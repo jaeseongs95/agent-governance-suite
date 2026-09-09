@@ -25,7 +25,9 @@ try {
   execFileSync("git", ["-C", sourceRepository, "archive", "--format=tar", `--output=${archive}`, commit]);
   const extracted = path.join(temporaryDirectory, "extracted");
   await mkdir(extracted);
-  execFileSync("tar", ["-xf", archive, "-C", extracted]);
+  execFileSync("tar", ["-xf", path.basename(archive), "-C", path.basename(extracted)], {
+    cwd: temporaryDirectory
+  });
 
   const sourceSkill = path.resolve(extracted, args["skill-path"]);
   if (!sourceSkill.startsWith(extracted + path.sep) && sourceSkill !== extracted) {
