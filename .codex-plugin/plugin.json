@@ -1,8 +1,8 @@
 {
   "id": "agent-governance-suite",
   "name": "agent-governance-suite",
-  "version": "0.2.0",
-  "description": "Route governance workflows across specialized skills and a local MCP server.",
+  "version": "1.0.0",
+  "description": "Route ten governance specialists through declarative provider contracts and a local MCP server.",
   "author": {
     "name": "jaeseongs95",
     "url": "https://github.com/jaeseongs95"
@@ -14,7 +14,9 @@
     "codex",
     "governance",
     "orchestration",
-    "audit"
+    "audit",
+    "scope",
+    "evidence"
   ],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
@@ -27,7 +29,9 @@
     "capabilities": [
       "Skill routing",
       "MCP coordination",
-      "Audit gating"
+      "Audit gating",
+      "Scope and evidence validation",
+      "Mutation preflight"
     ],
     "websiteURL": "https://github.com/jaeseongs95/agent-governance-suite",
     "defaultPrompt": [

@@ -14,12 +14,13 @@ if (!NAME_PATTERN.test(name) || !NAME_PATTERN.test(capability)) {
 const registryPath = path.join(ROOT, "skills", "registry.json");
 const registryDocument = await readJson(registryPath);
 const skills = Array.isArray(registryDocument) ? registryDocument : registryDocument.skills;
-if (skills.some((descriptor) => descriptor.id === name)) {
+if (registryDocument.schemaVersion !== "2.0.0") throw new Error("skills/registry.json must use schemaVersion 2.0.0");
+if (skills.some((descriptor) => descriptor.skillId === name)) {
   throw new Error(`registry already contains ${name}`);
 }
-const capabilityOwner = skills.find((descriptor) => descriptor.capabilities?.includes(capability));
+const capabilityOwner = skills.find((descriptor) => descriptor.providers?.some((provider) => provider.capabilities?.includes(capability)));
 if (capabilityOwner) {
-  throw new Error(`capability ${capability} is already provided by ${capabilityOwner.id}; choose a more specific capability`);
+  throw new Error(`capability ${capability} is already provided by ${capabilityOwner.skillId}; choose a more specific capability`);
 }
 
 const skillDirectory = path.join(ROOT, "skills", name);
@@ -41,19 +42,31 @@ await writeFile(path.join(ROOT, "tests", name, "cases.json"), `${JSON.stringify(
 }, null, 2)}\n`, "utf8");
 
 skills.push({
-  schemaVersion: "1.0.0",
-  id: name,
+  schemaVersion: "2.0.0",
+  skillId: name,
   version: "0.1.0",
   path: `./${name}`,
-  phase,
-  capabilities: [capability],
-  priority: 100,
-  selectionCriteria: [`requires-${capability}`],
-  preconditions: [],
-  requiredArtifacts: [],
-  producedArtifacts: [],
-  riskGate: "none",
-  enabled: true
+  priority: 50,
+  enabled: true,
+  providers: [{
+    capabilities: [capability],
+    executionClass: "workflow",
+    phase,
+    phaseOrder: 50,
+    requiredInputArtifacts: [],
+    inputBindings: [],
+    producedArtifacts: [],
+    outputSchema: "contracts/freeform-output.v1.schema.json",
+    resultSchema: "contracts/provider-result.v1.schema.json",
+    stateMapping: {
+      default: { state: "passed", errorRequired: false },
+      adapterErrors: ["INVALID_INPUT", "MISSING_EVIDENCE"]
+    },
+    selectionCriteria: [`requires-${capability}`],
+    preconditions: [],
+    failureHandling: "Return a structured provider result.",
+    gate: { kind: "none", policy: "none", validator: null }
+  }]
 });
 await writeFile(registryPath, `${JSON.stringify(registryDocument, null, 2)}\n`, "utf8");
 console.log(`created skills/${name}`);

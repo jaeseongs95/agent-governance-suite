@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskEnvelope": {
+    "schemaVersion": "1.0.0",
+    "taskId": "not-applicable",
+    "objective": "명시적 제외 근거를 확인한다.",
+    "scope": { "included": ["docs"], "excluded": ["deployment"] },
+    "acceptanceCriteria": ["문서 링크가 유효하다.", "프로덕션 배포가 성공한다."],
+    "riskLevel": "low",
+    "workUnits": [],
+    "requiredCapabilities": [],
+    "constraints": [],
+    "authorization": { "allowedActions": ["read"], "prohibitedActions": ["deploy"], "approvalRequired": [] },
+    "decision": { "complexity": "simple", "hasConflicts": false },
+    "orchestration": { "requested": false, "mcpAvailable": false }
+  },
+  "target": { "kind": "document", "identifier": "README.md", "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333" },
+  "evidence": [
+    {
+      "id": "link-check",
+      "kind": "file",
+      "locator": "README.md#links",
+      "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+      "targetDigest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "verified": true,
+      "criterionIds": ["AC-001"],
+      "direction": "supports",
+      "observedResult": "문서 링크를 직접 확인했다."
+    },
+    {
+      "id": "deployment-exclusion",
+      "kind": "document",
+      "locator": "task-envelope#/scope/excluded/0",
+      "digest": "sha256:979e39d9762d5fe23be7e1a435f6aef196c5eff27364c8aa3cab0aac780f511d",
+      "targetDigest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "verified": true,
+      "criterionIds": ["AC-002"],
+      "direction": "supports",
+      "observedResult": "TaskEnvelope scope excludes deployment."
+    }
+  ],
+  "verificationCommands": [],
+  "knownLimitations": [],
+  "criterionOverrides": [
+    { "criterionId": "AC-002", "status": "not-applicable", "rationale": "배포는 명시적으로 제외된 범위다.", "authorityRef": "deployment-exclusion" }
+  ]
+}

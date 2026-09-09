@@ -3262,8 +3262,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path) {
-      let input = path;
+    function removeDotSegments(path3) {
+      let input = path3;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3672,8 +3672,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path && path !== "/" ? path : void 0;
+        const path3 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path3 && path3 !== "/" ? path3 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -7992,12 +7992,12 @@ var require_dist = __commonJS({
     var fastName = new codegen_1.Name("fastFormats");
     var formatsPlugin = (ajv, opts = { keywords: true }) => {
       if (Array.isArray(opts)) {
-        addFormats(ajv, opts, formats_1.fullFormats, fullName);
+        addFormats2(ajv, opts, formats_1.fullFormats, fullName);
         return ajv;
       }
       const [formats, exportName] = opts.mode === "fast" ? [formats_1.fastFormats, fastName] : [formats_1.fullFormats, fullName];
       const list = opts.formats || formats_1.formatNames;
-      addFormats(ajv, list, formats, exportName);
+      addFormats2(ajv, list, formats, exportName);
       if (opts.keywords)
         (0, limit_1.default)(ajv);
       return ajv;
@@ -8009,7 +8009,7 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f;
     };
-    function addFormats(ajv, list, fs, exportName) {
+    function addFormats2(ajv, list, fs, exportName) {
       var _a3;
       var _b;
       (_a3 = (_b = ajv.opts.code).formats) !== null && _a3 !== void 0 ? _a3 : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
@@ -8205,10 +8205,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path) {
-  if (!path)
+function getElementAtPath(obj, path3) {
+  if (!path3)
     return obj;
-  return path.reduce((acc, key) => acc?.[key], obj);
+  return path3.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -8620,11 +8620,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path, issues) {
+function prefixIssues(path3, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path);
+    iss.path.unshift(path3);
     return iss;
   });
 }
@@ -9053,16 +9053,16 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
 }
 function formatError(error2, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error3, path = []) => {
+  const processError = (error3, path3 = []) => {
     for (const issue2 of error3.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path3, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path3, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path3, ...issue2.path]);
       } else {
-        const fullpath = [...path, ...issue2.path];
+        const fullpath = [...path3, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -15829,7 +15829,9 @@ var StdioServerTransport = class {
 };
 
 // mcp-server/src/registry.ts
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import path from "node:path";
 
 // contracts/types.ts
 var CONTRACT_VERSION = "1.0.0";
@@ -15857,9 +15859,11 @@ var FileSkillRegistry = class {
   constructor(registryPath, validator) {
     this.registryPath = registryPath;
     this.validator = validator;
+    this.rootDirectory = path.dirname(path.dirname(path.resolve(registryPath)));
   }
   registryPath;
   validator;
+  rootDirectory;
   read() {
     let raw;
     try {
@@ -15870,28 +15874,111 @@ var FileSkillRegistry = class {
         cause: cause instanceof Error ? cause.message : String(cause)
       });
     }
-    const candidates = Array.isArray(raw) ? raw : this.registrySkills(raw);
-    const skills = candidates.map((candidate) => this.validator.skillDescriptor(candidate));
-    const ids = /* @__PURE__ */ new Set();
-    for (const skill of skills) {
-      if (ids.has(skill.id)) {
+    if (raw.schemaVersion !== "2.0.0" || !Array.isArray(raw.skills)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Registry must be a v2 object with a skills array.");
+    }
+    const descriptors = raw.skills.map((candidate) => this.validator.skillDescriptorV2(candidate));
+    const skillIds = /* @__PURE__ */ new Set();
+    const providers = [];
+    for (const descriptor of descriptors) {
+      this.assertDescriptorPath(descriptor);
+      if (skillIds.has(descriptor.skillId)) {
         throw new WorkflowContractError("INVALID_INPUT", "Registry contains duplicate skillId values.", {
-          skillId: skill.id
+          skillId: descriptor.skillId
         });
       }
-      ids.add(skill.id);
+      skillIds.add(descriptor.skillId);
+      for (const [index, provider] of descriptor.providers.entries()) {
+        const providerKey = `${descriptor.skillId}:${provider.phase}:${index + 1}`;
+        providers.push({
+          ...provider,
+          gate: this.routeGateValidator(provider.gate),
+          skillId: descriptor.skillId,
+          version: descriptor.version,
+          path: descriptor.path,
+          enabled: descriptor.enabled,
+          priority: descriptor.priority,
+          providerKey,
+          outputSchemaDigest: this.schemaDigest(provider.outputSchema),
+          resultSchemaDigest: this.schemaDigest(provider.resultSchema)
+        });
+      }
     }
-    return skills;
+    this.assertProviderConflicts(providers);
+    return providers;
   }
-  registrySkills(value) {
-    if (!Array.isArray(value?.skills)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Registry must be an array or an object with a skills array.");
+  assertDescriptorPath(descriptor) {
+    if (descriptor.path !== `./${descriptor.skillId}`) {
+      throw new WorkflowContractError("INVALID_INPUT", "Registry path must match skillId.", {
+        skillId: descriptor.skillId,
+        path: descriptor.path
+      });
     }
-    return value.skills;
+    const skillRoot = path.resolve(this.rootDirectory, "skills", descriptor.skillId);
+    for (const provider of descriptor.providers) {
+      const bindings = new Set(provider.inputBindings.map((binding) => binding.targetArtifact));
+      for (const artifact of provider.requiredInputArtifacts) {
+        if (!bindings.has(artifact)) {
+          throw new WorkflowContractError("INVALID_INPUT", "Every required input artifact needs an input binding.", {
+            skillId: descriptor.skillId,
+            phase: provider.phase,
+            artifact
+          });
+        }
+      }
+      const gateSchema = provider.gate.validator?.endsWith(".schema.json") ? provider.gate.validator : null;
+      for (const schemaPath of [provider.outputSchema, provider.resultSchema, ...gateSchema ? [gateSchema] : []]) {
+        const resolved = path.resolve(this.rootDirectory, schemaPath);
+        if (resolved !== this.rootDirectory && !resolved.startsWith(`${this.rootDirectory}${path.sep}`)) {
+          throw new WorkflowContractError("INVALID_INPUT", "Provider schema path escapes the plugin root.", {
+            skillId: descriptor.skillId,
+            schemaPath
+          });
+        }
+        if (schemaPath.startsWith("skills/") && resolved !== skillRoot && !resolved.startsWith(`${skillRoot}${path.sep}`)) {
+          throw new WorkflowContractError("INVALID_INPUT", "Skill-local schema path must remain inside its skill directory.", {
+            skillId: descriptor.skillId,
+            schemaPath
+          });
+        }
+      }
+    }
+  }
+  schemaDigest(relativePath) {
+    try {
+      return `sha256:${createHash("sha256").update(readFileSync(path.resolve(this.rootDirectory, relativePath))).digest("hex")}`;
+    } catch (cause) {
+      throw new WorkflowContractError("INVALID_INPUT", "Cannot read a provider schema.", {
+        schemaPath: relativePath,
+        cause: cause instanceof Error ? cause.message : String(cause)
+      });
+    }
+  }
+  routeGateValidator(gate) {
+    const validator = gate.validator;
+    return validator?.endsWith(".schema.json") ? { ...gate, validatorSchema: { path: validator, digest: this.schemaDigest(validator) } } : { ...gate, validatorSchema: null };
+  }
+  assertProviderConflicts(providers) {
+    const owners = /* @__PURE__ */ new Map();
+    for (const provider of providers.filter((candidate) => candidate.enabled)) {
+      for (const capability of provider.capabilities) {
+        owners.set(capability, [...owners.get(capability) ?? [], provider]);
+      }
+    }
+    for (const [capability, candidates] of owners) {
+      if (candidates.length < 2) continue;
+      const priorities = new Set(candidates.map((candidate) => candidate.priority));
+      if (priorities.size !== candidates.length || candidates.some((candidate) => candidate.selectionCriteria.length === 0)) {
+        throw new WorkflowContractError("INVALID_INPUT", "Overlapping capability providers require unique priorities and selection criteria.", {
+          capability,
+          providers: candidates.map((candidate) => candidate.providerKey)
+        });
+      }
+    }
   }
 };
-function selectSkillByCapability(skills, capability) {
-  return skills.filter((skill) => skill.enabled && skill.capabilities.includes(capability)).sort((left, right) => right.priority - left.priority || left.id.localeCompare(right.id))[0];
+function selectSkillByCapability(providers, capability) {
+  return providers.filter((provider) => provider.enabled && provider.capabilities.includes(capability)).sort((left, right) => right.priority - left.priority || left.providerKey.localeCompare(right.providerKey))[0];
 }
 
 // mcp-server/src/runtime-config.ts
@@ -15902,23 +15989,23 @@ function resolveRegistryPath(environment = process.env, moduleUrl = import.meta.
 
 // mcp-server/src/schema-validator.ts
 var import__ = __toESM(require__(), 1);
-import { readFileSync as readFileSync2 } from "node:fs";
+import { createHash as createHash2 } from "node:crypto";
+import { readFileSync as readFileSync2, readdirSync } from "node:fs";
+import { createRequire } from "node:module";
+import path2 from "node:path";
+var addFormats = createRequire(import.meta.url)("ajv-formats");
 function loadSchema(fileName) {
-  const path = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path, "utf8"));
-}
-function loadSkillSchema(relativePath) {
-  const path = new URL(`../../skills/${relativePath}`, import.meta.url);
-  return JSON.parse(readFileSync2(path, "utf8"));
+  const path3 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path3, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
   taskEnvelope: loadSchema("task-envelope.v1.schema.json"),
   skillDescriptor: loadSchema("skill-descriptor.v1.schema.json"),
+  skillDescriptorV2: loadSchema("skill-descriptor.v2.schema.json"),
   workflowPlan: loadSchema("workflow-plan.v1.schema.json"),
   stageResult: loadSchema("stage-result.v1.schema.json"),
-  workflowReceipt: loadSchema("workflow-receipt.v1.schema.json"),
-  decisionRecord: loadSkillSchema("independent-deliberation-panel/contracts/decision-record.v1.schema.json")
+  workflowReceipt: loadSchema("workflow-receipt.v1.schema.json")
 };
 function errorText(errors) {
   return (errors ?? []).map((error2) => `${error2.instancePath || "/"} ${error2.message ?? "is invalid"}`).join("; ");
@@ -15927,6 +16014,7 @@ var ContractValidator = class {
   validators;
   constructor() {
     const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
+    addFormats(ajv);
     for (const schema of Object.values(contractSchemas)) {
       ajv.addSchema(schema);
     }
@@ -15934,10 +16022,10 @@ var ContractValidator = class {
       apiResult: ajv.getSchema("https://skill-suite.local/contracts/api-result.v1.schema.json"),
       taskEnvelope: ajv.getSchema("https://skill-suite.local/contracts/task-envelope.v1.schema.json"),
       skillDescriptor: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v1.schema.json"),
+      skillDescriptorV2: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v2.schema.json"),
       workflowPlan: ajv.getSchema("https://skill-suite.local/contracts/workflow-plan.v1.schema.json"),
       stageResult: ajv.getSchema("https://skill-suite.local/contracts/stage-result.v1.schema.json"),
-      workflowReceipt: ajv.getSchema("https://skill-suite.local/contracts/workflow-receipt.v1.schema.json"),
-      decisionRecord: ajv.compile(contractSchemas.decisionRecord)
+      workflowReceipt: ajv.getSchema("https://skill-suite.local/contracts/workflow-receipt.v1.schema.json")
     };
   }
   assert(name, value) {
@@ -15955,8 +16043,8 @@ var ContractValidator = class {
   taskEnvelope(value) {
     return this.assert("taskEnvelope", value);
   }
-  skillDescriptor(value) {
-    return this.assert("skillDescriptor", value);
+  skillDescriptorV2(value) {
+    return this.assert("skillDescriptorV2", value);
   }
   stageResult(value) {
     return this.assert("stageResult", value);
@@ -15967,11 +16055,70 @@ var ContractValidator = class {
   workflowReceipt(value) {
     return this.assert("workflowReceipt", value);
   }
-  decisionRecord(value) {
-    return this.assert("decisionRecord", value);
-  }
   apiResult(value) {
     return this.assert("apiResult", value);
+  }
+  providerResult(rootDirectory, resultSchema, outputSchema, value) {
+    const result = this.assertSchemaFile(rootDirectory, resultSchema, value, "provider result");
+    if (result.output !== null) {
+      this.assertSchemaFile(rootDirectory, outputSchema, result.output, "provider output");
+    }
+    return result;
+  }
+  declaredSchema(rootDirectory, reference, value, label) {
+    return this.assertSchemaFile(rootDirectory, reference, value, label);
+  }
+  assertSchemaFile(rootDirectory, reference, value, label) {
+    const root = path2.resolve(rootDirectory);
+    const schemaPath = path2.resolve(root, reference.path);
+    if (schemaPath !== root && !schemaPath.startsWith(`${root}${path2.sep}`)) {
+      throw new WorkflowContractError("INVALID_INPUT", `${label} schema escapes the plugin root.`, {
+        schemaPath: reference.path
+      });
+    }
+    const raw = readFileSync2(schemaPath);
+    const digest = `sha256:${createHash2("sha256").update(raw).digest("hex")}`;
+    if (digest !== reference.digest) {
+      throw new WorkflowContractError("STALE_REVISION", `${label} schema changed after planning.`, {
+        schemaPath: reference.path,
+        expectedDigest: reference.digest,
+        actualDigest: digest
+      });
+    }
+    const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
+    addFormats(ajv);
+    const schemas = /* @__PURE__ */ new Map();
+    for (const directory of [path2.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
+      for (const candidate of this.schemaFiles(directory)) {
+        const schema = JSON.parse(readFileSync2(candidate, "utf8"));
+        const id = typeof schema.$id === "string" ? schema.$id : `file://${candidate.split(path2.sep).join("/")}`;
+        if (!schemas.has(id)) schemas.set(id, schema);
+      }
+    }
+    for (const schema of schemas.values()) ajv.addSchema(schema);
+    const targetSchema = JSON.parse(raw.toString("utf8"));
+    const targetId = typeof targetSchema.$id === "string" ? targetSchema.$id : void 0;
+    const validate2 = (targetId ? ajv.getSchema(targetId) : void 0) ?? ajv.compile(targetSchema);
+    if (!validate2(value)) {
+      throw new WorkflowContractError("INVALID_INPUT", `${label} does not match its declared schema.`, {
+        schemaPath: reference.path,
+        validationErrors: errorText(validate2.errors)
+      });
+    }
+    return value;
+  }
+  skillSchemaRoot(rootDirectory, schemaPath) {
+    const segments = schemaPath.split("/");
+    return segments[0] === "skills" && segments[1] ? path2.join(rootDirectory, "skills", segments[1]) : path2.join(rootDirectory, "contracts");
+  }
+  schemaFiles(directory) {
+    const files = [];
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const candidate = path2.join(directory, entry.name);
+      if (entry.isDirectory()) files.push(...this.schemaFiles(candidate));
+      else if (entry.isFile() && entry.name.endsWith(".schema.json")) files.push(candidate);
+    }
+    return files;
   }
 };
 
@@ -17031,8 +17178,8 @@ function createDefaultAjvInstance() {
     validateSchema: false,
     allErrors: true
   });
-  const addFormats = import_ajv_formats.default;
-  addFormats(ajv);
+  const addFormats2 = import_ajv_formats.default;
+  addFormats2(ajv);
   return ajv;
 }
 var AjvJsonSchemaValidator = class {
@@ -17740,7 +17887,7 @@ function toolResult(result) {
 }
 function createMcpServer(service) {
   const server = new Server(
-    { name: "agent-governance-suite", version: "0.2.0" },
+    { name: "agent-governance-suite", version: "1.0.0" },
     { capabilities: { tools: {} } }
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -18278,7 +18425,8 @@ var WorkflowService = class {
             requestedStageId: result.stageId
           });
         }
-        this.assertResultSemantics(result);
+        this.assertPlannedInputsAvailable(receipt, target);
+        this.assertResultSemantics(target, result);
         if (result.state === "passed") {
           this.assertRequiredArtifacts(target, result);
           this.assertDeliberationGate(target, result);
@@ -18371,6 +18519,7 @@ var WorkflowService = class {
     const errors = [];
     const stages = [];
     const selectedSkills = /* @__PURE__ */ new Set();
+    const selectedProviders = /* @__PURE__ */ new Map();
     for (const capability of this.requiredCapabilities(task, dependencyGraph)) {
       const skill = selectSkillByCapability(skills, capability);
       if (!skill) {
@@ -18381,21 +18530,57 @@ var WorkflowService = class {
         });
         continue;
       }
+      if (skill.executionClass === "bootstrap") {
+        errors.push({
+          code: "GATE_FAILED",
+          message: `Capability '${capability}' is a bootstrap provider and must run before plan_workflow.`,
+          details: { capability, providerKey: skill.providerKey }
+        });
+        continue;
+      }
+      const selected = selectedProviders.get(skill.providerKey);
+      if (selected) {
+        if (!selected.satisfiedCapabilities.includes(capability)) selected.satisfiedCapabilities.push(capability);
+      } else {
+        selectedProviders.set(skill.providerKey, { capability, satisfiedCapabilities: [capability], provider: skill });
+      }
+    }
+    const selectedProviderList = [...selectedProviders.values()];
+    const executionClasses = new Set(selectedProviderList.map(({ provider }) => provider.executionClass));
+    if (executionClasses.size > 1) {
+      errors.push({
+        code: "INVALID_TRANSITION",
+        message: "Recovery providers must run in a separate workflow.",
+        details: { executionClasses: [...executionClasses] }
+      });
+    }
+    for (const { capability, satisfiedCapabilities, provider: skill } of this.orderProviders(selectedProviderList)) {
       const producedArtifacts = skill.producedArtifacts;
-      const stageRequiredArtifacts = skill.riskGate === "mandatory" ? [.../* @__PURE__ */ new Set([...producedArtifacts, "gate-verdict"])] : producedArtifacts;
+      const stageRequiredArtifacts = skill.gate.policy === "mandatory" ? [.../* @__PURE__ */ new Set([...producedArtifacts, "gate-verdict"])] : producedArtifacts;
       const order = stages.length + 1;
       stages.push({
         stageId: stageId(order, capability),
         order,
         requiredCapability: capability,
-        skillId: skill.id,
+        satisfiedCapabilities,
+        skillId: skill.skillId,
         phase: skill.phase,
-        selectionReason: `Selected '${skill.id}' because it provides required capability '${capability}' at priority ${skill.priority}.`,
+        selectionReason: `Selected '${skill.skillId}' because provider '${skill.providerKey}' supplies '${satisfiedCapabilities.join("', '")}' at priority ${skill.priority}.`,
         state: "ready",
         requiredArtifacts: stageRequiredArtifacts,
-        riskGate: skill.riskGate
+        riskGate: skill.gate.policy,
+        providerKey: skill.providerKey,
+        executionClass: skill.executionClass,
+        phaseOrder: skill.phaseOrder,
+        requiredInputArtifacts: skill.requiredInputArtifacts,
+        inputBindings: skill.inputBindings,
+        producedArtifacts: skill.producedArtifacts,
+        outputSchema: { path: skill.outputSchema, digest: skill.outputSchemaDigest },
+        resultSchema: { path: skill.resultSchema, digest: skill.resultSchemaDigest },
+        stateMapping: skill.stateMapping,
+        gate: skill.gate
       });
-      selectedSkills.add(skill.id);
+      selectedSkills.add(skill.skillId);
     }
     if (executionMode === "orchestrated" && !task.orchestration.mcpAvailable) {
       errors.unshift({
@@ -18433,7 +18618,86 @@ var WorkflowService = class {
     }
     return [.../* @__PURE__ */ new Set([...before, ...work, ...after])];
   }
-  assertResultSemantics(result) {
+  orderProviders(items) {
+    const producedBy = /* @__PURE__ */ new Map();
+    for (const [index, item] of items.entries()) {
+      for (const artifact of item.provider.producedArtifacts) {
+        const existing = producedBy.get(artifact);
+        if (existing !== void 0 && items[existing]?.provider.providerKey !== item.provider.providerKey) {
+          throw new WorkflowContractError("INVALID_INPUT", "Selected providers produce the same artifact.", {
+            artifact,
+            providers: [items[existing]?.provider.providerKey, item.provider.providerKey]
+          });
+        }
+        producedBy.set(artifact, index);
+      }
+    }
+    const outgoing = /* @__PURE__ */ new Map();
+    const indegree = items.map(() => 0);
+    for (const [consumerIndex, item] of items.entries()) {
+      for (const artifact of item.provider.requiredInputArtifacts) {
+        const producerIndex = producedBy.get(artifact);
+        if (producerIndex === void 0 || producerIndex === consumerIndex) continue;
+        const edges = outgoing.get(producerIndex) ?? /* @__PURE__ */ new Set();
+        if (!edges.has(consumerIndex)) {
+          edges.add(consumerIndex);
+          outgoing.set(producerIndex, edges);
+          indegree[consumerIndex] = (indegree[consumerIndex] ?? 0) + 1;
+        }
+      }
+    }
+    const compare = (left, right) => items[left].provider.phaseOrder - items[right].provider.phaseOrder || items[left].capability.localeCompare(items[right].capability) || items[left].provider.providerKey.localeCompare(items[right].provider.providerKey);
+    const ready = indegree.map((value, index) => value === 0 ? index : -1).filter((index) => index >= 0).sort(compare);
+    const ordered = [];
+    while (ready.length > 0) {
+      const index = ready.shift();
+      ordered.push(items[index]);
+      for (const next of outgoing.get(index) ?? []) {
+        indegree[next]--;
+        if (indegree[next] === 0) {
+          ready.push(next);
+          ready.sort(compare);
+        }
+      }
+    }
+    if (ordered.length !== items.length) {
+      throw new WorkflowContractError("INVALID_INPUT", "Selected provider artifact dependencies contain a cycle.");
+    }
+    return ordered;
+  }
+  assertResultSemantics(stage, result) {
+    const providerResult = this.validator.providerResult(
+      this.registry.rootDirectory,
+      stage.resultSchema,
+      stage.outputSchema,
+      result.output
+    );
+    const rule = this.mappedState(stage, providerResult);
+    if (result.state !== rule.state) {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Stage state does not match the provider state mapping.", {
+        stageId: result.stageId,
+        expectedState: rule.state,
+        actualState: result.state
+      });
+    }
+    const providerError = providerResult.error;
+    if (rule.errorRequired !== Boolean(providerError)) {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Provider error presence does not match the state mapping.", {
+        stageId: result.stageId,
+        errorRequired: rule.errorRequired
+      });
+    }
+    if (providerError && rule.allowedErrorCodes && !rule.allowedErrorCodes.includes(providerError.code)) {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Provider error code is not allowed by the state mapping.", {
+        stageId: result.stageId,
+        errorCode: providerError.code
+      });
+    }
+    if ((providerError?.code ?? null) !== (result.error?.code ?? null)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Stage error must mirror the provider result error.", {
+        stageId: result.stageId
+      });
+    }
     if (result.state === "passed") {
       if (result.evidence.length === 0 || result.evidence.some((evidence) => !evidence.verified || !evidence.locator)) {
         throw new WorkflowContractError("MISSING_EVIDENCE", "A passed stage requires verified evidence.", {
@@ -18448,9 +18712,40 @@ var WorkflowService = class {
       throw new WorkflowContractError("INVALID_INPUT", "Failed or blocked stages require an error object.");
     }
   }
+  mappedState(stage, providerResult) {
+    if (providerResult.kind === "adapter-error") {
+      const errorCode = providerResult.error?.code;
+      if (!errorCode || !stage.stateMapping.adapterErrors.includes(errorCode)) {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Adapter error is not allowed by the provider descriptor.", {
+          stageId: stage.stageId,
+          errorCode: errorCode ?? null
+        });
+      }
+      return { state: "blocked", errorRequired: true, allowedErrorCodes: stage.stateMapping.adapterErrors };
+    }
+    let rule = stage.stateMapping.default;
+    if (stage.stateMapping.selector) {
+      const value = this.jsonPointer(providerResult, stage.stateMapping.selector);
+      if (typeof value === "string") rule = stage.stateMapping.values?.[value] ?? "reject";
+    }
+    if (rule === "reject") {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Provider verdict is not mapped by the descriptor.", {
+        stageId: stage.stageId,
+        selector: stage.stateMapping.selector ?? null
+      });
+    }
+    return rule;
+  }
+  jsonPointer(value, pointer) {
+    return pointer.split("/").slice(1).reduce((current, token) => {
+      if (!current || typeof current !== "object") return void 0;
+      const key = token.replaceAll("~1", "/").replaceAll("~0", "~");
+      return current[key];
+    }, value);
+  }
   assertRequiredArtifacts(stage, result) {
     const verifiedArtifacts = new Set(
-      result.evidence.filter((evidence) => evidence.verified && evidence.locator).map((evidence) => evidence.artifactId)
+      result.output.artifacts.filter((artifact) => artifact.verified && artifact.locator && artifact.digest && artifact.targetDigest).map((artifact) => artifact.artifactId)
     );
     const missing = stage.requiredArtifacts.filter((artifact) => !verifiedArtifacts.has(artifact));
     if (missing.length > 0) {
@@ -18460,11 +18755,41 @@ var WorkflowService = class {
       });
     }
   }
+  assertPlannedInputsAvailable(receipt, stage) {
+    const missing = [];
+    for (const artifactId of stage.requiredInputArtifacts) {
+      const producer = receipt.plan.stages.find(
+        (candidate) => candidate.stageId !== stage.stageId && candidate.producedArtifacts.includes(artifactId)
+      );
+      if (!producer) continue;
+      const producerResult = receipt.stageResults.find((candidate) => candidate.stageId === producer.stageId);
+      const verified = producerResult?.state === "passed" && producerResult.output.artifacts.some(
+        (artifact) => artifact.artifactId === artifactId && artifact.verified && Boolean(artifact.locator) && Boolean(artifact.digest) && Boolean(artifact.targetDigest)
+      );
+      if (!verified) missing.push({ artifactId, producerStageId: producer.stageId });
+    }
+    if (missing.length > 0) {
+      throw new WorkflowContractError("MISSING_EVIDENCE", "Planned input artifacts are not backed by verified producer results.", {
+        stageId: stage.stageId,
+        missingInputs: missing
+      });
+    }
+  }
   assertDeliberationGate(stage, result) {
     if (!stage.requiredArtifacts.includes("decision-record")) return;
+    if (!stage.gate.validatorSchema) {
+      throw new WorkflowContractError("GATE_FAILED", "Deliberation provider must declare its decision record validator schema.", {
+        stageId: stage.stageId
+      });
+    }
     let record2;
     try {
-      record2 = this.validator.decisionRecord(result.output?.decisionRecord);
+      record2 = this.validator.declaredSchema(
+        this.registry.rootDirectory,
+        stage.gate.validatorSchema,
+        result.output.output?.decisionRecord,
+        "deliberation decision record"
+      );
     } catch (error2) {
       throw new WorkflowContractError("GATE_FAILED", "Deliberation requires a schema-valid DecisionRecord.v1.", {
         stageId: stage.stageId,
@@ -18494,7 +18819,7 @@ var WorkflowService = class {
         stage: run.stage
       });
     }
-    if (proposal.status === "conditional_consensus" && result.output?.conditionsVerified !== true) {
+    if (proposal.status === "conditional_consensus" && result.output.output?.conditionsVerified !== true) {
       throw new WorkflowContractError("GATE_FAILED", "Conditional consensus may advance only after its conditions are verified.", {
         stageId: stage.stageId
       });
@@ -18502,7 +18827,7 @@ var WorkflowService = class {
   }
   assertMandatoryAuditGate(stage, result) {
     if (stage.riskGate !== "mandatory") return;
-    const output = result.output;
+    const output = result.output.output;
     const auditorId = output?.auditorId;
     const implementationActorIds = output?.implementationActorIds;
     const auditTarget = output?.auditTarget;

@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.dev/workspace-convention-profiler/contracts/workspace-convention-profile.v1.schema.json",
+  "title": "WorkspaceConventionProfile.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "workspace", "ecosystems", "structure", "conventions", "commands", "changeHotspots", "generatedOrVendoredPaths", "openQuestions", "limitations", "evidenceIndex", "profileFingerprint", "observedAt", "verdict"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "workspace": {
+      "type": "object", "additionalProperties": false,
+      "required": ["root", "vcsType", "currentRef", "dirtyState"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "vcsType": { "enum": ["git", "none"] },
+        "currentRef": { "type": ["string", "null"] },
+        "dirtyState": { "enum": ["clean", "dirty", "unknown"] }
+      }
+    },
+    "ecosystems": { "type": "array", "items": { "$ref": "#/$defs/ecosystem" } },
+    "structure": { "type": "array", "items": { "$ref": "#/$defs/structure" } },
+    "conventions": { "type": "array", "items": { "$ref": "#/$defs/convention" } },
+    "commands": { "type": "array", "items": { "$ref": "#/$defs/command" } },
+    "changeHotspots": { "type": "array", "items": { "$ref": "#/$defs/hotspot" } },
+    "generatedOrVendoredPaths": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "openQuestions": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "limitations": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "evidenceIndex": { "type": "array", "items": { "$ref": "#/$defs/evidence" } },
+    "profileFingerprint": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "observedAt": { "type": "string", "format": "date-time" },
+    "verdict": { "enum": ["PASS", "BLOCKED"] }
+  },
+  "$defs": {
+    "evidenceRefs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "ecosystem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["language", "packageManager", "manifestRefs"],
+      "properties": {
+        "language": { "type": "string", "minLength": 1 },
+        "packageManager": { "type": ["string", "null"] },
+        "manifestRefs": { "$ref": "#/$defs/evidenceRefs" }
+      }
+    },
+    "structure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "paths", "evidenceRefs"],
+      "properties": {
+        "role": { "type": "string", "minLength": 1 },
+        "paths": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "evidenceRefs": { "$ref": "#/$defs/evidenceRefs" }
+      }
+    },
+    "convention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject", "observedPattern", "confidence", "evidenceRefs"],
+      "properties": {
+        "subject": { "type": "string", "minLength": 1 },
+        "observedPattern": { "type": "string", "minLength": 1 },
+        "confidence": { "enum": ["confirmed", "inferred", "unknown"] },
+        "evidenceRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["purpose", "command", "workingDirectory", "sourceRef"],
+      "properties": {
+        "purpose": { "enum": ["build", "test", "lint", "dev", "validate", "other"] },
+        "command": { "type": "string", "minLength": 1 },
+        "workingDirectory": { "type": "string", "minLength": 1 },
+        "sourceRef": { "type": "string", "minLength": 1 }
+      }
+    },
+    "hotspot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taskArea", "implementationPaths", "testPaths", "relatedConfigPaths", "scopeAuthority"],
+      "properties": {
+        "taskArea": { "type": "string", "minLength": 1 },
+        "implementationPaths": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "testPaths": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "relatedConfigPaths": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "scopeAuthority": { "const": "candidate-only" }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "digest", "size", "kind"],
+      "properties": {
+        "locator": { "type": "string", "minLength": 1 },
+        "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+        "size": { "type": "integer", "minimum": 0 },
+        "kind": { "enum": ["file", "directory"] }
+      }
+    }
+  }
+}

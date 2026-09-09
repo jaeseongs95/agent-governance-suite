@@ -1,0 +1,1 @@
+{ "name": "child", "scripts": { "build": "tsc" } }

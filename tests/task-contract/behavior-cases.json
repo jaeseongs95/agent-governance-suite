@@ -1,0 +1,17 @@
+{
+  "normal": [
+    { "id": "simple-read", "expected": "validates a read-only task without adding mutation authority" },
+    { "id": "parallel-work", "expected": "accepts unique acyclic coarse work units" }
+  ],
+  "boundary": [
+    { "id": "high-risk", "expected": "keeps deployment in approvalRequired" },
+    { "id": "windows-path", "expected": "rejects drive paths and backslashes" },
+    { "id": "needs-input", "expected": "allows a blocking ambiguity only with NEEDS_INPUT" }
+  ],
+  "failure": [
+    { "id": "conflicting", "expected": "rejects included and excluded overlap" },
+    { "id": "cycle", "expected": "rejects a work-unit cycle" },
+    { "id": "missing-evidence-plan", "expected": "rejects criteria without one-to-one evidence plans" },
+    { "id": "unsupported-pass", "expected": "rejects PASS with blocking uncertainty" }
+  ]
+}

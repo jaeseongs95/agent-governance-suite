@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.local/blocker-diagnostician/contracts/diagnosis-report.v1.schema.json",
+  "title": "DiagnosisReport.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "requestArtifactDigest", "failureClusters", "observations", "hypotheses", "nextDiscriminatingTest", "confirmedCause", "recommendedNextAction", "limitations", "verdict"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "requestArtifactDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "failureClusters": { "type": "array", "items": { "$ref": "#/$defs/cluster" } },
+    "observations": { "type": "array", "items": { "$ref": "#/$defs/observation" } },
+    "hypotheses": { "type": "array", "items": { "$ref": "#/$defs/hypothesis" } },
+    "nextDiscriminatingTest": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/test" }] },
+    "confirmedCause": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/cause" }] },
+    "recommendedNextAction": { "type": "string", "minLength": 1 },
+    "limitations": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "verdict": { "enum": ["CAUSE_CONFIRMED", "NEXT_TEST", "NEEDS_INPUT", "NEEDS_APPROVAL", "BLOCKED"] }
+  },
+  "$defs": {
+    "cluster": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fingerprint", "episodeIds", "operation", "environmentDigest", "stableFailureTuple"],
+      "properties": {
+        "fingerprint": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+        "episodeIds": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "operation": { "type": "string", "minLength": 1 },
+        "environmentDigest": { "type": "string", "minLength": 1 },
+        "stableFailureTuple": { "type": "object" }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "statement", "evidenceRefs"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "statement": { "type": "string", "minLength": 1 },
+        "evidenceRefs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    },
+    "hypothesis": { "$ref": "failure-episode-set.v1.schema.json#/$defs/hypothesis" },
+    "test": { "$ref": "failure-episode-set.v1.schema.json#/$defs/test" },
+    "cause": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hypothesisId", "statement", "evidenceBindings"],
+      "properties": {
+        "hypothesisId": { "type": "string", "minLength": 1 },
+        "statement": { "type": "string", "minLength": 1 },
+        "evidenceBindings": { "type": "array", "minItems": 1, "items": { "$ref": "failure-episode-set.v1.schema.json#/$defs/evidenceBinding" } }
+      }
+    }
+  }
+}

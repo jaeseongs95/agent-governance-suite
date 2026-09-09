@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskEnvelope": {
+    "schemaVersion": "1.0.0",
+    "taskId": "failing",
+    "objective": "실패 evidence를 판정한다.",
+    "scope": { "included": ["src"], "excluded": [] },
+    "acceptanceCriteria": ["통합 테스트가 통과한다."],
+    "riskLevel": "low",
+    "workUnits": [],
+    "requiredCapabilities": [],
+    "constraints": [],
+    "authorization": { "allowedActions": ["read"], "prohibitedActions": [], "approvalRequired": [] },
+    "decision": { "complexity": "simple", "hasConflicts": false },
+    "orchestration": { "requested": false, "mcpAvailable": false }
+  },
+  "target": { "kind": "diff", "identifier": "working-tree", "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111" },
+  "evidence": [
+    {
+      "id": "integration-failure",
+      "kind": "test",
+      "locator": "tests/results/failure.txt",
+      "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "targetDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "verified": true,
+      "criterionIds": ["AC-001"],
+      "direction": "refutes",
+      "observedResult": "통합 테스트가 종료 코드 1로 실패했다."
+    }
+  ],
+  "verificationCommands": [],
+  "knownLimitations": [],
+  "criterionOverrides": []
+}

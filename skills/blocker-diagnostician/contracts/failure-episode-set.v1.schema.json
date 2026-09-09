@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.local/blocker-diagnostician/contracts/failure-episode-set.v1.schema.json",
+  "title": "FailureEpisodeSet.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "objective", "expectedBehavior", "episodes", "lastKnownGood", "constraints", "authorization", "evidenceBindings", "attemptedChecks", "candidateHypotheses", "candidateTests", "accessBlockers"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "objective": { "type": "string", "minLength": 1 },
+    "expectedBehavior": { "type": "string", "minLength": 1 },
+    "episodes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/episode" } },
+    "lastKnownGood": { "type": ["object", "null"] },
+    "constraints": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowedChecks", "approvalRequired", "prohibitedChecks"],
+      "properties": {
+        "allowedChecks": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "approvalRequired": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "prohibitedChecks": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    },
+    "evidenceBindings": { "type": "array", "items": { "$ref": "#/$defs/evidenceBinding" } },
+    "attemptedChecks": { "type": "array", "items": { "$ref": "#/$defs/attemptedCheck" } },
+    "candidateHypotheses": { "type": "array", "items": { "$ref": "#/$defs/hypothesis" } },
+    "candidateTests": { "type": "array", "items": { "$ref": "#/$defs/test" } },
+    "accessBlockers": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+  },
+  "$defs": {
+    "episode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attemptId", "operation", "stableFailureTuple", "environmentDigest", "changeSummary", "evidenceRefs"],
+      "properties": {
+        "attemptId": { "type": "string", "minLength": 1 },
+        "operation": { "type": "string", "minLength": 1 },
+        "stableFailureTuple": { "type": "object", "minProperties": 1 },
+        "environmentDigest": { "type": "string", "minLength": 1 },
+        "changeSummary": { "type": "string" },
+        "evidenceRefs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    },
+    "attemptedCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checkId", "inputDigest", "resultDigest", "check"],
+      "properties": {
+        "checkId": { "type": "string", "minLength": 1 },
+        "inputDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+        "resultDigest": { "type": "string", "minLength": 1 },
+        "check": { "$ref": "#/$defs/testContent" }
+      }
+    },
+    "evidenceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidenceRef", "artifactDigest", "hypothesisIds", "relation"],
+      "properties": {
+        "evidenceRef": { "type": "string", "minLength": 1 },
+        "artifactDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+        "hypothesisIds": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "relation": { "enum": ["supports", "refutes"] }
+      }
+    },
+    "hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "causalLayer", "statement", "supportingEvidence", "contradictingEvidence", "state"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "causalLayer": { "enum": ["input", "state", "permission", "environment", "dependency", "timing", "implementation", "tooling", "unknown"] },
+        "statement": { "type": "string", "minLength": 1 },
+        "supportingEvidence": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "contradictingEvidence": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "state": { "enum": ["open", "supported", "refuted", "confirmed"] }
+      }
+    },
+    "test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checkId", "checkInput", "question", "preconditions", "risk", "requiredAuthorization", "outcomes", "stopCondition", "informationGain", "cost", "inputDigest"],
+      "properties": {
+        "checkId": { "type": "string", "minLength": 1 },
+        "checkInput": { "type": "object" },
+        "question": { "type": "string", "minLength": 1 },
+        "preconditions": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "risk": { "enum": ["read-only", "reversible", "external", "destructive"] },
+        "requiredAuthorization": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "outcomes": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/outcome" } },
+        "stopCondition": { "type": "string", "minLength": 1 },
+        "informationGain": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "cost": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "inputDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+      }
+    },
+    "testContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checkId", "checkInput", "question", "preconditions", "risk", "requiredAuthorization", "outcomes", "stopCondition", "informationGain", "cost"],
+      "properties": {
+        "checkId": { "type": "string", "minLength": 1 },
+        "checkInput": { "type": "object" },
+        "question": { "type": "string", "minLength": 1 },
+        "preconditions": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "risk": { "enum": ["read-only", "reversible", "external", "destructive"] },
+        "requiredAuthorization": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "outcomes": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/outcome" } },
+        "stopCondition": { "type": "string", "minLength": 1 },
+        "informationGain": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "cost": { "type": "integer", "minimum": 1, "maximum": 5 }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observation", "supportsHypotheses", "refutesHypotheses"],
+      "properties": {
+        "observation": { "type": "string", "minLength": 1 },
+        "supportsHypotheses": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "refutesHypotheses": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    }
+  }
+}

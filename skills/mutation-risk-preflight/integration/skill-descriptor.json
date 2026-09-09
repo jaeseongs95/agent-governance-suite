@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "2.0.0",
+  "providers": [
+    {
+      "skillId": "mutation-risk-preflight",
+      "version": "0.1.1",
+      "enabled": true,
+      "capabilities": [
+        "mutation-risk-preflight"
+      ],
+      "priority": 50,
+      "executionClass": "workflow",
+      "phase": "pre-mutation-gate",
+      "phaseOrder": 45,
+      "requiredInputArtifacts": [
+        "mutation-intent",
+        "task-envelope",
+        "authorization-boundary",
+        "current-target-state"
+      ],
+      "inputBindings": [
+        {
+          "targetArtifact": "mutation-intent",
+          "sources": [
+            "caller.mutationIntent"
+          ],
+          "operation": "require-external"
+        },
+        {
+          "targetArtifact": "task-envelope",
+          "sources": [
+            "bootstrap:task-envelope"
+          ],
+          "operation": "select"
+        },
+        {
+          "targetArtifact": "authorization-boundary",
+          "sources": [
+            "bootstrap:task-envelope.authorization",
+            "mutation-intent.authorizationRef"
+          ],
+          "operation": "combine"
+        },
+        {
+          "targetArtifact": "current-target-state",
+          "sources": [
+            "mutation-intent.currentStateEvidenceRefs"
+          ],
+          "operation": "select"
+        }
+      ],
+      "producedArtifacts": [
+        "mutation-preflight-report",
+        "approved-target-digest",
+        "recovery-evidence"
+      ],
+      "outputSchema": "contracts/mutation-preflight-report.v1.schema.json",
+      "resultSchema": "integration/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/verdict",
+        "values": {
+          "READY": {
+            "state": "passed",
+            "errorRequired": false
+          },
+          "NEEDS_INPUT": {
+            "state": "needs-input",
+            "errorRequired": false
+          },
+          "NEEDS_APPROVAL": {
+            "state": "needs-approval",
+            "errorRequired": false
+          },
+          "NEEDS_REDESIGN": {
+            "state": "needs-redesign",
+            "errorRequired": false
+          },
+          "BLOCKED": {
+            "state": "blocked",
+            "errorRequired": true,
+            "allowedErrorCodes": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          }
+        },
+        "default": "reject",
+        "adapterErrors": [
+          "INVALID_INPUT",
+          "MISSING_EVIDENCE"
+        ]
+      },
+      "selectionCriteria": [
+        "explicit-preflight-request",
+        "destructive-or-external-mutation"
+      ],
+      "preconditions": [
+        "A concrete mutation action and exact target are available.",
+        "The check runs before the mutation."
+      ],
+      "failureHandling": {
+        "missingInput": "needs-input",
+        "approvalRequired": "needs-approval",
+        "redesignRequired": "needs-redesign",
+        "invalidReport": "failed",
+        "retry": "new-preflight-after-input-change"
+      },
+      "gate": {
+        "kind": "precondition",
+        "policy": "conditional",
+        "validator": "contracts/mutation-preflight-report.v1.schema.json"
+      }
+    }
+  ]
+}

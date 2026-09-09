@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "2.0.0",
+  "providers": [
+    {
+      "skillId": "blocker-diagnostician",
+      "version": "0.1.0",
+      "enabled": true,
+      "capabilities": ["blocker-diagnosis"],
+      "priority": 50,
+      "executionClass": "recovery",
+      "phase": "failure-diagnosis",
+      "phaseOrder": 10,
+      "requiredInputArtifacts": ["failure-episodes", "expected-behavior", "diagnostic-constraints", "frozen-request-artifact-digest"],
+      "inputBindings": [
+        { "targetArtifact": "failure-episodes", "sources": ["recovery-request:failure-episodes", "prior-run:stage-results"], "operation": "collect" },
+        { "targetArtifact": "expected-behavior", "sources": ["recovery-request:expected-behavior"], "operation": "select" },
+        { "targetArtifact": "diagnostic-constraints", "sources": ["recovery-request:constraints", "recovery-request:authorization"], "operation": "combine" },
+        { "targetArtifact": "frozen-request-artifact-digest", "sources": ["recovery-request:artifact-digest"], "operation": "select" }
+      ],
+      "producedArtifacts": ["diagnosis-report"],
+      "outputSchema": "contracts/diagnosis-report.v1.schema.json",
+      "resultSchema": "integration/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/verdict",
+        "values": {
+          "CAUSE_CONFIRMED": { "state": "passed", "errorRequired": false },
+          "NEXT_TEST": { "state": "passed", "errorRequired": false },
+          "NEEDS_INPUT": { "state": "needs-input", "errorRequired": false },
+          "NEEDS_APPROVAL": { "state": "needs-approval", "errorRequired": false },
+          "BLOCKED": { "state": "blocked", "errorRequired": true, "allowedErrorCodes": ["MISSING_EVIDENCE", "MCP_UNAVAILABLE"] }
+        },
+        "default": "reject",
+        "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE", "MCP_UNAVAILABLE"]
+      },
+      "selectionCriteria": ["explicit-root-cause-discrimination", "repeated-failure-with-unresolved-cause"],
+      "preconditions": ["Observed failure episodes or directly inspectable evidence and the diagnostic permission boundary are available."],
+      "failureHandling": {
+        "missingInput": "needs-input",
+        "approvalRequired": "needs-approval",
+        "retry": "new-observation-or-changed-input-only"
+      },
+      "gate": { "kind": "none", "policy": "none", "validator": "blocker-diagnosis" }
+    }
+  ]
+}

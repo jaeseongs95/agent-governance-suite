@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance.local/change-scope-request.v1.schema.json",
+  "title": "ChangeScopeRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "mode", "repositoryRoot", "comparisonTarget", "taskEnvelope"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "mode": { "enum": ["capture", "verify"] },
+    "repositoryRoot": { "type": "string", "minLength": 1 },
+    "comparisonTarget": { "enum": ["working-tree", "index", "commit"] },
+    "taskEnvelope": { "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json" },
+    "baseline": { "$ref": "workspace-baseline.v1.schema.json" },
+    "baselineArtifactDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "commit": { "type": "string", "minLength": 1 },
+    "maxFiles": { "type": "integer", "minimum": 1, "maximum": 200000 }
+  },
+  "dependentRequired": {
+    "baseline": ["baselineArtifactDigest"],
+    "baselineArtifactDigest": ["baseline"]
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "comparisonTarget": { "const": "commit" } } },
+      "then": {
+        "properties": { "commit": { "type": "string", "minLength": 1 } },
+        "required": ["commit"]
+      }
+    }
+  ]
+}

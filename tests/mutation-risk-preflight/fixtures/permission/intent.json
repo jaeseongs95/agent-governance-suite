@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "operationId": "grant-admin",
+  "actionClass": "permission-change",
+  "targets": [{ "locator": "iam://production/group/admins", "targetType": "permission", "environment": "production", "expectedFingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111" }],
+  "plannedCommandOrTool": { "tool": "iam-api", "action": "grant" },
+  "scopeRef": { "locator": "evidence://scope", "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222", "includedTargets": ["iam://production/group/admins"], "excludedTargets": [] },
+  "authorizationRef": { "locator": "evidence://auth", "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333", "allowedActions": ["read"], "allowedTargets": ["iam://production/group/admins"], "environments": ["production"] },
+  "approvalEvidenceRefs": [],
+  "currentStateEvidenceRefs": [{ "locator": "evidence://state", "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555", "targetLocator": "iam://production/group/admins", "fingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111" }],
+  "recoveryPlan": { "available": true, "method": "restore ACL", "backupRef": "evidence://acl-before", "restoreProcedureRef": "runbook://acl-restore", "restoreTestEvidenceRef": "evidence://acl-test", "irreversibilityAccepted": false },
+  "expectedBlastRadius": { "affectedTargets": 1, "affectedUsers": 5, "external": true, "description": "admin group membership" }
+}

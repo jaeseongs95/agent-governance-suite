@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0.0",
+  "supplier": {
+    "name": "agent-governance-suite",
+    "version": "0.1.0",
+    "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+    "ref": "v0.1.0",
+    "commit": "5dd132fc6a2b0f2796ab68cc521388422ced3c1d"
+  },
+  "artifacts": [
+    {
+      "path": "task-envelope.v1.schema.json",
+      "sourcePath": "contracts/task-envelope.v1.schema.json",
+      "schemaId": "https://skill-suite.local/contracts/task-envelope.v1.schema.json",
+      "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21"
+    }
+  ]
+}

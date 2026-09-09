@@ -1,117 +1,1064 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
   "skills": [
     {
-      "schemaVersion": "1.0.0",
-      "id": "independent-deliberation-panel",
+      "schemaVersion": "2.0.0",
+      "skillId": "independent-deliberation-panel",
       "version": "1.0.0",
       "path": "./independent-deliberation-panel",
-      "phase": "decision-analysis",
-      "capabilities": [
-        "independent-deliberation",
-        "independent-review",
-        "cross-examination",
-        "evidence-resolution",
-        "consensus-decision"
-      ],
+      "enabled": true,
       "priority": 10,
-      "selectionCriteria": [
-        "decision-conflict",
-        "high-impact-uncertainty",
-        "explicit-independent-review"
-      ],
-      "preconditions": [
-        "The request contains material uncertainty, conflicting requirements, or high failure cost.",
-        "A case brief and directly inspectable evidence or evidence locations are available."
-      ],
-      "requiredArtifacts": [
-        "case-brief",
-        "evidence-sources",
-        "constraints"
-      ],
-      "producedArtifacts": [
-        "panel-manifest",
-        "cross-examination-plan",
-        "issue-ledger",
-        "consensus-proposal",
-        "decision-record"
-      ],
-      "riskGate": "conditional",
-      "enabled": true
+      "providers": [
+        {
+          "capabilities": [
+            "independent-deliberation",
+            "independent-review",
+            "cross-examination",
+            "evidence-resolution",
+            "consensus-decision"
+          ],
+          "executionClass": "workflow",
+          "phase": "decision-analysis",
+          "phaseOrder": 40,
+          "requiredInputArtifacts": [
+            "case-brief",
+            "evidence-sources",
+            "constraints"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "case-brief",
+              "sources": [
+                "task-envelope",
+                "bootstrap:task-contract-report"
+              ],
+              "operation": "combine"
+            },
+            {
+              "targetArtifact": "evidence-sources",
+              "sources": [
+                "task:user-evidence",
+                "bootstrap:instruction-scope-resolution",
+                "bootstrap:workspace-convention-profile"
+              ],
+              "operation": "collect"
+            },
+            {
+              "targetArtifact": "constraints",
+              "sources": [
+                "task-envelope:constraints",
+                "task-envelope:authorization"
+              ],
+              "operation": "combine"
+            }
+          ],
+          "producedArtifacts": [
+            "panel-manifest",
+            "cross-examination-plan",
+            "issue-ledger",
+            "consensus-proposal",
+            "decision-record"
+          ],
+          "outputSchema": "contracts/freeform-output.v1.schema.json",
+          "resultSchema": "contracts/provider-result.v1.schema.json",
+          "stateMapping": {
+            "default": {
+              "state": "passed",
+              "errorRequired": false
+            },
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          },
+          "selectionCriteria": [
+            "decision-conflict",
+            "high-impact-uncertainty",
+            "explicit-independent-review"
+          ],
+          "preconditions": [
+            "The request contains material uncertainty, conflicting requirements, or high failure cost.",
+            "A case brief and directly inspectable evidence or evidence locations are available."
+          ],
+          "failureHandling": "Preserve unresolved claims and return a structured non-passing result when consensus cannot advance.",
+          "gate": {
+            "kind": "none",
+            "policy": "none",
+            "validator": "skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json"
+          }
+        }
+      ]
     },
     {
-      "schemaVersion": "1.0.0",
-      "id": "coordinate-subagents",
+      "schemaVersion": "2.0.0",
+      "skillId": "coordinate-subagents",
       "version": "0.1.1",
       "path": "./coordinate-subagents",
-      "phase": "execution-planning",
-      "capabilities": [
-        "subagent-coordination",
-        "task-decomposition",
-        "subagent-delegation",
-        "ownership-coordination",
-        "evidence-integration"
-      ],
+      "enabled": true,
       "priority": 20,
-      "selectionCriteria": [
-        "explicit-delegation",
-        "parallel-independent-units",
-        "high-risk-audit-coordination"
-      ],
-      "preconditions": [
-        "The user authorizes the requested work and applicable permission boundaries are known.",
-        "The task has explicit delegation, two or more independent units, or a high-risk audit requirement."
-      ],
-      "requiredArtifacts": [
-        "task-request",
-        "execution-unit-inventory",
-        "constraints"
-      ],
-      "producedArtifacts": [
-        "delegation-decision",
-        "task-graph",
-        "assignment-briefs",
-        "integration-report"
-      ],
-      "riskGate": "conditional",
-      "enabled": true
+      "providers": [
+        {
+          "capabilities": [
+            "subagent-coordination",
+            "task-decomposition",
+            "subagent-delegation",
+            "ownership-coordination",
+            "evidence-integration"
+          ],
+          "executionClass": "workflow",
+          "phase": "execution-planning",
+          "phaseOrder": 35,
+          "requiredInputArtifacts": [
+            "task-request",
+            "execution-unit-inventory",
+            "constraints"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "task-request",
+              "sources": [
+                "task-envelope:objective",
+                "task-envelope:scope",
+                "task-envelope:acceptance-criteria"
+              ],
+              "operation": "select"
+            },
+            {
+              "targetArtifact": "execution-unit-inventory",
+              "sources": [
+                "task-envelope:work-units"
+              ],
+              "operation": "select"
+            },
+            {
+              "targetArtifact": "constraints",
+              "sources": [
+                "task-envelope:constraints",
+                "task-envelope:authorization",
+                "bootstrap:instruction-scope-resolution"
+              ],
+              "operation": "combine"
+            }
+          ],
+          "producedArtifacts": [
+            "delegation-decision",
+            "task-graph",
+            "assignment-briefs",
+            "integration-report"
+          ],
+          "outputSchema": "contracts/freeform-output.v1.schema.json",
+          "resultSchema": "contracts/provider-result.v1.schema.json",
+          "stateMapping": {
+            "default": {
+              "state": "passed",
+              "errorRequired": false
+            },
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          },
+          "selectionCriteria": [
+            "explicit-delegation",
+            "parallel-independent-units",
+            "high-risk-audit-coordination"
+          ],
+          "preconditions": [
+            "The user authorizes the requested work and applicable permission boundaries are known.",
+            "The task has explicit delegation, two or more independent units, or a high-risk audit requirement."
+          ],
+          "failureHandling": "Return the completed assignments and explicitly identify unavailable delegation or audit capacity.",
+          "gate": {
+            "kind": "none",
+            "policy": "none",
+            "validator": null
+          }
+        }
+      ]
     },
     {
-      "schemaVersion": "1.0.0",
-      "id": "independent-audit-gate",
+      "schemaVersion": "2.0.0",
+      "skillId": "independent-audit-gate",
       "version": "0.1.1",
       "path": "./independent-audit-gate",
-      "phase": "completion-gate",
-      "capabilities": [
-        "independent-audit",
-        "risk-classification",
-        "evidence-verification",
-        "release-gate"
-      ],
+      "enabled": true,
       "priority": 90,
-      "selectionCriteria": [
-        "high-risk-change",
-        "final-target-available",
-        "explicit-audit-gate"
-      ],
-      "preconditions": [
-        "A final target identifier and final change or release artifact are fixed.",
-        "Implementation verification evidence and a fresh auditor independent from implementation are available."
-      ],
-      "requiredArtifacts": [
-        "final-target-identifier",
-        "final-diff-or-artifact-digest",
-        "raw-verification-results",
-        "rollback-or-recovery-evidence"
-      ],
-      "producedArtifacts": [
-        "audit-target",
-        "audit-findings",
-        "re-audit-status",
-        "gate-verdict"
-      ],
-      "riskGate": "mandatory",
-      "enabled": true
+      "providers": [
+        {
+          "capabilities": [
+            "independent-audit",
+            "risk-classification",
+            "evidence-verification",
+            "release-gate"
+          ],
+          "executionClass": "workflow",
+          "phase": "completion-gate",
+          "phaseOrder": 90,
+          "requiredInputArtifacts": [
+            "final-target-identifier",
+            "final-diff-or-artifact-digest",
+            "raw-verification-results",
+            "rollback-or-recovery-evidence"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "final-target-identifier",
+              "sources": [
+                "acceptance-evidence-report:target",
+                "workflow:current-target"
+              ],
+              "operation": "select"
+            },
+            {
+              "targetArtifact": "final-diff-or-artifact-digest",
+              "sources": [
+                "acceptance-evidence-report:target-digest",
+                "change-scope-report:final-digest"
+              ],
+              "operation": "combine"
+            },
+            {
+              "targetArtifact": "raw-verification-results",
+              "sources": [
+                "verified-evidence-index:locators"
+              ],
+              "operation": "collect"
+            },
+            {
+              "targetArtifact": "rollback-or-recovery-evidence",
+              "sources": [
+                "recovery-evidence",
+                "workflow:rollback-evidence"
+              ],
+              "operation": "require-external"
+            }
+          ],
+          "producedArtifacts": [
+            "audit-target",
+            "audit-findings",
+            "re-audit-status",
+            "gate-verdict"
+          ],
+          "outputSchema": "contracts/freeform-output.v1.schema.json",
+          "resultSchema": "contracts/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/gateVerdict",
+            "values": {
+              "PASS": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "FAIL": {
+                "state": "failed",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "GATE_FAILED"
+                ]
+              },
+              "BLOCKED": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "MISSING_EVIDENCE"
+                ]
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          },
+          "selectionCriteria": [
+            "high-risk-change",
+            "final-target-available",
+            "explicit-audit-gate"
+          ],
+          "preconditions": [
+            "A final target identifier and final change or release artifact are fixed.",
+            "Implementation verification evidence and a fresh auditor independent from implementation are available."
+          ],
+          "failureHandling": "Return FAIL for blocking findings and BLOCKED when independence or required evidence cannot be confirmed.",
+          "gate": {
+            "kind": "completion",
+            "policy": "mandatory",
+            "validator": "independent-audit"
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": "2.0.0",
+      "skillId": "task-contract",
+      "version": "0.1.0",
+      "path": "./task-contract",
+      "enabled": true,
+      "priority": 50,
+      "providers": [
+        {
+          "capabilities": [
+            "task-contract-definition"
+          ],
+          "executionClass": "bootstrap",
+          "phase": "task-definition",
+          "phaseOrder": 30,
+          "requiredInputArtifacts": [
+            "task-request",
+            "instruction-scope-resolution"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "task-request",
+              "sources": [
+                "task:request"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "instruction-scope-resolution",
+              "sources": [
+                "bootstrap:instruction-scope-resolution"
+              ],
+              "operation": "select"
+            }
+          ],
+          "producedArtifacts": [
+            "task-envelope",
+            "task-contract-report",
+            "acceptance-evidence-plan"
+          ],
+          "outputSchema": "skills/task-contract/contracts/task-contract-report.v1.schema.json",
+          "resultSchema": "skills/task-contract/integration/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/verdict",
+            "values": {
+              "PASS": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "NEEDS_INPUT": {
+                "state": "needs-input",
+                "errorRequired": false
+              },
+              "BLOCKED": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "MISSING_EVIDENCE",
+                  "INVALID_INPUT"
+                ]
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          },
+          "selectionCriteria": [
+            "unstructured-task-request",
+            "missing-acceptance-criteria",
+            "scope-or-authorization-ambiguity",
+            "explicit-task-contract"
+          ],
+          "preconditions": [
+            "The user request and applicable instruction resolution are available."
+          ],
+          "failureHandling": "Return NEEDS_INPUT for material ambiguity and BLOCKED when required source evidence cannot be validated.",
+          "gate": {
+            "kind": "none",
+            "policy": "none",
+            "validator": null
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": "2.0.0",
+      "skillId": "acceptance-evidence-validator",
+      "version": "0.1.0",
+      "path": "./acceptance-evidence-validator",
+      "enabled": true,
+      "priority": 50,
+      "providers": [
+        {
+          "capabilities": [
+            "acceptance-evidence-validation"
+          ],
+          "executionClass": "workflow",
+          "phase": "acceptance-verification",
+          "phaseOrder": 70,
+          "requiredInputArtifacts": [
+            "task-envelope",
+            "acceptance-evidence-plan",
+            "target-identifier",
+            "evidence-sources",
+            "acceptance-evidence-request"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "task-envelope",
+              "sources": [
+                "bootstrap:task-envelope"
+              ],
+              "operation": "select"
+            },
+            {
+              "targetArtifact": "acceptance-evidence-plan",
+              "sources": [
+                "bootstrap:acceptance-evidence-plan"
+              ],
+              "operation": "select"
+            },
+            {
+              "targetArtifact": "target-identifier",
+              "sources": [
+                "workflow:current-target"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "evidence-sources",
+              "sources": [
+                "workflow:verification-evidence"
+              ],
+              "operation": "collect"
+            },
+            {
+              "targetArtifact": "acceptance-evidence-request",
+              "sources": [
+                "workflow:acceptance-evidence-request"
+              ],
+              "operation": "require-external"
+            }
+          ],
+          "producedArtifacts": [
+            "acceptance-evidence-report",
+            "verified-evidence-index"
+          ],
+          "outputSchema": "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
+          "resultSchema": "skills/acceptance-evidence-validator/integration/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/verdict",
+            "values": {
+              "PASS": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "NEEDS_INPUT": {
+                "state": "needs-input",
+                "errorRequired": false
+              },
+              "FAIL": {
+                "state": "failed",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "GATE_FAILED"
+                ]
+              },
+              "BLOCKED": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "MISSING_EVIDENCE"
+                ]
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          },
+          "selectionCriteria": [
+            "explicit-acceptance-evidence-review",
+            "completion-claim-needs-evidence"
+          ],
+          "preconditions": [
+            "A valid TaskEnvelope.v1, fixed target identifier, inspectable evidence locations, and a frozen acceptance request artifact are available."
+          ],
+          "failureHandling": {
+            "missingInput": "needs-input",
+            "invalidReport": "failed",
+            "retry": "new-or-corrected-evidence-only"
+          },
+          "gate": {
+            "kind": "completion",
+            "policy": "conditional",
+            "validator": "acceptance-evidence-validation"
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": "2.0.0",
+      "skillId": "blocker-diagnostician",
+      "version": "0.1.0",
+      "path": "./blocker-diagnostician",
+      "enabled": true,
+      "priority": 50,
+      "providers": [
+        {
+          "capabilities": [
+            "blocker-diagnosis"
+          ],
+          "executionClass": "recovery",
+          "phase": "failure-diagnosis",
+          "phaseOrder": 10,
+          "requiredInputArtifacts": [
+            "failure-episodes",
+            "expected-behavior",
+            "diagnostic-constraints",
+            "frozen-request-artifact-digest"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "failure-episodes",
+              "sources": [
+                "recovery-request:failure-episodes",
+                "prior-run:stage-results"
+              ],
+              "operation": "collect"
+            },
+            {
+              "targetArtifact": "expected-behavior",
+              "sources": [
+                "recovery-request:expected-behavior"
+              ],
+              "operation": "select"
+            },
+            {
+              "targetArtifact": "diagnostic-constraints",
+              "sources": [
+                "recovery-request:constraints",
+                "recovery-request:authorization"
+              ],
+              "operation": "combine"
+            },
+            {
+              "targetArtifact": "frozen-request-artifact-digest",
+              "sources": [
+                "recovery-request:artifact-digest"
+              ],
+              "operation": "select"
+            }
+          ],
+          "producedArtifacts": [
+            "diagnosis-report"
+          ],
+          "outputSchema": "skills/blocker-diagnostician/contracts/diagnosis-report.v1.schema.json",
+          "resultSchema": "skills/blocker-diagnostician/integration/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/verdict",
+            "values": {
+              "CAUSE_CONFIRMED": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "NEXT_TEST": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "NEEDS_INPUT": {
+                "state": "needs-input",
+                "errorRequired": false
+              },
+              "NEEDS_APPROVAL": {
+                "state": "needs-approval",
+                "errorRequired": false
+              },
+              "BLOCKED": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "MISSING_EVIDENCE",
+                  "MCP_UNAVAILABLE"
+                ]
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE",
+              "MCP_UNAVAILABLE"
+            ]
+          },
+          "selectionCriteria": [
+            "explicit-root-cause-discrimination",
+            "repeated-failure-with-unresolved-cause"
+          ],
+          "preconditions": [
+            "Observed failure episodes or directly inspectable evidence and the diagnostic permission boundary are available."
+          ],
+          "failureHandling": {
+            "missingInput": "needs-input",
+            "approvalRequired": "needs-approval",
+            "retry": "new-observation-or-changed-input-only"
+          },
+          "gate": {
+            "kind": "none",
+            "policy": "none",
+            "validator": "blocker-diagnosis"
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": "2.0.0",
+      "skillId": "workspace-convention-profiler",
+      "version": "0.1.1",
+      "path": "./workspace-convention-profiler",
+      "enabled": true,
+      "priority": 50,
+      "providers": [
+        {
+          "capabilities": [
+            "workspace-convention-profiling"
+          ],
+          "executionClass": "bootstrap",
+          "phase": "workspace-discovery",
+          "phaseOrder": 20,
+          "requiredInputArtifacts": [
+            "task-objective",
+            "workspace-root"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "task-objective",
+              "sources": [
+                "task-request.objective"
+              ],
+              "operation": "select"
+            },
+            {
+              "targetArtifact": "workspace-root",
+              "sources": [
+                "caller.workspaceRoot"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "instruction-scope-resolution",
+              "sources": [
+                "bootstrap:instruction-scope-resolution"
+              ],
+              "operation": "collect",
+              "optional": true
+            }
+          ],
+          "producedArtifacts": [
+            "workspace-convention-profile",
+            "convention-evidence-index",
+            "validation-command-map"
+          ],
+          "outputSchema": "skills/workspace-convention-profiler/contracts/workspace-convention-profile.v1.schema.json",
+          "resultSchema": "skills/workspace-convention-profiler/integration/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/verdict",
+            "values": {
+              "PASS": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "BLOCKED": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "MISSING_EVIDENCE",
+                  "INVALID_INPUT"
+                ]
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          },
+          "selectionCriteria": [
+            "explicit-workspace-convention-request",
+            "unfamiliar-repository",
+            "multi-module-change-without-current-profile"
+          ],
+          "preconditions": [
+            "The workspace root is known and readable.",
+            "The requested investigation is read-only."
+          ],
+          "failureHandling": {
+            "missingInput": "blocked",
+            "invalidReport": "failed",
+            "retry": "refresh-evidence-only"
+          },
+          "gate": {
+            "kind": "none",
+            "policy": "none"
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": "2.0.0",
+      "skillId": "mutation-risk-preflight",
+      "version": "0.1.1",
+      "path": "./mutation-risk-preflight",
+      "enabled": true,
+      "priority": 50,
+      "providers": [
+        {
+          "capabilities": [
+            "mutation-risk-preflight"
+          ],
+          "executionClass": "workflow",
+          "phase": "pre-mutation-gate",
+          "phaseOrder": 45,
+          "requiredInputArtifacts": [
+            "mutation-intent",
+            "task-envelope",
+            "authorization-boundary",
+            "current-target-state"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "mutation-intent",
+              "sources": [
+                "caller.mutationIntent"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "task-envelope",
+              "sources": [
+                "bootstrap:task-envelope"
+              ],
+              "operation": "select"
+            },
+            {
+              "targetArtifact": "authorization-boundary",
+              "sources": [
+                "bootstrap:task-envelope.authorization",
+                "mutation-intent.authorizationRef"
+              ],
+              "operation": "combine"
+            },
+            {
+              "targetArtifact": "current-target-state",
+              "sources": [
+                "mutation-intent.currentStateEvidenceRefs"
+              ],
+              "operation": "select"
+            }
+          ],
+          "producedArtifacts": [
+            "mutation-preflight-report",
+            "approved-target-digest",
+            "recovery-evidence"
+          ],
+          "outputSchema": "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json",
+          "resultSchema": "skills/mutation-risk-preflight/integration/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/verdict",
+            "values": {
+              "READY": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "NEEDS_INPUT": {
+                "state": "needs-input",
+                "errorRequired": false
+              },
+              "NEEDS_APPROVAL": {
+                "state": "needs-approval",
+                "errorRequired": false
+              },
+              "NEEDS_REDESIGN": {
+                "state": "needs-redesign",
+                "errorRequired": false
+              },
+              "BLOCKED": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "INVALID_INPUT",
+                  "MISSING_EVIDENCE"
+                ]
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          },
+          "selectionCriteria": [
+            "explicit-preflight-request",
+            "destructive-or-external-mutation"
+          ],
+          "preconditions": [
+            "A concrete mutation action and exact target are available.",
+            "The check runs before the mutation."
+          ],
+          "failureHandling": {
+            "missingInput": "needs-input",
+            "approvalRequired": "needs-approval",
+            "redesignRequired": "needs-redesign",
+            "invalidReport": "failed",
+            "retry": "new-preflight-after-input-change"
+          },
+          "gate": {
+            "kind": "precondition",
+            "policy": "conditional",
+            "validator": "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json"
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": "2.0.0",
+      "skillId": "instruction-scope-resolver",
+      "version": "0.1.0",
+      "path": "./instruction-scope-resolver",
+      "enabled": true,
+      "priority": 50,
+      "providers": [
+        {
+          "capabilities": [
+            "instruction-scope-resolution"
+          ],
+          "executionClass": "bootstrap",
+          "phase": "instruction-resolution",
+          "phaseOrder": 10,
+          "requiredInputArtifacts": [
+            "workspace-root",
+            "target-paths"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "workspace-root",
+              "sources": [
+                "workspace:root"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "target-paths",
+              "sources": [
+                "task:target-paths"
+              ],
+              "operation": "require-external"
+            }
+          ],
+          "producedArtifacts": [
+            "instruction-file-manifest",
+            "instruction-scope-resolution",
+            "instruction-conflict-ledger"
+          ],
+          "outputSchema": "skills/instruction-scope-resolver/contracts/instruction-scope-resolution.v1.schema.json",
+          "resultSchema": "skills/instruction-scope-resolver/integration/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/verdict",
+            "values": {
+              "ANALYSIS_REQUIRED": {
+                "state": "needs-input",
+                "errorRequired": false
+              },
+              "PASS": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "NEEDS_INPUT": {
+                "state": "needs-input",
+                "errorRequired": false
+              },
+              "BLOCKED": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "MISSING_EVIDENCE",
+                  "INVALID_INPUT"
+                ]
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          },
+          "selectionCriteria": [
+            "path-scoped-instructions",
+            "agents-override-resolution",
+            "multi-target-instruction-comparison"
+          ],
+          "preconditions": [
+            "A workspace root and target paths are known."
+          ],
+          "failureHandling": "Return BLOCKED with a structured error; do not inspect unauthorized roots.",
+          "gate": {
+            "kind": "none",
+            "policy": "none",
+            "validator": null
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": "2.0.0",
+      "skillId": "change-scope-guardian",
+      "version": "0.1.1",
+      "path": "./change-scope-guardian",
+      "enabled": true,
+      "priority": 50,
+      "providers": [
+        {
+          "capabilities": [
+            "change-scope-baseline-capture"
+          ],
+          "executionClass": "workflow",
+          "phase": "scope-baseline",
+          "phaseOrder": 42,
+          "selectionCriteria": [
+            "mutation-workflow",
+            "dirty-worktree",
+            "explicit-baseline-request"
+          ],
+          "preconditions": [
+            "A readable Git repository and frozen task envelope are available.",
+            "No task mutation has started."
+          ],
+          "requiredInputArtifacts": [
+            "task-envelope",
+            "current-workspace-state"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "task-envelope",
+              "sources": [
+                "task-envelope"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "current-workspace-state",
+              "sources": [
+                "repository-root",
+                "git-index",
+                "working-tree"
+              ],
+              "operation": "combine"
+            }
+          ],
+          "producedArtifacts": [
+            "workspace-baseline"
+          ],
+          "outputSchema": "skills/change-scope-guardian/contracts/workspace-baseline.v1.schema.json",
+          "resultSchema": "skills/change-scope-guardian/integration/provider-result.v1.schema.json",
+          "stateMapping": {
+            "default": {
+              "state": "passed",
+              "errorRequired": false
+            },
+            "adapterErrors": [
+              "MISSING_EVIDENCE",
+              "INVALID_INPUT"
+            ]
+          },
+          "failureHandling": "Do not mutate the repository; require a new baseline after resolving the input problem.",
+          "gate": {
+            "kind": "precondition",
+            "policy": "conditional",
+            "validator": "workspace-baseline.v1"
+          }
+        },
+        {
+          "capabilities": [
+            "change-scope-assurance"
+          ],
+          "executionClass": "workflow",
+          "phase": "scope-verification",
+          "phaseOrder": 60,
+          "selectionCriteria": [
+            "implementation-change-present",
+            "explicit-scope-review"
+          ],
+          "preconditions": [
+            "A frozen task envelope and matching workspace baseline are available."
+          ],
+          "requiredInputArtifacts": [
+            "task-envelope",
+            "workspace-baseline",
+            "current-change-set"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "task-envelope",
+              "sources": [
+                "task-envelope"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "workspace-baseline",
+              "sources": [
+                "workspace-baseline"
+              ],
+              "operation": "select"
+            },
+            {
+              "targetArtifact": "current-change-set",
+              "sources": [
+                "repository-root",
+                "git-index",
+                "working-tree",
+                "comparison-commit"
+              ],
+              "operation": "combine"
+            }
+          ],
+          "producedArtifacts": [
+            "scoped-change-inventory",
+            "ownership-collision-ledger",
+            "change-scope-report"
+          ],
+          "outputSchema": "skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json",
+          "resultSchema": "skills/change-scope-guardian/integration/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/verdict",
+            "values": {
+              "PASS": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "NEEDS_APPROVAL": {
+                "state": "needs-approval",
+                "errorRequired": false
+              },
+              "BLOCKED": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "MISSING_EVIDENCE",
+                  "INVALID_INPUT"
+                ]
+              },
+              "INCONCLUSIVE": {
+                "state": "needs-input",
+                "errorRequired": false
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "MISSING_EVIDENCE",
+              "INVALID_INPUT"
+            ]
+          },
+          "failureHandling": "Preserve all changes and request approval or a new task contract and baseline.",
+          "gate": {
+            "kind": "precondition",
+            "policy": "conditional",
+            "validator": "change-scope-report.v1"
+          }
+        }
+      ]
     }
   ]
 }

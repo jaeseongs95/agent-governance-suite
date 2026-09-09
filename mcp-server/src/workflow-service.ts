@@ -6,7 +6,8 @@ import {
   type ContractErrorBody,
   type PlannedStageV1,
   POLICY_CAPABILITY,
-  type SkillDescriptorV1,
+  type RoutedSkillProviderV2,
+  type StateMappingRuleV2,
   type StageResultV1,
   type TaskEnvelopeV1,
   type WorkflowPlanV1,
@@ -143,7 +144,8 @@ export class WorkflowService {
           });
         }
 
-        this.assertResultSemantics(result);
+        this.assertPlannedInputsAvailable(receipt, target);
+        this.assertResultSemantics(target, result);
         if (result.state === "passed") {
           this.assertRequiredArtifacts(target, result);
           this.assertDeliberationGate(target, result);
@@ -240,13 +242,18 @@ export class WorkflowService {
 
   private buildPlan(
     task: TaskEnvelopeV1,
-    skills: SkillDescriptorV1[],
+    skills: RoutedSkillProviderV2[],
     dependencyGraph: Map<string, string[]>,
   ): WorkflowPlanV1 {
     const executionMode = task.orchestration.requested ? "orchestrated" : "direct";
     const errors: ContractErrorBody[] = [];
     const stages: PlannedStageV1[] = [];
     const selectedSkills = new Set<string>();
+    const selectedProviders = new Map<string, {
+      capability: string;
+      satisfiedCapabilities: string[];
+      provider: RoutedSkillProviderV2;
+    }>();
 
     for (const capability of this.requiredCapabilities(task, dependencyGraph)) {
       const skill = selectSkillByCapability(skills, capability);
@@ -258,10 +265,37 @@ export class WorkflowService {
         });
         continue;
       }
+      if (skill.executionClass === "bootstrap") {
+        errors.push({
+          code: "GATE_FAILED",
+          message: `Capability '${capability}' is a bootstrap provider and must run before plan_workflow.`,
+          details: { capability, providerKey: skill.providerKey },
+        });
+        continue;
+      }
+      const selected = selectedProviders.get(skill.providerKey);
+      if (selected) {
+        if (!selected.satisfiedCapabilities.includes(capability)) selected.satisfiedCapabilities.push(capability);
+      } else {
+        selectedProviders.set(skill.providerKey, { capability, satisfiedCapabilities: [capability], provider: skill });
+      }
+    }
+
+    const selectedProviderList = [...selectedProviders.values()];
+    const executionClasses = new Set(selectedProviderList.map(({ provider }) => provider.executionClass));
+    if (executionClasses.size > 1) {
+      errors.push({
+        code: "INVALID_TRANSITION",
+        message: "Recovery providers must run in a separate workflow.",
+        details: { executionClasses: [...executionClasses] },
+      });
+    }
+
+    for (const { capability, satisfiedCapabilities, provider: skill } of this.orderProviders(selectedProviderList)) {
       // Descriptor requiredArtifacts are inputs/preconditions. Only declared
       // producedArtifacts become evidence obligations for a completed stage.
       const producedArtifacts = skill.producedArtifacts;
-      const stageRequiredArtifacts = skill.riskGate === "mandatory"
+      const stageRequiredArtifacts = skill.gate.policy === "mandatory"
         ? [...new Set([...producedArtifacts, "gate-verdict"])]
         : producedArtifacts;
       const order = stages.length + 1;
@@ -269,14 +303,25 @@ export class WorkflowService {
         stageId: stageId(order, capability),
         order,
         requiredCapability: capability,
-        skillId: skill.id,
+        satisfiedCapabilities,
+        skillId: skill.skillId,
         phase: skill.phase,
-        selectionReason: `Selected '${skill.id}' because it provides required capability '${capability}' at priority ${skill.priority}.`,
+        selectionReason: `Selected '${skill.skillId}' because provider '${skill.providerKey}' supplies '${satisfiedCapabilities.join("', '")}' at priority ${skill.priority}.`,
         state: "ready",
         requiredArtifacts: stageRequiredArtifacts,
-        riskGate: skill.riskGate,
+        riskGate: skill.gate.policy,
+        providerKey: skill.providerKey,
+        executionClass: skill.executionClass as "workflow" | "recovery",
+        phaseOrder: skill.phaseOrder,
+        requiredInputArtifacts: skill.requiredInputArtifacts,
+        inputBindings: skill.inputBindings,
+        producedArtifacts: skill.producedArtifacts,
+        outputSchema: { path: skill.outputSchema, digest: skill.outputSchemaDigest },
+        resultSchema: { path: skill.resultSchema, digest: skill.resultSchemaDigest },
+        stateMapping: skill.stateMapping,
+        gate: skill.gate,
       });
-      selectedSkills.add(skill.id);
+      selectedSkills.add(skill.skillId);
     }
 
     if (executionMode === "orchestrated" && !task.orchestration.mcpAvailable) {
@@ -320,7 +365,95 @@ export class WorkflowService {
     return [...new Set([...before, ...work, ...after])];
   }
 
-  private assertResultSemantics(result: StageResultV1): void {
+  private orderProviders(
+    items: Array<{ capability: string; satisfiedCapabilities: string[]; provider: RoutedSkillProviderV2 }>,
+  ): Array<{ capability: string; satisfiedCapabilities: string[]; provider: RoutedSkillProviderV2 }> {
+    const producedBy = new Map<string, number>();
+    for (const [index, item] of items.entries()) {
+      for (const artifact of item.provider.producedArtifacts) {
+        const existing = producedBy.get(artifact);
+        if (existing !== undefined && items[existing]?.provider.providerKey !== item.provider.providerKey) {
+          throw new WorkflowContractError("INVALID_INPUT", "Selected providers produce the same artifact.", {
+            artifact,
+            providers: [items[existing]?.provider.providerKey, item.provider.providerKey],
+          });
+        }
+        producedBy.set(artifact, index);
+      }
+    }
+
+    const outgoing = new Map<number, Set<number>>();
+    const indegree = items.map(() => 0);
+    for (const [consumerIndex, item] of items.entries()) {
+      for (const artifact of item.provider.requiredInputArtifacts) {
+        const producerIndex = producedBy.get(artifact);
+        if (producerIndex === undefined || producerIndex === consumerIndex) continue;
+        const edges = outgoing.get(producerIndex) ?? new Set<number>();
+        if (!edges.has(consumerIndex)) {
+          edges.add(consumerIndex);
+          outgoing.set(producerIndex, edges);
+          indegree[consumerIndex] = (indegree[consumerIndex] ?? 0) + 1;
+        }
+      }
+    }
+
+    const compare = (left: number, right: number) => (
+      items[left]!.provider.phaseOrder - items[right]!.provider.phaseOrder
+      || items[left]!.capability.localeCompare(items[right]!.capability)
+      || items[left]!.provider.providerKey.localeCompare(items[right]!.provider.providerKey)
+    );
+    const ready = indegree.map((value, index) => value === 0 ? index : -1).filter((index) => index >= 0).sort(compare);
+    const ordered: typeof items = [];
+    while (ready.length > 0) {
+      const index = ready.shift()!;
+      ordered.push(items[index]!);
+      for (const next of outgoing.get(index) ?? []) {
+        indegree[next]!--;
+        if (indegree[next] === 0) {
+          ready.push(next);
+          ready.sort(compare);
+        }
+      }
+    }
+    if (ordered.length !== items.length) {
+      throw new WorkflowContractError("INVALID_INPUT", "Selected provider artifact dependencies contain a cycle.");
+    }
+    return ordered;
+  }
+
+  private assertResultSemantics(stage: PlannedStageV1, result: StageResultV1): void {
+    const providerResult = this.validator.providerResult(
+      this.registry.rootDirectory,
+      stage.resultSchema,
+      stage.outputSchema,
+      result.output,
+    );
+    const rule = this.mappedState(stage, providerResult);
+    if (result.state !== rule.state) {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Stage state does not match the provider state mapping.", {
+        stageId: result.stageId,
+        expectedState: rule.state,
+        actualState: result.state,
+      });
+    }
+    const providerError = providerResult.error;
+    if (rule.errorRequired !== Boolean(providerError)) {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Provider error presence does not match the state mapping.", {
+        stageId: result.stageId,
+        errorRequired: rule.errorRequired,
+      });
+    }
+    if (providerError && rule.allowedErrorCodes && !rule.allowedErrorCodes.includes(providerError.code)) {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Provider error code is not allowed by the state mapping.", {
+        stageId: result.stageId,
+        errorCode: providerError.code,
+      });
+    }
+    if ((providerError?.code ?? null) !== (result.error?.code ?? null)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Stage error must mirror the provider result error.", {
+        stageId: result.stageId,
+      });
+    }
     if (result.state === "passed") {
       if (result.evidence.length === 0 || result.evidence.some((evidence) => !evidence.verified || !evidence.locator)) {
         throw new WorkflowContractError("MISSING_EVIDENCE", "A passed stage requires verified evidence.", {
@@ -336,9 +469,43 @@ export class WorkflowService {
     }
   }
 
+  private mappedState(stage: PlannedStageV1, providerResult: StageResultV1["output"]): StateMappingRuleV2 {
+    if (providerResult.kind === "adapter-error") {
+      const errorCode = providerResult.error?.code;
+      if (!errorCode || !stage.stateMapping.adapterErrors.includes(errorCode)) {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Adapter error is not allowed by the provider descriptor.", {
+          stageId: stage.stageId,
+          errorCode: errorCode ?? null,
+        });
+      }
+      return { state: "blocked", errorRequired: true, allowedErrorCodes: stage.stateMapping.adapterErrors };
+    }
+    let rule: StateMappingRuleV2 | "reject" = stage.stateMapping.default;
+    if (stage.stateMapping.selector) {
+      const value = this.jsonPointer(providerResult, stage.stateMapping.selector);
+      if (typeof value === "string") rule = stage.stateMapping.values?.[value] ?? "reject";
+    }
+    if (rule === "reject") {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Provider verdict is not mapped by the descriptor.", {
+        stageId: stage.stageId,
+        selector: stage.stateMapping.selector ?? null,
+      });
+    }
+    return rule;
+  }
+
+  private jsonPointer(value: unknown, pointer: string): unknown {
+    return pointer.split("/").slice(1).reduce<unknown>((current, token) => {
+      if (!current || typeof current !== "object") return undefined;
+      const key = token.replaceAll("~1", "/").replaceAll("~0", "~");
+      return (current as Record<string, unknown>)[key];
+    }, value);
+  }
+
   private assertRequiredArtifacts(stage: PlannedStageV1, result: StageResultV1): void {
     const verifiedArtifacts = new Set(
-      result.evidence.filter((evidence) => evidence.verified && evidence.locator).map((evidence) => evidence.artifactId),
+      result.output.artifacts.filter((artifact) => artifact.verified && artifact.locator && artifact.digest && artifact.targetDigest)
+        .map((artifact) => artifact.artifactId),
     );
     const missing = stage.requiredArtifacts.filter((artifact) => !verifiedArtifacts.has(artifact));
     if (missing.length > 0) {
@@ -349,11 +516,46 @@ export class WorkflowService {
     }
   }
 
+  private assertPlannedInputsAvailable(receipt: WorkflowReceiptV1, stage: PlannedStageV1): void {
+    const missing: Array<{ artifactId: string; producerStageId: string }> = [];
+    for (const artifactId of stage.requiredInputArtifacts) {
+      const producer = receipt.plan.stages.find(
+        (candidate) => candidate.stageId !== stage.stageId && candidate.producedArtifacts.includes(artifactId),
+      );
+      if (!producer) continue;
+      const producerResult = receipt.stageResults.find((candidate) => candidate.stageId === producer.stageId);
+      const verified = producerResult?.state === "passed" && producerResult.output.artifacts.some(
+        (artifact) => artifact.artifactId === artifactId
+          && artifact.verified
+          && Boolean(artifact.locator)
+          && Boolean(artifact.digest)
+          && Boolean(artifact.targetDigest),
+      );
+      if (!verified) missing.push({ artifactId, producerStageId: producer.stageId });
+    }
+    if (missing.length > 0) {
+      throw new WorkflowContractError("MISSING_EVIDENCE", "Planned input artifacts are not backed by verified producer results.", {
+        stageId: stage.stageId,
+        missingInputs: missing,
+      });
+    }
+  }
+
   private assertDeliberationGate(stage: PlannedStageV1, result: StageResultV1): void {
     if (!stage.requiredArtifacts.includes("decision-record")) return;
+    if (!stage.gate.validatorSchema) {
+      throw new WorkflowContractError("GATE_FAILED", "Deliberation provider must declare its decision record validator schema.", {
+        stageId: stage.stageId,
+      });
+    }
     let record: Record<string, unknown>;
     try {
-      record = this.validator.decisionRecord(result.output?.decisionRecord);
+      record = this.validator.declaredSchema(
+        this.registry.rootDirectory,
+        stage.gate.validatorSchema,
+        result.output.output?.decisionRecord,
+        "deliberation decision record",
+      );
     } catch (error) {
       throw new WorkflowContractError("GATE_FAILED", "Deliberation requires a schema-valid DecisionRecord.v1.", {
         stageId: stage.stageId,
@@ -388,7 +590,7 @@ export class WorkflowService {
         stage: run.stage,
       });
     }
-    if (proposal.status === "conditional_consensus" && result.output?.conditionsVerified !== true) {
+    if (proposal.status === "conditional_consensus" && result.output.output?.conditionsVerified !== true) {
       throw new WorkflowContractError("GATE_FAILED", "Conditional consensus may advance only after its conditions are verified.", {
         stageId: stage.stageId,
       });
@@ -397,7 +599,7 @@ export class WorkflowService {
 
   private assertMandatoryAuditGate(stage: PlannedStageV1, result: StageResultV1): void {
     if (stage.riskGate !== "mandatory") return;
-    const output = result.output;
+    const output = result.output.output;
     const auditorId = output?.auditorId;
     const implementationActorIds = output?.implementationActorIds;
     const auditTarget = output?.auditTarget;

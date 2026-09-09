@@ -4,6 +4,8 @@
 
 이 문서는 글로벌 `AGENTS.md`에서 분리한 일곱 가지 기능을 각각 독립 스킬로 구현하는 계획을 정리한다. 우선순위는 스킬 자체의 목적과 품질이다. Agent Governance Suite 편입은 독립 구현을 끝낸 뒤 수행한다.
 
+구현 상태: 일곱 스킬은 각 독립 저장소의 공개 태그로 릴리스되었고, `SkillDescriptor.v2` provider와 `ProviderResult.v1` 계약을 사용해 Agent Governance Suite `1.0.0`에 편입되었다. 아래 내용은 구현과 편입의 설계 기준으로 보존한다. 다만 6.3의 `BootstrapReceipt.v1`은 후속 후보이며 `1.0.0`에는 구현되지 않았다. 현재 MCP는 계획 밖 bootstrap 결과의 원자료를 인증하거나 일회용 영수증으로 보관하지 않고, 전문 스킬이 확인해 제출한 artifact의 구조화된 `verified` 선언을 신뢰한다.
+
 대상 스킬은 다음과 같다.
 
 | 우선순위 | 스킬 | 글로벌 지침에서 맡는 영역 |
@@ -882,7 +884,7 @@ MCP는 스킬 이름이 아니라 descriptor와 artifact dependency를 이용해
 
 `plan_workflow`는 선택한 `outputSchema`, `resultSchema`와 `stateMapping`의 경로·checksum을 `WorkflowPlan.v1`에 넣고 함께 서명한다. `resultSchema`는 성공·중간·실패 결과를 모두 표현하는 `ProviderResult.v1` envelope이며, `outputSchema`는 envelope 안에 실제 보고서가 있을 때만 적용한다. `record_stage_result`는 다음을 확인한다.
 
-- 필수 입력 artifact가 이전 bootstrap receipt 또는 stage 결과에 존재하는가
+- 계획 안에 생산자가 있는 필수 입력 artifact가 검증된 이전 stage 결과에 존재하는가
 - provider envelope가 `resultSchema`를 통과하고, output이 있으면 `outputSchema`도 통과하는가
 - descriptor의 `stateMapping`으로 계산한 상태와 `StageResult.state`가 일치하는가
 - `failed`와 `blocked`에 error가 있고 그 code가 mapping의 `allowedErrorCodes`에 포함되는가
@@ -893,9 +895,9 @@ MCP는 스킬 이름이 아니라 descriptor와 artifact dependency를 이용해
 
 검사 로직은 skill ID별 조건문으로 추가하지 않는다.
 
-### 6.3 bootstrap receipt
+### 6.3 후속 후보 — bootstrap receipt (1.0.0 미구현)
 
-`instruction-scope-resolver`, `workspace-convention-profiler`, `task-contract`는 run 생성 전에 실행된다. 이 결과를 잃지 않도록 `BootstrapReceipt.v1`을 추가한다.
+`instruction-scope-resolver`, `workspace-convention-profiler`, `task-contract`는 run 생성 전에 실행된다. 후속 버전에서 이 결과의 원자료 인증과 재사용 방지가 필요해지면 `BootstrapReceipt.v1`을 다음 형태로 추가할 수 있다.
 
 ```text
 taskId
@@ -909,9 +911,9 @@ integrityToken
 createdAt
 ```
 
-caller가 receipt를 자체 작성할 수 없도록 `plan_workflow`가 원시 bootstrap 결과, artifact schema, evidence reference와 state mapping을 먼저 검증한 뒤 receipt를 발급한다. MCP 프로세스는 시작할 때 임시 비밀키를 만들고 receipt 본문에 HMAC-SHA-256 `integrityToken`을 붙인다. 원시 코드와 전체 로그는 저장하지 않으며 receipt ID, digest, 만료 시각과 사용 여부만 메모리에 보관한다.
+구현 시에는 caller가 receipt를 자체 작성할 수 없도록 `plan_workflow`가 원시 bootstrap 결과, artifact schema, evidence reference와 state mapping을 먼저 검증한 뒤 receipt를 발급한다. MCP 프로세스는 시작할 때 임시 비밀키를 만들고 receipt 본문에 HMAC-SHA-256 `integrityToken`을 붙인다. 원시 코드와 전체 로그는 저장하지 않으며 receipt ID, digest, 만료 시각과 사용 여부만 메모리에 보관한다.
 
-`start_workflow`는 token, 만료, 미사용 상태, registry digest와 `TaskEnvelope.v1` digest를 모두 확인한 뒤 receipt를 한 번만 소비한다. 서버 재시작 뒤 임시 키와 메모리 상태가 사라진 receipt는 `RUN_NOT_FOUND`로 거부하고 bootstrap부터 다시 수행한다. 사용자가 task contract만 요청한 경우에는 구조화된 독립 결과만 반환하며, 실행 계획이나 receipt 발급을 요청하지 않은 한 `plan_workflow`를 호출하지 않는다.
+이 기능을 구현한 뒤에는 `start_workflow`가 token, 만료, 미사용 상태, registry digest와 `TaskEnvelope.v1` digest를 모두 확인한 뒤 receipt를 한 번만 소비해야 한다. 서버 재시작 뒤 임시 키와 메모리 상태가 사라진 receipt는 `RUN_NOT_FOUND`로 거부하고 bootstrap부터 다시 수행한다. 사용자가 task contract만 요청한 경우에는 구조화된 독립 결과만 반환하며, 실행 계획이나 receipt 발급을 요청하지 않은 한 `plan_workflow`를 호출하지 않는다.
 
 ### 6.4 import와 source lock
 
@@ -964,7 +966,7 @@ instruction-scope-resolution
 
 ### 단계 E — 플러그인 편입
 
-1. Agent Governance Suite의 descriptor, bootstrap receipt, artifact schema와 일반 gate 변경을 먼저 완료한다.
+1. Agent Governance Suite의 descriptor, artifact schema와 일반 gate 변경을 먼저 완료한다. `BootstrapReceipt.v1`은 후속 버전으로 분리한다.
 2. P0 스킬을 clean tag 단위로 편입한다.
 3. 기존 세 스킬과 P0의 통합·실패 전파 회귀 테스트를 통과시킨다.
 4. P1 스킬을 편입하고 preflight·audit 분리와 stale receipt를 검증한다.

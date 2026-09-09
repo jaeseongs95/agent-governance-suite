@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0.0",
+  "normal": [
+    { "id": "working-tree-in-scope", "expectedVerdict": "PASS" },
+    { "id": "index-staged-only", "expectedVerdict": "PASS" },
+    { "id": "commit-to-commit", "expectedVerdict": "PASS" }
+  ],
+  "boundary": [
+    { "id": "dirty-preexisting-untouched", "expectedClassification": "preexisting-untouched" },
+    { "id": "unicode-space-path", "expectedVerdict": "PASS" },
+    { "id": "no-commit-repository", "expectedHead": null }
+  ],
+  "failure": [
+    { "id": "excluded-change", "expectedVerdict": "BLOCKED" },
+    { "id": "preexisting-overlap", "expectedVerdict": "NEEDS_APPROVAL" },
+    { "id": "missing-baseline", "expectedVerdict": "INCONCLUSIVE" },
+    { "id": "foreign-baseline", "expectedError": "INVALID_INPUT" }
+  ]
+}

@@ -3,7 +3,7 @@ name: orchestrator
 description: 여러 거버넌스 스킬이 함께 필요한 요청을 분류하고, 사용 가능한 전문 스킬의 실행 순서·입출력·결과를 연결한다. 전문 판단이나 감사 자체를 수행할 때는 사용하지 않는다.
 license: MIT
 metadata:
-  version: "0.2.0"
+  version: "1.0.0"
 ---
 
 # Governance Orchestrator
@@ -14,9 +14,19 @@ metadata:
 
 먼저 요청의 목표, 상태 변경 여부, 완료 조건과 명시적으로 호출된 스킬을 확인한다. 명시적으로 `$skill-name`을 지정한 요청에서는 그 스킬을 우선하며, 다른 스킬로 대체하지 않는다.
 
-라우팅 전에 `skills/registry.json`을 읽고 `enabled: true`인 descriptor와 실제 스킬 경로를 대조한다. 요청에서 필요한 capability와 phase를 먼저 만들고, 일치하는 descriptor의 `selectionCriteria`, precondition, priority를 선택 설명에 남긴다. v1 MCP는 같은 capability의 후보 중 priority가 가장 큰 항목을 선택한다. `selectionCriteria`는 사람이 검토하는 근거이며 런타임 필터가 아니다. 조건에 따라 provider를 자동으로 나눠야 하면 구체적인 capability를 각각 사용한다. priority 동률이나 descriptor 충돌은 임의로 고르지 말고 `needs-input`으로 돌린다. 필요한 역할이 없으면 가능한 직접 스킬 호출 경로와 부족한 capability를 분리해 설명한다.
+라우팅 전에 `skills/registry.json`을 읽고 `enabled: true`인 `SkillDescriptor.v2` provider와 실제 스킬 경로를 대조한다. 요청에서 필요한 capability와 실행 class를 먼저 정하고, 일치하는 provider의 `selectionCriteria`, precondition, priority를 선택 설명에 남긴다. 같은 capability의 후보 중 priority가 가장 큰 항목을 선택하되, 동률이나 descriptor 충돌은 임의로 고르지 말고 `needs-input`으로 돌린다. `selectionCriteria`는 사람이 검토하는 근거이며 런타임 필터가 아니다. 필요한 역할이 없으면 가능한 직접 스킬 호출 경로와 부족한 capability를 분리해 설명한다.
 
-초기 정책 capability는 `subagent-coordination`, `independent-deliberation`, `independent-audit`다. 이 capability의 현재 provider 이름은 레지스트리에서 찾으며, 이름을 라우팅 조건으로 사용하지 않는다. 새 descriptor가 등록되면 이 절차로 발견하고, 오케스트레이터 지침에 스킬 이름을 추가하지 않는다.
+초기 정책 capability는 `subagent-coordination`, `independent-deliberation`, `independent-audit`다. 일반 변경 흐름에 필요한 지침 범위, 작업 계약, 저장소 관례, 변경 기준선·범위 확인, mutation 사전 점검, 수용 근거 확인과 실패 진단도 capability로 찾는다. 현재 provider 이름을 라우팅 조건으로 사용하지 않는다.
+
+## 실행 class와 단계 구성
+
+`executionClass`별로 흐름을 분리한다.
+
+- `bootstrap`: `plan_workflow` 전에 실행한다. `phaseOrder` 순으로 지침 범위를 확인하고, 필요할 때 저장소 관례를 조사한 뒤, 유효한 `TaskEnvelope.v1`과 수용 근거 계획을 만든다. 이미 같은 대상과 지침 revision에 대해 검증된 산출물이 있으면 중복 실행하지 않는다.
+- `workflow`: 동결된 `TaskEnvelope.v1`에서 필요한 capability만 선택한다. `phaseOrder`와 artifact 의존성을 함께 지키며, 첫 변경 전 기준선, 위험한 상태 변경 직전 precondition gate, 구현 후 범위·수용 근거 확인, 마지막 완료 gate 순서를 유지한다.
+- `recovery`: 기존 run의 실패 기록을 바꾸지 않고 별도 workflow로 실행한다. 반복 실패가 없으면 미리 넣지 않으며, recovery provider와 일반 workflow provider를 한 run에 섞지 않는다.
+
+여러 provider가 같은 스킬에 있어도 각 provider의 capability, phase, 입력·출력 artifact를 독립 단계로 취급한다. 스킬 디렉터리명이나 배열 위치로 순서를 추측하지 않는다.
 
 ## 초기 라우팅
 
@@ -29,11 +39,13 @@ metadata:
 5. 정확한 최종 대상이 있는 고위험 변경의 실행·병합·릴리스·완료 가능 여부를 판정하는 요청에는 `independent-audit`을 추가한다. 감사 전의 구현·수정·자체 검증은 이 provider의 역할이 아니다.
 6. 하나의 전문 스킬로 충분한 요청은 오케스트레이터 단계를 생략하고 그 스킬을 직접 사용할 수 있다고 안내한다.
 
-통합 워크플로에서는 작업 단위 조정을 먼저, 독립 숙고를 그다음으로, 요청된 전문 작업을 이어서, 최종 고위험 감사를 마지막으로 둔다. 이 순서는 MCP 실행 계층의 stage 순서와 같아야 한다. 각 전문 스킬이 이미 내부적으로 worker를 조정하는 경우에는 같은 단위를 다시 배정하지 않는다.
+통합 워크플로에서는 bootstrap을 마친 뒤 작업 단위 조정, 독립 숙고, 요청된 전문 작업, 범위·수용 근거 확인, 최종 고위험 감사 순으로 연결한다. 구체적인 순서는 provider의 `phaseOrder`와 artifact 의존성으로 정하며 MCP stage 순서와 같아야 한다. 각 전문 스킬이 이미 내부적으로 worker를 조정하는 경우에는 같은 단위를 다시 배정하지 않는다.
 
 ## 실행 순서와 입출력 연결
 
 - 각 단계마다 담당 스킬, 입력 출처, 기대 산출물, 다음 단계와 중단 조건을 기록한다.
+- provider가 선언한 `inputBindings`의 `select`, `collect`, `combine`, `require-external`만 사용한다. 누락된 입력을 새로 만들거나 다른 artifact로 조용히 대체하지 않는다.
+- 전문 스킬 결과는 선언된 `ProviderResult.v1` envelope로 연결한다. `outputSchema`, `resultSchema`, `stateMapping`을 통과하지 못한 결과를 다음 단계의 입력으로 사용하지 않는다.
 - 한 스킬의 결과를 다음 스킬에 전달할 때는 확인한 사실, 대상 식별자, 원시 증거 위치, 열린 제한사항을 보존한다. 요약으로 원시 결과나 불확실성을 대체하지 않는다.
 - 이전 단계의 필수 입력이 없거나 결과가 실패·차단 상태이면 그 의존 단계는 실행하지 않는다. 이미 확인된 결과와 누락된 입력을 구분해 보고한다.
 - 독립 감사가 필요한 흐름에서는 구현자와 감사자를 분리하고, 감사 후 의미 있는 변경이 생기면 감사 대상과 판정을 다시 연결한다.
@@ -68,7 +80,7 @@ MCP를 사용할 때는 연결이 성공했고 도구 목록과 입력 스키마
 
 1. 목표, 범위, 수용 기준, 작업 단위, 위험도와 필요한 capability를 `TaskEnvelope.v1`로 정리하고 `plan_workflow`를 호출한다. 이 호출은 run을 만들지 않는다.
 2. 계획이 `ready`이고 `executionMode`가 `orchestrated`일 때만 계획 전체를 `start_workflow`에 전달한다.
-3. 계획에 기록된 순서대로 전문 스킬을 사용한다. 각 결과의 산출물 참조와 검증 근거를 `StageResult.v1`로 만들어 현재 revision과 함께 `record_stage_result`에 전달한다.
+3. 계획에 기록된 순서대로 전문 스킬을 사용한다. provider 결과와 산출물 참조를 `ProviderResult.v1`로 묶고, 이를 `StageResult.v1.output`에 넣어 현재 revision과 함께 `record_stage_result`에 전달한다.
 4. 사용자 입력이나 승인이 필요하면 해당 상태와 차단 사유를 그대로 보고하고 새 실행이 필요한지 판단한다. 순서를 건너뛰거나 이미 기록한 stage를 덮어쓰지 않는다.
 5. 필요할 때 `get_workflow_status`로 현재 revision과 다음 stage를 확인한다. 모든 필수 stage와 감사 게이트가 `passed`인 경우에만 `finalize_workflow`를 호출한다.
 6. 통합 실행을 더 진행하지 않기로 확정하면 `abort_workflow`로 해당 run을 닫는다.

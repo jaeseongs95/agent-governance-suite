@@ -18,8 +18,20 @@ export default tseslint.config(
       globals: {
         console: "readonly",
         process: "readonly",
-        Buffer: "readonly"
+        Buffer: "readonly",
+        structuredClone: "readonly",
+        URL: "readonly"
       }
+    }
+  },
+  {
+    files: ["skills/**/*.mjs", "tests/**/*.node*.mjs"],
+    rules: {
+      "preserve-caught-error": "off",
+      "no-useless-assignment": "off",
+      "no-control-regex": "off",
+      "no-useless-escape": "off",
+      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
     }
   }
 );

@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "request": {
+    "schemaVersion": "1.0.0",
+    "taskId": "task-migration",
+    "request": "migration을 작성하고 검증하되 배포 전에 승인을 받아.",
+    "instructionResolutionRefs": ["artifact://instruction-scope-resolution/2"],
+    "pathSemantics": "posix",
+    "authorizationEvidence": [
+      { "action": "modify migration files", "effect": "allow", "authority": "user", "sourceLocator": "user-request" },
+      { "action": "run local tests", "effect": "allow", "authority": "user", "sourceLocator": "user-request" },
+      { "action": "deploy to production", "effect": "require-approval", "authority": "user", "sourceLocator": "user-request" }
+    ],
+    "suppliedFacts": [],
+    "userDecisions": ["Production deployment requires separate approval."]
+  },
+  "report": {
+    "schemaVersion": "1.0.0",
+    "taskEnvelope": {
+      "schemaVersion": "1.0.0",
+      "taskId": "task-migration",
+      "objective": "검증 가능한 schema migration을 작성한다.",
+      "scope": { "included": ["db/migrations/"], "excluded": ["docs/"] },
+      "acceptanceCriteria": ["[AC-001] migration 테스트가 깨끗한 데이터베이스에서 통과한다."],
+      "riskLevel": "high",
+      "workUnits": [
+        { "id": "migration", "objective": "migration 작성", "dependencies": [], "writeTargets": ["db/migrations/"] }
+      ],
+      "requiredCapabilities": ["change-scope-assurance", "acceptance-evidence-validation"],
+      "constraints": ["Production deployment is not part of implementation."],
+      "authorization": {
+        "allowedActions": ["modify migration files", "run local tests"],
+        "prohibitedActions": [],
+        "approvalRequired": ["deploy to production"]
+      },
+      "decision": { "complexity": "complex", "hasConflicts": false },
+      "orchestration": { "requested": true, "mcpAvailable": true }
+    },
+    "acceptanceEvidencePlan": {
+      "schemaVersion": "1.0.0",
+      "criteria": [
+        {
+          "criterionId": "AC-001",
+          "statement": "[AC-001] migration 테스트가 깨끗한 데이터베이스에서 통과한다.",
+          "verificationMethod": "깨끗한 fixture 데이터베이스에서 migration 테스트를 실행한다.",
+          "expectedEvidenceKinds": ["test"],
+          "passCondition": "테스트 프로세스가 exit code 0을 반환한다."
+        }
+      ]
+    },
+    "provenance": [
+      { "field": "/objective", "valueSummary": "migration 작성", "sourceLocator": "user-request", "basis": "explicit" },
+      { "field": "/scope", "valueSummary": "migration 디렉터리", "sourceLocator": "user-request", "basis": "verified-inference" },
+      { "field": "/riskLevel", "valueSummary": "schema migration", "sourceLocator": "risk-rubric", "basis": "verified-inference" },
+      { "field": "/authorization", "valueSummary": "배포는 별도 승인", "sourceLocator": "user-request", "basis": "explicit" }
+    ],
+    "authorizationProvenance": [
+      { "action": "modify migration files", "envelopeField": "/authorization/allowedActions", "effect": "allow", "authority": "user", "sourceLocator": "user-request" },
+      { "action": "run local tests", "envelopeField": "/authorization/allowedActions", "effect": "allow", "authority": "user", "sourceLocator": "user-request" },
+      { "action": "deploy to production", "envelopeField": "/authorization/approvalRequired", "effect": "require-approval", "authority": "user", "sourceLocator": "user-request" }
+    ],
+    "assumptions": [],
+    "ambiguities": [],
+    "contradictions": [],
+    "verdict": "PASS"
+  }
+}

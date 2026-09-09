@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "operationId": "migrate-users",
+  "actionClass": "migrate",
+  "targets": [{ "locator": "database://production/users", "targetType": "database-schema", "environment": "production", "expectedFingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111" }],
+  "plannedCommandOrTool": { "tool": "migration-runner", "action": "apply-v2" },
+  "scopeRef": { "locator": "evidence://scope", "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222", "includedTargets": ["database://production/users"], "excludedTargets": [] },
+  "authorizationRef": { "locator": "evidence://auth", "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333", "allowedActions": ["migrate"], "allowedTargets": ["database://production/users"], "environments": ["production"] },
+  "approvalEvidenceRefs": [{ "locator": "evidence://approval", "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444", "operationId": "migrate-users", "actionClass": "migrate", "targetLocators": ["database://production/users"], "environments": ["production"], "expiresAt": "2030-01-01T00:00:00.000Z" }],
+  "currentStateEvidenceRefs": [{ "locator": "evidence://state", "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555", "targetLocator": "database://production/users", "fingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111" }],
+  "recoveryPlan": { "available": true, "method": "restore snapshot", "backupRef": "backup://users", "restoreProcedureRef": "runbook://restore", "restoreTestEvidenceRef": null, "irreversibilityAccepted": false },
+  "expectedBlastRadius": { "affectedTargets": 1, "affectedUsers": 500, "external": true, "description": "users table schema" }
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "2.0.0",
+  "providers": [
+    {
+      "skillId": "acceptance-evidence-validator",
+      "version": "0.1.0",
+      "enabled": true,
+      "capabilities": ["acceptance-evidence-validation"],
+      "priority": 50,
+      "executionClass": "workflow",
+      "phase": "acceptance-verification",
+      "phaseOrder": 70,
+      "requiredInputArtifacts": ["task-envelope", "acceptance-evidence-plan", "target-identifier", "evidence-sources", "acceptance-evidence-request"],
+      "inputBindings": [
+        { "targetArtifact": "task-envelope", "sources": ["bootstrap:task-envelope"], "operation": "select" },
+        { "targetArtifact": "acceptance-evidence-plan", "sources": ["bootstrap:acceptance-evidence-plan"], "operation": "select" },
+        { "targetArtifact": "target-identifier", "sources": ["workflow:current-target"], "operation": "require-external" },
+        { "targetArtifact": "evidence-sources", "sources": ["workflow:verification-evidence"], "operation": "collect" },
+        { "targetArtifact": "acceptance-evidence-request", "sources": ["workflow:acceptance-evidence-request"], "operation": "require-external" }
+      ],
+      "producedArtifacts": ["acceptance-evidence-report", "verified-evidence-index"],
+      "outputSchema": "contracts/acceptance-evidence-report.v1.schema.json",
+      "resultSchema": "integration/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/verdict",
+        "values": {
+          "PASS": { "state": "passed", "errorRequired": false },
+          "NEEDS_INPUT": { "state": "needs-input", "errorRequired": false },
+          "FAIL": { "state": "failed", "errorRequired": true, "allowedErrorCodes": ["GATE_FAILED"] },
+          "BLOCKED": { "state": "blocked", "errorRequired": true, "allowedErrorCodes": ["MISSING_EVIDENCE"] }
+        },
+        "default": "reject",
+        "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE"]
+      },
+      "selectionCriteria": ["explicit-acceptance-evidence-review", "completion-claim-needs-evidence"],
+      "preconditions": ["A valid TaskEnvelope.v1, fixed target identifier, inspectable evidence locations, and a frozen acceptance request artifact are available."],
+      "failureHandling": {
+        "missingInput": "needs-input",
+        "invalidReport": "failed",
+        "retry": "new-or-corrected-evidence-only"
+      },
+      "gate": { "kind": "completion", "policy": "conditional", "validator": "acceptance-evidence-validation" }
+    }
+  ]
+}
