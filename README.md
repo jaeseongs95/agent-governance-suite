@@ -2,7 +2,7 @@
 
 Agent Governance Suite는 전문 스킬을 한 플러그인으로 묶되, 각 스킬의 책임과 단독 호출 가능성을 유지하는 프로젝트입니다. 오케스트레이터는 요청을 분류하고 스킬의 실행 순서와 입출력을 연결합니다. 전문 판단, 구현, 독립 감사의 결론은 해당 전문 스킬이 맡습니다.
 
-플러그인 식별자는 `agent-governance-suite`이며 현재 버전은 `1.0.1`입니다. 저장소와 홈페이지는 [https://github.com/jaeseongs95/agent-governance-suite](https://github.com/jaeseongs95/agent-governance-suite)입니다.
+플러그인 식별자는 `agent-governance-suite`이며 현재 버전은 `1.0.2`입니다. 저장소와 홈페이지는 [https://github.com/jaeseongs95/agent-governance-suite](https://github.com/jaeseongs95/agent-governance-suite)입니다.
 
 ## 구성
 
@@ -22,7 +22,7 @@ scripts/                   검증과 번들 확인
 | bootstrap | `instruction-scope-resolver` | 0.1.0 |
 | bootstrap | `workspace-convention-profiler` | 0.1.1 |
 | bootstrap | `task-contract` | 0.1.0 |
-| workflow | `coordinate-subagents` | 0.1.1 |
+| workflow | `coordinate-subagents` | 0.1.2 |
 | workflow | `independent-deliberation-panel` | 1.0.0 |
 | workflow | `change-scope-guardian` | 0.1.1 |
 | workflow | `mutation-risk-preflight` | 0.1.1 |
@@ -44,14 +44,14 @@ MCP는 `SkillDescriptor.v2`의 capability, `executionClass`, `phaseOrder`, artif
 
 ## 설치
 
-GitHub 마켓플레이스에서는 `v1.0.1` 태그를 기준으로 설치합니다.
+GitHub 마켓플레이스에서는 `v1.0.2` 태그를 기준으로 설치합니다.
 
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.0.1
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.0.2
 codex plugin add agent-governance-suite@agent-governance
 ```
 
-저장소 안의 marketplace 파일 자체를 확인하려면 플러그인 루트의 절대 경로를 등록할 수 있습니다. 현재 marketplace entry는 로컬 작업 트리가 아니라 GitHub의 `v1.0.1`을 source로 사용하므로, 아래 명령 뒤 `plugin add`를 실행해도 공개 태그가 설치됩니다.
+저장소 안의 marketplace 파일 자체를 확인하려면 플러그인 루트의 절대 경로를 등록할 수 있습니다. 현재 marketplace entry는 로컬 작업 트리가 아니라 GitHub의 `v1.0.2`을 source로 사용하므로, 아래 명령 뒤 `plugin add`를 실행해도 공개 태그가 설치됩니다.
 
 ```bash
 codex plugin marketplace add <absolute-repo-path>
