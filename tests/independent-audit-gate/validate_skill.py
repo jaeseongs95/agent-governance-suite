@@ -6,11 +6,13 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
 
 EXPECTED_NAME = "independent-audit-gate"
+EXPECTED_VERSION = "0.1.1"
 MONOREPO_ROOT = Path(__file__).resolve().parents[2]
 SKILL_ROOT = MONOREPO_ROOT / "skills" / EXPECTED_NAME
 BEHAVIOR_CASES = Path(__file__).with_name("behavior-cases.json")
@@ -19,8 +21,26 @@ REQUIRED_FILES = (
     "SKILL.md",
     "agents/openai.yaml",
     "references/audit-protocol.md",
+    "references/orchestrator-integration.md",
+    "scripts/test_plugin_component.py",
+    "scripts/validate_skill.py",
     "LICENSE",
 )
+OUTPUT_SECTIONS = (
+    "Audit Target",
+    "Independence",
+    "Evidence Checked",
+    "Findings",
+    "Remediation/Re-audit",
+    "Gate",
+    "Limitations",
+)
+REQUIRED_BEHAVIOR_CASE_IDS = {
+    "high-risk-frozen-target",
+    "ordinary-low-risk-review",
+    "auditor-not-independent",
+    "orchestrated-audit-handoff",
+}
 PLACEHOLDERS = (
     "TO" "DO",
     "T" "BD",
@@ -80,6 +100,70 @@ def validate_links(root: Path, relative: Path, text: str, errors: list[str]) -> 
             errors.append(f"{relative}: missing local link target: {raw_target}")
 
 
+def validate_output_contract(skill_text: str, errors: list[str]) -> None:
+    positions: list[int] = []
+    for index, section in enumerate(OUTPUT_SECTIONS, start=1):
+        marker = f"{index}. `{section}`"
+        position = skill_text.find(marker)
+        if position < 0:
+            errors.append(f"SKILL.md: missing output contract section {marker}")
+        positions.append(position)
+    if all(position >= 0 for position in positions) and positions != sorted(positions):
+        errors.append("SKILL.md: output contract sections must remain in the documented order")
+    if "`PASS | FAIL | BLOCKED`" not in skill_text:
+        errors.append("SKILL.md: Gate output must preserve PASS | FAIL | BLOCKED")
+
+
+def validate_orchestrator_handoff(root: Path, skill_text: str, errors: list[str]) -> None:
+    relative = Path("references/orchestrator-integration.md")
+    path = root / relative
+    if not path.is_file():
+        return
+    text = read_utf8(path, errors)
+    required_fragments = (
+        'contract: "independent-audit-gate/v0.1"',
+        'mode: "orchestrated"',
+        'phase: "pre-execution | post-execution | pre-deploy | post-deploy"',
+        "implementers: []",
+        "auditor:",
+        'worker_id: ""',
+        "fresh_context: true",
+        "delegation_allowed: false",
+        "final_target:",
+        'identifier: ""',
+        "evidence_locations:",
+        "rollback:",
+        "known_limitations: []",
+    )
+    for fragment in required_fragments:
+        if fragment not in text:
+            errors.append(f"{relative}: missing v0.1 handoff field {fragment!r}")
+    if "자연어와 구조화된 Markdown을 사용하는 지침 수준 계약" not in skill_text:
+        errors.append("SKILL.md: orchestrator handoff must remain a natural-language/Markdown contract")
+    if "별도 API나 `audit-run.json`을 요구하지 않는다" not in text:
+        errors.append(f"{relative}: handoff must not introduce an undeclared runtime API")
+
+
+def validate_plugin_component(root: Path, errors: list[str]) -> None:
+    commands = (
+        [
+            sys.executable,
+            str(root / "scripts" / "validate_skill.py"),
+            "--root",
+            str(root),
+            "--strict",
+            "--profile",
+            "plugin-component",
+        ],
+        [sys.executable, str(root / "scripts" / "test_plugin_component.py")],
+    )
+    for command in commands:
+        result = subprocess.run(command, text=True, capture_output=True, check=False)
+        if result.returncode != 0:
+            detail = "\n".join(part.strip() for part in (result.stdout, result.stderr) if part.strip())
+            errors.append(f"plugin component validation failed ({' '.join(command[1:])}): {detail}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=SKILL_ROOT)
@@ -107,6 +191,12 @@ def main() -> int:
         errors.append("SKILL.md: description is required")
     if len(description) > 1024:
         errors.append("SKILL.md: description must be at most 1024 characters")
+    version_match = re.search(r'^  version:\s*["\']?([^"\'\s]+)', skill_text, re.MULTILINE)
+    version = version_match.group(1) if version_match else ""
+    if version != EXPECTED_VERSION:
+        errors.append(f"SKILL.md: metadata.version must be {EXPECTED_VERSION!r}, got {version!r}")
+    validate_output_contract(skill_text, errors)
+    validate_orchestrator_handoff(root, skill_text, errors)
 
     openai_path = root / "agents/openai.yaml"
     openai_text = read_utf8(openai_path, errors) if openai_path.is_file() else ""
@@ -145,11 +235,18 @@ def main() -> int:
             behavior_document = json.loads(BEHAVIOR_CASES.read_text(encoding="utf-8"))
             cases = behavior_document.get("cases", [])
             kinds = {case.get("kind") for case in cases if isinstance(case, dict)}
+            case_ids = {case.get("id") for case in cases if isinstance(case, dict)}
             required_kinds = {"normal", "boundary", "expected-failure"}
             if not required_kinds.issubset(kinds):
                 errors.append("tests: behavior cases must include normal, boundary, and expected-failure")
+            missing_case_ids = REQUIRED_BEHAVIOR_CASE_IDS - case_ids
+            if missing_case_ids:
+                errors.append(f"tests: missing required behavior cases: {', '.join(sorted(missing_case_ids))}")
         except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
             errors.append(f"tests: cannot read behavior-cases.json ({exc})")
+
+    if all((root / relative).is_file() for relative in ("scripts/validate_skill.py", "scripts/test_plugin_component.py")):
+        validate_plugin_component(root, errors)
 
     if errors:
         print("Skill validation failed:", file=sys.stderr)

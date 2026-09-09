@@ -8,6 +8,12 @@
       "expected": "Check the evidence independently and return PASS only when no material finding remains."
     },
     {
+      "id": "orchestrated-audit-handoff",
+      "kind": "normal",
+      "scenario": "An orchestrator supplies the independent-audit-gate/v0.1 handoff with an already assigned fresh auditor and a fixed target.",
+      "expected": "Do not create a duplicate auditor; validate the handoff and return the seven documented output sections in order."
+    },
+    {
       "id": "ordinary-low-risk-review",
       "kind": "boundary",
       "scenario": "A low-risk wording change has no explicit audit request or high-risk completion gate.",

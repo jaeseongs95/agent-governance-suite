@@ -4,7 +4,7 @@
     {
       "schemaVersion": "1.0.0",
       "id": "independent-deliberation-panel",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "path": "./independent-deliberation-panel",
       "phase": "decision-analysis",
       "capabilities": [
@@ -33,7 +33,8 @@
         "panel-manifest",
         "cross-examination-plan",
         "issue-ledger",
-        "consensus-proposal"
+        "consensus-proposal",
+        "decision-record"
       ],
       "riskGate": "conditional",
       "enabled": true
@@ -41,7 +42,7 @@
     {
       "schemaVersion": "1.0.0",
       "id": "coordinate-subagents",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "./coordinate-subagents",
       "phase": "execution-planning",
       "capabilities": [
@@ -78,7 +79,7 @@
     {
       "schemaVersion": "1.0.0",
       "id": "independent-audit-gate",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "./independent-audit-gate",
       "phase": "completion-gate",
       "capabilities": [

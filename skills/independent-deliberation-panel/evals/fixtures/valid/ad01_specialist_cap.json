@@ -1,0 +1,350 @@
+{
+  "schema_version": "1.0",
+  "run": {
+    "id": "fixture-high",
+    "stage": "HIGH",
+    "worker_cap": 8,
+    "workers": [
+      {
+        "id": "r1",
+        "role": "Contract Auditor",
+        "status": "completed",
+        "instantiated": true,
+        "requested_model": "NOT_OBSERVABLE",
+        "actual_model": null,
+        "requested_reasoning": "NOT_OBSERVABLE",
+        "actual_reasoning": null,
+        "fallback_reason": null,
+        "is_judge": null,
+        "classification": "reviewer",
+        "blind_round1": true,
+        "context_isolated": true,
+        "participated_stages": [
+          "round1"
+        ]
+      },
+      {
+        "id": "r2",
+        "role": "Evidence Skeptic",
+        "status": "completed",
+        "instantiated": true,
+        "requested_model": "NOT_OBSERVABLE",
+        "actual_model": null,
+        "requested_reasoning": "NOT_OBSERVABLE",
+        "actual_reasoning": null,
+        "fallback_reason": null,
+        "is_judge": null,
+        "classification": "reviewer",
+        "blind_round1": true,
+        "context_isolated": true,
+        "participated_stages": [
+          "round1"
+        ]
+      },
+      {
+        "id": "r3",
+        "role": "Safety Reviewer",
+        "status": "completed",
+        "instantiated": true,
+        "requested_model": "NOT_OBSERVABLE",
+        "actual_model": null,
+        "requested_reasoning": "NOT_OBSERVABLE",
+        "actual_reasoning": null,
+        "fallback_reason": null,
+        "is_judge": null,
+        "classification": "reviewer",
+        "blind_round1": true,
+        "context_isolated": true,
+        "participated_stages": [
+          "round1"
+        ]
+      },
+      {
+        "id": "r4",
+        "role": "Release Planner",
+        "status": "completed",
+        "instantiated": true,
+        "requested_model": "NOT_OBSERVABLE",
+        "actual_model": null,
+        "requested_reasoning": "NOT_OBSERVABLE",
+        "actual_reasoning": null,
+        "fallback_reason": null,
+        "is_judge": null,
+        "classification": "adaptive_specialist",
+        "blind_round1": false,
+        "context_isolated": true,
+        "participated_stages": [
+          "adaptive_specialist"
+        ]
+      },
+      {
+        "id": "judge",
+        "role": "Fresh Judge",
+        "status": "completed",
+        "is_judge": true,
+        "instantiated": true,
+        "requested_model": "NOT_OBSERVABLE",
+        "actual_model": null,
+        "requested_reasoning": "NOT_OBSERVABLE",
+        "actual_reasoning": null,
+        "fallback_reason": null,
+        "classification": "judge",
+        "blind_round1": false,
+        "context_isolated": true,
+        "participated_stages": [
+          "final_judge"
+        ]
+      }
+    ],
+    "completed_worker_ids": [
+      "r1",
+      "r2",
+      "r3",
+      "r4",
+      "judge"
+    ],
+    "reused_worker_ids": [],
+    "fresh_judge_id": "judge",
+    "assurance": "partially_independent",
+    "specialist_additions": [
+      {
+        "id": "specialist",
+        "reason": "Needed for a distinct failure mode",
+        "admission_reason": "A distinct material gap requires specialist evidence.",
+        "worker_id": "r4",
+        "classification": "adaptive_specialist",
+        "admission": {
+          "material_gap": true,
+          "distinct_capability": true,
+          "verdict_change_possible": true,
+          "cap_available": true
+        }
+      }
+    ],
+    "redeliberations": [],
+    "judge_fallback": null,
+    "strict": true,
+    "failures": [],
+    "capability_shortfall": false,
+    "candidate_skill_sha256": null
+  },
+  "constraints": [
+    "constraint-1"
+  ],
+  "material_claims": [
+    {
+      "id": "C1",
+      "statement": "The contract test passed.",
+      "provenance": [
+        {
+          "locator": "references/evidence-and-verdict-schema.md",
+          "verification_status": "verified",
+          "verification_note": "Checked against the local reference."
+        }
+      ]
+    },
+    {
+      "id": "C2",
+      "statement": "A possible alternative needs evidence.",
+      "provenance": [
+        {
+          "locator": "user-input",
+          "verification_status": "unverified",
+          "verification_note": "Not independently verified."
+        }
+      ]
+    }
+  ],
+  "cross_examination": {
+    "decision": "run",
+    "reason": "A material claim needs independent challenge.",
+    "trigger_items": [
+      {
+        "id": "T1",
+        "origin_reviewer": "r1"
+      }
+    ],
+    "selected_item_ids": [
+      "T1"
+    ],
+    "coverage": [
+      {
+        "item_id": "T1",
+        "reviewer_ids": [
+          "r2"
+        ]
+      }
+    ],
+    "followups": [
+      {
+        "reviewer_id": "r2",
+        "item_ids": [
+          "T1"
+        ]
+      }
+    ]
+  },
+  "axis_decisions": [
+    {
+      "axis": "Safety",
+      "decision": "Meets the stated guardrail.",
+      "evidence_claim_ids": [
+        "C1"
+      ]
+    }
+  ],
+  "consensus_proposal": {
+    "status": "consensus",
+    "action": "Adopt the guarded option.",
+    "supported_by_verified_claims": [
+      "C1"
+    ],
+    "satisfied_constraints": [
+      "constraint-1"
+    ],
+    "axis_alignment": [
+      {
+        "axis": "Safety",
+        "decision_ref": "Safety"
+      }
+    ],
+    "conditions": [],
+    "unresolved_dissent": [],
+    "no_consensus_reason": null,
+    "remaining_options": [],
+    "decision_owner": null
+  },
+  "method_notes": [
+    "Structured evidence only."
+  ],
+  "case_brief": {
+    "decision": "Fixture decision.",
+    "facts": [
+      "Fixture fact."
+    ],
+    "assumptions": [],
+    "constraints": [
+      "constraint-1"
+    ],
+    "unknowns": [],
+    "success_criteria": [
+      "Record a decision."
+    ],
+    "failure_modes": [
+      "Contract violation."
+    ]
+  },
+  "required_constraints": [
+    "constraint-1"
+  ],
+  "panel_manifest": [
+    {
+      "id": "r1",
+      "role": "Contract Auditor",
+      "status": "completed",
+      "instantiated": true,
+      "requested_model": "NOT_OBSERVABLE",
+      "actual_model": null,
+      "requested_reasoning": "NOT_OBSERVABLE",
+      "actual_reasoning": null,
+      "fallback_reason": null,
+      "is_judge": null,
+      "classification": "reviewer",
+      "blind_round1": true,
+      "context_isolated": true,
+      "participated_stages": [
+        "round1"
+      ]
+    },
+    {
+      "id": "r2",
+      "role": "Evidence Skeptic",
+      "status": "completed",
+      "instantiated": true,
+      "requested_model": "NOT_OBSERVABLE",
+      "actual_model": null,
+      "requested_reasoning": "NOT_OBSERVABLE",
+      "actual_reasoning": null,
+      "fallback_reason": null,
+      "is_judge": null,
+      "classification": "reviewer",
+      "blind_round1": true,
+      "context_isolated": true,
+      "participated_stages": [
+        "round1"
+      ]
+    },
+    {
+      "id": "r3",
+      "role": "Safety Reviewer",
+      "status": "completed",
+      "instantiated": true,
+      "requested_model": "NOT_OBSERVABLE",
+      "actual_model": null,
+      "requested_reasoning": "NOT_OBSERVABLE",
+      "actual_reasoning": null,
+      "fallback_reason": null,
+      "is_judge": null,
+      "classification": "reviewer",
+      "blind_round1": true,
+      "context_isolated": true,
+      "participated_stages": [
+        "round1"
+      ]
+    },
+    {
+      "id": "r4",
+      "role": "Release Planner",
+      "status": "completed",
+      "instantiated": true,
+      "requested_model": "NOT_OBSERVABLE",
+      "actual_model": null,
+      "requested_reasoning": "NOT_OBSERVABLE",
+      "actual_reasoning": null,
+      "fallback_reason": null,
+      "is_judge": null,
+      "classification": "adaptive_specialist",
+      "blind_round1": false,
+      "context_isolated": true,
+      "participated_stages": [
+        "adaptive_specialist"
+      ]
+    },
+    {
+      "id": "judge",
+      "role": "Fresh Judge",
+      "status": "completed",
+      "is_judge": true,
+      "instantiated": true,
+      "requested_model": "NOT_OBSERVABLE",
+      "actual_model": null,
+      "requested_reasoning": "NOT_OBSERVABLE",
+      "actual_reasoning": null,
+      "fallback_reason": null,
+      "classification": "judge",
+      "blind_round1": false,
+      "context_isolated": true,
+      "participated_stages": [
+        "final_judge"
+      ]
+    }
+  ],
+  "issue_ledger": [],
+  "observability": {
+    "wall_time": "NOT_OBSERVABLE",
+    "tokens": "NOT_OBSERVABLE",
+    "tool_calls": "NOT_OBSERVABLE",
+    "worker_count": "NOT_OBSERVABLE"
+  },
+  "skill_version": "1.0.0",
+  "preflight": {
+    "required_capabilities": [
+      "blind_review"
+    ],
+    "observed_capabilities": [
+      "blind_review"
+    ],
+    "missing_capabilities": [],
+    "supported_models_reasoning": "NOT_OBSERVABLE"
+  }
+}

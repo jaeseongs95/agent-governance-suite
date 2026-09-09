@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "run": {
+    "id": "fixture-high",
+    "stage": "HIGH",
+    "worker_cap": 0,
+    "workers": [],
+    "completed_worker_ids": [],
+    "reused_worker_ids": [],
+    "fresh_judge_id": null,
+    "assurance": "provisional",
+    "specialist_additions": [],
+    "redeliberations": [],
+    "judge_fallback": null,
+    "strict": true,
+    "failures": [],
+    "capability_shortfall": true,
+    "candidate_skill_sha256": null
+  },
+  "constraints": [
+    "constraint-1"
+  ],
+  "material_claims": [],
+  "cross_examination": {
+    "decision": "skip",
+    "reason": "Strict preflight stopped panel creation.",
+    "trigger_items": [],
+    "selected_item_ids": [],
+    "coverage": [],
+    "followups": []
+  },
+  "axis_decisions": [],
+  "consensus_proposal": null,
+  "method_notes": [
+    "Structured evidence only."
+  ],
+  "case_brief": {
+    "decision": "Fixture decision.",
+    "facts": [
+      "Fixture fact."
+    ],
+    "assumptions": [],
+    "constraints": [
+      "constraint-1"
+    ],
+    "unknowns": [],
+    "success_criteria": [
+      "Record a decision."
+    ],
+    "failure_modes": [
+      "Contract violation."
+    ]
+  },
+  "required_constraints": [
+    "constraint-1"
+  ],
+  "panel_manifest": [],
+  "issue_ledger": [],
+  "observability": {
+    "wall_time": "NOT_OBSERVABLE",
+    "tokens": "NOT_OBSERVABLE",
+    "tool_calls": "NOT_OBSERVABLE",
+    "worker_count": "NOT_OBSERVABLE"
+  },
+  "skill_version": "1.0.0",
+  "preflight": {
+    "required_capabilities": [
+      "blind_review",
+      "fresh_judge"
+    ],
+    "observed_capabilities": [
+      "blind_review"
+    ],
+    "missing_capabilities": [
+      "fresh_judge"
+    ],
+    "supported_models_reasoning": "NOT_OBSERVABLE"
+  }
+}

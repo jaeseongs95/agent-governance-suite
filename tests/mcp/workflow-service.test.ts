@@ -1,14 +1,37 @@
+import { readFileSync, readdirSync } from "node:fs";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { type PlannedStageV1, type SkillDescriptorV1, type StageResultV1, type TaskEnvelopeV1 } from "../../contracts/types.js";
+import { validateDecisionRecordSemantics } from "../../mcp-server/src/decision-record-validator.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 
 const temporaryDirectories: string[] = [];
+const validDecisionRecordDirectory = new URL(
+  "../../skills/independent-deliberation-panel/evals/fixtures/valid/",
+  import.meta.url,
+);
+const invalidDecisionRecordDirectory = new URL(
+  "../../skills/independent-deliberation-panel/evals/fixtures/invalid/",
+  import.meta.url,
+);
+function decisionRecordFixtures(directory: URL): Array<{ name: string; record: Record<string, unknown> }> {
+  return readdirSync(directory)
+    .filter((name) => name.endsWith(".json"))
+    .sort()
+    .map((name) => ({
+      name,
+      record: JSON.parse(readFileSync(new URL(name, directory), "utf8")) as Record<string, unknown>,
+    }));
+}
+const validDecisionRecord = JSON.parse(readFileSync(new URL(
+  "../../skills/independent-deliberation-panel/evals/fixtures/valid/rc03_high_fresh_judge.json",
+  import.meta.url,
+), "utf8")) as Record<string, unknown>;
 
 function descriptor(
   input: Pick<SkillDescriptorV1, "id" | "capabilities" | "phase" | "riskGate" | "priority">
@@ -81,8 +104,22 @@ function passedStage(runId: string, stage: PlannedStageV1, expectedRevision: num
     expectedRevision,
     state: "passed",
     output: stage.riskGate === "mandatory"
-      ? { gateVerdict: "PASS", auditorId: "independent-auditor", implementationActorIds: ["implementation-agent"] }
-      : { accepted: true },
+      ? {
+          gateVerdict: "PASS",
+          auditorId: "independent-auditor",
+          implementationActorIds: ["implementation-agent"],
+          auditTarget: "commit:fixture-target",
+          currentTarget: "commit:fixture-target",
+          phase: "post-execution",
+          freshContext: true,
+          delegationAllowed: false,
+          blockingFindings: [],
+          stale: false,
+          postExecutionVerified: true,
+        }
+      : stage.requiredArtifacts.includes("decision-record")
+        ? { decisionRecord: structuredClone(validDecisionRecord) }
+        : { accepted: true },
     evidence: artifactIds.map((artifactId) => ({
       artifactId,
       kind: "test",
@@ -286,6 +323,24 @@ describe("WorkflowService", () => {
     ]);
   });
 
+  it("moves an explicitly requested audit to the final stage at every risk level", async () => {
+    const { service } = await createService();
+    for (const riskLevel of ["low", "medium"] as const) {
+      const plan = service.planWorkflow(task({
+        taskId: `explicit-audit-${riskLevel}`,
+        riskLevel,
+        decision: { complexity: "simple", hasConflicts: false },
+        requiredCapabilities: ["independent-audit", "draft"],
+      }));
+
+      expect(plan.data?.stages.map((stage) => stage.requiredCapability)).toEqual([
+        "subagent-coordination",
+        "draft",
+        "independent-audit",
+      ]);
+    }
+  });
+
   it("rejects forged, modified, and foreign-process plans without creating a run", async () => {
     const { service } = await createService();
     const validPlan = service.planWorkflow(task()).data!;
@@ -339,11 +394,89 @@ describe("WorkflowService", () => {
 
     const auditStage = receipt.plan.stages.find((stage) => stage.riskGate === "mandatory")!;
     const failingVerdict = passedStage(receipt.runId, auditStage, receipt.revision);
-    failingVerdict.output = { gateVerdict: "FAIL", auditorId: "independent-auditor", implementationActorIds: ["implementation-agent"] };
+    failingVerdict.output = { ...failingVerdict.output, gateVerdict: "FAIL" };
     expect(service.recordStageResult(failingVerdict).error?.code).toBe("GATE_FAILED");
 
     const selfAudited = passedStage(receipt.runId, auditStage, receipt.revision);
-    selfAudited.output = { gateVerdict: "PASS", auditorId: "implementation-agent", implementationActorIds: ["implementation-agent"] };
+    selfAudited.output = { ...selfAudited.output, auditorId: "implementation-agent", implementationActorIds: ["implementation-agent"] };
     expect(service.recordStageResult(selfAudited).error?.code).toBe("GATE_FAILED");
+  });
+
+  it("rejects deliberation without an eligible DecisionRecord", async () => {
+    const { service } = await createService();
+    let receipt = service.startWorkflow(service.planWorkflow(task()).data!).data!;
+    const coordination = receipt.plan.stages[0]!;
+    receipt = service.recordStageResult(passedStage(receipt.runId, coordination, receipt.revision)).data!;
+    const deliberation = receipt.plan.stages.find((stage) => stage.requiredArtifacts.includes("decision-record"))!;
+
+    const missing = passedStage(receipt.runId, deliberation, receipt.revision);
+    missing.output = { accepted: true };
+    expect(service.recordStageResult(missing).error?.code).toBe("GATE_FAILED");
+
+    const provisional = passedStage(receipt.runId, deliberation, receipt.revision);
+    const provisionalRecord = structuredClone(validDecisionRecord) as Record<string, unknown> & {
+      run: Record<string, unknown>;
+    };
+    provisionalRecord.run.assurance = "provisional";
+    provisional.output = { decisionRecord: provisionalRecord };
+    expect(service.recordStageResult(provisional).error?.code).toBe("GATE_FAILED");
+  });
+
+  it("rejects incomplete or stale mandatory audit handoffs", async () => {
+    const { service } = await createService();
+    let receipt = service.startWorkflow(service.planWorkflow(task()).data!).data!;
+    for (const stage of receipt.plan.stages.filter((item) => item.riskGate !== "mandatory")) {
+      receipt = service.recordStageResult(passedStage(receipt.runId, stage, receipt.revision)).data!;
+    }
+    const auditStage = receipt.plan.stages.find((stage) => stage.riskGate === "mandatory")!;
+
+    const missingSafetyFields = passedStage(receipt.runId, auditStage, receipt.revision);
+    missingSafetyFields.output = {
+      gateVerdict: "PASS",
+      auditorId: "independent-auditor",
+      implementationActorIds: ["implementation-agent"],
+    };
+    expect(service.recordStageResult(missingSafetyFields).error?.code).toBe("GATE_FAILED");
+
+    const stale = passedStage(receipt.runId, auditStage, receipt.revision);
+    stale.output = { ...stale.output, stale: true };
+    expect(service.recordStageResult(stale).error?.code).toBe("GATE_FAILED");
+
+    const wrongTarget = passedStage(receipt.runId, auditStage, receipt.revision);
+    wrongTarget.output = { ...wrongTarget.output, currentTarget: "commit:changed-after-audit" };
+    expect(service.recordStageResult(wrongTarget).error?.code).toBe("GATE_FAILED");
+  });
+
+  it("matches the canonical semantic verdict for every DecisionRecord fixture", () => {
+    const valid = decisionRecordFixtures(validDecisionRecordDirectory);
+    const invalid = decisionRecordFixtures(invalidDecisionRecordDirectory);
+    expect(valid).toHaveLength(24);
+    expect(invalid).toHaveLength(24);
+    for (const fixture of valid) {
+      expect(validateDecisionRecordSemantics(fixture.record), fixture.name).toEqual([]);
+    }
+    for (const fixture of invalid) {
+      expect(validateDecisionRecordSemantics(fixture.record).length, fixture.name).toBeGreaterThan(0);
+    }
+
+    const reordered = structuredClone(validDecisionRecord) as Record<string, unknown> & {
+      panel_manifest: Array<Record<string, unknown>>;
+    };
+    reordered.panel_manifest = reordered.panel_manifest.map((worker) => Object.fromEntries(
+      Object.entries(worker).reverse(),
+    ));
+    expect(validateDecisionRecordSemantics(reordered), "object key order must not affect parity").toEqual([]);
+ });
+
+  it("rejects every canonical invalid DecisionRecord at the MCP gate", async () => {
+    for (const fixture of decisionRecordFixtures(invalidDecisionRecordDirectory)) {
+      const { service } = await createService();
+      let receipt = service.startWorkflow(service.planWorkflow(task({ taskId: `invalid-${fixture.name}` })).data!).data!;
+      receipt = service.recordStageResult(passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision)).data!;
+      const deliberation = receipt.plan.stages.find((stage) => stage.requiredArtifacts.includes("decision-record"))!;
+      const result = passedStage(receipt.runId, deliberation, receipt.revision);
+      result.output = { decisionRecord: fixture.record };
+      expect(service.recordStageResult(result).error?.code, fixture.name).toBe("GATE_FAILED");
+    }
   });
 });

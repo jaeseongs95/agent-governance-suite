@@ -31,7 +31,7 @@
 3. 두 역할이 같은 자료에서 같은 기준으로 같은 결함을 찾는다면 합친다.
 4. 결론이 달라도 실패 기준이 같으면 독립 관점으로 세지 않는다.
 5. HIGH에서는 서로 다른 failure function 네 개를 우선한다.
-6. CRITICAL에서는 영향이 큰 축에 Red Team 또는 독립 감사 역할을 더한다.
+6. CRITICAL에서는 영향이 큰 축에 Red Team 또는 **independent design-assurance reviewer**를 더할 수 있다. 이는 설계·판단의 독립 검토 역할이며, 구현 변경의 final auditor나 audit-gate를 뜻하지 않는다.
 
 보편적으로 Architect, Security, UX, Cost를 채우지 않는다. 예를 들어 계약과 일정이 충돌하는 요청에는 Contract Auditor, Release Planner, Minimalist, Evidence Skeptic가 더 적합할 수 있다.
 
@@ -56,3 +56,25 @@ delegation_allowed: false
 ```
 
 mandate에는 선호 결론이나 다른 reviewer의 예상 주장을 넣지 않는다. 역할이 결함을 찾지 못해도 억지 반론을 만들지 말고, 확인한 범위와 남은 불확실성을 보고하게 한다.
+
+## Specialist admission과 중복 방지
+
+specialist는 고정 패널 역할도, reviewer 수를 채우는 대체재도 아니다. Stage 6에서 다음 조건을 모두 만족할 때만 한 명을 admission한다.
+
+1. 증거 확인 뒤에도 material한 `UNRESOLVED` 또는 `NOT_OBSERVABLE` gap이 하나 이상의 특정 claim, issue 또는 axis ID에 연결된다.
+2. 후보는 기존 role과 다른 failure function, 원자료 접근 또는 분석 방법을 제공한다.
+3. 그 차이가 필수 axis 또는 Judge verdict를 바꿀 수 있다.
+4. fresh Judge를 보존한 worker cap 안에 reserve가 남아 있다.
+
+후보가 단지 더 강한 모델, 같은 문서의 재요약, 기존 reviewer의 결론 지지·반박, 일반적 전문성 이름만 제공하면 admission하지 않는다. 같은 도메인이라도 입력·판정 기준·우선 증거가 기존 role과 실질적으로 다르면 중복이 아닐 수 있다. 반대로 이름이 달라도 다음이 모두 같으면 중복으로 합친다.
+
+- 공격 대상과 failure function
+- 주요 evidence set 또는 관찰 방법
+- 성공·실패를 가르는 판정 기준
+- 해결할 material gap
+
+admission을 기록할 때는 `role_id`, impacted claim/issue/axis, 기존 role과 구별되는 failure function, 새 evidence 또는 method, 왜 Judge 전에 필요한지를 남긴다. specialist는 full panel 재검토나 새 투표를 하지 않고 좁은 mandate만 수행한다. 이후 재숙고는 영향 항목과 그 결론을 만든 worker로 한 번만 한정하며 `non_independent`로 표시한다.
+
+## 최종 감사와의 경계
+
+이 카탈로그의 역할은 모두 설계·판단 절차의 participant다. final audit와 외부 workflow 연결은 이 카탈로그의 범위 밖이다.
