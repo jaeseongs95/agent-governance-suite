@@ -14,6 +14,7 @@ import {
   WorkflowContractError,
 } from "../../contracts/types.js";
 import { FileSkillRegistry, selectSkillByCapability } from "./registry.js";
+import { validateDecisionRecordSemantics } from "./decision-record-validator.js";
 import { ContractValidator } from "./schema-validator.js";
 
 interface StoredRun {
@@ -145,6 +146,7 @@ export class WorkflowService {
         this.assertResultSemantics(result);
         if (result.state === "passed") {
           this.assertRequiredArtifacts(target, result);
+          this.assertDeliberationGate(target, result);
           this.assertMandatoryAuditGate(target, result);
         }
         target.state = result.state;
@@ -301,9 +303,10 @@ export class WorkflowService {
 
   private requiredCapabilities(task: TaskEnvelopeV1, dependencyGraph: Map<string, string[]>): string[] {
     const before: string[] = [];
-    const work = task.requiredCapabilities.filter((capability) => (
-      !(capability === POLICY_CAPABILITY.audit && (task.riskLevel === "high" || task.riskLevel === "critical"))
-    ));
+    const auditRequested = task.requiredCapabilities.includes(POLICY_CAPABILITY.audit)
+      || task.riskLevel === "high"
+      || task.riskLevel === "critical";
+    const work = task.requiredCapabilities.filter((capability) => capability !== POLICY_CAPABILITY.audit);
     const after: string[] = [];
     if (task.orchestration.requested && this.hasIndependentWorkUnitPair(dependencyGraph)) {
       before.push(POLICY_CAPABILITY.coordination);
@@ -311,7 +314,7 @@ export class WorkflowService {
     if (task.orchestration.requested && (task.decision.complexity === "complex" || task.decision.hasConflicts)) {
       before.push(POLICY_CAPABILITY.deliberation);
     }
-    if (task.orchestration.requested && (task.riskLevel === "high" || task.riskLevel === "critical")) {
+    if (task.orchestration.requested && auditRequested) {
       after.push(POLICY_CAPABILITY.audit);
     }
     return [...new Set([...before, ...work, ...after])];
@@ -346,11 +349,61 @@ export class WorkflowService {
     }
   }
 
+  private assertDeliberationGate(stage: PlannedStageV1, result: StageResultV1): void {
+    if (!stage.requiredArtifacts.includes("decision-record")) return;
+    let record: Record<string, unknown>;
+    try {
+      record = this.validator.decisionRecord(result.output?.decisionRecord);
+    } catch (error) {
+      throw new WorkflowContractError("GATE_FAILED", "Deliberation requires a schema-valid DecisionRecord.v1.", {
+        stageId: stage.stageId,
+        cause: error instanceof Error ? error.message : String(error),
+      });
+    }
+    const semanticErrors = validateDecisionRecordSemantics(record);
+    if (semanticErrors.length > 0) {
+      throw new WorkflowContractError("GATE_FAILED", "DecisionRecord.v1 failed canonical semantic validation.", {
+        stageId: stage.stageId,
+        semanticErrors,
+      });
+    }
+    const run = record.run as Record<string, unknown>;
+    const proposal = record.consensus_proposal as Record<string, unknown> | null;
+    if (
+      run.assurance === "provisional"
+      || run.capability_shortfall !== false
+      || proposal === null
+      || proposal.status === "no_consensus"
+    ) {
+      throw new WorkflowContractError("GATE_FAILED", "Deliberation result is not eligible to advance the workflow.", {
+        stageId: stage.stageId,
+        assurance: run.assurance,
+        capabilityShortfall: run.capability_shortfall,
+        consensusStatus: proposal?.status ?? null,
+      });
+    }
+    if ((run.stage === "HIGH" || run.stage === "CRITICAL") && run.strict !== true) {
+      throw new WorkflowContractError("GATE_FAILED", "HIGH and CRITICAL deliberation requires strict execution assurance.", {
+        stageId: stage.stageId,
+        stage: run.stage,
+      });
+    }
+    if (proposal.status === "conditional_consensus" && result.output?.conditionsVerified !== true) {
+      throw new WorkflowContractError("GATE_FAILED", "Conditional consensus may advance only after its conditions are verified.", {
+        stageId: stage.stageId,
+      });
+    }
+  }
+
   private assertMandatoryAuditGate(stage: PlannedStageV1, result: StageResultV1): void {
     if (stage.riskGate !== "mandatory") return;
     const output = result.output;
     const auditorId = output?.auditorId;
     const implementationActorIds = output?.implementationActorIds;
+    const auditTarget = output?.auditTarget;
+    const currentTarget = output?.currentTarget;
+    const blockingFindings = output?.blockingFindings;
+    const phase = output?.phase;
     if (
       output?.gateVerdict !== "PASS"
       || typeof auditorId !== "string"
@@ -358,9 +411,26 @@ export class WorkflowService {
       || !Array.isArray(implementationActorIds)
       || implementationActorIds.length === 0
       || implementationActorIds.some((actorId) => typeof actorId !== "string" || actorId.length === 0)
+      || typeof auditTarget !== "string"
+      || auditTarget.length === 0
+      || typeof currentTarget !== "string"
+      || currentTarget !== auditTarget
+      || output?.freshContext !== true
+      || output?.delegationAllowed !== false
+      || !Array.isArray(blockingFindings)
+      || blockingFindings.length > 0
+      || output?.stale !== false
+      || !["pre-execution", "post-execution", "pre-deploy", "post-deploy"].includes(String(phase))
+      || typeof output?.postExecutionVerified !== "boolean"
     ) {
-      throw new WorkflowContractError("GATE_FAILED", "Mandatory audit requires a PASS verdict and identified independent actors.", {
+      throw new WorkflowContractError("GATE_FAILED", "Mandatory audit requires a current, fresh, non-delegated PASS with no blocking findings.", {
         stageId: stage.stageId,
+      });
+    }
+    if ((phase === "post-execution" || phase === "post-deploy") && output.postExecutionVerified !== true) {
+      throw new WorkflowContractError("GATE_FAILED", "Post-execution and post-deploy audits require verified resulting state.", {
+        stageId: stage.stageId,
+        phase,
       });
     }
     if (implementationActorIds.includes(auditorId)) {

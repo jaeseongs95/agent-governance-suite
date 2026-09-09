@@ -2,7 +2,7 @@
 
 Agent Governance Suite는 전문 스킬을 한 플러그인으로 묶되, 각 스킬의 책임과 단독 호출 가능성을 유지하는 프로젝트입니다. 오케스트레이터는 요청을 분류하고 스킬의 실행 순서와 입출력을 연결합니다. 전문 판단, 구현, 독립 감사의 결론은 해당 전문 스킬이 맡습니다.
 
-플러그인 식별자는 `agent-governance-suite`이며 현재 버전은 `0.1.0`입니다. 저장소와 홈페이지는 [https://github.com/jaeseongs95/agent-governance-suite](https://github.com/jaeseongs95/agent-governance-suite)입니다.
+플러그인 식별자는 `agent-governance-suite`이며 현재 버전은 `0.2.0`입니다. 저장소와 홈페이지는 [https://github.com/jaeseongs95/agent-governance-suite](https://github.com/jaeseongs95/agent-governance-suite)입니다.
 
 ## 구성
 
@@ -15,11 +15,11 @@ contracts/                 스킬 간 계약
 scripts/                   검증과 번들 확인
 ```
 
-`skills/orchestrator/`는 라우팅과 결과 통합만 담당합니다. 초기 전문 스킬은 `coordinate-subagents`, `independent-deliberation-panel`, `independent-audit-gate`입니다. 각 스킬은 독립적으로 호출할 수 있어야 하며, 공통 규칙은 전문 스킬에 복제하지 않고 계약과 오케스트레이터 경계에서 관리합니다.
+`skills/orchestrator/`는 라우팅과 결과 통합만 담당합니다. 포함된 전문 스킬은 `coordinate-subagents` v0.1.1, `independent-deliberation-panel` v1.0.0, `independent-audit-gate` v0.1.1입니다. 각 스킬은 독립적으로 호출할 수 있어야 하며, 공통 규칙은 전문 스킬에 복제하지 않고 계약과 오케스트레이터 경계에서 관리합니다. 정확한 원본 태그·커밋·checksum은 `skills/source-lock.json`에 고정합니다.
 
 MCP 서버는 `node mcp-server/dist/server.mjs`로 로컬 STDIO에서 실행됩니다. 서버를 사용할 수 없으면 오케스트레이터는 가능한 전문 스킬의 직접 호출을 계속합니다. MCP가 없으면 수행할 수 없는 통합 작업만 `BLOCKED`로 표시합니다.
 
-MCP는 레지스트리에서 capability와 phase를 조회해 계획을 만들고, 서명된 계획의 단계 순서·revision·필수 산출물 ID·감사 `PASS` 선언을 검사합니다. 실행 상태는 프로세스 메모리에만 두며 원문 코드나 전체 로그를 보관하지 않습니다. 서버가 다시 시작되어 `RUN_NOT_FOUND`가 반환되면 새 워크플로를 시작해야 합니다.
+MCP는 레지스트리에서 capability와 phase를 조회해 계획을 만들고, 서명된 계획의 단계 순서·revision·필수 산출물 ID를 검사합니다. 독립 숙고 단계는 schema-valid `DecisionRecord.v1`과 진행 가능한 assurance·consensus를 요구하고, 필수 감사 단계는 fresh auditor, 현재 대상 일치, 열린 blocking finding과 stale 여부, 실행 후 확인 상태까지 검사합니다. 실행 상태는 프로세스 메모리에만 두며 원문 코드나 전체 로그를 보관하지 않습니다. 서버가 다시 시작되어 `RUN_NOT_FOUND`가 반환되면 새 워크플로를 시작해야 합니다.
 
 이 검사는 로컬 워크플로의 구조적 게이트입니다. MCP는 호출자가 제출한 `verified`, 증거 위치, 작업자 식별자를 신뢰하며 파일 내용이나 실제 에이전트 신원을 인증하지 않습니다. 독립 감사자는 `independent-audit-gate` 절차에 따라 원자료와 구현자 분리를 직접 확인해야 합니다. 적대적인 클라이언트까지 통제해야 하는 환경에서는 인증된 신원·증거 저장소를 별도로 연결해야 합니다.
 
@@ -27,14 +27,14 @@ MCP는 레지스트리에서 capability와 phase를 조회해 계획을 만들�
 
 ## 설치
 
-GitHub 마켓플레이스에서는 `v0.1.0` 태그를 기준으로 설치합니다.
+GitHub 마켓플레이스에서는 `v0.2.0` 태그를 기준으로 설치합니다.
 
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v0.1.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v0.2.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 
-저장소 안의 marketplace 파일 자체를 확인하려면 플러그인 루트의 절대 경로를 등록할 수 있습니다. 현재 marketplace entry는 로컬 작업 트리가 아니라 GitHub의 `v0.1.0`을 source로 사용하므로, 아래 명령 뒤 `plugin add`를 실행해도 공개 태그가 설치됩니다.
+저장소 안의 marketplace 파일 자체를 확인하려면 플러그인 루트의 절대 경로를 등록할 수 있습니다. 현재 marketplace entry는 로컬 작업 트리가 아니라 GitHub의 `v0.2.0`을 source로 사용하므로, 아래 명령 뒤 `plugin add`를 실행해도 공개 태그가 설치됩니다.
 
 ```bash
 codex plugin marketplace add <absolute-repo-path>

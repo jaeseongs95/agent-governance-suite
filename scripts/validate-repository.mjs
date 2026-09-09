@@ -25,8 +25,16 @@ for (const relativePath of requiredFiles) {
 
 if (errors.length === 0) {
   const plugin = await readJson(path.join(ROOT, ".codex-plugin", "plugin.json"));
-  if (plugin.name !== "agent-governance-suite" || plugin.version !== "0.1.0") {
-    errors.push("plugin name/version must be agent-governance-suite@0.1.0");
+  if (plugin.name !== "agent-governance-suite" || !/^\d+\.\d+\.\d+$/u.test(plugin.version ?? "")) {
+    errors.push("plugin name/version must be agent-governance-suite with a strict semantic version");
+  }
+  const packageDocument = await readJson(path.join(ROOT, "package.json"));
+  if (packageDocument.name !== plugin.name || packageDocument.version !== plugin.version) {
+    errors.push("package.json name/version must match the plugin manifest");
+  }
+  const serverSource = await readFile(path.join(ROOT, "mcp-server", "src", "server.ts"), "utf8");
+  if (!serverSource.includes(`{ name: "${plugin.name}", version: "${plugin.version}" }`)) {
+    errors.push("MCP server name/version must match the plugin manifest");
   }
   for (const manifestPath of [plugin.skills, plugin.mcpServers]) {
     if (typeof manifestPath !== "string" || !manifestPath.startsWith("./")) {
@@ -94,8 +102,8 @@ if (errors.length === 0) {
   const marketplaceEntry = marketplace.plugins?.find((entry) => entry.name === plugin.name);
   if (marketplace.name !== "agent-governance" || !marketplaceEntry) {
     errors.push("marketplace must expose agent-governance-suite from agent-governance");
-  } else if (marketplaceEntry.source?.source !== "url" || marketplaceEntry.source?.ref !== "v0.1.0") {
-    errors.push("marketplace source must pin the GitHub root plugin at v0.1.0");
+  } else if (marketplaceEntry.source?.source !== "url" || marketplaceEntry.source?.ref !== `v${plugin.version}`) {
+    errors.push(`marketplace source must pin the GitHub root plugin at v${plugin.version}`);
   }
 
   const skillDirectories = (await readdir(path.join(ROOT, "skills"), { withFileTypes: true }))

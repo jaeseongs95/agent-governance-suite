@@ -18,6 +18,11 @@ function loadSchema(fileName: string): JsonSchema {
   return JSON.parse(readFileSync(path, "utf8")) as JsonSchema;
 }
 
+function loadSkillSchema(relativePath: string): JsonSchema {
+  const path = new URL(`../../skills/${relativePath}`, import.meta.url);
+  return JSON.parse(readFileSync(path, "utf8")) as JsonSchema;
+}
+
 /** The wire schemas are loaded from contracts/ so MCP and direct callers share one definition. */
 export const contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -26,6 +31,7 @@ export const contractSchemas = {
   workflowPlan: loadSchema("workflow-plan.v1.schema.json"),
   stageResult: loadSchema("stage-result.v1.schema.json"),
   workflowReceipt: loadSchema("workflow-receipt.v1.schema.json"),
+  decisionRecord: loadSkillSchema("independent-deliberation-panel/contracts/decision-record.v1.schema.json"),
 };
 
 function errorText(errors: ErrorObject[] | null | undefined): string {
@@ -49,6 +55,7 @@ export class ContractValidator {
       workflowPlan: ajv.getSchema("https://skill-suite.local/contracts/workflow-plan.v1.schema.json")!,
       stageResult: ajv.getSchema("https://skill-suite.local/contracts/stage-result.v1.schema.json")!,
       workflowReceipt: ajv.getSchema("https://skill-suite.local/contracts/workflow-receipt.v1.schema.json")!,
+      decisionRecord: ajv.compile(contractSchemas.decisionRecord),
     };
   }
 
@@ -83,6 +90,10 @@ export class ContractValidator {
 
   workflowReceipt(value: unknown): WorkflowReceiptV1 {
     return this.assert<WorkflowReceiptV1>("workflowReceipt", value);
+  }
+
+  decisionRecord(value: unknown): Record<string, unknown> {
+    return this.assert<Record<string, unknown>>("decisionRecord", value);
   }
 
   apiResult<T>(value: unknown): ApiResultV1<T> {

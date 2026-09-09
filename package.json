@@ -1,6 +1,6 @@
 {
   "name": "agent-governance-suite",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Specialized governance skills with a locally enforced workflow orchestrator.",
   "type": "module",

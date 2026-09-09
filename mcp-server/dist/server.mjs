@@ -8123,8 +8123,8 @@ function getEnumValues(entries) {
   const values = Object.entries(entries).filter(([k, _]) => numericValues.indexOf(+k) === -1).map(([_, v]) => v);
   return values;
 }
-function joinValues(array2, separator = "|") {
-  return array2.map((val) => stringifyPrimitive(val)).join(separator);
+function joinValues(array3, separator = "|") {
+  return array3.map((val) => stringifyPrimitive(val)).join(separator);
 }
 function jsonStringifyReplacer(_, value) {
   if (typeof value === "bigint")
@@ -8161,9 +8161,9 @@ function floatSafeRemainder(val, step) {
   return ratio - roundedRatio;
 }
 var EVALUATING = /* @__PURE__ */ Symbol("evaluating");
-function defineLazy(object3, key, getter) {
+function defineLazy(object4, key, getter) {
   let value = void 0;
-  Object.defineProperty(object3, key, {
+  Object.defineProperty(object4, key, {
     get() {
       if (value === EVALUATING) {
         return void 0;
@@ -8175,7 +8175,7 @@ function defineLazy(object3, key, getter) {
       return value;
     },
     set(v) {
-      Object.defineProperty(object3, key, {
+      Object.defineProperty(object4, key, {
         value: v
         // configurable: true,
       });
@@ -12468,8 +12468,8 @@ function foldObjects(members2) {
   }
   const properties = {};
   const required2 = /* @__PURE__ */ new Set();
-  for (const object3 of objects) {
-    for (const key in object3.properties) {
+  for (const object4 of objects) {
+    for (const key in object4.properties) {
       if (Object.prototype.hasOwnProperty.call(properties, key))
         continue;
       const parts = [];
@@ -12483,18 +12483,18 @@ function foldObjects(members2) {
       const merged = parts.length === 1 ? parts[0] : foldObjects(parts) ?? { allOf: parts };
       assignProp(properties, key, merged);
     }
-    for (const key of object3.required ?? [])
+    for (const key of object4.required ?? [])
       required2.add(key);
   }
   const folded = { type: "object", properties };
   if (required2.size)
     folded.required = [...required2];
-  if (objects.every((object3) => object3.additionalProperties === false)) {
+  if (objects.every((object4) => object4.additionalProperties === false)) {
     folded.additionalProperties = false;
   } else {
     const constraints = [];
-    for (const object3 of objects) {
-      const constraint = undeclaredConstraint(object3);
+    for (const object4 of objects) {
+      const constraint = undeclaredConstraint(object4);
       if (constraint && !constraints.some((seen) => JSON.stringify(seen) === JSON.stringify(constraint)))
         constraints.push(constraint);
     }
@@ -15907,13 +15907,18 @@ function loadSchema(fileName) {
   const path = new URL(`../../contracts/${fileName}`, import.meta.url);
   return JSON.parse(readFileSync2(path, "utf8"));
 }
+function loadSkillSchema(relativePath) {
+  const path = new URL(`../../skills/${relativePath}`, import.meta.url);
+  return JSON.parse(readFileSync2(path, "utf8"));
+}
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
   taskEnvelope: loadSchema("task-envelope.v1.schema.json"),
   skillDescriptor: loadSchema("skill-descriptor.v1.schema.json"),
   workflowPlan: loadSchema("workflow-plan.v1.schema.json"),
   stageResult: loadSchema("stage-result.v1.schema.json"),
-  workflowReceipt: loadSchema("workflow-receipt.v1.schema.json")
+  workflowReceipt: loadSchema("workflow-receipt.v1.schema.json"),
+  decisionRecord: loadSkillSchema("independent-deliberation-panel/contracts/decision-record.v1.schema.json")
 };
 function errorText(errors) {
   return (errors ?? []).map((error2) => `${error2.instancePath || "/"} ${error2.message ?? "is invalid"}`).join("; ");
@@ -15931,7 +15936,8 @@ var ContractValidator = class {
       skillDescriptor: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v1.schema.json"),
       workflowPlan: ajv.getSchema("https://skill-suite.local/contracts/workflow-plan.v1.schema.json"),
       stageResult: ajv.getSchema("https://skill-suite.local/contracts/stage-result.v1.schema.json"),
-      workflowReceipt: ajv.getSchema("https://skill-suite.local/contracts/workflow-receipt.v1.schema.json")
+      workflowReceipt: ajv.getSchema("https://skill-suite.local/contracts/workflow-receipt.v1.schema.json"),
+      decisionRecord: ajv.compile(contractSchemas.decisionRecord)
     };
   }
   assert(name, value) {
@@ -15960,6 +15966,9 @@ var ContractValidator = class {
   }
   workflowReceipt(value) {
     return this.assert("workflowReceipt", value);
+  }
+  decisionRecord(value) {
+    return this.assert("decisionRecord", value);
   }
   apiResult(value) {
     return this.assert("apiResult", value);
@@ -17731,7 +17740,7 @@ function toolResult(result) {
 }
 function createMcpServer(service) {
   const server = new Server(
-    { name: "agent-governance-suite", version: "0.1.0" },
+    { name: "agent-governance-suite", version: "0.2.0" },
     { capabilities: { tools: {} } }
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -17807,6 +17816,359 @@ function createMcpServer(service) {
 
 // mcp-server/src/workflow-service.ts
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+
+// mcp-server/src/decision-record-validator.ts
+import { isDeepStrictEqual } from "node:util";
+var EVIDENCE_STATUSES = /* @__PURE__ */ new Set(["verified", "unverified", "refuted", "not_observable"]);
+var ISSUE_STATUSES = /* @__PURE__ */ new Set(["CONFIRMED", "REFUTED", "PARTIALLY_SUPPORTED", "UNRESOLVED", "NOT_OBSERVABLE"]);
+var FORBIDDEN_KEYS = /* @__PURE__ */ new Set([
+  "chain_of_thought",
+  "raw_reasoning",
+  "internal_prompt",
+  "system_prompt",
+  "execution_directive",
+  "tool_directive"
+]);
+function object3(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+function array2(value) {
+  return Array.isArray(value) ? value : [];
+}
+function stringArray(value) {
+  return array2(value).filter((item) => typeof item === "string");
+}
+function nonempty(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+function sameValues(left, right) {
+  return left.size === right.size && [...left].every((value) => right.has(value));
+}
+function duplicateFree(values) {
+  return values.length === new Set(values).size;
+}
+function validateDecisionRecordSemantics(record2) {
+  const errors = [];
+  const preflight = object3(record2.preflight);
+  const requiredCapabilities = stringArray(preflight.required_capabilities);
+  const observedCapabilities = stringArray(preflight.observed_capabilities);
+  const missingCapabilities = stringArray(preflight.missing_capabilities);
+  if (!duplicateFree(requiredCapabilities) || !duplicateFree(observedCapabilities) || !duplicateFree(missingCapabilities) || requiredCapabilities.some((value) => !nonempty(value)) || observedCapabilities.some((value) => !nonempty(value)) || missingCapabilities.some((value) => !nonempty(value))) {
+    errors.push("preflight capabilities must be unique nonempty strings");
+  }
+  const requiredSet = new Set(requiredCapabilities);
+  const observedSet = new Set(observedCapabilities);
+  const expectedMissing = new Set([...requiredSet].filter((value) => !observedSet.has(value)));
+  const missingSet = new Set(missingCapabilities);
+  if (!sameValues(expectedMissing, missingSet)) {
+    errors.push("preflight missing capabilities must exactly equal required minus observed");
+  }
+  const caseBrief = object3(record2.case_brief);
+  if (!isDeepStrictEqual(caseBrief.constraints, record2.constraints)) {
+    errors.push("case_brief constraints must match record constraints");
+  }
+  const run = object3(record2.run);
+  const stage = run.stage;
+  const assurance = run.assurance;
+  const cap = run.worker_cap;
+  const strictShortfall = run.strict === true && run.capability_shortfall === true;
+  if (run.capability_shortfall !== missingSet.size > 0) {
+    errors.push("run capability_shortfall must match preflight missing capabilities");
+  }
+  const workers = array2(run.workers).map(object3);
+  const workerById = /* @__PURE__ */ new Map();
+  for (const worker of workers) {
+    const id = worker.id;
+    if (!nonempty(id) || workerById.has(id)) {
+      errors.push("worker ids must be unique nonempty strings");
+    } else {
+      workerById.set(id, worker);
+    }
+  }
+  const manifest = array2(record2.panel_manifest);
+  if (!isDeepStrictEqual(manifest, array2(run.workers))) {
+    errors.push("panel_manifest must exactly equal run.workers");
+  }
+  const instantiated = new Set([...workerById].filter(([, worker]) => worker.instantiated === true).map(([id]) => id));
+  if (typeof cap !== "number" || !Number.isInteger(cap) || cap < 0 || cap > 8 || instantiated.size > cap) {
+    errors.push("worker cap exceeded or invalid");
+  }
+  const participated = (worker) => stringArray(worker.participated_stages);
+  const eligibleReviewer = (worker) => Boolean(
+    worker && worker.classification === "reviewer" && worker.is_judge !== true && worker.instantiated === true && worker.status === "completed" && worker.blind_round1 === true && worker.context_isolated === true && participated(worker).includes("round1") && !participated(worker).includes("final_judge") && !participated(worker).includes("adaptive_specialist")
+  );
+  const eligibleJudge = (worker) => Boolean(
+    worker && worker.classification === "judge" && worker.is_judge === true && worker.instantiated === true && worker.status === "completed" && worker.blind_round1 === false && worker.context_isolated === true && isDeepStrictEqual(participated(worker), ["final_judge"])
+  );
+  const failures = array2(run.failures).map(object3);
+  const failureIds = failures.map((failure) => failure.worker_id).filter((id) => typeof id === "string");
+  const declaredFailed = new Set([...workerById].filter(([, worker]) => worker.status === "failed").map(([id]) => id));
+  if (!duplicateFree(failureIds) || !sameValues(new Set(failureIds), declaredFailed) || failures.some((failure) => !nonempty(failure.reason))) {
+    errors.push("run.failures must exactly identify failed workers with reasons");
+  }
+  const completedIds = stringArray(run.completed_worker_ids);
+  const reusedIds = stringArray(run.reused_worker_ids);
+  const completed = new Set(completedIds);
+  const reused = new Set(reusedIds);
+  if (!duplicateFree(completedIds) || !duplicateFree(reusedIds) || [...completed].some((id) => reused.has(id))) {
+    errors.push("completed and reused worker identities must be unique and distinct");
+  }
+  for (const [id, worker] of workerById) {
+    if (worker.status === "completed" && !completed.has(id)) errors.push("completed worker missing from completed ids");
+    if (worker.status === "reused" && !reused.has(id)) errors.push("reused worker missing from reused ids");
+    if (["completed", "reused", "failed"].includes(String(worker.status)) && worker.instantiated !== true) {
+      errors.push("lifecycle workers must be instantiated");
+    }
+  }
+  for (const id of [...completed, ...reused]) {
+    const worker = workerById.get(id);
+    if (!worker || completed.has(id) && worker.status !== "completed" || reused.has(id) && worker.status !== "reused") {
+      errors.push("completed/reused ids must match worker lifecycle status");
+    }
+  }
+  const judgeId = run.fresh_judge_id;
+  const fallback = run.judge_fallback;
+  const reviewerIds = new Set([...workerById].filter(([, worker]) => eligibleReviewer(worker)).map(([id]) => id));
+  if ((stage === "HIGH" || stage === "CRITICAL") && !strictShortfall) {
+    if (fallback === null && (!nonempty(judgeId) || !completed.has(judgeId) || !eligibleJudge(workerById.get(judgeId)))) {
+      errors.push("HIGH/CRITICAL requires a completed fresh Judge");
+    }
+    if (typeof judgeId === "string" && (reviewerIds.has(judgeId) || reused.has(judgeId))) {
+      errors.push("Judge must be fresh and not reused");
+    }
+    if (stage === "HIGH" && assurance === "independent" && run.capability_shortfall !== true && reviewerIds.size < 4) {
+      errors.push("HIGH requires at least four eligible completed reviewers");
+    }
+    if (stage === "CRITICAL" && assurance === "independent" && run.capability_shortfall !== true) {
+      if (reviewerIds.size < 5 || reviewerIds.size > 6) errors.push("CRITICAL requires five or six reviewers");
+      const roles = [...reviewerIds].map((id) => String(workerById.get(id)?.role ?? "").toLowerCase()).join(" ");
+      if (!roles.includes("red team") && !roles.includes("independent design-assurance")) {
+        errors.push("CRITICAL requires a red-team or independent design-assurance reviewer");
+      }
+    }
+    if (assurance === "partially_independent" && reviewerIds.size === 0) {
+      errors.push("partially_independent HIGH/CRITICAL requires an eligible reviewer");
+    }
+  } else if (stage === "LOW" && judgeId !== null) {
+    errors.push("LOW must not claim a fresh Judge");
+  } else if (stage === "MEDIUM" && judgeId !== null && (!nonempty(judgeId) || !completed.has(judgeId) || reused.has(judgeId) || !eligibleJudge(workerById.get(judgeId)))) {
+    errors.push("MEDIUM fresh Judge must be completed, isolated, and unreused");
+  }
+  if (fallback !== null) {
+    const fallbackObject = object3(fallback);
+    if (fallbackObject.provisional !== true || !nonempty(fallbackObject.reason) || judgeId !== null) {
+      errors.push("Judge fallback must be provisional, explained, and exclusive of a fresh Judge");
+    }
+    if ((stage === "HIGH" || stage === "CRITICAL") && assurance !== "provisional") {
+      errors.push("HIGH/CRITICAL Judge fallback must use provisional assurance");
+    }
+    if (run.strict === true) errors.push("strict execution cannot use a Judge fallback");
+  }
+  if (strictShortfall) {
+    const cross2 = object3(record2.cross_examination);
+    const emptyRunFields = ["workers", "completed_worker_ids", "reused_worker_ids", "failures", "specialist_additions", "redeliberations"];
+    const emptyRootFields = ["panel_manifest", "material_claims", "issue_ledger", "axis_decisions"];
+    if (assurance !== "provisional" || record2.consensus_proposal !== null || judgeId !== null || fallback !== null || instantiated.size > 0 || missingSet.size === 0 || emptyRunFields.some((field) => array2(run[field]).length > 0) || emptyRootFields.some((field) => array2(record2[field]).length > 0) || cross2.decision !== "skip" || !nonempty(cross2.reason) || ["trigger_items", "selected_item_ids", "coverage", "followups"].some((field) => array2(cross2[field]).length > 0)) {
+      errors.push("strict capability shortfall contract is inconsistent");
+    }
+    return errors;
+  }
+  if (stage === "LOW" && workerById.size > 0) errors.push("LOW must not create panel workers");
+  if (stage === "MEDIUM") {
+    if (reviewerIds.size < 2 || reviewerIds.size > 3) errors.push("MEDIUM requires two or three reviewers");
+    if (assurance === "independent" && judgeId === null) errors.push("MEDIUM independent assurance requires a fresh Judge");
+  }
+  const specialists = array2(run.specialist_additions).map(object3);
+  if (specialists.length > 1) errors.push("at most one specialist addition is allowed");
+  const specialistIds = [];
+  for (const specialist of specialists) {
+    const workerId = specialist.worker_id;
+    if (typeof workerId === "string") specialistIds.push(workerId);
+    const worker = typeof workerId === "string" ? workerById.get(workerId) : void 0;
+    const admission = object3(specialist.admission);
+    if (!nonempty(specialist.admission_reason) || !nonempty(specialist.reason) || specialist.classification !== "adaptive_specialist" || worker?.classification !== "adaptive_specialist" || worker.status !== "completed" || worker.instantiated !== true || worker.is_judge === true || worker.blind_round1 !== false || worker.context_isolated !== true || !participated(worker).includes("adaptive_specialist") || admission.material_gap !== true || admission.distinct_capability !== true || admission.verdict_change_possible !== true || admission.cap_available !== true) {
+      errors.push("specialist admission contract is invalid");
+    }
+  }
+  const declaredSpecialists = new Set([...workerById].filter(([, worker]) => worker.classification === "adaptive_specialist" && worker.instantiated === true && worker.status === "completed").map(([id]) => id));
+  if (!duplicateFree(specialistIds) || !sameValues(new Set(specialistIds), declaredSpecialists)) {
+    errors.push("specialist additions must identify every completed specialist");
+  }
+  const redeliberations = array2(run.redeliberations).map(object3);
+  if (redeliberations.length > 1) errors.push("at most one re-deliberation is allowed");
+  for (const redeliberation of redeliberations) {
+    const scope = stringArray(redeliberation.impacted_scope);
+    const participants = stringArray(redeliberation.participant_worker_ids);
+    if (!scope.length || !participants.length || !duplicateFree(scope) || !duplicateFree(participants) || redeliberation.non_independent !== true) {
+      errors.push("re-deliberation requires unique scope, participants, and non_independent=true");
+    }
+    for (const id of participants) {
+      const worker = workerById.get(id);
+      if (!worker || worker.instantiated !== true || worker.status !== "completed" || !["reviewer", "adaptive_specialist"].includes(String(worker.classification))) {
+        errors.push("re-deliberation participants must be completed existing reviewers or specialists");
+      }
+    }
+  }
+  const claimStatuses = /* @__PURE__ */ new Map();
+  for (const claim2 of array2(record2.material_claims).map(object3)) {
+    if (!nonempty(claim2.id) || claimStatuses.has(claim2.id)) {
+      errors.push("material claim ids must be unique nonempty strings");
+      continue;
+    }
+    const provenance = array2(claim2.provenance).map(object3);
+    if (!provenance.length) errors.push("material claims require provenance");
+    const statuses = /* @__PURE__ */ new Set();
+    for (const source of provenance) {
+      if (!EVIDENCE_STATUSES.has(String(source.verification_status))) {
+        errors.push("material claim has invalid verification status");
+      } else {
+        statuses.add(String(source.verification_status));
+      }
+      if (source.verification_status === "verified" && (!nonempty(source.locator) || !nonempty(source.verification_note))) {
+        errors.push("verified provenance requires a locator and verification note");
+      }
+    }
+    claimStatuses.set(claim2.id, statuses);
+  }
+  const scanForbidden = (value) => {
+    if (Array.isArray(value)) {
+      value.forEach(scanForbidden);
+    } else if (value && typeof value === "object") {
+      for (const [key, child] of Object.entries(value)) {
+        if (FORBIDDEN_KEYS.has(key.toLowerCase())) errors.push("DecisionRecord must not retain raw reasoning, prompts, or directives");
+        scanForbidden(child);
+      }
+    }
+  };
+  scanForbidden(record2);
+  const constraints = new Set(stringArray(record2.constraints));
+  const requiredConstraints = new Set(stringArray(record2.required_constraints));
+  if ([...requiredConstraints].some((constraint) => !constraints.has(constraint))) {
+    errors.push("required constraints must be declared constraints");
+  }
+  const issues = array2(record2.issue_ledger).map(object3);
+  for (const issue2 of issues) {
+    if (!ISSUE_STATUSES.has(String(issue2.status))) errors.push("issue ledger has invalid status");
+  }
+  const observability = object3(record2.observability);
+  for (const value of Object.values(observability)) {
+    if (typeof value === "string" && value !== "NOT_OBSERVABLE") errors.push("observability strings must be NOT_OBSERVABLE");
+  }
+  if (typeof observability.worker_count === "number" && observability.worker_count !== instantiated.size) {
+    errors.push("observability worker_count must match instantiated workers");
+  }
+  const cross = object3(record2.cross_examination);
+  const triggers = array2(cross.trigger_items).map(object3);
+  const selected = stringArray(cross.selected_item_ids);
+  const coverage = array2(cross.coverage).map(object3);
+  const followups = array2(cross.followups).map(object3);
+  if (!nonempty(cross.reason)) errors.push("cross-examination requires a reason");
+  const triggerOrigins = /* @__PURE__ */ new Map();
+  for (const trigger of triggers) {
+    if (!nonempty(trigger.id) || triggerOrigins.has(trigger.id) || !nonempty(trigger.origin_reviewer) || !eligibleReviewer(workerById.get(trigger.origin_reviewer))) {
+      errors.push("cross trigger ids and origins are invalid");
+    } else {
+      triggerOrigins.set(trigger.id, trigger.origin_reviewer);
+    }
+  }
+  if (cross.decision === "skip" && (triggers.length || selected.length || coverage.length || followups.length)) {
+    errors.push("cross-examination skip requires empty details");
+  }
+  if (cross.decision === "run") {
+    if (!triggers.length || !coverage.length || !followups.length || !duplicateFree(selected) || !sameValues(new Set(selected), new Set(triggerOrigins.keys()))) {
+      errors.push("cross-examination run must select every trigger exactly once");
+    }
+    const coverageIds = coverage.map((entry) => String(entry.item_id));
+    if (!duplicateFree(coverageIds) || !sameValues(new Set(coverageIds), new Set(selected))) {
+      errors.push("cross coverage must identify every selected item");
+    }
+    for (const entry of coverage) {
+      const itemId = String(entry.item_id);
+      const reviewerIdsForItem = stringArray(entry.reviewer_ids);
+      if (!duplicateFree(reviewerIdsForItem) || !reviewerIdsForItem.some((id) => id !== triggerOrigins.get(itemId)) || reviewerIdsForItem.some((id) => !eligibleReviewer(workerById.get(id)))) {
+        errors.push("cross coverage requires eligible non-origin reviewers");
+      }
+      if (!followups.some((followup) => reviewerIdsForItem.includes(String(followup.reviewer_id)) && stringArray(followup.item_ids).includes(itemId))) {
+        errors.push("cross coverage must have a matching follow-up");
+      }
+    }
+  }
+  const followupCounts = /* @__PURE__ */ new Map();
+  for (const followup of followups) {
+    const reviewerId = String(followup.reviewer_id);
+    followupCounts.set(reviewerId, (followupCounts.get(reviewerId) ?? 0) + 1);
+    const itemIds = stringArray(followup.item_ids);
+    if (!eligibleReviewer(workerById.get(reviewerId)) || !duplicateFree(itemIds) || itemIds.some((id) => !selected.includes(id))) {
+      errors.push("cross follow-up must use eligible reviewers and selected items");
+    }
+  }
+  if ([...followupCounts.values()].some((count) => count > 1)) errors.push("reviewers may receive at most one cross follow-up");
+  const axes = array2(record2.axis_decisions).map(object3);
+  const axisNames = /* @__PURE__ */ new Set();
+  for (const axis of axes) {
+    if (!nonempty(axis.axis) || axisNames.has(axis.axis)) {
+      errors.push("axis decisions must have unique nonempty names");
+    } else {
+      axisNames.add(axis.axis);
+    }
+    for (const claimId of stringArray(axis.evidence_claim_ids)) {
+      const statuses = claimStatuses.get(claimId);
+      if (!statuses || !sameValues(statuses, /* @__PURE__ */ new Set(["verified"]))) errors.push("axis evidence must reference verified claims");
+    }
+  }
+  const validScope = /* @__PURE__ */ new Set([...claimStatuses.keys(), ...issues.map((issue2) => String(issue2.issue_id)), ...axisNames]);
+  for (const redeliberation of redeliberations) {
+    if (stringArray(redeliberation.impacted_scope).some((id) => !validScope.has(id))) {
+      errors.push("re-deliberation scope must reference existing claims, issues, or axes");
+    }
+  }
+  if ((declaredSpecialists.size || redeliberations.length) && assurance === "independent") {
+    errors.push("material adaptive work cannot claim independent assurance");
+  }
+  if (assurance === "independent" && (missingSet.size || failures.length || reused.size)) {
+    errors.push("independent assurance requires no missing capability, failures, or reuse");
+  }
+  const proposal = object3(record2.consensus_proposal);
+  const status = proposal.status;
+  const supported = stringArray(proposal.supported_by_verified_claims);
+  if ((status === "consensus" || status === "conditional_consensus") && (!supported.length || !axes.length)) {
+    errors.push("consensus requires verified support and decision axes");
+  }
+  for (const claimId of supported) {
+    const statuses = claimStatuses.get(claimId);
+    if (!statuses || !sameValues(statuses, /* @__PURE__ */ new Set(["verified"]))) errors.push("consensus links must reference verified claims only");
+  }
+  const satisfied = stringArray(proposal.satisfied_constraints);
+  if (satisfied.some((constraint) => !constraints.has(constraint))) errors.push("consensus references undeclared constraints");
+  const alignment = array2(proposal.axis_alignment).map(object3);
+  const alignedAxes = alignment.map((entry) => String(entry.axis));
+  if (status !== "no_consensus" && (!duplicateFree(alignedAxes) || !sameValues(new Set(alignedAxes), axisNames))) {
+    errors.push("consensus must link every decision axis exactly once");
+  }
+  if (status !== "no_consensus" && alignment.some((entry) => entry.decision_ref !== entry.axis)) {
+    errors.push("consensus decision_ref must match its axis");
+  }
+  const materialDissent = array2(proposal.unresolved_dissent).map(object3).some((item) => item.material === true);
+  if (status === "consensus") {
+    if (!nonempty(proposal.action) || array2(proposal.conditions).length || materialDissent) errors.push("unconditional consensus shape is invalid");
+    if (issues.some((issue2) => issue2.status === "UNRESOLVED" || issue2.status === "NOT_OBSERVABLE")) errors.push("unresolved issues prevent consensus");
+    if (!sameValues(new Set(satisfied), requiredConstraints)) errors.push("consensus must satisfy every required constraint");
+  } else if (status === "conditional_consensus") {
+    if (!nonempty(proposal.action) || !array2(proposal.conditions).length || !sameValues(new Set(satisfied), requiredConstraints)) {
+      errors.push("conditional consensus shape is invalid");
+    }
+  } else if (status === "no_consensus") {
+    if (proposal.action !== null || !nonempty(proposal.no_consensus_reason) || !array2(proposal.remaining_options).length || !nonempty(proposal.decision_owner)) {
+      errors.push("no_consensus shape is invalid");
+    }
+  }
+  if (status !== "no_consensus" && (proposal.no_consensus_reason !== null || proposal.decision_owner !== null)) {
+    errors.push("only no_consensus may include a no-consensus reason or owner");
+  }
+  return errors;
+}
+
+// mcp-server/src/workflow-service.ts
 function clone2(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -17919,6 +18281,7 @@ var WorkflowService = class {
         this.assertResultSemantics(result);
         if (result.state === "passed") {
           this.assertRequiredArtifacts(target, result);
+          this.assertDeliberationGate(target, result);
           this.assertMandatoryAuditGate(target, result);
         }
         target.state = result.state;
@@ -18056,7 +18419,8 @@ var WorkflowService = class {
   }
   requiredCapabilities(task, dependencyGraph) {
     const before = [];
-    const work = task.requiredCapabilities.filter((capability) => !(capability === POLICY_CAPABILITY.audit && (task.riskLevel === "high" || task.riskLevel === "critical")));
+    const auditRequested = task.requiredCapabilities.includes(POLICY_CAPABILITY.audit) || task.riskLevel === "high" || task.riskLevel === "critical";
+    const work = task.requiredCapabilities.filter((capability) => capability !== POLICY_CAPABILITY.audit);
     const after = [];
     if (task.orchestration.requested && this.hasIndependentWorkUnitPair(dependencyGraph)) {
       before.push(POLICY_CAPABILITY.coordination);
@@ -18064,7 +18428,7 @@ var WorkflowService = class {
     if (task.orchestration.requested && (task.decision.complexity === "complex" || task.decision.hasConflicts)) {
       before.push(POLICY_CAPABILITY.deliberation);
     }
-    if (task.orchestration.requested && (task.riskLevel === "high" || task.riskLevel === "critical")) {
+    if (task.orchestration.requested && auditRequested) {
       after.push(POLICY_CAPABILITY.audit);
     }
     return [.../* @__PURE__ */ new Set([...before, ...work, ...after])];
@@ -18096,14 +18460,64 @@ var WorkflowService = class {
       });
     }
   }
+  assertDeliberationGate(stage, result) {
+    if (!stage.requiredArtifacts.includes("decision-record")) return;
+    let record2;
+    try {
+      record2 = this.validator.decisionRecord(result.output?.decisionRecord);
+    } catch (error2) {
+      throw new WorkflowContractError("GATE_FAILED", "Deliberation requires a schema-valid DecisionRecord.v1.", {
+        stageId: stage.stageId,
+        cause: error2 instanceof Error ? error2.message : String(error2)
+      });
+    }
+    const semanticErrors = validateDecisionRecordSemantics(record2);
+    if (semanticErrors.length > 0) {
+      throw new WorkflowContractError("GATE_FAILED", "DecisionRecord.v1 failed canonical semantic validation.", {
+        stageId: stage.stageId,
+        semanticErrors
+      });
+    }
+    const run = record2.run;
+    const proposal = record2.consensus_proposal;
+    if (run.assurance === "provisional" || run.capability_shortfall !== false || proposal === null || proposal.status === "no_consensus") {
+      throw new WorkflowContractError("GATE_FAILED", "Deliberation result is not eligible to advance the workflow.", {
+        stageId: stage.stageId,
+        assurance: run.assurance,
+        capabilityShortfall: run.capability_shortfall,
+        consensusStatus: proposal?.status ?? null
+      });
+    }
+    if ((run.stage === "HIGH" || run.stage === "CRITICAL") && run.strict !== true) {
+      throw new WorkflowContractError("GATE_FAILED", "HIGH and CRITICAL deliberation requires strict execution assurance.", {
+        stageId: stage.stageId,
+        stage: run.stage
+      });
+    }
+    if (proposal.status === "conditional_consensus" && result.output?.conditionsVerified !== true) {
+      throw new WorkflowContractError("GATE_FAILED", "Conditional consensus may advance only after its conditions are verified.", {
+        stageId: stage.stageId
+      });
+    }
+  }
   assertMandatoryAuditGate(stage, result) {
     if (stage.riskGate !== "mandatory") return;
     const output = result.output;
     const auditorId = output?.auditorId;
     const implementationActorIds = output?.implementationActorIds;
-    if (output?.gateVerdict !== "PASS" || typeof auditorId !== "string" || auditorId.length === 0 || !Array.isArray(implementationActorIds) || implementationActorIds.length === 0 || implementationActorIds.some((actorId) => typeof actorId !== "string" || actorId.length === 0)) {
-      throw new WorkflowContractError("GATE_FAILED", "Mandatory audit requires a PASS verdict and identified independent actors.", {
+    const auditTarget = output?.auditTarget;
+    const currentTarget = output?.currentTarget;
+    const blockingFindings = output?.blockingFindings;
+    const phase = output?.phase;
+    if (output?.gateVerdict !== "PASS" || typeof auditorId !== "string" || auditorId.length === 0 || !Array.isArray(implementationActorIds) || implementationActorIds.length === 0 || implementationActorIds.some((actorId) => typeof actorId !== "string" || actorId.length === 0) || typeof auditTarget !== "string" || auditTarget.length === 0 || typeof currentTarget !== "string" || currentTarget !== auditTarget || output?.freshContext !== true || output?.delegationAllowed !== false || !Array.isArray(blockingFindings) || blockingFindings.length > 0 || output?.stale !== false || !["pre-execution", "post-execution", "pre-deploy", "post-deploy"].includes(String(phase)) || typeof output?.postExecutionVerified !== "boolean") {
+      throw new WorkflowContractError("GATE_FAILED", "Mandatory audit requires a current, fresh, non-delegated PASS with no blocking findings.", {
         stageId: stage.stageId
+      });
+    }
+    if ((phase === "post-execution" || phase === "post-deploy") && output.postExecutionVerified !== true) {
+      throw new WorkflowContractError("GATE_FAILED", "Post-execution and post-deploy audits require verified resulting state.", {
+        stageId: stage.stageId,
+        phase
       });
     }
     if (implementationActorIds.includes(auditorId)) {
