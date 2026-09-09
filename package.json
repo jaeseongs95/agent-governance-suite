@@ -6,7 +6,7 @@
   "type": "module",
   "packageManager": "pnpm@11.19.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13"
   },
   "scripts": {
     "build": "tsc --noEmit && node scripts/build.mjs",

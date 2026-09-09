@@ -85,7 +85,7 @@ MCP를 사용할 때는 연결이 성공했고 도구 목록과 입력 스키마
 5. 필요할 때 `get_workflow_status`로 현재 revision과 다음 stage를 확인한다. 모든 필수 stage와 감사 게이트가 `passed`인 경우에만 `finalize_workflow`를 호출한다.
 6. 통합 실행을 더 진행하지 않기로 확정하면 `abort_workflow`로 해당 run을 닫는다.
 
-MCP 프로세스를 다시 시작하면 메모리의 run이 사라진다. `RUN_NOT_FOUND`를 받으면 이전 revision이나 stage 결과를 추측해 복구하지 말고 새 계획과 run을 만든다.
+MCP workflow run과 계획 서명 키는 SQLite에 저장되므로 프로세스를 다시 시작해도 이어서 처리할 수 있다. `RUN_NOT_FOUND`를 받으면 다른 데이터베이스 경로를 사용 중인지 먼저 확인하고, 저장된 상태가 실제로 없을 때만 새 계획과 run을 만든다. 이전 revision이나 stage 결과를 추측해 복구하지 않는다.
 
 - 선택한 MCP 도구가 필요한 작업만 수행하는지와 사용자가 부여한 권한 안인지 확인한다.
 - 필요한 최소 입력만 전달하고, 비밀값·개인정보·확인되지 않은 사실을 도구 입력에 새로 넣지 않는다.

@@ -3262,8 +3262,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path3) {
-      let input = path3;
+    function removeDotSegments(path5) {
+      let input = path5;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3672,8 +3672,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path3 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path3 && path3 !== "/" ? path3 : void 0;
+        const path5 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path5 && path5 !== "/" ? path5 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -8205,10 +8205,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path3) {
-  if (!path3)
+function getElementAtPath(obj, path5) {
+  if (!path5)
     return obj;
-  return path3.reduce((acc, key) => acc?.[key], obj);
+  return path5.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -8620,11 +8620,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path3, issues) {
+function prefixIssues(path5, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path3);
+    iss.path.unshift(path5);
     return iss;
   });
 }
@@ -9053,16 +9053,16 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
 }
 function formatError(error2, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error3, path3 = []) => {
+  const processError = (error3, path5 = []) => {
     for (const issue2 of error3.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path3, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path3, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path3, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else {
-        const fullpath = [...path3, ...issue2.path];
+        const fullpath = [...path5, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -15982,9 +15982,24 @@ function selectSkillByCapability(providers, capability) {
 }
 
 // mcp-server/src/runtime-config.ts
+import { homedir } from "node:os";
+import path2 from "node:path";
 import { fileURLToPath } from "node:url";
 function resolveRegistryPath(environment = process.env, moduleUrl = import.meta.url) {
   return environment.SKILL_REGISTRY_PATH ?? fileURLToPath(new URL("../../skills/registry.json", moduleUrl));
+}
+function resolveWorkflowDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  const configured = environment.AGENT_GOVERNANCE_DB_PATH?.trim();
+  if (configured) return path2.resolve(currentWorkingDirectory, configured);
+  let stateRoot;
+  if (platform === "win32") {
+    stateRoot = environment.LOCALAPPDATA?.trim() || path2.join(homeDirectory, "AppData", "Local");
+  } else if (platform === "darwin") {
+    stateRoot = path2.join(homeDirectory, "Library", "Application Support");
+  } else {
+    stateRoot = environment.XDG_STATE_HOME?.trim() || path2.join(homeDirectory, ".local", "state");
+  }
+  return path2.resolve(stateRoot, "agent-governance-suite", "workflows.sqlite3");
 }
 
 // mcp-server/src/schema-validator.ts
@@ -15992,11 +16007,11 @@ var import__ = __toESM(require__(), 1);
 import { createHash as createHash2 } from "node:crypto";
 import { readFileSync as readFileSync2, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
-import path2 from "node:path";
+import path3 from "node:path";
 var addFormats = createRequire(import.meta.url)("ajv-formats");
 function loadSchema(fileName) {
-  const path3 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path3, "utf8"));
+  const path5 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path5, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -16069,9 +16084,9 @@ var ContractValidator = class {
     return this.assertSchemaFile(rootDirectory, reference, value, label);
   }
   assertSchemaFile(rootDirectory, reference, value, label) {
-    const root = path2.resolve(rootDirectory);
-    const schemaPath = path2.resolve(root, reference.path);
-    if (schemaPath !== root && !schemaPath.startsWith(`${root}${path2.sep}`)) {
+    const root = path3.resolve(rootDirectory);
+    const schemaPath = path3.resolve(root, reference.path);
+    if (schemaPath !== root && !schemaPath.startsWith(`${root}${path3.sep}`)) {
       throw new WorkflowContractError("INVALID_INPUT", `${label} schema escapes the plugin root.`, {
         schemaPath: reference.path
       });
@@ -16088,10 +16103,10 @@ var ContractValidator = class {
     const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
     addFormats(ajv);
     const schemas = /* @__PURE__ */ new Map();
-    for (const directory of [path2.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
+    for (const directory of [path3.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
       for (const candidate of this.schemaFiles(directory)) {
         const schema = JSON.parse(readFileSync2(candidate, "utf8"));
-        const id = typeof schema.$id === "string" ? schema.$id : `file://${candidate.split(path2.sep).join("/")}`;
+        const id = typeof schema.$id === "string" ? schema.$id : `file://${candidate.split(path3.sep).join("/")}`;
         if (!schemas.has(id)) schemas.set(id, schema);
       }
     }
@@ -16109,12 +16124,12 @@ var ContractValidator = class {
   }
   skillSchemaRoot(rootDirectory, schemaPath) {
     const segments = schemaPath.split("/");
-    return segments[0] === "skills" && segments[1] ? path2.join(rootDirectory, "skills", segments[1]) : path2.join(rootDirectory, "contracts");
+    return segments[0] === "skills" && segments[1] ? path3.join(rootDirectory, "skills", segments[1]) : path3.join(rootDirectory, "contracts");
   }
   schemaFiles(directory) {
     const files = [];
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      const candidate = path2.join(directory, entry.name);
+      const candidate = path3.join(directory, entry.name);
       if (entry.isDirectory()) files.push(...this.schemaFiles(candidate));
       else if (entry.isFile() && entry.name.endsWith(".schema.json")) files.push(candidate);
     }
@@ -17900,7 +17915,7 @@ function createMcpServer(service) {
       },
       {
         name: "start_workflow",
-        description: "Create an in-memory running run from a ready orchestrated workflow plan.",
+        description: "Create a durable running run from a ready orchestrated workflow plan.",
         inputSchema: contractSchemas.workflowPlan,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
@@ -17912,7 +17927,7 @@ function createMcpServer(service) {
       },
       {
         name: "get_workflow_status",
-        description: "Read the current in-memory run receipt.",
+        description: "Read the current persisted run receipt.",
         inputSchema: workflowIdInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
@@ -17924,7 +17939,7 @@ function createMcpServer(service) {
       },
       {
         name: "abort_workflow",
-        description: "Abort a non-terminal in-memory workflow using optimistic revision control.",
+        description: "Abort a non-terminal persisted workflow using optimistic revision control.",
         inputSchema: revisionInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false }
       }
@@ -17961,8 +17976,190 @@ function createMcpServer(service) {
   return server;
 }
 
+// mcp-server/src/sqlite-workflow-store.ts
+import { chmodSync, mkdirSync } from "node:fs";
+import path4 from "node:path";
+import { DatabaseSync } from "node:sqlite";
+var SCHEMA_VERSION = 1;
+var SqliteWorkflowStore = class {
+  constructor(databasePath) {
+    this.databasePath = databasePath;
+    if (!databasePath.trim()) {
+      throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
+    }
+    if (databasePath !== ":memory:") {
+      mkdirSync(path4.dirname(path4.resolve(databasePath)), { recursive: true, mode: 448 });
+    }
+    let openedDatabase = null;
+    try {
+      openedDatabase = new DatabaseSync(databasePath);
+      this.database = openedDatabase;
+      this.database.exec("PRAGMA busy_timeout = 5000;");
+      this.database.exec("PRAGMA synchronous = FULL;");
+      if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
+      this.initializeSchema();
+      if (databasePath !== ":memory:" && process.platform !== "win32") {
+        chmodSync(path4.resolve(databasePath), 384);
+      }
+    } catch (cause) {
+      try {
+        openedDatabase?.close();
+      } catch {
+      }
+      throw this.storageError("Cannot initialize the workflow database.", cause);
+    }
+  }
+  databasePath;
+  database;
+  closed = false;
+  getOrCreateSecret(name, create) {
+    try {
+      return this.transaction(() => {
+        const existing = this.database.prepare("SELECT value FROM workflow_metadata WHERE key = ?").get(name);
+        if (existing) return existing.value;
+        const value = create();
+        this.database.prepare(`
+          INSERT INTO workflow_metadata (key, value, updated_at)
+          VALUES (?, ?, ?)
+        `).run(name, value, (/* @__PURE__ */ new Date()).toISOString());
+        return value;
+      });
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError("Cannot read or create workflow metadata.", cause, { key: name });
+    }
+  }
+  nextRunSequence() {
+    try {
+      return this.transaction(() => {
+        const row = this.database.prepare("SELECT value FROM workflow_metadata WHERE key = 'run-sequence'").get();
+        const current = row && /^(0|[1-9][0-9]*)$/.test(row.value) ? Number.parseInt(row.value, 10) : 0;
+        if (row && !/^(0|[1-9][0-9]*)$/.test(row.value) || !Number.isSafeInteger(current) || current < 0) {
+          throw new WorkflowContractError("INVALID_INPUT", "Workflow run sequence is invalid.", { value: row?.value ?? null });
+        }
+        const next = current + 1;
+        if (!Number.isSafeInteger(next)) {
+          throw new WorkflowContractError("INVALID_INPUT", "Workflow run sequence is exhausted.", { value: row?.value ?? null });
+        }
+        this.database.prepare(`
+          INSERT INTO workflow_metadata (key, value, updated_at)
+          VALUES ('run-sequence', ?, ?)
+          ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+        `).run(String(next), (/* @__PURE__ */ new Date()).toISOString());
+        return next;
+      });
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError("Cannot reserve the next workflow run sequence.", cause);
+    }
+  }
+  insertRun(receipt) {
+    try {
+      this.database.prepare(`
+        INSERT INTO workflow_runs (run_id, revision, receipt_json, updated_at)
+        VALUES (?, ?, ?, ?)
+      `).run(receipt.runId, receipt.revision, JSON.stringify(receipt), (/* @__PURE__ */ new Date()).toISOString());
+    } catch (cause) {
+      throw this.storageError("Cannot persist the workflow run.", cause, { runId: receipt.runId });
+    }
+  }
+  getRun(runId) {
+    try {
+      const row = this.database.prepare(`
+        SELECT revision, receipt_json
+        FROM workflow_runs
+        WHERE run_id = ?
+      `).get(runId);
+      if (!row) return null;
+      const receipt = JSON.parse(row.receipt_json);
+      if (receipt.runId !== runId || receipt.revision !== row.revision) {
+        throw new WorkflowContractError("INVALID_INPUT", "Stored workflow receipt metadata does not match its payload.", {
+          runId,
+          storedRevision: row.revision,
+          receiptRunId: receipt.runId,
+          receiptRevision: receipt.revision
+        });
+      }
+      return receipt;
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError("Cannot read the workflow run.", cause, { runId });
+    }
+  }
+  updateRun(receipt, expectedRevision) {
+    try {
+      const result = this.database.prepare(`
+        UPDATE workflow_runs
+        SET revision = ?, receipt_json = ?, updated_at = ?
+        WHERE run_id = ? AND revision = ?
+      `).run(
+        receipt.revision,
+        JSON.stringify(receipt),
+        (/* @__PURE__ */ new Date()).toISOString(),
+        receipt.runId,
+        expectedRevision
+      );
+      return Number(result.changes) === 1;
+    } catch (cause) {
+      throw this.storageError("Cannot update the workflow run.", cause, { runId: receipt.runId });
+    }
+  }
+  close() {
+    if (this.closed) return;
+    this.database.close();
+    this.closed = true;
+  }
+  initializeSchema() {
+    const row = this.database.prepare("PRAGMA user_version").get();
+    if (row.user_version > SCHEMA_VERSION) {
+      throw new WorkflowContractError("INVALID_INPUT", "Workflow database schema is newer than this server supports.", {
+        databasePath: this.databasePath,
+        supportedVersion: SCHEMA_VERSION,
+        actualVersion: row.user_version
+      });
+    }
+    this.transaction(() => {
+      this.database.exec(`
+        CREATE TABLE IF NOT EXISTS workflow_metadata (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        ) STRICT;
+        CREATE TABLE IF NOT EXISTS workflow_runs (
+          run_id TEXT PRIMARY KEY,
+          revision INTEGER NOT NULL CHECK (revision >= 0),
+          receipt_json TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        ) STRICT;
+        PRAGMA user_version = ${SCHEMA_VERSION};
+      `);
+    });
+  }
+  transaction(operation) {
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      const result = operation();
+      this.database.exec("COMMIT;");
+      return result;
+    } catch (cause) {
+      try {
+        this.database.exec("ROLLBACK;");
+      } catch {
+      }
+      throw cause;
+    }
+  }
+  storageError(message, cause, details = {}) {
+    return new WorkflowContractError("INVALID_INPUT", message, {
+      ...details,
+      databasePath: this.databasePath,
+      cause: cause instanceof Error ? cause.message : String(cause)
+    });
+  }
+};
+
 // mcp-server/src/workflow-service.ts
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 // mcp-server/src/decision-record-validator.ts
 import { isDeepStrictEqual } from "node:util";
@@ -18315,8 +18512,50 @@ function validateDecisionRecordSemantics(record2) {
   return errors;
 }
 
-// mcp-server/src/workflow-service.ts
+// mcp-server/src/workflow-store.ts
+import { randomBytes } from "node:crypto";
+var PLAN_SIGNING_KEY = "plan-signing-key";
 function clone2(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+var InMemoryWorkflowStore = class {
+  runs = /* @__PURE__ */ new Map();
+  secrets = /* @__PURE__ */ new Map();
+  runSequence = 0;
+  getOrCreateSecret(name, create) {
+    const existing = this.secrets.get(name);
+    if (existing) return existing;
+    const value = create();
+    this.secrets.set(name, value);
+    return value;
+  }
+  nextRunSequence() {
+    this.runSequence += 1;
+    return this.runSequence;
+  }
+  insertRun(receipt) {
+    if (this.runs.has(receipt.runId)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Workflow run already exists.", { runId: receipt.runId });
+    }
+    this.runs.set(receipt.runId, clone2(receipt));
+  }
+  getRun(runId) {
+    const receipt = this.runs.get(runId);
+    return receipt ? clone2(receipt) : null;
+  }
+  updateRun(receipt, expectedRevision) {
+    const current = this.runs.get(receipt.runId);
+    if (!current || current.revision !== expectedRevision) return false;
+    this.runs.set(receipt.runId, clone2(receipt));
+    return true;
+  }
+};
+function createPlanSigningKey() {
+  return randomBytes(32).toString("base64url");
+}
+
+// mcp-server/src/workflow-service.ts
+function clone3(value) {
   return JSON.parse(JSON.stringify(value));
 }
 function apiOk(data) {
@@ -18342,15 +18581,20 @@ function canonicalJson(value) {
   throw new WorkflowContractError("INVALID_INPUT", "Plan contains a non-serializable value.");
 }
 var WorkflowService = class {
-  constructor(registry2, validator = new ContractValidator()) {
+  constructor(registry2, validator = new ContractValidator(), store = new InMemoryWorkflowStore()) {
     this.registry = registry2;
     this.validator = validator;
+    this.store = store;
+    const encodedKey = this.store.getOrCreateSecret(PLAN_SIGNING_KEY, createPlanSigningKey);
+    this.planSigningKey = Buffer.from(encodedKey, "base64url");
+    if (this.planSigningKey.length !== 32) {
+      throw new WorkflowContractError("INVALID_INPUT", "Stored plan signing key is invalid.");
+    }
   }
   registry;
   validator;
-  runs = /* @__PURE__ */ new Map();
-  planSigningKey = randomBytes(32);
-  runSequence = 0;
+  store;
+  planSigningKey;
   planWorkflow(rawTask) {
     try {
       const task = this.validator.taskEnvelope(rawTask);
@@ -18364,7 +18608,7 @@ var WorkflowService = class {
   }
   startWorkflow(rawPlan) {
     try {
-      const plan = clone2(this.validator.workflowPlan(rawPlan));
+      const plan = clone3(this.validator.workflowPlan(rawPlan));
       this.assertPlanIntegrity(plan);
       if (plan.executionMode !== "orchestrated") {
         throw new WorkflowContractError("INVALID_TRANSITION", "Direct skill plans are not started by the MCP orchestrator.");
@@ -18376,7 +18620,7 @@ var WorkflowService = class {
           planState: plan.state
         });
       }
-      const runId = `run-${plan.taskId}-${++this.runSequence}`;
+      const runId = `run-${plan.taskId}-${this.store.nextRunSequence()}`;
       plan.state = "running";
       this.setRunningStagePointers(plan);
       const receipt = {
@@ -18391,8 +18635,8 @@ var WorkflowService = class {
         error: null
       };
       this.assertReceipt(receipt);
-      this.runs.set(runId, { receipt });
-      return apiOk(clone2(receipt));
+      this.store.insertRun(receipt);
+      return apiOk(clone3(receipt));
     } catch (error2) {
       return apiError(this.toErrorBody(error2));
     }
@@ -18433,7 +18677,7 @@ var WorkflowService = class {
           this.assertMandatoryAuditGate(target, result);
         }
         target.state = result.state;
-        receipt.stageResults.push(clone2(result));
+        receipt.stageResults.push(clone3(result));
         this.addUnique(receipt.blockers, result.blockers);
         this.addUnique(receipt.unresolved, result.blockers);
         if (result.state !== "passed") {
@@ -18457,7 +18701,7 @@ var WorkflowService = class {
   }
   getWorkflowStatus(runId) {
     try {
-      return apiOk(clone2(this.requireRun(runId).receipt));
+      return apiOk(clone3(this.requireRun(runId)));
     } catch (error2) {
       return apiError(this.toErrorBody(error2));
     }
@@ -18926,7 +19170,7 @@ var WorkflowService = class {
     const expected = Buffer.from(this.signPlan(plan), "base64url");
     const supplied = Buffer.from(plan.integrityToken, "base64url");
     if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Workflow plan integrity token is missing, modified, or foreign to this MCP process.");
+      throw new WorkflowContractError("INVALID_INPUT", "Workflow plan integrity token is missing, modified, or signed by a different workflow store.");
     }
   }
   planWithoutIntegrityToken(plan) {
@@ -18936,7 +19180,7 @@ var WorkflowService = class {
   }
   change(runId, expectedRevision, mutate) {
     try {
-      const receipt = this.requireRun(runId).receipt;
+      const receipt = this.requireRun(runId);
       if (!Number.isInteger(expectedRevision) || expectedRevision !== receipt.revision) {
         throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
           expectedRevision,
@@ -18946,17 +19190,25 @@ var WorkflowService = class {
       mutate(receipt);
       receipt.revision += 1;
       this.assertReceipt(receipt);
-      return apiOk(clone2(receipt));
+      if (!this.store.updateRun(receipt, expectedRevision)) {
+        const current = this.store.getRun(runId);
+        throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
+          expectedRevision,
+          actualRevision: current?.revision ?? null
+        });
+      }
+      return apiOk(clone3(receipt));
     } catch (error2) {
       return apiError(this.toErrorBody(error2));
     }
   }
   requireRun(runId) {
-    const stored = this.runs.get(runId);
-    if (!stored) {
-      throw new WorkflowContractError("RUN_NOT_FOUND", "Run was not found in this in-memory MCP process.", { runId });
+    const receipt = this.store.getRun(runId);
+    if (!receipt) {
+      throw new WorkflowContractError("RUN_NOT_FOUND", "Run was not found in workflow storage.", { runId });
     }
-    return stored;
+    this.assertReceipt(receipt);
+    return receipt;
   }
   assertReceipt(receipt) {
     this.validator.workflowPlan(receipt.plan);
@@ -18975,8 +19227,10 @@ var WorkflowService = class {
 // mcp-server/src/index.ts
 async function main() {
   const registryPath = resolveRegistryPath();
+  const store = new SqliteWorkflowStore(resolveWorkflowDatabasePath());
+  process.once("exit", () => store.close());
   const validator = new ContractValidator();
-  const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator);
+  const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store);
   const server = createMcpServer(service);
   await server.connect(new StdioServerTransport());
 }

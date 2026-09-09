@@ -20,7 +20,7 @@ plugin manifest
 
 MCP 서버는 플러그인 루트의 `.mcp.json`에 등록됩니다. MCP 응답은 외부 상태를 관측하는 근거일 수 있지만, 호출 수락만으로 성공을 뜻하지 않습니다. MCP가 없을 때도 단독 전문 스킬로 처리할 수 있는 요청은 계속할 수 있습니다.
 
-run과 revision은 프로세스 메모리에만 저장합니다. 서버를 다시 시작하면 이전 run은 복구하지 않으며 `RUN_NOT_FOUND`를 반환합니다. 저장되는 증거는 경로·식별자·검증 여부·요약뿐이고 원문 코드와 전체 로그는 저장하지 않습니다.
+run, revision, run ID sequence와 계획 서명 키는 SQLite에 저장합니다. 서버를 다시 시작해도 이전 run을 복구하고, 같은 데이터베이스를 공유하는 서버 인스턴스는 optimistic revision 검증으로 충돌을 거부합니다. 저장 단위는 전체 `WorkflowReceipt`의 평문 JSON입니다. 따라서 `StageResult`의 provider output, evidence note, findings, blockers와 error에 원문 코드, 로그, 비밀값이나 개인정보가 들어 있으면 그 내용도 DB에 남습니다. MCP 서버는 필드 내용을 걸러 내거나 자동으로 만료·삭제하지 않으므로 호출자는 민감한 원문을 제출하지 않고 DB 경로의 접근 권한과 보존 기간을 관리해야 합니다.
 
 고위험 변경의 완료 판정은 오케스트레이터가 내리지 않습니다. 최종 대상과 증거를 확인한 독립 감사 스킬의 결과를 그대로 통합합니다. `mutation-risk-preflight`의 통과는 실행 승인이나 감사 통과를 대신하지 않습니다.
 
