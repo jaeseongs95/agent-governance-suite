@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/api-result.v1.schema.json",
+  "title": "ApiResult.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "ok", "data", "error"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "ok": { "type": "boolean" },
+    "data": {},
+    "error": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/error" }] }
+  },
+  "$defs": {
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "details"],
+      "properties": {
+        "code": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE"] },
+        "message": { "type": "string", "minLength": 1 },
+        "details": { "type": ["object", "null"], "additionalProperties": true }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "cases": [
+    {
+      "id": "high-risk-frozen-target",
+      "kind": "normal",
+      "scenario": "A fresh auditor receives a frozen high-risk target, raw verification evidence, and recovery evidence.",
+      "expected": "Check the evidence independently and return PASS only when no material finding remains."
+    },
+    {
+      "id": "ordinary-low-risk-review",
+      "kind": "boundary",
+      "scenario": "A low-risk wording change has no explicit audit request or high-risk completion gate.",
+      "expected": "Do not activate the specialized audit gate automatically."
+    },
+    {
+      "id": "auditor-not-independent",
+      "kind": "expected-failure",
+      "scenario": "The implementer and auditor are the same agent and no fresh independent context is observable.",
+      "expected": "Return BLOCKED and identify the missing independence evidence."
+    }
+  ]
+}

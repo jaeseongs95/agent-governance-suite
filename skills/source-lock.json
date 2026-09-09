@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "sources": [
+    {
+      "skillId": "coordinate-subagents",
+      "path": "skills/coordinate-subagents",
+      "source": "https://github.com/jaeseongs95/coordinate-subagents.git",
+      "ref": "8b5c943",
+      "commit": "8b5c943826a2e2c4b03d03ecbdfa5322efcc077c",
+      "checksum": "sha256:23ed1848ca35c06bd68a0fc390e0f22a694b7c9fe2e72d55b98d5df423c7e4f3",
+      "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
+    },
+    {
+      "skillId": "independent-audit-gate",
+      "path": "skills/independent-audit-gate",
+      "source": "https://github.com/jaeseongs95/codex-independent-audit-gate.git",
+      "ref": "v0.1.0",
+      "commit": "181e059c736e8c71fa63c2c2f390d105f160a440",
+      "checksum": "sha256:408bfd087595be23240fdb49bb859bca79cc881d6154a57f81f2ef95d2a961d1",
+      "checksumScope": "relative paths and normalized text bytes under skills/independent-audit-gate"
+    },
+    {
+      "skillId": "independent-deliberation-panel",
+      "path": "skills/independent-deliberation-panel",
+      "source": "https://github.com/jaeseongs95/independent-deliberation-panel.git",
+      "ref": "v0.1.0",
+      "commit": "755378136e822412d726f43930b77ed1eb69bf7d",
+      "checksum": "sha256:98d68209bd1fccdcd88c1681866dc67c0d52121d4f5b897bcc31bad39660bd8c",
+      "checksumScope": "relative paths and normalized text bytes under skills/independent-deliberation-panel"
+    }
+  ]
+}

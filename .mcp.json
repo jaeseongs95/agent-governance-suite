@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "agent-governance-suite": {
+      "command": "node",
+      "args": [
+        "mcp-server/dist/server.mjs"
+      ]
+    }
+  }
+}

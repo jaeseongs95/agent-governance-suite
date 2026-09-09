@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "cases": [
+    {
+      "id": "medium-independent-review",
+      "kind": "normal",
+      "input": "A decision has competing requirements and multiple independently checkable failure modes.",
+      "expected": "Select two or three distinct perspectives and integrate their evidence."
+    },
+    {
+      "id": "low-no-subagents",
+      "kind": "boundary",
+      "input": "A request is a short factual lookup with no material tradeoff.",
+      "expected": "Classify it as LOW and do not create subagents."
+    },
+    {
+      "id": "unverified-material-claim",
+      "kind": "expected-failure",
+      "input": "A proposed consensus depends on a material claim whose provenance cannot be checked.",
+      "expected": "Keep the claim unverified and return a conditional or unresolved verdict instead of treating it as fact."
+    }
+  ]
+}
