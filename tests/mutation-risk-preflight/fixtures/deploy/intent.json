@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "operationId": "deploy-production",
+  "actionClass": "deploy",
+  "targets": [{ "locator": "service://payments", "targetType": "service", "environment": "production", "expectedFingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111" }],
+  "plannedCommandOrTool": { "tool": "deployment-api", "action": "deploy-release" },
+  "scopeRef": { "locator": "evidence://scope", "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222", "includedTargets": ["service://payments"], "excludedTargets": [] },
+  "authorizationRef": { "locator": "evidence://auth", "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333", "allowedActions": ["deploy"], "allowedTargets": ["service://payments"], "environments": ["production"] },
+  "approvalEvidenceRefs": [],
+  "currentStateEvidenceRefs": [{ "locator": "evidence://state", "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555", "targetLocator": "service://payments", "fingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111" }],
+  "recoveryPlan": { "available": true, "method": "redeploy previous release", "backupRef": "release://previous", "restoreProcedureRef": "runbook://rollback", "restoreTestEvidenceRef": "evidence://rollback-test", "irreversibilityAccepted": false },
+  "expectedBlastRadius": { "affectedTargets": 1, "affectedUsers": 100, "external": true, "description": "production payments service" }
+}

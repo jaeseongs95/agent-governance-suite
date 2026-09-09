@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "request": {
+    "schemaVersion": "1.0.0",
+    "taskId": "task-conflict",
+    "request": "docs 범위를 정리해 줘.",
+    "instructionResolutionRefs": ["artifact://instruction-scope-resolution/3"],
+    "pathSemantics": "posix",
+    "authorizationEvidence": [
+      { "action": "modify docs", "effect": "allow", "authority": "user", "sourceLocator": "user-request" }
+    ],
+    "suppliedFacts": [],
+    "userDecisions": []
+  },
+  "report": {
+    "schemaVersion": "1.0.0",
+    "taskEnvelope": {
+      "schemaVersion": "1.0.0",
+      "taskId": "task-conflict",
+      "objective": "문서 범위를 정리한다.",
+      "scope": { "included": ["docs/"], "excluded": ["docs/"] },
+      "acceptanceCriteria": ["[AC-001] 범위가 충돌하지 않는다."],
+      "riskLevel": "medium",
+      "workUnits": [],
+      "requiredCapabilities": [],
+      "constraints": [],
+      "authorization": { "allowedActions": ["modify docs"], "prohibitedActions": [], "approvalRequired": [] },
+      "decision": { "complexity": "simple", "hasConflicts": true },
+      "orchestration": { "requested": false, "mcpAvailable": false }
+    },
+    "acceptanceEvidencePlan": {
+      "schemaVersion": "1.0.0",
+      "criteria": [
+        { "criterionId": "AC-001", "statement": "[AC-001] 범위가 충돌하지 않는다.", "verificationMethod": "포함·제외 집합을 비교한다.", "expectedEvidenceKinds": ["document"], "passCondition": "교집합이 없다." }
+      ]
+    },
+    "provenance": [
+      { "field": "/objective", "valueSummary": "문서 범위 정리", "sourceLocator": "user-request", "basis": "explicit" },
+      { "field": "/scope", "valueSummary": "충돌하는 docs 범위", "sourceLocator": "user-request", "basis": "explicit" },
+      { "field": "/riskLevel", "valueSummary": "로컬 변경", "sourceLocator": "risk-rubric", "basis": "verified-inference" },
+      { "field": "/authorization", "valueSummary": "문서 변경", "sourceLocator": "user-request", "basis": "verified-inference" }
+    ],
+    "authorizationProvenance": [
+      { "action": "modify docs", "envelopeField": "/authorization/allowedActions", "effect": "allow", "authority": "user", "sourceLocator": "user-request" }
+    ],
+    "assumptions": [],
+    "ambiguities": [],
+    "contradictions": [
+      { "fields": ["/scope/included", "/scope/excluded"], "description": "docs가 포함과 제외에 모두 있다.", "sourceLocators": ["user-request"] }
+    ],
+    "verdict": "NEEDS_INPUT"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "objective": "반복되는 권한 오류의 다음 판별 검사를 정한다.",
+  "expectedBehavior": "빌드가 의존성 캐시를 읽고 완료된다.",
+  "episodes": [
+    {
+      "attemptId": "attempt-1",
+      "operation": "pnpm build",
+      "stableFailureTuple": { "errorCode": "EACCES", "topFrame": "cache.open", "timestamp": "2026-01-01T00:00:00Z" },
+      "environmentDigest": "env:windows-node22",
+      "changeSummary": "초기 실패",
+      "evidenceRefs": ["logs/build-1.txt"]
+    },
+    {
+      "attemptId": "attempt-2",
+      "operation": "pnpm build",
+      "stableFailureTuple": { "topFrame": "cache.open", "errorCode": "EACCES", "timestamp": "2026-01-01T00:01:00Z" },
+      "environmentDigest": "env:windows-node22",
+      "changeSummary": "소스 변경 뒤 재실행",
+      "evidenceRefs": ["logs/build-2.txt"]
+    }
+  ],
+  "lastKnownGood": null,
+  "constraints": ["파일을 수정하지 않는다."],
+  "authorization": { "allowedChecks": ["read-cache-acl"], "approvalRequired": [], "prohibitedChecks": ["delete-cache"] },
+  "evidenceBindings": [
+    { "evidenceRef": "logs/build-1.txt", "artifactDigest": "sha256:b15fc364ee913fda83d4a4f6e670c2eb59bd532dd1d1d877a1dd4128cc3ac542", "hypothesisIds": ["H1"], "relation": "supports" }
+  ],
+  "attemptedChecks": [],
+  "candidateHypotheses": [
+    { "id": "H1", "causalLayer": "permission", "statement": "캐시 ACL이 현재 사용자 읽기를 거부한다.", "supportingEvidence": ["logs/build-1.txt"], "contradictingEvidence": [], "state": "supported" },
+    { "id": "H2", "causalLayer": "dependency", "statement": "캐시 파일이 손상됐다.", "supportingEvidence": [], "contradictingEvidence": [], "state": "open" }
+  ],
+  "candidateTests": [
+    {
+      "checkId": "read-cache-acl",
+      "checkInput": { "target": "dependency-cache", "environmentDigest": "env:windows-node22" },
+      "question": "현재 사용자가 캐시 경로를 읽을 권한이 있는가?",
+      "preconditions": ["캐시 경로를 확인한다."],
+      "risk": "read-only",
+      "requiredAuthorization": [],
+      "outcomes": [
+        { "observation": "읽기 권한이 없다.", "supportsHypotheses": ["H1"], "refutesHypotheses": ["H2"] },
+        { "observation": "읽기 권한이 있다.", "supportsHypotheses": ["H2"], "refutesHypotheses": ["H1"] }
+      ],
+      "stopCondition": "ACL 결과를 한 번 기록하면 중단한다.",
+      "informationGain": 5,
+      "cost": 1,
+      "inputDigest": "sha256:ea1946a29194513ccb6f472d54d9b06987aeaaa344f256814e5dd9cfdf61096b"
+    }
+  ],
+  "accessBlockers": []
+}

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskEnvelope": {
+    "schemaVersion": "1.0.0",
+    "taskId": "passing",
+    "objective": "검증 결과를 판정한다.",
+    "scope": { "included": ["src/validator.mjs"], "excluded": [] },
+    "acceptanceCriteria": ["정상 입력은 PASS를 반환한다.", "잘못된 입력은 종료 코드 2를 반환한다."],
+    "riskLevel": "low",
+    "workUnits": [],
+    "requiredCapabilities": ["acceptance-evidence-validation"],
+    "constraints": ["읽기 전용 검증"],
+    "authorization": { "allowedActions": ["read", "test"], "prohibitedActions": ["publish"], "approvalRequired": [] },
+    "decision": { "complexity": "simple", "hasConflicts": false },
+    "orchestration": { "requested": false, "mcpAvailable": false }
+  },
+  "target": { "kind": "commit", "identifier": "abc123", "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+  "evidence": [
+    {
+      "id": "test-pass",
+      "kind": "test",
+      "locator": "tests/results/pass.txt",
+      "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "targetDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "verified": true,
+      "criterionIds": ["AC-001"],
+      "direction": "supports",
+      "observedResult": "정상 fixture가 PASS를 반환했다."
+    },
+    {
+      "id": "test-invalid",
+      "kind": "test",
+      "locator": "tests/results/invalid.txt",
+      "digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "targetDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "verified": true,
+      "criterionIds": ["AC-002"],
+      "direction": "supports",
+      "observedResult": "잘못된 fixture가 종료 코드 2를 반환했다."
+    }
+  ],
+  "verificationCommands": [
+    { "id": "all-tests", "command": "node --test", "exitCode": 0, "locator": "tests/results/all.txt", "targetDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "criterionIds": ["AC-001", "AC-002"] }
+  ],
+  "knownLimitations": [],
+  "criterionOverrides": []
+}

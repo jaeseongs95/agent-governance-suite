@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "cases": [
+    { "id": "normal-local-delete", "class": "normal", "fixture": "local-delete", "expectedVerdict": "READY" },
+    { "id": "boundary-production-approval", "class": "boundary", "fixture": "deploy", "expectedVerdict": "NEEDS_APPROVAL" },
+    { "id": "boundary-migration-recovery", "class": "boundary", "fixture": "migration", "expectedVerdict": "NEEDS_REDESIGN" },
+    { "id": "failure-permission-authority", "class": "expected-failure", "fixture": "permission", "expectedVerdict": "BLOCKED" },
+    { "id": "boundary-billing-approval", "class": "boundary", "fixture": "billing", "expectedVerdict": "NEEDS_APPROVAL" },
+    { "id": "failure-broad-target", "class": "expected-failure", "fixture": "broad-target", "expectedVerdict": "BLOCKED" }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "operationId": "delete-drive",
+  "actionClass": "delete",
+  "targets": [{ "locator": "C:\\", "targetType": "drive-root", "environment": "local", "expectedFingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111" }],
+  "plannedCommandOrTool": { "tool": "filesystem", "action": "recursive-delete" },
+  "scopeRef": { "locator": "evidence://scope", "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222", "includedTargets": ["C:\\"], "excludedTargets": [] },
+  "authorizationRef": { "locator": "evidence://auth", "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333", "allowedActions": ["delete"], "allowedTargets": ["C:\\"], "environments": ["local"] },
+  "approvalEvidenceRefs": [],
+  "currentStateEvidenceRefs": [{ "locator": "evidence://state", "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555", "targetLocator": "C:\\", "fingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111" }],
+  "recoveryPlan": { "available": false, "method": null, "backupRef": null, "restoreProcedureRef": null, "restoreTestEvidenceRef": null, "irreversibilityAccepted": false },
+  "expectedBlastRadius": { "affectedTargets": 1, "affectedUsers": 1, "external": false, "description": "entire drive" }
+}

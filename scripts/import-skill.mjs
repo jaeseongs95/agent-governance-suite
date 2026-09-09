@@ -11,23 +11,20 @@ if (!args.source || !args.ref || !args["skill-path"]) {
 
 const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "agent-governance-import-"));
 const transactionDirectory = await mkdtemp(path.join(ROOT, ".agent-governance-import-"));
-let sourceRepository = path.resolve(args.source);
 try {
+  let repositorySource = args.source;
   try {
-    await stat(sourceRepository);
+    const localSource = path.resolve(args.source);
+    await stat(localSource);
+    repositorySource = localSource;
   } catch {
-    sourceRepository = path.join(temporaryDirectory, "repository");
-    execFileSync("git", ["clone", "--filter=blob:none", "--no-checkout", args.source, sourceRepository], { stdio: "inherit" });
+    repositorySource = args.source;
   }
 
-  const commit = execFileSync("git", ["-C", sourceRepository, "rev-parse", "--verify", `${args.ref}^{commit}`], { encoding: "utf8" }).trim();
-  const archive = path.join(temporaryDirectory, "source.tar");
-  execFileSync("git", ["-C", sourceRepository, "archive", "--format=tar", `--output=${archive}`, commit]);
   const extracted = path.join(temporaryDirectory, "extracted");
-  await mkdir(extracted);
-  execFileSync("tar", ["-xf", path.basename(archive), "-C", path.basename(extracted)], {
-    cwd: temporaryDirectory
-  });
+  execFileSync("git", ["clone", "--no-checkout", repositorySource, extracted], { stdio: "inherit" });
+  const commit = execFileSync("git", ["-C", extracted, "rev-parse", "--verify", `${args.ref}^{commit}`], { encoding: "utf8" }).trim();
+  execFileSync("git", ["-C", extracted, "checkout", "--detach", commit], { stdio: "inherit" });
 
   const sourceSkill = path.resolve(extracted, args["skill-path"]);
   if (!sourceSkill.startsWith(extracted + path.sep) && sourceSkill !== extracted) {
@@ -36,23 +33,21 @@ try {
   const skillMarkdown = await readFile(path.join(sourceSkill, "SKILL.md"), "utf8");
   const name = readFrontmatter(skillMarkdown).name;
   if (!NAME_PATTERN.test(name)) throw new Error(`invalid imported skill name: ${name}`);
-  const metadataVersion = skillMarkdown.match(/\nmetadata:\s*\r?\n(?:[ \t]+.*\r?\n)*?[ \t]+version:\s*["']?([^\s"']+)/u)?.[1]
-    ?? "0.1.0";
+  let metadataVersion = skillMarkdown.match(/\nmetadata:\s*\r?\n(?:[ \t]+.*\r?\n)*?[ \t]+version:\s*["']?([^\s"']+)/u)?.[1];
+  if (!metadataVersion) {
+    try {
+      metadataVersion = (await readFile(path.join(sourceSkill, "VERSION"), "utf8")).trim();
+    } catch {
+      metadataVersion = undefined;
+    }
+  }
 
   const destination = path.join(ROOT, "skills", name);
   const registryPath = path.join(ROOT, "skills", "registry.json");
   const registryDocument = await readJson(registryPath);
   const skills = Array.isArray(registryDocument) ? registryDocument : registryDocument.skills;
-  const existingDescriptor = skills.find((descriptor) => descriptor.id === name);
-  if (!existingDescriptor && (!args.phase || !args.capability)) {
-    throw new Error("A new imported skill requires --phase and --capability so routing is not guessed.");
-  }
-  const capabilityOwner = !existingDescriptor
-    ? skills.find((descriptor) => descriptor.capabilities?.includes(args.capability))
-    : undefined;
-  if (capabilityOwner) {
-    throw new Error(`capability ${args.capability} is already provided by ${capabilityOwner.id}; choose a more specific capability`);
-  }
+  if (registryDocument.schemaVersion !== "2.0.0") throw new Error("skills/registry.json must use schemaVersion 2.0.0");
+  const existingDescriptor = skills.find((descriptor) => descriptor.skillId === name);
 
   let destinationExists = false;
   try {
@@ -68,7 +63,7 @@ try {
   }
 
   const allowedEntries = new Set([
-    "SKILL.md", "agents", "references", "scripts", "assets", "contracts", "evals",
+    "SKILL.md", "agents", "references", "scripts", "assets", "contracts", "evals", "integration",
     "README.md", "LICENSE", "COMPATIBILITY.md", "CHANGELOG.md", "VERSION"
   ]);
   const sourceEntries = await readdir(sourceSkill, { withFileTypes: true });
@@ -91,6 +86,73 @@ try {
   const lockDocument = await readJson(lockPath);
   const entries = Array.isArray(lockDocument) ? lockDocument : lockDocument.sources;
   const checksumValue = await computeDirectoryChecksum(stagedSkill);
+  let sourceDescriptor;
+  try {
+    sourceDescriptor = await readJson(path.join(stagedSkill, "integration", "skill-descriptor.json"));
+  } catch {
+    if (!args.phase || !args.capability) {
+      throw new Error("A new imported skill needs integration/skill-descriptor.json or --phase and --capability.");
+    }
+  }
+  const inherited = sourceDescriptor ?? {};
+  const sourceProviders = Array.isArray(inherited.providers) ? inherited.providers : [];
+  metadataVersion ??= inherited.version ?? sourceProviders[0]?.version ?? "0.1.0";
+  const providers = sourceProviders.length > 0
+    ? sourceProviders.map((provider) => {
+        const skillId = provider.skillId ?? inherited.skillId;
+        const version = provider.version ?? inherited.version ?? metadataVersion;
+        if (skillId !== name || version !== metadataVersion) {
+          throw new Error(`integration descriptor identity must match ${name}@${metadataVersion}`);
+        }
+        const providerFields = { ...provider };
+        delete providerFields.skillId;
+        delete providerFields.version;
+        delete providerFields.enabled;
+        delete providerFields.priority;
+        return {
+          ...providerFields,
+          outputSchema: `skills/${name}/${provider.outputSchema}`,
+          resultSchema: `skills/${name}/${provider.resultSchema}`,
+          gate: provider.gate?.validator?.endsWith(".schema.json")
+            ? { ...provider.gate, validator: `skills/${name}/${provider.gate.validator}` }
+            : provider.gate,
+        };
+      })
+    : [{
+        capabilities: [args.capability],
+        executionClass: "workflow",
+        phase: args.phase,
+        phaseOrder: 50,
+        requiredInputArtifacts: [],
+        inputBindings: [],
+        producedArtifacts: [],
+        outputSchema: "contracts/freeform-output.v1.schema.json",
+        resultSchema: "contracts/provider-result.v1.schema.json",
+        stateMapping: {
+          default: { state: "passed", errorRequired: false },
+          adapterErrors: ["INVALID_INPUT", "MISSING_EVIDENCE"],
+        },
+        selectionCriteria: [`requires-${args.capability}`],
+        preconditions: [],
+        failureHandling: "Return a structured provider result.",
+        gate: { kind: "none", policy: "none", validator: null },
+      }];
+  const importedDescriptor = {
+    schemaVersion: "2.0.0",
+    skillId: name,
+    version: metadataVersion,
+    path: `./${name}`,
+    enabled: inherited.enabled ?? sourceProviders[0]?.enabled ?? true,
+    priority: inherited.priority ?? sourceProviders[0]?.priority ?? 50,
+    providers,
+  };
+  for (const provider of providers) {
+    for (const capability of provider.capabilities ?? []) {
+      const owner = skills.find((descriptor) => descriptor.skillId !== name
+        && descriptor.providers?.some((candidate) => candidate.capabilities?.includes(capability)));
+      if (owner) throw new Error(`capability ${capability} is already provided by ${owner.skillId}`);
+    }
+  }
   const lockEntry = {
     skillId: name,
     path: `skills/${name}`,
@@ -103,25 +165,8 @@ try {
   const existingLockIndex = entries.findIndex((entry) => entry.skillId === name);
   if (existingLockIndex >= 0) entries[existingLockIndex] = lockEntry;
   else entries.push(lockEntry);
-  if (!existingDescriptor) {
-    skills.push({
-      schemaVersion: "1.0.0",
-      id: name,
-      version: metadataVersion,
-      path: `./${name}`,
-      phase: args.phase,
-      capabilities: [args.capability],
-      priority: 100,
-      selectionCriteria: [`requires-${args.capability}`],
-      preconditions: [],
-      requiredArtifacts: [],
-      producedArtifacts: [],
-      riskGate: "none",
-      enabled: true
-    });
-  } else {
-    existingDescriptor.version = metadataVersion;
-  }
+  if (!existingDescriptor) skills.push(importedDescriptor);
+  else skills[skills.indexOf(existingDescriptor)] = importedDescriptor;
 
   const testsDirectory = path.join(ROOT, "tests", name);
   let testsExist = false;

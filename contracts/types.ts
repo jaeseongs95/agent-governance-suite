@@ -36,6 +36,14 @@ export type ExecutionMode = (typeof EXECUTION_MODE)[number];
 export const RISK_GATE = ["none", "conditional", "mandatory"] as const;
 export type RiskGate = (typeof RISK_GATE)[number];
 
+export const DESCRIPTOR_VERSION = "2.0.0" as const;
+export const EXECUTION_CLASS = ["bootstrap", "workflow", "recovery"] as const;
+export type ExecutionClass = (typeof EXECUTION_CLASS)[number];
+export const BINDING_OPERATION = ["select", "collect", "combine", "require-external"] as const;
+export type BindingOperation = (typeof BINDING_OPERATION)[number];
+export const GATE_KIND = ["none", "precondition", "completion"] as const;
+export type GateKind = (typeof GATE_KIND)[number];
+
 export const POLICY_CAPABILITY = {
   coordination: "subagent-coordination",
   deliberation: "independent-deliberation",
@@ -106,16 +114,97 @@ export interface SkillDescriptorV1 {
   enabled: boolean;
 }
 
+export interface InputBindingV2 {
+  targetArtifact: string;
+  sources: string[];
+  operation: BindingOperation;
+  optional?: boolean;
+}
+
+export interface StateMappingRuleV2 {
+  state: Exclude<WorkflowState, "ready" | "running">;
+  errorRequired: boolean;
+  allowedErrorCodes?: ErrorCode[];
+}
+
+export interface StateMappingV2 {
+  selector?: string;
+  values?: Record<string, StateMappingRuleV2>;
+  default: "reject" | StateMappingRuleV2;
+  adapterErrors: ErrorCode[];
+}
+
+export interface SchemaReferenceV1 {
+  path: string;
+  digest: string;
+}
+
+export interface GateDescriptorV2 {
+  kind: GateKind;
+  policy: RiskGate;
+  validator?: string | null;
+  validatorSchema?: SchemaReferenceV1 | null;
+}
+
+export interface SkillProviderV2 {
+  capabilities: string[];
+  executionClass: ExecutionClass;
+  phase: string;
+  phaseOrder: number;
+  requiredInputArtifacts: string[];
+  inputBindings: InputBindingV2[];
+  producedArtifacts: string[];
+  outputSchema: string;
+  resultSchema: string;
+  stateMapping: StateMappingV2;
+  selectionCriteria: string[];
+  preconditions: string[];
+  failureHandling: string | Record<string, unknown>;
+  gate: GateDescriptorV2;
+}
+
+export interface SkillDescriptorV2 {
+  schemaVersion: typeof DESCRIPTOR_VERSION;
+  skillId: string;
+  version: string;
+  path: string;
+  enabled: boolean;
+  priority: number;
+  providers: SkillProviderV2[];
+}
+
+export interface RoutedSkillProviderV2 extends SkillProviderV2 {
+  skillId: string;
+  version: string;
+  path: string;
+  enabled: boolean;
+  priority: number;
+  providerKey: string;
+  outputSchemaDigest: string;
+  resultSchemaDigest: string;
+}
+
 export interface PlannedStageV1 {
   stageId: string;
   order: number;
   requiredCapability: string;
+  satisfiedCapabilities: string[];
   skillId: string;
   phase: string;
   selectionReason: string;
   state: WorkflowState;
   requiredArtifacts: string[];
   riskGate: RiskGate;
+  providerKey: string;
+  executionClass: Exclude<ExecutionClass, "bootstrap">;
+  phaseOrder: number;
+  requiredInputArtifacts: string[];
+  inputBindings: InputBindingV2[];
+  producedArtifacts: string[];
+  outputSchema: SchemaReferenceV1;
+  resultSchema: SchemaReferenceV1;
+  stateMapping: StateMappingV2;
+  gate: GateDescriptorV2;
 }
 
 export interface WorkflowPlanV1 {
@@ -139,13 +228,30 @@ export interface EvidenceReferenceV1 {
   note: string;
 }
 
+export interface ProviderArtifactV1 {
+  artifactId: string;
+  schemaId: string;
+  locator: string;
+  digest: string;
+  targetDigest: string;
+  verified: boolean;
+}
+
+export interface ProviderResultV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "output" | "adapter-error";
+  output: Record<string, unknown> | null;
+  artifacts: ProviderArtifactV1[];
+  error: ContractErrorBody | null;
+}
+
 export interface StageResultV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   runId: string;
   stageId: string;
   expectedRevision: number;
   state: "needs-input" | "needs-approval" | "needs-redesign" | "failed" | "passed" | "blocked";
-  output: Record<string, unknown> | null;
+  output: ProviderResultV1;
   evidence: EvidenceReferenceV1[];
   findings: string[];
   blockers: string[];

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.dev/workspace-convention-profiler/contracts/workspace-profile-request.v1.schema.json",
+  "title": "WorkspaceProfileRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "workspaceRoot", "taskObjective", "targetPaths", "resolvedInstructionRefs", "knownConstraints", "evidenceLimits"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "workspaceRoot": { "type": "string", "minLength": 1 },
+    "taskObjective": { "type": "string", "minLength": 1 },
+    "targetPaths": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "resolvedInstructionRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "knownConstraints": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "evidenceLimits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxFiles", "maxBytesPerFile", "excludedPatterns"],
+      "properties": {
+        "maxFiles": { "type": "integer", "minimum": 1, "maximum": 5000 },
+        "maxBytesPerFile": { "type": "integer", "minimum": 1, "maximum": 1048576 },
+        "excludedPatterns": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    }
+  }
+}

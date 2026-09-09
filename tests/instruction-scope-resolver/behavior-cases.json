@@ -1,0 +1,19 @@
+{
+  "normal": [
+    { "id": "root-only", "expected": "finds one root AGENTS.md" },
+    { "id": "nested", "expected": "orders broader and narrower instructions" },
+    { "id": "override", "expected": "non-empty override replaces its sibling AGENTS.md" },
+    { "id": "multi-target", "expected": "resolves each target independently" }
+  ],
+  "boundary": [
+    { "id": "whitespace-override", "expected": "ignores the empty override" },
+    { "id": "planned-path", "expected": "uses existing ancestors and marks the target absent" },
+    { "id": "windows-path", "expected": "compares drive paths case-insensitively" },
+    { "id": "unicode", "expected": "preserves Unicode paths" }
+  ],
+  "failure": [
+    { "id": "workspace-escape", "expected": "returns INVALID_INPUT" },
+    { "id": "unauthorized-root", "expected": "does not read the root" },
+    { "id": "missing-target", "expected": "rejects an absent target unless authorized" }
+  ]
+}

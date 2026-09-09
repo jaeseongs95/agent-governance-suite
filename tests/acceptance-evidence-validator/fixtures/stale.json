@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskEnvelope": {
+    "schemaVersion": "1.0.0",
+    "taskId": "stale",
+    "objective": "stale evidence를 거부한다.",
+    "scope": { "included": ["src"], "excluded": [] },
+    "acceptanceCriteria": ["현재 대상의 테스트가 통과한다."],
+    "riskLevel": "medium",
+    "workUnits": [],
+    "requiredCapabilities": ["acceptance-evidence-validation"],
+    "constraints": [],
+    "authorization": { "allowedActions": ["read"], "prohibitedActions": [], "approvalRequired": [] },
+    "decision": { "complexity": "simple", "hasConflicts": false },
+    "orchestration": { "requested": false, "mcpAvailable": false }
+  },
+  "target": { "kind": "commit", "identifier": "new", "digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" },
+  "evidence": [
+    {
+      "id": "old-test",
+      "kind": "test",
+      "locator": "tests/results/old.txt",
+      "digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "targetDigest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "verified": true,
+      "criterionIds": ["AC-001"],
+      "direction": "supports",
+      "observedResult": "이전 commit에서 통과했다."
+    }
+  ],
+  "verificationCommands": [],
+  "knownLimitations": [],
+  "criterionOverrides": []
+}

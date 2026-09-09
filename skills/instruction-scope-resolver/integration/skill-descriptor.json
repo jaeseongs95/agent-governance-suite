@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "2.0.0",
+  "skillId": "instruction-scope-resolver",
+  "version": "0.1.0",
+  "enabled": true,
+  "priority": 50,
+  "providers": [
+    {
+      "capabilities": ["instruction-scope-resolution"],
+      "executionClass": "bootstrap",
+      "phase": "instruction-resolution",
+      "phaseOrder": 10,
+      "requiredInputArtifacts": ["workspace-root", "target-paths"],
+      "inputBindings": [
+        { "targetArtifact": "workspace-root", "sources": ["workspace:root"], "operation": "require-external" },
+        { "targetArtifact": "target-paths", "sources": ["task:target-paths"], "operation": "require-external" }
+      ],
+      "producedArtifacts": ["instruction-file-manifest", "instruction-scope-resolution", "instruction-conflict-ledger"],
+      "outputSchema": "contracts/instruction-scope-resolution.v1.schema.json",
+      "resultSchema": "integration/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/verdict",
+        "values": {
+          "ANALYSIS_REQUIRED": { "state": "needs-input", "errorRequired": false },
+          "PASS": { "state": "passed", "errorRequired": false },
+          "NEEDS_INPUT": { "state": "needs-input", "errorRequired": false },
+          "BLOCKED": { "state": "blocked", "errorRequired": true, "allowedErrorCodes": ["MISSING_EVIDENCE", "INVALID_INPUT"] }
+        },
+        "default": "reject",
+        "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE"]
+      },
+      "selectionCriteria": ["path-scoped-instructions", "agents-override-resolution", "multi-target-instruction-comparison"],
+      "preconditions": ["A workspace root and target paths are known."],
+      "failureHandling": "Return BLOCKED with a structured error; do not inspect unauthorized roots.",
+      "gate": { "kind": "none", "policy": "none", "validator": null }
+    }
+  ]
+}

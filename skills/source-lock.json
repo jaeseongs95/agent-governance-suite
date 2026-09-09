@@ -27,6 +27,69 @@
       "commit": "877c11b8e1369a1dff3b5d208327f6604bd3dff2",
       "checksum": "sha256:6dc8c9a1128ad1ac6b2ff74f4307cf9f3dcbae7cbfa3a02a9222657713bcf31e",
       "checksumScope": "relative paths and normalized text bytes under skills/independent-deliberation-panel"
+    },
+    {
+      "skillId": "task-contract",
+      "path": "skills/task-contract",
+      "source": "https://github.com/jaeseongs95/task-contract.git",
+      "ref": "v0.1.0",
+      "commit": "028ae63b5a56cb889fa3920512ab61f3c0244fc3",
+      "checksum": "sha256:468b1d2126f71dc5efe44e5376e714342007271e4f495d4603b531de85b0ad56",
+      "checksumScope": "relative paths and normalized text bytes under skills/task-contract"
+    },
+    {
+      "skillId": "acceptance-evidence-validator",
+      "path": "skills/acceptance-evidence-validator",
+      "source": "https://github.com/jaeseongs95/acceptance-evidence-validator.git",
+      "ref": "v0.1.0",
+      "commit": "fa13cba56c544b92a27440c615e8372e325d506b",
+      "checksum": "sha256:963934c3b76687ed098fcd88678848947c13115822deaefbe8dc978c40a1a9c2",
+      "checksumScope": "relative paths and normalized text bytes under skills/acceptance-evidence-validator"
+    },
+    {
+      "skillId": "blocker-diagnostician",
+      "path": "skills/blocker-diagnostician",
+      "source": "https://github.com/jaeseongs95/blocker-diagnostician.git",
+      "ref": "v0.1.0",
+      "commit": "f5a936811a2610f0efc171bd9756619aa389e979",
+      "checksum": "sha256:56bbfaa00075cb97b2aabb07334802b85cdbfe57e4a06217847e12d04387d5e5",
+      "checksumScope": "relative paths and normalized text bytes under skills/blocker-diagnostician"
+    },
+    {
+      "skillId": "workspace-convention-profiler",
+      "path": "skills/workspace-convention-profiler",
+      "source": "https://github.com/jaeseongs95/workspace-convention-profiler.git",
+      "ref": "v0.1.1",
+      "commit": "4f3be0f3cfebc798558007a368f0b3332c6a4262",
+      "checksum": "sha256:7cadb39872dd95bf888301f627b0b969cdc4a8f8823359d0ccdde4dbfc590e6f",
+      "checksumScope": "relative paths and normalized text bytes under skills/workspace-convention-profiler"
+    },
+    {
+      "skillId": "mutation-risk-preflight",
+      "path": "skills/mutation-risk-preflight",
+      "source": "https://github.com/jaeseongs95/mutation-risk-preflight.git",
+      "ref": "v0.1.1",
+      "commit": "388377388b12fcda51321b882525898203121ab4",
+      "checksum": "sha256:0909886baa20b96af540303ec77d6509cbb72923a02e89b3075772318f35dbab",
+      "checksumScope": "relative paths and normalized text bytes under skills/mutation-risk-preflight"
+    },
+    {
+      "skillId": "instruction-scope-resolver",
+      "path": "skills/instruction-scope-resolver",
+      "source": "https://github.com/jaeseongs95/instruction-scope-resolver.git",
+      "ref": "v0.1.0",
+      "commit": "ba0f80c5621d5d3884a8ccdb774f3e35c29bdc54",
+      "checksum": "sha256:908987c39e6a960657159a57a87918f65ef2b77ad86d055ab98f01edfc949f0e",
+      "checksumScope": "relative paths and normalized text bytes under skills/instruction-scope-resolver"
+    },
+    {
+      "skillId": "change-scope-guardian",
+      "path": "skills/change-scope-guardian",
+      "source": "https://github.com/jaeseongs95/change-scope-guardian.git",
+      "ref": "v0.1.1",
+      "commit": "9347777c34c86447661959701f72a7d4a3c8a082",
+      "checksum": "sha256:3f2eeaa79ee60117d97e24b69a6f90a3d8de9b8a885fe2c141688c0bd4a8e51f",
+      "checksumScope": "relative paths and normalized text bytes under skills/change-scope-guardian"
     }
   ]
 }

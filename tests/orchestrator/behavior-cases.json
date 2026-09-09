@@ -43,6 +43,48 @@
       }
     },
     {
+      "id": "scope-preflight-acceptance-by-provider-metadata",
+      "kind": "normal",
+      "scenario": "일반 변경 흐름은 스킬 이름이 아니라 provider phaseOrder와 artifact metadata로 정렬한다.",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "taskId": "metadata-routed-change",
+        "objective": "기준 상태를 잡고 변경 위험과 범위, 수용 근거를 순서대로 확인한다.",
+        "scope": { "included": ["src"], "excluded": ["deployment"] },
+        "acceptanceCriteria": ["변경 범위와 검증 근거가 확인된다."],
+        "riskLevel": "medium",
+        "workUnits": [
+          { "id": "implementation", "objective": "요청 범위의 코드를 수정한다.", "dependencies": [], "writeTargets": ["src"] }
+        ],
+        "requiredCapabilities": [
+          "acceptance-evidence-validation",
+          "change-scope-assurance",
+          "mutation-risk-preflight",
+          "change-scope-baseline-capture"
+        ],
+        "constraints": [],
+        "authorization": { "allowedActions": ["local-write"], "prohibitedActions": ["deployment"], "approvalRequired": [] },
+        "decision": { "complexity": "simple", "hasConflicts": false },
+        "orchestration": { "requested": true, "mcpAvailable": true }
+      },
+      "expected": {
+        "executionMode": "orchestrated",
+        "workflowState": "ready",
+        "skillsInOrder": [
+          "change-scope-guardian",
+          "mutation-risk-preflight",
+          "change-scope-guardian",
+          "acceptance-evidence-validator"
+        ],
+        "requiredCapabilitiesInOrder": [
+          "change-scope-baseline-capture",
+          "mutation-risk-preflight",
+          "change-scope-assurance",
+          "acceptance-evidence-validation"
+        ]
+      }
+    },
+    {
       "id": "single-specialist-direct-invocation",
       "kind": "boundary",
       "scenario": "한 전문 스킬만 필요한 독립 검토 요청은 MCP 통합 없이 직접 호출한다.",

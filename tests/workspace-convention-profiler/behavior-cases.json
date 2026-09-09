@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "cases": [
+    { "id": "normal-node-monorepo", "class": "normal", "fixture": "node-monorepo", "expectedVerdict": "PASS", "expectedEcosystem": "JavaScript/TypeScript" },
+    { "id": "boundary-mixed-ecosystem", "class": "boundary", "fixture": "mixed", "expectedVerdict": "PASS", "expectedEcosystemCount": 2 },
+    { "id": "boundary-sparse-repo", "class": "boundary", "fixture": "sparse", "expectedVerdict": "PASS", "expectedCommandCount": 0 },
+    { "id": "failure-outside-target", "class": "expected-failure", "fixture": "node-monorepo", "targetPaths": ["../outside"], "expectedVerdict": "BLOCKED" }
+  ]
+}

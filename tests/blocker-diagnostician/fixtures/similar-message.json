@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "objective": "비슷한 메시지의 실패를 환경별로 분리한다.",
+  "expectedBehavior": "테스트가 두 환경에서 통과한다.",
+  "episodes": [
+    { "attemptId": "linux", "operation": "pnpm test", "stableFailureTuple": { "errorCode": "TIMEOUT", "topFrame": "client.connect" }, "environmentDigest": "env:linux-node22", "changeSummary": "", "evidenceRefs": ["logs/linux.txt"] },
+    { "attemptId": "windows", "operation": "pnpm test", "stableFailureTuple": { "errorCode": "TIMEOUT", "topFrame": "client.connect" }, "environmentDigest": "env:windows-node22", "changeSummary": "", "evidenceRefs": ["logs/windows.txt"] }
+  ],
+  "lastKnownGood": null,
+  "constraints": [],
+  "authorization": { "allowedChecks": [], "approvalRequired": [], "prohibitedChecks": [] },
+  "evidenceBindings": [],
+  "attemptedChecks": [],
+  "candidateHypotheses": [],
+  "candidateTests": [],
+  "accessBlockers": []
+}

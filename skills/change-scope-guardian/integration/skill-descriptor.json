@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "2.0.0",
+  "skillId": "change-scope-guardian",
+  "version": "0.1.1",
+  "enabled": true,
+  "priority": 50,
+  "providers": [
+    {
+      "capabilities": ["change-scope-baseline-capture"],
+      "executionClass": "workflow",
+      "phase": "scope-baseline",
+      "phaseOrder": 42,
+      "selectionCriteria": ["mutation-workflow", "dirty-worktree", "explicit-baseline-request"],
+      "preconditions": ["A readable Git repository and frozen task envelope are available.", "No task mutation has started."],
+      "requiredInputArtifacts": ["task-envelope", "current-workspace-state"],
+      "inputBindings": [
+        {
+          "targetArtifact": "task-envelope",
+          "sources": ["task-envelope"],
+          "operation": "require-external"
+        },
+        {
+          "targetArtifact": "current-workspace-state",
+          "sources": ["repository-root", "git-index", "working-tree"],
+          "operation": "combine"
+        }
+      ],
+      "producedArtifacts": ["workspace-baseline"],
+      "outputSchema": "contracts/workspace-baseline.v1.schema.json",
+      "resultSchema": "integration/provider-result.v1.schema.json",
+      "stateMapping": {
+        "default": { "state": "passed", "errorRequired": false },
+        "adapterErrors": ["MISSING_EVIDENCE", "INVALID_INPUT"]
+      },
+      "failureHandling": "Do not mutate the repository; require a new baseline after resolving the input problem.",
+      "gate": { "kind": "precondition", "policy": "conditional", "validator": "workspace-baseline.v1" }
+    },
+    {
+      "capabilities": ["change-scope-assurance"],
+      "executionClass": "workflow",
+      "phase": "scope-verification",
+      "phaseOrder": 60,
+      "selectionCriteria": ["implementation-change-present", "explicit-scope-review"],
+      "preconditions": ["A frozen task envelope and matching workspace baseline are available."],
+      "requiredInputArtifacts": ["task-envelope", "workspace-baseline", "current-change-set"],
+      "inputBindings": [
+        {
+          "targetArtifact": "task-envelope",
+          "sources": ["task-envelope"],
+          "operation": "require-external"
+        },
+        {
+          "targetArtifact": "workspace-baseline",
+          "sources": ["workspace-baseline"],
+          "operation": "select"
+        },
+        {
+          "targetArtifact": "current-change-set",
+          "sources": ["repository-root", "git-index", "working-tree", "comparison-commit"],
+          "operation": "combine"
+        }
+      ],
+      "producedArtifacts": ["scoped-change-inventory", "ownership-collision-ledger", "change-scope-report"],
+      "outputSchema": "contracts/change-scope-report.v1.schema.json",
+      "resultSchema": "integration/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/verdict",
+        "values": {
+          "PASS": { "state": "passed", "errorRequired": false },
+          "NEEDS_APPROVAL": { "state": "needs-approval", "errorRequired": false },
+          "BLOCKED": { "state": "blocked", "errorRequired": true, "allowedErrorCodes": ["MISSING_EVIDENCE", "INVALID_INPUT"] },
+          "INCONCLUSIVE": { "state": "needs-input", "errorRequired": false }
+        },
+        "default": "reject",
+        "adapterErrors": ["MISSING_EVIDENCE", "INVALID_INPUT"]
+      },
+      "failureHandling": "Preserve all changes and request approval or a new task contract and baseline.",
+      "gate": { "kind": "precondition", "policy": "conditional", "validator": "change-scope-report.v1" }
+    }
+  ]
+}

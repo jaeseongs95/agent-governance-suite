@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "operationId": "delete-one-file",
+  "actionClass": "delete",
+  "targets": [
+    {
+      "locator": "D:\\workspace\\repo\\obsolete.txt",
+      "targetType": "file",
+      "environment": "local",
+      "expectedFingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    }
+  ],
+  "plannedCommandOrTool": { "tool": "trash", "action": "move-to-trash" },
+  "scopeRef": {
+    "locator": "evidence://task-contract",
+    "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "includedTargets": ["D:\\workspace\\repo\\obsolete.txt"],
+    "excludedTargets": []
+  },
+  "authorizationRef": {
+    "locator": "evidence://authorization",
+    "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+    "allowedActions": ["delete"],
+    "allowedTargets": ["D:\\workspace\\repo\\obsolete.txt"],
+    "environments": ["local"]
+  },
+  "approvalEvidenceRefs": [
+    {
+      "locator": "evidence://approval/delete-one-file",
+      "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+      "operationId": "delete-one-file",
+      "actionClass": "delete",
+      "targetLocators": ["D:\\workspace\\repo\\obsolete.txt"],
+      "environments": ["local"],
+      "expiresAt": "2030-01-01T00:00:00.000Z"
+    }
+  ],
+  "currentStateEvidenceRefs": [
+    {
+      "locator": "evidence://state/obsolete",
+      "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "targetLocator": "D:\\workspace\\repo\\obsolete.txt",
+      "fingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    }
+  ],
+  "recoveryPlan": {
+    "available": true,
+    "method": "restore from trash",
+    "backupRef": "evidence://trash-entry",
+    "restoreProcedureRef": "evidence://restore-procedure",
+    "restoreTestEvidenceRef": "evidence://restore-test",
+    "irreversibilityAccepted": false
+  },
+  "expectedBlastRadius": {
+    "affectedTargets": 1,
+    "affectedUsers": 0,
+    "external": false,
+    "description": "한 로컬 파일"
+  }
+}

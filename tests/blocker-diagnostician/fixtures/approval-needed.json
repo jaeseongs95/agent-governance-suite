@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "objective": "외부 재시도 전에 승인을 요구한다.",
+  "expectedBehavior": "프로덕션 연결이 성공한다.",
+  "episodes": [
+    { "attemptId": "one", "operation": "deploy smoke", "stableFailureTuple": { "errorCode": "CONNECTION_RESET", "topFrame": "remote.call" }, "environmentDigest": "env:production", "changeSummary": "", "evidenceRefs": ["logs/remote.txt"] }
+  ],
+  "lastKnownGood": null,
+  "constraints": ["승인 없이 외부 호출 금지"],
+  "authorization": { "allowedChecks": [], "approvalRequired": ["production-read"], "prohibitedChecks": [] },
+  "evidenceBindings": [
+    { "evidenceRef": "logs/remote.txt", "artifactDigest": "sha256:810b462aac01f0aad5bdd2ac1b3108be79e5d59d8c3807c2a94f06ed42c3a5d9", "hypothesisIds": ["H1"], "relation": "supports" }
+  ],
+  "attemptedChecks": [],
+  "candidateHypotheses": [
+    { "id": "H1", "causalLayer": "environment", "statement": "프로덕션 endpoint가 연결을 끊는다.", "supportingEvidence": ["logs/remote.txt"], "contradictingEvidence": [], "state": "supported" },
+    { "id": "H2", "causalLayer": "permission", "statement": "호출 자격 증명이 거부된다.", "supportingEvidence": [], "contradictingEvidence": [], "state": "open" }
+  ],
+  "candidateTests": [
+    {
+      "checkId": "production-read",
+      "checkInput": { "target": "production-endpoint", "requestCount": 1 },
+      "question": "승인된 읽기 요청에서 endpoint와 credential 결과가 갈리는가?",
+      "preconditions": ["프로덕션 읽기 승인을 받는다."],
+      "risk": "external",
+      "requiredAuthorization": ["production-read"],
+      "outcomes": [
+        { "observation": "인증 전에 연결이 끊긴다.", "supportsHypotheses": ["H1"], "refutesHypotheses": ["H2"] },
+        { "observation": "인증 거부 응답을 받는다.", "supportsHypotheses": ["H2"], "refutesHypotheses": ["H1"] }
+      ],
+      "stopCondition": "읽기 요청 한 번 뒤 중단한다.",
+      "informationGain": 5,
+      "cost": 3,
+      "inputDigest": "sha256:a574ded728d403ea8854e98c8d87aec946ff3ec6f916161207890e11c4f40529"
+    }
+  ],
+  "accessBlockers": []
+}

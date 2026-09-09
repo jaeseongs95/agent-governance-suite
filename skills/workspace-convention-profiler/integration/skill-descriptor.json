@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "2.0.0",
+  "providers": [{
+    "skillId": "workspace-convention-profiler",
+    "version": "0.1.1",
+    "enabled": true,
+    "capabilities": ["workspace-convention-profiling"],
+    "priority": 50,
+    "executionClass": "bootstrap",
+    "phase": "workspace-discovery",
+    "phaseOrder": 20,
+    "requiredInputArtifacts": ["task-objective", "workspace-root"],
+    "inputBindings": [
+      { "targetArtifact": "task-objective", "sources": ["task-request.objective"], "operation": "select" },
+      { "targetArtifact": "workspace-root", "sources": ["caller.workspaceRoot"], "operation": "require-external" },
+      { "targetArtifact": "instruction-scope-resolution", "sources": ["bootstrap:instruction-scope-resolution"], "operation": "collect", "optional": true }
+    ],
+    "producedArtifacts": ["workspace-convention-profile", "convention-evidence-index", "validation-command-map"],
+    "outputSchema": "contracts/workspace-convention-profile.v1.schema.json",
+    "resultSchema": "integration/provider-result.v1.schema.json",
+    "stateMapping": {
+      "selector": "/output/verdict",
+      "values": {
+        "PASS": { "state": "passed", "errorRequired": false },
+        "BLOCKED": { "state": "blocked", "errorRequired": true, "allowedErrorCodes": ["MISSING_EVIDENCE", "INVALID_INPUT"] }
+      },
+      "default": "reject",
+      "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE"]
+    },
+    "selectionCriteria": ["explicit-workspace-convention-request", "unfamiliar-repository", "multi-module-change-without-current-profile"],
+    "preconditions": ["The workspace root is known and readable.", "The requested investigation is read-only."],
+    "failureHandling": {
+      "missingInput": "blocked",
+      "invalidReport": "failed",
+      "retry": "refresh-evidence-only"
+    },
+    "gate": { "kind": "none", "policy": "none" }
+  }]
+}

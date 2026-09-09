@@ -52,26 +52,27 @@ if (errors.length === 0) {
   const registryCandidate = Array.isArray(registryDocument) ? registryDocument : registryDocument.skills;
   if (!Array.isArray(registryCandidate)) errors.push("skills/registry.json must contain a skills array");
   const registry = Array.isArray(registryCandidate) ? registryCandidate : [];
+  if (registryDocument.schemaVersion !== "2.0.0") errors.push("skills/registry.json must use schemaVersion 2.0.0");
   const ids = new Set();
   for (const descriptor of registry) {
-    if (ids.has(descriptor.id)) errors.push(`duplicate skill id: ${descriptor.id}`);
-    ids.add(descriptor.id);
-    if (descriptor.path !== `./${descriptor.id}`) {
-      errors.push(`registry path for ${descriptor.id} must be ./${descriptor.id}`);
+    if (ids.has(descriptor.skillId)) errors.push(`duplicate skill id: ${descriptor.skillId}`);
+    ids.add(descriptor.skillId);
+    if (descriptor.path !== `./${descriptor.skillId}`) {
+      errors.push(`registry path for ${descriptor.skillId} must be ./${descriptor.skillId}`);
     }
     try {
-      await access(path.join(ROOT, "skills", descriptor.id, "SKILL.md"));
+      await access(path.join(ROOT, "skills", descriptor.skillId, "SKILL.md"));
     } catch {
-      errors.push(`registry skill path does not exist: skills/${descriptor.id}/SKILL.md`);
+      errors.push(`registry skill path does not exist: skills/${descriptor.skillId}/SKILL.md`);
     }
   }
 
-  const descriptorSchema = await readJson(path.join(ROOT, "contracts", "skill-descriptor.v1.schema.json"));
+  const descriptorSchema = await readJson(path.join(ROOT, "contracts", "skill-descriptor.v2.schema.json"));
   const ajv = new Ajv2020({ allErrors: true, strict: false });
   const validateDescriptor = ajv.compile(descriptorSchema);
   for (const descriptor of registry) {
     if (!validateDescriptor(descriptor)) {
-      errors.push(`invalid registry descriptor ${descriptor.id}: ${ajv.errorsText(validateDescriptor.errors)}`);
+      errors.push(`invalid registry descriptor ${descriptor.skillId}: ${ajv.errorsText(validateDescriptor.errors)}`);
     }
   }
 
@@ -115,16 +116,18 @@ if (errors.length === 0) {
 
   const capabilityOwners = new Map();
   for (const descriptor of registry) {
-    for (const capability of descriptor.capabilities ?? []) {
-      const owners = capabilityOwners.get(capability) ?? [];
-      owners.push(descriptor);
-      capabilityOwners.set(capability, owners);
+    for (const provider of descriptor.providers ?? []) {
+      for (const capability of provider.capabilities ?? []) {
+        const owners = capabilityOwners.get(capability) ?? [];
+        owners.push({ descriptor, provider });
+        capabilityOwners.set(capability, owners);
+      }
     }
   }
   for (const [capability, owners] of capabilityOwners) {
     if (owners.length > 1) {
-      const priorities = new Set(owners.map((owner) => owner.priority));
-      if (priorities.size !== owners.length || owners.some((owner) => !Array.isArray(owner.selectionCriteria) || owner.selectionCriteria.length === 0)) {
+      const priorities = new Set(owners.map((owner) => owner.descriptor.priority));
+      if (priorities.size !== owners.length || owners.some((owner) => !Array.isArray(owner.provider.selectionCriteria) || owner.provider.selectionCriteria.length === 0)) {
         errors.push(`overlapping capability ${capability} requires unique priorities and selectionCriteria`);
       }
     }

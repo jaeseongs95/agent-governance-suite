@@ -1,0 +1,6 @@
+interface:
+  display_name: "Instruction Scope Resolver"
+  short_description: "경로별 AGENTS 지침 chain과 우선순위를 확인합니다"
+  default_prompt: "Use $instruction-scope-resolver to identify the effective AGENTS.md instructions for these paths."
+policy:
+  allow_implicit_invocation: true

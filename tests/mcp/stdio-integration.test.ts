@@ -3,7 +3,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { describe, expect, it } from "vitest";
 
-import type { ApiResultV1, TaskEnvelopeV1, WorkflowPlanV1, WorkflowReceiptV1 } from "../../contracts/types.js";
+import type { ApiResultV1, StageResultV1, TaskEnvelopeV1, WorkflowPlanV1, WorkflowReceiptV1 } from "../../contracts/types.js";
 
 const rootDirectory = fileURLToPath(new URL("../../", import.meta.url));
 const bundledServer = fileURLToPath(new URL("../../mcp-server/dist/server.mjs", import.meta.url));
@@ -24,7 +24,7 @@ function toolData<T>(result: unknown): ApiResultV1<T> {
 }
 
 describe("bundled STDIO MCP server", () => {
-  it("starts with the packaged registry and executes the plan/start/get/abort path", async () => {
+  it("starts with the packaged registry and executes complete and abort paths", async () => {
     const environment = getDefaultEnvironment();
     delete environment.SKILL_REGISTRY_PATH;
     const transport = new StdioClientTransport({
@@ -79,6 +79,11 @@ describe("bundled STDIO MCP server", () => {
       expect(planned.ok).toBe(true);
       expect(planned.data?.state).toBe("ready");
       expect(planned.data?.selectedSkills).toContain("coordinate-subagents");
+      expect(planned.data?.stages).toHaveLength(1);
+      expect(planned.data?.stages[0]?.satisfiedCapabilities).toEqual([
+        "subagent-coordination",
+        "task-decomposition",
+      ]);
 
       const started = toolData<WorkflowReceiptV1>(await client.callTool({
         name: "start_workflow",
@@ -86,15 +91,68 @@ describe("bundled STDIO MCP server", () => {
       }));
       expect(started.data).toMatchObject({ state: "running", revision: 0 });
 
+      const stage = started.data!.plan.stages[0]!;
+      const stageResult: StageResultV1 = {
+        schemaVersion: "1.0.0",
+        runId: started.data!.runId,
+        stageId: stage.stageId,
+        expectedRevision: started.data!.revision,
+        state: "passed",
+        output: {
+          schemaVersion: "1.0.0",
+          kind: "output",
+          output: { completed: true },
+          artifacts: stage.requiredArtifacts.map((artifactId) => ({
+            artifactId,
+            schemaId: "stdio-fixture/v1",
+            locator: `tests/mcp/stdio/${artifactId}.json`,
+            digest: "a".repeat(64),
+            targetDigest: "b".repeat(64),
+            verified: true,
+          })),
+          error: null,
+        },
+        evidence: [{
+          artifactId: "stdio-execution",
+          kind: "test",
+          locator: "tests/mcp/stdio-integration.test.ts",
+          verified: true,
+          note: "Executed through the bundled STDIO transport.",
+        }],
+        findings: [],
+        blockers: [],
+        error: null,
+      };
+      const recorded = toolData<WorkflowReceiptV1>(await client.callTool({
+        name: "record_stage_result",
+        arguments: toolArguments(stageResult),
+      }));
+      expect(recorded.data).toMatchObject({ state: "running", revision: 1 });
+
       const status = toolData<WorkflowReceiptV1>(await client.callTool({
         name: "get_workflow_status",
-        arguments: { runId: started.data!.runId },
+        arguments: { runId: recorded.data!.runId },
       }));
       expect(status.data?.runId).toBe(started.data?.runId);
 
+      const finalized = toolData<WorkflowReceiptV1>(await client.callTool({
+        name: "finalize_workflow",
+        arguments: { runId: status.data!.runId, expectedRevision: status.data!.revision },
+      }));
+      expect(finalized.data).toMatchObject({ state: "passed", revision: 2 });
+
+      const abortTask = { ...task, taskId: "stdio-abort-path" };
+      const abortPlan = toolData<WorkflowPlanV1>(await client.callTool({
+        name: "plan_workflow",
+        arguments: toolArguments(abortTask),
+      }));
+      const abortRun = toolData<WorkflowReceiptV1>(await client.callTool({
+        name: "start_workflow",
+        arguments: toolArguments(abortPlan.data!),
+      }));
       const aborted = toolData<WorkflowReceiptV1>(await client.callTool({
         name: "abort_workflow",
-        arguments: { runId: started.data!.runId, expectedRevision: status.data!.revision },
+        arguments: { runId: abortRun.data!.runId, expectedRevision: abortRun.data!.revision },
       }));
       expect(aborted.data).toMatchObject({ state: "blocked", revision: 1 });
     } finally {

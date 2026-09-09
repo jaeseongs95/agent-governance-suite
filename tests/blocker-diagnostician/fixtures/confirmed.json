@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "objective": "확인된 원인을 기록한다.",
+  "expectedBehavior": "설정 파일을 읽는다.",
+  "episodes": [
+    { "attemptId": "one", "operation": "node app.mjs", "stableFailureTuple": { "errorCode": "ENOENT", "topFrame": "config.read" }, "environmentDigest": "env:local", "changeSummary": "", "evidenceRefs": ["logs/one.txt", "tool:file-stat"] }
+  ],
+  "lastKnownGood": { "identifier": "commit-old" },
+  "constraints": [],
+  "authorization": { "allowedChecks": [], "approvalRequired": [], "prohibitedChecks": [] },
+  "evidenceBindings": [
+    { "evidenceRef": "tool:file-stat", "artifactDigest": "sha256:01b54c26fd1a9d7583fb7103dc037fe2f1d2fe4b69494cdce20eb6acf88dc157", "hypothesisIds": ["H1"], "relation": "supports" }
+  ],
+  "attemptedChecks": [],
+  "candidateHypotheses": [
+    { "id": "H1", "causalLayer": "state", "statement": "필수 설정 파일이 대상 경로에 없다.", "supportingEvidence": ["tool:file-stat"], "contradictingEvidence": [], "state": "confirmed" }
+  ],
+  "candidateTests": [],
+  "accessBlockers": []
+}

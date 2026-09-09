@@ -13,4 +13,4 @@
 
 공개 전에는 버전, 변경 요약, 호환성 영향, 알려진 제한을 확인합니다. 고위험 변경이 포함되면 독립 감사의 대상 식별자와 판정이 현재 릴리스 후보와 일치하는지도 확인합니다.
 
-공개 GitHub 저장소를 만들거나 처음 push하기 직전에는 저장소 주소와 공개 범위를 다시 확인합니다. 릴리스 후에는 태그의 `mcp-server/dist/server.mjs`, `.codex-plugin/plugin.json`, `.agents/plugins/marketplace.json`이 같은 버전을 가리키는지 확인하고, 깨끗한 Codex 환경에서 marketplace 추가와 네 스킬 호출을 점검합니다.
+공개 GitHub 저장소를 만들거나 처음 push하기 직전에는 저장소 주소와 공개 범위를 다시 확인합니다. 릴리스 후에는 태그의 `mcp-server/dist/server.mjs`, `.codex-plugin/plugin.json`, `.agents/plugins/marketplace.json`이 같은 버전을 가리키는지 확인합니다. 깨끗한 Codex 환경에서 marketplace를 추가한 뒤 열 개 전문 스킬과 오케스트레이터가 발견되는지, MCP `tools/list`와 대표 계획·실행·중단 흐름이 동작하는지도 점검합니다.

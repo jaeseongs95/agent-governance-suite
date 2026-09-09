@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0.0",
+  "request": {
+    "schemaVersion": "1.0.0",
+    "taskId": "task-read-readme",
+    "request": "README의 설치 조건을 확인해 줘.",
+    "instructionResolutionRefs": ["artifact://instruction-scope-resolution/1"],
+    "pathSemantics": "windows",
+    "authorizationEvidence": [
+      { "action": "read repository files", "effect": "allow", "authority": "user", "sourceLocator": "user-request" },
+      { "action": "modify files", "effect": "prohibit", "authority": "project-instruction", "sourceLocator": "artifact://instruction-scope-resolution/1" }
+    ],
+    "suppliedFacts": [],
+    "userDecisions": []
+  },
+  "report": {
+    "schemaVersion": "1.0.0",
+    "taskEnvelope": {
+      "schemaVersion": "1.0.0",
+      "taskId": "task-read-readme",
+      "objective": "README에 기록된 설치 조건을 확인한다.",
+      "scope": { "included": ["README.md"], "excluded": ["source files"] },
+      "acceptanceCriteria": ["[AC-001] README의 설치 선행조건을 근거 위치와 함께 반환한다."],
+      "riskLevel": "low",
+      "workUnits": [],
+      "requiredCapabilities": [],
+      "constraints": ["파일을 수정하지 않는다."],
+      "authorization": {
+        "allowedActions": ["read repository files"],
+        "prohibitedActions": ["modify files"],
+        "approvalRequired": []
+      },
+      "decision": { "complexity": "simple", "hasConflicts": false },
+      "orchestration": { "requested": false, "mcpAvailable": false }
+    },
+    "acceptanceEvidencePlan": {
+      "schemaVersion": "1.0.0",
+      "criteria": [
+        {
+          "criterionId": "AC-001",
+          "statement": "[AC-001] README의 설치 선행조건을 근거 위치와 함께 반환한다.",
+          "verificationMethod": "README에서 설치 절을 읽고 근거 위치를 기록한다.",
+          "expectedEvidenceKinds": ["file"],
+          "passCondition": "설치 선행조건과 해당 파일 위치가 결과에 포함된다."
+        }
+      ]
+    },
+    "provenance": [
+      { "field": "/objective", "valueSummary": "README 설치 조건 확인", "sourceLocator": "user-request", "basis": "explicit" },
+      { "field": "/scope", "valueSummary": "README만 읽기", "sourceLocator": "user-request", "basis": "explicit" },
+      { "field": "/riskLevel", "valueSummary": "읽기 전용", "sourceLocator": "user-request", "basis": "verified-inference" },
+      { "field": "/authorization", "valueSummary": "읽기만 허용", "sourceLocator": "user-request", "basis": "verified-inference" }
+    ],
+    "authorizationProvenance": [
+      { "action": "read repository files", "envelopeField": "/authorization/allowedActions", "effect": "allow", "authority": "user", "sourceLocator": "user-request" },
+      { "action": "modify files", "envelopeField": "/authorization/prohibitedActions", "effect": "prohibit", "authority": "project-instruction", "sourceLocator": "artifact://instruction-scope-resolution/1" }
+    ],
+    "assumptions": [],
+    "ambiguities": [],
+    "contradictions": [],
+    "verdict": "PASS"
+  }
+}

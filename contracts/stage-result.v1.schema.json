@@ -11,13 +11,38 @@
     "stageId": { "type": "string", "minLength": 1 },
     "expectedRevision": { "type": "integer", "minimum": 0 },
     "state": { "enum": ["needs-input", "needs-approval", "needs-redesign", "failed", "passed", "blocked"] },
-    "output": { "type": ["object", "null"], "additionalProperties": true },
+    "output": { "$ref": "#/$defs/providerResult" },
     "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } },
     "findings": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
     "blockers": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
     "error": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/error" }] }
   },
   "$defs": {
+    "providerResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "output", "artifacts", "error"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "kind": { "enum": ["output", "adapter-error"] },
+        "output": { "type": ["object", "null"], "additionalProperties": true },
+        "artifacts": { "type": "array", "items": { "$ref": "#/$defs/providerArtifact" } },
+        "error": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/error" }] }
+      }
+    },
+    "providerArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "schemaId", "locator", "digest", "targetDigest", "verified"],
+      "properties": {
+        "artifactId": { "type": "string", "minLength": 1 },
+        "schemaId": { "type": "string", "minLength": 1 },
+        "locator": { "type": "string", "minLength": 1 },
+        "digest": { "type": "string", "pattern": "^(?:sha256:)?[a-f0-9]{64}$" },
+        "targetDigest": { "type": "string", "minLength": 1 },
+        "verified": { "type": "boolean" }
+      }
+    },
     "evidence": {
       "type": "object",
       "additionalProperties": false,

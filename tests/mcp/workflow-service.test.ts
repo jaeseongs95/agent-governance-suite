@@ -1,10 +1,10 @@
 import { readFileSync, readdirSync } from "node:fs";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { type PlannedStageV1, type SkillDescriptorV1, type StageResultV1, type TaskEnvelopeV1 } from "../../contracts/types.js";
+import { type PlannedStageV1, type SkillDescriptorV2, type StageResultV1, type TaskEnvelopeV1 } from "../../contracts/types.js";
 import { validateDecisionRecordSemantics } from "../../mcp-server/src/decision-record-validator.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
@@ -34,31 +34,66 @@ const validDecisionRecord = JSON.parse(readFileSync(new URL(
 ), "utf8")) as Record<string, unknown>;
 
 function descriptor(
-  input: Pick<SkillDescriptorV1, "id" | "capabilities" | "phase" | "riskGate" | "priority">
-    & Pick<SkillDescriptorV1, "producedArtifacts">,
-): SkillDescriptorV1 {
+  input: { id: string; capabilities: string[]; phase: string; riskGate: "none" | "conditional" | "mandatory"; priority: number; producedArtifacts: string[]; phaseOrder: number },
+): SkillDescriptorV2 {
+  const stateMapping = input.riskGate === "mandatory"
+    ? {
+        selector: "/output/gateVerdict",
+        values: {
+          PASS: { state: "passed" as const, errorRequired: false },
+          FAIL: { state: "failed" as const, errorRequired: true, allowedErrorCodes: ["GATE_FAILED" as const] },
+        },
+        default: "reject" as const,
+        adapterErrors: ["INVALID_INPUT" as const, "MISSING_EVIDENCE" as const],
+      }
+    : {
+        default: { state: "passed" as const, errorRequired: false },
+        adapterErrors: ["INVALID_INPUT" as const, "MISSING_EVIDENCE" as const],
+      };
   return {
-    schemaVersion: "1.0.0",
-    id: input.id,
+    schemaVersion: "2.0.0",
+    skillId: input.id,
     version: "1.0.0",
-    path: `skills/${input.id}`,
-    phase: input.phase,
-    capabilities: input.capabilities,
+    path: `./${input.id}`,
     priority: input.priority,
-    selectionCriteria: ["capability match"],
-    preconditions: [],
-    requiredArtifacts: input.id === "draft-specialist" ? ["draft"] : [`${input.id}-evidence`],
-    producedArtifacts: input.producedArtifacts,
-    riskGate: input.riskGate,
     enabled: true,
+    providers: [{
+      capabilities: input.capabilities,
+      executionClass: "workflow",
+      phase: input.phase,
+      phaseOrder: input.phaseOrder,
+      requiredInputArtifacts: [],
+      inputBindings: [],
+      producedArtifacts: input.producedArtifacts,
+      outputSchema: "contracts/freeform-output.v1.schema.json",
+      resultSchema: "contracts/provider-result.v1.schema.json",
+      stateMapping,
+      selectionCriteria: ["capability match"],
+      preconditions: [],
+      failureHandling: "Return a structured result.",
+      gate: {
+        kind: input.riskGate === "mandatory" ? "completion" : "none",
+        policy: input.riskGate,
+        validator: input.producedArtifacts.includes("decision-record")
+          ? "contracts/decision-record.v1.schema.json"
+          : null,
+      },
+    }],
   };
 }
 
-const skills: SkillDescriptorV1[] = [
-  descriptor({ id: "thread-conductor", capabilities: ["subagent-coordination"], phase: "execution-planning", riskGate: "conditional", priority: 10, producedArtifacts: [] }),
-  descriptor({ id: "reasoning-panel", capabilities: ["independent-deliberation"], phase: "decision-analysis", riskGate: "conditional", priority: 10, producedArtifacts: ["decision-record"] }),
-  descriptor({ id: "evidence-gate", capabilities: ["independent-audit"], phase: "completion-gate", riskGate: "mandatory", priority: 90, producedArtifacts: ["audit-report", "gate-verdict"] }),
-  descriptor({ id: "draft-specialist", capabilities: ["draft"], phase: "execution", riskGate: "none", priority: 10, producedArtifacts: ["draft"] }),
+const skills: SkillDescriptorV2[] = [
+  descriptor({ id: "thread-conductor", capabilities: ["subagent-coordination", "task-decomposition"], phase: "execution-planning", phaseOrder: 35, riskGate: "none", priority: 10, producedArtifacts: [] }),
+  descriptor({ id: "reasoning-panel", capabilities: ["independent-deliberation"], phase: "decision-analysis", phaseOrder: 40, riskGate: "none", priority: 10, producedArtifacts: ["decision-record"] }),
+  descriptor({ id: "evidence-gate", capabilities: ["independent-audit"], phase: "completion-gate", phaseOrder: 90, riskGate: "mandatory", priority: 90, producedArtifacts: ["audit-report", "gate-verdict"] }),
+  descriptor({ id: "draft-specialist", capabilities: ["draft"], phase: "execution", phaseOrder: 50, riskGate: "none", priority: 10, producedArtifacts: ["draft"] }),
+  {
+    ...descriptor({ id: "failure-analyst", capabilities: ["blocker-diagnosis"], phase: "failure-diagnosis", phaseOrder: 10, riskGate: "none", priority: 10, producedArtifacts: ["diagnosis-report"] }),
+    providers: [{
+      ...descriptor({ id: "failure-analyst", capabilities: ["blocker-diagnosis"], phase: "failure-diagnosis", phaseOrder: 10, riskGate: "none", priority: 10, producedArtifacts: ["diagnosis-report"] }).providers[0]!,
+      executionClass: "recovery",
+    }],
+  },
 ];
 
 function task(overrides: Partial<TaskEnvelopeV1> = {}): TaskEnvelopeV1 {
@@ -86,13 +121,22 @@ function task(overrides: Partial<TaskEnvelopeV1> = {}): TaskEnvelopeV1 {
   };
 }
 
-async function createService(descriptors = skills): Promise<{ service: WorkflowService; registryPath: string }> {
+async function createService(descriptors: SkillDescriptorV2[] = skills): Promise<{ service: WorkflowService; registryPath: string; rootDirectory: string }> {
   const directory = await mkdtemp(join(tmpdir(), "skill-suite-mcp-"));
   temporaryDirectories.push(directory);
-  const registryPath = join(directory, "registry.json");
-  await writeFile(registryPath, JSON.stringify({ schemaVersion: "1.0.0", skills: descriptors }), "utf8");
+  const registryPath = join(directory, "skills", "registry.json");
+  await mkdir(join(directory, "skills"), { recursive: true });
+  await mkdir(join(directory, "contracts"), { recursive: true });
+  await copyFile(new URL("../../contracts/freeform-output.v1.schema.json", import.meta.url), join(directory, "contracts", "freeform-output.v1.schema.json"));
+  await copyFile(new URL("../../contracts/provider-result.v1.schema.json", import.meta.url), join(directory, "contracts", "provider-result.v1.schema.json"));
+  await copyFile(new URL("../../contracts/task-envelope.v1.schema.json", import.meta.url), join(directory, "contracts", "task-envelope.v1.schema.json"));
+  await copyFile(
+    new URL("../../skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json", import.meta.url),
+    join(directory, "contracts", "decision-record.v1.schema.json"),
+  );
+  await writeFile(registryPath, JSON.stringify({ schemaVersion: "2.0.0", skills: descriptors }), "utf8");
   const validator = new ContractValidator();
-  return { service: new WorkflowService(new FileSkillRegistry(registryPath, validator), validator), registryPath };
+  return { service: new WorkflowService(new FileSkillRegistry(registryPath, validator), validator), registryPath, rootDirectory: directory };
 }
 
 function passedStage(runId: string, stage: PlannedStageV1, expectedRevision: number): StageResultV1 {
@@ -103,7 +147,10 @@ function passedStage(runId: string, stage: PlannedStageV1, expectedRevision: num
     stageId: stage.stageId,
     expectedRevision,
     state: "passed",
-    output: stage.riskGate === "mandatory"
+    output: {
+      schemaVersion: "1.0.0",
+      kind: "output",
+      output: stage.riskGate === "mandatory"
       ? {
           gateVerdict: "PASS",
           auditorId: "independent-auditor",
@@ -120,6 +167,16 @@ function passedStage(runId: string, stage: PlannedStageV1, expectedRevision: num
       : stage.requiredArtifacts.includes("decision-record")
         ? { decisionRecord: structuredClone(validDecisionRecord) }
         : { accepted: true },
+      artifacts: artifactIds.map((artifactId) => ({
+        artifactId,
+        schemaId: "fixture/v1",
+        locator: `tests/${stage.stageId}/${artifactId}.json`,
+        digest: "a".repeat(64),
+        targetDigest: "b".repeat(64),
+        verified: true,
+      })),
+      error: null,
+    },
     evidence: artifactIds.map((artifactId) => ({
       artifactId,
       kind: "test",
@@ -165,12 +222,29 @@ describe("WorkflowService", () => {
     expect(service.getWorkflowStatus("run-task-001-1").error?.code).toBe("RUN_NOT_FOUND");
   });
 
+  it("creates one stage when one provider satisfies multiple requested capabilities", async () => {
+    const { service } = await createService();
+    const result = service.planWorkflow(task({
+      taskId: "deduplicated-provider",
+      riskLevel: "low",
+      requiredCapabilities: ["task-decomposition"],
+      decision: { complexity: "simple", hasConflicts: false },
+    }));
+
+    const coordinationStages = result.data?.stages.filter((stage) => stage.skillId === "thread-conductor") ?? [];
+    expect(coordinationStages).toHaveLength(1);
+    expect(coordinationStages[0]?.satisfiedCapabilities).toEqual([
+      "subagent-coordination",
+      "task-decomposition",
+    ]);
+  });
+
   it("re-reads the runtime registry for each new plan", async () => {
     const { service, registryPath } = await createService();
     expect(service.planWorkflow(task({ taskId: "first" })).data?.selectedSkills).toContain("draft-specialist");
 
-    const replacement = skills.map((skill) => skill.id === "draft-specialist" ? { ...skill, id: "replacement-drafter", path: "skills/replacement-drafter" } : skill);
-    await writeFile(registryPath, JSON.stringify({ schemaVersion: "1.0.0", skills: replacement }), "utf8");
+    const replacement = skills.map((skill) => skill.skillId === "draft-specialist" ? { ...skill, skillId: "replacement-drafter", path: "./replacement-drafter" } : skill);
+    await writeFile(registryPath, JSON.stringify({ schemaVersion: "2.0.0", skills: replacement }), "utf8");
 
     expect(service.planWorkflow(task({ taskId: "second" })).data?.selectedSkills).toContain("replacement-drafter");
   });
@@ -219,7 +293,7 @@ describe("WorkflowService", () => {
 
     const auditStage = receipt.plan.stages.find((stage) => stage.riskGate === "mandatory")!;
     const missingArtifact = passedStage(receipt.runId, auditStage, receipt.revision);
-    missingArtifact.evidence = [{ ...missingArtifact.evidence[0]!, artifactId: "wrong-artifact" }];
+    missingArtifact.output.artifacts = [{ ...missingArtifact.output.artifacts[0]!, artifactId: "wrong-artifact" }];
     expect(service.recordStageResult(missingArtifact).error?.code).toBe("MISSING_EVIDENCE");
   });
 
@@ -232,7 +306,7 @@ describe("WorkflowService", () => {
       receipt = service.recordStageResult(passedStage(receipt.runId, stage, receipt.revision)).data!;
     }
     const missingProducedArtifact = passedStage(receipt.runId, producedArtifactStage, receipt.revision);
-    missingProducedArtifact.evidence = [{ ...missingProducedArtifact.evidence[0]!, artifactId: "wrong-artifact" }];
+    missingProducedArtifact.output.artifacts = [{ ...missingProducedArtifact.output.artifacts[0]!, artifactId: "wrong-artifact" }];
 
     expect(service.recordStageResult(missingProducedArtifact).error?.code).toBe("MISSING_EVIDENCE");
     const subsequentStage = receipt.plan.stages.find((stage) => stage.order === producedArtifactStage.order + 1)!;
@@ -248,6 +322,13 @@ describe("WorkflowService", () => {
         const failedAudit: StageResultV1 = {
           ...passedStage(receipt.runId, stage, receipt.revision),
           state: "failed",
+          output: {
+            schemaVersion: "1.0.0",
+            kind: "output",
+            output: { gateVerdict: "FAIL" },
+            artifacts: [],
+            error: { code: "GATE_FAILED", message: "Independent audit failed.", details: null },
+          },
           evidence: [],
           blockers: ["material-audit-finding"],
           error: { code: "GATE_FAILED", message: "Independent audit failed.", details: null }
@@ -296,6 +377,65 @@ describe("WorkflowService", () => {
       ],
     }));
     expect(cycle.error?.code).toBe("INVALID_INPUT");
+  });
+
+  it("keeps bootstrap providers before planning and isolates recovery workflows", async () => {
+    const { service } = await createService([
+      ...skills,
+      {
+        ...descriptor({ id: "instruction-reader", capabilities: ["instruction-scope-resolution"], phase: "instruction-resolution", phaseOrder: 10, riskGate: "none", priority: 10, producedArtifacts: ["instruction-scope-resolution"] }),
+        providers: [{
+          ...descriptor({ id: "instruction-reader", capabilities: ["instruction-scope-resolution"], phase: "instruction-resolution", phaseOrder: 10, riskGate: "none", priority: 10, producedArtifacts: ["instruction-scope-resolution"] }).providers[0]!,
+          executionClass: "bootstrap",
+        }],
+      },
+    ]);
+    const bootstrap = service.planWorkflow(task({
+      taskId: "bootstrap-stage-rejected",
+      riskLevel: "low",
+      workUnits: [],
+      requiredCapabilities: ["instruction-scope-resolution"],
+      decision: { complexity: "simple", hasConflicts: false },
+    }));
+    expect(bootstrap.data?.state).toBe("blocked");
+    expect(bootstrap.data?.errors[0]?.code).toBe("GATE_FAILED");
+
+    const recovery = service.planWorkflow(task({
+      taskId: "recovery-only",
+      riskLevel: "low",
+      workUnits: [],
+      requiredCapabilities: ["blocker-diagnosis"],
+      decision: { complexity: "simple", hasConflicts: false },
+    }));
+    expect(recovery.data?.stages).toHaveLength(1);
+    expect(recovery.data?.stages[0]).toMatchObject({ executionClass: "recovery", requiredCapability: "blocker-diagnosis" });
+
+    const mixed = service.planWorkflow(task({
+      taskId: "mixed-recovery",
+      riskLevel: "low",
+      workUnits: [],
+      requiredCapabilities: ["blocker-diagnosis", "draft"],
+      decision: { complexity: "simple", hasConflicts: false },
+    }));
+    expect(mixed.data?.state).toBe("blocked");
+    expect(mixed.data?.errors.some((error) => error.code === "INVALID_TRANSITION")).toBe(true);
+  });
+
+  it("rejects provider schemas changed after planning", async () => {
+    const { service, rootDirectory } = await createService();
+    const plan = service.planWorkflow(task({
+      taskId: "stale-provider-schema",
+      riskLevel: "low",
+      workUnits: [],
+      requiredCapabilities: ["draft"],
+      decision: { complexity: "simple", hasConflicts: false },
+    })).data!;
+    const receipt = service.startWorkflow(plan).data!;
+    const schemaPath = join(rootDirectory, "contracts", "provider-result.v1.schema.json");
+    const original = readFileSync(schemaPath, "utf8");
+    await writeFile(schemaPath, `${original}\n`, "utf8");
+    expect(service.recordStageResult(passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision)).error?.code)
+      .toBe("STALE_REVISION");
   });
 
   it("adds coordination only when work units contain an independent pair", async () => {
@@ -394,12 +534,28 @@ describe("WorkflowService", () => {
 
     const auditStage = receipt.plan.stages.find((stage) => stage.riskGate === "mandatory")!;
     const failingVerdict = passedStage(receipt.runId, auditStage, receipt.revision);
-    failingVerdict.output = { ...failingVerdict.output, gateVerdict: "FAIL" };
-    expect(service.recordStageResult(failingVerdict).error?.code).toBe("GATE_FAILED");
+    failingVerdict.output = {
+      ...failingVerdict.output,
+      output: { ...failingVerdict.output.output, gateVerdict: "FAIL" },
+      error: { code: "GATE_FAILED", message: "Independent audit failed.", details: null },
+    };
+    failingVerdict.state = "failed";
+    failingVerdict.error = failingVerdict.output.error;
+    const failedReceipt = service.recordStageResult(failingVerdict);
+    expect(failedReceipt.data?.state).toBe("failed");
 
-    const selfAudited = passedStage(receipt.runId, auditStage, receipt.revision);
-    selfAudited.output = { ...selfAudited.output, auditorId: "implementation-agent", implementationActorIds: ["implementation-agent"] };
-    expect(service.recordStageResult(selfAudited).error?.code).toBe("GATE_FAILED");
+    const { service: independentService } = await createService();
+    let independentReceipt = independentService.startWorkflow(independentService.planWorkflow(task({ taskId: "self-audit" })).data!).data!;
+    for (const stage of independentReceipt.plan.stages.filter((item) => item.riskGate !== "mandatory")) {
+      independentReceipt = independentService.recordStageResult(passedStage(independentReceipt.runId, stage, independentReceipt.revision)).data!;
+    }
+    const independentAuditStage = independentReceipt.plan.stages.find((stage) => stage.riskGate === "mandatory")!;
+    const selfAudited = passedStage(independentReceipt.runId, independentAuditStage, independentReceipt.revision);
+    selfAudited.output = {
+      ...selfAudited.output,
+      output: { ...selfAudited.output.output, auditorId: "implementation-agent", implementationActorIds: ["implementation-agent"] },
+    };
+    expect(independentService.recordStageResult(selfAudited).error?.code).toBe("GATE_FAILED");
   });
 
   it("rejects deliberation without an eligible DecisionRecord", async () => {
@@ -410,7 +566,7 @@ describe("WorkflowService", () => {
     const deliberation = receipt.plan.stages.find((stage) => stage.requiredArtifacts.includes("decision-record"))!;
 
     const missing = passedStage(receipt.runId, deliberation, receipt.revision);
-    missing.output = { accepted: true };
+    missing.output = { ...missing.output, output: { accepted: true } };
     expect(service.recordStageResult(missing).error?.code).toBe("GATE_FAILED");
 
     const provisional = passedStage(receipt.runId, deliberation, receipt.revision);
@@ -418,8 +574,22 @@ describe("WorkflowService", () => {
       run: Record<string, unknown>;
     };
     provisionalRecord.run.assurance = "provisional";
-    provisional.output = { decisionRecord: provisionalRecord };
+    provisional.output = { ...provisional.output, output: { decisionRecord: provisionalRecord } };
     expect(service.recordStageResult(provisional).error?.code).toBe("GATE_FAILED");
+  });
+
+  it("validates a replacement deliberation provider without a hardcoded skill path", async () => {
+    const replacementSkills = skills.map((skill) => skill.skillId === "reasoning-panel"
+      ? { ...skill, skillId: "alternate-reasoner", path: "./alternate-reasoner" }
+      : skill);
+    const { service } = await createService(replacementSkills);
+    let receipt = service.startWorkflow(service.planWorkflow(task({ taskId: "alternate-deliberation" })).data!).data!;
+    receipt = service.recordStageResult(passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision)).data!;
+    const deliberation = receipt.plan.stages.find((stage) => stage.skillId === "alternate-reasoner")!;
+
+    const accepted = service.recordStageResult(passedStage(receipt.runId, deliberation, receipt.revision));
+    expect(accepted.ok).toBe(true);
+    expect(accepted.data?.stageResults.at(-1)?.state).toBe("passed");
   });
 
   it("rejects incomplete or stale mandatory audit handoffs", async () => {
@@ -432,18 +602,21 @@ describe("WorkflowService", () => {
 
     const missingSafetyFields = passedStage(receipt.runId, auditStage, receipt.revision);
     missingSafetyFields.output = {
-      gateVerdict: "PASS",
-      auditorId: "independent-auditor",
-      implementationActorIds: ["implementation-agent"],
+      ...missingSafetyFields.output,
+      output: {
+        gateVerdict: "PASS",
+        auditorId: "independent-auditor",
+        implementationActorIds: ["implementation-agent"],
+      },
     };
     expect(service.recordStageResult(missingSafetyFields).error?.code).toBe("GATE_FAILED");
 
     const stale = passedStage(receipt.runId, auditStage, receipt.revision);
-    stale.output = { ...stale.output, stale: true };
+    stale.output = { ...stale.output, output: { ...stale.output.output, stale: true } };
     expect(service.recordStageResult(stale).error?.code).toBe("GATE_FAILED");
 
     const wrongTarget = passedStage(receipt.runId, auditStage, receipt.revision);
-    wrongTarget.output = { ...wrongTarget.output, currentTarget: "commit:changed-after-audit" };
+    wrongTarget.output = { ...wrongTarget.output, output: { ...wrongTarget.output.output, currentTarget: "commit:changed-after-audit" } };
     expect(service.recordStageResult(wrongTarget).error?.code).toBe("GATE_FAILED");
   });
 
@@ -475,7 +648,7 @@ describe("WorkflowService", () => {
       receipt = service.recordStageResult(passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision)).data!;
       const deliberation = receipt.plan.stages.find((stage) => stage.requiredArtifacts.includes("decision-record"))!;
       const result = passedStage(receipt.runId, deliberation, receipt.revision);
-      result.output = { decisionRecord: fixture.record };
+      result.output = { ...result.output, output: { decisionRecord: fixture.record } };
       expect(service.recordStageResult(result).error?.code, fixture.name).toBe("GATE_FAILED");
     }
   });

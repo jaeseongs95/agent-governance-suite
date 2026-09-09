@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "2.0.0",
+  "skillId": "task-contract",
+  "version": "0.1.0",
+  "enabled": true,
+  "priority": 50,
+  "providers": [
+    {
+      "capabilities": ["task-contract-definition"],
+      "executionClass": "bootstrap",
+      "phase": "task-definition",
+      "phaseOrder": 30,
+      "requiredInputArtifacts": ["task-request", "instruction-scope-resolution"],
+      "inputBindings": [
+        { "targetArtifact": "task-request", "sources": ["task:request"], "operation": "require-external" },
+        { "targetArtifact": "instruction-scope-resolution", "sources": ["bootstrap:instruction-scope-resolution"], "operation": "select" }
+      ],
+      "producedArtifacts": ["task-envelope", "task-contract-report", "acceptance-evidence-plan"],
+      "outputSchema": "contracts/task-contract-report.v1.schema.json",
+      "resultSchema": "integration/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/verdict",
+        "values": {
+          "PASS": { "state": "passed", "errorRequired": false },
+          "NEEDS_INPUT": { "state": "needs-input", "errorRequired": false },
+          "BLOCKED": { "state": "blocked", "errorRequired": true, "allowedErrorCodes": ["MISSING_EVIDENCE", "INVALID_INPUT"] }
+        },
+        "default": "reject",
+        "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE"]
+      },
+      "selectionCriteria": ["unstructured-task-request", "missing-acceptance-criteria", "scope-or-authorization-ambiguity", "explicit-task-contract"],
+      "preconditions": ["The user request and applicable instruction resolution are available."],
+      "failureHandling": "Return NEEDS_INPUT for material ambiguity and BLOCKED when required source evidence cannot be validated.",
+      "gate": { "kind": "none", "policy": "none", "validator": null }
+    }
+  ]
+}

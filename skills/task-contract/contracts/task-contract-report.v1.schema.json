@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.local/task-contract/contracts/task-contract-report.v1.schema.json",
+  "title": "TaskContractReport.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "taskEnvelope", "acceptanceEvidencePlan", "provenance", "authorizationProvenance", "assumptions", "ambiguities", "contradictions", "verdict"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "taskEnvelope": { "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json" },
+    "acceptanceEvidencePlan": { "$ref": "https://agent-governance-skills.local/task-contract/contracts/acceptance-evidence-plan.v1.schema.json" },
+    "provenance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field", "valueSummary", "sourceLocator", "basis"],
+        "properties": {
+          "field": { "type": "string", "pattern": "^/" },
+          "valueSummary": { "type": "string", "minLength": 1 },
+          "sourceLocator": { "type": "string", "minLength": 1 },
+          "basis": { "enum": ["explicit", "instruction", "verified-inference"] }
+        }
+      }
+    },
+    "authorizationProvenance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "envelopeField", "effect", "authority", "sourceLocator"],
+        "properties": {
+          "action": { "type": "string", "minLength": 1 },
+          "envelopeField": { "enum": ["/authorization/allowedActions", "/authorization/prohibitedActions", "/authorization/approvalRequired"] },
+          "effect": { "enum": ["allow", "prohibit", "require-approval"] },
+          "authority": { "enum": ["system", "developer", "user", "project-instruction"] },
+          "sourceLocator": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["statement", "impact", "confirmationRequired"],
+        "properties": {
+          "statement": { "type": "string", "minLength": 1 },
+          "impact": { "enum": ["low", "material"] },
+          "confirmationRequired": { "type": "boolean" }
+        }
+      }
+    },
+    "ambiguities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field", "question", "blocking"],
+        "properties": {
+          "field": { "type": "string", "pattern": "^/" },
+          "question": { "type": "string", "minLength": 1 },
+          "blocking": { "type": "boolean" }
+        }
+      }
+    },
+    "contradictions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fields", "description", "sourceLocators"],
+        "properties": {
+          "fields": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^/" }, "uniqueItems": true },
+          "description": { "type": "string", "minLength": 1 },
+          "sourceLocators": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+        }
+      }
+    },
+    "verdict": { "enum": ["PASS", "NEEDS_INPUT", "BLOCKED"] }
+  }
+}

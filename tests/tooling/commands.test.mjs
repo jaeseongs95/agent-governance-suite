@@ -12,7 +12,7 @@ async function createSuiteRoot() {
   temporaryDirectories.push(directory);
   await mkdir(path.join(directory, "skills"), { recursive: true });
   await mkdir(path.join(directory, "tests"), { recursive: true });
-  await writeFile(path.join(directory, "skills", "registry.json"), '{"schemaVersion":"1.0.0","skills":[]}\n');
+  await writeFile(path.join(directory, "skills", "registry.json"), '{"schemaVersion":"2.0.0","skills":[]}\n');
   await writeFile(path.join(directory, "skills", "source-lock.json"), '{"schemaVersion":"1.0.0","sources":[]}\n');
   return directory;
 }
@@ -56,7 +56,10 @@ describe("skill maintenance commands", () => {
     const cases = JSON.parse(await readFile(path.join(suiteRoot, "tests", "evidence-normalizer", "cases.json"), "utf8"));
     expect(Object.keys(cases)).toEqual(["normal", "boundary", "failure"]);
     const registry = JSON.parse(await readFile(path.join(suiteRoot, "skills", "registry.json"), "utf8"));
-    expect(registry.skills[0]).toMatchObject({ id: "evidence-normalizer", phase: "validation" });
+    expect(registry.skills[0]).toMatchObject({
+      skillId: "evidence-normalizer",
+      providers: [{ phase: "validation", capabilities: ["evidence-normalization"] }]
+    });
     const sourceLock = JSON.parse(await readFile(path.join(suiteRoot, "skills", "source-lock.json"), "utf8"));
     expect(sourceLock.sources).toEqual([]);
   });
@@ -64,8 +67,16 @@ describe("skill maintenance commands", () => {
   it("rejects a duplicate capability before creating files", async () => {
     const suiteRoot = await createSuiteRoot();
     await writeFile(path.join(suiteRoot, "skills", "registry.json"), JSON.stringify({
-      schemaVersion: "1.0.0",
-      skills: [{ id: "existing-provider", capabilities: ["shared-capability"] }]
+      schemaVersion: "2.0.0",
+      skills: [{
+        schemaVersion: "2.0.0",
+        skillId: "existing-provider",
+        version: "0.1.0",
+        path: "./existing-provider",
+        enabled: true,
+        priority: 50,
+        providers: [{ capabilities: ["shared-capability"] }]
+      }]
     }));
 
     const result = runScript("new-skill.mjs", [

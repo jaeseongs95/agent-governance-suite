@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "operationId": "buy-credits",
+  "actionClass": "billing",
+  "targets": [{ "locator": "billing://account/team/credits", "targetType": "billing-account", "environment": "external", "expectedFingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111" }],
+  "plannedCommandOrTool": { "tool": "billing-api", "action": "purchase" },
+  "scopeRef": { "locator": "evidence://scope", "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222", "includedTargets": ["billing://account/team/credits"], "excludedTargets": [] },
+  "authorizationRef": { "locator": "evidence://auth", "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333", "allowedActions": ["billing"], "allowedTargets": ["billing://account/team/credits"], "environments": ["external"] },
+  "approvalEvidenceRefs": [],
+  "currentStateEvidenceRefs": [{ "locator": "evidence://state", "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555", "targetLocator": "billing://account/team/credits", "fingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111" }],
+  "recoveryPlan": { "available": true, "method": "vendor refund", "backupRef": "evidence://quote", "restoreProcedureRef": "runbook://refund", "restoreTestEvidenceRef": "evidence://refund-policy", "irreversibilityAccepted": false },
+  "expectedBlastRadius": { "affectedTargets": 1, "affectedUsers": 0, "external": true, "description": "team billing account" }
+}

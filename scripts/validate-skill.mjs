@@ -53,7 +53,7 @@ export async function validateSkill(name) {
   if (name !== "orchestrator") {
     const registry = await readJson(path.join(ROOT, "skills", "registry.json"));
     const descriptors = Array.isArray(registry) ? registry : registry.skills;
-    const matches = descriptors.filter((descriptor) => descriptor.id === name);
+    const matches = descriptors.filter((descriptor) => descriptor.skillId === name);
     if (matches.length !== 1) {
       errors.push(`registry must contain exactly one descriptor for ${name}`);
     }
