@@ -18,7 +18,11 @@ for (const relativePath of requiredFiles) {
 
 const mcp = JSON.parse(await readFile(path.join(ROOT, ".mcp.json"), "utf8"));
 const server = mcp.mcpServers?.["agent-governance-suite"];
-if (server?.command !== "node" || server?.args?.[0] !== "mcp-server/dist/server.mjs") {
+if (
+  server?.command !== "node"
+  || server?.args?.[0] !== "mcp-server/dist/server.mjs"
+  || server?.cwd !== "."
+) {
   throw new Error(".mcp.json does not point to the packaged STDIO server.");
 }
 
