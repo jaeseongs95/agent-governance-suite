@@ -1,0 +1,7 @@
+interface:
+  display_name: "Governance Orchestrator"
+  short_description: "전문 스킬의 실행 순서와 결과 흐름을 연결합니다"
+  default_prompt: "Use $orchestrator to classify this governance request and connect the applicable installed skills."
+
+policy:
+  allow_implicit_invocation: true

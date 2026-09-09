@@ -1,0 +1,117 @@
+{
+  "schemaVersion": "1.0.0",
+  "cases": [
+    {
+      "id": "complex-parallel-high-risk-orchestration",
+      "kind": "normal",
+      "scenario": "두 개의 독립 작업 단위가 있고, 요구사항 충돌을 검토한 뒤 고위험 변경을 완료해야 한다.",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "taskId": "complex-parallel-high-risk",
+        "objective": "권한 변경과 배포 계획을 독립적으로 검토하고 실행 흐름을 조정한다.",
+        "scope": { "included": ["권한 변경", "배포 계획"], "excluded": [] },
+        "acceptanceCriteria": ["필수 감사 게이트를 통과한다."],
+        "riskLevel": "high",
+        "workUnits": [
+          { "id": "permission-change", "objective": "권한 변경을 구현한다.", "dependencies": [], "writeTargets": ["permissions"] },
+          { "id": "deployment-plan", "objective": "배포 계획을 검증한다.", "dependencies": [], "writeTargets": ["deployment"] }
+        ],
+        "requiredCapabilities": [],
+        "constraints": [],
+        "authorization": { "allowedActions": ["local-validation"], "prohibitedActions": ["public-release"], "approvalRequired": ["publish"] },
+        "decision": { "complexity": "complex", "hasConflicts": true },
+        "orchestration": {
+          "requested": true,
+          "mcpAvailable": true
+        }
+      },
+      "expected": {
+        "executionMode": "orchestrated",
+        "workflowState": "ready",
+        "skillsInOrder": [
+          "coordinate-subagents",
+          "independent-deliberation-panel",
+          "independent-audit-gate"
+        ],
+        "requiredCapabilitiesInOrder": [
+          "subagent-coordination",
+          "independent-deliberation",
+          "independent-audit"
+        ],
+        "parallelWorkOwnership": "coordinate-subagents assigns independent units without duplicating a specialist's work.",
+        "completionGate": "independent-audit-gate runs after preceding stages and requires PASS before high-risk completion."
+      }
+    },
+    {
+      "id": "single-specialist-direct-invocation",
+      "kind": "boundary",
+      "scenario": "한 전문 스킬만 필요한 독립 검토 요청은 MCP 통합 없이 직접 호출한다.",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "taskId": "single-direct-deliberation",
+        "objective": "두 설계안의 상충하는 근거를 독립적으로 검토한다.",
+        "scope": { "included": ["설계안 비교"], "excluded": ["구현"] },
+        "acceptanceCriteria": ["검토 결과와 근거를 반환한다."],
+        "riskLevel": "low",
+        "workUnits": [],
+        "requiredCapabilities": [
+          "independent-review"
+        ],
+        "constraints": [],
+        "authorization": { "allowedActions": ["read"], "prohibitedActions": ["write"], "approvalRequired": [] },
+        "decision": { "complexity": "simple", "hasConflicts": false },
+        "orchestration": {
+          "requested": false,
+          "mcpAvailable": false
+        }
+      },
+      "expected": {
+        "executionMode": "direct",
+        "workflowState": "ready",
+        "skillsInOrder": [
+          "independent-deliberation-panel"
+        ],
+        "requiredCapabilitiesInOrder": [
+          "independent-review"
+        ],
+        "mcpError": null,
+        "directInvocationAllowed": true
+      }
+    },
+    {
+      "id": "mcp-unavailable-blocks-integration-only",
+      "kind": "expected-failure",
+      "scenario": "통합 워크플로가 요청됐지만 MCP 실행 계층을 사용할 수 없다.",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "taskId": "orchestrated-mcp-unavailable",
+        "objective": "독립 작업을 조정하고 고위험 결과를 감사한다.",
+        "scope": { "included": ["작업 조정", "독립 감사"], "excluded": [] },
+        "acceptanceCriteria": ["통합 실행이 MCP 없이 진행되지 않는다."],
+        "riskLevel": "high",
+        "workUnits": [
+          { "id": "work-a", "objective": "작업 A를 수행한다.", "dependencies": [], "writeTargets": ["a"] },
+          { "id": "work-b", "objective": "작업 B를 수행한다.", "dependencies": [], "writeTargets": ["b"] }
+        ],
+        "requiredCapabilities": [],
+        "constraints": [],
+        "authorization": { "allowedActions": ["direct-skill-call"], "prohibitedActions": ["orchestrated-run-without-mcp"], "approvalRequired": [] },
+        "decision": { "complexity": "simple", "hasConflicts": false },
+        "orchestration": {
+          "requested": true,
+          "mcpAvailable": false
+        }
+      },
+      "expected": {
+        "executionMode": "orchestrated",
+        "workflowState": "blocked",
+        "errorCode": "MCP_UNAVAILABLE",
+        "skillsRemainDirectlyAvailable": [
+          "coordinate-subagents",
+          "independent-audit-gate"
+        ],
+        "blockedScope": "MCP로 실행하는 통합 워크플로만 차단하며, 직접 호출 가능한 전문 스킬의 사용 가능 여부는 바꾸지 않는다."
+      }
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/workflow-receipt.v1.schema.json",
+  "title": "WorkflowReceipt.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "revision", "state", "plan", "stageResults", "blockers", "unresolved", "error"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "runId": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 0 },
+    "state": { "enum": ["ready", "running", "needs-input", "needs-approval", "needs-redesign", "failed", "passed", "blocked"] },
+    "plan": { "$ref": "https://skill-suite.local/contracts/workflow-plan.v1.schema.json" },
+    "stageResults": { "type": "array", "items": { "$ref": "https://skill-suite.local/contracts/stage-result.v1.schema.json" } },
+    "blockers": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "unresolved": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "error": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/error" }] }
+  },
+  "$defs": {
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "details"],
+      "properties": {
+        "code": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE"] },
+        "message": { "type": "string", "minLength": 1 },
+        "details": { "type": ["object", "null"], "additionalProperties": true }
+      }
+    }
+  }
+}

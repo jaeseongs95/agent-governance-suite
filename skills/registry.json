@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0.0",
+  "skills": [
+    {
+      "schemaVersion": "1.0.0",
+      "id": "independent-deliberation-panel",
+      "version": "0.1.0",
+      "path": "./independent-deliberation-panel",
+      "phase": "decision-analysis",
+      "capabilities": [
+        "independent-deliberation",
+        "independent-review",
+        "cross-examination",
+        "evidence-resolution",
+        "consensus-decision"
+      ],
+      "priority": 10,
+      "selectionCriteria": [
+        "decision-conflict",
+        "high-impact-uncertainty",
+        "explicit-independent-review"
+      ],
+      "preconditions": [
+        "The request contains material uncertainty, conflicting requirements, or high failure cost.",
+        "A case brief and directly inspectable evidence or evidence locations are available."
+      ],
+      "requiredArtifacts": [
+        "case-brief",
+        "evidence-sources",
+        "constraints"
+      ],
+      "producedArtifacts": [
+        "panel-manifest",
+        "cross-examination-plan",
+        "issue-ledger",
+        "consensus-proposal"
+      ],
+      "riskGate": "conditional",
+      "enabled": true
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "id": "coordinate-subagents",
+      "version": "0.1.0",
+      "path": "./coordinate-subagents",
+      "phase": "execution-planning",
+      "capabilities": [
+        "subagent-coordination",
+        "task-decomposition",
+        "subagent-delegation",
+        "ownership-coordination",
+        "evidence-integration"
+      ],
+      "priority": 20,
+      "selectionCriteria": [
+        "explicit-delegation",
+        "parallel-independent-units",
+        "high-risk-audit-coordination"
+      ],
+      "preconditions": [
+        "The user authorizes the requested work and applicable permission boundaries are known.",
+        "The task has explicit delegation, two or more independent units, or a high-risk audit requirement."
+      ],
+      "requiredArtifacts": [
+        "task-request",
+        "execution-unit-inventory",
+        "constraints"
+      ],
+      "producedArtifacts": [
+        "delegation-decision",
+        "task-graph",
+        "assignment-briefs",
+        "integration-report"
+      ],
+      "riskGate": "conditional",
+      "enabled": true
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "id": "independent-audit-gate",
+      "version": "0.1.0",
+      "path": "./independent-audit-gate",
+      "phase": "completion-gate",
+      "capabilities": [
+        "independent-audit",
+        "risk-classification",
+        "evidence-verification",
+        "release-gate"
+      ],
+      "priority": 90,
+      "selectionCriteria": [
+        "high-risk-change",
+        "final-target-available",
+        "explicit-audit-gate"
+      ],
+      "preconditions": [
+        "A final target identifier and final change or release artifact are fixed.",
+        "Implementation verification evidence and a fresh auditor independent from implementation are available."
+      ],
+      "requiredArtifacts": [
+        "final-target-identifier",
+        "final-diff-or-artifact-digest",
+        "raw-verification-results",
+        "rollback-or-recovery-evidence"
+      ],
+      "producedArtifacts": [
+        "audit-target",
+        "audit-findings",
+        "re-audit-status",
+        "gate-verdict"
+      ],
+      "riskGate": "mandatory",
+      "enabled": true
+    }
+  ]
+}

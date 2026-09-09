@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/workflow-plan.v1.schema.json",
+  "title": "WorkflowPlan.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "taskId", "integrityToken", "executionMode", "state", "selectedSkills", "stages", "currentStageId", "nextStageId", "errors"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "taskId": { "type": "string", "minLength": 1 },
+    "integrityToken": { "type": "string", "minLength": 1 },
+    "executionMode": { "enum": ["direct", "orchestrated"] },
+    "state": { "enum": ["ready", "running", "needs-input", "needs-approval", "needs-redesign", "failed", "passed", "blocked"] },
+    "selectedSkills": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "stages": { "type": "array", "items": { "$ref": "#/$defs/stage" } },
+    "currentStageId": { "type": ["string", "null"] },
+    "nextStageId": { "type": ["string", "null"] },
+    "errors": { "type": "array", "items": { "$ref": "#/$defs/error" } }
+  },
+  "$defs": {
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stageId", "order", "requiredCapability", "skillId", "phase", "selectionReason", "state", "requiredArtifacts", "riskGate"],
+      "properties": {
+        "stageId": { "type": "string", "minLength": 1 },
+        "order": { "type": "integer", "minimum": 1 },
+        "requiredCapability": { "type": "string", "minLength": 1 },
+        "skillId": { "type": "string", "minLength": 1 },
+        "phase": { "type": "string", "minLength": 1 },
+        "selectionReason": { "type": "string", "minLength": 1 },
+        "state": { "enum": ["ready", "running", "needs-input", "needs-approval", "needs-redesign", "failed", "passed", "blocked"] },
+        "requiredArtifacts": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "riskGate": { "enum": ["none", "conditional", "mandatory"] }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "details"],
+      "properties": {
+        "code": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE"] },
+        "message": { "type": "string", "minLength": 1 },
+        "details": { "type": ["object", "null"], "additionalProperties": true }
+      }
+    }
+  }
+}

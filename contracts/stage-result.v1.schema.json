@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/stage-result.v1.schema.json",
+  "title": "StageResult.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "stageId", "expectedRevision", "state", "output", "evidence", "findings", "blockers", "error"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "runId": { "type": "string", "minLength": 1 },
+    "stageId": { "type": "string", "minLength": 1 },
+    "expectedRevision": { "type": "integer", "minimum": 0 },
+    "state": { "enum": ["needs-input", "needs-approval", "needs-redesign", "failed", "passed", "blocked"] },
+    "output": { "type": ["object", "null"], "additionalProperties": true },
+    "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } },
+    "findings": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "blockers": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "error": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/error" }] }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "kind", "locator", "verified", "note"],
+      "properties": {
+        "artifactId": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["user-input", "file", "test", "document", "tool"] },
+        "locator": { "type": "string", "minLength": 1 },
+        "verified": { "type": "boolean" },
+        "note": { "type": "string" }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "details"],
+      "properties": {
+        "code": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE"] },
+        "message": { "type": "string", "minLength": 1 },
+        "details": { "type": ["object", "null"], "additionalProperties": true }
+      }
+    }
+  }
+}

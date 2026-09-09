@@ -1,0 +1,39 @@
+{
+  "name": "agent-governance-suite",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Specialized governance skills with a locally enforced workflow orchestrator.",
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc --noEmit && node scripts/build.mjs",
+    "test": "node scripts/build.mjs && vitest run",
+    "lint": "eslint . && node scripts/validate-repository.mjs",
+    "dev": "tsx mcp-server/src/index.ts",
+    "runtime:check": "node scripts/check-runtime.mjs",
+    "bundle:check": "node scripts/check-bundle.mjs",
+    "validate:all": "node scripts/validate-repository.mjs && node scripts/run-python-validations.mjs",
+    "validate:official": "node scripts/validate-official.mjs",
+    "validate:skill": "node scripts/validate-skill.mjs",
+    "new:skill": "node scripts/new-skill.mjs",
+    "import:skill": "node scripts/import-skill.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "ajv": "^8.20.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.5.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.10.0",
+    "tsx": "^4.23.13",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.0"
+  }
+}
