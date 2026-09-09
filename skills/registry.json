@@ -92,7 +92,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "coordinate-subagents",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "path": "./coordinate-subagents",
       "enabled": true,
       "priority": 20,

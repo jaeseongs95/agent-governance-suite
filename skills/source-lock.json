@@ -5,9 +5,9 @@
       "skillId": "coordinate-subagents",
       "path": "skills/coordinate-subagents",
       "source": "https://github.com/jaeseongs95/coordinate-subagents.git",
-      "ref": "v0.1.1",
-      "commit": "fcbc347678811146fac1cefd931edc97d228152b",
-      "checksum": "sha256:d843f21c8ac1adec1e2d51004a13d9ff88b91b7a9418861cabda6d5b2318ab05",
+      "ref": "v0.1.2",
+      "commit": "020a4709ff42b5e7ef3ebf7ed6337112aabac410",
+      "checksum": "sha256:5c20347ab97213abf64959757501bc9d56d62df8dc8cbba4eec65119cfb2142a",
       "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
     },
     {
