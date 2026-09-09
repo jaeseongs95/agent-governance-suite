@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 import {
   type ApiResultV1,
@@ -17,10 +17,12 @@ import {
 import { FileSkillRegistry, selectSkillByCapability } from "./registry.js";
 import { validateDecisionRecordSemantics } from "./decision-record-validator.js";
 import { ContractValidator } from "./schema-validator.js";
-
-interface StoredRun {
-  receipt: WorkflowReceiptV1;
-}
+import {
+  createPlanSigningKey,
+  InMemoryWorkflowStore,
+  PLAN_SIGNING_KEY,
+  type WorkflowStore,
+} from "./workflow-store.js";
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -53,18 +55,23 @@ function canonicalJson(value: unknown): string {
 }
 
 /**
- * Runtime run state is process-local by design. Planning is read-only: only
- * startWorkflow creates a StoredRun, while specialists remain directly callable.
+ * Planning is read-only. Only startWorkflow creates a stored run, while
+ * specialists remain directly callable.
  */
 export class WorkflowService {
-  private readonly runs = new Map<string, StoredRun>();
-  private readonly planSigningKey = randomBytes(32);
-  private runSequence = 0;
+  private readonly planSigningKey: Buffer;
 
   constructor(
     private readonly registry: FileSkillRegistry,
     private readonly validator = new ContractValidator(),
-  ) {}
+    private readonly store: WorkflowStore = new InMemoryWorkflowStore(),
+  ) {
+    const encodedKey = this.store.getOrCreateSecret(PLAN_SIGNING_KEY, createPlanSigningKey);
+    this.planSigningKey = Buffer.from(encodedKey, "base64url");
+    if (this.planSigningKey.length !== 32) {
+      throw new WorkflowContractError("INVALID_INPUT", "Stored plan signing key is invalid.");
+    }
+  }
 
   planWorkflow(rawTask: unknown): ApiResultV1<WorkflowPlanV1> {
     try {
@@ -93,7 +100,7 @@ export class WorkflowService {
         });
       }
 
-      const runId = `run-${plan.taskId}-${++this.runSequence}`;
+      const runId = `run-${plan.taskId}-${this.store.nextRunSequence()}`;
       plan.state = "running";
       this.setRunningStagePointers(plan);
       const receipt: WorkflowReceiptV1 = {
@@ -108,7 +115,7 @@ export class WorkflowService {
         error: null,
       };
       this.assertReceipt(receipt);
-      this.runs.set(runId, { receipt });
+      this.store.insertRun(receipt);
       return apiOk(clone(receipt));
     } catch (error) {
       return apiError(this.toErrorBody(error));
@@ -177,7 +184,7 @@ export class WorkflowService {
 
   getWorkflowStatus(runId: string): ApiResultV1<WorkflowReceiptV1> {
     try {
-      return apiOk(clone(this.requireRun(runId).receipt));
+      return apiOk(clone(this.requireRun(runId)));
     } catch (error) {
       return apiError(this.toErrorBody(error));
     }
@@ -725,7 +732,7 @@ export class WorkflowService {
     const expected = Buffer.from(this.signPlan(plan), "base64url");
     const supplied = Buffer.from(plan.integrityToken, "base64url");
     if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Workflow plan integrity token is missing, modified, or foreign to this MCP process.");
+      throw new WorkflowContractError("INVALID_INPUT", "Workflow plan integrity token is missing, modified, or signed by a different workflow store.");
     }
   }
 
@@ -741,7 +748,7 @@ export class WorkflowService {
     mutate: (receipt: WorkflowReceiptV1) => void,
   ): ApiResultV1<WorkflowReceiptV1> {
     try {
-      const receipt = this.requireRun(runId).receipt;
+      const receipt = this.requireRun(runId);
       if (!Number.isInteger(expectedRevision) || expectedRevision !== receipt.revision) {
         throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
           expectedRevision,
@@ -751,18 +758,26 @@ export class WorkflowService {
       mutate(receipt);
       receipt.revision += 1;
       this.assertReceipt(receipt);
+      if (!this.store.updateRun(receipt, expectedRevision)) {
+        const current = this.store.getRun(runId);
+        throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
+          expectedRevision,
+          actualRevision: current?.revision ?? null,
+        });
+      }
       return apiOk(clone(receipt));
     } catch (error) {
       return apiError(this.toErrorBody(error));
     }
   }
 
-  private requireRun(runId: string): StoredRun {
-    const stored = this.runs.get(runId);
-    if (!stored) {
-      throw new WorkflowContractError("RUN_NOT_FOUND", "Run was not found in this in-memory MCP process.", { runId });
+  private requireRun(runId: string): WorkflowReceiptV1 {
+    const receipt = this.store.getRun(runId);
+    if (!receipt) {
+      throw new WorkflowContractError("RUN_NOT_FOUND", "Run was not found in workflow storage.", { runId });
     }
-    return stored;
+    this.assertReceipt(receipt);
+    return receipt;
   }
 
   private assertReceipt(receipt: WorkflowReceiptV1): void {

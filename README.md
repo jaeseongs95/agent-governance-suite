@@ -56,7 +56,7 @@ flowchart LR
 
 ## 설치하고 사용하기
 
-Node.js 22 이상이 필요합니다.
+Node.js 22.13.0 이상이 필요합니다.
 
 ```bash
 codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.0.2
@@ -80,6 +80,12 @@ $acceptance-evidence-validator를 사용해 각 수용 기준에 현재 근거�
 
 ```bash
 node scripts/check-runtime.mjs
+```
+
+MCP 서버는 실행 상태와 계획 서명 키를 SQLite에 저장합니다. 기본 DB는 운영체제의 사용자 상태 디렉터리에 만들어집니다. 저장 위치를 직접 관리하려면 `AGENT_GOVERNANCE_DB_PATH`에 SQLite 파일의 절대 경로나 MCP 작업 디렉터리 기준 상대 경로를 지정합니다. 해당 디렉터리는 MCP 서버를 실행하는 사용자만 접근할 수 있도록 보호해야 합니다.
+
+```bash
+AGENT_GOVERNANCE_DB_PATH=/absolute/path/workflows.sqlite3 pnpm dev
 ```
 
 MCP 서버가 시작되지 않아도 개별 전문 스킬은 직접 호출할 수 있습니다. 단계 순서를 강제하고 완료 영수증을 발급하는 통합 작업에는 MCP 서버가 필요합니다.
@@ -116,7 +122,7 @@ MCP 서버는 `SkillDescriptor.v2`의 `capability`, 실행 단계, `artifact` �
 
 이 서버는 적대적인 호출자를 인증하는 보안 경계가 아닙니다. 전문 스킬과 호출자가 `verified` 값, 증거 위치, 작업자 식별자를 확인했다고 전제합니다. 서버는 값의 형식과 단계 사이의 일관성을 검사하지만, 실제 작업자의 신원이나 증거 원문의 진위를 인증하지는 않습니다.
 
-실행 상태는 MCP 서버 프로세스의 메모리에만 저장됩니다. 서버를 다시 시작한 뒤 기존 run에 `RUN_NOT_FOUND`가 반환되면 새 워크플로를 시작해야 합니다. 소스 코드와 전체 로그는 저장하지 않습니다. 신원 인증, 영구 감사 기록, 적대적 환경에서도 보장되는 증거 무결성이 필요하다면 별도의 신원·증거 저장소를 연결해야 합니다.
+실행 중인 run, 현재 `revision`, run ID sequence, 계획 서명 키는 SQLite에 저장되므로 MCP 서버를 다시 시작해도 이어서 처리할 수 있습니다. SQLite에는 전체 `WorkflowReceipt`가 평문 JSON으로 들어가며, 여기에는 각 `StageResult`의 provider output, evidence note, findings, blockers와 error가 포함됩니다. 이 필드에 소스 코드, 로그 원문, 비밀값이나 개인정보를 넣으면 DB에도 그대로 남습니다. 자동 만료·삭제 정책은 제공하지 않으므로 호출자는 민감한 원문을 제출하지 말고 DB 파일과 디렉터리의 접근 권한과 보존 기간을 직접 관리해야 합니다. 기본 생성자를 사용한 `WorkflowService`는 테스트와 임베딩 호환성을 위해 메모리 저장 방식을 유지합니다. 신원 인증, 암호화된 장기 보존이나 적대적 환경에서도 보장되는 증거 무결성이 필요하다면 별도의 신원·증거 저장소를 연결해야 합니다.
 
 ## 프로젝트 구조
 
@@ -134,7 +140,7 @@ tests/                     회귀·통합 테스트
 
 ## 개발과 검증
 
-Node.js 22 이상과 Corepack이 필요합니다.
+Node.js 22.13.0 이상과 Corepack이 필요합니다.
 
 ```bash
 corepack enable

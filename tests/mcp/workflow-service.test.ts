@@ -2,15 +2,18 @@ import { readFileSync, readdirSync } from "node:fs";
 import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { type PlannedStageV1, type SkillDescriptorV2, type StageResultV1, type TaskEnvelopeV1 } from "../../contracts/types.js";
 import { validateDecisionRecordSemantics } from "../../mcp-server/src/decision-record-validator.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
+import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 
 const temporaryDirectories: string[] = [];
+const sqliteStores = new Set<SqliteWorkflowStore>();
 const validDecisionRecordDirectory = new URL(
   "../../skills/independent-deliberation-panel/evals/fixtures/valid/",
   import.meta.url,
@@ -121,7 +124,10 @@ function task(overrides: Partial<TaskEnvelopeV1> = {}): TaskEnvelopeV1 {
   };
 }
 
-async function createService(descriptors: SkillDescriptorV2[] = skills): Promise<{ service: WorkflowService; registryPath: string; rootDirectory: string }> {
+async function createService(
+  descriptors: SkillDescriptorV2[] = skills,
+  store?: SqliteWorkflowStore,
+): Promise<{ service: WorkflowService; registryPath: string; rootDirectory: string }> {
   const directory = await mkdtemp(join(tmpdir(), "skill-suite-mcp-"));
   temporaryDirectories.push(directory);
   const registryPath = join(directory, "skills", "registry.json");
@@ -136,7 +142,22 @@ async function createService(descriptors: SkillDescriptorV2[] = skills): Promise
   );
   await writeFile(registryPath, JSON.stringify({ schemaVersion: "2.0.0", skills: descriptors }), "utf8");
   const validator = new ContractValidator();
-  return { service: new WorkflowService(new FileSkillRegistry(registryPath, validator), validator), registryPath, rootDirectory: directory };
+  return {
+    service: new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store),
+    registryPath,
+    rootDirectory: directory,
+  };
+}
+
+function openSqliteStore(databasePath: string): SqliteWorkflowStore {
+  const store = new SqliteWorkflowStore(databasePath);
+  sqliteStores.add(store);
+  return store;
+}
+
+function closeSqliteStore(store: SqliteWorkflowStore): void {
+  store.close();
+  sqliteStores.delete(store);
 }
 
 function passedStage(runId: string, stage: PlannedStageV1, expectedRevision: number): StageResultV1 {
@@ -191,10 +212,82 @@ function passedStage(runId: string, stage: PlannedStageV1, expectedRevision: num
 }
 
 afterEach(async () => {
+  for (const store of sqliteStores) store.close();
+  sqliteStores.clear();
   await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
 });
 
+describe("SqliteWorkflowStore", () => {
+  it("rejects a database schema newer than the supported version", async () => {
+    const databaseDirectory = await mkdtemp(join(tmpdir(), "skill-suite-newer-schema-"));
+    temporaryDirectories.push(databaseDirectory);
+    const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
+    const fixture = new DatabaseSync(databasePath);
+    try {
+      fixture.exec("PRAGMA user_version = 2;");
+    } finally {
+      fixture.close();
+    }
+
+    let initializationError: unknown;
+    try {
+      new SqliteWorkflowStore(databasePath);
+    } catch (error) {
+      initializationError = error;
+    }
+    expect(initializationError).toMatchObject({
+      code: "INVALID_INPUT",
+      message: "Cannot initialize the workflow database.",
+      details: {
+        cause: expect.stringMatching(/schema is newer than this server supports/i),
+      },
+    });
+  });
+});
+
 describe("WorkflowService", () => {
+  it("persists runs, signing keys, revisions, and run sequences in SQLite", async () => {
+    const databaseDirectory = await mkdtemp(join(tmpdir(), "skill-suite-sqlite-"));
+    temporaryDirectories.push(databaseDirectory);
+    const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
+
+    const firstStore = openSqliteStore(databasePath);
+    const { service: firstService, registryPath } = await createService(skills, firstStore);
+    const firstPlan = firstService.planWorkflow(task({ taskId: "restart" })).data!;
+    const signedBeforeRestart = firstService.planWorkflow(task({ taskId: "signed-before-restart" })).data!;
+    const started = firstService.startWorkflow(firstPlan).data!;
+    const firstStage = started.plan.stages[0]!;
+    const recorded = firstService.recordStageResult(passedStage(started.runId, firstStage, started.revision)).data!;
+    expect(recorded.revision).toBe(1);
+    closeSqliteStore(firstStore);
+
+    const secondStore = openSqliteStore(databasePath);
+    const secondValidator = new ContractValidator();
+    const secondService = new WorkflowService(
+      new FileSkillRegistry(registryPath, secondValidator),
+      secondValidator,
+      secondStore,
+    );
+
+    expect(secondService.getWorkflowStatus(started.runId).data).toEqual(recorded);
+
+    const staleResult = passedStage(started.runId, recorded.plan.stages[1]!, 0);
+    expect(secondService.recordStageResult(staleResult).error).toMatchObject({
+      code: "STALE_REVISION",
+      details: { expectedRevision: 0, actualRevision: 1 },
+    });
+
+    const resumed = secondService.recordStageResult(
+      passedStage(started.runId, recorded.plan.stages[1]!, recorded.revision),
+    ).data!;
+    expect(resumed.revision).toBe(2);
+    expect(secondService.getWorkflowStatus(started.runId).data).toEqual(resumed);
+
+    const secondRun = secondService.startWorkflow(signedBeforeRestart);
+    expect(secondRun.ok).toBe(true);
+    expect(secondRun.data?.runId).toBe("run-signed-before-restart-2");
+  });
+
   it("plans from runtime capabilities without persisting a run", async () => {
     const { service } = await createService();
     const result = service.planWorkflow(task());

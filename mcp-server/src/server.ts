@@ -58,7 +58,7 @@ export function createMcpServer(service: WorkflowService): Server {
       },
       {
         name: "start_workflow",
-        description: "Create an in-memory running run from a ready orchestrated workflow plan.",
+        description: "Create a durable running run from a ready orchestrated workflow plan.",
         inputSchema: contractSchemas.workflowPlan,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
@@ -70,7 +70,7 @@ export function createMcpServer(service: WorkflowService): Server {
       },
       {
         name: "get_workflow_status",
-        description: "Read the current in-memory run receipt.",
+        description: "Read the current persisted run receipt.",
         inputSchema: workflowIdInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
@@ -82,7 +82,7 @@ export function createMcpServer(service: WorkflowService): Server {
       },
       {
         name: "abort_workflow",
-        description: "Abort a non-terminal in-memory workflow using optimistic revision control.",
+        description: "Abort a non-terminal persisted workflow using optimistic revision control.",
         inputSchema: revisionInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
       },

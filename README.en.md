@@ -56,7 +56,7 @@ The orchestrator does not run all ten skills for every request. It selects the r
 
 ## Install and try it
 
-Node.js 22 or newer is required.
+Node.js 22.13.0 or later is required.
 
 ```bash
 codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.0.2
@@ -80,6 +80,12 @@ Check the installed runtime from the plugin root:
 
 ```bash
 node scripts/check-runtime.mjs
+```
+
+The MCP server stores workflow state and its plan-signing key in SQLite. By default, it creates the database in the operating system's per-user state directory. Set `AGENT_GOVERNANCE_DB_PATH` to an absolute SQLite file path, or to a path relative to the MCP working directory, when you need to control its location. Protect that directory so only the account running the MCP server can access it.
+
+```bash
+AGENT_GOVERNANCE_DB_PATH=/absolute/path/workflows.sqlite3 pnpm dev
 ```
 
 Each specialist remains available when the MCP server is unavailable. Orchestrated runs that enforce stage order and issue a final receipt require the MCP server.
@@ -114,7 +120,7 @@ The MCP server reads capabilities, execution phases, and artifact dependencies f
 
 The MCP server is not a security boundary against a hostile caller. Specialist skills and callers submit `verified` flags, evidence locators, and actor identifiers as trusted inputs. The server checks their structure and consistency across workflow stages, but it does not authenticate a real person or prove that the source evidence is genuine.
 
-Run state lives only in the current MCP process memory. If the server restarts and returns `RUN_NOT_FOUND`, start a new workflow. The server does not store source code or full logs. Environments that require authenticated identity, durable audit records, or evidence integrity against hostile actors need a separate identity and evidence service.
+Active runs, their current revisions, the run ID sequence, and the plan-signing key are stored in SQLite, so they remain available after an MCP server restart. SQLite stores the complete `WorkflowReceipt` as plaintext JSON, including each `StageResult` provider output, evidence notes, findings, blockers, and errors. Source code, raw logs, secrets, or personal data submitted in those fields will therefore remain in the database. The server has no automatic retention or deletion policy: callers must avoid submitting sensitive source material and manage access permissions and retention for the database and its directory. The default `WorkflowService` constructor keeps its in-memory behavior for tests and embedded use. Environments that require authenticated identity, encrypted long-term retention, or evidence integrity against hostile actors still need a separate identity and evidence service.
 
 ## Repository layout
 
@@ -132,7 +138,7 @@ tests/                     Regression and integration tests
 
 ## Development and validation
 
-Development requires Node.js 22 or 24 and Corepack.
+Development requires Node.js 22.13.0 or later and Corepack.
 
 ```bash
 corepack enable

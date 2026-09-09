@@ -1,3 +1,6 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -25,16 +28,18 @@ function toolData<T>(result: unknown): ApiResultV1<T> {
 
 describe("bundled STDIO MCP server", () => {
   it("starts with the packaged registry and executes complete and abort paths", async () => {
+    const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-stdio-"));
     const environment = getDefaultEnvironment();
     delete environment.SKILL_REGISTRY_PATH;
-    const transport = new StdioClientTransport({
+    environment.AGENT_GOVERNANCE_DB_PATH = join(stateDirectory, "workflow-state.sqlite3");
+    let transport = new StdioClientTransport({
       command: process.execPath,
       args: [bundledServer],
       cwd: rootDirectory,
       env: environment,
       stderr: "pipe",
     });
-    const client = new Client({ name: "stdio-integration-test", version: "1.0.0" });
+    let client = new Client({ name: "stdio-integration-test", version: "1.0.0" });
 
     try {
       await client.connect(transport);
@@ -129,11 +134,23 @@ describe("bundled STDIO MCP server", () => {
       }));
       expect(recorded.data).toMatchObject({ state: "running", revision: 1 });
 
+      await transport.close();
+      transport = new StdioClientTransport({
+        command: process.execPath,
+        args: [bundledServer],
+        cwd: rootDirectory,
+        env: environment,
+        stderr: "pipe",
+      });
+      client = new Client({ name: "stdio-restart-test", version: "1.0.0" });
+      await client.connect(transport);
+
       const status = toolData<WorkflowReceiptV1>(await client.callTool({
         name: "get_workflow_status",
         arguments: { runId: recorded.data!.runId },
       }));
       expect(status.data?.runId).toBe(started.data?.runId);
+      expect(status.data?.revision).toBe(recorded.data?.revision);
 
       const finalized = toolData<WorkflowReceiptV1>(await client.callTool({
         name: "finalize_workflow",
@@ -156,7 +173,11 @@ describe("bundled STDIO MCP server", () => {
       }));
       expect(aborted.data).toMatchObject({ state: "blocked", revision: 1 });
     } finally {
-      await transport.close();
+      try {
+        await transport.close();
+      } finally {
+        await rm(stateDirectory, { recursive: true, force: true });
+      }
     }
   });
 });
