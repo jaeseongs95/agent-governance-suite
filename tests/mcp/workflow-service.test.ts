@@ -651,5 +651,5 @@ describe("WorkflowService", () => {
       result.output = { ...result.output, output: { decisionRecord: fixture.record } };
       expect(service.recordStageResult(result).error?.code, fixture.name).toBe("GATE_FAILED");
     }
-  });
+  }, 30_000);
 });

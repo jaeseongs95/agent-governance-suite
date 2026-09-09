@@ -4,7 +4,7 @@
 
 이 문서는 글로벌 `AGENTS.md`에서 분리한 일곱 가지 기능을 각각 독립 스킬로 구현하는 계획을 정리한다. 우선순위는 스킬 자체의 목적과 품질이다. Agent Governance Suite 편입은 독립 구현을 끝낸 뒤 수행한다.
 
-구현 상태: 일곱 스킬은 각 독립 저장소의 공개 태그로 릴리스되었고, `SkillDescriptor.v2` provider와 `ProviderResult.v1` 계약을 사용해 Agent Governance Suite `1.0.0`에 편입되었다. 아래 내용은 구현과 편입의 설계 기준으로 보존한다. 다만 6.3의 `BootstrapReceipt.v1`은 후속 후보이며 `1.0.0`에는 구현되지 않았다. 현재 MCP는 계획 밖 bootstrap 결과의 원자료를 인증하거나 일회용 영수증으로 보관하지 않고, 전문 스킬이 확인해 제출한 artifact의 구조화된 `verified` 선언을 신뢰한다.
+구현 상태: 일곱 스킬은 각 독립 저장소의 공개 태그로 릴리스되었고, `SkillDescriptor.v2` provider와 `ProviderResult.v1` 계약을 사용해 Agent Governance Suite `1.0.x`에 편입되었다. 아래 내용은 구현과 편입의 설계 기준으로 보존한다. 다만 6.3의 `BootstrapReceipt.v1`은 후속 후보이며 `1.0.x`에는 구현되지 않았다. 현재 MCP는 계획 밖 bootstrap 결과의 원자료를 인증하거나 일회용 영수증으로 보관하지 않고, 전문 스킬이 확인해 제출한 artifact의 구조화된 `verified` 선언을 신뢰한다.
 
 대상 스킬은 다음과 같다.
 
@@ -895,7 +895,7 @@ MCP는 스킬 이름이 아니라 descriptor와 artifact dependency를 이용해
 
 검사 로직은 skill ID별 조건문으로 추가하지 않는다.
 
-### 6.3 후속 후보 — bootstrap receipt (1.0.0 미구현)
+### 6.3 후속 후보 — bootstrap receipt (1.0.x 미구현)
 
 `instruction-scope-resolver`, `workspace-convention-profiler`, `task-contract`는 run 생성 전에 실행된다. 후속 버전에서 이 결과의 원자료 인증과 재사용 방지가 필요해지면 `BootstrapReceipt.v1`을 다음 형태로 추가할 수 있다.
 

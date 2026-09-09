@@ -44,7 +44,7 @@ function toolResult<T>(result: ApiResultV1<T>) {
 /** Exposes only the orchestration layer; direct specialist invocation bypasses MCP. */
 export function createMcpServer(service: WorkflowService): Server {
   const server = new Server(
-    { name: "agent-governance-suite", version: "1.0.0" },
+    { name: "agent-governance-suite", version: "1.0.1" },
     { capabilities: { tools: {} } },
   );
 
