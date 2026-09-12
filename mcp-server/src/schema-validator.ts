@@ -1,8 +1,7 @@
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
-import type { FormatsPlugin } from "ajv-formats";
+import addFormatsModule, { type FormatsPlugin } from "ajv-formats";
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
-import { createRequire } from "node:module";
 import path from "node:path";
 
 import {
@@ -18,7 +17,7 @@ import {
 } from "../../contracts/types.js";
 
 type JsonSchema = Record<string, unknown>;
-const addFormats = createRequire(import.meta.url)("ajv-formats") as FormatsPlugin;
+const addFormats = addFormatsModule as unknown as FormatsPlugin;
 
 function loadSchema(fileName: string): JsonSchema {
   const path = new URL(`../../contracts/${fileName}`, import.meta.url);

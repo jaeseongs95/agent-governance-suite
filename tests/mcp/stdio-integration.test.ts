@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,6 +27,51 @@ function toolData<T>(result: unknown): ApiResultV1<T> {
 }
 
 describe("bundled STDIO MCP server", () => {
+  it("starts from an isolated plugin tree without node_modules", async () => {
+    const isolatedRoot = await mkdtemp(join(tmpdir(), "skill-suite-clean-room-"));
+    const isolatedServer = join(isolatedRoot, "mcp-server", "dist", "server.mjs");
+    const environment = getDefaultEnvironment();
+    delete environment.SKILL_REGISTRY_PATH;
+    environment.AGENT_GOVERNANCE_DB_PATH = join(isolatedRoot, "state", "workflow-state.sqlite3");
+    let transport: StdioClientTransport | undefined;
+
+    try {
+      await mkdir(join(isolatedRoot, "mcp-server", "dist"), { recursive: true });
+      await Promise.all([
+        cp(bundledServer, isolatedServer),
+        cp(join(rootDirectory, "contracts"), join(isolatedRoot, "contracts"), { recursive: true }),
+        cp(join(rootDirectory, "skills"), join(isolatedRoot, "skills"), { recursive: true }),
+      ]);
+
+      transport = new StdioClientTransport({
+        command: process.execPath,
+        args: [isolatedServer],
+        cwd: isolatedRoot,
+        env: environment,
+        stderr: "pipe",
+      });
+      const client = new Client({ name: "clean-room-install-test", version: "1.0.0" });
+      await client.connect(transport);
+
+      const listed = await client.listTools();
+      expect(listed.tools.map((tool) => tool.name)).toEqual([
+        "plan_workflow",
+        "start_workflow",
+        "record_stage_result",
+        "get_workflow_status",
+        "finalize_workflow",
+        "abort_workflow",
+      ]);
+      expect(listed.tools.every((tool) => tool.inputSchema.type === "object")).toBe(true);
+    } finally {
+      try {
+        await transport?.close();
+      } finally {
+        await rm(isolatedRoot, { recursive: true, force: true });
+      }
+    }
+  });
+
   it("starts with the packaged registry and executes complete and abort paths", async () => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-stdio-"));
     const environment = getDefaultEnvironment();

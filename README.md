@@ -6,7 +6,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
-현재 릴리스는 `v1.0.2`이며, 열 개의 전문 스킬과 하나의 오케스트레이터를 포함합니다.
+현재 릴리스는 `v1.0.3`이며, 열 개의 전문 스킬과 하나의 오케스트레이터를 포함합니다.
 
 ## 이런 문제를 다룹니다
 
@@ -59,7 +59,7 @@ flowchart LR
 Node.js 22.13.0 이상이 필요합니다.
 
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.0.2
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.0.3
 codex plugin add agent-governance-suite@agent-governance
 ```
 
