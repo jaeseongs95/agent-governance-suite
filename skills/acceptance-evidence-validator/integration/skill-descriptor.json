@@ -3,7 +3,7 @@
   "providers": [
     {
       "skillId": "acceptance-evidence-validator",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "enabled": true,
       "capabilities": ["acceptance-evidence-validation"],
       "priority": 50,

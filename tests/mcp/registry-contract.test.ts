@@ -16,16 +16,16 @@ describe("bundled skill registry", () => {
     expect(capabilities.has("independent-deliberation")).toBe(true);
     expect(capabilities.has("independent-audit")).toBe(true);
     expect(Object.fromEntries(skills.map((skill) => [skill.skillId, skill.version]))).toMatchObject({
-      "coordinate-subagents": "0.1.2",
+      "coordinate-subagents": "1.0.0",
       "independent-deliberation-panel": "1.0.0",
-      "independent-audit-gate": "0.1.1",
-      "instruction-scope-resolver": "0.1.0",
-      "task-contract": "0.1.0",
-      "change-scope-guardian": "0.1.1",
-      "acceptance-evidence-validator": "0.1.0",
-      "blocker-diagnostician": "0.1.0",
-      "workspace-convention-profiler": "0.1.1",
-      "mutation-risk-preflight": "0.1.1",
+      "independent-audit-gate": "1.0.0",
+      "instruction-scope-resolver": "1.0.0",
+      "task-contract": "1.0.0",
+      "change-scope-guardian": "1.0.0",
+      "acceptance-evidence-validator": "1.0.0",
+      "blocker-diagnostician": "1.0.0",
+      "workspace-convention-profiler": "1.0.0",
+      "mutation-risk-preflight": "1.0.0",
     });
     expect(skills.find((skill) => skill.skillId === "independent-deliberation-panel")?.producedArtifacts)
       .toContain("decision-record");

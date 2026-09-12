@@ -3,7 +3,7 @@ name: task-contract
 description: 사용자 요청과 적용 지침을 목표·범위·수용 기준·작업 단위·위험도·권한·검증 근거가 추적되는 TaskEnvelope.v1으로 정리한다. 구현, 실행 계획 수립이나 완료 판정에는 사용하지 않는다.
 license: MIT
 metadata:
-  version: "0.1.0"
+  version: "1.0.0"
 ---
 
 # Task Contract

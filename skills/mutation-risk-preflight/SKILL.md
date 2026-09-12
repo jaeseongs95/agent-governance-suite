@@ -3,7 +3,7 @@ name: mutation-risk-preflight
 description: 삭제, 배포, 게시, 마이그레이션, 권한·결제·전역 설정 변경 전에 정확한 대상, 승인, 영향 범위와 복구 조건을 읽기 전용으로 점검한다. 실제 변경이나 변경 후 감사에는 사용하지 않는다.
 license: MIT
 metadata:
-  version: "0.1.1"
+  version: "1.0.0"
 ---
 
 # Mutation Risk Preflight
