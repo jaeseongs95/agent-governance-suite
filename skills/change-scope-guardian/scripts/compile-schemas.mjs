@@ -2,8 +2,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import Ajv2020 from "ajv/dist/2020.js";
-import addFormats from "ajv-formats";
+import { Ajv2020, addFormats } from "../../../runtime/schema-validation.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const schemas = [];

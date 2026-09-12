@@ -45,6 +45,9 @@ jobs:
       - name: Install locked dependencies
         shell: bash
         run: pnpm install --frozen-lockfile
+      - name: Verify committed runtime bundles
+        shell: bash
+        run: pnpm bundle:check
       - name: Lint
         shell: bash
         run: pnpm lint
@@ -54,9 +57,9 @@ jobs:
       - name: Test
         shell: bash
         run: pnpm test
-      - name: Verify bundle diff
+      - name: Verify installed runtime
         shell: bash
-        run: pnpm bundle:check
+        run: pnpm runtime:check
       - name: Validate plugin and skills
         shell: bash
         env:

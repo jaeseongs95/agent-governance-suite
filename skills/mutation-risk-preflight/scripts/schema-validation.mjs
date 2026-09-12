@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import Ajv2020 from "ajv/dist/2020.js";
+import { Ajv2020 } from "../../../runtime/schema-validation.mjs";
 
 const ajv = new Ajv2020({
   strict: true,

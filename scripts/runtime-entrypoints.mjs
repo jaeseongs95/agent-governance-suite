@@ -1,0 +1,17 @@
+export const SKILL_RUNTIME_ENTRYPOINTS = Object.freeze([
+  { path: "skills/acceptance-evidence-validator/scripts/cli.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
+  { path: "skills/acceptance-evidence-validator/scripts/validate-report.mjs", expectedExitCode: 1, outputIncludes: "validation input schema validation failed" },
+  { path: "skills/blocker-diagnostician/scripts/cluster-failures.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
+  { path: "skills/blocker-diagnostician/scripts/digest-request.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
+  { path: "skills/blocker-diagnostician/scripts/cli.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
+  { path: "skills/blocker-diagnostician/scripts/validate-report.mjs", expectedExitCode: 2, outputIncludes: "stdin must contain report" },
+  { path: "skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs", expectedExitCode: 1, outputIncludes: "request schema validation failed" },
+  { path: "skills/change-scope-guardian/scripts/compare-change-scope.mjs", expectedExitCode: 1, outputIncludes: "request schema validation failed" },
+  { path: "skills/change-scope-guardian/scripts/validate-report.mjs", expectedExitCode: 1, outputIncludes: "expectedArtifactDigest" },
+  { path: "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs", expectedExitCode: 1, outputIncludes: "INVALID_INPUT" },
+  { path: "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs", expectedExitCode: 2, outputIncludes: '"operationId":"unknown"' },
+  { path: "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs", expectedExitCode: 2, outputIncludes: '"errorCode":"INVALID_INPUT"' },
+  { path: "skills/task-contract/scripts/validate-task-contract.mjs", expectedExitCode: 1, outputIncludes: "INVALID_INPUT" },
+  { path: "skills/workspace-convention-profiler/scripts/profile-workspace.mjs", expectedExitCode: 2, outputIncludes: '"root":"unknown"' },
+  { path: "skills/workspace-convention-profiler/scripts/validate-profile.mjs", expectedExitCode: 1, outputIncludes: '"valid":false' },
+]);

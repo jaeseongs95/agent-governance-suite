@@ -4,7 +4,7 @@ import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import Ajv2020 from "ajv/dist/2020.js";
+import { Ajv2020 } from "../../../runtime/schema-validation.mjs";
 
 import { validateTaskContract } from "./validate-task-contract.mjs";
 
