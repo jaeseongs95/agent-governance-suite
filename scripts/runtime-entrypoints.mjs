@@ -9,6 +9,7 @@ export const SKILL_RUNTIME_ENTRYPOINTS = Object.freeze([
   { path: "skills/change-scope-guardian/scripts/compare-change-scope.mjs", expectedExitCode: 1, outputIncludes: "request schema validation failed" },
   { path: "skills/change-scope-guardian/scripts/validate-report.mjs", expectedExitCode: 1, outputIncludes: "expectedArtifactDigest" },
   { path: "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs", expectedExitCode: 1, outputIncludes: "INVALID_INPUT" },
+  { path: "skills/korean-prose-editor/scripts/finalize.mjs", expectedExitCode: 1, outputIncludes: "REQUEST_SCHEMA_VERSION" },
   { path: "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs", expectedExitCode: 2, outputIncludes: '"operationId":"unknown"' },
   { path: "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs", expectedExitCode: 2, outputIncludes: '"errorCode":"INVALID_INPUT"' },
   { path: "skills/task-contract/scripts/validate-task-contract.mjs", expectedExitCode: 1, outputIncludes: "INVALID_INPUT" },

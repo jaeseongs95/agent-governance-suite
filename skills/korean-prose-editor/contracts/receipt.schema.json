@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/korean-prose-editor/receipt.schema.json",
+  "title": "Raw-text-free finalization receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "actorIds", "digest", "length", "decisions", "warnings"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "actorIds": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/actorId" }
+    },
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "result", "manifest"],
+      "properties": {
+        "source": { "$ref": "#/$defs/digest" },
+        "result": { "$ref": "#/$defs/digest" },
+        "manifest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "length": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "result"],
+      "properties": {
+        "source": { "type": "integer", "minimum": 0 },
+        "result": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "decisions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "assurance", "status", "appliedEditDigests", "retainedEditDigests", "fallback"],
+      "properties": {
+        "mode": { "enum": ["mcp", "direct"] },
+        "assurance": { "enum": ["verified", "unverified"] },
+        "status": { "enum": ["finalized", "fallback"] },
+        "appliedEditDigests": { "type": "array", "items": { "$ref": "#/$defs/digest" }, "uniqueItems": true },
+        "retainedEditDigests": { "type": "array", "items": { "$ref": "#/$defs/digest" }, "uniqueItems": true },
+        "fallback": { "type": "boolean" }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "enum": ["EDIT_CONTRACT_INVALID", "EDIT_RANGES_OVERLAP", "FINAL_PROTECTED_CHECK_FAILED", "GLOBAL_FALLBACK_APPLIED", "MANIFEST_SCHEMA_VERSION", "MANIFEST_SPANS_INVALID", "MANIFEST_SPAN_INVALID", "PROTECTED_EDIT_RETAINED", "PROTECTED_SPAN_MISSING_OR_REORDERED", "SOURCE_MANIFEST_MISMATCH", "VERIFICATION_CONTRACT_INVALID", "VERIFICATION_DECISION_INVALID", "VERIFICATION_DECISION_MISSING", "VERIFIER_GLOBAL_FALLBACK"] },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "actorId": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

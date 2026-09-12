@@ -1,0 +1,20 @@
+{
+  "normal": [
+    {
+      "id": "normal-01",
+      "expected": "the imported skill returns its documented output"
+    }
+  ],
+  "boundary": [
+    {
+      "id": "boundary-01",
+      "expected": "the imported skill respects its exclusion conditions"
+    }
+  ],
+  "failure": [
+    {
+      "id": "failure-01",
+      "expected": "the imported skill reports missing required input"
+    }
+  ]
+}

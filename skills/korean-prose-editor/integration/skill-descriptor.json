@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "2.0.0",
+  "skillId": "korean-prose-editor",
+  "version": "0.1.0",
+  "path": "./korean-prose-editor",
+  "enabled": true,
+  "priority": 50,
+  "providers": [
+    {
+      "capabilities": ["korean-prose-selection"],
+      "executionClass": "workflow",
+      "phase": "korean-prose-selection",
+      "phaseOrder": 50,
+      "requiredInputArtifacts": ["korean-prose-request"],
+      "inputBindings": [
+        { "targetArtifact": "korean-prose-request", "sources": ["caller.koreanProseRequest"], "operation": "require-external" }
+      ],
+      "producedArtifacts": ["edit-decision-set"],
+      "outputSchema": "contracts/edit-decision-set.v1.schema.json",
+      "resultSchema": "integration/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/decisions/status",
+        "values": {
+          "ready": { "state": "passed", "errorRequired": false },
+          "needs-input": { "state": "needs-input", "errorRequired": false },
+          "blocked": { "state": "blocked", "errorRequired": true, "allowedErrorCodes": ["MISSING_EVIDENCE", "MCP_UNAVAILABLE"] }
+        },
+        "default": "reject",
+        "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE", "MCP_UNAVAILABLE"]
+      },
+      "selectionCriteria": ["korean-prose-edit-request", "meaning-preserving-style-edit"],
+      "preconditions": ["A Korean prose request artifact is available.", "A distinct selection actor is available."],
+      "failureHandling": { "missingInput": "needs-input", "subagentsUnavailable": "blocked", "retry": "only-after-input-or-actor-change" },
+      "gate": { "kind": "none", "policy": "none", "validator": null },
+      "receiptPolicy": { "mode": "reference-only", "actorIdPointer": "/output/actorId", "uniqueness": "run" }
+    },
+    {
+      "capabilities": ["korean-prose-editing"],
+      "executionClass": "workflow",
+      "phase": "korean-prose-editing",
+      "phaseOrder": 55,
+      "requiredInputArtifacts": ["korean-prose-request", "edit-decision-set"],
+      "inputBindings": [
+        { "targetArtifact": "korean-prose-request", "sources": ["caller.koreanProseRequest"], "operation": "require-external" },
+        { "targetArtifact": "edit-decision-set", "sources": ["provider:korean-prose-selection.edit-decision-set"], "operation": "select" }
+      ],
+      "producedArtifacts": ["edit-candidate"],
+      "outputSchema": "contracts/edit-candidate.v1.schema.json",
+      "resultSchema": "integration/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/decisions/status",
+        "values": {
+          "ready": { "state": "passed", "errorRequired": false },
+          "needs-input": { "state": "needs-input", "errorRequired": false },
+          "blocked": { "state": "blocked", "errorRequired": true, "allowedErrorCodes": ["MISSING_EVIDENCE", "MCP_UNAVAILABLE"] }
+        },
+        "default": "reject",
+        "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE", "MCP_UNAVAILABLE"]
+      },
+      "selectionCriteria": ["approved-korean-prose-edit-decision-set"],
+      "preconditions": ["The selection artifact matches the request digest.", "A distinct editing actor is available."],
+      "failureHandling": { "invalidSelection": "failed", "subagentsUnavailable": "blocked", "retry": "only-after-input-or-actor-change" },
+      "gate": { "kind": "none", "policy": "none", "validator": null },
+      "receiptPolicy": { "mode": "reference-only", "actorIdPointer": "/output/actorId", "uniqueness": "run" }
+    },
+    {
+      "capabilities": ["korean-prose-verification"],
+      "executionClass": "workflow",
+      "phase": "korean-prose-verification",
+      "phaseOrder": 60,
+      "requiredInputArtifacts": ["korean-prose-request", "edit-decision-set", "edit-candidate", "korean-prose-rubric"],
+      "inputBindings": [
+        { "targetArtifact": "korean-prose-request", "sources": ["caller.koreanProseRequest"], "operation": "require-external" },
+        { "targetArtifact": "edit-decision-set", "sources": ["provider:korean-prose-selection.edit-decision-set"], "operation": "select" },
+        { "targetArtifact": "edit-candidate", "sources": ["provider:korean-prose-editing.edit-candidate"], "operation": "select" },
+        { "targetArtifact": "korean-prose-rubric", "sources": ["caller.koreanProseRubric"], "operation": "require-external" }
+      ],
+      "producedArtifacts": ["edit-verification-report"],
+      "outputSchema": "contracts/edit-verification-report.v1.schema.json",
+      "resultSchema": "integration/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/decisions/status",
+        "values": {
+          "verified": { "state": "passed", "errorRequired": false },
+          "partial": { "state": "passed", "errorRequired": false },
+          "fallback": { "state": "passed", "errorRequired": false },
+          "blocked": { "state": "blocked", "errorRequired": true, "allowedErrorCodes": ["MISSING_EVIDENCE", "MCP_UNAVAILABLE"] }
+        },
+        "default": "reject",
+        "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE", "MCP_UNAVAILABLE"]
+      },
+      "selectionCriteria": ["candidate-needs-independent-meaning-verification"],
+      "preconditions": ["The frozen rubric artifact is available.", "A verification actor distinct from selection and editing is available."],
+      "failureHandling": { "uncertainEdit": "retain", "invalidEvidence": "fallback", "subagentsUnavailable": "blocked" },
+      "gate": { "kind": "none", "policy": "none", "validator": null },
+      "receiptPolicy": { "mode": "reference-only", "actorIdPointer": "/output/actorId", "uniqueness": "run" }
+    },
+    {
+      "capabilities": ["korean-prose-finalization"],
+      "executionClass": "workflow",
+      "phase": "korean-prose-finalization",
+      "phaseOrder": 65,
+      "requiredInputArtifacts": ["korean-prose-request", "edit-candidate", "edit-verification-report"],
+      "inputBindings": [
+        { "targetArtifact": "korean-prose-request", "sources": ["caller.koreanProseRequest"], "operation": "require-external" },
+        { "targetArtifact": "edit-candidate", "sources": ["provider:korean-prose-editing.edit-candidate"], "operation": "select" },
+        { "targetArtifact": "edit-verification-report", "sources": ["provider:korean-prose-verification.edit-verification-report"], "operation": "select" }
+      ],
+      "producedArtifacts": ["final-text-receipt"],
+      "outputSchema": "contracts/final-text-receipt.v1.schema.json",
+      "resultSchema": "integration/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/decisions/status",
+        "values": {
+          "finalized": { "state": "passed", "errorRequired": false },
+          "fallback": { "state": "passed", "errorRequired": false },
+          "blocked": { "state": "blocked", "errorRequired": true, "allowedErrorCodes": ["MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE"] }
+        },
+        "default": "reject",
+        "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE"]
+      },
+      "selectionCriteria": ["verified-korean-prose-candidate-needs-deterministic-finalization"],
+      "preconditions": ["The candidate and verification report target the same source digest.", "The deterministic finalizer is available."],
+      "failureHandling": { "rejectedEdit": "retain", "contractFailure": "fallback", "protectedSpanFailure": "fallback" },
+      "gate": { "kind": "completion", "policy": "conditional", "validator": "contracts/final-text-receipt.v1.schema.json" },
+      "receiptPolicy": { "mode": "reference-only", "actorIdsPointer": "/output/actorIds", "actorIdsMatch": "prior-policy-actors" }
+    }
+  ]
+}

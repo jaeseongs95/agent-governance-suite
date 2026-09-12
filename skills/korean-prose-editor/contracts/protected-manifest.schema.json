@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/korean-prose-editor/protected-manifest.schema.json",
+  "title": "Protected span manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sourceDigest", "sourceLength", "spans"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "sourceDigest": { "$ref": "#/$defs/digest" },
+    "sourceLength": { "type": "integer", "minimum": 0 },
+    "spans": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "start", "end", "text", "digest"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^span-[0-9]{4}$" },
+          "kind": { "enum": ["fenced-code", "inline-code", "command", "markdown-target", "url", "email", "path", "quotation", "number-or-date", "user-defined"] },
+          "start": { "type": "integer", "minimum": 0 },
+          "end": { "type": "integer", "minimum": 0 },
+          "text": { "type": "string", "minLength": 1 },
+          "digest": { "$ref": "#/$defs/digest" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

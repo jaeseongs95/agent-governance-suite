@@ -6,7 +6,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
-The current release is `v1.0.5`. It includes ten specialist skills and one orchestrator.
+The current public release is `v1.0.5`. This worktree's `v1.1.0` candidate contains ten governance specialist skills plus one Korean prose workflow, but it is not approved for release or installation because its prose-quality evaluation missed the improvement threshold.
 
 ## How it works
 
@@ -120,7 +120,7 @@ The MCP server reads capabilities, execution phases, and artifact dependencies f
 
 The MCP server is not a security boundary against a hostile caller. Specialist skills and callers submit `verified` flags, evidence locators, and actor identifiers as trusted inputs. The server checks their structure and consistency across workflow stages, but it does not authenticate a real person or prove that the source evidence is genuine.
 
-Active runs, their current revisions, the run ID sequence, and the plan-signing key are stored in SQLite, so they remain available after an MCP server restart. SQLite stores the complete `WorkflowReceipt` as plaintext JSON, including each `StageResult` provider output, evidence notes, findings, blockers, and errors. Source code, raw logs, secrets, or personal data submitted in those fields will therefore remain in the database. The server has no automatic retention or deletion policy: callers must avoid submitting sensitive source material and manage access permissions and retention for the database and its directory. The default `WorkflowService` constructor keeps its in-memory behavior for tests and embedded use. Environments that require authenticated identity, encrypted long-term retention, or evidence integrity against hostile actors still need a separate identity and evidence service.
+Active runs, their current revisions, the run ID sequence, and the plan-signing key are stored in SQLite, so they remain available after an MCP server restart. SQLite stores the complete `WorkflowReceipt` as plaintext JSON, including each `StageResult` provider output, evidence notes, findings, blockers, and errors. For ordinary providers, callers must not submit sensitive source material. A provider that declares `receiptPolicy.mode: reference-only` is checked before persistence: its closed output schema may retain only digests, artifact references, and fixed tokens, and free text is also rejected from notes, locators, findings, blockers, and errors. When both `actorIdPointer` and `uniqueness: run` are declared, the server rejects reuse of a canonical lowercase UUID actor ID across policy stages, including after restart. The server has no automatic retention or deletion policy, so callers must manage access and retention for the database and its directory. The default `WorkflowService` constructor keeps its in-memory behavior for tests and embedded use. This policy is a structural raw-content persistence boundary, not identity authentication. Environments that require authenticated identity, encrypted long-term retention, or evidence integrity against hostile actors still need a separate identity and evidence service.
 
 ## Repository layout
 

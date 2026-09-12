@@ -146,6 +146,16 @@ export interface GateDescriptorV2 {
   validatorSchema?: SchemaReferenceV1 | null;
 }
 
+export interface ReceiptPolicyV1 {
+  mode: "reference-only";
+  actorIdPointer?: string;
+  uniqueness?: "run";
+  /** JSON pointer relative to ProviderResult.v1, paired with actorIdsMatch. */
+  actorIdsPointer?: string;
+  /** Require the ordered actor bindings from all earlier policy stages. */
+  actorIdsMatch?: "prior-policy-actors";
+}
+
 export interface SkillProviderV2 {
   capabilities: string[];
   executionClass: ExecutionClass;
@@ -161,6 +171,7 @@ export interface SkillProviderV2 {
   preconditions: string[];
   failureHandling: string | Record<string, unknown>;
   gate: GateDescriptorV2;
+  receiptPolicy?: ReceiptPolicyV1;
 }
 
 export interface SkillDescriptorV2 {
@@ -205,6 +216,7 @@ export interface PlannedStageV1 {
   resultSchema: SchemaReferenceV1;
   stateMapping: StateMappingV2;
   gate: GateDescriptorV2;
+  receiptPolicy?: ReceiptPolicyV1;
 }
 
 export interface WorkflowPlanV1 {
