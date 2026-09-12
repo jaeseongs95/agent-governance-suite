@@ -11,6 +11,8 @@ const requiredFiles = [
   "skills/registry.json",
   "skills/source-lock.json",
   "mcp-server/dist/server.mjs",
+  "runtime/schema-validation.mjs",
+  "runtime/THIRD_PARTY_NOTICES.md",
   "pnpm-lock.yaml"
 ];
 const errors = [];

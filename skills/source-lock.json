@@ -34,7 +34,7 @@
       "source": "https://github.com/jaeseongs95/task-contract.git",
       "ref": "v1.0.0",
       "commit": "b14ffb36ed3be96cc4694d0b36054f21f69b577a",
-      "checksum": "sha256:88df77436b0880e6d6033a022593e59b7db016b8cb90847a06937a2d4a10d91f",
+      "checksum": "sha256:ce882edf63d99459d2e979b721add56602b19e5868b4d0b0c1218c01aa26400a",
       "checksumScope": "relative paths and normalized text bytes under skills/task-contract"
     },
     {
@@ -43,7 +43,7 @@
       "source": "https://github.com/jaeseongs95/acceptance-evidence-validator.git",
       "ref": "v1.0.0",
       "commit": "ad545c367e118a21b0cabfcd5b56fdf3b58e0ef5",
-      "checksum": "sha256:b417604d2600a3c09aadc9ffa2ae9d435aaa0dc2e28ccae457f8dda069ad166a",
+      "checksum": "sha256:193162ef7b982a66488a9a9c7360f76b5f4e36737b612f1c066f7b6391b8af27",
       "checksumScope": "relative paths and normalized text bytes under skills/acceptance-evidence-validator"
     },
     {
@@ -52,7 +52,7 @@
       "source": "https://github.com/jaeseongs95/blocker-diagnostician.git",
       "ref": "v1.0.0",
       "commit": "14ae3288535b1d2061a0ee1c537fa6773077a533",
-      "checksum": "sha256:76ffb61ad815a82e3abd9137320cb233a77d9576b7e8cea3c381b6b8d020683e",
+      "checksum": "sha256:00d5eefd11ba5a46d9dddb6590fab9d556ae325d37f1d35755634247618f49cf",
       "checksumScope": "relative paths and normalized text bytes under skills/blocker-diagnostician"
     },
     {
@@ -61,7 +61,7 @@
       "source": "https://github.com/jaeseongs95/workspace-convention-profiler.git",
       "ref": "v1.0.0",
       "commit": "6bc5cf4e65a4f5fb0dd5e2e01ba6a3428de63405",
-      "checksum": "sha256:0edcf71b974eeaac33128d8fea2b22026d3b50242106bea2eb61703b240e34d0",
+      "checksum": "sha256:7af2162e2651210fbafeb709c303868a79334a1820b107241ef608f7a0bbcccf",
       "checksumScope": "relative paths and normalized text bytes under skills/workspace-convention-profiler"
     },
     {
@@ -70,7 +70,7 @@
       "source": "https://github.com/jaeseongs95/mutation-risk-preflight.git",
       "ref": "v1.0.0",
       "commit": "66cc7d2ca4ae73f3d43d580600ab5e1af75e0a5c",
-      "checksum": "sha256:1a6b94868941410167556e783e29ebe93c9da99a395784927a06eaaf80cd0ddd",
+      "checksum": "sha256:b792b38d7d0d48b6084ac7703f832bb151e52602a7bcb39ce6f64b51945e15d2",
       "checksumScope": "relative paths and normalized text bytes under skills/mutation-risk-preflight"
     },
     {
@@ -79,7 +79,7 @@
       "source": "https://github.com/jaeseongs95/instruction-scope-resolver.git",
       "ref": "v1.0.0",
       "commit": "f8e459ebc826acbe9eb711128422b0f35f54bc98",
-      "checksum": "sha256:85485144ba8ffd9e558761f1dc9e5186aa54eac955c31f745812655310f7d3dc",
+      "checksum": "sha256:2bd6c1fc0f4504648d3e0b9182bb968bc9827d43e70577aa12e5089ea8308293",
       "checksumScope": "relative paths and normalized text bytes under skills/instruction-scope-resolver"
     },
     {
@@ -88,7 +88,7 @@
       "source": "https://github.com/jaeseongs95/change-scope-guardian.git",
       "ref": "v1.0.0",
       "commit": "531e820503bbefbb8cba9848657d42b3a5771587",
-      "checksum": "sha256:78c3275447af625639884e11da5c615c2f928f437503699df3b2a9f2893f94b5",
+      "checksum": "sha256:03bc40dd26356bc9b678db76d70f22474eb3812fa12711b96666dcf8ad7a533c",
       "checksumScope": "relative paths and normalized text bytes under skills/change-scope-guardian"
     }
   ]

@@ -1,7 +1,7 @@
 {
   "id": "agent-governance-suite",
   "name": "agent-governance-suite",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Route ten governance specialists through declarative provider contracts and a local MCP server.",
   "author": {
     "name": "jaeseongs95",
