@@ -120,12 +120,72 @@ export class ContractValidator {
     return this.assertSchemaFile<Record<string, unknown>>(rootDirectory, reference, value, label);
   }
 
+  referenceOnlyFixedTokens(
+    rootDirectory: string,
+    reference: SchemaReferenceV1,
+  ): Set<string> {
+    const schema = this.readBoundSchema(rootDirectory, reference, "reference-only output");
+    const tokens = new Set<string>();
+    const visit = (value: unknown): void => {
+      if (!value || typeof value !== "object") return;
+      if (Array.isArray(value)) {
+        value.forEach(visit);
+        return;
+      }
+      const record = value as Record<string, unknown>;
+      if ((record.type === "object" || record.properties) && record.additionalProperties !== false) {
+        throw new WorkflowContractError(
+          "INVALID_INPUT",
+          "A reference-only provider output schema must close every declared object.",
+          { schemaPath: reference.path },
+        );
+      }
+      if (typeof record.const === "string") tokens.add(record.const);
+      if (Array.isArray(record.enum)) {
+        for (const item of record.enum) if (typeof item === "string") tokens.add(item);
+      }
+      Object.values(record).forEach(visit);
+    };
+    visit(schema);
+    return tokens;
+  }
+
   private assertSchemaFile<T>(
     rootDirectory: string,
     reference: SchemaReferenceV1,
     value: unknown,
     label: string,
   ): T {
+    const root = path.resolve(rootDirectory);
+    const targetSchema = this.readBoundSchema(rootDirectory, reference, label);
+
+    const ajv = new Ajv2020({ allErrors: true, strict: false });
+    addFormats(ajv);
+    const schemas = new Map<string, JsonSchema>();
+    for (const directory of [path.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
+      for (const candidate of this.schemaFiles(directory)) {
+        const schema = JSON.parse(readFileSync(candidate, "utf8")) as JsonSchema;
+        const id = typeof schema.$id === "string" ? schema.$id : `file://${candidate.split(path.sep).join("/")}`;
+        if (!schemas.has(id)) schemas.set(id, schema);
+      }
+    }
+    for (const schema of schemas.values()) ajv.addSchema(schema);
+    const targetId = typeof targetSchema.$id === "string" ? targetSchema.$id : undefined;
+    const validate = (targetId ? ajv.getSchema(targetId) : undefined) ?? ajv.compile(targetSchema);
+    if (!validate(value)) {
+      throw new WorkflowContractError("INVALID_INPUT", `${label} does not match its declared schema.`, {
+        schemaPath: reference.path,
+        validationErrors: errorText(validate.errors),
+      });
+    }
+    return value as T;
+  }
+
+  private readBoundSchema(
+    rootDirectory: string,
+    reference: SchemaReferenceV1,
+    label: string,
+  ): JsonSchema {
     const root = path.resolve(rootDirectory);
     const schemaPath = path.resolve(root, reference.path);
     if (schemaPath !== root && !schemaPath.startsWith(`${root}${path.sep}`)) {
@@ -142,28 +202,7 @@ export class ContractValidator {
         actualDigest: digest,
       });
     }
-
-    const ajv = new Ajv2020({ allErrors: true, strict: false });
-    addFormats(ajv);
-    const schemas = new Map<string, JsonSchema>();
-    for (const directory of [path.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
-      for (const candidate of this.schemaFiles(directory)) {
-        const schema = JSON.parse(readFileSync(candidate, "utf8")) as JsonSchema;
-        const id = typeof schema.$id === "string" ? schema.$id : `file://${candidate.split(path.sep).join("/")}`;
-        if (!schemas.has(id)) schemas.set(id, schema);
-      }
-    }
-    for (const schema of schemas.values()) ajv.addSchema(schema);
-    const targetSchema = JSON.parse(raw.toString("utf8")) as JsonSchema;
-    const targetId = typeof targetSchema.$id === "string" ? targetSchema.$id : undefined;
-    const validate = (targetId ? ajv.getSchema(targetId) : undefined) ?? ajv.compile(targetSchema);
-    if (!validate(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", `${label} does not match its declared schema.`, {
-        schemaPath: reference.path,
-        validationErrors: errorText(validate.errors),
-      });
-    }
-    return value as T;
+    return JSON.parse(raw.toString("utf8")) as JsonSchema;
   }
 
   private skillSchemaRoot(rootDirectory: string, schemaPath: string): string {

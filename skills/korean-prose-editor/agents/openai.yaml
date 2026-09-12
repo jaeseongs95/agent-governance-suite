@@ -1,0 +1,6 @@
+interface:
+  display_name: "Korean Prose Editor"
+  short_description: "의미와 고정 문자열을 보존하는 한국어 산문 편집"
+  default_prompt: "Use $korean-prose-editor to revise this Korean prose conservatively and return only verified edits."
+policy:
+  allow_implicit_invocation: true

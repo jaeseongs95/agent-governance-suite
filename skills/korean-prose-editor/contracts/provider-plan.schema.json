@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/korean-prose-editor/provider-plan.schema.json",
+  "title": "Korean prose editor provider plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "actorIds", "providers"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "actorIds": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/actorId" }
+    },
+    "providers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selection", "editing", "verification", "finalization"],
+      "properties": {
+        "selection": { "$ref": "#/$defs/agentProvider" },
+        "editing": { "$ref": "#/$defs/agentProvider" },
+        "verification": { "$ref": "#/$defs/agentProvider" },
+        "finalization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "entrypoint"],
+          "properties": {
+            "kind": { "const": "deterministic" },
+            "entrypoint": { "const": "scripts/finalize.mjs" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "agentProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "actorId"],
+      "properties": {
+        "kind": { "const": "agent" },
+        "actorId": { "$ref": "#/$defs/actorId" }
+      }
+    },
+    "actorId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    }
+  }
+}

@@ -17,6 +17,7 @@ import {
 import { FileSkillRegistry, selectSkillByCapability } from "./registry.js";
 import { validateDecisionRecordSemantics } from "./decision-record-validator.js";
 import { ContractValidator } from "./schema-validator.js";
+import { assertReceiptPolicy } from "./receipt-policy.js";
 import {
   createPlanSigningKey,
   InMemoryWorkflowStore,
@@ -39,6 +40,13 @@ function apiError<T>(error: ContractErrorBody): ApiResultV1<T> {
 function stageId(order: number, capability: string): string {
   return `stage-${String(order).padStart(2, "0")}-${capability}`;
 }
+
+const KOREAN_PROSE_CAPABILITIES = [
+  "korean-prose-selection",
+  "korean-prose-editing",
+  "korean-prose-verification",
+  "korean-prose-finalization",
+] as const;
 
 function canonicalJson(value: unknown): string {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
@@ -153,6 +161,7 @@ export class WorkflowService {
 
         this.assertPlannedInputsAvailable(receipt, target);
         this.assertResultSemantics(target, result);
+        this.assertDeclaredReceiptPolicy(receipt, target, result);
         if (result.state === "passed") {
           this.assertRequiredArtifacts(target, result);
           this.assertDeliberationGate(target, result);
@@ -213,6 +222,7 @@ export class WorkflowService {
           });
         }
         this.assertRequiredArtifacts(stage, result);
+        this.assertDeclaredReceiptPolicy(receipt, stage, result);
       }
 
       const mandatoryAudit = receipt.plan.stages.find((stage) => stage.riskGate === "mandatory");
@@ -327,6 +337,7 @@ export class WorkflowService {
         resultSchema: { path: skill.resultSchema, digest: skill.resultSchemaDigest },
         stateMapping: skill.stateMapping,
         gate: skill.gate,
+        ...(skill.receiptPolicy ? { receiptPolicy: skill.receiptPolicy } : {}),
       });
       selectedSkills.add(skill.skillId);
     }
@@ -358,7 +369,17 @@ export class WorkflowService {
     const auditRequested = task.requiredCapabilities.includes(POLICY_CAPABILITY.audit)
       || task.riskLevel === "high"
       || task.riskLevel === "critical";
-    const work = task.requiredCapabilities.filter((capability) => capability !== POLICY_CAPABILITY.audit);
+    const requestedWork = task.requiredCapabilities.filter((capability) => capability !== POLICY_CAPABILITY.audit);
+    const work: string[] = [];
+    let koreanProseExpanded = false;
+    for (const capability of requestedWork) {
+      if (KOREAN_PROSE_CAPABILITIES.includes(capability as (typeof KOREAN_PROSE_CAPABILITIES)[number])) {
+        if (!koreanProseExpanded) work.push(...KOREAN_PROSE_CAPABILITIES);
+        koreanProseExpanded = true;
+      } else {
+        work.push(capability);
+      }
+    }
     const after: string[] = [];
     if (task.orchestration.requested && this.hasIndependentWorkUnitPair(dependencyGraph)) {
       before.push(POLICY_CAPABILITY.coordination);
@@ -474,6 +495,19 @@ export class WorkflowService {
     if ((result.state === "failed" || result.state === "blocked") && !result.error) {
       throw new WorkflowContractError("INVALID_INPUT", "Failed or blocked stages require an error object.");
     }
+  }
+
+  private assertDeclaredReceiptPolicy(
+    receipt: WorkflowReceiptV1,
+    stage: PlannedStageV1,
+    result: StageResultV1,
+  ): void {
+    if (!stage.receiptPolicy) return;
+    const fixedTokens = this.validator.referenceOnlyFixedTokens(
+      this.registry.rootDirectory,
+      stage.outputSchema,
+    );
+    assertReceiptPolicy(receipt, stage, result, fixedTokens);
   }
 
   private mappedState(stage: PlannedStageV1, providerResult: StageResultV1["output"]): StateMappingRuleV2 {

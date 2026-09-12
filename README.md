@@ -6,7 +6,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
-현재 릴리스는 `v1.0.5`이며, 열 개의 전문 스킬과 하나의 오케스트레이터를 포함합니다.
+현재 공개 릴리스는 `v1.0.5`입니다. 이 작업 트리의 `v1.1.0` 후보에는 거버넌스 전문 스킬 10개와 한국어 산문 워크플로 1개가 들어 있지만, 산문 품질 평가의 개선율 기준을 충족하지 못해 아직 릴리스·설치 대상으로 승인되지 않았습니다.
 
 ## 이런 문제를 다룹니다
 
@@ -122,7 +122,7 @@ MCP 서버는 `SkillDescriptor.v2`의 `capability`, 실행 단계, `artifact` �
 
 이 서버는 적대적인 호출자를 인증하는 보안 경계가 아닙니다. 전문 스킬과 호출자가 `verified` 값, 증거 위치, 작업자 식별자를 확인했다고 전제합니다. 서버는 값의 형식과 단계 사이의 일관성을 검사하지만, 실제 작업자의 신원이나 증거 원문의 진위를 인증하지는 않습니다.
 
-실행 중인 run, 현재 `revision`, run ID sequence, 계획 서명 키는 SQLite에 저장되므로 MCP 서버를 다시 시작해도 이어서 처리할 수 있습니다. SQLite에는 전체 `WorkflowReceipt`가 평문 JSON으로 들어가며, 여기에는 각 `StageResult`의 provider output, evidence note, findings, blockers와 error가 포함됩니다. 이 필드에 소스 코드, 로그 원문, 비밀값이나 개인정보를 넣으면 DB에도 그대로 남습니다. 자동 만료·삭제 정책은 제공하지 않으므로 호출자는 민감한 원문을 제출하지 말고 DB 파일과 디렉터리의 접근 권한과 보존 기간을 직접 관리해야 합니다. 기본 생성자를 사용한 `WorkflowService`는 테스트와 임베딩 호환성을 위해 메모리 저장 방식을 유지합니다. 신원 인증, 암호화된 장기 보존이나 적대적 환경에서도 보장되는 증거 무결성이 필요하다면 별도의 신원·증거 저장소를 연결해야 합니다.
+실행 중인 run, 현재 `revision`, run ID sequence, 계획 서명 키는 SQLite에 저장되므로 MCP 서버를 다시 시작해도 이어서 처리할 수 있습니다. SQLite에는 전체 `WorkflowReceipt`가 평문 JSON으로 들어가며, 여기에는 각 `StageResult`의 provider output, evidence note, findings, blockers와 error가 포함됩니다. 일반 provider는 호출자가 민감한 원문을 넣지 않아야 합니다. descriptor에 `receiptPolicy.mode: reference-only`를 선언한 provider는 저장 전에 닫힌 output schema, digest·artifact reference·고정 토큰만 허용하며 note, locator, findings, blockers와 error의 자유 텍스트도 거부합니다. `actorIdPointer`와 `uniqueness: run`을 함께 선언하면 canonical lowercase UUID actor ID의 run 내 재사용도 서버 재시작 후까지 거부합니다. 자동 만료·삭제 정책은 제공하지 않으므로 DB 파일과 디렉터리의 접근 권한과 보존 기간은 직접 관리해야 합니다. 기본 생성자를 사용한 `WorkflowService`는 테스트와 임베딩 호환성을 위해 메모리 저장 방식을 유지합니다. 이 정책은 원문 비저장을 위한 구조적 저장 경계일 뿐 신원을 인증하지 않습니다. 인증된 신원, 암호화된 장기 보존이나 적대적 환경에서도 보장되는 증거 무결성이 필요하다면 별도의 신원·증거 저장소를 연결해야 합니다.
 
 ## 프로젝트 구조
 

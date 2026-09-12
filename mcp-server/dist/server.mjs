@@ -2784,22 +2784,22 @@ var require_validate = __commonJS({
     var JSON_POINTER = /^\/(?:[^~]|~0|~1)*$/;
     var RELATIVE_JSON_POINTER = /^([0-9]+)(#|\/(?:[^~]|~0|~1)*)?$/;
     function getData($data, { dataLevel, dataNames, dataPathArr }) {
-      let jsonPointer;
+      let jsonPointer2;
       let data;
       if ($data === "")
         return names_1.default.rootData;
       if ($data[0] === "/") {
         if (!JSON_POINTER.test($data))
           throw new Error(`Invalid JSON-pointer: ${$data}`);
-        jsonPointer = $data;
+        jsonPointer2 = $data;
         data = names_1.default.rootData;
       } else {
         const matches = RELATIVE_JSON_POINTER.exec($data);
         if (!matches)
           throw new Error(`Invalid JSON-pointer: ${$data}`);
         const up = +matches[1];
-        jsonPointer = matches[2];
-        if (jsonPointer === "#") {
+        jsonPointer2 = matches[2];
+        if (jsonPointer2 === "#") {
           if (up >= dataLevel)
             throw new Error(errorMsg("property/index", up));
           return dataPathArr[dataLevel - up];
@@ -2807,11 +2807,11 @@ var require_validate = __commonJS({
         if (up > dataLevel)
           throw new Error(errorMsg("data", up));
         data = dataNames[dataLevel - up];
-        if (!jsonPointer)
+        if (!jsonPointer2)
           return data;
       }
       let expr = data;
-      const segments = jsonPointer.split("/");
+      const segments = jsonPointer2.split("/");
       for (const segment of segments) {
         if (segment) {
           data = (0, codegen_1._)`${data}${(0, codegen_1.getProperty)((0, util_1.unescapeJsonPointer)(segment))}`;
@@ -4629,8 +4629,8 @@ var require_core = __commonJS({
       $dataMetaSchema(metaSchema, keywordsJsonPointers) {
         const rules = this.RULES.all;
         metaSchema = JSON.parse(JSON.stringify(metaSchema));
-        for (const jsonPointer of keywordsJsonPointers) {
-          const segments = jsonPointer.split("/").slice(1);
+        for (const jsonPointer2 of keywordsJsonPointers) {
+          const segments = jsonPointer2.split("/").slice(1);
           let keywords = metaSchema;
           for (const seg of segments)
             keywords = keywords[seg];
@@ -15835,6 +15835,25 @@ import path from "node:path";
 
 // contracts/types.ts
 var CONTRACT_VERSION = "1.0.0";
+var WORKFLOW_STATE = [
+  "ready",
+  "running",
+  "needs-input",
+  "needs-approval",
+  "needs-redesign",
+  "failed",
+  "passed",
+  "blocked"
+];
+var ERROR_CODE = [
+  "INVALID_INPUT",
+  "RUN_NOT_FOUND",
+  "STALE_REVISION",
+  "INVALID_TRANSITION",
+  "MISSING_EVIDENCE",
+  "GATE_FAILED",
+  "MCP_UNAVAILABLE"
+];
 var POLICY_CAPABILITY = {
   coordination: "subagent-coordination",
   deliberation: "independent-deliberation",
@@ -16083,7 +16102,57 @@ var ContractValidator = class {
   declaredSchema(rootDirectory, reference, value, label) {
     return this.assertSchemaFile(rootDirectory, reference, value, label);
   }
+  referenceOnlyFixedTokens(rootDirectory, reference) {
+    const schema = this.readBoundSchema(rootDirectory, reference, "reference-only output");
+    const tokens = /* @__PURE__ */ new Set();
+    const visit = (value) => {
+      if (!value || typeof value !== "object") return;
+      if (Array.isArray(value)) {
+        value.forEach(visit);
+        return;
+      }
+      const record2 = value;
+      if ((record2.type === "object" || record2.properties) && record2.additionalProperties !== false) {
+        throw new WorkflowContractError(
+          "INVALID_INPUT",
+          "A reference-only provider output schema must close every declared object.",
+          { schemaPath: reference.path }
+        );
+      }
+      if (typeof record2.const === "string") tokens.add(record2.const);
+      if (Array.isArray(record2.enum)) {
+        for (const item of record2.enum) if (typeof item === "string") tokens.add(item);
+      }
+      Object.values(record2).forEach(visit);
+    };
+    visit(schema);
+    return tokens;
+  }
   assertSchemaFile(rootDirectory, reference, value, label) {
+    const root = path3.resolve(rootDirectory);
+    const targetSchema = this.readBoundSchema(rootDirectory, reference, label);
+    const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
+    addFormats(ajv);
+    const schemas = /* @__PURE__ */ new Map();
+    for (const directory of [path3.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
+      for (const candidate of this.schemaFiles(directory)) {
+        const schema = JSON.parse(readFileSync2(candidate, "utf8"));
+        const id = typeof schema.$id === "string" ? schema.$id : `file://${candidate.split(path3.sep).join("/")}`;
+        if (!schemas.has(id)) schemas.set(id, schema);
+      }
+    }
+    for (const schema of schemas.values()) ajv.addSchema(schema);
+    const targetId = typeof targetSchema.$id === "string" ? targetSchema.$id : void 0;
+    const validate2 = (targetId ? ajv.getSchema(targetId) : void 0) ?? ajv.compile(targetSchema);
+    if (!validate2(value)) {
+      throw new WorkflowContractError("INVALID_INPUT", `${label} does not match its declared schema.`, {
+        schemaPath: reference.path,
+        validationErrors: errorText(validate2.errors)
+      });
+    }
+    return value;
+  }
+  readBoundSchema(rootDirectory, reference, label) {
     const root = path3.resolve(rootDirectory);
     const schemaPath = path3.resolve(root, reference.path);
     if (schemaPath !== root && !schemaPath.startsWith(`${root}${path3.sep}`)) {
@@ -16100,27 +16169,7 @@ var ContractValidator = class {
         actualDigest: digest
       });
     }
-    const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
-    addFormats(ajv);
-    const schemas = /* @__PURE__ */ new Map();
-    for (const directory of [path3.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
-      for (const candidate of this.schemaFiles(directory)) {
-        const schema = JSON.parse(readFileSync2(candidate, "utf8"));
-        const id = typeof schema.$id === "string" ? schema.$id : `file://${candidate.split(path3.sep).join("/")}`;
-        if (!schemas.has(id)) schemas.set(id, schema);
-      }
-    }
-    for (const schema of schemas.values()) ajv.addSchema(schema);
-    const targetSchema = JSON.parse(raw.toString("utf8"));
-    const targetId = typeof targetSchema.$id === "string" ? targetSchema.$id : void 0;
-    const validate2 = (targetId ? ajv.getSchema(targetId) : void 0) ?? ajv.compile(targetSchema);
-    if (!validate2(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", `${label} does not match its declared schema.`, {
-        schemaPath: reference.path,
-        validationErrors: errorText(validate2.errors)
-      });
-    }
-    return value;
+    return JSON.parse(raw.toString("utf8"));
   }
   skillSchemaRoot(rootDirectory, schemaPath) {
     const segments = schemaPath.split("/");
@@ -17902,7 +17951,7 @@ function toolResult(result) {
 }
 function createMcpServer(service) {
   const server = new Server(
-    { name: "agent-governance-suite", version: "1.0.5" },
+    { name: "agent-governance-suite", version: "1.1.0" },
     { capabilities: { tools: {} } }
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -18512,6 +18561,192 @@ function validateDecisionRecordSemantics(record2) {
   return errors;
 }
 
+// mcp-server/src/receipt-policy.ts
+var DIGEST = /^(?:sha256:)?[a-f0-9]{64}$/;
+var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+var REFERENCE = /^(?:artifact|digest|schema|urn|run|stage|commit|test|file|document|tool):(?:\/\/)?[A-Za-z0-9][A-Za-z0-9._~:/?#@!$&'()*+,;=%-]{7,}$/;
+var NIL_UUID = "00000000-0000-0000-0000-000000000000";
+var ERROR_DETAIL_KEYS = /* @__PURE__ */ new Set([
+  "actorId",
+  "actorIdPointer",
+  "actual",
+  "artifactId",
+  "artifactIds",
+  "code",
+  "conflictingStageId",
+  "digest",
+  "digests",
+  "expected",
+  "locator",
+  "locators",
+  "mode",
+  "policy",
+  "reference",
+  "references",
+  "runId",
+  "schemaId",
+  "stageId",
+  "targetDigest"
+]);
+var PROTOCOL_TOKENS = /* @__PURE__ */ new Set([
+  CONTRACT_VERSION,
+  ...ERROR_CODE,
+  ...WORKFLOW_STATE,
+  "output",
+  "adapter-error",
+  "user-input",
+  "file",
+  "test",
+  "document",
+  "tool",
+  "reference-only",
+  "verified"
+]);
+function jsonPointer(value, pointer) {
+  return pointer.split("/").slice(1).reduce((current, token) => {
+    if (!current || typeof current !== "object") return void 0;
+    const key = token.replaceAll("~1", "/").replaceAll("~0", "~");
+    return current[key];
+  }, value);
+}
+function isOpaqueReference(value) {
+  return DIGEST.test(value) || UUID.test(value) || REFERENCE.test(value);
+}
+function assertSafeString(value, fixedTokens, location, allowEmpty = false) {
+  if (allowEmpty && value === "" || fixedTokens.has(value) || PROTOCOL_TOKENS.has(value) || isOpaqueReference(value)) return;
+  throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt policy rejected free text.", {
+    location
+  });
+}
+function assertSafeValue(value, fixedTokens, location) {
+  if (typeof value === "string") {
+    assertSafeString(value, fixedTokens, location);
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => assertSafeValue(item, fixedTokens, `${location}/${index}`));
+    return;
+  }
+  if (value && typeof value === "object") {
+    for (const [key, item] of Object.entries(value)) {
+      assertSafeValue(item, fixedTokens, `${location}/${key}`);
+    }
+  }
+}
+function assertSafeError(error2, fixedTokens, location) {
+  if (!error2) return;
+  assertSafeString(error2.message, fixedTokens, `${location}/message`);
+  if (error2.details) {
+    for (const [key, value] of Object.entries(error2.details)) {
+      if (!ERROR_DETAIL_KEYS.has(key)) {
+        throw new WorkflowContractError("INVALID_INPUT", "Reference-only error details contain an undeclared field.", {
+          location: `${location}/details/${key}`
+        });
+      }
+      assertSafeValue(value, fixedTokens, `${location}/details/${key}`);
+    }
+  }
+}
+function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
+  const policy = stage.receiptPolicy;
+  if (!policy) return;
+  const fixedTokens = /* @__PURE__ */ new Set([
+    ...outputFixedTokens,
+    ...stage.satisfiedCapabilities,
+    ...stage.requiredInputArtifacts,
+    ...stage.producedArtifacts,
+    ...stage.requiredArtifacts
+  ]);
+  assertSafeValue(result.output.output, fixedTokens, "/output/output");
+  const allowedArtifacts = /* @__PURE__ */ new Set([
+    ...stage.requiredInputArtifacts,
+    ...stage.producedArtifacts,
+    ...stage.requiredArtifacts
+  ]);
+  for (const [index, artifact] of result.output.artifacts.entries()) {
+    if (!allowedArtifacts.has(artifact.artifactId)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt contains an undeclared artifact.", {
+        stageId: stage.stageId,
+        artifactId: artifact.artifactId
+      });
+    }
+    assertSafeString(artifact.schemaId, fixedTokens, `/output/artifacts/${index}/schemaId`);
+    assertSafeString(artifact.locator, fixedTokens, `/output/artifacts/${index}/locator`);
+    if (!DIGEST.test(artifact.digest) || !DIGEST.test(artifact.targetDigest)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Reference-only artifact digests must be opaque SHA-256 references.", {
+        stageId: stage.stageId,
+        artifactId: artifact.artifactId
+      });
+    }
+  }
+  for (const [index, evidence] of result.evidence.entries()) {
+    if (!allowedArtifacts.has(evidence.artifactId)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt contains undeclared evidence.", {
+        stageId: stage.stageId,
+        artifactId: evidence.artifactId
+      });
+    }
+    assertSafeString(evidence.locator, fixedTokens, `/evidence/${index}/locator`);
+    assertSafeString(evidence.note, fixedTokens, `/evidence/${index}/note`, true);
+  }
+  result.findings.forEach((finding, index) => assertSafeString(finding, fixedTokens, `/findings/${index}`));
+  result.blockers.forEach((blocker, index) => assertSafeString(blocker, fixedTokens, `/blockers/${index}`));
+  assertSafeError(result.output.error, fixedTokens, "/output/error");
+  assertSafeError(result.error, fixedTokens, "/error");
+  const externalInputs = stage.requiredInputArtifacts.filter((artifactId) => !receipt.plan.stages.some(
+    (candidate) => candidate.stageId !== stage.stageId && candidate.producedArtifacts.includes(artifactId)
+  ));
+  const missingExternalInputs = externalInputs.filter((artifactId) => !result.evidence.some(
+    (evidence) => evidence.artifactId === artifactId && evidence.verified && isOpaqueReference(evidence.locator)
+  ));
+  if (missingExternalInputs.length > 0) {
+    throw new WorkflowContractError("MISSING_EVIDENCE", "Reference-only stage prerequisites require verified artifact references.", {
+      stageId: stage.stageId,
+      missingInputs: missingExternalInputs
+    });
+  }
+  if (policy.actorIdsMatch === "prior-policy-actors" && policy.actorIdsPointer) {
+    const priorActorStages = receipt.plan.stages.filter((candidate) => candidate.order < stage.order && candidate.receiptPolicy?.actorIdPointer).sort((left, right) => left.order - right.order);
+    const expectedActorIds = priorActorStages.map((priorStage) => {
+      const priorResult = receipt.stageResults.find((candidate) => candidate.stageId === priorStage.stageId);
+      const actorId2 = priorResult && jsonPointer(priorResult.output, priorStage.receiptPolicy.actorIdPointer);
+      if (typeof actorId2 !== "string" || actorId2 === NIL_UUID || !UUID.test(actorId2)) {
+        throw new WorkflowContractError("MISSING_EVIDENCE", "A prior policy stage has no valid actor binding.", {
+          stageId: stage.stageId,
+          conflictingStageId: priorStage.stageId
+        });
+      }
+      return actorId2;
+    });
+    const actorIds = jsonPointer(result.output, policy.actorIdsPointer);
+    if (!Array.isArray(actorIds) || actorIds.length !== expectedActorIds.length || new Set(actorIds).size !== actorIds.length || actorIds.some((actorId2, index) => actorId2 !== expectedActorIds[index])) {
+      throw new WorkflowContractError("GATE_FAILED", "Receipt actor IDs must exactly match prior policy actors in plan order.", {
+        stageId: stage.stageId,
+        actorIdsPointer: policy.actorIdsPointer
+      });
+    }
+  }
+  if (!policy.actorIdPointer) return;
+  const actorId = jsonPointer(result.output, policy.actorIdPointer);
+  if (typeof actorId !== "string" || actorId === NIL_UUID || !UUID.test(actorId)) {
+    throw new WorkflowContractError("INVALID_INPUT", "Receipt actor ID must be a nonempty canonical lowercase UUID.", {
+      stageId: stage.stageId,
+      actorIdPointer: policy.actorIdPointer
+    });
+  }
+  if (policy.uniqueness !== "run") return;
+  for (const priorResult of receipt.stageResults.filter((candidate) => candidate.stageId !== stage.stageId)) {
+    const priorStage = receipt.plan.stages.find((candidate) => candidate.stageId === priorResult.stageId);
+    if (!priorStage?.receiptPolicy?.actorIdPointer) continue;
+    if (jsonPointer(priorResult.output, priorStage.receiptPolicy.actorIdPointer) === actorId) {
+      throw new WorkflowContractError("GATE_FAILED", "Receipt actor ID must be unique across policy stages in this run.", {
+        stageId: stage.stageId,
+        conflictingStageId: priorStage.stageId
+      });
+    }
+  }
+}
+
 // mcp-server/src/workflow-store.ts
 import { randomBytes } from "node:crypto";
 var PLAN_SIGNING_KEY = "plan-signing-key";
@@ -18567,6 +18802,12 @@ function apiError(error2) {
 function stageId(order, capability) {
   return `stage-${String(order).padStart(2, "0")}-${capability}`;
 }
+var KOREAN_PROSE_CAPABILITIES = [
+  "korean-prose-selection",
+  "korean-prose-editing",
+  "korean-prose-verification",
+  "korean-prose-finalization"
+];
 function canonicalJson(value) {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
@@ -18671,6 +18912,7 @@ var WorkflowService = class {
         }
         this.assertPlannedInputsAvailable(receipt, target);
         this.assertResultSemantics(target, result);
+        this.assertDeclaredReceiptPolicy(receipt, target, result);
         if (result.state === "passed") {
           this.assertRequiredArtifacts(target, result);
           this.assertDeliberationGate(target, result);
@@ -18728,6 +18970,7 @@ var WorkflowService = class {
           });
         }
         this.assertRequiredArtifacts(stage, result);
+        this.assertDeclaredReceiptPolicy(receipt, stage, result);
       }
       const mandatoryAudit = receipt.plan.stages.find((stage) => stage.riskGate === "mandatory");
       if (mandatoryAudit && mandatoryAudit.state !== "passed") {
@@ -18822,7 +19065,8 @@ var WorkflowService = class {
         outputSchema: { path: skill.outputSchema, digest: skill.outputSchemaDigest },
         resultSchema: { path: skill.resultSchema, digest: skill.resultSchemaDigest },
         stateMapping: skill.stateMapping,
-        gate: skill.gate
+        gate: skill.gate,
+        ...skill.receiptPolicy ? { receiptPolicy: skill.receiptPolicy } : {}
       });
       selectedSkills.add(skill.skillId);
     }
@@ -18849,7 +19093,17 @@ var WorkflowService = class {
   requiredCapabilities(task, dependencyGraph) {
     const before = [];
     const auditRequested = task.requiredCapabilities.includes(POLICY_CAPABILITY.audit) || task.riskLevel === "high" || task.riskLevel === "critical";
-    const work = task.requiredCapabilities.filter((capability) => capability !== POLICY_CAPABILITY.audit);
+    const requestedWork = task.requiredCapabilities.filter((capability) => capability !== POLICY_CAPABILITY.audit);
+    const work = [];
+    let koreanProseExpanded = false;
+    for (const capability of requestedWork) {
+      if (KOREAN_PROSE_CAPABILITIES.includes(capability)) {
+        if (!koreanProseExpanded) work.push(...KOREAN_PROSE_CAPABILITIES);
+        koreanProseExpanded = true;
+      } else {
+        work.push(capability);
+      }
+    }
     const after = [];
     if (task.orchestration.requested && this.hasIndependentWorkUnitPair(dependencyGraph)) {
       before.push(POLICY_CAPABILITY.coordination);
@@ -18955,6 +19209,14 @@ var WorkflowService = class {
     if ((result.state === "failed" || result.state === "blocked") && !result.error) {
       throw new WorkflowContractError("INVALID_INPUT", "Failed or blocked stages require an error object.");
     }
+  }
+  assertDeclaredReceiptPolicy(receipt, stage, result) {
+    if (!stage.receiptPolicy) return;
+    const fixedTokens = this.validator.referenceOnlyFixedTokens(
+      this.registry.rootDirectory,
+      stage.outputSchema
+    );
+    assertReceiptPolicy(receipt, stage, result, fixedTokens);
   }
   mappedState(stage, providerResult) {
     if (providerResult.kind === "adapter-error") {

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/korean-prose-editor/edit-decision-set.v1.schema.json",
+  "title": "Edit decision set reference receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "actorId", "digest", "length", "decisions", "warnings"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "actorId": { "$ref": "#/$defs/actorId" },
+    "digest": { "$ref": "#/$defs/digests" },
+    "length": { "$ref": "#/$defs/lengths" },
+    "decisions": {
+      "type": "object", "additionalProperties": false, "required": ["status", "selectedCount", "retainedCount"],
+      "properties": { "status": { "enum": ["ready", "needs-input", "blocked"] }, "selectedCount": { "type": "integer", "minimum": 0 }, "retainedCount": { "type": "integer", "minimum": 0 } }
+    },
+    "warnings": { "$ref": "#/$defs/warnings" }
+  },
+  "$defs": {
+    "actorId": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
+    "digestValue": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "digests": { "type": "object", "additionalProperties": false, "required": ["source", "artifact"], "properties": { "source": { "$ref": "#/$defs/digestValue" }, "artifact": { "$ref": "#/$defs/digestValue" } } },
+    "lengths": { "type": "object", "additionalProperties": false, "required": ["source"], "properties": { "source": { "type": "integer", "minimum": 0 } } },
+    "warnings": { "type": "array", "items": { "enum": ["SELECTION_UNCERTAIN", "SELECTION_BLOCKED", "PROTECTED_CONTEXT_MISSING"] }, "uniqueItems": true }
+  }
+}

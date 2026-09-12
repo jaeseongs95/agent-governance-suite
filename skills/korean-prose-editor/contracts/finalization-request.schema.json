@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/korean-prose-editor/finalization-request.schema.json",
+  "title": "Finalization request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "mode", "subagentsAvailable", "plan", "source", "manifest", "edits", "verification"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "mode": { "enum": ["mcp", "direct"] },
+    "subagentsAvailable": { "const": true },
+    "plan": { "$ref": "provider-plan.schema.json" },
+    "source": { "type": "string" },
+    "manifest": { "$ref": "protected-manifest.schema.json" },
+    "edits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "sourceDigest", "start", "end", "replacement", "actorId"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "sourceDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "start": { "type": "integer", "minimum": 0 },
+          "end": { "type": "integer", "minimum": 0 },
+          "replacement": { "type": "string" },
+          "actorId": { "$ref": "#/$defs/actorId" }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorId", "globalDecision", "decisions"],
+      "properties": {
+        "actorId": { "$ref": "#/$defs/actorId" },
+        "globalDecision": { "enum": ["continue", "fallback"] },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["editId", "decision", "reasonCode"],
+            "properties": {
+              "editId": { "type": "string", "minLength": 1 },
+              "decision": { "enum": ["accept", "retain"] },
+              "reasonCode": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "actorId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    }
+  }
+}

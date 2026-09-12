@@ -42,7 +42,8 @@
         "outputSchema": { "$ref": "#/$defs/schemaReference" },
         "resultSchema": { "$ref": "#/$defs/schemaReference" },
         "stateMapping": { "$ref": "#/$defs/stateMapping" },
-        "gate": { "$ref": "#/$defs/gate" }
+        "gate": { "$ref": "#/$defs/gate" },
+        "receiptPolicy": { "$ref": "#/$defs/receiptPolicy" }
       }
     },
     "inputBinding": {
@@ -96,6 +97,32 @@
         "validator": { "type": ["string", "null"] },
         "validatorSchema": { "oneOf": [{ "$ref": "#/$defs/schemaReference" }, { "type": "null" }] }
       }
+    },
+    "receiptPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": { "const": "reference-only" },
+        "actorIdPointer": { "type": "string", "pattern": "^/(?:[^~/]|~0|~1)+(?:/(?:[^~/]|~0|~1)+)*$" },
+        "uniqueness": { "const": "run" },
+        "actorIdsPointer": { "type": "string", "pattern": "^/(?:[^~/]|~0|~1)+(?:/(?:[^~/]|~0|~1)+)*$" },
+        "actorIdsMatch": { "const": "prior-policy-actors" }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["uniqueness"] },
+          "then": { "required": ["actorIdPointer"] }
+        },
+        {
+          "if": { "required": ["actorIdsPointer"] },
+          "then": { "required": ["actorIdsMatch"] }
+        },
+        {
+          "if": { "required": ["actorIdsMatch"] },
+          "then": { "required": ["actorIdsPointer"] }
+        }
+      ]
     },
     "errorCode": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE"] },
     "error": {

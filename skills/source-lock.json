@@ -90,6 +90,15 @@
       "commit": "531e820503bbefbb8cba9848657d42b3a5771587",
       "checksum": "sha256:03bc40dd26356bc9b678db76d70f22474eb3812fa12711b96666dcf8ad7a533c",
       "checksumScope": "relative paths and normalized text bytes under skills/change-scope-guardian"
+    },
+    {
+      "skillId": "korean-prose-editor",
+      "path": "skills/korean-prose-editor",
+      "source": "D:\\\\codex\\\\korean-prose-editor",
+      "ref": "e31767939fc728fb2d0089cdd70dbb8134b3f32f",
+      "commit": "e31767939fc728fb2d0089cdd70dbb8134b3f32f",
+      "checksum": "sha256:65807e2781c9189805c5743d18ee8668f8bda5b62dd612e28689ccc2ab95a42d",
+      "checksumScope": "relative paths and normalized text bytes under skills/korean-prose-editor"
     }
   ]
 }
