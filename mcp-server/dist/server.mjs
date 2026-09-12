@@ -17902,7 +17902,7 @@ function toolResult(result) {
 }
 function createMcpServer(service) {
   const server = new Server(
-    { name: "agent-governance-suite", version: "1.0.3" },
+    { name: "agent-governance-suite", version: "1.0.4" },
     { capabilities: { tools: {} } }
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({

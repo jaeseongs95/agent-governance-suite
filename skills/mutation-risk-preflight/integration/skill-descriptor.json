@@ -3,7 +3,7 @@
   "providers": [
     {
       "skillId": "mutation-risk-preflight",
-      "version": "0.1.1",
+      "version": "1.0.0",
       "enabled": true,
       "capabilities": [
         "mutation-risk-preflight"

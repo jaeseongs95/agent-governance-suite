@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 EXPECTED_NAME = "independent-audit-gate"
-EXPECTED_VERSION = "0.1.1"
+EXPECTED_VERSION = "1.0.0"
 MONOREPO_ROOT = Path(__file__).resolve().parents[2]
 SKILL_ROOT = MONOREPO_ROOT / "skills" / EXPECTED_NAME
 BEHAVIOR_CASES = Path(__file__).with_name("behavior-cases.json")
@@ -121,7 +121,7 @@ def validate_orchestrator_handoff(root: Path, skill_text: str, errors: list[str]
         return
     text = read_utf8(path, errors)
     required_fragments = (
-        'contract: "independent-audit-gate/v0.1"',
+        'contract: "independent-audit-gate/v1.0"',
         'mode: "orchestrated"',
         'phase: "pre-execution | post-execution | pre-deploy | post-deploy"',
         "implementers: []",
@@ -137,7 +137,7 @@ def validate_orchestrator_handoff(root: Path, skill_text: str, errors: list[str]
     )
     for fragment in required_fragments:
         if fragment not in text:
-            errors.append(f"{relative}: missing v0.1 handoff field {fragment!r}")
+            errors.append(f"{relative}: missing v1.0 handoff field {fragment!r}")
     if "자연어와 구조화된 Markdown을 사용하는 지침 수준 계약" not in skill_text:
         errors.append("SKILL.md: orchestrator handoff must remain a natural-language/Markdown contract")
     if "별도 API나 `audit-run.json`을 요구하지 않는다" not in text:
@@ -206,7 +206,7 @@ def main() -> int:
         if not re.search(r"^\s*allow_implicit_invocation:\s*true\s*$", openai_text, re.MULTILINE):
             errors.append("agents/openai.yaml: allow_implicit_invocation must be true")
         if re.search(r"^dependencies:\s*$", openai_text, re.MULTILINE):
-            errors.append("agents/openai.yaml: runtime dependencies are not allowed in v0.1")
+            errors.append("agents/openai.yaml: runtime dependencies are not allowed")
 
     tracked_candidates = [
         path

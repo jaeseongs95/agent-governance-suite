@@ -3,7 +3,7 @@ name: blocker-diagnostician
 description: 반복되는 실패를 관측 episode와 원인 가설로 분리하고, 새 정보를 얻을 수 있는 다음 판별 검사를 정한다. 수정 구현, 일반 설계 비교, 같은 검사의 반복 실행이나 최종 독립 감사에는 사용하지 않는다.
 license: MIT
 metadata:
-  version: "0.1.0"
+  version: "1.0.0"
 ---
 
 # Blocker Diagnostician

@@ -3,7 +3,7 @@
   "providers": [
     {
       "skillId": "blocker-diagnostician",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "enabled": true,
       "capabilities": ["blocker-diagnosis"],
       "priority": 50,

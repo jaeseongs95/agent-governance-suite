@@ -3,7 +3,7 @@ name: workspace-convention-profiler
 description: 낯선 저장소의 구조, 도구, 관례, 정의된 검증 명령과 변경 후보 지점을 읽기 전용으로 조사한다. AGENTS.md 우선순위 판정, 작업 범위 확정, diff 감사에는 사용하지 않는다.
 license: MIT
 metadata:
-  version: "0.1.1"
+  version: "1.0.0"
 ---
 
 # Workspace Convention Profiler

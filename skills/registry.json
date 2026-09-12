@@ -92,7 +92,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "coordinate-subagents",
-      "version": "0.1.2",
+      "version": "1.0.0",
       "path": "./coordinate-subagents",
       "enabled": true,
       "priority": 20,
@@ -179,7 +179,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "independent-audit-gate",
-      "version": "0.1.1",
+      "version": "1.0.0",
       "path": "./independent-audit-gate",
       "enabled": true,
       "priority": 90,
@@ -290,7 +290,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "task-contract",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "path": "./task-contract",
       "enabled": true,
       "priority": 50,
@@ -376,7 +376,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "acceptance-evidence-validator",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "path": "./acceptance-evidence-validator",
       "enabled": true,
       "priority": 50,
@@ -493,7 +493,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "blocker-diagnostician",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "path": "./blocker-diagnostician",
       "enabled": true,
       "priority": 50,
@@ -606,7 +606,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "workspace-convention-profiler",
-      "version": "0.1.1",
+      "version": "1.0.0",
       "path": "./workspace-convention-profiler",
       "enabled": true,
       "priority": 50,
@@ -699,7 +699,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "mutation-risk-preflight",
-      "version": "0.1.1",
+      "version": "1.0.0",
       "path": "./mutation-risk-preflight",
       "enabled": true,
       "priority": 50,
@@ -815,7 +815,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "instruction-scope-resolver",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "path": "./instruction-scope-resolver",
       "enabled": true,
       "priority": 50,
@@ -904,7 +904,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "change-scope-guardian",
-      "version": "0.1.1",
+      "version": "1.0.0",
       "path": "./change-scope-guardian",
       "enabled": true,
       "priority": 50,

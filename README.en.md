@@ -6,7 +6,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
-The current release is `v1.0.3`. It includes ten specialist skills and one orchestrator.
+The current release is `v1.0.4`. It includes ten specialist skills and one orchestrator.
 
 ## How it works
 
@@ -59,7 +59,7 @@ The orchestrator does not run all ten skills for every request. It selects the r
 Node.js 22.13.0 or later is required.
 
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.0.3
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.0.4
 codex plugin add agent-governance-suite@agent-governance
 ```
 
@@ -94,16 +94,16 @@ Each specialist remains available when the MCP server is unavailable. Orchestrat
 
 | When | Skill | Version | Responsibility |
 | --- | --- | --- | --- |
-| Before work | `instruction-scope-resolver` | 0.1.0 | Finds the instructions and precedence rules that apply to the work target. |
-| Before work | `workspace-convention-profiler` | 0.1.1 | Records repository structure, commands, and test conventions with evidence. |
-| Before work | `task-contract` | 0.1.0 | Defines the objective, scope, risk, and completion criteria. |
-| During work | `coordinate-subagents` | 0.1.2 | Splits independent work and assigns ownership and verification duties. |
+| Before work | `instruction-scope-resolver` | 1.0.0 | Finds the instructions and precedence rules that apply to the work target. |
+| Before work | `workspace-convention-profiler` | 1.0.0 | Records repository structure, commands, and test conventions with evidence. |
+| Before work | `task-contract` | 1.0.0 | Defines the objective, scope, risk, and completion criteria. |
+| During work | `coordinate-subagents` | 1.0.0 | Splits independent work and assigns ownership and verification duties. |
 | During work | `independent-deliberation-panel` | 1.0.0 | Reviews evidence and counterarguments for complex decisions. |
-| Before and after changes | `change-scope-guardian` | 0.1.1 | Captures a baseline and checks whether the final change stayed in scope. |
-| Before changes | `mutation-risk-preflight` | 0.1.1 | Checks the target, authority, approval, and recovery conditions for risky mutations. |
-| Before completion | `acceptance-evidence-validator` | 0.1.0 | Verifies current evidence for every acceptance criterion. |
-| Before completion | `independent-audit-gate` | 0.1.1 | Requires a reviewer who is independent from the implementer for high-risk results. |
-| After a failure | `blocker-diagnostician` | 0.1.0 | Classifies repeated failures and selects the next diagnostic step. |
+| Before and after changes | `change-scope-guardian` | 1.0.0 | Captures a baseline and checks whether the final change stayed in scope. |
+| Before changes | `mutation-risk-preflight` | 1.0.0 | Checks the target, authority, approval, and recovery conditions for risky mutations. |
+| Before completion | `acceptance-evidence-validator` | 1.0.0 | Verifies current evidence for every acceptance criterion. |
+| Before completion | `independent-audit-gate` | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
+| After a failure | `blocker-diagnostician` | 1.0.0 | Classifies repeated failures and selects the next diagnostic step. |
 
 Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. Exact source tags, commits, and checksums are pinned in `skills/source-lock.json`.
 

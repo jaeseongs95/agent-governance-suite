@@ -3,7 +3,7 @@ name: acceptance-evidence-validator
 description: 고정된 구현 대상과 실제 테스트·검사 근거를 수용 기준별로 대조해 충족, 실패, 증거 부족을 판정한다. 구현, 반복 실패 원인 분석, 고위험 독립 감사나 릴리스 승인에는 사용하지 않는다.
 license: MIT
 metadata:
-  version: "0.1.0"
+  version: "1.0.0"
 ---
 
 # Acceptance Evidence Validator

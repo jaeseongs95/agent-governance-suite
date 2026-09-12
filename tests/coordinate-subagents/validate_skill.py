@@ -274,8 +274,8 @@ def validate_frontmatter() -> None:
     nested_metadata = metadata.get("metadata")
     if version is None and isinstance(nested_metadata, dict):
         version = nested_metadata.get("version")
-    require(isinstance(version, str) and re.fullmatch(r"0\.1\.2", version) is not None,
-            "SKILL.md frontmatter version (version or metadata.version) must be '0.1.2'")
+    require(isinstance(version, str) and re.fullmatch(r"1\.0\.0", version) is not None,
+            "SKILL.md frontmatter version (version or metadata.version) must be '1.0.0'")
     skill_license = read_utf8(SKILL_ROOT / "LICENSE")
     require("MIT License" in skill_license,
             "the installable skill LICENSE must contain the MIT License text")

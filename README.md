@@ -6,7 +6,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
-현재 릴리스는 `v1.0.3`이며, 열 개의 전문 스킬과 하나의 오케스트레이터를 포함합니다.
+현재 릴리스는 `v1.0.4`이며, 열 개의 전문 스킬과 하나의 오케스트레이터를 포함합니다.
 
 ## 이런 문제를 다룹니다
 
@@ -59,7 +59,7 @@ flowchart LR
 Node.js 22.13.0 이상이 필요합니다.
 
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.0.3
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.0.4
 codex plugin add agent-governance-suite@agent-governance
 ```
 
@@ -96,16 +96,16 @@ MCP 서버가 시작되지 않아도 개별 전문 스킬은 직접 호출할 �
 
 | 시점 | 스킬 | 버전 | 역할 |
 | --- | --- | --- | --- |
-| 시작 전 | [`instruction-scope-resolver`](https://github.com/jaeseongs95/instruction-scope-resolver/tree/v0.1.0) | 0.1.0 | 작업 대상에 적용되는 지침의 범위와 우선순위를 확인합니다. |
-| 시작 전 | [`workspace-convention-profiler`](https://github.com/jaeseongs95/workspace-convention-profiler/tree/v0.1.1) | 0.1.1 | 저장소의 구조, 도구, 관례, 검증 명령을 조사합니다. |
-| 시작 전 | [`task-contract`](https://github.com/jaeseongs95/task-contract/tree/v0.1.0) | 0.1.0 | 요청의 목표, 범위, 수용 기준, 위험도, 권한을 구조화합니다. |
-| 진행 중 | [`coordinate-subagents`](https://github.com/jaeseongs95/coordinate-subagents/tree/v0.1.2) | 0.1.2 | 독립 작업을 나누고 담당 영역과 검증 책임을 정합니다. |
+| 시작 전 | [`instruction-scope-resolver`](https://github.com/jaeseongs95/instruction-scope-resolver/tree/v1.0.0) | 1.0.0 | 작업 대상에 적용되는 지침의 범위와 우선순위를 확인합니다. |
+| 시작 전 | [`workspace-convention-profiler`](https://github.com/jaeseongs95/workspace-convention-profiler/tree/v1.0.0) | 1.0.0 | 저장소의 구조, 도구, 관례, 검증 명령을 조사합니다. |
+| 시작 전 | [`task-contract`](https://github.com/jaeseongs95/task-contract/tree/v1.0.0) | 1.0.0 | 요청의 목표, 범위, 수용 기준, 위험도, 권한을 구조화합니다. |
+| 진행 중 | [`coordinate-subagents`](https://github.com/jaeseongs95/coordinate-subagents/tree/v1.0.0) | 1.0.0 | 독립 작업을 나누고 담당 영역과 검증 책임을 정합니다. |
 | 진행 중 | [`independent-deliberation-panel`](https://github.com/jaeseongs95/independent-deliberation-panel/tree/v1.0.0) | 1.0.0 | 복잡한 결정의 근거와 반론을 여러 독립 관점에서 검토합니다. |
-| 변경 전후 | [`change-scope-guardian`](https://github.com/jaeseongs95/change-scope-guardian/tree/v0.1.1) | 0.1.1 | 변경 전 기준선과 현재 Git 변경 사항을 비교해 요청 범위 밖의 파일을 찾습니다. |
-| 변경 전 | [`mutation-risk-preflight`](https://github.com/jaeseongs95/mutation-risk-preflight/tree/v0.1.1) | 0.1.1 | 위험한 변경을 실행하기 전에 대상, 승인, 영향 범위, 복구 조건을 점검합니다. |
-| 완료 전 | [`acceptance-evidence-validator`](https://github.com/jaeseongs95/acceptance-evidence-validator/tree/v0.1.0) | 0.1.0 | 수용 기준마다 현재 결과를 뒷받침하는 증거가 있는지 검사합니다. |
-| 완료 전 | [`independent-audit-gate`](https://github.com/jaeseongs95/codex-independent-audit-gate/tree/v0.1.1) | 0.1.1 | 구현자와 분리된 감사자가 고위험 변경과 검증 근거를 확인합니다. |
-| 문제 발생 시 | [`blocker-diagnostician`](https://github.com/jaeseongs95/blocker-diagnostician/tree/v0.1.0) | 0.1.0 | 반복 실패를 관측 사실과 원인 가설로 나누고 다음 판별 검사를 정합니다. |
+| 변경 전후 | [`change-scope-guardian`](https://github.com/jaeseongs95/change-scope-guardian/tree/v1.0.0) | 1.0.0 | 변경 전 기준선과 현재 Git 변경 사항을 비교해 요청 범위 밖의 파일을 찾습니다. |
+| 변경 전 | [`mutation-risk-preflight`](https://github.com/jaeseongs95/mutation-risk-preflight/tree/v1.0.0) | 1.0.0 | 위험한 변경을 실행하기 전에 대상, 승인, 영향 범위, 복구 조건을 점검합니다. |
+| 완료 전 | [`acceptance-evidence-validator`](https://github.com/jaeseongs95/acceptance-evidence-validator/tree/v1.0.0) | 1.0.0 | 수용 기준마다 현재 결과를 뒷받침하는 증거가 있는지 검사합니다. |
+| 완료 전 | [`independent-audit-gate`](https://github.com/jaeseongs95/codex-independent-audit-gate/tree/v1.0.0) | 1.0.0 | 구현자와 분리된 감사자가 고위험 변경과 검증 근거를 확인합니다. |
+| 문제 발생 시 | [`blocker-diagnostician`](https://github.com/jaeseongs95/blocker-diagnostician/tree/v1.0.0) | 1.0.0 | 반복 실패를 관측 사실과 원인 가설로 나누고 다음 판별 검사를 정합니다. |
 
 각 전문 스킬은 단독으로 호출할 수 있습니다. 둘 이상의 역할을 연결하려면 [`$orchestrator`](skills/orchestrator/)를 사용합니다. 편입에 사용한 원본 태그, 커밋, `checksum`은 [`skills/source-lock.json`](skills/source-lock.json)에 고정되어 있습니다.
 

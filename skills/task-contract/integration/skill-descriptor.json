@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.0.0",
   "skillId": "task-contract",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "enabled": true,
   "priority": 50,
   "providers": [
