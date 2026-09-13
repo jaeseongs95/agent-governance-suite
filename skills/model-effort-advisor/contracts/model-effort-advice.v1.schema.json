@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance.local/model-effort-advice.v1.schema.json",
+  "title": "ModelEffortAdvice.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "verdict",
+    "observation",
+    "taskDemand",
+    "recommendation",
+    "rationaleCodes",
+    "userNotice"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "verdict": {
+      "enum": ["OVER_PROVISIONED", "ADEQUATE", "UNDER_PROVISIONED", "UNOBSERVABLE"]
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "source", "model", "modelClass", "reasoningEffort"],
+      "properties": {
+        "status": { "enum": ["observed", "unobservable"] },
+        "source": { "type": ["string", "null"], "enum": ["runtime", "user", "screenshot", null] },
+        "model": { "type": ["string", "null"], "minLength": 1 },
+        "modelClass": {
+          "type": ["string", "null"],
+          "enum": ["lightweight", "general", "deep", "frontier", null]
+        },
+        "reasoningEffort": {
+          "type": ["string", "null"],
+          "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra", null]
+        }
+      }
+    },
+    "taskDemand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["band", "riskLevel", "signals"],
+      "properties": {
+        "band": { "enum": ["routine", "substantial", "complex", "frontier"] },
+        "riskLevel": { "enum": ["low", "medium", "high", "critical"] },
+        "signals": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "modelClassMin",
+        "modelClassMax",
+        "reasoningEffortMin",
+        "reasoningEffortMax",
+        "exactModel",
+        "confidence"
+      ],
+      "properties": {
+        "modelClassMin": { "enum": ["lightweight", "general", "deep", "frontier"] },
+        "modelClassMax": { "enum": ["lightweight", "general", "deep", "frontier"] },
+        "reasoningEffortMin": { "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"] },
+        "reasoningEffortMax": { "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"] },
+        "exactModel": { "type": ["string", "null"], "minLength": 1 },
+        "confidence": { "enum": ["low", "medium", "high"] }
+      }
+    },
+    "rationaleCodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": [
+          "SIMPLE_SCOPE",
+          "MULTI_STEP",
+          "LONG_HORIZON",
+          "TOOL_HEAVY",
+          "HARD_REASONING",
+          "HIGH_FAILURE_IMPACT",
+          "EASY_TO_VERIFY",
+          "CURRENT_SELECTION_NOT_OBSERVED",
+          "USER_PRIORITY"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "userNotice": { "type": ["string", "null"], "minLength": 1 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "verdict": { "const": "UNOBSERVABLE" } } },
+      "then": {
+        "properties": {
+          "observation": {
+            "properties": {
+              "status": { "const": "unobservable" },
+              "source": { "type": "null" },
+              "model": { "type": "null" },
+              "modelClass": { "type": "null" },
+              "reasoningEffort": { "type": "null" }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "observation": {
+            "properties": {
+              "status": { "const": "observed" },
+              "source": { "enum": ["runtime", "user", "screenshot"] },
+              "model": { "type": "string" },
+              "modelClass": { "enum": ["lightweight", "general", "deep", "frontier"] },
+              "reasoningEffort": { "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "verdict": { "enum": ["OVER_PROVISIONED", "UNDER_PROVISIONED"] } } },
+      "then": { "properties": { "userNotice": { "type": "string" } } }
+    },
+    {
+      "if": { "properties": { "verdict": { "const": "ADEQUATE" } } },
+      "then": { "properties": { "userNotice": { "type": "null" } } }
+    }
+  ]
+}

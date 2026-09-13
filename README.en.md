@@ -52,7 +52,7 @@ These checks run in the MCP workflow layer. They are not recommendations that an
 | An implementer audits their own work or reuses an old audit | Checks actor separation, target identity, and audit freshness. |
 | The same failure is retried without new evidence | Groups failure episodes and identifies the next useful diagnostic check. |
 
-The orchestrator does not run all ten skills for every request. It selects the roles the task needs, and a simple request can call one specialist directly.
+The orchestrator does not run every specialist for every request. It selects the roles the task needs, and a simple request can call one specialist directly.
 
 ## Install and try it
 
@@ -104,6 +104,7 @@ Each specialist remains available when the MCP server is unavailable. Orchestrat
 
 | When | Skill | Version | Responsibility |
 | --- | --- | --- | --- |
+| On request | `model-effort-advisor` | 0.1.0 | Compares an observed current model and reasoning effort with the request's difficulty and risk, then reports only material mismatches. |
 | Before work | `instruction-scope-resolver` | 1.0.0 | Finds the instructions and precedence rules that apply to the work target. |
 | Before work | `workspace-convention-profiler` | 1.0.0 | Records repository structure, commands, and test conventions with evidence. |
 | Before work | `task-contract` | 1.0.0 | Defines the objective, scope, risk, and completion criteria. |

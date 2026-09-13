@@ -1,0 +1,151 @@
+{
+  "cases": [
+    {
+      "id": "routine-sol-high-is-materially-over",
+      "output": {
+        "schemaVersion": "1.0.0",
+        "verdict": "OVER_PROVISIONED",
+        "observation": {
+          "status": "observed",
+          "source": "screenshot",
+          "model": "gpt-5.6-sol",
+          "modelClass": "deep",
+          "reasoningEffort": "high"
+        },
+        "taskDemand": {
+          "band": "routine",
+          "riskLevel": "low",
+          "signals": ["요청 범위가 좁고 결과를 바로 검증할 수 있음"]
+        },
+        "recommendation": {
+          "modelClassMin": "lightweight",
+          "modelClassMax": "general",
+          "reasoningEffortMin": "low",
+          "reasoningEffortMax": "medium",
+          "exactModel": "gpt-5.6-terra",
+          "confidence": "high"
+        },
+        "rationaleCodes": ["SIMPLE_SCOPE", "EASY_TO_VERIFY"],
+        "userNotice": "설정 안내: 이 요청은 GPT-5.6 Terra Medium이면 충분해 현재 GPT-5.6 Sol High는 다소 과합니다. 설정은 자동으로 바꾸지 않고 요청은 계속 진행합니다."
+      }
+    },
+    {
+      "id": "complex-sol-high-is-adequate",
+      "output": {
+        "schemaVersion": "1.0.0",
+        "verdict": "ADEQUATE",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "gpt-5.6-sol",
+          "modelClass": "deep",
+          "reasoningEffort": "high"
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "medium",
+          "signals": ["여러 모듈과 검증 단계를 함께 다룸"]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": "gpt-5.6-sol",
+          "confidence": "high"
+        },
+        "rationaleCodes": ["MULTI_STEP", "HARD_REASONING"],
+        "userNotice": null
+      }
+    },
+    {
+      "id": "high-risk-lightweight-low-is-under",
+      "output": {
+        "schemaVersion": "1.0.0",
+        "verdict": "UNDER_PROVISIONED",
+        "observation": {
+          "status": "observed",
+          "source": "user",
+          "model": "gpt-5.6-luna",
+          "modelClass": "lightweight",
+          "reasoningEffort": "low"
+        },
+        "taskDemand": {
+          "band": "substantial",
+          "riskLevel": "high",
+          "signals": ["실패 영향이 크고 여러 검증 근거가 필요함"]
+        },
+        "recommendation": {
+          "modelClassMin": "general",
+          "modelClassMax": "deep",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "high",
+          "exactModel": "gpt-5.6-terra",
+          "confidence": "high"
+        },
+        "rationaleCodes": ["HIGH_FAILURE_IMPACT", "MULTI_STEP"],
+        "userNotice": "설정 안내: 이 요청은 GPT-5.6 Terra High 이상을 권장합니다. 현재 GPT-5.6 Luna Low로도 진행할 수 있지만 복잡한 판단이나 검증 품질이 낮아질 수 있습니다."
+      }
+    },
+    {
+      "id": "unobservable-does-not-invent-current-selection",
+      "output": {
+        "schemaVersion": "1.0.0",
+        "verdict": "UNOBSERVABLE",
+        "observation": {
+          "status": "unobservable",
+          "source": null,
+          "model": null,
+          "modelClass": null,
+          "reasoningEffort": null
+        },
+        "taskDemand": {
+          "band": "substantial",
+          "riskLevel": "low",
+          "signals": ["현재 task 선택값을 제공받지 못함"]
+        },
+        "recommendation": {
+          "modelClassMin": "general",
+          "modelClassMax": "deep",
+          "reasoningEffortMin": "medium",
+          "reasoningEffortMax": "high",
+          "exactModel": null,
+          "confidence": "medium"
+        },
+        "rationaleCodes": ["MULTI_STEP", "CURRENT_SELECTION_NOT_OBSERVED"],
+        "userNotice": null
+      }
+    }
+  ],
+  "invalidCases": [
+    {
+      "id": "mismatch-without-observed-selection",
+      "output": {
+        "schemaVersion": "1.0.0",
+        "verdict": "UNDER_PROVISIONED",
+        "observation": {
+          "status": "unobservable",
+          "source": null,
+          "model": null,
+          "modelClass": null,
+          "reasoningEffort": null
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "high",
+          "signals": ["현재 선택값이 없음"]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": "gpt-5.6-sol",
+          "confidence": "medium"
+        },
+        "rationaleCodes": ["HARD_REASONING", "CURRENT_SELECTION_NOT_OBSERVED"],
+        "userNotice": "현재 설정이 부족합니다."
+      }
+    }
+  ]
+}
