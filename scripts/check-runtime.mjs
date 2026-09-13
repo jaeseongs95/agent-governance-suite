@@ -11,6 +11,8 @@ if (major < 22 || (major === 22 && minor < 13)) {
 const requiredFiles = [
   ".mcp.json",
   "mcp-server/dist/server.mjs",
+  "mcp-server/dist/continuity-hook.mjs",
+  "hooks/hooks.json",
   "runtime/schema-validation.mjs",
   "runtime/THIRD_PARTY_NOTICES.md",
   "skills/registry.json"

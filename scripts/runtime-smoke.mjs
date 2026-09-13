@@ -18,10 +18,12 @@ async function assertMissing(target) {
 export async function runRuntimeSmokeCheck(sourceRoot) {
   const cleanRoot = await mkdtemp(path.join(tmpdir(), "agent-governance-runtime-"));
   try {
+    await mkdir(path.join(cleanRoot, "mcp-server", "dist"), { recursive: true });
     await Promise.all([
       cp(path.join(sourceRoot, "contracts"), path.join(cleanRoot, "contracts"), { recursive: true }),
       cp(path.join(sourceRoot, "runtime"), path.join(cleanRoot, "runtime"), { recursive: true }),
       cp(path.join(sourceRoot, "skills"), path.join(cleanRoot, "skills"), { recursive: true }),
+      cp(path.join(sourceRoot, "mcp-server", "dist", "continuity-hook.mjs"), path.join(cleanRoot, "mcp-server", "dist", "continuity-hook.mjs")),
     ]);
     await assertMissing(path.join(cleanRoot, "node_modules"));
 
@@ -29,6 +31,8 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     delete environment.AGENT_GOVERNANCE_ROOT;
     delete environment.NODE_OPTIONS;
     delete environment.NODE_PATH;
+    environment.AGENT_GOVERNANCE_DB_PATH = path.join(cleanRoot, "state", "workflows.sqlite3");
+    environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = path.join(cleanRoot, "state", "continuity.sqlite3");
 
     const results = [];
     for (const entrypoint of SKILL_RUNTIME_ENTRYPOINTS) {
@@ -56,6 +60,19 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
         throw new Error(`${entrypoint.path} leaked an unbundled runtime dependency.\n${output}`);
       }
       results.push({ path: entrypoint.path, exitCode: result.status });
+    }
+
+    const continuityHook = path.join(cleanRoot, "mcp-server", "dist", "continuity-hook.mjs");
+    const hookResult = spawnSync(process.execPath, [continuityHook], {
+      cwd: cleanRoot,
+      encoding: "utf8",
+      env: environment,
+      input: `${JSON.stringify({ hook_event_name: "SessionStart", session_id: "clean-room-session", source: "startup" })}\n`,
+      timeout: 10_000,
+      windowsHide: true,
+    });
+    if (hookResult.error || hookResult.status !== 0 || hookResult.stdout !== "") {
+      throw new Error(`continuity hook failed its node_modules-free startup smoke check.\n${hookResult.stderr ?? ""}`);
     }
 
     const workspace = path.join(cleanRoot, "resolver-fixture");

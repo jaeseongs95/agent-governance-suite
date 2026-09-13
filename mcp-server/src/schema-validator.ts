@@ -15,8 +15,13 @@ import {
   type ConvergenceRootV1,
   type ConvergenceStatusSummaryV1,
   type ConvergenceStatusV1,
+  type CheckpointContextRequestV1,
   type GuardedWorkflowStartRequestV1,
   type OpenConvergenceRootRequestV1,
+  type InspectContextRequestV1,
+  type LoadContextRequestV1,
+  type PurgeDirectContextRequestV1,
+  type SuppressContextRestoreRequestV1,
   type PluginUpdateNoticeV1,
   type ProviderResultV1,
   type PluginUpdateStatusV1,
@@ -64,6 +69,11 @@ export const contractSchemas = {
   convergenceStatus: loadSchema("convergence-status.v1.schema.json"),
   convergenceStatusSummary: loadSchema("convergence-status-summary.v1.schema.json"),
   responseMode: loadSchema("response-mode.v1.schema.json"),
+  checkpointContextRequest: loadSchema("checkpoint-context-request.v1.schema.json"),
+  inspectContextRequest: loadSchema("inspect-context-request.v1.schema.json"),
+  loadContextRequest: loadSchema("load-context-request.v1.schema.json"),
+  suppressContextRestoreRequest: loadSchema("suppress-context-restore-request.v1.schema.json"),
+  purgeDirectContextRequest: loadSchema("purge-direct-context-request.v1.schema.json"),
 };
 
 function errorText(errors: ErrorObject[] | null | undefined): string {
@@ -104,6 +114,11 @@ export class ContractValidator {
       resolveConvergenceGateRequest: ajv.getSchema("https://skill-suite.local/contracts/resolve-convergence-gate-request.v1.schema.json")!,
       convergenceStatus: ajv.getSchema("https://skill-suite.local/contracts/convergence-status.v1.schema.json")!,
       convergenceStatusSummary: ajv.getSchema("https://skill-suite.local/contracts/convergence-status-summary.v1.schema.json")!,
+      checkpointContextRequest: ajv.getSchema("https://skill-suite.local/contracts/checkpoint-context-request.v1.schema.json")!,
+      inspectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/inspect-context-request.v1.schema.json")!,
+      loadContextRequest: ajv.getSchema("https://skill-suite.local/contracts/load-context-request.v1.schema.json")!,
+      suppressContextRestoreRequest: ajv.getSchema("https://skill-suite.local/contracts/suppress-context-restore-request.v1.schema.json")!,
+      purgeDirectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/purge-direct-context-request.v1.schema.json")!,
     };
   }
 
@@ -190,6 +205,26 @@ export class ContractValidator {
 
   convergenceStatusSummary(value: unknown): ConvergenceStatusSummaryV1 {
     return this.assert<ConvergenceStatusSummaryV1>("convergenceStatusSummary", value);
+  }
+
+  checkpointContextRequest(value: unknown): CheckpointContextRequestV1 {
+    return this.assert<CheckpointContextRequestV1>("checkpointContextRequest", value);
+  }
+
+  inspectContextRequest(value: unknown): InspectContextRequestV1 {
+    return this.assert<InspectContextRequestV1>("inspectContextRequest", value);
+  }
+
+  loadContextRequest(value: unknown): LoadContextRequestV1 {
+    return this.assert<LoadContextRequestV1>("loadContextRequest", value);
+  }
+
+  suppressContextRestoreRequest(value: unknown): SuppressContextRestoreRequestV1 {
+    return this.assert<SuppressContextRestoreRequestV1>("suppressContextRestoreRequest", value);
+  }
+
+  purgeDirectContextRequest(value: unknown): PurgeDirectContextRequestV1 {
+    return this.assert<PurgeDirectContextRequestV1>("purgeDirectContextRequest", value);
   }
 
   apiResult<T>(value: unknown): ApiResultV1<T> {

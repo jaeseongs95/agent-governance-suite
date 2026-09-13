@@ -22,7 +22,7 @@
       "additionalProperties": false,
       "required": ["code", "message", "details"],
       "properties": {
-        "code": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE", "LEASE_REQUIRED", "LEASE_CONFLICT", "FRAME_REVIEW_REQUIRED", "ATTEMPT_BUDGET_EXHAUSTED", "NEW_EVIDENCE_REQUIRED", "ROOT_CONFLICT"] },
+        "code": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE", "LEASE_REQUIRED", "LEASE_CONFLICT", "FRAME_REVIEW_REQUIRED", "ATTEMPT_BUDGET_EXHAUSTED", "NEW_EVIDENCE_REQUIRED", "ROOT_CONFLICT", "CONTINUITY_UNAVAILABLE", "BINDING_REQUIRED", "BINDING_INVALID", "SNAPSHOT_NOT_FOUND", "SNAPSHOT_CONFLICT", "REQUEST_CONFLICT", "INTEGRITY_FAILED"] },
         "message": { "type": "string", "minLength": 1 },
         "details": { "type": ["object", "null"], "additionalProperties": true }
       }
