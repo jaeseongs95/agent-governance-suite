@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/convergence-review.v1.schema.json",
+  "title": "ConvergenceReview.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "reviewId", "rootId", "rootRevision", "epoch", "reviewerActorId", "implementationActorIds", "freshContext", "classification", "comparability", "route", "proposedFrame", "evidenceRefs", "userApprovalRefs", "reviewedAt"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "reviewId": { "type": "string", "minLength": 1 },
+    "rootId": { "type": "string", "minLength": 1 },
+    "rootRevision": { "type": "integer", "minimum": 0 },
+    "epoch": { "type": "integer", "minimum": 1, "maximum": 2 },
+    "reviewerActorId": { "type": "string", "minLength": 1 },
+    "implementationActorIds": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "freshContext": { "$ref": "#/$defs/freshContext" },
+    "classification": { "enum": ["semantics-preserving", "semantics-changing", "ambiguous"] },
+    "comparability": { "$ref": "#/$defs/comparability" },
+    "route": { "enum": ["resume-new-epoch", "diagnose", "panel", "needs-user", "stop"] },
+    "proposedFrame": {
+      "oneOf": [
+        { "$ref": "https://skill-suite.local/contracts/convergence-frame.v1.schema.json" },
+        { "type": "null" }
+      ]
+    },
+    "evidenceRefs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "userApprovalRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "reviewedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "freshContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["confirmed", "evidenceRef"],
+      "properties": {
+        "confirmed": { "type": "boolean" },
+        "evidenceRef": { "type": "string", "minLength": 1 }
+      }
+    },
+    "comparability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["comparable", "rationale"],
+      "properties": {
+        "comparable": { "type": "boolean" },
+        "rationale": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

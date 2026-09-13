@@ -1,8 +1,14 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 import {
   type ApiResultV1,
+  type AttemptLeaseV1,
+  type AttemptOutcomeV1,
   CONTRACT_VERSION,
+  type ConvergenceFrameV1,
+  type ConvergenceReviewV1,
+  type ConvergenceRootV1,
+  type ConvergenceStatusV1,
   type ContractErrorBody,
   type PlannedStageV1,
   POLICY_CAPABILITY,
@@ -14,12 +20,18 @@ import {
   type WorkflowReceiptV1,
   WorkflowContractError,
 } from "../../contracts/types.js";
+import {
+  convergenceDigest,
+  frameDigests,
+  normalizeWorkspaceLocator,
+} from "./convergence-logic.js";
 import { FileSkillRegistry, selectSkillByCapability } from "./registry.js";
 import { validateDecisionRecordSemantics } from "./decision-record-validator.js";
 import { ContractValidator } from "./schema-validator.js";
 import { assertReceiptPolicy } from "./receipt-policy.js";
 import {
   createPlanSigningKey,
+  type ConvergenceSnapshot,
   InMemoryWorkflowStore,
   PLAN_SIGNING_KEY,
   type WorkflowStore,
@@ -94,6 +106,355 @@ export class WorkflowService {
     }
   }
 
+  openConvergenceRoot(rawRequest: unknown): ApiResultV1<ConvergenceRootV1> {
+    try {
+      const request = this.validator.openConvergenceRootRequest(rawRequest);
+      this.validateWorkUnitGraph(request.taskEnvelope);
+      this.assertConvergenceFrame(request.frame);
+      if (!request.taskEnvelope.orchestration.requested || !request.taskEnvelope.orchestration.mcpAvailable) {
+        throw new WorkflowContractError("INVALID_INPUT", "Convergence roots require an MCP-backed orchestrated task.");
+      }
+      if (request.parentRootId && request.userApprovalRefs.length === 0) {
+        throw new WorkflowContractError("INVALID_INPUT", "Replacing a convergence root requires user approval evidence.", {
+          parentRootId: request.parentRootId,
+        });
+      }
+      if (request.parentRootId) {
+        const parent = this.requireConvergenceSnapshot(request.parentRootId).root;
+        if (!["needs-review", "needs-user"].includes(parent.state)) {
+          throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root may be replaced.", {
+            parentRootId: parent.rootId,
+            parentState: parent.state,
+          });
+        }
+        if (
+          parent.frame.workspace.workspaceId !== request.frame.workspace.workspaceId
+          || normalizeWorkspaceLocator(parent.frame.workspace.locator) !== normalizeWorkspaceLocator(request.frame.workspace.locator)
+        ) {
+          throw new WorkflowContractError("INVALID_INPUT", "A replacement root must remain bound to the same workspace.");
+        }
+      }
+
+      const now = new Date().toISOString();
+      const digests = this.convergenceDigests(request.taskEnvelope, request.frame);
+      const root: ConvergenceRootV1 = {
+        schemaVersion: CONTRACT_VERSION,
+        rootId: `root-${randomUUID()}`,
+        parentRootId: request.parentRootId,
+        revision: 0,
+        state: "open",
+        currentEpoch: 1,
+        taskEnvelope: clone(request.taskEnvelope),
+        frame: clone(request.frame),
+        ...digests,
+        userApprovalRefs: [...request.userApprovalRefs],
+        createdAt: now,
+        updatedAt: now,
+      };
+      this.validator.convergenceRoot(root);
+      const conflicting = this.store.insertConvergenceRoot(root);
+      if (conflicting) {
+        throw new WorkflowContractError("ROOT_CONFLICT", "An active convergence root already covers this workspace scope.", {
+          rootId: conflicting.rootId,
+          workspaceId: conflicting.frame.workspace.workspaceId,
+          scope: conflicting.taskEnvelope.scope.included,
+        });
+      }
+      return apiOk(clone(root));
+    } catch (error) {
+      return apiError(this.toErrorBody(error));
+    }
+  }
+
+  claimWorkflowAttempt(rawProposal: unknown): ApiResultV1<AttemptLeaseV1> {
+    try {
+      const proposal = clone(this.validator.attemptProposal(rawProposal));
+      this.assertPlanIntegrity(proposal.plan);
+      this.assertConvergenceFrame(proposal.frame);
+      if (proposal.plan.executionMode !== "orchestrated" || proposal.plan.state !== "ready") {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready orchestrated plan can claim an attempt lease.");
+      }
+      if (proposal.plan.taskId !== proposal.taskEnvelope.taskId) {
+        throw new WorkflowContractError("INVALID_INPUT", "Attempt task and workflow plan IDs do not match.");
+      }
+      if (proposal.plan.taskDigest !== convergenceDigest(proposal.taskEnvelope)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan is bound to a different task envelope.", {
+          rootId: proposal.rootId,
+          taskId: proposal.taskEnvelope.taskId,
+        });
+      }
+      const expectedPlan = this.buildPlan(proposal.taskEnvelope, this.registry.read());
+      expectedPlan.integrityToken = this.signPlan(expectedPlan);
+      if (canonicalJson(expectedPlan) !== canonicalJson(proposal.plan)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan was not produced from the proposed task envelope.", {
+          rootId: proposal.rootId,
+          taskId: proposal.taskEnvelope.taskId,
+        });
+      }
+
+      let snapshot = this.requireConvergenceSnapshot(proposal.rootId);
+      this.expireStaleLeases(snapshot);
+      snapshot = this.requireConvergenceSnapshot(proposal.rootId);
+      const root = snapshot.root;
+      if (snapshot.leases.some((lease) => lease.state === "issued")) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "A live attempt lease already exists for this convergence root.", {
+          rootId: root.rootId,
+        });
+      }
+      if (proposal.expectedRevision !== root.revision) {
+        throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the convergence root.", {
+          expectedRevision: proposal.expectedRevision,
+          actualRevision: root.revision,
+        });
+      }
+
+      const proposedDigests = this.convergenceDigests(proposal.taskEnvelope, proposal.frame);
+      const frameChanged = proposedDigests.taskDigest !== root.taskDigest
+        || proposedDigests.workspaceDigest !== root.workspaceDigest
+        || proposedDigests.controlDigest !== root.controlDigest
+        || proposedDigests.operationalDigest !== root.operationalDigest
+        || this.artifactRolesChanged(root.frame, proposal.frame);
+      if (frameChanged) {
+        this.moveRootToReview(root, "The task or control frame changed before the next full attempt.");
+        throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "Task, control, workspace, operational, or artifact-role changes require independent review.", {
+          rootId: root.rootId,
+          expected: {
+            taskDigest: root.taskDigest,
+            workspaceDigest: root.workspaceDigest,
+            controlDigest: root.controlDigest,
+            operationalDigest: root.operationalDigest,
+          },
+          proposed: proposedDigests,
+        });
+      }
+      if (root.state !== "open") this.throwRootGate(root, snapshot);
+
+      const attempts = snapshot.leases.filter((lease) => lease.epoch === root.currentEpoch && lease.state === "consumed");
+      if (attempts.length >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
+        this.moveRootToReview(root, "The convergence attempt budget is exhausted.");
+        throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Three full attempts have already started in this convergence epoch.", {
+          rootId: root.rootId,
+          epoch: root.currentEpoch,
+          attemptsUsed: attempts.length,
+        });
+      }
+
+      const currentOutcomes = snapshot.outcomes.filter((outcome) => outcome.epoch === root.currentEpoch);
+      const latestOutcome = currentOutcomes.at(-1) ?? null;
+      if (currentOutcomes.length < attempts.length) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The previous full attempt is still active and must reach a terminal outcome before another lease can be claimed.", {
+          rootId: root.rootId,
+          epoch: root.currentEpoch,
+        });
+      }
+      if (attempts.length === 0) {
+        if (proposal.priorFailure !== null) {
+          throw new WorkflowContractError("INVALID_INPUT", "The first attempt in an epoch must not claim a prior failure.");
+        }
+      } else {
+        if (!latestOutcome || latestOutcome.state === "passed") {
+          throw new WorkflowContractError("LEASE_CONFLICT", "The previous full attempt has not produced a retryable failure.", {
+            rootId: root.rootId,
+          });
+        }
+        if (!proposal.priorFailure || proposal.priorFailure.fingerprint !== latestOutcome.failureFingerprint) {
+          throw new WorkflowContractError("NEW_EVIDENCE_REQUIRED", "A retry must bind the latest failure fingerprint and a discriminating hypothesis.", {
+            expectedFingerprint: latestOutcome.failureFingerprint,
+          });
+        }
+        const priorLease = attempts.at(-1)!;
+        const priorProposal = snapshot.proposals.find((item) => convergenceDigest(item) === priorLease.proposalDigest);
+        const sameTarget = proposedDigests.targetDigest === priorLease.targetDigest;
+        const oldEvidence = new Set(priorProposal?.priorFailure?.evidenceRefs ?? []);
+        const hasNewEvidence = proposal.priorFailure.evidenceRefs.some((reference) => !oldEvidence.has(reference));
+        if (sameTarget && !hasNewEvidence) {
+          throw new WorkflowContractError("NEW_EVIDENCE_REQUIRED", "The proposed retry changes neither the target nor the observed evidence.", {
+            rootId: root.rootId,
+            route: "diagnose",
+          });
+        }
+      }
+
+      const now = new Date();
+      const updatedRoot = clone(root);
+      updatedRoot.revision += 1;
+      updatedRoot.updatedAt = now.toISOString();
+      const lease: AttemptLeaseV1 = {
+        schemaVersion: CONTRACT_VERSION,
+        leaseId: `lease-${randomUUID()}`,
+        rootId: root.rootId,
+        rootRevision: updatedRoot.revision,
+        epoch: root.currentEpoch,
+        ordinal: attempts.length + 1,
+        proposalDigest: convergenceDigest(proposal),
+        ...proposedDigests,
+        outputTargetsDigest: convergenceDigest(proposal.outputTargets),
+        planIntegrityToken: proposal.plan.integrityToken,
+        actorId: proposal.actorId,
+        outputTargets: [...proposal.outputTargets],
+        issuedAt: now.toISOString(),
+        expiresAt: new Date(now.getTime() + proposal.frame.operationalSettings.leaseTtlSeconds * 1000).toISOString(),
+        state: "issued",
+      };
+      this.validator.attemptLease(lease);
+      if (!this.store.insertAttemptLease(updatedRoot, root.revision, proposal, lease)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The convergence root changed while the lease was being claimed.", {
+          rootId: root.rootId,
+        });
+      }
+      return apiOk(clone(lease));
+    } catch (error) {
+      return apiError(this.toErrorBody(error));
+    }
+  }
+
+  startGuardedWorkflow(rawRequest: unknown): ApiResultV1<WorkflowReceiptV1> {
+    try {
+      const request = this.validator.guardedWorkflowStartRequest(rawRequest);
+      const plan = clone(request.plan);
+      this.assertPlanIntegrity(plan);
+      if (plan.executionMode !== "orchestrated" || plan.state !== "ready") {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready orchestrated workflow can use a convergence lease.");
+      }
+      const binding = this.store.getAttemptLease(request.leaseId);
+      if (!binding || binding.lease.state !== "issued") {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is missing, expired, or already consumed.", { leaseId: request.leaseId });
+      }
+      if (Date.parse(binding.lease.expiresAt) <= Date.now()) {
+        this.store.expireAttemptLease(binding.lease.leaseId);
+        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease expired before workflow start.", { leaseId: request.leaseId });
+      }
+      if (request.expectedRootRevision !== binding.root.revision || request.expectedRootRevision !== binding.lease.rootRevision) {
+        throw new WorkflowContractError("STALE_REVISION", "The guarded start does not target the current convergence revision.", {
+          expectedRevision: request.expectedRootRevision,
+          actualRevision: binding.root.revision,
+        });
+      }
+      if (plan.integrityToken !== binding.lease.planIntegrityToken || canonicalJson(plan) !== canonicalJson(binding.proposal.plan)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is bound to a different workflow plan.", { leaseId: request.leaseId });
+      }
+
+      const runId = `run-${plan.taskId}-${this.store.nextRunSequence()}`;
+      plan.state = "running";
+      this.setRunningStagePointers(plan);
+      const receipt: WorkflowReceiptV1 = {
+        schemaVersion: CONTRACT_VERSION,
+        runId,
+        revision: 0,
+        state: "running",
+        plan,
+        stageResults: [],
+        blockers: [],
+        unresolved: [],
+        error: null,
+      };
+      this.assertReceipt(receipt);
+      const started = this.store.insertGuardedRun(receipt, request.leaseId, request.expectedRootRevision, new Date().toISOString());
+      if (!started) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease could not be consumed atomically.", { leaseId: request.leaseId });
+      }
+      return apiOk(clone(receipt));
+    } catch (error) {
+      return apiError(this.toErrorBody(error));
+    }
+  }
+
+  getConvergenceStatus(rootId: string): ApiResultV1<ConvergenceStatusV1> {
+    try {
+      let snapshot = this.requireConvergenceSnapshot(rootId);
+      this.expireStaleLeases(snapshot);
+      snapshot = this.requireConvergenceSnapshot(rootId);
+      const status = this.buildConvergenceStatus(snapshot);
+      this.validator.convergenceStatus(status);
+      return apiOk(clone(status));
+    } catch (error) {
+      return apiError(this.toErrorBody(error));
+    }
+  }
+
+  resolveConvergenceGate(rawRequest: unknown): ApiResultV1<ConvergenceStatusV1> {
+    try {
+      const request = this.validator.resolveConvergenceGateRequest(rawRequest);
+      const review = clone(request.review);
+      let snapshot = this.requireConvergenceSnapshot(request.rootId);
+      const root = snapshot.root;
+      if (request.expectedRevision !== root.revision || review.rootRevision !== root.revision) {
+        throw new WorkflowContractError("STALE_REVISION", "The convergence review does not target the current root revision.", {
+          expectedRevision: request.expectedRevision,
+          reviewRevision: review.rootRevision,
+          actualRevision: root.revision,
+        });
+      }
+      if (review.rootId !== root.rootId || review.epoch !== root.currentEpoch) {
+        throw new WorkflowContractError("INVALID_INPUT", "The convergence review targets a different root or epoch.");
+      }
+      if (root.state !== "needs-review") {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root can be resolved.", { state: root.state });
+      }
+      const actualActors = [...new Set(snapshot.leases.filter((lease) => lease.state === "consumed").map((lease) => lease.actorId))].sort();
+      const reviewedActors = [...new Set(review.implementationActorIds)].sort();
+      if (!review.freshContext.confirmed || !review.freshContext.evidenceRef || actualActors.join("\0") !== reviewedActors.join("\0")) {
+        throw new WorkflowContractError("GATE_FAILED", "Independent frame review must be fresh and cover every implementation actor.", {
+          actualActors,
+          reviewedActors,
+        });
+      }
+      if (actualActors.includes(review.reviewerActorId)) {
+        throw new WorkflowContractError("GATE_FAILED", "The frame reviewer must be independent from implementation actors.");
+      }
+      this.assertReviewRoute(review);
+
+      const updatedRoot = clone(root);
+      updatedRoot.revision += 1;
+      updatedRoot.updatedAt = review.reviewedAt;
+      if (review.route === "stop") {
+        updatedRoot.state = "abandoned";
+      } else if (review.classification === "semantics-changing" || review.route === "needs-user") {
+        updatedRoot.state = "needs-user";
+      } else if (review.route === "panel" || review.route === "diagnose") {
+        updatedRoot.state = "needs-review";
+      } else if (review.route === "resume-new-epoch") {
+        if (updatedRoot.currentEpoch >= updatedRoot.frame.operationalSettings.maxEpochs) {
+          updatedRoot.state = "needs-user";
+        } else {
+          const proposedFrame = review.proposedFrame!;
+          this.assertConvergenceFrame(proposedFrame);
+          const nextDigests = this.convergenceDigests(updatedRoot.taskEnvelope, proposedFrame);
+          if (nextDigests.workspaceDigest !== root.workspaceDigest || nextDigests.operationalDigest !== root.operationalDigest) {
+            throw new WorkflowContractError("INVALID_INPUT", "A semantics-preserving review cannot change workspace or guard policy.");
+          }
+          updatedRoot.currentEpoch += 1;
+          updatedRoot.state = "open";
+          updatedRoot.frame = clone(proposedFrame);
+          Object.assign(updatedRoot, nextDigests);
+        }
+      }
+
+      this.validator.convergenceRoot(updatedRoot);
+      if (!this.store.updateConvergenceRoot(updatedRoot, root.revision, review)) {
+        throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while recording the review.");
+      }
+      snapshot = this.requireConvergenceSnapshot(root.rootId);
+      return apiOk(this.buildConvergenceStatus(snapshot));
+    } catch (error) {
+      return apiError(this.toErrorBody(error));
+    }
+  }
+
+  rejectUnguardedWorkflow(rawPlan: unknown): ApiResultV1<WorkflowReceiptV1> {
+    try {
+      const plan = clone(this.validator.workflowPlan(rawPlan));
+      this.assertPlanIntegrity(plan);
+      if (plan.executionMode === "orchestrated") {
+        throw new WorkflowContractError("LEASE_REQUIRED", "New orchestrated workflows must start through start_guarded_workflow.");
+      }
+      throw new WorkflowContractError("INVALID_TRANSITION", "Direct skill plans are not started by the MCP orchestrator.");
+    } catch (error) {
+      return apiError(this.toErrorBody(error));
+    }
+  }
+
+  /** Embedding compatibility only. The MCP start_workflow tool rejects new unguarded orchestrated runs. */
   startWorkflow(rawPlan: unknown): ApiResultV1<WorkflowReceiptV1> {
     try {
       const plan = clone(this.validator.workflowPlan(rawPlan));
@@ -353,6 +714,7 @@ export class WorkflowService {
     return {
       schemaVersion: CONTRACT_VERSION,
       taskId: task.taskId,
+      taskDigest: convergenceDigest(task),
       integrityToken: "pending",
       executionMode,
       state: errors.length > 0 ? "blocked" : "ready",
@@ -747,6 +1109,183 @@ export class WorkflowService {
     return unsignedPlan as Omit<WorkflowPlanV1, "integrityToken">;
   }
 
+  private convergenceDigests(task: TaskEnvelopeV1, frame: ConvergenceFrameV1) {
+    return {
+      ...frameDigests(frame),
+      taskDigest: convergenceDigest(task),
+    };
+  }
+
+  private assertConvergenceFrame(frame: ConvergenceFrameV1): void {
+    this.validator.convergenceFrame(frame);
+    const artifactIds = [...frame.controlArtifacts, ...frame.targetArtifacts].map((artifact) => artifact.artifactId);
+    if (new Set(artifactIds).size !== artifactIds.length) {
+      throw new WorkflowContractError("INVALID_INPUT", "Convergence artifact IDs must be unique across control and target frames.");
+    }
+    if (frame.operationalSettings.maxAttemptsPerEpoch !== 3 || frame.operationalSettings.maxEpochs !== 2) {
+      throw new WorkflowContractError("INVALID_INPUT", "The convergence guard policy is fixed at three attempts and two epochs.");
+    }
+  }
+
+  private artifactRolesChanged(baseline: ConvergenceFrameV1, proposed: ConvergenceFrameV1): boolean {
+    const baselineRoles = new Map([...baseline.controlArtifacts, ...baseline.targetArtifacts].map((artifact) => [artifact.artifactId, artifact.role]));
+    return [...proposed.controlArtifacts, ...proposed.targetArtifacts]
+      .some((artifact) => baselineRoles.has(artifact.artifactId) && baselineRoles.get(artifact.artifactId) !== artifact.role);
+  }
+
+  private requireConvergenceSnapshot(rootId: string): ConvergenceSnapshot {
+    const snapshot = this.store.getConvergenceSnapshot(rootId);
+    if (!snapshot) throw new WorkflowContractError("RUN_NOT_FOUND", "Convergence root was not found.", { rootId });
+    this.validator.convergenceRoot(snapshot.root);
+    return snapshot;
+  }
+
+  private expireStaleLeases(snapshot: ConvergenceSnapshot): void {
+    const now = Date.now();
+    for (const lease of snapshot.leases) {
+      if (lease.state === "issued" && Date.parse(lease.expiresAt) <= now) this.store.expireAttemptLease(lease.leaseId);
+    }
+  }
+
+  private moveRootToReview(root: ConvergenceRootV1, reason: string): void {
+    const updated = clone(root);
+    updated.revision += 1;
+    updated.state = "needs-review";
+    updated.updatedAt = new Date().toISOString();
+    if (!this.store.updateConvergenceRoot(updated, root.revision)) {
+      throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while applying its gate.", {
+        rootId: root.rootId,
+      });
+    }
+    void reason;
+  }
+
+  private throwRootGate(root: ConvergenceRootV1, snapshot: ConvergenceSnapshot): never {
+    const attempts = snapshot.leases.filter((lease) => lease.epoch === root.currentEpoch && lease.state === "consumed").length;
+    if (root.state === "needs-review" && attempts >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
+      throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Independent review is required before another full attempt.", {
+        rootId: root.rootId,
+        epoch: root.currentEpoch,
+      });
+    }
+    throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "The convergence root is gated and cannot issue another lease.", {
+      rootId: root.rootId,
+      state: root.state,
+    });
+  }
+
+  private buildConvergenceStatus(snapshot: ConvergenceSnapshot): ConvergenceStatusV1 {
+    const attemptsUsed = snapshot.leases.filter(
+      (lease) => lease.epoch === snapshot.root.currentEpoch && lease.state === "consumed",
+    ).length;
+    let gateError: ContractErrorBody | null = null;
+    if (snapshot.root.state === "needs-review") {
+      gateError = attemptsUsed >= snapshot.root.frame.operationalSettings.maxAttemptsPerEpoch
+        ? {
+            code: "ATTEMPT_BUDGET_EXHAUSTED",
+            message: "Independent review is required before another full attempt.",
+            details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch },
+          }
+        : {
+            code: "FRAME_REVIEW_REQUIRED",
+            message: "A task or control-frame change requires independent review.",
+            details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch },
+          };
+    } else if (snapshot.root.state === "needs-user") {
+      gateError = {
+        code: "FRAME_REVIEW_REQUIRED",
+        message: "The proposed change requires a new user contract.",
+        details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch },
+      };
+    }
+    return {
+      schemaVersion: CONTRACT_VERSION,
+      root: clone(snapshot.root),
+      currentEpoch: snapshot.root.currentEpoch,
+      maxAttemptsPerEpoch: 3,
+      maxEpochs: 2,
+      attemptsUsedInEpoch: attemptsUsed,
+      attemptsRemainingInEpoch: Math.max(0, 3 - attemptsUsed),
+      proposals: clone(snapshot.proposals),
+      leases: clone(snapshot.leases),
+      outcomes: clone(snapshot.outcomes),
+      reviews: clone(snapshot.reviews),
+      workflowRunIds: [...snapshot.workflowRunIds],
+      gateError,
+    };
+  }
+
+  private assertReviewRoute(review: ConvergenceReviewV1): void {
+    if (review.evidenceRefs.length === 0) {
+      throw new WorkflowContractError("MISSING_EVIDENCE", "A convergence review requires evidence.");
+    }
+    if (review.classification === "semantics-preserving") {
+      if (review.route === "resume-new-epoch") {
+        if (!review.comparability.comparable || !review.proposedFrame) {
+          throw new WorkflowContractError("GATE_FAILED", "Resuming a new epoch requires a comparable, semantics-preserving frame.");
+        }
+      } else if (!["diagnose", "stop"].includes(review.route)) {
+        throw new WorkflowContractError("GATE_FAILED", "A semantics-preserving review has an incompatible route.", { route: review.route });
+      }
+    } else if (review.classification === "semantics-changing") {
+      if (review.route !== "needs-user" || review.proposedFrame === null) {
+        throw new WorkflowContractError("GATE_FAILED", "Semantics-changing reviews must return the proposed frame to the user.");
+      }
+    } else if (!["panel", "needs-user", "stop"].includes(review.route)) {
+      throw new WorkflowContractError("GATE_FAILED", "Ambiguous frame reviews must route to a panel, the user, or stop.");
+    }
+  }
+
+  private convergenceOutcome(
+    receipt: WorkflowReceiptV1,
+    binding: NonNullable<ReturnType<WorkflowStore["getGuardedRunBinding"]>>,
+  ): { root: ConvergenceRootV1; expectedRootRevision: number; outcome: AttemptOutcomeV1 } {
+    const recordedAt = new Date().toISOString();
+    const expectedRootRevision = binding.root.revision;
+    const root = clone(binding.root);
+    root.revision += 1;
+    root.updatedAt = recordedAt;
+    const aborted = receipt.blockers.includes("aborted-by-caller");
+    const passed = receipt.state === "passed";
+    const state: AttemptOutcomeV1["state"] = passed ? "passed" : aborted ? "aborted" : "failed";
+    const attemptsUsed = this.requireConvergenceSnapshot(root.rootId).leases.filter(
+      (lease) => lease.epoch === root.currentEpoch && lease.state === "consumed",
+    ).length;
+    if (!["needs-review", "needs-user", "abandoned"].includes(root.state)) {
+      if (passed) root.state = "completed";
+      else if (attemptsUsed >= root.frame.operationalSettings.maxAttemptsPerEpoch) root.state = "needs-review";
+      else root.state = "open";
+    }
+    const failureFingerprint = passed ? null : convergenceDigest({
+      state: receipt.state,
+      stage: receipt.stageResults.at(-1)?.stageId ?? null,
+      error: receipt.error?.code ?? null,
+      blockers: receipt.blockers,
+      unresolved: receipt.unresolved,
+    });
+    const evidenceRefs = [...new Set(receipt.stageResults.flatMap((result) => [
+      ...result.evidence.map((evidence) => evidence.locator),
+      ...result.output.artifacts.map((artifact) => artifact.digest),
+    ]))];
+    const outcome: AttemptOutcomeV1 = {
+      schemaVersion: CONTRACT_VERSION,
+      outcomeId: `outcome-${randomUUID()}`,
+      rootId: root.rootId,
+      rootRevision: root.revision,
+      leaseId: binding.lease.leaseId,
+      epoch: binding.lease.epoch,
+      ordinal: binding.lease.ordinal,
+      workflowRunId: receipt.runId,
+      state,
+      receiptDigest: convergenceDigest(receipt),
+      failureFingerprint,
+      evidenceRefs,
+      recordedAt,
+    };
+    this.validator.attemptOutcome(outcome);
+    return { root, expectedRootRevision, outcome };
+  }
+
   private change(
     runId: string,
     expectedRevision: number,
@@ -763,7 +1302,11 @@ export class WorkflowService {
       mutate(receipt);
       receipt.revision += 1;
       this.assertReceipt(receipt);
-      if (!this.store.updateRun(receipt, expectedRevision)) {
+      const binding = this.store.getGuardedRunBinding(runId);
+      const convergence = binding && !binding.outcome && receipt.state !== "running"
+        ? this.convergenceOutcome(receipt, binding)
+        : undefined;
+      if (!this.store.updateRun(receipt, expectedRevision, convergence)) {
         const current = this.store.getRun(runId);
         throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
           expectedRevision,

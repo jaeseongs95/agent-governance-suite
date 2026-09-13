@@ -26,6 +26,15 @@ const workflowIdInputSchema = {
   },
 } as const;
 
+const convergenceIdInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["rootId"],
+  properties: {
+    rootId: { type: "string", minLength: 1 },
+  },
+} as const;
+
 const updateCheckInputSchema = {
   type: "object",
   additionalProperties: false,
@@ -94,6 +103,36 @@ export function createMcpServer(service: WorkflowService, updates: PluginUpdateS
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
+        name: "open_convergence_root",
+        description: "Create one durable immutable task lineage for an MCP-backed orchestrated workflow and reject overlapping active roots.",
+        inputSchema: contractSchemas.openConvergenceRootRequest,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "claim_workflow_attempt",
+        description: "Validate task and control-frame stability, retry evidence, and the three-attempt budget before issuing a one-use local lease.",
+        inputSchema: contractSchemas.attemptProposal,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "start_guarded_workflow",
+        description: "Atomically consume a convergence lease and start its exactly bound orchestrated workflow plan.",
+        inputSchema: contractSchemas.guardedWorkflowStartRequest,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "get_convergence_status",
+        description: "Read the durable convergence root, attempts, leases, outcomes, reviews, and current gate decision.",
+        inputSchema: convergenceIdInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "resolve_convergence_gate",
+        description: "Record a fresh independent frame review and either preserve the gate, require the user, stop, or open one reviewed epoch.",
+        inputSchema: contractSchemas.resolveConvergenceGateRequest,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
+      },
+      {
         name: "start_workflow",
         description: "Create a durable running run from a ready orchestrated workflow plan.",
         inputSchema: contractSchemas.workflowPlan,
@@ -144,8 +183,23 @@ export function createMcpServer(service: WorkflowService, updates: PluginUpdateS
         case "plan_workflow":
           result = service.planWorkflow(args);
           break;
+        case "open_convergence_root":
+          result = service.openConvergenceRoot(args);
+          break;
+        case "claim_workflow_attempt":
+          result = service.claimWorkflowAttempt(args);
+          break;
+        case "start_guarded_workflow":
+          result = service.startGuardedWorkflow(args);
+          break;
+        case "get_convergence_status":
+          result = service.getConvergenceStatus(String(args.rootId ?? ""));
+          break;
+        case "resolve_convergence_gate":
+          result = service.resolveConvergenceGate(args);
+          break;
         case "start_workflow":
-          result = service.startWorkflow(args);
+          result = service.rejectUnguardedWorkflow(args);
           break;
         case "record_stage_result":
           result = service.recordStageResult(args);

@@ -1,0 +1,148 @@
+{
+  "request": {
+    "schemaVersion": "1.0.0",
+    "root": {
+      "rootId": "root-1",
+      "epoch": 1,
+      "contract": {
+        "objective": "Make the workflow pass without changing its acceptance meaning.",
+        "scope": ["workflow implementation"],
+        "acceptanceCriteria": ["all fixed tests pass"],
+        "constraints": ["no network listener"],
+        "authorization": ["edit repository files"],
+        "workspace": "D:/work/repository",
+        "targetLocations": ["src/workflow.ts"]
+      },
+      "contractDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "controlFrame": {
+        "verifier": "pnpm test",
+        "aggregation": "all",
+        "passCondition": "exit code 0",
+        "evaluationInputs": ["tests/fixed.json"]
+      },
+      "controlDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "targetFrame": {
+        "candidate": "attempt-3",
+        "files": ["src/workflow.ts"]
+      },
+      "targetDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "attemptHistory": [
+      {
+        "attemptId": "attempt-3",
+        "epoch": 1,
+        "sequence": 3,
+        "implementationActorIds": ["worker-1"],
+        "outcome": "failed",
+        "failureFingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "evidenceRefs": ["evidence-attempt"]
+      }
+    ],
+    "proposal": {
+      "contract": {
+        "objective": "Make the workflow pass without changing its acceptance meaning.",
+        "scope": ["workflow implementation"],
+        "acceptanceCriteria": ["all fixed tests pass"],
+        "constraints": ["no network listener"],
+        "authorization": ["edit repository files"],
+        "workspace": "D:/work/repository",
+        "targetLocations": ["src/workflow.ts"]
+      },
+      "contractDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "controlFrame": {
+        "verifier": "pnpm test",
+        "aggregation": "all",
+        "passCondition": "exit code 0",
+        "evaluationInputs": ["tests/fixed.json"]
+      },
+      "controlDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "targetFrame": {
+        "candidate": "candidate-with-timeout-fix",
+        "files": ["src/workflow.ts"]
+      },
+      "targetDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "changeSummary": [
+        {
+          "path": "/targetFrame/candidate",
+          "claimedRole": "target",
+          "summary": "Change only the implementation candidate after the observed timeout."
+        }
+      ],
+      "evidenceRefs": ["evidence-contract", "evidence-control", "evidence-target"]
+    },
+    "reviewer": {
+      "actorId": "auditor-1",
+      "freshContext": true,
+      "implementationActorIds": ["worker-1"]
+    },
+    "evidenceInventory": [
+      {
+        "evidenceRef": "evidence-contract",
+        "artifactDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "locator": "artifact://root/contract-diff",
+        "kind": "contract-comparison",
+        "verified": true
+      },
+      {
+        "evidenceRef": "evidence-control",
+        "artifactDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "locator": "artifact://root/control-diff",
+        "kind": "control-comparison",
+        "verified": true
+      },
+      {
+        "evidenceRef": "evidence-target",
+        "artifactDigest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "locator": "artifact://root/target-diff",
+        "kind": "target-comparison",
+        "verified": true
+      },
+      {
+        "evidenceRef": "evidence-attempt",
+        "artifactDigest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "locator": "artifact://attempt/3/outcome",
+        "kind": "attempt-outcome",
+        "verified": true
+      }
+    ]
+  },
+  "review": {
+    "schemaVersion": "1.0.0",
+    "rootId": "root-1",
+    "reviewedEpoch": 1,
+    "requestArtifactDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "reviewer": {
+      "actorId": "auditor-1",
+      "freshContext": true
+    },
+    "comparisons": {
+      "contract": {
+        "impact": "unchanged",
+        "changedPaths": [],
+        "evidenceRefs": ["evidence-contract"]
+      },
+      "control": {
+        "impact": "unchanged",
+        "changedPaths": [],
+        "evidenceRefs": ["evidence-control"]
+      },
+      "target": {
+        "impact": "changed",
+        "changedPaths": ["/candidate"],
+        "evidenceRefs": ["evidence-target"]
+      }
+    },
+    "classification": "semantics-preserving",
+    "comparability": "comparable",
+    "route": "resume-new-epoch",
+    "userValueChange": false,
+    "evidenceRefs": ["evidence-contract", "evidence-control", "evidence-target", "evidence-attempt"],
+    "rationale": [
+      {
+        "statement": "The immutable contract and evaluation meaning are unchanged while the candidate changed.",
+        "evidenceRefs": ["evidence-contract", "evidence-control", "evidence-target", "evidence-attempt"]
+      }
+    ],
+    "limitations": ["The convergence guard still decides whether policy budget permits a new epoch."]
+  }
+}

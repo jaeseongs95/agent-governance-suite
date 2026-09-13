@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { type PlannedStageV1, type SkillDescriptorV2, type StageResultV1, type TaskEnvelopeV1 } from "../../contracts/types.js";
+import { type PlannedStageV1, type SkillDescriptorV2, type StageResultV1, type TaskEnvelopeV1, type WorkflowReceiptV1 } from "../../contracts/types.js";
 import { validateDecisionRecordSemantics } from "../../mcp-server/src/decision-record-validator.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
@@ -278,8 +278,81 @@ describe("SqliteWorkflowStore", () => {
 
     const migrated = new DatabaseSync(databasePath);
     try {
-      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(2);
+      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(3);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM plugin_update_state").get() as { count: number }).count).toBe(1);
+    } finally {
+      migrated.close();
+    }
+  });
+
+  it("migrates an active v2 workflow to v3 and preserves receipt updates", async () => {
+    const databaseDirectory = await mkdtemp(join(tmpdir(), "skill-suite-v2-migration-"));
+    temporaryDirectories.push(databaseDirectory);
+    const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
+    const activeReceipt = {
+      schemaVersion: "1.0.0",
+      runId: "run-v2-active",
+      revision: 0,
+      state: "running",
+      plan: {},
+      stageResults: [],
+      blockers: [],
+      unresolved: [],
+      error: null,
+    } as unknown as WorkflowReceiptV1;
+    const fixture = new DatabaseSync(databasePath);
+    try {
+      fixture.exec(`
+        CREATE TABLE workflow_metadata (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        ) STRICT;
+        CREATE TABLE workflow_runs (
+          run_id TEXT PRIMARY KEY,
+          revision INTEGER NOT NULL CHECK (revision >= 0),
+          receipt_json TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        ) STRICT;
+        CREATE TABLE plugin_update_state (
+          target_id TEXT PRIMARY KEY,
+          current_version TEXT NOT NULL,
+          latest_version TEXT,
+          latest_tag TEXT,
+          latest_commit TEXT,
+          etag TEXT,
+          comparison TEXT NOT NULL CHECK (comparison IN ('unknown', 'up-to-date', 'update-available', 'ahead-of-stable')),
+          last_attempt_at TEXT,
+          last_successful_check_at TEXT,
+          next_check_at TEXT NOT NULL,
+          last_notified_version TEXT,
+          last_notified_at TEXT,
+          last_error_code TEXT
+        ) STRICT;
+        INSERT INTO workflow_metadata VALUES ('plan-signing-key', 'v2-secret', '2026-09-12T00:00:00.000Z');
+        INSERT INTO workflow_metadata VALUES ('run-sequence', '11', '2026-09-12T00:00:00.000Z');
+        PRAGMA user_version = 2;
+      `);
+      fixture.prepare(`
+        INSERT INTO workflow_runs (run_id, revision, receipt_json, updated_at)
+        VALUES (?, ?, ?, ?)
+      `).run(activeReceipt.runId, activeReceipt.revision, JSON.stringify(activeReceipt), "2026-09-12T00:00:00.000Z");
+    } finally {
+      fixture.close();
+    }
+
+    const store = openSqliteStore(databasePath);
+    expect(store.getRun(activeReceipt.runId)).toMatchObject({ state: "running", revision: 0 });
+    const failedReceipt = { ...activeReceipt, state: "failed", revision: 1 } as WorkflowReceiptV1;
+    expect(store.updateRun(failedReceipt, 0)).toBe(true);
+    expect(store.getRun(activeReceipt.runId)).toMatchObject({ state: "failed", revision: 1 });
+    closeSqliteStore(store);
+
+    const migrated = new DatabaseSync(databasePath);
+    try {
+      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(3);
+      expect((migrated.prepare("SELECT COUNT(*) AS count FROM convergence_roots").get() as { count: number }).count).toBe(0);
+      expect((migrated.prepare("SELECT COUNT(*) AS count FROM workflow_attempt_links").get() as { count: number }).count).toBe(0);
     } finally {
       migrated.close();
     }
@@ -291,7 +364,7 @@ describe("SqliteWorkflowStore", () => {
     const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
     const fixture = new DatabaseSync(databasePath);
     try {
-      fixture.exec("PRAGMA user_version = 3;");
+      fixture.exec("PRAGMA user_version = 4;");
     } finally {
       fixture.close();
     }

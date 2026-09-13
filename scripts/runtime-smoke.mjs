@@ -19,6 +19,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
   const cleanRoot = await mkdtemp(path.join(tmpdir(), "agent-governance-runtime-"));
   try {
     await Promise.all([
+      cp(path.join(sourceRoot, "contracts"), path.join(cleanRoot, "contracts"), { recursive: true }),
       cp(path.join(sourceRoot, "runtime"), path.join(cleanRoot, "runtime"), { recursive: true }),
       cp(path.join(sourceRoot, "skills"), path.join(cleanRoot, "skills"), { recursive: true }),
     ]);

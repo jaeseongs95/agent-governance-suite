@@ -1,0 +1,15 @@
+{
+  "extends": "normal-target-only",
+  "proposalAcceptanceCriteria": ["at least 90 percent of fixed tests pass"],
+  "additionalChange": {
+    "path": "/contract/acceptanceCriteria",
+    "claimedRole": "contract",
+    "summary": "Relax the user acceptance threshold."
+  },
+  "contractImpact": "semantics-changing",
+  "contractChangedPaths": ["/acceptanceCriteria"],
+  "classification": "semantics-changing",
+  "comparability": "non-comparable",
+  "route": "needs-user",
+  "userValueChange": true
+}

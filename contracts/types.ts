@@ -21,6 +21,12 @@ export const ERROR_CODE = [
   "MISSING_EVIDENCE",
   "GATE_FAILED",
   "MCP_UNAVAILABLE",
+  "LEASE_REQUIRED",
+  "LEASE_CONFLICT",
+  "FRAME_REVIEW_REQUIRED",
+  "ATTEMPT_BUDGET_EXHAUSTED",
+  "NEW_EVIDENCE_REQUIRED",
+  "ROOT_CONFLICT",
 ] as const;
 export type ErrorCode = (typeof ERROR_CODE)[number];
 
@@ -43,6 +49,53 @@ export const BINDING_OPERATION = ["select", "collect", "combine", "require-exter
 export type BindingOperation = (typeof BINDING_OPERATION)[number];
 export const GATE_KIND = ["none", "precondition", "completion"] as const;
 export type GateKind = (typeof GATE_KIND)[number];
+
+export const CONTROL_ARTIFACT_ROLE = [
+  "validator",
+  "rubric",
+  "oracle",
+  "aggregation",
+  "pass-condition",
+  "evaluation-input",
+] as const;
+export type ControlArtifactRole = (typeof CONTROL_ARTIFACT_ROLE)[number];
+
+export const TARGET_ARTIFACT_ROLE = ["target", "candidate"] as const;
+export type TargetArtifactRole = (typeof TARGET_ARTIFACT_ROLE)[number];
+export type ConvergenceArtifactRole = ControlArtifactRole | TargetArtifactRole;
+
+export const CONVERGENCE_ROOT_STATE = [
+  "open",
+  "needs-review",
+  "needs-user",
+  "completed",
+  "abandoned",
+] as const;
+export type ConvergenceRootState = (typeof CONVERGENCE_ROOT_STATE)[number];
+
+export const ATTEMPT_LEASE_STATE = ["issued", "consumed", "expired"] as const;
+export type AttemptLeaseState = (typeof ATTEMPT_LEASE_STATE)[number];
+
+export const ATTEMPT_OUTCOME_STATE = ["passed", "failed", "aborted"] as const;
+export type AttemptOutcomeState = (typeof ATTEMPT_OUTCOME_STATE)[number];
+
+export const CONVERGENCE_CLASSIFICATION = [
+  "semantics-preserving",
+  "semantics-changing",
+  "ambiguous",
+] as const;
+export type ConvergenceClassification = (typeof CONVERGENCE_CLASSIFICATION)[number];
+
+export const CONVERGENCE_ROUTE = [
+  "resume-new-epoch",
+  "diagnose",
+  "panel",
+  "needs-user",
+  "stop",
+] as const;
+export type ConvergenceRoute = (typeof CONVERGENCE_ROUTE)[number];
+
+export type Sha256Digest = `sha256:${string}`;
 
 export const POLICY_CAPABILITY = {
   coordination: "subagent-coordination",
@@ -268,6 +321,7 @@ export interface PlannedStageV1 {
 export interface WorkflowPlanV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   taskId: string;
+  taskDigest: Sha256Digest;
   integrityToken: string;
   executionMode: ExecutionMode;
   state: WorkflowState;
@@ -276,6 +330,179 @@ export interface WorkflowPlanV1 {
   currentStageId: string | null;
   nextStageId: string | null;
   errors: ContractErrorBody[];
+}
+
+export interface ConvergenceWorkspaceV1 {
+  workspaceId: string;
+  locator: string;
+}
+
+export interface ConvergenceArtifactV1<
+  Role extends ConvergenceArtifactRole = ConvergenceArtifactRole,
+> {
+  artifactId: string;
+  role: Role;
+  locator: string;
+  digest: Sha256Digest;
+}
+
+export interface ConvergenceOperationalSettingsV1 {
+  maxAttemptsPerEpoch: 3;
+  maxEpochs: 2;
+  leaseTtlSeconds: number;
+}
+
+export interface ConvergenceFrameV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  workspace: ConvergenceWorkspaceV1;
+  controlArtifacts: ConvergenceArtifactV1<ControlArtifactRole>[];
+  targetArtifacts: ConvergenceArtifactV1<TargetArtifactRole>[];
+  operationalSettings: ConvergenceOperationalSettingsV1;
+}
+
+export interface ConvergenceRootV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  rootId: string;
+  parentRootId: string | null;
+  revision: number;
+  state: ConvergenceRootState;
+  currentEpoch: number;
+  taskEnvelope: TaskEnvelopeV1;
+  frame: ConvergenceFrameV1;
+  taskDigest: Sha256Digest;
+  frameDigest: Sha256Digest;
+  workspaceDigest: Sha256Digest;
+  controlDigest: Sha256Digest;
+  targetDigest: Sha256Digest;
+  operationalDigest: Sha256Digest;
+  userApprovalRefs: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OpenConvergenceRootRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  parentRootId: string | null;
+  taskEnvelope: TaskEnvelopeV1;
+  frame: ConvergenceFrameV1;
+  userApprovalRefs: string[];
+}
+
+export interface PriorFailureV1 {
+  fingerprint: string;
+  hypothesis: string;
+  changeSummary: string;
+  discriminator: string;
+  evidenceRefs: string[];
+}
+
+export interface AttemptProposalV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  rootId: string;
+  expectedRevision: number;
+  taskEnvelope: TaskEnvelopeV1;
+  frame: ConvergenceFrameV1;
+  plan: WorkflowPlanV1;
+  actorId: string;
+  outputTargets: string[];
+  priorFailure: PriorFailureV1 | null;
+}
+
+export interface AttemptLeaseV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  leaseId: string;
+  rootId: string;
+  rootRevision: number;
+  epoch: number;
+  ordinal: number;
+  proposalDigest: Sha256Digest;
+  taskDigest: Sha256Digest;
+  frameDigest: Sha256Digest;
+  workspaceDigest: Sha256Digest;
+  controlDigest: Sha256Digest;
+  targetDigest: Sha256Digest;
+  operationalDigest: Sha256Digest;
+  outputTargetsDigest: Sha256Digest;
+  planIntegrityToken: string;
+  actorId: string;
+  outputTargets: string[];
+  issuedAt: string;
+  expiresAt: string;
+  state: AttemptLeaseState;
+}
+
+export interface GuardedWorkflowStartRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  leaseId: string;
+  expectedRootRevision: number;
+  plan: WorkflowPlanV1;
+}
+
+export interface AttemptOutcomeV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  outcomeId: string;
+  rootId: string;
+  rootRevision: number;
+  leaseId: string;
+  epoch: number;
+  ordinal: number;
+  workflowRunId: string;
+  state: AttemptOutcomeState;
+  receiptDigest: Sha256Digest | null;
+  failureFingerprint: string | null;
+  evidenceRefs: string[];
+  recordedAt: string;
+}
+
+export interface ConvergenceFreshContextV1 {
+  confirmed: boolean;
+  evidenceRef: string;
+}
+
+export interface ConvergenceComparabilityV1 {
+  comparable: boolean;
+  rationale: string;
+}
+
+export interface ConvergenceReviewV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  reviewId: string;
+  rootId: string;
+  rootRevision: number;
+  epoch: number;
+  reviewerActorId: string;
+  implementationActorIds: string[];
+  freshContext: ConvergenceFreshContextV1;
+  classification: ConvergenceClassification;
+  comparability: ConvergenceComparabilityV1;
+  route: ConvergenceRoute;
+  proposedFrame: ConvergenceFrameV1 | null;
+  evidenceRefs: string[];
+  userApprovalRefs: string[];
+  reviewedAt: string;
+}
+
+export interface ResolveConvergenceGateRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  rootId: string;
+  expectedRevision: number;
+  review: ConvergenceReviewV1;
+}
+
+export interface ConvergenceStatusV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  root: ConvergenceRootV1;
+  currentEpoch: number;
+  maxAttemptsPerEpoch: 3;
+  maxEpochs: 2;
+  attemptsUsedInEpoch: number;
+  attemptsRemainingInEpoch: number;
+  proposals: AttemptProposalV1[];
+  leases: AttemptLeaseV1[];
+  outcomes: AttemptOutcomeV1[];
+  reviews: ConvergenceReviewV1[];
+  workflowRunIds: string[];
+  gateError: ContractErrorBody | null;
 }
 
 export interface EvidenceReferenceV1 {
