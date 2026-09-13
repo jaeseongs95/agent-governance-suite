@@ -8361,10 +8361,12 @@ var SqliteContinuityStore = class {
   }
   previewCleanup(payloadCutoff, recordCutoff) {
     const snapshotRows = this.database.prepare(`
-      SELECT task_correlation, epoch, revision, snapshot_digest, snapshot_json, updated_at
-      FROM continuity_snapshots
-      WHERE updated_at <= ?
-      ORDER BY task_correlation, epoch
+      SELECT snapshots.task_correlation, tasks.root_id, snapshots.epoch, snapshots.revision,
+             snapshots.snapshot_digest, snapshots.snapshot_json, snapshots.updated_at
+      FROM continuity_snapshots snapshots
+      LEFT JOIN continuity_tasks tasks ON tasks.task_correlation = snapshots.task_correlation
+      WHERE snapshots.updated_at <= ?
+      ORDER BY snapshots.task_correlation, snapshots.epoch
     `).all(payloadCutoff);
     let protectedActiveTasks = 0;
     const snapshots = [];
@@ -8376,6 +8378,7 @@ var SqliteContinuityStore = class {
       }
       snapshots.push({
         taskCorrelation: row.task_correlation,
+        rootId: row.root_id,
         epoch: row.epoch,
         revision: row.revision,
         snapshotDigest: row.snapshot_digest,
@@ -8438,19 +8441,23 @@ var SqliteContinuityStore = class {
       throw new ContinuityStoreError("Cannot create a verified continuity cleanup backup.", cause);
     }
   }
-  executeCleanup(preview, now) {
+  executeCleanup(preview, now, payloadCutoff, recordCutoff) {
     this.database.exec("BEGIN IMMEDIATE;");
     try {
       const verifySnapshot = this.database.prepare(`
-        SELECT revision, snapshot_digest, updated_at FROM continuity_snapshots
-        WHERE task_correlation = ? AND epoch = ?
+        SELECT snapshots.revision, snapshots.snapshot_digest, snapshots.snapshot_json,
+               snapshots.updated_at, tasks.root_id
+        FROM continuity_snapshots snapshots
+        LEFT JOIN continuity_tasks tasks ON tasks.task_correlation = snapshots.task_correlation
+        WHERE snapshots.task_correlation = ? AND snapshots.epoch = ?
       `);
       const verifyTask = this.database.prepare(`
         SELECT current_epoch, root_id, updated_at FROM continuity_tasks WHERE task_correlation = ?
       `);
       for (const snapshot of preview.snapshots) {
         const row = verifySnapshot.get(snapshot.taskCorrelation, snapshot.epoch);
-        if (!row || row.revision !== snapshot.revision || row.snapshot_digest !== snapshot.snapshotDigest || row.updated_at !== snapshot.updatedAt) {
+        const status = row ? JSON.parse(row.snapshot_json).status : null;
+        if (!row || status === "active" || row.updated_at > payloadCutoff || row.root_id !== snapshot.rootId || row.revision !== snapshot.revision || row.snapshot_digest !== snapshot.snapshotDigest || row.updated_at !== snapshot.updatedAt) {
           throw new ContinuityStoreError(`Continuity snapshot ${snapshot.taskCorrelation}/${snapshot.epoch} changed after preview.`);
         }
       }
@@ -8458,6 +8465,28 @@ var SqliteContinuityStore = class {
         const row = verifyTask.get(task.taskCorrelation);
         if (!row || row.current_epoch !== task.currentEpoch || row.root_id !== task.rootId || row.updated_at !== task.updatedAt) {
           throw new ContinuityStoreError(`Continuity task ${task.taskCorrelation} changed after preview.`);
+        }
+        const childState = this.database.prepare(`
+          SELECT
+            EXISTS(
+              SELECT 1 FROM continuity_snapshots
+              WHERE task_correlation = ? AND (updated_at > ? OR json_extract(snapshot_json, '$.status') = 'active')
+            ) AS invalid_snapshot,
+            EXISTS(SELECT 1 FROM continuity_requests WHERE task_correlation = ? AND created_at > ?) AS recent_request,
+            EXISTS(SELECT 1 FROM continuity_tombstones WHERE task_correlation = ? AND purged_at > ?) AS recent_tombstone,
+            EXISTS(SELECT 1 FROM continuity_observations WHERE task_correlation = ? AND observed_at > ?) AS recent_observation
+        `).get(
+          task.taskCorrelation,
+          recordCutoff,
+          task.taskCorrelation,
+          recordCutoff,
+          task.taskCorrelation,
+          recordCutoff,
+          task.taskCorrelation,
+          recordCutoff
+        );
+        if (childState.invalid_snapshot || childState.recent_request || childState.recent_tombstone || childState.recent_observation) {
+          throw new ContinuityStoreError(`Continuity task ${task.taskCorrelation} gained active or recent child state after preview.`);
         }
       }
       const scrubbed = this.database.prepare(`
@@ -9866,6 +9895,18 @@ var SqliteWorkflowStore = class {
       WHERE root_id = ? AND state IN ('open', 'needs-review', 'needs-user')
     `).get(rootId);
     return Boolean(row);
+  }
+  withInactiveRootGuard(rootIds, operation) {
+    return this.transaction(() => {
+      const readState = this.database.prepare("SELECT state FROM convergence_roots WHERE root_id = ?");
+      for (const rootId of [...new Set(rootIds)].sort()) {
+        const row = readState.get(rootId);
+        if (row && ["open", "needs-review", "needs-user"].includes(row.state)) {
+          throw new WorkflowContractError("STALE_REVISION", "A continuity cleanup root became active after preview.", { rootId });
+        }
+      }
+      return operation();
+    });
   }
   previewCleanup(cutoff) {
     const roots = this.database.prepare(`

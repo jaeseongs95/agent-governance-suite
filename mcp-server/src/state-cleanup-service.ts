@@ -194,7 +194,15 @@ export class StateCleanupService {
           continuityResult.backupPath = this.backupPath(this.continuityStore.databasePath, "continuity", payload.planId);
           this.continuityStore.backupTo(continuityResult.backupPath);
           this.protectBackup(continuityResult.backupPath);
-          const deleted = this.continuityStore.executeCleanup(current.continuity, now.toISOString());
+          const guardedRootIds = [...current.continuity.tasks, ...current.continuity.snapshots]
+            .map((candidate) => candidate.rootId)
+            .filter((rootId): rootId is string => rootId !== null);
+          const deleted = this.workflowStore.withInactiveRootGuard(guardedRootIds, () => this.continuityStore!.executeCleanup(
+            current.continuity!,
+            now.toISOString(),
+            payload.cutoffs.continuityPayload,
+            payload.cutoffs.continuityRecord,
+          ));
           continuityResult.status = "completed";
           continuityResult.deletedSnapshots = deleted.snapshots;
           continuityResult.deletedTasks = deleted.tasks;
@@ -232,14 +240,21 @@ export class StateCleanupService {
     const continuity = this.continuityStore?.previewCleanup(cutoffs.continuityPayload, cutoffs.continuityRecord) ?? null;
     let protectedContinuityTasks = continuity?.protectedActiveTasks ?? 0;
     if (continuity) {
+      const protectedRootTaskIds = new Set<string>();
       const allowedTasks = continuity.tasks.filter((task) => {
         const active = task.rootId ? this.workflowStore.isConvergenceRootActive(task.rootId) : false;
-        if (active) protectedContinuityTasks += 1;
+        if (active) {
+          protectedRootTaskIds.add(task.taskCorrelation);
+        }
         return !active;
       });
       continuity.tasks = allowedTasks;
-      const allowedIds = new Set(allowedTasks.map((task) => task.taskCorrelation));
-      continuity.snapshots = continuity.snapshots.filter((snapshot) => !allowedIds.has(snapshot.taskCorrelation));
+      continuity.snapshots = continuity.snapshots.filter((snapshot) => {
+        const active = snapshot.rootId ? this.workflowStore.isConvergenceRootActive(snapshot.rootId) : false;
+        if (active) protectedRootTaskIds.add(snapshot.taskCorrelation);
+        return !active;
+      });
+      protectedContinuityTasks += protectedRootTaskIds.size;
     }
     return { workflow, continuity, protectedContinuityTasks };
   }

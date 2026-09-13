@@ -74,9 +74,10 @@
     },
     "snapshot": {
       "type": "object", "additionalProperties": false,
-      "required": ["taskCorrelation", "epoch", "revision", "snapshotDigest", "updatedAt"],
+      "required": ["taskCorrelation", "rootId", "epoch", "revision", "snapshotDigest", "updatedAt"],
       "properties": {
-        "taskCorrelation": { "type": "string", "minLength": 1 }, "epoch": { "type": "integer", "minimum": 1 },
+        "taskCorrelation": { "type": "string", "minLength": 1 }, "rootId": { "type": ["string", "null"] },
+        "epoch": { "type": "integer", "minimum": 1 },
         "revision": { "type": "integer", "minimum": 1 }, "snapshotDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
         "updatedAt": { "type": "string", "format": "date-time" }
       }
