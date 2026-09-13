@@ -110,6 +110,15 @@
       "checksumScope": "relative paths and normalized text bytes under skills/iteration-frame-auditor"
     },
     {
+      "skillId": "recovery-strategy-selector",
+      "path": "skills/recovery-strategy-selector",
+      "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
+      "ref": "edd253b6d9d1655f7b2e581832f6894ff6811875",
+      "commit": "edd253b6d9d1655f7b2e581832f6894ff6811875",
+      "checksum": "sha256:8543efee8f1d52889c9567adafcf342a1e440149b8ac4f382103abd527adaba5",
+      "checksumScope": "relative paths and normalized text bytes under skills/recovery-strategy-selector"
+    },
+    {
       "skillId": "korean-prose-editor",
       "path": "skills/korean-prose-editor",
       "source": "https://github.com/jaeseongs95/korean-prose-editor.git",
