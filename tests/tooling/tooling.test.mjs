@@ -5,6 +5,8 @@ import {
   parseArguments,
   readFrontmatter
 } from "../../scripts/lib.mjs";
+import { assertMarkerPair, replaceExactlyOnce, syncReleaseMetadata } from "../../scripts/release-metadata.mjs";
+import { compareVersions, isUpstreamUpdate, stableTagsFromLsRemote } from "../../scripts/source-lock.mjs";
 
 describe("repository tooling", () => {
   it("normalizes CRLF text without changing binary content", () => {
@@ -30,5 +32,34 @@ describe("repository tooling", () => {
       name: "example",
       description: "Example description"
     });
+  });
+
+  it("selects only exact stable semantic-version tags and peels annotated tags", () => {
+    const tags = stableTagsFromLsRemote([
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa refs/tags/v1.2.0",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb refs/tags/v1.2.0^{}",
+      "cccccccccccccccccccccccccccccccccccccccc refs/tags/v1.3.0-rc.1",
+      "dddddddddddddddddddddddddddddddddddddddd refs/tags/release-2.0.0",
+      "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee refs/tags/v2.0.0",
+    ].join("\n"));
+    expect(tags).toEqual([
+      { tag: "v2.0.0", version: "2.0.0", commit: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" },
+      { tag: "v1.2.0", version: "1.2.0", commit: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
+    ]);
+    expect(compareVersions("1.10.0", "1.9.9")).toBeGreaterThan(0);
+    expect(isUpstreamUpdate({ version: "1.0.0", ref: { kind: "commit", value: "a", commit: "a" } }, {
+      tag: "v1.0.0", version: "1.0.0", commit: "b",
+    })).toBe(true);
+  });
+
+  it("fails closed when a release marker is missing or duplicated", () => {
+    expect(() => replaceExactlyOnce("none", /start.*end/u, "x", "test")).toThrow(/exactly once/u);
+    expect(() => replaceExactlyOnce("start end start end", /start end/u, "x", "test")).toThrow(/found 2/u);
+    expect(() => assertMarkerPair("<!-- release:start --><!-- release:start --><!-- release:end -->", "release", "test"))
+      .toThrow(/found 2/u);
+  });
+
+  it("keeps every generated release surface synchronized", async () => {
+    await expect(syncReleaseMetadata()).resolves.toEqual([]);
   });
 });

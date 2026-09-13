@@ -18,6 +18,7 @@ import type {
   ConvergenceStatusSummaryV1,
   PluginUpdateStatusV1,
   StageResultV1,
+  StateCleanupPlanV1,
   TaskEnvelopeV1,
   WorkflowPlanV1,
   WorkflowReceiptV1,
@@ -190,6 +191,8 @@ describe("bundled STDIO MCP server", () => {
         "load_context",
         "suppress_context_restore",
         "purge_direct_context",
+        "prepare_state_cleanup",
+        "execute_state_cleanup",
       ]);
       expect(listed.tools.every((tool) => tool.inputSchema.type === "object")).toBe(true);
       const unavailable = toolData(await client.callTool({
@@ -284,6 +287,8 @@ describe("bundled STDIO MCP server", () => {
         "load_context",
         "suppress_context_restore",
         "purge_direct_context",
+        "prepare_state_cleanup",
+        "execute_state_cleanup",
       ]);
       expect(listed.tools.find((tool) => tool.name === "plan_workflow")?.annotations?.readOnlyHint).toBe(true);
       expect(listed.tools.find((tool) => tool.name === "check_for_updates")?.annotations).toMatchObject({
@@ -293,6 +298,11 @@ describe("bundled STDIO MCP server", () => {
       });
       expect(listed.tools.find((tool) => tool.name === "get_workflow_status")?.annotations?.readOnlyHint).toBe(true);
       expect(listed.tools.find((tool) => tool.name === "start_workflow")?.annotations?.readOnlyHint).toBe(false);
+      expect(listed.tools.find((tool) => tool.name === "prepare_state_cleanup")?.annotations).toMatchObject({
+        readOnlyHint: true,
+        destructiveHint: false,
+      });
+      expect(listed.tools.find((tool) => tool.name === "execute_state_cleanup")?.annotations?.destructiveHint).toBe(true);
 
       const task: TaskEnvelopeV1 = {
         schemaVersion: "1.0.0",
@@ -333,6 +343,13 @@ describe("bundled STDIO MCP server", () => {
       expect(planned.data?.selectedSkills).toContain("coordinate-subagents");
       expect(planned.data?.stages).toHaveLength(1);
       expect(planned.data?.stages[0]?.satisfiedCapabilities).toEqual(["task-decomposition"]);
+
+      const cleanupPreview = toolData<StateCleanupPlanV1>(await client.callTool({
+        name: "prepare_state_cleanup",
+        arguments: { schemaVersion: "1.0.0" },
+      }));
+      expect(cleanupPreview.ok).toBe(true);
+      expect(cleanupPreview.data?.planToken).toEqual(expect.any(String));
 
       const startedResponse = await client.callTool({
         name: "start_workflow",

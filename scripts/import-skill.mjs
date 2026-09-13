@@ -33,14 +33,17 @@ try {
   const skillMarkdown = await readFile(path.join(sourceSkill, "SKILL.md"), "utf8");
   const name = readFrontmatter(skillMarkdown).name;
   if (!NAME_PATTERN.test(name)) throw new Error(`invalid imported skill name: ${name}`);
+  let versionSource = "skill-metadata";
   let metadataVersion = skillMarkdown.match(/\nmetadata:\s*\r?\n(?:[ \t]+.*\r?\n)*?[ \t]+version:\s*["']?([^\s"']+)/u)?.[1];
   if (!metadataVersion) {
     try {
       metadataVersion = (await readFile(path.join(sourceSkill, "VERSION"), "utf8")).trim();
+      versionSource = "version-file";
     } catch {
       metadataVersion = undefined;
     }
   }
+  if (!metadataVersion) throw new Error("Imported skills must declare metadata.version or a legacy VERSION file.");
 
   const destination = path.join(ROOT, "skills", name);
   const registryPath = path.join(ROOT, "skills", "registry.json");
@@ -84,6 +87,7 @@ try {
   const registryOriginal = await readFile(registryPath, "utf8");
   const lockOriginal = await readFile(lockPath, "utf8");
   const lockDocument = await readJson(lockPath);
+  if (lockDocument.schemaVersion !== "2.0.0") throw new Error("skills/source-lock.json must use schemaVersion 2.0.0");
   const entries = Array.isArray(lockDocument) ? lockDocument : lockDocument.sources;
   const checksumValue = await computeDirectoryChecksum(stagedSkill);
   let sourceDescriptor;
@@ -96,7 +100,6 @@ try {
   }
   const inherited = sourceDescriptor ?? {};
   const sourceProviders = Array.isArray(inherited.providers) ? inherited.providers : [];
-  metadataVersion ??= inherited.version ?? sourceProviders[0]?.version ?? "0.1.0";
   const providers = sourceProviders.length > 0
     ? sourceProviders.map((provider) => {
         const skillId = provider.skillId ?? inherited.skillId;
@@ -157,10 +160,19 @@ try {
     skillId: name,
     path: `skills/${name}`,
     source: args.source,
-    ref: args.ref,
-    commit,
-    checksum: checksumValue,
-    checksumScope: `relative paths and normalized text bytes under skills/${name}`
+    sourcePath: args["skill-path"],
+    version: metadataVersion,
+    versionSource,
+    ref: {
+      kind: /^v\d+\.\d+\.\d+$/u.test(args.ref) ? "tag" : "commit",
+      value: args.ref,
+      commit,
+    },
+    updatePolicy: entries.find((entry) => entry.skillId === name)?.updatePolicy ?? "notify-only",
+    upstreamChecksum: checksumValue,
+    integratedChecksum: checksumValue,
+    checksumScope: `relative paths and normalized text bytes under skills/${name}`,
+    downstreamModifications: [],
   };
   const existingLockIndex = entries.findIndex((entry) => entry.skillId === name);
   if (existingLockIndex >= 0) entries[existingLockIndex] = lockEntry;

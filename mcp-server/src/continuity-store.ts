@@ -49,7 +49,28 @@ interface RequestRow { command_digest: string; result_json: string }
 interface RequestPayloadRow { request_hash: string; result_json: string }
 interface TombstoneRow { revision: number; payload_digest: string; purged_at: string }
 
-const SCHEMA_VERSION = 1;
+export interface ContinuityCleanupSnapshotCandidate {
+  taskCorrelation: string;
+  epoch: number;
+  revision: number;
+  snapshotDigest: string;
+  updatedAt: string;
+}
+
+export interface ContinuityCleanupTaskCandidate {
+  taskCorrelation: string;
+  currentEpoch: number;
+  rootId: string | null;
+  updatedAt: string;
+}
+
+export interface ContinuityCleanupPreview {
+  snapshots: ContinuityCleanupSnapshotCandidate[];
+  tasks: ContinuityCleanupTaskCandidate[];
+  protectedActiveTasks: number;
+}
+
+const SCHEMA_VERSION = 2;
 const SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
 
 function hasExactKeys(value: Record<string, unknown>, keys: string[]): boolean {
@@ -354,9 +375,172 @@ export class SqliteContinuityStore {
     `).run(taskCorrelation, epoch, event, turnHash, success ? 1 : 0, now);
   }
 
+  getSchemaVersion(): number {
+    return (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
+  }
+
+  previewCleanup(payloadCutoff: string, recordCutoff: string): ContinuityCleanupPreview {
+    const snapshotRows = this.database.prepare(`
+      SELECT task_correlation, epoch, revision, snapshot_digest, snapshot_json, updated_at
+      FROM continuity_snapshots
+      WHERE updated_at <= ?
+      ORDER BY task_correlation, epoch
+    `).all(payloadCutoff) as unknown as Array<{
+      task_correlation: string;
+      epoch: number;
+      revision: number;
+      snapshot_digest: string;
+      snapshot_json: string;
+      updated_at: string;
+    }>;
+    let protectedActiveTasks = 0;
+    const snapshots = [];
+    for (const row of snapshotRows) {
+      const snapshot = JSON.parse(row.snapshot_json) as ContinuitySnapshotV1;
+      if (snapshot.status === "active") {
+        protectedActiveTasks += 1;
+        continue;
+      }
+      snapshots.push({
+        taskCorrelation: row.task_correlation,
+        epoch: row.epoch,
+        revision: row.revision,
+        snapshotDigest: row.snapshot_digest,
+        updatedAt: row.updated_at,
+      });
+    }
+    const taskRows = this.database.prepare(`
+      SELECT task_correlation, current_epoch, root_id, updated_at
+      FROM continuity_tasks tasks
+      WHERE updated_at <= ?
+        AND NOT EXISTS (
+          SELECT 1 FROM continuity_snapshots snapshots
+          WHERE snapshots.task_correlation = tasks.task_correlation AND snapshots.updated_at > ?
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM continuity_requests requests
+          WHERE requests.task_correlation = tasks.task_correlation AND requests.created_at > ?
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM continuity_tombstones tombstones
+          WHERE tombstones.task_correlation = tasks.task_correlation AND tombstones.purged_at > ?
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM continuity_observations observations
+          WHERE observations.task_correlation = tasks.task_correlation AND observations.observed_at > ?
+        )
+      ORDER BY task_correlation
+    `).all(recordCutoff, recordCutoff, recordCutoff, recordCutoff, recordCutoff) as unknown as Array<{
+      task_correlation: string;
+      current_epoch: number;
+      root_id: string | null;
+      updated_at: string;
+    }>;
+    const tasks = [];
+    for (const row of taskRows) {
+      const active = this.database.prepare(`
+        SELECT snapshot_json FROM continuity_snapshots WHERE task_correlation = ?
+      `).all(row.task_correlation) as unknown as SnapshotRow[];
+      if (active.some((item) => (JSON.parse(item.snapshot_json) as ContinuitySnapshotV1).status === "active")) {
+        protectedActiveTasks += 1;
+        continue;
+      }
+      tasks.push({
+        taskCorrelation: row.task_correlation,
+        currentEpoch: row.current_epoch,
+        rootId: row.root_id,
+        updatedAt: row.updated_at,
+      });
+    }
+    const fullTaskIds = new Set(tasks.map((task) => task.taskCorrelation));
+    return { snapshots: snapshots.filter((snapshot) => !fullTaskIds.has(snapshot.taskCorrelation)), tasks, protectedActiveTasks };
+  }
+
+  backupTo(targetPath: string): void {
+    if (this.databasePath === ":memory:") throw new ContinuityStoreError("An in-memory continuity database cannot be cleaned destructively.");
+    try {
+      this.database.prepare("VACUUM INTO ?").run(targetPath);
+      const backup = new DatabaseSync(targetPath, { readOnly: true });
+      try {
+        const result = backup.prepare("PRAGMA integrity_check").get() as { integrity_check: string };
+        if (result.integrity_check !== "ok") throw new Error(`integrity_check returned ${result.integrity_check}`);
+      } finally {
+        backup.close();
+      }
+    } catch (cause) {
+      throw new ContinuityStoreError("Cannot create a verified continuity cleanup backup.", cause);
+    }
+  }
+
+  executeCleanup(preview: ContinuityCleanupPreview, now: string): { snapshots: number; tasks: number } {
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      const verifySnapshot = this.database.prepare(`
+        SELECT revision, snapshot_digest, updated_at FROM continuity_snapshots
+        WHERE task_correlation = ? AND epoch = ?
+      `);
+      const verifyTask = this.database.prepare(`
+        SELECT current_epoch, root_id, updated_at FROM continuity_tasks WHERE task_correlation = ?
+      `);
+      for (const snapshot of preview.snapshots) {
+        const row = verifySnapshot.get(snapshot.taskCorrelation, snapshot.epoch) as {
+          revision: number; snapshot_digest: string; updated_at: string;
+        } | undefined;
+        if (!row || row.revision !== snapshot.revision || row.snapshot_digest !== snapshot.snapshotDigest || row.updated_at !== snapshot.updatedAt) {
+          throw new ContinuityStoreError(`Continuity snapshot ${snapshot.taskCorrelation}/${snapshot.epoch} changed after preview.`);
+        }
+      }
+      for (const task of preview.tasks) {
+        const row = verifyTask.get(task.taskCorrelation) as { current_epoch: number; root_id: string | null; updated_at: string } | undefined;
+        if (!row || row.current_epoch !== task.currentEpoch || row.root_id !== task.rootId || row.updated_at !== task.updatedAt) {
+          throw new ContinuityStoreError(`Continuity task ${task.taskCorrelation} changed after preview.`);
+        }
+      }
+
+      const scrubbed = this.database.prepare(`
+        UPDATE continuity_requests SET result_json = ?
+        WHERE task_correlation = ? AND epoch = ?
+      `);
+      for (const snapshot of preview.snapshots) {
+        this.database.prepare("DELETE FROM continuity_snapshots WHERE task_correlation = ? AND epoch = ?")
+          .run(snapshot.taskCorrelation, snapshot.epoch);
+        this.database.prepare(`
+          INSERT INTO continuity_tombstones(task_correlation, epoch, revision, payload_digest, purged_at)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(task_correlation, epoch) DO UPDATE SET
+            revision = excluded.revision, payload_digest = excluded.payload_digest, purged_at = excluded.purged_at
+        `).run(snapshot.taskCorrelation, snapshot.epoch, snapshot.revision, snapshot.snapshotDigest, now);
+        scrubbed.run(JSON.stringify({
+          schemaVersion: "1.0.0",
+          kind: "purged-request",
+          epoch: snapshot.epoch,
+          revision: snapshot.revision,
+          tombstoneDigest: snapshot.snapshotDigest,
+          purgedAt: now,
+        }), snapshot.taskCorrelation, snapshot.epoch);
+        this.database.prepare("UPDATE continuity_tasks SET updated_at = ? WHERE task_correlation = ?")
+          .run(now, snapshot.taskCorrelation);
+      }
+
+      const deleteByTask = [
+        "continuity_snapshots", "continuity_requests", "continuity_tombstones", "continuity_observations",
+      ].map((table) => this.database.prepare(`DELETE FROM ${table} WHERE task_correlation = ?`));
+      for (const task of preview.tasks) {
+        for (const statement of deleteByTask) statement.run(task.taskCorrelation);
+        this.database.prepare("DELETE FROM continuity_tasks WHERE task_correlation = ?").run(task.taskCorrelation);
+      }
+      this.database.exec("COMMIT;");
+      return { snapshots: preview.snapshots.length, tasks: preview.tasks.length };
+    } catch (cause) {
+      try { this.database.exec("ROLLBACK;"); } catch { /* Preserve the primary failure. */ }
+      if (cause instanceof ContinuityStoreError) throw cause;
+      throw new ContinuityStoreError("Cannot execute continuity state cleanup.", cause);
+    }
+  }
+
   private initializeSchema(): void {
     const version = this.database.prepare("PRAGMA user_version").get() as { user_version: number };
-    if (version.user_version !== 0 && version.user_version !== SCHEMA_VERSION) {
+    if (version.user_version < 0 || version.user_version > SCHEMA_VERSION) {
       throw new ContinuityStoreError(`Unsupported continuity schema version ${version.user_version}.`);
     }
     this.database.exec(`
@@ -412,7 +596,17 @@ export class SqliteContinuityStore {
         success INTEGER NOT NULL CHECK (success IN (0, 1)),
         observed_at TEXT NOT NULL
       );
+      CREATE INDEX IF NOT EXISTS continuity_snapshots_cleanup
+        ON continuity_snapshots(updated_at, task_correlation, epoch);
+      CREATE INDEX IF NOT EXISTS continuity_tasks_cleanup
+        ON continuity_tasks(updated_at, task_correlation);
+      CREATE INDEX IF NOT EXISTS continuity_requests_cleanup
+        ON continuity_requests(created_at, task_correlation, epoch);
+      CREATE INDEX IF NOT EXISTS continuity_tombstones_cleanup
+        ON continuity_tombstones(purged_at, task_correlation, epoch);
+      CREATE INDEX IF NOT EXISTS continuity_observations_cleanup
+        ON continuity_observations(observed_at, task_correlation, epoch);
     `);
-    if (version.user_version === 0) this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+    if (version.user_version < SCHEMA_VERSION) this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }
 }

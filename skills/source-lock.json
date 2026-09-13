@@ -1,122 +1,199 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
   "sources": [
     {
       "skillId": "coordinate-subagents",
       "path": "skills/coordinate-subagents",
       "source": "https://github.com/jaeseongs95/coordinate-subagents.git",
-      "ref": "837b182c490866d3800b919659581d69640ac687",
-      "commit": "837b182c490866d3800b919659581d69640ac687",
-      "checksum": "sha256:113603fd0545e44f593c289e8adf41c4363c7628c34b14ea27527b7072820091",
-      "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
+      "sourcePath": "skills/coordinate-subagents",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "ref": { "kind": "commit", "value": "837b182c490866d3800b919659581d69640ac687", "commit": "837b182c490866d3800b919659581d69640ac687" },
+      "updatePolicy": "auto-pr",
+      "upstreamChecksum": "sha256:113603fd0545e44f593c289e8adf41c4363c7628c34b14ea27527b7072820091",
+      "integratedChecksum": "sha256:113603fd0545e44f593c289e8adf41c4363c7628c34b14ea27527b7072820091",
+      "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents",
+      "downstreamModifications": []
     },
     {
       "skillId": "independent-audit-gate",
       "path": "skills/independent-audit-gate",
       "source": "https://github.com/jaeseongs95/codex-independent-audit-gate.git",
-      "ref": "v1.0.0",
-      "commit": "7570524b1536706911b5ad822c7010d60030d9e1",
-      "checksum": "sha256:31d76def511b3e90cb3acd4a01bb06f512bf1d68c8ff815d2ebf5cc3f0d2cbad",
-      "checksumScope": "relative paths and normalized text bytes under skills/independent-audit-gate"
+      "sourcePath": ".",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "7570524b1536706911b5ad822c7010d60030d9e1" },
+      "updatePolicy": "auto-pr",
+      "upstreamChecksum": "sha256:31d76def511b3e90cb3acd4a01bb06f512bf1d68c8ff815d2ebf5cc3f0d2cbad",
+      "integratedChecksum": "sha256:31d76def511b3e90cb3acd4a01bb06f512bf1d68c8ff815d2ebf5cc3f0d2cbad",
+      "checksumScope": "relative paths and normalized text bytes under skills/independent-audit-gate",
+      "downstreamModifications": []
     },
     {
       "skillId": "independent-deliberation-panel",
       "path": "skills/independent-deliberation-panel",
       "source": "https://github.com/jaeseongs95/independent-deliberation-panel.git",
-      "ref": "v1.0.0",
-      "commit": "877c11b8e1369a1dff3b5d208327f6604bd3dff2",
-      "checksum": "sha256:6dc8c9a1128ad1ac6b2ff74f4307cf9f3dcbae7cbfa3a02a9222657713bcf31e",
-      "checksumScope": "relative paths and normalized text bytes under skills/independent-deliberation-panel"
+      "sourcePath": ".",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "877c11b8e1369a1dff3b5d208327f6604bd3dff2" },
+      "updatePolicy": "auto-pr",
+      "upstreamChecksum": "sha256:6dc8c9a1128ad1ac6b2ff74f4307cf9f3dcbae7cbfa3a02a9222657713bcf31e",
+      "integratedChecksum": "sha256:6dc8c9a1128ad1ac6b2ff74f4307cf9f3dcbae7cbfa3a02a9222657713bcf31e",
+      "checksumScope": "relative paths and normalized text bytes under skills/independent-deliberation-panel",
+      "downstreamModifications": []
     },
     {
       "skillId": "task-contract",
       "path": "skills/task-contract",
       "source": "https://github.com/jaeseongs95/task-contract.git",
-      "ref": "v1.0.0",
-      "commit": "b14ffb36ed3be96cc4694d0b36054f21f69b577a",
-      "checksum": "sha256:ce882edf63d99459d2e979b721add56602b19e5868b4d0b0c1218c01aa26400a",
-      "checksumScope": "relative paths and normalized text bytes under skills/task-contract"
+      "sourcePath": ".",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "b14ffb36ed3be96cc4694d0b36054f21f69b577a" },
+      "updatePolicy": "notify-only",
+      "upstreamChecksum": "sha256:88df77436b0880e6d6033a022593e59b7db016b8cb90847a06937a2d4a10d91f",
+      "integratedChecksum": "sha256:ce882edf63d99459d2e979b721add56602b19e5868b4d0b0c1218c01aa26400a",
+      "checksumScope": "relative paths and normalized text bytes under skills/task-contract",
+      "downstreamModifications": [
+        "Adapt validation scripts to resolve contracts and suite paths from the integrated plugin layout."
+      ]
     },
     {
       "skillId": "acceptance-evidence-validator",
       "path": "skills/acceptance-evidence-validator",
       "source": "https://github.com/jaeseongs95/acceptance-evidence-validator.git",
-      "ref": "v1.0.0",
-      "commit": "ad545c367e118a21b0cabfcd5b56fdf3b58e0ef5",
-      "checksum": "sha256:193162ef7b982a66488a9a9c7360f76b5f4e36737b612f1c066f7b6391b8af27",
-      "checksumScope": "relative paths and normalized text bytes under skills/acceptance-evidence-validator"
+      "sourcePath": ".",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "ad545c367e118a21b0cabfcd5b56fdf3b58e0ef5" },
+      "updatePolicy": "notify-only",
+      "upstreamChecksum": "sha256:b417604d2600a3c09aadc9ffa2ae9d435aaa0dc2e28ccae457f8dda069ad166a",
+      "integratedChecksum": "sha256:193162ef7b982a66488a9a9c7360f76b5f4e36737b612f1c066f7b6391b8af27",
+      "checksumScope": "relative paths and normalized text bytes under skills/acceptance-evidence-validator",
+      "downstreamModifications": [
+        "Adapt validation and integration assets to the suite-level registry and shared contract layout."
+      ]
     },
     {
       "skillId": "blocker-diagnostician",
       "path": "skills/blocker-diagnostician",
       "source": "https://github.com/jaeseongs95/blocker-diagnostician.git",
-      "ref": "v1.0.0",
-      "commit": "14ae3288535b1d2061a0ee1c537fa6773077a533",
-      "checksum": "sha256:00d5eefd11ba5a46d9dddb6590fab9d556ae325d37f1d35755634247618f49cf",
-      "checksumScope": "relative paths and normalized text bytes under skills/blocker-diagnostician"
+      "sourcePath": ".",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "14ae3288535b1d2061a0ee1c537fa6773077a533" },
+      "updatePolicy": "notify-only",
+      "upstreamChecksum": "sha256:76ffb61ad815a82e3abd9137320cb233a77d9576b7e8cea3c381b6b8d020683e",
+      "integratedChecksum": "sha256:00d5eefd11ba5a46d9dddb6590fab9d556ae325d37f1d35755634247618f49cf",
+      "checksumScope": "relative paths and normalized text bytes under skills/blocker-diagnostician",
+      "downstreamModifications": [
+        "Adapt validation and integration assets to the suite-level registry and shared contract layout."
+      ]
     },
     {
       "skillId": "workspace-convention-profiler",
       "path": "skills/workspace-convention-profiler",
       "source": "https://github.com/jaeseongs95/workspace-convention-profiler.git",
-      "ref": "v1.0.0",
-      "commit": "6bc5cf4e65a4f5fb0dd5e2e01ba6a3428de63405",
-      "checksum": "sha256:7af2162e2651210fbafeb709c303868a79334a1820b107241ef608f7a0bbcccf",
-      "checksumScope": "relative paths and normalized text bytes under skills/workspace-convention-profiler"
+      "sourcePath": ".",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "6bc5cf4e65a4f5fb0dd5e2e01ba6a3428de63405" },
+      "updatePolicy": "notify-only",
+      "upstreamChecksum": "sha256:0edcf71b974eeaac33128d8fea2b22026d3b50242106bea2eb61703b240e34d0",
+      "integratedChecksum": "sha256:7af2162e2651210fbafeb709c303868a79334a1820b107241ef608f7a0bbcccf",
+      "checksumScope": "relative paths and normalized text bytes under skills/workspace-convention-profiler",
+      "downstreamModifications": [
+        "Adapt validation and integration assets to the suite-level registry and shared contract layout."
+      ]
     },
     {
       "skillId": "mutation-risk-preflight",
       "path": "skills/mutation-risk-preflight",
       "source": "https://github.com/jaeseongs95/mutation-risk-preflight.git",
-      "ref": "v1.0.0",
-      "commit": "66cc7d2ca4ae73f3d43d580600ab5e1af75e0a5c",
-      "checksum": "sha256:b792b38d7d0d48b6084ac7703f832bb151e52602a7bcb39ce6f64b51945e15d2",
-      "checksumScope": "relative paths and normalized text bytes under skills/mutation-risk-preflight"
+      "sourcePath": ".",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "66cc7d2ca4ae73f3d43d580600ab5e1af75e0a5c" },
+      "updatePolicy": "notify-only",
+      "upstreamChecksum": "sha256:1a6b94868941410167556e783e29ebe93c9da99a395784927a06eaaf80cd0ddd",
+      "integratedChecksum": "sha256:b792b38d7d0d48b6084ac7703f832bb151e52602a7bcb39ce6f64b51945e15d2",
+      "checksumScope": "relative paths and normalized text bytes under skills/mutation-risk-preflight",
+      "downstreamModifications": [
+        "Adapt validation and integration assets to the suite-level registry and shared contract layout."
+      ]
     },
     {
       "skillId": "instruction-scope-resolver",
       "path": "skills/instruction-scope-resolver",
       "source": "https://github.com/jaeseongs95/instruction-scope-resolver.git",
-      "ref": "v1.0.0",
-      "commit": "f8e459ebc826acbe9eb711128422b0f35f54bc98",
-      "checksum": "sha256:2bd6c1fc0f4504648d3e0b9182bb968bc9827d43e70577aa12e5089ea8308293",
-      "checksumScope": "relative paths and normalized text bytes under skills/instruction-scope-resolver"
+      "sourcePath": ".",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "f8e459ebc826acbe9eb711128422b0f35f54bc98" },
+      "updatePolicy": "notify-only",
+      "upstreamChecksum": "sha256:85485144ba8ffd9e558761f1dc9e5186aa54eac955c31f745812655310f7d3dc",
+      "integratedChecksum": "sha256:2bd6c1fc0f4504648d3e0b9182bb968bc9827d43e70577aa12e5089ea8308293",
+      "checksumScope": "relative paths and normalized text bytes under skills/instruction-scope-resolver",
+      "downstreamModifications": [
+        "Adapt validation and integration assets to the suite-level registry and shared contract layout."
+      ]
     },
     {
       "skillId": "change-scope-guardian",
       "path": "skills/change-scope-guardian",
       "source": "https://github.com/jaeseongs95/change-scope-guardian.git",
-      "ref": "v1.0.0",
-      "commit": "531e820503bbefbb8cba9848657d42b3a5771587",
-      "checksum": "sha256:03bc40dd26356bc9b678db76d70f22474eb3812fa12711b96666dcf8ad7a533c",
-      "checksumScope": "relative paths and normalized text bytes under skills/change-scope-guardian"
+      "sourcePath": ".",
+      "version": "1.0.0",
+      "versionSource": "version-file",
+      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "531e820503bbefbb8cba9848657d42b3a5771587" },
+      "updatePolicy": "notify-only",
+      "upstreamChecksum": "sha256:78c3275447af625639884e11da5c615c2f928f437503699df3b2a9f2893f94b5",
+      "integratedChecksum": "sha256:03bc40dd26356bc9b678db76d70f22474eb3812fa12711b96666dcf8ad7a533c",
+      "checksumScope": "relative paths and normalized text bytes under skills/change-scope-guardian",
+      "downstreamModifications": [
+        "Adapt validation and integration assets to the suite-level registry and shared contract layout."
+      ]
     },
     {
       "skillId": "model-effort-advisor",
       "path": "skills/model-effort-advisor",
       "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
-      "ref": "bc248f9babf1c850249c960385b2935db49756d4",
-      "commit": "bc248f9babf1c850249c960385b2935db49756d4",
-      "checksum": "sha256:9a2871ff97553884eea9e93e1b46464631b47fc2d2be7b50b0cd5ec5031e429c",
-      "checksumScope": "relative paths and normalized text bytes under skills/model-effort-advisor"
+      "sourcePath": "skills/model-effort-advisor",
+      "version": "0.1.0",
+      "versionSource": "skill-metadata",
+      "ref": { "kind": "commit", "value": "bc248f9babf1c850249c960385b2935db49756d4", "commit": "bc248f9babf1c850249c960385b2935db49756d4" },
+      "updatePolicy": "internal",
+      "upstreamChecksum": "sha256:9a2871ff97553884eea9e93e1b46464631b47fc2d2be7b50b0cd5ec5031e429c",
+      "integratedChecksum": "sha256:9a2871ff97553884eea9e93e1b46464631b47fc2d2be7b50b0cd5ec5031e429c",
+      "checksumScope": "relative paths and normalized text bytes under skills/model-effort-advisor",
+      "downstreamModifications": []
     },
     {
       "skillId": "iteration-frame-auditor",
       "path": "skills/iteration-frame-auditor",
       "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
-      "ref": "560aea5739887a0bb279ff3c5286b1acea296ff0",
-      "commit": "560aea5739887a0bb279ff3c5286b1acea296ff0",
-      "checksum": "sha256:86360c7a8573dafc3317931a4b161d5a5c44a65be42d35106c7996fa4e5fecb9",
-      "checksumScope": "relative paths and normalized text bytes under skills/iteration-frame-auditor"
+      "sourcePath": "skills/iteration-frame-auditor",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "ref": { "kind": "commit", "value": "560aea5739887a0bb279ff3c5286b1acea296ff0", "commit": "560aea5739887a0bb279ff3c5286b1acea296ff0" },
+      "updatePolicy": "internal",
+      "upstreamChecksum": "sha256:86360c7a8573dafc3317931a4b161d5a5c44a65be42d35106c7996fa4e5fecb9",
+      "integratedChecksum": "sha256:86360c7a8573dafc3317931a4b161d5a5c44a65be42d35106c7996fa4e5fecb9",
+      "checksumScope": "relative paths and normalized text bytes under skills/iteration-frame-auditor",
+      "downstreamModifications": []
     },
     {
       "skillId": "korean-prose-editor",
       "path": "skills/korean-prose-editor",
       "source": "https://github.com/jaeseongs95/korean-prose-editor.git",
-      "ref": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49",
-      "commit": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49",
+      "sourcePath": "skills/korean-prose-editor",
+      "version": "0.1.0",
+      "versionSource": "skill-metadata",
+      "ref": { "kind": "commit", "value": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49", "commit": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49" },
+      "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:a88252aa9c4e654458ecc7eed282d26c022ca9f5db858f87f3237decc622feb8",
-      "checksum": "sha256:5ff40007e1338c4dc397a7c79a07d5d3e28b15df558a9f2ca803c9560bee3319",
+      "integratedChecksum": "sha256:5ff40007e1338c4dc397a7c79a07d5d3e28b15df558a9f2ca803c9560bee3319",
       "checksumScope": "relative paths and normalized text bytes under skills/korean-prose-editor",
       "downstreamModifications": [
         "Temporarily disable implicit invocation and all direct execution paths until the quality gate passes.",

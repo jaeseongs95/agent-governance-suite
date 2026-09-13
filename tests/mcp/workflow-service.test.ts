@@ -281,14 +281,14 @@ describe("SqliteWorkflowStore", () => {
 
     const migrated = new DatabaseSync(databasePath);
     try {
-      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(3);
+      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(4);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM plugin_update_state").get() as { count: number }).count).toBe(1);
     } finally {
       migrated.close();
     }
   });
 
-  it("migrates an active v2 workflow to v3 and preserves receipt updates", async () => {
+  it("migrates an active v2 workflow to v4 and preserves receipt updates", async () => {
     const databaseDirectory = await mkdtemp(join(tmpdir(), "skill-suite-v2-migration-"));
     temporaryDirectories.push(databaseDirectory);
     const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
@@ -356,7 +356,7 @@ describe("SqliteWorkflowStore", () => {
 
     const migrated = new DatabaseSync(databasePath);
     try {
-      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(3);
+      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(4);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM convergence_roots").get() as { count: number }).count).toBe(0);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM workflow_attempt_links").get() as { count: number }).count).toBe(0);
     } finally {
@@ -370,7 +370,7 @@ describe("SqliteWorkflowStore", () => {
     const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
     const fixture = new DatabaseSync(databasePath);
     try {
-      fixture.exec("PRAGMA user_version = 4;");
+      fixture.exec("PRAGMA user_version = 5;");
     } finally {
       fixture.close();
     }

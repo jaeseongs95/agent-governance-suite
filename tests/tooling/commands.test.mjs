@@ -13,7 +13,7 @@ async function createSuiteRoot() {
   await mkdir(path.join(directory, "skills"), { recursive: true });
   await mkdir(path.join(directory, "tests"), { recursive: true });
   await writeFile(path.join(directory, "skills", "registry.json"), '{"schemaVersion":"2.0.0","skills":[]}\n');
-  await writeFile(path.join(directory, "skills", "source-lock.json"), '{"schemaVersion":"1.0.0","sources":[]}\n');
+  await writeFile(path.join(directory, "skills", "source-lock.json"), '{"schemaVersion":"2.0.0","sources":[]}\n');
   return directory;
 }
 
@@ -117,7 +117,14 @@ describe("skill maintenance commands", () => {
     await expect(readFile(path.join(suiteRoot, "skills", "ref-locked-skill", "uncommitted.txt"), "utf8"))
       .rejects.toThrow();
     const lock = JSON.parse(await readFile(path.join(suiteRoot, "skills", "source-lock.json"), "utf8"));
-    expect(lock.sources[0]).toMatchObject({ skillId: "ref-locked-skill", commit });
-    expect(lock.sources[0].checksum).toMatch(/^sha256:[a-f0-9]{64}$/u);
+    expect(lock.sources[0]).toMatchObject({
+      skillId: "ref-locked-skill",
+      version: "0.2.0",
+      versionSource: "skill-metadata",
+      ref: { kind: "commit", value: commit, commit },
+      updatePolicy: "notify-only",
+      downstreamModifications: [],
+    });
+    expect(lock.sources[0].integratedChecksum).toMatch(/^sha256:[a-f0-9]{64}$/u);
   });
 });

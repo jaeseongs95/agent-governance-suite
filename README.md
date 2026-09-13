@@ -6,7 +6,9 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
+<!-- release-version:start -->
 현재 공개 릴리스는 `v1.5.0`입니다. 거버넌스 전문 스킬 12개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 한국어 산문 워크플로는 품질 평가의 개선율 기준을 충족할 때까지 registry, 직접 descriptor와 Codex의 암시적 호출 설정에서 비활성화됩니다. 사용자가 직접 호출해도 스킬의 차단 지침에 따라 provider와 로컬 스크립트를 실행하지 않습니다.
+<!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
 
@@ -58,10 +60,12 @@ flowchart LR
 
 Node.js 22.13.0 이상이 필요합니다.
 
+<!-- release-install:start -->
 ```bash
 codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.5.0
 codex plugin add agent-governance-suite@agent-governance
 ```
+<!-- release-install:end -->
 
 설치를 마치면 새 Codex 세션을 시작합니다. 전체 워크플로를 사용하려면 다음과 같이 요청합니다.
 
@@ -85,6 +89,8 @@ node scripts/check-runtime.mjs
 ```
 
 MCP 서버는 workflow 실행 상태와 계획 서명 키를 `workflows.sqlite3`에 저장합니다. 선택적 task continuity는 같은 사용자 상태 디렉터리의 별도 `continuity.sqlite3`를 사용합니다. 저장 위치를 직접 관리하려면 각각 `AGENT_GOVERNANCE_DB_PATH`와 `AGENT_GOVERNANCE_CONTINUITY_DB_PATH`에 절대 경로나 MCP 작업 디렉터리 기준 상대 경로를 지정합니다. 해당 디렉터리는 MCP 서버를 실행하는 사용자만 접근할 수 있도록 보호해야 합니다.
+
+상태 정리는 자동 실행되지 않습니다. `prepare_state_cleanup`으로 180일이 지난 terminal workflow 상태와 30일이 지난 비활성 continuity payload를 미리 본 뒤, 사용자가 확인한 같은 15분 token을 `execute_state_cleanup`에 전달해야 합니다. 삭제 전 검증된 SQLite backup을 만들며 backup은 자동 삭제하지 않습니다. 자세한 정책과 복구 절차는 [SQLite 상태 보존과 정리](docs/state-cleanup.md)를 참고하십시오.
 
 ```bash
 AGENT_GOVERNANCE_DB_PATH=/absolute/path/workflows.sqlite3 pnpm dev
@@ -135,7 +141,7 @@ check_for_updates { "force": false }
 | 완료 전 | [`independent-audit-gate`](https://github.com/jaeseongs95/codex-independent-audit-gate/tree/v1.0.0) | 1.0.0 | 구현자와 분리된 감사자가 고위험 변경과 검증 근거를 확인합니다. |
 | 문제 발생 시 | [`blocker-diagnostician`](https://github.com/jaeseongs95/blocker-diagnostician/tree/v1.0.0) | 1.0.0 | 반복 실패를 관측 사실과 원인 가설로 나누고 다음 판별 검사를 정합니다. |
 
-각 전문 스킬은 단독으로 호출할 수 있습니다. 둘 이상의 역할을 연결하려면 [`$orchestrator`](skills/orchestrator/)를 사용합니다. 외부에서 편입한 스킬의 원본과 이 저장소에서 만든 `iteration-frame-auditor`의 생성 커밋·`checksum`은 [`skills/source-lock.json`](skills/source-lock.json)에 고정되어 있으며, `orchestrator`는 현재 Git 이력으로 추적합니다.
+각 전문 스킬은 단독으로 호출할 수 있습니다. 둘 이상의 역할을 연결하려면 [`$orchestrator`](skills/orchestrator/)를 사용합니다. 외부에서 편입한 스킬의 원본과 이 저장소에서 만든 `model-effort-advisor`, `iteration-frame-auditor`의 원본 경로·tag 또는 commit·원본/통합 `checksum`·업데이트 정책은 [`skills/source-lock.json`](skills/source-lock.json)에 고정되어 있으며, `orchestrator`는 현재 Git 이력으로 추적합니다.
 
 ### 공통 인프라 스킬
 
@@ -239,7 +245,7 @@ pnpm import:skill --source <path-or-url> --ref <new-tag-or-sha> --skill-path <pa
 pnpm validate:skill --name <skill-name>
 ```
 
-편입 명령은 임시 checkout에서 지정한 Git `ref`의 파일만 가져옵니다. `.git`, `__pycache__`, `evals/results`, 일반적인 빌드 산출물은 제외하며, 원본 `ref`, `commit`, `checksum`을 `skills/source-lock.json`에 기록합니다. 편입 PR에서는 자동 생성된 `fixture`를 실제 동작 사례로 교체해야 합니다.
+편입 명령은 임시 checkout에서 지정한 Git `ref`의 파일만 가져옵니다. `.git`, `__pycache__`, `evals/results`, 일반적인 빌드 산출물은 제외하며, 원본 경로, tag 또는 commit, peeled full SHA와 원본/통합 `checksum`을 `skills/source-lock.json`에 기록합니다. 편입 PR에서는 자동 생성된 `fixture`를 실제 동작 사례로 교체해야 합니다.
 
 공개 계약은 `contracts/`에 JSON Schema 2020-12로 정의되어 있습니다. 기존 버전과 호환되는 스킬 추가는 `minor`, 동작 수정은 `patch`, 계약·권한·식별자의 호환성을 깨는 변경은 `major` 버전으로 관리합니다.
 

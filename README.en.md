@@ -6,7 +6,9 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
+<!-- release-version:start -->
 The current public release is `v1.5.0`. It includes twelve governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. The Korean prose workflow remains disabled in the registry, its direct descriptor, and Codex's implicit-invocation setting until it passes the prose-quality improvement threshold. Its fail-closed skill instructions also refuse direct calls without running providers or local scripts.
+<!-- release-version:end -->
 
 ## How it works
 
@@ -58,10 +60,12 @@ The orchestrator does not run every specialist for every request. It selects the
 
 Node.js 22.13.0 or later is required.
 
+<!-- release-install:start -->
 ```bash
 codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.5.0
 codex plugin add agent-governance-suite@agent-governance
 ```
+<!-- release-install:end -->
 
 Start a new Codex session after installation so Codex can load the bundled skills and MCP tools. Then call the orchestrator:
 
@@ -85,6 +89,8 @@ node scripts/check-runtime.mjs
 ```
 
 The MCP server stores workflow state and its plan-signing key in `workflows.sqlite3`. Optional task continuity uses a separate `continuity.sqlite3` in the same per-user state directory. Set `AGENT_GOVERNANCE_DB_PATH` and `AGENT_GOVERNANCE_CONTINUITY_DB_PATH`, respectively, to absolute SQLite paths or paths relative to the MCP working directory. Protect that directory so only the account running the MCP server can access it.
+
+State cleanup never runs automatically. Preview terminal workflow state older than 180 days and inactive continuity payloads older than 30 days with `prepare_state_cleanup`, then pass the same 15-minute token to `execute_state_cleanup` only after user confirmation. A verified SQLite backup is created before deletion and is never deleted automatically. See [SQLite state retention and cleanup](docs/state-cleanup.md) for the policy and recovery procedure.
 
 ```bash
 AGENT_GOVERNANCE_DB_PATH=/absolute/path/workflows.sqlite3 pnpm dev
@@ -133,7 +139,7 @@ Each specialist remains available when the MCP server is unavailable. Orchestrat
 | Before completion | `independent-audit-gate` | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
 | After a failure | `blocker-diagnostician` | 1.0.0 | Classifies repeated failures and selects the next diagnostic step. |
 
-Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. `skills/source-lock.json` pins the upstream sources and the creation commits and checksums of the repository-native `model-effort-advisor` and `iteration-frame-auditor`; the `orchestrator` is tracked by current Git history.
+Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. `skills/source-lock.json` pins upstream paths, tags or commits, upstream/integrated checksums, and update policies, including the repository-native `model-effort-advisor` and `iteration-frame-auditor`; the `orchestrator` is tracked by current Git history.
 
 ### Shared infrastructure skill
 
@@ -226,7 +232,7 @@ pnpm import:skill --source <path-or-url> --ref <new-tag-or-sha> --skill-path <pa
 pnpm validate:skill --name <skill-name>
 ```
 
-The importer reads only the requested Git ref from a temporary checkout. It excludes `.git`, `__pycache__`, `evals/results`, and ordinary build output, then records the source ref, commit, and checksum in `skills/source-lock.json`. Replace generated fixtures with real behavior cases before submitting an import pull request.
+The importer reads only the requested Git ref from a temporary checkout. It excludes `.git`, `__pycache__`, `evals/results`, and ordinary build output, then records the source path, tag or commit, peeled full SHA, and upstream/integrated checksums in `skills/source-lock.json`. Replace generated fixtures with real behavior cases before submitting an import pull request.
 
 Public contracts use JSON Schema 2020-12 under `contracts/`. Compatible skill additions are minor releases, fixes are patch releases, and incompatible changes to contracts, authority, or identifiers require a major release.
 

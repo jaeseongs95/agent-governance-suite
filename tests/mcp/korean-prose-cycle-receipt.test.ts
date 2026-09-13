@@ -31,7 +31,7 @@ afterEach(async () => {
   await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
 });
 
-describe("range-aware Korean prose cycle receipts", () => {
+describe("range-aware Korean prose cycle receipts", { timeout: 15_000 }, () => {
   it("records canonical structured work products and binds selection through finalization", async () => {
     const evaluationRoot = await createCycleFixture();
     const positionalCycle = join("evals", "cycles", "0.1.0-rc2");

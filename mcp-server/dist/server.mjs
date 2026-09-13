@@ -3262,8 +3262,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path7) {
-      let input = path7;
+    function removeDotSegments(path8) {
+      let input = path8;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3672,8 +3672,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path7 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path7 && path7 !== "/" ? path7 : void 0;
+        const path8 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path8 && path8 !== "/" ? path8 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -8205,10 +8205,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path7) {
-  if (!path7)
+function getElementAtPath(obj, path8) {
+  if (!path8)
     return obj;
-  return path7.reduce((acc, key) => acc?.[key], obj);
+  return path8.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -8620,11 +8620,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path7, issues) {
+function prefixIssues(path8, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path7);
+    iss.path.unshift(path8);
     return iss;
   });
 }
@@ -9053,16 +9053,16 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
 }
 function formatError(error2, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error3, path7 = []) => {
+  const processError = (error3, path8 = []) => {
     for (const issue2 of error3.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path7, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path8, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path8, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path8, ...issue2.path]);
       } else {
-        const fullpath = [...path7, ...issue2.path];
+        const fullpath = [...path8, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -16075,7 +16075,7 @@ function normalizeWorkspaceLocator(locator) {
 import { chmodSync, mkdirSync } from "node:fs";
 import path3 from "node:path";
 import { DatabaseSync } from "node:sqlite";
-var SCHEMA_VERSION = 1;
+var SCHEMA_VERSION = 2;
 var SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
 function hasExactKeys(value, keys) {
   const actual = Object.keys(value).sort();
@@ -16318,20 +16318,20 @@ var SqliteContinuityStore = class {
       throw new ContinuityStoreError("Cannot purge the continuity checkpoint.", cause);
     }
   }
-  setPendingMarker(taskCorrelation, epoch, source, revision, digest, rootId, now) {
+  setPendingMarker(taskCorrelation, epoch, source, revision, digest2, rootId, now) {
     const result = this.database.prepare(`
       UPDATE continuity_tasks SET pending_source = ?, pending_revision = ?, pending_digest = ?,
         pending_root_id = ?, pending_consumed = 0, updated_at = ?
       WHERE task_correlation = ? AND current_epoch = ?
-    `).run(source, revision, digest, rootId, now, taskCorrelation, epoch);
+    `).run(source, revision, digest2, rootId, now, taskCorrelation, epoch);
     return result.changes === 1;
   }
-  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest, now) {
+  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest2, now) {
     const result = this.database.prepare(`
       UPDATE continuity_tasks SET pending_consumed = 1, last_auto_injected_revision = ?, updated_at = ?
       WHERE task_correlation = ? AND current_epoch = ? AND pending_source = 'workflow'
         AND pending_revision = ? AND pending_digest = ? AND pending_consumed = 0
-    `).run(revision, now, taskCorrelation, epoch, revision, digest);
+    `).run(revision, now, taskCorrelation, epoch, revision, digest2);
     return result.changes === 1;
   }
   recordObservation(taskCorrelation, epoch, event, turnHash, success, now) {
@@ -16340,9 +16340,156 @@ var SqliteContinuityStore = class {
       VALUES (?, ?, ?, ?, ?, ?)
     `).run(taskCorrelation, epoch, event, turnHash, success ? 1 : 0, now);
   }
+  getSchemaVersion() {
+    return this.database.prepare("PRAGMA user_version").get().user_version;
+  }
+  previewCleanup(payloadCutoff, recordCutoff) {
+    const snapshotRows = this.database.prepare(`
+      SELECT task_correlation, epoch, revision, snapshot_digest, snapshot_json, updated_at
+      FROM continuity_snapshots
+      WHERE updated_at <= ?
+      ORDER BY task_correlation, epoch
+    `).all(payloadCutoff);
+    let protectedActiveTasks = 0;
+    const snapshots = [];
+    for (const row of snapshotRows) {
+      const snapshot = JSON.parse(row.snapshot_json);
+      if (snapshot.status === "active") {
+        protectedActiveTasks += 1;
+        continue;
+      }
+      snapshots.push({
+        taskCorrelation: row.task_correlation,
+        epoch: row.epoch,
+        revision: row.revision,
+        snapshotDigest: row.snapshot_digest,
+        updatedAt: row.updated_at
+      });
+    }
+    const taskRows = this.database.prepare(`
+      SELECT task_correlation, current_epoch, root_id, updated_at
+      FROM continuity_tasks tasks
+      WHERE updated_at <= ?
+        AND NOT EXISTS (
+          SELECT 1 FROM continuity_snapshots snapshots
+          WHERE snapshots.task_correlation = tasks.task_correlation AND snapshots.updated_at > ?
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM continuity_requests requests
+          WHERE requests.task_correlation = tasks.task_correlation AND requests.created_at > ?
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM continuity_tombstones tombstones
+          WHERE tombstones.task_correlation = tasks.task_correlation AND tombstones.purged_at > ?
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM continuity_observations observations
+          WHERE observations.task_correlation = tasks.task_correlation AND observations.observed_at > ?
+        )
+      ORDER BY task_correlation
+    `).all(recordCutoff, recordCutoff, recordCutoff, recordCutoff, recordCutoff);
+    const tasks = [];
+    for (const row of taskRows) {
+      const active = this.database.prepare(`
+        SELECT snapshot_json FROM continuity_snapshots WHERE task_correlation = ?
+      `).all(row.task_correlation);
+      if (active.some((item) => JSON.parse(item.snapshot_json).status === "active")) {
+        protectedActiveTasks += 1;
+        continue;
+      }
+      tasks.push({
+        taskCorrelation: row.task_correlation,
+        currentEpoch: row.current_epoch,
+        rootId: row.root_id,
+        updatedAt: row.updated_at
+      });
+    }
+    const fullTaskIds = new Set(tasks.map((task) => task.taskCorrelation));
+    return { snapshots: snapshots.filter((snapshot) => !fullTaskIds.has(snapshot.taskCorrelation)), tasks, protectedActiveTasks };
+  }
+  backupTo(targetPath) {
+    if (this.databasePath === ":memory:") throw new ContinuityStoreError("An in-memory continuity database cannot be cleaned destructively.");
+    try {
+      this.database.prepare("VACUUM INTO ?").run(targetPath);
+      const backup = new DatabaseSync(targetPath, { readOnly: true });
+      try {
+        const result = backup.prepare("PRAGMA integrity_check").get();
+        if (result.integrity_check !== "ok") throw new Error(`integrity_check returned ${result.integrity_check}`);
+      } finally {
+        backup.close();
+      }
+    } catch (cause) {
+      throw new ContinuityStoreError("Cannot create a verified continuity cleanup backup.", cause);
+    }
+  }
+  executeCleanup(preview, now) {
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      const verifySnapshot = this.database.prepare(`
+        SELECT revision, snapshot_digest, updated_at FROM continuity_snapshots
+        WHERE task_correlation = ? AND epoch = ?
+      `);
+      const verifyTask = this.database.prepare(`
+        SELECT current_epoch, root_id, updated_at FROM continuity_tasks WHERE task_correlation = ?
+      `);
+      for (const snapshot of preview.snapshots) {
+        const row = verifySnapshot.get(snapshot.taskCorrelation, snapshot.epoch);
+        if (!row || row.revision !== snapshot.revision || row.snapshot_digest !== snapshot.snapshotDigest || row.updated_at !== snapshot.updatedAt) {
+          throw new ContinuityStoreError(`Continuity snapshot ${snapshot.taskCorrelation}/${snapshot.epoch} changed after preview.`);
+        }
+      }
+      for (const task of preview.tasks) {
+        const row = verifyTask.get(task.taskCorrelation);
+        if (!row || row.current_epoch !== task.currentEpoch || row.root_id !== task.rootId || row.updated_at !== task.updatedAt) {
+          throw new ContinuityStoreError(`Continuity task ${task.taskCorrelation} changed after preview.`);
+        }
+      }
+      const scrubbed = this.database.prepare(`
+        UPDATE continuity_requests SET result_json = ?
+        WHERE task_correlation = ? AND epoch = ?
+      `);
+      for (const snapshot of preview.snapshots) {
+        this.database.prepare("DELETE FROM continuity_snapshots WHERE task_correlation = ? AND epoch = ?").run(snapshot.taskCorrelation, snapshot.epoch);
+        this.database.prepare(`
+          INSERT INTO continuity_tombstones(task_correlation, epoch, revision, payload_digest, purged_at)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(task_correlation, epoch) DO UPDATE SET
+            revision = excluded.revision, payload_digest = excluded.payload_digest, purged_at = excluded.purged_at
+        `).run(snapshot.taskCorrelation, snapshot.epoch, snapshot.revision, snapshot.snapshotDigest, now);
+        scrubbed.run(JSON.stringify({
+          schemaVersion: "1.0.0",
+          kind: "purged-request",
+          epoch: snapshot.epoch,
+          revision: snapshot.revision,
+          tombstoneDigest: snapshot.snapshotDigest,
+          purgedAt: now
+        }), snapshot.taskCorrelation, snapshot.epoch);
+        this.database.prepare("UPDATE continuity_tasks SET updated_at = ? WHERE task_correlation = ?").run(now, snapshot.taskCorrelation);
+      }
+      const deleteByTask = [
+        "continuity_snapshots",
+        "continuity_requests",
+        "continuity_tombstones",
+        "continuity_observations"
+      ].map((table) => this.database.prepare(`DELETE FROM ${table} WHERE task_correlation = ?`));
+      for (const task of preview.tasks) {
+        for (const statement of deleteByTask) statement.run(task.taskCorrelation);
+        this.database.prepare("DELETE FROM continuity_tasks WHERE task_correlation = ?").run(task.taskCorrelation);
+      }
+      this.database.exec("COMMIT;");
+      return { snapshots: preview.snapshots.length, tasks: preview.tasks.length };
+    } catch (cause) {
+      try {
+        this.database.exec("ROLLBACK;");
+      } catch {
+      }
+      if (cause instanceof ContinuityStoreError) throw cause;
+      throw new ContinuityStoreError("Cannot execute continuity state cleanup.", cause);
+    }
+  }
   initializeSchema() {
     const version2 = this.database.prepare("PRAGMA user_version").get();
-    if (version2.user_version !== 0 && version2.user_version !== SCHEMA_VERSION) {
+    if (version2.user_version < 0 || version2.user_version > SCHEMA_VERSION) {
       throw new ContinuityStoreError(`Unsupported continuity schema version ${version2.user_version}.`);
     }
     this.database.exec(`
@@ -16398,8 +16545,18 @@ var SqliteContinuityStore = class {
         success INTEGER NOT NULL CHECK (success IN (0, 1)),
         observed_at TEXT NOT NULL
       );
+      CREATE INDEX IF NOT EXISTS continuity_snapshots_cleanup
+        ON continuity_snapshots(updated_at, task_correlation, epoch);
+      CREATE INDEX IF NOT EXISTS continuity_tasks_cleanup
+        ON continuity_tasks(updated_at, task_correlation);
+      CREATE INDEX IF NOT EXISTS continuity_requests_cleanup
+        ON continuity_requests(created_at, task_correlation, epoch);
+      CREATE INDEX IF NOT EXISTS continuity_tombstones_cleanup
+        ON continuity_tombstones(purged_at, task_correlation, epoch);
+      CREATE INDEX IF NOT EXISTS continuity_observations_cleanup
+        ON continuity_observations(observed_at, task_correlation, epoch);
     `);
-    if (version2.user_version === 0) this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+    if (version2.user_version < SCHEMA_VERSION) this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }
 };
 
@@ -16894,8 +17051,8 @@ import { readFileSync as readFileSync2, readdirSync } from "node:fs";
 import path5 from "node:path";
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path7 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path7, "utf8"));
+  const path8 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path8, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -16925,7 +17082,11 @@ var contractSchemas = {
   inspectContextRequest: loadSchema("inspect-context-request.v1.schema.json"),
   loadContextRequest: loadSchema("load-context-request.v1.schema.json"),
   suppressContextRestoreRequest: loadSchema("suppress-context-restore-request.v1.schema.json"),
-  purgeDirectContextRequest: loadSchema("purge-direct-context-request.v1.schema.json")
+  purgeDirectContextRequest: loadSchema("purge-direct-context-request.v1.schema.json"),
+  prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
+  executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
+  stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
+  stateCleanupReceipt: loadSchema("state-cleanup-receipt.v1.schema.json")
 };
 function errorText(errors) {
   return (errors ?? []).map((error2) => `${error2.instancePath || "/"} ${error2.message ?? "is invalid"}`).join("; ");
@@ -16965,7 +17126,11 @@ var ContractValidator = class {
       inspectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/inspect-context-request.v1.schema.json"),
       loadContextRequest: ajv.getSchema("https://skill-suite.local/contracts/load-context-request.v1.schema.json"),
       suppressContextRestoreRequest: ajv.getSchema("https://skill-suite.local/contracts/suppress-context-restore-request.v1.schema.json"),
-      purgeDirectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/purge-direct-context-request.v1.schema.json")
+      purgeDirectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/purge-direct-context-request.v1.schema.json"),
+      prepareStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/prepare-state-cleanup-request.v1.schema.json"),
+      executeStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/execute-state-cleanup-request.v1.schema.json"),
+      stateCleanupPlan: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-plan.v1.schema.json"),
+      stateCleanupReceipt: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-receipt.v1.schema.json")
     };
   }
   assert(name, value) {
@@ -17049,6 +17214,18 @@ var ContractValidator = class {
   purgeDirectContextRequest(value) {
     return this.assert("purgeDirectContextRequest", value);
   }
+  prepareStateCleanupRequest(value) {
+    return this.assert("prepareStateCleanupRequest", value);
+  }
+  executeStateCleanupRequest(value) {
+    return this.assert("executeStateCleanupRequest", value);
+  }
+  stateCleanupPlan(value) {
+    return this.assert("stateCleanupPlan", value);
+  }
+  stateCleanupReceipt(value) {
+    return this.assert("stateCleanupReceipt", value);
+  }
   apiResult(value) {
     return this.assert("apiResult", value);
   }
@@ -17127,12 +17304,12 @@ var ContractValidator = class {
       });
     }
     const raw = readFileSync2(schemaPath);
-    const digest = `sha256:${createHash3("sha256").update(raw).digest("hex")}`;
-    if (digest !== reference.digest) {
+    const digest2 = `sha256:${createHash3("sha256").update(raw).digest("hex")}`;
+    if (digest2 !== reference.digest) {
       throw new WorkflowContractError("STALE_REVISION", `${label} schema changed after planning.`, {
         schemaPath: reference.path,
         expectedDigest: reference.digest,
-        actualDigest: digest
+        actualDigest: digest2
       });
     }
     return JSON.parse(raw.toString("utf8"));
@@ -19059,7 +19236,7 @@ function invalidInput(message) {
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService()) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup) {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} } }
@@ -19167,6 +19344,18 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         description: "Delete the current direct-task payload and retain only a hash tombstone; workflow receipts are never deleted.",
         inputSchema: contractSchemas.purgeDirectContextRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: true, openWorldHint: false }
+      },
+      {
+        name: "prepare_state_cleanup",
+        description: "Preview fixed retention cleanup candidates and issue a 15-minute, one-use token without deleting data.",
+        inputSchema: contractSchemas.prepareStateCleanupRequest,
+        annotations: { readOnlyHint: true, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "execute_state_cleanup",
+        description: "Recheck a preview token, create verified SQLite backups, and atomically delete only the bound inactive candidates. Backups are retained until manually deleted.",
+        inputSchema: contractSchemas.executeStateCleanupRequest,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false }
       }
     ]
   }));
@@ -19293,6 +19482,12 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
           break;
         case "purge_direct_context":
           result = continuity.purgeDirectContext(args);
+          break;
+        case "prepare_state_cleanup":
+          result = cleanup ? cleanup.prepare(args) : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
+          break;
+        case "execute_state_cleanup":
+          result = cleanup ? cleanup.execute(args) : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
           break;
         default:
           result = {
@@ -19670,7 +19865,7 @@ function mergePluginUpdateState(existing, incoming) {
 }
 
 // mcp-server/src/sqlite-workflow-store.ts
-var SCHEMA_VERSION2 = 3;
+var SCHEMA_VERSION2 = 4;
 var SqliteWorkflowStore = class {
   constructor(databasePath) {
     this.databasePath = databasePath;
@@ -19745,10 +19940,11 @@ var SqliteWorkflowStore = class {
   }
   insertRun(receipt) {
     try {
+      const now = (/* @__PURE__ */ new Date()).toISOString();
       this.database.prepare(`
-        INSERT INTO workflow_runs (run_id, revision, receipt_json, updated_at)
-        VALUES (?, ?, ?, ?)
-      `).run(receipt.runId, receipt.revision, JSON.stringify(receipt), (/* @__PURE__ */ new Date()).toISOString());
+        INSERT INTO workflow_runs (run_id, revision, state, receipt_json, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(receipt.runId, receipt.revision, receipt.state, JSON.stringify(receipt), now, now);
     } catch (cause) {
       throw this.storageError("Cannot persist the workflow run.", cause, { runId: receipt.runId });
     }
@@ -19781,10 +19977,11 @@ var SqliteWorkflowStore = class {
       return this.transaction(() => {
         const result = this.database.prepare(`
           UPDATE workflow_runs
-          SET revision = ?, receipt_json = ?, updated_at = ?
+          SET revision = ?, state = ?, receipt_json = ?, updated_at = ?
           WHERE run_id = ? AND revision = ?
         `).run(
           receipt.revision,
+          receipt.state,
           JSON.stringify(receipt),
           (/* @__PURE__ */ new Date()).toISOString(),
           receipt.runId,
@@ -20016,8 +20213,9 @@ var SqliteWorkflowStore = class {
         `).run(root.revision, JSON.stringify(root), root.updatedAt, root.rootId, expectedRootRevision);
         if (Number(rootUpdate.changes) !== 1) return null;
         this.database.prepare(`
-          INSERT INTO workflow_runs (run_id, revision, receipt_json, updated_at) VALUES (?, ?, ?, ?)
-        `).run(receipt.runId, receipt.revision, JSON.stringify(receipt), consumedAt);
+          INSERT INTO workflow_runs (run_id, revision, state, receipt_json, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(receipt.runId, receipt.revision, receipt.state, JSON.stringify(receipt), consumedAt, consumedAt);
         this.database.prepare(`
           INSERT INTO convergence_attempts (
             root_id, epoch, ordinal, lease_id, run_id, state, outcome_json, started_at, updated_at
@@ -20143,6 +20341,138 @@ var SqliteWorkflowStore = class {
       throw this.storageError("Cannot claim plugin update notice.", cause, { targetId, latestVersion });
     }
   }
+  getSchemaVersion() {
+    return this.database.prepare("PRAGMA user_version").get().user_version;
+  }
+  isConvergenceRootActive(rootId) {
+    const row = this.database.prepare(`
+      SELECT 1 AS active FROM convergence_roots
+      WHERE root_id = ? AND state IN ('open', 'needs-review', 'needs-user')
+    `).get(rootId);
+    return Boolean(row);
+  }
+  previewCleanup(cutoff) {
+    const roots = this.database.prepare(`
+      SELECT root_id, revision, state, updated_at
+      FROM convergence_roots
+      WHERE state IN ('completed', 'abandoned') AND updated_at <= ?
+      ORDER BY root_id
+    `).all(cutoff);
+    const linkedRuns = this.database.prepare(`
+      SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY run_id
+    `);
+    const rootCandidates = roots.map((root) => ({
+      rootId: root.root_id,
+      revision: root.revision,
+      state: root.state,
+      updatedAt: root.updated_at,
+      runIds: linkedRuns.all(root.root_id).map((row) => row.run_id)
+    }));
+    const runs = this.database.prepare(`
+      SELECT run_id, revision, state, updated_at
+      FROM workflow_runs
+      WHERE state IN ('failed', 'passed', 'blocked')
+        AND updated_at <= ?
+        AND NOT EXISTS (SELECT 1 FROM workflow_attempt_links links WHERE links.run_id = workflow_runs.run_id)
+      ORDER BY run_id
+    `).all(cutoff);
+    const protectedRow = this.database.prepare(`
+      SELECT COUNT(*) AS count FROM convergence_roots
+      WHERE state IN ('open', 'needs-review', 'needs-user')
+    `).get();
+    return {
+      roots: rootCandidates,
+      standaloneRuns: runs.map((run) => ({
+        runId: run.run_id,
+        revision: run.revision,
+        state: run.state,
+        updatedAt: run.updated_at
+      })),
+      protectedActiveRoots: protectedRow.count
+    };
+  }
+  claimCleanupPlan(planId, planDigest, claimedAt) {
+    try {
+      const result = this.database.prepare(`
+        INSERT OR IGNORE INTO state_cleanup_claims(plan_id, plan_digest, claimed_at)
+        VALUES (?, ?, ?)
+      `).run(planId, planDigest, claimedAt);
+      return Number(result.changes) === 1;
+    } catch (cause) {
+      throw this.storageError("Cannot claim the state cleanup plan.", cause, { planId });
+    }
+  }
+  backupTo(targetPath) {
+    if (this.databasePath === ":memory:") {
+      throw new WorkflowContractError("INVALID_INPUT", "An in-memory workflow database cannot be cleaned destructively.");
+    }
+    try {
+      this.database.prepare("VACUUM INTO ?").run(targetPath);
+      const backup = new DatabaseSync2(targetPath, { readOnly: true });
+      try {
+        const result = backup.prepare("PRAGMA integrity_check").get();
+        if (result.integrity_check !== "ok") throw new Error(`integrity_check returned ${result.integrity_check}`);
+      } finally {
+        backup.close();
+      }
+    } catch (cause) {
+      throw this.storageError("Cannot create a verified workflow cleanup backup.", cause, { targetPath });
+    }
+  }
+  executeCleanup(preview) {
+    try {
+      return this.transaction(() => {
+        const verifyRoot = this.database.prepare(`
+          SELECT state, revision, updated_at FROM convergence_roots WHERE root_id = ?
+        `);
+        const verifyRun = this.database.prepare(`
+          SELECT state, revision, updated_at FROM workflow_runs WHERE run_id = ?
+        `);
+        for (const root of preview.roots) {
+          const row = verifyRoot.get(root.rootId);
+          if (!row || row.state !== root.state || row.revision !== root.revision || row.updated_at !== root.updatedAt) {
+            throw new WorkflowContractError("STALE_REVISION", "A cleanup root changed after preview.", { rootId: root.rootId });
+          }
+          const actualRunIds = this.database.prepare(`
+            SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY run_id
+          `).all(root.rootId).map((item) => item.run_id);
+          if (JSON.stringify(actualRunIds) !== JSON.stringify(root.runIds)) {
+            throw new WorkflowContractError("STALE_REVISION", "A cleanup root's linked runs changed after preview.", { rootId: root.rootId });
+          }
+        }
+        for (const run of preview.standaloneRuns) {
+          const row = verifyRun.get(run.runId);
+          if (!row || row.state !== run.state || row.revision !== run.revision || row.updated_at !== run.updatedAt) {
+            throw new WorkflowContractError("STALE_REVISION", "A cleanup workflow run changed after preview.", { runId: run.runId });
+          }
+        }
+        const deleteLinks = this.database.prepare("DELETE FROM workflow_attempt_links WHERE root_id = ?");
+        const deleteAttempts = this.database.prepare("DELETE FROM convergence_attempts WHERE root_id = ?");
+        const deleteReviews = this.database.prepare("DELETE FROM convergence_reviews WHERE root_id = ?");
+        const deleteLeases = this.database.prepare("DELETE FROM convergence_leases WHERE root_id = ?");
+        const deleteEpochs = this.database.prepare("DELETE FROM convergence_epochs WHERE root_id = ?");
+        const deleteRoot = this.database.prepare("DELETE FROM convergence_roots WHERE root_id = ?");
+        const deleteRun = this.database.prepare("DELETE FROM workflow_runs WHERE run_id = ?");
+        let deletedRuns = 0;
+        for (const root of preview.roots) {
+          deleteLinks.run(root.rootId);
+          deleteAttempts.run(root.rootId);
+          deleteReviews.run(root.rootId);
+          deleteLeases.run(root.rootId);
+          deleteEpochs.run(root.rootId);
+          deleteRoot.run(root.rootId);
+          for (const runId of root.runIds) {
+            deletedRuns += Number(deleteRun.run(runId).changes);
+          }
+        }
+        for (const run of preview.standaloneRuns) deletedRuns += Number(deleteRun.run(run.runId).changes);
+        return { roots: preview.roots.length, runs: deletedRuns };
+      });
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError("Cannot execute workflow state cleanup.", cause);
+    }
+  }
   close() {
     if (this.closed) return;
     this.database.close();
@@ -20158,6 +20488,15 @@ var SqliteWorkflowStore = class {
       });
     }
     this.transaction(() => {
+      if (row.user_version > 0 && row.user_version < 4) {
+        this.database.exec(`
+          ALTER TABLE workflow_runs ADD COLUMN state TEXT;
+          ALTER TABLE workflow_runs ADD COLUMN created_at TEXT;
+          UPDATE workflow_runs
+          SET state = COALESCE(json_extract(receipt_json, '$.state'), 'blocked'),
+              created_at = updated_at;
+        `);
+      }
       this.database.exec(`
         CREATE TABLE IF NOT EXISTS workflow_metadata (
           key TEXT PRIMARY KEY,
@@ -20167,9 +20506,13 @@ var SqliteWorkflowStore = class {
         CREATE TABLE IF NOT EXISTS workflow_runs (
           run_id TEXT PRIMARY KEY,
           revision INTEGER NOT NULL CHECK (revision >= 0),
+          state TEXT NOT NULL CHECK (state IN ('ready', 'running', 'needs-input', 'needs-approval', 'needs-redesign', 'failed', 'passed', 'blocked')),
           receipt_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
         ) STRICT;
+        CREATE INDEX IF NOT EXISTS workflow_runs_cleanup
+          ON workflow_runs(state, updated_at);
         CREATE TABLE IF NOT EXISTS plugin_update_state (
           target_id TEXT PRIMARY KEY,
           current_version TEXT NOT NULL,
@@ -20249,6 +20592,11 @@ var SqliteWorkflowStore = class {
           lease_id TEXT NOT NULL UNIQUE REFERENCES convergence_leases(lease_id),
           epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
           ordinal INTEGER NOT NULL CHECK (ordinal >= 1 AND ordinal <= 3)
+        ) STRICT;
+        CREATE TABLE IF NOT EXISTS state_cleanup_claims (
+          plan_id TEXT PRIMARY KEY,
+          plan_digest TEXT NOT NULL,
+          claimed_at TEXT NOT NULL
         ) STRICT;
         PRAGMA user_version = ${SCHEMA_VERSION2};
       `);
@@ -22205,6 +22553,260 @@ var WorkflowService = class {
   }
 };
 
+// mcp-server/src/state-cleanup-service.ts
+import { createHash as createHash4, createHmac as createHmac3, randomBytes as randomBytes3, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+import { chmodSync as chmodSync3, mkdirSync as mkdirSync3 } from "node:fs";
+import path7 from "node:path";
+var DAY_MS = 24 * 60 * 60 * 1e3;
+var TOKEN_TTL_MS = 15 * 60 * 1e3;
+var POLICY = {
+  workflowRetentionDays: 180,
+  continuityPayloadRetentionDays: 30,
+  continuityRecordRetentionDays: 180
+};
+function digest(value) {
+  return `sha256:${createHash4("sha256").update(JSON.stringify(value)).digest("hex")}`;
+}
+function protection() {
+  return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
+}
+function databaseIdentity(databasePath) {
+  return databasePath === ":memory:" ? databasePath : path7.resolve(databasePath);
+}
+function apiError2(error2) {
+  const normalized = error2 instanceof WorkflowContractError ? error2 : new WorkflowContractError("INVALID_INPUT", error2 instanceof Error ? error2.message : String(error2));
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: normalized.toBody() };
+}
+var StateCleanupService = class {
+  constructor(workflowStore, continuityStore, validator, clock = () => /* @__PURE__ */ new Date()) {
+    this.workflowStore = workflowStore;
+    this.continuityStore = continuityStore;
+    this.validator = validator;
+    this.clock = clock;
+    this.secret = Buffer.from(workflowStore.getOrCreateSecret(
+      "state-cleanup-signing-key",
+      () => randomBytes3(32).toString("base64url")
+    ), "base64url");
+  }
+  workflowStore;
+  continuityStore;
+  validator;
+  clock;
+  secret;
+  prepare(value) {
+    try {
+      this.validator.prepareStateCleanupRequest(value);
+      const created = this.clock();
+      const createdAt = created.toISOString();
+      const cutoffs = {
+        workflow: new Date(created.getTime() - POLICY.workflowRetentionDays * DAY_MS).toISOString(),
+        continuityPayload: new Date(created.getTime() - POLICY.continuityPayloadRetentionDays * DAY_MS).toISOString(),
+        continuityRecord: new Date(created.getTime() - POLICY.continuityRecordRetentionDays * DAY_MS).toISOString()
+      };
+      const { workflow, continuity, protectedContinuityTasks } = this.currentCandidates(cutoffs);
+      const candidates = {
+        workflowRoots: workflow.roots,
+        standaloneWorkflowRuns: workflow.standaloneRuns,
+        continuitySnapshots: continuity?.snapshots ?? [],
+        continuityTasks: continuity?.tasks ?? []
+      };
+      const candidateDigest = digest(candidates);
+      const payload = {
+        schemaVersion: "1.0.0",
+        planId: randomUUID2(),
+        createdAt,
+        expiresAt: new Date(created.getTime() + TOKEN_TTL_MS).toISOString(),
+        policy: POLICY,
+        cutoffs,
+        candidates,
+        candidateDigest,
+        databases: {
+          workflow: { path: databaseIdentity(this.workflowStore.databasePath), schemaVersion: this.workflowStore.getSchemaVersion() },
+          continuity: this.continuityStore ? { path: databaseIdentity(this.continuityStore.databasePath), schemaVersion: this.continuityStore.getSchemaVersion() } : null
+        }
+      };
+      const plan = {
+        schemaVersion: "1.0.0",
+        planId: payload.planId,
+        createdAt,
+        expiresAt: payload.expiresAt,
+        policy: POLICY,
+        cutoffs,
+        candidates,
+        counts: {
+          workflowRoots: workflow.roots.length,
+          workflowRuns: workflow.standaloneRuns.length + workflow.roots.reduce((count, root) => count + root.runIds.length, 0),
+          continuitySnapshots: continuity?.snapshots.length ?? 0,
+          continuityTasks: continuity?.tasks.length ?? 0,
+          protectedActiveRoots: workflow.protectedActiveRoots,
+          protectedActiveContinuityTasks: protectedContinuityTasks
+        },
+        candidateDigest,
+        protection: protection(),
+        planToken: this.sign(payload)
+      };
+      this.validator.stateCleanupPlan(plan);
+      return { schemaVersion: "1.0.0", ok: true, data: plan, error: null };
+    } catch (error2) {
+      return apiError2(error2);
+    }
+  }
+  execute(value) {
+    try {
+      const request = this.validator.executeStateCleanupRequest(value);
+      const payload = this.verify(request.planToken);
+      const now = this.clock();
+      if (Date.parse(payload.expiresAt) <= now.getTime()) {
+        throw new WorkflowContractError("STALE_REVISION", "The state cleanup plan token expired.", { planId: payload.planId });
+      }
+      this.assertDatabaseIdentity(payload);
+      const current = this.currentCandidates(payload.cutoffs);
+      const candidates = {
+        workflowRoots: current.workflow.roots,
+        standaloneWorkflowRuns: current.workflow.standaloneRuns,
+        continuitySnapshots: current.continuity?.snapshots ?? [],
+        continuityTasks: current.continuity?.tasks ?? []
+      };
+      const currentDigest = digest(candidates);
+      if (currentDigest !== payload.candidateDigest || JSON.stringify(candidates) !== JSON.stringify(payload.candidates)) {
+        throw new WorkflowContractError("STALE_REVISION", "State cleanup candidates changed after preview.", {
+          planId: payload.planId,
+          expectedDigest: payload.candidateDigest,
+          actualDigest: currentDigest
+        });
+      }
+      if (!this.workflowStore.claimCleanupPlan(payload.planId, payload.candidateDigest, now.toISOString())) {
+        throw new WorkflowContractError("STALE_REVISION", "The state cleanup plan token was already used.", { planId: payload.planId });
+      }
+      const workflowHasCandidates = candidates.workflowRoots.length > 0 || candidates.standaloneWorkflowRuns.length > 0;
+      const continuityHasCandidates = candidates.continuitySnapshots.length > 0 || candidates.continuityTasks.length > 0;
+      const workflowResult = {
+        status: "skipped",
+        backupPath: null,
+        deletedRoots: 0,
+        deletedRuns: 0,
+        error: null
+      };
+      const continuityResult = {
+        status: this.continuityStore ? "skipped" : "unavailable",
+        backupPath: null,
+        deletedSnapshots: 0,
+        deletedTasks: 0,
+        error: null
+      };
+      if (workflowHasCandidates) {
+        try {
+          workflowResult.backupPath = this.backupPath(this.workflowStore.databasePath, "workflows", payload.planId);
+          this.workflowStore.backupTo(workflowResult.backupPath);
+          this.protectBackup(workflowResult.backupPath);
+          const deleted = this.workflowStore.executeCleanup({
+            roots: candidates.workflowRoots,
+            standaloneRuns: candidates.standaloneWorkflowRuns,
+            protectedActiveRoots: current.workflow.protectedActiveRoots
+          });
+          workflowResult.status = "completed";
+          workflowResult.deletedRoots = deleted.roots;
+          workflowResult.deletedRuns = deleted.runs;
+        } catch (error2) {
+          workflowResult.status = "failed";
+          workflowResult.error = error2 instanceof Error ? error2.message : String(error2);
+        }
+      }
+      if (continuityHasCandidates && this.continuityStore && current.continuity) {
+        try {
+          continuityResult.backupPath = this.backupPath(this.continuityStore.databasePath, "continuity", payload.planId);
+          this.continuityStore.backupTo(continuityResult.backupPath);
+          this.protectBackup(continuityResult.backupPath);
+          const deleted = this.continuityStore.executeCleanup(current.continuity, now.toISOString());
+          continuityResult.status = "completed";
+          continuityResult.deletedSnapshots = deleted.snapshots;
+          continuityResult.deletedTasks = deleted.tasks;
+        } catch (error2) {
+          continuityResult.status = "failed";
+          continuityResult.error = error2 instanceof Error ? error2.message : String(error2);
+        }
+      }
+      const failures = workflowResult.status === "failed" || continuityResult.status === "failed";
+      const noOp = !workflowHasCandidates && !continuityHasCandidates;
+      const receipt = {
+        schemaVersion: "1.0.0",
+        planId: payload.planId,
+        status: noOp ? "no-op" : failures ? "partial" : "completed",
+        executedAt: now.toISOString(),
+        candidateDigest: payload.candidateDigest,
+        databases: { workflow: workflowResult, continuity: continuityResult },
+        backupRetention: "manual-deletion-only",
+        protection: protection()
+      };
+      this.validator.stateCleanupReceipt(receipt);
+      return { schemaVersion: "1.0.0", ok: true, data: receipt, error: null };
+    } catch (error2) {
+      return apiError2(error2);
+    }
+  }
+  currentCandidates(cutoffs) {
+    const workflow = this.workflowStore.previewCleanup(cutoffs.workflow);
+    const continuity = this.continuityStore?.previewCleanup(cutoffs.continuityPayload, cutoffs.continuityRecord) ?? null;
+    let protectedContinuityTasks = continuity?.protectedActiveTasks ?? 0;
+    if (continuity) {
+      const allowedTasks = continuity.tasks.filter((task) => {
+        const active = task.rootId ? this.workflowStore.isConvergenceRootActive(task.rootId) : false;
+        if (active) protectedContinuityTasks += 1;
+        return !active;
+      });
+      continuity.tasks = allowedTasks;
+      const allowedIds = new Set(allowedTasks.map((task) => task.taskCorrelation));
+      continuity.snapshots = continuity.snapshots.filter((snapshot) => !allowedIds.has(snapshot.taskCorrelation));
+    }
+    return { workflow, continuity, protectedContinuityTasks };
+  }
+  sign(payload) {
+    const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+    const signature = createHmac3("sha256", this.secret).update(encoded).digest("base64url");
+    return `${encoded}.${signature}`;
+  }
+  verify(token) {
+    const [encoded, signature, extra] = token.split(".");
+    if (!encoded || !signature || extra) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
+    const expected = createHmac3("sha256", this.secret).update(encoded).digest();
+    let actual;
+    try {
+      actual = Buffer.from(signature, "base64url");
+    } catch {
+      throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
+    }
+    if (actual.toString("base64url") !== signature || actual.length !== expected.length || !timingSafeEqual3(actual, expected)) {
+      throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token signature is invalid.");
+    }
+    try {
+      const payloadBytes = Buffer.from(encoded, "base64url");
+      if (payloadBytes.toString("base64url") !== encoded) throw new Error("non-canonical token payload");
+      return JSON.parse(payloadBytes.toString("utf8"));
+    } catch {
+      throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token payload is invalid.");
+    }
+  }
+  assertDatabaseIdentity(payload) {
+    const workflow = payload.databases.workflow;
+    if (workflow.path !== databaseIdentity(this.workflowStore.databasePath) || workflow.schemaVersion !== this.workflowStore.getSchemaVersion()) {
+      throw new WorkflowContractError("STALE_REVISION", "The workflow database identity or schema changed after preview.");
+    }
+    const continuity = this.continuityStore ? { path: databaseIdentity(this.continuityStore.databasePath), schemaVersion: this.continuityStore.getSchemaVersion() } : null;
+    if (JSON.stringify(continuity) !== JSON.stringify(payload.databases.continuity)) {
+      throw new WorkflowContractError("STALE_REVISION", "The continuity database identity or schema changed after preview.");
+    }
+  }
+  backupPath(databasePath, label, planId) {
+    if (databasePath === ":memory:") throw new WorkflowContractError("INVALID_INPUT", "In-memory databases cannot be cleaned destructively.");
+    const directory = path7.join(path7.dirname(path7.resolve(databasePath)), "backups");
+    mkdirSync3(directory, { recursive: true, mode: 448 });
+    return path7.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
+  }
+  protectBackup(targetPath) {
+    if (process.platform !== "win32") chmodSync3(targetPath, 384);
+  }
+};
+
 // mcp-server/src/index.ts
 async function main() {
   const registryPath = resolveRegistryPath();
@@ -22233,7 +22835,8 @@ async function main() {
     } catch {
     }
   }
-  const server = createMcpServer(service, updates, continuity);
+  const cleanup = new StateCleanupService(store, continuityStore, validator);
+  const server = createMcpServer(service, updates, continuity, cleanup);
   await server.connect(new StdioServerTransport());
 }
 void main().catch((error2) => {
