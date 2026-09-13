@@ -507,6 +507,33 @@ describe("local MCP convergence guard", () => {
     expect(current.workflowRunIds).toHaveLength(1);
   });
 
+  it("accepts an independent review when frame drift is detected before any attempt starts", async () => {
+    const { service } = await createHarness();
+    const root = openRoot(service);
+    const changedFrame = frame({ controlVersion: "control-v2" });
+    const claimed = service.claimWorkflowAttempt(proposal(service, root, { frame: changedFrame }));
+    expect(claimed.error?.code).toBe("FRAME_REVIEW_REQUIRED");
+
+    const current = status(service, root.rootId);
+    expect(current.leases).toHaveLength(0);
+    const gateReview = review(current, {
+      classification: "semantics-changing",
+      route: "needs-user",
+      proposedFrame: changedFrame,
+    }, "review-before-first-attempt");
+    gateReview.implementationActorIds = [];
+
+    const resolved = service.resolveConvergenceGate({
+      schemaVersion: "1.0.0",
+      rootId: root.rootId,
+      expectedRevision: current.root.revision,
+      review: gateReview,
+    });
+    expect(resolved.error).toBeNull();
+    expect(resolved.data?.root.state).toBe("needs-user");
+    expect(resolved.data?.reviews[0]?.implementationActorIds).toEqual([]);
+  });
+
   it("rejects a repeated target and repeated evidence as NEW_EVIDENCE_REQUIRED", async () => {
     const { service } = await createHarness();
     const root = openRoot(service);
