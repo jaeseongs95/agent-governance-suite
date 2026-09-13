@@ -30,6 +30,7 @@
 | --- | --- | --- | --- |
 | 0. `v1.1.0` 안정화 | 부분 완료 | 거버넌스 릴리스 운영과 한국어 산문 워크플로의 계약·품질·재현성 확보 | 비활성 산문 provider, 검증된 receipt 경로, 품질 평가 결과, 고정된 원본 ref |
 | 0.5. 업데이트 알림 | 완료 | 안정 버전 존재 여부만 안내 | `check_for_updates`, SQLite v2 상태, 일회성 MCP notice |
+| 0.6. 모델·추론 수준 안내 | 별도 브랜치 구현·검증 완료, 통합 보류 | 요청 난도와 관측 가능한 현재 설정을 비교해 과다·적정·부족 여부 안내 | `model-effort-advisor`, `ModelEffortAdvice.v1`, 정상·경계·실패 fixture |
 | 1. 실행 전 신뢰성 | 다음 | 평가 오류와 동시 작업 충돌을 조기에 차단 | `evaluation-validity-auditor`, `active-workspace-guard` |
 | 2. 복구 워크플로 | 계획됨 | blocker 진단 뒤 선택 가능한 복구 전략 제공 | `recovery-strategy-selector`, `RecoveryHandoff.v1` |
 | 3. 실행 환경과 연속성 | 설계 필요 | 실행 가능 여부를 먼저 확인하고 세션 복원을 표준화 | `runtime-capability-profiler`, continuity provider |
@@ -74,6 +75,23 @@
 - 캐시, 강제 확인, 실패 재시도, SemVer 비교, 버전당 한 번 안내와 재시작 후 상태 복구 테스트가 통과한다.
 - STDIO 통합 테스트에서 새 도구와 조건부 두 번째 notice block이 확인된다.
 - 전체 릴리스 검증을 통과하고 `v1.1.0` 변경과 섞이지 않은 별도 변경으로 검토할 수 있다.
+
+## 0.6단계: 모델·추론 수준 적합성 안내
+
+`model-effort-advisor`는 `codex/model-effort-advisor` 브랜치의 별도 worktree에서 구현과 검증을 마쳤다. 아직 `main`에 병합하지 않았고 공개 릴리스에도 포함하지 않았다. 0단계의 변경 범위와 평가 결과를 먼저 고정한다는 원칙에 따라 현재 상태는 통합 보류다.
+
+- 현재 task의 모델과 reasoning effort가 host runtime metadata, 사용자 설명 또는 현재 요청에 첨부된 화면에서 확인될 때만 요청 난도·위험과 비교한다.
+- 판정은 `OVER_PROVISIONED`, `ADEQUATE`, `UNDER_PROVISIONED`, `UNOBSERVABLE`로 구분한다.
+- 과다하거나 부족하다는 근거가 분명할 때만 짧게 안내하고 요청 처리는 계속한다. 적정하면 별도 안내를 생략한다.
+- 현재 선택을 관측할 수 없으면 값을 추정하거나 일반 작업에서 사용자에게 재확인을 요구하지 않는다.
+- 모델이나 reasoning effort를 자동으로 변경하지 않으며, 요금제·잔여 사용량이나 실제 비용을 관측 근거 없이 추정하지 않는다.
+
+### 현재 검증 상태와 남은 결정
+
+- schema, registry bootstrap provider, 오케스트레이터 라우팅과 정상·경계·실패 회귀 테스트를 브랜치에 추가했다.
+- `pnpm bundle:check`, `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm runtime:check`, `pnpm validate:all`, `pnpm validate:official`, `git diff --check`가 통과했다.
+- 스킬 자체만으로는 매 요청에서 UI의 현재 선택을 읽을 수 없다. host가 runtime metadata를 제공하지 않는 환경에서는 사용자 설명이나 현재 요청의 화면 자료가 있어야 구체적인 판정이 가능하다.
+- `main` 통합 전에는 0단계 종료 조건과의 우선순위, host metadata 연동 여부, 관측 불가 시의 안내 정책을 최종 확정한다.
 
 ## 1단계: 평가와 작업 공간의 신뢰성 확보
 
