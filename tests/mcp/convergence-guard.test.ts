@@ -2,7 +2,7 @@ import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Worker } from "node:worker_threads";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   type AttemptLeaseV1,
@@ -403,6 +403,105 @@ describe("local MCP convergence guard", () => {
     const result = service.claimWorkflowAttempt(mismatched);
     expect(result.error?.code).toBe("LEASE_CONFLICT");
     expect(status(service, root.rootId).leases).toHaveLength(0);
+  });
+
+  it("reuses root and lease bindings when compact claim and guarded start omit duplicate values", async () => {
+    const harness = await createHarness();
+    const root = openRoot(harness.service);
+    const workflowPlan = plan(harness.service, root.taskEnvelope);
+    const partial = harness.service.claimWorkflowAttempt({
+      schemaVersion: "1.0.0",
+      rootId: root.rootId,
+      expectedRevision: root.revision,
+      taskEnvelope: root.taskEnvelope,
+      plan: workflowPlan,
+      actorId: "implementation-agent",
+      outputTargets: ["src/candidate.ts"],
+      priorFailure: null,
+    });
+    expect(partial.error?.code).toBe("INVALID_INPUT");
+
+    const lease = harness.service.claimWorkflowAttempt({
+      schemaVersion: "1.0.0",
+      rootId: root.rootId,
+      expectedRevision: root.revision,
+      plan: workflowPlan,
+      actorId: "implementation-agent",
+      outputTargets: ["src/candidate.ts"],
+      priorFailure: null,
+    });
+    expect(lease.error).toBeNull();
+    expect(status(harness.service, root.rootId).proposals[0]).toMatchObject({
+      taskEnvelope: root.taskEnvelope,
+      frame: root.frame,
+      plan: workflowPlan,
+    });
+
+    const tamperedLegacyStart = harness.service.startGuardedWorkflow({
+      schemaVersion: "1.0.0",
+      leaseId: lease.data!.leaseId,
+      expectedRootRevision: lease.data!.rootRevision,
+      plan: { ...workflowPlan, nextStageId: "tampered-stage" },
+    });
+    expect(tamperedLegacyStart.error?.code).toBe("INVALID_INPUT");
+
+    closeStore(harness.store);
+    const restartedStore = trackStore(harness.databasePath);
+    const restarted = serviceFor(harness.registryPath, restartedStore);
+    const started = restarted.startGuardedWorkflow({
+      schemaVersion: "1.0.0",
+      leaseId: lease.data!.leaseId,
+      expectedRootRevision: lease.data!.rootRevision,
+    });
+    expect(started.error).toBeNull();
+    expect(started.data).toMatchObject({ state: "running", revision: 0 });
+    expect(restarted.getWorkflowStatus(started.data!.runId).data?.plan.taskId).toBe(root.taskEnvelope.taskId);
+
+    const reused = restarted.startGuardedWorkflow({
+      schemaVersion: "1.0.0",
+      leaseId: lease.data!.leaseId,
+      expectedRootRevision: lease.data!.rootRevision,
+    });
+    expect(reused.error?.code).toBe("LEASE_CONFLICT");
+  });
+
+  it("preserves stale and expiry checks for planless guarded starts", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-13T00:00:00.000Z"));
+    try {
+      const { service } = await createHarness();
+      const root = openRoot(service);
+      const workflowPlan = plan(service, root.taskEnvelope);
+      const lease = service.claimWorkflowAttempt({
+        schemaVersion: "1.0.0",
+        rootId: root.rootId,
+        expectedRevision: root.revision,
+        plan: workflowPlan,
+        actorId: "implementation-agent",
+        outputTargets: ["src/candidate.ts"],
+        priorFailure: null,
+      });
+      expect(lease.error).toBeNull();
+
+      const stale = service.startGuardedWorkflow({
+        schemaVersion: "1.0.0",
+        leaseId: lease.data!.leaseId,
+        expectedRootRevision: lease.data!.rootRevision + 1,
+      });
+      expect(stale.error?.code).toBe("STALE_REVISION");
+      expect(status(service, root.rootId).leases[0]?.state).toBe("issued");
+
+      vi.advanceTimersByTime(301_000);
+      const expired = service.startGuardedWorkflow({
+        schemaVersion: "1.0.0",
+        leaseId: lease.data!.leaseId,
+        expectedRootRevision: lease.data!.rootRevision,
+      });
+      expect(expired.error?.code).toBe("LEASE_CONFLICT");
+      expect(status(service, root.rootId).leases[0]?.state).toBe("expired");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("atomically consumes the first lease and rejects reuse", async () => {
