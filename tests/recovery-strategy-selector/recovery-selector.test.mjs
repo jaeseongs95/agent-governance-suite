@@ -38,21 +38,6 @@ function taskEnvelope() {
 
 function selectionRequest() {
   const envelope = taskEnvelope();
-  const diagnosisRequest = {
-    schemaVersion: "1.0.0",
-    objective: "Repair the local cache writer.",
-    expectedBehavior: "The cache writer stores its entry.",
-    episodes: [{ attemptId: "attempt-1", operation: "write cache", stableFailureTuple: { code: "EACCES" }, environmentDigest: "env:local", changeSummary: "", evidenceRefs: ["cause-evidence"] }],
-    lastKnownGood: null,
-    constraints: ["Keep production untouched."],
-    authorization: { allowedChecks: [], approvalRequired: [], prohibitedChecks: [] },
-    evidenceBindings: [{ evidenceRef: "cause-evidence", artifactDigest: digest({ mode: "readonly" }), hypothesisIds: ["cause-cache-permission"], relation: "supports" }],
-    attemptedChecks: [],
-    candidateHypotheses: [{ id: "cause-cache-permission", causalLayer: "permission", statement: "The cache path lacks write permission.", supportingEvidence: ["cause-evidence"], contradictingEvidence: [], state: "confirmed" }],
-    candidateTests: [],
-    accessBlockers: [],
-  };
-  const report = analyzeDiagnosis(diagnosisRequest);
   const workflowReceipt = {
     schemaVersion: "1.0.0",
     runId: "run-failed",
@@ -64,6 +49,25 @@ function selectionRequest() {
     unresolved: ["cache-write-failed"],
     error: null,
   };
+  const diagnosisRequest = {
+    schemaVersion: "1.0.0",
+    objective: "Repair the local cache writer.",
+    expectedBehavior: "The cache writer stores its entry.",
+    episodes: [{ attemptId: "attempt-1", operation: "write cache", stableFailureTuple: { code: "EACCES" }, environmentDigest: "env:local", changeSummary: "", evidenceRefs: ["cause-evidence", "source-task-envelope", "source-workflow-receipt"] }],
+    lastKnownGood: null,
+    constraints: ["Keep production untouched."],
+    authorization: { allowedChecks: [], approvalRequired: [], prohibitedChecks: [] },
+    evidenceBindings: [
+      { evidenceRef: "cause-evidence", artifactDigest: digest({ mode: "readonly" }), hypothesisIds: ["cause-cache-permission"], relation: "supports" },
+      { evidenceRef: "source-task-envelope", artifactDigest: digest(envelope), hypothesisIds: ["cause-cache-permission"], relation: "supports" },
+      { evidenceRef: "source-workflow-receipt", artifactDigest: digest(workflowReceipt), hypothesisIds: ["cause-cache-permission"], relation: "supports" },
+    ],
+    attemptedChecks: [],
+    candidateHypotheses: [{ id: "cause-cache-permission", causalLayer: "permission", statement: "The cache path lacks write permission.", supportingEvidence: ["cause-evidence", "source-task-envelope", "source-workflow-receipt"], contradictingEvidence: [], state: "confirmed" }],
+    candidateTests: [],
+    accessBlockers: [],
+  };
+  const report = analyzeDiagnosis(diagnosisRequest);
   return {
     schemaVersion: "1.0.0",
     selectionId: "selection-001",
@@ -251,6 +255,18 @@ describe("recovery strategy selector", () => {
     const request = selectionRequest();
     request.diagnosis.request.objective = "A different failure objective.";
     expect(() => validateRequest(request)).toThrow(/diagnosis request digest/);
+  });
+
+  it("expected failure: rejects a fully regenerated diagnosis from another task and workflow", () => {
+    const request = selectionRequest();
+    for (const binding of request.diagnosis.request.evidenceBindings) {
+      if (binding.evidenceRef === "source-task-envelope") binding.artifactDigest = digest({ taskId: "unrelated-task" });
+      if (binding.evidenceRef === "source-workflow-receipt") binding.artifactDigest = digest({ runId: "unrelated-run" });
+    }
+    request.diagnosis.report = analyzeDiagnosis(request.diagnosis.request);
+    request.diagnosis.requestDigest = diagnosisRequestDigest(request.diagnosis.request);
+    request.diagnosis.digest = digest(request.diagnosis.report);
+    expect(() => validateRequest(request)).toThrow(/source task envelope digest/);
   });
 
   it("expected failure: rejects a receipt that is not bound to the source task", () => {

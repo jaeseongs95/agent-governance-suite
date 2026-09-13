@@ -2,7 +2,7 @@
 
 ## 전략 작성
 
-`DiagnosisReport.v1.verdict`가 `CAUSE_CONFIRMED`이고 `confirmedCause`가 존재할 때만 전략을 작성한다. 원본 diagnosis request와 외부 동결 digest로 기존 diagnosis validator를 다시 통과해야 하며, 실패 workflow receipt payload도 digest·run metadata·원본 task digest가 모두 일치해야 한다. 전략은 이름이나 중단 조건만 달리하지 말고 mechanism, actions 또는 write targets가 달라야 한다. 원래 목표와 수용 기준은 복구 편의를 위해 완화하지 않는다.
+`DiagnosisReport.v1.verdict`가 `CAUSE_CONFIRMED`이고 `confirmedCause`가 존재할 때만 전략을 작성한다. 원본 diagnosis request와 외부 동결 digest로 기존 diagnosis validator를 다시 통과해야 하며, 실패 workflow receipt payload도 digest·run metadata·원본 task digest가 모두 일치해야 한다. diagnosis objective는 source task objective와 같아야 하고, `confirmedCause.evidenceBindings`에는 source task digest와 workflow receipt digest가 확정 가설의 supporting evidence로 직접 들어 있어야 한다. 전략은 이름이나 중단 조건만 달리하지 말고 mechanism, actions 또는 write targets가 달라야 한다. 원래 목표와 수용 기준은 복구 편의를 위해 완화하지 않는다.
 
 각 action은 요청의 authorization evidence 하나와 정확히 대응해야 한다. 프로젝트 지침은 행동을 제한할 수 있지만 허용 권한을 새로 만들 수 없다. 승인으로 해소 가능한 행동은 전략에 남길 수 있으나 handoff만으로 승인됐다고 보지 않는다.
 
