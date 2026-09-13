@@ -30,6 +30,8 @@ run, revision, run ID sequence와 계획 서명 키는 SQLite schema v3에 저�
 
 Continuity는 같은 MCP 서버 프로세스 안의 별도 서비스이며 workflow schema v3를 변경하지 않습니다. Direct-task replacement snapshot, session epoch, compact marker, HMAC binding과 hash-only 관측은 기본적으로 workflow DB 옆의 `continuity.sqlite3`에 저장합니다. Orchestrated 상태의 원장은 계속 `workflows.sqlite3`의 `TaskEnvelope`, `WorkflowReceipt`와 convergence root이고 continuity DB에는 root 결속과 marker만 둡니다.
 
+Direct snapshot의 `core`와 `evidenceRefs`는 `continuity.sqlite3`에 평문 JSON으로 저장되고 자동 만료되지 않습니다. 호출자는 비밀값, 개인정보, 원시 로그·코드와 chain-of-thought를 checkpoint에서 제외하고 DB 파일의 접근 권한과 보존 기간을 관리합니다. `purge_direct_context`는 지정한 epoch의 direct payload와 idempotency 결과에 남을 수 있는 본문을 제거하고 hash-only tombstone만 유지하며 workflow receipt와 convergence root는 변경하지 않습니다.
+
 Codex lifecycle Hook은 MCP 준비 여부에 의존하지 않고 bundled continuity runtime을 직접 실행합니다. `PreToolUse`는 continuity 도구와 `open_convergence_root` 입력에 task correlation, epoch, 도구 이름, canonical input digest와 만료 시간을 HMAC으로 결속한 stateless token을 추가합니다. Raw session·turn·request ID와 transcript는 저장하지 않습니다.
 
 `SessionStart(resume)`과 direct-task `SessionStart(compact)`는 snapshot 본문 없이 `DEFER` 후보 metadata만 추가합니다. 본문은 token·epoch·revision·digest를 다시 검사하는 `load_context`의 tool result로만 반환됩니다. Workflow compact는 `PreCompact` marker와 현재 projection이 일치할 때 bounded 구조 카드만 한 번 `INJECT`합니다. Startup은 복원하지 않고 clear는 epoch를 회전합니다. 모든 Hook 저장 오류는 exit 0과 빈 출력으로 끝나며, MCP 서버도 continuity 초기화 실패 시 workflow를 계속 제공하고 continuity 도구에만 `CONTINUITY_UNAVAILABLE`을 반환합니다.

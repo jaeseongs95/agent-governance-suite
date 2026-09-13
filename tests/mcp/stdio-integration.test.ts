@@ -2,6 +2,7 @@ import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -200,6 +201,40 @@ describe("bundled STDIO MCP server", () => {
         await transport?.close();
       } finally {
         await rm(isolatedRoot, { recursive: true, force: true });
+      }
+    }
+  }, 15_000);
+
+  it("keeps workflow startup clean when both database settings resolve to one file", async () => {
+    const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-shared-db-"));
+    const environment = getDefaultEnvironment();
+    const sharedDatabasePath = join(stateDirectory, "shared.sqlite3");
+    environment.AGENT_GOVERNANCE_DB_PATH = sharedDatabasePath;
+    environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = sharedDatabasePath;
+    const transport = new StdioClientTransport({
+      command: process.execPath,
+      args: [bundledServer],
+      cwd: rootDirectory,
+      env: environment,
+      stderr: "pipe",
+    });
+    const client = new Client({ name: "shared-db-boundary-test", version: "1.0.0" });
+
+    try {
+      await client.connect(transport);
+      expect((await client.listTools()).tools.some((tool) => tool.name === "plan_workflow")).toBe(true);
+      const unavailable = toolData(await client.callTool({
+        name: "inspect_context",
+        arguments: { schemaVersion: "1.0.0", _continuityBinding: "untrusted-placeholder" },
+      }));
+      expect(unavailable.error?.code).toBe("CONTINUITY_UNAVAILABLE");
+    } finally {
+      try { await transport.close(); } finally {
+        const database = new DatabaseSync(sharedDatabasePath);
+        const tables = database.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all();
+        database.close();
+        expect(JSON.stringify(tables)).not.toContain("continuity_");
+        await rm(stateDirectory, { recursive: true, force: true });
       }
     }
   }, 15_000);

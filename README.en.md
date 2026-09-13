@@ -140,6 +140,8 @@ Every specialist can run on its own. Use `$orchestrator` when a request needs mo
 
 The lifecycle hook never reads or stores raw transcripts and records installation-keyed HMAC correlations instead of raw session, turn, or request identifiers. `clear` rotates the epoch and suppresses old restoration without automatically deleting payloads. `suppress_context_restore` stops candidate delivery, while the explicitly destructive `purge_direct_context` deletes only direct payloads and leaves a hash tombstone. Continuity database failures do not block workflow operations or Codex compaction.
 
+The snapshot `core` and `evidenceRefs` are stored as plaintext JSON in the local `continuity.sqlite3` and do not expire automatically. Do not checkpoint secrets, personal data, raw logs or code, or chain-of-thought; manage access and retention for the database file directly.
+
 ## Enforcement scope and limits
 
 The MCP server reads capabilities, execution phases, and artifact dependencies from `SkillDescriptor.v2`. It creates a plan with schema checksums and an HMAC signature, then checks:

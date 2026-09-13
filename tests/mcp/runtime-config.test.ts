@@ -1,9 +1,15 @@
+import { mkdtemp, mkdir, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, normalize } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { resolveContinuityDatabasePath, resolveRegistryPath, resolveWorkflowDatabasePath } from "../../mcp-server/src/runtime-config.js";
+import {
+  assertDistinctDatabasePaths,
+  resolveContinuityDatabasePath,
+  resolveRegistryPath,
+  resolveWorkflowDatabasePath,
+} from "../../mcp-server/src/runtime-config.js";
 
 describe("resolveRegistryPath", () => {
   it("uses SKILL_REGISTRY_PATH when supplied", () => {
@@ -94,5 +100,33 @@ describe("resolveContinuityDatabasePath", () => {
     const workflowPath = join(tmpdir(), "governance-state", "workflows-custom.sqlite3");
     expect(resolveContinuityDatabasePath({ AGENT_GOVERNANCE_DB_PATH: workflowPath }, "linux"))
       .toBe(join(tmpdir(), "governance-state", "continuity.sqlite3"));
+  });
+});
+
+describe("assertDistinctDatabasePaths", () => {
+  it("rejects the same database and Windows case aliases", () => {
+    const databasePath = join(tmpdir(), "governance-state", "shared.sqlite3");
+    expect(() => assertDistinctDatabasePaths(databasePath, databasePath)).toThrow(/different files/u);
+    expect(() => assertDistinctDatabasePaths(databasePath.toUpperCase(), databasePath.toLowerCase(), "win32")).toThrow(/different files/u);
+  });
+
+  it("allows separate in-memory connections", () => {
+    expect(() => assertDistinctDatabasePaths(":memory:", ":memory:")).not.toThrow();
+  });
+
+  it("rejects paths whose parent directories resolve through a symlink", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "continuity-path-alias-"));
+    const realDirectory = join(directory, "real");
+    const aliasDirectory = join(directory, "alias");
+    try {
+      await mkdir(realDirectory);
+      await symlink(realDirectory, aliasDirectory, process.platform === "win32" ? "junction" : "dir");
+      expect(() => assertDistinctDatabasePaths(
+        join(realDirectory, "shared.sqlite3"),
+        join(aliasDirectory, "shared.sqlite3"),
+      )).toThrow(/different files/u);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 });
