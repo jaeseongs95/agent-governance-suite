@@ -222,7 +222,7 @@ export interface StateCleanupPlanV1 {
   candidates: {
     workflowRoots: Array<{ rootId: string; revision: number; state: string; updatedAt: string; runIds: string[] }>;
     standaloneWorkflowRuns: Array<{ runId: string; revision: number; state: string; updatedAt: string }>;
-    continuitySnapshots: Array<{ taskCorrelation: string; epoch: number; revision: number; snapshotDigest: string; updatedAt: string }>;
+    continuitySnapshots: Array<{ taskCorrelation: string; rootId: string | null; epoch: number; revision: number; snapshotDigest: string; updatedAt: string }>;
     continuityTasks: Array<{ taskCorrelation: string; currentEpoch: number; rootId: string | null; updatedAt: string }>;
   };
   counts: {

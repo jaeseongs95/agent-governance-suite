@@ -619,6 +619,19 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     return Boolean(row);
   }
 
+  withInactiveRootGuard<T>(rootIds: string[], operation: () => T): T {
+    return this.transaction(() => {
+      const readState = this.database.prepare("SELECT state FROM convergence_roots WHERE root_id = ?");
+      for (const rootId of [...new Set(rootIds)].sort()) {
+        const row = readState.get(rootId) as { state: string } | undefined;
+        if (row && ["open", "needs-review", "needs-user"].includes(row.state)) {
+          throw new WorkflowContractError("STALE_REVISION", "A continuity cleanup root became active after preview.", { rootId });
+        }
+      }
+      return operation();
+    });
+  }
+
   previewCleanup(cutoff: string): WorkflowCleanupPreview {
     const roots = this.database.prepare(`
       SELECT root_id, revision, state, updated_at
