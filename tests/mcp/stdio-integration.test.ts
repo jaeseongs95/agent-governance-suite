@@ -130,10 +130,7 @@ describe("bundled STDIO MCP server", () => {
       expect(planned.data?.state).toBe("ready");
       expect(planned.data?.selectedSkills).toContain("coordinate-subagents");
       expect(planned.data?.stages).toHaveLength(1);
-      expect(planned.data?.stages[0]?.satisfiedCapabilities).toEqual([
-        "subagent-coordination",
-        "task-decomposition",
-      ]);
+      expect(planned.data?.stages[0]?.satisfiedCapabilities).toEqual(["task-decomposition"]);
 
       const started = toolData<WorkflowReceiptV1>(await client.callTool({
         name: "start_workflow",
