@@ -2,7 +2,7 @@
   "id": "agent-governance-suite",
   "name": "agent-governance-suite",
   "version": "1.1.0",
-  "description": "Route ten governance specialists through declarative provider contracts and a local MCP server; bundle the disabled Korean prose workflow for later activation.",
+  "description": "Route governance specialists through declarative provider contracts and a local MCP server; bundle the disabled Korean prose workflow for later activation.",
   "author": {
     "name": "jaeseongs95",
     "url": "https://github.com/jaeseongs95"

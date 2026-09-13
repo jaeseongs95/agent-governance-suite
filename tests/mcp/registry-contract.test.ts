@@ -26,6 +26,7 @@ describe("bundled skill registry", () => {
       "blocker-diagnostician": "1.0.0",
       "workspace-convention-profiler": "1.0.0",
       "mutation-risk-preflight": "1.0.0",
+      "model-effort-advisor": "0.1.0",
     });
     expect(skills.find((skill) => skill.skillId === "independent-deliberation-panel")?.producedArtifacts)
       .toContain("decision-record");
@@ -39,6 +40,7 @@ describe("bundled skill registry", () => {
       "blocker-diagnosis",
       "workspace-convention-profiling",
       "mutation-risk-preflight",
+      "model-effort-fit-assessment",
     ]));
   });
 

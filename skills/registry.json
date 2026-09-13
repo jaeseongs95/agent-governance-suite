@@ -1062,6 +1062,107 @@
     },
     {
       "schemaVersion": "2.0.0",
+      "skillId": "model-effort-advisor",
+      "version": "0.1.0",
+      "path": "./model-effort-advisor",
+      "enabled": true,
+      "priority": 50,
+      "providers": [
+        {
+          "capabilities": [
+            "model-effort-fit-assessment"
+          ],
+          "executionClass": "bootstrap",
+          "phase": "model-effort-assessment",
+          "phaseOrder": 25,
+          "requiredInputArtifacts": [
+            "task-request"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "task-request",
+              "sources": [
+                "task:request"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "current-model-selection",
+              "sources": [
+                "host:current-model-selection",
+                "task:user-evidence"
+              ],
+              "operation": "collect",
+              "optional": true
+            },
+            {
+              "targetArtifact": "host-model-capabilities",
+              "sources": [
+                "host:supported-models-reasoning"
+              ],
+              "operation": "collect",
+              "optional": true
+            },
+            {
+              "targetArtifact": "model-effort-preference",
+              "sources": [
+                "task:user-preference"
+              ],
+              "operation": "collect",
+              "optional": true
+            }
+          ],
+          "producedArtifacts": [
+            "model-effort-advice"
+          ],
+          "outputSchema": "skills/model-effort-advisor/contracts/model-effort-advice.v1.schema.json",
+          "resultSchema": "contracts/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/verdict",
+            "values": {
+              "OVER_PROVISIONED": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "ADEQUATE": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "UNDER_PROVISIONED": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "UNOBSERVABLE": {
+                "state": "passed",
+                "errorRequired": false
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          },
+          "selectionCriteria": [
+            "explicit-model-or-reasoning-fit-request",
+            "current-task-model-and-reasoning-observed",
+            "material-quality-latency-or-cost-mismatch"
+          ],
+          "preconditions": [
+            "The original user request is available.",
+            "A mismatch verdict requires an observed current model and reasoning effort from the host, user, or current screenshot."
+          ],
+          "failureHandling": "Return UNOBSERVABLE without interrupting the task when the current selection is unavailable; never invent or change the setting.",
+          "gate": {
+            "kind": "none",
+            "policy": "none",
+            "validator": null
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": "2.0.0",
       "skillId": "korean-prose-editor",
       "version": "0.1.0",
       "path": "./korean-prose-editor",
