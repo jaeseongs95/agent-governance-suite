@@ -213,7 +213,7 @@ describe("direct task continuity", () => {
     expect(JSON.stringify(storedRequests)).not.toContain(marker);
   });
 
-  it("preserves each purge receipt across later checkpoint and purge cycles", () => {
+  it("makes an old purge stale across identical snapshot cycles in the same millisecond", () => {
     const service = createService();
     const firstSnapshot = directCheckpoint(service, "repeated-purge-session").data!;
     const firstPurgeInput = {
@@ -225,18 +225,19 @@ describe("direct task continuity", () => {
     const firstPurge = service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", firstPurgeInput));
     expect(firstPurge.data?.purged).toBe(true);
 
-    const secondCheckpoint = checkpointInput({
-      requestId: "checkpoint-second",
-      core: { ...checkpointInput().core, objective: "Second snapshot." },
-    });
+    const secondCheckpoint = checkpointInput({ requestId: "checkpoint-second" });
     const secondSnapshot = service.checkpointContext(bound(service, "repeated-purge-session", "checkpoint_context", secondCheckpoint)).data!;
+    expect(secondSnapshot.snapshotDigest).toBe(firstSnapshot.snapshotDigest);
     const secondPurgeInput = {
       schemaVersion: "1.0.0" as const,
       requestId: "purge-second",
       expectedEpoch: 1,
       expectedRevision: secondSnapshot.revision,
     };
-    expect(service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", secondPurgeInput)).data?.purged).toBe(true);
+    const secondPurge = service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", secondPurgeInput));
+    expect(secondPurge.data?.purged).toBe(true);
+    expect(secondPurge.data?.purgedAt).toBe(firstPurge.data?.purgedAt);
+    expect(secondPurge.data?.tombstoneDigest).not.toBe(firstPurge.data?.tombstoneDigest);
 
     const replayedFirst = service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", firstPurgeInput));
     expect(replayedFirst.error?.code).toBe("STALE_REVISION");

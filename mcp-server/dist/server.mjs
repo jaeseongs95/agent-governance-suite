@@ -16573,7 +16573,13 @@ var ContinuityService = class {
       const current = this.store.getSnapshot(binding.c, request.expectedEpoch);
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request));
-      const tombstoneDigest = convergenceDigest({ taskCorrelation: binding.c, epoch: request.expectedEpoch, revision: request.expectedRevision, payloadDigest: current?.snapshotDigest ?? null });
+      const tombstoneDigest = convergenceDigest({
+        taskCorrelation: binding.c,
+        epoch: request.expectedEpoch,
+        revision: request.expectedRevision,
+        payloadDigest: current?.snapshotDigest ?? null,
+        purgeRequestHash: requestHash
+      });
       const now = this.now().toISOString();
       const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
       if (purged.kind === "replay") {
