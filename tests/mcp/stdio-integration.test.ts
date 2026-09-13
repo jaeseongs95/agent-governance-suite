@@ -6,7 +6,8 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { describe, expect, it } from "vitest";
 
-import type { ApiResultV1, StageResultV1, TaskEnvelopeV1, WorkflowPlanV1, WorkflowReceiptV1 } from "../../contracts/types.js";
+import type { ApiResultV1, PluginUpdateStatusV1, StageResultV1, TaskEnvelopeV1, WorkflowPlanV1, WorkflowReceiptV1 } from "../../contracts/types.js";
+import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 
 const rootDirectory = fileURLToPath(new URL("../../", import.meta.url));
 const bundledServer = fileURLToPath(new URL("../../mcp-server/dist/server.mjs", import.meta.url));
@@ -24,6 +25,40 @@ function toolData<T>(result: unknown): ApiResultV1<T> {
   ));
   if (!text) throw new Error("MCP response did not contain a text result.");
   return JSON.parse(text.text) as ApiResultV1<T>;
+}
+
+function textContents(result: unknown): string[] {
+  const content = (result as { content?: unknown }).content;
+  if (!Array.isArray(content)) return [];
+  return content.flatMap((item) => (
+    Boolean(item) && typeof item === "object" && (item as { type?: unknown }).type === "text"
+      && typeof (item as { text?: unknown }).text === "string"
+      ? [(item as { text: string }).text]
+      : []
+  ));
+}
+
+function seedAvailableUpdate(databasePath: string): void {
+  const store = new SqliteWorkflowStore(databasePath);
+  try {
+    store.putPluginUpdateState({
+      targetId: "agent-governance-suite",
+      currentVersion: "1.1.0",
+      latestVersion: "1.2.0",
+      latestTag: "v1.2.0",
+      latestCommit: "c".repeat(40),
+      etag: "stdio-fixture",
+      comparison: "update-available",
+      lastAttemptAt: "2026-09-13T00:00:00.000Z",
+      lastSuccessfulCheckAt: "2026-09-13T00:00:00.000Z",
+      nextCheckAt: "2099-01-01T00:00:00.000Z",
+      lastNotifiedVersion: null,
+      lastNotifiedAt: null,
+      lastErrorCode: null,
+    });
+  } finally {
+    store.close();
+  }
 }
 
 describe("bundled STDIO MCP server", () => {
@@ -55,6 +90,7 @@ describe("bundled STDIO MCP server", () => {
 
       const listed = await client.listTools();
       expect(listed.tools.map((tool) => tool.name)).toEqual([
+        "check_for_updates",
         "plan_workflow",
         "start_workflow",
         "record_stage_result",
@@ -76,7 +112,9 @@ describe("bundled STDIO MCP server", () => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-stdio-"));
     const environment = getDefaultEnvironment();
     delete environment.SKILL_REGISTRY_PATH;
-    environment.AGENT_GOVERNANCE_DB_PATH = join(stateDirectory, "workflow-state.sqlite3");
+    const databasePath = join(stateDirectory, "workflow-state.sqlite3");
+    environment.AGENT_GOVERNANCE_DB_PATH = databasePath;
+    seedAvailableUpdate(databasePath);
     let transport = new StdioClientTransport({
       command: process.execPath,
       args: [bundledServer],
@@ -90,6 +128,7 @@ describe("bundled STDIO MCP server", () => {
       await client.connect(transport);
       const listed = await client.listTools();
       expect(listed.tools.map((tool) => tool.name)).toEqual([
+        "check_for_updates",
         "plan_workflow",
         "start_workflow",
         "record_stage_result",
@@ -98,6 +137,11 @@ describe("bundled STDIO MCP server", () => {
         "abort_workflow",
       ]);
       expect(listed.tools.find((tool) => tool.name === "plan_workflow")?.annotations?.readOnlyHint).toBe(true);
+      expect(listed.tools.find((tool) => tool.name === "check_for_updates")?.annotations).toMatchObject({
+        readOnlyHint: true,
+        destructiveHint: false,
+        openWorldHint: true,
+      });
       expect(listed.tools.find((tool) => tool.name === "get_workflow_status")?.annotations?.readOnlyHint).toBe(true);
       expect(listed.tools.find((tool) => tool.name === "start_workflow")?.annotations?.readOnlyHint).toBe(false);
 
@@ -122,10 +166,19 @@ describe("bundled STDIO MCP server", () => {
         decision: { complexity: "simple", hasConflicts: false },
         orchestration: { requested: true, mcpAvailable: true },
       };
-      const planned = toolData<WorkflowPlanV1>(await client.callTool({
+      const plannedResponse = await client.callTool({
         name: "plan_workflow",
         arguments: toolArguments(task),
-      }));
+      });
+      const planned = toolData<WorkflowPlanV1>(plannedResponse);
+      const plannedContents = textContents(plannedResponse);
+      expect(plannedContents).toHaveLength(2);
+      expect(JSON.parse(plannedContents[1]!)).toMatchObject({
+        kind: "plugin-update-notice",
+        currentVersion: "1.1.0",
+        latestVersion: "1.2.0",
+        automaticInstall: false,
+      });
       expect(planned.ok).toBe(true);
       expect(planned.data?.state).toBe("ready");
       expect(planned.data?.selectedSkills).toContain("coordinate-subagents");
@@ -135,11 +188,24 @@ describe("bundled STDIO MCP server", () => {
         "task-decomposition",
       ]);
 
-      const started = toolData<WorkflowReceiptV1>(await client.callTool({
+      const startedResponse = await client.callTool({
         name: "start_workflow",
         arguments: toolArguments(planned.data!),
-      }));
+      });
+      expect(textContents(startedResponse)).toHaveLength(1);
+      const started = toolData<WorkflowReceiptV1>(startedResponse);
       expect(started.data).toMatchObject({ state: "running", revision: 0 });
+
+      const updateStatus = toolData<PluginUpdateStatusV1>(await client.callTool({
+        name: "check_for_updates",
+        arguments: { force: false },
+      }));
+      expect(updateStatus.data).toMatchObject({
+        currentVersion: "1.1.0",
+        latestVersion: "1.2.0",
+        comparison: "update-available",
+        automaticInstall: false,
+      });
 
       const stage = started.data!.plan.stages[0]!;
       const stageResult: StageResultV1 = {
@@ -190,10 +256,12 @@ describe("bundled STDIO MCP server", () => {
       client = new Client({ name: "stdio-restart-test", version: "1.0.0" });
       await client.connect(transport);
 
-      const status = toolData<WorkflowReceiptV1>(await client.callTool({
+      const statusResponse = await client.callTool({
         name: "get_workflow_status",
         arguments: { runId: recorded.data!.runId },
-      }));
+      });
+      expect(textContents(statusResponse)).toHaveLength(1);
+      const status = toolData<WorkflowReceiptV1>(statusResponse);
       expect(status.data?.runId).toBe(started.data?.runId);
       expect(status.data?.revision).toBe(recorded.data?.revision);
 
