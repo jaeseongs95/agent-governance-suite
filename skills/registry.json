@@ -1460,7 +1460,7 @@
             "verified-korean-prose-candidate-needs-deterministic-finalization"
           ],
           "preconditions": [
-            "The candidate and verification report target the same source digest.",
+            "The selection, candidate, and verification report are digest-linked to the same source.",
             "The deterministic finalizer is available."
           ],
           "failureHandling": {

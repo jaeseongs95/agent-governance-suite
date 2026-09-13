@@ -1,6 +1,6 @@
 # Agent Governance Suite 향후 로드맵
 
-문서 기준일은 2026년 9월 13일이다. 현재 공개 릴리스는 `v1.4.0`이다. 한국어 산문 워크플로의 구현과 평가 자료는 릴리스에 포함하지만, 품질 게이트를 통과할 때까지 registry와 오케스트레이터 선택 경로에서 비활성으로 유지한다.
+문서 기준일은 2026년 9월 13일이다. 현재 공개 릴리스는 `v1.4.1`이다. 한국어 산문 워크플로의 구현과 평가 자료는 릴리스에 포함하지만, 품질 게이트를 통과할 때까지 registry와 오케스트레이터 선택 경로에서 비활성으로 유지한다.
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
 
@@ -52,9 +52,10 @@
 
 ### 현재 구현 진척
 
-- `codex/korean-prose-receipt-cycle`에서는 최종화 단계가 selection이 만든 `edit-decision-set`을 실제 입력과 검증 근거로 받는지 확인한다. 평가 cycle의 구조화 산출물은 key 순서와 무관한 canonical digest로 대조하며, receipt와 SQLite에 원문을 남기지 않고 기존 산출물도 덮어쓰지 않는다.
-- 독립 저장소의 구조화 평가 체크포인트는 `0c061eda63b0ce94fe85d0763aacd9345489293c`이고 현재 원격 `main`은 라이선스 고지를 보완한 `149ae9ff5e530ea0c5be2371bad218da5da5ceba`다. 통합 저장소의 스킬 사본과 source lock은 아직 이전 원본 `e31767939fc728fb2d0089cdd70dbb8134b3f32f`를 기준으로 하므로, 최신 원본 편입은 별도 작업으로 남긴다.
-- 새 편집 후보 11건의 선정 재현성은 `6/11·11/11·9/11`로 기준에 미달했다. 이 구현 단위가 통과해도 선정 재현성, 새 비공개 holdout 개선율 80%와 전체 릴리스 후보 검증이 끝날 때까지 provider는 비활성으로 유지한다.
+- 구조화된 평가 cycle의 receipt 경로는 finalization이 selection의 `edit-decision-set`을 실제 입력과 evidence로 받는지 확인한다. JSON·JSONL 산출물은 key 순서와 무관한 canonical digest로 대조하며, receipt와 SQLite에 원문을 남기거나 기존 산출물을 덮어쓰지 않는다.
+- 독립 저장소와 통합 사본은 immutable commit `c5df63749e2edfc8aa424f9935ee3cd4697d3c49`에 고정했다. 이 스냅샷은 범주·용어 보존, 대리 명사 없는 기능 동사 직접화, 편집 후 경계 공백 거부와 provenance-bound run metadata v3를 포함한다.
+- 기존 11-case gate는 기록된 실패와 9/11 기준을 바꾸지 않고 `invalid-corpus`로 종결했다. 별도 12-case recovery는 edit 5/8, restraint 4/4, major meaning change 0, protected failure 0으로 실패했으며 재실행하지 않는다.
+- recovery 실패 보정은 공개 회귀 fixture와 계약에 반영했지만 `IMPLEMENTED_NOT_RERUN` 상태다. 새 ID·새 freeze·독립 corpus 타당성 검사를 갖춘 다음 정식 frame과 신규 private holdout이 기존 기준을 통과할 때까지 provider는 비활성으로 유지한다.
 
 ### 종료 기준
 

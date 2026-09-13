@@ -1,10 +1,17 @@
 import { checkResult } from "./result-checker.mjs";
 import { overlapsProtectedSpan } from "./protected-spans.mjs";
+import { createSourceUnitManifest } from "./source-units.mjs";
 import { ContractError, SCHEMA_VERSION, requireObject, sha256, stableJson } from "./lib.mjs";
 import { validateProviderPlan } from "./provider-plan.mjs";
 
-/** @typedef {{id: string, sourceDigest: string, start: number, end: number, replacement: string, actorId: string}} Edit */
-/** @typedef {{editId: string, decision: "accept" | "retain", reasonCode: string}} VerificationDecision */
+/** @typedef {{id: string, unitId: string, sourceDigest: string, start: number, end: number, replacement: string, actorId: string}} Edit */
+/** @typedef {{editId: string, decision: "accept" | "retain", reasonCode: string, sourceDefect: string, invariantDelta: string}} VerificationDecision */
+/** @typedef {{unitId: string, start: number, end: number, kind: "prose" | "fenced-code"}} SourceUnit */
+
+const DIGEST = /^[a-f0-9]{64}$/u;
+const CODE = /^[A-Z][A-Z0-9_]*$/u;
+const ISSUE_CODES = new Set(["AMBIGUOUS_RELATIONSHIP", "GRAMMATICAL_MISMATCH", "NOUN_STACKING", "REDUNDANCY", "TRANSLATIONESE", "UNNECESSARY_META_PROSE", "UNSUPPORTED_EMPHASIS", "USER_FACING_IMPLEMENTATION_JARGON"]);
+const PROTECTED_KINDS = new Set(["fenced-code", "inline-code", "command", "markdown-target", "url", "email", "path", "quotation", "number-or-date", "user-defined"]);
 
 /**
  * @param {unknown} value
@@ -17,97 +24,152 @@ export function finalizeRequest(value) {
   const mode = request.mode;
   if (typeof request.source !== "string") throw new ContractError("SOURCE", "source must be a string");
   const source = request.source;
+  const sourceDigest = sha256(source);
   const plan = validateProviderPlan(request.plan, { subagentsAvailable: request.subagentsAvailable === true });
   const actorIds = plan.actorIds;
   const manifest = requireObject(request.manifest, "manifest");
+  const sourceUnitManifest = requireObject(request.sourceUnitManifest, "sourceUnitManifest");
+  const selection = requireObject(request.selection, "selection");
+  const editing = requireObject(request.editing, "editing");
+  const verification = requireObject(request.verification, "verification");
   const warnings = new Set();
-  /** @type {Edit[]} */
-  const edits = [];
   let fallback = false;
 
-  if (manifest.sourceDigest !== sha256(source) || manifest.sourceLength !== source.length || !Array.isArray(manifest.spans)) {
+  if (!validProtectedManifest(manifest, source)) {
     warnings.add("SOURCE_MANIFEST_MISMATCH");
     fallback = true;
   }
 
-  if (!Array.isArray(request.edits)) throw new ContractError("EDITS", "edits must be an array");
+  /** @type {SourceUnit[]} */
+  let units = [];
+  if (!fallback) {
+    const expectedUnits = createSourceUnitManifest(source, /** @type {any} */ (manifest));
+    if (stableJson(sourceUnitManifest) !== stableJson(expectedUnits)) {
+      warnings.add("SOURCE_UNIT_MANIFEST_MISMATCH");
+      fallback = true;
+    } else {
+      units = /** @type {SourceUnit[]} */ (expectedUnits.units);
+    }
+  }
+
+  const unitById = new Map(units.map((unit) => [unit.unitId, unit]));
+  const selectionByUnit = new Map();
+  if (!validSelection(selection, sourceDigest, actorIds[0], unitById, source)) {
+    warnings.add("SELECTION_CONTRACT_INVALID");
+    fallback = true;
+  } else {
+    for (const decision of /** @type {any[]} */ (selection.decisions)) selectionByUnit.set(decision.unitId, decision);
+    if (selection.status !== "ready") {
+      warnings.add("SELECTION_NOT_READY");
+      fallback = true;
+    }
+  }
+
+  const selectionDigest = sha256(stableJson(selection));
+  /** @type {Edit[]} */
+  const edits = [];
+  if (!validEditingRoot(editing, sourceDigest, selectionDigest, actorIds[1])) {
+    if (editing.selectionDigest === selectionDigest) warnings.add("EDIT_CONTRACT_INVALID");
+    else warnings.add("SELECTION_DIGEST_MISMATCH");
+    fallback = true;
+  }
+
+  const rawEdits = Array.isArray(editing.edits) ? editing.edits : [];
   const editIds = new Set();
-  for (const rawEdit of request.edits) {
-    const edit = requireObject(rawEdit, "edit");
-    if (
-      typeof edit.id !== "string" || edit.id.length === 0 || editIds.has(edit.id) ||
-      !Number.isInteger(edit.start) || !Number.isInteger(edit.end) || edit.start < 0 || edit.end < edit.start || edit.end > source.length ||
-      typeof edit.replacement !== "string" || edit.sourceDigest !== sha256(source) || edit.actorId !== actorIds[1]
-    ) {
+  for (const rawEdit of rawEdits) {
+    if (!validEdit(rawEdit, source, sourceDigest, actorIds[1], editIds)) {
       warnings.add("EDIT_CONTRACT_INVALID");
       fallback = true;
       continue;
     }
+    const edit = /** @type {Edit} */ (rawEdit);
     editIds.add(edit.id);
-    edits.push(/** @type {Edit} */ (edit));
+    edits.push(edit);
   }
   edits.sort((left, right) => left.start - right.start || left.end - right.end || left.id.localeCompare(right.id));
   for (let index = 1; index < edits.length; index += 1) {
-    if (edits[index].start < edits[index - 1].end) {
+    if (edits[index].start < edits[index - 1].end || (edits[index].start === edits[index - 1].start && edits[index].start === edits[index].end)) {
       warnings.add("EDIT_RANGES_OVERLAP");
       fallback = true;
     }
   }
 
-  const verification = requireObject(request.verification, "verification");
-  if (verification.actorId !== actorIds[2] || (verification.globalDecision !== "continue" && verification.globalDecision !== "fallback")) {
-    warnings.add("VERIFICATION_CONTRACT_INVALID");
+  if (!fallback && editing.candidateDigest !== sha256(applyEdits(source, edits))) {
+    warnings.add("EDITING_DIGEST_MISMATCH");
+    fallback = true;
+  }
+
+  const editingDigest = sha256(stableJson(editing));
+  if (!validVerificationRoot(verification, sourceDigest, editingDigest, actorIds[2])) {
+    if (verification.editingDigest === editingDigest) warnings.add("VERIFICATION_CONTRACT_INVALID");
+    else warnings.add("VERIFICATION_DIGEST_MISMATCH");
+    fallback = true;
+  }
+  if (typeof request.rubricDigest !== "string" || !DIGEST.test(request.rubricDigest) || verification.rubricDigest !== request.rubricDigest) {
+    warnings.add("VERIFICATION_RUBRIC_DIGEST_MISMATCH");
     fallback = true;
   }
   if (verification.globalDecision === "fallback") {
     warnings.add("VERIFIER_GLOBAL_FALLBACK");
     fallback = true;
   }
-  if (!Array.isArray(verification.decisions)) throw new ContractError("VERIFICATION_DECISIONS", "verification decisions must be an array");
 
   /** @type {Map<string, VerificationDecision>} */
   const decisionByEdit = new Map();
-  for (const rawDecision of verification.decisions) {
-    const decision = requireObject(rawDecision, "verification decision");
-    if (
-      typeof decision.editId !== "string" ||
-      (decision.decision !== "accept" && decision.decision !== "retain") ||
-      typeof decision.reasonCode !== "string" || !/^[A-Z][A-Z0-9_]*$/.test(decision.reasonCode) ||
-      decisionByEdit.has(decision.editId)
-    ) {
+  const rawDecisions = Array.isArray(verification.decisions) ? verification.decisions : [];
+  for (const rawDecision of rawDecisions) {
+    if (!validVerificationDecision(rawDecision) || decisionByEdit.has(rawDecision.editId) || !editIds.has(rawDecision.editId)) {
       warnings.add("VERIFICATION_DECISION_INVALID");
       fallback = true;
       continue;
     }
-    decisionByEdit.set(decision.editId, /** @type {VerificationDecision} */ (decision));
+    decisionByEdit.set(rawDecision.editId, /** @type {VerificationDecision} */ (rawDecision));
   }
 
+  const effectiveManifest = fallback
+    ? manifest
+    : addSelectionProtectedStrings(source, /** @type {any} */ (manifest), /** @type {any[]} */ (selection.decisions), unitById);
+  const spans = Array.isArray(effectiveManifest.spans) ? effectiveManifest.spans : [];
   /** @type {Edit[]} */
   const accepted = [];
   /** @type {Edit[]} */
   const retained = [];
-  const spans = /** @type {{start: number, end: number}[]} */ (manifest.spans ?? []);
   for (const edit of edits) {
+    const unit = unitById.get(edit.unitId);
+    const selected = selectionByUnit.get(edit.unitId);
+    if (!unit || !selected || selected.action !== "edit" || edit.start < unit.start || edit.end > unit.end || !selected.issueRanges.some((issue) => rangesOverlap(edit, issue))) {
+      retained.push(edit);
+      warnings.add("EDIT_OUT_OF_SCOPE_RETAINED");
+      continue;
+    }
+    if (unit.kind === "fenced-code" || overlapsProtectedSpan(edit.start, edit.end, spans)) {
+      retained.push(edit);
+      warnings.add("PROTECTED_EDIT_RETAINED");
+      continue;
+    }
+    if (!isMinimalEdit(source, edit)) {
+      retained.push(edit);
+      warnings.add("NON_MINIMAL_EDIT_RETAINED");
+      continue;
+    }
     const decision = decisionByEdit.get(edit.id);
     if (decision?.decision !== "accept") {
       retained.push(edit);
       if (!decision) warnings.add("VERIFICATION_DECISION_MISSING");
       continue;
     }
-    if (overlapsProtectedSpan(edit.start, edit.end, spans)) {
-      retained.push(edit);
-      warnings.add("PROTECTED_EDIT_RETAINED");
-      continue;
-    }
     accepted.push(edit);
+  }
+
+  if (!fallback && accepted.length > 0 && !acceptedAssessmentIsSafe(verification.assessment)) {
+    warnings.add("VERIFICATION_CONTRACT_INVALID");
+    fallback = true;
   }
 
   let output = source;
   if (!fallback) {
-    for (const edit of [...accepted].sort((left, right) => right.start - left.start)) {
-      output = `${output.slice(0, edit.start)}${edit.replacement}${output.slice(edit.end)}`;
-    }
-    const check = checkResult(source, output, manifest);
+    output = applyEdits(source, accepted);
+    const check = checkResult(source, output, effectiveManifest);
     if (check.decisions.protectedSpansPreserved !== true) {
       warnings.add("FINAL_PROTECTED_CHECK_FAILED");
       for (const warning of check.warnings) warnings.add(warning);
@@ -123,9 +185,9 @@ export function finalizeRequest(value) {
     schemaVersion: SCHEMA_VERSION,
     actorIds,
     digest: {
-      source: sha256(source),
+      source: sourceDigest,
       result: sha256(output),
-      manifest: sha256(stableJson(manifest)),
+      manifest: sha256(stableJson(effectiveManifest)),
     },
     length: { source: source.length, result: output.length },
     decisions: {
@@ -146,4 +208,200 @@ export function finalizeRequest(value) {
 export function formatFinalizationResponse(result, mode) {
   if (mode === "mcp") return result.receipt;
   return { output: result.output, verificationStatus: "unverified", receipt: result.receipt };
+}
+
+/** @param {Record<string, unknown>} manifest @param {string} source */
+function validProtectedManifest(manifest, source) {
+  if (!hasExactKeys(manifest, ["schemaVersion", "sourceDigest", "sourceLength", "spans"]) || manifest.schemaVersion !== SCHEMA_VERSION || manifest.sourceDigest !== sha256(source) || manifest.sourceLength !== source.length || !Array.isArray(manifest.spans)) return false;
+  const ids = new Set();
+  let previousEnd = 0;
+  for (const span of manifest.spans) {
+    if (!span || typeof span !== "object" || Array.isArray(span) || !hasExactKeys(span, ["id", "kind", "start", "end", "text", "digest"])) return false;
+    const item = /** @type {Record<string, unknown>} */ (span);
+    if (typeof item.id !== "string" || !/^span-[0-9]{4}$/u.test(item.id) || ids.has(item.id) || typeof item.kind !== "string" || !PROTECTED_KINDS.has(item.kind) || !Number.isInteger(item.start) || !Number.isInteger(item.end)) return false;
+    const start = /** @type {number} */ (item.start);
+    const end = /** @type {number} */ (item.end);
+    if (start < previousEnd || end <= start || end > source.length || typeof item.text !== "string" || item.text !== source.slice(start, end) || item.digest !== sha256(item.text)) return false;
+    ids.add(item.id);
+    previousEnd = end;
+  }
+  return true;
+}
+
+/** @param {Record<string, unknown>} selection @param {string} sourceDigest @param {string} actorId @param {Map<string, SourceUnit>} unitById @param {string} source */
+function validSelection(selection, sourceDigest, actorId, unitById, source) {
+  if (!hasExactKeys(selection, ["schemaVersion", "actorId", "sourceDigest", "status", "decisions"])) return false;
+  if (selection.schemaVersion !== SCHEMA_VERSION || selection.actorId !== actorId || selection.sourceDigest !== sourceDigest || !["ready", "needs-input", "blocked"].includes(/** @type {string} */ (selection.status)) || !Array.isArray(selection.decisions)) return false;
+  if (selection.decisions.length !== unitById.size) return false;
+  const seen = new Set();
+  for (const rawDecision of selection.decisions) {
+    if (!rawDecision || typeof rawDecision !== "object" || Array.isArray(rawDecision) || !hasExactKeys(rawDecision, ["unitId", "action", "reasonCodes", "riskFlags", "additionalProtectedStrings", "issueRanges"])) return false;
+    const decision = /** @type {Record<string, unknown>} */ (rawDecision);
+    const unit = typeof decision.unitId === "string" ? unitById.get(decision.unitId) : undefined;
+    if (!unit || seen.has(decision.unitId) || !["edit", "retain", "defer"].includes(/** @type {string} */ (decision.action))) return false;
+    if (unit.kind === "fenced-code" && decision.action === "edit") return false;
+    if (!validCodes(decision.reasonCodes) || !validCodes(decision.riskFlags) || !Array.isArray(decision.additionalProtectedStrings) || !Array.isArray(decision.issueRanges)) return false;
+    const protectedStrings = decision.additionalProtectedStrings;
+    if (new Set(protectedStrings).size !== protectedStrings.length || protectedStrings.some((item) => typeof item !== "string" || item.length === 0 || !source.slice(unit.start, unit.end).includes(item))) return false;
+    if (decision.action === "edit") {
+      if (decision.issueRanges.length === 0 || !validIssueRanges(decision.issueRanges, unit, source)) return false;
+      const issueCodes = new Set(decision.issueRanges.map((issue) => issue.reasonCode));
+      if (decision.reasonCodes.length !== issueCodes.size || decision.reasonCodes.some((code) => !issueCodes.has(code))) return false;
+    } else if (decision.issueRanges.length !== 0) return false;
+    seen.add(decision.unitId);
+  }
+  return true;
+}
+
+/** @param {any[]} issues @param {SourceUnit} unit @param {string} source */
+function validIssueRanges(issues, unit, source) {
+  const seen = new Set();
+  for (const issue of issues) {
+    if (!issue || typeof issue !== "object" || Array.isArray(issue) || !hasExactKeys(issue, ["start", "end", "reasonCode"])) return false;
+    if (!Number.isInteger(issue.start) || !Number.isInteger(issue.end) || issue.start < unit.start || issue.end > unit.end || issue.end <= issue.start) return false;
+    if (!isUtf16Boundary(source, issue.start) || !isUtf16Boundary(source, issue.end) || !ISSUE_CODES.has(issue.reasonCode)) return false;
+    const key = `${issue.start}:${issue.end}:${issue.reasonCode}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+  }
+  return true;
+}
+
+/** @param {{start:number,end:number}} left @param {{start:number,end:number}} right */
+function rangesOverlap(left, right) {
+  if (left.start === left.end) return right.start < left.start && left.start < right.end;
+  return left.start < right.end && right.start < left.end;
+}
+
+/** @param {Record<string, unknown>} editing @param {string} sourceDigest @param {string} selectionDigest @param {string} actorId */
+function validEditingRoot(editing, sourceDigest, selectionDigest, actorId) {
+  return hasExactKeys(editing, ["schemaVersion", "actorId", "sourceDigest", "selectionDigest", "edits", "candidateDigest"])
+    && editing.schemaVersion === SCHEMA_VERSION
+    && editing.actorId === actorId
+    && editing.sourceDigest === sourceDigest
+    && editing.selectionDigest === selectionDigest
+    && Array.isArray(editing.edits)
+    && typeof editing.candidateDigest === "string"
+    && DIGEST.test(editing.candidateDigest);
+}
+
+/** @param {unknown} rawEdit @param {string} source @param {string} sourceDigest @param {string} actorId @param {Set<string>} ids */
+function validEdit(rawEdit, source, sourceDigest, actorId, ids) {
+  if (!rawEdit || typeof rawEdit !== "object" || Array.isArray(rawEdit) || !hasExactKeys(rawEdit, ["id", "unitId", "sourceDigest", "start", "end", "replacement", "actorId"])) return false;
+  const edit = /** @type {Record<string, unknown>} */ (rawEdit);
+  return typeof edit.id === "string" && edit.id.length > 0 && !ids.has(edit.id)
+    && typeof edit.unitId === "string"
+    && edit.sourceDigest === sourceDigest
+    && Number.isInteger(edit.start) && Number.isInteger(edit.end)
+    && /** @type {number} */ (edit.start) >= 0
+    && /** @type {number} */ (edit.end) >= /** @type {number} */ (edit.start)
+    && /** @type {number} */ (edit.end) <= source.length
+    && isUtf16Boundary(source, /** @type {number} */ (edit.start))
+    && isUtf16Boundary(source, /** @type {number} */ (edit.end))
+    && typeof edit.replacement === "string"
+    && edit.actorId === actorId;
+}
+
+/** @param {string} source @param {number} index */
+function isUtf16Boundary(source, index) {
+  if (index <= 0 || index >= source.length) return true;
+  const before = source.charCodeAt(index - 1);
+  const after = source.charCodeAt(index);
+  return !(before >= 0xD800 && before <= 0xDBFF && after >= 0xDC00 && after <= 0xDFFF);
+}
+
+/** @param {Record<string, unknown>} verification @param {string} sourceDigest @param {string} editingDigest @param {string} actorId */
+function validVerificationRoot(verification, sourceDigest, editingDigest, actorId) {
+  if (!hasExactKeys(verification, ["schemaVersion", "actorId", "sourceDigest", "editingDigest", "rubricDigest", "globalDecision", "decisions", "assessment"])) return false;
+  if (verification.schemaVersion !== SCHEMA_VERSION || verification.actorId !== actorId || verification.sourceDigest !== sourceDigest || verification.editingDigest !== editingDigest || typeof verification.rubricDigest !== "string" || !DIGEST.test(verification.rubricDigest) || !["continue", "fallback"].includes(/** @type {string} */ (verification.globalDecision)) || !Array.isArray(verification.decisions)) return false;
+  if (!verification.assessment || typeof verification.assessment !== "object" || Array.isArray(verification.assessment) || !hasExactKeys(verification.assessment, ["meaningPreservation", "majorMeaningChange", "registerCompliance", "protectedStrings", "terminologyJudgment", "pairPreference"])) return false;
+  const assessment = /** @type {Record<string, unknown>} */ (verification.assessment);
+  return ["pass", "fail", "uncertain"].includes(/** @type {string} */ (assessment.meaningPreservation))
+    && typeof assessment.majorMeaningChange === "boolean"
+    && ["pass", "fail", "uncertain"].includes(/** @type {string} */ (assessment.registerCompliance))
+    && ["pass", "fail", "uncertain"].includes(/** @type {string} */ (assessment.protectedStrings))
+    && ["pass", "fail", "uncertain", "not-applicable"].includes(/** @type {string} */ (assessment.terminologyJudgment))
+    && ["candidate", "original", "tie", "neither"].includes(/** @type {string} */ (assessment.pairPreference));
+}
+
+/** @param {any} decision */
+function validVerificationDecision(decision) {
+  return decision && typeof decision === "object" && !Array.isArray(decision)
+    && hasExactKeys(decision, ["editId", "decision", "reasonCode", "sourceDefect", "invariantDelta"])
+    && typeof decision.editId === "string" && decision.editId.length > 0
+    && (decision.decision === "accept" || decision.decision === "retain")
+    && typeof decision.reasonCode === "string" && CODE.test(decision.reasonCode)
+    && ["GRAMMATICAL_MISMATCH", "NOUN_STACKING", "REDUNDANCY", "TRANSLATIONESE", "UNNECESSARY_META_PROSE", "UNSUPPORTED_EMPHASIS", "USER_FACING_IMPLEMENTATION_JARGON", "NONE"].includes(decision.sourceDefect)
+    && ["NONE", "QUANTIFIER_SCOPE", "CONDITION_OR_TENSE", "MODALITY_OR_CERTAINTY", "ACTION_OR_AUTHORITY", "CLAIM_TYPE_OR_STRENGTH", "PREDICATE_ARGUMENT_STRUCTURE", "RHETORICAL_FUNCTION", "ACTOR_OR_TARGET", "TIME", "NEGATION", "CAUSAL_RELATION", "TERMINOLOGY", "UNCERTAIN"].includes(decision.invariantDelta)
+    && (decision.decision !== "accept" || (decision.reasonCode === "MEANING_PRESERVED" && decision.sourceDefect !== "NONE" && decision.invariantDelta === "NONE"));
+}
+
+/** @param {any} assessment */
+function acceptedAssessmentIsSafe(assessment) {
+  return assessment.meaningPreservation === "pass"
+    && assessment.majorMeaningChange === false
+    && assessment.registerCompliance === "pass"
+    && assessment.protectedStrings === "pass"
+    && (assessment.terminologyJudgment === "pass" || assessment.terminologyJudgment === "not-applicable")
+    && assessment.pairPreference === "candidate";
+}
+
+/** @param {string} source @param {Edit[]} edits */
+function applyEdits(source, edits) {
+  let output = source;
+  for (const edit of [...edits].sort((left, right) => right.start - left.start || right.end - left.end)) {
+    output = `${output.slice(0, edit.start)}${edit.replacement}${output.slice(edit.end)}`;
+  }
+  return output;
+}
+
+/** @param {string} source @param {Edit} edit */
+function isMinimalEdit(source, edit) {
+  const original = source.slice(edit.start, edit.end);
+  if (original === edit.replacement) return false;
+  if (original.length === 0 || edit.replacement.length === 0) return true;
+  const originalCodePoints = Array.from(original);
+  const replacementCodePoints = Array.from(edit.replacement);
+  return originalCodePoints[0] !== replacementCodePoints[0] && originalCodePoints.at(-1) !== replacementCodePoints.at(-1);
+}
+
+/** @param {string} source @param {any} manifest @param {any[]} decisions @param {Map<string, SourceUnit>} unitById */
+function addSelectionProtectedStrings(source, manifest, decisions, unitById) {
+  const ranges = manifest.spans.map((span) => ({ start: span.start, end: span.end }));
+  for (const decision of decisions) {
+    const unit = unitById.get(decision.unitId);
+    if (!unit) continue;
+    for (const value of decision.additionalProtectedStrings) {
+      for (let start = source.indexOf(value, unit.start); start !== -1 && start + value.length <= unit.end; start = source.indexOf(value, start + 1)) {
+        ranges.push({ start, end: start + value.length });
+      }
+    }
+  }
+  ranges.sort((left, right) => left.start - right.start || left.end - right.end);
+  const merged = [];
+  for (const range of ranges) {
+    const previous = merged.at(-1);
+    if (previous && range.start < previous.end) previous.end = Math.max(previous.end, range.end);
+    else merged.push({ ...range });
+  }
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    sourceDigest: sha256(source),
+    sourceLength: source.length,
+    spans: merged.map((range, index) => {
+      const text = source.slice(range.start, range.end);
+      return { id: `span-${String(index + 1).padStart(4, "0")}`, kind: "user-defined", start: range.start, end: range.end, text, digest: sha256(text) };
+    }),
+  };
+}
+
+/** @param {unknown} value */
+function validCodes(value) {
+  return Array.isArray(value) && new Set(value).size === value.length && value.every((item) => typeof item === "string" && CODE.test(item));
+}
+
+/** @param {object} value @param {string[]} keys */
+function hasExactKeys(value, keys) {
+  const actual = Object.keys(value).sort();
+  return actual.length === keys.length && actual.every((key, index) => key === [...keys].sort()[index]);
 }
