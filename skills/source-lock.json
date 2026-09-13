@@ -95,9 +95,9 @@
       "skillId": "model-effort-advisor",
       "path": "skills/model-effort-advisor",
       "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
-      "ref": "6c80d2bee4641007898d60ecb7b87180293a0f72",
-      "commit": "6c80d2bee4641007898d60ecb7b87180293a0f72",
-      "checksum": "sha256:b82d6203768dd4ce37d08b7bc0df998e13b06a79336c8865a9f2e3dcf308860e",
+      "ref": "bc248f9babf1c850249c960385b2935db49756d4",
+      "commit": "bc248f9babf1c850249c960385b2935db49756d4",
+      "checksum": "sha256:9a2871ff97553884eea9e93e1b46464631b47fc2d2be7b50b0cd5ec5031e429c",
       "checksumScope": "relative paths and normalized text bytes under skills/model-effort-advisor"
     },
     {
