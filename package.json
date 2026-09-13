@@ -2,7 +2,7 @@
   "name": "agent-governance-suite",
   "version": "1.1.0",
   "private": true,
-  "description": "Ten governance specialists and one Korean prose workflow with declarative local orchestration.",
+  "description": "Ten governance specialists with declarative local orchestration and a bundled, disabled Korean prose workflow.",
   "type": "module",
   "packageManager": "pnpm@11.19.0",
   "engines": {

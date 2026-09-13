@@ -6,7 +6,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
-The current public release is `v1.0.5`. This worktree's `v1.1.0` candidate contains ten governance specialist skills plus one Korean prose workflow, but it is not approved for release or installation because its prose-quality evaluation missed the improvement threshold.
+The current public release is `v1.1.0`. It includes ten governance specialist skills and one Korean prose workflow. The Korean prose workflow remains disabled in `skills/registry.json`, so MCP routing and the orchestrator cannot select it until it passes the prose-quality improvement threshold.
 
 ## How it works
 
@@ -59,7 +59,7 @@ The orchestrator does not run all ten skills for every request. It selects the r
 Node.js 22.13.0 or later is required.
 
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.0.5
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.1.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 

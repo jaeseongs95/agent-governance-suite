@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
+import { FileSkillRegistry, selectSkillByCapability } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
@@ -40,5 +40,22 @@ describe("bundled skill registry", () => {
       "workspace-convention-profiling",
       "mutation-risk-preflight",
     ]));
+  });
+
+  it("bundles the Korean prose workflow without enabling runtime selection", () => {
+    const registry = new FileSkillRegistry(registryPath, new ContractValidator());
+    const providers = registry.read();
+    const koreanProviders = providers.filter((provider) => provider.skillId === "korean-prose-editor");
+
+    expect(koreanProviders).toHaveLength(4);
+    expect(koreanProviders.every((provider) => provider.enabled === false)).toBe(true);
+    for (const capability of [
+      "korean-prose-selection",
+      "korean-prose-editing",
+      "korean-prose-verification",
+      "korean-prose-finalization",
+    ]) {
+      expect(selectSkillByCapability(providers, capability)).toBeUndefined();
+    }
   });
 });
