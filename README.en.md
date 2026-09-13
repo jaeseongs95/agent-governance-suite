@@ -118,7 +118,7 @@ This development source upgrades the SQLite schema from v2 to v3 to preserve con
 | Before completion | `independent-audit-gate` | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
 | After a failure | `blocker-diagnostician` | 1.0.0 | Classifies repeated failures and selects the next diagnostic step. |
 
-Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. Exact source tags, commits, and checksums for externally imported skills are pinned in `skills/source-lock.json`; the repository-native `orchestrator` and `iteration-frame-auditor` are tracked by the registry and current Git history.
+Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. `skills/source-lock.json` pins the upstream sources and the creation commit and checksum of the repository-native `iteration-frame-auditor`; the `orchestrator` is tracked by current Git history.
 
 ## Enforcement scope and limits
 

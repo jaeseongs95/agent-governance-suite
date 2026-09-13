@@ -92,6 +92,15 @@
       "checksumScope": "relative paths and normalized text bytes under skills/change-scope-guardian"
     },
     {
+      "skillId": "iteration-frame-auditor",
+      "path": "skills/iteration-frame-auditor",
+      "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
+      "ref": "afb6d034a78dee6a65362191bd6f2d5d374f44fe",
+      "commit": "afb6d034a78dee6a65362191bd6f2d5d374f44fe",
+      "checksum": "sha256:aadb18d075d353a3c70a47f15af938220944a5ded03406be2ffc450678cd1c6e",
+      "checksumScope": "relative paths and normalized text bytes under skills/iteration-frame-auditor"
+    },
+    {
       "skillId": "korean-prose-editor",
       "path": "skills/korean-prose-editor",
       "source": "https://github.com/jaeseongs95/korean-prose-editor.git",
