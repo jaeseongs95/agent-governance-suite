@@ -1388,6 +1388,7 @@
           "phaseOrder": 65,
           "requiredInputArtifacts": [
             "korean-prose-request",
+            "edit-decision-set",
             "edit-candidate",
             "edit-verification-report"
           ],
@@ -1398,6 +1399,13 @@
                 "caller.koreanProseRequest"
               ],
               "operation": "require-external"
+            },
+            {
+              "targetArtifact": "edit-decision-set",
+              "sources": [
+                "provider:korean-prose-selection.edit-decision-set"
+              ],
+              "operation": "select"
             },
             {
               "targetArtifact": "edit-candidate",

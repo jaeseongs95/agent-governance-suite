@@ -100,9 +100,10 @@
       "executionClass": "workflow",
       "phase": "korean-prose-finalization",
       "phaseOrder": 65,
-      "requiredInputArtifacts": ["korean-prose-request", "edit-candidate", "edit-verification-report"],
+      "requiredInputArtifacts": ["korean-prose-request", "edit-decision-set", "edit-candidate", "edit-verification-report"],
       "inputBindings": [
         { "targetArtifact": "korean-prose-request", "sources": ["caller.koreanProseRequest"], "operation": "require-external" },
+        { "targetArtifact": "edit-decision-set", "sources": ["provider:korean-prose-selection.edit-decision-set"], "operation": "select" },
         { "targetArtifact": "edit-candidate", "sources": ["provider:korean-prose-editing.edit-candidate"], "operation": "select" },
         { "targetArtifact": "edit-verification-report", "sources": ["provider:korean-prose-verification.edit-verification-report"], "operation": "select" }
       ],

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, realpath } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { DatabaseSync } from "node:sqlite";
@@ -141,17 +141,25 @@ function parseArguments(cliArgs: string[]): { run: number; evaluationRoot: strin
 }
 
 async function resolveLayout(evaluationRoot: string, run: number, cycleArgument: string | null): Promise<EvaluationLayout> {
-  const defaultCycle = path.join(evaluationRoot, "evals", "cycles", "0.1.0-rc2");
-  const explicitCycle = cycleArgument
-    ? (path.isAbsolute(cycleArgument) ? path.resolve(cycleArgument) : path.resolve(evaluationRoot, cycleArgument))
-    : null;
+  const resolvedEvaluationRoot = await realpath(evaluationRoot);
+  const defaultCycle = path.join(resolvedEvaluationRoot, "evals", "cycles", "0.1.0-rc2");
+  const explicitCycle = cycleArgument ? await realpath(path.isAbsolute(cycleArgument)
+    ? path.resolve(cycleArgument)
+    : path.resolve(resolvedEvaluationRoot, cycleArgument)) : null;
   if (explicitCycle) {
-    await access(explicitCycle);
+    assertContainedPath(resolvedEvaluationRoot, explicitCycle);
     if (await exists(path.join(explicitCycle, `run-${run}`, "selection.jsonl"))) return legacyLayout(explicitCycle, run);
     return cycleLayout(explicitCycle, run);
   }
   if (await exists(defaultCycle)) return cycleLayout(defaultCycle, run);
-  return legacyLayout(path.join(evaluationRoot, "evals", "runs"), run);
+  return legacyLayout(path.join(resolvedEvaluationRoot, "evals", "runs"), run);
+}
+
+function assertContainedPath(root: string, candidate: string): void {
+  const relative = path.relative(root, candidate);
+  if (relative.startsWith(`..${path.sep}`) || relative === ".." || path.isAbsolute(relative)) {
+    throw new Error("cycle directory must be inside the evaluation root");
+  }
 }
 
 function legacyLayout(legacyBase: string, run: number): EvaluationLayout {

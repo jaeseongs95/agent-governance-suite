@@ -1,10 +1,10 @@
 import { createHash } from "node:crypto";
-import { access, readFile, writeFile } from "node:fs/promises";
+import { access, readFile, realpath, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { DatabaseSync } from "node:sqlite";
 
-import type { PlannedStageV1, StageResultV1, TaskEnvelopeV1 } from "../contracts/types.js";
+import type { PlannedStageV1, RoutedSkillProviderV2, StageResultV1, TaskEnvelopeV1 } from "../contracts/types.js";
 import { FileSkillRegistry } from "../mcp-server/src/registry.js";
 import { ContractValidator } from "../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../mcp-server/src/sqlite-workflow-store.js";
@@ -20,6 +20,14 @@ interface EvaluationLayout {
   verificationPath: string;
   finalPath: string;
   structured: boolean;
+}
+
+class EvaluationSkillRegistry extends FileSkillRegistry {
+  override read(): RoutedSkillProviderV2[] {
+    return super.read().map((provider) => (
+      provider.skillId === "korean-prose-editor" ? { ...provider, enabled: true } : provider
+    ));
+  }
 }
 
 const args = process.argv.slice(2).filter((argument) => argument !== "--");
@@ -75,7 +83,7 @@ const finalEditDigests = collectFinalEditDigests(parseJsonl(finalText));
 const validator = new ContractValidator();
 const store = new SqliteWorkflowStore(databasePath);
 try {
-  const service = new WorkflowService(new FileSkillRegistry(path.join(repositoryRoot, "skills", "registry.json"), validator), validator, store);
+  const service = new WorkflowService(new EvaluationSkillRegistry(path.join(repositoryRoot, "skills", "registry.json"), validator), validator, store);
   const task: TaskEnvelopeV1 = {
     schemaVersion: "1.0.0",
     taskId: `korean-prose-evaluation-run-${run}`,
@@ -92,8 +100,9 @@ try {
   };
   const planResult = service.planWorkflow(task);
   if (!planResult.ok || !planResult.data) throw new Error(`plan failed: ${JSON.stringify(planResult.error)}`);
-  let receipt = service.startWorkflow(planResult.data).data;
-  if (!receipt) throw new Error("start failed");
+  const started = service.startWorkflow(planResult.data);
+  if (!started.ok || !started.data) throw new Error(`start failed: ${JSON.stringify(started.error)}`);
+  let receipt = started.data;
   for (const stage of receipt.plan.stages) {
     const result = stageResult(receipt.runId, receipt.revision, stage);
     const recorded = service.recordStageResult(result);
@@ -210,17 +219,25 @@ function parseArguments(cliArgs: string[]): { run: number; evaluationRoot: strin
 }
 
 async function resolveLayout(evaluationRoot: string, run: number, cycleArgument: string | null): Promise<EvaluationLayout> {
-  const defaultCycle = path.join(evaluationRoot, "evals", "cycles", "0.1.0-rc2");
-  const explicitCycle = cycleArgument
-    ? (path.isAbsolute(cycleArgument) ? path.resolve(cycleArgument) : path.resolve(evaluationRoot, cycleArgument))
-    : null;
+  const resolvedEvaluationRoot = await realpath(evaluationRoot);
+  const defaultCycle = path.join(resolvedEvaluationRoot, "evals", "cycles", "0.1.0-rc2");
+  const explicitCycle = cycleArgument ? await realpath(path.isAbsolute(cycleArgument)
+    ? path.resolve(cycleArgument)
+    : path.resolve(resolvedEvaluationRoot, cycleArgument)) : null;
   if (explicitCycle) {
-    await access(explicitCycle);
+    assertContainedPath(resolvedEvaluationRoot, explicitCycle);
     if (await exists(path.join(explicitCycle, `run-${run}`, "selection.jsonl"))) return legacyLayout(explicitCycle, run);
     return cycleLayout(explicitCycle, run);
   }
   if (await exists(defaultCycle)) return cycleLayout(defaultCycle, run);
-  return legacyLayout(path.join(evaluationRoot, "evals", "runs"), run);
+  return legacyLayout(path.join(resolvedEvaluationRoot, "evals", "runs"), run);
+}
+
+function assertContainedPath(root: string, candidate: string): void {
+  const relative = path.relative(root, candidate);
+  if (relative.startsWith(`..${path.sep}`) || relative === ".." || path.isAbsolute(relative)) {
+    throw new Error("cycle directory must be inside the evaluation root");
+  }
 }
 
 function legacyLayout(legacyBase: string, run: number): EvaluationLayout {

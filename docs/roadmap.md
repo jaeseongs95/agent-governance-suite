@@ -50,6 +50,12 @@
 - `korean-prose-editor`의 원본을 재현 가능한 공개 tag 또는 immutable commit으로 고정한다. 로컬 절대 경로는 공개 릴리스의 최종 source lock으로 사용하지 않는다.
 - 공개 릴리스 버전, manifest, package, marketplace와 문서의 버전 표기가 서로 일치하는지 확인한다.
 
+### 현재 구현 진척
+
+- `codex/korean-prose-receipt-cycle`에서는 최종화 단계가 selection이 만든 `edit-decision-set`을 실제 입력과 검증 근거로 받는지 확인한다. 평가 cycle의 구조화 산출물은 key 순서와 무관한 canonical digest로 대조하며, receipt와 SQLite에 원문을 남기지 않고 기존 산출물도 덮어쓰지 않는다.
+- 독립 저장소의 구조화 평가 체크포인트는 `0c061eda63b0ce94fe85d0763aacd9345489293c`이고 현재 원격 `main`은 라이선스 고지를 보완한 `149ae9ff5e530ea0c5be2371bad218da5da5ceba`다. 통합 저장소의 스킬 사본과 source lock은 아직 이전 원본 `e31767939fc728fb2d0089cdd70dbb8134b3f32f`를 기준으로 하므로, 최신 원본 편입은 별도 작업으로 남긴다.
+- 새 편집 후보 11건의 선정 재현성은 `6/11·11/11·9/11`로 기준에 미달했다. 이 구현 단위가 통과해도 선정 재현성, 새 비공개 holdout 개선율 80%와 전체 릴리스 후보 검증이 끝날 때까지 provider는 비활성으로 유지한다.
+
 ### 종료 기준
 
 - 한국어 산문 workflow의 정상·경계·실패·원문 비저장 테스트가 모두 통과한다.

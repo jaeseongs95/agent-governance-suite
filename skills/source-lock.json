@@ -107,10 +107,11 @@
       "ref": "e31767939fc728fb2d0089cdd70dbb8134b3f32f",
       "commit": "e31767939fc728fb2d0089cdd70dbb8134b3f32f",
       "upstreamChecksum": "sha256:02480e85679e6796b257b9c7ecfeecb8495b6c0a27e6aef71fb943728ffa0996",
-      "checksum": "sha256:5432b02c4906f89c45bb8e2fc3eb5879e461d2524c06911e6843f8313c3e7c06",
+      "checksum": "sha256:e796a841135fa333e459985e7aa8b65fbd1d99daf257d01287b0f40c5ad597df",
       "checksumScope": "relative paths and normalized text bytes under skills/korean-prose-editor",
       "downstreamModifications": [
-        "Temporarily disable implicit invocation and all direct execution paths until the quality gate passes."
+        "Temporarily disable implicit invocation and all direct execution paths until the quality gate passes.",
+        "Bind finalization receipts to the selection decision artifact and document canonical cycle receipt verification."
       ]
     }
   ]
