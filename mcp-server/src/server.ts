@@ -1,8 +1,10 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 
-import { type ApiResultV1 } from "../../contracts/types.js";
+import { type ApiResultV1, type PluginUpdateStatusV1 } from "../../contracts/types.js";
 import { contractSchemas } from "./schema-validator.js";
+import { PLUGIN_INFO } from "./plugin-info.js";
+import { PluginUpdateService } from "./plugin-update-service.js";
 import { WorkflowService } from "./workflow-service.js";
 
 const revisionInputSchema = {
@@ -24,6 +26,14 @@ const workflowIdInputSchema = {
   },
 } as const;
 
+const updateCheckInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    force: { type: "boolean", default: false },
+  },
+} as const;
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -35,21 +45,48 @@ function integer(value: unknown): number {
 }
 
 function toolResult<T>(result: ApiResultV1<T>) {
+  const content: Array<{ type: "text"; text: string }> = [
+    { type: "text", text: JSON.stringify(result) },
+  ];
   return {
-    content: [{ type: "text" as const, text: JSON.stringify(result) }],
+    content,
     isError: !result.ok,
   };
 }
 
+function apiOk<T>(data: T): ApiResultV1<T> {
+  return { schemaVersion: "1.0.0", ok: true, data, error: null };
+}
+
+function invalidInput(message: string): ApiResultV1<never> {
+  return {
+    schemaVersion: "1.0.0",
+    ok: false,
+    data: null,
+    error: { code: "INVALID_INPUT", message, details: null },
+  };
+}
+
+function validUpdateArguments(args: Record<string, unknown>): boolean {
+  return Object.keys(args).every((key) => key === "force")
+    && (args.force === undefined || typeof args.force === "boolean");
+}
+
 /** Exposes only the orchestration layer; direct specialist invocation bypasses MCP. */
-export function createMcpServer(service: WorkflowService): Server {
+export function createMcpServer(service: WorkflowService, updates: PluginUpdateService): Server {
   const server = new Server(
-    { name: "agent-governance-suite", version: "1.1.0" },
+    { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} } },
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
+      {
+        name: "check_for_updates",
+        description: "Check the fixed Agent Governance Suite repository for a newer stable plugin tag without installing it.",
+        inputSchema: updateCheckInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: false, destructiveHint: false, openWorldHint: true },
+      },
       {
         name: "plan_workflow",
         description: "Read the current skill registry and return a capability-based workflow plan without storing a run.",
@@ -91,21 +128,39 @@ export function createMcpServer(service: WorkflowService): Server {
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const args = asRecord(request.params.arguments);
-    switch (request.params.name) {
-      case "plan_workflow":
-        return toolResult(service.planWorkflow(args));
-      case "start_workflow":
-        return toolResult(service.startWorkflow(args));
-      case "record_stage_result":
-        return toolResult(service.recordStageResult(args));
-      case "get_workflow_status":
-        return toolResult(service.getWorkflowStatus(String(args.runId ?? "")));
-      case "finalize_workflow":
-        return toolResult(service.finalizeWorkflow(String(args.runId ?? ""), integer(args.expectedRevision)));
-      case "abort_workflow":
-        return toolResult(service.abortWorkflow(String(args.runId ?? ""), integer(args.expectedRevision)));
-      default:
-        return toolResult({
+    let updateStatus: PluginUpdateStatusV1 | null = null;
+    let result: ApiResultV1<unknown>;
+
+    if (request.params.name === "check_for_updates") {
+      if (!validUpdateArguments(args)) {
+        result = invalidInput("check_for_updates accepts only an optional boolean force field.");
+      } else {
+        updateStatus = await updates.check(args.force === true);
+        result = apiOk(updateStatus);
+      }
+    } else {
+      updateStatus = await updates.check(false);
+      switch (request.params.name) {
+        case "plan_workflow":
+          result = service.planWorkflow(args);
+          break;
+        case "start_workflow":
+          result = service.startWorkflow(args);
+          break;
+        case "record_stage_result":
+          result = service.recordStageResult(args);
+          break;
+        case "get_workflow_status":
+          result = service.getWorkflowStatus(String(args.runId ?? ""));
+          break;
+        case "finalize_workflow":
+          result = service.finalizeWorkflow(String(args.runId ?? ""), integer(args.expectedRevision));
+          break;
+        case "abort_workflow":
+          result = service.abortWorkflow(String(args.runId ?? ""), integer(args.expectedRevision));
+          break;
+        default:
+          result = {
           schemaVersion: "1.0.0",
           ok: false,
           data: null,
@@ -114,8 +169,14 @@ export function createMcpServer(service: WorkflowService): Server {
             message: "Unknown workflow tool.",
             details: { tool: request.params.name },
           },
-        });
+          };
+      }
     }
+
+    const response = toolResult(result);
+    const notice = updateStatus ? updates.takeNotice(updateStatus) : null;
+    if (notice) response.content.push({ type: "text", text: JSON.stringify(notice) });
+    return response;
   });
 
   return server;

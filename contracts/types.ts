@@ -63,6 +63,52 @@ export interface ApiResultV1<T> {
   error: ContractErrorBody | null;
 }
 
+export const PLUGIN_UPDATE_COMPARISON = [
+  "unknown",
+  "up-to-date",
+  "update-available",
+  "ahead-of-stable",
+] as const;
+export type PluginUpdateComparison = (typeof PLUGIN_UPDATE_COMPARISON)[number];
+
+export const PLUGIN_UPDATE_ERROR_CODE = [
+  "TIMEOUT",
+  "NETWORK",
+  "HTTP",
+  "INVALID_RESPONSE",
+  "NO_STABLE_TAG",
+] as const;
+export type PluginUpdateErrorCode = (typeof PLUGIN_UPDATE_ERROR_CODE)[number];
+
+export interface PluginUpdateStatusV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  pluginId: string;
+  currentVersion: string;
+  latestVersion: string | null;
+  latestTag: string | null;
+  latestCommit: string | null;
+  comparison: PluginUpdateComparison;
+  lastAttemptAt: string | null;
+  lastSuccessfulCheckAt: string | null;
+  nextCheckAt: string;
+  stale: boolean;
+  lastErrorCode: PluginUpdateErrorCode | null;
+  automaticInstall: false;
+}
+
+export interface PluginUpdateNoticeV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "plugin-update-notice";
+  pluginId: string;
+  currentVersion: string;
+  latestVersion: string;
+  latestTag: string;
+  latestCommit: string;
+  checkedAt: string;
+  tagUrl: string;
+  automaticInstall: false;
+}
+
 export interface TaskEnvelopeV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   taskId: string;

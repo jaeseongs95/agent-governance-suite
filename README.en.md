@@ -88,6 +88,16 @@ The MCP server stores workflow state and its plan-signing key in SQLite. By defa
 AGENT_GOVERNANCE_DB_PATH=/absolute/path/workflows.sqlite3 pnpm dev
 ```
 
+### Plugin update checks
+
+On the first MCP use after the cache expires, the server checks the fixed public repository for a stable plugin release tag. Successful results are cached in SQLite for 24 hours. A failed check never blocks the requested workflow operation, preserves the last successful result, and becomes eligible for retry after one hour. When a newer stable version is available, the server appends one `plugin-update-notice` content block for that version.
+
+```text
+check_for_updates { "force": false }
+```
+
+Set `force: true` to bypass the cached check time. This feature only reports that a release exists. It never modifies plugin files, installation caches, or marketplace settings, and it never installs the update automatically. Direct specialist-skill calls that do not use the MCP server do not perform this check.
+
 Each specialist remains available when the MCP server is unavailable. Orchestrated runs that enforce stage order and issue a final receipt require the MCP server.
 
 ## Included skills
@@ -120,7 +130,7 @@ The MCP server reads capabilities, execution phases, and artifact dependencies f
 
 The MCP server is not a security boundary against a hostile caller. Specialist skills and callers submit `verified` flags, evidence locators, and actor identifiers as trusted inputs. The server checks their structure and consistency across workflow stages, but it does not authenticate a real person or prove that the source evidence is genuine.
 
-Active runs, their current revisions, the run ID sequence, and the plan-signing key are stored in SQLite, so they remain available after an MCP server restart. SQLite stores the complete `WorkflowReceipt` as plaintext JSON, including each `StageResult` provider output, evidence notes, findings, blockers, and errors. For ordinary providers, callers must not submit sensitive source material. A provider that declares `receiptPolicy.mode: reference-only` is checked before persistence: its closed output schema may retain only digests, artifact references, and fixed tokens, and free text is also rejected from notes, locators, findings, blockers, and errors. When both `actorIdPointer` and `uniqueness: run` are declared, the server rejects reuse of a canonical lowercase UUID actor ID across policy stages, including after restart. The server has no automatic retention or deletion policy, so callers must manage access and retention for the database and its directory. The default `WorkflowService` constructor keeps its in-memory behavior for tests and embedded use. This policy is a structural raw-content persistence boundary, not identity authentication. Environments that require authenticated identity, encrypted long-term retention, or evidence integrity against hostile actors still need a separate identity and evidence service.
+Active runs, their current revisions, the run ID sequence, the plan-signing key, and plugin update-check state are stored in SQLite, so they remain available after an MCP server restart. Update state is limited to versions, tag and commit identifiers, the ETag, check and retry timestamps, the last notified version, and an error code. SQLite stores the complete `WorkflowReceipt` as plaintext JSON, including each `StageResult` provider output, evidence notes, findings, blockers, and errors. For ordinary providers, callers must not submit sensitive source material. A provider that declares `receiptPolicy.mode: reference-only` is checked before persistence: its closed output schema may retain only digests, artifact references, and fixed tokens, and free text is also rejected from notes, locators, findings, blockers, and errors. When both `actorIdPointer` and `uniqueness: run` are declared, the server rejects reuse of a canonical lowercase UUID actor ID across policy stages, including after restart. The server has no automatic retention or deletion policy, so callers must manage access and retention for the database and its directory. The default `WorkflowService` constructor keeps its in-memory behavior for tests and embedded use. This policy is a structural raw-content persistence boundary, not identity authentication. Environments that require authenticated identity, encrypted long-term retention, or evidence integrity against hostile actors still need a separate identity and evidence service.
 
 ## Repository layout
 
