@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/korean-prose-evaluation-frame.v1.schema.json",
+  "title": "KoreanProseEvaluationFrame.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "frameId",
+    "status",
+    "createdAt",
+    "candidate",
+    "corpus",
+    "controls",
+    "runBudget",
+    "aggregation",
+    "thresholds",
+    "priorFrames",
+    "executionMetadataSchemaVersion",
+    "frameDigest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "frameId": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+    "status": { "const": "frozen" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["suiteRevision", "skillSourceCommit", "skillSourceChecksum", "integratedSkillChecksum", "toolchainDigest"],
+      "properties": {
+        "suiteRevision": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "skillSourceCommit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "skillSourceChecksum": { "$ref": "#/$defs/digest" },
+        "integratedSkillChecksum": { "$ref": "#/$defs/digest" },
+        "toolchainDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "corpus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caseCount", "inputDigest", "orderedCaseIdsDigest", "labelsLocator", "labelsDigest", "visibility", "strata"],
+      "properties": {
+        "caseCount": { "type": "integer", "minimum": 1 },
+        "inputDigest": { "$ref": "#/$defs/digest" },
+        "orderedCaseIdsDigest": { "$ref": "#/$defs/digest" },
+        "labelsLocator": { "type": "string", "minLength": 1 },
+        "labelsDigest": { "$ref": "#/$defs/digest" },
+        "visibility": { "const": "mixed-gate" },
+        "strata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["legacyCount", "holdoutCount"],
+          "properties": {
+            "legacyCount": { "type": "integer", "minimum": 1 },
+            "holdoutCount": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rubricLocator", "rubricDigest", "thresholdsDigest", "corpusValidityEvidenceDigest"],
+      "properties": {
+        "rubricLocator": { "type": "string", "minLength": 1 },
+        "rubricDigest": { "$ref": "#/$defs/digest" },
+        "thresholdsDigest": { "$ref": "#/$defs/digest" },
+        "corpusValidityEvidenceDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "runBudget": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "aggregation": { "const": "all-runs-complete" },
+    "thresholds": { "$ref": "#/$defs/thresholds" },
+    "priorFrames": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["frameId", "disposition", "evidenceLocator", "evidenceDigest"],
+        "properties": {
+          "frameId": { "type": "string", "minLength": 1 },
+          "disposition": { "enum": ["invalid-corpus", "failed-recovery"] },
+          "evidenceLocator": { "type": "string", "minLength": 1 },
+          "evidenceDigest": { "$ref": "#/$defs/digest" }
+        }
+      }
+    },
+    "executionMetadataSchemaVersion": { "const": "3.0.0" },
+    "frameDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protectedExactRate",
+        "legacyMeaningPassRate",
+        "legacyImprovementRate",
+        "legacyRegressionRateMax",
+        "legacyRestraintSuccessRate",
+        "holdoutMajorMeaningFailuresMax",
+        "holdoutProtectedFailuresMax",
+        "holdoutImprovementRate",
+        "holdoutRestraintSuccessRate",
+        "roleReuseMax",
+        "missingEvidenceMax",
+        "rubricChangesMax"
+      ],
+      "properties": {
+        "protectedExactRate": { "type": "number", "minimum": 0, "maximum": 100 },
+        "legacyMeaningPassRate": { "type": "number", "minimum": 0, "maximum": 100 },
+        "legacyImprovementRate": { "type": "number", "minimum": 0, "maximum": 100 },
+        "legacyRegressionRateMax": { "type": "number", "minimum": 0, "maximum": 100 },
+        "legacyRestraintSuccessRate": { "type": "number", "minimum": 0, "maximum": 100 },
+        "holdoutMajorMeaningFailuresMax": { "type": "integer", "minimum": 0 },
+        "holdoutProtectedFailuresMax": { "type": "integer", "minimum": 0 },
+        "holdoutImprovementRate": { "type": "number", "minimum": 0, "maximum": 100 },
+        "holdoutRestraintSuccessRate": { "type": "number", "minimum": 0, "maximum": 100 },
+        "roleReuseMax": { "type": "integer", "minimum": 0 },
+        "missingEvidenceMax": { "type": "integer", "minimum": 0 },
+        "rubricChangesMax": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

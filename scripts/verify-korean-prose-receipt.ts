@@ -4,7 +4,11 @@ import path from "node:path";
 import process from "node:process";
 import { DatabaseSync } from "node:sqlite";
 
+import { evaluateKoreanProseReadiness } from "./korean-prose-readiness.js";
+
 interface EvaluationLayout {
+  cycleDirectory: string | null;
+  formal: boolean;
   runDirectory: string;
   inputPath: string;
   manifestPath: string;
@@ -35,8 +39,19 @@ interface ReceiptStageResult {
 }
 
 const args = process.argv.slice(2).filter((argument) => argument !== "--");
-const { run, evaluationRoot, cycleDirectory } = parseArguments(args);
+const { run, evaluationRoot, cycleDirectory, expectedFrameDigest, expectedValidityReportDigest } = parseArguments(args);
 const layout = await resolveLayout(evaluationRoot, run, cycleDirectory);
+if (layout.formal) {
+  if (!expectedFrameDigest || !expectedValidityReportDigest) {
+    throw new Error("--expected-frame-digest and --expected-validity-report-digest are required for a formal structured cycle");
+  }
+  await evaluateKoreanProseReadiness(layout.cycleDirectory!, {
+    requireQuality: false,
+    expectedFrameDigest,
+    expectedValidityReportDigest,
+    evaluationRoot,
+  });
+}
 const [inputText, selectionText, editingText, verificationText, finalText, manifestText, receiptText] = await Promise.all([
   readFile(layout.inputPath, "utf8"),
   readFile(layout.selectionPath, "utf8"),
@@ -117,15 +132,33 @@ function assertArtifactDigest(result: ReceiptStageResult | undefined, artifactId
   if (!artifact?.verified || artifact.digest !== expectedDigest) throw new Error(`${artifactId} digest does not match its work product`);
 }
 
-function parseArguments(cliArgs: string[]): { run: number; evaluationRoot: string; cycleDirectory: string | null } {
+function parseArguments(cliArgs: string[]): {
+  run: number;
+  evaluationRoot: string;
+  cycleDirectory: string | null;
+  expectedFrameDigest: string | null;
+  expectedValidityReportDigest: string | null;
+} {
   const positional: string[] = [];
   let flaggedCycle: string | null = null;
+  let expectedFrameDigest: string | null = null;
+  let expectedValidityReportDigest: string | null = null;
   for (let index = 0; index < cliArgs.length; index += 1) {
     const argument = cliArgs[index]!;
     if (argument === "--cycle-dir") {
       const value = cliArgs[index + 1];
       if (!value || value.startsWith("--")) throw new Error("--cycle-dir requires a path");
       flaggedCycle = value;
+      index += 1;
+    } else if (argument === "--expected-frame-digest") {
+      const value = cliArgs[index + 1];
+      if (!value || !/^sha256:[a-f0-9]{64}$/u.test(value)) throw new Error("--expected-frame-digest requires a sha256 digest");
+      expectedFrameDigest = value;
+      index += 1;
+    } else if (argument === "--expected-validity-report-digest") {
+      const value = cliArgs[index + 1];
+      if (!value || !/^sha256:[a-f0-9]{64}$/u.test(value)) throw new Error("--expected-validity-report-digest requires a sha256 digest");
+      expectedValidityReportDigest = value;
       index += 1;
     } else {
       positional.push(argument);
@@ -135,9 +168,9 @@ function parseArguments(cliArgs: string[]): { run: number; evaluationRoot: strin
   const evaluationRoot = positional[1] ? path.resolve(positional[1]) : "";
   const positionalCycle = positional[2] ?? null;
   if (![1, 2, 3].includes(run) || !evaluationRoot || positional.length > 3 || (flaggedCycle && positionalCycle)) {
-    throw new Error("usage: <run:1|2|3> <evaluation-root> [cycle-path | --cycle-dir <cycle-path>]");
+    throw new Error("usage: <run:1|2|3> <evaluation-root> [cycle-path | --cycle-dir <cycle-path>] [--expected-frame-digest <sha256:digest>] [--expected-validity-report-digest <sha256:digest>]");
   }
-  return { run, evaluationRoot, cycleDirectory: flaggedCycle ?? positionalCycle };
+  return { run, evaluationRoot, cycleDirectory: flaggedCycle ?? positionalCycle, expectedFrameDigest, expectedValidityReportDigest };
 }
 
 async function resolveLayout(evaluationRoot: string, run: number, cycleArgument: string | null): Promise<EvaluationLayout> {
@@ -149,9 +182,9 @@ async function resolveLayout(evaluationRoot: string, run: number, cycleArgument:
   if (explicitCycle) {
     assertContainedPath(resolvedEvaluationRoot, explicitCycle);
     if (await exists(path.join(explicitCycle, `run-${run}`, "selection.jsonl"))) return legacyLayout(explicitCycle, run);
-    return cycleLayout(explicitCycle, run);
+    return cycleLayout(explicitCycle, run, await exists(path.join(explicitCycle, "evaluation-frame.json")));
   }
-  if (await exists(defaultCycle)) return cycleLayout(defaultCycle, run);
+  if (await exists(defaultCycle)) return cycleLayout(defaultCycle, run, await exists(path.join(defaultCycle, "evaluation-frame.json")));
   return legacyLayout(path.join(resolvedEvaluationRoot, "evals", "runs"), run);
 }
 
@@ -164,6 +197,8 @@ function assertContainedPath(root: string, candidate: string): void {
 
 function legacyLayout(legacyBase: string, run: number): EvaluationLayout {
   return {
+    cycleDirectory: null,
+    formal: false,
     runDirectory: path.join(legacyBase, `run-${run}`),
     inputPath: path.join(legacyBase, "input.jsonl"),
     manifestPath: path.join(legacyBase, "manifest.json"),
@@ -175,12 +210,14 @@ function legacyLayout(legacyBase: string, run: number): EvaluationLayout {
   };
 }
 
-function cycleLayout(cycleDirectory: string, run: number): EvaluationLayout {
+function cycleLayout(cycleDirectory: string, run: number, formal: boolean): EvaluationLayout {
   const runDirectory = path.join(cycleDirectory, "runs", `run-${run}`);
   return {
+    cycleDirectory,
+    formal,
     runDirectory,
     inputPath: path.join(cycleDirectory, "input.jsonl"),
-    manifestPath: path.join(cycleDirectory, "manifest.json"),
+    manifestPath: path.join(runDirectory, "receipt-binding.json"),
     selectionPath: path.join(runDirectory, "selection-work-product.jsonl"),
     editingPath: path.join(runDirectory, "editing-work-product.jsonl"),
     verificationPath: path.join(runDirectory, "verification-work-product.jsonl"),

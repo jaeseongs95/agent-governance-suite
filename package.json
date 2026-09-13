@@ -21,6 +21,7 @@
     "new:skill": "node scripts/new-skill.mjs",
     "import:skill": "node scripts/import-skill.mjs",
     "eval:preflight": "tsx scripts/verify-korean-prose-evaluation-preflight.ts",
+    "eval:readiness": "tsx scripts/verify-korean-prose-readiness.ts",
     "eval:receipt": "tsx scripts/record-korean-prose-run.ts",
     "eval:receipt:verify": "tsx scripts/verify-korean-prose-receipt.ts"
   },

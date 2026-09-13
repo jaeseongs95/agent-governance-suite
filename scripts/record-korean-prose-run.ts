@@ -9,9 +9,11 @@ import { FileSkillRegistry } from "../mcp-server/src/registry.js";
 import { ContractValidator } from "../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../mcp-server/src/sqlite-workflow-store.js";
 import { WorkflowService } from "../mcp-server/src/workflow-service.js";
-import { preflightKoreanProseEvaluation } from "./korean-prose-evaluation-preflight.js";
+import { preflightKoreanProseEvaluation, preflightStructuredKoreanProseEvaluation } from "./korean-prose-evaluation-preflight.js";
+import type { KoreanProseReadinessResult } from "./korean-prose-readiness.js";
 
 interface EvaluationLayout {
+  cycleDirectory: string | null;
   runDirectory: string;
   inputPath: string;
   manifestPath: string;
@@ -31,13 +33,28 @@ class EvaluationSkillRegistry extends FileSkillRegistry {
 }
 
 const args = process.argv.slice(2).filter((argument) => argument !== "--");
-const { run, evaluationRoot, cycleDirectory } = parseArguments(args);
+const { run, evaluationRoot, cycleDirectory, expectedFrameDigest, expectedValidityReportDigest } = parseArguments(args);
 const layout = await resolveLayout(evaluationRoot, run, cycleDirectory);
 const repositoryRoot = path.resolve(import.meta.dirname, "..");
 const databasePath = path.join(layout.runDirectory, "workflow.sqlite3");
 const receiptPath = path.join(layout.runDirectory, "workflow-receipt.json");
-await Promise.all([databasePath, receiptPath].map(refuseExisting));
-if (!layout.structured) await preflightKoreanProseEvaluation("record", run, evaluationRoot);
+const bindingPath = path.join(layout.runDirectory, "receipt-binding.json");
+const protectedOutputs = [receiptPath, databasePath];
+if (layout.structured) protectedOutputs.push(path.join(layout.cycleDirectory!, "quality-report.json"));
+if (layout.structured) protectedOutputs.push(bindingPath);
+for (const output of protectedOutputs) await refuseExisting(output);
+let structuredReadiness: KoreanProseReadinessResult | null = null;
+if (layout.structured) {
+  if (!expectedFrameDigest || !expectedValidityReportDigest) {
+    throw new Error("--expected-frame-digest and --expected-validity-report-digest are required for a structured cycle");
+  }
+  structuredReadiness = await preflightStructuredKoreanProseEvaluation(
+    "record", run, layout.cycleDirectory!, expectedFrameDigest, expectedValidityReportDigest, evaluationRoot,
+  );
+  if (run > structuredReadiness.runBudget) throw new Error(`run ${run} exceeds the frozen run budget ${structuredReadiness.runBudget}`);
+} else {
+  await preflightKoreanProseEvaluation("record", run, evaluationRoot);
+}
 
 const [inputText, selectionText, editingText, verificationText, finalText, metricsText, manifestText, selectionMeta, editingMeta, verificationMeta] = await Promise.all([
   readFile(layout.inputPath, "utf8"),
@@ -51,6 +68,15 @@ const [inputText, selectionText, editingText, verificationText, finalText, metri
   readJson(path.join(layout.runDirectory, "editing-meta.json")),
   readJson(path.join(layout.runDirectory, "verification-meta.json")),
 ]);
+const [startClaimText, selectionMetaText, editingMetaText, verificationMetaText] = layout.structured
+  ? await Promise.all([
+      readFile(path.join(layout.runDirectory, "evaluation-run-claim.json"), "utf8"),
+      readFile(path.join(layout.runDirectory, "selection-meta.json"), "utf8"),
+      readFile(path.join(layout.runDirectory, "editing-meta.json"), "utf8"),
+      readFile(path.join(layout.runDirectory, "verification-meta.json"), "utf8"),
+    ])
+  : [null, null, null, null];
+const startClaimSha256 = startClaimText ? sha256(startClaimText) : null;
 const metrics = JSON.parse(metricsText) as {
   actorIds: string[];
   counts: {
@@ -77,6 +103,30 @@ const digests = {
   rubric: sha256(await readFile(path.join(evaluationRoot, "skills", "korean-prose-editor", "references", "verification-rubric.md"))),
   manifest: digestText(manifestText, "json"),
 };
+if (structuredReadiness && `sha256:${digests.rubric}` !== structuredReadiness.rubricDigest) {
+  throw new Error("evaluation rubric differs from the frozen frame");
+}
+if (structuredReadiness) {
+  assertStructuredRunMetadata(selectionMeta, "selection", actorIds[0]!, run, structuredReadiness.caseCount, digests.source, digests.selection, startClaimSha256!);
+  assertStructuredRunMetadata(editingMeta, "editing", actorIds[1]!, run, structuredReadiness.caseCount, digests.source, digests.editing, startClaimSha256!);
+  assertStructuredRunMetadata(verificationMeta, "verification", actorIds[2]!, run, structuredReadiness.caseCount, digests.source, digests.verification, startClaimSha256!);
+  const bindingPayload = {
+    schemaVersion: "1.0.0",
+    frameId: structuredReadiness.frameId,
+    frameDigest: structuredReadiness.frameDigest,
+    run,
+    cycleManifestSha256: digestText(manifestText, "json"),
+    startClaimSha256,
+    roleMetaSha256: {
+      selection: sha256(selectionMetaText!),
+      editing: sha256(editingMetaText!),
+      verification: sha256(verificationMetaText!),
+    },
+  };
+  const bindingText = `${JSON.stringify(bindingPayload, null, 2)}\n`;
+  await writeFile(bindingPath, bindingText, { encoding: "utf8", flag: "wx" });
+  digests.manifest = digestText(bindingText, "json");
+}
 const counts = normalizedCounts(metrics, parseJsonl(selectionText));
 const finalEditDigests = collectFinalEditDigests(parseJsonl(finalText));
 
@@ -113,7 +163,7 @@ try {
   if (!finalized.ok || !finalized.data) throw new Error(`finalize failed: ${JSON.stringify(finalized.error)}`);
   const serialized = `${JSON.stringify(finalized.data, null, 2)}\n`;
   assertNoRawText(serialized, [inputText, selectionText, editingText, verificationText, finalText]);
-  await writeFile(receiptPath, serialized, "utf8");
+  await writeFile(receiptPath, serialized, { encoding: "utf8", flag: "wx" });
   const persistedDatabase = new DatabaseSync(databasePath, { readOnly: true });
   try {
     const row = persistedDatabase.prepare("SELECT receipt_json FROM workflow_runs WHERE run_id = ?").get(finalized.data.runId) as { receipt_json: string } | undefined;
@@ -195,15 +245,33 @@ try {
   store.close();
 }
 
-function parseArguments(cliArgs: string[]): { run: number; evaluationRoot: string; cycleDirectory: string | null } {
+function parseArguments(cliArgs: string[]): {
+  run: number;
+  evaluationRoot: string;
+  cycleDirectory: string | null;
+  expectedFrameDigest: string | null;
+  expectedValidityReportDigest: string | null;
+} {
   const positional: string[] = [];
   let flaggedCycle: string | null = null;
+  let expectedFrameDigest: string | null = null;
+  let expectedValidityReportDigest: string | null = null;
   for (let index = 0; index < cliArgs.length; index += 1) {
     const argument = cliArgs[index]!;
     if (argument === "--cycle-dir") {
       const value = cliArgs[index + 1];
       if (!value || value.startsWith("--")) throw new Error("--cycle-dir requires a path");
       flaggedCycle = value;
+      index += 1;
+    } else if (argument === "--expected-frame-digest") {
+      const value = cliArgs[index + 1];
+      if (!value || !/^sha256:[a-f0-9]{64}$/u.test(value)) throw new Error("--expected-frame-digest requires a sha256 digest");
+      expectedFrameDigest = value;
+      index += 1;
+    } else if (argument === "--expected-validity-report-digest") {
+      const value = cliArgs[index + 1];
+      if (!value || !/^sha256:[a-f0-9]{64}$/u.test(value)) throw new Error("--expected-validity-report-digest requires a sha256 digest");
+      expectedValidityReportDigest = value;
       index += 1;
     } else {
       positional.push(argument);
@@ -213,14 +281,13 @@ function parseArguments(cliArgs: string[]): { run: number; evaluationRoot: strin
   const evaluationRoot = positional[1] ? path.resolve(positional[1]) : "";
   const positionalCycle = positional[2] ?? null;
   if (![1, 2, 3].includes(run) || !evaluationRoot || positional.length > 3 || (flaggedCycle && positionalCycle)) {
-    throw new Error("usage: <run:1|2|3> <evaluation-root> [cycle-path | --cycle-dir <cycle-path>]");
+    throw new Error("usage: <run:1|2|3> <evaluation-root> [cycle-path | --cycle-dir <cycle-path>] [--expected-frame-digest <sha256:digest>] [--expected-validity-report-digest <sha256:digest>]");
   }
-  return { run, evaluationRoot, cycleDirectory: flaggedCycle ?? positionalCycle };
+  return { run, evaluationRoot, cycleDirectory: flaggedCycle ?? positionalCycle, expectedFrameDigest, expectedValidityReportDigest };
 }
 
 async function resolveLayout(evaluationRoot: string, run: number, cycleArgument: string | null): Promise<EvaluationLayout> {
   const resolvedEvaluationRoot = await realpath(evaluationRoot);
-  const defaultCycle = path.join(resolvedEvaluationRoot, "evals", "cycles", "0.1.0-rc2");
   const explicitCycle = cycleArgument ? await realpath(path.isAbsolute(cycleArgument)
     ? path.resolve(cycleArgument)
     : path.resolve(resolvedEvaluationRoot, cycleArgument)) : null;
@@ -229,7 +296,6 @@ async function resolveLayout(evaluationRoot: string, run: number, cycleArgument:
     if (await exists(path.join(explicitCycle, `run-${run}`, "selection.jsonl"))) return legacyLayout(explicitCycle, run);
     return cycleLayout(explicitCycle, run);
   }
-  if (await exists(defaultCycle)) return cycleLayout(defaultCycle, run);
   return legacyLayout(path.join(resolvedEvaluationRoot, "evals", "runs"), run);
 }
 
@@ -242,6 +308,7 @@ function assertContainedPath(root: string, candidate: string): void {
 
 function legacyLayout(legacyBase: string, run: number): EvaluationLayout {
   return {
+    cycleDirectory: null,
     runDirectory: path.join(legacyBase, `run-${run}`),
     inputPath: path.join(legacyBase, "input.jsonl"),
     manifestPath: path.join(legacyBase, "manifest.json"),
@@ -256,6 +323,7 @@ function legacyLayout(legacyBase: string, run: number): EvaluationLayout {
 function cycleLayout(cycleDirectory: string, run: number): EvaluationLayout {
   const runDirectory = path.join(cycleDirectory, "runs", `run-${run}`);
   return {
+    cycleDirectory,
     runDirectory,
     inputPath: path.join(cycleDirectory, "input.jsonl"),
     manifestPath: path.join(cycleDirectory, "manifest.json"),
@@ -292,6 +360,42 @@ function normalizedCounts(metrics: { counts: Record<string, unknown> }, selectio
 
 function numeric(value: unknown): number | null {
   return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
+}
+
+function assertStructuredRunMetadata(
+  meta: Record<string, unknown>,
+  role: "selection" | "editing" | "verification",
+  actorId: string,
+  run: number,
+  caseCount: number,
+  inputSha256: string,
+  workProductSha256: string,
+  startClaimSha256: string,
+): void {
+  if (meta.schemaVersion !== "3.0.0" || meta.role !== role || meta.actorId !== actorId
+    || meta.run !== run || meta.caseCount !== caseCount || meta.status !== "complete"
+    || meta.inputSha256 !== inputSha256 || meta.workProductSha256 !== workProductSha256
+    || meta.startClaimSha256 !== startClaimSha256) {
+    throw new Error(`${role} metadata is not bound to the frozen run and work product`);
+  }
+  const provenance = meta.executionProvenance;
+  if (!provenance || typeof provenance !== "object" || Array.isArray(provenance)) {
+    throw new Error(`${role} metadata is missing execution provenance`);
+  }
+  const record = provenance as Record<string, unknown>;
+  for (const field of ["requestedModel", "actualModel", "provider", "providerVersion"]) {
+    if (typeof record[field] !== "string" || (record[field] as string).length === 0) {
+      throw new Error(`${role} execution provenance is missing ${field}`);
+    }
+  }
+  for (const field of ["promptSha256", "decodingParametersSha256"]) {
+    if (record[field] !== "unverified" && (typeof record[field] !== "string" || !/^[a-f0-9]{64}$/u.test(record[field] as string))) {
+      throw new Error(`${role} execution provenance has invalid ${field}`);
+    }
+  }
+  if (record.promptSha256 === "unverified" || (record.seed !== "unverified" && !Number.isInteger(record.seed))) {
+    throw new Error(`${role} execution provenance is incomplete`);
+  }
 }
 
 function collectFinalEditDigests(records: Array<Record<string, unknown>>): { applied: string[]; retained: string[] } {

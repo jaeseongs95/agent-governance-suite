@@ -56,6 +56,8 @@
 - 독립 저장소와 통합 사본은 immutable commit `c5df63749e2edfc8aa424f9935ee3cd4697d3c49`에 고정했다. 이 스냅샷은 범주·용어 보존, 대리 명사 없는 기능 동사 직접화, 편집 후 경계 공백 거부와 provenance-bound run metadata v3를 포함한다.
 - 기존 11-case gate는 기록된 실패와 9/11 기준을 바꾸지 않고 `invalid-corpus`로 종결했다. 별도 12-case recovery는 edit 5/8, restraint 4/4, major meaning change 0, protected failure 0으로 실패했으며 재실행하지 않는다.
 - recovery 실패 보정은 공개 회귀 fixture와 계약에 반영했지만 `IMPLEMENTED_NOT_RERUN` 상태다. 새 ID·새 freeze·독립 corpus 타당성 검사를 갖춘 다음 정식 frame과 신규 private holdout이 기존 기준을 통과할 때까지 provider는 비활성으로 유지한다.
+- 다음 정식 frame용 fail-closed readiness gate를 구현했다. 새 구조화 cycle은 외부에서 보관한 frame·타당성 보고서 digest, 현재 suite revision, 실제 통합 대상과 동일한 평가 skill 사본·평가 toolchain checksum, 정답이 제거된 모델·독립 심사 입력과 별도 동결 label, corpus strata·rubric·threshold digest, 실행 횟수, 과거 terminal evidence와 독립 corpus 타당성 근거를 결속해야 receipt를 기록할 수 있다. selection 직전 만든 원자적 start claim을 후속 단계 metadata가 참조하며, 품질 판정은 self-reported 상태가 아니라 외부에서 고정한 품질 보고서, 전체 workflow receipt·SQLite·최종 case와 봉인된 독립 심사 결과에서 분자·분모를 다시 집계한다. `READY_TO_EVALUATE`와 `EVALUATION_EVIDENCE_PASSED`는 provider 활성화와 분리한다.
+- registry, 직접 descriptor, Codex implicit invocation과 `TEMPORARILY_DISABLED` 표시는 저장소 검증에서 함께 비활성인지 검사한다. 실제 신규 private holdout 작성·독립 타당성 감사·모델 실행과 별도 활성화 승인은 아직 남아 있다.
 
 ### 종료 기준
 
