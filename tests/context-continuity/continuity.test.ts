@@ -239,8 +239,51 @@ describe("direct task continuity", () => {
     expect(service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", secondPurgeInput)).data?.purged).toBe(true);
 
     const replayedFirst = service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", firstPurgeInput));
-    expect(replayedFirst).toEqual(firstPurge);
-    expect(replayedFirst.data).toMatchObject({ purged: true, epoch: 1, revision: firstSnapshot.revision });
+    expect(replayedFirst.error?.code).toBe("STALE_REVISION");
+    expect(replayedFirst.data).toBeNull();
+  });
+
+  it("rejects and later scrubs a malformed purge receipt with extra snapshot content", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "continuity-purge-receipt-"));
+    temporaryDirectories.push(directory);
+    const databasePath = join(directory, "continuity.sqlite3");
+    const service = createService(databasePath);
+    const session = "malformed-purge-session";
+    const firstSnapshot = directCheckpoint(service, session).data!;
+    const firstPurgeInput = {
+      schemaVersion: "1.0.0" as const,
+      requestId: "purge-malformed-first",
+      expectedEpoch: 1,
+      expectedRevision: firstSnapshot.revision,
+    };
+    const firstPurge = service.purgeDirectContext(bound(service, session, "purge_direct_context", firstPurgeInput)).data!;
+    const marker = "MALFORMED-PURGE-BODY-MUST-NOT-SURVIVE";
+    const database = new DatabaseSync(databasePath);
+    database.prepare("UPDATE continuity_requests SET result_json = ? WHERE result_json LIKE ?").run(JSON.stringify({
+      ...firstPurge,
+      tombstoneDigest: `sha256:${"f".repeat(64)}`,
+      core: { objective: marker },
+    }), "%\"purged\":true%");
+    database.close();
+
+    const rejected = service.purgeDirectContext(bound(service, session, "purge_direct_context", firstPurgeInput));
+    expect(rejected.error?.code).toBe("STALE_REVISION");
+    expect(JSON.stringify(rejected)).not.toContain(marker);
+
+    const secondCheckpoint = checkpointInput({ requestId: "checkpoint-after-malformed-purge" });
+    const secondSnapshot = service.checkpointContext(bound(service, session, "checkpoint_context", secondCheckpoint)).data!;
+    const secondPurgeInput = {
+      schemaVersion: "1.0.0" as const,
+      requestId: "purge-after-malformed-purge",
+      expectedEpoch: 1,
+      expectedRevision: secondSnapshot.revision,
+    };
+    expect(service.purgeDirectContext(bound(service, session, "purge_direct_context", secondPurgeInput)).data?.purged).toBe(true);
+
+    const after = new DatabaseSync(databasePath);
+    const requests = after.prepare("SELECT result_json FROM continuity_requests").all();
+    after.close();
+    expect(JSON.stringify(requests)).not.toContain(marker);
   });
 
   it("purges a direct payload after workflow binding without deleting the workflow root", () => {
