@@ -321,7 +321,7 @@ export interface PlannedStageV1 {
 export interface WorkflowPlanV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   taskId: string;
-  taskDigest: Sha256Digest;
+  taskDigest?: Sha256Digest;
   integrityToken: string;
   executionMode: ExecutionMode;
   state: WorkflowState;

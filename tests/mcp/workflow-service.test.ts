@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -5,12 +6,14 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { type PlannedStageV1, type SkillDescriptorV2, type StageResultV1, type TaskEnvelopeV1, type WorkflowReceiptV1 } from "../../contracts/types.js";
+import { type PlannedStageV1, type SkillDescriptorV2, type StageResultV1, type TaskEnvelopeV1 } from "../../contracts/types.js";
 import { validateDecisionRecordSemantics } from "../../mcp-server/src/decision-record-validator.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
+import { canonicalJson } from "../../mcp-server/src/convergence-logic.js";
+import { InMemoryWorkflowStore, PLAN_SIGNING_KEY, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
 
 const temporaryDirectories: string[] = [];
 const sqliteStores = new Set<SqliteWorkflowStore>();
@@ -126,7 +129,7 @@ function task(overrides: Partial<TaskEnvelopeV1> = {}): TaskEnvelopeV1 {
 
 async function createService(
   descriptors: SkillDescriptorV2[] = skills,
-  store?: SqliteWorkflowStore,
+  store?: WorkflowStore,
 ): Promise<{ service: WorkflowService; registryPath: string; rootDirectory: string }> {
   const directory = await mkdtemp(join(tmpdir(), "skill-suite-mcp-"));
   temporaryDirectories.push(directory);
@@ -289,17 +292,20 @@ describe("SqliteWorkflowStore", () => {
     const databaseDirectory = await mkdtemp(join(tmpdir(), "skill-suite-v2-migration-"));
     temporaryDirectories.push(databaseDirectory);
     const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
-    const activeReceipt = {
-      schemaVersion: "1.0.0",
-      runId: "run-v2-active",
-      revision: 0,
-      state: "running",
-      plan: {},
-      stageResults: [],
-      blockers: [],
-      unresolved: [],
-      error: null,
-    } as unknown as WorkflowReceiptV1;
+    const signingKey = Buffer.alloc(32, 7).toString("base64url");
+    const generatorStore = new InMemoryWorkflowStore();
+    generatorStore.getOrCreateSecret(PLAN_SIGNING_KEY, () => signingKey);
+    const { service: generator } = await createService(skills, generatorStore);
+    const legacyPlan = structuredClone(generator.planWorkflow(task({ taskId: "v2-active" })).data!);
+    delete legacyPlan.taskDigest;
+    const unsignedPlan = { ...legacyPlan } as Record<string, unknown>;
+    delete unsignedPlan.integrityToken;
+    legacyPlan.integrityToken = createHmac("sha256", Buffer.from(signingKey, "base64url"))
+      .update(canonicalJson(unsignedPlan))
+      .digest("base64url");
+    const activeReceipt = generator.startWorkflow(legacyPlan).data!;
+    expect(activeReceipt).toMatchObject({ state: "running", revision: 0 });
+    expect(activeReceipt.plan.taskDigest).toBeUndefined();
     const fixture = new DatabaseSync(databasePath);
     try {
       fixture.exec(`
@@ -329,7 +335,7 @@ describe("SqliteWorkflowStore", () => {
           last_notified_at TEXT,
           last_error_code TEXT
         ) STRICT;
-        INSERT INTO workflow_metadata VALUES ('plan-signing-key', 'v2-secret', '2026-09-12T00:00:00.000Z');
+        INSERT INTO workflow_metadata VALUES ('plan-signing-key', '${signingKey}', '2026-09-12T00:00:00.000Z');
         INSERT INTO workflow_metadata VALUES ('run-sequence', '11', '2026-09-12T00:00:00.000Z');
         PRAGMA user_version = 2;
       `);
@@ -342,10 +348,10 @@ describe("SqliteWorkflowStore", () => {
     }
 
     const store = openSqliteStore(databasePath);
-    expect(store.getRun(activeReceipt.runId)).toMatchObject({ state: "running", revision: 0 });
-    const failedReceipt = { ...activeReceipt, state: "failed", revision: 1 } as WorkflowReceiptV1;
-    expect(store.updateRun(failedReceipt, 0)).toBe(true);
-    expect(store.getRun(activeReceipt.runId)).toMatchObject({ state: "failed", revision: 1 });
+    const { service } = await createService(skills, store);
+    expect(service.getWorkflowStatus(activeReceipt.runId).data).toMatchObject({ state: "running", revision: 0 });
+    expect(service.abortWorkflow(activeReceipt.runId, 0).data).toMatchObject({ state: "blocked", revision: 1 });
+    expect(service.getWorkflowStatus(activeReceipt.runId).data).toMatchObject({ state: "blocked", revision: 1 });
     closeSqliteStore(store);
 
     const migrated = new DatabaseSync(databasePath);

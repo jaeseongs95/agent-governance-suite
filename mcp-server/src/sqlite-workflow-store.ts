@@ -17,7 +17,7 @@ import {
   type StoredPluginUpdateState,
 } from "./plugin-update-store.js";
 import { compareStableVersionNumbers } from "./plugin-version.js";
-import { rootsOverlap } from "./convergence-logic.js";
+import { normalizeWorkspaceLocator, rootsOverlap } from "./convergence-logic.js";
 import {
   type ConvergenceSnapshot,
   type GuardedRunBinding,
@@ -243,7 +243,8 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         const rows = this.database.prepare(`
           SELECT root_json, revision FROM convergence_roots
           WHERE state NOT IN ('completed', 'abandoned')
-        `).all() as unknown as ConvergenceRootRow[];
+            AND (workspace_id = ? OR workspace_locator = ?)
+        `).all(root.frame.workspace.workspaceId, normalizeWorkspaceLocator(root.frame.workspace.locator)) as unknown as ConvergenceRootRow[];
         for (const row of rows) {
           const existing = JSON.parse(row.root_json) as ConvergenceRootV1;
           if (root.parentRootId === existing.rootId) continue;
@@ -262,9 +263,18 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
           `).run(parent.revision, parent.state, JSON.stringify(parent), parent.updatedAt, parent.rootId, row.revision);
         }
         this.database.prepare(`
-          INSERT INTO convergence_roots (root_id, revision, state, workspace_id, root_json, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(root.rootId, root.revision, root.state, root.frame.workspace.workspaceId, JSON.stringify(root), root.createdAt, root.updatedAt);
+          INSERT INTO convergence_roots (root_id, revision, state, workspace_id, workspace_locator, root_json, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          root.rootId,
+          root.revision,
+          root.state,
+          root.frame.workspace.workspaceId,
+          normalizeWorkspaceLocator(root.frame.workspace.locator),
+          JSON.stringify(root),
+          root.createdAt,
+          root.updatedAt,
+        );
         this.database.prepare(`
           INSERT INTO convergence_epochs (root_id, epoch, frame_digest, created_at)
           VALUES (?, ?, ?, ?)
@@ -279,20 +289,22 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
 
   getConvergenceSnapshot(rootId: string): ConvergenceSnapshot | null {
     try {
-      const rootRow = this.database.prepare(`SELECT root_json, revision FROM convergence_roots WHERE root_id = ?`).get(rootId) as ConvergenceRootRow | undefined;
-      if (!rootRow) return null;
-      const leases = this.database.prepare(`SELECT lease_json, proposal_json FROM convergence_leases WHERE root_id = ? ORDER BY epoch, ordinal, issued_at`).all(rootId) as unknown as ConvergenceLeaseRow[];
-      const outcomes = this.database.prepare(`SELECT outcome_json FROM convergence_attempts WHERE root_id = ? AND outcome_json IS NOT NULL ORDER BY epoch, ordinal`).all(rootId) as unknown as ConvergenceOutcomeRow[];
-      const reviews = this.database.prepare(`SELECT review_json FROM convergence_reviews WHERE root_id = ? ORDER BY reviewed_at, review_id`).all(rootId) as unknown as ConvergenceReviewRow[];
-      const links = this.database.prepare(`SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY epoch, ordinal`).all(rootId) as unknown as Array<{ run_id: string }>;
-      return {
-        root: JSON.parse(rootRow.root_json) as ConvergenceRootV1,
-        proposals: leases.map((row) => JSON.parse(row.proposal_json) as AttemptProposalV1),
-        leases: leases.map((row) => JSON.parse(row.lease_json) as AttemptLeaseV1),
-        outcomes: outcomes.map((row) => JSON.parse(row.outcome_json) as AttemptOutcomeV1),
-        reviews: reviews.map((row) => JSON.parse(row.review_json) as ConvergenceReviewV1),
-        workflowRunIds: links.map((row) => row.run_id),
-      };
+      return this.readTransaction(() => {
+        const rootRow = this.database.prepare(`SELECT root_json, revision FROM convergence_roots WHERE root_id = ?`).get(rootId) as ConvergenceRootRow | undefined;
+        if (!rootRow) return null;
+        const leases = this.database.prepare(`SELECT lease_json, proposal_json FROM convergence_leases WHERE root_id = ? ORDER BY epoch, ordinal, issued_at`).all(rootId) as unknown as ConvergenceLeaseRow[];
+        const outcomes = this.database.prepare(`SELECT outcome_json FROM convergence_attempts WHERE root_id = ? AND outcome_json IS NOT NULL ORDER BY epoch, ordinal`).all(rootId) as unknown as ConvergenceOutcomeRow[];
+        const reviews = this.database.prepare(`SELECT review_json FROM convergence_reviews WHERE root_id = ? ORDER BY reviewed_at, review_id`).all(rootId) as unknown as ConvergenceReviewRow[];
+        const links = this.database.prepare(`SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY epoch, ordinal`).all(rootId) as unknown as Array<{ run_id: string }>;
+        return {
+          root: JSON.parse(rootRow.root_json) as ConvergenceRootV1,
+          proposals: leases.map((row) => JSON.parse(row.proposal_json) as AttemptProposalV1),
+          leases: leases.map((row) => JSON.parse(row.lease_json) as AttemptLeaseV1),
+          outcomes: outcomes.map((row) => JSON.parse(row.outcome_json) as AttemptOutcomeV1),
+          reviews: reviews.map((row) => JSON.parse(row.review_json) as ConvergenceReviewV1),
+          workflowRunIds: links.map((row) => row.run_id),
+        };
+      });
     } catch (cause) {
       if (cause instanceof WorkflowContractError) throw cause;
       throw this.storageError("Cannot read convergence state.", cause, { rootId });
@@ -363,6 +375,11 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       });
     } catch (cause) {
       if (cause instanceof WorkflowContractError) throw cause;
+      if (this.isLeaseContention(cause)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The convergence database is busy; read status before retrying the lease claim.", {
+          rootId: root.rootId,
+        });
+      }
       throw this.storageError("Cannot claim the convergence attempt lease.", cause, { rootId: root.rootId });
     }
   }
@@ -444,6 +461,9 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       });
     } catch (cause) {
       if (cause instanceof WorkflowContractError) throw cause;
+      if (this.isLeaseContention(cause)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The convergence database is busy or the lease was consumed concurrently.", { leaseId });
+      }
       throw this.storageError("Cannot start the guarded workflow run.", cause, { leaseId });
     }
   }
@@ -614,10 +634,15 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
           revision INTEGER NOT NULL CHECK (revision >= 0),
           state TEXT NOT NULL CHECK (state IN ('open', 'needs-review', 'needs-user', 'completed', 'abandoned')),
           workspace_id TEXT NOT NULL,
+          workspace_locator TEXT NOT NULL,
           root_json TEXT NOT NULL,
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
         ) STRICT;
+        CREATE INDEX IF NOT EXISTS convergence_active_roots_by_workspace
+          ON convergence_roots(workspace_id, state);
+        CREATE INDEX IF NOT EXISTS convergence_active_roots_by_locator
+          ON convergence_roots(workspace_locator, state);
         CREATE TABLE IF NOT EXISTS convergence_epochs (
           root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
           epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
@@ -710,6 +735,27 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       }
       throw cause;
     }
+  }
+
+  private readTransaction<T>(operation: () => T): T {
+    this.database.exec("BEGIN;");
+    try {
+      const result = operation();
+      this.database.exec("COMMIT;");
+      return result;
+    } catch (cause) {
+      try {
+        this.database.exec("ROLLBACK;");
+      } catch {
+        // Preserve the original failure.
+      }
+      throw cause;
+    }
+  }
+
+  private isLeaseContention(cause: unknown): boolean {
+    const message = cause instanceof Error ? cause.message : String(cause);
+    return /database is locked|SQLITE_BUSY|UNIQUE constraint failed: convergence_leases/iu.test(message);
   }
 
   private storageError(message: string, cause: unknown, details: Record<string, unknown> = {}): WorkflowContractError {

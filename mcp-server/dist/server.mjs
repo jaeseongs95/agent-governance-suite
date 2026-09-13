@@ -18773,7 +18773,8 @@ var SqliteWorkflowStore = class {
         const rows = this.database.prepare(`
           SELECT root_json, revision FROM convergence_roots
           WHERE state NOT IN ('completed', 'abandoned')
-        `).all();
+            AND (workspace_id = ? OR workspace_locator = ?)
+        `).all(root.frame.workspace.workspaceId, normalizeWorkspaceLocator(root.frame.workspace.locator));
         for (const row of rows) {
           const existing = JSON.parse(row.root_json);
           if (root.parentRootId === existing.rootId) continue;
@@ -18792,9 +18793,18 @@ var SqliteWorkflowStore = class {
           `).run(parent.revision, parent.state, JSON.stringify(parent), parent.updatedAt, parent.rootId, row.revision);
         }
         this.database.prepare(`
-          INSERT INTO convergence_roots (root_id, revision, state, workspace_id, root_json, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(root.rootId, root.revision, root.state, root.frame.workspace.workspaceId, JSON.stringify(root), root.createdAt, root.updatedAt);
+          INSERT INTO convergence_roots (root_id, revision, state, workspace_id, workspace_locator, root_json, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          root.rootId,
+          root.revision,
+          root.state,
+          root.frame.workspace.workspaceId,
+          normalizeWorkspaceLocator(root.frame.workspace.locator),
+          JSON.stringify(root),
+          root.createdAt,
+          root.updatedAt
+        );
         this.database.prepare(`
           INSERT INTO convergence_epochs (root_id, epoch, frame_digest, created_at)
           VALUES (?, ?, ?, ?)
@@ -18808,20 +18818,22 @@ var SqliteWorkflowStore = class {
   }
   getConvergenceSnapshot(rootId) {
     try {
-      const rootRow = this.database.prepare(`SELECT root_json, revision FROM convergence_roots WHERE root_id = ?`).get(rootId);
-      if (!rootRow) return null;
-      const leases = this.database.prepare(`SELECT lease_json, proposal_json FROM convergence_leases WHERE root_id = ? ORDER BY epoch, ordinal, issued_at`).all(rootId);
-      const outcomes = this.database.prepare(`SELECT outcome_json FROM convergence_attempts WHERE root_id = ? AND outcome_json IS NOT NULL ORDER BY epoch, ordinal`).all(rootId);
-      const reviews = this.database.prepare(`SELECT review_json FROM convergence_reviews WHERE root_id = ? ORDER BY reviewed_at, review_id`).all(rootId);
-      const links = this.database.prepare(`SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY epoch, ordinal`).all(rootId);
-      return {
-        root: JSON.parse(rootRow.root_json),
-        proposals: leases.map((row) => JSON.parse(row.proposal_json)),
-        leases: leases.map((row) => JSON.parse(row.lease_json)),
-        outcomes: outcomes.map((row) => JSON.parse(row.outcome_json)),
-        reviews: reviews.map((row) => JSON.parse(row.review_json)),
-        workflowRunIds: links.map((row) => row.run_id)
-      };
+      return this.readTransaction(() => {
+        const rootRow = this.database.prepare(`SELECT root_json, revision FROM convergence_roots WHERE root_id = ?`).get(rootId);
+        if (!rootRow) return null;
+        const leases = this.database.prepare(`SELECT lease_json, proposal_json FROM convergence_leases WHERE root_id = ? ORDER BY epoch, ordinal, issued_at`).all(rootId);
+        const outcomes = this.database.prepare(`SELECT outcome_json FROM convergence_attempts WHERE root_id = ? AND outcome_json IS NOT NULL ORDER BY epoch, ordinal`).all(rootId);
+        const reviews = this.database.prepare(`SELECT review_json FROM convergence_reviews WHERE root_id = ? ORDER BY reviewed_at, review_id`).all(rootId);
+        const links = this.database.prepare(`SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY epoch, ordinal`).all(rootId);
+        return {
+          root: JSON.parse(rootRow.root_json),
+          proposals: leases.map((row) => JSON.parse(row.proposal_json)),
+          leases: leases.map((row) => JSON.parse(row.lease_json)),
+          outcomes: outcomes.map((row) => JSON.parse(row.outcome_json)),
+          reviews: reviews.map((row) => JSON.parse(row.review_json)),
+          workflowRunIds: links.map((row) => row.run_id)
+        };
+      });
     } catch (cause) {
       if (cause instanceof WorkflowContractError) throw cause;
       throw this.storageError("Cannot read convergence state.", cause, { rootId });
@@ -18885,6 +18897,11 @@ var SqliteWorkflowStore = class {
       });
     } catch (cause) {
       if (cause instanceof WorkflowContractError) throw cause;
+      if (this.isLeaseContention(cause)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The convergence database is busy; read status before retrying the lease claim.", {
+          rootId: root.rootId
+        });
+      }
       throw this.storageError("Cannot claim the convergence attempt lease.", cause, { rootId: root.rootId });
     }
   }
@@ -18958,6 +18975,9 @@ var SqliteWorkflowStore = class {
       });
     } catch (cause) {
       if (cause instanceof WorkflowContractError) throw cause;
+      if (this.isLeaseContention(cause)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The convergence database is busy or the lease was consumed concurrently.", { leaseId });
+      }
       throw this.storageError("Cannot start the guarded workflow run.", cause, { leaseId });
     }
   }
@@ -19117,10 +19137,15 @@ var SqliteWorkflowStore = class {
           revision INTEGER NOT NULL CHECK (revision >= 0),
           state TEXT NOT NULL CHECK (state IN ('open', 'needs-review', 'needs-user', 'completed', 'abandoned')),
           workspace_id TEXT NOT NULL,
+          workspace_locator TEXT NOT NULL,
           root_json TEXT NOT NULL,
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
         ) STRICT;
+        CREATE INDEX IF NOT EXISTS convergence_active_roots_by_workspace
+          ON convergence_roots(workspace_id, state);
+        CREATE INDEX IF NOT EXISTS convergence_active_roots_by_locator
+          ON convergence_roots(workspace_locator, state);
         CREATE TABLE IF NOT EXISTS convergence_epochs (
           root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
           epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
@@ -19210,6 +19235,24 @@ var SqliteWorkflowStore = class {
       }
       throw cause;
     }
+  }
+  readTransaction(operation) {
+    this.database.exec("BEGIN;");
+    try {
+      const result = operation();
+      this.database.exec("COMMIT;");
+      return result;
+    } catch (cause) {
+      try {
+        this.database.exec("ROLLBACK;");
+      } catch {
+      }
+      throw cause;
+    }
+  }
+  isLeaseContention(cause) {
+    const message = cause instanceof Error ? cause.message : String(cause);
+    return /database is locked|SQLITE_BUSY|UNIQUE constraint failed: convergence_leases/iu.test(message);
   }
   storageError(message, cause, details = {}) {
     return new WorkflowContractError("INVALID_INPUT", message, {
