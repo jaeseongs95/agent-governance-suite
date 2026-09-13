@@ -6,7 +6,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
-현재 공개 릴리스는 `v1.0.5`입니다. 이 작업 트리의 `v1.1.0` 후보에는 거버넌스 전문 스킬 10개와 한국어 산문 워크플로 1개가 들어 있지만, 산문 품질 평가의 개선율 기준을 충족하지 못해 아직 릴리스·설치 대상으로 승인되지 않았습니다.
+현재 공개 릴리스는 `v1.1.0`입니다. 거버넌스 전문 스킬 10개와 한국어 산문 워크플로 1개를 포함합니다. 한국어 산문 워크플로는 품질 평가의 개선율 기준을 충족할 때까지 `skills/registry.json`에서 비활성화되어 MCP 라우팅과 오케스트레이터의 선택 대상에서 제외됩니다.
 
 ## 이런 문제를 다룹니다
 
@@ -59,7 +59,7 @@ flowchart LR
 Node.js 22.13.0 이상이 필요합니다.
 
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.0.5
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.1.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 
