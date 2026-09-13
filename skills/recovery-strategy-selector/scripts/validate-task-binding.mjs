@@ -7,7 +7,7 @@ import { readJsonInput, writeJson } from "./io.mjs";
 
 export async function main() {
   const input = await readJsonInput();
-  const report = validateTaskBinding(input.request, input.handoff, input.taskContractReport, input.approvalEvidence ?? []);
+  const report = await validateTaskBinding(input.request, input.handoff, input.taskContractRequest, input.taskContractReport);
   writeJson(report);
   if (!report.valid) process.exitCode = 1;
 }
