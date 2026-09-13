@@ -81,6 +81,12 @@ export function validateRequest(request) {
   if (artifactDigest(receipt) !== request.sourceWorkflow.receiptDigest) throw new InputError("source workflow receipt digest가 payload와 일치하지 않습니다.");
   if (receipt.runId !== request.sourceWorkflow.runId || receipt.revision !== request.sourceWorkflow.revision || receipt.state !== request.sourceWorkflow.state) throw new InputError("source workflow metadata가 receipt payload와 일치하지 않습니다.");
   if (!request.sourceWorkflow.receiptLocator || receipt.plan.taskId !== request.sourceTask.envelope.taskId || receipt.plan.taskDigest !== request.sourceTask.digest) throw new InputError("source workflow receipt가 원본 task envelope에 결속되지 않았습니다.");
+  if (request.diagnosis.request.objective !== request.sourceTask.envelope.objective) throw new InputError("diagnosis request objective가 source task objective와 일치하지 않습니다.");
+  const causeId = request.diagnosis.report.confirmedCause.hypothesisId;
+  const causeBindings = request.diagnosis.report.confirmedCause.evidenceBindings;
+  const hasBoundDigest = (expectedDigest) => causeBindings.some((binding) => binding.artifactDigest === expectedDigest && binding.relation === "supports" && binding.hypothesisIds.includes(causeId));
+  if (!hasBoundDigest(request.sourceTask.digest)) throw new InputError("confirmed diagnosis가 source task envelope digest에 결속되지 않았습니다.");
+  if (!hasBoundDigest(request.sourceWorkflow.receiptDigest)) throw new InputError("confirmed diagnosis가 source workflow receipt digest에 결속되지 않았습니다.");
   authorizationMap(request);
   const evidenceIds = request.evidenceIndex.map((item) => item.evidenceRef);
   if (new Set(evidenceIds).size !== evidenceIds.length) throw new InputError("evidenceIndex evidenceRef는 고유해야 합니다.");
