@@ -134,6 +134,10 @@ The MCP server reads capabilities, execution phases, and artifact dependencies f
 
 Convergence roots, epochs, attempts, leases, reviews, and workflow links are also stored as append-only history in the same SQLite database, so budgets and active attempts survive an MCP process restart. The stdio server in `.mcp.json` starts on demand; no port, account, or persistent daemon is required.
 
+The orchestrator first derives candidate capabilities from the skill descriptions exposed at installation, then runs `skills/orchestrator/scripts/query-registry.mjs` to read only active-provider execution metadata. It uses the compact `--all` catalog only when it cannot identify candidates and never sends the complete `skills/registry.json` to the model context.
+
+Omitting public MCP response options preserves the existing full receipts and convergence histories. The orchestrator's normal path uses `responseMode: "compact"` and `detail: "compact"` to receive a fixed-size summary without plans, accumulated `stageResults`, provider output, raw task/frame values, or history arrays. It performs a single `full` status read only when it needs error causes, prior results, or audit material. A compact attempt claim restores the root-bound task envelope and frame, while a guarded start without a plan uses the proposal plan bound to its one-time lease. The persisted full `WorkflowReceipt` and SQLite schema v3 remain unchanged by this transport choice.
+
 The MCP server is not a security boundary against a hostile caller. Specialist skills and callers submit `verified` flags, evidence locators, and actor identifiers as trusted inputs. The server checks their structure and consistency across workflow stages, but it does not authenticate a real person or prove that the source evidence is genuine.
 
 Active runs, their current revisions, the run ID sequence, the plan-signing key, and plugin update-check state are stored in SQLite, so they remain available after an MCP server restart. Update state is limited to versions, tag and commit identifiers, the ETag, check and retry timestamps, the last notified version, and an error code. SQLite stores the complete `WorkflowReceipt` as plaintext JSON, including each `StageResult` provider output, evidence notes, findings, blockers, and errors. For ordinary providers, callers must not submit sensitive source material. A provider that declares `receiptPolicy.mode: reference-only` is checked before persistence: its closed output schema may retain only digests, artifact references, and fixed tokens, and free text is also rejected from notes, locators, findings, blockers, and errors. When both `actorIdPointer` and `uniqueness: run` are declared, the server rejects reuse of a canonical lowercase UUID actor ID across policy stages, including after restart. The server has no automatic retention or deletion policy, so callers must manage access and retention for the database and its directory. The default `WorkflowService` constructor keeps its in-memory behavior for tests and embedded use. This policy is a structural raw-content persistence boundary, not identity authentication. Environments that require authenticated identity, encrypted long-term retention, or evidence integrity against hostile actors still need a separate identity and evidence service.
@@ -159,20 +163,17 @@ Development requires Node.js 22.13.0 or later and Corepack.
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
+pnpm bundle:check
 pnpm lint
 pnpm build
 pnpm test
-pnpm bundle:check
+pnpm runtime:check
 pnpm validate:all
-```
-
-In a Codex development environment, you can also run the official validators from the system `skill-creator` and `plugin-creator`. If Python 3 is not on the system path, set `PYTHON` to its absolute executable path.
-
-```bash
 pnpm validate:official
+git diff --check
 ```
 
-Run `git diff --check` after documentation changes. Start the local MCP server with `pnpm dev`.
+Keep this order because `bundle:check` must detect a stale committed bundle before a build can overwrite it. In a Codex development environment, `validate:official` runs the system `skill-creator` and `plugin-creator` validators. If Python 3 is not on the system path, set `PYTHON` to its absolute executable path. Start the local MCP server with `pnpm dev`.
 
 ## Adding and importing skills
 

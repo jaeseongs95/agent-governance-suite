@@ -10,13 +10,17 @@ import type {
   ApiResultV1,
   AttemptLeaseV1,
   ConvergenceFrameV1,
+  ConvergenceRootHandleV1,
   ConvergenceRootV1,
+  ConvergenceStatusSummaryV1,
   PluginUpdateStatusV1,
   StageResultV1,
   TaskEnvelopeV1,
   WorkflowPlanV1,
   WorkflowReceiptV1,
+  WorkflowStatusSummaryV1,
 } from "../../contracts/types.js";
+import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 
 const rootDirectory = fileURLToPath(new URL("../../", import.meta.url));
@@ -322,30 +326,134 @@ describe("bundled STDIO MCP server", () => {
 
       const statusResponse = await client.callTool({
         name: "get_workflow_status",
-        arguments: { runId: recorded.data!.runId },
+        arguments: { runId: recorded.data!.runId, detail: "compact" },
       });
       expect(textContents(statusResponse)).toHaveLength(1);
-      const status = toolData<WorkflowReceiptV1>(statusResponse);
-      expect(status.data?.runId).toBe(started.data?.runId);
-      expect(status.data?.revision).toBe(recorded.data?.revision);
+      const compactStatus = toolData<WorkflowStatusSummaryV1>(statusResponse);
+      expect(compactStatus.data?.runId).toBe(started.data?.runId);
+      expect(compactStatus.data?.revision).toBe(recorded.data?.revision);
+      expect(compactStatus.data).not.toHaveProperty("plan");
+      expect(compactStatus.data).not.toHaveProperty("stageResults");
 
-      const finalized = toolData<WorkflowReceiptV1>(await client.callTool({
+      const status = toolData<WorkflowReceiptV1>(await client.callTool({
+        name: "get_workflow_status",
+        arguments: { runId: recorded.data!.runId },
+      }));
+      expect(status.data?.stageResults).toHaveLength(1);
+
+      const finalized = toolData<WorkflowStatusSummaryV1>(await client.callTool({
         name: "finalize_workflow",
-        arguments: { runId: status.data!.runId, expectedRevision: status.data!.revision },
+        arguments: { runId: status.data!.runId, expectedRevision: status.data!.revision, responseMode: "compact" },
       }));
       expect(finalized.data).toMatchObject({ state: "passed", revision: 2 });
+      expect(finalized.data).not.toHaveProperty("plan");
+      const finalizedFullStatus = toolData<WorkflowReceiptV1>(await client.callTool({
+        name: "get_workflow_status",
+        arguments: { runId: finalized.data!.runId },
+      }));
+      expect(convergenceDigest(finalizedFullStatus.data)).toBe(finalized.data!.receiptDigest);
+      const finalizedConvergence = toolData<ConvergenceStatusSummaryV1>(await client.callTool({
+        name: "get_convergence_status",
+        arguments: { rootId: guarded.root.rootId, detail: "compact" },
+      }));
+      expect(finalizedConvergence.data?.latestOutcomeReceiptDigest).toBe(finalized.data!.receiptDigest);
 
       const abortTask = { ...task, taskId: "stdio-abort-path" };
       const abortPlan = toolData<WorkflowPlanV1>(await client.callTool({
         name: "plan_workflow",
         arguments: toolArguments(abortTask),
       }));
-      const abortRun = { data: (await startGuarded(client, abortTask, abortPlan.data!)).receipt };
-      const aborted = toolData<WorkflowReceiptV1>(await client.callTool({
-        name: "abort_workflow",
-        arguments: { runId: abortRun.data!.runId, expectedRevision: abortRun.data!.revision },
+      const abortFrame = convergenceFrame(abortTask.taskId);
+      const abortRoot = toolData<ConvergenceRootHandleV1>(await client.callTool({
+        name: "open_convergence_root",
+        arguments: toolArguments({
+          schemaVersion: "1.0.0",
+          parentRootId: null,
+          taskEnvelope: abortTask,
+          frame: abortFrame,
+          userApprovalRefs: [],
+          responseMode: "compact",
+        }),
       }));
-      expect(aborted.data).toMatchObject({ state: "blocked", revision: 1 });
+      expect(abortRoot.data).not.toHaveProperty("taskEnvelope");
+      expect(abortRoot.data).not.toHaveProperty("frame");
+      const abortLease = toolData<AttemptLeaseV1>(await client.callTool({
+        name: "claim_workflow_attempt",
+        arguments: toolArguments({
+          schemaVersion: "1.0.0",
+          rootId: abortRoot.data!.rootId,
+          expectedRevision: abortRoot.data!.revision,
+          plan: abortPlan.data!,
+          actorId: "stdio-compact-agent",
+          outputTargets: abortTask.workUnits.flatMap((unit) => unit.writeTargets),
+          priorFailure: null,
+        }),
+      }));
+      const abortRun = toolData<WorkflowStatusSummaryV1>(await client.callTool({
+        name: "start_guarded_workflow",
+        arguments: {
+          schemaVersion: "1.0.0",
+          leaseId: abortLease.data!.leaseId,
+          expectedRootRevision: abortLease.data!.rootRevision,
+          responseMode: "compact",
+        },
+      }));
+      expect(abortRun.data).not.toHaveProperty("plan");
+
+      const abortStage = abortPlan.data!.stages[0]!;
+      const abortRecorded = toolData<WorkflowStatusSummaryV1>(await client.callTool({
+        name: "record_stage_result",
+        arguments: toolArguments({
+          schemaVersion: "1.0.0",
+          runId: abortRun.data!.runId,
+          stageId: abortStage.stageId,
+          expectedRevision: abortRun.data!.revision,
+          state: "passed",
+          output: {
+            schemaVersion: "1.0.0",
+            kind: "output",
+            output: { payload: "x".repeat(8 * 1024) },
+            artifacts: abortStage.requiredArtifacts.map((artifactId) => ({
+              artifactId,
+              schemaId: "stdio-fixture/v1",
+              locator: `tests/mcp/stdio/${artifactId}.json`,
+              digest: "c".repeat(64),
+              targetDigest: "d".repeat(64),
+              verified: true,
+            })),
+            error: null,
+          },
+          evidence: [{
+            artifactId: "stdio-compact-execution",
+            kind: "test",
+            locator: "tests/mcp/stdio-integration.test.ts",
+            verified: true,
+            note: "Compact stage response fixture.",
+          }],
+          findings: [],
+          blockers: [],
+          error: null,
+          responseMode: "compact",
+        }),
+      }));
+      expect(abortRecorded.data).not.toHaveProperty("stageResults");
+      expect(JSON.stringify(abortRecorded.data)).not.toContain("x".repeat(1024));
+
+      const aborted = toolData<WorkflowStatusSummaryV1>(await client.callTool({
+        name: "abort_workflow",
+        arguments: { runId: abortRun.data!.runId, expectedRevision: abortRecorded.data!.revision, responseMode: "compact" },
+      }));
+      expect(aborted.data).toMatchObject({ state: "blocked", revision: 2 });
+      expect(aborted.data).not.toHaveProperty("stageResults");
+
+      const compactConvergence = toolData<ConvergenceStatusSummaryV1>(await client.callTool({
+        name: "get_convergence_status",
+        arguments: { rootId: abortRoot.data!.rootId, detail: "compact" },
+      }));
+      expect(compactConvergence.data).toMatchObject({ outcomeCount: 1, latestOutcomeState: "aborted" });
+      expect(compactConvergence.data?.latestOutcomeReceiptDigest).toBe(aborted.data!.receiptDigest);
+      expect(compactConvergence.data?.root).not.toHaveProperty("taskEnvelope");
+      expect(compactConvergence.data).not.toHaveProperty("proposals");
     } finally {
       try {
         await transport.close();
