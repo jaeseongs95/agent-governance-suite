@@ -9,7 +9,7 @@
       "source": {
         "source": "url",
         "url": "https://github.com/jaeseongs95/agent-governance-suite.git",
-        "ref": "v1.4.1"
+        "ref": "v1.4.2"
       },
       "policy": {
         "installation": "AVAILABLE",
