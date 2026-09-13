@@ -16048,8 +16048,10 @@ var contractSchemas = {
   workflowPlan: loadSchema("workflow-plan.v1.schema.json"),
   stageResult: loadSchema("stage-result.v1.schema.json"),
   workflowReceipt: loadSchema("workflow-receipt.v1.schema.json"),
+  workflowStatusSummary: loadSchema("workflow-status-summary.v1.schema.json"),
   convergenceFrame: loadSchema("convergence-frame.v1.schema.json"),
   convergenceRoot: loadSchema("convergence-root.v1.schema.json"),
+  convergenceRootHandle: loadSchema("convergence-root-handle.v1.schema.json"),
   openConvergenceRootRequest: loadSchema("open-convergence-root-request.v1.schema.json"),
   attemptProposal: loadSchema("attempt-proposal.v1.schema.json"),
   attemptLease: loadSchema("attempt-lease.v1.schema.json"),
@@ -16057,7 +16059,9 @@ var contractSchemas = {
   attemptOutcome: loadSchema("attempt-outcome.v1.schema.json"),
   convergenceReview: loadSchema("convergence-review.v1.schema.json"),
   resolveConvergenceGateRequest: loadSchema("resolve-convergence-gate-request.v1.schema.json"),
-  convergenceStatus: loadSchema("convergence-status.v1.schema.json")
+  convergenceStatus: loadSchema("convergence-status.v1.schema.json"),
+  convergenceStatusSummary: loadSchema("convergence-status-summary.v1.schema.json"),
+  responseMode: loadSchema("response-mode.v1.schema.json")
 };
 function errorText(errors) {
   return (errors ?? []).map((error2) => `${error2.instancePath || "/"} ${error2.message ?? "is invalid"}`).join("; ");
@@ -16080,8 +16084,10 @@ var ContractValidator = class {
       workflowPlan: ajv.getSchema("https://skill-suite.local/contracts/workflow-plan.v1.schema.json"),
       stageResult: ajv.getSchema("https://skill-suite.local/contracts/stage-result.v1.schema.json"),
       workflowReceipt: ajv.getSchema("https://skill-suite.local/contracts/workflow-receipt.v1.schema.json"),
+      workflowStatusSummary: ajv.getSchema("https://skill-suite.local/contracts/workflow-status-summary.v1.schema.json"),
       convergenceFrame: ajv.getSchema("https://skill-suite.local/contracts/convergence-frame.v1.schema.json"),
       convergenceRoot: ajv.getSchema("https://skill-suite.local/contracts/convergence-root.v1.schema.json"),
+      convergenceRootHandle: ajv.getSchema("https://skill-suite.local/contracts/convergence-root-handle.v1.schema.json"),
       openConvergenceRootRequest: ajv.getSchema("https://skill-suite.local/contracts/open-convergence-root-request.v1.schema.json"),
       attemptProposal: ajv.getSchema("https://skill-suite.local/contracts/attempt-proposal.v1.schema.json"),
       attemptLease: ajv.getSchema("https://skill-suite.local/contracts/attempt-lease.v1.schema.json"),
@@ -16089,7 +16095,8 @@ var ContractValidator = class {
       attemptOutcome: ajv.getSchema("https://skill-suite.local/contracts/attempt-outcome.v1.schema.json"),
       convergenceReview: ajv.getSchema("https://skill-suite.local/contracts/convergence-review.v1.schema.json"),
       resolveConvergenceGateRequest: ajv.getSchema("https://skill-suite.local/contracts/resolve-convergence-gate-request.v1.schema.json"),
-      convergenceStatus: ajv.getSchema("https://skill-suite.local/contracts/convergence-status.v1.schema.json")
+      convergenceStatus: ajv.getSchema("https://skill-suite.local/contracts/convergence-status.v1.schema.json"),
+      convergenceStatusSummary: ajv.getSchema("https://skill-suite.local/contracts/convergence-status-summary.v1.schema.json")
     };
   }
   assert(name, value) {
@@ -16119,11 +16126,17 @@ var ContractValidator = class {
   workflowReceipt(value) {
     return this.assert("workflowReceipt", value);
   }
+  workflowStatusSummary(value) {
+    return this.assert("workflowStatusSummary", value);
+  }
   convergenceFrame(value) {
     return this.assert("convergenceFrame", value);
   }
   convergenceRoot(value) {
     return this.assert("convergenceRoot", value);
+  }
+  convergenceRootHandle(value) {
+    return this.assert("convergenceRootHandle", value);
   }
   openConvergenceRootRequest(value) {
     return this.assert("openConvergenceRootRequest", value);
@@ -16148,6 +16161,9 @@ var ContractValidator = class {
   }
   convergenceStatus(value) {
     return this.assert("convergenceStatus", value);
+  }
+  convergenceStatusSummary(value) {
+    return this.assert("convergenceStatusSummary", value);
   }
   apiResult(value) {
     return this.assert("apiResult", value);
@@ -17993,14 +18009,154 @@ var PLUGIN_INFO = Object.freeze({
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
 
+// mcp-server/src/convergence-logic.ts
+import { createHash as createHash3 } from "node:crypto";
+import path4 from "node:path";
+function canonicalJson(value) {
+  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-finite number.");
+    }
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    const record2 = value;
+    return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record2[key])}`).join(",")}}`;
+  }
+  throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-serializable value.");
+}
+function convergenceDigest(value) {
+  return `sha256:${createHash3("sha256").update(canonicalJson(value), "utf8").digest("hex")}`;
+}
+function frameDigests(frame) {
+  return {
+    frameDigest: convergenceDigest(frame),
+    workspaceDigest: convergenceDigest(frame.workspace),
+    controlDigest: convergenceDigest(frame.controlArtifacts),
+    targetDigest: convergenceDigest(frame.targetArtifacts),
+    operationalDigest: convergenceDigest(frame.operationalSettings)
+  };
+}
+function normalizedScope(value, workspaceLocator) {
+  const normalized = path4.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
+  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
+}
+function scopeEntryOverlaps(left, leftWorkspace, right, rightWorkspace) {
+  const a = normalizedScope(left, leftWorkspace);
+  const b = normalizedScope(right, rightWorkspace);
+  if (a === b) return true;
+  return a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
+}
+function rootsOverlap(left, right) {
+  const sameWorkspace = left.frame.workspace.workspaceId === right.frame.workspace.workspaceId || normalizeWorkspaceLocator(left.frame.workspace.locator) === normalizeWorkspaceLocator(right.frame.workspace.locator);
+  if (!sameWorkspace) return false;
+  return left.taskEnvelope.scope.included.some((leftTarget) => right.taskEnvelope.scope.included.some((rightTarget) => scopeEntryOverlaps(
+    leftTarget,
+    left.frame.workspace.locator,
+    rightTarget,
+    right.frame.workspace.locator
+  )));
+}
+function normalizeWorkspaceLocator(locator) {
+  const resolved = path4.resolve(locator);
+  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
+}
+
+// mcp-server/src/response-projections.ts
+function convergenceRootHandle(root) {
+  return {
+    schemaVersion: CONTRACT_VERSION,
+    rootId: root.rootId,
+    revision: root.revision,
+    state: root.state,
+    currentEpoch: root.currentEpoch,
+    taskDigest: root.taskDigest,
+    frameDigest: root.frameDigest,
+    workspaceDigest: root.workspaceDigest,
+    controlDigest: root.controlDigest,
+    targetDigest: root.targetDigest,
+    operationalDigest: root.operationalDigest
+  };
+}
+function workflowStatusSummary(receipt) {
+  return {
+    schemaVersion: CONTRACT_VERSION,
+    runId: receipt.runId,
+    revision: receipt.revision,
+    state: receipt.state,
+    currentStageId: receipt.plan.currentStageId,
+    nextStageId: receipt.plan.nextStageId,
+    lastRecordedStageId: receipt.stageResults.at(-1)?.stageId ?? null,
+    completedStageCount: receipt.stageResults.length,
+    totalStageCount: receipt.plan.stages.length,
+    blockerCount: receipt.blockers.length,
+    unresolvedCount: receipt.unresolved.length,
+    errorCode: receipt.error?.code ?? null,
+    receiptDigest: convergenceDigest(receipt)
+  };
+}
+function convergenceStatusSummary(status) {
+  const latestOutcome = status.outcomes.at(-1);
+  const issuedLease = [...status.leases].reverse().find((lease) => lease.state === "issued");
+  return {
+    schemaVersion: CONTRACT_VERSION,
+    root: convergenceRootHandle(status.root),
+    currentEpoch: status.currentEpoch,
+    maxAttemptsPerEpoch: status.maxAttemptsPerEpoch,
+    maxEpochs: status.maxEpochs,
+    attemptsUsedInEpoch: status.attemptsUsedInEpoch,
+    attemptsRemainingInEpoch: status.attemptsRemainingInEpoch,
+    issuedLeaseId: issuedLease?.leaseId ?? null,
+    latestWorkflowRunId: status.workflowRunIds.at(-1) ?? null,
+    latestOutcomeId: latestOutcome?.outcomeId ?? null,
+    latestOutcomeState: latestOutcome?.state ?? null,
+    latestOutcomeReceiptDigest: latestOutcome?.receiptDigest ?? null,
+    proposalCount: status.proposals.length,
+    leaseCount: status.leases.length,
+    outcomeCount: status.outcomes.length,
+    reviewCount: status.reviews.length,
+    gateErrorCode: status.gateError?.code ?? null
+  };
+}
+
 // mcp-server/src/server.ts
+var responseModeProperty = { enum: ["compact", "full"], default: "full" };
+function toolSchema(source, options = {}) {
+  const schema = structuredClone(source);
+  schema.properties = { ...schema.properties ?? {}, ...options.add ?? {} };
+  schema.required = (schema.required ?? []).filter((name) => !(options.optional ?? []).includes(name));
+  return schema;
+}
+var openConvergenceRootInputSchema = toolSchema(contractSchemas.openConvergenceRootRequest, {
+  add: { responseMode: responseModeProperty }
+});
+var attemptProposalInputSchema = toolSchema(contractSchemas.attemptProposal, {
+  optional: ["taskEnvelope", "frame"]
+});
+attemptProposalInputSchema.dependentRequired = {
+  taskEnvelope: ["frame"],
+  frame: ["taskEnvelope"]
+};
+var guardedWorkflowStartInputSchema = toolSchema(contractSchemas.guardedWorkflowStartRequest, {
+  add: { responseMode: responseModeProperty },
+  optional: ["plan"]
+});
+var resolveConvergenceGateInputSchema = toolSchema(contractSchemas.resolveConvergenceGateRequest, {
+  add: { responseMode: responseModeProperty }
+});
+var recordStageResultInputSchema = toolSchema(contractSchemas.stageResult, {
+  add: { responseMode: responseModeProperty }
+});
 var revisionInputSchema = {
   type: "object",
   additionalProperties: false,
   required: ["runId", "expectedRevision"],
   properties: {
     runId: { type: "string", minLength: 1 },
-    expectedRevision: { type: "integer", minimum: 0 }
+    expectedRevision: { type: "integer", minimum: 0 },
+    responseMode: responseModeProperty
   }
 };
 var workflowIdInputSchema = {
@@ -18008,7 +18164,8 @@ var workflowIdInputSchema = {
   additionalProperties: false,
   required: ["runId"],
   properties: {
-    runId: { type: "string", minLength: 1 }
+    runId: { type: "string", minLength: 1 },
+    detail: responseModeProperty
   }
 };
 var convergenceIdInputSchema = {
@@ -18016,7 +18173,8 @@ var convergenceIdInputSchema = {
   additionalProperties: false,
   required: ["rootId"],
   properties: {
-    rootId: { type: "string", minLength: 1 }
+    rootId: { type: "string", minLength: 1 },
+    detail: responseModeProperty
   }
 };
 var updateCheckInputSchema = {
@@ -18031,6 +18189,19 @@ function asRecord(value) {
 }
 function integer2(value) {
   return typeof value === "number" && Number.isInteger(value) ? value : Number.NaN;
+}
+function responseMode(args, field) {
+  const value = args[field];
+  return value === void 0 || value === "full" ? "full" : value === "compact" ? "compact" : null;
+}
+function domainArguments(args, field) {
+  const result = { ...args };
+  delete result[field];
+  return result;
+}
+function projectResult(result, mode, project) {
+  if (mode === "full" || !result.ok || result.data === null) return result;
+  return { ...result, data: project(result.data) };
 }
 function toolResult(result) {
   const content = [
@@ -18076,32 +18247,32 @@ function createMcpServer(service, updates) {
       },
       {
         name: "open_convergence_root",
-        description: "Create one durable immutable task lineage for an MCP-backed orchestrated workflow and reject overlapping active roots.",
-        inputSchema: contractSchemas.openConvergenceRootRequest,
+        description: "Create one durable immutable task lineage; use responseMode=compact to avoid echoing task and frame inputs.",
+        inputSchema: openConvergenceRootInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "claim_workflow_attempt",
-        description: "Validate task and control-frame stability, retry evidence, and the three-attempt budget before issuing a one-use local lease.",
-        inputSchema: contractSchemas.attemptProposal,
+        description: "Issue a one-use lease after validating stability and attempt budget; taskEnvelope and frame may be omitted to reuse the bound root.",
+        inputSchema: attemptProposalInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "start_guarded_workflow",
-        description: "Atomically consume a convergence lease and start its exactly bound orchestrated workflow plan.",
-        inputSchema: contractSchemas.guardedWorkflowStartRequest,
+        description: "Atomically consume a lease and start its bound plan; plan may be omitted and responseMode=compact avoids returning the full receipt.",
+        inputSchema: guardedWorkflowStartInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "get_convergence_status",
-        description: "Read the durable convergence root, attempts, leases, outcomes, reviews, and current gate decision.",
+        description: "Read convergence state; detail=compact returns handles and counts, while the default full mode includes complete history.",
         inputSchema: convergenceIdInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "resolve_convergence_gate",
-        description: "Record a fresh independent frame review and either preserve the gate, require the user, stop, or open one reviewed epoch.",
-        inputSchema: contractSchemas.resolveConvergenceGateRequest,
+        description: "Record a fresh independent frame review; use responseMode=compact to return handles and counts only.",
+        inputSchema: resolveConvergenceGateInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
@@ -18112,25 +18283,25 @@ function createMcpServer(service, updates) {
       },
       {
         name: "record_stage_result",
-        description: "Record one ordered stage result after validating its revision and declared verified evidence obligations.",
-        inputSchema: contractSchemas.stageResult,
+        description: "Record one ordered stage result; use responseMode=compact to avoid echoing the accumulated receipt.",
+        inputSchema: recordStageResultInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "get_workflow_status",
-        description: "Read the current persisted run receipt.",
+        description: "Read workflow state; detail=compact returns fixed-size progress metadata, while the default full mode returns the receipt.",
         inputSchema: workflowIdInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "finalize_workflow",
-        description: "Mark a running workflow passed only after every stage, declared required artifact, blocker, and mandatory audit gate passes.",
+        description: "Finalize a fully passed workflow; use responseMode=compact to avoid returning the full terminal receipt.",
         inputSchema: revisionInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "abort_workflow",
-        description: "Abort a non-terminal persisted workflow using optimistic revision control.",
+        description: "Abort a non-terminal workflow; use responseMode=compact to avoid returning the full terminal receipt.",
         inputSchema: revisionInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false }
       }
@@ -18154,34 +18325,90 @@ function createMcpServer(service, updates) {
           result = service.planWorkflow(args);
           break;
         case "open_convergence_root":
-          result = service.openConvergenceRoot(args);
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null ? invalidInput("responseMode must be compact or full.") : projectResult(
+              service.openConvergenceRoot(domainArguments(args, "responseMode")),
+              mode,
+              convergenceRootHandle
+            );
+          }
           break;
         case "claim_workflow_attempt":
           result = service.claimWorkflowAttempt(args);
           break;
         case "start_guarded_workflow":
-          result = service.startGuardedWorkflow(args);
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null ? invalidInput("responseMode must be compact or full.") : projectResult(
+              service.startGuardedWorkflow(domainArguments(args, "responseMode")),
+              mode,
+              workflowStatusSummary
+            );
+          }
           break;
         case "get_convergence_status":
-          result = service.getConvergenceStatus(String(args.rootId ?? ""));
+          {
+            const mode = responseMode(args, "detail");
+            result = mode === null ? invalidInput("detail must be compact or full.") : projectResult(
+              service.getConvergenceStatus(String(args.rootId ?? "")),
+              mode,
+              convergenceStatusSummary
+            );
+          }
           break;
         case "resolve_convergence_gate":
-          result = service.resolveConvergenceGate(args);
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null ? invalidInput("responseMode must be compact or full.") : projectResult(
+              service.resolveConvergenceGate(domainArguments(args, "responseMode")),
+              mode,
+              convergenceStatusSummary
+            );
+          }
           break;
         case "start_workflow":
           result = service.rejectUnguardedWorkflow(args);
           break;
         case "record_stage_result":
-          result = service.recordStageResult(args);
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null ? invalidInput("responseMode must be compact or full.") : projectResult(
+              service.recordStageResult(domainArguments(args, "responseMode")),
+              mode,
+              workflowStatusSummary
+            );
+          }
           break;
         case "get_workflow_status":
-          result = service.getWorkflowStatus(String(args.runId ?? ""));
+          {
+            const mode = responseMode(args, "detail");
+            result = mode === null ? invalidInput("detail must be compact or full.") : projectResult(
+              service.getWorkflowStatus(String(args.runId ?? "")),
+              mode,
+              workflowStatusSummary
+            );
+          }
           break;
         case "finalize_workflow":
-          result = service.finalizeWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision));
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null ? invalidInput("responseMode must be compact or full.") : projectResult(
+              service.finalizeWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision)),
+              mode,
+              workflowStatusSummary
+            );
+          }
           break;
         case "abort_workflow":
-          result = service.abortWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision));
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null ? invalidInput("responseMode must be compact or full.") : projectResult(
+              service.abortWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision)),
+              mode,
+              workflowStatusSummary
+            );
+          }
           break;
         default:
           result = {
@@ -18556,61 +18783,6 @@ function mergePluginUpdateState(existing, incoming) {
     lastNotifiedAt: existing.lastNotifiedAt,
     lastErrorCode: incomingAttemptIsNewer ? incoming.lastErrorCode : existing.lastErrorCode
   };
-}
-
-// mcp-server/src/convergence-logic.ts
-import { createHash as createHash3 } from "node:crypto";
-import path4 from "node:path";
-function canonicalJson(value) {
-  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-finite number.");
-    }
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
-  if (value && typeof value === "object") {
-    const record2 = value;
-    return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record2[key])}`).join(",")}}`;
-  }
-  throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-serializable value.");
-}
-function convergenceDigest(value) {
-  return `sha256:${createHash3("sha256").update(canonicalJson(value), "utf8").digest("hex")}`;
-}
-function frameDigests(frame) {
-  return {
-    frameDigest: convergenceDigest(frame),
-    workspaceDigest: convergenceDigest(frame.workspace),
-    controlDigest: convergenceDigest(frame.controlArtifacts),
-    targetDigest: convergenceDigest(frame.targetArtifacts),
-    operationalDigest: convergenceDigest(frame.operationalSettings)
-  };
-}
-function normalizedScope(value, workspaceLocator) {
-  const normalized = path4.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
-  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
-}
-function scopeEntryOverlaps(left, leftWorkspace, right, rightWorkspace) {
-  const a = normalizedScope(left, leftWorkspace);
-  const b = normalizedScope(right, rightWorkspace);
-  if (a === b) return true;
-  return a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
-}
-function rootsOverlap(left, right) {
-  const sameWorkspace = left.frame.workspace.workspaceId === right.frame.workspace.workspaceId || normalizeWorkspaceLocator(left.frame.workspace.locator) === normalizeWorkspaceLocator(right.frame.workspace.locator);
-  if (!sameWorkspace) return false;
-  return left.taskEnvelope.scope.included.some((leftTarget) => right.taskEnvelope.scope.included.some((rightTarget) => scopeEntryOverlaps(
-    leftTarget,
-    left.frame.workspace.locator,
-    rightTarget,
-    right.frame.workspace.locator
-  )));
-}
-function normalizeWorkspaceLocator(locator) {
-  const resolved = path4.resolve(locator);
-  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
 }
 
 // mcp-server/src/sqlite-workflow-store.ts
@@ -19955,6 +20127,9 @@ function createPlanSigningKey() {
 function clone4(value) {
   return JSON.parse(JSON.stringify(value));
 }
+function asRecord2(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
 function apiOk2(data) {
   return { schemaVersion: CONTRACT_VERSION, ok: true, data, error: null };
 }
@@ -20067,7 +20242,7 @@ var WorkflowService = class {
   }
   claimWorkflowAttempt(rawProposal) {
     try {
-      const proposal = clone4(this.validator.attemptProposal(rawProposal));
+      const proposal = clone4(this.normalizeAttemptProposal(rawProposal));
       this.assertPlanIntegrity(proposal.plan);
       this.assertConvergenceFrame(proposal.frame);
       if (proposal.plan.executionMode !== "orchestrated" || proposal.plan.state !== "ready") {
@@ -20201,7 +20376,7 @@ var WorkflowService = class {
   }
   startGuardedWorkflow(rawRequest) {
     try {
-      const request = this.validator.guardedWorkflowStartRequest(rawRequest);
+      const request = this.normalizeGuardedWorkflowStartRequest(rawRequest);
       const plan = clone4(request.plan);
       this.assertPlanIntegrity(plan);
       if (plan.executionMode !== "orchestrated" || plan.state !== "ready") {
@@ -20247,6 +20422,35 @@ var WorkflowService = class {
     } catch (error2) {
       return apiError(this.toErrorBody(error2));
     }
+  }
+  normalizeAttemptProposal(rawProposal) {
+    const candidate = asRecord2(rawProposal);
+    const hasTaskEnvelope = Object.hasOwn(candidate, "taskEnvelope");
+    const hasFrame = Object.hasOwn(candidate, "frame");
+    if (hasTaskEnvelope !== hasFrame) {
+      throw new WorkflowContractError("INVALID_INPUT", "Attempt proposal must provide both taskEnvelope and frame, or omit both.");
+    }
+    if (hasTaskEnvelope) return this.validator.attemptProposal(rawProposal);
+    const rootId = typeof candidate.rootId === "string" ? candidate.rootId : "";
+    const root = this.requireConvergenceSnapshot(rootId).root;
+    return this.validator.attemptProposal({
+      ...candidate,
+      taskEnvelope: clone4(root.taskEnvelope),
+      frame: clone4(root.frame)
+    });
+  }
+  normalizeGuardedWorkflowStartRequest(rawRequest) {
+    const candidate = asRecord2(rawRequest);
+    if (Object.hasOwn(candidate, "plan")) return this.validator.guardedWorkflowStartRequest(rawRequest);
+    const leaseId = typeof candidate.leaseId === "string" ? candidate.leaseId : "";
+    const binding = this.store.getAttemptLease(leaseId);
+    if (!binding) {
+      throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is missing, expired, or already consumed.", { leaseId });
+    }
+    return this.validator.guardedWorkflowStartRequest({
+      ...candidate,
+      plan: clone4(binding.proposal.plan)
+    });
   }
   getConvergenceStatus(rootId) {
     try {

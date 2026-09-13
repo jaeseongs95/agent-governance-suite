@@ -95,6 +95,9 @@ export const CONVERGENCE_ROUTE = [
 ] as const;
 export type ConvergenceRoute = (typeof CONVERGENCE_ROUTE)[number];
 
+export const RESPONSE_MODE = ["compact", "full"] as const;
+export type ResponseModeV1 = (typeof RESPONSE_MODE)[number];
+
 export type Sha256Digest = `sha256:${string}`;
 
 export const POLICY_CAPABILITY = {
@@ -505,6 +508,40 @@ export interface ConvergenceStatusV1 {
   gateError: ContractErrorBody | null;
 }
 
+export interface ConvergenceRootHandleV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  rootId: string;
+  revision: number;
+  state: ConvergenceRootState;
+  currentEpoch: number;
+  taskDigest: Sha256Digest;
+  frameDigest: Sha256Digest;
+  workspaceDigest: Sha256Digest;
+  controlDigest: Sha256Digest;
+  targetDigest: Sha256Digest;
+  operationalDigest: Sha256Digest;
+}
+
+export interface ConvergenceStatusSummaryV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  root: ConvergenceRootHandleV1;
+  currentEpoch: number;
+  maxAttemptsPerEpoch: 3;
+  maxEpochs: 2;
+  attemptsUsedInEpoch: number;
+  attemptsRemainingInEpoch: number;
+  issuedLeaseId: string | null;
+  latestWorkflowRunId: string | null;
+  latestOutcomeId: string | null;
+  latestOutcomeState: AttemptOutcomeState | null;
+  latestOutcomeReceiptDigest: Sha256Digest | null;
+  proposalCount: number;
+  leaseCount: number;
+  outcomeCount: number;
+  reviewCount: number;
+  gateErrorCode: ErrorCode | null;
+}
+
 export interface EvidenceReferenceV1 {
   artifactId: string;
   kind: "user-input" | "file" | "test" | "document" | "tool";
@@ -553,6 +590,22 @@ export interface WorkflowReceiptV1 {
   blockers: string[];
   unresolved: string[];
   error: ContractErrorBody | null;
+}
+
+export interface WorkflowStatusSummaryV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  runId: string;
+  revision: number;
+  state: WorkflowState;
+  currentStageId: string | null;
+  nextStageId: string | null;
+  lastRecordedStageId: string | null;
+  completedStageCount: number;
+  totalStageCount: number;
+  blockerCount: number;
+  unresolvedCount: number;
+  errorCode: ErrorCode | null;
+  receiptDigest: Sha256Digest;
 }
 
 export class WorkflowContractError extends Error {

@@ -4,12 +4,14 @@ import {
   type ApiResultV1,
   type AttemptLeaseV1,
   type AttemptOutcomeV1,
+  type AttemptProposalV1,
   CONTRACT_VERSION,
   type ConvergenceFrameV1,
   type ConvergenceReviewV1,
   type ConvergenceRootV1,
   type ConvergenceStatusV1,
   type ContractErrorBody,
+  type GuardedWorkflowStartRequestV1,
   type PlannedStageV1,
   POLICY_CAPABILITY,
   type RoutedSkillProviderV2,
@@ -39,6 +41,12 @@ import {
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
 }
 
 function apiOk<T>(data: T): ApiResultV1<T> {
@@ -168,7 +176,7 @@ export class WorkflowService {
 
   claimWorkflowAttempt(rawProposal: unknown): ApiResultV1<AttemptLeaseV1> {
     try {
-      const proposal = clone(this.validator.attemptProposal(rawProposal));
+      const proposal = clone(this.normalizeAttemptProposal(rawProposal));
       this.assertPlanIntegrity(proposal.plan);
       this.assertConvergenceFrame(proposal.frame);
       if (proposal.plan.executionMode !== "orchestrated" || proposal.plan.state !== "ready") {
@@ -312,7 +320,7 @@ export class WorkflowService {
 
   startGuardedWorkflow(rawRequest: unknown): ApiResultV1<WorkflowReceiptV1> {
     try {
-      const request = this.validator.guardedWorkflowStartRequest(rawRequest);
+      const request = this.normalizeGuardedWorkflowStartRequest(rawRequest);
       const plan = clone(request.plan);
       this.assertPlanIntegrity(plan);
       if (plan.executionMode !== "orchestrated" || plan.state !== "ready") {
@@ -359,6 +367,39 @@ export class WorkflowService {
     } catch (error) {
       return apiError(this.toErrorBody(error));
     }
+  }
+
+  private normalizeAttemptProposal(rawProposal: unknown): AttemptProposalV1 {
+    const candidate = asRecord(rawProposal);
+    const hasTaskEnvelope = Object.hasOwn(candidate, "taskEnvelope");
+    const hasFrame = Object.hasOwn(candidate, "frame");
+    if (hasTaskEnvelope !== hasFrame) {
+      throw new WorkflowContractError("INVALID_INPUT", "Attempt proposal must provide both taskEnvelope and frame, or omit both.");
+    }
+    if (hasTaskEnvelope) return this.validator.attemptProposal(rawProposal);
+
+    const rootId = typeof candidate.rootId === "string" ? candidate.rootId : "";
+    const root = this.requireConvergenceSnapshot(rootId).root;
+    return this.validator.attemptProposal({
+      ...candidate,
+      taskEnvelope: clone(root.taskEnvelope),
+      frame: clone(root.frame),
+    });
+  }
+
+  private normalizeGuardedWorkflowStartRequest(rawRequest: unknown): GuardedWorkflowStartRequestV1 {
+    const candidate = asRecord(rawRequest);
+    if (Object.hasOwn(candidate, "plan")) return this.validator.guardedWorkflowStartRequest(rawRequest);
+
+    const leaseId = typeof candidate.leaseId === "string" ? candidate.leaseId : "";
+    const binding = this.store.getAttemptLease(leaseId);
+    if (!binding) {
+      throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is missing, expired, or already consumed.", { leaseId });
+    }
+    return this.validator.guardedWorkflowStartRequest({
+      ...candidate,
+      plan: clone(binding.proposal.plan),
+    });
   }
 
   getConvergenceStatus(rootId: string): ApiResultV1<ConvergenceStatusV1> {

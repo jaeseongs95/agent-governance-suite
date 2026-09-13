@@ -14,7 +14,7 @@ metadata:
 
 먼저 요청의 목표, 상태 변경 여부, 완료 조건과 명시적으로 호출된 스킬을 확인한다. 명시적으로 `$skill-name`을 지정한 요청에서는 그 스킬을 우선하며, 다른 스킬로 대체하지 않는다.
 
-라우팅 전에 `skills/registry.json`을 읽고 `enabled: true`인 `SkillDescriptor.v2` provider와 실제 스킬 경로를 대조한다. 요청에서 필요한 capability와 실행 class를 먼저 정하고, 일치하는 provider의 `selectionCriteria`, precondition, priority를 선택 설명에 남긴다. 같은 capability의 후보 중 priority가 가장 큰 항목을 선택하되, 동률이나 descriptor 충돌은 임의로 고르지 말고 `needs-input`으로 돌린다. `selectionCriteria`는 사람이 검토하는 근거이며 런타임 필터가 아니다. 필요한 역할이 없으면 가능한 직접 스킬 호출 경로와 부족한 capability를 분리해 설명한다.
+라우팅 전에 설치 시 노출된 스킬 설명으로 후보 capability를 정하고 `node scripts/query-registry.mjs --capability <capability>`를 실행해 일치하는 활성 provider만 조회한다. 여러 capability는 `--capability`를 반복한다. 후보를 특정할 수 없을 때만 `--all`로 compact 전체 목록을 조회하며, `skills/registry.json` 원문 전체를 모델 컨텍스트로 읽지 않는다. 조회 결과의 `selectionCriteria`, precondition, priority를 선택 설명에 남긴다. 같은 capability의 후보 중 priority가 가장 큰 항목을 선택하되, 동률이나 descriptor 충돌은 임의로 고르지 말고 `needs-input`으로 돌린다. `selectionCriteria`는 사람이 검토하는 근거이며 런타임 필터가 아니다. 필요한 역할이 없으면 `missingCapabilities`, 가능한 직접 스킬 호출 경로와 부족한 capability를 분리해 설명한다.
 
 초기 정책 capability는 `subagent-coordination`, `independent-deliberation`, `independent-audit`다. 일반 변경 흐름에 필요한 지침 범위, 작업 계약, 저장소 관례, 변경 기준선·범위 확인, mutation 사전 점검, 수용 근거 확인과 실패 진단도 capability로 찾는다. 현재 provider 이름을 라우팅 조건으로 사용하지 않는다.
 
@@ -98,12 +98,12 @@ MCP를 사용할 때는 연결이 성공했고 도구 목록과 입력 스키마
 통합 실행은 다음 순서를 지킨다.
 
 1. 목표, 범위, 수용 기준, 작업 단위, 위험도와 필요한 capability를 `TaskEnvelope.v1`로 정리하고 `plan_workflow`를 호출한다. 이 호출은 run을 만들지 않는다.
-2. 최초 전체 실행 전에 `open_convergence_root`로 작업 계약과 control/target frame을 결속한다. 같은 작업을 요약하거나 fresh context에 넘겨도 발급된 `rootId`를 유지한다.
-3. 계획이 `ready`이고 `executionMode`가 `orchestrated`이면 `claim_workflow_attempt`로 계획·frame·실행자·출력 대상에 결속된 lease를 받은 뒤 `start_guarded_workflow`로 시작한다. 새 orchestrated run에 `start_workflow`를 사용하지 않는다.
-4. 계획에 기록된 순서대로 전문 스킬을 사용한다. provider 결과와 산출물 참조를 `ProviderResult.v1`로 묶고, 이를 `StageResult.v1.output`에 넣어 현재 revision과 함께 `record_stage_result`에 전달한다.
+2. 최초 전체 실행 전에 `open_convergence_root`를 `responseMode: "compact"`로 호출해 작업 계약과 control/target frame을 결속한다. 같은 작업을 요약하거나 fresh context에 넘겨도 발급된 `rootId`를 유지한다.
+3. 계획이 `ready`이고 `executionMode`가 `orchestrated`이면 `claim_workflow_attempt`에서 이미 root에 결속된 `taskEnvelope`와 `frame`을 다시 보내지 않고 계획·실행자·출력 대상에 결속된 lease를 받는다. 이어 `start_guarded_workflow`를 plan 없이 `responseMode: "compact"`로 호출한다. 새 orchestrated run에 `start_workflow`를 사용하지 않는다.
+4. 계획에 기록된 순서대로 전문 스킬을 사용한다. provider 결과와 산출물 참조를 `ProviderResult.v1`로 묶고, 이를 `StageResult.v1.output`에 넣어 현재 revision과 `responseMode: "compact"`로 `record_stage_result`에 전달한다.
 5. 사용자 입력이나 승인이 필요하면 해당 상태와 차단 사유를 그대로 보고하고 새 실행이 필요한지 판단한다. 순서를 건너뛰거나 이미 기록한 stage를 덮어쓰지 않는다.
-6. 필요할 때 `get_workflow_status`와 `get_convergence_status`로 현재 revision, 다음 stage와 남은 실행 예산을 확인한다. 모든 필수 stage와 감사 게이트가 `passed`인 경우에만 `finalize_workflow`를 호출한다.
-7. 통합 실행을 더 진행하지 않기로 확정하면 `abort_workflow`로 해당 run을 닫는다. 시작된 run은 실패·중단돼도 해당 epoch의 시도 횟수에 남는다.
+6. 필요할 때 `get_workflow_status`와 `get_convergence_status`를 `detail: "compact"`로 호출해 현재 revision, 다음 stage와 남은 실행 예산을 확인한다. compact 결과에 오류 코드나 0보다 큰 blocker·unresolved 수가 있거나 과거 원자료가 필요한 경우에만 해당 status를 `detail: "full"`로 한 번 다시 조회한다. 모든 필수 stage와 감사 게이트가 `passed`인 경우에만 `finalize_workflow`를 `responseMode: "compact"`로 호출한다.
+7. 통합 실행을 더 진행하지 않기로 확정하면 `abort_workflow`를 `responseMode: "compact"`로 호출해 해당 run을 닫는다. 시작된 run은 실패·중단돼도 해당 epoch의 시도 횟수에 남는다.
 
 MCP workflow run과 계획 서명 키는 SQLite에 저장되므로 프로세스를 다시 시작해도 이어서 처리할 수 있다. `RUN_NOT_FOUND`를 받으면 다른 데이터베이스 경로를 사용 중인지 먼저 확인하고, 저장된 상태가 실제로 없을 때만 새 계획과 run을 만든다. 이전 revision이나 stage 결과를 추측해 복구하지 않는다.
 

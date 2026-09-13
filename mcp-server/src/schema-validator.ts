@@ -10,8 +10,10 @@ import {
   type AttemptOutcomeV1,
   type AttemptProposalV1,
   type ConvergenceFrameV1,
+  type ConvergenceRootHandleV1,
   type ConvergenceReviewV1,
   type ConvergenceRootV1,
+  type ConvergenceStatusSummaryV1,
   type ConvergenceStatusV1,
   type GuardedWorkflowStartRequestV1,
   type OpenConvergenceRootRequestV1,
@@ -25,6 +27,7 @@ import {
   type TaskEnvelopeV1,
   type WorkflowPlanV1,
   type WorkflowReceiptV1,
+  type WorkflowStatusSummaryV1,
   WorkflowContractError,
 } from "../../contracts/types.js";
 
@@ -47,8 +50,10 @@ export const contractSchemas = {
   workflowPlan: loadSchema("workflow-plan.v1.schema.json"),
   stageResult: loadSchema("stage-result.v1.schema.json"),
   workflowReceipt: loadSchema("workflow-receipt.v1.schema.json"),
+  workflowStatusSummary: loadSchema("workflow-status-summary.v1.schema.json"),
   convergenceFrame: loadSchema("convergence-frame.v1.schema.json"),
   convergenceRoot: loadSchema("convergence-root.v1.schema.json"),
+  convergenceRootHandle: loadSchema("convergence-root-handle.v1.schema.json"),
   openConvergenceRootRequest: loadSchema("open-convergence-root-request.v1.schema.json"),
   attemptProposal: loadSchema("attempt-proposal.v1.schema.json"),
   attemptLease: loadSchema("attempt-lease.v1.schema.json"),
@@ -57,6 +62,8 @@ export const contractSchemas = {
   convergenceReview: loadSchema("convergence-review.v1.schema.json"),
   resolveConvergenceGateRequest: loadSchema("resolve-convergence-gate-request.v1.schema.json"),
   convergenceStatus: loadSchema("convergence-status.v1.schema.json"),
+  convergenceStatusSummary: loadSchema("convergence-status-summary.v1.schema.json"),
+  responseMode: loadSchema("response-mode.v1.schema.json"),
 };
 
 function errorText(errors: ErrorObject[] | null | undefined): string {
@@ -84,8 +91,10 @@ export class ContractValidator {
       workflowPlan: ajv.getSchema("https://skill-suite.local/contracts/workflow-plan.v1.schema.json")!,
       stageResult: ajv.getSchema("https://skill-suite.local/contracts/stage-result.v1.schema.json")!,
       workflowReceipt: ajv.getSchema("https://skill-suite.local/contracts/workflow-receipt.v1.schema.json")!,
+      workflowStatusSummary: ajv.getSchema("https://skill-suite.local/contracts/workflow-status-summary.v1.schema.json")!,
       convergenceFrame: ajv.getSchema("https://skill-suite.local/contracts/convergence-frame.v1.schema.json")!,
       convergenceRoot: ajv.getSchema("https://skill-suite.local/contracts/convergence-root.v1.schema.json")!,
+      convergenceRootHandle: ajv.getSchema("https://skill-suite.local/contracts/convergence-root-handle.v1.schema.json")!,
       openConvergenceRootRequest: ajv.getSchema("https://skill-suite.local/contracts/open-convergence-root-request.v1.schema.json")!,
       attemptProposal: ajv.getSchema("https://skill-suite.local/contracts/attempt-proposal.v1.schema.json")!,
       attemptLease: ajv.getSchema("https://skill-suite.local/contracts/attempt-lease.v1.schema.json")!,
@@ -94,6 +103,7 @@ export class ContractValidator {
       convergenceReview: ajv.getSchema("https://skill-suite.local/contracts/convergence-review.v1.schema.json")!,
       resolveConvergenceGateRequest: ajv.getSchema("https://skill-suite.local/contracts/resolve-convergence-gate-request.v1.schema.json")!,
       convergenceStatus: ajv.getSchema("https://skill-suite.local/contracts/convergence-status.v1.schema.json")!,
+      convergenceStatusSummary: ajv.getSchema("https://skill-suite.local/contracts/convergence-status-summary.v1.schema.json")!,
     };
   }
 
@@ -130,12 +140,20 @@ export class ContractValidator {
     return this.assert<WorkflowReceiptV1>("workflowReceipt", value);
   }
 
+  workflowStatusSummary(value: unknown): WorkflowStatusSummaryV1 {
+    return this.assert<WorkflowStatusSummaryV1>("workflowStatusSummary", value);
+  }
+
   convergenceFrame(value: unknown): ConvergenceFrameV1 {
     return this.assert<ConvergenceFrameV1>("convergenceFrame", value);
   }
 
   convergenceRoot(value: unknown): ConvergenceRootV1 {
     return this.assert<ConvergenceRootV1>("convergenceRoot", value);
+  }
+
+  convergenceRootHandle(value: unknown): ConvergenceRootHandleV1 {
+    return this.assert<ConvergenceRootHandleV1>("convergenceRootHandle", value);
   }
 
   openConvergenceRootRequest(value: unknown): OpenConvergenceRootRequestV1 {
@@ -168,6 +186,10 @@ export class ContractValidator {
 
   convergenceStatus(value: unknown): ConvergenceStatusV1 {
     return this.assert<ConvergenceStatusV1>("convergenceStatus", value);
+  }
+
+  convergenceStatusSummary(value: unknown): ConvergenceStatusSummaryV1 {
+    return this.assert<ConvergenceStatusSummaryV1>("convergenceStatusSummary", value);
   }
 
   apiResult<T>(value: unknown): ApiResultV1<T> {
