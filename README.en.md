@@ -6,7 +6,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
-The current public release is `v1.1.0`. This development source includes eleven governance specialist skills and one Korean prose workflow. The Korean prose workflow remains disabled in the registry, its direct descriptor, and Codex's implicit-invocation setting until it passes the prose-quality improvement threshold. Its fail-closed skill instructions also refuse direct calls without running providers or local scripts.
+The current public release is `v1.2.0`. It includes eleven governance specialist skills and one Korean prose workflow. The Korean prose workflow remains disabled in the registry, its direct descriptor, and Codex's implicit-invocation setting until it passes the prose-quality improvement threshold. Its fail-closed skill instructions also refuse direct calls without running providers or local scripts.
 
 ## How it works
 
@@ -59,7 +59,7 @@ The orchestrator does not run all eleven skills for every request. It selects th
 Node.js 22.13.0 or later is required.
 
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.1.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.2.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 
@@ -100,7 +100,7 @@ Set `force: true` to bypass the cached check time. This feature only reports tha
 
 Each specialist remains available when the MCP server is unavailable. Orchestrated runs that enforce stage order and issue a final receipt require the MCP server.
 
-This development source upgrades the SQLite schema from v2 to v3 to preserve convergence roots, epochs, attempts, leases, reviews, and workflow links. If you may need to return to the v2 server, stop the MCP server and create a consistent SQLite backup before upgrading. A v3 database cannot be opened by the v2 server, so reinstalling only the plugin is not a rollback. Restore the pre-upgrade v2 backup while the MCP server is stopped.
+`v1.2.0` upgrades the SQLite schema from v2 to v3 to preserve convergence roots, epochs, attempts, leases, reviews, and workflow links. If you may need to return to the v2 server, stop the MCP server and create a consistent SQLite backup before upgrading. A v3 database cannot be opened by the v2 server, so reinstalling only the plugin is not a rollback. Restore the pre-upgrade v2 backup while the MCP server is stopped.
 
 ## Included skills
 
