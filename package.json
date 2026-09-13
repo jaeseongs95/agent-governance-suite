@@ -1,6 +1,6 @@
 {
   "name": "agent-governance-suite",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Eleven governance specialists with declarative local orchestration, a local convergence guard, and a bundled, disabled Korean prose workflow.",
   "type": "module",
