@@ -5,9 +5,9 @@
       "skillId": "coordinate-subagents",
       "path": "skills/coordinate-subagents",
       "source": "https://github.com/jaeseongs95/coordinate-subagents.git",
-      "ref": "v1.0.0",
-      "commit": "614eac25c8f3d348de3a1377e299f5f968d83005",
-      "checksum": "sha256:43a1d0c8fbc410ce31a2d444aac105741ac2f0750a0bb5287e8852d6db9e1c7c",
+      "ref": "837b182c490866d3800b919659581d69640ac687",
+      "commit": "837b182c490866d3800b919659581d69640ac687",
+      "checksum": "sha256:113603fd0545e44f593c289e8adf41c4363c7628c34b14ea27527b7072820091",
       "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
     },
     {
@@ -97,7 +97,7 @@
       "source": "D:\\\\codex\\\\korean-prose-editor",
       "ref": "e31767939fc728fb2d0089cdd70dbb8134b3f32f",
       "commit": "e31767939fc728fb2d0089cdd70dbb8134b3f32f",
-      "checksum": "sha256:65807e2781c9189805c5743d18ee8668f8bda5b62dd612e28689ccc2ab95a42d",
+      "checksum": "sha256:02480e85679e6796b257b9c7ecfeecb8495b6c0a27e6aef71fb943728ffa0996",
       "checksumScope": "relative paths and normalized text bytes under skills/korean-prose-editor"
     }
   ]

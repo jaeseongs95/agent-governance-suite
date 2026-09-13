@@ -170,6 +170,17 @@ pnpm validate:official
 
 문서를 수정한 뒤에는 `git diff --check`로 공백 오류를 확인합니다. 로컬 MCP 서버는 `pnpm dev`로 실행합니다.
 
+동결된 한국어 산문 평가에서는 각 모델 단계 직전에 공통 사전 검사를 실행합니다. `<evaluation-root>`에는 `evals/runs`와 평가에 사용한 `skills/korean-prose-editor`가 있어야 합니다.
+
+```bash
+pnpm eval:preflight -- selection 1 <evaluation-root>
+pnpm eval:preflight -- editing 1 <evaluation-root>
+pnpm eval:preflight -- verification 1 <evaluation-root>
+pnpm eval:preflight -- record 1 <evaluation-root>
+```
+
+검사는 승인된 실행 횟수, 기존 출력, 입력·후보·루브릭 digest, ID 순서, 빈 후보, 역할 결속과 블라인드 검증 입력을 확인합니다. 실패하면 해당 모델 단계를 실행하지 않습니다. `record` 검사는 `pnpm eval:receipt`에도 자동으로 적용됩니다.
+
 ## 스킬 추가와 편입
 
 새 전문 스킬의 기본 구조와 정상·경계·실패 사례용 `fixture`를 만들려면 다음 명령을 사용합니다.
