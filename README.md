@@ -136,6 +136,10 @@ MCP 서버는 `SkillDescriptor.v2`의 `capability`, 실행 단계, `artifact` �
 
 Convergence root, epoch, attempt, lease, review와 workflow 연결도 같은 SQLite DB에 append-only 이력으로 저장되므로 MCP 프로세스가 다시 시작돼도 예산과 활성 attempt를 유지합니다. `.mcp.json`의 stdio 서버가 필요할 때 자동 실행되며 별도 포트, 계정이나 상시 데몬은 필요하지 않습니다.
 
+오케스트레이터는 설치 시 노출된 스킬 설명에서 필요한 capability 후보를 고른 뒤 `skills/orchestrator/scripts/query-registry.mjs`로 활성 provider의 실행 메타데이터만 조회합니다. 후보를 정하지 못한 경우에만 `--all` compact catalog를 사용하며, 전체 `skills/registry.json`을 모델 입력으로 전달하지 않습니다.
+
+공개 MCP 도구의 응답 옵션을 생략하면 기존과 같은 전체 영수증과 convergence 이력을 반환합니다. 오케스트레이터의 정상 경로는 `responseMode: "compact"`와 `detail: "compact"`를 사용해 plan, 누적 `stageResults`, provider output, task/frame 원문과 전체 이력을 제외한 고정 크기 요약만 받습니다. 오류 원인, 과거 결과 또는 감사 자료가 필요할 때만 해당 상태를 `full`로 다시 조회합니다. compact attempt claim은 root에 저장된 task envelope와 frame을 복원하고, plan을 생략한 guarded start는 일회용 lease에 결속된 proposal plan을 사용합니다. 저장되는 전체 `WorkflowReceipt`와 SQLite schema v3는 이 전송 방식과 무관하게 유지됩니다.
+
 이 서버는 적대적인 호출자를 인증하는 보안 경계가 아닙니다. 전문 스킬과 호출자가 `verified` 값, 증거 위치, 작업자 식별자를 확인했다고 전제합니다. 서버는 값의 형식과 단계 사이의 일관성을 검사하지만, 실제 작업자의 신원이나 증거 원문의 진위를 인증하지는 않습니다.
 
 실행 중인 run, 현재 `revision`, run ID sequence, 계획 서명 키와 플러그인 업데이트 확인 상태는 SQLite에 저장되므로 MCP 서버를 다시 시작해도 이어서 처리할 수 있습니다. 업데이트 상태에는 버전·tag·commit, ETag, 확인 시각, 다음 확인 시각, 마지막 안내 버전과 오류 코드만 들어갑니다. SQLite에는 전체 `WorkflowReceipt`가 평문 JSON으로 들어가며, 여기에는 각 `StageResult`의 provider output, evidence note, findings, blockers와 error가 포함됩니다. 일반 provider는 호출자가 민감한 원문을 넣지 않아야 합니다. descriptor에 `receiptPolicy.mode: reference-only`를 선언한 provider는 저장 전에 닫힌 output schema, digest·artifact reference·고정 토큰만 허용하며 note, locator, findings, blockers와 error의 자유 텍스트도 거부합니다. `actorIdPointer`와 `uniqueness: run`을 함께 선언하면 canonical lowercase UUID actor ID의 run 내 재사용도 서버 재시작 후까지 거부합니다. 자동 만료·삭제 정책은 제공하지 않으므로 DB 파일과 디렉터리의 접근 권한과 보존 기간은 직접 관리해야 합니다. 기본 생성자를 사용한 `WorkflowService`는 테스트와 임베딩 호환성을 위해 메모리 저장 방식을 유지합니다. 이 정책은 원문 비저장을 위한 구조적 저장 경계일 뿐 신원을 인증하지 않습니다. 인증된 신원, 암호화된 장기 보존이나 적대적 환경에서도 보장되는 증거 무결성이 필요하다면 별도의 신원·증거 저장소를 연결해야 합니다.
@@ -161,20 +165,17 @@ Node.js 22.13.0 이상과 Corepack이 필요합니다.
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
+pnpm bundle:check
 pnpm lint
 pnpm build
 pnpm test
-pnpm bundle:check
+pnpm runtime:check
 pnpm validate:all
-```
-
-Codex 개발 환경에서는 시스템 `skill-creator`와 `plugin-creator`의 공식 검증기도 실행할 수 있습니다. 시스템이 Python 3를 찾지 못하면 `PYTHON`에 실행 파일의 절대 경로를 지정합니다.
-
-```bash
 pnpm validate:official
+git diff --check
 ```
 
-문서를 수정한 뒤에는 `git diff --check`로 공백 오류를 확인합니다. 로컬 MCP 서버는 `pnpm dev`로 실행합니다.
+`bundle:check`는 stale 번들을 빌드가 덮어쓰기 전에 확인하므로 위 순서를 유지합니다. Codex 개발 환경의 `validate:official`은 시스템 `skill-creator`와 `plugin-creator` validator를 실행합니다. 시스템이 Python 3를 찾지 못하면 `PYTHON`에 실행 파일의 절대 경로를 지정합니다. 로컬 MCP 서버는 `pnpm dev`로 실행합니다.
 
 동결된 한국어 산문 평가에서는 각 모델 단계 직전에 공통 사전 검사를 실행합니다. `<evaluation-root>`에는 `evals/runs`와 평가에 사용한 `skills/korean-prose-editor`가 있어야 합니다.
 

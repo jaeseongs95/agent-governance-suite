@@ -1,11 +1,61 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 
-import { type ApiResultV1, type PluginUpdateStatusV1 } from "../../contracts/types.js";
+import {
+  type ApiResultV1,
+  type ConvergenceRootV1,
+  type ConvergenceStatusV1,
+  type PluginUpdateStatusV1,
+  type ResponseModeV1,
+  type WorkflowReceiptV1,
+} from "../../contracts/types.js";
 import { contractSchemas } from "./schema-validator.js";
 import { PLUGIN_INFO } from "./plugin-info.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
+import {
+  convergenceRootHandle,
+  convergenceStatusSummary,
+  workflowStatusSummary,
+} from "./response-projections.js";
 import { WorkflowService } from "./workflow-service.js";
+
+type ObjectSchema = Record<string, unknown> & {
+  properties?: Record<string, unknown>;
+  required?: string[];
+};
+
+const responseModeProperty = { enum: ["compact", "full"], default: "full" } as const;
+
+function toolSchema(
+  source: Record<string, unknown>,
+  options: { add?: Record<string, unknown>; optional?: string[] } = {},
+): ObjectSchema {
+  const schema = structuredClone(source) as ObjectSchema;
+  schema.properties = { ...(schema.properties ?? {}), ...(options.add ?? {}) };
+  schema.required = (schema.required ?? []).filter((name) => !(options.optional ?? []).includes(name));
+  return schema;
+}
+
+const openConvergenceRootInputSchema = toolSchema(contractSchemas.openConvergenceRootRequest, {
+  add: { responseMode: responseModeProperty },
+});
+const attemptProposalInputSchema = toolSchema(contractSchemas.attemptProposal, {
+  optional: ["taskEnvelope", "frame"],
+});
+attemptProposalInputSchema.dependentRequired = {
+  taskEnvelope: ["frame"],
+  frame: ["taskEnvelope"],
+};
+const guardedWorkflowStartInputSchema = toolSchema(contractSchemas.guardedWorkflowStartRequest, {
+  add: { responseMode: responseModeProperty },
+  optional: ["plan"],
+});
+const resolveConvergenceGateInputSchema = toolSchema(contractSchemas.resolveConvergenceGateRequest, {
+  add: { responseMode: responseModeProperty },
+});
+const recordStageResultInputSchema = toolSchema(contractSchemas.stageResult, {
+  add: { responseMode: responseModeProperty },
+});
 
 const revisionInputSchema = {
   type: "object",
@@ -14,6 +64,7 @@ const revisionInputSchema = {
   properties: {
     runId: { type: "string", minLength: 1 },
     expectedRevision: { type: "integer", minimum: 0 },
+    responseMode: responseModeProperty,
   },
 } as const;
 
@@ -23,6 +74,7 @@ const workflowIdInputSchema = {
   required: ["runId"],
   properties: {
     runId: { type: "string", minLength: 1 },
+    detail: responseModeProperty,
   },
 } as const;
 
@@ -32,6 +84,7 @@ const convergenceIdInputSchema = {
   required: ["rootId"],
   properties: {
     rootId: { type: "string", minLength: 1 },
+    detail: responseModeProperty,
   },
 } as const;
 
@@ -51,6 +104,26 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function integer(value: unknown): number {
   return typeof value === "number" && Number.isInteger(value) ? value : Number.NaN;
+}
+
+function responseMode(args: Record<string, unknown>, field: "responseMode" | "detail"): ResponseModeV1 | null {
+  const value = args[field];
+  return value === undefined || value === "full" ? "full" : value === "compact" ? "compact" : null;
+}
+
+function domainArguments(args: Record<string, unknown>, field: "responseMode" | "detail"): Record<string, unknown> {
+  const result = { ...args };
+  delete result[field];
+  return result;
+}
+
+function projectResult<T, U>(
+  result: ApiResultV1<T>,
+  mode: ResponseModeV1,
+  project: (value: T) => U,
+): ApiResultV1<T | U> {
+  if (mode === "full" || !result.ok || result.data === null) return result;
+  return { ...result, data: project(result.data) };
 }
 
 function toolResult<T>(result: ApiResultV1<T>) {
@@ -104,32 +177,32 @@ export function createMcpServer(service: WorkflowService, updates: PluginUpdateS
       },
       {
         name: "open_convergence_root",
-        description: "Create one durable immutable task lineage for an MCP-backed orchestrated workflow and reject overlapping active roots.",
-        inputSchema: contractSchemas.openConvergenceRootRequest,
+        description: "Create one durable immutable task lineage; use responseMode=compact to avoid echoing task and frame inputs.",
+        inputSchema: openConvergenceRootInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "claim_workflow_attempt",
-        description: "Validate task and control-frame stability, retry evidence, and the three-attempt budget before issuing a one-use local lease.",
-        inputSchema: contractSchemas.attemptProposal,
+        description: "Issue a one-use lease after validating stability and attempt budget; taskEnvelope and frame may be omitted to reuse the bound root.",
+        inputSchema: attemptProposalInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "start_guarded_workflow",
-        description: "Atomically consume a convergence lease and start its exactly bound orchestrated workflow plan.",
-        inputSchema: contractSchemas.guardedWorkflowStartRequest,
+        description: "Atomically consume a lease and start its bound plan; plan may be omitted and responseMode=compact avoids returning the full receipt.",
+        inputSchema: guardedWorkflowStartInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "get_convergence_status",
-        description: "Read the durable convergence root, attempts, leases, outcomes, reviews, and current gate decision.",
+        description: "Read convergence state; detail=compact returns handles and counts, while the default full mode includes complete history.",
         inputSchema: convergenceIdInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "resolve_convergence_gate",
-        description: "Record a fresh independent frame review and either preserve the gate, require the user, stop, or open one reviewed epoch.",
-        inputSchema: contractSchemas.resolveConvergenceGateRequest,
+        description: "Record a fresh independent frame review; use responseMode=compact to return handles and counts only.",
+        inputSchema: resolveConvergenceGateInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
@@ -140,25 +213,25 @@ export function createMcpServer(service: WorkflowService, updates: PluginUpdateS
       },
       {
         name: "record_stage_result",
-        description: "Record one ordered stage result after validating its revision and declared verified evidence obligations.",
-        inputSchema: contractSchemas.stageResult,
+        description: "Record one ordered stage result; use responseMode=compact to avoid echoing the accumulated receipt.",
+        inputSchema: recordStageResultInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "get_workflow_status",
-        description: "Read the current persisted run receipt.",
+        description: "Read workflow state; detail=compact returns fixed-size progress metadata, while the default full mode returns the receipt.",
         inputSchema: workflowIdInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "finalize_workflow",
-        description: "Mark a running workflow passed only after every stage, declared required artifact, blocker, and mandatory audit gate passes.",
+        description: "Finalize a fully passed workflow; use responseMode=compact to avoid returning the full terminal receipt.",
         inputSchema: revisionInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "abort_workflow",
-        description: "Abort a non-terminal persisted workflow using optimistic revision control.",
+        description: "Abort a non-terminal workflow; use responseMode=compact to avoid returning the full terminal receipt.",
         inputSchema: revisionInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
       },
@@ -184,34 +257,106 @@ export function createMcpServer(service: WorkflowService, updates: PluginUpdateS
           result = service.planWorkflow(args);
           break;
         case "open_convergence_root":
-          result = service.openConvergenceRoot(args);
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null
+              ? invalidInput("responseMode must be compact or full.")
+              : projectResult<ConvergenceRootV1, ReturnType<typeof convergenceRootHandle>>(
+                  service.openConvergenceRoot(domainArguments(args, "responseMode")),
+                  mode,
+                  convergenceRootHandle,
+                );
+          }
           break;
         case "claim_workflow_attempt":
           result = service.claimWorkflowAttempt(args);
           break;
         case "start_guarded_workflow":
-          result = service.startGuardedWorkflow(args);
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null
+              ? invalidInput("responseMode must be compact or full.")
+              : projectResult<WorkflowReceiptV1, ReturnType<typeof workflowStatusSummary>>(
+                  service.startGuardedWorkflow(domainArguments(args, "responseMode")),
+                  mode,
+                  workflowStatusSummary,
+                );
+          }
           break;
         case "get_convergence_status":
-          result = service.getConvergenceStatus(String(args.rootId ?? ""));
+          {
+            const mode = responseMode(args, "detail");
+            result = mode === null
+              ? invalidInput("detail must be compact or full.")
+              : projectResult<ConvergenceStatusV1, ReturnType<typeof convergenceStatusSummary>>(
+                  service.getConvergenceStatus(String(args.rootId ?? "")),
+                  mode,
+                  convergenceStatusSummary,
+                );
+          }
           break;
         case "resolve_convergence_gate":
-          result = service.resolveConvergenceGate(args);
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null
+              ? invalidInput("responseMode must be compact or full.")
+              : projectResult<ConvergenceStatusV1, ReturnType<typeof convergenceStatusSummary>>(
+                  service.resolveConvergenceGate(domainArguments(args, "responseMode")),
+                  mode,
+                  convergenceStatusSummary,
+                );
+          }
           break;
         case "start_workflow":
           result = service.rejectUnguardedWorkflow(args);
           break;
         case "record_stage_result":
-          result = service.recordStageResult(args);
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null
+              ? invalidInput("responseMode must be compact or full.")
+              : projectResult<WorkflowReceiptV1, ReturnType<typeof workflowStatusSummary>>(
+                  service.recordStageResult(domainArguments(args, "responseMode")),
+                  mode,
+                  workflowStatusSummary,
+                );
+          }
           break;
         case "get_workflow_status":
-          result = service.getWorkflowStatus(String(args.runId ?? ""));
+          {
+            const mode = responseMode(args, "detail");
+            result = mode === null
+              ? invalidInput("detail must be compact or full.")
+              : projectResult<WorkflowReceiptV1, ReturnType<typeof workflowStatusSummary>>(
+                  service.getWorkflowStatus(String(args.runId ?? "")),
+                  mode,
+                  workflowStatusSummary,
+                );
+          }
           break;
         case "finalize_workflow":
-          result = service.finalizeWorkflow(String(args.runId ?? ""), integer(args.expectedRevision));
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null
+              ? invalidInput("responseMode must be compact or full.")
+              : projectResult<WorkflowReceiptV1, ReturnType<typeof workflowStatusSummary>>(
+                  service.finalizeWorkflow(String(args.runId ?? ""), integer(args.expectedRevision)),
+                  mode,
+                  workflowStatusSummary,
+                );
+          }
           break;
         case "abort_workflow":
-          result = service.abortWorkflow(String(args.runId ?? ""), integer(args.expectedRevision));
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null
+              ? invalidInput("responseMode must be compact or full.")
+              : projectResult<WorkflowReceiptV1, ReturnType<typeof workflowStatusSummary>>(
+                  service.abortWorkflow(String(args.runId ?? ""), integer(args.expectedRevision)),
+                  mode,
+                  workflowStatusSummary,
+                );
+          }
           break;
         default:
           result = {
