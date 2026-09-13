@@ -1,6 +1,6 @@
 # Agent Governance Suite 향후 로드맵
 
-문서 기준일은 2026년 9월 13일이다. 현재 공개 릴리스는 `v1.1.0`이다. 한국어 산문 워크플로의 구현과 평가 자료는 릴리스에 포함하지만, 품질 게이트를 통과할 때까지 registry와 오케스트레이터 선택 경로에서 비활성으로 유지한다.
+문서 기준일은 2026년 9월 13일이다. 현재 공개 릴리스는 `v1.4.3`이다. 한국어 산문 워크플로의 구현과 평가 자료는 릴리스에 포함하지만, 품질 게이트를 통과할 때까지 registry와 오케스트레이터 선택 경로에서 비활성으로 유지한다.
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
 
@@ -33,7 +33,7 @@
 | 0.6. 모델·추론 수준 안내 | 별도 브랜치 구현·검증 완료, 통합 보류 | 요청 난도와 관측 가능한 현재 설정을 비교해 과다·적정·부족 여부 안내 | `model-effort-advisor`, `ModelEffortAdvice.v1`, 정상·경계·실패 fixture |
 | 1. 실행 전 신뢰성 | 다음 | 평가 오류와 동시 작업 충돌을 조기에 차단 | `evaluation-validity-auditor`, `active-workspace-guard` |
 | 2. 복구 워크플로 | 계획됨 | blocker 진단 뒤 선택 가능한 복구 전략 제공 | `recovery-strategy-selector`, `RecoveryHandoff.v1` |
-| 3. 실행 환경과 연속성 | 설계 필요 | 실행 가능 여부를 먼저 확인하고 세션 복원을 표준화 | `runtime-capability-profiler`, continuity provider |
+| 3. 실행 환경과 연속성 | 부분 구현 | 실행 가능 여부를 먼저 확인하고 세션 복원을 표준화 | 계획된 `runtime-capability-profiler`, 구현된 로컬 task continuity |
 | 4. 신뢰 경계 강화 | 설계 후보 | bootstrap·증거·라우팅 선언의 신뢰 수준 향상 | `BootstrapReceipt.v1`, 증거 검증 경계 |
 | 5. 공급망과 운영 | 보류 | 원본 편입과 버전·릴리스 관리를 자동화 | 동기화 검사, 업데이트 PR, 버전 단일 소스화 |
 
@@ -49,6 +49,13 @@
 - 품질 평가 fixture와 실제 사례에서 의미 보존을 유지하면서 개선율 기준 80% 이상을 충족한다.
 - `korean-prose-editor`의 원본을 재현 가능한 공개 tag 또는 immutable commit으로 고정한다. 로컬 절대 경로는 공개 릴리스의 최종 source lock으로 사용하지 않는다.
 - 공개 릴리스 버전, manifest, package, marketplace와 문서의 버전 표기가 서로 일치하는지 확인한다.
+
+### 현재 구현 진척
+
+- 구조화된 평가 cycle의 receipt 경로는 finalization이 selection의 `edit-decision-set`을 실제 입력과 evidence로 받는지 확인한다. JSON·JSONL 산출물은 key 순서와 무관한 canonical digest로 대조하며, receipt와 SQLite에 원문을 남기거나 기존 산출물을 덮어쓰지 않는다.
+- 독립 저장소와 통합 사본은 immutable commit `c5df63749e2edfc8aa424f9935ee3cd4697d3c49`에 고정했다. 이 스냅샷은 범주·용어 보존, 대리 명사 없는 기능 동사 직접화, 편집 후 경계 공백 거부와 provenance-bound run metadata v3를 포함한다.
+- 기존 11-case gate는 기록된 실패와 9/11 기준을 바꾸지 않고 `invalid-corpus`로 종결했다. 별도 12-case recovery는 edit 5/8, restraint 4/4, major meaning change 0, protected failure 0으로 실패했으며 재실행하지 않는다.
+- recovery 실패 보정은 공개 회귀 fixture와 계약에 반영했지만 `IMPLEMENTED_NOT_RERUN` 상태다. 새 ID·새 freeze·독립 corpus 타당성 검사를 갖춘 다음 정식 frame과 신규 private holdout이 기존 기준을 통과할 때까지 provider는 비활성으로 유지한다.
 
 ### 종료 기준
 
@@ -160,9 +167,9 @@
 
 결과는 `supported`, `unsupported`, `unobserved`를 구분해야 한다. 설정값이 존재한다는 이유만으로 실제 적용됐다고 판정하지 않는다.
 
-### continuity provider
+### 로컬 task continuity
 
-컨텍스트 연속성은 독립 판단 스킬보다 공통 인프라 provider로 구현한다. snapshot에는 최소한 다음 내용을 포함한다.
+컨텍스트 연속성은 전문 provider registry에 넣지 않고 `context-continuity` 인프라 스킬, 기존 MCP 프로세스와 Codex lifecycle Hook으로 구현했다. Workflow DB schema v3는 유지하고 optional 상태는 같은 로컬 상태 디렉터리의 별도 `continuity.sqlite3`에 저장한다. snapshot에는 최소한 다음 내용을 포함한다.
 
 - objective와 completion criteria
 - constraints와 decisions
@@ -170,7 +177,9 @@
 - blockers와 next actions
 - task correlation, epoch, revision, digest와 updated time
 
-compact, resume, startup, clear 이벤트에서 snapshot을 `INJECT`, `DEFER`, `REJECT` 중 하나로 처리한다. 현재 목표나 revision과 충돌하는 snapshot은 자동 병합하지 않고 사용자 판단으로 넘긴다.
+Direct task의 resume과 compact에는 본문 없이 metadata와 서명된 restore token만 `DEFER`로 제공하며, 본문은 명시적인 `load_context` 호출에서만 반환한다. Orchestrated workflow는 기존 `TaskEnvelope`, receipt와 convergence root에서 marker와 revision·digest가 일치하는 bounded 구조 카드만 compact 뒤 한 번 `INJECT`한다. Startup은 복원하지 않고, clear는 epoch를 회전해 이전 snapshot을 억제하되 payload를 자동 삭제하지 않는다. 현재 목표나 revision과 충돌하는 snapshot은 자동 병합하지 않는다.
+
+Hook은 transcript를 읽지 않고 설치별 HMAC으로 session·turn·request 식별자를 결속한다. `checkpoint_context`, `inspect_context`, `load_context`, `suppress_context_restore`, `purge_direct_context`와 `open_convergence_root`의 correlation에는 task·epoch·도구·canonical input digest·만료 시간이 포함된 stateless token을 쓴다. Continuity 초기화나 lifecycle 처리 실패는 기존 workflow와 compaction을 막지 않는다.
 
 ### 종료 기준
 

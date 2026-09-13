@@ -1,0 +1,6 @@
+interface:
+  display_name: "Iteration Frame Auditor"
+  short_description: "반복 frame의 의미 보존 여부와 다음 경로를 독립 판정합니다"
+  default_prompt: "Use $iteration-frame-auditor to compare the immutable convergence root, attempt evidence, and proposed frame change from a fresh context."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/korean-prose-editor/verification-work-product.v1.schema.json",
+  "title": "Private verification work product",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "actorId", "sourceDigest", "editingDigest", "rubricDigest", "globalDecision", "decisions", "assessment"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "actorId": { "$ref": "#/$defs/actorId" },
+    "sourceDigest": { "$ref": "#/$defs/digest" },
+    "editingDigest": { "$ref": "#/$defs/digest" },
+    "rubricDigest": { "$ref": "#/$defs/digest" },
+    "globalDecision": { "enum": ["continue", "fallback"] },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["editId", "decision", "reasonCode", "sourceDefect", "invariantDelta"],
+        "properties": {
+          "editId": { "type": "string", "minLength": 1 },
+          "decision": { "enum": ["accept", "retain"] },
+          "reasonCode": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+          "sourceDefect": { "$ref": "#/$defs/sourceDefect" },
+          "invariantDelta": { "$ref": "#/$defs/invariantDelta" }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "decision": { "const": "accept" } }, "required": ["decision"] },
+            "then": {
+              "properties": {
+                "reasonCode": { "const": "MEANING_PRESERVED" },
+                "sourceDefect": { "not": { "const": "NONE" } },
+                "invariantDelta": { "const": "NONE" }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["meaningPreservation", "majorMeaningChange", "registerCompliance", "protectedStrings", "terminologyJudgment", "pairPreference"],
+      "properties": {
+        "meaningPreservation": { "enum": ["pass", "fail", "uncertain"] },
+        "majorMeaningChange": { "type": "boolean" },
+        "registerCompliance": { "enum": ["pass", "fail", "uncertain"] },
+        "protectedStrings": { "enum": ["pass", "fail", "uncertain"] },
+        "terminologyJudgment": { "enum": ["pass", "fail", "uncertain", "not-applicable"] },
+        "pairPreference": { "enum": ["candidate", "original", "tie", "neither"] }
+      }
+    }
+  },
+  "$defs": {
+    "actorId": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "sourceDefect": { "enum": ["GRAMMATICAL_MISMATCH", "NOUN_STACKING", "REDUNDANCY", "TRANSLATIONESE", "UNNECESSARY_META_PROSE", "UNSUPPORTED_EMPHASIS", "USER_FACING_IMPLEMENTATION_JARGON", "NONE"] },
+    "invariantDelta": { "enum": ["NONE", "QUANTIFIER_SCOPE", "CONDITION_OR_TENSE", "MODALITY_OR_CERTAINTY", "ACTION_OR_AUTHORITY", "CLAIM_TYPE_OR_STRENGTH", "PREDICATE_ARGUMENT_STRUCTURE", "RHETORICAL_FUNCTION", "ACTOR_OR_TARGET", "TIME", "NEGATION", "CAUSAL_RELATION", "TERMINOLOGY", "UNCERTAIN"] }
+  }
+}

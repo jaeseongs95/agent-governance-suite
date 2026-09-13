@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/open-convergence-root-request.v1.schema.json",
+  "title": "OpenConvergenceRootRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "parentRootId", "taskEnvelope", "frame", "userApprovalRefs"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "parentRootId": { "type": ["string", "null"], "minLength": 1 },
+    "taskEnvelope": { "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json" },
+    "frame": { "$ref": "https://skill-suite.local/contracts/convergence-frame.v1.schema.json" },
+    "userApprovalRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+  }
+}

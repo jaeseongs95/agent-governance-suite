@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/resolve-convergence-gate-request.v1.schema.json",
+  "title": "ResolveConvergenceGateRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "rootId", "expectedRevision", "review"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "rootId": { "type": "string", "minLength": 1 },
+    "expectedRevision": { "type": "integer", "minimum": 0 },
+    "review": { "$ref": "https://skill-suite.local/contracts/convergence-review.v1.schema.json" }
+  }
+}

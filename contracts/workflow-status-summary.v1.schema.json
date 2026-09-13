@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/workflow-status-summary.v1.schema.json",
+  "title": "WorkflowStatusSummary.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "revision", "state", "currentStageId", "nextStageId", "lastRecordedStageId", "completedStageCount", "totalStageCount", "blockerCount", "unresolvedCount", "errorCode", "receiptDigest"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "runId": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 0 },
+    "state": { "enum": ["ready", "running", "needs-input", "needs-approval", "needs-redesign", "failed", "passed", "blocked"] },
+    "currentStageId": { "type": ["string", "null"] },
+    "nextStageId": { "type": ["string", "null"] },
+    "lastRecordedStageId": { "type": ["string", "null"] },
+    "completedStageCount": { "type": "integer", "minimum": 0 },
+    "totalStageCount": { "type": "integer", "minimum": 0 },
+    "blockerCount": { "type": "integer", "minimum": 0 },
+    "unresolvedCount": { "type": "integer", "minimum": 0 },
+    "errorCode": {
+      "oneOf": [
+        { "type": "null" },
+        { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE", "LEASE_REQUIRED", "LEASE_CONFLICT", "FRAME_REVIEW_REQUIRED", "ATTEMPT_BUDGET_EXHAUSTED", "NEW_EVIDENCE_REQUIRED", "ROOT_CONFLICT", "CONTINUITY_UNAVAILABLE", "BINDING_REQUIRED", "BINDING_INVALID", "SNAPSHOT_NOT_FOUND", "SNAPSHOT_CONFLICT", "REQUEST_CONFLICT", "INTEGRITY_FAILED"] }
+      ]
+    },
+    "receiptDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

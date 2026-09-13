@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/attempt-proposal.v1.schema.json",
+  "title": "AttemptProposal.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "rootId", "expectedRevision", "taskEnvelope", "frame", "plan", "actorId", "outputTargets", "priorFailure"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "rootId": { "type": "string", "minLength": 1 },
+    "expectedRevision": { "type": "integer", "minimum": 0 },
+    "taskEnvelope": { "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json" },
+    "frame": { "$ref": "https://skill-suite.local/contracts/convergence-frame.v1.schema.json" },
+    "plan": { "$ref": "https://skill-suite.local/contracts/workflow-plan.v1.schema.json" },
+    "actorId": { "type": "string", "minLength": 1 },
+    "outputTargets": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "priorFailure": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/priorFailure" }
+      ]
+    }
+  },
+  "$defs": {
+    "priorFailure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fingerprint", "hypothesis", "changeSummary", "discriminator", "evidenceRefs"],
+      "properties": {
+        "fingerprint": { "type": "string", "minLength": 1 },
+        "hypothesis": { "type": "string", "minLength": 1 },
+        "changeSummary": { "type": "string", "minLength": 1 },
+        "discriminator": { "type": "string", "minLength": 1 },
+        "evidenceRefs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    }
+  }
+}

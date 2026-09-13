@@ -1,3 +1,4 @@
+import { realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,4 +34,57 @@ export function resolveWorkflowDatabasePath(
     stateRoot = environment.XDG_STATE_HOME?.trim() || path.join(homeDirectory, ".local", "state");
   }
   return path.resolve(stateRoot, "agent-governance-suite", "workflows.sqlite3");
+}
+
+/** Resolves continuity state beside workflow state unless explicitly overridden. */
+export function resolveContinuityDatabasePath(
+  environment: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+  homeDirectory: string = homedir(),
+  currentWorkingDirectory: string = process.cwd(),
+): string {
+  const configured = environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH?.trim();
+  if (configured) return path.resolve(currentWorkingDirectory, configured);
+  const workflowPath = resolveWorkflowDatabasePath(
+    environment,
+    platform,
+    homeDirectory,
+    currentWorkingDirectory,
+  );
+  if (workflowPath === ":memory:") return ":memory:";
+  return path.join(path.dirname(workflowPath), "continuity.sqlite3");
+}
+
+function canonicalDatabasePath(databasePath: string, platform: NodeJS.Platform): string | null {
+  if (databasePath === ":memory:") return null;
+  const absolute = path.resolve(databasePath);
+  const unresolved: string[] = [];
+  let cursor = absolute;
+  let resolved = absolute;
+  while (true) {
+    try {
+      resolved = path.join(realpathSync.native(cursor), ...unresolved.reverse());
+      break;
+    } catch {
+      const parent = path.dirname(cursor);
+      if (parent === cursor) break;
+      unresolved.push(path.basename(cursor));
+      cursor = parent;
+    }
+  }
+  const normalized = path.normalize(resolved);
+  return platform === "win32" ? normalized.toLocaleLowerCase("en-US") : normalized;
+}
+
+/** Rejects aliases that would mix optional continuity tables into workflow state. */
+export function assertDistinctDatabasePaths(
+  workflowDatabasePath: string,
+  continuityDatabasePath: string,
+  platform: NodeJS.Platform = process.platform,
+): void {
+  const workflowIdentity = canonicalDatabasePath(workflowDatabasePath, platform);
+  const continuityIdentity = canonicalDatabasePath(continuityDatabasePath, platform);
+  if (workflowIdentity !== null && workflowIdentity === continuityIdentity) {
+    throw new Error("Workflow and continuity databases must use different files.");
+  }
 }
