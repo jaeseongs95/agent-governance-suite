@@ -92,6 +92,15 @@
       "checksumScope": "relative paths and normalized text bytes under skills/change-scope-guardian"
     },
     {
+      "skillId": "model-effort-advisor",
+      "path": "skills/model-effort-advisor",
+      "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
+      "ref": "bc248f9babf1c850249c960385b2935db49756d4",
+      "commit": "bc248f9babf1c850249c960385b2935db49756d4",
+      "checksum": "sha256:9a2871ff97553884eea9e93e1b46464631b47fc2d2be7b50b0cd5ec5031e429c",
+      "checksumScope": "relative paths and normalized text bytes under skills/model-effort-advisor"
+    },
+    {
       "skillId": "iteration-frame-auditor",
       "path": "skills/iteration-frame-auditor",
       "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
