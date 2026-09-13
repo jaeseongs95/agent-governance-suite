@@ -22013,6 +22013,21 @@ var WorkflowService = class {
         details: { executionClasses: [...executionClasses] }
       });
     }
+    for (const { provider: consumer } of selectedProviderList) {
+      for (const binding of consumer.inputBindings.filter((item) => item.operation === "require-external")) {
+        const producer = selectedProviderList.find(({ provider }) => provider.providerKey !== consumer.providerKey && provider.producedArtifacts.includes(binding.targetArtifact));
+        if (producer) {
+          errors.push({
+            code: "INVALID_TRANSITION",
+            message: `Artifact '${binding.targetArtifact}' must come from a completed external run.`,
+            details: {
+              consumerProviderKey: consumer.providerKey,
+              producerProviderKey: producer.provider.providerKey
+            }
+          });
+        }
+      }
+    }
     for (const { capability, satisfiedCapabilities, provider: skill } of this.orderProviders(selectedProviderList)) {
       const producedArtifacts = skill.producedArtifacts;
       const stageRequiredArtifacts = skill.gate.policy === "mandatory" ? [.../* @__PURE__ */ new Set([...producedArtifacts, "gate-verdict"])] : producedArtifacts;

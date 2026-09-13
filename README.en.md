@@ -123,6 +123,7 @@ Each specialist remains available when the MCP server is unavailable. Orchestrat
 - **Before changes**: Immediately before a high-impact or difficult-to-reverse action such as deletion, deployment, or migration, check the target, authority, and recovery conditions.
 - **Before completion**: After implementation and testing but before declaring completion, verify evidence for every acceptance criterion and, for high-risk work, confirm that the independent audit passed.
 - **After a failure**: When failures repeat or an unclear cause blocks progress, separate observations from hypotheses and choose the next discriminating diagnostic check.
+- **When selecting recovery**: Compare two or three viable responses to a confirmed cause and create a handoff bound to a new task contract.
 
 | When | Skill | Version | Responsibility |
 | --- | --- | --- | --- |
@@ -138,8 +139,9 @@ Each specialist remains available when the MCP server is unavailable. Orchestrat
 | Before completion | `acceptance-evidence-validator` | 1.0.0 | Verifies current evidence for every acceptance criterion. |
 | Before completion | `independent-audit-gate` | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
 | After a failure | `blocker-diagnostician` | 1.0.0 | Classifies repeated failures and selects the next diagnostic step. |
+| When selecting recovery | [`recovery-strategy-selector`](skills/recovery-strategy-selector/) | 0.1.0 | Applies an Objective Gate to strategies for a confirmed cause and creates a `RecoveryHandoff.v1` for a new task. |
 
-Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. `skills/source-lock.json` pins upstream paths, tags or commits, upstream/integrated checksums, and update policies, including the repository-native `model-effort-advisor` and `iteration-frame-auditor`; the `orchestrator` is tracked by current Git history.
+Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. `skills/source-lock.json` pins upstream paths, tags or commits, upstream/integrated checksums, and update policies, including the repository-native `model-effort-advisor`, `iteration-frame-auditor`, and `recovery-strategy-selector`; the `orchestrator` is tracked by current Git history.
 
 ### Shared infrastructure skill
 

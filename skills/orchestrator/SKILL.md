@@ -28,7 +28,7 @@ metadata:
 
 - `bootstrap`: `plan_workflow` 전에 실행한다. `phaseOrder` 순으로 지침 범위를 확인하고, 신뢰할 수 있는 현재 선택값이 있을 때 모델·추론 수준 적합성을 평가하며, 필요할 때 저장소 관례를 조사한 뒤 유효한 `TaskEnvelope.v1`과 수용 근거 계획을 만든다. 이미 같은 대상과 지침 revision에 대해 검증된 산출물이 있으면 중복 실행하지 않는다.
 - `workflow`: 동결된 `TaskEnvelope.v1`에서 필요한 capability만 선택한다. `phaseOrder`와 artifact 의존성을 함께 지키며, 첫 변경 전 기준선, 위험한 상태 변경 직전 precondition gate, 구현 후 범위·수용 근거 확인, 마지막 완료 gate 순서를 유지한다.
-- `recovery`: 기존 run의 실패 기록을 바꾸지 않고 별도 workflow로 실행한다. 반복 실패가 없으면 미리 넣지 않으며, recovery provider와 일반 workflow provider를 한 run에 섞지 않는다.
+- `recovery`: 기존 run의 실패 기록을 바꾸지 않고 별도 workflow로 실행한다. 반복 실패가 없으면 미리 넣지 않으며, recovery provider와 일반 workflow provider를 한 run에 섞지 않는다. `blocker-diagnostician`이 `CAUSE_CONFIRMED`를 반환한 뒤에만 별도의 recovery run에서 `recovery-strategy-selector`를 실행한다. 검증된 `RecoveryHandoff.v1`은 새 작업 계약의 입력일 뿐 권한이나 실행 승인이 아니며, 새 `TaskEnvelope.v1` 결속 검사 전에는 후속 workflow를 시작하지 않는다.
 
 여러 provider가 같은 스킬에 있어도 각 provider의 capability, phase, 입력·출력 artifact를 독립 단계로 취급한다. 스킬 디렉터리명이나 배열 위치로 순서를 추측하지 않는다.
 
