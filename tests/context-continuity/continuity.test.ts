@@ -61,6 +61,14 @@ function bound<T extends Record<string, unknown>>(service: ContinuityService, se
   return { ...input, _continuityBinding: service.issueToolBinding(session, tool, input) };
 }
 
+function nonCanonicalSignatureAlias(token: string): string {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  const [body, signature] = token.split(".") as [string, string];
+  const lastIndex = alphabet.indexOf(signature.at(-1)!);
+  if (lastIndex < 0 || lastIndex % 4 !== 0 || lastIndex >= alphabet.length - 1) throw new Error("Unexpected canonical SHA-256 signature encoding.");
+  return `${body}.${signature.slice(0, -1)}${alphabet[lastIndex + 1]}`;
+}
+
 function directCheckpoint(service: ContinuityService, session = "raw-session") {
   const input = checkpointInput();
   return service.checkpointContext(bound(service, session, "checkpoint_context", input));
@@ -159,7 +167,9 @@ describe("direct task continuity", () => {
     };
     expect(service.loadContext(bound(service, "raw-session", "load_context", loadInput)).data).toEqual(snapshot);
 
-    const tampered = { ...loadInput, candidateToken: `${candidate.restoreToken!.slice(0, -1)}x` };
+    const tamperedToken = nonCanonicalSignatureAlias(candidate.restoreToken!);
+    expect(Buffer.from(tamperedToken.split(".")[1]!, "base64url")).toEqual(Buffer.from(candidate.restoreToken!.split(".")[1]!, "base64url"));
+    const tampered = { ...loadInput, candidateToken: tamperedToken };
     expect(service.loadContext(bound(service, "raw-session", "load_context", tampered)).error?.code).toBe("BINDING_INVALID");
     expect(service.loadContext(bound(service, "other-session", "load_context", loadInput)).error?.code).toBe("BINDING_INVALID");
   });
@@ -213,7 +223,7 @@ describe("direct task continuity", () => {
     expect(JSON.stringify(storedRequests)).not.toContain(marker);
   });
 
-  it("makes an old purge stale across identical snapshot cycles in the same millisecond", () => {
+  it("keeps revisions monotonic and makes an old purge stale across identical snapshot cycles", () => {
     const service = createService();
     const firstSnapshot = directCheckpoint(service, "repeated-purge-session").data!;
     const firstPurgeInput = {
@@ -225,9 +235,10 @@ describe("direct task continuity", () => {
     const firstPurge = service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", firstPurgeInput));
     expect(firstPurge.data?.purged).toBe(true);
 
-    const secondCheckpoint = checkpointInput({ requestId: "checkpoint-second" });
+    const secondCheckpoint = checkpointInput({ requestId: "checkpoint-second", expectedRevision: firstSnapshot.revision });
     const secondSnapshot = service.checkpointContext(bound(service, "repeated-purge-session", "checkpoint_context", secondCheckpoint)).data!;
-    expect(secondSnapshot.snapshotDigest).toBe(firstSnapshot.snapshotDigest);
+    expect(secondSnapshot.revision).toBe(firstSnapshot.revision + 1);
+    expect(secondSnapshot.snapshotDigest).not.toBe(firstSnapshot.snapshotDigest);
     const secondPurgeInput = {
       schemaVersion: "1.0.0" as const,
       requestId: "purge-second",
@@ -242,6 +253,29 @@ describe("direct task continuity", () => {
     const replayedFirst = service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", firstPurgeInput));
     expect(replayedFirst.error?.code).toBe("STALE_REVISION");
     expect(replayedFirst.data).toBeNull();
+  });
+
+  it("does not replay a purge requestId across snapshot generations", () => {
+    const service = createService();
+    const session = "purge-request-generation-session";
+    const firstSnapshot = directCheckpoint(service, session).data!;
+    const purgeInput = {
+      schemaVersion: "1.0.0" as const,
+      requestId: "purge-generation-bound",
+      expectedEpoch: 1,
+      expectedRevision: firstSnapshot.revision,
+    };
+    expect(service.purgeDirectContext(bound(service, session, "purge_direct_context", purgeInput)).data?.purged).toBe(true);
+
+    const secondCheckpoint = checkpointInput({ requestId: "checkpoint-next-generation", expectedRevision: firstSnapshot.revision });
+    const secondSnapshot = service.checkpointContext(bound(service, session, "checkpoint_context", secondCheckpoint)).data!;
+    const staleReplay = service.purgeDirectContext(bound(service, session, "purge_direct_context", purgeInput));
+    expect(staleReplay.error).toMatchObject({ code: "STALE_REVISION", details: { actualRevision: secondSnapshot.revision } });
+    expect(service.store.getSnapshot(service.correlateSession(session), 1)).toEqual(secondSnapshot);
+
+    const reusedForCurrent = { ...purgeInput, expectedRevision: secondSnapshot.revision };
+    expect(service.purgeDirectContext(bound(service, session, "purge_direct_context", reusedForCurrent)).error?.code).toBe("REQUEST_CONFLICT");
+    expect(service.store.getSnapshot(service.correlateSession(session), 1)).toEqual(secondSnapshot);
   });
 
   it("rejects and later scrubs a malformed purge receipt with extra snapshot content", async () => {
@@ -271,7 +305,7 @@ describe("direct task continuity", () => {
     expect(rejected.error?.code).toBe("STALE_REVISION");
     expect(JSON.stringify(rejected)).not.toContain(marker);
 
-    const secondCheckpoint = checkpointInput({ requestId: "checkpoint-after-malformed-purge" });
+    const secondCheckpoint = checkpointInput({ requestId: "checkpoint-after-malformed-purge", expectedRevision: firstSnapshot.revision });
     const secondSnapshot = service.checkpointContext(bound(service, session, "checkpoint_context", secondCheckpoint)).data!;
     const secondPurgeInput = {
       schemaVersion: "1.0.0" as const,

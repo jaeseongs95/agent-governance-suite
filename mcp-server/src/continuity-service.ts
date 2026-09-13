@@ -144,10 +144,13 @@ function parseJsonToken<T>(value: string): { payload: T; body: string; signature
   const [body, signature, extra] = value.split(".");
   if (!body || !signature || extra) return null;
   try {
+    const bodyBytes = Buffer.from(body, "base64url");
+    const signatureBytes = Buffer.from(signature, "base64url");
+    if (bodyBytes.toString("base64url") !== body || signatureBytes.toString("base64url") !== signature) return null;
     return {
-      payload: JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as T,
+      payload: JSON.parse(bodyBytes.toString("utf8")) as T,
       body,
-      signature: Buffer.from(signature, "base64url"),
+      signature: signatureBytes,
     };
   } catch {
     return null;
@@ -290,6 +293,12 @@ export class ContinuityService implements ContinuityGateway {
       const binding = this.verifyToolBinding("purge_direct_context", request, request._continuityBinding);
       this.currentTask(binding);
       const current = this.store.getSnapshot(binding.c, request.expectedEpoch);
+      if (current && current.revision !== request.expectedRevision) {
+        return failure("STALE_REVISION", "The direct checkpoint revision changed.", {
+          expectedRevision: request.expectedRevision,
+          actualRevision: current.revision,
+        });
+      }
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request as unknown as Record<string, unknown>));
       const tombstoneDigest = convergenceDigest({

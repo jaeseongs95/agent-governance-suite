@@ -16221,7 +16221,7 @@ var SqliteContinuityStore = class {
         return replay.commandDigest === commandDigest ? { kind: "replay", request: replay } : { kind: "conflict" };
       }
       const current = this.getSnapshot(taskCorrelation, epoch);
-      const actualRevision = current?.revision ?? 0;
+      const actualRevision = current?.revision ?? this.getTombstone(taskCorrelation, epoch)?.revision ?? 0;
       if (actualRevision !== expectedRevision) {
         this.database.exec("ROLLBACK;");
         return { kind: "stale", actualRevision };
@@ -16441,10 +16441,13 @@ function parseJsonToken(value) {
   const [body, signature, extra] = value.split(".");
   if (!body || !signature || extra) return null;
   try {
+    const bodyBytes = Buffer.from(body, "base64url");
+    const signatureBytes = Buffer.from(signature, "base64url");
+    if (bodyBytes.toString("base64url") !== body || signatureBytes.toString("base64url") !== signature) return null;
     return {
-      payload: JSON.parse(Buffer.from(body, "base64url").toString("utf8")),
+      payload: JSON.parse(bodyBytes.toString("utf8")),
       body,
-      signature: Buffer.from(signature, "base64url")
+      signature: signatureBytes
     };
   } catch {
     return null;
@@ -16571,6 +16574,12 @@ var ContinuityService = class {
       const binding = this.verifyToolBinding("purge_direct_context", request, request._continuityBinding);
       this.currentTask(binding);
       const current = this.store.getSnapshot(binding.c, request.expectedEpoch);
+      if (current && current.revision !== request.expectedRevision) {
+        return failure("STALE_REVISION", "The direct checkpoint revision changed.", {
+          expectedRevision: request.expectedRevision,
+          actualRevision: current.revision
+        });
+      }
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request));
       const tombstoneDigest = convergenceDigest({

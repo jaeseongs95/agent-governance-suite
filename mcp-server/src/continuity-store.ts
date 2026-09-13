@@ -221,7 +221,7 @@ export class SqliteContinuityStore {
         return replay.commandDigest === commandDigest ? { kind: "replay", request: replay } : { kind: "conflict" };
       }
       const current = this.getSnapshot(taskCorrelation, epoch);
-      const actualRevision = current?.revision ?? 0;
+      const actualRevision = current?.revision ?? this.getTombstone(taskCorrelation, epoch)?.revision ?? 0;
       if (actualRevision !== expectedRevision) {
         this.database.exec("ROLLBACK;");
         return { kind: "stale", actualRevision };
