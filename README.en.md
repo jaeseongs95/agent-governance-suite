@@ -6,7 +6,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
-The current public release is `v1.3.0`. It includes eleven governance specialist skills and one Korean prose workflow. The Korean prose workflow remains disabled in the registry, its direct descriptor, and Codex's implicit-invocation setting until it passes the prose-quality improvement threshold. Its fail-closed skill instructions also refuse direct calls without running providers or local scripts.
+The current public release is `v1.4.0`. It includes eleven governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. The Korean prose workflow remains disabled in the registry, its direct descriptor, and Codex's implicit-invocation setting until it passes the prose-quality improvement threshold. Its fail-closed skill instructions also refuse direct calls without running providers or local scripts.
 
 ## How it works
 
@@ -59,11 +59,13 @@ The orchestrator does not run all eleven skills for every request. It selects th
 Node.js 22.13.0 or later is required.
 
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.3.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.4.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 
 Start a new Codex session after installation so Codex can load the bundled skills and MCP tools. Then call the orchestrator:
+
+The task-continuity lifecycle hook runs only after you review and trust its current definition in Codex `/hooks` following installation or a hook change. Existing specialist skills and workflow MCP operations continue to work when the untrusted hook is skipped.
 
 ```text
 Use $orchestrator to define the scope and success criteria for this task, then manage the required checks and completion evidence: <your task>
@@ -82,7 +84,7 @@ Check the installed runtime from the plugin root:
 node scripts/check-runtime.mjs
 ```
 
-The MCP server stores workflow state and its plan-signing key in SQLite. By default, it creates the database in the operating system's per-user state directory. Set `AGENT_GOVERNANCE_DB_PATH` to an absolute SQLite file path, or to a path relative to the MCP working directory, when you need to control its location. Protect that directory so only the account running the MCP server can access it.
+The MCP server stores workflow state and its plan-signing key in `workflows.sqlite3`. Optional task continuity uses a separate `continuity.sqlite3` in the same per-user state directory. Set `AGENT_GOVERNANCE_DB_PATH` and `AGENT_GOVERNANCE_CONTINUITY_DB_PATH`, respectively, to absolute SQLite paths or paths relative to the MCP working directory. Protect that directory so only the account running the MCP server can access it.
 
 ```bash
 AGENT_GOVERNANCE_DB_PATH=/absolute/path/workflows.sqlite3 pnpm dev
@@ -131,6 +133,14 @@ Each specialist remains available when the MCP server is unavailable. Orchestrat
 | After a failure | `blocker-diagnostician` | 1.0.0 | Classifies repeated failures and selects the next diagnostic step. |
 
 Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. `skills/source-lock.json` pins the upstream sources and the creation commit and checksum of the repository-native `iteration-frame-auditor`; the `orchestrator` is tracked by current Git history.
+
+### Shared infrastructure skill
+
+[`context-continuity`](skills/context-continuity/) is local lifecycle infrastructure, not a specialist judgment provider. It writes replacement checkpoints only for direct-task state whose loss would change scope, authority, branching, or verification decisions. Resume and direct compact hooks inject metadata and an opaque restore token, never snapshot body text; the body is returned only by an explicit `load_context` call. For orchestrated workflows, compact restoration may inject only a bounded structural card projected from the existing `TaskEnvelope`, receipt, and convergence root. This skill is intentionally absent from `skills/registry.json` and the specialist count above.
+
+The lifecycle hook never reads or stores raw transcripts and records installation-keyed HMAC correlations instead of raw session, turn, or request identifiers. `clear` rotates the epoch and suppresses old restoration without automatically deleting payloads. `suppress_context_restore` stops candidate delivery, while the explicitly destructive `purge_direct_context` deletes only direct payloads and leaves a hash tombstone. Continuity database failures do not block workflow operations or Codex compaction.
+
+The snapshot `core` and `evidenceRefs` are stored as plaintext JSON in the local `continuity.sqlite3` and do not expire automatically. Do not checkpoint secrets, personal data, raw logs or code, or chain-of-thought; manage access and retention for the database file directly.
 
 ## Enforcement scope and limits
 

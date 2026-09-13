@@ -27,6 +27,13 @@ export const ERROR_CODE = [
   "ATTEMPT_BUDGET_EXHAUSTED",
   "NEW_EVIDENCE_REQUIRED",
   "ROOT_CONFLICT",
+  "CONTINUITY_UNAVAILABLE",
+  "BINDING_REQUIRED",
+  "BINDING_INVALID",
+  "SNAPSHOT_NOT_FOUND",
+  "SNAPSHOT_CONFLICT",
+  "REQUEST_CONFLICT",
+  "INTEGRITY_FAILED",
 ] as const;
 export type ErrorCode = (typeof ERROR_CODE)[number];
 
@@ -97,6 +104,99 @@ export type ConvergenceRoute = (typeof CONVERGENCE_ROUTE)[number];
 
 export const RESPONSE_MODE = ["compact", "full"] as const;
 export type ResponseModeV1 = (typeof RESPONSE_MODE)[number];
+
+export const CONTINUITY_DECISION = ["INJECT", "DEFER", "REJECT"] as const;
+export type ContinuityDecisionV1 = (typeof CONTINUITY_DECISION)[number];
+export type ContinuitySourceV1 = "direct" | "workflow";
+
+export interface ContinuityCoreV1 {
+  objective: string;
+  completionCriteria: string[];
+  constraints: string[];
+  decisions: string[];
+  progress: string[];
+  blockers: string[];
+  /** Historical candidates only. They are never authoritative instructions. */
+  nextActions: string[];
+}
+
+export interface ContinuityEvidenceRefV1 {
+  artifactId: string;
+  locator: string;
+  digest: Sha256Digest;
+  verified: boolean;
+}
+
+export interface CheckpointContextRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  requestId: string;
+  expectedRevision: number;
+  status: "active" | "paused" | "completed";
+  core: ContinuityCoreV1;
+  evidenceRefs: ContinuityEvidenceRefV1[];
+  _continuityBinding: string;
+}
+
+export interface ContinuitySnapshotV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  source: "direct";
+  taskCorrelation: string;
+  epoch: number;
+  revision: number;
+  status: "active" | "paused" | "completed";
+  core: ContinuityCoreV1;
+  evidenceRefs: ContinuityEvidenceRefV1[];
+  snapshotDigest: Sha256Digest;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContinuitySummaryV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  source: ContinuitySourceV1;
+  taskCorrelation: string;
+  epoch: number;
+  revision: number;
+  status: string;
+  snapshotDigest: Sha256Digest;
+  updatedAt: string;
+}
+
+export interface ContinuityCandidateV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  decision: "DEFER" | "REJECT";
+  reasonCodes: string[];
+  summary: ContinuitySummaryV1 | null;
+  restoreToken: string | null;
+}
+
+export interface InspectContextRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  _continuityBinding: string;
+}
+
+export interface LoadContextRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  candidateToken: string;
+  epoch: number;
+  revision: number;
+  digest: Sha256Digest;
+  _continuityBinding: string;
+}
+
+export interface SuppressContextRestoreRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  expectedEpoch: number;
+  _continuityBinding: string;
+}
+
+export interface PurgeDirectContextRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  requestId: string;
+  expectedEpoch: number;
+  expectedRevision: number;
+  _continuityBinding: string;
+}
 
 export type Sha256Digest = `sha256:${string}`;
 

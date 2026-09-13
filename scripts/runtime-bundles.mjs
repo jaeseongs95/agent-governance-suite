@@ -18,6 +18,12 @@ export const RUNTIME_BUNDLES = Object.freeze([
     output: "runtime/schema-validation.mjs",
     executable: false,
   }),
+  Object.freeze({
+    id: "continuity-hook",
+    entry: "mcp-server/src/continuity-hook.ts",
+    output: "mcp-server/dist/continuity-hook.mjs",
+    executable: true,
+  }),
 ]);
 
 export const RUNTIME_NOTICES = "runtime/THIRD_PARTY_NOTICES.md";
