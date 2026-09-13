@@ -1,6 +1,7 @@
 import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Worker } from "node:worker_threads";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -549,18 +550,43 @@ describe("local MCP convergence guard", () => {
 
   it("allows only one competing lease claim across two SQLite connections", async () => {
     const harness = await createHarness();
-    const competingStore = trackStore(harness.databasePath);
-    const competingService = serviceFor(harness.registryPath, competingStore);
     const root = openRoot(harness.service);
     const firstProposal = proposal(harness.service, root);
-    const secondProposal = proposal(competingService, root);
-
-    const [first, second] = await Promise.all([
-      Promise.resolve().then(() => harness.service.claimWorkflowAttempt(firstProposal)),
-      Promise.resolve().then(() => competingService.claimWorkflowAttempt(secondProposal)),
-    ]);
-    expect([first.ok, second.ok].filter(Boolean)).toHaveLength(1);
-    expect([first, second].filter((result) => !result.ok)).toHaveLength(1);
+    const workers = [firstProposal, structuredClone(firstProposal)].map((workerProposal) => new Worker(
+      new URL("./fixtures/concurrent-claim-worker.ts", import.meta.url),
+      {
+        execArgv: ["--import", "tsx"],
+        workerData: {
+          databasePath: harness.databasePath,
+          registryPath: harness.registryPath,
+          proposal: workerProposal,
+        },
+      },
+    ));
+    const ready = workers.map((worker) => new Promise<void>((resolve, reject) => {
+      const onMessage = (message: { type?: string }) => {
+        if (message.type !== "ready") return;
+        worker.off("message", onMessage);
+        resolve();
+      };
+      worker.on("message", onMessage);
+      worker.once("error", reject);
+    }));
+    await Promise.all(ready);
+    const results = workers.map((worker) => new Promise<{ ok: boolean; error: { code: string } | null }>((resolve, reject) => {
+      worker.once("message", (message: { type?: string; result?: { ok: boolean; error: { code: string } | null } }) => {
+        if (message.type === "result" && message.result) resolve(message.result);
+        else reject(new Error("Concurrent claim worker returned an unexpected message."));
+      });
+      worker.once("error", reject);
+    }));
+    const exits = workers.map((worker) => new Promise<void>((resolve) => worker.once("exit", () => resolve())));
+    workers.forEach((worker) => worker.postMessage("claim"));
+    const workerResults = await Promise.all(results);
+    await Promise.all(exits);
+    expect(workerResults.filter((result) => result.ok)).toHaveLength(1);
+    expect(workerResults.filter((result) => !result.ok)).toHaveLength(1);
+    expect(workerResults.find((result) => !result.ok)?.error?.code).toBe("LEASE_CONFLICT");
     expect(status(harness.service, root.rootId).leases.filter((lease) => lease.state === "issued")).toHaveLength(1);
   });
 

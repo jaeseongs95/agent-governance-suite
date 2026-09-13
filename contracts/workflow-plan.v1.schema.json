@@ -4,7 +4,7 @@
   "title": "WorkflowPlan.v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "taskId", "taskDigest", "integrityToken", "executionMode", "state", "selectedSkills", "stages", "currentStageId", "nextStageId", "errors"],
+  "required": ["schemaVersion", "taskId", "integrityToken", "executionMode", "state", "selectedSkills", "stages", "currentStageId", "nextStageId", "errors"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "taskId": { "type": "string", "minLength": 1 },
