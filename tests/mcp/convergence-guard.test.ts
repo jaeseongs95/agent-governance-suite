@@ -374,6 +374,17 @@ describe("local MCP convergence guard", () => {
       userApprovalRefs: [],
     });
     expect(aliasConflict.error?.code).toBe("ROOT_CONFLICT");
+
+    const normalizedAliasFrame = frame({ workspaceId: "workspace-dot-alias" });
+    normalizedAliasFrame.workspace.locator = "D:/fixtures/./workspace-fixture";
+    const normalizedAliasConflict = service.openConvergenceRoot({
+      schemaVersion: "1.0.0",
+      parentRootId: null,
+      taskEnvelope: task({ taskId: "guarded-task-dot-alias", included: ["./src/candidate.ts"] }),
+      frame: normalizedAliasFrame,
+      userApprovalRefs: [],
+    });
+    expect(normalizedAliasConflict.error?.code).toBe("ROOT_CONFLICT");
   });
 
   it("requires a lease for every valid orchestrated plan", async () => {
@@ -596,6 +607,24 @@ describe("local MCP convergence guard", () => {
     expect(noThirdEpoch.data?.root).toMatchObject({ currentEpoch: 2, state: "needs-user" });
   });
 
+  it("does not open a new epoch when an otherwise preserving review has no target correction", async () => {
+    const { service } = await createHarness();
+    const root = openRoot(service);
+    const current = await consumeThreeFailedAttempts(service, root, "unchanged-review");
+    const result = service.resolveConvergenceGate({
+      schemaVersion: "1.0.0",
+      rootId: root.rootId,
+      expectedRevision: current.root.revision,
+      review: review(current, {
+        classification: "semantics-preserving",
+        route: "resume-new-epoch",
+        proposedFrame: current.root.frame,
+      }, "review-without-target-correction"),
+    });
+    expect(result.error?.code).toBe("GATE_FAILED");
+    expect(status(service, root.rootId).root).toMatchObject({ currentEpoch: 1, state: "needs-review" });
+  });
+
   it.each([
     { classification: "semantics-changing" as const, route: "needs-user" as const, expectedState: "needs-user" },
     { classification: "ambiguous" as const, route: "panel" as const, expectedState: "needs-review" },
@@ -658,6 +687,13 @@ describe("local MCP convergence guard", () => {
       }, "review-bypass-user"),
     });
     expect(bypass.error?.code).toBe("INVALID_TRANSITION");
+    expect(status(service, root.rootId).root.state).toBe("needs-user");
+
+    const changedWhileWaiting = service.claimWorkflowAttempt(proposal(service, current.root, {
+      frame: frame({ controlVersion: "another-user-value-change", targetVersion: "another-target" }),
+      priorFailure: latestFailure(current, "test:still-needs-user"),
+    }));
+    expect(changedWhileWaiting.error?.code).toBe("FRAME_REVIEW_REQUIRED");
     expect(status(service, root.rootId).root.state).toBe("needs-user");
   });
 

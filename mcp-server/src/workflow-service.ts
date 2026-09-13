@@ -215,7 +215,9 @@ export class WorkflowService {
         || proposedDigests.operationalDigest !== root.operationalDigest
         || this.artifactRolesChanged(root.frame, proposal.frame);
       if (frameChanged) {
-        this.moveRootToReview(root, "The task or control frame changed before the next full attempt.");
+        if (root.state === "open") {
+          this.moveRootToReview(root, "The task or control frame changed before the next full attempt.");
+        }
         throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "Task, control, workspace, operational, or artifact-role changes require independent review.", {
           rootId: root.rootId,
           expected: {
@@ -422,6 +424,9 @@ export class WorkflowService {
           const nextDigests = this.convergenceDigests(updatedRoot.taskEnvelope, proposedFrame);
           if (nextDigests.workspaceDigest !== root.workspaceDigest || nextDigests.operationalDigest !== root.operationalDigest) {
             throw new WorkflowContractError("INVALID_INPUT", "A semantics-preserving review cannot change workspace or guard policy.");
+          }
+          if (nextDigests.targetDigest === root.targetDigest) {
+            throw new WorkflowContractError("GATE_FAILED", "A new convergence epoch requires a verified target-frame correction.");
           }
           updatedRoot.currentEpoch += 1;
           updatedRoot.state = "open";

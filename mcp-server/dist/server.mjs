@@ -18588,20 +18588,25 @@ function frameDigests(frame) {
     operationalDigest: convergenceDigest(frame.operationalSettings)
   };
 }
-function normalizedScope(value) {
-  const normalized = value.replaceAll("\\", "/").replace(/\/+$/u, "");
+function normalizedScope(value, workspaceLocator) {
+  const normalized = path4.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
   return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }
-function scopeEntryOverlaps(left, right) {
-  const a = normalizedScope(left);
-  const b = normalizedScope(right);
+function scopeEntryOverlaps(left, leftWorkspace, right, rightWorkspace) {
+  const a = normalizedScope(left, leftWorkspace);
+  const b = normalizedScope(right, rightWorkspace);
   if (a === b) return true;
   return a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
 }
 function rootsOverlap(left, right) {
   const sameWorkspace = left.frame.workspace.workspaceId === right.frame.workspace.workspaceId || normalizeWorkspaceLocator(left.frame.workspace.locator) === normalizeWorkspaceLocator(right.frame.workspace.locator);
   if (!sameWorkspace) return false;
-  return left.taskEnvelope.scope.included.some((leftTarget) => right.taskEnvelope.scope.included.some((rightTarget) => scopeEntryOverlaps(leftTarget, rightTarget)));
+  return left.taskEnvelope.scope.included.some((leftTarget) => right.taskEnvelope.scope.included.some((rightTarget) => scopeEntryOverlaps(
+    leftTarget,
+    left.frame.workspace.locator,
+    rightTarget,
+    right.frame.workspace.locator
+  )));
 }
 function normalizeWorkspaceLocator(locator) {
   const resolved = path4.resolve(locator);
@@ -20060,7 +20065,9 @@ var WorkflowService = class {
       const proposedDigests = this.convergenceDigests(proposal.taskEnvelope, proposal.frame);
       const frameChanged = proposedDigests.taskDigest !== root.taskDigest || proposedDigests.workspaceDigest !== root.workspaceDigest || proposedDigests.controlDigest !== root.controlDigest || proposedDigests.operationalDigest !== root.operationalDigest || this.artifactRolesChanged(root.frame, proposal.frame);
       if (frameChanged) {
-        this.moveRootToReview(root, "The task or control frame changed before the next full attempt.");
+        if (root.state === "open") {
+          this.moveRootToReview(root, "The task or control frame changed before the next full attempt.");
+        }
         throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "Task, control, workspace, operational, or artifact-role changes require independent review.", {
           rootId: root.rootId,
           expected: {
@@ -20259,6 +20266,9 @@ var WorkflowService = class {
           const nextDigests = this.convergenceDigests(updatedRoot.taskEnvelope, proposedFrame);
           if (nextDigests.workspaceDigest !== root.workspaceDigest || nextDigests.operationalDigest !== root.operationalDigest) {
             throw new WorkflowContractError("INVALID_INPUT", "A semantics-preserving review cannot change workspace or guard policy.");
+          }
+          if (nextDigests.targetDigest === root.targetDigest) {
+            throw new WorkflowContractError("GATE_FAILED", "A new convergence epoch requires a verified target-frame correction.");
           }
           updatedRoot.currentEpoch += 1;
           updatedRoot.state = "open";

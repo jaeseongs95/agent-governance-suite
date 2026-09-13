@@ -44,14 +44,14 @@ export function frameDigests(frame: ConvergenceFrameV1): {
   };
 }
 
-function normalizedScope(value: string): string {
-  const normalized = value.replaceAll("\\", "/").replace(/\/+$/u, "");
+function normalizedScope(value: string, workspaceLocator: string): string {
+  const normalized = path.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
   return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }
 
-function scopeEntryOverlaps(left: string, right: string): boolean {
-  const a = normalizedScope(left);
-  const b = normalizedScope(right);
+function scopeEntryOverlaps(left: string, leftWorkspace: string, right: string, rightWorkspace: string): boolean {
+  const a = normalizedScope(left, leftWorkspace);
+  const b = normalizedScope(right, rightWorkspace);
   if (a === b) return true;
   return a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
 }
@@ -64,7 +64,12 @@ export function rootsOverlap(
     || normalizeWorkspaceLocator(left.frame.workspace.locator) === normalizeWorkspaceLocator(right.frame.workspace.locator);
   if (!sameWorkspace) return false;
   return left.taskEnvelope.scope.included.some((leftTarget) => (
-    right.taskEnvelope.scope.included.some((rightTarget) => scopeEntryOverlaps(leftTarget, rightTarget))
+    right.taskEnvelope.scope.included.some((rightTarget) => scopeEntryOverlaps(
+      leftTarget,
+      left.frame.workspace.locator,
+      rightTarget,
+      right.frame.workspace.locator,
+    ))
   ));
 }
 
