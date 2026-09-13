@@ -104,6 +104,18 @@ Each specialist remains available when the MCP server is unavailable. Orchestrat
 
 ## Included skills
 
+### How to read the `When` column
+
+`When` identifies the **work situation in which a skill should be considered or invoked**. It is lifecycle guidance, not a fixed instruction to run every skill from top to bottom. In practice, select only the skills justified by the request's risk and current state; when multiple skills are connected, the orchestrator determines their required execution order.
+
+- **Before work**: Before editing files or running commands, resolve applicable instructions and repository conventions, then define the objective, scope, and completion criteria.
+- **During work**: When work needs to be divided into independent units or a complex, high-cost decision needs review from multiple perspectives.
+- **Convergence review**: When the attempt budget is exhausted or the objective, evaluation criteria, or inputs may change, compare the invariant contract with the proposed change before opening a new attempt epoch.
+- **Before and after changes**: Capture the Git baseline before editing, then compare the resulting diff with that baseline to detect files outside the requested scope.
+- **Before changes**: Immediately before a high-impact or difficult-to-reverse action such as deletion, deployment, or migration, check the target, authority, and recovery conditions.
+- **Before completion**: After implementation and testing but before declaring completion, verify evidence for every acceptance criterion and, for high-risk work, confirm that the independent audit passed.
+- **After a failure**: When failures repeat or an unclear cause blocks progress, separate observations from hypotheses and choose the next discriminating diagnostic check.
+
 | When | Skill | Version | Responsibility |
 | --- | --- | --- | --- |
 | Before work | `instruction-scope-resolver` | 1.0.0 | Finds the instructions and precedence rules that apply to the work target. |
