@@ -6,7 +6,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
-The current public release is `v1.1.0`. It includes ten governance specialist skills and one Korean prose workflow. The Korean prose workflow remains disabled in `skills/registry.json`, so MCP routing and the orchestrator cannot select it until it passes the prose-quality improvement threshold.
+The current public release is `v1.1.0`. It includes ten governance specialist skills and one Korean prose workflow. The Korean prose workflow remains disabled in the registry, its direct descriptor, and Codex's implicit-invocation setting until it passes the prose-quality improvement threshold. Its fail-closed skill instructions also refuse direct calls without running providers or local scripts.
 
 ## How it works
 
@@ -99,6 +99,8 @@ check_for_updates { "force": false }
 Set `force: true` to bypass the cached check time. This feature only reports that a release exists. It never modifies plugin files, installation caches, or marketplace settings, and it never installs the update automatically. Direct specialist-skill calls that do not use the MCP server do not perform this check.
 
 Each specialist remains available when the MCP server is unavailable. Orchestrated runs that enforce stage order and issue a final receipt require the MCP server.
+
+`v1.1.0` upgrades the SQLite schema from v1 to v2. If you may need to return to an older release, stop the MCP server and create a consistent SQLite backup before upgrading. A v2 database cannot be opened by `v1.0.5`, so reinstalling only the plugin is not a rollback. To roll back, stop the MCP server, restore the pre-upgrade v1 backup, and then install `v1.0.5`. If no database existed before the upgrade, archive the new v2 database outside its configured path before starting `v1.0.5`.
 
 ## Included skills
 
