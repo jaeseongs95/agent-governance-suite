@@ -106,7 +106,7 @@ function seedAvailableUpdate(databasePath: string): void {
   try {
     store.putPluginUpdateState({
       targetId: "agent-governance-suite",
-      currentVersion: "1.4.2",
+      currentVersion: "1.4.3",
       latestVersion: "1.5.0",
       latestTag: "v1.5.0",
       latestCommit: "c".repeat(40),
@@ -324,7 +324,7 @@ describe("bundled STDIO MCP server", () => {
       expect(plannedContents).toHaveLength(2);
       expect(JSON.parse(plannedContents[1]!)).toMatchObject({
         kind: "plugin-update-notice",
-        currentVersion: "1.4.2",
+        currentVersion: "1.4.3",
         latestVersion: "1.5.0",
         automaticInstall: false,
       });
@@ -349,7 +349,7 @@ describe("bundled STDIO MCP server", () => {
         arguments: { force: false },
       }));
       expect(updateStatus.data).toMatchObject({
-        currentVersion: "1.4.2",
+        currentVersion: "1.4.3",
         latestVersion: "1.5.0",
         comparison: "update-available",
         automaticInstall: false,

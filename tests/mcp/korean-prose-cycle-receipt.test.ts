@@ -65,9 +65,9 @@ describe("range-aware Korean prose cycle receipts", () => {
     ]);
     const refused = runScript(recorderPath, ["1", evaluationRoot, "--cycle-dir", positionalCycle]);
     expect(refused.status).not.toBe(0);
-    expect(refused.stderr.toLowerCase()).toContain(
-      `refusing to overwrite ${join(runDirectory, "workflow-receipt.json")}`.toLowerCase(),
-    );
+    expect(refused.stderr).toContain("refusing to overwrite");
+    expect(refused.stderr).toContain("workflow-receipt.json");
+    expect(await readFile(join(runDirectory, "workflow-receipt.json"), "utf8")).toBe(receiptText);
   });
 
   it("rejects a cycle work product changed after the receipt was recorded", async () => {
