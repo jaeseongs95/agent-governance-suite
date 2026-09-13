@@ -119,6 +119,7 @@ check_for_updates { "force": false }
 - **변경 전**: 삭제, 배포, 마이그레이션처럼 영향이 크거나 되돌리기 어려운 동작을 실행하기 직전에 대상·권한·복구 조건을 점검할 때 사용합니다.
 - **완료 전**: 구현과 테스트가 끝난 뒤 완료를 선언하기 전에 수용 기준별 근거를 확인하고, 고위험 작업에는 독립 감사까지 통과했는지 확인할 때 사용합니다.
 - **문제 발생 시**: 같은 실패가 반복되거나 원인이 불분명해 진행이 막혔을 때, 관측 사실과 원인 가설을 분리하고 다음 판별 검사를 정할 때 사용합니다.
+- **복구 선택 시**: 원인이 확정된 실패에 대해 실행 가능한 복구안 2~3개를 비교하고, 새 작업 계약에 결속할 handoff를 만들 때 사용합니다.
 
 | 시점 | 스킬 | 버전 | 역할 |
 | --- | --- | --- | --- |
@@ -134,8 +135,9 @@ check_for_updates { "force": false }
 | 완료 전 | [`acceptance-evidence-validator`](https://github.com/jaeseongs95/acceptance-evidence-validator/tree/v1.0.0) | 1.0.0 | 수용 기준마다 현재 결과를 뒷받침하는 증거가 있는지 검사합니다. |
 | 완료 전 | [`independent-audit-gate`](https://github.com/jaeseongs95/codex-independent-audit-gate/tree/v1.0.0) | 1.0.0 | 구현자와 분리된 감사자가 고위험 변경과 검증 근거를 확인합니다. |
 | 문제 발생 시 | [`blocker-diagnostician`](https://github.com/jaeseongs95/blocker-diagnostician/tree/v1.0.0) | 1.0.0 | 반복 실패를 관측 사실과 원인 가설로 나누고 다음 판별 검사를 정합니다. |
+| 복구 선택 시 | [`recovery-strategy-selector`](skills/recovery-strategy-selector/) | 0.1.0 | 확정된 원인에 맞는 복구 전략을 Objective Gate로 비교하고 새 작업용 `RecoveryHandoff.v1`을 만듭니다. |
 
-각 전문 스킬은 단독으로 호출할 수 있습니다. 둘 이상의 역할을 연결하려면 [`$orchestrator`](skills/orchestrator/)를 사용합니다. 외부에서 편입한 스킬의 원본과 이 저장소에서 만든 `iteration-frame-auditor`의 생성 커밋·`checksum`은 [`skills/source-lock.json`](skills/source-lock.json)에 고정되어 있으며, `orchestrator`는 현재 Git 이력으로 추적합니다.
+각 전문 스킬은 단독으로 호출할 수 있습니다. 둘 이상의 역할을 연결하려면 [`$orchestrator`](skills/orchestrator/)를 사용합니다. 외부에서 편입한 스킬의 원본과 이 저장소에서 만든 `model-effort-advisor`, `iteration-frame-auditor`, `recovery-strategy-selector`의 생성 커밋·`checksum`은 [`skills/source-lock.json`](skills/source-lock.json)에 고정되어 있으며, `orchestrator`는 현재 Git 이력으로 추적합니다.
 
 ### 공통 인프라 스킬
 
