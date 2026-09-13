@@ -64,7 +64,8 @@ export function validateRequest(request) {
 
   const evidenceIds = request.evidenceInventory.map((item) => item.evidenceRef);
   unique(evidenceIds, "evidenceInventory.evidenceRef");
-  const requiredKinds = new Set(["contract-comparison", "control-comparison", "target-comparison", "attempt-outcome", "reviewer-separation"]);
+  const requiredKinds = new Set(["contract-comparison", "control-comparison", "target-comparison", "reviewer-separation"]);
+  if (request.attemptHistory.length > 0) requiredKinds.add("attempt-outcome");
   for (const item of request.evidenceInventory) requiredKinds.delete(item.kind);
   if (requiredKinds.size > 0) throw new InputError(`evidenceInventory is missing required evidence kinds: ${[...requiredKinds].join(", ")}.`);
 
@@ -201,7 +202,9 @@ export function validateReview(review, comparison = null, request = null, frozen
       errors.push(error instanceof Error ? error.message : String(error));
     }
   }
-  if (!evidenceKindMatches(review.evidenceRefs ?? [], "attempt-outcome", inventory)) errors.push("review evidence must include attempt-outcome evidence");
+  if (request.attemptHistory.length > 0 && !evidenceKindMatches(review.evidenceRefs ?? [], "attempt-outcome", inventory)) {
+    errors.push("review evidence must include attempt-outcome evidence when attempt history is non-empty");
+  }
   if (!evidenceKindMatches(review.evidenceRefs ?? [], "reviewer-separation", inventory)) errors.push("review evidence must include reviewer-separation evidence");
   for (const ref of comparison.evidenceRefs) {
     if (!review.evidenceRefs.includes(ref)) errors.push(`review.evidenceRefs does not include comparison evidence ${ref}`);

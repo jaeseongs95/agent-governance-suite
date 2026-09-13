@@ -10,14 +10,13 @@
     "root": { "$ref": "#/$defs/root" },
     "attemptHistory": {
       "type": "array",
-      "minItems": 1,
       "items": { "$ref": "#/$defs/attempt" }
     },
     "proposal": { "$ref": "#/$defs/proposal" },
     "reviewer": { "$ref": "#/$defs/reviewerAssignment" },
     "evidenceInventory": {
       "type": "array",
-      "minItems": 5,
+      "minItems": 4,
       "items": { "$ref": "#/$defs/evidence" }
     }
   },
@@ -121,7 +120,7 @@
         "actorId": { "$ref": "#/$defs/nonEmptyString" },
         "freshContext": { "const": true },
         "freshContextEvidenceRef": { "$ref": "#/$defs/nonEmptyString" },
-        "implementationActorIds": { "$ref": "#/$defs/nonEmptyStringSet" }
+        "implementationActorIds": { "$ref": "#/$defs/stringSet" }
       }
     },
     "evidence": {

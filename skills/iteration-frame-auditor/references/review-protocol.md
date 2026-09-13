@@ -2,7 +2,7 @@
 
 ## Evidence boundary
 
-검토자는 `IterationFrameAuditRequest.v1`에 포함된 artifact와 locator만 근거로 사용한다. 최소한 contract, control frame, target frame 비교 근거, 이전 attempt outcome과 reviewer 분리 근거가 각각 하나 있어야 한다. locator가 존재한다는 사실만으로 내용을 확인했다고 간주하지 않는다. 읽을 수 없거나 digest가 맞지 않는 근거는 누락된 근거로 취급하고 review를 발행하지 않는다.
+검토자는 `IterationFrameAuditRequest.v1`에 포함된 artifact와 locator만 근거로 사용한다. 최소한 contract, control frame, target frame 비교 근거와 reviewer 분리 근거가 각각 하나 있어야 하며, 이전 attempt가 하나라도 있으면 attempt outcome 근거도 필요하다. 첫 attempt 전에 frame 변경이 감지된 경우 `attemptHistory`와 `implementationActorIds`는 빈 배열이어야 한다. locator가 존재한다는 사실만으로 내용을 확인했다고 간주하지 않는다. 읽을 수 없거나 digest가 맞지 않는 근거는 누락된 근거로 취급하고 review를 발행하지 않는다.
 
 `requestArtifactDigest`는 검토자가 받은 request 전체의 canonical JSON digest다. orchestrator가 검토 전에 보관한 digest와 `IterationFrameComparison.v1` sidecar의 digest를 함께 검사해 중간 입력 교체를 막는다. 최종 판정은 저장소 공개 계약인 `ConvergenceReview.v1`으로 반환하고 sidecar는 그 판정의 비교 근거를 보존한다.
 

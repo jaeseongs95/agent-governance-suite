@@ -121,6 +121,24 @@ test("normal: target-only correction can recommend a new epoch", async () => {
   assert.equal(review.route, "resume-new-epoch");
 });
 
+test("boundary: a frame change before the first attempt can be independently reviewed", async () => {
+  const { request, review, comparison } = await loadCase("failure-user-value-change");
+  request.attemptHistory = [];
+  request.reviewer.implementationActorIds = [];
+  request.evidenceInventory = request.evidenceInventory.filter((item) => item.kind !== "attempt-outcome");
+  comparison.evidenceRefs = comparison.evidenceRefs.filter((ref) => ref !== "evidence-attempt");
+  comparison.rationale.forEach((item) => {
+    item.evidenceRefs = item.evidenceRefs.filter((ref) => ref !== "evidence-attempt");
+  });
+  review.implementationActorIds = [];
+  review.evidenceRefs = review.evidenceRefs.filter((ref) => ref !== "evidence-attempt");
+  comparison.requestArtifactDigest = reviewRequestDigest(request);
+
+  assert.doesNotThrow(() => validateRequest(request));
+  assert.deepEqual(boundErrors(review, comparison, request), []);
+  assert.equal(review.route, "needs-user");
+});
+
 test("boundary: evidence-backed control equivalence remains comparable", async () => {
   const { request, review, comparison } = await loadCase("boundary-control-equivalent");
   assert.notEqual(request.root.controlDigest, request.proposal.controlDigest);
