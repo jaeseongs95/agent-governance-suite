@@ -121,7 +121,7 @@
         "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE"]
       },
       "selectionCriteria": ["verified-korean-prose-candidate-needs-deterministic-finalization"],
-      "preconditions": ["The candidate and verification report target the same source digest.", "The deterministic finalizer is available."],
+      "preconditions": ["The selection, candidate, and verification report are digest-linked to the same source.", "The deterministic finalizer is available."],
       "failureHandling": { "rejectedEdit": "retain", "contractFailure": "fallback", "protectedSpanFailure": "fallback" },
       "gate": { "kind": "completion", "policy": "conditional", "validator": "contracts/final-text-receipt.v1.schema.json" },
       "receiptPolicy": { "mode": "reference-only", "actorIdsPointer": "/output/actorIds", "actorIdsMatch": "prior-policy-actors" }

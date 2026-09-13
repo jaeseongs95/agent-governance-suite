@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/korean-prose-editor/editing-draft.v1.schema.json",
+  "title": "Private editing actor draft",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "actorId", "sourceDigest", "edits"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "actorId": { "$ref": "#/$defs/actorId" },
+    "sourceDigest": { "$ref": "#/$defs/digest" },
+    "edits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "unitId", "sourceDigest", "start", "end", "replacement", "actorId"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "unitId": { "type": "string", "pattern": "^unit-[0-9]{4,}$" },
+          "sourceDigest": { "$ref": "#/$defs/digest" },
+          "start": { "type": "integer", "minimum": 0 },
+          "end": { "type": "integer", "minimum": 0 },
+          "replacement": { "type": "string" },
+          "actorId": { "$ref": "#/$defs/actorId" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "actorId": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}
