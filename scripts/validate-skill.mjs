@@ -4,6 +4,7 @@ import { NAME_PATTERN, ROOT, parseArguments, readFrontmatter, readJson, walkFile
 
 const PLACEHOLDER_PATTERN = /\[TODO:[^\]]*\]|\bTODO\b|\bTBD\b/u;
 const LINK_PATTERN = /\[[^\]]+\]\((?!https?:|#|mailto:)([^)]+)\)/gu;
+const INFRASTRUCTURE_SKILLS = new Set(["context-continuity"]);
 
 export async function validateSkill(name) {
   const errors = [];
@@ -50,12 +51,24 @@ export async function validateSkill(name) {
     }
   }
 
-  if (name !== "orchestrator") {
+  if (name !== "orchestrator" && !INFRASTRUCTURE_SKILLS.has(name)) {
     const registry = await readJson(path.join(ROOT, "skills", "registry.json"));
     const descriptors = Array.isArray(registry) ? registry : registry.skills;
     const matches = descriptors.filter((descriptor) => descriptor.skillId === name);
     if (matches.length !== 1) {
       errors.push(`registry must contain exactly one descriptor for ${name}`);
+    }
+    try {
+      await access(path.join(ROOT, "tests", name));
+    } catch {
+      errors.push(`missing tests/${name}`);
+    }
+  }
+  if (INFRASTRUCTURE_SKILLS.has(name)) {
+    const registry = await readJson(path.join(ROOT, "skills", "registry.json"));
+    const descriptors = Array.isArray(registry) ? registry : registry.skills;
+    if (descriptors.some((descriptor) => descriptor.skillId === name)) {
+      errors.push(`infrastructure skill ${name} must not appear in the specialist registry`);
     }
     try {
       await access(path.join(ROOT, "tests", name));

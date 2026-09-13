@@ -3,7 +3,7 @@ import { basename, join, normalize } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { resolveRegistryPath, resolveWorkflowDatabasePath } from "../../mcp-server/src/runtime-config.js";
+import { resolveContinuityDatabasePath, resolveRegistryPath, resolveWorkflowDatabasePath } from "../../mcp-server/src/runtime-config.js";
 
 describe("resolveRegistryPath", () => {
   it("uses SKILL_REGISTRY_PATH when supplied", () => {
@@ -76,5 +76,23 @@ describe("resolveWorkflowDatabasePath", () => {
 
     expect(resolveWorkflowDatabasePath({}, "linux", homeDirectory))
       .toBe(join(homeDirectory, ".local", "state", "agent-governance-suite", "workflows.sqlite3"));
+  });
+});
+
+describe("resolveContinuityDatabasePath", () => {
+  it("uses the explicit continuity override", () => {
+    const workingDirectory = join(tmpdir(), "continuity-working-directory");
+    expect(resolveContinuityDatabasePath(
+      { AGENT_GOVERNANCE_CONTINUITY_DB_PATH: join("private", "context.sqlite3") },
+      "linux",
+      join(tmpdir(), "unused-home"),
+      workingDirectory,
+    )).toBe(join(workingDirectory, "private", "context.sqlite3"));
+  });
+
+  it("defaults beside a configured workflow database without sharing the file", () => {
+    const workflowPath = join(tmpdir(), "governance-state", "workflows-custom.sqlite3");
+    expect(resolveContinuityDatabasePath({ AGENT_GOVERNANCE_DB_PATH: workflowPath }, "linux"))
+      .toBe(join(tmpdir(), "governance-state", "continuity.sqlite3"));
   });
 });

@@ -12,6 +12,7 @@ import {
 import { contractSchemas } from "./schema-validator.js";
 import { PLUGIN_INFO } from "./plugin-info.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
+import { type ContinuityGateway, UnavailableContinuityService } from "./continuity-service.js";
 import {
   convergenceRootHandle,
   convergenceStatusSummary,
@@ -37,7 +38,10 @@ function toolSchema(
 }
 
 const openConvergenceRootInputSchema = toolSchema(contractSchemas.openConvergenceRootRequest, {
-  add: { responseMode: responseModeProperty },
+  add: {
+    responseMode: responseModeProperty,
+    _continuityBinding: { type: "string", minLength: 16 },
+  },
 });
 const attemptProposalInputSchema = toolSchema(contractSchemas.attemptProposal, {
   optional: ["taskEnvelope", "frame"],
@@ -114,6 +118,7 @@ function responseMode(args: Record<string, unknown>, field: "responseMode" | "de
 function domainArguments(args: Record<string, unknown>, field: "responseMode" | "detail"): Record<string, unknown> {
   const result = { ...args };
   delete result[field];
+  delete result._continuityBinding;
   return result;
 }
 
@@ -155,7 +160,11 @@ function validUpdateArguments(args: Record<string, unknown>): boolean {
 }
 
 /** Exposes only the orchestration layer; direct specialist invocation bypasses MCP. */
-export function createMcpServer(service: WorkflowService, updates: PluginUpdateService): Server {
+export function createMcpServer(
+  service: WorkflowService,
+  updates: PluginUpdateService,
+  continuity: ContinuityGateway = new UnavailableContinuityService(),
+): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} } },
@@ -235,6 +244,36 @@ export function createMcpServer(service: WorkflowService, updates: PluginUpdateS
         inputSchema: revisionInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
       },
+      {
+        name: "checkpoint_context",
+        description: "Replace the current direct-task continuity snapshot using CAS and an idempotent requestId; nextActions remain historical candidates.",
+        inputSchema: contractSchemas.checkpointContextRequest,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "inspect_context",
+        description: "Inspect continuity metadata and obtain an opaque restore candidate without returning snapshot body text.",
+        inputSchema: contractSchemas.inspectContextRequest,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "load_context",
+        description: "Explicitly load a restore candidate after rechecking its task, epoch, revision, and digest.",
+        inputSchema: contractSchemas.loadContextRequest,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "suppress_context_restore",
+        description: "Suppress automatic restore candidates for the current epoch without deleting stored payloads.",
+        inputSchema: contractSchemas.suppressContextRestoreRequest,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "purge_direct_context",
+        description: "Delete the current direct-task payload and retain only a hash tombstone; workflow receipts are never deleted.",
+        inputSchema: contractSchemas.purgeDirectContextRequest,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: true, openWorldHint: false },
+      },
     ],
   }));
 
@@ -259,13 +298,15 @@ export function createMcpServer(service: WorkflowService, updates: PluginUpdateS
         case "open_convergence_root":
           {
             const mode = responseMode(args, "responseMode");
-            result = mode === null
-              ? invalidInput("responseMode must be compact or full.")
-              : projectResult<ConvergenceRootV1, ReturnType<typeof convergenceRootHandle>>(
-                  service.openConvergenceRoot(domainArguments(args, "responseMode")),
-                  mode,
-                  convergenceRootHandle,
-                );
+            if (mode === null) {
+              result = invalidInput("responseMode must be compact or full.");
+            } else {
+              const opened = service.openConvergenceRoot(domainArguments(args, "responseMode"));
+              if (opened.ok && opened.data) continuity.bindOpenedRoot(args, opened.data.rootId);
+              result = projectResult<ConvergenceRootV1, ReturnType<typeof convergenceRootHandle>>(
+                opened, mode, convergenceRootHandle,
+              );
+            }
           }
           break;
         case "claim_workflow_attempt":
@@ -357,6 +398,21 @@ export function createMcpServer(service: WorkflowService, updates: PluginUpdateS
                   workflowStatusSummary,
                 );
           }
+          break;
+        case "checkpoint_context":
+          result = continuity.checkpointContext(args);
+          break;
+        case "inspect_context":
+          result = continuity.inspectContext(args);
+          break;
+        case "load_context":
+          result = continuity.loadContext(args);
+          break;
+        case "suppress_context_restore":
+          result = continuity.suppressContextRestore(args);
+          break;
+        case "purge_direct_context":
+          result = continuity.purgeDirectContext(args);
           break;
         default:
           result = {

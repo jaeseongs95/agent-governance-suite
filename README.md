@@ -6,7 +6,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
-현재 공개 릴리스는 `v1.3.0`입니다. 거버넌스 전문 스킬 11개와 한국어 산문 워크플로 1개를 포함합니다. 한국어 산문 워크플로는 품질 평가의 개선율 기준을 충족할 때까지 registry, 직접 descriptor와 Codex의 암시적 호출 설정에서 비활성화됩니다. 사용자가 직접 호출해도 스킬의 차단 지침에 따라 provider와 로컬 스크립트를 실행하지 않습니다.
+현재 공개 릴리스는 `v1.4.0`입니다. 거버넌스 전문 스킬 11개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 한국어 산문 워크플로는 품질 평가의 개선율 기준을 충족할 때까지 registry, 직접 descriptor와 Codex의 암시적 호출 설정에서 비활성화됩니다. 사용자가 직접 호출해도 스킬의 차단 지침에 따라 provider와 로컬 스크립트를 실행하지 않습니다.
 
 ## 이런 문제를 다룹니다
 
@@ -59,11 +59,13 @@ flowchart LR
 Node.js 22.13.0 이상이 필요합니다.
 
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.3.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.4.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 
 설치를 마치면 새 Codex 세션을 시작합니다. 전체 워크플로를 사용하려면 다음과 같이 요청합니다.
+
+Task continuity lifecycle Hook은 처음 설치하거나 정의가 바뀐 뒤 Codex의 `/hooks`에서 내용을 검토하고 신뢰해야 실행됩니다. 신뢰하지 않아 Hook이 건너뛰어져도 기존 전문 스킬과 workflow MCP는 계속 동작합니다.
 
 ```text
 $orchestrator를 사용해 이 작업의 범위와 성공 조건을 정하고, 필요한 검증과 완료 근거를 관리해 줘: <작업 내용>
@@ -82,7 +84,7 @@ $acceptance-evidence-validator를 사용해 각 수용 기준에 현재 근거�
 node scripts/check-runtime.mjs
 ```
 
-MCP 서버는 실행 상태와 계획 서명 키를 SQLite에 저장합니다. 기본 DB는 운영체제의 사용자 상태 디렉터리에 만들어집니다. 저장 위치를 직접 관리하려면 `AGENT_GOVERNANCE_DB_PATH`에 SQLite 파일의 절대 경로나 MCP 작업 디렉터리 기준 상대 경로를 지정합니다. 해당 디렉터리는 MCP 서버를 실행하는 사용자만 접근할 수 있도록 보호해야 합니다.
+MCP 서버는 workflow 실행 상태와 계획 서명 키를 `workflows.sqlite3`에 저장합니다. 선택적 task continuity는 같은 사용자 상태 디렉터리의 별도 `continuity.sqlite3`를 사용합니다. 저장 위치를 직접 관리하려면 각각 `AGENT_GOVERNANCE_DB_PATH`와 `AGENT_GOVERNANCE_CONTINUITY_DB_PATH`에 절대 경로나 MCP 작업 디렉터리 기준 상대 경로를 지정합니다. 해당 디렉터리는 MCP 서버를 실행하는 사용자만 접근할 수 있도록 보호해야 합니다.
 
 ```bash
 AGENT_GOVERNANCE_DB_PATH=/absolute/path/workflows.sqlite3 pnpm dev
@@ -133,6 +135,12 @@ check_for_updates { "force": false }
 | 문제 발생 시 | [`blocker-diagnostician`](https://github.com/jaeseongs95/blocker-diagnostician/tree/v1.0.0) | 1.0.0 | 반복 실패를 관측 사실과 원인 가설로 나누고 다음 판별 검사를 정합니다. |
 
 각 전문 스킬은 단독으로 호출할 수 있습니다. 둘 이상의 역할을 연결하려면 [`$orchestrator`](skills/orchestrator/)를 사용합니다. 외부에서 편입한 스킬의 원본과 이 저장소에서 만든 `iteration-frame-auditor`의 생성 커밋·`checksum`은 [`skills/source-lock.json`](skills/source-lock.json)에 고정되어 있으며, `orchestrator`는 현재 Git 이력으로 추적합니다.
+
+### 공통 인프라 스킬
+
+[`context-continuity`](skills/context-continuity/)는 전문 판단 provider가 아니라 로컬 lifecycle 인프라입니다. 긴 direct task에서 잃으면 범위·권한·분기·검증 판단이 달라질 상태만 선별해 replacement checkpoint를 작성합니다. Resume과 direct compact에서는 본문을 자동 주입하지 않고 metadata와 restore token만 제공하며, 본문은 `load_context`를 명시적으로 호출할 때만 반환합니다. Orchestrated workflow의 compact 복원은 기존 `TaskEnvelope`, receipt와 convergence root에서 투영한 bounded 구조 카드만 자동 주입합니다. 이 스킬은 `skills/registry.json`과 위 전문 스킬 수에 포함되지 않습니다.
+
+Lifecycle Hook은 raw transcript를 읽거나 저장하지 않으며 raw session·turn·request 식별자 대신 설치별 HMAC correlation을 기록합니다. `clear`는 epoch를 회전해 이전 snapshot 복원을 억제하지만 payload를 자동 삭제하지 않습니다. `suppress_context_restore`는 후보 제공만 멈추고, 명시적인 `purge_direct_context`만 direct payload를 지우고 hash tombstone을 남깁니다. Continuity DB 오류는 workflow나 compaction을 막지 않습니다.
 
 ## 검사 범위와 한계
 
