@@ -26,11 +26,20 @@ describe("model-effort-advisor", () => {
     }
   });
 
-  it("rejects mismatch claims without an observed current selection", () => {
+  it("rejects invalid observation claims, risk floors, and recommendation ranges", () => {
     const validate = new Ajv2020({ allErrors: true, strict: false }).compile(schema);
     for (const testCase of fixture.invalidCases) {
       expect(validate(testCase.output), testCase.id).toBe(false);
     }
+
+    expect(fixture.invalidCases.map((testCase) => testCase.id)).toEqual(expect.arrayContaining([
+      "mismatch-without-observed-selection",
+      "high-risk-below-model-floor",
+      "high-risk-below-effort-floor",
+      "critical-risk-below-model-floor",
+      "inverted-model-range",
+      "inverted-reasoning-range",
+    ]));
   });
 
   it("warns only on observed material mismatches", () => {
@@ -45,5 +54,12 @@ describe("model-effort-advisor", () => {
     expect(output("high-risk-lightweight-low-is-under").verdict).toBe("UNDER_PROVISIONED");
     expect(output("complex-sol-high-is-adequate").userNotice).toBeNull();
     expect(output("unobservable-does-not-invent-current-selection").userNotice).toBeNull();
+
+    const criticalFloor = output("critical-deep-high-is-exact-floor").recommendation as {
+      modelClassMin: string;
+      reasoningEffortMin: string;
+    };
+    expect(criticalFloor.modelClassMin).toBe("deep");
+    expect(criticalFloor.reasoningEffortMin).toBe("high");
   });
 });

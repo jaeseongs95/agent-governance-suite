@@ -88,6 +88,35 @@
       }
     },
     {
+      "id": "critical-deep-high-is-exact-floor",
+      "output": {
+        "schemaVersion": "1.0.0",
+        "verdict": "ADEQUATE",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "gpt-5.6-sol",
+          "modelClass": "deep",
+          "reasoningEffort": "high"
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "critical",
+          "signals": ["복구하기 어려운 외부 상태 변경을 검토함"]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": "gpt-5.6-sol",
+          "confidence": "high"
+        },
+        "rationaleCodes": ["HIGH_FAILURE_IMPACT", "HARD_REASONING"],
+        "userNotice": null
+      }
+    },
+    {
       "id": "unobservable-does-not-invent-current-selection",
       "output": {
         "schemaVersion": "1.0.0",
@@ -145,6 +174,151 @@
         },
         "rationaleCodes": ["HARD_REASONING", "CURRENT_SELECTION_NOT_OBSERVED"],
         "userNotice": "현재 설정이 부족합니다."
+      }
+    },
+    {
+      "id": "high-risk-below-model-floor",
+      "output": {
+        "schemaVersion": "1.0.0",
+        "verdict": "UNDER_PROVISIONED",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "gpt-5.6-luna",
+          "modelClass": "lightweight",
+          "reasoningEffort": "high"
+        },
+        "taskDemand": {
+          "band": "substantial",
+          "riskLevel": "high",
+          "signals": ["실패 영향이 큼"]
+        },
+        "recommendation": {
+          "modelClassMin": "lightweight",
+          "modelClassMax": "deep",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "high",
+          "exactModel": "gpt-5.6-luna",
+          "confidence": "high"
+        },
+        "rationaleCodes": ["HIGH_FAILURE_IMPACT"],
+        "userNotice": "현재 설정이 부족합니다."
+      }
+    },
+    {
+      "id": "high-risk-below-effort-floor",
+      "output": {
+        "schemaVersion": "1.0.0",
+        "verdict": "UNDER_PROVISIONED",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "gpt-5.6-terra",
+          "modelClass": "general",
+          "reasoningEffort": "medium"
+        },
+        "taskDemand": {
+          "band": "substantial",
+          "riskLevel": "high",
+          "signals": ["실패 영향이 큼"]
+        },
+        "recommendation": {
+          "modelClassMin": "general",
+          "modelClassMax": "deep",
+          "reasoningEffortMin": "medium",
+          "reasoningEffortMax": "high",
+          "exactModel": "gpt-5.6-terra",
+          "confidence": "high"
+        },
+        "rationaleCodes": ["HIGH_FAILURE_IMPACT"],
+        "userNotice": "현재 설정이 부족합니다."
+      }
+    },
+    {
+      "id": "critical-risk-below-model-floor",
+      "output": {
+        "schemaVersion": "1.0.0",
+        "verdict": "ADEQUATE",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "gpt-5.6-terra",
+          "modelClass": "general",
+          "reasoningEffort": "high"
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "critical",
+          "signals": ["복구하기 어려운 외부 상태 변경"]
+        },
+        "recommendation": {
+          "modelClassMin": "general",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": "gpt-5.6-terra",
+          "confidence": "high"
+        },
+        "rationaleCodes": ["HIGH_FAILURE_IMPACT"],
+        "userNotice": null
+      }
+    },
+    {
+      "id": "inverted-model-range",
+      "output": {
+        "schemaVersion": "1.0.0",
+        "verdict": "ADEQUATE",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "gpt-5.6-sol",
+          "modelClass": "deep",
+          "reasoningEffort": "high"
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "medium",
+          "signals": ["여러 모듈을 검토함"]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "general",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": "gpt-5.6-sol",
+          "confidence": "high"
+        },
+        "rationaleCodes": ["HARD_REASONING"],
+        "userNotice": null
+      }
+    },
+    {
+      "id": "inverted-reasoning-range",
+      "output": {
+        "schemaVersion": "1.0.0",
+        "verdict": "ADEQUATE",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "gpt-5.6-sol",
+          "modelClass": "deep",
+          "reasoningEffort": "high"
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "medium",
+          "signals": ["여러 모듈을 검토함"]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "medium",
+          "exactModel": "gpt-5.6-sol",
+          "confidence": "high"
+        },
+        "rationaleCodes": ["HARD_REASONING"],
+        "userNotice": null
       }
     }
   ]

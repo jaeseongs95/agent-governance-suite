@@ -34,6 +34,16 @@ require(cases["routine-sol-high-is-materially-over"]["verdict"] == "OVER_PROVISI
 require(cases["complex-sol-high-is-adequate"]["userNotice"] is None, "adequate case must stay quiet")
 require(cases["unobservable-does-not-invent-current-selection"]["observation"]["model"] is None, "unobservable case must not invent a model")
 require(cases["unobservable-does-not-invent-current-selection"]["userNotice"] is None, "unobservable ordinary case must stay quiet")
+require(cases["critical-deep-high-is-exact-floor"]["recommendation"]["modelClassMin"] == "deep", "critical floor must allow deep")
+require(cases["critical-deep-high-is-exact-floor"]["recommendation"]["reasoningEffortMin"] == "high", "critical floor must allow high effort")
 require(invalid_cases["mismatch-without-observed-selection"]["observation"]["status"] == "unobservable", "failure case must exercise an unobserved mismatch claim")
+for required_invalid_case in [
+    "high-risk-below-model-floor",
+    "high-risk-below-effort-floor",
+    "critical-risk-below-model-floor",
+    "inverted-model-range",
+    "inverted-reasoning-range",
+]:
+    require(required_invalid_case in invalid_cases, f"missing invalid behavior case: {required_invalid_case}")
 
 print("model-effort-advisor: valid")
