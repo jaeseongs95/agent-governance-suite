@@ -1,5 +1,6 @@
 import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -174,6 +175,7 @@ describe("bundled STDIO MCP server", () => {
 
       const listed = await client.listTools();
       expect(listed.tools.map((tool) => tool.name)).toEqual([
+        "lookup_korean_prose_terms",
         "check_for_updates",
         "plan_workflow",
         "open_convergence_root",
@@ -195,6 +197,16 @@ describe("bundled STDIO MCP server", () => {
         "execute_state_cleanup",
       ]);
       expect(listed.tools.every((tool) => tool.inputSchema.type === "object")).toBe(true);
+      const sourceText = "MCP와 SQLite는 보호하고 데이터 베이스는 문맥을 확인한다.";
+      const glossary = toolData(await client.callTool({
+        name: "lookup_korean_prose_terms",
+        arguments: { schemaVersion: "1.0.0", sourceText, sourceDigest: createHash("sha256").update(sourceText).digest("hex") },
+      }));
+      expect(glossary.ok).toBe(true);
+      expect(glossary.data).toMatchObject({ status: "matched", sourceDigest: createHash("sha256").update(sourceText).digest("hex") });
+      const workflowDatabase = new DatabaseSync(environment.AGENT_GOVERNANCE_DB_PATH!, { readOnly: true });
+      expect(workflowDatabase.prepare("SELECT COUNT(*) AS count FROM workflow_runs").get()).toEqual({ count: 0 });
+      workflowDatabase.close();
       const unavailable = toolData(await client.callTool({
         name: "inspect_context",
         arguments: { schemaVersion: "1.0.0", _continuityBinding: "untrusted-placeholder" },
@@ -270,6 +282,7 @@ describe("bundled STDIO MCP server", () => {
       await client.connect(transport);
       const listed = await client.listTools();
       expect(listed.tools.map((tool) => tool.name)).toEqual([
+        "lookup_korean_prose_terms",
         "check_for_updates",
         "plan_workflow",
         "open_convergence_root",

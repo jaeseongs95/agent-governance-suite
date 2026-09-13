@@ -149,11 +149,13 @@ async function loadWorkProductValidators(): Promise<Record<"selection" | "editin
   workProductValidators ??= (async () => {
     const ajv = new Ajv2020({ allErrors: true, strict: false });
     const root = path.resolve(import.meta.dirname, "..", "skills", "korean-prose-editor", "contracts");
-    const [selection, editing, verification] = await Promise.all([
+    const [glossaryBinding, selection, editing, verification] = await Promise.all([
+      readJson(path.join(root, "glossary-binding.v1.schema.json")),
       readJson(path.join(root, "selection-work-product.v1.schema.json")),
       readJson(path.join(root, "editing-work-product.v1.schema.json")),
       readJson(path.join(root, "verification-work-product.v1.schema.json")),
     ]);
+    ajv.addSchema(glossaryBinding);
     return { selection: ajv.compile(selection), editing: ajv.compile(editing), verification: ajv.compile(verification) };
   })();
   return workProductValidators;

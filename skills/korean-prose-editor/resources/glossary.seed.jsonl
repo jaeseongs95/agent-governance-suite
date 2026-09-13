@@ -1,0 +1,9 @@
+{"entryId":"codex","canonicalForm":"Codex","policy":"protect","sourceRef":"https://openai.com/codex/","priority":100,"active":true,"forms":[{"form":"Codex","kind":"canonical"}]}
+{"entryId":"json","canonicalForm":"JSON","policy":"protect","sourceRef":"https://www.json.org/json-en.html","priority":90,"active":true,"forms":[{"form":"JSON","kind":"canonical"}]}
+{"entryId":"json-schema","canonicalForm":"JSON Schema","policy":"protect","sourceRef":"https://json-schema.org/","priority":100,"active":true,"forms":[{"form":"JSON Schema","kind":"canonical"}]}
+{"entryId":"mcp","canonicalForm":"MCP","policy":"protect","sourceRef":"https://modelcontextprotocol.io/specification/","priority":100,"active":true,"forms":[{"form":"MCP","kind":"canonical"}]}
+{"entryId":"model-context-protocol","canonicalForm":"Model Context Protocol","policy":"protect","sourceRef":"https://modelcontextprotocol.io/specification/","priority":100,"active":true,"forms":[{"form":"Model Context Protocol","kind":"canonical"}]}
+{"entryId":"sqlite","canonicalForm":"SQLite","policy":"protect","sourceRef":"https://www.sqlite.org/docs.html","priority":100,"active":true,"forms":[{"form":"SQLite","kind":"canonical"}]}
+{"entryId":"database-ko","canonicalForm":"데이터베이스","policy":"avoid","sourceRef":"https://stdict.korean.go.kr/","priority":50,"active":true,"forms":[{"form":"데이터 베이스","kind":"discouraged"}]}
+{"entryId":"model-context-protocol-ko","canonicalForm":"모델 컨텍스트 프로토콜","policy":"prefer","sourceRef":"https://modelcontextprotocol.io/specification/","priority":50,"active":true,"forms":[{"form":"모델 문맥 프로토콜","kind":"alias"}]}
+{"entryId":"skill-ko","canonicalForm":"스킬","policy":"allow","sourceRef":"https://developers.openai.com/codex/skills/","priority":25,"active":true,"forms":[{"form":"스킬","kind":"canonical"}]}

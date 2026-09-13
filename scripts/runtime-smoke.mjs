@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { access, cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -23,6 +24,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       cp(path.join(sourceRoot, "contracts"), path.join(cleanRoot, "contracts"), { recursive: true }),
       cp(path.join(sourceRoot, "runtime"), path.join(cleanRoot, "runtime"), { recursive: true }),
       cp(path.join(sourceRoot, "skills"), path.join(cleanRoot, "skills"), { recursive: true }),
+      cp(path.join(sourceRoot, "mcp-server", "dist", "server.mjs"), path.join(cleanRoot, "mcp-server", "dist", "server.mjs")),
       cp(path.join(sourceRoot, "mcp-server", "dist", "continuity-hook.mjs"), path.join(cleanRoot, "mcp-server", "dist", "continuity-hook.mjs")),
     ]);
     await assertMissing(path.join(cleanRoot, "node_modules"));
@@ -73,6 +75,30 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     });
     if (hookResult.error || hookResult.status !== 0 || hookResult.stdout !== "") {
       throw new Error(`continuity hook failed its node_modules-free startup smoke check.\n${hookResult.stderr ?? ""}`);
+    }
+
+    const sourceText = "MCP와 SQLite";
+    const lookupInput = [
+      { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "runtime-smoke", version: "1.0.0" } } },
+      { jsonrpc: "2.0", method: "notifications/initialized", params: {} },
+      { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "lookup_korean_prose_terms", arguments: { schemaVersion: "1.0.0", sourceText, sourceDigest: createHash("sha256").update(sourceText).digest("hex") } } },
+    ].map((message) => JSON.stringify(message)).join("\n");
+    const serverResult = spawnSync(process.execPath, [path.join(cleanRoot, "mcp-server", "dist", "server.mjs")], {
+      cwd: cleanRoot,
+      encoding: "utf8",
+      env: environment,
+      input: `${lookupInput}\n`,
+      maxBuffer: 5 * 1024 * 1024,
+      timeout: 10_000,
+      windowsHide: true,
+    });
+    if (serverResult.error || serverResult.status !== 0) {
+      throw new Error(`MCP server failed its node_modules-free glossary lookup.\n${serverResult.stderr ?? ""}`);
+    }
+    const lookupResponse = String(serverResult.stdout).split(/\r?\n/u).filter(Boolean).map((line) => JSON.parse(line)).find((message) => message.id === 2);
+    const lookupEnvelope = lookupResponse?.result?.content?.[0]?.text ? JSON.parse(lookupResponse.result.content[0].text) : null;
+    if (lookupEnvelope?.ok !== true || lookupEnvelope.data?.status !== "matched" || lookupEnvelope.data.matches?.length !== 2) {
+      throw new Error(`MCP glossary lookup returned an unexpected clean-room result.\n${serverResult.stdout ?? ""}`);
     }
 
     const workspace = path.join(cleanRoot, "resolver-fixture");

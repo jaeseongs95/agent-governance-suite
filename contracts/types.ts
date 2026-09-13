@@ -259,6 +259,38 @@ export interface StateCleanupReceiptV1 {
 
 export type Sha256Digest = `sha256:${string}`;
 
+export type KoreanProseGlossaryStatusV1 =
+  | "matched"
+  | "no-match"
+  | "unavailable"
+  | "limit-exceeded"
+  | "unsupported-normalization";
+
+export interface KoreanProseGlossaryLookupRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  sourceText: string;
+  sourceDigest: string;
+}
+
+export interface KoreanProseGlossaryMatchV1 {
+  start: number;
+  end: number;
+  entryId: string;
+  policy: "protect" | "prefer" | "allow" | "avoid";
+  canonicalForm: string;
+  priority: number;
+}
+
+export interface KoreanProseGlossaryLookupResultV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  status: KoreanProseGlossaryStatusV1;
+  sourceDigest: string;
+  glossary: { id: string; version: string; contentDigest: string } | null;
+  matches: KoreanProseGlossaryMatchV1[];
+  matchSetDigest: string | null;
+  warnings: Array<"GLOSSARY_UNAVAILABLE" | "GLOSSARY_MATCH_LIMIT_EXCEEDED" | "GLOSSARY_UNSUPPORTED_NORMALIZATION">;
+}
+
 export const POLICY_CAPABILITY = {
   coordination: "subagent-coordination",
   deliberation: "independent-deliberation",

@@ -17,7 +17,7 @@
         "required": ["id", "kind", "start", "end", "text", "digest"],
         "properties": {
           "id": { "type": "string", "pattern": "^span-[0-9]{4}$" },
-          "kind": { "enum": ["fenced-code", "inline-code", "command", "markdown-target", "url", "email", "path", "quotation", "number-or-date", "user-defined"] },
+          "kind": { "enum": ["fenced-code", "inline-code", "command", "markdown-target", "url", "email", "path", "quotation", "number-or-date", "user-defined", "glossary"] },
           "start": { "type": "integer", "minimum": 0 },
           "end": { "type": "integer", "minimum": 0 },
           "text": { "type": "string", "minLength": 1 },
