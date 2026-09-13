@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/purge-direct-context-request.v1.schema.json",
+  "title": "PurgeDirectContextRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "requestId", "expectedEpoch", "expectedRevision", "_continuityBinding"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "requestId": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "expectedEpoch": { "type": "integer", "minimum": 1 },
+    "expectedRevision": { "type": "integer", "minimum": 1 },
+    "_continuityBinding": { "type": "string", "minLength": 16 }
+  }
+}

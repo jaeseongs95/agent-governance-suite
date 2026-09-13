@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/checkpoint-context-request.v1.schema.json",
+  "title": "CheckpointContextRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "requestId", "expectedRevision", "status", "core", "evidenceRefs", "_continuityBinding"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "requestId": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "expectedRevision": { "type": "integer", "minimum": 0 },
+    "status": { "enum": ["active", "paused", "completed"] },
+    "core": { "$ref": "#/$defs/core" },
+    "evidenceRefs": { "type": "array", "items": { "$ref": "#/$defs/evidenceRef" }, "maxItems": 128 },
+    "_continuityBinding": { "type": "string", "minLength": 16 }
+  },
+  "$defs": {
+    "boundedStrings": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 2000 }, "maxItems": 64 },
+    "core": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objective", "completionCriteria", "constraints", "decisions", "progress", "blockers", "nextActions"],
+      "properties": {
+        "objective": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "completionCriteria": { "$ref": "#/$defs/boundedStrings" },
+        "constraints": { "$ref": "#/$defs/boundedStrings" },
+        "decisions": { "$ref": "#/$defs/boundedStrings" },
+        "progress": { "$ref": "#/$defs/boundedStrings" },
+        "blockers": { "$ref": "#/$defs/boundedStrings" },
+        "nextActions": { "$ref": "#/$defs/boundedStrings" }
+      }
+    },
+    "evidenceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "locator", "digest", "verified"],
+      "properties": {
+        "artifactId": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "locator": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+        "verified": { "type": "boolean" }
+      }
+    }
+  }
+}

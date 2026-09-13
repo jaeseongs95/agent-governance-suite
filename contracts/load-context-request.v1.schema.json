@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/load-context-request.v1.schema.json",
+  "title": "LoadContextRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "candidateToken", "epoch", "revision", "digest", "_continuityBinding"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "candidateToken": { "type": "string", "minLength": 16 },
+    "epoch": { "type": "integer", "minimum": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "_continuityBinding": { "type": "string", "minLength": 16 }
+  }
+}

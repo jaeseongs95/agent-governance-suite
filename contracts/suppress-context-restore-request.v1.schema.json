@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/suppress-context-restore-request.v1.schema.json",
+  "title": "SuppressContextRestoreRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "expectedEpoch", "_continuityBinding"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "expectedEpoch": { "type": "integer", "minimum": 1 },
+    "_continuityBinding": { "type": "string", "minLength": 16 }
+  }
+}

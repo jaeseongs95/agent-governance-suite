@@ -6,7 +6,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
-The current public release is `v1.1.0`. It includes ten governance specialist skills and one Korean prose workflow. The Korean prose workflow remains disabled in the registry, its direct descriptor, and Codex's implicit-invocation setting until it passes the prose-quality improvement threshold. Its fail-closed skill instructions also refuse direct calls without running providers or local scripts.
+The current public release is `v1.4.3`. It includes eleven governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. The Korean prose workflow remains disabled in the registry, its direct descriptor, and Codex's implicit-invocation setting until it passes the prose-quality improvement threshold. Its fail-closed skill instructions also refuse direct calls without running providers or local scripts.
 
 ## How it works
 
@@ -59,11 +59,13 @@ The orchestrator does not run every specialist for every request. It selects the
 Node.js 22.13.0 or later is required.
 
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.1.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.4.3
 codex plugin add agent-governance-suite@agent-governance
 ```
 
 Start a new Codex session after installation so Codex can load the bundled skills and MCP tools. Then call the orchestrator:
+
+The task-continuity lifecycle hook runs only after you review and trust its current definition in Codex `/hooks` following installation or a hook change. Existing specialist skills and workflow MCP operations continue to work when the untrusted hook is skipped.
 
 ```text
 Use $orchestrator to define the scope and success criteria for this task, then manage the required checks and completion evidence: <your task>
@@ -82,7 +84,7 @@ Check the installed runtime from the plugin root:
 node scripts/check-runtime.mjs
 ```
 
-The MCP server stores workflow state and its plan-signing key in SQLite. By default, it creates the database in the operating system's per-user state directory. Set `AGENT_GOVERNANCE_DB_PATH` to an absolute SQLite file path, or to a path relative to the MCP working directory, when you need to control its location. Protect that directory so only the account running the MCP server can access it.
+The MCP server stores workflow state and its plan-signing key in `workflows.sqlite3`. Optional task continuity uses a separate `continuity.sqlite3` in the same per-user state directory. Set `AGENT_GOVERNANCE_DB_PATH` and `AGENT_GOVERNANCE_CONTINUITY_DB_PATH`, respectively, to absolute SQLite paths or paths relative to the MCP working directory. Protect that directory so only the account running the MCP server can access it.
 
 ```bash
 AGENT_GOVERNANCE_DB_PATH=/absolute/path/workflows.sqlite3 pnpm dev
@@ -100,9 +102,21 @@ Set `force: true` to bypass the cached check time. This feature only reports tha
 
 Each specialist remains available when the MCP server is unavailable. Orchestrated runs that enforce stage order and issue a final receipt require the MCP server.
 
-`v1.1.0` upgrades the SQLite schema from v1 to v2. If you may need to return to an older release, stop the MCP server and create a consistent SQLite backup before upgrading. A v2 database cannot be opened by `v1.0.5`, so reinstalling only the plugin is not a rollback. To roll back, stop the MCP server, restore the pre-upgrade v1 backup, and then install `v1.0.5`. If no database existed before the upgrade, archive the new v2 database outside its configured path before starting `v1.0.5`.
+`v1.2.0` upgrades the SQLite schema from v2 to v3 to preserve convergence roots, epochs, attempts, leases, reviews, and workflow links. If you may need to return to the v2 server, stop the MCP server and create a consistent SQLite backup before upgrading. A v3 database cannot be opened by the v2 server, so reinstalling only the plugin is not a rollback. Restore the pre-upgrade v2 backup while the MCP server is stopped.
 
 ## Included skills
+
+### How to read the `When` column
+
+`When` identifies the **work situation in which a skill should be considered or invoked**. It is lifecycle guidance, not a fixed instruction to run every skill from top to bottom. In practice, select only the skills justified by the request's risk and current state; when multiple skills are connected, the orchestrator determines their required execution order.
+
+- **Before work**: Before editing files or running commands, resolve applicable instructions and repository conventions, then define the objective, scope, and completion criteria.
+- **During work**: When work needs to be divided into independent units or a complex, high-cost decision needs review from multiple perspectives.
+- **Convergence review**: When the attempt budget is exhausted or the objective, evaluation criteria, or inputs may change, compare the invariant contract with the proposed change before opening a new attempt epoch.
+- **Before and after changes**: Capture the Git baseline before editing, then compare the resulting diff with that baseline to detect files outside the requested scope.
+- **Before changes**: Immediately before a high-impact or difficult-to-reverse action such as deletion, deployment, or migration, check the target, authority, and recovery conditions.
+- **Before completion**: After implementation and testing but before declaring completion, verify evidence for every acceptance criterion and, for high-risk work, confirm that the independent audit passed.
+- **After a failure**: When failures repeat or an unclear cause blocks progress, separate observations from hypotheses and choose the next discriminating diagnostic check.
 
 | When | Skill | Version | Responsibility |
 | --- | --- | --- | --- |
@@ -112,13 +126,22 @@ Each specialist remains available when the MCP server is unavailable. Orchestrat
 | Before work | `task-contract` | 1.0.0 | Defines the objective, scope, risk, and completion criteria. |
 | During work | `coordinate-subagents` | 1.0.0 | Splits independent work and assigns ownership and verification duties. |
 | During work | `independent-deliberation-panel` | 1.0.0 | Reviews evidence and counterarguments for complex decisions. |
+| Convergence review | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 1.0.0 | Independently compares iteration contracts and frame changes before a new epoch can open. |
 | Before and after changes | `change-scope-guardian` | 1.0.0 | Captures a baseline and checks whether the final change stayed in scope. |
 | Before changes | `mutation-risk-preflight` | 1.0.0 | Checks the target, authority, approval, and recovery conditions for risky mutations. |
 | Before completion | `acceptance-evidence-validator` | 1.0.0 | Verifies current evidence for every acceptance criterion. |
 | Before completion | `independent-audit-gate` | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
 | After a failure | `blocker-diagnostician` | 1.0.0 | Classifies repeated failures and selects the next diagnostic step. |
 
-Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. Exact source tags, commits, and checksums are pinned in `skills/source-lock.json`.
+Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. `skills/source-lock.json` pins the upstream sources and the creation commits and checksums of the repository-native `model-effort-advisor` and `iteration-frame-auditor`; the `orchestrator` is tracked by current Git history.
+
+### Shared infrastructure skill
+
+[`context-continuity`](skills/context-continuity/) is local lifecycle infrastructure, not a specialist judgment provider. It writes replacement checkpoints only for direct-task state whose loss would change scope, authority, branching, or verification decisions. Resume and direct compact hooks inject metadata and an opaque restore token, never snapshot body text; the body is returned only by an explicit `load_context` call. For orchestrated workflows, compact restoration may inject only a bounded structural card projected from the existing `TaskEnvelope`, receipt, and convergence root. This skill is intentionally absent from `skills/registry.json` and the specialist count above.
+
+The lifecycle hook never reads or stores raw transcripts and records installation-keyed HMAC correlations instead of raw session, turn, or request identifiers. `clear` rotates the epoch and suppresses old restoration without automatically deleting payloads. `suppress_context_restore` stops candidate delivery, while the explicitly destructive `purge_direct_context` deletes only direct payloads and leaves a hash tombstone. Continuity database failures do not block workflow operations or Codex compaction.
+
+The snapshot `core` and `evidenceRefs` are stored as plaintext JSON in the local `continuity.sqlite3` and do not expire automatically. Do not checkpoint secrets, personal data, raw logs or code, or chain-of-thought; manage access and retention for the database file directly.
 
 ## Enforcement scope and limits
 
@@ -130,6 +153,13 @@ The MCP server reads capabilities, execution phases, and artifact dependencies f
 - whether required artifacts and verified evidence exist before dependent stages run
 - whether deliberation and mandatory audit results match the current target and policy conditions
 - whether any blocking item remains unresolved
+- whether each new orchestrated run consumed a root-bound one-time lease and respected the three-attempt epoch budget and frame invariants
+
+Convergence roots, epochs, attempts, leases, reviews, and workflow links are also stored as append-only history in the same SQLite database, so budgets and active attempts survive an MCP process restart. The stdio server in `.mcp.json` starts on demand; no port, account, or persistent daemon is required.
+
+The orchestrator first derives candidate capabilities from the skill descriptions exposed at installation, then runs `skills/orchestrator/scripts/query-registry.mjs` to read only active-provider execution metadata. It uses the compact `--all` catalog only when it cannot identify candidates and never sends the complete `skills/registry.json` to the model context.
+
+Omitting public MCP response options preserves the existing full receipts and convergence histories. The orchestrator's normal path uses `responseMode: "compact"` and `detail: "compact"` to receive a fixed-size summary without plans, accumulated `stageResults`, provider output, raw task/frame values, or history arrays. It performs a single `full` status read only when it needs error causes, prior results, or audit material. A compact attempt claim restores the root-bound task envelope and frame, while a guarded start without a plan uses the proposal plan bound to its one-time lease. The persisted full `WorkflowReceipt` and SQLite schema v3 remain unchanged by this transport choice.
 
 The MCP server is not a security boundary against a hostile caller. Specialist skills and callers submit `verified` flags, evidence locators, and actor identifiers as trusted inputs. The server checks their structure and consistency across workflow stages, but it does not authenticate a real person or prove that the source evidence is genuine.
 
@@ -156,20 +186,17 @@ Development requires Node.js 22.13.0 or later and Corepack.
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
+pnpm bundle:check
 pnpm lint
 pnpm build
 pnpm test
-pnpm bundle:check
+pnpm runtime:check
 pnpm validate:all
-```
-
-In a Codex development environment, you can also run the official validators from the system `skill-creator` and `plugin-creator`. If Python 3 is not on the system path, set `PYTHON` to its absolute executable path.
-
-```bash
 pnpm validate:official
+git diff --check
 ```
 
-Run `git diff --check` after documentation changes. Start the local MCP server with `pnpm dev`.
+Keep this order because `bundle:check` must detect a stale committed bundle before a build can overwrite it. In a Codex development environment, `validate:official` runs the system `skill-creator` and `plugin-creator` validators. If Python 3 is not on the system path, set `PYTHON` to its absolute executable path. Start the local MCP server with `pnpm dev`.
 
 ## Adding and importing skills
 

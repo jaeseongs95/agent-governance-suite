@@ -45,6 +45,13 @@ export function checkResult(source, candidate, manifest) {
     cursor = foundAt + span.text.length;
   }
 
+  for (const text of new Set(spans.map((span) => span?.text).filter((text) => typeof text === "string" && text.length > 0))) {
+    if (countOccurrences(source, text) !== countOccurrences(candidate, text)) {
+      warnings.add("PROTECTED_SPAN_MISSING_OR_REORDERED");
+      valid = false;
+    }
+  }
+
   return {
     schemaVersion: SCHEMA_VERSION,
     digest: {
@@ -56,4 +63,11 @@ export function checkResult(source, candidate, manifest) {
     decisions: { protectedSpansPreserved: valid },
     warnings: [...warnings].sort(),
   };
+}
+
+/** @param {string} text @param {string} value */
+function countOccurrences(text, value) {
+  let count = 0;
+  for (let index = text.indexOf(value); index !== -1; index = text.indexOf(value, index + value.length)) count += 1;
+  return count;
 }

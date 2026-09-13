@@ -1,0 +1,20 @@
+{
+  "extends": "normal-target-only",
+  "proposalControlFrame": {
+    "verifier": "pnpm test --run",
+    "aggregation": "all",
+    "passCondition": "exit code 0",
+    "evaluationInputs": ["tests/fixed.json"]
+  },
+  "additionalChange": {
+    "path": "/controlFrame/verifier",
+    "claimedRole": "control",
+    "summary": "Use the non-watch spelling of the same fixed test invocation."
+  },
+  "controlImpact": "semantics-preserving",
+  "controlChangedPaths": ["/verifier"],
+  "classification": "semantics-preserving",
+  "comparability": "comparable",
+  "route": "resume-new-epoch",
+  "userValueChange": false
+}

@@ -3262,8 +3262,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path5) {
-      let input = path5;
+    function removeDotSegments(path7) {
+      let input = path7;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3672,8 +3672,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path5 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path5 && path5 !== "/" ? path5 : void 0;
+        const path7 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path7 && path7 !== "/" ? path7 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -8205,10 +8205,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path5) {
-  if (!path5)
+function getElementAtPath(obj, path7) {
+  if (!path7)
     return obj;
-  return path5.reduce((acc, key) => acc?.[key], obj);
+  return path7.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -8620,11 +8620,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path5, issues) {
+function prefixIssues(path7, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path5);
+    iss.path.unshift(path7);
     return iss;
   });
 }
@@ -9053,16 +9053,16 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
 }
 function formatError(error2, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error3, path5 = []) => {
+  const processError = (error3, path7 = []) => {
     for (const issue2 of error3.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path7, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
       } else {
-        const fullpath = [...path5, ...issue2.path];
+        const fullpath = [...path7, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -15852,7 +15852,20 @@ var ERROR_CODE = [
   "INVALID_TRANSITION",
   "MISSING_EVIDENCE",
   "GATE_FAILED",
-  "MCP_UNAVAILABLE"
+  "MCP_UNAVAILABLE",
+  "LEASE_REQUIRED",
+  "LEASE_CONFLICT",
+  "FRAME_REVIEW_REQUIRED",
+  "ATTEMPT_BUDGET_EXHAUSTED",
+  "NEW_EVIDENCE_REQUIRED",
+  "ROOT_CONFLICT",
+  "CONTINUITY_UNAVAILABLE",
+  "BINDING_REQUIRED",
+  "BINDING_INVALID",
+  "SNAPSHOT_NOT_FOUND",
+  "SNAPSHOT_CONFLICT",
+  "REQUEST_CONFLICT",
+  "INTEGRITY_FAILED"
 ];
 var POLICY_CAPABILITY = {
   coordination: "subagent-coordination",
@@ -16000,37 +16013,889 @@ function selectSkillByCapability(providers, capability) {
   return providers.filter((provider) => provider.enabled && provider.capabilities.includes(capability)).sort((left, right) => right.priority - left.priority || left.providerKey.localeCompare(right.providerKey))[0];
 }
 
-// mcp-server/src/runtime-config.ts
-import { homedir } from "node:os";
+// mcp-server/src/continuity-service.ts
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+
+// mcp-server/src/convergence-logic.ts
+import { createHash as createHash2 } from "node:crypto";
 import path2 from "node:path";
+function canonicalJson(value) {
+  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-finite number.");
+    }
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    const record2 = value;
+    return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record2[key])}`).join(",")}}`;
+  }
+  throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-serializable value.");
+}
+function convergenceDigest(value) {
+  return `sha256:${createHash2("sha256").update(canonicalJson(value), "utf8").digest("hex")}`;
+}
+function frameDigests(frame) {
+  return {
+    frameDigest: convergenceDigest(frame),
+    workspaceDigest: convergenceDigest(frame.workspace),
+    controlDigest: convergenceDigest(frame.controlArtifacts),
+    targetDigest: convergenceDigest(frame.targetArtifacts),
+    operationalDigest: convergenceDigest(frame.operationalSettings)
+  };
+}
+function normalizedScope(value, workspaceLocator) {
+  const normalized = path2.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
+  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
+}
+function scopeEntryOverlaps(left, leftWorkspace, right, rightWorkspace) {
+  const a = normalizedScope(left, leftWorkspace);
+  const b = normalizedScope(right, rightWorkspace);
+  if (a === b) return true;
+  return a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
+}
+function rootsOverlap(left, right) {
+  const sameWorkspace = left.frame.workspace.workspaceId === right.frame.workspace.workspaceId || normalizeWorkspaceLocator(left.frame.workspace.locator) === normalizeWorkspaceLocator(right.frame.workspace.locator);
+  if (!sameWorkspace) return false;
+  return left.taskEnvelope.scope.included.some((leftTarget) => right.taskEnvelope.scope.included.some((rightTarget) => scopeEntryOverlaps(
+    leftTarget,
+    left.frame.workspace.locator,
+    rightTarget,
+    right.frame.workspace.locator
+  )));
+}
+function normalizeWorkspaceLocator(locator) {
+  const resolved = path2.resolve(locator);
+  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
+}
+
+// mcp-server/src/continuity-store.ts
+import { chmodSync, mkdirSync } from "node:fs";
+import path3 from "node:path";
+import { DatabaseSync } from "node:sqlite";
+var SCHEMA_VERSION = 1;
+var SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
+function hasExactKeys(value, keys) {
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+}
+function isBodyFreeRequestReceipt(value) {
+  if (!value || value.schemaVersion !== "1.0.0") return false;
+  if (value.kind === "checkpoint") {
+    return hasExactKeys(value, ["schemaVersion", "kind", "epoch", "revision", "snapshotDigest"]) && Number.isInteger(value.epoch) && Number.isInteger(value.revision) && typeof value.snapshotDigest === "string" && SHA256_DIGEST.test(value.snapshotDigest);
+  }
+  if (value.kind === "purged-request") {
+    return hasExactKeys(value, ["schemaVersion", "kind", "epoch", "revision", "tombstoneDigest", "purgedAt"]) && Number.isInteger(value.epoch) && Number.isInteger(value.revision) && typeof value.tombstoneDigest === "string" && SHA256_DIGEST.test(value.tombstoneDigest) && typeof value.purgedAt === "string";
+  }
+  return value.purged === true && hasExactKeys(value, ["schemaVersion", "purged", "epoch", "revision", "tombstoneDigest", "purgedAt"]) && Number.isInteger(value.epoch) && Number.isInteger(value.revision) && typeof value.tombstoneDigest === "string" && SHA256_DIGEST.test(value.tombstoneDigest) && typeof value.purgedAt === "string";
+}
+var ContinuityStoreError = class extends Error {
+  constructor(message, causeValue) {
+    super(message);
+    this.causeValue = causeValue;
+    this.name = "ContinuityStoreError";
+  }
+  causeValue;
+};
+function taskRecord(row) {
+  return {
+    taskCorrelation: row.task_correlation,
+    currentEpoch: row.current_epoch,
+    rootId: row.root_id,
+    suppressed: row.suppressed === 1,
+    lastAutoInjectedRevision: row.last_auto_injected_revision,
+    pendingSource: row.pending_source,
+    pendingRevision: row.pending_revision,
+    pendingDigest: row.pending_digest,
+    pendingRootId: row.pending_root_id,
+    pendingConsumed: row.pending_consumed === 1,
+    updatedAt: row.updated_at
+  };
+}
+var SqliteContinuityStore = class {
+  constructor(databasePath) {
+    this.databasePath = databasePath;
+    if (!databasePath.trim()) throw new ContinuityStoreError("Continuity database path must not be empty.");
+    if (databasePath !== ":memory:") mkdirSync(path3.dirname(path3.resolve(databasePath)), { recursive: true, mode: 448 });
+    let opened = null;
+    try {
+      opened = new DatabaseSync(databasePath);
+      this.database = opened;
+      this.database.exec("PRAGMA busy_timeout = 5000;");
+      this.database.exec("PRAGMA synchronous = FULL;");
+      if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
+      this.initializeSchema();
+      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path3.resolve(databasePath), 384);
+    } catch (cause) {
+      try {
+        opened?.close();
+      } catch {
+      }
+      throw new ContinuityStoreError("Cannot initialize the continuity database.", cause);
+    }
+  }
+  databasePath;
+  database;
+  closed = false;
+  close() {
+    if (this.closed) return;
+    this.closed = true;
+    this.database.close();
+  }
+  getOrCreateSecret(create) {
+    const existing = this.database.prepare("SELECT value FROM continuity_metadata WHERE key = 'signing-secret'").get();
+    if (existing) return existing.value;
+    const value = create();
+    this.database.prepare("INSERT OR IGNORE INTO continuity_metadata(key, value) VALUES ('signing-secret', ?)").run(value);
+    const stored = this.database.prepare("SELECT value FROM continuity_metadata WHERE key = 'signing-secret'").get();
+    if (!stored) throw new ContinuityStoreError("Cannot initialize the continuity signing secret.");
+    return stored.value;
+  }
+  ensureTask(taskCorrelation, now) {
+    this.database.prepare(`
+      INSERT INTO continuity_tasks(task_correlation, current_epoch, updated_at)
+      VALUES (?, 1, ?)
+      ON CONFLICT(task_correlation) DO NOTHING
+    `).run(taskCorrelation, now);
+    return this.getTask(taskCorrelation);
+  }
+  getTask(taskCorrelation) {
+    const row = this.database.prepare("SELECT * FROM continuity_tasks WHERE task_correlation = ?").get(taskCorrelation);
+    return row ? taskRecord(row) : null;
+  }
+  rotateEpoch(taskCorrelation, now) {
+    this.ensureTask(taskCorrelation, now);
+    this.database.prepare(`
+      UPDATE continuity_tasks
+      SET current_epoch = current_epoch + 1, root_id = NULL, suppressed = 0,
+          last_auto_injected_revision = NULL, pending_source = NULL,
+          pending_revision = NULL, pending_digest = NULL, pending_root_id = NULL,
+          pending_consumed = 0, updated_at = ?
+      WHERE task_correlation = ?
+    `).run(now, taskCorrelation);
+    return this.getTask(taskCorrelation);
+  }
+  bindRoot(taskCorrelation, epoch, rootId, now) {
+    const result = this.database.prepare(`
+      UPDATE continuity_tasks SET root_id = ?, suppressed = 0, updated_at = ?
+      WHERE task_correlation = ? AND current_epoch = ?
+    `).run(rootId, now, taskCorrelation, epoch);
+    return result.changes === 1;
+  }
+  setSuppressed(taskCorrelation, epoch, now) {
+    const result = this.database.prepare(`
+      UPDATE continuity_tasks SET suppressed = 1, updated_at = ?
+      WHERE task_correlation = ? AND current_epoch = ?
+    `).run(now, taskCorrelation, epoch);
+    return result.changes === 1;
+  }
+  getSnapshot(taskCorrelation, epoch) {
+    const row = this.database.prepare(`
+      SELECT snapshot_json FROM continuity_snapshots WHERE task_correlation = ? AND epoch = ?
+    `).get(taskCorrelation, epoch);
+    return row ? JSON.parse(row.snapshot_json) : null;
+  }
+  getRequest(taskCorrelation, epoch, requestHash) {
+    const row = this.database.prepare(`
+      SELECT command_digest, result_json FROM continuity_requests
+      WHERE task_correlation = ? AND epoch = ? AND request_hash = ?
+    `).get(taskCorrelation, epoch, requestHash);
+    return row ? { commandDigest: row.command_digest, resultJson: row.result_json } : null;
+  }
+  getTombstone(taskCorrelation, epoch) {
+    const row = this.database.prepare(`
+      SELECT revision, payload_digest, purged_at FROM continuity_tombstones
+      WHERE task_correlation = ? AND epoch = ?
+    `).get(taskCorrelation, epoch);
+    return row ? { revision: row.revision, payloadDigest: row.payload_digest, purgedAt: row.purged_at } : null;
+  }
+  checkpoint(taskCorrelation, epoch, expectedRevision, requestHash, commandDigest, snapshot) {
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      const replay = this.getRequest(taskCorrelation, epoch, requestHash);
+      if (replay) {
+        this.database.exec("COMMIT;");
+        return replay.commandDigest === commandDigest ? { kind: "replay", request: replay } : { kind: "conflict" };
+      }
+      const current = this.getSnapshot(taskCorrelation, epoch);
+      const actualRevision = current?.revision ?? this.getTombstone(taskCorrelation, epoch)?.revision ?? 0;
+      if (actualRevision !== expectedRevision) {
+        this.database.exec("ROLLBACK;");
+        return { kind: "stale", actualRevision };
+      }
+      const json = JSON.stringify(snapshot);
+      const resultJson = JSON.stringify({
+        schemaVersion: "1.0.0",
+        kind: "checkpoint",
+        epoch,
+        revision: snapshot.revision,
+        snapshotDigest: snapshot.snapshotDigest
+      });
+      this.database.prepare(`
+        INSERT INTO continuity_snapshots(task_correlation, epoch, revision, snapshot_digest, snapshot_json, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(task_correlation, epoch) DO UPDATE SET
+          revision = excluded.revision, snapshot_digest = excluded.snapshot_digest,
+          snapshot_json = excluded.snapshot_json, updated_at = excluded.updated_at
+      `).run(taskCorrelation, epoch, snapshot.revision, snapshot.snapshotDigest, json, snapshot.updatedAt);
+      this.database.prepare(`
+        INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(taskCorrelation, epoch, requestHash, commandDigest, resultJson, snapshot.updatedAt);
+      this.database.exec("COMMIT;");
+      return { kind: "stored" };
+    } catch (cause) {
+      try {
+        this.database.exec("ROLLBACK;");
+      } catch {
+      }
+      throw new ContinuityStoreError("Cannot store the continuity checkpoint.", cause);
+    }
+  }
+  purge(taskCorrelation, epoch, expectedRevision, requestHash, commandDigest, tombstoneDigest, now) {
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      const replay = this.getRequest(taskCorrelation, epoch, requestHash);
+      if (replay) {
+        this.database.exec("COMMIT;");
+        return replay.commandDigest === commandDigest ? { kind: "replay", request: replay } : { kind: "conflict" };
+      }
+      const current = this.getSnapshot(taskCorrelation, epoch);
+      const actualRevision = current?.revision ?? 0;
+      if (!current || actualRevision !== expectedRevision) {
+        this.database.exec("ROLLBACK;");
+        return { kind: "stale", actualRevision };
+      }
+      this.database.prepare("DELETE FROM continuity_snapshots WHERE task_correlation = ? AND epoch = ?").run(taskCorrelation, epoch);
+      this.database.prepare(`
+        INSERT INTO continuity_tombstones(task_correlation, epoch, revision, payload_digest, purged_at)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(task_correlation, epoch) DO UPDATE SET
+          revision = excluded.revision, payload_digest = excluded.payload_digest, purged_at = excluded.purged_at
+      `).run(taskCorrelation, epoch, expectedRevision, tombstoneDigest, now);
+      const scrubbedRequestJson = JSON.stringify({
+        schemaVersion: "1.0.0",
+        kind: "purged-request",
+        epoch,
+        revision: expectedRevision,
+        tombstoneDigest,
+        purgedAt: now
+      });
+      const storedRequests = this.database.prepare(`
+        SELECT request_hash, result_json FROM continuity_requests
+        WHERE task_correlation = ? AND epoch = ?
+      `).all(taskCorrelation, epoch);
+      const scrubRequest = this.database.prepare(`
+        UPDATE continuity_requests SET result_json = ?
+        WHERE task_correlation = ? AND epoch = ? AND request_hash = ?
+      `);
+      for (const storedRequest of storedRequests) {
+        let parsed = null;
+        try {
+          const value = JSON.parse(storedRequest.result_json);
+          parsed = value && typeof value === "object" && !Array.isArray(value) ? value : null;
+        } catch {
+        }
+        if (!isBodyFreeRequestReceipt(parsed)) {
+          scrubRequest.run(scrubbedRequestJson, taskCorrelation, epoch, storedRequest.request_hash);
+        }
+      }
+      const resultJson = JSON.stringify({ schemaVersion: "1.0.0", purged: true, epoch, revision: expectedRevision, tombstoneDigest, purgedAt: now });
+      this.database.prepare(`
+        INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(taskCorrelation, epoch, requestHash, commandDigest, resultJson, now);
+      this.database.exec("COMMIT;");
+      return { kind: "purged" };
+    } catch (cause) {
+      try {
+        this.database.exec("ROLLBACK;");
+      } catch {
+      }
+      throw new ContinuityStoreError("Cannot purge the continuity checkpoint.", cause);
+    }
+  }
+  setPendingMarker(taskCorrelation, epoch, source, revision, digest, rootId, now) {
+    const result = this.database.prepare(`
+      UPDATE continuity_tasks SET pending_source = ?, pending_revision = ?, pending_digest = ?,
+        pending_root_id = ?, pending_consumed = 0, updated_at = ?
+      WHERE task_correlation = ? AND current_epoch = ?
+    `).run(source, revision, digest, rootId, now, taskCorrelation, epoch);
+    return result.changes === 1;
+  }
+  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest, now) {
+    const result = this.database.prepare(`
+      UPDATE continuity_tasks SET pending_consumed = 1, last_auto_injected_revision = ?, updated_at = ?
+      WHERE task_correlation = ? AND current_epoch = ? AND pending_source = 'workflow'
+        AND pending_revision = ? AND pending_digest = ? AND pending_consumed = 0
+    `).run(revision, now, taskCorrelation, epoch, revision, digest);
+    return result.changes === 1;
+  }
+  recordObservation(taskCorrelation, epoch, event, turnHash, success, now) {
+    this.database.prepare(`
+      INSERT INTO continuity_observations(task_correlation, epoch, event, turn_hash, success, observed_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(taskCorrelation, epoch, event, turnHash, success ? 1 : 0, now);
+  }
+  initializeSchema() {
+    const version2 = this.database.prepare("PRAGMA user_version").get();
+    if (version2.user_version !== 0 && version2.user_version !== SCHEMA_VERSION) {
+      throw new ContinuityStoreError(`Unsupported continuity schema version ${version2.user_version}.`);
+    }
+    this.database.exec(`
+      CREATE TABLE IF NOT EXISTS continuity_metadata (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS continuity_tasks (
+        task_correlation TEXT PRIMARY KEY,
+        current_epoch INTEGER NOT NULL CHECK (current_epoch >= 1),
+        root_id TEXT,
+        suppressed INTEGER NOT NULL DEFAULT 0 CHECK (suppressed IN (0, 1)),
+        last_auto_injected_revision INTEGER,
+        pending_source TEXT CHECK (pending_source IN ('direct', 'workflow')),
+        pending_revision INTEGER,
+        pending_digest TEXT,
+        pending_root_id TEXT,
+        pending_consumed INTEGER NOT NULL DEFAULT 0 CHECK (pending_consumed IN (0, 1)),
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS continuity_snapshots (
+        task_correlation TEXT NOT NULL,
+        epoch INTEGER NOT NULL,
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        snapshot_digest TEXT NOT NULL,
+        snapshot_json TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY(task_correlation, epoch)
+      );
+      CREATE TABLE IF NOT EXISTS continuity_requests (
+        task_correlation TEXT NOT NULL,
+        epoch INTEGER NOT NULL,
+        request_hash TEXT NOT NULL,
+        command_digest TEXT NOT NULL,
+        result_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY(task_correlation, epoch, request_hash)
+      );
+      CREATE TABLE IF NOT EXISTS continuity_tombstones (
+        task_correlation TEXT NOT NULL,
+        epoch INTEGER NOT NULL,
+        revision INTEGER NOT NULL,
+        payload_digest TEXT NOT NULL,
+        purged_at TEXT NOT NULL,
+        PRIMARY KEY(task_correlation, epoch)
+      );
+      CREATE TABLE IF NOT EXISTS continuity_observations (
+        observation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_correlation TEXT NOT NULL,
+        epoch INTEGER NOT NULL,
+        event TEXT NOT NULL,
+        turn_hash TEXT,
+        success INTEGER NOT NULL CHECK (success IN (0, 1)),
+        observed_at TEXT NOT NULL
+      );
+    `);
+    if (version2.user_version === 0) this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+  }
+};
+
+// mcp-server/src/continuity-service.ts
+var TOOL_TOKEN_TTL_SECONDS = 300;
+var CANDIDATE_TOKEN_TTL_SECONDS = 3600;
+function ok(data) {
+  return { schemaVersion: "1.0.0", ok: true, data, error: null };
+}
+function failure(code, message, details = null) {
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
+}
+function withoutBinding(value) {
+  const result = { ...value };
+  delete result._continuityBinding;
+  return result;
+}
+function exactKeys(value, keys) {
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+}
+function purgeReceipt(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const receipt = value;
+  if (!exactKeys(receipt, ["schemaVersion", "purged", "epoch", "revision", "tombstoneDigest", "purgedAt"]) || receipt.schemaVersion !== "1.0.0" || receipt.purged !== true || !Number.isInteger(receipt.epoch) || !Number.isInteger(receipt.revision) || typeof receipt.tombstoneDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(receipt.tombstoneDigest) || typeof receipt.purgedAt !== "string") return null;
+  return receipt;
+}
+function boundedText(value, maxLength) {
+  return value.length <= maxLength ? value : `${value.slice(0, maxLength - 1)}\u2026`;
+}
+function boundedStrings(values, maxItems, maxLength) {
+  return values.slice(0, maxItems).map((value) => boundedText(value, maxLength));
+}
+function encode2(value) {
+  return Buffer.from(canonicalJson(value), "utf8").toString("base64url");
+}
+function parseJsonToken(value) {
+  const [body, signature, extra] = value.split(".");
+  if (!body || !signature || extra) return null;
+  try {
+    const bodyBytes = Buffer.from(body, "base64url");
+    const signatureBytes = Buffer.from(signature, "base64url");
+    if (bodyBytes.toString("base64url") !== body || signatureBytes.toString("base64url") !== signature) return null;
+    return {
+      payload: JSON.parse(bodyBytes.toString("utf8")),
+      body,
+      signature: signatureBytes
+    };
+  } catch {
+    return null;
+  }
+}
+var ContinuityService = class {
+  constructor(store, validator, workflowStore = null, now = () => /* @__PURE__ */ new Date()) {
+    this.store = store;
+    this.validator = validator;
+    this.workflowStore = workflowStore;
+    this.now = now;
+    this.secret = store.getOrCreateSecret(() => randomBytes(32).toString("base64url"));
+  }
+  store;
+  validator;
+  workflowStore;
+  now;
+  available = true;
+  secret;
+  correlateSession(rawSessionId) {
+    return `hmac-sha256:${this.hmac(`session\0${rawSessionId}`)}`;
+  }
+  hashOpaque(kind, value) {
+    return `hmac-sha256:${this.hmac(`${kind}\0${value}`)}`;
+  }
+  ensureSession(rawSessionId) {
+    return this.store.ensureTask(this.correlateSession(rawSessionId), this.now().toISOString());
+  }
+  clearSession(rawSessionId) {
+    return this.store.rotateEpoch(this.correlateSession(rawSessionId), this.now().toISOString());
+  }
+  issueToolBinding(rawSessionId, toolName, input) {
+    const task = this.ensureSession(rawSessionId);
+    const payload = {
+      v: 1,
+      c: task.taskCorrelation,
+      e: task.currentEpoch,
+      t: toolName,
+      d: convergenceDigest(withoutBinding(input)),
+      x: Math.floor(this.now().getTime() / 1e3) + TOOL_TOKEN_TTL_SECONDS
+    };
+    return this.sign(payload);
+  }
+  checkpointContext(value) {
+    return this.guard(() => {
+      const request = this.validator.checkpointContextRequest(value);
+      const binding = this.verifyToolBinding("checkpoint_context", request, request._continuityBinding);
+      const task = this.currentTask(binding);
+      if (task.rootId) throw new WorkflowContractError("SNAPSHOT_CONFLICT", "Direct checkpoints are disabled after a workflow root is bound.", { rootId: task.rootId });
+      const now = this.now().toISOString();
+      const current = this.store.getSnapshot(binding.c, binding.e);
+      const base = {
+        schemaVersion: "1.0.0",
+        source: "direct",
+        taskCorrelation: binding.c,
+        epoch: binding.e,
+        revision: request.expectedRevision + 1,
+        status: request.status,
+        core: request.core,
+        evidenceRefs: request.evidenceRefs,
+        createdAt: current?.createdAt ?? now,
+        updatedAt: now
+      };
+      const snapshot = { ...base, snapshotDigest: convergenceDigest(base) };
+      const requestHash = this.hashOpaque("request", request.requestId);
+      const commandDigest = convergenceDigest(withoutBinding(request));
+      const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot);
+      if (stored.kind === "replay") {
+        const receipt = JSON.parse(stored.request.resultJson);
+        const replaySnapshot = this.store.getSnapshot(binding.c, binding.e);
+        if (receipt.kind !== "checkpoint" || receipt.epoch !== binding.e || !replaySnapshot || replaySnapshot.revision !== receipt.revision || replaySnapshot.snapshotDigest !== receipt.snapshotDigest) {
+          return failure("STALE_REVISION", "The idempotent checkpoint result is no longer available after replacement or purge.");
+        }
+        return ok(replaySnapshot);
+      }
+      if (stored.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for different checkpoint content.");
+      if (stored.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed.", { expectedRevision: request.expectedRevision, actualRevision: stored.actualRevision });
+      return ok(snapshot);
+    });
+  }
+  inspectContext(value) {
+    return this.guard(() => {
+      const request = this.validator.inspectContextRequest(value);
+      const binding = this.verifyToolBinding("inspect_context", request, request._continuityBinding);
+      return ok(this.candidateFor(binding.c));
+    });
+  }
+  loadContext(value) {
+    return this.guard(() => {
+      const request = this.validator.loadContextRequest(value);
+      const binding = this.verifyToolBinding("load_context", request, request._continuityBinding);
+      const candidate = this.verifyCandidate(request.candidateToken);
+      if (candidate.c !== binding.c || candidate.e !== binding.e || candidate.e !== request.epoch || candidate.r !== request.revision || candidate.d !== request.digest) throw new WorkflowContractError("BINDING_INVALID", "Restore candidate does not match the current task and requested state.");
+      const task = this.currentTask(binding);
+      if (task.suppressed) throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", "Restore is suppressed for the current epoch.");
+      if (candidate.s === "direct") {
+        const snapshot = this.store.getSnapshot(binding.c, binding.e);
+        if (!snapshot || snapshot.revision !== candidate.r || snapshot.snapshotDigest !== candidate.d) {
+          throw new WorkflowContractError("STALE_REVISION", "The direct restore candidate is stale.");
+        }
+        const { snapshotDigest, ...base } = snapshot;
+        if (convergenceDigest(base) !== snapshotDigest) throw new WorkflowContractError("INTEGRITY_FAILED", "The direct snapshot digest is invalid.");
+        return ok(snapshot);
+      }
+      const card = this.workflowProjection(task);
+      if (!card || card.revision !== candidate.r || card.snapshotDigest !== candidate.d) {
+        throw new WorkflowContractError("STALE_REVISION", "The workflow restore candidate is stale.");
+      }
+      return ok(card);
+    });
+  }
+  suppressContextRestore(value) {
+    return this.guard(() => {
+      const request = this.validator.suppressContextRestoreRequest(value);
+      const binding = this.verifyToolBinding("suppress_context_restore", request, request._continuityBinding);
+      if (request.expectedEpoch !== binding.e) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.", { actualEpoch: binding.e });
+      if (!this.store.setSuppressed(binding.c, binding.e, this.now().toISOString())) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.");
+      return ok({ schemaVersion: "1.0.0", suppressed: true, epoch: binding.e });
+    });
+  }
+  purgeDirectContext(value) {
+    return this.guard(() => {
+      const request = this.validator.purgeDirectContextRequest(value);
+      const binding = this.verifyToolBinding("purge_direct_context", request, request._continuityBinding);
+      this.currentTask(binding);
+      const current = this.store.getSnapshot(binding.c, request.expectedEpoch);
+      if (current && current.revision !== request.expectedRevision) {
+        return failure("STALE_REVISION", "The direct checkpoint revision changed.", {
+          expectedRevision: request.expectedRevision,
+          actualRevision: current.revision
+        });
+      }
+      const requestHash = this.hashOpaque("request", request.requestId);
+      const commandDigest = convergenceDigest(withoutBinding(request));
+      const tombstoneDigest = convergenceDigest({
+        taskCorrelation: binding.c,
+        epoch: request.expectedEpoch,
+        revision: request.expectedRevision,
+        payloadDigest: current?.snapshotDigest ?? null,
+        purgeRequestHash: requestHash
+      });
+      const now = this.now().toISOString();
+      const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
+      if (purged.kind === "replay") {
+        let replay = null;
+        try {
+          replay = purgeReceipt(JSON.parse(purged.request.resultJson));
+        } catch {
+        }
+        const tombstone = this.store.getTombstone(binding.c, request.expectedEpoch);
+        if (!replay || !tombstone || replay.epoch !== request.expectedEpoch || replay.revision !== request.expectedRevision || replay.revision !== tombstone.revision || replay.tombstoneDigest !== tombstone.payloadDigest || replay.purgedAt !== tombstone.purgedAt) {
+          return failure("STALE_REVISION", "The idempotent purge result is no longer available.");
+        }
+        return ok({
+          schemaVersion: "1.0.0",
+          purged: true,
+          epoch: replay.epoch,
+          revision: replay.revision,
+          tombstoneDigest: replay.tombstoneDigest,
+          purgedAt: replay.purgedAt
+        });
+      }
+      if (purged.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for a different purge request.");
+      if (purged.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed or no payload exists.", { expectedRevision: request.expectedRevision, actualRevision: purged.actualRevision });
+      return ok({ schemaVersion: "1.0.0", purged: true, epoch: request.expectedEpoch, revision: request.expectedRevision, tombstoneDigest, purgedAt: now });
+    });
+  }
+  bindOpenedRoot(value, rootId) {
+    try {
+      const args = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+      const token = typeof args._continuityBinding === "string" ? args._continuityBinding : "";
+      const binding = this.verifyToolBinding("open_convergence_root", args, token);
+      this.store.bindRoot(binding.c, binding.e, rootId, this.now().toISOString());
+    } catch {
+    }
+  }
+  candidateForSession(rawSessionId) {
+    const task = this.ensureSession(rawSessionId);
+    return this.candidateFor(task.taskCorrelation);
+  }
+  markPreCompact(rawSessionId) {
+    const task = this.ensureSession(rawSessionId);
+    if (task.suppressed) return;
+    const summary = this.summary(task);
+    if (!summary) return;
+    this.store.setPendingMarker(task.taskCorrelation, task.currentEpoch, summary.source, summary.revision, summary.snapshotDigest, task.rootId, this.now().toISOString());
+  }
+  compactContext(rawSessionId) {
+    const task = this.ensureSession(rawSessionId);
+    if (task.suppressed || task.pendingConsumed) return null;
+    const summary = this.summary(task);
+    if (!summary || task.pendingRevision !== summary.revision || task.pendingDigest !== summary.snapshotDigest || task.pendingSource !== summary.source) return null;
+    if (summary.source === "direct") return this.formatCandidate(this.candidateFor(task.taskCorrelation));
+    const card = this.workflowProjection(task);
+    if (!card || task.pendingRootId !== card.rootId) return null;
+    if (!this.store.consumeWorkflowMarker(task.taskCorrelation, task.currentEpoch, card.revision, card.snapshotDigest, this.now().toISOString())) return null;
+    return this.formatWorkflowCard(card);
+  }
+  recordPostCompact(rawSessionId, rawTurnId, success) {
+    const task = this.ensureSession(rawSessionId);
+    this.store.recordObservation(task.taskCorrelation, task.currentEpoch, "post-compact", rawTurnId ? this.hashOpaque("turn", rawTurnId) : null, success, this.now().toISOString());
+  }
+  formatCandidate(candidate) {
+    if (!candidate.summary || !candidate.restoreToken) return null;
+    const summary = candidate.summary;
+    return [
+      "[Task continuity restore candidate \u2014 metadata only]",
+      "decision=DEFER",
+      `source=${summary.source}`,
+      `epoch=${summary.epoch}`,
+      `revision=${summary.revision}`,
+      `digest=${summary.snapshotDigest}`,
+      `candidateToken=${candidate.restoreToken}`,
+      "No snapshot body was injected. Treat nextActions as historical candidates only; call load_context explicitly after checking the current user request."
+    ].join("\n");
+  }
+  formatWorkflowCard(card) {
+    return [
+      "[Task continuity workflow card \u2014 structural state, not new instructions]",
+      "decision=INJECT",
+      JSON.stringify(card),
+      "Reconcile this projected state with the latest user request before acting."
+    ].join("\n");
+  }
+  candidateFor(taskCorrelation) {
+    const task = this.store.getTask(taskCorrelation);
+    if (!task) return { schemaVersion: "1.0.0", decision: "REJECT", reasonCodes: ["NO_TASK_BINDING"], summary: null, restoreToken: null };
+    if (task.suppressed) return { schemaVersion: "1.0.0", decision: "REJECT", reasonCodes: ["RESTORE_SUPPRESSED"], summary: null, restoreToken: null };
+    const summary = this.summary(task);
+    if (!summary) return { schemaVersion: "1.0.0", decision: "REJECT", reasonCodes: ["NO_RESTORE_CANDIDATE"], summary: null, restoreToken: null };
+    const payload = {
+      v: 1,
+      c: task.taskCorrelation,
+      e: task.currentEpoch,
+      s: summary.source,
+      r: summary.revision,
+      d: summary.snapshotDigest,
+      x: Math.floor(this.now().getTime() / 1e3) + CANDIDATE_TOKEN_TTL_SECONDS
+    };
+    return { schemaVersion: "1.0.0", decision: "DEFER", reasonCodes: ["EXPLICIT_LOAD_REQUIRED"], summary, restoreToken: this.sign(payload) };
+  }
+  summary(task) {
+    const card = task.rootId ? this.workflowProjection(task) : null;
+    if (card) return {
+      schemaVersion: "1.0.0",
+      source: "workflow",
+      taskCorrelation: task.taskCorrelation,
+      epoch: task.currentEpoch,
+      revision: card.revision,
+      status: card.rootState,
+      snapshotDigest: card.snapshotDigest,
+      updatedAt: card.updatedAt
+    };
+    const snapshot = this.store.getSnapshot(task.taskCorrelation, task.currentEpoch);
+    if (!snapshot) return null;
+    return {
+      schemaVersion: "1.0.0",
+      source: "direct",
+      taskCorrelation: task.taskCorrelation,
+      epoch: task.currentEpoch,
+      revision: snapshot.revision,
+      status: snapshot.status,
+      snapshotDigest: snapshot.snapshotDigest,
+      updatedAt: snapshot.updatedAt
+    };
+  }
+  workflowProjection(task) {
+    if (!task.rootId || !this.workflowStore) return null;
+    const snapshot = this.workflowStore.getConvergenceSnapshot(task.rootId);
+    if (!snapshot) return null;
+    const latestRunId = snapshot.workflowRunIds.at(-1);
+    const receipt = latestRunId ? this.workflowStore.getRun(latestRunId) : null;
+    const base = {
+      schemaVersion: "1.0.0",
+      source: "workflow",
+      taskCorrelation: task.taskCorrelation,
+      epoch: task.currentEpoch,
+      revision: snapshot.root.revision,
+      rootId: boundedText(snapshot.root.rootId, 160),
+      rootState: snapshot.root.state,
+      taskId: boundedText(snapshot.root.taskEnvelope.taskId, 160),
+      objective: boundedText(snapshot.root.taskEnvelope.objective, 800),
+      includedScope: boundedStrings(snapshot.root.taskEnvelope.scope.included, 4, 120),
+      acceptanceCriteria: boundedStrings(snapshot.root.taskEnvelope.acceptanceCriteria, 4, 240),
+      constraints: boundedStrings(snapshot.root.taskEnvelope.constraints, 4, 240),
+      authorization: {
+        allowedActions: boundedStrings(snapshot.root.taskEnvelope.authorization.allowedActions, 4, 120),
+        prohibitedActions: boundedStrings(snapshot.root.taskEnvelope.authorization.prohibitedActions, 4, 120),
+        approvalRequired: boundedStrings(snapshot.root.taskEnvelope.authorization.approvalRequired, 4, 120)
+      },
+      workflowState: receipt?.state ?? null,
+      currentStageId: receipt?.plan.currentStageId ?? null,
+      nextStageId: receipt?.plan.nextStageId ?? null,
+      blockers: boundedStrings(receipt?.blockers ?? [], 4, 200),
+      unresolved: boundedStrings(receipt?.unresolved ?? [], 4, 200),
+      evidenceRefs: (receipt?.stageResults ?? []).flatMap((result) => result.output.artifacts.map((item) => ({
+        artifactId: boundedText(item.artifactId, 80),
+        locator: boundedText(item.locator, 160),
+        digest: item.digest,
+        verified: item.verified
+      }))).slice(0, 6),
+      updatedAt: snapshot.root.updatedAt
+    };
+    return { ...base, snapshotDigest: convergenceDigest(base) };
+  }
+  currentTask(binding) {
+    const task = this.store.getTask(binding.c);
+    if (!task || task.currentEpoch !== binding.e) throw new WorkflowContractError("BINDING_INVALID", "Continuity task binding is stale.");
+    return task;
+  }
+  verifyToolBinding(toolName, value, token) {
+    if (!token) throw new WorkflowContractError("BINDING_REQUIRED", "A current continuity binding token is required.");
+    const payload = this.verifySigned(token);
+    const now = Math.floor(this.now().getTime() / 1e3);
+    if (payload.v !== 1 || payload.t !== toolName || payload.x < now || payload.d !== convergenceDigest(withoutBinding(value))) {
+      throw new WorkflowContractError("BINDING_INVALID", "Continuity binding token is invalid, expired, or bound to different input.");
+    }
+    return payload;
+  }
+  verifyCandidate(token) {
+    const payload = this.verifySigned(token);
+    if (payload.v !== 1 || payload.x < Math.floor(this.now().getTime() / 1e3) || !["direct", "workflow"].includes(payload.s)) {
+      throw new WorkflowContractError("BINDING_INVALID", "Restore candidate token is invalid or expired.");
+    }
+    return payload;
+  }
+  sign(value) {
+    const body = encode2(value);
+    const signature = createHmac("sha256", this.secret).update(body).digest("base64url");
+    return `${body}.${signature}`;
+  }
+  verifySigned(token) {
+    const parsed = parseJsonToken(token);
+    if (!parsed) throw new WorkflowContractError("BINDING_INVALID", "Signed continuity token is malformed.");
+    const expected = createHmac("sha256", this.secret).update(parsed.body).digest();
+    if (expected.length !== parsed.signature.length || !timingSafeEqual(expected, parsed.signature)) {
+      throw new WorkflowContractError("BINDING_INVALID", "Signed continuity token failed verification.");
+    }
+    return parsed.payload;
+  }
+  hmac(value) {
+    return createHmac("sha256", this.secret).update(value, "utf8").digest("hex");
+  }
+  guard(action) {
+    try {
+      return action();
+    } catch (error2) {
+      if (error2 instanceof WorkflowContractError) return failure(error2.code, error2.message, error2.details);
+      if (error2 instanceof ContinuityStoreError) return failure("CONTINUITY_UNAVAILABLE", error2.message);
+      return failure("CONTINUITY_UNAVAILABLE", "Continuity operation failed.", { cause: error2 instanceof Error ? error2.message : String(error2) });
+    }
+  }
+};
+var UnavailableContinuityService = class {
+  available = false;
+  unavailable() {
+    return failure("CONTINUITY_UNAVAILABLE", "The optional continuity store is unavailable.");
+  }
+  checkpointContext() {
+    return this.unavailable();
+  }
+  inspectContext() {
+    return this.unavailable();
+  }
+  loadContext() {
+    return this.unavailable();
+  }
+  suppressContextRestore() {
+    return this.unavailable();
+  }
+  purgeDirectContext() {
+    return this.unavailable();
+  }
+  bindOpenedRoot() {
+  }
+};
+
+// mcp-server/src/runtime-config.ts
+import { realpathSync } from "node:fs";
+import { homedir } from "node:os";
+import path4 from "node:path";
 import { fileURLToPath } from "node:url";
 function resolveRegistryPath(environment = process.env, moduleUrl = import.meta.url) {
   return environment.SKILL_REGISTRY_PATH ?? fileURLToPath(new URL("../../skills/registry.json", moduleUrl));
 }
 function resolveWorkflowDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   const configured = environment.AGENT_GOVERNANCE_DB_PATH?.trim();
-  if (configured) return path2.resolve(currentWorkingDirectory, configured);
+  if (configured) return path4.resolve(currentWorkingDirectory, configured);
   let stateRoot;
   if (platform === "win32") {
-    stateRoot = environment.LOCALAPPDATA?.trim() || path2.join(homeDirectory, "AppData", "Local");
+    stateRoot = environment.LOCALAPPDATA?.trim() || path4.join(homeDirectory, "AppData", "Local");
   } else if (platform === "darwin") {
-    stateRoot = path2.join(homeDirectory, "Library", "Application Support");
+    stateRoot = path4.join(homeDirectory, "Library", "Application Support");
   } else {
-    stateRoot = environment.XDG_STATE_HOME?.trim() || path2.join(homeDirectory, ".local", "state");
+    stateRoot = environment.XDG_STATE_HOME?.trim() || path4.join(homeDirectory, ".local", "state");
   }
-  return path2.resolve(stateRoot, "agent-governance-suite", "workflows.sqlite3");
+  return path4.resolve(stateRoot, "agent-governance-suite", "workflows.sqlite3");
+}
+function resolveContinuityDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  const configured = environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH?.trim();
+  if (configured) return path4.resolve(currentWorkingDirectory, configured);
+  const workflowPath = resolveWorkflowDatabasePath(
+    environment,
+    platform,
+    homeDirectory,
+    currentWorkingDirectory
+  );
+  if (workflowPath === ":memory:") return ":memory:";
+  return path4.join(path4.dirname(workflowPath), "continuity.sqlite3");
+}
+function canonicalDatabasePath(databasePath, platform) {
+  if (databasePath === ":memory:") return null;
+  const absolute = path4.resolve(databasePath);
+  const unresolved = [];
+  let cursor = absolute;
+  let resolved = absolute;
+  while (true) {
+    try {
+      resolved = path4.join(realpathSync.native(cursor), ...unresolved.reverse());
+      break;
+    } catch {
+      const parent = path4.dirname(cursor);
+      if (parent === cursor) break;
+      unresolved.push(path4.basename(cursor));
+      cursor = parent;
+    }
+  }
+  const normalized = path4.normalize(resolved);
+  return platform === "win32" ? normalized.toLocaleLowerCase("en-US") : normalized;
+}
+function assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath, platform = process.platform) {
+  const workflowIdentity = canonicalDatabasePath(workflowDatabasePath, platform);
+  const continuityIdentity = canonicalDatabasePath(continuityDatabasePath, platform);
+  if (workflowIdentity !== null && workflowIdentity === continuityIdentity) {
+    throw new Error("Workflow and continuity databases must use different files.");
+  }
 }
 
 // mcp-server/src/schema-validator.ts
 var import__ = __toESM(require__(), 1);
 var import_ajv_formats = __toESM(require_dist(), 1);
-import { createHash as createHash2 } from "node:crypto";
+import { createHash as createHash3 } from "node:crypto";
 import { readFileSync as readFileSync2, readdirSync } from "node:fs";
-import path3 from "node:path";
+import path5 from "node:path";
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path5 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path5, "utf8"));
+  const path7 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path7, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -16041,7 +16906,26 @@ var contractSchemas = {
   skillDescriptorV2: loadSchema("skill-descriptor.v2.schema.json"),
   workflowPlan: loadSchema("workflow-plan.v1.schema.json"),
   stageResult: loadSchema("stage-result.v1.schema.json"),
-  workflowReceipt: loadSchema("workflow-receipt.v1.schema.json")
+  workflowReceipt: loadSchema("workflow-receipt.v1.schema.json"),
+  workflowStatusSummary: loadSchema("workflow-status-summary.v1.schema.json"),
+  convergenceFrame: loadSchema("convergence-frame.v1.schema.json"),
+  convergenceRoot: loadSchema("convergence-root.v1.schema.json"),
+  convergenceRootHandle: loadSchema("convergence-root-handle.v1.schema.json"),
+  openConvergenceRootRequest: loadSchema("open-convergence-root-request.v1.schema.json"),
+  attemptProposal: loadSchema("attempt-proposal.v1.schema.json"),
+  attemptLease: loadSchema("attempt-lease.v1.schema.json"),
+  guardedWorkflowStartRequest: loadSchema("guarded-workflow-start-request.v1.schema.json"),
+  attemptOutcome: loadSchema("attempt-outcome.v1.schema.json"),
+  convergenceReview: loadSchema("convergence-review.v1.schema.json"),
+  resolveConvergenceGateRequest: loadSchema("resolve-convergence-gate-request.v1.schema.json"),
+  convergenceStatus: loadSchema("convergence-status.v1.schema.json"),
+  convergenceStatusSummary: loadSchema("convergence-status-summary.v1.schema.json"),
+  responseMode: loadSchema("response-mode.v1.schema.json"),
+  checkpointContextRequest: loadSchema("checkpoint-context-request.v1.schema.json"),
+  inspectContextRequest: loadSchema("inspect-context-request.v1.schema.json"),
+  loadContextRequest: loadSchema("load-context-request.v1.schema.json"),
+  suppressContextRestoreRequest: loadSchema("suppress-context-restore-request.v1.schema.json"),
+  purgeDirectContextRequest: loadSchema("purge-direct-context-request.v1.schema.json")
 };
 function errorText(errors) {
   return (errors ?? []).map((error2) => `${error2.instancePath || "/"} ${error2.message ?? "is invalid"}`).join("; ");
@@ -16063,7 +16947,25 @@ var ContractValidator = class {
       skillDescriptorV2: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v2.schema.json"),
       workflowPlan: ajv.getSchema("https://skill-suite.local/contracts/workflow-plan.v1.schema.json"),
       stageResult: ajv.getSchema("https://skill-suite.local/contracts/stage-result.v1.schema.json"),
-      workflowReceipt: ajv.getSchema("https://skill-suite.local/contracts/workflow-receipt.v1.schema.json")
+      workflowReceipt: ajv.getSchema("https://skill-suite.local/contracts/workflow-receipt.v1.schema.json"),
+      workflowStatusSummary: ajv.getSchema("https://skill-suite.local/contracts/workflow-status-summary.v1.schema.json"),
+      convergenceFrame: ajv.getSchema("https://skill-suite.local/contracts/convergence-frame.v1.schema.json"),
+      convergenceRoot: ajv.getSchema("https://skill-suite.local/contracts/convergence-root.v1.schema.json"),
+      convergenceRootHandle: ajv.getSchema("https://skill-suite.local/contracts/convergence-root-handle.v1.schema.json"),
+      openConvergenceRootRequest: ajv.getSchema("https://skill-suite.local/contracts/open-convergence-root-request.v1.schema.json"),
+      attemptProposal: ajv.getSchema("https://skill-suite.local/contracts/attempt-proposal.v1.schema.json"),
+      attemptLease: ajv.getSchema("https://skill-suite.local/contracts/attempt-lease.v1.schema.json"),
+      guardedWorkflowStartRequest: ajv.getSchema("https://skill-suite.local/contracts/guarded-workflow-start-request.v1.schema.json"),
+      attemptOutcome: ajv.getSchema("https://skill-suite.local/contracts/attempt-outcome.v1.schema.json"),
+      convergenceReview: ajv.getSchema("https://skill-suite.local/contracts/convergence-review.v1.schema.json"),
+      resolveConvergenceGateRequest: ajv.getSchema("https://skill-suite.local/contracts/resolve-convergence-gate-request.v1.schema.json"),
+      convergenceStatus: ajv.getSchema("https://skill-suite.local/contracts/convergence-status.v1.schema.json"),
+      convergenceStatusSummary: ajv.getSchema("https://skill-suite.local/contracts/convergence-status-summary.v1.schema.json"),
+      checkpointContextRequest: ajv.getSchema("https://skill-suite.local/contracts/checkpoint-context-request.v1.schema.json"),
+      inspectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/inspect-context-request.v1.schema.json"),
+      loadContextRequest: ajv.getSchema("https://skill-suite.local/contracts/load-context-request.v1.schema.json"),
+      suppressContextRestoreRequest: ajv.getSchema("https://skill-suite.local/contracts/suppress-context-restore-request.v1.schema.json"),
+      purgeDirectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/purge-direct-context-request.v1.schema.json")
     };
   }
   assert(name, value) {
@@ -16092,6 +16994,60 @@ var ContractValidator = class {
   }
   workflowReceipt(value) {
     return this.assert("workflowReceipt", value);
+  }
+  workflowStatusSummary(value) {
+    return this.assert("workflowStatusSummary", value);
+  }
+  convergenceFrame(value) {
+    return this.assert("convergenceFrame", value);
+  }
+  convergenceRoot(value) {
+    return this.assert("convergenceRoot", value);
+  }
+  convergenceRootHandle(value) {
+    return this.assert("convergenceRootHandle", value);
+  }
+  openConvergenceRootRequest(value) {
+    return this.assert("openConvergenceRootRequest", value);
+  }
+  attemptProposal(value) {
+    return this.assert("attemptProposal", value);
+  }
+  attemptLease(value) {
+    return this.assert("attemptLease", value);
+  }
+  guardedWorkflowStartRequest(value) {
+    return this.assert("guardedWorkflowStartRequest", value);
+  }
+  attemptOutcome(value) {
+    return this.assert("attemptOutcome", value);
+  }
+  convergenceReview(value) {
+    return this.assert("convergenceReview", value);
+  }
+  resolveConvergenceGateRequest(value) {
+    return this.assert("resolveConvergenceGateRequest", value);
+  }
+  convergenceStatus(value) {
+    return this.assert("convergenceStatus", value);
+  }
+  convergenceStatusSummary(value) {
+    return this.assert("convergenceStatusSummary", value);
+  }
+  checkpointContextRequest(value) {
+    return this.assert("checkpointContextRequest", value);
+  }
+  inspectContextRequest(value) {
+    return this.assert("inspectContextRequest", value);
+  }
+  loadContextRequest(value) {
+    return this.assert("loadContextRequest", value);
+  }
+  suppressContextRestoreRequest(value) {
+    return this.assert("suppressContextRestoreRequest", value);
+  }
+  purgeDirectContextRequest(value) {
+    return this.assert("purgeDirectContextRequest", value);
   }
   apiResult(value) {
     return this.assert("apiResult", value);
@@ -16139,15 +17095,15 @@ var ContractValidator = class {
     return tokens;
   }
   assertSchemaFile(rootDirectory, reference, value, label) {
-    const root = path3.resolve(rootDirectory);
+    const root = path5.resolve(rootDirectory);
     const targetSchema = this.readBoundSchema(rootDirectory, reference, label);
     const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
     addFormats(ajv);
     const schemas = /* @__PURE__ */ new Map();
-    for (const directory of [path3.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
+    for (const directory of [path5.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
       for (const candidate of this.schemaFiles(directory)) {
         const schema = JSON.parse(readFileSync2(candidate, "utf8"));
-        const id = typeof schema.$id === "string" ? schema.$id : `file://${candidate.split(path3.sep).join("/")}`;
+        const id = typeof schema.$id === "string" ? schema.$id : `file://${candidate.split(path5.sep).join("/")}`;
         if (!schemas.has(id)) schemas.set(id, schema);
       }
     }
@@ -16163,15 +17119,15 @@ var ContractValidator = class {
     return value;
   }
   readBoundSchema(rootDirectory, reference, label) {
-    const root = path3.resolve(rootDirectory);
-    const schemaPath = path3.resolve(root, reference.path);
-    if (schemaPath !== root && !schemaPath.startsWith(`${root}${path3.sep}`)) {
+    const root = path5.resolve(rootDirectory);
+    const schemaPath = path5.resolve(root, reference.path);
+    if (schemaPath !== root && !schemaPath.startsWith(`${root}${path5.sep}`)) {
       throw new WorkflowContractError("INVALID_INPUT", `${label} schema escapes the plugin root.`, {
         schemaPath: reference.path
       });
     }
     const raw = readFileSync2(schemaPath);
-    const digest = `sha256:${createHash2("sha256").update(raw).digest("hex")}`;
+    const digest = `sha256:${createHash3("sha256").update(raw).digest("hex")}`;
     if (digest !== reference.digest) {
       throw new WorkflowContractError("STALE_REVISION", `${label} schema changed after planning.`, {
         schemaPath: reference.path,
@@ -16183,12 +17139,12 @@ var ContractValidator = class {
   }
   skillSchemaRoot(rootDirectory, schemaPath) {
     const segments = schemaPath.split("/");
-    return segments[0] === "skills" && segments[1] ? path3.join(rootDirectory, "skills", segments[1]) : path3.join(rootDirectory, "contracts");
+    return segments[0] === "skills" && segments[1] ? path5.join(rootDirectory, "skills", segments[1]) : path5.join(rootDirectory, "contracts");
   }
   schemaFiles(directory) {
     const files = [];
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      const candidate = path3.join(directory, entry.name);
+      const candidate = path5.join(directory, entry.name);
       if (entry.isDirectory()) files.push(...this.schemaFiles(candidate));
       else if (entry.isFile() && entry.name.endsWith(".schema.json")) files.push(candidate);
     }
@@ -17932,19 +18888,107 @@ var Server = class extends Protocol {
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "1.1.0",
+  version: "1.4.3",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
 
+// mcp-server/src/response-projections.ts
+function convergenceRootHandle(root) {
+  return {
+    schemaVersion: CONTRACT_VERSION,
+    rootId: root.rootId,
+    revision: root.revision,
+    state: root.state,
+    currentEpoch: root.currentEpoch,
+    taskDigest: root.taskDigest,
+    frameDigest: root.frameDigest,
+    workspaceDigest: root.workspaceDigest,
+    controlDigest: root.controlDigest,
+    targetDigest: root.targetDigest,
+    operationalDigest: root.operationalDigest
+  };
+}
+function workflowStatusSummary(receipt) {
+  return {
+    schemaVersion: CONTRACT_VERSION,
+    runId: receipt.runId,
+    revision: receipt.revision,
+    state: receipt.state,
+    currentStageId: receipt.plan.currentStageId,
+    nextStageId: receipt.plan.nextStageId,
+    lastRecordedStageId: receipt.stageResults.at(-1)?.stageId ?? null,
+    completedStageCount: receipt.stageResults.length,
+    totalStageCount: receipt.plan.stages.length,
+    blockerCount: receipt.blockers.length,
+    unresolvedCount: receipt.unresolved.length,
+    errorCode: receipt.error?.code ?? null,
+    receiptDigest: convergenceDigest(receipt)
+  };
+}
+function convergenceStatusSummary(status) {
+  const latestOutcome = status.outcomes.at(-1);
+  const issuedLease = [...status.leases].reverse().find((lease) => lease.state === "issued");
+  return {
+    schemaVersion: CONTRACT_VERSION,
+    root: convergenceRootHandle(status.root),
+    currentEpoch: status.currentEpoch,
+    maxAttemptsPerEpoch: status.maxAttemptsPerEpoch,
+    maxEpochs: status.maxEpochs,
+    attemptsUsedInEpoch: status.attemptsUsedInEpoch,
+    attemptsRemainingInEpoch: status.attemptsRemainingInEpoch,
+    issuedLeaseId: issuedLease?.leaseId ?? null,
+    latestWorkflowRunId: status.workflowRunIds.at(-1) ?? null,
+    latestOutcomeId: latestOutcome?.outcomeId ?? null,
+    latestOutcomeState: latestOutcome?.state ?? null,
+    latestOutcomeReceiptDigest: latestOutcome?.receiptDigest ?? null,
+    proposalCount: status.proposals.length,
+    leaseCount: status.leases.length,
+    outcomeCount: status.outcomes.length,
+    reviewCount: status.reviews.length,
+    gateErrorCode: status.gateError?.code ?? null
+  };
+}
+
 // mcp-server/src/server.ts
+var responseModeProperty = { enum: ["compact", "full"], default: "full" };
+function toolSchema(source, options = {}) {
+  const schema = structuredClone(source);
+  schema.properties = { ...schema.properties ?? {}, ...options.add ?? {} };
+  schema.required = (schema.required ?? []).filter((name) => !(options.optional ?? []).includes(name));
+  return schema;
+}
+var openConvergenceRootInputSchema = toolSchema(contractSchemas.openConvergenceRootRequest, {
+  add: {
+    responseMode: responseModeProperty,
+    _continuityBinding: { type: "string", minLength: 16 }
+  }
+});
+var attemptProposalInputSchema = toolSchema(contractSchemas.attemptProposal, {
+  optional: ["taskEnvelope", "frame"]
+});
+attemptProposalInputSchema.dependentRequired = {
+  taskEnvelope: ["frame"],
+  frame: ["taskEnvelope"]
+};
+var guardedWorkflowStartInputSchema = toolSchema(contractSchemas.guardedWorkflowStartRequest, {
+  add: { responseMode: responseModeProperty },
+  optional: ["plan"]
+});
+var resolveConvergenceGateInputSchema = toolSchema(contractSchemas.resolveConvergenceGateRequest, {
+  add: { responseMode: responseModeProperty }
+});
+var recordStageResultInputSchema = toolSchema(contractSchemas.stageResult, {
+  add: { responseMode: responseModeProperty }
+});
 var revisionInputSchema = {
   type: "object",
   additionalProperties: false,
   required: ["runId", "expectedRevision"],
   properties: {
     runId: { type: "string", minLength: 1 },
-    expectedRevision: { type: "integer", minimum: 0 }
+    expectedRevision: { type: "integer", minimum: 0 },
+    responseMode: responseModeProperty
   }
 };
 var workflowIdInputSchema = {
@@ -17952,7 +18996,17 @@ var workflowIdInputSchema = {
   additionalProperties: false,
   required: ["runId"],
   properties: {
-    runId: { type: "string", minLength: 1 }
+    runId: { type: "string", minLength: 1 },
+    detail: responseModeProperty
+  }
+};
+var convergenceIdInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["rootId"],
+  properties: {
+    rootId: { type: "string", minLength: 1 },
+    detail: responseModeProperty
   }
 };
 var updateCheckInputSchema = {
@@ -17967,6 +19021,20 @@ function asRecord(value) {
 }
 function integer2(value) {
   return typeof value === "number" && Number.isInteger(value) ? value : Number.NaN;
+}
+function responseMode(args, field) {
+  const value = args[field];
+  return value === void 0 || value === "full" ? "full" : value === "compact" ? "compact" : null;
+}
+function domainArguments(args, field) {
+  const result = { ...args };
+  delete result[field];
+  delete result._continuityBinding;
+  return result;
+}
+function projectResult(result, mode, project) {
+  if (mode === "full" || !result.ok || result.data === null) return result;
+  return { ...result, data: project(result.data) };
 }
 function toolResult(result) {
   const content = [
@@ -17991,7 +19059,7 @@ function invalidInput(message) {
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService()) {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} } }
@@ -18011,6 +19079,36 @@ function createMcpServer(service, updates) {
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
       {
+        name: "open_convergence_root",
+        description: "Create one durable immutable task lineage; use responseMode=compact to avoid echoing task and frame inputs.",
+        inputSchema: openConvergenceRootInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "claim_workflow_attempt",
+        description: "Issue a one-use lease after validating stability and attempt budget; taskEnvelope and frame may be omitted to reuse the bound root.",
+        inputSchema: attemptProposalInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "start_guarded_workflow",
+        description: "Atomically consume a lease and start its bound plan; plan may be omitted and responseMode=compact avoids returning the full receipt.",
+        inputSchema: guardedWorkflowStartInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "get_convergence_status",
+        description: "Read convergence state; detail=compact returns handles and counts, while the default full mode includes complete history.",
+        inputSchema: convergenceIdInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "resolve_convergence_gate",
+        description: "Record a fresh independent frame review; use responseMode=compact to return handles and counts only.",
+        inputSchema: resolveConvergenceGateInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+      },
+      {
         name: "start_workflow",
         description: "Create a durable running run from a ready orchestrated workflow plan.",
         inputSchema: contractSchemas.workflowPlan,
@@ -18018,27 +19116,57 @@ function createMcpServer(service, updates) {
       },
       {
         name: "record_stage_result",
-        description: "Record one ordered stage result after validating its revision and declared verified evidence obligations.",
-        inputSchema: contractSchemas.stageResult,
+        description: "Record one ordered stage result; use responseMode=compact to avoid echoing the accumulated receipt.",
+        inputSchema: recordStageResultInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "get_workflow_status",
-        description: "Read the current persisted run receipt.",
+        description: "Read workflow state; detail=compact returns fixed-size progress metadata, while the default full mode returns the receipt.",
         inputSchema: workflowIdInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "finalize_workflow",
-        description: "Mark a running workflow passed only after every stage, declared required artifact, blocker, and mandatory audit gate passes.",
+        description: "Finalize a fully passed workflow; use responseMode=compact to avoid returning the full terminal receipt.",
         inputSchema: revisionInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "abort_workflow",
-        description: "Abort a non-terminal persisted workflow using optimistic revision control.",
+        description: "Abort a non-terminal workflow; use responseMode=compact to avoid returning the full terminal receipt.",
         inputSchema: revisionInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false }
+      },
+      {
+        name: "checkpoint_context",
+        description: "Replace the current direct-task continuity snapshot using CAS and an idempotent requestId; nextActions remain historical candidates.",
+        inputSchema: contractSchemas.checkpointContextRequest,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "inspect_context",
+        description: "Inspect continuity metadata and obtain an opaque restore candidate without returning snapshot body text.",
+        inputSchema: contractSchemas.inspectContextRequest,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "load_context",
+        description: "Explicitly load a restore candidate after rechecking its task, epoch, revision, and digest.",
+        inputSchema: contractSchemas.loadContextRequest,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "suppress_context_restore",
+        description: "Suppress automatic restore candidates for the current epoch without deleting stored payloads.",
+        inputSchema: contractSchemas.suppressContextRestoreRequest,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "purge_direct_context",
+        description: "Delete the current direct-task payload and retain only a hash tombstone; workflow receipts are never deleted.",
+        inputSchema: contractSchemas.purgeDirectContextRequest,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: true, openWorldHint: false }
       }
     ]
   }));
@@ -18059,20 +19187,112 @@ function createMcpServer(service, updates) {
         case "plan_workflow":
           result = service.planWorkflow(args);
           break;
+        case "open_convergence_root":
+          {
+            const mode = responseMode(args, "responseMode");
+            if (mode === null) {
+              result = invalidInput("responseMode must be compact or full.");
+            } else {
+              const opened = service.openConvergenceRoot(domainArguments(args, "responseMode"));
+              if (opened.ok && opened.data) continuity.bindOpenedRoot(args, opened.data.rootId);
+              result = projectResult(
+                opened,
+                mode,
+                convergenceRootHandle
+              );
+            }
+          }
+          break;
+        case "claim_workflow_attempt":
+          result = service.claimWorkflowAttempt(args);
+          break;
+        case "start_guarded_workflow":
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null ? invalidInput("responseMode must be compact or full.") : projectResult(
+              service.startGuardedWorkflow(domainArguments(args, "responseMode")),
+              mode,
+              workflowStatusSummary
+            );
+          }
+          break;
+        case "get_convergence_status":
+          {
+            const mode = responseMode(args, "detail");
+            result = mode === null ? invalidInput("detail must be compact or full.") : projectResult(
+              service.getConvergenceStatus(String(args.rootId ?? "")),
+              mode,
+              convergenceStatusSummary
+            );
+          }
+          break;
+        case "resolve_convergence_gate":
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null ? invalidInput("responseMode must be compact or full.") : projectResult(
+              service.resolveConvergenceGate(domainArguments(args, "responseMode")),
+              mode,
+              convergenceStatusSummary
+            );
+          }
+          break;
         case "start_workflow":
-          result = service.startWorkflow(args);
+          result = service.rejectUnguardedWorkflow(args);
           break;
         case "record_stage_result":
-          result = service.recordStageResult(args);
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null ? invalidInput("responseMode must be compact or full.") : projectResult(
+              service.recordStageResult(domainArguments(args, "responseMode")),
+              mode,
+              workflowStatusSummary
+            );
+          }
           break;
         case "get_workflow_status":
-          result = service.getWorkflowStatus(String(args.runId ?? ""));
+          {
+            const mode = responseMode(args, "detail");
+            result = mode === null ? invalidInput("detail must be compact or full.") : projectResult(
+              service.getWorkflowStatus(String(args.runId ?? "")),
+              mode,
+              workflowStatusSummary
+            );
+          }
           break;
         case "finalize_workflow":
-          result = service.finalizeWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision));
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null ? invalidInput("responseMode must be compact or full.") : projectResult(
+              service.finalizeWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision)),
+              mode,
+              workflowStatusSummary
+            );
+          }
           break;
         case "abort_workflow":
-          result = service.abortWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision));
+          {
+            const mode = responseMode(args, "responseMode");
+            result = mode === null ? invalidInput("responseMode must be compact or full.") : projectResult(
+              service.abortWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision)),
+              mode,
+              workflowStatusSummary
+            );
+          }
+          break;
+        case "checkpoint_context":
+          result = continuity.checkpointContext(args);
+          break;
+        case "inspect_context":
+          result = continuity.inspectContext(args);
+          break;
+        case "load_context":
+          result = continuity.loadContext(args);
+          break;
+        case "suppress_context_restore":
+          result = continuity.suppressContextRestore(args);
+          break;
+        case "purge_direct_context":
+          result = continuity.purgeDirectContext(args);
           break;
         default:
           result = {
@@ -18406,9 +19626,9 @@ var PluginUpdateService = class {
 };
 
 // mcp-server/src/sqlite-workflow-store.ts
-import { chmodSync, mkdirSync } from "node:fs";
-import path4 from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { chmodSync as chmodSync2, mkdirSync as mkdirSync2 } from "node:fs";
+import path6 from "node:path";
+import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 
 // mcp-server/src/plugin-update-store.ts
 function clone2(value) {
@@ -18450,7 +19670,7 @@ function mergePluginUpdateState(existing, incoming) {
 }
 
 // mcp-server/src/sqlite-workflow-store.ts
-var SCHEMA_VERSION = 2;
+var SCHEMA_VERSION2 = 3;
 var SqliteWorkflowStore = class {
   constructor(databasePath) {
     this.databasePath = databasePath;
@@ -18458,18 +19678,18 @@ var SqliteWorkflowStore = class {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
     }
     if (databasePath !== ":memory:") {
-      mkdirSync(path4.dirname(path4.resolve(databasePath)), { recursive: true, mode: 448 });
+      mkdirSync2(path6.dirname(path6.resolve(databasePath)), { recursive: true, mode: 448 });
     }
     let openedDatabase = null;
     try {
-      openedDatabase = new DatabaseSync(databasePath);
+      openedDatabase = new DatabaseSync2(databasePath);
       this.database = openedDatabase;
       this.database.exec("PRAGMA busy_timeout = 5000;");
       this.database.exec("PRAGMA synchronous = FULL;");
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       if (databasePath !== ":memory:" && process.platform !== "win32") {
-        chmodSync(path4.resolve(databasePath), 384);
+        chmodSync2(path6.resolve(databasePath), 384);
       }
     } catch (cause) {
       try {
@@ -18556,22 +19776,283 @@ var SqliteWorkflowStore = class {
       throw this.storageError("Cannot read the workflow run.", cause, { runId });
     }
   }
-  updateRun(receipt, expectedRevision) {
+  updateRun(receipt, expectedRevision, convergence) {
     try {
-      const result = this.database.prepare(`
-        UPDATE workflow_runs
-        SET revision = ?, receipt_json = ?, updated_at = ?
-        WHERE run_id = ? AND revision = ?
-      `).run(
-        receipt.revision,
-        JSON.stringify(receipt),
-        (/* @__PURE__ */ new Date()).toISOString(),
-        receipt.runId,
-        expectedRevision
-      );
-      return Number(result.changes) === 1;
+      return this.transaction(() => {
+        const result = this.database.prepare(`
+          UPDATE workflow_runs
+          SET revision = ?, receipt_json = ?, updated_at = ?
+          WHERE run_id = ? AND revision = ?
+        `).run(
+          receipt.revision,
+          JSON.stringify(receipt),
+          (/* @__PURE__ */ new Date()).toISOString(),
+          receipt.runId,
+          expectedRevision
+        );
+        if (Number(result.changes) !== 1) return false;
+        if (!convergence) return true;
+        const rootUpdate = this.database.prepare(`
+          UPDATE convergence_roots
+          SET revision = ?, state = ?, root_json = ?, updated_at = ?
+          WHERE root_id = ? AND revision = ?
+        `).run(
+          convergence.root.revision,
+          convergence.root.state,
+          JSON.stringify(convergence.root),
+          convergence.root.updatedAt,
+          convergence.root.rootId,
+          convergence.expectedRootRevision
+        );
+        if (Number(rootUpdate.changes) !== 1) throw new WorkflowContractError("STALE_REVISION", "Convergence root changed while recording the workflow outcome.");
+        const attemptUpdate = this.database.prepare(`
+          UPDATE convergence_attempts
+          SET state = ?, outcome_json = ?, updated_at = ?
+          WHERE run_id = ? AND outcome_json IS NULL
+        `).run(
+          convergence.outcome.state,
+          JSON.stringify(convergence.outcome),
+          convergence.outcome.recordedAt,
+          receipt.runId
+        );
+        if (Number(attemptUpdate.changes) !== 1) throw new WorkflowContractError("LEASE_CONFLICT", "Guarded attempt outcome was already recorded or is missing.", { runId: receipt.runId });
+        return true;
+      });
     } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
       throw this.storageError("Cannot update the workflow run.", cause, { runId: receipt.runId });
+    }
+  }
+  insertConvergenceRoot(root) {
+    try {
+      return this.transaction(() => {
+        const rows = this.database.prepare(`
+          SELECT root_json, revision FROM convergence_roots
+          WHERE state NOT IN ('completed', 'abandoned')
+            AND (workspace_id = ? OR workspace_locator = ?)
+        `).all(root.frame.workspace.workspaceId, normalizeWorkspaceLocator(root.frame.workspace.locator));
+        for (const row of rows) {
+          const existing = JSON.parse(row.root_json);
+          if (root.parentRootId === existing.rootId) continue;
+          if (rootsOverlap(root, existing)) return existing;
+        }
+        if (root.parentRootId) {
+          const row = this.database.prepare(`SELECT root_json, revision FROM convergence_roots WHERE root_id = ?`).get(root.parentRootId);
+          if (!row) throw new WorkflowContractError("INVALID_INPUT", "Parent convergence root was not found.", { rootId: root.parentRootId });
+          const parent = JSON.parse(row.root_json);
+          parent.state = "abandoned";
+          parent.revision += 1;
+          parent.updatedAt = root.createdAt;
+          this.database.prepare(`
+            UPDATE convergence_roots SET revision = ?, state = ?, root_json = ?, updated_at = ?
+            WHERE root_id = ? AND revision = ?
+          `).run(parent.revision, parent.state, JSON.stringify(parent), parent.updatedAt, parent.rootId, row.revision);
+        }
+        this.database.prepare(`
+          INSERT INTO convergence_roots (root_id, revision, state, workspace_id, workspace_locator, root_json, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          root.rootId,
+          root.revision,
+          root.state,
+          root.frame.workspace.workspaceId,
+          normalizeWorkspaceLocator(root.frame.workspace.locator),
+          JSON.stringify(root),
+          root.createdAt,
+          root.updatedAt
+        );
+        this.database.prepare(`
+          INSERT INTO convergence_epochs (root_id, epoch, frame_digest, created_at)
+          VALUES (?, ?, ?, ?)
+        `).run(root.rootId, root.currentEpoch, root.frameDigest, root.createdAt);
+        return null;
+      });
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError("Cannot persist the convergence root.", cause, { rootId: root.rootId });
+    }
+  }
+  getConvergenceSnapshot(rootId) {
+    try {
+      return this.readTransaction(() => {
+        const rootRow = this.database.prepare(`SELECT root_json, revision FROM convergence_roots WHERE root_id = ?`).get(rootId);
+        if (!rootRow) return null;
+        const leases = this.database.prepare(`SELECT lease_json, proposal_json FROM convergence_leases WHERE root_id = ? ORDER BY epoch, ordinal, issued_at`).all(rootId);
+        const outcomes = this.database.prepare(`SELECT outcome_json FROM convergence_attempts WHERE root_id = ? AND outcome_json IS NOT NULL ORDER BY epoch, ordinal`).all(rootId);
+        const reviews = this.database.prepare(`SELECT review_json FROM convergence_reviews WHERE root_id = ? ORDER BY reviewed_at, review_id`).all(rootId);
+        const links = this.database.prepare(`SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY epoch, ordinal`).all(rootId);
+        return {
+          root: JSON.parse(rootRow.root_json),
+          proposals: leases.map((row) => JSON.parse(row.proposal_json)),
+          leases: leases.map((row) => JSON.parse(row.lease_json)),
+          outcomes: outcomes.map((row) => JSON.parse(row.outcome_json)),
+          reviews: reviews.map((row) => JSON.parse(row.review_json)),
+          workflowRunIds: links.map((row) => row.run_id)
+        };
+      });
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError("Cannot read convergence state.", cause, { rootId });
+    }
+  }
+  updateConvergenceRoot(root, expectedRevision, review) {
+    try {
+      return this.transaction(() => {
+        const current = this.database.prepare(`SELECT root_json, revision FROM convergence_roots WHERE root_id = ?`).get(root.rootId);
+        if (!current || current.revision !== expectedRevision) return false;
+        const previous = JSON.parse(current.root_json);
+        const result = this.database.prepare(`
+          UPDATE convergence_roots SET revision = ?, state = ?, root_json = ?, updated_at = ?
+          WHERE root_id = ? AND revision = ?
+        `).run(root.revision, root.state, JSON.stringify(root), root.updatedAt, root.rootId, expectedRevision);
+        if (Number(result.changes) !== 1) return false;
+        if (root.currentEpoch !== previous.currentEpoch) {
+          this.database.prepare(`
+            INSERT INTO convergence_epochs (root_id, epoch, frame_digest, created_at)
+            VALUES (?, ?, ?, ?)
+          `).run(root.rootId, root.currentEpoch, root.frameDigest, root.updatedAt);
+        }
+        if (review) {
+          this.database.prepare(`
+            INSERT INTO convergence_reviews (review_id, root_id, epoch, review_json, reviewed_at)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(review.reviewId, review.rootId, review.epoch, JSON.stringify(review), review.reviewedAt);
+        }
+        return true;
+      });
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError("Cannot update the convergence root.", cause, { rootId: root.rootId });
+    }
+  }
+  insertAttemptLease(root, expectedRevision, proposal, lease) {
+    try {
+      return this.transaction(() => {
+        const result = this.database.prepare(`
+          UPDATE convergence_roots SET revision = ?, state = ?, root_json = ?, updated_at = ?
+          WHERE root_id = ? AND revision = ?
+        `).run(root.revision, root.state, JSON.stringify(root), root.updatedAt, root.rootId, expectedRevision);
+        if (Number(result.changes) !== 1) return false;
+        this.database.prepare(`
+          INSERT INTO convergence_leases (
+            lease_id, root_id, root_revision, epoch, ordinal, state, lease_json, proposal_json, issued_at, expires_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          lease.leaseId,
+          lease.rootId,
+          lease.rootRevision,
+          lease.epoch,
+          lease.ordinal,
+          lease.state,
+          JSON.stringify(lease),
+          JSON.stringify(proposal),
+          lease.issuedAt,
+          lease.expiresAt
+        );
+        return true;
+      });
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      if (this.isLeaseContention(cause)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The convergence database is busy; read status before retrying the lease claim.", {
+          rootId: root.rootId
+        });
+      }
+      throw this.storageError("Cannot claim the convergence attempt lease.", cause, { rootId: root.rootId });
+    }
+  }
+  expireAttemptLease(leaseId) {
+    try {
+      return this.transaction(() => {
+        const row = this.database.prepare(`SELECT lease_json, proposal_json FROM convergence_leases WHERE lease_id = ?`).get(leaseId);
+        if (!row) return false;
+        const lease = JSON.parse(row.lease_json);
+        if (lease.state !== "issued") return false;
+        lease.state = "expired";
+        const result = this.database.prepare(`
+          UPDATE convergence_leases SET state = 'expired', lease_json = ? WHERE lease_id = ? AND state = 'issued'
+        `).run(JSON.stringify(lease), leaseId);
+        return Number(result.changes) === 1;
+      });
+    } catch (cause) {
+      throw this.storageError("Cannot expire the convergence attempt lease.", cause, { leaseId });
+    }
+  }
+  getAttemptLease(leaseId) {
+    try {
+      const row = this.database.prepare(`SELECT lease_json, proposal_json FROM convergence_leases WHERE lease_id = ?`).get(leaseId);
+      if (!row) return null;
+      const lease = JSON.parse(row.lease_json);
+      const proposal = JSON.parse(row.proposal_json);
+      const rootRow = this.database.prepare(`SELECT root_json, revision FROM convergence_roots WHERE root_id = ?`).get(lease.rootId);
+      if (!rootRow) return null;
+      return { root: JSON.parse(rootRow.root_json), proposal, lease };
+    } catch (cause) {
+      throw this.storageError("Cannot read the convergence attempt lease.", cause, { leaseId });
+    }
+  }
+  insertGuardedRun(receipt, leaseId, expectedRootRevision, consumedAt) {
+    try {
+      return this.transaction(() => {
+        const leaseRow = this.database.prepare(`SELECT lease_json, proposal_json FROM convergence_leases WHERE lease_id = ?`).get(leaseId);
+        if (!leaseRow) return null;
+        const lease = JSON.parse(leaseRow.lease_json);
+        const proposal = JSON.parse(leaseRow.proposal_json);
+        if (lease.state !== "issued" || lease.rootRevision !== expectedRootRevision || Date.parse(lease.expiresAt) <= Date.parse(consumedAt)) return null;
+        const rootRow = this.database.prepare(`SELECT root_json, revision FROM convergence_roots WHERE root_id = ?`).get(lease.rootId);
+        if (!rootRow || rootRow.revision !== expectedRootRevision) return null;
+        const root = JSON.parse(rootRow.root_json);
+        lease.state = "consumed";
+        const leaseUpdate = this.database.prepare(`
+          UPDATE convergence_leases SET state = 'consumed', lease_json = ?
+          WHERE lease_id = ? AND state = 'issued'
+        `).run(JSON.stringify(lease), leaseId);
+        if (Number(leaseUpdate.changes) !== 1) return null;
+        root.revision += 1;
+        root.updatedAt = consumedAt;
+        const rootUpdate = this.database.prepare(`
+          UPDATE convergence_roots SET revision = ?, root_json = ?, updated_at = ?
+          WHERE root_id = ? AND revision = ?
+        `).run(root.revision, JSON.stringify(root), root.updatedAt, root.rootId, expectedRootRevision);
+        if (Number(rootUpdate.changes) !== 1) return null;
+        this.database.prepare(`
+          INSERT INTO workflow_runs (run_id, revision, receipt_json, updated_at) VALUES (?, ?, ?, ?)
+        `).run(receipt.runId, receipt.revision, JSON.stringify(receipt), consumedAt);
+        this.database.prepare(`
+          INSERT INTO convergence_attempts (
+            root_id, epoch, ordinal, lease_id, run_id, state, outcome_json, started_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, 'running', NULL, ?, ?)
+        `).run(root.rootId, lease.epoch, lease.ordinal, lease.leaseId, receipt.runId, consumedAt, consumedAt);
+        this.database.prepare(`
+          INSERT INTO workflow_attempt_links (run_id, root_id, lease_id, epoch, ordinal)
+          VALUES (?, ?, ?, ?, ?)
+        `).run(receipt.runId, root.rootId, lease.leaseId, lease.epoch, lease.ordinal);
+        return { root, proposal, lease, outcome: null };
+      });
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      if (this.isLeaseContention(cause)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The convergence database is busy or the lease was consumed concurrently.", { leaseId });
+      }
+      throw this.storageError("Cannot start the guarded workflow run.", cause, { leaseId });
+    }
+  }
+  getGuardedRunBinding(runId) {
+    try {
+      const link = this.database.prepare(`SELECT root_id, lease_id FROM workflow_attempt_links WHERE run_id = ?`).get(runId);
+      if (!link) return null;
+      const rootRow = this.database.prepare(`SELECT root_json, revision FROM convergence_roots WHERE root_id = ?`).get(link.root_id);
+      const leaseRow = this.database.prepare(`SELECT lease_json, proposal_json FROM convergence_leases WHERE lease_id = ?`).get(link.lease_id);
+      const outcomeRow = this.database.prepare(`SELECT outcome_json FROM convergence_attempts WHERE run_id = ?`).get(runId);
+      if (!rootRow || !leaseRow) return null;
+      return {
+        root: JSON.parse(rootRow.root_json),
+        proposal: JSON.parse(leaseRow.proposal_json),
+        lease: JSON.parse(leaseRow.lease_json),
+        outcome: outcomeRow?.outcome_json ? JSON.parse(outcomeRow.outcome_json) : null
+      };
+    } catch (cause) {
+      throw this.storageError("Cannot read the guarded workflow binding.", cause, { runId });
     }
   }
   getPluginUpdateState(targetId) {
@@ -18669,10 +20150,10 @@ var SqliteWorkflowStore = class {
   }
   initializeSchema() {
     const row = this.database.prepare("PRAGMA user_version").get();
-    if (row.user_version > SCHEMA_VERSION) {
+    if (row.user_version > SCHEMA_VERSION2) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database schema is newer than this server supports.", {
         databasePath: this.databasePath,
-        supportedVersion: SCHEMA_VERSION,
+        supportedVersion: SCHEMA_VERSION2,
         actualVersion: row.user_version
       });
     }
@@ -18707,7 +20188,69 @@ var SqliteWorkflowStore = class {
             OR last_error_code IN ('TIMEOUT', 'NETWORK', 'HTTP', 'INVALID_RESPONSE', 'NO_STABLE_TAG')
           )
         ) STRICT;
-        PRAGMA user_version = ${SCHEMA_VERSION};
+        CREATE TABLE IF NOT EXISTS convergence_roots (
+          root_id TEXT PRIMARY KEY,
+          revision INTEGER NOT NULL CHECK (revision >= 0),
+          state TEXT NOT NULL CHECK (state IN ('open', 'needs-review', 'needs-user', 'completed', 'abandoned')),
+          workspace_id TEXT NOT NULL,
+          workspace_locator TEXT NOT NULL,
+          root_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        ) STRICT;
+        CREATE INDEX IF NOT EXISTS convergence_active_roots_by_workspace
+          ON convergence_roots(workspace_id, state);
+        CREATE INDEX IF NOT EXISTS convergence_active_roots_by_locator
+          ON convergence_roots(workspace_locator, state);
+        CREATE TABLE IF NOT EXISTS convergence_epochs (
+          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
+          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
+          frame_digest TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          PRIMARY KEY (root_id, epoch)
+        ) STRICT;
+        CREATE TABLE IF NOT EXISTS convergence_leases (
+          lease_id TEXT PRIMARY KEY,
+          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
+          root_revision INTEGER NOT NULL CHECK (root_revision >= 0),
+          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
+          ordinal INTEGER NOT NULL CHECK (ordinal >= 1 AND ordinal <= 3),
+          state TEXT NOT NULL CHECK (state IN ('issued', 'consumed', 'expired')),
+          lease_json TEXT NOT NULL,
+          proposal_json TEXT NOT NULL,
+          issued_at TEXT NOT NULL,
+          expires_at TEXT NOT NULL,
+          UNIQUE (root_id, epoch, ordinal, lease_id)
+        ) STRICT;
+        CREATE UNIQUE INDEX IF NOT EXISTS convergence_one_issued_lease
+          ON convergence_leases(root_id) WHERE state = 'issued';
+        CREATE TABLE IF NOT EXISTS convergence_attempts (
+          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
+          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
+          ordinal INTEGER NOT NULL CHECK (ordinal >= 1 AND ordinal <= 3),
+          lease_id TEXT NOT NULL UNIQUE REFERENCES convergence_leases(lease_id),
+          run_id TEXT NOT NULL UNIQUE REFERENCES workflow_runs(run_id),
+          state TEXT NOT NULL CHECK (state IN ('running', 'passed', 'failed', 'aborted')),
+          outcome_json TEXT,
+          started_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          PRIMARY KEY (root_id, epoch, ordinal)
+        ) STRICT;
+        CREATE TABLE IF NOT EXISTS convergence_reviews (
+          review_id TEXT PRIMARY KEY,
+          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
+          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
+          review_json TEXT NOT NULL,
+          reviewed_at TEXT NOT NULL
+        ) STRICT;
+        CREATE TABLE IF NOT EXISTS workflow_attempt_links (
+          run_id TEXT PRIMARY KEY REFERENCES workflow_runs(run_id),
+          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
+          lease_id TEXT NOT NULL UNIQUE REFERENCES convergence_leases(lease_id),
+          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
+          ordinal INTEGER NOT NULL CHECK (ordinal >= 1 AND ordinal <= 3)
+        ) STRICT;
+        PRAGMA user_version = ${SCHEMA_VERSION2};
       `);
     });
   }
@@ -18749,6 +20292,24 @@ var SqliteWorkflowStore = class {
       throw cause;
     }
   }
+  readTransaction(operation) {
+    this.database.exec("BEGIN;");
+    try {
+      const result = operation();
+      this.database.exec("COMMIT;");
+      return result;
+    } catch (cause) {
+      try {
+        this.database.exec("ROLLBACK;");
+      } catch {
+      }
+      throw cause;
+    }
+  }
+  isLeaseContention(cause) {
+    const message = cause instanceof Error ? cause.message : String(cause);
+    return /database is locked|SQLITE_BUSY|UNIQUE constraint failed: convergence_leases/iu.test(message);
+  }
   storageError(message, cause, details = {}) {
     return new WorkflowContractError("INVALID_INPUT", message, {
       ...details,
@@ -18759,7 +20320,7 @@ var SqliteWorkflowStore = class {
 };
 
 // mcp-server/src/workflow-service.ts
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac as createHmac2, randomUUID, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
 
 // mcp-server/src/decision-record-validator.ts
 import { isDeepStrictEqual } from "node:util";
@@ -18845,9 +20406,9 @@ function validateDecisionRecordSemantics(record2) {
     worker && worker.classification === "judge" && worker.is_judge === true && worker.instantiated === true && worker.status === "completed" && worker.blind_round1 === false && worker.context_isolated === true && isDeepStrictEqual(participated(worker), ["final_judge"])
   );
   const failures = array2(run.failures).map(object3);
-  const failureIds = failures.map((failure) => failure.worker_id).filter((id) => typeof id === "string");
+  const failureIds = failures.map((failure2) => failure2.worker_id).filter((id) => typeof id === "string");
   const declaredFailed = new Set([...workerById].filter(([, worker]) => worker.status === "failed").map(([id]) => id));
-  if (!duplicateFree(failureIds) || !sameValues(new Set(failureIds), declaredFailed) || failures.some((failure) => !nonempty(failure.reason))) {
+  if (!duplicateFree(failureIds) || !sameValues(new Set(failureIds), declaredFailed) || failures.some((failure2) => !nonempty(failure2.reason))) {
     errors.push("run.failures must exactly identify failed workers with reasons");
   }
   const completedIds = stringArray(run.completed_worker_ids);
@@ -19299,7 +20860,7 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
 }
 
 // mcp-server/src/workflow-store.ts
-import { randomBytes } from "node:crypto";
+import { randomBytes as randomBytes2 } from "node:crypto";
 var PLAN_SIGNING_KEY = "plan-signing-key";
 function clone3(value) {
   return JSON.parse(JSON.stringify(value));
@@ -19307,6 +20868,8 @@ function clone3(value) {
 var InMemoryWorkflowStore = class {
   runs = /* @__PURE__ */ new Map();
   secrets = /* @__PURE__ */ new Map();
+  convergence = /* @__PURE__ */ new Map();
+  guardedRuns = /* @__PURE__ */ new Map();
   runSequence = 0;
   getOrCreateSecret(name, create) {
     const existing = this.secrets.get(name);
@@ -19329,20 +20892,127 @@ var InMemoryWorkflowStore = class {
     const receipt = this.runs.get(runId);
     return receipt ? clone3(receipt) : null;
   }
-  updateRun(receipt, expectedRevision) {
+  updateRun(receipt, expectedRevision, convergence) {
     const current = this.runs.get(receipt.runId);
     if (!current || current.revision !== expectedRevision) return false;
+    if (convergence) {
+      const snapshot = this.convergence.get(convergence.root.rootId);
+      if (!snapshot || snapshot.root.revision !== convergence.expectedRootRevision) return false;
+      if (snapshot.outcomes.some((item) => item.workflowRunId === receipt.runId)) return false;
+      snapshot.root = clone3(convergence.root);
+      snapshot.outcomes.push(clone3(convergence.outcome));
+    }
     this.runs.set(receipt.runId, clone3(receipt));
     return true;
   }
+  insertConvergenceRoot(root) {
+    if (this.convergence.has(root.rootId)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Convergence root already exists.", { rootId: root.rootId });
+    }
+    for (const snapshot of this.convergence.values()) {
+      if (["completed", "abandoned"].includes(snapshot.root.state)) continue;
+      if (root.parentRootId === snapshot.root.rootId) continue;
+      if (rootsOverlap(root, snapshot.root)) return clone3(snapshot.root);
+    }
+    if (root.parentRootId) {
+      const parent = this.convergence.get(root.parentRootId);
+      if (!parent) throw new WorkflowContractError("INVALID_INPUT", "Parent convergence root was not found.", { rootId: root.parentRootId });
+      parent.root.state = "abandoned";
+      parent.root.revision += 1;
+      parent.root.updatedAt = root.createdAt;
+    }
+    this.convergence.set(root.rootId, {
+      root: clone3(root),
+      proposals: [],
+      leases: [],
+      outcomes: [],
+      reviews: [],
+      workflowRunIds: []
+    });
+    return null;
+  }
+  getConvergenceSnapshot(rootId) {
+    const snapshot = this.convergence.get(rootId);
+    return snapshot ? clone3(snapshot) : null;
+  }
+  updateConvergenceRoot(root, expectedRevision, review) {
+    const snapshot = this.convergence.get(root.rootId);
+    if (!snapshot || snapshot.root.revision !== expectedRevision) return false;
+    snapshot.root = clone3(root);
+    if (review) snapshot.reviews.push(clone3(review));
+    return true;
+  }
+  insertAttemptLease(root, expectedRevision, proposal, lease) {
+    const snapshot = this.convergence.get(root.rootId);
+    if (!snapshot || snapshot.root.revision !== expectedRevision) return false;
+    if (snapshot.leases.some((item) => item.state === "issued")) return false;
+    if (snapshot.leases.some((item) => item.leaseId === lease.leaseId)) return false;
+    snapshot.root = clone3(root);
+    snapshot.proposals.push(clone3(proposal));
+    snapshot.leases.push(clone3(lease));
+    return true;
+  }
+  expireAttemptLease(leaseId) {
+    for (const snapshot of this.convergence.values()) {
+      const lease = snapshot.leases.find((item) => item.leaseId === leaseId);
+      if (!lease || lease.state !== "issued") continue;
+      lease.state = "expired";
+      return true;
+    }
+    return false;
+  }
+  getAttemptLease(leaseId) {
+    for (const snapshot of this.convergence.values()) {
+      const lease = snapshot.leases.find((item) => item.leaseId === leaseId);
+      const proposal = snapshot.proposals.find((item) => convergenceDigest(item) === lease?.proposalDigest);
+      if (lease && proposal) return { root: clone3(snapshot.root), proposal: clone3(proposal), lease: clone3(lease) };
+    }
+    return null;
+  }
+  insertGuardedRun(receipt, leaseId, expectedRootRevision, consumedAt) {
+    if (this.runs.has(receipt.runId)) return null;
+    for (const snapshot of this.convergence.values()) {
+      const lease = snapshot.leases.find((item) => item.leaseId === leaseId);
+      if (!lease || lease.state !== "issued" || snapshot.root.revision !== expectedRootRevision) continue;
+      if (Date.parse(lease.expiresAt) <= Date.parse(consumedAt)) return null;
+      const proposal = snapshot.proposals.find((item) => convergenceDigest(item) === lease.proposalDigest);
+      if (!proposal) return null;
+      lease.state = "consumed";
+      snapshot.root.revision += 1;
+      snapshot.root.updatedAt = consumedAt;
+      snapshot.workflowRunIds.push(receipt.runId);
+      this.runs.set(receipt.runId, clone3(receipt));
+      this.guardedRuns.set(receipt.runId, { rootId: snapshot.root.rootId, leaseId });
+      return { root: clone3(snapshot.root), proposal: clone3(proposal), lease: clone3(lease), outcome: null };
+    }
+    return null;
+  }
+  getGuardedRunBinding(runId) {
+    const binding = this.guardedRuns.get(runId);
+    if (!binding) return null;
+    const snapshot = this.convergence.get(binding.rootId);
+    if (!snapshot) return null;
+    const lease = snapshot.leases.find((item) => item.leaseId === binding.leaseId);
+    const proposal = snapshot.proposals.find((item) => convergenceDigest(item) === lease?.proposalDigest);
+    if (!lease || !proposal) return null;
+    return {
+      root: clone3(snapshot.root),
+      proposal: clone3(proposal),
+      lease: clone3(lease),
+      outcome: clone3(snapshot.outcomes.find((item) => item.workflowRunId === runId) ?? null)
+    };
+  }
 };
 function createPlanSigningKey() {
-  return randomBytes(32).toString("base64url");
+  return randomBytes2(32).toString("base64url");
 }
 
 // mcp-server/src/workflow-service.ts
 function clone4(value) {
   return JSON.parse(JSON.stringify(value));
+}
+function asRecord2(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
 function apiOk2(data) {
   return { schemaVersion: CONTRACT_VERSION, ok: true, data, error: null };
@@ -19359,16 +21029,16 @@ var KOREAN_PROSE_CAPABILITIES = [
   "korean-prose-verification",
   "korean-prose-finalization"
 ];
-function canonicalJson(value) {
+function canonicalJson2(value) {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
     if (!Number.isFinite(value)) throw new WorkflowContractError("INVALID_INPUT", "Plan contains a non-finite number.");
     return JSON.stringify(value);
   }
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (Array.isArray(value)) return `[${value.map(canonicalJson2).join(",")}]`;
   if (value && typeof value === "object") {
     const record2 = value;
-    return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record2[key])}`).join(",")}}`;
+    return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson2(record2[key])}`).join(",")}}`;
   }
   throw new WorkflowContractError("INVALID_INPUT", "Plan contains a non-serializable value.");
 }
@@ -19399,6 +21069,367 @@ var WorkflowService = class {
       return apiError(this.toErrorBody(error2));
     }
   }
+  openConvergenceRoot(rawRequest) {
+    try {
+      const request = this.validator.openConvergenceRootRequest(rawRequest);
+      this.validateWorkUnitGraph(request.taskEnvelope);
+      this.assertConvergenceFrame(request.frame);
+      if (!request.taskEnvelope.orchestration.requested || !request.taskEnvelope.orchestration.mcpAvailable) {
+        throw new WorkflowContractError("INVALID_INPUT", "Convergence roots require an MCP-backed orchestrated task.");
+      }
+      if (request.parentRootId && request.userApprovalRefs.length === 0) {
+        throw new WorkflowContractError("INVALID_INPUT", "Replacing a convergence root requires user approval evidence.", {
+          parentRootId: request.parentRootId
+        });
+      }
+      if (request.parentRootId) {
+        const parent = this.requireConvergenceSnapshot(request.parentRootId).root;
+        if (!["needs-review", "needs-user"].includes(parent.state)) {
+          throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root may be replaced.", {
+            parentRootId: parent.rootId,
+            parentState: parent.state
+          });
+        }
+        if (parent.frame.workspace.workspaceId !== request.frame.workspace.workspaceId || normalizeWorkspaceLocator(parent.frame.workspace.locator) !== normalizeWorkspaceLocator(request.frame.workspace.locator)) {
+          throw new WorkflowContractError("INVALID_INPUT", "A replacement root must remain bound to the same workspace.");
+        }
+      }
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const digests = this.convergenceDigests(request.taskEnvelope, request.frame);
+      const root = {
+        schemaVersion: CONTRACT_VERSION,
+        rootId: `root-${randomUUID()}`,
+        parentRootId: request.parentRootId,
+        revision: 0,
+        state: "open",
+        currentEpoch: 1,
+        taskEnvelope: clone4(request.taskEnvelope),
+        frame: clone4(request.frame),
+        ...digests,
+        userApprovalRefs: [...request.userApprovalRefs],
+        createdAt: now,
+        updatedAt: now
+      };
+      this.validator.convergenceRoot(root);
+      const conflicting = this.store.insertConvergenceRoot(root);
+      if (conflicting) {
+        throw new WorkflowContractError("ROOT_CONFLICT", "An active convergence root already covers this workspace scope.", {
+          rootId: conflicting.rootId,
+          workspaceId: conflicting.frame.workspace.workspaceId,
+          scope: conflicting.taskEnvelope.scope.included
+        });
+      }
+      return apiOk2(clone4(root));
+    } catch (error2) {
+      return apiError(this.toErrorBody(error2));
+    }
+  }
+  claimWorkflowAttempt(rawProposal) {
+    try {
+      const proposal = clone4(this.normalizeAttemptProposal(rawProposal));
+      this.assertPlanIntegrity(proposal.plan);
+      this.assertConvergenceFrame(proposal.frame);
+      if (proposal.plan.executionMode !== "orchestrated" || proposal.plan.state !== "ready") {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready orchestrated plan can claim an attempt lease.");
+      }
+      if (proposal.plan.taskId !== proposal.taskEnvelope.taskId) {
+        throw new WorkflowContractError("INVALID_INPUT", "Attempt task and workflow plan IDs do not match.");
+      }
+      if (proposal.plan.taskDigest !== convergenceDigest(proposal.taskEnvelope)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan is bound to a different task envelope.", {
+          rootId: proposal.rootId,
+          taskId: proposal.taskEnvelope.taskId
+        });
+      }
+      const expectedPlan = this.buildPlan(proposal.taskEnvelope, this.registry.read());
+      expectedPlan.integrityToken = this.signPlan(expectedPlan);
+      if (canonicalJson2(expectedPlan) !== canonicalJson2(proposal.plan)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan was not produced from the proposed task envelope.", {
+          rootId: proposal.rootId,
+          taskId: proposal.taskEnvelope.taskId
+        });
+      }
+      let snapshot = this.requireConvergenceSnapshot(proposal.rootId);
+      this.expireStaleLeases(snapshot);
+      snapshot = this.requireConvergenceSnapshot(proposal.rootId);
+      const root = snapshot.root;
+      if (snapshot.leases.some((lease2) => lease2.state === "issued")) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "A live attempt lease already exists for this convergence root.", {
+          rootId: root.rootId
+        });
+      }
+      if (proposal.expectedRevision !== root.revision) {
+        throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the convergence root.", {
+          expectedRevision: proposal.expectedRevision,
+          actualRevision: root.revision
+        });
+      }
+      const proposedDigests = this.convergenceDigests(proposal.taskEnvelope, proposal.frame);
+      const frameChanged = proposedDigests.taskDigest !== root.taskDigest || proposedDigests.workspaceDigest !== root.workspaceDigest || proposedDigests.controlDigest !== root.controlDigest || proposedDigests.operationalDigest !== root.operationalDigest || this.artifactRolesChanged(root.frame, proposal.frame);
+      if (frameChanged) {
+        if (root.state === "open") {
+          this.moveRootToReview(root, "The task or control frame changed before the next full attempt.");
+        }
+        throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "Task, control, workspace, operational, or artifact-role changes require independent review.", {
+          rootId: root.rootId,
+          expected: {
+            taskDigest: root.taskDigest,
+            workspaceDigest: root.workspaceDigest,
+            controlDigest: root.controlDigest,
+            operationalDigest: root.operationalDigest
+          },
+          proposed: proposedDigests
+        });
+      }
+      if (root.state !== "open") this.throwRootGate(root, snapshot);
+      const attempts = snapshot.leases.filter((lease2) => lease2.epoch === root.currentEpoch && lease2.state === "consumed");
+      if (attempts.length >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
+        this.moveRootToReview(root, "The convergence attempt budget is exhausted.");
+        throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Three full attempts have already started in this convergence epoch.", {
+          rootId: root.rootId,
+          epoch: root.currentEpoch,
+          attemptsUsed: attempts.length
+        });
+      }
+      const currentOutcomes = snapshot.outcomes.filter((outcome) => outcome.epoch === root.currentEpoch);
+      const latestOutcome = currentOutcomes.at(-1) ?? null;
+      if (currentOutcomes.length < attempts.length) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The previous full attempt is still active and must reach a terminal outcome before another lease can be claimed.", {
+          rootId: root.rootId,
+          epoch: root.currentEpoch
+        });
+      }
+      if (attempts.length === 0) {
+        if (proposal.priorFailure !== null) {
+          throw new WorkflowContractError("INVALID_INPUT", "The first attempt in an epoch must not claim a prior failure.");
+        }
+      } else {
+        if (!latestOutcome || latestOutcome.state === "passed") {
+          throw new WorkflowContractError("LEASE_CONFLICT", "The previous full attempt has not produced a retryable failure.", {
+            rootId: root.rootId
+          });
+        }
+        if (!proposal.priorFailure || proposal.priorFailure.fingerprint !== latestOutcome.failureFingerprint) {
+          throw new WorkflowContractError("NEW_EVIDENCE_REQUIRED", "A retry must bind the latest failure fingerprint and a discriminating hypothesis.", {
+            expectedFingerprint: latestOutcome.failureFingerprint
+          });
+        }
+        const priorLease = attempts.at(-1);
+        const priorProposal = snapshot.proposals.find((item) => convergenceDigest(item) === priorLease.proposalDigest);
+        const sameTarget = proposedDigests.targetDigest === priorLease.targetDigest;
+        const oldEvidence = new Set(priorProposal?.priorFailure?.evidenceRefs ?? []);
+        const hasNewEvidence = proposal.priorFailure.evidenceRefs.some((reference) => !oldEvidence.has(reference));
+        if (sameTarget && !hasNewEvidence) {
+          throw new WorkflowContractError("NEW_EVIDENCE_REQUIRED", "The proposed retry changes neither the target nor the observed evidence.", {
+            rootId: root.rootId,
+            route: "diagnose"
+          });
+        }
+      }
+      const now = /* @__PURE__ */ new Date();
+      const updatedRoot = clone4(root);
+      updatedRoot.revision += 1;
+      updatedRoot.updatedAt = now.toISOString();
+      const lease = {
+        schemaVersion: CONTRACT_VERSION,
+        leaseId: `lease-${randomUUID()}`,
+        rootId: root.rootId,
+        rootRevision: updatedRoot.revision,
+        epoch: root.currentEpoch,
+        ordinal: attempts.length + 1,
+        proposalDigest: convergenceDigest(proposal),
+        ...proposedDigests,
+        outputTargetsDigest: convergenceDigest(proposal.outputTargets),
+        planIntegrityToken: proposal.plan.integrityToken,
+        actorId: proposal.actorId,
+        outputTargets: [...proposal.outputTargets],
+        issuedAt: now.toISOString(),
+        expiresAt: new Date(now.getTime() + proposal.frame.operationalSettings.leaseTtlSeconds * 1e3).toISOString(),
+        state: "issued"
+      };
+      this.validator.attemptLease(lease);
+      if (!this.store.insertAttemptLease(updatedRoot, root.revision, proposal, lease)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The convergence root changed while the lease was being claimed.", {
+          rootId: root.rootId
+        });
+      }
+      return apiOk2(clone4(lease));
+    } catch (error2) {
+      return apiError(this.toErrorBody(error2));
+    }
+  }
+  startGuardedWorkflow(rawRequest) {
+    try {
+      const request = this.normalizeGuardedWorkflowStartRequest(rawRequest);
+      const plan = clone4(request.plan);
+      this.assertPlanIntegrity(plan);
+      if (plan.executionMode !== "orchestrated" || plan.state !== "ready") {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready orchestrated workflow can use a convergence lease.");
+      }
+      const binding = this.store.getAttemptLease(request.leaseId);
+      if (!binding || binding.lease.state !== "issued") {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is missing, expired, or already consumed.", { leaseId: request.leaseId });
+      }
+      if (Date.parse(binding.lease.expiresAt) <= Date.now()) {
+        this.store.expireAttemptLease(binding.lease.leaseId);
+        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease expired before workflow start.", { leaseId: request.leaseId });
+      }
+      if (request.expectedRootRevision !== binding.root.revision || request.expectedRootRevision !== binding.lease.rootRevision) {
+        throw new WorkflowContractError("STALE_REVISION", "The guarded start does not target the current convergence revision.", {
+          expectedRevision: request.expectedRootRevision,
+          actualRevision: binding.root.revision
+        });
+      }
+      if (plan.integrityToken !== binding.lease.planIntegrityToken || canonicalJson2(plan) !== canonicalJson2(binding.proposal.plan)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is bound to a different workflow plan.", { leaseId: request.leaseId });
+      }
+      const runId = `run-${plan.taskId}-${this.store.nextRunSequence()}`;
+      plan.state = "running";
+      this.setRunningStagePointers(plan);
+      const receipt = {
+        schemaVersion: CONTRACT_VERSION,
+        runId,
+        revision: 0,
+        state: "running",
+        plan,
+        stageResults: [],
+        blockers: [],
+        unresolved: [],
+        error: null
+      };
+      this.assertReceipt(receipt);
+      const started = this.store.insertGuardedRun(receipt, request.leaseId, request.expectedRootRevision, (/* @__PURE__ */ new Date()).toISOString());
+      if (!started) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease could not be consumed atomically.", { leaseId: request.leaseId });
+      }
+      return apiOk2(clone4(receipt));
+    } catch (error2) {
+      return apiError(this.toErrorBody(error2));
+    }
+  }
+  normalizeAttemptProposal(rawProposal) {
+    const candidate = asRecord2(rawProposal);
+    const hasTaskEnvelope = Object.hasOwn(candidate, "taskEnvelope");
+    const hasFrame = Object.hasOwn(candidate, "frame");
+    if (hasTaskEnvelope !== hasFrame) {
+      throw new WorkflowContractError("INVALID_INPUT", "Attempt proposal must provide both taskEnvelope and frame, or omit both.");
+    }
+    if (hasTaskEnvelope) return this.validator.attemptProposal(rawProposal);
+    const rootId = typeof candidate.rootId === "string" ? candidate.rootId : "";
+    const root = this.requireConvergenceSnapshot(rootId).root;
+    return this.validator.attemptProposal({
+      ...candidate,
+      taskEnvelope: clone4(root.taskEnvelope),
+      frame: clone4(root.frame)
+    });
+  }
+  normalizeGuardedWorkflowStartRequest(rawRequest) {
+    const candidate = asRecord2(rawRequest);
+    if (Object.hasOwn(candidate, "plan")) return this.validator.guardedWorkflowStartRequest(rawRequest);
+    const leaseId = typeof candidate.leaseId === "string" ? candidate.leaseId : "";
+    const binding = this.store.getAttemptLease(leaseId);
+    if (!binding) {
+      throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is missing, expired, or already consumed.", { leaseId });
+    }
+    return this.validator.guardedWorkflowStartRequest({
+      ...candidate,
+      plan: clone4(binding.proposal.plan)
+    });
+  }
+  getConvergenceStatus(rootId) {
+    try {
+      let snapshot = this.requireConvergenceSnapshot(rootId);
+      this.expireStaleLeases(snapshot);
+      snapshot = this.requireConvergenceSnapshot(rootId);
+      const status = this.buildConvergenceStatus(snapshot);
+      this.validator.convergenceStatus(status);
+      return apiOk2(clone4(status));
+    } catch (error2) {
+      return apiError(this.toErrorBody(error2));
+    }
+  }
+  resolveConvergenceGate(rawRequest) {
+    try {
+      const request = this.validator.resolveConvergenceGateRequest(rawRequest);
+      const review = clone4(request.review);
+      let snapshot = this.requireConvergenceSnapshot(request.rootId);
+      const root = snapshot.root;
+      if (request.expectedRevision !== root.revision || review.rootRevision !== root.revision) {
+        throw new WorkflowContractError("STALE_REVISION", "The convergence review does not target the current root revision.", {
+          expectedRevision: request.expectedRevision,
+          reviewRevision: review.rootRevision,
+          actualRevision: root.revision
+        });
+      }
+      if (review.rootId !== root.rootId || review.epoch !== root.currentEpoch) {
+        throw new WorkflowContractError("INVALID_INPUT", "The convergence review targets a different root or epoch.");
+      }
+      if (root.state !== "needs-review") {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root can be resolved.", { state: root.state });
+      }
+      const actualActors = [...new Set(snapshot.leases.filter((lease) => lease.state === "consumed").map((lease) => lease.actorId))].sort();
+      const reviewedActors = [...new Set(review.implementationActorIds)].sort();
+      if (!review.freshContext.confirmed || !review.freshContext.evidenceRef || actualActors.join("\0") !== reviewedActors.join("\0")) {
+        throw new WorkflowContractError("GATE_FAILED", "Independent frame review must be fresh and cover every implementation actor.", {
+          actualActors,
+          reviewedActors
+        });
+      }
+      if (actualActors.includes(review.reviewerActorId)) {
+        throw new WorkflowContractError("GATE_FAILED", "The frame reviewer must be independent from implementation actors.");
+      }
+      this.assertReviewRoute(review);
+      const updatedRoot = clone4(root);
+      updatedRoot.revision += 1;
+      updatedRoot.updatedAt = review.reviewedAt;
+      if (review.route === "stop") {
+        updatedRoot.state = "abandoned";
+      } else if (review.classification === "semantics-changing" || review.route === "needs-user") {
+        updatedRoot.state = "needs-user";
+      } else if (review.route === "panel" || review.route === "diagnose") {
+        updatedRoot.state = "needs-review";
+      } else if (review.route === "resume-new-epoch") {
+        if (updatedRoot.currentEpoch >= updatedRoot.frame.operationalSettings.maxEpochs) {
+          updatedRoot.state = "needs-user";
+        } else {
+          const proposedFrame = review.proposedFrame;
+          this.assertConvergenceFrame(proposedFrame);
+          const nextDigests = this.convergenceDigests(updatedRoot.taskEnvelope, proposedFrame);
+          if (nextDigests.workspaceDigest !== root.workspaceDigest || nextDigests.operationalDigest !== root.operationalDigest) {
+            throw new WorkflowContractError("INVALID_INPUT", "A semantics-preserving review cannot change workspace or guard policy.");
+          }
+          if (nextDigests.targetDigest === root.targetDigest) {
+            throw new WorkflowContractError("GATE_FAILED", "A new convergence epoch requires a verified target-frame correction.");
+          }
+          updatedRoot.currentEpoch += 1;
+          updatedRoot.state = "open";
+          updatedRoot.frame = clone4(proposedFrame);
+          Object.assign(updatedRoot, nextDigests);
+        }
+      }
+      this.validator.convergenceRoot(updatedRoot);
+      if (!this.store.updateConvergenceRoot(updatedRoot, root.revision, review)) {
+        throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while recording the review.");
+      }
+      snapshot = this.requireConvergenceSnapshot(root.rootId);
+      return apiOk2(this.buildConvergenceStatus(snapshot));
+    } catch (error2) {
+      return apiError(this.toErrorBody(error2));
+    }
+  }
+  rejectUnguardedWorkflow(rawPlan) {
+    try {
+      const plan = clone4(this.validator.workflowPlan(rawPlan));
+      this.assertPlanIntegrity(plan);
+      if (plan.executionMode === "orchestrated") {
+        throw new WorkflowContractError("LEASE_REQUIRED", "New orchestrated workflows must start through start_guarded_workflow.");
+      }
+      throw new WorkflowContractError("INVALID_TRANSITION", "Direct skill plans are not started by the MCP orchestrator.");
+    } catch (error2) {
+      return apiError(this.toErrorBody(error2));
+    }
+  }
+  /** Embedding compatibility only. The MCP start_workflow tool rejects new unguarded orchestrated runs. */
   startWorkflow(rawPlan) {
     try {
       const plan = clone4(this.validator.workflowPlan(rawPlan));
@@ -19632,6 +21663,7 @@ var WorkflowService = class {
     return {
       schemaVersion: CONTRACT_VERSION,
       taskId: task.taskId,
+      taskDigest: convergenceDigest(task),
       integrityToken: "pending",
       executionMode,
       state: errors.length > 0 ? "blocked" : "ready",
@@ -19950,12 +21982,12 @@ var WorkflowService = class {
     }
   }
   signPlan(plan) {
-    return createHmac("sha256", this.planSigningKey).update(canonicalJson(this.planWithoutIntegrityToken(plan)), "utf8").digest("base64url");
+    return createHmac2("sha256", this.planSigningKey).update(canonicalJson2(this.planWithoutIntegrityToken(plan)), "utf8").digest("base64url");
   }
   assertPlanIntegrity(plan) {
     const expected = Buffer.from(this.signPlan(plan), "base64url");
     const supplied = Buffer.from(plan.integrityToken, "base64url");
-    if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) {
+    if (supplied.length !== expected.length || !timingSafeEqual2(supplied, expected)) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow plan integrity token is missing, modified, or signed by a different workflow store.");
     }
   }
@@ -19963,6 +21995,167 @@ var WorkflowService = class {
     const unsignedPlan = { ...plan };
     delete unsignedPlan.integrityToken;
     return unsignedPlan;
+  }
+  convergenceDigests(task, frame) {
+    return {
+      ...frameDigests(frame),
+      taskDigest: convergenceDigest(task)
+    };
+  }
+  assertConvergenceFrame(frame) {
+    this.validator.convergenceFrame(frame);
+    const artifactIds = [...frame.controlArtifacts, ...frame.targetArtifacts].map((artifact) => artifact.artifactId);
+    if (new Set(artifactIds).size !== artifactIds.length) {
+      throw new WorkflowContractError("INVALID_INPUT", "Convergence artifact IDs must be unique across control and target frames.");
+    }
+    if (frame.operationalSettings.maxAttemptsPerEpoch !== 3 || frame.operationalSettings.maxEpochs !== 2) {
+      throw new WorkflowContractError("INVALID_INPUT", "The convergence guard policy is fixed at three attempts and two epochs.");
+    }
+  }
+  artifactRolesChanged(baseline, proposed) {
+    const baselineRoles = new Map([...baseline.controlArtifacts, ...baseline.targetArtifacts].map((artifact) => [artifact.artifactId, artifact.role]));
+    return [...proposed.controlArtifacts, ...proposed.targetArtifacts].some((artifact) => baselineRoles.has(artifact.artifactId) && baselineRoles.get(artifact.artifactId) !== artifact.role);
+  }
+  requireConvergenceSnapshot(rootId) {
+    const snapshot = this.store.getConvergenceSnapshot(rootId);
+    if (!snapshot) throw new WorkflowContractError("RUN_NOT_FOUND", "Convergence root was not found.", { rootId });
+    this.validator.convergenceRoot(snapshot.root);
+    return snapshot;
+  }
+  expireStaleLeases(snapshot) {
+    const now = Date.now();
+    for (const lease of snapshot.leases) {
+      if (lease.state === "issued" && Date.parse(lease.expiresAt) <= now) this.store.expireAttemptLease(lease.leaseId);
+    }
+  }
+  moveRootToReview(root, reason) {
+    const updated = clone4(root);
+    updated.revision += 1;
+    updated.state = "needs-review";
+    updated.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+    if (!this.store.updateConvergenceRoot(updated, root.revision)) {
+      throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while applying its gate.", {
+        rootId: root.rootId
+      });
+    }
+    void reason;
+  }
+  throwRootGate(root, snapshot) {
+    const attempts = snapshot.leases.filter((lease) => lease.epoch === root.currentEpoch && lease.state === "consumed").length;
+    if (root.state === "needs-review" && attempts >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
+      throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Independent review is required before another full attempt.", {
+        rootId: root.rootId,
+        epoch: root.currentEpoch
+      });
+    }
+    throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "The convergence root is gated and cannot issue another lease.", {
+      rootId: root.rootId,
+      state: root.state
+    });
+  }
+  buildConvergenceStatus(snapshot) {
+    const attemptsUsed = snapshot.leases.filter(
+      (lease) => lease.epoch === snapshot.root.currentEpoch && lease.state === "consumed"
+    ).length;
+    let gateError = null;
+    if (snapshot.root.state === "needs-review") {
+      gateError = attemptsUsed >= snapshot.root.frame.operationalSettings.maxAttemptsPerEpoch ? {
+        code: "ATTEMPT_BUDGET_EXHAUSTED",
+        message: "Independent review is required before another full attempt.",
+        details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch }
+      } : {
+        code: "FRAME_REVIEW_REQUIRED",
+        message: "A task or control-frame change requires independent review.",
+        details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch }
+      };
+    } else if (snapshot.root.state === "needs-user") {
+      gateError = {
+        code: "FRAME_REVIEW_REQUIRED",
+        message: "The proposed change requires a new user contract.",
+        details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch }
+      };
+    }
+    return {
+      schemaVersion: CONTRACT_VERSION,
+      root: clone4(snapshot.root),
+      currentEpoch: snapshot.root.currentEpoch,
+      maxAttemptsPerEpoch: 3,
+      maxEpochs: 2,
+      attemptsUsedInEpoch: attemptsUsed,
+      attemptsRemainingInEpoch: Math.max(0, 3 - attemptsUsed),
+      proposals: clone4(snapshot.proposals),
+      leases: clone4(snapshot.leases),
+      outcomes: clone4(snapshot.outcomes),
+      reviews: clone4(snapshot.reviews),
+      workflowRunIds: [...snapshot.workflowRunIds],
+      gateError
+    };
+  }
+  assertReviewRoute(review) {
+    if (review.evidenceRefs.length === 0) {
+      throw new WorkflowContractError("MISSING_EVIDENCE", "A convergence review requires evidence.");
+    }
+    if (review.classification === "semantics-preserving") {
+      if (review.route === "resume-new-epoch") {
+        if (!review.comparability.comparable || !review.proposedFrame) {
+          throw new WorkflowContractError("GATE_FAILED", "Resuming a new epoch requires a comparable, semantics-preserving frame.");
+        }
+      } else if (!["diagnose", "stop"].includes(review.route)) {
+        throw new WorkflowContractError("GATE_FAILED", "A semantics-preserving review has an incompatible route.", { route: review.route });
+      }
+    } else if (review.classification === "semantics-changing") {
+      if (review.route !== "needs-user" || review.proposedFrame === null) {
+        throw new WorkflowContractError("GATE_FAILED", "Semantics-changing reviews must return the proposed frame to the user.");
+      }
+    } else if (!["panel", "needs-user", "stop"].includes(review.route)) {
+      throw new WorkflowContractError("GATE_FAILED", "Ambiguous frame reviews must route to a panel, the user, or stop.");
+    }
+  }
+  convergenceOutcome(receipt, binding) {
+    const recordedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const expectedRootRevision = binding.root.revision;
+    const root = clone4(binding.root);
+    root.revision += 1;
+    root.updatedAt = recordedAt;
+    const aborted2 = receipt.blockers.includes("aborted-by-caller");
+    const passed = receipt.state === "passed";
+    const state = passed ? "passed" : aborted2 ? "aborted" : "failed";
+    const attemptsUsed = this.requireConvergenceSnapshot(root.rootId).leases.filter(
+      (lease) => lease.epoch === root.currentEpoch && lease.state === "consumed"
+    ).length;
+    if (!["needs-review", "needs-user", "abandoned"].includes(root.state)) {
+      if (passed) root.state = "completed";
+      else if (attemptsUsed >= root.frame.operationalSettings.maxAttemptsPerEpoch) root.state = "needs-review";
+      else root.state = "open";
+    }
+    const failureFingerprint = passed ? null : convergenceDigest({
+      state: receipt.state,
+      stage: receipt.stageResults.at(-1)?.stageId ?? null,
+      error: receipt.error?.code ?? null,
+      blockers: receipt.blockers,
+      unresolved: receipt.unresolved
+    });
+    const evidenceRefs = [...new Set(receipt.stageResults.flatMap((result) => [
+      ...result.evidence.map((evidence) => evidence.locator),
+      ...result.output.artifacts.map((artifact) => artifact.digest)
+    ]))];
+    const outcome = {
+      schemaVersion: CONTRACT_VERSION,
+      outcomeId: `outcome-${randomUUID()}`,
+      rootId: root.rootId,
+      rootRevision: root.revision,
+      leaseId: binding.lease.leaseId,
+      epoch: binding.lease.epoch,
+      ordinal: binding.lease.ordinal,
+      workflowRunId: receipt.runId,
+      state,
+      receiptDigest: convergenceDigest(receipt),
+      failureFingerprint,
+      evidenceRefs,
+      recordedAt
+    };
+    this.validator.attemptOutcome(outcome);
+    return { root, expectedRootRevision, outcome };
   }
   change(runId, expectedRevision, mutate) {
     try {
@@ -19976,7 +22169,9 @@ var WorkflowService = class {
       mutate(receipt);
       receipt.revision += 1;
       this.assertReceipt(receipt);
-      if (!this.store.updateRun(receipt, expectedRevision)) {
+      const binding = this.store.getGuardedRunBinding(runId);
+      const convergence = binding && !binding.outcome && receipt.state !== "running" ? this.convergenceOutcome(receipt, binding) : void 0;
+      if (!this.store.updateRun(receipt, expectedRevision, convergence)) {
         const current = this.store.getRun(runId);
         throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
           expectedRevision,
@@ -20013,12 +22208,32 @@ var WorkflowService = class {
 // mcp-server/src/index.ts
 async function main() {
   const registryPath = resolveRegistryPath();
-  const store = new SqliteWorkflowStore(resolveWorkflowDatabasePath());
-  process.once("exit", () => store.close());
+  const workflowDatabasePath = resolveWorkflowDatabasePath();
+  const continuityDatabasePath = resolveContinuityDatabasePath();
+  let continuityPathAvailable = true;
+  try {
+    assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath);
+  } catch {
+    continuityPathAvailable = false;
+  }
+  const store = new SqliteWorkflowStore(workflowDatabasePath);
+  let continuityStore = null;
+  process.once("exit", () => {
+    continuityStore?.close();
+    store.close();
+  });
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store);
   const updates = new PluginUpdateService(store);
-  const server = createMcpServer(service, updates);
+  let continuity = new UnavailableContinuityService();
+  if (continuityPathAvailable) {
+    try {
+      continuityStore = new SqliteContinuityStore(continuityDatabasePath);
+      continuity = new ContinuityService(continuityStore, validator, store);
+    } catch {
+    }
+  }
+  const server = createMcpServer(service, updates, continuity);
   await server.connect(new StdioServerTransport());
 }
 void main().catch((error2) => {
