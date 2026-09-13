@@ -32,7 +32,7 @@
 | 0.5. 업데이트 알림 | 완료 | 안정 버전 존재 여부만 안내 | `check_for_updates`, SQLite v2 상태, 일회성 MCP notice |
 | 0.6. 모델·추론 수준 안내 | 완료 | 요청 난도와 관측 가능한 현재 설정을 비교해 과다·적정·부족 여부 안내 | `model-effort-advisor`, `ModelEffortAdvice.v1`, 정상·경계·실패 fixture |
 | 1. 실행 전 신뢰성 | 다음 | 평가 오류와 동시 작업 충돌을 조기에 차단 | `evaluation-validity-auditor`, `active-workspace-guard` |
-| 2. 복구 워크플로 | 계획됨 | blocker 진단 뒤 선택 가능한 복구 전략 제공 | `recovery-strategy-selector`, `RecoveryHandoff.v1` |
+| 2. 복구 워크플로 | 구현됨 | blocker 진단 뒤 선택 가능한 복구 전략 제공 | `recovery-strategy-selector`, `RecoveryHandoff.v1` |
 | 3. 실행 환경과 연속성 | 부분 구현 | 실행 가능 여부를 먼저 확인하고 세션 복원을 표준화 | 계획된 `runtime-capability-profiler`, 구현된 로컬 task continuity |
 | 4. 신뢰 경계 강화 | 설계 후보 | bootstrap·증거·라우팅 선언의 신뢰 수준 향상 | `BootstrapReceipt.v1`, 증거 검증 경계 |
 | 5. 공급망과 운영 | 보류 | 원본 편입과 버전·릴리스 관리를 자동화 | 동기화 검사, 업데이트 PR, 버전 단일 소스화 |
@@ -147,7 +147,7 @@
 - 필수 조건을 만족하지 못하는 전략은 점수 보정 없이 Objective Gate에서 제외한다.
 - 둘 이상의 전략이 남은 경우에만 조건부 교차 검토를 수행한다.
 - 선택 결과를 `RecoveryHandoff.v1`로 만들고, 후속 작업은 새 `TaskEnvelope.v1`과 새 workflow run으로 시작한다.
-- provider는 `executionClass: recovery`를 사용하며 일반 workflow 단계와 섞지 않는다. 기존 논의의 `recovery-strategy-selection`, `phaseOrder: 20`은 구현 시 registry 충돌 여부를 다시 확인한다.
+- provider는 `executionClass: recovery`, `recovery-strategy-selection`, `phaseOrder: 20`으로 등록하며 일반 workflow 단계와 섞지 않는다.
 
 ### 종료 기준
 
