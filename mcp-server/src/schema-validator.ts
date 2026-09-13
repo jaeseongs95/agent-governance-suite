@@ -6,7 +6,9 @@ import path from "node:path";
 
 import {
   type ApiResultV1,
+  type PluginUpdateNoticeV1,
   type ProviderResultV1,
+  type PluginUpdateStatusV1,
   type SchemaReferenceV1,
   type SkillDescriptorV2,
   type StageResultV1,
@@ -27,6 +29,8 @@ function loadSchema(fileName: string): JsonSchema {
 /** The wire schemas are loaded from contracts/ so MCP and direct callers share one definition. */
 export const contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
+  pluginUpdateStatus: loadSchema("plugin-update-status.v1.schema.json"),
+  pluginUpdateNotice: loadSchema("plugin-update-notice.v1.schema.json"),
   taskEnvelope: loadSchema("task-envelope.v1.schema.json"),
   skillDescriptor: loadSchema("skill-descriptor.v1.schema.json"),
   skillDescriptorV2: loadSchema("skill-descriptor.v2.schema.json"),
@@ -52,6 +56,8 @@ export class ContractValidator {
     }
     this.validators = {
       apiResult: ajv.getSchema("https://skill-suite.local/contracts/api-result.v1.schema.json")!,
+      pluginUpdateStatus: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-status.v1.schema.json")!,
+      pluginUpdateNotice: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-notice.v1.schema.json")!,
       taskEnvelope: ajv.getSchema("https://skill-suite.local/contracts/task-envelope.v1.schema.json")!,
       skillDescriptor: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v1.schema.json")!,
       skillDescriptorV2: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v2.schema.json")!,
@@ -96,6 +102,14 @@ export class ContractValidator {
 
   apiResult<T>(value: unknown): ApiResultV1<T> {
     return this.assert<ApiResultV1<T>>("apiResult", value);
+  }
+
+  pluginUpdateStatus(value: unknown): PluginUpdateStatusV1 {
+    return this.assert<PluginUpdateStatusV1>("pluginUpdateStatus", value);
+  }
+
+  pluginUpdateNotice(value: unknown): PluginUpdateNoticeV1 {
+    return this.assert<PluginUpdateNoticeV1>("pluginUpdateNotice", value);
   }
 
   providerResult(

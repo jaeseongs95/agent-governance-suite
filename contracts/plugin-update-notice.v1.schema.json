@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/plugin-update-notice.v1.schema.json",
+  "title": "PluginUpdateNotice.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "pluginId",
+    "currentVersion",
+    "latestVersion",
+    "latestTag",
+    "latestCommit",
+    "checkedAt",
+    "tagUrl",
+    "automaticInstall"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "kind": { "const": "plugin-update-notice" },
+    "pluginId": { "const": "agent-governance-suite" },
+    "currentVersion": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+    "latestVersion": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+    "latestTag": { "type": "string", "pattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+    "latestCommit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "checkedAt": { "type": "string", "format": "date-time" },
+    "tagUrl": { "type": "string", "format": "uri", "pattern": "^https://github\\.com/jaeseongs95/agent-governance-suite/tree/v" },
+    "automaticInstall": { "const": false }
+  }
+}
