@@ -8220,6 +8220,13 @@ var SqliteContinuityStore = class {
         return { kind: "stale", actualRevision };
       }
       const json = JSON.stringify(snapshot);
+      const resultJson = JSON.stringify({
+        schemaVersion: "1.0.0",
+        kind: "checkpoint",
+        epoch,
+        revision: snapshot.revision,
+        snapshotDigest: snapshot.snapshotDigest
+      });
       this.database.prepare(`
         INSERT INTO continuity_snapshots(task_correlation, epoch, revision, snapshot_digest, snapshot_json, updated_at)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -8230,7 +8237,7 @@ var SqliteContinuityStore = class {
       this.database.prepare(`
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
-      `).run(taskCorrelation, epoch, requestHash, commandDigest, json, snapshot.updatedAt);
+      `).run(taskCorrelation, epoch, requestHash, commandDigest, resultJson, snapshot.updatedAt);
       this.database.exec("COMMIT;");
       return { kind: "stored" };
     } catch (cause) {
@@ -8262,6 +8269,18 @@ var SqliteContinuityStore = class {
         ON CONFLICT(task_correlation, epoch) DO UPDATE SET
           revision = excluded.revision, payload_digest = excluded.payload_digest, purged_at = excluded.purged_at
       `).run(taskCorrelation, epoch, expectedRevision, tombstoneDigest, now);
+      const scrubbedRequestJson = JSON.stringify({
+        schemaVersion: "1.0.0",
+        kind: "purged-request",
+        epoch,
+        revision: expectedRevision,
+        tombstoneDigest,
+        purgedAt: now
+      });
+      this.database.prepare(`
+        UPDATE continuity_requests SET result_json = ?
+        WHERE task_correlation = ? AND epoch = ?
+      `).run(scrubbedRequestJson, taskCorrelation, epoch);
       const resultJson = JSON.stringify({ schemaVersion: "1.0.0", purged: true, epoch, revision: expectedRevision, tombstoneDigest, purgedAt: now });
       this.database.prepare(`
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
@@ -8300,6 +8319,10 @@ var SqliteContinuityStore = class {
     `).run(taskCorrelation, epoch, event, turnHash, success ? 1 : 0, now);
   }
   initializeSchema() {
+    const version = this.database.prepare("PRAGMA user_version").get();
+    if (version.user_version !== 0 && version.user_version !== SCHEMA_VERSION) {
+      throw new ContinuityStoreError(`Unsupported continuity schema version ${version.user_version}.`);
+    }
     this.database.exec(`
       CREATE TABLE IF NOT EXISTS continuity_metadata (
         key TEXT PRIMARY KEY,
@@ -8354,9 +8377,7 @@ var SqliteContinuityStore = class {
         observed_at TEXT NOT NULL
       );
     `);
-    const version = this.database.prepare("PRAGMA user_version").get();
     if (version.user_version === 0) this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
-    else if (version.user_version !== SCHEMA_VERSION) throw new ContinuityStoreError(`Unsupported continuity schema version ${version.user_version}.`);
   }
 };
 
@@ -8458,7 +8479,14 @@ var ContinuityService = class {
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request));
       const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot);
-      if (stored.kind === "replay") return ok(JSON.parse(stored.request.resultJson));
+      if (stored.kind === "replay") {
+        const receipt = JSON.parse(stored.request.resultJson);
+        const replaySnapshot = this.store.getSnapshot(binding.c, binding.e);
+        if (receipt.kind !== "checkpoint" || receipt.epoch !== binding.e || !replaySnapshot || replaySnapshot.revision !== receipt.revision || replaySnapshot.snapshotDigest !== receipt.snapshotDigest) {
+          return failure("STALE_REVISION", "The idempotent checkpoint result is no longer available after replacement or purge.");
+        }
+        return ok(replaySnapshot);
+      }
       if (stored.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for different checkpoint content.");
       if (stored.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed.", { expectedRevision: request.expectedRevision, actualRevision: stored.actualRevision });
       return ok(snapshot);
@@ -8508,19 +8536,17 @@ var ContinuityService = class {
     return this.guard(() => {
       const request = this.validator.purgeDirectContextRequest(value);
       const binding = this.verifyToolBinding("purge_direct_context", request, request._continuityBinding);
-      const task = this.currentTask(binding);
-      if (task.rootId) throw new WorkflowContractError("SNAPSHOT_CONFLICT", "Workflow receipts cannot be deleted by the direct-context purge tool.", { rootId: task.rootId });
-      if (request.expectedEpoch !== binding.e) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.", { actualEpoch: binding.e });
-      const current = this.store.getSnapshot(binding.c, binding.e);
+      this.currentTask(binding);
+      const current = this.store.getSnapshot(binding.c, request.expectedEpoch);
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request));
-      const tombstoneDigest = convergenceDigest({ taskCorrelation: binding.c, epoch: binding.e, revision: request.expectedRevision, payloadDigest: current?.snapshotDigest ?? null });
+      const tombstoneDigest = convergenceDigest({ taskCorrelation: binding.c, epoch: request.expectedEpoch, revision: request.expectedRevision, payloadDigest: current?.snapshotDigest ?? null });
       const now = this.now().toISOString();
-      const purged = this.store.purge(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
+      const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
       if (purged.kind === "replay") return ok(JSON.parse(purged.request.resultJson));
       if (purged.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for a different purge request.");
       if (purged.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed or no payload exists.", { expectedRevision: request.expectedRevision, actualRevision: purged.actualRevision });
-      return ok({ schemaVersion: "1.0.0", purged: true, epoch: binding.e, revision: request.expectedRevision, tombstoneDigest, purgedAt: now });
+      return ok({ schemaVersion: "1.0.0", purged: true, epoch: request.expectedEpoch, revision: request.expectedRevision, tombstoneDigest, purgedAt: now });
     });
   }
   bindOpenedRoot(value, rootId) {

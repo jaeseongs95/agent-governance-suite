@@ -16204,6 +16204,13 @@ var SqliteContinuityStore = class {
         return { kind: "stale", actualRevision };
       }
       const json = JSON.stringify(snapshot);
+      const resultJson = JSON.stringify({
+        schemaVersion: "1.0.0",
+        kind: "checkpoint",
+        epoch,
+        revision: snapshot.revision,
+        snapshotDigest: snapshot.snapshotDigest
+      });
       this.database.prepare(`
         INSERT INTO continuity_snapshots(task_correlation, epoch, revision, snapshot_digest, snapshot_json, updated_at)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -16214,7 +16221,7 @@ var SqliteContinuityStore = class {
       this.database.prepare(`
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
-      `).run(taskCorrelation, epoch, requestHash, commandDigest, json, snapshot.updatedAt);
+      `).run(taskCorrelation, epoch, requestHash, commandDigest, resultJson, snapshot.updatedAt);
       this.database.exec("COMMIT;");
       return { kind: "stored" };
     } catch (cause) {
@@ -16246,6 +16253,18 @@ var SqliteContinuityStore = class {
         ON CONFLICT(task_correlation, epoch) DO UPDATE SET
           revision = excluded.revision, payload_digest = excluded.payload_digest, purged_at = excluded.purged_at
       `).run(taskCorrelation, epoch, expectedRevision, tombstoneDigest, now);
+      const scrubbedRequestJson = JSON.stringify({
+        schemaVersion: "1.0.0",
+        kind: "purged-request",
+        epoch,
+        revision: expectedRevision,
+        tombstoneDigest,
+        purgedAt: now
+      });
+      this.database.prepare(`
+        UPDATE continuity_requests SET result_json = ?
+        WHERE task_correlation = ? AND epoch = ?
+      `).run(scrubbedRequestJson, taskCorrelation, epoch);
       const resultJson = JSON.stringify({ schemaVersion: "1.0.0", purged: true, epoch, revision: expectedRevision, tombstoneDigest, purgedAt: now });
       this.database.prepare(`
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
@@ -16284,6 +16303,10 @@ var SqliteContinuityStore = class {
     `).run(taskCorrelation, epoch, event, turnHash, success ? 1 : 0, now);
   }
   initializeSchema() {
+    const version2 = this.database.prepare("PRAGMA user_version").get();
+    if (version2.user_version !== 0 && version2.user_version !== SCHEMA_VERSION) {
+      throw new ContinuityStoreError(`Unsupported continuity schema version ${version2.user_version}.`);
+    }
     this.database.exec(`
       CREATE TABLE IF NOT EXISTS continuity_metadata (
         key TEXT PRIMARY KEY,
@@ -16338,9 +16361,7 @@ var SqliteContinuityStore = class {
         observed_at TEXT NOT NULL
       );
     `);
-    const version2 = this.database.prepare("PRAGMA user_version").get();
     if (version2.user_version === 0) this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
-    else if (version2.user_version !== SCHEMA_VERSION) throw new ContinuityStoreError(`Unsupported continuity schema version ${version2.user_version}.`);
   }
 };
 
@@ -16442,7 +16463,14 @@ var ContinuityService = class {
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request));
       const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot);
-      if (stored.kind === "replay") return ok(JSON.parse(stored.request.resultJson));
+      if (stored.kind === "replay") {
+        const receipt = JSON.parse(stored.request.resultJson);
+        const replaySnapshot = this.store.getSnapshot(binding.c, binding.e);
+        if (receipt.kind !== "checkpoint" || receipt.epoch !== binding.e || !replaySnapshot || replaySnapshot.revision !== receipt.revision || replaySnapshot.snapshotDigest !== receipt.snapshotDigest) {
+          return failure("STALE_REVISION", "The idempotent checkpoint result is no longer available after replacement or purge.");
+        }
+        return ok(replaySnapshot);
+      }
       if (stored.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for different checkpoint content.");
       if (stored.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed.", { expectedRevision: request.expectedRevision, actualRevision: stored.actualRevision });
       return ok(snapshot);
@@ -16492,19 +16520,17 @@ var ContinuityService = class {
     return this.guard(() => {
       const request = this.validator.purgeDirectContextRequest(value);
       const binding = this.verifyToolBinding("purge_direct_context", request, request._continuityBinding);
-      const task = this.currentTask(binding);
-      if (task.rootId) throw new WorkflowContractError("SNAPSHOT_CONFLICT", "Workflow receipts cannot be deleted by the direct-context purge tool.", { rootId: task.rootId });
-      if (request.expectedEpoch !== binding.e) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.", { actualEpoch: binding.e });
-      const current = this.store.getSnapshot(binding.c, binding.e);
+      this.currentTask(binding);
+      const current = this.store.getSnapshot(binding.c, request.expectedEpoch);
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request));
-      const tombstoneDigest = convergenceDigest({ taskCorrelation: binding.c, epoch: binding.e, revision: request.expectedRevision, payloadDigest: current?.snapshotDigest ?? null });
+      const tombstoneDigest = convergenceDigest({ taskCorrelation: binding.c, epoch: request.expectedEpoch, revision: request.expectedRevision, payloadDigest: current?.snapshotDigest ?? null });
       const now = this.now().toISOString();
-      const purged = this.store.purge(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
+      const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
       if (purged.kind === "replay") return ok(JSON.parse(purged.request.resultJson));
       if (purged.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for a different purge request.");
       if (purged.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed or no payload exists.", { expectedRevision: request.expectedRevision, actualRevision: purged.actualRevision });
-      return ok({ schemaVersion: "1.0.0", purged: true, epoch: binding.e, revision: request.expectedRevision, tombstoneDigest, purgedAt: now });
+      return ok({ schemaVersion: "1.0.0", purged: true, epoch: request.expectedEpoch, revision: request.expectedRevision, tombstoneDigest, purgedAt: now });
     });
   }
   bindOpenedRoot(value, rootId) {
@@ -16718,6 +16744,7 @@ var UnavailableContinuityService = class {
 };
 
 // mcp-server/src/runtime-config.ts
+import { realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import path4 from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16748,6 +16775,33 @@ function resolveContinuityDatabasePath(environment = process.env, platform = pro
   );
   if (workflowPath === ":memory:") return ":memory:";
   return path4.join(path4.dirname(workflowPath), "continuity.sqlite3");
+}
+function canonicalDatabasePath(databasePath, platform) {
+  if (databasePath === ":memory:") return null;
+  const absolute = path4.resolve(databasePath);
+  const unresolved = [];
+  let cursor = absolute;
+  let resolved = absolute;
+  while (true) {
+    try {
+      resolved = path4.join(realpathSync.native(cursor), ...unresolved.reverse());
+      break;
+    } catch {
+      const parent = path4.dirname(cursor);
+      if (parent === cursor) break;
+      unresolved.push(path4.basename(cursor));
+      cursor = parent;
+    }
+  }
+  const normalized = path4.normalize(resolved);
+  return platform === "win32" ? normalized.toLocaleLowerCase("en-US") : normalized;
+}
+function assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath, platform = process.platform) {
+  const workflowIdentity = canonicalDatabasePath(workflowDatabasePath, platform);
+  const continuityIdentity = canonicalDatabasePath(continuityDatabasePath, platform);
+  if (workflowIdentity !== null && workflowIdentity === continuityIdentity) {
+    throw new Error("Workflow and continuity databases must use different files.");
+  }
 }
 
 // mcp-server/src/schema-validator.ts
@@ -22072,7 +22126,15 @@ var WorkflowService = class {
 // mcp-server/src/index.ts
 async function main() {
   const registryPath = resolveRegistryPath();
-  const store = new SqliteWorkflowStore(resolveWorkflowDatabasePath());
+  const workflowDatabasePath = resolveWorkflowDatabasePath();
+  const continuityDatabasePath = resolveContinuityDatabasePath();
+  let continuityPathAvailable = true;
+  try {
+    assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath);
+  } catch {
+    continuityPathAvailable = false;
+  }
+  const store = new SqliteWorkflowStore(workflowDatabasePath);
   let continuityStore = null;
   process.once("exit", () => {
     continuityStore?.close();
@@ -22082,10 +22144,12 @@ async function main() {
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store);
   const updates = new PluginUpdateService(store);
   let continuity = new UnavailableContinuityService();
-  try {
-    continuityStore = new SqliteContinuityStore(resolveContinuityDatabasePath());
-    continuity = new ContinuityService(continuityStore, validator, store);
-  } catch {
+  if (continuityPathAvailable) {
+    try {
+      continuityStore = new SqliteContinuityStore(continuityDatabasePath);
+      continuity = new ContinuityService(continuityStore, validator, store);
+    } catch {
+    }
   }
   const server = createMcpServer(service, updates, continuity);
   await server.connect(new StdioServerTransport());

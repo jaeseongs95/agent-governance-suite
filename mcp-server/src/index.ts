@@ -3,7 +3,12 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { FileSkillRegistry } from "./registry.js";
 import { ContinuityService, type ContinuityGateway, UnavailableContinuityService } from "./continuity-service.js";
 import { SqliteContinuityStore } from "./continuity-store.js";
-import { resolveContinuityDatabasePath, resolveRegistryPath, resolveWorkflowDatabasePath } from "./runtime-config.js";
+import {
+  assertDistinctDatabasePaths,
+  resolveContinuityDatabasePath,
+  resolveRegistryPath,
+  resolveWorkflowDatabasePath,
+} from "./runtime-config.js";
 import { ContractValidator } from "./schema-validator.js";
 import { createMcpServer } from "./server.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
@@ -12,7 +17,15 @@ import { WorkflowService } from "./workflow-service.js";
 
 async function main(): Promise<void> {
   const registryPath = resolveRegistryPath();
-  const store = new SqliteWorkflowStore(resolveWorkflowDatabasePath());
+  const workflowDatabasePath = resolveWorkflowDatabasePath();
+  const continuityDatabasePath = resolveContinuityDatabasePath();
+  let continuityPathAvailable = true;
+  try {
+    assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath);
+  } catch {
+    continuityPathAvailable = false;
+  }
+  const store = new SqliteWorkflowStore(workflowDatabasePath);
   let continuityStore: SqliteContinuityStore | null = null;
   process.once("exit", () => {
     continuityStore?.close();
@@ -23,11 +36,13 @@ async function main(): Promise<void> {
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store);
   const updates = new PluginUpdateService(store);
   let continuity: ContinuityGateway = new UnavailableContinuityService();
-  try {
-    continuityStore = new SqliteContinuityStore(resolveContinuityDatabasePath());
-    continuity = new ContinuityService(continuityStore, validator, store);
-  } catch {
-    // Optional continuity failures never prevent the workflow MCP server from starting.
+  if (continuityPathAvailable) {
+    try {
+      continuityStore = new SqliteContinuityStore(continuityDatabasePath);
+      continuity = new ContinuityService(continuityStore, validator, store);
+    } catch {
+      // Optional continuity failures never prevent the workflow MCP server from starting.
+    }
   }
   const server = createMcpServer(service, updates, continuity);
   await server.connect(new StdioServerTransport());

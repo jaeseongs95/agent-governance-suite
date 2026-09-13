@@ -184,6 +184,13 @@ export class SqliteContinuityStore {
         return { kind: "stale", actualRevision };
       }
       const json = JSON.stringify(snapshot);
+      const resultJson = JSON.stringify({
+        schemaVersion: "1.0.0",
+        kind: "checkpoint",
+        epoch,
+        revision: snapshot.revision,
+        snapshotDigest: snapshot.snapshotDigest,
+      });
       this.database.prepare(`
         INSERT INTO continuity_snapshots(task_correlation, epoch, revision, snapshot_digest, snapshot_json, updated_at)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -194,7 +201,7 @@ export class SqliteContinuityStore {
       this.database.prepare(`
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
-      `).run(taskCorrelation, epoch, requestHash, commandDigest, json, snapshot.updatedAt);
+      `).run(taskCorrelation, epoch, requestHash, commandDigest, resultJson, snapshot.updatedAt);
       this.database.exec("COMMIT;");
       return { kind: "stored" };
     } catch (cause) {
@@ -232,6 +239,18 @@ export class SqliteContinuityStore {
         ON CONFLICT(task_correlation, epoch) DO UPDATE SET
           revision = excluded.revision, payload_digest = excluded.payload_digest, purged_at = excluded.purged_at
       `).run(taskCorrelation, epoch, expectedRevision, tombstoneDigest, now);
+      const scrubbedRequestJson = JSON.stringify({
+        schemaVersion: "1.0.0",
+        kind: "purged-request",
+        epoch,
+        revision: expectedRevision,
+        tombstoneDigest,
+        purgedAt: now,
+      });
+      this.database.prepare(`
+        UPDATE continuity_requests SET result_json = ?
+        WHERE task_correlation = ? AND epoch = ?
+      `).run(scrubbedRequestJson, taskCorrelation, epoch);
       const resultJson = JSON.stringify({ schemaVersion: "1.0.0", purged: true, epoch, revision: expectedRevision, tombstoneDigest, purgedAt: now });
       this.database.prepare(`
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
@@ -279,6 +298,10 @@ export class SqliteContinuityStore {
   }
 
   private initializeSchema(): void {
+    const version = this.database.prepare("PRAGMA user_version").get() as { user_version: number };
+    if (version.user_version !== 0 && version.user_version !== SCHEMA_VERSION) {
+      throw new ContinuityStoreError(`Unsupported continuity schema version ${version.user_version}.`);
+    }
     this.database.exec(`
       CREATE TABLE IF NOT EXISTS continuity_metadata (
         key TEXT PRIMARY KEY,
@@ -333,8 +356,6 @@ export class SqliteContinuityStore {
         observed_at TEXT NOT NULL
       );
     `);
-    const version = this.database.prepare("PRAGMA user_version").get() as { user_version: number };
     if (version.user_version === 0) this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
-    else if (version.user_version !== SCHEMA_VERSION) throw new ContinuityStoreError(`Unsupported continuity schema version ${version.user_version}.`);
   }
 }

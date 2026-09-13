@@ -77,6 +77,14 @@ export interface ContinuityPurgeResultV1 {
   purgedAt: string;
 }
 
+interface CheckpointReplayReceiptV1 {
+  schemaVersion: "1.0.0";
+  kind: "checkpoint";
+  epoch: number;
+  revision: number;
+  snapshotDigest: Sha256Digest;
+}
+
 export interface ContinuityGateway {
   readonly available: boolean;
   checkpointContext(value: unknown): ApiResultV1<ContinuitySnapshotV1>;
@@ -193,7 +201,18 @@ export class ContinuityService implements ContinuityGateway {
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request as unknown as Record<string, unknown>));
       const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot);
-      if (stored.kind === "replay") return ok(JSON.parse(stored.request.resultJson) as ContinuitySnapshotV1);
+      if (stored.kind === "replay") {
+        const receipt = JSON.parse(stored.request.resultJson) as Partial<CheckpointReplayReceiptV1>;
+        const replaySnapshot = this.store.getSnapshot(binding.c, binding.e);
+        if (
+          receipt.kind !== "checkpoint" || receipt.epoch !== binding.e ||
+          !replaySnapshot || replaySnapshot.revision !== receipt.revision ||
+          replaySnapshot.snapshotDigest !== receipt.snapshotDigest
+        ) {
+          return failure("STALE_REVISION", "The idempotent checkpoint result is no longer available after replacement or purge.");
+        }
+        return ok(replaySnapshot);
+      }
       if (stored.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for different checkpoint content.");
       if (stored.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed.", { expectedRevision: request.expectedRevision, actualRevision: stored.actualRevision });
       return ok(snapshot);
@@ -250,19 +269,17 @@ export class ContinuityService implements ContinuityGateway {
     return this.guard(() => {
       const request = this.validator.purgeDirectContextRequest(value);
       const binding = this.verifyToolBinding("purge_direct_context", request, request._continuityBinding);
-      const task = this.currentTask(binding);
-      if (task.rootId) throw new WorkflowContractError("SNAPSHOT_CONFLICT", "Workflow receipts cannot be deleted by the direct-context purge tool.", { rootId: task.rootId });
-      if (request.expectedEpoch !== binding.e) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.", { actualEpoch: binding.e });
-      const current = this.store.getSnapshot(binding.c, binding.e);
+      this.currentTask(binding);
+      const current = this.store.getSnapshot(binding.c, request.expectedEpoch);
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request as unknown as Record<string, unknown>));
-      const tombstoneDigest = convergenceDigest({ taskCorrelation: binding.c, epoch: binding.e, revision: request.expectedRevision, payloadDigest: current?.snapshotDigest ?? null });
+      const tombstoneDigest = convergenceDigest({ taskCorrelation: binding.c, epoch: request.expectedEpoch, revision: request.expectedRevision, payloadDigest: current?.snapshotDigest ?? null });
       const now = this.now().toISOString();
-      const purged = this.store.purge(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
+      const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
       if (purged.kind === "replay") return ok(JSON.parse(purged.request.resultJson) as ContinuityPurgeResultV1);
       if (purged.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for a different purge request.");
       if (purged.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed or no payload exists.", { expectedRevision: request.expectedRevision, actualRevision: purged.actualRevision });
-      return ok({ schemaVersion: "1.0.0", purged: true, epoch: binding.e, revision: request.expectedRevision, tombstoneDigest, purgedAt: now });
+      return ok({ schemaVersion: "1.0.0", purged: true, epoch: request.expectedEpoch, revision: request.expectedRevision, tombstoneDigest, purgedAt: now });
     });
   }
 

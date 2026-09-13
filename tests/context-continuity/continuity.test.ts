@@ -177,9 +177,21 @@ describe("direct task continuity", () => {
     expect(JSON.stringify(compact)).not.toContain("Finish the continuity implementation");
   });
 
-  it("separates suppression, clear epoch rotation, and destructive purge", () => {
-    const service = createService();
-    const snapshot = directCheckpoint(service).data!;
+  it("separates suppression and clear while allowing old-epoch purge without retained payload", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "continuity-purge-"));
+    temporaryDirectories.push(directory);
+    const databasePath = join(directory, "continuity.sqlite3");
+    const service = createService(databasePath);
+    const marker = "PLAINTEXT-SNAPSHOT-MUST-BE-DELETED";
+    const checkpoint = checkpointInput({
+      core: { ...checkpointInput().core, objective: marker },
+    });
+    const snapshot = service.checkpointContext(bound(service, "raw-session", "checkpoint_context", checkpoint)).data!;
+    const beforePurge = new DatabaseSync(databasePath);
+    const requestJson = beforePurge.prepare("SELECT result_json FROM continuity_requests").get() as { result_json: string };
+    beforePurge.close();
+    expect(requestJson.result_json).not.toContain(marker);
+
     const suppress = { schemaVersion: "1.0.0" as const, expectedEpoch: 1 };
     expect(service.suppressContextRestore(bound(service, "raw-session", "suppress_context_restore", suppress)).data?.suppressed).toBe(true);
     expect(service.candidateForSession("raw-session").decision).toBe("REJECT");
@@ -187,11 +199,32 @@ describe("direct task continuity", () => {
     service.clearSession("raw-session");
     expect(service.candidateForSession("raw-session")).toMatchObject({ decision: "REJECT", reasonCodes: ["NO_RESTORE_CANDIDATE"] });
 
-    const service2 = createService();
-    directCheckpoint(service2, "purge-session");
     const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-1", expectedEpoch: 1, expectedRevision: snapshot.revision };
-    expect(service2.purgeDirectContext(bound(service2, "purge-session", "purge_direct_context", purge)).data?.purged).toBe(true);
-    expect(service2.candidateForSession("purge-session").decision).toBe("REJECT");
+    const purged = service.purgeDirectContext(bound(service, "raw-session", "purge_direct_context", purge));
+    expect(purged.data).toMatchObject({ purged: true, epoch: 1, revision: snapshot.revision });
+    expect(service.purgeDirectContext(bound(service, "raw-session", "purge_direct_context", purge))).toEqual(purged);
+
+    const afterPurge = new DatabaseSync(databasePath);
+    const snapshotCount = afterPurge.prepare("SELECT COUNT(*) AS count FROM continuity_snapshots").get() as { count: number };
+    const storedRequests = afterPurge.prepare("SELECT result_json FROM continuity_requests").all() as Array<{ result_json: string }>;
+    afterPurge.close();
+    expect(snapshotCount.count).toBe(0);
+    expect(JSON.stringify(storedRequests)).not.toContain(marker);
+  });
+
+  it("purges a direct payload after workflow binding without deleting the workflow root", () => {
+    const workflow = new InMemoryWorkflowStore();
+    const root = workflowRoot();
+    workflow.insertConvergenceRoot(root);
+    const service = createService(":memory:", workflow);
+    const snapshot = directCheckpoint(service, "mixed-session").data!;
+    const openInput = { schemaVersion: "1.0.0", taskEnvelope: root.taskEnvelope, frame: root.frame, parentRootId: null, userApprovalRefs: [] };
+    service.bindOpenedRoot(bound(service, "mixed-session", "open_convergence_root", openInput), root.rootId);
+
+    const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-mixed", expectedEpoch: 1, expectedRevision: snapshot.revision };
+    expect(service.purgeDirectContext(bound(service, "mixed-session", "purge_direct_context", purge)).data?.purged).toBe(true);
+    expect(service.store.getSnapshot(service.correlateSession("mixed-session"), 1)).toBeNull();
+    expect(workflow.getConvergenceSnapshot(root.rootId)?.root).toEqual(root);
   });
 
   it("allows only one winner across two SQLite connections using the same CAS revision", async () => {
@@ -279,6 +312,25 @@ describe("workflow projection and fail-open lifecycle", () => {
     expect(workflow.nextRunSequence()).toBe(1);
     workflow.close();
     expect(new UnavailableContinuityService().inspectContext().error?.code).toBe("CONTINUITY_UNAVAILABLE");
+  });
+
+  it("rejects a workflow database before creating any continuity tables", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "continuity-schema-boundary-"));
+    temporaryDirectories.push(directory);
+    const databasePath = join(directory, "workflows.sqlite3");
+    const workflow = new SqliteWorkflowStore(databasePath);
+    workflow.close();
+    const database = new DatabaseSync(databasePath);
+    const before = database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all();
+    database.close();
+
+    expect(() => new SqliteContinuityStore(databasePath)).toThrow(/Cannot initialize the continuity database/u);
+
+    const reopened = new DatabaseSync(databasePath);
+    const after = reopened.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all();
+    reopened.close();
+    expect(after).toEqual(before);
+    expect(JSON.stringify(after)).not.toContain("continuity_");
   });
 
   it("rewrites only bound MCP tool inputs and persists only HMAC lifecycle correlations", async () => {

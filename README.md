@@ -142,6 +142,8 @@ check_for_updates { "force": false }
 
 Lifecycle Hook은 raw transcript를 읽거나 저장하지 않으며 raw session·turn·request 식별자 대신 설치별 HMAC correlation을 기록합니다. `clear`는 epoch를 회전해 이전 snapshot 복원을 억제하지만 payload를 자동 삭제하지 않습니다. `suppress_context_restore`는 후보 제공만 멈추고, 명시적인 `purge_direct_context`만 direct payload를 지우고 hash tombstone을 남깁니다. Continuity DB 오류는 workflow나 compaction을 막지 않습니다.
 
+Continuity snapshot의 `core`와 `evidenceRefs`는 로컬 `continuity.sqlite3`에 평문 JSON으로 저장되며 자동 만료되지 않습니다. 비밀값, 개인정보, 원시 로그·코드나 chain-of-thought를 checkpoint에 넣지 말고, DB 파일의 접근 권한과 보존 기간을 직접 관리해야 합니다.
+
 ## 검사 범위와 한계
 
 MCP 서버는 `SkillDescriptor.v2`의 `capability`, 실행 단계, `artifact` 의존성을 읽어 계획을 만듭니다. 계획에는 스키마 체크섬과 HMAC 서명이 포함되며, 서버는 다음 항목을 검사합니다.

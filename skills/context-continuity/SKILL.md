@@ -22,7 +22,7 @@ Orchestrated workflow에는 direct snapshot을 만들지 않는다. `TaskEnvelop
 - 검증·승인 근거를 다시 찾게 만드는 참조
 - 현재 blocker나 아직 필요한 사용자 결정
 
-단순 대화 요약, 설명 가능한 배경지식, raw transcript, 원시 로그·코드, 비밀, chain-of-thought는 저장하지 않는다. checkpoint가 필요하지 않으면 MCP를 호출하지 않는다.
+단순 대화 요약, 설명 가능한 배경지식, raw transcript, 원시 로그·코드, 비밀, 개인정보, chain-of-thought는 저장하지 않는다. Direct snapshot은 로컬 SQLite에 평문 JSON으로 보존되고 자동 만료되지 않는다. checkpoint가 필요하지 않으면 MCP를 호출하지 않는다.
 
 ## Direct checkpoint 작성
 
@@ -40,6 +40,6 @@ Hook이 추가한 `_continuityBinding`은 수정하거나 재사용하지 않는
 
 Resume과 direct compact의 Hook 카드에는 본문이 없으며 `DEFER` metadata만 있다. 현재 사용자 요청과 task·epoch·revision·digest가 맞는지 확인한 뒤에만 카드의 값을 그대로 사용해 `load_context`를 호출한다. 반환된 snapshot도 과거 상태이므로 최신 사용자 요청이 우선한다.
 
-자동 후보 제공만 멈추려면 `suppress_context_restore`를 사용한다. 저장된 direct payload까지 지워야 한다는 명시적 요청이 있을 때만 `purge_direct_context`를 사용한다. purge는 workflow receipt를 삭제하지 않는다.
+자동 후보 제공만 멈추려면 `suppress_context_restore`를 사용한다. 저장된 direct payload까지 지워야 한다는 명시적 요청이 있을 때만 `purge_direct_context`를 사용한다. `clear` 뒤 과거 epoch를 지울 때도 해당 snapshot의 epoch와 revision을 지정한다. purge는 direct payload와 본문을 담을 수 있는 idempotency 결과를 제거하지만 workflow receipt와 convergence root는 삭제하지 않는다.
 
 Continuity가 unavailable이면 작업이나 Codex compaction을 막지 않는다. 저장되지 않은 direct task의 연속성을 보장했다고 보고하지 않는다.
