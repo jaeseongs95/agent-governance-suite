@@ -93,7 +93,7 @@ const descriptor: SkillDescriptorV2 = {
     provider(0, ["korean-prose-request"], "edit-decision-set"),
     provider(1, ["korean-prose-request", "edit-decision-set"], "edit-candidate"),
     provider(2, ["korean-prose-request", "edit-decision-set", "edit-candidate", "korean-prose-rubric"], "edit-verification-report"),
-    provider(3, ["korean-prose-request", "edit-candidate", "edit-verification-report"], "final-text-receipt"),
+    provider(3, ["korean-prose-request", "edit-decision-set", "edit-candidate", "edit-verification-report"], "final-text-receipt"),
   ],
 };
 
@@ -223,6 +223,12 @@ describe("descriptor-declared reference-only receipts", () => {
       "edit-candidate",
       "korean-prose-rubric",
     ]));
+    expect(plan.stages[3]?.requiredInputArtifacts).toContain("edit-decision-set");
+    expect(plan.stages[3]?.inputBindings).toContainEqual({
+      targetArtifact: "edit-decision-set",
+      sources: ["edit-decision-set"],
+      operation: "select",
+    });
 
     const modified = structuredClone(plan);
     modified.stages[0]!.receiptPolicy = { mode: "reference-only" };
@@ -310,6 +316,43 @@ describe("descriptor-declared reference-only receipts", () => {
     const missingProduced = passedStage(started.runId, started.plan.stages[0]!, started.revision);
     missingProduced.output.artifacts = [];
     expect(service.recordStageResult(missingProduced).error?.code).toBe("MISSING_EVIDENCE");
+  });
+
+  it("blocks finalization when the bound selection artifact is unavailable and proceeds when restored", async () => {
+    const databaseDirectory = await mkdtemp(join(tmpdir(), "receipt-policy-selection-finalization-"));
+    temporaryDirectories.push(databaseDirectory);
+    const databasePath = join(databaseDirectory, "workflow.sqlite3");
+    const store = openStore(databasePath);
+    const { service } = await createFixture(store);
+    let receipt = service.startWorkflow(service.planWorkflow(task({ taskId: "selection-finalization" })).data!).data!;
+    for (const stage of receipt.plan.stages.slice(0, 3)) {
+      receipt = service.recordStageResult(passedStage(receipt.runId, stage, receipt.revision)).data!;
+    }
+
+    const selectionStageId = receipt.plan.stages[0]!.stageId;
+    const tampered = structuredClone(receipt);
+    const selectionResult = tampered.stageResults.find((result) => result.stageId === selectionStageId)!;
+    selectionResult.output.artifacts = selectionResult.output.artifacts.filter(
+      (artifact) => artifact.artifactId !== "edit-decision-set",
+    );
+    const database = new DatabaseSync(databasePath);
+    try {
+      database.prepare("UPDATE workflow_runs SET receipt_json = ? WHERE run_id = ?")
+        .run(JSON.stringify(tampered), receipt.runId);
+      const finalResult = passedStage(receipt.runId, receipt.plan.stages[3]!, receipt.revision);
+      expect(service.recordStageResult(finalResult).error).toMatchObject({ code: "MISSING_EVIDENCE" });
+
+      database.prepare("UPDATE workflow_runs SET receipt_json = ? WHERE run_id = ?")
+        .run(JSON.stringify(receipt), receipt.runId);
+      const recorded = service.recordStageResult(finalResult);
+      expect(recorded.ok).toBe(true);
+      expect(service.finalizeWorkflow(receipt.runId, recorded.data!.revision)).toMatchObject({
+        ok: true,
+        data: { state: "passed" },
+      });
+    } finally {
+      database.close();
+    }
   });
 
   it("rejects actor reuse after SQLite restart", async () => {
