@@ -1,5 +1,8 @@
-import { readFile } from "node:fs/promises";
+import { access, mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { createHash } from "node:crypto";
+
+import { Ajv2020, type ValidateFunction } from "ajv/dist/2020.js";
 
 import {
   assertEvaluationPreflight,
@@ -10,8 +13,180 @@ import {
   type EvaluationPreflightResult,
   type EvaluationRecordBinding,
 } from "../mcp-server/src/evaluation-preflight.js";
+import {
+  evaluateKoreanProseReadiness,
+  digestCanonical,
+  type KoreanProseReadinessResult,
+} from "./korean-prose-readiness.js";
 
 export type KoreanProseEvaluationPhase = "selection" | "editing" | "verification" | "record";
+
+export async function preflightStructuredKoreanProseEvaluation(
+  phase: KoreanProseEvaluationPhase,
+  run: number,
+  cycleDirectory: string,
+  expectedFrameDigest: string,
+  expectedValidityReportDigest: string,
+  evaluationRoot: string,
+): Promise<KoreanProseReadinessResult> {
+  const cycleRoot = await realpath(cycleDirectory);
+  const readiness = await evaluateKoreanProseReadiness(cycleRoot, {
+    requireQuality: false,
+    expectedFrameDigest,
+    expectedValidityReportDigest,
+    evaluationRoot,
+  });
+  if (!Number.isInteger(run) || run < 1 || run > readiness.runBudget) {
+    throw new Error(`run ${run} exceeds the frozen run budget ${readiness.runBudget}`);
+  }
+  const runDirectory = path.join(cycleRoot, "runs", `run-${run}`);
+  const pending = {
+    selection: [
+      "selection-work-product.jsonl", "selection-meta.json", "editing-work-product.jsonl", "editing-meta.json",
+      "verification-work-product.jsonl", "verification-meta.json", "final.jsonl", "metrics.json",
+      "workflow.sqlite3", "workflow-receipt.json", "receipt-binding.json", "evaluation-run-claim.json",
+    ],
+    editing: [
+      "editing-work-product.jsonl", "editing-meta.json", "verification-work-product.jsonl", "verification-meta.json",
+      "final.jsonl", "metrics.json", "workflow.sqlite3", "workflow-receipt.json", "receipt-binding.json",
+    ],
+    verification: [
+      "verification-work-product.jsonl", "verification-meta.json", "final.jsonl", "metrics.json",
+      "workflow.sqlite3", "workflow-receipt.json", "receipt-binding.json",
+    ],
+    record: ["workflow.sqlite3", "workflow-receipt.json", "receipt-binding.json"],
+  } satisfies Record<KoreanProseEvaluationPhase, string[]>;
+  for (const name of pending[phase]) {
+    if (await access(path.join(runDirectory, name)).then(() => true, () => false)) {
+      throw new Error(`refusing to overwrite ${path.join(runDirectory, name)}`);
+    }
+  }
+  const qualityPath = path.join(cycleRoot, "quality-report.json");
+  if (await access(qualityPath).then(() => true, () => false)) {
+    throw new Error(`refusing to overwrite ${qualityPath}`);
+  }
+  const claimPath = path.join(runDirectory, "evaluation-run-claim.json");
+  if (phase === "selection") {
+    await assertStructuredPhaseInputs(phase, run, cycleRoot, readiness.caseCount, readiness.rubricDigest);
+    await mkdir(runDirectory, { recursive: true });
+    await writeFile(claimPath, `${JSON.stringify({
+      schemaVersion: "1.0.0",
+      frameId: readiness.frameId,
+      frameDigest: readiness.frameDigest,
+      validityReportDigest: expectedValidityReportDigest,
+      run,
+      startedAt: new Date().toISOString(),
+    }, null, 2)}\n`, { encoding: "utf8", flag: "wx" });
+  } else {
+    const claim = await readJson(claimPath);
+    if (claim.schemaVersion !== "1.0.0" || claim.frameId !== readiness.frameId
+      || claim.frameDigest !== readiness.frameDigest || claim.validityReportDigest !== expectedValidityReportDigest
+      || claim.run !== run || typeof claim.startedAt !== "string" || !Number.isFinite(Date.parse(claim.startedAt))) {
+      throw new Error("structured evaluation run does not have a matching atomic start claim");
+    }
+    await assertStructuredPhaseInputs(phase, run, cycleRoot, readiness.caseCount, readiness.rubricDigest);
+  }
+  return readiness;
+}
+
+let workProductValidators: Promise<Record<"selection" | "editing" | "verification", ValidateFunction>> | null = null;
+
+async function assertStructuredPhaseInputs(
+  phase: KoreanProseEvaluationPhase,
+  run: number,
+  cycleRoot: string,
+  caseCount: number,
+  rubricDigest: string,
+): Promise<void> {
+  if (phase === "selection") return;
+  const inputRecords = parseStructuredJsonl(await readFile(path.join(cycleRoot, "input.jsonl"), "utf8"));
+  const runDirectory = path.join(cycleRoot, "runs", `run-${run}`);
+  const startClaimSha256 = createHash("sha256")
+    .update(await readFile(path.join(runDirectory, "evaluation-run-claim.json")))
+    .digest("hex");
+  const validators = await loadWorkProductValidators();
+  const roles = phase === "editing" ? ["selection"] as const
+    : phase === "verification" ? ["selection", "editing"] as const
+    : ["selection", "editing", "verification"] as const;
+  const recordsByRole = new Map<string, Array<Record<string, unknown>>>();
+  const actors: string[] = [];
+  for (const role of roles) {
+    const filename = `${role}-work-product.jsonl`;
+    const text = await readFile(path.join(runDirectory, filename), "utf8");
+    const records = parseStructuredJsonl(text);
+    if (records.length !== caseCount) throw new Error(`${role} work product case count does not match the frozen frame`);
+    for (const record of records) {
+      if (!validators[role](record)) throw new Error(`${role} work product does not satisfy its schema: ${JSON.stringify(validators[role].errors)}`);
+    }
+    const actorIds = new Set(records.map((record) => requiredStructuredString(record, "actorId", role)));
+    if (actorIds.size !== 1) throw new Error(`${role} work product uses inconsistent actors`);
+    const actorId = [...actorIds][0]!;
+    actors.push(actorId);
+    for (const [index, record] of records.entries()) {
+      const sourceText = requiredStructuredString(inputRecords[index]!, "sourceText", "input");
+      if (record.sourceDigest !== sha256Text(sourceText)) throw new Error(`${role} work product source digest mismatch at case ${index + 1}`);
+      if (role === "editing") {
+        const selection = recordsByRole.get("selection")![index]!;
+        if (record.selectionDigest !== digestCanonical(selection).slice("sha256:".length)) throw new Error("editing work product selection digest mismatch");
+        const edits = record.edits as Array<Record<string, unknown>>;
+        if (edits.some((edit) => edit.actorId !== actorId)) throw new Error("editing work product edit actor mismatch");
+      }
+      if (role === "verification") {
+        const editing = recordsByRole.get("editing")![index]!;
+        if (record.editingDigest !== digestCanonical(editing).slice("sha256:".length)) throw new Error("verification work product editing digest mismatch");
+        if (record.rubricDigest !== rubricDigest.slice("sha256:".length)) throw new Error("verification work product rubric digest mismatch");
+      }
+    }
+    const meta = await readJson(path.join(runDirectory, `${role}-meta.json`));
+    assertStructuredRoleMeta(meta, role, actorId, run, caseCount, digestCanonical(inputRecords).slice("sha256:".length),
+      digestCanonical(records).slice("sha256:".length), startClaimSha256);
+    recordsByRole.set(role, records);
+  }
+  if (new Set(actors).size !== actors.length) throw new Error("structured evaluation reuses a language actor across roles");
+}
+
+async function loadWorkProductValidators(): Promise<Record<"selection" | "editing" | "verification", ValidateFunction>> {
+  workProductValidators ??= (async () => {
+    const ajv = new Ajv2020({ allErrors: true, strict: false });
+    const root = path.resolve(import.meta.dirname, "..", "skills", "korean-prose-editor", "contracts");
+    const [selection, editing, verification] = await Promise.all([
+      readJson(path.join(root, "selection-work-product.v1.schema.json")),
+      readJson(path.join(root, "editing-work-product.v1.schema.json")),
+      readJson(path.join(root, "verification-work-product.v1.schema.json")),
+    ]);
+    return { selection: ajv.compile(selection), editing: ajv.compile(editing), verification: ajv.compile(verification) };
+  })();
+  return workProductValidators;
+}
+
+function assertStructuredRoleMeta(
+  meta: Record<string, unknown>, role: string, actorId: string, run: number, caseCount: number,
+  inputSha256: string, workProductSha256: string,
+  startClaimSha256: string,
+): void {
+  if (meta.schemaVersion !== "3.0.0" || meta.role !== role || meta.actorId !== actorId || meta.run !== run
+    || meta.caseCount !== caseCount || meta.inputSha256 !== inputSha256 || meta.workProductSha256 !== workProductSha256
+    || meta.status !== "complete" || meta.startClaimSha256 !== startClaimSha256
+    || !meta.executionProvenance || typeof meta.executionProvenance !== "object") {
+    throw new Error(`${role} metadata is not bound to the frozen structured work product`);
+  }
+}
+
+function parseStructuredJsonl(text: string): Array<Record<string, unknown>> {
+  const records = text.trim().split(/\r?\n/u).filter(Boolean).map((line) => JSON.parse(line) as unknown);
+  if (records.some((record) => !record || typeof record !== "object" || Array.isArray(record))) throw new Error("structured artifact must contain JSON objects");
+  return records as Array<Record<string, unknown>>;
+}
+
+function requiredStructuredString(record: Record<string, unknown>, field: string, label: string): string {
+  const value = record[field];
+  if (typeof value !== "string" || value.length === 0) throw new Error(`${label} record is missing ${field}`);
+  return value;
+}
+
+function sha256Text(value: string): string {
+  return createHash("sha256").update(value).digest("hex");
+}
 
 interface EvaluationManifest {
   caseCount: number;

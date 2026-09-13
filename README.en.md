@@ -198,6 +198,18 @@ git diff --check
 
 Keep this order because `bundle:check` must detect a stale committed bundle before a build can overwrite it. In a Codex development environment, `validate:official` runs the system `skill-creator` and `plugin-creator` validators. If Python 3 is not on the system path, set `PYTHON` to its absolute executable path. Start the local MCP server with `pnpm dev`.
 
+For a new structured Korean prose cycle, explicitly name the cycle and verify its frozen frame and independent corpus-validity report before any model call. Require quality evidence only when producing release evidence:
+
+```bash
+pnpm eval:readiness -- <cycle-directory> --expected-frame-digest <sha256:digest> --expected-validity-report-digest <sha256:digest> --evaluation-root <evaluation-root>
+pnpm eval:preflight -- selection 1 <evaluation-root> --cycle-dir <cycle-directory> --expected-frame-digest <sha256:digest> --expected-validity-report-digest <sha256:digest>
+pnpm eval:readiness -- <cycle-directory> --expected-frame-digest <sha256:digest> --expected-validity-report-digest <sha256:digest> --expected-quality-report-digest <sha256:digest> --evaluation-root <evaluation-root> --require-quality
+```
+
+`READY_TO_EVALUATE` authorizes only the new evaluation frame. `EVALUATION_EVIDENCE_PASSED` means every run passed after recomputing metrics from receipt-, SQLite-, final-case-, and independent-adjudication-bound evidence. Neither status activates the provider or approves a release. Retain the frame, validity-report, and quality-report digests outside the cycle and supply each one explicitly. Selection preflight atomically creates a start claim before model execution, and later phase metadata binds its digest. Language-model and independent-adjudicator inputs exclude answer labels; labels are joined from a separate frozen file only after adjudication is sealed. The frame also binds the current suite revision, an evaluation skill copy identical to the integrated target, the evaluation-toolchain checksum, corpus strata, rubric, thresholds, and run budget. Earlier `invalid-corpus` and `failed-recovery` cycles remain terminal evidence and are never reinterpreted.
+
+The frozen values are preserved verbatim from `evals/cycles/0.1.0-rc2/thresholds.json` at source-locked upstream commit `c5df63749e2edfc8aa424f9935ee3cd4697d3c49`.
+
 ## Adding and importing skills
 
 Create a specialist skeleton with normal, boundary, and expected-failure fixtures:

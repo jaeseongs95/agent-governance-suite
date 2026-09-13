@@ -83,6 +83,25 @@ if (errors.length === 0) {
     }
   }
 
+  const koreanRegistryDescriptor = registry.find((descriptor) => descriptor.skillId === "korean-prose-editor");
+  if (!koreanRegistryDescriptor) {
+    errors.push("korean-prose-editor must remain represented in the registry");
+  } else {
+    const [directDescriptor, openAiConfig, skillInstructions] = await Promise.all([
+      readJson(path.join(ROOT, "skills", "korean-prose-editor", "integration", "skill-descriptor.json")),
+      readFile(path.join(ROOT, "skills", "korean-prose-editor", "agents", "openai.yaml"), "utf8"),
+      readFile(path.join(ROOT, "skills", "korean-prose-editor", "SKILL.md"), "utf8"),
+    ]);
+    const implicitInvocationDisabled = /^\s*allow_implicit_invocation:\s*false\s*$/mu.test(openAiConfig);
+    const disabledMarkerPresent = skillInstructions.includes("TEMPORARILY_DISABLED");
+    if (koreanRegistryDescriptor.enabled !== false
+      || directDescriptor.enabled !== false
+      || !implicitInvocationDisabled
+      || !disabledMarkerPresent) {
+      errors.push("korean-prose-editor activation surfaces must remain disabled until a separately approved activation change");
+    }
+  }
+
   const sourceLock = await readJson(path.join(ROOT, "skills", "source-lock.json"));
   if (sourceLock.schemaVersion !== "1.0.0" || !Array.isArray(sourceLock.sources)) {
     errors.push("skills/source-lock.json must be a v1 sources document");

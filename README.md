@@ -211,6 +211,18 @@ pnpm eval:preflight -- record 1 <evaluation-root>
 
 검사는 승인된 실행 횟수, 기존 출력, 입력·후보·루브릭 digest, ID 순서, 빈 후보, 역할 결속과 블라인드 검증 입력을 확인합니다. 실패하면 해당 모델 단계를 실행하지 않습니다. `record` 검사는 `pnpm eval:receipt`에도 자동으로 적용됩니다.
 
+새 구조화 cycle은 경로를 명시하고, 모델 호출 전에 동결 frame과 독립 corpus 타당성 보고서를 검사합니다. 품질 결과를 릴리스 근거로 사용할 때는 `--require-quality`를 붙입니다.
+
+```bash
+pnpm eval:readiness -- <cycle-directory> --expected-frame-digest <sha256:digest> --expected-validity-report-digest <sha256:digest> --evaluation-root <evaluation-root>
+pnpm eval:preflight -- selection 1 <evaluation-root> --cycle-dir <cycle-directory> --expected-frame-digest <sha256:digest> --expected-validity-report-digest <sha256:digest>
+pnpm eval:readiness -- <cycle-directory> --expected-frame-digest <sha256:digest> --expected-validity-report-digest <sha256:digest> --expected-quality-report-digest <sha256:digest> --evaluation-root <evaluation-root> --require-quality
+```
+
+`READY_TO_EVALUATE`는 새 평가를 시작할 수 있다는 뜻이고, `EVALUATION_EVIDENCE_PASSED`는 receipt·SQLite·최종 case와 독립 심사 결과에서 다시 집계한 모든 실행이 동결 기준을 통과했다는 뜻입니다. 어느 상태도 provider 활성화나 릴리스 승인을 뜻하지 않습니다. frame·타당성 보고서·품질 보고서 digest는 cycle 밖에서 먼저 보관해 각각 전달해야 합니다. selection 사전 검사는 모델 실행 전에 start claim을 원자적으로 만들고 이후 단계 metadata가 그 digest를 참조합니다. 언어 모델과 독립 심사자 입력에는 정답 label을 넣지 않으며, 심사가 봉인된 뒤 별도 동결 label 파일을 결합해 점수만 집계합니다. 기존 `invalid-corpus`와 `failed-recovery` cycle은 재해석하지 않으며, 새 frame은 현재 suite revision, 실제 통합 skill과 동일한 평가 사본 checksum, 평가 toolchain checksum, corpus strata·rubric·threshold digest, 실행 횟수와 독립 역할을 함께 결속해야 합니다.
+
+동결 threshold 값은 source lock의 upstream commit `c5df63749e2edfc8aa424f9935ee3cd4697d3c49`에 있는 `evals/cycles/0.1.0-rc2/thresholds.json`을 그대로 보존합니다.
+
 ## 스킬 추가와 편입
 
 새 전문 스킬의 기본 구조와 정상·경계·실패 사례용 `fixture`를 만들려면 다음 명령을 사용합니다.
