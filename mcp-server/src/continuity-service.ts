@@ -109,6 +109,25 @@ function withoutBinding(value: Record<string, unknown>): Record<string, unknown>
   return result;
 }
 
+function exactKeys(value: Record<string, unknown>, keys: string[]): boolean {
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+}
+
+function purgeReceipt(value: unknown): ContinuityPurgeResultV1 | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const receipt = value as Record<string, unknown>;
+  if (
+    !exactKeys(receipt, ["schemaVersion", "purged", "epoch", "revision", "tombstoneDigest", "purgedAt"]) ||
+    receipt.schemaVersion !== "1.0.0" || receipt.purged !== true ||
+    !Number.isInteger(receipt.epoch) || !Number.isInteger(receipt.revision) ||
+    typeof receipt.tombstoneDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(receipt.tombstoneDigest) ||
+    typeof receipt.purgedAt !== "string"
+  ) return null;
+  return receipt as unknown as ContinuityPurgeResultV1;
+}
+
 function boundedText(value: string, maxLength: number): string {
   return value.length <= maxLength ? value : `${value.slice(0, maxLength - 1)}…`;
 }
@@ -277,16 +296,24 @@ export class ContinuityService implements ContinuityGateway {
       const now = this.now().toISOString();
       const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
       if (purged.kind === "replay") {
-        const replay = JSON.parse(purged.request.resultJson) as Partial<ContinuityPurgeResultV1>;
+        let replay: ContinuityPurgeResultV1 | null = null;
+        try { replay = purgeReceipt(JSON.parse(purged.request.resultJson) as unknown); } catch { /* Reject malformed stored state below. */ }
+        const tombstone = this.store.getTombstone(binding.c, request.expectedEpoch);
         if (
-          replay.schemaVersion !== "1.0.0" || replay.purged !== true ||
-          replay.epoch !== request.expectedEpoch || replay.revision !== request.expectedRevision ||
-          typeof replay.tombstoneDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(replay.tombstoneDigest) ||
-          typeof replay.purgedAt !== "string"
+          !replay || !tombstone || replay.epoch !== request.expectedEpoch ||
+          replay.revision !== request.expectedRevision || replay.revision !== tombstone.revision ||
+          replay.tombstoneDigest !== tombstone.payloadDigest || replay.purgedAt !== tombstone.purgedAt
         ) {
           return failure("STALE_REVISION", "The idempotent purge result is no longer available.");
         }
-        return ok(replay as ContinuityPurgeResultV1);
+        return ok({
+          schemaVersion: "1.0.0",
+          purged: true,
+          epoch: replay.epoch,
+          revision: replay.revision,
+          tombstoneDigest: replay.tombstoneDigest,
+          purgedAt: replay.purgedAt,
+        });
       }
       if (purged.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for a different purge request.");
       if (purged.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed or no payload exists.", { expectedRevision: request.expectedRevision, actualRevision: purged.actualRevision });

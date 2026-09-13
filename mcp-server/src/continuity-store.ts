@@ -23,6 +23,12 @@ export interface StoredRequest {
   resultJson: string;
 }
 
+export interface ContinuityTombstoneRecord {
+  revision: number;
+  payloadDigest: string;
+  purgedAt: string;
+}
+
 interface TaskRow {
   task_correlation: string;
   current_epoch: number;
@@ -41,8 +47,36 @@ interface SnapshotRow { snapshot_json: string }
 interface MetadataRow { value: string }
 interface RequestRow { command_digest: string; result_json: string }
 interface RequestPayloadRow { request_hash: string; result_json: string }
+interface TombstoneRow { revision: number; payload_digest: string; purged_at: string }
 
 const SCHEMA_VERSION = 1;
+const SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
+
+function hasExactKeys(value: Record<string, unknown>, keys: string[]): boolean {
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+}
+
+function isBodyFreeRequestReceipt(value: Record<string, unknown> | null): boolean {
+  if (!value || value.schemaVersion !== "1.0.0") return false;
+  if (value.kind === "checkpoint") {
+    return hasExactKeys(value, ["schemaVersion", "kind", "epoch", "revision", "snapshotDigest"])
+      && Number.isInteger(value.epoch) && Number.isInteger(value.revision)
+      && typeof value.snapshotDigest === "string" && SHA256_DIGEST.test(value.snapshotDigest);
+  }
+  if (value.kind === "purged-request") {
+    return hasExactKeys(value, ["schemaVersion", "kind", "epoch", "revision", "tombstoneDigest", "purgedAt"])
+      && Number.isInteger(value.epoch) && Number.isInteger(value.revision)
+      && typeof value.tombstoneDigest === "string" && SHA256_DIGEST.test(value.tombstoneDigest)
+      && typeof value.purgedAt === "string";
+  }
+  return value.purged === true
+    && hasExactKeys(value, ["schemaVersion", "purged", "epoch", "revision", "tombstoneDigest", "purgedAt"])
+    && Number.isInteger(value.epoch) && Number.isInteger(value.revision)
+    && typeof value.tombstoneDigest === "string" && SHA256_DIGEST.test(value.tombstoneDigest)
+    && typeof value.purgedAt === "string";
+}
 
 export class ContinuityStoreError extends Error {
   constructor(message: string, readonly causeValue?: unknown) {
@@ -163,6 +197,14 @@ export class SqliteContinuityStore {
     return row ? { commandDigest: row.command_digest, resultJson: row.result_json } : null;
   }
 
+  getTombstone(taskCorrelation: string, epoch: number): ContinuityTombstoneRecord | null {
+    const row = this.database.prepare(`
+      SELECT revision, payload_digest, purged_at FROM continuity_tombstones
+      WHERE task_correlation = ? AND epoch = ?
+    `).get(taskCorrelation, epoch) as TombstoneRow | undefined;
+    return row ? { revision: row.revision, payloadDigest: row.payload_digest, purgedAt: row.purged_at } : null;
+  }
+
   checkpoint(
     taskCorrelation: string,
     epoch: number,
@@ -262,10 +304,9 @@ export class SqliteContinuityStore {
           const value = JSON.parse(storedRequest.result_json) as unknown;
           parsed = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
         } catch { /* Unknown legacy content is scrubbed below. */ }
-        const bodyFreeReceipt = parsed?.kind === "checkpoint"
-          || parsed?.kind === "purged-request"
-          || parsed?.purged === true;
-        if (!bodyFreeReceipt) scrubRequest.run(scrubbedRequestJson, taskCorrelation, epoch, storedRequest.request_hash);
+        if (!isBodyFreeRequestReceipt(parsed)) {
+          scrubRequest.run(scrubbedRequestJson, taskCorrelation, epoch, storedRequest.request_hash);
+        }
       }
       const resultJson = JSON.stringify({ schemaVersion: "1.0.0", purged: true, epoch, revision: expectedRevision, tombstoneDigest, purgedAt: now });
       this.database.prepare(`

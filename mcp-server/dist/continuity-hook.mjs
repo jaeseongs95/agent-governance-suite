@@ -8092,6 +8092,22 @@ import { chmodSync, mkdirSync } from "node:fs";
 import path2 from "node:path";
 import { DatabaseSync } from "node:sqlite";
 var SCHEMA_VERSION = 1;
+var SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
+function hasExactKeys(value, keys) {
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+}
+function isBodyFreeRequestReceipt(value) {
+  if (!value || value.schemaVersion !== "1.0.0") return false;
+  if (value.kind === "checkpoint") {
+    return hasExactKeys(value, ["schemaVersion", "kind", "epoch", "revision", "snapshotDigest"]) && Number.isInteger(value.epoch) && Number.isInteger(value.revision) && typeof value.snapshotDigest === "string" && SHA256_DIGEST.test(value.snapshotDigest);
+  }
+  if (value.kind === "purged-request") {
+    return hasExactKeys(value, ["schemaVersion", "kind", "epoch", "revision", "tombstoneDigest", "purgedAt"]) && Number.isInteger(value.epoch) && Number.isInteger(value.revision) && typeof value.tombstoneDigest === "string" && SHA256_DIGEST.test(value.tombstoneDigest) && typeof value.purgedAt === "string";
+  }
+  return value.purged === true && hasExactKeys(value, ["schemaVersion", "purged", "epoch", "revision", "tombstoneDigest", "purgedAt"]) && Number.isInteger(value.epoch) && Number.isInteger(value.revision) && typeof value.tombstoneDigest === "string" && SHA256_DIGEST.test(value.tombstoneDigest) && typeof value.purgedAt === "string";
+}
 var ContinuityStoreError = class extends Error {
   constructor(message, causeValue) {
     super(message);
@@ -8205,6 +8221,13 @@ var SqliteContinuityStore = class {
     `).get(taskCorrelation, epoch, requestHash);
     return row ? { commandDigest: row.command_digest, resultJson: row.result_json } : null;
   }
+  getTombstone(taskCorrelation, epoch) {
+    const row = this.database.prepare(`
+      SELECT revision, payload_digest, purged_at FROM continuity_tombstones
+      WHERE task_correlation = ? AND epoch = ?
+    `).get(taskCorrelation, epoch);
+    return row ? { revision: row.revision, payloadDigest: row.payload_digest, purgedAt: row.purged_at } : null;
+  }
   checkpoint(taskCorrelation, epoch, expectedRevision, requestHash, commandDigest, snapshot) {
     this.database.exec("BEGIN IMMEDIATE;");
     try {
@@ -8292,8 +8315,9 @@ var SqliteContinuityStore = class {
           parsed = value && typeof value === "object" && !Array.isArray(value) ? value : null;
         } catch {
         }
-        const bodyFreeReceipt = parsed?.kind === "checkpoint" || parsed?.kind === "purged-request" || parsed?.purged === true;
-        if (!bodyFreeReceipt) scrubRequest.run(scrubbedRequestJson, taskCorrelation, epoch, storedRequest.request_hash);
+        if (!isBodyFreeRequestReceipt(parsed)) {
+          scrubRequest.run(scrubbedRequestJson, taskCorrelation, epoch, storedRequest.request_hash);
+        }
       }
       const resultJson = JSON.stringify({ schemaVersion: "1.0.0", purged: true, epoch, revision: expectedRevision, tombstoneDigest, purgedAt: now });
       this.database.prepare(`
@@ -8408,6 +8432,17 @@ function withoutBinding(value) {
   const result = { ...value };
   delete result._continuityBinding;
   return result;
+}
+function exactKeys(value, keys) {
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+}
+function purgeReceipt(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const receipt = value;
+  if (!exactKeys(receipt, ["schemaVersion", "purged", "epoch", "revision", "tombstoneDigest", "purgedAt"]) || receipt.schemaVersion !== "1.0.0" || receipt.purged !== true || !Number.isInteger(receipt.epoch) || !Number.isInteger(receipt.revision) || typeof receipt.tombstoneDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(receipt.tombstoneDigest) || typeof receipt.purgedAt !== "string") return null;
+  return receipt;
 }
 function boundedText(value, maxLength) {
   return value.length <= maxLength ? value : `${value.slice(0, maxLength - 1)}\u2026`;
@@ -8558,11 +8593,23 @@ var ContinuityService = class {
       const now = this.now().toISOString();
       const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
       if (purged.kind === "replay") {
-        const replay = JSON.parse(purged.request.resultJson);
-        if (replay.schemaVersion !== "1.0.0" || replay.purged !== true || replay.epoch !== request.expectedEpoch || replay.revision !== request.expectedRevision || typeof replay.tombstoneDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(replay.tombstoneDigest) || typeof replay.purgedAt !== "string") {
+        let replay = null;
+        try {
+          replay = purgeReceipt(JSON.parse(purged.request.resultJson));
+        } catch {
+        }
+        const tombstone = this.store.getTombstone(binding.c, request.expectedEpoch);
+        if (!replay || !tombstone || replay.epoch !== request.expectedEpoch || replay.revision !== request.expectedRevision || replay.revision !== tombstone.revision || replay.tombstoneDigest !== tombstone.payloadDigest || replay.purgedAt !== tombstone.purgedAt) {
           return failure("STALE_REVISION", "The idempotent purge result is no longer available.");
         }
-        return ok(replay);
+        return ok({
+          schemaVersion: "1.0.0",
+          purged: true,
+          epoch: replay.epoch,
+          revision: replay.revision,
+          tombstoneDigest: replay.tombstoneDigest,
+          purgedAt: replay.purgedAt
+        });
       }
       if (purged.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for a different purge request.");
       if (purged.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed or no payload exists.", { expectedRevision: request.expectedRevision, actualRevision: purged.actualRevision });
