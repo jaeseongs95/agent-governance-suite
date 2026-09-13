@@ -23,4 +23,4 @@
 
 SQLite v2에서 v3으로 올리기 전에는 MCP 서버를 중지하고 SQLite backup API 또는 `VACUUM INTO`처럼 WAL까지 일관되게 반영하는 방식으로 DB를 백업합니다. 롤백 시험은 backup을 별도 경로에 복원하고 `v1.1.0` MCP로 열어 기존 run, run ID sequence, 계획 서명 키와 업데이트 상태가 유지되는지 확인합니다. v3 DB를 그대로 둔 채 `v1.1.0`만 다시 설치하는 절차는 롤백으로 인정하지 않습니다. 업그레이드 전 DB가 없었다면 새 v3 DB를 별도 보관하고 원래 경로에서 제거한 상태로 이전 MCP를 시작합니다.
 
-공개 GitHub 저장소를 만들거나 처음 push하기 직전에는 저장소 주소와 공개 범위를 다시 확인합니다. 릴리스 후에는 태그의 `mcp-server/dist/server.mjs`, `.codex-plugin/plugin.json`, `.agents/plugins/marketplace.json`이 같은 버전을 가리키는지 확인합니다. 깨끗한 Codex 환경에서 marketplace를 추가한 뒤 전문 스킬 11개, 오케스트레이터와 registry 밖의 `context-continuity` 인프라 스킬이 발견되는지, 비활성 스킬이 MCP 라우팅에서 제외되는지 확인합니다. MCP `tools/list`, 대표 계획·실행·중단 흐름과 explicit continuity 도구도 함께 점검합니다.
+공개 GitHub 저장소를 만들거나 처음 push하기 직전에는 저장소 주소와 공개 범위를 다시 확인합니다. 릴리스 후에는 태그의 `mcp-server/dist/server.mjs`, `.codex-plugin/plugin.json`, `.agents/plugins/marketplace.json`이 같은 버전을 가리키는지 확인합니다. 깨끗한 Codex 환경에서 marketplace를 추가한 뒤 전문 스킬 12개, 오케스트레이터와 registry 밖의 `context-continuity` 인프라 스킬이 발견되는지, 비활성 스킬이 MCP 라우팅에서 제외되는지 확인합니다. MCP `tools/list`, 대표 계획·실행·중단 흐름과 explicit continuity 도구도 함께 점검합니다.

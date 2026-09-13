@@ -1,6 +1,6 @@
 # Agent Governance Suite 향후 로드맵
 
-문서 기준일은 2026년 9월 13일이다. 현재 공개 릴리스는 `v1.4.3`이다. 한국어 산문 워크플로의 구현과 평가 자료는 릴리스에 포함하지만, 품질 게이트를 통과할 때까지 registry와 오케스트레이터 선택 경로에서 비활성으로 유지한다.
+문서 기준일은 2026년 9월 13일이다. 현재 공개 릴리스는 `v1.5.0`이다. 한국어 산문 워크플로의 구현과 평가 자료는 릴리스에 포함하지만, 품질 게이트를 통과할 때까지 registry와 오케스트레이터 선택 경로에서 비활성으로 유지한다.
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
 
@@ -30,7 +30,7 @@
 | --- | --- | --- | --- |
 | 0. `v1.1.0` 안정화 | 부분 완료 | 거버넌스 릴리스 운영과 한국어 산문 워크플로의 계약·품질·재현성 확보 | 비활성 산문 provider, 검증된 receipt 경로, 품질 평가 결과, 고정된 원본 ref |
 | 0.5. 업데이트 알림 | 완료 | 안정 버전 존재 여부만 안내 | `check_for_updates`, SQLite v2 상태, 일회성 MCP notice |
-| 0.6. 모델·추론 수준 안내 | 별도 브랜치 구현·검증 완료, 통합 보류 | 요청 난도와 관측 가능한 현재 설정을 비교해 과다·적정·부족 여부 안내 | `model-effort-advisor`, `ModelEffortAdvice.v1`, 정상·경계·실패 fixture |
+| 0.6. 모델·추론 수준 안내 | 완료 | 요청 난도와 관측 가능한 현재 설정을 비교해 과다·적정·부족 여부 안내 | `model-effort-advisor`, `ModelEffortAdvice.v1`, 정상·경계·실패 fixture |
 | 1. 실행 전 신뢰성 | 다음 | 평가 오류와 동시 작업 충돌을 조기에 차단 | `evaluation-validity-auditor`, `active-workspace-guard` |
 | 2. 복구 워크플로 | 계획됨 | blocker 진단 뒤 선택 가능한 복구 전략 제공 | `recovery-strategy-selector`, `RecoveryHandoff.v1` |
 | 3. 실행 환경과 연속성 | 부분 구현 | 실행 가능 여부를 먼저 확인하고 세션 복원을 표준화 | 계획된 `runtime-capability-profiler`, 구현된 로컬 task continuity |
@@ -85,7 +85,7 @@
 
 ## 0.6단계: 모델·추론 수준 적합성 안내
 
-`model-effort-advisor`는 `codex/model-effort-advisor` 브랜치의 별도 worktree에서 구현과 검증을 마쳤다. 아직 `main`에 병합하지 않았고 공개 릴리스에도 포함하지 않았다. 0단계의 변경 범위와 평가 결과를 먼저 고정한다는 원칙에 따라 현재 상태는 통합 보류다.
+`model-effort-advisor`는 별도 작업 브랜치에서 구현·검증한 뒤 `main`에 통합했으며 `v1.5.0`부터 공개 릴리스에 포함한다.
 
 - 현재 task의 모델과 reasoning effort가 host runtime metadata, 사용자 설명 또는 현재 요청에 첨부된 화면에서 확인될 때만 요청 난도·위험과 비교한다.
 - 판정은 `OVER_PROVISIONED`, `ADEQUATE`, `UNDER_PROVISIONED`, `UNOBSERVABLE`로 구분한다.
@@ -93,12 +93,12 @@
 - 현재 선택을 관측할 수 없으면 값을 추정하거나 일반 작업에서 사용자에게 재확인을 요구하지 않는다.
 - 모델이나 reasoning effort를 자동으로 변경하지 않으며, 요금제·잔여 사용량이나 실제 비용을 관측 근거 없이 추정하지 않는다.
 
-### 현재 검증 상태와 남은 결정
+### 릴리스 상태와 제한
 
-- schema, registry bootstrap provider, 오케스트레이터 라우팅과 정상·경계·실패 회귀 테스트를 브랜치에 추가했다.
-- `pnpm bundle:check`, `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm runtime:check`, `pnpm validate:all`, `pnpm validate:official`, `git diff --check`가 통과했다.
+- schema, registry bootstrap provider, 오케스트레이터 라우팅과 정상·경계·실패 회귀 테스트를 `main`에 통합했다.
+- `v1.5.0` 릴리스 후보에서 `pnpm bundle:check`, `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm runtime:check`, `pnpm validate:all`, `pnpm validate:official`, `git diff --check`가 통과했다.
 - 스킬 자체만으로는 매 요청에서 UI의 현재 선택을 읽을 수 없다. host가 runtime metadata를 제공하지 않는 환경에서는 사용자 설명이나 현재 요청의 화면 자료가 있어야 구체적인 판정이 가능하다.
-- `main` 통합 전에는 0단계 종료 조건과의 우선순위, host metadata 연동 여부, 관측 불가 시의 안내 정책을 최종 확정한다.
+- host metadata 연동이 없는 환경에서도 관측 불가를 조용히 처리하고 기존 작업을 막지 않는다.
 
 ## 1단계: 평가와 작업 공간의 신뢰성 확보
 
