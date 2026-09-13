@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -5,6 +6,7 @@ import { FileSkillRegistry, selectSkillByCapability } from "../../mcp-server/src
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
+const koreanSkillRoot = new URL("../../skills/korean-prose-editor/", import.meta.url);
 
 describe("bundled skill registry", () => {
   it("conforms to SkillDescriptor.v2 and exposes all specialist capabilities", () => {
@@ -57,5 +59,12 @@ describe("bundled skill registry", () => {
     ]) {
       expect(selectSkillByCapability(providers, capability)).toBeUndefined();
     }
+
+    const directDescriptor = JSON.parse(readFileSync(new URL("integration/skill-descriptor.json", koreanSkillRoot), "utf8")) as { enabled?: unknown };
+    const openAiConfig = readFileSync(new URL("agents/openai.yaml", koreanSkillRoot), "utf8");
+    const skillInstructions = readFileSync(new URL("SKILL.md", koreanSkillRoot), "utf8");
+    expect(directDescriptor.enabled).toBe(false);
+    expect(openAiConfig).toMatch(/^\s*allow_implicit_invocation:\s*false\s*$/m);
+    expect(skillInstructions).toContain("TEMPORARILY_DISABLED");
   });
 });
