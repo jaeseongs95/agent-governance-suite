@@ -100,6 +100,15 @@ const skills: SkillDescriptorV2[] = [
       executionClass: "recovery",
     }],
   },
+  {
+    ...descriptor({ id: "recovery-selector", capabilities: ["recovery-strategy-selection"], phase: "recovery-strategy-selection", phaseOrder: 20, riskGate: "none", priority: 10, producedArtifacts: ["recovery-handoff"] }),
+    providers: [{
+      ...descriptor({ id: "recovery-selector", capabilities: ["recovery-strategy-selection"], phase: "recovery-strategy-selection", phaseOrder: 20, riskGate: "none", priority: 10, producedArtifacts: ["recovery-handoff"] }).providers[0]!,
+      executionClass: "recovery",
+      requiredInputArtifacts: ["diagnosis-report"],
+      inputBindings: [{ targetArtifact: "diagnosis-report", sources: ["prior-recovery:diagnosis-report"], operation: "require-external" }],
+    }],
+  },
 ];
 
 function task(overrides: Partial<TaskEnvelopeV1> = {}): TaskEnvelopeV1 {
@@ -652,6 +661,30 @@ describe("WorkflowService", () => {
     }));
     expect(recovery.data?.stages).toHaveLength(1);
     expect(recovery.data?.stages[0]).toMatchObject({ executionClass: "recovery", requiredCapability: "blocker-diagnosis" });
+
+    const selector = service.planWorkflow(task({
+      taskId: "recovery-selector-only",
+      riskLevel: "low",
+      workUnits: [],
+      requiredCapabilities: ["recovery-strategy-selection"],
+      decision: { complexity: "simple", hasConflicts: false },
+    }));
+    expect(selector.data?.state).toBe("ready");
+    expect(selector.data?.stages).toHaveLength(1);
+    expect(selector.data?.stages[0]).toMatchObject({ executionClass: "recovery", requiredCapability: "recovery-strategy-selection" });
+
+    const sameRunRecovery = service.planWorkflow(task({
+      taskId: "same-run-recovery",
+      riskLevel: "low",
+      workUnits: [],
+      requiredCapabilities: ["blocker-diagnosis", "recovery-strategy-selection"],
+      decision: { complexity: "simple", hasConflicts: false },
+    }));
+    expect(sameRunRecovery.data?.state).toBe("blocked");
+    expect(sameRunRecovery.data?.errors).toContainEqual(expect.objectContaining({
+      code: "INVALID_TRANSITION",
+      message: expect.stringContaining("completed external run"),
+    }));
 
     const mixed = service.planWorkflow(task({
       taskId: "mixed-recovery",

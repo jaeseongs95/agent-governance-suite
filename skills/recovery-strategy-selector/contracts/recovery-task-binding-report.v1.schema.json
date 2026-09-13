@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.local/recovery-strategy-selector/contracts/recovery-task-binding-report.v1.schema.json",
+  "title": "RecoveryTaskBindingReport.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "valid", "handoffDigest", "taskEnvelopeDigest", "errors"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "valid": { "type": "boolean" },
+    "handoffDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "taskEnvelopeDigest": { "type": ["string", "null"], "pattern": "^sha256:[a-f0-9]{64}$" },
+    "errors": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  }
+}
