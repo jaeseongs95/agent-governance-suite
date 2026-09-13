@@ -67,6 +67,31 @@ describe("range-aware Korean prose cycle receipts", () => {
     expect(refused.status).not.toBe(0);
     expect(refused.stderr).toContain(`refusing to overwrite ${join(runDirectory, "workflow-receipt.json")}`);
   });
+
+  it("rejects a cycle work product changed after the receipt was recorded", async () => {
+    const evaluationRoot = await createCycleFixture();
+    const cycleDirectory = join("evals", "cycles", "0.1.0-rc2");
+    const recorded = runScript(recorderPath, ["1", evaluationRoot, "--cycle-dir", cycleDirectory]);
+    expect(recorded.status, recorded.stderr).toBe(0);
+
+    const editingPath = join(evaluationRoot, cycleDirectory, "runs", "run-1", "editing-work-product.jsonl");
+    const editingText = await readFile(editingPath, "utf8");
+    await writeFile(editingPath, editingText.replace(`"candidateDigest":"${"c".repeat(64)}"`, `"candidateDigest":"${"e".repeat(64)}"`), "utf8");
+
+    const verified = runScript(verifierPath, ["1", evaluationRoot, "--cycle-dir", cycleDirectory]);
+    expect(verified.status).not.toBe(0);
+    expect(verified.stderr).toContain("edit-candidate digest does not match its work product");
+  });
+
+  it("rejects a cycle directory outside the evaluation root", async () => {
+    const evaluationRoot = await createCycleFixture();
+    const outsideDirectory = await mkdtemp(join(tmpdir(), "korean-prose-cycle-outside-"));
+    temporaryDirectories.push(outsideDirectory);
+
+    const recorded = runScript(recorderPath, ["1", evaluationRoot, "--cycle-dir", outsideDirectory]);
+    expect(recorded.status).not.toBe(0);
+    expect(recorded.stderr).toContain("cycle directory must be inside the evaluation root");
+  });
 });
 
 async function createCycleFixture(): Promise<string> {
@@ -85,7 +110,14 @@ async function createCycleFixture(): Promise<string> {
       actorId: actors[0],
       sourceDigest: "a".repeat(64),
       status: "ready",
-      decisions: [{ unitId: "unit-0001", action: "edit", reasonCodes: ["STYLE"], riskFlags: [], additionalProtectedStrings: [] }],
+      decisions: [{
+        unitId: "unit-0001",
+        action: "edit",
+        reasonCodes: ["TRANSLATIONESE"],
+        riskFlags: [],
+        additionalProtectedStrings: [],
+        issueRanges: [{ start: 0, end: 1, reasonCode: "TRANSLATIONESE" }],
+      }],
     })],
     [join(runDirectory, "editing-work-product.jsonl"), jsonl({
       schemaVersion: "1.0.0",
@@ -110,7 +142,13 @@ async function createCycleFixture(): Promise<string> {
       editingDigest: "c".repeat(64),
       rubricDigest: "d".repeat(64),
       globalDecision: "continue",
-      decisions: [{ editId: "edit-1", decision: "accept", reasonCode: "VERIFIED" }],
+      decisions: [{
+        editId: "edit-1",
+        decision: "accept",
+        reasonCode: "MEANING_PRESERVED",
+        sourceDefect: "TRANSLATIONESE",
+        invariantDelta: "NONE",
+      }],
       assessment: {
         meaningPreservation: "pass",
         majorMeaningChange: false,
