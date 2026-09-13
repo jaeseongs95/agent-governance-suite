@@ -9104,7 +9104,9 @@ var contractSchemas = {
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
   executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
   stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
-  stateCleanupReceipt: loadSchema("state-cleanup-receipt.v1.schema.json")
+  stateCleanupReceipt: loadSchema("state-cleanup-receipt.v1.schema.json"),
+  koreanProseGlossaryLookupRequest: loadSchema("korean-prose-glossary-lookup-request.v1.schema.json"),
+  koreanProseGlossaryLookupResult: loadSchema("korean-prose-glossary-lookup-result.v1.schema.json")
 };
 function errorText(errors) {
   return (errors ?? []).map((error) => `${error.instancePath || "/"} ${error.message ?? "is invalid"}`).join("; ");
@@ -9148,7 +9150,9 @@ var ContractValidator = class {
       prepareStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/prepare-state-cleanup-request.v1.schema.json"),
       executeStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/execute-state-cleanup-request.v1.schema.json"),
       stateCleanupPlan: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-plan.v1.schema.json"),
-      stateCleanupReceipt: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-receipt.v1.schema.json")
+      stateCleanupReceipt: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-receipt.v1.schema.json"),
+      koreanProseGlossaryLookupRequest: ajv.getSchema("https://skill-suite.local/contracts/korean-prose-glossary-lookup-request.v1.schema.json"),
+      koreanProseGlossaryLookupResult: ajv.getSchema("https://skill-suite.local/contracts/korean-prose-glossary-lookup-result.v1.schema.json")
     };
   }
   assert(name, value) {
@@ -9243,6 +9247,12 @@ var ContractValidator = class {
   }
   stateCleanupReceipt(value) {
     return this.assert("stateCleanupReceipt", value);
+  }
+  koreanProseGlossaryLookupRequest(value) {
+    return this.assert("koreanProseGlossaryLookupRequest", value);
+  }
+  koreanProseGlossaryLookupResult(value) {
+    return this.assert("koreanProseGlossaryLookupResult", value);
   }
   apiResult(value) {
     return this.assert("apiResult", value);

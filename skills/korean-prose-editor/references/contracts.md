@@ -4,6 +4,8 @@
 
 외부 provider receipt와 원문을 담을 수 있는 비공개 work product를 구분한다. `edit-decision-set.v1`, `edit-candidate.v1`, `edit-verification-report.v1`, `final-text-receipt.v1`은 raw-text-free receipt다. 실제 범위와 replacement는 `source-unit-manifest.v1`, `selection-work-product.v1`, `editing-draft.v1`, `editing-work-product.v1`, `verification-work-product.v1`에만 둔다.
 
+`glossary-match-set.v1`은 MCP 조회의 비공개 결과다. 각 언어 역할의 private work product에는 같은 `GlossaryBinding.v1`을 넣는다. 직접 실행은 필드가 `schemaVersion`과 `mode: "none"`뿐인 binding을 쓰고 match set은 `null`이어야 한다. MCP 실행은 source·사전·match-set digest, 상태, match count와 고정 경고를 결속한다. 조회 실패 상태는 빈 match와 null match-set digest를 사용한다.
+
 `provider-plan`은 selection, editing, verification 순서의 `actorIds` 세 개를 요구한다. 각 값은 격리된 역할 실행에서 새로 만든 canonical lowercase UUID여야 하고 서로 달라야 한다. `providers.finalization.kind`는 `deterministic`이며 `actorId`를 갖지 않는다. 호출 환경에서 서브에이전트를 사용할 수 없으면 계획을 유효한 것으로 축소하지 않는다. UUID 고유성은 협력적 역할 분리를 위한 실행 표식이며 암호학적 신원 증명은 아니다.
 
 `source-unit-manifest`는 원문과 보호 manifest에서 결정적으로 만든다. 빈 줄로 나뉜 문단은 `prose`, Markdown fence는 `fenced-code` unit이 된다. 문단 사이 구분자와 prose 앞뒤 공백은 unit 밖에 남겨 기본 문단 구조를 보호한다. unit은 원문 순서대로 정렬되고 서로 겹치지 않는다. 각 unit에는 `unitId`, UTF-16 반열린 범위 `[start, end)`, 종류, 해당 원문 조각의 digest와 겹치는 `protectedSpanIds`가 들어간다. 닫히지 않은 fence는 여는 줄부터 원문 끝까지 하나의 `fenced-code` unit으로 취급한다.
@@ -14,9 +16,9 @@
 
 `verification-work-product`는 editing artifact digest, 고정 rubric digest, 전체 결정과 edit별 결정을 함께 기록한다. 각 edit에는 원문에서 제거한 구체적 결함인 `sourceDefect`와 수량·양태·권리·주장 강도 등의 변화인 `invariantDelta`를 기록한다. `accept`는 `sourceDefect`가 `NONE`이 아니고 `invariantDelta`가 `NONE`이며 후보가 원문보다 분명히 나을 때만 쓴다. 나머지는 `retain`이며 결정이 빠진 edit도 해당 edit만 `retain`한다.
 
-finalizer는 범위 밖 edit, 선택되지 않은 unit의 edit, fenced-code나 보호 구간을 건드린 edit, 최소화되지 않은 edit와 `retain`·누락 결정을 개별적으로 유지한다. malformed selection, 원문·artifact digest 불일치, 겹치는 edit, 전역 verification fallback과 최종 보호 검사 실패는 전체 fallback 대상이다.
+finalizer는 범위 밖 edit, 선택되지 않은 unit의 edit, fenced-code나 보호 구간을 건드린 edit, 최소화되지 않은 edit와 `retain`·누락 결정을 개별적으로 유지한다. malformed selection, 원문·artifact digest 불일치, 역할별 glossary binding 불일치, match-set 변조, `protect` 범위 누락, 겹치는 edit, 전역 verification fallback과 최종 보호 검사 실패는 전체 fallback 대상이다.
 
-최종 receipt의 허용 최상위 필드는 `schemaVersion`, `actorIds`, `digest`, `length`, `decisions`, `warnings`다. `actorIds`는 선정자·편집자·검증자 세 UUID를 순서대로 기록한다. 원문이나 결과문을 유추할 수 있는 발췌, edit replacement, 자유 서술 경고를 넣지 않는다.
+최종 receipt의 허용 최상위 필드는 `schemaVersion`, `actorIds`, `digest`, `length`, `glossary`, `decisions`, `warnings`다. `actorIds`는 선정자·편집자·검증자 세 UUID를 순서대로 기록한다. `glossary`에는 상태, version, digest, match count와 고정 경고만 둔다. 원문이나 결과문을 유추할 수 있는 발췌, 일치 표면형, 권장 표현, edit replacement, 자유 서술 경고를 넣지 않는다.
 
 finalization의 `receiptPolicy`는 `actorIdsPointer: "/output/actorIds"`와 `actorIdsMatch: "prior-policy-actors"`를 함께 지정한다. 최종 receipt의 배열은 앞선 역할 receipt에서 정책으로 기록한 세 actor ID와 값·개수·순서가 모두 같아야 한다. 새로운 actor를 만들거나 배열 순서를 바꿀 수 없다.
 

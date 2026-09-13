@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/korean-prose-glossary-lookup-request.v1.schema.json",
+  "title": "Korean prose glossary lookup request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sourceText", "sourceDigest"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "sourceText": { "type": "string" },
+    "sourceDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

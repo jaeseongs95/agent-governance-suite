@@ -437,6 +437,7 @@ async function createCycleFixture(): Promise<string> {
       schemaVersion: "1.0.0",
       actorId: actors[0],
       sourceDigest: sha256(record.sourceText),
+      glossaryBinding: { schemaVersion: "1.0.0", mode: "none" },
       status: "ready",
       decisions: [{
         unitId: "unit-0001",
@@ -454,6 +455,7 @@ async function createCycleFixture(): Promise<string> {
       schemaVersion: "1.0.0",
       actorId: actors[1],
       sourceDigest: sha256(record.sourceText),
+      glossaryBinding: { schemaVersion: "1.0.0", mode: "none" },
       selectionDigest: readinessDigest(selectionRecords[index]).slice("sha256:".length),
       edits: edited ? [{
         id: `edit-${record.id}`,
@@ -473,6 +475,7 @@ async function createCycleFixture(): Promise<string> {
       schemaVersion: "1.0.0",
       actorId: actors[2],
       sourceDigest: sha256(record.sourceText),
+      glossaryBinding: { schemaVersion: "1.0.0", mode: "none" },
       editingDigest: readinessDigest(editingRecords[index]).slice("sha256:".length),
       rubricDigest: readinessRawDigest(rubricText).slice("sha256:".length),
       globalDecision: "continue",

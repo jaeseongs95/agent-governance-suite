@@ -202,12 +202,13 @@
       "ref": { "kind": "commit", "value": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49", "commit": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49" },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:a88252aa9c4e654458ecc7eed282d26c022ca9f5db858f87f3237decc622feb8",
-      "integratedChecksum": "sha256:5ff40007e1338c4dc397a7c79a07d5d3e28b15df558a9f2ca803c9560bee3319",
+      "integratedChecksum": "sha256:e4d6d15cc4eac4ce645d6f5d5c33e5c2677386cbd704f2c48626a6a7c342976b",
       "checksumScope": "relative paths and normalized text bytes under skills/korean-prose-editor",
       "downstreamModifications": [
         "Temporarily disable implicit invocation and all direct execution paths until the quality gate passes.",
         "Retain the suite-level frozen-evaluation preflight contract.",
-        "Document canonical cycle receipt verification in the integration copy."
+        "Document canonical cycle receipt verification in the integration copy.",
+        "Ship a reviewed SQLite glossary and bind one read-only MCP lookup across the Korean prose roles."
       ]
     }
   ]

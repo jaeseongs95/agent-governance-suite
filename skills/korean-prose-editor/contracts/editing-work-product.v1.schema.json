@@ -4,11 +4,12 @@
   "title": "Private editing work product",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "actorId", "sourceDigest", "selectionDigest", "edits", "candidateDigest"],
+  "required": ["schemaVersion", "actorId", "sourceDigest", "glossaryBinding", "selectionDigest", "edits", "candidateDigest"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "actorId": { "$ref": "#/$defs/actorId" },
     "sourceDigest": { "$ref": "#/$defs/digest" },
+    "glossaryBinding": { "$ref": "glossary-binding.v1.schema.json" },
     "selectionDigest": { "$ref": "#/$defs/digest" },
     "edits": {
       "type": "array",
