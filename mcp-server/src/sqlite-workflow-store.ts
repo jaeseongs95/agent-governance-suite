@@ -3,6 +3,12 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { type WorkflowReceiptV1, WorkflowContractError } from "../../contracts/types.js";
+import {
+  mergePluginUpdateState,
+  type PluginUpdateStore,
+  type StoredPluginUpdateState,
+} from "./plugin-update-store.js";
+import { compareStableVersionNumbers } from "./plugin-version.js";
 import { type WorkflowStore } from "./workflow-store.js";
 
 interface MetadataRow {
@@ -14,9 +20,25 @@ interface RunRow {
   revision: number;
 }
 
-const SCHEMA_VERSION = 1;
+interface PluginUpdateRow {
+  target_id: string;
+  current_version: string;
+  latest_version: string | null;
+  latest_tag: string | null;
+  latest_commit: string | null;
+  etag: string | null;
+  comparison: StoredPluginUpdateState["comparison"];
+  last_attempt_at: string | null;
+  last_successful_check_at: string | null;
+  next_check_at: string;
+  last_notified_version: string | null;
+  last_notified_at: string | null;
+  last_error_code: StoredPluginUpdateState["lastErrorCode"];
+}
 
-export class SqliteWorkflowStore implements WorkflowStore {
+const SCHEMA_VERSION = 2;
+
+export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   private readonly database: DatabaseSync;
   private closed = false;
 
@@ -146,6 +168,102 @@ export class SqliteWorkflowStore implements WorkflowStore {
     }
   }
 
+  getPluginUpdateState(targetId: string): StoredPluginUpdateState | null {
+    try {
+      const row = this.database.prepare(`
+        SELECT target_id, current_version, latest_version, latest_tag, latest_commit, etag,
+               comparison, last_attempt_at, last_successful_check_at, next_check_at,
+               last_notified_version, last_notified_at, last_error_code
+        FROM plugin_update_state
+        WHERE target_id = ?
+      `).get(targetId) as PluginUpdateRow | undefined;
+      return row ? {
+        targetId: row.target_id,
+        currentVersion: row.current_version,
+        latestVersion: row.latest_version,
+        latestTag: row.latest_tag,
+        latestCommit: row.latest_commit,
+        etag: row.etag,
+        comparison: row.comparison,
+        lastAttemptAt: row.last_attempt_at,
+        lastSuccessfulCheckAt: row.last_successful_check_at,
+        nextCheckAt: row.next_check_at,
+        lastNotifiedVersion: row.last_notified_version,
+        lastNotifiedAt: row.last_notified_at,
+        lastErrorCode: row.last_error_code,
+      } : null;
+    } catch (cause) {
+      throw this.storageError("Cannot read plugin update state.", cause, { targetId });
+    }
+  }
+
+  putPluginUpdateState(state: StoredPluginUpdateState): void {
+    try {
+      this.transaction(() => {
+        const merged = mergePluginUpdateState(this.readPluginUpdateStateRow(state.targetId), state);
+        this.database.prepare(`
+        INSERT INTO plugin_update_state (
+          target_id, current_version, latest_version, latest_tag, latest_commit, etag,
+          comparison, last_attempt_at, last_successful_check_at, next_check_at,
+          last_notified_version, last_notified_at, last_error_code
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(target_id) DO UPDATE SET
+          current_version = excluded.current_version,
+          latest_version = excluded.latest_version,
+          latest_tag = excluded.latest_tag,
+          latest_commit = excluded.latest_commit,
+          etag = excluded.etag,
+          comparison = excluded.comparison,
+          last_attempt_at = excluded.last_attempt_at,
+          last_successful_check_at = excluded.last_successful_check_at,
+          next_check_at = excluded.next_check_at,
+          last_notified_version = excluded.last_notified_version,
+          last_notified_at = excluded.last_notified_at,
+          last_error_code = excluded.last_error_code
+        `).run(
+          merged.targetId,
+          merged.currentVersion,
+          merged.latestVersion,
+          merged.latestTag,
+          merged.latestCommit,
+          merged.etag,
+          merged.comparison,
+          merged.lastAttemptAt,
+          merged.lastSuccessfulCheckAt,
+          merged.nextCheckAt,
+          merged.lastNotifiedVersion,
+          merged.lastNotifiedAt,
+          merged.lastErrorCode,
+        );
+      });
+    } catch (cause) {
+      throw this.storageError("Cannot persist plugin update state.", cause, { targetId: state.targetId });
+    }
+  }
+
+  claimPluginUpdateNotice(targetId: string, latestVersion: string, notifiedAt: string): boolean {
+    try {
+      return this.transaction(() => {
+        const state = this.readPluginUpdateStateRow(targetId);
+        if (
+          !state
+          || state.latestVersion !== latestVersion
+          || (state.lastNotifiedVersion !== null
+            && compareStableVersionNumbers(state.lastNotifiedVersion, latestVersion) >= 0)
+        ) return false;
+        const result = this.database.prepare(`
+        UPDATE plugin_update_state
+        SET last_notified_version = ?, last_notified_at = ?
+        WHERE target_id = ?
+          AND latest_version = ?
+        `).run(latestVersion, notifiedAt, targetId, latestVersion);
+        return Number(result.changes) === 1;
+      });
+    } catch (cause) {
+      throw this.storageError("Cannot claim plugin update notice.", cause, { targetId, latestVersion });
+    }
+  }
+
   close(): void {
     if (this.closed) return;
     this.database.close();
@@ -174,9 +292,52 @@ export class SqliteWorkflowStore implements WorkflowStore {
           receipt_json TEXT NOT NULL,
           updated_at TEXT NOT NULL
         ) STRICT;
+        CREATE TABLE IF NOT EXISTS plugin_update_state (
+          target_id TEXT PRIMARY KEY,
+          current_version TEXT NOT NULL,
+          latest_version TEXT,
+          latest_tag TEXT,
+          latest_commit TEXT,
+          etag TEXT,
+          comparison TEXT NOT NULL CHECK (comparison IN ('unknown', 'up-to-date', 'update-available', 'ahead-of-stable')),
+          last_attempt_at TEXT,
+          last_successful_check_at TEXT,
+          next_check_at TEXT NOT NULL,
+          last_notified_version TEXT,
+          last_notified_at TEXT,
+          last_error_code TEXT CHECK (
+            last_error_code IS NULL
+            OR last_error_code IN ('TIMEOUT', 'NETWORK', 'HTTP', 'INVALID_RESPONSE', 'NO_STABLE_TAG')
+          )
+        ) STRICT;
         PRAGMA user_version = ${SCHEMA_VERSION};
       `);
     });
+  }
+
+  private readPluginUpdateStateRow(targetId: string): StoredPluginUpdateState | null {
+    const row = this.database.prepare(`
+      SELECT target_id, current_version, latest_version, latest_tag, latest_commit, etag,
+             comparison, last_attempt_at, last_successful_check_at, next_check_at,
+             last_notified_version, last_notified_at, last_error_code
+      FROM plugin_update_state
+      WHERE target_id = ?
+    `).get(targetId) as PluginUpdateRow | undefined;
+    return row ? {
+      targetId: row.target_id,
+      currentVersion: row.current_version,
+      latestVersion: row.latest_version,
+      latestTag: row.latest_tag,
+      latestCommit: row.latest_commit,
+      etag: row.etag,
+      comparison: row.comparison,
+      lastAttemptAt: row.last_attempt_at,
+      lastSuccessfulCheckAt: row.last_successful_check_at,
+      nextCheckAt: row.next_check_at,
+      lastNotifiedVersion: row.last_notified_version,
+      lastNotifiedAt: row.last_notified_at,
+      lastErrorCode: row.last_error_code,
+    } : null;
   }
 
   private transaction<T>(operation: () => T): T {

@@ -34,9 +34,12 @@ if (errors.length === 0) {
   if (packageDocument.name !== plugin.name || packageDocument.version !== plugin.version) {
     errors.push("package.json name/version must match the plugin manifest");
   }
-  const serverSource = await readFile(path.join(ROOT, "mcp-server", "src", "server.ts"), "utf8");
-  if (!serverSource.includes(`{ name: "${plugin.name}", version: "${plugin.version}" }`)) {
-    errors.push("MCP server name/version must match the plugin manifest");
+  const pluginInfoSource = await readFile(path.join(ROOT, "mcp-server", "src", "plugin-info.ts"), "utf8");
+  if (!pluginInfoSource.includes(`id: "${plugin.name}"`) || !pluginInfoSource.includes(`version: "${plugin.version}"`)) {
+    errors.push("MCP plugin info name/version must match the plugin manifest");
+  }
+  if (!pluginInfoSource.includes(`repository: "${plugin.repository}"`)) {
+    errors.push("MCP plugin info repository must match the plugin manifest");
   }
   for (const manifestPath of [plugin.skills, plugin.mcpServers]) {
     if (typeof manifestPath !== "string" || !manifestPath.startsWith("./")) {

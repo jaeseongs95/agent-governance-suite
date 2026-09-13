@@ -218,13 +218,80 @@ afterEach(async () => {
 });
 
 describe("SqliteWorkflowStore", () => {
+  it("migrates a v1 database without losing workflow state", async () => {
+    const databaseDirectory = await mkdtemp(join(tmpdir(), "skill-suite-v1-migration-"));
+    temporaryDirectories.push(databaseDirectory);
+    const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
+    const fixture = new DatabaseSync(databasePath);
+    try {
+      fixture.exec(`
+        CREATE TABLE workflow_metadata (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        ) STRICT;
+        CREATE TABLE workflow_runs (
+          run_id TEXT PRIMARY KEY,
+          revision INTEGER NOT NULL CHECK (revision >= 0),
+          receipt_json TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        ) STRICT;
+        INSERT INTO workflow_metadata VALUES ('plan-signing-key', 'existing-secret', '2026-09-12T00:00:00.000Z');
+        INSERT INTO workflow_metadata VALUES ('run-sequence', '7', '2026-09-12T00:00:00.000Z');
+        INSERT INTO workflow_runs VALUES (
+          'run-existing-7', 2, '{"runId":"run-existing-7","revision":2}', '2026-09-12T00:00:00.000Z'
+        );
+        PRAGMA user_version = 1;
+      `);
+    } finally {
+      fixture.close();
+    }
+
+    const store = openSqliteStore(databasePath);
+    expect(store.getOrCreateSecret("plan-signing-key", () => "replacement")).toBe("existing-secret");
+    expect(store.nextRunSequence()).toBe(8);
+    expect(store.getRun("run-existing-7")).toMatchObject({ runId: "run-existing-7", revision: 2 });
+    expect(store.getPluginUpdateState("agent-governance-suite")).toBeNull();
+    store.putPluginUpdateState({
+      targetId: "agent-governance-suite",
+      currentVersion: "1.1.0",
+      latestVersion: "1.2.0",
+      latestTag: "v1.2.0",
+      latestCommit: "d".repeat(40),
+      etag: "migration-fixture",
+      comparison: "update-available",
+      lastAttemptAt: "2026-09-13T00:00:00.000Z",
+      lastSuccessfulCheckAt: "2026-09-13T00:00:00.000Z",
+      nextCheckAt: "2026-09-14T00:00:00.000Z",
+      lastNotifiedVersion: "1.2.0",
+      lastNotifiedAt: "2026-09-13T00:01:00.000Z",
+      lastErrorCode: null,
+    });
+    closeSqliteStore(store);
+
+    const reopened = openSqliteStore(databasePath);
+    expect(reopened.getPluginUpdateState("agent-governance-suite")).toMatchObject({
+      latestVersion: "1.2.0",
+      lastNotifiedVersion: "1.2.0",
+    });
+    closeSqliteStore(reopened);
+
+    const migrated = new DatabaseSync(databasePath);
+    try {
+      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(2);
+      expect((migrated.prepare("SELECT COUNT(*) AS count FROM plugin_update_state").get() as { count: number }).count).toBe(1);
+    } finally {
+      migrated.close();
+    }
+  });
+
   it("rejects a database schema newer than the supported version", async () => {
     const databaseDirectory = await mkdtemp(join(tmpdir(), "skill-suite-newer-schema-"));
     temporaryDirectories.push(databaseDirectory);
     const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
     const fixture = new DatabaseSync(databasePath);
     try {
-      fixture.exec("PRAGMA user_version = 2;");
+      fixture.exec("PRAGMA user_version = 3;");
     } finally {
       fixture.close();
     }

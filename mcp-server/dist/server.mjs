@@ -16034,6 +16034,8 @@ function loadSchema(fileName) {
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
+  pluginUpdateStatus: loadSchema("plugin-update-status.v1.schema.json"),
+  pluginUpdateNotice: loadSchema("plugin-update-notice.v1.schema.json"),
   taskEnvelope: loadSchema("task-envelope.v1.schema.json"),
   skillDescriptor: loadSchema("skill-descriptor.v1.schema.json"),
   skillDescriptorV2: loadSchema("skill-descriptor.v2.schema.json"),
@@ -16054,6 +16056,8 @@ var ContractValidator = class {
     }
     this.validators = {
       apiResult: ajv.getSchema("https://skill-suite.local/contracts/api-result.v1.schema.json"),
+      pluginUpdateStatus: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-status.v1.schema.json"),
+      pluginUpdateNotice: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-notice.v1.schema.json"),
       taskEnvelope: ajv.getSchema("https://skill-suite.local/contracts/task-envelope.v1.schema.json"),
       skillDescriptor: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v1.schema.json"),
       skillDescriptorV2: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v2.schema.json"),
@@ -16091,6 +16095,12 @@ var ContractValidator = class {
   }
   apiResult(value) {
     return this.assert("apiResult", value);
+  }
+  pluginUpdateStatus(value) {
+    return this.assert("pluginUpdateStatus", value);
+  }
+  pluginUpdateNotice(value) {
+    return this.assert("pluginUpdateNotice", value);
   }
   providerResult(rootDirectory, resultSchema, outputSchema, value) {
     const result = this.assertSchemaFile(rootDirectory, resultSchema, value, "provider result");
@@ -17919,6 +17929,14 @@ var Server = class extends Protocol {
   }
 };
 
+// mcp-server/src/plugin-info.ts
+var PLUGIN_INFO = Object.freeze({
+  id: "agent-governance-suite",
+  version: "1.1.0",
+  repository: "https://github.com/jaeseongs95/agent-governance-suite",
+  tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
+});
+
 // mcp-server/src/server.ts
 var revisionInputSchema = {
   type: "object",
@@ -17937,6 +17955,13 @@ var workflowIdInputSchema = {
     runId: { type: "string", minLength: 1 }
   }
 };
+var updateCheckInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    force: { type: "boolean", default: false }
+  }
+};
 function asRecord(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
@@ -17944,18 +17969,41 @@ function integer2(value) {
   return typeof value === "number" && Number.isInteger(value) ? value : Number.NaN;
 }
 function toolResult(result) {
+  const content = [
+    { type: "text", text: JSON.stringify(result) }
+  ];
   return {
-    content: [{ type: "text", text: JSON.stringify(result) }],
+    content,
     isError: !result.ok
   };
 }
-function createMcpServer(service) {
+function apiOk(data) {
+  return { schemaVersion: "1.0.0", ok: true, data, error: null };
+}
+function invalidInput(message) {
+  return {
+    schemaVersion: "1.0.0",
+    ok: false,
+    data: null,
+    error: { code: "INVALID_INPUT", message, details: null }
+  };
+}
+function validUpdateArguments(args) {
+  return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
+}
+function createMcpServer(service, updates) {
   const server = new Server(
-    { name: "agent-governance-suite", version: "1.1.0" },
+    { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} } }
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
+      {
+        name: "check_for_updates",
+        description: "Check the fixed Agent Governance Suite repository for a newer stable plugin tag without installing it.",
+        inputSchema: updateCheckInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: false, destructiveHint: false, openWorldHint: true }
+      },
       {
         name: "plan_workflow",
         description: "Read the current skill registry and return a capability-based workflow plan without storing a run.",
@@ -17996,40 +18044,413 @@ function createMcpServer(service) {
   }));
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const args = asRecord(request.params.arguments);
-    switch (request.params.name) {
-      case "plan_workflow":
-        return toolResult(service.planWorkflow(args));
-      case "start_workflow":
-        return toolResult(service.startWorkflow(args));
-      case "record_stage_result":
-        return toolResult(service.recordStageResult(args));
-      case "get_workflow_status":
-        return toolResult(service.getWorkflowStatus(String(args.runId ?? "")));
-      case "finalize_workflow":
-        return toolResult(service.finalizeWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision)));
-      case "abort_workflow":
-        return toolResult(service.abortWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision)));
-      default:
-        return toolResult({
-          schemaVersion: "1.0.0",
-          ok: false,
-          data: null,
-          error: {
-            code: "INVALID_INPUT",
-            message: "Unknown workflow tool.",
-            details: { tool: request.params.name }
-          }
-        });
+    let updateStatus = null;
+    let result;
+    if (request.params.name === "check_for_updates") {
+      if (!validUpdateArguments(args)) {
+        result = invalidInput("check_for_updates accepts only an optional boolean force field.");
+      } else {
+        updateStatus = await updates.check(args.force === true);
+        result = apiOk(updateStatus);
+      }
+    } else {
+      updateStatus = await updates.check(false);
+      switch (request.params.name) {
+        case "plan_workflow":
+          result = service.planWorkflow(args);
+          break;
+        case "start_workflow":
+          result = service.startWorkflow(args);
+          break;
+        case "record_stage_result":
+          result = service.recordStageResult(args);
+          break;
+        case "get_workflow_status":
+          result = service.getWorkflowStatus(String(args.runId ?? ""));
+          break;
+        case "finalize_workflow":
+          result = service.finalizeWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision));
+          break;
+        case "abort_workflow":
+          result = service.abortWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision));
+          break;
+        default:
+          result = {
+            schemaVersion: "1.0.0",
+            ok: false,
+            data: null,
+            error: {
+              code: "INVALID_INPUT",
+              message: "Unknown workflow tool.",
+              details: { tool: request.params.name }
+            }
+          };
+      }
     }
+    const response = toolResult(result);
+    const notice = updateStatus ? updates.takeNotice(updateStatus) : null;
+    if (notice) response.content.push({ type: "text", text: JSON.stringify(notice) });
+    return response;
   });
   return server;
 }
+
+// mcp-server/src/plugin-version.ts
+function parseStableVersion(version2) {
+  const match = /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/u.exec(version2);
+  if (!match) return null;
+  const parts = match.slice(1).map((part) => Number.parseInt(part, 10));
+  return parts.length === 3 && parts.every(Number.isSafeInteger) ? [parts[0], parts[1], parts[2]] : null;
+}
+function compareStableVersionNumbers(leftVersion, rightVersion) {
+  const left = parseStableVersion(leftVersion);
+  const right = parseStableVersion(rightVersion);
+  if (!left || !right) throw new Error("A plugin version is not strict stable SemVer.");
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] < right[index]) return -1;
+    if (left[index] > right[index]) return 1;
+  }
+  return 0;
+}
+
+// mcp-server/src/plugin-update-service.ts
+var SUCCESS_TTL_MS = 24 * 60 * 60 * 1e3;
+var FAILURE_RETRY_MS = 60 * 60 * 1e3;
+var REQUEST_TIMEOUT_MS = 3e3;
+var STABLE_TAG = /^refs\/tags\/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/u;
+var TAG_OBJECT_URL_PREFIX = `${PLUGIN_INFO.tagsApi.split("/git/matching-refs/")[0]}/git/tags/`;
+var UpdateCheckError = class extends Error {
+  constructor(code, message) {
+    super(message);
+    this.code = code;
+  }
+  code;
+};
+function safeDate(value) {
+  if (value === null) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+function stateTimestamp(state) {
+  if (!state) return -1;
+  return Math.max(
+    safeDate(state.lastAttemptAt) ?? -1,
+    safeDate(state.lastNotifiedAt) ?? -1
+  );
+}
+function compareStableVersions(current, latest) {
+  try {
+    return compareStableVersionNumbers(current, latest);
+  } catch (cause) {
+    throw new UpdateCheckError(
+      "INVALID_RESPONSE",
+      cause instanceof Error ? cause.message : "A plugin version is not strict stable SemVer."
+    );
+  }
+}
+function comparison(current, latest) {
+  const order = compareStableVersions(current, latest);
+  return order < 0 ? "update-available" : order > 0 ? "ahead-of-stable" : "up-to-date";
+}
+function isRecord(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+function remoteReference(value) {
+  if (!isRecord(value) || typeof value.ref !== "string" || !isRecord(value.object)) return null;
+  const object4 = value.object;
+  return typeof object4.sha === "string" && typeof object4.type === "string" && typeof object4.url === "string" ? { ref: value.ref, object: { sha: object4.sha, type: object4.type, url: object4.url } } : null;
+}
+var PluginUpdateService = class {
+  constructor(store, options = {}) {
+    this.store = store;
+    this.fetcher = options.fetcher ?? fetch;
+    this.now = options.now ?? (() => /* @__PURE__ */ new Date());
+    this.requestTimeoutMs = options.requestTimeoutMs ?? REQUEST_TIMEOUT_MS;
+    this.successTtlMs = options.successTtlMs ?? SUCCESS_TTL_MS;
+    this.failureRetryMs = options.failureRetryMs ?? FAILURE_RETRY_MS;
+  }
+  store;
+  fetcher;
+  now;
+  requestTimeoutMs;
+  successTtlMs;
+  failureRetryMs;
+  volatileState = null;
+  async check(force = false) {
+    const now = this.now();
+    const stored = this.readState();
+    let current;
+    try {
+      current = this.withCurrentVersion(stored, now);
+    } catch {
+      current = { ...this.emptyState(now), lastErrorCode: "INVALID_RESPONSE" };
+    }
+    const nextCheck = safeDate(current.nextCheckAt);
+    if (!force && nextCheck !== null && now.getTime() < nextCheck) {
+      return this.publicStatus(current, now);
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.requestTimeoutMs);
+    try {
+      const response = await this.fetcher(PLUGIN_INFO.tagsApi, {
+        headers: {
+          Accept: "application/vnd.github+json",
+          "User-Agent": `${PLUGIN_INFO.id}/${PLUGIN_INFO.version}`,
+          ...current.etag ? { "If-None-Match": current.etag } : {}
+        },
+        redirect: "error",
+        signal: controller.signal
+      });
+      const updated = response.status === 304 ? this.notModified(current, now) : await this.fromResponse(response, current, now, controller.signal);
+      this.writeState(updated);
+      return this.publicStatus(this.readState() ?? updated, now);
+    } catch (error2) {
+      const code = this.errorCode(error2, controller.signal.aborted);
+      const failed = {
+        ...current,
+        lastAttemptAt: now.toISOString(),
+        nextCheckAt: new Date(now.getTime() + this.failureRetryMs).toISOString(),
+        lastErrorCode: code
+      };
+      this.writeState(failed);
+      return this.publicStatus(this.readState() ?? failed, now);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  takeNotice(status) {
+    if (status.comparison !== "update-available" || !status.latestVersion || !status.latestTag || !status.latestCommit || !status.lastSuccessfulCheckAt) return null;
+    const state = this.volatileState ?? this.readState();
+    if (state?.lastNotifiedVersion) {
+      try {
+        if (compareStableVersions(state.lastNotifiedVersion, status.latestVersion) >= 0) return null;
+      } catch {
+        return null;
+      }
+    }
+    const notifiedAt = this.now().toISOString();
+    const notice = {
+      schemaVersion: "1.0.0",
+      kind: "plugin-update-notice",
+      pluginId: PLUGIN_INFO.id,
+      currentVersion: status.currentVersion,
+      latestVersion: status.latestVersion,
+      latestTag: status.latestTag,
+      latestCommit: status.latestCommit,
+      checkedAt: status.lastSuccessfulCheckAt,
+      tagUrl: `${PLUGIN_INFO.repository}/tree/${status.latestTag}`,
+      automaticInstall: false
+    };
+    let claimed;
+    try {
+      claimed = this.store.claimPluginUpdateNotice(PLUGIN_INFO.id, status.latestVersion, notifiedAt);
+    } catch {
+      return null;
+    }
+    if (!claimed) return null;
+    this.volatileState = {
+      ...state ?? this.withCurrentVersion(null, this.now()),
+      lastNotifiedVersion: status.latestVersion,
+      lastNotifiedAt: notifiedAt
+    };
+    return notice;
+  }
+  readState() {
+    try {
+      const stored = this.store.getPluginUpdateState(PLUGIN_INFO.id);
+      const current = stateTimestamp(stored) >= stateTimestamp(this.volatileState) ? stored : this.volatileState;
+      if (current) this.volatileState = current;
+      return current;
+    } catch {
+      return this.volatileState;
+    }
+  }
+  writeState(state) {
+    this.volatileState = state;
+    try {
+      this.store.putPluginUpdateState(state);
+    } catch {
+    }
+  }
+  withCurrentVersion(state, now) {
+    if (!state) return this.emptyState(now);
+    const latestIsValid = state.latestVersion === null ? state.latestTag === null && state.latestCommit === null : parseStableVersion(state.latestVersion) !== null && state.latestTag === `v${state.latestVersion}` && typeof state.latestCommit === "string" && /^[a-f0-9]{40}$/u.test(state.latestCommit);
+    if (!parseStableVersion(state.currentVersion) || !latestIsValid || safeDate(state.nextCheckAt) === null || state.lastAttemptAt !== null && safeDate(state.lastAttemptAt) === null || state.lastSuccessfulCheckAt !== null && safeDate(state.lastSuccessfulCheckAt) === null || state.lastNotifiedVersion !== null && parseStableVersion(state.lastNotifiedVersion) === null || state.lastNotifiedAt !== null && safeDate(state.lastNotifiedAt) === null) {
+      throw new UpdateCheckError("INVALID_RESPONSE", "Stored plugin update state is invalid.");
+    }
+    return {
+      ...state,
+      currentVersion: PLUGIN_INFO.version,
+      comparison: state.latestVersion ? comparison(PLUGIN_INFO.version, state.latestVersion) : "unknown"
+    };
+  }
+  emptyState(now) {
+    return {
+      targetId: PLUGIN_INFO.id,
+      currentVersion: PLUGIN_INFO.version,
+      latestVersion: null,
+      latestTag: null,
+      latestCommit: null,
+      etag: null,
+      comparison: "unknown",
+      lastAttemptAt: null,
+      lastSuccessfulCheckAt: null,
+      nextCheckAt: now.toISOString(),
+      lastNotifiedVersion: null,
+      lastNotifiedAt: null,
+      lastErrorCode: null
+    };
+  }
+  notModified(state, now) {
+    if (!state.latestVersion || !state.latestTag || !state.latestCommit) {
+      throw new UpdateCheckError("INVALID_RESPONSE", "GitHub returned 304 without a cached stable tag.");
+    }
+    return {
+      ...state,
+      currentVersion: PLUGIN_INFO.version,
+      comparison: comparison(PLUGIN_INFO.version, state.latestVersion),
+      lastAttemptAt: now.toISOString(),
+      lastSuccessfulCheckAt: now.toISOString(),
+      nextCheckAt: new Date(now.getTime() + this.successTtlMs).toISOString(),
+      lastErrorCode: null
+    };
+  }
+  async fromResponse(response, state, now, signal) {
+    if (!response.ok) throw new UpdateCheckError("HTTP", `GitHub tags request failed with HTTP ${response.status}.`);
+    let body;
+    try {
+      body = await response.json();
+    } catch {
+      throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tags response was not JSON.");
+    }
+    if (!Array.isArray(body)) throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tags response was not an array.");
+    const stable = body.flatMap((item) => {
+      const reference = remoteReference(item);
+      const match = reference ? STABLE_TAG.exec(reference.ref) : null;
+      return reference && match ? [{ reference, version: `${match[1]}.${match[2]}.${match[3]}` }] : [];
+    });
+    if (stable.length === 0) throw new UpdateCheckError("NO_STABLE_TAG", "GitHub returned no stable plugin tag.");
+    stable.sort((left, right) => compareStableVersions(right.version, left.version));
+    const latest = stable[0];
+    const commit = await this.resolveCommit(latest.reference.object, signal);
+    return {
+      ...state,
+      currentVersion: PLUGIN_INFO.version,
+      latestVersion: latest.version,
+      latestTag: `v${latest.version}`,
+      latestCommit: commit,
+      etag: response.headers.get("etag"),
+      comparison: comparison(PLUGIN_INFO.version, latest.version),
+      lastAttemptAt: now.toISOString(),
+      lastSuccessfulCheckAt: now.toISOString(),
+      nextCheckAt: new Date(now.getTime() + this.successTtlMs).toISOString(),
+      lastErrorCode: null
+    };
+  }
+  async resolveCommit(initial, signal) {
+    let current = initial;
+    for (let depth = 0; depth < 5; depth += 1) {
+      if (current.type === "commit" && /^[a-f0-9]{40}$/u.test(current.sha)) return current.sha;
+      if (current.type !== "tag" || !current.url.startsWith(TAG_OBJECT_URL_PREFIX)) {
+        throw new UpdateCheckError("INVALID_RESPONSE", "A stable tag did not resolve to a repository commit.");
+      }
+      const response = await this.fetcher(current.url, {
+        headers: {
+          Accept: "application/vnd.github+json",
+          "User-Agent": `${PLUGIN_INFO.id}/${PLUGIN_INFO.version}`
+        },
+        redirect: "error",
+        signal
+      });
+      if (!response.ok) throw new UpdateCheckError("HTTP", `GitHub tag object request failed with HTTP ${response.status}.`);
+      let value;
+      try {
+        value = await response.json();
+      } catch {
+        throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object response was not JSON.");
+      }
+      if (!isRecord(value) || !isRecord(value.object)) {
+        throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object response was invalid.");
+      }
+      const object4 = value.object;
+      if (typeof object4.sha !== "string" || typeof object4.type !== "string" || typeof object4.url !== "string") {
+        throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object target was invalid.");
+      }
+      current = { sha: object4.sha, type: object4.type, url: object4.url };
+    }
+    throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag indirection exceeded the supported depth.");
+  }
+  errorCode(error2, aborted2) {
+    if (aborted2 || error2 instanceof Error && error2.name === "AbortError") return "TIMEOUT";
+    if (error2 instanceof UpdateCheckError) return error2.code;
+    return "NETWORK";
+  }
+  publicStatus(state, now) {
+    const nextCheck = safeDate(state.nextCheckAt);
+    return {
+      schemaVersion: "1.0.0",
+      pluginId: PLUGIN_INFO.id,
+      currentVersion: PLUGIN_INFO.version,
+      latestVersion: state.latestVersion,
+      latestTag: state.latestTag,
+      latestCommit: state.latestCommit,
+      comparison: state.comparison,
+      lastAttemptAt: state.lastAttemptAt,
+      lastSuccessfulCheckAt: state.lastSuccessfulCheckAt,
+      nextCheckAt: state.nextCheckAt,
+      stale: state.lastSuccessfulCheckAt === null || state.lastErrorCode !== null || nextCheck === null || now.getTime() >= nextCheck,
+      lastErrorCode: state.lastErrorCode,
+      automaticInstall: false
+    };
+  }
+};
 
 // mcp-server/src/sqlite-workflow-store.ts
 import { chmodSync, mkdirSync } from "node:fs";
 import path4 from "node:path";
 import { DatabaseSync } from "node:sqlite";
-var SCHEMA_VERSION = 1;
+
+// mcp-server/src/plugin-update-store.ts
+function clone2(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+function timestamp(value) {
+  if (value === null) return -1;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : -1;
+}
+function comparison2(currentVersion, latestVersion) {
+  if (!latestVersion) return "unknown";
+  const order = compareStableVersionNumbers(currentVersion, latestVersion);
+  return order < 0 ? "update-available" : order > 0 ? "ahead-of-stable" : "up-to-date";
+}
+function mergePluginUpdateState(existing, incoming) {
+  if (!existing) return clone2(incoming);
+  const incomingSuccessTime = timestamp(incoming.lastSuccessfulCheckAt);
+  const existingSuccessTime = timestamp(existing.lastSuccessfulCheckAt);
+  const sameTimeVersionIsNotOlder = incoming.latestVersion !== null && (existing.latestVersion === null || compareStableVersionNumbers(incoming.latestVersion, existing.latestVersion) >= 0);
+  const incomingSuccessIsNewer = incoming.lastSuccessfulCheckAt !== null && (incomingSuccessTime > existingSuccessTime || incomingSuccessTime === existingSuccessTime && sameTimeVersionIsNotOlder);
+  const incomingAttemptIsNewer = timestamp(incoming.lastAttemptAt) >= timestamp(existing.lastAttemptAt);
+  const latestVersion = incomingSuccessIsNewer ? incoming.latestVersion : existing.latestVersion;
+  return {
+    targetId: incoming.targetId,
+    currentVersion: incoming.currentVersion,
+    latestVersion,
+    latestTag: incomingSuccessIsNewer ? incoming.latestTag : existing.latestTag,
+    latestCommit: incomingSuccessIsNewer ? incoming.latestCommit : existing.latestCommit,
+    etag: incomingSuccessIsNewer ? incoming.etag : existing.etag,
+    comparison: comparison2(incoming.currentVersion, latestVersion),
+    lastAttemptAt: incomingAttemptIsNewer ? incoming.lastAttemptAt : existing.lastAttemptAt,
+    lastSuccessfulCheckAt: incomingSuccessIsNewer ? incoming.lastSuccessfulCheckAt : existing.lastSuccessfulCheckAt,
+    nextCheckAt: incomingAttemptIsNewer ? incoming.nextCheckAt : existing.nextCheckAt,
+    lastNotifiedVersion: existing.lastNotifiedVersion,
+    lastNotifiedAt: existing.lastNotifiedAt,
+    lastErrorCode: incomingAttemptIsNewer ? incoming.lastErrorCode : existing.lastErrorCode
+  };
+}
+
+// mcp-server/src/sqlite-workflow-store.ts
+var SCHEMA_VERSION = 2;
 var SqliteWorkflowStore = class {
   constructor(databasePath) {
     this.databasePath = databasePath;
@@ -18153,6 +18574,94 @@ var SqliteWorkflowStore = class {
       throw this.storageError("Cannot update the workflow run.", cause, { runId: receipt.runId });
     }
   }
+  getPluginUpdateState(targetId) {
+    try {
+      const row = this.database.prepare(`
+        SELECT target_id, current_version, latest_version, latest_tag, latest_commit, etag,
+               comparison, last_attempt_at, last_successful_check_at, next_check_at,
+               last_notified_version, last_notified_at, last_error_code
+        FROM plugin_update_state
+        WHERE target_id = ?
+      `).get(targetId);
+      return row ? {
+        targetId: row.target_id,
+        currentVersion: row.current_version,
+        latestVersion: row.latest_version,
+        latestTag: row.latest_tag,
+        latestCommit: row.latest_commit,
+        etag: row.etag,
+        comparison: row.comparison,
+        lastAttemptAt: row.last_attempt_at,
+        lastSuccessfulCheckAt: row.last_successful_check_at,
+        nextCheckAt: row.next_check_at,
+        lastNotifiedVersion: row.last_notified_version,
+        lastNotifiedAt: row.last_notified_at,
+        lastErrorCode: row.last_error_code
+      } : null;
+    } catch (cause) {
+      throw this.storageError("Cannot read plugin update state.", cause, { targetId });
+    }
+  }
+  putPluginUpdateState(state) {
+    try {
+      this.transaction(() => {
+        const merged = mergePluginUpdateState(this.readPluginUpdateStateRow(state.targetId), state);
+        this.database.prepare(`
+        INSERT INTO plugin_update_state (
+          target_id, current_version, latest_version, latest_tag, latest_commit, etag,
+          comparison, last_attempt_at, last_successful_check_at, next_check_at,
+          last_notified_version, last_notified_at, last_error_code
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(target_id) DO UPDATE SET
+          current_version = excluded.current_version,
+          latest_version = excluded.latest_version,
+          latest_tag = excluded.latest_tag,
+          latest_commit = excluded.latest_commit,
+          etag = excluded.etag,
+          comparison = excluded.comparison,
+          last_attempt_at = excluded.last_attempt_at,
+          last_successful_check_at = excluded.last_successful_check_at,
+          next_check_at = excluded.next_check_at,
+          last_notified_version = excluded.last_notified_version,
+          last_notified_at = excluded.last_notified_at,
+          last_error_code = excluded.last_error_code
+        `).run(
+          merged.targetId,
+          merged.currentVersion,
+          merged.latestVersion,
+          merged.latestTag,
+          merged.latestCommit,
+          merged.etag,
+          merged.comparison,
+          merged.lastAttemptAt,
+          merged.lastSuccessfulCheckAt,
+          merged.nextCheckAt,
+          merged.lastNotifiedVersion,
+          merged.lastNotifiedAt,
+          merged.lastErrorCode
+        );
+      });
+    } catch (cause) {
+      throw this.storageError("Cannot persist plugin update state.", cause, { targetId: state.targetId });
+    }
+  }
+  claimPluginUpdateNotice(targetId, latestVersion, notifiedAt) {
+    try {
+      return this.transaction(() => {
+        const state = this.readPluginUpdateStateRow(targetId);
+        if (!state || state.latestVersion !== latestVersion || state.lastNotifiedVersion !== null && compareStableVersionNumbers(state.lastNotifiedVersion, latestVersion) >= 0) return false;
+        const result = this.database.prepare(`
+        UPDATE plugin_update_state
+        SET last_notified_version = ?, last_notified_at = ?
+        WHERE target_id = ?
+          AND latest_version = ?
+        `).run(latestVersion, notifiedAt, targetId, latestVersion);
+        return Number(result.changes) === 1;
+      });
+    } catch (cause) {
+      throw this.storageError("Cannot claim plugin update notice.", cause, { targetId, latestVersion });
+    }
+  }
   close() {
     if (this.closed) return;
     this.database.close();
@@ -18180,9 +18689,51 @@ var SqliteWorkflowStore = class {
           receipt_json TEXT NOT NULL,
           updated_at TEXT NOT NULL
         ) STRICT;
+        CREATE TABLE IF NOT EXISTS plugin_update_state (
+          target_id TEXT PRIMARY KEY,
+          current_version TEXT NOT NULL,
+          latest_version TEXT,
+          latest_tag TEXT,
+          latest_commit TEXT,
+          etag TEXT,
+          comparison TEXT NOT NULL CHECK (comparison IN ('unknown', 'up-to-date', 'update-available', 'ahead-of-stable')),
+          last_attempt_at TEXT,
+          last_successful_check_at TEXT,
+          next_check_at TEXT NOT NULL,
+          last_notified_version TEXT,
+          last_notified_at TEXT,
+          last_error_code TEXT CHECK (
+            last_error_code IS NULL
+            OR last_error_code IN ('TIMEOUT', 'NETWORK', 'HTTP', 'INVALID_RESPONSE', 'NO_STABLE_TAG')
+          )
+        ) STRICT;
         PRAGMA user_version = ${SCHEMA_VERSION};
       `);
     });
+  }
+  readPluginUpdateStateRow(targetId) {
+    const row = this.database.prepare(`
+      SELECT target_id, current_version, latest_version, latest_tag, latest_commit, etag,
+             comparison, last_attempt_at, last_successful_check_at, next_check_at,
+             last_notified_version, last_notified_at, last_error_code
+      FROM plugin_update_state
+      WHERE target_id = ?
+    `).get(targetId);
+    return row ? {
+      targetId: row.target_id,
+      currentVersion: row.current_version,
+      latestVersion: row.latest_version,
+      latestTag: row.latest_tag,
+      latestCommit: row.latest_commit,
+      etag: row.etag,
+      comparison: row.comparison,
+      lastAttemptAt: row.last_attempt_at,
+      lastSuccessfulCheckAt: row.last_successful_check_at,
+      nextCheckAt: row.next_check_at,
+      lastNotifiedVersion: row.last_notified_version,
+      lastNotifiedAt: row.last_notified_at,
+      lastErrorCode: row.last_error_code
+    } : null;
   }
   transaction(operation) {
     this.database.exec("BEGIN IMMEDIATE;");
@@ -18750,7 +19301,7 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
 // mcp-server/src/workflow-store.ts
 import { randomBytes } from "node:crypto";
 var PLAN_SIGNING_KEY = "plan-signing-key";
-function clone2(value) {
+function clone3(value) {
   return JSON.parse(JSON.stringify(value));
 }
 var InMemoryWorkflowStore = class {
@@ -18772,16 +19323,16 @@ var InMemoryWorkflowStore = class {
     if (this.runs.has(receipt.runId)) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow run already exists.", { runId: receipt.runId });
     }
-    this.runs.set(receipt.runId, clone2(receipt));
+    this.runs.set(receipt.runId, clone3(receipt));
   }
   getRun(runId) {
     const receipt = this.runs.get(runId);
-    return receipt ? clone2(receipt) : null;
+    return receipt ? clone3(receipt) : null;
   }
   updateRun(receipt, expectedRevision) {
     const current = this.runs.get(receipt.runId);
     if (!current || current.revision !== expectedRevision) return false;
-    this.runs.set(receipt.runId, clone2(receipt));
+    this.runs.set(receipt.runId, clone3(receipt));
     return true;
   }
 };
@@ -18790,10 +19341,10 @@ function createPlanSigningKey() {
 }
 
 // mcp-server/src/workflow-service.ts
-function clone3(value) {
+function clone4(value) {
   return JSON.parse(JSON.stringify(value));
 }
-function apiOk(data) {
+function apiOk2(data) {
   return { schemaVersion: CONTRACT_VERSION, ok: true, data, error: null };
 }
 function apiError(error2) {
@@ -18842,14 +19393,14 @@ var WorkflowService = class {
       const plan = this.buildPlan(task, this.registry.read(), this.validateWorkUnitGraph(task));
       plan.integrityToken = this.signPlan(plan);
       this.validator.workflowPlan(plan);
-      return apiOk(plan);
+      return apiOk2(plan);
     } catch (error2) {
       return apiError(this.toErrorBody(error2));
     }
   }
   startWorkflow(rawPlan) {
     try {
-      const plan = clone3(this.validator.workflowPlan(rawPlan));
+      const plan = clone4(this.validator.workflowPlan(rawPlan));
       this.assertPlanIntegrity(plan);
       if (plan.executionMode !== "orchestrated") {
         throw new WorkflowContractError("INVALID_TRANSITION", "Direct skill plans are not started by the MCP orchestrator.");
@@ -18877,7 +19428,7 @@ var WorkflowService = class {
       };
       this.assertReceipt(receipt);
       this.store.insertRun(receipt);
-      return apiOk(clone3(receipt));
+      return apiOk2(clone4(receipt));
     } catch (error2) {
       return apiError(this.toErrorBody(error2));
     }
@@ -18919,7 +19470,7 @@ var WorkflowService = class {
           this.assertMandatoryAuditGate(target, result);
         }
         target.state = result.state;
-        receipt.stageResults.push(clone3(result));
+        receipt.stageResults.push(clone4(result));
         this.addUnique(receipt.blockers, result.blockers);
         this.addUnique(receipt.unresolved, result.blockers);
         if (result.state !== "passed") {
@@ -18943,7 +19494,7 @@ var WorkflowService = class {
   }
   getWorkflowStatus(runId) {
     try {
-      return apiOk(clone3(this.requireRun(runId)));
+      return apiOk2(clone4(this.requireRun(runId)));
     } catch (error2) {
       return apiError(this.toErrorBody(error2));
     }
@@ -19459,7 +20010,7 @@ var WorkflowService = class {
           actualRevision: current?.revision ?? null
         });
       }
-      return apiOk(clone3(receipt));
+      return apiOk2(clone4(receipt));
     } catch (error2) {
       return apiError(this.toErrorBody(error2));
     }
@@ -19493,7 +20044,8 @@ async function main() {
   process.once("exit", () => store.close());
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store);
-  const server = createMcpServer(service);
+  const updates = new PluginUpdateService(store);
+  const server = createMcpServer(service, updates);
   await server.connect(new StdioServerTransport());
 }
 void main().catch((error2) => {

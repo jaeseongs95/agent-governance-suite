@@ -4,6 +4,7 @@ import { FileSkillRegistry } from "./registry.js";
 import { resolveRegistryPath, resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { ContractValidator } from "./schema-validator.js";
 import { createMcpServer } from "./server.js";
+import { PluginUpdateService } from "./plugin-update-service.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { WorkflowService } from "./workflow-service.js";
 
@@ -14,7 +15,8 @@ async function main(): Promise<void> {
 
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store);
-  const server = createMcpServer(service);
+  const updates = new PluginUpdateService(store);
+  const server = createMcpServer(service, updates);
   await server.connect(new StdioServerTransport());
 }
 
