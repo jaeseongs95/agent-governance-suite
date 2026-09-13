@@ -2,7 +2,7 @@
   "id": "agent-governance-suite",
   "name": "agent-governance-suite",
   "version": "1.1.0",
-  "description": "Route ten governance specialists through declarative provider contracts and a local MCP server; bundle the disabled Korean prose workflow for later activation.",
+  "description": "Route eleven governance specialists through declarative provider contracts and a local MCP convergence guard; bundle the disabled Korean prose workflow for later activation.",
   "author": {
     "name": "jaeseongs95",
     "url": "https://github.com/jaeseongs95"
@@ -29,6 +29,7 @@
     "capabilities": [
       "Skill routing",
       "MCP coordination",
+      "Convergence attempt gating",
       "Audit gating",
       "Scope and evidence validation",
       "Mutation preflight",

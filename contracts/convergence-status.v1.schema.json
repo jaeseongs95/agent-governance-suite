@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/convergence-status.v1.schema.json",
+  "title": "ConvergenceStatus.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "root", "currentEpoch", "maxAttemptsPerEpoch", "maxEpochs", "attemptsUsedInEpoch", "attemptsRemainingInEpoch", "proposals", "leases", "outcomes", "reviews", "workflowRunIds", "gateError"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "root": { "$ref": "https://skill-suite.local/contracts/convergence-root.v1.schema.json" },
+    "currentEpoch": { "type": "integer", "minimum": 1, "maximum": 2 },
+    "maxAttemptsPerEpoch": { "const": 3 },
+    "maxEpochs": { "const": 2 },
+    "attemptsUsedInEpoch": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "attemptsRemainingInEpoch": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "proposals": { "type": "array", "items": { "$ref": "https://skill-suite.local/contracts/attempt-proposal.v1.schema.json" } },
+    "leases": { "type": "array", "items": { "$ref": "https://skill-suite.local/contracts/attempt-lease.v1.schema.json" } },
+    "outcomes": { "type": "array", "items": { "$ref": "https://skill-suite.local/contracts/attempt-outcome.v1.schema.json" } },
+    "reviews": { "type": "array", "items": { "$ref": "https://skill-suite.local/contracts/convergence-review.v1.schema.json" } },
+    "workflowRunIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "gateError": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/error" }
+      ]
+    }
+  },
+  "$defs": {
+    "errorCode": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE", "LEASE_REQUIRED", "LEASE_CONFLICT", "FRAME_REVIEW_REQUIRED", "ATTEMPT_BUDGET_EXHAUSTED", "NEW_EVIDENCE_REQUIRED", "ROOT_CONFLICT"] },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "details"],
+      "properties": {
+        "code": { "$ref": "#/$defs/errorCode" },
+        "message": { "type": "string", "minLength": 1 },
+        "details": { "type": ["object", "null"], "additionalProperties": true }
+      }
+    }
+  }
+}

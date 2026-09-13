@@ -1,0 +1,20 @@
+{
+  "extends": "normal-target-only",
+  "proposalControlFrame": {
+    "verifier": "pnpm test",
+    "aggregation": "weighted-score",
+    "passCondition": "score at least 0.9",
+    "evaluationInputs": ["tests/fixed.json"]
+  },
+  "additionalChange": {
+    "path": "/controlFrame",
+    "claimedRole": "unknown",
+    "summary": "The relationship between the new score and the original all-pass rule is disputed."
+  },
+  "controlImpact": "uncertain",
+  "controlChangedPaths": ["/aggregation", "/passCondition"],
+  "classification": "ambiguous",
+  "comparability": "non-comparable",
+  "route": "panel",
+  "userValueChange": false
+}

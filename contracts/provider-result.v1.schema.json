@@ -31,7 +31,7 @@
       "additionalProperties": false,
       "required": ["code", "message", "details"],
       "properties": {
-        "code": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE"] },
+        "code": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE", "LEASE_REQUIRED", "LEASE_CONFLICT", "FRAME_REVIEW_REQUIRED", "ATTEMPT_BUDGET_EXHAUSTED", "NEW_EVIDENCE_REQUIRED", "ROOT_CONFLICT"] },
         "message": { "type": "string", "minLength": 1 },
         "details": { "type": ["object", "null"], "additionalProperties": true }
       }

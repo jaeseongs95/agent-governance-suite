@@ -22,6 +22,8 @@ metadata:
 
 ## 실행 class와 단계 구성
 
+`orchestrated` workflow를 실제 실행하거나 실패 뒤 다시 실행할 때는 먼저 [수렴 가드 계약](references/convergence-guard.md)을 읽고 같은 `rootId`를 유지한다. 단순 조회나 전문 스킬 단독 호출에는 수렴 root를 만들지 않는다.
+
 `executionClass`별로 흐름을 분리한다.
 
 - `bootstrap`: `plan_workflow` 전에 실행한다. `phaseOrder` 순으로 지침 범위를 확인하고, 필요할 때 저장소 관례를 조사한 뒤, 유효한 `TaskEnvelope.v1`과 수용 근거 계획을 만든다. 이미 같은 대상과 지침 revision에 대해 검증된 산출물이 있으면 중복 실행하지 않는다.
@@ -96,11 +98,12 @@ MCP를 사용할 때는 연결이 성공했고 도구 목록과 입력 스키마
 통합 실행은 다음 순서를 지킨다.
 
 1. 목표, 범위, 수용 기준, 작업 단위, 위험도와 필요한 capability를 `TaskEnvelope.v1`로 정리하고 `plan_workflow`를 호출한다. 이 호출은 run을 만들지 않는다.
-2. 계획이 `ready`이고 `executionMode`가 `orchestrated`일 때만 계획 전체를 `start_workflow`에 전달한다.
-3. 계획에 기록된 순서대로 전문 스킬을 사용한다. provider 결과와 산출물 참조를 `ProviderResult.v1`로 묶고, 이를 `StageResult.v1.output`에 넣어 현재 revision과 함께 `record_stage_result`에 전달한다.
-4. 사용자 입력이나 승인이 필요하면 해당 상태와 차단 사유를 그대로 보고하고 새 실행이 필요한지 판단한다. 순서를 건너뛰거나 이미 기록한 stage를 덮어쓰지 않는다.
-5. 필요할 때 `get_workflow_status`로 현재 revision과 다음 stage를 확인한다. 모든 필수 stage와 감사 게이트가 `passed`인 경우에만 `finalize_workflow`를 호출한다.
-6. 통합 실행을 더 진행하지 않기로 확정하면 `abort_workflow`로 해당 run을 닫는다.
+2. 최초 전체 실행 전에 `open_convergence_root`로 작업 계약과 control/target frame을 결속한다. 같은 작업을 요약하거나 fresh context에 넘겨도 발급된 `rootId`를 유지한다.
+3. 계획이 `ready`이고 `executionMode`가 `orchestrated`이면 `claim_workflow_attempt`로 계획·frame·실행자·출력 대상에 결속된 lease를 받은 뒤 `start_guarded_workflow`로 시작한다. 새 orchestrated run에 `start_workflow`를 사용하지 않는다.
+4. 계획에 기록된 순서대로 전문 스킬을 사용한다. provider 결과와 산출물 참조를 `ProviderResult.v1`로 묶고, 이를 `StageResult.v1.output`에 넣어 현재 revision과 함께 `record_stage_result`에 전달한다.
+5. 사용자 입력이나 승인이 필요하면 해당 상태와 차단 사유를 그대로 보고하고 새 실행이 필요한지 판단한다. 순서를 건너뛰거나 이미 기록한 stage를 덮어쓰지 않는다.
+6. 필요할 때 `get_workflow_status`와 `get_convergence_status`로 현재 revision, 다음 stage와 남은 실행 예산을 확인한다. 모든 필수 stage와 감사 게이트가 `passed`인 경우에만 `finalize_workflow`를 호출한다.
+7. 통합 실행을 더 진행하지 않기로 확정하면 `abort_workflow`로 해당 run을 닫는다. 시작된 run은 실패·중단돼도 해당 epoch의 시도 횟수에 남는다.
 
 MCP workflow run과 계획 서명 키는 SQLite에 저장되므로 프로세스를 다시 시작해도 이어서 처리할 수 있다. `RUN_NOT_FOUND`를 받으면 다른 데이터베이스 경로를 사용 중인지 먼저 확인하고, 저장된 상태가 실제로 없을 때만 새 계획과 run을 만든다. 이전 revision이나 stage 결과를 추측해 복구하지 않는다.
 

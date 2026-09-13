@@ -17,7 +17,7 @@
   "$defs": {
     "name": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
     "artifact": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
-    "errorCode": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE"] },
+    "errorCode": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE", "LEASE_REQUIRED", "LEASE_CONFLICT", "FRAME_REVIEW_REQUIRED", "ATTEMPT_BUDGET_EXHAUSTED", "NEW_EVIDENCE_REQUIRED", "ROOT_CONFLICT"] },
     "state": { "enum": ["needs-input", "needs-approval", "needs-redesign", "failed", "passed", "blocked"] },
     "mappingRule": {
       "type": "object",

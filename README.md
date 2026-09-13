@@ -6,7 +6,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
-현재 공개 릴리스는 `v1.1.0`입니다. 거버넌스 전문 스킬 10개와 한국어 산문 워크플로 1개를 포함합니다. 한국어 산문 워크플로는 품질 평가의 개선율 기준을 충족할 때까지 registry, 직접 descriptor와 Codex의 암시적 호출 설정에서 비활성화됩니다. 사용자가 직접 호출해도 스킬의 차단 지침에 따라 provider와 로컬 스크립트를 실행하지 않습니다.
+현재 공개 릴리스는 `v1.1.0`입니다. 이 개발 소스는 거버넌스 전문 스킬 11개와 한국어 산문 워크플로 1개를 포함합니다. 한국어 산문 워크플로는 품질 평가의 개선율 기준을 충족할 때까지 registry, 직접 descriptor와 Codex의 암시적 호출 설정에서 비활성화됩니다. 사용자가 직접 호출해도 스킬의 차단 지침에 따라 provider와 로컬 스크립트를 실행하지 않습니다.
 
 ## 이런 문제를 다룹니다
 
@@ -90,7 +90,7 @@ AGENT_GOVERNANCE_DB_PATH=/absolute/path/workflows.sqlite3 pnpm dev
 
 MCP 서버가 시작되지 않아도 개별 전문 스킬은 직접 호출할 수 있습니다. 단계 순서를 강제하고 완료 영수증을 발급하는 통합 작업에는 MCP 서버가 필요합니다.
 
-`v1.1.0`은 SQLite schema를 v1에서 v2로 올립니다. 이전 버전으로 돌아갈 가능성이 있다면 업그레이드 전에 MCP 서버를 중지하고 DB를 SQLite의 일관된 backup 방식으로 복사해야 합니다. v2 DB는 `v1.0.5`에서 열 수 없으므로 플러그인만 다시 설치해서는 롤백되지 않습니다. 롤백할 때는 MCP를 중지한 상태에서 업그레이드 전 v1 backup을 복원한 뒤 `v1.0.5`를 설치합니다. 업그레이드 전 DB가 없었다면 새 v2 DB를 별도 보관한 뒤 기본 경로에서 치우고 `v1.0.5`를 시작합니다.
+이 개발 소스는 SQLite schema를 v2에서 v3으로 올려 convergence root, epoch, attempt, lease, review와 workflow 연결을 보존합니다. 이전 버전으로 돌아갈 가능성이 있다면 업그레이드 전에 MCP 서버를 중지하고 DB를 SQLite의 일관된 backup 방식으로 복사해야 합니다. v3 DB는 v2 서버에서 열 수 없으므로 플러그인만 다시 설치해서는 롤백되지 않습니다. 롤백할 때는 MCP를 중지한 상태에서 업그레이드 전 v2 backup을 복원해야 합니다.
 
 ### 플러그인 업데이트 확인
 
@@ -113,13 +113,14 @@ check_for_updates { "force": false }
 | 시작 전 | [`task-contract`](https://github.com/jaeseongs95/task-contract/tree/v1.0.0) | 1.0.0 | 요청의 목표, 범위, 수용 기준, 위험도, 권한을 구조화합니다. |
 | 진행 중 | [`coordinate-subagents`](https://github.com/jaeseongs95/coordinate-subagents/tree/v1.0.0) | 1.0.0 | 독립 작업을 나누고 담당 영역과 검증 책임을 정합니다. |
 | 진행 중 | [`independent-deliberation-panel`](https://github.com/jaeseongs95/independent-deliberation-panel/tree/v1.0.0) | 1.0.0 | 복잡한 결정의 근거와 반론을 여러 독립 관점에서 검토합니다. |
+| 수렴 검토 | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 1.0.0 | 반복 시도의 계약과 frame 변경을 독립적으로 비교해 새 epoch 허용 여부를 판정합니다. |
 | 변경 전후 | [`change-scope-guardian`](https://github.com/jaeseongs95/change-scope-guardian/tree/v1.0.0) | 1.0.0 | 변경 전 기준선과 현재 Git 변경 사항을 비교해 요청 범위 밖의 파일을 찾습니다. |
 | 변경 전 | [`mutation-risk-preflight`](https://github.com/jaeseongs95/mutation-risk-preflight/tree/v1.0.0) | 1.0.0 | 위험한 변경을 실행하기 전에 대상, 승인, 영향 범위, 복구 조건을 점검합니다. |
 | 완료 전 | [`acceptance-evidence-validator`](https://github.com/jaeseongs95/acceptance-evidence-validator/tree/v1.0.0) | 1.0.0 | 수용 기준마다 현재 결과를 뒷받침하는 증거가 있는지 검사합니다. |
 | 완료 전 | [`independent-audit-gate`](https://github.com/jaeseongs95/codex-independent-audit-gate/tree/v1.0.0) | 1.0.0 | 구현자와 분리된 감사자가 고위험 변경과 검증 근거를 확인합니다. |
 | 문제 발생 시 | [`blocker-diagnostician`](https://github.com/jaeseongs95/blocker-diagnostician/tree/v1.0.0) | 1.0.0 | 반복 실패를 관측 사실과 원인 가설로 나누고 다음 판별 검사를 정합니다. |
 
-각 전문 스킬은 단독으로 호출할 수 있습니다. 둘 이상의 역할을 연결하려면 [`$orchestrator`](skills/orchestrator/)를 사용합니다. 편입에 사용한 원본 태그, 커밋, `checksum`은 [`skills/source-lock.json`](skills/source-lock.json)에 고정되어 있습니다.
+각 전문 스킬은 단독으로 호출할 수 있습니다. 둘 이상의 역할을 연결하려면 [`$orchestrator`](skills/orchestrator/)를 사용합니다. 외부에서 편입한 스킬의 원본 태그, 커밋, `checksum`은 [`skills/source-lock.json`](skills/source-lock.json)에 고정되어 있으며, 이 저장소에서 만든 `orchestrator`와 `iteration-frame-auditor`는 registry와 현재 Git 이력으로 추적합니다.
 
 ## 검사 범위와 한계
 
@@ -131,6 +132,9 @@ MCP 서버는 `SkillDescriptor.v2`의 `capability`, 실행 단계, `artifact` �
 - 다음 단계에 필요한 산출물과 검증 근거가 준비됐는지
 - 독립 숙고와 필수 감사의 대상이 현재 결과와 일치하고 정해진 조건을 충족하는지
 - 해결되지 않은 차단 사유가 남아 있지 않은지
+- 새 orchestrated 실행이 root에 결속된 일회용 lease를 사용하고 epoch당 3회 예산과 frame 불변조건을 지켰는지
+
+Convergence root, epoch, attempt, lease, review와 workflow 연결도 같은 SQLite DB에 append-only 이력으로 저장되므로 MCP 프로세스가 다시 시작돼도 예산과 활성 attempt를 유지합니다. `.mcp.json`의 stdio 서버가 필요할 때 자동 실행되며 별도 포트, 계정이나 상시 데몬은 필요하지 않습니다.
 
 이 서버는 적대적인 호출자를 인증하는 보안 경계가 아닙니다. 전문 스킬과 호출자가 `verified` 값, 증거 위치, 작업자 식별자를 확인했다고 전제합니다. 서버는 값의 형식과 단계 사이의 일관성을 검사하지만, 실제 작업자의 신원이나 증거 원문의 진위를 인증하지는 않습니다.
 

@@ -6,7 +6,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
-The current public release is `v1.1.0`. It includes ten governance specialist skills and one Korean prose workflow. The Korean prose workflow remains disabled in the registry, its direct descriptor, and Codex's implicit-invocation setting until it passes the prose-quality improvement threshold. Its fail-closed skill instructions also refuse direct calls without running providers or local scripts.
+The current public release is `v1.1.0`. This development source includes eleven governance specialist skills and one Korean prose workflow. The Korean prose workflow remains disabled in the registry, its direct descriptor, and Codex's implicit-invocation setting until it passes the prose-quality improvement threshold. Its fail-closed skill instructions also refuse direct calls without running providers or local scripts.
 
 ## How it works
 
@@ -52,7 +52,7 @@ These checks run in the MCP workflow layer. They are not recommendations that an
 | An implementer audits their own work or reuses an old audit | Checks actor separation, target identity, and audit freshness. |
 | The same failure is retried without new evidence | Groups failure episodes and identifies the next useful diagnostic check. |
 
-The orchestrator does not run all ten skills for every request. It selects the roles the task needs, and a simple request can call one specialist directly.
+The orchestrator does not run all eleven skills for every request. It selects the roles the task needs, and a simple request can call one specialist directly.
 
 ## Install and try it
 
@@ -100,7 +100,7 @@ Set `force: true` to bypass the cached check time. This feature only reports tha
 
 Each specialist remains available when the MCP server is unavailable. Orchestrated runs that enforce stage order and issue a final receipt require the MCP server.
 
-`v1.1.0` upgrades the SQLite schema from v1 to v2. If you may need to return to an older release, stop the MCP server and create a consistent SQLite backup before upgrading. A v2 database cannot be opened by `v1.0.5`, so reinstalling only the plugin is not a rollback. To roll back, stop the MCP server, restore the pre-upgrade v1 backup, and then install `v1.0.5`. If no database existed before the upgrade, archive the new v2 database outside its configured path before starting `v1.0.5`.
+This development source upgrades the SQLite schema from v2 to v3 to preserve convergence roots, epochs, attempts, leases, reviews, and workflow links. If you may need to return to the v2 server, stop the MCP server and create a consistent SQLite backup before upgrading. A v3 database cannot be opened by the v2 server, so reinstalling only the plugin is not a rollback. Restore the pre-upgrade v2 backup while the MCP server is stopped.
 
 ## Included skills
 
@@ -111,13 +111,14 @@ Each specialist remains available when the MCP server is unavailable. Orchestrat
 | Before work | `task-contract` | 1.0.0 | Defines the objective, scope, risk, and completion criteria. |
 | During work | `coordinate-subagents` | 1.0.0 | Splits independent work and assigns ownership and verification duties. |
 | During work | `independent-deliberation-panel` | 1.0.0 | Reviews evidence and counterarguments for complex decisions. |
+| Convergence review | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 1.0.0 | Independently compares iteration contracts and frame changes before a new epoch can open. |
 | Before and after changes | `change-scope-guardian` | 1.0.0 | Captures a baseline and checks whether the final change stayed in scope. |
 | Before changes | `mutation-risk-preflight` | 1.0.0 | Checks the target, authority, approval, and recovery conditions for risky mutations. |
 | Before completion | `acceptance-evidence-validator` | 1.0.0 | Verifies current evidence for every acceptance criterion. |
 | Before completion | `independent-audit-gate` | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
 | After a failure | `blocker-diagnostician` | 1.0.0 | Classifies repeated failures and selects the next diagnostic step. |
 
-Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. Exact source tags, commits, and checksums are pinned in `skills/source-lock.json`.
+Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. Exact source tags, commits, and checksums for externally imported skills are pinned in `skills/source-lock.json`; the repository-native `orchestrator` and `iteration-frame-auditor` are tracked by the registry and current Git history.
 
 ## Enforcement scope and limits
 
@@ -129,6 +130,9 @@ The MCP server reads capabilities, execution phases, and artifact dependencies f
 - whether required artifacts and verified evidence exist before dependent stages run
 - whether deliberation and mandatory audit results match the current target and policy conditions
 - whether any blocking item remains unresolved
+- whether each new orchestrated run consumed a root-bound one-time lease and respected the three-attempt epoch budget and frame invariants
+
+Convergence roots, epochs, attempts, leases, reviews, and workflow links are also stored as append-only history in the same SQLite database, so budgets and active attempts survive an MCP process restart. The stdio server in `.mcp.json` starts on demand; no port, account, or persistent daemon is required.
 
 The MCP server is not a security boundary against a hostile caller. Specialist skills and callers submit `verified` flags, evidence locators, and actor identifiers as trusted inputs. The server checks their structure and consistency across workflow stages, but it does not authenticate a real person or prove that the source evidence is genuine.
 

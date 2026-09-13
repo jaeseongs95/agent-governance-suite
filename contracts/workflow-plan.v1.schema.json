@@ -4,10 +4,11 @@
   "title": "WorkflowPlan.v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "taskId", "integrityToken", "executionMode", "state", "selectedSkills", "stages", "currentStageId", "nextStageId", "errors"],
+  "required": ["schemaVersion", "taskId", "taskDigest", "integrityToken", "executionMode", "state", "selectedSkills", "stages", "currentStageId", "nextStageId", "errors"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "taskId": { "type": "string", "minLength": 1 },
+    "taskDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
     "integrityToken": { "type": "string", "minLength": 1 },
     "executionMode": { "enum": ["direct", "orchestrated"] },
     "state": { "enum": ["ready", "running", "needs-input", "needs-approval", "needs-redesign", "failed", "passed", "blocked"] },
@@ -124,7 +125,7 @@
         }
       ]
     },
-    "errorCode": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE"] },
+    "errorCode": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE", "LEASE_REQUIRED", "LEASE_CONFLICT", "FRAME_REVIEW_REQUIRED", "ATTEMPT_BUDGET_EXHAUSTED", "NEW_EVIDENCE_REQUIRED", "ROOT_CONFLICT"] },
     "error": {
       "type": "object",
       "additionalProperties": false,

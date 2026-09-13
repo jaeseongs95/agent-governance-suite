@@ -6,7 +6,17 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { describe, expect, it } from "vitest";
 
-import type { ApiResultV1, PluginUpdateStatusV1, StageResultV1, TaskEnvelopeV1, WorkflowPlanV1, WorkflowReceiptV1 } from "../../contracts/types.js";
+import type {
+  ApiResultV1,
+  AttemptLeaseV1,
+  ConvergenceFrameV1,
+  ConvergenceRootV1,
+  PluginUpdateStatusV1,
+  StageResultV1,
+  TaskEnvelopeV1,
+  WorkflowPlanV1,
+  WorkflowReceiptV1,
+} from "../../contracts/types.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 
 const rootDirectory = fileURLToPath(new URL("../../", import.meta.url));
@@ -14,6 +24,51 @@ const bundledServer = fileURLToPath(new URL("../../mcp-server/dist/server.mjs", 
 
 function toolArguments(value: object): Record<string, unknown> {
   return value as unknown as Record<string, unknown>;
+}
+
+function digest(value: string): `sha256:${string}` {
+  return `sha256:${value.repeat(64).slice(0, 64)}`;
+}
+
+function convergenceFrame(taskId: string): ConvergenceFrameV1 {
+  return {
+    schemaVersion: "1.0.0",
+    workspace: { workspaceId: `stdio-${taskId}`, locator: rootDirectory },
+    controlArtifacts: [{ artifactId: "pass-contract", role: "pass-condition", locator: "acceptance", digest: digest("c") }],
+    targetArtifacts: [{ artifactId: "candidate", role: "candidate", locator: taskId, digest: digest("d") }],
+    operationalSettings: { maxAttemptsPerEpoch: 3, maxEpochs: 2, leaseTtlSeconds: 300 },
+  };
+}
+
+async function startGuarded(
+  client: Client,
+  task: TaskEnvelopeV1,
+  plan: WorkflowPlanV1,
+): Promise<{ root: ConvergenceRootV1; lease: AttemptLeaseV1; receipt: WorkflowReceiptV1 }> {
+  const frame = convergenceFrame(task.taskId);
+  const root = toolData<ConvergenceRootV1>(await client.callTool({
+    name: "open_convergence_root",
+    arguments: toolArguments({ schemaVersion: "1.0.0", parentRootId: null, taskEnvelope: task, frame, userApprovalRefs: [] }),
+  })).data!;
+  const lease = toolData<AttemptLeaseV1>(await client.callTool({
+    name: "claim_workflow_attempt",
+    arguments: toolArguments({
+      schemaVersion: "1.0.0",
+      rootId: root.rootId,
+      expectedRevision: root.revision,
+      taskEnvelope: task,
+      frame,
+      plan,
+      actorId: "stdio-implementation-agent",
+      outputTargets: task.workUnits.flatMap((unit) => unit.writeTargets),
+      priorFailure: null,
+    }),
+  })).data!;
+  const receipt = toolData<WorkflowReceiptV1>(await client.callTool({
+    name: "start_guarded_workflow",
+    arguments: toolArguments({ schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan }),
+  })).data!;
+  return { root, lease, receipt };
 }
 
 function toolData<T>(result: unknown): ApiResultV1<T> {
@@ -92,6 +147,11 @@ describe("bundled STDIO MCP server", () => {
       expect(listed.tools.map((tool) => tool.name)).toEqual([
         "check_for_updates",
         "plan_workflow",
+        "open_convergence_root",
+        "claim_workflow_attempt",
+        "start_guarded_workflow",
+        "get_convergence_status",
+        "resolve_convergence_gate",
         "start_workflow",
         "record_stage_result",
         "get_workflow_status",
@@ -130,6 +190,11 @@ describe("bundled STDIO MCP server", () => {
       expect(listed.tools.map((tool) => tool.name)).toEqual([
         "check_for_updates",
         "plan_workflow",
+        "open_convergence_root",
+        "claim_workflow_attempt",
+        "start_guarded_workflow",
+        "get_convergence_status",
+        "resolve_convergence_gate",
         "start_workflow",
         "record_stage_result",
         "get_workflow_status",
@@ -190,7 +255,9 @@ describe("bundled STDIO MCP server", () => {
         arguments: toolArguments(planned.data!),
       });
       expect(textContents(startedResponse)).toHaveLength(1);
-      const started = toolData<WorkflowReceiptV1>(startedResponse);
+      expect(toolData<WorkflowReceiptV1>(startedResponse).error?.code).toBe("LEASE_REQUIRED");
+      const guarded = await startGuarded(client, task, planned.data!);
+      const started = { data: guarded.receipt };
       expect(started.data).toMatchObject({ state: "running", revision: 0 });
 
       const updateStatus = toolData<PluginUpdateStatusV1>(await client.callTool({
@@ -273,10 +340,7 @@ describe("bundled STDIO MCP server", () => {
         name: "plan_workflow",
         arguments: toolArguments(abortTask),
       }));
-      const abortRun = toolData<WorkflowReceiptV1>(await client.callTool({
-        name: "start_workflow",
-        arguments: toolArguments(abortPlan.data!),
-      }));
+      const abortRun = { data: (await startGuarded(client, abortTask, abortPlan.data!)).receipt };
       const aborted = toolData<WorkflowReceiptV1>(await client.callTool({
         name: "abort_workflow",
         arguments: { runId: abortRun.data!.runId, expectedRevision: abortRun.data!.revision },

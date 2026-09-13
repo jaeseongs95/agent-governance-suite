@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "2.0.0",
+  "providers": [
+    {
+      "skillId": "iteration-frame-auditor",
+      "version": "1.0.0",
+      "enabled": true,
+      "capabilities": ["iteration-frame-audit"],
+      "priority": 80,
+      "executionClass": "workflow",
+      "phase": "convergence-review",
+      "phaseOrder": 80,
+      "requiredInputArtifacts": ["convergence-root", "attempt-history", "frame-change-proposal", "reviewer-assignment", "review-evidence"],
+      "inputBindings": [
+        {
+          "targetArtifact": "convergence-root",
+          "sources": ["convergence-guard:root"],
+          "operation": "require-external"
+        },
+        {
+          "targetArtifact": "attempt-history",
+          "sources": ["convergence-guard:attempt-history"],
+          "operation": "require-external"
+        },
+        {
+          "targetArtifact": "frame-change-proposal",
+          "sources": ["convergence-guard:frame-change-proposal"],
+          "operation": "require-external"
+        },
+        {
+          "targetArtifact": "reviewer-assignment",
+          "sources": ["orchestrator:fresh-reviewer-assignment"],
+          "operation": "require-external"
+        },
+        {
+          "targetArtifact": "review-evidence",
+          "sources": ["convergence-guard:evidence-inventory"],
+          "operation": "collect"
+        }
+      ],
+      "producedArtifacts": ["iteration-frame-comparison", "convergence-review"],
+      "outputSchema": "contracts/convergence-review.v1.schema.json",
+      "resultSchema": "contracts/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/route",
+        "values": {
+          "resume-new-epoch": { "state": "passed", "errorRequired": false },
+          "diagnose": { "state": "passed", "errorRequired": false },
+          "panel": { "state": "passed", "errorRequired": false },
+          "needs-user": { "state": "needs-input", "errorRequired": false },
+          "stop": { "state": "blocked", "errorRequired": false }
+        },
+        "default": "reject",
+        "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE", "MCP_UNAVAILABLE"]
+      },
+      "selectionCriteria": ["attempt-budget-exhausted", "frame-semantics-change-detected", "explicit-convergence-frame-review"],
+      "preconditions": [
+        "A frozen convergence root, append-only attempt history, proposed frame change, and verified evidence inventory are available.",
+        "A fresh-context reviewer distinct from every implementation actor is available."
+      ],
+      "failureHandling": {
+        "missingEvidence": "blocked",
+        "freshReviewerUnavailable": "blocked",
+        "ambiguous": "panel",
+        "userValueChange": "needs-input",
+        "retry": "new-evidence-or-new-reviewer-assignment-only"
+      },
+      "gate": {
+        "kind": "completion",
+        "policy": "mandatory",
+        "validator": "contracts/convergence-review.v1.schema.json"
+      }
+    }
+  ]
+}

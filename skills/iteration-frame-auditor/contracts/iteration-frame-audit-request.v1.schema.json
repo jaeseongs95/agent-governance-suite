@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.local/iteration-frame-auditor/contracts/iteration-frame-audit-request.v1.schema.json",
+  "title": "IterationFrameAuditRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "root", "attemptHistory", "proposal", "reviewer", "evidenceInventory"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "root": { "$ref": "#/$defs/root" },
+    "attemptHistory": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/attempt" }
+    },
+    "proposal": { "$ref": "#/$defs/proposal" },
+    "reviewer": { "$ref": "#/$defs/reviewerAssignment" },
+    "evidenceInventory": {
+      "type": "array",
+      "minItems": 5,
+      "items": { "$ref": "#/$defs/evidence" }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "stringSet": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonEmptyString" },
+      "uniqueItems": true
+    },
+    "nonEmptyStringSet": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/nonEmptyString" },
+      "uniqueItems": true
+    },
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objective", "scope", "acceptanceCriteria", "constraints", "authorization", "workspace", "targetLocations"],
+      "properties": {
+        "objective": { "$ref": "#/$defs/nonEmptyString" },
+        "scope": { "$ref": "#/$defs/nonEmptyStringSet" },
+        "acceptanceCriteria": { "$ref": "#/$defs/nonEmptyStringSet" },
+        "constraints": { "$ref": "#/$defs/stringSet" },
+        "authorization": { "$ref": "#/$defs/nonEmptyStringSet" },
+        "workspace": { "$ref": "#/$defs/nonEmptyString" },
+        "targetLocations": { "$ref": "#/$defs/nonEmptyStringSet" }
+      }
+    },
+    "root": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rootId", "revision", "epoch", "contract", "contractDigest", "frame", "frameDigest", "controlDigest", "targetDigest"],
+      "properties": {
+        "rootId": { "$ref": "#/$defs/nonEmptyString" },
+        "revision": { "type": "integer", "minimum": 0 },
+        "epoch": { "type": "integer", "minimum": 1 },
+        "contract": { "$ref": "#/$defs/contract" },
+        "contractDigest": { "$ref": "#/$defs/digest" },
+        "frame": { "$ref": "https://skill-suite.local/contracts/convergence-frame.v1.schema.json" },
+        "frameDigest": { "$ref": "#/$defs/digest" },
+        "controlDigest": { "$ref": "#/$defs/digest" },
+        "targetDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attemptId", "epoch", "sequence", "implementationActorIds", "outcome", "failureFingerprint", "evidenceRefs"],
+      "properties": {
+        "attemptId": { "$ref": "#/$defs/nonEmptyString" },
+        "epoch": { "type": "integer", "minimum": 1 },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "implementationActorIds": { "$ref": "#/$defs/nonEmptyStringSet" },
+        "outcome": { "enum": ["failed", "aborted", "crashed"] },
+        "failureFingerprint": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/digest" }
+          ]
+        },
+        "evidenceRefs": { "$ref": "#/$defs/nonEmptyStringSet" }
+      }
+    },
+    "change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "claimedRole", "summary"],
+      "properties": {
+        "path": { "$ref": "#/$defs/nonEmptyString" },
+        "claimedRole": { "enum": ["contract", "control", "target", "unknown"] },
+        "summary": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract", "contractDigest", "frame", "frameDigest", "controlDigest", "targetDigest", "changeSummary", "evidenceRefs"],
+      "properties": {
+        "contract": { "$ref": "#/$defs/contract" },
+        "contractDigest": { "$ref": "#/$defs/digest" },
+        "frame": { "$ref": "https://skill-suite.local/contracts/convergence-frame.v1.schema.json" },
+        "frameDigest": { "$ref": "#/$defs/digest" },
+        "controlDigest": { "$ref": "#/$defs/digest" },
+        "targetDigest": { "$ref": "#/$defs/digest" },
+        "changeSummary": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/change" }
+        },
+        "evidenceRefs": { "$ref": "#/$defs/nonEmptyStringSet" }
+      }
+    },
+    "reviewerAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorId", "freshContext", "freshContextEvidenceRef", "implementationActorIds"],
+      "properties": {
+        "actorId": { "$ref": "#/$defs/nonEmptyString" },
+        "freshContext": { "const": true },
+        "freshContextEvidenceRef": { "$ref": "#/$defs/nonEmptyString" },
+        "implementationActorIds": { "$ref": "#/$defs/nonEmptyStringSet" }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidenceRef", "artifactDigest", "locator", "kind", "verified"],
+      "properties": {
+        "evidenceRef": { "$ref": "#/$defs/nonEmptyString" },
+        "artifactDigest": { "$ref": "#/$defs/digest" },
+        "locator": { "$ref": "#/$defs/nonEmptyString" },
+        "kind": { "enum": ["contract-comparison", "control-comparison", "target-comparison", "attempt-outcome", "reviewer-separation"] },
+        "verified": { "const": true }
+      }
+    }
+  }
+}
