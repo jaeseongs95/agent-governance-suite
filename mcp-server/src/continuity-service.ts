@@ -276,7 +276,18 @@ export class ContinuityService implements ContinuityGateway {
       const tombstoneDigest = convergenceDigest({ taskCorrelation: binding.c, epoch: request.expectedEpoch, revision: request.expectedRevision, payloadDigest: current?.snapshotDigest ?? null });
       const now = this.now().toISOString();
       const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
-      if (purged.kind === "replay") return ok(JSON.parse(purged.request.resultJson) as ContinuityPurgeResultV1);
+      if (purged.kind === "replay") {
+        const replay = JSON.parse(purged.request.resultJson) as Partial<ContinuityPurgeResultV1>;
+        if (
+          replay.schemaVersion !== "1.0.0" || replay.purged !== true ||
+          replay.epoch !== request.expectedEpoch || replay.revision !== request.expectedRevision ||
+          typeof replay.tombstoneDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(replay.tombstoneDigest) ||
+          typeof replay.purgedAt !== "string"
+        ) {
+          return failure("STALE_REVISION", "The idempotent purge result is no longer available.");
+        }
+        return ok(replay as ContinuityPurgeResultV1);
+      }
       if (purged.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for a different purge request.");
       if (purged.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed or no payload exists.", { expectedRevision: request.expectedRevision, actualRevision: purged.actualRevision });
       return ok({ schemaVersion: "1.0.0", purged: true, epoch: request.expectedEpoch, revision: request.expectedRevision, tombstoneDigest, purgedAt: now });

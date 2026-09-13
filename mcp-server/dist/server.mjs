@@ -16261,10 +16261,24 @@ var SqliteContinuityStore = class {
         tombstoneDigest,
         purgedAt: now
       });
-      this.database.prepare(`
-        UPDATE continuity_requests SET result_json = ?
+      const storedRequests = this.database.prepare(`
+        SELECT request_hash, result_json FROM continuity_requests
         WHERE task_correlation = ? AND epoch = ?
-      `).run(scrubbedRequestJson, taskCorrelation, epoch);
+      `).all(taskCorrelation, epoch);
+      const scrubRequest = this.database.prepare(`
+        UPDATE continuity_requests SET result_json = ?
+        WHERE task_correlation = ? AND epoch = ? AND request_hash = ?
+      `);
+      for (const storedRequest of storedRequests) {
+        let parsed = null;
+        try {
+          const value = JSON.parse(storedRequest.result_json);
+          parsed = value && typeof value === "object" && !Array.isArray(value) ? value : null;
+        } catch {
+        }
+        const bodyFreeReceipt = parsed?.kind === "checkpoint" || parsed?.kind === "purged-request" || parsed?.purged === true;
+        if (!bodyFreeReceipt) scrubRequest.run(scrubbedRequestJson, taskCorrelation, epoch, storedRequest.request_hash);
+      }
       const resultJson = JSON.stringify({ schemaVersion: "1.0.0", purged: true, epoch, revision: expectedRevision, tombstoneDigest, purgedAt: now });
       this.database.prepare(`
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
@@ -16527,7 +16541,13 @@ var ContinuityService = class {
       const tombstoneDigest = convergenceDigest({ taskCorrelation: binding.c, epoch: request.expectedEpoch, revision: request.expectedRevision, payloadDigest: current?.snapshotDigest ?? null });
       const now = this.now().toISOString();
       const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
-      if (purged.kind === "replay") return ok(JSON.parse(purged.request.resultJson));
+      if (purged.kind === "replay") {
+        const replay = JSON.parse(purged.request.resultJson);
+        if (replay.schemaVersion !== "1.0.0" || replay.purged !== true || replay.epoch !== request.expectedEpoch || replay.revision !== request.expectedRevision || typeof replay.tombstoneDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(replay.tombstoneDigest) || typeof replay.purgedAt !== "string") {
+          return failure("STALE_REVISION", "The idempotent purge result is no longer available.");
+        }
+        return ok(replay);
+      }
       if (purged.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for a different purge request.");
       if (purged.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed or no payload exists.", { expectedRevision: request.expectedRevision, actualRevision: purged.actualRevision });
       return ok({ schemaVersion: "1.0.0", purged: true, epoch: request.expectedEpoch, revision: request.expectedRevision, tombstoneDigest, purgedAt: now });

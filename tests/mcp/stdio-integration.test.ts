@@ -1,5 +1,6 @@
 import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -211,6 +212,12 @@ describe("bundled STDIO MCP server", () => {
     const sharedDatabasePath = join(stateDirectory, "shared.sqlite3");
     environment.AGENT_GOVERNANCE_DB_PATH = sharedDatabasePath;
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = sharedDatabasePath;
+    expect(runContinuityHook(environment, {
+      hook_event_name: "SessionStart",
+      session_id: "shared-db-session",
+      source: "startup",
+    })).toEqual({});
+    expect(existsSync(sharedDatabasePath)).toBe(false);
     const transport = new StdioClientTransport({
       command: process.execPath,
       args: [bundledServer],

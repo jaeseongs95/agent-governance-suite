@@ -189,8 +189,9 @@ describe("direct task continuity", () => {
     const snapshot = service.checkpointContext(bound(service, "raw-session", "checkpoint_context", checkpoint)).data!;
     const beforePurge = new DatabaseSync(databasePath);
     const requestJson = beforePurge.prepare("SELECT result_json FROM continuity_requests").get() as { result_json: string };
-    beforePurge.close();
     expect(requestJson.result_json).not.toContain(marker);
+    beforePurge.prepare("UPDATE continuity_requests SET result_json = ?").run(JSON.stringify(snapshot));
+    beforePurge.close();
 
     const suppress = { schemaVersion: "1.0.0" as const, expectedEpoch: 1 };
     expect(service.suppressContextRestore(bound(service, "raw-session", "suppress_context_restore", suppress)).data?.suppressed).toBe(true);
@@ -210,6 +211,36 @@ describe("direct task continuity", () => {
     afterPurge.close();
     expect(snapshotCount.count).toBe(0);
     expect(JSON.stringify(storedRequests)).not.toContain(marker);
+  });
+
+  it("preserves each purge receipt across later checkpoint and purge cycles", () => {
+    const service = createService();
+    const firstSnapshot = directCheckpoint(service, "repeated-purge-session").data!;
+    const firstPurgeInput = {
+      schemaVersion: "1.0.0" as const,
+      requestId: "purge-first",
+      expectedEpoch: 1,
+      expectedRevision: firstSnapshot.revision,
+    };
+    const firstPurge = service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", firstPurgeInput));
+    expect(firstPurge.data?.purged).toBe(true);
+
+    const secondCheckpoint = checkpointInput({
+      requestId: "checkpoint-second",
+      core: { ...checkpointInput().core, objective: "Second snapshot." },
+    });
+    const secondSnapshot = service.checkpointContext(bound(service, "repeated-purge-session", "checkpoint_context", secondCheckpoint)).data!;
+    const secondPurgeInput = {
+      schemaVersion: "1.0.0" as const,
+      requestId: "purge-second",
+      expectedEpoch: 1,
+      expectedRevision: secondSnapshot.revision,
+    };
+    expect(service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", secondPurgeInput)).data?.purged).toBe(true);
+
+    const replayedFirst = service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", firstPurgeInput));
+    expect(replayedFirst).toEqual(firstPurge);
+    expect(replayedFirst.data).toMatchObject({ purged: true, epoch: 1, revision: firstSnapshot.revision });
   });
 
   it("purges a direct payload after workflow binding without deleting the workflow root", () => {

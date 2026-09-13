@@ -4,7 +4,11 @@ import { fileURLToPath } from "node:url";
 
 import { ContinuityService } from "./continuity-service.js";
 import { SqliteContinuityStore } from "./continuity-store.js";
-import { resolveContinuityDatabasePath, resolveWorkflowDatabasePath } from "./runtime-config.js";
+import {
+  assertDistinctDatabasePaths,
+  resolveContinuityDatabasePath,
+  resolveWorkflowDatabasePath,
+} from "./runtime-config.js";
 import { ContractValidator } from "./schema-validator.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 
@@ -88,13 +92,16 @@ async function main(): Promise<void> {
   let workflow: SqliteWorkflowStore | null = null;
   try {
     const input = JSON.parse(readFileSync(0, "utf8")) as HookInput;
-    continuity = new SqliteContinuityStore(resolveContinuityDatabasePath());
+    const workflowDatabasePath = resolveWorkflowDatabasePath();
+    const continuityDatabasePath = resolveContinuityDatabasePath();
+    assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath);
+    continuity = new SqliteContinuityStore(continuityDatabasePath);
     const event = input.hook_event_name;
     const source = input.source;
     const needsWorkflowProjection = event === "PreCompact"
       || (event === "SessionStart" && (source === "resume" || source === "compact"));
     if (needsWorkflowProjection) {
-      try { workflow = new SqliteWorkflowStore(resolveWorkflowDatabasePath()); } catch { workflow = null; }
+      try { workflow = new SqliteWorkflowStore(workflowDatabasePath); } catch { workflow = null; }
     }
     const output = handleContinuityHook(input, new ContinuityService(continuity, new ContractValidator(), workflow));
     if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));

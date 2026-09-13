@@ -40,6 +40,7 @@ interface TaskRow {
 interface SnapshotRow { snapshot_json: string }
 interface MetadataRow { value: string }
 interface RequestRow { command_digest: string; result_json: string }
+interface RequestPayloadRow { request_hash: string; result_json: string }
 
 const SCHEMA_VERSION = 1;
 
@@ -247,10 +248,25 @@ export class SqliteContinuityStore {
         tombstoneDigest,
         purgedAt: now,
       });
-      this.database.prepare(`
-        UPDATE continuity_requests SET result_json = ?
+      const storedRequests = this.database.prepare(`
+        SELECT request_hash, result_json FROM continuity_requests
         WHERE task_correlation = ? AND epoch = ?
-      `).run(scrubbedRequestJson, taskCorrelation, epoch);
+      `).all(taskCorrelation, epoch) as unknown as RequestPayloadRow[];
+      const scrubRequest = this.database.prepare(`
+        UPDATE continuity_requests SET result_json = ?
+        WHERE task_correlation = ? AND epoch = ? AND request_hash = ?
+      `);
+      for (const storedRequest of storedRequests) {
+        let parsed: Record<string, unknown> | null = null;
+        try {
+          const value = JSON.parse(storedRequest.result_json) as unknown;
+          parsed = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+        } catch { /* Unknown legacy content is scrubbed below. */ }
+        const bodyFreeReceipt = parsed?.kind === "checkpoint"
+          || parsed?.kind === "purged-request"
+          || parsed?.purged === true;
+        if (!bodyFreeReceipt) scrubRequest.run(scrubbedRequestJson, taskCorrelation, epoch, storedRequest.request_hash);
+      }
       const resultJson = JSON.stringify({ schemaVersion: "1.0.0", purged: true, epoch, revision: expectedRevision, tombstoneDigest, purgedAt: now });
       this.database.prepare(`
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)

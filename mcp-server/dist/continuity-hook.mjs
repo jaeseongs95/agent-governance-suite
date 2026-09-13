@@ -8277,10 +8277,24 @@ var SqliteContinuityStore = class {
         tombstoneDigest,
         purgedAt: now
       });
-      this.database.prepare(`
-        UPDATE continuity_requests SET result_json = ?
+      const storedRequests = this.database.prepare(`
+        SELECT request_hash, result_json FROM continuity_requests
         WHERE task_correlation = ? AND epoch = ?
-      `).run(scrubbedRequestJson, taskCorrelation, epoch);
+      `).all(taskCorrelation, epoch);
+      const scrubRequest = this.database.prepare(`
+        UPDATE continuity_requests SET result_json = ?
+        WHERE task_correlation = ? AND epoch = ? AND request_hash = ?
+      `);
+      for (const storedRequest of storedRequests) {
+        let parsed = null;
+        try {
+          const value = JSON.parse(storedRequest.result_json);
+          parsed = value && typeof value === "object" && !Array.isArray(value) ? value : null;
+        } catch {
+        }
+        const bodyFreeReceipt = parsed?.kind === "checkpoint" || parsed?.kind === "purged-request" || parsed?.purged === true;
+        if (!bodyFreeReceipt) scrubRequest.run(scrubbedRequestJson, taskCorrelation, epoch, storedRequest.request_hash);
+      }
       const resultJson = JSON.stringify({ schemaVersion: "1.0.0", purged: true, epoch, revision: expectedRevision, tombstoneDigest, purgedAt: now });
       this.database.prepare(`
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
@@ -8543,7 +8557,13 @@ var ContinuityService = class {
       const tombstoneDigest = convergenceDigest({ taskCorrelation: binding.c, epoch: request.expectedEpoch, revision: request.expectedRevision, payloadDigest: current?.snapshotDigest ?? null });
       const now = this.now().toISOString();
       const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
-      if (purged.kind === "replay") return ok(JSON.parse(purged.request.resultJson));
+      if (purged.kind === "replay") {
+        const replay = JSON.parse(purged.request.resultJson);
+        if (replay.schemaVersion !== "1.0.0" || replay.purged !== true || replay.epoch !== request.expectedEpoch || replay.revision !== request.expectedRevision || typeof replay.tombstoneDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(replay.tombstoneDigest) || typeof replay.purgedAt !== "string") {
+          return failure("STALE_REVISION", "The idempotent purge result is no longer available.");
+        }
+        return ok(replay);
+      }
       if (purged.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for a different purge request.");
       if (purged.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed or no payload exists.", { expectedRevision: request.expectedRevision, actualRevision: purged.actualRevision });
       return ok({ schemaVersion: "1.0.0", purged: true, epoch: request.expectedEpoch, revision: request.expectedRevision, tombstoneDigest, purgedAt: now });
@@ -8737,6 +8757,7 @@ var ContinuityService = class {
 };
 
 // mcp-server/src/runtime-config.ts
+import { realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import path3 from "node:path";
 function resolveWorkflowDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
@@ -8763,6 +8784,33 @@ function resolveContinuityDatabasePath(environment = process.env, platform = pro
   );
   if (workflowPath === ":memory:") return ":memory:";
   return path3.join(path3.dirname(workflowPath), "continuity.sqlite3");
+}
+function canonicalDatabasePath(databasePath, platform) {
+  if (databasePath === ":memory:") return null;
+  const absolute = path3.resolve(databasePath);
+  const unresolved = [];
+  let cursor = absolute;
+  let resolved = absolute;
+  while (true) {
+    try {
+      resolved = path3.join(realpathSync.native(cursor), ...unresolved.reverse());
+      break;
+    } catch {
+      const parent = path3.dirname(cursor);
+      if (parent === cursor) break;
+      unresolved.push(path3.basename(cursor));
+      cursor = parent;
+    }
+  }
+  const normalized = path3.normalize(resolved);
+  return platform === "win32" ? normalized.toLocaleLowerCase("en-US") : normalized;
+}
+function assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath, platform = process.platform) {
+  const workflowIdentity = canonicalDatabasePath(workflowDatabasePath, platform);
+  const continuityIdentity = canonicalDatabasePath(continuityDatabasePath, platform);
+  if (workflowIdentity !== null && workflowIdentity === continuityIdentity) {
+    throw new Error("Workflow and continuity databases must use different files.");
+  }
 }
 
 // mcp-server/src/schema-validator.ts
@@ -9812,13 +9860,16 @@ async function main() {
   let workflow = null;
   try {
     const input = JSON.parse(readFileSync2(0, "utf8"));
-    continuity = new SqliteContinuityStore(resolveContinuityDatabasePath());
+    const workflowDatabasePath = resolveWorkflowDatabasePath();
+    const continuityDatabasePath = resolveContinuityDatabasePath();
+    assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath);
+    continuity = new SqliteContinuityStore(continuityDatabasePath);
     const event = input.hook_event_name;
     const source = input.source;
     const needsWorkflowProjection = event === "PreCompact" || event === "SessionStart" && (source === "resume" || source === "compact");
     if (needsWorkflowProjection) {
       try {
-        workflow = new SqliteWorkflowStore(resolveWorkflowDatabasePath());
+        workflow = new SqliteWorkflowStore(workflowDatabasePath);
       } catch {
         workflow = null;
       }
