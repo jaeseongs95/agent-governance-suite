@@ -127,6 +127,204 @@
     {
       "if": { "properties": { "verdict": { "const": "ADEQUATE" } } },
       "then": { "properties": { "userNotice": { "type": "null" } } }
+    },
+    {
+      "if": {
+        "properties": {
+          "taskDemand": {
+            "properties": { "riskLevel": { "const": "high" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recommendation": {
+            "properties": {
+              "modelClassMin": { "enum": ["general", "deep", "frontier"] },
+              "reasoningEffortMin": { "enum": ["high", "xhigh", "max", "ultra"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "taskDemand": {
+            "properties": { "riskLevel": { "const": "critical" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recommendation": {
+            "properties": {
+              "modelClassMin": { "enum": ["deep", "frontier"] },
+              "reasoningEffortMin": { "enum": ["high", "xhigh", "max", "ultra"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recommendation": {
+            "properties": { "modelClassMin": { "const": "general" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recommendation": {
+            "properties": { "modelClassMax": { "enum": ["general", "deep", "frontier"] } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recommendation": {
+            "properties": { "modelClassMin": { "const": "deep" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recommendation": {
+            "properties": { "modelClassMax": { "enum": ["deep", "frontier"] } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recommendation": {
+            "properties": { "modelClassMin": { "const": "frontier" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recommendation": {
+            "properties": { "modelClassMax": { "const": "frontier" } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMin": { "const": "minimal" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMax": { "enum": ["minimal", "low", "medium", "high", "xhigh", "max", "ultra"] } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMin": { "const": "low" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMax": { "enum": ["low", "medium", "high", "xhigh", "max", "ultra"] } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMin": { "const": "medium" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMax": { "enum": ["medium", "high", "xhigh", "max", "ultra"] } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMin": { "const": "high" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMax": { "enum": ["high", "xhigh", "max", "ultra"] } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMin": { "const": "xhigh" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMax": { "enum": ["xhigh", "max", "ultra"] } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMin": { "const": "max" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMax": { "enum": ["max", "ultra"] } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMin": { "const": "ultra" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recommendation": {
+            "properties": { "reasoningEffortMax": { "const": "ultra" } }
+          }
+        }
+      }
     }
   ]
 }
