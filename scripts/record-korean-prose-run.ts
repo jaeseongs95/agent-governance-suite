@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { access, readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { DatabaseSync } from "node:sqlite";
@@ -9,19 +9,17 @@ import { FileSkillRegistry } from "../mcp-server/src/registry.js";
 import { ContractValidator } from "../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../mcp-server/src/sqlite-workflow-store.js";
 import { WorkflowService } from "../mcp-server/src/workflow-service.js";
+import { preflightKoreanProseEvaluation } from "./korean-prose-evaluation-preflight.js";
 
 const args = process.argv.slice(2).filter((argument) => argument !== "--");
 const run = Number(args[0]);
 const evaluationRoot = args[1] ? path.resolve(args[1]) : null;
-if (![1, 2, 3].includes(run) || !evaluationRoot) throw new Error("usage: <run:1|2|3> <evaluation-root>");
+if (!Number.isInteger(run) || run < 1 || !evaluationRoot) throw new Error("usage: <positive-run-number> <evaluation-root>");
 
 const repositoryRoot = path.resolve(import.meta.dirname, "..");
 const runDirectory = path.join(evaluationRoot, "evals", "runs", `run-${run}`);
 const databasePath = path.join(runDirectory, "workflow.sqlite3");
-await access(databasePath).then(
-  () => { throw new Error(`refusing to overwrite ${databasePath}`); },
-  () => undefined,
-);
+await preflightKoreanProseEvaluation("record", run, evaluationRoot);
 
 const [inputText, selectionText, candidateText, verificationText, finalText, metricsText, manifestText, selectionMeta, editingMeta, verificationMeta] = await Promise.all([
   readFile(path.join(evaluationRoot, "evals", "runs", "input.jsonl"), "utf8"),

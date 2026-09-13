@@ -295,14 +295,10 @@ describe("WorkflowService", () => {
     expect(result.ok).toBe(true);
     expect(result.data?.state).toBe("ready");
     expect(result.data?.stages.map((stage) => stage.requiredCapability)).toEqual([
-      "subagent-coordination",
-      "independent-deliberation",
       "draft",
       "independent-audit",
     ]);
     expect(result.data?.stages.map((stage) => stage.skillId)).toEqual([
-      "thread-conductor",
-      "reasoning-panel",
       "draft-specialist",
       "evidence-gate",
     ]);
@@ -310,12 +306,12 @@ describe("WorkflowService", () => {
     expect(result.data?.nextStageId).toBe(result.data?.stages[0]?.stageId);
     expect(result.data?.stages.every((stage) => stage.selectionReason.length > 0)).toBe(true);
     expect(result.data?.stages.find((stage) => stage.skillId === "draft-specialist")?.requiredArtifacts).toEqual(["draft"]);
-    expect(result.data?.stages.find((stage) => stage.skillId === "thread-conductor")?.requiredArtifacts)
-      .toEqual([]);
+    expect(result.data?.selectedSkills).not.toContain("thread-conductor");
+    expect(result.data?.selectedSkills).not.toContain("reasoning-panel");
     expect(service.getWorkflowStatus("run-task-001-1").error?.code).toBe("RUN_NOT_FOUND");
   });
 
-  it("creates one stage when one provider satisfies multiple requested capabilities", async () => {
+  it("does not infer coordination when a provider satisfies another requested capability", async () => {
     const { service } = await createService();
     const result = service.planWorkflow(task({
       taskId: "deduplicated-provider",
@@ -326,10 +322,7 @@ describe("WorkflowService", () => {
 
     const coordinationStages = result.data?.stages.filter((stage) => stage.skillId === "thread-conductor") ?? [];
     expect(coordinationStages).toHaveLength(1);
-    expect(coordinationStages[0]?.satisfiedCapabilities).toEqual([
-      "subagent-coordination",
-      "task-decomposition",
-    ]);
+    expect(coordinationStages[0]?.satisfiedCapabilities).toEqual(["task-decomposition"]);
   });
 
   it("re-reads the runtime registry for each new plan", async () => {
@@ -449,6 +442,17 @@ describe("WorkflowService", () => {
     expect(direct.ok).toBe(true);
     expect(direct.data?.state).toBe("ready");
     expect(direct.data?.executionMode).toBe("direct");
+    expect(direct.data?.stages.map((stage) => stage.requiredCapability)).toEqual(["draft"]);
+
+    const directHighRisk = service.planWorkflow(task({
+      taskId: "direct-high-risk",
+      orchestration: { requested: false, mcpAvailable: false },
+    }));
+    expect(directHighRisk.data?.executionMode).toBe("direct");
+    expect(directHighRisk.data?.stages.map((stage) => stage.requiredCapability)).toEqual([
+      "draft",
+      "independent-audit",
+    ]);
 
     const orchestrated = service.planWorkflow(task({ taskId: "orchestrated", orchestration: { requested: true, mcpAvailable: false } }));
     expect(orchestrated.ok).toBe(true);
@@ -531,17 +535,50 @@ describe("WorkflowService", () => {
       .toBe("STALE_REVISION");
   });
 
-  it("adds coordination only when work units contain an independent pair", async () => {
+  it("requires coordination to be requested explicitly even for independent work units", async () => {
     const { service } = await createService();
+    const independent = service.planWorkflow(task({
+      riskLevel: "low",
+      decision: { complexity: "simple", hasConflicts: false },
+      requiredCapabilities: ["draft"],
+    }));
+    expect(independent.data?.stages.map((stage) => stage.requiredCapability)).toEqual(["draft"]);
+
     const sequential = service.planWorkflow(task({
+      riskLevel: "low",
       workUnits: [
         { id: "first", objective: "First.", dependencies: [], writeTargets: ["first.md"] },
         { id: "second", objective: "Second.", dependencies: ["first"], writeTargets: ["second.md"] },
       ],
+      requiredCapabilities: ["draft"],
+      decision: { complexity: "simple", hasConflicts: false },
     }));
+    expect(sequential.data?.stages.map((stage) => stage.requiredCapability)).toEqual(["draft"]);
 
-    expect(sequential.ok).toBe(true);
-    expect(sequential.data?.stages.map((stage) => stage.requiredCapability)).not.toContain("subagent-coordination");
+    const explicit = service.planWorkflow(task({
+      riskLevel: "low",
+      requiredCapabilities: ["subagent-coordination", "draft"],
+      decision: { complexity: "simple", hasConflicts: false },
+    }));
+    expect(explicit.data?.stages.map((stage) => stage.requiredCapability)).toEqual([
+      "subagent-coordination",
+      "draft",
+    ]);
+  });
+
+  it("requires deliberation to be requested explicitly even for complex conflicting tasks", async () => {
+    const { service } = await createService();
+    const implicit = service.planWorkflow(task({ riskLevel: "low", requiredCapabilities: ["draft"] }));
+    expect(implicit.data?.stages.map((stage) => stage.requiredCapability)).toEqual(["draft"]);
+
+    const explicit = service.planWorkflow(task({
+      riskLevel: "low",
+      requiredCapabilities: ["independent-deliberation", "draft"],
+    }));
+    expect(explicit.data?.stages.map((stage) => stage.requiredCapability)).toEqual([
+      "independent-deliberation",
+      "draft",
+    ]);
   });
 
   it("keeps a high-risk audit requested by the caller as the final policy stage", async () => {
@@ -549,8 +586,6 @@ describe("WorkflowService", () => {
     const plan = service.planWorkflow(task({ requiredCapabilities: ["independent-audit", "draft"] }));
 
     expect(plan.data?.stages.map((stage) => stage.requiredCapability)).toEqual([
-      "subagent-coordination",
-      "independent-deliberation",
       "draft",
       "independent-audit",
     ]);
@@ -567,7 +602,6 @@ describe("WorkflowService", () => {
       }));
 
       expect(plan.data?.stages.map((stage) => stage.requiredCapability)).toEqual([
-        "subagent-coordination",
         "draft",
         "independent-audit",
       ]);
@@ -653,9 +687,9 @@ describe("WorkflowService", () => {
 
   it("rejects deliberation without an eligible DecisionRecord", async () => {
     const { service } = await createService();
-    let receipt = service.startWorkflow(service.planWorkflow(task()).data!).data!;
-    const coordination = receipt.plan.stages[0]!;
-    receipt = service.recordStageResult(passedStage(receipt.runId, coordination, receipt.revision)).data!;
+    const receipt = service.startWorkflow(service.planWorkflow(task({
+      requiredCapabilities: ["independent-deliberation", "draft"],
+    })).data!).data!;
     const deliberation = receipt.plan.stages.find((stage) => stage.requiredArtifacts.includes("decision-record"))!;
 
     const missing = passedStage(receipt.runId, deliberation, receipt.revision);
@@ -676,8 +710,10 @@ describe("WorkflowService", () => {
       ? { ...skill, skillId: "alternate-reasoner", path: "./alternate-reasoner" }
       : skill);
     const { service } = await createService(replacementSkills);
-    let receipt = service.startWorkflow(service.planWorkflow(task({ taskId: "alternate-deliberation" })).data!).data!;
-    receipt = service.recordStageResult(passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision)).data!;
+    const receipt = service.startWorkflow(service.planWorkflow(task({
+      taskId: "alternate-deliberation",
+      requiredCapabilities: ["independent-deliberation", "draft"],
+    })).data!).data!;
     const deliberation = receipt.plan.stages.find((stage) => stage.skillId === "alternate-reasoner")!;
 
     const accepted = service.recordStageResult(passedStage(receipt.runId, deliberation, receipt.revision));
@@ -737,8 +773,10 @@ describe("WorkflowService", () => {
   it("rejects every canonical invalid DecisionRecord at the MCP gate", async () => {
     for (const fixture of decisionRecordFixtures(invalidDecisionRecordDirectory)) {
       const { service } = await createService();
-      let receipt = service.startWorkflow(service.planWorkflow(task({ taskId: `invalid-${fixture.name}` })).data!).data!;
-      receipt = service.recordStageResult(passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision)).data!;
+      const receipt = service.startWorkflow(service.planWorkflow(task({
+        taskId: `invalid-${fixture.name}`,
+        requiredCapabilities: ["independent-deliberation", "draft"],
+      })).data!).data!;
       const deliberation = receipt.plan.stages.find((stage) => stage.requiredArtifacts.includes("decision-record"))!;
       const result = passedStage(receipt.runId, deliberation, receipt.revision);
       result.output = { ...result.output, output: { decisionRecord: fixture.record } };

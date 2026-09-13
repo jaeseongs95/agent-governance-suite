@@ -159,13 +159,13 @@
             ]
           },
           "selectionCriteria": [
-            "explicit-delegation",
-            "parallel-independent-units",
-            "high-risk-audit-coordination"
+            "explicit-task-decomposition-or-delegation",
+            "documented-net-benefit-delegation",
+            "explicit-ownership-or-evidence-integration"
           ],
           "preconditions": [
             "The user authorizes the requested work and applicable permission boundaries are known.",
-            "The task has explicit delegation, two or more independent units, or a high-risk audit requirement."
+            "The task explicitly requires one of this provider's capabilities. Subagent dispatch additionally requires an explicit user request or a documented net benefit."
           ],
           "failureHandling": "Return the completed assignments and explicitly identify unavailable delegation or audit capacity.",
           "gate": {

@@ -7,7 +7,7 @@
       "source": "https://github.com/jaeseongs95/coordinate-subagents.git",
       "ref": "v1.0.0",
       "commit": "614eac25c8f3d348de3a1377e299f5f968d83005",
-      "checksum": "sha256:43a1d0c8fbc410ce31a2d444aac105741ac2f0750a0bb5287e8852d6db9e1c7c",
+      "checksum": "sha256:efc89f34a53567db49117257a37ea06c266dde0517d702158f41080c88fa6a52",
       "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
     },
     {

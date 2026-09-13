@@ -84,7 +84,8 @@ export class WorkflowService {
   planWorkflow(rawTask: unknown): ApiResultV1<WorkflowPlanV1> {
     try {
       const task = this.validator.taskEnvelope(rawTask);
-      const plan = this.buildPlan(task, this.registry.read(), this.validateWorkUnitGraph(task));
+      this.validateWorkUnitGraph(task);
+      const plan = this.buildPlan(task, this.registry.read());
       plan.integrityToken = this.signPlan(plan);
       this.validator.workflowPlan(plan);
       return apiOk(plan);
@@ -260,7 +261,6 @@ export class WorkflowService {
   private buildPlan(
     task: TaskEnvelopeV1,
     skills: RoutedSkillProviderV2[],
-    dependencyGraph: Map<string, string[]>,
   ): WorkflowPlanV1 {
     const executionMode = task.orchestration.requested ? "orchestrated" : "direct";
     const errors: ContractErrorBody[] = [];
@@ -272,7 +272,7 @@ export class WorkflowService {
       provider: RoutedSkillProviderV2;
     }>();
 
-    for (const capability of this.requiredCapabilities(task, dependencyGraph)) {
+    for (const capability of this.requiredCapabilities(task)) {
       const skill = selectSkillByCapability(skills, capability);
       if (!skill) {
         errors.push({
@@ -364,8 +364,7 @@ export class WorkflowService {
     };
   }
 
-  private requiredCapabilities(task: TaskEnvelopeV1, dependencyGraph: Map<string, string[]>): string[] {
-    const before: string[] = [];
+  private requiredCapabilities(task: TaskEnvelopeV1): string[] {
     const auditRequested = task.requiredCapabilities.includes(POLICY_CAPABILITY.audit)
       || task.riskLevel === "high"
       || task.riskLevel === "critical";
@@ -381,16 +380,10 @@ export class WorkflowService {
       }
     }
     const after: string[] = [];
-    if (task.orchestration.requested && this.hasIndependentWorkUnitPair(dependencyGraph)) {
-      before.push(POLICY_CAPABILITY.coordination);
-    }
-    if (task.orchestration.requested && (task.decision.complexity === "complex" || task.decision.hasConflicts)) {
-      before.push(POLICY_CAPABILITY.deliberation);
-    }
-    if (task.orchestration.requested && auditRequested) {
+    if (auditRequested) {
       after.push(POLICY_CAPABILITY.audit);
     }
-    return [...new Set([...before, ...work, ...after])];
+    return [...new Set([...work, ...after])];
   }
 
   private orderProviders(
@@ -720,28 +713,6 @@ export class WorkflowService {
     };
     for (const unit of task.workUnits) visit(unit.id);
     return graph;
-  }
-
-  private hasIndependentWorkUnitPair(graph: Map<string, string[]>): boolean {
-    const ids = [...graph.keys()];
-    const reaches = (from: string, target: string): boolean => {
-      const pending = [...(graph.get(from) ?? [])];
-      const visited = new Set<string>();
-      while (pending.length > 0) {
-        const current = pending.pop()!;
-        if (current === target) return true;
-        if (visited.has(current)) continue;
-        visited.add(current);
-        pending.push(...(graph.get(current) ?? []));
-      }
-      return false;
-    };
-    for (let index = 0; index < ids.length; index += 1) {
-      for (let other = index + 1; other < ids.length; other += 1) {
-        if (!reaches(ids[index]!, ids[other]!) && !reaches(ids[other]!, ids[index]!)) return true;
-      }
-    }
-    return false;
   }
 
   private setRunningStagePointers(plan: WorkflowPlanV1): void {
