@@ -1,6 +1,6 @@
 interface:
   display_name: "Korean Prose Editor"
-  short_description: "의미와 고정 문자열을 보존하는 한국어 산문 편집"
-  default_prompt: "Use $korean-prose-editor to revise this Korean prose conservatively and return only verified edits."
+  short_description: "직접 실행은 사전 없이, MCP 경로는 SQLite 용어집과 함께 편집"
+  default_prompt: "Use $korean-prose-editor conservatively. Do not use its glossary in direct mode; in MCP mode, bind exactly one glossary lookup before selection."
 policy:
   allow_implicit_invocation: false

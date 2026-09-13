@@ -4,11 +4,12 @@
   "title": "Private verification work product",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "actorId", "sourceDigest", "editingDigest", "rubricDigest", "globalDecision", "decisions", "assessment"],
+  "required": ["schemaVersion", "actorId", "sourceDigest", "glossaryBinding", "editingDigest", "rubricDigest", "globalDecision", "decisions", "assessment"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "actorId": { "$ref": "#/$defs/actorId" },
     "sourceDigest": { "$ref": "#/$defs/digest" },
+    "glossaryBinding": { "$ref": "glossary-binding.v1.schema.json" },
     "editingDigest": { "$ref": "#/$defs/digest" },
     "rubricDigest": { "$ref": "#/$defs/digest" },
     "globalDecision": { "enum": ["continue", "fallback"] },

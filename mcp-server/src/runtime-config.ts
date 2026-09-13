@@ -15,6 +15,11 @@ export function resolveRegistryPath(
     ?? fileURLToPath(new URL("../../skills/registry.json", moduleUrl));
 }
 
+/** Resolves the immutable glossary shipped inside the Korean prose skill. */
+export function resolveKoreanProseGlossaryPath(moduleUrl: string = import.meta.url): string {
+  return fileURLToPath(new URL("../../skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3", moduleUrl));
+}
+
 /** Resolves durable workflow state outside the plugin installation by default. */
 export function resolveWorkflowDatabasePath(
   environment: NodeJS.ProcessEnv = process.env,

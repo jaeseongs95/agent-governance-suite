@@ -17019,6 +17019,9 @@ import { fileURLToPath } from "node:url";
 function resolveRegistryPath(environment = process.env, moduleUrl = import.meta.url) {
   return environment.SKILL_REGISTRY_PATH ?? fileURLToPath(new URL("../../skills/registry.json", moduleUrl));
 }
+function resolveKoreanProseGlossaryPath(moduleUrl = import.meta.url) {
+  return fileURLToPath(new URL("../../skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3", moduleUrl));
+}
 function resolveWorkflowDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   const configured = environment.AGENT_GOVERNANCE_DB_PATH?.trim();
   if (configured) return path4.resolve(currentWorkingDirectory, configured);
@@ -17115,7 +17118,9 @@ var contractSchemas = {
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
   executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
   stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
-  stateCleanupReceipt: loadSchema("state-cleanup-receipt.v1.schema.json")
+  stateCleanupReceipt: loadSchema("state-cleanup-receipt.v1.schema.json"),
+  koreanProseGlossaryLookupRequest: loadSchema("korean-prose-glossary-lookup-request.v1.schema.json"),
+  koreanProseGlossaryLookupResult: loadSchema("korean-prose-glossary-lookup-result.v1.schema.json")
 };
 function errorText(errors) {
   return (errors ?? []).map((error2) => `${error2.instancePath || "/"} ${error2.message ?? "is invalid"}`).join("; ");
@@ -17159,7 +17164,9 @@ var ContractValidator = class {
       prepareStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/prepare-state-cleanup-request.v1.schema.json"),
       executeStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/execute-state-cleanup-request.v1.schema.json"),
       stateCleanupPlan: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-plan.v1.schema.json"),
-      stateCleanupReceipt: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-receipt.v1.schema.json")
+      stateCleanupReceipt: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-receipt.v1.schema.json"),
+      koreanProseGlossaryLookupRequest: ajv.getSchema("https://skill-suite.local/contracts/korean-prose-glossary-lookup-request.v1.schema.json"),
+      koreanProseGlossaryLookupResult: ajv.getSchema("https://skill-suite.local/contracts/korean-prose-glossary-lookup-result.v1.schema.json")
     };
   }
   assert(name, value) {
@@ -17254,6 +17261,12 @@ var ContractValidator = class {
   }
   stateCleanupReceipt(value) {
     return this.assert("stateCleanupReceipt", value);
+  }
+  koreanProseGlossaryLookupRequest(value) {
+    return this.assert("koreanProseGlossaryLookupRequest", value);
+  }
+  koreanProseGlossaryLookupResult(value) {
+    return this.assert("koreanProseGlossaryLookupResult", value);
   }
   apiResult(value) {
     return this.assert("apiResult", value);
@@ -19156,6 +19169,179 @@ function convergenceStatusSummary(status) {
   };
 }
 
+// mcp-server/src/korean-prose-glossary.ts
+import { createHash as createHash4 } from "node:crypto";
+import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
+var KOREAN_PROSE_GLOSSARY_MAX_SOURCE_LENGTH = 2e5;
+var KOREAN_PROSE_GLOSSARY_MAX_MATCHES = 256;
+var DIGEST = /^[a-f0-9]{64}$/u;
+var ENTRY_ID = /^[a-z0-9][a-z0-9-]*$/u;
+var POLICIES = /* @__PURE__ */ new Set(["protect", "prefer", "allow", "avoid"]);
+var FORM_KINDS = /* @__PURE__ */ new Set(["canonical", "alias", "discouraged"]);
+var UnavailableKoreanProseGlossary = class {
+  lookup(request) {
+    return unavailableResult(request.sourceText);
+  }
+};
+var SqliteKoreanProseGlossary = class {
+  constructor(databasePath) {
+    this.databasePath = databasePath;
+  }
+  databasePath;
+  lookup(request) {
+    const sourceDigest = sha256(request.sourceText);
+    if (request.schemaVersion !== "1.0.0" || !DIGEST.test(request.sourceDigest) || request.sourceDigest !== sourceDigest) {
+      throw new Error("The caller sourceDigest does not match sourceText.");
+    }
+    if (request.sourceText.length > KOREAN_PROSE_GLOSSARY_MAX_SOURCE_LENGTH) {
+      return emptyResult("limit-exceeded", sourceDigest, null, "GLOSSARY_MATCH_LIMIT_EXCEEDED");
+    }
+    if (request.sourceText !== request.sourceText.normalize("NFC")) {
+      return emptyResult("unsupported-normalization", sourceDigest, null, "GLOSSARY_UNSUPPORTED_NORMALIZATION");
+    }
+    let loaded;
+    try {
+      loaded = loadGlossary(this.databasePath);
+    } catch {
+      return unavailableResult(request.sourceText);
+    }
+    const matches = [];
+    for (const entry of loaded.entries) {
+      if (!entry.active) continue;
+      for (const form of entry.forms) {
+        for (let start = request.sourceText.indexOf(form.form); start !== -1; start = request.sourceText.indexOf(form.form, start + 1)) {
+          matches.push({
+            start,
+            end: start + form.form.length,
+            entryId: entry.entryId,
+            policy: entry.policy,
+            canonicalForm: entry.canonicalForm,
+            priority: entry.priority
+          });
+          if (matches.length > KOREAN_PROSE_GLOSSARY_MAX_MATCHES) {
+            return emptyResult("limit-exceeded", sourceDigest, loaded.metadata, "GLOSSARY_MATCH_LIMIT_EXCEEDED");
+          }
+        }
+      }
+    }
+    matches.sort((left, right) => left.start - right.start || right.end - left.end || right.priority - left.priority || compareText(left.entryId, right.entryId));
+    const status = matches.length === 0 ? "no-match" : "matched";
+    const digestInput = {
+      schemaVersion: "1.0.0",
+      sourceDigest,
+      glossary: loaded.metadata,
+      matches
+    };
+    return {
+      schemaVersion: "1.0.0",
+      status,
+      sourceDigest,
+      glossary: loaded.metadata,
+      matches,
+      matchSetDigest: sha256(stableJson(digestInput)),
+      warnings: []
+    };
+  }
+};
+function parseGlossarySeed(text) {
+  const entries = text.split(/\r?\n/u).filter((line) => line.trim().length > 0).map((line, index) => {
+    try {
+      return JSON.parse(line);
+    } catch {
+      throw new Error(`Glossary seed line ${index + 1} is not valid JSON.`);
+    }
+  });
+  const normalized = entries.map((value, index) => validateSeedEntry(value, index + 1));
+  const ids = /* @__PURE__ */ new Set();
+  const activeForms = /* @__PURE__ */ new Map();
+  for (const entry of normalized) {
+    if (ids.has(entry.entryId)) throw new Error(`Duplicate glossary entryId: ${entry.entryId}`);
+    ids.add(entry.entryId);
+    if (!entry.active) continue;
+    for (const form of entry.forms) {
+      const owner = activeForms.get(form.form);
+      if (owner && owner !== entry.entryId) throw new Error(`Conflicting active glossary form ${JSON.stringify(form.form)}.`);
+      activeForms.set(form.form, entry.entryId);
+    }
+  }
+  return normalized.sort((left, right) => compareText(left.entryId, right.entryId));
+}
+function glossaryContentDigest(entries) {
+  return sha256(stableJson(entries.map((entry) => ({
+    entryId: entry.entryId,
+    canonicalForm: entry.canonicalForm,
+    policy: entry.policy,
+    sourceRef: entry.sourceRef,
+    priority: entry.priority,
+    active: entry.active,
+    forms: [...entry.forms].sort((left, right) => compareText(left.form, right.form) || compareText(left.kind, right.kind))
+  }))));
+}
+function loadGlossary(databasePath) {
+  const database = new DatabaseSync2(databasePath, { readOnly: true });
+  try {
+    database.exec("PRAGMA query_only = ON;");
+    const integrity = database.prepare("PRAGMA integrity_check").get();
+    if (!integrity || Object.values(integrity)[0] !== "ok") throw new Error("Glossary database integrity check failed.");
+    const metadataRows = database.prepare("SELECT key, value FROM metadata ORDER BY key").all();
+    const metadata = new Map(metadataRows.map((row) => [row.key, row.value]));
+    if (metadata.get("schemaVersion") !== "1.0.0" || !metadata.get("glossaryId") || !metadata.get("glossaryVersion") || !DIGEST.test(metadata.get("contentDigest") ?? "")) throw new Error("Glossary metadata is invalid.");
+    const rows = database.prepare("SELECT entry_id, canonical_form, policy, source_ref, priority, active FROM entries ORDER BY entry_id").all();
+    const formRows = database.prepare("SELECT entry_id, surface, form_kind FROM forms ORDER BY entry_id, form_id").all();
+    const entries = rows.map((row) => ({
+      entryId: String(row.entry_id),
+      canonicalForm: String(row.canonical_form),
+      policy: String(row.policy),
+      sourceRef: String(row.source_ref),
+      priority: Number(row.priority),
+      active: row.active === 1,
+      forms: formRows.filter((form) => form.entry_id === row.entry_id).map((form) => ({ form: String(form.surface), kind: String(form.form_kind) }))
+    }));
+    const validated = parseGlossarySeed(entries.map((entry) => JSON.stringify(entry)).join("\n"));
+    if (glossaryContentDigest(validated) !== metadata.get("contentDigest")) throw new Error("Glossary content digest is stale.");
+    return { metadata: { id: metadata.get("glossaryId"), version: metadata.get("glossaryVersion"), contentDigest: metadata.get("contentDigest") }, entries: validated };
+  } finally {
+    database.close();
+  }
+}
+function validateSeedEntry(value, line) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`Glossary seed line ${line} must be an object.`);
+  const item = value;
+  const keys = Object.keys(item).sort().join(",");
+  if (keys !== ["active", "canonicalForm", "entryId", "forms", "policy", "priority", "sourceRef"].sort().join(",")) throw new Error(`Glossary seed line ${line} has unexpected or missing fields.`);
+  if (typeof item.entryId !== "string" || !ENTRY_ID.test(item.entryId)) throw new Error(`Glossary seed line ${line} has an invalid entryId.`);
+  if (typeof item.canonicalForm !== "string" || item.canonicalForm.length === 0 || item.canonicalForm !== item.canonicalForm.normalize("NFC")) throw new Error(`Glossary seed line ${line} has a non-NFC or empty canonicalForm.`);
+  if (typeof item.policy !== "string" || !POLICIES.has(item.policy)) throw new Error(`Glossary seed line ${line} has an invalid policy.`);
+  if (typeof item.sourceRef !== "string" || item.sourceRef.trim().length === 0) throw new Error(`Glossary seed line ${line} is missing sourceRef.`);
+  if (!Number.isInteger(item.priority) || Number(item.priority) < 0 || Number(item.priority) > 1e3) throw new Error(`Glossary seed line ${line} has an invalid priority.`);
+  if (typeof item.active !== "boolean" || !Array.isArray(item.forms) || item.forms.length === 0) throw new Error(`Glossary seed line ${line} has invalid active/forms fields.`);
+  const forms = item.forms.map((raw, index) => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error(`Glossary seed line ${line} form ${index + 1} is invalid.`);
+    const form = raw;
+    if (Object.keys(form).sort().join(",") !== "form,kind" || typeof form.form !== "string" || form.form.length === 0 || form.form !== form.form.normalize("NFC") || typeof form.kind !== "string" || !FORM_KINDS.has(form.kind)) throw new Error(`Glossary seed line ${line} form ${index + 1} is invalid or non-NFC.`);
+    return { form: form.form, kind: form.kind };
+  });
+  if (new Set(forms.map((form) => form.form)).size !== forms.length) throw new Error(`Glossary seed line ${line} has duplicate forms.`);
+  return { entryId: item.entryId, canonicalForm: item.canonicalForm, policy: item.policy, sourceRef: item.sourceRef, priority: Number(item.priority), active: item.active, forms };
+}
+function emptyResult(status, sourceDigest, glossary, warning) {
+  return { schemaVersion: "1.0.0", status, sourceDigest, glossary, matches: [], matchSetDigest: null, warnings: [warning] };
+}
+function unavailableResult(sourceText) {
+  return { schemaVersion: "1.0.0", status: "unavailable", sourceDigest: sha256(sourceText), glossary: null, matches: [], matchSetDigest: null, warnings: ["GLOSSARY_UNAVAILABLE"] };
+}
+function sha256(value) {
+  return createHash4("sha256").update(value).digest("hex");
+}
+function stableJson(value) {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value && typeof value === "object") return `{${Object.entries(value).sort(([left], [right]) => compareText(left, right)).map(([key, item]) => `${JSON.stringify(key)}:${stableJson(item)}`).join(",")}}`;
+  return JSON.stringify(value);
+}
+function compareText(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 // mcp-server/src/server.ts
 var responseModeProperty = { enum: ["compact", "full"], default: "full" };
 function toolSchema(source, options = {}) {
@@ -19265,13 +19451,19 @@ function invalidInput(message) {
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator()) {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} } }
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
+      {
+        name: "lookup_korean_prose_terms",
+        description: "Look up curated Korean prose glossary terms once before MCP selection. The source and matches are never persisted.",
+        inputSchema: contractSchemas.koreanProseGlossaryLookupRequest,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
       {
         name: "check_for_updates",
         description: "Check the fixed Agent Governance Suite repository for a newer stable plugin tag without installing it.",
@@ -19392,7 +19584,15 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
     const args = asRecord(request.params.arguments);
     let updateStatus = null;
     let result;
-    if (request.params.name === "check_for_updates") {
+    if (request.params.name === "lookup_korean_prose_terms") {
+      try {
+        const input = validator.koreanProseGlossaryLookupRequest(args);
+        const output = validator.koreanProseGlossaryLookupResult(glossary.lookup(input));
+        result = apiOk(output);
+      } catch (error2) {
+        result = invalidInput(error2 instanceof Error ? error2.message : "Glossary lookup input is invalid.");
+      }
+    } else if (request.params.name === "check_for_updates") {
       if (!validUpdateArguments(args)) {
         result = invalidInput("check_for_updates accepts only an optional boolean force field.");
       } else {
@@ -19852,7 +20052,7 @@ var PluginUpdateService = class {
 // mcp-server/src/sqlite-workflow-store.ts
 import { chmodSync as chmodSync2, mkdirSync as mkdirSync2 } from "node:fs";
 import path6 from "node:path";
-import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
+import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 
 // mcp-server/src/plugin-update-store.ts
 function clone2(value) {
@@ -19906,7 +20106,7 @@ var SqliteWorkflowStore = class {
     }
     let openedDatabase = null;
     try {
-      openedDatabase = new DatabaseSync2(databasePath);
+      openedDatabase = new DatabaseSync3(databasePath);
       this.database = openedDatabase;
       this.database.exec("PRAGMA busy_timeout = 5000;");
       this.database.exec("PRAGMA synchronous = FULL;");
@@ -20449,7 +20649,7 @@ var SqliteWorkflowStore = class {
     }
     try {
       this.database.prepare("VACUUM INTO ?").run(targetPath);
-      const backup = new DatabaseSync2(targetPath, { readOnly: true });
+      const backup = new DatabaseSync3(targetPath, { readOnly: true });
       try {
         const result = backup.prepare("PRAGMA integrity_check").get();
         if (result.integrity_check !== "ok") throw new Error(`integrity_check returned ${result.integrity_check}`);
@@ -21063,7 +21263,7 @@ function validateDecisionRecordSemantics(record2) {
 }
 
 // mcp-server/src/receipt-policy.ts
-var DIGEST = /^(?:sha256:)?[a-f0-9]{64}$/;
+var DIGEST2 = /^(?:sha256:)?[a-f0-9]{64}$/;
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 var REFERENCE = /^(?:artifact|digest|schema|urn|run|stage|commit|test|file|document|tool):(?:\/\/)?[A-Za-z0-9][A-Za-z0-9._~:/?#@!$&'()*+,;=%-]{7,}$/;
 var NIL_UUID = "00000000-0000-0000-0000-000000000000";
@@ -21111,7 +21311,7 @@ function jsonPointer(value, pointer) {
   }, value);
 }
 function isOpaqueReference(value) {
-  return DIGEST.test(value) || UUID.test(value) || REFERENCE.test(value);
+  return DIGEST2.test(value) || UUID.test(value) || REFERENCE.test(value);
 }
 function assertSafeString(value, fixedTokens, location, allowEmpty = false) {
   if (allowEmpty && value === "" || fixedTokens.has(value) || PROTOCOL_TOKENS.has(value) || isOpaqueReference(value)) return;
@@ -21173,7 +21373,7 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
     }
     assertSafeString(artifact.schemaId, fixedTokens, `/output/artifacts/${index}/schemaId`);
     assertSafeString(artifact.locator, fixedTokens, `/output/artifacts/${index}/locator`);
-    if (!DIGEST.test(artifact.digest) || !DIGEST.test(artifact.targetDigest)) {
+    if (!DIGEST2.test(artifact.digest) || !DIGEST2.test(artifact.targetDigest)) {
       throw new WorkflowContractError("INVALID_INPUT", "Reference-only artifact digests must be opaque SHA-256 references.", {
         stageId: stage.stageId,
         artifactId: artifact.artifactId
@@ -22610,7 +22810,7 @@ var WorkflowService = class {
 };
 
 // mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash4, createHmac as createHmac3, randomBytes as randomBytes3, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+import { createHash as createHash5, createHmac as createHmac3, randomBytes as randomBytes3, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync3 } from "node:fs";
 import path7 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
@@ -22621,7 +22821,7 @@ var POLICY = {
   continuityRecordRetentionDays: 180
 };
 function digest(value) {
-  return `sha256:${createHash4("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${createHash5("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function protection() {
   return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
@@ -22905,7 +23105,8 @@ async function main() {
     }
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
-  const server = createMcpServer(service, updates, continuity, cleanup);
+  const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator);
   await server.connect(new StdioServerTransport());
 }
 void main().catch((error2) => {

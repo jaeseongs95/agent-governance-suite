@@ -6,6 +6,7 @@ import { SqliteContinuityStore } from "./continuity-store.js";
 import {
   assertDistinctDatabasePaths,
   resolveContinuityDatabasePath,
+  resolveKoreanProseGlossaryPath,
   resolveRegistryPath,
   resolveWorkflowDatabasePath,
 } from "./runtime-config.js";
@@ -15,6 +16,7 @@ import { PluginUpdateService } from "./plugin-update-service.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { WorkflowService } from "./workflow-service.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
+import { SqliteKoreanProseGlossary } from "./korean-prose-glossary.js";
 
 async function main(): Promise<void> {
   const registryPath = resolveRegistryPath();
@@ -46,7 +48,8 @@ async function main(): Promise<void> {
     }
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
-  const server = createMcpServer(service, updates, continuity, cleanup);
+  const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator);
   await server.connect(new StdioServerTransport());
 }
 

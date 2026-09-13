@@ -11,7 +11,9 @@ import { validateProviderPlan } from "./provider-plan.mjs";
 const DIGEST = /^[a-f0-9]{64}$/u;
 const CODE = /^[A-Z][A-Z0-9_]*$/u;
 const ISSUE_CODES = new Set(["AMBIGUOUS_RELATIONSHIP", "GRAMMATICAL_MISMATCH", "NOUN_STACKING", "REDUNDANCY", "TRANSLATIONESE", "UNNECESSARY_META_PROSE", "UNSUPPORTED_EMPHASIS", "USER_FACING_IMPLEMENTATION_JARGON"]);
-const PROTECTED_KINDS = new Set(["fenced-code", "inline-code", "command", "markdown-target", "url", "email", "path", "quotation", "number-or-date", "user-defined"]);
+const PROTECTED_KINDS = new Set(["fenced-code", "inline-code", "command", "markdown-target", "url", "email", "path", "quotation", "number-or-date", "user-defined", "glossary"]);
+const GLOSSARY_STATUSES = new Set(["matched", "no-match", "unavailable", "limit-exceeded", "unsupported-normalization"]);
+const GLOSSARY_POLICIES = new Set(["protect", "prefer", "allow", "avoid"]);
 
 /**
  * @param {unknown} value
@@ -40,6 +42,20 @@ export function finalizeRequest(value) {
     fallback = true;
   }
 
+  const glossaryContext = validateGlossaryContext(mode, sourceDigest, request.glossaryMatchSet, manifest);
+  for (const warning of glossaryContext.warnings) warnings.add(warning);
+  if (!glossaryContext.valid) {
+    warnings.add("GLOSSARY_MATCH_SET_INVALID");
+    fallback = true;
+  }
+  const expectedGlossaryBinding = glossaryContext.binding;
+  if (stableJson(selection.glossaryBinding) !== stableJson(expectedGlossaryBinding)
+    || stableJson(editing.glossaryBinding) !== stableJson(expectedGlossaryBinding)
+    || stableJson(verification.glossaryBinding) !== stableJson(expectedGlossaryBinding)) {
+    warnings.add("GLOSSARY_BINDING_MISMATCH");
+    fallback = true;
+  }
+
   /** @type {SourceUnit[]} */
   let units = [];
   if (!fallback) {
@@ -54,7 +70,7 @@ export function finalizeRequest(value) {
 
   const unitById = new Map(units.map((unit) => [unit.unitId, unit]));
   const selectionByUnit = new Map();
-  if (!validSelection(selection, sourceDigest, actorIds[0], unitById, source)) {
+  if (!validSelection(selection, sourceDigest, actorIds[0], unitById, source, expectedGlossaryBinding)) {
     warnings.add("SELECTION_CONTRACT_INVALID");
     fallback = true;
   } else {
@@ -68,7 +84,7 @@ export function finalizeRequest(value) {
   const selectionDigest = sha256(stableJson(selection));
   /** @type {Edit[]} */
   const edits = [];
-  if (!validEditingRoot(editing, sourceDigest, selectionDigest, actorIds[1])) {
+  if (!validEditingRoot(editing, sourceDigest, selectionDigest, actorIds[1], expectedGlossaryBinding)) {
     if (editing.selectionDigest === selectionDigest) warnings.add("EDIT_CONTRACT_INVALID");
     else warnings.add("SELECTION_DIGEST_MISMATCH");
     fallback = true;
@@ -100,7 +116,7 @@ export function finalizeRequest(value) {
   }
 
   const editingDigest = sha256(stableJson(editing));
-  if (!validVerificationRoot(verification, sourceDigest, editingDigest, actorIds[2])) {
+  if (!validVerificationRoot(verification, sourceDigest, editingDigest, actorIds[2], expectedGlossaryBinding)) {
     if (verification.editingDigest === editingDigest) warnings.add("VERIFICATION_CONTRACT_INVALID");
     else warnings.add("VERIFICATION_DIGEST_MISMATCH");
     fallback = true;
@@ -190,6 +206,7 @@ export function finalizeRequest(value) {
       manifest: sha256(stableJson(effectiveManifest)),
     },
     length: { source: source.length, result: output.length },
+    glossary: glossaryContext.summary,
     decisions: {
       mode,
       assurance: mode === "mcp" && !fallback ? "verified" : "unverified",
@@ -208,6 +225,105 @@ export function finalizeRequest(value) {
 export function formatFinalizationResponse(result, mode) {
   if (mode === "mcp") return result.receipt;
   return { output: result.output, verificationStatus: "unverified", receipt: result.receipt };
+}
+
+/** @param {"mcp" | "direct"} mode @param {string} sourceDigest @param {unknown} value @param {Record<string, unknown>} manifest */
+function validateGlossaryContext(mode, sourceDigest, value, manifest) {
+  const directBinding = { schemaVersion: SCHEMA_VERSION, mode: "none" };
+  const directSummary = { mode: "none", status: "direct", id: null, version: null, contentDigest: null, matchSetDigest: null, matchCount: 0, warnings: [] };
+  if (mode === "direct") return { valid: value === null, binding: directBinding, summary: directSummary, warnings: [] };
+
+  const invalidSummary = { mode: "mcp", status: "unavailable", id: null, version: null, contentDigest: null, matchSetDigest: null, matchCount: 0, warnings: [] };
+  if (!value || typeof value !== "object" || Array.isArray(value)) return { valid: false, binding: mcpFailureBinding(sourceDigest), summary: invalidSummary, warnings: [] };
+  const matchSet = /** @type {Record<string, unknown>} */ (value);
+  if (!hasExactKeys(matchSet, ["schemaVersion", "status", "sourceDigest", "glossary", "matches", "matchSetDigest", "warnings"])
+    || matchSet.schemaVersion !== SCHEMA_VERSION || matchSet.sourceDigest !== sourceDigest
+    || typeof matchSet.status !== "string" || !GLOSSARY_STATUSES.has(matchSet.status)
+    || !Array.isArray(matchSet.matches) || matchSet.matches.length > 256 || !Array.isArray(matchSet.warnings)) {
+    return { valid: false, binding: mcpFailureBinding(sourceDigest), summary: invalidSummary, warnings: [] };
+  }
+  const status = /** @type {string} */ (matchSet.status);
+  const warningSets = {
+    matched: [],
+    "no-match": [],
+    unavailable: ["GLOSSARY_UNAVAILABLE"],
+    "limit-exceeded": ["GLOSSARY_MATCH_LIMIT_EXCEEDED"],
+    "unsupported-normalization": ["GLOSSARY_UNSUPPORTED_NORMALIZATION"],
+  };
+  const expectedWarnings = warningSets[status];
+  if (stableJson(matchSet.warnings) !== stableJson(expectedWarnings)) return { valid: false, binding: mcpFailureBinding(sourceDigest), summary: invalidSummary, warnings: [] };
+
+  const available = status === "matched" || status === "no-match";
+  const glossary = matchSet.glossary;
+  const validGlossaryMetadata = glossary && typeof glossary === "object" && !Array.isArray(glossary)
+    && hasExactKeys(glossary, ["id", "version", "contentDigest"])
+    && glossary.id === "korean-prose-core" && glossary.version === "1.0.0"
+    && typeof glossary.contentDigest === "string" && DIGEST.test(glossary.contentDigest);
+  if (available) {
+    if (!validGlossaryMetadata
+      || typeof matchSet.matchSetDigest !== "string" || !DIGEST.test(matchSet.matchSetDigest)) {
+      return { valid: false, binding: mcpFailureBinding(sourceDigest), summary: invalidSummary, warnings: [] };
+    }
+  } else if (matchSet.matchSetDigest !== null || (glossary !== null && (status !== "limit-exceeded" || !validGlossaryMetadata))) {
+    return { valid: false, binding: mcpFailureBinding(sourceDigest), summary: invalidSummary, warnings: [] };
+  }
+
+  const matches = /** @type {Record<string, unknown>[]} */ (matchSet.matches);
+  if ((!available && matches.length !== 0) || (status === "matched" && matches.length === 0) || (status === "no-match" && matches.length !== 0)) {
+    return { valid: false, binding: mcpFailureBinding(sourceDigest), summary: invalidSummary, warnings: [] };
+  }
+  for (const match of matches) {
+    if (!match || typeof match !== "object" || Array.isArray(match)
+      || !hasExactKeys(match, ["start", "end", "entryId", "policy", "canonicalForm", "priority"])
+      || !Number.isInteger(match.start) || !Number.isInteger(match.end)
+      || /** @type {number} */ (match.start) < 0 || /** @type {number} */ (match.end) <= /** @type {number} */ (match.start)
+      || /** @type {number} */ (match.end) > /** @type {number} */ (manifest.sourceLength ?? 0)
+      || typeof match.entryId !== "string" || !/^[a-z0-9][a-z0-9-]*$/u.test(match.entryId)
+      || typeof match.policy !== "string" || !GLOSSARY_POLICIES.has(match.policy)
+      || typeof match.canonicalForm !== "string" || match.canonicalForm.length === 0
+      || !Number.isInteger(match.priority) || /** @type {number} */ (match.priority) < 0 || /** @type {number} */ (match.priority) > 1000) {
+      return { valid: false, binding: mcpFailureBinding(sourceDigest), summary: invalidSummary, warnings: [] };
+    }
+  }
+  if (available) {
+    const digestInput = { schemaVersion: SCHEMA_VERSION, sourceDigest, glossary, matches };
+    if (matchSet.matchSetDigest !== sha256(stableJson(digestInput))) return { valid: false, binding: mcpFailureBinding(sourceDigest), summary: invalidSummary, warnings: [] };
+    const spans = Array.isArray(manifest.spans) ? manifest.spans : [];
+    const protectMissing = matches.some((match) => match.policy === "protect" && !spans.some((span) => span.start <= match.start && span.end >= match.end));
+    if (protectMissing) {
+      const binding = bindingFromMatchSet(matchSet);
+      return { valid: false, binding, summary: summaryFromBinding(binding), warnings: ["GLOSSARY_PROTECT_MISSING"] };
+    }
+  }
+  const binding = bindingFromMatchSet(matchSet);
+  return { valid: true, binding, summary: summaryFromBinding(binding), warnings: /** @type {string[]} */ (matchSet.warnings) };
+}
+
+/** @param {string} sourceDigest */
+function mcpFailureBinding(sourceDigest) {
+  return { schemaVersion: SCHEMA_VERSION, mode: "mcp", status: "unavailable", sourceDigest, glossaryId: null, glossaryVersion: null, glossaryDigest: null, matchSetDigest: null, matchCount: 0, warnings: ["GLOSSARY_UNAVAILABLE"] };
+}
+
+/** @param {Record<string, unknown>} matchSet */
+function bindingFromMatchSet(matchSet) {
+  const glossary = matchSet.glossary && typeof matchSet.glossary === "object" ? /** @type {Record<string, unknown>} */ (matchSet.glossary) : null;
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    mode: "mcp",
+    status: matchSet.status,
+    sourceDigest: matchSet.sourceDigest,
+    glossaryId: glossary?.id ?? null,
+    glossaryVersion: glossary?.version ?? null,
+    glossaryDigest: glossary?.contentDigest ?? null,
+    matchSetDigest: matchSet.matchSetDigest,
+    matchCount: /** @type {unknown[]} */ (matchSet.matches).length,
+    warnings: matchSet.warnings,
+  };
+}
+
+/** @param {Record<string, unknown>} binding */
+function summaryFromBinding(binding) {
+  return { mode: binding.mode, status: binding.status, id: binding.glossaryId, version: binding.glossaryVersion, contentDigest: binding.glossaryDigest, matchSetDigest: binding.matchSetDigest, matchCount: binding.matchCount, warnings: binding.warnings };
 }
 
 /** @param {Record<string, unknown>} manifest @param {string} source */
@@ -229,9 +345,9 @@ function validProtectedManifest(manifest, source) {
 }
 
 /** @param {Record<string, unknown>} selection @param {string} sourceDigest @param {string} actorId @param {Map<string, SourceUnit>} unitById @param {string} source */
-function validSelection(selection, sourceDigest, actorId, unitById, source) {
-  if (!hasExactKeys(selection, ["schemaVersion", "actorId", "sourceDigest", "status", "decisions"])) return false;
-  if (selection.schemaVersion !== SCHEMA_VERSION || selection.actorId !== actorId || selection.sourceDigest !== sourceDigest || !["ready", "needs-input", "blocked"].includes(/** @type {string} */ (selection.status)) || !Array.isArray(selection.decisions)) return false;
+function validSelection(selection, sourceDigest, actorId, unitById, source, glossaryBinding) {
+  if (!hasExactKeys(selection, ["schemaVersion", "actorId", "sourceDigest", "glossaryBinding", "status", "decisions"])) return false;
+  if (selection.schemaVersion !== SCHEMA_VERSION || selection.actorId !== actorId || selection.sourceDigest !== sourceDigest || stableJson(selection.glossaryBinding) !== stableJson(glossaryBinding) || !["ready", "needs-input", "blocked"].includes(/** @type {string} */ (selection.status)) || !Array.isArray(selection.decisions)) return false;
   if (selection.decisions.length !== unitById.size) return false;
   const seen = new Set();
   for (const rawDecision of selection.decisions) {
@@ -274,11 +390,12 @@ function rangesOverlap(left, right) {
 }
 
 /** @param {Record<string, unknown>} editing @param {string} sourceDigest @param {string} selectionDigest @param {string} actorId */
-function validEditingRoot(editing, sourceDigest, selectionDigest, actorId) {
-  return hasExactKeys(editing, ["schemaVersion", "actorId", "sourceDigest", "selectionDigest", "edits", "candidateDigest"])
+function validEditingRoot(editing, sourceDigest, selectionDigest, actorId, glossaryBinding) {
+  return hasExactKeys(editing, ["schemaVersion", "actorId", "sourceDigest", "glossaryBinding", "selectionDigest", "edits", "candidateDigest"])
     && editing.schemaVersion === SCHEMA_VERSION
     && editing.actorId === actorId
     && editing.sourceDigest === sourceDigest
+    && stableJson(editing.glossaryBinding) === stableJson(glossaryBinding)
     && editing.selectionDigest === selectionDigest
     && Array.isArray(editing.edits)
     && typeof editing.candidateDigest === "string"
@@ -311,9 +428,9 @@ function isUtf16Boundary(source, index) {
 }
 
 /** @param {Record<string, unknown>} verification @param {string} sourceDigest @param {string} editingDigest @param {string} actorId */
-function validVerificationRoot(verification, sourceDigest, editingDigest, actorId) {
-  if (!hasExactKeys(verification, ["schemaVersion", "actorId", "sourceDigest", "editingDigest", "rubricDigest", "globalDecision", "decisions", "assessment"])) return false;
-  if (verification.schemaVersion !== SCHEMA_VERSION || verification.actorId !== actorId || verification.sourceDigest !== sourceDigest || verification.editingDigest !== editingDigest || typeof verification.rubricDigest !== "string" || !DIGEST.test(verification.rubricDigest) || !["continue", "fallback"].includes(/** @type {string} */ (verification.globalDecision)) || !Array.isArray(verification.decisions)) return false;
+function validVerificationRoot(verification, sourceDigest, editingDigest, actorId, glossaryBinding) {
+  if (!hasExactKeys(verification, ["schemaVersion", "actorId", "sourceDigest", "glossaryBinding", "editingDigest", "rubricDigest", "globalDecision", "decisions", "assessment"])) return false;
+  if (verification.schemaVersion !== SCHEMA_VERSION || verification.actorId !== actorId || verification.sourceDigest !== sourceDigest || stableJson(verification.glossaryBinding) !== stableJson(glossaryBinding) || verification.editingDigest !== editingDigest || typeof verification.rubricDigest !== "string" || !DIGEST.test(verification.rubricDigest) || !["continue", "fallback"].includes(/** @type {string} */ (verification.globalDecision)) || !Array.isArray(verification.decisions)) return false;
   if (!verification.assessment || typeof verification.assessment !== "object" || Array.isArray(verification.assessment) || !hasExactKeys(verification.assessment, ["meaningPreservation", "majorMeaningChange", "registerCompliance", "protectedStrings", "terminologyJudgment", "pairPreference"])) return false;
   const assessment = /** @type {Record<string, unknown>} */ (verification.assessment);
   return ["pass", "fail", "uncertain"].includes(/** @type {string} */ (assessment.meaningPreservation))
