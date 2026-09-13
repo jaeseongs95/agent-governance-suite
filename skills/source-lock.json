@@ -94,11 +94,15 @@
     {
       "skillId": "korean-prose-editor",
       "path": "skills/korean-prose-editor",
-      "source": "D:\\\\codex\\\\korean-prose-editor",
+      "source": "https://github.com/jaeseongs95/korean-prose-editor.git",
       "ref": "e31767939fc728fb2d0089cdd70dbb8134b3f32f",
       "commit": "e31767939fc728fb2d0089cdd70dbb8134b3f32f",
-      "checksum": "sha256:02480e85679e6796b257b9c7ecfeecb8495b6c0a27e6aef71fb943728ffa0996",
-      "checksumScope": "relative paths and normalized text bytes under skills/korean-prose-editor"
+      "upstreamChecksum": "sha256:02480e85679e6796b257b9c7ecfeecb8495b6c0a27e6aef71fb943728ffa0996",
+      "checksum": "sha256:5432b02c4906f89c45bb8e2fc3eb5879e461d2524c06911e6843f8313c3e7c06",
+      "checksumScope": "relative paths and normalized text bytes under skills/korean-prose-editor",
+      "downstreamModifications": [
+        "Temporarily disable implicit invocation and all direct execution paths until the quality gate passes."
+      ]
     }
   ]
 }
