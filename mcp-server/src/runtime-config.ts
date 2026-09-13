@@ -34,3 +34,22 @@ export function resolveWorkflowDatabasePath(
   }
   return path.resolve(stateRoot, "agent-governance-suite", "workflows.sqlite3");
 }
+
+/** Resolves continuity state beside workflow state unless explicitly overridden. */
+export function resolveContinuityDatabasePath(
+  environment: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+  homeDirectory: string = homedir(),
+  currentWorkingDirectory: string = process.cwd(),
+): string {
+  const configured = environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH?.trim();
+  if (configured) return path.resolve(currentWorkingDirectory, configured);
+  const workflowPath = resolveWorkflowDatabasePath(
+    environment,
+    platform,
+    homeDirectory,
+    currentWorkingDirectory,
+  );
+  if (workflowPath === ":memory:") return ":memory:";
+  return path.join(path.dirname(workflowPath), "continuity.sqlite3");
+}

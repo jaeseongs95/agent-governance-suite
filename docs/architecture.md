@@ -26,6 +26,14 @@ mutating workflow 도구의 `responseMode`와 status 도구의 `detail`은 서�
 
 run, revision, run ID sequence와 계획 서명 키는 SQLite schema v3에 저장합니다. 서버를 다시 시작해도 이전 run을 복구하고, 같은 데이터베이스를 공유하는 서버 인스턴스는 optimistic revision 검증으로 충돌을 거부합니다. compact 전송도 저장 단위를 바꾸지 않으며 전체 `WorkflowReceipt`의 평문 JSON을 유지합니다. 따라서 `StageResult`의 provider output, evidence note, findings, blockers와 error에 원문 코드, 로그, 비밀값이나 개인정보가 들어 있으면 그 내용도 DB에 남습니다. MCP 서버는 필드 내용을 걸러 내거나 자동으로 만료·삭제하지 않으므로 호출자는 민감한 원문을 제출하지 않고 DB 경로의 접근 권한과 보존 기간을 관리해야 합니다.
 
+## 로컬 task continuity
+
+Continuity는 같은 MCP 서버 프로세스 안의 별도 서비스이며 workflow schema v3를 변경하지 않습니다. Direct-task replacement snapshot, session epoch, compact marker, HMAC binding과 hash-only 관측은 기본적으로 workflow DB 옆의 `continuity.sqlite3`에 저장합니다. Orchestrated 상태의 원장은 계속 `workflows.sqlite3`의 `TaskEnvelope`, `WorkflowReceipt`와 convergence root이고 continuity DB에는 root 결속과 marker만 둡니다.
+
+Codex lifecycle Hook은 MCP 준비 여부에 의존하지 않고 bundled continuity runtime을 직접 실행합니다. `PreToolUse`는 continuity 도구와 `open_convergence_root` 입력에 task correlation, epoch, 도구 이름, canonical input digest와 만료 시간을 HMAC으로 결속한 stateless token을 추가합니다. Raw session·turn·request ID와 transcript는 저장하지 않습니다.
+
+`SessionStart(resume)`과 direct-task `SessionStart(compact)`는 snapshot 본문 없이 `DEFER` 후보 metadata만 추가합니다. 본문은 token·epoch·revision·digest를 다시 검사하는 `load_context`의 tool result로만 반환됩니다. Workflow compact는 `PreCompact` marker와 현재 projection이 일치할 때 bounded 구조 카드만 한 번 `INJECT`합니다. Startup은 복원하지 않고 clear는 epoch를 회전합니다. 모든 Hook 저장 오류는 exit 0과 빈 출력으로 끝나며, MCP 서버도 continuity 초기화 실패 시 workflow를 계속 제공하고 continuity 도구에만 `CONTINUITY_UNAVAILABLE`을 반환합니다.
+
 ## 플러그인 업데이트 알림
 
 MCP 서버는 고정된 공개 저장소에서 `vMAJOR.MINOR.PATCH` 형식의 안정 tag만 확인합니다. 성공한 결과는 같은 SQLite DB의 `plugin_update_state`에 24시간 동안 보관하고, 실패하면 마지막 성공 결과를 유지한 채 1시간 뒤 다시 시도합니다. 업데이트 확인 오류는 workflow 상태나 도구 결과를 바꾸지 않습니다.
