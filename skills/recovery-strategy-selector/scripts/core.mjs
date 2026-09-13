@@ -1,11 +1,14 @@
 import { createHash } from "node:crypto";
 
+import { requestArtifactDigest as diagnosisRequestDigest, validateReport as validateDiagnosisReport } from "../../blocker-diagnostician/scripts/core.mjs";
+import { validateTaskContract } from "../../task-contract/scripts/validate-task-contract.mjs";
 import {
   schemaErrors,
   validateDiagnosisReportSchema,
   validateHandoffSchema,
   validateRequestSchema,
   validateTaskEnvelopeSchema,
+  validateWorkflowReceiptSchema,
 } from "./schema-validation.mjs";
 
 export class InputError extends Error {}
@@ -30,6 +33,14 @@ export function strategyFingerprint(strategy) {
     preconditions: strategy.preconditions.map(({ statement }) => statement),
     verificationPlan: strategy.verificationPlan,
     stopConditions: strategy.stopConditions,
+  });
+}
+
+export function strategyIdentityFingerprint(strategy) {
+  return artifactDigest({
+    mechanism: strategy.mechanism.trim(),
+    actions: [...strategy.actions].sort((left, right) => canonicalJson(left).localeCompare(canonicalJson(right))),
+    writeTargets: sorted(strategy.writeTargets),
   });
 }
 
@@ -59,9 +70,17 @@ export function validateRequest(request) {
   if (!validateRequestSchema(request)) throw new InputError(`RecoveryStrategySelectionRequest.v1 계약 위반: ${schemaErrors(validateRequestSchema).join("; ")}`);
   if (!validateDiagnosisReportSchema(request.diagnosis.report)) throw new InputError(`DiagnosisReport.v1 계약 위반: ${schemaErrors(validateDiagnosisReportSchema).join("; ")}`);
   if (!validateTaskEnvelopeSchema(request.sourceTask.envelope)) throw new InputError(`TaskEnvelope.v1 계약 위반: ${schemaErrors(validateTaskEnvelopeSchema).join("; ")}`);
+  if (!validateWorkflowReceiptSchema(request.sourceWorkflow.receipt)) throw new InputError(`WorkflowReceipt.v1 계약 위반: ${schemaErrors(validateWorkflowReceiptSchema).join("; ")}`);
   if (artifactDigest(request.diagnosis.report) !== request.diagnosis.digest) throw new InputError("diagnosis report digest가 payload와 일치하지 않습니다.");
+  if (diagnosisRequestDigest(request.diagnosis.request) !== request.diagnosis.requestDigest) throw new InputError("diagnosis request digest가 payload와 일치하지 않습니다.");
+  const diagnosisErrors = validateDiagnosisReport(request.diagnosis.report, request.diagnosis.request, request.diagnosis.requestDigest);
+  if (diagnosisErrors.length > 0) throw new InputError(`DiagnosisReport.v1 원본 결속 위반: ${diagnosisErrors.join("; ")}`);
   if (artifactDigest(request.sourceTask.envelope) !== request.sourceTask.digest) throw new InputError("source task digest가 TaskEnvelope와 일치하지 않습니다.");
   if (request.diagnosis.report.verdict !== "CAUSE_CONFIRMED" || !request.diagnosis.report.confirmedCause) throw new InputError("recovery 전략 선택에는 CAUSE_CONFIRMED diagnosis가 필요합니다.");
+  const receipt = request.sourceWorkflow.receipt;
+  if (artifactDigest(receipt) !== request.sourceWorkflow.receiptDigest) throw new InputError("source workflow receipt digest가 payload와 일치하지 않습니다.");
+  if (receipt.runId !== request.sourceWorkflow.runId || receipt.revision !== request.sourceWorkflow.revision || receipt.state !== request.sourceWorkflow.state) throw new InputError("source workflow metadata가 receipt payload와 일치하지 않습니다.");
+  if (!request.sourceWorkflow.receiptLocator || receipt.plan.taskId !== request.sourceTask.envelope.taskId || receipt.plan.taskDigest !== request.sourceTask.digest) throw new InputError("source workflow receipt가 원본 task envelope에 결속되지 않았습니다.");
   authorizationMap(request);
   const evidenceIds = request.evidenceIndex.map((item) => item.evidenceRef);
   if (new Set(evidenceIds).size !== evidenceIds.length) throw new InputError("evidenceIndex evidenceRef는 고유해야 합니다.");
@@ -77,6 +96,18 @@ function gateFor(strategy, request, auth) {
   if (strategy.verificationStrength === "unavailable" || strategy.verificationPlan.length === 0) reasons.push("verification-unavailable");
   if (strategy.stopConditions.length === 0) reasons.push("stop-condition-missing");
   if (strategy.mutatesPriorRun) reasons.push("prior-run-mutation");
+  const protectedTargets = [
+    request.sourceWorkflow.runId,
+    `run:${request.sourceWorkflow.runId}`,
+    `workflow:${request.sourceWorkflow.runId}`,
+    request.sourceWorkflow.receiptLocator,
+  ];
+  const targets = [...strategy.actions.map((item) => item.target), ...strategy.writeTargets];
+  if (targets.some((target) => protectedTargets.some((protectedTarget) => {
+    if (target === protectedTarget) return true;
+    const suffix = target.startsWith(protectedTarget) ? target.slice(protectedTarget.length) : "";
+    return /^[/#?:]/u.test(suffix);
+  }))) reasons.push("prior-run-target");
   if (strategy.repeatsPriorAttempt || request.priorStrategyFingerprints.includes(strategy.strategyFingerprint)) reasons.push("unchanged-failed-attempt");
   if (strategy.preconditions.some((item) => item.status !== "satisfied")) reasons.push("precondition-not-satisfied");
 
@@ -192,12 +223,16 @@ export function validateHandoff(request, handoff, frozenRequestDigest = null) {
   const ids = handoff.strategies.map((item) => item.strategyId);
   if (new Set(ids).size !== ids.length) errors.push("strategyId는 고유해야 합니다.");
   const fingerprints = new Set();
+  const identities = new Set();
   const evidence = verifiedRefs(request);
   for (const strategy of handoff.strategies) {
     const fingerprint = strategyFingerprint(strategy);
     if (strategy.strategyFingerprint !== fingerprint) errors.push(`strategy ${strategy.strategyId} fingerprint가 일치하지 않습니다.`);
     if (fingerprints.has(fingerprint)) errors.push("구조적으로 동일한 recovery 전략을 중복 제출할 수 없습니다.");
     fingerprints.add(fingerprint);
+    const identity = strategyIdentityFingerprint(strategy);
+    if (identities.has(identity)) errors.push("mechanism, actions, writeTargets가 같은 복구 전략을 중복 제출할 수 없습니다.");
+    identities.add(identity);
     if (strategy.changeBreadth !== strategy.writeTargets.length) errors.push(`strategy ${strategy.strategyId} changeBreadth는 write target 수와 일치해야 합니다.`);
     const expectedGate = gateFor(strategy, request, auth);
     if (strategy.objectiveGate.verdict !== expectedGate.verdict || !equalValues(sorted(strategy.objectiveGate.reasons), expectedGate.reasons)) errors.push(`strategy ${strategy.strategyId} Objective Gate 결과가 결정적 판정과 일치하지 않습니다.`);
@@ -233,7 +268,7 @@ export function validateHandoff(request, handoff, frozenRequestDigest = null) {
   return errors;
 }
 
-export function validateTaskBinding(request, handoff, taskContractReport, approvalEvidence = []) {
+export async function validateTaskBinding(request, handoff, taskContractRequest, taskContractReport) {
   const errors = validateHandoff(request, handoff);
   const seed = handoff?.nextTaskSeed;
   const envelope = taskContractReport?.taskEnvelope;
@@ -249,26 +284,34 @@ export function validateTaskBinding(request, handoff, taskContractReport, approv
   }
   if (!seed || !envelope) errors.push("검증된 nextTaskSeed와 TaskContractReport.taskEnvelope가 필요합니다.");
   else {
+    try {
+      await validateTaskContract({ schemaVersion: "1.0.0", request: taskContractRequest, report: taskContractReport });
+    } catch (error) {
+      errors.push(`TaskContractReport.v1 검증 실패: ${error instanceof Error ? error.message : String(error)}`);
+    }
     if (taskContractReport.verdict !== "PASS") errors.push("새 task contract verdict는 PASS여야 합니다.");
     if (envelope.taskId === handoff.sourceTask.taskId) errors.push("복구 작업은 원본과 다른 taskId를 사용해야 합니다.");
     for (const field of ["objective", "scope", "acceptanceCriteria", "constraints", "workUnits", "requiredCapabilities"]) {
       if (!equalValues(envelope[field], seed[field])) errors.push(`새 TaskEnvelope ${field}가 recovery task seed와 일치하지 않습니다.`);
     }
-    const approvalByAction = new Map(approvalEvidence.map((item) => [item.action, item]));
-    for (const action of handoff.approvalRequired.filter((item) => item !== "scope-expansion")) {
-      const approval = approvalByAction.get(action);
-      if (!approval || !["system", "developer", "user"].includes(approval.authority)) errors.push(`승인 필요 action에 실제 승인 근거가 없습니다: ${action}`);
-    }
+    const authorityEvidence = taskContractRequest?.authorizationEvidence ?? [];
+    const allowedEvidence = new Map(authorityEvidence.filter((item) => item.effect === "allow" && ["system", "developer", "user"].includes(item.authority) && !item.sourceLocator.startsWith("recovery-handoff:")).map((item) => [item.action, item]));
+    for (const action of handoff.approvalRequired.filter((item) => item !== "scope-expansion")) if (!allowedEvidence.has(action)) errors.push(`승인 필요 action에 실제 상위 권한 근거가 없습니다: ${action}`);
     if (handoff.approvalRequired.includes("scope-expansion")) {
-      const approval = approvalByAction.get("scope-expansion");
-      if (!approval || !["system", "developer", "user"].includes(approval.authority)) errors.push("scope expansion에 실제 승인 근거가 없습니다.");
+      if (!allowedEvidence.has("scope-expansion")) errors.push("scope expansion에 실제 상위 권한 근거가 없습니다.");
     }
     const sourceAllowed = new Set(request.sourceTask.envelope.authorization.allowedActions);
-    const approved = new Set(approvalEvidence.filter((item) => ["system", "developer", "user"].includes(item.authority)).map((item) => item.action));
+    const requestedActions = new Set(seed.requestedActions);
     for (const action of envelope.authorization.allowedActions) {
-      if (!sourceAllowed.has(action) && !approved.has(action)) errors.push(`새 TaskEnvelope가 근거 없이 allowed action을 확대했습니다: ${action}`);
+      if (!sourceAllowed.has(action) && (!requestedActions.has(action) || !allowedEvidence.has(action))) errors.push(`새 TaskEnvelope가 근거 없이 allowed action을 확대했습니다: ${action}`);
+    }
+    for (const action of requestedActions) if (!envelope.authorization.allowedActions.includes(action)) errors.push(`선택 전략 action이 새 TaskEnvelope에서 허용되지 않았습니다: ${action}`);
+    for (const action of request.sourceTask.envelope.authorization.prohibitedActions) if (!envelope.authorization.prohibitedActions.includes(action)) errors.push(`새 TaskEnvelope가 원본 prohibited action을 제거했습니다: ${action}`);
+    for (const action of request.sourceTask.envelope.authorization.approvalRequired) {
+      if (!envelope.authorization.approvalRequired.includes(action) && !allowedEvidence.has(action)) errors.push(`새 TaskEnvelope가 승인 없이 원본 approval requirement를 제거했습니다: ${action}`);
     }
     const locator = `recovery-handoff:${handoffDigest}`;
+    if (taskContractRequest?.taskId !== envelope.taskId || !taskContractRequest?.suppliedFacts?.some((item) => item.locator === locator)) errors.push("TaskContractRequest가 recovery handoff digest에 결속되지 않았습니다.");
     for (const field of ["/objective", "/scope", "/acceptanceCriteria", "/workUnits"]) {
       if (!taskContractReport.provenance?.some((item) => (item.field === field || item.field.startsWith(`${field}/`)) && item.sourceLocator === locator)) errors.push(`${field} provenance가 recovery handoff digest에 결속되지 않았습니다.`);
     }

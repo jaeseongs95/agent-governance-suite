@@ -12,7 +12,7 @@ metadata:
 
 ## 입력
 
-`RecoveryStrategySelectionRequest.v1`을 받는다. 입력에는 `CAUSE_CONFIRMED`인 `DiagnosisReport.v1`, 원본 `TaskEnvelope.v1`, 실패한 workflow receipt 식별자와 digest, 기존 시도 fingerprint, 현재 제약과 권한 근거를 포함한다.
+`RecoveryStrategySelectionRequest.v1`을 받는다. 입력에는 `CAUSE_CONFIRMED`인 `DiagnosisReport.v1`과 그 원본 diagnosis request·외부 동결 digest, 원본 `TaskEnvelope.v1`, 실패한 `WorkflowReceipt.v1` payload·locator·digest, 기존 시도 fingerprint, 현재 제약과 권한 근거를 포함한다.
 
 전략을 만들기 전에 [선택 프로토콜](references/selection-protocol.md)을 읽는다. 요청을 작성한 뒤 `digest-request.mjs`의 digest를 외부 상태에 동결하고, handoff는 `validate-handoff.mjs`로 검증한다.
 
@@ -26,12 +26,12 @@ node scripts/validate-task-binding.mjs --input task-binding-input.json
 
 ## 절차
 
-1. diagnosis, 원본 task와 실패 workflow의 digest 결속을 확인한다. 원인이 확정되지 않았거나 evidence가 변조됐으면 전략을 만들지 않는다.
+1. 기존 diagnosis validator로 report와 원본 diagnosis request·외부 동결 digest를 다시 검증한다. 실패 receipt payload의 digest, run metadata와 원본 task digest 결속도 확인한다. 원인이 확정되지 않았거나 evidence가 변조됐으면 전략을 만들지 않는다.
 2. 서로 다른 mechanism, action과 write target을 가진 전략 2~3개를 만든다. 각 전략에 선행 조건, 권한 요구, 검증 방법, 중단 조건과 실패 영향을 기록한다.
 3. Objective Gate에서 목표·수용 기준 약화, 금지 행동, 미충족 선행 조건, 검증 부재, 기존 실패 반복과 기존 run 변경을 제외한다. 사용자 승인으로만 해소되는 전략은 `REQUIRES_APPROVAL`로 보존한다.
 4. 생존 전략이 둘 이상이면 고정 비교축으로 각 전략의 challenge와 response를 기록한다. 가중 점수를 만들지 않으며 동률은 사용자가 결정하도록 남긴다.
 5. 선택 결과와 `nextTaskSeed`를 `RecoveryHandoff.v1`로 반환한다. seed는 요청 행동을 기술하지만 권한을 부여하지 않는다.
-6. 새 `TaskContractReport.v1`을 만들었으면 `validate-task-binding.mjs`로 handoff digest, 새 task ID, scope·criteria·work unit과 권한 근거를 대조한다.
+6. 새 `TaskContractRequest.v1`과 `TaskContractReport.v1`을 만들었으면 `validate-task-binding.mjs`로 기존 task-contract validator를 실행하고 handoff digest, 새 task ID, scope·criteria·work unit과 실제 상위 권한 근거를 대조한다.
 
 ## 경계와 실패 처리
 

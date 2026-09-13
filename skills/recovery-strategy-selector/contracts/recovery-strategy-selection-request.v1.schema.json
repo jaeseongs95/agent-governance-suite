@@ -21,10 +21,13 @@
     "boundDiagnosis": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["locator", "digest", "report"],
+      "required": ["locator", "digest", "report", "requestLocator", "requestDigest", "request"],
       "properties": {
         "locator": { "type": "string", "minLength": 1 },
         "digest": { "$ref": "#/$defs/digest" },
+        "requestLocator": { "type": "string", "minLength": 1 },
+        "requestDigest": { "$ref": "#/$defs/digest" },
+        "request": { "type": "object" },
         "report": {
           "type": "object",
           "required": ["schemaVersion", "requestArtifactDigest", "confirmedCause", "verdict"],
@@ -62,13 +65,14 @@
     "sourceWorkflow": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["runId", "revision", "state", "receiptLocator", "receiptDigest"],
+      "required": ["runId", "revision", "state", "receiptLocator", "receiptDigest", "receipt"],
       "properties": {
         "runId": { "type": "string", "minLength": 1 },
         "revision": { "type": "integer", "minimum": 0 },
         "state": { "enum": ["failed", "blocked", "needs-redesign"] },
         "receiptLocator": { "type": "string", "minLength": 1 },
-        "receiptDigest": { "$ref": "#/$defs/digest" }
+        "receiptDigest": { "$ref": "#/$defs/digest" },
+        "receipt": { "type": "object" }
       }
     },
     "scope": {
