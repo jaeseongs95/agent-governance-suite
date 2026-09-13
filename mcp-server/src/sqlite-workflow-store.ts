@@ -33,6 +33,27 @@ interface RunRow {
   revision: number;
 }
 
+export interface WorkflowCleanupRunCandidate {
+  runId: string;
+  revision: number;
+  state: string;
+  updatedAt: string;
+}
+
+export interface WorkflowCleanupRootCandidate {
+  rootId: string;
+  revision: number;
+  state: string;
+  updatedAt: string;
+  runIds: string[];
+}
+
+export interface WorkflowCleanupPreview {
+  roots: WorkflowCleanupRootCandidate[];
+  standaloneRuns: WorkflowCleanupRunCandidate[];
+  protectedActiveRoots: number;
+}
+
 interface ConvergenceRootRow {
   root_json: string;
   revision: number;
@@ -72,7 +93,7 @@ interface PluginUpdateRow {
   last_error_code: StoredPluginUpdateState["lastErrorCode"];
 }
 
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   private readonly database: DatabaseSync;
@@ -152,10 +173,11 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
 
   insertRun(receipt: WorkflowReceiptV1): void {
     try {
+      const now = new Date().toISOString();
       this.database.prepare(`
-        INSERT INTO workflow_runs (run_id, revision, receipt_json, updated_at)
-        VALUES (?, ?, ?, ?)
-      `).run(receipt.runId, receipt.revision, JSON.stringify(receipt), new Date().toISOString());
+        INSERT INTO workflow_runs (run_id, revision, state, receipt_json, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(receipt.runId, receipt.revision, receipt.state, JSON.stringify(receipt), now, now);
     } catch (cause) {
       throw this.storageError("Cannot persist the workflow run.", cause, { runId: receipt.runId });
     }
@@ -194,10 +216,11 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       return this.transaction(() => {
         const result = this.database.prepare(`
           UPDATE workflow_runs
-          SET revision = ?, receipt_json = ?, updated_at = ?
+          SET revision = ?, state = ?, receipt_json = ?, updated_at = ?
           WHERE run_id = ? AND revision = ?
         `).run(
           receipt.revision,
+          receipt.state,
           JSON.stringify(receipt),
           new Date().toISOString(),
           receipt.runId,
@@ -446,8 +469,9 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         `).run(root.revision, JSON.stringify(root), root.updatedAt, root.rootId, expectedRootRevision);
         if (Number(rootUpdate.changes) !== 1) return null;
         this.database.prepare(`
-          INSERT INTO workflow_runs (run_id, revision, receipt_json, updated_at) VALUES (?, ?, ?, ?)
-        `).run(receipt.runId, receipt.revision, JSON.stringify(receipt), consumedAt);
+          INSERT INTO workflow_runs (run_id, revision, state, receipt_json, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(receipt.runId, receipt.revision, receipt.state, JSON.stringify(receipt), consumedAt, consumedAt);
         this.database.prepare(`
           INSERT INTO convergence_attempts (
             root_id, epoch, ordinal, lease_id, run_id, state, outcome_json, started_at, updated_at
@@ -583,6 +607,145 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     }
   }
 
+  getSchemaVersion(): number {
+    return (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
+  }
+
+  isConvergenceRootActive(rootId: string): boolean {
+    const row = this.database.prepare(`
+      SELECT 1 AS active FROM convergence_roots
+      WHERE root_id = ? AND state IN ('open', 'needs-review', 'needs-user')
+    `).get(rootId) as { active: number } | undefined;
+    return Boolean(row);
+  }
+
+  previewCleanup(cutoff: string): WorkflowCleanupPreview {
+    const roots = this.database.prepare(`
+      SELECT root_id, revision, state, updated_at
+      FROM convergence_roots
+      WHERE state IN ('completed', 'abandoned') AND updated_at <= ?
+      ORDER BY root_id
+    `).all(cutoff) as unknown as Array<{ root_id: string; revision: number; state: string; updated_at: string }>;
+    const linkedRuns = this.database.prepare(`
+      SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY run_id
+    `);
+    const rootCandidates = roots.map((root) => ({
+      rootId: root.root_id,
+      revision: root.revision,
+      state: root.state,
+      updatedAt: root.updated_at,
+      runIds: (linkedRuns.all(root.root_id) as unknown as Array<{ run_id: string }>).map((row) => row.run_id),
+    }));
+    const runs = this.database.prepare(`
+      SELECT run_id, revision, state, updated_at
+      FROM workflow_runs
+      WHERE state IN ('failed', 'passed', 'blocked')
+        AND updated_at <= ?
+        AND NOT EXISTS (SELECT 1 FROM workflow_attempt_links links WHERE links.run_id = workflow_runs.run_id)
+      ORDER BY run_id
+    `).all(cutoff) as unknown as Array<{ run_id: string; revision: number; state: string; updated_at: string }>;
+    const protectedRow = this.database.prepare(`
+      SELECT COUNT(*) AS count FROM convergence_roots
+      WHERE state IN ('open', 'needs-review', 'needs-user')
+    `).get() as { count: number };
+    return {
+      roots: rootCandidates,
+      standaloneRuns: runs.map((run) => ({
+        runId: run.run_id,
+        revision: run.revision,
+        state: run.state,
+        updatedAt: run.updated_at,
+      })),
+      protectedActiveRoots: protectedRow.count,
+    };
+  }
+
+  claimCleanupPlan(planId: string, planDigest: string, claimedAt: string): boolean {
+    try {
+      const result = this.database.prepare(`
+        INSERT OR IGNORE INTO state_cleanup_claims(plan_id, plan_digest, claimed_at)
+        VALUES (?, ?, ?)
+      `).run(planId, planDigest, claimedAt);
+      return Number(result.changes) === 1;
+    } catch (cause) {
+      throw this.storageError("Cannot claim the state cleanup plan.", cause, { planId });
+    }
+  }
+
+  backupTo(targetPath: string): void {
+    if (this.databasePath === ":memory:") {
+      throw new WorkflowContractError("INVALID_INPUT", "An in-memory workflow database cannot be cleaned destructively.");
+    }
+    try {
+      this.database.prepare("VACUUM INTO ?").run(targetPath);
+      const backup = new DatabaseSync(targetPath, { readOnly: true });
+      try {
+        const result = backup.prepare("PRAGMA integrity_check").get() as { integrity_check: string };
+        if (result.integrity_check !== "ok") throw new Error(`integrity_check returned ${result.integrity_check}`);
+      } finally {
+        backup.close();
+      }
+    } catch (cause) {
+      throw this.storageError("Cannot create a verified workflow cleanup backup.", cause, { targetPath });
+    }
+  }
+
+  executeCleanup(preview: WorkflowCleanupPreview): { roots: number; runs: number } {
+    try {
+      return this.transaction(() => {
+        const verifyRoot = this.database.prepare(`
+          SELECT state, revision, updated_at FROM convergence_roots WHERE root_id = ?
+        `);
+        const verifyRun = this.database.prepare(`
+          SELECT state, revision, updated_at FROM workflow_runs WHERE run_id = ?
+        `);
+        for (const root of preview.roots) {
+          const row = verifyRoot.get(root.rootId) as { state: string; revision: number; updated_at: string } | undefined;
+          if (!row || row.state !== root.state || row.revision !== root.revision || row.updated_at !== root.updatedAt) {
+            throw new WorkflowContractError("STALE_REVISION", "A cleanup root changed after preview.", { rootId: root.rootId });
+          }
+          const actualRunIds = (this.database.prepare(`
+            SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY run_id
+          `).all(root.rootId) as unknown as Array<{ run_id: string }>).map((item) => item.run_id);
+          if (JSON.stringify(actualRunIds) !== JSON.stringify(root.runIds)) {
+            throw new WorkflowContractError("STALE_REVISION", "A cleanup root's linked runs changed after preview.", { rootId: root.rootId });
+          }
+        }
+        for (const run of preview.standaloneRuns) {
+          const row = verifyRun.get(run.runId) as { state: string; revision: number; updated_at: string } | undefined;
+          if (!row || row.state !== run.state || row.revision !== run.revision || row.updated_at !== run.updatedAt) {
+            throw new WorkflowContractError("STALE_REVISION", "A cleanup workflow run changed after preview.", { runId: run.runId });
+          }
+        }
+
+        const deleteLinks = this.database.prepare("DELETE FROM workflow_attempt_links WHERE root_id = ?");
+        const deleteAttempts = this.database.prepare("DELETE FROM convergence_attempts WHERE root_id = ?");
+        const deleteReviews = this.database.prepare("DELETE FROM convergence_reviews WHERE root_id = ?");
+        const deleteLeases = this.database.prepare("DELETE FROM convergence_leases WHERE root_id = ?");
+        const deleteEpochs = this.database.prepare("DELETE FROM convergence_epochs WHERE root_id = ?");
+        const deleteRoot = this.database.prepare("DELETE FROM convergence_roots WHERE root_id = ?");
+        const deleteRun = this.database.prepare("DELETE FROM workflow_runs WHERE run_id = ?");
+        let deletedRuns = 0;
+        for (const root of preview.roots) {
+          deleteLinks.run(root.rootId);
+          deleteAttempts.run(root.rootId);
+          deleteReviews.run(root.rootId);
+          deleteLeases.run(root.rootId);
+          deleteEpochs.run(root.rootId);
+          deleteRoot.run(root.rootId);
+          for (const runId of root.runIds) {
+            deletedRuns += Number(deleteRun.run(runId).changes);
+          }
+        }
+        for (const run of preview.standaloneRuns) deletedRuns += Number(deleteRun.run(run.runId).changes);
+        return { roots: preview.roots.length, runs: deletedRuns };
+      });
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError("Cannot execute workflow state cleanup.", cause);
+    }
+  }
+
   close(): void {
     if (this.closed) return;
     this.database.close();
@@ -599,6 +762,15 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       });
     }
     this.transaction(() => {
+      if (row.user_version > 0 && row.user_version < 4) {
+        this.database.exec(`
+          ALTER TABLE workflow_runs ADD COLUMN state TEXT;
+          ALTER TABLE workflow_runs ADD COLUMN created_at TEXT;
+          UPDATE workflow_runs
+          SET state = COALESCE(json_extract(receipt_json, '$.state'), 'blocked'),
+              created_at = updated_at;
+        `);
+      }
       this.database.exec(`
         CREATE TABLE IF NOT EXISTS workflow_metadata (
           key TEXT PRIMARY KEY,
@@ -608,9 +780,13 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         CREATE TABLE IF NOT EXISTS workflow_runs (
           run_id TEXT PRIMARY KEY,
           revision INTEGER NOT NULL CHECK (revision >= 0),
+          state TEXT NOT NULL CHECK (state IN ('ready', 'running', 'needs-input', 'needs-approval', 'needs-redesign', 'failed', 'passed', 'blocked')),
           receipt_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
         ) STRICT;
+        CREATE INDEX IF NOT EXISTS workflow_runs_cleanup
+          ON workflow_runs(state, updated_at);
         CREATE TABLE IF NOT EXISTS plugin_update_state (
           target_id TEXT PRIMARY KEY,
           current_version TEXT NOT NULL,
@@ -690,6 +866,11 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
           lease_id TEXT NOT NULL UNIQUE REFERENCES convergence_leases(lease_id),
           epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
           ordinal INTEGER NOT NULL CHECK (ordinal >= 1 AND ordinal <= 3)
+        ) STRICT;
+        CREATE TABLE IF NOT EXISTS state_cleanup_claims (
+          plan_id TEXT PRIMARY KEY,
+          plan_digest TEXT NOT NULL,
+          claimed_at TEXT NOT NULL
         ) STRICT;
         PRAGMA user_version = ${SCHEMA_VERSION};
       `);

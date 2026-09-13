@@ -14,6 +14,7 @@ import { createMcpServer } from "./server.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { WorkflowService } from "./workflow-service.js";
+import { StateCleanupService } from "./state-cleanup-service.js";
 
 async function main(): Promise<void> {
   const registryPath = resolveRegistryPath();
@@ -44,7 +45,8 @@ async function main(): Promise<void> {
       // Optional continuity failures never prevent the workflow MCP server from starting.
     }
   }
-  const server = createMcpServer(service, updates, continuity);
+  const cleanup = new StateCleanupService(store, continuityStore, validator);
+  const server = createMcpServer(service, updates, continuity, cleanup);
   await server.connect(new StdioServerTransport());
 }
 

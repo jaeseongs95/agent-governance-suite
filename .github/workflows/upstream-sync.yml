@@ -1,0 +1,78 @@
+name: Upstream skill sync
+
+on:
+  schedule:
+    # Monday 09:00 Asia/Seoul (GitHub cron is UTC).
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify pinned upstream refs and checksums
+        run: node scripts/check-source-lock.mjs --remote
+      - name: Discover exact stable semantic-version tags
+        run: node scripts/check-upstream-updates.mjs upstream-report.json
+      - id: matrix
+        name: Prepare update matrix and notify-only report
+        run: node scripts/prepare-upstream-matrix.mjs upstream-report.json
+
+  update:
+    needs: discover
+    if: needs.discover.outputs.matrix != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Skip an existing pull request
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: codex/update-${{ matrix.skillId }}-${{ matrix.tag }}
+        run: |
+          count="$(gh pr list --state all --head "$BRANCH" --json number --jq length)"
+          if [ "$count" != "0" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+      - name: Import pinned source without executing it
+        if: steps.existing.outputs.skip != 'true'
+        run: node scripts/apply-upstream-update.mjs "${{ matrix.skillId }}" "${{ matrix.tag }}"
+      - name: Verify local source contracts
+        if: steps.existing.outputs.skip != 'true'
+        run: node scripts/check-source-lock.mjs
+      - name: Create draft pull request
+        if: steps.existing.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: codex/update-${{ matrix.skillId }}-${{ matrix.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add -- README.md README.en.md skills/${{ matrix.skillId }} skills/registry.json skills/source-lock.json tests/${{ matrix.skillId }}
+          git commit -m "chore: update ${{ matrix.skillId }} to ${{ matrix.tag }}"
+          git push --set-upstream origin "$BRANCH"
+          gh pr create --draft --base main --head "$BRANCH" \
+            --title "chore: update ${{ matrix.skillId }} to ${{ matrix.tag }}" \
+            --body "Automated upstream import of exact stable tag ${{ matrix.tag }}. The workflow copied allowlisted files and did not execute upstream code. CI requires manual approval because this PR is created with GITHUB_TOKEN."

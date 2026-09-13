@@ -1,7 +1,9 @@
 import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
-import { ROOT, computeDirectoryChecksum, readJson, walkFiles } from "./lib.mjs";
+import { ROOT, readJson, walkFiles } from "./lib.mjs";
+import { syncReleaseMetadata } from "./release-metadata.mjs";
+import { verifySourceLockOffline } from "./source-lock.mjs";
 import { validateSkill } from "./validate-skill.mjs";
 
 const requiredFiles = [
@@ -10,6 +12,8 @@ const requiredFiles = [
   ".mcp.json",
   "skills/registry.json",
   "skills/source-lock.json",
+  "contracts/source-lock.v2.schema.json",
+  "release/version.json",
   "mcp-server/dist/server.mjs",
   "mcp-server/dist/continuity-hook.mjs",
   "hooks/hooks.json",
@@ -28,6 +32,11 @@ for (const relativePath of requiredFiles) {
 }
 
 if (errors.length === 0) {
+  try {
+    await syncReleaseMetadata();
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : String(error));
+  }
   const plugin = await readJson(path.join(ROOT, ".codex-plugin", "plugin.json"));
   if (plugin.name !== "agent-governance-suite" || !/^\d+\.\d+\.\d+$/u.test(plugin.version ?? "")) {
     errors.push("plugin name/version must be agent-governance-suite with a strict semantic version");
@@ -103,27 +112,12 @@ if (errors.length === 0) {
   }
 
   const sourceLock = await readJson(path.join(ROOT, "skills", "source-lock.json"));
-  if (sourceLock.schemaVersion !== "1.0.0" || !Array.isArray(sourceLock.sources)) {
-    errors.push("skills/source-lock.json must be a v1 sources document");
-  } else {
-    const sourceIds = new Set();
-    for (const source of sourceLock.sources) {
-      if (sourceIds.has(source.skillId)) errors.push(`duplicate source lock id: ${source.skillId}`);
-      sourceIds.add(source.skillId);
-      if (!ids.has(source.skillId)) errors.push(`source lock references unknown skill: ${source.skillId}`);
-      if (source.path !== `skills/${source.skillId}`) errors.push(`invalid source lock path for ${source.skillId}`);
-      if (!/^[a-f0-9]{40}$/u.test(source.commit ?? "")) errors.push(`invalid source commit for ${source.skillId}`);
-      if (!/^sha256:[a-f0-9]{64}$/u.test(source.checksum ?? "")) errors.push(`invalid source checksum for ${source.skillId}`);
-      try {
-        const actualChecksum = await computeDirectoryChecksum(path.join(ROOT, source.path));
-        if (actualChecksum !== source.checksum) {
-          errors.push(`source checksum mismatch for ${source.skillId}`);
-        }
-      } catch (error) {
-        errors.push(`cannot verify source checksum for ${source.skillId}: ${error instanceof Error ? error.message : String(error)}`);
-      }
-    }
+  const sourceLockSchema = await readJson(path.join(ROOT, "contracts", "source-lock.v2.schema.json"));
+  const validateSourceLock = ajv.compile(sourceLockSchema);
+  if (!validateSourceLock(sourceLock)) {
+    errors.push(`invalid source lock: ${ajv.errorsText(validateSourceLock.errors)}`);
   }
+  errors.push(...await verifySourceLockOffline());
 
   const marketplace = await readJson(path.join(ROOT, ".agents", "plugins", "marketplace.json"));
   const marketplaceEntry = marketplace.plugins?.find((entry) => entry.name === plugin.name);

@@ -198,6 +198,65 @@ export interface PurgeDirectContextRequestV1 {
   _continuityBinding: string;
 }
 
+export interface StateCleanupPolicyV1 {
+  workflowRetentionDays: 180;
+  continuityPayloadRetentionDays: 30;
+  continuityRecordRetentionDays: 180;
+}
+
+export interface PrepareStateCleanupRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+}
+
+export interface StateCleanupPlanV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  planId: string;
+  createdAt: string;
+  expiresAt: string;
+  policy: StateCleanupPolicyV1;
+  cutoffs: {
+    workflow: string;
+    continuityPayload: string;
+    continuityRecord: string;
+  };
+  candidates: {
+    workflowRoots: Array<{ rootId: string; revision: number; state: string; updatedAt: string; runIds: string[] }>;
+    standaloneWorkflowRuns: Array<{ runId: string; revision: number; state: string; updatedAt: string }>;
+    continuitySnapshots: Array<{ taskCorrelation: string; epoch: number; revision: number; snapshotDigest: string; updatedAt: string }>;
+    continuityTasks: Array<{ taskCorrelation: string; currentEpoch: number; rootId: string | null; updatedAt: string }>;
+  };
+  counts: {
+    workflowRoots: number;
+    workflowRuns: number;
+    continuitySnapshots: number;
+    continuityTasks: number;
+    protectedActiveRoots: number;
+    protectedActiveContinuityTasks: number;
+  };
+  candidateDigest: Sha256Digest;
+  protection: "os-managed-unverified" | "filesystem-mode-0600";
+  planToken: string;
+}
+
+export interface ExecuteStateCleanupRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  planToken: string;
+}
+
+export interface StateCleanupReceiptV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  planId: string;
+  status: "completed" | "partial" | "no-op";
+  executedAt: string;
+  candidateDigest: Sha256Digest;
+  databases: {
+    workflow: { status: "completed" | "skipped" | "failed"; backupPath: string | null; deletedRoots: number; deletedRuns: number; error: string | null };
+    continuity: { status: "completed" | "skipped" | "unavailable" | "failed"; backupPath: string | null; deletedSnapshots: number; deletedTasks: number; error: string | null };
+  };
+  backupRetention: "manual-deletion-only";
+  protection: "os-managed-unverified" | "filesystem-mode-0600";
+}
+
 export type Sha256Digest = `sha256:${string}`;
 
 export const POLICY_CAPABILITY = {

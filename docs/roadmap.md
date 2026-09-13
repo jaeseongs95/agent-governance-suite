@@ -1,6 +1,8 @@
 # Agent Governance Suite 향후 로드맵
 
+<!-- release-version:start -->
 문서 기준일은 2026년 9월 13일이다. 현재 공개 릴리스는 `v1.5.0`이다. 한국어 산문 워크플로의 구현과 평가 자료는 릴리스에 포함하지만, 품질 게이트를 통과할 때까지 registry와 오케스트레이터 선택 경로에서 비활성으로 유지한다.
+<!-- release-version:end -->
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
 
@@ -35,7 +37,7 @@
 | 2. 복구 워크플로 | 계획됨 | blocker 진단 뒤 선택 가능한 복구 전략 제공 | `recovery-strategy-selector`, `RecoveryHandoff.v1` |
 | 3. 실행 환경과 연속성 | 부분 구현 | 실행 가능 여부를 먼저 확인하고 세션 복원을 표준화 | 계획된 `runtime-capability-profiler`, 구현된 로컬 task continuity |
 | 4. 신뢰 경계 강화 | 설계 후보 | bootstrap·증거·라우팅 선언의 신뢰 수준 향상 | `BootstrapReceipt.v1`, 증거 검증 경계 |
-| 5. 공급망과 운영 | 보류 | 원본 편입과 버전·릴리스 관리를 자동화 | 동기화 검사, 업데이트 PR, 버전 단일 소스화 |
+| 5. 공급망과 운영 | 구현 완료·운영 설정 대기 | 원본 편입과 버전·릴리스 관리를 자동화 | source lock v2, draft 업데이트 PR workflow, 버전 단일 소스, 확인 기반 SQLite 정리 |
 
 ## 0단계: `v1.1.0` 후보 안정화
 
@@ -217,15 +219,16 @@ Hook은 transcript를 읽지 않고 설치별 HMAC으로 session·turn·request 
 
 ## 5단계: 공급망과 릴리스 운영
 
-프로젝트 구조와 기능이 안정된 뒤 원본 스킬 편입과 릴리스 유지보수를 자동화한다. 이 단계의 정책은 구현 전에 다시 확정한다.
+source lock, 업데이트 후보 탐지, 릴리스 버전 생성과 SQLite 보존 정책을 구현했다. 공개 tag·release 생성, 원격 push와 Actions 권한 변경은 이 단계에서 실행하지 않았다.
 
-### 후보 작업
+### 구현 결과
 
-- suite 안에서 편입 스킬을 직접 수정했는지 CI에서 검사하고, 원본 commit과 checksum을 다시 비교한다.
-- 원본 tag, `SKILL.md` metadata version, registry version과 source lock의 full SHA 일치를 검사한다.
-- 원본 저장소에 새 tag가 생기면 검증용 업데이트 PR을 만든다.
-- manifest, package, marketplace, README와 서버에 흩어진 플러그인 버전을 단일 소스에서 생성한다.
-- SQLite receipt의 보존 기간, 삭제 절차, 접근 권한과 필요 시 암호화 정책을 정한다.
+- source lock v2가 원본 경로, stable tag 또는 commit, peeled full SHA, 원본·통합 checksum, downstream 수정과 `auto-pr`/`notify-only`/`internal` 정책을 함께 고정한다.
+- 오프라인 검사는 `SKILL.md` metadata 또는 legacy `VERSION`, registry, 직접 descriptor와 통합 checksum을 교차 검증하고, 원격 검사는 고정 ref checkout의 원본 checksum까지 확인한다.
+- 매주 월요일 09:00 KST와 수동 실행에서 정확한 `vX.Y.Z` tag를 확인한다. 수정 없는 스킬만 스킬별 draft PR 후보가 되며 원본 코드는 실행하지 않는다. 실제 PR 생성에는 저장소 관리자의 Actions Pull Request 권한 설정이 남아 있다.
+- `release/version.json`에서 package, plugin manifest, marketplace, MCP metadata와 한·영 README·roadmap의 현재 버전 표면을 생성·검사한다.
+- `prepare_state_cleanup`과 `execute_state_cleanup`이 180일 terminal workflow, 30일 비활성 continuity payload와 180일 비활성 continuity record를 확인 기반으로 정리한다. 15분 일회성 token, 후보 재검증, DB별 검증 backup과 transaction을 강제한다.
+- 앱 수준 DB 암호화는 추가하지 않고 OS 계정 권한·BitLocker 정책을 문서화했다. Windows에서는 보호 활성 상태를 검증하지 않았음을 receipt에 표시한다.
 
 ### 종료 기준
 
@@ -237,8 +240,8 @@ Hook은 transcript를 읽지 않고 설치별 HMAC으로 session·turn·request 
 
 - `resource-profile.v1`을 이용한 요금제·잔여 사용량 기반 자동 모델 배분은 필수 로드맵에서 제외한다. 현재는 작업마다 품질, 균형, 절약 중 우선순위를 사용자가 선택하는 방식을 유지한다.
 - MCP 도구는 설정으로 활성화 여부를 조절할 수 있지만 Codex의 플러그인 스킬별 on/off는 저장소만으로 해결하기 어려운 플랫폼 기능이다.
-- SQLite 암호화와 자동 만료는 보안 요구가 확정되기 전까지 5단계 후보로 둔다. 현재는 평문 receipt 저장과 운영자 관리라는 제한을 문서에 계속 명시한다.
-- 공급망 자동화 정책은 프로젝트가 개발 중이라는 기존 결정을 존중해 기능 안정화 뒤 확정한다.
+- SQLite 앱 수준 암호화와 무확인 자동 만료는 현재 정책 범위에서 제외한다. backup 삭제와 OS 저장장치 보호는 운영자가 관리한다.
+- `upstream-sync`의 실제 draft PR 생성은 저장소 관리자가 Actions의 Pull Request 생성 권한을 명시적으로 활성화한 뒤 운영한다.
 
 ## 공통 구현 단위
 

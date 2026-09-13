@@ -19,8 +19,10 @@ import {
   type GuardedWorkflowStartRequestV1,
   type OpenConvergenceRootRequestV1,
   type InspectContextRequestV1,
+  type ExecuteStateCleanupRequestV1,
   type LoadContextRequestV1,
   type PurgeDirectContextRequestV1,
+  type PrepareStateCleanupRequestV1,
   type SuppressContextRestoreRequestV1,
   type PluginUpdateNoticeV1,
   type ProviderResultV1,
@@ -29,6 +31,8 @@ import {
   type SchemaReferenceV1,
   type SkillDescriptorV2,
   type StageResultV1,
+  type StateCleanupPlanV1,
+  type StateCleanupReceiptV1,
   type TaskEnvelopeV1,
   type WorkflowPlanV1,
   type WorkflowReceiptV1,
@@ -74,6 +78,10 @@ export const contractSchemas = {
   loadContextRequest: loadSchema("load-context-request.v1.schema.json"),
   suppressContextRestoreRequest: loadSchema("suppress-context-restore-request.v1.schema.json"),
   purgeDirectContextRequest: loadSchema("purge-direct-context-request.v1.schema.json"),
+  prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
+  executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
+  stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
+  stateCleanupReceipt: loadSchema("state-cleanup-receipt.v1.schema.json"),
 };
 
 function errorText(errors: ErrorObject[] | null | undefined): string {
@@ -119,6 +127,10 @@ export class ContractValidator {
       loadContextRequest: ajv.getSchema("https://skill-suite.local/contracts/load-context-request.v1.schema.json")!,
       suppressContextRestoreRequest: ajv.getSchema("https://skill-suite.local/contracts/suppress-context-restore-request.v1.schema.json")!,
       purgeDirectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/purge-direct-context-request.v1.schema.json")!,
+      prepareStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/prepare-state-cleanup-request.v1.schema.json")!,
+      executeStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/execute-state-cleanup-request.v1.schema.json")!,
+      stateCleanupPlan: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-plan.v1.schema.json")!,
+      stateCleanupReceipt: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-receipt.v1.schema.json")!,
     };
   }
 
@@ -225,6 +237,22 @@ export class ContractValidator {
 
   purgeDirectContextRequest(value: unknown): PurgeDirectContextRequestV1 {
     return this.assert<PurgeDirectContextRequestV1>("purgeDirectContextRequest", value);
+  }
+
+  prepareStateCleanupRequest(value: unknown): PrepareStateCleanupRequestV1 {
+    return this.assert<PrepareStateCleanupRequestV1>("prepareStateCleanupRequest", value);
+  }
+
+  executeStateCleanupRequest(value: unknown): ExecuteStateCleanupRequestV1 {
+    return this.assert<ExecuteStateCleanupRequestV1>("executeStateCleanupRequest", value);
+  }
+
+  stateCleanupPlan(value: unknown): StateCleanupPlanV1 {
+    return this.assert<StateCleanupPlanV1>("stateCleanupPlan", value);
+  }
+
+  stateCleanupReceipt(value: unknown): StateCleanupReceiptV1 {
+    return this.assert<StateCleanupReceiptV1>("stateCleanupReceipt", value);
   }
 
   apiResult<T>(value: unknown): ApiResultV1<T> {

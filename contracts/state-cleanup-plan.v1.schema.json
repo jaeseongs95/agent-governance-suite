@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/state-cleanup-plan.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "planId", "createdAt", "expiresAt", "policy", "cutoffs", "candidates", "counts", "candidateDigest", "protection", "planToken"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "planId": { "type": "string", "format": "uuid" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "policy": { "$ref": "#/$defs/policy" },
+    "cutoffs": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workflow", "continuityPayload", "continuityRecord"],
+      "properties": {
+        "workflow": { "type": "string", "format": "date-time" },
+        "continuityPayload": { "type": "string", "format": "date-time" },
+        "continuityRecord": { "type": "string", "format": "date-time" }
+      }
+    },
+    "candidates": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workflowRoots", "standaloneWorkflowRuns", "continuitySnapshots", "continuityTasks"],
+      "properties": {
+        "workflowRoots": { "type": "array", "items": { "$ref": "#/$defs/root" } },
+        "standaloneWorkflowRuns": { "type": "array", "items": { "$ref": "#/$defs/run" } },
+        "continuitySnapshots": { "type": "array", "items": { "$ref": "#/$defs/snapshot" } },
+        "continuityTasks": { "type": "array", "items": { "$ref": "#/$defs/task" } }
+      }
+    },
+    "counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workflowRoots", "workflowRuns", "continuitySnapshots", "continuityTasks", "protectedActiveRoots", "protectedActiveContinuityTasks"],
+      "properties": {
+        "workflowRoots": { "type": "integer", "minimum": 0 },
+        "workflowRuns": { "type": "integer", "minimum": 0 },
+        "continuitySnapshots": { "type": "integer", "minimum": 0 },
+        "continuityTasks": { "type": "integer", "minimum": 0 },
+        "protectedActiveRoots": { "type": "integer", "minimum": 0 },
+        "protectedActiveContinuityTasks": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "candidateDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "protection": { "enum": ["os-managed-unverified", "filesystem-mode-0600"] },
+    "planToken": { "type": "string", "minLength": 80 }
+  },
+  "$defs": {
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workflowRetentionDays", "continuityPayloadRetentionDays", "continuityRecordRetentionDays"],
+      "properties": {
+        "workflowRetentionDays": { "const": 180 },
+        "continuityPayloadRetentionDays": { "const": 30 },
+        "continuityRecordRetentionDays": { "const": 180 }
+      }
+    },
+    "run": {
+      "type": "object", "additionalProperties": false,
+      "required": ["runId", "revision", "state", "updatedAt"],
+      "properties": {
+        "runId": { "type": "string", "minLength": 1 }, "revision": { "type": "integer", "minimum": 0 },
+        "state": { "type": "string" }, "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "root": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rootId", "revision", "state", "updatedAt", "runIds"],
+      "properties": {
+        "rootId": { "type": "string", "minLength": 1 }, "revision": { "type": "integer", "minimum": 0 },
+        "state": { "type": "string" }, "updatedAt": { "type": "string", "format": "date-time" },
+        "runIds": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "snapshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["taskCorrelation", "epoch", "revision", "snapshotDigest", "updatedAt"],
+      "properties": {
+        "taskCorrelation": { "type": "string", "minLength": 1 }, "epoch": { "type": "integer", "minimum": 1 },
+        "revision": { "type": "integer", "minimum": 1 }, "snapshotDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "task": {
+      "type": "object", "additionalProperties": false,
+      "required": ["taskCorrelation", "currentEpoch", "rootId", "updatedAt"],
+      "properties": {
+        "taskCorrelation": { "type": "string", "minLength": 1 }, "currentEpoch": { "type": "integer", "minimum": 1 },
+        "rootId": { "type": ["string", "null"] }, "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

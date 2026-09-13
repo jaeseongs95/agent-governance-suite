@@ -8091,7 +8091,7 @@ function normalizeWorkspaceLocator(locator) {
 import { chmodSync, mkdirSync } from "node:fs";
 import path2 from "node:path";
 import { DatabaseSync } from "node:sqlite";
-var SCHEMA_VERSION = 1;
+var SCHEMA_VERSION = 2;
 var SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
 function hasExactKeys(value, keys) {
   const actual = Object.keys(value).sort();
@@ -8356,9 +8356,156 @@ var SqliteContinuityStore = class {
       VALUES (?, ?, ?, ?, ?, ?)
     `).run(taskCorrelation, epoch, event, turnHash, success ? 1 : 0, now);
   }
+  getSchemaVersion() {
+    return this.database.prepare("PRAGMA user_version").get().user_version;
+  }
+  previewCleanup(payloadCutoff, recordCutoff) {
+    const snapshotRows = this.database.prepare(`
+      SELECT task_correlation, epoch, revision, snapshot_digest, snapshot_json, updated_at
+      FROM continuity_snapshots
+      WHERE updated_at <= ?
+      ORDER BY task_correlation, epoch
+    `).all(payloadCutoff);
+    let protectedActiveTasks = 0;
+    const snapshots = [];
+    for (const row of snapshotRows) {
+      const snapshot = JSON.parse(row.snapshot_json);
+      if (snapshot.status === "active") {
+        protectedActiveTasks += 1;
+        continue;
+      }
+      snapshots.push({
+        taskCorrelation: row.task_correlation,
+        epoch: row.epoch,
+        revision: row.revision,
+        snapshotDigest: row.snapshot_digest,
+        updatedAt: row.updated_at
+      });
+    }
+    const taskRows = this.database.prepare(`
+      SELECT task_correlation, current_epoch, root_id, updated_at
+      FROM continuity_tasks tasks
+      WHERE updated_at <= ?
+        AND NOT EXISTS (
+          SELECT 1 FROM continuity_snapshots snapshots
+          WHERE snapshots.task_correlation = tasks.task_correlation AND snapshots.updated_at > ?
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM continuity_requests requests
+          WHERE requests.task_correlation = tasks.task_correlation AND requests.created_at > ?
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM continuity_tombstones tombstones
+          WHERE tombstones.task_correlation = tasks.task_correlation AND tombstones.purged_at > ?
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM continuity_observations observations
+          WHERE observations.task_correlation = tasks.task_correlation AND observations.observed_at > ?
+        )
+      ORDER BY task_correlation
+    `).all(recordCutoff, recordCutoff, recordCutoff, recordCutoff, recordCutoff);
+    const tasks = [];
+    for (const row of taskRows) {
+      const active = this.database.prepare(`
+        SELECT snapshot_json FROM continuity_snapshots WHERE task_correlation = ?
+      `).all(row.task_correlation);
+      if (active.some((item) => JSON.parse(item.snapshot_json).status === "active")) {
+        protectedActiveTasks += 1;
+        continue;
+      }
+      tasks.push({
+        taskCorrelation: row.task_correlation,
+        currentEpoch: row.current_epoch,
+        rootId: row.root_id,
+        updatedAt: row.updated_at
+      });
+    }
+    const fullTaskIds = new Set(tasks.map((task) => task.taskCorrelation));
+    return { snapshots: snapshots.filter((snapshot) => !fullTaskIds.has(snapshot.taskCorrelation)), tasks, protectedActiveTasks };
+  }
+  backupTo(targetPath) {
+    if (this.databasePath === ":memory:") throw new ContinuityStoreError("An in-memory continuity database cannot be cleaned destructively.");
+    try {
+      this.database.prepare("VACUUM INTO ?").run(targetPath);
+      const backup = new DatabaseSync(targetPath, { readOnly: true });
+      try {
+        const result = backup.prepare("PRAGMA integrity_check").get();
+        if (result.integrity_check !== "ok") throw new Error(`integrity_check returned ${result.integrity_check}`);
+      } finally {
+        backup.close();
+      }
+    } catch (cause) {
+      throw new ContinuityStoreError("Cannot create a verified continuity cleanup backup.", cause);
+    }
+  }
+  executeCleanup(preview, now) {
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      const verifySnapshot = this.database.prepare(`
+        SELECT revision, snapshot_digest, updated_at FROM continuity_snapshots
+        WHERE task_correlation = ? AND epoch = ?
+      `);
+      const verifyTask = this.database.prepare(`
+        SELECT current_epoch, root_id, updated_at FROM continuity_tasks WHERE task_correlation = ?
+      `);
+      for (const snapshot of preview.snapshots) {
+        const row = verifySnapshot.get(snapshot.taskCorrelation, snapshot.epoch);
+        if (!row || row.revision !== snapshot.revision || row.snapshot_digest !== snapshot.snapshotDigest || row.updated_at !== snapshot.updatedAt) {
+          throw new ContinuityStoreError(`Continuity snapshot ${snapshot.taskCorrelation}/${snapshot.epoch} changed after preview.`);
+        }
+      }
+      for (const task of preview.tasks) {
+        const row = verifyTask.get(task.taskCorrelation);
+        if (!row || row.current_epoch !== task.currentEpoch || row.root_id !== task.rootId || row.updated_at !== task.updatedAt) {
+          throw new ContinuityStoreError(`Continuity task ${task.taskCorrelation} changed after preview.`);
+        }
+      }
+      const scrubbed = this.database.prepare(`
+        UPDATE continuity_requests SET result_json = ?
+        WHERE task_correlation = ? AND epoch = ?
+      `);
+      for (const snapshot of preview.snapshots) {
+        this.database.prepare("DELETE FROM continuity_snapshots WHERE task_correlation = ? AND epoch = ?").run(snapshot.taskCorrelation, snapshot.epoch);
+        this.database.prepare(`
+          INSERT INTO continuity_tombstones(task_correlation, epoch, revision, payload_digest, purged_at)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(task_correlation, epoch) DO UPDATE SET
+            revision = excluded.revision, payload_digest = excluded.payload_digest, purged_at = excluded.purged_at
+        `).run(snapshot.taskCorrelation, snapshot.epoch, snapshot.revision, snapshot.snapshotDigest, now);
+        scrubbed.run(JSON.stringify({
+          schemaVersion: "1.0.0",
+          kind: "purged-request",
+          epoch: snapshot.epoch,
+          revision: snapshot.revision,
+          tombstoneDigest: snapshot.snapshotDigest,
+          purgedAt: now
+        }), snapshot.taskCorrelation, snapshot.epoch);
+        this.database.prepare("UPDATE continuity_tasks SET updated_at = ? WHERE task_correlation = ?").run(now, snapshot.taskCorrelation);
+      }
+      const deleteByTask = [
+        "continuity_snapshots",
+        "continuity_requests",
+        "continuity_tombstones",
+        "continuity_observations"
+      ].map((table) => this.database.prepare(`DELETE FROM ${table} WHERE task_correlation = ?`));
+      for (const task of preview.tasks) {
+        for (const statement of deleteByTask) statement.run(task.taskCorrelation);
+        this.database.prepare("DELETE FROM continuity_tasks WHERE task_correlation = ?").run(task.taskCorrelation);
+      }
+      this.database.exec("COMMIT;");
+      return { snapshots: preview.snapshots.length, tasks: preview.tasks.length };
+    } catch (cause) {
+      try {
+        this.database.exec("ROLLBACK;");
+      } catch {
+      }
+      if (cause instanceof ContinuityStoreError) throw cause;
+      throw new ContinuityStoreError("Cannot execute continuity state cleanup.", cause);
+    }
+  }
   initializeSchema() {
     const version = this.database.prepare("PRAGMA user_version").get();
-    if (version.user_version !== 0 && version.user_version !== SCHEMA_VERSION) {
+    if (version.user_version < 0 || version.user_version > SCHEMA_VERSION) {
       throw new ContinuityStoreError(`Unsupported continuity schema version ${version.user_version}.`);
     }
     this.database.exec(`
@@ -8414,8 +8561,18 @@ var SqliteContinuityStore = class {
         success INTEGER NOT NULL CHECK (success IN (0, 1)),
         observed_at TEXT NOT NULL
       );
+      CREATE INDEX IF NOT EXISTS continuity_snapshots_cleanup
+        ON continuity_snapshots(updated_at, task_correlation, epoch);
+      CREATE INDEX IF NOT EXISTS continuity_tasks_cleanup
+        ON continuity_tasks(updated_at, task_correlation);
+      CREATE INDEX IF NOT EXISTS continuity_requests_cleanup
+        ON continuity_requests(created_at, task_correlation, epoch);
+      CREATE INDEX IF NOT EXISTS continuity_tombstones_cleanup
+        ON continuity_tombstones(purged_at, task_correlation, epoch);
+      CREATE INDEX IF NOT EXISTS continuity_observations_cleanup
+        ON continuity_observations(observed_at, task_correlation, epoch);
     `);
-    if (version.user_version === 0) this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+    if (version.user_version < SCHEMA_VERSION) this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }
 };
 
@@ -8914,7 +9071,11 @@ var contractSchemas = {
   inspectContextRequest: loadSchema("inspect-context-request.v1.schema.json"),
   loadContextRequest: loadSchema("load-context-request.v1.schema.json"),
   suppressContextRestoreRequest: loadSchema("suppress-context-restore-request.v1.schema.json"),
-  purgeDirectContextRequest: loadSchema("purge-direct-context-request.v1.schema.json")
+  purgeDirectContextRequest: loadSchema("purge-direct-context-request.v1.schema.json"),
+  prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
+  executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
+  stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
+  stateCleanupReceipt: loadSchema("state-cleanup-receipt.v1.schema.json")
 };
 function errorText(errors) {
   return (errors ?? []).map((error) => `${error.instancePath || "/"} ${error.message ?? "is invalid"}`).join("; ");
@@ -8954,7 +9115,11 @@ var ContractValidator = class {
       inspectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/inspect-context-request.v1.schema.json"),
       loadContextRequest: ajv.getSchema("https://skill-suite.local/contracts/load-context-request.v1.schema.json"),
       suppressContextRestoreRequest: ajv.getSchema("https://skill-suite.local/contracts/suppress-context-restore-request.v1.schema.json"),
-      purgeDirectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/purge-direct-context-request.v1.schema.json")
+      purgeDirectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/purge-direct-context-request.v1.schema.json"),
+      prepareStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/prepare-state-cleanup-request.v1.schema.json"),
+      executeStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/execute-state-cleanup-request.v1.schema.json"),
+      stateCleanupPlan: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-plan.v1.schema.json"),
+      stateCleanupReceipt: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-receipt.v1.schema.json")
     };
   }
   assert(name, value) {
@@ -9037,6 +9202,18 @@ var ContractValidator = class {
   }
   purgeDirectContextRequest(value) {
     return this.assert("purgeDirectContextRequest", value);
+  }
+  prepareStateCleanupRequest(value) {
+    return this.assert("prepareStateCleanupRequest", value);
+  }
+  executeStateCleanupRequest(value) {
+    return this.assert("executeStateCleanupRequest", value);
+  }
+  stateCleanupPlan(value) {
+    return this.assert("stateCleanupPlan", value);
+  }
+  stateCleanupReceipt(value) {
+    return this.assert("stateCleanupReceipt", value);
   }
   apiResult(value) {
     return this.assert("apiResult", value);
@@ -9204,7 +9381,7 @@ function mergePluginUpdateState(existing, incoming) {
 }
 
 // mcp-server/src/sqlite-workflow-store.ts
-var SCHEMA_VERSION2 = 3;
+var SCHEMA_VERSION2 = 4;
 var SqliteWorkflowStore = class {
   constructor(databasePath) {
     this.databasePath = databasePath;
@@ -9279,10 +9456,11 @@ var SqliteWorkflowStore = class {
   }
   insertRun(receipt) {
     try {
+      const now = (/* @__PURE__ */ new Date()).toISOString();
       this.database.prepare(`
-        INSERT INTO workflow_runs (run_id, revision, receipt_json, updated_at)
-        VALUES (?, ?, ?, ?)
-      `).run(receipt.runId, receipt.revision, JSON.stringify(receipt), (/* @__PURE__ */ new Date()).toISOString());
+        INSERT INTO workflow_runs (run_id, revision, state, receipt_json, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(receipt.runId, receipt.revision, receipt.state, JSON.stringify(receipt), now, now);
     } catch (cause) {
       throw this.storageError("Cannot persist the workflow run.", cause, { runId: receipt.runId });
     }
@@ -9315,10 +9493,11 @@ var SqliteWorkflowStore = class {
       return this.transaction(() => {
         const result = this.database.prepare(`
           UPDATE workflow_runs
-          SET revision = ?, receipt_json = ?, updated_at = ?
+          SET revision = ?, state = ?, receipt_json = ?, updated_at = ?
           WHERE run_id = ? AND revision = ?
         `).run(
           receipt.revision,
+          receipt.state,
           JSON.stringify(receipt),
           (/* @__PURE__ */ new Date()).toISOString(),
           receipt.runId,
@@ -9550,8 +9729,9 @@ var SqliteWorkflowStore = class {
         `).run(root.revision, JSON.stringify(root), root.updatedAt, root.rootId, expectedRootRevision);
         if (Number(rootUpdate.changes) !== 1) return null;
         this.database.prepare(`
-          INSERT INTO workflow_runs (run_id, revision, receipt_json, updated_at) VALUES (?, ?, ?, ?)
-        `).run(receipt.runId, receipt.revision, JSON.stringify(receipt), consumedAt);
+          INSERT INTO workflow_runs (run_id, revision, state, receipt_json, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(receipt.runId, receipt.revision, receipt.state, JSON.stringify(receipt), consumedAt, consumedAt);
         this.database.prepare(`
           INSERT INTO convergence_attempts (
             root_id, epoch, ordinal, lease_id, run_id, state, outcome_json, started_at, updated_at
@@ -9677,6 +9857,138 @@ var SqliteWorkflowStore = class {
       throw this.storageError("Cannot claim plugin update notice.", cause, { targetId, latestVersion });
     }
   }
+  getSchemaVersion() {
+    return this.database.prepare("PRAGMA user_version").get().user_version;
+  }
+  isConvergenceRootActive(rootId) {
+    const row = this.database.prepare(`
+      SELECT 1 AS active FROM convergence_roots
+      WHERE root_id = ? AND state IN ('open', 'needs-review', 'needs-user')
+    `).get(rootId);
+    return Boolean(row);
+  }
+  previewCleanup(cutoff) {
+    const roots = this.database.prepare(`
+      SELECT root_id, revision, state, updated_at
+      FROM convergence_roots
+      WHERE state IN ('completed', 'abandoned') AND updated_at <= ?
+      ORDER BY root_id
+    `).all(cutoff);
+    const linkedRuns = this.database.prepare(`
+      SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY run_id
+    `);
+    const rootCandidates = roots.map((root) => ({
+      rootId: root.root_id,
+      revision: root.revision,
+      state: root.state,
+      updatedAt: root.updated_at,
+      runIds: linkedRuns.all(root.root_id).map((row) => row.run_id)
+    }));
+    const runs = this.database.prepare(`
+      SELECT run_id, revision, state, updated_at
+      FROM workflow_runs
+      WHERE state IN ('failed', 'passed', 'blocked')
+        AND updated_at <= ?
+        AND NOT EXISTS (SELECT 1 FROM workflow_attempt_links links WHERE links.run_id = workflow_runs.run_id)
+      ORDER BY run_id
+    `).all(cutoff);
+    const protectedRow = this.database.prepare(`
+      SELECT COUNT(*) AS count FROM convergence_roots
+      WHERE state IN ('open', 'needs-review', 'needs-user')
+    `).get();
+    return {
+      roots: rootCandidates,
+      standaloneRuns: runs.map((run) => ({
+        runId: run.run_id,
+        revision: run.revision,
+        state: run.state,
+        updatedAt: run.updated_at
+      })),
+      protectedActiveRoots: protectedRow.count
+    };
+  }
+  claimCleanupPlan(planId, planDigest, claimedAt) {
+    try {
+      const result = this.database.prepare(`
+        INSERT OR IGNORE INTO state_cleanup_claims(plan_id, plan_digest, claimed_at)
+        VALUES (?, ?, ?)
+      `).run(planId, planDigest, claimedAt);
+      return Number(result.changes) === 1;
+    } catch (cause) {
+      throw this.storageError("Cannot claim the state cleanup plan.", cause, { planId });
+    }
+  }
+  backupTo(targetPath) {
+    if (this.databasePath === ":memory:") {
+      throw new WorkflowContractError("INVALID_INPUT", "An in-memory workflow database cannot be cleaned destructively.");
+    }
+    try {
+      this.database.prepare("VACUUM INTO ?").run(targetPath);
+      const backup = new DatabaseSync2(targetPath, { readOnly: true });
+      try {
+        const result = backup.prepare("PRAGMA integrity_check").get();
+        if (result.integrity_check !== "ok") throw new Error(`integrity_check returned ${result.integrity_check}`);
+      } finally {
+        backup.close();
+      }
+    } catch (cause) {
+      throw this.storageError("Cannot create a verified workflow cleanup backup.", cause, { targetPath });
+    }
+  }
+  executeCleanup(preview) {
+    try {
+      return this.transaction(() => {
+        const verifyRoot = this.database.prepare(`
+          SELECT state, revision, updated_at FROM convergence_roots WHERE root_id = ?
+        `);
+        const verifyRun = this.database.prepare(`
+          SELECT state, revision, updated_at FROM workflow_runs WHERE run_id = ?
+        `);
+        for (const root of preview.roots) {
+          const row = verifyRoot.get(root.rootId);
+          if (!row || row.state !== root.state || row.revision !== root.revision || row.updated_at !== root.updatedAt) {
+            throw new WorkflowContractError("STALE_REVISION", "A cleanup root changed after preview.", { rootId: root.rootId });
+          }
+          const actualRunIds = this.database.prepare(`
+            SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY run_id
+          `).all(root.rootId).map((item) => item.run_id);
+          if (JSON.stringify(actualRunIds) !== JSON.stringify(root.runIds)) {
+            throw new WorkflowContractError("STALE_REVISION", "A cleanup root's linked runs changed after preview.", { rootId: root.rootId });
+          }
+        }
+        for (const run of preview.standaloneRuns) {
+          const row = verifyRun.get(run.runId);
+          if (!row || row.state !== run.state || row.revision !== run.revision || row.updated_at !== run.updatedAt) {
+            throw new WorkflowContractError("STALE_REVISION", "A cleanup workflow run changed after preview.", { runId: run.runId });
+          }
+        }
+        const deleteLinks = this.database.prepare("DELETE FROM workflow_attempt_links WHERE root_id = ?");
+        const deleteAttempts = this.database.prepare("DELETE FROM convergence_attempts WHERE root_id = ?");
+        const deleteReviews = this.database.prepare("DELETE FROM convergence_reviews WHERE root_id = ?");
+        const deleteLeases = this.database.prepare("DELETE FROM convergence_leases WHERE root_id = ?");
+        const deleteEpochs = this.database.prepare("DELETE FROM convergence_epochs WHERE root_id = ?");
+        const deleteRoot = this.database.prepare("DELETE FROM convergence_roots WHERE root_id = ?");
+        const deleteRun = this.database.prepare("DELETE FROM workflow_runs WHERE run_id = ?");
+        let deletedRuns = 0;
+        for (const root of preview.roots) {
+          deleteLinks.run(root.rootId);
+          deleteAttempts.run(root.rootId);
+          deleteReviews.run(root.rootId);
+          deleteLeases.run(root.rootId);
+          deleteEpochs.run(root.rootId);
+          deleteRoot.run(root.rootId);
+          for (const runId of root.runIds) {
+            deletedRuns += Number(deleteRun.run(runId).changes);
+          }
+        }
+        for (const run of preview.standaloneRuns) deletedRuns += Number(deleteRun.run(run.runId).changes);
+        return { roots: preview.roots.length, runs: deletedRuns };
+      });
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError("Cannot execute workflow state cleanup.", cause);
+    }
+  }
   close() {
     if (this.closed) return;
     this.database.close();
@@ -9692,6 +10004,15 @@ var SqliteWorkflowStore = class {
       });
     }
     this.transaction(() => {
+      if (row.user_version > 0 && row.user_version < 4) {
+        this.database.exec(`
+          ALTER TABLE workflow_runs ADD COLUMN state TEXT;
+          ALTER TABLE workflow_runs ADD COLUMN created_at TEXT;
+          UPDATE workflow_runs
+          SET state = COALESCE(json_extract(receipt_json, '$.state'), 'blocked'),
+              created_at = updated_at;
+        `);
+      }
       this.database.exec(`
         CREATE TABLE IF NOT EXISTS workflow_metadata (
           key TEXT PRIMARY KEY,
@@ -9701,9 +10022,13 @@ var SqliteWorkflowStore = class {
         CREATE TABLE IF NOT EXISTS workflow_runs (
           run_id TEXT PRIMARY KEY,
           revision INTEGER NOT NULL CHECK (revision >= 0),
+          state TEXT NOT NULL CHECK (state IN ('ready', 'running', 'needs-input', 'needs-approval', 'needs-redesign', 'failed', 'passed', 'blocked')),
           receipt_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
         ) STRICT;
+        CREATE INDEX IF NOT EXISTS workflow_runs_cleanup
+          ON workflow_runs(state, updated_at);
         CREATE TABLE IF NOT EXISTS plugin_update_state (
           target_id TEXT PRIMARY KEY,
           current_version TEXT NOT NULL,
@@ -9783,6 +10108,11 @@ var SqliteWorkflowStore = class {
           lease_id TEXT NOT NULL UNIQUE REFERENCES convergence_leases(lease_id),
           epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
           ordinal INTEGER NOT NULL CHECK (ordinal >= 1 AND ordinal <= 3)
+        ) STRICT;
+        CREATE TABLE IF NOT EXISTS state_cleanup_claims (
+          plan_id TEXT PRIMARY KEY,
+          plan_digest TEXT NOT NULL,
+          claimed_at TEXT NOT NULL
         ) STRICT;
         PRAGMA user_version = ${SCHEMA_VERSION2};
       `);

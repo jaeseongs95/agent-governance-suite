@@ -19,6 +19,7 @@ import {
   workflowStatusSummary,
 } from "./response-projections.js";
 import { WorkflowService } from "./workflow-service.js";
+import { StateCleanupService } from "./state-cleanup-service.js";
 
 type ObjectSchema = Record<string, unknown> & {
   properties?: Record<string, unknown>;
@@ -164,6 +165,7 @@ export function createMcpServer(
   service: WorkflowService,
   updates: PluginUpdateService,
   continuity: ContinuityGateway = new UnavailableContinuityService(),
+  cleanup?: StateCleanupService,
 ): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -273,6 +275,18 @@ export function createMcpServer(
         description: "Delete the current direct-task payload and retain only a hash tombstone; workflow receipts are never deleted.",
         inputSchema: contractSchemas.purgeDirectContextRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: true, openWorldHint: false },
+      },
+      {
+        name: "prepare_state_cleanup",
+        description: "Preview fixed retention cleanup candidates and issue a 15-minute, one-use token without deleting data.",
+        inputSchema: contractSchemas.prepareStateCleanupRequest,
+        annotations: { readOnlyHint: true, idempotentHint: false, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "execute_state_cleanup",
+        description: "Recheck a preview token, create verified SQLite backups, and atomically delete only the bound inactive candidates. Backups are retained until manually deleted.",
+        inputSchema: contractSchemas.executeStateCleanupRequest,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
       },
     ],
   }));
@@ -413,6 +427,16 @@ export function createMcpServer(
           break;
         case "purge_direct_context":
           result = continuity.purgeDirectContext(args);
+          break;
+        case "prepare_state_cleanup":
+          result = cleanup
+            ? cleanup.prepare(args)
+            : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
+          break;
+        case "execute_state_cleanup":
+          result = cleanup
+            ? cleanup.execute(args)
+            : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
           break;
         default:
           result = {
