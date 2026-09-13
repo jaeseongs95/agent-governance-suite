@@ -19390,7 +19390,8 @@ var WorkflowService = class {
   planWorkflow(rawTask) {
     try {
       const task = this.validator.taskEnvelope(rawTask);
-      const plan = this.buildPlan(task, this.registry.read(), this.validateWorkUnitGraph(task));
+      this.validateWorkUnitGraph(task);
+      const plan = this.buildPlan(task, this.registry.read());
       plan.integrityToken = this.signPlan(plan);
       this.validator.workflowPlan(plan);
       return apiOk2(plan);
@@ -19552,13 +19553,13 @@ var WorkflowService = class {
       receipt.error = null;
     });
   }
-  buildPlan(task, skills, dependencyGraph) {
+  buildPlan(task, skills) {
     const executionMode = task.orchestration.requested ? "orchestrated" : "direct";
     const errors = [];
     const stages = [];
     const selectedSkills = /* @__PURE__ */ new Set();
     const selectedProviders = /* @__PURE__ */ new Map();
-    for (const capability of this.requiredCapabilities(task, dependencyGraph)) {
+    for (const capability of this.requiredCapabilities(task)) {
       const skill = selectSkillByCapability(skills, capability);
       if (!skill) {
         errors.push({
@@ -19641,8 +19642,7 @@ var WorkflowService = class {
       errors
     };
   }
-  requiredCapabilities(task, dependencyGraph) {
-    const before = [];
+  requiredCapabilities(task) {
     const auditRequested = task.requiredCapabilities.includes(POLICY_CAPABILITY.audit) || task.riskLevel === "high" || task.riskLevel === "critical";
     const requestedWork = task.requiredCapabilities.filter((capability) => capability !== POLICY_CAPABILITY.audit);
     const work = [];
@@ -19656,16 +19656,10 @@ var WorkflowService = class {
       }
     }
     const after = [];
-    if (task.orchestration.requested && this.hasIndependentWorkUnitPair(dependencyGraph)) {
-      before.push(POLICY_CAPABILITY.coordination);
-    }
-    if (task.orchestration.requested && (task.decision.complexity === "complex" || task.decision.hasConflicts)) {
-      before.push(POLICY_CAPABILITY.deliberation);
-    }
-    if (task.orchestration.requested && auditRequested) {
+    if (auditRequested) {
       after.push(POLICY_CAPABILITY.audit);
     }
-    return [.../* @__PURE__ */ new Set([...before, ...work, ...after])];
+    return [.../* @__PURE__ */ new Set([...work, ...after])];
   }
   orderProviders(items) {
     const producedBy = /* @__PURE__ */ new Map();
@@ -19944,27 +19938,6 @@ var WorkflowService = class {
     };
     for (const unit of task.workUnits) visit(unit.id);
     return graph;
-  }
-  hasIndependentWorkUnitPair(graph) {
-    const ids = [...graph.keys()];
-    const reaches = (from, target) => {
-      const pending = [...graph.get(from) ?? []];
-      const visited = /* @__PURE__ */ new Set();
-      while (pending.length > 0) {
-        const current = pending.pop();
-        if (current === target) return true;
-        if (visited.has(current)) continue;
-        visited.add(current);
-        pending.push(...graph.get(current) ?? []);
-      }
-      return false;
-    };
-    for (let index = 0; index < ids.length; index += 1) {
-      for (let other = index + 1; other < ids.length; other += 1) {
-        if (!reaches(ids[index], ids[other]) && !reaches(ids[other], ids[index])) return true;
-      }
-    }
-    return false;
   }
   setRunningStagePointers(plan) {
     const readyStages = plan.stages.filter((stage) => stage.state === "ready");

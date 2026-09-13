@@ -4,7 +4,7 @@
     {
       "id": "complex-parallel-high-risk-orchestration",
       "kind": "normal",
-      "scenario": "두 개의 독립 작업 단위가 있고, 요구사항 충돌을 검토한 뒤 고위험 변경을 완료해야 한다.",
+      "scenario": "두 개의 독립 작업을 위임할 실익과 충돌 대안 검토 필요가 확인되어 두 capability를 명시한 고위험 작업이다.",
       "input": {
         "schemaVersion": "1.0.0",
         "taskId": "complex-parallel-high-risk",
@@ -16,7 +16,10 @@
           { "id": "permission-change", "objective": "권한 변경을 구현한다.", "dependencies": [], "writeTargets": ["permissions"] },
           { "id": "deployment-plan", "objective": "배포 계획을 검증한다.", "dependencies": [], "writeTargets": ["deployment"] }
         ],
-        "requiredCapabilities": [],
+        "requiredCapabilities": [
+          "subagent-coordination",
+          "independent-deliberation"
+        ],
         "constraints": [],
         "authorization": { "allowedActions": ["local-validation"], "prohibitedActions": ["public-release"], "approvalRequired": ["publish"] },
         "decision": { "complexity": "complex", "hasConflicts": true },
@@ -40,6 +43,66 @@
         ],
         "parallelWorkOwnership": "coordinate-subagents assigns independent units without duplicating a specialist's work.",
         "completionGate": "independent-audit-gate runs after preceding stages and requires PASS before high-risk completion."
+      }
+    },
+    {
+      "id": "parallel-low-risk-no-implicit-coordination",
+      "kind": "boundary",
+      "scenario": "독립 작업 단위가 여러 개여도 명시적인 위임 판단이 없으면 작업 분해만 수행한다.",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "taskId": "parallel-low-risk-no-implicit",
+        "objective": "서로 독립적인 두 구현 단위를 작업 계획으로 정리한다.",
+        "scope": { "included": ["작업 계획"], "excluded": ["위임", "배포"] },
+        "acceptanceCriteria": ["명시되지 않은 하위 에이전트 조정을 추가하지 않는다."],
+        "riskLevel": "low",
+        "workUnits": [
+          { "id": "work-a", "objective": "작업 A를 계획한다.", "dependencies": [], "writeTargets": ["a"] },
+          { "id": "work-b", "objective": "작업 B를 계획한다.", "dependencies": [], "writeTargets": ["b"] }
+        ],
+        "requiredCapabilities": ["task-decomposition"],
+        "constraints": [],
+        "authorization": { "allowedActions": ["local-validation"], "prohibitedActions": ["delegation", "deployment"], "approvalRequired": [] },
+        "decision": { "complexity": "simple", "hasConflicts": false },
+        "orchestration": { "requested": true, "mcpAvailable": true }
+      },
+      "expected": {
+        "executionMode": "orchestrated",
+        "workflowState": "ready",
+        "skillsInOrder": ["coordinate-subagents"],
+        "requiredCapabilitiesInOrder": ["task-decomposition"]
+      }
+    },
+    {
+      "id": "complex-parallel-high-risk-no-implicit-expansion",
+      "kind": "boundary",
+      "scenario": "독립 작업 단위와 complex 표시는 자동 위임·숙의를 만들지 않고 고위험 감사만 유지한다.",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "taskId": "complex-parallel-high-risk-no-implicit",
+        "objective": "두 작업 단위를 포함한 고위험 변경을 계획한다.",
+        "scope": { "included": ["변경 계획"], "excluded": ["배포"] },
+        "acceptanceCriteria": ["명시되지 않은 위임과 숙의를 추가하지 않는다.", "필수 감사 게이트를 유지한다."],
+        "riskLevel": "high",
+        "workUnits": [
+          { "id": "work-a", "objective": "작업 A를 수행한다.", "dependencies": [], "writeTargets": ["a"] },
+          { "id": "work-b", "objective": "작업 B를 수행한다.", "dependencies": [], "writeTargets": ["b"] }
+        ],
+        "requiredCapabilities": [],
+        "constraints": [],
+        "authorization": { "allowedActions": ["local-validation"], "prohibitedActions": ["deployment"], "approvalRequired": [] },
+        "decision": { "complexity": "complex", "hasConflicts": true },
+        "orchestration": { "requested": true, "mcpAvailable": true }
+      },
+      "expected": {
+        "executionMode": "orchestrated",
+        "workflowState": "ready",
+        "skillsInOrder": [
+          "independent-audit-gate"
+        ],
+        "requiredCapabilitiesInOrder": [
+          "independent-audit"
+        ]
       }
     },
     {
@@ -149,7 +212,6 @@
         "workflowState": "blocked",
         "errorCode": "MCP_UNAVAILABLE",
         "skillsRemainDirectlyAvailable": [
-          "coordinate-subagents",
           "independent-audit-gate"
         ],
         "blockedScope": "MCP로 실행하는 통합 워크플로만 차단하며, 직접 호출 가능한 전문 스킬의 사용 가능 여부는 바꾸지 않는다."
