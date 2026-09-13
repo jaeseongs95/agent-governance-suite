@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/korean-prose-editor/glossary-binding.v1.schema.json",
+  "title": "Private glossary binding",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "mode"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "mode": { "const": "none" }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "mode", "status", "sourceDigest", "glossaryId", "glossaryVersion", "glossaryDigest", "matchSetDigest", "matchCount", "warnings"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "mode": { "const": "mcp" },
+        "status": { "enum": ["matched", "no-match", "unavailable", "limit-exceeded", "unsupported-normalization"] },
+        "sourceDigest": { "$ref": "#/$defs/digest" },
+        "glossaryId": { "oneOf": [{ "const": "korean-prose-core" }, { "type": "null" }] },
+        "glossaryVersion": { "oneOf": [{ "const": "1.0.0" }, { "type": "null" }] },
+        "glossaryDigest": { "oneOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+        "matchSetDigest": { "oneOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+        "matchCount": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "warnings": { "type": "array", "uniqueItems": true, "items": { "enum": ["GLOSSARY_UNAVAILABLE", "GLOSSARY_MATCH_LIMIT_EXCEEDED", "GLOSSARY_UNSUPPORTED_NORMALIZATION"] } }
+      }
+    }
+  ],
+  "$defs": { "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}
