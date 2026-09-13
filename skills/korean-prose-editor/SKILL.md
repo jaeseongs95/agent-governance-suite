@@ -16,6 +16,8 @@ metadata:
 
 provider 교환 객체를 만들기 전에 [contracts.md](references/contracts.md)를 읽는다. MCP 통합이면 [integration.md](references/integration.md)도 읽는다.
 
+동결 평가에서는 각 언어 판단 provider를 호출하기 직전에 저장소의 `eval:preflight`를 해당 단계(`selection`, `editing`, `verification`)로 실행한다. 모든 결과를 만든 뒤 workflow receipt를 기록하기 전에는 `record` 단계로 다시 검사한다. 실패하면 해당 provider와 이후 단계를 호출하지 않으며, 같은 입력과 출력 경로로 재시도하거나 기존 결과를 덮어쓰지 않는다. `verification` 단계가 반환한 입력·후보·루브릭 digest는 검증 작업에 그대로 전달하고 verification metadata에 기록한다.
+
 ## Provider 흐름
 
 1. selection provider는 원문, 사용자의 목적과 문체 샘플만 보고 편집 범위와 보존 조건을 정한다. 구체적인 편집안을 만들지 않는다. 자세한 기준은 [selection-policy.md](references/selection-policy.md)를 따른다.

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -15,6 +15,18 @@ afterEach(async () => {
 });
 
 describe("Korean prose evaluation preflight", () => {
+  it("requires every frozen model phase to pass the repository preflight", async () => {
+    const [skill, integration] = await Promise.all([
+      readFile(new URL("../../skills/korean-prose-editor/SKILL.md", import.meta.url), "utf8"),
+      readFile(new URL("../../skills/korean-prose-editor/references/integration.md", import.meta.url), "utf8"),
+    ]);
+
+    expect(skill).toContain("`eval:preflight`");
+    expect(skill).toContain("실패하면 해당 provider와 이후 단계를 호출하지 않으며");
+    expect(integration).toContain("pnpm eval:preflight -- <selection|editing|verification>");
+    expect(integration).toContain("실패하면 모델을 호출하지 않는다.");
+  });
+
   it("accepts a frozen complete run before recording its workflow receipt", async () => {
     const root = await createFrozenRun();
 
