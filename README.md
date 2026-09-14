@@ -7,7 +7,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v1.12.0`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스에는 명시 호출 전용 `codex-token-usage-analyzer` 0.1.0과 평가 근거의 공정성·재현성을 검사하는 `evaluation-validity-auditor` 1.0.0이 추가됐습니다. `korean-prose-editor`는 확장한 SQLite 용어집의 빌드·조회·통합 검증을 통과해 registry, 직접 descriptor와 Codex 암시 호출 설정에서 활성화했습니다. 엄격한 신규 holdout 평가는 최종 `≥80%` 지표를 만들기 전에 중단됐으므로 그 기준을 통과했다고 주장하지 않습니다.
+현재 공개 릴리스는 `v1.13.0`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 semantic execution assurance를 MCP workflow에 추가해, 오케스트레이션 bootstrap과 각 의미 판단 stage가 계획된 최소 model class·reasoning effort를 충족했다는 실행 메타데이터 없이 `passed`로 진행되지 않도록 합니다. 이 하한은 특정 모델 이름이 아니라 역할과 위험도에 결속되며, 기존 v1.12 receipt의 새 필드 부재는 호환 경로로 유지합니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -36,6 +36,8 @@ flowchart LR
 
 오케스트레이터는 요청에 필요한 검사를 선택하고 실행 순서를 정합니다. 로컬 MCP 서버는 이 계획을 고정한 뒤 단계 순서, 결과 형식, 증거, 감사 조건을 검사합니다. 모든 필수 조건을 통과하면 구조화된 완료 영수증을 발급합니다.
 
+오케스트레이션 workflow에서는 의미 판단 단계의 실행 능력도 계획에 포함합니다. bootstrap과 각 semantic stage는 역할·위험도에 따라 최소 model class와 reasoning effort가 정해지며, 실제 실행에서 관측한 값이 없거나 하한보다 낮으면 MCP가 `passed` 결과를 거절합니다. 따라서 같은 스킬이더라도 낮은 세션 설정이 높은 신뢰도의 stage로 조용히 통과하는 경로를 차단합니다. 특정 제품 모델은 고정하지 않습니다.
+
 ### 예: 위험도가 높은 배포 작업
 
 1. 작업을 시작하기 전에 적용 지침과 저장소 관례를 확인하고, 허용 범위와 완료 조건을 정합니다.
@@ -62,7 +64,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.12.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.13.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->

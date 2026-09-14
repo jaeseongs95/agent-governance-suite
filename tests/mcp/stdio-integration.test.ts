@@ -17,6 +17,7 @@ import type {
   ConvergenceRootHandleV1,
   ConvergenceRootV1,
   ConvergenceStatusSummaryV1,
+  ExecutionContextV1,
   PluginUpdateStatusV1,
   StageResultV1,
   StateCleanupPlanV1,
@@ -32,6 +33,23 @@ import { CURRENT_VERSION, NEXT_TAG, NEXT_VERSION } from "./version-fixtures.js";
 const rootDirectory = fileURLToPath(new URL("../../", import.meta.url));
 const bundledServer = fileURLToPath(new URL("../../mcp-server/dist/server.mjs", import.meta.url));
 const bundledContinuityHook = fileURLToPath(new URL("../../mcp-server/dist/continuity-hook.mjs", import.meta.url));
+
+const STDIO_EXECUTION_CONTEXT: ExecutionContextV1 = {
+  schemaVersion: "1.0.0",
+  model: "stdio-frontier-fixture",
+  modelClass: "frontier",
+  reasoningEffort: "high",
+  source: "runtime",
+  observedAt: "2026-09-14T00:00:00.000Z",
+};
+
+function assuredPlanArguments(task: TaskEnvelopeV1): Record<string, unknown> {
+  return toolArguments({
+    schemaVersion: "1.0.0",
+    taskEnvelope: task,
+    executionContext: STDIO_EXECUTION_CONTEXT,
+  });
+}
 
 function toolArguments(value: object): Record<string, unknown> {
   return value as unknown as Record<string, unknown>;
@@ -308,6 +326,7 @@ describe("bundled STDIO MCP server", () => {
       const planningInputSchema = listed.tools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
       expect(planningInputSchema).toMatchObject({ type: "object", oneOf: expect.any(Array) });
       expect(JSON.stringify(planningInputSchema)).not.toContain("$ref");
+      expect(JSON.stringify(planningInputSchema)).toContain("executionContext");
       expect(listed.tools.find((tool) => tool.name === "check_for_updates")?.annotations).toMatchObject({
         readOnlyHint: true,
         destructiveHint: false,
@@ -344,7 +363,7 @@ describe("bundled STDIO MCP server", () => {
       };
       const plannedResponse = await client.callTool({
         name: "plan_workflow",
-        arguments: toolArguments(task),
+        arguments: assuredPlanArguments(task),
       });
       const planned = toolData<WorkflowPlanV1>(plannedResponse);
       const plannedContents = textContents(plannedResponse);
@@ -396,6 +415,7 @@ describe("bundled STDIO MCP server", () => {
         stageId: stage.stageId,
         expectedRevision: started.data!.revision,
         state: "passed",
+        executionContext: STDIO_EXECUTION_CONTEXT,
         output: {
           schemaVersion: "1.0.0",
           kind: "output",
@@ -475,7 +495,7 @@ describe("bundled STDIO MCP server", () => {
       const abortTask = { ...task, taskId: "stdio-abort-path" };
       const abortPlan = toolData<WorkflowPlanV1>(await client.callTool({
         name: "plan_workflow",
-        arguments: toolArguments(abortTask),
+        arguments: assuredPlanArguments(abortTask),
       }));
       const abortFrame = convergenceFrame(abortTask.taskId);
       const abortRoot = toolData<ConvergenceRootHandleV1>(await client.callTool({
@@ -523,6 +543,7 @@ describe("bundled STDIO MCP server", () => {
           stageId: abortStage.stageId,
           expectedRevision: abortRun.data!.revision,
           state: "passed",
+          executionContext: STDIO_EXECUTION_CONTEXT,
           output: {
             schemaVersion: "1.0.0",
             kind: "output",

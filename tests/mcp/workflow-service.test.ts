@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { type PlannedStageV1, type SkillDescriptorV2, type StageResultV1, type TaskEnvelopeV1 } from "../../contracts/types.js";
+import { type ExecutionContextV1, type PlannedStageV1, type SkillDescriptorV2, type StageResultV1, type TaskEnvelopeV1 } from "../../contracts/types.js";
 import { validateDecisionRecordSemantics } from "../../mcp-server/src/decision-record-validator.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
@@ -17,6 +17,14 @@ import { InMemoryWorkflowStore, PLAN_SIGNING_KEY, type WorkflowStore } from "../
 
 const temporaryDirectories: string[] = [];
 const sqliteStores = new Set<SqliteWorkflowStore>();
+const TEST_EXECUTION_CONTEXT: ExecutionContextV1 = {
+  schemaVersion: "1.0.0",
+  model: "fixture-frontier",
+  modelClass: "frontier",
+  reasoningEffort: "high",
+  source: "runtime",
+  observedAt: "2026-09-14T00:00:00.000Z",
+};
 const validDecisionRecordDirectory = new URL(
   "../../skills/independent-deliberation-panel/evals/fixtures/valid/",
   import.meta.url,
@@ -139,6 +147,7 @@ function task(overrides: Partial<TaskEnvelopeV1> = {}): TaskEnvelopeV1 {
 async function createService(
   descriptors: SkillDescriptorV2[] = skills,
   store?: WorkflowStore,
+  defaultExecutionContext: ExecutionContextV1 | null = TEST_EXECUTION_CONTEXT,
 ): Promise<{ service: WorkflowService; registryPath: string; rootDirectory: string }> {
   const directory = await mkdtemp(join(tmpdir(), "skill-suite-mcp-"));
   temporaryDirectories.push(directory);
@@ -155,7 +164,12 @@ async function createService(
   await writeFile(registryPath, JSON.stringify({ schemaVersion: "2.0.0", skills: descriptors }), "utf8");
   const validator = new ContractValidator();
   return {
-    service: new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store),
+    service: new WorkflowService(
+      new FileSkillRegistry(registryPath, validator),
+      validator,
+      store,
+      defaultExecutionContext,
+    ),
     registryPath,
     rootDirectory: directory,
   };
@@ -180,6 +194,9 @@ function passedStage(runId: string, stage: PlannedStageV1, expectedRevision: num
     stageId: stage.stageId,
     expectedRevision,
     state: "passed",
+    executionContext: stage.executionRequirement?.kind === "semantic"
+      ? structuredClone(TEST_EXECUTION_CONTEXT)
+      : null,
     output: {
       schemaVersion: "1.0.0",
       kind: "output",
@@ -441,6 +458,54 @@ describe("WorkflowService", () => {
     const secondRun = secondService.startWorkflow(signedBeforeRestart);
     expect(secondRun.ok).toBe(true);
     expect(secondRun.data?.runId).toBe("run-signed-before-restart-2");
+  });
+
+  it("requires trusted execution metadata before an orchestrated plan can be assured", async () => {
+    const { service } = await createService(skills, undefined, null);
+    const result = service.planWorkflow(task(), true);
+
+    expect(result.ok).toBe(false);
+    expect(result.error?.code).toBe("BINDING_REQUIRED");
+  });
+
+  it("binds execution requirements and rejects missing or under-provisioned stage execution", async () => {
+    const { service } = await createService();
+    const plan = service.planWorkflow(task()).data!;
+
+    expect(plan.bootstrapExecution).toMatchObject({
+      requirement: {
+        policyId: "semantic-execution-assurance-v1",
+        kind: "semantic",
+        minimumModelClass: "deep",
+        minimumReasoningEffort: "high",
+      },
+      context: TEST_EXECUTION_CONTEXT,
+    });
+    expect(plan.stages[0]?.executionRequirement).toMatchObject({
+      policyId: "semantic-execution-assurance-v1",
+      kind: "semantic",
+      minimumReasoningEffort: "high",
+    });
+
+    const started = service.startWorkflow(plan).data!;
+    const stage = started.plan.stages[0]!;
+    const missing = passedStage(started.runId, stage, started.revision);
+    missing.executionContext = null;
+    expect(service.recordStageResult(missing).error?.code).toBe("BINDING_REQUIRED");
+
+    const weak = passedStage(started.runId, stage, started.revision);
+    weak.executionContext = {
+      ...TEST_EXECUTION_CONTEXT,
+      model: "fixture-lightweight",
+      modelClass: "lightweight",
+      reasoningEffort: "low",
+    };
+    expect(service.recordStageResult(weak).error?.code).toBe("BINDING_INVALID");
+
+    const accepted = service.recordStageResult(
+      passedStage(started.runId, stage, started.revision),
+    );
+    expect(accepted.ok).toBe(true);
   });
 
   it("plans from runtime capabilities without persisting a run", async () => {

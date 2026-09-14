@@ -33,10 +33,18 @@ describe("skill maintenance commands", () => {
   it("forwards pnpm script arguments without a standalone separator", () => {
     const pnpmEntrypoint = process.env.npm_execpath;
     expect(pnpmEntrypoint).toBeTruthy();
-    const result = spawnSync(process.execPath, [pnpmEntrypoint, "validate:skill", "--name", "orchestrator"], {
+    const pnpmArguments = [
+"validate:skill", "--name", "orchestrator"
+    ];
+    const javascriptEntrypoint = /\.(?:cjs|mjs|js)$/iu.test(pnpmEntrypoint);
+    const result = spawnSync(
+      javascriptEntrypoint ? process.execPath : pnpmEntrypoint,
+      javascriptEntrypoint ? [pnpmEntrypoint, ...pnpmArguments] : pnpmArguments,
+      {
       cwd: root,
       encoding: "utf8"
-    });
+    },
+    );
 
     expect(result.status, result.stderr || result.stdout).toBe(0);
     expect(result.stdout).toContain("orchestrator");

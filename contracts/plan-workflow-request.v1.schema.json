@@ -2,32 +2,62 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://skill-suite.local/contracts/plan-workflow-request.v1.schema.json",
   "title": "PlanWorkflowRequest.v1",
-  "description": "Accepts the legacy TaskEnvelope.v1 form or an evaluation audit planning wrapper that binds purpose outside the shared task contract.",
+  "description": "Accepts the legacy TaskEnvelope.v1 form or a wrapper that binds bootstrap execution context and optional evaluation-audit purpose.",
   "type": "object",
   "oneOf": [
-    { "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json" },
+    {
+      "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json"
+    },
     {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schemaVersion", "taskEnvelope", "evaluationAuditPurpose"],
+      "required": [
+        "schemaVersion",
+        "taskEnvelope"
+      ],
       "properties": {
-        "schemaVersion": { "const": "1.0.0" },
-        "taskEnvelope": {
-          "allOf": [
-            { "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json" },
-            {
-              "properties": {
-                "requiredCapabilities": {
-                  "type": "array",
-                  "contains": { "const": "evaluation-validity-audit" }
-                }
-              },
-              "required": ["requiredCapabilities"]
-            }
-          ]
+        "schemaVersion": {
+          "const": "1.0.0"
         },
-        "evaluationAuditPurpose": { "enum": ["design-readiness", "quality-or-release"] }
-      }
+        "taskEnvelope": {
+          "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json"
+        },
+        "executionContext": {
+          "$ref": "https://skill-suite.local/contracts/execution-context.v1.schema.json"
+        },
+        "evaluationAuditPurpose": {
+          "enum": [
+            "design-readiness",
+            "quality-or-release"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "taskEnvelope": {
+                "properties": {
+                  "requiredCapabilities": {
+                    "type": "array",
+                    "contains": {
+                      "const": "evaluation-validity-audit"
+                    }
+                  }
+                },
+                "required": [
+                  "requiredCapabilities"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "evaluationAuditPurpose"
+            ]
+          }
+        }
+      ]
     }
   ]
 }

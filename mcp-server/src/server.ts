@@ -49,16 +49,7 @@ function embeddedSchema(source: Record<string, unknown>): ObjectSchema {
 }
 
 const taskEnvelopeInputSchema = embeddedSchema(contractSchemas.taskEnvelope);
-const evaluationTaskEnvelopeInputSchema = structuredClone(taskEnvelopeInputSchema);
-evaluationTaskEnvelopeInputSchema.allOf = [{
-  properties: {
-    requiredCapabilities: {
-      type: "array",
-      contains: { const: "evaluation-validity-audit" },
-    },
-  },
-  required: ["requiredCapabilities"],
-}];
+const executionContextInputSchema = embeddedSchema(contractSchemas.executionContext);
 const planWorkflowInputSchema = {
   type: "object",
   oneOf: [
@@ -66,12 +57,29 @@ const planWorkflowInputSchema = {
     {
       type: "object",
       additionalProperties: false,
-      required: ["schemaVersion", "taskEnvelope", "evaluationAuditPurpose"],
+      required: ["schemaVersion", "taskEnvelope"],
       properties: {
         schemaVersion: { const: "1.0.0" },
-        taskEnvelope: evaluationTaskEnvelopeInputSchema,
+        taskEnvelope: taskEnvelopeInputSchema,
+        executionContext: executionContextInputSchema,
         evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] },
       },
+      allOf: [{
+        if: {
+          properties: {
+            taskEnvelope: {
+              properties: {
+                requiredCapabilities: {
+                  type: "array",
+                  contains: { const: "evaluation-validity-audit" },
+                },
+              },
+              required: ["requiredCapabilities"],
+            },
+          },
+        },
+        then: { required: ["evaluationAuditPurpose"] },
+      }],
     },
   ],
 } as const;
@@ -228,7 +236,7 @@ export function createMcpServer(
       },
       {
         name: "plan_workflow",
-        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Evaluation validity audits use the structured wrapper to bind their purpose.",
+        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated workflows use the structured wrapper to bind host-observed execution context; evaluation validity audits also bind their purpose.",
         inputSchema: planWorkflowInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
@@ -361,7 +369,7 @@ export function createMcpServer(
       updateStatus = await updates.check(false);
       switch (request.params.name) {
         case "plan_workflow":
-          result = service.planWorkflow(args);
+          result = service.planWorkflow(args, true);
           break;
         case "open_convergence_root":
           {

@@ -18,6 +18,15 @@ plugin manifest
 
 `record_stage_result`는 revision과 실행 순서를 확인한 뒤 provider envelope와 내부 output을 각각 선언된 schema로 검증합니다. 계획에 생산자가 있는 입력 artifact는 해당 선행 단계가 검증된 artifact를 남긴 경우에만 소비할 수 있습니다. bootstrap·task 입력처럼 계획 밖에서 들어오는 artifact의 내용과 출처 확인은 실행한 전문 스킬이 책임지고, MCP는 제출된 locator·digest·`verified` 선언의 구조를 확인합니다. descriptor의 선택적 `receiptPolicy`는 계획 stage로 복사되어 HMAC에 결속됩니다. `reference-only` mode는 닫힌 output schema와 opaque reference만 허용하고, 선언된 actor pointer에는 canonical UUID와 run 단위 고유성을 적용합니다. `finalize_workflow`는 모든 필수 단계가 통과하고 미해결 항목이 없으며 각 stage의 receipt policy가 다시 확인된 경우에만 최종 영수증을 만듭니다.
 
+### Semantic execution assurance
+
+MCP의 `plan_workflow` 경계는 `WorkflowService.planWorkflow(..., true)`로 execution assurance를 fail-closed로 강제합니다. 직접 programmatic 호출은 기존 내부 도구와 legacy receipt 호환을 위해 기본적으로 permissive이며, 실제 MCP handler가 strict mode를 선택합니다. ExecutionContext가 결속된 새 plan의 stage-level 검사는 그대로 유지됩니다.
+
+
+v1.13부터 orchestrated workflow는 의미 판단 단계의 실행 능력을 계획에 결속합니다. `plan_workflow`는 bootstrap 판단에 사용한 `ExecutionContext.v1`을 받아 작업 위험도와 복잡도에 따른 최소 model class·reasoning effort를 검사합니다. 새 계획의 각 stage에는 `ExecutionRequirement.v1`이 들어가며, semantic stage가 `passed`가 되려면 실제 stage 실행에서 관측한 model class와 reasoning effort가 그 하한을 만족해야 합니다. 관측 정보가 없으면 `BINDING_REQUIRED`, 하한보다 낮으면 `BINDING_INVALID`로 거절합니다. `korean-prose-finalization`처럼 완전히 결정적인 단계는 `deterministic`으로 표시해 모델 하한을 요구하지 않습니다.
+
+이 계약은 특정 제품 모델 이름을 고정하지 않습니다. `lightweight < general < deep < frontier` model class와 `low < medium < high < xhigh < max < ultra` effort 순서를 사용하므로, 호스트가 다른 모델을 제공하더라도 같은 capability 하한으로 비교할 수 있습니다. model class와 effort는 host runtime 또는 worker spawn 결과에서 직접 관측한 값이어야 하며, MCP는 그 선언을 암호학적으로 인증하지 않습니다. 따라서 이 계층은 모델 성능을 새로 만들어 내는 장치가 아니라, 낮은 실행 설정이 높은 신뢰도의 semantic stage로 조용히 통과하는 경로를 차단하는 실행 거버넌스입니다.
+
 MCP 서버는 플러그인 루트의 `.mcp.json`에 등록됩니다. MCP 응답은 외부 상태를 관측하는 근거일 수 있지만, 호출 수락만으로 성공을 뜻하지 않습니다. MCP가 없을 때도 단독 전문 스킬로 처리할 수 있는 요청은 계속할 수 있습니다.
 
 mutating workflow 도구의 `responseMode`와 status 도구의 `detail`은 서버 경계의 전송 옵션입니다. 생략 시 `full`이며 기존 domain validator와 상태 전이를 그대로 사용합니다. `compact`일 때만 검증·저장이 끝난 domain 결과를 요약 계약으로 투영합니다. 이 옵션은 서버 경계에서 제거되므로 `StageResultV1`, `WorkflowReceiptV1` 같은 저장 계약에는 들어가지 않습니다. MCP 결과는 JSON text content block 하나만 사용하고 같은 데이터를 `structuredContent`에 복제하지 않습니다.

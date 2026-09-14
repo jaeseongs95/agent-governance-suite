@@ -9076,6 +9076,8 @@ var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
   pluginUpdateStatus: loadSchema("plugin-update-status.v1.schema.json"),
   pluginUpdateNotice: loadSchema("plugin-update-notice.v1.schema.json"),
+  executionContext: loadSchema("execution-context.v1.schema.json"),
+  executionRequirement: loadSchema("execution-requirement.v1.schema.json"),
   taskEnvelope: loadSchema("task-envelope.v1.schema.json"),
   planWorkflowRequest: loadSchema("plan-workflow-request.v1.schema.json"),
   skillDescriptor: loadSchema("skill-descriptor.v1.schema.json"),

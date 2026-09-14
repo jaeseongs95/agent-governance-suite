@@ -15867,6 +15867,8 @@ var ERROR_CODE = [
   "REQUEST_CONFLICT",
   "INTEGRITY_FAILED"
 ];
+var MODEL_CLASS = ["lightweight", "general", "deep", "frontier"];
+var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
 var POLICY_CAPABILITY = {
   coordination: "subagent-coordination",
   deliberation: "independent-deliberation",
@@ -17090,6 +17092,8 @@ var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
   pluginUpdateStatus: loadSchema("plugin-update-status.v1.schema.json"),
   pluginUpdateNotice: loadSchema("plugin-update-notice.v1.schema.json"),
+  executionContext: loadSchema("execution-context.v1.schema.json"),
+  executionRequirement: loadSchema("execution-requirement.v1.schema.json"),
   taskEnvelope: loadSchema("task-envelope.v1.schema.json"),
   planWorkflowRequest: loadSchema("plan-workflow-request.v1.schema.json"),
   skillDescriptor: loadSchema("skill-descriptor.v1.schema.json"),
@@ -19112,7 +19116,7 @@ var Server = class extends Protocol {
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "1.12.0",
+  version: "1.13.0",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
@@ -19389,16 +19393,7 @@ function embeddedSchema(source) {
   return schema;
 }
 var taskEnvelopeInputSchema = embeddedSchema(contractSchemas.taskEnvelope);
-var evaluationTaskEnvelopeInputSchema = structuredClone(taskEnvelopeInputSchema);
-evaluationTaskEnvelopeInputSchema.allOf = [{
-  properties: {
-    requiredCapabilities: {
-      type: "array",
-      contains: { const: "evaluation-validity-audit" }
-    }
-  },
-  required: ["requiredCapabilities"]
-}];
+var executionContextInputSchema = embeddedSchema(contractSchemas.executionContext);
 var planWorkflowInputSchema = {
   type: "object",
   oneOf: [
@@ -19406,12 +19401,29 @@ var planWorkflowInputSchema = {
     {
       type: "object",
       additionalProperties: false,
-      required: ["schemaVersion", "taskEnvelope", "evaluationAuditPurpose"],
+      required: ["schemaVersion", "taskEnvelope"],
       properties: {
         schemaVersion: { const: "1.0.0" },
-        taskEnvelope: evaluationTaskEnvelopeInputSchema,
+        taskEnvelope: taskEnvelopeInputSchema,
+        executionContext: executionContextInputSchema,
         evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] }
-      }
+      },
+      allOf: [{
+        if: {
+          properties: {
+            taskEnvelope: {
+              properties: {
+                requiredCapabilities: {
+                  type: "array",
+                  contains: { const: "evaluation-validity-audit" }
+                }
+              },
+              required: ["requiredCapabilities"]
+            }
+          }
+        },
+        then: { required: ["evaluationAuditPurpose"] }
+      }]
     }
   ]
 };
@@ -19537,7 +19549,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "plan_workflow",
-        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Evaluation validity audits use the structured wrapper to bind their purpose.",
+        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated workflows use the structured wrapper to bind host-observed execution context; evaluation validity audits also bind their purpose.",
         inputSchema: planWorkflowInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
@@ -19668,7 +19680,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       updateStatus = await updates.check(false);
       switch (request.params.name) {
         case "plan_workflow":
-          result = service.planWorkflow(args);
+          result = service.planWorkflow(args, true);
           break;
         case "open_convergence_root":
           {
@@ -21689,6 +21701,21 @@ var KOREAN_PROSE_CAPABILITIES = [
   "korean-prose-verification",
   "korean-prose-finalization"
 ];
+var DETERMINISTIC_CAPABILITIES = /* @__PURE__ */ new Set([
+  "korean-prose-finalization"
+]);
+var HIGH_ASSURANCE_CAPABILITIES = /* @__PURE__ */ new Set([
+  "independent-deliberation",
+  "independent-audit",
+  "evaluation-validity-audit",
+  "blocker-diagnosis",
+  "recovery-strategy-selection",
+  "iteration-frame-audit",
+  "korean-prose-selection",
+  "korean-prose-verification",
+  "acceptance-evidence-validation",
+  "mutation-risk-preflight"
+]);
 function canonicalJson2(value) {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
@@ -21703,10 +21730,11 @@ function canonicalJson2(value) {
   throw new WorkflowContractError("INVALID_INPUT", "Plan contains a non-serializable value.");
 }
 var WorkflowService = class {
-  constructor(registry2, validator = new ContractValidator(), store = new InMemoryWorkflowStore()) {
+  constructor(registry2, validator = new ContractValidator(), store = new InMemoryWorkflowStore(), defaultExecutionContext = null) {
     this.registry = registry2;
     this.validator = validator;
     this.store = store;
+    this.defaultExecutionContext = defaultExecutionContext;
     const encodedKey = this.store.getOrCreateSecret(PLAN_SIGNING_KEY, createPlanSigningKey);
     this.planSigningKey = Buffer.from(encodedKey, "base64url");
     if (this.planSigningKey.length !== 32) {
@@ -21716,21 +21744,30 @@ var WorkflowService = class {
   registry;
   validator;
   store;
+  defaultExecutionContext;
   planSigningKey;
-  planWorkflow(rawTask) {
+  planWorkflow(rawTask, requireExecutionContext = false) {
     try {
       const request = this.validator.planWorkflowRequest(rawTask);
       const wrapped = "taskEnvelope" in request;
       const task = wrapped ? request.taskEnvelope : request;
       const evaluationAuditPurpose = wrapped ? request.evaluationAuditPurpose : void 0;
+      const executionContext = wrapped ? request.executionContext ?? this.defaultExecutionContext : this.defaultExecutionContext;
       if (task.requiredCapabilities.includes("evaluation-validity-audit") && evaluationAuditPurpose === void 0) {
         throw new WorkflowContractError(
           "INVALID_INPUT",
           "Evaluation validity planning requires the structured request with evaluationAuditPurpose."
         );
       }
+      if (requireExecutionContext && task.orchestration.requested) {
+        this.assertExecutionContext(
+          this.bootstrapExecutionRequirement(task),
+          executionContext,
+          "bootstrap orchestration"
+        );
+      }
       this.validateWorkUnitGraph(task);
-      const plan = this.buildPlan(task, this.registry.read(), evaluationAuditPurpose);
+      const plan = this.buildPlan(task, this.registry.read(), evaluationAuditPurpose, executionContext);
       plan.integrityToken = this.signPlan(plan);
       this.validator.workflowPlan(plan);
       return apiOk2(plan);
@@ -21813,7 +21850,12 @@ var WorkflowService = class {
       const evaluationAuditPurpose = proposal.plan.stages.find(
         (stage) => stage.requiredCapability === "evaluation-validity-audit"
       )?.evaluationAuditPurpose;
-      const expectedPlan = this.buildPlan(proposal.taskEnvelope, this.registry.read(), evaluationAuditPurpose);
+      const expectedPlan = this.buildPlan(
+        proposal.taskEnvelope,
+        this.registry.read(),
+        evaluationAuditPurpose,
+        proposal.plan.bootstrapExecution?.context ?? this.defaultExecutionContext ?? void 0
+      );
       expectedPlan.integrityToken = this.signPlan(expectedPlan);
       if (canonicalJson2(expectedPlan) !== canonicalJson2(proposal.plan)) {
         throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan was not produced from the proposed task envelope.", {
@@ -22226,6 +22268,7 @@ var WorkflowService = class {
           });
         }
         this.assertRequiredArtifacts(stage, result);
+        this.assertExecutionAssurance(stage, result);
         this.assertDeclaredReceiptPolicy(receipt, stage, result);
         this.assertEvaluationValidityGate(stage, result);
       }
@@ -22258,7 +22301,7 @@ var WorkflowService = class {
       receipt.error = null;
     });
   }
-  buildPlan(task, skills, evaluationAuditPurpose) {
+  buildPlan(task, skills, evaluationAuditPurpose, executionContext) {
     const executionMode = task.orchestration.requested ? "orchestrated" : "direct";
     const errors = [];
     const stages = [];
@@ -22331,6 +22374,7 @@ var WorkflowService = class {
         phase: skill.phase,
         selectionReason: `Selected '${skill.skillId}' because provider '${skill.providerKey}' supplies '${satisfiedCapabilities.join("', '")}' at priority ${skill.priority}.`,
         state: "ready",
+        ...executionContext ? { executionRequirement: this.stageExecutionRequirement(task, capability, skill.gate.policy) } : {},
         requiredArtifacts: stageRequiredArtifacts,
         riskGate: skill.gate.policy,
         providerKey: skill.providerKey,
@@ -22360,6 +22404,12 @@ var WorkflowService = class {
       taskDigest: convergenceDigest(task),
       integrityToken: "pending",
       executionMode,
+      ...executionContext ? {
+        bootstrapExecution: {
+          requirement: this.bootstrapExecutionRequirement(task),
+          context: clone4(executionContext)
+        }
+      } : {},
       state: errors.length > 0 ? "blocked" : "ready",
       selectedSkills: [...selectedSkills],
       stages,
@@ -22468,6 +22518,7 @@ var WorkflowService = class {
       });
     }
     if (result.state === "passed") {
+      this.assertExecutionAssurance(stage, result);
       if (result.evidence.length === 0 || result.evidence.some((evidence) => !evidence.verified || !evidence.locator)) {
         throw new WorkflowContractError("MISSING_EVIDENCE", "A passed stage requires verified evidence.", {
           stageId: result.stageId
@@ -22648,6 +22699,98 @@ var WorkflowService = class {
         implementationActorIds
       });
     }
+  }
+  bootstrapExecutionRequirement(task) {
+    const deepBootstrap = task.riskLevel === "high" || task.riskLevel === "critical" || task.decision.complexity === "complex";
+    return {
+      policyId: "semantic-execution-assurance-v1",
+      kind: "semantic",
+      minimumModelClass: deepBootstrap ? "deep" : "general",
+      minimumReasoningEffort: "high",
+      observationRequired: true
+    };
+  }
+  stageExecutionRequirement(task, capability, riskGate) {
+    if (DETERMINISTIC_CAPABILITIES.has(capability)) {
+      return {
+        policyId: "semantic-execution-assurance-v1",
+        kind: "deterministic",
+        minimumModelClass: null,
+        minimumReasoningEffort: null,
+        observationRequired: false
+      };
+    }
+    let minimumModelClass = "general";
+    let minimumReasoningEffort = "medium";
+    if (HIGH_ASSURANCE_CAPABILITIES.has(capability)) {
+      minimumModelClass = "deep";
+      minimumReasoningEffort = "high";
+    }
+    if (task.riskLevel === "high") {
+      minimumReasoningEffort = "high";
+    }
+    if (task.riskLevel === "critical" || riskGate === "mandatory") {
+      minimumModelClass = "deep";
+      minimumReasoningEffort = "high";
+    }
+    return {
+      policyId: "semantic-execution-assurance-v1",
+      kind: "semantic",
+      minimumModelClass,
+      minimumReasoningEffort,
+      observationRequired: true
+    };
+  }
+  assertExecutionContext(requirement, context, subject) {
+    if (requirement.kind === "deterministic") return;
+    if (!context) {
+      throw new WorkflowContractError(
+        "BINDING_REQUIRED",
+        `${subject} requires observed model and reasoning metadata.`,
+        { requirement }
+      );
+    }
+    if (context.schemaVersion !== CONTRACT_VERSION || typeof context.model !== "string" || context.model.length === 0 || !["runtime", "spawn-result"].includes(context.source) || Number.isNaN(Date.parse(context.observedAt))) {
+      throw new WorkflowContractError(
+        "BINDING_INVALID",
+        `${subject} execution context is malformed or not host-observed.`,
+        { context }
+      );
+    }
+    const minimumModelClass = requirement.minimumModelClass;
+    const minimumReasoningEffort = requirement.minimumReasoningEffort;
+    if (!minimumModelClass || !minimumReasoningEffort) {
+      throw new WorkflowContractError(
+        "INVALID_INPUT",
+        `${subject} semantic requirement is incomplete.`,
+        { requirement }
+      );
+    }
+    const modelClassRank = MODEL_CLASS.indexOf(context.modelClass);
+    const minimumModelClassRank = MODEL_CLASS.indexOf(minimumModelClass);
+    const reasoningRank = REASONING_EFFORT.indexOf(context.reasoningEffort);
+    const minimumReasoningRank = REASONING_EFFORT.indexOf(minimumReasoningEffort);
+    if (modelClassRank < 0 || reasoningRank < 0 || modelClassRank < minimumModelClassRank || reasoningRank < minimumReasoningRank) {
+      throw new WorkflowContractError(
+        "BINDING_INVALID",
+        `${subject} execution profile is below the planned semantic assurance floor.`,
+        {
+          model: context.model,
+          modelClass: context.modelClass,
+          reasoningEffort: context.reasoningEffort,
+          minimumModelClass,
+          minimumReasoningEffort
+        }
+      );
+    }
+  }
+  assertExecutionAssurance(stage, result) {
+    if (!stage.executionRequirement || result.state !== "passed") return;
+    this.assertExecutionContext(
+      stage.executionRequirement,
+      result.executionContext,
+      `Stage '${stage.stageId}'`
+    );
   }
   validateWorkUnitGraph(task) {
     const graph = /* @__PURE__ */ new Map();

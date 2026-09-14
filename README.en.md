@@ -7,7 +7,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
 <!-- release-version:start -->
-The current public release is `v1.12.0` and includes fifteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. This release adds the explicit-only `codex-token-usage-analyzer` 0.1.0 and `evaluation-validity-auditor` 1.0.0 for checking the fairness and reproducibility of evaluation evidence. `korean-prose-editor` is enabled in the registry, direct descriptor, and Codex implicit-invocation setting after its expanded SQLite glossary passed build, lookup, and integration validation. The strict new-holdout run stopped before producing the final `≥80%` metric, so this release does not claim that threshold was met.
+The current public release is `v1.13.0` and includes fifteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. This release adds semantic execution assurance to MCP workflows: orchestration bootstrap and semantic stages cannot advance as `passed` without observed execution metadata that meets the planned minimum model class and reasoning effort. The floor is bound to role and risk rather than a specific product model, while receipts created before v1.13 remain readable when the new fields are absent.
 <!-- release-version:end -->
 
 ## How it works
@@ -22,6 +22,8 @@ flowchart LR
 ```
 
 The orchestrator selects only the checks required by the request and puts them in order. The local MCP server freezes that plan, then validates stage order, result shapes, evidence, and audit conditions. It issues a final receipt only after every required gate passes.
+
+For orchestrated workflows, the plan now also binds the execution capability of semantic stages. Bootstrap and each semantic stage receive a minimum model class and reasoning-effort floor based on role and risk. If the actual runtime metadata is missing or below that floor, the MCP layer rejects a `passed` result. The policy therefore prevents a weaker session configuration from silently satisfying a higher-assurance stage without pinning the suite to one product model.
 
 ### Example: a production deployment
 
@@ -62,7 +64,7 @@ Node.js 22.13.0 or later is required.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.12.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.13.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
