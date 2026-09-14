@@ -60,7 +60,7 @@
 - recovery 실패 보정은 공개 회귀 fixture와 계약에 반영했지만 `IMPLEMENTED_NOT_RERUN` 상태다. 실제 활성 후보를 새 ID·새 freeze·독립 corpus 타당성 검사를 갖춘 holdout에서 시험했으나, direct editing의 첫 모델 응답이 최소 편집 범위 계약을 위반해 fail-closed로 중단됐다. 실제 모델 출력 뒤에는 같은 frame을 재시도하지 않는다.
 - 다음 정식 frame용 fail-closed readiness gate를 구현했다. 새 구조화 cycle은 외부에서 보관한 frame·타당성 보고서 digest, 현재 suite revision, 실제 통합 대상과 동일한 평가 skill 사본·평가 toolchain checksum, 정답이 제거된 모델·독립 심사 입력과 별도 동결 label, corpus strata·rubric·threshold digest, 실행 횟수, 과거 terminal evidence와 독립 corpus 타당성 근거를 결속해야 receipt를 기록할 수 있다. selection 직전 만든 원자적 start claim을 후속 단계 metadata가 참조하며, 품질 판정은 self-reported 상태가 아니라 외부에서 고정한 품질 보고서, 전체 workflow receipt·SQLite·최종 case와 봉인된 독립 심사 결과에서 분자·분모를 다시 집계한다. `READY_TO_EVALUATE`와 `EVALUATION_EVIDENCE_PASSED`는 provider 활성화와 분리한다.
 - registry, 직접 descriptor와 Codex implicit invocation은 함께 활성 상태인지 저장소 검증에서 검사한다. 구조·의미 감사를 통과한 100-case holdout과 SQLite 조회는 각각 100/100 일치했지만, 실제 모델 평가는 direct selection 뒤 direct editing에서 멈춰 MCP arm, 독립 품질 심사와 최종 지표를 생성하지 못했다. 따라서 전체 품질 `≥80%`는 입증되지 않았으며, 현재 활성화는 그 지표 통과 주장이 아니라 별도의 사용자 승인에 따른 배포 결정이다.
-- SQLite 용어집은 공식 프로젝트·표준·TTA·공식 한국어 문서에 근거한 43개 entry와 48개 form으로 확장했다. `protect` 25개, `prefer` 4개, `avoid` 8개, `allow` 6개를 각각 시험하며, 데이터 버전은 `1.1.0`이다.
+- SQLite 용어집은 공식 프로젝트·표준·TTA·공식 한국어 문서에 근거한 243개 entry와 248개 form으로 확장했다. `protect` 162개, `prefer` 4개, `avoid` 9개, `allow` 68개를 각각 시험하며, 데이터 버전은 `1.2.0`이다. GitHub 한국어 용어집의 다의적인 단일어는 `allow`로 분류해 산문 편집을 과도하게 고정하지 않는다.
 - 용어집 평가는 전체 편집 품질과 분리한다. 같은 신규 문장의 direct/MCP 결과를 짝지어 비교하고, 사전 적중군·미적중군, 정책별 정확도, 조회 precision/recall, MCP가 새로 만든 개선과 회귀를 각각 집계한다. 정책별 서로 다른 entry 수가 부족하면 높은 점수라도 일반화 성공이 아니라 `INSUFFICIENT_EVIDENCE`로 기록한다.
 
 ### 종료 기준

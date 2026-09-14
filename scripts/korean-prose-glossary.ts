@@ -21,7 +21,7 @@ if (mode === "build") {
   const temporaryPath = `${databasePath}.building`;
   await rm(temporaryPath, { force: true });
   try {
-    buildGlossaryDatabase(temporaryPath, entries, { id: "korean-prose-core", version: "1.1.0" });
+    buildGlossaryDatabase(temporaryPath, entries, { id: "korean-prose-core", version: "1.2.0" });
     checkGlossaryDatabase(temporaryPath, entries);
     await rm(databasePath, { force: true });
     await rename(temporaryPath, databasePath);
