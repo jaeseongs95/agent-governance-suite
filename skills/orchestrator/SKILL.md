@@ -38,6 +38,7 @@ metadata:
 
 1. 사용자가 특정 전문 스킬을 명시했으면 해당 스킬의 적용 조건을 확인하고 그 스킬을 호출한다.
 2. 그 밖의 전문 기능은 요청의 목표와 수용 기준에서 capability를 추출하고 레지스트리 descriptor로 찾는다. 선택한 capability, provider, phase와 선택 이유를 계획에 남긴다.
+   `evaluation-validity-audit`를 선택할 때는 실행 전 설계 감사면 `TaskEnvelope.v1.evaluationAuditPurpose`를 `design-readiness`로, 평가 결과를 품질·릴리스 근거로 제출하는 감사면 `quality-or-release`로 고정한다. 후자는 `post-execution PASS`와 `qualifiesAsQualityOrReleaseEvidence: true`가 모두 확인되지 않으면 완료하지 않는다.
 3. 호스트 runtime metadata, 사용자 텍스트나 이번 요청의 화면 캡처에서 현재 task의 모델과 추론 수준을 모두 관측한 경우 `model-effort-fit-assessment`를 요청한다. 현재 선택이 없으면 이 capability 때문에 묻거나 작업을 멈추지 않으며, 결과가 `ADEQUATE`이면 사용자 안내를 생략한다.
 4. 사용자가 하위 에이전트·병렬 작업을 명시적으로 요청했거나, 아래 위임 판단을 모두 통과해 직접 수행보다 완료까지의 순이익이 있다고 확인한 경우에만 `subagent-coordination`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. 작업 단위가 둘 이상이거나 `orchestration.requested: true`라는 사실만으로 추가하지 않는다.
 5. 실제로 양립할 수 없는 대안이나 충돌하는 근거 중 하나를 선택해야 하고, 독립 관점과 교차 반박이 그 선택에 필요한 경우에만 `independent-deliberation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. `decision.complexity: complex`만으로 추가하지 않으며, 이 단계는 구현이나 완료 게이트를 대체하지 않는다.

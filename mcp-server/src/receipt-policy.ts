@@ -62,11 +62,15 @@ function jsonPointer(value: unknown, pointer: string): unknown {
 }
 
 function isOpaqueReference(value: string): boolean {
-  return DIGEST.test(value) || UUID.test(value) || RFC3339_TIMESTAMP.test(value) || REFERENCE.test(value);
+  return DIGEST.test(value) || UUID.test(value) || REFERENCE.test(value);
+}
+
+function isSafeScalar(value: string): boolean {
+  return isOpaqueReference(value) || RFC3339_TIMESTAMP.test(value);
 }
 
 function assertSafeString(value: string, fixedTokens: Set<string>, location: string, allowEmpty = false): void {
-  if ((allowEmpty && value === "") || fixedTokens.has(value) || PROTOCOL_TOKENS.has(value) || isOpaqueReference(value)) return;
+  if ((allowEmpty && value === "") || fixedTokens.has(value) || PROTOCOL_TOKENS.has(value) || isSafeScalar(value)) return;
   throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt policy rejected free text.", {
     location,
   });

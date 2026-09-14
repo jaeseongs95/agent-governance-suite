@@ -21341,10 +21341,13 @@ function jsonPointer(value, pointer) {
   }, value);
 }
 function isOpaqueReference(value) {
-  return DIGEST2.test(value) || UUID.test(value) || RFC3339_TIMESTAMP.test(value) || REFERENCE.test(value);
+  return DIGEST2.test(value) || UUID.test(value) || REFERENCE.test(value);
+}
+function isSafeScalar(value) {
+  return isOpaqueReference(value) || RFC3339_TIMESTAMP.test(value);
 }
 function assertSafeString(value, fixedTokens, location, allowEmpty = false) {
-  if (allowEmpty && value === "" || fixedTokens.has(value) || PROTOCOL_TOKENS.has(value) || isOpaqueReference(value)) return;
+  if (allowEmpty && value === "" || fixedTokens.has(value) || PROTOCOL_TOKENS.has(value) || isSafeScalar(value)) return;
   throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt policy rejected free text.", {
     location
   });
@@ -22119,6 +22122,7 @@ var WorkflowService = class {
           this.assertRequiredArtifacts(target, result);
           this.assertDeliberationGate(target, result);
           this.assertMandatoryAuditGate(target, result);
+          this.assertEvaluationValidityGate(target, result);
         }
         target.state = result.state;
         receipt.stageResults.push(clone4(result));
@@ -22173,6 +22177,7 @@ var WorkflowService = class {
         }
         this.assertRequiredArtifacts(stage, result);
         this.assertDeclaredReceiptPolicy(receipt, stage, result);
+        this.assertEvaluationValidityGate(stage, result);
       }
       const mandatoryAudit = receipt.plan.stages.find((stage) => stage.riskGate === "mandatory");
       if (mandatoryAudit && mandatoryAudit.state !== "passed") {
@@ -22266,6 +22271,7 @@ var WorkflowService = class {
         stageId: stageId(order, capability),
         order,
         requiredCapability: capability,
+        ...capability === "evaluation-validity-audit" ? { evaluationAuditPurpose: task.evaluationAuditPurpose } : {},
         satisfiedCapabilities,
         skillId: skill.skillId,
         phase: skill.phase,
@@ -22541,6 +22547,25 @@ var WorkflowService = class {
         stageId: stage.stageId
       });
     }
+  }
+  assertEvaluationValidityGate(stage, result) {
+    if (stage.requiredCapability !== "evaluation-validity-audit") return;
+    const output = result.output.output;
+    const purpose = stage.evaluationAuditPurpose;
+    const isDesignReadiness = purpose === "design-readiness" && output?.auditStage === "pre-execution" && output?.verdict === "PASS" && output?.qualifiesAsQualityOrReleaseEvidence === false;
+    const isQualityOrRelease = purpose === "quality-or-release" && output?.auditStage === "post-execution" && output?.verdict === "PASS" && output?.qualifiesAsQualityOrReleaseEvidence === true;
+    if (isDesignReadiness || isQualityOrRelease) return;
+    throw new WorkflowContractError(
+      "GATE_FAILED",
+      "Evaluation validity PASS does not satisfy the frozen audit purpose.",
+      {
+        stageId: stage.stageId,
+        purpose: purpose ?? null,
+        auditStage: output?.auditStage ?? null,
+        verdict: output?.verdict ?? null,
+        qualifiesAsQualityOrReleaseEvidence: output?.qualifiesAsQualityOrReleaseEvidence ?? null
+      }
+    );
   }
   assertMandatoryAuditGate(stage, result) {
     if (stage.riskGate !== "mandatory") return;
