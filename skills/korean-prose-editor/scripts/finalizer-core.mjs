@@ -257,7 +257,7 @@ function validateGlossaryContext(mode, sourceDigest, value, manifest) {
   const glossary = matchSet.glossary;
   const validGlossaryMetadata = glossary && typeof glossary === "object" && !Array.isArray(glossary)
     && hasExactKeys(glossary, ["id", "version", "contentDigest"])
-    && glossary.id === "korean-prose-core" && glossary.version === "1.0.0"
+    && glossary.id === "korean-prose-core" && glossary.version === "1.1.0"
     && typeof glossary.contentDigest === "string" && DIGEST.test(glossary.contentDigest);
   if (available) {
     if (!validGlossaryMetadata
