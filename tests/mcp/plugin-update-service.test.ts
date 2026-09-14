@@ -76,8 +76,8 @@ describe("PluginUpdateService", () => {
       fetcher: async () => {
         calls += 1;
         return jsonResponse([
-          reference("v1.9.0"),
-          reference("v1.10.0"),
+          reference(NEXT_TAG),
+          reference(NEXT_NEXT_TAG),
           reference("v2.0.0-beta.1"),
           reference("latest"),
         ], { headers: { etag: "fixture-etag" } });
@@ -86,8 +86,8 @@ describe("PluginUpdateService", () => {
 
     const first = await service.check();
     expect(first).toMatchObject({
-      latestVersion: "1.10.0",
-      latestTag: "v1.10.0",
+      latestVersion: NEXT_NEXT_VERSION,
+      latestTag: NEXT_NEXT_TAG,
       comparison: "update-available",
       stale: false,
       lastErrorCode: null,
@@ -95,7 +95,7 @@ describe("PluginUpdateService", () => {
     new ContractValidator().pluginUpdateStatus(first);
 
     now = new Date("2026-09-13T12:00:00.000Z");
-    expect((await service.check()).latestVersion).toBe("1.10.0");
+    expect((await service.check()).latestVersion).toBe(NEXT_NEXT_VERSION);
     expect(calls).toBe(1);
 
     await service.check(true);
