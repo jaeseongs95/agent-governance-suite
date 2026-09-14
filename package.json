@@ -15,7 +15,7 @@
     "dev": "tsx mcp-server/src/index.ts",
     "runtime:check": "node scripts/check-runtime.mjs",
     "bundle:check": "node scripts/check-bundle.mjs",
-    "validate:all": "node scripts/validate-repository.mjs && node scripts/run-python-validations.mjs",
+    "validate:all": "node scripts/validate-repository.mjs && node scripts/run-python-validations.mjs && tsx scripts/korean-prose-glossary.ts --mode check",
     "validate:official": "node scripts/validate-official.mjs",
     "validate:skill": "node scripts/validate-skill.mjs",
     "new:skill": "node scripts/new-skill.mjs",
@@ -28,7 +28,9 @@
     "eval:preflight": "tsx scripts/verify-korean-prose-evaluation-preflight.ts",
     "eval:readiness": "tsx scripts/verify-korean-prose-readiness.ts",
     "eval:receipt": "tsx scripts/record-korean-prose-run.ts",
-    "eval:receipt:verify": "tsx scripts/verify-korean-prose-receipt.ts"
+    "eval:receipt:verify": "tsx scripts/verify-korean-prose-receipt.ts",
+    "glossary:build": "tsx scripts/korean-prose-glossary.ts --mode build",
+    "glossary:check": "tsx scripts/korean-prose-glossary.ts --mode check"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

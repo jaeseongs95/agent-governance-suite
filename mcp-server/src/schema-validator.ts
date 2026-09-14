@@ -19,6 +19,8 @@ import {
   type GuardedWorkflowStartRequestV1,
   type OpenConvergenceRootRequestV1,
   type InspectContextRequestV1,
+  type KoreanProseGlossaryLookupRequestV1,
+  type KoreanProseGlossaryLookupResultV1,
   type ExecuteStateCleanupRequestV1,
   type LoadContextRequestV1,
   type PurgeDirectContextRequestV1,
@@ -82,6 +84,8 @@ export const contractSchemas = {
   executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
   stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
   stateCleanupReceipt: loadSchema("state-cleanup-receipt.v1.schema.json"),
+  koreanProseGlossaryLookupRequest: loadSchema("korean-prose-glossary-lookup-request.v1.schema.json"),
+  koreanProseGlossaryLookupResult: loadSchema("korean-prose-glossary-lookup-result.v1.schema.json"),
 };
 
 function errorText(errors: ErrorObject[] | null | undefined): string {
@@ -131,6 +135,8 @@ export class ContractValidator {
       executeStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/execute-state-cleanup-request.v1.schema.json")!,
       stateCleanupPlan: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-plan.v1.schema.json")!,
       stateCleanupReceipt: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-receipt.v1.schema.json")!,
+      koreanProseGlossaryLookupRequest: ajv.getSchema("https://skill-suite.local/contracts/korean-prose-glossary-lookup-request.v1.schema.json")!,
+      koreanProseGlossaryLookupResult: ajv.getSchema("https://skill-suite.local/contracts/korean-prose-glossary-lookup-result.v1.schema.json")!,
     };
   }
 
@@ -253,6 +259,14 @@ export class ContractValidator {
 
   stateCleanupReceipt(value: unknown): StateCleanupReceiptV1 {
     return this.assert<StateCleanupReceiptV1>("stateCleanupReceipt", value);
+  }
+
+  koreanProseGlossaryLookupRequest(value: unknown): KoreanProseGlossaryLookupRequestV1 {
+    return this.assert<KoreanProseGlossaryLookupRequestV1>("koreanProseGlossaryLookupRequest", value);
+  }
+
+  koreanProseGlossaryLookupResult(value: unknown): KoreanProseGlossaryLookupResultV1 {
+    return this.assert<KoreanProseGlossaryLookupResultV1>("koreanProseGlossaryLookupResult", value);
   }
 
   apiResult<T>(value: unknown): ApiResultV1<T> {

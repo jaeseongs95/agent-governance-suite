@@ -4,7 +4,7 @@
   "title": "Finalization request",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "mode", "subagentsAvailable", "plan", "source", "manifest", "sourceUnitManifest", "selection", "editing", "verification", "rubricDigest"],
+  "required": ["schemaVersion", "mode", "subagentsAvailable", "plan", "source", "manifest", "sourceUnitManifest", "glossaryMatchSet", "selection", "editing", "verification", "rubricDigest"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "mode": { "enum": ["mcp", "direct"] },
@@ -13,6 +13,7 @@
     "source": { "type": "string" },
     "manifest": { "$ref": "protected-manifest.schema.json" },
     "sourceUnitManifest": { "$ref": "source-unit-manifest.v1.schema.json" },
+    "glossaryMatchSet": { "oneOf": [{ "type": "null" }, { "$ref": "glossary-match-set.v1.schema.json" }] },
     "selection": { "$ref": "selection-work-product.v1.schema.json" },
     "editing": { "$ref": "editing-work-product.v1.schema.json" },
     "verification": { "$ref": "verification-work-product.v1.schema.json" },

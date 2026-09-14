@@ -6,4 +6,5 @@
 *.mjs text eol=lf
 *.js text eol=lf
 *.ts text eol=lf
+*.sqlite3 binary
 mcp-server/dist/server.mjs text eol=lf -whitespace

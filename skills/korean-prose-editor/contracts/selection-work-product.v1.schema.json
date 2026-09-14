@@ -4,11 +4,12 @@
   "title": "Private selection work product",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "actorId", "sourceDigest", "status", "decisions"],
+  "required": ["schemaVersion", "actorId", "sourceDigest", "glossaryBinding", "status", "decisions"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "actorId": { "$ref": "#/$defs/actorId" },
     "sourceDigest": { "$ref": "#/$defs/digest" },
+    "glossaryBinding": { "$ref": "glossary-binding.v1.schema.json" },
     "status": { "enum": ["ready", "needs-input", "blocked"] },
     "decisions": {
       "type": "array",
