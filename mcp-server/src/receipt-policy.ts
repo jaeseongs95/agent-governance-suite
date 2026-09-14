@@ -10,6 +10,7 @@ import {
 
 const DIGEST = /^(?:sha256:)?[a-f0-9]{64}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const RFC3339_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 const REFERENCE = /^(?:artifact|digest|schema|urn|run|stage|commit|test|file|document|tool):(?:\/\/)?[A-Za-z0-9][A-Za-z0-9._~:/?#@!$&'()*+,;=%-]{7,}$/;
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 const ERROR_DETAIL_KEYS = new Set([
@@ -48,6 +49,8 @@ const PROTOCOL_TOKENS = new Set<string>([
   "tool",
   "reference-only",
   "verified",
+  "COOPERATIVE_PROVENANCE_ASSERTIONS",
+  "JSON_JSONL_ONLY_V1",
 ]);
 
 function jsonPointer(value: unknown, pointer: string): unknown {
@@ -59,7 +62,7 @@ function jsonPointer(value: unknown, pointer: string): unknown {
 }
 
 function isOpaqueReference(value: string): boolean {
-  return DIGEST.test(value) || UUID.test(value) || REFERENCE.test(value);
+  return DIGEST.test(value) || UUID.test(value) || RFC3339_TIMESTAMP.test(value) || REFERENCE.test(value);
 }
 
 function assertSafeString(value: string, fixedTokens: Set<string>, location: string, allowEmpty = false): void {

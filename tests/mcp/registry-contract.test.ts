@@ -31,6 +31,7 @@ describe("bundled skill registry", () => {
       "mutation-risk-preflight": "1.0.0",
       "model-effort-advisor": "0.1.0",
       "iteration-frame-auditor": "1.0.0",
+      "evaluation-validity-auditor": "1.0.0",
     });
     expect(skills.find((skill) => skill.skillId === "independent-deliberation-panel")?.producedArtifacts)
       .toContain("decision-record");
@@ -47,6 +48,7 @@ describe("bundled skill registry", () => {
       "mutation-risk-preflight",
       "model-effort-fit-assessment",
       "iteration-frame-audit",
+      "evaluation-validity-audit",
     ]));
   });
 

@@ -217,6 +217,24 @@
         "Enable the integrated provider, direct descriptor, and implicit invocation under explicit release approval while preserving the incomplete quality-gate record.",
         "Expand the reviewed glossary to data version 1.1.0 with policy-balanced official terminology and deterministic multi-form ordering."
       ]
+    },
+    {
+      "skillId": "evaluation-validity-auditor",
+      "path": "skills/evaluation-validity-auditor",
+      "source": "https://github.com/jaeseongs95/evaluation-validity-auditor.git",
+      "sourcePath": ".",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "ref": {
+        "kind": "tag",
+        "value": "v1.0.0",
+        "commit": "d1d564462ae93e205b27bcc1443ee17d04a97dcf"
+      },
+      "updatePolicy": "auto-pr",
+      "upstreamChecksum": "sha256:083ee804efcbe785ca87c6f7a1e20e5cd71732bcc44c7e8e8546336a412f8f24",
+      "integratedChecksum": "sha256:083ee804efcbe785ca87c6f7a1e20e5cd71732bcc44c7e8e8546336a412f8f24",
+      "checksumScope": "relative paths and normalized text bytes under skills/evaluation-validity-auditor",
+      "downstreamModifications": []
     }
   ]
 }

@@ -21292,6 +21292,7 @@ function validateDecisionRecordSemantics(record2) {
 // mcp-server/src/receipt-policy.ts
 var DIGEST2 = /^(?:sha256:)?[a-f0-9]{64}$/;
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+var RFC3339_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 var REFERENCE = /^(?:artifact|digest|schema|urn|run|stage|commit|test|file|document|tool):(?:\/\/)?[A-Za-z0-9][A-Za-z0-9._~:/?#@!$&'()*+,;=%-]{7,}$/;
 var NIL_UUID = "00000000-0000-0000-0000-000000000000";
 var ERROR_DETAIL_KEYS = /* @__PURE__ */ new Set([
@@ -21328,7 +21329,9 @@ var PROTOCOL_TOKENS = /* @__PURE__ */ new Set([
   "document",
   "tool",
   "reference-only",
-  "verified"
+  "verified",
+  "COOPERATIVE_PROVENANCE_ASSERTIONS",
+  "JSON_JSONL_ONLY_V1"
 ]);
 function jsonPointer(value, pointer) {
   return pointer.split("/").slice(1).reduce((current, token) => {
@@ -21338,7 +21341,7 @@ function jsonPointer(value, pointer) {
   }, value);
 }
 function isOpaqueReference(value) {
-  return DIGEST2.test(value) || UUID.test(value) || REFERENCE.test(value);
+  return DIGEST2.test(value) || UUID.test(value) || RFC3339_TIMESTAMP.test(value) || REFERENCE.test(value);
 }
 function assertSafeString(value, fixedTokens, location, allowEmpty = false) {
   if (allowEmpty && value === "" || fixedTokens.has(value) || PROTOCOL_TOKENS.has(value) || isOpaqueReference(value)) return;
