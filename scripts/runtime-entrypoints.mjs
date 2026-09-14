@@ -11,6 +11,7 @@ export const SKILL_RUNTIME_ENTRYPOINTS = Object.freeze([
   { path: "skills/evaluation-validity-auditor/scripts/cli.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
   { path: "skills/evaluation-validity-auditor/scripts/digest-request.mjs", expectedExitCode: 2, outputIncludes: "EvaluationValidityRequest.v1 validation failed" },
   { path: "skills/evaluation-validity-auditor/scripts/validate-report.mjs", expectedExitCode: 2, outputIncludes: "--artifact-root is required" },
+  { path: "skills/codex-token-usage-analyzer/scripts/cli.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
   { path: "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs", expectedExitCode: 1, outputIncludes: "INVALID_INPUT" },
   { path: "skills/iteration-frame-auditor/scripts/digest-request.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
   { path: "skills/iteration-frame-auditor/scripts/validate-review.mjs", expectedExitCode: 1, outputIncludes: "review must be an object" },

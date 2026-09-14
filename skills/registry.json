@@ -1293,34 +1293,98 @@
       "priority": 80,
       "providers": [
         {
-          "capabilities": ["iteration-frame-audit"],
+          "capabilities": [
+            "iteration-frame-audit"
+          ],
           "executionClass": "workflow",
           "phase": "convergence-review",
           "phaseOrder": 80,
-          "requiredInputArtifacts": ["convergence-root", "attempt-history", "frame-change-proposal", "reviewer-assignment", "review-evidence"],
-          "inputBindings": [
-            { "targetArtifact": "convergence-root", "sources": ["convergence-guard:root"], "operation": "require-external" },
-            { "targetArtifact": "attempt-history", "sources": ["convergence-guard:attempt-history"], "operation": "require-external" },
-            { "targetArtifact": "frame-change-proposal", "sources": ["convergence-guard:frame-change-proposal"], "operation": "require-external" },
-            { "targetArtifact": "reviewer-assignment", "sources": ["orchestrator:fresh-reviewer-assignment"], "operation": "require-external" },
-            { "targetArtifact": "review-evidence", "sources": ["convergence-guard:evidence-inventory"], "operation": "collect" }
+          "requiredInputArtifacts": [
+            "convergence-root",
+            "attempt-history",
+            "frame-change-proposal",
+            "reviewer-assignment",
+            "review-evidence"
           ],
-          "producedArtifacts": ["iteration-frame-comparison", "convergence-review"],
+          "inputBindings": [
+            {
+              "targetArtifact": "convergence-root",
+              "sources": [
+                "convergence-guard:root"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "attempt-history",
+              "sources": [
+                "convergence-guard:attempt-history"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "frame-change-proposal",
+              "sources": [
+                "convergence-guard:frame-change-proposal"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "reviewer-assignment",
+              "sources": [
+                "orchestrator:fresh-reviewer-assignment"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "review-evidence",
+              "sources": [
+                "convergence-guard:evidence-inventory"
+              ],
+              "operation": "collect"
+            }
+          ],
+          "producedArtifacts": [
+            "iteration-frame-comparison",
+            "convergence-review"
+          ],
           "outputSchema": "contracts/convergence-review.v1.schema.json",
           "resultSchema": "contracts/provider-result.v1.schema.json",
           "stateMapping": {
             "selector": "/output/route",
             "values": {
-              "resume-new-epoch": { "state": "passed", "errorRequired": false },
-              "diagnose": { "state": "needs-redesign", "errorRequired": false },
-              "panel": { "state": "needs-redesign", "errorRequired": false },
-              "needs-user": { "state": "needs-input", "errorRequired": false },
-              "stop": { "state": "blocked", "errorRequired": false }
+              "resume-new-epoch": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "diagnose": {
+                "state": "needs-redesign",
+                "errorRequired": false
+              },
+              "panel": {
+                "state": "needs-redesign",
+                "errorRequired": false
+              },
+              "needs-user": {
+                "state": "needs-input",
+                "errorRequired": false
+              },
+              "stop": {
+                "state": "blocked",
+                "errorRequired": false
+              }
             },
             "default": "reject",
-            "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE", "MCP_UNAVAILABLE"]
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE",
+              "MCP_UNAVAILABLE"
+            ]
           },
-          "selectionCriteria": ["attempt-budget-exhausted", "frame-semantics-change-detected", "explicit-convergence-frame-review"],
+          "selectionCriteria": [
+            "attempt-budget-exhausted",
+            "frame-semantics-change-detected",
+            "explicit-convergence-frame-review"
+          ],
           "preconditions": [
             "A frozen convergence root, append-only attempt history, proposed frame change, and verified evidence inventory are available.",
             "A fresh-context reviewer distinct from every implementation actor is available."
@@ -1332,7 +1396,11 @@
             "userValueChange": "needs-input",
             "retry": "new-evidence-or-new-reviewer-assignment-only"
           },
-          "gate": { "kind": "completion", "policy": "mandatory", "validator": "contracts/convergence-review.v1.schema.json" }
+          "gate": {
+            "kind": "completion",
+            "policy": "mandatory",
+            "validator": "contracts/convergence-review.v1.schema.json"
+          }
         }
       ]
     },
@@ -1836,6 +1904,90 @@
             "mode": "reference-only",
             "actorIdPointer": "/output/auditorActorId",
             "uniqueness": "run"
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": "2.0.0",
+      "skillId": "codex-token-usage-analyzer",
+      "version": "0.1.0",
+      "path": "./codex-token-usage-analyzer",
+      "enabled": true,
+      "priority": 50,
+      "providers": [
+        {
+          "capabilities": [
+            "local-codex-token-usage-analysis"
+          ],
+          "executionClass": "workflow",
+          "phase": "usage-analysis",
+          "phaseOrder": 50,
+          "requiredInputArtifacts": [
+            "token-usage-report-request"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "token-usage-report-request",
+              "sources": [
+                "workflow:token-usage-report-request"
+              ],
+              "operation": "require-external"
+            }
+          ],
+          "producedArtifacts": [
+            "token-usage-report",
+            "token-usage-markdown-artifact"
+          ],
+          "outputSchema": "skills/codex-token-usage-analyzer/contracts/token-usage-report.v1.schema.json",
+          "resultSchema": "skills/codex-token-usage-analyzer/integration/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/verdict",
+            "values": {
+              "PASS": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "PARTIAL": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "NEEDS_INPUT": {
+                "state": "needs-input",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "RUN_NOT_FOUND",
+                  "INVALID_INPUT"
+                ]
+              },
+              "BLOCKED": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "MISSING_EVIDENCE"
+                ]
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          },
+          "selectionCriteria": [
+            "explicit-codex-token-usage-analysis-request"
+          ],
+          "preconditions": [
+            "The request explicitly invokes codex-token-usage-analyzer and local Codex session logs are readable."
+          ],
+          "failureHandling": {
+            "missingInput": "needs-input",
+            "invalidReport": "failed",
+            "retry": "corrected-request-or-access-only"
+          },
+          "gate": {
+            "kind": "none",
+            "policy": "none"
           }
         }
       ]
