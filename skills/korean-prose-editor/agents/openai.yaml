@@ -3,4 +3,4 @@ interface:
   short_description: "직접 실행은 사전 없이, MCP 경로는 SQLite 용어집과 함께 편집"
   default_prompt: "Use $korean-prose-editor conservatively. Do not use its glossary in direct mode; in MCP mode, bind exactly one glossary lookup before selection."
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false

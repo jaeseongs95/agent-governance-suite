@@ -7,7 +7,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
 <!-- release-version:start -->
-The current public release is `v1.5.0`. It includes twelve governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. The current `main` candidate enables the Korean prose workflow in the registry, direct descriptor, and Codex implicit-invocation setting; the new holdout evaluation freezes and tests that same enabled candidate. This change has not been published as a remote release.
+The current public release is `v1.5.0`. It includes twelve governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. The Korean prose workflow was evaluated as an enabled candidate with the expanded SQLite glossary, but it did not pass editing-contract validation, so it is disabled again in the registry, direct descriptor, and Codex implicit-invocation setting. This change has not been published as a remote release.
 <!-- release-version:end -->
 
 ## How it works

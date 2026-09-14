@@ -207,14 +207,14 @@
       "ref": { "kind": "commit", "value": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49", "commit": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49" },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:a88252aa9c4e654458ecc7eed282d26c022ca9f5db858f87f3237decc622feb8",
-      "integratedChecksum": "sha256:ded8cebb340eee7f535e31958ae99b3ce115eeebbe70957f5b87833999de230e",
+      "integratedChecksum": "sha256:f83735f4ac0cafb9f44543790464386108e3b7f34e88cb00021162dd083e1a1e",
       "checksumScope": "relative paths and normalized text bytes under skills/korean-prose-editor",
       "downstreamModifications": [
-        "Control runtime activation consistently across the skill instruction, descriptor, and implicit-invocation policy.",
+        "Keep runtime activation disabled consistently across the skill instruction, descriptor, and implicit-invocation policy until the quality gate passes.",
         "Retain the suite-level frozen-evaluation preflight contract.",
         "Document canonical cycle receipt verification in the integration copy.",
         "Ship a reviewed SQLite glossary and bind one read-only MCP lookup across the Korean prose roles.",
-        "Enable the integrated provider, direct descriptor, and implicit invocation for the main-candidate evaluation.",
+        "Record the failed enabled-candidate evaluation and return the provider, direct descriptor, and implicit invocation to the disabled state.",
         "Expand the reviewed glossary to data version 1.1.0 with policy-balanced official terminology and deterministic multi-form ordering."
       ]
     }
