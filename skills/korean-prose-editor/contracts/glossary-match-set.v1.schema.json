@@ -14,7 +14,7 @@
         { "type": "null" },
         {
           "type": "object", "additionalProperties": false, "required": ["id", "version", "contentDigest"],
-          "properties": { "id": { "const": "korean-prose-core" }, "version": { "const": "1.0.0" }, "contentDigest": { "$ref": "#/$defs/digest" } }
+          "properties": { "id": { "const": "korean-prose-core" }, "version": { "const": "1.1.0" }, "contentDigest": { "$ref": "#/$defs/digest" } }
         }
       ]
     },
