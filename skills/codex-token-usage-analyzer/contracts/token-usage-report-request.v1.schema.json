@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex-token-usage-analyzer.local/contracts/token-usage-report-request.v1.schema.json",
+  "title": "TokenUsageReportRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "target"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "target": { "type": "string", "minLength": 1 },
+    "markdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["directory"],
+      "properties": {
+        "directory": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

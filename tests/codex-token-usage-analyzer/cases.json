@@ -1,0 +1,20 @@
+{
+  "normal": [
+    {
+      "id": "normal-01",
+      "expected": "an explicit thread or project target returns a schema-valid PASS or PARTIAL local token usage report"
+    }
+  ],
+  "boundary": [
+    {
+      "id": "boundary-01",
+      "expected": "the analyzer remains explicit-only and refuses Markdown writes below session or plugin installation paths"
+    }
+  ],
+  "failure": [
+    {
+      "id": "failure-01",
+      "expected": "invalid request contracts return an INVALID_INPUT adapter result with exit code 2"
+    }
+  ]
+}
