@@ -20,4 +20,6 @@
 
 ## 호환성과 복구
 
-공개 workflow SQLite schema는 바뀌지 않는다. 문제가 생기면 marketplace ref와 설치 버전을 `v1.5.0`으로 복원한다. `v1.5.0`에서는 `korean-prose-editor`가 비활성 상태다.
+이 릴리스는 workflow SQLite schema를 v3에서 v4로, continuity SQLite schema를 v1에서 v2로 자동 migration한다. 기존 run, revision, run ID sequence, 계획 서명 키, 업데이트 상태, convergence guard 이력과 continuity snapshot은 회귀 테스트에서 보존됨을 확인했다.
+
+업그레이드 전 MCP 서버를 중지하고 두 DB를 `VACUUM INTO`처럼 WAL까지 일관되게 반영하는 방식으로 각각 백업해야 한다. `v1.5.0`으로 롤백하려면 새 MCP를 중지하고, migration 전 backup을 별도 경로에서 복원한 다음 marketplace ref와 설치 버전을 `v1.5.0`으로 되돌려 이전 MCP가 기존 상태를 여는지 확인한다. 새 schema DB를 그대로 둔 채 이전 MCP만 재설치하는 것은 롤백이 아니다. 업그레이드 전에 DB가 없었다면 새 DB를 별도 보관하고 원래 상태 경로에서 제거한 뒤 이전 MCP를 시작한다. `v1.5.0`에서는 `korean-prose-editor`가 비활성 상태다.
