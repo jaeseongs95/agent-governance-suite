@@ -18,8 +18,8 @@
 - continuity SQLite v1 DB를 v2로 열었을 때 기존 task·snapshot·request·tombstone·observation이 유지되고 보존 기간 조회 index가 추가된다.
 - 업데이트 확인의 24시간 캐시, 실패 후 1시간 재시도, 버전당 한 번 안내와 비차단 실패 경로를 fixture로 검증한다.
 - 배포 후보의 현재 버전과 공개 저장소의 최신 안정 tag를 비교하고, 업데이트 알림이 설치 파일이나 마켓플레이스 설정을 변경하지 않는지 확인한다.
-- 품질 게이트를 통과하지 못한 포함 스킬은 `skills/registry.json`에서 `enabled: false`이며 MCP capability 선택 결과가 없는지 확인한다.
-- 같은 비활성 스킬의 직접 descriptor와 `agents/openai.yaml`도 비활성인지, 직접 호출 시 provider와 스크립트를 실행하지 않는 fail-closed 지침이 있는지 확인한다.
+- 포함 스킬의 품질 평가 상태와 runtime 활성 상태를 공개 문서에 분리해 기록한다. 품질 게이트를 통과하지 못한 스킬은 기본적으로 비활성화하되, 사용자가 현재 후보와 남은 제한을 확인하고 활성 배포를 명시적으로 승인한 경우에는 registry, 직접 descriptor와 implicit invocation을 같은 릴리스에서 일관되게 활성화한다.
+- 비활성 스킬은 직접 호출 시 provider와 스크립트를 실행하지 않는 fail-closed 지침을 유지한다. 활성 스킬은 registry, 직접 descriptor, `agents/openai.yaml`과 `SKILL.md`의 상태가 모두 일치하는지 확인한다.
 - SQLite가 전체 `WorkflowReceipt`·`StageResult`와 direct continuity snapshot의 `core`·`evidenceRefs`를 평문으로 저장한다는 사실, 확인 기반 보존·삭제 정책, backup의 수동 삭제 책임과 OS 접근 권한 정책을 사용자 문서에서 설명한다.
 
 공개 전에는 버전, 변경 요약, 호환성 영향, 알려진 제한을 확인합니다. SQLite 스키마가 바뀌면 기존 DB를 복사해 둔 뒤 릴리스 후보로 열어 호환성을 확인하고, 복구 절차도 변경 요약에 남깁니다. 고위험 변경이 포함되면 독립 감사의 대상 식별자와 판정이 현재 릴리스 후보와 일치하는지도 확인합니다.
