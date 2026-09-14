@@ -25,6 +25,7 @@ import type {
 } from "../../contracts/types.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
+import { CURRENT_VERSION, NEXT_TAG, NEXT_VERSION } from "./version-fixtures.js";
 
 const rootDirectory = fileURLToPath(new URL("../../", import.meta.url));
 const bundledServer = fileURLToPath(new URL("../../mcp-server/dist/server.mjs", import.meta.url));
@@ -106,9 +107,9 @@ function seedAvailableUpdate(databasePath: string): void {
   try {
     store.putPluginUpdateState({
       targetId: "agent-governance-suite",
-      currentVersion: "1.6.0",
-      latestVersion: "1.7.0",
-      latestTag: "v1.7.0",
+      currentVersion: CURRENT_VERSION,
+      latestVersion: NEXT_VERSION,
+      latestTag: NEXT_TAG,
       latestCommit: "c".repeat(40),
       etag: "stdio-fixture",
       comparison: "update-available",
@@ -324,8 +325,8 @@ describe("bundled STDIO MCP server", () => {
       expect(plannedContents).toHaveLength(2);
       expect(JSON.parse(plannedContents[1]!)).toMatchObject({
         kind: "plugin-update-notice",
-        currentVersion: "1.6.0",
-        latestVersion: "1.7.0",
+        currentVersion: CURRENT_VERSION,
+        latestVersion: NEXT_VERSION,
         automaticInstall: false,
       });
       expect(planned.ok).toBe(true);
@@ -349,8 +350,8 @@ describe("bundled STDIO MCP server", () => {
         arguments: { force: false },
       }));
       expect(updateStatus.data).toMatchObject({
-        currentVersion: "1.6.0",
-        latestVersion: "1.7.0",
+        currentVersion: CURRENT_VERSION,
+        latestVersion: NEXT_VERSION,
         comparison: "update-available",
         automaticInstall: false,
       });
