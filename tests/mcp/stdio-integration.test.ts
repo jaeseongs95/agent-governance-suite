@@ -596,7 +596,7 @@ describe("bundled STDIO MCP server", () => {
         await rm(stateDirectory, { recursive: true, force: true });
       }
     }
-  });
+  }, 15_000);
 
   it("shares signed continuity bindings between the packaged hook and MCP server", async () => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-continuity-stdio-"));

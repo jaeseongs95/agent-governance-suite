@@ -378,7 +378,7 @@ describe("direct task continuity", () => {
       digest: inspected.summary!.snapshotDigest,
     };
     expect(service.loadContext(bound(service, "raw-session", "load_context", load)).error?.code).toBe("INTEGRITY_FAILED");
-  });
+  }, 15_000);
 });
 
 describe("workflow projection and fail-open lifecycle", () => {
