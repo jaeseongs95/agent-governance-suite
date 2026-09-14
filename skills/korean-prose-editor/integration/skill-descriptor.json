@@ -3,7 +3,7 @@
   "skillId": "korean-prose-editor",
   "version": "0.1.0",
   "path": "./korean-prose-editor",
-  "enabled": true,
+  "enabled": false,
   "priority": 50,
   "providers": [
     {

@@ -50,27 +50,27 @@ describe("bundled skill registry", () => {
     ]));
   });
 
-  it("bundles and enables the Korean prose workflow for runtime selection", () => {
+  it("bundles the Korean prose workflow without enabling runtime selection", () => {
     const registry = new FileSkillRegistry(registryPath, new ContractValidator());
     const providers = registry.read();
     const koreanProviders = providers.filter((provider) => provider.skillId === "korean-prose-editor");
 
     expect(koreanProviders).toHaveLength(4);
-    expect(koreanProviders.every((provider) => provider.enabled === true)).toBe(true);
+    expect(koreanProviders.every((provider) => provider.enabled === false)).toBe(true);
     for (const capability of [
       "korean-prose-selection",
       "korean-prose-editing",
       "korean-prose-verification",
       "korean-prose-finalization",
     ]) {
-      expect(selectSkillByCapability(providers, capability)?.skillId).toBe("korean-prose-editor");
+      expect(selectSkillByCapability(providers, capability)).toBeUndefined();
     }
 
     const directDescriptor = JSON.parse(readFileSync(new URL("integration/skill-descriptor.json", koreanSkillRoot), "utf8")) as { enabled?: unknown };
     const openAiConfig = readFileSync(new URL("agents/openai.yaml", koreanSkillRoot), "utf8");
     const skillInstructions = readFileSync(new URL("SKILL.md", koreanSkillRoot), "utf8");
-    expect(directDescriptor.enabled).toBe(true);
-    expect(openAiConfig).toMatch(/^\s*allow_implicit_invocation:\s*true\s*$/m);
-    expect(skillInstructions).not.toContain("TEMPORARILY_DISABLED");
+    expect(directDescriptor.enabled).toBe(false);
+    expect(openAiConfig).toMatch(/^\s*allow_implicit_invocation:\s*false\s*$/m);
+    expect(skillInstructions).toContain("TEMPORARILY_DISABLED");
   });
 });
