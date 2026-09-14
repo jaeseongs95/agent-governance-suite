@@ -20,9 +20,17 @@ const digest = (value: string) => createHash("sha256").update(value).digest("hex
 describe("Korean prose glossary", () => {
   it("keeps reviewed JSONL and packaged SQLite logically identical", async () => {
     const entries = parseGlossarySeed(await readFile(seedPath, "utf8"));
-    expect(checkGlossaryDatabase(databasePath, entries)).toMatchObject({ id: "korean-prose-core", version: "1.0.0" });
+    expect(checkGlossaryDatabase(databasePath, entries)).toMatchObject({ id: "korean-prose-core", version: "1.1.0" });
     const database = new DatabaseSync(databasePath, { readOnly: true });
     expect(database.prepare("SELECT name FROM sqlite_schema WHERE type = 'table' ORDER BY name").all()).toEqual([{ name: "entries" }, { name: "forms" }, { name: "metadata" }]);
+    expect(database.prepare("SELECT COUNT(*) AS count FROM entries WHERE active = 1").get()).toEqual({ count: 43 });
+    expect(database.prepare("SELECT COUNT(*) AS count FROM forms").get()).toEqual({ count: 48 });
+    expect(database.prepare("SELECT policy, COUNT(*) AS count FROM entries WHERE active = 1 GROUP BY policy ORDER BY policy").all()).toEqual([
+      { policy: "allow", count: 6 },
+      { policy: "avoid", count: 8 },
+      { policy: "prefer", count: 4 },
+      { policy: "protect", count: 25 },
+    ]);
     database.close();
   });
 
@@ -51,6 +59,17 @@ describe("Korean prose glossary", () => {
     expect(result.matches.map(({ entryId, start, end }) => ({ entryId, start, end }))).toEqual([
       { entryId: "json-schema", start: 0, end: 11 },
       { entryId: "json", start: 0, end: 4 },
+    ]);
+  });
+
+  it("maps all four policies to reviewed canonical forms", () => {
+    const sourceText = "OpenAI의 데이터 베이스와 워크플로우를 스킬로 설명한다.";
+    const result = new SqliteKoreanProseGlossary(databasePath).lookup({ schemaVersion: "1.0.0", sourceText, sourceDigest: digest(sourceText) });
+    expect(result.matches.map(({ entryId, policy, canonicalForm }) => ({ entryId, policy, canonicalForm }))).toEqual([
+      { entryId: "openai", policy: "protect", canonicalForm: "OpenAI" },
+      { entryId: "database-ko", policy: "avoid", canonicalForm: "데이터베이스" },
+      { entryId: "workflow-ko", policy: "prefer", canonicalForm: "워크플로" },
+      { entryId: "skill-ko", policy: "allow", canonicalForm: "스킬" },
     ]);
   });
 
@@ -95,7 +114,10 @@ describe("Korean prose glossary", () => {
     ["duplicate id", (line: Record<string, unknown>) => `${JSON.stringify(line)}\n${JSON.stringify(line)}`],
     ["invalid policy", (line: Record<string, unknown>) => JSON.stringify({ ...line, policy: "replace" })],
     ["missing source", (line: Record<string, unknown>) => JSON.stringify({ ...line, sourceRef: "" })],
+    ["non-HTTPS source", (line: Record<string, unknown>) => JSON.stringify({ ...line, sourceRef: "http://example.test/source" })],
     ["non NFC", (line: Record<string, unknown>) => JSON.stringify({ ...line, canonicalForm: "가".normalize("NFD") })],
+    ["policy/form-kind mismatch", (line: Record<string, unknown>) => JSON.stringify({ ...line, forms: [{ form: line.canonicalForm, kind: "alias" }] })],
+    ["missing canonical form", (line: Record<string, unknown>) => JSON.stringify({ ...line, canonicalForm: "Different" })],
   ])("rejects %s seed data", async (_name, mutate) => {
     const line = JSON.parse((await readFile(seedPath, "utf8")).split(/\r?\n/u)[0]!);
     expect(() => parseGlossarySeed(mutate(line))).toThrow();
@@ -103,7 +125,7 @@ describe("Korean prose glossary", () => {
 
   it("rejects conflicting active forms", async () => {
     const line = JSON.parse((await readFile(seedPath, "utf8")).split(/\r?\n/u)[0]!);
-    const other = { ...line, entryId: "other", canonicalForm: "Other" };
+    const other = { ...line, entryId: "other" };
     expect(() => parseGlossarySeed(`${JSON.stringify(line)}\n${JSON.stringify(other)}`)).toThrow(/Conflicting/u);
   });
 
@@ -112,7 +134,7 @@ describe("Korean prose glossary", () => {
     try {
       const target = path.join(directory, "glossary.sqlite3");
       const entries = parseGlossarySeed(await readFile(seedPath, "utf8"));
-      buildGlossaryDatabase(target, entries, { id: "korean-prose-core", version: "1.0.0" });
+      buildGlossaryDatabase(target, entries, { id: "korean-prose-core", version: "1.1.0" });
       expect(checkGlossaryDatabase(target, entries).contentDigest).toMatch(/^[a-f0-9]{64}$/u);
     } finally {
       await rm(directory, { recursive: true, force: true });

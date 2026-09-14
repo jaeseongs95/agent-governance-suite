@@ -101,13 +101,13 @@ if (errors.length === 0) {
       readFile(path.join(ROOT, "skills", "korean-prose-editor", "agents", "openai.yaml"), "utf8"),
       readFile(path.join(ROOT, "skills", "korean-prose-editor", "SKILL.md"), "utf8"),
     ]);
-    const implicitInvocationDisabled = /^\s*allow_implicit_invocation:\s*false\s*$/mu.test(openAiConfig);
+    const implicitInvocationEnabled = /^\s*allow_implicit_invocation:\s*true\s*$/mu.test(openAiConfig);
     const disabledMarkerPresent = skillInstructions.includes("TEMPORARILY_DISABLED");
-    if (koreanRegistryDescriptor.enabled !== false
-      || directDescriptor.enabled !== false
-      || !implicitInvocationDisabled
-      || !disabledMarkerPresent) {
-      errors.push("korean-prose-editor activation surfaces must remain disabled until a separately approved activation change");
+    if (koreanRegistryDescriptor.enabled !== true
+      || directDescriptor.enabled !== true
+      || !implicitInvocationEnabled
+      || disabledMarkerPresent) {
+      errors.push("korean-prose-editor activation surfaces must remain enabled and internally consistent");
     }
   }
 

@@ -10,6 +10,12 @@ const DIGEST = /^[a-f0-9]{64}$/u;
 const ENTRY_ID = /^[a-z0-9][a-z0-9-]*$/u;
 const POLICIES = new Set(["protect", "prefer", "allow", "avoid"]);
 const FORM_KINDS = new Set(["canonical", "alias", "discouraged"]);
+const POLICY_FORM_KINDS: Record<GlossarySeedEntry["policy"], ReadonlySet<GlossarySeedForm["kind"]>> = {
+  protect: new Set(["canonical"]),
+  prefer: new Set(["alias"]),
+  allow: new Set(["canonical", "alias"]),
+  avoid: new Set(["discouraged"]),
+};
 
 export interface GlossarySeedForm {
   form: string;
@@ -215,6 +221,11 @@ function validateSeedEntry(value: unknown, line: number): GlossarySeedEntry {
   if (typeof item.canonicalForm !== "string" || item.canonicalForm.length === 0 || item.canonicalForm !== item.canonicalForm.normalize("NFC")) throw new Error(`Glossary seed line ${line} has a non-NFC or empty canonicalForm.`);
   if (typeof item.policy !== "string" || !POLICIES.has(item.policy)) throw new Error(`Glossary seed line ${line} has an invalid policy.`);
   if (typeof item.sourceRef !== "string" || item.sourceRef.trim().length === 0) throw new Error(`Glossary seed line ${line} is missing sourceRef.`);
+  try {
+    if (new URL(item.sourceRef).protocol !== "https:") throw new Error();
+  } catch {
+    throw new Error(`Glossary seed line ${line} sourceRef must be an absolute HTTPS URL.`);
+  }
   if (!Number.isInteger(item.priority) || Number(item.priority) < 0 || Number(item.priority) > 1000) throw new Error(`Glossary seed line ${line} has an invalid priority.`);
   if (typeof item.active !== "boolean" || !Array.isArray(item.forms) || item.forms.length === 0) throw new Error(`Glossary seed line ${line} has invalid active/forms fields.`);
   const forms = item.forms.map((raw, index) => {
@@ -224,7 +235,23 @@ function validateSeedEntry(value: unknown, line: number): GlossarySeedEntry {
     return { form: form.form, kind: form.kind as GlossarySeedForm["kind"] };
   });
   if (new Set(forms.map((form) => form.form)).size !== forms.length) throw new Error(`Glossary seed line ${line} has duplicate forms.`);
-  return { entryId: item.entryId, canonicalForm: item.canonicalForm, policy: item.policy as GlossarySeedEntry["policy"], sourceRef: item.sourceRef, priority: Number(item.priority), active: item.active, forms };
+  const policy = item.policy as GlossarySeedEntry["policy"];
+  if (forms.some((form) => !POLICY_FORM_KINDS[policy].has(form.kind))) throw new Error(`Glossary seed line ${line} has a form kind that conflicts with policy ${policy}.`);
+  if ((policy === "protect" || policy === "allow") && !forms.some((form) => form.kind === "canonical" && form.form === item.canonicalForm)) {
+    throw new Error(`Glossary seed line ${line} must include its canonicalForm as a canonical form.`);
+  }
+  if ((policy === "prefer" || policy === "avoid") && forms.some((form) => form.form === item.canonicalForm)) {
+    throw new Error(`Glossary seed line ${line} must not flag its canonicalForm as a ${policy} source form.`);
+  }
+  return {
+    entryId: item.entryId,
+    canonicalForm: item.canonicalForm,
+    policy,
+    sourceRef: item.sourceRef,
+    priority: Number(item.priority),
+    active: item.active,
+    forms: [...forms].sort((left, right) => compareText(left.form, right.form) || compareText(left.kind, right.kind)),
+  };
 }
 
 function emptyResult(status: "limit-exceeded" | "unsupported-normalization", sourceDigest: string, glossary: GlossaryMetadata | null, warning: "GLOSSARY_MATCH_LIMIT_EXCEEDED" | "GLOSSARY_UNSUPPORTED_NORMALIZATION"): KoreanProseGlossaryLookupResultV1 {
