@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.local/recovery-strategy-selector/contracts/recovery-strategy-selection-request.v1.schema.json",
+  "title": "RecoveryStrategySelectionRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "selectionId", "diagnosis", "sourceTask", "sourceWorkflow", "constraints", "authorizationEvidence", "priorStrategyFingerprints", "evidenceIndex"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "selectionId": { "type": "string", "minLength": 1 },
+    "diagnosis": { "$ref": "#/$defs/boundDiagnosis" },
+    "sourceTask": { "$ref": "#/$defs/boundTask" },
+    "sourceWorkflow": { "$ref": "#/$defs/sourceWorkflow" },
+    "constraints": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "authorizationEvidence": { "type": "array", "items": { "$ref": "#/$defs/authorization" } },
+    "priorStrategyFingerprints": { "type": "array", "items": { "$ref": "#/$defs/digest" }, "uniqueItems": true },
+    "evidenceIndex": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/evidence" } }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "boundDiagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "digest", "report", "requestLocator", "requestDigest", "request"],
+      "properties": {
+        "locator": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" },
+        "requestLocator": { "type": "string", "minLength": 1 },
+        "requestDigest": { "$ref": "#/$defs/digest" },
+        "request": { "type": "object" },
+        "report": {
+          "type": "object",
+          "required": ["schemaVersion", "requestArtifactDigest", "confirmedCause", "verdict"],
+          "properties": {
+            "schemaVersion": { "const": "1.0.0" },
+            "requestArtifactDigest": { "$ref": "#/$defs/digest" },
+            "confirmedCause": { "type": ["object", "null"] },
+            "verdict": { "enum": ["CAUSE_CONFIRMED", "NEXT_TEST", "NEEDS_INPUT", "NEEDS_APPROVAL", "BLOCKED"] }
+          }
+        }
+      }
+    },
+    "boundTask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "digest", "envelope"],
+      "properties": {
+        "locator": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" },
+        "envelope": {
+          "type": "object",
+          "required": ["schemaVersion", "taskId", "objective", "scope", "acceptanceCriteria", "constraints", "authorization"],
+          "properties": {
+            "schemaVersion": { "const": "1.0.0" },
+            "taskId": { "type": "string", "minLength": 1 },
+            "objective": { "type": "string", "minLength": 1 },
+            "scope": { "$ref": "#/$defs/scope" },
+            "acceptanceCriteria": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+            "constraints": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+            "authorization": { "$ref": "#/$defs/taskAuthorization" }
+          }
+        }
+      }
+    },
+    "sourceWorkflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runId", "revision", "state", "receiptLocator", "receiptDigest", "receipt"],
+      "properties": {
+        "runId": { "type": "string", "minLength": 1 },
+        "revision": { "type": "integer", "minimum": 0 },
+        "state": { "enum": ["failed", "blocked", "needs-redesign"] },
+        "receiptLocator": { "type": "string", "minLength": 1 },
+        "receiptDigest": { "$ref": "#/$defs/digest" },
+        "receipt": { "type": "object" }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["included", "excluded"],
+      "properties": {
+        "included": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "excluded": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    },
+    "taskAuthorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowedActions", "prohibitedActions", "approvalRequired"],
+      "properties": {
+        "allowedActions": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "prohibitedActions": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "approvalRequired": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "effect", "authority", "sourceLocator"],
+      "properties": {
+        "action": { "type": "string", "minLength": 1 },
+        "effect": { "enum": ["allow", "prohibit", "require-approval"] },
+        "authority": { "enum": ["system", "developer", "user", "project-instruction"] },
+        "sourceLocator": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidenceRef", "locator", "digest", "verified"],
+      "properties": {
+        "evidenceRef": { "type": "string", "minLength": 1 },
+        "locator": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" },
+        "verified": { "type": "boolean" }
+      }
+    }
+  }
+}
