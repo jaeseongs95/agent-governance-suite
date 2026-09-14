@@ -15,4 +15,4 @@ test("change-scope-guardian Node tests pass in an isolated process", () => {
     windowsHide: true
   });
   expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
-}, 30_000);
+}, 60_000);

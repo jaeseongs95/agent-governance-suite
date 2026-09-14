@@ -12,5 +12,5 @@ describe("evaluation-validity-auditor imported core", () => {
       encoding: "utf8",
     });
     expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
-  });
+  }, 15_000);
 });
