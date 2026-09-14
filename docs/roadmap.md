@@ -33,7 +33,7 @@
 | 0. `v1.1.0` 안정화 | 부분 완료 | 거버넌스 릴리스 운영과 한국어 산문 워크플로의 계약·품질·재현성 확보 | 활성 평가 후보, 검증된 receipt 경로, 품질 평가 결과, 고정된 원본 ref |
 | 0.5. 업데이트 알림 | 완료 | 안정 버전 존재 여부만 안내 | `check_for_updates`, SQLite v2 상태, 일회성 MCP notice |
 | 0.6. 모델·추론 수준 안내 | 완료 | 요청 난도와 관측 가능한 현재 설정을 비교해 과다·적정·부족 여부 안내 | `model-effort-advisor`, `ModelEffortAdvice.v1`, 정상·경계·실패 fixture |
-| 1. 실행 전 신뢰성 | 다음 | 평가 오류와 동시 작업 충돌을 조기에 차단 | `evaluation-validity-auditor`, `active-workspace-guard` |
+| 1. 실행 전 신뢰성 | 부분 구현 | 평가 오류와 동시 작업 충돌을 조기에 차단 | 구현된 `evaluation-validity-auditor`, 계획된 `active-workspace-guard` |
 | 2. 복구 워크플로 | 구현됨 | blocker 진단 뒤 선택 가능한 복구 전략 제공 | `recovery-strategy-selector`, `RecoveryHandoff.v1` |
 | 3. 실행 환경과 연속성 | 부분 구현 | 실행 가능 여부를 먼저 확인하고 세션 복원을 표준화 | 계획된 `runtime-capability-profiler`, 구현된 로컬 task continuity |
 | 4. 신뢰 경계 강화 | 설계 후보 | bootstrap·증거·라우팅 선언의 신뢰 수준 향상 | `BootstrapReceipt.v1`, 증거 검증 경계 |
@@ -120,7 +120,7 @@
 - 불완전한 JSONL이나 누락된 case를 전체 평가 결과로 집계하지 않는다.
 - 동결된 rubric, fixture set, 실행 revision과 결과 digest를 하나의 평가 보고서에 결속한다.
 
-계약 이름은 구현 시작 시 확정하되, `EvaluationValidityReport.v1`과 같은 독립 결과물을 우선 검토한다. 이 결과는 품질 게이트나 릴리스 승인 근거로 재사용할 수 있어야 한다.
+`evaluation-validity-auditor` v1.0.0을 독립 공개 저장소에 구현하고 immutable tag의 peeled commit과 checksum으로 suite에 편입했다. `EvaluationValidityRequest.v1`, case/result JSONL 계약, `EvaluationValidityReport.v1`, `EvaluationValidityValidation.v1`과 세 CLI가 동결 digest, 역할 독립성, 완전한 case/run/result 집합과 재집계 metric을 검사한다. `pre-execution PASS`는 설계 실행 가능성만 뜻하며, 품질 게이트나 릴리스 승인에는 `post-execution PASS`만 재사용할 수 있다. Suite provider는 명시적 감사 요청 또는 평가 결과가 품질·릴리스 근거로 제출될 때만 `evaluation-validity` phase order 68에서 조건부 완료 게이트로 선택된다.
 
 ### `active-workspace-guard`
 
@@ -135,7 +135,7 @@
 
 ### 종료 기준
 
-- 두 전문 스킬이 registry capability와 독립 계약을 갖는다.
+- `evaluation-validity-auditor`는 registry capability와 독립 계약을 갖췄고, `active-workspace-guard`는 아직 구현되지 않았다.
 - 정상 사례, 정보 부족, 충돌·오염 사례를 포함한 회귀 테스트가 있다.
 - 오케스트레이터가 평가 작업과 mutation 작업에서 필요한 검사만 선택한다.
 - 검사 실패나 불확실한 결과가 후속 mutation 또는 릴리스 승인으로 전달되지 않는다.

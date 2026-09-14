@@ -1,0 +1,21 @@
+{
+  "normal": [
+    { "id": "post-pass", "expected": "complete independent evidence and exact recomputation produce PASS" }
+  ],
+  "boundary": [
+    { "id": "pre-pass", "expected": "pre-execution PASS does not qualify as quality or release evidence" },
+    { "id": "deterministic-exact-match", "expected": "a deterministic oracle may use exact matching" },
+    { "id": "self-report-secondary", "expected": "self-report is allowed only beside an independent judgment method" }
+  ],
+  "failure": [
+    { "id": "self-report-only", "expected": "a sole self-report judgment fails" },
+    { "id": "semantic-lexical-only", "expected": "semantic quality cannot use lexical matching alone" },
+    { "id": "posthoc-input", "expected": "confirmed post-execution input fails" },
+    { "id": "actor-conflict", "expected": "semantic judge and auditor roles remain independent from authors and executors" },
+    { "id": "digest-or-aggregate-mismatch", "expected": "digest and recomputed aggregate mismatches fail" },
+    { "id": "malformed-or-incomplete-jsonl", "expected": "malformed, missing, duplicate, or unknown records fail without aggregate output" },
+    { "id": "missing-evidence", "expected": "missing required artifacts or independent timing provenance block" },
+    { "id": "unsafe-path", "expected": "traversal and external symlink or junction paths are INVALID_INPUT" },
+    { "id": "report-remapping", "expected": "request artifact and report remapping is rejected by validation" }
+  ]
+}

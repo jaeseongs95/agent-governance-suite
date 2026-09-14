@@ -7,7 +7,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
 <!-- release-version:start -->
-The current public release is `v1.10.0`. It includes twelve governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. `korean-prose-editor` is enabled in the registry, direct descriptor, and Codex implicit-invocation setting after its expanded SQLite glossary passed build, lookup, and integration validation. The strict new-holdout run stopped before producing the final `≥80%` metric, so this release does not claim that threshold was met.
+The current public release is `v1.10.0`. The current repository contains fourteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow; publishing a suite release for the new `evaluation-validity-auditor` is outside this change. `korean-prose-editor` is enabled in the registry, direct descriptor, and Codex implicit-invocation setting after its expanded SQLite glossary passed build, lookup, and integration validation. The strict new-holdout run stopped before producing the final `≥80%` metric, so this release does not claim that threshold was met.
 <!-- release-version:end -->
 
 ## How it works
@@ -124,6 +124,7 @@ Each specialist remains available when the MCP server is unavailable. Orchestrat
 - **Before completion**: After implementation and testing but before declaring completion, verify evidence for every acceptance criterion and, for high-risk work, confirm that the independent audit passed.
 - **After a failure**: When failures repeat or an unclear cause blocks progress, separate observations from hypotheses and choose the next discriminating diagnostic check.
 - **When selecting recovery**: Compare two or three viable responses to a confirmed cause and create a handoff bound to a new task contract.
+- **Before and after evaluation**: Check whether a frozen design is executable before a run, or audit the validity of result, judgment, and aggregation evidence after a run.
 
 | When | Skill | Version | Responsibility |
 | --- | --- | --- | --- |
@@ -140,6 +141,7 @@ Each specialist remains available when the MCP server is unavailable. Orchestrat
 | Before completion | `independent-audit-gate` | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
 | After a failure | `blocker-diagnostician` | 1.0.0 | Classifies repeated failures and selects the next diagnostic step. |
 | When selecting recovery | [`recovery-strategy-selector`](skills/recovery-strategy-selector/) | 0.1.0 | Applies an Objective Gate to strategies for a confirmed cause and creates a `RecoveryHandoff.v1` for a new task. |
+| Before and after evaluation | [`evaluation-validity-auditor`](https://github.com/jaeseongs95/evaluation-validity-auditor/tree/v1.0.0) | 1.0.0 | Independently audits a frozen evaluation's design, inputs, judgments, and aggregation; only a `post-execution PASS` qualifies as quality or release evidence. |
 
 Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. `skills/source-lock.json` pins upstream paths, tags or commits, upstream/integrated checksums, and update policies, including the repository-native `model-effort-advisor`, `iteration-frame-auditor`, and `recovery-strategy-selector`; the `orchestrator` is tracked by current Git history.
 
