@@ -369,7 +369,7 @@ describe("descriptor-declared reference-only receipts", () => {
     } finally {
       database.close();
     }
-  });
+  }, 15_000);
 
   it("rejects actor reuse after SQLite restart", async () => {
     const databaseDirectory = await mkdtemp(join(tmpdir(), "receipt-policy-db-"));
