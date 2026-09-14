@@ -306,9 +306,11 @@
       },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:e88e4c76c30b53e5a536a7a82280f9b8124768a37c16ea7f13cbfa7f282d9bfe",
-      "integratedChecksum": "sha256:e88e4c76c30b53e5a536a7a82280f9b8124768a37c16ea7f13cbfa7f282d9bfe",
+      "integratedChecksum": "sha256:c314d497e7ef63e314ee44827bf41b0a20a05eb5b22f37f640538bfe4c071fd8",
       "checksumScope": "relative paths and normalized text bytes under skills/codex-token-usage-analyzer",
-      "downstreamModifications": []
+      "downstreamModifications": [
+        "Treat the optional Markdown export as a provider result artifact rather than a mandatory workflow completion artifact."
+      ]
     }
   ]
 }
