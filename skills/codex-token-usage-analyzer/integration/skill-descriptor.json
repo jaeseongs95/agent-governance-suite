@@ -13,7 +13,7 @@
     "inputBindings": [
       { "targetArtifact": "token-usage-report-request", "sources": ["workflow:token-usage-report-request"], "operation": "require-external" }
     ],
-    "producedArtifacts": ["token-usage-report", "token-usage-markdown-artifact"],
+    "producedArtifacts": ["token-usage-report"],
     "outputSchema": "contracts/token-usage-report.v1.schema.json",
     "resultSchema": "integration/provider-result.v1.schema.json",
     "stateMapping": {
