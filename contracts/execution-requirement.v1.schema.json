@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/execution-requirement.v1.schema.json",
+  "title": "ExecutionRequirement.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policyId",
+    "kind",
+    "minimumModelClass",
+    "minimumReasoningEffort",
+    "observationRequired"
+  ],
+  "properties": {
+    "policyId": {
+      "const": "semantic-execution-assurance-v1"
+    },
+    "kind": {
+      "enum": [
+        "deterministic",
+        "semantic"
+      ]
+    },
+    "minimumModelClass": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "lightweight",
+        "general",
+        "deep",
+        "frontier",
+        null
+      ]
+    },
+    "minimumReasoningEffort": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+        "ultra",
+        null
+      ]
+    },
+    "observationRequired": {
+      "type": "boolean"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "deterministic"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "minimumModelClass": {
+            "type": "null"
+          },
+          "minimumReasoningEffort": {
+            "type": "null"
+          },
+          "observationRequired": {
+            "const": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "semantic"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "minimumModelClass": {
+            "enum": [
+              "lightweight",
+              "general",
+              "deep",
+              "frontier"
+            ]
+          },
+          "minimumReasoningEffort": {
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          "observationRequired": {
+            "const": true
+          }
+        }
+      }
+    }
+  ]
+}

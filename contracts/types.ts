@@ -57,6 +57,29 @@ export type BindingOperation = (typeof BINDING_OPERATION)[number];
 export const GATE_KIND = ["none", "precondition", "completion"] as const;
 export type GateKind = (typeof GATE_KIND)[number];
 
+export const MODEL_CLASS = ["lightweight", "general", "deep", "frontier"] as const;
+export type ModelClassV1 = (typeof MODEL_CLASS)[number];
+
+export const REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"] as const;
+export type ReasoningEffortV1 = (typeof REASONING_EFFORT)[number];
+
+export interface ExecutionContextV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  model: string;
+  modelClass: ModelClassV1;
+  reasoningEffort: ReasoningEffortV1;
+  source: "runtime" | "spawn-result";
+  observedAt: string;
+}
+
+export interface ExecutionRequirementV1 {
+  policyId: "semantic-execution-assurance-v1";
+  kind: "deterministic" | "semantic";
+  minimumModelClass: ModelClassV1 | null;
+  minimumReasoningEffort: ReasoningEffortV1 | null;
+  observationRequired: boolean;
+}
+
 export const CONTROL_ARTIFACT_ROLE = [
   "validator",
   "rubric",
@@ -386,13 +409,14 @@ export interface TaskEnvelopeV1 {
 
 export type EvaluationAuditPurposeV1 = "design-readiness" | "quality-or-release";
 
-export interface EvaluationAuditPlanRequestV1 {
+export interface AssuredPlanWorkflowRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   taskEnvelope: TaskEnvelopeV1;
-  evaluationAuditPurpose: EvaluationAuditPurposeV1;
+  executionContext?: ExecutionContextV1;
+  evaluationAuditPurpose?: EvaluationAuditPurposeV1;
 }
 
-export type PlanWorkflowRequestV1 = TaskEnvelopeV1 | EvaluationAuditPlanRequestV1;
+export type PlanWorkflowRequestV1 = TaskEnvelopeV1 | AssuredPlanWorkflowRequestV1;
 
 export interface WorkUnitV1 {
   id: string;
@@ -508,6 +532,7 @@ export interface PlannedStageV1 {
   phase: string;
   selectionReason: string;
   state: WorkflowState;
+  executionRequirement?: ExecutionRequirementV1;
   requiredArtifacts: string[];
   riskGate: RiskGate;
   providerKey: string;
@@ -529,6 +554,10 @@ export interface WorkflowPlanV1 {
   taskDigest?: Sha256Digest;
   integrityToken: string;
   executionMode: ExecutionMode;
+  bootstrapExecution?: {
+    requirement: ExecutionRequirementV1;
+    context: ExecutionContextV1;
+  } | null;
   state: WorkflowState;
   selectedSkills: string[];
   stages: PlannedStageV1[];
@@ -775,6 +804,7 @@ export interface StageResultV1 {
   stageId: string;
   expectedRevision: number;
   state: "needs-input" | "needs-approval" | "needs-redesign" | "failed" | "passed" | "blocked";
+  executionContext?: ExecutionContextV1 | null;
   output: ProviderResultV1;
   evidence: EvidenceReferenceV1[];
   findings: string[];

@@ -19,6 +19,7 @@
 - 업데이트 확인의 24시간 캐시, 실패 후 1시간 재시도, 버전당 한 번 안내와 비차단 실패 경로를 fixture로 검증한다.
 - 배포 후보의 현재 버전과 공개 저장소의 최신 안정 tag를 비교하고, 업데이트 알림이 설치 파일이나 마켓플레이스 설정을 변경하지 않는지 확인한다.
 - 포함 스킬의 품질 평가 상태와 runtime 활성 상태를 공개 문서에 분리해 기록한다. 품질 게이트를 통과하지 못한 스킬은 기본적으로 비활성화하되, 사용자가 현재 후보와 남은 제한을 확인하고 활성 배포를 명시적으로 승인한 경우에는 registry, 직접 descriptor와 implicit invocation을 같은 릴리스에서 일관되게 활성화한다.
+- orchestrated semantic workflow의 `bootstrapExecution`, stage별 `executionRequirement`와 `StageResult.executionContext`가 계획 HMAC·저장 receipt에 결속되고, missing/under-provisioned 실행이 각각 `BINDING_REQUIRED`/`BINDING_INVALID`로 차단되는지 확인한다. 이전 버전 receipt에 새 필드가 없어도 읽기·종료 상태 조회가 깨지지 않는지 함께 회귀 검사한다.
 - 비활성 스킬은 직접 호출 시 provider와 스크립트를 실행하지 않는 fail-closed 지침을 유지한다. 활성 스킬은 registry, 직접 descriptor, `agents/openai.yaml`과 `SKILL.md`의 상태가 모두 일치하는지 확인한다.
 - SQLite가 전체 `WorkflowReceipt`·`StageResult`와 direct continuity snapshot의 `core`·`evidenceRefs`를 평문으로 저장한다는 사실, 확인 기반 보존·삭제 정책, backup의 수동 삭제 책임과 OS 접근 권한 정책을 사용자 문서에서 설명한다.
 

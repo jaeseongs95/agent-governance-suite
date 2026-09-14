@@ -4,65 +4,302 @@
   "title": "StageResult.v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "runId", "stageId", "expectedRevision", "state", "output", "evidence", "findings", "blockers", "error"],
+  "required": [
+    "schemaVersion",
+    "runId",
+    "stageId",
+    "expectedRevision",
+    "state",
+    "output",
+    "evidence",
+    "findings",
+    "blockers",
+    "error"
+  ],
   "properties": {
-    "schemaVersion": { "const": "1.0.0" },
-    "runId": { "type": "string", "minLength": 1 },
-    "stageId": { "type": "string", "minLength": 1 },
-    "expectedRevision": { "type": "integer", "minimum": 0 },
-    "state": { "enum": ["needs-input", "needs-approval", "needs-redesign", "failed", "passed", "blocked"] },
-    "output": { "$ref": "#/$defs/providerResult" },
-    "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } },
-    "findings": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
-    "blockers": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
-    "error": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/error" }] }
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stageId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expectedRevision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "state": {
+      "enum": [
+        "needs-input",
+        "needs-approval",
+        "needs-redesign",
+        "failed",
+        "passed",
+        "blocked"
+      ]
+    },
+    "output": {
+      "$ref": "#/$defs/providerResult"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "error": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/error"
+        }
+      ]
+    },
+    "executionContext": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/executionContext"
+        }
+      ]
+    }
   },
   "$defs": {
     "providerResult": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schemaVersion", "kind", "output", "artifacts", "error"],
+      "required": [
+        "schemaVersion",
+        "kind",
+        "output",
+        "artifacts",
+        "error"
+      ],
       "properties": {
-        "schemaVersion": { "const": "1.0.0" },
-        "kind": { "enum": ["output", "adapter-error"] },
-        "output": { "type": ["object", "null"], "additionalProperties": true },
-        "artifacts": { "type": "array", "items": { "$ref": "#/$defs/providerArtifact" } },
-        "error": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/error" }] }
+        "schemaVersion": {
+          "const": "1.0.0"
+        },
+        "kind": {
+          "enum": [
+            "output",
+            "adapter-error"
+          ]
+        },
+        "output": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/providerArtifact"
+          }
+        },
+        "error": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/error"
+            }
+          ]
+        }
       }
     },
     "providerArtifact": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["artifactId", "schemaId", "locator", "digest", "targetDigest", "verified"],
+      "required": [
+        "artifactId",
+        "schemaId",
+        "locator",
+        "digest",
+        "targetDigest",
+        "verified"
+      ],
       "properties": {
-        "artifactId": { "type": "string", "minLength": 1 },
-        "schemaId": { "type": "string", "minLength": 1 },
-        "locator": { "type": "string", "minLength": 1 },
-        "digest": { "type": "string", "pattern": "^(?:sha256:)?[a-f0-9]{64}$" },
-        "targetDigest": { "type": "string", "minLength": 1 },
-        "verified": { "type": "boolean" }
+        "artifactId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schemaId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^(?:sha256:)?[a-f0-9]{64}$"
+        },
+        "targetDigest": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verified": {
+          "type": "boolean"
+        }
       }
     },
     "evidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["artifactId", "kind", "locator", "verified", "note"],
+      "required": [
+        "artifactId",
+        "kind",
+        "locator",
+        "verified",
+        "note"
+      ],
       "properties": {
-        "artifactId": { "type": "string", "minLength": 1 },
-        "kind": { "enum": ["user-input", "file", "test", "document", "tool"] },
-        "locator": { "type": "string", "minLength": 1 },
-        "verified": { "type": "boolean" },
-        "note": { "type": "string" }
+        "artifactId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "user-input",
+            "file",
+            "test",
+            "document",
+            "tool"
+          ]
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verified": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string"
+        }
       }
     },
     "error": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["code", "message", "details"],
+      "required": [
+        "code",
+        "message",
+        "details"
+      ],
       "properties": {
-        "code": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE", "LEASE_REQUIRED", "LEASE_CONFLICT", "FRAME_REVIEW_REQUIRED", "ATTEMPT_BUDGET_EXHAUSTED", "NEW_EVIDENCE_REQUIRED", "ROOT_CONFLICT", "CONTINUITY_UNAVAILABLE", "BINDING_REQUIRED", "BINDING_INVALID", "SNAPSHOT_NOT_FOUND", "SNAPSHOT_CONFLICT", "REQUEST_CONFLICT", "INTEGRITY_FAILED"] },
-        "message": { "type": "string", "minLength": 1 },
-        "details": { "type": ["object", "null"], "additionalProperties": true }
+        "code": {
+          "enum": [
+            "INVALID_INPUT",
+            "RUN_NOT_FOUND",
+            "STALE_REVISION",
+            "INVALID_TRANSITION",
+            "MISSING_EVIDENCE",
+            "GATE_FAILED",
+            "MCP_UNAVAILABLE",
+            "LEASE_REQUIRED",
+            "LEASE_CONFLICT",
+            "FRAME_REVIEW_REQUIRED",
+            "ATTEMPT_BUDGET_EXHAUSTED",
+            "NEW_EVIDENCE_REQUIRED",
+            "ROOT_CONFLICT",
+            "CONTINUITY_UNAVAILABLE",
+            "BINDING_REQUIRED",
+            "BINDING_INVALID",
+            "SNAPSHOT_NOT_FOUND",
+            "SNAPSHOT_CONFLICT",
+            "REQUEST_CONFLICT",
+            "INTEGRITY_FAILED"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "details": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
+        }
+      }
+    },
+    "executionContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "model",
+        "modelClass",
+        "reasoningEffort",
+        "source",
+        "observedAt"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0.0"
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "modelClass": {
+          "enum": [
+            "lightweight",
+            "general",
+            "deep",
+            "frontier"
+          ]
+        },
+        "reasoningEffort": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+            "ultra"
+          ]
+        },
+        "source": {
+          "enum": [
+            "runtime",
+            "spawn-result"
+          ]
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       }
     }
   }
