@@ -70,6 +70,17 @@ export interface ExecutionContextV1 {
   reasoningEffort: ReasoningEffortV1;
   source: "runtime" | "spawn-result";
   observedAt: string;
+  /**
+   * Trusted-host binding fields are optional for v1 receipt compatibility.
+   * Strict MCP assurance requires all of them and rejects caller-supplied contexts.
+   */
+  observationId?: string;
+  taskId?: string;
+  runId?: string | null;
+  stageId?: string | null;
+  revision?: number | null;
+  actorId?: string;
+  expiresAt?: string;
 }
 
 export interface ExecutionRequirementV1 {
@@ -412,7 +423,6 @@ export type EvaluationAuditPurposeV1 = "design-readiness" | "quality-or-release"
 export interface AssuredPlanWorkflowRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   taskEnvelope: TaskEnvelopeV1;
-  executionContext?: ExecutionContextV1;
   evaluationAuditPurpose?: EvaluationAuditPurposeV1;
 }
 

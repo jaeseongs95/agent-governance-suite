@@ -20,3 +20,12 @@ MCP는 model class 선언의 암호학적 진위를 증명하지 않습니다. �
 ## 검증 요구
 
 공개 릴리스 전에 저장소 `AGENTS.md`의 전체 검증 순서, 독립 사전 감사, mutation preflight, CI, 설치 캐시·MCP 확인, 독립 사후 감사를 완료해야 합니다. 이 적용 번들은 소스 변경과 테스트를 준비하지만 독립 감사나 GitHub Release 게시를 대신하지 않습니다.
+
+## Trusted host attestation boundary
+
+- Public MCP `plan_workflow` and `record_stage_result` no longer accept caller-supplied `executionContext`.
+- Strict semantic assurance requires a server-side `TrustedExecutionContextProvider`.
+- Trusted observations are bound to task/run/stage/revision, carry a one-use observation ID and a bounded validity window, and reject stale or replayed observations.
+- The packaged server intentionally fails closed with `BINDING_REQUIRED` until the host supplies an authoritative attestation adapter; it does not infer or fabricate model/reasoning metadata.
+- Provider-level capability classification prevents aliases of high-assurance providers from lowering the `deep/high` floor.
+- Workflow HMAC tokens now require the canonical 43-character base64url spelling.

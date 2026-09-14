@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://skill-suite.local/contracts/plan-workflow-request.v1.schema.json",
   "title": "PlanWorkflowRequest.v1",
-  "description": "Accepts the legacy TaskEnvelope.v1 form or a wrapper that binds bootstrap execution context and optional evaluation-audit purpose.",
+  "description": "Accepts the legacy TaskEnvelope.v1 form or a wrapper that binds an optional evaluation-audit purpose. Execution context is never accepted from the caller.",
   "type": "object",
   "oneOf": [
     {
@@ -21,9 +21,6 @@
         },
         "taskEnvelope": {
           "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json"
-        },
-        "executionContext": {
-          "$ref": "https://skill-suite.local/contracts/execution-context.v1.schema.json"
         },
         "evaluationAuditPurpose": {
           "enum": [

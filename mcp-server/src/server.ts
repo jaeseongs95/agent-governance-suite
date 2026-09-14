@@ -49,7 +49,6 @@ function embeddedSchema(source: Record<string, unknown>): ObjectSchema {
 }
 
 const taskEnvelopeInputSchema = embeddedSchema(contractSchemas.taskEnvelope);
-const executionContextInputSchema = embeddedSchema(contractSchemas.executionContext);
 const planWorkflowInputSchema = {
   type: "object",
   oneOf: [
@@ -61,7 +60,6 @@ const planWorkflowInputSchema = {
       properties: {
         schemaVersion: { const: "1.0.0" },
         taskEnvelope: taskEnvelopeInputSchema,
-        executionContext: executionContextInputSchema,
         evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] },
       },
       allOf: [{
@@ -107,6 +105,11 @@ const resolveConvergenceGateInputSchema = toolSchema(contractSchemas.resolveConv
 const recordStageResultInputSchema = toolSchema(contractSchemas.stageResult, {
   add: { responseMode: responseModeProperty },
 });
+if (recordStageResultInputSchema.properties) {
+  delete recordStageResultInputSchema.properties.executionContext;
+}
+recordStageResultInputSchema.required = (recordStageResultInputSchema.required ?? [])
+  .filter((name) => name !== "executionContext");
 
 const revisionInputSchema = {
   type: "object",
@@ -236,7 +239,7 @@ export function createMcpServer(
       },
       {
         name: "plan_workflow",
-        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated workflows use the structured wrapper to bind host-observed execution context; evaluation validity audits also bind their purpose.",
+        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Evaluation validity audits also bind their purpose.",
         inputSchema: planWorkflowInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
@@ -433,7 +436,7 @@ export function createMcpServer(
             result = mode === null
               ? invalidInput("responseMode must be compact or full.")
               : projectResult<WorkflowReceiptV1, ReturnType<typeof workflowStatusSummary>>(
-                  service.recordStageResult(domainArguments(args, "responseMode")),
+                  service.recordStageResult(domainArguments(args, "responseMode"), true),
                   mode,
                   workflowStatusSummary,
                 );

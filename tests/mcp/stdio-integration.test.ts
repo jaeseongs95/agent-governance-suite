@@ -47,7 +47,6 @@ function assuredPlanArguments(task: TaskEnvelopeV1): Record<string, unknown> {
   return toolArguments({
     schemaVersion: "1.0.0",
     taskEnvelope: task,
-    executionContext: STDIO_EXECUTION_CONTEXT,
   });
 }
 
@@ -326,7 +325,7 @@ describe("bundled STDIO MCP server", () => {
       const planningInputSchema = listed.tools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
       expect(planningInputSchema).toMatchObject({ type: "object", oneOf: expect.any(Array) });
       expect(JSON.stringify(planningInputSchema)).not.toContain("$ref");
-      expect(JSON.stringify(planningInputSchema)).toContain("executionContext");
+      expect(JSON.stringify(planningInputSchema)).not.toContain("executionContext");
       expect(listed.tools.find((tool) => tool.name === "check_for_updates")?.annotations).toMatchObject({
         readOnlyHint: true,
         destructiveHint: false,
@@ -366,6 +365,10 @@ describe("bundled STDIO MCP server", () => {
         arguments: assuredPlanArguments(task),
       });
       const planned = toolData<WorkflowPlanV1>(plannedResponse);
+      expect(planned.ok).toBe(false);
+      expect(planned.error?.code).toBe("BINDING_REQUIRED");
+      if (!planned.ok) return;
+
       const plannedContents = textContents(plannedResponse);
       expect(plannedContents).toHaveLength(2);
       expect(JSON.parse(plannedContents[1]!)).toMatchObject({
