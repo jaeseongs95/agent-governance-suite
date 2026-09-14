@@ -8,6 +8,7 @@ export const SKILL_RUNTIME_ENTRYPOINTS = Object.freeze([
   { path: "skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs", expectedExitCode: 1, outputIncludes: "request schema validation failed" },
   { path: "skills/change-scope-guardian/scripts/compare-change-scope.mjs", expectedExitCode: 1, outputIncludes: "request schema validation failed" },
   { path: "skills/change-scope-guardian/scripts/validate-report.mjs", expectedExitCode: 1, outputIncludes: "expectedArtifactDigest" },
+  { path: "skills/codex-token-usage-analyzer/scripts/cli.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
   { path: "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs", expectedExitCode: 1, outputIncludes: "INVALID_INPUT" },
   { path: "skills/iteration-frame-auditor/scripts/digest-request.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
   { path: "skills/iteration-frame-auditor/scripts/validate-review.mjs", expectedExitCode: 1, outputIncludes: "review must be an object" },

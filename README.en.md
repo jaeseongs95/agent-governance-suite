@@ -7,7 +7,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
 <!-- release-version:start -->
-The current public release is `v1.10.0`. It includes twelve governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. `korean-prose-editor` is enabled in the registry, direct descriptor, and Codex implicit-invocation setting after its expanded SQLite glossary passed build, lookup, and integration validation. The strict new-holdout run stopped before producing the final `≥80%` metric, so this release does not claim that threshold was met.
+The current public release is `v1.10.0`. It includes twelve governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. The current source tree also integrates the explicit-only `codex-token-usage-analyzer` 0.1.0, which is not yet part of a public Suite release. `korean-prose-editor` is enabled in the registry, direct descriptor, and Codex implicit-invocation setting after its expanded SQLite glossary passed build, lookup, and integration validation. The strict new-holdout run stopped before producing the final `≥80%` metric, so this release does not claim that threshold was met.
 <!-- release-version:end -->
 
 ## How it works
@@ -128,6 +128,7 @@ Each specialist remains available when the MCP server is unavailable. Orchestrat
 | When | Skill | Version | Responsibility |
 | --- | --- | --- | --- |
 | On request | `model-effort-advisor` | 0.1.0 | Compares an observed current model and reasoning effort with the request's difficulty and risk, then reports only material mismatches. |
+| On explicit request | [`codex-token-usage-analyzer`](https://github.com/jaeseongs95/codex-token-usage-analyzer/tree/v0.1.0/skills/codex-token-usage-analyzer) | 0.1.0 | Aggregates local Codex token observations for threads, descendants, or projects and returns JSON with optional Markdown. |
 | Before work | `instruction-scope-resolver` | 1.0.0 | Finds the instructions and precedence rules that apply to the work target. |
 | Before work | `workspace-convention-profiler` | 1.0.0 | Records repository structure, commands, and test conventions with evidence. |
 | Before work | `task-contract` | 1.0.0 | Defines the objective, scope, risk, and completion criteria. |
