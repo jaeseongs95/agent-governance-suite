@@ -8,7 +8,11 @@
       "sourcePath": "skills/coordinate-subagents",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": { "kind": "commit", "value": "837b182c490866d3800b919659581d69640ac687", "commit": "837b182c490866d3800b919659581d69640ac687" },
+      "ref": {
+        "kind": "commit",
+        "value": "837b182c490866d3800b919659581d69640ac687",
+        "commit": "837b182c490866d3800b919659581d69640ac687"
+      },
       "updatePolicy": "auto-pr",
       "upstreamChecksum": "sha256:113603fd0545e44f593c289e8adf41c4363c7628c34b14ea27527b7072820091",
       "integratedChecksum": "sha256:113603fd0545e44f593c289e8adf41c4363c7628c34b14ea27527b7072820091",
@@ -22,7 +26,11 @@
       "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "7570524b1536706911b5ad822c7010d60030d9e1" },
+      "ref": {
+        "kind": "tag",
+        "value": "v1.0.0",
+        "commit": "7570524b1536706911b5ad822c7010d60030d9e1"
+      },
       "updatePolicy": "auto-pr",
       "upstreamChecksum": "sha256:31d76def511b3e90cb3acd4a01bb06f512bf1d68c8ff815d2ebf5cc3f0d2cbad",
       "integratedChecksum": "sha256:31d76def511b3e90cb3acd4a01bb06f512bf1d68c8ff815d2ebf5cc3f0d2cbad",
@@ -36,7 +44,11 @@
       "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "877c11b8e1369a1dff3b5d208327f6604bd3dff2" },
+      "ref": {
+        "kind": "tag",
+        "value": "v1.0.0",
+        "commit": "877c11b8e1369a1dff3b5d208327f6604bd3dff2"
+      },
       "updatePolicy": "auto-pr",
       "upstreamChecksum": "sha256:6dc8c9a1128ad1ac6b2ff74f4307cf9f3dcbae7cbfa3a02a9222657713bcf31e",
       "integratedChecksum": "sha256:6dc8c9a1128ad1ac6b2ff74f4307cf9f3dcbae7cbfa3a02a9222657713bcf31e",
@@ -50,7 +62,11 @@
       "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "b14ffb36ed3be96cc4694d0b36054f21f69b577a" },
+      "ref": {
+        "kind": "tag",
+        "value": "v1.0.0",
+        "commit": "b14ffb36ed3be96cc4694d0b36054f21f69b577a"
+      },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:88df77436b0880e6d6033a022593e59b7db016b8cb90847a06937a2d4a10d91f",
       "integratedChecksum": "sha256:ce882edf63d99459d2e979b721add56602b19e5868b4d0b0c1218c01aa26400a",
@@ -66,7 +82,11 @@
       "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "ad545c367e118a21b0cabfcd5b56fdf3b58e0ef5" },
+      "ref": {
+        "kind": "tag",
+        "value": "v1.0.0",
+        "commit": "ad545c367e118a21b0cabfcd5b56fdf3b58e0ef5"
+      },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:b417604d2600a3c09aadc9ffa2ae9d435aaa0dc2e28ccae457f8dda069ad166a",
       "integratedChecksum": "sha256:193162ef7b982a66488a9a9c7360f76b5f4e36737b612f1c066f7b6391b8af27",
@@ -82,7 +102,11 @@
       "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "14ae3288535b1d2061a0ee1c537fa6773077a533" },
+      "ref": {
+        "kind": "tag",
+        "value": "v1.0.0",
+        "commit": "14ae3288535b1d2061a0ee1c537fa6773077a533"
+      },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:76ffb61ad815a82e3abd9137320cb233a77d9576b7e8cea3c381b6b8d020683e",
       "integratedChecksum": "sha256:00d5eefd11ba5a46d9dddb6590fab9d556ae325d37f1d35755634247618f49cf",
@@ -98,7 +122,11 @@
       "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "6bc5cf4e65a4f5fb0dd5e2e01ba6a3428de63405" },
+      "ref": {
+        "kind": "tag",
+        "value": "v1.0.0",
+        "commit": "6bc5cf4e65a4f5fb0dd5e2e01ba6a3428de63405"
+      },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:0edcf71b974eeaac33128d8fea2b22026d3b50242106bea2eb61703b240e34d0",
       "integratedChecksum": "sha256:7af2162e2651210fbafeb709c303868a79334a1820b107241ef608f7a0bbcccf",
@@ -114,7 +142,11 @@
       "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "66cc7d2ca4ae73f3d43d580600ab5e1af75e0a5c" },
+      "ref": {
+        "kind": "tag",
+        "value": "v1.0.0",
+        "commit": "66cc7d2ca4ae73f3d43d580600ab5e1af75e0a5c"
+      },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:1a6b94868941410167556e783e29ebe93c9da99a395784927a06eaaf80cd0ddd",
       "integratedChecksum": "sha256:b792b38d7d0d48b6084ac7703f832bb151e52602a7bcb39ce6f64b51945e15d2",
@@ -130,7 +162,11 @@
       "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "f8e459ebc826acbe9eb711128422b0f35f54bc98" },
+      "ref": {
+        "kind": "tag",
+        "value": "v1.0.0",
+        "commit": "f8e459ebc826acbe9eb711128422b0f35f54bc98"
+      },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:85485144ba8ffd9e558761f1dc9e5186aa54eac955c31f745812655310f7d3dc",
       "integratedChecksum": "sha256:2bd6c1fc0f4504648d3e0b9182bb968bc9827d43e70577aa12e5089ea8308293",
@@ -146,7 +182,11 @@
       "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "version-file",
-      "ref": { "kind": "tag", "value": "v1.0.0", "commit": "531e820503bbefbb8cba9848657d42b3a5771587" },
+      "ref": {
+        "kind": "tag",
+        "value": "v1.0.0",
+        "commit": "531e820503bbefbb8cba9848657d42b3a5771587"
+      },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:78c3275447af625639884e11da5c615c2f928f437503699df3b2a9f2893f94b5",
       "integratedChecksum": "sha256:03bc40dd26356bc9b678db76d70f22474eb3812fa12711b96666dcf8ad7a533c",
@@ -162,7 +202,11 @@
       "sourcePath": "skills/model-effort-advisor",
       "version": "0.1.0",
       "versionSource": "skill-metadata",
-      "ref": { "kind": "commit", "value": "bc248f9babf1c850249c960385b2935db49756d4", "commit": "bc248f9babf1c850249c960385b2935db49756d4" },
+      "ref": {
+        "kind": "commit",
+        "value": "bc248f9babf1c850249c960385b2935db49756d4",
+        "commit": "bc248f9babf1c850249c960385b2935db49756d4"
+      },
       "updatePolicy": "internal",
       "upstreamChecksum": "sha256:9a2871ff97553884eea9e93e1b46464631b47fc2d2be7b50b0cd5ec5031e429c",
       "integratedChecksum": "sha256:9a2871ff97553884eea9e93e1b46464631b47fc2d2be7b50b0cd5ec5031e429c",
@@ -176,7 +220,11 @@
       "sourcePath": "skills/iteration-frame-auditor",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": { "kind": "commit", "value": "560aea5739887a0bb279ff3c5286b1acea296ff0", "commit": "560aea5739887a0bb279ff3c5286b1acea296ff0" },
+      "ref": {
+        "kind": "commit",
+        "value": "560aea5739887a0bb279ff3c5286b1acea296ff0",
+        "commit": "560aea5739887a0bb279ff3c5286b1acea296ff0"
+      },
       "updatePolicy": "internal",
       "upstreamChecksum": "sha256:86360c7a8573dafc3317931a4b161d5a5c44a65be42d35106c7996fa4e5fecb9",
       "integratedChecksum": "sha256:86360c7a8573dafc3317931a4b161d5a5c44a65be42d35106c7996fa4e5fecb9",
@@ -190,7 +238,11 @@
       "sourcePath": "skills/recovery-strategy-selector",
       "version": "0.1.0",
       "versionSource": "skill-metadata",
-      "ref": { "kind": "commit", "value": "cf0538aaeef69eb855d1caf8436fe7a92c04cb0e", "commit": "cf0538aaeef69eb855d1caf8436fe7a92c04cb0e" },
+      "ref": {
+        "kind": "commit",
+        "value": "cf0538aaeef69eb855d1caf8436fe7a92c04cb0e",
+        "commit": "cf0538aaeef69eb855d1caf8436fe7a92c04cb0e"
+      },
       "updatePolicy": "internal",
       "upstreamChecksum": "sha256:07ac3e0b5eb9a9c5f20eb1117f920a17de34553a0034ebb986f2d7215c261d96",
       "integratedChecksum": "sha256:07ac3e0b5eb9a9c5f20eb1117f920a17de34553a0034ebb986f2d7215c261d96",
@@ -204,7 +256,11 @@
       "sourcePath": "skills/korean-prose-editor",
       "version": "0.1.0",
       "versionSource": "skill-metadata",
-      "ref": { "kind": "commit", "value": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49", "commit": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49" },
+      "ref": {
+        "kind": "commit",
+        "value": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49",
+        "commit": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49"
+      },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:a88252aa9c4e654458ecc7eed282d26c022ca9f5db858f87f3237decc622feb8",
       "integratedChecksum": "sha256:a53a0953244b736e548985c5bd997ac0d77d14d29f57d9543745d71c6b176888",
@@ -234,6 +290,24 @@
       "upstreamChecksum": "sha256:083ee804efcbe785ca87c6f7a1e20e5cd71732bcc44c7e8e8546336a412f8f24",
       "integratedChecksum": "sha256:083ee804efcbe785ca87c6f7a1e20e5cd71732bcc44c7e8e8546336a412f8f24",
       "checksumScope": "relative paths and normalized text bytes under skills/evaluation-validity-auditor",
+      "downstreamModifications": []
+    },
+    {
+      "skillId": "codex-token-usage-analyzer",
+      "path": "skills/codex-token-usage-analyzer",
+      "source": "https://github.com/jaeseongs95/codex-token-usage-analyzer.git",
+      "sourcePath": "skills/codex-token-usage-analyzer",
+      "version": "0.1.0",
+      "versionSource": "skill-metadata",
+      "ref": {
+        "kind": "tag",
+        "value": "v0.1.0",
+        "commit": "68843ce943e87767ed9605cb19f3074452cabf89"
+      },
+      "updatePolicy": "notify-only",
+      "upstreamChecksum": "sha256:e88e4c76c30b53e5a536a7a82280f9b8124768a37c16ea7f13cbfa7f282d9bfe",
+      "integratedChecksum": "sha256:e88e4c76c30b53e5a536a7a82280f9b8124768a37c16ea7f13cbfa7f282d9bfe",
+      "checksumScope": "relative paths and normalized text bytes under skills/codex-token-usage-analyzer",
       "downstreamModifications": []
     }
   ]

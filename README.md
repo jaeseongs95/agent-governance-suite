@@ -7,7 +7,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v1.10.0`입니다. 현재 저장소에는 거버넌스 전문 스킬 14개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개가 있으며, 새 `evaluation-validity-auditor`의 suite 릴리스는 이번 변경 범위에 포함하지 않습니다. `korean-prose-editor`는 확장한 SQLite 용어집의 빌드·조회·통합 검증을 통과해 registry, 직접 descriptor와 Codex 암시 호출 설정에서 활성화했습니다. 엄격한 신규 holdout 평가는 최종 `≥80%` 지표를 만들기 전에 중단됐으므로 그 기준을 통과했다고 주장하지 않습니다.
+현재 공개 릴리스는 `v1.10.0`이며 거버넌스 전문 스킬 12개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 현재 소스 트리에는 거버넌스 전문 스킬 15개가 있으며, 아직 Suite 공개 릴리스에 포함되지 않은 명시 호출 전용 `codex-token-usage-analyzer` 0.1.0과 새 `evaluation-validity-auditor` 1.0.0도 통합되어 있습니다. `korean-prose-editor`는 확장한 SQLite 용어집의 빌드·조회·통합 검증을 통과해 registry, 직접 descriptor와 Codex 암시 호출 설정에서 활성화했습니다. 엄격한 신규 holdout 평가는 최종 `≥80%` 지표를 만들기 전에 중단됐으므로 그 기준을 통과했다고 주장하지 않습니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -131,6 +131,7 @@ check_for_updates { "force": false }
 | 시점 | 스킬 | 버전 | 역할 |
 | --- | --- | --- | --- |
 | 요청 직후 | [`model-effort-advisor`](skills/model-effort-advisor/) | 0.1.0 | 관측 가능한 현재 모델·추론 수준이 요청 난도와 위험에 비해 과한지 또는 부족한지 확인하고, 유의미한 차이만 안내합니다. |
+| 명시 요청 시 | [`codex-token-usage-analyzer`](https://github.com/jaeseongs95/codex-token-usage-analyzer/tree/v0.1.0/skills/codex-token-usage-analyzer) | 0.1.0 | 로컬 Codex 로그에서 작업·하위 작업·프로젝트의 token 사용량을 집계하고 JSON과 선택적 Markdown으로 보고합니다. |
 | 시작 전 | [`instruction-scope-resolver`](https://github.com/jaeseongs95/instruction-scope-resolver/tree/v1.0.0) | 1.0.0 | 작업 대상에 적용되는 지침의 범위와 우선순위를 확인합니다. |
 | 시작 전 | [`workspace-convention-profiler`](https://github.com/jaeseongs95/workspace-convention-profiler/tree/v1.0.0) | 1.0.0 | 저장소의 구조, 도구, 관례, 검증 명령을 조사합니다. |
 | 시작 전 | [`task-contract`](https://github.com/jaeseongs95/task-contract/tree/v1.0.0) | 1.0.0 | 요청의 목표, 범위, 수용 기준, 위험도, 권한을 구조화합니다. |
@@ -229,7 +230,7 @@ pnpm eval:preflight -- selection 1 <evaluation-root> --cycle-dir <cycle-director
 pnpm eval:readiness -- <cycle-directory> --expected-frame-digest <sha256:digest> --expected-validity-report-digest <sha256:digest> --expected-quality-report-digest <sha256:digest> --evaluation-root <evaluation-root> --require-quality
 ```
 
-`READY_TO_EVALUATE`는 새 평가를 시작할 수 있다는 뜻이고, `EVALUATION_EVIDENCE_PASSED`는 receipt·SQLite·최종 case와 독립 심사 결과에서 다시 집계한 모든 실행이 동결 기준을 통과했다는 뜻입니다. 어느 상태도 provider 활성화나 릴리스 승인을 뜻하지 않습니다. frame·타당성 보고서·품질 보고서 digest는 cycle 밖에서 먼저 보관해 각각 전달해야 합니다. selection 사전 검사는 모델 실행 전에 start claim을 원자적으로 만들고 이후 단계 metadata가 그 digest를 참조합니다. 언어 모델과 독립 심사자 입력에는 정답 label을 넣지 않으며, 심사가 봉인된 뒤 별도 동결 label 파일을 결합해 점수만 집계합니다. 기존 `invalid-corpus`와 `failed-recovery` cycle은 재해석하지 않으며, 새 frame은 현재 suite revision, 실제 통합 skill과 동일한 평가 사본 checksum, 평가 toolchain checksum, corpus strata·rubric·threshold digest, 실행 횟수와 독립 역할을 함께 결속해야 합니다.
+`READY_TO_EVALUATE`는 새 평가를 시작할 수 있다는 뜻이고, `EVALUATION_EVIDENCE_PASSED`는 receipt·SQLite·최종 case와 독립 심사 결과에서 다시 집계한 모든 실행이 동결 기준을 통과했다는 뜻입니다. 어느 상태도 provider 활성화나 릴리스 승인을 뜻하지 않습니다. frame·타당성 보고서·품질 보고서의 digest를 cycle 밖에 먼저 보관한 뒤 각각 전달해야 합니다. selection 사전 검사는 모델 실행 전에 start claim을 원자적으로 만들고 이후 단계 metadata가 그 digest를 참조합니다. 언어 모델과 독립 심사자 입력에는 정답 label을 넣지 않으며, 심사가 봉인된 뒤 별도 동결 label 파일을 결합해 점수만 집계합니다. 기존 `invalid-corpus`와 `failed-recovery` cycle은 재해석하지 않으며, 새 frame은 현재 suite revision, 실제 통합 skill과 동일한 평가 사본의 checksum, 평가 toolchain의 checksum, corpus strata·rubric·threshold의 digest, 실행 횟수, 독립 역할을 함께 결속해야 합니다.
 
 동결 threshold 값은 source lock의 upstream commit `c5df63749e2edfc8aa424f9935ee3cd4697d3c49`에 있는 `evals/cycles/0.1.0-rc2/thresholds.json`을 그대로 보존합니다.
 

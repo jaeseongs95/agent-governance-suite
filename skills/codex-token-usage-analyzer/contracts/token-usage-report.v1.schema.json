@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex-token-usage-analyzer.local/contracts/token-usage-report.v1.schema.json",
+  "title": "TokenUsageReport.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "verdict", "target", "observedAt", "counts", "totals", "models", "threads", "partialReasons", "message", "markdownArtifact"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "verdict": { "enum": ["PASS", "PARTIAL", "NEEDS_INPUT", "BLOCKED"] },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "label", "rootThreadIds"],
+      "properties": {
+        "kind": { "enum": ["thread", "title", "project", "unknown"] },
+        "label": { "type": "string" },
+        "rootThreadIds": { "type": "array", "items": { "type": "string", "format": "uuid" }, "uniqueItems": true }
+      }
+    },
+    "observedAt": { "$ref": "#/$defs/range" },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rootThreads", "totalThreads", "observedThreads", "observations"],
+      "properties": {
+        "rootThreads": { "type": "integer", "minimum": 0 },
+        "totalThreads": { "type": "integer", "minimum": 0 },
+        "observedThreads": { "type": "integer", "minimum": 0 },
+        "observations": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "totals": { "$ref": "#/$defs/usage" },
+    "models": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["model", "effort", "status", "values"],
+        "properties": {
+          "model": { "type": "string", "minLength": 1 },
+          "effort": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["complete", "partial"] },
+          "values": { "$ref": "#/$defs/usage" }
+        }
+      }
+    },
+    "threads": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "threadId", "title", "status", "models", "observedAt", "values"],
+        "properties": {
+          "role": { "type": "string", "minLength": 1 },
+          "threadId": { "type": "string", "format": "uuid" },
+          "title": { "type": ["string", "null"] },
+          "status": { "enum": ["complete", "partial"] },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["model", "effort"],
+              "properties": {
+                "model": { "type": "string", "minLength": 1 },
+                "effort": { "type": "string", "minLength": 1 }
+              }
+            }
+          },
+          "observedAt": { "$ref": "#/$defs/range" },
+          "values": { "$ref": "#/$defs/usage" }
+        }
+      }
+    },
+    "partialReasons": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "message": { "type": ["string", "null"] },
+    "markdownArtifact": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "digest"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "type": ["string", "null"], "format": "date-time" },
+        "to": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_tokens", "cached_input_tokens", "cache_write_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens", "non_cached_input_tokens", "input_output_tokens"],
+      "properties": {
+        "input_tokens": { "$ref": "#/$defs/counter" },
+        "cached_input_tokens": { "$ref": "#/$defs/counter" },
+        "cache_write_input_tokens": { "$ref": "#/$defs/counter" },
+        "output_tokens": { "$ref": "#/$defs/counter" },
+        "reasoning_output_tokens": { "$ref": "#/$defs/counter" },
+        "total_tokens": { "$ref": "#/$defs/counter" },
+        "non_cached_input_tokens": { "$ref": "#/$defs/counter" },
+        "input_output_tokens": { "$ref": "#/$defs/counter" }
+      }
+    },
+    "counter": { "type": ["integer", "null"], "minimum": 0 }
+  }
+}
