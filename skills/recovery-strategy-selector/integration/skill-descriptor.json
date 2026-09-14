@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "2.0.0",
+  "skillId": "recovery-strategy-selector",
+  "version": "0.1.0",
+  "enabled": true,
+  "priority": 50,
+  "providers": [
+    {
+      "capabilities": ["recovery-strategy-selection"],
+      "executionClass": "recovery",
+      "phase": "recovery-strategy-selection",
+      "phaseOrder": 20,
+      "requiredInputArtifacts": ["diagnosis-report", "source-task-envelope", "source-workflow-receipt", "recovery-constraints", "recovery-authorization"],
+      "inputBindings": [
+        { "targetArtifact": "diagnosis-report", "sources": ["prior-recovery:diagnosis-report"], "operation": "require-external" },
+        { "targetArtifact": "source-task-envelope", "sources": ["recovery-request:source-task-envelope"], "operation": "require-external" },
+        { "targetArtifact": "source-workflow-receipt", "sources": ["recovery-request:source-workflow-receipt"], "operation": "require-external" },
+        { "targetArtifact": "recovery-constraints", "sources": ["recovery-request:constraints"], "operation": "select" },
+        { "targetArtifact": "recovery-authorization", "sources": ["recovery-request:authorization"], "operation": "select" }
+      ],
+      "producedArtifacts": ["recovery-handoff"],
+      "outputSchema": "contracts/recovery-handoff.v1.schema.json",
+      "resultSchema": "integration/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/verdict",
+        "values": {
+          "SELECTED": { "state": "passed", "errorRequired": false },
+          "NEEDS_APPROVAL": { "state": "needs-approval", "errorRequired": false },
+          "NEEDS_INPUT": { "state": "needs-input", "errorRequired": false },
+          "NO_VIABLE_STRATEGY": { "state": "needs-redesign", "errorRequired": false },
+          "BLOCKED": { "state": "blocked", "errorRequired": true, "allowedErrorCodes": ["INVALID_INPUT", "MISSING_EVIDENCE", "MCP_UNAVAILABLE"] }
+        },
+        "default": "reject",
+        "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE"]
+      },
+      "selectionCriteria": ["confirmed-failure-cause-needs-recovery-strategy", "explicit-recovery-strategy-comparison"],
+      "preconditions": ["A validated CAUSE_CONFIRMED diagnosis, the source task, the failed workflow receipt, constraints, and authorization evidence are available."],
+      "failureHandling": {
+        "missingEvidence": "blocked",
+        "approvalRequired": "needs-approval",
+        "tie": "needs-input",
+        "noViableStrategy": "needs-redesign",
+        "retry": "new-diagnosis-evidence-authorization-or-user-decision-only"
+      },
+      "gate": { "kind": "completion", "policy": "conditional", "validator": "contracts/recovery-handoff.v1.schema.json" }
+    }
+  ]
+}

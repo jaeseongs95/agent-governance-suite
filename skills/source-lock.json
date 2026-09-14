@@ -184,6 +184,15 @@
       "downstreamModifications": []
     },
     {
+      "skillId": "recovery-strategy-selector",
+      "path": "skills/recovery-strategy-selector",
+      "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
+      "ref": "cf0538aaeef69eb855d1caf8436fe7a92c04cb0e",
+      "commit": "cf0538aaeef69eb855d1caf8436fe7a92c04cb0e",
+      "checksum": "sha256:07ac3e0b5eb9a9c5f20eb1117f920a17de34553a0034ebb986f2d7215c261d96",
+      "checksumScope": "relative paths and normalized text bytes under skills/recovery-strategy-selector"
+    },
+    {
       "skillId": "korean-prose-editor",
       "path": "skills/korean-prose-editor",
       "source": "https://github.com/jaeseongs95/korean-prose-editor.git",
