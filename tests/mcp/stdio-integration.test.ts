@@ -305,6 +305,9 @@ describe("bundled STDIO MCP server", () => {
         "execute_state_cleanup",
       ]);
       expect(listed.tools.find((tool) => tool.name === "plan_workflow")?.annotations?.readOnlyHint).toBe(true);
+      const planningInputSchema = listed.tools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
+      expect(planningInputSchema).toMatchObject({ type: "object", oneOf: expect.any(Array) });
+      expect(JSON.stringify(planningInputSchema)).not.toContain("$ref");
       expect(listed.tools.find((tool) => tool.name === "check_for_updates")?.annotations).toMatchObject({
         readOnlyHint: true,
         destructiveHint: false,

@@ -35,7 +35,6 @@
       }
     },
     "requiredCapabilities": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
-    "evaluationAuditPurpose": { "enum": ["design-readiness", "quality-or-release"] },
     "constraints": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
     "authorization": {
       "type": "object",
@@ -62,18 +61,5 @@
       "required": ["requested", "mcpAvailable"],
       "properties": { "requested": { "type": "boolean" }, "mcpAvailable": { "type": "boolean" } }
     }
-  },
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "requiredCapabilities": { "type": "array", "contains": { "const": "evaluation-validity-audit" } }
-        }
-      },
-      "then": {
-        "properties": { "evaluationAuditPurpose": { "enum": ["design-readiness", "quality-or-release"] } },
-        "required": ["evaluationAuditPurpose"]
-      }
-    }
-  ]
+  }
 }

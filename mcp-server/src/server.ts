@@ -41,6 +41,41 @@ function toolSchema(
   return schema;
 }
 
+function embeddedSchema(source: Record<string, unknown>): ObjectSchema {
+  const schema = structuredClone(source) as ObjectSchema & { $schema?: string; $id?: string };
+  delete schema.$schema;
+  delete schema.$id;
+  return schema;
+}
+
+const taskEnvelopeInputSchema = embeddedSchema(contractSchemas.taskEnvelope);
+const evaluationTaskEnvelopeInputSchema = structuredClone(taskEnvelopeInputSchema);
+evaluationTaskEnvelopeInputSchema.allOf = [{
+  properties: {
+    requiredCapabilities: {
+      type: "array",
+      contains: { const: "evaluation-validity-audit" },
+    },
+  },
+  required: ["requiredCapabilities"],
+}];
+const planWorkflowInputSchema = {
+  type: "object",
+  oneOf: [
+    taskEnvelopeInputSchema,
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["schemaVersion", "taskEnvelope", "evaluationAuditPurpose"],
+      properties: {
+        schemaVersion: { const: "1.0.0" },
+        taskEnvelope: evaluationTaskEnvelopeInputSchema,
+        evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] },
+      },
+    },
+  ],
+} as const;
+
 const openConvergenceRootInputSchema = toolSchema(contractSchemas.openConvergenceRootRequest, {
   add: {
     responseMode: responseModeProperty,
@@ -193,8 +228,8 @@ export function createMcpServer(
       },
       {
         name: "plan_workflow",
-        description: "Read the current skill registry and return a capability-based workflow plan without storing a run.",
-        inputSchema: contractSchemas.taskEnvelope,
+        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Evaluation validity audits use the structured wrapper to bind their purpose.",
+        inputSchema: planWorkflowInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
