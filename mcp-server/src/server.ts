@@ -6,6 +6,7 @@ import {
   type ConvergenceRootV1,
   type ConvergenceStatusV1,
   type PluginUpdateStatusV1,
+  type KoreanProseGlossaryLookupResultV1,
   type ResponseModeV1,
   type WorkflowReceiptV1,
 } from "../../contracts/types.js";
@@ -20,6 +21,8 @@ import {
 } from "./response-projections.js";
 import { WorkflowService } from "./workflow-service.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
+import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from "./korean-prose-glossary.js";
+import { ContractValidator } from "./schema-validator.js";
 
 type ObjectSchema = Record<string, unknown> & {
   properties?: Record<string, unknown>;
@@ -166,6 +169,8 @@ export function createMcpServer(
   updates: PluginUpdateService,
   continuity: ContinuityGateway = new UnavailableContinuityService(),
   cleanup?: StateCleanupService,
+  glossary: KoreanProseGlossaryGateway = new UnavailableKoreanProseGlossary(),
+  validator: ContractValidator = new ContractValidator(),
 ): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -174,6 +179,12 @@ export function createMcpServer(
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
+      {
+        name: "lookup_korean_prose_terms",
+        description: "Look up curated Korean prose glossary terms once before MCP selection. The source and matches are never persisted.",
+        inputSchema: contractSchemas.koreanProseGlossaryLookupRequest,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
       {
         name: "check_for_updates",
         description: "Check the fixed Agent Governance Suite repository for a newer stable plugin tag without installing it.",
@@ -296,7 +307,15 @@ export function createMcpServer(
     let updateStatus: PluginUpdateStatusV1 | null = null;
     let result: ApiResultV1<unknown>;
 
-    if (request.params.name === "check_for_updates") {
+    if (request.params.name === "lookup_korean_prose_terms") {
+      try {
+        const input = validator.koreanProseGlossaryLookupRequest(args);
+        const output = validator.koreanProseGlossaryLookupResult(glossary.lookup(input));
+        result = apiOk<KoreanProseGlossaryLookupResultV1>(output);
+      } catch (error) {
+        result = invalidInput(error instanceof Error ? error.message : "Glossary lookup input is invalid.");
+      }
+    } else if (request.params.name === "check_for_updates") {
       if (!validUpdateArguments(args)) {
         result = invalidInput("check_for_updates accepts only an optional boolean force field.");
       } else {

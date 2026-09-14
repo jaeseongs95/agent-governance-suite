@@ -183,6 +183,7 @@ try {
       schemaVersion: "1.0.0",
       digest: { source: digests.source, artifact: digests.selection },
       length: { source: inputText.length },
+      glossary: { mode: "none", status: "direct", id: null, version: null, contentDigest: null, matchSetDigest: null, matchCount: 0, warnings: [] },
       decisions: {
         status: "ready",
         selectedCount: counts.selected,
@@ -195,18 +196,21 @@ try {
           schemaVersion: "1.0.0", actorId: actorIds[1],
           digest: { source: digests.source, candidate: digests.editing, artifact: digests.editing },
           length: { source: inputText.length, candidate: editingText.length },
+          glossary: { mode: "none", status: "direct", id: null, version: null, contentDigest: null, matchSetDigest: null, matchCount: 0, warnings: [] },
           decisions: { status: "ready", editCount: counts.selected }, warnings: [],
         }
       : stage.requiredCapability === "korean-prose-verification" ? {
           schemaVersion: "1.0.0", actorId: actorIds[2],
           digest: { source: digests.source, candidate: digests.editing, rubric: digests.rubric, artifact: digests.verification },
           length: { source: inputText.length, candidate: editingText.length },
+          glossary: { mode: "none", status: "direct", id: null, version: null, contentDigest: null, matchSetDigest: null, matchCount: 0, warnings: [] },
           decisions: { status: counts.partial ? "partial" : "verified", acceptedCount: counts.accepted, retainedCount: counts.retained, fallback: false }, warnings: [],
         }
       : {
           schemaVersion: "1.0.0", actorIds,
           digest: { source: digests.source, result: digests.final, manifest: digests.manifest },
           length: { source: inputText.length, result: finalText.length },
+          glossary: { mode: "none", status: "direct", id: null, version: null, contentDigest: null, matchSetDigest: null, matchCount: 0, warnings: [] },
           decisions: {
             mode: "mcp", assurance: "verified", status: "finalized",
             appliedEditDigests: finalEditDigests.applied,

@@ -11,9 +11,10 @@
       "executionClass": "workflow",
       "phase": "korean-prose-selection",
       "phaseOrder": 50,
-      "requiredInputArtifacts": ["korean-prose-request"],
+      "requiredInputArtifacts": ["korean-prose-request", "korean-prose-glossary-match-set"],
       "inputBindings": [
-        { "targetArtifact": "korean-prose-request", "sources": ["caller.koreanProseRequest"], "operation": "require-external" }
+        { "targetArtifact": "korean-prose-request", "sources": ["caller.koreanProseRequest"], "operation": "require-external" },
+        { "targetArtifact": "korean-prose-glossary-match-set", "sources": ["caller.koreanProseGlossaryMatchSet"], "operation": "require-external" }
       ],
       "producedArtifacts": ["edit-decision-set"],
       "outputSchema": "contracts/edit-decision-set.v1.schema.json",
@@ -29,7 +30,7 @@
         "adapterErrors": ["INVALID_INPUT", "MISSING_EVIDENCE", "MCP_UNAVAILABLE"]
       },
       "selectionCriteria": ["korean-prose-edit-request", "meaning-preserving-style-edit"],
-      "preconditions": ["A Korean prose request artifact is available.", "A distinct selection actor is available."],
+      "preconditions": ["The MCP host performed exactly one glossary lookup after protected-span extraction.", "A Korean prose request artifact is available.", "A distinct selection actor is available."],
       "failureHandling": { "missingInput": "needs-input", "subagentsUnavailable": "blocked", "retry": "only-after-input-or-actor-change" },
       "gate": { "kind": "none", "policy": "none", "validator": null },
       "receiptPolicy": { "mode": "reference-only", "actorIdPointer": "/output/actorId", "uniqueness": "run" }
@@ -39,9 +40,10 @@
       "executionClass": "workflow",
       "phase": "korean-prose-editing",
       "phaseOrder": 55,
-      "requiredInputArtifacts": ["korean-prose-request", "edit-decision-set"],
+      "requiredInputArtifacts": ["korean-prose-request", "korean-prose-glossary-match-set", "edit-decision-set"],
       "inputBindings": [
         { "targetArtifact": "korean-prose-request", "sources": ["caller.koreanProseRequest"], "operation": "require-external" },
+        { "targetArtifact": "korean-prose-glossary-match-set", "sources": ["caller.koreanProseGlossaryMatchSet"], "operation": "require-external" },
         { "targetArtifact": "edit-decision-set", "sources": ["provider:korean-prose-selection.edit-decision-set"], "operation": "select" }
       ],
       "producedArtifacts": ["edit-candidate"],
@@ -68,9 +70,10 @@
       "executionClass": "workflow",
       "phase": "korean-prose-verification",
       "phaseOrder": 60,
-      "requiredInputArtifacts": ["korean-prose-request", "edit-decision-set", "edit-candidate", "korean-prose-rubric"],
+      "requiredInputArtifacts": ["korean-prose-request", "korean-prose-glossary-match-set", "edit-decision-set", "edit-candidate", "korean-prose-rubric"],
       "inputBindings": [
         { "targetArtifact": "korean-prose-request", "sources": ["caller.koreanProseRequest"], "operation": "require-external" },
+        { "targetArtifact": "korean-prose-glossary-match-set", "sources": ["caller.koreanProseGlossaryMatchSet"], "operation": "require-external" },
         { "targetArtifact": "edit-decision-set", "sources": ["provider:korean-prose-selection.edit-decision-set"], "operation": "select" },
         { "targetArtifact": "edit-candidate", "sources": ["provider:korean-prose-editing.edit-candidate"], "operation": "select" },
         { "targetArtifact": "korean-prose-rubric", "sources": ["caller.koreanProseRubric"], "operation": "require-external" }
@@ -100,9 +103,10 @@
       "executionClass": "workflow",
       "phase": "korean-prose-finalization",
       "phaseOrder": 65,
-      "requiredInputArtifacts": ["korean-prose-request", "edit-decision-set", "edit-candidate", "edit-verification-report"],
+      "requiredInputArtifacts": ["korean-prose-request", "korean-prose-glossary-match-set", "edit-decision-set", "edit-candidate", "edit-verification-report"],
       "inputBindings": [
         { "targetArtifact": "korean-prose-request", "sources": ["caller.koreanProseRequest"], "operation": "require-external" },
+        { "targetArtifact": "korean-prose-glossary-match-set", "sources": ["caller.koreanProseGlossaryMatchSet"], "operation": "require-external" },
         { "targetArtifact": "edit-decision-set", "sources": ["provider:korean-prose-selection.edit-decision-set"], "operation": "select" },
         { "targetArtifact": "edit-candidate", "sources": ["provider:korean-prose-editing.edit-candidate"], "operation": "select" },
         { "targetArtifact": "edit-verification-report", "sources": ["provider:korean-prose-verification.edit-verification-report"], "operation": "select" }
