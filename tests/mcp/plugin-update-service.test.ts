@@ -120,7 +120,7 @@ describe("PluginUpdateService", () => {
       fetcher: async () => {
         calls += 1;
         if (fail) throw new TypeError("offline");
-        return jsonResponse([reference("v1.6.0")]);
+        return jsonResponse([reference("v1.7.0")]);
       },
     });
 
@@ -129,7 +129,7 @@ describe("PluginUpdateService", () => {
     now = new Date("2026-09-14T00:00:00.000Z");
     const failed = await service.check();
     expect(failed).toMatchObject({
-      latestVersion: "1.6.0",
+      latestVersion: "1.7.0",
       comparison: "update-available",
       stale: true,
       lastErrorCode: "NETWORK",
@@ -144,7 +144,7 @@ describe("PluginUpdateService", () => {
   it("emits each available version once and persists that claim", async () => {
     const store = new InMemoryPluginUpdateStore();
     let now = new Date("2026-09-13T00:00:00.000Z");
-    let latest = "v1.6.0";
+    let latest = "v1.7.0";
     const firstService = new PluginUpdateService(store, {
       now: () => now,
       fetcher: async () => jsonResponse([reference(latest)]),
@@ -152,7 +152,7 @@ describe("PluginUpdateService", () => {
 
     const first = await firstService.check();
     const notice = firstService.takeNotice(first);
-    expect(notice).toMatchObject({ latestVersion: "1.6.0", automaticInstall: false });
+    expect(notice).toMatchObject({ latestVersion: "1.7.0", automaticInstall: false });
     if (!notice) throw new Error("Expected an update notice.");
     new ContractValidator().pluginUpdateNotice(notice);
     expect(firstService.takeNotice(first)).toBeNull();
@@ -163,10 +163,10 @@ describe("PluginUpdateService", () => {
     });
     expect(restarted.takeNotice(await restarted.check())).toBeNull();
 
-    latest = "v1.7.0";
+    latest = "v1.8.0";
     now = new Date("2026-09-14T00:00:00.000Z");
     const next = await restarted.check();
-    expect(restarted.takeNotice(next)).toMatchObject({ latestVersion: "1.7.0" });
+    expect(restarted.takeNotice(next)).toMatchObject({ latestVersion: "1.8.0" });
   });
 
   it("preserves a concurrent SQLite notice claim against a stale check write", async () => {
@@ -178,14 +178,14 @@ describe("PluginUpdateService", () => {
 
     const firstCheck = firstService.check(true);
     const secondCheck = secondService.check(true);
-    firstResponse.resolve(jsonResponse([reference("v1.6.0")]));
+    firstResponse.resolve(jsonResponse([reference("v1.7.0")]));
     const firstStatus = await firstCheck;
-    expect(firstService.takeNotice(firstStatus)?.latestVersion).toBe("1.6.0");
+    expect(firstService.takeNotice(firstStatus)?.latestVersion).toBe("1.7.0");
 
-    secondResponse.resolve(jsonResponse([reference("v1.6.0")]));
+    secondResponse.resolve(jsonResponse([reference("v1.7.0")]));
     const secondStatus = await secondCheck;
     expect(secondService.takeNotice(secondStatus)).toBeNull();
-    expect(secondStore.getPluginUpdateState("agent-governance-suite")?.lastNotifiedVersion).toBe("1.6.0");
+    expect(secondStore.getPluginUpdateState("agent-governance-suite")?.lastNotifiedVersion).toBe("1.7.0");
     firstStore.close();
     secondStore.close();
   });
@@ -214,20 +214,20 @@ describe("PluginUpdateService", () => {
 
   it("does not notify an older version after a higher version was already claimed", async () => {
     const store = new InMemoryPluginUpdateStore();
-    let latest = "v1.6.0";
+    let latest = "v1.7.0";
     const service = new PluginUpdateService(store, {
       fetcher: async () => jsonResponse([reference(latest)]),
     });
 
     const versions: Array<string | undefined> = [];
     versions.push(service.takeNotice(await service.check(true))?.latestVersion);
+    latest = "v1.8.0";
+    versions.push(service.takeNotice(await service.check(true))?.latestVersion);
     latest = "v1.7.0";
     versions.push(service.takeNotice(await service.check(true))?.latestVersion);
-    latest = "v1.6.0";
-    versions.push(service.takeNotice(await service.check(true))?.latestVersion);
 
-    expect(versions).toEqual(["1.6.0", "1.7.0", undefined]);
-    expect(store.getPluginUpdateState("agent-governance-suite")?.lastNotifiedVersion).toBe("1.7.0");
+    expect(versions).toEqual(["1.7.0", "1.8.0", undefined]);
+    expect(store.getPluginUpdateState("agent-governance-suite")?.lastNotifiedVersion).toBe("1.8.0");
   });
 
   it.each([
@@ -258,7 +258,7 @@ describe("PluginUpdateService", () => {
       claimPluginUpdateNotice() { throw new Error("claim failed"); },
     };
     const service = new PluginUpdateService(failingStore, {
-      fetcher: async () => jsonResponse([reference("v1.6.0")]),
+      fetcher: async () => jsonResponse([reference("v1.7.0")]),
     });
     const status = await service.check();
     expect(status.comparison).toBe("update-available");
@@ -274,12 +274,12 @@ describe("PluginUpdateService", () => {
       claimPluginUpdateNotice() { throw new Error("claim failed"); },
     };
     const firstService = new PluginUpdateService(claimFailureStore, {
-      fetcher: async () => jsonResponse([reference("v1.6.0")]),
+      fetcher: async () => jsonResponse([reference("v1.7.0")]),
     });
     expect(firstService.takeNotice(await firstService.check())).toBeNull();
 
     const restarted = new PluginUpdateService(claimFailureStore, {
-      fetcher: async () => jsonResponse([reference("v1.6.0")]),
+      fetcher: async () => jsonResponse([reference("v1.7.0")]),
     });
     expect(restarted.takeNotice(await restarted.check())).toBeNull();
     expect(durable.getPluginUpdateState("agent-governance-suite")?.lastNotifiedVersion).toBeNull();
@@ -289,9 +289,9 @@ describe("PluginUpdateService", () => {
     const store = new InMemoryPluginUpdateStore();
     const state: StoredPluginUpdateState = {
       targetId: "agent-governance-suite",
-      currentVersion: "1.5.0",
-      latestVersion: "1.6.0",
-      latestTag: "v1.6.0",
+      currentVersion: "1.6.0",
+      latestVersion: "1.7.0",
+      latestTag: "v1.7.0",
       latestCommit: commit,
       etag: null,
       comparison: "update-available",
@@ -305,7 +305,7 @@ describe("PluginUpdateService", () => {
     store.putPluginUpdateState(state);
     const service = new PluginUpdateService(store, {
       now: () => new Date("2026-09-13T01:00:00.000Z"),
-      fetcher: async () => jsonResponse([reference("v1.6.0")]),
+      fetcher: async () => jsonResponse([reference("v1.7.0")]),
     });
 
     const status = await service.check();
