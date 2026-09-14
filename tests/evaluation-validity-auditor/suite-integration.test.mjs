@@ -7,11 +7,11 @@ import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { analyzeEvaluation } from "../../skills/evaluation-validity-auditor/scripts/core.mjs";
-import { makePostFixture } from "./fixture.mjs";
+import { makeFixture, makePostFixture } from "./fixture.mjs";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 
-function task() {
+function task(evaluationAuditPurpose = "quality-or-release") {
   return {
     schemaVersion: "1.0.0",
     taskId: "evaluation-validity-integration",
@@ -21,6 +21,7 @@ function task() {
     riskLevel: "low",
     workUnits: [],
     requiredCapabilities: ["evaluation-validity-audit"],
+    evaluationAuditPurpose,
     constraints: ["Keep receipt output reference-only."],
     authorization: { allowedActions: ["read"], prohibitedActions: ["write"], approvalRequired: [] },
     decision: { complexity: "simple", hasConflicts: false },
@@ -28,14 +29,16 @@ function task() {
   };
 }
 
-function stageResult(receipt, report) {
+function stageResult(receipt, report, state = "passed") {
   const stage = receipt.plan.stages[0];
+  const errorCode = state === "failed" ? "GATE_FAILED" : state === "blocked" ? "MISSING_EVIDENCE" : null;
+  const error = errorCode === null ? null : { code: errorCode, message: errorCode, details: null };
   return {
     schemaVersion: "1.0.0",
     runId: receipt.runId,
     stageId: stage.stageId,
     expectedRevision: receipt.revision,
-    state: "passed",
+    state,
     output: {
       schemaVersion: "1.0.0",
       kind: "output",
@@ -48,7 +51,7 @@ function stageResult(receipt, report) {
         targetDigest: report.target.digest,
         verified: true,
       })),
-      error: null,
+      error,
     },
     evidence: stage.requiredInputArtifacts.map((artifactId) => ({
       artifactId,
@@ -59,7 +62,7 @@ function stageResult(receipt, report) {
     })),
     findings: [],
     blockers: [],
-    error: null,
+    error,
   };
 }
 
@@ -113,5 +116,57 @@ describe("evaluation-validity-auditor suite descriptor", () => {
     const rejected = service.recordStageResult(stageResult(receipt, unsafe));
     expect(rejected.ok).toBe(false);
     expect(rejected.error?.message).toBe("Reference-only receipt policy rejected free text.");
+  });
+
+  it("freezes the audit purpose in the signed plan and enforces pre versus post completion", async () => {
+    const registry = new FileSkillRegistry(registryPath, new ContractValidator());
+    const service = new WorkflowService(registry, new ContractValidator());
+    const pre = await makeFixture();
+    const preReport = await analyzeEvaluation(pre.base, { artifactRoot: pre.root });
+
+    let plan = service.planWorkflow(task("design-readiness")).data;
+    expect(plan.stages[0].evaluationAuditPurpose).toBe("design-readiness");
+    let receipt = service.startWorkflow(plan).data;
+    const accepted = service.recordStageResult(stageResult(receipt, preReport));
+    expect(accepted.ok, accepted.error?.message).toBe(true);
+    expect(service.finalizeWorkflow(receipt.runId, accepted.data.revision).ok).toBe(true);
+
+    plan = service.planWorkflow(task("quality-or-release")).data;
+    receipt = service.startWorkflow(plan).data;
+    const rejected = service.recordStageResult(stageResult(receipt, preReport));
+    expect(rejected.ok).toBe(false);
+    expect(rejected.error?.code).toBe("GATE_FAILED");
+    expect(service.getWorkflowStatus(receipt.runId).data.stageResults).toHaveLength(0);
+
+    plan = service.planWorkflow(task("design-readiness")).data;
+    plan.stages[0].evaluationAuditPurpose = "quality-or-release";
+    expect(service.startWorkflow(plan).error?.code).toBe("INVALID_INPUT");
+  });
+
+  it("requires an explicit structured purpose for evaluation validity planning", () => {
+    const registry = new FileSkillRegistry(registryPath, new ContractValidator());
+    const service = new WorkflowService(registry, new ContractValidator());
+    const request = task();
+    delete request.evaluationAuditPurpose;
+    expect(service.planWorkflow(request).error?.code).toBe("INVALID_INPUT");
+  });
+
+  it("maps FAIL and BLOCKED reports to their fixed workflow error states", async () => {
+    const registry = new FileSkillRegistry(registryPath, new ContractValidator());
+    const service = new WorkflowService(registry, new ContractValidator());
+
+    const invalid = await makeFixture();
+    invalid.base.criteria[0].judgmentMethods = ["self-report"];
+    const failedReport = await analyzeEvaluation(invalid.base, { artifactRoot: invalid.root });
+    let receipt = service.startWorkflow(service.planWorkflow(task("design-readiness")).data).data;
+    const failed = service.recordStageResult(stageResult(receipt, failedReport, "failed"));
+    expect(failed).toMatchObject({ ok: true, data: { state: "failed", error: { code: "GATE_FAILED" } } });
+
+    const incomplete = await makeFixture();
+    incomplete.base.artifacts.find((item) => item.role === "rubric").provenance = null;
+    const blockedReport = await analyzeEvaluation(incomplete.base, { artifactRoot: incomplete.root });
+    receipt = service.startWorkflow(service.planWorkflow(task("design-readiness")).data).data;
+    const blocked = service.recordStageResult(stageResult(receipt, blockedReport, "blocked"));
+    expect(blocked).toMatchObject({ ok: true, data: { state: "blocked", error: { code: "MISSING_EVIDENCE" } } });
   });
 });

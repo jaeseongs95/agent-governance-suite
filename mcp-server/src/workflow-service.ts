@@ -574,6 +574,7 @@ export class WorkflowService {
           this.assertRequiredArtifacts(target, result);
           this.assertDeliberationGate(target, result);
           this.assertMandatoryAuditGate(target, result);
+          this.assertEvaluationValidityGate(target, result);
         }
         target.state = result.state;
         receipt.stageResults.push(clone(result));
@@ -631,6 +632,7 @@ export class WorkflowService {
         }
         this.assertRequiredArtifacts(stage, result);
         this.assertDeclaredReceiptPolicy(receipt, stage, result);
+        this.assertEvaluationValidityGate(stage, result);
       }
 
       const mandatoryAudit = receipt.plan.stages.find((stage) => stage.riskGate === "mandatory");
@@ -744,6 +746,9 @@ export class WorkflowService {
         stageId: stageId(order, capability),
         order,
         requiredCapability: capability,
+        ...(capability === "evaluation-validity-audit"
+          ? { evaluationAuditPurpose: task.evaluationAuditPurpose }
+          : {}),
         satisfiedCapabilities,
         skillId: skill.skillId,
         phase: skill.phase,
@@ -1054,6 +1059,32 @@ export class WorkflowService {
         stageId: stage.stageId,
       });
     }
+  }
+
+  private assertEvaluationValidityGate(stage: PlannedStageV1, result: StageResultV1): void {
+    if (stage.requiredCapability !== "evaluation-validity-audit") return;
+    const output = result.output.output;
+    const purpose = stage.evaluationAuditPurpose;
+    const isDesignReadiness = purpose === "design-readiness"
+      && output?.auditStage === "pre-execution"
+      && output?.verdict === "PASS"
+      && output?.qualifiesAsQualityOrReleaseEvidence === false;
+    const isQualityOrRelease = purpose === "quality-or-release"
+      && output?.auditStage === "post-execution"
+      && output?.verdict === "PASS"
+      && output?.qualifiesAsQualityOrReleaseEvidence === true;
+    if (isDesignReadiness || isQualityOrRelease) return;
+    throw new WorkflowContractError(
+      "GATE_FAILED",
+      "Evaluation validity PASS does not satisfy the frozen audit purpose.",
+      {
+        stageId: stage.stageId,
+        purpose: purpose ?? null,
+        auditStage: output?.auditStage ?? null,
+        verdict: output?.verdict ?? null,
+        qualifiesAsQualityOrReleaseEvidence: output?.qualifiesAsQualityOrReleaseEvidence ?? null,
+      },
+    );
   }
 
   private assertMandatoryAuditGate(stage: PlannedStageV1, result: StageResultV1): void {

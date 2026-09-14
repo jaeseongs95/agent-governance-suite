@@ -368,6 +368,7 @@ export interface TaskEnvelopeV1 {
   riskLevel: RiskLevel;
   workUnits: WorkUnitV1[];
   requiredCapabilities: string[];
+  evaluationAuditPurpose?: "design-readiness" | "quality-or-release";
   constraints: string[];
   authorization: {
     allowedActions: string[];
@@ -492,6 +493,7 @@ export interface PlannedStageV1 {
   stageId: string;
   order: number;
   requiredCapability: string;
+  evaluationAuditPurpose?: "design-readiness" | "quality-or-release";
   satisfiedCapabilities: string[];
   skillId: string;
   phase: string;
