@@ -1,8 +1,8 @@
 {
   "id": "agent-governance-suite",
   "name": "agent-governance-suite",
-  "version": "1.9.0",
-  "description": "Route governance specialists through declarative provider contracts, a local MCP convergence guard, and opt-in task continuity; bundle the disabled Korean prose workflow for later activation.",
+  "version": "1.10.0",
+  "description": "Route governance specialists through declarative provider contracts, a local MCP convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
   "author": {
     "name": "jaeseongs95",
     "url": "https://github.com/jaeseongs95"
@@ -34,7 +34,7 @@
       "Audit gating",
       "Scope and evidence validation",
       "Mutation preflight",
-      "Bundled, disabled Korean prose workflow"
+      "MCP-assisted Korean prose workflow"
     ],
     "websiteURL": "https://github.com/jaeseongs95/agent-governance-suite",
     "defaultPrompt": [
