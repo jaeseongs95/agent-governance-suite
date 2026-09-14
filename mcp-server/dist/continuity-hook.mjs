@@ -9077,6 +9077,7 @@ var contractSchemas = {
   pluginUpdateStatus: loadSchema("plugin-update-status.v1.schema.json"),
   pluginUpdateNotice: loadSchema("plugin-update-notice.v1.schema.json"),
   taskEnvelope: loadSchema("task-envelope.v1.schema.json"),
+  planWorkflowRequest: loadSchema("plan-workflow-request.v1.schema.json"),
   skillDescriptor: loadSchema("skill-descriptor.v1.schema.json"),
   skillDescriptorV2: loadSchema("skill-descriptor.v2.schema.json"),
   workflowPlan: loadSchema("workflow-plan.v1.schema.json"),
@@ -9124,6 +9125,7 @@ var ContractValidator = class {
       pluginUpdateStatus: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-status.v1.schema.json"),
       pluginUpdateNotice: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-notice.v1.schema.json"),
       taskEnvelope: ajv.getSchema("https://skill-suite.local/contracts/task-envelope.v1.schema.json"),
+      planWorkflowRequest: ajv.getSchema("https://skill-suite.local/contracts/plan-workflow-request.v1.schema.json"),
       skillDescriptor: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v1.schema.json"),
       skillDescriptorV2: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v2.schema.json"),
       workflowPlan: ajv.getSchema("https://skill-suite.local/contracts/workflow-plan.v1.schema.json"),
@@ -9169,6 +9171,9 @@ var ContractValidator = class {
   }
   taskEnvelope(value) {
     return this.assert("taskEnvelope", value);
+  }
+  planWorkflowRequest(value) {
+    return this.assert("planWorkflowRequest", value);
   }
   skillDescriptorV2(value) {
     return this.assert("skillDescriptorV2", value);

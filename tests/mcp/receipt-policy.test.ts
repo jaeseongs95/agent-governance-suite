@@ -288,6 +288,22 @@ describe("descriptor-declared reference-only receipts", () => {
     expect(service.recordStageResult(result).ok).toBe(true);
   });
 
+  it("accepts RFC 3339 timestamps as structured receipt metadata", async () => {
+    const { service } = await createFixture();
+    const receipt = service.startWorkflow(service.planWorkflow(task()).data!).data!;
+    const result = passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision);
+    result.output.output!.reference = "2026-09-14T12:34:56.789+09:00";
+    expect(service.recordStageResult(result).ok).toBe(true);
+  });
+
+  it("does not accept an RFC 3339 timestamp as an external evidence locator", async () => {
+    const { service } = await createFixture();
+    const receipt = service.startWorkflow(service.planWorkflow(task()).data!).data!;
+    const result = passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision);
+    result.evidence.forEach((evidence) => { evidence.locator = "2026-09-14T12:34:56Z"; });
+    expect(service.recordStageResult(result).error?.code).toBe("MISSING_EVIDENCE");
+  });
+
   it.each(["ARBITRARY_UPPERCASE_TOKEN", "PROTECTED_EDIT_RETAINED_EXTRA", "arbitrary free text"])(
     "rejects undeclared text even when the output schema permits strings: %s",
     async (value) => {

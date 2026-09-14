@@ -384,6 +384,16 @@ export interface TaskEnvelopeV1 {
   };
 }
 
+export type EvaluationAuditPurposeV1 = "design-readiness" | "quality-or-release";
+
+export interface EvaluationAuditPlanRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  taskEnvelope: TaskEnvelopeV1;
+  evaluationAuditPurpose: EvaluationAuditPurposeV1;
+}
+
+export type PlanWorkflowRequestV1 = TaskEnvelopeV1 | EvaluationAuditPlanRequestV1;
+
 export interface WorkUnitV1 {
   id: string;
   objective: string;
@@ -492,6 +502,7 @@ export interface PlannedStageV1 {
   stageId: string;
   order: number;
   requiredCapability: string;
+  evaluationAuditPurpose?: EvaluationAuditPurposeV1;
   satisfiedCapabilities: string[];
   skillId: string;
   phase: string;
