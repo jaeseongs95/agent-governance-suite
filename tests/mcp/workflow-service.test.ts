@@ -11,7 +11,11 @@ import { validateDecisionRecordSemantics } from "../../mcp-server/src/decision-r
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
-import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
+import {
+  WorkflowService,
+  type ExecutionObservationBindingV1,
+  type TrustedExecutionContextProvider,
+} from "../../mcp-server/src/workflow-service.js";
 import { canonicalJson } from "../../mcp-server/src/convergence-logic.js";
 import { InMemoryWorkflowStore, PLAN_SIGNING_KEY, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
 
@@ -25,6 +29,35 @@ const TEST_EXECUTION_CONTEXT: ExecutionContextV1 = {
   source: "runtime",
   observedAt: "2026-09-14T00:00:00.000Z",
 };
+
+let trustedObservationSequence = 0;
+
+function trustedExecutionContext(
+  binding: ExecutionObservationBindingV1,
+  overrides: Partial<ExecutionContextV1> = {},
+): ExecutionContextV1 {
+  trustedObservationSequence += 1;
+  const observed = new Date();
+  return {
+    ...TEST_EXECUTION_CONTEXT,
+    observedAt: observed.toISOString(),
+    observationId: `fixture-observation-${String(trustedObservationSequence).padStart(6, "0")}`,
+    taskId: binding.taskId,
+    runId: binding.runId,
+    stageId: binding.stageId,
+    revision: binding.revision,
+    actorId: "fixture-execution-actor",
+    expiresAt: new Date(observed.getTime() + 60_000).toISOString(),
+    ...overrides,
+  };
+}
+
+function trustedProvider(
+  observe: (binding: ExecutionObservationBindingV1) => ExecutionContextV1 | null
+    = (binding) => trustedExecutionContext(binding),
+): TrustedExecutionContextProvider {
+  return { observe };
+}
 const validDecisionRecordDirectory = new URL(
   "../../skills/independent-deliberation-panel/evals/fixtures/valid/",
   import.meta.url,
@@ -148,6 +181,7 @@ async function createService(
   descriptors: SkillDescriptorV2[] = skills,
   store?: WorkflowStore,
   defaultExecutionContext: ExecutionContextV1 | null = TEST_EXECUTION_CONTEXT,
+  trustedExecutionContextProvider: TrustedExecutionContextProvider | null = null,
 ): Promise<{ service: WorkflowService; registryPath: string; rootDirectory: string }> {
   const directory = await mkdtemp(join(tmpdir(), "skill-suite-mcp-"));
   temporaryDirectories.push(directory);
@@ -169,6 +203,7 @@ async function createService(
       validator,
       store,
       defaultExecutionContext,
+      trustedExecutionContextProvider,
     ),
     registryPath,
     rootDirectory: directory,
@@ -460,12 +495,161 @@ describe("WorkflowService", () => {
     expect(secondRun.data?.runId).toBe("run-signed-before-restart-2");
   });
 
-  it("requires trusted execution metadata before an orchestrated plan can be assured", async () => {
-    const { service } = await createService(skills, undefined, null);
+  it("requires a trusted host provider before an orchestrated plan can be assured", async () => {
+    const { service } = await createService(skills, undefined, null, null);
     const result = service.planWorkflow(task(), true);
 
     expect(result.ok).toBe(false);
     expect(result.error?.code).toBe("BINDING_REQUIRED");
+  });
+
+  it("rejects caller-supplied execution metadata on the strict planning boundary", async () => {
+    const { service } = await createService(skills, undefined, null, trustedProvider());
+    const result = service.planWorkflow({
+      schemaVersion: "1.0.0",
+      taskEnvelope: task(),
+      executionContext: {
+        ...TEST_EXECUTION_CONTEXT,
+        model: "forged-frontier",
+        modelClass: "frontier",
+        reasoningEffort: "ultra",
+        observedAt: new Date().toISOString(),
+      },
+    }, true);
+
+    expect(result.ok).toBe(false);
+    expect(result.error?.code).toBe("INVALID_INPUT");
+  });
+
+  it("binds fresh trusted observations to bootstrap and exact stage identity", async () => {
+    const { service } = await createService(skills, undefined, null, trustedProvider());
+    const planned = service.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task() }, true);
+    expect(planned.ok, planned.error?.message).toBe(true);
+    expect(planned.data?.bootstrapExecution?.context).toMatchObject({
+      taskId: "task-001",
+      runId: null,
+      stageId: null,
+      revision: null,
+      actorId: "fixture-execution-actor",
+    });
+
+    const started = service.startWorkflow(planned.data!).data!;
+    const result = passedStage(started.runId, started.plan.stages[0]!, started.revision);
+    delete result.executionContext;
+    const recorded = service.recordStageResult(result, true);
+    expect(recorded.ok, recorded.error?.message).toBe(true);
+    expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({
+      taskId: "task-001",
+      runId: started.runId,
+      stageId: started.plan.stages[0]!.stageId,
+      revision: 0,
+      actorId: "fixture-execution-actor",
+    });
+  });
+
+  it("rejects stale, replayed, and cross-stage trusted observations", async () => {
+    const staleProvider = trustedProvider((binding) => trustedExecutionContext(binding, {
+      observedAt: "2020-01-01T00:00:00.000Z",
+      expiresAt: "2020-01-01T00:01:00.000Z",
+    }));
+    const { service: staleService } = await createService(skills, undefined, null, staleProvider);
+    expect(
+      staleService.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task() }, true).error?.code,
+    ).toBe("BINDING_INVALID");
+
+    const replayId = "fixture-replay-observation";
+    const replayProvider = trustedProvider((binding) => trustedExecutionContext(binding, {
+      observationId: replayId,
+    }));
+    const { service: replayService } = await createService(skills, undefined, null, replayProvider);
+    expect(
+      replayService.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task({ taskId: "replay" }) }, true).ok,
+    ).toBe(true);
+    expect(
+      replayService.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task({ taskId: "replay" }) }, true).error?.code,
+    ).toBe("BINDING_INVALID");
+
+    let firstStageBinding: ExecutionObservationBindingV1 | null = null;
+    const crossStageProvider = trustedProvider((binding) => {
+      if (binding.phase === "bootstrap") return trustedExecutionContext(binding);
+      if (!firstStageBinding) {
+        firstStageBinding = binding;
+        return trustedExecutionContext(binding);
+      }
+      return trustedExecutionContext(firstStageBinding, {
+        observationId: "fixture-cross-stage-observation",
+      });
+    });
+    const { service: crossStageService } = await createService(skills, undefined, null, crossStageProvider);
+    const plan = crossStageService.planWorkflow({
+      schemaVersion: "1.0.0",
+      taskEnvelope: task({ taskId: "cross-stage" }),
+    }, true).data!;
+    let receipt = crossStageService.startWorkflow(plan).data!;
+    const first = passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision);
+    delete first.executionContext;
+    receipt = crossStageService.recordStageResult(first, true).data!;
+    const second = passedStage(receipt.runId, receipt.plan.stages[1]!, receipt.revision);
+    delete second.executionContext;
+    expect(crossStageService.recordStageResult(second, true).error?.code).toBe("BINDING_INVALID");
+  });
+
+  it("rejects caller-supplied stage execution metadata on the strict MCP boundary", async () => {
+    const { service } = await createService(skills, undefined, null, trustedProvider());
+    const plan = service.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task() }, true).data!;
+    const started = service.startWorkflow(plan).data!;
+    const forged = passedStage(started.runId, started.plan.stages[0]!, started.revision);
+    forged.executionContext = {
+      ...TEST_EXECUTION_CONTEXT,
+      model: "forged-frontier",
+      modelClass: "frontier",
+      reasoningEffort: "ultra",
+      observedAt: new Date().toISOString(),
+    };
+    expect(service.recordStageResult(forged, true).error?.code).toBe("BINDING_INVALID");
+  });
+
+  it("applies deep/high to every alias of a provider that supplies a high-assurance capability", async () => {
+    const aliases = [
+      "independent-deliberation",
+      "independent-review",
+      "cross-examination",
+      "evidence-resolution",
+      "consensus-decision",
+    ];
+    const aliasedProvider = descriptor({
+      id: "aliased-deliberation-panel",
+      capabilities: aliases,
+      phase: "decision-analysis",
+      phaseOrder: 40,
+      riskGate: "none",
+      priority: 10,
+      producedArtifacts: ["decision-record"],
+    });
+    const { service } = await createService([aliasedProvider]);
+
+    for (const capability of aliases) {
+      const plan = service.planWorkflow(task({
+        taskId: `alias-${capability}`,
+        riskLevel: "low",
+        requiredCapabilities: [capability],
+        decision: { complexity: "simple", hasConflicts: false },
+      })).data!;
+      expect(plan.stages[0]?.executionRequirement).toMatchObject({
+        minimumModelClass: "deep",
+        minimumReasoningEffort: "high",
+      });
+    }
+  });
+
+  it("rejects non-canonical plan integrity token spellings", async () => {
+    const { service } = await createService();
+    const plan = service.planWorkflow(task({ taskId: "canonical-token" })).data!;
+    for (const suffix of ["!", "=", " "]) {
+      const modified = structuredClone(plan);
+      modified.integrityToken += suffix;
+      expect(service.startWorkflow(modified).error?.code).toBe("INVALID_INPUT");
+    }
   });
 
   it("binds execution requirements and rejects missing or under-provisioned stage execution", async () => {

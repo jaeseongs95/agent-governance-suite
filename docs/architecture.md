@@ -20,6 +20,9 @@ plugin manifest
 
 ### Semantic execution assurance
 
+Strict MCP assurance never trusts `executionContext` supplied in tool arguments. A `TrustedExecutionContextProvider` must supply a fresh observation bound to the exact task, run, stage and revision; observation IDs are one-use and expired or mismatched observations fail closed. The packaged server does not fabricate host attestation: without an authoritative host adapter, orchestrated semantic planning returns `BINDING_REQUIRED`. Direct/legacy embedding paths remain backward compatible.
+
+
 MCP의 `plan_workflow` 경계는 `WorkflowService.planWorkflow(..., true)`로 execution assurance를 fail-closed로 강제합니다. 직접 programmatic 호출은 기존 내부 도구와 legacy receipt 호환을 위해 기본적으로 permissive이며, 실제 MCP handler가 strict mode를 선택합니다. ExecutionContext가 결속된 새 plan의 stage-level 검사는 그대로 유지됩니다.
 
 
