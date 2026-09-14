@@ -33,5 +33,11 @@ export default tseslint.config(
       "no-useless-escape": "off",
       "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
     }
+  },
+  {
+    files: ["skills/evaluation-validity-auditor/scripts/check-repository.mjs"],
+    rules: {
+      "no-empty": "off"
+    }
   }
 );

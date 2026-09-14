@@ -7,7 +7,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v1.10.0`입니다. 거버넌스 전문 스킬 12개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 현재 소스 트리에는 아직 Suite 공개 릴리스에 포함되지 않은 명시 호출 전용 `codex-token-usage-analyzer` 0.1.0도 통합되어 있습니다. `korean-prose-editor`는 확장한 SQLite 용어집의 빌드·조회·통합 검증을 통과해 registry, 직접 descriptor와 Codex 암시 호출 설정에서 활성화했습니다. 엄격한 신규 holdout 평가는 최종 `≥80%` 지표를 만들기 전에 중단됐으므로 그 기준을 통과했다고 주장하지 않습니다.
+현재 공개 릴리스는 `v1.11.0`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스에는 명시 호출 전용 `codex-token-usage-analyzer` 0.1.0과 평가 근거의 공정성·재현성을 검사하는 `evaluation-validity-auditor` 1.0.0이 추가됐습니다. `korean-prose-editor`는 확장한 SQLite 용어집의 빌드·조회·통합 검증을 통과해 registry, 직접 descriptor와 Codex 암시 호출 설정에서 활성화했습니다. 엄격한 신규 holdout 평가는 최종 `≥80%` 지표를 만들기 전에 중단됐으므로 그 기준을 통과했다고 주장하지 않습니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -62,7 +62,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.10.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.11.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -126,6 +126,7 @@ check_for_updates { "force": false }
 - **완료 전**: 구현과 테스트가 끝난 뒤 완료를 선언하기 전에 수용 기준별 근거를 확인하고, 고위험 작업에는 독립 감사까지 통과했는지 확인할 때 사용합니다.
 - **문제 발생 시**: 같은 실패가 반복되거나 원인이 불분명해 진행이 막혔을 때, 관측 사실과 원인 가설을 분리하고 다음 판별 검사를 정할 때 사용합니다.
 - **복구 선택 시**: 원인이 확정된 실패에 대해 실행 가능한 복구안 2~3개를 비교하고, 새 작업 계약에 결속할 handoff를 만들 때 사용합니다.
+- **평가 전후**: 평가 실행 전에 동결한 설계의 실행 가능성을 확인하거나, 실행 뒤 결과·판정·집계 근거의 유효성을 감사할 때 사용합니다.
 
 | 시점 | 스킬 | 버전 | 역할 |
 | --- | --- | --- | --- |
@@ -143,6 +144,7 @@ check_for_updates { "force": false }
 | 완료 전 | [`independent-audit-gate`](https://github.com/jaeseongs95/codex-independent-audit-gate/tree/v1.0.0) | 1.0.0 | 구현자와 분리된 감사자가 고위험 변경과 검증 근거를 확인합니다. |
 | 문제 발생 시 | [`blocker-diagnostician`](https://github.com/jaeseongs95/blocker-diagnostician/tree/v1.0.0) | 1.0.0 | 반복 실패를 관측 사실과 원인 가설로 나누고 다음 판별 검사를 정합니다. |
 | 복구 선택 시 | [`recovery-strategy-selector`](skills/recovery-strategy-selector/) | 0.1.0 | 확정된 원인에 맞는 복구 전략을 Objective Gate로 비교하고 새 작업용 `RecoveryHandoff.v1`을 만듭니다. |
+| 평가 전후 | [`evaluation-validity-auditor`](https://github.com/jaeseongs95/evaluation-validity-auditor/tree/v1.0.0) | 1.0.0 | 동결된 평가의 설계·입력·판정·집계를 독립적으로 감사하며, `post-execution PASS`만 품질·릴리스 근거로 허용합니다. |
 
 각 전문 스킬은 단독으로 호출할 수 있습니다. 둘 이상의 역할을 연결하려면 [`$orchestrator`](skills/orchestrator/)를 사용합니다. 외부에서 편입한 스킬의 원본과 이 저장소에서 만든 `model-effort-advisor`, `iteration-frame-auditor`, `recovery-strategy-selector`의 원본 경로·tag 또는 commit·원본/통합 `checksum`·업데이트 정책은 [`skills/source-lock.json`](skills/source-lock.json)에 고정되어 있으며, `orchestrator`는 현재 Git 이력으로 추적합니다.
 

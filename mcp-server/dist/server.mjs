@@ -17091,6 +17091,7 @@ var contractSchemas = {
   pluginUpdateStatus: loadSchema("plugin-update-status.v1.schema.json"),
   pluginUpdateNotice: loadSchema("plugin-update-notice.v1.schema.json"),
   taskEnvelope: loadSchema("task-envelope.v1.schema.json"),
+  planWorkflowRequest: loadSchema("plan-workflow-request.v1.schema.json"),
   skillDescriptor: loadSchema("skill-descriptor.v1.schema.json"),
   skillDescriptorV2: loadSchema("skill-descriptor.v2.schema.json"),
   workflowPlan: loadSchema("workflow-plan.v1.schema.json"),
@@ -17138,6 +17139,7 @@ var ContractValidator = class {
       pluginUpdateStatus: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-status.v1.schema.json"),
       pluginUpdateNotice: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-notice.v1.schema.json"),
       taskEnvelope: ajv.getSchema("https://skill-suite.local/contracts/task-envelope.v1.schema.json"),
+      planWorkflowRequest: ajv.getSchema("https://skill-suite.local/contracts/plan-workflow-request.v1.schema.json"),
       skillDescriptor: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v1.schema.json"),
       skillDescriptorV2: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v2.schema.json"),
       workflowPlan: ajv.getSchema("https://skill-suite.local/contracts/workflow-plan.v1.schema.json"),
@@ -17183,6 +17185,9 @@ var ContractValidator = class {
   }
   taskEnvelope(value) {
     return this.assert("taskEnvelope", value);
+  }
+  planWorkflowRequest(value) {
+    return this.assert("planWorkflowRequest", value);
   }
   skillDescriptorV2(value) {
     return this.assert("skillDescriptorV2", value);
@@ -19107,7 +19112,7 @@ var Server = class extends Protocol {
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "1.10.0",
+  version: "1.11.0",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
@@ -19377,6 +19382,39 @@ function toolSchema(source, options = {}) {
   schema.required = (schema.required ?? []).filter((name) => !(options.optional ?? []).includes(name));
   return schema;
 }
+function embeddedSchema(source) {
+  const schema = structuredClone(source);
+  delete schema.$schema;
+  delete schema.$id;
+  return schema;
+}
+var taskEnvelopeInputSchema = embeddedSchema(contractSchemas.taskEnvelope);
+var evaluationTaskEnvelopeInputSchema = structuredClone(taskEnvelopeInputSchema);
+evaluationTaskEnvelopeInputSchema.allOf = [{
+  properties: {
+    requiredCapabilities: {
+      type: "array",
+      contains: { const: "evaluation-validity-audit" }
+    }
+  },
+  required: ["requiredCapabilities"]
+}];
+var planWorkflowInputSchema = {
+  type: "object",
+  oneOf: [
+    taskEnvelopeInputSchema,
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["schemaVersion", "taskEnvelope", "evaluationAuditPurpose"],
+      properties: {
+        schemaVersion: { const: "1.0.0" },
+        taskEnvelope: evaluationTaskEnvelopeInputSchema,
+        evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] }
+      }
+    }
+  ]
+};
 var openConvergenceRootInputSchema = toolSchema(contractSchemas.openConvergenceRootRequest, {
   add: {
     responseMode: responseModeProperty,
@@ -19499,8 +19537,8 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "plan_workflow",
-        description: "Read the current skill registry and return a capability-based workflow plan without storing a run.",
-        inputSchema: contractSchemas.taskEnvelope,
+        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Evaluation validity audits use the structured wrapper to bind their purpose.",
+        inputSchema: planWorkflowInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
       {
@@ -21292,6 +21330,7 @@ function validateDecisionRecordSemantics(record2) {
 // mcp-server/src/receipt-policy.ts
 var DIGEST2 = /^(?:sha256:)?[a-f0-9]{64}$/;
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+var RFC3339_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 var REFERENCE = /^(?:artifact|digest|schema|urn|run|stage|commit|test|file|document|tool):(?:\/\/)?[A-Za-z0-9][A-Za-z0-9._~:/?#@!$&'()*+,;=%-]{7,}$/;
 var NIL_UUID = "00000000-0000-0000-0000-000000000000";
 var ERROR_DETAIL_KEYS = /* @__PURE__ */ new Set([
@@ -21328,7 +21367,9 @@ var PROTOCOL_TOKENS = /* @__PURE__ */ new Set([
   "document",
   "tool",
   "reference-only",
-  "verified"
+  "verified",
+  "COOPERATIVE_PROVENANCE_ASSERTIONS",
+  "JSON_JSONL_ONLY_V1"
 ]);
 function jsonPointer(value, pointer) {
   return pointer.split("/").slice(1).reduce((current, token) => {
@@ -21340,8 +21381,11 @@ function jsonPointer(value, pointer) {
 function isOpaqueReference(value) {
   return DIGEST2.test(value) || UUID.test(value) || REFERENCE.test(value);
 }
+function isSafeScalar(value) {
+  return isOpaqueReference(value) || RFC3339_TIMESTAMP.test(value);
+}
 function assertSafeString(value, fixedTokens, location, allowEmpty = false) {
-  if (allowEmpty && value === "" || fixedTokens.has(value) || PROTOCOL_TOKENS.has(value) || isOpaqueReference(value)) return;
+  if (allowEmpty && value === "" || fixedTokens.has(value) || PROTOCOL_TOKENS.has(value) || isSafeScalar(value)) return;
   throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt policy rejected free text.", {
     location
   });
@@ -21675,9 +21719,18 @@ var WorkflowService = class {
   planSigningKey;
   planWorkflow(rawTask) {
     try {
-      const task = this.validator.taskEnvelope(rawTask);
+      const request = this.validator.planWorkflowRequest(rawTask);
+      const wrapped = "taskEnvelope" in request;
+      const task = wrapped ? request.taskEnvelope : request;
+      const evaluationAuditPurpose = wrapped ? request.evaluationAuditPurpose : void 0;
+      if (task.requiredCapabilities.includes("evaluation-validity-audit") && evaluationAuditPurpose === void 0) {
+        throw new WorkflowContractError(
+          "INVALID_INPUT",
+          "Evaluation validity planning requires the structured request with evaluationAuditPurpose."
+        );
+      }
       this.validateWorkUnitGraph(task);
-      const plan = this.buildPlan(task, this.registry.read());
+      const plan = this.buildPlan(task, this.registry.read(), evaluationAuditPurpose);
       plan.integrityToken = this.signPlan(plan);
       this.validator.workflowPlan(plan);
       return apiOk2(plan);
@@ -21757,7 +21810,10 @@ var WorkflowService = class {
           taskId: proposal.taskEnvelope.taskId
         });
       }
-      const expectedPlan = this.buildPlan(proposal.taskEnvelope, this.registry.read());
+      const evaluationAuditPurpose = proposal.plan.stages.find(
+        (stage) => stage.requiredCapability === "evaluation-validity-audit"
+      )?.evaluationAuditPurpose;
+      const expectedPlan = this.buildPlan(proposal.taskEnvelope, this.registry.read(), evaluationAuditPurpose);
       expectedPlan.integrityToken = this.signPlan(expectedPlan);
       if (canonicalJson2(expectedPlan) !== canonicalJson2(proposal.plan)) {
         throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan was not produced from the proposed task envelope.", {
@@ -22116,6 +22172,7 @@ var WorkflowService = class {
           this.assertRequiredArtifacts(target, result);
           this.assertDeliberationGate(target, result);
           this.assertMandatoryAuditGate(target, result);
+          this.assertEvaluationValidityGate(target, result);
         }
         target.state = result.state;
         receipt.stageResults.push(clone4(result));
@@ -22170,6 +22227,7 @@ var WorkflowService = class {
         }
         this.assertRequiredArtifacts(stage, result);
         this.assertDeclaredReceiptPolicy(receipt, stage, result);
+        this.assertEvaluationValidityGate(stage, result);
       }
       const mandatoryAudit = receipt.plan.stages.find((stage) => stage.riskGate === "mandatory");
       if (mandatoryAudit && mandatoryAudit.state !== "passed") {
@@ -22200,7 +22258,7 @@ var WorkflowService = class {
       receipt.error = null;
     });
   }
-  buildPlan(task, skills) {
+  buildPlan(task, skills, evaluationAuditPurpose) {
     const executionMode = task.orchestration.requested ? "orchestrated" : "direct";
     const errors = [];
     const stages = [];
@@ -22258,11 +22316,16 @@ var WorkflowService = class {
     for (const { capability, satisfiedCapabilities, provider: skill } of this.orderProviders(selectedProviderList)) {
       const producedArtifacts = skill.producedArtifacts;
       const stageRequiredArtifacts = skill.gate.policy === "mandatory" ? [.../* @__PURE__ */ new Set([...producedArtifacts, "gate-verdict"])] : producedArtifacts;
+      const stageEvaluationAuditPurpose = capability === "evaluation-validity-audit" ? evaluationAuditPurpose : void 0;
+      if (capability === "evaluation-validity-audit" && stageEvaluationAuditPurpose === void 0) {
+        throw new WorkflowContractError("INVALID_INPUT", "Evaluation audit purpose is missing from the planning request.");
+      }
       const order = stages.length + 1;
       stages.push({
         stageId: stageId(order, capability),
         order,
         requiredCapability: capability,
+        ...stageEvaluationAuditPurpose !== void 0 ? { evaluationAuditPurpose: stageEvaluationAuditPurpose } : {},
         satisfiedCapabilities,
         skillId: skill.skillId,
         phase: skill.phase,
@@ -22538,6 +22601,25 @@ var WorkflowService = class {
         stageId: stage.stageId
       });
     }
+  }
+  assertEvaluationValidityGate(stage, result) {
+    if (stage.requiredCapability !== "evaluation-validity-audit") return;
+    const output = result.output.output;
+    const purpose = stage.evaluationAuditPurpose;
+    const isDesignReadiness = purpose === "design-readiness" && output?.auditStage === "pre-execution" && output?.verdict === "PASS" && output?.qualifiesAsQualityOrReleaseEvidence === false;
+    const isQualityOrRelease = purpose === "quality-or-release" && output?.auditStage === "post-execution" && output?.verdict === "PASS" && output?.qualifiesAsQualityOrReleaseEvidence === true;
+    if (isDesignReadiness || isQualityOrRelease) return;
+    throw new WorkflowContractError(
+      "GATE_FAILED",
+      "Evaluation validity PASS does not satisfy the frozen audit purpose.",
+      {
+        stageId: stage.stageId,
+        purpose: purpose ?? null,
+        auditStage: output?.auditStage ?? null,
+        verdict: output?.verdict ?? null,
+        qualifiesAsQualityOrReleaseEvidence: output?.qualifiesAsQualityOrReleaseEvidence ?? null
+      }
+    );
   }
   assertMandatoryAuditGate(stage, result) {
     if (stage.riskGate !== "mandatory") return;

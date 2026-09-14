@@ -1808,6 +1808,108 @@
     },
     {
       "schemaVersion": "2.0.0",
+      "skillId": "evaluation-validity-auditor",
+      "version": "1.0.0",
+      "path": "./evaluation-validity-auditor",
+      "enabled": true,
+      "priority": 50,
+      "providers": [
+        {
+          "capabilities": [
+            "evaluation-validity-audit"
+          ],
+          "executionClass": "workflow",
+          "phase": "evaluation-validity",
+          "phaseOrder": 68,
+          "requiredInputArtifacts": [
+            "evaluation-validity-request",
+            "frozen-evaluation-frame",
+            "evaluation-evidence"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "evaluation-validity-request",
+              "sources": [
+                "workflow:evaluation-validity-request"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "frozen-evaluation-frame",
+              "sources": [
+                "workflow:frozen-evaluation-frame"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "evaluation-evidence",
+              "sources": [
+                "workflow:evaluation-evidence"
+              ],
+              "operation": "collect"
+            }
+          ],
+          "producedArtifacts": [
+            "evaluation-validity-report",
+            "verified-evaluation-evidence-index"
+          ],
+          "outputSchema": "skills/evaluation-validity-auditor/contracts/evaluation-validity-report.v1.schema.json",
+          "resultSchema": "skills/evaluation-validity-auditor/integration/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/verdict",
+            "values": {
+              "PASS": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "FAIL": {
+                "state": "failed",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "GATE_FAILED"
+                ]
+              },
+              "BLOCKED": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "MISSING_EVIDENCE"
+                ]
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          },
+          "selectionCriteria": [
+            "explicit-evaluation-validity-audit",
+            "evaluation-result-used-as-quality-or-release-evidence"
+          ],
+          "preconditions": [
+            "A frozen evaluation request and inspectable evidence rooted in one explicit artifact directory are available."
+          ],
+          "failureHandling": {
+            "missingInput": "blocked",
+            "invalidEvaluation": "failed",
+            "retry": "new-or-corrected-evidence-only"
+          },
+          "gate": {
+            "kind": "completion",
+            "policy": "conditional",
+            "validator": "skills/evaluation-validity-auditor/contracts/evaluation-validity-report.v1.schema.json"
+          },
+          "receiptPolicy": {
+            "mode": "reference-only",
+            "actorIdPointer": "/output/auditorActorId",
+            "uniqueness": "run"
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": "2.0.0",
       "skillId": "codex-token-usage-analyzer",
       "version": "0.1.0",
       "path": "./codex-token-usage-analyzer",
@@ -1833,10 +1935,9 @@
               "operation": "require-external"
             }
           ],
-          "producedArtifacts": [
-            "token-usage-report",
-            "token-usage-markdown-artifact"
-          ],
+        "producedArtifacts": [
+          "token-usage-report"
+        ],
           "outputSchema": "skills/codex-token-usage-analyzer/contracts/token-usage-report.v1.schema.json",
           "resultSchema": "skills/codex-token-usage-analyzer/integration/provider-result.v1.schema.json",
           "stateMapping": {

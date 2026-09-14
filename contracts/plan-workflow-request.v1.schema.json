@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/plan-workflow-request.v1.schema.json",
+  "title": "PlanWorkflowRequest.v1",
+  "description": "Accepts the legacy TaskEnvelope.v1 form or an evaluation audit planning wrapper that binds purpose outside the shared task contract.",
+  "type": "object",
+  "oneOf": [
+    { "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json" },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "taskEnvelope", "evaluationAuditPurpose"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "taskEnvelope": {
+          "allOf": [
+            { "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json" },
+            {
+              "properties": {
+                "requiredCapabilities": {
+                  "type": "array",
+                  "contains": { "const": "evaluation-validity-audit" }
+                }
+              },
+              "required": ["requiredCapabilities"]
+            }
+          ]
+        },
+        "evaluationAuditPurpose": { "enum": ["design-readiness", "quality-or-release"] }
+      }
+    }
+  ]
+}
