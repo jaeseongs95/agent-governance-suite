@@ -120,7 +120,7 @@
 - 불완전한 JSONL이나 누락된 case를 전체 평가 결과로 집계하지 않는다.
 - 동결된 rubric, fixture set, 실행 revision과 결과 digest를 하나의 평가 보고서에 결속한다.
 
-`evaluation-validity-auditor` v1.0.0을 독립 공개 저장소에 구현하고 immutable tag의 peeled commit과 checksum으로 suite에 편입했다. `EvaluationValidityRequest.v1`, case/result JSONL 계약, `EvaluationValidityReport.v1`, `EvaluationValidityValidation.v1`과 세 CLI가 동결 digest, 역할 독립성, 완전한 case/run/result 집합과 재집계 metric을 검사한다. `pre-execution PASS`는 설계 실행 가능성만 뜻하며, 품질 게이트나 릴리스 승인에는 `post-execution PASS`만 재사용할 수 있다. Suite provider는 명시적 감사 요청 또는 평가 결과가 품질·릴리스 근거로 제출될 때만 `evaluation-validity` phase order 68에서 조건부 완료 게이트로 선택된다. 동결된 `TaskEnvelope.v1.evaluationAuditPurpose`와 서명된 plan stage가 `design-readiness`와 `quality-or-release`를 구분하며, 실행 계층은 각 목적에 맞는 audit stage와 자격 boolean을 함께 검사한다.
+`evaluation-validity-auditor` v1.0.0을 독립 공개 저장소에 구현하고 immutable tag의 peeled commit과 checksum으로 suite에 편입했다. `EvaluationValidityRequest.v1`, case/result JSONL 계약, `EvaluationValidityReport.v1`, `EvaluationValidityValidation.v1`과 세 CLI가 동결 digest, 역할 독립성, 완전한 case/run/result 집합과 재집계 metric을 검사한다. `pre-execution PASS`는 설계 실행 가능성만 뜻하며, 품질 게이트나 릴리스 승인에는 `post-execution PASS`만 재사용할 수 있다. Suite provider는 명시적 감사 요청 또는 평가 결과가 품질·릴리스 근거로 제출될 때만 `evaluation-validity` phase order 68에서 조건부 완료 게이트로 선택된다. 공유 `TaskEnvelope.v1`은 변경하지 않고 `plan_workflow`의 별도 구조화 입력과 서명된 plan stage가 `design-readiness`와 `quality-or-release`를 구분하며, 실행 계층은 각 목적에 맞는 audit stage와 자격 boolean을 함께 검사한다.
 
 ### `active-workspace-guard`
 

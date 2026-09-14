@@ -18,6 +18,7 @@ import {
   type CheckpointContextRequestV1,
   type GuardedWorkflowStartRequestV1,
   type OpenConvergenceRootRequestV1,
+  type PlanWorkflowRequestV1,
   type InspectContextRequestV1,
   type KoreanProseGlossaryLookupRequestV1,
   type KoreanProseGlossaryLookupResultV1,
@@ -56,6 +57,7 @@ export const contractSchemas = {
   pluginUpdateStatus: loadSchema("plugin-update-status.v1.schema.json"),
   pluginUpdateNotice: loadSchema("plugin-update-notice.v1.schema.json"),
   taskEnvelope: loadSchema("task-envelope.v1.schema.json"),
+  planWorkflowRequest: loadSchema("plan-workflow-request.v1.schema.json"),
   skillDescriptor: loadSchema("skill-descriptor.v1.schema.json"),
   skillDescriptorV2: loadSchema("skill-descriptor.v2.schema.json"),
   workflowPlan: loadSchema("workflow-plan.v1.schema.json"),
@@ -108,6 +110,7 @@ export class ContractValidator {
       pluginUpdateStatus: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-status.v1.schema.json")!,
       pluginUpdateNotice: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-notice.v1.schema.json")!,
       taskEnvelope: ajv.getSchema("https://skill-suite.local/contracts/task-envelope.v1.schema.json")!,
+      planWorkflowRequest: ajv.getSchema("https://skill-suite.local/contracts/plan-workflow-request.v1.schema.json")!,
       skillDescriptor: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v1.schema.json")!,
       skillDescriptorV2: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v2.schema.json")!,
       workflowPlan: ajv.getSchema("https://skill-suite.local/contracts/workflow-plan.v1.schema.json")!,
@@ -155,6 +158,10 @@ export class ContractValidator {
 
   taskEnvelope(value: unknown): TaskEnvelopeV1 {
     return this.assert<TaskEnvelopeV1>("taskEnvelope", value);
+  }
+
+  planWorkflowRequest(value: unknown): PlanWorkflowRequestV1 {
+    return this.assert<PlanWorkflowRequestV1>("planWorkflowRequest", value);
   }
 
   skillDescriptorV2(value: unknown): SkillDescriptorV2 {

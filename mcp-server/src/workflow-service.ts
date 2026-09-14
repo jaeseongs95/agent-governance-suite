@@ -11,6 +11,7 @@ import {
   type ConvergenceRootV1,
   type ConvergenceStatusV1,
   type ContractErrorBody,
+  type EvaluationAuditPurposeV1,
   type GuardedWorkflowStartRequestV1,
   type PlannedStageV1,
   POLICY_CAPABILITY,
@@ -103,9 +104,18 @@ export class WorkflowService {
 
   planWorkflow(rawTask: unknown): ApiResultV1<WorkflowPlanV1> {
     try {
-      const task = this.validator.taskEnvelope(rawTask);
+      const request = this.validator.planWorkflowRequest(rawTask);
+      const wrapped = "taskEnvelope" in request;
+      const task = wrapped ? request.taskEnvelope : request;
+      const evaluationAuditPurpose = wrapped ? request.evaluationAuditPurpose : undefined;
+      if (task.requiredCapabilities.includes("evaluation-validity-audit") && evaluationAuditPurpose === undefined) {
+        throw new WorkflowContractError(
+          "INVALID_INPUT",
+          "Evaluation validity planning requires the structured request with evaluationAuditPurpose.",
+        );
+      }
       this.validateWorkUnitGraph(task);
-      const plan = this.buildPlan(task, this.registry.read());
+      const plan = this.buildPlan(task, this.registry.read(), evaluationAuditPurpose);
       plan.integrityToken = this.signPlan(plan);
       this.validator.workflowPlan(plan);
       return apiOk(plan);
@@ -191,7 +201,10 @@ export class WorkflowService {
           taskId: proposal.taskEnvelope.taskId,
         });
       }
-      const expectedPlan = this.buildPlan(proposal.taskEnvelope, this.registry.read());
+      const evaluationAuditPurpose = proposal.plan.stages.find(
+        (stage) => stage.requiredCapability === "evaluation-validity-audit",
+      )?.evaluationAuditPurpose;
+      const expectedPlan = this.buildPlan(proposal.taskEnvelope, this.registry.read(), evaluationAuditPurpose);
       expectedPlan.integrityToken = this.signPlan(expectedPlan);
       if (canonicalJson(expectedPlan) !== canonicalJson(proposal.plan)) {
         throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan was not produced from the proposed task envelope.", {
@@ -670,6 +683,7 @@ export class WorkflowService {
   private buildPlan(
     task: TaskEnvelopeV1,
     skills: RoutedSkillProviderV2[],
+    evaluationAuditPurpose?: EvaluationAuditPurposeV1,
   ): WorkflowPlanV1 {
     const executionMode = task.orchestration.requested ? "orchestrated" : "direct";
     const errors: ContractErrorBody[] = [];
@@ -741,13 +755,19 @@ export class WorkflowService {
       const stageRequiredArtifacts = skill.gate.policy === "mandatory"
         ? [...new Set([...producedArtifacts, "gate-verdict"])]
         : producedArtifacts;
+      const stageEvaluationAuditPurpose = capability === "evaluation-validity-audit"
+        ? evaluationAuditPurpose
+        : undefined;
+      if (capability === "evaluation-validity-audit" && stageEvaluationAuditPurpose === undefined) {
+        throw new WorkflowContractError("INVALID_INPUT", "Evaluation audit purpose is missing from the planning request.");
+      }
       const order = stages.length + 1;
       stages.push({
         stageId: stageId(order, capability),
         order,
         requiredCapability: capability,
-        ...(capability === "evaluation-validity-audit"
-          ? { evaluationAuditPurpose: task.evaluationAuditPurpose }
+        ...(stageEvaluationAuditPurpose !== undefined
+          ? { evaluationAuditPurpose: stageEvaluationAuditPurpose }
           : {}),
         satisfiedCapabilities,
         skillId: skill.skillId,
