@@ -1,7 +1,7 @@
 # Agent Governance Suite 향후 로드맵
 
 <!-- release-version:start -->
-문서 기준일은 2026년 9월 14일이다. 현재 공개 릴리스는 `v1.5.0`이다. 작업 중인 `main` 후보에서는 한국어 산문 워크플로를 활성화했지만, 새 용어집의 효용과 전체 품질 게이트를 통과하기 전에는 이 활성 상태를 새 공개 릴리스의 품질 근거로 사용하지 않는다.
+문서 기준일은 2026년 9월 14일이다. 현재 공개 릴리스는 `v1.6.0`이다. 작업 중인 `main` 후보에서는 한국어 산문 워크플로를 활성화했지만, 새 용어집의 효용과 전체 품질 게이트를 통과하기 전에는 이 활성 상태를 새 공개 릴리스의 품질 근거로 사용하지 않는다.
 <!-- release-version:end -->
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
@@ -41,7 +41,7 @@
 
 ## 0단계: `v1.1.0` 후보 안정화
 
-한국어 산문 워크플로의 활성 후보를 실제로 시험해 품질 기준을 완료하는 단계다. 활성 후보의 신규 holdout 실행은 편집 계약 검증에서 중단됐으며, 작업 중인 `main`에서는 registry의 `enabled` 값을 다시 `false`로 고정했다. 다른 신규 스킬을 추가하기 전에 이 단계의 변경 범위와 평가 결과를 고정한다.
+한국어 산문 워크플로의 활성 후보를 실제로 시험해 품질 기준을 완료하는 단계다. 활성 후보의 신규 holdout 실행은 편집 계약 검증에서 중단됐지만, 용어집·MCP·통합 검증 성공과 사용자의 명시적 배포 승인에 따라 작업 중인 `main`에서는 registry의 `enabled` 값을 `true`로 고정했다. 품질 평가 상태와 배포 활성 상태는 별도로 기록한다.
 
 ### 구현 범위
 
@@ -59,7 +59,7 @@
 - 기존 11-case gate는 기록된 실패와 9/11 기준을 바꾸지 않고 `invalid-corpus`로 종결했다. 별도 12-case recovery는 edit 5/8, restraint 4/4, major meaning change 0, protected failure 0으로 실패했으며 재실행하지 않는다.
 - recovery 실패 보정은 공개 회귀 fixture와 계약에 반영했지만 `IMPLEMENTED_NOT_RERUN` 상태다. 실제 활성 후보를 새 ID·새 freeze·독립 corpus 타당성 검사를 갖춘 holdout에서 시험했으나, direct editing의 첫 모델 응답이 최소 편집 범위 계약을 위반해 fail-closed로 중단됐다. 실제 모델 출력 뒤에는 같은 frame을 재시도하지 않는다.
 - 다음 정식 frame용 fail-closed readiness gate를 구현했다. 새 구조화 cycle은 외부에서 보관한 frame·타당성 보고서 digest, 현재 suite revision, 실제 통합 대상과 동일한 평가 skill 사본·평가 toolchain checksum, 정답이 제거된 모델·독립 심사 입력과 별도 동결 label, corpus strata·rubric·threshold digest, 실행 횟수, 과거 terminal evidence와 독립 corpus 타당성 근거를 결속해야 receipt를 기록할 수 있다. selection 직전 만든 원자적 start claim을 후속 단계 metadata가 참조하며, 품질 판정은 self-reported 상태가 아니라 외부에서 고정한 품질 보고서, 전체 workflow receipt·SQLite·최종 case와 봉인된 독립 심사 결과에서 분자·분모를 다시 집계한다. `READY_TO_EVALUATE`와 `EVALUATION_EVIDENCE_PASSED`는 provider 활성화와 분리한다.
-- registry, 직접 descriptor, Codex implicit invocation과 `TEMPORARILY_DISABLED` 표시는 함께 비활성 상태인지 저장소 검증에서 검사한다. 구조·의미 감사를 통과한 100-case holdout과 SQLite 조회는 각각 100/100 일치했지만, 실제 모델 평가는 direct selection 뒤 direct editing에서 멈춰 MCP arm, 독립 품질 심사와 최종 지표를 생성하지 못했다. 따라서 전체 품질 `≥80%`는 입증되지 않았다.
+- registry, 직접 descriptor와 Codex implicit invocation은 함께 활성 상태인지 저장소 검증에서 검사한다. 구조·의미 감사를 통과한 100-case holdout과 SQLite 조회는 각각 100/100 일치했지만, 실제 모델 평가는 direct selection 뒤 direct editing에서 멈춰 MCP arm, 독립 품질 심사와 최종 지표를 생성하지 못했다. 따라서 전체 품질 `≥80%`는 입증되지 않았으며, 현재 활성화는 그 지표 통과 주장이 아니라 별도의 사용자 승인에 따른 배포 결정이다.
 - SQLite 용어집은 공식 프로젝트·표준·TTA·공식 한국어 문서에 근거한 43개 entry와 48개 form으로 확장했다. `protect` 25개, `prefer` 4개, `avoid` 8개, `allow` 6개를 각각 시험하며, 데이터 버전은 `1.1.0`이다.
 - 용어집 평가는 전체 편집 품질과 분리한다. 같은 신규 문장의 direct/MCP 결과를 짝지어 비교하고, 사전 적중군·미적중군, 정책별 정확도, 조회 precision/recall, MCP가 새로 만든 개선과 회귀를 각각 집계한다. 정책별 서로 다른 entry 수가 부족하면 높은 점수라도 일반화 성공이 아니라 `INSUFFICIENT_EVIDENCE`로 기록한다.
 
