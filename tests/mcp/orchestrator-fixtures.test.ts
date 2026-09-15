@@ -21,6 +21,7 @@ interface BehaviorCase {
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const fixturePath = fileURLToPath(new URL("../orchestrator/behavior-cases.json", import.meta.url));
+const orchestratorInstructions = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8");
 const fixture = JSON.parse(readFileSync(fixturePath, "utf8")) as { cases: BehaviorCase[] };
 
 describe("orchestrator behavior fixtures", () => {
@@ -47,4 +48,12 @@ describe("orchestrator behavior fixtures", () => {
       }
     });
   }
+
+  it("keeps trusted execution attestation on the server-side MCP boundary", () => {
+    expect(orchestratorInstructions).toContain("서버 측 `TrustedExecutionContextProvider`");
+    expect(orchestratorInstructions).toContain("caller는 `plan_workflow` 인자에 `executionContext`를 넣지 않는다");
+    expect(orchestratorInstructions).toContain("caller는 `StageResult.v1`이나 `record_stage_result` 인자에 `executionContext`를 넣지 않는다");
+    expect(orchestratorInstructions).not.toContain("wrapper의 `executionContext`에 전달한다");
+    expect(orchestratorInstructions).not.toContain("`StageResult.v1.executionContext`로 제출한다");
+  });
 });

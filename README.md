@@ -174,7 +174,7 @@ Convergence root, epoch, attempt, lease, review와 workflow 연결도 같은 SQL
 
 오케스트레이터는 설치 시 노출된 스킬 설명에서 필요한 capability 후보를 고른 뒤 `skills/orchestrator/scripts/query-registry.mjs`로 활성 provider의 실행 메타데이터만 조회합니다. 후보를 정하지 못한 경우에만 `--all` compact catalog를 사용하며, 전체 `skills/registry.json`을 모델 입력으로 전달하지 않습니다.
 
-공개 MCP 도구의 응답 옵션을 생략하면 기존과 같은 전체 영수증과 convergence 이력을 반환합니다. 오케스트레이터의 정상 경로는 `responseMode: "compact"`와 `detail: "compact"`를 사용해 plan, 누적 `stageResults`, provider output, task/frame 원문과 전체 이력을 제외한 고정 크기 요약만 받습니다. 오류 원인, 과거 결과 또는 감사 자료가 필요할 때만 해당 상태를 `full`로 다시 조회합니다. compact attempt claim은 root에 저장된 task envelope와 frame을 복원하고, plan을 생략한 guarded start는 일회용 lease에 결속된 proposal plan을 사용합니다. 저장되는 전체 `WorkflowReceipt`와 SQLite schema v3는 이 전송 방식과 무관하게 유지됩니다.
+공개 MCP 도구의 응답 옵션을 생략하면 기존과 같은 전체 영수증과 convergence 이력을 반환합니다. 오케스트레이터의 정상 경로는 `responseMode: "compact"`와 `detail: "compact"`를 사용해 plan, 누적 `stageResults`, provider output, task/frame 원문과 전체 이력을 제외한 고정 크기 요약만 받습니다. 오류 원인, 과거 결과 또는 감사 자료가 필요할 때만 해당 상태를 `full`로 다시 조회합니다. compact attempt claim은 root에 저장된 task envelope와 frame을 복원하고, plan을 생략한 guarded start는 일회용 lease에 결속된 proposal plan을 사용합니다. 저장되는 전체 `WorkflowReceipt`와 SQLite schema v5의 run·convergence·trusted observation claim 상태는 이 전송 방식과 무관하게 유지됩니다.
 
 이 서버는 적대적인 호출자를 인증하는 보안 경계가 아닙니다. 전문 스킬과 호출자가 `verified` 값, 증거 위치, 작업자 식별자를 확인했다고 전제합니다. 서버는 값의 형식과 단계 사이의 일관성을 검사하지만, 실제 작업자의 신원이나 증거 원문의 진위를 인증하지는 않습니다.
 
