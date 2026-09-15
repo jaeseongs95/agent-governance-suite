@@ -716,6 +716,56 @@ describe("local MCP convergence guard", () => {
     expect(status(harness.service, root.rootId).leases.filter((lease) => lease.state === "issued")).toHaveLength(1);
   });
 
+  it("allows only one trusted observation claim across two SQLite connections", async () => {
+    const harness = await createHarness();
+    const observationId = "concurrent-trusted-observation";
+    const expiresAt = new Date(Date.now() + 60_000).toISOString();
+    const consumedAt = new Date().toISOString();
+    const workers = [0, 1].map(() => new Worker(
+      new URL("./fixtures/concurrent-observation-claim-worker.ts", import.meta.url),
+      {
+        execArgv: ["--import", "tsx"],
+        workerData: { databasePath: harness.databasePath, observationId, expiresAt, consumedAt },
+      },
+    ));
+    await Promise.all(workers.map((worker) => new Promise<void>((resolve, reject) => {
+      const onMessage = (message: { type?: string }) => {
+        if (message.type !== "ready") return;
+        worker.off("message", onMessage);
+        resolve();
+      };
+      worker.on("message", onMessage);
+      worker.once("error", reject);
+    })));
+    const results = workers.map((worker) => new Promise<boolean>((resolve, reject) => {
+      worker.once("message", (message: { type?: string; claimed?: boolean }) => {
+        if (message.type === "result" && typeof message.claimed === "boolean") resolve(message.claimed);
+        else reject(new Error("Observation claim worker returned an unexpected message."));
+      });
+      worker.once("error", reject);
+    }));
+    const exits = workers.map((worker) => new Promise<void>((resolve) => worker.once("exit", () => resolve())));
+    workers.forEach((worker) => worker.postMessage("claim"));
+    expect((await Promise.all(results)).sort()).toEqual([false, true]);
+    await Promise.all(exits);
+  });
+
+  it("keeps legacy plans compatible only outside strict MCP claim and start boundaries", async () => {
+    const harness = await createHarness();
+    const root = openRoot(harness.service);
+    const legacyProposal = proposal(harness.service, root);
+    expect(legacyProposal.plan.bootstrapExecution).toBeUndefined();
+    expect(harness.service.claimWorkflowAttempt(legacyProposal, true).error?.code).toBe("BINDING_REQUIRED");
+
+    const lease = harness.service.claimWorkflowAttempt(legacyProposal).data!;
+    expect(harness.service.startGuardedWorkflow({
+      schemaVersion: "1.0.0",
+      leaseId: lease.leaseId,
+      expectedRootRevision: lease.rootRevision,
+      plan: legacyProposal.plan,
+    }, true).error?.code).toBe("BINDING_REQUIRED");
+  });
+
   it("opens epoch 2 exactly once after a fresh independent semantics-preserving review", async () => {
     const { service } = await createHarness();
     const root = openRoot(service);

@@ -7,7 +7,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v1.13.0`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 semantic execution assurance를 MCP workflow에 추가해, 오케스트레이션 bootstrap과 각 의미 판단 stage가 계획된 최소 model class·reasoning effort를 충족했다는 실행 메타데이터 없이 `passed`로 진행되지 않도록 합니다. 이 하한은 특정 모델 이름이 아니라 역할과 위험도에 결속되며, 기존 v1.12 receipt의 새 필드 부재는 호환 경로로 유지합니다.
+현재 공개 릴리스는 `v1.13.0`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 semantic execution assurance를 MCP workflow에 추가해, 오케스트레이션 bootstrap과 각 의미 판단 stage가 계획된 최소 model class·reasoning effort를 충족했다는 실행 메타데이터 없이 `passed`로 진행되지 않도록 합니다. 이 하한은 특정 모델 이름이 아니라 역할과 위험도에 결속되며, 기존 v1.12 receipt는 읽을 수 있지만 assurance가 없는 legacy plan은 strict MCP 진행 경계에서 거부됩니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다

@@ -20,7 +20,7 @@ plugin manifest
 
 ### Semantic execution assurance
 
-Strict MCP assurance never trusts `executionContext` supplied in tool arguments. A `TrustedExecutionContextProvider` must supply a fresh observation bound to the exact task, run, stage and revision; observation IDs are one-use and expired or mismatched observations fail closed. The packaged server does not fabricate host attestation: without an authoritative host adapter, orchestrated semantic planning returns `BINDING_REQUIRED`. Direct/legacy embedding paths remain backward compatible.
+Strict MCP assurance never trusts `executionContext` supplied in tool arguments. A `TrustedExecutionContextProvider` must supply a fresh observation bound to the exact task, run, stage and revision; observation IDs are atomically claimed in the workflow SQLite database and remain one-use across server restarts and concurrent connections. Expired, mismatched or replayed observations fail closed. The packaged server does not fabricate host attestation: without an authoritative host adapter, orchestrated semantic planning returns `BINDING_REQUIRED`. Legacy plans and receipts remain readable, but strict MCP claim, guarded start and semantic stage boundaries do not advance assurance-less legacy plans.
 
 
 MCP의 `plan_workflow` 경계는 `WorkflowService.planWorkflow(..., true)`로 execution assurance를 fail-closed로 강제합니다. 직접 programmatic 호출은 기존 내부 도구와 legacy receipt 호환을 위해 기본적으로 permissive이며, 실제 MCP handler가 strict mode를 선택합니다. ExecutionContext가 결속된 새 plan의 stage-level 검사는 그대로 유지됩니다.
@@ -28,7 +28,7 @@ MCP의 `plan_workflow` 경계는 `WorkflowService.planWorkflow(..., true)`로 ex
 
 v1.13부터 orchestrated workflow는 의미 판단 단계의 실행 능력을 계획에 결속합니다. `plan_workflow`는 bootstrap 판단에 사용한 `ExecutionContext.v1`을 받아 작업 위험도와 복잡도에 따른 최소 model class·reasoning effort를 검사합니다. 새 계획의 각 stage에는 `ExecutionRequirement.v1`이 들어가며, semantic stage가 `passed`가 되려면 실제 stage 실행에서 관측한 model class와 reasoning effort가 그 하한을 만족해야 합니다. 관측 정보가 없으면 `BINDING_REQUIRED`, 하한보다 낮으면 `BINDING_INVALID`로 거절합니다. `korean-prose-finalization`처럼 완전히 결정적인 단계는 `deterministic`으로 표시해 모델 하한을 요구하지 않습니다.
 
-이 계약은 특정 제품 모델 이름을 고정하지 않습니다. `lightweight < general < deep < frontier` model class와 `low < medium < high < xhigh < max < ultra` effort 순서를 사용하므로, 호스트가 다른 모델을 제공하더라도 같은 capability 하한으로 비교할 수 있습니다. model class와 effort는 host runtime 또는 worker spawn 결과에서 직접 관측한 값이어야 하며, MCP는 그 선언을 암호학적으로 인증하지 않습니다. 따라서 이 계층은 모델 성능을 새로 만들어 내는 장치가 아니라, 낮은 실행 설정이 높은 신뢰도의 semantic stage로 조용히 통과하는 경로를 차단하는 실행 거버넌스입니다.
+이 계약은 특정 제품 모델 이름을 고정하지 않습니다. `lightweight < general < deep < frontier` model class와 `low < medium < high < xhigh < max < ultra` effort 순서를 사용하므로, 호스트가 다른 모델을 제공하더라도 같은 capability 하한으로 비교할 수 있습니다. model class와 effort는 host runtime 또는 worker spawn 결과에서 직접 관측한 값이어야 하며, MCP는 그 선언을 암호학적으로 인증하지 않습니다. 따라서 이 계층은 모델 성능을 새로 만들어 내거나 서로 다른 세션의 산출물 품질을 같게 만드는 장치가 아니라, 낮은 실행 설정이 높은 신뢰도의 semantic stage로 조용히 통과하는 경로를 차단하는 실행 거버넌스입니다. 실제 품질 보장은 동결된 corpus·rubric·threshold와 독립 평가 증거를 결속하는 별도 평가 계층이 담당합니다.
 
 MCP 서버는 플러그인 루트의 `.mcp.json`에 등록됩니다. MCP 응답은 외부 상태를 관측하는 근거일 수 있지만, 호출 수락만으로 성공을 뜻하지 않습니다. MCP가 없을 때도 단독 전문 스킬로 처리할 수 있는 요청은 계속할 수 있습니다.
 
@@ -36,7 +36,7 @@ mutating workflow 도구의 `responseMode`와 status 도구의 `detail`은 서�
 
 `claim_workflow_attempt`가 task envelope와 frame을 함께 생략하면 서버는 `rootId`의 저장 값을 복원한 뒤 기존 digest와 revision 검사를 수행하고 정규화된 전체 proposal을 저장합니다. `start_guarded_workflow`가 plan을 생략하면 `leaseId`에 결속된 proposal plan을 복원한 뒤 integrity token, root revision, 만료와 일회성 소비를 검사합니다. legacy 호출자가 사본을 전달하면 저장된 root·proposal과의 기존 완전 일치 검사를 유지합니다. lease가 안전한 plan reference이므로 별도 plan ID나 정리 정책은 추가하지 않습니다.
 
-run, revision, run ID sequence, 계획 서명 키, 업데이트 상태와 정리 claim은 SQLite schema v4에 저장합니다. 서버를 다시 시작해도 이전 run을 복구하고, 같은 데이터베이스를 공유하는 서버 인스턴스는 optimistic revision 검증으로 충돌을 거부합니다. compact 전송도 저장 단위를 바꾸지 않으며 전체 `WorkflowReceipt`의 평문 JSON을 유지합니다. 따라서 `StageResult`의 provider output, evidence note, findings, blockers와 error에 원문 코드, 로그, 비밀값이나 개인정보가 들어 있으면 그 내용도 DB에 남습니다. MCP 서버는 필드 내용을 걸러 내거나 자동으로 만료·삭제하지 않으므로 호출자는 민감한 원문을 제출하지 않고 DB 경로의 접근 권한과 보존 기간을 관리해야 합니다.
+run, revision, run ID sequence, 계획 서명 키, 업데이트 상태, 정리 claim과 trusted execution observation claim은 SQLite schema v5에 저장합니다. 서버를 다시 시작해도 이전 run과 observation의 일회성 소비 상태를 복구하고, 같은 데이터베이스를 공유하는 서버 인스턴스는 optimistic revision 검증과 원자적 observation claim으로 충돌·재사용을 거부합니다. observation claim은 만료 뒤에도 opaque ID tombstone으로 유지해 같은 ID의 재사용을 허용하지 않습니다. compact 전송도 저장 단위를 바꾸지 않으며 전체 `WorkflowReceipt`의 평문 JSON을 유지합니다. 따라서 `StageResult`의 provider output, evidence note, findings, blockers와 error에 원문 코드, 로그, 비밀값이나 개인정보가 들어 있으면 그 내용도 DB에 남습니다. MCP 서버는 필드 내용을 걸러 내거나 자동으로 만료·삭제하지 않으므로 호출자는 민감한 원문을 제출하지 않고 DB 경로의 접근 권한과 보존 기간을 관리해야 합니다.
 
 ## 로컬 task continuity
 

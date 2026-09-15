@@ -35,6 +35,7 @@ export interface GuardedRunBinding {
 
 export interface WorkflowStore {
   getOrCreateSecret(name: string, create: () => string): string;
+  claimExecutionObservation(observationId: string, expiresAt: string, consumedAt: string): boolean;
   nextRunSequence(): number;
   insertRun(receipt: WorkflowReceiptV1): void;
   getRun(runId: string): WorkflowReceiptV1 | null;
@@ -70,6 +71,7 @@ export interface WorkflowStore {
 export class InMemoryWorkflowStore implements WorkflowStore {
   private readonly runs = new Map<string, WorkflowReceiptV1>();
   private readonly secrets = new Map<string, string>();
+  private readonly executionObservations = new Map<string, string>();
   private readonly convergence = new Map<string, ConvergenceSnapshot>();
   private readonly guardedRuns = new Map<string, { rootId: string; leaseId: string }>();
   private runSequence = 0;
@@ -80,6 +82,12 @@ export class InMemoryWorkflowStore implements WorkflowStore {
     const value = create();
     this.secrets.set(name, value);
     return value;
+  }
+
+  claimExecutionObservation(observationId: string, expiresAt: string): boolean {
+    if (this.executionObservations.has(observationId)) return false;
+    this.executionObservations.set(observationId, expiresAt);
+    return true;
   }
 
   nextRunSequence(): number {

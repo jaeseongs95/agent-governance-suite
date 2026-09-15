@@ -7,7 +7,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
 <!-- release-version:start -->
-The current public release is `v1.13.0` and includes fifteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. This release adds semantic execution assurance to MCP workflows: orchestration bootstrap and semantic stages cannot advance as `passed` without observed execution metadata that meets the planned minimum model class and reasoning effort. The floor is bound to role and risk rather than a specific product model, while receipts created before v1.13 remain readable when the new fields are absent.
+The current public release is `v1.13.0` and includes fifteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. This release adds semantic execution assurance to MCP workflows: orchestration bootstrap and semantic stages cannot advance as `passed` without observed execution metadata that meets the planned minimum model class and reasoning effort. The floor is bound to role and risk rather than a specific product model. Pre-v1.13 receipts remain readable, but assurance-less legacy plans are rejected at strict MCP progression boundaries.
 <!-- release-version:end -->
 
 ## How it works
