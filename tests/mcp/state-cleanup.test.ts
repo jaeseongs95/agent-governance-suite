@@ -168,7 +168,7 @@ describe("state cleanup", () => {
     legacyWorkflow.prepare("INSERT INTO workflow_runs VALUES (?, 1, ?, ?)").run("legacy", JSON.stringify(receipt("legacy")), OLD);
     legacyWorkflow.close();
     const workflow = new SqliteWorkflowStore(workflowPath);
-    expect(workflow.getSchemaVersion()).toBe(4);
+    expect(workflow.getSchemaVersion()).toBe(5);
     expect(workflow.getRun("legacy")?.state).toBe("passed");
     workflow.close();
 

@@ -93,7 +93,7 @@ interface PluginUpdateRow {
   last_error_code: StoredPluginUpdateState["lastErrorCode"];
 }
 
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   private readonly database: DatabaseSync;
@@ -143,6 +143,20 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     } catch (cause) {
       if (cause instanceof WorkflowContractError) throw cause;
       throw this.storageError("Cannot read or create workflow metadata.", cause, { key: name });
+    }
+  }
+
+  claimExecutionObservation(observationId: string, expiresAt: string, consumedAt: string): boolean {
+    try {
+      return this.transaction(() => {
+        const result = this.database.prepare(`
+          INSERT OR IGNORE INTO execution_observation_claims(observation_id, expires_at, consumed_at)
+          VALUES (?, ?, ?)
+        `).run(observationId, expiresAt, consumedAt);
+        return Number(result.changes) === 1;
+      });
+    } catch (cause) {
+      throw this.storageError("Cannot claim the trusted execution observation.", cause, { observationId });
     }
   }
 
@@ -884,6 +898,11 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
           plan_id TEXT PRIMARY KEY,
           plan_digest TEXT NOT NULL,
           claimed_at TEXT NOT NULL
+        ) STRICT;
+        CREATE TABLE IF NOT EXISTS execution_observation_claims (
+          observation_id TEXT PRIMARY KEY,
+          expires_at TEXT NOT NULL,
+          consumed_at TEXT NOT NULL
         ) STRICT;
         PRAGMA user_version = ${SCHEMA_VERSION};
       `);

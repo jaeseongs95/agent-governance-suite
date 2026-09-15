@@ -342,14 +342,15 @@ describe("SqliteWorkflowStore", () => {
 
     const migrated = new DatabaseSync(databasePath);
     try {
-      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(4);
+      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(5);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM plugin_update_state").get() as { count: number }).count).toBe(1);
+      expect((migrated.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name = 'execution_observation_claims'").get() as { count: number }).count).toBe(1);
     } finally {
       migrated.close();
     }
   });
 
-  it("migrates an active v2 workflow to v4 and preserves receipt updates", async () => {
+  it("migrates an active v2 workflow to v5 and preserves receipt updates", async () => {
     const databaseDirectory = await mkdtemp(join(tmpdir(), "skill-suite-v2-migration-"));
     temporaryDirectories.push(databaseDirectory);
     const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
@@ -417,9 +418,10 @@ describe("SqliteWorkflowStore", () => {
 
     const migrated = new DatabaseSync(databasePath);
     try {
-      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(4);
+      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(5);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM convergence_roots").get() as { count: number }).count).toBe(0);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM workflow_attempt_links").get() as { count: number }).count).toBe(0);
+      expect((migrated.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name = 'execution_observation_claims'").get() as { count: number }).count).toBe(1);
     } finally {
       migrated.close();
     }
@@ -431,7 +433,7 @@ describe("SqliteWorkflowStore", () => {
     const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
     const fixture = new DatabaseSync(databasePath);
     try {
-      fixture.exec("PRAGMA user_version = 5;");
+      fixture.exec("PRAGMA user_version = 6;");
     } finally {
       fixture.close();
     }
@@ -449,6 +451,23 @@ describe("SqliteWorkflowStore", () => {
         cause: expect.stringMatching(/schema is newer than this server supports/i),
       },
     });
+  });
+
+  it("retains trusted observation tombstones after their validity window", async () => {
+    const databaseDirectory = await mkdtemp(join(tmpdir(), "skill-suite-observation-tombstone-"));
+    temporaryDirectories.push(databaseDirectory);
+    const store = openSqliteStore(join(databaseDirectory, "workflow-state.sqlite3"));
+    const observationId = "never-reuse-this-observation";
+    expect(store.claimExecutionObservation(
+      observationId,
+      "2026-09-15T00:01:00.000Z",
+      "2026-09-15T00:00:00.000Z",
+    )).toBe(true);
+    expect(store.claimExecutionObservation(
+      observationId,
+      "2026-09-16T00:01:00.000Z",
+      "2026-09-16T00:00:00.000Z",
+    )).toBe(false);
   });
 });
 
@@ -594,6 +613,36 @@ describe("WorkflowService", () => {
     expect(crossStageService.recordStageResult(second, true).error?.code).toBe("BINDING_INVALID");
   });
 
+  it("persists trusted observation claims across service restart", async () => {
+    const databaseDirectory = await mkdtemp(join(tmpdir(), "skill-suite-observation-restart-"));
+    temporaryDirectories.push(databaseDirectory);
+    const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
+    const observationId = "fixture-persistent-replay-observation";
+    const replayProvider = trustedProvider((binding) => trustedExecutionContext(binding, { observationId }));
+
+    const firstStore = openSqliteStore(databasePath);
+    const { service: firstService, registryPath } = await createService(skills, firstStore, null, replayProvider);
+    expect(firstService.planWorkflow({
+      schemaVersion: "1.0.0",
+      taskEnvelope: task({ taskId: "persistent-replay" }),
+    }, true).ok).toBe(true);
+    closeSqliteStore(firstStore);
+
+    const secondStore = openSqliteStore(databasePath);
+    const secondValidator = new ContractValidator();
+    const secondService = new WorkflowService(
+      new FileSkillRegistry(registryPath, secondValidator),
+      secondValidator,
+      secondStore,
+      null,
+      replayProvider,
+    );
+    expect(secondService.planWorkflow({
+      schemaVersion: "1.0.0",
+      taskEnvelope: task({ taskId: "persistent-replay" }),
+    }, true).error?.code).toBe("BINDING_INVALID");
+  });
+
   it("rejects caller-supplied stage execution metadata on the strict MCP boundary", async () => {
     const { service } = await createService(skills, undefined, null, trustedProvider());
     const plan = service.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task() }, true).data!;
@@ -650,6 +699,28 @@ describe("WorkflowService", () => {
       modified.integrityToken += suffix;
       expect(service.startWorkflow(modified).error?.code).toBe("INVALID_INPUT");
     }
+
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    const lastIndex = alphabet.indexOf(plan.integrityToken.at(-1)!);
+    const groupStart = Math.floor(lastIndex / 4) * 4;
+    const sameBytesAlias = structuredClone(plan);
+    sameBytesAlias.integrityToken = `${plan.integrityToken.slice(0, -1)}${alphabet[groupStart + ((lastIndex - groupStart + 1) % 4)]}`;
+    expect(Buffer.from(sameBytesAlias.integrityToken, "base64url")).toEqual(Buffer.from(plan.integrityToken, "base64url"));
+    expect(() => new ContractValidator().workflowPlan(sameBytesAlias)).toThrow();
+    expect(service.startWorkflow(sameBytesAlias).error?.code).toBe("INVALID_INPUT");
+  });
+
+  it("keeps legacy plans readable but blocks them from the strict stage boundary", async () => {
+    const { service } = await createService(skills, undefined, null, null);
+    const legacyPlan = service.planWorkflow(task({ taskId: "legacy-strict-stage" })).data!;
+    expect(legacyPlan.bootstrapExecution).toBeUndefined();
+    expect(legacyPlan.stages.every((stage) => stage.executionRequirement === undefined)).toBe(true);
+    const receipt = service.startWorkflow(legacyPlan).data!;
+    const result = passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision);
+    delete result.executionContext;
+
+    expect(service.getWorkflowStatus(receipt.runId).ok).toBe(true);
+    expect(service.recordStageResult(result, true).error?.code).toBe("BINDING_REQUIRED");
   });
 
   it("binds execution requirements and rejects missing or under-provisioned stage execution", async () => {

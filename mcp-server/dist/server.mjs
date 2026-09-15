@@ -19551,9 +19551,9 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "plan_workflow",
-        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Evaluation validity audits also bind their purpose.",
+        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose.",
         inputSchema: planWorkflowInputSchema,
-        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "open_convergence_root",
@@ -19701,13 +19701,13 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
           }
           break;
         case "claim_workflow_attempt":
-          result = service.claimWorkflowAttempt(args);
+          result = service.claimWorkflowAttempt(args, true);
           break;
         case "start_guarded_workflow":
           {
             const mode = responseMode(args, "responseMode");
             result = mode === null ? invalidInput("responseMode must be compact or full.") : projectResult(
-              service.startGuardedWorkflow(domainArguments(args, "responseMode")),
+              service.startGuardedWorkflow(domainArguments(args, "responseMode"), true),
               mode,
               workflowStatusSummary
             );
@@ -20173,7 +20173,7 @@ function mergePluginUpdateState(existing, incoming) {
 }
 
 // mcp-server/src/sqlite-workflow-store.ts
-var SCHEMA_VERSION2 = 4;
+var SCHEMA_VERSION2 = 5;
 var SqliteWorkflowStore = class {
   constructor(databasePath) {
     this.databasePath = databasePath;
@@ -20220,6 +20220,19 @@ var SqliteWorkflowStore = class {
     } catch (cause) {
       if (cause instanceof WorkflowContractError) throw cause;
       throw this.storageError("Cannot read or create workflow metadata.", cause, { key: name });
+    }
+  }
+  claimExecutionObservation(observationId, expiresAt, consumedAt) {
+    try {
+      return this.transaction(() => {
+        const result = this.database.prepare(`
+          INSERT OR IGNORE INTO execution_observation_claims(observation_id, expires_at, consumed_at)
+          VALUES (?, ?, ?)
+        `).run(observationId, expiresAt, consumedAt);
+        return Number(result.changes) === 1;
+      });
+    } catch (cause) {
+      throw this.storageError("Cannot claim the trusted execution observation.", cause, { observationId });
     }
   }
   nextRunSequence() {
@@ -20918,6 +20931,11 @@ var SqliteWorkflowStore = class {
           plan_digest TEXT NOT NULL,
           claimed_at TEXT NOT NULL
         ) STRICT;
+        CREATE TABLE IF NOT EXISTS execution_observation_claims (
+          observation_id TEXT PRIMARY KEY,
+          expires_at TEXT NOT NULL,
+          consumed_at TEXT NOT NULL
+        ) STRICT;
         PRAGMA user_version = ${SCHEMA_VERSION2};
       `);
     });
@@ -21542,6 +21560,7 @@ function clone3(value) {
 var InMemoryWorkflowStore = class {
   runs = /* @__PURE__ */ new Map();
   secrets = /* @__PURE__ */ new Map();
+  executionObservations = /* @__PURE__ */ new Map();
   convergence = /* @__PURE__ */ new Map();
   guardedRuns = /* @__PURE__ */ new Map();
   runSequence = 0;
@@ -21551,6 +21570,11 @@ var InMemoryWorkflowStore = class {
     const value = create();
     this.secrets.set(name, value);
     return value;
+  }
+  claimExecutionObservation(observationId, expiresAt) {
+    if (this.executionObservations.has(observationId)) return false;
+    this.executionObservations.set(observationId, expiresAt);
+    return true;
   }
   nextRunSequence() {
     this.runSequence += 1;
@@ -21720,7 +21744,7 @@ var HIGH_ASSURANCE_CAPABILITIES = /* @__PURE__ */ new Set([
 ]);
 var TRUSTED_EXECUTION_MAX_AGE_MS = 5 * 60 * 1e3;
 var TRUSTED_EXECUTION_CLOCK_SKEW_MS = 5 * 1e3;
-var PLAN_INTEGRITY_TOKEN = /^[A-Za-z0-9_-]{43}$/u;
+var PLAN_INTEGRITY_TOKEN = /^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/u;
 function canonicalJson2(value) {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
@@ -21753,7 +21777,6 @@ var WorkflowService = class {
   defaultExecutionContext;
   trustedExecutionContextProvider;
   planSigningKey;
-  consumedExecutionObservationIds = /* @__PURE__ */ new Set();
   planWorkflow(rawTask, requireExecutionContext = false) {
     try {
       const request = this.validator.planWorkflowRequest(rawTask);
@@ -21789,7 +21812,7 @@ var WorkflowService = class {
       const plan = this.buildPlan(task, this.registry.read(), evaluationAuditPurpose, executionContext);
       plan.integrityToken = this.signPlan(plan);
       this.validator.workflowPlan(plan);
-      if (trustedBootstrapContext) this.consumeTrustedExecutionObservation(trustedBootstrapContext);
+      if (trustedBootstrapContext) this.consumeTrustedExecutionObservation(trustedBootstrapContext, "bootstrap orchestration");
       return apiOk2(plan);
     } catch (error2) {
       return apiError(this.toErrorBody(error2));
@@ -21850,10 +21873,11 @@ var WorkflowService = class {
       return apiError(this.toErrorBody(error2));
     }
   }
-  claimWorkflowAttempt(rawProposal) {
+  claimWorkflowAttempt(rawProposal, requireTrustedExecutionContext = false) {
     try {
       const proposal = clone4(this.normalizeAttemptProposal(rawProposal));
       this.assertPlanIntegrity(proposal.plan);
+      if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(proposal.plan, "Workflow attempt");
       this.assertConvergenceFrame(proposal.frame);
       if (proposal.plan.executionMode !== "orchestrated" || proposal.plan.state !== "ready") {
         throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready orchestrated plan can claim an attempt lease.");
@@ -21992,11 +22016,12 @@ var WorkflowService = class {
       return apiError(this.toErrorBody(error2));
     }
   }
-  startGuardedWorkflow(rawRequest) {
+  startGuardedWorkflow(rawRequest, requireTrustedExecutionContext = false) {
     try {
       const request = this.normalizeGuardedWorkflowStartRequest(rawRequest);
       const plan = clone4(request.plan);
       this.assertPlanIntegrity(plan);
+      if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(plan, "Guarded workflow start");
       if (plan.executionMode !== "orchestrated" || plan.state !== "ready") {
         throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready orchestrated workflow can use a convergence lease.");
       }
@@ -22235,6 +22260,12 @@ var WorkflowService = class {
           });
         }
         let trustedStageContext = null;
+        if (requireTrustedExecutionContext && result.state === "passed" && !target.executionRequirement && !DETERMINISTIC_CAPABILITIES.has(target.requiredCapability)) {
+          throw new WorkflowContractError(
+            "BINDING_REQUIRED",
+            `Stage '${target.stageId}' has no execution assurance requirement and cannot pass through the strict MCP boundary.`
+          );
+        }
         if (requireTrustedExecutionContext && result.state === "passed" && target.executionRequirement?.kind === "semantic") {
           const binding = {
             phase: "stage",
@@ -22265,7 +22296,7 @@ var WorkflowService = class {
           this.assertEvaluationValidityGate(target, result);
         }
         target.state = result.state;
-        if (trustedStageContext) this.consumeTrustedExecutionObservation(trustedStageContext);
+        if (trustedStageContext) this.consumeTrustedExecutionObservation(trustedStageContext, `Stage '${target.stageId}'`);
         receipt.stageResults.push(clone4(result));
         this.addUnique(receipt.blockers, result.blockers);
         this.addUnique(receipt.unresolved, result.blockers);
@@ -22804,6 +22835,10 @@ var WorkflowService = class {
   }
   assertTrustedExecutionContext(requirement, context, subject, binding) {
     this.assertExecutionContext(requirement, context, subject);
+    this.assertTrustedExecutionBinding(context, subject, binding);
+    this.assertTrustedExecutionFreshness(context, subject);
+  }
+  assertTrustedExecutionBinding(context, subject, binding) {
     if (typeof context.observationId !== "string" || context.observationId.length < 16 || context.taskId !== binding.taskId || context.runId !== binding.runId || context.stageId !== binding.stageId || context.revision !== binding.revision || typeof context.actorId !== "string" || context.actorId.length === 0 || typeof context.expiresAt !== "string") {
       throw new WorkflowContractError(
         "BINDING_INVALID",
@@ -22811,8 +22846,10 @@ var WorkflowService = class {
         { binding, context }
       );
     }
+  }
+  assertTrustedExecutionFreshness(context, subject) {
     const observedAt = Date.parse(context.observedAt);
-    const expiresAt = Date.parse(context.expiresAt);
+    const expiresAt = Date.parse(context.expiresAt ?? "");
     const now = Date.now();
     if (Number.isNaN(observedAt) || Number.isNaN(expiresAt) || observedAt > now + TRUSTED_EXECUTION_CLOCK_SKEW_MS || now - observedAt > TRUSTED_EXECUTION_MAX_AGE_MS || expiresAt <= now || expiresAt < observedAt || expiresAt - observedAt > TRUSTED_EXECUTION_MAX_AGE_MS) {
       throw new WorkflowContractError(
@@ -22821,16 +22858,52 @@ var WorkflowService = class {
         { observedAt: context.observedAt, expiresAt: context.expiresAt }
       );
     }
-    if (this.consumedExecutionObservationIds.has(context.observationId)) {
+  }
+  consumeTrustedExecutionObservation(context, subject) {
+    const observationId = context.observationId;
+    const expiresAt = context.expiresAt;
+    if (!observationId || !expiresAt) {
+      throw new WorkflowContractError(
+        "BINDING_INVALID",
+        `${subject} trusted execution attestation is missing its one-use claim fields.`,
+        { observationId: observationId ?? null, expiresAt: expiresAt ?? null }
+      );
+    }
+    const consumedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const canonicalExpiry = new Date(expiresAt).toISOString();
+    if (!this.store.claimExecutionObservation(observationId, canonicalExpiry, consumedAt)) {
       throw new WorkflowContractError(
         "BINDING_INVALID",
         `${subject} trusted execution attestation was already consumed.`,
-        { observationId: context.observationId }
+        { observationId }
       );
     }
   }
-  consumeTrustedExecutionObservation(context) {
-    if (context.observationId) this.consumedExecutionObservationIds.add(context.observationId);
+  assertStrictPlanExecutionAssurance(plan, subject) {
+    const bootstrap = plan.bootstrapExecution;
+    if (!bootstrap) {
+      throw new WorkflowContractError(
+        "BINDING_REQUIRED",
+        `${subject} requires a plan with trusted bootstrap execution assurance.`
+      );
+    }
+    const binding = {
+      phase: "bootstrap",
+      taskId: plan.taskId,
+      runId: null,
+      stageId: null,
+      revision: null
+    };
+    this.assertExecutionContext(bootstrap.requirement, bootstrap.context, `${subject} bootstrap`);
+    this.assertTrustedExecutionBinding(bootstrap.context, `${subject} bootstrap`, binding);
+    for (const stage of plan.stages) {
+      if (!stage.executionRequirement && !DETERMINISTIC_CAPABILITIES.has(stage.requiredCapability)) {
+        throw new WorkflowContractError(
+          "BINDING_REQUIRED",
+          `${subject} stage '${stage.stageId}' has no execution assurance requirement.`
+        );
+      }
+    }
   }
   assertExecutionContext(requirement, context, subject) {
     if (requirement.kind === "deterministic") return;
@@ -22940,7 +23013,7 @@ var WorkflowService = class {
     }
     const expected = Buffer.from(this.signPlan(plan), "base64url");
     const supplied = Buffer.from(plan.integrityToken, "base64url");
-    if (supplied.length !== expected.length || !timingSafeEqual2(supplied, expected)) {
+    if (supplied.toString("base64url") !== plan.integrityToken || supplied.length !== expected.length || !timingSafeEqual2(supplied, expected)) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow plan integrity token is missing, modified, or signed by a different workflow store.");
     }
   }

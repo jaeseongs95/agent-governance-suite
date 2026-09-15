@@ -239,9 +239,9 @@ export function createMcpServer(
       },
       {
         name: "plan_workflow",
-        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Evaluation validity audits also bind their purpose.",
+        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose.",
         inputSchema: planWorkflowInputSchema,
-        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "open_convergence_root",
@@ -389,7 +389,7 @@ export function createMcpServer(
           }
           break;
         case "claim_workflow_attempt":
-          result = service.claimWorkflowAttempt(args);
+          result = service.claimWorkflowAttempt(args, true);
           break;
         case "start_guarded_workflow":
           {
@@ -397,7 +397,7 @@ export function createMcpServer(
             result = mode === null
               ? invalidInput("responseMode must be compact or full.")
               : projectResult<WorkflowReceiptV1, ReturnType<typeof workflowStatusSummary>>(
-                  service.startGuardedWorkflow(domainArguments(args, "responseMode")),
+                  service.startGuardedWorkflow(domainArguments(args, "responseMode"), true),
                   mode,
                   workflowStatusSummary,
                 );

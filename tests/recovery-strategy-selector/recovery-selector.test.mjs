@@ -43,7 +43,7 @@ function selectionRequest() {
     runId: "run-failed",
     revision: 4,
     state: "failed",
-    plan: { schemaVersion: "1.0.0", taskId: envelope.taskId, taskDigest: digest(envelope), integrityToken: "a".repeat(43), executionMode: "orchestrated", state: "failed", selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [] },
+    plan: { schemaVersion: "1.0.0", taskId: envelope.taskId, taskDigest: digest(envelope), integrityToken: "A".repeat(43), executionMode: "orchestrated", state: "failed", selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [] },
     stageResults: [],
     blockers: ["cache-write-failed"],
     unresolved: ["cache-write-failed"],

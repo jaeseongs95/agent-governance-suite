@@ -29,3 +29,7 @@ MCP는 model class 선언의 암호학적 진위를 증명하지 않습니다. �
 - The packaged server intentionally fails closed with `BINDING_REQUIRED` until the host supplies an authoritative attestation adapter; it does not infer or fabricate model/reasoning metadata.
 - Provider-level capability classification prevents aliases of high-assurance providers from lowering the `deep/high` floor.
 - Workflow HMAC tokens now require the canonical 43-character base64url spelling.
+- Trusted observation IDs are atomically claimed in workflow SQLite schema v5, so replay is rejected across process restarts and concurrent database connections.
+- Legacy plans and receipts remain readable, but strict MCP claim, guarded start and semantic stage boundaries reject assurance-less legacy plans with `BINDING_REQUIRED`.
+
+Execution profiles encapsulate the minimum observed conditions under which a semantic stage may advance; they do not guarantee identical output quality across models or sessions. Frozen evaluation inputs, rubrics, thresholds and independent judgments remain a separate evidence layer.
