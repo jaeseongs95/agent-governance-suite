@@ -6,6 +6,9 @@
 
 ```text
 .codex-plugin/plugin.json        # 플러그인 매니페스트
+.claude-plugin/marketplace.json  # Claude Code 마켓플레이스 배포 정보
+claude-overlay/                  # Claude 전용 파일과 문구 치환 규칙
+claude-plugin/                   # 생성된 Claude Code 플러그인(직접 수정 금지)
 .agents/plugins/marketplace.json # 마켓플레이스 배포 정보
 contracts/                       # 공유 JSON Schema와 TypeScript 계약
 mcp-server/src/                  # MCP 서버 소스
@@ -37,7 +40,7 @@ Node.js 22.13 이상과 `pnpm@11.19.0`을 사용한다. 주요 명령은 다음�
 - `pnpm validate:all`: 저장소·스킬 전체 검증
 - `pnpm validate:official`: Codex 공식 validator 검사
 
-전체 검증은 `pnpm install --frozen-lockfile` 후 `pnpm bundle:check`를 빌드보다 먼저 실행한다. 이어 `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm runtime:check`, `pnpm validate:all`, `pnpm validate:official`, `git diff --check`를 실행한다. 빌드가 stale 번들을 덮어쓸 수 있으므로 순서를 바꾸지 않는다. CI는 Ubuntu와 Windows의 Node.js 22·24 조합을 기준으로 한다.
+전체 검증은 `pnpm install --frozen-lockfile` 후 `pnpm bundle:check`를 빌드보다 먼저 실행한다. 이어 `pnpm claude:check`, `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm runtime:check`, `pnpm validate:all`, `pnpm validate:official`, `git diff --check`를 실행한다. 빌드가 stale 번들을 덮어쓸 수 있으므로 순서를 바꾸지 않는다. CI는 Ubuntu와 Windows의 Node.js 22·24 조합을 기준으로 한다.
 
 ## 배포물 계약
 
@@ -46,6 +49,12 @@ Node.js 22.13 이상과 `pnpm@11.19.0`을 사용한다. 주요 명령은 다음�
 런타임 의존성이 바뀌면 번들, `runtime/THIRD_PARTY_NOTICES.md`, 신선도 검사와 clean-room 검사를 함께 갱신한다. `mcp-server/dist/server.mjs`를 비롯한 커밋 산출물은 같은 소스 상태를 가리켜야 한다.
 
 업데이트 확인 기능은 설치 파일이나 마켓플레이스 설정을 바꾸지 않으며 `automaticInstall: false`를 유지한다. 저장 실패나 손상된 업데이트 상태가 기존 workflow를 막아서는 안 된다. SQLite 변경에는 기존 데이터 보존, 두 연결의 경합, 성공·실패 경합, 알림 버전의 단조 증가와 버전당 한 번 claim을 검증하는 테스트를 둔다.
+
+## Claude Code 배포물
+
+Claude Code 배포물은 Codex 플러그인과 서로 영향을 주지 않아야 한다. `claude-plugin/`은 `pnpm claude:build`로만 생성하고 직접 고치지 않는다. Claude 전용 파일은 `claude-overlay/`에, 공용 파일의 Claude용 문구 보정은 `claude-overlay/replacements.json`에 둔다. Claude 작업을 위해 `.codex-plugin/`, `.agents/`, `hooks/`, `.mcp.json`과 루트 `skills/`의 Codex 동작을 바꾸지 않는다.
+
+공용 원본(`skills/`, `mcp-server/dist/`, `runtime/`, `contracts/`, `release/version.json`)이 바뀌면 같은 변경에서 `pnpm claude:build`를 실행해 생성물을 함께 커밋한다. 치환할 원문이 사라지거나 생성물의 `SKILL.md`·`references/`·`agents/`에 Codex 전용 표현이 남으면 생성이 실패하므로, 원인을 overlay에서 고친다. Claude Code 배포물의 상태 DB는 `${CLAUDE_PLUGIN_DATA}` 아래에만 둔다.
 
 ## 스킬과 라우팅 규칙
 
@@ -61,7 +70,7 @@ Node.js 22.13 이상과 `pnpm@11.19.0`을 사용한다. 주요 명령은 다음�
 
 ## 변경과 릴리스
 
-새 스킬이나 기능은 구현을 시작하기 전에 `codex/<작업명>` 형식의 전용 브랜치를 만들고, 해당 브랜치나 연결된 worktree에서 작업한다. 사용자가 브랜치 이름을 지정하면 그 이름을 따른다.
+새 스킬이나 기능은 구현을 시작하기 전에 `codex/<작업명>` 형식(Claude Code 세션에서는 `claude/<작업명>`)의 전용 브랜치를 만들고, 해당 브랜치나 연결된 worktree에서 작업한다. 사용자가 브랜치 이름을 지정하면 그 이름을 따른다.
 
 작업 전 `git status`, 관련 worktree와 적용 지침을 확인한다. 미추적 파일, 다른 작업의 커밋과 변경은 사용자 소유로 보고 보존한다. 파일과 외부 상태는 한 작업자만 쓰게 하고, 별도 worktree의 결과는 commit과 검증 근거로 통합한다.
 

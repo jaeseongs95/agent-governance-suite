@@ -15,6 +15,10 @@
 - workflow·continuity SQLite 상태는 `${CLAUDE_PLUGIN_DATA}`에 저장한다. Codex 플러그인의 상태 디렉터리를 열지 않는다.
 - `codex-token-usage-analyzer`는 Codex 세션 로그 전용이라 포함하지 않는다.
 
+## 실행 보증 제한
+
+실행 보증이 필요한 orchestrated workflow는 Claude Code에서 시작되지 않고 `BINDING_REQUIRED`를 반환한다. 서버에 신뢰할 수 있는 실행 관측값 제공자가 없고, Claude Code 훅은 추론 수준만 알려 주며 모델 정보는 주지 않기 때문이다. Codex 배포물의 서버도 같은 조건에서 같은 결과를 낸다. 전문 스킬 단독 호출과 실행 보증이 필요 없는 MCP 기능은 그대로 사용할 수 있다.
+
 ## Claude용 보정
 
 - `claude-overlay/replacements.json`: 공용 파일에 적용할 치환 목록이다. 찾을 문구가 없거나 두 번 이상 나오면 생성이 실패한다.

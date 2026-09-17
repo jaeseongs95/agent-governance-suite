@@ -49,6 +49,9 @@ jobs:
       - name: Verify committed runtime bundles
         shell: bash
         run: pnpm bundle:check
+      - name: Verify generated Claude plugin
+        shell: bash
+        run: pnpm claude:check
       - name: Lint
         shell: bash
         run: pnpm lint

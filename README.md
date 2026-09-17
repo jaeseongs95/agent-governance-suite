@@ -102,6 +102,25 @@ MCP 서버가 시작되지 않아도 개별 전문 스킬은 직접 호출할 �
 
 `v1.2.0`은 SQLite schema를 v2에서 v3으로 올려 convergence root, epoch, attempt, lease, review와 workflow 연결을 보존합니다. 이전 버전으로 돌아갈 가능성이 있다면 업그레이드 전에 MCP 서버를 중지하고 DB를 SQLite의 일관된 backup 방식으로 복사해야 합니다. v3 DB는 v2 서버에서 열 수 없으므로 플러그인만 다시 설치해서는 롤백되지 않습니다. 롤백할 때는 MCP를 중지한 상태에서 업그레이드 전 v2 backup을 복원해야 합니다.
 
+### Claude Code에서 사용하기
+
+Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다. Codex 플러그인과 파일·훅·MCP 설정·상태 DB를 공유하지 않습니다.
+
+```text
+/plugin marketplace add jaeseongs95/agent-governance-suite
+/plugin install agent-governance-suite@agent-governance-claude
+```
+
+설치 후 새 세션에서 `/agent-governance-suite:orchestrator`나 `/agent-governance-suite:mutation-risk-preflight`처럼 스킬을 호출합니다. Codex와 다른 점은 다음과 같습니다.
+
+- workflow·continuity 상태는 Claude Code가 플러그인마다 제공하는 데이터 디렉터리(`${CLAUDE_PLUGIN_DATA}`)에 저장합니다.
+- `codex-token-usage-analyzer`는 Codex 세션 로그 전용이라 포함하지 않습니다.
+- 독립 감사와 심의에는 부모 대화를 상속하지 않는 `independent-auditor`, `deliberation-reviewer` 서브에이전트를 사용합니다.
+- `instruction-scope-resolver`는 `AGENTS.md` chain과 함께 `CLAUDE.md` 계층을 확인합니다.
+- 실행 보증이 필요한 orchestrated workflow는 신뢰할 수 있는 실행 관측값이 없어 `BINDING_REQUIRED`로 시작되지 않습니다. Codex 배포 서버도 같은 조건에서 같은 결과를 냅니다.
+
+`claude-plugin/`은 `pnpm claude:build`로 생성하며 직접 수정하지 않습니다. Claude 전용 파일과 문구 보정은 `claude-overlay/`에 둡니다.
+
 ### 플러그인 업데이트 확인
 
 MCP 서버는 플러그인을 처음 사용할 때 공개 저장소의 안정 버전 tag를 확인합니다. 성공한 결과는 SQLite에 24시간 동안 보관하며, 확인에 실패하면 기존 workflow를 중단하지 않고 1시간 뒤 다시 시도합니다. 설치된 버전보다 높은 안정 버전이 확인되면 MCP 응답에 `plugin-update-notice`를 한 번 추가합니다.
@@ -184,6 +203,9 @@ Convergence root, epoch, attempt, lease, review와 workflow 연결도 같은 SQL
 
 ```text
 .codex-plugin/plugin.json  플러그인 메타데이터
+.claude-plugin/            Claude Code 마켓플레이스
+claude-plugin/             생성된 Claude Code 플러그인(직접 수정 금지)
+claude-overlay/            Claude 전용 파일과 문구 보정
 .mcp.json                  로컬 STDIO MCP 서버 설정
 skills/                    오케스트레이터와 전문 스킬
 mcp-server/                MCP 서버 구현
@@ -202,6 +224,7 @@ Node.js 22.13.0 이상과 Corepack이 필요합니다.
 corepack enable
 pnpm install --frozen-lockfile
 pnpm bundle:check
+pnpm claude:check
 pnpm lint
 pnpm build
 pnpm test
@@ -211,7 +234,7 @@ pnpm validate:official
 git diff --check
 ```
 
-`bundle:check`는 stale 번들을 빌드가 덮어쓰기 전에 확인하므로 위 순서를 유지합니다. Codex 개발 환경의 `validate:official`은 시스템 `skill-creator`와 `plugin-creator` validator를 실행합니다. 시스템이 Python 3를 찾지 못하면 `PYTHON`에 실행 파일의 절대 경로를 지정합니다. 로컬 MCP 서버는 `pnpm dev`로 실행합니다.
+`claude:check`는 `claude-plugin/`이 현재 원본과 `claude-overlay/`로 생성한 결과와 같은지 확인합니다. `bundle:check`는 stale 번들을 빌드가 덮어쓰기 전에 확인하므로 위 순서를 유지합니다. Codex 개발 환경의 `validate:official`은 시스템 `skill-creator`와 `plugin-creator` validator를 실행합니다. 시스템이 Python 3를 찾지 못하면 `PYTHON`에 실행 파일의 절대 경로를 지정합니다. 로컬 MCP 서버는 `pnpm dev`로 실행합니다.
 
 동결된 한국어 산문 평가에서는 각 모델 단계 직전에 공통 사전 검사를 실행합니다. `<evaluation-root>`에는 `evals/runs`와 평가에 사용한 `skills/korean-prose-editor`가 있어야 합니다.
 
