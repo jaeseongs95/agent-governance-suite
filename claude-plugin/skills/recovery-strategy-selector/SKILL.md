@@ -1,6 +1,6 @@
 ---
 name: recovery-strategy-selector
-description: 확인된 반복 실패 원인 뒤에 실행 가능한 복구 전략을 비교하고, 새 작업 계약으로 안전하게 넘길 RecoveryHandoff.v1을 만든다. 원인 미확정 진단, 수정 실행, 기존 run 변경에는 사용하지 않는다.
+description: blocker-diagnostician이 원인을 확정한 뒤 어떻게 복구할지 골라야 할 때, 우회·롤백·재설계 중 선택이 필요할 때 쓴다. 실행 가능한 복구 전략을 비교하고 새 작업 계약으로 넘길 RecoveryHandoff.v1을 만든다. 원인 미확정 상태의 진단, 수정 실행, 기존 run 변경은 하지 않는다.
 license: MIT
 metadata:
   version: "0.1.0"

@@ -1,6 +1,6 @@
 ---
 name: workspace-convention-profiler
-description: 낯선 저장소의 구조, 도구, 관례, 정의된 검증 명령과 변경 후보 지점을 읽기 전용으로 조사한다. AGENTS.md·CLAUDE.md 우선순위 판정, 작업 범위 확정, diff 감사에는 사용하지 않는다.
+description: 처음 보는 저장소에서 작업을 시작할 때, 어떤 명령으로 검증하는지·어디를 고쳐야 하는지 모를 때, 코드 변경 전에 관례를 확인해야 할 때 쓴다. 구조·도구·관례·정의된 검증 명령과 변경 후보 지점을 읽기 전용으로 조사한다. AGENTS.md 우선순위 판정·범위 확정·diff 감사는 다른 스킬이 맡는다.
 license: MIT
 metadata:
   version: "1.0.0"

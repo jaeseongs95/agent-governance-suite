@@ -1,6 +1,6 @@
 ---
 name: coordinate-subagents
-description: Coordinate subagents in Codex and Claude Code by delegating only when the user requests it or a documented net-benefit check justifies it, assigning ownership, integrating evidence, and separating required high-risk audits. Do not activate solely because multiple work units exist, a task is complex, or orchestration is enabled.
+description: 사용자가 서브에이전트·병렬 작업·독립 감사자를 요청했을 때, 또는 문서화된 순이익 검사가 위임을 정당화할 때 쓴다. 소유권 배정, 근거 통합, 고위험 감사 분리를 맡는다. 작업 단위가 많거나 복잡하다는 이유만으로, 또는 orchestration이 켜져 있다는 이유만으로는 쓰지 않는다.
 license: MIT
 metadata:
   version: "1.0.0"

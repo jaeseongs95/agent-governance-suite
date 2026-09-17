@@ -1,6 +1,6 @@
 ---
 name: context-continuity
-description: 긴 direct task에서 compaction·resume 뒤 잃으면 실행 판단이 달라질 핵심 상태를 선별해 로컬 continuity checkpoint로 저장하고 복원 후보를 검토한다. transcript 보관, workflow 원장 복제나 일반 메모에는 사용하지 않는다.
+description: 긴 작업 중 컨텍스트 압축·재시작이 예상될 때, 지금까지의 결정·진행·차단 요인을 잃으면 다음 판단이 달라질 때, 재개 후 이전 상태를 복원해야 할 때 쓴다. 핵심 상태를 선별해 로컬 continuity checkpoint로 저장하고 복원 후보를 검토한다. transcript 보관, workflow 원장 복제, 일반 메모에는 쓰지 않는다.
 license: MIT
 metadata:
   version: "1.0.0"

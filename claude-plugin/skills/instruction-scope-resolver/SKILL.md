@@ -1,6 +1,6 @@
 ---
 name: instruction-scope-resolver
-description: 특정 workspace 경로에 적용되는 CLAUDE.md 계층·.claude/rules와 AGENTS.md·AGENTS.override.md chain, 우선순위와 충돌 근거를 확인한다. 지침 파일 작성이나 일반 정책 검토에는 사용하지 않는다.
+description: 특정 경로에서 어떤 CLAUDE.md·.claude/rules·AGENTS.md·AGENTS.override.md가 적용되는지 확인해야 할 때, 지침끼리 충돌하는 것 같을 때, 하위 디렉터리 규칙이 상위를 덮는지 판단할 때 쓴다. 적용 chain·우선순위·충돌 근거를 계산한다. 지침 파일 작성이나 일반 정책 검토는 하지 않는다.
 license: MIT
 metadata:
   version: "1.0.0"

@@ -91,6 +91,91 @@
       "file": "skills/independent-audit-gate/scripts/validate_skill.py",
       "find": "(plugin_root / \"plugin.json\", plugin_root / \".codex-plugin/plugin.json\")",
       "replace": "(plugin_root / \"plugin.json\", plugin_root / \".codex-plugin/plugin.json\", plugin_root / \".claude-plugin/plugin.json\")"
+    },
+    {
+      "file": "skills/orchestrator/SKILL.md",
+      "find": "description: 여러 거버넌스 스킬이 함께 필요한 요청을 분류하고, 사용 가능한 전문 스킬의 실행 순서·입출력·결과를 연결한다. 전문 판단이나 감사 자체를 수행할 때는 사용하지 않는다.",
+      "replace": "description: 거버넌스 스킬을 둘 이상 이어 써야 할 때 쓴다: 새 구현·리팩터링 요청을 받아 계약 정리→관례 조사→구현→범위·근거 확인→감사 순서를 잡을 때, 어느 스킬을 먼저 써야 할지 애매할 때, 여러 산출물을 하나의 완료 판정으로 묶을 때. 요청을 분류하고 전문 스킬의 실행 순서·입출력·결과를 연결한다. MCP orchestrated 모드가 BINDING_REQUIRED로 막히면 전문 스킬을 직접 순서대로 호출한다. 전문 판단이나 감사 자체는 각 스킬이 맡는다."
+    },
+    {
+      "file": "skills/task-contract/SKILL.md",
+      "find": "description: 사용자 요청과 적용 지침을 목표·범위·수용 기준·작업 단위·위험도·권한·검증 근거가 추적되는 TaskEnvelope.v1으로 정리한다. 구현, 실행 계획 수립이나 완료 판정에는 사용하지 않는다.",
+      "replace": "description: 구현·수정·마이그레이션 요청을 받아 작업을 시작하기 전, 요청이 여러 해석을 허용하거나 범위·완료 조건·권한이 불명확할 때, 긴 작업을 나눠 추적해야 할 때 쓴다. 목표·범위·수용 기준·작업 단위·위험도·권한·검증 근거를 TaskEnvelope.v1로 고정한다. 구현·실행 계획·완료 판정은 하지 않는다."
+    },
+    {
+      "file": "skills/workspace-convention-profiler/SKILL.md",
+      "find": "description: 낯선 저장소의 구조, 도구, 관례, 정의된 검증 명령과 변경 후보 지점을 읽기 전용으로 조사한다. AGENTS.md·CLAUDE.md 우선순위 판정, 작업 범위 확정, diff 감사에는 사용하지 않는다.",
+      "replace": "description: 처음 보는 저장소에서 작업을 시작할 때, 어떤 명령으로 검증하는지·어디를 고쳐야 하는지 모를 때, 코드 변경 전에 관례를 확인해야 할 때 쓴다. 구조·도구·관례·정의된 검증 명령과 변경 후보 지점을 읽기 전용으로 조사한다. AGENTS.md 우선순위 판정·범위 확정·diff 감사는 다른 스킬이 맡는다."
+    },
+    {
+      "file": "skills/instruction-scope-resolver/SKILL.md",
+      "find": "description: 특정 workspace 경로에 적용되는 CLAUDE.md 계층·.claude/rules와 AGENTS.md·AGENTS.override.md chain, 우선순위와 충돌 근거를 확인한다. 지침 파일 작성이나 일반 정책 검토에는 사용하지 않는다.",
+      "replace": "description: 특정 경로에서 어떤 CLAUDE.md·.claude/rules·AGENTS.md·AGENTS.override.md가 적용되는지 확인해야 할 때, 지침끼리 충돌하는 것 같을 때, 하위 디렉터리 규칙이 상위를 덮는지 판단할 때 쓴다. 적용 chain·우선순위·충돌 근거를 계산한다. 지침 파일 작성이나 일반 정책 검토는 하지 않는다."
+    },
+    {
+      "file": "skills/change-scope-guardian/SKILL.md",
+      "find": "description: 작업 전 기준 상태와 현재 Git 변경을 비교해 요청 범위 밖 파일, 제외 경로, 기존 사용자 변경과의 겹침을 판정한다. 요구사항 충족이나 코드 품질 검토에는 사용하지 않는다.",
+      "replace": "description: git commit·merge 전, 여러 파일을 고친 뒤 요청 범위를 넘지 않았는지 확인할 때, 다른 사람·다른 작업의 미커밋 변경이 있는 트리에서 작업할 때 쓴다. 작업 전 기준 상태와 현재 Git 변경을 비교해 범위 밖 파일·제외 경로·기존 변경과의 겹침을 판정한다. 요구사항 충족이나 코드 품질은 검토하지 않는다."
+    },
+    {
+      "file": "skills/mutation-risk-preflight/SKILL.md",
+      "find": "description: 삭제, 배포, 게시, 마이그레이션, 권한·결제·전역 설정 변경 전에 정확한 대상, 승인, 영향 범위와 복구 조건을 읽기 전용으로 점검한다. 실제 변경이나 변경 후 감사에는 사용하지 않는다.",
+      "replace": "description: rm·삭제, 배포·게시, DB 마이그레이션, 권한·결제·전역 설정 변경, 되돌릴 수 없는 명령을 실행하기 직전에 쓴다. 정확한 대상·승인 여부·영향 범위·복구 조건을 읽기 전용으로 점검한다. 실제 변경 실행과 변경 후 감사는 하지 않는다."
+    },
+    {
+      "file": "skills/acceptance-evidence-validator/SKILL.md",
+      "find": "description: 고정된 구현 대상과 실제 테스트·검사 근거를 수용 기준별로 대조해 충족, 실패, 증거 부족을 판정한다. 구현, 반복 실패 원인 분석, 고위험 독립 감사나 릴리스 승인에는 사용하지 않는다.",
+      "replace": "description: 구현을 마치고 완료를 보고하기 전, 테스트·검사 결과를 수용 기준과 대조해야 할 때, 사용자가 '다 됐는지' 물을 때 쓴다. 고정된 구현 대상과 실제 근거를 기준별로 대조해 충족·실패·증거 부족을 판정한다. 구현, 반복 실패 진단, 고위험 독립 감사, 릴리스 승인은 하지 않는다."
+    },
+    {
+      "file": "skills/blocker-diagnostician/SKILL.md",
+      "find": "description: 반복되는 실패를 관측 episode와 원인 가설로 분리하고, 새 정보를 얻을 수 있는 다음 판별 검사를 정한다. 수정 구현, 일반 설계 비교, 같은 검사의 반복 실행이나 최종 독립 감사에는 사용하지 않는다.",
+      "replace": "description: 같은 테스트·빌드·명령이 두 번 이상 실패했을 때, 고쳤는데 또 실패할 때, 원인 후보가 여럿이라 무엇을 먼저 확인할지 정해야 할 때 쓴다. 관측된 실패 episode와 원인 가설을 분리하고 새 정보를 주는 다음 판별 검사를 고른다. 수정 구현, 같은 검사 반복, 최종 감사는 하지 않는다."
+    },
+    {
+      "file": "skills/recovery-strategy-selector/SKILL.md",
+      "find": "description: 확인된 반복 실패 원인 뒤에 실행 가능한 복구 전략을 비교하고, 새 작업 계약으로 안전하게 넘길 RecoveryHandoff.v1을 만든다. 원인 미확정 진단, 수정 실행, 기존 run 변경에는 사용하지 않는다.",
+      "replace": "description: blocker-diagnostician이 원인을 확정한 뒤 어떻게 복구할지 골라야 할 때, 우회·롤백·재설계 중 선택이 필요할 때 쓴다. 실행 가능한 복구 전략을 비교하고 새 작업 계약으로 넘길 RecoveryHandoff.v1을 만든다. 원인 미확정 상태의 진단, 수정 실행, 기존 run 변경은 하지 않는다."
+    },
+    {
+      "file": "skills/independent-audit-gate/SKILL.md",
+      "find": "description: 보안·권한·결제·데이터 손실·스키마 마이그레이션·프로덕션 배포·전역 설정처럼 실패 영향이 큰 변경을 실행하거나 릴리스하기 전후에, 구현자와 분리된 감사자가 최종 변경과 검증 근거를 직접 확인하고 완료 가능 여부를 판정한다. 단순 조사, 저위험 수정, 일반 코드 리뷰, 구현 없는 설계 토론에는 사용하지 않는다.",
+      "replace": "description: 보안·권한·결제·데이터 손실·스키마 마이그레이션·프로덕션 배포·전역 설정 변경을 실행하거나 릴리스하기 전후에 쓴다. 구현자와 분리된 감사자가 최종 변경과 검증 근거를 직접 확인해 완료 가능 여부를 판정한다. 단순 조사, 저위험 수정, 일반 코드 리뷰, 구현 없는 설계 토론에는 쓰지 않는다."
+    },
+    {
+      "file": "skills/independent-deliberation-panel/SKILL.md",
+      "find": "description: 복잡하거나 실패 비용이 큰 설계·의사결정·감사를 독립 관점, 조건부 반박, 증거 검증과 별도 판정으로 검토한다. 단순 조회·요약·정형 변환에는 사용하지 않는다.",
+      "replace": "description: 설계 대안이 갈리거나 결정이 틀리면 비용이 큰 판단, 기존 설계나 AI 산출물을 독립 감사해야 할 때, 사용자가 '검토해 봐'·'맞는지 봐 줘'·반박 패널을 요구할 때 쓴다. 독립 관점 reviewer, 조건부 반박, 증거 검증, 별도 판정으로 결론을 낸다. 단순 조회·요약·정형 변환에는 쓰지 않는다."
+    },
+    {
+      "file": "skills/iteration-frame-auditor/SKILL.md",
+      "find": "description: 반복 작업의 불변 계약과 frame 변경을 fresh-context로 비교해 의미 보존 여부와 다음 수렴 경로를 판정한다. 수정 구현, 저수준 원인 진단, 사용자 가치 변경 승인에는 사용하지 않는다.",
+      "replace": "description: 같은 작업을 여러 번 반복하며 지침·프레임을 바꿔 왔을 때, 반복 중 원래 계약이 조용히 바뀌었는지 의심될 때, 다음 반복 방향을 정해야 할 때 쓴다. 불변 계약과 frame 변경을 fresh-context로 비교해 의미 보존 여부와 수렴 경로를 판정한다. 수정 구현, 원인 진단, 사용자 가치 변경 승인은 하지 않는다."
+    },
+    {
+      "file": "skills/evaluation-validity-auditor/SKILL.md",
+      "find": "description: 동결된 스킬·모델 평가의 입력, 판정 방법과 결과 집계가 공정하고 재현 가능한지 실행 전후에 감사한다. 평가 실행·채점·수정이나 일반 구현 검증에는 사용하지 않는다.",
+      "replace": "description: 스킬·모델 평가 결과를 품질 근거나 릴리스 근거로 제출하려 할 때, 평가를 설계해 실행하기 전, 평가가 공정했는지 의심될 때 쓴다. 입력·판정 방법·집계가 공정하고 재현 가능한지 실행 전후에 감사한다. 평가 실행·채점·수정과 일반 구현 검증은 하지 않는다."
+    },
+    {
+      "file": "skills/model-effort-advisor/SKILL.md",
+      "find": "description: 관측 가능한 현재 모델과 추론 수준이 받은 요청의 난도·위험·비용 요구에 비해 과한지, 적절한지, 부족한지 평가하고 유의미한 불일치만 안내한다. 실제 설정을 관측할 수 없는 일반 작업, 하위 에이전트 라우팅이나 모델 자동 변경에는 사용하지 않는다.",
+      "replace": "description: 현재 모델·추론 수준이 관측될 때(호스트 metadata, 사용자 설명, 화면) 요청 난도·위험·비용과 맞는지 판단해야 할 때, 사용자가 '이 모델로 충분해?'라고 물을 때 쓴다. 과다·적정·부족 여부를 평가해 유의미한 불일치만 안내한다. 설정을 관측할 수 없는 일반 작업, 하위 에이전트 라우팅, 모델 자동 변경에는 쓰지 않는다."
+    },
+    {
+      "file": "skills/context-continuity/SKILL.md",
+      "find": "description: 긴 direct task에서 compaction·resume 뒤 잃으면 실행 판단이 달라질 핵심 상태를 선별해 로컬 continuity checkpoint로 저장하고 복원 후보를 검토한다. transcript 보관, workflow 원장 복제나 일반 메모에는 사용하지 않는다.",
+      "replace": "description: 긴 작업 중 컨텍스트 압축·재시작이 예상될 때, 지금까지의 결정·진행·차단 요인을 잃으면 다음 판단이 달라질 때, 재개 후 이전 상태를 복원해야 할 때 쓴다. 핵심 상태를 선별해 로컬 continuity checkpoint로 저장하고 복원 후보를 검토한다. transcript 보관, workflow 원장 복제, 일반 메모에는 쓰지 않는다."
+    },
+    {
+      "file": "skills/coordinate-subagents/SKILL.md",
+      "find": "description: Coordinate subagents in Codex and Claude Code by delegating only when the user requests it or a documented net-benefit check justifies it, assigning ownership, integrating evidence, and separating required high-risk audits. Do not activate solely because multiple work units exist, a task is complex, or orchestration is enabled.",
+      "replace": "description: 사용자가 서브에이전트·병렬 작업·독립 감사자를 요청했을 때, 또는 문서화된 순이익 검사가 위임을 정당화할 때 쓴다. 소유권 배정, 근거 통합, 고위험 감사 분리를 맡는다. 작업 단위가 많거나 복잡하다는 이유만으로, 또는 orchestration이 켜져 있다는 이유만으로는 쓰지 않는다."
+    },
+    {
+      "file": "skills/korean-prose-editor/SKILL.md",
+      "find": "description: 한국어 README, 안내문, 보고서와 여러 문단의 산문을 자연스럽게 편집하면서 사실·숫자·인용·링크·코드와 주장 강도를 보존하고, 별도 검증과 결정적 최종화가 필요할 때 사용한다. 일반 질문, 짧은 답변, 영어 전용 편집에는 사용하지 않는다.",
+      "replace": "description: 한국어 README·안내문·보고서·문서 초안을 쓰거나 다듬을 때, 여러 문단의 한국어 산문을 더 자연스럽게 고치되 사실·숫자·인용·링크·코드·주장 강도를 지켜야 할 때, 편집 결과를 별도 검증하고 결정적으로 최종화해야 할 때 쓴다. 일반 질문, 짧은 답변, 영어 전용 편집에는 쓰지 않는다."
     }
   ]
 }
