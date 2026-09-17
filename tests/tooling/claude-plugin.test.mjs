@@ -75,15 +75,23 @@ describe("generated Claude plugin", () => {
     }
   });
 
-  it("registers exec-form hooks for the same lifecycle events as the Codex plugin", async () => {
+  it("registers exec-form hooks for the Codex lifecycle events plus the Claude-only skill trigger", async () => {
     const claudeHooks = await readJson(pluginRoot, "hooks", "hooks.json");
     const codexHooks = await readJson(root, "hooks", "hooks.json");
-    expect(Object.keys(claudeHooks.hooks).sort()).toEqual(Object.keys(codexHooks.hooks).sort());
+    // Every Codex continuity event must exist in the Claude plugin; Claude may add its own trigger events.
+    for (const event of Object.keys(codexHooks.hooks)) expect(Object.keys(claudeHooks.hooks)).toContain(event);
+    expect(Object.keys(claudeHooks.hooks).sort()).toEqual([...Object.keys(codexHooks.hooks), "UserPromptSubmit"].sort());
+    const allowedScripts = ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs", "${CLAUDE_PLUGIN_ROOT}/hooks/skill-trigger-hook.mjs"];
     for (const groups of Object.values(claudeHooks.hooks)) {
       for (const hook of groups.flatMap((group) => group.hooks)) {
-        expect(hook).toMatchObject({ type: "command", command: "node", args: ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"] });
+        expect(hook).toMatchObject({ type: "command", command: "node" });
+        expect(allowedScripts).toContain(hook.args[0]);
       }
     }
+    // The trigger hook is the only handler for UserPromptSubmit and for the Bash PreToolUse group.
+    expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[1]]);
+    const bashGroup = claudeHooks.hooks.PreToolUse.find((group) => group.matcher === "^Bash$");
+    expect(bashGroup.hooks.map((hook) => hook.args[0])).toEqual([allowedScripts[1]]);
     const matcher = new RegExp(claudeHooks.hooks.PreToolUse[0].matcher, "u");
     for (const tool of continuityTools) {
       expect(matcher.test(`${toolPrefix}${tool}`)).toBe(true);
