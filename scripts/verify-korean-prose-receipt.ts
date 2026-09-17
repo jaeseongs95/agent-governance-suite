@@ -39,16 +39,23 @@ interface ReceiptStageResult {
 }
 
 const args = process.argv.slice(2).filter((argument) => argument !== "--");
-const { run, evaluationRoot, cycleDirectory, expectedFrameDigest, expectedValidityReportDigest } = parseArguments(args);
+const { run, evaluationRoot, cycleDirectory, expectedFrameDigest, expectedValidityReportDigest, expectedQualityReportDigest } = parseArguments(args);
 const layout = await resolveLayout(evaluationRoot, run, cycleDirectory);
 if (layout.formal) {
   if (!expectedFrameDigest || !expectedValidityReportDigest) {
     throw new Error("--expected-frame-digest and --expected-validity-report-digest are required for a formal structured cycle");
   }
+  // Once quality-report.json exists the readiness check re-aggregates the quality evidence and
+  // therefore needs the externally held quality digest as well; the flag is optional before that.
+  const qualityRecorded = await access(path.join(layout.cycleDirectory!, "quality-report.json")).then(() => true, () => false);
+  if (qualityRecorded && !expectedQualityReportDigest) {
+    throw new Error("--expected-quality-report-digest is required once quality-report.json exists in the cycle");
+  }
   await evaluateKoreanProseReadiness(layout.cycleDirectory!, {
-    requireQuality: false,
+    requireQuality: qualityRecorded,
     expectedFrameDigest,
     expectedValidityReportDigest,
+    ...(qualityRecorded && expectedQualityReportDigest ? { expectedQualityReportDigest } : {}),
     evaluationRoot,
   });
 }
@@ -138,11 +145,13 @@ function parseArguments(cliArgs: string[]): {
   cycleDirectory: string | null;
   expectedFrameDigest: string | null;
   expectedValidityReportDigest: string | null;
+  expectedQualityReportDigest: string | null;
 } {
   const positional: string[] = [];
   let flaggedCycle: string | null = null;
   let expectedFrameDigest: string | null = null;
   let expectedValidityReportDigest: string | null = null;
+  let expectedQualityReportDigest: string | null = null;
   for (let index = 0; index < cliArgs.length; index += 1) {
     const argument = cliArgs[index]!;
     if (argument === "--cycle-dir") {
@@ -160,6 +169,11 @@ function parseArguments(cliArgs: string[]): {
       if (!value || !/^sha256:[a-f0-9]{64}$/u.test(value)) throw new Error("--expected-validity-report-digest requires a sha256 digest");
       expectedValidityReportDigest = value;
       index += 1;
+    } else if (argument === "--expected-quality-report-digest") {
+      const value = cliArgs[index + 1];
+      if (!value || !/^sha256:[a-f0-9]{64}$/u.test(value)) throw new Error("--expected-quality-report-digest requires a sha256 digest");
+      expectedQualityReportDigest = value;
+      index += 1;
     } else {
       positional.push(argument);
     }
@@ -168,9 +182,9 @@ function parseArguments(cliArgs: string[]): {
   const evaluationRoot = positional[1] ? path.resolve(positional[1]) : "";
   const positionalCycle = positional[2] ?? null;
   if (![1, 2, 3].includes(run) || !evaluationRoot || positional.length > 3 || (flaggedCycle && positionalCycle)) {
-    throw new Error("usage: <run:1|2|3> <evaluation-root> [cycle-path | --cycle-dir <cycle-path>] [--expected-frame-digest <sha256:digest>] [--expected-validity-report-digest <sha256:digest>]");
+    throw new Error("usage: <run:1|2|3> <evaluation-root> [cycle-path | --cycle-dir <cycle-path>] [--expected-frame-digest <sha256:digest>] [--expected-validity-report-digest <sha256:digest>] [--expected-quality-report-digest <sha256:digest>]");
   }
-  return { run, evaluationRoot, cycleDirectory: flaggedCycle ?? positionalCycle, expectedFrameDigest, expectedValidityReportDigest };
+  return { run, evaluationRoot, cycleDirectory: flaggedCycle ?? positionalCycle, expectedFrameDigest, expectedValidityReportDigest, expectedQualityReportDigest };
 }
 
 async function resolveLayout(evaluationRoot: string, run: number, cycleArgument: string | null): Promise<EvaluationLayout> {

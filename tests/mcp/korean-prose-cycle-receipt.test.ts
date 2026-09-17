@@ -161,6 +161,30 @@ describe("range-aware Korean prose cycle receipts", { timeout: 15_000 }, () => {
     });
   });
 
+  it("verifies a receipt whose quality evidence passed only with the external quality digest", async () => {
+    const evaluationRoot = await createCycleFixture();
+    const cycleDirectory = join(evaluationRoot, "evals", "cycles", "0.1.0-rc2");
+    const recorded = runScript(recorderPath, ["1", evaluationRoot, "--cycle-dir", cycleDirectory]);
+    expect(recorded.status, recorded.stderr).toBe(0);
+    await writeQualityReport(cycleDirectory);
+    const quality = JSON.parse(await readFile(join(cycleDirectory, "quality-report.json"), "utf8")) as { reportDigest: string };
+
+    const withoutQualityDigest = runScript(verifierPath, ["1", evaluationRoot, "--cycle-dir", cycleDirectory]);
+    expect(withoutQualityDigest.status).not.toBe(0);
+    expect(withoutQualityDigest.stderr).toContain("--expected-quality-report-digest is required once quality-report.json exists");
+
+    const wrongQualityDigest = runScript(verifierPath, [
+      "1", evaluationRoot, "--cycle-dir", cycleDirectory, "--expected-quality-report-digest", `sha256:${"f".repeat(64)}`,
+    ]);
+    expect(wrongQualityDigest.status).not.toBe(0);
+    expect(wrongQualityDigest.stderr).toContain("quality report does not match the externally expected digest");
+
+    const verified = runScript(verifierPath, [
+      "1", evaluationRoot, "--cycle-dir", cycleDirectory, "--expected-quality-report-digest", quality.reportDigest,
+    ]);
+    expect(verified.status, verified.stderr).toBe(0);
+  });
+
   it("rejects quality evidence when bound final records miss the improvement threshold", async () => {
     const evaluationRoot = await createCycleFixture();
     const cycleDirectory = join(evaluationRoot, "evals", "cycles", "0.1.0-rc2");
