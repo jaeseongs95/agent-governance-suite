@@ -8,3 +8,5 @@
 *.ts text eol=lf
 *.sqlite3 binary
 mcp-server/dist/server.mjs text eol=lf -whitespace
+claude-plugin/mcp-server/dist/server.mjs text eol=lf -whitespace
+claude-plugin/** linguist-generated=true

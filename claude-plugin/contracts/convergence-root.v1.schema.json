@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/convergence-root.v1.schema.json",
+  "title": "ConvergenceRoot.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "rootId", "parentRootId", "revision", "state", "currentEpoch", "taskEnvelope", "frame", "taskDigest", "frameDigest", "workspaceDigest", "controlDigest", "targetDigest", "operationalDigest", "userApprovalRefs", "createdAt", "updatedAt"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "rootId": { "type": "string", "minLength": 1 },
+    "parentRootId": { "type": ["string", "null"], "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 0 },
+    "state": { "enum": ["open", "needs-review", "needs-user", "completed", "abandoned"] },
+    "currentEpoch": { "type": "integer", "minimum": 1, "maximum": 2 },
+    "taskEnvelope": { "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json" },
+    "frame": { "$ref": "https://skill-suite.local/contracts/convergence-frame.v1.schema.json" },
+    "taskDigest": { "$ref": "#/$defs/digest" },
+    "frameDigest": { "$ref": "#/$defs/digest" },
+    "workspaceDigest": { "$ref": "#/$defs/digest" },
+    "controlDigest": { "$ref": "#/$defs/digest" },
+    "targetDigest": { "$ref": "#/$defs/digest" },
+    "operationalDigest": { "$ref": "#/$defs/digest" },
+    "userApprovalRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

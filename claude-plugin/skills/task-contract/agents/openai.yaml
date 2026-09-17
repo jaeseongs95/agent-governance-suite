@@ -1,0 +1,6 @@
+interface:
+  display_name: "Task Contract"
+  short_description: "요청을 범위·수용 기준·권한이 명확한 계약으로 정리합니다"
+  default_prompt: "Use $task-contract to turn this request into a traceable TaskEnvelope.v1 without starting implementation."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/attempt-lease.v1.schema.json",
+  "title": "AttemptLease.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "leaseId", "rootId", "rootRevision", "epoch", "ordinal", "proposalDigest", "taskDigest", "frameDigest", "workspaceDigest", "controlDigest", "targetDigest", "operationalDigest", "outputTargetsDigest", "planIntegrityToken", "actorId", "outputTargets", "issuedAt", "expiresAt", "state"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "leaseId": { "type": "string", "minLength": 1 },
+    "rootId": { "type": "string", "minLength": 1 },
+    "rootRevision": { "type": "integer", "minimum": 0 },
+    "epoch": { "type": "integer", "minimum": 1, "maximum": 2 },
+    "ordinal": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "proposalDigest": { "$ref": "#/$defs/digest" },
+    "taskDigest": { "$ref": "#/$defs/digest" },
+    "frameDigest": { "$ref": "#/$defs/digest" },
+    "workspaceDigest": { "$ref": "#/$defs/digest" },
+    "controlDigest": { "$ref": "#/$defs/digest" },
+    "targetDigest": { "$ref": "#/$defs/digest" },
+    "operationalDigest": { "$ref": "#/$defs/digest" },
+    "outputTargetsDigest": { "$ref": "#/$defs/digest" },
+    "planIntegrityToken": { "type": "string", "minLength": 1 },
+    "actorId": { "type": "string", "minLength": 1 },
+    "outputTargets": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "issuedAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "state": { "enum": ["issued", "consumed", "expired"] }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

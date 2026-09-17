@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance.local/change-scope-report.v1.schema.json",
+  "title": "ChangeScopeReport.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "repositoryIdentity", "baselineDigest", "currentDigest", "taskEnvelopeDigest", "changes", "summary", "findings", "verdict", "observedAt", "reportSha256"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "repositoryIdentity": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "baselineDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "currentDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "taskEnvelopeDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "originalPath", "status", "classification", "baselineSha256", "currentSha256", "matchedRule"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "originalPath": { "type": ["string", "null"] },
+          "status": { "type": "string", "minLength": 1 },
+          "classification": { "enum": ["in-scope", "excluded", "unplanned", "preexisting-untouched", "preexisting-overlap", "ownership-unknown"] },
+          "baselineSha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+          "currentSha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+          "matchedRule": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["in-scope", "excluded", "unplanned", "preexisting-untouched", "preexisting-overlap", "ownership-unknown"],
+      "properties": {
+        "in-scope": { "type": "integer", "minimum": 0 },
+        "excluded": { "type": "integer", "minimum": 0 },
+        "unplanned": { "type": "integer", "minimum": 0 },
+        "preexisting-untouched": { "type": "integer", "minimum": 0 },
+        "preexisting-overlap": { "type": "integer", "minimum": 0 },
+        "ownership-unknown": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "findings": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "verdict": { "enum": ["PASS", "NEEDS_APPROVAL", "BLOCKED", "INCONCLUSIVE"] },
+    "observedAt": { "type": "string", "format": "date-time" },
+    "reportSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

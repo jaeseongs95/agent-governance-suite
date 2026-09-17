@@ -1,0 +1,32 @@
+{
+  "name": "agent-governance-suite",
+  "version": "1.13.0",
+  "description": "Governance specialists, a local MCP workflow guard, opt-in task continuity, and an MCP-assisted Korean prose workflow for Claude Code.",
+  "author": {
+    "name": "jaeseongs95",
+    "url": "https://github.com/jaeseongs95"
+  },
+  "homepage": "https://github.com/jaeseongs95/agent-governance-suite",
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "governance",
+    "orchestration",
+    "audit",
+    "scope",
+    "evidence"
+  ],
+  "mcpServers": {
+    "agent-governance-suite": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/server.mjs"
+      ],
+      "env": {
+        "AGENT_GOVERNANCE_DB_PATH": "${CLAUDE_PLUGIN_DATA}/workflows.sqlite3",
+        "AGENT_GOVERNANCE_CONTINUITY_DB_PATH": "${CLAUDE_PLUGIN_DATA}/continuity.sqlite3"
+      }
+    }
+  }
+}

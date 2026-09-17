@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/korean-prose-quality-adjudication-meta.v1.schema.json",
+  "title": "KoreanProseQualityAdjudicationMeta.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "actorId",
+    "status",
+    "completedAt",
+    "inputDigest",
+    "workProductDigest",
+    "containsExpectedDecision",
+    "containsSuiteLabel",
+    "executionProvenance"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "actorId": { "type": "string", "format": "uuid" },
+    "status": { "const": "complete" },
+    "completedAt": { "type": "string", "format": "date-time" },
+    "inputDigest": { "$ref": "#/$defs/digest" },
+    "workProductDigest": { "$ref": "#/$defs/digest" },
+    "containsExpectedDecision": { "const": false },
+    "containsSuiteLabel": { "const": false },
+    "executionProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestedModel", "actualModel", "provider", "providerVersion", "promptSha256", "seed", "decodingParametersSha256"],
+      "properties": {
+        "requestedModel": { "type": "string", "minLength": 1 },
+        "actualModel": { "type": "string", "minLength": 1 },
+        "provider": { "type": "string", "minLength": 1 },
+        "providerVersion": { "type": "string", "minLength": 1 },
+        "promptSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "seed": { "oneOf": [{ "type": "integer" }, { "const": "unverified" }] },
+        "decodingParametersSha256": {
+          "oneOf": [{ "type": "string", "pattern": "^[a-f0-9]{64}$" }, { "const": "unverified" }]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

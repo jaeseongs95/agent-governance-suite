@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/execution-context.v1.schema.json",
+  "title": "ExecutionContext.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "model",
+    "modelClass",
+    "reasoningEffort",
+    "source",
+    "observedAt"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "modelClass": {
+      "enum": [
+        "lightweight",
+        "general",
+        "deep",
+        "frontier"
+      ]
+    },
+    "reasoningEffort": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+        "ultra"
+      ]
+    },
+    "source": {
+      "enum": [
+        "runtime",
+        "spawn-result"
+      ]
+    },
+    "observedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "observationId": {
+      "type": "string",
+      "minLength": 16
+    },
+    "taskId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "stageId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "revision": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "actorId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

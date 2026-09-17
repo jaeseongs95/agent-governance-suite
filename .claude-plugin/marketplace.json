@@ -1,0 +1,16 @@
+{
+  "name": "agent-governance-claude",
+  "description": "Claude Code distribution of Agent Governance Suite, generated in claude-plugin/ and isolated from the Codex plugin.",
+  "owner": {
+    "name": "jaeseongs95",
+    "url": "https://github.com/jaeseongs95"
+  },
+  "plugins": [
+    {
+      "name": "agent-governance-suite",
+      "source": "./claude-plugin",
+      "description": "Governance specialists, a local MCP workflow guard, and opt-in task continuity for Claude Code.",
+      "category": "development"
+    }
+  ]
+}

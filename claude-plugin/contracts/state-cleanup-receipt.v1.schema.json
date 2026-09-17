@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/state-cleanup-receipt.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "planId", "status", "executedAt", "candidateDigest", "databases", "backupRetention", "protection"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "planId": { "type": "string", "format": "uuid" },
+    "status": { "enum": ["completed", "partial", "no-op"] },
+    "executedAt": { "type": "string", "format": "date-time" },
+    "candidateDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "databases": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workflow", "continuity"],
+      "properties": {
+        "workflow": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "backupPath", "deletedRoots", "deletedRuns", "error"],
+          "properties": {
+            "status": { "enum": ["completed", "skipped", "failed"] },
+            "backupPath": { "type": ["string", "null"] },
+            "deletedRoots": { "type": "integer", "minimum": 0 },
+            "deletedRuns": { "type": "integer", "minimum": 0 },
+            "error": { "type": ["string", "null"] }
+          }
+        },
+        "continuity": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "backupPath", "deletedSnapshots", "deletedTasks", "error"],
+          "properties": {
+            "status": { "enum": ["completed", "skipped", "unavailable", "failed"] },
+            "backupPath": { "type": ["string", "null"] },
+            "deletedSnapshots": { "type": "integer", "minimum": 0 },
+            "deletedTasks": { "type": "integer", "minimum": 0 },
+            "error": { "type": ["string", "null"] }
+          }
+        }
+      }
+    },
+    "backupRetention": { "const": "manual-deletion-only" },
+    "protection": { "enum": ["os-managed-unverified", "filesystem-mode-0600"] }
+  }
+}

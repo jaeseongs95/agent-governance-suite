@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.local/task-contract/contracts/task-contract-validation.v1.schema.json",
+  "title": "TaskContractValidation.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "request", "report"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "request": { "$ref": "https://agent-governance-skills.local/task-contract/contracts/task-contract-request.v1.schema.json" },
+    "report": { "$ref": "https://agent-governance-skills.local/task-contract/contracts/task-contract-report.v1.schema.json" }
+  }
+}

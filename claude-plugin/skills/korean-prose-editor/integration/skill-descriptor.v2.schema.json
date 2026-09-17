@@ -1,0 +1,374 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/korean-prose-editor/skill-descriptor.v2.schema.json",
+  "title": "SkillDescriptor.v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "skillId",
+    "version",
+    "path",
+    "enabled",
+    "priority",
+    "providers"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "2.0.0"
+    },
+    "skillId": {
+      "$ref": "#/$defs/name"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^\\./[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "providers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/provider"
+      }
+    }
+  },
+  "$defs": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "artifact": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "errorCode": {
+      "enum": [
+        "INVALID_INPUT",
+        "RUN_NOT_FOUND",
+        "STALE_REVISION",
+        "INVALID_TRANSITION",
+        "MISSING_EVIDENCE",
+        "GATE_FAILED",
+        "MCP_UNAVAILABLE"
+      ]
+    },
+    "state": {
+      "enum": [
+        "needs-input",
+        "needs-approval",
+        "needs-redesign",
+        "failed",
+        "passed",
+        "blocked"
+      ]
+    },
+    "mappingRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "errorRequired"
+      ],
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "errorRequired": {
+          "type": "boolean"
+        },
+        "allowedErrorCodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/errorCode"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "stateMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "default",
+        "adapterErrors"
+      ],
+      "properties": {
+        "selector": {
+          "type": "string",
+          "pattern": "^/(?:[^~/]|~0|~1)+(?:/(?:[^~/]|~0|~1)+)*$"
+        },
+        "values": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/mappingRule"
+          }
+        },
+        "default": {
+          "oneOf": [
+            {
+              "const": "reject"
+            },
+            {
+              "$ref": "#/$defs/mappingRule"
+            }
+          ]
+        },
+        "adapterErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/errorCode"
+          },
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "selector"
+            ]
+          },
+          "then": {
+            "required": [
+              "values"
+            ]
+          }
+        }
+      ]
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetArtifact",
+        "sources",
+        "operation"
+      ],
+      "properties": {
+        "targetArtifact": {
+          "$ref": "#/$defs/artifact"
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "operation": {
+          "enum": [
+            "select",
+            "collect",
+            "combine",
+            "require-external"
+          ]
+        },
+        "optional": {
+          "type": "boolean"
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "policy"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "none",
+            "precondition",
+            "completion"
+          ]
+        },
+        "policy": {
+          "enum": [
+            "none",
+            "conditional",
+            "mandatory"
+          ]
+        },
+        "validator": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "receiptPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "const": "reference-only"
+        },
+        "actorIdPointer": {
+          "type": "string",
+          "pattern": "^/(?:[^~/]|~0|~1)+(?:/(?:[^~/]|~0|~1)+)*$"
+        },
+        "actorIdsPointer": {
+          "type": "string",
+          "pattern": "^/(?:[^~/]|~0|~1)+(?:/(?:[^~/]|~0|~1)+)*$"
+        },
+        "actorIdsMatch": {
+          "const": "prior-policy-actors"
+        },
+        "uniqueness": {
+          "const": "run"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["actorIdsPointer"] },
+          "then": { "required": ["actorIdsMatch"] }
+        },
+        {
+          "if": { "required": ["actorIdsMatch"] },
+          "then": { "required": ["actorIdsPointer"] }
+        },
+        {
+          "if": {
+            "required": [
+              "uniqueness"
+            ]
+          },
+          "then": {
+            "required": [
+              "actorIdPointer"
+            ]
+          }
+        }
+      ]
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capabilities",
+        "executionClass",
+        "phase",
+        "phaseOrder",
+        "requiredInputArtifacts",
+        "inputBindings",
+        "producedArtifacts",
+        "outputSchema",
+        "resultSchema",
+        "stateMapping",
+        "selectionCriteria",
+        "preconditions",
+        "failureHandling",
+        "gate",
+        "receiptPolicy"
+      ],
+      "properties": {
+        "capabilities": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "uniqueItems": true
+        },
+        "executionClass": {
+          "enum": [
+            "bootstrap",
+            "workflow",
+            "recovery"
+          ]
+        },
+        "phase": {
+          "$ref": "#/$defs/name"
+        },
+        "phaseOrder": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requiredInputArtifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/artifact"
+          },
+          "uniqueItems": true
+        },
+        "inputBindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/binding"
+          }
+        },
+        "producedArtifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/artifact"
+          },
+          "uniqueItems": true
+        },
+        "outputSchema": {
+          "type": "string",
+          "pattern": "^(?:contracts|skills)/[^\\\\]*\\.schema\\.json$"
+        },
+        "resultSchema": {
+          "type": "string",
+          "pattern": "^(?:contracts|integration|skills)/[^\\\\]*\\.schema\\.json$"
+        },
+        "stateMapping": {
+          "$ref": "#/$defs/stateMapping"
+        },
+        "selectionCriteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "preconditions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "failureHandling": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "object",
+              "minProperties": 1
+            }
+          ]
+        },
+        "gate": {
+          "$ref": "#/$defs/gate"
+        },
+        "receiptPolicy": {
+          "$ref": "#/$defs/receiptPolicy"
+        }
+      }
+    }
+  }
+}

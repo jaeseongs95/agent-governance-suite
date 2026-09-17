@@ -1,0 +1,6 @@
+interface:
+  display_name: "Blocker Diagnostician"
+  short_description: "반복 실패를 나누고 다음 판별 검사를 정합니다"
+  default_prompt: "Use $blocker-diagnostician to separate these repeated failures and choose the next discriminating test."
+policy:
+  allow_implicit_invocation: true

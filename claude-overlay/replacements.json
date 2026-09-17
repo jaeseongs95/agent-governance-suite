@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "1.0.0",
+  "description": "Exact-once text replacements applied to shared files when generating claude-plugin/. A replacement whose find text is missing or ambiguous fails the build.",
+  "replacements": [
+    {
+      "file": "skills/orchestrator/SKILL.md",
+      "find": "명시적으로 `$skill-name`을 지정한 요청에서는",
+      "replace": "`/agent-governance-suite:<skill-name>` 호출이나 스킬 이름으로 명시적으로 지정한 요청에서는"
+    },
+    {
+      "file": "skills/context-continuity/SKILL.md",
+      "find": "작업이나 Codex compaction을 막지 않는다",
+      "replace": "작업이나 Claude Code compaction을 막지 않는다"
+    },
+    {
+      "file": "skills/independent-audit-gate/SKILL.md",
+      "find": "적용 가능한 상위 지침, `AGENTS.md`, 사용자 권한",
+      "replace": "적용 가능한 상위 지침, `CLAUDE.md`(import된 `AGENTS.md` 포함), 사용자 권한"
+    },
+    {
+      "file": "skills/independent-audit-gate/SKILL.md",
+      "find": "협업 도구가 지원하면 `fork_turns:none`을 사용하고 재위임과 하위 에이전트 생성을 금지한다.",
+      "replace": "Agent 도구로 fork가 아닌 새 서브에이전트를 시작한다. 가능하면 `agent-governance-suite:independent-auditor`를 사용하고, 재위임과 하위 에이전트 생성을 금지한다. 부모 대화를 상속하는 fork(`#fork`, `/subtask`)는 감사자로 쓰지 않는다."
+    },
+    {
+      "file": "skills/independent-deliberation-panel/SKILL.md",
+      "find": "적용 가능한 `AGENTS.md`와 상위 지침을 먼저 따른다.",
+      "replace": "적용 가능한 `CLAUDE.md`(import된 `AGENTS.md` 포함)와 상위 지침을 먼저 따른다."
+    },
+    {
+      "file": "skills/independent-deliberation-panel/SKILL.md",
+      "find": "상위 시스템·개발자·적용 가능한 `AGENTS.md` 지침이 항상 우선한다.",
+      "replace": "상위 시스템·개발자·적용 가능한 `CLAUDE.md`(import된 `AGENTS.md` 포함) 지침이 항상 우선한다."
+    },
+    {
+      "file": "skills/independent-deliberation-panel/SKILL.md",
+      "find": "reviewer를 `fork_turns:none`과 완결된 중립 briefing으로 시작한다.",
+      "replace": "reviewer를 fork가 아닌 새 서브에이전트(가능하면 `agent-governance-suite:deliberation-reviewer`)와 완결된 중립 briefing으로 시작한다."
+    },
+    {
+      "file": "skills/independent-deliberation-panel/references/orchestration-policy.md",
+      "find": "(`fork_turns:none` 또는 동등한 새 컨텍스트)",
+      "replace": "(fork가 아닌 새 서브에이전트처럼 부모 대화를 상속하지 않는 새 컨텍스트)"
+    },
+    {
+      "file": "skills/independent-deliberation-panel/references/orchestration-policy.md",
+      "find": "고유 worker여야 하며 `fork_turns:none`으로 시작한다.",
+      "replace": "고유 worker여야 하며 fork가 아닌 새 서브에이전트로 시작한다."
+    },
+    {
+      "file": "skills/independent-deliberation-panel/references/integration-contract.md",
+      "find": "- 스킬 이름 `$independent-deliberation-panel`",
+      "replace": "- 스킬 이름 `independent-deliberation-panel` (Claude Code 호출: `/agent-governance-suite:independent-deliberation-panel`)"
+    },
+    {
+      "file": "skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md",
+      "find": "    requested_model: \"gpt-5.6-terra\"\n    actual_model: \"gpt-5.6-terra\"\n    requested_reasoning: \"xhigh\"\n    actual_reasoning: \"xhigh\"",
+      "replace": "    requested_model: \"sonnet\"\n    actual_model: \"sonnet\"\n    requested_reasoning: \"high\"\n    actual_reasoning: \"high\""
+    },
+    {
+      "file": "skills/independent-audit-gate/references/orchestrator-integration.md",
+      "find": "├── plugin.json 또는 .codex-plugin/plugin.json",
+      "replace": "├── .claude-plugin/plugin.json"
+    },
+    {
+      "file": "skills/independent-audit-gate/references/orchestrator-integration.md",
+      "find": "        ├── SKILL.md\n        ├── agents/openai.yaml\n",
+      "replace": "        ├── SKILL.md\n"
+    },
+    {
+      "file": "skills/workspace-convention-profiler/SKILL.md",
+      "find": "AGENTS.md 우선순위 판정, 작업 범위 확정",
+      "replace": "AGENTS.md·CLAUDE.md 우선순위 판정, 작업 범위 확정"
+    },
+    {
+      "file": "skills/workspace-convention-profiler/SKILL.md",
+      "find": "적용 `AGENTS.md`만 묻는 요청",
+      "replace": "적용 `AGENTS.md`·`CLAUDE.md`만 묻는 요청"
+    },
+    {
+      "file": "skills/instruction-scope-resolver/SKILL.md",
+      "find": "description: 특정 workspace 경로에 적용되는 AGENTS.md와 비어 있지 않은 AGENTS.override.md의 chain, 우선순위와 충돌 근거를 확인한다.",
+      "replace": "description: 특정 workspace 경로에 적용되는 CLAUDE.md 계층·.claude/rules와 AGENTS.md·AGENTS.override.md chain, 우선순위와 충돌 근거를 확인한다."
+    },
+    {
+      "file": "skills/instruction-scope-resolver/SKILL.md",
+      "find": "## 출력과 실패 처리",
+      "replace": "## Claude Code 지침 파일\n\n스크립트는 `AGENTS.md`·`AGENTS.override.md` chain만 계산한다. Claude Code는 `AGENTS.md`를 직접 읽지 않고 `CLAUDE.md` 계층을 읽으므로, [claude-code-instructions.md](references/claude-code-instructions.md)에 따라 Claude Code 지침 파일을 따로 확인하고 `findings`에 원본 경로와 함께 기록한다. 이 확인을 하지 않았으면 `PASS`로 판정하지 않고 `ANALYSIS_REQUIRED`를 유지한다.\n\n## 출력과 실패 처리"
+    },
+    {
+      "file": "skills/independent-audit-gate/scripts/validate_skill.py",
+      "find": "(plugin_root / \"plugin.json\", plugin_root / \".codex-plugin/plugin.json\")",
+      "replace": "(plugin_root / \"plugin.json\", plugin_root / \".codex-plugin/plugin.json\", plugin_root / \".claude-plugin/plugin.json\")"
+    }
+  ]
+}
