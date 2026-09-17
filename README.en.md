@@ -7,7 +7,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
 <!-- release-version:start -->
-The current public release is `v1.14.1` and includes fifteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. This release corrects the selection policy of the Korean prose workflow. A translated implementation metaphor is no longer excluded because the document it sits in is technical; the exclusion now covers code and backtick spans, schema fields, fixed identifiers, and protected strings, and each expression is judged by whether it defines a contract or identifier or describes what happens to the reader. The skill set, contract schemas, and SQLite schema are unchanged from v1.14.0, and MCP server behaviour is unchanged.
+The current public release is `v1.15.0` and includes fifteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. This release passes the Korean prose quality gate on frozen frame `0.3.0-gate-1` (`EVALUATION_EVIDENCE_PASSED`), deactivates the glossary entry `completion-result-ko` whose source reference did not support its mapping, and raises the glossary data version to `1.2.1`. The skill descriptions in the Claude Code distribution now lead with trigger situations instead of exclusion clauses. The skill set, workflow contract schemas, and SQLite schema are unchanged from v1.14.1, and MCP server behaviour is unchanged.
 <!-- release-version:end -->
 
 ## Problems it handles
@@ -44,7 +44,7 @@ Node.js 22.13.0 or later is required.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.14.1
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.15.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->

@@ -7,7 +7,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v1.14.1`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 한국어 산문 워크플로의 선정 정책을 고칩니다. 직역한 내부 구현 은유는 문서 전체가 기술 문서라는 이유로 제외하지 않고, 코드·백틱 구간, 스키마 필드, 고정 식별자와 보호 문자열만 제외합니다. 같은 표현이라도 계약이나 식별자를 정의하는 자리인지 독자에게 무엇이 일어나는지 설명하는 산문인지로 판단합니다. 스킬 구성, 계약 schema와 SQLite schema는 v1.14.0과 같고 MCP 서버 동작은 바뀌지 않습니다.
+현재 공개 릴리스는 `v1.15.0`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 한국어 산문 워크플로의 품질 게이트를 동결 frame `0.3.0-gate-1`에서 통과시키고(`EVALUATION_EVIDENCE_PASSED`), 출처가 확인되지 않은 용어집 항목 `completion-result-ko`를 비활성화하며 용어집 데이터 버전을 `1.2.1`로 올립니다. Claude Code 배포물의 스킬 설명은 제외 조항 대신 트리거 상황을 앞세우도록 바꿉니다. 스킬 구성, workflow 계약 schema와 SQLite schema는 v1.14.1과 같고 MCP 서버 동작은 바뀌지 않습니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -44,7 +44,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.14.1
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.15.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
