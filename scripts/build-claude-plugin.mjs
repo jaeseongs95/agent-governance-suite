@@ -149,7 +149,7 @@ async function writeTree(directory, files) {
 export async function checkClaudePlugin(root = ROOT) {
   const expected = await renderClaudePlugin(root);
   const outputRoot = path.join(root, OUTPUT_DIRECTORY);
-  let actualPaths = [];
+  let actualPaths;
   try {
     actualPaths = await walk(outputRoot);
   } catch {
