@@ -263,7 +263,7 @@
       },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:a88252aa9c4e654458ecc7eed282d26c022ca9f5db858f87f3237decc622feb8",
-      "integratedChecksum": "sha256:dd96be37c7823bba467b2e791f86431bf41fee94535883548f2654f06c1de131",
+      "integratedChecksum": "sha256:b6de61abcd20d5f5990fcc7c7f5db467a93a46142f4c0c97d1cdbc980b10a451",
       "checksumScope": "relative paths and normalized text bytes under skills/korean-prose-editor",
       "downstreamModifications": [
         "Control runtime activation consistently across the skill instruction, descriptor, and implicit-invocation policy.",
@@ -271,7 +271,8 @@
         "Document canonical cycle receipt verification in the integration copy.",
         "Ship a reviewed SQLite glossary and bind one read-only MCP lookup across the Korean prose roles.",
         "Enable the integrated provider, direct descriptor, and implicit invocation under explicit release approval while preserving the incomplete quality-gate record.",
-        "Expand the reviewed glossary to data version 1.2.0 with 199 official GitHub Korean glossary terms, a context-sensitive policy split, and a reviewed replacement for the user-facing phrase 완료 영수증."
+        "Expand the reviewed glossary to data version 1.2.0 with 199 official GitHub Korean glossary terms, a context-sensitive policy split, and a reviewed replacement for the user-facing phrase 완료 영수증.",
+        "Narrow the user-facing jargon exception so a document being technical no longer excludes its prose, and judge each expression by whether it defines a contract or identifier."
       ]
     },
     {
