@@ -7,7 +7,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v1.13.0`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 semantic execution assurance를 MCP workflow에 추가해, 오케스트레이션 bootstrap과 각 의미 판단 stage가 계획된 최소 model class·reasoning effort를 충족했다는 실행 메타데이터 없이 `passed`로 진행되지 않도록 합니다. 이 하한은 특정 모델 이름이 아니라 역할과 위험도에 결속되며, 기존 v1.12 receipt는 읽을 수 있지만 assurance가 없는 legacy plan은 strict MCP 진행 경계에서 거부됩니다.
+현재 공개 릴리스는 `v1.14.0`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 Claude Code 배포물을 추가합니다. `claude-plugin/`은 `pnpm claude:build`가 생성하고, Claude 전용 파일과 문구 보정은 `claude-overlay/`에 두며, 상태 DB는 `${CLAUDE_PLUGIN_DATA}` 아래에만 만듭니다. Claude 배포물에서만 `plan_workflow`의 공개 스키마를 최상위 조합자 없는 형태로 내보내 Anthropic API가 이 도구를 건너뛰지 않게 합니다. 스킬 구성, 계약 schema와 SQLite schema는 v1.13.0과 같고 Codex 배포물의 동작은 바뀌지 않습니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -64,7 +64,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.13.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.14.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
