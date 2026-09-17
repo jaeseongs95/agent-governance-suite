@@ -1,0 +1,1 @@
+{"id":"low-routing","stage":"LOW","decision":"Rename a local variable for clarity.","facts":["No external side effect."],"constraints":["Do not create panel workers."],"success_criteria":["Return a concise recommendation."],"expected_observations":["no_panel_workers"]}

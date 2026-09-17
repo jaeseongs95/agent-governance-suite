@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.dev/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json",
+  "title": "MutationPreflightReport.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "operationId", "actionDigest", "targetDigest", "classification", "checks", "approval", "recovery", "blastRadius", "unresolved", "invalidationTriggers", "validUntil", "observedAt", "verdict"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "operationId": { "type": "string", "minLength": 1 },
+    "actionDigest": { "$ref": "#/$defs/digest" },
+    "targetDigest": { "$ref": "#/$defs/digest" },
+    "classification": { "type": "object", "additionalProperties": false, "required": ["actionClass", "reversibility", "externalImpact", "dataLossPotential", "permissionImpact"], "properties": { "actionClass": { "enum": ["delete", "overwrite", "move", "deploy", "publish", "migrate", "permission-change", "billing", "global-config", "other"] }, "reversibility": { "enum": ["reversible", "conditional", "irreversible"] }, "externalImpact": { "type": "boolean" }, "dataLossPotential": { "type": "boolean" }, "permissionImpact": { "type": "boolean" } } },
+    "checks": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["checkId", "state", "evidenceRefs", "message"], "properties": { "checkId": { "type": "string", "minLength": 1 }, "state": { "enum": ["passed", "failed", "unknown"] }, "evidenceRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }, "message": { "type": "string", "minLength": 1 } } } },
+    "approval": { "type": "object", "additionalProperties": false, "required": ["required", "status", "evidenceRefs"], "properties": { "required": { "type": "boolean" }, "status": { "enum": ["not-required", "missing", "observed", "stale", "mismatched"] }, "evidenceRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true } } },
+    "recovery": { "type": "object", "additionalProperties": false, "required": ["available", "restoreTested", "irreversibilityAccepted", "evidenceRefs"], "properties": { "available": { "type": "boolean" }, "restoreTested": { "type": "boolean" }, "irreversibilityAccepted": { "type": "boolean" }, "evidenceRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true } } },
+    "blastRadius": { "$ref": "#/$defs/blastRadius" },
+    "unresolved": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "invalidationTriggers": { "type": "array", "minItems": 1, "items": { "type": "string" }, "uniqueItems": true },
+    "validUntil": { "type": "string", "format": "date-time" },
+    "observedAt": { "type": "string", "format": "date-time" },
+    "verdict": { "enum": ["READY", "NEEDS_INPUT", "NEEDS_APPROVAL", "NEEDS_REDESIGN", "BLOCKED"] }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "blastRadius": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["affectedTargets", "affectedUsers", "external", "description"],
+      "properties": {
+        "affectedTargets": { "type": "integer", "minimum": 1 },
+        "affectedUsers": { "type": "integer", "minimum": 0 },
+        "external": { "type": "boolean" },
+        "description": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

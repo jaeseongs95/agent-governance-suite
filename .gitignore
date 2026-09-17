@@ -15,3 +15,6 @@ coverage/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+!claude-plugin/mcp-server/dist/
+!claude-plugin/mcp-server/dist/*.mjs
+!claude-plugin/skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3

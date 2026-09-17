@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/korean-prose-editor/selection-work-product.v1.schema.json",
+  "title": "Private selection work product",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "actorId", "sourceDigest", "glossaryBinding", "status", "decisions"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "actorId": { "$ref": "#/$defs/actorId" },
+    "sourceDigest": { "$ref": "#/$defs/digest" },
+    "glossaryBinding": { "$ref": "glossary-binding.v1.schema.json" },
+    "status": { "enum": ["ready", "needs-input", "blocked"] },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["unitId", "action", "reasonCodes", "riskFlags", "additionalProtectedStrings", "issueRanges"],
+        "properties": {
+          "unitId": { "type": "string", "pattern": "^unit-[0-9]{4,}$" },
+          "action": { "enum": ["edit", "retain", "defer"] },
+          "reasonCodes": { "$ref": "#/$defs/codes" },
+          "riskFlags": { "$ref": "#/$defs/codes" },
+          "additionalProtectedStrings": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "issueRanges": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["start", "end", "reasonCode"],
+              "properties": {
+                "start": { "type": "integer", "minimum": 0 },
+                "end": { "type": "integer", "minimum": 1 },
+                "reasonCode": { "$ref": "#/$defs/editReasonCode" }
+              }
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "action": { "const": "edit" } }, "required": ["action"] },
+            "then": { "properties": { "issueRanges": { "type": "array", "minItems": 1 } } },
+            "else": { "properties": { "issueRanges": { "type": "array", "maxItems": 0 } } }
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "actorId": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "codes": { "type": "array", "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" }, "uniqueItems": true },
+    "editReasonCode": { "enum": ["AMBIGUOUS_RELATIONSHIP", "GRAMMATICAL_MISMATCH", "NOUN_STACKING", "REDUNDANCY", "TRANSLATIONESE", "UNNECESSARY_META_PROSE", "UNSUPPORTED_EMPHASIS", "USER_FACING_IMPLEMENTATION_JARGON"] }
+  }
+}

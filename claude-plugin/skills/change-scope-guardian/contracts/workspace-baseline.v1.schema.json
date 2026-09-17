@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance.local/workspace-baseline.v1.schema.json",
+  "title": "WorkspaceBaseline.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "repository", "head", "comparisonTarget", "targetRef", "taskEnvelopeDigest", "entries", "manifestSha256", "capturedAt"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "identity"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "identity": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "head": { "type": ["string", "null"] },
+    "comparisonTarget": { "enum": ["working-tree", "index", "commit"] },
+    "targetRef": { "type": "string", "minLength": 1 },
+    "taskEnvelopeDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "status", "sha256", "size", "kind", "originalPath"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "status": { "type": "string", "minLength": 1 },
+          "sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+          "size": { "type": ["integer", "null"], "minimum": 0 },
+          "kind": { "enum": ["file", "symlink", "gitlink", "missing"] },
+          "originalPath": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "manifestSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "capturedAt": { "type": "string", "format": "date-time" }
+  }
+}

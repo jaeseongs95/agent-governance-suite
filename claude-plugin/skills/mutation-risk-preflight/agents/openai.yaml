@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mutation Risk Preflight"
+  short_description: "상태 변경 전 대상·승인·복구 조건 점검"
+  default_prompt: "이 상태 변경을 실행하기 전에 정확한 대상, 승인, 영향 범위와 복구 조건을 점검해 주세요. 실제 변경은 수행하지 마세요."

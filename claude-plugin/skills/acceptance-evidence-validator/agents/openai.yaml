@@ -1,0 +1,6 @@
+interface:
+  display_name: "Acceptance Evidence Validator"
+  short_description: "수용 기준과 실제 구현·테스트 근거를 대조합니다"
+  default_prompt: "Use $acceptance-evidence-validator to judge each acceptance criterion from target-aligned evidence."
+policy:
+  allow_implicit_invocation: true

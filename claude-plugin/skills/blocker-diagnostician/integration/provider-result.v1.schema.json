@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.local/blocker-diagnostician/integration/provider-result.v1.schema.json",
+  "title": "ProviderResult.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "output", "artifacts", "error"],
+  "properties": {
+    "kind": { "enum": ["output", "adapter-error"] },
+    "output": { "type": ["object", "null"] },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["artifactId", "schemaId", "locator", "digest", "targetDigest", "verified"],
+        "properties": {
+          "artifactId": { "type": "string", "minLength": 1 },
+          "schemaId": { "type": "string", "minLength": 1 },
+          "locator": { "type": "string", "minLength": 1 },
+          "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+          "targetDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+          "verified": { "type": "boolean" }
+        }
+      }
+    },
+    "error": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message", "details"],
+          "properties": {
+            "code": { "enum": ["INVALID_INPUT", "RUN_NOT_FOUND", "STALE_REVISION", "INVALID_TRANSITION", "MISSING_EVIDENCE", "GATE_FAILED", "MCP_UNAVAILABLE"] },
+            "message": { "type": "string", "minLength": 1 },
+            "details": { "type": ["object", "null"] }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "adapter-error" } } },
+      "then": { "properties": { "output": { "type": "null" }, "artifacts": { "type": "array", "maxItems": 0 }, "error": { "type": "object" } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "output" } } },
+      "then": { "properties": { "output": { "type": "object" } } }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/korean-prose-quality-adjudication.v1.schema.json",
+  "title": "KoreanProseQualityAdjudication.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "run",
+    "caseId",
+    "adjudicatorActorId",
+    "receiptDigest",
+    "sourceDigest",
+    "finalDigest",
+    "rubricDigest",
+    "meaningPreservation",
+    "majorMeaningChange",
+    "registerCompliance",
+    "protectedStrings",
+    "terminologyJudgment",
+    "pairPreference"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "run": { "type": "integer", "minimum": 1 },
+    "caseId": { "type": "string", "minLength": 1 },
+    "adjudicatorActorId": { "type": "string", "format": "uuid" },
+    "receiptDigest": { "$ref": "#/$defs/digest" },
+    "sourceDigest": { "$ref": "#/$defs/digest" },
+    "finalDigest": { "$ref": "#/$defs/digest" },
+    "rubricDigest": { "$ref": "#/$defs/digest" },
+    "meaningPreservation": { "enum": ["pass", "fail", "uncertain"] },
+    "majorMeaningChange": { "type": "boolean" },
+    "registerCompliance": { "enum": ["pass", "fail", "uncertain"] },
+    "protectedStrings": { "enum": ["pass", "fail", "uncertain"] },
+    "terminologyJudgment": { "enum": ["pass", "fail", "uncertain", "not-applicable"] },
+    "pairPreference": { "enum": ["candidate", "original", "tie", "neither"] }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

@@ -5,6 +5,7 @@ export default tseslint.config(
   {
     ignores: [
       "mcp-server/dist/**",
+      "claude-plugin/**",
       "**/__pycache__/**",
       "**/evals/results/**",
       "node_modules/**"

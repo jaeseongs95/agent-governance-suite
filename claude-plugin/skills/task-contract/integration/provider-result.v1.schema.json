@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.local/task-contract/integration/provider-result.v1.schema.json",
+  "title": "ProviderResult.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "output", "artifacts", "error"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "kind": { "enum": ["output", "adapter-error"] },
+    "output": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "https://agent-governance-skills.local/task-contract/contracts/task-contract-report.v1.schema.json" }
+      ]
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["artifactId", "schemaId", "locator", "digest", "targetDigest", "verified"],
+        "properties": {
+          "artifactId": { "type": "string", "minLength": 1 },
+          "schemaId": { "type": "string", "minLength": 1 },
+          "locator": { "type": "string", "minLength": 1 },
+          "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "targetDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "verified": { "type": "boolean" }
+        }
+      }
+    },
+    "error": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message", "details"],
+          "properties": {
+            "code": { "enum": ["INVALID_INPUT", "MISSING_EVIDENCE", "INVALID_TRANSITION"] },
+            "message": { "type": "string", "minLength": 1 },
+            "details": { "type": ["object", "null"] }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "adapter-error" } }, "required": ["kind"] },
+      "then": { "properties": { "output": { "type": "null" }, "error": { "type": "object" } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "output" } }, "required": ["kind"] },
+      "then": {
+        "properties": { "output": { "type": "object" } },
+        "allOf": [
+          {
+            "if": { "properties": { "output": { "type": "object", "properties": { "verdict": { "const": "BLOCKED" } }, "required": ["verdict"] } } },
+            "then": { "properties": { "error": { "type": "object" } } },
+            "else": { "properties": { "error": { "type": "null" } } }
+          }
+        ]
+      }
+    }
+  ]
+}
