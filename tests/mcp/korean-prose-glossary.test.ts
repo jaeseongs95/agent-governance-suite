@@ -20,14 +20,14 @@ const digest = (value: string) => createHash("sha256").update(value).digest("hex
 describe("Korean prose glossary", () => {
   it("keeps reviewed JSONL and packaged SQLite logically identical", async () => {
     const entries = parseGlossarySeed(await readFile(seedPath, "utf8"));
-    expect(checkGlossaryDatabase(databasePath, entries)).toMatchObject({ id: "korean-prose-core", version: "1.2.0" });
+    expect(checkGlossaryDatabase(databasePath, entries)).toMatchObject({ id: "korean-prose-core", version: "1.2.1" });
     const database = new DatabaseSync(databasePath, { readOnly: true });
     expect(database.prepare("SELECT name FROM sqlite_schema WHERE type = 'table' ORDER BY name").all()).toEqual([{ name: "entries" }, { name: "forms" }, { name: "metadata" }]);
-    expect(database.prepare("SELECT COUNT(*) AS count FROM entries WHERE active = 1").get()).toEqual({ count: 243 });
+    expect(database.prepare("SELECT COUNT(*) AS count FROM entries WHERE active = 1").get()).toEqual({ count: 242 });
     expect(database.prepare("SELECT COUNT(*) AS count FROM forms").get()).toEqual({ count: 248 });
     expect(database.prepare("SELECT policy, COUNT(*) AS count FROM entries WHERE active = 1 GROUP BY policy ORDER BY policy").all()).toEqual([
       { policy: "allow", count: 68 },
-      { policy: "avoid", count: 9 },
+      { policy: "avoid", count: 8 },
       { policy: "prefer", count: 4 },
       { policy: "protect", count: 162 },
     ]);
@@ -73,13 +73,18 @@ describe("Korean prose glossary", () => {
     ]);
   });
 
-  it("uses the official GitHub terms and rejects the user-facing receipt metaphor", () => {
+  it("uses the official GitHub terms and no longer matches the deactivated receipt-metaphor entry", async () => {
+    // completion-result-ko was deactivated after the 2026-09-18 deliberation: its sourceRef did not support
+    // the mapping and the phrase has no observed usage outside this repository. The metaphor stays a
+    // selection-policy concern, not a glossary match.
+    const entries = parseGlossarySeed(await readFile(seedPath, "utf8"));
     const sourceText = "@mention 뒤에 완료 영수증을 표시한다.";
     const result = new SqliteKoreanProseGlossary(databasePath).lookup({ schemaVersion: "1.0.0", sourceText, sourceDigest: digest(sourceText) });
     expect(result.matches.map(({ entryId, policy, canonicalForm }) => ({ entryId, policy, canonicalForm }))).toEqual([
       { entryId: "github-glossary-001", policy: "protect", canonicalForm: "@mention" },
-      { entryId: "completion-result-ko", policy: "avoid", canonicalForm: "완료 결과" },
     ]);
+    const inactive = entries.find((entry) => entry.entryId === "completion-result-ko");
+    expect(inactive).toMatchObject({ active: false, policy: "avoid", canonicalForm: "완료 결과" });
   });
 
   it("returns empty non-partial results for normalization and size limits", () => {
@@ -143,7 +148,7 @@ describe("Korean prose glossary", () => {
     try {
       const target = path.join(directory, "glossary.sqlite3");
       const entries = parseGlossarySeed(await readFile(seedPath, "utf8"));
-      buildGlossaryDatabase(target, entries, { id: "korean-prose-core", version: "1.2.0" });
+      buildGlossaryDatabase(target, entries, { id: "korean-prose-core", version: "1.2.1" });
       expect(checkGlossaryDatabase(target, entries).contentDigest).toMatch(/^[a-f0-9]{64}$/u);
     } finally {
       await rm(directory, { recursive: true, force: true });

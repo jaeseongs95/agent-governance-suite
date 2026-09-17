@@ -22,7 +22,7 @@
         "status": { "enum": ["matched", "no-match", "unavailable", "limit-exceeded", "unsupported-normalization"] },
         "sourceDigest": { "$ref": "#/$defs/digest" },
         "glossaryId": { "oneOf": [{ "const": "korean-prose-core" }, { "type": "null" }] },
-        "glossaryVersion": { "oneOf": [{ "const": "1.2.0" }, { "type": "null" }] },
+        "glossaryVersion": { "oneOf": [{ "const": "1.2.1" }, { "type": "null" }] },
         "glossaryDigest": { "oneOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
         "matchSetDigest": { "oneOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
         "matchCount": { "type": "integer", "minimum": 0, "maximum": 256 },
