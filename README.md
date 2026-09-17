@@ -117,6 +117,7 @@ Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다
 - `codex-token-usage-analyzer`는 Codex 세션 로그 전용이라 포함하지 않습니다.
 - 독립 감사와 심의에는 부모 대화를 상속하지 않는 `independent-auditor`, `deliberation-reviewer` 서브에이전트를 사용합니다.
 - `instruction-scope-resolver`는 `AGENTS.md` chain과 함께 `CLAUDE.md` 계층을 확인합니다.
+- Anthropic API는 최상위 `oneOf`가 있는 도구 스키마를 받지 않으므로, Claude 배포물은 `AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE=anthropic`으로 `plan_workflow`의 공개 스키마만 평평하게 바꿉니다. 서버의 입력 검증은 같은 계약을 그대로 사용하고, 이 값이 없으면 기존 스키마를 그대로 내보냅니다.
 - 실행 보증이 필요한 orchestrated workflow는 신뢰할 수 있는 실행 관측값이 없어 `BINDING_REQUIRED`로 시작되지 않습니다. Codex 배포 서버도 같은 조건에서 같은 결과를 냅니다.
 
 `claude-plugin/`은 `pnpm claude:build`로 생성하며 직접 수정하지 않습니다. Claude 전용 파일과 문구 보정은 `claude-overlay/`에 둡니다.

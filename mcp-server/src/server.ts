@@ -204,6 +204,28 @@ function invalidInput(message: string): ApiResultV1<never> {
   };
 }
 
+/**
+ * Controls only the advertised tool schemas. Validation always uses the exact
+ * contracts. "default" keeps the historical schemas; "anthropic" removes
+ * top-level combinators that the Anthropic API rejects.
+ */
+export type ToolSchemaProfile = "default" | "anthropic";
+
+const planWorkflowAnthropicInputSchema: ObjectSchema = {
+  type: "object",
+  description: "Send either a TaskEnvelope.v1 object at the top level, or { schemaVersion, taskEnvelope, evaluationAuditPurpose? }. The server validates the exact PlanWorkflowRequest.v1 contract.",
+  additionalProperties: false,
+  properties: {
+    ...structuredClone(taskEnvelopeInputSchema.properties ?? {}),
+    taskEnvelope: structuredClone(taskEnvelopeInputSchema),
+    evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] },
+  },
+};
+
+export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "default"): Record<string, unknown> {
+  return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
+}
+
 function validUpdateArguments(args: Record<string, unknown>): boolean {
   return Object.keys(args).every((key) => key === "force")
     && (args.force === undefined || typeof args.force === "boolean");
@@ -217,6 +239,7 @@ export function createMcpServer(
   cleanup?: StateCleanupService,
   glossary: KoreanProseGlossaryGateway = new UnavailableKoreanProseGlossary(),
   validator: ContractValidator = new ContractValidator(),
+  toolSchemaProfile: ToolSchemaProfile = "default",
 ): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -240,7 +263,7 @@ export function createMcpServer(
       {
         name: "plan_workflow",
         description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose.",
-        inputSchema: planWorkflowInputSchema,
+        inputSchema: planWorkflowToolInputSchema(toolSchemaProfile),
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
