@@ -48,6 +48,7 @@ describe("generated Claude plugin", () => {
     expect(server.args).toEqual(["${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/server.mjs"]);
     expect(server.env.AGENT_GOVERNANCE_DB_PATH).toBe("${CLAUDE_PLUGIN_DATA}/workflows.sqlite3");
     expect(server.env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH).toBe("${CLAUDE_PLUGIN_DATA}/continuity.sqlite3");
+    expect(server.env.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE).toBe("anthropic");
   });
 
   it("publishes a separate marketplace that points only at the generated tree", async () => {
@@ -59,6 +60,8 @@ describe("generated Claude plugin", () => {
     ]);
     const codexManifest = await readFile(path.join(root, ".codex-plugin", "plugin.json"), "utf8");
     expect(codexManifest).not.toContain(OUTPUT_DIRECTORY);
+    const codexMcp = await readFile(path.join(root, ".mcp.json"), "utf8");
+    expect(codexMcp).not.toContain("AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE");
   });
 
   it("omits Codex-only skills from files, registry, and source lock", async () => {

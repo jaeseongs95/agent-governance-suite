@@ -93,3 +93,14 @@ export function assertDistinctDatabasePaths(
     throw new Error("Workflow and continuity databases must use different files.");
   }
 }
+
+/**
+ * Selects the advertised MCP tool schema profile. Only the exact value
+ * "anthropic" changes the default, so an unset or unknown value keeps the
+ * historical schemas.
+ */
+export function resolveToolSchemaProfile(
+  environment: NodeJS.ProcessEnv = process.env,
+): "default" | "anthropic" {
+  return environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE === "anthropic" ? "anthropic" : "default";
+}

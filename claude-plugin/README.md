@@ -12,6 +12,7 @@
 ## Codex 배포물과의 격리
 
 - 이 플러그인의 루트는 `claude-plugin/`이다. 저장소 루트의 Codex용 `hooks/hooks.json`, `.mcp.json`, `.codex-plugin/`은 읽지 않는다.
+- MCP 서버에 `AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE=anthropic`을 넘겨 `plan_workflow`의 공개 스키마에서 최상위 `oneOf`를 없앤다. Anthropic API가 이 형태를 받지 않기 때문이다. 입력 검증은 기존 계약 그대로다.
 - workflow·continuity SQLite 상태는 `${CLAUDE_PLUGIN_DATA}`에 저장한다. Codex 플러그인의 상태 디렉터리를 열지 않는다.
 - `codex-token-usage-analyzer`는 Codex 세션 로그 전용이라 포함하지 않는다.
 

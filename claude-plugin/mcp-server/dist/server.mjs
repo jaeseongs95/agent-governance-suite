@@ -17076,6 +17076,9 @@ function assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePat
     throw new Error("Workflow and continuity databases must use different files.");
   }
 }
+function resolveToolSchemaProfile(environment = process.env) {
+  return environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE === "anthropic" ? "anthropic" : "default";
+}
 
 // mcp-server/src/schema-validator.ts
 var import__ = __toESM(require__(), 1);
@@ -19527,10 +19530,23 @@ function invalidInput(message) {
     error: { code: "INVALID_INPUT", message, details: null }
   };
 }
+var planWorkflowAnthropicInputSchema = {
+  type: "object",
+  description: "Send either a TaskEnvelope.v1 object at the top level, or { schemaVersion, taskEnvelope, evaluationAuditPurpose? }. The server validates the exact PlanWorkflowRequest.v1 contract.",
+  additionalProperties: false,
+  properties: {
+    ...structuredClone(taskEnvelopeInputSchema.properties ?? {}),
+    taskEnvelope: structuredClone(taskEnvelopeInputSchema),
+    evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] }
+  }
+};
+function planWorkflowToolInputSchema(profile = "default") {
+  return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
+}
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator()) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default") {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} } }
@@ -19552,7 +19568,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       {
         name: "plan_workflow",
         description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose.",
-        inputSchema: planWorkflowInputSchema,
+        inputSchema: planWorkflowToolInputSchema(toolSchemaProfile),
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
@@ -23528,7 +23544,7 @@ async function main() {
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator);
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile());
   await server.connect(new StdioServerTransport());
 }
 void main().catch((error2) => {
