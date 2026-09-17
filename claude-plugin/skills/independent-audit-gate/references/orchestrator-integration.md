@@ -79,13 +79,12 @@ known_limitations: []
 
 ```text
 orchestration-plugin/
-├── plugin.json 또는 .codex-plugin/plugin.json
+├── .claude-plugin/plugin.json
 └── skills/
     ├── orchestrator-skill/
     │   └── SKILL.md
     └── independent-audit-gate/
         ├── SKILL.md
-        ├── agents/openai.yaml
         ├── references/
         └── scripts/
 ```

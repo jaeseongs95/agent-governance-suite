@@ -100,7 +100,7 @@ def main() -> int:
 
     plugin_root = root.parent.parent if root.parent.name == "skills" else None
     plugin_manifests = (
-        (plugin_root / "plugin.json", plugin_root / ".codex-plugin/plugin.json")
+        (plugin_root / "plugin.json", plugin_root / ".codex-plugin/plugin.json", plugin_root / ".claude-plugin/plugin.json")
         if plugin_root is not None
         else ()
     )

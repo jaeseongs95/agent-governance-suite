@@ -42,4 +42,4 @@ Resume과 direct compact의 Hook 카드에는 본문이 없으며 `DEFER` metada
 
 자동 후보 제공만 멈추려면 `suppress_context_restore`를 사용한다. 저장된 direct payload까지 지워야 한다는 명시적 요청이 있을 때만 `purge_direct_context`를 사용한다. `clear` 뒤 과거 epoch를 지울 때도 해당 snapshot의 epoch와 revision을 지정한다. purge는 direct payload와 본문을 담을 수 있는 idempotency 결과를 제거하지만 workflow receipt와 convergence root는 삭제하지 않는다.
 
-Continuity가 unavailable이면 작업이나 Codex compaction을 막지 않는다. 저장되지 않은 direct task의 연속성을 보장했다고 보고하지 않는다.
+Continuity가 unavailable이면 작업이나 Claude Code compaction을 막지 않는다. 저장되지 않은 direct task의 연속성을 보장했다고 보고하지 않는다.

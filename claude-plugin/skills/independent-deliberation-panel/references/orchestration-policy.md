@@ -14,7 +14,7 @@ v1.0은 사용자 요청의 `deliberation` 표기를 자연어로 해석할 뿐,
 
 Coordinator는 worker를 만들기 전에 다음을 확인해 `preflight`에 기록한다.
 
-- reviewer briefing을 서로 격리할 수 있는지 (`fork_turns:none` 또는 동등한 새 컨텍스트)
+- reviewer briefing을 서로 격리할 수 있는지 (fork가 아닌 새 서브에이전트처럼 부모 대화를 상속하지 않는 새 컨텍스트)
 - Round 1·반박에 참여하지 않은 fresh Judge를 만들 수 있는지
 - 사용 가능한 모델·추론 수준, 실제 동시 슬롯과 전체 worker 수
 - 원자료에 대한 읽기 접근과 provenance를 확인할 도구
@@ -66,7 +66,7 @@ specialist 결과 또는 Stage 5의 새 verified evidence가 material 변화를 
 
 ## 7. Fresh Judge와 assurance
 
-Judge는 Round 1, cross-examination, specialist, re-deliberation에 참여하지 않은 고유 worker여야 하며 `fork_turns:none`으로 시작한다. case brief의 제약·성공 기준, 검증 상태가 있는 material claim, issue ledger, cross-examination·adaptive 요약, candidate axes만 전달한다. raw reviewer 출력, 다른 대화 기록, 검증 전 Coordinator 메모는 전달하지 않는다. Judge와 reviewer briefing에는 재위임 금지를 명시한다. 스킬은 그 도구 권한을 기술적으로 차단하지 못하므로, Coordinator가 시도·관찰 가능한 재위임을 발견하면 해당 worker를 독립 participant에서 제외하고 `run.failures`에 기록한다. required 수나 격리가 깨지면 `provisional`로 내린다.
+Judge는 Round 1, cross-examination, specialist, re-deliberation에 참여하지 않은 고유 worker여야 하며 fork가 아닌 새 서브에이전트로 시작한다. case brief의 제약·성공 기준, 검증 상태가 있는 material claim, issue ledger, cross-examination·adaptive 요약, candidate axes만 전달한다. raw reviewer 출력, 다른 대화 기록, 검증 전 Coordinator 메모는 전달하지 않는다. Judge와 reviewer briefing에는 재위임 금지를 명시한다. 스킬은 그 도구 권한을 기술적으로 차단하지 못하므로, Coordinator가 시도·관찰 가능한 재위임을 발견하면 해당 worker를 독립 participant에서 제외하고 `run.failures`에 기록한다. required 수나 격리가 깨지면 `provisional`로 내린다.
 
 assurance 값은 다음 중 정확히 하나다.
 

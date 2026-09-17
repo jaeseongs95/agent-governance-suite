@@ -1,6 +1,6 @@
 ---
 name: workspace-convention-profiler
-description: 낯선 저장소의 구조, 도구, 관례, 정의된 검증 명령과 변경 후보 지점을 읽기 전용으로 조사한다. AGENTS.md 우선순위 판정, 작업 범위 확정, diff 감사에는 사용하지 않는다.
+description: 낯선 저장소의 구조, 도구, 관례, 정의된 검증 명령과 변경 후보 지점을 읽기 전용으로 조사한다. AGENTS.md·CLAUDE.md 우선순위 판정, 작업 범위 확정, diff 감사에는 사용하지 않는다.
 license: MIT
 metadata:
   version: "1.0.0"
@@ -16,7 +16,7 @@ metadata:
 - 낯선 저장소의 여러 파일이나 모듈을 수정하기 전에 기존 방식을 확인해야 한다.
 - 작업 분해나 검증 계획에 필요한 코드, 테스트, 설정 위치가 아직 확인되지 않았다.
 
-단일 파일의 명백한 수정, 이미 유효한 profile이 있는 작업, 적용 `AGENTS.md`만 묻는 요청, 현재 diff의 범위 판정에는 사용하지 않는다.
+단일 파일의 명백한 수정, 이미 유효한 profile이 있는 작업, 적용 `AGENTS.md`·`CLAUDE.md`만 묻는 요청, 현재 diff의 범위 판정에는 사용하지 않는다.
 
 ## 경계
 

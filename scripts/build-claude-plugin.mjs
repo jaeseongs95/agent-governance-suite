@@ -14,6 +14,20 @@ export const OVERLAY_DIRECTORY = "claude-overlay";
 export const EXCLUDED_SKILLS = Object.freeze(["codex-token-usage-analyzer"]);
 const SHARED_ROOTS = Object.freeze(["skills/", "runtime/", "contracts/"]);
 const SHARED_FILES = Object.freeze(["LICENSE", "mcp-server/dist/server.mjs", "mcp-server/dist/continuity-hook.mjs"]);
+const REPLACEMENTS_FILE = "replacements.json";
+// Codex-only wording that must not reach model-visible Claude files.
+export const CODEX_ONLY_PATTERNS = Object.freeze([
+  /\b(?:spawn_agent|wait_agent|send_input|fork_turns|reasoning_effort|CODEX_HOME)\b/u,
+  /\.codex-plugin|agents\/openai\.yaml/u,
+  /\bgpt-\d/u,
+  /\bCodex\b/u,
+  /(?<![\w$])\$[a-z][a-z0-9]*(?:-[a-z0-9]+)+\b/u,
+]);
+// Files that intentionally document both hosts side by side.
+export const DUAL_HOST_FILES = Object.freeze([
+  "skills/coordinate-subagents/SKILL.md",
+  "skills/coordinate-subagents/references/model-routing.md",
+]);
 
 function toPosix(value) {
   return value.split(path.sep).join("/");
@@ -21,6 +35,39 @@ function toPosix(value) {
 
 function isExcludedSkillPath(relativePath) {
   return EXCLUDED_SKILLS.some((skill) => relativePath.startsWith(`skills/${skill}/`));
+}
+
+function isModelVisible(relativePath) {
+  return /^skills\/[^/]+\/SKILL\.md$/u.test(relativePath)
+    || /^skills\/[^/]+\/references\/.+\.md$/u.test(relativePath)
+    || /^agents\/[^/]+\.md$/u.test(relativePath);
+}
+
+/** Lists model-visible generated files that still carry Codex-only wording. */
+export function findCodexOnlyWording(files) {
+  const problems = [];
+  for (const [relativePath, content] of files) {
+    if (!isModelVisible(relativePath) || DUAL_HOST_FILES.includes(relativePath)) continue;
+    const lines = content.toString("utf8").split("\n");
+    lines.forEach((line, index) => {
+      if (CODEX_ONLY_PATTERNS.some((pattern) => pattern.test(line))) {
+        problems.push(`Codex-only wording in ${OUTPUT_DIRECTORY}/${relativePath}:${index + 1}`);
+      }
+    });
+  }
+  return problems;
+}
+
+function applyReplacements(files, replacements) {
+  for (const { file, find, replace } of replacements) {
+    const content = files.get(file);
+    if (!content) throw new Error(`replacement target is not generated: ${file}`);
+    const text = content.toString("utf8");
+    const first = text.indexOf(find);
+    if (first < 0) throw new Error(`replacement text not found in ${file}: ${find.slice(0, 60)}`);
+    if (text.indexOf(find, first + find.length) >= 0) throw new Error(`replacement text is ambiguous in ${file}: ${find.slice(0, 60)}`);
+    files.set(file, Buffer.from(text.slice(0, first) + replace + text.slice(first + find.length)));
+  }
 }
 
 function trackedFiles(root) {
@@ -68,7 +115,10 @@ export async function renderClaudePlugin(root = ROOT) {
   }
 
   const overlayRoot = path.join(root, OVERLAY_DIRECTORY);
-  for (const relativePath of await walk(overlayRoot)) {
+  const overlayFiles = await walk(overlayRoot);
+  for (const relativePath of overlayFiles) {
+    if (relativePath === REPLACEMENTS_FILE) continue;
+    if (files.has(relativePath)) throw new Error(`overlay must not replace a shared file wholesale: ${relativePath}`);
     let content = await readFile(path.join(overlayRoot, relativePath));
     if (relativePath === ".claude-plugin/plugin.json") {
       const manifest = JSON.parse(content.toString("utf8"));
@@ -77,6 +127,12 @@ export async function renderClaudePlugin(root = ROOT) {
     }
     files.set(relativePath, content);
   }
+  if (overlayFiles.includes(REPLACEMENTS_FILE)) {
+    const { replacements } = JSON.parse(await readFile(path.join(overlayRoot, REPLACEMENTS_FILE), "utf8"));
+    applyReplacements(files, replacements);
+  }
+  const wording = findCodexOnlyWording(files);
+  if (wording.length > 0) throw new Error(`Claude overlay is incomplete:\n${wording.map((problem) => `- ${problem}`).join("\n")}`);
   return files;
 }
 
@@ -134,5 +190,10 @@ async function main() {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  await main();
+  try {
+    await main();
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
 }

@@ -87,10 +87,10 @@ workers:
     blind_round1: true
     context_isolated: true
     participated_stages: ["round1"]
-    requested_model: "gpt-5.6-terra"
-    actual_model: "gpt-5.6-terra"
-    requested_reasoning: "xhigh"
-    actual_reasoning: "xhigh"
+    requested_model: "sonnet"
+    actual_model: "sonnet"
+    requested_reasoning: "high"
+    actual_reasoning: "high"
     fallback_reason: null
 ```
 

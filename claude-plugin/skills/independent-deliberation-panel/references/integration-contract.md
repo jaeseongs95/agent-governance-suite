@@ -20,7 +20,7 @@ HIGH·CRITICAL 또는 사용자가 독립 판단을 승인 조건으로 요구�
 
 스킬은 사용자용 10개 섹션과 canonical [DecisionRecord.v1 schema](../contracts/decision-record.v1.schema.json)에 맞는 record를 반환한다. 오케스트레이터가 안정적으로 읽을 값은 다음과 같다.
 
-- 스킬 이름 `$independent-deliberation-panel`
+- 스킬 이름 `independent-deliberation-panel` (Claude Code 호출: `/agent-governance-suite:independent-deliberation-panel`)
 - `Executive Verdict`부터 `Method / Run Summary`까지의 사용자용 10개 섹션
 - `schema_version`, `skill_version`
 - `run.stage`, `run.assurance`, `run.capability_shortfall`

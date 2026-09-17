@@ -1,6 +1,6 @@
 ---
 name: instruction-scope-resolver
-description: 특정 workspace 경로에 적용되는 AGENTS.md와 비어 있지 않은 AGENTS.override.md의 chain, 우선순위와 충돌 근거를 확인한다. 지침 파일 작성이나 일반 정책 검토에는 사용하지 않는다.
+description: 특정 workspace 경로에 적용되는 CLAUDE.md 계층·.claude/rules와 AGENTS.md·AGENTS.override.md chain, 우선순위와 충돌 근거를 확인한다. 지침 파일 작성이나 일반 정책 검토에는 사용하지 않는다.
 license: MIT
 metadata:
   version: "1.0.0"
@@ -25,6 +25,10 @@ workspace root, 대상 경로와 caller가 읽도록 허용한 instruction root�
 5. 미해결 충돌이 작업 범위, 권한 또는 완료 조건을 바꾸면 `NEEDS_INPUT`으로 반환한다.
 
 스크립트는 JSON만 stdout으로 출력한다. 직접 호출에서는 MCP 없이 구조화 결과와 짧은 사용자용 요약을 함께 제공한다.
+
+## Claude Code 지침 파일
+
+스크립트는 `AGENTS.md`·`AGENTS.override.md` chain만 계산한다. Claude Code는 `AGENTS.md`를 직접 읽지 않고 `CLAUDE.md` 계층을 읽으므로, [claude-code-instructions.md](references/claude-code-instructions.md)에 따라 Claude Code 지침 파일을 따로 확인하고 `findings`에 원본 경로와 함께 기록한다. 이 확인을 하지 않았으면 `PASS`로 판정하지 않고 `ANALYSIS_REQUIRED`를 유지한다.
 
 ## 출력과 실패 처리
 
