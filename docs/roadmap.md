@@ -215,7 +215,7 @@ Hook은 transcript를 읽지 않고 설치별 HMAC으로 session·turn·request 
 ### 종료 기준
 
 - bootstrap receipt 변조, 재사용, revision 불일치가 거부된다.
-- 각 완료 영수증이 어떤 보증 수준에서 만들어졌는지 식별할 수 있다.
+- 각 완료 결과가 어떤 보증 수준에서 만들어졌는지 식별할 수 있다.
 - caller-trusted 값과 실제로 검증한 값을 결과에서 구분한다.
 - 기존 신뢰 모델을 사용하는 로컬 workflow의 호환 정책과 마이그레이션 절차가 문서화된다.
 
