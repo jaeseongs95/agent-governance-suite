@@ -58,7 +58,7 @@ export function findCodexOnlyWording(files) {
   return problems;
 }
 
-function applyReplacements(files, replacements) {
+export function applyReplacements(files, replacements) {
   for (const { file, find, replace } of replacements) {
     const content = files.get(file);
     if (!content) throw new Error(`replacement target is not generated: ${file}`);
