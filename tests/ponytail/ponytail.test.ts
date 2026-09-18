@@ -58,6 +58,21 @@ describe("ponytail at the implementation step", () => {
     }
   });
 
+  it("limits the skill body to code-writing turns and yields to repository instructions on both hosts", () => {
+    for (const copy of ["skills/ponytail/SKILL.md", "claude-plugin/skills/ponytail/SKILL.md"]) {
+      const text = readFileSync(`${root}${copy}`, "utf8").replace(/\s+/gu, " ");
+      expect(text).toContain("ACTIVE EVERY RESPONSE THAT WRITES OR CHANGES CODE.");
+      expect(text).not.toContain("ACTIVE EVERY RESPONSE. ");
+      expect(text).toContain("It does not apply to reviews, audits, verification, completion reports, or non-coding answers.");
+      expect(text).toContain("override the Output and test rules above.");
+      expect(text).toContain("Requested behavior and acceptance criteria are never cut; offer cuts as suggestions.");
+      expect(text).not.toMatch(/Caveman/u);
+    }
+    for (const agent of ["independent-auditor", "deliberation-reviewer"]) {
+      expect(readFileSync(`${root}claude-plugin/agents/${agent}.md`, "utf8")).toMatch(/\ndisallowedTools: Write, Edit, NotebookEdit, Agent, Skill\r?\n/u);
+    }
+  });
+
   it("adds no ponytail stage when the plan does not ask for minimal-implementation", () => {
     const stages = plannedCapabilities(["change-scope-baseline-capture", "change-scope-assurance"]);
     expect(stages.map((stage) => stage.capability)).not.toContain("minimal-implementation");
@@ -84,5 +99,7 @@ describe("ponytail at the implementation step", () => {
     });
     const hooks = readFileSync(`${root}hooks/hooks.json`, "utf8") + readFileSync(`${root}claude-overlay/hooks/hooks.json`, "utf8");
     expect(hooks).not.toMatch(/ponytail/iu);
+    expect(readFileSync(`${root}claude-overlay/hooks/skill-trigger-hook.mjs`, "utf8")).not.toMatch(/ponytail/iu);
+    expect((lock.sources.find((source) => source.skillId === "ponytail")!.downstreamModifications as string[]).length).toBe(5);
   });
 });

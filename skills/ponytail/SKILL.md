@@ -25,8 +25,8 @@ code is the code never written.
 
 ## Persistence
 
-ACTIVE EVERY RESPONSE. No drift back to over-building. Still active if
-unsure. Off only: "stop ponytail" / "normal mode". Default: **full**.
+ACTIVE EVERY RESPONSE THAT WRITES OR CHANGES CODE. No drift back to
+over-building. Still active if unsure. Off only: "stop ponytail" / "normal mode". Default: **full**.
 Switch: `/ponytail lite|full|ultra`.
 
 ## The ladder
@@ -113,8 +113,12 @@ test, YAGNI applies to tests too.
 
 ## Boundaries
 
-Ponytail governs what you build, not how you talk (pair with Caveman for
-terse prose). "stop ponytail" / "normal mode": revert. Level persists until
-changed or session end.
+Ponytail governs what you build, not how you talk. It does not apply to
+reviews, audits, verification, completion reports, or non-coding answers.
+User, project, and repository instructions (report format, language, test
+location and tooling) override the Output and test rules above. Requested
+behavior and acceptance criteria are never cut; offer cuts as suggestions.
+"stop ponytail" / "normal mode": revert. Level persists until changed or
+session end.
 
 The shortest path to done is the right path.

@@ -196,6 +196,9 @@ describe("MCP tool schema profiles", () => {
     expect(serverInstructions("anthropic")).toBe(ANTHROPIC_SERVER_INSTRUCTIONS);
     expect(ANTHROPIC_SERVER_INSTRUCTIONS).toMatch(/실패 영향/u);
     expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("/agent-governance-suite:orchestrator");
+    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("실패 영향이 낮으면 그 이유를 한 줄로 밝히고 진행하되");
+    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("코드를 쓰거나 파일을 고치기 전에 Skill 도구로 /agent-governance-suite:ponytail을 호출한다.");
+    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("검토·감사를 맡은 서브에이전트에서는 ponytail을 호출하지 않는다.");
     const implicit = await connect();
     const codex = await connect("default");
     const claude = await connect("anthropic");

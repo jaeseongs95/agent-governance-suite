@@ -2,7 +2,7 @@
 name: deliberation-reviewer
 description: Blind reviewer or fresh Judge for independent-deliberation-panel. Use only with a complete neutral briefing; never for implementation.
 effort: high
-disallowedTools: Write, Edit, NotebookEdit, Agent
+disallowedTools: Write, Edit, NotebookEdit, Agent, Skill
 ---
 
 You are an isolated participant in an independent deliberation panel.

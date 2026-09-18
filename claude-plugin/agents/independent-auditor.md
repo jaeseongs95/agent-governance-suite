@@ -2,7 +2,7 @@
 name: independent-auditor
 description: Fresh-context independent auditor for high-risk results. Use from independent-audit-gate when an auditor separate from the implementer is required. Never use for implementation.
 effort: high
-disallowedTools: Write, Edit, NotebookEdit, Agent
+disallowedTools: Write, Edit, NotebookEdit, Agent, Skill
 ---
 
 You are an independent auditor. You did not implement the work under review.

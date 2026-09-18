@@ -56,6 +56,6 @@ Codex 배포물은 이 훅을 등록하지 않고 환경 변수도 넘기지 않
 - `adaptations/<스킬명>.json`의 `replacements`: 호스트 중립 표현이 없는 문장만 스킬 폴더 기준 경로(`file`)와 정확히 한 번 나오는 원문(`find`)으로 바꾼다. 원문이 사라지거나 두 번 이상 나오면 해당 adaptation 파일 이름과 함께 생성이 실패한다.
 - 배포하는 스킬을 Codex 방식으로 호출한 `$스킬명` 표기는 `/agent-governance-suite:스킬명`으로 자동 변환한다.
 - 이 변환을 거친 뒤에도 생성된 `SKILL.md`, `references/*.md`, `agents/*.md`에 Codex 전용 표현(`fork_turns`, 배포하지 않는 스킬의 `$스킬명` 호출 등)이 남으면 생성이 실패한다. 두 호스트를 함께 설명하는 `coordinate-subagents` 문서는 예외다.
-- `agents/independent-auditor.md`, `agents/deliberation-reviewer.md`: 부모 대화를 상속하지 않고, 파일 수정과 재위임을 막은 서브에이전트 정의다.
+- `agents/independent-auditor.md`, `agents/deliberation-reviewer.md`: 부모 대화를 상속하지 않고, 파일 수정, 재위임과 스킬 호출을 막은 서브에이전트 정의다.
 - `hooks/skill-trigger-hook.mjs`: Claude Code 전용 유도 훅이다. `UserPromptSubmit`에서 요청 문장을, `PreToolUse`(`Bash`)에서 실행할 명령을 정규식으로 보고 커밋·병합, 삭제·배포·마이그레이션, 반복 실패, 미정 사항이 남은 구현 요청에 해당하면 적용 가능한 스킬 이름을 `additionalContext`로 한 번 안내한다. 차단·승인 요구·상태 기록은 하지 않고 실패 시 조용히 종료한다. 설명문만으로는 짧은 자연어 요청에서 스킬이 거의 호출되지 않았기 때문에 둔 장치이며(측정 기록은 `docs/roadmap.md`), Codex 배포물의 `hooks/hooks.json`에는 없다.
 - `instruction-scope-resolver`의 스크립트는 `AGENTS.md` chain만 계산한다. `CLAUDE.md` 계층은 `references/claude-code-instructions.md`에 따라 스킬이 따로 확인한다.

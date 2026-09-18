@@ -329,13 +329,14 @@
       },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:60dc9353cf86e1e6714dd946ac29558f8833d3589f614bb9dab140edb4c6bf93",
-      "integratedChecksum": "sha256:fa92947fa43e5c73013149449d0c07a44a4b689bbb3a731298e5bf8faf11803c",
+      "integratedChecksum": "sha256:64a288f589a5f9199e5602b2706701e8b133e3334ab627c28d013bed79410c77",
       "checksumScope": "relative paths and normalized text bytes under skills/ponytail",
       "downstreamModifications": [
         "Drop the argument-hint frontmatter key, which the Codex skill validator rejects; the Claude overlay restores it.",
         "Add agents/openai.yaml with the display name and implicit-invocation policy used by the other suite skills.",
         "Add LICENSE copied from the upstream repository root, which the skill directory does not carry.",
-        "Remove reviewing from the description's coding-task list and exclude code review, audits, verification, and completion checks, so implicit invocation does not load the skill during governance review stages."
+        "Remove reviewing from the description's coding-task list and exclude code review, audits, verification, and completion checks, so implicit invocation does not load the skill during governance review stages.",
+        "Scope persistence to responses that write or change code, and replace the Boundaries paragraph so reviews, audits, verification, completion reports and non-coding answers are excluded, user, project and repository instructions override the Output and test rules, requested behavior and acceptance criteria are never cut, and the Caveman pairing, which the suite does not ship, is dropped."
       ]
     }
   ]
