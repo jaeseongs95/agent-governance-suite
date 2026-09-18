@@ -18,7 +18,7 @@ describe("bundled skill registry", () => {
     expect(capabilities.has("independent-deliberation")).toBe(true);
     expect(capabilities.has("independent-audit")).toBe(true);
     expect(Object.fromEntries(skills.map((skill) => [skill.skillId, skill.version]))).toMatchObject({
-      "coordinate-subagents": "1.0.0",
+      "coordinate-subagents": "1.1.0",
       "independent-deliberation-panel": "1.0.0",
       "independent-audit-gate": "1.0.0",
       "instruction-scope-resolver": "1.0.0",
