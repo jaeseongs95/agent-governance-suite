@@ -3,8 +3,9 @@
 ## 핵심 변경
 
 - `record_stage_result`가 선택 필드 `outputFile: { locator, digest }`를 받습니다. provider 출력(`output.output`)이 클 때 그 JSON을 로컬 파일에 두고 절대 경로와 SHA-256을 넘기면, 서버가 파일을 읽어 digest를 확인하고 인라인 출력과 똑같이 출력 schema, 상태 대응, 게이트, receipt 정책을 검사합니다. receipt에는 참조와 digest만 남고 `output.output`은 `null`입니다.
-  - 절대 경로의 일반 파일, 16 MiB 이하, JSON 객체만 받습니다. digest가 다르면 `INTEGRITY_FAILED`, 읽을 수 없거나 JSON 객체가 아니거나 상대 경로면 `INVALID_INPUT`입니다. `outputFile`과 인라인 `output.output`을 함께 보내면 `INVALID_INPUT`입니다.
+  - 절대 경로의 로컬 일반 파일(네트워크 경로 제외), 16 MiB 이하, JSON 객체만 받습니다. 크기와 종류는 연 파일에서 확인하고 읽는 양도 한도로 제한합니다. digest가 다르면 `INTEGRITY_FAILED`, 읽을 수 없거나 JSON 객체가 아니거나 상대 경로면 `INVALID_INPUT`입니다. `outputFile`과 인라인 `output.output`을 함께 보내면 `INVALID_INPUT`입니다.
   - Windows 도구가 붙이는 byte order mark는 무시합니다.
+- receipt 정책이 있는 stage(한국어 산문, 평가 타당성)는 다음 stage가 저장된 출력에서 actor를 비교하므로 `outputFile`을 받지 않고 인라인 출력만 받습니다. 이 stage들의 출력은 참조 전용이라 크지 않습니다.
 - Claude용 orchestrator 지침에 "큰 stage 출력" 절을 넣었습니다. 저장소 크기에 비례하는 출력은 항목을 줄이거나 요약하지 않고 파일 참조로 넘깁니다.
 
 ## 배경
@@ -18,5 +19,5 @@ v1.18.0 준비 중 새 세션에 실제 고위험 요청을 주었을 때, 세�
 
 ## 알려진 제한
 
-- 서버는 호출자가 지정한 로컬 파일을 같은 OS 사용자 권한으로 읽습니다. 내용은 검사에만 쓰고 응답이나 receipt에 되돌려 싣지 않지만, 파일 경로는 receipt에 남습니다.
+- 서버는 호출자가 지정한 로컬 파일을 같은 OS 사용자 권한으로 읽습니다. 파일 내용 전체를 응답이나 receipt에 싣지는 않지만, 파일 경로는 receipt에 남고, 오류 응답으로 파일이 있는지·한도를 넘는지·schema 검사에서 어느 필드가 틀렸는지(필드 이름과 일부 값)는 알 수 있습니다. digest가 다를 때 파일의 실제 digest는 돌려주지 않습니다.
 - 파일 참조로 기록한 stage의 출력 내용은 receipt에 없으므로, 나중에 내용을 다시 보려면 그 파일이 남아 있어야 합니다. digest로 같은 파일인지 확인할 수 있습니다.

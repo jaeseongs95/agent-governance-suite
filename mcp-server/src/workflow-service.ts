@@ -632,12 +632,8 @@ export class WorkflowService {
         );
       }
       const result = this.validator.stageResult(rawResult);
-      let loadedOutput: Record<string, unknown> | undefined;
-      if (result.outputFile) {
-        if (result.output.output !== null) {
-          throw new WorkflowContractError("INVALID_INPUT", "output.output must be null when outputFile carries the provider output.");
-        }
-        loadedOutput = loadStageOutputFile(result.outputFile, this.readStageOutputFile);
+      if (result.outputFile && result.output.output !== null) {
+        throw new WorkflowContractError("INVALID_INPUT", "output.output must be null when outputFile carries the provider output.");
       }
       return this.change(result.runId, result.expectedRevision, (receipt) => {
         if (receipt.state !== "running") {
@@ -663,6 +659,16 @@ export class WorkflowService {
             requiredStageId: priorStage.stageId,
             requestedStageId: result.stageId,
           });
+        }
+        let loadedOutput: Record<string, unknown> | undefined;
+        if (result.outputFile) {
+          // Receipt policies compare actors across stages through the stored output, so policy stages stay inline.
+          if (target.receiptPolicy) {
+            throw new WorkflowContractError("INVALID_INPUT", "Stages with a receipt policy must record their output inline.", {
+              stageId: target.stageId,
+            });
+          }
+          loadedOutput = loadStageOutputFile(result.outputFile, this.readStageOutputFile);
         }
 
         let trustedStageContext: ExecutionContextV1 | null = null;

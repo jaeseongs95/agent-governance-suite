@@ -37,6 +37,7 @@ metadata:
 
 - provider 출력(`output.output`)이 저장소 크기에 비례해 커지면(예: `change-scope-guardian` baseline, 변경 범위 보고서, 저장소 관례 조사) 도구 인자에 넣지 않는다. 스킬이 만든 JSON을 바꾸지 않고 로컬 파일에 저장한 뒤, `record_stage_result`에 `outputFile: { "locator": "<절대 경로>", "digest": "sha256:<그 파일 바이트의 SHA-256>" }`를 넣고 `output.output`은 `null`로 보낸다. 서버가 파일을 읽어 digest와 출력 schema, 게이트를 인라인 출력과 똑같이 검사하고 receipt에는 참조만 남긴다.
 - 크기를 맞추려고 항목을 줄이거나 요약하지 않는다. digest가 맞지 않으면 `INTEGRITY_FAILED`다.
+- receipt 정책이 있는 stage(한국어 산문, 평가 타당성)는 `outputFile`을 받지 않으므로 인라인으로 기록한다. 이 stage들의 출력은 참조 전용이라 크지 않다.
 
 ## 시작 전 확인
 

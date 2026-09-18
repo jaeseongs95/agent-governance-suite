@@ -14,7 +14,7 @@ import type {
 } from "../../contracts/types.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
-import { loadStageOutputFile, MAX_STAGE_OUTPUT_FILE_BYTES } from "../../mcp-server/src/stage-output-file.js";
+import { loadStageOutputFile, MAX_STAGE_OUTPUT_FILE_BYTES, readLocalStageOutputFile } from "../../mcp-server/src/stage-output-file.js";
 import { type ExecutionObservationBindingV1, WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 
@@ -38,7 +38,7 @@ function writeOutput(content: string | Buffer): { locator: string; digest: `sha2
   return { locator, digest: `sha256:${createHash("sha256").update(bytes).digest("hex")}` };
 }
 
-function task(taskId: string): TaskEnvelopeV1 {
+function task(taskId: string, capabilities: string[] = ["task-decomposition"]): TaskEnvelopeV1 {
   return {
     schemaVersion: "1.0.0",
     taskId,
@@ -47,7 +47,7 @@ function task(taskId: string): TaskEnvelopeV1 {
     acceptanceCriteria: ["Complete the planned stage through the MCP boundary."],
     riskLevel: "low",
     workUnits: [{ id: "unit-1", objective: "Run the fixture.", dependencies: [], writeTargets: ["fixture.md"] }],
-    requiredCapabilities: ["task-decomposition"],
+    requiredCapabilities: capabilities,
     constraints: ["Use only fixture data."],
     authorization: { allowedActions: ["test"], prohibitedActions: ["deploy"], approvalRequired: [] },
     decision: { complexity: "simple", hasConflicts: false },
@@ -82,8 +82,8 @@ function service(): WorkflowService {
   });
 }
 
-function running(workflow: WorkflowService, taskId: string): WorkflowReceiptV1 {
-  const envelope = task(taskId);
+function running(workflow: WorkflowService, taskId: string, capabilities?: string[]): WorkflowReceiptV1 {
+  const envelope = task(taskId, capabilities);
   const plan = workflow.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: envelope }, true).data!;
   const root = workflow.openConvergenceRoot({ schemaVersion: "1.0.0", parentRootId: null, taskEnvelope: envelope, frame: frame(taskId), userApprovalRefs: [] }).data!;
   const lease = workflow.claimWorkflowAttempt({
@@ -165,6 +165,32 @@ describe("stage output by file reference", () => {
     const big = Buffer.alloc(MAX_STAGE_OUTPUT_FILE_BYTES + 1, 0x20);
     expect(() => loadStageOutputFile({ locator: "/virtual/big.json", digest: `sha256:${"0".repeat(64)}` }, () => big))
       .toThrow(/16 MiB/u);
+  });
+
+  it("keeps receipt-policy stages inline so cross-stage actor checks still see their output", () => {
+    const workflow = service();
+    const receipt = running(workflow, "policy-stage", ["korean-prose-selection"]);
+    expect(receipt.plan.stages[0]?.receiptPolicy).toBeTruthy();
+    const file = writeOutput("{}");
+    const rejected = workflow.recordStageResult(stageResult(receipt, null, file), true);
+    expect(rejected.error?.code).toBe("INVALID_INPUT");
+    expect(rejected.error?.message).toMatch(/receipt policy/u);
+  });
+
+  it("reads regular local files only, bounded by the size limit, and never echoes the actual digest", () => {
+    expect(() => readLocalStageOutputFile(String.raw`\\server\share\output.json`)).toThrow(/network path/u);
+    expect(() => readLocalStageOutputFile("//server/share/output.json")).toThrow(/network path|absolute/u);
+    const oversized = path.join(scratch(), "big.json");
+    writeFileSync(oversized, Buffer.alloc(MAX_STAGE_OUTPUT_FILE_BYTES + 1, 0x20));
+    expect(() => readLocalStageOutputFile(oversized)).toThrow(/16 MiB/u);
+    const file = writeOutput('{"completed":true}');
+    expect(readLocalStageOutputFile(file.locator).toString("utf8")).toBe('{"completed":true}');
+    try {
+      loadStageOutputFile({ ...file, digest: `sha256:${"0".repeat(64)}` });
+      throw new Error("expected a digest mismatch");
+    } catch (error) {
+      expect(JSON.stringify((error as { details?: unknown }).details)).not.toContain(file.digest.slice(7));
+    }
   });
 
   it("rejects outputFile fields that break the contract", () => {

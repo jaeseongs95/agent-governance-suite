@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFileSync, statSync } from "node:fs";
+import { closeSync, fstatSync, openSync, readSync } from "node:fs";
 import path from "node:path";
 
 import { type StageOutputFileV1, WorkflowContractError } from "../../contracts/types.js";
@@ -9,26 +9,41 @@ export const MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
 
 export type StageOutputFileReader = (locator: string) => Buffer;
 
-/** Reads a caller-named local file; only its digest and parsed JSON are used, never echoed back. */
+function unreadable(locator: string): WorkflowContractError {
+  return new WorkflowContractError("INVALID_INPUT", "outputFile.locator is not a readable regular local file of at most 16 MiB.", { locator });
+}
+
+/**
+ * Reads a caller-named local file. Size and type are checked on the opened
+ * descriptor and the read is bounded, so the file cannot grow or change type
+ * between the check and the read. Network (UNC) paths are refused.
+ */
 export function readLocalStageOutputFile(locator: string): Buffer {
   if (!path.isAbsolute(locator)) {
     throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must be an absolute local path.");
   }
-  let size: number;
-  try {
-    const stats = statSync(locator);
-    if (!stats.isFile()) throw new Error("not a regular file");
-    size = stats.size;
-  } catch {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator is not a readable regular file.", { locator });
+  if (/^(?:\\\\|\/\/)/u.test(locator)) {
+    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must not be a network path.");
   }
-  if (size > MAX_STAGE_OUTPUT_FILE_BYTES) {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile exceeds the 16 MiB limit.", { locator });
-  }
+  let descriptor: number | null = null;
   try {
-    return readFileSync(locator);
-  } catch {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator could not be read.", { locator });
+    descriptor = openSync(locator, "r");
+    const stats = fstatSync(descriptor);
+    if (!stats.isFile() || stats.size > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(locator);
+    const buffer = Buffer.alloc(MAX_STAGE_OUTPUT_FILE_BYTES + 1);
+    let length = 0;
+    for (;;) {
+      const read = readSync(descriptor, buffer, length, buffer.length - length, null);
+      if (read === 0) break;
+      length += read;
+      if (length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(locator);
+    }
+    return buffer.subarray(0, length);
+  } catch (error) {
+    if (error instanceof WorkflowContractError) throw error;
+    throw unreadable(locator);
+  } finally {
+    if (descriptor !== null) closeSync(descriptor);
   }
 }
 
@@ -41,15 +56,13 @@ export function loadStageOutputFile(
   read: StageOutputFileReader = readLocalStageOutputFile,
 ): Record<string, unknown> {
   const bytes = read(reference.locator);
-  if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile exceeds the 16 MiB limit.", { locator: reference.locator });
-  }
+  if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(reference.locator);
   const digest = `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
   if (digest !== reference.digest) {
+    // The file's actual digest is not echoed back.
     throw new WorkflowContractError("INTEGRITY_FAILED", "outputFile content does not match its digest.", {
       locator: reference.locator,
       expected: reference.digest,
-      actual: digest,
     });
   }
   let parsed: unknown;

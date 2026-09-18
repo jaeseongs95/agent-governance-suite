@@ -21645,41 +21645,48 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
 
 // mcp-server/src/stage-output-file.ts
 import { createHash as createHash5 } from "node:crypto";
-import { readFileSync as readFileSync3, statSync } from "node:fs";
+import { closeSync, fstatSync, openSync, readSync } from "node:fs";
 import path7 from "node:path";
 var MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
+function unreadable(locator) {
+  return new WorkflowContractError("INVALID_INPUT", "outputFile.locator is not a readable regular local file of at most 16 MiB.", { locator });
+}
 function readLocalStageOutputFile(locator) {
   if (!path7.isAbsolute(locator)) {
     throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must be an absolute local path.");
   }
-  let size;
-  try {
-    const stats = statSync(locator);
-    if (!stats.isFile()) throw new Error("not a regular file");
-    size = stats.size;
-  } catch {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator is not a readable regular file.", { locator });
+  if (/^(?:\\\\|\/\/)/u.test(locator)) {
+    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must not be a network path.");
   }
-  if (size > MAX_STAGE_OUTPUT_FILE_BYTES) {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile exceeds the 16 MiB limit.", { locator });
-  }
+  let descriptor = null;
   try {
-    return readFileSync3(locator);
-  } catch {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator could not be read.", { locator });
+    descriptor = openSync(locator, "r");
+    const stats = fstatSync(descriptor);
+    if (!stats.isFile() || stats.size > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(locator);
+    const buffer = Buffer.alloc(MAX_STAGE_OUTPUT_FILE_BYTES + 1);
+    let length = 0;
+    for (; ; ) {
+      const read = readSync(descriptor, buffer, length, buffer.length - length, null);
+      if (read === 0) break;
+      length += read;
+      if (length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(locator);
+    }
+    return buffer.subarray(0, length);
+  } catch (error2) {
+    if (error2 instanceof WorkflowContractError) throw error2;
+    throw unreadable(locator);
+  } finally {
+    if (descriptor !== null) closeSync(descriptor);
   }
 }
 function loadStageOutputFile(reference, read = readLocalStageOutputFile) {
   const bytes = read(reference.locator);
-  if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile exceeds the 16 MiB limit.", { locator: reference.locator });
-  }
+  if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(reference.locator);
   const digest2 = `sha256:${createHash5("sha256").update(bytes).digest("hex")}`;
   if (digest2 !== reference.digest) {
     throw new WorkflowContractError("INTEGRITY_FAILED", "outputFile content does not match its digest.", {
       locator: reference.locator,
-      expected: reference.digest,
-      actual: digest2
+      expected: reference.digest
     });
   }
   let parsed;
@@ -22379,12 +22386,8 @@ var WorkflowService = class {
         );
       }
       const result = this.validator.stageResult(rawResult);
-      let loadedOutput;
-      if (result.outputFile) {
-        if (result.output.output !== null) {
-          throw new WorkflowContractError("INVALID_INPUT", "output.output must be null when outputFile carries the provider output.");
-        }
-        loadedOutput = loadStageOutputFile(result.outputFile, this.readStageOutputFile);
+      if (result.outputFile && result.output.output !== null) {
+        throw new WorkflowContractError("INVALID_INPUT", "output.output must be null when outputFile carries the provider output.");
       }
       return this.change(result.runId, result.expectedRevision, (receipt) => {
         if (receipt.state !== "running") {
@@ -22410,6 +22413,15 @@ var WorkflowService = class {
             requiredStageId: priorStage.stageId,
             requestedStageId: result.stageId
           });
+        }
+        let loadedOutput;
+        if (result.outputFile) {
+          if (target.receiptPolicy) {
+            throw new WorkflowContractError("INVALID_INPUT", "Stages with a receipt policy must record their output inline.", {
+              stageId: target.stageId
+            });
+          }
+          loadedOutput = loadStageOutputFile(result.outputFile, this.readStageOutputFile);
         }
         let trustedStageContext = null;
         if (requireTrustedExecutionContext && result.state === "passed" && !target.executionRequirement && !DETERMINISTIC_CAPABILITIES.has(target.requiredCapability)) {
