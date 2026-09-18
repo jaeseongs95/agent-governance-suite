@@ -90,8 +90,13 @@ function actionDigestFor(input, targetDigest) {
   return digest(canonicalIntentForDigest(input, targetDigest));
 }
 
+// Report evidence lists are unique by contract; one evidence file may cover several targets.
+function uniqueRefs(refs) {
+  return [...new Set(refs.filter(Boolean))];
+}
+
 function refLocators(refs) {
-  return refs.map((item) => item.locator).filter(Boolean);
+  return uniqueRefs(refs.map((item) => item.locator));
 }
 
 function approvalStatus(input, now, required) {
@@ -177,7 +182,7 @@ export function evaluatePreflight(input, options = {}) {
     { checkId: "authorization-match", state: authorizationMatched ? "passed" : "failed", evidenceRefs: [input.authorizationRef.locator], message: authorizationMatched ? "행동, 대상과 환경이 허용 범위에 있습니다." : "권한 범위가 행동, 대상 또는 환경과 일치하지 않습니다." },
     { checkId: "current-state", state: currentStateMatched ? "passed" : "unknown", evidenceRefs: refLocators(input.currentStateEvidenceRefs), message: currentStateMatched ? "현재 fingerprint가 예상값과 일치합니다." : "모든 대상의 현재 fingerprint를 확인하지 못했습니다." },
     { checkId: "approval", state: approval.status === "observed" || approval.status === "not-required" ? "passed" : "unknown", evidenceRefs: approval.refs, message: `승인 상태: ${approval.status}` },
-    { checkId: "recovery", state: recoverySufficient ? "passed" : "failed", evidenceRefs: [input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef].filter(Boolean), message: recoverySufficient ? "복구 또는 명시적 비가역성 수용 근거가 있습니다." : "복구 설계를 보완해야 합니다." },
+    { checkId: "recovery", state: recoverySufficient ? "passed" : "failed", evidenceRefs: uniqueRefs([input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef]), message: recoverySufficient ? "복구 또는 명시적 비가역성 수용 근거가 있습니다." : "복구 설계를 보완해야 합니다." },
     { checkId: "blast-radius", state: blastRadiusMatched ? "passed" : "failed", evidenceRefs: [], message: blastRadiusMatched ? "예상 영향 범위가 모든 대상을 포함합니다." : "예상 영향 범위가 대상 수보다 작습니다." },
   ];
   const unresolved = [];
@@ -197,7 +202,7 @@ export function evaluatePreflight(input, options = {}) {
     if (!blastRadiusMatched) unresolved.push("영향 범위를 다시 계산해야 합니다.");
   }
 
-  const recoveryRefs = [input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef].filter(Boolean);
+  const recoveryRefs = uniqueRefs([input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef]);
   return {
     schemaVersion: VERSION, operationId: input.operationId, actionDigest, targetDigest,
     classification: { actionClass: input.actionClass, reversibility: input.recoveryPlan.irreversibilityAccepted ? "irreversible" : (recoverySufficient ? "reversible" : "conditional"), externalImpact, dataLossPotential, permissionImpact },

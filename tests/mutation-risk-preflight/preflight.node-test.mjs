@@ -55,6 +55,36 @@ test("READY 보고서는 계약을 통과하고 실행 권한을 부여하지 �
   assert.match(report.checks.find((item) => item.checkId === "authorization-match").message, /허용 범위/);
 });
 
+test("여러 대상이 같은 evidence를 공유해도 보고서와 receipt가 계약을 통과한다", async () => {
+  const intent = await fixture("deploy");
+  const shared = intent.currentStateEvidenceRefs[0];
+  intent.targets.push({ ...intent.targets[0], locator: "service://payments-worker" });
+  intent.currentStateEvidenceRefs.push({ ...shared, targetLocator: "service://payments-worker" });
+  intent.scopeRef.includedTargets.push("service://payments-worker");
+  intent.authorizationRef.allowedTargets.push("service://payments-worker");
+  const approvalRef = {
+    locator: "evidence://approval",
+    digest: `sha256:${"7".repeat(64)}`,
+    operationId: intent.operationId,
+    actionClass: intent.actionClass,
+    targetLocators: intent.targets.map((target) => target.locator),
+    environments: [...new Set(intent.targets.map((target) => target.environment))],
+    expiresAt: "2026-09-10T00:00:00.000Z",
+  };
+  intent.approvalEvidenceRefs = [approvalRef, { ...approvalRef }];
+  intent.expectedBlastRadius.affectedTargets = intent.targets.length;
+  intent.recoveryPlan.restoreProcedureRef = intent.recoveryPlan.backupRef;
+  const report = evaluatePreflight(intent, { now: evaluationTime });
+  const schema = JSON.parse(await readFile(path.join(skillRoot, "contracts", "mutation-preflight-report.v1.schema.json"), "utf8"));
+  const validate = new Ajv2020({ strict: true, formats: { "date-time": true } }).compile(schema);
+  assert.equal(validate(report), true, JSON.stringify(validate.errors));
+  assert.deepEqual(report.checks.find((item) => item.checkId === "current-state").evidenceRefs, [shared.locator]);
+  assert.deepEqual(report.recovery.evidenceRefs, [intent.recoveryPlan.backupRef, intent.recoveryPlan.restoreTestEvidenceRef]);
+  assert.equal(report.verdict, "READY", JSON.stringify(report.unresolved));
+  assert.deepEqual(report.approval.evidenceRefs, [approvalRef.locator]);
+  assert.equal(verifyReceipt({ report, intent, verificationTime: evaluationTime }).valid, true);
+});
+
 test("receipt는 대상 fingerprint, action과 만료 시각 변경을 거부한다", async () => {
   const intent = await fixture("local-delete");
   const report = evaluatePreflight(intent, { now: evaluationTime });

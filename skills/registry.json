@@ -822,7 +822,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "mutation-risk-preflight",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "path": "./mutation-risk-preflight",
       "enabled": true,
       "priority": 50,
