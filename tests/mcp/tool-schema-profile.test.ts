@@ -5,13 +5,14 @@ import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { Ajv2020 } from "ajv/dist/2020.js";
 import { describe, expect, it } from "vitest";
 
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { resolveToolSchemaProfile } from "../../mcp-server/src/runtime-config.js";
-import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
+import { ContractValidator, contractSchemas } from "../../mcp-server/src/schema-validator.js";
 import { ANTHROPIC_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
@@ -94,10 +95,67 @@ describe("MCP tool schema profiles", () => {
       expect(Object.keys(planning.properties as object)).toEqual(expect.arrayContaining(["taskEnvelope", "evaluationAuditPurpose", "taskId"]));
       expect(JSON.stringify(planning)).not.toContain("executionContext");
       expect(JSON.stringify(planning)).not.toContain("$ref");
+      // Only plan_workflow and the schemas that use $ref differ; Claude Code cannot resolve references.
+      const referencing = defaults.filter((tool) => JSON.stringify(tool.inputSchema).includes("$ref")).map((tool) => tool.name);
+      expect(referencing).toEqual(expect.arrayContaining(["open_convergence_root", "claim_workflow_attempt", "start_guarded_workflow", "record_stage_result"]));
+      for (const tool of tools) {
+        expect(JSON.stringify(tool.inputSchema), tool.name).not.toContain("$ref");
+        expect(JSON.stringify(tool.inputSchema), tool.name).not.toContain("$defs");
+      }
       const changed = tools.filter((tool) => JSON.stringify(tool) !== JSON.stringify(defaults.find((entry) => entry.name === tool.name)));
-      expect(changed.map((tool) => tool.name)).toEqual(["plan_workflow"]);
+      expect(changed.map((tool) => tool.name).sort()).toEqual([...new Set(["plan_workflow", ...referencing])].sort());
     } finally {
       await client.close();
+      await fallback.close();
+    }
+  });
+
+  it("accepts and rejects the same inputs with inlined Anthropic schemas as with the referenced contracts", async () => {
+    const anthropic = await connect("anthropic");
+    const fallback = await connect();
+    try {
+      const inlined = (await anthropic.listTools()).tools as ListedTool[];
+      const referenced = (await fallback.listTools()).tools as ListedTool[];
+      const options = { strict: false, allErrors: true, validateFormats: false };
+      const inlineAjv = new Ajv2020(options);
+      const contractAjv = new Ajv2020(options);
+      for (const document of Object.values(contractSchemas)) contractAjv.addSchema(document as object);
+      const compileReferenced = (schema: Record<string, unknown>) => {
+        const copy = structuredClone(schema);
+        delete copy.$id;
+        return contractAjv.compile(copy);
+      };
+      const task = {
+        schemaVersion: "1.0.0", taskId: "inline", objective: "Check inlined schemas.",
+        scope: { included: ["x"], excluded: [] }, acceptanceCriteria: ["x"], riskLevel: "low",
+        workUnits: [{ id: "u", objective: "x", dependencies: [], writeTargets: ["x.md"] }],
+        requiredCapabilities: ["task-decomposition"], constraints: [],
+        authorization: { allowedActions: ["test"], prohibitedActions: [], approvalRequired: [] },
+        decision: { complexity: "simple", hasConflicts: false }, orchestration: { requested: true, mcpAvailable: true },
+      };
+      const frame = {
+        schemaVersion: "1.0.0", workspace: { workspaceId: "w", locator: "fixture:w" },
+        controlArtifacts: [{ artifactId: "a", role: "pass-condition", locator: "fixture:a", digest: `sha256:${"a".repeat(64)}` }],
+        targetArtifacts: [{ artifactId: "c", role: "candidate", locator: "fixture:c", digest: `sha256:${"b".repeat(64)}` }],
+        operationalSettings: { maxAttemptsPerEpoch: 3, maxEpochs: 2, leaseTtlSeconds: 300 },
+      };
+      const open = { schemaVersion: "1.0.0", parentRootId: null, taskEnvelope: task, frame, userApprovalRefs: [], responseMode: "compact" };
+      const cases: Array<[string, Record<string, unknown>]> = [
+        ["open_convergence_root", open],
+        ["open_convergence_root", { ...open, taskEnvelope: JSON.stringify(task) }],
+        ["open_convergence_root", { ...open, frame: JSON.stringify(frame) }],
+        ["open_convergence_root", { ...open, frame: { ...frame, operationalSettings: { ...frame.operationalSettings, maxEpochs: 9 } } }],
+        ["record_stage_result", { schemaVersion: "1.0.0", runId: "r", stageId: "s", expectedRevision: 0, state: "passed", output: { schemaVersion: "1.0.0", kind: "output", output: {}, artifacts: [], error: null }, evidence: [], findings: [], blockers: [], error: null }],
+        ["record_stage_result", { schemaVersion: "1.0.0", runId: "r", stageId: "s", expectedRevision: 0, state: "passed", output: "{}", evidence: [], findings: [], blockers: [], error: null }],
+      ];
+      for (const [name, input] of cases) {
+        const inline = inlineAjv.compile(inlined.find((tool) => tool.name === name)!.inputSchema);
+        const reference = compileReferenced(referenced.find((tool) => tool.name === name)!.inputSchema);
+        expect(inline(input), `${name} ${JSON.stringify(input).slice(0, 80)}`).toBe(reference(input));
+      }
+      expect(inlineAjv.compile(inlined.find((tool) => tool.name === "open_convergence_root")!.inputSchema)(open)).toBe(true);
+    } finally {
+      await anthropic.close();
       await fallback.close();
     }
   });

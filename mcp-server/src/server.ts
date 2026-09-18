@@ -11,6 +11,7 @@ import {
   type WorkflowReceiptV1,
 } from "../../contracts/types.js";
 import { contractSchemas } from "./schema-validator.js";
+import { inlineSchemaReferences } from "./tool-schema-inline.js";
 import { PLUGIN_INFO } from "./plugin-info.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
 import { type ContinuityGateway, UnavailableContinuityService } from "./continuity-service.js";
@@ -261,8 +262,17 @@ export function createMcpServer(
     { capabilities: { tools: {} }, ...(instructions === undefined ? {} : { instructions }) },
   );
 
+  const contractDocuments = Object.values(contractSchemas) as Array<Record<string, unknown>>;
+  // Anthropic hosts cannot resolve $ref in tool schemas, so they receive fully inlined copies.
+  const advertise = <T extends { inputSchema: Record<string, unknown> }>(tools: T[]): T[] =>
+    toolSchemaProfile === "anthropic"
+      ? tools.map((tool) => (JSON.stringify(tool.inputSchema).includes('"$ref"')
+        ? { ...tool, inputSchema: inlineSchemaReferences(tool.inputSchema, contractDocuments) }
+        : tool))
+      : tools;
+
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: [
+    tools: advertise([
       {
         name: "lookup_korean_prose_terms",
         description: "Look up curated Korean prose glossary terms once before MCP selection. The source and matches are never persisted.",
@@ -383,7 +393,7 @@ export function createMcpServer(
         inputSchema: contractSchemas.executeStateCleanupRequest,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
       },
-    ],
+    ]),
   }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
