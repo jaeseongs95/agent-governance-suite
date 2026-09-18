@@ -280,13 +280,20 @@ export async function findHookEventDrift(root = ROOT) {
 /**
  * Reports how the committed claude-plugin/ differs from the current sources
  * without failing. Shared-source changes do not have to regenerate the Claude
- * plugin, so a failed render is reported as drift as well.
+ * plugin, so a failed render is reported as drift as well. Hook event drift
+ * does not depend on the render, so a failed render does not hide it.
  */
 export async function reportClaudePluginDrift(root = ROOT) {
   try {
     return await checkClaudePlugin(root);
   } catch (error) {
-    return [`render failed: ${error instanceof Error ? error.message : String(error)}`];
+    const problems = [`render failed: ${error instanceof Error ? error.message : String(error)}`];
+    try {
+      problems.push(...await findHookEventDrift(root));
+    } catch {
+      // The hook files are unreadable as well; the render failure already says why.
+    }
+    return problems;
   }
 }
 

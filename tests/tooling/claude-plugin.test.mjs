@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -229,5 +229,18 @@ describe("Claude overlay safeguards", () => {
     const problems = await reportClaudePluginDrift(directory);
     expect(problems).toHaveLength(1);
     expect(problems[0]).toMatch(/^render failed: /u);
+  });
+
+  it("still reports missing hook events when the Claude plugin cannot be rendered", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "claude-plugin-drift-"));
+    temporaryDirectories.push(directory);
+    await mkdir(path.join(directory, "hooks"), { recursive: true });
+    await mkdir(path.join(directory, OUTPUT_DIRECTORY, "hooks"), { recursive: true });
+    await writeFile(path.join(directory, "hooks", "hooks.json"), JSON.stringify({ hooks: { SessionStart: [], Stop: [] } }));
+    await writeFile(path.join(directory, OUTPUT_DIRECTORY, "hooks", "hooks.json"), JSON.stringify({ hooks: { SessionStart: [] } }));
+    const problems = await reportClaudePluginDrift(directory);
+    expect(problems).toHaveLength(2);
+    expect(problems[0]).toMatch(/^render failed: /u);
+    expect(problems[1]).toMatch(/^Codex hook event Stop is not registered/u);
   });
 });
