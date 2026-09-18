@@ -7,7 +7,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
 <!-- release-version:start -->
-The current public release is `v1.16.0` and includes fifteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. This release applies the candidate-v2 policies to `korean-prose-editor`: selection searches for defects in two steps, editing tries safe alternatives instead of dropping a risky first edit, and verification compares source and candidate in both directions. The evaluation tooling no longer accepts runs whose actual model or provider version is unverified as new evidence. The quality-gate pass (`0.3.0-gate-1`) evaluated the policies before candidate-v2, so the new policies have not been quality-evaluated yet.
+The current public release is `v1.16.1` and includes fifteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. This release changes only how the Claude Code distribution is generated; skills, the MCP server, and the Codex distribution behave as in v1.16.0. Claude-only wording now lives in per-skill files, so changes to shared skills or Codex-only files no longer have to update the generated Claude plugin in the same change. The candidate-v2 policies applied to `korean-prose-editor` in v1.16.0 were not covered by the quality-gate pass (`0.3.0-gate-1`) and have not been quality-evaluated yet.
 <!-- release-version:end -->
 
 ## Problems it handles
@@ -44,7 +44,7 @@ Node.js 22.13.0 or later is required.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.16.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.16.1
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
