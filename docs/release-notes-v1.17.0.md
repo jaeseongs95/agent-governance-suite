@@ -7,7 +7,7 @@
 - 훅은 도구 이름, 도구 입력 digest, task·run·stage·revision, actor와 2분 유효기간을 담은 토큰을 HMAC으로 서명해 도구 입력의 `_hostAttestation`에 넣습니다. 서명 키는 Claude 배포물의 workflow DB(`${CLAUDE_PLUGIN_DATA}/workflows.sqlite3`)에 둡니다.
 - 서버의 `HostAttestationProvider`가 토큰을 검증해 관측값을 넘기고, 기존 결속·유효기간·1회 소비 검사는 그대로 적용됩니다. 입력이 바뀌었거나, 서명이 틀렸거나, 만료됐거나, 이미 쓴 토큰이면 `BINDING_INVALID`입니다. 토큰이 없으면 `BINDING_REQUIRED`입니다.
 - 모델 class는 Claude 라우팅 프리셋과 같게 haiku=`lightweight`, sonnet=`general`, opus=`deep`, fable=`frontier`로 정합니다. 목록에 없는 모델에는 토큰을 만들지 않습니다.
-- 훅이 토큰을 만들지 못하면 호출자가 도구 인자에 넣은 `_hostAttestation`을 지웁니다. launcher도 훅 실패·시간 초과·`CLAUDE_PLUGIN_DATA` 없음에서 같은 처리를 하므로, 도구 인자로 넣은 토큰은 서버에 닿지 않습니다.
+- 훅이 토큰을 만들지 못하면 호출자가 도구 인자에 넣은 `_hostAttestation`을 지웁니다. launcher도 훅 실패·시간 초과·`CLAUDE_PLUGIN_DATA` 없음에서 같은 처리를 합니다. `node`를 실행하지 못하거나 Claude Code가 훅 timeout(10초)으로 launcher를 끝낸 경우에는 원래 입력이 그대로 전달되지만, 그 토큰은 같은 사용자 권한으로 서명 키를 읽어야만 만들 수 있습니다.
 - 계획과 receipt에 남는 actor ID는 session·agent ID의 SHA-256 digest로 만듭니다. 훅은 transcript에서 해당 메시지의 모델과 effort만 꺼내고 내용을 저장하지 않습니다.
 
 ## 배경
