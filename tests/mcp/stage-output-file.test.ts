@@ -178,7 +178,8 @@ describe("stage output by file reference", () => {
   });
 
   it("reads regular local files only, bounded by the size limit, and never echoes the actual digest", () => {
-    expect(() => readLocalStageOutputFile(String.raw`\\server\share\output.json`)).toThrow(/network path/u);
+    // POSIX treats a backslash UNC path as relative; either way it is refused.
+    expect(() => readLocalStageOutputFile(String.raw`\\server\share\output.json`)).toThrow(/network path|absolute/u);
     expect(() => readLocalStageOutputFile("//server/share/output.json")).toThrow(/network path|absolute/u);
     const oversized = path.join(scratch(), "big.json");
     writeFileSync(oversized, Buffer.alloc(MAX_STAGE_OUTPUT_FILE_BYTES + 1, 0x20));
