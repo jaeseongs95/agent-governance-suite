@@ -102,11 +102,14 @@ try {
   let sourceDescriptor;
   try {
     sourceDescriptor = await readJson(path.join(stagedSkill, "integration", "skill-descriptor.json"));
-  } catch {
-    if (!args.phase || !args.capability) {
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    if (!existingDescriptor && (!args.phase || !args.capability)) {
       throw new Error("A new imported skill needs integration/skill-descriptor.json or --phase and --capability.");
     }
   }
+  // An upstream without an integration descriptor keeps the routing this repository already registered for the skill.
+  const keepRegistered = !sourceDescriptor && Boolean(existingDescriptor) && !(args.phase && args.capability);
   const inherited = sourceDescriptor ?? {};
   const sourceProviders = Array.isArray(inherited.providers) ? inherited.providers : [];
   const providers = sourceProviders.length > 0
@@ -149,16 +152,18 @@ try {
         failureHandling: "Return a structured provider result.",
         gate: { kind: "none", policy: "none", validator: null },
       }];
-  const importedDescriptor = {
-    schemaVersion: "2.0.0",
-    skillId: name,
-    version: metadataVersion,
-    path: `./${name}`,
-    enabled: inherited.enabled ?? sourceProviders[0]?.enabled ?? true,
-    priority: inherited.priority ?? sourceProviders[0]?.priority ?? 50,
-    providers,
-  };
-  for (const provider of providers) {
+  const importedDescriptor = keepRegistered
+    ? { ...existingDescriptor, version: metadataVersion }
+    : {
+        schemaVersion: "2.0.0",
+        skillId: name,
+        version: metadataVersion,
+        path: `./${name}`,
+        enabled: inherited.enabled ?? sourceProviders[0]?.enabled ?? true,
+        priority: inherited.priority ?? sourceProviders[0]?.priority ?? 50,
+        providers,
+      };
+  for (const provider of importedDescriptor.providers ?? []) {
     for (const capability of provider.capabilities ?? []) {
       const owner = skills.find((descriptor) => descriptor.skillId !== name
         && descriptor.providers?.some((candidate) => candidate.capabilities?.includes(capability)));

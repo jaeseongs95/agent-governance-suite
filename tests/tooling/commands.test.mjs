@@ -157,6 +157,37 @@ describe("skill maintenance commands", () => {
     expect(newer.status, newer.stderr).toBe(0);
     expect(await readFile(path.join(suiteRoot, "skills", "versioned-skill", "SKILL.md"), "utf8")).toContain("version: 0.2.2");
   });
+
+  it("keeps the registered routing when a replaced skill ships no integration descriptor", async () => {
+    const suiteRoot = await createSuiteRoot();
+    const { source, commits } = await createVersionedSource(["0.2.0", "0.2.1"]);
+    const base = ["--source", source, "--skill-path", "."];
+    // A new skill without a descriptor still needs an explicit phase and capability.
+    expect(runScript("import-skill.mjs", [...base, "--ref", commits[0]], suiteRoot).status).not.toBe(0);
+    expect(runScript("import-skill.mjs", [...base, "--ref", commits[0], "--phase", "validation", "--capability", "ref-validation"], suiteRoot).status).toBe(0);
+
+    const registryPath = path.join(suiteRoot, "skills", "registry.json");
+    const lockPath = path.join(suiteRoot, "skills", "source-lock.json");
+    const registry = JSON.parse(await readFile(registryPath, "utf8"));
+    registry.skills[0].priority = 70;
+    registry.skills[0].providers[0].capabilities.push("ref-auditing");
+    registry.skills[0].providers[0].phaseOrder = 20;
+    await writeFile(registryPath, `${JSON.stringify(registry, null, 2)}\n`);
+    const lock = JSON.parse(await readFile(lockPath, "utf8"));
+    lock.sources[0].updatePolicy = "auto-pr";
+    await writeFile(lockPath, `${JSON.stringify(lock, null, 2)}\n`);
+
+    const result = runScript("import-skill.mjs", [...base, "--ref", commits[1], "--replace", "true", "--descendant-of", commits[0]], suiteRoot);
+    expect(result.status, result.stderr).toBe(0);
+    const updated = JSON.parse(await readFile(registryPath, "utf8")).skills;
+    expect(updated).toHaveLength(1);
+    expect(updated[0]).toEqual({ ...registry.skills[0], version: "0.2.1" });
+    expect(JSON.parse(await readFile(lockPath, "utf8")).sources[0]).toMatchObject({
+      version: "0.2.1",
+      ref: { kind: "commit", commit: commits[1] },
+      updatePolicy: "auto-pr",
+    });
+  });
 });
 
 async function createVersionedSource(versions) {
