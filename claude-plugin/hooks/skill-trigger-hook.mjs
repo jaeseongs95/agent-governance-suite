@@ -18,12 +18,14 @@ const PROMPT_RULES = [
   },
   {
     skill: "mutation-risk-preflight",
-    test: (p) => /(rm\s+-r|rm\s+-rf|삭제|지우|날리|drop\s+table|truncate|migrat|마이그레이션|deploy|배포|publish|게시|권한\s*변경|permission|결제|billing)/iu.test(p),
+    // Verb forms only: "삭제된 파일 목록 보여줘" or a bare "permission" must not trigger.
+    test: (p) => /(rm\s+-r|rm\s+-rf|삭제해|삭제할|삭제하|지워|지울|날려|날리|drop\s+table|truncate|migrat|마이그레이션|deploy|배포해|배포할|배포하|publish|게시해|게시할|권한\s*변경|permission\s*(change|grant|update|revok)|chmod|결제|billing)/iu.test(p),
     why: "삭제·배포·마이그레이션·권한 변경처럼 되돌리기 어려운 작업은 실행 직전에 대상·승인·영향 범위·복구 조건을 읽기 전용으로 점검하는 단계가 있다",
   },
   {
     skill: "blocker-diagnostician",
-    test: (p) => /(실패|에러|error|fail|죽|깨지|안\s*돼|안\s*됨)/iu.test(p) && /(또|다시|계속|반복|여전히|세\s*번|두\s*번|번째|still|again|keeps?)/iu.test(p),
+    // "또" must be the adverb, not the conjunction "또는".
+    test: (p) => /(실패|에러|error|fail|죽|깨지|안\s*돼|안\s*됨)/iu.test(p) && /(또(?!는)|다시|계속|반복|여전히|세\s*번|두\s*번|번째|still|again|keeps?)/iu.test(p),
     why: "같은 실패가 반복될 때는 관측된 실패와 원인 가설을 분리하고 새 정보를 주는 다음 검사를 고르는 단계가 있다",
   },
   {
