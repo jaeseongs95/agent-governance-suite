@@ -1,7 +1,7 @@
 # Agent Governance Suite 향후 로드맵
 
 <!-- release-version:start -->
-문서 기준일은 2026년 9월 18일이다. 현재 공개 릴리스는 `v1.16.2`이다. 한국어 산문 워크플로는 확장한 용어집 검증과 사용자의 명시적 배포 승인에 따라 활성화했다. 2026년 9월 17일 동결 frame `0.3.0-gate-1`(130건, suite revision `9377b6d19eb3a07671dad85af4aaf5e5ce0f5d81`)은 candidate-v2 이전 정책으로 `EVALUATION_EVIDENCE_PASSED`를 얻었지만, v1.16.0의 candidate-v2 정책은 그 평가 대상이 아니므로 품질 미평가 상태로 기록한다. 이 정책의 활성 배포는 사용자의 명시적 릴리스 요청에 따른 결정이며 품질 기준 통과 주장이 아니다.
+문서 기준일은 2026년 9월 18일이다. 현재 공개 릴리스는 `v1.17.0`이다. 한국어 산문 워크플로는 확장한 용어집 검증과 사용자의 명시적 배포 승인에 따라 활성화했다. 2026년 9월 17일 동결 frame `0.3.0-gate-1`(130건, suite revision `9377b6d19eb3a07671dad85af4aaf5e5ce0f5d81`)은 candidate-v2 이전 정책으로 `EVALUATION_EVIDENCE_PASSED`를 얻었지만, v1.16.0의 candidate-v2 정책은 그 평가 대상이 아니므로 품질 미평가 상태로 기록한다. 이 정책의 활성 배포는 사용자의 명시적 릴리스 요청에 따른 결정이며 품질 기준 통과 주장이 아니다.
 <!-- release-version:end -->
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
@@ -70,6 +70,7 @@
 - 2026년 9월 18일 용어집 짝 비교의 회귀 사례(`완료 영수증`→`완료 결과`)를 독립 심의 패널(blind reviewer 3명 + 외부 증거 specialist 1명, `partially_independent`)로 검토했다. 결론: 블라인드 심사자의 "의미 보존 확정 불가 → 원문 유지" 판정은 정책의 기본 규칙에 부합하며 오류가 아니다. 그러나 `completion-result-ko`의 `sourceRef`가 가리키는 국립국어원 페이지는 무관한 역사 용어 `체자`(帖子)를 등재하고 `완료 결과`·`완료 영수증`을 다루지 않으며, 정확 구절 `완료 영수증`은 저장소 밖 문서에서 관측되지 않았다(검색 엔진 4종 후보 59페이지 0건). 따라서 이 항목을 `active: false`로 내리고 `sourceRef`를 저장소의 selection-policy 문서로, priority를 다른 avoid 항목과 같은 60으로 정정했으며 데이터 버전을 `1.2.1`로 올렸다. 함께 정책 문언을 두 곳 정합화했다: rubric의 「용어」 불변량과 sourceDefect 「내부 구현 표현」의 관계를 명시하고, 직역 은유 규정이 "확인 불가면 원문 유지" 기본값을 대체하지 않음을 selection·editing 정책에 적었다. 동결된 짝 비교 결과와 `0.3.0-gate-1` 결과는 바꾸지 않는다. 심의 산출물과 외부 확인 기록은 저장소 밖 custody에 보관한다. GitHub 한국어 용어집의 다의적인 단일어는 `allow`로 분류해 산문 편집을 과도하게 고정하지 않는다.
 - 용어집 평가는 전체 편집 품질과 분리한다. 같은 신규 문장의 direct/MCP 결과를 짝지어 비교하고, 사전 적중군·미적중군, 정책별 정확도, 조회 precision/recall, MCP가 새로 만든 개선과 회귀를 각각 집계한다. 정책별 서로 다른 entry 수가 부족하면 높은 점수라도 일반화 성공이 아니라 `INSUFFICIENT_EVIDENCE`로 기록한다.
 - candidate-v2 정책을 통합 사본에 반영했다. selection은 2단계 결함 탐색을, editing은 안전한 대체안과 왕복 의미 대조를, verification은 양방향 판정을 적용한다. 실제 모델과 provider 버전이 `unverified`인 실행은 새 평가 증거로 받지 않지만, 이 문자열 검사는 provider attestation을 대신하지 않는다. `0.3.0-gate-1`은 candidate-v2 이전의 정책과 평가 toolchain으로 실행했으므로, 이 정책을 포함한 통합 사본의 품질 기준 통과 근거가 아니다. 새 정책은 품질 미평가 상태로 기록한다. provider가 발급한 모델·버전 근거와 과거 holdout 재사용을 막는 shadow gate를 실행 계층에 결속한 뒤에만 완전히 새로운 private holdout으로 정식 재평가한다.
+- 2026년 9월 18일 Claude Code에서 orchestrated MCP가 항상 `BINDING_REQUIRED`로 막히던 원인을 확인했다. 서버에 `TrustedExecutionContextProvider` 구현체가 주입되지 않았고, 이전 문서는 "Claude Code 훅은 모델 정보를 주지 않는다"고 적었지만 PreToolUse 입력의 `tool_use_id`로 transcript에서 그 호출을 낸 assistant 메시지의 `message.model`을 찾을 수 있었다. v1.17.0에 Claude 전용 host attestation 훅과 서버 provider를 추가했다. 서버는 `AGENT_GOVERNANCE_HOST_ATTESTATION=claude-code`일 때만 provider를 켜므로 Codex 배포물은 그대로 `BINDING_REQUIRED`다. 빌드한 Claude 배포물로 새 세션(`claude-sonnet-5`, effort `high`)을 띄워 `plan_workflow`가 관측값으로 통과하는 것을 확인했다. 훅이 시작될 때 transcript에는 아직 그 호출이 없었고 재시도로 찾았다. transcript를 남기지 않는 `--no-session-persistence` 세션에서는 `BINDING_REQUIRED`였다. `record_stage_result`와 서브에이전트 경로는 단위·통합 테스트로만 확인했다. 보증 수준은 하네스 관측이며, 같은 OS 사용자 프로세스의 위조는 막지 않는다.
 
 ### 종료 기준
 
@@ -216,6 +217,7 @@ Hook은 transcript를 읽지 않고 설치별 HMAC으로 session·turn·request 
 ### 증거와 라우팅 강화
 
 - `verified` boolean만 신뢰하지 않고, 가능한 provider에는 검증 가능한 digest 또는 외부 attestation을 요구한다.
+- 실행 모델·추론 수준은 v1.17.0부터 Claude Code에서 하네스 관측(host attestation 훅)으로 결속한다. Codex 호스트용 adapter와 OS 수준 격리(별도 사용자·서명 서비스)는 아직 없다.
 - 감사 보증 수준을 `cooperative-sealed`, `native-atomic`, `external-attested`처럼 명시한다. 지원하지 않는 보증을 성공으로 표시하지 않는다.
 - 자연어 `selectionCriteria`를 MCP가 임의로 해석하지 않는다. 자동 분기가 필요한 조건은 구체적인 capability, 구조화된 routing input 또는 결정적 policy로 옮긴다.
 - 신원 인증과 원본 증거 검증이 필요한 위협 모델은 별도 신원·증거 저장소와의 연동 범위로 분리한다.

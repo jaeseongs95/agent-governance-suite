@@ -5053,8 +5053,8 @@ var require_multipleOf = __commonJS({
         const { gen, data, schemaCode, it } = cxt;
         const prec = it.opts.multipleOfPrecision;
         const res = gen.let("res");
-        const invalid = prec ? (0, codegen_1._)`Math.abs(Math.round(${res}) - ${res}) > 1e-${prec}` : (0, codegen_1._)`${res} !== parseInt(${res})`;
-        cxt.fail$data((0, codegen_1._)`(${schemaCode} === 0 || (${res} = ${data}/${schemaCode}, ${invalid}))`);
+        const invalid2 = prec ? (0, codegen_1._)`Math.abs(Math.round(${res}) - ${res}) > 1e-${prec}` : (0, codegen_1._)`${res} !== parseInt(${res})`;
+        cxt.fail$data((0, codegen_1._)`(${schemaCode} === 0 || (${res} = ${data}/${schemaCode}, ${invalid2}))`);
       }
     };
     exports.default = def;
@@ -13050,8 +13050,8 @@ function rewriteKeyNames(ctx) {
       bySchema.set(entry.schema, entry);
   }
   const rewrites = /* @__PURE__ */ new Map();
-  for (const record2 of pendingRecords.get(ctx) ?? []) {
-    const seen = ctx.seen.get(record2);
+  for (const record3 of pendingRecords.get(ctx) ?? []) {
+    const seen = ctx.seen.get(record3);
     const names = (seen?.def ?? seen?.schema)?.propertyNames;
     if (!names || names === true || rewrites.has(names))
       continue;
@@ -16031,8 +16031,8 @@ function canonicalJson(value) {
   }
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   if (value && typeof value === "object") {
-    const record2 = value;
-    return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record2[key])}`).join(",")}}`;
+    const record3 = value;
+    return `{${Object.keys(record3).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record3[key])}`).join(",")}}`;
   }
   throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-serializable value.");
 }
@@ -17079,6 +17079,9 @@ function assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePat
 function resolveToolSchemaProfile(environment = process.env) {
   return environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE === "anthropic" ? "anthropic" : "default";
 }
+function resolveHostAttestation(environment = process.env) {
+  return environment.AGENT_GOVERNANCE_HOST_ATTESTATION === "claude-code" ? "claude-code" : null;
+}
 
 // mcp-server/src/schema-validator.ts
 var import__ = __toESM(require__(), 1);
@@ -17308,19 +17311,19 @@ var ContractValidator = class {
         value.forEach(visit);
         return;
       }
-      const record2 = value;
-      if ((record2.type === "object" || record2.properties) && record2.additionalProperties !== false) {
+      const record3 = value;
+      if ((record3.type === "object" || record3.properties) && record3.additionalProperties !== false) {
         throw new WorkflowContractError(
           "INVALID_INPUT",
           "A reference-only provider output schema must close every declared object.",
           { schemaPath: reference.path }
         );
       }
-      if (typeof record2.const === "string") tokens.add(record2.const);
-      if (Array.isArray(record2.enum)) {
-        for (const item of record2.enum) if (typeof item === "string") tokens.add(item);
+      if (typeof record3.const === "string") tokens.add(record3.const);
+      if (Array.isArray(record3.enum)) {
+        for (const item of record3.enum) if (typeof item === "string") tokens.add(item);
       }
-      Object.values(record2).forEach(visit);
+      Object.values(record3).forEach(visit);
     };
     visit(schema);
     return tokens;
@@ -19119,7 +19122,7 @@ var Server = class extends Protocol {
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "1.16.2",
+  version: "1.17.0",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
@@ -19550,7 +19553,7 @@ function serverInstructions(profile = "default") {
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default") {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null) {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -19682,6 +19685,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
   }));
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const args = asRecord(request.params.arguments);
+    const attested = (tool, call) => hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
     let updateStatus = null;
     let result;
     if (request.params.name === "lookup_korean_prose_terms") {
@@ -19703,7 +19707,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       updateStatus = await updates.check(false);
       switch (request.params.name) {
         case "plan_workflow":
-          result = service.planWorkflow(args, true);
+          result = attested("plan_workflow", (input) => service.planWorkflow(input, true));
           break;
         case "open_convergence_root":
           {
@@ -19761,7 +19765,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
           {
             const mode = responseMode(args, "responseMode");
             result = mode === null ? invalidInput("responseMode must be compact or full.") : projectResult(
-              service.recordStageResult(domainArguments(args, "responseMode"), true),
+              attested("record_stage_result", (input) => service.recordStageResult(domainArguments(input, "responseMode"), true)),
               mode,
               workflowStatusSummary
             );
@@ -21059,9 +21063,9 @@ function sameValues(left, right) {
 function duplicateFree(values) {
   return values.length === new Set(values).size;
 }
-function validateDecisionRecordSemantics(record2) {
+function validateDecisionRecordSemantics(record3) {
   const errors = [];
-  const preflight = object3(record2.preflight);
+  const preflight = object3(record3.preflight);
   const requiredCapabilities = stringArray(preflight.required_capabilities);
   const observedCapabilities = stringArray(preflight.observed_capabilities);
   const missingCapabilities = stringArray(preflight.missing_capabilities);
@@ -21075,11 +21079,11 @@ function validateDecisionRecordSemantics(record2) {
   if (!sameValues(expectedMissing, missingSet)) {
     errors.push("preflight missing capabilities must exactly equal required minus observed");
   }
-  const caseBrief = object3(record2.case_brief);
-  if (!isDeepStrictEqual(caseBrief.constraints, record2.constraints)) {
+  const caseBrief = object3(record3.case_brief);
+  if (!isDeepStrictEqual(caseBrief.constraints, record3.constraints)) {
     errors.push("case_brief constraints must match record constraints");
   }
-  const run = object3(record2.run);
+  const run = object3(record3.run);
   const stage = run.stage;
   const assurance = run.assurance;
   const cap = run.worker_cap;
@@ -21097,7 +21101,7 @@ function validateDecisionRecordSemantics(record2) {
       workerById.set(id, worker);
     }
   }
-  const manifest = array2(record2.panel_manifest);
+  const manifest = array2(record3.panel_manifest);
   if (!isDeepStrictEqual(manifest, array2(run.workers))) {
     errors.push("panel_manifest must exactly equal run.workers");
   }
@@ -21177,10 +21181,10 @@ function validateDecisionRecordSemantics(record2) {
     if (run.strict === true) errors.push("strict execution cannot use a Judge fallback");
   }
   if (strictShortfall) {
-    const cross2 = object3(record2.cross_examination);
+    const cross2 = object3(record3.cross_examination);
     const emptyRunFields = ["workers", "completed_worker_ids", "reused_worker_ids", "failures", "specialist_additions", "redeliberations"];
     const emptyRootFields = ["panel_manifest", "material_claims", "issue_ledger", "axis_decisions"];
-    if (assurance !== "provisional" || record2.consensus_proposal !== null || judgeId !== null || fallback !== null || instantiated.size > 0 || missingSet.size === 0 || emptyRunFields.some((field) => array2(run[field]).length > 0) || emptyRootFields.some((field) => array2(record2[field]).length > 0) || cross2.decision !== "skip" || !nonempty(cross2.reason) || ["trigger_items", "selected_item_ids", "coverage", "followups"].some((field) => array2(cross2[field]).length > 0)) {
+    if (assurance !== "provisional" || record3.consensus_proposal !== null || judgeId !== null || fallback !== null || instantiated.size > 0 || missingSet.size === 0 || emptyRunFields.some((field) => array2(run[field]).length > 0) || emptyRootFields.some((field) => array2(record3[field]).length > 0) || cross2.decision !== "skip" || !nonempty(cross2.reason) || ["trigger_items", "selected_item_ids", "coverage", "followups"].some((field) => array2(cross2[field]).length > 0)) {
       errors.push("strict capability shortfall contract is inconsistent");
     }
     return errors;
@@ -21222,7 +21226,7 @@ function validateDecisionRecordSemantics(record2) {
     }
   }
   const claimStatuses = /* @__PURE__ */ new Map();
-  for (const claim2 of array2(record2.material_claims).map(object3)) {
+  for (const claim2 of array2(record3.material_claims).map(object3)) {
     if (!nonempty(claim2.id) || claimStatuses.has(claim2.id)) {
       errors.push("material claim ids must be unique nonempty strings");
       continue;
@@ -21252,24 +21256,24 @@ function validateDecisionRecordSemantics(record2) {
       }
     }
   };
-  scanForbidden(record2);
-  const constraints = new Set(stringArray(record2.constraints));
-  const requiredConstraints = new Set(stringArray(record2.required_constraints));
+  scanForbidden(record3);
+  const constraints = new Set(stringArray(record3.constraints));
+  const requiredConstraints = new Set(stringArray(record3.required_constraints));
   if ([...requiredConstraints].some((constraint) => !constraints.has(constraint))) {
     errors.push("required constraints must be declared constraints");
   }
-  const issues = array2(record2.issue_ledger).map(object3);
+  const issues = array2(record3.issue_ledger).map(object3);
   for (const issue2 of issues) {
     if (!ISSUE_STATUSES.has(String(issue2.status))) errors.push("issue ledger has invalid status");
   }
-  const observability = object3(record2.observability);
+  const observability = object3(record3.observability);
   for (const value of Object.values(observability)) {
     if (typeof value === "string" && value !== "NOT_OBSERVABLE") errors.push("observability strings must be NOT_OBSERVABLE");
   }
   if (typeof observability.worker_count === "number" && observability.worker_count !== instantiated.size) {
     errors.push("observability worker_count must match instantiated workers");
   }
-  const cross = object3(record2.cross_examination);
+  const cross = object3(record3.cross_examination);
   const triggers = array2(cross.trigger_items).map(object3);
   const selected = stringArray(cross.selected_item_ids);
   const coverage = array2(cross.coverage).map(object3);
@@ -21315,7 +21319,7 @@ function validateDecisionRecordSemantics(record2) {
     }
   }
   if ([...followupCounts.values()].some((count) => count > 1)) errors.push("reviewers may receive at most one cross follow-up");
-  const axes = array2(record2.axis_decisions).map(object3);
+  const axes = array2(record3.axis_decisions).map(object3);
   const axisNames = /* @__PURE__ */ new Set();
   for (const axis of axes) {
     if (!nonempty(axis.axis) || axisNames.has(axis.axis)) {
@@ -21340,7 +21344,7 @@ function validateDecisionRecordSemantics(record2) {
   if (assurance === "independent" && (missingSet.size || failures.length || reused.size)) {
     errors.push("independent assurance requires no missing capability, failures, or reuse");
   }
-  const proposal = object3(record2.consensus_proposal);
+  const proposal = object3(record3.consensus_proposal);
   const status = proposal.status;
   const supported = stringArray(proposal.supported_by_verified_claims);
   if ((status === "consensus" || status === "conditional_consensus") && (!supported.length || !axes.length)) {
@@ -21774,8 +21778,8 @@ function canonicalJson2(value) {
   }
   if (Array.isArray(value)) return `[${value.map(canonicalJson2).join(",")}]`;
   if (value && typeof value === "object") {
-    const record2 = value;
-    return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson2(record2[key])}`).join(",")}}`;
+    const record3 = value;
+    return `{${Object.keys(record3).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson2(record3[key])}`).join(",")}}`;
   }
   throw new WorkflowContractError("INVALID_INPUT", "Plan contains a non-serializable value.");
 }
@@ -22711,9 +22715,9 @@ var WorkflowService = class {
         stageId: stage.stageId
       });
     }
-    let record2;
+    let record3;
     try {
-      record2 = this.validator.declaredSchema(
+      record3 = this.validator.declaredSchema(
         this.registry.rootDirectory,
         stage.gate.validatorSchema,
         result.output.output?.decisionRecord,
@@ -22725,15 +22729,15 @@ var WorkflowService = class {
         cause: error2 instanceof Error ? error2.message : String(error2)
       });
     }
-    const semanticErrors = validateDecisionRecordSemantics(record2);
+    const semanticErrors = validateDecisionRecordSemantics(record3);
     if (semanticErrors.length > 0) {
       throw new WorkflowContractError("GATE_FAILED", "DecisionRecord.v1 failed canonical semantic validation.", {
         stageId: stage.stageId,
         semanticErrors
       });
     }
-    const run = record2.run;
-    const proposal = record2.consensus_proposal;
+    const run = record3.run;
+    const proposal = record3.consensus_proposal;
     if (run.assurance === "provisional" || run.capability_shortfall !== false || proposal === null || proposal.status === "no_consensus") {
       throw new WorkflowContractError("GATE_FAILED", "Deliberation result is not eligible to advance the workflow.", {
         stageId: stage.stageId,
@@ -23252,12 +23256,118 @@ var WorkflowService = class {
   }
 };
 
+// mcp-server/src/host-attestation.ts
+import { createHmac as createHmac3, randomBytes as randomBytes3, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+var HOST_ATTESTATION_FIELD = "_hostAttestation";
+var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
+var TOKEN_PREFIX = "aghs1";
+var TOKEN_TTL_MS = 2 * 60 * 1e3;
+var CLAUDE_MODEL_CLASSES = [
+  [/^claude-haiku(?:-|$)/u, "lightweight"],
+  [/^claude-sonnet(?:-|$)/u, "general"],
+  [/^claude-opus(?:-|$)/u, "deep"],
+  [/^claude-fable(?:-|$)/u, "frontier"]
+];
+function record2(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+}
+function modelClassForClaudeModel(model) {
+  return CLAUDE_MODEL_CLASSES.find(([pattern]) => pattern.test(model))?.[1] ?? null;
+}
+function isReasoningEffort(value) {
+  return typeof value === "string" && REASONING_EFFORT.includes(value);
+}
+function withoutHostAttestation(input) {
+  const copy = { ...input };
+  delete copy[HOST_ATTESTATION_FIELD];
+  return copy;
+}
+function signingKey(store) {
+  const key = Buffer.from(
+    store.getOrCreateSecret(HOST_ATTESTATION_KEY, () => randomBytes3(32).toString("base64url")),
+    "base64url"
+  );
+  if (key.length !== 32) throw new WorkflowContractError("INVALID_INPUT", "Stored host attestation key is invalid.");
+  return key;
+}
+function mac2(key, body) {
+  return createHmac3("sha256", key).update(body, "utf8").digest("base64url");
+}
+function invalid(message) {
+  return new WorkflowContractError("BINDING_INVALID", message);
+}
+function verifyToken(store, token) {
+  const [prefix, encodedPayload, signature, ...rest] = token.split(".");
+  if (prefix !== TOKEN_PREFIX || !encodedPayload || !signature || rest.length > 0) {
+    throw invalid("Host attestation token is malformed.");
+  }
+  const expected = Buffer.from(mac2(signingKey(store), `${prefix}.${encodedPayload}`), "utf8");
+  const actual = Buffer.from(signature, "utf8");
+  if (expected.length !== actual.length || !timingSafeEqual3(expected, actual)) {
+    throw invalid("Host attestation token signature is invalid.");
+  }
+  let payload;
+  try {
+    payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8"));
+  } catch {
+    throw invalid("Host attestation token payload is malformed.");
+  }
+  const value = record2(payload);
+  if (!value || value.v !== 1 || value.host !== "claude-code" || typeof value.model !== "string" || modelClassForClaudeModel(value.model) !== value.modelClass || !isReasoningEffort(value.reasoningEffort)) {
+    throw invalid("Host attestation token payload is not a supported Claude Code observation.");
+  }
+  return value;
+}
+var HostAttestationProvider = class {
+  constructor(store) {
+    this.store = store;
+  }
+  store;
+  current = null;
+  run(tool, args, call) {
+    const input = withoutHostAttestation(args);
+    const token = typeof args[HOST_ATTESTATION_FIELD] === "string" ? args[HOST_ATTESTATION_FIELD] : null;
+    this.current = { tool, input, token };
+    try {
+      return call(input);
+    } finally {
+      this.current = null;
+    }
+  }
+  observe(binding) {
+    const current = this.current;
+    if (!current?.token) return null;
+    const payload = verifyToken(this.store, current.token);
+    if (payload.tool !== current.tool || payload.inputDigest !== convergenceDigest(current.input)) {
+      throw invalid("Host attestation token was issued for a different tool call.");
+    }
+    if (payload.phase !== binding.phase) throw invalid("Host attestation token was issued for a different phase.");
+    const taskId = payload.phase === "stage" ? binding.taskId : payload.taskId;
+    if (!taskId) throw invalid("Host attestation token is missing its task binding.");
+    return {
+      schemaVersion: CONTRACT_VERSION,
+      model: payload.model,
+      modelClass: payload.modelClass,
+      reasoningEffort: payload.reasoningEffort,
+      source: "runtime",
+      observedAt: payload.observedAt,
+      observationId: payload.observationId,
+      taskId,
+      runId: payload.runId,
+      stageId: payload.stageId,
+      revision: payload.revision,
+      actorId: payload.actorId,
+      expiresAt: payload.expiresAt
+    };
+  }
+};
+
 // mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash5, createHmac as createHmac3, randomBytes as randomBytes3, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+import { createHash as createHash5, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync3 } from "node:fs";
 import path7 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
-var TOKEN_TTL_MS = 15 * 60 * 1e3;
+var TOKEN_TTL_MS2 = 15 * 60 * 1e3;
 var POLICY = {
   workflowRetentionDays: 180,
   continuityPayloadRetentionDays: 30,
@@ -23284,7 +23394,7 @@ var StateCleanupService = class {
     this.clock = clock;
     this.secret = Buffer.from(workflowStore.getOrCreateSecret(
       "state-cleanup-signing-key",
-      () => randomBytes3(32).toString("base64url")
+      () => randomBytes4(32).toString("base64url")
     ), "base64url");
   }
   workflowStore;
@@ -23314,7 +23424,7 @@ var StateCleanupService = class {
         schemaVersion: "1.0.0",
         planId: randomUUID2(),
         createdAt,
-        expiresAt: new Date(created.getTime() + TOKEN_TTL_MS).toISOString(),
+        expiresAt: new Date(created.getTime() + TOKEN_TTL_MS2).toISOString(),
         policy: POLICY,
         cutoffs,
         candidates,
@@ -23474,20 +23584,20 @@ var StateCleanupService = class {
   }
   sign(payload) {
     const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-    const signature = createHmac3("sha256", this.secret).update(encoded).digest("base64url");
+    const signature = createHmac4("sha256", this.secret).update(encoded).digest("base64url");
     return `${encoded}.${signature}`;
   }
   verify(token) {
     const [encoded, signature, extra] = token.split(".");
     if (!encoded || !signature || extra) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
-    const expected = createHmac3("sha256", this.secret).update(encoded).digest();
+    const expected = createHmac4("sha256", this.secret).update(encoded).digest();
     let actual;
     try {
       actual = Buffer.from(signature, "base64url");
     } catch {
       throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
     }
-    if (actual.toString("base64url") !== signature || actual.length !== expected.length || !timingSafeEqual3(actual, expected)) {
+    if (actual.toString("base64url") !== signature || actual.length !== expected.length || !timingSafeEqual4(actual, expected)) {
       throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token signature is invalid.");
     }
     try {
@@ -23537,7 +23647,14 @@ async function main() {
     store.close();
   });
   const validator = new ContractValidator();
-  const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store);
+  const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
+  const service = new WorkflowService(
+    new FileSkillRegistry(registryPath, validator),
+    validator,
+    store,
+    null,
+    hostAttestation
+  );
   const updates = new PluginUpdateService(store);
   let continuity = new UnavailableContinuityService();
   if (continuityPathAvailable) {
@@ -23549,7 +23666,7 @@ async function main() {
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile());
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation);
   await server.connect(new StdioServerTransport());
 }
 void main().catch((error2) => {

@@ -1,5 +1,5 @@
 {
-  "description": "Local task continuity binding and compact/resume restore metadata for Claude Code.",
+  "description": "Local task continuity binding, compact/resume restore metadata and host execution attestation for Claude Code.",
   "hooks": {
     "SessionStart": [
       {
@@ -49,6 +49,17 @@
             "type": "command",
             "command": "node",
             "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"],
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(plan_workflow|record_stage_result)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs"],
             "timeout": 10
           }
         ]
