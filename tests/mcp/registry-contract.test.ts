@@ -6,6 +6,7 @@ import { FileSkillRegistry, selectSkillByCapability } from "../../mcp-server/src
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
+const sourceLockPath = fileURLToPath(new URL("../../skills/source-lock.json", import.meta.url));
 const koreanSkillRoot = new URL("../../skills/korean-prose-editor/", import.meta.url);
 
 describe("bundled skill registry", () => {
@@ -17,22 +18,31 @@ describe("bundled skill registry", () => {
     expect(capabilities.has("subagent-coordination")).toBe(true);
     expect(capabilities.has("independent-deliberation")).toBe(true);
     expect(capabilities.has("independent-audit")).toBe(true);
-    expect(Object.fromEntries(skills.map((skill) => [skill.skillId, skill.version]))).toMatchObject({
-      "coordinate-subagents": "1.1.0",
-      "independent-deliberation-panel": "1.0.0",
-      "independent-audit-gate": "1.0.0",
-      "instruction-scope-resolver": "1.0.0",
-      "task-contract": "1.0.0",
-      "change-scope-guardian": "1.0.0",
-      "acceptance-evidence-validator": "1.0.0",
-      "blocker-diagnostician": "1.0.0",
-      "recovery-strategy-selector": "0.1.0",
-      "workspace-convention-profiler": "1.0.0",
-      "mutation-risk-preflight": "1.0.0",
-      "model-effort-advisor": "0.1.0",
-      "iteration-frame-auditor": "1.0.0",
-      "evaluation-validity-auditor": "1.0.0",
-    });
+    // Versions come from the source lock so that a skill update does not need an edit here.
+    const lockedVersions = new Map<string, string>(
+      (JSON.parse(readFileSync(sourceLockPath, "utf8")) as { sources: Array<{ skillId: string; version: string }> })
+        .sources.map((source) => [source.skillId, source.version]),
+    );
+    const registeredVersions = new Map(skills.map((skill) => [skill.skillId, skill.version]));
+    for (const skillId of [
+      "coordinate-subagents",
+      "independent-deliberation-panel",
+      "independent-audit-gate",
+      "instruction-scope-resolver",
+      "task-contract",
+      "change-scope-guardian",
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "recovery-strategy-selector",
+      "workspace-convention-profiler",
+      "mutation-risk-preflight",
+      "model-effort-advisor",
+      "iteration-frame-auditor",
+      "evaluation-validity-auditor",
+    ]) {
+      expect(lockedVersions.get(skillId), `${skillId} is missing from skills/source-lock.json`).toMatch(/^\d+\.\d+\.\d+$/u);
+      expect(registeredVersions.get(skillId), `${skillId} registry version`).toBe(lockedVersions.get(skillId));
+    }
     expect(skills.find((skill) => skill.skillId === "independent-deliberation-panel")?.producedArtifacts)
       .toContain("decision-record");
     expect(skills.filter((skill) => skill.skillId === "change-scope-guardian")).toHaveLength(2);

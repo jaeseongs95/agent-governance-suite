@@ -12,10 +12,22 @@ from pathlib import Path
 
 
 EXPECTED_NAME = "independent-audit-gate"
-EXPECTED_VERSION = "1.0.0"
 MONOREPO_ROOT = Path(__file__).resolve().parents[2]
 SKILL_ROOT = MONOREPO_ROOT / "skills" / EXPECTED_NAME
 BEHAVIOR_CASES = Path(__file__).with_name("behavior-cases.json")
+
+
+def locked_version(skill_id: str) -> str:
+    """Version the monorepo source lock records, so a skill update needs no edit here."""
+    lock_path = MONOREPO_ROOT / "skills" / "source-lock.json"
+    lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    versions = [source.get("version") for source in lock.get("sources", []) if source.get("skillId") == skill_id]
+    if len(versions) != 1 or not isinstance(versions[0], str):
+        raise SystemExit(f"{lock_path}: expected exactly one source lock entry with a version for {skill_id}")
+    return versions[0]
+
+
+EXPECTED_VERSION = locked_version(EXPECTED_NAME)
 
 REQUIRED_FILES = (
     "SKILL.md",

@@ -13,6 +13,17 @@ from urllib.parse import unquote
 MONOREPO_ROOT = Path(__file__).resolve().parents[2]
 SKILL_ROOT = MONOREPO_ROOT / "skills" / "coordinate-subagents"
 TEST_ROOT = Path(__file__).resolve().parent
+
+
+def locked_version(skill_id: str) -> str:
+    """Version the monorepo source lock records, so a skill update needs no edit here."""
+    lock_path = MONOREPO_ROOT / "skills" / "source-lock.json"
+    lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    versions = [source.get("version") for source in lock.get("sources", []) if source.get("skillId") == skill_id]
+    if len(versions) != 1 or not isinstance(versions[0], str):
+        raise SystemExit(f"{lock_path}: expected exactly one source lock entry with a version for {skill_id}")
+    return versions[0]
+
 EXPECTED_CASE_IDS = {
     "atomic-no-delegation",
     "audit-slot-reservation",
@@ -314,8 +325,9 @@ def validate_frontmatter() -> None:
     nested_metadata = metadata.get("metadata")
     if version is None and isinstance(nested_metadata, dict):
         version = nested_metadata.get("version")
-    require(isinstance(version, str) and re.fullmatch(r"1\.1\.0", version) is not None,
-            "SKILL.md frontmatter version (version or metadata.version) must be '1.1.0'")
+    expected_version = locked_version("coordinate-subagents")
+    require(isinstance(version, str) and version == expected_version,
+            f"SKILL.md frontmatter version (version or metadata.version) must be {expected_version!r}")
     skill_license = read_utf8(SKILL_ROOT / "LICENSE")
     require("MIT License" in skill_license,
             "the installable skill LICENSE must contain the MIT License text")
