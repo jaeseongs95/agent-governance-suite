@@ -2,7 +2,7 @@
   "normal": [
     {
       "id": "normal-01",
-      "expected": "a plan that needs minimal-implementation routes it to ponytail in the implementation phase, after the pre-mutation gate and before scope verification"
+      "expected": "a plan that needs minimal-implementation routes it to ponytail in the implementation phase, after the scope baseline and before the pre-mutation gate and scope verification"
     }
   ],
   "boundary": [
@@ -14,7 +14,7 @@
   "failure": [
     {
       "id": "failure-01",
-      "expected": "the integrated package carries only the skill instructions and version file, pinned to the fork commit; no always-on hooks are installed"
+      "expected": "packaging guard: the integrated package carries only the skill instructions, version file, license and Codex agent metadata, pinned to the fork commit; no always-on hooks are installed"
     }
   ]
 }

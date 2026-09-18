@@ -1922,7 +1922,7 @@
           ],
           "executionClass": "workflow",
           "phase": "implementation",
-          "phaseOrder": 50,
+          "phaseOrder": 44,
           "requiredInputArtifacts": [],
           "inputBindings": [],
           "producedArtifacts": [],
