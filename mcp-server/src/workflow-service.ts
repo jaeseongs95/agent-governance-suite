@@ -39,6 +39,7 @@ import { FileSkillRegistry, selectSkillByCapability } from "./registry.js";
 import { validateDecisionRecordSemantics } from "./decision-record-validator.js";
 import { ContractValidator } from "./schema-validator.js";
 import { assertReceiptPolicy } from "./receipt-policy.js";
+import { loadStageOutputFile, readLocalStageOutputFile, type StageOutputFileReader } from "./stage-output-file.js";
 import {
   createPlanSigningKey,
   type ConvergenceSnapshot,
@@ -136,6 +137,7 @@ export class WorkflowService {
     private readonly store: WorkflowStore = new InMemoryWorkflowStore(),
     private readonly defaultExecutionContext: ExecutionContextV1 | null = null,
     private readonly trustedExecutionContextProvider: TrustedExecutionContextProvider | null = null,
+    private readonly readStageOutputFile: StageOutputFileReader = readLocalStageOutputFile,
   ) {
     const encodedKey = this.store.getOrCreateSecret(PLAN_SIGNING_KEY, createPlanSigningKey);
     this.planSigningKey = Buffer.from(encodedKey, "base64url");
@@ -630,6 +632,13 @@ export class WorkflowService {
         );
       }
       const result = this.validator.stageResult(rawResult);
+      let loadedOutput: Record<string, unknown> | undefined;
+      if (result.outputFile) {
+        if (result.output.output !== null) {
+          throw new WorkflowContractError("INVALID_INPUT", "output.output must be null when outputFile carries the provider output.");
+        }
+        loadedOutput = loadStageOutputFile(result.outputFile, this.readStageOutputFile);
+      }
       return this.change(result.runId, result.expectedRevision, (receipt) => {
         if (receipt.state !== "running") {
           throw new WorkflowContractError("INVALID_TRANSITION", "Stage results require a running workflow.", {
@@ -693,14 +702,18 @@ export class WorkflowService {
           result.executionContext = clone(trustedStageContext);
         }
 
+        // A file-backed output is checked exactly like inline output; the receipt keeps only its reference.
+        const checked: StageResultV1 = loadedOutput === undefined
+          ? result
+          : { ...result, output: { ...result.output, output: loadedOutput } };
         this.assertPlannedInputsAvailable(receipt, target);
-        this.assertResultSemantics(target, result);
-        this.assertDeclaredReceiptPolicy(receipt, target, result);
+        this.assertResultSemantics(target, checked);
+        this.assertDeclaredReceiptPolicy(receipt, target, checked);
         if (result.state === "passed") {
-          this.assertRequiredArtifacts(target, result);
-          this.assertDeliberationGate(target, result);
-          this.assertMandatoryAuditGate(target, result);
-          this.assertEvaluationValidityGate(target, result);
+          this.assertRequiredArtifacts(target, checked);
+          this.assertDeliberationGate(target, checked);
+          this.assertMandatoryAuditGate(target, checked);
+          this.assertEvaluationValidityGate(target, checked);
         }
         target.state = result.state;
         if (trustedStageContext) this.consumeTrustedExecutionObservation(trustedStageContext, `Stage '${target.stageId}'`);

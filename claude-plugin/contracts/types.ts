@@ -808,6 +808,11 @@ export interface ProviderResultV1 {
   error: ContractErrorBody | null;
 }
 
+export interface StageOutputFileV1 {
+  locator: string;
+  digest: Sha256Digest;
+}
+
 export interface StageResultV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   runId: string;
@@ -815,6 +820,8 @@ export interface StageResultV1 {
   expectedRevision: number;
   state: "needs-input" | "needs-approval" | "needs-redesign" | "failed" | "passed" | "blocked";
   executionContext?: ExecutionContextV1 | null;
+  /** Large provider output passed by local file reference; output.output is then null. */
+  outputFile?: StageOutputFileV1;
   output: ProviderResultV1;
   evidence: EvidenceReferenceV1[];
   findings: string[];

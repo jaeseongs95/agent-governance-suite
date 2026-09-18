@@ -3262,8 +3262,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path8) {
-      let input = path8;
+    function removeDotSegments(path9) {
+      let input = path9;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3672,8 +3672,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path8 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path8 && path8 !== "/" ? path8 : void 0;
+        const path9 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path9 && path9 !== "/" ? path9 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -8205,10 +8205,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path8) {
-  if (!path8)
+function getElementAtPath(obj, path9) {
+  if (!path9)
     return obj;
-  return path8.reduce((acc, key) => acc?.[key], obj);
+  return path9.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -8620,11 +8620,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path8, issues) {
+function prefixIssues(path9, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path8);
+    iss.path.unshift(path9);
     return iss;
   });
 }
@@ -9053,16 +9053,16 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
 }
 function formatError(error2, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error3, path8 = []) => {
+  const processError = (error3, path9 = []) => {
     for (const issue2 of error3.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path8, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path9, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path8, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path8, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
       } else {
-        const fullpath = [...path8, ...issue2.path];
+        const fullpath = [...path9, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -17091,8 +17091,8 @@ import { readFileSync as readFileSync2, readdirSync } from "node:fs";
 import path5 from "node:path";
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path8 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path8, "utf8"));
+  const path9 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path9, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -21643,6 +21643,57 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
   }
 }
 
+// mcp-server/src/stage-output-file.ts
+import { createHash as createHash5 } from "node:crypto";
+import { readFileSync as readFileSync3, statSync } from "node:fs";
+import path7 from "node:path";
+var MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
+function readLocalStageOutputFile(locator) {
+  if (!path7.isAbsolute(locator)) {
+    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must be an absolute local path.");
+  }
+  let size;
+  try {
+    const stats = statSync(locator);
+    if (!stats.isFile()) throw new Error("not a regular file");
+    size = stats.size;
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator is not a readable regular file.", { locator });
+  }
+  if (size > MAX_STAGE_OUTPUT_FILE_BYTES) {
+    throw new WorkflowContractError("INVALID_INPUT", "outputFile exceeds the 16 MiB limit.", { locator });
+  }
+  try {
+    return readFileSync3(locator);
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator could not be read.", { locator });
+  }
+}
+function loadStageOutputFile(reference, read = readLocalStageOutputFile) {
+  const bytes = read(reference.locator);
+  if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) {
+    throw new WorkflowContractError("INVALID_INPUT", "outputFile exceeds the 16 MiB limit.", { locator: reference.locator });
+  }
+  const digest2 = `sha256:${createHash5("sha256").update(bytes).digest("hex")}`;
+  if (digest2 !== reference.digest) {
+    throw new WorkflowContractError("INTEGRITY_FAILED", "outputFile content does not match its digest.", {
+      locator: reference.locator,
+      expected: reference.digest,
+      actual: digest2
+    });
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(bytes.toString("utf8").replace(/^\uFEFF/u, ""));
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", "outputFile is not valid JSON.", { locator: reference.locator });
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new WorkflowContractError("INVALID_INPUT", "outputFile must contain a JSON object.", { locator: reference.locator });
+  }
+  return parsed;
+}
+
 // mcp-server/src/workflow-store.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
 var PLAN_SIGNING_KEY = "plan-signing-key";
@@ -21851,12 +21902,13 @@ function canonicalJson2(value) {
   throw new WorkflowContractError("INVALID_INPUT", "Plan contains a non-serializable value.");
 }
 var WorkflowService = class {
-  constructor(registry2, validator = new ContractValidator(), store = new InMemoryWorkflowStore(), defaultExecutionContext = null, trustedExecutionContextProvider = null) {
+  constructor(registry2, validator = new ContractValidator(), store = new InMemoryWorkflowStore(), defaultExecutionContext = null, trustedExecutionContextProvider = null, readStageOutputFile = readLocalStageOutputFile) {
     this.registry = registry2;
     this.validator = validator;
     this.store = store;
     this.defaultExecutionContext = defaultExecutionContext;
     this.trustedExecutionContextProvider = trustedExecutionContextProvider;
+    this.readStageOutputFile = readStageOutputFile;
     const encodedKey = this.store.getOrCreateSecret(PLAN_SIGNING_KEY, createPlanSigningKey);
     this.planSigningKey = Buffer.from(encodedKey, "base64url");
     if (this.planSigningKey.length !== 32) {
@@ -21868,6 +21920,7 @@ var WorkflowService = class {
   store;
   defaultExecutionContext;
   trustedExecutionContextProvider;
+  readStageOutputFile;
   planSigningKey;
   planWorkflow(rawTask, requireExecutionContext = false) {
     try {
@@ -22326,6 +22379,13 @@ var WorkflowService = class {
         );
       }
       const result = this.validator.stageResult(rawResult);
+      let loadedOutput;
+      if (result.outputFile) {
+        if (result.output.output !== null) {
+          throw new WorkflowContractError("INVALID_INPUT", "output.output must be null when outputFile carries the provider output.");
+        }
+        loadedOutput = loadStageOutputFile(result.outputFile, this.readStageOutputFile);
+      }
       return this.change(result.runId, result.expectedRevision, (receipt) => {
         if (receipt.state !== "running") {
           throw new WorkflowContractError("INVALID_TRANSITION", "Stage results require a running workflow.", {
@@ -22378,14 +22438,15 @@ var WorkflowService = class {
           );
           result.executionContext = clone4(trustedStageContext);
         }
+        const checked = loadedOutput === void 0 ? result : { ...result, output: { ...result.output, output: loadedOutput } };
         this.assertPlannedInputsAvailable(receipt, target);
-        this.assertResultSemantics(target, result);
-        this.assertDeclaredReceiptPolicy(receipt, target, result);
+        this.assertResultSemantics(target, checked);
+        this.assertDeclaredReceiptPolicy(receipt, target, checked);
         if (result.state === "passed") {
-          this.assertRequiredArtifacts(target, result);
-          this.assertDeliberationGate(target, result);
-          this.assertMandatoryAuditGate(target, result);
-          this.assertEvaluationValidityGate(target, result);
+          this.assertRequiredArtifacts(target, checked);
+          this.assertDeliberationGate(target, checked);
+          this.assertMandatoryAuditGate(target, checked);
+          this.assertEvaluationValidityGate(target, checked);
         }
         target.state = result.state;
         if (trustedStageContext) this.consumeTrustedExecutionObservation(trustedStageContext, `Stage '${target.stageId}'`);
@@ -23432,9 +23493,9 @@ var HostAttestationProvider = class {
 };
 
 // mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash5, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHash as createHash6, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync3 } from "node:fs";
-import path7 from "node:path";
+import path8 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
 var TOKEN_TTL_MS2 = 15 * 60 * 1e3;
 var POLICY = {
@@ -23443,13 +23504,13 @@ var POLICY = {
   continuityRecordRetentionDays: 180
 };
 function digest(value) {
-  return `sha256:${createHash5("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${createHash6("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function protection() {
   return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
 }
 function databaseIdentity(databasePath) {
-  return databasePath === ":memory:" ? databasePath : path7.resolve(databasePath);
+  return databasePath === ":memory:" ? databasePath : path8.resolve(databasePath);
 }
 function apiError2(error2) {
   const normalized = error2 instanceof WorkflowContractError ? error2 : new WorkflowContractError("INVALID_INPUT", error2 instanceof Error ? error2.message : String(error2));
@@ -23689,9 +23750,9 @@ var StateCleanupService = class {
   }
   backupPath(databasePath, label, planId) {
     if (databasePath === ":memory:") throw new WorkflowContractError("INVALID_INPUT", "In-memory databases cannot be cleaned destructively.");
-    const directory = path7.join(path7.dirname(path7.resolve(databasePath)), "backups");
+    const directory = path8.join(path8.dirname(path8.resolve(databasePath)), "backups");
     mkdirSync3(directory, { recursive: true, mode: 448 });
-    return path7.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
+    return path8.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
   }
   protectBackup(targetPath) {
     if (process.platform !== "win32") chmodSync3(targetPath, 384);
