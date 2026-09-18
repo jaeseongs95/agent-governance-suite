@@ -30,9 +30,9 @@
       "required": ["requestedModel", "actualModel", "provider", "providerVersion", "promptSha256", "seed", "decodingParametersSha256"],
       "properties": {
         "requestedModel": { "type": "string", "minLength": 1 },
-        "actualModel": { "type": "string", "minLength": 1 },
-        "provider": { "type": "string", "minLength": 1 },
-        "providerVersion": { "type": "string", "minLength": 1 },
+        "actualModel": { "$ref": "#/$defs/verifiedString" },
+        "provider": { "$ref": "#/$defs/verifiedString" },
+        "providerVersion": { "$ref": "#/$defs/verifiedString" },
         "promptSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
         "seed": { "oneOf": [{ "type": "integer" }, { "const": "unverified" }] },
         "decodingParametersSha256": {
@@ -42,6 +42,11 @@
     }
   },
   "$defs": {
-    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "verifiedString": {
+      "type": "string",
+      "minLength": 1,
+      "not": { "enum": ["unverified", "unknown", "n/a", "not-available"] }
+    }
   }
 }

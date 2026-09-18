@@ -18,6 +18,7 @@ import {
   digestCanonical,
   type KoreanProseReadinessResult,
 } from "./korean-prose-readiness.js";
+import { assertConcreteKoreanProseExecutionProvenance } from "./korean-prose-execution-provenance.js";
 
 export type KoreanProseEvaluationPhase = "selection" | "editing" | "verification" | "record";
 
@@ -172,6 +173,7 @@ function assertStructuredRoleMeta(
     || !meta.executionProvenance || typeof meta.executionProvenance !== "object") {
     throw new Error(`${role} metadata is not bound to the frozen structured work product`);
   }
+  assertConcreteKoreanProseExecutionProvenance(meta.executionProvenance, role);
 }
 
 function parseStructuredJsonl(text: string): Array<Record<string, unknown>> {

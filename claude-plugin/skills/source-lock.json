@@ -263,7 +263,7 @@
       },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:a88252aa9c4e654458ecc7eed282d26c022ca9f5db858f87f3237decc622feb8",
-      "integratedChecksum": "sha256:84e5f85860651337f4880c75c79281eb289d56d032c95f5c5d0ae839e515eb85",
+      "integratedChecksum": "sha256:27face62dd8c3ecd91127fdfb70d0f49e55054c5ff96a97179174224cfc54269",
       "checksumScope": "relative paths and normalized text bytes under skills/korean-prose-editor",
       "downstreamModifications": [
         "Control runtime activation consistently across the skill instruction, descriptor, and implicit-invocation policy.",
@@ -273,7 +273,8 @@
         "Enable the integrated provider, direct descriptor, and implicit invocation under explicit release approval while preserving the incomplete quality-gate record.",
         "Expand the reviewed glossary to data version 1.2.0 with 199 official GitHub Korean glossary terms, a context-sensitive policy split, and a reviewed replacement for the user-facing phrase 완료 영수증.",
         "Narrow the user-facing jargon exception so a document being technical no longer excludes its prose, and judge each expression by whether it defines a contract or identifier.",
-        "Deactivate completion-result-ko after the 2026-09-18 independent deliberation (unsupported sourceRef, no external usage), correct its provenance and priority, raise the glossary data version to 1.2.1, and state in the rubric and the selection/editing policies that the literal-metaphor rule does not replace the keep-when-unconfirmed default."
+        "Deactivate completion-result-ko after the 2026-09-18 independent deliberation (unsupported sourceRef, no external usage), correct its provenance and priority, raise the glossary data version to 1.2.1, and state in the rubric and the selection/editing policies that the literal-metaphor rule does not replace the keep-when-unconfirmed default.",
+        "Apply candidate-v2 selection, bidirectional editing, and verification policies after the terminal private evaluation failure."
       ]
     },
     {

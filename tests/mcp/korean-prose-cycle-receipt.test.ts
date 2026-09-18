@@ -139,6 +139,19 @@ describe("range-aware Korean prose cycle receipts", { timeout: 15_000 }, () => {
     expect(recorded.stderr).toContain("not bound to the frozen structured work product");
   });
 
+  it("rejects structured run metadata with an unverified actual model", async () => {
+    const evaluationRoot = await createCycleFixture();
+    const cycleDirectory = join(evaluationRoot, "evals", "cycles", "0.1.0-rc2");
+    const metaPath = join(cycleDirectory, "runs", "run-1", "selection-meta.json");
+    const meta = JSON.parse(await readFile(metaPath, "utf8")) as Record<string, unknown>;
+    (meta.executionProvenance as Record<string, unknown>).actualModel = "unverified";
+    await writeFile(metaPath, JSON.stringify(meta), "utf8");
+
+    const recorded = runScript(recorderPath, ["1", evaluationRoot, "--cycle-dir", cycleDirectory]);
+    expect(recorded.status).not.toBe(0);
+    expect(recorded.stderr).toContain("execution provenance contains an unverified identity field");
+  });
+
   it("derives a passing quality decision from the bound final records", async () => {
     const evaluationRoot = await createCycleFixture();
     const cycleDirectory = join(evaluationRoot, "evals", "cycles", "0.1.0-rc2");

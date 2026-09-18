@@ -9,6 +9,7 @@ import { Ajv2020, type ValidateFunction } from "ajv/dist/2020.js";
 import addFormatsModule, { type FormatsPlugin } from "ajv-formats";
 import { ContractValidator } from "../mcp-server/src/schema-validator.js";
 import type { WorkflowReceiptV1 } from "../contracts/types.js";
+import { assertConcreteKoreanProseExecutionProvenance } from "./korean-prose-execution-provenance.js";
 
 const addFormats = addFormatsModule as unknown as FormatsPlugin;
 
@@ -363,6 +364,7 @@ async function assertQualityEvidence(
     || adjudicationMeta.workProductDigest !== quality.adjudicationDigest) {
     throw new Error("quality adjudication metadata is not bound to its blind input and work product");
   }
+  assertConcreteKoreanProseExecutionProvenance(adjudicationMeta.executionProvenance, "quality adjudication");
   const allFinals: AdjudicatedFinal[] = [];
   let rubricChanges = 0;
   for (const run of quality.runs) {
@@ -505,6 +507,7 @@ async function assertStructuredReceipt(
       || !entry.value.executionProvenance || typeof entry.value.executionProvenance !== "object") {
       throw new Error(`${entry.role} metadata is not bound to the atomic start claim and finalized work product`);
     }
+    assertConcreteKoreanProseExecutionProvenance(entry.value.executionProvenance, entry.role);
   }
   const binding = JSON.parse(bindingText) as Record<string, unknown>;
   const { receiptBinding: validateReceiptBinding } = await loadValidators();
@@ -631,6 +634,7 @@ export async function computeKoreanProseToolchainDigest(repositoryRoot: string):
     "mcp-server/src/sqlite-workflow-store.ts",
     "mcp-server/src/workflow-service.ts",
     "scripts/korean-prose-evaluation-preflight.ts",
+    "scripts/korean-prose-execution-provenance.ts",
     "scripts/korean-prose-readiness.ts",
     "scripts/record-korean-prose-run.ts",
     "scripts/verify-korean-prose-evaluation-preflight.ts",
