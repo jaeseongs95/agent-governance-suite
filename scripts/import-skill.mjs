@@ -6,7 +6,7 @@ import { NAME_PATTERN, ROOT, computeDirectoryChecksum, parseArguments, readFront
 
 const args = parseArguments(process.argv.slice(2));
 if (!args.source || !args.ref || !args["skill-path"]) {
-  throw new Error("Usage: pnpm import:skill --source <path-or-url> --ref <tag-or-sha> --skill-path <path> [--phase <phase> --capability <capability>]");
+  throw new Error("Usage: pnpm import:skill --source <path-or-url> --ref <tag-or-sha> --skill-path <path> [--phase <phase> --capability <capability>] [--replace true] [--descendant-of <sha>]");
 }
 
 const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "agent-governance-import-"));
@@ -24,6 +24,15 @@ try {
   const extracted = path.join(temporaryDirectory, "extracted");
   execFileSync("git", ["clone", "--no-checkout", repositorySource, extracted], { stdio: "inherit" });
   const commit = execFileSync("git", ["-C", extracted, "rev-parse", "--verify", `${args.ref}^{commit}`], { encoding: "utf8" }).trim();
+  if (args["descendant-of"]) {
+    // The automatic update path passes the locked commit so that it can never import older or unrelated history.
+    if (!/^[a-f0-9]{40}$/u.test(args["descendant-of"])) throw new Error("--descendant-of must be a full commit SHA");
+    try {
+      execFileSync("git", ["-C", extracted, "merge-base", "--is-ancestor", args["descendant-of"], commit], { stdio: "ignore" });
+    } catch {
+      throw new Error(`${args.ref} (${commit}) does not contain ${args["descendant-of"]}; refusing to replace newer or unrelated content`);
+    }
+  }
   execFileSync("git", ["-C", extracted, "checkout", "--detach", commit], { stdio: "inherit" });
 
   const sourceSkill = path.resolve(extracted, args["skill-path"]);

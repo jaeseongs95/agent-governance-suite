@@ -25,6 +25,7 @@ execFileSync(process.execPath, [
   "--ref", update.latestTag,
   "--skill-path", source.sourcePath,
   "--replace", "true",
+  "--descendant-of", source.ref.commit,
 ], { cwd: ROOT, stdio: "inherit" });
 
 for (const readme of ["README.md", "README.en.md"]) {

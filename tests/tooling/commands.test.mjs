@@ -135,4 +135,40 @@ describe("skill maintenance commands", () => {
     });
     expect(lock.sources[0].integratedChecksum).toMatch(/^sha256:[a-f0-9]{64}$/u);
   });
+
+  it("refuses a replacement that does not contain the required ancestor commit", async () => {
+    const suiteRoot = await createSuiteRoot();
+    const { source, commits } = await createVersionedSource(["0.2.0", "0.2.1", "0.2.2"]);
+    const importAt = (ref, extra = []) => runScript("import-skill.mjs", [
+      "--source", source, "--ref", ref, "--skill-path", ".",
+      "--phase", "validation", "--capability", "ref-validation", ...extra,
+    ], suiteRoot);
+    expect(importAt(commits[1]).status).toBe(0);
+
+    const older = importAt(commits[0], ["--replace", "true", "--descendant-of", commits[1]]);
+    expect(older.status).not.toBe(0);
+    expect(older.stderr).toContain("refusing to replace");
+    const lock = JSON.parse(await readFile(path.join(suiteRoot, "skills", "source-lock.json"), "utf8"));
+    expect(lock.sources[0].ref.commit).toBe(commits[1]);
+    expect(await readFile(path.join(suiteRoot, "skills", "versioned-skill", "SKILL.md"), "utf8")).toContain("version: 0.2.1");
+
+    expect(importAt(commits[2], ["--replace", "true", "--descendant-of", "not-a-sha"]).status).not.toBe(0);
+    const newer = importAt(commits[2], ["--replace", "true", "--descendant-of", commits[1]]);
+    expect(newer.status, newer.stderr).toBe(0);
+    expect(await readFile(path.join(suiteRoot, "skills", "versioned-skill", "SKILL.md"), "utf8")).toContain("version: 0.2.2");
+  });
 });
+
+async function createVersionedSource(versions) {
+  const source = await mkdtemp(path.join(tmpdir(), "agent-governance-source-"));
+  temporaryDirectories.push(source);
+  execFileSync("git", ["init", "-b", "main"], { cwd: source });
+  const commits = [];
+  for (const version of versions) {
+    await writeFile(path.join(source, "SKILL.md"), `---\nname: versioned-skill\ndescription: Carries a version that changes between commits.\nmetadata:\n  version: ${version}\n---\n\n# Versioned skill\n`);
+    execFileSync("git", ["-c", "core.autocrlf=false", "add", "."], { cwd: source });
+    execFileSync("git", ["-c", "core.autocrlf=false", "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-m", `version ${version}`], { cwd: source });
+    commits.push(execFileSync("git", ["rev-parse", "HEAD"], { cwd: source, encoding: "utf8" }).trim());
+  }
+  return { source, commits };
+}
