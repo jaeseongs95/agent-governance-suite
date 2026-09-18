@@ -274,7 +274,7 @@ export async function findHookEventDrift(root = ROOT) {
   const claudeEvents = new Set(await events(`${OUTPUT_DIRECTORY}/hooks/hooks.json`));
   return (await events("hooks/hooks.json"))
     .filter((event) => !claudeEvents.has(event))
-    .map((event) => `Codex hook event ${event} is not registered in ${OUTPUT_DIRECTORY}/hooks/hooks.json`);
+    .map((event) => `Codex hook event ${event} is not registered in ${OUTPUT_DIRECTORY}/hooks/hooks.json; add it to ${OVERLAY_DIRECTORY}/hooks/hooks.json`);
 }
 
 /**
@@ -307,7 +307,7 @@ async function main() {
     const problems = await checkClaudePlugin();
     if (problems.length > 0) {
       console.error(problems.map((problem) => `- ${problem}`).join("\n"));
-      console.error("Run pnpm claude:build and commit the result.");
+      console.error("Fix the listed claude-overlay files if any, then run pnpm claude:build and commit the result.");
       process.exitCode = 1;
       return;
     }
