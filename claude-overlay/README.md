@@ -23,6 +23,10 @@
 
 Claude Code는 MCP 도구 스키마의 `$ref`를 풀지 못한다. 외부 `$ref`로 정의된 `taskEnvelope`·`frame` 같은 필드는 객체가 아니라 문자열로 서버에 도착해, v1.17.0까지 `open_convergence_root`가 항상 `INVALID_INPUT`으로 거절됐다. `AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE=anthropic`이면 서버는 `$ref`가 있는 도구 스키마를 참조 없이 펼친 사본으로 내보낸다. 입력 검증은 원래 계약 그대로이고, 이 값이 없는 Codex 서버는 이전 스키마를 그대로 내보낸다.
 
+## 큰 stage 출력
+
+stage 결과는 provider 출력(`output.output`)을 `record_stage_result`로 넘겨 schema와 게이트 검사를 받는다. 저장소 크기에 비례하는 출력(`change-scope-guardian` baseline은 실제 저장소에서 972개 항목, 262KB였다)은 도구 인자로 넘기기 어려워, v1.18.0 세션은 orchestrated run을 닫고 direct로 전환했다. v1.19.0부터 `record_stage_result`는 `outputFile: { locator, digest }`를 받는다. 절대 경로의 JSON 파일(16 MiB 이하)을 읽어 SHA-256을 확인하고, 인라인 출력과 똑같이 검사한 뒤 receipt에는 참조만 남긴다. orchestrator 지침(`adaptations/orchestrator.json`)의 "큰 stage 출력" 절이 이 방식을 안내한다.
+
 ## 실행 보증(host attestation)
 
 실행 보증이 필요한 orchestrated workflow는 `hooks/host-attestation-hook.mjs`가 관측한 값으로 진행한다.
