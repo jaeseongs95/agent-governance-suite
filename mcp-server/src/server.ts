@@ -266,9 +266,15 @@ export function createMcpServer(
   // Anthropic hosts cannot resolve $ref in tool schemas, so they receive fully inlined copies.
   const advertise = <T extends { inputSchema: Record<string, unknown> }>(tools: T[]): T[] =>
     toolSchemaProfile === "anthropic"
-      ? tools.map((tool) => (JSON.stringify(tool.inputSchema).includes('"$ref"')
-        ? { ...tool, inputSchema: inlineSchemaReferences(tool.inputSchema, contractDocuments) }
-        : tool))
+      ? tools.map((tool) => {
+        if (!JSON.stringify(tool.inputSchema).includes('"$ref"')) return tool;
+        try {
+          return { ...tool, inputSchema: inlineSchemaReferences(tool.inputSchema, contractDocuments) };
+        } catch {
+          // A schema that cannot be inlined keeps its references rather than hiding every tool.
+          return tool;
+        }
+      })
       : tools;
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({

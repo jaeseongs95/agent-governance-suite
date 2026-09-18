@@ -19122,13 +19122,15 @@ var Server = class extends Protocol {
 // mcp-server/src/tool-schema-inline.ts
 var ANNOTATION_ONLY_KEYS = /* @__PURE__ */ new Set(["$schema", "$id", "$defs", "definitions"]);
 var SCHEMA_MAP_KEYS = /* @__PURE__ */ new Set(["properties", "patternProperties", "dependentSchemas"]);
+var ANNOTATION_KEYWORDS = /* @__PURE__ */ new Set(["title", "description", "default", "examples", "$comment", "deprecated", "readOnly", "writeOnly"]);
 function isObject2(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 function pointer(document, fragment) {
-  if (!fragment || fragment === "/") return document;
+  if (!fragment) return document;
+  if (!fragment.startsWith("/")) throw new Error(`Unsupported schema fragment #${fragment}`);
   let current = document;
-  for (const raw of fragment.replace(/^\//u, "").split("/")) {
+  for (const raw of fragment.slice(1).split("/")) {
     const key = decodeURIComponent(raw).replaceAll("~1", "/").replaceAll("~0", "~");
     if (!isObject2(current) && !Array.isArray(current)) throw new Error(`Unresolvable schema pointer #${fragment}`);
     current = current[key];
@@ -19158,9 +19160,12 @@ function inlineSchemaReferences(schema, documents) {
       if (active.has(key)) throw new Error(`Recursive schema reference ${key} cannot be inlined`);
       const resolved = inline(pointer(document, fragment), documentId, /* @__PURE__ */ new Set([...active, key]));
       const siblings = Object.fromEntries(
-        Object.entries(node2).filter(([name]) => name !== "$ref" && !ANNOTATION_ONLY_KEYS.has(name))
+        Object.entries(node2).filter(([name]) => name !== "$ref" && !ANNOTATION_ONLY_KEYS.has(name)).map(([name, value]) => [name, inline(value, nodeBase, active)])
       );
-      return isObject2(resolved) ? { ...resolved, ...Object.fromEntries(Object.entries(siblings).map(([name, value]) => [name, inline(value, nodeBase, active)])) } : resolved;
+      if (Object.keys(siblings).length === 0) return resolved;
+      const constraining = Object.keys(siblings).some((name) => !ANNOTATION_KEYWORDS.has(name));
+      if (!constraining && isObject2(resolved)) return { ...resolved, ...siblings };
+      return { allOf: [resolved, siblings] };
     }
     const output = {};
     for (const [name, value] of Object.entries(node2)) {
@@ -19613,7 +19618,14 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
     { capabilities: { tools: {} }, ...instructions === void 0 ? {} : { instructions } }
   );
   const contractDocuments = Object.values(contractSchemas);
-  const advertise = (tools) => toolSchemaProfile === "anthropic" ? tools.map((tool) => JSON.stringify(tool.inputSchema).includes('"$ref"') ? { ...tool, inputSchema: inlineSchemaReferences(tool.inputSchema, contractDocuments) } : tool) : tools;
+  const advertise = (tools) => toolSchemaProfile === "anthropic" ? tools.map((tool) => {
+    if (!JSON.stringify(tool.inputSchema).includes('"$ref"')) return tool;
+    try {
+      return { ...tool, inputSchema: inlineSchemaReferences(tool.inputSchema, contractDocuments) };
+    } catch {
+      return tool;
+    }
+  }) : tools;
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: advertise([
       {

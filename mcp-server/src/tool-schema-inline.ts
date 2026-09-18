@@ -10,15 +10,19 @@ type JsonObject = { [key: string]: Json };
 
 const ANNOTATION_ONLY_KEYS = new Set(["$schema", "$id", "$defs", "definitions"]);
 const SCHEMA_MAP_KEYS = new Set(["properties", "patternProperties", "dependentSchemas"]);
+// Keywords that only describe a schema; merging them next to a resolved reference keeps its meaning.
+const ANNOTATION_KEYWORDS = new Set(["title", "description", "default", "examples", "$comment", "deprecated", "readOnly", "writeOnly"]);
 
 function isObject(value: unknown): value is JsonObject {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function pointer(document: Json, fragment: string): Json {
-  if (!fragment || fragment === "/") return document;
+  // An empty fragment is the whole document; "/" is the member named "" (RFC 6901).
+  if (!fragment) return document;
+  if (!fragment.startsWith("/")) throw new Error(`Unsupported schema fragment #${fragment}`);
   let current: Json = document;
-  for (const raw of fragment.replace(/^\//u, "").split("/")) {
+  for (const raw of fragment.slice(1).split("/")) {
     const key = decodeURIComponent(raw).replaceAll("~1", "/").replaceAll("~0", "~");
     if (!isObject(current) && !Array.isArray(current)) throw new Error(`Unresolvable schema pointer #${fragment}`);
     current = (current as Record<string, Json>)[key] as Json;
@@ -53,11 +57,15 @@ export function inlineSchemaReferences(
       if (active.has(key)) throw new Error(`Recursive schema reference ${key} cannot be inlined`);
       const resolved = inline(pointer(document, fragment), documentId, new Set([...active, key]));
       const siblings = Object.fromEntries(
-        Object.entries(node).filter(([name]) => name !== "$ref" && !ANNOTATION_ONLY_KEYS.has(name)),
+        Object.entries(node)
+          .filter(([name]) => name !== "$ref" && !ANNOTATION_ONLY_KEYS.has(name))
+          .map(([name, value]) => [name, inline(value, nodeBase, active)]),
       );
-      return isObject(resolved)
-        ? { ...resolved, ...Object.fromEntries(Object.entries(siblings).map(([name, value]) => [name, inline(value, nodeBase, active)])) }
-        : resolved;
+      if (Object.keys(siblings).length === 0) return resolved;
+      // In JSON Schema 2020-12 a $ref applies together with its siblings, so constraints are combined, not merged.
+      const constraining = Object.keys(siblings).some((name) => !ANNOTATION_KEYWORDS.has(name));
+      if (!constraining && isObject(resolved)) return { ...resolved, ...siblings };
+      return { allOf: [resolved, siblings] };
     }
     const output: JsonObject = {};
     for (const [name, value] of Object.entries(node)) {
