@@ -121,12 +121,24 @@ export function latestStableTag(source) {
   return stableTagsFromLsRemote(git(["ls-remote", "--tags", source, "refs/tags/v*"]))[0] ?? null;
 }
 
+/**
+ * A commit pin whose version equals the latest stable tag but whose commit
+ * differs cannot be ordered from ls-remote output: the pin may be ahead of the
+ * tag. It is reported for attention instead of being imported automatically.
+ */
+export function isSameVersionPinMismatch(source, latest) {
+  return Boolean(latest)
+    && compareVersions(latest.version, source.version) === 0
+    && source.ref.kind === "commit"
+    && source.ref.commit !== latest.commit;
+}
+
 export function isUpstreamUpdate(source, latest) {
-  return Boolean(latest) && (
-    compareVersions(latest.version, source.version) > 0
-    || (compareVersions(latest.version, source.version) === 0
-      && (source.ref.kind !== "tag" || source.ref.value !== latest.tag || source.ref.commit !== latest.commit))
-  );
+  if (!latest) return false;
+  const order = compareVersions(latest.version, source.version);
+  if (order !== 0) return order > 0;
+  if (source.ref.kind !== "tag") return source.ref.commit === latest.commit;
+  return source.ref.value !== latest.tag || source.ref.commit !== latest.commit;
 }
 
 async function projectedUpstreamChecksum(sourceDirectory, projectionDirectory) {
@@ -200,6 +212,7 @@ export async function discoverUpstreamUpdates() {
         latestTag: latest?.tag ?? null,
         latestCommit: latest?.commit ?? null,
         updateAvailable: isUpstreamUpdate(source, latest),
+        pinMismatch: isSameVersionPinMismatch(source, latest),
         error: null,
       });
     } catch (error) {
@@ -211,6 +224,7 @@ export async function discoverUpstreamUpdates() {
         latestTag: null,
         latestCommit: null,
         updateAvailable: false,
+        pinMismatch: false,
         error: error instanceof Error ? error.message : String(error),
       });
     }

@@ -6,7 +6,7 @@ import {
   readFrontmatter
 } from "../../scripts/lib.mjs";
 import { assertMarkerPair, replaceExactlyOnce, syncReleaseMetadata } from "../../scripts/release-metadata.mjs";
-import { compareVersions, isUpstreamUpdate, stableTagsFromLsRemote } from "../../scripts/source-lock.mjs";
+import { compareVersions, isSameVersionPinMismatch, isUpstreamUpdate, stableTagsFromLsRemote } from "../../scripts/source-lock.mjs";
 
 describe("repository tooling", () => {
   it("normalizes CRLF text without changing binary content", () => {
@@ -47,9 +47,27 @@ describe("repository tooling", () => {
       { tag: "v1.2.0", version: "1.2.0", commit: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
     ]);
     expect(compareVersions("1.10.0", "1.9.9")).toBeGreaterThan(0);
-    expect(isUpstreamUpdate({ version: "1.0.0", ref: { kind: "commit", value: "a", commit: "a" } }, {
-      tag: "v1.0.0", version: "1.0.0", commit: "b",
-    })).toBe(true);
+  });
+
+  it("does not treat a same-version commit pin that differs from the tag as an update", () => {
+    const pinned = { version: "1.0.0", ref: { kind: "commit", value: "a", commit: "a" } };
+    const differentCommit = { tag: "v1.0.0", version: "1.0.0", commit: "b" };
+    expect(isUpstreamUpdate(pinned, differentCommit)).toBe(false);
+    expect(isSameVersionPinMismatch(pinned, differentCommit)).toBe(true);
+    // The tag names the pinned commit: moving the lock onto the tag changes no content.
+    const sameCommit = { tag: "v1.0.0", version: "1.0.0", commit: "a" };
+    expect(isUpstreamUpdate(pinned, sameCommit)).toBe(true);
+    expect(isSameVersionPinMismatch(pinned, sameCommit)).toBe(false);
+    // A higher stable version is an update for every pin kind; a lower one never is.
+    expect(isUpstreamUpdate(pinned, { tag: "v1.1.0", version: "1.1.0", commit: "c" })).toBe(true);
+    expect(isSameVersionPinMismatch(pinned, { tag: "v1.1.0", version: "1.1.0", commit: "c" })).toBe(false);
+    expect(isUpstreamUpdate(pinned, { tag: "v0.9.0", version: "0.9.0", commit: "c" })).toBe(false);
+    expect(isUpstreamUpdate(pinned, null)).toBe(false);
+    // A tag pin keeps reporting a moved tag and stays quiet when nothing changed.
+    const tagged = { version: "1.0.0", ref: { kind: "tag", value: "v1.0.0", commit: "a" } };
+    expect(isUpstreamUpdate(tagged, differentCommit)).toBe(true);
+    expect(isSameVersionPinMismatch(tagged, differentCommit)).toBe(false);
+    expect(isUpstreamUpdate(tagged, sameCommit)).toBe(false);
   });
 
   it("fails closed when a release marker is missing or duplicated", () => {

@@ -13,6 +13,11 @@ if (summary) {
     lines.push(`- notify-only: ${entry.skillId}: ${entry.error ?? `${entry.currentVersion} -> ${entry.latestVersion}`}`);
   }
   if (report.notify.length === 0) lines.push("- No notify-only changes.");
+  for (const entry of report.attention ?? []) {
+    lines.push(entry.error
+      ? `- needs attention: ${entry.skillId}: ${entry.error}`
+      : `- needs attention: ${entry.skillId}: pinned commit differs from ${entry.latestTag} at the same version; not updated automatically`);
+  }
   await appendFile(summary, `${lines.join("\n")}\n`, "utf8");
 }
 process.stdout.write(`${JSON.stringify(matrix)}\n`);

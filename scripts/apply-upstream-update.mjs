@@ -35,7 +35,7 @@ for (const readme of ["README.md", "README.en.md"]) {
   const index = lines.indexOf(matching[0]);
   const cells = matching[0].split("|");
   if (cells.length < 6) throw new Error(`${readme} skill row has an unexpected shape for ${skillId}`);
-  cells[2] = cells[2].replace(/\/tree\/v\d+\.\d+\.\d+/u, `/tree/${update.latestTag}`);
+  cells[2] = cells[2].replace(/\/tree\/(?:v\d+\.\d+\.\d+|[a-f0-9]{40})/u, `/tree/${update.latestTag}`);
   cells[3] = ` ${update.latestVersion} `;
   lines[index] = cells.join("|");
   await writeFile(target, lines.join(""), "utf8");
