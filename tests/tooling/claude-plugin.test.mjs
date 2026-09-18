@@ -174,6 +174,19 @@ describe("generated Claude plugin", () => {
     expect(await readdir(home)).toEqual([]);
   });
 
+  it("removes a caller-supplied token when it cannot attest", async () => {
+    const home = await mkdtemp(path.join(tmpdir(), "claude-plugin-attest-strip-"));
+    temporaryDirectories.push(home);
+    const input = JSON.stringify({ hook_event_name: "PreToolUse", session_id: "test-session", tool_name: `${toolPrefix}plan_workflow`, tool_use_id: "toolu_x", transcript_path: path.join(home, "missing.jsonl"), tool_input: { taskId: "t", _hostAttestation: "aghs1.caller.forged" } });
+    const withoutData = { ...process.env };
+    delete withoutData.CLAUDE_PLUGIN_DATA;
+    for (const env of [withoutData, { ...process.env, CLAUDE_PLUGIN_DATA: path.join(home, "data") }]) {
+      const result = spawnSync(process.execPath, [path.join(pluginRoot, "hooks", "host-attestation-hook.mjs")], { encoding: "utf8", env, input });
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { taskId: "t" } } });
+    }
+  }, 30_000);
+
   it("signs host attestation with a key in the plugin data directory", async () => {
     const data = await mkdtemp(path.join(tmpdir(), "claude-plugin-attest-data-"));
     temporaryDirectories.push(data);

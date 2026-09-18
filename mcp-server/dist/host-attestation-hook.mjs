@@ -1114,17 +1114,33 @@ function findToolUseObservation(transcript, toolUseId, sessionId, agentId) {
   }
   return null;
 }
-function handleHostAttestationHook(input, store, options = {}) {
-  if (input.hook_event_name !== "PreToolUse") return {};
+function attestedToolInput(input) {
+  if (input.hook_event_name !== "PreToolUse") return null;
   const canonicalName = text(input.tool_name) ?? "";
-  if (!canonicalName.startsWith("mcp__")) return {};
+  if (!canonicalName.startsWith("mcp__")) return null;
   const tool = canonicalName.split("__").at(-1) ?? "";
-  if (!HOST_ATTESTATION_TOOLS.has(tool)) return {};
   const toolInput = record2(input.tool_input);
+  return HOST_ATTESTATION_TOOLS.has(tool) && toolInput ? { tool, toolInput } : null;
+}
+function withoutCallerAttestation(input) {
+  const target = attestedToolInput(input);
+  if (!target || !Object.prototype.hasOwnProperty.call(target.toolInput, HOST_ATTESTATION_FIELD)) return {};
+  return {
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      updatedInput: withoutHostAttestation(target.toolInput)
+    }
+  };
+}
+function handleHostAttestationHook(input, store, options = {}) {
+  const target = attestedToolInput(input);
+  if (!target) return {};
+  const { tool, toolInput } = target;
+  const unattested = () => withoutCallerAttestation(input);
   const sessionId = text(input.session_id);
   const toolUseId = text(input.tool_use_id);
   const transcriptPath = text(input.transcript_path);
-  if (!toolInput || !sessionId || !toolUseId || !transcriptPath) return {};
+  if (!sessionId || !toolUseId || !transcriptPath) return unattested();
   const agentId = text(input.agent_id);
   const readText = options.readText ?? readTextOrNull;
   const sleep = options.sleep ?? sleepSync;
@@ -1141,9 +1157,9 @@ function handleHostAttestationHook(input, store, options = {}) {
     if (observation || waited >= maxWaitMs) break;
     sleep(pollIntervalMs);
   }
-  if (!observation) return {};
+  if (!observation) return unattested();
   const effort = text(record2(input.effort)?.level) ?? observation.effort;
-  if (!effort) return {};
+  if (!effort) return unattested();
   const token = issueHostAttestation(store, {
     tool,
     input: toolInput,
@@ -1152,7 +1168,7 @@ function handleHostAttestationHook(input, store, options = {}) {
     actorId: claudeCodeActorId(sessionId, agentId),
     ...options.now ? { now: options.now() } : {}
   });
-  if (!token) return {};
+  if (!token) return unattested();
   return {
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
@@ -1162,23 +1178,27 @@ function handleHostAttestationHook(input, store, options = {}) {
 }
 async function main() {
   let store = null;
+  let input = {};
+  let output;
   try {
-    const input = JSON.parse(readFileSync(0, "utf8"));
+    input = JSON.parse(readFileSync(0, "utf8"));
     store = new SqliteWorkflowStore(resolveWorkflowDatabasePath());
-    const output = handleHostAttestationHook(input, store);
-    if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));
+    output = handleHostAttestationHook(input, store);
   } catch {
+    output = withoutCallerAttestation(input);
   } finally {
     try {
       store?.close();
     } catch {
     }
   }
+  if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));
 }
 if (path4.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) await main();
 export {
   claudeCodeActorId,
   findToolUseObservation,
   handleHostAttestationHook,
-  transcriptCandidates
+  transcriptCandidates,
+  withoutCallerAttestation
 };

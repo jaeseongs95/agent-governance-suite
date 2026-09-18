@@ -3,7 +3,12 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { HOST_ATTESTATION_FIELD, HOST_ATTESTATION_TOOLS, issueHostAttestation } from "./host-attestation.js";
+import {
+  HOST_ATTESTATION_FIELD,
+  HOST_ATTESTATION_TOOLS,
+  issueHostAttestation,
+  withoutHostAttestation,
+} from "./host-attestation.js";
 import { resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import type { WorkflowStore } from "./workflow-store.js";
@@ -94,21 +99,43 @@ export function findToolUseObservation(
   return null;
 }
 
+function attestedToolInput(input: HookInput): { tool: string; toolInput: Record<string, unknown> } | null {
+  if (input.hook_event_name !== "PreToolUse") return null;
+  const canonicalName = text(input.tool_name) ?? "";
+  if (!canonicalName.startsWith("mcp__")) return null;
+  const tool = canonicalName.split("__").at(-1) ?? "";
+  const toolInput = record(input.tool_input);
+  return HOST_ATTESTATION_TOOLS.has(tool) && toolInput ? { tool, toolInput } : null;
+}
+
+/**
+ * When the hook cannot attest a call, a token the caller put in the arguments
+ * must not reach the server, so it is removed instead of passed through.
+ */
+export function withoutCallerAttestation(input: HookInput): Record<string, unknown> {
+  const target = attestedToolInput(input);
+  if (!target || !Object.prototype.hasOwnProperty.call(target.toolInput, HOST_ATTESTATION_FIELD)) return {};
+  return {
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      updatedInput: withoutHostAttestation(target.toolInput),
+    },
+  };
+}
+
 export function handleHostAttestationHook(
   input: HookInput,
   store: WorkflowStore,
   options: HostAttestationHookOptions = {},
 ): Record<string, unknown> {
-  if (input.hook_event_name !== "PreToolUse") return {};
-  const canonicalName = text(input.tool_name) ?? "";
-  if (!canonicalName.startsWith("mcp__")) return {};
-  const tool = canonicalName.split("__").at(-1) ?? "";
-  if (!HOST_ATTESTATION_TOOLS.has(tool)) return {};
-  const toolInput = record(input.tool_input);
+  const target = attestedToolInput(input);
+  if (!target) return {};
+  const { tool, toolInput } = target;
+  const unattested = () => withoutCallerAttestation(input);
   const sessionId = text(input.session_id);
   const toolUseId = text(input.tool_use_id);
   const transcriptPath = text(input.transcript_path);
-  if (!toolInput || !sessionId || !toolUseId || !transcriptPath) return {};
+  if (!sessionId || !toolUseId || !transcriptPath) return unattested();
   const agentId = text(input.agent_id);
 
   const readText = options.readText ?? readTextOrNull;
@@ -127,11 +154,11 @@ export function handleHostAttestationHook(
     if (observation || waited >= maxWaitMs) break;
     sleep(pollIntervalMs);
   }
-  if (!observation) return {};
+  if (!observation) return unattested();
 
   // The harness reports the effort of this tool-use context; the transcript entry is the fallback.
   const effort = text(record(input.effort)?.level) ?? observation.effort;
-  if (!effort) return {};
+  if (!effort) return unattested();
   const token = issueHostAttestation(store, {
     tool,
     input: toolInput,
@@ -140,7 +167,7 @@ export function handleHostAttestationHook(
     actorId: claudeCodeActorId(sessionId, agentId),
     ...(options.now ? { now: options.now() } : {}),
   });
-  if (!token) return {};
+  if (!token) return unattested();
   return {
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
@@ -151,16 +178,19 @@ export function handleHostAttestationHook(
 
 async function main(): Promise<void> {
   let store: SqliteWorkflowStore | null = null;
+  let input: HookInput = {};
+  let output: Record<string, unknown>;
   try {
-    const input = JSON.parse(readFileSync(0, "utf8")) as HookInput;
+    input = JSON.parse(readFileSync(0, "utf8")) as HookInput;
     store = new SqliteWorkflowStore(resolveWorkflowDatabasePath());
-    const output = handleHostAttestationHook(input, store);
-    if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));
+    output = handleHostAttestationHook(input, store);
   } catch {
     // Without a token the server fails closed with BINDING_REQUIRED; never block the tool call here.
+    output = withoutCallerAttestation(input);
   } finally {
     try { store?.close(); } catch { /* Fail open. */ }
   }
+  if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));
 }
 
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) await main();

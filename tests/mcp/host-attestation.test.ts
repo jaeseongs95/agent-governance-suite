@@ -24,6 +24,7 @@ import {
   findToolUseObservation,
   handleHostAttestationHook,
   transcriptCandidates,
+  withoutCallerAttestation,
 } from "../../mcp-server/src/host-attestation-hook.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
@@ -342,6 +343,29 @@ describe("host attestation hook", () => {
     expect(updated.updatedInput.taskId).toBe("hook-task");
     expect(updated.updatedInput[HOST_ATTESTATION_FIELD]).toMatch(/^aghs1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/u);
     expect(updated.updatedInput[HOST_ATTESTATION_FIELD]).not.toBe("aghs1.caller.forged");
+  });
+
+  it("removes a caller-supplied token whenever it cannot attest the call", async () => {
+    const callerInput = { taskId: "hook-task", [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged" };
+    const unattested = [
+      handleHostAttestationHook({ ...base, tool_input: callerInput }, store, { ...noWait, maxWaitMs: 0, readText: () => null }),
+      handleHostAttestationHook({ ...base, tool_input: callerInput }, store, { ...noWait, readText: () => transcriptLine("toolu_hook", { model: "us.anthropic.claude-opus-5" }) }),
+      handleHostAttestationHook({ ...base, tool_input: callerInput, transcript_path: undefined }, store, noWait),
+      withoutCallerAttestation({ ...base, tool_input: callerInput }),
+    ];
+    for (const output of unattested) {
+      expect(output).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { taskId: "hook-task" } } });
+    }
+    expect(withoutCallerAttestation(base)).toEqual({});
+    expect(withoutCallerAttestation({ ...base, tool_name: "Bash", tool_input: callerInput })).toEqual({});
+
+    // A stripped call reaches the server without a token and fails closed.
+    const { call } = await harness(true);
+    const planInput = { ...planArguments("stripped"), [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged" };
+    const output = handleHostAttestationHook({ ...base, tool_input: planInput }, store, { ...noWait, maxWaitMs: 0, readText: () => null });
+    const stripped = (output.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput;
+    expect(stripped).toEqual(planArguments("stripped"));
+    expect((await call<WorkflowPlanV1>("plan_workflow", stripped)).error?.code).toBe("BINDING_REQUIRED");
   });
 
   it("waits for a lagging transcript and gives up without a token", () => {
