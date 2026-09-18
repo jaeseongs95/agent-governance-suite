@@ -7,7 +7,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v1.18.0`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 Claude Code에서 MCP orchestrated workflow가 계획부터 finalize까지 실제로 동작하게 합니다. Claude용 orchestrator 지침이 이 경로를 쓰도록 바꾸고, Claude Code가 풀지 못하는 도구 스키마의 `$ref`를 펼쳐 내보내며, host attestation의 추론 수준·모델 ID·유효기간 처리를 보완합니다. `mutation-risk-preflight`는 원본 v1.0.1로 올립니다. Codex 배포물은 이 스킬의 결함 수정 외에는 v1.17.0과 같습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
+현재 공개 릴리스는 `v1.18.0`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 Claude Code에서 MCP orchestrated workflow의 계획부터 finalize까지의 경로를 복구합니다(저장소 크기에 비례하는 stage 출력은 아직 제한이 있습니다). Claude용 orchestrator 지침이 이 경로를 쓰도록 바꾸고, Claude Code가 풀지 못하는 도구 스키마의 `$ref`를 펼쳐 내보내며, host attestation의 추론 수준·모델 ID·유효기간 처리를 보완합니다. `mutation-risk-preflight`는 원본 v1.0.1로 올립니다. Codex 배포물은 이 스킬의 결함 수정 외에는 v1.17.0과 같습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다

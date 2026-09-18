@@ -1,8 +1,8 @@
-# v1.18.0 — Claude Code에서 끝까지 동작하는 orchestrated workflow
+# v1.18.0 — Claude Code의 orchestrated workflow 경로 복구
 
 ## 핵심 변경
 
-- Claude Code에서 MCP orchestrated workflow가 계획부터 finalize까지 실제로 동작합니다. v1.17.0은 실행 보증 관측값을 붙였지만, 두 가지가 더 막고 있었습니다.
+- Claude Code에서 MCP orchestrated workflow의 계획부터 finalize까지의 경로가 동작합니다(작은 stage 출력으로 확인). v1.17.0은 실행 보증 관측값을 붙였지만, 두 가지가 더 막고 있었습니다. 저장소 크기에 비례하는 stage 출력은 아직 도구 인자로 넘기기 어렵습니다(알려진 제한 참고).
   - Claude용 orchestrator 지침이 "Claude Code에서는 orchestrated 모드가 시작되지 않는다"고 안내해, 세션이 MCP 경로를 쓰지 않았습니다.
   - Claude Code는 MCP 도구 스키마의 `$ref`를 풀지 못해, 외부 `$ref`로 정의된 `taskEnvelope`·`frame` 필드를 문자열로 보냈습니다. 그래서 `open_convergence_root`가 항상 `INVALID_INPUT`으로 거절됐습니다.
 - Claude 배포물의 서버(`AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE=anthropic`)는 `$ref`가 있는 도구 스키마를 참조 없이 펼친 사본으로 내보냅니다. 입력 검증은 원래 계약 그대로입니다. 펼친 스키마와 원래 계약이 같은 입력을 받고 거절하는지 테스트로 확인합니다.
