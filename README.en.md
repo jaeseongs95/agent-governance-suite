@@ -104,7 +104,7 @@ Start a new session after installation and call skills as `/agent-governance-sui
 | Before work | `instruction-scope-resolver` | 1.0.0 | Finds the instructions and precedence rules that apply to the work target. |
 | Before work | `workspace-convention-profiler` | 1.0.0 | Records repository structure, commands, and test conventions with evidence. |
 | Before work | `task-contract` | 1.0.0 | Defines the objective, scope, risk, and completion criteria. |
-| During work | `coordinate-subagents` | 1.0.0 | Splits independent work and assigns ownership and verification duties. |
+| During work | `coordinate-subagents` | 1.1.0 | Splits independent work and assigns ownership and verification duties. |
 | During work | `independent-deliberation-panel` | 1.0.0 | Reviews evidence and counterarguments for complex decisions. |
 | Convergence review | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 1.0.0 | Independently compares iteration contracts and frame changes before a new epoch can open. |
 | Before and after changes | `change-scope-guardian` | 1.0.0 | Captures a baseline and checks whether the final change stayed in scope. |

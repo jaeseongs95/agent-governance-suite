@@ -6,16 +6,16 @@
       "path": "skills/coordinate-subagents",
       "source": "https://github.com/jaeseongs95/coordinate-subagents.git",
       "sourcePath": "skills/coordinate-subagents",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "versionSource": "skill-metadata",
       "ref": {
-        "kind": "commit",
-        "value": "837b182c490866d3800b919659581d69640ac687",
-        "commit": "837b182c490866d3800b919659581d69640ac687"
+        "kind": "tag",
+        "value": "v1.1.0",
+        "commit": "404ed8738216d047265f960c8dacb9c7d8cfa8af"
       },
       "updatePolicy": "auto-pr",
-      "upstreamChecksum": "sha256:113603fd0545e44f593c289e8adf41c4363c7628c34b14ea27527b7072820091",
-      "integratedChecksum": "sha256:113603fd0545e44f593c289e8adf41c4363c7628c34b14ea27527b7072820091",
+      "upstreamChecksum": "sha256:6298059722111d33add2d1933ad0fc0ae166e477f27aa5b976b8b12e8185f1bd",
+      "integratedChecksum": "sha256:6298059722111d33add2d1933ad0fc0ae166e477f27aa5b976b8b12e8185f1bd",
       "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents",
       "downstreamModifications": []
     },

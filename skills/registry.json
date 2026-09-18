@@ -92,7 +92,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "coordinate-subagents",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "path": "./coordinate-subagents",
       "enabled": true,
       "priority": 20,
@@ -1935,9 +1935,9 @@
               "operation": "require-external"
             }
           ],
-        "producedArtifacts": [
-          "token-usage-report"
-        ],
+          "producedArtifacts": [
+            "token-usage-report"
+          ],
           "outputSchema": "skills/codex-token-usage-analyzer/contracts/token-usage-report.v1.schema.json",
           "resultSchema": "skills/codex-token-usage-analyzer/integration/provider-result.v1.schema.json",
           "stateMapping": {
