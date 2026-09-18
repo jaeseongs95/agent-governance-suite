@@ -24,6 +24,7 @@ metadata:
 - 실행 방식과 그 이유. 둘 중 하나를 고른다.
   - `orchestrated`: 실패 영향이 크고 고른 단계가 둘 이상이며 `plan_workflow` MCP 도구를 쓸 수 있을 때. 아래 "MCP 도구 사용 계약" 순서로 계획, 수렴 root, attempt claim, guarded start, stage별 기록, finalize를 진행한다. 각 stage의 전문 스킬은 Skill 도구로 실제 호출하고 그 결과를 `record_stage_result`로 기록한다. MCP 원장이 단계 순서와 감사 게이트를 강제하므로, 지침만으로 순서를 지키는 것보다 이 방식을 우선한다.
   - `direct`: 그 밖의 경우, 또는 MCP 도구를 쓸 수 없거나 `BINDING_REQUIRED`·`BINDING_INVALID`로 계획이나 stage 기록이 거절됐을 때. 결정한 스킬을 그 순서대로 직접 호출한다. `orchestrated`에서 전환했다면 반환 코드와 전환 이유를 사용자에게 한 줄로 밝히고, 이미 시작한 run은 `abort_workflow`로 닫는다.
+- `orchestrated`로 계획할 작업 계약(`TaskEnvelope.v1`)은 `plan_workflow` 전에 확정한다. `scope`와 `workUnits[].writeTargets`에는 저장소 기준 파일 경로나 glob만 적는다. 브랜치·태그·원격 같은 git 대상은 `authorization.allowedActions`와 `mutation-risk-preflight`의 대상으로 다룬다(`change-scope-guardian`은 경로가 아닌 규칙을 `INVALID_INPUT`으로 거절한다). 시작한 run의 계약을 바꿔 다시 시도하면 수렴 가드가 frame 검토(`FRAME_REVIEW_REQUIRED`)와 사용자 승인을 요구한다.
 - 단순 조회·저위험 수정이라 전문 스킬이 필요 없으면 그렇게 적고 진행한다.
 
 ### Claude Code의 실행 보증
