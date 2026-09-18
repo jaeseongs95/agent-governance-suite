@@ -7,7 +7,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v1.16.1`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 Claude Code 배포물의 생성 구조만 바꾸며 스킬, MCP 서버와 Codex 배포물의 동작은 v1.16.0과 같습니다. Claude 전용 문구를 스킬별 파일로 나눠, 공용 스킬이나 Codex 전용 파일을 고칠 때 Claude 생성물을 함께 맞추지 않아도 됩니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
+현재 공개 릴리스는 `v1.16.2`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 `coordinate-subagents`를 원본의 안정 태그 `v1.1.0`으로 옮기고(내용은 v1.16.1에 통합된 것과 같고 버전 표기만 바뀝니다), 원본 스킬 자동 갱신 도구의 오판과 실패를 고치며, Claude Code용 스킬 설명문 5개에 판단 기준을 되살립니다. MCP 서버와 Codex 배포물의 동작은 v1.16.1과 같습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -44,7 +44,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.16.1
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.16.2
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->

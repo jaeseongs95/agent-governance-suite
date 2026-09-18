@@ -7,7 +7,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
 <!-- release-version:start -->
-The current public release is `v1.16.1` and includes fifteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. This release changes only how the Claude Code distribution is generated; skills, the MCP server, and the Codex distribution behave as in v1.16.0. Claude-only wording now lives in per-skill files, so changes to shared skills or Codex-only files no longer have to update the generated Claude plugin in the same change. The candidate-v2 policies applied to `korean-prose-editor` in v1.16.0 were not covered by the quality-gate pass (`0.3.0-gate-1`) and have not been quality-evaluated yet.
+The current public release is `v1.16.2` and includes fifteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. This release moves `coordinate-subagents` to the upstream stable tag `v1.1.0` (the content is what v1.16.1 already integrated; only the version label changes), fixes misjudgments and failures in the upstream skill update tooling, and restores the judgment criteria in five Claude Code skill descriptions. The MCP server and the Codex distribution behave as in v1.16.1. The candidate-v2 policies applied to `korean-prose-editor` in v1.16.0 were not covered by the quality-gate pass (`0.3.0-gate-1`) and have not been quality-evaluated yet.
 <!-- release-version:end -->
 
 ## Problems it handles
@@ -44,7 +44,7 @@ Node.js 22.13.0 or later is required.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.16.1
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.16.2
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
