@@ -105,7 +105,7 @@ try {
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
     if (!existingDescriptor && (!args.phase || !args.capability)) {
-      throw new Error("A new imported skill needs integration/skill-descriptor.json or --phase and --capability.");
+      throw new Error("A new imported skill needs integration/skill-descriptor.json or --phase and --capability.", { cause: error });
     }
   }
   // An upstream without an integration descriptor keeps the routing this repository already registered for the skill.
