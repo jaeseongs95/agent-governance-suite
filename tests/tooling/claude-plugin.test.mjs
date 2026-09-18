@@ -78,6 +78,17 @@ describe("generated Claude plugin", () => {
     expect(codexMcp).not.toContain("AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE");
   });
 
+  it("puts the Claude selection decision at the top of the generated orchestrator skill", async () => {
+    const generated = await readFile(path.join(pluginRoot, "skills", "orchestrator", "SKILL.md"), "utf8");
+    const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
+    expect(shared).not.toContain("## Claude Code에서의 선택 결정");
+    expect(generated.indexOf("## Claude Code에서의 선택 decision".replace("decision", "결정"))).toBeLessThan(generated.indexOf("## 시작 전 확인"));
+    for (const skill of ["task-contract", "change-scope-guardian", "acceptance-evidence-validator", "independent-audit-gate", "mutation-risk-preflight"]) {
+      expect(generated).toContain(`\`${skill}\`:`);
+    }
+    expect(generated).toContain("agent-governance-suite:independent-auditor");
+  });
+
   it("omits Codex-only skills from files, registry, and source lock", async () => {
     const skillDirectories = await readdir(path.join(pluginRoot, "skills"));
     const registry = await readJson(pluginRoot, "skills", "registry.json");

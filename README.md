@@ -88,7 +88,7 @@ Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다
 - 독립 감사와 심의에는 부모 대화를 상속하지 않는 `independent-auditor`, `deliberation-reviewer` 서브에이전트를 사용합니다.
 - `instruction-scope-resolver`는 `AGENTS.md` chain과 함께 `CLAUDE.md` 계층을 확인합니다.
 - Anthropic API는 최상위 `oneOf`가 있는 도구 스키마를 받지 않으므로, Claude 배포물은 `AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE=anthropic`으로 `plan_workflow`의 공개 스키마만 평평하게 바꿉니다. 서버의 입력 검증은 같은 계약을 그대로 사용하고, 이 값이 없으면 기존 스키마를 그대로 내보냅니다.
-- 같은 값으로 서버가 세션 `instructions`를 내보내고, Claude Code는 이를 세션 시작 때 시스템 프롬프트에 넣습니다. 내용은 "파일을 고치거나 명령을 실행하기 전에 요청의 실패 영향을 분류하고, 크면 orchestrator나 해당 전문 스킬을 먼저 호출한다"는 접수 규칙입니다. 이 값이 없으면 `instructions`를 내보내지 않습니다.
+- 같은 값으로 서버가 세션 `instructions`를 내보내고, Claude Code는 이를 세션 시작 때 시스템 프롬프트에 넣습니다. 내용은 "파일을 고치거나 명령을 실행하기 전에 요청의 실패 영향을 분류하고, 크면 orchestrator를 호출해 필요한 단계와 생략할 단계를 정한 뒤 정한 단계를 실제로 호출한다"는 접수 규칙입니다. 이 값이 없으면 `instructions`를 내보내지 않습니다.
 - 실행 보증이 필요한 orchestrated workflow는 신뢰할 수 있는 실행 관측값이 없어 `BINDING_REQUIRED`로 시작되지 않습니다. Codex 배포 서버도 같은 조건에서 같은 결과를 냅니다.
 
 `claude-plugin/`은 `pnpm claude:build`로 생성하며 직접 수정하지 않습니다. 공용 원본(`skills/`, `runtime/`, `contracts/`, MCP 서버 번들)은 그대로 복사하고, Claude 전용 파일은 `claude-overlay/`에, 스킬별 Claude 문구는 `claude-overlay/adaptations/<스킬명>.json`에 둡니다. 공용 원본을 고칠 때 Claude 생성물을 함께 맞출 필요는 없습니다. CI는 둘의 차이를 경고로만 알리고, 릴리스를 준비하거나 Claude 쪽을 작업할 때 다시 생성합니다.
