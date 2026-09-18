@@ -1,7 +1,7 @@
 # Agent Governance Suite 향후 로드맵
 
 <!-- release-version:start -->
-문서 기준일은 2026년 9월 18일이다. 현재 공개 릴리스는 `v1.19.1`이다. 한국어 산문 워크플로는 확장한 용어집 검증과 사용자의 명시적 배포 승인에 따라 활성화했다. 2026년 9월 17일 동결 frame `0.3.0-gate-1`(130건, suite revision `9377b6d19eb3a07671dad85af4aaf5e5ce0f5d81`)은 candidate-v2 이전 정책으로 `EVALUATION_EVIDENCE_PASSED`를 얻었지만, v1.16.0의 candidate-v2 정책은 그 평가 대상이 아니므로 품질 미평가 상태로 기록한다. 이 정책의 활성 배포는 사용자의 명시적 릴리스 요청에 따른 결정이며 품질 기준 통과 주장이 아니다.
+문서 기준일은 2026년 9월 18일이다. 현재 공개 릴리스는 `v1.20.0`이다. 한국어 산문 워크플로는 확장한 용어집 검증과 사용자의 명시적 배포 승인에 따라 활성화했다. 2026년 9월 17일 동결 frame `0.3.0-gate-1`(130건, suite revision `9377b6d19eb3a07671dad85af4aaf5e5ce0f5d81`)은 candidate-v2 이전 정책으로 `EVALUATION_EVIDENCE_PASSED`를 얻었지만, v1.16.0의 candidate-v2 정책은 그 평가 대상이 아니므로 품질 미평가 상태로 기록한다. 이 정책의 활성 배포는 사용자의 명시적 릴리스 요청에 따른 결정이며 품질 기준 통과 주장이 아니다.
 <!-- release-version:end -->
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
@@ -73,6 +73,7 @@
 - 2026년 9월 18일 Claude Code에서 orchestrated MCP가 항상 `BINDING_REQUIRED`로 막히던 원인을 확인했다. 서버에 `TrustedExecutionContextProvider` 구현체가 주입되지 않았고, 이전 문서는 "Claude Code 훅은 모델 정보를 주지 않는다"고 적었지만 PreToolUse 입력의 `tool_use_id`로 transcript에서 그 호출을 낸 assistant 메시지의 `message.model`을 찾을 수 있었다. v1.17.0에 Claude 전용 host attestation 훅과 서버 provider를 추가했다. 서버는 `AGENT_GOVERNANCE_HOST_ATTESTATION=claude-code`일 때만 provider를 켜므로 Codex 배포물은 그대로 `BINDING_REQUIRED`다. 빌드한 Claude 배포물로 새 세션(`claude-sonnet-5`, effort `high`)을 띄워 `plan_workflow`가 관측값으로 통과하는 것을 확인했다. 훅이 시작될 때 transcript에는 아직 그 호출이 없었고 재시도로 찾았다. transcript를 남기지 않는 `--no-session-persistence` 세션에서는 `BINDING_REQUIRED`였다. `record_stage_result`와 서브에이전트 경로는 단위·통합 테스트로만 확인했다. 보증 수준은 하네스 관측이며, 같은 OS 사용자 프로세스의 위조는 막지 않는다.
 - 2026년 9월 18일 v1.17.0 뒤 전체 흐름을 다시 점검했다. Claude용 orchestrator 지침이 여전히 "Claude Code에서는 orchestrated 모드가 시작되지 않는다"고 안내했고, 새 세션으로 전체 흐름을 돌려 보니 Claude Code가 도구 스키마의 외부 `$ref`를 풀지 못해 `open_convergence_root`의 `taskEnvelope`·`frame`을 문자열로 보내 `INVALID_INPUT`으로 멈췄다. v1.18.0에서 `anthropic` 프로필의 공개 스키마를 참조 없이 펼치고, orchestrator 지침이 실패 영향이 큰 여러 단계 요청에 MCP orchestrated workflow를 쓰고 `BINDING_*`이면 직접 호출로 전환하게 했다. 같은 새 세션 방식으로 계획부터 finalize까지 한 흐름이 통과하고, 서브에이전트 호출이 서브에이전트 actor와 그 effort로 관측되는 것을 확인했다. 추론 수준은 훅 입력과 transcript 중 낮은 값, 토큰 유효기간은 5분, Bedrock·Vertex·이전 형식 모델 ID 인식을 함께 반영했다. 릴리스 절차 중 찾은 `mutation-risk-preflight` 평가기의 중복 근거 결함은 원본 v1.0.1로 고쳤다.
 - 2026년 9월 18일 v1.18.0 준비 중 실제 고위험 요청으로 새 세션을 돌렸을 때, 세션은 orchestrated 경로를 골랐지만 `change-scope-guardian` baseline(972개 항목, 262KB)을 `record_stage_result` 인자로 넘길 수 없어 run을 닫고 direct로 전환했다. v1.19.0에서 `StageResult.outputFile`(절대 경로와 SHA-256)을 추가해 서버가 파일을 읽어 인라인 출력과 똑같이 검사하고 receipt에는 참조만 남기게 했다.
+- 2026년 9월 18일 MIT 공개 스킬 `ponytail`(원본 `DietrichGebert/ponytail` v4.10.0, 포크 `jaeseongs95/ponytail` 커밋 `83b2cbc`)을 v1.20.0에서 구현 단계 provider(`minimal-implementation`, phaseOrder 44)로 붙였다. 사용자 결정에 따라 원본의 항상 켜짐 훅, 보조 스킬 5개와 MCP 서버는 넣지 않았고 Claude·Codex 배포물 모두에 넣었다. Codex 공식 검사기가 허용하지 않는 frontmatter 키 `argument-hint`는 공용 사본에서 빼고 Claude 사본에서만 되살렸다.
 
 ### 종료 기준
 

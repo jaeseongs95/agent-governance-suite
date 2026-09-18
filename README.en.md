@@ -7,7 +7,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
 <!-- release-version:start -->
-The current public release is `v1.19.1` and includes fifteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. This patch fixes one test line that made v1.19.0 CI fail on Ubuntu. v1.19.0 lets `record_stage_result` take large provider outputs by local file reference and SHA-256, so stage outputs that grow with repository size no longer stop orchestrated workflows. The candidate-v2 policies applied to `korean-prose-editor` in v1.16.0 were not covered by the quality-gate pass (`0.3.0-gate-1`) and have not been quality-evaluated yet.
+The current public release is `v1.20.0` and includes fifteen governance specialist skills, one implementation-step skill (`ponytail`), one local task-continuity infrastructure skill, and one Korean prose workflow. This release attaches the MIT-licensed `ponytail` skill to the implementation step: the orchestrator requests the `minimal-implementation` capability for requests that write or change code, and the skill instructs the agent to pick the simplest implementation without unneeded features, abstractions, or dependencies. The upstream always-on hooks and helper skills are not included. v1.19.0 lets `record_stage_result` take large provider outputs by local file reference and SHA-256, so stage outputs that grow with repository size no longer stop orchestrated workflows. The candidate-v2 policies applied to `korean-prose-editor` in v1.16.0 were not covered by the quality-gate pass (`0.3.0-gate-1`) and have not been quality-evaluated yet.
 <!-- release-version:end -->
 
 ## Problems it handles
@@ -44,7 +44,7 @@ Node.js 22.13.0 or later is required.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.19.1
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.20.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -109,7 +109,7 @@ Start a new session after installation and call skills as `/agent-governance-sui
 | Convergence review | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 1.0.0 | Independently compares iteration contracts and frame changes before a new epoch can open. |
 | Before and after changes | `change-scope-guardian` | 1.0.0 | Captures a baseline and checks whether the final change stayed in scope. |
 | Before changes | `mutation-risk-preflight` | 1.0.1 | Checks the target, authority, approval, and recovery conditions for risky mutations. |
-| Implementation | `ponytail` | 4.10.0 | Picks the simplest correct implementation at the code-writing step, without unrequested features, abstractions or dependencies. |
+| Implementation | `ponytail` | 4.10.0 | Instructs the agent to pick the simplest correct implementation at the code-writing step, without unrequested features, abstractions or dependencies. |
 | Before completion | `acceptance-evidence-validator` | 1.0.0 | Verifies current evidence for every acceptance criterion. |
 | Before completion | `independent-audit-gate` | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
 | After a failure | `blocker-diagnostician` | 1.0.0 | Classifies repeated failures and selects the next diagnostic step. |
