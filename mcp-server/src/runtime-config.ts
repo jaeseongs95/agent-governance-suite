@@ -104,3 +104,14 @@ export function resolveToolSchemaProfile(
 ): "default" | "anthropic" {
   return environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE === "anthropic" ? "anthropic" : "default";
 }
+
+/**
+ * Enables the Claude Code host attestation adapter. Only the Claude Code plugin
+ * manifest sets this; an unset or unknown value keeps the server without a
+ * trusted execution provider, so strict orchestration stays BINDING_REQUIRED.
+ */
+export function resolveHostAttestation(
+  environment: NodeJS.ProcessEnv = process.env,
+): "claude-code" | null {
+  return environment.AGENT_GOVERNANCE_HOST_ATTESTATION === "claude-code" ? "claude-code" : null;
+}

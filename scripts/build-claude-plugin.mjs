@@ -19,7 +19,12 @@ export const ADAPTATIONS_DIRECTORY = "adaptations";
 export const PLUGIN_NAME = "agent-governance-suite";
 export const EXCLUDED_SKILLS = Object.freeze(["codex-token-usage-analyzer"]);
 const SHARED_ROOTS = Object.freeze(["skills/", "runtime/", "contracts/"]);
-const SHARED_FILES = Object.freeze(["LICENSE", "mcp-server/dist/server.mjs", "mcp-server/dist/continuity-hook.mjs"]);
+const SHARED_FILES = Object.freeze([
+  "LICENSE",
+  "mcp-server/dist/server.mjs",
+  "mcp-server/dist/continuity-hook.mjs",
+  "mcp-server/dist/host-attestation-hook.mjs",
+]);
 const ADAPTATION_KEYS = Object.freeze(["description", "replacements"]);
 // Codex-only wording that must not reach model-visible Claude files.
 export const CODEX_ONLY_PATTERNS = Object.freeze([

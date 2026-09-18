@@ -20,6 +20,7 @@ import {
   workflowStatusSummary,
 } from "./response-projections.js";
 import { WorkflowService } from "./workflow-service.js";
+import type { HostAttestationProvider } from "./host-attestation.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { ContractValidator } from "./schema-validator.js";
@@ -252,6 +253,7 @@ export function createMcpServer(
   glossary: KoreanProseGlossaryGateway = new UnavailableKoreanProseGlossary(),
   validator: ContractValidator = new ContractValidator(),
   toolSchemaProfile: ToolSchemaProfile = "default",
+  hostAttestation: HostAttestationProvider | null = null,
 ): Server {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
@@ -386,6 +388,9 @@ export function createMcpServer(
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const args = asRecord(request.params.arguments);
+    // Only a host with an attestation adapter strips and verifies the hook token.
+    const attested = <T>(tool: string, call: (input: Record<string, unknown>) => T): T =>
+      hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
     let updateStatus: PluginUpdateStatusV1 | null = null;
     let result: ApiResultV1<unknown>;
 
@@ -408,7 +413,7 @@ export function createMcpServer(
       updateStatus = await updates.check(false);
       switch (request.params.name) {
         case "plan_workflow":
-          result = service.planWorkflow(args, true);
+          result = attested("plan_workflow", (input) => service.planWorkflow(input, true));
           break;
         case "open_convergence_root":
           {
@@ -472,7 +477,7 @@ export function createMcpServer(
             result = mode === null
               ? invalidInput("responseMode must be compact or full.")
               : projectResult<WorkflowReceiptV1, ReturnType<typeof workflowStatusSummary>>(
-                  service.recordStageResult(domainArguments(args, "responseMode"), true),
+                  attested("record_stage_result", (input) => service.recordStageResult(domainArguments(input, "responseMode"), true)),
                   mode,
                   workflowStatusSummary,
                 );

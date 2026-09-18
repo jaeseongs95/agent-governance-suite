@@ -24,6 +24,12 @@ export const RUNTIME_BUNDLES = Object.freeze([
     output: "mcp-server/dist/continuity-hook.mjs",
     executable: true,
   }),
+  Object.freeze({
+    id: "host-attestation-hook",
+    entry: "mcp-server/src/host-attestation-hook.ts",
+    output: "mcp-server/dist/host-attestation-hook.mjs",
+    executable: true,
+  }),
 ]);
 
 export const RUNTIME_NOTICES = "runtime/THIRD_PARTY_NOTICES.md";

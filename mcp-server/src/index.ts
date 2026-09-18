@@ -6,6 +6,7 @@ import { SqliteContinuityStore } from "./continuity-store.js";
 import {
   assertDistinctDatabasePaths,
   resolveContinuityDatabasePath,
+  resolveHostAttestation,
   resolveKoreanProseGlossaryPath,
   resolveRegistryPath,
   resolveToolSchemaProfile,
@@ -16,6 +17,7 @@ import { createMcpServer } from "./server.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { WorkflowService } from "./workflow-service.js";
+import { HostAttestationProvider } from "./host-attestation.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { SqliteKoreanProseGlossary } from "./korean-prose-glossary.js";
 
@@ -37,7 +39,14 @@ async function main(): Promise<void> {
   });
 
   const validator = new ContractValidator();
-  const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store);
+  const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
+  const service = new WorkflowService(
+    new FileSkillRegistry(registryPath, validator),
+    validator,
+    store,
+    null,
+    hostAttestation,
+  );
   const updates = new PluginUpdateService(store);
   let continuity: ContinuityGateway = new UnavailableContinuityService();
   if (continuityPathAvailable) {
@@ -50,7 +59,7 @@ async function main(): Promise<void> {
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile());
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation);
   await server.connect(new StdioServerTransport());
 }
 

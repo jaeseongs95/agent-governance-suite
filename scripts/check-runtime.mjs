@@ -12,6 +12,7 @@ const requiredFiles = [
   ".mcp.json",
   "mcp-server/dist/server.mjs",
   "mcp-server/dist/continuity-hook.mjs",
+  "mcp-server/dist/host-attestation-hook.mjs",
   "hooks/hooks.json",
   "runtime/schema-validation.mjs",
   "runtime/THIRD_PARTY_NOTICES.md",

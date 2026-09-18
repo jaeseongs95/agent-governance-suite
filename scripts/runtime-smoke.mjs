@@ -26,6 +26,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       cp(path.join(sourceRoot, "skills"), path.join(cleanRoot, "skills"), { recursive: true }),
       cp(path.join(sourceRoot, "mcp-server", "dist", "server.mjs"), path.join(cleanRoot, "mcp-server", "dist", "server.mjs")),
       cp(path.join(sourceRoot, "mcp-server", "dist", "continuity-hook.mjs"), path.join(cleanRoot, "mcp-server", "dist", "continuity-hook.mjs")),
+      cp(path.join(sourceRoot, "mcp-server", "dist", "host-attestation-hook.mjs"), path.join(cleanRoot, "mcp-server", "dist", "host-attestation-hook.mjs")),
     ]);
     await assertMissing(path.join(cleanRoot, "node_modules"));
 
@@ -75,6 +76,41 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     });
     if (hookResult.error || hookResult.status !== 0 || hookResult.stdout !== "") {
       throw new Error(`continuity hook failed its node_modules-free startup smoke check.\n${hookResult.stderr ?? ""}`);
+    }
+
+    const transcriptPath = path.join(cleanRoot, "state", "transcript.jsonl");
+    await mkdir(path.dirname(transcriptPath), { recursive: true });
+    await writeFile(transcriptPath, `${JSON.stringify({
+      type: "assistant",
+      sessionId: "clean-room-session",
+      isSidechain: false,
+      effort: "high",
+      message: { model: "claude-opus-5", content: [{ type: "tool_use", id: "toolu_clean_room", name: "plan_workflow", input: {} }] },
+    })}\n`, "utf8");
+    const attestationInput = {
+      hook_event_name: "PreToolUse",
+      session_id: "clean-room-session",
+      transcript_path: transcriptPath,
+      tool_name: "mcp__plugin_agent-governance-suite_agent-governance-suite__plan_workflow",
+      tool_use_id: "toolu_clean_room",
+      tool_input: { taskId: "clean-room-task" },
+      effort: { level: "high" },
+    };
+    const attestationResult = spawnSync(process.execPath, [path.join(cleanRoot, "mcp-server", "dist", "host-attestation-hook.mjs")], {
+      cwd: cleanRoot,
+      encoding: "utf8",
+      env: environment,
+      input: `${JSON.stringify(attestationInput)}\n`,
+      timeout: 10_000,
+      windowsHide: true,
+    });
+    const attestationOutput = attestationResult.status === 0 && attestationResult.stdout ? JSON.parse(attestationResult.stdout) : null;
+    if (
+      attestationResult.error
+      || !String(attestationOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs1.")
+      || attestationOutput.hookSpecificOutput.updatedInput.taskId !== "clean-room-task"
+    ) {
+      throw new Error(`host attestation hook failed its node_modules-free smoke check.\n${attestationResult.stderr ?? ""}`);
     }
 
     const sourceText = "MCP와 SQLite";

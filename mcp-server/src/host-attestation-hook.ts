@@ -1,0 +1,166 @@
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { HOST_ATTESTATION_FIELD, HOST_ATTESTATION_TOOLS, issueHostAttestation } from "./host-attestation.js";
+import { resolveWorkflowDatabasePath } from "./runtime-config.js";
+import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
+import type { WorkflowStore } from "./workflow-store.js";
+
+type HookInput = Record<string, unknown>;
+
+export interface TranscriptObservation {
+  model: string;
+  effort: string | null;
+}
+
+export interface HostAttestationHookOptions {
+  readText?: (file: string) => string | null;
+  sleep?: (milliseconds: number) => void;
+  maxWaitMs?: number;
+  pollIntervalMs?: number;
+  now?: () => Date;
+}
+
+function record(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+function text(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function readTextOrNull(file: string): string | null {
+  try {
+    return readFileSync(file, "utf8");
+  } catch {
+    return null;
+  }
+}
+
+/** Actor IDs are persisted in plans and receipts, so raw session and agent IDs are stored only as digests. */
+export function claudeCodeActorId(sessionId: string, agentId: string | null): string {
+  const digest = (value: string) => createHash("sha256").update(value, "utf8").digest("hex").slice(0, 24);
+  return agentId
+    ? `claude-code:session-${digest(sessionId)}:agent-${digest(agentId)}`
+    : `claude-code:session-${digest(sessionId)}`;
+}
+
+function sleepSync(milliseconds: number): void {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+}
+
+/** Transcripts that can hold the assistant message for this call: the given one and the subagent's own file. */
+export function transcriptCandidates(transcriptPath: string, sessionId: string, agentId: string | null): string[] {
+  const candidates = [transcriptPath];
+  if (agentId) {
+    candidates.push(path.join(path.dirname(transcriptPath), sessionId, "subagents", `agent-${agentId}.jsonl`));
+  }
+  return [...new Set(candidates)];
+}
+
+/**
+ * Finds the assistant message that issued toolUseId, as recorded by the harness,
+ * and returns the model and effort stored with it.
+ */
+export function findToolUseObservation(
+  transcript: string,
+  toolUseId: string,
+  sessionId: string,
+  agentId: string | null,
+): TranscriptObservation | null {
+  const lines = transcript.split("\n");
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const line = lines[index];
+    if (!line?.includes(toolUseId)) continue;
+    let entry: Record<string, unknown> | null;
+    try {
+      entry = record(JSON.parse(line));
+    } catch {
+      continue;
+    }
+    if (!entry || entry.type !== "assistant") continue;
+    const message = record(entry.message);
+    const content = Array.isArray(message?.content) ? message.content : [];
+    const issued = content.some((block) => record(block)?.type === "tool_use" && record(block)?.id === toolUseId);
+    if (!issued) continue;
+    if (entry.sessionId !== undefined && entry.sessionId !== sessionId) return null;
+    if (agentId ? entry.agentId !== agentId : entry.isSidechain === true) return null;
+    const model = text(message?.model);
+    if (!model) return null;
+    return { model, effort: text(entry.effort) };
+  }
+  return null;
+}
+
+export function handleHostAttestationHook(
+  input: HookInput,
+  store: WorkflowStore,
+  options: HostAttestationHookOptions = {},
+): Record<string, unknown> {
+  if (input.hook_event_name !== "PreToolUse") return {};
+  const canonicalName = text(input.tool_name) ?? "";
+  if (!canonicalName.startsWith("mcp__")) return {};
+  const tool = canonicalName.split("__").at(-1) ?? "";
+  if (!HOST_ATTESTATION_TOOLS.has(tool)) return {};
+  const toolInput = record(input.tool_input);
+  const sessionId = text(input.session_id);
+  const toolUseId = text(input.tool_use_id);
+  const transcriptPath = text(input.transcript_path);
+  if (!toolInput || !sessionId || !toolUseId || !transcriptPath) return {};
+  const agentId = text(input.agent_id);
+
+  const readText = options.readText ?? readTextOrNull;
+  const sleep = options.sleep ?? sleepSync;
+  const maxWaitMs = options.maxWaitMs ?? 5000;
+  const pollIntervalMs = options.pollIntervalMs ?? 100;
+  const candidates = transcriptCandidates(transcriptPath, sessionId, agentId);
+  let observation: TranscriptObservation | null = null;
+  // The transcript is written asynchronously and may lag the tool call.
+  for (let waited = 0; ; waited += pollIntervalMs) {
+    for (const candidate of candidates) {
+      const transcript = readText(candidate);
+      observation = transcript ? findToolUseObservation(transcript, toolUseId, sessionId, agentId) : null;
+      if (observation) break;
+    }
+    if (observation || waited >= maxWaitMs) break;
+    sleep(pollIntervalMs);
+  }
+  if (!observation) return {};
+
+  // The harness reports the effort of this tool-use context; the transcript entry is the fallback.
+  const effort = text(record(input.effort)?.level) ?? observation.effort;
+  if (!effort) return {};
+  const token = issueHostAttestation(store, {
+    tool,
+    input: toolInput,
+    model: observation.model,
+    reasoningEffort: effort,
+    actorId: claudeCodeActorId(sessionId, agentId),
+    ...(options.now ? { now: options.now() } : {}),
+  });
+  if (!token) return {};
+  return {
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      updatedInput: { ...toolInput, [HOST_ATTESTATION_FIELD]: token },
+    },
+  };
+}
+
+async function main(): Promise<void> {
+  let store: SqliteWorkflowStore | null = null;
+  try {
+    const input = JSON.parse(readFileSync(0, "utf8")) as HookInput;
+    store = new SqliteWorkflowStore(resolveWorkflowDatabasePath());
+    const output = handleHostAttestationHook(input, store);
+    if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));
+  } catch {
+    // Without a token the server fails closed with BINDING_REQUIRED; never block the tool call here.
+  } finally {
+    try { store?.close(); } catch { /* Fail open. */ }
+  }
+}
+
+if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) await main();

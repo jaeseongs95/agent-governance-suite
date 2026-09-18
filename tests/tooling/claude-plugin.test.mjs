@@ -63,6 +63,7 @@ describe("generated Claude plugin", () => {
     expect(server.env.AGENT_GOVERNANCE_DB_PATH).toBe("${CLAUDE_PLUGIN_DATA}/workflows.sqlite3");
     expect(server.env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH).toBe("${CLAUDE_PLUGIN_DATA}/continuity.sqlite3");
     expect(server.env.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE).toBe("anthropic");
+    expect(server.env.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("claude-code");
   });
 
   it("publishes a separate marketplace that points only at the generated tree", async () => {
@@ -76,6 +77,7 @@ describe("generated Claude plugin", () => {
     expect(codexManifest).not.toContain(OUTPUT_DIRECTORY);
     const codexMcp = await readFile(path.join(root, ".mcp.json"), "utf8");
     expect(codexMcp).not.toContain("AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE");
+    expect(codexMcp).not.toContain("AGENT_GOVERNANCE_HOST_ATTESTATION");
   });
 
   it("puts the Claude selection decision at the top of the generated orchestrator skill", async () => {
@@ -100,11 +102,15 @@ describe("generated Claude plugin", () => {
     }
   });
 
-  it("registers exec-form continuity hooks plus the Claude-only skill trigger", async () => {
+  it("registers exec-form continuity hooks plus the Claude-only skill trigger and host attestation", async () => {
     const claudeHooks = await readJson(pluginRoot, "hooks", "hooks.json");
     // Parity with the Codex hook events is reported as drift, so a new Codex event never fails this test.
     expect(Object.keys(claudeHooks.hooks).sort()).toEqual(["PostCompact", "PreCompact", "PreToolUse", "SessionStart", "UserPromptSubmit"]);
-    const allowedScripts = ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs", "${CLAUDE_PLUGIN_ROOT}/hooks/skill-trigger-hook.mjs"];
+    const allowedScripts = [
+      "${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs",
+      "${CLAUDE_PLUGIN_ROOT}/hooks/skill-trigger-hook.mjs",
+      "${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs",
+    ];
     for (const groups of Object.values(claudeHooks.hooks)) {
       for (const hook of groups.flatMap((group) => group.hooks)) {
         expect(hook).toMatchObject({ type: "command", command: "node" });
@@ -121,6 +127,18 @@ describe("generated Claude plugin", () => {
       expect(matcher.test(`mcp__agent-governance-suite__${tool}`)).toBe(false);
     }
     expect(matcher.test(`${toolPrefix}plan_workflow`)).toBe(false);
+    // Host attestation is the only handler for exactly the two strict tools, so no other hook rewrites their input.
+    const attestationGroups = claudeHooks.hooks.PreToolUse.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[2]));
+    expect(attestationGroups).toHaveLength(1);
+    expect(attestationGroups[0].hooks.map((hook) => hook.args[0])).toEqual([allowedScripts[2]]);
+    const attestationMatcher = new RegExp(attestationGroups[0].matcher, "u");
+    for (const tool of ["plan_workflow", "record_stage_result"]) {
+      expect(attestationMatcher.test(`${toolPrefix}${tool}`)).toBe(true);
+      expect(claudeHooks.hooks.PreToolUse.filter((group) => new RegExp(group.matcher, "u").test(`${toolPrefix}${tool}`))).toHaveLength(1);
+    }
+    for (const tool of [...continuityTools, "claim_workflow_attempt", "start_guarded_workflow", "finalize_workflow"]) {
+      expect(attestationMatcher.test(`${toolPrefix}${tool}`)).toBe(false);
+    }
   });
 
   it("exits quietly without touching shared state when plugin data is unavailable", async () => {
@@ -138,6 +156,39 @@ describe("generated Claude plugin", () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toBe("");
     expect(await readdir(home)).toEqual([]);
+  });
+
+  it("emits no attestation and creates no state without plugin data", async () => {
+    const home = await mkdtemp(path.join(tmpdir(), "claude-plugin-attest-"));
+    temporaryDirectories.push(home);
+    const environment = { ...process.env, HOME: home, USERPROFILE: home, XDG_STATE_HOME: path.join(home, "state"), LOCALAPPDATA: path.join(home, "local") };
+    delete environment.CLAUDE_PLUGIN_DATA;
+    delete environment.AGENT_GOVERNANCE_DB_PATH;
+    const result = spawnSync(process.execPath, [path.join(pluginRoot, "hooks", "host-attestation-hook.mjs")], {
+      encoding: "utf8",
+      env: environment,
+      input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "test-session", tool_name: `${toolPrefix}plan_workflow`, tool_use_id: "toolu_x", transcript_path: path.join(home, "t.jsonl"), tool_input: { taskId: "t" } }),
+    });
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe("");
+    expect(await readdir(home)).toEqual([]);
+  });
+
+  it("signs host attestation with a key in the plugin data directory", async () => {
+    const data = await mkdtemp(path.join(tmpdir(), "claude-plugin-attest-data-"));
+    temporaryDirectories.push(data);
+    const transcript = path.join(data, "session.jsonl");
+    await writeFile(transcript, `${JSON.stringify({ type: "assistant", sessionId: "test-session", isSidechain: false, effort: "high", message: { model: "claude-opus-5", content: [{ type: "tool_use", id: "toolu_x", name: "plan_workflow", input: {} }] } })}\n`, "utf8");
+    const result = spawnSync(process.execPath, [path.join(pluginRoot, "hooks", "host-attestation-hook.mjs")], {
+      encoding: "utf8",
+      env: { ...process.env, CLAUDE_PLUGIN_DATA: data },
+      input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "test-session", tool_name: `${toolPrefix}plan_workflow`, tool_use_id: "toolu_x", transcript_path: transcript, tool_input: { taskId: "t" }, effort: { level: "high" } }),
+    });
+    expect(result.status).toBe(0);
+    const output = JSON.parse(result.stdout);
+    expect(output.hookSpecificOutput.permissionDecision).toBeUndefined();
+    expect(output.hookSpecificOutput.updatedInput).toMatchObject({ taskId: "t", _hostAttestation: expect.stringMatching(/^aghs1\./u) });
+    expect(await readdir(data)).toContain("workflows.sqlite3");
   });
 
   it("stores continuity state under the plugin data directory", async () => {
