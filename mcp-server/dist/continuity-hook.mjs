@@ -9271,7 +9271,11 @@ var ContractValidator = class {
     return this.assert("pluginUpdateNotice", value);
   }
   providerResult(rootDirectory, resultSchema, outputSchema, value) {
-    const result = this.assertSchemaFile(rootDirectory, resultSchema, value, "provider result");
+    const declared = this.readBoundSchema(rootDirectory, resultSchema, "provider result");
+    const declaresVersion = Boolean(declared.properties && Object.prototype.hasOwnProperty.call(declared.properties, "schemaVersion"));
+    const providerView = !declaresVersion && value && typeof value === "object" && !Array.isArray(value) ? Object.fromEntries(Object.entries(value).filter(([key]) => key !== "schemaVersion")) : value;
+    this.assertSchemaFile(rootDirectory, resultSchema, providerView, "provider result");
+    const result = value;
     if (result.output !== null) {
       this.assertSchemaFile(rootDirectory, outputSchema, result.output, "provider output");
     }

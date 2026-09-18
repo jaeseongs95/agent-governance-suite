@@ -296,7 +296,15 @@ export class ContractValidator {
     outputSchema: SchemaReferenceV1,
     value: unknown,
   ): ProviderResultV1 {
-    const result = this.assertSchemaFile<ProviderResultV1>(rootDirectory, resultSchema, value, "provider result");
+    // StageResult.output always carries the shared envelope's schemaVersion. Some skills describe
+    // their result without it and forbid unknown keys, so it is left out when their schema omits it.
+    const declared = this.readBoundSchema(rootDirectory, resultSchema, "provider result");
+    const declaresVersion = Boolean(declared.properties && Object.prototype.hasOwnProperty.call(declared.properties, "schemaVersion"));
+    const providerView = !declaresVersion && value && typeof value === "object" && !Array.isArray(value)
+      ? Object.fromEntries(Object.entries(value).filter(([key]) => key !== "schemaVersion"))
+      : value;
+    this.assertSchemaFile<ProviderResultV1>(rootDirectory, resultSchema, providerView, "provider result");
+    const result = value as ProviderResultV1;
     if (result.output !== null) {
       this.assertSchemaFile(rootDirectory, outputSchema, result.output, "provider output");
     }
