@@ -13,7 +13,9 @@ const SKILL = (name) => `/agent-governance-suite:${name}`;
 const PROMPT_RULES = [
   {
     skill: "change-scope-guardian",
-    test: (p) => /(커밋|commit|merge|병합|push|푸시)/iu.test(p) && !/(커밋\s*로그|commit\s*log|commit\s*message)/iu.test(p),
+    // Read-only requests about commits (log, history, message, "show me") are not a pre-commit situation.
+    test: (p) => /(커밋|commit|merge|병합|push|푸시)/iu.test(p)
+      && !/((커밋|commit|merge|병합|push|푸시)\s*(로그|내용|이력|히스토리|목록|메시지|log|message|history)|(커밋|commit).{0,8}(보여|알려|설명|show|list))/iu.test(p),
     why: "커밋·병합 전에는 요청 범위 밖 파일이나 다른 작업의 변경이 섞였는지 확인하는 단계가 있다",
   },
   {
