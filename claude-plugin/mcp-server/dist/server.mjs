@@ -19543,13 +19543,18 @@ var planWorkflowAnthropicInputSchema = {
 function planWorkflowToolInputSchema(profile = "default") {
   return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
 }
+var ANTHROPIC_SERVER_INSTRUCTIONS = "agent-governance-suite \uC811\uC218 \uADDC\uCE59: \uC0AC\uC6A9\uC790 \uC694\uCCAD\uC744 \uBC1B\uC744 \uB54C\uB9C8\uB2E4, \uD30C\uC77C\uC744 \uACE0\uCE58\uAC70\uB098 \uBA85\uB839\uC744 \uC2E4\uD589\uD558\uAE30 \uC804\uC5D0 \uC774 \uC694\uCCAD\uC774 \uC798\uBABB \uC218\uD589\uB410\uC744 \uB54C\uC758 \uC2E4\uD328 \uC601\uD5A5\uC744 \uD55C \uC904\uB85C \uBD84\uB958\uD55C\uB2E4(\uB0AE\uC74C \uB610\uB294 \uB192\uC74C). CI\xB7CD, \uB9B4\uB9AC\uC2A4\xB7\uBC30\uD3EC, \uAD8C\uD55C\xB7\uC2E0\uB8B0 \uACBD\uACC4, \uC804\uC5ED \uC124\uC815, \uB370\uC774\uD130\xB7\uC2A4\uD0A4\uB9C8, \uACF5\uAC1C \uC800\uC7A5\uC18C\uC758 \uAE30\uBCF8 \uBE0C\uB79C\uCE58\uCC98\uB7FC \uC2E4\uD328 \uC601\uD5A5\uC774 \uD070 \uC791\uC5C5\uC774\uBA74 \uAD6C\uD604\uC744 \uC2DC\uC791\uD558\uAE30 \uC804\uC5D0 Skill \uB3C4\uAD6C\uB85C /agent-governance-suite:orchestrator \uB610\uB294 \uD574\uB2F9 \uC804\uBB38 \uC2A4\uD0AC(task-contract, mutation-risk-preflight, independent-audit-gate)\uC744 \uBA3C\uC800 \uD638\uCD9C\uD55C\uB2E4. \uC2E4\uD328 \uC601\uD5A5\uC774 \uB0AE\uC73C\uBA74 \uADF8 \uC774\uC720\uB97C \uD55C \uC904\uB85C \uBC1D\uD788\uACE0 \uC9C4\uD589\uD55C\uB2E4.";
+function serverInstructions(profile = "default") {
+  return profile === "anthropic" ? ANTHROPIC_SERVER_INSTRUCTIONS : void 0;
+}
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
 function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default") {
+  const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
-    { capabilities: { tools: {} } }
+    { capabilities: { tools: {} }, ...instructions === void 0 ? {} : { instructions } }
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [

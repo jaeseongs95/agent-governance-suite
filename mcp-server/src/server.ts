@@ -226,6 +226,18 @@ export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "defaul
   return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
 }
 
+/**
+ * Session instructions for Claude Code, which places MCP server instructions in
+ * its system prompt once per session. Claude Code sessions start implementing
+ * as soon as a request arrives, so this asks for an intake-time failure-impact
+ * classification before the first action. The default profile advertises none.
+ */
+export const ANTHROPIC_SERVER_INSTRUCTIONS = "agent-governance-suite 접수 규칙: 사용자 요청을 받을 때마다, 파일을 고치거나 명령을 실행하기 전에 이 요청이 잘못 수행됐을 때의 실패 영향을 한 줄로 분류한다(낮음 또는 높음). CI·CD, 릴리스·배포, 권한·신뢰 경계, 전역 설정, 데이터·스키마, 공개 저장소의 기본 브랜치처럼 실패 영향이 큰 작업이면 구현을 시작하기 전에 Skill 도구로 /agent-governance-suite:orchestrator 또는 해당 전문 스킬(task-contract, mutation-risk-preflight, independent-audit-gate)을 먼저 호출한다. 실패 영향이 낮으면 그 이유를 한 줄로 밝히고 진행한다.";
+
+export function serverInstructions(profile: ToolSchemaProfile = "default"): string | undefined {
+  return profile === "anthropic" ? ANTHROPIC_SERVER_INSTRUCTIONS : undefined;
+}
+
 function validUpdateArguments(args: Record<string, unknown>): boolean {
   return Object.keys(args).every((key) => key === "force")
     && (args.force === undefined || typeof args.force === "boolean");
@@ -241,9 +253,10 @@ export function createMcpServer(
   validator: ContractValidator = new ContractValidator(),
   toolSchemaProfile: ToolSchemaProfile = "default",
 ): Server {
+  const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
-    { capabilities: { tools: {} } },
+    { capabilities: { tools: {} }, ...(instructions === undefined ? {} : { instructions }) },
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({

@@ -12,7 +12,7 @@ import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { resolveToolSchemaProfile } from "../../mcp-server/src/runtime-config.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
-import { createMcpServer, planWorkflowToolInputSchema, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
+import { ANTHROPIC_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "./version-fixtures.js";
@@ -132,6 +132,26 @@ describe("MCP tool schema profiles", () => {
     expect(resolveToolSchemaProfile({ AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE: "anthropic" })).toBe("anthropic");
   });
 
+  it("advertises intake session instructions only for Anthropic hosts", async () => {
+    expect(serverInstructions()).toBeUndefined();
+    expect(serverInstructions("default")).toBeUndefined();
+    expect(serverInstructions("anthropic")).toBe(ANTHROPIC_SERVER_INSTRUCTIONS);
+    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toMatch(/실패 영향/u);
+    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("/agent-governance-suite:orchestrator");
+    const implicit = await connect();
+    const codex = await connect("default");
+    const claude = await connect("anthropic");
+    try {
+      expect(implicit.getInstructions()).toBeUndefined();
+      expect(codex.getInstructions()).toBeUndefined();
+      expect(claude.getInstructions()).toBe(ANTHROPIC_SERVER_INSTRUCTIONS);
+    } finally {
+      await implicit.close();
+      await codex.close();
+      await claude.close();
+    }
+  });
+
   it("applies the environment profile in the bundled server", async () => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "tool-schema-profile-"));
     const environment = getDefaultEnvironment();
@@ -145,6 +165,7 @@ describe("MCP tool schema profiles", () => {
       const planning = (await client.listTools()).tools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
       expect(planning).toBeDefined();
       expect(planning).not.toHaveProperty("oneOf");
+      expect(client.getInstructions()).toBe(ANTHROPIC_SERVER_INSTRUCTIONS);
     } finally {
       try { await transport.close(); } finally { await rm(stateDirectory, { recursive: true, force: true }); }
     }
