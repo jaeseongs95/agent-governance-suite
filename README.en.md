@@ -109,6 +109,7 @@ Start a new session after installation and call skills as `/agent-governance-sui
 | Convergence review | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 1.0.0 | Independently compares iteration contracts and frame changes before a new epoch can open. |
 | Before and after changes | `change-scope-guardian` | 1.0.0 | Captures a baseline and checks whether the final change stayed in scope. |
 | Before changes | `mutation-risk-preflight` | 1.0.1 | Checks the target, authority, approval, and recovery conditions for risky mutations. |
+| Implementation | `ponytail` | 4.10.0 | Picks the simplest correct implementation at the code-writing step, without unrequested features, abstractions or dependencies. |
 | Before completion | `acceptance-evidence-validator` | 1.0.0 | Verifies current evidence for every acceptance criterion. |
 | Before completion | `independent-audit-gate` | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
 | After a failure | `blocker-diagnostician` | 1.0.0 | Classifies repeated failures and selects the next diagnostic step. |

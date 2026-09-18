@@ -9,6 +9,19 @@ import { assertMarkerPair, replaceExactlyOnce, syncReleaseMetadata } from "../..
 import { compareVersions, isSameVersionPinMismatch, isUpstreamUpdate, stableTagsFromLsRemote } from "../../scripts/source-lock.mjs";
 
 describe("repository tooling", () => {
+  it("reads single-line and YAML block scalar frontmatter values", () => {
+    expect(readFrontmatter("---\nname: plain\ndescription: \"A quoted one-line description.\"\n---\n")).toEqual({
+      name: "plain",
+      description: "A quoted one-line description.",
+    });
+    expect(readFrontmatter("---\nname: folded\ndescription: >\n  First line\n  second line.\nlicense: MIT\n---\n")).toEqual({
+      name: "folded",
+      description: "First line second line.",
+      license: "MIT",
+    });
+    expect(readFrontmatter("---\nname: literal\ndescription: |-\n  one\n  two\n---\n").description).toBe("one\ntwo");
+  });
+
   it("normalizes CRLF text without changing binary content", () => {
     expect(normalizeChecksumContent(Buffer.from("one\r\ntwo\r\n"))).toEqual(Buffer.from("one\ntwo\n"));
     expect(normalizeChecksumContent(Buffer.from([0xff, 0x00, 0x0d, 0x0a])))

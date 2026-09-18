@@ -1,0 +1,20 @@
+{
+  "normal": [
+    {
+      "id": "normal-01",
+      "expected": "a plan that needs minimal-implementation routes it to ponytail in the implementation phase, after the pre-mutation gate and before scope verification"
+    }
+  ],
+  "boundary": [
+    {
+      "id": "boundary-01",
+      "expected": "a plan without minimal-implementation does not add a ponytail stage"
+    }
+  ],
+  "failure": [
+    {
+      "id": "failure-01",
+      "expected": "the integrated package carries only the skill instructions and version file, pinned to the fork commit; no always-on hooks are installed"
+    }
+  ]
+}

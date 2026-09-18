@@ -314,6 +314,24 @@
       "downstreamModifications": [
         "Treat the optional Markdown export as a provider result artifact rather than a mandatory workflow completion artifact."
       ]
+    },
+    {
+      "skillId": "ponytail",
+      "path": "skills/ponytail",
+      "source": "https://github.com/jaeseongs95/ponytail.git",
+      "sourcePath": "skills/ponytail",
+      "version": "4.10.0",
+      "versionSource": "version-file",
+      "ref": {
+        "kind": "commit",
+        "value": "83b2cbc3bc50df3030c49d1dfe598ccefe850a85",
+        "commit": "83b2cbc3bc50df3030c49d1dfe598ccefe850a85"
+      },
+      "updatePolicy": "notify-only",
+      "upstreamChecksum": "sha256:60dc9353cf86e1e6714dd946ac29558f8833d3589f614bb9dab140edb4c6bf93",
+      "integratedChecksum": "sha256:60dc9353cf86e1e6714dd946ac29558f8833d3589f614bb9dab140edb4c6bf93",
+      "checksumScope": "relative paths and normalized text bytes under skills/ponytail",
+      "downstreamModifications": []
     }
   ]
 }

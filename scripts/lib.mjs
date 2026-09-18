@@ -34,11 +34,22 @@ export function readFrontmatter(markdown) {
     throw new Error("SKILL.md must begin with YAML frontmatter.");
   }
   const values = {};
-  for (const line of match[1].split(/\r?\n/u)) {
-    const field = line.match(/^([a-zA-Z0-9_-]+):\s*(.+)$/u);
-    if (field) {
-      values[field[1]] = field[2].trim().replace(/^(["'])(.*)\1$/u, "$2");
+  const lines = match[1].split(/\r?\n/u);
+  for (let index = 0; index < lines.length; index += 1) {
+    const field = lines[index].match(/^([a-zA-Z0-9_-]+):\s*(.+)$/u);
+    if (!field) continue;
+    const value = field[2].trim();
+    // YAML block scalars (description: > or |) continue on the following indented lines.
+    if (/^[>|][+-]?$/u.test(value)) {
+      const block = [];
+      while (index + 1 < lines.length && (/^\s+\S/u.test(lines[index + 1]) || lines[index + 1].trim() === "")) {
+        index += 1;
+        block.push(lines[index].trim());
+      }
+      values[field[1]] = value.startsWith(">") ? block.filter(Boolean).join(" ") : block.join("\n").trim();
+      continue;
     }
+    values[field[1]] = value.replace(/^(["'])(.*)\1$/u, "$2");
   }
   return values;
 }

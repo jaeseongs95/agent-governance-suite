@@ -43,9 +43,10 @@ metadata:
 4. 사용자가 하위 에이전트·병렬 작업을 명시적으로 요청했거나, 아래 위임 판단을 모두 통과해 직접 수행보다 완료까지의 순이익이 있다고 확인한 경우에만 `subagent-coordination`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. 작업 단위가 둘 이상이거나 `orchestration.requested: true`라는 사실만으로 추가하지 않는다.
 5. 실제로 양립할 수 없는 대안이나 충돌하는 근거 중 하나를 선택해야 하고, 독립 관점과 교차 반박이 그 선택에 필요한 경우에만 `independent-deliberation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. `decision.complexity: complex`만으로 추가하지 않으며, 이 단계는 구현이나 완료 게이트를 대체하지 않는다.
 6. 정확한 최종 대상이 있는 고위험 변경의 실행·병합·릴리스·완료 가능 여부를 판정하는 요청에는 `independent-audit`을 추가한다. 감사 전의 구현·수정·자체 검증은 이 provider의 역할이 아니다.
-7. 하나의 전문 스킬로 충분한 요청은 오케스트레이터 단계를 생략하고 그 스킬을 직접 사용할 수 있다고 안내한다.
+7. 코드를 작성·수정하는 구현 단계가 있는 요청에는 `minimal-implementation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. 이 단계는 변경 전 기준선과 사전 점검 뒤, 범위·수용 근거 확인 전에 실행된다. provider는 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르고, 의도적으로 뺀 것을 결과에 남긴다. MCP 없이 직접 진행할 때도 구현 단계에서 이 capability의 provider를 호출한다.
+8. 하나의 전문 스킬로 충분한 요청은 오케스트레이터 단계를 생략하고 그 스킬을 직접 사용할 수 있다고 안내한다.
 
-통합 워크플로에서는 bootstrap을 마친 뒤 작업 단위 조정, 독립 숙고, 요청된 전문 작업, 범위·수용 근거 확인, 최종 고위험 감사 순으로 연결한다. 구체적인 순서는 provider의 `phaseOrder`와 artifact 의존성으로 정하며 MCP stage 순서와 같아야 한다. 각 전문 스킬이 이미 내부적으로 worker를 조정하는 경우에는 같은 단위를 다시 배정하지 않는다.
+통합 워크플로에서는 bootstrap을 마친 뒤 작업 단위 조정, 독립 숙고, 변경 전 기준선과 사전 점검, 최소 구현, 요청된 전문 작업, 범위·수용 근거 확인, 최종 고위험 감사 순으로 연결한다. 구체적인 순서는 provider의 `phaseOrder`와 artifact 의존성으로 정하며 MCP stage 순서와 같아야 한다. 각 전문 스킬이 이미 내부적으로 worker를 조정하는 경우에는 같은 단위를 다시 배정하지 않는다.
 
 ### 위임 판단
 

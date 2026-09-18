@@ -1990,6 +1990,50 @@
           }
         }
       ]
+    },
+    {
+      "schemaVersion": "2.0.0",
+      "skillId": "ponytail",
+      "version": "4.10.0",
+      "path": "./ponytail",
+      "enabled": true,
+      "priority": 50,
+      "providers": [
+        {
+          "capabilities": [
+            "minimal-implementation"
+          ],
+          "executionClass": "workflow",
+          "phase": "implementation",
+          "phaseOrder": 50,
+          "requiredInputArtifacts": [],
+          "inputBindings": [],
+          "producedArtifacts": [],
+          "outputSchema": "contracts/freeform-output.v1.schema.json",
+          "resultSchema": "contracts/provider-result.v1.schema.json",
+          "stateMapping": {
+            "default": {
+              "state": "passed",
+              "errorRequired": false
+            },
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          },
+          "selectionCriteria": [
+            "code-writing-step",
+            "explicit-minimal-implementation-request"
+          ],
+          "preconditions": [],
+          "failureHandling": "Report the simplest rung that held and anything deliberately left out; do not add unrequested abstractions or dependencies.",
+          "gate": {
+            "kind": "none",
+            "policy": "none",
+            "validator": null
+          }
+        }
+      ]
     }
   ]
 }
