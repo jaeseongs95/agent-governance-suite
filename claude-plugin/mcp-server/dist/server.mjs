@@ -10424,7 +10424,7 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
     }
     return propValues;
   });
-  const isObject2 = isObject;
+  const isObject3 = isObject;
   const catchall = def.catchall;
   let value;
   const memo2 = globalConfig.memoizer;
@@ -10432,7 +10432,7 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject2(input)) {
+    if (!isObject3(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -10551,7 +10551,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     return doc.compile();
   };
   let fastpass;
-  const isObject2 = isObject;
+  const isObject3 = isObject;
   const jit = !globalConfig.jitless;
   const allowsEval2 = allowsEval;
   const fastEnabled = jit && allowsEval2.value;
@@ -10560,7 +10560,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject2(input)) {
+    if (!isObject3(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -19119,10 +19119,63 @@ var Server = class extends Protocol {
   }
 };
 
+// mcp-server/src/tool-schema-inline.ts
+var ANNOTATION_ONLY_KEYS = /* @__PURE__ */ new Set(["$schema", "$id", "$defs", "definitions"]);
+var SCHEMA_MAP_KEYS = /* @__PURE__ */ new Set(["properties", "patternProperties", "dependentSchemas"]);
+function isObject2(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+function pointer(document, fragment) {
+  if (!fragment || fragment === "/") return document;
+  let current = document;
+  for (const raw of fragment.replace(/^\//u, "").split("/")) {
+    const key = decodeURIComponent(raw).replaceAll("~1", "/").replaceAll("~0", "~");
+    if (!isObject2(current) && !Array.isArray(current)) throw new Error(`Unresolvable schema pointer #${fragment}`);
+    current = current[key];
+    if (current === void 0) throw new Error(`Unresolvable schema pointer #${fragment}`);
+  }
+  return current;
+}
+function inlineSchemaReferences(schema, documents) {
+  const byId = /* @__PURE__ */ new Map();
+  for (const document of documents) {
+    if (typeof document.$id === "string") byId.set(document.$id, document);
+  }
+  const rootBase = typeof schema.$id === "string" ? schema.$id : "urn:agent-governance:tool-schema";
+  byId.set(rootBase, schema);
+  function inline(node2, base, active) {
+    if (Array.isArray(node2)) return node2.map((item) => inline(item, base, active));
+    if (!isObject2(node2)) return node2;
+    const nodeBase = typeof node2.$id === "string" ? new URL(node2.$id, base).href : base;
+    if (typeof node2.$ref === "string") {
+      const target = new URL(node2.$ref, nodeBase);
+      const fragment = target.hash.replace(/^#/u, "");
+      target.hash = "";
+      const documentId = target.href;
+      const document = byId.get(documentId);
+      if (document === void 0) throw new Error(`Unknown schema reference ${node2.$ref}`);
+      const key = `${documentId}#${fragment}`;
+      if (active.has(key)) throw new Error(`Recursive schema reference ${key} cannot be inlined`);
+      const resolved = inline(pointer(document, fragment), documentId, /* @__PURE__ */ new Set([...active, key]));
+      const siblings = Object.fromEntries(
+        Object.entries(node2).filter(([name]) => name !== "$ref" && !ANNOTATION_ONLY_KEYS.has(name))
+      );
+      return isObject2(resolved) ? { ...resolved, ...Object.fromEntries(Object.entries(siblings).map(([name, value]) => [name, inline(value, nodeBase, active)])) } : resolved;
+    }
+    const output = {};
+    for (const [name, value] of Object.entries(node2)) {
+      if (ANNOTATION_ONLY_KEYS.has(name)) continue;
+      output[name] = SCHEMA_MAP_KEYS.has(name) && isObject2(value) ? Object.fromEntries(Object.entries(value).map(([property, subschema]) => [property, inline(subschema, nodeBase, active)])) : inline(value, nodeBase, active);
+    }
+    return output;
+  }
+  return inline(schema, rootBase, /* @__PURE__ */ new Set());
+}
+
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "1.17.0",
+  version: "1.18.0",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
@@ -19559,8 +19612,10 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} }, ...instructions === void 0 ? {} : { instructions } }
   );
+  const contractDocuments = Object.values(contractSchemas);
+  const advertise = (tools) => toolSchemaProfile === "anthropic" ? tools.map((tool) => JSON.stringify(tool.inputSchema).includes('"$ref"') ? { ...tool, inputSchema: inlineSchemaReferences(tool.inputSchema, contractDocuments) } : tool) : tools;
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: [
+    tools: advertise([
       {
         name: "lookup_korean_prose_terms",
         description: "Look up curated Korean prose glossary terms once before MCP selection. The source and matches are never persisted.",
@@ -19681,7 +19736,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         inputSchema: contractSchemas.executeStateCleanupRequest,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false }
       }
-    ]
+    ])
   }));
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const args = asRecord(request.params.arguments);
@@ -21428,8 +21483,8 @@ var PROTOCOL_TOKENS = /* @__PURE__ */ new Set([
   "COOPERATIVE_PROVENANCE_ASSERTIONS",
   "JSON_JSONL_ONLY_V1"
 ]);
-function jsonPointer(value, pointer) {
-  return pointer.split("/").slice(1).reduce((current, token) => {
+function jsonPointer(value, pointer2) {
+  return pointer2.split("/").slice(1).reduce((current, token) => {
     if (!current || typeof current !== "object") return void 0;
     const key = token.replaceAll("~1", "/").replaceAll("~0", "~");
     return current[key];
@@ -22669,8 +22724,8 @@ var WorkflowService = class {
     }
     return rule;
   }
-  jsonPointer(value, pointer) {
-    return pointer.split("/").slice(1).reduce((current, token) => {
+  jsonPointer(value, pointer2) {
+    return pointer2.split("/").slice(1).reduce((current, token) => {
       if (!current || typeof current !== "object") return void 0;
       const key = token.replaceAll("~1", "/").replaceAll("~0", "~");
       return current[key];
@@ -23261,18 +23316,20 @@ import { createHmac as createHmac3, randomBytes as randomBytes3, timingSafeEqual
 var HOST_ATTESTATION_FIELD = "_hostAttestation";
 var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
 var TOKEN_PREFIX = "aghs1";
-var TOKEN_TTL_MS = 2 * 60 * 1e3;
-var CLAUDE_MODEL_CLASSES = [
-  [/^claude-haiku(?:-|$)/u, "lightweight"],
-  [/^claude-sonnet(?:-|$)/u, "general"],
-  [/^claude-opus(?:-|$)/u, "deep"],
-  [/^claude-fable(?:-|$)/u, "frontier"]
-];
+var TOKEN_TTL_MS = 5 * 60 * 1e3;
+var CLAUDE_MODEL_CLASSES = {
+  haiku: "lightweight",
+  sonnet: "general",
+  opus: "deep",
+  fable: "frontier"
+};
+var CLAUDE_MODEL_ID = /^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\.)?(?:anthropic\.)?claude-(?:\d+(?:-\d+)?-)?(haiku|sonnet|opus|fable)(?:[-@:.]|$)/u;
 function record2(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
 function modelClassForClaudeModel(model) {
-  return CLAUDE_MODEL_CLASSES.find(([pattern]) => pattern.test(model))?.[1] ?? null;
+  const family = CLAUDE_MODEL_ID.exec(model)?.[1];
+  return family ? CLAUDE_MODEL_CLASSES[family] ?? null : null;
 }
 function isReasoningEffort(value) {
   return typeof value === "string" && REASONING_EFFORT.includes(value);

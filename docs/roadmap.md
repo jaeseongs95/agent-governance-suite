@@ -1,7 +1,7 @@
 # Agent Governance Suite 향후 로드맵
 
 <!-- release-version:start -->
-문서 기준일은 2026년 9월 18일이다. 현재 공개 릴리스는 `v1.17.0`이다. 한국어 산문 워크플로는 확장한 용어집 검증과 사용자의 명시적 배포 승인에 따라 활성화했다. 2026년 9월 17일 동결 frame `0.3.0-gate-1`(130건, suite revision `9377b6d19eb3a07671dad85af4aaf5e5ce0f5d81`)은 candidate-v2 이전 정책으로 `EVALUATION_EVIDENCE_PASSED`를 얻었지만, v1.16.0의 candidate-v2 정책은 그 평가 대상이 아니므로 품질 미평가 상태로 기록한다. 이 정책의 활성 배포는 사용자의 명시적 릴리스 요청에 따른 결정이며 품질 기준 통과 주장이 아니다.
+문서 기준일은 2026년 9월 18일이다. 현재 공개 릴리스는 `v1.18.0`이다. 한국어 산문 워크플로는 확장한 용어집 검증과 사용자의 명시적 배포 승인에 따라 활성화했다. 2026년 9월 17일 동결 frame `0.3.0-gate-1`(130건, suite revision `9377b6d19eb3a07671dad85af4aaf5e5ce0f5d81`)은 candidate-v2 이전 정책으로 `EVALUATION_EVIDENCE_PASSED`를 얻었지만, v1.16.0의 candidate-v2 정책은 그 평가 대상이 아니므로 품질 미평가 상태로 기록한다. 이 정책의 활성 배포는 사용자의 명시적 릴리스 요청에 따른 결정이며 품질 기준 통과 주장이 아니다.
 <!-- release-version:end -->
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
@@ -71,6 +71,7 @@
 - 용어집 평가는 전체 편집 품질과 분리한다. 같은 신규 문장의 direct/MCP 결과를 짝지어 비교하고, 사전 적중군·미적중군, 정책별 정확도, 조회 precision/recall, MCP가 새로 만든 개선과 회귀를 각각 집계한다. 정책별 서로 다른 entry 수가 부족하면 높은 점수라도 일반화 성공이 아니라 `INSUFFICIENT_EVIDENCE`로 기록한다.
 - candidate-v2 정책을 통합 사본에 반영했다. selection은 2단계 결함 탐색을, editing은 안전한 대체안과 왕복 의미 대조를, verification은 양방향 판정을 적용한다. 실제 모델과 provider 버전이 `unverified`인 실행은 새 평가 증거로 받지 않지만, 이 문자열 검사는 provider attestation을 대신하지 않는다. `0.3.0-gate-1`은 candidate-v2 이전의 정책과 평가 toolchain으로 실행했으므로, 이 정책을 포함한 통합 사본의 품질 기준 통과 근거가 아니다. 새 정책은 품질 미평가 상태로 기록한다. provider가 발급한 모델·버전 근거와 과거 holdout 재사용을 막는 shadow gate를 실행 계층에 결속한 뒤에만 완전히 새로운 private holdout으로 정식 재평가한다.
 - 2026년 9월 18일 Claude Code에서 orchestrated MCP가 항상 `BINDING_REQUIRED`로 막히던 원인을 확인했다. 서버에 `TrustedExecutionContextProvider` 구현체가 주입되지 않았고, 이전 문서는 "Claude Code 훅은 모델 정보를 주지 않는다"고 적었지만 PreToolUse 입력의 `tool_use_id`로 transcript에서 그 호출을 낸 assistant 메시지의 `message.model`을 찾을 수 있었다. v1.17.0에 Claude 전용 host attestation 훅과 서버 provider를 추가했다. 서버는 `AGENT_GOVERNANCE_HOST_ATTESTATION=claude-code`일 때만 provider를 켜므로 Codex 배포물은 그대로 `BINDING_REQUIRED`다. 빌드한 Claude 배포물로 새 세션(`claude-sonnet-5`, effort `high`)을 띄워 `plan_workflow`가 관측값으로 통과하는 것을 확인했다. 훅이 시작될 때 transcript에는 아직 그 호출이 없었고 재시도로 찾았다. transcript를 남기지 않는 `--no-session-persistence` 세션에서는 `BINDING_REQUIRED`였다. `record_stage_result`와 서브에이전트 경로는 단위·통합 테스트로만 확인했다. 보증 수준은 하네스 관측이며, 같은 OS 사용자 프로세스의 위조는 막지 않는다.
+- 2026년 9월 18일 v1.17.0 뒤 전체 흐름을 다시 점검했다. Claude용 orchestrator 지침이 여전히 "Claude Code에서는 orchestrated 모드가 시작되지 않는다"고 안내했고, 새 세션으로 전체 흐름을 돌려 보니 Claude Code가 도구 스키마의 외부 `$ref`를 풀지 못해 `open_convergence_root`의 `taskEnvelope`·`frame`을 문자열로 보내 `INVALID_INPUT`으로 멈췄다. v1.18.0에서 `anthropic` 프로필의 공개 스키마를 참조 없이 펼치고, orchestrator 지침이 실패 영향이 큰 여러 단계 요청에 MCP orchestrated workflow를 쓰고 `BINDING_*`이면 직접 호출로 전환하게 했다. 같은 새 세션 방식으로 계획부터 finalize까지 한 흐름이 통과하고, 서브에이전트 호출이 서브에이전트 actor와 그 effort로 관측되는 것을 확인했다. 추론 수준은 훅 입력과 transcript 중 낮은 값, 토큰 유효기간은 5분, Bedrock·Vertex·이전 형식 모델 ID 인식을 함께 반영했다. 릴리스 절차 중 찾은 `mutation-risk-preflight` 평가기의 중복 근거 결함은 원본 v1.0.1로 고쳤다.
 
 ### 종료 기준
 

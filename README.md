@@ -7,7 +7,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v1.17.0`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 Claude Code 배포물에 host attestation 훅을 추가해, 실행 보증이 필요한 orchestrated workflow가 하네스가 관측한 모델과 추론 수준으로 시작되게 합니다. Codex 배포물의 동작은 v1.16.2와 같습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
+현재 공개 릴리스는 `v1.18.0`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 Claude Code에서 MCP orchestrated workflow가 계획부터 finalize까지 실제로 동작하게 합니다. Claude용 orchestrator 지침이 이 경로를 쓰도록 바꾸고, Claude Code가 풀지 못하는 도구 스키마의 `$ref`를 펼쳐 내보내며, host attestation의 추론 수준·모델 ID·유효기간 처리를 보완합니다. `mutation-risk-preflight`는 원본 v1.0.1로 올립니다. Codex 배포물은 이 스킬의 결함 수정 외에는 v1.17.0과 같습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -44,7 +44,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.17.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.18.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -89,7 +89,7 @@ Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다
 - `instruction-scope-resolver`는 `AGENTS.md` chain과 함께 `CLAUDE.md` 계층을 확인합니다.
 - Anthropic API는 최상위 `oneOf`가 있는 도구 스키마를 받지 않으므로, Claude 배포물은 `AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE=anthropic`으로 `plan_workflow`의 공개 스키마만 평평하게 바꿉니다. 서버의 입력 검증은 같은 계약을 그대로 사용하고, 이 값이 없으면 기존 스키마를 그대로 내보냅니다.
 - 같은 값으로 서버가 세션 `instructions`를 내보내고, Claude Code는 이를 세션 시작 때 시스템 프롬프트에 넣습니다. 내용은 "파일을 고치거나 명령을 실행하기 전에 요청의 실패 영향을 분류하고, 크면 orchestrator를 호출해 필요한 단계와 생략할 단계를 정한 뒤 정한 단계를 실제로 호출한다"는 접수 규칙입니다. 이 값이 없으면 `instructions`를 내보내지 않습니다.
-- 실행 보증이 필요한 orchestrated workflow는 Claude 전용 host attestation 훅이 관측한 모델과 추론 수준으로 시작합니다. `plan_workflow`와 `record_stage_result`를 호출하기 직전에 Claude Code가 이 훅을 실행하고, 훅은 그 호출을 만든 assistant 메시지의 모델을 transcript에서, 추론 수준을 훅 입력(없으면 transcript)에서 읽어 서명한 토큰을 도구 입력에 넣습니다. 서버는 Claude 배포물이 넘기는 `AGENT_GOVERNANCE_HOST_ATTESTATION=claude-code`가 있을 때만 이 토큰을 검증하므로, Codex 배포 서버는 이전처럼 `BINDING_REQUIRED`를 반환합니다. 토큰은 하네스가 관측했다는 근거일 뿐이며, 서명 키가 같은 사용자 권한의 상태 DB에 있으므로 OS 수준의 위조 방지는 아닙니다.
+- 실행 보증이 필요한 orchestrated workflow는 Claude 전용 host attestation 훅이 관측한 모델과 추론 수준으로 시작합니다. `plan_workflow`와 `record_stage_result`를 호출하기 직전에 Claude Code가 이 훅을 실행하고, 훅은 그 호출을 만든 assistant 메시지의 모델을 transcript에서, 추론 수준을 훅 입력과 transcript 중 낮은 값으로 정해 서명한 토큰을 도구 입력에 넣습니다. 서버는 Claude 배포물이 넘기는 `AGENT_GOVERNANCE_HOST_ATTESTATION=claude-code`가 있을 때만 이 토큰을 검증하므로, Codex 배포 서버는 이전처럼 `BINDING_REQUIRED`를 반환합니다. 토큰은 하네스가 관측했다는 근거일 뿐이며, 서명 키가 같은 사용자 권한의 상태 DB에 있으므로 OS 수준의 위조 방지는 아닙니다.
 
 `claude-plugin/`은 `pnpm claude:build`로 생성하며 직접 수정하지 않습니다. 공용 원본(`skills/`, `runtime/`, `contracts/`, MCP 서버 번들)은 그대로 복사하고, Claude 전용 파일은 `claude-overlay/`에, 스킬별 Claude 문구는 `claude-overlay/adaptations/<스킬명>.json`에 둡니다. 공용 원본을 고칠 때 Claude 생성물을 함께 맞출 필요는 없습니다. CI는 둘의 차이를 경고로만 알리고, 릴리스를 준비하거나 Claude 쪽을 작업할 때 다시 생성합니다.
 
@@ -110,7 +110,7 @@ Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다
 | 진행 중 | [`independent-deliberation-panel`](https://github.com/jaeseongs95/independent-deliberation-panel/tree/v1.0.0) | 1.0.0 | 복잡한 결정의 근거와 반론을 여러 독립 관점에서 검토합니다. |
 | 수렴 검토 | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 1.0.0 | 반복 시도의 계약과 frame 변경을 독립적으로 비교해 새 epoch 허용 여부를 판정합니다. |
 | 변경 전후 | [`change-scope-guardian`](https://github.com/jaeseongs95/change-scope-guardian/tree/v1.0.0) | 1.0.0 | 변경 전 기준선과 현재 Git 변경 사항을 비교해 요청 범위 밖의 파일을 찾습니다. |
-| 변경 전 | [`mutation-risk-preflight`](https://github.com/jaeseongs95/mutation-risk-preflight/tree/v1.0.0) | 1.0.0 | 위험한 변경을 실행하기 전에 대상, 승인, 영향 범위, 복구 조건을 점검합니다. |
+| 변경 전 | [`mutation-risk-preflight`](https://github.com/jaeseongs95/mutation-risk-preflight/tree/v1.0.1) | 1.0.1 | 위험한 변경을 실행하기 전에 대상, 승인, 영향 범위, 복구 조건을 점검합니다. |
 | 완료 전 | [`acceptance-evidence-validator`](https://github.com/jaeseongs95/acceptance-evidence-validator/tree/v1.0.0) | 1.0.0 | 수용 기준마다 현재 결과를 뒷받침하는 증거가 있는지 검사합니다. |
 | 완료 전 | [`independent-audit-gate`](https://github.com/jaeseongs95/codex-independent-audit-gate/tree/v1.0.0) | 1.0.0 | 구현자와 분리된 감사자가 고위험 변경과 검증 근거를 확인합니다. |
 | 문제 발생 시 | [`blocker-diagnostician`](https://github.com/jaeseongs95/blocker-diagnostician/tree/v1.0.0) | 1.0.0 | 반복 실패를 관측 사실과 원인 가설로 나누고 다음 판별 검사를 정합니다. |

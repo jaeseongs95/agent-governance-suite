@@ -76,13 +76,14 @@ var HOST_ATTESTATION_FIELD = "_hostAttestation";
 var HOST_ATTESTATION_TOOLS = /* @__PURE__ */ new Set(["plan_workflow", "record_stage_result"]);
 var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
 var TOKEN_PREFIX = "aghs1";
-var TOKEN_TTL_MS = 2 * 60 * 1e3;
-var CLAUDE_MODEL_CLASSES = [
-  [/^claude-haiku(?:-|$)/u, "lightweight"],
-  [/^claude-sonnet(?:-|$)/u, "general"],
-  [/^claude-opus(?:-|$)/u, "deep"],
-  [/^claude-fable(?:-|$)/u, "frontier"]
-];
+var TOKEN_TTL_MS = 5 * 60 * 1e3;
+var CLAUDE_MODEL_CLASSES = {
+  haiku: "lightweight",
+  sonnet: "general",
+  opus: "deep",
+  fable: "frontier"
+};
+var CLAUDE_MODEL_ID = /^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\.)?(?:anthropic\.)?claude-(?:\d+(?:-\d+)?-)?(haiku|sonnet|opus|fable)(?:[-@:.]|$)/u;
 function record(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
@@ -90,7 +91,11 @@ function nonEmpty(value) {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 function modelClassForClaudeModel(model) {
-  return CLAUDE_MODEL_CLASSES.find(([pattern]) => pattern.test(model))?.[1] ?? null;
+  const family = CLAUDE_MODEL_ID.exec(model)?.[1];
+  return family ? CLAUDE_MODEL_CLASSES[family] ?? null : null;
+}
+function lowerReasoningEffort(left, right) {
+  return REASONING_EFFORT.indexOf(left) <= REASONING_EFFORT.indexOf(right) ? left : right;
 }
 function isReasoningEffort(value) {
   return typeof value === "string" && REASONING_EFFORT.includes(value);
@@ -1132,6 +1137,12 @@ function withoutCallerAttestation(input) {
     }
   };
 }
+function observedEffort(hookEffort, messageEffort) {
+  const hook = isReasoningEffort(hookEffort) ? hookEffort : null;
+  const message = isReasoningEffort(messageEffort) ? messageEffort : null;
+  if (hook && message) return lowerReasoningEffort(hook, message);
+  return hook ?? message;
+}
 function handleHostAttestationHook(input, store, options = {}) {
   const target = attestedToolInput(input);
   if (!target) return {};
@@ -1158,7 +1169,7 @@ function handleHostAttestationHook(input, store, options = {}) {
     sleep(pollIntervalMs);
   }
   if (!observation) return unattested();
-  const effort = text(record2(input.effort)?.level) ?? observation.effort;
+  const effort = observedEffort(text(record2(input.effort)?.level), observation.effort);
   if (!effort) return unattested();
   const token = issueHostAttestation(store, {
     tool,
@@ -1199,6 +1210,7 @@ export {
   claudeCodeActorId,
   findToolUseObservation,
   handleHostAttestationHook,
+  observedEffort,
   transcriptCandidates,
   withoutCallerAttestation
 };

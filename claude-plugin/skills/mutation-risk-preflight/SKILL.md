@@ -3,7 +3,7 @@ name: mutation-risk-preflight
 description: rm·삭제, 배포·게시, DB 마이그레이션, 권한·결제·전역 설정 변경, 되돌릴 수 없는 명령을 실행하기 직전에 쓴다. 정확한 대상·승인 여부·영향 범위·복구 조건을 읽기 전용으로 점검한다. 실제 변경 실행과 변경 후 감사는 하지 않는다.
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
 ---
 
 # Mutation Risk Preflight

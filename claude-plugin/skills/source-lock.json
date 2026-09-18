@@ -140,16 +140,16 @@
       "path": "skills/mutation-risk-preflight",
       "source": "https://github.com/jaeseongs95/mutation-risk-preflight.git",
       "sourcePath": ".",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "versionSource": "skill-metadata",
       "ref": {
         "kind": "tag",
-        "value": "v1.0.0",
-        "commit": "66cc7d2ca4ae73f3d43d580600ab5e1af75e0a5c"
+        "value": "v1.0.1",
+        "commit": "63d98201ae80dfae89d6cf41cbaec815c441e9fa"
       },
       "updatePolicy": "notify-only",
-      "upstreamChecksum": "sha256:1a6b94868941410167556e783e29ebe93c9da99a395784927a06eaaf80cd0ddd",
-      "integratedChecksum": "sha256:b792b38d7d0d48b6084ac7703f832bb151e52602a7bcb39ce6f64b51945e15d2",
+      "upstreamChecksum": "sha256:bb9c97cdb7e7daf47bfc9fd4ebebe2c7782f35fce22afe5ed46ccf2a0e85083a",
+      "integratedChecksum": "sha256:c19678651216d4d74f88c42860f721960bc33a050bf8c8e405b4e6cd7ed966b7",
       "checksumScope": "relative paths and normalized text bytes under skills/mutation-risk-preflight",
       "downstreamModifications": [
         "Adapt validation and integration assets to the suite-level registry and shared contract layout."

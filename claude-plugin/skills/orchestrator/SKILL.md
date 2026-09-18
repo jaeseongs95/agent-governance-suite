@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: 요청을 받아 어떤 거버넌스 스킬이 필요한지 분류해야 할 때 쓴다. 실패 영향이 큰 요청에서 필요한 단계와 생략할 단계를 정할 때, 거버넌스 스킬을 둘 이상 이어 써야 할 때(계약 정리→관례 조사→구현→범위·근거 확인→감사), 어느 스킬을 먼저 써야 할지 애매할 때, 여러 산출물을 하나의 완료 판정으로 묶을 때가 해당한다. 요청을 분류하고 전문 스킬의 실행 순서·입출력·결과를 연결한다. MCP orchestrated 모드가 BINDING_REQUIRED로 막히면 전문 스킬을 직접 순서대로 호출한다. 전문 판단이나 감사 자체는 각 스킬이 맡는다.
+description: 요청을 받아 어떤 거버넌스 스킬이 필요한지 분류해야 할 때 쓴다. 실패 영향이 큰 요청에서 필요한 단계와 생략할 단계를 정할 때, 거버넌스 스킬을 둘 이상 이어 써야 할 때(계약 정리→관례 조사→구현→범위·근거 확인→감사), 어느 스킬을 먼저 써야 할지 애매할 때, 여러 산출물을 하나의 완료 판정으로 묶을 때가 해당한다. 요청을 분류하고 전문 스킬의 실행 순서·입출력·결과를 연결하며, 실패 영향이 큰 여러 단계 요청은 MCP orchestrated workflow로 순서와 감사 게이트를 강제한다. MCP가 BINDING_REQUIRED나 BINDING_INVALID를 반환하면 전문 스킬을 직접 순서대로 호출한다. 전문 판단이나 감사 자체는 각 스킬이 맡는다.
 license: MIT
 metadata:
   version: "1.0.0"
@@ -12,7 +12,7 @@ metadata:
 
 ## Claude Code에서의 선택 결정
 
-Claude Code에서는 MCP orchestrated 모드가 실행 보증 없이 시작되지 않으므로, 이 스킬은 전문 스킬을 직접 고르고 부르는 방식으로 동작한다. 이 문서를 읽는 것은 실행이 아니다. 첫 파일 편집이나 명령 실행 전에 다음 결정을 한 단락으로 적고, 그 결정대로 각 시점에 Skill 도구로 실제 호출한다.
+이 문서를 읽는 것은 실행이 아니다. 첫 파일 편집이나 명령 실행 전에 다음 결정을 한 단락으로 적고, 그 결정대로 각 시점에 실제로 실행한다.
 
 - 이 요청이 잘못 수행됐을 때의 실패 영향과 그 근거.
 - 필요한 단계와 생략하는 단계를 각각 이유와 함께. 후보는 다음과 같고, 조건에 맞는 것만 고른다.
@@ -21,7 +21,16 @@ Claude Code에서는 MCP orchestrated 모드가 실행 보증 없이 시작되�
   - `acceptance-evidence-validator`: 수용 기준이 명시됐거나 완료를 보고해야 할 때.
   - `independent-audit-gate`: 실패 영향이 큰 변경(CI·CD, 릴리스·배포, 권한·신뢰 경계, 전역 설정, 데이터·스키마)을 커밋·병합·릴리스로 확정하기 전. 구현자와 분리된 fresh 서브에이전트(`agent-governance-suite:independent-auditor`)가 최종 diff를 본다.
   - `mutation-risk-preflight`: 삭제·배포·push·태그처럼 되돌리기 어려운 명령 직전.
+- 실행 방식과 그 이유. 둘 중 하나를 고른다.
+  - `orchestrated`: 실패 영향이 크고 고른 단계가 둘 이상이며 `plan_workflow` MCP 도구를 쓸 수 있을 때. 아래 "MCP 도구 사용 계약" 순서로 계획, 수렴 root, attempt claim, guarded start, stage별 기록, finalize를 진행한다. 각 stage의 전문 스킬은 Skill 도구로 실제 호출하고 그 결과를 `record_stage_result`로 기록한다. MCP 원장이 단계 순서와 감사 게이트를 강제하므로, 지침만으로 순서를 지키는 것보다 이 방식을 우선한다.
+  - `direct`: 그 밖의 경우, 또는 MCP 도구를 쓸 수 없거나 `BINDING_REQUIRED`·`BINDING_INVALID`로 계획이나 stage 기록이 거절됐을 때. 결정한 스킬을 그 순서대로 직접 호출한다. `orchestrated`에서 전환했다면 반환 코드와 전환 이유를 사용자에게 한 줄로 밝히고, 이미 시작한 run은 `abort_workflow`로 닫는다.
 - 단순 조회·저위험 수정이라 전문 스킬이 필요 없으면 그렇게 적고 진행한다.
+
+### Claude Code의 실행 보증
+
+- `plan_workflow`와 `record_stage_result`를 호출할 때마다 플러그인 훅이 그 호출을 낸 세션(서브에이전트가 호출했으면 그 서브에이전트)의 모델과 추론 수준을 transcript에서 관측해 서버에 넘긴다. 도구 인자에 `executionContext`나 `_hostAttestation`을 넣지 않는다. 넣어도 훅이 지우거나 덮어쓴다.
+- semantic stage의 관측값은 그 stage를 기록한 호출자의 것이다. 서브에이전트에 맡긴 stage를 메인 세션이 기록하면 메인 세션의 모델과 추론 수준이 결속되므로, 그 서브에이전트가 계획된 하한(`executionRequirement`) 이상의 모델과 추론 수준으로 실행됐는지 확인한 뒤 기록한다.
+- 관측값이 하한보다 낮아 `BINDING_INVALID`가 나오면 값을 고쳐 다시 보내지 않는다. 더 높은 모델·추론 수준의 세션에서 다시 실행하거나 `direct`로 전환한다. 대화형 세션에서 도구 승인에 5분 넘게 걸려 `BINDING_INVALID`가 나오면 같은 호출을 다시 한다.
 
 ## 시작 전 확인
 
