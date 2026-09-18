@@ -173,7 +173,7 @@ describe("bundled STDIO MCP server", () => {
         await rm(isolatedRoot, { recursive: true, force: true });
       }
     }
-  }, 15_000);
+  }, 60_000); // Copies a plugin tree and starts the server; Windows CI runners have taken over 15 s.
 
   it("keeps workflow startup clean when both database settings resolve to one file", async () => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-shared-db-"));

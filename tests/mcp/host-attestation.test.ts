@@ -23,6 +23,7 @@ import {
   claudeCodeActorId,
   findToolUseObservation,
   handleHostAttestationHook,
+  observedEffort,
   transcriptCandidates,
   withoutCallerAttestation,
 } from "../../mcp-server/src/host-attestation-hook.js";
@@ -87,6 +88,7 @@ let toolUseSequence = 0;
 interface AttestOptions {
   model?: string;
   effort?: string;
+  hookEffort?: string;
   now?: Date;
 }
 
@@ -103,7 +105,7 @@ function attest(store: WorkflowStore, tool: string, input: Record<string, unknow
       tool_name: `${TOOL_PREFIX}${tool}`,
       tool_use_id: toolUseId,
       tool_input: input,
-      effort: { level: options.effort ?? "high" },
+      effort: { level: options.hookEffort ?? options.effort ?? "high" },
     },
     store,
     { readText: () => transcript, sleep: () => {}, ...(options.now ? { now: () => options.now! } : {}) },
@@ -304,6 +306,21 @@ describe("Claude Code host attestation through the MCP boundary", () => {
     expect((await call<WorkflowPlanV1>("plan_workflow", expired)).error?.code).toBe("BINDING_INVALID");
   });
 
+  it("accepts an observation that waited on a permission prompt for up to five minutes", async () => {
+    const { store, call } = await harness(true);
+    const waited = attest(store, "plan_workflow", planArguments("waited"), { now: new Date(Date.now() - 4 * 60 * 1000) });
+    const planned = await call<WorkflowPlanV1>("plan_workflow", waited);
+    expect(planned.error).toBeNull();
+    const context = planned.data!.bootstrapExecution!.context;
+    expect(Date.parse(context.expiresAt!) - Date.parse(context.observedAt)).toBe(5 * 60 * 1000);
+  });
+
+  it("does not over-report effort when the transcript message ran lower than the hook reports", async () => {
+    const { store, call } = await harness(true);
+    const mixed = attest(store, "plan_workflow", planArguments("mixed-effort"), { effort: "low", hookEffort: "high" });
+    expect((await call<WorkflowPlanV1>("plan_workflow", mixed)).error?.code).toBe("BINDING_INVALID");
+  });
+
   it("enforces the planned assurance floor on the observed model and effort", async () => {
     const { store, call } = await harness(true);
     const lightweight = attest(store, "plan_workflow", planArguments("haiku"), { model: "claude-haiku-4-5-20251001" });
@@ -349,7 +366,7 @@ describe("host attestation hook", () => {
     const callerInput = { taskId: "hook-task", [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged" };
     const unattested = [
       handleHostAttestationHook({ ...base, tool_input: callerInput }, store, { ...noWait, maxWaitMs: 0, readText: () => null }),
-      handleHostAttestationHook({ ...base, tool_input: callerInput }, store, { ...noWait, readText: () => transcriptLine("toolu_hook", { model: "us.anthropic.claude-opus-5" }) }),
+      handleHostAttestationHook({ ...base, tool_input: callerInput }, store, { ...noWait, readText: () => transcriptLine("toolu_hook", { model: "gpt-5.6-sol" }) }),
       handleHostAttestationHook({ ...base, tool_input: callerInput, transcript_path: undefined }, store, noWait),
       withoutCallerAttestation({ ...base, tool_input: callerInput }),
     ];
@@ -432,7 +449,25 @@ describe("host attestation configuration", () => {
     expect(modelClassForClaudeModel("claude-sonnet-5")).toBe("general");
     expect(modelClassForClaudeModel("claude-opus-5")).toBe("deep");
     expect(modelClassForClaudeModel("claude-fable-5-1")).toBe("frontier");
+    expect(modelClassForClaudeModel("claude-3-5-sonnet-20241022")).toBe("general");
+    expect(modelClassForClaudeModel("claude-3-opus-20240229")).toBe("deep");
+    expect(modelClassForClaudeModel("us.anthropic.claude-opus-5-v1:0")).toBe("deep");
+    expect(modelClassForClaudeModel("global.anthropic.claude-sonnet-5-v1:0")).toBe("general");
+    expect(modelClassForClaudeModel("us-gov.anthropic.claude-3-5-sonnet-20240620-v1:0")).toBe("general");
+    expect(modelClassForClaudeModel("anthropic.claude-3-haiku-20240307-v1:0")).toBe("lightweight");
+    expect(modelClassForClaudeModel("claude-opus-5@20260101")).toBe("deep");
     expect(modelClassForClaudeModel("claude-opusx")).toBeNull();
+    expect(modelClassForClaudeModel("xclaude-opus-5")).toBeNull();
+    expect(modelClassForClaudeModel("claude-instant-1")).toBeNull();
     expect(modelClassForClaudeModel("gpt-6-astra")).toBeNull();
+  });
+
+  it("attests the lower effort when the hook and the transcript message disagree", () => {
+    expect(observedEffort("high", "low")).toBe("low");
+    expect(observedEffort("medium", "xhigh")).toBe("medium");
+    expect(observedEffort("high", null)).toBe("high");
+    expect(observedEffort(null, "max")).toBe("max");
+    expect(observedEffort("turbo", "high")).toBe("high");
+    expect(observedEffort(null, null)).toBeNull();
   });
 });

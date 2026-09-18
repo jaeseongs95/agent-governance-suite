@@ -26,14 +26,19 @@ export const HOST_ATTESTATION_TOOLS: ReadonlySet<string> = new Set(["plan_workfl
 
 const HOST_ATTESTATION_KEY = "host_attestation_key_v1";
 const TOKEN_PREFIX = "aghs1";
-const TOKEN_TTL_MS = 2 * 60 * 1000;
+// The server accepts observations up to five minutes old; the token may wait on a permission prompt.
+const TOKEN_TTL_MS = 5 * 60 * 1000;
 
-const CLAUDE_MODEL_CLASSES: ReadonlyArray<[RegExp, ModelClassV1]> = [
-  [/^claude-haiku(?:-|$)/u, "lightweight"],
-  [/^claude-sonnet(?:-|$)/u, "general"],
-  [/^claude-opus(?:-|$)/u, "deep"],
-  [/^claude-fable(?:-|$)/u, "frontier"],
-];
+const CLAUDE_MODEL_CLASSES: Readonly<Record<string, ModelClassV1>> = {
+  haiku: "lightweight",
+  sonnet: "general",
+  opus: "deep",
+  fable: "frontier",
+};
+
+// Anthropic IDs (claude-opus-5, claude-3-5-sonnet-20241022), Bedrock IDs with an
+// optional region prefix (us., global., us-gov.) and Vertex IDs (claude-opus-5@20260101).
+const CLAUDE_MODEL_ID = /^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\.)?(?:anthropic\.)?claude-(?:\d+(?:-\d+)?-)?(haiku|sonnet|opus|fable)(?:[-@:.]|$)/u;
 
 export interface HostAttestationBindingV1 {
   phase: "bootstrap" | "stage";
@@ -67,7 +72,13 @@ function nonEmpty(value: unknown): string | null {
 
 /** Maps a Claude model ID to the class used by the Claude routing presets; unknown models get none. */
 export function modelClassForClaudeModel(model: string): ModelClassV1 | null {
-  return CLAUDE_MODEL_CLASSES.find(([pattern]) => pattern.test(model))?.[1] ?? null;
+  const family = CLAUDE_MODEL_ID.exec(model)?.[1];
+  return family ? CLAUDE_MODEL_CLASSES[family] ?? null : null;
+}
+
+/** Orders reasoning efforts; used to report the lower of two observations. */
+export function lowerReasoningEffort(left: ReasoningEffortV1, right: ReasoningEffortV1): ReasoningEffortV1 {
+  return REASONING_EFFORT.indexOf(left) <= REASONING_EFFORT.indexOf(right) ? left : right;
 }
 
 export function isReasoningEffort(value: unknown): value is ReasoningEffortV1 {

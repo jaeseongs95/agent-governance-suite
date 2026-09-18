@@ -6,7 +6,9 @@ import { fileURLToPath } from "node:url";
 import {
   HOST_ATTESTATION_FIELD,
   HOST_ATTESTATION_TOOLS,
+  isReasoningEffort,
   issueHostAttestation,
+  lowerReasoningEffort,
   withoutHostAttestation,
 } from "./host-attestation.js";
 import { resolveWorkflowDatabasePath } from "./runtime-config.js";
@@ -123,6 +125,13 @@ export function withoutCallerAttestation(input: HookInput): Record<string, unkno
   };
 }
 
+export function observedEffort(hookEffort: string | null, messageEffort: string | null): string | null {
+  const hook = isReasoningEffort(hookEffort) ? hookEffort : null;
+  const message = isReasoningEffort(messageEffort) ? messageEffort : null;
+  if (hook && message) return lowerReasoningEffort(hook, message);
+  return hook ?? message;
+}
+
 export function handleHostAttestationHook(
   input: HookInput,
   store: WorkflowStore,
@@ -156,8 +165,9 @@ export function handleHostAttestationHook(
   }
   if (!observation) return unattested();
 
-  // The harness reports the effort of this tool-use context; the transcript entry is the fallback.
-  const effort = text(record(input.effort)?.level) ?? observation.effort;
+  // The transcript records the effort of the exact message; the hook reports the effort of the
+  // current tool-use context. When both are present and differ, the lower one is attested.
+  const effort = observedEffort(text(record(input.effort)?.level), observation.effort);
   if (!effort) return unattested();
   const token = issueHostAttestation(store, {
     tool,
