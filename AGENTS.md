@@ -7,7 +7,7 @@
 ```text
 .codex-plugin/plugin.json        # 플러그인 매니페스트
 .claude-plugin/marketplace.json  # Claude Code 마켓플레이스 배포 정보
-claude-overlay/                  # Claude 전용 파일과 문구 치환 규칙
+claude-overlay/                  # Claude 전용 파일과 스킬별 Claude 보정(adaptations/)
 claude-plugin/                   # 생성된 Claude Code 플러그인(직접 수정 금지)
 .agents/plugins/marketplace.json # 마켓플레이스 배포 정보
 contracts/                       # 공유 JSON Schema와 TypeScript 계약
@@ -40,7 +40,7 @@ Node.js 22.13 이상과 `pnpm@11.19.0`을 사용한다. 주요 명령은 다음�
 - `pnpm validate:all`: 저장소·스킬 전체 검증
 - `pnpm validate:official`: Codex 공식 validator 검사
 
-전체 검증은 `pnpm install --frozen-lockfile` 후 `pnpm bundle:check`를 빌드보다 먼저 실행한다. 이어 `pnpm claude:check`, `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm runtime:check`, `pnpm validate:all`, `pnpm validate:official`, `git diff --check`를 실행한다. 빌드가 stale 번들을 덮어쓸 수 있으므로 순서를 바꾸지 않는다. CI는 Ubuntu와 Windows의 Node.js 22·24 조합을 기준으로 한다.
+전체 검증은 `pnpm install --frozen-lockfile` 후 `pnpm bundle:check`를 빌드보다 먼저 실행한다. 이어 `pnpm claude:drift`, `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm runtime:check`, `pnpm validate:all`, `pnpm validate:official`, `git diff --check`를 실행한다. 빌드가 stale 번들을 덮어쓸 수 있으므로 순서를 바꾸지 않는다. CI는 Ubuntu와 Windows의 Node.js 22·24 조합을 기준으로 한다.
 
 ## 배포물 계약
 
@@ -52,9 +52,9 @@ Node.js 22.13 이상과 `pnpm@11.19.0`을 사용한다. 주요 명령은 다음�
 
 ## Claude Code 배포물
 
-Claude Code 배포물은 Codex 플러그인과 서로 영향을 주지 않아야 한다. `claude-plugin/`은 `pnpm claude:build`로만 생성하고 직접 고치지 않는다. Claude 전용 파일은 `claude-overlay/`에, 공용 파일의 Claude용 문구 보정은 `claude-overlay/replacements.json`에 둔다. Claude 작업을 위해 `.codex-plugin/`, `.agents/`, `hooks/`, `.mcp.json`과 루트 `skills/`의 Codex 동작을 바꾸지 않는다.
+Claude Code 배포물은 Codex 플러그인과 서로 영향을 주지 않아야 한다. 공용 원본(`skills/`, `mcp-server/dist/`, `runtime/`, `contracts/`, `release/version.json`)은 두 배포물이 함께 쓰고, 호스트별 부분은 따로 둔다. Codex 전용 부분은 Codex가 저장소 루트를 그대로 설치하므로 `.codex-plugin/`, `.agents/`, `hooks/`, `.mcp.json`, 스킬의 `agents/openai.yaml`에 있다. Claude 전용 파일은 `claude-overlay/`에, 스킬별 Claude 문구(description과 호스트 중립 표현이 없는 문장)는 `claude-overlay/adaptations/<스킬명>.json`에 둔다. Claude 작업을 위해 Codex 전용 부분과 루트 `skills/`의 Codex 동작을 바꾸지 않는다.
 
-공용 원본(`skills/`, `mcp-server/dist/`, `runtime/`, `contracts/`, `release/version.json`)이 바뀌면 같은 변경에서 `pnpm claude:build`를 실행해 생성물을 함께 커밋한다. 치환할 원문이 사라지거나 생성물의 `SKILL.md`·`references/`·`agents/`에 Codex 전용 표현이 남으면 생성이 실패하므로, 원인을 overlay에서 고친다. Claude Code 배포물의 상태 DB는 `${CLAUDE_PLUGIN_DATA}` 아래에만 둔다.
+`claude-plugin/`은 `pnpm claude:build`로만 생성하고 직접 고치지 않는다. 공용 원본이나 Codex 전용 부분을 바꾸는 변경은 Claude 생성물을 다시 만들거나 `claude-overlay/`를 고칠 필요가 없다. CI의 `pnpm claude:drift`는 생성물과 원본의 차이, Codex 훅 이벤트 누락을 경고로만 알린다. 릴리스를 준비하거나 Claude 쪽을 작업할 때 `pnpm claude:build`와 `pnpm claude:check`로 맞추고, 치환할 원문이 사라지거나 생성물에 Codex 전용 표현이 남아 생성이 실패하면 오류에 표시된 adaptation 파일을 고친다. 생성을 맞추지 못해도 Codex 릴리스는 막지 않으며, 그때 Claude 배포물은 이전 버전으로 남는다. Claude Code 배포물의 상태 DB는 `${CLAUDE_PLUGIN_DATA}` 아래에만 둔다.
 
 ## 스킬과 라우팅 규칙
 

@@ -1,0 +1,10 @@
+{
+  "description": "특정 경로에서 어떤 CLAUDE.md·.claude/rules·AGENTS.md·AGENTS.override.md가 적용되는지 확인해야 할 때, 지침끼리 충돌하는 것 같을 때, 하위 디렉터리 규칙이 상위를 덮는지 판단할 때 쓴다. 적용 chain·우선순위·충돌 근거를 계산한다. 지침 파일 작성이나 일반 정책 검토는 하지 않는다.",
+  "replacements": [
+    {
+      "file": "SKILL.md",
+      "find": "## 출력과 실패 처리",
+      "replace": "## Claude Code 지침 파일\n\n스크립트는 `AGENTS.md`·`AGENTS.override.md` chain만 계산한다. Claude Code는 `AGENTS.md`를 직접 읽지 않고 `CLAUDE.md` 계층을 읽으므로, [claude-code-instructions.md](references/claude-code-instructions.md)에 따라 Claude Code 지침 파일을 따로 확인하고 `findings`에 원본 경로와 함께 기록한다. 이 확인을 하지 않았으면 `PASS`로 판정하지 않고 `ANALYSIS_REQUIRED`를 유지한다.\n\n## 출력과 실패 처리"
+    }
+  ]
+}

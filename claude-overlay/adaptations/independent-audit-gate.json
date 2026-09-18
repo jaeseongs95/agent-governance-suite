@@ -1,0 +1,30 @@
+{
+  "description": "보안·권한·결제·데이터 손실·스키마 마이그레이션·프로덕션 배포·전역 설정 변경을 실행하거나 릴리스하기 전후에 쓴다. 구현자와 분리된 감사자가 최종 변경과 검증 근거를 직접 확인해 완료 가능 여부를 판정한다. 단순 조사, 저위험 수정, 일반 코드 리뷰, 구현 없는 설계 토론에는 쓰지 않는다.",
+  "replacements": [
+    {
+      "file": "SKILL.md",
+      "find": "적용 가능한 상위 지침, `AGENTS.md`, 사용자 권한",
+      "replace": "적용 가능한 상위 지침, `CLAUDE.md`(import된 `AGENTS.md` 포함), 사용자 권한"
+    },
+    {
+      "file": "SKILL.md",
+      "find": "협업 도구가 지원하면 `fork_turns:none`을 사용하고 재위임과 하위 에이전트 생성을 금지한다.",
+      "replace": "Agent 도구로 fork가 아닌 새 서브에이전트를 시작한다. 가능하면 `agent-governance-suite:independent-auditor`를 사용하고, 재위임과 하위 에이전트 생성을 금지한다. 부모 대화를 상속하는 fork(`#fork`, `/subtask`)는 감사자로 쓰지 않는다."
+    },
+    {
+      "file": "references/orchestrator-integration.md",
+      "find": "├── plugin.json 또는 .codex-plugin/plugin.json",
+      "replace": "├── .claude-plugin/plugin.json"
+    },
+    {
+      "file": "references/orchestrator-integration.md",
+      "find": "        ├── SKILL.md\n        ├── agents/openai.yaml\n",
+      "replace": "        ├── SKILL.md\n"
+    },
+    {
+      "file": "scripts/validate_skill.py",
+      "find": "(plugin_root / \"plugin.json\", plugin_root / \".codex-plugin/plugin.json\")",
+      "replace": "(plugin_root / \"plugin.json\", plugin_root / \".codex-plugin/plugin.json\", plugin_root / \".claude-plugin/plugin.json\")"
+    }
+  ]
+}

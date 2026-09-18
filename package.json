@@ -17,6 +17,7 @@
     "bundle:check": "node scripts/check-bundle.mjs",
     "claude:build": "node scripts/build-claude-plugin.mjs",
     "claude:check": "node scripts/build-claude-plugin.mjs --check",
+    "claude:drift": "node scripts/build-claude-plugin.mjs --drift",
     "validate:all": "node scripts/validate-repository.mjs && node scripts/run-python-validations.mjs && tsx scripts/korean-prose-glossary.ts --mode check",
     "validate:official": "node scripts/validate-official.mjs",
     "validate:skill": "node scripts/validate-skill.mjs",

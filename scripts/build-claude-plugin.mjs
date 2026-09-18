@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 // Generates the isolated Claude Code plugin tree in claude-plugin/.
 // Shared sources are copied from the repository root; Claude-only files come
-// from claude-overlay/. The Codex plugin files are read, never written.
-// Usage: node scripts/build-claude-plugin.mjs [--check]
+// from claude-overlay/, and per-skill Claude adaptations from
+// claude-overlay/adaptations/<skill>.json. The Codex plugin files are read,
+// never written.
+// Usage: node scripts/build-claude-plugin.mjs [--check | --drift]
+//   --check  fail when claude-plugin/ differs from a fresh render
+//   --drift  report the same differences as warnings and exit 0
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -11,10 +15,12 @@ import { ROOT } from "./lib.mjs";
 
 export const OUTPUT_DIRECTORY = "claude-plugin";
 export const OVERLAY_DIRECTORY = "claude-overlay";
+export const ADAPTATIONS_DIRECTORY = "adaptations";
+export const PLUGIN_NAME = "agent-governance-suite";
 export const EXCLUDED_SKILLS = Object.freeze(["codex-token-usage-analyzer"]);
 const SHARED_ROOTS = Object.freeze(["skills/", "runtime/", "contracts/"]);
 const SHARED_FILES = Object.freeze(["LICENSE", "mcp-server/dist/server.mjs", "mcp-server/dist/continuity-hook.mjs"]);
-const REPLACEMENTS_FILE = "replacements.json";
+const ADAPTATION_KEYS = Object.freeze(["description", "replacements"]);
 // Codex-only wording that must not reach model-visible Claude files.
 export const CODEX_ONLY_PATTERNS = Object.freeze([
   /\b(?:spawn_agent|wait_agent|send_input|fork_turns|reasoning_effort|CODEX_HOME)\b/u,
@@ -70,8 +76,91 @@ export function applyReplacements(files, replacements) {
   }
 }
 
+/**
+ * Replaces the frontmatter description of a SKILL.md as a whole field, so the
+ * Claude description never depends on the wording of the shared description.
+ */
+export function replaceFrontmatterDescription(text, description) {
+  const lines = text.split("\n");
+  const bare = (line) => line.replace(/\r$/u, "");
+  if (bare(lines[0] ?? "") !== "---") throw new Error("SKILL.md has no frontmatter");
+  const end = lines.findIndex((line, index) => index > 0 && bare(line) === "---");
+  if (end < 0) throw new Error("SKILL.md frontmatter is not closed");
+  const start = lines.findIndex((line, index) => index > 0 && index < end && /^description:/u.test(line));
+  if (start < 0) throw new Error("SKILL.md frontmatter has no description");
+  let stop = start + 1;
+  while (stop < end && /^[ \t]/u.test(lines[stop])) stop += 1;
+  const lineEnding = lines[start].endsWith("\r") ? "\r" : "";
+  lines.splice(start, stop - start, `description: ${description}${lineEnding}`);
+  return lines.join("\n");
+}
+
+/**
+ * Rewrites Codex skill invocations such as `$task-contract` into the Claude
+ * Code form for the skills that the Claude plugin ships.
+ */
+export function mapSkillInvocations(files, skillIds) {
+  if (skillIds.length === 0) return;
+  const alternatives = [...skillIds]
+    .sort((left, right) => right.length - left.length)
+    .map((skillId) => skillId.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"));
+  const pattern = new RegExp(`(?<![\\w$])\\$(${alternatives.join("|")})(?![\\w-])`, "gu");
+  for (const [relativePath, content] of files) {
+    if (!isModelVisible(relativePath) || DUAL_HOST_FILES.includes(relativePath)) continue;
+    const text = content.toString("utf8");
+    const mapped = text.replace(pattern, `/${PLUGIN_NAME}:$1`);
+    if (mapped !== text) files.set(relativePath, Buffer.from(mapped));
+  }
+}
+
+function assertAdaptation(value, source) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${source} must contain a JSON object`);
+  const unknown = Object.keys(value).filter((key) => !ADAPTATION_KEYS.includes(key));
+  if (unknown.length > 0) throw new Error(`${source} has unknown keys: ${unknown.join(", ")}`);
+  const { description } = value;
+  if (description !== undefined && (typeof description !== "string" || description.trim() === "" || /[\r\n]/u.test(description))) {
+    throw new Error(`${source} description must be a non-empty single line`);
+  }
+  const replacements = value.replacements ?? [];
+  if (!Array.isArray(replacements)) throw new Error(`${source} replacements must be an array`);
+  for (const entry of replacements) {
+    const valid = entry && typeof entry === "object" && !Array.isArray(entry)
+      && Object.keys(entry).sort().join(",") === "file,find,replace"
+      && ["file", "find", "replace"].every((key) => typeof entry[key] === "string")
+      && entry.find !== ""
+      && !entry.file.startsWith("/")
+      && !entry.file.split("/").includes("..");
+    if (!valid) throw new Error(`${source} has an invalid replacement entry`);
+  }
+  return { description, replacements };
+}
+
+/**
+ * Applies one claude-overlay/adaptations/<skill>.json to the generated files.
+ * The description replaces the whole frontmatter field; replacements use
+ * paths relative to the skill directory and must match exactly once.
+ */
+export function applySkillAdaptation(files, skillId, adaptation, source = `${skillId}.json`) {
+  const { description, replacements } = assertAdaptation(adaptation, source);
+  const skillFile = `skills/${skillId}/SKILL.md`;
+  if (!files.has(skillFile)) throw new Error(`${source}: skill is not generated: ${skillId}`);
+  try {
+    if (description !== undefined) {
+      files.set(skillFile, Buffer.from(replaceFrontmatterDescription(files.get(skillFile).toString("utf8"), description)));
+    }
+    applyReplacements(files, replacements.map((entry) => ({ ...entry, file: `skills/${skillId}/${entry.file}` })));
+  } catch (error) {
+    throw new Error(`${source}: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+  }
+}
+
 function trackedFiles(root) {
-  const output = execFileSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  const output = execFileSync("git", ["ls-files", "-z"], {
+    cwd: root,
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
   return output.split("\0").filter(Boolean);
 }
 
@@ -101,13 +190,15 @@ export async function renderClaudePlugin(root = ROOT) {
   const files = new Map();
   const tracked = trackedFiles(root);
   const version = JSON.parse(await readFile(path.join(root, "release/version.json"), "utf8")).version;
+  let registry = null;
 
   for (const relativePath of tracked) {
     const shared = SHARED_FILES.includes(relativePath) || SHARED_ROOTS.some((prefix) => relativePath.startsWith(prefix));
     if (!shared || isExcludedSkillPath(relativePath)) continue;
     let content = await readFile(path.join(root, relativePath));
     if (relativePath === "skills/registry.json") {
-      content = Buffer.from(formatJson(withoutExcludedSkills(JSON.parse(content.toString("utf8")), "skills")));
+      registry = withoutExcludedSkills(JSON.parse(content.toString("utf8")), "skills");
+      content = Buffer.from(formatJson(registry));
     } else if (relativePath === "skills/source-lock.json") {
       content = Buffer.from(formatJson(withoutExcludedSkills(JSON.parse(content.toString("utf8")), "sources")));
     }
@@ -116,8 +207,9 @@ export async function renderClaudePlugin(root = ROOT) {
 
   const overlayRoot = path.join(root, OVERLAY_DIRECTORY);
   const overlayFiles = await walk(overlayRoot);
+  const adaptationPrefix = `${ADAPTATIONS_DIRECTORY}/`;
   for (const relativePath of overlayFiles) {
-    if (relativePath === REPLACEMENTS_FILE) continue;
+    if (relativePath.startsWith(adaptationPrefix)) continue;
     if (files.has(relativePath)) throw new Error(`overlay must not replace a shared file wholesale: ${relativePath}`);
     let content = await readFile(path.join(overlayRoot, relativePath));
     if (relativePath === ".claude-plugin/plugin.json") {
@@ -127,10 +219,13 @@ export async function renderClaudePlugin(root = ROOT) {
     }
     files.set(relativePath, content);
   }
-  if (overlayFiles.includes(REPLACEMENTS_FILE)) {
-    const { replacements } = JSON.parse(await readFile(path.join(overlayRoot, REPLACEMENTS_FILE), "utf8"));
-    applyReplacements(files, replacements);
+  for (const relativePath of overlayFiles.filter((file) => file.startsWith(adaptationPrefix)).sort()) {
+    const source = `${OVERLAY_DIRECTORY}/${relativePath}`;
+    const match = /^adaptations\/([a-z0-9]+(?:-[a-z0-9]+)*)\.json$/u.exec(relativePath);
+    if (!match) throw new Error(`unexpected adaptation file: ${source}`);
+    applySkillAdaptation(files, match[1], JSON.parse(await readFile(path.join(overlayRoot, relativePath), "utf8")), source);
   }
+  mapSkillInvocations(files, (registry?.skills ?? []).map((entry) => entry.skillId));
   const wording = findCodexOnlyWording(files);
   if (wording.length > 0) throw new Error(`Claude overlay is incomplete:\n${wording.map((problem) => `- ${problem}`).join("\n")}`);
   return files;
@@ -169,10 +264,45 @@ export async function checkClaudePlugin(root = ROOT) {
     }
     if (!actual.equals(content)) problems.push(`stale file ${OUTPUT_DIRECTORY}/${relativePath}`);
   }
+  problems.push(...await findHookEventDrift(root));
   return problems;
 }
 
+/** Lists Codex hook events that the committed Claude plugin does not register. */
+export async function findHookEventDrift(root = ROOT) {
+  const events = async (relativePath) => Object.keys(JSON.parse(await readFile(path.join(root, relativePath), "utf8")).hooks ?? {});
+  const claudeEvents = new Set(await events(`${OUTPUT_DIRECTORY}/hooks/hooks.json`));
+  return (await events("hooks/hooks.json"))
+    .filter((event) => !claudeEvents.has(event))
+    .map((event) => `Codex hook event ${event} is not registered in ${OUTPUT_DIRECTORY}/hooks/hooks.json`);
+}
+
+/**
+ * Reports how the committed claude-plugin/ differs from the current sources
+ * without failing. Shared-source changes do not have to regenerate the Claude
+ * plugin, so a failed render is reported as drift as well.
+ */
+export async function reportClaudePluginDrift(root = ROOT) {
+  try {
+    return await checkClaudePlugin(root);
+  } catch (error) {
+    return [`render failed: ${error instanceof Error ? error.message : String(error)}`];
+  }
+}
+
 async function main() {
+  if (process.argv.includes("--drift")) {
+    const problems = await reportClaudePluginDrift();
+    if (problems.length === 0) {
+      console.log(`${OUTPUT_DIRECTORY}: fresh`);
+      return;
+    }
+    const prefix = process.env.GITHUB_ACTIONS === "true" ? "::warning title=Claude plugin drift::" : "warning: ";
+    console.log(`${prefix}${OUTPUT_DIRECTORY}/ differs from the current sources (${problems.length} item(s)). This does not block shared-source changes; run pnpm claude:build for a release or Claude-side work.`);
+    for (const problem of problems.slice(0, 20)) console.log(`- ${problem}`);
+    if (problems.length > 20) console.log(`- ... ${problems.length - 20} more`);
+    return;
+  }
   if (process.argv.includes("--check")) {
     const problems = await checkClaudePlugin();
     if (problems.length > 0) {

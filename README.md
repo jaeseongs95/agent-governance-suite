@@ -90,7 +90,7 @@ Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다
 - Anthropic API는 최상위 `oneOf`가 있는 도구 스키마를 받지 않으므로, Claude 배포물은 `AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE=anthropic`으로 `plan_workflow`의 공개 스키마만 평평하게 바꿉니다. 서버의 입력 검증은 같은 계약을 그대로 사용하고, 이 값이 없으면 기존 스키마를 그대로 내보냅니다.
 - 실행 보증이 필요한 orchestrated workflow는 신뢰할 수 있는 실행 관측값이 없어 `BINDING_REQUIRED`로 시작되지 않습니다. Codex 배포 서버도 같은 조건에서 같은 결과를 냅니다.
 
-`claude-plugin/`은 `pnpm claude:build`로 생성하며 직접 수정하지 않습니다. Claude 전용 파일과 문구 보정은 `claude-overlay/`에 둡니다.
+`claude-plugin/`은 `pnpm claude:build`로 생성하며 직접 수정하지 않습니다. 공용 원본(`skills/`, `runtime/`, `contracts/`, MCP 서버 번들)은 그대로 복사하고, Claude 전용 파일은 `claude-overlay/`에, 스킬별 Claude 문구는 `claude-overlay/adaptations/<스킬명>.json`에 둡니다. 공용 원본을 고칠 때 Claude 생성물을 함께 맞출 필요는 없습니다. CI는 둘의 차이를 경고로만 알리고, 릴리스를 준비하거나 Claude 쪽을 작업할 때 다시 생성합니다.
 
 ## 포함된 스킬
 
@@ -126,7 +126,7 @@ Node.js 22.13.0 이상과 Corepack이 필요합니다.
 corepack enable
 pnpm install --frozen-lockfile
 pnpm bundle:check
-pnpm claude:check
+pnpm claude:drift
 pnpm lint
 pnpm build
 pnpm test
@@ -136,7 +136,7 @@ pnpm validate:official
 git diff --check
 ```
 
-`claude:check`는 `claude-plugin/`이 현재 원본과 `claude-overlay/`로 생성한 결과와 같은지 확인합니다. `bundle:check`는 stale 번들을 빌드가 덮어쓰기 전에 확인하므로 위 순서를 유지합니다. Codex 개발 환경의 `validate:official`은 시스템 `skill-creator`와 `plugin-creator` validator를 실행합니다. 시스템이 Python 3를 찾지 못하면 `PYTHON`에 실행 파일의 절대 경로를 지정합니다. 로컬 MCP 서버는 `pnpm dev`로 실행합니다.
+`claude:drift`는 `claude-plugin/`이 현재 원본으로 다시 생성한 결과와 다를 때 알려 주기만 하고 실패하지 않습니다. 릴리스를 준비하거나 Claude 쪽을 작업할 때는 `pnpm claude:build` 뒤 `pnpm claude:check`로 생성물이 최신인지 확인합니다. `bundle:check`는 stale 번들을 빌드가 덮어쓰기 전에 확인하므로 위 순서를 유지합니다. Codex 개발 환경의 `validate:official`은 시스템 `skill-creator`와 `plugin-creator` validator를 실행합니다. 시스템이 Python 3를 찾지 못하면 `PYTHON`에 실행 파일의 절대 경로를 지정합니다. 로컬 MCP 서버는 `pnpm dev`로 실행합니다.
 
 ## 문서와 기여
 

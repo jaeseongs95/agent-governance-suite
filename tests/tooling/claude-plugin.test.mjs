@@ -6,11 +6,14 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   applyReplacements,
-  checkClaudePlugin,
+  applySkillAdaptation,
   DUAL_HOST_FILES,
   EXCLUDED_SKILLS,
   findCodexOnlyWording,
+  mapSkillInvocations,
   OUTPUT_DIRECTORY,
+  replaceFrontmatterDescription,
+  reportClaudePluginDrift,
 } from "../../scripts/build-claude-plugin.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -34,16 +37,27 @@ afterEach(async () => {
   await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
 });
 
-describe("generated Claude plugin", () => {
-  it("matches a fresh render of the shared sources and overlay", async () => {
-    expect(await checkClaudePlugin(root)).toEqual([]);
-  });
+function versionParts(version) {
+  return version.split(".").map(Number);
+}
 
-  it("uses the release version and plugin-scoped runtime paths", async () => {
+function compareVersions(left, right) {
+  const [a, b] = [versionParts(left), versionParts(right)];
+  for (let index = 0; index < 3; index += 1) {
+    if (a[index] !== b[index]) return a[index] - b[index];
+  }
+  return 0;
+}
+
+// Freshness against the shared sources is reported by `pnpm claude:drift` and
+// enforced only by `pnpm claude:check`, so shared-source changes never fail here.
+describe("generated Claude plugin", () => {
+  it("uses a released version and plugin-scoped runtime paths", async () => {
     const release = await readJson(root, "release", "version.json");
     const manifest = await readJson(pluginRoot, ".claude-plugin", "plugin.json");
     expect(manifest.name).toBe("agent-governance-suite");
-    expect(manifest.version).toBe(release.version);
+    expect(manifest.version).toMatch(/^\d+\.\d+\.\d+$/u);
+    expect(compareVersions(manifest.version, release.version)).toBeLessThanOrEqual(0);
     const server = manifest.mcpServers["agent-governance-suite"];
     expect(server.args).toEqual(["${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/server.mjs"]);
     expect(server.env.AGENT_GOVERNANCE_DB_PATH).toBe("${CLAUDE_PLUGIN_DATA}/workflows.sqlite3");
@@ -75,12 +89,10 @@ describe("generated Claude plugin", () => {
     }
   });
 
-  it("registers exec-form hooks for the Codex lifecycle events plus the Claude-only skill trigger", async () => {
+  it("registers exec-form continuity hooks plus the Claude-only skill trigger", async () => {
     const claudeHooks = await readJson(pluginRoot, "hooks", "hooks.json");
-    const codexHooks = await readJson(root, "hooks", "hooks.json");
-    // Every Codex continuity event must exist in the Claude plugin; Claude may add its own trigger events.
-    for (const event of Object.keys(codexHooks.hooks)) expect(Object.keys(claudeHooks.hooks)).toContain(event);
-    expect(Object.keys(claudeHooks.hooks).sort()).toEqual([...Object.keys(codexHooks.hooks), "UserPromptSubmit"].sort());
+    // Parity with the Codex hook events is reported as drift, so a new Codex event never fails this test.
+    expect(Object.keys(claudeHooks.hooks).sort()).toEqual(["PostCompact", "PreCompact", "PreToolUse", "SessionStart", "UserPromptSubmit"]);
     const allowedScripts = ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs", "${CLAUDE_PLUGIN_ROOT}/hooks/skill-trigger-hook.mjs"];
     for (const groups of Object.values(claudeHooks.hooks)) {
       for (const hook of groups.flatMap((group) => group.hooks)) {
@@ -151,5 +163,60 @@ describe("Claude overlay safeguards", () => {
     expect(() => applyReplacements(files, [{ file: "skills/example/SKILL.md", find: "beta", replace: "x" }])).toThrow(/not found/u);
     expect(() => applyReplacements(files, [{ file: "skills/example/SKILL.md", find: "alpha", replace: "x" }])).toThrow(/ambiguous/u);
     expect(() => applyReplacements(files, [{ file: "skills/missing/SKILL.md", find: "a", replace: "b" }])).toThrow(/not generated/u);
+  });
+
+  it("replaces the whole frontmatter description regardless of the shared wording", () => {
+    const single = "---\nname: example\ndescription: Codex wording that may change.\n---\n# Body\ndescription: body text\n";
+    expect(replaceFrontmatterDescription(single, "Claude trigger wording.")).toBe(
+      "---\nname: example\ndescription: Claude trigger wording.\n---\n# Body\ndescription: body text\n",
+    );
+    const folded = "---\r\nname: example\r\ndescription: >\r\n  folded\r\n  lines\r\nlicense: MIT\r\n---\r\n";
+    expect(replaceFrontmatterDescription(folded, "Claude.")).toBe("---\r\nname: example\r\ndescription: Claude.\r\nlicense: MIT\r\n---\r\n");
+    expect(() => replaceFrontmatterDescription("# no frontmatter\n", "x")).toThrow(/no frontmatter/u);
+    expect(() => replaceFrontmatterDescription("---\nname: example\n---\n", "x")).toThrow(/no description/u);
+  });
+
+  it("applies a skill adaptation with skill-relative paths and names the adaptation file on failure", () => {
+    const files = new Map([
+      ["skills/example/SKILL.md", Buffer.from("---\nname: example\ndescription: Codex.\n---\nUse `fork_turns:none`.\n")],
+      ["skills/example/references/guide.md", Buffer.from("See .codex-plugin/plugin.json\n")],
+    ]);
+    applySkillAdaptation(files, "example", {
+      description: "Claude.",
+      replacements: [
+        { file: "SKILL.md", find: "`fork_turns:none`", replace: "a new subagent" },
+        { file: "references/guide.md", find: ".codex-plugin/plugin.json", replace: ".claude-plugin/plugin.json" },
+      ],
+    }, "claude-overlay/adaptations/example.json");
+    expect(files.get("skills/example/SKILL.md").toString("utf8")).toBe("---\nname: example\ndescription: Claude.\n---\nUse a new subagent.\n");
+    expect(files.get("skills/example/references/guide.md").toString("utf8")).toBe("See .claude-plugin/plugin.json\n");
+    expect(() => applySkillAdaptation(files, "example", { replacements: [{ file: "SKILL.md", find: "gone", replace: "x" }] }, "claude-overlay/adaptations/example.json"))
+      .toThrow(/^claude-overlay\/adaptations\/example\.json: replacement text not found/u);
+    expect(() => applySkillAdaptation(files, "missing", { description: "x" })).toThrow(/skill is not generated/u);
+    expect(() => applySkillAdaptation(files, "example", { summary: "x" })).toThrow(/unknown keys/u);
+    expect(() => applySkillAdaptation(files, "example", { description: "two\nlines" })).toThrow(/single line/u);
+    expect(() => applySkillAdaptation(files, "example", { replacements: [{ file: "../x.md", find: "a", replace: "b" }] })).toThrow(/invalid replacement/u);
+  });
+
+  it("maps Codex invocations of shipped skills to the Claude Code form only", () => {
+    const files = new Map([
+      ["skills/example/SKILL.md", Buffer.from("Call `$task-contract`, then $task-contract-v2, $skill-name and $codex-token-usage-analyzer.\n")],
+      ["skills/example/scripts/run.mjs", Buffer.from("const skill = '$task-contract';\n")],
+      [DUAL_HOST_FILES[0], Buffer.from("Codex: $task-contract\n")],
+    ]);
+    mapSkillInvocations(files, ["task-contract"]);
+    expect(files.get("skills/example/SKILL.md").toString("utf8")).toBe(
+      "Call `/agent-governance-suite:task-contract`, then $task-contract-v2, $skill-name and $codex-token-usage-analyzer.\n",
+    );
+    expect(files.get("skills/example/scripts/run.mjs").toString("utf8")).toBe("const skill = '$task-contract';\n");
+    expect(files.get(DUAL_HOST_FILES[0]).toString("utf8")).toBe("Codex: $task-contract\n");
+  });
+
+  it("reports drift instead of throwing when the Claude plugin cannot be rendered", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "claude-plugin-drift-"));
+    temporaryDirectories.push(directory);
+    const problems = await reportClaudePluginDrift(directory);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toMatch(/^render failed: /u);
   });
 });

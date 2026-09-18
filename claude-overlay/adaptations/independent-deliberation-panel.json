@@ -1,0 +1,40 @@
+{
+  "description": "설계 대안이 갈리거나 결정이 틀리면 비용이 큰 판단, 기존 설계나 AI 산출물을 독립 감사해야 할 때, 사용자가 '검토해 봐'·'맞는지 봐 줘'·반박 패널을 요구할 때 쓴다. 독립 관점 reviewer, 조건부 반박, 증거 검증, 별도 판정으로 결론을 낸다. 단순 조회·요약·정형 변환에는 쓰지 않는다.",
+  "replacements": [
+    {
+      "file": "SKILL.md",
+      "find": "적용 가능한 `AGENTS.md`와 상위 지침을 먼저 따른다.",
+      "replace": "적용 가능한 `CLAUDE.md`(import된 `AGENTS.md` 포함)와 상위 지침을 먼저 따른다."
+    },
+    {
+      "file": "SKILL.md",
+      "find": "상위 시스템·개발자·적용 가능한 `AGENTS.md` 지침이 항상 우선한다.",
+      "replace": "상위 시스템·개발자·적용 가능한 `CLAUDE.md`(import된 `AGENTS.md` 포함) 지침이 항상 우선한다."
+    },
+    {
+      "file": "SKILL.md",
+      "find": "reviewer를 `fork_turns:none`과 완결된 중립 briefing으로 시작한다.",
+      "replace": "reviewer를 fork가 아닌 새 서브에이전트(가능하면 `agent-governance-suite:deliberation-reviewer`)와 완결된 중립 briefing으로 시작한다."
+    },
+    {
+      "file": "references/orchestration-policy.md",
+      "find": "(`fork_turns:none` 또는 동등한 새 컨텍스트)",
+      "replace": "(fork가 아닌 새 서브에이전트처럼 부모 대화를 상속하지 않는 새 컨텍스트)"
+    },
+    {
+      "file": "references/orchestration-policy.md",
+      "find": "고유 worker여야 하며 `fork_turns:none`으로 시작한다.",
+      "replace": "고유 worker여야 하며 fork가 아닌 새 서브에이전트로 시작한다."
+    },
+    {
+      "file": "references/integration-contract.md",
+      "find": "- 스킬 이름 `$independent-deliberation-panel`",
+      "replace": "- 스킬 이름 `independent-deliberation-panel` (Claude Code 호출: `/agent-governance-suite:independent-deliberation-panel`)"
+    },
+    {
+      "file": "references/evidence-and-verdict-schema.md",
+      "find": "    requested_model: \"gpt-5.6-terra\"\n    actual_model: \"gpt-5.6-terra\"\n    requested_reasoning: \"xhigh\"\n    actual_reasoning: \"xhigh\"",
+      "replace": "    requested_model: \"sonnet\"\n    actual_model: \"sonnet\"\n    requested_reasoning: \"high\"\n    actual_reasoning: \"high\""
+    }
+  ]
+}
