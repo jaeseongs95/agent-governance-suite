@@ -68,6 +68,10 @@ export async function verifySourceLockOffline() {
     if ((source.downstreamModifications?.length ?? 0) > 0 && source.updatePolicy === "auto-pr") {
       errors.push(`modified source cannot use auto-pr for ${label}`);
     }
+    // A commit pin carries content no stable tag names, so the version no longer identifies what is integrated.
+    if (source.updatePolicy === "auto-pr" && source.ref?.kind !== "tag") {
+      errors.push(`auto-pr source must be pinned to a stable tag for ${label}`);
+    }
     try {
       const version = await readSkillVersion(path.join(ROOT, source.path));
       if (version.version !== source.version || version.source !== source.versionSource) {

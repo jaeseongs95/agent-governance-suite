@@ -163,8 +163,8 @@ describe("skill maintenance commands", () => {
     const { source, commits } = await createVersionedSource(["0.2.0", "0.2.1"]);
     const base = ["--source", source, "--skill-path", "."];
     // A new skill without a descriptor still needs an explicit phase and capability.
-    expect(runScript("import-skill.mjs", [...base, "--ref", commits[0]], suiteRoot).status).not.toBe(0);
-    expect(runScript("import-skill.mjs", [...base, "--ref", commits[0], "--phase", "validation", "--capability", "ref-validation"], suiteRoot).status).toBe(0);
+    expect(runScript("import-skill.mjs", [...base, "--ref", "v0.2.0"], suiteRoot).status).not.toBe(0);
+    expect(runScript("import-skill.mjs", [...base, "--ref", "v0.2.0", "--phase", "validation", "--capability", "ref-validation"], suiteRoot).status).toBe(0);
 
     const registryPath = path.join(suiteRoot, "skills", "registry.json");
     const lockPath = path.join(suiteRoot, "skills", "source-lock.json");
@@ -177,16 +177,42 @@ describe("skill maintenance commands", () => {
     lock.sources[0].updatePolicy = "auto-pr";
     await writeFile(lockPath, `${JSON.stringify(lock, null, 2)}\n`);
 
-    const result = runScript("import-skill.mjs", [...base, "--ref", commits[1], "--replace", "true", "--descendant-of", commits[0]], suiteRoot);
+    // An auto-pr skill is only replaced from a stable tag; a commit ref is refused before anything is written.
+    const fromCommit = runScript("import-skill.mjs", [...base, "--ref", commits[1], "--replace", "true", "--descendant-of", commits[0]], suiteRoot);
+    expect(fromCommit.status).not.toBe(0);
+    expect(fromCommit.stderr).toContain("must be imported from a stable vX.Y.Z tag");
+    expect(JSON.parse(await readFile(lockPath, "utf8")).sources[0].ref).toEqual({ kind: "tag", value: "v0.2.0", commit: commits[0] });
+
+    const result = runScript("import-skill.mjs", [...base, "--ref", "v0.2.1", "--replace", "true", "--descendant-of", commits[0]], suiteRoot);
     expect(result.status, result.stderr).toBe(0);
     const updated = JSON.parse(await readFile(registryPath, "utf8")).skills;
     expect(updated).toHaveLength(1);
     expect(updated[0]).toEqual({ ...registry.skills[0], version: "0.2.1" });
     expect(JSON.parse(await readFile(lockPath, "utf8")).sources[0]).toMatchObject({
       version: "0.2.1",
-      ref: { kind: "commit", commit: commits[1] },
+      ref: { kind: "tag", value: "v0.2.1", commit: commits[1] },
       updatePolicy: "auto-pr",
     });
+  });
+
+  it("rejects a lock whose auto-pr source is pinned to a commit", async () => {
+    const suiteRoot = await createSuiteRoot();
+    const { source, commits } = await createVersionedSource(["0.2.0"]);
+    expect(runScript("import-skill.mjs", [
+      "--source", source, "--ref", commits[0], "--skill-path", ".", "--phase", "validation", "--capability", "ref-validation",
+    ], suiteRoot).status).toBe(0);
+    const pinMessage = "auto-pr source must be pinned to a stable tag for versioned-skill";
+    const notifyOnly = runScript("check-source-lock.mjs", [], suiteRoot);
+    expect(`${notifyOnly.stdout}${notifyOnly.stderr}`).not.toContain(pinMessage);
+
+    const lockPath = path.join(suiteRoot, "skills", "source-lock.json");
+    const lock = JSON.parse(await readFile(lockPath, "utf8"));
+    lock.sources[0].updatePolicy = "auto-pr";
+    await writeFile(lockPath, `${JSON.stringify(lock, null, 2)}
+`);
+    const autoPr = runScript("check-source-lock.mjs", [], suiteRoot);
+    expect(autoPr.status).not.toBe(0);
+    expect(`${autoPr.stdout}${autoPr.stderr}`).toContain(pinMessage);
   });
 });
 
@@ -200,6 +226,7 @@ async function createVersionedSource(versions) {
     execFileSync("git", ["-c", "core.autocrlf=false", "add", "."], { cwd: source });
     execFileSync("git", ["-c", "core.autocrlf=false", "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-m", `version ${version}`], { cwd: source });
     commits.push(execFileSync("git", ["rev-parse", "HEAD"], { cwd: source, encoding: "utf8" }).trim());
+    execFileSync("git", ["-c", "tag.gpgSign=false", "tag", `v${version}`], { cwd: source });
   }
   return { source, commits };
 }

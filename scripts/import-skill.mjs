@@ -170,6 +170,11 @@ try {
       if (owner) throw new Error(`capability ${capability} is already provided by ${owner.skillId}`);
     }
   }
+  const refKind = /^v\d+\.\d+\.\d+$/u.test(args.ref) ? "tag" : "commit";
+  const updatePolicy = entries.find((entry) => entry.skillId === name)?.updatePolicy ?? "notify-only";
+  if (updatePolicy === "auto-pr" && refKind !== "tag") {
+    throw new Error(`${name} uses auto-pr and must be imported from a stable vX.Y.Z tag; release upstream first or set its updatePolicy to notify-only`);
+  }
   const lockEntry = {
     skillId: name,
     path: `skills/${name}`,
@@ -178,11 +183,11 @@ try {
     version: metadataVersion,
     versionSource,
     ref: {
-      kind: /^v\d+\.\d+\.\d+$/u.test(args.ref) ? "tag" : "commit",
+      kind: refKind,
       value: args.ref,
       commit,
     },
-    updatePolicy: entries.find((entry) => entry.skillId === name)?.updatePolicy ?? "notify-only",
+    updatePolicy,
     upstreamChecksum: checksumValue,
     integratedChecksum: checksumValue,
     checksumScope: `relative paths and normalized text bytes under skills/${name}`,
