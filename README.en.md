@@ -7,7 +7,7 @@ Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
 <!-- release-version:start -->
-The current public release is `v1.19.0` and includes fifteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. This release lets `record_stage_result` take large provider outputs by local file reference and SHA-256, so stage outputs that grow with repository size no longer stop orchestrated workflows. Apart from this optional field appearing in the tool schema, the Codex distribution behaves as in v1.18.0. The candidate-v2 policies applied to `korean-prose-editor` in v1.16.0 were not covered by the quality-gate pass (`0.3.0-gate-1`) and have not been quality-evaluated yet.
+The current public release is `v1.19.1` and includes fifteen governance specialist skills, one local task-continuity infrastructure skill, and one Korean prose workflow. This patch fixes one test line that made v1.19.0 CI fail on Ubuntu. v1.19.0 lets `record_stage_result` take large provider outputs by local file reference and SHA-256, so stage outputs that grow with repository size no longer stop orchestrated workflows. The candidate-v2 policies applied to `korean-prose-editor` in v1.16.0 were not covered by the quality-gate pass (`0.3.0-gate-1`) and have not been quality-evaluated yet.
 <!-- release-version:end -->
 
 ## Problems it handles
@@ -44,7 +44,7 @@ Node.js 22.13.0 or later is required.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.19.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.19.1
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->

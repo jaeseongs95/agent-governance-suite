@@ -7,7 +7,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v1.19.0`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 `record_stage_result`가 큰 provider 출력을 로컬 파일 참조와 SHA-256으로 받게 해, 저장소 크기에 비례하는 stage 출력 때문에 orchestrated workflow가 중단되던 문제를 없앱니다. Codex 배포물은 이 선택 필드가 도구 스키마에 추가되는 것 외에는 v1.18.0과 같습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
+현재 공개 릴리스는 `v1.19.1`이며 거버넌스 전문 스킬 15개, 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 v1.19.0의 CI가 Ubuntu에서 실패하게 한 테스트 한 줄을 고친 패치입니다. v1.19.0은 `record_stage_result`가 큰 provider 출력을 로컬 파일 참조와 SHA-256으로 받게 해, 저장소 크기에 비례하는 stage 출력 때문에 orchestrated workflow가 중단되던 문제를 없앴습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -44,7 +44,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.19.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.19.1
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
