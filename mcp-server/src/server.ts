@@ -233,8 +233,12 @@ function sessionBoardResult(
     return apiError("BINDING_REQUIRED", "The plugin hook records the session board line and did not run for this call.");
   }
   if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
-  // Listing never creates the board; only the hook's first write does.
-  if (tool === "list_session_status" && !existsSync(databasePath)) return apiOk({ sessions: [] });
+  // The tools never create the board; only the hook's first write does.
+  if (!existsSync(databasePath)) {
+    return tool === "list_session_status"
+      ? apiOk({ sessions: [] })
+      : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
+  }
   let board: ReturnType<typeof openBoard> | null = null;
   try {
     board = openBoard(databasePath);

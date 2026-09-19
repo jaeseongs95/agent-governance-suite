@@ -50,7 +50,7 @@ Codex lifecycle Hook은 MCP 준비 여부에 의존하지 않고 bundled continu
 
 ## 세션 현황판
 
-세션 현황판은 `session-board` 인프라 스킬의 저장소 모듈이 규칙과 SQLite 저장을 모두 맡고, 훅과 MCP 도구(`update_session_status`, `list_session_status`)는 그 모듈을 부르는 인터페이스입니다. 행마다 호스트, 세션 ID, 작업 디렉터리, 한 줄 요약, 요약 시각, 마지막 요청 시각을 두며 요청 원문은 저장하지 않습니다. 세션 ID와 작업 디렉터리는 훅 입력에서 채웁니다. 요청마다 첫 상태 변경 도구 호출을 한 번 거부할지는 저장소 모듈이 판단하고, 훅은 그 결과를 호스트에 전달하며 모든 오류에서 호출을 통과(fail open)시킵니다. 파일은 기본적으로 workflow DB 옆의 `session-board.sqlite3`이며 Claude Code에서는 `${CLAUDE_PLUGIN_DATA}` 아래에 둡니다.
+세션 현황판은 `session-board` 인프라 스킬의 저장소 모듈이 규칙과 SQLite 저장을 모두 맡고, 훅과 MCP 도구(`update_session_status`, `list_session_status`)는 그 모듈을 부르는 인터페이스입니다. 행마다 호스트, 세션 ID, 작업 디렉터리, 한 줄 요약, 요약 시각, 마지막 요청 시각을 두며 요청 원문은 저장하지 않습니다. 세션 ID와 작업 디렉터리는 훅 입력에서 채웁니다. 요청마다 첫 상태 변경 도구 호출(파일 편집, 셸 명령, 서브에이전트 실행. 이 플러그인의 MCP 도구는 제외)을 한 번 거부할지는 저장소 모듈이 판단하고, 훅은 그 결과를 호스트에 전달하며 모든 오류에서 호출을 통과(fail open)시킵니다. Codex의 도구 이름, 거부와 입력 수정 지원은 Codex에서 확인하지 않았습니다. 파일은 기본적으로 workflow DB 옆의 `session-board.sqlite3`이며 Claude Code에서는 `${CLAUDE_PLUGIN_DATA}` 아래에 둡니다.
 
 ## 플러그인 업데이트 알림
 

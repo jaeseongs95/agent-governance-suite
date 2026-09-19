@@ -115,6 +115,7 @@ describe("session board store", () => {
     for (const command of [
       "git status && rm -rf x", "cat a > b", "ls | xargs rm", "echo $(whoami)", "git branch -D main", "git commit -m x", "pnpm test", "cat `x`", "ls; rm a", "git status\nrm a", "", null,
       "rg --pre ./x.sh foo", "rg foo --pre=./x.sh", "git diff --output=README.md", "git log --output a.txt", "git diff --ext-diff", "cat (Remove-Item x)", "ls @(rm x)", "cat $HOME/x", "ls {a,b}",
+      "git diff \"--output=o.txt\"", "git diff '--output=o.txt'", "git diff \\--output=o.txt", "rg '--pre=./x.sh' foo",
     ]) {
       expect(isReadOnlyCommand(command)).toBe(false);
     }
@@ -236,6 +237,7 @@ describe("session board MCP tools", () => {
     expect(payload(await (await connect(null)).callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } })).error?.code).toBe("MCP_UNAVAILABLE");
     const missing = boardPath();
     expect(payload(await (await connect(missing)).callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } }))).toMatchObject({ ok: true, data: { sessions: [] } });
+    expect(payload(await (await connect(missing)).callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "x", _sessionBinding: binding } })).error?.code).toBe("MCP_UNAVAILABLE");
     expect(existsSync(missing)).toBe(false);
   });
 });

@@ -72,7 +72,7 @@ function pruneSessions(db, now) {
 function isReadOnlyCommand(command) {
   if (typeof command !== "string") return false;
   const text2 = command.trim();
-  if (!text2 || /[;&|<>`$@(){}\r\n]/u.test(text2)) return false;
+  if (!text2 || /[;&|<>`$@(){}'"\\\r\n]/u.test(text2)) return false;
   const [first, second, ...rest] = text2.split(/\s+/u);
   if ([second, ...rest].some((argument) => /^--(?:output|ext-diff|pre)(?:=|$|-)/u.test(argument ?? ""))) return false;
   if (READ_ONLY_COMMANDS.has(first)) return true;
