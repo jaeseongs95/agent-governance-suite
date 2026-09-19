@@ -89,16 +89,16 @@ export async function runSessionBoardHook(host: string, raw: string): Promise<st
     if (text(input.hook_event_name) === "UserPromptSubmit") {
       const parsed = parseWakeMessages(input.prompt);
       const sessionId = text(input.session_id);
-      let recognized = false;
+      let allRecognized = parsed.nonces.length > 0;
       if (sessionId) {
         for (const nonce of parsed.nonces) {
           try {
             const result = await sessionMessageRequest<{ consumed: boolean }>("consume-wake", { target: { host, sessionId }, nonce });
-            recognized ||= result.consumed;
-          } catch { /* An unverifiable bell remains an ordinary prompt. */ }
+            allRecognized &&= result.consumed;
+          } catch { allRecognized = false; }
         }
-      }
-      verifiedInternalWake = parsed.wakeOnly && recognized;
+      } else allRecognized = false;
+      verifiedInternalWake = parsed.wakeOnly && allRecognized;
     }
     board = openBoard(resolveSessionBoardDatabasePath(), { busyTimeoutMs: 500 });
     const output = handleSessionBoardHook(input, board, host, new Date().toISOString(), verifiedInternalWake);

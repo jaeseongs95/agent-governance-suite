@@ -14,12 +14,14 @@ import {
   parseWakeMessages,
   requestSessionMessageOnce,
   sessionMessageBrokerEnvironment,
+  sessionMessageRequest,
   SESSION_MESSAGE_PROTOCOL,
 } from "../../mcp-server/src/session-message-client.js";
 import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
+import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
-import { wakeBackoffDelay } from "../../mcp-server/src/session-message-relay.js";
+import { relayIdentityDecision, wakeBackoffDelay } from "../../mcp-server/src/session-message-relay.js";
 import { MESSAGE_BODY_MAX_BYTES, SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 import { processIdentityState, processStartToken, processStillMatches } from "../../mcp-server/src/process-identity.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
@@ -152,8 +154,53 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       .toEqual({ nonces: [first], wakeOnly: false });
   });
 
+  it("treats merged wake bells as internal only when every nonce is broker-recognized", async () => {
+    const directory = stateDirectory();
+    const previousMessageState = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
+    const previousBoardPath = process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
+    process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = directory;
+    process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = path.join(directory, "session-board.sqlite3");
+    const sessionId = "merged-wake-session";
+    const hook = (hook_event_name: string, extra: Record<string, unknown> = {}) => JSON.stringify({
+      hook_event_name,
+      session_id: sessionId,
+      cwd: "D:/work/repo",
+      ...extra,
+    });
+    try {
+      await runSessionBoardHook("claude-code", hook("SessionStart"));
+      await runSessionBoardHook("claude-code", hook("UserPromptSubmit", { prompt: "initial request" }));
+      await runSessionBoardHook("claude-code", hook("PreToolUse", {
+        tool_name: "mcp__agent_governance_suite__update_session_status",
+        tool_input: { schemaVersion: "1.0.0", summary: "initial request recorded" },
+      }));
+      const issued = "a".repeat(32);
+      const unissued = "b".repeat(32);
+      await sessionMessageRequest("issue-wake", { target: { host: "claude-code", sessionId }, nonce: issued }, directory);
+      await runSessionBoardHook("claude-code", hook("UserPromptSubmit", {
+        prompt: `[agent-governance-suite:wake:${issued}]\n[agent-governance-suite:wake:${unissued}]`,
+      }));
+      const edit = await runSessionBoardHook("claude-code", hook("PreToolUse", { tool_name: "Edit", tool_input: {} }));
+      expect(edit).toContain('"permissionDecision":"deny"');
+    } finally {
+      if (previousMessageState === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
+      else process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = previousMessageState;
+      if (previousBoardPath === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
+      else process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = previousBoardPath;
+    }
+  });
+
   it("backs off repeated wake hints without exceeding ten minutes", () => {
     expect([0, 1, 2, 5, 20].map(wakeBackoffDelay)).toEqual([30_000, 60_000, 120_000, 600_000, 600_000]);
+  });
+
+  it("stops relay acquisition after three consecutive unknown identity checks", () => {
+    const first = relayIdentityDecision("unknown", 0);
+    const second = relayIdentityDecision("unknown", first.unknowns);
+    const third = relayIdentityDecision("unknown", second.unknowns);
+    expect([first.stop, second.stop, third.stop]).toEqual([false, false, true]);
+    expect(relayIdentityDecision("match", second.unknowns)).toEqual({ proceed: true, stop: false, unknowns: 0 });
+    expect(relayIdentityDecision("mismatch", 0)).toEqual({ proceed: false, stop: true, unknowns: 0 });
   });
 
   it("does not pass Claude inbox credentials into the broker process", () => {
@@ -218,6 +265,20 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     await runSessionMessageCli(JSON.stringify({ operation: "acknowledge", payload: { target: { host: "spark", sessionId: "escaped" }, messageIds: ["escaped-0001"] } }), directory);
     const secondEscaped = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target: { host: "spark", sessionId: "escaped" } } }), directory);
     expect(secondEscaped).toMatchObject({ data: { messages: [{ messageId: "escaped-0002", body: escapedBody }] } });
+
+    const invalidBudgetTarget = { host: "spark", sessionId: "invalid-budget" };
+    await runSessionMessageCli(JSON.stringify({
+      operation: "send",
+      payload: { messageId: "invalid-budget-0001", sender: { host: "grok", sessionId: "g-1" }, target: invalidBudgetTarget, body: "still queued", ttlSeconds: 600 },
+    }), directory);
+    for (const invalid of ["1", null, {}]) {
+      await expect(runSessionMessageCli(JSON.stringify({
+        operation: "claim",
+        payload: { target: invalidBudgetTarget, maxMessages: invalid },
+      }), directory)).rejects.toThrow(/maxMessages must be an integer/u);
+    }
+    const afterInvalidBudget = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target: invalidBudgetTarget, maxMessages: 1 } }), directory);
+    expect(afterInvalidBudget).toMatchObject({ data: { messages: [{ messageId: "invalid-budget-0001" }] } });
 
     const metadataTarget = { host: "spark", sessionId: "wire-sized" };
     const metadataSender = { host: "가".repeat(64), sessionId: "나".repeat(200) };

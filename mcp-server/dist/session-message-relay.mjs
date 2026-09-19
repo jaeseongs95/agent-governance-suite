@@ -222,6 +222,12 @@ var WAKE_BACKOFF_MAX_MS = 10 * 6e4;
 function wakeBackoffDelay(attempt) {
   return Math.min(WAKE_BACKOFF_MAX_MS, WAKE_BACKOFF_BASE_MS * 2 ** Math.max(0, attempt));
 }
+function relayIdentityDecision(identity, previousUnknowns) {
+  if (identity === "mismatch") return { proceed: false, stop: true, unknowns: 0 };
+  if (identity === "match") return { proceed: true, stop: false, unknowns: 0 };
+  const unknowns = previousUnknowns + 1;
+  return { proceed: false, stop: unknowns >= IDENTITY_UNKNOWN_LIMIT, unknowns };
+}
 function argument(name) {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] ?? null : null;
@@ -259,11 +265,14 @@ async function runSessionMessageRelay(options) {
   const target = { host: options.host, sessionId: options.sessionId };
   const relayId = randomUUID();
   let acquired = false;
+  let acquisitionUnknowns = 0;
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const identity = processIdentityState(options.parentPid, options.parentStartToken);
-    if (identity === "mismatch") return;
+    const decision = relayIdentityDecision(identity, acquisitionUnknowns);
+    acquisitionUnknowns = decision.unknowns;
+    if (decision.stop) return;
     try {
-      if (identity === "match") {
+      if (decision.proceed) {
         const result = await sessionMessageRequest("acquire-relay", {
           target,
           transport: options.transport,
@@ -348,6 +357,7 @@ if (path3.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
   });
 }
 export {
+  relayIdentityDecision,
   runSessionMessageRelay,
   wakeBackoffDelay
 };

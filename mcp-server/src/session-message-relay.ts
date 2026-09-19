@@ -18,6 +18,17 @@ export function wakeBackoffDelay(attempt: number): number {
   return Math.min(WAKE_BACKOFF_MAX_MS, WAKE_BACKOFF_BASE_MS * 2 ** Math.max(0, attempt));
 }
 
+export function relayIdentityDecision(identity: ProcessIdentityState, previousUnknowns: number): {
+  proceed: boolean;
+  stop: boolean;
+  unknowns: number;
+} {
+  if (identity === "mismatch") return { proceed: false, stop: true, unknowns: 0 };
+  if (identity === "match") return { proceed: true, stop: false, unknowns: 0 };
+  const unknowns = previousUnknowns + 1;
+  return { proceed: false, stop: unknowns >= IDENTITY_UNKNOWN_LIMIT, unknowns };
+}
+
 interface RelayOptions {
   host: string;
   sessionId: string;
@@ -63,11 +74,14 @@ export async function runSessionMessageRelay(options: RelayOptions): Promise<voi
   const target = { host: options.host, sessionId: options.sessionId };
   const relayId = randomUUID();
   let acquired = false;
+  let acquisitionUnknowns = 0;
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const identity = processIdentityState(options.parentPid, options.parentStartToken);
-    if (identity === "mismatch") return;
+    const decision = relayIdentityDecision(identity, acquisitionUnknowns);
+    acquisitionUnknowns = decision.unknowns;
+    if (decision.stop) return;
     try {
-      if (identity === "match") {
+      if (decision.proceed) {
         const result = await sessionMessageRequest<{ acquired: boolean }>("acquire-relay", {
           target,
           transport: options.transport,

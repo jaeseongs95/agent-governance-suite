@@ -349,6 +349,9 @@ function integer2(value, name) {
   if (typeof value !== "number" || !Number.isInteger(value)) throw new Error(`${name} must be an integer.`);
   return value;
 }
+function optionalInteger(record, name) {
+  return Object.hasOwn(record, name) ? integer2(record[name], name) : void 0;
+}
 function tokenMatches(actual, expected) {
   const left = Buffer.from(actual);
   const right = Buffer.from(expected);
@@ -448,11 +451,14 @@ function dispatch(store, operation, payload) {
         body: string(payload.body, "body"),
         ...typeof payload.ttlSeconds === "number" ? { ttlSeconds: payload.ttlSeconds } : {}
       });
-    case "claim":
+    case "claim": {
+      const maxMessages = optionalInteger(payload, "maxMessages");
+      const maxBodyChars = optionalInteger(payload, "maxBodyChars");
       return { messages: store.claim(identity(payload.target), Date.now(), {
-        ...typeof payload.maxMessages === "number" ? { maxMessages: integer2(payload.maxMessages, "maxMessages") } : {},
-        ...typeof payload.maxBodyChars === "number" ? { maxBodyChars: integer2(payload.maxBodyChars, "maxBodyChars") } : {}
+        ...maxMessages === void 0 ? {} : { maxMessages },
+        ...maxBodyChars === void 0 ? {} : { maxBodyChars }
       }) };
+    }
     case "acknowledge":
       return { acknowledged: store.acknowledge(identity(payload.target), Array.isArray(payload.messageIds) ? payload.messageIds.map((value) => string(value, "messageId")) : []) };
     case "status":
