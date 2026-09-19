@@ -7,7 +7,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v1.21.0`이며 거버넌스 전문 스킬 15개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 같은 컴퓨터에서 동시에 일하는 세션들이 서로의 작업을 알 수 있도록 세션 현황판(`session-board`)을 더했습니다. 세션마다 세션 ID, 작업 디렉터리, 지금 하는 일 한 줄을 로컬 SQLite에 두고 `list_session_status`로 읽습니다. 사용자 요청마다 처음 파일을 고치거나 명령·서브에이전트를 실행하기 전에 `update_session_status`로 한 줄을 적어야 하며, 적지 않았으면 훅이 그 호출을 한 번 거부합니다. 현황판은 호스트마다 따로 있고, Codex 쪽 훅은 아직 Codex에서 실행해 확인하지 않았습니다. v1.20.3은 Claude Code에서 실패 영향이 큰 작업이 orchestrated workflow로 계획되도록 오케스트레이터 지침에 `orchestration.requested: true`를 적는 규칙과 stage마다 필수 산출물을 모두 기록하는 규칙을 넣었습니다. 또 provider마다 달랐던 artifact digest 표기(`sha256:` 접두사 유무)를 `record_stage_result`가 어느 쪽이든 받게 해 불필요한 거절을 줄였습니다. v1.20.2는 동작을 바꾸지 않고 MCP 서버와 저장소 스크립트의 중복을 정리했습니다. MCP 도구·schema와 SQLite 형식은 그대로이며, continuity hook 번들에서 쓰지 않던 schema validator를 빼 번들이 약 90KB로 줄었습니다. v1.20.1은 Claude Code 대화형 세션에서 실행 보증(host attestation)이 항상 실패해 orchestrated workflow를 시작할 수 없던 결함을 고쳤습니다. 대화형 세션은 도구를 호출한 메시지를 호출이 끝난 뒤에 transcript에 쓰므로, 이제 훅이 세션 시작·모델 전환 때 기록한 현재 모델이나 이미 기록된 직전 메시지의 모델로 증명합니다. v1.20.0은 MIT 공개 스킬 `ponytail`을 구현 단계에 붙였습니다. orchestrator는 코드를 작성·수정하는 단계가 있는 요청에 `minimal-implementation` capability를 요청하고, 이 스킬은 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르도록 안내합니다. orchestrator를 거치지 않는 평소 코드 작업에서도 쓰이며, Claude Code에서는 세션 접수 규칙이, Codex에서는 스킬 설명이 호출을 이끕니다. 원본의 항상 켜짐 훅과 보조 스킬은 넣지 않았습니다. v1.19.0은 `record_stage_result`가 큰 provider 출력을 로컬 파일 참조와 SHA-256으로 받게 해, 저장소 크기에 비례하는 stage 출력 때문에 orchestrated workflow가 중단되던 문제를 없앴습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
+현재 공개 릴리스는 `v2.0.0`이며 거버넌스 전문 스킬 15개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 세션 현황판을 Claude Code와 Codex가 함께 쓰게 했습니다. 두 호스트가 사용자 상태 디렉터리의 같은 파일을 읽고 써서, Claude Code 세션의 진행 상황을 Codex 세션이, Codex 세션의 진행 상황을 Claude Code 세션이 `list_session_status`로 봅니다. Claude 상태 일부가 플러그인 데이터 폴더 밖으로 나가고 호스트 사이에 정보가 보이게 되어 신뢰 경계가 바뀌므로 major 버전입니다. Codex 쪽 훅은 아직 Codex에서 실행해 확인하지 않았습니다. v1.21.0은 같은 컴퓨터에서 동시에 일하는 세션들이 서로의 작업을 알 수 있도록 세션 현황판(`session-board`)을 더했습니다. 세션마다 세션 ID, 작업 디렉터리, 지금 하는 일 한 줄을 로컬 SQLite에 두고 `list_session_status`로 읽습니다. 사용자 요청마다 처음 파일을 고치거나 명령·서브에이전트를 실행하기 전에 `update_session_status`로 한 줄을 적어야 하며, 적지 않았으면 훅이 그 호출을 한 번 거부합니다. v1.20.3은 Claude Code에서 실패 영향이 큰 작업이 orchestrated workflow로 계획되도록 오케스트레이터 지침에 `orchestration.requested: true`를 적는 규칙과 stage마다 필수 산출물을 모두 기록하는 규칙을 넣었습니다. 또 provider마다 달랐던 artifact digest 표기(`sha256:` 접두사 유무)를 `record_stage_result`가 어느 쪽이든 받게 해 불필요한 거절을 줄였습니다. v1.20.2는 동작을 바꾸지 않고 MCP 서버와 저장소 스크립트의 중복을 정리했습니다. MCP 도구·schema와 SQLite 형식은 그대로이며, continuity hook 번들에서 쓰지 않던 schema validator를 빼 번들이 약 90KB로 줄었습니다. v1.20.1은 Claude Code 대화형 세션에서 실행 보증(host attestation)이 항상 실패해 orchestrated workflow를 시작할 수 없던 결함을 고쳤습니다. 대화형 세션은 도구를 호출한 메시지를 호출이 끝난 뒤에 transcript에 쓰므로, 이제 훅이 세션 시작·모델 전환 때 기록한 현재 모델이나 이미 기록된 직전 메시지의 모델로 증명합니다. v1.20.0은 MIT 공개 스킬 `ponytail`을 구현 단계에 붙였습니다. orchestrator는 코드를 작성·수정하는 단계가 있는 요청에 `minimal-implementation` capability를 요청하고, 이 스킬은 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르도록 안내합니다. orchestrator를 거치지 않는 평소 코드 작업에서도 쓰이며, Claude Code에서는 세션 접수 규칙이, Codex에서는 스킬 설명이 호출을 이끕니다. 원본의 항상 켜짐 훅과 보조 스킬은 넣지 않았습니다. v1.19.0은 `record_stage_result`가 큰 provider 출력을 로컬 파일 참조와 SHA-256으로 받게 해, 저장소 크기에 비례하는 stage 출력 때문에 orchestrated workflow가 중단되던 문제를 없앴습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -44,7 +44,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.21.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.0.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -74,7 +74,7 @@ MCP 서버가 시작되지 않아도 개별 전문 스킬은 직접 호출할 �
 
 ### Claude Code에서 사용하기
 
-Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다. Codex 플러그인과 파일·훅·MCP 설정·상태 DB를 공유하지 않습니다.
+Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다. Codex 플러그인과 파일·훅·MCP 설정을 공유하지 않고, 상태 DB는 세션 현황판만 함께 씁니다.
 
 ```text
 /plugin marketplace add jaeseongs95/agent-governance-suite

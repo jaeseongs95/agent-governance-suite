@@ -1,6 +1,6 @@
 {
   "name": "agent-governance-suite",
-  "version": "1.21.0",
+  "version": "2.0.0",
   "private": true,
   "description": "Governance specialists with declarative local orchestration, a local convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
   "type": "module",
