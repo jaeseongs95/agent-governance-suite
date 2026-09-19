@@ -19203,7 +19203,7 @@ function inlineSchemaReferences(schema, documents) {
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "1.20.3",
+  version: "1.21.0",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
