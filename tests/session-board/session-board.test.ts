@@ -239,7 +239,7 @@ describe("session board MCP tools", () => {
   it("shares one board between the Claude launcher and the Codex hook and lists both hosts", async () => {
     const state = mkdtempSync(path.join(tmpdir(), "session-board-state-"));
     directories.push(state);
-    const env: NodeJS.ProcessEnv = { ...process.env, LOCALAPPDATA: state, XDG_STATE_HOME: state, HOME: state, CLAUDE_PLUGIN_DATA: path.join(state, "plugin-data") };
+    const env: NodeJS.ProcessEnv = { ...process.env, LOCALAPPDATA: state, XDG_STATE_HOME: state, HOME: state, AGENT_GOVERNANCE_SHARED_STATE_DIR: state, CLAUDE_PLUGIN_DATA: path.join(state, "plugin-data") };
     delete env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
     delete env.AGENT_GOVERNANCE_DB_PATH;
     const repository = fileURLToPath(new URL("../../", import.meta.url));
