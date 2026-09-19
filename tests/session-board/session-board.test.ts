@@ -175,6 +175,8 @@ describe("session board hook", () => {
   it("points every Codex hook command at a bundle that exists", () => {
     const repository = fileURLToPath(new URL("../../", import.meta.url));
     const config = JSON.parse(readFileSync(path.join(repository, "hooks", "hooks.json"), "utf8")) as { hooks: Record<string, Array<{ hooks: Array<{ command: string; commandWindows: string }> }>> };
+    expect(config.hooks.UserPromptSubmit).toHaveLength(1);
+    expect(config.hooks.UserPromptSubmit?.[0]?.hooks[0]?.command).toContain("session-board-hook.mjs");
     for (const hook of Object.values(config.hooks).flat().flatMap((group) => group.hooks)) {
       const posix = /^node "\$PLUGIN_ROOT\/([^"]+)"$/u.exec(hook.command)?.[1];
       const windows = /^node "\$env:PLUGIN_ROOT\\([^"]+)"$/u.exec(hook.commandWindows)?.[1];
