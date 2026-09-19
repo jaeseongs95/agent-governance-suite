@@ -12,7 +12,7 @@ interface RelayOptions {
   sessionId: string;
   transport: "codex-queue" | "claude-inbox";
   parentPid: number;
-  parentStartToken: string | null;
+  parentStartToken: string;
 }
 
 function argument(name: string): string | null {
@@ -102,6 +102,6 @@ if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
   const transport = argument("--transport");
   const parentPid = Number.parseInt(argument("--parent-pid") ?? "", 10);
   const parentStartToken = argument("--parent-start-token");
-  if (!host || !sessionId || (transport !== "codex-queue" && transport !== "claude-inbox") || !Number.isInteger(parentPid)) process.exitCode = 2;
+  if (!host || !sessionId || (transport !== "codex-queue" && transport !== "claude-inbox") || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
   else void runSessionMessageRelay({ host, sessionId, transport, parentPid, parentStartToken }).catch(() => { process.exitCode = 1; });
 }

@@ -12,6 +12,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   ensureSessionMessageBroker,
   requestSessionMessageOnce,
+  sessionMessageBrokerEnvironment,
   SESSION_MESSAGE_PROTOCOL,
 } from "../../mcp-server/src/session-message-client.js";
 import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
@@ -115,9 +116,20 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
   it("rejects a reused PID when its process-start token changes", () => {
     const token = processStartToken(process.pid);
     expect(token).toBeTruthy();
+    if (!token) throw new Error("The current process must expose a start token for this platform test.");
     expect(processStillMatches(process.pid, token)).toBe(true);
     expect(processStillMatches(process.pid, `${token}-different`)).toBe(false);
-    expect(processStillMatches(2_147_483_647, null)).toBe(false);
+    expect(processStillMatches(process.pid, "")).toBe(false);
+    expect(processStartToken(2_147_483_647)).toBeNull();
+    expect(processStillMatches(2_147_483_647, token)).toBe(false);
+  });
+
+  it("does not pass Claude inbox credentials into the broker process", () => {
+    expect(sessionMessageBrokerEnvironment({
+      KEEP_ME: "yes",
+      CLAUDE_CODE_MESSAGING_SOCKET: "socket-secret",
+      CLAUDE_CODE_MESSAGING_TOKEN: "token-secret",
+    })).toEqual({ KEEP_ME: "yes" });
   });
 
   it("pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts", async () => {
@@ -160,6 +172,20 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       payload: { sender: { host: "grok", sessionId: "g-1" }, target: { host: "spark", sessionId: "s-2" }, body: "client-generated identifier", ttlSeconds: 600 },
     }), directory);
     expect((generatedId.data as { messageId: string }).messageId).toMatch(/^[0-9a-f-]{36}$/u);
+
+    const escapedBody = "\0".repeat(4000);
+    for (const messageId of ["escaped-0001", "escaped-0002"]) {
+      await runSessionMessageCli(JSON.stringify({
+        operation: "send",
+        payload: { messageId, sender: { host: "grok", sessionId: "g-1" }, target: { host: "spark", sessionId: "escaped" }, body: escapedBody, ttlSeconds: 600 },
+      }), directory);
+    }
+    const firstEscaped = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target: { host: "spark", sessionId: "escaped" } } }), directory);
+    expect(firstEscaped).toMatchObject({ data: { messages: [{ messageId: "escaped-0001", body: escapedBody }] } });
+    expect((firstEscaped.data as { messages: unknown[] }).messages).toHaveLength(1);
+    await runSessionMessageCli(JSON.stringify({ operation: "acknowledge", payload: { target: { host: "spark", sessionId: "escaped" }, messageIds: ["escaped-0001"] } }), directory);
+    const secondEscaped = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target: { host: "spark", sessionId: "escaped" } } }), directory);
+    expect(secondEscaped).toMatchObject({ data: { messages: [{ messageId: "escaped-0002", body: escapedBody }] } });
 
     await terminateBroker(directory);
     await ensureSessionMessageBroker(directory);

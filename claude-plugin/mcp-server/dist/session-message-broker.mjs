@@ -21,6 +21,7 @@ var MESSAGE_TTL_DEFAULT_SECONDS = 3600;
 var MESSAGE_TTL_MAX_SECONDS = 86400;
 var MESSAGE_LIMIT = 1e3;
 var MESSAGE_BYTES_LIMIT = 4 * 1024 * 1024;
+var CLAIM_BODY_BYTES_LIMIT = MESSAGE_BODY_MAX_BYTES;
 var CLAIM_LEASE_BASE_MS = 12e4;
 var CLAIM_LEASE_MAX_MS = 30 * 6e4;
 var RELAY_LEASE_MS = 15e3;
@@ -143,7 +144,7 @@ var SessionMessageStore = class {
     let bytes = 0;
     for (const row of rows) {
       const next = Number(row.body_bytes);
-      if (selected.length > 0 && bytes + next > 8e3) break;
+      if (selected.length > 0 && bytes + next > CLAIM_BODY_BYTES_LIMIT) break;
       selected.push(row);
       bytes += next;
     }
@@ -302,7 +303,7 @@ ${encoded}
 
 // mcp-server/src/session-message-broker.ts
 var IDLE_EXIT_MS = 6e4;
-var MAX_REQUEST_BYTES = 16 * 1024;
+var MAX_REQUEST_BYTES = 32 * 1024;
 function argument(name) {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] ?? null : null;

@@ -62,7 +62,7 @@ Codex lifecycle Hook은 MCP 준비 여부에 의존하지 않고 bundled continu
 
 메시지는 UUID 또는 호출자가 정한 안정된 `messageId`로 idempotent insert됩니다. 같은 ID와 같은 envelope는 기존 결과를 반환하고 다른 내용은 거부합니다. 수신 훅의 claim은 짧은 lease를 설정하고, ACK가 없으면 TTL까지 지수 backoff로 재전달합니다. 모델이 본문을 처리한 뒤 MCP ACK를 호출한 시점만 `acknowledged`이며, Codex queue 또는 Claude inbox write 성공은 전달 증거로 쓰지 않습니다. 메시지는 발신·수신 host/session, 본문, 생성·만료·claim·ACK 시각만 저장하고 개인 키, broker token, inbox token과 socket 경로는 넣지 않습니다. 본문 4096 UTF-8 byte, TTL 30초~24시간, spool 1000개·4 MiB, claim batch 10개·8 KiB 제한을 적용합니다.
 
-Codex와 Claude Code relay는 `(host, sessionId, transport)` lease로 하나만 살아 있게 하고 host 프로세스 PID, 플랫폼이 제공하는 프로세스 시작 식별자와 heartbeat로 stale 상태와 PID 재사용을 회수합니다. 호스트별 adapter가 실제 host PID를 relay에 명시적으로 넘기므로 중간 셸 PID를 host로 오인하지 않습니다. 본문은 host wake transport를 통과하지 않습니다. relay는 broker에 1회용 nonce를 기록한 뒤 nonce만 든 bell을 보내며, `UserPromptSubmit` 현황판 훅이 TLS로 nonce를 소비한 경우에만 이를 내부 wake로 인정해 새 사용자 요청 장벽을 만들지 않습니다. 수신 훅은 본문을 사용자 승인·권한이 아닌 비신뢰 peer context로 감싸고 message ID와 명시적 ACK 지시를 함께 주입합니다.
+Codex와 Claude Code relay는 `(host, sessionId, transport)` lease로 하나만 살아 있게 하고 host 프로세스 PID, 플랫폼이 제공하는 프로세스 시작 식별자와 heartbeat로 stale 상태와 PID 재사용을 회수합니다. 시작 식별자를 얻지 못하면 relay를 시작하지 않아 PID만으로 lease를 유지하지 않습니다. 호스트별 adapter가 실제 host PID를 relay에 명시적으로 넘기므로 중간 셸 PID를 host로 오인하지 않습니다. 본문은 host wake transport를 통과하지 않습니다. relay는 broker에 1회용 nonce를 기록한 뒤 nonce만 든 bell을 보내며, `UserPromptSubmit` 현황판 훅이 TLS로 nonce를 소비한 경우에만 이를 내부 wake로 인정해 새 사용자 요청 장벽을 만들지 않습니다. 수신 훅은 본문을 사용자 승인·권한이 아닌 비신뢰 peer context로 감싸고 message ID와 명시적 ACK 지시를 함께 주입합니다.
 
 이 경계가 막는 것은 loopback 구간의 평문 관찰, 우연한 다른 서비스 연결과 잘못된 broker endpoint입니다. 같은 OS 사용자 권한의 악성 프로세스는 상태 디렉터리의 인증서 키·token·DB를 읽거나 바꿀 수 있으므로 막지 못합니다. 따라서 TLS나 추가 HMAC을 같은 사용자 프로세스 사이의 강한 신원 격리로 설명하지 않으며, peer 메시지는 승인·권한·외부 변경 의사를 대신하지 않습니다.
 

@@ -46,6 +46,12 @@ function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
     certificate: path2.join(stateDirectory, "broker-cert.pem")
   };
 }
+function sessionMessageBrokerEnvironment(environment = process.env) {
+  const sanitized = { ...environment };
+  delete sanitized.CLAUDE_CODE_MESSAGING_SOCKET;
+  delete sanitized.CLAUDE_CODE_MESSAGING_TOKEN;
+  return sanitized;
+}
 async function readEndpoint(stateDirectory) {
   const paths = statePaths(stateDirectory);
   const [rawEndpoint, rawToken, certificate] = await Promise.all([
@@ -125,7 +131,8 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
     const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
       detached: true,
       windowsHide: true,
-      stdio: "ignore"
+      stdio: "ignore",
+      env: sessionMessageBrokerEnvironment()
     });
     child.unref();
   }
@@ -163,14 +170,14 @@ function processStartToken(pid, platform = process.platform) {
         "-NonInteractive",
         "-Command",
         `(Get-CimInstance Win32_Process -Filter "ProcessId=${pid}").CreationDate.ToUniversalTime().ToString('o')`
-      ], { encoding: "utf8", windowsHide: true, timeout: 3e3 }).trim() || null;
+      ], { encoding: "utf8", windowsHide: true, timeout: 3e3, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
     }
     if (platform === "linux") {
       const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
       const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
       return fields[19] ?? null;
     }
-    return execFileSync("ps", ["-p", String(pid), "-o", "lstart="], { encoding: "utf8", timeout: 3e3 }).trim() || null;
+    return execFileSync("ps", ["-p", String(pid), "-o", "lstart="], { encoding: "utf8", timeout: 3e3, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
   } catch {
     return null;
   }
@@ -190,6 +197,7 @@ function startRelay(host, sessionId, explicitHostPid) {
   const hostPid = host === "codex" ? explicitHostPid : process.ppid;
   if (!hostPid || !Number.isInteger(hostPid) || hostPid < 1) return;
   const startToken = processStartToken(hostPid);
+  if (!startToken) return;
   const child = spawn2(process.execPath, [
     relayPath,
     "--host",
@@ -200,7 +208,8 @@ function startRelay(host, sessionId, explicitHostPid) {
     transport,
     "--parent-pid",
     String(hostPid),
-    ...startToken ? ["--parent-start-token", startToken] : []
+    "--parent-start-token",
+    startToken
   ], {
     detached: true,
     windowsHide: true,

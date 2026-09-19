@@ -25,7 +25,7 @@ Claude Code는 MCP 도구 스키마의 `$ref`를 풀지 못한다. 외부 `$ref`
 
 ## TLS 세션 메시지
 
-Claude Code adapter는 args 형식의 SessionStart 훅에서 relay를 띄우고 그 훅의 parent PID와 시작 식별자를 host 생명주기로 사용합니다. 자기 환경의 `CLAUDE_CODE_MESSAGING_SOCKET`과 `CLAUDE_CODE_MESSAGING_TOKEN`은 relay 메모리에만 넘깁니다. inbox에는 본문이 아니라 broker가 발급한 1회용 nonce의 wake bell만 보내며, 실제 본문은 공용 TLS 1.3 broker에서 동기 훅이 claim합니다. 모델이 처리한 `messageId`를 `acknowledge_session_messages`로 ACK하기 전까지 TTL 안에서 재전달될 수 있습니다. inbox write는 ACK로 간주하지 않습니다.
+Claude Code adapter는 args 형식의 SessionStart 훅에서 relay를 띄우고 그 훅의 parent PID와 시작 식별자를 host 생명주기로 사용합니다. 시작 식별자를 얻지 못하면 선택 기능인 relay를 띄우지 않습니다. `CLAUDE_CODE_MESSAGING_SOCKET`과 `CLAUDE_CODE_MESSAGING_TOKEN`은 Claude host, 짧게 실행되는 hook과 relay 환경에만 남기고 broker 자식 환경에서는 제거합니다. inbox에는 본문이 아니라 broker가 발급한 1회용 nonce의 wake bell만 보내며, 실제 본문은 공용 TLS 1.3 broker에서 동기 훅이 claim합니다. 모델이 처리한 `messageId`를 `acknowledge_session_messages`로 ACK하기 전까지 TTL 안에서 재전달될 수 있습니다. inbox write는 ACK로 간주하지 않습니다.
 
 broker와 MCP 계약의 `host`는 임의 식별자입니다. Claude Code와 Codex는 번들 adapter이고, 다른 AI 런타임은 공용 `session-message-cli.mjs`의 JSON stdin/stdout 계약을 사용합니다. TLS pin과 token은 loopback의 잘못된 endpoint와 평문 노출을 막지만 같은 OS 사용자 프로세스를 격리하지 않습니다.
 

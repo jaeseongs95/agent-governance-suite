@@ -19511,6 +19511,12 @@ function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
     certificate: path7.join(stateDirectory, "broker-cert.pem")
   };
 }
+function sessionMessageBrokerEnvironment(environment = process.env) {
+  const sanitized = { ...environment };
+  delete sanitized.CLAUDE_CODE_MESSAGING_SOCKET;
+  delete sanitized.CLAUDE_CODE_MESSAGING_TOKEN;
+  return sanitized;
+}
 async function readEndpoint(stateDirectory) {
   const paths = statePaths(stateDirectory);
   const [rawEndpoint, rawToken, certificate] = await Promise.all([
@@ -19590,7 +19596,8 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
     const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
       detached: true,
       windowsHide: true,
-      stdio: "ignore"
+      stdio: "ignore",
+      env: sessionMessageBrokerEnvironment()
     });
     child.unref();
   }

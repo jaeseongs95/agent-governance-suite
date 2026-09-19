@@ -49,6 +49,12 @@ function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
     certificate: path2.join(stateDirectory, "broker-cert.pem")
   };
 }
+function sessionMessageBrokerEnvironment(environment = process.env) {
+  const sanitized = { ...environment };
+  delete sanitized.CLAUDE_CODE_MESSAGING_SOCKET;
+  delete sanitized.CLAUDE_CODE_MESSAGING_TOKEN;
+  return sanitized;
+}
 async function readEndpoint(stateDirectory) {
   const paths = statePaths(stateDirectory);
   const [rawEndpoint, rawToken, certificate] = await Promise.all([
@@ -128,7 +134,8 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
     const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
       detached: true,
       windowsHide: true,
-      stdio: "ignore"
+      stdio: "ignore",
+      env: sessionMessageBrokerEnvironment()
     });
     child.unref();
   }
@@ -172,25 +179,26 @@ function processStartToken(pid, platform = process.platform) {
         "-NonInteractive",
         "-Command",
         `(Get-CimInstance Win32_Process -Filter "ProcessId=${pid}").CreationDate.ToUniversalTime().ToString('o')`
-      ], { encoding: "utf8", windowsHide: true, timeout: 3e3 }).trim() || null;
+      ], { encoding: "utf8", windowsHide: true, timeout: 3e3, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
     }
     if (platform === "linux") {
       const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
       const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
       return fields[19] ?? null;
     }
-    return execFileSync("ps", ["-p", String(pid), "-o", "lstart="], { encoding: "utf8", timeout: 3e3 }).trim() || null;
+    return execFileSync("ps", ["-p", String(pid), "-o", "lstart="], { encoding: "utf8", timeout: 3e3, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
   } catch {
     return null;
   }
 }
 function processStillMatches(pid, expectedStartToken) {
+  if (!expectedStartToken) return false;
   try {
     process.kill(pid, 0);
   } catch {
     return false;
   }
-  return expectedStartToken === null || processStartToken(pid) === expectedStartToken;
+  return processStartToken(pid) === expectedStartToken;
 }
 
 // mcp-server/src/session-message-relay.ts
@@ -279,7 +287,7 @@ if (path3.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
   const transport = argument("--transport");
   const parentPid = Number.parseInt(argument("--parent-pid") ?? "", 10);
   const parentStartToken = argument("--parent-start-token");
-  if (!host || !sessionId || transport !== "codex-queue" && transport !== "claude-inbox" || !Number.isInteger(parentPid)) process.exitCode = 2;
+  if (!host || !sessionId || transport !== "codex-queue" && transport !== "claude-inbox" || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
   else void runSessionMessageRelay({ host, sessionId, transport, parentPid, parentStartToken }).catch(() => {
     process.exitCode = 1;
   });

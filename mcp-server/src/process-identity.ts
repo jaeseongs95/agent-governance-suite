@@ -11,24 +11,25 @@ export function processStartToken(pid: number, platform: NodeJS.Platform = proce
         "-NonInteractive",
         "-Command",
         `(Get-CimInstance Win32_Process -Filter "ProcessId=${pid}").CreationDate.ToUniversalTime().ToString('o')`,
-      ], { encoding: "utf8", windowsHide: true, timeout: 3000 }).trim() || null;
+      ], { encoding: "utf8", windowsHide: true, timeout: 3000, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
     }
     if (platform === "linux") {
       const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
       const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
       return fields[19] ?? null;
     }
-    return execFileSync("ps", ["-p", String(pid), "-o", "lstart="], { encoding: "utf8", timeout: 3000 }).trim() || null;
+    return execFileSync("ps", ["-p", String(pid), "-o", "lstart="], { encoding: "utf8", timeout: 3000, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
   } catch {
     return null;
   }
 }
 
-export function processStillMatches(pid: number, expectedStartToken: string | null): boolean {
+export function processStillMatches(pid: number, expectedStartToken: string): boolean {
+  if (!expectedStartToken) return false;
   try {
     process.kill(pid, 0);
   } catch {
     return false;
   }
-  return expectedStartToken === null || processStartToken(pid) === expectedStartToken;
+  return processStartToken(pid) === expectedStartToken;
 }

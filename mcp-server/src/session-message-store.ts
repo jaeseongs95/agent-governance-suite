@@ -8,6 +8,7 @@ export const MESSAGE_TTL_DEFAULT_SECONDS = 3600;
 export const MESSAGE_TTL_MAX_SECONDS = 86400;
 const MESSAGE_LIMIT = 1000;
 const MESSAGE_BYTES_LIMIT = 4 * 1024 * 1024;
+const CLAIM_BODY_BYTES_LIMIT = MESSAGE_BODY_MAX_BYTES;
 const CLAIM_LEASE_BASE_MS = 120_000;
 const CLAIM_LEASE_MAX_MS = 30 * 60_000;
 const RELAY_LEASE_MS = 15_000;
@@ -155,7 +156,8 @@ export class SessionMessageStore {
     let bytes = 0;
     for (const row of rows) {
       const next = Number(row.body_bytes);
-      if (selected.length > 0 && bytes + next > 8000) break;
+      // One legal max-size body always fits the 32 KiB wire response even when every byte becomes a six-byte JSON escape.
+      if (selected.length > 0 && bytes + next > CLAIM_BODY_BYTES_LIMIT) break;
       selected.push(row);
       bytes += next;
     }

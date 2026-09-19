@@ -25,13 +25,14 @@ function startRelay(host: Host, sessionId: string, explicitHostPid?: number): vo
   const hostPid = host === "codex" ? explicitHostPid : process.ppid;
   if (!hostPid || !Number.isInteger(hostPid) || hostPid < 1) return;
   const startToken = processStartToken(hostPid);
+  if (!startToken) return;
   const child = spawn(process.execPath, [
     relayPath,
     "--host", host,
     "--session-id", sessionId,
     "--transport", transport,
     "--parent-pid", String(hostPid),
-    ...(startToken ? ["--parent-start-token", startToken] : []),
+    "--parent-start-token", startToken,
   ], {
     detached: true,
     windowsHide: true,

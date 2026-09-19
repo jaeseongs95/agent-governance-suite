@@ -31,6 +31,13 @@ function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
   };
 }
 
+export function sessionMessageBrokerEnvironment(environment: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const sanitized = { ...environment };
+  delete sanitized.CLAUDE_CODE_MESSAGING_SOCKET;
+  delete sanitized.CLAUDE_CODE_MESSAGING_TOKEN;
+  return sanitized;
+}
+
 async function readEndpoint(stateDirectory?: string): Promise<{ endpoint: BrokerEndpoint; token: string; certificate: string }> {
   const paths = statePaths(stateDirectory);
   const [rawEndpoint, rawToken, certificate] = await Promise.all([
@@ -120,6 +127,7 @@ export async function ensureSessionMessageBroker(stateDirectory = resolveSession
       detached: true,
       windowsHide: true,
       stdio: "ignore",
+      env: sessionMessageBrokerEnvironment(),
     });
     child.unref();
   }

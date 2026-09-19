@@ -10,7 +10,8 @@ import { SessionMessageStore, type SessionIdentity } from "./session-message-sto
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
 
 const IDLE_EXIT_MS = 60_000;
-const MAX_REQUEST_BYTES = 16 * 1024;
+// A 4096-byte control-character body can expand to 24576 bytes after JSON escaping.
+const MAX_REQUEST_BYTES = 32 * 1024;
 
 interface BrokerRequest {
   protocolVersion: string;
