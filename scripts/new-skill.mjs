@@ -1,6 +1,6 @@
-import { mkdir, stat, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { NAME_PATTERN, ROOT, parseArguments, readJson } from "./lib.mjs";
+import { NAME_PATTERN, ROOT, defaultProvider, parseArguments, pathExists, readJson } from "./lib.mjs";
 
 const args = parseArguments(process.argv.slice(2));
 const { name, phase, capability } = args;
@@ -13,7 +13,7 @@ if (!NAME_PATTERN.test(name) || !NAME_PATTERN.test(capability)) {
 
 const registryPath = path.join(ROOT, "skills", "registry.json");
 const registryDocument = await readJson(registryPath);
-const skills = Array.isArray(registryDocument) ? registryDocument : registryDocument.skills;
+const skills = registryDocument.skills;
 if (registryDocument.schemaVersion !== "2.0.0") throw new Error("skills/registry.json must use schemaVersion 2.0.0");
 if (skills.some((descriptor) => descriptor.skillId === name)) {
   throw new Error(`registry already contains ${name}`);
@@ -24,12 +24,7 @@ if (capabilityOwner) {
 }
 
 const skillDirectory = path.join(ROOT, "skills", name);
-try {
-  await stat(skillDirectory);
-  throw new Error(`skill already exists: ${name}`);
-} catch (error) {
-  if (error.code !== "ENOENT") throw error;
-}
+if (await pathExists(skillDirectory)) throw new Error(`skill already exists: ${name}`);
 await mkdir(path.join(skillDirectory, "agents"), { recursive: true });
 await mkdir(path.join(ROOT, "tests", name), { recursive: true });
 
@@ -48,25 +43,7 @@ skills.push({
   path: `./${name}`,
   priority: 50,
   enabled: true,
-  providers: [{
-    capabilities: [capability],
-    executionClass: "workflow",
-    phase,
-    phaseOrder: 50,
-    requiredInputArtifacts: [],
-    inputBindings: [],
-    producedArtifacts: [],
-    outputSchema: "contracts/freeform-output.v1.schema.json",
-    resultSchema: "contracts/provider-result.v1.schema.json",
-    stateMapping: {
-      default: { state: "passed", errorRequired: false },
-      adapterErrors: ["INVALID_INPUT", "MISSING_EVIDENCE"]
-    },
-    selectionCriteria: [`requires-${capability}`],
-    preconditions: [],
-    failureHandling: "Return a structured provider result.",
-    gate: { kind: "none", policy: "none", validator: null }
-  }]
+  providers: [defaultProvider(capability, phase)]
 });
 await writeFile(registryPath, `${JSON.stringify(registryDocument, null, 2)}\n`, "utf8");
 console.log(`created skills/${name}`);

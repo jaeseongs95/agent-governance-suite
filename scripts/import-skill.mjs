@@ -1,8 +1,9 @@
 import { execFileSync } from "node:child_process";
-import { cp, mkdtemp, mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { NAME_PATTERN, ROOT, computeDirectoryChecksum, parseArguments, readFrontmatter, readJson } from "./lib.mjs";
+import { NAME_PATTERN, ROOT, computeDirectoryChecksum, defaultProvider, parseArguments, pathExists, readFrontmatter, readJson } from "./lib.mjs";
+import { copyAllowlisted, readSkillVersion } from "./source-lock.mjs";
 
 const args = parseArguments(process.argv.slice(2));
 if (!args.source || !args.ref || !args["skill-path"]) {
@@ -42,62 +43,30 @@ try {
   const skillMarkdown = await readFile(path.join(sourceSkill, "SKILL.md"), "utf8");
   const name = readFrontmatter(skillMarkdown).name;
   if (!NAME_PATTERN.test(name)) throw new Error(`invalid imported skill name: ${name}`);
-  let versionSource = "skill-metadata";
-  let metadataVersion = skillMarkdown.match(/\nmetadata:\s*\r?\n(?:[ \t]+.*\r?\n)*?[ \t]+version:\s*["']?([^\s"']+)/u)?.[1];
-  if (!metadataVersion) {
-    try {
-      metadataVersion = (await readFile(path.join(sourceSkill, "VERSION"), "utf8")).trim();
-      versionSource = "version-file";
-    } catch {
-      metadataVersion = undefined;
-    }
-  }
+  const { version: metadataVersion, source: versionSource } = await readSkillVersion(sourceSkill).catch(() => ({}));
   if (!metadataVersion) throw new Error("Imported skills must declare metadata.version or a legacy VERSION file.");
 
   const destination = path.join(ROOT, "skills", name);
   const registryPath = path.join(ROOT, "skills", "registry.json");
   const registryDocument = await readJson(registryPath);
-  const skills = Array.isArray(registryDocument) ? registryDocument : registryDocument.skills;
+  const skills = registryDocument.skills;
   if (registryDocument.schemaVersion !== "2.0.0") throw new Error("skills/registry.json must use schemaVersion 2.0.0");
   const existingDescriptor = skills.find((descriptor) => descriptor.skillId === name);
 
-  let destinationExists = false;
-  try {
-    await stat(destination);
-    destinationExists = true;
-  } catch (error) {
-    if (error.code !== "ENOENT") {
-      throw error;
-    }
-  }
+  const destinationExists = await pathExists(destination);
   if (destinationExists && args.replace !== "true") {
     throw new Error(`destination exists: pass --replace true to update skills/${name}`);
   }
 
-  const allowedEntries = new Set([
-    "SKILL.md", "agents", "references", "scripts", "assets", "contracts", "evals", "integration",
-    "README.md", "LICENSE", "COMPATIBILITY.md", "CHANGELOG.md", "VERSION"
-  ]);
-  const sourceEntries = await readdir(sourceSkill, { withFileTypes: true });
   const stagedSkill = path.join(transactionDirectory, "staged-skill");
-  await mkdir(stagedSkill);
-  for (const entry of sourceEntries) {
-    if (!allowedEntries.has(entry.name)) continue;
-    await cp(path.join(sourceSkill, entry.name), path.join(stagedSkill, entry.name), {
-      recursive: true,
-      filter(source) {
-        const relative = path.relative(sourceSkill, source).split(path.sep).join("/");
-        return !relative.includes("__pycache__") && !relative.startsWith("evals/results") && !relative.startsWith("dist/");
-      }
-    });
-  }
+  await copyAllowlisted(sourceSkill, stagedSkill);
 
   const lockPath = path.join(ROOT, "skills", "source-lock.json");
   const registryOriginal = await readFile(registryPath, "utf8");
   const lockOriginal = await readFile(lockPath, "utf8");
   const lockDocument = await readJson(lockPath);
   if (lockDocument.schemaVersion !== "2.0.0") throw new Error("skills/source-lock.json must use schemaVersion 2.0.0");
-  const entries = Array.isArray(lockDocument) ? lockDocument : lockDocument.sources;
+  const entries = lockDocument.sources;
   const checksumValue = await computeDirectoryChecksum(stagedSkill);
   let sourceDescriptor;
   try {
@@ -133,25 +102,7 @@ try {
             : provider.gate,
         };
       })
-    : [{
-        capabilities: [args.capability],
-        executionClass: "workflow",
-        phase: args.phase,
-        phaseOrder: 50,
-        requiredInputArtifacts: [],
-        inputBindings: [],
-        producedArtifacts: [],
-        outputSchema: "contracts/freeform-output.v1.schema.json",
-        resultSchema: "contracts/provider-result.v1.schema.json",
-        stateMapping: {
-          default: { state: "passed", errorRequired: false },
-          adapterErrors: ["INVALID_INPUT", "MISSING_EVIDENCE"],
-        },
-        selectionCriteria: [`requires-${args.capability}`],
-        preconditions: [],
-        failureHandling: "Return a structured provider result.",
-        gate: { kind: "none", policy: "none", validator: null },
-      }];
+    : [defaultProvider(args.capability, args.phase)];
   const importedDescriptor = keepRegistered
     ? { ...existingDescriptor, version: metadataVersion }
     : {
@@ -200,13 +151,7 @@ try {
   else skills[skills.indexOf(existingDescriptor)] = importedDescriptor;
 
   const testsDirectory = path.join(ROOT, "tests", name);
-  let testsExist = false;
-  try {
-    await stat(testsDirectory);
-    testsExist = true;
-  } catch (error) {
-    if (error.code !== "ENOENT") throw error;
-  }
+  const testsExist = await pathExists(testsDirectory);
   const stagedTests = path.join(transactionDirectory, "staged-tests");
   if (!testsExist) {
     await mkdir(stagedTests, { recursive: true });

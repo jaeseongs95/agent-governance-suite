@@ -51,24 +51,15 @@ export async function validateSkill(name) {
     }
   }
 
-  if (name !== "orchestrator" && !INFRASTRUCTURE_SKILLS.has(name)) {
+  // Specialists need exactly one registry descriptor; infrastructure skills (never the orchestrator) need none.
+  if (name !== "orchestrator") {
     const registry = await readJson(path.join(ROOT, "skills", "registry.json"));
     const descriptors = Array.isArray(registry) ? registry : registry.skills;
-    const matches = descriptors.filter((descriptor) => descriptor.skillId === name);
-    if (matches.length !== 1) {
+    const matches = descriptors.filter((descriptor) => descriptor.skillId === name).length;
+    if (INFRASTRUCTURE_SKILLS.has(name)) {
+      if (matches > 0) errors.push(`infrastructure skill ${name} must not appear in the specialist registry`);
+    } else if (matches !== 1) {
       errors.push(`registry must contain exactly one descriptor for ${name}`);
-    }
-    try {
-      await access(path.join(ROOT, "tests", name));
-    } catch {
-      errors.push(`missing tests/${name}`);
-    }
-  }
-  if (INFRASTRUCTURE_SKILLS.has(name)) {
-    const registry = await readJson(path.join(ROOT, "skills", "registry.json"));
-    const descriptors = Array.isArray(registry) ? registry : registry.skills;
-    if (descriptors.some((descriptor) => descriptor.skillId === name)) {
-      errors.push(`infrastructure skill ${name} must not appear in the specialist registry`);
     }
     try {
       await access(path.join(ROOT, "tests", name));

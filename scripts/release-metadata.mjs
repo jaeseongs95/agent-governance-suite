@@ -4,6 +4,9 @@ import path from "node:path";
 import { ROOT, readJson } from "./lib.mjs";
 
 const SEMVER = /^\d+\.\d+\.\d+$/u;
+const RELEASE_VERSION_KO = /(<!-- release-version:start -->\r?\n[\s\S]*?현재 공개 릴리스는 `v)\d+\.\d+\.\d+(`[^\r\n]*\r?\n<!-- release-version:end -->)/u;
+const RELEASE_VERSION_EN = /(<!-- release-version:start -->\r?\n[\s\S]*?current public release is `v)\d+\.\d+\.\d+(`[^\r\n]*\r?\n<!-- release-version:end -->)/u;
+const RELEASE_INSTALL = /(<!-- release-install:start -->\r?\n[\s\S]*?--ref v)\d+\.\d+\.\d+([\s\S]*?\r?\n<!-- release-install:end -->)/u;
 
 export function replaceExactlyOnce(text, pattern, replacement, label) {
   const matches = [...text.matchAll(new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`))];
@@ -40,6 +43,12 @@ export async function expectedReleaseFiles() {
     throw new Error("release/version.json must contain a strict semantic version");
   }
   const version = release.version;
+  const updateReadme = (file, versionPattern) => updateText(file, (text) => {
+    assertMarkerPair(text, "release-version", file);
+    assertMarkerPair(text, "release-install", file);
+    const versioned = replaceExactlyOnce(text, versionPattern, `$1${version}$2`, `${file} release-version`);
+    return replaceExactlyOnce(versioned, RELEASE_INSTALL, `$1${version}$2`, `${file} release-install`);
+  });
   return [
     await updateJson("package.json", (document) => { document.version = version; }),
     await updateJson(".codex-plugin/plugin.json", (document) => { document.version = version; }),
@@ -54,39 +63,11 @@ export async function expectedReleaseFiles() {
       `version: "${version}"`,
       "MCP plugin version",
     )),
-    await updateText("README.md", (text) => {
-      assertMarkerPair(text, "release-version", "README.md");
-      assertMarkerPair(text, "release-install", "README.md");
-      return replaceExactlyOnce(replaceExactlyOnce(text,
-        /(<!-- release-version:start -->\r?\n[\s\S]*?현재 공개 릴리스는 `v)\d+\.\d+\.\d+(`[^\r\n]*\r?\n<!-- release-version:end -->)/u,
-        `$1${version}$2`,
-        "README.md release-version",
-      ),
-        /(<!-- release-install:start -->\r?\n[\s\S]*?--ref v)\d+\.\d+\.\d+([\s\S]*?\r?\n<!-- release-install:end -->)/u,
-        `$1${version}$2`,
-        "README.md release-install",
-      );
-    }),
-    await updateText("README.en.md", (text) => {
-      assertMarkerPair(text, "release-version", "README.en.md");
-      assertMarkerPair(text, "release-install", "README.en.md");
-      return replaceExactlyOnce(replaceExactlyOnce(text,
-        /(<!-- release-version:start -->\r?\n[\s\S]*?current public release is `v)\d+\.\d+\.\d+(`[^\r\n]*\r?\n<!-- release-version:end -->)/u,
-        `$1${version}$2`,
-        "README.en.md release-version",
-      ),
-        /(<!-- release-install:start -->\r?\n[\s\S]*?--ref v)\d+\.\d+\.\d+([\s\S]*?\r?\n<!-- release-install:end -->)/u,
-        `$1${version}$2`,
-        "README.en.md release-install",
-      );
-    }),
+    await updateReadme("README.md", RELEASE_VERSION_KO),
+    await updateReadme("README.en.md", RELEASE_VERSION_EN),
     await updateText("docs/roadmap.md", (text) => {
       assertMarkerPair(text, "release-version", "docs/roadmap.md");
-      return replaceExactlyOnce(text,
-        /(<!-- release-version:start -->\r?\n[\s\S]*?현재 공개 릴리스는 `v)\d+\.\d+\.\d+(`[^\r\n]*\r?\n<!-- release-version:end -->)/u,
-        `$1${version}$2`,
-        "roadmap release-version",
-      );
+      return replaceExactlyOnce(text, RELEASE_VERSION_KO, `$1${version}$2`, "roadmap release-version");
     }),
   ];
 }

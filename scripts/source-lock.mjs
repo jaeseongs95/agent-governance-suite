@@ -145,11 +145,12 @@ export function isUpstreamUpdate(source, latest) {
   return source.ref.value !== latest.tag || source.ref.commit !== latest.commit;
 }
 
-async function projectedUpstreamChecksum(sourceDirectory, projectionDirectory) {
-  await mkdir(projectionDirectory);
+/** Copies the importable part of a skill: allowlisted top-level entries without caches, eval results or builds. */
+export async function copyAllowlisted(sourceDirectory, destination) {
+  await mkdir(destination);
   for (const entry of await readdir(sourceDirectory, { withFileTypes: true })) {
     if (!IMPORT_ALLOWLIST.has(entry.name)) continue;
-    await cp(path.join(sourceDirectory, entry.name), path.join(projectionDirectory, entry.name), {
+    await cp(path.join(sourceDirectory, entry.name), path.join(destination, entry.name), {
       recursive: true,
       filter(source) {
         const relative = path.relative(sourceDirectory, source).split(path.sep).join("/");
@@ -157,6 +158,10 @@ async function projectedUpstreamChecksum(sourceDirectory, projectionDirectory) {
       },
     });
   }
+}
+
+async function projectedUpstreamChecksum(sourceDirectory, projectionDirectory) {
+  await copyAllowlisted(sourceDirectory, projectionDirectory);
   return computeDirectoryChecksum(projectionDirectory);
 }
 
@@ -206,31 +211,22 @@ export async function discoverUpstreamUpdates() {
   const results = [];
   for (const source of lock.sources ?? []) {
     if (source.updatePolicy === "internal") continue;
+    // Keep this key order: the JSON report is compared as written.
+    const report = (latest, error) => ({
+      skillId: source.skillId,
+      policy: source.updatePolicy,
+      currentVersion: source.version,
+      latestVersion: latest?.version ?? null,
+      latestTag: latest?.tag ?? null,
+      latestCommit: latest?.commit ?? null,
+      updateAvailable: error === null && isUpstreamUpdate(source, latest),
+      pinMismatch: error === null && isSameVersionPinMismatch(source, latest),
+      error,
+    });
     try {
-      const latest = latestStableTag(source.source);
-      results.push({
-        skillId: source.skillId,
-        policy: source.updatePolicy,
-        currentVersion: source.version,
-        latestVersion: latest?.version ?? null,
-        latestTag: latest?.tag ?? null,
-        latestCommit: latest?.commit ?? null,
-        updateAvailable: isUpstreamUpdate(source, latest),
-        pinMismatch: isSameVersionPinMismatch(source, latest),
-        error: null,
-      });
+      results.push(report(latestStableTag(source.source), null));
     } catch (error) {
-      results.push({
-        skillId: source.skillId,
-        policy: source.updatePolicy,
-        currentVersion: source.version,
-        latestVersion: null,
-        latestTag: null,
-        latestCommit: null,
-        updateAvailable: false,
-        pinMismatch: false,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      results.push(report(null, error instanceof Error ? error.message : String(error)));
     }
   }
   return results;

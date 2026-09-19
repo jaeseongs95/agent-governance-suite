@@ -1,6 +1,6 @@
 import { isUtf8 } from "node:buffer";
 import { createHash } from "node:crypto";
-import { readFile, readdir } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
 export const ROOT = path.resolve(process.env.AGENT_GOVERNANCE_ROOT ?? path.join(import.meta.dirname, ".."));
@@ -26,6 +26,40 @@ export function parseArguments(argv) {
 
 export async function readJson(filePath) {
   return JSON.parse(await readFile(filePath, "utf8"));
+}
+
+/** False only when the path is missing; any other stat failure is rethrown. */
+export async function pathExists(target) {
+  try {
+    await stat(target);
+    return true;
+  } catch (error) {
+    if (error.code === "ENOENT") return false;
+    throw error;
+  }
+}
+
+/** The registry provider for a skill that declares no integration descriptor of its own. */
+export function defaultProvider(capability, phase) {
+  return {
+    capabilities: [capability],
+    executionClass: "workflow",
+    phase,
+    phaseOrder: 50,
+    requiredInputArtifacts: [],
+    inputBindings: [],
+    producedArtifacts: [],
+    outputSchema: "contracts/freeform-output.v1.schema.json",
+    resultSchema: "contracts/provider-result.v1.schema.json",
+    stateMapping: {
+      default: { state: "passed", errorRequired: false },
+      adapterErrors: ["INVALID_INPUT", "MISSING_EVIDENCE"],
+    },
+    selectionCriteria: [`requires-${capability}`],
+    preconditions: [],
+    failureHandling: "Return a structured provider result.",
+    gate: { kind: "none", policy: "none", validator: null },
+  };
 }
 
 export function readFrontmatter(markdown) {

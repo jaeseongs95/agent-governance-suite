@@ -21,12 +21,10 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
   try {
     await mkdir(path.join(cleanRoot, "mcp-server", "dist"), { recursive: true });
     await Promise.all([
-      cp(path.join(sourceRoot, "contracts"), path.join(cleanRoot, "contracts"), { recursive: true }),
-      cp(path.join(sourceRoot, "runtime"), path.join(cleanRoot, "runtime"), { recursive: true }),
-      cp(path.join(sourceRoot, "skills"), path.join(cleanRoot, "skills"), { recursive: true }),
-      cp(path.join(sourceRoot, "mcp-server", "dist", "server.mjs"), path.join(cleanRoot, "mcp-server", "dist", "server.mjs")),
-      cp(path.join(sourceRoot, "mcp-server", "dist", "continuity-hook.mjs"), path.join(cleanRoot, "mcp-server", "dist", "continuity-hook.mjs")),
-      cp(path.join(sourceRoot, "mcp-server", "dist", "host-attestation-hook.mjs"), path.join(cleanRoot, "mcp-server", "dist", "host-attestation-hook.mjs")),
+      ...["contracts", "runtime", "skills"].map((directory) => cp(path.join(sourceRoot, directory), path.join(cleanRoot, directory), { recursive: true })),
+      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs"].map((bundle) => (
+        cp(path.join(sourceRoot, "mcp-server", "dist", bundle), path.join(cleanRoot, "mcp-server", "dist", bundle))
+      )),
     ]);
     await assertMissing(path.join(cleanRoot, "node_modules"));
 
@@ -36,19 +34,20 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     delete environment.NODE_PATH;
     environment.AGENT_GOVERNANCE_DB_PATH = path.join(cleanRoot, "state", "workflows.sqlite3");
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = path.join(cleanRoot, "state", "continuity.sqlite3");
+    // Runs a clean-room script (a path relative to the clean root) with the given stdin text.
+    const runNode = (script, input) => spawnSync(process.execPath, [path.join(cleanRoot, ...script.split("/"))], {
+      cwd: cleanRoot,
+      encoding: "utf8",
+      env: environment,
+      input,
+      maxBuffer: 5 * 1024 * 1024,
+      timeout: 10_000,
+      windowsHide: true,
+    });
 
     const results = [];
     for (const entrypoint of SKILL_RUNTIME_ENTRYPOINTS) {
-      const executable = path.join(cleanRoot, ...entrypoint.path.split("/"));
-      const result = spawnSync(process.execPath, [executable], {
-        cwd: cleanRoot,
-        encoding: "utf8",
-        env: environment,
-        input: "{}\n",
-        maxBuffer: 5 * 1024 * 1024,
-        timeout: 10_000,
-        windowsHide: true,
-      });
+      const result = runNode(entrypoint.path, "{}\n");
       const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
       if (result.error) {
         throw new Error(`${entrypoint.path} could not run in the clean room: ${result.error.message}`);
@@ -65,15 +64,10 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       results.push({ path: entrypoint.path, exitCode: result.status });
     }
 
-    const continuityHook = path.join(cleanRoot, "mcp-server", "dist", "continuity-hook.mjs");
-    const hookResult = spawnSync(process.execPath, [continuityHook], {
-      cwd: cleanRoot,
-      encoding: "utf8",
-      env: environment,
-      input: `${JSON.stringify({ hook_event_name: "SessionStart", session_id: "clean-room-session", source: "startup" })}\n`,
-      timeout: 10_000,
-      windowsHide: true,
-    });
+    const hookResult = runNode(
+      "mcp-server/dist/continuity-hook.mjs",
+      `${JSON.stringify({ hook_event_name: "SessionStart", session_id: "clean-room-session", source: "startup" })}\n`,
+    );
     if (hookResult.error || hookResult.status !== 0 || hookResult.stdout !== "") {
       throw new Error(`continuity hook failed its node_modules-free startup smoke check.\n${hookResult.stderr ?? ""}`);
     }
@@ -96,14 +90,8 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       tool_input: { taskId: "clean-room-task" },
       effort: { level: "high" },
     };
-    const attestationResult = spawnSync(process.execPath, [path.join(cleanRoot, "mcp-server", "dist", "host-attestation-hook.mjs")], {
-      cwd: cleanRoot,
-      encoding: "utf8",
-      env: environment,
-      input: `${JSON.stringify(attestationInput)}\n`,
-      timeout: 10_000,
-      windowsHide: true,
-    });
+    const runAttestationHook = (input) => runNode("mcp-server/dist/host-attestation-hook.mjs", `${JSON.stringify(input)}\n`);
+    const attestationResult = runAttestationHook(attestationInput);
     const attestationOutput = attestationResult.status === 0 && attestationResult.stdout ? JSON.parse(attestationResult.stdout) : null;
     if (
       attestationResult.error
@@ -115,14 +103,6 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
 
     // Interactive sessions: the issuing message is not in the transcript yet, so the model
     // recorded by the SessionStart hook must be used.
-    const runAttestationHook = (input) => spawnSync(process.execPath, [path.join(cleanRoot, "mcp-server", "dist", "host-attestation-hook.mjs")], {
-      cwd: cleanRoot,
-      encoding: "utf8",
-      env: environment,
-      input: `${JSON.stringify(input)}\n`,
-      timeout: 10_000,
-      windowsHide: true,
-    });
     const sessionStart = runAttestationHook({ hook_event_name: "SessionStart", session_id: "clean-room-interactive", source: "startup", model: "claude-opus-5" });
     const interactive = runAttestationHook({ ...attestationInput, session_id: "clean-room-interactive", tool_use_id: "toolu_not_written_yet" });
     const interactiveOutput = interactive.status === 0 && interactive.stdout ? JSON.parse(interactive.stdout) : null;
@@ -140,15 +120,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       { jsonrpc: "2.0", method: "notifications/initialized", params: {} },
       { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "lookup_korean_prose_terms", arguments: { schemaVersion: "1.0.0", sourceText, sourceDigest: createHash("sha256").update(sourceText).digest("hex") } } },
     ].map((message) => JSON.stringify(message)).join("\n");
-    const serverResult = spawnSync(process.execPath, [path.join(cleanRoot, "mcp-server", "dist", "server.mjs")], {
-      cwd: cleanRoot,
-      encoding: "utf8",
-      env: environment,
-      input: `${lookupInput}\n`,
-      maxBuffer: 5 * 1024 * 1024,
-      timeout: 10_000,
-      windowsHide: true,
-    });
+    const serverResult = runNode("mcp-server/dist/server.mjs", `${lookupInput}\n`);
     if (serverResult.error || serverResult.status !== 0) {
       throw new Error(`MCP server failed its node_modules-free glossary lookup.\n${serverResult.stderr ?? ""}`);
     }
@@ -161,7 +133,6 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     const workspace = path.join(cleanRoot, "resolver-fixture");
     await mkdir(path.join(workspace, "src"), { recursive: true });
     await writeFile(path.join(workspace, "AGENTS.md"), "Use the repository validation commands.\n", "utf8");
-    const resolver = path.join(cleanRoot, "skills", "instruction-scope-resolver", "scripts", "resolve-instruction-files.mjs");
     const resolverInput = {
       schemaVersion: "1.0.0",
       workspaceRoot: workspace,
@@ -169,15 +140,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       targets: [{ path: "src", mayNotExist: false }],
       externalPolicyRefs: [],
     };
-    const resolverResult = spawnSync(process.execPath, [resolver], {
-      cwd: cleanRoot,
-      encoding: "utf8",
-      env: environment,
-      input: `${JSON.stringify(resolverInput)}\n`,
-      maxBuffer: 5 * 1024 * 1024,
-      timeout: 10_000,
-      windowsHide: true,
-    });
+    const resolverResult = runNode("skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs", `${JSON.stringify(resolverInput)}\n`);
     if (resolverResult.error || resolverResult.status !== 0) {
       throw new Error(`instruction-scope-resolver valid clean-room smoke failed.\n${resolverResult.stderr ?? ""}`);
     }

@@ -18,7 +18,6 @@ export function findPython() {
 
 export function runPython(python, script, arguments_ = []) {
   const result = spawnSync(python.command, [...python.prefix, script, ...arguments_], {
-    cwd: process.cwd(),
     encoding: "utf8",
     env: { ...process.env, PYTHONUTF8: "1" }
   });
