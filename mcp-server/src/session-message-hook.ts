@@ -77,6 +77,8 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       },
     };
   }
+  // Codex Stop cannot inject additionalContext; its queue wake becomes a UserPromptSubmit instead.
+  if (host === "codex" && event === "Stop") return {};
   if (!["SessionStart", "UserPromptSubmit", "PostToolUse", "Stop"].includes(event)) return {};
   const result = await sessionMessageRequest<{ messages: SessionMessage[] }>("claim", {
     target: { host, sessionId },

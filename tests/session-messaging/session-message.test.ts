@@ -372,6 +372,52 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     }
   }, 30_000);
 
+  it("leaves Codex Stop messages queued for a supported context event", async () => {
+    const directory = stateDirectory();
+    const previous = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
+    process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = directory;
+    try {
+      const target = { host: "codex", sessionId: "stop-hook" };
+      await runSessionMessageCli(JSON.stringify({
+        operation: "send",
+        payload: { messageId: "stop-hook-0001", sender: { host: "claude-code", sessionId: "sender" }, target, body: "hello", ttlSeconds: 600 },
+      }), directory);
+
+      expect(await handleSessionMessageHook({ hook_event_name: "Stop", session_id: target.sessionId }, "codex")).toEqual({});
+      const output = await handleSessionMessageHook({ hook_event_name: "UserPromptSubmit", session_id: target.sessionId }, "codex");
+      expect((output.hookSpecificOutput as { additionalContext: string }).additionalContext).toContain("stop-hook-0001");
+    } finally {
+      if (previous === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
+      else process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = previous;
+    }
+  }, 30_000);
+
+  it("does not register an unsupported Codex Stop context hook", async () => {
+    const config = JSON.parse(await readFile(fileURLToPath(new URL("../../hooks/hooks.json", import.meta.url)), "utf8")) as {
+      hooks: Record<string, unknown>;
+    };
+    expect(config.hooks.Stop).toBeUndefined();
+  });
+
+  it("keeps Claude Code Stop context delivery enabled", async () => {
+    const directory = stateDirectory();
+    const previous = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
+    process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = directory;
+    try {
+      const target = { host: "claude-code", sessionId: "stop-hook" };
+      await runSessionMessageCli(JSON.stringify({
+        operation: "send",
+        payload: { messageId: "claude-stop-0001", sender: { host: "codex", sessionId: "sender" }, target, body: "hello", ttlSeconds: 600 },
+      }), directory);
+
+      const output = await handleSessionMessageHook({ hook_event_name: "Stop", session_id: target.sessionId }, "claude-code");
+      expect((output.hookSpecificOutput as { additionalContext: string }).additionalContext).toContain("claude-stop-0001");
+    } finally {
+      if (previous === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
+      else process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = previous;
+    }
+  }, 30_000);
+
   it("binds message tools to host hook identity", async () => {
     const output = await handleSessionMessageHook({
       hook_event_name: "PreToolUse",

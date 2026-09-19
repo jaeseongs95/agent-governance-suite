@@ -147,19 +147,6 @@
           }
         ]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs\"",
-            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\"",
-            "timeout": 10,
-            "additionalContextLimit": 2200
-          }
-        ]
-      }
     ]
   }
 }

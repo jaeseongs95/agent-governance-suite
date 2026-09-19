@@ -255,6 +255,7 @@ async function handleSessionMessageHook(input, host, explicitHostPid) {
       }
     };
   }
+  if (host === "codex" && event === "Stop") return {};
   if (!["SessionStart", "UserPromptSubmit", "PostToolUse", "Stop"].includes(event)) return {};
   const result = await sessionMessageRequest("claim", {
     target: { host, sessionId },
