@@ -113,7 +113,13 @@ import { spawn } from "node:child_process";
 import path3 from "node:path";
 import tls from "node:tls";
 import { fileURLToPath } from "node:url";
+
+// mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
+var SESSION_MESSAGE_MAX_REQUEST_BYTES = 32 * 1024;
+var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
+
+// mcp-server/src/session-message-client.ts
 var WAKE_PREFIX = "[agent-governance-suite:wake:";
 var BrokerRequestRejected = class extends Error {
 };
@@ -178,7 +184,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory) {
     });
     socket.on("data", (chunk) => {
       buffer += chunk.toString("utf8");
-      if (Buffer.byteLength(buffer, "utf8") > 32 * 1024) return finish(new Error("The broker response exceeded its limit."));
+      if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) return finish(new Error("The broker response exceeded its limit."));
       const newline = buffer.indexOf("\n");
       if (newline < 0) return;
       try {

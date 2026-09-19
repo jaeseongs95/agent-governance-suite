@@ -7,8 +7,9 @@ import tls from "node:tls";
 import { fileURLToPath } from "node:url";
 
 import { resolveSessionMessageStateDirectory } from "./runtime-config.js";
+import { SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
 
-export const SESSION_MESSAGE_PROTOCOL = "1.0.0";
+export { SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
 export const WAKE_PREFIX = "[agent-governance-suite:wake:";
 
 export interface BrokerEndpoint {
@@ -93,7 +94,7 @@ export async function requestSessionMessageOnce<T>(operation: string, payload: R
     });
     socket.on("data", (chunk: Buffer) => {
       buffer += chunk.toString("utf8");
-      if (Buffer.byteLength(buffer, "utf8") > 32 * 1024) return finish(new Error("The broker response exceeded its limit."));
+      if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) return finish(new Error("The broker response exceeded its limit."));
       const newline = buffer.indexOf("\n");
       if (newline < 0) return;
       try {

@@ -3,12 +3,13 @@ import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 
+import { SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
+
 export const MESSAGE_BODY_MAX_BYTES = 4096;
 export const MESSAGE_TTL_DEFAULT_SECONDS = 3600;
 export const MESSAGE_TTL_MAX_SECONDS = 86400;
 const MESSAGE_LIMIT = 1000;
 const MESSAGE_BYTES_LIMIT = 4 * 1024 * 1024;
-const CLAIM_BODY_BYTES_LIMIT = MESSAGE_BODY_MAX_BYTES;
 const CLAIM_LEASE_BASE_MS = 120_000;
 const CLAIM_LEASE_MAX_MS = 30 * 60_000;
 const RELAY_LEASE_MS = 15_000;
@@ -39,6 +40,20 @@ function boundedIdentity(value: SessionIdentity): void {
   if (!value.host || value.host.length > 64 || !value.sessionId || value.sessionId.length > 200) {
     throw new Error("A host and bounded sessionId are required.");
   }
+}
+
+function claimedMessage(row: Record<string, unknown>): SessionMessage {
+  return {
+    messageId: String(row.message_id),
+    sender: { host: String(row.sender_host), sessionId: String(row.sender_session_id) },
+    body: String(row.body),
+    createdAt: String(row.created_at),
+    expiresAt: String(row.expires_at),
+  };
+}
+
+function claimResponseBytes(messages: SessionMessage[]): number {
+  return Buffer.byteLength(JSON.stringify({ ok: true, data: { messages } }), "utf8") + 1;
 }
 
 export class SessionMessageStore {
@@ -153,13 +168,16 @@ export class SessionMessageStore {
         AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?)
       ORDER BY created_at ASC LIMIT 10`).all(target.host, target.sessionId, now, now) as Array<Record<string, unknown>>;
     const selected: Array<Record<string, unknown>> = [];
-    let bytes = 0;
+    const projected: SessionMessage[] = [];
     for (const row of rows) {
-      const next = Number(row.body_bytes);
-      // One legal max-size body always fits the 32 KiB wire response even when every byte becomes a six-byte JSON escape.
-      if (selected.length > 0 && bytes + next > CLAIM_BODY_BYTES_LIMIT) break;
+      const message = claimedMessage(row);
+      const next = [...projected, message];
+      if (claimResponseBytes(next) > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
+        if (selected.length === 0) throw new Error("A valid message exceeded the broker response limit.");
+        break;
+      }
       selected.push(row);
-      bytes += next;
+      projected.push(message);
     }
     if (selected.length === 0) return [];
     const statement = this.database.prepare("UPDATE messages SET claimed_at = ?, claim_until = ?, delivery_attempts = delivery_attempts + 1 WHERE message_id = ? AND acknowledged_at IS NULL AND (claim_until IS NULL OR claim_until <= ?)");
@@ -171,13 +189,7 @@ export class SessionMessageStore {
         return statement.run(now, iso(nowMs + leaseMs), String(row.message_id), now).changes === 1;
       });
       this.database.exec("COMMIT");
-      return claimed.map((row) => ({
-        messageId: String(row.message_id),
-        sender: { host: String(row.sender_host), sessionId: String(row.sender_session_id) },
-        body: String(row.body),
-        createdAt: String(row.created_at),
-        expiresAt: String(row.expires_at),
-      }));
+      return claimed.map(claimedMessage);
     } catch (error) {
       this.database.exec("ROLLBACK");
       throw error;

@@ -187,6 +187,28 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     const secondEscaped = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target: { host: "spark", sessionId: "escaped" } } }), directory);
     expect(secondEscaped).toMatchObject({ data: { messages: [{ messageId: "escaped-0002", body: escapedBody }] } });
 
+    const metadataTarget = { host: "spark", sessionId: "wire-sized" };
+    const metadataSender = { host: "h".repeat(64), sessionId: "s".repeat(200) };
+    const expectedMetadataIds: string[] = [];
+    for (let index = 0; index < 10; index += 1) {
+      const messageId = `wire-${String(index).padStart(3, "0")}-${"m".repeat(119)}`;
+      expectedMetadataIds.push(messageId);
+      await runSessionMessageCli(JSON.stringify({
+        operation: "send",
+        payload: { messageId, sender: metadataSender, target: metadataTarget, body: "\0".repeat(400), ttlSeconds: 600 },
+      }), directory);
+    }
+    const claimedMetadataIds: string[] = [];
+    while (claimedMetadataIds.length < expectedMetadataIds.length) {
+      const batch = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target: metadataTarget } }), directory);
+      const messages = (batch.data as { messages: Array<{ messageId: string }> }).messages;
+      expect(messages.length).toBeGreaterThan(0);
+      expect(Buffer.byteLength(JSON.stringify(batch), "utf8")).toBeLessThanOrEqual(32 * 1024);
+      claimedMetadataIds.push(...messages.map((message) => message.messageId));
+      await runSessionMessageCli(JSON.stringify({ operation: "acknowledge", payload: { target: metadataTarget, messageIds: messages.map((message) => message.messageId) } }), directory);
+    }
+    expect(claimedMetadataIds).toEqual(expectedMetadataIds);
+
     await terminateBroker(directory);
     await ensureSessionMessageBroker(directory);
     const claim = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target: { host: "spark", sessionId: "s-1" } } }), directory);

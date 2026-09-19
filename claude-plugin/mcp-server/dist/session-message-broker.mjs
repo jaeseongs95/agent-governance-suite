@@ -8,8 +8,10 @@ import path2 from "node:path";
 import tls from "node:tls";
 import { fileURLToPath } from "node:url";
 
-// mcp-server/src/session-message-client.ts
+// mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
+var SESSION_MESSAGE_MAX_REQUEST_BYTES = 32 * 1024;
+var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
 
 // mcp-server/src/session-message-store.ts
 import { mkdirSync } from "node:fs";
@@ -21,7 +23,6 @@ var MESSAGE_TTL_DEFAULT_SECONDS = 3600;
 var MESSAGE_TTL_MAX_SECONDS = 86400;
 var MESSAGE_LIMIT = 1e3;
 var MESSAGE_BYTES_LIMIT = 4 * 1024 * 1024;
-var CLAIM_BODY_BYTES_LIMIT = MESSAGE_BODY_MAX_BYTES;
 var CLAIM_LEASE_BASE_MS = 12e4;
 var CLAIM_LEASE_MAX_MS = 30 * 6e4;
 var RELAY_LEASE_MS = 15e3;
@@ -36,6 +37,18 @@ function boundedIdentity(value) {
   if (!value.host || value.host.length > 64 || !value.sessionId || value.sessionId.length > 200) {
     throw new Error("A host and bounded sessionId are required.");
   }
+}
+function claimedMessage(row) {
+  return {
+    messageId: String(row.message_id),
+    sender: { host: String(row.sender_host), sessionId: String(row.sender_session_id) },
+    body: String(row.body),
+    createdAt: String(row.created_at),
+    expiresAt: String(row.expires_at)
+  };
+}
+function claimResponseBytes(messages) {
+  return Buffer.byteLength(JSON.stringify({ ok: true, data: { messages } }), "utf8") + 1;
 }
 var SessionMessageStore = class {
   database;
@@ -141,12 +154,16 @@ var SessionMessageStore = class {
         AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?)
       ORDER BY created_at ASC LIMIT 10`).all(target.host, target.sessionId, now, now);
     const selected = [];
-    let bytes = 0;
+    const projected = [];
     for (const row of rows) {
-      const next = Number(row.body_bytes);
-      if (selected.length > 0 && bytes + next > CLAIM_BODY_BYTES_LIMIT) break;
+      const message = claimedMessage(row);
+      const next = [...projected, message];
+      if (claimResponseBytes(next) > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
+        if (selected.length === 0) throw new Error("A valid message exceeded the broker response limit.");
+        break;
+      }
       selected.push(row);
-      bytes += next;
+      projected.push(message);
     }
     if (selected.length === 0) return [];
     const statement = this.database.prepare("UPDATE messages SET claimed_at = ?, claim_until = ?, delivery_attempts = delivery_attempts + 1 WHERE message_id = ? AND acknowledged_at IS NULL AND (claim_until IS NULL OR claim_until <= ?)");
@@ -158,13 +175,7 @@ var SessionMessageStore = class {
         return statement.run(now, iso(nowMs + leaseMs), String(row.message_id), now).changes === 1;
       });
       this.database.exec("COMMIT");
-      return claimed.map((row) => ({
-        messageId: String(row.message_id),
-        sender: { host: String(row.sender_host), sessionId: String(row.sender_session_id) },
-        body: String(row.body),
-        createdAt: String(row.created_at),
-        expiresAt: String(row.expires_at)
-      }));
+      return claimed.map(claimedMessage);
     } catch (error) {
       this.database.exec("ROLLBACK");
       throw error;
@@ -303,7 +314,6 @@ ${encoded}
 
 // mcp-server/src/session-message-broker.ts
 var IDLE_EXIT_MS = 6e4;
-var MAX_REQUEST_BYTES = 32 * 1024;
 function argument(name) {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] ?? null : null;
@@ -473,7 +483,7 @@ async function startSessionMessageBroker(stateDirectory) {
     socket.setTimeout(5e3, () => socket.destroy());
     socket.on("data", (chunk) => {
       buffer += chunk.toString("utf8");
-      if (Buffer.byteLength(buffer, "utf8") > MAX_REQUEST_BYTES) {
+      if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_REQUEST_BYTES) {
         socket.end(`${JSON.stringify({ ok: false, error: "Request exceeds the broker limit." })}
 `);
         return;

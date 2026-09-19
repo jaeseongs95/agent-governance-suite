@@ -5,13 +5,11 @@ import path from "node:path";
 import tls from "node:tls";
 import { fileURLToPath } from "node:url";
 
-import { SESSION_MESSAGE_PROTOCOL } from "./session-message-client.js";
+import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
 import { SessionMessageStore, type SessionIdentity } from "./session-message-store.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
 
 const IDLE_EXIT_MS = 60_000;
-// A 4096-byte control-character body can expand to 24576 bytes after JSON escaping.
-const MAX_REQUEST_BYTES = 32 * 1024;
 
 interface BrokerRequest {
   protocolVersion: string;
@@ -182,7 +180,7 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
     socket.setTimeout(5000, () => socket.destroy());
     socket.on("data", (chunk: Buffer) => {
       buffer += chunk.toString("utf8");
-      if (Buffer.byteLength(buffer, "utf8") > MAX_REQUEST_BYTES) {
+      if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_REQUEST_BYTES) {
         socket.end(`${JSON.stringify({ ok: false, error: "Request exceeds the broker limit." })}\n`);
         return;
       }

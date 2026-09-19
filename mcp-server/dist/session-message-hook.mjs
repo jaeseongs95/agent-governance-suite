@@ -34,8 +34,12 @@ function resolveSessionMessageStateDirectory(environment = process.env, platform
   return path.join(userStateDirectory(environment, platform, homeDirectory), "session-messaging");
 }
 
-// mcp-server/src/session-message-client.ts
+// mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
+var SESSION_MESSAGE_MAX_REQUEST_BYTES = 32 * 1024;
+var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
+
+// mcp-server/src/session-message-client.ts
 var BrokerRequestRejected = class extends Error {
 };
 function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
@@ -99,7 +103,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory) {
     });
     socket.on("data", (chunk) => {
       buffer += chunk.toString("utf8");
-      if (Buffer.byteLength(buffer, "utf8") > 32 * 1024) return finish(new Error("The broker response exceeded its limit."));
+      if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) return finish(new Error("The broker response exceeded its limit."));
       const newline = buffer.indexOf("\n");
       if (newline < 0) return;
       try {
