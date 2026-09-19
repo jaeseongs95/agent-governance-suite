@@ -17,21 +17,21 @@ import { fileURLToPath } from "node:url";
 // mcp-server/src/runtime-config.ts
 import { homedir } from "node:os";
 import path from "node:path";
-function userStateDirectory(environment, platform, homeDirectory) {
-  let stateRoot;
-  if (platform === "win32") {
-    stateRoot = environment.LOCALAPPDATA?.trim() || path.join(homeDirectory, "AppData", "Local");
-  } else if (platform === "darwin") {
-    stateRoot = path.join(homeDirectory, "Library", "Application Support");
-  } else {
-    stateRoot = environment.XDG_STATE_HOME?.trim() || path.join(homeDirectory, ".local", "state");
+function sharedUserStateDirectory(environment, homeDirectory) {
+  const configured = environment.AGENT_GOVERNANCE_SHARED_STATE_DIR?.trim();
+  if (configured) {
+    if (!path.isAbsolute(configured)) {
+      throw new Error("AGENT_GOVERNANCE_SHARED_STATE_DIR must be an absolute path.");
+    }
+    return path.normalize(configured);
   }
-  return path.resolve(stateRoot, "agent-governance-suite");
+  return path.resolve(homeDirectory, ".agent-governance-suite");
 }
 function resolveSessionMessageStateDirectory(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  void platform;
   const configured = environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim();
   if (configured) return path.resolve(currentWorkingDirectory, configured);
-  return path.join(userStateDirectory(environment, platform, homeDirectory), "session-messaging");
+  return path.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
 }
 
 // mcp-server/src/session-message-protocol.ts

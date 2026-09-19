@@ -1,6 +1,6 @@
 import { mkdtemp, mkdir, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { basename, dirname, join, normalize } from "node:path";
+import { basename, join, normalize } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -8,6 +8,7 @@ import {
   assertDistinctDatabasePaths,
   resolveContinuityDatabasePath,
   resolveSessionBoardDatabasePath,
+  resolveSessionMessageStateDirectory,
   resolveRegistryPath,
   resolveWorkflowDatabasePath,
 } from "../../mcp-server/src/runtime-config.js";
@@ -111,15 +112,45 @@ describe("resolveSessionBoardDatabasePath", () => {
       .toBe(join(workingDirectory, "board.sqlite3"));
   });
 
-  it("shares one board in the user state directory even when a host moves its workflow database", () => {
+  it("shares one board in the host-neutral home state directory", () => {
     const state = join(tmpdir(), "user-state");
+    const home = join(tmpdir(), "shared-home");
     const moved = { AGENT_GOVERNANCE_DB_PATH: join(tmpdir(), "plugin-data", "workflows.sqlite3") };
-    expect(resolveSessionBoardDatabasePath({ ...moved, XDG_STATE_HOME: state }, "linux"))
-      .toBe(join(state, "agent-governance-suite", "session-board.sqlite3"));
-    expect(resolveSessionBoardDatabasePath({ XDG_STATE_HOME: state }, "linux"))
-      .toBe(join(dirname(resolveWorkflowDatabasePath({ XDG_STATE_HOME: state }, "linux")), "session-board.sqlite3"));
-    expect(resolveSessionBoardDatabasePath({ ...moved, LOCALAPPDATA: state }, "win32"))
-      .toBe(join(state, "agent-governance-suite", "session-board.sqlite3"));
+    for (const platform of ["linux", "darwin", "win32"] as const) {
+      expect(resolveSessionBoardDatabasePath({ ...moved, XDG_STATE_HOME: state, LOCALAPPDATA: state }, platform, home))
+        .toBe(join(home, ".agent-governance-suite", "session-board.sqlite3"));
+      expect(resolveSessionMessageStateDirectory({ XDG_STATE_HOME: state, LOCALAPPDATA: state }, platform, home))
+        .toBe(join(home, ".agent-governance-suite", "session-messaging"));
+    }
+  });
+
+  it("uses a shared-root override for both shared features", () => {
+    const sharedRoot = join(tmpdir(), "shared-state");
+    const environment = { AGENT_GOVERNANCE_SHARED_STATE_DIR: sharedRoot };
+
+    expect(resolveSessionBoardDatabasePath(environment, "win32"))
+      .toBe(join(sharedRoot, "session-board.sqlite3"));
+    expect(resolveSessionMessageStateDirectory(environment, "linux"))
+      .toBe(join(sharedRoot, "session-messaging"));
+  });
+
+  it("keeps feature-specific overrides ahead of the shared root", () => {
+    const workingDirectory = join(tmpdir(), "shared-working-directory");
+    const environment = {
+      AGENT_GOVERNANCE_SHARED_STATE_DIR: join(tmpdir(), "shared-state"),
+      AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: "board.sqlite3",
+      AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: "messages",
+    };
+
+    expect(resolveSessionBoardDatabasePath(environment, "linux", join(tmpdir(), "unused-home"), workingDirectory))
+      .toBe(join(workingDirectory, "board.sqlite3"));
+    expect(resolveSessionMessageStateDirectory(environment, "linux", join(tmpdir(), "unused-home"), workingDirectory))
+      .toBe(join(workingDirectory, "messages"));
+  });
+
+  it("rejects a relative shared-root override", () => {
+    expect(() => resolveSessionBoardDatabasePath({ AGENT_GOVERNANCE_SHARED_STATE_DIR: "relative" }, "linux"))
+      .toThrow(/absolute path/u);
   });
 });
 

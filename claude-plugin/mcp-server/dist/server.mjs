@@ -17004,10 +17004,21 @@ function userStateDirectory(environment, platform, homeDirectory) {
   }
   return path4.resolve(stateRoot, "agent-governance-suite");
 }
+function sharedUserStateDirectory(environment, homeDirectory) {
+  const configured = environment.AGENT_GOVERNANCE_SHARED_STATE_DIR?.trim();
+  if (configured) {
+    if (!path4.isAbsolute(configured)) {
+      throw new Error("AGENT_GOVERNANCE_SHARED_STATE_DIR must be an absolute path.");
+    }
+    return path4.normalize(configured);
+  }
+  return path4.resolve(homeDirectory, ".agent-governance-suite");
+}
 function resolveSessionMessageStateDirectory(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  void platform;
   const configured = environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim();
   if (configured) return path4.resolve(currentWorkingDirectory, configured);
-  return path4.join(userStateDirectory(environment, platform, homeDirectory), "session-messaging");
+  return path4.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
 }
 function besideWorkflowDatabase(variable, fileName, environment, platform, homeDirectory, currentWorkingDirectory) {
   const configured = environment[variable]?.trim();
@@ -17025,9 +17036,10 @@ function resolveContinuityDatabasePath(environment = process.env, platform = pro
   return besideWorkflowDatabase("AGENT_GOVERNANCE_CONTINUITY_DB_PATH", "continuity.sqlite3", environment, platform, homeDirectory, currentWorkingDirectory);
 }
 function resolveSessionBoardDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  void platform;
   const configured = environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH?.trim();
   if (configured) return path4.resolve(currentWorkingDirectory, configured);
-  return path4.join(userStateDirectory(environment, platform, homeDirectory), "session-board.sqlite3");
+  return path4.join(sharedUserStateDirectory(environment, homeDirectory), "session-board.sqlite3");
 }
 function canonicalDatabasePath(databasePath, platform) {
   if (databasePath === ":memory:") return null;

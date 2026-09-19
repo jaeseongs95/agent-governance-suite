@@ -76,7 +76,7 @@ MCP 서버가 시작되지 않아도 개별 전문 스킬은 직접 호출할 �
 
 `send_session_message`는 `targetHost`, `targetSessionId`와 최대 4096 UTF-8 byte의 본문을 받아 로컬 TLS 1.3 broker에 저장합니다. 수신 훅은 본문을 비신뢰 peer context로 claim하고, 처리한 모델이 `acknowledge_session_messages`를 호출해야 완료됩니다. ACK 전에는 claim lease가 끝난 뒤 지수 backoff로 다시 전달될 수 있으며, `get_session_message_status`는 `queued`, `delivered`, `acknowledged` 상태를 보여 줍니다. 기본 TTL은 1시간이고 30초부터 24시간까지 지정할 수 있으며, spool은 미ACK 메시지 1000개 또는 본문 합계 4 MiB로 제한됩니다. TLS spool과 ACK가 본문 전달의 내구성을 맡고, host를 깨우는 wake bell은 유실될 수 있는 알림입니다. wake가 유실돼도 다음 hook이나 turn이 같은 spool을 다시 확인합니다.
 
-broker는 사용자 상태 디렉터리의 `session-messaging/`에서 필요할 때 시작하고 `127.0.0.1`에만 임의 포트로 바인딩합니다. Node 내장 암호 모듈로 만든 P-256 자체서명 인증서의 SHA-256 fingerprint를 pin하고, 별도 256-bit token도 TLS 안에서 확인합니다. 본문은 Codex 명령행이나 Claude inbox에 넣지 않으며, 두 adapter는 target에 묶인 무작위 nonce가 든 작은 wake bell만 보냅니다. 지연·중복된 같은 bell도 TTL 안에서는 내부 wake로 인식하지만 본문 전달이나 권한을 부여하지 않습니다. 개인 키·broker token·Claude inbox token과 socket 경로는 메시지 DB에 저장하지 않습니다.
+broker는 모든 호스트가 함께 쓰는 `~/.agent-governance-suite/session-messaging/`에서 필요할 때 시작하고 `127.0.0.1`에만 임의 포트로 바인딩합니다. 공용 루트는 절대 경로인 `AGENT_GOVERNANCE_SHARED_STATE_DIR`로 바꿀 수 있습니다. Node 내장 암호 모듈로 만든 P-256 자체서명 인증서의 SHA-256 fingerprint를 pin하고, 별도 256-bit token도 TLS 안에서 확인합니다. 본문은 Codex 명령행이나 Claude inbox에 넣지 않으며, 두 adapter는 target에 묶인 무작위 nonce가 든 작은 wake bell만 보냅니다. 지연·중복된 같은 bell도 TTL 안에서는 내부 wake로 인식하지만 본문 전달이나 권한을 부여하지 않습니다. 개인 키·broker token·Claude inbox token과 socket 경로는 메시지 DB에 저장하지 않습니다.
 
 공통 프로토콜의 `host`는 임의 문자열입니다. Codex와 Claude Code에는 wake adapter를 제공하고, Grok·Spark 같은 다른 로컬 런타임은 `mcp-server/dist/session-message-cli.mjs`에 JSON을 stdin으로 넘겨 같은 `send`, `claim`, `acknowledge`, `status`, `pending` 작업을 사용할 수 있습니다. `claim` 호출자는 host 주입 한도에 맞춰 `maxMessages`와 UTF-16 code unit 기준 `maxBodyChars`를 줄일 수 있고, broker는 이 예산과 별개로 실제 JSON 응답을 32 KiB 이하로 유지합니다. 번들 hook은 가장 보수적인 공통값으로 한 번에 한 메시지만 주입합니다. 메시지 본문과 비밀값을 프로세스 인수로 넘기지 않습니다. 예:
 
@@ -97,7 +97,7 @@ Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다
 
 설치 후 새 세션에서 `/agent-governance-suite:orchestrator`나 `/agent-governance-suite:mutation-risk-preflight`처럼 스킬을 호출합니다. Codex와 다른 점은 다음과 같습니다.
 
-- workflow·continuity 상태는 Claude Code가 플러그인마다 제공하는 데이터 디렉터리(`${CLAUDE_PLUGIN_DATA}`)에 저장합니다. 세션 현황판은 Codex와 함께 쓰도록 사용자 상태 디렉터리(Windows는 `%LOCALAPPDATA%\agent-governance-suite\session-board.sqlite3`)에 두며, Claude Code 세션과 Codex 세션이 서로의 줄을 봅니다. 같은 OS 사용자로 실행되는 로컬 프로세스는 이 파일을 읽을 수 있습니다.
+- workflow·continuity 상태는 Claude Code가 플러그인마다 제공하는 데이터 디렉터리(`${CLAUDE_PLUGIN_DATA}`)에 저장합니다. 세션 현황판과 TLS broker는 OS·호스트에 관계없이 `~/.agent-governance-suite` 공용 루트에 두며, Claude Code 세션과 Codex 세션이 같은 상태를 봅니다. 샌드박스 호스트는 모든 adapter에 같은 절대 `AGENT_GOVERNANCE_SHARED_STATE_DIR`를 전달해야 합니다. 같은 OS 사용자로 실행되는 로컬 프로세스는 이 상태를 읽을 수 있습니다.
 - 세션 현황판 Hook은 사용자 요청마다 처음 파일을 고치거나 명령·서브에이전트를 실행하기 전에 `update_session_status`로 지금 하는 일 한 줄을 적게 합니다. 적지 않았으면 그 호출을 한 번 거부하고 다음 시도는 허용합니다. 이 플러그인의 MCP 도구 호출은 거부하지 않습니다.
 - `codex-token-usage-analyzer`는 Codex 세션 로그 전용이라 포함하지 않습니다.
 - 독립 감사와 심의에는 부모 대화를 상속하지 않는 `independent-auditor`, `deliberation-reviewer` 서브에이전트를 사용합니다.

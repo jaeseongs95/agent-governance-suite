@@ -49,6 +49,21 @@ function userStateDirectory(
   return path.resolve(stateRoot, "agent-governance-suite");
 }
 
+/** The host-neutral state root shared across local AI runtimes. */
+function sharedUserStateDirectory(
+  environment: NodeJS.ProcessEnv,
+  homeDirectory: string,
+): string {
+  const configured = environment.AGENT_GOVERNANCE_SHARED_STATE_DIR?.trim();
+  if (configured) {
+    if (!path.isAbsolute(configured)) {
+      throw new Error("AGENT_GOVERNANCE_SHARED_STATE_DIR must be an absolute path.");
+    }
+    return path.normalize(configured);
+  }
+  return path.resolve(homeDirectory, ".agent-governance-suite");
+}
+
 /** Resolves the per-user TLS broker directory shared by supported local hosts. */
 export function resolveSessionMessageStateDirectory(
   environment: NodeJS.ProcessEnv = process.env,
@@ -56,9 +71,10 @@ export function resolveSessionMessageStateDirectory(
   homeDirectory: string = homedir(),
   currentWorkingDirectory: string = process.cwd(),
 ): string {
+  void platform;
   const configured = environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim();
   if (configured) return path.resolve(currentWorkingDirectory, configured);
-  return path.join(userStateDirectory(environment, platform, homeDirectory), "session-messaging");
+  return path.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
 }
 
 function besideWorkflowDatabase(
@@ -101,9 +117,10 @@ export function resolveSessionBoardDatabasePath(
   homeDirectory: string = homedir(),
   currentWorkingDirectory: string = process.cwd(),
 ): string {
+  void platform;
   const configured = environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH?.trim();
   if (configured) return path.resolve(currentWorkingDirectory, configured);
-  return path.join(userStateDirectory(environment, platform, homeDirectory), "session-board.sqlite3");
+  return path.join(sharedUserStateDirectory(environment, homeDirectory), "session-board.sqlite3");
 }
 
 function canonicalDatabasePath(databasePath: string, platform: NodeJS.Platform): string | null {

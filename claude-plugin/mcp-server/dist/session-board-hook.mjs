@@ -84,26 +84,27 @@ function isReadOnlyCommand(command) {
 // mcp-server/src/runtime-config.ts
 import { homedir } from "node:os";
 import path2 from "node:path";
-function userStateDirectory(environment, platform, homeDirectory) {
-  let stateRoot;
-  if (platform === "win32") {
-    stateRoot = environment.LOCALAPPDATA?.trim() || path2.join(homeDirectory, "AppData", "Local");
-  } else if (platform === "darwin") {
-    stateRoot = path2.join(homeDirectory, "Library", "Application Support");
-  } else {
-    stateRoot = environment.XDG_STATE_HOME?.trim() || path2.join(homeDirectory, ".local", "state");
+function sharedUserStateDirectory(environment, homeDirectory) {
+  const configured = environment.AGENT_GOVERNANCE_SHARED_STATE_DIR?.trim();
+  if (configured) {
+    if (!path2.isAbsolute(configured)) {
+      throw new Error("AGENT_GOVERNANCE_SHARED_STATE_DIR must be an absolute path.");
+    }
+    return path2.normalize(configured);
   }
-  return path2.resolve(stateRoot, "agent-governance-suite");
+  return path2.resolve(homeDirectory, ".agent-governance-suite");
 }
 function resolveSessionMessageStateDirectory(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  void platform;
   const configured = environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim();
   if (configured) return path2.resolve(currentWorkingDirectory, configured);
-  return path2.join(userStateDirectory(environment, platform, homeDirectory), "session-messaging");
+  return path2.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
 }
 function resolveSessionBoardDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  void platform;
   const configured = environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH?.trim();
   if (configured) return path2.resolve(currentWorkingDirectory, configured);
-  return path2.join(userStateDirectory(environment, platform, homeDirectory), "session-board.sqlite3");
+  return path2.join(sharedUserStateDirectory(environment, homeDirectory), "session-board.sqlite3");
 }
 
 // mcp-server/src/session-message-client.ts
