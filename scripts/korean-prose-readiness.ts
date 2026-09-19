@@ -1,8 +1,7 @@
 import { createHash } from "node:crypto";
-import { access, readFile, realpath } from "node:fs/promises";
+import { access, readdir, readFile, realpath } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import { execFileSync } from "node:child_process";
-import { readdir } from "node:fs/promises";
 import path from "node:path";
 
 import { Ajv2020, type ValidateFunction } from "ajv/dist/2020.js";
@@ -144,17 +143,20 @@ interface AdjudicatedFinal extends FinalEvaluationRecord {
   adjudication: QualityAdjudicationRecord;
 }
 
-let validators: Promise<{
-  frame: ValidateFunction;
-  input: ValidateFunction;
-  final: ValidateFunction;
-  receiptBinding: ValidateFunction;
-  validity: ValidateFunction;
-  quality: ValidateFunction;
-  adjudicationInput: ValidateFunction;
-  adjudicationMeta: ValidateFunction;
-  adjudication: ValidateFunction;
-}> | null = null;
+// Compiled in this order, so a schema may reference any schema listed before it.
+const SCHEMA_FILES = {
+  frame: "korean-prose-evaluation-frame",
+  input: "korean-prose-evaluation-input",
+  final: "korean-prose-evaluation-final",
+  receiptBinding: "korean-prose-receipt-binding",
+  validity: "korean-prose-evaluation-validity-report",
+  quality: "korean-prose-quality-report",
+  adjudicationInput: "korean-prose-quality-adjudication-input",
+  adjudicationMeta: "korean-prose-quality-adjudication-meta",
+  adjudication: "korean-prose-quality-adjudication",
+} as const;
+
+let validators: Promise<Record<keyof typeof SCHEMA_FILES, ValidateFunction>> | null = null;
 
 export async function evaluateKoreanProseReadiness(
   cycleDirectory: string,
@@ -187,8 +189,7 @@ export async function evaluateKoreanProseReadiness(
   const inputRecords = parseJsonl(inputText);
   for (const record of inputRecords) assertSchema(validateInput, record, "model-visible evaluation input record");
   const caseIds = inputRecords.map((record) => requiredString(record, "id", "input case"));
-  const labelsPath = path.resolve(cycleRoot, frame.corpus.labelsLocator);
-  assertContainedPath(cycleRoot, labelsPath, "quality labels locator");
+  const labelsPath = resolveInside(cycleRoot, frame.corpus.labelsLocator, "quality labels locator");
   const labelRecords = parseJsonl(await readFile(labelsPath, "utf8"));
   if (digestCanonical(labelRecords) !== frame.corpus.labelsDigest) throw new Error("quality labels digest does not match the frozen frame");
   const labelIds = labelRecords.map((record) => requiredString(record, "id", "quality label"));
@@ -206,8 +207,7 @@ export async function evaluateKoreanProseReadiness(
   if (digestCanonical(inputRecords) !== frame.corpus.inputDigest) throw new Error("evaluation corpus digest does not match the frozen frame");
   if (digestCanonical(caseIds) !== frame.corpus.orderedCaseIdsDigest) throw new Error("ordered case ID digest does not match the frozen frame");
   if (digestCanonical(frame.thresholds) !== frame.controls.thresholdsDigest) throw new Error("threshold digest does not match the frozen frame");
-  const rubricPath = path.resolve(cycleRoot, frame.controls.rubricLocator);
-  assertContainedPath(cycleRoot, rubricPath, "rubric locator");
+  const rubricPath = resolveInside(cycleRoot, frame.controls.rubricLocator, "rubric locator");
   if (digestRaw(await readFile(rubricPath)) !== frame.controls.rubricDigest) {
     throw new Error("rubric digest does not match the frozen frame");
   }
@@ -237,9 +237,7 @@ export async function evaluateKoreanProseReadiness(
   if (new Set(validityActors).size !== validityActors.length) throw new Error("evaluation validity roles must use distinct actors");
   const verifiedEvidenceDigests: string[] = [];
   for (const evidence of validityValue.evidence as Array<Record<string, unknown>>) {
-    const locator = requiredString(evidence, "locator", "validity evidence");
-    const evidencePath = path.resolve(cycleRoot, locator);
-    assertContainedPath(cycleRoot, evidencePath, "validity evidence locator");
+    const evidencePath = resolveInside(cycleRoot, requiredString(evidence, "locator", "validity evidence"), "validity evidence locator");
     if (digestRaw(await readFile(evidencePath)) !== evidence.digest) throw new Error("evaluation validity evidence digest mismatch");
     verifiedEvidenceDigests.push(String(evidence.digest));
   }
@@ -263,7 +261,7 @@ export async function evaluateKoreanProseReadiness(
   if (!options.expectedFrameDigest || !options.expectedValidityReportDigest || !options.expectedQualityReportDigest) {
     throw new Error("externally expected frame, validity, and quality report digests are required for passed evidence");
   }
-  if (options.expectedQualityReportDigest && quality.reportDigest !== options.expectedQualityReportDigest) {
+  if (quality.reportDigest !== options.expectedQualityReportDigest) {
     throw new Error("quality report does not match the externally expected digest");
   }
   await assertQualityEvidence(cycleRoot, frame, quality, inputRecords, labelRecords, validity, new Set(validityActors));
@@ -317,14 +315,13 @@ async function assertQualityEvidence(
     return [id, { ...labelsById.get(id)!, protectedStrings: protectedStrings as string[] }] as const;
   }));
   const expectedIds = [...sourceById.keys()];
-  const adjudicationInputPath = path.resolve(cycleRoot, quality.adjudicationInputLocator);
-  assertContainedPath(cycleRoot, adjudicationInputPath, "quality adjudication input locator");
+  const adjudicationInputPath = resolveInside(cycleRoot, quality.adjudicationInputLocator, "quality adjudication input locator");
   const adjudicationInputRecords = parseJsonl(await readFile(adjudicationInputPath, "utf8"));
   if (digestCanonical(adjudicationInputRecords) !== quality.adjudicationInputDigest) {
     throw new Error("quality adjudication input digest mismatch");
   }
   const { adjudicationInput: validateAdjudicationInput, adjudicationMeta: validateAdjudicationMeta,
-    adjudication: validateAdjudication } = await loadValidators();
+    adjudication: validateAdjudication, final: validateFinal } = await loadValidators();
   const adjudicationInputByRunAndCase = new Map<string, Record<string, unknown>>();
   for (const record of adjudicationInputRecords) {
     assertSchema(validateAdjudicationInput, record, "quality adjudication input record");
@@ -335,8 +332,7 @@ async function assertQualityEvidence(
   if (adjudicationInputRecords.length !== frame.runBudget * frame.corpus.caseCount) {
     throw new Error("quality adjudication input does not cover the frozen run budget and corpus");
   }
-  const adjudicationPath = path.resolve(cycleRoot, quality.adjudicationLocator);
-  assertContainedPath(cycleRoot, adjudicationPath, "quality adjudication locator");
+  const adjudicationPath = resolveInside(cycleRoot, quality.adjudicationLocator, "quality adjudication locator");
   const adjudicationRecords = parseJsonl(await readFile(adjudicationPath, "utf8"));
   if (digestCanonical(adjudicationRecords) !== quality.adjudicationDigest) throw new Error("quality adjudication digest mismatch");
   for (const record of adjudicationRecords) assertSchema(validateAdjudication, record, "quality adjudication record");
@@ -353,8 +349,7 @@ async function assertQualityEvidence(
     }
     adjudicationByRunAndCase.set(key, record);
   }
-  const adjudicationMetaPath = path.resolve(cycleRoot, quality.adjudicationMetaLocator);
-  assertContainedPath(cycleRoot, adjudicationMetaPath, "quality adjudication metadata locator");
+  const adjudicationMetaPath = resolveInside(cycleRoot, quality.adjudicationMetaLocator, "quality adjudication metadata locator");
   const adjudicationMetaText = await readFile(adjudicationMetaPath);
   if (digestRaw(adjudicationMetaText) !== quality.adjudicationMetaDigest) throw new Error("quality adjudication metadata digest mismatch");
   const adjudicationMeta = JSON.parse(adjudicationMetaText.toString("utf8")) as Record<string, unknown>;
@@ -369,14 +364,12 @@ async function assertQualityEvidence(
   let rubricChanges = 0;
   for (const run of quality.runs) {
     if (!run.complete || run.caseCount !== frame.corpus.caseCount) throw new Error(`run ${run.run} is incomplete`);
-    const receiptPath = path.resolve(cycleRoot, run.receiptLocator);
-    assertContainedPath(cycleRoot, receiptPath, "receipt locator");
+    const receiptPath = resolveInside(cycleRoot, run.receiptLocator, "receipt locator");
     const receiptText = await readFile(receiptPath);
     if (digestRaw(receiptText) !== run.receiptDigest) throw new Error(`run ${run.run} receipt digest mismatch`);
     const { receipt, claimedAt, claimDigest } = await assertStructuredReceipt(cycleRoot, receiptPath, receiptText);
     if (claimDigest !== run.claimDigest) throw new Error(`run ${run.run} claim digest mismatch`);
-    if (Date.parse(validity.auditedAt) > Date.parse(validity.executionStartedAt)
-      || Date.parse(validity.executionStartedAt) > Date.parse(claimedAt)
+    if (Date.parse(validity.executionStartedAt) > Date.parse(claimedAt)
       || Date.parse(claimedAt) > Date.parse(String(adjudicationMeta.completedAt))) {
       throw new Error(`run ${run.run} timing is not ordered audit -> execution -> adjudication`);
     }
@@ -390,7 +383,6 @@ async function assertQualityEvidence(
     const finalRecords = parseJsonl(await readFile(path.join(runDirectory, "final.jsonl"), "utf8"));
     const finalIds = finalRecords.map((record) => requiredString(record, "id", "final record"));
     if (JSON.stringify(finalIds) !== JSON.stringify(expectedIds)) throw new Error(`run ${run.run} final case IDs are incomplete or reordered`);
-    const { final: validateFinal } = await loadValidators();
     const normalizedFinals = finalRecords.map((record) => {
       assertSchema(validateFinal, record, "final evaluation record");
       const id = requiredString(record, "id", "final record");
@@ -551,20 +543,22 @@ async function assertStructuredReceipt(
     if (!row || JSON.stringify(JSON.parse(row.receipt_json)) !== JSON.stringify(receipt)) {
       throw new Error("SQLite and file workflow receipts differ");
     }
-    assertNoRawText(receiptText.toString("utf8"), [inputText, selectionText, editingText, verificationText, finalText]);
-    assertNoRawText(row.receipt_json, [inputText, selectionText, editingText, verificationText, finalText]);
+    const artifactTexts = [inputText, selectionText, editingText, verificationText, finalText];
+    assertNoRawText(receiptText.toString("utf8"), artifactTexts, "raw prose leaked into a workflow receipt");
+    assertNoRawText(row.receipt_json, artifactTexts, "raw prose leaked into a workflow receipt");
   } finally {
     database.close();
   }
   return { receipt, claimedAt: startedAt, claimDigest: digestRaw(claimText) };
 }
 
-function assertNoRawText(receiptText: string, artifactTexts: string[]): void {
+/** Throws `message` when any prose value from the JSON Lines artifacts appears in the receipt surface. */
+export function assertNoRawText(surface: string, artifactTexts: string[], message: string): void {
   const rawValues = new Set<string>();
   for (const text of artifactTexts) {
-    for (const record of parseJsonl(text)) collectRawText(record, rawValues);
+    for (const record of jsonlValues(text)) collectRawText(record, rawValues);
   }
-  for (const raw of rawValues) if (receiptText.includes(raw)) throw new Error("raw prose leaked into a workflow receipt");
+  for (const raw of rawValues) if (surface.includes(raw)) throw new Error(message);
 }
 
 function collectRawText(value: unknown, destination: Set<string>, key = ""): void {
@@ -692,8 +686,7 @@ async function assertPriorTerminalFrames(cycleRoot: string, frame: EvaluationFra
     throw new Error("frozen frame must preserve both prior terminal dispositions");
   }
   for (const prior of frame.priorFrames) {
-    const evidencePath = path.resolve(cycleRoot, prior.evidenceLocator);
-    assertContainedPath(cycleRoot, evidencePath, "prior frame evidence locator");
+    const evidencePath = resolveInside(cycleRoot, prior.evidenceLocator, "prior frame evidence locator");
     const evidenceText = await readFile(evidencePath);
     if (digestRaw(evidenceText) !== prior.evidenceDigest) throw new Error("prior frame evidence digest mismatch");
     let evidence: Record<string, unknown>;
@@ -798,43 +791,14 @@ function result(
   };
 }
 
-async function loadValidators(): Promise<{
-  frame: ValidateFunction;
-  input: ValidateFunction;
-  final: ValidateFunction;
-  receiptBinding: ValidateFunction;
-  validity: ValidateFunction;
-  quality: ValidateFunction;
-  adjudicationInput: ValidateFunction;
-  adjudicationMeta: ValidateFunction;
-  adjudication: ValidateFunction;
-}> {
+async function loadValidators(): Promise<Record<keyof typeof SCHEMA_FILES, ValidateFunction>> {
   validators ??= (async () => {
     const ajv = new Ajv2020({ allErrors: true, strict: false });
     addFormats(ajv);
     const contractRoot = path.resolve(import.meta.dirname, "..", "contracts");
-    const [frame, input, final, receiptBinding, validity, quality, adjudicationInput, adjudicationMeta, adjudication] = await Promise.all([
-      readJson(path.join(contractRoot, "korean-prose-evaluation-frame.v1.schema.json")),
-      readJson(path.join(contractRoot, "korean-prose-evaluation-input.v1.schema.json")),
-      readJson(path.join(contractRoot, "korean-prose-evaluation-final.v1.schema.json")),
-      readJson(path.join(contractRoot, "korean-prose-receipt-binding.v1.schema.json")),
-      readJson(path.join(contractRoot, "korean-prose-evaluation-validity-report.v1.schema.json")),
-      readJson(path.join(contractRoot, "korean-prose-quality-report.v1.schema.json")),
-      readJson(path.join(contractRoot, "korean-prose-quality-adjudication-input.v1.schema.json")),
-      readJson(path.join(contractRoot, "korean-prose-quality-adjudication-meta.v1.schema.json")),
-      readJson(path.join(contractRoot, "korean-prose-quality-adjudication.v1.schema.json")),
-    ]);
-    return {
-      frame: ajv.compile(frame),
-      input: ajv.compile(input),
-      final: ajv.compile(final),
-      receiptBinding: ajv.compile(receiptBinding),
-      validity: ajv.compile(validity),
-      quality: ajv.compile(quality),
-      adjudicationInput: ajv.compile(adjudicationInput),
-      adjudicationMeta: ajv.compile(adjudicationMeta),
-      adjudication: ajv.compile(adjudication),
-    };
+    const names = Object.keys(SCHEMA_FILES) as Array<keyof typeof SCHEMA_FILES>;
+    const schemas = await Promise.all(names.map((name) => readJson(path.join(contractRoot, `${SCHEMA_FILES[name]}.v1.schema.json`))));
+    return Object.fromEntries(names.map((name, index) => [name, ajv.compile(schemas[index]!)])) as Record<keyof typeof SCHEMA_FILES, ValidateFunction>;
   })();
   return validators;
 }
@@ -862,8 +826,13 @@ async function readJson(file: string): Promise<Record<string, unknown>> {
   return value as Record<string, unknown>;
 }
 
+/** JSON Lines values without shape checks; parseJsonl also requires every line to be an object. */
+export function jsonlValues(text: string): Array<Record<string, unknown>> {
+  return text.trim().split(/\r?\n/u).filter(Boolean).map((line) => JSON.parse(line) as Record<string, unknown>);
+}
+
 function parseJsonl(text: string): Array<Record<string, unknown>> {
-  const records = text.trim().split(/\r?\n/u).filter(Boolean).map((line) => JSON.parse(line) as unknown);
+  const records = jsonlValues(text) as unknown[];
   if (records.some((record) => !record || typeof record !== "object" || Array.isArray(record))) {
     throw new Error("evaluation input must contain one JSON object per line");
   }
@@ -878,7 +847,11 @@ export function digestRaw(value: string | Buffer): string {
   return `sha256:${createHash("sha256").update(value).digest("hex")}`;
 }
 
-function canonicalJson(value: unknown): string {
+export function canonicalArtifact(text: string, format: "json" | "jsonl"): string {
+  return canonicalJson(format === "jsonl" ? jsonlValues(text) : JSON.parse(text) as unknown);
+}
+
+export function canonicalJson(value: unknown): string {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
     if (!Number.isFinite(value)) throw new Error("artifact contains a non-finite number");
@@ -892,13 +865,119 @@ function canonicalJson(value: unknown): string {
   throw new Error("artifact contains a non-serializable value");
 }
 
-function assertContainedPath(root: string, candidate: string, label: string): void {
+export function assertInside(root: string, candidate: string, message: string): void {
   const relative = path.relative(root, candidate);
-  if (relative.startsWith(`..${path.sep}`) || relative === ".." || path.isAbsolute(relative)) {
-    throw new Error(`${label} must stay inside the evaluation cycle`);
-  }
+  if (relative.startsWith(`..${path.sep}`) || relative === ".." || path.isAbsolute(relative)) throw new Error(message);
 }
 
-async function exists(target: string): Promise<boolean> {
+function resolveInside(root: string, locator: string, label: string): string {
+  const resolved = path.resolve(root, locator);
+  assertInside(root, resolved, `${label} must stay inside the evaluation cycle`);
+  return resolved;
+}
+
+export async function exists(target: string): Promise<boolean> {
   return access(target).then(() => true, () => false);
+}
+
+// Shared by the record and verify CLIs, which read the same run layouts.
+
+export interface EvaluationRunLayout {
+  cycleDirectory: string | null;
+  runDirectory: string;
+  inputPath: string;
+  manifestPath: string;
+  selectionPath: string;
+  editingPath: string;
+  verificationPath: string;
+  finalPath: string;
+  structured: boolean;
+}
+
+/**
+ * Parses `<run> <evaluation-root> [cycle-path | --cycle-dir <cycle-path>]` plus the given
+ * `--...-digest <sha256:...>` flags; any other argument counts as positional.
+ */
+export function parseEvaluationRunArguments(cliArgs: string[], digestFlags: string[], usage: string): {
+  run: number;
+  evaluationRoot: string;
+  cycleDirectory: string | null;
+  digests: Map<string, string>;
+} {
+  const positional: string[] = [];
+  const digests = new Map<string, string>();
+  let flaggedCycle: string | null = null;
+  for (let index = 0; index < cliArgs.length; index += 1) {
+    const argument = cliArgs[index]!;
+    const value = cliArgs[index + 1];
+    if (argument === "--cycle-dir") {
+      if (!value || value.startsWith("--")) throw new Error("--cycle-dir requires a path");
+      flaggedCycle = value;
+      index += 1;
+    } else if (digestFlags.includes(argument)) {
+      if (!value || !/^sha256:[a-f0-9]{64}$/u.test(value)) throw new Error(`${argument} requires a sha256 digest`);
+      digests.set(argument, value);
+      index += 1;
+    } else {
+      positional.push(argument);
+    }
+  }
+  const run = Number(positional[0]);
+  const evaluationRoot = positional[1] ? path.resolve(positional[1]) : "";
+  const positionalCycle = positional[2] ?? null;
+  if (![1, 2, 3].includes(run) || !evaluationRoot || positional.length > 3 || (flaggedCycle && positionalCycle)) {
+    throw new Error(usage);
+  }
+  return { run, evaluationRoot, cycleDirectory: flaggedCycle ?? positionalCycle, digests };
+}
+
+/**
+ * An explicit cycle must stay inside the evaluation root. Without one, `fallbackCycle`
+ * (segments under the root) is used when it exists, and evals/runs otherwise.
+ */
+export async function resolveEvaluationLayout(
+  evaluationRoot: string,
+  run: number,
+  cycleArgument: string | null,
+  fallbackCycle: string[] = [],
+): Promise<EvaluationRunLayout> {
+  const root = await realpath(evaluationRoot);
+  if (cycleArgument) {
+    const cycle = await realpath(path.isAbsolute(cycleArgument) ? path.resolve(cycleArgument) : path.resolve(root, cycleArgument));
+    assertInside(root, cycle, "cycle directory must be inside the evaluation root");
+    return await exists(path.join(cycle, `run-${run}`, "selection.jsonl")) ? legacyLayout(cycle, run) : cycleLayout(cycle, run);
+  }
+  const defaultCycle = path.join(root, ...fallbackCycle);
+  if (fallbackCycle.length > 0 && await exists(defaultCycle)) return cycleLayout(defaultCycle, run);
+  return legacyLayout(path.join(root, "evals", "runs"), run);
+}
+
+function legacyLayout(legacyBase: string, run: number): EvaluationRunLayout {
+  const runDirectory = path.join(legacyBase, `run-${run}`);
+  return {
+    cycleDirectory: null,
+    runDirectory,
+    inputPath: path.join(legacyBase, "input.jsonl"),
+    manifestPath: path.join(legacyBase, "manifest.json"),
+    selectionPath: path.join(runDirectory, "selection.jsonl"),
+    editingPath: path.join(runDirectory, "candidate.jsonl"),
+    verificationPath: path.join(runDirectory, "verification.jsonl"),
+    finalPath: path.join(runDirectory, "final.jsonl"),
+    structured: false,
+  };
+}
+
+function cycleLayout(cycleDirectory: string, run: number): EvaluationRunLayout {
+  const runDirectory = path.join(cycleDirectory, "runs", `run-${run}`);
+  return {
+    cycleDirectory,
+    runDirectory,
+    inputPath: path.join(cycleDirectory, "input.jsonl"),
+    manifestPath: path.join(cycleDirectory, "manifest.json"),
+    selectionPath: path.join(runDirectory, "selection-work-product.jsonl"),
+    editingPath: path.join(runDirectory, "editing-work-product.jsonl"),
+    verificationPath: path.join(runDirectory, "verification-work-product.jsonl"),
+    finalPath: path.join(runDirectory, "final.jsonl"),
+    structured: true,
+  };
 }

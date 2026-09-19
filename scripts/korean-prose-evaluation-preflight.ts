@@ -1,4 +1,4 @@
-import { access, mkdir, readFile, realpath, writeFile } from "node:fs/promises";
+import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 
@@ -16,11 +16,24 @@ import {
 import {
   evaluateKoreanProseReadiness,
   digestCanonical,
+  exists,
   type KoreanProseReadinessResult,
 } from "./korean-prose-readiness.js";
 import { assertConcreteKoreanProseExecutionProvenance } from "./korean-prose-execution-provenance.js";
 
 export type KoreanProseEvaluationPhase = "selection" | "editing" | "verification" | "record";
+
+// Every later phase may still write only a tail of the outputs pending before selection, in this order.
+const STRUCTURED_OUTPUTS = [
+  "selection-work-product.jsonl", "selection-meta.json", "editing-work-product.jsonl", "editing-meta.json",
+  "verification-work-product.jsonl", "verification-meta.json", "final.jsonl", "metrics.json",
+  "workflow.sqlite3", "workflow-receipt.json", "receipt-binding.json", "evaluation-run-claim.json",
+];
+const LEGACY_OUTPUTS = [
+  "selection.jsonl", "selection-meta.json", "candidate.jsonl", "editing-meta.json",
+  "verification-input.jsonl", "verification-input-meta.json", "verification.jsonl", "verification-meta.json",
+  "final.jsonl", "metrics.json", "workflow.sqlite3", "workflow-receipt.json",
+];
 
 export async function preflightStructuredKoreanProseEvaluation(
   phase: KoreanProseEvaluationPhase,
@@ -42,28 +55,18 @@ export async function preflightStructuredKoreanProseEvaluation(
   }
   const runDirectory = path.join(cycleRoot, "runs", `run-${run}`);
   const pending = {
-    selection: [
-      "selection-work-product.jsonl", "selection-meta.json", "editing-work-product.jsonl", "editing-meta.json",
-      "verification-work-product.jsonl", "verification-meta.json", "final.jsonl", "metrics.json",
-      "workflow.sqlite3", "workflow-receipt.json", "receipt-binding.json", "evaluation-run-claim.json",
-    ],
-    editing: [
-      "editing-work-product.jsonl", "editing-meta.json", "verification-work-product.jsonl", "verification-meta.json",
-      "final.jsonl", "metrics.json", "workflow.sqlite3", "workflow-receipt.json", "receipt-binding.json",
-    ],
-    verification: [
-      "verification-work-product.jsonl", "verification-meta.json", "final.jsonl", "metrics.json",
-      "workflow.sqlite3", "workflow-receipt.json", "receipt-binding.json",
-    ],
-    record: ["workflow.sqlite3", "workflow-receipt.json", "receipt-binding.json"],
+    selection: STRUCTURED_OUTPUTS,
+    editing: STRUCTURED_OUTPUTS.slice(2, 11),
+    verification: STRUCTURED_OUTPUTS.slice(4, 11),
+    record: STRUCTURED_OUTPUTS.slice(8, 11),
   } satisfies Record<KoreanProseEvaluationPhase, string[]>;
   for (const name of pending[phase]) {
-    if (await access(path.join(runDirectory, name)).then(() => true, () => false)) {
+    if (await exists(path.join(runDirectory, name))) {
       throw new Error(`refusing to overwrite ${path.join(runDirectory, name)}`);
     }
   }
   const qualityPath = path.join(cycleRoot, "quality-report.json");
-  if (await access(qualityPath).then(() => true, () => false)) {
+  if (await exists(qualityPath)) {
     throw new Error(`refusing to overwrite ${qualityPath}`);
   }
   const claimPath = path.join(runDirectory, "evaluation-run-claim.json");
@@ -358,41 +361,10 @@ export async function preflightKoreanProseEvaluation(
 
 function pendingOutputPaths(phase: KoreanProseEvaluationPhase, runDirectory: string): string[] {
   const outputs = {
-    selection: [
-      "selection.jsonl",
-      "selection-meta.json",
-      "candidate.jsonl",
-      "editing-meta.json",
-      "verification-input.jsonl",
-      "verification-input-meta.json",
-      "verification.jsonl",
-      "verification-meta.json",
-      "final.jsonl",
-      "metrics.json",
-      "workflow.sqlite3",
-      "workflow-receipt.json",
-    ],
-    editing: [
-      "candidate.jsonl",
-      "editing-meta.json",
-      "verification-input.jsonl",
-      "verification-input-meta.json",
-      "verification.jsonl",
-      "verification-meta.json",
-      "final.jsonl",
-      "metrics.json",
-      "workflow.sqlite3",
-      "workflow-receipt.json",
-    ],
-    verification: [
-      "verification.jsonl",
-      "verification-meta.json",
-      "final.jsonl",
-      "metrics.json",
-      "workflow.sqlite3",
-      "workflow-receipt.json",
-    ],
-    record: ["workflow.sqlite3", "workflow-receipt.json"],
+    selection: LEGACY_OUTPUTS,
+    editing: LEGACY_OUTPUTS.slice(2),
+    verification: LEGACY_OUTPUTS.slice(6),
+    record: LEGACY_OUTPUTS.slice(10),
   } satisfies Record<KoreanProseEvaluationPhase, string[]>;
   return outputs[phase].map((name) => path.join(runDirectory, name));
 }

@@ -1,23 +1,17 @@
-import { createHash } from "node:crypto";
-import { access, readFile, realpath } from "node:fs/promises";
+import { hash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { DatabaseSync } from "node:sqlite";
 
-import { evaluateKoreanProseReadiness } from "./korean-prose-readiness.js";
-
-interface EvaluationLayout {
-  cycleDirectory: string | null;
-  formal: boolean;
-  runDirectory: string;
-  inputPath: string;
-  manifestPath: string;
-  selectionPath: string;
-  editingPath: string;
-  verificationPath: string;
-  finalPath: string;
-  structured: boolean;
-}
+import {
+  assertNoRawText,
+  canonicalArtifact,
+  evaluateKoreanProseReadiness,
+  exists,
+  parseEvaluationRunArguments,
+  resolveEvaluationLayout,
+} from "./korean-prose-readiness.js";
 
 interface ReceiptStage {
   requiredCapability: string;
@@ -39,15 +33,25 @@ interface ReceiptStageResult {
 }
 
 const args = process.argv.slice(2).filter((argument) => argument !== "--");
-const { run, evaluationRoot, cycleDirectory, expectedFrameDigest, expectedValidityReportDigest, expectedQualityReportDigest } = parseArguments(args);
-const layout = await resolveLayout(evaluationRoot, run, cycleDirectory);
-if (layout.formal) {
+const { run, evaluationRoot, cycleDirectory, digests } = parseEvaluationRunArguments(
+  args,
+  ["--expected-frame-digest", "--expected-validity-report-digest", "--expected-quality-report-digest"],
+  "usage: <run:1|2|3> <evaluation-root> [cycle-path | --cycle-dir <cycle-path>] [--expected-frame-digest <sha256:digest>] [--expected-validity-report-digest <sha256:digest>] [--expected-quality-report-digest <sha256:digest>]",
+);
+const expectedFrameDigest = digests.get("--expected-frame-digest") ?? null;
+const expectedValidityReportDigest = digests.get("--expected-validity-report-digest") ?? null;
+const expectedQualityReportDigest = digests.get("--expected-quality-report-digest") ?? null;
+const layout = await resolveEvaluationLayout(evaluationRoot, run, cycleDirectory, ["evals", "cycles", "0.1.0-rc2"]);
+// A structured cycle is formal once it has a frozen frame; its receipt binding stands in for the manifest.
+const formal = layout.structured && await exists(path.join(layout.cycleDirectory!, "evaluation-frame.json"));
+const manifestPath = layout.structured ? path.join(layout.runDirectory, "receipt-binding.json") : layout.manifestPath;
+if (formal) {
   if (!expectedFrameDigest || !expectedValidityReportDigest) {
     throw new Error("--expected-frame-digest and --expected-validity-report-digest are required for a formal structured cycle");
   }
   // Once quality-report.json exists the readiness check re-aggregates the quality evidence and
   // therefore needs the externally held quality digest as well; the flag is optional before that.
-  const qualityRecorded = await access(path.join(layout.cycleDirectory!, "quality-report.json")).then(() => true, () => false);
+  const qualityRecorded = await exists(path.join(layout.cycleDirectory!, "quality-report.json"));
   if (qualityRecorded && !expectedQualityReportDigest) {
     throw new Error("--expected-quality-report-digest is required once quality-report.json exists in the cycle");
   }
@@ -65,7 +69,7 @@ const [inputText, selectionText, editingText, verificationText, finalText, manif
   readFile(layout.editingPath, "utf8"),
   readFile(layout.verificationPath, "utf8"),
   readFile(layout.finalPath, "utf8"),
-  readFile(layout.manifestPath, "utf8"),
+  readFile(manifestPath, "utf8"),
   readFile(path.join(layout.runDirectory, "workflow-receipt.json"), "utf8"),
 ]);
 const receipt = JSON.parse(receiptText) as {
@@ -107,8 +111,9 @@ try {
   if (!row) throw new Error("persisted workflow receipt is missing");
   if (JSON.stringify(JSON.parse(row.receipt_json)) !== JSON.stringify(receipt)) throw new Error("SQLite and file receipts differ");
 
-  assertNoRawText(receiptText, [inputText, selectionText, editingText, verificationText, finalText]);
-  assertNoRawText(row.receipt_json, [inputText, selectionText, editingText, verificationText, finalText]);
+  const artifactTexts = [inputText, selectionText, editingText, verificationText, finalText];
+  assertNoRawText(receiptText, artifactTexts, "raw prose leaked into a receipt surface");
+  assertNoRawText(row.receipt_json, artifactTexts, "raw prose leaked into a receipt surface");
   const layoutSummary = layout.structured ? "bound selection artifact" : "legacy artifact layout";
   console.log(`verified run ${run}: four stages, three actors, ${layoutSummary}, no raw prose in receipt or SQLite`);
 } finally {
@@ -139,168 +144,7 @@ function assertArtifactDigest(result: ReceiptStageResult | undefined, artifactId
   if (!artifact?.verified || artifact.digest !== expectedDigest) throw new Error(`${artifactId} digest does not match its work product`);
 }
 
-function parseArguments(cliArgs: string[]): {
-  run: number;
-  evaluationRoot: string;
-  cycleDirectory: string | null;
-  expectedFrameDigest: string | null;
-  expectedValidityReportDigest: string | null;
-  expectedQualityReportDigest: string | null;
-} {
-  const positional: string[] = [];
-  let flaggedCycle: string | null = null;
-  let expectedFrameDigest: string | null = null;
-  let expectedValidityReportDigest: string | null = null;
-  let expectedQualityReportDigest: string | null = null;
-  for (let index = 0; index < cliArgs.length; index += 1) {
-    const argument = cliArgs[index]!;
-    if (argument === "--cycle-dir") {
-      const value = cliArgs[index + 1];
-      if (!value || value.startsWith("--")) throw new Error("--cycle-dir requires a path");
-      flaggedCycle = value;
-      index += 1;
-    } else if (argument === "--expected-frame-digest") {
-      const value = cliArgs[index + 1];
-      if (!value || !/^sha256:[a-f0-9]{64}$/u.test(value)) throw new Error("--expected-frame-digest requires a sha256 digest");
-      expectedFrameDigest = value;
-      index += 1;
-    } else if (argument === "--expected-validity-report-digest") {
-      const value = cliArgs[index + 1];
-      if (!value || !/^sha256:[a-f0-9]{64}$/u.test(value)) throw new Error("--expected-validity-report-digest requires a sha256 digest");
-      expectedValidityReportDigest = value;
-      index += 1;
-    } else if (argument === "--expected-quality-report-digest") {
-      const value = cliArgs[index + 1];
-      if (!value || !/^sha256:[a-f0-9]{64}$/u.test(value)) throw new Error("--expected-quality-report-digest requires a sha256 digest");
-      expectedQualityReportDigest = value;
-      index += 1;
-    } else {
-      positional.push(argument);
-    }
-  }
-  const run = Number(positional[0]);
-  const evaluationRoot = positional[1] ? path.resolve(positional[1]) : "";
-  const positionalCycle = positional[2] ?? null;
-  if (![1, 2, 3].includes(run) || !evaluationRoot || positional.length > 3 || (flaggedCycle && positionalCycle)) {
-    throw new Error("usage: <run:1|2|3> <evaluation-root> [cycle-path | --cycle-dir <cycle-path>] [--expected-frame-digest <sha256:digest>] [--expected-validity-report-digest <sha256:digest>] [--expected-quality-report-digest <sha256:digest>]");
-  }
-  return { run, evaluationRoot, cycleDirectory: flaggedCycle ?? positionalCycle, expectedFrameDigest, expectedValidityReportDigest, expectedQualityReportDigest };
-}
-
-async function resolveLayout(evaluationRoot: string, run: number, cycleArgument: string | null): Promise<EvaluationLayout> {
-  const resolvedEvaluationRoot = await realpath(evaluationRoot);
-  const defaultCycle = path.join(resolvedEvaluationRoot, "evals", "cycles", "0.1.0-rc2");
-  const explicitCycle = cycleArgument ? await realpath(path.isAbsolute(cycleArgument)
-    ? path.resolve(cycleArgument)
-    : path.resolve(resolvedEvaluationRoot, cycleArgument)) : null;
-  if (explicitCycle) {
-    assertContainedPath(resolvedEvaluationRoot, explicitCycle);
-    if (await exists(path.join(explicitCycle, `run-${run}`, "selection.jsonl"))) return legacyLayout(explicitCycle, run);
-    return cycleLayout(explicitCycle, run, await exists(path.join(explicitCycle, "evaluation-frame.json")));
-  }
-  if (await exists(defaultCycle)) return cycleLayout(defaultCycle, run, await exists(path.join(defaultCycle, "evaluation-frame.json")));
-  return legacyLayout(path.join(resolvedEvaluationRoot, "evals", "runs"), run);
-}
-
-function assertContainedPath(root: string, candidate: string): void {
-  const relative = path.relative(root, candidate);
-  if (relative.startsWith(`..${path.sep}`) || relative === ".." || path.isAbsolute(relative)) {
-    throw new Error("cycle directory must be inside the evaluation root");
-  }
-}
-
-function legacyLayout(legacyBase: string, run: number): EvaluationLayout {
-  return {
-    cycleDirectory: null,
-    formal: false,
-    runDirectory: path.join(legacyBase, `run-${run}`),
-    inputPath: path.join(legacyBase, "input.jsonl"),
-    manifestPath: path.join(legacyBase, "manifest.json"),
-    selectionPath: path.join(legacyBase, `run-${run}`, "selection.jsonl"),
-    editingPath: path.join(legacyBase, `run-${run}`, "candidate.jsonl"),
-    verificationPath: path.join(legacyBase, `run-${run}`, "verification.jsonl"),
-    finalPath: path.join(legacyBase, `run-${run}`, "final.jsonl"),
-    structured: false,
-  };
-}
-
-function cycleLayout(cycleDirectory: string, run: number, formal: boolean): EvaluationLayout {
-  const runDirectory = path.join(cycleDirectory, "runs", `run-${run}`);
-  return {
-    cycleDirectory,
-    formal,
-    runDirectory,
-    inputPath: path.join(cycleDirectory, "input.jsonl"),
-    manifestPath: path.join(runDirectory, "receipt-binding.json"),
-    selectionPath: path.join(runDirectory, "selection-work-product.jsonl"),
-    editingPath: path.join(runDirectory, "editing-work-product.jsonl"),
-    verificationPath: path.join(runDirectory, "verification-work-product.jsonl"),
-    finalPath: path.join(runDirectory, "final.jsonl"),
-    structured: true,
-  };
-}
-
-function assertNoRawText(receiptTextValue: string, artifactTexts: string[]): void {
-  const rawValues = new Set<string>();
-  for (const text of artifactTexts) {
-    for (const record of parseJsonl(text)) collectRawText(record, rawValues);
-  }
-  for (const raw of rawValues) {
-    if (receiptTextValue.includes(raw)) throw new Error("raw prose leaked into a receipt surface");
-  }
-}
-
-function collectRawText(value: unknown, destination: Set<string>, key = ""): void {
-  if (typeof value === "string") {
-    if (/^(?:text|prose|replacement|context|userRequest|meaningConstraints)$/iu.test(key)
-      || /(?:source|candidate|final|original|replacement|before|after|context|selected)(?:text|prose|slice|snippet)$/iu.test(key)) {
-      if (value.length > 0) destination.add(value);
-    }
-    return;
-  }
-  if (Array.isArray(value)) {
-    if (/^(?:additionalProtectedStrings|protectedStrings)$/iu.test(key)) {
-      for (const item of value) if (typeof item === "string" && item.length > 0) destination.add(item);
-      return;
-    }
-    for (const item of value) collectRawText(item, destination, key);
-    return;
-  }
-  if (value && typeof value === "object") {
-    for (const [childKey, child] of Object.entries(value as Record<string, unknown>)) collectRawText(child, destination, childKey);
-  }
-}
-
 function artifactDigest(text: string, format: "json" | "jsonl", structured: boolean): string {
-  return sha256(structured ? canonicalArtifact(text, format) : text);
+  return hash("sha256", structured ? canonicalArtifact(text, format) : text);
 }
 
-function canonicalArtifact(text: string, format: "json" | "jsonl"): string {
-  return canonicalJson(format === "jsonl" ? parseJsonl(text) : JSON.parse(text) as unknown);
-}
-
-function canonicalJson(value: unknown): string {
-  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) throw new Error("artifact contains a non-finite number");
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
-  if (value && typeof value === "object") {
-    const record = value as Record<string, unknown>;
-    return `{${Object.keys(record).sort().map((entry) => `${JSON.stringify(entry)}:${canonicalJson(record[entry])}`).join(",")}}`;
-  }
-  throw new Error("artifact contains a non-serializable value");
-}
-
-function parseJsonl(text: string): Array<Record<string, unknown>> {
-  return text.trim().split(/\r?\n/u).filter(Boolean).map((line) => JSON.parse(line) as Record<string, unknown>);
-}
-
-async function exists(target: string): Promise<boolean> {
-  return access(target).then(() => true, () => false);
-}
-
-function sha256(value: string): string {
-  return createHash("sha256").update(value).digest("hex");
-}
