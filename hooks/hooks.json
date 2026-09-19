@@ -1,5 +1,5 @@
 {
-  "description": "Local task continuity binding and compact/resume restore metadata.",
+  "description": "Local task continuity binding, compact/resume restore metadata and the session board.",
   "hooks": {
     "SessionStart": [
       {
@@ -12,6 +12,17 @@
             "timeout": 10,
             "additionalContextLimit": 1800,
             "statusMessage": "Checking local task continuity"
+          }
+        ]
+      },
+      {
+        "matcher": "^(startup|resume|clear|compact)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-board-hook.mjs\"",
+            "commandWindows": "node \"$env:PLUGIN_ROOTmcp-serverdistsession-board-hook.mjs\"",
+            "timeout": 5
           }
         ]
       }
@@ -51,6 +62,28 @@
             "command": "node \"$PLUGIN_ROOT/mcp-server/dist/continuity-hook.mjs\"",
             "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\continuity-hook.mjs\"",
             "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "^mcp__agent[-_]governance[-_]suite__(update_session_status|list_session_status)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-board-hook.mjs\"",
+            "commandWindows": "node \"$env:PLUGIN_ROOTmcp-serverdistsession-board-hook.mjs\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "^(shell|local_shell|exec_command|apply_patch|Bash|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-board-hook.mjs\"",
+            "commandWindows": "node \"$env:PLUGIN_ROOTmcp-serverdistsession-board-hook.mjs\"",
+            "timeout": 5
           }
         ]
       }

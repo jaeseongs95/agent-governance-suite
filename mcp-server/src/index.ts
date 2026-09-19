@@ -9,6 +9,7 @@ import {
   resolveHostAttestation,
   resolveKoreanProseGlossaryPath,
   resolveRegistryPath,
+  resolveSessionBoardDatabasePath,
   resolveToolSchemaProfile,
   resolveWorkflowDatabasePath,
 } from "./runtime-config.js";
@@ -59,7 +60,7 @@ async function main(): Promise<void> {
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation);
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath());
   await server.connect(new StdioServerTransport());
 }
 

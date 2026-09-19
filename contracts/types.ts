@@ -232,6 +232,23 @@ export interface PurgeDirectContextRequestV1 {
   _continuityBinding: string;
 }
 
+/** Added by the session board hook from host hook input; callers never supply it. */
+export interface SessionBindingV1 {
+  host: string;
+  sessionId: string;
+}
+
+export interface UpdateSessionStatusRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  summary: string;
+  _sessionBinding?: SessionBindingV1;
+}
+
+export interface ListSessionStatusRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  _sessionBinding?: SessionBindingV1;
+}
+
 export interface StateCleanupPolicyV1 {
   workflowRetentionDays: 180;
   continuityPayloadRetentionDays: 30;

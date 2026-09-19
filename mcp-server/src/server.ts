@@ -3,10 +3,12 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 
 import {
   type ApiResultV1,
+  type ErrorCode,
   type PluginUpdateStatusV1,
   type KoreanProseGlossaryLookupResultV1,
   type ResponseModeV1,
 } from "../../contracts/types.js";
+import { listSessions, normalizeSummary, openBoard, readSession } from "../../skills/session-board/scripts/board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
 import { inlineSchemaReferences } from "./tool-schema-inline.js";
 import { PLUGIN_INFO } from "./plugin-info.js";
@@ -195,12 +197,53 @@ function apiOk<T>(data: T): ApiResultV1<T> {
 }
 
 function invalidInput(message: string): ApiResultV1<never> {
-  return {
-    schemaVersion: "1.0.0",
-    ok: false,
-    data: null,
-    error: { code: "INVALID_INPUT", message, details: null },
-  };
+  return apiError("INVALID_INPUT", message);
+}
+
+function apiError(code: ErrorCode, message: string): ApiResultV1<never> {
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
+}
+
+/**
+ * Session board tools are an interface over the skill's board store. The PreToolUse hook writes the line with the
+ * host's session identity and binds it here; this side validates the call and reads the board back.
+ */
+function sessionBoardResult(
+  tool: "update_session_status" | "list_session_status",
+  args: Record<string, unknown>,
+  databasePath: string | null,
+  validator: ContractValidator,
+): ApiResultV1<unknown> {
+  let summary: string | null = null;
+  let binding: { host: string; sessionId: string } | null;
+  try {
+    if (tool === "update_session_status") {
+      const request = validator.updateSessionStatusRequest(args);
+      summary = normalizeSummary(request.summary);
+      binding = request._sessionBinding ?? null;
+    } else {
+      binding = validator.listSessionStatusRequest(args)._sessionBinding ?? null;
+    }
+  } catch (error) {
+    return invalidInput(error instanceof Error ? error.message : "Session board input is invalid.");
+  }
+  if (tool === "update_session_status" && !binding) {
+    return apiError("BINDING_REQUIRED", "The plugin hook records the session board line and did not run for this call.");
+  }
+  if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
+  let board: ReturnType<typeof openBoard> | null = null;
+  try {
+    board = openBoard(databasePath);
+    if (tool === "list_session_status") return apiOk({ sessions: listSessions(board, new Date().toISOString(), binding) });
+    const row = readSession(board, binding!.host, binding!.sessionId);
+    return row && row.summary === summary
+      ? apiOk(row)
+      : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
+  } catch {
+    return apiError("MCP_UNAVAILABLE", "The session board is unavailable.");
+  } finally {
+    try { board?.close(); } catch { /* Read-only close failures do not change the result. */ }
+  }
 }
 
 /**
@@ -252,6 +295,7 @@ export function createMcpServer(
   validator: ContractValidator = new ContractValidator(),
   toolSchemaProfile: ToolSchemaProfile = "default",
   hostAttestation: HostAttestationProvider | null = null,
+  sessionBoardPath: string | null = null,
 ): Server {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
@@ -396,6 +440,18 @@ export function createMcpServer(
         inputSchema: contractSchemas.executeStateCleanupRequest,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
       },
+      {
+        name: "update_session_status",
+        description: "Write this session's one-line current work (what, where, next external step) to the local session board. The plugin hook binds the session; call it when a request starts or the work changes.",
+        inputSchema: contractSchemas.updateSessionStatusRequest,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "list_session_status",
+        description: "List this host's sessions on the local session board with working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs.",
+        inputSchema: contractSchemas.listSessionStatusRequest,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
     ]),
   }));
 
@@ -490,6 +546,10 @@ export function createMcpServer(
           result = cleanup
             ? cleanup.prepare(args)
             : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
+          break;
+        case "update_session_status":
+        case "list_session_status":
+          result = sessionBoardResult(request.params.name, args, sessionBoardPath, validator);
           break;
         case "execute_state_cleanup":
           result = cleanup

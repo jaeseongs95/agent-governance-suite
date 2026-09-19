@@ -51,7 +51,7 @@ codex plugin add agent-governance-suite@agent-governance
 
 Start a new Codex session after installation so Codex can load the bundled skills and MCP tools. Then call the orchestrator:
 
-The task-continuity lifecycle hook runs only after you review and trust its current definition in Codex `/hooks` following installation or a hook change. Existing specialist skills and workflow MCP operations continue to work when the untrusted hook is skipped.
+The task-continuity lifecycle hook runs only after you review and trust its current definition in Codex `/hooks` following installation or a hook change. Existing specialist skills and workflow MCP operations continue to work when the untrusted hook is skipped. The session board hook needs the same trust. In Codex it runs on session start and before tool calls; Codex's shell and patch tool names and its support for denying a tool call have not been verified in Codex yet.
 
 ```text
 Use $orchestrator to define the scope and success criteria for this task, then manage the required checks and completion evidence: <your task>
@@ -83,7 +83,8 @@ The Claude Code distribution lives separately in `claude-plugin/`. It shares no 
 
 Start a new session after installation and call skills as `/agent-governance-suite:orchestrator` or `/agent-governance-suite:mutation-risk-preflight`. Differences from Codex:
 
-- Workflow and continuity state is stored in the per-plugin data directory Claude Code provides (`${CLAUDE_PLUGIN_DATA}`).
+- Workflow, continuity and session board state is stored in the per-plugin data directory Claude Code provides (`${CLAUDE_PLUGIN_DATA}`), so Claude Code sessions see only Claude Code sessions on the board.
+- For each user request, the session board hook asks for a one-line `update_session_status` before the first file change, command or subagent run. Without it, that call is denied once and the next attempt is allowed.
 - `codex-token-usage-analyzer` is omitted because it reads Codex session logs only.
 - Independent audits and deliberation use the `independent-auditor` and `deliberation-reviewer` subagents, which do not inherit the parent conversation.
 - `instruction-scope-resolver` checks the `CLAUDE.md` hierarchy in addition to the `AGENTS.md` chain.

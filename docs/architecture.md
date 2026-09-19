@@ -48,6 +48,10 @@ Codex lifecycle Hook은 MCP 준비 여부에 의존하지 않고 bundled continu
 
 `SessionStart(resume)`과 direct-task `SessionStart(compact)`는 snapshot 본문 없이 `DEFER` 후보 metadata만 추가합니다. 본문은 token·epoch·revision·digest를 다시 검사하는 `load_context`의 tool result로만 반환됩니다. Workflow compact는 `PreCompact` marker와 현재 projection이 일치할 때 bounded 구조 카드만 한 번 `INJECT`합니다. Startup은 복원하지 않고 clear는 epoch를 회전합니다. 모든 Hook 저장 오류는 exit 0과 빈 출력으로 끝나며, MCP 서버도 continuity 초기화 실패 시 workflow를 계속 제공하고 continuity 도구에만 `CONTINUITY_UNAVAILABLE`을 반환합니다.
 
+## 세션 현황판
+
+세션 현황판은 `session-board` 인프라 스킬의 저장소 모듈이 규칙과 SQLite 저장을 모두 맡고, 훅과 MCP 도구(`update_session_status`, `list_session_status`)는 그 모듈을 부르는 인터페이스입니다. 행마다 호스트, 세션 ID, 작업 디렉터리, 한 줄 요약, 요약 시각, 마지막 요청 시각을 두며 요청 원문은 저장하지 않습니다. 세션 ID와 작업 디렉터리는 훅 입력에서 채웁니다. 요청마다 첫 상태 변경 도구 호출을 한 번 거부할지는 저장소 모듈이 판단하고, 훅은 그 결과를 호스트에 전달하며 모든 오류에서 호출을 통과(fail open)시킵니다. 파일은 기본적으로 workflow DB 옆의 `session-board.sqlite3`이며 Claude Code에서는 `${CLAUDE_PLUGIN_DATA}` 아래에 둡니다.
+
 ## 플러그인 업데이트 알림
 
 MCP 서버는 고정된 공개 저장소에서 `vMAJOR.MINOR.PATCH` 형식의 안정 tag만 확인합니다. 성공한 결과는 같은 SQLite DB의 `plugin_update_state`에 24시간 동안 보관하고, 실패하면 마지막 성공 결과를 유지한 채 1시간 뒤 다시 시도합니다. 업데이트 확인 오류는 workflow 상태나 도구 결과를 바꾸지 않습니다.

@@ -41,14 +41,15 @@ export function resolveWorkflowDatabasePath(
   return path.resolve(stateRoot, "agent-governance-suite", "workflows.sqlite3");
 }
 
-/** Resolves continuity state beside workflow state unless explicitly overridden. */
-export function resolveContinuityDatabasePath(
-  environment: NodeJS.ProcessEnv = process.env,
-  platform: NodeJS.Platform = process.platform,
-  homeDirectory: string = homedir(),
-  currentWorkingDirectory: string = process.cwd(),
+function besideWorkflowDatabase(
+  variable: string,
+  fileName: string,
+  environment: NodeJS.ProcessEnv,
+  platform: NodeJS.Platform,
+  homeDirectory: string,
+  currentWorkingDirectory: string,
 ): string {
-  const configured = environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH?.trim();
+  const configured = environment[variable]?.trim();
   if (configured) return path.resolve(currentWorkingDirectory, configured);
   const workflowPath = resolveWorkflowDatabasePath(
     environment,
@@ -57,7 +58,27 @@ export function resolveContinuityDatabasePath(
     currentWorkingDirectory,
   );
   if (workflowPath === ":memory:") return ":memory:";
-  return path.join(path.dirname(workflowPath), "continuity.sqlite3");
+  return path.join(path.dirname(workflowPath), fileName);
+}
+
+/** Resolves continuity state beside workflow state unless explicitly overridden. */
+export function resolveContinuityDatabasePath(
+  environment: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+  homeDirectory: string = homedir(),
+  currentWorkingDirectory: string = process.cwd(),
+): string {
+  return besideWorkflowDatabase("AGENT_GOVERNANCE_CONTINUITY_DB_PATH", "continuity.sqlite3", environment, platform, homeDirectory, currentWorkingDirectory);
+}
+
+/** Resolves the session board beside workflow state unless explicitly overridden. */
+export function resolveSessionBoardDatabasePath(
+  environment: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+  homeDirectory: string = homedir(),
+  currentWorkingDirectory: string = process.cwd(),
+): string {
+  return besideWorkflowDatabase("AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH", "session-board.sqlite3", environment, platform, homeDirectory, currentWorkingDirectory);
 }
 
 function canonicalDatabasePath(databasePath: string, platform: NodeJS.Platform): string | null {

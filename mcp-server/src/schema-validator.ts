@@ -23,6 +23,8 @@ import {
   type ExecuteStateCleanupRequestV1,
   type LoadContextRequestV1,
   type PurgeDirectContextRequestV1,
+  type UpdateSessionStatusRequestV1,
+  type ListSessionStatusRequestV1,
   type PrepareStateCleanupRequestV1,
   type SuppressContextRestoreRequestV1,
   type PluginUpdateNoticeV1,
@@ -81,6 +83,8 @@ export const contractSchemas = {
   loadContextRequest: loadSchema("load-context-request.v1.schema.json"),
   suppressContextRestoreRequest: loadSchema("suppress-context-restore-request.v1.schema.json"),
   purgeDirectContextRequest: loadSchema("purge-direct-context-request.v1.schema.json"),
+  updateSessionStatusRequest: loadSchema("update-session-status-request.v1.schema.json"),
+  listSessionStatusRequest: loadSchema("list-session-status-request.v1.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
   executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
   stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
@@ -232,6 +236,14 @@ export class ContractValidator {
 
   purgeDirectContextRequest(value: unknown): PurgeDirectContextRequestV1 {
     return this.assert<PurgeDirectContextRequestV1>("purgeDirectContextRequest", value);
+  }
+
+  updateSessionStatusRequest(value: unknown): UpdateSessionStatusRequestV1 {
+    return this.assert<UpdateSessionStatusRequestV1>("updateSessionStatusRequest", value);
+  }
+
+  listSessionStatusRequest(value: unknown): ListSessionStatusRequestV1 {
+    return this.assert<ListSessionStatusRequestV1>("listSessionStatusRequest", value);
   }
 
   prepareStateCleanupRequest(value: unknown): PrepareStateCleanupRequestV1 {

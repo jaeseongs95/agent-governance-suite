@@ -62,6 +62,7 @@ describe("generated Claude plugin", () => {
     expect(server.args).toEqual(["${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/server.mjs"]);
     expect(server.env.AGENT_GOVERNANCE_DB_PATH).toBe("${CLAUDE_PLUGIN_DATA}/workflows.sqlite3");
     expect(server.env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH).toBe("${CLAUDE_PLUGIN_DATA}/continuity.sqlite3");
+    expect(server.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH).toBe("${CLAUDE_PLUGIN_DATA}/session-board.sqlite3");
     expect(server.env.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE).toBe("anthropic");
     expect(server.env.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("claude-code");
   });
@@ -102,7 +103,7 @@ describe("generated Claude plugin", () => {
     }
   });
 
-  it("registers exec-form continuity hooks plus the Claude-only skill trigger and host attestation", async () => {
+  it("registers exec-form continuity hooks plus the Claude-only skill trigger, host attestation and session board", async () => {
     const claudeHooks = await readJson(pluginRoot, "hooks", "hooks.json");
     // Parity with the Codex hook events is reported as drift, so a new Codex event never fails this test.
     expect(Object.keys(claudeHooks.hooks).sort()).toEqual(["PostCompact", "PostModelSwitch", "PreCompact", "PreToolUse", "SessionStart", "UserPromptSubmit"]);
@@ -110,6 +111,7 @@ describe("generated Claude plugin", () => {
       "${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs",
       "${CLAUDE_PLUGIN_ROOT}/hooks/skill-trigger-hook.mjs",
       "${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs",
+      "${CLAUDE_PLUGIN_ROOT}/hooks/session-board-hook.mjs",
     ];
     for (const groups of Object.values(claudeHooks.hooks)) {
       for (const hook of groups.flatMap((group) => group.hooks)) {
@@ -117,8 +119,18 @@ describe("generated Claude plugin", () => {
         expect(allowedScripts).toContain(hook.args[0]);
       }
     }
-    // The trigger hook is the only handler for UserPromptSubmit and for the Bash PreToolUse group.
-    expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[1]]);
+    // UserPromptSubmit runs the trigger hook and the session board, which records only the request time.
+    expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[1], allowedScripts[3]]);
+    // The session board gates edits, shells and delegation, and binds only its own two MCP tools.
+    const boardMatchers = claudeHooks.hooks.PreToolUse
+      .filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[3]))
+      .map((group) => new RegExp(group.matcher, "u"));
+    for (const tool of ["Edit", "Write", "MultiEdit", "NotebookEdit", "Bash", "PowerShell", "Agent", "Task", `${toolPrefix}update_session_status`, `${toolPrefix}list_session_status`]) {
+      expect(boardMatchers.some((matcher) => matcher.test(tool))).toBe(true);
+    }
+    for (const tool of ["Read", "Grep", "Glob", `${toolPrefix}plan_workflow`, `${toolPrefix}record_stage_result`, ...continuityTools.map((name) => `${toolPrefix}${name}`)]) {
+      expect(boardMatchers.some((matcher) => matcher.test(tool))).toBe(false);
+    }
     const bashGroup = claudeHooks.hooks.PreToolUse.find((group) => group.matcher === "^Bash$");
     expect(bashGroup.hooks.map((hook) => hook.args[0])).toEqual([allowedScripts[1]]);
     const matcher = new RegExp(claudeHooks.hooks.PreToolUse[0].matcher, "u");

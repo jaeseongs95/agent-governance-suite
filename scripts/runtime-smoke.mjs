@@ -22,7 +22,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     await mkdir(path.join(cleanRoot, "mcp-server", "dist"), { recursive: true });
     await Promise.all([
       ...["contracts", "runtime", "skills"].map((directory) => cp(path.join(sourceRoot, directory), path.join(cleanRoot, directory), { recursive: true })),
-      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs"].map((bundle) => (
+      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "session-board-hook.mjs"].map((bundle) => (
         cp(path.join(sourceRoot, "mcp-server", "dist", bundle), path.join(cleanRoot, "mcp-server", "dist", bundle))
       )),
     ]);
@@ -34,6 +34,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     delete environment.NODE_PATH;
     environment.AGENT_GOVERNANCE_DB_PATH = path.join(cleanRoot, "state", "workflows.sqlite3");
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = path.join(cleanRoot, "state", "continuity.sqlite3");
+    environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = path.join(cleanRoot, "state", "session-board.sqlite3");
     // Runs a clean-room script (a path relative to the clean root) with the given stdin text.
     const runNode = (script, input) => spawnSync(process.execPath, [path.join(cleanRoot, ...script.split("/"))], {
       cwd: cleanRoot,
@@ -112,6 +113,15 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       || !String(interactiveOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs1.")
     ) {
       throw new Error(`host attestation hook failed its interactive-session smoke check.\n${sessionStart.stderr ?? ""}${interactive.stderr ?? ""}`);
+    }
+
+    // The session board gate denies the first edit of a session without a summary once, then lets it through.
+    const gateInput = `${JSON.stringify({ hook_event_name: "PreToolUse", session_id: "clean-room-board", cwd: cleanRoot, tool_name: "Edit", tool_input: {} })}\n`;
+    const firstGate = runNode("mcp-server/dist/session-board-hook.mjs", gateInput);
+    const secondGate = runNode("mcp-server/dist/session-board-hook.mjs", gateInput);
+    const firstDecision = firstGate.status === 0 && firstGate.stdout ? JSON.parse(firstGate.stdout).hookSpecificOutput?.permissionDecision : null;
+    if (firstGate.error || firstDecision !== "deny" || secondGate.error || secondGate.status !== 0 || secondGate.stdout !== "") {
+      throw new Error(`session board hook failed its node_modules-free deny-once smoke check.\n${firstGate.stderr ?? ""}${secondGate.stderr ?? ""}`);
     }
 
     const sourceText = "MCP와 SQLite";

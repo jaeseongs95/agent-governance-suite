@@ -4,7 +4,7 @@ import { NAME_PATTERN, ROOT, parseArguments, readFrontmatter, readJson, walkFile
 
 const PLACEHOLDER_PATTERN = /\[TODO:[^\]]*\]|\bTODO\b|\bTBD\b/u;
 const LINK_PATTERN = /\[[^\]]+\]\((?!https?:|#|mailto:)([^)]+)\)/gu;
-const INFRASTRUCTURE_SKILLS = new Set(["context-continuity"]);
+const INFRASTRUCTURE_SKILLS = new Set(["context-continuity", "session-board"]);
 
 export async function validateSkill(name) {
   const errors = [];

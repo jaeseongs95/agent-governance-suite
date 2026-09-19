@@ -968,8 +968,8 @@ function resolveWorkflowDatabasePath(environment = process.env, platform = proce
   }
   return path3.resolve(stateRoot, "agent-governance-suite", "workflows.sqlite3");
 }
-function resolveContinuityDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
-  const configured = environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH?.trim();
+function besideWorkflowDatabase(variable, fileName, environment, platform, homeDirectory, currentWorkingDirectory) {
+  const configured = environment[variable]?.trim();
   if (configured) return path3.resolve(currentWorkingDirectory, configured);
   const workflowPath = resolveWorkflowDatabasePath(
     environment,
@@ -978,7 +978,10 @@ function resolveContinuityDatabasePath(environment = process.env, platform = pro
     currentWorkingDirectory
   );
   if (workflowPath === ":memory:") return ":memory:";
-  return path3.join(path3.dirname(workflowPath), "continuity.sqlite3");
+  return path3.join(path3.dirname(workflowPath), fileName);
+}
+function resolveContinuityDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  return besideWorkflowDatabase("AGENT_GOVERNANCE_CONTINUITY_DB_PATH", "continuity.sqlite3", environment, platform, homeDirectory, currentWorkingDirectory);
 }
 function canonicalDatabasePath(databasePath, platform) {
   if (databasePath === ":memory:") return null;

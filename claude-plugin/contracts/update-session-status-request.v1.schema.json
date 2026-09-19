@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/update-session-status-request.v1.schema.json",
+  "title": "UpdateSessionStatusRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "summary"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[^\\r\\n]*$" },
+    "_sessionBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host", "sessionId"],
+      "properties": {
+        "host": { "type": "string", "minLength": 1 },
+        "sessionId": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

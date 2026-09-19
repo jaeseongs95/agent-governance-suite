@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertDistinctDatabasePaths,
   resolveContinuityDatabasePath,
+  resolveSessionBoardDatabasePath,
   resolveRegistryPath,
   resolveWorkflowDatabasePath,
 } from "../../mcp-server/src/runtime-config.js";
@@ -100,6 +101,17 @@ describe("resolveContinuityDatabasePath", () => {
     const workflowPath = join(tmpdir(), "governance-state", "workflows-custom.sqlite3");
     expect(resolveContinuityDatabasePath({ AGENT_GOVERNANCE_DB_PATH: workflowPath }, "linux"))
       .toBe(join(tmpdir(), "governance-state", "continuity.sqlite3"));
+  });
+});
+
+describe("resolveSessionBoardDatabasePath", () => {
+  it("uses the explicit board override and otherwise sits beside the workflow database", () => {
+    const workingDirectory = join(tmpdir(), "board-working-directory");
+    expect(resolveSessionBoardDatabasePath({ AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: "board.sqlite3" }, "linux", join(tmpdir(), "unused-home"), workingDirectory))
+      .toBe(join(workingDirectory, "board.sqlite3"));
+    const workflowPath = join(tmpdir(), "governance-state", "workflows.sqlite3");
+    expect(resolveSessionBoardDatabasePath({ AGENT_GOVERNANCE_DB_PATH: workflowPath }, "linux"))
+      .toBe(join(tmpdir(), "governance-state", "session-board.sqlite3"));
   });
 });
 

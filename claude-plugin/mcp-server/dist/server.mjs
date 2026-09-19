@@ -3262,8 +3262,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path9) {
-      let input = path9;
+    function removeDotSegments(path10) {
+      let input = path10;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3672,8 +3672,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path9 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path9 && path9 !== "/" ? path9 : void 0;
+        const path10 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path10 && path10 !== "/" ? path10 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -8205,10 +8205,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path9) {
-  if (!path9)
+function getElementAtPath(obj, path10) {
+  if (!path10)
     return obj;
-  return path9.reduce((acc, key) => acc?.[key], obj);
+  return path10.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -8620,11 +8620,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path9, issues) {
+function prefixIssues(path10, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path9);
+    iss.path.unshift(path10);
     return iss;
   });
 }
@@ -9053,16 +9053,16 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
 }
 function formatError(error2, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error3, path9 = []) => {
+  const processError = (error3, path10 = []) => {
     for (const issue2 of error3.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path9, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path10, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else {
-        const fullpath = [...path9, ...issue2.path];
+        const fullpath = [...path10, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -17001,8 +17001,8 @@ function resolveWorkflowDatabasePath(environment = process.env, platform = proce
   }
   return path4.resolve(stateRoot, "agent-governance-suite", "workflows.sqlite3");
 }
-function resolveContinuityDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
-  const configured = environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH?.trim();
+function besideWorkflowDatabase(variable, fileName, environment, platform, homeDirectory, currentWorkingDirectory) {
+  const configured = environment[variable]?.trim();
   if (configured) return path4.resolve(currentWorkingDirectory, configured);
   const workflowPath = resolveWorkflowDatabasePath(
     environment,
@@ -17011,7 +17011,13 @@ function resolveContinuityDatabasePath(environment = process.env, platform = pro
     currentWorkingDirectory
   );
   if (workflowPath === ":memory:") return ":memory:";
-  return path4.join(path4.dirname(workflowPath), "continuity.sqlite3");
+  return path4.join(path4.dirname(workflowPath), fileName);
+}
+function resolveContinuityDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  return besideWorkflowDatabase("AGENT_GOVERNANCE_CONTINUITY_DB_PATH", "continuity.sqlite3", environment, platform, homeDirectory, currentWorkingDirectory);
+}
+function resolveSessionBoardDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  return besideWorkflowDatabase("AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH", "session-board.sqlite3", environment, platform, homeDirectory, currentWorkingDirectory);
 }
 function canonicalDatabasePath(databasePath, platform) {
   if (databasePath === ":memory:") return null;
@@ -17055,8 +17061,8 @@ import { readFileSync as readFileSync2, readdirSync } from "node:fs";
 import path5 from "node:path";
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path9 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path9, "utf8"));
+  const path10 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path10, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -17090,6 +17096,8 @@ var contractSchemas = {
   loadContextRequest: loadSchema("load-context-request.v1.schema.json"),
   suppressContextRestoreRequest: loadSchema("suppress-context-restore-request.v1.schema.json"),
   purgeDirectContextRequest: loadSchema("purge-direct-context-request.v1.schema.json"),
+  updateSessionStatusRequest: loadSchema("update-session-status-request.v1.schema.json"),
+  listSessionStatusRequest: loadSchema("list-session-status-request.v1.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
   executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
   stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
@@ -17105,16 +17113,16 @@ function artifactDigestView(declared) {
   const properties = items?.properties;
   return (artifact) => {
     if (!properties || !artifact || typeof artifact !== "object" || Array.isArray(artifact)) return artifact;
-    const view = { ...artifact };
+    const view2 = { ...artifact };
     for (const key of ["digest", "targetDigest"]) {
-      const current = view[key];
+      const current = view2[key];
       const pattern = properties[key]?.pattern;
       if (typeof current !== "string" || typeof pattern !== "string" || !/^(?:sha256:)?[a-f0-9]{64}$/u.test(current)) continue;
       const declaredForm = new RegExp(pattern, "u");
       const alternate = current.startsWith("sha256:") ? current.slice(7) : `sha256:${current}`;
-      if (!declaredForm.test(current) && declaredForm.test(alternate)) view[key] = alternate;
+      if (!declaredForm.test(current) && declaredForm.test(alternate)) view2[key] = alternate;
     }
-    return view;
+    return view2;
   };
 }
 function errorText(errors) {
@@ -17209,6 +17217,12 @@ var ContractValidator = class {
   }
   purgeDirectContextRequest(value) {
     return this.assert("purgeDirectContextRequest", value);
+  }
+  updateSessionStatusRequest(value) {
+    return this.assert("updateSessionStatusRequest", value);
+  }
+  listSessionStatusRequest(value) {
+    return this.assert("listSessionStatusRequest", value);
   }
   prepareStateCleanupRequest(value) {
     return this.assert("prepareStateCleanupRequest", value);
@@ -19070,6 +19084,64 @@ var Server = class extends Protocol {
   }
 };
 
+// skills/session-board/scripts/board-store.mjs
+import { mkdirSync as mkdirSync2 } from "node:fs";
+import path6 from "node:path";
+import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
+var SUMMARY_MAX_LENGTH = 200;
+var RETAIN_MS = 24 * 36e5;
+function openBoard(databasePath, { busyTimeoutMs = 5e3 } = {}) {
+  if (databasePath !== ":memory:") mkdirSync2(path6.dirname(path6.resolve(databasePath)), { recursive: true });
+  const db = new DatabaseSync2(databasePath);
+  try {
+    db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
+    if (databasePath !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
+    db.exec(`CREATE TABLE IF NOT EXISTS sessions (
+      host TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      cwd TEXT NOT NULL,
+      summary TEXT,
+      summary_at TEXT,
+      last_prompt_at TEXT,
+      denied_for TEXT,
+      started_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (host, session_id)
+    ) STRICT;`);
+  } catch (error2) {
+    db.close();
+    throw error2;
+  }
+  return db;
+}
+function normalizeSummary(value) {
+  if (typeof value !== "string") return null;
+  const line = value.trim();
+  return line && !/[\r\n]/u.test(line) && line.length <= SUMMARY_MAX_LENGTH ? line : null;
+}
+function view(row, current) {
+  return {
+    host: row.host,
+    sessionId: row.session_id,
+    cwd: row.cwd,
+    summary: row.summary ?? null,
+    summaryAt: row.summary_at ?? null,
+    lastPromptAt: row.last_prompt_at ?? null,
+    startedAt: row.started_at,
+    updatedAt: row.updated_at,
+    stale: !row.summary_at || row.summary_at < (row.last_prompt_at ?? row.started_at),
+    current: Boolean(current && row.host === current.host && row.session_id === current.sessionId)
+  };
+}
+function readSession(db, host, sessionId) {
+  const row = db.prepare("SELECT * FROM sessions WHERE host = ? AND session_id = ?").get(host, sessionId);
+  return row ? view(row, { host, sessionId }) : null;
+}
+function listSessions(db, now, current = null) {
+  const since = new Date(Date.parse(now) - RETAIN_MS).toISOString();
+  return db.prepare("SELECT * FROM sessions WHERE updated_at >= ? ORDER BY updated_at DESC").all(since).map((row) => view(row, current));
+}
+
 // mcp-server/src/tool-schema-inline.ts
 var ANNOTATION_ONLY_KEYS = /* @__PURE__ */ new Set(["$schema", "$id", "$defs", "definitions"]);
 var SCHEMA_MAP_KEYS = /* @__PURE__ */ new Set(["properties", "patternProperties", "dependentSchemas"]);
@@ -19195,7 +19267,7 @@ function convergenceStatusSummary(status) {
 
 // mcp-server/src/korean-prose-glossary.ts
 import { createHash as createHash4 } from "node:crypto";
-import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
+import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 var KOREAN_PROSE_GLOSSARY_MAX_SOURCE_LENGTH = 2e5;
 var KOREAN_PROSE_GLOSSARY_MAX_MATCHES = 256;
 var DIGEST = /^[a-f0-9]{64}$/u;
@@ -19308,7 +19380,7 @@ function glossaryContentDigest(entries) {
   }))));
 }
 function loadGlossary(databasePath) {
-  const database = new DatabaseSync2(databasePath, { readOnly: true });
+  const database = new DatabaseSync3(databasePath, { readOnly: true });
   try {
     database.exec("PRAGMA query_only = ON;");
     const integrity = database.prepare("PRAGMA integrity_check").get();
@@ -19535,12 +19607,43 @@ function apiOk(data) {
   return { schemaVersion: "1.0.0", ok: true, data, error: null };
 }
 function invalidInput(message) {
-  return {
-    schemaVersion: "1.0.0",
-    ok: false,
-    data: null,
-    error: { code: "INVALID_INPUT", message, details: null }
-  };
+  return apiError("INVALID_INPUT", message);
+}
+function apiError(code, message) {
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
+}
+function sessionBoardResult(tool, args, databasePath, validator) {
+  let summary = null;
+  let binding;
+  try {
+    if (tool === "update_session_status") {
+      const request = validator.updateSessionStatusRequest(args);
+      summary = normalizeSummary(request.summary);
+      binding = request._sessionBinding ?? null;
+    } else {
+      binding = validator.listSessionStatusRequest(args)._sessionBinding ?? null;
+    }
+  } catch (error2) {
+    return invalidInput(error2 instanceof Error ? error2.message : "Session board input is invalid.");
+  }
+  if (tool === "update_session_status" && !binding) {
+    return apiError("BINDING_REQUIRED", "The plugin hook records the session board line and did not run for this call.");
+  }
+  if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
+  let board = null;
+  try {
+    board = openBoard(databasePath);
+    if (tool === "list_session_status") return apiOk({ sessions: listSessions(board, (/* @__PURE__ */ new Date()).toISOString(), binding) });
+    const row = readSession(board, binding.host, binding.sessionId);
+    return row && row.summary === summary ? apiOk(row) : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
+  } catch {
+    return apiError("MCP_UNAVAILABLE", "The session board is unavailable.");
+  } finally {
+    try {
+      board?.close();
+    } catch {
+    }
+  }
 }
 var planWorkflowAnthropicInputSchema = {
   type: "object",
@@ -19562,7 +19665,7 @@ function serverInstructions(profile = "default") {
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null) {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -19698,6 +19801,18 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         description: "Recheck a preview token, create verified SQLite backups, and atomically delete only the bound inactive candidates. Backups are retained until manually deleted.",
         inputSchema: contractSchemas.executeStateCleanupRequest,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false }
+      },
+      {
+        name: "update_session_status",
+        description: "Write this session's one-line current work (what, where, next external step) to the local session board. The plugin hook binds the session; call it when a request starts or the work changes.",
+        inputSchema: contractSchemas.updateSessionStatusRequest,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "list_session_status",
+        description: "List this host's sessions on the local session board with working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs.",
+        inputSchema: contractSchemas.listSessionStatusRequest,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       }
     ])
   }));
@@ -19786,6 +19901,10 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
           break;
         case "prepare_state_cleanup":
           result = cleanup ? cleanup.prepare(args) : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
+          break;
+        case "update_session_status":
+        case "list_session_status":
+          result = sessionBoardResult(request.params.name, args, sessionBoardPath, validator);
           break;
         case "execute_state_cleanup":
           result = cleanup ? cleanup.execute(args) : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
@@ -20115,9 +20234,9 @@ var PluginUpdateService = class {
 };
 
 // mcp-server/src/sqlite-workflow-store.ts
-import { chmodSync as chmodSync2, mkdirSync as mkdirSync2 } from "node:fs";
-import path6 from "node:path";
-import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
+import { chmodSync as chmodSync2, mkdirSync as mkdirSync3 } from "node:fs";
+import path7 from "node:path";
+import { DatabaseSync as DatabaseSync4 } from "node:sqlite";
 
 // mcp-server/src/workflow-store.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
@@ -20318,18 +20437,18 @@ var SqliteWorkflowStore = class {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
     }
     if (databasePath !== ":memory:") {
-      mkdirSync2(path6.dirname(path6.resolve(databasePath)), { recursive: true, mode: 448 });
+      mkdirSync3(path7.dirname(path7.resolve(databasePath)), { recursive: true, mode: 448 });
     }
     let openedDatabase = null;
     try {
-      openedDatabase = new DatabaseSync3(databasePath);
+      openedDatabase = new DatabaseSync4(databasePath);
       this.database = openedDatabase;
       this.database.exec("PRAGMA busy_timeout = 5000;");
       this.database.exec("PRAGMA synchronous = FULL;");
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       if (databasePath !== ":memory:" && process.platform !== "win32") {
-        chmodSync2(path6.resolve(databasePath), 384);
+        chmodSync2(path7.resolve(databasePath), 384);
       }
     } catch (cause) {
       try {
@@ -20736,7 +20855,7 @@ var SqliteWorkflowStore = class {
     }
     this.guard("Cannot create a verified workflow cleanup backup.", { targetPath }, () => {
       this.database.prepare("VACUUM INTO ?").run(targetPath);
-      const backup = new DatabaseSync3(targetPath, { readOnly: true });
+      const backup = new DatabaseSync4(targetPath, { readOnly: true });
       try {
         const result = backup.prepare("PRAGMA integrity_check").get();
         if (result.integrity_check !== "ok") throw new Error(`integrity_check returned ${result.integrity_check}`);
@@ -21571,13 +21690,13 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
 // mcp-server/src/stage-output-file.ts
 import { createHash as createHash5 } from "node:crypto";
 import { closeSync, fstatSync, openSync, readSync } from "node:fs";
-import path7 from "node:path";
+import path8 from "node:path";
 var MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
 function unreadable(locator) {
   return new WorkflowContractError("INVALID_INPUT", "outputFile.locator is not a readable regular local file of at most 16 MiB.", { locator });
 }
 function readLocalStageOutputFile(locator) {
-  if (!path7.isAbsolute(locator)) {
+  if (!path8.isAbsolute(locator)) {
     throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must be an absolute local path.");
   }
   if (/^(?:\\\\|\/\/)/u.test(locator)) {
@@ -21633,7 +21752,7 @@ function asRecord2(value) {
 function apiOk2(data) {
   return { schemaVersion: CONTRACT_VERSION, ok: true, data, error: null };
 }
-function apiError(error2) {
+function apiError2(error2) {
   return { schemaVersion: CONTRACT_VERSION, ok: false, data: null, error: error2 };
 }
 function stageId(order, capability) {
@@ -22187,7 +22306,7 @@ var WorkflowService = class {
         }
       });
     } catch (error2) {
-      return apiError(this.toErrorBody(error2));
+      return apiError2(this.toErrorBody(error2));
     }
   }
   getWorkflowStatus(runId) {
@@ -23089,7 +23208,7 @@ var WorkflowService = class {
     try {
       return apiOk2(operation());
     } catch (error2) {
-      return apiError(this.toErrorBody(error2));
+      return apiError2(this.toErrorBody(error2));
     }
   }
   toErrorBody(error2) {
@@ -23212,8 +23331,8 @@ var HostAttestationProvider = class {
 
 // mcp-server/src/state-cleanup-service.ts
 import { createHash as createHash6, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
-import { chmodSync as chmodSync3, mkdirSync as mkdirSync3 } from "node:fs";
-import path8 from "node:path";
+import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
+import path9 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
 var TOKEN_TTL_MS2 = 15 * 60 * 1e3;
 var POLICY = {
@@ -23228,9 +23347,9 @@ function protection() {
   return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
 }
 function databaseIdentity(databasePath) {
-  return databasePath === ":memory:" ? databasePath : path8.resolve(databasePath);
+  return databasePath === ":memory:" ? databasePath : path9.resolve(databasePath);
 }
-function apiError2(error2) {
+function apiError3(error2) {
   const normalized = error2 instanceof WorkflowContractError ? error2 : new WorkflowContractError("INVALID_INPUT", error2 instanceof Error ? error2.message : String(error2));
   return { schemaVersion: "1.0.0", ok: false, data: null, error: normalized.toBody() };
 }
@@ -23296,7 +23415,7 @@ var StateCleanupService = class {
       this.validator.stateCleanupPlan(plan);
       return { schemaVersion: "1.0.0", ok: true, data: plan, error: null };
     } catch (error2) {
-      return apiError2(error2);
+      return apiError3(error2);
     }
   }
   execute(value) {
@@ -23390,7 +23509,7 @@ var StateCleanupService = class {
       this.validator.stateCleanupReceipt(receipt);
       return { schemaVersion: "1.0.0", ok: true, data: receipt, error: null };
     } catch (error2) {
-      return apiError2(error2);
+      return apiError3(error2);
     }
   }
   currentCandidates(cutoffs) {
@@ -23463,9 +23582,9 @@ var StateCleanupService = class {
   }
   backupPath(databasePath, label, planId) {
     if (databasePath === ":memory:") throw new WorkflowContractError("INVALID_INPUT", "In-memory databases cannot be cleaned destructively.");
-    const directory = path8.join(path8.dirname(path8.resolve(databasePath)), "backups");
-    mkdirSync3(directory, { recursive: true, mode: 448 });
-    return path8.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
+    const directory = path9.join(path9.dirname(path9.resolve(databasePath)), "backups");
+    mkdirSync4(directory, { recursive: true, mode: 448 });
+    return path9.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
   }
   protectBackup(targetPath) {
     if (process.platform !== "win32") chmodSync3(targetPath, 384);
@@ -23509,7 +23628,7 @@ async function main() {
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation);
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath());
   await server.connect(new StdioServerTransport());
 }
 void main().catch((error2) => {

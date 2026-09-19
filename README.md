@@ -51,7 +51,7 @@ codex plugin add agent-governance-suite@agent-governance
 
 설치를 마치면 새 Codex 세션을 시작합니다. 전체 워크플로를 사용하려면 다음과 같이 요청합니다.
 
-Task continuity lifecycle Hook은 처음 설치하거나 정의가 바뀐 뒤 Codex의 `/hooks`에서 내용을 검토하고 신뢰해야 실행됩니다. 신뢰하지 않아 Hook이 생략되어도 기존 전문 스킬과 workflow MCP는 계속 동작합니다.
+Task continuity lifecycle Hook은 처음 설치하거나 정의가 바뀐 뒤 Codex의 `/hooks`에서 내용을 검토하고 신뢰해야 실행됩니다. 신뢰하지 않아 Hook이 생략되어도 기존 전문 스킬과 workflow MCP는 계속 동작합니다. 세션 현황판 Hook도 같은 방식으로 신뢰해야 실행됩니다. Codex에서는 세션 시작과 도구 호출 전 이벤트에 걸려 있으며, Codex의 셸·패치 도구 이름과 도구 차단(`deny`) 지원은 아직 Codex에서 확인하지 않았습니다.
 
 ```text
 $orchestrator를 사용해 이 작업의 범위와 성공 조건을 정하고, 필요한 검증과 완료 근거를 관리해 줘: <작업 내용>
@@ -83,7 +83,8 @@ Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다
 
 설치 후 새 세션에서 `/agent-governance-suite:orchestrator`나 `/agent-governance-suite:mutation-risk-preflight`처럼 스킬을 호출합니다. Codex와 다른 점은 다음과 같습니다.
 
-- workflow·continuity 상태는 Claude Code가 플러그인마다 제공하는 데이터 디렉터리(`${CLAUDE_PLUGIN_DATA}`)에 저장합니다.
+- workflow·continuity·세션 현황판 상태는 Claude Code가 플러그인마다 제공하는 데이터 디렉터리(`${CLAUDE_PLUGIN_DATA}`)에 저장합니다. 그래서 Claude Code 세션은 Claude Code 세션의 현황판만 봅니다.
+- 세션 현황판 Hook은 사용자 요청마다 처음 파일을 고치거나 명령·서브에이전트를 실행하기 전에 `update_session_status`로 지금 하는 일 한 줄을 적게 합니다. 적지 않았으면 그 호출을 한 번 거부하고 다음 시도는 허용합니다.
 - `codex-token-usage-analyzer`는 Codex 세션 로그 전용이라 포함하지 않습니다.
 - 독립 감사와 심의에는 부모 대화를 상속하지 않는 `independent-auditor`, `deliberation-reviewer` 서브에이전트를 사용합니다.
 - `instruction-scope-resolver`는 `AGENTS.md` chain과 함께 `CLAUDE.md` 계층을 확인합니다.
