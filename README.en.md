@@ -2,7 +2,7 @@
 
 [한국어](README.md) | English
 
-Agent Governance Suite is a local Codex plugin that keeps scope, risky changes, verification evidence, and independent review in one workflow.
+Agent Governance Suite is a set of local plugins that keeps scope, risky changes, verification evidence, and independent review in one workflow across AI hosts. Shared skills, contracts, and MCP tools are host-neutral; Codex, Claude Code, and other runtime differences stay in adapters and overlays.
 
 When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
 
@@ -72,9 +72,23 @@ node scripts/check-runtime.mjs
 
 Each specialist remains available when the MCP server is unavailable. Orchestrated runs that enforce stage order and issue a final receipt require the MCP server.
 
+### Local session messages
+
+`send_session_message` accepts `targetHost`, `targetSessionId`, and a body of at most 4096 UTF-8 bytes, then stores it in a local TLS 1.3 broker. A receiving hook claims the body as untrusted peer context, and the processing model must call `acknowledge_session_messages` to complete delivery. Before ACK, the message becomes eligible for redelivery with exponential backoff when its claim lease expires. `get_session_message_status` reports `queued`, `delivered`, or `acknowledged`. TTL defaults to one hour and may be 30 seconds to 24 hours; the spool is capped at 1000 unacknowledged messages or 4 MiB of body text.
+
+The broker starts lazily under the per-user `session-messaging/` state directory and binds only to an ephemeral `127.0.0.1` port. It pins the SHA-256 fingerprint of a P-256 self-signed certificate generated with Node's built-in crypto module and also checks a separate 256-bit token inside TLS. Message bodies never go through Codex command arguments or the Claude inbox; those adapters carry only a small wake bell with a one-use nonce. The message database does not store the private key, broker token, Claude inbox token, or inbox socket path.
+
+The common protocol treats `host` as an arbitrary string. Codex and Claude Code have bundled wake adapters. Other local runtimes such as Grok or Spark can send JSON on stdin to `mcp-server/dist/session-message-cli.mjs` and use the same `send`, `claim`, `acknowledge`, `status`, and `pending` operations. Bodies and secrets do not appear in process arguments. Example:
+
+```json
+{"operation":"claim","payload":{"target":{"host":"spark","sessionId":"session-1"}}}
+```
+
+TLS prevents plaintext exposure on loopback and rejects an incorrectly identified broker. It does not isolate a malicious process running as the same OS user, which can read or alter the user's key, token, or database files. Do not treat this channel as a user-to-user security boundary or as delegated approval.
+
 ### Use with Claude Code
 
-The Claude Code distribution lives separately in `claude-plugin/`. It shares no files, hooks, or MCP configuration with the Codex plugin, and of the state databases only the session board is shared.
+The Claude Code distribution lives separately in `claude-plugin/`. It shares no files, hooks, or MCP configuration with the Codex plugin; among local state, only the session board and TLS session-message broker are shared across hosts.
 
 ```text
 /plugin marketplace add jaeseongs95/agent-governance-suite

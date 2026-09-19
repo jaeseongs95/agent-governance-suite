@@ -3262,8 +3262,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path10) {
-      let input = path10;
+    function removeDotSegments(path11) {
+      let input = path11;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3672,8 +3672,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path10 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path10 && path10 !== "/" ? path10 : void 0;
+        const path11 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path11 && path11 !== "/" ? path11 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -8205,10 +8205,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path10) {
-  if (!path10)
+function getElementAtPath(obj, path11) {
+  if (!path11)
     return obj;
-  return path10.reduce((acc, key) => acc?.[key], obj);
+  return path11.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -8620,11 +8620,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path10, issues) {
+function prefixIssues(path11, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path10);
+    iss.path.unshift(path11);
     return iss;
   });
 }
@@ -9053,16 +9053,16 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
 }
 function formatError(error2, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error3, path10 = []) => {
+  const processError = (error3, path11 = []) => {
     for (const issue2 of error3.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path10, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path11, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path11, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path11, ...issue2.path]);
       } else {
-        const fullpath = [...path10, ...issue2.path];
+        const fullpath = [...path11, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -15950,7 +15950,7 @@ var FileSkillRegistry = class {
     }
     const skillRoot = path.resolve(this.rootDirectory, "skills", descriptor.skillId);
     for (const provider of descriptor.providers) {
-      const bindings = new Set(provider.inputBindings.map((binding) => binding.targetArtifact));
+      const bindings = new Set(provider.inputBindings.map((binding2) => binding2.targetArtifact));
       for (const artifact of provider.requiredInputArtifacts) {
         if (!bindings.has(artifact)) {
           throw new WorkflowContractError("INVALID_INPUT", "Every required input artifact needs an input binding.", {
@@ -16647,16 +16647,16 @@ var ContinuityService = class {
   checkpointContext(value) {
     return this.guard(() => {
       const request = this.validator.checkpointContextRequest(value);
-      const binding = this.verifyToolBinding("checkpoint_context", request, request._continuityBinding);
-      const task = this.currentTask(binding);
+      const binding2 = this.verifyToolBinding("checkpoint_context", request, request._continuityBinding);
+      const task = this.currentTask(binding2);
       if (task.rootId) throw new WorkflowContractError("SNAPSHOT_CONFLICT", "Direct checkpoints are disabled after a workflow root is bound.", { rootId: task.rootId });
       const now = this.now().toISOString();
-      const current = this.store.getSnapshot(binding.c, binding.e);
+      const current = this.store.getSnapshot(binding2.c, binding2.e);
       const base = {
         schemaVersion: "1.0.0",
         source: "direct",
-        taskCorrelation: binding.c,
-        epoch: binding.e,
+        taskCorrelation: binding2.c,
+        epoch: binding2.e,
         revision: request.expectedRevision + 1,
         status: request.status,
         core: request.core,
@@ -16667,11 +16667,11 @@ var ContinuityService = class {
       const snapshot = { ...base, snapshotDigest: convergenceDigest(base) };
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request));
-      const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot);
+      const stored = this.store.checkpoint(binding2.c, binding2.e, request.expectedRevision, requestHash, commandDigest, snapshot);
       if (stored.kind === "replay") {
         const receipt = JSON.parse(stored.request.resultJson);
-        const replaySnapshot = this.store.getSnapshot(binding.c, binding.e);
-        if (receipt.kind !== "checkpoint" || receipt.epoch !== binding.e || !replaySnapshot || replaySnapshot.revision !== receipt.revision || replaySnapshot.snapshotDigest !== receipt.snapshotDigest) {
+        const replaySnapshot = this.store.getSnapshot(binding2.c, binding2.e);
+        if (receipt.kind !== "checkpoint" || receipt.epoch !== binding2.e || !replaySnapshot || replaySnapshot.revision !== receipt.revision || replaySnapshot.snapshotDigest !== receipt.snapshotDigest) {
           return failure("STALE_REVISION", "The idempotent checkpoint result is no longer available after replacement or purge.");
         }
         return ok(replaySnapshot);
@@ -16684,20 +16684,20 @@ var ContinuityService = class {
   inspectContext(value) {
     return this.guard(() => {
       const request = this.validator.inspectContextRequest(value);
-      const binding = this.verifyToolBinding("inspect_context", request, request._continuityBinding);
-      return ok(this.candidateFor(binding.c));
+      const binding2 = this.verifyToolBinding("inspect_context", request, request._continuityBinding);
+      return ok(this.candidateFor(binding2.c));
     });
   }
   loadContext(value) {
     return this.guard(() => {
       const request = this.validator.loadContextRequest(value);
-      const binding = this.verifyToolBinding("load_context", request, request._continuityBinding);
+      const binding2 = this.verifyToolBinding("load_context", request, request._continuityBinding);
       const candidate = this.verifyCandidate(request.candidateToken);
-      if (candidate.c !== binding.c || candidate.e !== binding.e || candidate.e !== request.epoch || candidate.r !== request.revision || candidate.d !== request.digest) throw new WorkflowContractError("BINDING_INVALID", "Restore candidate does not match the current task and requested state.");
-      const task = this.currentTask(binding);
+      if (candidate.c !== binding2.c || candidate.e !== binding2.e || candidate.e !== request.epoch || candidate.r !== request.revision || candidate.d !== request.digest) throw new WorkflowContractError("BINDING_INVALID", "Restore candidate does not match the current task and requested state.");
+      const task = this.currentTask(binding2);
       if (task.suppressed) throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", "Restore is suppressed for the current epoch.");
       if (candidate.s === "direct") {
-        const snapshot = this.store.getSnapshot(binding.c, binding.e);
+        const snapshot = this.store.getSnapshot(binding2.c, binding2.e);
         if (!snapshot || snapshot.revision !== candidate.r || snapshot.snapshotDigest !== candidate.d) {
           throw new WorkflowContractError("STALE_REVISION", "The direct restore candidate is stale.");
         }
@@ -16715,18 +16715,18 @@ var ContinuityService = class {
   suppressContextRestore(value) {
     return this.guard(() => {
       const request = this.validator.suppressContextRestoreRequest(value);
-      const binding = this.verifyToolBinding("suppress_context_restore", request, request._continuityBinding);
-      if (request.expectedEpoch !== binding.e) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.", { actualEpoch: binding.e });
-      if (!this.store.setSuppressed(binding.c, binding.e, this.now().toISOString())) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.");
-      return ok({ schemaVersion: "1.0.0", suppressed: true, epoch: binding.e });
+      const binding2 = this.verifyToolBinding("suppress_context_restore", request, request._continuityBinding);
+      if (request.expectedEpoch !== binding2.e) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.", { actualEpoch: binding2.e });
+      if (!this.store.setSuppressed(binding2.c, binding2.e, this.now().toISOString())) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.");
+      return ok({ schemaVersion: "1.0.0", suppressed: true, epoch: binding2.e });
     });
   }
   purgeDirectContext(value) {
     return this.guard(() => {
       const request = this.validator.purgeDirectContextRequest(value);
-      const binding = this.verifyToolBinding("purge_direct_context", request, request._continuityBinding);
-      this.currentTask(binding);
-      const current = this.store.getSnapshot(binding.c, request.expectedEpoch);
+      const binding2 = this.verifyToolBinding("purge_direct_context", request, request._continuityBinding);
+      this.currentTask(binding2);
+      const current = this.store.getSnapshot(binding2.c, request.expectedEpoch);
       if (current && current.revision !== request.expectedRevision) {
         return failure("STALE_REVISION", "The direct checkpoint revision changed.", {
           expectedRevision: request.expectedRevision,
@@ -16736,21 +16736,21 @@ var ContinuityService = class {
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request));
       const tombstoneDigest = convergenceDigest({
-        taskCorrelation: binding.c,
+        taskCorrelation: binding2.c,
         epoch: request.expectedEpoch,
         revision: request.expectedRevision,
         payloadDigest: current?.snapshotDigest ?? null,
         purgeRequestHash: requestHash
       });
       const now = this.now().toISOString();
-      const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
+      const purged = this.store.purge(binding2.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
       if (purged.kind === "replay") {
         let replay = null;
         try {
           replay = purgeReceipt(JSON.parse(purged.request.resultJson));
         } catch {
         }
-        const tombstone = this.store.getTombstone(binding.c, request.expectedEpoch);
+        const tombstone = this.store.getTombstone(binding2.c, request.expectedEpoch);
         if (!replay || !tombstone || replay.epoch !== request.expectedEpoch || replay.revision !== request.expectedRevision || replay.revision !== tombstone.revision || replay.tombstoneDigest !== tombstone.payloadDigest || replay.purgedAt !== tombstone.purgedAt) {
           return failure("STALE_REVISION", "The idempotent purge result is no longer available.");
         }
@@ -16772,8 +16772,8 @@ var ContinuityService = class {
     try {
       const args = value && typeof value === "object" && !Array.isArray(value) ? value : {};
       const token = typeof args._continuityBinding === "string" ? args._continuityBinding : "";
-      const binding = this.verifyToolBinding("open_convergence_root", args, token);
-      this.store.bindRoot(binding.c, binding.e, rootId, this.now().toISOString());
+      const binding2 = this.verifyToolBinding("open_convergence_root", args, token);
+      this.store.bindRoot(binding2.c, binding2.e, rootId, this.now().toISOString());
     } catch {
     }
   }
@@ -16906,9 +16906,9 @@ var ContinuityService = class {
     };
     return { ...base, snapshotDigest: convergenceDigest(base) };
   }
-  currentTask(binding) {
-    const task = this.store.getTask(binding.c);
-    if (!task || task.currentEpoch !== binding.e) throw new WorkflowContractError("BINDING_INVALID", "Continuity task binding is stale.");
+  currentTask(binding2) {
+    const task = this.store.getTask(binding2.c);
+    if (!task || task.currentEpoch !== binding2.e) throw new WorkflowContractError("BINDING_INVALID", "Continuity task binding is stale.");
     return task;
   }
   verifyToolBinding(toolName, value, token) {
@@ -17004,6 +17004,11 @@ function userStateDirectory(environment, platform, homeDirectory) {
   }
   return path4.resolve(stateRoot, "agent-governance-suite");
 }
+function resolveSessionMessageStateDirectory(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  const configured = environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim();
+  if (configured) return path4.resolve(currentWorkingDirectory, configured);
+  return path4.join(userStateDirectory(environment, platform, homeDirectory), "session-messaging");
+}
 function besideWorkflowDatabase(variable, fileName, environment, platform, homeDirectory, currentWorkingDirectory) {
   const configured = environment[variable]?.trim();
   if (configured) return path4.resolve(currentWorkingDirectory, configured);
@@ -17066,8 +17071,8 @@ import { readFileSync as readFileSync2, readdirSync } from "node:fs";
 import path5 from "node:path";
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path10 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path10, "utf8"));
+  const path11 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path11, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -17103,6 +17108,9 @@ var contractSchemas = {
   purgeDirectContextRequest: loadSchema("purge-direct-context-request.v1.schema.json"),
   updateSessionStatusRequest: loadSchema("update-session-status-request.v1.schema.json"),
   listSessionStatusRequest: loadSchema("list-session-status-request.v1.schema.json"),
+  sendSessionMessageRequest: loadSchema("send-session-message-request.v1.schema.json"),
+  acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
+  getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
   executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
   stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
@@ -17228,6 +17236,15 @@ var ContractValidator = class {
   }
   listSessionStatusRequest(value) {
     return this.assert("listSessionStatusRequest", value);
+  }
+  sendSessionMessageRequest(value) {
+    return this.assert("sendSessionMessageRequest", value);
+  }
+  acknowledgeSessionMessagesRequest(value) {
+    return this.assert("acknowledgeSessionMessagesRequest", value);
+  }
+  getSessionMessageStatusRequest(value) {
+    return this.assert("getSessionMessageStatusRequest", value);
   }
   prepareStateCleanupRequest(value) {
     return this.assert("prepareStateCleanupRequest", value);
@@ -17357,7 +17374,7 @@ var ContractValidator = class {
 };
 
 // mcp-server/src/server.ts
-import { existsSync } from "node:fs";
+import { existsSync as existsSync2 } from "node:fs";
 
 // node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
 function isZ4Schema(s) {
@@ -19473,6 +19490,187 @@ function compareText(left, right) {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
+// mcp-server/src/session-message-service.ts
+import { randomUUID } from "node:crypto";
+
+// mcp-server/src/session-message-client.ts
+import { existsSync } from "node:fs";
+import { chmod, mkdir, readFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import path7 from "node:path";
+import tls from "node:tls";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
+var SESSION_MESSAGE_PROTOCOL = "1.0.0";
+var BrokerRequestRejected = class extends Error {
+};
+function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
+  return {
+    stateDirectory,
+    endpoint: path7.join(stateDirectory, "endpoint.json"),
+    token: path7.join(stateDirectory, "broker.token"),
+    certificate: path7.join(stateDirectory, "broker-cert.pem")
+  };
+}
+async function readEndpoint(stateDirectory) {
+  const paths = statePaths(stateDirectory);
+  const [rawEndpoint, rawToken, certificate] = await Promise.all([
+    readFile(paths.endpoint, "utf8"),
+    readFile(paths.token, "utf8"),
+    readFile(paths.certificate, "utf8")
+  ]);
+  const endpoint = JSON.parse(rawEndpoint);
+  if (endpoint.protocolVersion !== SESSION_MESSAGE_PROTOCOL || endpoint.address !== "127.0.0.1" || !Number.isInteger(endpoint.port) || endpoint.port < 1 || endpoint.port > 65535 || !/^(?:[0-9A-F]{2}:){31}[0-9A-F]{2}$/u.test(endpoint.certificateFingerprint256) || !/^[A-Za-z0-9_-]{43}$/u.test(rawToken.trim())) {
+    throw new Error("The session message broker endpoint is invalid.");
+  }
+  return { endpoint, token: rawToken.trim(), certificate };
+}
+async function requestSessionMessageOnce(operation, payload, stateDirectory) {
+  const { endpoint, token, certificate } = await readEndpoint(stateDirectory);
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let buffer = "";
+    const socket = tls.connect({
+      host: endpoint.address,
+      port: endpoint.port,
+      ca: certificate,
+      servername: "localhost",
+      minVersion: "TLSv1.3",
+      maxVersion: "TLSv1.3",
+      rejectUnauthorized: true,
+      checkServerIdentity: (_host, certificate2) => certificate2.fingerprint256 === endpoint.certificateFingerprint256 ? void 0 : new Error("The session message broker certificate pin did not match.")
+    });
+    const finish = (error2, value) => {
+      if (settled) return;
+      settled = true;
+      socket.destroy();
+      if (error2) reject(error2);
+      else resolve(value);
+    };
+    socket.setTimeout(2500, () => finish(new Error("The session message broker timed out.")));
+    socket.once("secureConnect", () => {
+      const peer = socket.getPeerCertificate();
+      if (!peer.fingerprint256 || peer.fingerprint256 !== endpoint.certificateFingerprint256) {
+        finish(new Error("The session message broker certificate pin did not match."));
+        return;
+      }
+      socket.write(`${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload })}
+`);
+    });
+    socket.on("data", (chunk) => {
+      buffer += chunk.toString("utf8");
+      if (Buffer.byteLength(buffer, "utf8") > 32 * 1024) return finish(new Error("The broker response exceeded its limit."));
+      const newline = buffer.indexOf("\n");
+      if (newline < 0) return;
+      try {
+        const response = JSON.parse(buffer.slice(0, newline));
+        if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
+        else finish(void 0, response.data);
+      } catch {
+        finish(new Error("The broker returned invalid JSON."));
+      }
+    });
+    socket.once("error", (error2) => finish(error2));
+  });
+}
+async function delay(milliseconds) {
+  await new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessageStateDirectory()) {
+  try {
+    await requestSessionMessageOnce("ping", {}, stateDirectory);
+    return;
+  } catch {
+    await mkdir(stateDirectory, { recursive: true, mode: 448 });
+    try {
+      await chmod(stateDirectory, 448);
+    } catch {
+    }
+    const adjacentBroker = fileURLToPath2(new URL("./session-message-broker.mjs", import.meta.url));
+    const brokerPath = existsSync(adjacentBroker) ? adjacentBroker : fileURLToPath2(new URL("../dist/session-message-broker.mjs", import.meta.url));
+    const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+      detached: true,
+      windowsHide: true,
+      stdio: "ignore"
+    });
+    child.unref();
+  }
+  let lastError;
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    await delay(100);
+    try {
+      await requestSessionMessageOnce("ping", {}, stateDirectory);
+      return;
+    } catch (error2) {
+      lastError = error2;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("The session message broker did not start.");
+}
+async function sessionMessageRequest(operation, payload, stateDirectory = resolveSessionMessageStateDirectory()) {
+  try {
+    return await requestSessionMessageOnce(operation, payload, stateDirectory);
+  } catch (error2) {
+    if (error2 instanceof BrokerRequestRejected) throw error2;
+    await ensureSessionMessageBroker(stateDirectory);
+    return requestSessionMessageOnce(operation, payload, stateDirectory);
+  }
+}
+
+// mcp-server/src/session-message-service.ts
+function ok2(data) {
+  return { schemaVersion: "1.0.0", ok: true, data, error: null };
+}
+function failure2(code, message) {
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
+}
+function binding(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const record3 = value;
+  return typeof record3.host === "string" && record3.host && typeof record3.sessionId === "string" && record3.sessionId ? { host: record3.host, sessionId: record3.sessionId } : null;
+}
+var SessionMessageService = class {
+  stateDirectory;
+  constructor(stateDirectory) {
+    this.stateDirectory = stateDirectory;
+  }
+  async send(args) {
+    const sender = binding(args._sessionBinding);
+    if (!sender) return failure2("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
+    try {
+      const data = await sessionMessageRequest("send", {
+        sender,
+        target: { host: args.targetHost, sessionId: args.targetSessionId },
+        body: args.body,
+        ...args.ttlSeconds === void 0 ? {} : { ttlSeconds: args.ttlSeconds },
+        messageId: args.messageId ?? randomUUID()
+      }, this.stateDirectory);
+      return ok2(data);
+    } catch (error2) {
+      return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "The session message broker is unavailable.");
+    }
+  }
+  async acknowledge(args) {
+    const target = binding(args._sessionBinding);
+    if (!target) return failure2("BINDING_REQUIRED", "The session message hook did not bind the receiving session.");
+    try {
+      const data = await sessionMessageRequest("acknowledge", { target, messageIds: args.messageIds }, this.stateDirectory);
+      return ok2(data);
+    } catch (error2) {
+      return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "The session message broker is unavailable.");
+    }
+  }
+  async status(args) {
+    const sender = binding(args._sessionBinding);
+    if (!sender) return failure2("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
+    try {
+      const data = await sessionMessageRequest("status", { sender, messageId: args.messageId }, this.stateDirectory);
+      return ok2(data);
+    } catch (error2) {
+      return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "The session message broker is unavailable.");
+    }
+  }
+};
+
 // mcp-server/src/server.ts
 var responseModeProperty = { enum: ["compact", "full"], default: "full" };
 function toolSchema(source, options = {}) {
@@ -19622,30 +19820,30 @@ function apiError(code, message) {
 }
 function sessionBoardResult(tool, args, databasePath, validator) {
   let summary = null;
-  let binding;
+  let binding2;
   try {
     if (tool === "update_session_status") {
       const request = validator.updateSessionStatusRequest(args);
       summary = normalizeSummary(request.summary);
-      binding = request._sessionBinding ?? null;
+      binding2 = request._sessionBinding ?? null;
     } else {
-      binding = validator.listSessionStatusRequest(args)._sessionBinding ?? null;
+      binding2 = validator.listSessionStatusRequest(args)._sessionBinding ?? null;
     }
   } catch (error2) {
     return invalidInput(error2 instanceof Error ? error2.message : "Session board input is invalid.");
   }
-  if (tool === "update_session_status" && !binding) {
+  if (tool === "update_session_status" && !binding2) {
     return apiError("BINDING_REQUIRED", "The plugin hook records the session board line and did not run for this call.");
   }
   if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
-  if (!existsSync(databasePath)) {
+  if (!existsSync2(databasePath)) {
     return tool === "list_session_status" ? apiOk({ sessions: [] }) : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
   }
   let board = null;
   try {
     board = openBoard(databasePath);
-    if (tool === "list_session_status") return apiOk({ sessions: listSessions(board, (/* @__PURE__ */ new Date()).toISOString(), binding) });
-    const row = readSession(board, binding.host, binding.sessionId);
+    if (tool === "list_session_status") return apiOk({ sessions: listSessions(board, (/* @__PURE__ */ new Date()).toISOString(), binding2) });
+    const row = readSession(board, binding2.host, binding2.sessionId);
     return row && row.summary === summary ? apiOk(row) : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
   } catch {
     return apiError("MCP_UNAVAILABLE", "The session board is unavailable.");
@@ -19676,7 +19874,7 @@ function serverInstructions(profile = "default") {
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService()) {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -19824,6 +20022,24 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs.",
         inputSchema: contractSchemas.listSessionStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "send_session_message",
+        description: "Send a bounded, expiring peer message to any local AI host/session through the loopback TLS 1.3 broker. The hook binds the sender identity.",
+        inputSchema: contractSchemas.sendSessionMessageRequest,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "acknowledge_session_messages",
+        description: "Acknowledge peer message IDs after processing them. Unacknowledged messages remain eligible for redelivery after their claim lease expires.",
+        inputSchema: contractSchemas.acknowledgeSessionMessagesRequest,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "get_session_message_status",
+        description: "Read queued, delivered, or acknowledged status for a message sent by this bound session.",
+        inputSchema: contractSchemas.getSessionMessageStatusRequest,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       }
     ])
   }));
@@ -19916,6 +20132,30 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         case "update_session_status":
         case "list_session_status":
           result = sessionBoardResult(request.params.name, args, sessionBoardPath, validator);
+          break;
+        case "send_session_message":
+          try {
+            validator.sendSessionMessageRequest(args);
+            result = await sessionMessages.send(args);
+          } catch (error2) {
+            result = invalidInput(error2 instanceof Error ? error2.message : "Session message input is invalid.");
+          }
+          break;
+        case "acknowledge_session_messages":
+          try {
+            validator.acknowledgeSessionMessagesRequest(args);
+            result = await sessionMessages.acknowledge(args);
+          } catch (error2) {
+            result = invalidInput(error2 instanceof Error ? error2.message : "Session message acknowledgement is invalid.");
+          }
+          break;
+        case "get_session_message_status":
+          try {
+            validator.getSessionMessageStatusRequest(args);
+            result = await sessionMessages.status(args);
+          } catch (error2) {
+            result = invalidInput(error2 instanceof Error ? error2.message : "Session message status input is invalid.");
+          }
           break;
         case "execute_state_cleanup":
           result = cleanup ? cleanup.execute(args) : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
@@ -20246,7 +20486,7 @@ var PluginUpdateService = class {
 
 // mcp-server/src/sqlite-workflow-store.ts
 import { chmodSync as chmodSync2, mkdirSync as mkdirSync3 } from "node:fs";
-import path7 from "node:path";
+import path8 from "node:path";
 import { DatabaseSync as DatabaseSync4 } from "node:sqlite";
 
 // mcp-server/src/workflow-store.ts
@@ -20384,11 +20624,11 @@ var InMemoryWorkflowStore = class {
     return null;
   }
   getGuardedRunBinding(runId) {
-    const binding = this.guardedRuns.get(runId);
-    if (!binding) return null;
-    const snapshot = this.convergence.get(binding.rootId);
+    const binding2 = this.guardedRuns.get(runId);
+    if (!binding2) return null;
+    const snapshot = this.convergence.get(binding2.rootId);
     if (!snapshot) return null;
-    const lease = snapshot.leases.find((item) => item.leaseId === binding.leaseId);
+    const lease = snapshot.leases.find((item) => item.leaseId === binding2.leaseId);
     const proposal = snapshot.proposals.find((item) => convergenceDigest(item) === lease?.proposalDigest);
     if (!lease || !proposal) return null;
     return {
@@ -20448,7 +20688,7 @@ var SqliteWorkflowStore = class {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
     }
     if (databasePath !== ":memory:") {
-      mkdirSync3(path7.dirname(path7.resolve(databasePath)), { recursive: true, mode: 448 });
+      mkdirSync3(path8.dirname(path8.resolve(databasePath)), { recursive: true, mode: 448 });
     }
     let openedDatabase = null;
     try {
@@ -20459,7 +20699,7 @@ var SqliteWorkflowStore = class {
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       if (databasePath !== ":memory:" && process.platform !== "win32") {
-        chmodSync2(path7.resolve(databasePath), 384);
+        chmodSync2(path8.resolve(databasePath), 384);
       }
     } catch (cause) {
       try {
@@ -21153,7 +21393,7 @@ var SqliteWorkflowStore = class {
 };
 
 // mcp-server/src/workflow-service.ts
-import { createHmac as createHmac2, randomUUID, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
+import { createHmac as createHmac2, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
 
 // mcp-server/src/decision-record-validator.ts
 import { isDeepStrictEqual } from "node:util";
@@ -21239,9 +21479,9 @@ function validateDecisionRecordSemantics(record3) {
     worker && worker.classification === "judge" && worker.is_judge === true && worker.instantiated === true && worker.status === "completed" && worker.blind_round1 === false && worker.context_isolated === true && isDeepStrictEqual(participated(worker), ["final_judge"])
   );
   const failures = array2(run.failures).map(object3);
-  const failureIds = failures.map((failure2) => failure2.worker_id).filter((id) => typeof id === "string");
+  const failureIds = failures.map((failure3) => failure3.worker_id).filter((id) => typeof id === "string");
   const declaredFailed = new Set([...workerById].filter(([, worker]) => worker.status === "failed").map(([id]) => id));
-  if (!duplicateFree(failureIds) || !sameValues(new Set(failureIds), declaredFailed) || failures.some((failure2) => !nonempty(failure2.reason))) {
+  if (!duplicateFree(failureIds) || !sameValues(new Set(failureIds), declaredFailed) || failures.some((failure3) => !nonempty(failure3.reason))) {
     errors.push("run.failures must exactly identify failed workers with reasons");
   }
   const completedIds = stringArray(run.completed_worker_ids);
@@ -21701,13 +21941,13 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
 // mcp-server/src/stage-output-file.ts
 import { createHash as createHash5 } from "node:crypto";
 import { closeSync, fstatSync, openSync, readSync } from "node:fs";
-import path8 from "node:path";
+import path9 from "node:path";
 var MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
 function unreadable(locator) {
   return new WorkflowContractError("INVALID_INPUT", "outputFile.locator is not a readable regular local file of at most 16 MiB.", { locator });
 }
 function readLocalStageOutputFile(locator) {
-  if (!path8.isAbsolute(locator)) {
+  if (!path9.isAbsolute(locator)) {
     throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must be an absolute local path.");
   }
   if (/^(?:\\\\|\/\/)/u.test(locator)) {
@@ -21836,19 +22076,19 @@ var WorkflowService = class {
         );
       }
       if (requireExecutionContext && task.orchestration.requested) {
-        const binding = {
+        const binding2 = {
           phase: "bootstrap",
           taskId: task.taskId,
           runId: null,
           stageId: null,
           revision: null
         };
-        trustedBootstrapContext = this.observeTrustedExecutionContext(binding, "bootstrap orchestration");
+        trustedBootstrapContext = this.observeTrustedExecutionContext(binding2, "bootstrap orchestration");
         this.assertTrustedExecutionContext(
           this.bootstrapExecutionRequirement(task),
           trustedBootstrapContext,
           "bootstrap orchestration",
-          binding
+          binding2
         );
         executionContext = trustedBootstrapContext;
       }
@@ -21889,7 +22129,7 @@ var WorkflowService = class {
       const digests = this.convergenceDigests(request.taskEnvelope, request.frame);
       const root = {
         schemaVersion: CONTRACT_VERSION,
-        rootId: `root-${randomUUID()}`,
+        rootId: `root-${randomUUID2()}`,
         parentRootId: request.parentRootId,
         revision: 0,
         state: "open",
@@ -22024,7 +22264,7 @@ var WorkflowService = class {
       const updatedRoot = bumpedRoot(root, now.toISOString());
       const lease = {
         schemaVersion: CONTRACT_VERSION,
-        leaseId: `lease-${randomUUID()}`,
+        leaseId: `lease-${randomUUID2()}`,
         rootId: root.rootId,
         rootRevision: updatedRoot.revision,
         epoch: root.currentEpoch,
@@ -22057,21 +22297,21 @@ var WorkflowService = class {
       if (plan.executionMode !== "orchestrated" || plan.state !== "ready") {
         throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready orchestrated workflow can use a convergence lease.");
       }
-      const binding = this.store.getAttemptLease(request.leaseId);
-      if (!binding || binding.lease.state !== "issued") {
+      const binding2 = this.store.getAttemptLease(request.leaseId);
+      if (!binding2 || binding2.lease.state !== "issued") {
         throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is missing, expired, or already consumed.", { leaseId: request.leaseId });
       }
-      if (Date.parse(binding.lease.expiresAt) <= Date.now()) {
-        this.store.expireAttemptLease(binding.lease.leaseId);
+      if (Date.parse(binding2.lease.expiresAt) <= Date.now()) {
+        this.store.expireAttemptLease(binding2.lease.leaseId);
         throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease expired before workflow start.", { leaseId: request.leaseId });
       }
-      if (request.expectedRootRevision !== binding.root.revision || request.expectedRootRevision !== binding.lease.rootRevision) {
+      if (request.expectedRootRevision !== binding2.root.revision || request.expectedRootRevision !== binding2.lease.rootRevision) {
         throw new WorkflowContractError("STALE_REVISION", "The guarded start does not target the current convergence revision.", {
           expectedRevision: request.expectedRootRevision,
-          actualRevision: binding.root.revision
+          actualRevision: binding2.root.revision
         });
       }
-      if (plan.integrityToken !== binding.lease.planIntegrityToken || canonicalJson(plan, "Plan") !== canonicalJson(binding.proposal.plan, "Plan")) {
+      if (plan.integrityToken !== binding2.lease.planIntegrityToken || canonicalJson(plan, "Plan") !== canonicalJson(binding2.proposal.plan, "Plan")) {
         throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is bound to a different workflow plan.", { leaseId: request.leaseId });
       }
       const receipt = this.newRunningReceipt(plan);
@@ -22102,13 +22342,13 @@ var WorkflowService = class {
     const candidate = asRecord2(rawRequest);
     if (Object.hasOwn(candidate, "plan")) return this.validator.guardedWorkflowStartRequest(rawRequest);
     const leaseId = typeof candidate.leaseId === "string" ? candidate.leaseId : "";
-    const binding = this.store.getAttemptLease(leaseId);
-    if (!binding) {
+    const binding2 = this.store.getAttemptLease(leaseId);
+    if (!binding2) {
       throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is missing, expired, or already consumed.", { leaseId });
     }
     return this.validator.guardedWorkflowStartRequest({
       ...candidate,
-      plan: clone2(binding.proposal.plan)
+      plan: clone2(binding2.proposal.plan)
     });
   }
   getConvergenceStatus(rootId) {
@@ -22267,7 +22507,7 @@ var WorkflowService = class {
           );
         }
         if (requireTrustedExecutionContext && result.state === "passed" && target.executionRequirement?.kind === "semantic") {
-          const binding = {
+          const binding2 = {
             phase: "stage",
             taskId: receipt.plan.taskId,
             runId: receipt.runId,
@@ -22275,14 +22515,14 @@ var WorkflowService = class {
             revision: result.expectedRevision
           };
           trustedStageContext = this.observeTrustedExecutionContext(
-            binding,
+            binding2,
             `Stage '${target.stageId}'`
           );
           this.assertTrustedExecutionContext(
             target.executionRequirement,
             trustedStageContext,
             `Stage '${target.stageId}'`,
-            binding
+            binding2
           );
           result.executionContext = clone2(trustedStageContext);
         }
@@ -22419,12 +22659,12 @@ var WorkflowService = class {
       });
     }
     for (const { provider: consumer } of selectedProviderList) {
-      for (const binding of consumer.inputBindings.filter((item) => item.operation === "require-external")) {
-        const producer = selectedProviderList.find(({ provider }) => provider.providerKey !== consumer.providerKey && provider.producedArtifacts.includes(binding.targetArtifact));
+      for (const binding2 of consumer.inputBindings.filter((item) => item.operation === "require-external")) {
+        const producer = selectedProviderList.find(({ provider }) => provider.providerKey !== consumer.providerKey && provider.producedArtifacts.includes(binding2.targetArtifact));
         if (producer) {
           errors.push({
             code: "INVALID_TRANSITION",
-            message: `Artifact '${binding.targetArtifact}' must come from a completed external run.`,
+            message: `Artifact '${binding2.targetArtifact}' must come from a completed external run.`,
             details: {
               consumerProviderKey: consumer.providerKey,
               producerProviderKey: producer.provider.providerKey
@@ -22808,28 +23048,28 @@ var WorkflowService = class {
       observationRequired: true
     };
   }
-  observeTrustedExecutionContext(binding, subject) {
-    const context = this.trustedExecutionContextProvider?.observe(binding) ?? null;
+  observeTrustedExecutionContext(binding2, subject) {
+    const context = this.trustedExecutionContextProvider?.observe(binding2) ?? null;
     if (!context) {
       throw new WorkflowContractError(
         "BINDING_REQUIRED",
         `${subject} requires trusted host execution attestation.`,
-        { binding }
+        { binding: binding2 }
       );
     }
     return clone2(context);
   }
-  assertTrustedExecutionContext(requirement, context, subject, binding) {
+  assertTrustedExecutionContext(requirement, context, subject, binding2) {
     this.assertExecutionContext(requirement, context, subject);
-    this.assertTrustedExecutionBinding(context, subject, binding);
+    this.assertTrustedExecutionBinding(context, subject, binding2);
     this.assertTrustedExecutionFreshness(context, subject);
   }
-  assertTrustedExecutionBinding(context, subject, binding) {
-    if (typeof context.observationId !== "string" || context.observationId.length < 16 || context.taskId !== binding.taskId || context.runId !== binding.runId || context.stageId !== binding.stageId || context.revision !== binding.revision || typeof context.actorId !== "string" || context.actorId.length === 0 || typeof context.expiresAt !== "string") {
+  assertTrustedExecutionBinding(context, subject, binding2) {
+    if (typeof context.observationId !== "string" || context.observationId.length < 16 || context.taskId !== binding2.taskId || context.runId !== binding2.runId || context.stageId !== binding2.stageId || context.revision !== binding2.revision || typeof context.actorId !== "string" || context.actorId.length === 0 || typeof context.expiresAt !== "string") {
       throw new WorkflowContractError(
         "BINDING_INVALID",
         `${subject} trusted execution attestation is not bound to the requested task/run/stage/revision.`,
-        { binding, context }
+        { binding: binding2, context }
       );
     }
   }
@@ -22873,7 +23113,7 @@ var WorkflowService = class {
         `${subject} requires a plan with trusted bootstrap execution assurance.`
       );
     }
-    const binding = {
+    const binding2 = {
       phase: "bootstrap",
       taskId: plan.taskId,
       runId: null,
@@ -22881,7 +23121,7 @@ var WorkflowService = class {
       revision: null
     };
     this.assertExecutionContext(bootstrap.requirement, bootstrap.context, `${subject} bootstrap`);
-    this.assertTrustedExecutionBinding(bootstrap.context, `${subject} bootstrap`, binding);
+    this.assertTrustedExecutionBinding(bootstrap.context, `${subject} bootstrap`, binding2);
     for (const stage of plan.stages) {
       if (!stage.executionRequirement && !DETERMINISTIC_CAPABILITIES.has(stage.requiredCapability)) {
         throw new WorkflowContractError(
@@ -23137,10 +23377,10 @@ var WorkflowService = class {
       throw new WorkflowContractError("GATE_FAILED", "Ambiguous frame reviews must route to a panel, the user, or stop.");
     }
   }
-  convergenceOutcome(receipt, binding) {
+  convergenceOutcome(receipt, binding2) {
     const recordedAt = (/* @__PURE__ */ new Date()).toISOString();
-    const expectedRootRevision = binding.root.revision;
-    const root = bumpedRoot(binding.root, recordedAt);
+    const expectedRootRevision = binding2.root.revision;
+    const root = bumpedRoot(binding2.root, recordedAt);
     const aborted2 = receipt.blockers.includes("aborted-by-caller");
     const passed = receipt.state === "passed";
     const state = passed ? "passed" : aborted2 ? "aborted" : "failed";
@@ -23163,12 +23403,12 @@ var WorkflowService = class {
     ]))];
     const outcome = {
       schemaVersion: CONTRACT_VERSION,
-      outcomeId: `outcome-${randomUUID()}`,
+      outcomeId: `outcome-${randomUUID2()}`,
       rootId: root.rootId,
       rootRevision: root.revision,
-      leaseId: binding.lease.leaseId,
-      epoch: binding.lease.epoch,
-      ordinal: binding.lease.ordinal,
+      leaseId: binding2.lease.leaseId,
+      epoch: binding2.lease.epoch,
+      ordinal: binding2.lease.ordinal,
       workflowRunId: receipt.runId,
       state,
       receiptDigest: convergenceDigest(receipt),
@@ -23191,8 +23431,8 @@ var WorkflowService = class {
       mutate(receipt);
       receipt.revision += 1;
       this.assertReceipt(receipt);
-      const binding = this.store.getGuardedRunBinding(runId);
-      const convergence = binding && !binding.outcome && receipt.state !== "running" ? this.convergenceOutcome(receipt, binding) : void 0;
+      const binding2 = this.store.getGuardedRunBinding(runId);
+      const convergence = binding2 && !binding2.outcome && receipt.state !== "running" ? this.convergenceOutcome(receipt, binding2) : void 0;
       if (!this.store.updateRun(receipt, expectedRevision, convergence)) {
         const current = this.store.getRun(runId);
         throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
@@ -23312,15 +23552,15 @@ var HostAttestationProvider = class {
       this.current = null;
     }
   }
-  observe(binding) {
+  observe(binding2) {
     const current = this.current;
     if (!current?.token) return null;
     const payload = verifyToken(this.store, current.token);
     if (payload.tool !== current.tool || payload.inputDigest !== convergenceDigest(current.input)) {
       throw invalid("Host attestation token was issued for a different tool call.");
     }
-    if (payload.phase !== binding.phase) throw invalid("Host attestation token was issued for a different phase.");
-    const taskId = payload.phase === "stage" ? binding.taskId : payload.taskId;
+    if (payload.phase !== binding2.phase) throw invalid("Host attestation token was issued for a different phase.");
+    const taskId = payload.phase === "stage" ? binding2.taskId : payload.taskId;
     if (!taskId) throw invalid("Host attestation token is missing its task binding.");
     return {
       schemaVersion: CONTRACT_VERSION,
@@ -23341,9 +23581,9 @@ var HostAttestationProvider = class {
 };
 
 // mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash6, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHash as createHash6, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
-import path9 from "node:path";
+import path10 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
 var TOKEN_TTL_MS2 = 15 * 60 * 1e3;
 var POLICY = {
@@ -23358,7 +23598,7 @@ function protection() {
   return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
 }
 function databaseIdentity(databasePath) {
-  return databasePath === ":memory:" ? databasePath : path9.resolve(databasePath);
+  return databasePath === ":memory:" ? databasePath : path10.resolve(databasePath);
 }
 function apiError3(error2) {
   const normalized = error2 instanceof WorkflowContractError ? error2 : new WorkflowContractError("INVALID_INPUT", error2 instanceof Error ? error2.message : String(error2));
@@ -23394,7 +23634,7 @@ var StateCleanupService = class {
       const candidateDigest = digest(candidates);
       const payload = {
         schemaVersion: "1.0.0",
-        planId: randomUUID2(),
+        planId: randomUUID3(),
         createdAt,
         expiresAt: new Date(created.getTime() + TOKEN_TTL_MS2).toISOString(),
         policy: POLICY,
@@ -23593,9 +23833,9 @@ var StateCleanupService = class {
   }
   backupPath(databasePath, label, planId) {
     if (databasePath === ":memory:") throw new WorkflowContractError("INVALID_INPUT", "In-memory databases cannot be cleaned destructively.");
-    const directory = path9.join(path9.dirname(path9.resolve(databasePath)), "backups");
+    const directory = path10.join(path10.dirname(path10.resolve(databasePath)), "backups");
     mkdirSync4(directory, { recursive: true, mode: 448 });
-    return path9.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
+    return path10.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
   }
   protectBackup(targetPath) {
     if (process.platform !== "win32") chmodSync3(targetPath, 384);

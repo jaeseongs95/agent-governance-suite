@@ -2,8 +2,8 @@
 
 // mcp-server/src/session-board-hook.ts
 import { readFileSync } from "node:fs";
-import path3 from "node:path";
-import { fileURLToPath } from "node:url";
+import path4 from "node:path";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // skills/session-board/scripts/board-store.mjs
 import { mkdirSync } from "node:fs";
@@ -95,10 +95,144 @@ function userStateDirectory(environment, platform, homeDirectory) {
   }
   return path2.resolve(stateRoot, "agent-governance-suite");
 }
+function resolveSessionMessageStateDirectory(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  const configured = environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim();
+  if (configured) return path2.resolve(currentWorkingDirectory, configured);
+  return path2.join(userStateDirectory(environment, platform, homeDirectory), "session-messaging");
+}
 function resolveSessionBoardDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   const configured = environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH?.trim();
   if (configured) return path2.resolve(currentWorkingDirectory, configured);
   return path2.join(userStateDirectory(environment, platform, homeDirectory), "session-board.sqlite3");
+}
+
+// mcp-server/src/session-message-client.ts
+import { existsSync } from "node:fs";
+import { chmod, mkdir, readFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import path3 from "node:path";
+import tls from "node:tls";
+import { fileURLToPath } from "node:url";
+var SESSION_MESSAGE_PROTOCOL = "1.0.0";
+var WAKE_PREFIX = "[agent-governance-suite:wake:";
+var BrokerRequestRejected = class extends Error {
+};
+function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
+  return {
+    stateDirectory,
+    endpoint: path3.join(stateDirectory, "endpoint.json"),
+    token: path3.join(stateDirectory, "broker.token"),
+    certificate: path3.join(stateDirectory, "broker-cert.pem")
+  };
+}
+async function readEndpoint(stateDirectory) {
+  const paths = statePaths(stateDirectory);
+  const [rawEndpoint, rawToken, certificate] = await Promise.all([
+    readFile(paths.endpoint, "utf8"),
+    readFile(paths.token, "utf8"),
+    readFile(paths.certificate, "utf8")
+  ]);
+  const endpoint = JSON.parse(rawEndpoint);
+  if (endpoint.protocolVersion !== SESSION_MESSAGE_PROTOCOL || endpoint.address !== "127.0.0.1" || !Number.isInteger(endpoint.port) || endpoint.port < 1 || endpoint.port > 65535 || !/^(?:[0-9A-F]{2}:){31}[0-9A-F]{2}$/u.test(endpoint.certificateFingerprint256) || !/^[A-Za-z0-9_-]{43}$/u.test(rawToken.trim())) {
+    throw new Error("The session message broker endpoint is invalid.");
+  }
+  return { endpoint, token: rawToken.trim(), certificate };
+}
+async function requestSessionMessageOnce(operation, payload, stateDirectory) {
+  const { endpoint, token, certificate } = await readEndpoint(stateDirectory);
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let buffer = "";
+    const socket = tls.connect({
+      host: endpoint.address,
+      port: endpoint.port,
+      ca: certificate,
+      servername: "localhost",
+      minVersion: "TLSv1.3",
+      maxVersion: "TLSv1.3",
+      rejectUnauthorized: true,
+      checkServerIdentity: (_host, certificate2) => certificate2.fingerprint256 === endpoint.certificateFingerprint256 ? void 0 : new Error("The session message broker certificate pin did not match.")
+    });
+    const finish = (error, value) => {
+      if (settled) return;
+      settled = true;
+      socket.destroy();
+      if (error) reject(error);
+      else resolve(value);
+    };
+    socket.setTimeout(2500, () => finish(new Error("The session message broker timed out.")));
+    socket.once("secureConnect", () => {
+      const peer = socket.getPeerCertificate();
+      if (!peer.fingerprint256 || peer.fingerprint256 !== endpoint.certificateFingerprint256) {
+        finish(new Error("The session message broker certificate pin did not match."));
+        return;
+      }
+      socket.write(`${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload })}
+`);
+    });
+    socket.on("data", (chunk) => {
+      buffer += chunk.toString("utf8");
+      if (Buffer.byteLength(buffer, "utf8") > 32 * 1024) return finish(new Error("The broker response exceeded its limit."));
+      const newline = buffer.indexOf("\n");
+      if (newline < 0) return;
+      try {
+        const response = JSON.parse(buffer.slice(0, newline));
+        if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
+        else finish(void 0, response.data);
+      } catch {
+        finish(new Error("The broker returned invalid JSON."));
+      }
+    });
+    socket.once("error", (error) => finish(error));
+  });
+}
+async function delay(milliseconds) {
+  await new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessageStateDirectory()) {
+  try {
+    await requestSessionMessageOnce("ping", {}, stateDirectory);
+    return;
+  } catch {
+    await mkdir(stateDirectory, { recursive: true, mode: 448 });
+    try {
+      await chmod(stateDirectory, 448);
+    } catch {
+    }
+    const adjacentBroker = fileURLToPath(new URL("./session-message-broker.mjs", import.meta.url));
+    const brokerPath = existsSync(adjacentBroker) ? adjacentBroker : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
+    const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+      detached: true,
+      windowsHide: true,
+      stdio: "ignore"
+    });
+    child.unref();
+  }
+  let lastError;
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    await delay(100);
+    try {
+      await requestSessionMessageOnce("ping", {}, stateDirectory);
+      return;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("The session message broker did not start.");
+}
+async function sessionMessageRequest(operation, payload, stateDirectory = resolveSessionMessageStateDirectory()) {
+  try {
+    return await requestSessionMessageOnce(operation, payload, stateDirectory);
+  } catch (error) {
+    if (error instanceof BrokerRequestRejected) throw error;
+    await ensureSessionMessageBroker(stateDirectory);
+    return requestSessionMessageOnce(operation, payload, stateDirectory);
+  }
+}
+function parseWakeMessage(value) {
+  if (typeof value !== "string" || !value.startsWith(WAKE_PREFIX) || !value.endsWith("]")) return null;
+  const nonce = value.slice(WAKE_PREFIX.length, -1);
+  return /^[A-Za-z0-9_-]{22,128}$/u.test(nonce) ? nonce : null;
 }
 
 // mcp-server/src/session-board-hook.ts
@@ -115,7 +249,7 @@ function record(value) {
 function preToolUse(permissionDecision, extra) {
   return { hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision, ...extra } };
 }
-function handleSessionBoardHook(input, board, host, now = (/* @__PURE__ */ new Date()).toISOString()) {
+function handleSessionBoardHook(input, board, host, now = (/* @__PURE__ */ new Date()).toISOString(), verifiedInternalWake = false) {
   const sessionId = text(input.session_id);
   if (!sessionId) return {};
   const session = { host, sessionId, cwd: text(input.cwd) || process.cwd(), now };
@@ -129,7 +263,8 @@ function handleSessionBoardHook(input, board, host, now = (/* @__PURE__ */ new D
   if (event === "UserPromptSubmit") {
     if (!subagent) {
       pruneSessions(board, now);
-      recordPrompt(board, session);
+      if (verifiedInternalWake) touchSession(board, session);
+      else recordPrompt(board, session);
     }
     return {};
   }
@@ -151,12 +286,24 @@ function handleSessionBoardHook(input, board, host, now = (/* @__PURE__ */ new D
   if (SHELL_TOOLS.has(toolName) && isReadOnlyCommand(toolInput.command)) return {};
   return gateDecision(board, session) === "deny" ? preToolUse("deny", { permissionDecisionReason: GATE_REASON }) : {};
 }
-function runSessionBoardHook(host, raw) {
+async function runSessionBoardHook(host, raw) {
   let board = null;
   try {
     const input = JSON.parse(raw);
+    let verifiedInternalWake = false;
+    if (text(input.hook_event_name) === "UserPromptSubmit") {
+      const nonce = parseWakeMessage(input.prompt);
+      const sessionId = text(input.session_id);
+      if (nonce && sessionId) {
+        try {
+          const result = await sessionMessageRequest("consume-wake", { target: { host, sessionId }, nonce });
+          verifiedInternalWake = result.consumed;
+        } catch {
+        }
+      }
+    }
     board = openBoard(resolveSessionBoardDatabasePath(), { busyTimeoutMs: 500 });
-    const output = handleSessionBoardHook(input, board, host);
+    const output = handleSessionBoardHook(input, board, host, (/* @__PURE__ */ new Date()).toISOString(), verifiedInternalWake);
     return Object.keys(output).length > 0 ? JSON.stringify(output) : "";
   } catch {
     return "";
@@ -167,14 +314,15 @@ function runSessionBoardHook(host, raw) {
     }
   }
 }
-if (path3.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
+if (path4.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
   let raw = "";
   try {
     raw = readFileSync(0, "utf8");
   } catch {
   }
-  const output = runSessionBoardHook("codex", raw);
-  if (output) process.stdout.write(output);
+  void runSessionBoardHook("codex", raw).then((output) => {
+    if (output) process.stdout.write(output);
+  });
 }
 export {
   GATE_REASON,

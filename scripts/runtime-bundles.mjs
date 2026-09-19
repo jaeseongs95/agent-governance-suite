@@ -36,6 +36,30 @@ export const RUNTIME_BUNDLES = Object.freeze([
     output: "mcp-server/dist/session-board-hook.mjs",
     executable: true,
   }),
+  Object.freeze({
+    id: "session-message-broker",
+    entry: "mcp-server/src/session-message-broker.ts",
+    output: "mcp-server/dist/session-message-broker.mjs",
+    executable: true,
+  }),
+  Object.freeze({
+    id: "session-message-relay",
+    entry: "mcp-server/src/session-message-relay.ts",
+    output: "mcp-server/dist/session-message-relay.mjs",
+    executable: true,
+  }),
+  Object.freeze({
+    id: "session-message-hook",
+    entry: "mcp-server/src/session-message-hook.ts",
+    output: "mcp-server/dist/session-message-hook.mjs",
+    executable: true,
+  }),
+  Object.freeze({
+    id: "session-message-cli",
+    entry: "mcp-server/src/session-message-cli.ts",
+    output: "mcp-server/dist/session-message-cli.mjs",
+    executable: true,
+  }),
 ]);
 
 export const RUNTIME_NOTICES = "runtime/THIRD_PARTY_NOTICES.md";

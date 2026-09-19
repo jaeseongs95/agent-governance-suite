@@ -49,6 +49,18 @@ function userStateDirectory(
   return path.resolve(stateRoot, "agent-governance-suite");
 }
 
+/** Resolves the per-user TLS broker directory shared by supported local hosts. */
+export function resolveSessionMessageStateDirectory(
+  environment: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+  homeDirectory: string = homedir(),
+  currentWorkingDirectory: string = process.cwd(),
+): string {
+  const configured = environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim();
+  if (configured) return path.resolve(currentWorkingDirectory, configured);
+  return path.join(userStateDirectory(environment, platform, homeDirectory), "session-messaging");
+}
+
 function besideWorkflowDatabase(
   variable: string,
   fileName: string,

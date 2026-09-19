@@ -2,7 +2,7 @@
 
 한국어 | [English](README.en.md)
 
-Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위험한 변경을 사전에 점검하며, 증거 검증과 독립 감사를 하나의 워크플로로 연결하는 로컬 플러그인입니다.
+Agent Governance Suite는 여러 AI 호스트의 긴 작업에서 범위를 관리하고 위험한 변경을 사전에 점검하며, 증거 검증과 독립 감사를 하나의 워크플로로 연결하는 로컬 플러그인 모음입니다. 공용 스킬·계약·MCP는 호스트 중립이며 Codex, Claude Code와 다른 런타임의 차이는 adapter와 overlay에 둡니다.
 
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
@@ -72,9 +72,23 @@ node scripts/check-runtime.mjs
 
 MCP 서버가 시작되지 않아도 개별 전문 스킬은 직접 호출할 수 있습니다. 단계 순서를 강제하고 완료 결과를 만드는 통합 작업에는 MCP 서버가 필요합니다.
 
+### 로컬 세션 메시지
+
+`send_session_message`는 `targetHost`, `targetSessionId`와 최대 4096 UTF-8 byte의 본문을 받아 로컬 TLS 1.3 broker에 저장합니다. 수신 훅은 본문을 비신뢰 peer context로 claim하고, 처리한 모델이 `acknowledge_session_messages`를 호출해야 완료됩니다. ACK 전에는 claim lease가 끝난 뒤 지수 backoff로 다시 전달될 수 있으며, `get_session_message_status`는 `queued`, `delivered`, `acknowledged` 상태를 보여 줍니다. 기본 TTL은 1시간이고 30초부터 24시간까지 지정할 수 있으며, spool은 미ACK 메시지 1000개 또는 본문 합계 4 MiB로 제한됩니다.
+
+broker는 사용자 상태 디렉터리의 `session-messaging/`에서 필요할 때 시작하고 `127.0.0.1`에만 임의 포트로 바인딩합니다. Node 내장 암호 모듈로 만든 P-256 자체서명 인증서의 SHA-256 fingerprint를 pin하고, 별도 256-bit token도 TLS 안에서 확인합니다. 본문은 Codex 명령행이나 Claude inbox에 넣지 않으며, 두 adapter는 일회용 nonce가 든 작은 wake bell만 보냅니다. 개인 키·broker token·Claude inbox token과 socket 경로는 메시지 DB에 저장하지 않습니다.
+
+공통 프로토콜의 `host`는 임의 문자열입니다. Codex와 Claude Code에는 wake adapter를 제공하고, Grok·Spark 같은 다른 로컬 런타임은 `mcp-server/dist/session-message-cli.mjs`에 JSON을 stdin으로 넘겨 같은 `send`, `claim`, `acknowledge`, `status`, `pending` 작업을 사용할 수 있습니다. 메시지 본문과 비밀값을 프로세스 인수로 넘기지 않습니다. 예:
+
+```json
+{"operation":"claim","payload":{"target":{"host":"spark","sessionId":"session-1"}}}
+```
+
+TLS는 loopback 구간의 평문 노출과 잘못된 broker 연결을 막지만, 같은 OS 사용자 권한으로 실행되는 악성 프로세스를 격리하지는 못합니다. 그런 프로세스는 사용자 상태의 키·token·DB를 읽거나 바꿀 수 있으므로, 이 기능을 사용자 간 보안 경계나 승인 위임 수단으로 사용하면 안 됩니다.
+
 ### Claude Code에서 사용하기
 
-Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다. Codex 플러그인과 파일·훅·MCP 설정을 공유하지 않고, 상태 DB는 세션 현황판만 함께 씁니다.
+Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다. Codex 플러그인과 파일·훅·MCP 설정을 공유하지 않고, 상태 가운데 세션 현황판과 TLS 세션 메시지 broker만 모든 로컬 호스트가 함께 씁니다.
 
 ```text
 /plugin marketplace add jaeseongs95/agent-governance-suite

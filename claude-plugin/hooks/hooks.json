@@ -8,6 +8,18 @@
           {
             "type": "command",
             "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"],
+            "timeout": 10,
+            "statusMessage": "Checking peer messages"
+          }
+        ]
+      },
+      {
+        "matcher": "^(startup|resume|clear|compact)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
             "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"],
             "timeout": 10,
             "statusMessage": "Checking local task continuity"
@@ -64,6 +76,17 @@
       }
     ],
     "PreToolUse": [
+      {
+        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(send_session_message|acknowledge_session_messages|get_session_message_status)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"],
+            "timeout": 10
+          }
+        ]
+      },
       {
         "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(open_convergence_root|checkpoint_context|inspect_context|load_context|suppress_context_restore|purge_direct_context)$",
         "hooks": [
@@ -126,6 +149,16 @@
           {
             "type": "command",
             "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"],
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
             "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/skill-trigger-hook.mjs"],
             "timeout": 5
           }
@@ -138,6 +171,30 @@
             "command": "node",
             "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-board-hook.mjs"],
             "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"],
+            "timeout": 10
           }
         ]
       }

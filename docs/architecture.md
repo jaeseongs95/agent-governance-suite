@@ -14,6 +14,8 @@ plugin manifest
 
 같은 capability를 여러 provider가 제공하면 숫자가 큰 priority를 우선합니다. `selectionCriteria`는 사람이 검토할 선택 조건과 이유이며 MCP가 자연어를 해석하지는 않습니다. 조건별 자동 분기가 필요하면 서로 다른 구체적 capability로 등록합니다. 같은 capability에 priority가 겹치거나 선택 조건이 비어 있으면 저장소 검증이 실패합니다.
 
+공용 스킬, JSON Schema, MCP 도구와 런타임은 호스트 중립 계약을 사용합니다. `host`는 Codex나 Claude Code로 닫힌 enum이 아니라 확장 가능한 식별자이고, 제품별 훅 이벤트·inbox·wake transport·실행 관측은 adapter 또는 overlay가 공용 계약으로 변환합니다. 따라서 Grok, Spark나 다른 로컬 AI 런타임도 공용 계층을 고치지 않고 adapter를 추가해 같은 기능을 사용할 수 있습니다. 특정 제품의 로그나 설치 형식처럼 본질적으로 전용인 기능만 예외로 두며, 그 제약은 기능 이름과 문서에 명시합니다.
+
 공개 계약은 `TaskEnvelope.v1`, `SkillDescriptor.v2`, `ProviderResult.v1`, `WorkflowPlan.v1`, `StageResult.v1`, `WorkflowReceipt.v1`, `ApiResult.v1`와 전송 전용 `ResponseModeV1`, `WorkflowStatusSummaryV1`, `ConvergenceRootHandleV1`, `ConvergenceStatusSummaryV1`로 나뉩니다. `SkillDescriptor.v2`는 한 스킬의 여러 provider, 입출력 artifact, 결과 schema, 상태 매핑과 gate를 선언합니다. `plan_workflow`가 레지스트리를 읽어 schema checksum이 포함된 계획을 HMAC으로 서명하고, `start_guarded_workflow`가 같은 MCP 저장소의 서명과 일회용 lease를 확인한 뒤 계획을 동결합니다. 공개 `start_workflow`는 unguarded orchestrated start를 거부하며, 직접 embedding의 `startWorkflow`만 legacy 호환 경로로 남습니다.
 
 `record_stage_result`는 revision과 실행 순서를 확인한 뒤 provider envelope와 내부 output을 각각 선언된 schema로 검증합니다. 계획에 생산자가 있는 입력 artifact는 해당 선행 단계가 검증된 artifact를 남긴 경우에만 소비할 수 있습니다. bootstrap·task 입력처럼 계획 밖에서 들어오는 artifact의 내용과 출처 확인은 실행한 전문 스킬이 책임지고, MCP는 제출된 locator·digest·`verified` 선언의 구조를 확인합니다. descriptor의 선택적 `receiptPolicy`는 계획 stage로 복사되어 HMAC에 결속됩니다. `reference-only` mode는 닫힌 output schema와 opaque reference만 허용하고, 선언된 actor pointer에는 canonical UUID와 run 단위 고유성을 적용합니다. `finalize_workflow`는 모든 필수 단계가 통과하고 미해결 항목이 없으며 각 stage의 receipt policy가 다시 확인된 경우에만 완료 결과를 만듭니다.
@@ -51,6 +53,18 @@ Codex lifecycle Hook은 MCP 준비 여부에 의존하지 않고 bundled continu
 ## 세션 현황판
 
 세션 현황판은 `session-board` 인프라 스킬의 저장소 모듈이 규칙과 SQLite 저장을 모두 맡고, 훅과 MCP 도구(`update_session_status`, `list_session_status`)는 그 모듈을 부르는 인터페이스입니다. 행마다 호스트, 세션 ID, 작업 디렉터리, 한 줄 요약, 요약 시각, 마지막 요청 시각을 두며 요청 원문은 저장하지 않습니다. 세션 ID와 작업 디렉터리는 훅 입력에서 채웁니다. 요청마다 첫 상태 변경 도구 호출(파일 편집, 셸 명령, 서브에이전트 실행. 이 플러그인의 MCP 도구는 제외)을 한 번 거부할지는 저장소 모듈이 판단하고, 훅은 그 결과를 호스트에 전달하며 모든 오류에서 호출을 통과(fail open)시킵니다. 2026-09-19에 Codex 데스크톱에서 실검증해 `exec_command` 거부, `update_session_status`의 입력 수정, `apply_patch` 통과와 `mcp__agent_governance_suite__...` 도구 이름을 확인했습니다. 파일은 Claude Code와 Codex가 함께 쓰는 사용자 상태 디렉터리의 `session-board.sqlite3` 하나이며, 목록은 모든 호스트의 행을 `host`와 함께 보여 줍니다. workflow·continuity DB와 달리 호스트별 위치(`${CLAUDE_PLUGIN_DATA}` 등)를 따르지 않습니다. 현황판은 세션이 목록을 다시 읽어야 변경을 알 수 있는 pull 방식이며, 실행 중인 다른 세션에 메시지를 push하거나 그 작업을 중단시키는 실시간 통신 채널은 아닙니다.
+
+## TLS 1.3 세션 메시지 broker
+
+세션 메시지는 현황판과 분리된 사용자별 `session-messaging/session-messages.sqlite3` spool에 저장합니다. MCP의 `send_session_message`, `acknowledge_session_messages`, `get_session_message_status`와 범용 JSON CLI는 모두 같은 broker 프로토콜을 사용합니다. `host`는 열린 문자열 식별자이며 broker, schema와 SQLite는 제품별 transport를 알지 못합니다. Codex queue, Claude Code inbox와 앞으로 추가될 Grok·Spark adapter는 wake bell을 전달하고 호스트 훅 입출력을 공용 claim·ACK로 바꾸는 가장자리 계층입니다.
+
+첫 클라이언트가 broker를 lazy start합니다. broker는 process lock으로 단일 인스턴스를 유지하고 `127.0.0.1:0`에만 바인딩하며, relay heartbeat나 요청이 없으면 60초 뒤 끝납니다. 다음 요청은 저장된 SQLite를 그대로 열어 새 broker를 시작합니다. 인증서는 Node 내장 `crypto`만으로 만든 ECDSA P-256 자체서명 X.509이며 DNS `localhost`와 IP `127.0.0.1` SAN을 갖습니다. 클라이언트는 이 인증서를 trust anchor로 쓰면서 endpoint 파일의 SHA-256 fingerprint도 pin합니다. TLS의 최소·최대 버전은 모두 1.3이고, TLS 내부 요청에는 별도 256-bit bearer token이 들어갑니다. 인증서·키·token은 사용자 상태 디렉터리에 두고 가능한 플랫폼에서는 `0600`, 디렉터리는 `0700`으로 제한합니다.
+
+메시지는 UUID 또는 호출자가 정한 안정된 `messageId`로 idempotent insert됩니다. 같은 ID와 같은 envelope는 기존 결과를 반환하고 다른 내용은 거부합니다. 수신 훅의 claim은 짧은 lease를 설정하고, ACK가 없으면 TTL까지 지수 backoff로 재전달합니다. 모델이 본문을 처리한 뒤 MCP ACK를 호출한 시점만 `acknowledged`이며, Codex queue 또는 Claude inbox write 성공은 전달 증거로 쓰지 않습니다. 메시지는 발신·수신 host/session, 본문, 생성·만료·claim·ACK 시각만 저장하고 개인 키, broker token, inbox token과 socket 경로는 넣지 않습니다. 본문 4096 UTF-8 byte, TTL 30초~24시간, spool 1000개·4 MiB, claim batch 10개·8 KiB 제한을 적용합니다.
+
+Codex와 Claude Code relay는 `(host, sessionId, transport)` lease로 하나만 살아 있게 하고 host 프로세스 PID, 플랫폼이 제공하는 프로세스 시작 식별자와 heartbeat로 stale 상태와 PID 재사용을 회수합니다. 호스트별 adapter가 실제 host PID를 relay에 명시적으로 넘기므로 중간 셸 PID를 host로 오인하지 않습니다. 본문은 host wake transport를 통과하지 않습니다. relay는 broker에 1회용 nonce를 기록한 뒤 nonce만 든 bell을 보내며, `UserPromptSubmit` 현황판 훅이 TLS로 nonce를 소비한 경우에만 이를 내부 wake로 인정해 새 사용자 요청 장벽을 만들지 않습니다. 수신 훅은 본문을 사용자 승인·권한이 아닌 비신뢰 peer context로 감싸고 message ID와 명시적 ACK 지시를 함께 주입합니다.
+
+이 경계가 막는 것은 loopback 구간의 평문 관찰, 우연한 다른 서비스 연결과 잘못된 broker endpoint입니다. 같은 OS 사용자 권한의 악성 프로세스는 상태 디렉터리의 인증서 키·token·DB를 읽거나 바꿀 수 있으므로 막지 못합니다. 따라서 TLS나 추가 HMAC을 같은 사용자 프로세스 사이의 강한 신원 격리로 설명하지 않으며, peer 메시지는 승인·권한·외부 변경 의사를 대신하지 않습니다.
 
 ## 플러그인 업데이트 알림
 

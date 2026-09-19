@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/get-session-message-status-request.v1.schema.json",
+  "title": "GetSessionMessageStatusRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "messageId"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "messageId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "_sessionBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host", "sessionId"],
+      "properties": {
+        "host": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "sessionId": { "type": "string", "minLength": 1, "maxLength": 200 }
+      }
+    }
+  }
+}

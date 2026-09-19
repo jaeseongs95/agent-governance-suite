@@ -26,6 +26,7 @@ import type { HostAttestationProvider } from "./host-attestation.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { ContractValidator } from "./schema-validator.js";
+import { SessionMessageService } from "./session-message-service.js";
 
 type ObjectSchema = Record<string, unknown> & {
   properties?: Record<string, unknown>;
@@ -304,6 +305,7 @@ export function createMcpServer(
   toolSchemaProfile: ToolSchemaProfile = "default",
   hostAttestation: HostAttestationProvider | null = null,
   sessionBoardPath: string | null = null,
+  sessionMessages: SessionMessageService = new SessionMessageService(),
 ): Server {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
@@ -460,6 +462,24 @@ export function createMcpServer(
         inputSchema: contractSchemas.listSessionStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
+      {
+        name: "send_session_message",
+        description: "Send a bounded, expiring peer message to any local AI host/session through the loopback TLS 1.3 broker. The hook binds the sender identity.",
+        inputSchema: contractSchemas.sendSessionMessageRequest,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "acknowledge_session_messages",
+        description: "Acknowledge peer message IDs after processing them. Unacknowledged messages remain eligible for redelivery after their claim lease expires.",
+        inputSchema: contractSchemas.acknowledgeSessionMessagesRequest,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "get_session_message_status",
+        description: "Read queued, delivered, or acknowledged status for a message sent by this bound session.",
+        inputSchema: contractSchemas.getSessionMessageStatusRequest,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
     ]),
   }));
 
@@ -558,6 +578,30 @@ export function createMcpServer(
         case "update_session_status":
         case "list_session_status":
           result = sessionBoardResult(request.params.name, args, sessionBoardPath, validator);
+          break;
+        case "send_session_message":
+          try {
+            validator.sendSessionMessageRequest(args);
+            result = await sessionMessages.send(args);
+          } catch (error) {
+            result = invalidInput(error instanceof Error ? error.message : "Session message input is invalid.");
+          }
+          break;
+        case "acknowledge_session_messages":
+          try {
+            validator.acknowledgeSessionMessagesRequest(args);
+            result = await sessionMessages.acknowledge(args);
+          } catch (error) {
+            result = invalidInput(error instanceof Error ? error.message : "Session message acknowledgement is invalid.");
+          }
+          break;
+        case "get_session_message_status":
+          try {
+            validator.getSessionMessageStatusRequest(args);
+            result = await sessionMessages.status(args);
+          } catch (error) {
+            result = invalidInput(error instanceof Error ? error.message : "Session message status input is invalid.");
+          }
           break;
         case "execute_state_cleanup":
           result = cleanup

@@ -155,6 +155,16 @@ describe("session board hook", () => {
     expect(listed).toMatchObject({ hookSpecificOutput: { permissionDecision: "allow", updatedInput: { _sessionBinding: { host: "claude-code", sessionId: "s1" } } } });
   });
 
+  it("does not create a new request boundary for a broker-verified wake bell", () => {
+    const board = open();
+    handleSessionBoardHook(input("SessionStart"), board, "claude-code", at(0));
+    setSummary(board, session(at(1)), "메시지 대기");
+    handleSessionBoardHook(input("UserPromptSubmit", { prompt: "verified wake" }), board, "claude-code", at(2), true);
+    expect(decision(handleSessionBoardHook(tool("Edit"), board, "claude-code", at(3)))).toBe(null);
+    handleSessionBoardHook(input("UserPromptSubmit", { prompt: "ordinary prompt" }), board, "claude-code", at(4));
+    expect(decision(handleSessionBoardHook(tool("Edit"), board, "claude-code", at(5)))).toBe("deny");
+  });
+
   it("denies exactly once when several hook processes race on the same request", async () => {
     const databasePath = boardPath();
     open(databasePath); // The schema exists, so the processes race on the session row itself.
@@ -175,19 +185,23 @@ describe("session board hook", () => {
   it("points every Codex hook command at a bundle that exists", () => {
     const repository = fileURLToPath(new URL("../../", import.meta.url));
     const config = JSON.parse(readFileSync(path.join(repository, "hooks", "hooks.json"), "utf8")) as { hooks: Record<string, Array<{ hooks: Array<{ command: string; commandWindows: string }> }>> };
-    expect(config.hooks.UserPromptSubmit).toHaveLength(1);
-    expect(config.hooks.UserPromptSubmit?.[0]?.hooks[0]?.command).toContain("session-board-hook.mjs");
+    expect(config.hooks.UserPromptSubmit?.some((group) => group.hooks.some((hook) => hook.command.includes("session-board-hook.mjs")))).toBe(true);
     for (const hook of Object.values(config.hooks).flat().flatMap((group) => group.hooks)) {
-      const posix = /^node "\$PLUGIN_ROOT\/([^"]+)"$/u.exec(hook.command)?.[1];
-      const windows = /^node "\$env:PLUGIN_ROOT\\([^"]+)"$/u.exec(hook.commandWindows)?.[1];
+      const posix = /^node "\$PLUGIN_ROOT\/([^"]+)"(?: .*)?$/u.exec(hook.command)?.[1];
+      const windows = /^node "\$env:PLUGIN_ROOT\\([^"]+)"(?: .*)?$/u.exec(hook.commandWindows)?.[1];
       expect(posix, hook.command).toBeTruthy();
       expect(windows?.split("\\").join("/"), hook.commandWindows).toBe(posix);
       expect(existsSync(path.join(repository, posix!))).toBe(true);
     }
+    const messageStart = config.hooks.SessionStart?.[0]?.hooks[0];
+    expect(messageStart).toBeDefined();
+    expect(messageStart!.command).toContain('--host-pid "$PPID"');
+    expect(messageStart!.commandWindows).toContain('Get-CimInstance Win32_Process');
+    expect(messageStart!.commandWindows).toContain('.ParentProcessId');
   });
 
-  it("fails open on unreadable input or an unusable board", () => {
-    expect(runSessionBoardHook("claude-code", "not json")).toBe("");
+  it("fails open on unreadable input or an unusable board", async () => {
+    expect(await runSessionBoardHook("claude-code", "not json")).toBe("");
     const directory = mkdtempSync(path.join(tmpdir(), "session-board-blocked-"));
     directories.push(directory);
     const blocker = path.join(directory, "file");
@@ -195,7 +209,7 @@ describe("session board hook", () => {
     const previous = process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
     process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = path.join(blocker, "session-board.sqlite3");
     try {
-      expect(runSessionBoardHook("claude-code", JSON.stringify(tool("Edit")))).toBe("");
+      expect(await runSessionBoardHook("claude-code", JSON.stringify(tool("Edit")))).toBe("");
     } finally {
       if (previous === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
       else process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = previous;

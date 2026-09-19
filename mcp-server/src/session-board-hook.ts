@@ -14,6 +14,7 @@ import {
   touchSession,
 } from "../../skills/session-board/scripts/board-store.mjs";
 import { resolveSessionBoardDatabasePath } from "./runtime-config.js";
+import { parseWakeMessage, sessionMessageRequest } from "./session-message-client.js";
 
 type HookInput = Record<string, unknown>;
 type Board = ReturnType<typeof openBoard>;
@@ -38,7 +39,7 @@ function preToolUse(permissionDecision: "allow" | "deny", extra: Record<string, 
 }
 
 /** Maps one host hook event onto the board; identity always comes from the hook input, never from the model. */
-export function handleSessionBoardHook(input: HookInput, board: Board, host: string, now: string = new Date().toISOString()): Record<string, unknown> {
+export function handleSessionBoardHook(input: HookInput, board: Board, host: string, now: string = new Date().toISOString(), verifiedInternalWake = false): Record<string, unknown> {
   const sessionId = text(input.session_id);
   if (!sessionId) return {};
   const session = { host, sessionId, cwd: text(input.cwd) || process.cwd(), now };
@@ -53,7 +54,8 @@ export function handleSessionBoardHook(input: HookInput, board: Board, host: str
   if (event === "UserPromptSubmit") {
     if (!subagent) {
       pruneSessions(board, now);
-      recordPrompt(board, session);
+      if (verifiedInternalWake) touchSession(board, session);
+      else recordPrompt(board, session);
     }
     return {};
   }
@@ -79,12 +81,23 @@ export function handleSessionBoardHook(input: HookInput, board: Board, host: str
 }
 
 /** Runs one hook event and returns the JSON to print; every failure lets the tool call through. */
-export function runSessionBoardHook(host: string, raw: string): string {
+export async function runSessionBoardHook(host: string, raw: string): Promise<string> {
   let board: Board | null = null;
   try {
     const input = JSON.parse(raw) as HookInput;
+    let verifiedInternalWake = false;
+    if (text(input.hook_event_name) === "UserPromptSubmit") {
+      const nonce = parseWakeMessage(input.prompt);
+      const sessionId = text(input.session_id);
+      if (nonce && sessionId) {
+        try {
+          const result = await sessionMessageRequest<{ consumed: boolean }>("consume-wake", { target: { host, sessionId }, nonce });
+          verifiedInternalWake = result.consumed;
+        } catch { /* An unverifiable bell remains an ordinary prompt. */ }
+      }
+    }
     board = openBoard(resolveSessionBoardDatabasePath(), { busyTimeoutMs: 500 });
-    const output = handleSessionBoardHook(input, board, host);
+    const output = handleSessionBoardHook(input, board, host, new Date().toISOString(), verifiedInternalWake);
     return Object.keys(output).length > 0 ? JSON.stringify(output) : "";
   } catch {
     return "";
@@ -97,6 +110,5 @@ export function runSessionBoardHook(host: string, raw: string): string {
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
   let raw = "";
   try { raw = readFileSync(0, "utf8"); } catch { /* Fail open. */ }
-  const output = runSessionBoardHook("codex", raw);
-  if (output) process.stdout.write(output);
+  void runSessionBoardHook("codex", raw).then((output) => { if (output) process.stdout.write(output); });
 }

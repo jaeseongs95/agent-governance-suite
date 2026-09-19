@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 
 try {
   const { runSessionBoardHook } = await import("../mcp-server/dist/session-board-hook.mjs");
-  const output = runSessionBoardHook("claude-code", readFileSync(0, "utf8"));
+  const output = await runSessionBoardHook("claude-code", readFileSync(0, "utf8"));
   if (output) process.stdout.write(output);
 } catch {
   // Never block the session on launcher failures.

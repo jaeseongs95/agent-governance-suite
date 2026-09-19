@@ -25,6 +25,9 @@ import {
   type PurgeDirectContextRequestV1,
   type UpdateSessionStatusRequestV1,
   type ListSessionStatusRequestV1,
+  type SendSessionMessageRequestV1,
+  type AcknowledgeSessionMessagesRequestV1,
+  type GetSessionMessageStatusRequestV1,
   type PrepareStateCleanupRequestV1,
   type SuppressContextRestoreRequestV1,
   type PluginUpdateNoticeV1,
@@ -85,6 +88,9 @@ export const contractSchemas = {
   purgeDirectContextRequest: loadSchema("purge-direct-context-request.v1.schema.json"),
   updateSessionStatusRequest: loadSchema("update-session-status-request.v1.schema.json"),
   listSessionStatusRequest: loadSchema("list-session-status-request.v1.schema.json"),
+  sendSessionMessageRequest: loadSchema("send-session-message-request.v1.schema.json"),
+  acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
+  getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
   executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
   stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
@@ -244,6 +250,18 @@ export class ContractValidator {
 
   listSessionStatusRequest(value: unknown): ListSessionStatusRequestV1 {
     return this.assert<ListSessionStatusRequestV1>("listSessionStatusRequest", value);
+  }
+
+  sendSessionMessageRequest(value: unknown): SendSessionMessageRequestV1 {
+    return this.assert<SendSessionMessageRequestV1>("sendSessionMessageRequest", value);
+  }
+
+  acknowledgeSessionMessagesRequest(value: unknown): AcknowledgeSessionMessagesRequestV1 {
+    return this.assert<AcknowledgeSessionMessagesRequestV1>("acknowledgeSessionMessagesRequest", value);
+  }
+
+  getSessionMessageStatusRequest(value: unknown): GetSessionMessageStatusRequestV1 {
+    return this.assert<GetSessionMessageStatusRequestV1>("getSessionMessageStatusRequest", value);
   }
 
   prepareStateCleanupRequest(value: unknown): PrepareStateCleanupRequestV1 {

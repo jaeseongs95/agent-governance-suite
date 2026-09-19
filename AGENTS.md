@@ -21,6 +21,8 @@ tests/                           # 계약·회귀·런타임 테스트
 
 전문 스킬은 한 가지 역할과 독립 호출 가치를 유지한다. 오케스트레이터는 요청 분류, 실행 순서, 공통 입출력, 중간 검증과 결과 통합만 맡는다. 필수 순서와 불변조건은 지침만으로 두지 말고 스크립트, schema 또는 MCP 실행 계층에서 강제한다.
 
+공용 스킬, 계약, MCP 도구와 런타임은 특정 AI 제품이나 호스트 API를 전제로 하지 않는다. 호스트 이름은 확장 가능한 식별자로 다루고, Codex·Claude Code·Grok·Spark 등 제품별 훅, 신원 관측, 깨우기와 배포 형식은 adapter 또는 overlay 경계에만 둔다. 새 호스트를 지원할 때 공용 계약을 복제하거나 제품명을 박아 넣지 말고 같은 계약에 얇은 adapter를 추가한다. 제품 자체의 로그처럼 본질적으로 호스트 전용인 기능은 이름과 적용 범위에 그 제약을 명시한다.
+
 ## 기준 상태
 
 정확한 버전, 명령, 필수 파일은 현재 `package.json`, `.codex-plugin/plugin.json`, `skills/registry.json`, 소스와 테스트에서 확인한다. 문서나 과거 채팅이 다르면 현재 구현을 우선한다.
@@ -54,7 +56,7 @@ Node.js 22.13 이상과 `pnpm@11.19.0`을 사용한다. 주요 명령은 다음�
 
 Claude Code 배포물은 Codex 플러그인과 서로 영향을 주지 않아야 한다. 공용 원본(`skills/`, `mcp-server/dist/`, `runtime/`, `contracts/`, `release/version.json`)은 두 배포물이 함께 쓰고, 호스트별 부분은 따로 둔다. Codex 전용 부분은 Codex가 저장소 루트를 그대로 설치하므로 `.codex-plugin/`, `.agents/`, `hooks/`, `.mcp.json`, 스킬의 `agents/openai.yaml`에 있다. Claude 전용 파일은 `claude-overlay/`에, 스킬별 Claude 문구(description과 호스트 중립 표현이 없는 문장)는 `claude-overlay/adaptations/<스킬명>.json`에 둔다. Claude 작업을 위해 Codex 전용 부분과 루트 `skills/`의 Codex 동작을 바꾸지 않는다.
 
-`claude-plugin/`은 `pnpm claude:build`로만 생성하고 직접 고치지 않는다. 공용 원본이나 Codex 전용 부분을 바꾸는 변경은 Claude 생성물을 다시 만들거나 `claude-overlay/`를 고칠 필요가 없다. CI의 `pnpm claude:drift`는 생성물과 원본의 차이, Codex 훅 이벤트 누락을 경고로만 알린다. 릴리스를 준비하거나 Claude 쪽을 작업할 때 `pnpm claude:build`와 `pnpm claude:check`로 맞추고, 치환할 원문이 사라지거나 생성물에 Codex 전용 표현이 남아 생성이 실패하면 오류에 표시된 adaptation 파일을 고친다. 생성을 맞추지 못해도 Codex 릴리스는 막지 않으며, 그때 Claude 배포물은 이전 버전으로 남는다. Claude Code 배포물의 상태 DB는 `${CLAUDE_PLUGIN_DATA}` 아래에만 둔다. 예외는 모든 호스트가 함께 쓰는 세션 현황판(`session-board.sqlite3`)이며, 사용자 상태 디렉터리에 두고 요청 원문·비밀은 저장하지 않는다.
+`claude-plugin/`은 `pnpm claude:build`로만 생성하고 직접 고치지 않는다. 공용 원본이나 Codex 전용 부분을 바꾸는 변경은 Claude 생성물을 다시 만들거나 `claude-overlay/`를 고칠 필요가 없다. CI의 `pnpm claude:drift`는 생성물과 원본의 차이, Codex 훅 이벤트 누락을 경고로만 알린다. 릴리스를 준비하거나 Claude 쪽을 작업할 때 `pnpm claude:build`와 `pnpm claude:check`로 맞추고, 치환할 원문이 사라지거나 생성물에 Codex 전용 표현이 남아 생성이 실패하면 오류에 표시된 adaptation 파일을 고친다. 생성을 맞추지 못해도 Codex 릴리스는 막지 않으며, 그때 Claude 배포물은 이전 버전으로 남는다. Claude Code 배포물의 workflow·continuity 상태 DB는 `${CLAUDE_PLUGIN_DATA}` 아래에만 둔다. 예외는 모든 호스트가 함께 쓰는 세션 현황판(`session-board.sqlite3`)과 TLS broker 상태(`session-messaging/`)이며 사용자 상태 디렉터리에 둔다. 현황판에는 요청 원문·비밀을 저장하지 않고, 메시지 spool에는 제한된 본문만 저장하며 인증 비밀은 넣지 않는다.
 
 ## 스킬과 라우팅 규칙
 

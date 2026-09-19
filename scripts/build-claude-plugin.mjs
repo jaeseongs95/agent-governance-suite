@@ -25,6 +25,10 @@ const SHARED_FILES = Object.freeze([
   "mcp-server/dist/continuity-hook.mjs",
   "mcp-server/dist/host-attestation-hook.mjs",
   "mcp-server/dist/session-board-hook.mjs",
+  "mcp-server/dist/session-message-broker.mjs",
+  "mcp-server/dist/session-message-relay.mjs",
+  "mcp-server/dist/session-message-hook.mjs",
+  "mcp-server/dist/session-message-cli.mjs",
 ]);
 const ADAPTATION_KEYS = Object.freeze(["description", "replacements"]);
 // Codex-only wording that must not reach model-visible Claude files.

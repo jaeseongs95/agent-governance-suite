@@ -16,12 +16,18 @@
 - MCP 서버에 `AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE=anthropic`을 넘겨 `plan_workflow`의 공개 스키마에서 최상위 `oneOf`를 없앤다. Anthropic API가 이 형태를 받지 않기 때문이다. 입력 검증은 기존 계약 그대로다.
 - 같은 환경 변수로 MCP 서버가 세션 `instructions`(접수 규칙)를 내보낸다. Claude Code는 이것을 세션 시작 때 시스템 프롬프트에 넣는다. 규칙은 "파일을 고치거나 명령을 실행하기 전에 이 요청의 실패 영향을 한 줄로 분류하고, 크면 orchestrator를 호출해 필요한 단계와 생략할 단계를 이유와 함께 정한 뒤 정한 단계를 그 시점에 실제로 호출한다"이다. Claude Code 세션은 요청을 받으면 곧바로 첫 구현 단계로 들어가고 그 앞에 위험을 따지는 단계가 없어서, 스킬 설명문이나 orchestrator 지침을 통째로 넣어 주는 것만으로는 스킬을 스스로 고르지 않았다(측정 기록은 `docs/roadmap.md`). 환경 변수가 없는 Codex 서버는 `instructions`를 내보내지 않는다.
 - `adaptations/orchestrator.json`은 생성된 orchestrator `SKILL.md` 맨 앞에 "Claude Code에서의 선택 결정" 절을 넣는다. 정해진 체인을 강제하지 않고, 첫 행동 전에 실패 영향과 필요한·생략하는 단계를 이유와 함께 적고 고른 단계를 실제로 호출하라고만 한다. 후보 스킬마다 고르는 조건을 적어 두었다. 실행 방식도 함께 정한다. 실패 영향이 크고 고른 단계가 둘 이상이면 MCP orchestrated workflow로 계획·stage 기록·finalize를 진행해 순서와 감사 게이트를 MCP 원장이 강제하게 하고, MCP가 `BINDING_REQUIRED`·`BINDING_INVALID`를 반환하거나 도구를 쓸 수 없으면 이유를 밝히고 전문 스킬을 직접 호출한다. v1.17.0까지 이 절은 "Claude Code에서는 orchestrated 모드가 시작되지 않는다"고 안내해, host attestation을 추가한 뒤에도 세션이 MCP 경로를 쓰지 않았다. 접수 규칙이 orchestrator를 거치게 하는 이유는, "orchestrator 또는 전문 스킬"로 두면 세션이 이 절을 읽지 않고 전문 스킬 하나만 바로 부르기 때문이다.
-- workflow·continuity SQLite 상태는 `${CLAUDE_PLUGIN_DATA}`에 저장한다. Codex 플러그인의 상태 디렉터리를 열지 않는다.
+- workflow·continuity SQLite 상태는 `${CLAUDE_PLUGIN_DATA}`에 저장한다. 모든 호스트가 함께 쓰는 세션 현황판과 TLS 세션 메시지 broker만 사용자 상태 디렉터리에 둔다.
 - `codex-token-usage-analyzer`는 Codex 세션 로그 전용이라 포함하지 않는다.
 
 ## 공개 도구 스키마
 
 Claude Code는 MCP 도구 스키마의 `$ref`를 풀지 못한다. 외부 `$ref`로 정의된 `taskEnvelope`·`frame` 같은 필드는 객체가 아니라 문자열로 서버에 도착해, v1.17.0까지 `open_convergence_root`가 항상 `INVALID_INPUT`으로 거절됐다. `AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE=anthropic`이면 서버는 `$ref`가 있는 도구 스키마를 참조 없이 펼친 사본으로 내보낸다. 입력 검증은 원래 계약 그대로이고, 이 값이 없는 Codex 서버는 이전 스키마를 그대로 내보낸다.
+
+## TLS 세션 메시지
+
+Claude Code adapter는 args 형식의 SessionStart 훅에서 relay를 띄우고 그 훅의 parent PID와 시작 식별자를 host 생명주기로 사용합니다. 자기 환경의 `CLAUDE_CODE_MESSAGING_SOCKET`과 `CLAUDE_CODE_MESSAGING_TOKEN`은 relay 메모리에만 넘깁니다. inbox에는 본문이 아니라 broker가 발급한 1회용 nonce의 wake bell만 보내며, 실제 본문은 공용 TLS 1.3 broker에서 동기 훅이 claim합니다. 모델이 처리한 `messageId`를 `acknowledge_session_messages`로 ACK하기 전까지 TTL 안에서 재전달될 수 있습니다. inbox write는 ACK로 간주하지 않습니다.
+
+broker와 MCP 계약의 `host`는 임의 식별자입니다. Claude Code와 Codex는 번들 adapter이고, 다른 AI 런타임은 공용 `session-message-cli.mjs`의 JSON stdin/stdout 계약을 사용합니다. TLS pin과 token은 loopback의 잘못된 endpoint와 평문 노출을 막지만 같은 OS 사용자 프로세스를 격리하지 않습니다.
 
 ## 큰 stage 출력
 

@@ -104,15 +104,16 @@ describe("generated Claude plugin", () => {
     }
   });
 
-  it("registers exec-form continuity hooks plus the Claude-only skill trigger, host attestation and session board", async () => {
+  it("registers exec-form continuity and messaging hooks plus the Claude-only adapters", async () => {
     const claudeHooks = await readJson(pluginRoot, "hooks", "hooks.json");
     // Parity with the Codex hook events is reported as drift, so a new Codex event never fails this test.
-    expect(Object.keys(claudeHooks.hooks).sort()).toEqual(["PostCompact", "PostModelSwitch", "PreCompact", "PreToolUse", "SessionStart", "UserPromptSubmit"]);
+    expect(Object.keys(claudeHooks.hooks).sort()).toEqual(["PostCompact", "PostModelSwitch", "PostToolUse", "PreCompact", "PreToolUse", "SessionStart", "Stop", "UserPromptSubmit"]);
     const allowedScripts = [
       "${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs",
       "${CLAUDE_PLUGIN_ROOT}/hooks/skill-trigger-hook.mjs",
       "${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs",
       "${CLAUDE_PLUGIN_ROOT}/hooks/session-board-hook.mjs",
+      "${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs",
     ];
     for (const groups of Object.values(claudeHooks.hooks)) {
       for (const hook of groups.flatMap((group) => group.hooks)) {
@@ -120,8 +121,16 @@ describe("generated Claude plugin", () => {
         expect(allowedScripts).toContain(hook.args[0]);
       }
     }
-    // UserPromptSubmit runs the trigger hook and the session board, which records only the request time.
-    expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[1], allowedScripts[3]]);
+    // Messaging runs before the trigger and board so a peer message can enter the same turn.
+    expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[4], allowedScripts[1], allowedScripts[3]]);
+    // The relay-launching hook must stay in direct args form: process.ppid is then the Claude host, not a transient shell.
+    const messageSessionStart = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[4]));
+    expect(messageSessionStart).toHaveLength(1);
+    expect(messageSessionStart[0].hooks).toEqual([expect.objectContaining({ command: "node", args: [allowedScripts[4]] })]);
+    const messageToolMatcher = new RegExp(claudeHooks.hooks.PreToolUse.find((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[4])).matcher, "u");
+    for (const tool of ["send_session_message", "acknowledge_session_messages", "get_session_message_status"]) {
+      expect(messageToolMatcher.test(`${toolPrefix}${tool}`)).toBe(true);
+    }
     // The session board gates edits, shells and delegation, and binds only its own two MCP tools.
     const boardMatchers = claudeHooks.hooks.PreToolUse
       .filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[3]))
@@ -134,7 +143,8 @@ describe("generated Claude plugin", () => {
     }
     const bashGroup = claudeHooks.hooks.PreToolUse.find((group) => group.matcher === "^Bash$");
     expect(bashGroup.hooks.map((hook) => hook.args[0])).toEqual([allowedScripts[1]]);
-    const matcher = new RegExp(claudeHooks.hooks.PreToolUse[0].matcher, "u");
+    const continuityGroup = claudeHooks.hooks.PreToolUse.find((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[0]));
+    const matcher = new RegExp(continuityGroup.matcher, "u");
     for (const tool of continuityTools) {
       expect(matcher.test(`${toolPrefix}${tool}`)).toBe(true);
       expect(matcher.test(`mcp__agent-governance-suite__${tool}`)).toBe(false);

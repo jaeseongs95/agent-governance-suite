@@ -7,6 +7,19 @@
         "hooks": [
           {
             "type": "command",
+            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs\" --host-pid \"$PPID\"",
+            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\" --host-pid (Get-CimInstance Win32_Process -Filter \"ProcessId=$PID\").ParentProcessId",
+            "timeout": 10,
+            "additionalContextLimit": 2200,
+            "statusMessage": "Checking peer messages"
+          }
+        ]
+      },
+      {
+        "matcher": "^(startup|resume|clear|compact)$",
+        "hooks": [
+          {
+            "type": "command",
             "command": "node \"$PLUGIN_ROOT/mcp-server/dist/continuity-hook.mjs\"",
             "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\continuity-hook.mjs\"",
             "timeout": 10,
@@ -28,6 +41,17 @@
       }
     ],
     "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs\"",
+            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\"",
+            "timeout": 10,
+            "additionalContextLimit": 2200
+          }
+        ]
+      },
       {
         "hooks": [
           {
@@ -67,6 +91,17 @@
     ],
     "PreToolUse": [
       {
+        "matcher": "^mcp__agent[-_]governance[-_]suite__(send_session_message|acknowledge_session_messages|get_session_message_status)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs\"",
+            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
         "matcher": "^mcp__agent[-_]governance[-_]suite__(open_convergence_root|checkpoint_context|inspect_context|load_context|suppress_context_restore|purge_direct_context)$",
         "hooks": [
           {
@@ -96,6 +131,32 @@
             "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-board-hook.mjs\"",
             "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-board-hook.mjs\"",
             "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs\"",
+            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\"",
+            "timeout": 10,
+            "additionalContextLimit": 2200
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs\"",
+            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\"",
+            "timeout": 10,
+            "additionalContextLimit": 2200
           }
         ]
       }
