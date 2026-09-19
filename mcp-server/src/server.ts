@@ -3,12 +3,9 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 
 import {
   type ApiResultV1,
-  type ConvergenceRootV1,
-  type ConvergenceStatusV1,
   type PluginUpdateStatusV1,
   type KoreanProseGlossaryLookupResultV1,
   type ResponseModeV1,
-  type WorkflowReceiptV1,
 } from "../../contracts/types.js";
 import { contractSchemas } from "./schema-validator.js";
 import { inlineSchemaReferences } from "./tool-schema-inline.js";
@@ -407,6 +404,11 @@ export function createMcpServer(
     // Only a host with an attestation adapter strips and verifies the hook token.
     const attested = <T>(tool: string, call: (input: Record<string, unknown>) => T): T =>
       hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
+    // Rejects an unknown mode before the call runs; compact mode projects successful results only.
+    const withMode = <T, U>(field: "responseMode" | "detail", call: () => ApiResultV1<T>, project: (value: T) => U): ApiResultV1<T | U> => {
+      const mode = responseMode(args, field);
+      return mode === null ? invalidInput(`${field} must be compact or full.`) : projectResult(call(), mode, project);
+    };
     let updateStatus: PluginUpdateStatusV1 | null = null;
     let result: ApiResultV1<unknown>;
 
@@ -432,108 +434,42 @@ export function createMcpServer(
           result = attested("plan_workflow", (input) => service.planWorkflow(input, true));
           break;
         case "open_convergence_root":
-          {
-            const mode = responseMode(args, "responseMode");
-            if (mode === null) {
-              result = invalidInput("responseMode must be compact or full.");
-            } else {
-              const opened = service.openConvergenceRoot(domainArguments(args, "responseMode"));
-              if (opened.ok && opened.data) continuity.bindOpenedRoot(args, opened.data.rootId);
-              result = projectResult<ConvergenceRootV1, ReturnType<typeof convergenceRootHandle>>(
-                opened, mode, convergenceRootHandle,
-              );
-            }
-          }
+          result = withMode("responseMode", () => {
+            const opened = service.openConvergenceRoot(domainArguments(args, "responseMode"));
+            if (opened.ok && opened.data) continuity.bindOpenedRoot(args, opened.data.rootId);
+            return opened;
+          }, convergenceRootHandle);
           break;
         case "claim_workflow_attempt":
           result = service.claimWorkflowAttempt(args, true);
           break;
         case "start_guarded_workflow":
-          {
-            const mode = responseMode(args, "responseMode");
-            result = mode === null
-              ? invalidInput("responseMode must be compact or full.")
-              : projectResult<WorkflowReceiptV1, ReturnType<typeof workflowStatusSummary>>(
-                  service.startGuardedWorkflow(domainArguments(args, "responseMode"), true),
-                  mode,
-                  workflowStatusSummary,
-                );
-          }
+          result = withMode("responseMode", () => service.startGuardedWorkflow(domainArguments(args, "responseMode"), true), workflowStatusSummary);
           break;
         case "get_convergence_status":
-          {
-            const mode = responseMode(args, "detail");
-            result = mode === null
-              ? invalidInput("detail must be compact or full.")
-              : projectResult<ConvergenceStatusV1, ReturnType<typeof convergenceStatusSummary>>(
-                  service.getConvergenceStatus(String(args.rootId ?? "")),
-                  mode,
-                  convergenceStatusSummary,
-                );
-          }
+          result = withMode("detail", () => service.getConvergenceStatus(String(args.rootId ?? "")), convergenceStatusSummary);
           break;
         case "resolve_convergence_gate":
-          {
-            const mode = responseMode(args, "responseMode");
-            result = mode === null
-              ? invalidInput("responseMode must be compact or full.")
-              : projectResult<ConvergenceStatusV1, ReturnType<typeof convergenceStatusSummary>>(
-                  service.resolveConvergenceGate(domainArguments(args, "responseMode")),
-                  mode,
-                  convergenceStatusSummary,
-                );
-          }
+          result = withMode("responseMode", () => service.resolveConvergenceGate(domainArguments(args, "responseMode")), convergenceStatusSummary);
           break;
         case "start_workflow":
           result = service.rejectUnguardedWorkflow(args);
           break;
         case "record_stage_result":
-          {
-            const mode = responseMode(args, "responseMode");
-            result = mode === null
-              ? invalidInput("responseMode must be compact or full.")
-              : projectResult<WorkflowReceiptV1, ReturnType<typeof workflowStatusSummary>>(
-                  attested("record_stage_result", (input) => service.recordStageResult(domainArguments(input, "responseMode"), true)),
-                  mode,
-                  workflowStatusSummary,
-                );
-          }
+          result = withMode(
+            "responseMode",
+            () => attested("record_stage_result", (input) => service.recordStageResult(domainArguments(input, "responseMode"), true)),
+            workflowStatusSummary,
+          );
           break;
         case "get_workflow_status":
-          {
-            const mode = responseMode(args, "detail");
-            result = mode === null
-              ? invalidInput("detail must be compact or full.")
-              : projectResult<WorkflowReceiptV1, ReturnType<typeof workflowStatusSummary>>(
-                  service.getWorkflowStatus(String(args.runId ?? "")),
-                  mode,
-                  workflowStatusSummary,
-                );
-          }
+          result = withMode("detail", () => service.getWorkflowStatus(String(args.runId ?? "")), workflowStatusSummary);
           break;
         case "finalize_workflow":
-          {
-            const mode = responseMode(args, "responseMode");
-            result = mode === null
-              ? invalidInput("responseMode must be compact or full.")
-              : projectResult<WorkflowReceiptV1, ReturnType<typeof workflowStatusSummary>>(
-                  service.finalizeWorkflow(String(args.runId ?? ""), integer(args.expectedRevision)),
-                  mode,
-                  workflowStatusSummary,
-                );
-          }
+          result = withMode("responseMode", () => service.finalizeWorkflow(String(args.runId ?? ""), integer(args.expectedRevision)), workflowStatusSummary);
           break;
         case "abort_workflow":
-          {
-            const mode = responseMode(args, "responseMode");
-            result = mode === null
-              ? invalidInput("responseMode must be compact or full.")
-              : projectResult<WorkflowReceiptV1, ReturnType<typeof workflowStatusSummary>>(
-                  service.abortWorkflow(String(args.runId ?? ""), integer(args.expectedRevision)),
-                  mode,
-                  workflowStatusSummary,
-                );
-          }
+          result = withMode("responseMode", () => service.abortWorkflow(String(args.runId ?? ""), integer(args.expectedRevision)), workflowStatusSummary);
           break;
         case "checkpoint_context":
           result = continuity.checkpointContext(args);
