@@ -10,7 +10,7 @@ import {
   WorkflowContractError,
 } from "../../contracts/types.js";
 import { canonicalJson, convergenceDigest } from "./convergence-logic.js";
-import { ContractValidator } from "./schema-validator.js";
+import type { ContractValidator } from "./schema-validator.js";
 import {
   ContinuityStoreError,
   type ContinuityTaskRecord,
@@ -163,7 +163,8 @@ export class ContinuityService implements ContinuityGateway {
 
   constructor(
     readonly store: SqliteContinuityStore,
-    private readonly validator: ContractValidator,
+    // Lifecycle hooks pass null: they never call the MCP tool methods, and skipping the validator keeps ajv out of the hook bundle.
+    private readonly validator: ContractValidator | null,
     private readonly workflowStore: WorkflowStore | null = null,
     private readonly now: () => Date = () => new Date(),
   ) {
@@ -201,7 +202,7 @@ export class ContinuityService implements ContinuityGateway {
 
   checkpointContext(value: unknown): ApiResultV1<ContinuitySnapshotV1> {
     return this.guard(() => {
-      const request = this.validator.checkpointContextRequest(value);
+      const request = this.validator!.checkpointContextRequest(value);
       const binding = this.verifyToolBinding("checkpoint_context", request, request._continuityBinding);
       const task = this.currentTask(binding);
       if (task.rootId) throw new WorkflowContractError("SNAPSHOT_CONFLICT", "Direct checkpoints are disabled after a workflow root is bound.", { rootId: task.rootId });
@@ -243,7 +244,7 @@ export class ContinuityService implements ContinuityGateway {
 
   inspectContext(value: unknown): ApiResultV1<ContinuityCandidateV1> {
     return this.guard(() => {
-      const request = this.validator.inspectContextRequest(value);
+      const request = this.validator!.inspectContextRequest(value);
       const binding = this.verifyToolBinding("inspect_context", request, request._continuityBinding);
       return ok(this.candidateFor(binding.c));
     });
@@ -251,7 +252,7 @@ export class ContinuityService implements ContinuityGateway {
 
   loadContext(value: unknown): ApiResultV1<ContinuitySnapshotV1 | WorkflowContinuityCardV1> {
     return this.guard<ContinuitySnapshotV1 | WorkflowContinuityCardV1>(() => {
-      const request = this.validator.loadContextRequest(value);
+      const request = this.validator!.loadContextRequest(value);
       const binding = this.verifyToolBinding("load_context", request, request._continuityBinding);
       const candidate = this.verifyCandidate(request.candidateToken);
       if (
@@ -279,7 +280,7 @@ export class ContinuityService implements ContinuityGateway {
 
   suppressContextRestore(value: unknown): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }> {
     return this.guard(() => {
-      const request = this.validator.suppressContextRestoreRequest(value);
+      const request = this.validator!.suppressContextRestoreRequest(value);
       const binding = this.verifyToolBinding("suppress_context_restore", request, request._continuityBinding);
       if (request.expectedEpoch !== binding.e) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.", { actualEpoch: binding.e });
       if (!this.store.setSuppressed(binding.c, binding.e, this.now().toISOString())) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.");
@@ -289,7 +290,7 @@ export class ContinuityService implements ContinuityGateway {
 
   purgeDirectContext(value: unknown): ApiResultV1<ContinuityPurgeResultV1> {
     return this.guard(() => {
-      const request = this.validator.purgeDirectContextRequest(value);
+      const request = this.validator!.purgeDirectContextRequest(value);
       const binding = this.verifyToolBinding("purge_direct_context", request, request._continuityBinding);
       this.currentTask(binding);
       const current = this.store.getSnapshot(binding.c, request.expectedEpoch);

@@ -9,7 +9,6 @@ import {
   resolveContinuityDatabasePath,
   resolveWorkflowDatabasePath,
 } from "./runtime-config.js";
-import { ContractValidator } from "./schema-validator.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 
 type HookInput = Record<string, unknown>;
@@ -103,7 +102,7 @@ async function main(): Promise<void> {
     if (needsWorkflowProjection) {
       try { workflow = new SqliteWorkflowStore(workflowDatabasePath); } catch { workflow = null; }
     }
-    const output = handleContinuityHook(input, new ContinuityService(continuity, new ContractValidator(), workflow));
+    const output = handleContinuityHook(input, new ContinuityService(continuity, null, workflow));
     if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));
   } catch {
     // Continuity is optional: every lifecycle failure exits successfully and emits no context.
