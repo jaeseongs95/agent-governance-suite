@@ -2,7 +2,7 @@ import { chmodSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-import type { ContinuitySnapshotV1 } from "../../contracts/types.js";
+import type { ContinuitySnapshotV1, StateCleanupPlanV1 } from "../../contracts/types.js";
 
 export interface ContinuityTaskRecord {
   taskCorrelation: string;
@@ -49,25 +49,9 @@ interface RequestRow { command_digest: string; result_json: string }
 interface RequestPayloadRow { request_hash: string; result_json: string }
 interface TombstoneRow { revision: number; payload_digest: string; purged_at: string }
 
-export interface ContinuityCleanupSnapshotCandidate {
-  taskCorrelation: string;
-  rootId: string | null;
-  epoch: number;
-  revision: number;
-  snapshotDigest: string;
-  updatedAt: string;
-}
-
-export interface ContinuityCleanupTaskCandidate {
-  taskCorrelation: string;
-  currentEpoch: number;
-  rootId: string | null;
-  updatedAt: string;
-}
-
 export interface ContinuityCleanupPreview {
-  snapshots: ContinuityCleanupSnapshotCandidate[];
-  tasks: ContinuityCleanupTaskCandidate[];
+  snapshots: StateCleanupPlanV1["candidates"]["continuitySnapshots"];
+  tasks: StateCleanupPlanV1["candidates"]["continuityTasks"];
   protectedActiveTasks: number;
 }
 
@@ -80,7 +64,7 @@ function hasExactKeys(value: Record<string, unknown>, keys: string[]): boolean {
   return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
 }
 
-function isBodyFreeRequestReceipt(value: Record<string, unknown> | null): boolean {
+export function isBodyFreeRequestReceipt(value: Record<string, unknown> | null): boolean {
   if (!value || value.schemaVersion !== "1.0.0") return false;
   if (value.kind === "checkpoint") {
     return hasExactKeys(value, ["schemaVersion", "kind", "epoch", "revision", "snapshotDigest"])
@@ -105,6 +89,10 @@ export class ContinuityStoreError extends Error {
     super(message);
     this.name = "ContinuityStoreError";
   }
+}
+
+function purgedRequestJson(epoch: number, revision: number, tombstoneDigest: string, purgedAt: string): string {
+  return JSON.stringify({ schemaVersion: "1.0.0", kind: "purged-request", epoch, revision, tombstoneDigest, purgedAt });
 }
 
 function taskRecord(row: TaskRow): ContinuityTaskRecord {
@@ -235,19 +223,12 @@ export class SqliteContinuityStore {
     commandDigest: string,
     snapshot: ContinuitySnapshotV1,
   ): { kind: "stored" } | { kind: "stale"; actualRevision: number } | { kind: "replay"; request: StoredRequest } | { kind: "conflict" } {
-    this.database.exec("BEGIN IMMEDIATE;");
-    try {
+    return this.transaction("Cannot store the continuity checkpoint.", () => {
       const replay = this.getRequest(taskCorrelation, epoch, requestHash);
-      if (replay) {
-        this.database.exec("COMMIT;");
-        return replay.commandDigest === commandDigest ? { kind: "replay", request: replay } : { kind: "conflict" };
-      }
+      if (replay) return replay.commandDigest === commandDigest ? { kind: "replay", request: replay } : { kind: "conflict" };
       const current = this.getSnapshot(taskCorrelation, epoch);
       const actualRevision = current?.revision ?? this.getTombstone(taskCorrelation, epoch)?.revision ?? 0;
-      if (actualRevision !== expectedRevision) {
-        this.database.exec("ROLLBACK;");
-        return { kind: "stale", actualRevision };
-      }
+      if (actualRevision !== expectedRevision) return { kind: "stale", actualRevision };
       const json = JSON.stringify(snapshot);
       const resultJson = JSON.stringify({
         schemaVersion: "1.0.0",
@@ -267,12 +248,8 @@ export class SqliteContinuityStore {
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
       `).run(taskCorrelation, epoch, requestHash, commandDigest, resultJson, snapshot.updatedAt);
-      this.database.exec("COMMIT;");
       return { kind: "stored" };
-    } catch (cause) {
-      try { this.database.exec("ROLLBACK;"); } catch { /* Preserve the primary failure. */ }
-      throw new ContinuityStoreError("Cannot store the continuity checkpoint.", cause);
-    }
+    });
   }
 
   purge(
@@ -284,34 +261,14 @@ export class SqliteContinuityStore {
     tombstoneDigest: string,
     now: string,
   ): { kind: "purged" } | { kind: "stale"; actualRevision: number } | { kind: "replay"; request: StoredRequest } | { kind: "conflict" } {
-    this.database.exec("BEGIN IMMEDIATE;");
-    try {
+    return this.transaction("Cannot purge the continuity checkpoint.", () => {
       const replay = this.getRequest(taskCorrelation, epoch, requestHash);
-      if (replay) {
-        this.database.exec("COMMIT;");
-        return replay.commandDigest === commandDigest ? { kind: "replay", request: replay } : { kind: "conflict" };
-      }
+      if (replay) return replay.commandDigest === commandDigest ? { kind: "replay", request: replay } : { kind: "conflict" };
       const current = this.getSnapshot(taskCorrelation, epoch);
       const actualRevision = current?.revision ?? 0;
-      if (!current || actualRevision !== expectedRevision) {
-        this.database.exec("ROLLBACK;");
-        return { kind: "stale", actualRevision };
-      }
-      this.database.prepare("DELETE FROM continuity_snapshots WHERE task_correlation = ? AND epoch = ?").run(taskCorrelation, epoch);
-      this.database.prepare(`
-        INSERT INTO continuity_tombstones(task_correlation, epoch, revision, payload_digest, purged_at)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(task_correlation, epoch) DO UPDATE SET
-          revision = excluded.revision, payload_digest = excluded.payload_digest, purged_at = excluded.purged_at
-      `).run(taskCorrelation, epoch, expectedRevision, tombstoneDigest, now);
-      const scrubbedRequestJson = JSON.stringify({
-        schemaVersion: "1.0.0",
-        kind: "purged-request",
-        epoch,
-        revision: expectedRevision,
-        tombstoneDigest,
-        purgedAt: now,
-      });
+      if (!current || actualRevision !== expectedRevision) return { kind: "stale", actualRevision };
+      this.tombstone(taskCorrelation, epoch, expectedRevision, tombstoneDigest, now);
+      const scrubbedRequestJson = purgedRequestJson(epoch, expectedRevision, tombstoneDigest, now);
       const storedRequests = this.database.prepare(`
         SELECT request_hash, result_json FROM continuity_requests
         WHERE task_correlation = ? AND epoch = ?
@@ -335,12 +292,8 @@ export class SqliteContinuityStore {
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
       `).run(taskCorrelation, epoch, requestHash, commandDigest, resultJson, now);
-      this.database.exec("COMMIT;");
       return { kind: "purged" };
-    } catch (cause) {
-      try { this.database.exec("ROLLBACK;"); } catch { /* Preserve the primary failure. */ }
-      throw new ContinuityStoreError("Cannot purge the continuity checkpoint.", cause);
-    }
+    });
   }
 
   setPendingMarker(
@@ -483,8 +436,7 @@ export class SqliteContinuityStore {
     payloadCutoff: string,
     recordCutoff: string,
   ): { snapshots: number; tasks: number } {
-    this.database.exec("BEGIN IMMEDIATE;");
-    try {
+    return this.transaction("Cannot execute continuity state cleanup.", () => {
       const verifySnapshot = this.database.prepare(`
         SELECT snapshots.revision, snapshots.snapshot_digest, snapshots.snapshot_json,
                snapshots.updated_at, tasks.root_id
@@ -536,22 +488,12 @@ export class SqliteContinuityStore {
         WHERE task_correlation = ? AND epoch = ?
       `);
       for (const snapshot of preview.snapshots) {
-        this.database.prepare("DELETE FROM continuity_snapshots WHERE task_correlation = ? AND epoch = ?")
-          .run(snapshot.taskCorrelation, snapshot.epoch);
-        this.database.prepare(`
-          INSERT INTO continuity_tombstones(task_correlation, epoch, revision, payload_digest, purged_at)
-          VALUES (?, ?, ?, ?, ?)
-          ON CONFLICT(task_correlation, epoch) DO UPDATE SET
-            revision = excluded.revision, payload_digest = excluded.payload_digest, purged_at = excluded.purged_at
-        `).run(snapshot.taskCorrelation, snapshot.epoch, snapshot.revision, snapshot.snapshotDigest, now);
-        scrubbed.run(JSON.stringify({
-          schemaVersion: "1.0.0",
-          kind: "purged-request",
-          epoch: snapshot.epoch,
-          revision: snapshot.revision,
-          tombstoneDigest: snapshot.snapshotDigest,
-          purgedAt: now,
-        }), snapshot.taskCorrelation, snapshot.epoch);
+        this.tombstone(snapshot.taskCorrelation, snapshot.epoch, snapshot.revision, snapshot.snapshotDigest, now);
+        scrubbed.run(
+          purgedRequestJson(snapshot.epoch, snapshot.revision, snapshot.snapshotDigest, now),
+          snapshot.taskCorrelation,
+          snapshot.epoch,
+        );
         this.database.prepare("UPDATE continuity_tasks SET updated_at = ? WHERE task_correlation = ?")
           .run(now, snapshot.taskCorrelation);
       }
@@ -563,12 +505,35 @@ export class SqliteContinuityStore {
         for (const statement of deleteByTask) statement.run(task.taskCorrelation);
         this.database.prepare("DELETE FROM continuity_tasks WHERE task_correlation = ?").run(task.taskCorrelation);
       }
-      this.database.exec("COMMIT;");
       return { snapshots: preview.snapshots.length, tasks: preview.tasks.length };
+    });
+  }
+
+  /** Deletes the snapshot payload and keeps only its revision and digest. */
+  private tombstone(taskCorrelation: string, epoch: number, revision: number, payloadDigest: string, purgedAt: string): void {
+    this.database.prepare("DELETE FROM continuity_snapshots WHERE task_correlation = ? AND epoch = ?").run(taskCorrelation, epoch);
+    this.database.prepare(`
+      INSERT INTO continuity_tombstones(task_correlation, epoch, revision, payload_digest, purged_at)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(task_correlation, epoch) DO UPDATE SET
+        revision = excluded.revision, payload_digest = excluded.payload_digest, purged_at = excluded.purged_at
+    `).run(taskCorrelation, epoch, revision, payloadDigest, purgedAt);
+  }
+
+  /**
+   * Runs a write transaction. Early returns commit without having written;
+   * failures roll back and surface as ContinuityStoreError.
+   */
+  private transaction<T>(message: string, operation: () => T): T {
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      const result = operation();
+      this.database.exec("COMMIT;");
+      return result;
     } catch (cause) {
       try { this.database.exec("ROLLBACK;"); } catch { /* Preserve the primary failure. */ }
       if (cause instanceof ContinuityStoreError) throw cause;
-      throw new ContinuityStoreError("Cannot execute continuity state cleanup.", cause);
+      throw new ContinuityStoreError(message, cause);
     }
   }
 

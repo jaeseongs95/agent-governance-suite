@@ -14,6 +14,7 @@ import type { ContractValidator } from "./schema-validator.js";
 import {
   ContinuityStoreError,
   type ContinuityTaskRecord,
+  isBodyFreeRequestReceipt,
   SqliteContinuityStore,
 } from "./continuity-store.js";
 import type { WorkflowStore } from "./workflow-store.js";
@@ -86,7 +87,6 @@ interface CheckpointReplayReceiptV1 {
 }
 
 export interface ContinuityGateway {
-  readonly available: boolean;
   checkpointContext(value: unknown): ApiResultV1<ContinuitySnapshotV1>;
   inspectContext(value: unknown): ApiResultV1<ContinuityCandidateV1>;
   loadContext(value: unknown): ApiResultV1<ContinuitySnapshotV1 | WorkflowContinuityCardV1>;
@@ -109,23 +109,10 @@ function withoutBinding(value: Record<string, unknown>): Record<string, unknown>
   return result;
 }
 
-function exactKeys(value: Record<string, unknown>, keys: string[]): boolean {
-  const actual = Object.keys(value).sort();
-  const expected = [...keys].sort();
-  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
-}
-
+/** A stored purge result: the body-free "purged" receipt shape, never a checkpoint or scrubbed request. */
 function purgeReceipt(value: unknown): ContinuityPurgeResultV1 | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const receipt = value as Record<string, unknown>;
-  if (
-    !exactKeys(receipt, ["schemaVersion", "purged", "epoch", "revision", "tombstoneDigest", "purgedAt"]) ||
-    receipt.schemaVersion !== "1.0.0" || receipt.purged !== true ||
-    !Number.isInteger(receipt.epoch) || !Number.isInteger(receipt.revision) ||
-    typeof receipt.tombstoneDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(receipt.tombstoneDigest) ||
-    typeof receipt.purgedAt !== "string"
-  ) return null;
-  return receipt as unknown as ContinuityPurgeResultV1;
+  const receipt = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+  return receipt && receipt.purged === true && isBodyFreeRequestReceipt(receipt) ? receipt as unknown as ContinuityPurgeResultV1 : null;
 }
 
 function boundedText(value: string, maxLength: number): string {
@@ -158,7 +145,6 @@ function parseJsonToken<T>(value: string): { payload: T; body: string; signature
 }
 
 export class ContinuityService implements ContinuityGateway {
-  readonly available = true;
   private readonly secret: string;
 
   constructor(
@@ -528,7 +514,6 @@ export class ContinuityService implements ContinuityGateway {
 }
 
 export class UnavailableContinuityService implements ContinuityGateway {
-  readonly available = false;
   private unavailable<T>(): ApiResultV1<T> {
     return failure("CONTINUITY_UNAVAILABLE", "The optional continuity store is unavailable.");
   }
