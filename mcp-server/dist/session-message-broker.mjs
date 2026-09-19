@@ -122,7 +122,7 @@ var SessionMessageStore = class {
     this.prune(nowMs);
     const existing = this.database.prepare("SELECT * FROM messages WHERE message_id = ?").get(messageId);
     if (existing) {
-      const same = existing.sender_host === input.sender.host && existing.sender_session_id === input.sender.sessionId && existing.target_host === input.target.host && existing.target_session_id === input.target.sessionId && existing.body === input.body;
+      const same = existing.sender_host === input.sender.host && existing.sender_session_id === input.sender.sessionId && existing.target_host === input.target.host && existing.target_session_id === input.target.sessionId && existing.body === input.body && Date.parse(String(existing.expires_at)) - Date.parse(String(existing.created_at)) === ttlSeconds * 1e3;
       if (!same) throw new Error("messageId already belongs to a different message.");
       return { messageId, createdAt: String(existing.created_at), expiresAt: String(existing.expires_at), duplicate: true };
     }
@@ -352,6 +352,9 @@ function integer2(value, name) {
 function optionalInteger(record, name) {
   return Object.hasOwn(record, name) ? integer2(record[name], name) : void 0;
 }
+function optionalString(record, name) {
+  return Object.hasOwn(record, name) ? string(record[name], name) : void 0;
+}
 function tokenMatches(actual, expected) {
   const left = Buffer.from(actual);
   const right = Buffer.from(expected);
@@ -443,14 +446,17 @@ function dispatch(store, operation, payload) {
   switch (operation) {
     case "ping":
       return { protocolVersion: SESSION_MESSAGE_PROTOCOL };
-    case "send":
+    case "send": {
+      const messageId = optionalString(payload, "messageId");
+      const ttlSeconds = optionalInteger(payload, "ttlSeconds");
       return store.send({
-        ...typeof payload.messageId === "string" ? { messageId: payload.messageId } : {},
+        ...messageId === void 0 ? {} : { messageId },
         sender: identity(payload.sender),
         target: identity(payload.target),
         body: string(payload.body, "body"),
-        ...typeof payload.ttlSeconds === "number" ? { ttlSeconds: payload.ttlSeconds } : {}
+        ...ttlSeconds === void 0 ? {} : { ttlSeconds }
       });
+    }
     case "claim": {
       const maxMessages = optionalInteger(payload, "maxMessages");
       const maxBodyChars = optionalInteger(payload, "maxBodyChars");

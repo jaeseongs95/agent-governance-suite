@@ -147,7 +147,8 @@ export class SessionMessageStore {
         && existing.sender_session_id === input.sender.sessionId
         && existing.target_host === input.target.host
         && existing.target_session_id === input.target.sessionId
-        && existing.body === input.body;
+        && existing.body === input.body
+        && Date.parse(String(existing.expires_at)) - Date.parse(String(existing.created_at)) === ttlSeconds * 1000;
       if (!same) throw new Error("messageId already belongs to a different message.");
       return { messageId, createdAt: String(existing.created_at), expiresAt: String(existing.expires_at), duplicate: true };
     }

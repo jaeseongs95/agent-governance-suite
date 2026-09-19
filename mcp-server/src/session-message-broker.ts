@@ -44,6 +44,10 @@ function optionalInteger(record: Record<string, unknown>, name: string): number 
   return Object.hasOwn(record, name) ? integer(record[name], name) : undefined;
 }
 
+function optionalString(record: Record<string, unknown>, name: string): string | undefined {
+  return Object.hasOwn(record, name) ? string(record[name], name) : undefined;
+}
+
 function tokenMatches(actual: string, expected: string): boolean {
   const left = Buffer.from(actual);
   const right = Buffer.from(expected);
@@ -133,13 +137,17 @@ async function credentials(stateDirectory: string): Promise<{ key: string; certi
 function dispatch(store: SessionMessageStore, operation: string, payload: Record<string, unknown>): unknown {
   switch (operation) {
     case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL };
-    case "send": return store.send({
-      ...(typeof payload.messageId === "string" ? { messageId: payload.messageId } : {}),
-      sender: identity(payload.sender),
-      target: identity(payload.target),
-      body: string(payload.body, "body"),
-      ...(typeof payload.ttlSeconds === "number" ? { ttlSeconds: payload.ttlSeconds } : {}),
-    });
+    case "send": {
+      const messageId = optionalString(payload, "messageId");
+      const ttlSeconds = optionalInteger(payload, "ttlSeconds");
+      return store.send({
+        ...(messageId === undefined ? {} : { messageId }),
+        sender: identity(payload.sender),
+        target: identity(payload.target),
+        body: string(payload.body, "body"),
+        ...(ttlSeconds === undefined ? {} : { ttlSeconds }),
+      });
+    }
     case "claim": {
       const maxMessages = optionalInteger(payload, "maxMessages");
       const maxBodyChars = optionalInteger(payload, "maxBodyChars");

@@ -79,6 +79,7 @@ describe("session message spool", () => {
     const first = store.send({ messageId: "msg-0001", sender: grok, target: spark, body: "hello", ttlSeconds: 600 }, 1000);
     expect(store.send({ messageId: "msg-0001", sender: grok, target: spark, body: "hello", ttlSeconds: 600 }, 2000)).toMatchObject({ ...first, duplicate: true });
     expect(() => store.send({ messageId: "msg-0001", sender: grok, target: spark, body: "changed" }, 2000)).toThrow(/different message/u);
+    expect(() => store.send({ messageId: "msg-0001", sender: grok, target: spark, body: "hello", ttlSeconds: 601 }, 2000)).toThrow(/different message/u);
     expect(() => store.send({ sender: grok, target: spark, body: "x".repeat(MESSAGE_BODY_MAX_BYTES + 1) }, 2000)).toThrow(/4096/u);
     expect(() => store.send({ sender: grok, target: spark, body: "가".repeat(2048) }, 2000)).toThrow(/4096/u);
     expect(() => store.send({ sender: grok, target: spark, body: "ttl", ttlSeconds: 29 }, 2000)).toThrow(/ttlSeconds/u);
@@ -279,6 +280,30 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     }
     const afterInvalidBudget = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target: invalidBudgetTarget, maxMessages: 1 } }), directory);
     expect(afterInvalidBudget).toMatchObject({ data: { messages: [{ messageId: "invalid-budget-0001" }] } });
+
+    const invalidSendTarget = { host: "spark", sessionId: "invalid-send" };
+    for (const invalid of [null, {}, 1]) {
+      await expect(runSessionMessageCli(JSON.stringify({
+        operation: "send",
+        payload: { messageId: invalid, sender: { host: "grok", sessionId: "g-1" }, target: invalidSendTarget, body: "invalid message id", ttlSeconds: 600 },
+      }), directory)).rejects.toThrow(/messageId must be a string/u);
+    }
+    for (const invalid of ["600", null, {}]) {
+      await expect(runSessionMessageCli(JSON.stringify({
+        operation: "send",
+        payload: { messageId: "invalid-send-0001", sender: { host: "grok", sessionId: "g-1" }, target: invalidSendTarget, body: "invalid ttl", ttlSeconds: invalid },
+      }), directory)).rejects.toThrow(/ttlSeconds must be an integer/u);
+    }
+    const pendingAfterInvalidSend = await runSessionMessageCli(JSON.stringify({ operation: "pending", payload: { target: invalidSendTarget } }), directory);
+    expect(pendingAfterInvalidSend).toMatchObject({ data: { count: 0 } });
+    await runSessionMessageCli(JSON.stringify({
+      operation: "send",
+      payload: { messageId: "invalid-send-0001", sender: { host: "grok", sessionId: "g-1" }, target: invalidSendTarget, body: "valid send", ttlSeconds: 600 },
+    }), directory);
+    await expect(runSessionMessageCli(JSON.stringify({
+      operation: "send",
+      payload: { messageId: "invalid-send-0001", sender: { host: "grok", sessionId: "g-1" }, target: invalidSendTarget, body: "valid send", ttlSeconds: 601 },
+    }), directory)).rejects.toThrow(/different message/u);
 
     const metadataTarget = { host: "spark", sessionId: "wire-sized" };
     const metadataSender = { host: "가".repeat(64), sessionId: "나".repeat(200) };
