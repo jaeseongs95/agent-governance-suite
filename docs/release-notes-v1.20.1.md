@@ -11,7 +11,7 @@
 
 ## 호환성
 
-- 서버의 토큰 계약, `contracts/` schema, MCP 도구, Codex 배포물(`hooks/`, `.codex-plugin/`, `.mcp.json`)은 바뀌지 않았습니다. 이 훅은 Claude 배포물에만 등록되며, Codex는 이전과 같이 `BINDING_REQUIRED`를 반환합니다.
+- 서버의 토큰 계약, `contracts/` schema, MCP 도구는 바뀌지 않았습니다. Codex 배포물은 버전 번호만 바뀌었습니다. 공용 번들 `mcp-server/dist/host-attestation-hook.mjs`도 함께 설치되지만 Codex의 `hooks/`에는 등록되지 않으므로, Codex는 이전과 같이 `BINDING_REQUIRED`를 반환합니다.
 - 헤드리스 세션은 이전과 같이 호출 메시지로 증명합니다.
 
 ## 알려진 제한
@@ -25,6 +25,6 @@
 
 - 전체 검증: `pnpm install --frozen-lockfile`, `bundle:check`, `claude:drift`, `lint`, `build`, `test`(353건 통과), `runtime:check`(대화형 경로 clean-room 검사 추가), `validate:all`, `validate:official`, `claude:check`, `git diff --check`가 모두 종료 코드 0입니다.
 - 사전 관측: 훅 입력만 기록하는 플러그인을 대화형 세션에 적재해 확인했습니다. `SessionStart`(startup)가 `model`을 넘기고, `/model` 전환 뒤 `PostModelSwitch`가 적용된 모델을 넘깁니다. `PreModelSwitch`는 적용되지 않은 요청에도 옵니다. Haiku에서는 PreToolUse 입력에 `effort`가 없고, `SubagentStart`에는 모델이 없습니다. 대화형 PreToolUse 4회 모두 호출 메시지가 transcript에 없었습니다.
-- 대화형 실측(`claude --setting-sources project --plugin-dir <후보 claude-plugin>`, 사용자가 실행): Opus 5에서 `plan_workflow`가 1.5초 만에 통과했습니다(`claude-opus-5`, `deep`, `high`). `/model`로 Sonnet 5로 바꾼 뒤에는 Sonnet으로 증명돼 계획 하한 미달로 `BINDING_INVALID`가 반환됐습니다. 수정 전에는 약 7초 뒤 `BINDING_REQUIRED`였습니다.
+- 대화형 실측(`claude --setting-sources project --plugin-dir <후보 claude-plugin>`, 사용자가 실행): Opus 5에서 `plan_workflow`의 실행 보증이 1.5초 만에 통과했습니다(`claude-opus-5`, `deep`, `high`). 실측용 작업 계약에 기준선 provider가 없어 계획 상태는 `blocked`였고, 이는 보증과 관계없는 결과입니다. `/model`로 Sonnet 5로 바꾼 뒤에는 Sonnet으로 증명돼 계획 하한 미달로 `BINDING_INVALID`가 반환됐습니다. 수정 전에는 약 7초 뒤 `BINDING_REQUIRED`였습니다.
 - 헤드리스 E2E(`claude-opus-5`, 후보 빌드, 저장소 복제본): `plan_workflow`와 `record_stage_result` 4건이 모두 증명을 통과했습니다. 실행기 턴 한도(60)에 걸려 마지막 감사 stage와 finalize까지는 진행하지 않았습니다.
 - 독립 감사: 첫 감사는 FAIL이었습니다. 대체 경로가 이전 메시지의 effort를 써서 effort를 지원하지 않는 모델의 호출이 다른 모델의 값으로 증명될 수 있었습니다. 수정 뒤 재감사는 PASS였습니다.
