@@ -32,13 +32,18 @@ stage 결과는 provider 출력(`output.output`)을 `record_stage_result`로 넘
 실행 보증이 필요한 orchestrated workflow는 `hooks/host-attestation-hook.mjs`가 관측한 값으로 진행한다.
 
 - Claude Code는 `plan_workflow`와 `record_stage_result`를 호출하기 직전에 이 훅을 실행한다. 훅 입력에는 모델 이름이 없지만 `tool_use_id`, `transcript_path`, 추론 수준(`effort.level`)이 있다.
-- 훅은 transcript에서 그 `tool_use_id`를 낸 assistant 메시지를 찾아 `message.model`을 읽는다. 서브에이전트가 호출했으면 `<세션>/subagents/agent-<agent_id>.jsonl`을 읽고, actor를 서브에이전트로 기록한다. transcript에서는 그 메시지의 모델과 effort만 꺼내고 내용을 저장하지 않으며, 계획과 receipt에 남는 actor ID에는 session·agent ID의 SHA-256 digest만 쓴다. transcript는 호출보다 늦게 기록될 수 있어 최대 5초 동안 다시 읽는다.
+- 훅은 transcript에서 그 `tool_use_id`를 낸 assistant 메시지를 찾아 `message.model`을 읽는다. 서브에이전트가 호출했으면 `<세션>/subagents/agent-<agent_id>.jsonl`을 읽고, actor를 서브에이전트로 기록한다. transcript에서는 그 메시지의 모델과 effort만 꺼내고 내용을 저장하지 않으며, 계획과 receipt에 남는 actor ID에는 session·agent ID의 SHA-256 digest만 쓴다. 헤드리스(`claude -p`)는 그 메시지를 훅보다 먼저 기록하므로 최대 0.3초만 다시 읽는다.
+- 대화형 세션은 호출을 낸 메시지를 호출이 끝난 뒤에 transcript에 쓴다(Claude Code 문서도 transcript가 비동기로 기록된다고 밝힌다). v1.20.0까지는 이 메시지만 찾았기 때문에 대화형 세션의 `plan_workflow`·`record_stage_result`가 5초 대기 뒤 항상 `BINDING_REQUIRED`가 됐다. 검증을 헤드리스로만 해서 발견하지 못했다. 이제 그 메시지가 없으면 두 출처 가운데 더 늦은 쪽의 모델을 쓴다.
+  - 같은 세션·에이전트가 이미 기록한 가장 최근 assistant 메시지(모델을 알 수 없는 메시지는 건너뛴다)
+  - 이 훅이 `SessionStart`의 `model`과 `PostModelSwitch`의 `to_model`에서 기록한 메인 스레드의 현재 모델(`${CLAUDE_PLUGIN_DATA}/host-models/<session digest>.json`)
+- 이 경로의 보증은 "호출한 메시지의 모델"이 아니라 "하네스가 기록한 이 세션의 현재 모델"이다. 대화형 세션에서 확인한 사실: `SessionStart`(startup)가 `model`을 넘기고, `/model` 전환 뒤 `PostModelSwitch`가 적용된 모델을 넘긴다. `PreModelSwitch`는 적용되지 않은 요청에도 오므로 쓰지 않는다. effort를 지원하지 않는 모델(Haiku)로 바꾸면 훅 입력에 `effort`가 없어 토큰을 만들지 않는다.
+- 서브에이전트에는 `SessionStart`·모델 전환 훅이 오지 않고 `SubagentStart`에도 모델이 없다. 그래서 서브에이전트 호출은 자기 transcript에 이미 기록된 메시지만 쓴다. 대화형 세션에서 서브에이전트가 첫 메시지로 바로 strict 도구를 부르면 여전히 `BINDING_REQUIRED`다.
 - 추론 수준은 훅 입력의 `effort.level`과 transcript 메시지에 기록된 `effort`를 함께 본다. 둘 다 있고 다르면 낮은 쪽을 쓰고, 하나만 있거나 한쪽이 알 수 없는 값이면 다른 쪽을 쓰며, 둘 다 없으면 토큰을 만들지 않는다. 서브에이전트(`effort: low`로 정의)가 호출했을 때 훅 입력은 서브에이전트 값(`low`)을 줬고, 서버는 하한 미달로 `BINDING_INVALID`를 반환했다(v1.18.0 준비 중 실제 세션으로 확인).
 - 모델 class는 `coordinate-subagents`의 Claude 라우팅 프리셋과 같게 haiku=`lightweight`, sonnet=`general`, opus=`deep`, fable=`frontier`로 정한다. Anthropic API ID(`claude-opus-5`, `claude-3-5-sonnet-20241022`), Bedrock ID(`us.`·`global.`·`us-gov.` 같은 지역 접두사를 포함한 `anthropic.claude-…`), Vertex ID(`claude-opus-5@…`)를 인식한다. 모델군을 알 수 없는 ID, 찾지 못한 메시지, 추론 수준이 없는 호출에는 토큰을 만들지 않는다.
 - 토큰을 만들지 못하면 훅은 호출자가 도구 인자에 넣은 `_hostAttestation`을 지우고 넘긴다. launcher도 훅이 실패하거나 시간을 넘기거나 `CLAUDE_PLUGIN_DATA`가 없을 때 같은 처리를 한다. 따라서 모델이 도구 인자로 넣은 토큰은 서버에 닿지 않는다. 예외는 `node`를 실행하지 못하거나 Claude Code가 훅 timeout(10초)으로 launcher를 끝낸 경우다. 이때 Claude Code는 원래 입력으로 도구를 호출한다. 그 입력에 든 토큰은 같은 사용자 권한으로 서명 키를 읽어 만들었거나, 아래처럼 transcript에 남은 미소비 토큰을 옮긴 것이어야 한다.
 - 토큰은 도구 이름, 도구 입력 digest, task·run·stage·revision, actor와 5분 유효기간(서버가 받는 관측값의 최대 나이)을 담고 `${CLAUDE_PLUGIN_DATA}/workflows.sqlite3`에 저장한 키로 HMAC 서명한다. 훅은 `permissionDecision` 없이 `updatedInput`만 돌려주므로 권한 확인 흐름은 그대로다. 토큰은 권한 확인보다 먼저 만들어지므로, 대화형 세션에서 도구 승인에 5분 넘게 걸리면 `BINDING_INVALID`가 되고 다시 호출하면 된다. Claude Code는 훅 출력을 transcript에 기록하므로 토큰도 transcript에 남는다. 남은 토큰은 입력이 완전히 같은 호출에 한 번만, 5분 안에만 쓸 수 있고, 훅이 정상 실행되는 호출에서는 새 토큰으로 덮어쓴다.
 - 서버는 `plugin.json`이 넘기는 `AGENT_GOVERNANCE_HOST_ATTESTATION=claude-code`가 있을 때만 토큰을 검증한다. 입력이 바뀌었거나, 서명이 틀렸거나, 만료됐거나, 이미 쓴 토큰이면 `BINDING_INVALID`, 토큰이 없으면 `BINDING_REQUIRED`다. 관측한 모델·추론 수준이 계획의 하한보다 낮으면 기존처럼 `BINDING_INVALID`다.
-- transcript를 남기지 않는 세션(`--no-session-persistence`)에서는 모델을 관측할 수 없어 `BINDING_REQUIRED`가 된다.
+- transcript를 남기지 않는 세션(`--no-session-persistence`)은 `SessionStart`가 `model`을 넘긴 경우에만 그 기록으로 증명되고, 아니면 `BINDING_REQUIRED`가 된다.
 - 이 토큰이 보장하는 것은 "모델이 도구 인자로 주장한 값이 아니라 하네스가 기록한 값"까지다. 서명 키와 transcript는 같은 OS 사용자 권한으로 읽고 쓸 수 있으므로, 같은 사용자로 실행되는 프로세스의 위조는 막지 못한다. 통제 대상 모델 자신도 Bash 같은 도구로 그런 프로세스를 실행할 수 있다.
 
 Codex 배포물은 이 훅을 등록하지 않고 환경 변수도 넘기지 않으므로 이전처럼 `BINDING_REQUIRED`를 반환한다. 전문 스킬 단독 호출과 실행 보증이 필요 없는 MCP 기능은 두 배포물 모두 그대로 사용할 수 있다.

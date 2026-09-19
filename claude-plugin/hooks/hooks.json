@@ -13,6 +13,16 @@
             "statusMessage": "Checking local task continuity"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs"],
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PreCompact": [
@@ -36,6 +46,18 @@
             "type": "command",
             "command": "node",
             "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostModelSwitch": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs"],
             "timeout": 10
           }
         ]

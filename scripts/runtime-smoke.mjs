@@ -113,6 +113,27 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       throw new Error(`host attestation hook failed its node_modules-free smoke check.\n${attestationResult.stderr ?? ""}`);
     }
 
+    // Interactive sessions: the issuing message is not in the transcript yet, so the model
+    // recorded by the SessionStart hook must be used.
+    const runAttestationHook = (input) => spawnSync(process.execPath, [path.join(cleanRoot, "mcp-server", "dist", "host-attestation-hook.mjs")], {
+      cwd: cleanRoot,
+      encoding: "utf8",
+      env: environment,
+      input: `${JSON.stringify(input)}\n`,
+      timeout: 10_000,
+      windowsHide: true,
+    });
+    const sessionStart = runAttestationHook({ hook_event_name: "SessionStart", session_id: "clean-room-interactive", source: "startup", model: "claude-opus-5" });
+    const interactive = runAttestationHook({ ...attestationInput, session_id: "clean-room-interactive", tool_use_id: "toolu_not_written_yet" });
+    const interactiveOutput = interactive.status === 0 && interactive.stdout ? JSON.parse(interactive.stdout) : null;
+    if (
+      sessionStart.error || sessionStart.status !== 0 || sessionStart.stdout !== ""
+      || interactive.error
+      || !String(interactiveOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs1.")
+    ) {
+      throw new Error(`host attestation hook failed its interactive-session smoke check.\n${sessionStart.stderr ?? ""}${interactive.stderr ?? ""}`);
+    }
+
     const sourceText = "MCP와 SQLite";
     const lookupInput = [
       { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "runtime-smoke", version: "1.0.0" } } },

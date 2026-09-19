@@ -1,5 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
@@ -24,8 +26,11 @@ import {
   findToolUseObservation,
   handleHostAttestationHook,
   observedEffort,
+  readSessionModel,
+  sessionModelUpdate,
   transcriptCandidates,
   withoutCallerAttestation,
+  writeSessionModel,
 } from "../../mcp-server/src/host-attestation-hook.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
@@ -428,6 +433,81 @@ describe("host attestation hook", () => {
     expect(payload).toMatchObject({ model: "claude-sonnet-5", modelClass: "general", actorId: claudeCodeActorId(SESSION, "agent123") });
     expect(claudeCodeActorId(SESSION, "agent123")).toMatch(/^claude-code:session-[0-9a-f]{24}:agent-[0-9a-f]{24}$/u);
     expect(claudeCodeActorId(SESSION, "agent123")).not.toBe(claudeCodeActorId(SESSION, "agent456"));
+  });
+
+  describe("interactive sessions, where the issuing message is written only after the call", () => {
+    const at = (iso: string) => ({ timestamp: iso });
+    const written = (options: Parameters<typeof transcriptLine>[1] & { timestamp?: string } = {}) =>
+      JSON.stringify({ ...JSON.parse(transcriptLine("toolu_previous", options)), ...at(options.timestamp ?? "2026-09-19T00:10:12.000Z") });
+    const payloadOf = (output: Record<string, unknown>) => {
+      const token = String((output.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput[HOST_ATTESTATION_FIELD]);
+      return JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8")) as Record<string, unknown>;
+    };
+    const run = (transcript: string | null, session: { model: string; observedAt: string } | null, input: Record<string, unknown> = base) =>
+      handleHostAttestationHook(input, store, { ...noWait, maxWaitMs: 0, readText: () => transcript, readSessionModel: () => session });
+
+    it("attests the SessionStart model before the session has written any message", () => {
+      expect(payloadOf(run(null, { model: "claude-opus-5", observedAt: "2026-09-19T00:10:01.000Z" }))).toMatchObject({ model: "claude-opus-5", reasoningEffort: "high" });
+    });
+
+    it("prefers the newer of the last written message and the session model record", () => {
+      const switched = { model: "claude-sonnet-5", observedAt: "2026-09-19T00:10:18.000Z" };
+      expect(payloadOf(run(written({ model: "claude-opus-5" }), switched))).toMatchObject({ model: "claude-sonnet-5", modelClass: "general" });
+      const started = { model: "claude-sonnet-5", observedAt: "2026-09-19T00:10:01.000Z" };
+      expect(payloadOf(run(written({ model: "claude-opus-5" }), started))).toMatchObject({ model: "claude-opus-5", modelClass: "deep" });
+      expect(payloadOf(run(written({ model: "claude-opus-5", effort: "low" }), null))).toMatchObject({ model: "claude-opus-5", reasoningEffort: "low" });
+    });
+
+    it("skips messages of other sessions, sidechains and unknown models when falling back", () => {
+      const lines = [
+        written({ model: "claude-opus-5" }),
+        written({ sessionId: "other", model: "claude-fable-5-1" }),
+        written({ isSidechain: true, model: "claude-fable-5-1" }),
+        JSON.stringify({ ...JSON.parse(written()), message: { model: "<synthetic>", content: [] } }),
+      ].join("\n");
+      expect(payloadOf(run(lines, null))).toMatchObject({ model: "claude-opus-5" });
+    });
+
+    it("fails closed without a model source, without effort, or for an unknown switched model", () => {
+      const callerInput = { ...base, tool_input: { taskId: "hook-task", [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged" } };
+      const stripped = { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { taskId: "hook-task" } } };
+      expect(run(null, null, callerInput)).toEqual(stripped);
+      expect(run(null, { model: "claude-opus-5", observedAt: "2026-09-19T00:10:01.000Z" }, { ...callerInput, effort: undefined })).toEqual(stripped);
+      expect(run(written(), { model: "claude-next", observedAt: "2026-09-19T00:10:18.000Z" }, callerInput)).toEqual(stripped);
+    });
+
+    it("uses only the subagent's own written messages, never the session model", () => {
+      const session = { model: "claude-fable-5-1", observedAt: "2026-09-19T00:10:18.000Z" };
+      const subagent = { ...base, agent_id: "agent123" };
+      expect(run(null, session, subagent)).toEqual({});
+      const own = written({ isSidechain: true, agentId: "agent123", model: "claude-sonnet-5" });
+      expect(payloadOf(run(own, session, subagent))).toMatchObject({ model: "claude-sonnet-5", actorId: claudeCodeActorId(SESSION, "agent123") });
+    });
+
+    it("records the main-thread model from SessionStart and PostModelSwitch only", () => {
+      const now = new Date("2026-09-19T00:10:01.000Z");
+      expect(sessionModelUpdate({ hook_event_name: "SessionStart", session_id: SESSION, source: "startup", model: "claude-opus-5" }, now))
+        .toEqual({ sessionId: SESSION, record: { model: "claude-opus-5", observedAt: "2026-09-19T00:10:01.000Z" } });
+      expect(sessionModelUpdate({ hook_event_name: "PostModelSwitch", session_id: SESSION, from_model: "claude-opus-5", to_model: "claude-haiku-4-5-20251001" }, now)?.record.model)
+        .toBe("claude-haiku-4-5-20251001");
+      expect(sessionModelUpdate({ hook_event_name: "PreModelSwitch", session_id: SESSION, to_model: "claude-sonnet-5" }, now)).toBeNull();
+      expect(sessionModelUpdate({ hook_event_name: "SessionStart", session_id: SESSION, source: "resume" }, now)).toBeNull();
+      expect(sessionModelUpdate({ hook_event_name: "PostModelSwitch", session_id: SESSION, agent_id: "agent123", to_model: "claude-opus-5" }, now)).toBeNull();
+    });
+
+    it("stores the session model under a digest of the session ID and ignores damaged records", () => {
+      const directory = mkdtempSync(path.join(tmpdir(), "host-models-"));
+      try {
+        writeSessionModel(directory, SESSION, { model: "claude-opus-5", observedAt: "2026-09-19T00:10:01.000Z" });
+        expect(readdirSync(directory)).toEqual([expect.stringMatching(/^[0-9a-f]{24}\.json$/u)]);
+        expect(readSessionModel(directory, SESSION)).toEqual({ model: "claude-opus-5", observedAt: "2026-09-19T00:10:01.000Z" });
+        expect(readSessionModel(directory, "other")).toBeNull();
+        writeFileSync(path.join(directory, readdirSync(directory)[0]!), "{not json");
+        expect(readSessionModel(directory, SESSION)).toBeNull();
+      } finally {
+        rmSync(directory, { recursive: true, force: true });
+      }
+    });
   });
 
   it("finds the message that issued the tool call, not a later mention of its ID", () => {

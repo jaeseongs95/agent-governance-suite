@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,6 +9,7 @@ import {
   isReasoningEffort,
   issueHostAttestation,
   lowerReasoningEffort,
+  modelClassForClaudeModel,
   withoutHostAttestation,
 } from "./host-attestation.js";
 import { resolveWorkflowDatabasePath } from "./runtime-config.js";
@@ -22,12 +23,19 @@ export interface TranscriptObservation {
   effort: string | null;
 }
 
+/** The session model that SessionStart or PostModelSwitch reported, and when the hook saw it. */
+export interface SessionModelRecord {
+  model: string;
+  observedAt: string;
+}
+
 export interface HostAttestationHookOptions {
   readText?: (file: string) => string | null;
   sleep?: (milliseconds: number) => void;
   maxWaitMs?: number;
   pollIntervalMs?: number;
   now?: () => Date;
+  readSessionModel?: (sessionId: string) => SessionModelRecord | null;
 }
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -46,9 +54,10 @@ function readTextOrNull(file: string): string | null {
   }
 }
 
+const digest = (value: string) => createHash("sha256").update(value, "utf8").digest("hex").slice(0, 24);
+
 /** Actor IDs are persisted in plans and receipts, so raw session and agent IDs are stored only as digests. */
 export function claudeCodeActorId(sessionId: string, agentId: string | null): string {
-  const digest = (value: string) => createHash("sha256").update(value, "utf8").digest("hex").slice(0, 24);
   return agentId
     ? `claude-code:session-${digest(sessionId)}:agent-${digest(agentId)}`
     : `claude-code:session-${digest(sessionId)}`;
@@ -101,6 +110,71 @@ export function findToolUseObservation(
   return null;
 }
 
+/**
+ * Finds the newest assistant message this actor already wrote, with its timestamp.
+ * Interactive Claude Code writes the message that issues a tool call only after the
+ * call returns, so this is the latest model the harness recorded for the actor.
+ */
+export function findLatestAssistantObservation(
+  transcript: string,
+  sessionId: string,
+  agentId: string | null,
+): (TranscriptObservation & { at: number | null }) | null {
+  const lines = transcript.split("\n");
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const line = lines[index];
+    if (!line?.includes("\"assistant\"")) continue;
+    let entry: Record<string, unknown> | null;
+    try {
+      entry = record(JSON.parse(line));
+    } catch {
+      continue;
+    }
+    if (!entry || entry.type !== "assistant") continue;
+    if (entry.sessionId !== undefined && entry.sessionId !== sessionId) continue;
+    if (agentId ? entry.agentId !== agentId : entry.isSidechain === true) continue;
+    const model = text(record(entry.message)?.model);
+    // Synthetic or unknown-model messages are not a model the actor ran on.
+    if (!model || !modelClassForClaudeModel(model)) continue;
+    const at = Date.parse(text(entry.timestamp) ?? "");
+    return { model, effort: text(entry.effort), at: Number.isNaN(at) ? null : at };
+  }
+  return null;
+}
+
+/** The model a SessionStart or PostModelSwitch hook reports for the main thread, if any. */
+export function sessionModelUpdate(input: HookInput, now: Date = new Date()): { sessionId: string; record: SessionModelRecord } | null {
+  const sessionId = text(input.session_id);
+  if (!sessionId || text(input.agent_id)) return null;
+  const model = input.hook_event_name === "SessionStart" ? text(input.model)
+    : input.hook_event_name === "PostModelSwitch" ? text(input.to_model)
+      : null;
+  return model ? { sessionId, record: { model, observedAt: now.toISOString() } } : null;
+}
+
+function sessionModelFile(directory: string, sessionId: string): string {
+  return path.join(directory, `${digest(sessionId)}.json`);
+}
+
+export function writeSessionModel(directory: string, sessionId: string, value: SessionModelRecord): void {
+  mkdirSync(directory, { recursive: true });
+  const file = sessionModelFile(directory, sessionId);
+  const temporary = `${file}.${process.pid}.tmp`;
+  writeFileSync(temporary, JSON.stringify(value), "utf8");
+  renameSync(temporary, file);
+}
+
+export function readSessionModel(directory: string, sessionId: string): SessionModelRecord | null {
+  try {
+    const value = record(JSON.parse(readFileSync(sessionModelFile(directory, sessionId), "utf8")));
+    const model = text(value?.model);
+    const observedAt = text(value?.observedAt);
+    return model && observedAt && !Number.isNaN(Date.parse(observedAt)) ? { model, observedAt } : null;
+  } catch {
+    return null;
+  }
+}
+
 function attestedToolInput(input: HookInput): { tool: string; toolInput: Record<string, unknown> } | null {
   if (input.hook_event_name !== "PreToolUse") return null;
   const canonicalName = text(input.tool_name) ?? "";
@@ -149,11 +223,12 @@ export function handleHostAttestationHook(
 
   const readText = options.readText ?? readTextOrNull;
   const sleep = options.sleep ?? sleepSync;
-  const maxWaitMs = options.maxWaitMs ?? 5000;
+  const maxWaitMs = options.maxWaitMs ?? 300;
   const pollIntervalMs = options.pollIntervalMs ?? 100;
   const candidates = transcriptCandidates(transcriptPath, sessionId, agentId);
   let observation: TranscriptObservation | null = null;
-  // The transcript is written asynchronously and may lag the tool call.
+  // Headless sessions write the issuing message before the hook runs; interactive ones do not,
+  // so the wait stays short and the fallbacks below cover interactive sessions.
   for (let waited = 0; ; waited += pollIntervalMs) {
     for (const candidate of candidates) {
       const transcript = readText(candidate);
@@ -162,6 +237,18 @@ export function handleHostAttestationHook(
     }
     if (observation || waited >= maxWaitMs) break;
     sleep(pollIntervalMs);
+  }
+  if (!observation) {
+    let latest: ReturnType<typeof findLatestAssistantObservation> = null;
+    for (const candidate of candidates) {
+      const transcript = readText(candidate);
+      latest = transcript ? findLatestAssistantObservation(transcript, sessionId, agentId) : null;
+      if (latest) break;
+    }
+    // Subagents get no SessionStart or model-switch hooks, so only their own written messages count.
+    const session = agentId ? null : options.readSessionModel?.(sessionId) ?? null;
+    const switchedLater = session && (!latest || latest.at === null || Date.parse(session.observedAt) >= latest.at);
+    observation = switchedLater ? { model: session.model, effort: null } : latest;
   }
   if (!observation) return unattested();
 
@@ -192,8 +279,15 @@ async function main(): Promise<void> {
   let output: Record<string, unknown>;
   try {
     input = JSON.parse(readFileSync(0, "utf8")) as HookInput;
-    store = new SqliteWorkflowStore(resolveWorkflowDatabasePath());
-    output = handleHostAttestationHook(input, store);
+    const databasePath = resolveWorkflowDatabasePath();
+    const modelDirectory = path.join(path.dirname(databasePath), "host-models");
+    const update = sessionModelUpdate(input);
+    if (update) {
+      writeSessionModel(modelDirectory, update.sessionId, update.record);
+      return;
+    }
+    store = new SqliteWorkflowStore(databasePath);
+    output = handleHostAttestationHook(input, store, { readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId) });
   } catch {
     // Without a token the server fails closed with BINDING_REQUIRED; never block the tool call here.
     output = withoutCallerAttestation(input);

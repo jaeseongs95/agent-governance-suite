@@ -2,7 +2,7 @@
 
 // mcp-server/src/host-attestation-hook.ts
 import { createHash as createHash2 } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { mkdirSync as mkdirSync2, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path4 from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -1081,8 +1081,8 @@ function readTextOrNull(file) {
     return null;
   }
 }
+var digest = (value) => createHash2("sha256").update(value, "utf8").digest("hex").slice(0, 24);
 function claudeCodeActorId(sessionId, agentId) {
-  const digest = (value) => createHash2("sha256").update(value, "utf8").digest("hex").slice(0, 24);
   return agentId ? `claude-code:session-${digest(sessionId)}:agent-${digest(agentId)}` : `claude-code:session-${digest(sessionId)}`;
 }
 function sleepSync(milliseconds) {
@@ -1118,6 +1118,53 @@ function findToolUseObservation(transcript, toolUseId, sessionId, agentId) {
     return { model, effort: text(entry.effort) };
   }
   return null;
+}
+function findLatestAssistantObservation(transcript, sessionId, agentId) {
+  const lines = transcript.split("\n");
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const line = lines[index];
+    if (!line?.includes('"assistant"')) continue;
+    let entry;
+    try {
+      entry = record2(JSON.parse(line));
+    } catch {
+      continue;
+    }
+    if (!entry || entry.type !== "assistant") continue;
+    if (entry.sessionId !== void 0 && entry.sessionId !== sessionId) continue;
+    if (agentId ? entry.agentId !== agentId : entry.isSidechain === true) continue;
+    const model = text(record2(entry.message)?.model);
+    if (!model || !modelClassForClaudeModel(model)) continue;
+    const at = Date.parse(text(entry.timestamp) ?? "");
+    return { model, effort: text(entry.effort), at: Number.isNaN(at) ? null : at };
+  }
+  return null;
+}
+function sessionModelUpdate(input, now = /* @__PURE__ */ new Date()) {
+  const sessionId = text(input.session_id);
+  if (!sessionId || text(input.agent_id)) return null;
+  const model = input.hook_event_name === "SessionStart" ? text(input.model) : input.hook_event_name === "PostModelSwitch" ? text(input.to_model) : null;
+  return model ? { sessionId, record: { model, observedAt: now.toISOString() } } : null;
+}
+function sessionModelFile(directory, sessionId) {
+  return path4.join(directory, `${digest(sessionId)}.json`);
+}
+function writeSessionModel(directory, sessionId, value) {
+  mkdirSync2(directory, { recursive: true });
+  const file = sessionModelFile(directory, sessionId);
+  const temporary = `${file}.${process.pid}.tmp`;
+  writeFileSync(temporary, JSON.stringify(value), "utf8");
+  renameSync(temporary, file);
+}
+function readSessionModel(directory, sessionId) {
+  try {
+    const value = record2(JSON.parse(readFileSync(sessionModelFile(directory, sessionId), "utf8")));
+    const model = text(value?.model);
+    const observedAt = text(value?.observedAt);
+    return model && observedAt && !Number.isNaN(Date.parse(observedAt)) ? { model, observedAt } : null;
+  } catch {
+    return null;
+  }
 }
 function attestedToolInput(input) {
   if (input.hook_event_name !== "PreToolUse") return null;
@@ -1155,7 +1202,7 @@ function handleHostAttestationHook(input, store, options = {}) {
   const agentId = text(input.agent_id);
   const readText = options.readText ?? readTextOrNull;
   const sleep = options.sleep ?? sleepSync;
-  const maxWaitMs = options.maxWaitMs ?? 5e3;
+  const maxWaitMs = options.maxWaitMs ?? 300;
   const pollIntervalMs = options.pollIntervalMs ?? 100;
   const candidates = transcriptCandidates(transcriptPath, sessionId, agentId);
   let observation = null;
@@ -1167,6 +1214,17 @@ function handleHostAttestationHook(input, store, options = {}) {
     }
     if (observation || waited >= maxWaitMs) break;
     sleep(pollIntervalMs);
+  }
+  if (!observation) {
+    let latest = null;
+    for (const candidate of candidates) {
+      const transcript = readText(candidate);
+      latest = transcript ? findLatestAssistantObservation(transcript, sessionId, agentId) : null;
+      if (latest) break;
+    }
+    const session = agentId ? null : options.readSessionModel?.(sessionId) ?? null;
+    const switchedLater = session && (!latest || latest.at === null || Date.parse(session.observedAt) >= latest.at);
+    observation = switchedLater ? { model: session.model, effort: null } : latest;
   }
   if (!observation) return unattested();
   const effort = observedEffort(text(record2(input.effort)?.level), observation.effort);
@@ -1193,8 +1251,15 @@ async function main() {
   let output;
   try {
     input = JSON.parse(readFileSync(0, "utf8"));
-    store = new SqliteWorkflowStore(resolveWorkflowDatabasePath());
-    output = handleHostAttestationHook(input, store);
+    const databasePath = resolveWorkflowDatabasePath();
+    const modelDirectory = path4.join(path4.dirname(databasePath), "host-models");
+    const update = sessionModelUpdate(input);
+    if (update) {
+      writeSessionModel(modelDirectory, update.sessionId, update.record);
+      return;
+    }
+    store = new SqliteWorkflowStore(databasePath);
+    output = handleHostAttestationHook(input, store, { readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId) });
   } catch {
     output = withoutCallerAttestation(input);
   } finally {
@@ -1208,9 +1273,13 @@ async function main() {
 if (path4.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) await main();
 export {
   claudeCodeActorId,
+  findLatestAssistantObservation,
   findToolUseObservation,
   handleHostAttestationHook,
   observedEffort,
+  readSessionModel,
+  sessionModelUpdate,
   transcriptCandidates,
-  withoutCallerAttestation
+  withoutCallerAttestation,
+  writeSessionModel
 };

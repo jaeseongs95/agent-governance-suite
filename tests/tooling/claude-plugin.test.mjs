@@ -105,7 +105,7 @@ describe("generated Claude plugin", () => {
   it("registers exec-form continuity hooks plus the Claude-only skill trigger and host attestation", async () => {
     const claudeHooks = await readJson(pluginRoot, "hooks", "hooks.json");
     // Parity with the Codex hook events is reported as drift, so a new Codex event never fails this test.
-    expect(Object.keys(claudeHooks.hooks).sort()).toEqual(["PostCompact", "PreCompact", "PreToolUse", "SessionStart", "UserPromptSubmit"]);
+    expect(Object.keys(claudeHooks.hooks).sort()).toEqual(["PostCompact", "PostModelSwitch", "PreCompact", "PreToolUse", "SessionStart", "UserPromptSubmit"]);
     const allowedScripts = [
       "${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs",
       "${CLAUDE_PLUGIN_ROOT}/hooks/skill-trigger-hook.mjs",
@@ -138,6 +138,12 @@ describe("generated Claude plugin", () => {
     }
     for (const tool of [...continuityTools, "claim_workflow_attempt", "start_guarded_workflow", "finalize_workflow"]) {
       expect(attestationMatcher.test(`${toolPrefix}${tool}`)).toBe(false);
+    }
+    // Interactive sessions write the issuing message late, so the session model is recorded from these events.
+    for (const event of ["SessionStart", "PostModelSwitch"]) {
+      const groups = claudeHooks.hooks[event].filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[2]));
+      expect(groups).toHaveLength(1);
+      expect(groups[0].matcher).toBeUndefined();
     }
   });
 
