@@ -195,10 +195,12 @@ function compareStableVersionNumbers(leftVersion, rightVersion) {
   return 0;
 }
 
-// mcp-server/src/plugin-update-store.ts
+// mcp-server/src/workflow-store.ts
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
+
+// mcp-server/src/plugin-update-store.ts
 function timestamp(value) {
   if (value === null) return -1;
   const parsed = Date.parse(value);

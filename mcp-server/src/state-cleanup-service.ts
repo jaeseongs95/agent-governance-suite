@@ -81,13 +81,7 @@ export class StateCleanupService {
         continuityPayload: new Date(created.getTime() - POLICY.continuityPayloadRetentionDays * DAY_MS).toISOString(),
         continuityRecord: new Date(created.getTime() - POLICY.continuityRecordRetentionDays * DAY_MS).toISOString(),
       };
-      const { workflow, continuity, protectedContinuityTasks } = this.currentCandidates(cutoffs);
-      const candidates: StateCleanupPlanV1["candidates"] = {
-        workflowRoots: workflow.roots,
-        standaloneWorkflowRuns: workflow.standaloneRuns,
-        continuitySnapshots: continuity?.snapshots ?? [],
-        continuityTasks: continuity?.tasks ?? [],
-      };
+      const { workflow, continuity, protectedContinuityTasks, candidates } = this.currentCandidates(cutoffs);
       const candidateDigest = digest(candidates);
       const payload: CleanupTokenPayload = {
         schemaVersion: "1.0.0",
@@ -98,12 +92,7 @@ export class StateCleanupService {
         cutoffs,
         candidates,
         candidateDigest,
-        databases: {
-          workflow: { path: databaseIdentity(this.workflowStore.databasePath), schemaVersion: this.workflowStore.getSchemaVersion() },
-          continuity: this.continuityStore
-            ? { path: databaseIdentity(this.continuityStore.databasePath), schemaVersion: this.continuityStore.getSchemaVersion() }
-            : null,
-        },
+        databases: this.databaseIdentities(),
       };
       const plan: StateCleanupPlanV1 = {
         schemaVersion: "1.0.0",
@@ -142,12 +131,7 @@ export class StateCleanupService {
       }
       this.assertDatabaseIdentity(payload);
       const current = this.currentCandidates(payload.cutoffs);
-      const candidates: StateCleanupPlanV1["candidates"] = {
-        workflowRoots: current.workflow.roots,
-        standaloneWorkflowRuns: current.workflow.standaloneRuns,
-        continuitySnapshots: current.continuity?.snapshots ?? [],
-        continuityTasks: current.continuity?.tasks ?? [],
-      };
+      const candidates = current.candidates;
       const currentDigest = digest(candidates);
       if (currentDigest !== payload.candidateDigest || JSON.stringify(candidates) !== JSON.stringify(payload.candidates)) {
         throw new WorkflowContractError("STALE_REVISION", "State cleanup candidates changed after preview.", {
@@ -235,20 +219,18 @@ export class StateCleanupService {
     workflow: WorkflowCleanupPreview;
     continuity: ContinuityCleanupPreview | null;
     protectedContinuityTasks: number;
+    candidates: StateCleanupPlanV1["candidates"];
   } {
     const workflow = this.workflowStore.previewCleanup(cutoffs.workflow);
     const continuity = this.continuityStore?.previewCleanup(cutoffs.continuityPayload, cutoffs.continuityRecord) ?? null;
     let protectedContinuityTasks = continuity?.protectedActiveTasks ?? 0;
     if (continuity) {
       const protectedRootTaskIds = new Set<string>();
-      const allowedTasks = continuity.tasks.filter((task) => {
+      continuity.tasks = continuity.tasks.filter((task) => {
         const active = task.rootId ? this.workflowStore.isConvergenceRootActive(task.rootId) : false;
-        if (active) {
-          protectedRootTaskIds.add(task.taskCorrelation);
-        }
+        if (active) protectedRootTaskIds.add(task.taskCorrelation);
         return !active;
       });
-      continuity.tasks = allowedTasks;
       continuity.snapshots = continuity.snapshots.filter((snapshot) => {
         const active = snapshot.rootId ? this.workflowStore.isConvergenceRootActive(snapshot.rootId) : false;
         if (active) protectedRootTaskIds.add(snapshot.taskCorrelation);
@@ -256,7 +238,22 @@ export class StateCleanupService {
       });
       protectedContinuityTasks += protectedRootTaskIds.size;
     }
-    return { workflow, continuity, protectedContinuityTasks };
+    const candidates = {
+      workflowRoots: workflow.roots,
+      standaloneWorkflowRuns: workflow.standaloneRuns,
+      continuitySnapshots: continuity?.snapshots ?? [],
+      continuityTasks: continuity?.tasks ?? [],
+    };
+    return { workflow, continuity, protectedContinuityTasks, candidates };
+  }
+
+  private databaseIdentities(): CleanupTokenPayload["databases"] {
+    return {
+      workflow: { path: databaseIdentity(this.workflowStore.databasePath), schemaVersion: this.workflowStore.getSchemaVersion() },
+      continuity: this.continuityStore
+        ? { path: databaseIdentity(this.continuityStore.databasePath), schemaVersion: this.continuityStore.getSchemaVersion() }
+        : null,
+    };
   }
 
   private sign(payload: CleanupTokenPayload): string {
@@ -284,14 +281,12 @@ export class StateCleanupService {
   }
 
   private assertDatabaseIdentity(payload: CleanupTokenPayload): void {
+    const current = this.databaseIdentities();
     const workflow = payload.databases.workflow;
-    if (workflow.path !== databaseIdentity(this.workflowStore.databasePath) || workflow.schemaVersion !== this.workflowStore.getSchemaVersion()) {
+    if (workflow.path !== current.workflow.path || workflow.schemaVersion !== current.workflow.schemaVersion) {
       throw new WorkflowContractError("STALE_REVISION", "The workflow database identity or schema changed after preview.");
     }
-    const continuity = this.continuityStore
-      ? { path: databaseIdentity(this.continuityStore.databasePath), schemaVersion: this.continuityStore.getSchemaVersion() }
-      : null;
-    if (JSON.stringify(continuity) !== JSON.stringify(payload.databases.continuity)) {
+    if (JSON.stringify(current.continuity) !== JSON.stringify(payload.databases.continuity)) {
       throw new WorkflowContractError("STALE_REVISION", "The continuity database identity or schema changed after preview.");
     }
   }

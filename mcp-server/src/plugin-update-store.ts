@@ -3,6 +3,7 @@ import {
   type PluginUpdateErrorCode,
 } from "../../contracts/types.js";
 import { compareStableVersionNumbers } from "./plugin-version.js";
+import { clone } from "./workflow-store.js";
 
 export interface StoredPluginUpdateState {
   targetId: string;
@@ -24,10 +25,6 @@ export interface PluginUpdateStore {
   getPluginUpdateState(targetId: string): StoredPluginUpdateState | null;
   putPluginUpdateState(state: StoredPluginUpdateState): void;
   claimPluginUpdateNotice(targetId: string, latestVersion: string, notifiedAt: string): boolean;
-}
-
-function clone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
 }
 
 function timestamp(value: string | null): number {

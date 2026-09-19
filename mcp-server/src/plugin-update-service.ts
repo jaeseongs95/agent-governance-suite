@@ -19,6 +19,10 @@ const FAILURE_RETRY_MS = 60 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 3_000;
 const STABLE_TAG = /^refs\/tags\/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/u;
 const TAG_OBJECT_URL_PREFIX = `${PLUGIN_INFO.tagsApi.split("/git/matching-refs/")[0]}/git/tags/`;
+const GITHUB_HEADERS = {
+  Accept: "application/vnd.github+json",
+  "User-Agent": `${PLUGIN_INFO.id}/${PLUGIN_INFO.version}`,
+};
 
 type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -35,8 +39,6 @@ interface ServiceOptions {
   fetcher?: Fetcher;
   now?: () => Date;
   requestTimeoutMs?: number;
-  successTtlMs?: number;
-  failureRetryMs?: number;
 }
 
 class UpdateCheckError extends Error {
@@ -91,8 +93,6 @@ export class PluginUpdateService {
   private readonly fetcher: Fetcher;
   private readonly now: () => Date;
   private readonly requestTimeoutMs: number;
-  private readonly successTtlMs: number;
-  private readonly failureRetryMs: number;
   private volatileState: StoredPluginUpdateState | null = null;
 
   constructor(
@@ -102,8 +102,6 @@ export class PluginUpdateService {
     this.fetcher = options.fetcher ?? fetch;
     this.now = options.now ?? (() => new Date());
     this.requestTimeoutMs = options.requestTimeoutMs ?? REQUEST_TIMEOUT_MS;
-    this.successTtlMs = options.successTtlMs ?? SUCCESS_TTL_MS;
-    this.failureRetryMs = options.failureRetryMs ?? FAILURE_RETRY_MS;
   }
 
   async check(force = false): Promise<PluginUpdateStatusV1> {
@@ -124,11 +122,7 @@ export class PluginUpdateService {
     const timeout = setTimeout(() => controller.abort(), this.requestTimeoutMs);
     try {
       const response = await this.fetcher(PLUGIN_INFO.tagsApi, {
-        headers: {
-          Accept: "application/vnd.github+json",
-          "User-Agent": `${PLUGIN_INFO.id}/${PLUGIN_INFO.version}`,
-          ...(current.etag ? { "If-None-Match": current.etag } : {}),
-        },
+        headers: { ...GITHUB_HEADERS, ...(current.etag ? { "If-None-Match": current.etag } : {}) },
         redirect: "error",
         signal: controller.signal,
       });
@@ -142,7 +136,7 @@ export class PluginUpdateService {
       const failed: StoredPluginUpdateState = {
         ...current,
         lastAttemptAt: now.toISOString(),
-        nextCheckAt: new Date(now.getTime() + this.failureRetryMs).toISOString(),
+        nextCheckAt: new Date(now.getTime() + FAILURE_RETRY_MS).toISOString(),
         lastErrorCode: code,
       };
       this.writeState(failed);
@@ -274,7 +268,7 @@ export class PluginUpdateService {
       comparison: comparison(PLUGIN_INFO.version, state.latestVersion),
       lastAttemptAt: now.toISOString(),
       lastSuccessfulCheckAt: now.toISOString(),
-      nextCheckAt: new Date(now.getTime() + this.successTtlMs).toISOString(),
+      nextCheckAt: new Date(now.getTime() + SUCCESS_TTL_MS).toISOString(),
       lastErrorCode: null,
     };
   }
@@ -312,7 +306,7 @@ export class PluginUpdateService {
       comparison: comparison(PLUGIN_INFO.version, latest.version),
       lastAttemptAt: now.toISOString(),
       lastSuccessfulCheckAt: now.toISOString(),
-      nextCheckAt: new Date(now.getTime() + this.successTtlMs).toISOString(),
+      nextCheckAt: new Date(now.getTime() + SUCCESS_TTL_MS).toISOString(),
       lastErrorCode: null,
     };
   }
@@ -328,10 +322,7 @@ export class PluginUpdateService {
         throw new UpdateCheckError("INVALID_RESPONSE", "A stable tag did not resolve to a repository commit.");
       }
       const response = await this.fetcher(current.url, {
-        headers: {
-          Accept: "application/vnd.github+json",
-          "User-Agent": `${PLUGIN_INFO.id}/${PLUGIN_INFO.version}`,
-        },
+        headers: GITHUB_HEADERS,
         redirect: "error",
         signal,
       });

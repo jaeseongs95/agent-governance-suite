@@ -139,8 +139,6 @@ export type ConvergenceRoute = (typeof CONVERGENCE_ROUTE)[number];
 export const RESPONSE_MODE = ["compact", "full"] as const;
 export type ResponseModeV1 = (typeof RESPONSE_MODE)[number];
 
-export const CONTINUITY_DECISION = ["INJECT", "DEFER", "REJECT"] as const;
-export type ContinuityDecisionV1 = (typeof CONTINUITY_DECISION)[number];
 export type ContinuitySourceV1 = "direct" | "workflow";
 
 export interface ContinuityCoreV1 {
@@ -433,22 +431,6 @@ export interface WorkUnitV1 {
   objective: string;
   dependencies: string[];
   writeTargets: string[];
-}
-
-export interface SkillDescriptorV1 {
-  schemaVersion: typeof CONTRACT_VERSION;
-  id: string;
-  version: string;
-  path: string;
-  phase: string;
-  capabilities: string[];
-  priority: number;
-  selectionCriteria: string[];
-  preconditions: string[];
-  requiredArtifacts: string[];
-  producedArtifacts: string[];
-  riskGate: RiskGate;
-  enabled: boolean;
 }
 
 export interface InputBindingV2 {
