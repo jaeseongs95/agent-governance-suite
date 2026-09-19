@@ -450,13 +450,13 @@ export function createMcpServer(
       },
       {
         name: "update_session_status",
-        description: "Write this session's one-line current work (what, where, next external step) to the local session board. The plugin hook binds the session; call it when a request starts or the work changes.",
+        description: "Write this session's one-line current work (what, where, next external step) to the local session board shared by every host on this machine. The plugin hook binds the session; call it when a request starts or the work changes.",
         inputSchema: contractSchemas.updateSessionStatusRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "list_session_status",
-        description: "List this host's sessions on the local session board with working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs.",
+        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs.",
         inputSchema: contractSchemas.listSessionStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },

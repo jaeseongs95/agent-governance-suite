@@ -16991,6 +16991,9 @@ function resolveKoreanProseGlossaryPath(moduleUrl = import.meta.url) {
 function resolveWorkflowDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   const configured = environment.AGENT_GOVERNANCE_DB_PATH?.trim();
   if (configured) return path4.resolve(currentWorkingDirectory, configured);
+  return path4.resolve(userStateDirectory(environment, platform, homeDirectory), "workflows.sqlite3");
+}
+function userStateDirectory(environment, platform, homeDirectory) {
   let stateRoot;
   if (platform === "win32") {
     stateRoot = environment.LOCALAPPDATA?.trim() || path4.join(homeDirectory, "AppData", "Local");
@@ -16999,7 +17002,7 @@ function resolveWorkflowDatabasePath(environment = process.env, platform = proce
   } else {
     stateRoot = environment.XDG_STATE_HOME?.trim() || path4.join(homeDirectory, ".local", "state");
   }
-  return path4.resolve(stateRoot, "agent-governance-suite", "workflows.sqlite3");
+  return path4.resolve(stateRoot, "agent-governance-suite");
 }
 function besideWorkflowDatabase(variable, fileName, environment, platform, homeDirectory, currentWorkingDirectory) {
   const configured = environment[variable]?.trim();
@@ -17017,7 +17020,9 @@ function resolveContinuityDatabasePath(environment = process.env, platform = pro
   return besideWorkflowDatabase("AGENT_GOVERNANCE_CONTINUITY_DB_PATH", "continuity.sqlite3", environment, platform, homeDirectory, currentWorkingDirectory);
 }
 function resolveSessionBoardDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
-  return besideWorkflowDatabase("AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH", "session-board.sqlite3", environment, platform, homeDirectory, currentWorkingDirectory);
+  const configured = environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH?.trim();
+  if (configured) return path4.resolve(currentWorkingDirectory, configured);
+  return path4.join(userStateDirectory(environment, platform, homeDirectory), "session-board.sqlite3");
 }
 function canonicalDatabasePath(databasePath, platform) {
   if (databasePath === ":memory:") return null;
@@ -19810,13 +19815,13 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "update_session_status",
-        description: "Write this session's one-line current work (what, where, next external step) to the local session board. The plugin hook binds the session; call it when a request starts or the work changes.",
+        description: "Write this session's one-line current work (what, where, next external step) to the local session board shared by every host on this machine. The plugin hook binds the session; call it when a request starts or the work changes.",
         inputSchema: contractSchemas.updateSessionStatusRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "list_session_status",
-        description: "List this host's sessions on the local session board with working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs.",
+        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs.",
         inputSchema: contractSchemas.listSessionStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       }

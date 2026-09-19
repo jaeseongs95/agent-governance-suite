@@ -24,7 +24,7 @@
 
 ## 상태 저장과 마이그레이션
 
-MCP 서버는 workflow 실행 상태와 계획 서명 키를 `workflows.sqlite3`에 저장합니다. 선택적 task continuity는 같은 사용자 상태 디렉터리의 별도 `continuity.sqlite3`를, 세션 현황판은 `session-board.sqlite3`를 사용합니다. 저장 위치를 직접 관리하려면 각각 `AGENT_GOVERNANCE_DB_PATH`, `AGENT_GOVERNANCE_CONTINUITY_DB_PATH`, `AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH`에 절대 경로나 MCP 작업 디렉터리 기준 상대 경로를 지정합니다. 해당 디렉터리는 MCP 서버를 실행하는 사용자만 접근할 수 있도록 보호해야 합니다.
+MCP 서버는 workflow 실행 상태와 계획 서명 키를 `workflows.sqlite3`에 저장합니다. 선택적 task continuity는 같은 사용자 상태 디렉터리의 별도 `continuity.sqlite3`를, 세션 현황판은 모든 호스트(Claude Code, Codex)가 함께 쓰는 사용자 상태 디렉터리의 `session-board.sqlite3`를 사용하며, 호스트가 workflow DB 위치를 바꿔도 따라가지 않습니다. 저장 위치를 직접 관리하려면 각각 `AGENT_GOVERNANCE_DB_PATH`, `AGENT_GOVERNANCE_CONTINUITY_DB_PATH`, `AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH`에 절대 경로나 MCP 작업 디렉터리 기준 상대 경로를 지정합니다. 해당 디렉터리는 MCP 서버를 실행하는 사용자만 접근할 수 있도록 보호해야 합니다.
 
 상태 정리는 자동 실행되지 않습니다. `prepare_state_cleanup`으로 180일이 지난 terminal workflow 상태와 30일이 지난 비활성 continuity payload를 미리 본 뒤, 사용자가 확인한 같은 15분 token을 `execute_state_cleanup`에 전달해야 합니다. 삭제 전 검증된 SQLite backup을 만들며 backup은 자동 삭제하지 않습니다. 자세한 정책과 복구 절차는 [SQLite 상태 보존과 정리](state-cleanup.md)를 참고하십시오.
 

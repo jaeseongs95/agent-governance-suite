@@ -84,9 +84,7 @@ function isReadOnlyCommand(command) {
 // mcp-server/src/runtime-config.ts
 import { homedir } from "node:os";
 import path2 from "node:path";
-function resolveWorkflowDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
-  const configured = environment.AGENT_GOVERNANCE_DB_PATH?.trim();
-  if (configured) return path2.resolve(currentWorkingDirectory, configured);
+function userStateDirectory(environment, platform, homeDirectory) {
   let stateRoot;
   if (platform === "win32") {
     stateRoot = environment.LOCALAPPDATA?.trim() || path2.join(homeDirectory, "AppData", "Local");
@@ -95,22 +93,12 @@ function resolveWorkflowDatabasePath(environment = process.env, platform = proce
   } else {
     stateRoot = environment.XDG_STATE_HOME?.trim() || path2.join(homeDirectory, ".local", "state");
   }
-  return path2.resolve(stateRoot, "agent-governance-suite", "workflows.sqlite3");
-}
-function besideWorkflowDatabase(variable, fileName, environment, platform, homeDirectory, currentWorkingDirectory) {
-  const configured = environment[variable]?.trim();
-  if (configured) return path2.resolve(currentWorkingDirectory, configured);
-  const workflowPath = resolveWorkflowDatabasePath(
-    environment,
-    platform,
-    homeDirectory,
-    currentWorkingDirectory
-  );
-  if (workflowPath === ":memory:") return ":memory:";
-  return path2.join(path2.dirname(workflowPath), fileName);
+  return path2.resolve(stateRoot, "agent-governance-suite");
 }
 function resolveSessionBoardDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
-  return besideWorkflowDatabase("AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH", "session-board.sqlite3", environment, platform, homeDirectory, currentWorkingDirectory);
+  const configured = environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH?.trim();
+  if (configured) return path2.resolve(currentWorkingDirectory, configured);
+  return path2.join(userStateDirectory(environment, platform, homeDirectory), "session-board.sqlite3");
 }
 
 // mcp-server/src/session-board-hook.ts

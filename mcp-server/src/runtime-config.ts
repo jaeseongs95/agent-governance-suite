@@ -29,7 +29,15 @@ export function resolveWorkflowDatabasePath(
 ): string {
   const configured = environment.AGENT_GOVERNANCE_DB_PATH?.trim();
   if (configured) return path.resolve(currentWorkingDirectory, configured);
+  return path.resolve(userStateDirectory(environment, platform, homeDirectory), "workflows.sqlite3");
+}
 
+/** The per-user state directory shared by every host installation on this machine. */
+function userStateDirectory(
+  environment: NodeJS.ProcessEnv,
+  platform: NodeJS.Platform,
+  homeDirectory: string,
+): string {
   let stateRoot: string;
   if (platform === "win32") {
     stateRoot = environment.LOCALAPPDATA?.trim() || path.join(homeDirectory, "AppData", "Local");
@@ -38,7 +46,7 @@ export function resolveWorkflowDatabasePath(
   } else {
     stateRoot = environment.XDG_STATE_HOME?.trim() || path.join(homeDirectory, ".local", "state");
   }
-  return path.resolve(stateRoot, "agent-governance-suite", "workflows.sqlite3");
+  return path.resolve(stateRoot, "agent-governance-suite");
 }
 
 function besideWorkflowDatabase(
@@ -71,14 +79,19 @@ export function resolveContinuityDatabasePath(
   return besideWorkflowDatabase("AGENT_GOVERNANCE_CONTINUITY_DB_PATH", "continuity.sqlite3", environment, platform, homeDirectory, currentWorkingDirectory);
 }
 
-/** Resolves the session board beside workflow state unless explicitly overridden. */
+/**
+ * Resolves the session board every host on this machine shares (Claude Code and Codex alike). It stays in the
+ * user state directory even when a host moves its own workflow database, unless explicitly overridden.
+ */
 export function resolveSessionBoardDatabasePath(
   environment: NodeJS.ProcessEnv = process.env,
   platform: NodeJS.Platform = process.platform,
   homeDirectory: string = homedir(),
   currentWorkingDirectory: string = process.cwd(),
 ): string {
-  return besideWorkflowDatabase("AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH", "session-board.sqlite3", environment, platform, homeDirectory, currentWorkingDirectory);
+  const configured = environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH?.trim();
+  if (configured) return path.resolve(currentWorkingDirectory, configured);
+  return path.join(userStateDirectory(environment, platform, homeDirectory), "session-board.sqlite3");
 }
 
 function canonicalDatabasePath(databasePath: string, platform: NodeJS.Platform): string | null {

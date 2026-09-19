@@ -1,6 +1,6 @@
 import { mkdtemp, mkdir, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { basename, join, normalize } from "node:path";
+import { basename, dirname, join, normalize } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -105,13 +105,21 @@ describe("resolveContinuityDatabasePath", () => {
 });
 
 describe("resolveSessionBoardDatabasePath", () => {
-  it("uses the explicit board override and otherwise sits beside the workflow database", () => {
+  it("uses the explicit board override", () => {
     const workingDirectory = join(tmpdir(), "board-working-directory");
     expect(resolveSessionBoardDatabasePath({ AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: "board.sqlite3" }, "linux", join(tmpdir(), "unused-home"), workingDirectory))
       .toBe(join(workingDirectory, "board.sqlite3"));
-    const workflowPath = join(tmpdir(), "governance-state", "workflows.sqlite3");
-    expect(resolveSessionBoardDatabasePath({ AGENT_GOVERNANCE_DB_PATH: workflowPath }, "linux"))
-      .toBe(join(tmpdir(), "governance-state", "session-board.sqlite3"));
+  });
+
+  it("shares one board in the user state directory even when a host moves its workflow database", () => {
+    const state = join(tmpdir(), "user-state");
+    const moved = { AGENT_GOVERNANCE_DB_PATH: join(tmpdir(), "plugin-data", "workflows.sqlite3") };
+    expect(resolveSessionBoardDatabasePath({ ...moved, XDG_STATE_HOME: state }, "linux"))
+      .toBe(join(state, "agent-governance-suite", "session-board.sqlite3"));
+    expect(resolveSessionBoardDatabasePath({ XDG_STATE_HOME: state }, "linux"))
+      .toBe(join(dirname(resolveWorkflowDatabasePath({ XDG_STATE_HOME: state }, "linux")), "session-board.sqlite3"));
+    expect(resolveSessionBoardDatabasePath({ ...moved, LOCALAPPDATA: state }, "win32"))
+      .toBe(join(state, "agent-governance-suite", "session-board.sqlite3"));
   });
 });
 

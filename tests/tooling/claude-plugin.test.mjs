@@ -62,7 +62,8 @@ describe("generated Claude plugin", () => {
     expect(server.args).toEqual(["${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/server.mjs"]);
     expect(server.env.AGENT_GOVERNANCE_DB_PATH).toBe("${CLAUDE_PLUGIN_DATA}/workflows.sqlite3");
     expect(server.env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH).toBe("${CLAUDE_PLUGIN_DATA}/continuity.sqlite3");
-    expect(server.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH).toBe("${CLAUDE_PLUGIN_DATA}/session-board.sqlite3");
+    // The session board is shared with Codex in the user state directory, so the manifest does not pin it.
+    expect(server.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH).toBeUndefined();
     expect(server.env.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE).toBe("anthropic");
     expect(server.env.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("claude-code");
   });

@@ -26,7 +26,6 @@
       "env": {
         "AGENT_GOVERNANCE_DB_PATH": "${CLAUDE_PLUGIN_DATA}/workflows.sqlite3",
         "AGENT_GOVERNANCE_CONTINUITY_DB_PATH": "${CLAUDE_PLUGIN_DATA}/continuity.sqlite3",
-        "AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH": "${CLAUDE_PLUGIN_DATA}/session-board.sqlite3",
         "AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE": "anthropic",
         "AGENT_GOVERNANCE_HOST_ATTESTATION": "claude-code"
       }

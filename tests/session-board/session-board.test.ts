@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -20,6 +20,7 @@ import {
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
+import { resolveSessionBoardDatabasePath } from "../../mcp-server/src/runtime-config.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
 import { GATE_REASON, handleSessionBoardHook, runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
@@ -218,6 +219,32 @@ describe("session board MCP tools", () => {
     return client;
   }
   const payload = (response: unknown) => JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: unknown; error: { code: string } | null };
+
+  it("shares one board between the Claude launcher and the Codex hook and lists both hosts", async () => {
+    const state = mkdtempSync(path.join(tmpdir(), "session-board-state-"));
+    directories.push(state);
+    const env: NodeJS.ProcessEnv = { ...process.env, LOCALAPPDATA: state, XDG_STATE_HOME: state, HOME: state, CLAUDE_PLUGIN_DATA: path.join(state, "plugin-data") };
+    delete env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
+    delete env.AGENT_GOVERNANCE_DB_PATH;
+    const repository = fileURLToPath(new URL("../../", import.meta.url));
+    const update = (sessionId: string, toolName: string, summary: string) => JSON.stringify({ hook_event_name: "PreToolUse", session_id: sessionId, cwd: "D:/work/repo", tool_name: toolName, tool_input: { schemaVersion: "1.0.0", summary } });
+    const run = (script: string, input: string) => spawnSync(process.execPath, [path.join(repository, script)], { env, input, encoding: "utf8", windowsHide: true });
+    const claude = run("claude-plugin/hooks/session-board-hook.mjs", update("claude-1", "mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status", "Claude 작업"));
+    const codex = run("mcp-server/dist/session-board-hook.mjs", update("codex-1", "mcp__agent-governance-suite__update_session_status", "Codex 작업"));
+    expect([claude.status, codex.status]).toEqual([0, 0]);
+    expect(claude.stdout).toContain('"host":"claude-code"');
+    expect(codex.stdout).toContain('"host":"codex"');
+    const shared = resolveSessionBoardDatabasePath(env);
+    expect(existsSync(shared)).toBe(true);
+    expect(existsSync(env.CLAUDE_PLUGIN_DATA!)).toBe(false);
+
+    const listed = payload(await (await connect(shared)).callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0", _sessionBinding: { host: "codex", sessionId: "codex-1" } } }));
+    const sessions = (listed.data as { sessions: Array<{ host: string; sessionId: string; summary: string; current: boolean }> }).sessions;
+    expect(sessions.map((row) => [row.host, row.sessionId, row.summary, row.current]).sort()).toEqual([
+      ["claude-code", "claude-1", "Claude 작업", false],
+      ["codex", "codex-1", "Codex 작업", true],
+    ]);
+  });
 
   it("reads back the hook-written line, lists the host board and refuses unbound updates", async () => {
     const databasePath = boardPath();

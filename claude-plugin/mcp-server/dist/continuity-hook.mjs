@@ -958,6 +958,9 @@ import path3 from "node:path";
 function resolveWorkflowDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   const configured = environment.AGENT_GOVERNANCE_DB_PATH?.trim();
   if (configured) return path3.resolve(currentWorkingDirectory, configured);
+  return path3.resolve(userStateDirectory(environment, platform, homeDirectory), "workflows.sqlite3");
+}
+function userStateDirectory(environment, platform, homeDirectory) {
   let stateRoot;
   if (platform === "win32") {
     stateRoot = environment.LOCALAPPDATA?.trim() || path3.join(homeDirectory, "AppData", "Local");
@@ -966,7 +969,7 @@ function resolveWorkflowDatabasePath(environment = process.env, platform = proce
   } else {
     stateRoot = environment.XDG_STATE_HOME?.trim() || path3.join(homeDirectory, ".local", "state");
   }
-  return path3.resolve(stateRoot, "agent-governance-suite", "workflows.sqlite3");
+  return path3.resolve(stateRoot, "agent-governance-suite");
 }
 function besideWorkflowDatabase(variable, fileName, environment, platform, homeDirectory, currentWorkingDirectory) {
   const configured = environment[variable]?.trim();
