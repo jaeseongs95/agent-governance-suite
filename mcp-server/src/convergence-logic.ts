@@ -8,20 +8,20 @@ import {
   WorkflowContractError,
 } from "../../contracts/types.js";
 
-export function canonicalJson(value: unknown): string {
+export function canonicalJson(value: unknown, subject = "Convergence input"): string {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
     if (!Number.isFinite(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-finite number.");
+      throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-finite number.`);
     }
     return JSON.stringify(value);
   }
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
   if (value && typeof value === "object") {
     const record = value as Record<string, unknown>;
-    return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`).join(",")}}`;
+    return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key], subject)}`).join(",")}}`;
   }
-  throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-serializable value.");
+  throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
 }
 
 export function convergenceDigest(value: unknown): Sha256Digest {

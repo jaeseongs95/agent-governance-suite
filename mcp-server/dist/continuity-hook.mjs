@@ -8044,20 +8044,20 @@ var WorkflowContractError = class extends Error {
 // mcp-server/src/convergence-logic.ts
 import { createHash } from "node:crypto";
 import path from "node:path";
-function canonicalJson(value) {
+function canonicalJson(value, subject = "Convergence input") {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
     if (!Number.isFinite(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-finite number.");
+      throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-finite number.`);
     }
     return JSON.stringify(value);
   }
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
   if (value && typeof value === "object") {
     const record2 = value;
-    return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record2[key])}`).join(",")}}`;
+    return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record2[key], subject)}`).join(",")}}`;
   }
-  throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-serializable value.");
+  throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
 }
 function convergenceDigest(value) {
   return `sha256:${createHash("sha256").update(canonicalJson(value), "utf8").digest("hex")}`;
@@ -9122,42 +9122,9 @@ var ContractValidator = class {
     for (const schema of Object.values(contractSchemas)) {
       ajv.addSchema(schema);
     }
-    this.validators = {
-      apiResult: ajv.getSchema("https://skill-suite.local/contracts/api-result.v1.schema.json"),
-      pluginUpdateStatus: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-status.v1.schema.json"),
-      pluginUpdateNotice: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-notice.v1.schema.json"),
-      taskEnvelope: ajv.getSchema("https://skill-suite.local/contracts/task-envelope.v1.schema.json"),
-      planWorkflowRequest: ajv.getSchema("https://skill-suite.local/contracts/plan-workflow-request.v1.schema.json"),
-      skillDescriptor: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v1.schema.json"),
-      skillDescriptorV2: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v2.schema.json"),
-      workflowPlan: ajv.getSchema("https://skill-suite.local/contracts/workflow-plan.v1.schema.json"),
-      stageResult: ajv.getSchema("https://skill-suite.local/contracts/stage-result.v1.schema.json"),
-      workflowReceipt: ajv.getSchema("https://skill-suite.local/contracts/workflow-receipt.v1.schema.json"),
-      workflowStatusSummary: ajv.getSchema("https://skill-suite.local/contracts/workflow-status-summary.v1.schema.json"),
-      convergenceFrame: ajv.getSchema("https://skill-suite.local/contracts/convergence-frame.v1.schema.json"),
-      convergenceRoot: ajv.getSchema("https://skill-suite.local/contracts/convergence-root.v1.schema.json"),
-      convergenceRootHandle: ajv.getSchema("https://skill-suite.local/contracts/convergence-root-handle.v1.schema.json"),
-      openConvergenceRootRequest: ajv.getSchema("https://skill-suite.local/contracts/open-convergence-root-request.v1.schema.json"),
-      attemptProposal: ajv.getSchema("https://skill-suite.local/contracts/attempt-proposal.v1.schema.json"),
-      attemptLease: ajv.getSchema("https://skill-suite.local/contracts/attempt-lease.v1.schema.json"),
-      guardedWorkflowStartRequest: ajv.getSchema("https://skill-suite.local/contracts/guarded-workflow-start-request.v1.schema.json"),
-      attemptOutcome: ajv.getSchema("https://skill-suite.local/contracts/attempt-outcome.v1.schema.json"),
-      convergenceReview: ajv.getSchema("https://skill-suite.local/contracts/convergence-review.v1.schema.json"),
-      resolveConvergenceGateRequest: ajv.getSchema("https://skill-suite.local/contracts/resolve-convergence-gate-request.v1.schema.json"),
-      convergenceStatus: ajv.getSchema("https://skill-suite.local/contracts/convergence-status.v1.schema.json"),
-      convergenceStatusSummary: ajv.getSchema("https://skill-suite.local/contracts/convergence-status-summary.v1.schema.json"),
-      checkpointContextRequest: ajv.getSchema("https://skill-suite.local/contracts/checkpoint-context-request.v1.schema.json"),
-      inspectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/inspect-context-request.v1.schema.json"),
-      loadContextRequest: ajv.getSchema("https://skill-suite.local/contracts/load-context-request.v1.schema.json"),
-      suppressContextRestoreRequest: ajv.getSchema("https://skill-suite.local/contracts/suppress-context-restore-request.v1.schema.json"),
-      purgeDirectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/purge-direct-context-request.v1.schema.json"),
-      prepareStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/prepare-state-cleanup-request.v1.schema.json"),
-      executeStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/execute-state-cleanup-request.v1.schema.json"),
-      stateCleanupPlan: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-plan.v1.schema.json"),
-      stateCleanupReceipt: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-receipt.v1.schema.json"),
-      koreanProseGlossaryLookupRequest: ajv.getSchema("https://skill-suite.local/contracts/korean-prose-glossary-lookup-request.v1.schema.json"),
-      koreanProseGlossaryLookupResult: ajv.getSchema("https://skill-suite.local/contracts/korean-prose-glossary-lookup-result.v1.schema.json")
-    };
+    this.validators = Object.fromEntries(
+      Object.entries(contractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id)])
+    );
   }
   assert(name, value) {
     const validate = this.validators[name];
@@ -9170,9 +9137,6 @@ var ContractValidator = class {
       });
     }
     return value;
-  }
-  taskEnvelope(value) {
-    return this.assert("taskEnvelope", value);
   }
   planWorkflowRequest(value) {
     return this.assert("planWorkflowRequest", value);
@@ -9216,9 +9180,6 @@ var ContractValidator = class {
   attemptOutcome(value) {
     return this.assert("attemptOutcome", value);
   }
-  convergenceReview(value) {
-    return this.assert("convergenceReview", value);
-  }
   resolveConvergenceGateRequest(value) {
     return this.assert("resolveConvergenceGateRequest", value);
   }
@@ -9260,9 +9221,6 @@ var ContractValidator = class {
   }
   koreanProseGlossaryLookupResult(value) {
     return this.assert("koreanProseGlossaryLookupResult", value);
-  }
-  apiResult(value) {
-    return this.assert("apiResult", value);
   }
   pluginUpdateStatus(value) {
     return this.assert("pluginUpdateStatus", value);

@@ -53,7 +53,7 @@ const PROTOCOL_TOKENS = new Set<string>([
   "JSON_JSONL_ONLY_V1",
 ]);
 
-function jsonPointer(value: unknown, pointer: string): unknown {
+export function jsonPointer(value: unknown, pointer: string): unknown {
   return pointer.split("/").slice(1).reduce<unknown>((current, token) => {
     if (!current || typeof current !== "object") return undefined;
     const key = token.replaceAll("~1", "/").replaceAll("~0", "~");

@@ -28,20 +28,20 @@ var WorkflowContractError = class extends Error {
 // mcp-server/src/convergence-logic.ts
 import { createHash } from "node:crypto";
 import path from "node:path";
-function canonicalJson(value) {
+function canonicalJson(value, subject = "Convergence input") {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
     if (!Number.isFinite(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-finite number.");
+      throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-finite number.`);
     }
     return JSON.stringify(value);
   }
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
   if (value && typeof value === "object") {
     const record3 = value;
-    return `{${Object.keys(record3).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record3[key])}`).join(",")}}`;
+    return `{${Object.keys(record3).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record3[key], subject)}`).join(",")}}`;
   }
-  throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-serializable value.");
+  throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
 }
 function convergenceDigest(value) {
   return `sha256:${createHash("sha256").update(canonicalJson(value), "utf8").digest("hex")}`;

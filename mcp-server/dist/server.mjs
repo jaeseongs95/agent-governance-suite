@@ -16021,20 +16021,20 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 // mcp-server/src/convergence-logic.ts
 import { createHash as createHash2 } from "node:crypto";
 import path2 from "node:path";
-function canonicalJson(value) {
+function canonicalJson(value, subject = "Convergence input") {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
     if (!Number.isFinite(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-finite number.");
+      throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-finite number.`);
     }
     return JSON.stringify(value);
   }
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
   if (value && typeof value === "object") {
     const record3 = value;
-    return `{${Object.keys(record3).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record3[key])}`).join(",")}}`;
+    return `{${Object.keys(record3).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record3[key], subject)}`).join(",")}}`;
   }
-  throw new WorkflowContractError("INVALID_INPUT", "Convergence input contains a non-serializable value.");
+  throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
 }
 function convergenceDigest(value) {
   return `sha256:${createHash2("sha256").update(canonicalJson(value), "utf8").digest("hex")}`;
@@ -17144,42 +17144,9 @@ var ContractValidator = class {
     for (const schema of Object.values(contractSchemas)) {
       ajv.addSchema(schema);
     }
-    this.validators = {
-      apiResult: ajv.getSchema("https://skill-suite.local/contracts/api-result.v1.schema.json"),
-      pluginUpdateStatus: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-status.v1.schema.json"),
-      pluginUpdateNotice: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-notice.v1.schema.json"),
-      taskEnvelope: ajv.getSchema("https://skill-suite.local/contracts/task-envelope.v1.schema.json"),
-      planWorkflowRequest: ajv.getSchema("https://skill-suite.local/contracts/plan-workflow-request.v1.schema.json"),
-      skillDescriptor: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v1.schema.json"),
-      skillDescriptorV2: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v2.schema.json"),
-      workflowPlan: ajv.getSchema("https://skill-suite.local/contracts/workflow-plan.v1.schema.json"),
-      stageResult: ajv.getSchema("https://skill-suite.local/contracts/stage-result.v1.schema.json"),
-      workflowReceipt: ajv.getSchema("https://skill-suite.local/contracts/workflow-receipt.v1.schema.json"),
-      workflowStatusSummary: ajv.getSchema("https://skill-suite.local/contracts/workflow-status-summary.v1.schema.json"),
-      convergenceFrame: ajv.getSchema("https://skill-suite.local/contracts/convergence-frame.v1.schema.json"),
-      convergenceRoot: ajv.getSchema("https://skill-suite.local/contracts/convergence-root.v1.schema.json"),
-      convergenceRootHandle: ajv.getSchema("https://skill-suite.local/contracts/convergence-root-handle.v1.schema.json"),
-      openConvergenceRootRequest: ajv.getSchema("https://skill-suite.local/contracts/open-convergence-root-request.v1.schema.json"),
-      attemptProposal: ajv.getSchema("https://skill-suite.local/contracts/attempt-proposal.v1.schema.json"),
-      attemptLease: ajv.getSchema("https://skill-suite.local/contracts/attempt-lease.v1.schema.json"),
-      guardedWorkflowStartRequest: ajv.getSchema("https://skill-suite.local/contracts/guarded-workflow-start-request.v1.schema.json"),
-      attemptOutcome: ajv.getSchema("https://skill-suite.local/contracts/attempt-outcome.v1.schema.json"),
-      convergenceReview: ajv.getSchema("https://skill-suite.local/contracts/convergence-review.v1.schema.json"),
-      resolveConvergenceGateRequest: ajv.getSchema("https://skill-suite.local/contracts/resolve-convergence-gate-request.v1.schema.json"),
-      convergenceStatus: ajv.getSchema("https://skill-suite.local/contracts/convergence-status.v1.schema.json"),
-      convergenceStatusSummary: ajv.getSchema("https://skill-suite.local/contracts/convergence-status-summary.v1.schema.json"),
-      checkpointContextRequest: ajv.getSchema("https://skill-suite.local/contracts/checkpoint-context-request.v1.schema.json"),
-      inspectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/inspect-context-request.v1.schema.json"),
-      loadContextRequest: ajv.getSchema("https://skill-suite.local/contracts/load-context-request.v1.schema.json"),
-      suppressContextRestoreRequest: ajv.getSchema("https://skill-suite.local/contracts/suppress-context-restore-request.v1.schema.json"),
-      purgeDirectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/purge-direct-context-request.v1.schema.json"),
-      prepareStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/prepare-state-cleanup-request.v1.schema.json"),
-      executeStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/execute-state-cleanup-request.v1.schema.json"),
-      stateCleanupPlan: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-plan.v1.schema.json"),
-      stateCleanupReceipt: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-receipt.v1.schema.json"),
-      koreanProseGlossaryLookupRequest: ajv.getSchema("https://skill-suite.local/contracts/korean-prose-glossary-lookup-request.v1.schema.json"),
-      koreanProseGlossaryLookupResult: ajv.getSchema("https://skill-suite.local/contracts/korean-prose-glossary-lookup-result.v1.schema.json")
-    };
+    this.validators = Object.fromEntries(
+      Object.entries(contractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id)])
+    );
   }
   assert(name, value) {
     const validate2 = this.validators[name];
@@ -17192,9 +17159,6 @@ var ContractValidator = class {
       });
     }
     return value;
-  }
-  taskEnvelope(value) {
-    return this.assert("taskEnvelope", value);
   }
   planWorkflowRequest(value) {
     return this.assert("planWorkflowRequest", value);
@@ -17238,9 +17202,6 @@ var ContractValidator = class {
   attemptOutcome(value) {
     return this.assert("attemptOutcome", value);
   }
-  convergenceReview(value) {
-    return this.assert("convergenceReview", value);
-  }
   resolveConvergenceGateRequest(value) {
     return this.assert("resolveConvergenceGateRequest", value);
   }
@@ -17282,9 +17243,6 @@ var ContractValidator = class {
   }
   koreanProseGlossaryLookupResult(value) {
     return this.assert("koreanProseGlossaryLookupResult", value);
-  }
-  apiResult(value) {
-    return this.assert("apiResult", value);
   }
   pluginUpdateStatus(value) {
     return this.assert("pluginUpdateStatus", value);
@@ -21690,9 +21648,6 @@ function createPlanSigningKey() {
 }
 
 // mcp-server/src/workflow-service.ts
-function clone4(value) {
-  return JSON.parse(JSON.stringify(value));
-}
 function asRecord2(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
@@ -21729,27 +21684,22 @@ var HIGH_ASSURANCE_CAPABILITIES = /* @__PURE__ */ new Set([
 var TRUSTED_EXECUTION_MAX_AGE_MS = 5 * 60 * 1e3;
 var TRUSTED_EXECUTION_CLOCK_SKEW_MS = 5 * 1e3;
 var PLAN_INTEGRITY_TOKEN = /^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/u;
-function canonicalJson2(value) {
-  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) throw new WorkflowContractError("INVALID_INPUT", "Plan contains a non-finite number.");
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) return `[${value.map(canonicalJson2).join(",")}]`;
-  if (value && typeof value === "object") {
-    const record3 = value;
-    return `{${Object.keys(record3).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson2(record3[key])}`).join(",")}}`;
-  }
-  throw new WorkflowContractError("INVALID_INPUT", "Plan contains a non-serializable value.");
+function bumpedRoot(root, updatedAt) {
+  const next = clone3(root);
+  next.revision += 1;
+  next.updatedAt = updatedAt;
+  return next;
+}
+function consumedLeases(snapshot, epoch) {
+  return snapshot.leases.filter((lease) => lease.epoch === epoch && lease.state === "consumed");
 }
 var WorkflowService = class {
-  constructor(registry2, validator = new ContractValidator(), store = new InMemoryWorkflowStore(), defaultExecutionContext = null, trustedExecutionContextProvider = null, readStageOutputFile = readLocalStageOutputFile) {
+  constructor(registry2, validator = new ContractValidator(), store = new InMemoryWorkflowStore(), defaultExecutionContext = null, trustedExecutionContextProvider = null) {
     this.registry = registry2;
     this.validator = validator;
     this.store = store;
     this.defaultExecutionContext = defaultExecutionContext;
     this.trustedExecutionContextProvider = trustedExecutionContextProvider;
-    this.readStageOutputFile = readStageOutputFile;
     const encodedKey = this.store.getOrCreateSecret(PLAN_SIGNING_KEY, createPlanSigningKey);
     this.planSigningKey = Buffer.from(encodedKey, "base64url");
     if (this.planSigningKey.length !== 32) {
@@ -21761,10 +21711,9 @@ var WorkflowService = class {
   store;
   defaultExecutionContext;
   trustedExecutionContextProvider;
-  readStageOutputFile;
   planSigningKey;
   planWorkflow(rawTask, requireExecutionContext = false) {
-    try {
+    return this.attempt(() => {
       const request = this.validator.planWorkflowRequest(rawTask);
       const wrapped = "taskEnvelope" in request;
       const task = wrapped ? request.taskEnvelope : request;
@@ -21799,13 +21748,11 @@ var WorkflowService = class {
       plan.integrityToken = this.signPlan(plan);
       this.validator.workflowPlan(plan);
       if (trustedBootstrapContext) this.consumeTrustedExecutionObservation(trustedBootstrapContext, "bootstrap orchestration");
-      return apiOk2(plan);
-    } catch (error2) {
-      return apiError(this.toErrorBody(error2));
-    }
+      return plan;
+    });
   }
   openConvergenceRoot(rawRequest) {
-    try {
+    return this.attempt(() => {
       const request = this.validator.openConvergenceRootRequest(rawRequest);
       this.validateWorkUnitGraph(request.taskEnvelope);
       this.assertConvergenceFrame(request.frame);
@@ -21838,8 +21785,8 @@ var WorkflowService = class {
         revision: 0,
         state: "open",
         currentEpoch: 1,
-        taskEnvelope: clone4(request.taskEnvelope),
-        frame: clone4(request.frame),
+        taskEnvelope: clone3(request.taskEnvelope),
+        frame: clone3(request.frame),
         ...digests,
         userApprovalRefs: [...request.userApprovalRefs],
         createdAt: now,
@@ -21854,14 +21801,12 @@ var WorkflowService = class {
           scope: conflicting.taskEnvelope.scope.included
         });
       }
-      return apiOk2(clone4(root));
-    } catch (error2) {
-      return apiError(this.toErrorBody(error2));
-    }
+      return clone3(root);
+    });
   }
   claimWorkflowAttempt(rawProposal, requireTrustedExecutionContext = false) {
-    try {
-      const proposal = clone4(this.normalizeAttemptProposal(rawProposal));
+    return this.attempt(() => {
+      const proposal = clone3(this.normalizeAttemptProposal(rawProposal));
       this.assertPlanIntegrity(proposal.plan);
       if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(proposal.plan, "Workflow attempt");
       this.assertConvergenceFrame(proposal.frame);
@@ -21887,15 +21832,13 @@ var WorkflowService = class {
         proposal.plan.bootstrapExecution?.context ?? this.defaultExecutionContext ?? void 0
       );
       expectedPlan.integrityToken = this.signPlan(expectedPlan);
-      if (canonicalJson2(expectedPlan) !== canonicalJson2(proposal.plan)) {
+      if (canonicalJson(expectedPlan, "Plan") !== canonicalJson(proposal.plan, "Plan")) {
         throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan was not produced from the proposed task envelope.", {
           rootId: proposal.rootId,
           taskId: proposal.taskEnvelope.taskId
         });
       }
-      let snapshot = this.requireConvergenceSnapshot(proposal.rootId);
-      this.expireStaleLeases(snapshot);
-      snapshot = this.requireConvergenceSnapshot(proposal.rootId);
+      const snapshot = this.liveConvergenceSnapshot(proposal.rootId);
       const root = snapshot.root;
       if (snapshot.leases.some((lease2) => lease2.state === "issued")) {
         throw new WorkflowContractError("LEASE_CONFLICT", "A live attempt lease already exists for this convergence root.", {
@@ -21911,9 +21854,7 @@ var WorkflowService = class {
       const proposedDigests = this.convergenceDigests(proposal.taskEnvelope, proposal.frame);
       const frameChanged = proposedDigests.taskDigest !== root.taskDigest || proposedDigests.workspaceDigest !== root.workspaceDigest || proposedDigests.controlDigest !== root.controlDigest || proposedDigests.operationalDigest !== root.operationalDigest || this.artifactRolesChanged(root.frame, proposal.frame);
       if (frameChanged) {
-        if (root.state === "open") {
-          this.moveRootToReview(root, "The task or control frame changed before the next full attempt.");
-        }
+        if (root.state === "open") this.moveRootToReview(root);
         throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "Task, control, workspace, operational, or artifact-role changes require independent review.", {
           rootId: root.rootId,
           expected: {
@@ -21926,9 +21867,9 @@ var WorkflowService = class {
         });
       }
       if (root.state !== "open") this.throwRootGate(root, snapshot);
-      const attempts = snapshot.leases.filter((lease2) => lease2.epoch === root.currentEpoch && lease2.state === "consumed");
+      const attempts = consumedLeases(snapshot, root.currentEpoch);
       if (attempts.length >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
-        this.moveRootToReview(root, "The convergence attempt budget is exhausted.");
+        this.moveRootToReview(root);
         throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Three full attempts have already started in this convergence epoch.", {
           rootId: root.rootId,
           epoch: root.currentEpoch,
@@ -21971,9 +21912,7 @@ var WorkflowService = class {
         }
       }
       const now = /* @__PURE__ */ new Date();
-      const updatedRoot = clone4(root);
-      updatedRoot.revision += 1;
-      updatedRoot.updatedAt = now.toISOString();
+      const updatedRoot = bumpedRoot(root, now.toISOString());
       const lease = {
         schemaVersion: CONTRACT_VERSION,
         leaseId: `lease-${randomUUID()}`,
@@ -21997,15 +21936,13 @@ var WorkflowService = class {
           rootId: root.rootId
         });
       }
-      return apiOk2(clone4(lease));
-    } catch (error2) {
-      return apiError(this.toErrorBody(error2));
-    }
+      return clone3(lease);
+    });
   }
   startGuardedWorkflow(rawRequest, requireTrustedExecutionContext = false) {
-    try {
+    return this.attempt(() => {
       const request = this.normalizeGuardedWorkflowStartRequest(rawRequest);
-      const plan = clone4(request.plan);
+      const plan = clone3(request.plan);
       this.assertPlanIntegrity(plan);
       if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(plan, "Guarded workflow start");
       if (plan.executionMode !== "orchestrated" || plan.state !== "ready") {
@@ -22025,32 +21962,16 @@ var WorkflowService = class {
           actualRevision: binding.root.revision
         });
       }
-      if (plan.integrityToken !== binding.lease.planIntegrityToken || canonicalJson2(plan) !== canonicalJson2(binding.proposal.plan)) {
+      if (plan.integrityToken !== binding.lease.planIntegrityToken || canonicalJson(plan, "Plan") !== canonicalJson(binding.proposal.plan, "Plan")) {
         throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is bound to a different workflow plan.", { leaseId: request.leaseId });
       }
-      const runId = `run-${plan.taskId}-${this.store.nextRunSequence()}`;
-      plan.state = "running";
-      this.setRunningStagePointers(plan);
-      const receipt = {
-        schemaVersion: CONTRACT_VERSION,
-        runId,
-        revision: 0,
-        state: "running",
-        plan,
-        stageResults: [],
-        blockers: [],
-        unresolved: [],
-        error: null
-      };
-      this.assertReceipt(receipt);
+      const receipt = this.newRunningReceipt(plan);
       const started = this.store.insertGuardedRun(receipt, request.leaseId, request.expectedRootRevision, (/* @__PURE__ */ new Date()).toISOString());
       if (!started) {
         throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease could not be consumed atomically.", { leaseId: request.leaseId });
       }
-      return apiOk2(clone4(receipt));
-    } catch (error2) {
-      return apiError(this.toErrorBody(error2));
-    }
+      return clone3(receipt);
+    });
   }
   normalizeAttemptProposal(rawProposal) {
     const candidate = asRecord2(rawProposal);
@@ -22064,8 +21985,8 @@ var WorkflowService = class {
     const root = this.requireConvergenceSnapshot(rootId).root;
     return this.validator.attemptProposal({
       ...candidate,
-      taskEnvelope: clone4(root.taskEnvelope),
-      frame: clone4(root.frame)
+      taskEnvelope: clone3(root.taskEnvelope),
+      frame: clone3(root.frame)
     });
   }
   normalizeGuardedWorkflowStartRequest(rawRequest) {
@@ -22078,26 +21999,21 @@ var WorkflowService = class {
     }
     return this.validator.guardedWorkflowStartRequest({
       ...candidate,
-      plan: clone4(binding.proposal.plan)
+      plan: clone3(binding.proposal.plan)
     });
   }
   getConvergenceStatus(rootId) {
-    try {
-      let snapshot = this.requireConvergenceSnapshot(rootId);
-      this.expireStaleLeases(snapshot);
-      snapshot = this.requireConvergenceSnapshot(rootId);
-      const status = this.buildConvergenceStatus(snapshot);
+    return this.attempt(() => {
+      const status = this.buildConvergenceStatus(this.liveConvergenceSnapshot(rootId));
       this.validator.convergenceStatus(status);
-      return apiOk2(clone4(status));
-    } catch (error2) {
-      return apiError(this.toErrorBody(error2));
-    }
+      return clone3(status);
+    });
   }
   resolveConvergenceGate(rawRequest) {
-    try {
+    return this.attempt(() => {
       const request = this.validator.resolveConvergenceGateRequest(rawRequest);
-      const review = clone4(request.review);
-      let snapshot = this.requireConvergenceSnapshot(request.rootId);
+      const review = clone3(request.review);
+      const snapshot = this.requireConvergenceSnapshot(request.rootId);
       const root = snapshot.root;
       if (request.expectedRevision !== root.revision || review.rootRevision !== root.revision) {
         throw new WorkflowContractError("STALE_REVISION", "The convergence review does not target the current root revision.", {
@@ -22124,9 +22040,7 @@ var WorkflowService = class {
         throw new WorkflowContractError("GATE_FAILED", "The frame reviewer must be independent from implementation actors.");
       }
       this.assertReviewRoute(review);
-      const updatedRoot = clone4(root);
-      updatedRoot.revision += 1;
-      updatedRoot.updatedAt = review.reviewedAt;
+      const updatedRoot = bumpedRoot(root, review.reviewedAt);
       if (review.route === "stop") {
         updatedRoot.state = "abandoned";
       } else if (review.classification === "semantics-changing" || review.route === "needs-user") {
@@ -22148,7 +22062,7 @@ var WorkflowService = class {
           }
           updatedRoot.currentEpoch += 1;
           updatedRoot.state = "open";
-          updatedRoot.frame = clone4(proposedFrame);
+          updatedRoot.frame = clone3(proposedFrame);
           Object.assign(updatedRoot, nextDigests);
         }
       }
@@ -22156,28 +22070,23 @@ var WorkflowService = class {
       if (!this.store.updateConvergenceRoot(updatedRoot, root.revision, review)) {
         throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while recording the review.");
       }
-      snapshot = this.requireConvergenceSnapshot(root.rootId);
-      return apiOk2(this.buildConvergenceStatus(snapshot));
-    } catch (error2) {
-      return apiError(this.toErrorBody(error2));
-    }
+      return this.buildConvergenceStatus(this.requireConvergenceSnapshot(root.rootId));
+    });
   }
   rejectUnguardedWorkflow(rawPlan) {
-    try {
-      const plan = clone4(this.validator.workflowPlan(rawPlan));
+    return this.attempt(() => {
+      const plan = clone3(this.validator.workflowPlan(rawPlan));
       this.assertPlanIntegrity(plan);
       if (plan.executionMode === "orchestrated") {
         throw new WorkflowContractError("LEASE_REQUIRED", "New orchestrated workflows must start through start_guarded_workflow.");
       }
       throw new WorkflowContractError("INVALID_TRANSITION", "Direct skill plans are not started by the MCP orchestrator.");
-    } catch (error2) {
-      return apiError(this.toErrorBody(error2));
-    }
+    });
   }
   /** Embedding compatibility only. The MCP start_workflow tool rejects new unguarded orchestrated runs. */
   startWorkflow(rawPlan) {
-    try {
-      const plan = clone4(this.validator.workflowPlan(rawPlan));
+    return this.attempt(() => {
+      const plan = clone3(this.validator.workflowPlan(rawPlan));
       this.assertPlanIntegrity(plan);
       if (plan.executionMode !== "orchestrated") {
         throw new WorkflowContractError("INVALID_TRANSITION", "Direct skill plans are not started by the MCP orchestrator.");
@@ -22189,26 +22098,10 @@ var WorkflowService = class {
           planState: plan.state
         });
       }
-      const runId = `run-${plan.taskId}-${this.store.nextRunSequence()}`;
-      plan.state = "running";
-      this.setRunningStagePointers(plan);
-      const receipt = {
-        schemaVersion: CONTRACT_VERSION,
-        runId,
-        revision: 0,
-        state: "running",
-        plan,
-        stageResults: [],
-        blockers: [],
-        unresolved: [],
-        error: null
-      };
-      this.assertReceipt(receipt);
+      const receipt = this.newRunningReceipt(plan);
       this.store.insertRun(receipt);
-      return apiOk2(clone4(receipt));
-    } catch (error2) {
-      return apiError(this.toErrorBody(error2));
-    }
+      return clone3(receipt);
+    });
   }
   recordStageResult(rawResult, requireTrustedExecutionContext = false) {
     try {
@@ -22255,7 +22148,7 @@ var WorkflowService = class {
               stageId: target.stageId
             });
           }
-          loadedOutput = loadStageOutputFile(result.outputFile, this.readStageOutputFile);
+          loadedOutput = loadStageOutputFile(result.outputFile);
         }
         let trustedStageContext = null;
         if (requireTrustedExecutionContext && result.state === "passed" && !target.executionRequirement && !DETERMINISTIC_CAPABILITIES.has(target.requiredCapability)) {
@@ -22282,7 +22175,7 @@ var WorkflowService = class {
             `Stage '${target.stageId}'`,
             binding
           );
-          result.executionContext = clone4(trustedStageContext);
+          result.executionContext = clone3(trustedStageContext);
         }
         const checked = loadedOutput === void 0 ? result : { ...result, output: { ...result.output, output: loadedOutput } };
         this.assertPlannedInputsAvailable(receipt, target);
@@ -22296,7 +22189,7 @@ var WorkflowService = class {
         }
         target.state = result.state;
         if (trustedStageContext) this.consumeTrustedExecutionObservation(trustedStageContext, `Stage '${target.stageId}'`);
-        receipt.stageResults.push(clone4(result));
+        receipt.stageResults.push(clone3(result));
         this.addUnique(receipt.blockers, result.blockers);
         this.addUnique(receipt.unresolved, result.blockers);
         if (result.state !== "passed") {
@@ -22319,11 +22212,7 @@ var WorkflowService = class {
     }
   }
   getWorkflowStatus(runId) {
-    try {
-      return apiOk2(clone4(this.requireRun(runId)));
-    } catch (error2) {
-      return apiError(this.toErrorBody(error2));
-    }
+    return this.attempt(() => clone3(this.requireRun(runId)));
   }
   finalizeWorkflow(runId, expectedRevision) {
     return this.change(runId, expectedRevision, (receipt) => {
@@ -22486,7 +22375,7 @@ var WorkflowService = class {
       ...executionContext ? {
         bootstrapExecution: {
           requirement: this.bootstrapExecutionRequirement(task),
-          context: clone4(executionContext)
+          context: clone3(executionContext)
         }
       } : {},
       state: errors.length > 0 ? "blocked" : "ready",
@@ -22510,11 +22399,7 @@ var WorkflowService = class {
         work.push(capability);
       }
     }
-    const after = [];
-    if (auditRequested) {
-      after.push(POLICY_CAPABILITY.audit);
-    }
-    return [.../* @__PURE__ */ new Set([...work, ...after])];
+    return [.../* @__PURE__ */ new Set([...work, ...auditRequested ? [POLICY_CAPABILITY.audit] : []])];
   }
   orderProviders(items) {
     const producedBy = /* @__PURE__ */ new Map();
@@ -22632,7 +22517,7 @@ var WorkflowService = class {
     }
     let rule = stage.stateMapping.default;
     if (stage.stateMapping.selector) {
-      const value = this.jsonPointer(providerResult, stage.stateMapping.selector);
+      const value = jsonPointer(providerResult, stage.stateMapping.selector);
       if (typeof value === "string") rule = stage.stateMapping.values?.[value] ?? "reject";
     }
     if (rule === "reject") {
@@ -22642,13 +22527,6 @@ var WorkflowService = class {
       });
     }
     return rule;
-  }
-  jsonPointer(value, pointer2) {
-    return pointer2.split("/").slice(1).reduce((current, token) => {
-      if (!current || typeof current !== "object") return void 0;
-      const key = token.replaceAll("~1", "/").replaceAll("~0", "~");
-      return current[key];
-    }, value);
   }
   assertRequiredArtifacts(stage, result) {
     const verifiedArtifacts = new Set(
@@ -22830,7 +22708,7 @@ var WorkflowService = class {
         { binding }
       );
     }
-    return clone4(context);
+    return clone3(context);
   }
   assertTrustedExecutionContext(requirement, context, subject, binding) {
     this.assertExecutionContext(requirement, context, subject);
@@ -22988,7 +22866,6 @@ var WorkflowService = class {
       visited.add(unitId);
     };
     for (const unit of task.workUnits) visit(unit.id);
-    return graph;
   }
   setRunningStagePointers(plan) {
     const readyStages = plan.stages.filter((stage) => stage.state === "ready");
@@ -23001,7 +22878,7 @@ var WorkflowService = class {
     }
   }
   signPlan(plan) {
-    return createHmac2("sha256", this.planSigningKey).update(canonicalJson2(this.planWithoutIntegrityToken(plan)), "utf8").digest("base64url");
+    return createHmac2("sha256", this.planSigningKey).update(canonicalJson(this.planWithoutIntegrityToken(plan), "Plan"), "utf8").digest("base64url");
   }
   assertPlanIntegrity(plan) {
     if (!PLAN_INTEGRITY_TOKEN.test(plan.integrityToken)) {
@@ -23047,26 +22924,43 @@ var WorkflowService = class {
     this.validator.convergenceRoot(snapshot.root);
     return snapshot;
   }
-  expireStaleLeases(snapshot) {
+  /** Expires stale issued leases, then rereads the root so callers see the current lease state. */
+  liveConvergenceSnapshot(rootId) {
     const now = Date.now();
-    for (const lease of snapshot.leases) {
+    for (const lease of this.requireConvergenceSnapshot(rootId).leases) {
       if (lease.state === "issued" && Date.parse(lease.expiresAt) <= now) this.store.expireAttemptLease(lease.leaseId);
     }
+    return this.requireConvergenceSnapshot(rootId);
   }
-  moveRootToReview(root, reason) {
-    const updated = clone4(root);
-    updated.revision += 1;
+  newRunningReceipt(plan) {
+    const runId = `run-${plan.taskId}-${this.store.nextRunSequence()}`;
+    plan.state = "running";
+    this.setRunningStagePointers(plan);
+    const receipt = {
+      schemaVersion: CONTRACT_VERSION,
+      runId,
+      revision: 0,
+      state: "running",
+      plan,
+      stageResults: [],
+      blockers: [],
+      unresolved: [],
+      error: null
+    };
+    this.assertReceipt(receipt);
+    return receipt;
+  }
+  moveRootToReview(root) {
+    const updated = bumpedRoot(root, (/* @__PURE__ */ new Date()).toISOString());
     updated.state = "needs-review";
-    updated.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
     if (!this.store.updateConvergenceRoot(updated, root.revision)) {
       throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while applying its gate.", {
         rootId: root.rootId
       });
     }
-    void reason;
   }
   throwRootGate(root, snapshot) {
-    const attempts = snapshot.leases.filter((lease) => lease.epoch === root.currentEpoch && lease.state === "consumed").length;
+    const attempts = consumedLeases(snapshot, root.currentEpoch).length;
     if (root.state === "needs-review" && attempts >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
       throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Independent review is required before another full attempt.", {
         rootId: root.rootId,
@@ -23079,9 +22973,7 @@ var WorkflowService = class {
     });
   }
   buildConvergenceStatus(snapshot) {
-    const attemptsUsed = snapshot.leases.filter(
-      (lease) => lease.epoch === snapshot.root.currentEpoch && lease.state === "consumed"
-    ).length;
+    const attemptsUsed = consumedLeases(snapshot, snapshot.root.currentEpoch).length;
     let gateError = null;
     if (snapshot.root.state === "needs-review") {
       gateError = attemptsUsed >= snapshot.root.frame.operationalSettings.maxAttemptsPerEpoch ? {
@@ -23102,16 +22994,16 @@ var WorkflowService = class {
     }
     return {
       schemaVersion: CONTRACT_VERSION,
-      root: clone4(snapshot.root),
+      root: clone3(snapshot.root),
       currentEpoch: snapshot.root.currentEpoch,
       maxAttemptsPerEpoch: 3,
       maxEpochs: 2,
       attemptsUsedInEpoch: attemptsUsed,
       attemptsRemainingInEpoch: Math.max(0, 3 - attemptsUsed),
-      proposals: clone4(snapshot.proposals),
-      leases: clone4(snapshot.leases),
-      outcomes: clone4(snapshot.outcomes),
-      reviews: clone4(snapshot.reviews),
+      proposals: clone3(snapshot.proposals),
+      leases: clone3(snapshot.leases),
+      outcomes: clone3(snapshot.outcomes),
+      reviews: clone3(snapshot.reviews),
       workflowRunIds: [...snapshot.workflowRunIds],
       gateError
     };
@@ -23139,15 +23031,11 @@ var WorkflowService = class {
   convergenceOutcome(receipt, binding) {
     const recordedAt = (/* @__PURE__ */ new Date()).toISOString();
     const expectedRootRevision = binding.root.revision;
-    const root = clone4(binding.root);
-    root.revision += 1;
-    root.updatedAt = recordedAt;
+    const root = bumpedRoot(binding.root, recordedAt);
     const aborted2 = receipt.blockers.includes("aborted-by-caller");
     const passed = receipt.state === "passed";
     const state = passed ? "passed" : aborted2 ? "aborted" : "failed";
-    const attemptsUsed = this.requireConvergenceSnapshot(root.rootId).leases.filter(
-      (lease) => lease.epoch === root.currentEpoch && lease.state === "consumed"
-    ).length;
+    const attemptsUsed = consumedLeases(this.requireConvergenceSnapshot(root.rootId), root.currentEpoch).length;
     if (!["needs-review", "needs-user", "abandoned"].includes(root.state)) {
       if (passed) root.state = "completed";
       else if (attemptsUsed >= root.frame.operationalSettings.maxAttemptsPerEpoch) root.state = "needs-review";
@@ -23183,7 +23071,7 @@ var WorkflowService = class {
     return { root, expectedRootRevision, outcome };
   }
   change(runId, expectedRevision, mutate) {
-    try {
+    return this.attempt(() => {
       const receipt = this.requireRun(runId);
       if (!Number.isInteger(expectedRevision) || expectedRevision !== receipt.revision) {
         throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
@@ -23203,10 +23091,8 @@ var WorkflowService = class {
           actualRevision: current?.revision ?? null
         });
       }
-      return apiOk2(clone4(receipt));
-    } catch (error2) {
-      return apiError(this.toErrorBody(error2));
-    }
+      return clone3(receipt);
+    });
   }
   requireRun(runId) {
     const receipt = this.store.getRun(runId);
@@ -23219,6 +23105,13 @@ var WorkflowService = class {
   assertReceipt(receipt) {
     this.validator.workflowPlan(receipt.plan);
     this.validator.workflowReceipt(receipt);
+  }
+  attempt(operation) {
+    try {
+      return apiOk2(operation());
+    } catch (error2) {
+      return apiError(this.toErrorBody(error2));
+    }
   }
   toErrorBody(error2) {
     if (error2 instanceof WorkflowContractError) return error2.toBody();

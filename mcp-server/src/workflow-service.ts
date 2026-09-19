@@ -31,6 +31,7 @@ import {
   WorkflowContractError,
 } from "../../contracts/types.js";
 import {
+  canonicalJson,
   convergenceDigest,
   frameDigests,
   normalizeWorkspaceLocator,
@@ -38,19 +39,16 @@ import {
 import { FileSkillRegistry, selectSkillByCapability } from "./registry.js";
 import { validateDecisionRecordSemantics } from "./decision-record-validator.js";
 import { ContractValidator } from "./schema-validator.js";
-import { assertReceiptPolicy } from "./receipt-policy.js";
-import { loadStageOutputFile, readLocalStageOutputFile, type StageOutputFileReader } from "./stage-output-file.js";
+import { assertReceiptPolicy, jsonPointer } from "./receipt-policy.js";
+import { loadStageOutputFile } from "./stage-output-file.js";
 import {
+  clone,
   createPlanSigningKey,
   type ConvergenceSnapshot,
   InMemoryWorkflowStore,
   PLAN_SIGNING_KEY,
   type WorkflowStore,
 } from "./workflow-store.js";
-
-function clone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
-}
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -110,18 +108,16 @@ export interface TrustedExecutionContextProvider {
   observe(binding: ExecutionObservationBindingV1): ExecutionContextV1 | null;
 }
 
-function canonicalJson(value: unknown): string {
-  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) throw new WorkflowContractError("INVALID_INPUT", "Plan contains a non-finite number.");
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
-  if (value && typeof value === "object") {
-    const record = value as Record<string, unknown>;
-    return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`).join(",")}}`;
-  }
-  throw new WorkflowContractError("INVALID_INPUT", "Plan contains a non-serializable value.");
+/** Copy of a root at the next revision, stamped with updatedAt. */
+function bumpedRoot(root: ConvergenceRootV1, updatedAt: string): ConvergenceRootV1 {
+  const next = clone(root);
+  next.revision += 1;
+  next.updatedAt = updatedAt;
+  return next;
+}
+
+function consumedLeases(snapshot: ConvergenceSnapshot, epoch: number): AttemptLeaseV1[] {
+  return snapshot.leases.filter((lease) => lease.epoch === epoch && lease.state === "consumed");
 }
 
 /**
@@ -137,7 +133,6 @@ export class WorkflowService {
     private readonly store: WorkflowStore = new InMemoryWorkflowStore(),
     private readonly defaultExecutionContext: ExecutionContextV1 | null = null,
     private readonly trustedExecutionContextProvider: TrustedExecutionContextProvider | null = null,
-    private readonly readStageOutputFile: StageOutputFileReader = readLocalStageOutputFile,
   ) {
     const encodedKey = this.store.getOrCreateSecret(PLAN_SIGNING_KEY, createPlanSigningKey);
     this.planSigningKey = Buffer.from(encodedKey, "base64url");
@@ -147,7 +142,7 @@ export class WorkflowService {
   }
 
   planWorkflow(rawTask: unknown, requireExecutionContext = false): ApiResultV1<WorkflowPlanV1> {
-    try {
+    return this.attempt(() => {
       const request = this.validator.planWorkflowRequest(rawTask);
       const wrapped = "taskEnvelope" in request;
       const task = wrapped ? request.taskEnvelope : request;
@@ -182,14 +177,12 @@ export class WorkflowService {
       plan.integrityToken = this.signPlan(plan);
       this.validator.workflowPlan(plan);
       if (trustedBootstrapContext) this.consumeTrustedExecutionObservation(trustedBootstrapContext, "bootstrap orchestration");
-      return apiOk(plan);
-    } catch (error) {
-      return apiError(this.toErrorBody(error));
-    }
+      return plan;
+    });
   }
 
   openConvergenceRoot(rawRequest: unknown): ApiResultV1<ConvergenceRootV1> {
-    try {
+    return this.attempt(() => {
       const request = this.validator.openConvergenceRootRequest(rawRequest);
       this.validateWorkUnitGraph(request.taskEnvelope);
       this.assertConvergenceFrame(request.frame);
@@ -242,14 +235,12 @@ export class WorkflowService {
           scope: conflicting.taskEnvelope.scope.included,
         });
       }
-      return apiOk(clone(root));
-    } catch (error) {
-      return apiError(this.toErrorBody(error));
-    }
+      return clone(root);
+    });
   }
 
   claimWorkflowAttempt(rawProposal: unknown, requireTrustedExecutionContext = false): ApiResultV1<AttemptLeaseV1> {
-    try {
+    return this.attempt(() => {
       const proposal = clone(this.normalizeAttemptProposal(rawProposal));
       this.assertPlanIntegrity(proposal.plan);
       if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(proposal.plan, "Workflow attempt");
@@ -276,16 +267,14 @@ export class WorkflowService {
         proposal.plan.bootstrapExecution?.context ?? this.defaultExecutionContext ?? undefined,
       );
       expectedPlan.integrityToken = this.signPlan(expectedPlan);
-      if (canonicalJson(expectedPlan) !== canonicalJson(proposal.plan)) {
+      if (canonicalJson(expectedPlan, "Plan") !== canonicalJson(proposal.plan, "Plan")) {
         throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan was not produced from the proposed task envelope.", {
           rootId: proposal.rootId,
           taskId: proposal.taskEnvelope.taskId,
         });
       }
 
-      let snapshot = this.requireConvergenceSnapshot(proposal.rootId);
-      this.expireStaleLeases(snapshot);
-      snapshot = this.requireConvergenceSnapshot(proposal.rootId);
+      const snapshot = this.liveConvergenceSnapshot(proposal.rootId);
       const root = snapshot.root;
       if (snapshot.leases.some((lease) => lease.state === "issued")) {
         throw new WorkflowContractError("LEASE_CONFLICT", "A live attempt lease already exists for this convergence root.", {
@@ -306,9 +295,8 @@ export class WorkflowService {
         || proposedDigests.operationalDigest !== root.operationalDigest
         || this.artifactRolesChanged(root.frame, proposal.frame);
       if (frameChanged) {
-        if (root.state === "open") {
-          this.moveRootToReview(root, "The task or control frame changed before the next full attempt.");
-        }
+        // The task or control frame changed before the next full attempt.
+        if (root.state === "open") this.moveRootToReview(root);
         throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "Task, control, workspace, operational, or artifact-role changes require independent review.", {
           rootId: root.rootId,
           expected: {
@@ -322,9 +310,9 @@ export class WorkflowService {
       }
       if (root.state !== "open") this.throwRootGate(root, snapshot);
 
-      const attempts = snapshot.leases.filter((lease) => lease.epoch === root.currentEpoch && lease.state === "consumed");
+      const attempts = consumedLeases(snapshot, root.currentEpoch);
       if (attempts.length >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
-        this.moveRootToReview(root, "The convergence attempt budget is exhausted.");
+        this.moveRootToReview(root);
         throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Three full attempts have already started in this convergence epoch.", {
           rootId: root.rootId,
           epoch: root.currentEpoch,
@@ -369,9 +357,7 @@ export class WorkflowService {
       }
 
       const now = new Date();
-      const updatedRoot = clone(root);
-      updatedRoot.revision += 1;
-      updatedRoot.updatedAt = now.toISOString();
+      const updatedRoot = bumpedRoot(root, now.toISOString());
       const lease: AttemptLeaseV1 = {
         schemaVersion: CONTRACT_VERSION,
         leaseId: `lease-${randomUUID()}`,
@@ -395,14 +381,12 @@ export class WorkflowService {
           rootId: root.rootId,
         });
       }
-      return apiOk(clone(lease));
-    } catch (error) {
-      return apiError(this.toErrorBody(error));
-    }
+      return clone(lease);
+    });
   }
 
   startGuardedWorkflow(rawRequest: unknown, requireTrustedExecutionContext = false): ApiResultV1<WorkflowReceiptV1> {
-    try {
+    return this.attempt(() => {
       const request = this.normalizeGuardedWorkflowStartRequest(rawRequest);
       const plan = clone(request.plan);
       this.assertPlanIntegrity(plan);
@@ -424,33 +408,17 @@ export class WorkflowService {
           actualRevision: binding.root.revision,
         });
       }
-      if (plan.integrityToken !== binding.lease.planIntegrityToken || canonicalJson(plan) !== canonicalJson(binding.proposal.plan)) {
+      if (plan.integrityToken !== binding.lease.planIntegrityToken || canonicalJson(plan, "Plan") !== canonicalJson(binding.proposal.plan, "Plan")) {
         throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is bound to a different workflow plan.", { leaseId: request.leaseId });
       }
 
-      const runId = `run-${plan.taskId}-${this.store.nextRunSequence()}`;
-      plan.state = "running";
-      this.setRunningStagePointers(plan);
-      const receipt: WorkflowReceiptV1 = {
-        schemaVersion: CONTRACT_VERSION,
-        runId,
-        revision: 0,
-        state: "running",
-        plan,
-        stageResults: [],
-        blockers: [],
-        unresolved: [],
-        error: null,
-      };
-      this.assertReceipt(receipt);
+      const receipt = this.newRunningReceipt(plan);
       const started = this.store.insertGuardedRun(receipt, request.leaseId, request.expectedRootRevision, new Date().toISOString());
       if (!started) {
         throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease could not be consumed atomically.", { leaseId: request.leaseId });
       }
-      return apiOk(clone(receipt));
-    } catch (error) {
-      return apiError(this.toErrorBody(error));
-    }
+      return clone(receipt);
+    });
   }
 
   private normalizeAttemptProposal(rawProposal: unknown): AttemptProposalV1 {
@@ -487,23 +455,18 @@ export class WorkflowService {
   }
 
   getConvergenceStatus(rootId: string): ApiResultV1<ConvergenceStatusV1> {
-    try {
-      let snapshot = this.requireConvergenceSnapshot(rootId);
-      this.expireStaleLeases(snapshot);
-      snapshot = this.requireConvergenceSnapshot(rootId);
-      const status = this.buildConvergenceStatus(snapshot);
+    return this.attempt(() => {
+      const status = this.buildConvergenceStatus(this.liveConvergenceSnapshot(rootId));
       this.validator.convergenceStatus(status);
-      return apiOk(clone(status));
-    } catch (error) {
-      return apiError(this.toErrorBody(error));
-    }
+      return clone(status);
+    });
   }
 
   resolveConvergenceGate(rawRequest: unknown): ApiResultV1<ConvergenceStatusV1> {
-    try {
+    return this.attempt(() => {
       const request = this.validator.resolveConvergenceGateRequest(rawRequest);
       const review = clone(request.review);
-      let snapshot = this.requireConvergenceSnapshot(request.rootId);
+      const snapshot = this.requireConvergenceSnapshot(request.rootId);
       const root = snapshot.root;
       if (request.expectedRevision !== root.revision || review.rootRevision !== root.revision) {
         throw new WorkflowContractError("STALE_REVISION", "The convergence review does not target the current root revision.", {
@@ -531,9 +494,7 @@ export class WorkflowService {
       }
       this.assertReviewRoute(review);
 
-      const updatedRoot = clone(root);
-      updatedRoot.revision += 1;
-      updatedRoot.updatedAt = review.reviewedAt;
+      const updatedRoot = bumpedRoot(root, review.reviewedAt);
       if (review.route === "stop") {
         updatedRoot.state = "abandoned";
       } else if (review.classification === "semantics-changing" || review.route === "needs-user") {
@@ -564,29 +525,24 @@ export class WorkflowService {
       if (!this.store.updateConvergenceRoot(updatedRoot, root.revision, review)) {
         throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while recording the review.");
       }
-      snapshot = this.requireConvergenceSnapshot(root.rootId);
-      return apiOk(this.buildConvergenceStatus(snapshot));
-    } catch (error) {
-      return apiError(this.toErrorBody(error));
-    }
+      return this.buildConvergenceStatus(this.requireConvergenceSnapshot(root.rootId));
+    });
   }
 
   rejectUnguardedWorkflow(rawPlan: unknown): ApiResultV1<WorkflowReceiptV1> {
-    try {
+    return this.attempt<WorkflowReceiptV1>(() => {
       const plan = clone(this.validator.workflowPlan(rawPlan));
       this.assertPlanIntegrity(plan);
       if (plan.executionMode === "orchestrated") {
         throw new WorkflowContractError("LEASE_REQUIRED", "New orchestrated workflows must start through start_guarded_workflow.");
       }
       throw new WorkflowContractError("INVALID_TRANSITION", "Direct skill plans are not started by the MCP orchestrator.");
-    } catch (error) {
-      return apiError(this.toErrorBody(error));
-    }
+    });
   }
 
   /** Embedding compatibility only. The MCP start_workflow tool rejects new unguarded orchestrated runs. */
   startWorkflow(rawPlan: unknown): ApiResultV1<WorkflowReceiptV1> {
-    try {
+    return this.attempt(() => {
       const plan = clone(this.validator.workflowPlan(rawPlan));
       this.assertPlanIntegrity(plan);
       if (plan.executionMode !== "orchestrated") {
@@ -600,26 +556,10 @@ export class WorkflowService {
         });
       }
 
-      const runId = `run-${plan.taskId}-${this.store.nextRunSequence()}`;
-      plan.state = "running";
-      this.setRunningStagePointers(plan);
-      const receipt: WorkflowReceiptV1 = {
-        schemaVersion: CONTRACT_VERSION,
-        runId,
-        revision: 0,
-        state: "running",
-        plan,
-        stageResults: [],
-        blockers: [],
-        unresolved: [],
-        error: null,
-      };
-      this.assertReceipt(receipt);
+      const receipt = this.newRunningReceipt(plan);
       this.store.insertRun(receipt);
-      return apiOk(clone(receipt));
-    } catch (error) {
-      return apiError(this.toErrorBody(error));
-    }
+      return clone(receipt);
+    });
   }
 
   recordStageResult(rawResult: unknown, requireTrustedExecutionContext = false): ApiResultV1<WorkflowReceiptV1> {
@@ -668,7 +608,7 @@ export class WorkflowService {
               stageId: target.stageId,
             });
           }
-          loadedOutput = loadStageOutputFile(result.outputFile, this.readStageOutputFile);
+          loadedOutput = loadStageOutputFile(result.outputFile);
         }
 
         let trustedStageContext: ExecutionContextV1 | null = null;
@@ -747,11 +687,7 @@ export class WorkflowService {
   }
 
   getWorkflowStatus(runId: string): ApiResultV1<WorkflowReceiptV1> {
-    try {
-      return apiOk(clone(this.requireRun(runId)));
-    } catch (error) {
-      return apiError(this.toErrorBody(error));
-    }
+    return this.attempt(() => clone(this.requireRun(runId)));
   }
 
   finalizeWorkflow(runId: string, expectedRevision: number): ApiResultV1<WorkflowReceiptV1> {
@@ -975,11 +911,7 @@ export class WorkflowService {
         work.push(capability);
       }
     }
-    const after: string[] = [];
-    if (auditRequested) {
-      after.push(POLICY_CAPABILITY.audit);
-    }
-    return [...new Set([...work, ...after])];
+    return [...new Set([...work, ...(auditRequested ? [POLICY_CAPABILITY.audit] : [])])];
   }
 
   private orderProviders(
@@ -1113,7 +1045,7 @@ export class WorkflowService {
     }
     let rule: StateMappingRuleV2 | "reject" = stage.stateMapping.default;
     if (stage.stateMapping.selector) {
-      const value = this.jsonPointer(providerResult, stage.stateMapping.selector);
+      const value = jsonPointer(providerResult, stage.stateMapping.selector);
       if (typeof value === "string") rule = stage.stateMapping.values?.[value] ?? "reject";
     }
     if (rule === "reject") {
@@ -1123,14 +1055,6 @@ export class WorkflowService {
       });
     }
     return rule;
-  }
-
-  private jsonPointer(value: unknown, pointer: string): unknown {
-    return pointer.split("/").slice(1).reduce<unknown>((current, token) => {
-      if (!current || typeof current !== "object") return undefined;
-      const key = token.replaceAll("~1", "/").replaceAll("~0", "~");
-      return (current as Record<string, unknown>)[key];
-    }, value);
   }
 
   private assertRequiredArtifacts(stage: PlannedStageV1, result: StageResultV1): void {
@@ -1545,7 +1469,7 @@ export class WorkflowService {
     );
   }
 
-  private validateWorkUnitGraph(task: TaskEnvelopeV1): Map<string, string[]> {
+  private validateWorkUnitGraph(task: TaskEnvelopeV1): void {
     const graph = new Map<string, string[]>();
     for (const unit of task.workUnits) {
       if (graph.has(unit.id)) {
@@ -1579,7 +1503,6 @@ export class WorkflowService {
       visited.add(unitId);
     };
     for (const unit of task.workUnits) visit(unit.id);
-    return graph;
   }
 
   private setRunningStagePointers(plan: WorkflowPlanV1): void {
@@ -1596,7 +1519,7 @@ export class WorkflowService {
 
   private signPlan(plan: WorkflowPlanV1): string {
     return createHmac("sha256", this.planSigningKey)
-      .update(canonicalJson(this.planWithoutIntegrityToken(plan)), "utf8")
+      .update(canonicalJson(this.planWithoutIntegrityToken(plan), "Plan"), "utf8")
       .digest("base64url");
   }
 
@@ -1655,28 +1578,46 @@ export class WorkflowService {
     return snapshot;
   }
 
-  private expireStaleLeases(snapshot: ConvergenceSnapshot): void {
+  /** Expires stale issued leases, then rereads the root so callers see the current lease state. */
+  private liveConvergenceSnapshot(rootId: string): ConvergenceSnapshot {
     const now = Date.now();
-    for (const lease of snapshot.leases) {
+    for (const lease of this.requireConvergenceSnapshot(rootId).leases) {
       if (lease.state === "issued" && Date.parse(lease.expiresAt) <= now) this.store.expireAttemptLease(lease.leaseId);
     }
+    return this.requireConvergenceSnapshot(rootId);
   }
 
-  private moveRootToReview(root: ConvergenceRootV1, reason: string): void {
-    const updated = clone(root);
-    updated.revision += 1;
+  private newRunningReceipt(plan: WorkflowPlanV1): WorkflowReceiptV1 {
+    const runId = `run-${plan.taskId}-${this.store.nextRunSequence()}`;
+    plan.state = "running";
+    this.setRunningStagePointers(plan);
+    const receipt: WorkflowReceiptV1 = {
+      schemaVersion: CONTRACT_VERSION,
+      runId,
+      revision: 0,
+      state: "running",
+      plan,
+      stageResults: [],
+      blockers: [],
+      unresolved: [],
+      error: null,
+    };
+    this.assertReceipt(receipt);
+    return receipt;
+  }
+
+  private moveRootToReview(root: ConvergenceRootV1): void {
+    const updated = bumpedRoot(root, new Date().toISOString());
     updated.state = "needs-review";
-    updated.updatedAt = new Date().toISOString();
     if (!this.store.updateConvergenceRoot(updated, root.revision)) {
       throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while applying its gate.", {
         rootId: root.rootId,
       });
     }
-    void reason;
   }
 
   private throwRootGate(root: ConvergenceRootV1, snapshot: ConvergenceSnapshot): never {
-    const attempts = snapshot.leases.filter((lease) => lease.epoch === root.currentEpoch && lease.state === "consumed").length;
+    const attempts = consumedLeases(snapshot, root.currentEpoch).length;
     if (root.state === "needs-review" && attempts >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
       throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Independent review is required before another full attempt.", {
         rootId: root.rootId,
@@ -1690,9 +1631,7 @@ export class WorkflowService {
   }
 
   private buildConvergenceStatus(snapshot: ConvergenceSnapshot): ConvergenceStatusV1 {
-    const attemptsUsed = snapshot.leases.filter(
-      (lease) => lease.epoch === snapshot.root.currentEpoch && lease.state === "consumed",
-    ).length;
+    const attemptsUsed = consumedLeases(snapshot, snapshot.root.currentEpoch).length;
     let gateError: ContractErrorBody | null = null;
     if (snapshot.root.state === "needs-review") {
       gateError = attemptsUsed >= snapshot.root.frame.operationalSettings.maxAttemptsPerEpoch
@@ -1757,15 +1696,11 @@ export class WorkflowService {
   ): { root: ConvergenceRootV1; expectedRootRevision: number; outcome: AttemptOutcomeV1 } {
     const recordedAt = new Date().toISOString();
     const expectedRootRevision = binding.root.revision;
-    const root = clone(binding.root);
-    root.revision += 1;
-    root.updatedAt = recordedAt;
+    const root = bumpedRoot(binding.root, recordedAt);
     const aborted = receipt.blockers.includes("aborted-by-caller");
     const passed = receipt.state === "passed";
     const state: AttemptOutcomeV1["state"] = passed ? "passed" : aborted ? "aborted" : "failed";
-    const attemptsUsed = this.requireConvergenceSnapshot(root.rootId).leases.filter(
-      (lease) => lease.epoch === root.currentEpoch && lease.state === "consumed",
-    ).length;
+    const attemptsUsed = consumedLeases(this.requireConvergenceSnapshot(root.rootId), root.currentEpoch).length;
     if (!["needs-review", "needs-user", "abandoned"].includes(root.state)) {
       if (passed) root.state = "completed";
       else if (attemptsUsed >= root.frame.operationalSettings.maxAttemptsPerEpoch) root.state = "needs-review";
@@ -1806,7 +1741,7 @@ export class WorkflowService {
     expectedRevision: number,
     mutate: (receipt: WorkflowReceiptV1) => void,
   ): ApiResultV1<WorkflowReceiptV1> {
-    try {
+    return this.attempt(() => {
       const receipt = this.requireRun(runId);
       if (!Number.isInteger(expectedRevision) || expectedRevision !== receipt.revision) {
         throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
@@ -1828,10 +1763,8 @@ export class WorkflowService {
           actualRevision: current?.revision ?? null,
         });
       }
-      return apiOk(clone(receipt));
-    } catch (error) {
-      return apiError(this.toErrorBody(error));
-    }
+      return clone(receipt);
+    });
   }
 
   private requireRun(runId: string): WorkflowReceiptV1 {
@@ -1846,6 +1779,14 @@ export class WorkflowService {
   private assertReceipt(receipt: WorkflowReceiptV1): void {
     this.validator.workflowPlan(receipt.plan);
     this.validator.workflowReceipt(receipt);
+  }
+
+  private attempt<T>(operation: () => T): ApiResultV1<T> {
+    try {
+      return apiOk(operation());
+    } catch (error) {
+      return apiError(this.toErrorBody(error));
+    }
   }
 
   private toErrorBody(error: unknown): ContractErrorBody {

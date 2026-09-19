@@ -13,7 +13,8 @@ import { convergenceDigest, rootsOverlap } from "./convergence-logic.js";
 
 export const PLAN_SIGNING_KEY = "plan-signing-key";
 
-function clone<T>(value: T): T {
+/** JSON round-trip copy; unlike structuredClone it drops undefined-valued keys, which stored payloads rely on. */
+export function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 

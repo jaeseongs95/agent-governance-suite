@@ -5,13 +5,11 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import {
-  type ApiResultV1,
   type AttemptLeaseV1,
   type AttemptOutcomeV1,
   type AttemptProposalV1,
   type ConvergenceFrameV1,
   type ConvergenceRootHandleV1,
-  type ConvergenceReviewV1,
   type ConvergenceRootV1,
   type ConvergenceStatusSummaryV1,
   type ConvergenceStatusV1,
@@ -36,7 +34,6 @@ import {
   type StageResultV1,
   type StateCleanupPlanV1,
   type StateCleanupReceiptV1,
-  type TaskEnvelopeV1,
   type WorkflowPlanV1,
   type WorkflowReceiptV1,
   type WorkflowStatusSummaryV1,
@@ -107,42 +104,10 @@ export class ContractValidator {
     for (const schema of Object.values(contractSchemas)) {
       ajv.addSchema(schema);
     }
-    this.validators = {
-      apiResult: ajv.getSchema("https://skill-suite.local/contracts/api-result.v1.schema.json")!,
-      pluginUpdateStatus: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-status.v1.schema.json")!,
-      pluginUpdateNotice: ajv.getSchema("https://skill-suite.local/contracts/plugin-update-notice.v1.schema.json")!,
-      taskEnvelope: ajv.getSchema("https://skill-suite.local/contracts/task-envelope.v1.schema.json")!,
-      planWorkflowRequest: ajv.getSchema("https://skill-suite.local/contracts/plan-workflow-request.v1.schema.json")!,
-      skillDescriptor: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v1.schema.json")!,
-      skillDescriptorV2: ajv.getSchema("https://skill-suite.local/contracts/skill-descriptor.v2.schema.json")!,
-      workflowPlan: ajv.getSchema("https://skill-suite.local/contracts/workflow-plan.v1.schema.json")!,
-      stageResult: ajv.getSchema("https://skill-suite.local/contracts/stage-result.v1.schema.json")!,
-      workflowReceipt: ajv.getSchema("https://skill-suite.local/contracts/workflow-receipt.v1.schema.json")!,
-      workflowStatusSummary: ajv.getSchema("https://skill-suite.local/contracts/workflow-status-summary.v1.schema.json")!,
-      convergenceFrame: ajv.getSchema("https://skill-suite.local/contracts/convergence-frame.v1.schema.json")!,
-      convergenceRoot: ajv.getSchema("https://skill-suite.local/contracts/convergence-root.v1.schema.json")!,
-      convergenceRootHandle: ajv.getSchema("https://skill-suite.local/contracts/convergence-root-handle.v1.schema.json")!,
-      openConvergenceRootRequest: ajv.getSchema("https://skill-suite.local/contracts/open-convergence-root-request.v1.schema.json")!,
-      attemptProposal: ajv.getSchema("https://skill-suite.local/contracts/attempt-proposal.v1.schema.json")!,
-      attemptLease: ajv.getSchema("https://skill-suite.local/contracts/attempt-lease.v1.schema.json")!,
-      guardedWorkflowStartRequest: ajv.getSchema("https://skill-suite.local/contracts/guarded-workflow-start-request.v1.schema.json")!,
-      attemptOutcome: ajv.getSchema("https://skill-suite.local/contracts/attempt-outcome.v1.schema.json")!,
-      convergenceReview: ajv.getSchema("https://skill-suite.local/contracts/convergence-review.v1.schema.json")!,
-      resolveConvergenceGateRequest: ajv.getSchema("https://skill-suite.local/contracts/resolve-convergence-gate-request.v1.schema.json")!,
-      convergenceStatus: ajv.getSchema("https://skill-suite.local/contracts/convergence-status.v1.schema.json")!,
-      convergenceStatusSummary: ajv.getSchema("https://skill-suite.local/contracts/convergence-status-summary.v1.schema.json")!,
-      checkpointContextRequest: ajv.getSchema("https://skill-suite.local/contracts/checkpoint-context-request.v1.schema.json")!,
-      inspectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/inspect-context-request.v1.schema.json")!,
-      loadContextRequest: ajv.getSchema("https://skill-suite.local/contracts/load-context-request.v1.schema.json")!,
-      suppressContextRestoreRequest: ajv.getSchema("https://skill-suite.local/contracts/suppress-context-restore-request.v1.schema.json")!,
-      purgeDirectContextRequest: ajv.getSchema("https://skill-suite.local/contracts/purge-direct-context-request.v1.schema.json")!,
-      prepareStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/prepare-state-cleanup-request.v1.schema.json")!,
-      executeStateCleanupRequest: ajv.getSchema("https://skill-suite.local/contracts/execute-state-cleanup-request.v1.schema.json")!,
-      stateCleanupPlan: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-plan.v1.schema.json")!,
-      stateCleanupReceipt: ajv.getSchema("https://skill-suite.local/contracts/state-cleanup-receipt.v1.schema.json")!,
-      koreanProseGlossaryLookupRequest: ajv.getSchema("https://skill-suite.local/contracts/korean-prose-glossary-lookup-request.v1.schema.json")!,
-      koreanProseGlossaryLookupResult: ajv.getSchema("https://skill-suite.local/contracts/korean-prose-glossary-lookup-result.v1.schema.json")!,
-    };
+    // Every contract schema's $id is https://skill-suite.local/contracts/<file name>.
+    this.validators = Object.fromEntries(
+      Object.entries(contractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id as string)!]),
+    );
   }
 
   private assert<T>(name: keyof ContractValidator["validators"], value: unknown): T {
@@ -156,10 +121,6 @@ export class ContractValidator {
       });
     }
     return value as T;
-  }
-
-  taskEnvelope(value: unknown): TaskEnvelopeV1 {
-    return this.assert<TaskEnvelopeV1>("taskEnvelope", value);
   }
 
   planWorkflowRequest(value: unknown): PlanWorkflowRequestV1 {
@@ -218,10 +179,6 @@ export class ContractValidator {
     return this.assert<AttemptOutcomeV1>("attemptOutcome", value);
   }
 
-  convergenceReview(value: unknown): ConvergenceReviewV1 {
-    return this.assert<ConvergenceReviewV1>("convergenceReview", value);
-  }
-
   resolveConvergenceGateRequest(value: unknown): ResolveConvergenceGateRequestV1 {
     return this.assert<ResolveConvergenceGateRequestV1>("resolveConvergenceGateRequest", value);
   }
@@ -276,10 +233,6 @@ export class ContractValidator {
 
   koreanProseGlossaryLookupResult(value: unknown): KoreanProseGlossaryLookupResultV1 {
     return this.assert<KoreanProseGlossaryLookupResultV1>("koreanProseGlossaryLookupResult", value);
-  }
-
-  apiResult<T>(value: unknown): ApiResultV1<T> {
-    return this.assert<ApiResultV1<T>>("apiResult", value);
   }
 
   pluginUpdateStatus(value: unknown): PluginUpdateStatusV1 {
