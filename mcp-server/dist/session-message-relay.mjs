@@ -195,17 +195,33 @@ function processStartToken(pid, platform = process.platform) {
     return null;
   }
 }
-function processStillMatches(pid, expectedStartToken) {
-  if (!expectedStartToken) return false;
+function processExists(pid) {
+  if (!Number.isInteger(pid) || pid < 1) return false;
   try {
     process.kill(pid, 0);
+    return true;
   } catch {
     return false;
   }
-  return processStartToken(pid) === expectedStartToken;
+}
+function processIdentityState(pid, expectedStartToken, readStartToken = processStartToken) {
+  if (!expectedStartToken) return "mismatch";
+  if (!processExists(pid)) return "mismatch";
+  const actual = readStartToken(pid);
+  if (actual === null) return "unknown";
+  return actual === expectedStartToken ? "match" : "mismatch";
 }
 
 // mcp-server/src/session-message-relay.ts
+var LOOP_MS = 5e3;
+var IDENTITY_RECHECK_MS = 10 * 6e4;
+var IDENTITY_RETRY_MS = 6e4;
+var IDENTITY_UNKNOWN_LIMIT = 3;
+var WAKE_BACKOFF_BASE_MS = 3e4;
+var WAKE_BACKOFF_MAX_MS = 10 * 6e4;
+function wakeBackoffDelay(attempt) {
+  return Math.min(WAKE_BACKOFF_MAX_MS, WAKE_BACKOFF_BASE_MS * 2 ** Math.max(0, attempt));
+}
 function argument(name) {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] ?? null : null;
@@ -243,46 +259,81 @@ async function runSessionMessageRelay(options) {
   const target = { host: options.host, sessionId: options.sessionId };
   const relayId = randomUUID();
   let acquired = false;
-  for (let attempt = 0; attempt < 6 && processStillMatches(options.parentPid, options.parentStartToken); attempt += 1) {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const identity = processIdentityState(options.parentPid, options.parentStartToken);
+    if (identity === "mismatch") return;
     try {
-      const result = await sessionMessageRequest("acquire-relay", {
-        target,
-        transport: options.transport,
-        relayId,
-        pid: process.pid,
-        parentPid: options.parentPid
-      });
-      acquired = result.acquired;
-      if (acquired) break;
+      if (identity === "match") {
+        const result = await sessionMessageRequest("acquire-relay", {
+          target,
+          transport: options.transport,
+          relayId,
+          pid: process.pid,
+          parentPid: options.parentPid
+        });
+        acquired = result.acquired;
+        if (acquired) break;
+      }
     } catch {
     }
     await delay2(3e3);
   }
   if (!acquired) return;
-  let lastPending = 0;
-  let lastRingAt = 0;
-  let nextIdentityCheck = 0;
+  let outstandingNonce = null;
+  let ringAttempts = 0;
+  let nextRingAt = 0;
+  let identityUnknowns = 0;
+  let nextIdentityCheck = Date.now() + IDENTITY_RECHECK_MS;
   while (true) {
-    if (Date.now() >= nextIdentityCheck) {
-      if (!processStillMatches(options.parentPid, options.parentStartToken)) return;
-      nextIdentityCheck = Date.now() + 6e4;
+    if (!processExists(options.parentPid)) return;
+    const now = Date.now();
+    let checkedIdentity = null;
+    if (now >= nextIdentityCheck) {
+      checkedIdentity = processIdentityState(options.parentPid, options.parentStartToken);
+      if (checkedIdentity === "mismatch") return;
+      if (checkedIdentity === "unknown") {
+        identityUnknowns += 1;
+        if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) return;
+        nextIdentityCheck = now + IDENTITY_RETRY_MS;
+      } else {
+        identityUnknowns = 0;
+        nextIdentityCheck = now + IDENTITY_RECHECK_MS;
+      }
     }
     try {
       const heartbeat = await sessionMessageRequest("heartbeat-relay", { target, transport: options.transport, relayId });
       if (!heartbeat.alive) return;
       const pending = await sessionMessageRequest("pending", { target });
-      if (pending.count > 0 && (lastPending === 0 || Date.now() - lastRingAt >= 3e4)) {
-        const nonce = newWakeNonce();
-        await sessionMessageRequest("issue-wake", { target, nonce });
-        const bell = wakeMessage(nonce);
+      if (pending.count === 0) {
+        outstandingNonce = null;
+        ringAttempts = 0;
+        nextRingAt = 0;
+      } else if (now >= nextRingAt) {
+        const identity = checkedIdentity ?? processIdentityState(options.parentPid, options.parentStartToken);
+        if (identity === "mismatch") return;
+        if (identity === "unknown") {
+          if (checkedIdentity === null) identityUnknowns += 1;
+          if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) return;
+          nextIdentityCheck = Math.min(nextIdentityCheck, now + IDENTITY_RETRY_MS);
+          nextRingAt = now + IDENTITY_RETRY_MS;
+          await delay2(LOOP_MS);
+          continue;
+        }
+        identityUnknowns = 0;
+        nextIdentityCheck = now + IDENTITY_RECHECK_MS;
+        if (outstandingNonce === null) {
+          outstandingNonce = newWakeNonce();
+          await sessionMessageRequest("issue-wake", { target, nonce: outstandingNonce });
+        }
+        const bell = wakeMessage(outstandingNonce);
+        nextRingAt = now + wakeBackoffDelay(ringAttempts);
+        ringAttempts += 1;
         if (options.transport === "codex-queue") await ringCodex(options.sessionId, bell);
         else await ringClaude(bell);
-        lastRingAt = Date.now();
       }
-      lastPending = pending.count;
     } catch {
     }
-    await delay2(5e3);
+    await delay2(LOOP_MS);
   }
 }
 if (path3.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
@@ -297,5 +348,6 @@ if (path3.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
   });
 }
 export {
-  runSessionMessageRelay
+  runSessionMessageRelay,
+  wakeBackoffDelay
 };

@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   ensureSessionMessageBroker,
+  parseWakeMessages,
   requestSessionMessageOnce,
   sessionMessageBrokerEnvironment,
   SESSION_MESSAGE_PROTOCOL,
@@ -18,8 +19,9 @@ import {
 import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
+import { wakeBackoffDelay } from "../../mcp-server/src/session-message-relay.js";
 import { MESSAGE_BODY_MAX_BYTES, SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
-import { processStartToken, processStillMatches } from "../../mcp-server/src/process-identity.js";
+import { processIdentityState, processStartToken, processStillMatches } from "../../mcp-server/src/process-identity.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
@@ -95,8 +97,22 @@ describe("session message spool", () => {
     expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-b", pid: 2, parentPid: 2 }, 216_000)).toBe(true);
     reopened.issueWake(spark, "nonce-abcdefghijklmnop", 220_000);
     expect(reopened.consumeWake(spark, "nonce-abcdefghijklmnop", 221_000)).toBe(true);
-    expect(reopened.consumeWake(spark, "nonce-abcdefghijklmnop", 222_000)).toBe(false);
+    expect(reopened.consumeWake(spark, "nonce-abcdefghijklmnop", 222_000)).toBe(true);
+    expect(reopened.consumeWake(spark, "nonce-abcdefghijklmnop", 220_000 + 86_400_000)).toBe(false);
     reopened.close();
+  });
+
+  it("applies caller claim budgets before leasing messages", () => {
+    const store = new SessionMessageStore(":memory:");
+    const sender = { host: "grok", sessionId: "grok-budget" };
+    const target = { host: "spark", sessionId: "spark-budget" };
+    store.send({ messageId: "budget-0001", sender, target, body: "abcd" }, 1000);
+    store.send({ messageId: "budget-0002", sender, target, body: "efgh" }, 1001);
+    expect(store.claim(target, 2000, { maxMessages: 10, maxBodyChars: 4 }).map((message) => message.messageId)).toEqual(["budget-0001"]);
+    expect(store.claim(target, 2000, { maxMessages: 1, maxBodyChars: 4 }).map((message) => message.messageId)).toEqual(["budget-0002"]);
+    expect(() => store.claim(target, 2000, { maxMessages: 0 })).toThrow(/maxMessages/u);
+    expect(() => store.claim(target, 2000, { maxBodyChars: 0 })).toThrow(/maxBodyChars/u);
+    store.close();
   });
 
   it("caps the unacknowledged spool and expires messages", () => {
@@ -120,8 +136,24 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(processStillMatches(process.pid, token)).toBe(true);
     expect(processStillMatches(process.pid, `${token}-different`)).toBe(false);
     expect(processStillMatches(process.pid, "")).toBe(false);
+    expect(processIdentityState(process.pid, token, () => null)).toBe("unknown");
     expect(processStartToken(2_147_483_647)).toBeNull();
     expect(processStillMatches(2_147_483_647, token)).toBe(false);
+  });
+
+  it("parses merged wake bells without hiding mixed user text", () => {
+    const first = "a".repeat(32);
+    const second = "b".repeat(32);
+    expect(parseWakeMessages(`[agent-governance-suite:wake:${first}]\n[agent-governance-suite:wake:${second}]`))
+      .toEqual({ nonces: [first, second], wakeOnly: true });
+    expect(parseWakeMessages(`ordinary text\n[agent-governance-suite:wake:${first}]`))
+      .toEqual({ nonces: [first], wakeOnly: false });
+    expect(parseWakeMessages(`[agent-governance-suite:wake:${first}]\n[agent-governance-suite:wake:bad]`))
+      .toEqual({ nonces: [first], wakeOnly: false });
+  });
+
+  it("backs off repeated wake hints without exceeding ten minutes", () => {
+    expect([0, 1, 2, 5, 20].map(wakeBackoffDelay)).toEqual([30_000, 60_000, 120_000, 600_000, 600_000]);
   });
 
   it("does not pass Claude inbox credentials into the broker process", () => {
@@ -188,7 +220,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(secondEscaped).toMatchObject({ data: { messages: [{ messageId: "escaped-0002", body: escapedBody }] } });
 
     const metadataTarget = { host: "spark", sessionId: "wire-sized" };
-    const metadataSender = { host: "h".repeat(64), sessionId: "s".repeat(200) };
+    const metadataSender = { host: "가".repeat(64), sessionId: "나".repeat(200) };
     const expectedMetadataIds: string[] = [];
     for (let index = 0; index < 10; index += 1) {
       const messageId = `wire-${String(index).padStart(3, "0")}-${"m".repeat(119)}`;
@@ -199,14 +231,21 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       }), directory);
     }
     const claimedMetadataIds: string[] = [];
+    let batchCount = 0;
     while (claimedMetadataIds.length < expectedMetadataIds.length) {
-      const batch = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target: metadataTarget } }), directory);
+      const batch = await runSessionMessageCli(JSON.stringify({
+        operation: "claim",
+        payload: { target: metadataTarget, maxMessages: 10, maxBodyChars: 800 },
+      }), directory);
       const messages = (batch.data as { messages: Array<{ messageId: string }> }).messages;
       expect(messages.length).toBeGreaterThan(0);
+      expect(messages.length).toBeLessThanOrEqual(2);
       expect(Buffer.byteLength(JSON.stringify(batch), "utf8")).toBeLessThanOrEqual(32 * 1024);
+      batchCount += 1;
       claimedMetadataIds.push(...messages.map((message) => message.messageId));
       await runSessionMessageCli(JSON.stringify({ operation: "acknowledge", payload: { target: metadataTarget, messageIds: messages.map((message) => message.messageId) } }), directory);
     }
+    expect(batchCount).toBeGreaterThan(1);
     expect(claimedMetadataIds).toEqual(expectedMetadataIds);
 
     await terminateBroker(directory);
@@ -222,6 +261,29 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(database.includes(privateKey)).toBe(false);
     expect(database.includes(Buffer.from("claude-inbox-token-probe"))).toBe(false);
     expect(database.includes(Buffer.from("cc-msg-socket-probe"))).toBe(false);
+  }, 30_000);
+
+  it("keeps built-in hook context below the Claude injection limit", async () => {
+    const directory = stateDirectory();
+    const previous = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
+    process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = directory;
+    try {
+      const target = { host: "codex", sessionId: "budget-hook" };
+      for (const messageId of ["hook-budget-0001", "hook-budget-0002"]) {
+        await runSessionMessageCli(JSON.stringify({
+          operation: "send",
+          payload: { messageId, sender: { host: "grok", sessionId: "grok-budget" }, target, body: "x".repeat(4096), ttlSeconds: 600 },
+        }), directory);
+      }
+      const output = await handleSessionMessageHook({ hook_event_name: "UserPromptSubmit", session_id: target.sessionId }, "codex");
+      const context = (output.hookSpecificOutput as { additionalContext: string }).additionalContext;
+      expect(context.length).toBeLessThanOrEqual(9_000);
+      expect(context).toContain("hook-budget-0001");
+      expect(context).not.toContain("hook-budget-0002");
+    } finally {
+      if (previous === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
+      else process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = previous;
+    }
   }, 30_000);
 
   it("binds message tools to host hook identity", async () => {

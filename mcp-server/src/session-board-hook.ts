@@ -14,7 +14,7 @@ import {
   touchSession,
 } from "../../skills/session-board/scripts/board-store.mjs";
 import { resolveSessionBoardDatabasePath } from "./runtime-config.js";
-import { parseWakeMessage, sessionMessageRequest } from "./session-message-client.js";
+import { parseWakeMessages, sessionMessageRequest } from "./session-message-client.js";
 
 type HookInput = Record<string, unknown>;
 type Board = ReturnType<typeof openBoard>;
@@ -87,14 +87,18 @@ export async function runSessionBoardHook(host: string, raw: string): Promise<st
     const input = JSON.parse(raw) as HookInput;
     let verifiedInternalWake = false;
     if (text(input.hook_event_name) === "UserPromptSubmit") {
-      const nonce = parseWakeMessage(input.prompt);
+      const parsed = parseWakeMessages(input.prompt);
       const sessionId = text(input.session_id);
-      if (nonce && sessionId) {
-        try {
-          const result = await sessionMessageRequest<{ consumed: boolean }>("consume-wake", { target: { host, sessionId }, nonce });
-          verifiedInternalWake = result.consumed;
-        } catch { /* An unverifiable bell remains an ordinary prompt. */ }
+      let recognized = false;
+      if (sessionId) {
+        for (const nonce of parsed.nonces) {
+          try {
+            const result = await sessionMessageRequest<{ consumed: boolean }>("consume-wake", { target: { host, sessionId }, nonce });
+            recognized ||= result.consumed;
+          } catch { /* An unverifiable bell remains an ordinary prompt. */ }
+        }
       }
+      verifiedInternalWake = parsed.wakeOnly && recognized;
     }
     board = openBoard(resolveSessionBoardDatabasePath(), { busyTimeoutMs: 500 });
     const output = handleSessionBoardHook(input, board, host, new Date().toISOString(), verifiedInternalWake);

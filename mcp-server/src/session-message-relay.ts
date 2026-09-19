@@ -5,7 +5,18 @@ import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 
 import { newWakeNonce, sessionMessageRequest, wakeMessage } from "./session-message-client.js";
-import { processStillMatches } from "./process-identity.js";
+import { processExists, processIdentityState, type ProcessIdentityState } from "./process-identity.js";
+
+const LOOP_MS = 5000;
+const IDENTITY_RECHECK_MS = 10 * 60_000;
+const IDENTITY_RETRY_MS = 60_000;
+const IDENTITY_UNKNOWN_LIMIT = 3;
+const WAKE_BACKOFF_BASE_MS = 30_000;
+const WAKE_BACKOFF_MAX_MS = 10 * 60_000;
+
+export function wakeBackoffDelay(attempt: number): number {
+  return Math.min(WAKE_BACKOFF_MAX_MS, WAKE_BACKOFF_BASE_MS * 2 ** Math.max(0, attempt));
+}
 
 interface RelayOptions {
   host: string;
@@ -52,47 +63,82 @@ export async function runSessionMessageRelay(options: RelayOptions): Promise<voi
   const target = { host: options.host, sessionId: options.sessionId };
   const relayId = randomUUID();
   let acquired = false;
-  for (let attempt = 0; attempt < 6 && processStillMatches(options.parentPid, options.parentStartToken); attempt += 1) {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const identity = processIdentityState(options.parentPid, options.parentStartToken);
+    if (identity === "mismatch") return;
     try {
-      const result = await sessionMessageRequest<{ acquired: boolean }>("acquire-relay", {
-        target,
-        transport: options.transport,
-        relayId,
-        pid: process.pid,
-        parentPid: options.parentPid,
-      });
-      acquired = result.acquired;
-      if (acquired) break;
+      if (identity === "match") {
+        const result = await sessionMessageRequest<{ acquired: boolean }>("acquire-relay", {
+          target,
+          transport: options.transport,
+          relayId,
+          pid: process.pid,
+          parentPid: options.parentPid,
+        });
+        acquired = result.acquired;
+        if (acquired) break;
+      }
     } catch { /* Retry while a stale lease expires. */ }
     await delay(3000);
   }
   if (!acquired) return;
 
-  let lastPending = 0;
-  let lastRingAt = 0;
-  let nextIdentityCheck = 0;
+  let outstandingNonce: string | null = null;
+  let ringAttempts = 0;
+  let nextRingAt = 0;
+  let identityUnknowns = 0;
+  let nextIdentityCheck = Date.now() + IDENTITY_RECHECK_MS;
   while (true) {
-    if (Date.now() >= nextIdentityCheck) {
-      if (!processStillMatches(options.parentPid, options.parentStartToken)) return;
-      nextIdentityCheck = Date.now() + 60_000;
+    if (!processExists(options.parentPid)) return;
+    const now = Date.now();
+    let checkedIdentity: ProcessIdentityState | null = null;
+    if (now >= nextIdentityCheck) {
+      checkedIdentity = processIdentityState(options.parentPid, options.parentStartToken);
+      if (checkedIdentity === "mismatch") return;
+      if (checkedIdentity === "unknown") {
+        identityUnknowns += 1;
+        if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) return;
+        nextIdentityCheck = now + IDENTITY_RETRY_MS;
+      } else {
+        identityUnknowns = 0;
+        nextIdentityCheck = now + IDENTITY_RECHECK_MS;
+      }
     }
     try {
       const heartbeat = await sessionMessageRequest<{ alive: boolean }>("heartbeat-relay", { target, transport: options.transport, relayId });
       if (!heartbeat.alive) return;
       const pending = await sessionMessageRequest<{ count: number }>("pending", { target });
-      if (pending.count > 0 && (lastPending === 0 || Date.now() - lastRingAt >= 30_000)) {
-        const nonce = newWakeNonce();
-        await sessionMessageRequest("issue-wake", { target, nonce });
-        const bell = wakeMessage(nonce);
+      if (pending.count === 0) {
+        outstandingNonce = null;
+        ringAttempts = 0;
+        nextRingAt = 0;
+      } else if (now >= nextRingAt) {
+        const identity = checkedIdentity ?? processIdentityState(options.parentPid, options.parentStartToken);
+        if (identity === "mismatch") return;
+        if (identity === "unknown") {
+          if (checkedIdentity === null) identityUnknowns += 1;
+          if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) return;
+          nextIdentityCheck = Math.min(nextIdentityCheck, now + IDENTITY_RETRY_MS);
+          nextRingAt = now + IDENTITY_RETRY_MS;
+          await delay(LOOP_MS);
+          continue;
+        }
+        identityUnknowns = 0;
+        nextIdentityCheck = now + IDENTITY_RECHECK_MS;
+        if (outstandingNonce === null) {
+          outstandingNonce = newWakeNonce();
+          await sessionMessageRequest("issue-wake", { target, nonce: outstandingNonce });
+        }
+        const bell = wakeMessage(outstandingNonce);
+        nextRingAt = now + wakeBackoffDelay(ringAttempts);
+        ringAttempts += 1;
         if (options.transport === "codex-queue") await ringCodex(options.sessionId, bell);
         else await ringClaude(bell);
-        lastRingAt = Date.now();
       }
-      lastPending = pending.count;
     } catch {
       // Delivery remains durable in the broker and is retried on the next loop.
     }
-    await delay(5000);
+    await delay(LOOP_MS);
   }
 }
 

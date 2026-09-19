@@ -189,6 +189,8 @@ function processStartToken(pid, platform = process.platform) {
 
 // mcp-server/src/session-message-hook.ts
 var MESSAGE_TOOLS = /* @__PURE__ */ new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
+var HOST_CLAIM_MAX_MESSAGES = 1;
+var HOST_CLAIM_MAX_BODY_CHARS = 4096;
 function text(value) {
   return typeof value === "string" ? value : "";
 }
@@ -254,7 +256,11 @@ async function handleSessionMessageHook(input, host, explicitHostPid) {
     };
   }
   if (!["SessionStart", "UserPromptSubmit", "PostToolUse", "Stop"].includes(event)) return {};
-  const result = await sessionMessageRequest("claim", { target: { host, sessionId } });
+  const result = await sessionMessageRequest("claim", {
+    target: { host, sessionId },
+    maxMessages: HOST_CLAIM_MAX_MESSAGES,
+    maxBodyChars: HOST_CLAIM_MAX_BODY_CHARS
+  });
   return result.messages.length > 0 ? additionalContext(event, envelope(result.messages)) : {};
 }
 async function runSessionMessageHook(host, raw, explicitHostPid) {

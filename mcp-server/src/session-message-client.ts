@@ -159,10 +159,24 @@ export function wakeMessage(nonce: string): string {
   return `${WAKE_PREFIX}${nonce}]`;
 }
 
-export function parseWakeMessage(value: unknown): string | null {
-  if (typeof value !== "string" || !value.startsWith(WAKE_PREFIX) || !value.endsWith("]")) return null;
-  const nonce = value.slice(WAKE_PREFIX.length, -1);
-  return /^[A-Za-z0-9_-]{22,128}$/u.test(nonce) ? nonce : null;
+export function parseWakeMessages(value: unknown): { nonces: string[]; wakeOnly: boolean } {
+  if (typeof value !== "string") return { nonces: [], wakeOnly: false };
+  const lines = value.split(/\r?\n/u).map((line) => line.trim()).filter(Boolean);
+  const nonces: string[] = [];
+  let wakeOnly = lines.length > 0;
+  for (const line of lines) {
+    if (!line.startsWith(WAKE_PREFIX) || !line.endsWith("]")) {
+      wakeOnly = false;
+      continue;
+    }
+    const nonce = line.slice(WAKE_PREFIX.length, -1);
+    if (!/^[A-Za-z0-9_-]{22,128}$/u.test(nonce)) {
+      wakeOnly = false;
+      continue;
+    }
+    nonces.push(nonce);
+  }
+  return { nonces: [...new Set(nonces)], wakeOnly };
 }
 
 export function newWakeNonce(): string {

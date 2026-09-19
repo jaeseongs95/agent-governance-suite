@@ -74,11 +74,11 @@ MCP 서버가 시작되지 않아도 개별 전문 스킬은 직접 호출할 �
 
 ### 로컬 세션 메시지
 
-`send_session_message`는 `targetHost`, `targetSessionId`와 최대 4096 UTF-8 byte의 본문을 받아 로컬 TLS 1.3 broker에 저장합니다. 수신 훅은 본문을 비신뢰 peer context로 claim하고, 처리한 모델이 `acknowledge_session_messages`를 호출해야 완료됩니다. ACK 전에는 claim lease가 끝난 뒤 지수 backoff로 다시 전달될 수 있으며, `get_session_message_status`는 `queued`, `delivered`, `acknowledged` 상태를 보여 줍니다. 기본 TTL은 1시간이고 30초부터 24시간까지 지정할 수 있으며, spool은 미ACK 메시지 1000개 또는 본문 합계 4 MiB로 제한됩니다.
+`send_session_message`는 `targetHost`, `targetSessionId`와 최대 4096 UTF-8 byte의 본문을 받아 로컬 TLS 1.3 broker에 저장합니다. 수신 훅은 본문을 비신뢰 peer context로 claim하고, 처리한 모델이 `acknowledge_session_messages`를 호출해야 완료됩니다. ACK 전에는 claim lease가 끝난 뒤 지수 backoff로 다시 전달될 수 있으며, `get_session_message_status`는 `queued`, `delivered`, `acknowledged` 상태를 보여 줍니다. 기본 TTL은 1시간이고 30초부터 24시간까지 지정할 수 있으며, spool은 미ACK 메시지 1000개 또는 본문 합계 4 MiB로 제한됩니다. TLS spool과 ACK가 본문 전달의 내구성을 맡고, host를 깨우는 wake bell은 유실될 수 있는 알림입니다. wake가 유실돼도 다음 hook이나 turn이 같은 spool을 다시 확인합니다.
 
-broker는 사용자 상태 디렉터리의 `session-messaging/`에서 필요할 때 시작하고 `127.0.0.1`에만 임의 포트로 바인딩합니다. Node 내장 암호 모듈로 만든 P-256 자체서명 인증서의 SHA-256 fingerprint를 pin하고, 별도 256-bit token도 TLS 안에서 확인합니다. 본문은 Codex 명령행이나 Claude inbox에 넣지 않으며, 두 adapter는 일회용 nonce가 든 작은 wake bell만 보냅니다. 개인 키·broker token·Claude inbox token과 socket 경로는 메시지 DB에 저장하지 않습니다.
+broker는 사용자 상태 디렉터리의 `session-messaging/`에서 필요할 때 시작하고 `127.0.0.1`에만 임의 포트로 바인딩합니다. Node 내장 암호 모듈로 만든 P-256 자체서명 인증서의 SHA-256 fingerprint를 pin하고, 별도 256-bit token도 TLS 안에서 확인합니다. 본문은 Codex 명령행이나 Claude inbox에 넣지 않으며, 두 adapter는 target에 묶인 무작위 nonce가 든 작은 wake bell만 보냅니다. 지연·중복된 같은 bell도 TTL 안에서는 내부 wake로 인식하지만 본문 전달이나 권한을 부여하지 않습니다. 개인 키·broker token·Claude inbox token과 socket 경로는 메시지 DB에 저장하지 않습니다.
 
-공통 프로토콜의 `host`는 임의 문자열입니다. Codex와 Claude Code에는 wake adapter를 제공하고, Grok·Spark 같은 다른 로컬 런타임은 `mcp-server/dist/session-message-cli.mjs`에 JSON을 stdin으로 넘겨 같은 `send`, `claim`, `acknowledge`, `status`, `pending` 작업을 사용할 수 있습니다. 메시지 본문과 비밀값을 프로세스 인수로 넘기지 않습니다. 예:
+공통 프로토콜의 `host`는 임의 문자열입니다. Codex와 Claude Code에는 wake adapter를 제공하고, Grok·Spark 같은 다른 로컬 런타임은 `mcp-server/dist/session-message-cli.mjs`에 JSON을 stdin으로 넘겨 같은 `send`, `claim`, `acknowledge`, `status`, `pending` 작업을 사용할 수 있습니다. `claim` 호출자는 host 주입 한도에 맞춰 `maxMessages`와 UTF-16 code unit 기준 `maxBodyChars`를 줄일 수 있고, broker는 이 예산과 별개로 실제 JSON 응답을 32 KiB 이하로 유지합니다. 번들 hook은 가장 보수적인 공통값으로 한 번에 한 메시지만 주입합니다. 메시지 본문과 비밀값을 프로세스 인수로 넘기지 않습니다. 예:
 
 ```json
 {"operation":"claim","payload":{"target":{"host":"spark","sessionId":"session-1"}}}

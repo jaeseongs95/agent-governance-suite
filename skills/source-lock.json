@@ -31,11 +31,13 @@
         "value": "v1.0.0",
         "commit": "7570524b1536706911b5ad822c7010d60030d9e1"
       },
-      "updatePolicy": "auto-pr",
+      "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:31d76def511b3e90cb3acd4a01bb06f512bf1d68c8ff815d2ebf5cc3f0d2cbad",
-      "integratedChecksum": "sha256:31d76def511b3e90cb3acd4a01bb06f512bf1d68c8ff815d2ebf5cc3f0d2cbad",
+      "integratedChecksum": "sha256:11e9534f90e9e03de65eb34b3b7fca0ddbca1c4fe217d5fecce34a04679b8eed",
       "checksumScope": "relative paths and normalized text bytes under skills/independent-audit-gate",
-      "downstreamModifications": []
+      "downstreamModifications": [
+        "Add vendor-neutral execution safety rules for reproducible audits and EDR-safe validation."
+      ]
     },
     {
       "skillId": "independent-deliberation-panel",

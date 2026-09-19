@@ -26,7 +26,8 @@ var MESSAGE_BYTES_LIMIT = 4 * 1024 * 1024;
 var CLAIM_LEASE_BASE_MS = 12e4;
 var CLAIM_LEASE_MAX_MS = 30 * 6e4;
 var RELAY_LEASE_MS = 15e3;
-var WAKE_TTL_MS = 12e4;
+var WAKE_TTL_MS = MESSAGE_TTL_MAX_SECONDS * 1e3;
+var CLAIM_MAX_MESSAGES = 10;
 function iso(milliseconds) {
   return new Date(milliseconds).toISOString();
 }
@@ -105,7 +106,7 @@ var SessionMessageStore = class {
     const acknowledgedBefore = iso(nowMs - 36e5);
     this.database.prepare("DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)").run(now, acknowledgedBefore);
     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
-    this.database.prepare("DELETE FROM wake_nonces WHERE expires_at <= ? OR consumed_at IS NOT NULL").run(now);
+    this.database.prepare("DELETE FROM wake_nonces WHERE expires_at <= ?").run(now);
   }
   send(input, nowMs = Date.now()) {
     boundedIdentity(input.sender);
@@ -145,25 +146,35 @@ var SessionMessageStore = class {
     );
     return { messageId, createdAt, expiresAt, duplicate: false };
   }
-  claim(target, nowMs = Date.now()) {
+  claim(target, nowMs = Date.now(), limits = {}) {
     boundedIdentity(target);
+    const maxMessages = limits.maxMessages ?? CLAIM_MAX_MESSAGES;
+    const maxBodyChars = limits.maxBodyChars ?? SESSION_MESSAGE_MAX_RESPONSE_BYTES;
+    if (!Number.isInteger(maxMessages) || maxMessages < 1 || maxMessages > CLAIM_MAX_MESSAGES) {
+      throw new Error(`maxMessages must be an integer from 1 to ${CLAIM_MAX_MESSAGES}.`);
+    }
+    if (!Number.isInteger(maxBodyChars) || maxBodyChars < 1 || maxBodyChars > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
+      throw new Error(`maxBodyChars must be an integer from 1 to ${SESSION_MESSAGE_MAX_RESPONSE_BYTES}.`);
+    }
     this.prune(nowMs);
     const now = iso(nowMs);
     const rows = this.database.prepare(`SELECT * FROM messages
       WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
         AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?)
-      ORDER BY created_at ASC LIMIT 10`).all(target.host, target.sessionId, now, now);
+      ORDER BY created_at ASC LIMIT ?`).all(target.host, target.sessionId, now, now, maxMessages);
     const selected = [];
     const projected = [];
+    let bodyChars = 0;
     for (const row of rows) {
       const message = claimedMessage(row);
       const next = [...projected, message];
-      if (claimResponseBytes(next) > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
-        if (selected.length === 0) throw new Error("A valid message exceeded the broker response limit.");
+      if (bodyChars + message.body.length > maxBodyChars || claimResponseBytes(next) > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
+        if (selected.length === 0) throw new Error("The next message exceeds the caller claim budget.");
         break;
       }
       selected.push(row);
       projected.push(message);
+      bodyChars += message.body.length;
     }
     if (selected.length === 0) return [];
     const statement = this.database.prepare("UPDATE messages SET claimed_at = ?, claim_until = ?, delivery_attempts = delivery_attempts + 1 WHERE message_id = ? AND acknowledged_at IS NULL AND (claim_until IS NULL OR claim_until <= ?)");
@@ -251,9 +262,15 @@ var SessionMessageStore = class {
   }
   consumeWake(target, nonce, nowMs = Date.now()) {
     boundedIdentity(target);
-    const result = this.database.prepare(`UPDATE wake_nonces SET consumed_at = ?
-      WHERE nonce_digest = ? AND host = ? AND session_id = ? AND consumed_at IS NULL AND expires_at > ?`).run(iso(nowMs), nonceDigest(nonce), target.host, target.sessionId, iso(nowMs));
-    return result.changes === 1;
+    const digest = nonceDigest(nonce);
+    const now = iso(nowMs);
+    const existing = this.database.prepare(`SELECT consumed_at FROM wake_nonces
+      WHERE nonce_digest = ? AND host = ? AND session_id = ? AND expires_at > ?`).get(digest, target.host, target.sessionId, now);
+    if (!existing) return false;
+    if (existing.consumed_at === null) {
+      this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ?").run(now, digest);
+    }
+    return true;
   }
 };
 
@@ -432,7 +449,10 @@ function dispatch(store, operation, payload) {
         ...typeof payload.ttlSeconds === "number" ? { ttlSeconds: payload.ttlSeconds } : {}
       });
     case "claim":
-      return { messages: store.claim(identity(payload.target)) };
+      return { messages: store.claim(identity(payload.target), Date.now(), {
+        ...typeof payload.maxMessages === "number" ? { maxMessages: integer2(payload.maxMessages, "maxMessages") } : {},
+        ...typeof payload.maxBodyChars === "number" ? { maxBodyChars: integer2(payload.maxBodyChars, "maxBodyChars") } : {}
+      }) };
     case "acknowledge":
       return { acknowledged: store.acknowledge(identity(payload.target), Array.isArray(payload.messageIds) ? payload.messageIds.map((value) => string(value, "messageId")) : []) };
     case "status":

@@ -136,7 +136,10 @@ function dispatch(store: SessionMessageStore, operation: string, payload: Record
       body: string(payload.body, "body"),
       ...(typeof payload.ttlSeconds === "number" ? { ttlSeconds: payload.ttlSeconds } : {}),
     });
-    case "claim": return { messages: store.claim(identity(payload.target)) };
+    case "claim": return { messages: store.claim(identity(payload.target), Date.now(), {
+      ...(typeof payload.maxMessages === "number" ? { maxMessages: integer(payload.maxMessages, "maxMessages") } : {}),
+      ...(typeof payload.maxBodyChars === "number" ? { maxBodyChars: integer(payload.maxBodyChars, "maxBodyChars") } : {}),
+    }) };
     case "acknowledge": return { acknowledged: store.acknowledge(identity(payload.target), Array.isArray(payload.messageIds) ? payload.messageIds.map((value) => string(value, "messageId")) : []) };
     case "status": return { status: store.status(identity(payload.sender), string(payload.messageId, "messageId")) };
     case "pending": return { count: store.pendingCount(identity(payload.target)) };

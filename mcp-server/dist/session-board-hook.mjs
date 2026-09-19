@@ -242,10 +242,24 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
     return requestSessionMessageOnce(operation, payload, stateDirectory);
   }
 }
-function parseWakeMessage(value) {
-  if (typeof value !== "string" || !value.startsWith(WAKE_PREFIX) || !value.endsWith("]")) return null;
-  const nonce = value.slice(WAKE_PREFIX.length, -1);
-  return /^[A-Za-z0-9_-]{22,128}$/u.test(nonce) ? nonce : null;
+function parseWakeMessages(value) {
+  if (typeof value !== "string") return { nonces: [], wakeOnly: false };
+  const lines = value.split(/\r?\n/u).map((line) => line.trim()).filter(Boolean);
+  const nonces = [];
+  let wakeOnly = lines.length > 0;
+  for (const line of lines) {
+    if (!line.startsWith(WAKE_PREFIX) || !line.endsWith("]")) {
+      wakeOnly = false;
+      continue;
+    }
+    const nonce = line.slice(WAKE_PREFIX.length, -1);
+    if (!/^[A-Za-z0-9_-]{22,128}$/u.test(nonce)) {
+      wakeOnly = false;
+      continue;
+    }
+    nonces.push(nonce);
+  }
+  return { nonces: [...new Set(nonces)], wakeOnly };
 }
 
 // mcp-server/src/session-board-hook.ts
@@ -305,15 +319,19 @@ async function runSessionBoardHook(host, raw) {
     const input = JSON.parse(raw);
     let verifiedInternalWake = false;
     if (text(input.hook_event_name) === "UserPromptSubmit") {
-      const nonce = parseWakeMessage(input.prompt);
+      const parsed = parseWakeMessages(input.prompt);
       const sessionId = text(input.session_id);
-      if (nonce && sessionId) {
-        try {
-          const result = await sessionMessageRequest("consume-wake", { target: { host, sessionId }, nonce });
-          verifiedInternalWake = result.consumed;
-        } catch {
+      let recognized = false;
+      if (sessionId) {
+        for (const nonce of parsed.nonces) {
+          try {
+            const result = await sessionMessageRequest("consume-wake", { target: { host, sessionId }, nonce });
+            recognized ||= result.consumed;
+          } catch {
+          }
         }
       }
+      verifiedInternalWake = parsed.wakeOnly && recognized;
     }
     board = openBoard(resolveSessionBoardDatabasePath(), { busyTimeoutMs: 500 });
     const output = handleSessionBoardHook(input, board, host, (/* @__PURE__ */ new Date()).toISOString(), verifiedInternalWake);

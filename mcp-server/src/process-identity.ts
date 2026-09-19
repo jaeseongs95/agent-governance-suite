@@ -24,12 +24,30 @@ export function processStartToken(pid: number, platform: NodeJS.Platform = proce
   }
 }
 
-export function processStillMatches(pid: number, expectedStartToken: string): boolean {
-  if (!expectedStartToken) return false;
+export function processExists(pid: number): boolean {
+  if (!Number.isInteger(pid) || pid < 1) return false;
   try {
     process.kill(pid, 0);
+    return true;
   } catch {
     return false;
   }
-  return processStartToken(pid) === expectedStartToken;
+}
+
+export type ProcessIdentityState = "match" | "mismatch" | "unknown";
+
+export function processIdentityState(
+  pid: number,
+  expectedStartToken: string,
+  readStartToken: (targetPid: number) => string | null = processStartToken,
+): ProcessIdentityState {
+  if (!expectedStartToken) return "mismatch";
+  if (!processExists(pid)) return "mismatch";
+  const actual = readStartToken(pid);
+  if (actual === null) return "unknown";
+  return actual === expectedStartToken ? "match" : "mismatch";
+}
+
+export function processStillMatches(pid: number, expectedStartToken: string): boolean {
+  return processIdentityState(pid, expectedStartToken) === "match";
 }

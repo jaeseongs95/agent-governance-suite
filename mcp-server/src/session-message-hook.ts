@@ -10,6 +10,8 @@ import { processStartToken } from "./process-identity.js";
 type Host = "codex" | "claude-code";
 
 const MESSAGE_TOOLS = new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
+const HOST_CLAIM_MAX_MESSAGES = 1;
+const HOST_CLAIM_MAX_BODY_CHARS = 4096;
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -76,7 +78,11 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     };
   }
   if (!["SessionStart", "UserPromptSubmit", "PostToolUse", "Stop"].includes(event)) return {};
-  const result = await sessionMessageRequest<{ messages: SessionMessage[] }>("claim", { target: { host, sessionId } });
+  const result = await sessionMessageRequest<{ messages: SessionMessage[] }>("claim", {
+    target: { host, sessionId },
+    maxMessages: HOST_CLAIM_MAX_MESSAGES,
+    maxBodyChars: HOST_CLAIM_MAX_BODY_CHARS,
+  });
   return result.messages.length > 0 ? additionalContext(event, envelope(result.messages)) : {};
 }
 
