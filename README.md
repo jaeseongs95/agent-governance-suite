@@ -7,7 +7,7 @@ Agent Governance Suite는 Codex의 긴 작업에서 범위를 관리하고 위�
 에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v1.20.1`이며 거버넌스 전문 스킬 15개, 구현 단계 스킬 1개(`ponytail`), 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 Claude Code 대화형 세션에서 실행 보증(host attestation)이 항상 실패해 orchestrated workflow를 시작할 수 없던 결함을 고쳤습니다. 대화형 세션은 도구를 호출한 메시지를 호출이 끝난 뒤에 transcript에 쓰므로, 이제 훅이 세션 시작·모델 전환 때 기록한 현재 모델이나 이미 기록된 직전 메시지의 모델로 증명합니다. v1.20.0은 MIT 공개 스킬 `ponytail`을 구현 단계에 붙였습니다. orchestrator는 코드를 작성·수정하는 단계가 있는 요청에 `minimal-implementation` capability를 요청하고, 이 스킬은 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르도록 안내합니다. orchestrator를 거치지 않는 평소 코드 작업에서도 쓰이며, Claude Code에서는 세션 접수 규칙이, Codex에서는 스킬 설명이 호출을 이끕니다. 원본의 항상 켜짐 훅과 보조 스킬은 넣지 않았습니다. v1.19.0은 `record_stage_result`가 큰 provider 출력을 로컬 파일 참조와 SHA-256으로 받게 해, 저장소 크기에 비례하는 stage 출력 때문에 orchestrated workflow가 중단되던 문제를 없앴습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
+현재 공개 릴리스는 `v1.20.2`이며 거버넌스 전문 스킬 15개, 구현 단계 스킬 1개(`ponytail`), 로컬 task continuity 인프라 스킬 1개와 한국어 산문 워크플로 1개를 포함합니다. 이번 릴리스는 Claude Code 대화형 세션에서 실행 보증(host attestation)이 항상 실패해 orchestrated workflow를 시작할 수 없던 결함을 고쳤습니다. 대화형 세션은 도구를 호출한 메시지를 호출이 끝난 뒤에 transcript에 쓰므로, 이제 훅이 세션 시작·모델 전환 때 기록한 현재 모델이나 이미 기록된 직전 메시지의 모델로 증명합니다. v1.20.0은 MIT 공개 스킬 `ponytail`을 구현 단계에 붙였습니다. orchestrator는 코드를 작성·수정하는 단계가 있는 요청에 `minimal-implementation` capability를 요청하고, 이 스킬은 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르도록 안내합니다. orchestrator를 거치지 않는 평소 코드 작업에서도 쓰이며, Claude Code에서는 세션 접수 규칙이, Codex에서는 스킬 설명이 호출을 이끕니다. 원본의 항상 켜짐 훅과 보조 스킬은 넣지 않았습니다. v1.19.0은 `record_stage_result`가 큰 provider 출력을 로컬 파일 참조와 SHA-256으로 받게 해, 저장소 크기에 비례하는 stage 출력 때문에 orchestrated workflow가 중단되던 문제를 없앴습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -44,7 +44,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.20.1
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v1.20.2
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
