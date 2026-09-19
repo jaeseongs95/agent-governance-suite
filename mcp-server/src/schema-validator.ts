@@ -89,6 +89,29 @@ export const contractSchemas = {
   koreanProseGlossaryLookupResult: loadSchema("korean-prose-glossary-lookup-result.v1.schema.json"),
 };
 
+// Providers declare artifact digests either bare or sha256:-prefixed. A SHA-256 digest that misses the
+// declared pattern only by that prefix is validated in the declared form; the caller's value is stored.
+function artifactDigestView(declared: JsonSchema): (artifact: unknown) => unknown {
+  let items = (declared.properties as { artifacts?: { items?: JsonSchema } } | undefined)?.artifacts?.items;
+  if (typeof items?.$ref === "string" && items.$ref.startsWith("#/")) {
+    items = items.$ref.slice(2).split("/").reduce<JsonSchema | undefined>((node, key) => node?.[key] as JsonSchema | undefined, declared);
+  }
+  const properties = items?.properties as Record<string, { pattern?: unknown }> | undefined;
+  return (artifact) => {
+    if (!properties || !artifact || typeof artifact !== "object" || Array.isArray(artifact)) return artifact;
+    const view: Record<string, unknown> = { ...artifact };
+    for (const key of ["digest", "targetDigest"]) {
+      const current = view[key];
+      const pattern = properties[key]?.pattern;
+      if (typeof current !== "string" || typeof pattern !== "string" || !/^(?:sha256:)?[a-f0-9]{64}$/u.test(current)) continue;
+      const declaredForm = new RegExp(pattern, "u");
+      const alternate = current.startsWith("sha256:") ? current.slice(7) : `sha256:${current}`;
+      if (!declaredForm.test(current) && declaredForm.test(alternate)) view[key] = alternate;
+    }
+    return view;
+  };
+}
+
 function errorText(errors: ErrorObject[] | null | undefined): string {
   return (errors ?? [])
     .map((error) => `${error.instancePath || "/"} ${error.message ?? "is invalid"}`)
@@ -253,9 +276,14 @@ export class ContractValidator {
     // their result without it and forbid unknown keys, so it is left out when their schema omits it.
     const declared = this.readBoundSchema(rootDirectory, resultSchema, "provider result");
     const declaresVersion = Boolean(declared.properties && Object.prototype.hasOwnProperty.call(declared.properties, "schemaVersion"));
-    const providerView = !declaresVersion && value && typeof value === "object" && !Array.isArray(value)
-      ? Object.fromEntries(Object.entries(value).filter(([key]) => key !== "schemaVersion"))
-      : value;
+    let providerView = value;
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      const record: Record<string, unknown> = declaresVersion
+        ? { ...value }
+        : Object.fromEntries(Object.entries(value).filter(([key]) => key !== "schemaVersion"));
+      if (Array.isArray(record.artifacts)) record.artifacts = record.artifacts.map(artifactDigestView(declared));
+      providerView = record;
+    }
     this.assertSchemaFile<ProviderResultV1>(rootDirectory, resultSchema, providerView, "provider result");
     const result = value as ProviderResultV1;
     if (result.output !== null) {

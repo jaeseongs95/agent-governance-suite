@@ -25,7 +25,7 @@ metadata:
 - 실행 방식과 그 이유. 둘 중 하나를 고른다.
   - `orchestrated`: 실패 영향이 크고 고른 단계가 둘 이상이며 `plan_workflow` MCP 도구를 쓸 수 있을 때. 아래 "MCP 도구 사용 계약" 순서로 계획, 수렴 root, attempt claim, guarded start, stage별 기록, finalize를 진행한다. 각 stage의 전문 스킬은 Skill 도구로 실제 호출하고 그 결과를 `record_stage_result`로 기록한다. MCP 원장이 단계 순서와 감사 게이트를 강제하므로, 지침만으로 순서를 지키는 것보다 이 방식을 우선한다.
   - `direct`: 그 밖의 경우, 또는 MCP 도구를 쓸 수 없거나 `BINDING_REQUIRED`·`BINDING_INVALID`로 계획이나 stage 기록이 거절됐을 때. 결정한 스킬을 그 순서대로 직접 호출한다. `orchestrated`에서 전환했다면 반환 코드와 전환 이유를 사용자에게 한 줄로 밝히고, 이미 시작한 run은 `abort_workflow`로 닫는다.
-- `orchestrated`로 계획할 작업 계약(`TaskEnvelope.v1`)은 `plan_workflow` 전에 확정한다. `scope`와 `workUnits[].writeTargets`에는 저장소 기준 파일 경로나 glob만 적는다. 브랜치·태그·원격 같은 git 대상은 `authorization.allowedActions`와 `mutation-risk-preflight`의 대상으로 다룬다(`change-scope-guardian`은 경로가 아닌 규칙을 `INVALID_INPUT`으로 거절한다). 시작한 run의 계약을 바꿔 다시 시도하면 수렴 가드가 frame 검토(`FRAME_REVIEW_REQUIRED`)와 사용자 승인을 요구한다.
+- `orchestrated`로 계획할 작업 계약(`TaskEnvelope.v1`)은 `plan_workflow` 전에 확정한다. `orchestration`에는 `{ "requested": true, "mcpAvailable": true }`를 적는다. 서버는 `requested` 값으로 실행 방식을 정하므로 `false`를 적으면 direct 계획이 돌아온다. `scope`와 `workUnits[].writeTargets`에는 저장소 기준 파일 경로나 glob만 적는다. 브랜치·태그·원격 같은 git 대상은 `authorization.allowedActions`와 `mutation-risk-preflight`의 대상으로 다룬다(`change-scope-guardian`은 경로가 아닌 규칙을 `INVALID_INPUT`으로 거절한다). 시작한 run의 계약을 바꿔 다시 시도하면 수렴 가드가 frame 검토(`FRAME_REVIEW_REQUIRED`)와 사용자 승인을 요구한다.
 - 단순 조회·저위험 수정이라 전문 스킬이 필요 없으면 그렇게 적고 진행한다.
 
 ### Claude Code의 실행 보증
@@ -39,6 +39,11 @@ metadata:
 - provider 출력(`output.output`)이 저장소 크기에 비례해 커지면(예: `change-scope-guardian` baseline, 변경 범위 보고서, 저장소 관례 조사) 도구 인자에 넣지 않는다. 스킬이 만든 JSON을 바꾸지 않고 로컬 파일에 저장한 뒤, `record_stage_result`에 `outputFile: { "locator": "<절대 경로>", "digest": "sha256:<그 파일 바이트의 SHA-256>" }`를 넣고 `output.output`은 `null`로 보낸다. 서버가 파일을 읽어 digest와 출력 schema, 게이트를 인라인 출력과 똑같이 검사하고 receipt에는 참조만 남긴다.
 - 크기를 맞추려고 항목을 줄이거나 요약하지 않는다. digest가 맞지 않으면 `INTEGRITY_FAILED`다.
 - receipt 정책이 있는 stage(한국어 산문, 평가 타당성)는 `outputFile`을 받지 않으므로 인라인으로 기록한다. 이 stage들의 출력은 참조 전용이라 크지 않다.
+
+### stage 기록
+
+- `record_stage_result` 전에 계획된 stage의 `requiredArtifacts`에 있는 id를 모두 `output.artifacts`에 넣는다. 각 항목에는 실제 산출물의 locator, digest, targetDigest를 적고 `verified: true`로 표시한다. digest는 64자리 소문자 hex이며 `sha256:` 접두사는 있어도 없어도 된다.
+- 실제로 만들지 않았거나 확인하지 않은 산출물은 `verified: true`로 적지 않는다. 그 stage는 `passed`로 기록하지 않고, provider 결과(verdict나 `MISSING_EVIDENCE` adapter error)가 가리키는 `needs-input`이나 `blocked` 상태로 기록한다.
 
 ## 시작 전 확인
 

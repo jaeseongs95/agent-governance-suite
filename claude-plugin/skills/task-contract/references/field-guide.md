@@ -14,6 +14,6 @@
 
 ## 기능과 실행 정보
 
-`requiredCapabilities`는 결과에 필요한 기능만 기록한다. provider 이름이나 세부 실행 순서는 넣지 않는다. `decision`은 충돌이나 복잡성이 실제 입력에서 확인되는 경우에만 표시한다. `orchestration`은 사용자의 요청과 현재 MCP 가용성이라는 관측 사실을 보존한다.
+`requiredCapabilities`는 결과에 필요한 기능만 기록한다. provider 이름이나 세부 실행 순서는 넣지 않는다. `decision`은 충돌이나 복잡성이 실제 입력에서 확인되는 경우에만 표시한다. `orchestration.requested`에는 이 요청을 MCP orchestrated workflow로 실행하기로 한 결정을 적는다. 사용자가 따로 말하지 않아도 오케스트레이터의 선택 결정이 `orchestrated`이면 `true`이고, `false`이면 서버가 direct 계획을 돌려준다. `orchestration.mcpAvailable`에는 현재 MCP 도구를 실제로 쓸 수 있는지 관측한 사실을 적는다.
 
 `task-contract`가 자연어 요청에서 envelope를 만드는 일반 경로는 `plan_workflow` 전 bootstrap이다. 계약 작성 요청만 받았다면 이후 workflow를 시작하지 않는다.

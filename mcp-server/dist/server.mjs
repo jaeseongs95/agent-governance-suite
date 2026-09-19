@@ -17097,6 +17097,26 @@ var contractSchemas = {
   koreanProseGlossaryLookupRequest: loadSchema("korean-prose-glossary-lookup-request.v1.schema.json"),
   koreanProseGlossaryLookupResult: loadSchema("korean-prose-glossary-lookup-result.v1.schema.json")
 };
+function artifactDigestView(declared) {
+  let items = declared.properties?.artifacts?.items;
+  if (typeof items?.$ref === "string" && items.$ref.startsWith("#/")) {
+    items = items.$ref.slice(2).split("/").reduce((node2, key) => node2?.[key], declared);
+  }
+  const properties = items?.properties;
+  return (artifact) => {
+    if (!properties || !artifact || typeof artifact !== "object" || Array.isArray(artifact)) return artifact;
+    const view = { ...artifact };
+    for (const key of ["digest", "targetDigest"]) {
+      const current = view[key];
+      const pattern = properties[key]?.pattern;
+      if (typeof current !== "string" || typeof pattern !== "string" || !/^(?:sha256:)?[a-f0-9]{64}$/u.test(current)) continue;
+      const declaredForm = new RegExp(pattern, "u");
+      const alternate = current.startsWith("sha256:") ? current.slice(7) : `sha256:${current}`;
+      if (!declaredForm.test(current) && declaredForm.test(alternate)) view[key] = alternate;
+    }
+    return view;
+  };
+}
 function errorText(errors) {
   return (errors ?? []).map((error2) => `${error2.instancePath || "/"} ${error2.message ?? "is invalid"}`).join("; ");
 }
@@ -17217,7 +17237,12 @@ var ContractValidator = class {
   providerResult(rootDirectory, resultSchema, outputSchema, value) {
     const declared = this.readBoundSchema(rootDirectory, resultSchema, "provider result");
     const declaresVersion = Boolean(declared.properties && Object.prototype.hasOwnProperty.call(declared.properties, "schemaVersion"));
-    const providerView = !declaresVersion && value && typeof value === "object" && !Array.isArray(value) ? Object.fromEntries(Object.entries(value).filter(([key]) => key !== "schemaVersion")) : value;
+    let providerView = value;
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      const record3 = declaresVersion ? { ...value } : Object.fromEntries(Object.entries(value).filter(([key]) => key !== "schemaVersion"));
+      if (Array.isArray(record3.artifacts)) record3.artifacts = record3.artifacts.map(artifactDigestView(declared));
+      providerView = record3;
+    }
     this.assertSchemaFile(rootDirectory, resultSchema, providerView, "provider result");
     const result = value;
     if (result.output !== null) {
