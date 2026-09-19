@@ -20,6 +20,7 @@
 ## 알려진 제한
 
 - Codex에서는 여전히 실행해 확인하지 않았습니다. v1.21.0의 Codex 제한(도구 이름 후보, `deny`·`updatedInput` 지원, MCP 도구 이름 형식, 세션당 한 번 강제)이 그대로입니다. 공용 파일에 쓰고 읽는 부분은 아래처럼 Codex 없이 확인했습니다.
+  - 공용 경로는 환경 변수(`LOCALAPPDATA`, `XDG_STATE_HOME`)로 정합니다. Codex가 MCP 서버에 넘기는 환경 변수를 훅과 다르게 거르면 두 쪽이 다른 파일을 열 수 있습니다. Codex에서 MCP 서버와 훅이 같은 파일을 여는지 확인해야 합니다. Windows에서 `LOCALAPPDATA`를 바꾸지 않았다면 대체 경로(`홈/AppData/Local`)가 같아 영향이 없습니다.
 - 같은 OS 사용자로 실행되는 로컬 프로세스는 현황판 파일을 읽을 수 있습니다. 한 줄에 비밀이나 개인정보를 적지 않습니다.
 - 이 플러그인의 MCP 도구 호출은 게이트하지 않습니다(v1.21.0과 같음).
 - 훅이 없는 실행기(예: 별도 워크플로 엔진)가 현황판에 쓰는 CLI는 넣지 않았습니다.
@@ -31,6 +32,9 @@
   - override가 없으면 현황판 경로가 `AGENT_GOVERNANCE_DB_PATH`와 무관하게 사용자 상태 디렉터리를 가리키고, override는 그대로 우선한다.
   - Claude launcher(`claude-plugin/hooks/session-board-hook.mjs`)와 Codex 훅 번들을 따로 실행해도 같은 파일에 쓰고, `CLAUDE_PLUGIN_DATA` 아래에는 파일을 만들지 않으며, 목록이 두 호스트의 행을 함께 보여 준다.
   - Claude 매니페스트에 현황판 경로 설정이 없다.
-- 실제 Claude Code 헤드리스 세션(Opus 5, 후보 플러그인)과 Codex 설정으로 띄운 MCP 서버로 교차 확인했습니다.
+- 실제 Claude Code 헤드리스 세션(Opus 5, 후보 플러그인)과 Codex 설정으로 띄운 MCP 서버로 교차 확인했습니다. 실제 현황판을 건드리지 않도록 이 확인에서는 `AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH`로 임시 파일 하나를 지정했습니다.
   - Codex 훅 번들로 기록한 행을 Claude Code 세션이 `list_session_status`로 읽어 `codex` 호스트의 한 줄을 그대로 보고했습니다.
   - Claude 관련 환경 없이 Codex처럼 띄운 MCP 서버의 목록에 그 Claude Code 세션의 행과 Codex 행이 함께 나왔습니다.
+- 설정 없이 기본 공용 경로를 쓰는지는 임시 사용자 상태 디렉터리로 확인했습니다.
+  - Claude launcher 4개와 Codex 훅 번들 4개를 동시에 실행해도 8행이 모두 같은 파일에 올바른 `host`로 기록됐고, Codex 설정의 MCP 서버 목록에 모두 나왔습니다.
+  - Codex 훅 설정의 Windows 명령(`commandWindows`)을 Codex처럼 `powershell -NoProfile -Command`로 실행하자 기본 공용 경로에 `codex` 행이 생겼고, 게이트는 한 번만 거부했습니다.
