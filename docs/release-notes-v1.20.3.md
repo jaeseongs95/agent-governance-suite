@@ -25,6 +25,6 @@
 - 릴리스 준비 트리에서 `bundle:check`, `claude:drift`, `lint`, `test`(358건 통과, 새 테스트 5건 포함), `runtime:check`, `validate:all`, `validate:official`, `claude:check`, `release:check`, `source:check`가 모두 종료 코드 0이었습니다. 새 digest 테스트 3건은 수정 전 코드에서 실패하고 수정 후 통과합니다.
 - MCP 표면 비교: 기본, anthropic, anthropic과 실행 보증을 함께 켠 설정에서 `tools/list`와 서버 instructions가 v1.20.2와 같고 `serverInfo.version`만 다릅니다.
 - 헤드리스 재측정(Opus 5, v1.20.2 A/B와 같은 CI 변경 요청, 5회):
-  - 4회가 orchestrated로 진행했고, `plan_workflow` 호출 7번 모두 `requested: true`였습니다(v1.20.2는 10회 중 4회 진행, 6회는 `false`).
+  - 4회가 orchestrated로 진행했고, `plan_workflow` 호출 6번 모두 `requested: true`였습니다(v1.20.2는 10회 중 4회 진행, 6회는 `false`). 그중 2회는 `finalize_workflow`까지 마쳤습니다. 1회는 헤드리스 실행의 파일 쓰기 제한 때문에 첫 stage를 기록하기 전에 스스로 중단했고, 1회는 수용 근거 검증기가 `BLOCKED`를 내 그 결과를 기록한 채 끝났습니다.
   - stage 기록 거절은 1건이었습니다(v1.20.2는 orchestrated run 4개에서 15건). 접두사 차이에 따른 digest 거절과 필수 artifact 누락 거절은 0건이었습니다. 남은 1건은 `targetDigest`에 SHA-256이 아닌 git commit 값을 넣은 입력이라 거절하는 것이 맞습니다.
   - 목표였던 5회 모두 orchestrated 진행에는 못 미쳤습니다. direct로 진행한 1회는 실패 영향을 높게 분류하고도 "로컬에서 되돌릴 수 있다"는 이유로 direct를 골랐습니다. 이번 수정이 다루지 않는 유형이며, 사용자 결정에 따라 그대로 릴리스합니다.
