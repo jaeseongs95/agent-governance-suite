@@ -27,6 +27,7 @@ import {
   handleHostAttestationHook,
   observedEffort,
   readSessionModel,
+  type SessionModelRecord,
   sessionModelUpdate,
   transcriptCandidates,
   withoutCallerAttestation,
@@ -443,41 +444,62 @@ describe("host attestation hook", () => {
       const token = String((output.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput[HOST_ATTESTATION_FIELD]);
       return JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8")) as Record<string, unknown>;
     };
-    const run = (transcript: string | null, session: { model: string; observedAt: string } | null, input: Record<string, unknown> = base) =>
-      handleHostAttestationHook(input, store, { ...noWait, maxWaitMs: 0, readText: () => transcript, readSessionModel: () => session });
+    const record = (model: string, observedAt: string, source: SessionModelRecord["source"] = "model-switch"): SessionModelRecord => ({ model, source, observedAt });
+    const now = () => new Date("2026-09-19T00:11:00.000Z");
+    const run = (transcript: string | null, session: SessionModelRecord | null, input: Record<string, unknown> = base) =>
+      handleHostAttestationHook(input, store, { ...noWait, maxWaitMs: 0, now, readText: () => transcript, readSessionModel: () => session });
+    const callerInput = { ...base, tool_input: { taskId: "hook-task", [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged" } };
+    const stripped = { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { taskId: "hook-task" } } };
 
     it("attests the SessionStart model before the session has written any message", () => {
-      expect(payloadOf(run(null, { model: "claude-opus-5", observedAt: "2026-09-19T00:10:01.000Z" }))).toMatchObject({ model: "claude-opus-5", reasoningEffort: "high" });
+      expect(payloadOf(run(null, record("claude-opus-5", "2026-09-19T00:10:01.000Z", "session-start")))).toMatchObject({ model: "claude-opus-5", reasoningEffort: "high" });
     });
 
     it("prefers the newer of the last written message and the session model record", () => {
-      const switched = { model: "claude-sonnet-5", observedAt: "2026-09-19T00:10:18.000Z" };
+      const switched = record("claude-sonnet-5", "2026-09-19T00:10:18.000Z");
       expect(payloadOf(run(written({ model: "claude-opus-5" }), switched))).toMatchObject({ model: "claude-sonnet-5", modelClass: "general" });
-      const started = { model: "claude-sonnet-5", observedAt: "2026-09-19T00:10:01.000Z" };
+      const started = record("claude-sonnet-5", "2026-09-19T00:10:01.000Z", "session-start");
       expect(payloadOf(run(written({ model: "claude-opus-5" }), started))).toMatchObject({ model: "claude-opus-5", modelClass: "deep" });
-      expect(payloadOf(run(written({ model: "claude-opus-5", effort: "low" }), null))).toMatchObject({ model: "claude-opus-5", reasoningEffort: "low" });
     });
 
-    it("skips messages of other sessions, sidechains and unknown models when falling back", () => {
+    it("takes effort only from the hook, never from an earlier message that may belong to another model", () => {
+      expect(payloadOf(run(written({ model: "claude-opus-5", effort: "low" }), null))).toMatchObject({ model: "claude-opus-5", reasoningEffort: "high" });
+      // A model without effort support (Haiku) sends no hook effort; an earlier Opus message must not stand in for it.
+      expect(run(written({ model: "claude-opus-5", effort: "xhigh" }), null, { ...callerInput, effort: undefined })).toEqual(stripped);
+      expect(run(written({ model: "claude-opus-5", effort: "high" }), record("claude-opus-5", "2026-09-19T00:10:01.000Z", "session-start"), { ...callerInput, effort: undefined })).toEqual(stripped);
+    });
+
+    it("skips messages of other sessions, sidechains, unknown models, missing session IDs and future timestamps", () => {
       const lines = [
         written({ model: "claude-opus-5" }),
         written({ sessionId: "other", model: "claude-fable-5-1" }),
         written({ isSidechain: true, model: "claude-fable-5-1" }),
         JSON.stringify({ ...JSON.parse(written()), message: { model: "<synthetic>", content: [] } }),
+        JSON.stringify({ ...JSON.parse(written({ model: "claude-fable-5-1" })), sessionId: undefined }),
+        written({ model: "claude-fable-5-1", timestamp: "2026-09-19T01:00:00.000Z" }),
       ].join("\n");
       expect(payloadOf(run(lines, null))).toMatchObject({ model: "claude-opus-5" });
+      const undated = JSON.stringify({ ...JSON.parse(written({ model: "claude-fable-5-1" })), timestamp: undefined });
+      expect(run(undated, null, callerInput)).toEqual(stripped);
+    });
+
+    it("does not fall back when the issuing message was found but rejected", () => {
+      const session = record("claude-opus-5", "2026-09-19T00:10:01.000Z", "session-start");
+      const issued = (options: Parameters<typeof transcriptLine>[1]) => transcriptLine("toolu_hook", options);
+      expect(run(issued({ sessionId: "other" }), session, callerInput)).toEqual(stripped);
+      expect(run(issued({ isSidechain: true }), session, callerInput)).toEqual(stripped);
+      const noModel = JSON.stringify({ ...JSON.parse(issued({})), message: { content: [{ type: "tool_use", id: "toolu_hook", name: "tool", input: {} }] } });
+      expect(run(noModel, session, callerInput)).toEqual(stripped);
     });
 
     it("fails closed without a model source, without effort, or for an unknown switched model", () => {
-      const callerInput = { ...base, tool_input: { taskId: "hook-task", [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged" } };
-      const stripped = { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { taskId: "hook-task" } } };
       expect(run(null, null, callerInput)).toEqual(stripped);
-      expect(run(null, { model: "claude-opus-5", observedAt: "2026-09-19T00:10:01.000Z" }, { ...callerInput, effort: undefined })).toEqual(stripped);
-      expect(run(written(), { model: "claude-next", observedAt: "2026-09-19T00:10:18.000Z" }, callerInput)).toEqual(stripped);
+      expect(run(null, record("claude-opus-5", "2026-09-19T00:10:01.000Z", "session-start"), { ...callerInput, effort: undefined })).toEqual(stripped);
+      expect(run(written(), record("claude-next", "2026-09-19T00:10:18.000Z"), callerInput)).toEqual(stripped);
     });
 
     it("uses only the subagent's own written messages, never the session model", () => {
-      const session = { model: "claude-fable-5-1", observedAt: "2026-09-19T00:10:18.000Z" };
+      const session = record("claude-fable-5-1", "2026-09-19T00:10:18.000Z");
       const subagent = { ...base, agent_id: "agent123" };
       expect(run(null, session, subagent)).toEqual({});
       const own = written({ isSidechain: true, agentId: "agent123", model: "claude-sonnet-5" });
@@ -487,7 +509,7 @@ describe("host attestation hook", () => {
     it("records the main-thread model from SessionStart and PostModelSwitch only", () => {
       const now = new Date("2026-09-19T00:10:01.000Z");
       expect(sessionModelUpdate({ hook_event_name: "SessionStart", session_id: SESSION, source: "startup", model: "claude-opus-5" }, now))
-        .toEqual({ sessionId: SESSION, record: { model: "claude-opus-5", observedAt: "2026-09-19T00:10:01.000Z" } });
+        .toEqual({ sessionId: SESSION, record: { model: "claude-opus-5", source: "session-start", observedAt: "2026-09-19T00:10:01.000Z" } });
       expect(sessionModelUpdate({ hook_event_name: "PostModelSwitch", session_id: SESSION, from_model: "claude-opus-5", to_model: "claude-haiku-4-5-20251001" }, now)?.record.model)
         .toBe("claude-haiku-4-5-20251001");
       expect(sessionModelUpdate({ hook_event_name: "PreModelSwitch", session_id: SESSION, to_model: "claude-sonnet-5" }, now)).toBeNull();
@@ -498,9 +520,10 @@ describe("host attestation hook", () => {
     it("stores the session model under a digest of the session ID and ignores damaged records", () => {
       const directory = mkdtempSync(path.join(tmpdir(), "host-models-"));
       try {
-        writeSessionModel(directory, SESSION, { model: "claude-opus-5", observedAt: "2026-09-19T00:10:01.000Z" });
+        const stored = { model: "claude-opus-5", source: "session-start" as const, observedAt: "2026-09-19T00:10:01.000Z" };
+        writeSessionModel(directory, SESSION, stored);
         expect(readdirSync(directory)).toEqual([expect.stringMatching(/^[0-9a-f]{24}\.json$/u)]);
-        expect(readSessionModel(directory, SESSION)).toEqual({ model: "claude-opus-5", observedAt: "2026-09-19T00:10:01.000Z" });
+        expect(readSessionModel(directory, SESSION)).toEqual(stored);
         expect(readSessionModel(directory, "other")).toBeNull();
         writeFileSync(path.join(directory, readdirSync(directory)[0]!), "{not json");
         expect(readSessionModel(directory, SESSION)).toBeNull();

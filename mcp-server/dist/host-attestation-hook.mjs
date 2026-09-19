@@ -1119,7 +1119,7 @@ function findToolUseObservation(transcript, toolUseId, sessionId, agentId) {
   }
   return null;
 }
-function findLatestAssistantObservation(transcript, sessionId, agentId) {
+function findLatestAssistantObservation(transcript, sessionId, agentId, nowMs = Date.now()) {
   const lines = transcript.split("\n");
   for (let index = lines.length - 1; index >= 0; index -= 1) {
     const line = lines[index];
@@ -1131,20 +1131,34 @@ function findLatestAssistantObservation(transcript, sessionId, agentId) {
       continue;
     }
     if (!entry || entry.type !== "assistant") continue;
-    if (entry.sessionId !== void 0 && entry.sessionId !== sessionId) continue;
+    if (entry.sessionId !== sessionId) continue;
     if (agentId ? entry.agentId !== agentId : entry.isSidechain === true) continue;
+    const at = Date.parse(text(entry.timestamp) ?? "");
+    if (Number.isNaN(at) || at > nowMs) continue;
     const model = text(record2(entry.message)?.model);
     if (!model || !modelClassForClaudeModel(model)) continue;
-    const at = Date.parse(text(entry.timestamp) ?? "");
-    return { model, effort: text(entry.effort), at: Number.isNaN(at) ? null : at };
+    return { model, at };
   }
   return null;
+}
+function hasIssuingMessage(transcript, toolUseId) {
+  return transcript.split("\n").some((line) => {
+    if (!line.includes(toolUseId)) return false;
+    try {
+      const entry = record2(JSON.parse(line));
+      const content = record2(entry?.message)?.content;
+      return entry?.type === "assistant" && Array.isArray(content) && content.some((block) => record2(block)?.type === "tool_use" && record2(block)?.id === toolUseId);
+    } catch {
+      return false;
+    }
+  });
 }
 function sessionModelUpdate(input, now = /* @__PURE__ */ new Date()) {
   const sessionId = text(input.session_id);
   if (!sessionId || text(input.agent_id)) return null;
-  const model = input.hook_event_name === "SessionStart" ? text(input.model) : input.hook_event_name === "PostModelSwitch" ? text(input.to_model) : null;
-  return model ? { sessionId, record: { model, observedAt: now.toISOString() } } : null;
+  const source = input.hook_event_name === "SessionStart" ? "session-start" : input.hook_event_name === "PostModelSwitch" ? "model-switch" : null;
+  const model = source === "session-start" ? text(input.model) : source === "model-switch" ? text(input.to_model) : null;
+  return source && model ? { sessionId, record: { model, source, observedAt: now.toISOString() } } : null;
 }
 function sessionModelFile(directory, sessionId) {
   return path4.join(directory, `${digest(sessionId)}.json`);
@@ -1160,8 +1174,9 @@ function readSessionModel(directory, sessionId) {
   try {
     const value = record2(JSON.parse(readFileSync(sessionModelFile(directory, sessionId), "utf8")));
     const model = text(value?.model);
+    const source = value?.source === "session-start" || value?.source === "model-switch" ? value.source : null;
     const observedAt = text(value?.observedAt);
-    return model && observedAt && !Number.isNaN(Date.parse(observedAt)) ? { model, observedAt } : null;
+    return model && source && observedAt && !Number.isNaN(Date.parse(observedAt)) ? { model, source, observedAt } : null;
   } catch {
     return null;
   }
@@ -1216,15 +1231,17 @@ function handleHostAttestationHook(input, store, options = {}) {
     sleep(pollIntervalMs);
   }
   if (!observation) {
+    const transcripts = candidates.map((candidate) => readText(candidate) ?? "");
+    if (transcripts.some((transcript) => hasIssuingMessage(transcript, toolUseId))) return unattested();
+    const nowMs = (options.now?.() ?? /* @__PURE__ */ new Date()).getTime();
     let latest = null;
-    for (const candidate of candidates) {
-      const transcript = readText(candidate);
-      latest = transcript ? findLatestAssistantObservation(transcript, sessionId, agentId) : null;
+    for (const transcript of transcripts) {
+      latest = findLatestAssistantObservation(transcript, sessionId, agentId, nowMs);
       if (latest) break;
     }
     const session = agentId ? null : options.readSessionModel?.(sessionId) ?? null;
-    const switchedLater = session && (!latest || latest.at === null || Date.parse(session.observedAt) >= latest.at);
-    observation = switchedLater ? { model: session.model, effort: null } : latest;
+    const model = session && (!latest || Date.parse(session.observedAt) >= latest.at) ? session.model : latest?.model;
+    observation = model ? { model, effort: null } : null;
   }
   if (!observation) return unattested();
   const effort = observedEffort(text(record2(input.effort)?.level), observation.effort);
@@ -1276,6 +1293,7 @@ export {
   findLatestAssistantObservation,
   findToolUseObservation,
   handleHostAttestationHook,
+  hasIssuingMessage,
   observedEffort,
   readSessionModel,
   sessionModelUpdate,

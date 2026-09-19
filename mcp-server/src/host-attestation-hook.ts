@@ -26,6 +26,7 @@ export interface TranscriptObservation {
 /** The session model that SessionStart or PostModelSwitch reported, and when the hook saw it. */
 export interface SessionModelRecord {
   model: string;
+  source: "session-start" | "model-switch";
   observedAt: string;
 }
 
@@ -119,7 +120,8 @@ export function findLatestAssistantObservation(
   transcript: string,
   sessionId: string,
   agentId: string | null,
-): (TranscriptObservation & { at: number | null }) | null {
+  nowMs: number = Date.now(),
+): { model: string; at: number } | null {
   const lines = transcript.split("\n");
   for (let index = lines.length - 1; index >= 0; index -= 1) {
     const line = lines[index];
@@ -131,25 +133,44 @@ export function findLatestAssistantObservation(
       continue;
     }
     if (!entry || entry.type !== "assistant") continue;
-    if (entry.sessionId !== undefined && entry.sessionId !== sessionId) continue;
+    // Unlike the exact lookup, nothing ties this line to the call, so it must name the session
+    // and carry a timestamp that is not in the future.
+    if (entry.sessionId !== sessionId) continue;
     if (agentId ? entry.agentId !== agentId : entry.isSidechain === true) continue;
+    const at = Date.parse(text(entry.timestamp) ?? "");
+    if (Number.isNaN(at) || at > nowMs) continue;
     const model = text(record(entry.message)?.model);
     // Synthetic or unknown-model messages are not a model the actor ran on.
     if (!model || !modelClassForClaudeModel(model)) continue;
-    const at = Date.parse(text(entry.timestamp) ?? "");
-    return { model, effort: text(entry.effort), at: Number.isNaN(at) ? null : at };
+    return { model, at };
   }
   return null;
+}
+
+/** True when an assistant message that issued toolUseId is in the transcript, whoever wrote it. */
+export function hasIssuingMessage(transcript: string, toolUseId: string): boolean {
+  return transcript.split("\n").some((line) => {
+    if (!line.includes(toolUseId)) return false;
+    try {
+      const entry = record(JSON.parse(line));
+      const content = record(entry?.message)?.content;
+      return entry?.type === "assistant" && Array.isArray(content)
+        && content.some((block) => record(block)?.type === "tool_use" && record(block)?.id === toolUseId);
+    } catch {
+      return false;
+    }
+  });
 }
 
 /** The model a SessionStart or PostModelSwitch hook reports for the main thread, if any. */
 export function sessionModelUpdate(input: HookInput, now: Date = new Date()): { sessionId: string; record: SessionModelRecord } | null {
   const sessionId = text(input.session_id);
   if (!sessionId || text(input.agent_id)) return null;
-  const model = input.hook_event_name === "SessionStart" ? text(input.model)
-    : input.hook_event_name === "PostModelSwitch" ? text(input.to_model)
+  const source = input.hook_event_name === "SessionStart" ? "session-start"
+    : input.hook_event_name === "PostModelSwitch" ? "model-switch"
       : null;
-  return model ? { sessionId, record: { model, observedAt: now.toISOString() } } : null;
+  const model = source === "session-start" ? text(input.model) : source === "model-switch" ? text(input.to_model) : null;
+  return source && model ? { sessionId, record: { model, source, observedAt: now.toISOString() } } : null;
 }
 
 function sessionModelFile(directory: string, sessionId: string): string {
@@ -168,8 +189,9 @@ export function readSessionModel(directory: string, sessionId: string): SessionM
   try {
     const value = record(JSON.parse(readFileSync(sessionModelFile(directory, sessionId), "utf8")));
     const model = text(value?.model);
+    const source = value?.source === "session-start" || value?.source === "model-switch" ? value.source : null;
     const observedAt = text(value?.observedAt);
-    return model && observedAt && !Number.isNaN(Date.parse(observedAt)) ? { model, observedAt } : null;
+    return model && source && observedAt && !Number.isNaN(Date.parse(observedAt)) ? { model, source, observedAt } : null;
   } catch {
     return null;
   }
@@ -239,16 +261,20 @@ export function handleHostAttestationHook(
     sleep(pollIntervalMs);
   }
   if (!observation) {
+    const transcripts = candidates.map((candidate) => readText(candidate) ?? "");
+    // An issuing message that was found but rejected (another session, a sidechain, no model) stays unattested.
+    if (transcripts.some((transcript) => hasIssuingMessage(transcript, toolUseId))) return unattested();
+    const nowMs = (options.now?.() ?? new Date()).getTime();
     let latest: ReturnType<typeof findLatestAssistantObservation> = null;
-    for (const candidate of candidates) {
-      const transcript = readText(candidate);
-      latest = transcript ? findLatestAssistantObservation(transcript, sessionId, agentId) : null;
+    for (const transcript of transcripts) {
+      latest = findLatestAssistantObservation(transcript, sessionId, agentId, nowMs);
       if (latest) break;
     }
     // Subagents get no SessionStart or model-switch hooks, so only their own written messages count.
     const session = agentId ? null : options.readSessionModel?.(sessionId) ?? null;
-    const switchedLater = session && (!latest || latest.at === null || Date.parse(session.observedAt) >= latest.at);
-    observation = switchedLater ? { model: session.model, effort: null } : latest;
+    const model = session && (!latest || Date.parse(session.observedAt) >= latest.at) ? session.model : latest?.model;
+    // Without the issuing message, effort comes only from the hook: a message effort may belong to another model.
+    observation = model ? { model, effort: null } : null;
   }
   if (!observation) return unattested();
 
