@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 
@@ -231,6 +233,8 @@ function sessionBoardResult(
     return apiError("BINDING_REQUIRED", "The plugin hook records the session board line and did not run for this call.");
   }
   if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
+  // Listing never creates the board; only the hook's first write does.
+  if (tool === "list_session_status" && !existsSync(databasePath)) return apiOk({ sessions: [] });
   let board: ReturnType<typeof openBoard> | null = null;
   try {
     board = openBoard(databasePath);

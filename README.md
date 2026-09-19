@@ -51,7 +51,7 @@ codex plugin add agent-governance-suite@agent-governance
 
 설치를 마치면 새 Codex 세션을 시작합니다. 전체 워크플로를 사용하려면 다음과 같이 요청합니다.
 
-Task continuity lifecycle Hook은 처음 설치하거나 정의가 바뀐 뒤 Codex의 `/hooks`에서 내용을 검토하고 신뢰해야 실행됩니다. 신뢰하지 않아 Hook이 생략되어도 기존 전문 스킬과 workflow MCP는 계속 동작합니다. 세션 현황판 Hook도 같은 방식으로 신뢰해야 실행됩니다. Codex에서는 세션 시작과 도구 호출 전 이벤트에 걸려 있으며, Codex의 셸·패치 도구 이름과 도구 차단(`deny`) 지원은 아직 Codex에서 확인하지 않았습니다.
+Task continuity lifecycle Hook은 처음 설치하거나 정의가 바뀐 뒤 Codex의 `/hooks`에서 내용을 검토하고 신뢰해야 실행됩니다. 신뢰하지 않아 Hook이 생략되어도 기존 전문 스킬과 workflow MCP는 계속 동작합니다. 세션 현황판 Hook도 같은 방식으로 신뢰해야 실행됩니다. Codex에서는 세션 시작과 도구 호출 전 이벤트에 걸려 있으며, Codex의 셸·패치 도구 이름, 도구 차단(`deny`)과 입력 수정(`updatedInput`) 지원, MCP 도구 이름 형식은 아직 Codex에서 확인하지 않았습니다.
 
 ```text
 $orchestrator를 사용해 이 작업의 범위와 성공 조건을 정하고, 필요한 검증과 완료 근거를 관리해 줘: <작업 내용>

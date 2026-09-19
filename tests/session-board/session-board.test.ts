@@ -1,4 +1,5 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -111,7 +112,10 @@ describe("session board store", () => {
     for (const command of ["git status", "git log --oneline -3", "git diff --stat", "git show HEAD", "git branch", "git branch --list", "ls -la", "cat README.md", "pwd", "rg foo src", "grep -n x file"]) {
       expect(isReadOnlyCommand(command)).toBe(true);
     }
-    for (const command of ["git status && rm -rf x", "cat a > b", "ls | xargs rm", "echo $(whoami)", "git branch -D main", "git commit -m x", "pnpm test", "cat `x`", "ls; rm a", "git status\nrm a", "", null]) {
+    for (const command of [
+      "git status && rm -rf x", "cat a > b", "ls | xargs rm", "echo $(whoami)", "git branch -D main", "git commit -m x", "pnpm test", "cat `x`", "ls; rm a", "git status\nrm a", "", null,
+      "rg --pre ./x.sh foo", "rg foo --pre=./x.sh", "git diff --output=README.md", "git log --output a.txt", "git diff --ext-diff", "cat (Remove-Item x)", "ls @(rm x)", "cat $HOME/x", "ls {a,b}",
+    ]) {
       expect(isReadOnlyCommand(command)).toBe(false);
     }
   });
@@ -147,6 +151,35 @@ describe("session board hook", () => {
 
     const listed = run(tool(boardTool("list_session_status"), { schemaVersion: "1.0.0" }, { agent_id: "sub-1" }), 12);
     expect(listed).toMatchObject({ hookSpecificOutput: { permissionDecision: "allow", updatedInput: { _sessionBinding: { host: "claude-code", sessionId: "s1" } } } });
+  });
+
+  it("denies exactly once when several hook processes race on the same request", async () => {
+    const databasePath = boardPath();
+    open(databasePath); // The schema exists, so the processes race on the session row itself.
+    const bundle = fileURLToPath(new URL("../../mcp-server/dist/session-board-hook.mjs", import.meta.url));
+    const hookInput = JSON.stringify(tool("Edit"));
+    const outputs = await Promise.all(Array.from({ length: 4 }, () => new Promise<{ status: number | null; stdout: string }>((resolve) => {
+      const child = spawn(process.execPath, [bundle], { env: { ...process.env, AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: databasePath }, windowsHide: true });
+      let stdout = "";
+      child.stdout.on("data", (chunk: Buffer) => { stdout += chunk.toString("utf8"); });
+      child.on("close", (status) => resolve({ status, stdout }));
+      child.stdin.end(hookInput);
+    })));
+    expect(outputs.every((output) => output.status === 0)).toBe(true);
+    // Run directly, the bundle is the Codex host: a fresh row whose session start is the request marker.
+    expect(outputs.filter((output) => output.stdout.includes('"deny"'))).toHaveLength(1);
+  });
+
+  it("points every Codex hook command at a bundle that exists", () => {
+    const repository = fileURLToPath(new URL("../../", import.meta.url));
+    const config = JSON.parse(readFileSync(path.join(repository, "hooks", "hooks.json"), "utf8")) as { hooks: Record<string, Array<{ hooks: Array<{ command: string; commandWindows: string }> }>> };
+    for (const hook of Object.values(config.hooks).flat().flatMap((group) => group.hooks)) {
+      const posix = /^node "\$PLUGIN_ROOT\/([^"]+)"$/u.exec(hook.command)?.[1];
+      const windows = /^node "\$env:PLUGIN_ROOT\\([^"]+)"$/u.exec(hook.commandWindows)?.[1];
+      expect(posix, hook.command).toBeTruthy();
+      expect(windows?.split("\\").join("/"), hook.commandWindows).toBe(posix);
+      expect(existsSync(path.join(repository, posix!))).toBe(true);
+    }
   });
 
   it("fails open on unreadable input or an unusable board", () => {
@@ -201,5 +234,8 @@ describe("session board MCP tools", () => {
     const listed = payload(await client.callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } }));
     expect(listed).toMatchObject({ ok: true, data: { sessions: [{ sessionId: "s1", summary: "릴리스 준비", current: false }] } });
     expect(payload(await (await connect(null)).callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } })).error?.code).toBe("MCP_UNAVAILABLE");
+    const missing = boardPath();
+    expect(payload(await (await connect(missing)).callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } }))).toMatchObject({ ok: true, data: { sessions: [] } });
+    expect(existsSync(missing)).toBe(false);
   });
 });

@@ -111,12 +111,17 @@ export function listSessions(db, now, current = null) {
     .map((row) => view(row, current));
 }
 
-/** True for a single read-only shell command without operators, redirection or substitution. */
+/**
+ * True for a single read-only shell command. Operators, redirection, variables, substitution and grouping
+ * (including PowerShell `(...)`, `@(...)` and script blocks) and options that write files or run programs
+ * (`--output`, `--ext-diff`, `--pre`) make the command gated.
+ */
 export function isReadOnlyCommand(command) {
   if (typeof command !== "string") return false;
   const text = command.trim();
-  if (!text || /[;&|<>`\r\n]|\$\(/u.test(text)) return false;
+  if (!text || /[;&|<>`$@(){}\r\n]/u.test(text)) return false;
   const [first, second, ...rest] = text.split(/\s+/u);
+  if ([second, ...rest].some((argument) => /^--(?:output|ext-diff|pre)(?:=|$|-)/u.test(argument ?? ""))) return false;
   if (READ_ONLY_COMMANDS.has(first)) return true;
   if (first !== "git") return false;
   if (READ_ONLY_GIT.has(second)) return true;

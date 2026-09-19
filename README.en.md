@@ -51,7 +51,7 @@ codex plugin add agent-governance-suite@agent-governance
 
 Start a new Codex session after installation so Codex can load the bundled skills and MCP tools. Then call the orchestrator:
 
-The task-continuity lifecycle hook runs only after you review and trust its current definition in Codex `/hooks` following installation or a hook change. Existing specialist skills and workflow MCP operations continue to work when the untrusted hook is skipped. The session board hook needs the same trust. In Codex it runs on session start and before tool calls; Codex's shell and patch tool names and its support for denying a tool call have not been verified in Codex yet.
+The task-continuity lifecycle hook runs only after you review and trust its current definition in Codex `/hooks` following installation or a hook change. Existing specialist skills and workflow MCP operations continue to work when the untrusted hook is skipped. The session board hook needs the same trust. In Codex it runs on session start and before tool calls; Codex's shell and patch tool names, its support for denying a tool call and for `updatedInput`, and its MCP tool name format have not been verified in Codex yet.
 
 ```text
 Use $orchestrator to define the scope and success criteria for this task, then manage the required checks and completion evidence: <your task>

@@ -17351,6 +17351,9 @@ var ContractValidator = class {
   }
 };
 
+// mcp-server/src/server.ts
+import { existsSync } from "node:fs";
+
 // node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
 function isZ4Schema(s) {
   const schema = s;
@@ -19630,6 +19633,7 @@ function sessionBoardResult(tool, args, databasePath, validator) {
     return apiError("BINDING_REQUIRED", "The plugin hook records the session board line and did not run for this call.");
   }
   if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
+  if (tool === "list_session_status" && !existsSync(databasePath)) return apiOk({ sessions: [] });
   let board = null;
   try {
     board = openBoard(databasePath);
