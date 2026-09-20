@@ -42,6 +42,7 @@ export function handleSessionBoardHook(input: HookInput, board: Board, host: str
   const subagent = isObservedSubagent(observation);
 
   if (adapted.lifecycle === "start") {
+    if (subagent) return {};
     pruneSessions(board, now);
     touchSession(board, session);
     return {};
@@ -76,20 +77,24 @@ export function handleSessionBoardHook(input: HookInput, board: Board, host: str
 }
 
 /** Runs one hook event and returns the JSON to print; every failure lets the tool call through. */
-export async function runSessionBoardHook(host: string, raw: string): Promise<string> {
+export async function runSessionBoardHook(
+  host: string,
+  raw: string,
+  request: typeof sessionMessageRequest = sessionMessageRequest,
+): Promise<string> {
   let board: Board | null = null;
   try {
     const input = JSON.parse(raw) as HookInput;
     const observation = adaptHostInput(input, host).observation;
     let verifiedInternalWake = false;
-    if (observation.kind === "user-input") {
+    if (observation.kind === "user-input" && !isObservedSubagent(observation)) {
       const nonces = observation.wakeCandidates ?? [];
       const sessionId = observation.sessionId;
       let allRecognized = nonces.length > 0;
       if (sessionId) {
         for (const nonce of nonces) {
           try {
-            const result = await sessionMessageRequest<{ consumed: boolean }>("consume-wake", { target: { host, sessionId }, nonce });
+            const result = await request<{ consumed: boolean }>("consume-wake", { target: { host, sessionId }, nonce });
             allRecognized &&= result.consumed;
           } catch { allRecognized = false; }
         }

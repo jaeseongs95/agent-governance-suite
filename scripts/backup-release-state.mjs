@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { closeSync, existsSync, mkdirSync, openSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { pathToFileURL } from "node:url";
@@ -9,7 +9,10 @@ export function backupReleaseState(source, destination) {
   const destinationPath = path.resolve(destination);
   if (!existsSync(sourcePath)) throw new Error("The source database does not exist.");
   if (existsSync(destinationPath)) throw new Error("The backup destination must not exist.");
-  mkdirSync(path.dirname(destinationPath), { recursive: true });
+  mkdirSync(path.dirname(destinationPath), { recursive: true, mode: 0o700 });
+  // VACUUM INTO accepts an empty file; exclusive creation preserves no-overwrite
+  // and prevents a POSIX umask from exposing the snapshot during the write.
+  closeSync(openSync(destinationPath, "wx", 0o600));
   const database = new DatabaseSync(sourcePath, { readOnly: true });
   try {
     database.exec("PRAGMA busy_timeout = 5000");

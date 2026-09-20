@@ -298,16 +298,9 @@ var SessionMessageStore = class {
     this.prune(nowMs);
     this.database.exec("BEGIN IMMEDIATE");
     try {
-      const row = this.database.prepare(`SELECT deferred_tool_claim FROM input_observations
-        WHERE host = ? AND session_id = ?`).get(target.host, target.sessionId);
-      let messages = [];
-      if (row?.deferred_tool_claim === 1) {
-        this.database.prepare(`UPDATE input_observations SET deferred_tool_claim = 0
-          WHERE host = ? AND session_id = ?`).run(target.host, target.sessionId);
-      } else if (row) {
-        this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
-        messages = this.claimLocked(target, nowMs, limits);
-      }
+      const skipped = this.database.prepare(`UPDATE input_observations SET deferred_tool_claim = 0
+        WHERE host = ? AND session_id = ? AND deferred_tool_claim = 1`).run(target.host, target.sessionId).changes === 1;
+      const messages = skipped ? [] : this.claimLocked(target, nowMs, limits);
       if (messages.length > 0) this.consumePendingWakes(target, nowMs);
       this.database.exec("COMMIT");
       return messages;

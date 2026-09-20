@@ -480,6 +480,7 @@ function handleSessionBoardHook(input, board, host, now = (/* @__PURE__ */ new D
   const session = { host, sessionId, cwd: observation.workspaceId || process.cwd(), now };
   const subagent = isObservedSubagent(observation);
   if (adapted.lifecycle === "start") {
+    if (subagent) return {};
     pruneSessions(board, now);
     touchSession(board, session);
     return {};
@@ -510,20 +511,20 @@ function handleSessionBoardHook(input, board, host, now = (/* @__PURE__ */ new D
   if (SHELL_TOOLS.has(toolName) && isReadOnlyCommand(toolInput.command)) return {};
   return gateDecision(board, session) === "deny" ? preToolUse("deny", { permissionDecisionReason: GATE_REASON }) : {};
 }
-async function runSessionBoardHook(host, raw) {
+async function runSessionBoardHook(host, raw, request = sessionMessageRequest) {
   let board = null;
   try {
     const input = JSON.parse(raw);
     const observation = adaptHostInput(input, host).observation;
     let verifiedInternalWake = false;
-    if (observation.kind === "user-input") {
+    if (observation.kind === "user-input" && !isObservedSubagent(observation)) {
       const nonces = observation.wakeCandidates ?? [];
       const sessionId = observation.sessionId;
       let allRecognized = nonces.length > 0;
       if (sessionId) {
         for (const nonce of nonces) {
           try {
-            const result = await sessionMessageRequest("consume-wake", { target: { host, sessionId }, nonce });
+            const result = await request("consume-wake", { target: { host, sessionId }, nonce });
             allRecognized &&= result.consumed;
           } catch {
             allRecognized = false;

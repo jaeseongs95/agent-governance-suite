@@ -3,6 +3,7 @@ import { readFile, rm, writeFile } from "node:fs/promises";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
 import { Worker } from "node:worker_threads";
+import { createHash } from "node:crypto";
 import net from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -25,12 +26,13 @@ import {
 } from "../../mcp-server/src/session-message-client.js";
 import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
 import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
-import { handleSessionMessageHook, sessionMessageTransport } from "../../mcp-server/src/session-message-hook.js";
+import { handleSessionMessageHook, sessionMessageEnvelope, sessionMessageTransport } from "../../mcp-server/src/session-message-hook.js";
 import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import { claudeWakeOutcome, codexWakeOutcome, relayIdentityDecision, shouldReleaseWake, transportWakeCapabilities, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
 import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
 import { processIdentityState } from "../../mcp-server/src/process-identity.js";
+import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "../../mcp-server/src/session-message-protocol.js";
 import { adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
 import { supportsInjection, type DeliveryCapabilities } from "../../mcp-server/src/input-observation.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
@@ -469,18 +471,35 @@ describe("session message spool", () => {
     await Promise.all(exits);
   });
 
-  it("consumes one native-input flag on the next tool boundary and clears it at turn end", () => {
+  it("defers one boundary, then keeps claiming new and redelivered messages until a new native input", () => {
     const store = new SessionMessageStore(":memory:");
     const sender = { host: "fake-host-a", sessionId: "sender" };
     const target = { host: "fake-host-b", sessionId: "recipient" };
     store.send({ messageId: "deferred-0001", sender, target, body: "first" }, 1000);
+    store.send({ messageId: "deferred-0002", sender, target, body: "second" }, 1001);
     store.observeNativeInput(target, 2000);
     expect(store.claimDeferred(target, 2001)).toEqual([]);
-    expect(store.claimDeferred(target, 2002).map((message) => message.messageId)).toEqual(["deferred-0001"]);
-    store.send({ messageId: "deferred-0002", sender, target, body: "second" }, 2003);
-    store.observeNativeInput(target, 2004);
+    expect(store.claimDeferred(target, 2002, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["deferred-0001"]);
+    store.acknowledge(target, ["deferred-0001"], 2002);
+    expect(store.claimDeferred(target, 2003, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["deferred-0002"]);
+    store.acknowledge(target, ["deferred-0002"], 2003);
+    expect(store.claimDeferred(target, 2004)).toEqual([]);
+
+    store.send({ messageId: "deferred-late", sender, target, body: "late" }, 2005);
+    expect(store.claimDeferred(target, 2006).map((message) => message.messageId)).toEqual(["deferred-late"]);
+    store.acknowledge(target, ["deferred-late"], 2006);
+    store.send({ messageId: "deferred-redelivery", sender, target, body: "retry" }, 2007);
+    expect(store.claimDeferred(target, 2008)).toMatchObject([{ messageId: "deferred-redelivery", deliveryAttempt: 1 }]);
+    expect(store.claimDeferred(target, 2009)).toEqual([]);
+    expect(store.claimDeferred(target, 122_009)).toMatchObject([{ messageId: "deferred-redelivery", deliveryAttempt: 2 }]);
+    store.acknowledge(target, ["deferred-redelivery"], 122_009);
+
+    store.send({ messageId: "deferred-after-native", sender, target, body: "after native" }, 122_010);
+    store.observeNativeInput(target, 122_011);
+    expect(store.claimDeferred(target, 122_012)).toEqual([]);
+    expect(store.claimDeferred(target, 122_013).map((message) => message.messageId)).toEqual(["deferred-after-native"]);
     store.clearDeferred(target);
-    expect(store.claimDeferred(target, 2005)).toEqual([]);
+    expect(store.database.prepare("SELECT * FROM input_observations").all()).toEqual([]);
     store.close();
   });
 
@@ -1045,6 +1064,37 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       else process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = previous;
     }
   }, 30_000);
+
+  it.each([
+    ["controls", "\u0001".repeat(MESSAGE_BODY_MAX_BYTES)],
+    ["quotes", '"'.repeat(MESSAGE_BODY_MAX_BYTES)],
+    ["backslashes", "\\".repeat(MESSAGE_BODY_MAX_BYTES)],
+  ])("losslessly bounds an escape-heavy %s envelope", (_name, body) => {
+    const contentDigest = `sha256:${createHash("sha256").update(body).digest("hex")}`;
+    const context = sessionMessageEnvelope([{
+      messageId: `m${"x".repeat(127)}`,
+      sender: { host: `h${"x".repeat(63)}`, sessionId: `s${"x".repeat(199)}` },
+      recipient: { host: `r${"x".repeat(63)}`, sessionId: `t${"x".repeat(199)}` },
+      body,
+      createdAt: "2026-09-20T00:00:00.000Z",
+      expiresAt: "2026-09-20T01:00:00.000Z",
+      deliveryAttempt: 1,
+      firstDeliveredAt: "2026-09-20T00:00:00.000Z",
+      sourceReceiptId: `source-${"x".repeat(121)}`,
+      contentDigest,
+    }]);
+    expect(Buffer.byteLength(context, "utf8")).toBeLessThanOrEqual(SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES);
+    const lines = context.split("\n");
+    expect(lines.filter((line) => line === "[agent-governance-suite peer message END]")).toHaveLength(1);
+    const parsed = JSON.parse(lines.find((line) => line.startsWith("{"))!) as {
+      message: string;
+      messageEncoding: string;
+      receipt: { contentDigest: string };
+    };
+    expect(parsed.messageEncoding).toBe("base64-utf8");
+    expect(Buffer.from(parsed.message, "base64").toString("utf8")).toBe(body);
+    expect(parsed.receipt.contentDigest).toBe(contentDigest);
+  });
 
   it("starts the relay without spending a second claim budget during SessionStart", async () => {
     const directory = stateDirectory();

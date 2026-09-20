@@ -27,6 +27,7 @@ import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
 import { GATE_REASON, handleSessionBoardHook, runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SessionMessageService, type SessionPresenceList } from "../../mcp-server/src/session-message-service.js";
+import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "../mcp/version-fixtures.js";
@@ -150,14 +151,16 @@ describe("session board hook", () => {
 
     run(input("UserPromptSubmit", { agent_id: "sub-1", prompt: "서브에이전트 입력" }), 9);
     expect(listSessions(board, at(9))[0]).toMatchObject({ summary: "현황판 구현", stale: false });
+    run(input("SessionStart", { agent_id: "sub-1" }), 10);
+    expect(listSessions(board, at(10))[0]).toMatchObject({ summary: "현황판 구현", stale: false });
 
-    run(input("UserPromptSubmit"), 10);
-    expect(decision(run(tool("Agent"), 11))).toBe("deny");
-    const row = listSessions(board, at(12))[0];
+    run(input("UserPromptSubmit"), 11);
+    expect(decision(run(tool("Agent"), 12))).toBe("deny");
+    const row = listSessions(board, at(13))[0];
     expect(row).toMatchObject({ sessionId: "s1", cwd: "D:/work/repo", summary: "현황판 구현", stale: true });
     expect(JSON.stringify(listSessions(board, at(11)))).not.toContain("비밀 요청 원문");
 
-    const listed = run(tool(boardTool("list_session_status"), { schemaVersion: "1.0.0" }, { agent_id: "sub-1" }), 13);
+    const listed = run(tool(boardTool("list_session_status"), { schemaVersion: "1.0.0" }, { agent_id: "sub-1" }), 14);
     expect(listed).toMatchObject({ hookSpecificOutput: { permissionDecision: "allow", updatedInput: { _sessionBinding: { host: "claude-code", sessionId: "s1" } } } });
   });
 
@@ -169,6 +172,35 @@ describe("session board hook", () => {
     expect(decision(handleSessionBoardHook(tool("Edit"), board, "claude-code", at(3)))).toBe(null);
     handleSessionBoardHook(input("UserPromptSubmit", { prompt: "ordinary prompt" }), board, "claude-code", at(4));
     expect(decision(handleSessionBoardHook(tool("Edit"), board, "claude-code", at(5)))).toBe("deny");
+  });
+
+  it("does not consume a parent wake from an observed subagent prompt", async () => {
+    const store = new SessionMessageStore(":memory:");
+    const target = { host: "claude-code", sessionId: "parent" };
+    const nonce = "subagent-wake-nonce-abcdefghijklmnop";
+    store.send({ messageId: "subagent-wake-0001", sender: { host: "peer", sessionId: "sender" }, target, body: "pending" }, 1000);
+    expect(store.reserveWake(target, nonce, 2000)).toBe(true);
+    let requests = 0;
+    const request = (async <T>() => {
+      requests += 1;
+      return { consumed: store.consumeWake(target, nonce, 2001) } as T;
+    }) as typeof import("../../mcp-server/src/session-message-client.js").sessionMessageRequest;
+    const previous = process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
+    process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = boardPath();
+    try {
+      await runSessionBoardHook("claude-code", JSON.stringify({
+        hook_event_name: "UserPromptSubmit",
+        session_id: target.sessionId,
+        agent_id: "sub-1",
+        prompt: `[agent-governance-suite:wake:${nonce}]`,
+      }), request);
+      expect(requests).toBe(0);
+      expect(store.claimWake(target, [nonce], 2002)).toMatchObject({ recognized: true, messages: [{ messageId: "subagent-wake-0001" }] });
+    } finally {
+      if (previous === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
+      else process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = previous;
+      store.close();
+    }
   });
 
   it("denies exactly once when several hook processes race on the same request", async () => {
