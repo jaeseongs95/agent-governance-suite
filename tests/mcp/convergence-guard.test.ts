@@ -1407,6 +1407,16 @@ function failIntoReview(service: WorkflowService, root: ConvergenceRootV1): Conv
   return current;
 }
 
+function identityBlobs(databasePath: string): Array<{ root_id: string; identity_json: string; surface_digest: string }> {
+  const database = new DatabaseSync(databasePath, { readOnly: true });
+  try {
+    return database.prepare("SELECT root_id, identity_json, surface_digest FROM convergence_root_identities ORDER BY root_id")
+      .all() as unknown as Array<{ root_id: string; identity_json: string; surface_digest: string }>;
+  } finally {
+    database.close();
+  }
+}
+
 function identityRows(databasePath: string): Array<{ root_id: string; replacement_match: string | null }> {
   const database = new DatabaseSync(databasePath, { readOnly: true });
   try {
@@ -1937,10 +1947,15 @@ describe("gated roots stored before identities existed", () => {
       frameAt(git.base, "workspace-base", inside),
     );
     gateRoot(harness.service, mixed);
+    const observedBlobs = identityBlobs(harness.databasePath);
+    const observedGit = (JSON.parse(observedBlobs[0]!.identity_json) as { surfaces: Array<{ git: unknown }> }).surfaces[0]!.git;
+    expect(observedGit).toMatchObject({ relative: "src/candidate.ts" });
     await removeWorktree(git, checkout, "w1");
 
     const pastMixed = tryOpen(harness.service, taskFor("past-mixed"), frameAt(await git.worktree("w2", nested), "workspace-w2"));
     expect(pastMixed.error?.details).toMatchObject({ rootId: mixed.rootId, conflictKind: "lineage", existingEntry: inside });
+    // Physical key, checkout root and relative path of the deleted checkout are exactly what was observed.
+    expect(identityBlobs(harness.databasePath)).toEqual(observedBlobs);
   });
 
   it("does not reuse an identity observed for a replaced frame, and grants no legacy exception for it", async () => {
@@ -1978,20 +1993,57 @@ describe("gated roots stored before identities existed", () => {
     const harness = await createHarness();
     const project = await mkdtemp(join(tmpdir(), "convergence-project-"));
     temporaryDirectories.push(project);
-    await mkdir(join(project, "src"), { recursive: true });
-    const gated = openRoot(harness.service, taskFor("new-project"), frameAt(project, "workspace-project"));
+    await touch(project, "src", "candidate.ts");
+    const gated = openRoot(harness.service, taskFor("existing-project"), frameAt(project, "workspace-project"));
     gateRoot(harness.service, gated);
-    const before = identityRows(harness.databasePath);
+    const before = identityBlobs(harness.databasePath);
 
-    // The folder becomes a repository afterwards; the target file has not been written yet.
+    // The folder becomes a repository afterwards and the observed target is gone: what is above it now is a guess.
     await mkdir(join(project, ".git"), { recursive: true });
+    await rm(join(project, "src", "candidate.ts"), { force: true });
     const other = await gitFixture();
     const unknown = tryOpen(harness.service, taskFor("other-repository"), frameAt(other.main, "workspace-other"));
     expect(unknown.error?.details).toMatchObject({ rootId: gated.rootId, conflictKind: "lineage-unresolved" });
-    expect(identityRows(harness.databasePath)).toEqual(before);
+    expect(identityBlobs(harness.databasePath)).toEqual(before);
 
     await touch(project, "src", "candidate.ts");
     expect(tryOpen(harness.service, taskFor("other-repository"), frameAt(other.main, "workspace-other")).error).toBeNull();
+    expect(identityBlobs(harness.databasePath).find((row) => row.root_id === gated.rootId)).not.toEqual(before[0]);
+  });
+
+  it.each([
+    { name: "a workspace that does not exist yet", absolute: false },
+    { name: "an absolute target below an existing checkout", absolute: true },
+  ])("follows a checkout created after a root was registered for $name, and keeps it once it is deleted", async ({ absolute }) => {
+    const harness = await createHarness();
+    const git = await gitFixture();
+    const nested = join(git.main, ".worktrees");
+    await mkdir(nested, { recursive: true });
+    const future = join(nested, "w9");
+    const entry = absolute ? join(future, "src", "candidate.ts") : "src/candidate.ts";
+    const plain = await mkdtemp(join(tmpdir(), "convergence-plain-"));
+    temporaryDirectories.push(plain);
+
+    // Registered before the worktree exists: its lineage is read from the outer checkout and marked as inferred.
+    const early = openRoot(harness.service, taskFor("registered-early", entry), frameAt(absolute ? plain : future, "workspace-w9", entry));
+    const inferred = JSON.parse(identityBlobs(harness.databasePath)[0]!.identity_json) as { inferred: boolean[]; surfaces: Array<{ git: { relative: string } }> };
+    expect(inferred.inferred).toEqual([true, true, true]);
+    expect(inferred.surfaces[0]!.git.relative).toBe(".worktrees/w9/src/candidate.ts");
+
+    await git.worktree("w9", nested);
+    gateRoot(harness.service, early);
+    const second = await git.worktree("w2", nested);
+    const sibling = tryOpen(harness.service, taskFor("sibling"), frameAt(second, "workspace-w2"));
+    expect(sibling.error?.code).toBe("ROOT_CONFLICT");
+    expect(sibling.error?.details).toMatchObject({ rootId: early.rootId, blockerState: "needs-user", conflictKind: "lineage" });
+    const followed = JSON.parse(identityBlobs(harness.databasePath)[0]!.identity_json) as { surfaces: Array<{ git: { relative: string } }> };
+    expect(followed.surfaces[0]!.git.relative).toBe("src/candidate.ts");
+
+    // The checkout seen in between is more specific than the outer one; its deletion does not lift the gate.
+    await removeWorktree(git, future, "w9");
+    const afterDeletion = tryOpen(harness.service, taskFor("sibling-again"), frameAt(second, "workspace-w2"));
+    expect(afterDeletion.error?.details).toMatchObject({ rootId: early.rootId, conflictKind: "lineage" });
+    expect(tryOpen(harness.service, taskFor("sibling-docs", "docs/guide.md"), frameAt(second, "workspace-w2", "docs/guide.md")).error).toBeNull();
   });
 
   it("still replaces a gated legacy root of a deleted checkout when the same workspace is named", async () => {

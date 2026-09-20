@@ -145,12 +145,14 @@ export class InMemoryWorkflowStore implements WorkflowStore {
       .filter((snapshot) => !["completed", "abandoned"].includes(snapshot.root.state))
       .map((snapshot) => {
         const active = activeRootIdentity(snapshot.root, this.identities.get(snapshot.root.rootId) ?? null);
-        if (active.fresh) this.identities.set(snapshot.root.rootId, { identity: active.identity, surfaceDigest: active.surfaceDigest });
+        if (active.fresh) {
+          this.identities.set(snapshot.root.rootId, { identity: active.identity, surfaceDigest: active.surfaceDigest, inferred: active.inferred });
+        }
         return active;
       });
     const plan = planRootInsertion(root, actives);
     if (plan.conflict) return clone(plan.conflict);
-    this.identities.set(root.rootId, { identity: plan.identity, surfaceDigest: plan.surfaceDigest });
+    this.identities.set(root.rootId, { identity: plan.identity, surfaceDigest: plan.surfaceDigest, inferred: plan.inferred });
     if (root.parentRootId) {
       const parent = this.convergence.get(root.parentRootId)!;
       parent.root.state = "abandoned";

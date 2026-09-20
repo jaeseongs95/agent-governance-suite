@@ -24,6 +24,7 @@ import {
   planRootInsertion,
   type ReplacementMatch,
   type RootConflict,
+  type StoredIdentity,
 } from "./convergence-logic.js";
 import { type RootIdentityV1 } from "./workspace-identity.js";
 import {
@@ -251,11 +252,9 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       const actives = rows.map((row) => {
         const active = activeRootIdentity(
           JSON.parse(row.root_json) as ConvergenceRootV1,
-          row.identity_json && row.surface_digest
-            ? { identity: JSON.parse(row.identity_json) as RootIdentityV1, surfaceDigest: row.surface_digest }
-            : null,
+          row.identity_json && row.surface_digest ? this.storedIdentity(row.identity_json, row.surface_digest) : null,
         );
-        if (active.fresh) this.saveRootIdentity(row.root_id, active.identity, active.surfaceDigest, null, root.createdAt);
+        if (active.fresh) this.saveRootIdentity(row.root_id, active.identity, active.inferred, active.surfaceDigest, null, root.createdAt);
         return active;
       });
       const plan = planRootInsertion(root, actives);
@@ -281,7 +280,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         root.updatedAt,
       );
       this.insertEpoch(root, root.createdAt);
-      this.saveRootIdentity(root.rootId, plan.identity, plan.surfaceDigest, plan.match, root.createdAt);
+      this.saveRootIdentity(root.rootId, plan.identity, plan.inferred, plan.surfaceDigest, plan.match, root.createdAt);
       return null;
     }));
   }
@@ -808,6 +807,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   private saveRootIdentity(
     rootId: string,
     identity: RootIdentityV1,
+    inferred: boolean[],
     surfaceDigest: string,
     match: ReplacementMatch | null,
     createdAt: string,
@@ -816,7 +816,13 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       INSERT INTO convergence_root_identities (root_id, identity_json, surface_digest, replacement_match, created_at)
       VALUES (?, ?, ?, ?, ?)
       ON CONFLICT(root_id) DO UPDATE SET identity_json = excluded.identity_json, surface_digest = excluded.surface_digest
-    `).run(rootId, JSON.stringify(identity), surfaceDigest, match, createdAt);
+    `).run(rootId, JSON.stringify({ ...identity, inferred }), surfaceDigest, match, createdAt);
+  }
+
+  /** `inferred` travels inside identity_json; rows written without it hold observed surfaces only. */
+  private storedIdentity(identityJson: string, surfaceDigest: string): StoredIdentity {
+    const { inferred = [], ...identity } = JSON.parse(identityJson) as RootIdentityV1 & { inferred?: boolean[] };
+    return { identity, surfaceDigest, inferred };
   }
 
   private insertEpoch(root: ConvergenceRootV1, createdAt: string): void {

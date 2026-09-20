@@ -87,6 +87,11 @@ export function surfaceDigest(root: { taskEnvelope: TaskEnvelopeV1; frame: Conve
 export interface StoredIdentity {
   identity: RootIdentityV1;
   surfaceDigest: string;
+  /**
+   * Per surface: true while its path has never existed. Its identity was then read from the
+   * nearest existing ancestor, which is an inference, not an observation of where it will live.
+   */
+  inferred: boolean[];
 }
 
 export interface IdentifiedRoot {
@@ -115,6 +120,18 @@ function normalizedScope(value: string, workspaceLocator: string): string {
  * outside any checkout, as it was observed at creation, gets by with its directory, because a
  * target file may not have been written yet.
  */
+/** Per surface: the path does not exist, so whatever was derived for it was read from an ancestor. */
+function inferredSurfaces(identity: RootIdentityV1): boolean[] {
+  return identity.surfaces.map((surface) => !existsSync(surface.physical || "/"));
+}
+
+/** A checkout seen earlier that is more specific than what is found now has disappeared; that does not lift a gate. */
+function coversEarlierCheckout(current: SurfaceIdentityV1, earlier: SurfaceIdentityV1): boolean {
+  if (earlier.git === null) return false;
+  if (current.git === null) return true;
+  return earlier.git.checkoutRoot !== current.git.checkoutRoot && pathWithin(earlier.git.checkoutRoot, current.git.checkoutRoot);
+}
+
 function surfaceBacked(surface: SurfaceIdentityV1, observedOutsideCheckouts: boolean): boolean {
   const unchanged = observedOutsideCheckouts && surface.git === null && !surface.conservative;
   return existsSync((unchanged ? path.posix.dirname(surface.physical) : surface.physical) || "/");
@@ -127,18 +144,22 @@ function surfaceBacked(surface: SurfaceIdentityV1, observedOutsideCheckouts: boo
  * changed frame invalidates the stored identity without making the root a legacy one. Whatever
  * is derived now counts only when the workspace and the surface's directory exist; otherwise,
  * or when Git evidence is unreadable, the root is unresolved: "no Git" and "cannot tell" are
- * different answers. The caller persists the identity when `fresh`; an unresolved or guessed
- * one is never stored, so a later open retries.
+ * different answers. A surface whose path never existed when the root was created carries an
+ * inferred identity: it is derived again on every open, so a checkout created at that path since
+ * is followed, while a more specific checkout seen in between is kept after it disappears. The
+ * caller persists the identity when `fresh`; an unresolved one is never stored, so a later open
+ * retries.
  */
 export function activeRootIdentity(
   root: ConvergenceRootV1,
   stored: StoredIdentity | null,
-): IdentifiedRoot & { fresh: boolean; surfaceDigest: Sha256Digest } {
+): IdentifiedRoot & { fresh: boolean; surfaceDigest: Sha256Digest; inferred: boolean[] } {
   const digest = surfaceDigest(root);
   const observed = stored && stored.surfaceDigest === digest ? stored.identity : null;
+  const wasInferred = (index: number): boolean => observed !== null && stored!.inferred[index] === true;
   const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest };
-  if (observed && observed.surfaces.every((surface) => surface.git !== null)) {
-    return { ...known, identity: observed, resolved: true, fresh: false };
+  if (observed && observed.surfaces.every((surface, index) => surface.git !== null && !wasInferred(index))) {
+    return { ...known, identity: observed, resolved: true, fresh: false, inferred: stored!.inferred };
   }
   let derived: RootIdentityV1 | null = null;
   try {
@@ -153,13 +174,18 @@ export function activeRootIdentity(
       workspacePhysical: normalizedScope(".", locator),
       surfaces: writeSurface(root).map((entry) => ({ entry, physical: normalizedScope(entry, locator), git: null, conservative: null })),
     };
-    return { ...known, identity, resolved: false, fresh: false };
+    return { ...known, identity, resolved: false, fresh: false, inferred: [] };
   }
-  let resolved = derived !== null && existsSync(locator);
+  const workspaceExists = existsSync(locator);
+  let resolved = true;
   const surfaces = (observed ?? derived!).surfaces.map((surface, index) => {
-    if (observed && surface.git !== null) return surface;
     const current = derived?.surfaces[index];
-    if (current && surfaceBacked(current, observed !== null)) return current;
+    if (wasInferred(index)) {
+      if (!current) resolved = false;
+      return current && !coversEarlierCheckout(current, surface) ? current : surface;
+    }
+    if (observed && surface.git !== null) return surface;
+    if (current && workspaceExists && surfaceBacked(current, observed !== null)) return current;
     resolved = false;
     return surface;
   });
@@ -168,7 +194,10 @@ export function activeRootIdentity(
     workspacePhysical: observed?.workspacePhysical ?? derived!.workspacePhysical,
     surfaces,
   };
-  return { ...known, identity, resolved, fresh: resolved && JSON.stringify(identity) !== JSON.stringify(observed) };
+  // Once its path exists a surface has been observed; nothing unobserved starts out as inferred.
+  const inferred = surfaces.map((surface, index) => wasInferred(index) && !existsSync(surface.physical || "/"));
+  const fresh = resolved && JSON.stringify({ identity, inferred }) !== JSON.stringify({ identity: observed, inferred: stored?.inferred });
+  return { ...known, identity, resolved, fresh, inferred };
 }
 
 export interface RootConflict {
@@ -315,7 +344,13 @@ export function replacementMatch(
 export function planRootInsertion(
   root: ConvergenceRootV1,
   actives: readonly IdentifiedRoot[],
-): { identity: RootIdentityV1; surfaceDigest: Sha256Digest; match: ReplacementMatch | null; conflict: RootConflict | null } {
+): {
+  identity: RootIdentityV1;
+  surfaceDigest: Sha256Digest;
+  inferred: boolean[];
+  match: ReplacementMatch | null;
+  conflict: RootConflict | null;
+} {
   const identity = rootIdentity(root);
   let parent: IdentifiedRoot | null = null;
   let match: ReplacementMatch | null = null;
@@ -338,6 +373,7 @@ export function planRootInsertion(
   return {
     identity,
     surfaceDigest: surfaceDigest(root),
+    inferred: inferredSurfaces(identity),
     match,
     conflict: findRootConflict({ root, identity }, parent?.identity ?? null, actives),
   };
