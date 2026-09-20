@@ -110,12 +110,14 @@ function normalizedScope(value: string, workspaceLocator: string): string {
  * existing ancestor, so below a path that is gone it describes that ancestor: a deleted worktree
  * nested in another checkout would be taken for a path of the outer checkout. With nothing
  * observed earlier, a missing target cannot be told from a deleted checkout directory, so the
- * path itself has to exist. A surface that was observed outside any checkout when the root was
- * created only needs its directory, because a target file may not have been written yet.
+ * path itself has to exist. The same holds for a checkout that shows up above a surface which
+ * was observed outside any checkout: that is a new observation. Only a surface that is still
+ * outside any checkout, as it was observed at creation, gets by with its directory, because a
+ * target file may not have been written yet.
  */
-function surfaceBacked(surface: SurfaceIdentityV1, observedBefore: boolean): boolean {
-  const backing = observedBefore && !surface.conservative ? path.posix.dirname(surface.physical) : surface.physical;
-  return existsSync(backing || "/");
+function surfaceBacked(surface: SurfaceIdentityV1, observedOutsideCheckouts: boolean): boolean {
+  const unchanged = observedOutsideCheckouts && surface.git === null && !surface.conservative;
+  return existsSync((unchanged ? path.posix.dirname(surface.physical) : surface.physical) || "/");
 }
 
 /**

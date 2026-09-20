@@ -1974,6 +1974,26 @@ describe("gated roots stored before identities existed", () => {
     expect(sameName.error?.details).toMatchObject({ reason: "WORKSPACE_IDENTITY_UNRESOLVED" });
   });
 
+  it("takes a checkout that appears above an observed non-Git surface only once the target itself exists", async () => {
+    const harness = await createHarness();
+    const project = await mkdtemp(join(tmpdir(), "convergence-project-"));
+    temporaryDirectories.push(project);
+    await mkdir(join(project, "src"), { recursive: true });
+    const gated = openRoot(harness.service, taskFor("new-project"), frameAt(project, "workspace-project"));
+    gateRoot(harness.service, gated);
+    const before = identityRows(harness.databasePath);
+
+    // The folder becomes a repository afterwards; the target file has not been written yet.
+    await mkdir(join(project, ".git"), { recursive: true });
+    const other = await gitFixture();
+    const unknown = tryOpen(harness.service, taskFor("other-repository"), frameAt(other.main, "workspace-other"));
+    expect(unknown.error?.details).toMatchObject({ rootId: gated.rootId, conflictKind: "lineage-unresolved" });
+    expect(identityRows(harness.databasePath)).toEqual(before);
+
+    await touch(project, "src", "candidate.ts");
+    expect(tryOpen(harness.service, taskFor("other-repository"), frameAt(other.main, "workspace-other")).error).toBeNull();
+  });
+
   it("still replaces a gated legacy root of a deleted checkout when the same workspace is named", async () => {
     const harness = await createHarness();
     const git = await gitFixture();
