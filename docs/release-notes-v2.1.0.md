@@ -23,6 +23,7 @@
 
 ## 검증
 
+- 2026-09-19 Codex 데스크톱에서 신뢰한 훅의 첫 `exec_command` 거부, `update_session_status`의 `_sessionBinding` 입력 결속, MCP 도구명, Claude Code·Codex 공용 현황판 조회, 상태 갱신 뒤 `apply_patch` 허용을 확인했습니다.
 - Windows 패키지·비패키지 프로세스가 같은 broker, spool과 현황판 파일을 보는지 확인했습니다.
 - Claude↔Codex 양방향 메시지가 `acknowledged`까지 도달하는 것을 실세션에서 확인했습니다.
 - 메시지가 156.752초 동안 claimable인 구간에 wake nonce가 하나만 유지되고, 도중 메시지가 추가돼도 새 nonce가 생기지 않는 것을 확인했습니다.
