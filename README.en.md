@@ -9,7 +9,7 @@ When an agent says a task is finished, the suite checks whether the required con
 The same standard reaches past a single session. When several agent sessions on one computer work on the same repository or installation without knowing about each other, each can pass its own checks and still produce results that do not fit together. So every host shares one session board, and sessions message each other directly over a local TLS channel.
 
 <!-- release-version:start -->
-v2.1.0 lets AI host sessions working on the same computer send messages directly to each other. A local TLS 1.3 broker holds the body and tracks delivery until the receiver acknowledges it, and the wake bell that nudges a host is reserved at most once per target, so notifications cannot pile up across an unchanged pending interval. The session board and broker state live under `~/.agent-governance-suite`, a root every host shares. Each new Codex user request is recorded through the `UserPromptSubmit` hook, so the request boundary requires a fresh board summary before the session's next mutation.
+v2.1.0 lets AI host sessions working on the same computer send messages directly to each other. A local TLS 1.3 broker holds the body and tracks delivery until the receiver acknowledges it, and the wake bell that nudges a host is reserved at most once per target, so notifications cannot pile up across an unchanged pending interval. The session board and broker state live under `~/.agent-governance-suite`, a root every host shares. Each new Codex user request is recorded through the `UserPromptSubmit` hook, so the request boundary requires a fresh board summary before the session's next mutation. v2.1.1 rejects a session message whose body contains a NUL character at send time, removing a case where `node:sqlite` behaved differently across platforms.
 
 - v2.0.0 — the major release that made both hosts share one session board and expanded the trust boundary
 - v1.21.0 — added the session board (`session-board`) so sessions working on the same machine can see each other's work
@@ -17,7 +17,7 @@ v2.1.0 lets AI host sessions working on the same computer send messages directly
 
 Release notes for earlier versions are in [`docs/`](docs/) (Korean). The candidate-v2 policy applied to `korean-prose-editor` in v1.16.0 was not part of the quality gate record (`0.3.0-gate-1`), so it remains unevaluated for quality.
 
-The current public release is `v2.1.0` and includes fifteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+The current public release is `v2.1.1` and includes fifteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
 
 ## Problems it handles
@@ -58,7 +58,7 @@ Node.js 22.13.0 or later is required.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.1.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.1.1
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
