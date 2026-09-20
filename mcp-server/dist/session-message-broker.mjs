@@ -188,6 +188,10 @@ var SessionMessageStore = class {
         const leaseMs = Math.min(CLAIM_LEASE_MAX_MS, CLAIM_LEASE_BASE_MS * 2 ** Math.min(attempts, 4));
         return statement.run(now, iso(nowMs + leaseMs), String(row.message_id), now).changes === 1;
       });
+      if (claimed.length > 0) {
+        this.database.prepare(`UPDATE wake_nonces SET consumed_at = ?
+          WHERE host = ? AND session_id = ? AND consumed_at IS NULL AND expires_at > ?`).run(now, target.host, target.sessionId, now);
+      }
       this.database.exec("COMMIT");
       return claimed.map(claimedMessage);
     } catch (error) {
@@ -304,7 +308,14 @@ var SessionMessageStore = class {
       WHERE nonce_digest = ? AND host = ? AND session_id = ? AND expires_at > ?`).get(digest, target.host, target.sessionId, now);
     if (!existing) return false;
     if (existing.consumed_at === null) {
-      this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ?").run(now, digest);
+      const unacknowledged = this.database.prepare(`SELECT
+          count(*) AS count,
+          coalesce(sum(CASE WHEN claim_until > ? THEN 1 ELSE 0 END), 0) AS live_claims
+        FROM messages
+        WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires_at > ?`).get(now, target.host, target.sessionId, now);
+      if (unacknowledged.count === 0 || unacknowledged.live_claims > 0) {
+        this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ?").run(now, digest);
+      }
     }
     return true;
   }

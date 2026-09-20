@@ -134,17 +134,21 @@ describe("session message spool", () => {
     store.close();
 
     const reopened = new SessionMessageStore(databasePath);
-    expect(reopened.reserveWake(target, secondNonce, 2002)).toBe(false);
-    expect(reopened.consumeWake(target, firstNonce, 2003)).toBe(true);
-    expect(reopened.reserveWake(target, secondNonce, 2004)).toBe(true);
-    expect(reopened.releaseWake(target, secondNonce)).toBe(true);
-    expect(reopened.reserveWake(target, secondNonce, 2005)).toBe(true);
-    expect(reopened.consumeWake(target, secondNonce, 2006)).toBe(true);
-    expect(reopened.claim(target, 3000, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["wake-msg-0001"]);
-    expect(reopened.reserveWake(target, thirdNonce, 3001)).toBe(false);
-    expect(reopened.acknowledge(target, ["wake-msg-0001"], 4000)).toBe(1);
-    expect(reopened.reserveWake(target, thirdNonce, 4001)).toBe(true);
-    reopened.close();
+    try {
+      expect(reopened.reserveWake(target, secondNonce, 2002)).toBe(false);
+      expect(reopened.consumeWake(target, firstNonce, 2003)).toBe(true);
+      expect(reopened.reserveWake(target, secondNonce, 2004)).toBe(false);
+      expect(reopened.claim(target, 3000, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["wake-msg-0001"]);
+      expect(reopened.reserveWake(target, thirdNonce, 3001)).toBe(false);
+      expect(reopened.acknowledge(target, ["wake-msg-0001"], 4000)).toBe(1);
+      expect(reopened.reserveWake(target, secondNonce, 4001)).toBe(true);
+      expect(reopened.releaseWake(target, secondNonce)).toBe(true);
+      expect(reopened.reserveWake(target, secondNonce, 4002)).toBe(true);
+      expect(reopened.claim(target, 5000, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["wake-msg-0002"]);
+      expect(reopened.reserveWake(target, thirdNonce, 5001)).toBe(false);
+    } finally {
+      reopened.close();
+    }
   });
 
   it("locks claim selection before a competing connection can reserve a wake", () => {
@@ -184,6 +188,27 @@ describe("session message spool", () => {
     expect(contender.reserveWake(target, "claim-race-nonce-qrstuvwxyzabcdef", 2001)).toBe(false);
     claimant.close();
     contender.close();
+  });
+
+  it("keeps a recognized wake latched until claim consumes it atomically", () => {
+    const store = new SessionMessageStore(":memory:");
+    const target = { host: "codex", sessionId: "parallel-hook-target" };
+    store.send({
+      messageId: "parallel-hook-0001",
+      sender: { host: "claude-code", sessionId: "parallel-hook-sender" },
+      target,
+      body: "parallel hooks",
+    }, 1000);
+    const nonce = "parallel-hook-nonce-abcdefghijklmnop";
+    expect(store.reserveWake(target, nonce, 2000)).toBe(true);
+    expect(store.consumeWake(target, nonce, 2001)).toBe(true);
+    expect(store.database.prepare("SELECT consumed_at FROM wake_nonces").get()).toEqual({ consumed_at: null });
+    expect(store.reserveWake(target, "parallel-hook-nonce-qrstuvwxyzabcdef", 2002)).toBe(false);
+
+    expect(store.claim(target, 2003, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["parallel-hook-0001"]);
+    expect(store.database.prepare("SELECT consumed_at FROM wake_nonces").get()).toEqual({ consumed_at: new Date(2003).toISOString() });
+    expect(store.reserveWake(target, "parallel-hook-nonce-ghijklmnopqrstuv", 2004)).toBe(false);
+    store.close();
   });
 
   it("caps the unacknowledged spool and expires messages", () => {
