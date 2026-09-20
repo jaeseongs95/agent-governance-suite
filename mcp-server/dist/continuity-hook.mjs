@@ -265,6 +265,14 @@ function normalizedScope(value, workspaceLocator) {
   const normalized = path2.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
   return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }
+function inferredSurfaces(identity) {
+  return identity.surfaces.map((surface) => !existsSync(surface.physical || "/"));
+}
+function coversEarlierCheckout(current, earlier) {
+  if (earlier.git === null) return false;
+  if (current.git === null) return true;
+  return earlier.git.checkoutRoot !== current.git.checkoutRoot && pathWithin(earlier.git.checkoutRoot, current.git.checkoutRoot);
+}
 function surfaceBacked(surface, observedOutsideCheckouts) {
   const unchanged = observedOutsideCheckouts && surface.git === null && !surface.conservative;
   return existsSync((unchanged ? path2.posix.dirname(surface.physical) : surface.physical) || "/");
@@ -272,9 +280,10 @@ function surfaceBacked(surface, observedOutsideCheckouts) {
 function activeRootIdentity(root, stored) {
   const digest = surfaceDigest(root);
   const observed = stored && stored.surfaceDigest === digest ? stored.identity : null;
+  const wasInferred = (index) => observed !== null && stored.inferred[index] === true;
   const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest };
-  if (observed && observed.surfaces.every((surface) => surface.git !== null)) {
-    return { ...known, identity: observed, resolved: true, fresh: false };
+  if (observed && observed.surfaces.every((surface, index) => surface.git !== null && !wasInferred(index))) {
+    return { ...known, identity: observed, resolved: true, fresh: false, inferred: stored.inferred };
   }
   let derived = null;
   try {
@@ -289,13 +298,18 @@ function activeRootIdentity(root, stored) {
       workspacePhysical: normalizedScope(".", locator),
       surfaces: writeSurface(root).map((entry) => ({ entry, physical: normalizedScope(entry, locator), git: null, conservative: null }))
     };
-    return { ...known, identity: identity2, resolved: false, fresh: false };
+    return { ...known, identity: identity2, resolved: false, fresh: false, inferred: [] };
   }
-  let resolved = derived !== null && existsSync(locator);
+  const workspaceExists = existsSync(locator);
+  let resolved = true;
   const surfaces = (observed ?? derived).surfaces.map((surface, index) => {
-    if (observed && surface.git !== null) return surface;
     const current = derived?.surfaces[index];
-    if (current && surfaceBacked(current, observed !== null)) return current;
+    if (wasInferred(index)) {
+      if (!current) resolved = false;
+      return current && !coversEarlierCheckout(current, surface) ? current : surface;
+    }
+    if (observed && surface.git !== null) return surface;
+    if (current && workspaceExists && surfaceBacked(current, observed !== null)) return current;
     resolved = false;
     return surface;
   });
@@ -304,7 +318,9 @@ function activeRootIdentity(root, stored) {
     workspacePhysical: observed?.workspacePhysical ?? derived.workspacePhysical,
     surfaces
   };
-  return { ...known, identity, resolved, fresh: resolved && JSON.stringify(identity) !== JSON.stringify(observed) };
+  const inferred = surfaces.map((surface, index) => wasInferred(index) && !existsSync(surface.physical || "/"));
+  const fresh = resolved && JSON.stringify({ identity, inferred }) !== JSON.stringify({ identity: observed, inferred: stored?.inferred });
+  return { ...known, identity, resolved, fresh, inferred };
 }
 var GATED_STATES = ["needs-review", "needs-user"];
 function overlaps(left, right) {
@@ -405,6 +421,7 @@ function planRootInsertion(root, actives) {
   return {
     identity,
     surfaceDigest: surfaceDigest(root),
+    inferred: inferredSurfaces(identity),
     match,
     conflict: findRootConflict({ root, identity }, parent?.identity ?? null, actives)
   };
@@ -1567,9 +1584,9 @@ var SqliteWorkflowStore = class {
       const actives = rows.map((row) => {
         const active = activeRootIdentity(
           JSON.parse(row.root_json),
-          row.identity_json && row.surface_digest ? { identity: JSON.parse(row.identity_json), surfaceDigest: row.surface_digest } : null
+          row.identity_json && row.surface_digest ? this.storedIdentity(row.identity_json, row.surface_digest) : null
         );
-        if (active.fresh) this.saveRootIdentity(row.root_id, active.identity, active.surfaceDigest, null, root.createdAt);
+        if (active.fresh) this.saveRootIdentity(row.root_id, active.identity, active.inferred, active.surfaceDigest, null, root.createdAt);
         return active;
       });
       const plan = planRootInsertion(root, actives);
@@ -1595,7 +1612,7 @@ var SqliteWorkflowStore = class {
         root.updatedAt
       );
       this.insertEpoch(root, root.createdAt);
-      this.saveRootIdentity(root.rootId, plan.identity, plan.surfaceDigest, plan.match, root.createdAt);
+      this.saveRootIdentity(root.rootId, plan.identity, plan.inferred, plan.surfaceDigest, plan.match, root.createdAt);
       return null;
     }));
   }
@@ -2080,12 +2097,17 @@ var SqliteWorkflowStore = class {
    * leaves behind are recomputed or ignored. A refreshed identity replaces the stored one; how
    * the root was bound to its parent is kept.
    */
-  saveRootIdentity(rootId, identity, surfaceDigest2, match, createdAt) {
+  saveRootIdentity(rootId, identity, inferred, surfaceDigest2, match, createdAt) {
     this.database.prepare(`
       INSERT INTO convergence_root_identities (root_id, identity_json, surface_digest, replacement_match, created_at)
       VALUES (?, ?, ?, ?, ?)
       ON CONFLICT(root_id) DO UPDATE SET identity_json = excluded.identity_json, surface_digest = excluded.surface_digest
-    `).run(rootId, JSON.stringify(identity), surfaceDigest2, match, createdAt);
+    `).run(rootId, JSON.stringify({ ...identity, inferred }), surfaceDigest2, match, createdAt);
+  }
+  /** `inferred` travels inside identity_json; rows written without it hold observed surfaces only. */
+  storedIdentity(identityJson, surfaceDigest2) {
+    const { inferred = [], ...identity } = JSON.parse(identityJson);
+    return { identity, surfaceDigest: surfaceDigest2, inferred };
   }
   insertEpoch(root, createdAt) {
     this.database.prepare(`
