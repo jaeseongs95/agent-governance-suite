@@ -64,6 +64,9 @@ jobs:
       - name: Build
         shell: bash
         run: pnpm build
+      - name: Verify process identity probe
+        shell: bash
+        run: pnpm process-identity:check
       - name: Test
         shell: bash
         run: pnpm test

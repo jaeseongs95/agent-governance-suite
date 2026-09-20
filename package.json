@@ -1,6 +1,6 @@
 {
   "name": "agent-governance-suite",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "private": true,
   "description": "Governance specialists with declarative local orchestration, a local convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
   "type": "module",
@@ -14,6 +14,7 @@
     "lint": "eslint . && node scripts/validate-repository.mjs",
     "dev": "tsx mcp-server/src/index.ts",
     "runtime:check": "node scripts/check-runtime.mjs",
+    "process-identity:check": "tsx scripts/check-process-identity.ts",
     "bundle:check": "node scripts/check-bundle.mjs",
     "claude:build": "node scripts/build-claude-plugin.mjs",
     "claude:check": "node scripts/build-claude-plugin.mjs --check",

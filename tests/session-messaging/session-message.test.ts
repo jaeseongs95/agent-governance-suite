@@ -23,7 +23,7 @@ import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js"
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import { claudeWakeOutcome, codexWakeOutcome, relayIdentityDecision, shouldReleaseWake, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
 import { MESSAGE_BODY_MAX_BYTES, SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
-import { processIdentityState, processStartToken, processStillMatches } from "../../mcp-server/src/process-identity.js";
+import { processIdentityState } from "../../mcp-server/src/process-identity.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
@@ -228,15 +228,12 @@ describe("session message spool", () => {
 
 describe("TLS 1.3 broker and vendor-neutral adapter", () => {
   it("rejects a reused PID when its process-start token changes", () => {
-    const token = processStartToken(process.pid);
-    expect(token).toBeTruthy();
-    if (!token) throw new Error("The current process must expose a start token for this platform test.");
-    expect(processStillMatches(process.pid, token)).toBe(true);
-    expect(processStillMatches(process.pid, `${token}-different`)).toBe(false);
-    expect(processStillMatches(process.pid, "")).toBe(false);
+    const token = "process-start-token";
+    expect(processIdentityState(process.pid, token, () => token)).toBe("match");
+    expect(processIdentityState(process.pid, token, () => `${token}-different`)).toBe("mismatch");
+    expect(processIdentityState(process.pid, "", () => token)).toBe("mismatch");
     expect(processIdentityState(process.pid, token, () => null)).toBe("unknown");
-    expect(processStartToken(2_147_483_647)).toBeNull();
-    expect(processStillMatches(2_147_483_647, token)).toBe(false);
+    expect(processIdentityState(2_147_483_647, token, () => token)).toBe("mismatch");
   });
 
   it("parses merged wake bells without hiding mixed user text", () => {
