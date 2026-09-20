@@ -143,7 +143,7 @@ function deadlineError(message) {
   return new Error(message);
 }
 function signalError(signal) {
-  return signal.reason instanceof Error ? signal.reason : deadlineError("The session message request deadline expired.");
+  return signal.reason instanceof Error ? signal.reason : deadlineError(deadlineMetadata.get(signal)?.message ?? SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE);
 }
 function throwIfAborted(signal) {
   if (signal?.aborted) throw signalError(signal);
@@ -152,8 +152,11 @@ function remainingMilliseconds(deadline, signal, message = SESSION_MESSAGE_REQUE
   throwIfAborted(signal);
   const inherited = signal ? deadlineMetadata.get(signal) : void 0;
   const remaining = (inherited?.deadline ?? deadline) - performance.now();
-  if (remaining <= 0) throw deadlineError(inherited?.message ?? message);
+  if (remaining < 1) throw deadlineError(inherited?.message ?? message);
   return remaining;
+}
+function assertWithinDeadline(deadline, signal, message) {
+  remainingMilliseconds(deadline, signal, message);
 }
 async function withDeadline(timeoutMs, parentSignal, message, work) {
   const parentDeadline = parentSignal ? deadlineMetadata.get(parentSignal) : void 0;
@@ -333,7 +336,7 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
       if (error instanceof BrokerRequestRejected) throw error;
       await prepareStateDirectory(stateDirectory);
       throwIfAborted(signal);
-      remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
+      assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
       const adjacentBroker = fileURLToPath(new URL("./session-message-broker.mjs", import.meta.url));
       const brokerPath = existsSync(adjacentBroker) ? adjacentBroker : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
       const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
