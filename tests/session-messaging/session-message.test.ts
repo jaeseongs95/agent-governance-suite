@@ -1,5 +1,7 @@
 import { mkdtempSync } from "node:fs";
 import { readFile, rm, writeFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import { once } from "node:events";
 import net from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -16,6 +18,7 @@ import {
   sessionMessageBrokerEnvironment,
   sessionMessageRequest,
   SESSION_MESSAGE_PROTOCOL,
+  waitForSessionMessageBrokerReady,
 } from "../../mcp-server/src/session-message-client.js";
 import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
@@ -47,19 +50,26 @@ async function waitUntil(predicate: () => Promise<boolean>, timeoutMs = 5000): P
 
 async function terminateBroker(stateDirectory: string): Promise<void> {
   const endpointPath = path.join(stateDirectory, "endpoint.json");
+  const lockPath = path.join(stateDirectory, "broker.lock");
   try {
-    const endpoint = JSON.parse(await readFile(endpointPath, "utf8")) as { pid: number };
-    try { process.kill(endpoint.pid, "SIGTERM"); } catch { /* Already stopped. */ }
+    let pid: number;
+    try {
+      const endpoint = JSON.parse(await readFile(endpointPath, "utf8")) as { pid: number };
+      pid = endpoint.pid;
+    } catch {
+      pid = Number((await readFile(lockPath, "utf8")).trim());
+    }
+    try { process.kill(pid, "SIGTERM"); } catch { /* Already stopped. */ }
     await waitUntil(async () => {
-      try { await readFile(endpointPath); return false; } catch { return true; }
-    });
+      try { process.kill(pid, 0); return false; } catch { return true; }
+    }, 10_000);
   } catch { /* No broker was started. */ }
 }
 
 afterEach(async () => {
   for (const directory of directories.splice(0)) {
     await terminateBroker(directory);
-    await rm(directory, { recursive: true, force: true });
+    await rm(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
   }
 });
 
@@ -227,6 +237,30 @@ describe("session message spool", () => {
 });
 
 describe("TLS 1.3 broker and vendor-neutral adapter", () => {
+  it("fails fast on broker exit and leaves deadline cleanup to the state-directory owner", async () => {
+    const fixture = fileURLToPath(new URL("./fixtures/broker-startup-child.mjs", import.meta.url));
+    const exitedDirectory = stateDirectory();
+    const exited = spawn(process.execPath, [fixture, "exit"], { stdio: "ignore" });
+    await expect(waitForSessionMessageBrokerReady(exitedDirectory, exited, 2_000)).rejects.toThrow(/exited before it was ready/u);
+
+    const silentDirectory = stateDirectory();
+    const silent = spawn(process.execPath, [fixture, "silent"], { stdio: "ignore" });
+    const silentExit = once(silent, "exit");
+    await expect(waitForSessionMessageBrokerReady(silentDirectory, silent, 100)).rejects.toThrow(/startup deadline/u);
+    await writeFile(path.join(silentDirectory, "broker.lock"), `${String(silent.pid)}\n`, "utf8");
+    await terminateBroker(silentDirectory);
+    await silentExit;
+  });
+
+  it("converges simultaneous startup requests on one broker", async () => {
+    const directory = stateDirectory();
+    await Promise.all([
+      ensureSessionMessageBroker(directory),
+      ensureSessionMessageBroker(directory),
+    ]);
+    await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toEqual({ protocolVersion: SESSION_MESSAGE_PROTOCOL });
+  });
+
   it("rejects a reused PID when its process-start token changes", () => {
     const token = "process-start-token";
     expect(processIdentityState(process.pid, token, () => token)).toBe("match");

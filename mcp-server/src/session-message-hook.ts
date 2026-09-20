@@ -12,6 +12,7 @@ type Host = "codex" | "claude-code";
 const MESSAGE_TOOLS = new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
 const HOST_CLAIM_MAX_MESSAGES = 1;
 const HOST_CLAIM_MAX_BODY_CHARS = 4096;
+const HOST_MESSAGE_REQUEST_TIMEOUT_MS = 8_000;
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -84,7 +85,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     target: { host, sessionId },
     maxMessages: HOST_CLAIM_MAX_MESSAGES,
     maxBodyChars: HOST_CLAIM_MAX_BODY_CHARS,
-  });
+  }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
   return result.messages.length > 0 ? additionalContext(event, envelope(result.messages)) : {};
 }
 
