@@ -146,6 +146,7 @@ describe("session message spool", () => {
       expect(reopened.reserveWake(target, secondNonce, 4002)).toBe(true);
       expect(reopened.claim(target, 5000, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["wake-msg-0002"]);
       expect(reopened.reserveWake(target, thirdNonce, 5001)).toBe(false);
+      expect(reopened.reserveWake(target, thirdNonce, 125_001)).toBe(true);
     } finally {
       reopened.close();
     }

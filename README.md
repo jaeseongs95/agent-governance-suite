@@ -78,7 +78,7 @@ MCP 서버가 시작되지 않아도 개별 전문 스킬은 직접 호출할 �
 
 broker는 모든 호스트가 함께 쓰는 `~/.agent-governance-suite/session-messaging/`에서 필요할 때 시작하고 `127.0.0.1`에만 임의 포트로 바인딩합니다. 공용 루트는 절대 경로인 `AGENT_GOVERNANCE_SHARED_STATE_DIR`로 바꿀 수 있습니다. Node 내장 암호 모듈로 만든 P-256 자체서명 인증서의 SHA-256 fingerprint를 pin하고, 별도 256-bit token도 TLS 안에서 확인합니다. 본문은 Codex 명령행이나 Claude inbox에 넣지 않으며, 두 adapter는 target에 묶인 무작위 nonce가 든 작은 wake bell만 보냅니다. 지연·중복된 같은 bell도 TTL 안에서는 내부 wake로 인식하지만 본문 전달이나 권한을 부여하지 않습니다. 개인 키·broker token·Claude inbox token과 socket 경로는 메시지 DB에 저장하지 않습니다.
 
-공통 프로토콜의 `host`는 임의 문자열입니다. Codex와 Claude Code에는 wake adapter를 제공하고, Grok·Spark 같은 다른 로컬 런타임은 `mcp-server/dist/session-message-cli.mjs`에 JSON을 stdin으로 넘겨 같은 `send`, `claim`, `acknowledge`, `status`, `pending` 작업을 사용할 수 있습니다. `claim` 호출자는 host 주입 한도에 맞춰 `maxMessages`와 UTF-16 code unit 기준 `maxBodyChars`를 줄일 수 있고, broker는 이 예산과 별개로 실제 JSON 응답을 32 KiB 이하로 유지합니다. 번들 hook은 가장 보수적인 공통값으로 한 번에 한 메시지만 주입합니다. 메시지 본문과 비밀값을 프로세스 인수로 넘기지 않습니다. 예:
+공통 프로토콜의 `host`는 임의 문자열입니다. Codex와 Claude Code에는 wake adapter를 제공하고, Grok·Spark 같은 다른 로컬 런타임은 `mcp-server/dist/session-message-cli.mjs`에 JSON을 stdin으로 넘겨 같은 `send`, `claim`, `acknowledge`, `status`, `pending` 작업을 사용할 수 있습니다. 새 wake adapter는 bell을 받을 수 있는 host 이벤트에서 반드시 `claim`도 호출해야 합니다. bell만 소비하고 claim하지 않으면 중복 억제 latch가 nonce TTL 동안 다음 자동 wake를 막으며, 본문은 spool에 남아 다음 자연 hook에서 전달됩니다. `claim` 호출자는 host 주입 한도에 맞춰 `maxMessages`와 UTF-16 code unit 기준 `maxBodyChars`를 줄일 수 있고, broker는 이 예산과 별개로 실제 JSON 응답을 32 KiB 이하로 유지합니다. 번들 hook은 가장 보수적인 공통값으로 한 번에 한 메시지만 주입합니다. 메시지 본문과 비밀값을 프로세스 인수로 넘기지 않습니다. 예:
 
 ```json
 {"operation":"claim","payload":{"target":{"host":"spark","sessionId":"session-1"}}}
