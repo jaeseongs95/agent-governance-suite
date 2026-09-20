@@ -56,6 +56,19 @@ function scopeEntryOverlaps(left: string, leftWorkspace: string, right: string, 
   return a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
 }
 
+/**
+ * Every path a root may write. Rescoping to a sibling path leaves the work units and the
+ * frame targets pointing at the same files, so all three are compared. Control artifacts are
+ * excluded: unrelated tasks legitimately share a validator or rubric.
+ */
+function writeSurface(root: { taskEnvelope: TaskEnvelopeV1; frame: ConvergenceFrameV1 }): string[] {
+  return [
+    ...root.taskEnvelope.scope.included,
+    ...root.taskEnvelope.workUnits.flatMap((unit) => unit.writeTargets),
+    ...root.frame.targetArtifacts.map((artifact) => artifact.locator),
+  ];
+}
+
 export function rootsOverlap(
   left: { taskEnvelope: TaskEnvelopeV1; frame: ConvergenceFrameV1 },
   right: { taskEnvelope: TaskEnvelopeV1; frame: ConvergenceFrameV1 },
@@ -63,8 +76,9 @@ export function rootsOverlap(
   const sameWorkspace = left.frame.workspace.workspaceId === right.frame.workspace.workspaceId
     || normalizeWorkspaceLocator(left.frame.workspace.locator) === normalizeWorkspaceLocator(right.frame.workspace.locator);
   if (!sameWorkspace) return false;
-  return left.taskEnvelope.scope.included.some((leftTarget) => (
-    right.taskEnvelope.scope.included.some((rightTarget) => scopeEntryOverlaps(
+  const rightSurface = writeSurface(right);
+  return writeSurface(left).some((leftTarget) => (
+    rightSurface.some((rightTarget) => scopeEntryOverlaps(
       leftTarget,
       left.frame.workspace.locator,
       rightTarget,

@@ -506,7 +506,8 @@ export class WorkflowService {
 
       const updatedRoot = bumpedRoot(root, review.reviewedAt);
       if (review.route === "stop") {
-        updatedRoot.state = "abandoned";
+        // A stopped root keeps holding its write surface; only an approved replacement releases it.
+        updatedRoot.state = "needs-user";
       } else if (review.classification === "semantics-changing" || review.route === "needs-user") {
         updatedRoot.state = "needs-user";
       } else if (review.route === "panel" || review.route === "diagnose") {

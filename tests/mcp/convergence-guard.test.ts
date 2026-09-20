@@ -105,7 +105,12 @@ async function createHarness(): Promise<Harness> {
   return { databasePath, registryPath, service: serviceFor(registryPath, store), store };
 }
 
-function task(options: { taskId?: string; objective?: string; included?: string[] } = {}): TaskEnvelopeV1 {
+function task(options: {
+  taskId?: string;
+  objective?: string;
+  included?: string[];
+  writeTargets?: string[];
+} = {}): TaskEnvelopeV1 {
   return {
     schemaVersion: "1.0.0",
     taskId: options.taskId ?? "guarded-task",
@@ -117,7 +122,7 @@ function task(options: { taskId?: string; objective?: string; included?: string[
       id: "edit",
       objective: "Edit the candidate.",
       dependencies: [],
-      writeTargets: ["src/candidate.ts"],
+      writeTargets: options.writeTargets ?? ["src/candidate.ts"],
     }],
     requiredCapabilities: ["fixture-editing"],
     constraints: ["Keep the evaluation frame fixed."],
@@ -135,6 +140,7 @@ function frame(options: {
   workspaceId?: string;
   controlVersion?: string;
   targetVersion?: string;
+  targetLocator?: string;
 } = {}): ConvergenceFrameV1 {
   const workspaceId = options.workspaceId ?? "workspace-fixture";
   return {
@@ -149,7 +155,7 @@ function frame(options: {
     targetArtifacts: [{
       artifactId: "candidate",
       role: "candidate",
-      locator: "src/candidate.ts",
+      locator: options.targetLocator ?? "src/candidate.ts",
       digest: convergenceDigest({ version: options.targetVersion ?? "target-v1" }),
     }],
     operationalSettings: { maxAttemptsPerEpoch: 3, maxEpochs: 2, leaseTtlSeconds: 300 },
@@ -1028,5 +1034,100 @@ describe("local MCP convergence guard", () => {
     expect(approved.data).toMatchObject({ state: "open", currentEpoch: 1, parentRootId: root.rootId });
     expect(status(service, root.rootId).root.state).toBe("abandoned");
     expect(status(service, approved.data!.rootId).attemptsUsedInEpoch).toBe(0);
+  });
+
+  it("does not reset the attempt budget by reopening after a stop review", async () => {
+    const { service } = await createHarness();
+    const root = openRoot(service);
+    await consumeThreeFailedAttempts(service, root, "stop-bypass");
+
+    const gated = status(service, root.rootId);
+    expect(gated.root.state).toBe("needs-review");
+    const stopped = service.resolveConvergenceGate({
+      schemaVersion: "1.0.0",
+      rootId: root.rootId,
+      expectedRevision: gated.root.revision,
+      review: review(gated, { classification: "semantics-preserving", route: "stop", proposedFrame: null }, "review-stop"),
+    });
+    expect(stopped.error).toBeNull();
+    expect(stopped.data?.root).toMatchObject({ state: "needs-user" });
+
+    const reopened = service.openConvergenceRoot({
+      schemaVersion: "1.0.0",
+      parentRootId: null,
+      taskEnvelope: task({ taskId: "guarded-task-after-stop" }),
+      frame: frame(),
+      userApprovalRefs: [],
+    });
+    expect(reopened.error?.code).toBe("ROOT_CONFLICT");
+    expect(reopened.error?.details).toMatchObject({ rootId: root.rootId });
+
+    const withoutApproval = service.openConvergenceRoot({
+      schemaVersion: "1.0.0",
+      parentRootId: root.rootId,
+      taskEnvelope: task({ taskId: "guarded-task-after-stop" }),
+      frame: frame(),
+      userApprovalRefs: [],
+    });
+    expect(withoutApproval.error?.code).toBe("INVALID_INPUT");
+
+    const approved = service.openConvergenceRoot({
+      schemaVersion: "1.0.0",
+      parentRootId: root.rootId,
+      taskEnvelope: task({ taskId: "guarded-task-after-stop" }),
+      frame: frame(),
+      userApprovalRefs: ["user-approval:recontract-after-stop"],
+    });
+    expect(approved.error).toBeNull();
+    expect(approved.data).toMatchObject({ state: "open", currentEpoch: 1, parentRootId: root.rootId });
+    expect(status(service, approved.data!.rootId).attemptsUsedInEpoch).toBe(0);
+    expect(status(service, root.rootId).root.state).toBe("abandoned");
+  });
+
+  it("treats a sibling-path rescope of the same write surface as the same root", async () => {
+    const { service } = await createHarness();
+    const root = openRoot(service);
+
+    const rescoped = service.openConvergenceRoot({
+      schemaVersion: "1.0.0",
+      parentRootId: null,
+      taskEnvelope: task({ taskId: "guarded-task-rescoped", included: ["sibling/src/candidate.ts"] }),
+      frame: frame(),
+      userApprovalRefs: [],
+    });
+    expect(rescoped.error?.code).toBe("ROOT_CONFLICT");
+    expect(rescoped.error?.details).toMatchObject({ rootId: root.rootId });
+
+    const rescopedWithWorkUnits = service.openConvergenceRoot({
+      schemaVersion: "1.0.0",
+      parentRootId: null,
+      taskEnvelope: task({
+        taskId: "guarded-task-rescoped-units",
+        included: ["sibling/src/candidate.ts"],
+        writeTargets: ["sibling/src/candidate.ts"],
+      }),
+      frame: frame(),
+      userApprovalRefs: [],
+    });
+    expect(rescopedWithWorkUnits.error?.code).toBe("ROOT_CONFLICT");
+  });
+
+  it("opens a second root for unrelated work that shares only the control frame", async () => {
+    const { service } = await createHarness();
+    openRoot(service);
+
+    const unrelated = service.openConvergenceRoot({
+      schemaVersion: "1.0.0",
+      parentRootId: null,
+      taskEnvelope: task({
+        taskId: "docs-task",
+        included: ["docs/guide.md"],
+        writeTargets: ["docs/guide.md"],
+      }),
+      frame: frame({ targetLocator: "docs/guide.md" }),
+      userApprovalRefs: [],
+    });
+    expect(unrelated.error).toBeNull();
+    expect(unrelated.data).toMatchObject({ state: "open", currentEpoch: 1 });
   });
 });
