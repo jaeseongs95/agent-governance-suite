@@ -1,6 +1,6 @@
 {
   "name": "agent-governance-suite",
-  "version": "2.2.5",
+  "version": "2.2.6",
   "description": "Governance specialists, a local MCP workflow guard, opt-in task continuity, and an MCP-assisted Korean prose workflow for Claude Code.",
   "author": {
     "name": "jaeseongs95",
