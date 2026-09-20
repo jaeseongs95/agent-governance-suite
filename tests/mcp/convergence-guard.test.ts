@@ -1412,6 +1412,30 @@ function identityRows(databasePath: string): Array<{ root_id: string; replacemen
 
 describe("server-derived workspace identity", () => {
   it.each([
+    { entry: ".worktrees", reverse: false },
+    { entry: ".worktrees/*/src/candidate.ts", reverse: false },
+    { entry: ".worktrees", reverse: true },
+    { entry: ".worktrees/*/src/candidate.ts", reverse: true },
+  ])("checks nested checkout containers sharing a repository ($entry, reverse=$reverse)", async ({ entry, reverse }) => {
+    const { service } = await createHarness();
+    const git = await gitFixture();
+    await git.worktree("nested", join(git.main, ".worktrees"));
+    const external = await git.worktree("external");
+    const gated = reverse
+      ? openRoot(service, taskFor("gated-container", entry), frameAt(git.main, "main", entry))
+      : openRoot(service, taskFor("gated-external"), frameAt(external, "external"));
+    gateRoot(service, gated);
+    const result = reverse
+      ? tryOpen(service, taskFor("external-candidate"), frameAt(external, "external"))
+      : tryOpen(service, taskFor("nested-container", entry), frameAt(git.main, "main", entry));
+    expect(result.error?.code).toBe("ROOT_CONFLICT");
+    expect(result.error?.details).toMatchObject({ rootId: gated.rootId, conflictKind: "lineage" });
+    if (!reverse) {
+      await mkdir(join(git.main, "unrelated"));
+      expect(tryOpen(service, taskFor("same-repo-unrelated", "unrelated"), frameAt(git.main, "main", "unrelated")).error).toBeNull();
+    }
+  });
+  it.each([
     { adminName: "admin", nested: false },
     { adminName: ".git", nested: false },
     { adminName: "admin", nested: true },

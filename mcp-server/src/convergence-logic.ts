@@ -190,8 +190,8 @@ function lineageRelation(
   checkouts: Map<string, ReturnType<typeof repositoryCheckouts>>,
   scans: Map<string, ReturnType<typeof repositoryInDirectory>>,
 ): "overlap" | "unknown" | "none" {
-  if (sharesLineage(left, right)) {
-    return overlaps(left.git!.relative, right.git!.relative) ? "overlap" : "none";
+  if (sharesLineage(left, right) && overlaps(left.git!.relative, right.git!.relative)) {
+    return "overlap";
   }
   let uncertain = false;
   for (const [container, member] of [[left, right], [right, left]] as const) {
