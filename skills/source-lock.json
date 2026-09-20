@@ -204,16 +204,16 @@
     {
       "skillId": "model-effort-advisor",
       "path": "skills/model-effort-advisor",
-      "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
+      "source": "https://github.com/jaeseongs95/model-effort-advisor.git",
       "sourcePath": "skills/model-effort-advisor",
       "version": "0.1.0",
       "versionSource": "skill-metadata",
       "ref": {
-        "kind": "commit",
-        "value": "bc248f9babf1c850249c960385b2935db49756d4",
-        "commit": "bc248f9babf1c850249c960385b2935db49756d4"
+        "kind": "tag",
+        "value": "v0.1.0",
+        "commit": "dfb806545e978bf03d6e1d6cc65707152629b271"
       },
-      "updatePolicy": "internal",
+      "updatePolicy": "auto-pr",
       "upstreamChecksum": "sha256:9a2871ff97553884eea9e93e1b46464631b47fc2d2be7b50b0cd5ec5031e429c",
       "integratedChecksum": "sha256:9a2871ff97553884eea9e93e1b46464631b47fc2d2be7b50b0cd5ec5031e429c",
       "checksumScope": "relative paths and normalized text bytes under skills/model-effort-advisor",
@@ -222,16 +222,16 @@
     {
       "skillId": "iteration-frame-auditor",
       "path": "skills/iteration-frame-auditor",
-      "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
+      "source": "https://github.com/jaeseongs95/iteration-frame-auditor.git",
       "sourcePath": "skills/iteration-frame-auditor",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
       "ref": {
-        "kind": "commit",
-        "value": "560aea5739887a0bb279ff3c5286b1acea296ff0",
-        "commit": "560aea5739887a0bb279ff3c5286b1acea296ff0"
+        "kind": "tag",
+        "value": "v1.0.0",
+        "commit": "7d9f9122a4e0fa2c3a84901317f0d95a2b7fd677"
       },
-      "updatePolicy": "internal",
+      "updatePolicy": "auto-pr",
       "upstreamChecksum": "sha256:86360c7a8573dafc3317931a4b161d5a5c44a65be42d35106c7996fa4e5fecb9",
       "integratedChecksum": "sha256:86360c7a8573dafc3317931a4b161d5a5c44a65be42d35106c7996fa4e5fecb9",
       "checksumScope": "relative paths and normalized text bytes under skills/iteration-frame-auditor",
@@ -350,16 +350,16 @@
     {
       "skillId": "software-security-auditor",
       "path": "skills/software-security-auditor",
-      "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
+      "source": "https://github.com/jaeseongs95/software-security-auditor.git",
       "sourcePath": "skills/software-security-auditor",
       "version": "0.1.0",
       "versionSource": "skill-metadata",
       "ref": {
-        "kind": "commit",
-        "value": "7c48fdaff8a8e08ca1209591bc5cac2fa7310f32",
-        "commit": "7c48fdaff8a8e08ca1209591bc5cac2fa7310f32"
+        "kind": "tag",
+        "value": "v0.1.0",
+        "commit": "8273db3d3fc52a7a9c36e73f9888b5fe44c69fe3"
       },
-      "updatePolicy": "internal",
+      "updatePolicy": "auto-pr",
       "upstreamChecksum": "sha256:7346de58a9bdc9b8e5d283687326bacecf980f7997f4458b28782b69216d76a5",
       "integratedChecksum": "sha256:7346de58a9bdc9b8e5d283687326bacecf980f7997f4458b28782b69216d76a5",
       "checksumScope": "relative paths and normalized text bytes under skills/software-security-auditor",
