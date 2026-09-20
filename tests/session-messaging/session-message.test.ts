@@ -1,6 +1,6 @@
 import { mkdtempSync } from "node:fs";
 import { readFile, rm, writeFile } from "node:fs/promises";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
 import net from "node:net";
 import { tmpdir } from "node:os";
@@ -40,6 +40,8 @@ import { CURRENT_VERSION } from "../mcp/version-fixtures.js";
 
 const directories: string[] = [];
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
+const bundledSessionMessageHook = fileURLToPath(new URL("../../mcp-server/dist/session-message-hook.mjs", import.meta.url));
+const bundledSessionMessageRelay = fileURLToPath(new URL("../../mcp-server/dist/session-message-relay.mjs", import.meta.url));
 
 async function waitUntil(predicate: () => Promise<boolean>, timeoutMs = 5000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
@@ -856,10 +858,25 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
 
   it("does not register an unsupported Codex Stop context hook", async () => {
     const config = JSON.parse(await readFile(fileURLToPath(new URL("../../hooks/hooks.json", import.meta.url)), "utf8")) as {
-      hooks: Record<string, unknown>;
+      hooks: Record<string, Array<{ hooks: Array<{ timeout?: number }> }>>;
     };
     expect(config.hooks.Stop).toBeUndefined();
     expect(config.hooks.SessionEnd).toBeDefined();
+    expect(config.hooks.SessionEnd?.[0]?.hooks[0]?.timeout).toBeUndefined();
+  });
+
+  it("keeps packaged hook and relay entrypoints isolated", () => {
+    const hook = spawnSync(process.execPath, [bundledSessionMessageHook], {
+      input: JSON.stringify({ hook_event_name: "SessionEnd", session_id: "packaged-session-end", reason: "other" }),
+      encoding: "utf8",
+      timeout: 3000,
+      windowsHide: true,
+    });
+    expect(hook.status, hook.stderr).toBe(0);
+    expect(hook.stdout).toBe("");
+
+    const relay = spawnSync(process.execPath, [bundledSessionMessageRelay], { encoding: "utf8", timeout: 3000, windowsHide: true });
+    expect(relay.status, relay.stderr).toBe(2);
   });
 
   it("keeps Claude Code Stop context delivery enabled", async () => {

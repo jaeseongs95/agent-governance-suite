@@ -9,7 +9,7 @@ When an agent says a task is finished, the suite checks whether the required con
 The same standard reaches past a single session. When several agent sessions on one computer work on the same repository or installation without knowing about each other, each can pass its own checks and still produce results that do not fit together. So every host shares one session board, and sessions message each other directly over a local TLS channel.
 
 <!-- release-version:start -->
-v2.2.1 is a patch release that preserves the v2.2.0 behavior. It removes Codex-only skill metadata from the Claude distribution to restore the host boundary, brings the Korean and English README skill tables back into parity with the current registry and source lock, and canonicalizes certificate serial DER encoding to eliminate an intermittent session-message broker startup failure.
+v2.2.2 is a patch release that restores the hook bundle boundary. It separates the executable session-message relay entrypoint from the importable core so Codex hooks no longer fail through the relay argument parser, directly tests the packaged hook exit code, and uses Codex's documented default `SessionEnd` timeout without a clamping warning.
 
 v2.2.0 records a source receipt before a peer message body is injected and keeps that receipt separate from authority, approval, and delegation. The trust store retains a digest and bounded metadata rather than the raw body, and peer input cannot create authority. Session listings now include presence bound to an exact runtime instance, so a stale instance cannot end a newer one. Codex wake delivery is deferred to the next user turn by default; visible queue wake must be enabled explicitly. Collaboration decisions distinguish the current user turn from non-authorizing sources, and a diagnostician's confirmed root condition stays digest-bound through recovery strategies and the next task seed.
 
@@ -21,7 +21,7 @@ v2.1.0 lets AI host sessions working on the same computer send messages directly
 
 Release notes for earlier versions are in [`docs/`](docs/) (Korean). The candidate-v2 policy applied to `korean-prose-editor` in v1.16.0 was not part of the quality gate record (`0.3.0-gate-1`), so it remains unevaluated for quality.
 
-The current public release is `v2.2.1` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+The current public release is `v2.2.2` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
 
 ## Problems it handles
@@ -62,7 +62,7 @@ Node.js 22.13.0 or later is required.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.2.1
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.2.2
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->

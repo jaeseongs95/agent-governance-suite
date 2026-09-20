@@ -46,8 +46,7 @@
           {
             "type": "command",
             "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs\"",
-            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\"",
-            "timeout": 5
+            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\""
           }
         ]
       }

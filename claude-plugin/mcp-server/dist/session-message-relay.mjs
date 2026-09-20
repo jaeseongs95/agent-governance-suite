@@ -3,8 +3,6 @@
 // mcp-server/src/session-message-relay.ts
 import { execFile } from "node:child_process";
 import net from "node:net";
-import path3 from "node:path";
-import { fileURLToPath as fileURLToPath2 } from "node:url";
 import { randomUUID } from "node:crypto";
 
 // mcp-server/src/session-message-client.ts
@@ -365,11 +363,6 @@ function relayIdentityDecision(identity, previousUnknowns) {
   const unknowns = previousUnknowns + 1;
   return { proceed: false, stop: unknowns >= IDENTITY_UNKNOWN_LIMIT, unknowns };
 }
-function transportWakeCapabilities(transport) {
-  if (transport === "claude-inbox") return { wakeVisibility: "silent", canWakeSilently: true };
-  if (transport === "codex-queue") return { wakeVisibility: "user-message", canWakeSilently: false };
-  return { wakeVisibility: "none", canWakeSilently: false };
-}
 function codexWakeOutcome(error, spawned) {
   return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
 }
@@ -387,14 +380,10 @@ function wakeRetryState(outcome, released, attempt, now) {
     ringAttempts: retry ? attempt + 1 : 0
   };
 }
-function argument(name) {
-  const index = process.argv.indexOf(name);
-  return index >= 0 ? process.argv[index + 1] ?? null : null;
-}
-async function ringCodex(sessionId, message) {
+async function ringCodex(sessionId2, message) {
   return new Promise((resolve) => {
     let spawned = false;
-    const child = execFile("codex", ["queue", "--thread", sessionId, "--message", message], { windowsHide: true, timeout: 1e4 }, (error) => resolve(codexWakeOutcome(error, spawned)));
+    const child = execFile("codex", ["queue", "--thread", sessionId2, "--message", message], { windowsHide: true, timeout: 1e4 }, (error) => resolve(codexWakeOutcome(error, spawned)));
     child.once("spawn", () => {
       spawned = true;
     });
@@ -543,25 +532,19 @@ async function runSessionMessageRelay(options) {
     }
   }
 }
-if (path3.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
-  const host = argument("--host");
-  const sessionId = argument("--session-id");
-  const instanceId = argument("--instance-id");
-  const transport = argument("--transport");
-  const parentPid = Number.parseInt(argument("--parent-pid") ?? "", 10);
-  const parentStartToken = argument("--parent-start-token");
-  if (!host || !sessionId || !instanceId || transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox" || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
-  else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken }).catch(() => {
-    process.exitCode = 1;
-  });
+
+// mcp-server/src/session-message-relay-cli.ts
+function argument(name) {
+  const index = process.argv.indexOf(name);
+  return index >= 0 ? process.argv[index + 1] ?? null : null;
 }
-export {
-  claudeWakeOutcome,
-  codexWakeOutcome,
-  relayIdentityDecision,
-  runSessionMessageRelay,
-  shouldReleaseWake,
-  transportWakeCapabilities,
-  wakeBackoffDelay,
-  wakeRetryState
-};
+var host = argument("--host");
+var sessionId = argument("--session-id");
+var instanceId = argument("--instance-id");
+var transport = argument("--transport");
+var parentPid = Number.parseInt(argument("--parent-pid") ?? "", 10);
+var parentStartToken = argument("--parent-start-token");
+if (!host || !sessionId || !instanceId || transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox" || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
+else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken }).catch(() => {
+  process.exitCode = 1;
+});

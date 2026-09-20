@@ -2,13 +2,12 @@
 
 // mcp-server/src/session-message-hook.ts
 import { spawn as spawn2 } from "node:child_process";
-import { createHash, randomUUID as randomUUID3 } from "node:crypto";
+import { createHash, randomUUID as randomUUID2 } from "node:crypto";
 import { readFileSync as readFileSync2 } from "node:fs";
-import path5 from "node:path";
-import { fileURLToPath as fileURLToPath3 } from "node:url";
+import path4 from "node:path";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // mcp-server/src/session-message-client.ts
-import { randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
@@ -52,7 +51,6 @@ var SESSION_MESSAGE_MAX_REQUEST_BYTES = 32 * 1024;
 var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
 
 // mcp-server/src/session-message-client.ts
-var WAKE_PREFIX = "[agent-governance-suite:wake:";
 var BrokerRequestRejected = class extends Error {
 };
 var BROKER_STARTUP_TIMEOUT_MS = 15e3;
@@ -310,19 +308,6 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
     }
   });
 }
-function wakeMessage(nonce) {
-  return `${WAKE_PREFIX}${nonce}]`;
-}
-function newWakeNonce() {
-  return randomBytes(24).toString("base64url");
-}
-
-// mcp-server/src/session-message-relay.ts
-import { execFile } from "node:child_process";
-import net from "node:net";
-import path3 from "node:path";
-import { fileURLToPath as fileURLToPath2 } from "node:url";
-import { randomUUID } from "node:crypto";
 
 // mcp-server/src/process-identity.ts
 import { execFileSync } from "node:child_process";
@@ -348,234 +333,20 @@ function processStartToken(pid, platform = process.platform) {
     return null;
   }
 }
-function processExists(pid) {
-  if (!Number.isInteger(pid) || pid < 1) return false;
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
-function processIdentityState(pid, expectedStartToken, readStartToken = processStartToken) {
-  if (!expectedStartToken) return "mismatch";
-  if (!processExists(pid)) return "mismatch";
-  const actual = readStartToken(pid);
-  if (actual === null) return "unknown";
-  return actual === expectedStartToken ? "match" : "mismatch";
-}
 
 // mcp-server/src/session-message-relay.ts
-var LOOP_MS = 5e3;
 var IDENTITY_RECHECK_MS = 10 * 6e4;
-var IDENTITY_RETRY_MS = 6e4;
-var IDENTITY_UNKNOWN_LIMIT = 3;
-var WAKE_BACKOFF_BASE_MS = 3e4;
 var WAKE_BACKOFF_MAX_MS = 10 * 6e4;
-function wakeBackoffDelay(attempt) {
-  return Math.min(WAKE_BACKOFF_MAX_MS, WAKE_BACKOFF_BASE_MS * 2 ** Math.max(0, attempt));
-}
-function relayIdentityDecision(identity, previousUnknowns) {
-  if (identity === "mismatch") return { proceed: false, stop: true, unknowns: 0 };
-  if (identity === "match") return { proceed: true, stop: false, unknowns: 0 };
-  const unknowns = previousUnknowns + 1;
-  return { proceed: false, stop: unknowns >= IDENTITY_UNKNOWN_LIMIT, unknowns };
-}
 function transportWakeCapabilities(transport) {
   if (transport === "claude-inbox") return { wakeVisibility: "silent", canWakeSilently: true };
   if (transport === "codex-queue") return { wakeVisibility: "user-message", canWakeSilently: false };
   return { wakeVisibility: "none", canWakeSilently: false };
 }
-function codexWakeOutcome(error, spawned) {
-  return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
-}
-function claudeWakeOutcome(hadError, connected, wrote) {
-  return !hadError && wrote ? "submitted" : connected || wrote ? "accepted-or-unknown" : "definite-failure";
-}
-function shouldReleaseWake(outcome) {
-  return outcome === "definite-failure";
-}
-function wakeRetryState(outcome, released, attempt, now) {
-  const retry = outcome === "definite-failure" && released;
-  return {
-    retry,
-    nextRingAt: retry ? now + wakeBackoffDelay(attempt) : 0,
-    ringAttempts: retry ? attempt + 1 : 0
-  };
-}
-function argument(name) {
-  const index = process.argv.indexOf(name);
-  return index >= 0 ? process.argv[index + 1] ?? null : null;
-}
-async function ringCodex(sessionId, message) {
-  return new Promise((resolve) => {
-    let spawned = false;
-    const child = execFile("codex", ["queue", "--thread", sessionId, "--message", message], { windowsHide: true, timeout: 1e4 }, (error) => resolve(codexWakeOutcome(error, spawned)));
-    child.once("spawn", () => {
-      spawned = true;
-    });
-  });
-}
-async function ringClaude(message) {
-  const socketPath = process.env.CLAUDE_CODE_MESSAGING_SOCKET;
-  const token = process.env.CLAUDE_CODE_MESSAGING_TOKEN;
-  if (!socketPath || !token) return "definite-failure";
-  return new Promise((resolve) => {
-    let settled = false;
-    let connected = false;
-    let wrote = false;
-    const finish = (outcome) => {
-      if (settled) return;
-      settled = true;
-      resolve(outcome);
-    };
-    const socket = net.createConnection(socketPath);
-    socket.setTimeout(5e3, () => socket.destroy(new Error("Claude inbox timed out.")));
-    socket.once("connect", () => {
-      connected = true;
-      try {
-        wrote = true;
-        socket.end(`${JSON.stringify({ type: "auth", token })}
-${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "now" })}
-`);
-      } catch {
-        finish("accepted-or-unknown");
-      }
-    });
-    socket.once("close", (hadError) => finish(claudeWakeOutcome(hadError, connected, wrote)));
-    socket.once("error", () => finish(claudeWakeOutcome(true, connected, wrote)));
-  });
-}
-async function delay2(milliseconds) {
-  await new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
-async function runSessionMessageRelay(options) {
-  const target = { host: options.host, sessionId: options.sessionId };
-  const relayId = randomUUID();
-  let acquired = false;
-  let acquisitionUnknowns = 0;
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    const identity = processIdentityState(options.parentPid, options.parentStartToken);
-    const decision = relayIdentityDecision(identity, acquisitionUnknowns);
-    acquisitionUnknowns = decision.unknowns;
-    if (decision.stop) return;
-    try {
-      if (decision.proceed) {
-        const result = await sessionMessageRequest("acquire-relay", {
-          target,
-          transport: options.transport,
-          relayId,
-          pid: process.pid,
-          parentPid: options.parentPid
-        });
-        acquired = result.acquired;
-        if (acquired) break;
-      }
-    } catch {
-    }
-    await delay2(3e3);
-  }
-  if (!acquired) return;
-  try {
-    let retryNonce = null;
-    let ringAttempts = 0;
-    let nextRingAt = 0;
-    let identityUnknowns = 0;
-    let nextIdentityCheck = Date.now() + IDENTITY_RECHECK_MS;
-    while (true) {
-      if (!processExists(options.parentPid)) return;
-      const now = Date.now();
-      let checkedIdentity = null;
-      if (now >= nextIdentityCheck) {
-        checkedIdentity = processIdentityState(options.parentPid, options.parentStartToken);
-        if (checkedIdentity === "mismatch") return;
-        if (checkedIdentity === "unknown") {
-          identityUnknowns += 1;
-          if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) return;
-          nextIdentityCheck = now + IDENTITY_RETRY_MS;
-        } else {
-          identityUnknowns = 0;
-          nextIdentityCheck = now + IDENTITY_RECHECK_MS;
-        }
-      }
-      try {
-        const heartbeat = await sessionMessageRequest("heartbeat-relay", { target, transport: options.transport, relayId });
-        if (!heartbeat.alive) return;
-        await sessionMessageRequest("presence-heartbeat", { target, instanceId: options.instanceId });
-        if (options.transport === "codex-deferred") {
-          await delay2(LOOP_MS);
-          continue;
-        }
-        const pending = await sessionMessageRequest("pending", { target });
-        if (pending.count === 0) {
-          retryNonce = null;
-          ringAttempts = 0;
-          nextRingAt = 0;
-        } else if (now >= nextRingAt) {
-          const identity = checkedIdentity ?? processIdentityState(options.parentPid, options.parentStartToken);
-          if (identity === "mismatch") return;
-          if (identity === "unknown") {
-            if (checkedIdentity === null) identityUnknowns += 1;
-            if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) return;
-            nextIdentityCheck = Math.min(nextIdentityCheck, now + IDENTITY_RETRY_MS);
-            nextRingAt = now + IDENTITY_RETRY_MS;
-            await delay2(LOOP_MS);
-            continue;
-          }
-          identityUnknowns = 0;
-          nextIdentityCheck = now + IDENTITY_RECHECK_MS;
-          const nonce = retryNonce ?? newWakeNonce();
-          const reservation = await sessionMessageRequest("reserve-wake", { target, nonce });
-          if (!reservation.dispatch) {
-            retryNonce = null;
-            ringAttempts = 0;
-            nextRingAt = 0;
-          } else {
-            const bell = wakeMessage(nonce);
-            const outcome = options.transport === "codex-queue" ? await ringCodex(options.sessionId, bell) : await ringClaude(bell);
-            let released = false;
-            if (shouldReleaseWake(outcome)) {
-              const result = await sessionMessageRequest("release-wake", { target, nonce });
-              released = result.released;
-            }
-            const retry = wakeRetryState(outcome, released, ringAttempts, now);
-            retryNonce = retry.retry ? nonce : null;
-            nextRingAt = retry.nextRingAt;
-            ringAttempts = retry.ringAttempts;
-          }
-        }
-      } catch {
-      }
-      await delay2(LOOP_MS);
-    }
-  } finally {
-    try {
-      await sessionMessageRequest("presence-end", {
-        target,
-        instanceId: options.instanceId,
-        reason: "host-process-ended"
-      }, void 0, { totalTimeoutMs: 3e3 });
-    } catch {
-    }
-  }
-}
-if (path3.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
-  const host = argument("--host");
-  const sessionId = argument("--session-id");
-  const instanceId = argument("--instance-id");
-  const transport = argument("--transport");
-  const parentPid = Number.parseInt(argument("--parent-pid") ?? "", 10);
-  const parentStartToken = argument("--parent-start-token");
-  if (!host || !sessionId || !instanceId || transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox" || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
-  else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken }).catch(() => {
-    process.exitCode = 1;
-  });
-}
 
 // mcp-server/src/trust-store.ts
-import { createHmac, randomBytes as randomBytes2, randomUUID as randomUUID2, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { chmodSync, mkdirSync } from "node:fs";
-import path4 from "node:path";
+import path3 from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 // contracts/types.ts
@@ -636,7 +407,7 @@ var TrustStore = class {
   constructor(databasePath) {
     this.databasePath = databasePath;
     if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
-    if (databasePath !== ":memory:") mkdirSync(path4.dirname(path4.resolve(databasePath)), { recursive: true, mode: 448 });
+    if (databasePath !== ":memory:") mkdirSync(path3.dirname(path3.resolve(databasePath)), { recursive: true, mode: 448 });
     this.database = new DatabaseSync(databasePath);
     try {
       this.database.exec("PRAGMA busy_timeout = 5000;");
@@ -645,7 +416,7 @@ var TrustStore = class {
       this.initializeSchema();
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
       if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
-      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path4.resolve(databasePath), 384);
+      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path3.resolve(databasePath), 384);
     } catch (cause) {
       try {
         this.database.close();
@@ -676,7 +447,7 @@ var TrustStore = class {
     }
     const receipt = this.seal({
       schemaVersion: CONTRACT_VERSION,
-      receiptId: `source-${randomUUID2()}`,
+      receiptId: `source-${randomUUID()}`,
       originKind: input.originKind,
       host: input.host,
       sessionId: input.sessionId,
@@ -794,7 +565,7 @@ var TrustStore = class {
     return this.transaction(() => {
       const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name);
       if (existing) return existing.value;
-      const value = randomBytes2(32).toString("base64url");
+      const value = randomBytes(32).toString("base64url");
       this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
       return value;
     });
@@ -846,7 +617,7 @@ function sessionMessageTransport(host, environment = process.env) {
   return environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE === "1" ? "codex-queue" : "codex-deferred";
 }
 function startRelay(host, sessionId, instanceId, transport, explicitHostPid) {
-  const relayPath = fileURLToPath3(new URL("./session-message-relay.mjs", import.meta.url));
+  const relayPath = fileURLToPath2(new URL("./session-message-relay.mjs", import.meta.url));
   const hostPid = host === "codex" ? explicitHostPid : process.ppid;
   if (!hostPid || !Number.isInteger(hostPid) || hostPid < 1) return;
   const startToken = processStartToken(hostPid);
@@ -923,7 +694,7 @@ async function handleSessionMessageHook(input, host, explicitHostPid) {
   if (!sessionId) return {};
   const event = text(input.hook_event_name);
   if (event === "SessionStart") {
-    const instanceId = randomUUID3();
+    const instanceId = randomUUID2();
     const transport = sessionMessageTransport(host);
     const capabilities = transportWakeCapabilities(transport);
     try {
@@ -973,7 +744,7 @@ async function runSessionMessageHook(host, raw, explicitHostPid) {
     return "";
   }
 }
-if (path5.resolve(process.argv[1] ?? "") === fileURLToPath3(import.meta.url)) {
+if (path4.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
   let raw = "";
   try {
     raw = readFileSync2(0, "utf8");

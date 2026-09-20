@@ -1,7 +1,5 @@
 import { execFile } from "node:child_process";
 import net from "node:net";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 
 import { newWakeNonce, sessionMessageRequest, wakeMessage } from "./session-message-client.js";
@@ -74,11 +72,6 @@ export function wakeRetryState(outcome: WakeDispatchOutcome, released: boolean, 
     nextRingAt: retry ? now + wakeBackoffDelay(attempt) : 0,
     ringAttempts: retry ? attempt + 1 : 0,
   };
-}
-
-function argument(name: string): string | null {
-  const index = process.argv.indexOf(name);
-  return index >= 0 ? process.argv[index + 1] ?? null : null;
 }
 
 async function ringCodex(sessionId: string, message: string): Promise<WakeDispatchOutcome> {
@@ -233,15 +226,4 @@ export async function runSessionMessageRelay(options: RelayOptions): Promise<voi
       }, undefined, { totalTimeoutMs: 3_000 });
     } catch { /* Lease expiry still provides an unreachable fallback. */ }
   }
-}
-
-if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
-  const host = argument("--host");
-  const sessionId = argument("--session-id");
-  const instanceId = argument("--instance-id");
-  const transport = argument("--transport");
-  const parentPid = Number.parseInt(argument("--parent-pid") ?? "", 10);
-  const parentStartToken = argument("--parent-start-token");
-  if (!host || !sessionId || !instanceId || (transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox") || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
-  else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken }).catch(() => { process.exitCode = 1; });
 }
