@@ -178,28 +178,31 @@ export class SessionMessageStore {
     }
     this.prune(nowMs);
     const now = iso(nowMs);
-    const rows = this.database.prepare(`SELECT * FROM messages
-      WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
-        AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?)
-      ORDER BY created_at ASC LIMIT ?`).all(target.host, target.sessionId, now, now, maxMessages) as Array<Record<string, unknown>>;
-    const selected: Array<Record<string, unknown>> = [];
-    const projected: SessionMessage[] = [];
-    let bodyChars = 0;
-    for (const row of rows) {
-      const message = claimedMessage(row);
-      const next = [...projected, message];
-      if (bodyChars + message.body.length > maxBodyChars || claimResponseBytes(next) > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
-        if (selected.length === 0) throw new Error("The next message exceeds the caller claim budget.");
-        break;
-      }
-      selected.push(row);
-      projected.push(message);
-      bodyChars += message.body.length;
-    }
-    if (selected.length === 0) return [];
     const statement = this.database.prepare("UPDATE messages SET claimed_at = ?, claim_until = ?, delivery_attempts = delivery_attempts + 1 WHERE message_id = ? AND acknowledged_at IS NULL AND (claim_until IS NULL OR claim_until <= ?)");
     this.database.exec("BEGIN IMMEDIATE");
     try {
+      const rows = this.database.prepare(`SELECT * FROM messages
+        WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
+          AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?)
+        ORDER BY created_at ASC LIMIT ?`).all(target.host, target.sessionId, now, now, maxMessages) as Array<Record<string, unknown>>;
+      const selected: Array<Record<string, unknown>> = [];
+      const projected: SessionMessage[] = [];
+      let bodyChars = 0;
+      for (const row of rows) {
+        const message = claimedMessage(row);
+        const next = [...projected, message];
+        if (bodyChars + message.body.length > maxBodyChars || claimResponseBytes(next) > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
+          if (selected.length === 0) throw new Error("The next message exceeds the caller claim budget.");
+          break;
+        }
+        selected.push(row);
+        projected.push(message);
+        bodyChars += message.body.length;
+      }
+      if (selected.length === 0) {
+        this.database.exec("COMMIT");
+        return [];
+      }
       const claimed = selected.filter((row) => {
         const attempts = Number(row.delivery_attempts ?? 0);
         const leaseMs = Math.min(CLAIM_LEASE_MAX_MS, CLAIM_LEASE_BASE_MS * 2 ** Math.min(attempts, 4));

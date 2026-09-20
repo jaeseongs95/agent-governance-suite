@@ -147,6 +147,45 @@ describe("session message spool", () => {
     reopened.close();
   });
 
+  it("locks claim selection before a competing connection can reserve a wake", () => {
+    const directory = stateDirectory();
+    const databasePath = path.join(directory, "messages.sqlite3");
+    const sender = { host: "grok", sessionId: "claim-race-sender" };
+    const target = { host: "codex", sessionId: "claim-race-target" };
+    const claimant = new SessionMessageStore(databasePath);
+    const contender = new SessionMessageStore(databasePath);
+    contender.database.exec("PRAGMA busy_timeout = 0");
+    claimant.send({ messageId: "claim-race-0001", sender, target, body: "claim first" }, 1000);
+
+    let competingReservation: boolean | "locked" | null = null;
+    const originalPrepare = claimant.database.prepare.bind(claimant.database);
+    claimant.database.prepare = ((sql: string) => {
+      const statement = originalPrepare(sql);
+      if (!sql.includes("SELECT * FROM messages")) return statement;
+      return new Proxy(statement, {
+        get(targetStatement, property, receiver) {
+          if (property !== "all") return Reflect.get(targetStatement, property, receiver) as unknown;
+          return (...args: Parameters<typeof targetStatement.all>) => {
+            const rows = targetStatement.all(...args);
+            try {
+              competingReservation = contender.reserveWake(target, "claim-race-nonce-abcdefghijklmnop", 2000);
+            } catch (error) {
+              if (!/locked|SQLITE_BUSY/u.test(String(error))) throw error;
+              competingReservation = "locked";
+            }
+            return rows;
+          };
+        },
+      });
+    }) as typeof claimant.database.prepare;
+
+    expect(claimant.claim(target, 2000, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["claim-race-0001"]);
+    expect(competingReservation).toBe("locked");
+    expect(contender.reserveWake(target, "claim-race-nonce-qrstuvwxyzabcdef", 2001)).toBe(false);
+    claimant.close();
+    contender.close();
+  });
+
   it("caps the unacknowledged spool and expires messages", () => {
     const store = new SessionMessageStore(":memory:");
     const sender = { host: "generic-a", sessionId: "a" };
