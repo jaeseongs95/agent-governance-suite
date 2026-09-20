@@ -65,7 +65,10 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   const sessionId = text(input.session_id);
   if (!sessionId) return {};
   const event = text(input.hook_event_name);
-  if (event === "SessionStart") startRelay(host, sessionId, explicitHostPid);
+  if (event === "SessionStart") {
+    startRelay(host, sessionId, explicitHostPid);
+    return {};
+  }
   if (event === "PreToolUse") {
     const toolName = text(input.tool_name);
     const localTool = toolName.split("__").at(-1) ?? "";

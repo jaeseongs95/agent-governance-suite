@@ -12,6 +12,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  type BrokerEndpoint,
   ensureSessionMessageBroker,
   parseWakeMessages,
   requestSessionMessageOnce,
@@ -48,22 +49,37 @@ async function waitUntil(predicate: () => Promise<boolean>, timeoutMs = 5000): P
   throw new Error("Timed out waiting for test state.");
 }
 
+async function optionalFile(target: string): Promise<string | null> {
+  try {
+    return await readFile(target, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
+}
+
 async function terminateBroker(stateDirectory: string): Promise<void> {
   const endpointPath = path.join(stateDirectory, "endpoint.json");
   const lockPath = path.join(stateDirectory, "broker.lock");
-  try {
-    let pid: number;
-    try {
-      const endpoint = JSON.parse(await readFile(endpointPath, "utf8")) as { pid: number };
-      pid = endpoint.pid;
-    } catch {
-      pid = Number((await readFile(lockPath, "utf8")).trim());
+  const rawEndpoint = await optionalFile(endpointPath);
+  const rawLock = rawEndpoint === null ? await optionalFile(lockPath) : null;
+  if (rawEndpoint === null && rawLock === null) return;
+  const pid = rawEndpoint === null
+    ? Number(rawLock?.trim())
+    : (JSON.parse(rawEndpoint) as { pid: number }).pid;
+  if (!Number.isInteger(pid) || pid < 1) throw new Error("The test broker PID is invalid.");
+  try { process.kill(pid, "SIGTERM"); }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ESRCH") return;
+    throw error;
+  }
+  await waitUntil(async () => {
+    try { process.kill(pid, 0); return false; }
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ESRCH") return true;
+      throw error;
     }
-    try { process.kill(pid, "SIGTERM"); } catch { /* Already stopped. */ }
-    await waitUntil(async () => {
-      try { process.kill(pid, 0); return false; } catch { return true; }
-    }, 10_000);
-  } catch { /* No broker was started. */ }
+  }, 10_000);
 }
 
 afterEach(async () => {
@@ -243,10 +259,18 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     const exited = spawn(process.execPath, [fixture, "exit"], { stdio: "ignore" });
     await expect(waitForSessionMessageBrokerReady(exitedDirectory, exited, 2_000)).rejects.toThrow(/exited before it was ready/u);
 
+    const zeroDirectory = stateDirectory();
+    const zero = spawn(process.execPath, [fixture, "exit-zero"], { stdio: "ignore" });
+    const zeroStartedAt = Date.now();
+    await expect(waitForSessionMessageBrokerReady(zeroDirectory, zero, 100)).rejects.toThrow(/startup deadline/u);
+    expect(Date.now() - zeroStartedAt).toBeLessThan(1_000);
+
     const silentDirectory = stateDirectory();
     const silent = spawn(process.execPath, [fixture, "silent"], { stdio: "ignore" });
     const silentExit = once(silent, "exit");
+    const silentStartedAt = Date.now();
     await expect(waitForSessionMessageBrokerReady(silentDirectory, silent, 100)).rejects.toThrow(/startup deadline/u);
+    expect(Date.now() - silentStartedAt).toBeLessThan(1_000);
     await writeFile(path.join(silentDirectory, "broker.lock"), `${String(silent.pid)}\n`, "utf8");
     await terminateBroker(silentDirectory);
     await silentExit;
@@ -259,6 +283,47 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       ensureSessionMessageBroker(directory),
     ]);
     await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toEqual({ protocolVersion: SESSION_MESSAGE_PROTOCOL });
+  });
+
+  it("enforces an absolute request deadline while a TLS peer keeps sending partial data", async () => {
+    const directory = stateDirectory();
+    await ensureSessionMessageBroker(directory);
+    const endpointPath = path.join(directory, "endpoint.json");
+    const endpoint = JSON.parse(await readFile(endpointPath, "utf8")) as BrokerEndpoint;
+    const [key, certificate] = await Promise.all([
+      readFile(path.join(directory, "broker-key.pem"), "utf8"),
+      readFile(path.join(directory, "broker-cert.pem"), "utf8"),
+    ]);
+    await terminateBroker(directory);
+    await rm(path.join(directory, "broker.lock"), { force: true });
+
+    const sockets = new Set<tls.TLSSocket>();
+    const timers = new Set<NodeJS.Timeout>();
+    const server = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
+      sockets.add(socket);
+      socket.once("close", () => sockets.delete(socket));
+      const timer = setInterval(() => socket.write(" "), 20);
+      timers.add(timer);
+      socket.once("close", () => { clearInterval(timer); timers.delete(timer); });
+    });
+    await new Promise<void>((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("The test TLS server did not receive a port.");
+    await writeFile(endpointPath, `${JSON.stringify({ ...endpoint, port: address.port, pid: process.pid })}\n`, "utf8");
+    const startedAt = Date.now();
+    try {
+      await expect(sessionMessageRequest("ping", {}, directory, { totalTimeoutMs: 150 })).rejects.toThrow(/deadline expired/u);
+      expect(Date.now() - startedAt).toBeLessThan(1_000);
+      await expect(optionalFile(path.join(directory, "broker.lock"))).resolves.toBeNull();
+    } finally {
+      await rm(endpointPath, { force: true });
+      for (const timer of timers) clearInterval(timer);
+      for (const socket of sockets) socket.destroy();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
   });
 
   it("rejects a reused PID when its process-start token changes", () => {
@@ -550,6 +615,27 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       expect(context.length).toBeLessThanOrEqual(9_000);
       expect(context).toContain("hook-budget-0001");
       expect(context).not.toContain("hook-budget-0002");
+    } finally {
+      if (previous === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
+      else process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = previous;
+    }
+  }, 30_000);
+
+  it("starts the relay without spending a second claim budget during SessionStart", async () => {
+    const directory = stateDirectory();
+    const previous = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
+    process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = directory;
+    try {
+      const target = { host: "codex", sessionId: "session-start" };
+      await runSessionMessageCli(JSON.stringify({
+        operation: "send",
+        payload: { messageId: "session-start-0001", sender: { host: "grok", sessionId: "sender" }, target, body: "hello", ttlSeconds: 600 },
+      }), directory);
+      await expect(handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: target.sessionId }, "codex", 0)).resolves.toEqual({});
+      await expect(runSessionMessageCli(JSON.stringify({ operation: "pending", payload: { target } }), directory))
+        .resolves.toMatchObject({ data: { count: 1 } });
+      const output = await handleSessionMessageHook({ hook_event_name: "UserPromptSubmit", session_id: target.sessionId }, "codex");
+      expect((output.hookSpecificOutput as { additionalContext: string }).additionalContext).toContain("session-start-0001");
     } finally {
       if (previous === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
       else process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = previous;

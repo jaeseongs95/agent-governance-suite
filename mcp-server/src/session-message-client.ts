@@ -36,6 +36,46 @@ function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
   };
 }
 
+function deadlineError(message: string): Error {
+  return new Error(message);
+}
+
+function signalError(signal: AbortSignal): Error {
+  return signal.reason instanceof Error ? signal.reason : deadlineError("The session message request deadline expired.");
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw signalError(signal);
+}
+
+function remainingMilliseconds(deadline: number): number {
+  const remaining = deadline - Date.now();
+  if (remaining <= 0) throw deadlineError("The session message request deadline expired.");
+  return remaining;
+}
+
+async function withDeadline<T>(
+  timeoutMs: number,
+  parentSignal: AbortSignal | undefined,
+  message: string,
+  work: (signal: AbortSignal, deadline: number) => Promise<T>,
+): Promise<T> {
+  if (!Number.isFinite(timeoutMs) || timeoutMs < 1) throw deadlineError(message);
+  const controller = new AbortController();
+  const deadline = Date.now() + timeoutMs;
+  const onParentAbort = () => controller.abort(parentSignal ? signalError(parentSignal) : deadlineError(message));
+  if (parentSignal?.aborted) onParentAbort();
+  else parentSignal?.addEventListener("abort", onParentAbort, { once: true });
+  const timer = setTimeout(() => controller.abort(deadlineError(message)), timeoutMs);
+  try {
+    throwIfAborted(controller.signal);
+    return await work(controller.signal, deadline);
+  } finally {
+    clearTimeout(timer);
+    parentSignal?.removeEventListener("abort", onParentAbort);
+  }
+}
+
 export function sessionMessageBrokerEnvironment(environment: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
   const sanitized = { ...environment };
   delete sanitized.CLAUDE_CODE_MESSAGING_SOCKET;
@@ -43,12 +83,13 @@ export function sessionMessageBrokerEnvironment(environment: NodeJS.ProcessEnv =
   return sanitized;
 }
 
-async function readEndpoint(stateDirectory?: string): Promise<{ endpoint: BrokerEndpoint; token: string; certificate: string }> {
+async function readEndpoint(stateDirectory?: string, signal?: AbortSignal): Promise<{ endpoint: BrokerEndpoint; token: string; certificate: string }> {
+  throwIfAborted(signal);
   const paths = statePaths(stateDirectory);
   const [rawEndpoint, rawToken, certificate] = await Promise.all([
-    readFile(paths.endpoint, "utf8"),
-    readFile(paths.token, "utf8"),
-    readFile(paths.certificate, "utf8"),
+    readFile(paths.endpoint, { encoding: "utf8", signal }),
+    readFile(paths.token, { encoding: "utf8", signal }),
+    readFile(paths.certificate, { encoding: "utf8", signal }),
   ]);
   const endpoint = JSON.parse(rawEndpoint) as BrokerEndpoint;
   if (endpoint.protocolVersion !== SESSION_MESSAGE_PROTOCOL
@@ -68,118 +109,142 @@ export async function requestSessionMessageOnce<T>(
   payload: Record<string, unknown>,
   stateDirectory?: string,
   timeoutMs = BROKER_REQUEST_TIMEOUT_MS,
+  parentSignal?: AbortSignal,
 ): Promise<T> {
-  if (!Number.isFinite(timeoutMs) || timeoutMs < 1) throw new Error("The session message request deadline expired.");
-  const { endpoint, token, certificate } = await readEndpoint(stateDirectory);
-  return new Promise<T>((resolve, reject) => {
-    let settled = false;
-    let buffer = "";
-    const socket = tls.connect({
-      host: endpoint.address,
-      port: endpoint.port,
-      ca: certificate,
-      servername: "localhost",
-      minVersion: "TLSv1.3",
-      maxVersion: "TLSv1.3",
-      rejectUnauthorized: true,
-      checkServerIdentity: (_host, certificate) => certificate.fingerprint256 === endpoint.certificateFingerprint256
-        ? undefined
-        : new Error("The session message broker certificate pin did not match."),
+  return withDeadline(Math.min(BROKER_REQUEST_TIMEOUT_MS, timeoutMs), parentSignal, "The session message broker timed out.", async (signal) => {
+    const { endpoint, token, certificate } = await readEndpoint(stateDirectory, signal);
+    return new Promise<T>((resolve, reject) => {
+      let settled = false;
+      let buffer = "";
+      const socket = tls.connect({
+        host: endpoint.address,
+        port: endpoint.port,
+        ca: certificate,
+        servername: "localhost",
+        minVersion: "TLSv1.3",
+        maxVersion: "TLSv1.3",
+        rejectUnauthorized: true,
+        checkServerIdentity: (_host, certificate) => certificate.fingerprint256 === endpoint.certificateFingerprint256
+          ? undefined
+          : new Error("The session message broker certificate pin did not match."),
+      });
+      const finish = (error?: Error, value?: T) => {
+        if (settled) return;
+        settled = true;
+        signal.removeEventListener("abort", onAbort);
+        socket.destroy();
+        if (error) reject(error);
+        else resolve(value as T);
+      };
+      const onAbort = () => finish(signalError(signal));
+      signal.addEventListener("abort", onAbort, { once: true });
+      if (signal.aborted) return onAbort();
+      socket.once("secureConnect", () => {
+        const peer = socket.getPeerCertificate();
+        if (!peer.fingerprint256 || peer.fingerprint256 !== endpoint.certificateFingerprint256) {
+          finish(new Error("The session message broker certificate pin did not match."));
+          return;
+        }
+        socket.write(`${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload })}\n`);
+      });
+      socket.on("data", (chunk: Buffer) => {
+        buffer += chunk.toString("utf8");
+        if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) return finish(new Error("The broker response exceeded its limit."));
+        const newline = buffer.indexOf("\n");
+        if (newline < 0) return;
+        try {
+          const response = JSON.parse(buffer.slice(0, newline)) as { ok: boolean; data?: T; error?: string };
+          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
+          else finish(undefined, response.data);
+        } catch {
+          finish(new Error("The broker returned invalid JSON."));
+        }
+      });
+      socket.once("error", (error) => finish(error));
     });
-    const finish = (error?: Error, value?: T) => {
-      if (settled) return;
-      settled = true;
-      socket.destroy();
-      if (error) reject(error);
-      else resolve(value as T);
-    };
-    socket.setTimeout(Math.min(BROKER_REQUEST_TIMEOUT_MS, timeoutMs), () => finish(new Error("The session message broker timed out.")));
-    socket.once("secureConnect", () => {
-      const peer = socket.getPeerCertificate();
-      if (!peer.fingerprint256 || peer.fingerprint256 !== endpoint.certificateFingerprint256) {
-        finish(new Error("The session message broker certificate pin did not match."));
-        return;
-      }
-      socket.write(`${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload })}\n`);
-    });
-    socket.on("data", (chunk: Buffer) => {
-      buffer += chunk.toString("utf8");
-      if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) return finish(new Error("The broker response exceeded its limit."));
-      const newline = buffer.indexOf("\n");
-      if (newline < 0) return;
-      try {
-        const response = JSON.parse(buffer.slice(0, newline)) as { ok: boolean; data?: T; error?: string };
-        if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
-        else finish(undefined, response.data);
-      } catch {
-        finish(new Error("The broker returned invalid JSON."));
-      }
-    });
-    socket.once("error", (error) => finish(error));
   });
 }
 
-async function delay(milliseconds: number): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, milliseconds));
+async function delay(milliseconds: number, signal: AbortSignal): Promise<void> {
+  throwIfAborted(signal);
+  await new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(finish, milliseconds);
+    const onAbort = () => finish(signalError(signal));
+    function finish(error?: Error): void {
+      clearTimeout(timer);
+      signal.removeEventListener("abort", onAbort);
+      if (error) reject(error);
+      else resolve();
+    }
+    signal.addEventListener("abort", onAbort, { once: true });
+    if (signal.aborted) onAbort();
+  });
 }
 
 export async function waitForSessionMessageBrokerReady(
   stateDirectory: string,
   child: ChildProcess,
   timeoutMs = BROKER_STARTUP_TIMEOUT_MS,
+  parentSignal?: AbortSignal,
 ): Promise<void> {
-  let spawnError: Error | null = null;
-  const onError = (error: Error) => { spawnError = error; };
-  child.once("error", onError);
-  try {
-    const deadline = Date.now() + timeoutMs;
-    let lastError: unknown;
-    while (Date.now() < deadline) {
-      if (spawnError) throw spawnError;
-      if ((child.exitCode !== null && child.exitCode !== 0) || child.signalCode !== null) {
-        throw new Error(
-          `The session message broker exited before it was ready (code ${String(child.exitCode)}, signal ${String(child.signalCode)}).`,
-        );
+  return withDeadline(timeoutMs, parentSignal, "The session message broker did not become ready before the startup deadline.", async (signal, deadline) => {
+    let spawnError: Error | null = null;
+    const onError = (error: Error) => { spawnError = error; };
+    child.once("error", onError);
+    try {
+      while (true) {
+        throwIfAborted(signal);
+        if (spawnError) throw spawnError;
+        if ((child.exitCode !== null && child.exitCode !== 0) || child.signalCode !== null) {
+          throw new Error(
+            `The session message broker exited before it was ready (code ${String(child.exitCode)}, signal ${String(child.signalCode)}).`,
+          );
+        }
+        await delay(Math.min(100, remainingMilliseconds(deadline)), signal);
+        try {
+          await requestSessionMessageOnce("ping", {}, stateDirectory, remainingMilliseconds(deadline), signal);
+          return;
+        } catch (error) {
+          throwIfAborted(signal);
+          if (error instanceof BrokerRequestRejected) throw error;
+        }
       }
-      await delay(100);
-      try {
-        await requestSessionMessageOnce("ping", {}, stateDirectory, Math.max(1, deadline - Date.now()));
-        return;
-      } catch (error) {
-        lastError = error;
-      }
+    } finally {
+      child.off("error", onError);
     }
-    throw new Error("The session message broker did not become ready before the startup deadline.", { cause: lastError });
-  } finally {
-    child.off("error", onError);
-  }
+  });
 }
 
 export async function ensureSessionMessageBroker(
   stateDirectory = resolveSessionMessageStateDirectory(),
   timeoutMs = BROKER_STARTUP_TIMEOUT_MS,
+  parentSignal?: AbortSignal,
 ): Promise<void> {
-  const deadline = Date.now() + Math.min(BROKER_STARTUP_TIMEOUT_MS, timeoutMs);
-  try {
-    await requestSessionMessageOnce("ping", {}, stateDirectory, Math.max(1, deadline - Date.now()));
-    return;
-  } catch {
-    await mkdir(stateDirectory, { recursive: true, mode: 0o700 });
-    try { await chmod(stateDirectory, 0o700); } catch { /* Windows ACLs remain governed by the user profile. */ }
-    const adjacentBroker = fileURLToPath(new URL("./session-message-broker.mjs", import.meta.url));
-    const brokerPath = existsSync(adjacentBroker)
-      ? adjacentBroker
-      : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
-    const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
-      detached: true,
-      windowsHide: true,
-      stdio: "ignore",
-      env: sessionMessageBrokerEnvironment(),
-    });
-    child.unref();
-    await waitForSessionMessageBrokerReady(stateDirectory, child, Math.max(1, deadline - Date.now()));
-    return;
-  }
+  return withDeadline(Math.min(BROKER_STARTUP_TIMEOUT_MS, timeoutMs), parentSignal, "The session message broker did not become ready before the startup deadline.", async (signal, deadline) => {
+    try {
+      await requestSessionMessageOnce("ping", {}, stateDirectory, remainingMilliseconds(deadline), signal);
+      return;
+    } catch (error) {
+      throwIfAborted(signal);
+      if (error instanceof BrokerRequestRejected) throw error;
+      await mkdir(stateDirectory, { recursive: true, mode: 0o700 });
+      throwIfAborted(signal);
+      try { await chmod(stateDirectory, 0o700); } catch { /* Windows ACLs remain governed by the user profile. */ }
+      remainingMilliseconds(deadline);
+      const adjacentBroker = fileURLToPath(new URL("./session-message-broker.mjs", import.meta.url));
+      const brokerPath = existsSync(adjacentBroker)
+        ? adjacentBroker
+        : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
+      const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+        detached: true,
+        windowsHide: true,
+        stdio: "ignore",
+        env: sessionMessageBrokerEnvironment(),
+      });
+      child.unref();
+      await waitForSessionMessageBrokerReady(stateDirectory, child, remainingMilliseconds(deadline), signal);
+    }
+  });
 }
 
 export async function sessionMessageRequest<T>(
@@ -189,16 +254,17 @@ export async function sessionMessageRequest<T>(
   options: { totalTimeoutMs?: number } = {},
 ): Promise<T> {
   const totalTimeoutMs = options.totalTimeoutMs ?? SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
-  if (!Number.isFinite(totalTimeoutMs) || totalTimeoutMs < 1) throw new Error("The session message request timeout must be positive.");
-  const deadline = Date.now() + totalTimeoutMs;
-  const remaining = () => Math.max(1, deadline - Date.now());
-  try {
-    return await requestSessionMessageOnce<T>(operation, payload, stateDirectory, remaining());
-  } catch (error) {
-    if (error instanceof BrokerRequestRejected) throw error;
-    await ensureSessionMessageBroker(stateDirectory, remaining());
-    return requestSessionMessageOnce<T>(operation, payload, stateDirectory, remaining());
-  }
+  return withDeadline(totalTimeoutMs, undefined, "The session message request deadline expired.", async (signal, deadline) => {
+    try {
+      return await requestSessionMessageOnce<T>(operation, payload, stateDirectory, remainingMilliseconds(deadline), signal);
+    } catch (error) {
+      throwIfAborted(signal);
+      if (error instanceof BrokerRequestRejected) throw error;
+      await ensureSessionMessageBroker(stateDirectory, remainingMilliseconds(deadline), signal);
+      throwIfAborted(signal);
+      return requestSessionMessageOnce<T>(operation, payload, stateDirectory, remainingMilliseconds(deadline), signal);
+    }
+  });
 }
 
 export function wakeMessage(nonce: string): string {
