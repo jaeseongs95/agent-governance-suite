@@ -458,7 +458,11 @@ function tlv(tag, ...parts) {
 }
 var sequence = (...parts) => tlv(48, ...parts);
 var objectIdentifier = (hex) => tlv(6, Buffer.from(hex, "hex"));
-var integer = (value) => tlv(2, value[0] & 128 ? Buffer.concat([Buffer.from([0]), value]) : value);
+function integer(value) {
+  const firstNonZero = value.findIndex((byte) => byte !== 0);
+  const body = firstNonZero < 0 ? value.subarray(-1) : value.subarray(firstNonZero);
+  return tlv(2, body[0] & 128 ? Buffer.concat([Buffer.from([0]), body]) : body);
+}
 var utf8 = (value) => tlv(12, Buffer.from(value, "utf8"));
 function certificateTime(value) {
   const digits = value.toISOString().replace(/[-:T]/gu, "").slice(0, 14);
@@ -468,6 +472,8 @@ var ECDSA_WITH_SHA256 = sequence(objectIdentifier("2a8648ce3d040302"));
 var COMMON_NAME = sequence(tlv(49, sequence(objectIdentifier("550403"), utf8("agent-governance-suite local broker"))));
 function createSelfSignedCertificate(now = /* @__PURE__ */ new Date()) {
   const { publicKey, privateKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
+  const serialNumber = randomBytes(16);
+  if (serialNumber.every((byte) => byte === 0)) serialNumber[serialNumber.length - 1] = 1;
   const notBefore = new Date(now.getTime() - 6e4);
   const notAfter = new Date(now);
   notAfter.setUTCFullYear(notAfter.getUTCFullYear() + 5);
@@ -481,7 +487,7 @@ function createSelfSignedCertificate(now = /* @__PURE__ */ new Date()) {
   )));
   const toBeSigned = sequence(
     tlv(160, integer(Buffer.from([2]))),
-    integer(randomBytes(16)),
+    integer(serialNumber),
     ECDSA_WITH_SHA256,
     COMMON_NAME,
     sequence(certificateTime(notBefore), certificateTime(notAfter)),

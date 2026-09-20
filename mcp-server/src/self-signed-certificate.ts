@@ -13,7 +13,11 @@ function tlv(tag: number, ...parts: Buffer[]): Buffer {
 
 const sequence = (...parts: Buffer[]) => tlv(0x30, ...parts);
 const objectIdentifier = (hex: string) => tlv(0x06, Buffer.from(hex, "hex"));
-const integer = (value: Buffer) => tlv(0x02, value[0]! & 0x80 ? Buffer.concat([Buffer.from([0]), value]) : value);
+function integer(value: Buffer): Buffer {
+  const firstNonZero = value.findIndex((byte) => byte !== 0);
+  const body = firstNonZero < 0 ? value.subarray(-1) : value.subarray(firstNonZero);
+  return tlv(0x02, body[0]! & 0x80 ? Buffer.concat([Buffer.from([0]), body]) : body);
+}
 const utf8 = (value: string) => tlv(0x0c, Buffer.from(value, "utf8"));
 
 function certificateTime(value: Date): Buffer {
@@ -29,6 +33,8 @@ const COMMON_NAME = sequence(tlv(0x31, sequence(objectIdentifier("550403"), utf8
 /** Creates the minimal portable X.509 material needed by the loopback TLS 1.3 broker. */
 export function createSelfSignedCertificate(now = new Date()): { privateKeyPem: string; certificatePem: string; fingerprint256: string } {
   const { publicKey, privateKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
+  const serialNumber = randomBytes(16);
+  if (serialNumber.every((byte) => byte === 0)) serialNumber[serialNumber.length - 1] = 1;
   const notBefore = new Date(now.getTime() - 60_000);
   const notAfter = new Date(now);
   notAfter.setUTCFullYear(notAfter.getUTCFullYear() + 5);
@@ -42,7 +48,7 @@ export function createSelfSignedCertificate(now = new Date()): { privateKeyPem: 
   )));
   const toBeSigned = sequence(
     tlv(0xa0, integer(Buffer.from([2]))),
-    integer(randomBytes(16)),
+    integer(serialNumber),
     ECDSA_WITH_SHA256,
     COMMON_NAME,
     sequence(certificateTime(notBefore), certificateTime(notAfter)),
