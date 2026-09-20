@@ -1,6 +1,7 @@
 import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { Worker } from "node:worker_threads";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -690,6 +691,150 @@ describe("local MCP convergence guard", () => {
     }));
     expect(rejected.error?.code).toBe("NEW_EVIDENCE_REQUIRED");
     expect(rejected.error?.details).toMatchObject({ route: "diagnose" });
+  });
+
+  it("records a rejected retry on the root without spending attempt budget", async () => {
+    const harness = await createHarness();
+    const root = openRoot(harness.service);
+    let current = status(harness.service, root.rootId);
+    let attempt = claimAndStart(harness.service, current.root);
+    current = recordFailureAndStatus(harness.service, root.rootId, attempt.receipt);
+
+    const secondFrame = frame({ targetVersion: "target-v2" });
+    attempt = claimAndStart(harness.service, current.root, {
+      frame: secondFrame,
+      priorFailure: latestFailure(current, "test:shared-evidence"),
+    });
+    current = recordFailureAndStatus(harness.service, root.rootId, attempt.receipt);
+    const before = current;
+
+    const rejected = harness.service.claimWorkflowAttempt(proposal(harness.service, before.root, {
+      frame: secondFrame,
+      priorFailure: latestFailure(before, "test:shared-evidence"),
+    }));
+    expect(rejected.error?.code).toBe("NEW_EVIDENCE_REQUIRED");
+    expect(rejected.error?.details).toMatchObject({
+      route: "diagnose",
+      rootRevision: before.root.revision + 1,
+    });
+
+    current = status(harness.service, root.rootId);
+    expect(current.root.revision).toBe(before.root.revision + 1);
+    expect(current.root.state).toBe("open");
+    expect(current.attemptsUsedInEpoch).toBe(before.attemptsUsedInEpoch);
+    expect(current.leases).toHaveLength(before.leases.length);
+    expect(current.root.retryRejections).toHaveLength(1);
+    expect(current.root.retryRejections?.[0]).toMatchObject({
+      epoch: 1,
+      reason: "stale-evidence",
+      actorId: "implementation-agent",
+      evidenceRefs: ["test:shared-evidence"],
+    });
+
+    // The record has to survive a restart: it is what burns the evidence later.
+    closeStore(harness.store);
+    const restartedStore = trackStore(harness.databasePath);
+    const restarted = serviceFor(harness.registryPath, restartedStore);
+    expect(status(restarted, root.rootId).root.retryRejections).toHaveLength(1);
+  });
+
+  it("reads a root stored before retry rejections existed", async () => {
+    const harness = await createHarness();
+    const root = openRoot(harness.service);
+    let current = status(harness.service, root.rootId);
+    let attempt = claimAndStart(harness.service, current.root);
+    current = recordFailureAndStatus(harness.service, root.rootId, attempt.receipt);
+    const secondFrame = frame({ targetVersion: "legacy-target-v2" });
+    attempt = claimAndStart(harness.service, current.root, {
+      frame: secondFrame,
+      priorFailure: latestFailure(current, "test:legacy-evidence"),
+    });
+    current = recordFailureAndStatus(harness.service, root.rootId, attempt.receipt);
+    expect(harness.service.claimWorkflowAttempt(proposal(harness.service, current.root, {
+      frame: secondFrame,
+      priorFailure: latestFailure(current, "test:legacy-evidence"),
+    })).error?.code).toBe("NEW_EVIDENCE_REQUIRED");
+    expect(status(harness.service, root.rootId).root.retryRejections).toHaveLength(1);
+
+    // A root written by a deployment without the field must still load.
+    closeStore(harness.store);
+    const database = new DatabaseSync(harness.databasePath);
+    try {
+      const stored = database.prepare("SELECT root_json FROM convergence_roots WHERE root_id = ?").get(root.rootId) as { root_json: string };
+      const legacy = JSON.parse(stored.root_json) as ConvergenceRootV1;
+      delete legacy.retryRejections;
+      database.prepare("UPDATE convergence_roots SET root_json = ? WHERE root_id = ?").run(JSON.stringify(legacy), root.rootId);
+    } finally {
+      database.close();
+    }
+
+    const restarted = serviceFor(harness.registryPath, trackStore(harness.databasePath));
+    current = status(restarted, root.rootId);
+    expect(current.root.retryRejections).toBeUndefined();
+    expect(current).toMatchObject({ attemptsUsedInEpoch: 2, currentEpoch: 1 });
+    expect(current.root.state).toBe("open");
+  });
+
+  it("refuses evidence burnt by an earlier rejection even in the next epoch", async () => {
+    const { service } = await createHarness();
+    const root = openRoot(service);
+    let current = status(service, root.rootId);
+    let attempt = claimAndStart(service, current.root);
+    current = recordFailureAndStatus(service, root.rootId, attempt.receipt);
+
+    const secondFrame = frame({ targetVersion: "burnt-target-v2" });
+    attempt = claimAndStart(service, current.root, {
+      frame: secondFrame,
+      priorFailure: latestFailure(current, "test:burnt-evidence"),
+    });
+    current = recordFailureAndStatus(service, root.rootId, attempt.receipt);
+
+    const rejected = service.claimWorkflowAttempt(proposal(service, current.root, {
+      frame: secondFrame,
+      priorFailure: latestFailure(current, "test:burnt-evidence"),
+    }));
+    expect(rejected.error?.code).toBe("NEW_EVIDENCE_REQUIRED");
+
+    current = status(service, root.rootId);
+    attempt = claimAndStart(service, current.root, {
+      frame: frame({ targetVersion: "burnt-target-v3" }),
+      priorFailure: latestFailure(current, "test:third-attempt-evidence"),
+    });
+    current = recordFailureAndStatus(service, root.rootId, attempt.receipt);
+    expect(current).toMatchObject({ attemptsUsedInEpoch: 3 });
+    expect(current.root.state).toBe("needs-review");
+
+    const nextFrame = frame({ targetVersion: "burnt-epoch-2" });
+    const resolved = service.resolveConvergenceGate({
+      schemaVersion: "1.0.0",
+      rootId: root.rootId,
+      expectedRevision: current.root.revision,
+      review: review(
+        current,
+        { classification: "semantics-preserving", route: "resume-new-epoch", proposedFrame: nextFrame },
+        "burnt-review",
+      ),
+    });
+    expect(resolved.error).toBeNull();
+    expect(resolved.data?.currentEpoch).toBe(2);
+
+    current = status(service, root.rootId);
+    const reopened = claimAndStart(service, current.root, { frame: nextFrame, priorFailure: null });
+    current = recordFailureAndStatus(service, root.rootId, reopened.receipt);
+
+    const recycled = service.claimWorkflowAttempt(proposal(service, current.root, {
+      frame: nextFrame,
+      priorFailure: latestFailure(current, "test:burnt-evidence"),
+    }));
+    expect(recycled.error?.code).toBe("NEW_EVIDENCE_REQUIRED");
+
+    current = status(service, root.rootId);
+    const accepted = service.claimWorkflowAttempt(proposal(service, current.root, {
+      frame: nextFrame,
+      priorFailure: latestFailure(current, "test:genuinely-new-evidence"),
+    }));
+    expect(accepted.error).toBeNull();
+    expect(accepted.data?.epoch).toBe(2);
   });
 
   it("persists roots, consumed budget, running attempts, and aborted outcomes across restart", async () => {

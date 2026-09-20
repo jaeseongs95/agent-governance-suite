@@ -686,8 +686,20 @@ export interface ConvergenceRootV1 {
   targetDigest: Sha256Digest;
   operationalDigest: Sha256Digest;
   userApprovalRefs: string[];
+  retryRejections?: RetryRejectionV1[];
   createdAt: string;
   updatedAt: string;
+}
+
+/** One rejected retry claim, kept so its evidence cannot be recycled as new. */
+export interface RetryRejectionV1 {
+  epoch: number;
+  reason: "stale-fingerprint" | "stale-evidence";
+  actorId?: string;
+  expectedFingerprint?: string | null;
+  targetDigest?: Sha256Digest;
+  evidenceRefs: string[];
+  rejectedAt: string;
 }
 
 export interface OpenConvergenceRootRequestV1 {

@@ -19,6 +19,7 @@ import {
   type ModelClassV1,
   REASONING_EFFORT,
   type ReasoningEffortV1,
+  type RetryRejectionV1,
   type RiskGate,
   type PlannedStageV1,
   POLICY_CAPABILITY,
@@ -349,20 +350,46 @@ export class WorkflowService {
           });
         }
         if (!proposal.priorFailure || proposal.priorFailure.fingerprint !== latestOutcome.failureFingerprint) {
-          throw new WorkflowContractError("NEW_EVIDENCE_REQUIRED", "A retry must bind the latest failure fingerprint and a discriminating hypothesis.", {
-            expectedFingerprint: latestOutcome.failureFingerprint,
-          });
+          this.rejectRetry(
+            root,
+            {
+              epoch: root.currentEpoch,
+              reason: "stale-fingerprint",
+              actorId: proposal.actorId,
+              expectedFingerprint: latestOutcome.failureFingerprint,
+              targetDigest: proposedDigests.targetDigest,
+              evidenceRefs: proposal.priorFailure?.evidenceRefs ?? [],
+              rejectedAt: new Date().toISOString(),
+            },
+            "A retry must bind the latest failure fingerprint and a discriminating hypothesis.",
+            { expectedFingerprint: latestOutcome.failureFingerprint },
+          );
         }
         const priorLease = attempts.at(-1)!;
         const priorProposal = snapshot.proposals.find((item) => convergenceDigest(item) === priorLease.proposalDigest);
         const sameTarget = proposedDigests.targetDigest === priorLease.targetDigest;
-        const oldEvidence = new Set(priorProposal?.priorFailure?.evidenceRefs ?? []);
+        // Evidence burnt by an earlier rejection stays burnt for the whole root: a new epoch
+        // forces priorFailure to null, so an epoch-scoped set would let it back in.
+        const burned = (root.retryRejections ?? [])
+          .filter((item) => item.reason === "stale-evidence")
+          .flatMap((item) => item.evidenceRefs);
+        const oldEvidence = new Set([...(priorProposal?.priorFailure?.evidenceRefs ?? []), ...burned]);
         const hasNewEvidence = proposal.priorFailure.evidenceRefs.some((reference) => !oldEvidence.has(reference));
         if (sameTarget && !hasNewEvidence) {
-          throw new WorkflowContractError("NEW_EVIDENCE_REQUIRED", "The proposed retry changes neither the target nor the observed evidence.", {
-            rootId: root.rootId,
-            route: "diagnose",
-          });
+          this.rejectRetry(
+            root,
+            {
+              epoch: root.currentEpoch,
+              reason: "stale-evidence",
+              actorId: proposal.actorId,
+              expectedFingerprint: latestOutcome.failureFingerprint,
+              targetDigest: proposedDigests.targetDigest,
+              evidenceRefs: proposal.priorFailure.evidenceRefs,
+              rejectedAt: new Date().toISOString(),
+            },
+            "The proposed retry changes neither the target nor the observed evidence.",
+            { rootId: root.rootId, route: "diagnose" },
+          );
         }
       }
 
@@ -1619,6 +1646,30 @@ export class WorkflowService {
     };
     this.assertReceipt(receipt);
     return receipt;
+  }
+
+  /** Records a rejected retry on the root before failing, so its evidence cannot return as new. */
+  private rejectRetry(
+    root: ConvergenceRootV1,
+    entry: RetryRejectionV1,
+    message: string,
+    details: Record<string, unknown>,
+  ): never {
+    const recorded = root.retryRejections ?? [];
+    const identity = (item: RetryRejectionV1): string => convergenceDigest({ ...item, rejectedAt: "" });
+    let rootRevision = root.revision;
+    if (!recorded.some((item) => identity(item) === identity(entry))) {
+      const updated = bumpedRoot(root, entry.rejectedAt);
+      updated.retryRejections = [...recorded, entry];
+      this.validator.convergenceRoot(updated);
+      if (!this.store.updateConvergenceRoot(updated, root.revision)) {
+        throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while recording the rejected retry.", {
+          rootId: root.rootId,
+        });
+      }
+      rootRevision = updated.revision;
+    }
+    throw new WorkflowContractError("NEW_EVIDENCE_REQUIRED", message, { ...details, rootRevision });
   }
 
   private moveRootToReview(root: ConvergenceRootV1): void {

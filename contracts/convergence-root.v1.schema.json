@@ -21,6 +21,23 @@
     "targetDigest": { "$ref": "#/$defs/digest" },
     "operationalDigest": { "$ref": "#/$defs/digest" },
     "userApprovalRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "retryRejections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["epoch", "reason", "evidenceRefs", "rejectedAt"],
+        "properties": {
+          "epoch": { "type": "integer", "minimum": 1, "maximum": 2 },
+          "reason": { "enum": ["stale-fingerprint", "stale-evidence"] },
+          "actorId": { "type": "string", "minLength": 1 },
+          "expectedFingerprint": { "type": ["string", "null"], "minLength": 1 },
+          "targetDigest": { "$ref": "#/$defs/digest" },
+          "evidenceRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "rejectedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
     "createdAt": { "type": "string", "format": "date-time" },
     "updatedAt": { "type": "string", "format": "date-time" }
   },
