@@ -16269,38 +16269,46 @@ function normalizedScope(value, workspaceLocator) {
   const normalized = path3.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
   return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }
-function surfaceDirectoryExists(surface) {
-  const directory = surface.conservative ? surface.physical : path3.posix.dirname(surface.physical);
-  return existsSync(directory || "/");
+function surfaceBacked(surface, observedOutsideCheckouts) {
+  const unchanged = observedOutsideCheckouts && surface.git === null && !surface.conservative;
+  return existsSync((unchanged ? path3.posix.dirname(surface.physical) : surface.physical) || "/");
 }
 function activeRootIdentity(root, stored) {
   const digest3 = surfaceDigest(root);
-  const legacy = stored === null;
   const observed = stored && stored.surfaceDigest === digest3 ? stored.identity : null;
+  const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest3 };
   if (observed && observed.surfaces.every((surface) => surface.git !== null)) {
-    return { root, identity: observed, resolved: true, legacy, fresh: false, surfaceDigest: digest3 };
+    return { ...known, identity: observed, resolved: true, fresh: false };
   }
-  let derived;
+  let derived = null;
   try {
     derived = rootIdentity(root, true);
   } catch (cause) {
     if (!(cause instanceof WorkflowContractError)) throw cause;
-    if (observed) return { root, identity: observed, resolved: true, legacy, fresh: false, surfaceDigest: digest3 };
-    const locator = root.frame.workspace.locator;
+  }
+  const locator = root.frame.workspace.locator;
+  if (!observed && !derived) {
     const identity2 = {
       version: 1,
       workspacePhysical: normalizedScope(".", locator),
       surfaces: writeSurface(root).map((entry) => ({ entry, physical: normalizedScope(entry, locator), git: null, conservative: null }))
     };
-    return { root, identity: identity2, resolved: false, legacy, fresh: false, surfaceDigest: digest3 };
+    return { ...known, identity: identity2, resolved: false, fresh: false };
   }
+  let resolved = derived !== null && existsSync(locator);
+  const surfaces = (observed ?? derived).surfaces.map((surface, index) => {
+    if (observed && surface.git !== null) return surface;
+    const current = derived?.surfaces[index];
+    if (current && surfaceBacked(current, observed !== null)) return current;
+    resolved = false;
+    return surface;
+  });
   const identity = {
-    ...derived,
-    surfaces: derived.surfaces.map((surface, index) => surface.git === null && observed?.surfaces[index]?.git ? observed.surfaces[index] : surface)
+    version: 1,
+    workspacePhysical: observed?.workspacePhysical ?? derived.workspacePhysical,
+    surfaces
   };
-  const resolved = observed !== null || identity.surfaces.every((surface) => surface.git !== null || surfaceDirectoryExists(surface));
-  const fresh = resolved && JSON.stringify(identity) !== JSON.stringify(observed);
-  return { root, identity, resolved, legacy, fresh, surfaceDigest: digest3 };
+  return { ...known, identity, resolved, fresh: resolved && JSON.stringify(identity) !== JSON.stringify(observed) };
 }
 var GATED_STATES = ["needs-review", "needs-user"];
 function overlaps(left, right) {
@@ -16313,8 +16321,8 @@ function insideParentSurface(surface, parent) {
   return parent.surfaces.some((owned) => pathWithin(surface.physical, owned.physical) || sharesLineage(surface, owned) && pathWithin(surface.git.relative, owned.git.relative));
 }
 function lineageRelation(left, right, checkouts, scans) {
-  if (sharesLineage(left, right)) {
-    return overlaps(left.git.relative, right.git.relative) ? "overlap" : "none";
+  if (sharesLineage(left, right) && overlaps(left.git.relative, right.git.relative)) {
+    return "overlap";
   }
   let uncertain = false;
   for (const [container, member] of [[left, right], [right, left]]) {
@@ -16367,7 +16375,10 @@ function findRootConflict(candidate, parent, actives) {
 }
 function replacementMatch(candidate, parent) {
   if (!parent.resolved) {
-    const sameNamedWorkspace = parent.legacy && parent.root.frame.workspace.workspaceId === candidate.root.frame.workspace.workspaceId && normalizeWorkspaceLocator(parent.root.frame.workspace.locator) === normalizeWorkspaceLocator(candidate.root.frame.workspace.locator);
+    if (!parent.legacy) {
+      return parent.observedWorkspace && candidate.identity.workspacePhysical === parent.identity.workspacePhysical ? "physical" : null;
+    }
+    const sameNamedWorkspace = parent.root.frame.workspace.workspaceId === candidate.root.frame.workspace.workspaceId && normalizeWorkspaceLocator(parent.root.frame.workspace.locator) === normalizeWorkspaceLocator(candidate.root.frame.workspace.locator);
     return sameNamedWorkspace ? "legacy-locator" : null;
   }
   if (candidate.identity.workspacePhysical === parent.identity.workspacePhysical) return "physical";
