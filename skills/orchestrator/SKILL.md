@@ -34,11 +34,7 @@ metadata:
 
 여러 provider가 같은 스킬에 있어도 각 provider의 capability, phase, 입력·출력 artifact를 독립 단계로 취급한다. 스킬 디렉터리명이나 배열 위치로 순서를 추측하지 않는다.
 
-## 전체 최적화와 기준선 재배치
-
-에이전트 간 이견이 생기면 개별 실행의 원장·시도 예산·매몰비용보다 최종 통합·배포 결과와 총작업 비용을 우선한다. 최신 통합 대상에 맞춰 다시 수행하는 편이 후속 충돌과 재검증을 줄이면 기존 기준선을 고수하지 말고 작업을 재배치한다. 폐기 비용과 절감 효과를 비교한 근거를 공유하고, 재사용 가능한 조사·명세·증거는 보존한다.
-
-시도 예산과 기존 run 기록은 무의미한 반복을 막고 이력을 보존하기 위한 제약이지, 오래된 target에서 구현을 계속할 이유가 아니다. 이를 우회하거나 지우지 않되, 예산 소진을 피하려는 이유만으로 최종 통합 대상과 다른 기준선을 유지하지 않는다. target이 바뀌면 기존 run을 변경하지 않고 필요한 frame 검토와 새 시도를 거쳐 최종 대상 위에서 다시 검증한다.
+에이전트 간 이견이나 통합 대상 변경으로 기준선을 재배치할 때는 [협업 상세 계약](references/collaboration.md#전체-최적화와-기준선-재배치)을 먼저 읽는다.
 
 ## 초기 라우팅
 
@@ -58,17 +54,7 @@ metadata:
 
 통합 워크플로에서는 bootstrap을 마친 뒤 작업 단위 조정, 독립 숙고, 변경 전 기준선, 최소 구현, 위험한 상태 변경 직전의 사전 점검, 요청된 전문 작업, 범위·수용 근거 확인, 최종 고위험 감사 순으로 연결한다. 구체적인 순서는 provider의 `phaseOrder`와 artifact 의존성으로 정하며 MCP stage 순서와 같아야 한다. 각 전문 스킬이 이미 내부적으로 worker를 조정하는 경우에는 같은 단위를 다시 배정하지 않는다.
 
-### 위임 판단
-
-자동 위임 전에 다음 조건을 모두 확인한다.
-
-- 담당 결과를 독립적으로 완료하고 검증할 수 있다.
-- 동시에 실행하면 실제 병목이 줄어든다.
-- 관련 원자료와 결정만 담은 제한된 컨텍스트로도 정확히 수행할 수 있다.
-- 파일·외부 상태의 단일 writer 책임을 겹치지 않게 정할 수 있다.
-- 전달, 대기, 검토, 통합과 재작업 비용을 포함해도 메인이 직접 수행하는 것보다 이득이다.
-
-자동 위임에서는 하나라도 확인할 수 없으면 메인이 직접 수행한다. 사용자가 위임을 명시하면 병렬 병목 감소와 비용상 순이익을 필수 조건으로 삼지 않는다. 독립 완료 가능성·충분한 컨텍스트·단일 writer 책임은 확인하고, 유일한 작업도 위임할 수 있다. 제한 컨텍스트가 부족하지만 호스트가 지원하는 전체 대화 상속으로 충분해지면 `fullHistoryContext: { sufficient: true, reason: "구체적인 사유" }`를 기록한다. 이 예외는 명시적 위임에만 적용하며 자동 위임의 제한 컨텍스트 조건을 면제하지 않는다. 슬롯·도구·권한·필수 입력을 확보하지 못했으면 실행 전에 구체적인 제약을 기록하고 대기·직접 수행 또는 필요한 입력 요청으로 처리한다. 동일 목적의 중복 위임은 사용자가 대안 비교를 요청했거나 고위험 독립 감사를 분리해야 할 때만 허용한다. 고위험 감사 필요성은 구현 작업의 위임 사유가 아니다.
+위임 여부를 결정하기 전에 [협업 상세 계약의 위임 판단](references/collaboration.md#위임-판단)을 읽고 자동·명시적 위임의 조건과 예외를 적용한다.
 
 ## 실행 순서와 입출력 연결
 
@@ -83,52 +69,13 @@ metadata:
 - 독립 감사가 필요한 흐름에서는 구현자와 감사자를 분리하고, 감사 후 의미 있는 변경이 생기면 감사 대상과 판정을 다시 연결한다.
 - 같은 명령, 입력·candidate digest, 실패 원인과 판별 가설이 모두 그대로라면 다시 실행하지 않는다. 다른 원인 가설을 가르는 검사가 없으면 해당 단계만 중단하고 실패 근거와 필요한 새 입력을 보고한다.
 
-### 독립 숙고 handoff
-
-통합 워크플로에서 `independent-deliberation` provider를 호출할 때는 원래 요청과 원자료를 보존하고 `include_decision_record: true`를 지정한다. HIGH·CRITICAL 또는 독립 판단이 승인 조건인 요청에는 `execution_assurance: strict`를 사용한다. 그 밖의 제어는 provider가 선언한 허용값과 기본값을 따른다.
-
-반환된 `DecisionRecord.v1`은 provider 패키지의 canonical schema와 validator로 확인한다. 검증 실패, `run.assurance: provisional`, `run.capability_shortfall: true`, `consensus_proposal: null`은 다음 자동 단계를 승인하지 않는다. `conditional_consensus`는 record에 적힌 조건을 외부 workflow가 확인한 뒤에만 진행하고, `no_consensus`는 미해결 선택지와 `decision_owner`에게 반환한다. schema-valid record만으로 주장 진위, 실제 worker 격리나 final audit 완료를 추정하지 않는다.
-
-MCP에 기록할 때는 전체 record를 `StageResult.v1.output.decisionRecord`에 넣고, `conditional_consensus`의 외부 조건을 실제로 확인한 경우에만 `output.conditionsVerified: true`를 함께 기록한다. `decision-record` 증거 항목은 canonical record의 실제 위치를 가리켜야 한다.
-
-### 독립 감사 handoff
-
-`independent-audit` provider에는 현재 단계, 구현자 ID, fresh auditor ID, 최종 대상 식별자, 변경 범위, 원시 검증 위치, rollback 근거와 알려진 제한을 전달한다. 감사 결과의 일곱 섹션을 보존하고 다음처럼 `StageResult.v1.output`에 투영한다.
-
-- `gateVerdict`: `Gate`의 `PASS | FAIL | BLOCKED`
-- `auditorId`: `Independence`에서 확인한 fresh auditor ID
-- `implementationActorIds`: `Independence`에서 확인한 구현자 ID 목록
-- `auditTarget`: `Audit Target`의 현재 최종 대상 식별자
-- `currentTarget`: 결과 기록 시점에 오케스트레이터가 확인한 최종 대상 식별자. `auditTarget`과 같아야 한다.
-- `phase`: `pre-execution | post-execution | pre-deploy | post-deploy`
-- `freshContext`, `delegationAllowed`, `blockingFindings`, `stale`, `postExecutionVerified`: 감사 결과에서 직접 확인한 값
-
-현재 최종 대상과 `auditTarget`이 다르거나, fresh context가 아니거나, 재위임이 허용됐거나, 열린 blocking finding이 있거나, 판정이 stale하면 `passed`로 기록하지 않는다. 실제 상태 변경 뒤에는 `post-execution` 또는 `post-deploy` 확인이 끝난 경우에만 완료할 수 있다. MCP의 구조적 필드 검사는 감사 사실이나 신원을 인증하지 않으므로 오케스트레이터가 원자료를 직접 대조한다.
+`independent-deliberation` 또는 `independent-audit` provider를 호출하기 전에 [전문 단계 handoff 계약](references/specialist-handoffs.md)에서 해당 절을 읽고 입력, 결과 투영과 진행 조건을 적용한다.
 
 ## MCP 도구 사용 계약
 
-MCP를 사용할 때는 연결이 성공했고 도구 목록과 입력 스키마를 실제로 읽을 수 있는 경우에만 호출한다. 도구 이름, 입력 필드, 권한 범위, 대상 식별자를 추측하지 않는다.
+MCP로 계획·실행·결과 기록을 하기 전에 [MCP 실행 계약](references/mcp-execution.md)을 읽는다. 연결과 도구 스키마를 확인한 뒤 계약의 호출 순서, revision, compact 응답과 실패 처리를 따른다.
 
-통합 실행은 다음 순서를 지킨다.
-
-1. 목표, 범위, 수용 기준, 작업 단위, 위험도와 필요한 capability를 `TaskEnvelope.v1`로 정리하고 `plan_workflow`를 호출한다. 이 호출은 run을 만들지 않는다.
-2. 최초 전체 실행 전에 `open_convergence_root`를 `responseMode: "compact"`로 호출해 작업 계약과 control/target frame을 결속한다. 같은 작업을 요약하거나 fresh context에 넘겨도 발급된 `rootId`를 유지한다.
-3. 계획이 `ready`이고 `executionMode`가 `orchestrated`이면 `claim_workflow_attempt`에서 이미 root에 결속된 `taskEnvelope`와 `frame`을 다시 보내지 않고 계획·실행자·출력 대상에 결속된 lease를 받는다. 이어 `start_guarded_workflow`를 plan 없이 `responseMode: "compact"`로 호출한다. 새 orchestrated run에 `start_workflow`를 사용하지 않는다.
-4. 계획에 기록된 순서대로 전문 스킬을 사용한다. provider 결과와 산출물 참조를 `ProviderResult.v1`로 묶고, 이를 `StageResult.v1.output`에 넣어 현재 revision과 `responseMode: "compact"`로 `record_stage_result`에 전달한다.
-5. 사용자 입력이나 승인이 필요하면 해당 상태와 차단 사유를 그대로 보고하고 새 실행이 필요한지 판단한다. 순서를 건너뛰거나 이미 기록한 stage를 덮어쓰지 않는다.
-6. 필요할 때 `get_workflow_status`와 `get_convergence_status`를 `detail: "compact"`로 호출해 현재 revision, 다음 stage와 남은 실행 예산을 확인한다. compact 결과에 오류 코드나 0보다 큰 blocker·unresolved 수가 있거나 과거 원자료가 필요한 경우에만 해당 status를 `detail: "full"`로 한 번 다시 조회한다. 모든 필수 stage와 감사 게이트가 `passed`인 경우에만 `finalize_workflow`를 `responseMode: "compact"`로 호출한다.
-7. 통합 실행을 더 진행하지 않기로 확정하면 `abort_workflow`를 `responseMode: "compact"`로 호출해 해당 run을 닫는다. 시작된 run은 실패·중단돼도 해당 epoch의 시도 횟수에 남는다.
-
-MCP workflow run과 계획 서명 키는 SQLite에 저장되므로 프로세스를 다시 시작해도 이어서 처리할 수 있다. `RUN_NOT_FOUND`를 받으면 다른 데이터베이스 경로를 사용 중인지 먼저 확인하고, 저장된 상태가 실제로 없을 때만 새 계획과 run을 만든다. 이전 revision이나 stage 결과를 추측해 복구하지 않는다.
-
-MCP 응답에 별도의 `plugin-update-notice` content block이 있으면 현재 버전과 최신 버전, 제공된 tag URL을 사용자에게 한 문장으로 안내한다. `automaticInstall: false`도 함께 밝혀 업데이트가 설치됐다고 오해하지 않게 한다. 이 알림을 이유로 현재 workflow 결과를 바꾸거나 설치, 파일 수정, 마켓플레이스 갱신을 실행하지 않는다.
-
-- 선택한 MCP 도구가 필요한 작업만 수행하는지와 사용자가 부여한 권한 안인지 확인한다.
-- 필요한 최소 입력만 전달하고, 비밀값·개인정보·확인되지 않은 사실을 도구 입력에 새로 넣지 않는다.
-- 도구 응답의 구조화된 결과, 오류, 외부 상태 식별자와 관측 시각을 다음 단계에 전달한다. 도구 호출이 수락됐다는 사실만으로 작업 성공을 선언하지 않는다.
-- 도구가 실패하거나 결과를 관측할 수 없으면 실패 원인과 영향을 받은 단계만 멈춘다. 다른 전문 스킬이 독립적으로 완료할 수 있는 부분은 계속할 수 있다.
-
-MCP 연결이나 필요한 MCP 도구를 사용할 수 없더라도, 설치된 전문 스킬을 직접 호출해 처리할 수 있는 요청은 진행한다. MCP 없이는 필요한 통합 작업 자체를 수행할 수 없는 경우에만 통합 결과를 `BLOCKED`로 표시하고, 직접 사용할 수 있는 스킬과 필요한 MCP 기능을 함께 밝힌다.
+MCP를 사용할 수 없어도 설치된 전문 스킬로 독립 처리 가능한 부분은 진행한다. 필요한 통합 실행 자체가 불가능할 때만 통합 결과를 `BLOCKED`로 보고하며, 직접 실행 결과를 guarded 완료 근거로 표현하지 않는다.
 
 ## 결과 통합
 
