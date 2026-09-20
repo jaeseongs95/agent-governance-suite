@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/input-source-receipt.v1.schema.json",
+  "title": "InputSourceReceipt.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "receiptId", "originKind", "host", "sessionId", "eventId", "contentDigest", "observedAt", "expiresAt", "authorityEffect", "attestation", "integrityToken"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "receiptId": { "type": "string", "pattern": "^source-[A-Za-z0-9_-]{16,128}$" },
+    "originKind": { "enum": ["user-turn", "peer", "system", "developer", "project", "artifact"] },
+    "host": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "sessionId": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "eventId": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "contentDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "observedAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "authorityEffect": { "enum": ["none", "restrict-only"] },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "adapter", "capabilityVersion"],
+      "properties": {
+        "kind": { "enum": ["host-direct-user-event", "broker-peer-envelope", "verified-internal-wake", "unverified-host-event"] },
+        "adapter": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "capabilityVersion": { "type": "string", "minLength": 1, "maxLength": 32 }
+      }
+    },
+    "integrityToken": { "type": "string", "minLength": 43, "maxLength": 128 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "originKind": { "const": "peer" } }, "required": ["originKind"] },
+      "then": {
+        "properties": {
+          "authorityEffect": { "const": "none" },
+          "attestation": { "properties": { "kind": { "const": "broker-peer-envelope" } } }
+        }
+      }
+    }
+  ]
+}

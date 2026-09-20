@@ -4,7 +4,7 @@
 
 로그, 테스트 결과, 환경 digest와 직접 검사 결과만 관측으로 기록한다. 가설의 지지·반박 evidence ref는 적어도 한 episode의 evidence inventory에 존재해야 한다. 각 ref는 artifact digest, 가설 ID와 `supports | refutes` 관계를 함께 기록하고, 같은 관계를 해당 가설의 `supportingEvidence` 또는 `contradictingEvidence`에도 정확히 반영한다. 한쪽에만 존재하거나 같은 evidence–가설–관계가 중복된 binding은 거부한다. “이 원인일 가능성이 높다”는 가설이며, inventory의 직접 evidence가 해당 가설에 `supports`로 결속되기 전에는 원인으로 확정하지 않는다. confirmed 가설에 `refutes` binding이 하나라도 있으면 확정 판정을 거부한다. `DiagnosisReport.v1`은 확정 원인을 하나만 표현하므로 confirmed 가설이 둘 이상인 입력도 거부한다.
 
-가설은 필요에 따라 입력, 상태, 권한, 환경, dependency, timing, 구현, 도구 계층으로 나눈다. 분류표를 채우기 위해 근거 없는 가설을 만들지 않는다.
+가설은 필요에 따라 입력, 상태, 권한, 환경, dependency, timing, 구현, 도구 계층으로 나눈다. 분류표를 채우기 위해 근거 없는 가설을 만들지 않는다. 확정 가설에는 `causeAnalysis`를 붙여 증상, 작동 메커니즘, 근본 조건과 각각 supporting episode evidence를 가리키는 판별 evidence·경쟁 가설 제거 관측을 기록한다. 이 다섯 요소가 없으면 `CAUSE_CONFIRMED`로 올리지 않는다.
 
 ## Failure fingerprint
 

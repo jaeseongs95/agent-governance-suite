@@ -737,7 +737,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     }), directory)).rejects.toThrow(/different message/u);
 
     const metadataTarget = { host: "spark", sessionId: "wire-sized" };
-    const metadataSender = { host: "가".repeat(64), sessionId: "나".repeat(200) };
+    const metadataSender = { host: "h".repeat(64), sessionId: "s".repeat(200) };
     const expectedMetadataIds: string[] = [];
     for (let index = 0; index < 10; index += 1) {
       const messageId = `wire-${String(index).padStart(3, "0")}-${"m".repeat(119)}`;

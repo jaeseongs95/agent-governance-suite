@@ -3,7 +3,7 @@ name: blocker-diagnostician
 description: 같은 실패가 반복될 때 쓴다. 테스트·빌드·명령·배포·외부 호출 등 무엇이든 같은 증상으로 두 번 이상 실패했을 때, 고쳤는데 또 실패할 때, 원인 후보가 여럿이라 무엇을 먼저 확인할지 정해야 할 때가 해당한다. 관측된 실패 episode와 원인 가설을 분리하고 새 정보를 주는 다음 판별 검사를 고른다. 수정 구현, 같은 검사 반복, 최종 감사는 하지 않는다.
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Blocker Diagnostician
@@ -12,7 +12,7 @@ metadata:
 
 ## 적용 범위
 
-- 같은 작업이 반복해서 실패했거나 수정 뒤에도 실패가 이어질 때 사용한다.
+- 첫 수정이 실패한 뒤, adapter·운영체제·패키징 관측이 서로 모순될 때, 실제 호스트와 테스트 결과가 다를 때, 또는 evidence가 충돌할 때 사용한다. 이후 같은 작업이 반복해서 실패하거나 수정 뒤에도 실패가 이어질 때도 사용한다.
 - 사용자가 원인 후보 분리나 다음 판별 검사를 요청했을 때 사용한다.
 - 명확한 단일 오타, 일반 코드 리뷰, 설계안의 정책·비용 비교에는 자동 적용하지 않는다.
 - 해결안 사이의 안전·비용·정책 판단이 핵심이 되면 별도의 숙의가 필요하다고 보고한다.
@@ -36,7 +36,7 @@ node scripts/validate-report.mjs --request failures.json --request-digest "sha25
 
 1. episode별 operation, stable tuple과 환경 digest를 보존해 cluster를 만든다.
 2. 관측 사실과 가설을 분리하고 각 가설의 지지·반박 evidence를 기록한다.
-3. 각 `evidenceBinding`의 evidence ref와 `supports | refutes` 관계가 결속된 가설의 `supportingEvidence` 또는 `contradictingEvidence`에 정확히 반영됐는지 양방향으로 확인한다. episode의 evidence inventory에 실제로 존재하고 artifact digest와 가설 ID가 `supports`로 결속된 직접 evidence가 있는 가설 하나만 `confirmed`로 인정한다. `confirmed` 가설에 `refutes` binding이 있거나 confirmed 가설이 둘 이상이면 입력을 거부한다.
+3. 각 `evidenceBinding`의 evidence ref와 `supports | refutes` 관계가 결속된 가설의 `supportingEvidence` 또는 `contradictingEvidence`에 정확히 반영됐는지 양방향으로 확인한다. episode의 evidence inventory에 실제로 존재하고 artifact digest와 가설 ID가 `supports`로 결속된 직접 evidence가 있는 가설 하나만 `confirmed`로 인정한다. 확정 원인은 `causeId`와 증상→작동 메커니즘→근본 조건, 판별 evidence 및 경쟁 가설을 제거한 관측을 모두 담아야 한다. `confirmed` 가설에 `refutes` binding이 있거나 confirmed 가설이 둘 이상이면 입력을 거부한다.
 4. 후보와 과거 검사에는 실행 대상을 나타내는 `checkInput`을 기록한다. `checkId + checkInput`의 canonical JSON에서 `inputDigest`를 다시 계산하고, 같은 digest로 이미 실행한 검사는 후보에서 제외한다. 질문 문구나 정보가치·비용 점수만 바꿔 새 검사로 만들지 않는다.
 5. 서로 다른 두 개 이상의 관측 결과가 가설을 다르게 지지·기각하는 검사만 판별 검사로 인정한다.
 6. 정보가치가 높은 검사를 우선하고, 같은 정보가치에서는 위험과 비용이 낮은 검사를 선택한다.

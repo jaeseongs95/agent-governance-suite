@@ -110,6 +110,7 @@ export function validateInput(input) {
     }
     if (!["open", "supported", "refuted", "confirmed"].includes(hypothesis.state)) throw new InputError(`hypothesis ${hypothesis.id} state is invalid.`);
     if (hypothesis.state === "confirmed" && (hypothesis.supportingEvidence.length === 0 || hypothesis.contradictingEvidence.length > 0)) throw new InputError(`confirmed hypothesis ${hypothesis.id} requires supporting evidence and no unresolved contradiction.`);
+    if (hypothesis.state === "confirmed") validateCauseAnalysis(hypothesis, evidenceInventory);
   }
   const confirmedHypotheses = input.candidateHypotheses.filter((item) => item.state === "confirmed");
   if (confirmedHypotheses.length > 1) throw new InputError("Only one confirmed hypothesis is supported by DiagnosisReport.v1.");
@@ -168,6 +169,21 @@ export function validateInput(input) {
     if (attempt.checkId !== attempt.check.checkId) throw new InputError(`attempted check ${attempt.checkId} does not match embedded check ${attempt.check.checkId}.`);
     const computedDigest = checkInputDigest(attempt.check);
     if (attempt.inputDigest !== computedDigest) throw new InputError(`attempted check ${attempt.checkId} inputDigest does not match its canonical check content.`);
+  }
+}
+
+function validateCauseAnalysis(hypothesis, evidenceInventory) {
+  const analysis = hypothesis.causeAnalysis;
+  if (!analysis || typeof analysis !== "object") throw new InputError(`confirmed hypothesis ${hypothesis.id} requires causeAnalysis.`);
+  for (const field of ["symptom", "mechanism", "rootCondition"]) nonEmptyString(analysis[field], `confirmed hypothesis ${hypothesis.id} causeAnalysis.${field}`);
+  for (const field of ["discriminatingEvidence", "eliminationObservation"]) {
+    const observation = analysis[field];
+    if (!observation || typeof observation !== "object") throw new InputError(`confirmed hypothesis ${hypothesis.id} causeAnalysis.${field} is required.`);
+    nonEmptyString(observation.statement, `confirmed hypothesis ${hypothesis.id} causeAnalysis.${field}.statement`);
+    stringArray(observation.evidenceRefs, `confirmed hypothesis ${hypothesis.id} causeAnalysis.${field}.evidenceRefs`, { min: 1 });
+    for (const ref of observation.evidenceRefs) {
+      if (!evidenceInventory.has(ref) || !hypothesis.supportingEvidence.includes(ref)) throw new InputError(`confirmed hypothesis ${hypothesis.id} causeAnalysis.${field} must cite supporting episode evidence: ${ref}.`);
+    }
   }
 }
 
@@ -270,8 +286,14 @@ export function analyzeDiagnosis(input) {
       hypotheses,
       nextDiscriminatingTest: null,
       confirmedCause: {
+        causeId: confirmed.id,
         hypothesisId: confirmed.id,
         statement: confirmed.statement,
+        symptom: confirmed.causeAnalysis.symptom,
+        mechanism: confirmed.causeAnalysis.mechanism,
+        rootCondition: confirmed.causeAnalysis.rootCondition,
+        discriminatingEvidence: structuredClone(confirmed.causeAnalysis.discriminatingEvidence),
+        eliminationObservation: structuredClone(confirmed.causeAnalysis.eliminationObservation),
         evidenceBindings: input.evidenceBindings
           .filter((binding) => binding.relation === "supports" && binding.hypothesisIds.includes(confirmed.id) && confirmed.supportingEvidence.includes(binding.evidenceRef))
           .map((binding) => structuredClone(binding))
@@ -349,6 +371,7 @@ export function validateReport(report, request = null, frozenRequestArtifactDige
     if (!report.confirmedCause || !Array.isArray(report.confirmedCause.evidenceBindings) || report.confirmedCause.evidenceBindings.length === 0) errors.push("CAUSE_CONFIRMED requires structurally bound direct evidence");
     const hypothesis = report.hypotheses?.find((item) => item.id === report.confirmedCause?.hypothesisId);
     if (!hypothesis || hypothesis.state !== "confirmed" || hypothesis.contradictingEvidence?.length > 0) errors.push("confirmedCause must reference an uncontradicted confirmed hypothesis");
+    if (report.confirmedCause?.causeId !== report.confirmedCause?.hypothesisId) errors.push("confirmedCause causeId must equal its confirmed hypothesisId");
     if (request) {
       for (const binding of report.confirmedCause?.evidenceBindings ?? []) {
         const matching = request.evidenceBindings?.some((item) => canonicalJson(item) === canonicalJson(binding));

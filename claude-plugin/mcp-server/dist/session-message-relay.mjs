@@ -365,6 +365,11 @@ function relayIdentityDecision(identity, previousUnknowns) {
   const unknowns = previousUnknowns + 1;
   return { proceed: false, stop: unknowns >= IDENTITY_UNKNOWN_LIMIT, unknowns };
 }
+function transportWakeCapabilities(transport) {
+  if (transport === "claude-inbox") return { wakeVisibility: "silent", canWakeSilently: true };
+  if (transport === "codex-queue") return { wakeVisibility: "user-message", canWakeSilently: false };
+  return { wakeVisibility: "none", canWakeSilently: false };
+}
 function codexWakeOutcome(error, spawned) {
   return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
 }
@@ -455,81 +460,98 @@ async function runSessionMessageRelay(options) {
     await delay2(3e3);
   }
   if (!acquired) return;
-  let retryNonce = null;
-  let ringAttempts = 0;
-  let nextRingAt = 0;
-  let identityUnknowns = 0;
-  let nextIdentityCheck = Date.now() + IDENTITY_RECHECK_MS;
-  while (true) {
-    if (!processExists(options.parentPid)) return;
-    const now = Date.now();
-    let checkedIdentity = null;
-    if (now >= nextIdentityCheck) {
-      checkedIdentity = processIdentityState(options.parentPid, options.parentStartToken);
-      if (checkedIdentity === "mismatch") return;
-      if (checkedIdentity === "unknown") {
-        identityUnknowns += 1;
-        if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) return;
-        nextIdentityCheck = now + IDENTITY_RETRY_MS;
-      } else {
-        identityUnknowns = 0;
-        nextIdentityCheck = now + IDENTITY_RECHECK_MS;
-      }
-    }
-    try {
-      const heartbeat = await sessionMessageRequest("heartbeat-relay", { target, transport: options.transport, relayId });
-      if (!heartbeat.alive) return;
-      const pending = await sessionMessageRequest("pending", { target });
-      if (pending.count === 0) {
-        retryNonce = null;
-        ringAttempts = 0;
-        nextRingAt = 0;
-      } else if (now >= nextRingAt) {
-        const identity = checkedIdentity ?? processIdentityState(options.parentPid, options.parentStartToken);
-        if (identity === "mismatch") return;
-        if (identity === "unknown") {
-          if (checkedIdentity === null) identityUnknowns += 1;
+  try {
+    let retryNonce = null;
+    let ringAttempts = 0;
+    let nextRingAt = 0;
+    let identityUnknowns = 0;
+    let nextIdentityCheck = Date.now() + IDENTITY_RECHECK_MS;
+    while (true) {
+      if (!processExists(options.parentPid)) return;
+      const now = Date.now();
+      let checkedIdentity = null;
+      if (now >= nextIdentityCheck) {
+        checkedIdentity = processIdentityState(options.parentPid, options.parentStartToken);
+        if (checkedIdentity === "mismatch") return;
+        if (checkedIdentity === "unknown") {
+          identityUnknowns += 1;
           if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) return;
-          nextIdentityCheck = Math.min(nextIdentityCheck, now + IDENTITY_RETRY_MS);
-          nextRingAt = now + IDENTITY_RETRY_MS;
+          nextIdentityCheck = now + IDENTITY_RETRY_MS;
+        } else {
+          identityUnknowns = 0;
+          nextIdentityCheck = now + IDENTITY_RECHECK_MS;
+        }
+      }
+      try {
+        const heartbeat = await sessionMessageRequest("heartbeat-relay", { target, transport: options.transport, relayId });
+        if (!heartbeat.alive) return;
+        await sessionMessageRequest("presence-heartbeat", { target, instanceId: options.instanceId });
+        if (options.transport === "codex-deferred") {
           await delay2(LOOP_MS);
           continue;
         }
-        identityUnknowns = 0;
-        nextIdentityCheck = now + IDENTITY_RECHECK_MS;
-        const nonce = retryNonce ?? newWakeNonce();
-        const reservation = await sessionMessageRequest("reserve-wake", { target, nonce });
-        if (!reservation.dispatch) {
+        const pending = await sessionMessageRequest("pending", { target });
+        if (pending.count === 0) {
           retryNonce = null;
           ringAttempts = 0;
           nextRingAt = 0;
-        } else {
-          const bell = wakeMessage(nonce);
-          const outcome = options.transport === "codex-queue" ? await ringCodex(options.sessionId, bell) : await ringClaude(bell);
-          let released = false;
-          if (shouldReleaseWake(outcome)) {
-            const result = await sessionMessageRequest("release-wake", { target, nonce });
-            released = result.released;
+        } else if (now >= nextRingAt) {
+          const identity = checkedIdentity ?? processIdentityState(options.parentPid, options.parentStartToken);
+          if (identity === "mismatch") return;
+          if (identity === "unknown") {
+            if (checkedIdentity === null) identityUnknowns += 1;
+            if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) return;
+            nextIdentityCheck = Math.min(nextIdentityCheck, now + IDENTITY_RETRY_MS);
+            nextRingAt = now + IDENTITY_RETRY_MS;
+            await delay2(LOOP_MS);
+            continue;
           }
-          const retry = wakeRetryState(outcome, released, ringAttempts, now);
-          retryNonce = retry.retry ? nonce : null;
-          nextRingAt = retry.nextRingAt;
-          ringAttempts = retry.ringAttempts;
+          identityUnknowns = 0;
+          nextIdentityCheck = now + IDENTITY_RECHECK_MS;
+          const nonce = retryNonce ?? newWakeNonce();
+          const reservation = await sessionMessageRequest("reserve-wake", { target, nonce });
+          if (!reservation.dispatch) {
+            retryNonce = null;
+            ringAttempts = 0;
+            nextRingAt = 0;
+          } else {
+            const bell = wakeMessage(nonce);
+            const outcome = options.transport === "codex-queue" ? await ringCodex(options.sessionId, bell) : await ringClaude(bell);
+            let released = false;
+            if (shouldReleaseWake(outcome)) {
+              const result = await sessionMessageRequest("release-wake", { target, nonce });
+              released = result.released;
+            }
+            const retry = wakeRetryState(outcome, released, ringAttempts, now);
+            retryNonce = retry.retry ? nonce : null;
+            nextRingAt = retry.nextRingAt;
+            ringAttempts = retry.ringAttempts;
+          }
         }
+      } catch {
       }
+      await delay2(LOOP_MS);
+    }
+  } finally {
+    try {
+      await sessionMessageRequest("presence-end", {
+        target,
+        instanceId: options.instanceId,
+        reason: "host-process-ended"
+      }, void 0, { totalTimeoutMs: 3e3 });
     } catch {
     }
-    await delay2(LOOP_MS);
   }
 }
 if (path3.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
   const host = argument("--host");
   const sessionId = argument("--session-id");
+  const instanceId = argument("--instance-id");
   const transport = argument("--transport");
   const parentPid = Number.parseInt(argument("--parent-pid") ?? "", 10);
   const parentStartToken = argument("--parent-start-token");
-  if (!host || !sessionId || transport !== "codex-queue" && transport !== "claude-inbox" || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
-  else void runSessionMessageRelay({ host, sessionId, transport, parentPid, parentStartToken }).catch(() => {
+  if (!host || !sessionId || !instanceId || transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox" || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
+  else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken }).catch(() => {
     process.exitCode = 1;
   });
 }
@@ -539,6 +561,7 @@ export {
   relayIdentityDecision,
   runSessionMessageRelay,
   shouldReleaseWake,
+  transportWakeCapabilities,
   wakeBackoffDelay,
   wakeRetryState
 };

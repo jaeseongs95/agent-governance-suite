@@ -3262,8 +3262,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path11) {
-      let input = path11;
+    function removeDotSegments(path12) {
+      let input = path12;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3672,8 +3672,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path11 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path11 && path11 !== "/" ? path11 : void 0;
+        const path12 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path12 && path12 !== "/" ? path12 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -8205,10 +8205,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path11) {
-  if (!path11)
+function getElementAtPath(obj, path12) {
+  if (!path12)
     return obj;
-  return path11.reduce((acc, key) => acc?.[key], obj);
+  return path12.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -8620,11 +8620,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path11, issues) {
+function prefixIssues(path12, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path11);
+    iss.path.unshift(path12);
     return iss;
   });
 }
@@ -9053,16 +9053,16 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
 }
 function formatError(error2, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error3, path11 = []) => {
+  const processError = (error3, path12 = []) => {
     for (const issue2 of error3.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path11, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path12, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path11, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path12, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path11, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path12, ...issue2.path]);
       } else {
-        const fullpath = [...path11, ...issue2.path];
+        const fullpath = [...path12, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -17020,6 +17020,15 @@ function resolveSessionMessageStateDirectory(environment = process.env, platform
   if (configured) return path4.resolve(currentWorkingDirectory, configured);
   return path4.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
 }
+function resolveTrustDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  void platform;
+  const configured = environment.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim();
+  if (configured) return path4.resolve(currentWorkingDirectory, configured);
+  return path4.join(
+    resolveSessionMessageStateDirectory(environment, platform, homeDirectory, currentWorkingDirectory),
+    "trust.sqlite3"
+  );
+}
 function besideWorkflowDatabase(variable, fileName, environment, platform, homeDirectory, currentWorkingDirectory) {
   const configured = environment[variable]?.trim();
   if (configured) return path4.resolve(currentWorkingDirectory, configured);
@@ -17083,8 +17092,8 @@ import { readFileSync as readFileSync2, readdirSync } from "node:fs";
 import path5 from "node:path";
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path11 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path11, "utf8"));
+  const path12 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path12, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -17093,6 +17102,7 @@ var contractSchemas = {
   executionContext: loadSchema("execution-context.v1.schema.json"),
   executionRequirement: loadSchema("execution-requirement.v1.schema.json"),
   taskEnvelope: loadSchema("task-envelope.v1.schema.json"),
+  inputSourceReceipt: loadSchema("input-source-receipt.v1.schema.json"),
   planWorkflowRequest: loadSchema("plan-workflow-request.v1.schema.json"),
   skillDescriptor: loadSchema("skill-descriptor.v1.schema.json"),
   skillDescriptorV2: loadSchema("skill-descriptor.v2.schema.json"),
@@ -17179,6 +17189,9 @@ var ContractValidator = class {
   }
   planWorkflowRequest(value) {
     return this.assert("planWorkflowRequest", value);
+  }
+  inputSourceReceipt(value) {
+    return this.assert("inputSourceReceipt", value);
   }
   skillDescriptorV2(value) {
     return this.assert("skillDescriptorV2", value);
@@ -19240,7 +19253,7 @@ function inlineSchemaReferences(schema, documents) {
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "2.1.2",
+  version: "2.2.0",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
@@ -19831,6 +19844,14 @@ var SessionMessageService = class {
       return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "The session message broker is unavailable.");
     }
   }
+  async listPresence() {
+    try {
+      const data = await sessionMessageRequest("list-presence", {}, this.stateDirectory);
+      return ok2(data);
+    } catch (error2) {
+      return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "Session presence is unavailable.");
+    }
+  }
 };
 
 // mcp-server/src/server.ts
@@ -19980,7 +20001,35 @@ function invalidInput(message) {
 function apiError(code, message) {
   return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
 }
-function sessionBoardResult(tool, args, databasePath, validator) {
+function unknownPresence(host, sessionId) {
+  return {
+    host,
+    sessionId,
+    instanceId: null,
+    transport: null,
+    wakeVisibility: "none",
+    canWakeSilently: false,
+    collaborationId: null,
+    workspaceId: null,
+    role: null,
+    startedAt: null,
+    heartbeatAt: null,
+    leaseUntil: null,
+    endedAt: null,
+    endReason: null,
+    state: "unknown"
+  };
+}
+function withPresence(sessions, presence) {
+  const bySession = new Map(
+    presence.ok && presence.data ? presence.data.sessions.map((item) => [`${item.host}\0${item.sessionId}`, item]) : []
+  );
+  return sessions.map((session) => ({
+    ...session,
+    presence: bySession.get(`${session.host}\0${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId)
+  }));
+}
+async function sessionBoardResult(tool, args, databasePath, validator, sessionMessages) {
   let summary = null;
   let binding2;
   try {
@@ -20004,7 +20053,12 @@ function sessionBoardResult(tool, args, databasePath, validator) {
   let board = null;
   try {
     board = openBoard(databasePath);
-    if (tool === "list_session_status") return apiOk({ sessions: listSessions(board, (/* @__PURE__ */ new Date()).toISOString(), binding2) });
+    if (tool === "list_session_status") {
+      const sessions = listSessions(board, (/* @__PURE__ */ new Date()).toISOString(), binding2);
+      board.close();
+      board = null;
+      return apiOk({ sessions: withPresence(sessions, await sessionMessages.listPresence()) });
+    }
     const row = readSession(board, binding2.host, binding2.sessionId);
     return row && row.summary === summary ? apiOk(row) : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
   } catch {
@@ -20036,7 +20090,7 @@ function serverInstructions(profile = "default") {
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService()) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null) {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -20064,6 +20118,12 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         description: "Check the fixed Agent Governance Suite repository for a newer stable plugin tag without installing it.",
         inputSchema: updateCheckInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: false, destructiveHint: false, openWorldHint: true }
+      },
+      {
+        name: "get_trust_capabilities",
+        description: "Report the provenance and authority capabilities that this release can actually enforce.",
+        inputSchema: { type: "object", additionalProperties: false },
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "plan_workflow",
@@ -20232,6 +20292,9 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
     } else {
       updateStatus = await updates.check(false);
       switch (request.params.name) {
+        case "get_trust_capabilities":
+          result = Object.keys(args).length > 0 ? invalidInput("get_trust_capabilities accepts no arguments.") : trust ? trust.capabilities() : apiError("MCP_UNAVAILABLE", "The trust receipt store is unavailable.");
+          break;
         case "plan_workflow":
           result = attested("plan_workflow", (input) => service.planWorkflow(input, true));
           break;
@@ -20293,7 +20356,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
           break;
         case "update_session_status":
         case "list_session_status":
-          result = sessionBoardResult(request.params.name, args, sessionBoardPath, validator);
+          result = await sessionBoardResult(request.params.name, args, sessionBoardPath, validator, sessionMessages);
           break;
         case "send_session_message":
           try {
@@ -24070,6 +24133,253 @@ var StateCleanupService = class {
   }
 };
 
+// mcp-server/src/trust-store.ts
+import { createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID4, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
+import { chmodSync as chmodSync4, mkdirSync as mkdirSync5 } from "node:fs";
+import path11 from "node:path";
+import { DatabaseSync as DatabaseSync5 } from "node:sqlite";
+var TRUST_SIGNING_KEY = "trust-signing-key";
+var SCHEMA_VERSION3 = 1;
+var INPUT_SOURCE_KEYS = /* @__PURE__ */ new Set([
+  "originKind",
+  "host",
+  "sessionId",
+  "eventId",
+  "contentDigest",
+  "observedAt",
+  "expiresAt",
+  "authorityEffect",
+  "attestation"
+]);
+var ATTESTATION_KEYS = /* @__PURE__ */ new Set(["kind", "adapter", "capabilityVersion"]);
+function rejectUnexpectedKeys(value, allowed, label) {
+  const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
+  if (unexpected.length > 0) {
+    throw new WorkflowContractError("INVALID_INPUT", `${label} contains unsupported fields.`, { unexpected });
+  }
+}
+var TrustStore = class {
+  constructor(databasePath) {
+    this.databasePath = databasePath;
+    if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
+    if (databasePath !== ":memory:") mkdirSync5(path11.dirname(path11.resolve(databasePath)), { recursive: true, mode: 448 });
+    this.database = new DatabaseSync5(databasePath);
+    try {
+      this.database.exec("PRAGMA busy_timeout = 5000;");
+      this.database.exec("PRAGMA synchronous = FULL;");
+      if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
+      this.initializeSchema();
+      this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
+      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync4(path11.resolve(databasePath), 384);
+    } catch (cause) {
+      try {
+        this.database.close();
+      } catch {
+      }
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError("Cannot initialize the trust database.", cause);
+    }
+  }
+  databasePath;
+  database;
+  signingKey;
+  closed = false;
+  recordInputSource(input) {
+    rejectUnexpectedKeys(input, INPUT_SOURCE_KEYS, "Input source metadata");
+    if (!input.attestation || typeof input.attestation !== "object" || Array.isArray(input.attestation)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Input source attestation must be an object.");
+    }
+    rejectUnexpectedKeys(input.attestation, ATTESTATION_KEYS, "Input source attestation");
+    if (input.originKind === "user-turn" || input.attestation.kind === "host-direct-user-event") {
+      throw new WorkflowContractError("BINDING_INVALID", "This release cannot attest direct-user approval sources.");
+    }
+    if (input.originKind === "peer" && (input.authorityEffect !== "none" || input.attestation.kind !== "broker-peer-envelope")) {
+      throw new WorkflowContractError("BINDING_INVALID", "Peer input must be a non-authorizing broker envelope.");
+    }
+    if (input.originKind !== "peer" && input.attestation.kind === "broker-peer-envelope") {
+      throw new WorkflowContractError("BINDING_INVALID", "Broker peer attestations must be classified as peer input.");
+    }
+    const receipt = this.seal({
+      schemaVersion: CONTRACT_VERSION,
+      receiptId: `source-${randomUUID4()}`,
+      originKind: input.originKind,
+      host: input.host,
+      sessionId: input.sessionId,
+      eventId: input.eventId,
+      contentDigest: input.contentDigest,
+      observedAt: input.observedAt,
+      expiresAt: input.expiresAt,
+      authorityEffect: input.authorityEffect,
+      attestation: {
+        kind: input.attestation.kind,
+        adapter: input.attestation.adapter,
+        capabilityVersion: input.attestation.capabilityVersion
+      }
+    });
+    return this.guard("Cannot record the input source receipt.", { receiptId: receipt.receiptId }, () => this.transaction(() => {
+      const existing = this.database.prepare(`
+        SELECT receipt_json FROM input_source_receipts
+        WHERE host = ? AND session_id = ? AND event_id = ?
+      `).get(receipt.host, receipt.sessionId, receipt.eventId);
+      if (existing) {
+        const prior = JSON.parse(existing.receipt_json);
+        const sameSecurityMetadata = prior.contentDigest === receipt.contentDigest && prior.originKind === receipt.originKind && prior.authorityEffect === receipt.authorityEffect && canonicalJson(prior.attestation, "Source attestation") === canonicalJson(receipt.attestation, "Source attestation");
+        if (sameSecurityMetadata) return structuredClone(prior);
+        throw new WorkflowContractError("REQUEST_CONFLICT", "The input event was already recorded with different content or provenance metadata.", {
+          host: receipt.host,
+          sessionId: receipt.sessionId,
+          eventId: receipt.eventId
+        });
+      }
+      this.database.prepare(`
+        INSERT INTO input_source_receipts (
+          receipt_id, host, session_id, event_id, origin_kind,
+          authority_effect, observed_at, expires_at, receipt_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        receipt.receiptId,
+        receipt.host,
+        receipt.sessionId,
+        receipt.eventId,
+        receipt.originKind,
+        receipt.authorityEffect,
+        receipt.observedAt,
+        receipt.expiresAt,
+        JSON.stringify(receipt)
+      );
+      return structuredClone(receipt);
+    }));
+  }
+  latestInputSource(binding2) {
+    return this.guard("Cannot read the latest input source receipt.", { ...binding2 }, () => {
+      const row = this.database.prepare(`
+        SELECT receipt_json FROM input_source_receipts
+        WHERE host = ? AND session_id = ?
+        ORDER BY observed_at DESC, receipt_id DESC LIMIT 1
+      `).get(binding2.host, binding2.sessionId);
+      return row ? JSON.parse(row.receipt_json) : null;
+    });
+  }
+  getInputSource(receiptId) {
+    return this.guard("Cannot read the input source receipt.", { receiptId }, () => {
+      const row = this.database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId);
+      return row ? JSON.parse(row.receipt_json) : null;
+    });
+  }
+  verify(receipt) {
+    const { integrityToken, ...unsigned } = receipt;
+    const actual = Buffer.from(integrityToken, "base64url");
+    const expected = createHmac5("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
+    return actual.length === expected.length && timingSafeEqual5(actual, expected);
+  }
+  close() {
+    if (this.closed) return;
+    this.database.close();
+    this.closed = true;
+  }
+  seal(unsigned) {
+    return {
+      ...unsigned,
+      integrityToken: createHmac5("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest("base64url")
+    };
+  }
+  initializeSchema() {
+    const version2 = this.database.prepare("PRAGMA user_version").get().user_version;
+    if (version2 > SCHEMA_VERSION3) {
+      throw new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
+        databasePath: this.databasePath,
+        supportedVersion: SCHEMA_VERSION3,
+        actualVersion: version2
+      });
+    }
+    this.database.exec(`
+      BEGIN IMMEDIATE;
+      CREATE TABLE IF NOT EXISTS trust_metadata (
+        key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL
+      ) STRICT;
+      CREATE TABLE IF NOT EXISTS input_source_receipts (
+        receipt_id TEXT PRIMARY KEY,
+        host TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        event_id TEXT NOT NULL,
+        origin_kind TEXT NOT NULL,
+        authority_effect TEXT NOT NULL,
+        observed_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        receipt_json TEXT NOT NULL,
+        UNIQUE(host, session_id, event_id)
+      ) STRICT;
+      CREATE INDEX IF NOT EXISTS input_source_latest
+        ON input_source_receipts(host, session_id, observed_at DESC);
+      PRAGMA user_version = ${SCHEMA_VERSION3};
+      COMMIT;
+    `);
+  }
+  getOrCreateSecret(name) {
+    return this.transaction(() => {
+      const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name);
+      if (existing) return existing.value;
+      const value = randomBytes5(32).toString("base64url");
+      this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
+      return value;
+    });
+  }
+  transaction(operation) {
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      const result = operation();
+      this.database.exec("COMMIT;");
+      return result;
+    } catch (cause) {
+      try {
+        this.database.exec("ROLLBACK;");
+      } catch {
+      }
+      throw cause;
+    }
+  }
+  guard(message, details, operation) {
+    try {
+      return operation();
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError(message, cause, details);
+    }
+  }
+  storageError(message, cause, details = {}) {
+    return new WorkflowContractError("INVALID_INPUT", message, {
+      ...details,
+      databasePath: this.databasePath,
+      cause: cause instanceof Error ? cause.message : String(cause)
+    });
+  }
+};
+
+// mcp-server/src/trust-service.ts
+var TrustService = class {
+  constructor(store) {
+    this.store = store;
+  }
+  store;
+  capabilities() {
+    return {
+      schemaVersion: CONTRACT_VERSION,
+      ok: true,
+      data: {
+        schemaVersion: CONTRACT_VERSION,
+        provenanceRecording: true,
+        directUserInputAttestation: false,
+        authorityIssuance: false,
+        scopedDelegation: false,
+        acceptedOrigins: ["peer", "system", "developer", "project", "artifact"],
+        acceptedAuthorityEffects: ["none", "restrict-only"]
+      },
+      error: null
+    };
+  }
+};
+
 // mcp-server/src/index.ts
 async function main() {
   const registryPath = resolveRegistryPath();
@@ -24082,13 +24392,16 @@ async function main() {
     continuityPathAvailable = false;
   }
   const store = new SqliteWorkflowStore(workflowDatabasePath);
+  const trustStore = new TrustStore(resolveTrustDatabasePath());
   let continuityStore = null;
   process.once("exit", () => {
     continuityStore?.close();
+    trustStore.close();
     store.close();
   });
   const validator = new ContractValidator();
   const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
+  const trust = new TrustService(trustStore);
   const service = new WorkflowService(
     new FileSkillRegistry(registryPath, validator),
     validator,
@@ -24107,7 +24420,7 @@ async function main() {
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath());
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), void 0, trust);
   await server.connect(new StdioServerTransport());
 }
 void main().catch((error2) => {

@@ -290,7 +290,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "task-contract",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "path": "./task-contract",
       "enabled": true,
       "priority": 50,
@@ -493,7 +493,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "blocker-diagnostician",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "path": "./blocker-diagnostician",
       "enabled": true,
       "priority": 50,
@@ -606,7 +606,7 @@
     {
       "schemaVersion": "2.0.0",
       "skillId": "recovery-strategy-selector",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "path": "./recovery-strategy-selector",
       "enabled": true,
       "priority": 50,

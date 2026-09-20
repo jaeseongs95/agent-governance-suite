@@ -131,6 +131,7 @@ describe("bundled STDIO MCP server", () => {
       expect(listed.tools.map((tool) => tool.name)).toEqual([
         "lookup_korean_prose_terms",
         "check_for_updates",
+        "get_trust_capabilities",
         "plan_workflow",
         "open_convergence_root",
         "claim_workflow_attempt",
@@ -243,6 +244,7 @@ describe("bundled STDIO MCP server", () => {
       expect(listed.tools.map((tool) => tool.name)).toEqual([
         "lookup_korean_prose_terms",
         "check_for_updates",
+        "get_trust_capabilities",
         "plan_workflow",
         "open_convergence_root",
         "claim_workflow_attempt",
