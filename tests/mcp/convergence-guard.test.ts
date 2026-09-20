@@ -1638,8 +1638,11 @@ describe("server-derived workspace identity", () => {
     const harness = await createHarness();
     const git = await gitFixture();
     const removed = await git.worktree("w1");
+    await touch(removed, "src", "candidate.ts");
     const gated = openRoot(harness.service, taskFor("gated"), frameAt(removed, "workspace-w1"));
     gateRoot(harness.service, gated);
+    const observed = identityBlobs(harness.databasePath);
+    expect((JSON.parse(observed[0]!.identity_json) as { inferred: boolean[] }).inferred).toEqual([false, false, false]);
     await rm(removed, { recursive: true, force: true });
     await rm(join(git.main, ".git", "worktrees", "w1"), { recursive: true, force: true });
 
@@ -1648,6 +1651,7 @@ describe("server-derived workspace identity", () => {
     expect(foreign.error?.code).toBe("INVALID_INPUT");
     expect(foreign.error?.message).toContain("same workspace");
     expect(status(harness.service, gated.rootId).root.state).toBe("needs-user");
+    expect(identityBlobs(harness.databasePath)).toEqual(observed);
 
     const replacement = tryOpen(harness.service, taskFor("replacement"), frameAt(await git.worktree("w2"), "workspace-w2"), gated.rootId);
     expect(replacement.error).toBeNull();
@@ -1937,6 +1941,7 @@ describe("gated roots stored before identities existed", () => {
     const git = await gitFixture();
     const nested = join(git.main, ".worktrees");
     const checkout = await git.worktree("w1", nested);
+    await touch(checkout, "src", "candidate.ts");
     await mkdir(join(git.base, "notes"), { recursive: true });
 
     // Mixed observation: one surface inside the nested worktree, one outside every checkout.
@@ -1948,8 +1953,11 @@ describe("gated roots stored before identities existed", () => {
     );
     gateRoot(harness.service, mixed);
     const observedBlobs = identityBlobs(harness.databasePath);
-    const observedGit = (JSON.parse(observedBlobs[0]!.identity_json) as { surfaces: Array<{ git: unknown }> }).surfaces[0]!.git;
-    expect(observedGit).toMatchObject({ relative: "src/candidate.ts" });
+    const observedIdentity = JSON.parse(observedBlobs[0]!.identity_json) as { inferred: boolean[]; surfaces: Array<{ git: unknown }> };
+    // Surfaces are [inside, notes/plan.md, inside, inside]: the worktree target was seen, the note never existed.
+    expect(observedIdentity.inferred).toEqual([false, true, false, false]);
+    expect(observedIdentity.surfaces[0]!.git).toMatchObject({ relative: "src/candidate.ts" });
+    expect(observedIdentity.surfaces[1]!.git).toBeNull();
     await removeWorktree(git, checkout, "w1");
 
     const pastMixed = tryOpen(harness.service, taskFor("past-mixed"), frameAt(await git.worktree("w2", nested), "workspace-w2"));
