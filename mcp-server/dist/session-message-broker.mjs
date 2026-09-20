@@ -260,6 +260,39 @@ var SessionMessageStore = class {
     if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
     this.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at) VALUES (?, ?, ?, ?)").run(nonceDigest(nonce), target.host, target.sessionId, iso(nowMs + WAKE_TTL_MS));
   }
+  reserveWake(target, nonce, nowMs = Date.now()) {
+    boundedIdentity(target);
+    if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
+    this.prune(nowMs);
+    const now = iso(nowMs);
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const outstanding = this.database.prepare(`SELECT 1 FROM wake_nonces
+        WHERE host = ? AND session_id = ? AND consumed_at IS NULL AND expires_at > ? LIMIT 1`).get(target.host, target.sessionId, now);
+      const delivering = this.database.prepare(`SELECT 1 FROM messages
+        WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
+          AND expires_at > ? AND claim_until > ? LIMIT 1`).get(target.host, target.sessionId, now, now);
+      const claimable = this.database.prepare(`SELECT 1 FROM messages
+        WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
+          AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?) LIMIT 1`).get(target.host, target.sessionId, now, now);
+      if (outstanding || delivering || !claimable) {
+        this.database.exec("COMMIT");
+        return false;
+      }
+      this.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at) VALUES (?, ?, ?, ?)").run(nonceDigest(nonce), target.host, target.sessionId, iso(nowMs + WAKE_TTL_MS));
+      this.database.exec("COMMIT");
+      return true;
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  releaseWake(target, nonce) {
+    boundedIdentity(target);
+    if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
+    return this.database.prepare(`DELETE FROM wake_nonces
+      WHERE nonce_digest = ? AND host = ? AND session_id = ? AND consumed_at IS NULL`).run(nonceDigest(nonce), target.host, target.sessionId).changes === 1;
+  }
   consumeWake(target, nonce, nowMs = Date.now()) {
     boundedIdentity(target);
     const digest = nonceDigest(nonce);
@@ -489,6 +522,10 @@ function dispatch(store, operation, payload) {
       store.issueWake(identity(payload.target), string(payload.nonce, "nonce"));
       return { issued: true };
     }
+    case "reserve-wake":
+      return { dispatch: store.reserveWake(identity(payload.target), string(payload.nonce, "nonce")) };
+    case "release-wake":
+      return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "consume-wake":
       return { consumed: store.consumeWake(identity(payload.target), string(payload.nonce, "nonce")) };
     default:

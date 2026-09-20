@@ -233,29 +233,45 @@ function argument(name) {
   return index >= 0 ? process.argv[index + 1] ?? null : null;
 }
 async function ringCodex(sessionId, message) {
-  await new Promise((resolve, reject) => {
-    execFile("codex", ["queue", "--thread", sessionId, "--message", message], { windowsHide: true, timeout: 1e4 }, (error) => {
-      if (error) reject(error);
-      else resolve();
+  return new Promise((resolve) => {
+    let spawned = false;
+    const child = execFile("codex", ["queue", "--thread", sessionId, "--message", message], { windowsHide: true, timeout: 1e4 }, (error) => {
+      if (!error) resolve("submitted");
+      else resolve(spawned ? "accepted-or-unknown" : "definite-failure");
+    });
+    child.once("spawn", () => {
+      spawned = true;
     });
   });
 }
 async function ringClaude(message) {
   const socketPath = process.env.CLAUDE_CODE_MESSAGING_SOCKET;
   const token = process.env.CLAUDE_CODE_MESSAGING_TOKEN;
-  if (!socketPath || !token) throw new Error("Claude inbox transport is unavailable.");
-  await new Promise((resolve, reject) => {
+  if (!socketPath || !token) return "definite-failure";
+  return new Promise((resolve) => {
+    let settled = false;
+    let connected = false;
+    let wrote = false;
+    const finish = (outcome) => {
+      if (settled) return;
+      settled = true;
+      resolve(outcome);
+    };
     const socket = net.createConnection(socketPath);
     socket.setTimeout(5e3, () => socket.destroy(new Error("Claude inbox timed out.")));
     socket.once("connect", () => {
-      socket.end(`${JSON.stringify({ type: "auth", token })}
+      connected = true;
+      try {
+        wrote = true;
+        socket.end(`${JSON.stringify({ type: "auth", token })}
 ${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "now" })}
 `);
+      } catch {
+        finish("accepted-or-unknown");
+      }
     });
-    socket.once("close", (hadError) => {
-      if (!hadError) resolve();
-    });
-    socket.once("error", reject);
+    socket.once("close", (hadError) => finish(!hadError && wrote ? "submitted" : connected || wrote ? "accepted-or-unknown" : "definite-failure"));
+    socket.once("error", () => finish(connected || wrote ? "accepted-or-unknown" : "definite-failure"));
   });
 }
 async function delay2(milliseconds) {
@@ -288,7 +304,7 @@ async function runSessionMessageRelay(options) {
     await delay2(3e3);
   }
   if (!acquired) return;
-  let outstandingNonce = null;
+  let retryNonce = null;
   let ringAttempts = 0;
   let nextRingAt = 0;
   let identityUnknowns = 0;
@@ -314,7 +330,7 @@ async function runSessionMessageRelay(options) {
       if (!heartbeat.alive) return;
       const pending = await sessionMessageRequest("pending", { target });
       if (pending.count === 0) {
-        outstandingNonce = null;
+        retryNonce = null;
         ringAttempts = 0;
         nextRingAt = 0;
       } else if (now >= nextRingAt) {
@@ -330,15 +346,26 @@ async function runSessionMessageRelay(options) {
         }
         identityUnknowns = 0;
         nextIdentityCheck = now + IDENTITY_RECHECK_MS;
-        if (outstandingNonce === null) {
-          outstandingNonce = newWakeNonce();
-          await sessionMessageRequest("issue-wake", { target, nonce: outstandingNonce });
+        const nonce = retryNonce ?? newWakeNonce();
+        const reservation = await sessionMessageRequest("reserve-wake", { target, nonce });
+        if (!reservation.dispatch) {
+          retryNonce = null;
+          ringAttempts = 0;
+          nextRingAt = 0;
+        } else {
+          const bell = wakeMessage(nonce);
+          const outcome = options.transport === "codex-queue" ? await ringCodex(options.sessionId, bell) : await ringClaude(bell);
+          if (outcome === "definite-failure") {
+            const released = await sessionMessageRequest("release-wake", { target, nonce });
+            retryNonce = released.released ? nonce : null;
+            nextRingAt = released.released ? now + wakeBackoffDelay(ringAttempts) : 0;
+            ringAttempts = released.released ? ringAttempts + 1 : 0;
+          } else {
+            retryNonce = null;
+            ringAttempts = 0;
+            nextRingAt = 0;
+          }
         }
-        const bell = wakeMessage(outstandingNonce);
-        nextRingAt = now + wakeBackoffDelay(ringAttempts);
-        ringAttempts += 1;
-        if (options.transport === "codex-queue") await ringCodex(options.sessionId, bell);
-        else await ringClaude(bell);
       }
     } catch {
     }

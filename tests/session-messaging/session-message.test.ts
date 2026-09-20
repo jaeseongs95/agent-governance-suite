@@ -118,6 +118,35 @@ describe("session message spool", () => {
     store.close();
   });
 
+  it("allows only one unconsumed wake and suppresses wakes during a live claim", () => {
+    const directory = stateDirectory();
+    const databasePath = path.join(directory, "messages.sqlite3");
+    const sender = { host: "grok", sessionId: "wake-sender" };
+    const target = { host: "codex", sessionId: "wake-target" };
+    const firstNonce = "wake-nonce-abcdefghijklmnop";
+    const secondNonce = "wake-nonce-qrstuvwxyzabcdef";
+    const thirdNonce = "wake-nonce-ghijklmnopqrstuv";
+    const store = new SessionMessageStore(databasePath);
+    store.send({ messageId: "wake-msg-0001", sender, target, body: "first" }, 1000);
+    store.send({ messageId: "wake-msg-0002", sender, target, body: "second" }, 1001);
+    expect(store.reserveWake(target, firstNonce, 2000)).toBe(true);
+    expect(store.reserveWake(target, secondNonce, 2001)).toBe(false);
+    store.close();
+
+    const reopened = new SessionMessageStore(databasePath);
+    expect(reopened.reserveWake(target, secondNonce, 2002)).toBe(false);
+    expect(reopened.consumeWake(target, firstNonce, 2003)).toBe(true);
+    expect(reopened.reserveWake(target, secondNonce, 2004)).toBe(true);
+    expect(reopened.releaseWake(target, secondNonce)).toBe(true);
+    expect(reopened.reserveWake(target, secondNonce, 2005)).toBe(true);
+    expect(reopened.consumeWake(target, secondNonce, 2006)).toBe(true);
+    expect(reopened.claim(target, 3000, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["wake-msg-0001"]);
+    expect(reopened.reserveWake(target, thirdNonce, 3001)).toBe(false);
+    expect(reopened.acknowledge(target, ["wake-msg-0001"], 4000)).toBe(1);
+    expect(reopened.reserveWake(target, thirdNonce, 4001)).toBe(true);
+    reopened.close();
+  });
+
   it("caps the unacknowledged spool and expires messages", () => {
     const store = new SessionMessageStore(":memory:");
     const sender = { host: "generic-a", sessionId: "a" };
@@ -191,8 +220,26 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     }
   });
 
-  it("backs off repeated wake hints without exceeding ten minutes", () => {
+  it("backs off definite wake submission failures without exceeding ten minutes", () => {
     expect([0, 1, 2, 5, 20].map(wakeBackoffDelay)).toEqual([30_000, 60_000, 120_000, 600_000, 600_000]);
+  });
+
+  it("serializes wake reservation and release through the TLS broker", async () => {
+    const directory = stateDirectory();
+    const target = { host: "codex", sessionId: "broker-wake-target" };
+    await sessionMessageRequest("send", {
+      messageId: "broker-wake-0001",
+      sender: { host: "claude-code", sessionId: "broker-wake-sender" },
+      target,
+      body: "wake once",
+      ttlSeconds: 600,
+    }, directory);
+    const first = "broker-wake-nonce-abcdefghijklmnop";
+    const second = "broker-wake-nonce-qrstuvwxyzabcdef";
+    await expect(sessionMessageRequest("reserve-wake", { target, nonce: first }, directory)).resolves.toEqual({ dispatch: true });
+    await expect(sessionMessageRequest("reserve-wake", { target, nonce: second }, directory)).resolves.toEqual({ dispatch: false });
+    await expect(sessionMessageRequest("release-wake", { target, nonce: first }, directory)).resolves.toEqual({ released: true });
+    await expect(sessionMessageRequest("reserve-wake", { target, nonce: second }, directory)).resolves.toEqual({ dispatch: true });
   });
 
   it("stops relay acquisition after three consecutive unknown identity checks", () => {

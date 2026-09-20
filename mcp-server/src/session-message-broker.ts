@@ -177,6 +177,8 @@ function dispatch(store: SessionMessageStore, operation: string, payload: Record
       store.issueWake(identity(payload.target), string(payload.nonce, "nonce"));
       return { issued: true };
     }
+    case "reserve-wake": return { dispatch: store.reserveWake(identity(payload.target), string(payload.nonce, "nonce")) };
+    case "release-wake": return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "consume-wake": return { consumed: store.consumeWake(identity(payload.target), string(payload.nonce, "nonce")) };
     default: throw new Error("Unknown broker operation.");
   }
