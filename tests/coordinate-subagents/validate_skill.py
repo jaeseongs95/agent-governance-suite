@@ -49,7 +49,7 @@ POLICY_REQUIRED_CLAUSES = {
         "Apply the current mode and write restrictions to every delegated task.",
     ),
     "delegation.atomic-local": (
-        "Keep work local when the net-benefit conditions are not all confirmed, including multi-unit work that is sequential, shares a writer, needs the coordinator's full context, or would cost more to hand off and integrate.",
+        "Without an explicit delegation request, keep work local when the net-benefit conditions are not all confirmed, including multi-unit work that is sequential, shares a writer, needs the coordinator's full context, or would cost more to hand off and integrate.",
     ),
     "delegation.explicit-request": (
         "Implementation delegation is allowed only when the user explicitly requests it or every net-benefit condition below is satisfied:",
@@ -172,7 +172,7 @@ POLICY_REQUIRED_CLAUSES = {
         "With `fork_turns=\"all\"`, inherit the parent model and reasoning effort; do not set model or reasoning overrides.",
     ),
     "routing.unsupported-fallback": (
-        "If a preferred override is unavailable but inherited execution is supported, delegate with the inherited configuration.",
+        "If a preferred override is unavailable but inherited execution is supported and its observed settings satisfy the assignment's risk floor, delegate with the inherited configuration.",
     ),
     "routing.no-mechanical-retry": (
         "Do not retry through progressively different models when the failure comes from missing information, permissions, tools, an unsupported setting, or an incomplete specification.",

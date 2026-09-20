@@ -32,7 +32,13 @@
   },
   "providers": {
     "openai-codex": {
+      "minimum_efforts": { "gpt-5.6-luna": "high" },
       "application": {
+        "full_history_overrides": false,
+        "context_field": "fork_turns",
+        "default_context": "all",
+        "full_history_value": "all",
+        "limited_context_value": "none",
         "model_field": "model",
         "effort_field": "reasoning_effort",
         "model_delivery": ["spawn-argument"],

@@ -50,6 +50,9 @@ When reusing a completed agent, send a complete new brief. Do not assume the old
 - If more units remain, queue the next independent batch and reuse completed agents.
 - Use a single writer for shared files. Other agents return proposed changes or evidence to that writer.
 - Start dependent work only after validating the upstream result it consumes.
+- After dispatch, the coordinator works on its own ready unit; it does not immediately wait while useful independent work remains. Collect finished results and refill available slots without a whole-batch barrier.
+- Reserving an auditor does not disable implementation delegation. Keep the auditor out of implementation and begin its audit only after the final candidate and verification evidence are available.
+- The MCP workflow records stage results in plan order. Run independent units inside the appropriate stage with host collaboration tools, then integrate their results before recording the stage. Parallel execution does not permit out-of-order stage receipts.
 - Do not ask multiple agents to solve the same unit unless independent comparison or audit is the stated purpose.
 
 ## Recover from dispatch problems

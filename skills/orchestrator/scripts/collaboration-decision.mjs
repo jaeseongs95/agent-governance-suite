@@ -18,11 +18,23 @@ const criteriaKeys = [
 
 export function deriveCollaborationRoute(decision) {
   const allBenefitsHold = criteriaKeys.every((key) => decision.netBenefitCriteria[key]);
-  if (decision.auditSeparationRequired) return decision.userDirective === "require" ? "needs-input" : "audit-only";
-  if (decision.sourceOriginKind !== "user-turn") return "direct";
-  if (decision.userDirective === "forbid") return "direct";
-  if (decision.userDirective === "require") return allBenefitsHold ? "delegate" : "needs-input";
-  return allBenefitsHold ? "delegate" : "direct";
+  // Historical v1.0 decisions remain valid evidence; new planning uses v1.1.
+  if (decision.schemaVersion === "1.0.0") {
+    if (decision.auditSeparationRequired) return decision.userDirective === "require" ? "needs-input" : "audit-only";
+    if (decision.sourceOriginKind !== "user-turn" || decision.userDirective === "forbid") return "direct";
+    if (decision.userDirective === "require") return allBenefitsHold ? "delegate" : "needs-input";
+    return allBenefitsHold ? "delegate" : "direct";
+  }
+  const localRoute = decision.auditSeparationRequired ? "audit-only" : "direct";
+  if (decision.sourceOriginKind !== "user-turn") return localRoute;
+  if (decision.userDirective === "forbid") return localRoute;
+  if (decision.userDirective === "require") {
+    const feasible = decision.netBenefitCriteria.independentlyCompletable
+      && decision.netBenefitCriteria.singleWriterOwnership
+      && (decision.netBenefitCriteria.limitedContextSufficient || decision.fullHistoryContext?.sufficient === true);
+    return feasible ? "delegate" : "needs-input";
+  }
+  return allBenefitsHold ? "delegate" : localRoute;
 }
 
 export function validateCollaborationDecision(decision) {
