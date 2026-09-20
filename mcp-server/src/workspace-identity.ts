@@ -142,13 +142,13 @@ function discoverGit(physical: { real: string; existing: string }): SurfaceIdent
 /**
  * Checkout roots registered for a repository: the main checkout when the common dir is a
  * `.git` directory, plus every linked worktree listed under `<commonDir>/worktrees`.
- * Bounded; never throws. Returns normalized keys. `complete` is false whenever the list may
- * miss a checkout (common dir gone, unreadable listing, a broken registration, too many
- * entries), so a caller never reads a partial list as "no checkout there".
+ * Bounded; never throws. Git files can point to this admin directory without a reverse
+ * registration, including an external admin directory named `.git`. Thus this list can
+ * establish overlap but cannot prove that a container has no checkout of this repository.
  */
 export function repositoryCheckouts(commonDir: string): { roots: string[]; complete: boolean } {
   const roots = new Set<string>();
-  let complete = true;
+  const complete = false;
   try {
     if (!isDirectory(commonDir)) return { roots: [], complete: false };
     if (path.basename(commonDir) === ".git") roots.add(normalizedKey(physicalPath(path.dirname(commonDir)).real));
@@ -161,29 +161,56 @@ export function repositoryCheckouts(commonDir: string): { roots: string[]; compl
           const name = listing.readSync()?.name;
           if (name === undefined) break;
           if (count >= WALK_LIMIT) {
-            complete = false;
             break;
           }
           try {
             // `gitdir` names the worktree's `.git` file; like Git, anything else is an invalid registration.
             const pointer = readHead(path.join(worktrees, name, "gitdir")).trim();
             if (!pointer || isUnsupported(pointer) || normalizedKey(path.basename(pointer)) !== ".git") {
-              complete = false;
               continue;
             }
             roots.add(normalizedKey(physicalPath(path.dirname(path.resolve(worktrees, name, pointer))).real));
-          } catch {
-            complete = false;
-          }
+          } catch { /* The partial result remains explicitly incomplete. */ }
         }
       } finally {
         listing.closeSync();
       }
     }
-  } catch {
-    complete = false;
-  }
+  } catch { /* The partial result remains explicitly incomplete. */ }
   return { roots: [...roots], complete };
+}
+
+/** Inspect only the requested container, with a fixed entry budget and cycle detection. */
+export function repositoryInDirectory(container: string, commonDir: string): "overlap" | "unknown" | "none" {
+  const pending = [container];
+  const visited = new Set<string>();
+  let inspected = 0;
+  try {
+    while (pending.length > 0) {
+      if (++inspected > READ_LIMIT) return "unknown";
+      const directory = fs.realpathSync.native(pending.pop()!);
+      const key = normalizedKey(directory);
+      if (visited.has(key)) continue;
+      visited.add(key);
+      if (fs.statSync(path.join(directory, ".git"), { throwIfNoEntry: false })) {
+        if (discoverGit({ real: directory, existing: directory })?.commonDir === commonDir) return "overlap";
+      }
+      const listing = fs.opendirSync(directory);
+      try {
+        for (let entry = listing.readSync(); entry; entry = listing.readSync()) {
+          if (++inspected > READ_LIMIT) return "unknown";
+          if (entry.name === ".git") continue;
+          const child = path.join(directory, entry.name);
+          if (entry.isDirectory()) pending.push(child);
+          else if (entry.isSymbolicLink()) {
+            if (isDirectory(child)) pending.push(child);
+            else if (identify(child).git?.commonDir === commonDir) return "overlap";
+          }
+        }
+      } finally { listing.closeSync(); }
+    }
+    return "none";
+  } catch { return "unknown"; }
 }
 
 function identify(target: string): Pick<SurfaceIdentityV1, "physical" | "git"> {

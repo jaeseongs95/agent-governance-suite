@@ -12,6 +12,7 @@ import {
 import {
   pathWithin,
   repositoryCheckouts,
+  repositoryInDirectory,
   resolveRootIdentity,
   type RootIdentityV1,
   type SurfaceIdentityV1,
@@ -180,26 +181,35 @@ function insideParentSurface(surface: SurfaceIdentityV1, parent: RootIdentityV1)
 }
 
 /**
- * Whether two surfaces name the same checkout-relative files of one repository. A directory
- * outside any checkout (a parent folder, a widened glob) has no Git identity of its own but can
- * hold whole checkouts, so it overlaps a repository when it contains one of its checkouts.
+ * A directory can contain nested checkouts even when it belongs to a different repository.
+ * Registered checkouts prove overlap; incomplete registration cannot prove disjointness.
  */
 function lineageRelation(
   left: SurfaceIdentityV1,
   right: SurfaceIdentityV1,
   checkouts: Map<string, ReturnType<typeof repositoryCheckouts>>,
+  scans: Map<string, ReturnType<typeof repositoryInDirectory>>,
 ): "overlap" | "unknown" | "none" {
-  if (left.git && right.git) {
-    return sharesLineage(left, right) && overlaps(left.git.relative, right.git.relative) ? "overlap" : "none";
+  if (sharesLineage(left, right)) {
+    return overlaps(left.git!.relative, right.git!.relative) ? "overlap" : "none";
   }
-  const [container, member] = left.git ? [right, left] : [left, right];
-  if (!member.git || outsideEveryRepository(container)) return "none";
-  const commonDir = member.git.commonDir;
-  if (!checkouts.has(commonDir)) checkouts.set(commonDir, repositoryCheckouts(commonDir));
-  const listing = checkouts.get(commonDir)!;
-  if (listing.roots.some((checkout) => pathWithin(checkout, container.physical))) return "overlap";
-  // A partial list of the repository's checkouts cannot show that the folder holds none of them.
-  return listing.complete ? "none" : "unknown";
+  let uncertain = false;
+  for (const [container, member] of [[left, right], [right, left]] as const) {
+    if (!member.git || (container.conservative === null
+      && statSync(container.physical || "/", { throwIfNoEntry: false })?.isDirectory() !== true)) continue;
+    const commonDir = member.git.commonDir;
+    if (!checkouts.has(commonDir)) checkouts.set(commonDir, repositoryCheckouts(commonDir));
+    const listing = checkouts.get(commonDir)!;
+    if (listing.roots.some((checkout) => pathWithin(checkout, container.physical))) return "overlap";
+    if (!listing.complete) {
+      const scanKey = `${commonDir}\u0000${container.physical}`;
+      if (!scans.has(scanKey)) scans.set(scanKey, repositoryInDirectory(container.physical || "/", commonDir));
+      const scanned = scans.get(scanKey)!;
+      if (scanned === "overlap") return "overlap";
+      uncertain ||= scanned === "unknown";
+    }
+  }
+  return uncertain ? "unknown" : "none";
 }
 
 /** A plain file path outside any checkout cannot share a repository's lineage; a directory there may hold checkouts. */
@@ -223,6 +233,7 @@ export function findRootConflict(
   actives: readonly IdentifiedRoot[],
 ): RootConflict | null {
   const checkouts = new Map<string, ReturnType<typeof repositoryCheckouts>>();
+  const scans = new Map<string, ReturnType<typeof repositoryInDirectory>>();
   for (const active of actives) {
     if (active.root.rootId === candidate.root.parentRootId) continue;
     for (const requested of candidate.identity.surfaces) {
@@ -240,7 +251,7 @@ export function findRootConflict(
           if (outsideEveryRepository(requested)) continue;
           return { root: active.root, kind: "lineage-unresolved", requested, existing };
         }
-        const relation = lineageRelation(requested, existing, checkouts);
+        const relation = lineageRelation(requested, existing, checkouts, scans);
         if (relation !== "none") {
           return { root: active.root, kind: relation === "overlap" ? "lineage" : "lineage-unresolved", requested, existing };
         }

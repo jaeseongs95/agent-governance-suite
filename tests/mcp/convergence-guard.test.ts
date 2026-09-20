@@ -1,8 +1,10 @@
+import fs from "node:fs";
 import { copyFile, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { Worker } from "node:worker_threads";
+import { spawnSync } from "node:child_process";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -1409,6 +1411,56 @@ function identityRows(databasePath: string): Array<{ root_id: string; replacemen
 }
 
 describe("server-derived workspace identity", () => {
+  it.each([
+    { adminName: "admin", nested: false },
+    { adminName: ".git", nested: false },
+    { adminName: "admin", nested: true },
+    { adminName: ".git", nested: true },
+  ])("blocks checkout containers across separate gitdir layouts ($adminName, nested=$nested)", async ({ adminName, nested }) => {
+    const harness = await createHarness();
+    const fixture = await gitFixture();
+    const container = nested ? join(fixture.main, "vendor") : join(fixture.base, "plain");
+    const original = join(container, "original");
+    const admin = join(fixture.base, "administration", adminName);
+    await mkdir(container, { recursive: true });
+    await mkdir(join(fixture.base, "administration"), { recursive: true });
+    const initialized = spawnSync("git", ["init", "--separate-git-dir", admin, original], {
+      encoding: "utf8", windowsHide: true, timeout: 10_000,
+    });
+    expect(initialized.status, initialized.stderr).toBe(0);
+    const linked = join(fixture.base, "linked");
+    const linkedAdmin = join(admin, "worktrees", "linked");
+    await mkdir(linked, { recursive: true });
+    await mkdir(linkedAdmin, { recursive: true });
+    await writeFile(join(linked, ".git"), `gitdir: ${linkedAdmin}\n`, "utf8");
+    await writeFile(join(linkedAdmin, "commondir"), "../..\n", "utf8");
+    await writeFile(join(linkedAdmin, "gitdir"), `${join(linked, ".git")}\n`, "utf8");
+    const gated = openRoot(harness.service, taskFor("gated-linked"), frameAt(linked, "linked"));
+    gateRoot(harness.service, gated);
+    for (const entry of [".", "*/src/candidate.ts"]) {
+      const result = tryOpen(harness.service, taskFor(`container-${entry}`, entry), frameAt(container, "container", entry));
+      expect(result.error?.code).toBe("ROOT_CONFLICT");
+      expect(result.error?.details?.rootId).toBe(gated.rootId);
+    }
+    // Concrete unrelated files remain usable even when their repository differs.
+    const unrelated = await gitFixture();
+    await mkdir(join(unrelated.main, "src"));
+    await writeFile(join(unrelated.main, "src", "candidate.ts"), "synthetic\n", "utf8");
+    expect(tryOpen(harness.service, taskFor("unrelated-file"), frameAt(unrelated.main, "unrelated")).error).toBeNull();
+    await mkdir(join(unrelated.main, "docs"));
+    expect(tryOpen(harness.service, taskFor("unrelated-directory", "docs"), frameAt(unrelated.main, "unrelated-dir", "docs")).error).toBeNull();
+    await mkdir(join(unrelated.main, "inaccessible"));
+    const realOpen = fs.opendirSync;
+    const denied = vi.spyOn(fs, "opendirSync").mockImplementation((path, ...options) => {
+      if (String(path).endsWith("inaccessible")) throw new Error("EACCES");
+      return realOpen(path, ...options);
+    });
+    try {
+      const unknown = tryOpen(harness.service, taskFor("unknown-directory", "inaccessible"), frameAt(unrelated.main, "unknown-dir", "inaccessible"));
+      expect(unknown.error?.code).toBe("ROOT_CONFLICT");
+      expect(unknown.error?.details?.rootId).toBe(gated.rootId);
+    } finally { denied.mockRestore(); }
+  });
   it("rejects the same physical target under a changed workspace id and locator", async () => {
     const { service } = await createHarness();
     const git = await gitFixture();
@@ -1506,14 +1558,13 @@ describe("server-derived workspace identity", () => {
     temporaryDirectories.push(unrelatedFolder);
     expect(tryOpen(service, taskFor("unrelated-folder", "."), frameAt(unrelatedFolder, "workspace-unrelated", ".")).error).toBeNull();
 
-    // A registration that cannot be read leaves the list of checkouts partial: a folder is no longer provably unrelated.
+    // A partial registration is not absence evidence; bounded inspection independently proves this empty folder unrelated.
     await writeFile(join(git.main, ".git", "worktrees", "w2", "gitdir"), "\n", "utf8");
     const otherFolder = await mkdtemp(join(tmpdir(), "convergence-unrelated-"));
     temporaryDirectories.push(otherFolder);
     const partial = tryOpen(service, taskFor("partial-listing", "."), frameAt(otherFolder, "workspace-other", "."));
-    expect(partial.error?.code).toBe("ROOT_CONFLICT");
-    expect(partial.error?.details).toMatchObject({ rootId: gated.rootId, conflictKind: "lineage-unresolved", reason: "WORKSPACE_IDENTITY_UNRESOLVED" });
-    expect(tryOpen(service, taskFor("plain-file"), frameAt(otherFolder, "workspace-other")).error).toBeNull();
+    expect(partial.error).toBeNull();
+    expect(tryOpen(service, taskFor("plain-file"), frameAt(join(git.base, "new-plain-folder"), "workspace-other")).error).toBeNull();
   });
 
   it("follows the write surface of a stored root after a review replaces its frame", async () => {

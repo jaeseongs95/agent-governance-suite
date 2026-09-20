@@ -1,6 +1,7 @@
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import fs, { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { spawnSync } from "node:child_process";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { WorkflowContractError } from "../../contracts/types.js";
@@ -8,6 +9,7 @@ import {
   assertSupportedScopeEntry,
   pathWithin,
   repositoryCheckouts,
+  repositoryInDirectory,
   resolveRootIdentity,
 } from "../../mcp-server/src/workspace-identity.js";
 
@@ -334,6 +336,19 @@ describe("resolveRootIdentity entry classes", () => {
 });
 
 describe("repositoryCheckouts", () => {
+  it("does not infer a complete checkout list from an external admin directory named .git", () => {
+    const root = fixtureRoot();
+    const admin = join(root, "admin", ".git");
+    mkdirSync(dirname(admin));
+    const original = join(root, "original");
+    const initialized = spawnSync("git", ["init", "--separate-git-dir", admin, original], {
+      encoding: "utf8", windowsHide: true, timeout: 10_000,
+    });
+    expect(initialized.status, initialized.stderr).toBe(0);
+    const listing = repositoryCheckouts(key(admin));
+    expect(listing.roots).not.toContain(key(original));
+    expect(listing.complete).toBe(false);
+  });
   it("lists the main checkout and its linked worktrees with the keys resolveRootIdentity reports", () => {
     const root = fixtureRoot();
     const main = mainCheckout(root);
@@ -344,7 +359,7 @@ describe("repositoryCheckouts", () => {
     const listing = repositoryCheckouts(commonDir);
     const checkouts = [...listing.roots].sort();
 
-    expect(listing.complete).toBe(true);
+    expect(listing.complete).toBe(false);
     expect(checkouts).toEqual([key(main), key(first), key(second)].sort());
     expect(checkouts).toEqual([main, first, second]
       .map((checkout) => resolveRootIdentity(checkout, ["src/a.ts"]).surfaces[0]?.git)
@@ -363,7 +378,7 @@ describe("repositoryCheckouts", () => {
 
     const listing = repositoryCheckouts(key(main, ".git"));
     expect([...listing.roots].sort()).toEqual([key(main), key(gone), key(relative)].sort());
-    expect(listing.complete).toBe(true);
+    expect(listing.complete).toBe(false);
   });
 
   it("skips malformed, empty, oversized and missing gitdir registrations and reports the list as partial", () => {
@@ -390,12 +405,36 @@ describe("repositoryCheckouts", () => {
     const worktree = linkedWorktree(root, bare, "bw");
     const main = mainCheckout(root);
 
-    expect(repositoryCheckouts(key(bare))).toEqual({ roots: [key(worktree)], complete: true });
-    // No `worktrees` directory is a complete answer; a common dir that is gone is not.
-    expect(repositoryCheckouts(key(main, ".git"))).toEqual({ roots: [key(main)], complete: true });
+    expect(repositoryCheckouts(key(bare))).toEqual({ roots: [key(worktree)], complete: false });
+    // Reverse registrations cannot prove there are no additional Git-file checkouts.
+    expect(repositoryCheckouts(key(main, ".git"))).toEqual({ roots: [key(main)], complete: false });
     for (const missing of [key(root, "nowhere", ".git"), key(root, "nowhere.git"), "", "bad\u0000dir/.git"]) {
       expect(repositoryCheckouts(missing)).toEqual({ roots: [], complete: false });
     }
+  });
+});
+
+describe("bounded repository container inspection", () => {
+  it("proves an unrelated directory and terminates a directory alias cycle", () => {
+    const root = fixtureRoot();
+    symlinkSync(root, join(root, "loop"), windows ? "junction" : "dir");
+    expect(repositoryInDirectory(root, key(root, "unrelated-admin"))).toBe("none");
+  });
+
+  it("returns unknown on access failure or when the entry budget is exhausted", () => {
+    const root = fixtureRoot();
+    const inaccessible = vi.spyOn(fs, "opendirSync").mockImplementation(() => { throw new Error("EACCES"); });
+    try { expect(repositoryInDirectory(root, "unrelated")).toBe("unknown"); }
+    finally { inaccessible.mockRestore(); }
+    const closeSync = vi.fn();
+    const oversized = vi.spyOn(fs, "opendirSync").mockReturnValue({
+      readSync: () => ({ name: "ordinary", isDirectory: () => false, isSymbolicLink: () => false }),
+      closeSync,
+    } as unknown as fs.Dir);
+    try {
+      expect(repositoryInDirectory(root, "unrelated")).toBe("unknown");
+      expect(closeSync).toHaveBeenCalledOnce();
+    } finally { oversized.mockRestore(); }
   });
 });
 

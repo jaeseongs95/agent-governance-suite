@@ -141,7 +141,7 @@ function discoverGit(physical) {
 }
 function repositoryCheckouts(commonDir) {
   const roots = /* @__PURE__ */ new Set();
-  let complete = true;
+  const complete = false;
   try {
     if (!isDirectory(commonDir)) return { roots: [], complete: false };
     if (path.basename(commonDir) === ".git") roots.add(normalizedKey(physicalPath(path.dirname(commonDir)).real));
@@ -153,18 +153,15 @@ function repositoryCheckouts(commonDir) {
           const name = listing.readSync()?.name;
           if (name === void 0) break;
           if (count >= WALK_LIMIT) {
-            complete = false;
             break;
           }
           try {
             const pointer = readHead(path.join(worktrees, name, "gitdir")).trim();
             if (!pointer || isUnsupported(pointer) || normalizedKey(path.basename(pointer)) !== ".git") {
-              complete = false;
               continue;
             }
             roots.add(normalizedKey(physicalPath(path.dirname(path.resolve(worktrees, name, pointer))).real));
           } catch {
-            complete = false;
           }
         }
       } finally {
@@ -172,9 +169,43 @@ function repositoryCheckouts(commonDir) {
       }
     }
   } catch {
-    complete = false;
   }
   return { roots: [...roots], complete };
+}
+function repositoryInDirectory(container, commonDir) {
+  const pending = [container];
+  const visited = /* @__PURE__ */ new Set();
+  let inspected = 0;
+  try {
+    while (pending.length > 0) {
+      if (++inspected > READ_LIMIT) return "unknown";
+      const directory = fs.realpathSync.native(pending.pop());
+      const key = normalizedKey(directory);
+      if (visited.has(key)) continue;
+      visited.add(key);
+      if (fs.statSync(path.join(directory, ".git"), { throwIfNoEntry: false })) {
+        if (discoverGit({ real: directory, existing: directory })?.commonDir === commonDir) return "overlap";
+      }
+      const listing = fs.opendirSync(directory);
+      try {
+        for (let entry = listing.readSync(); entry; entry = listing.readSync()) {
+          if (++inspected > READ_LIMIT) return "unknown";
+          if (entry.name === ".git") continue;
+          const child = path.join(directory, entry.name);
+          if (entry.isDirectory()) pending.push(child);
+          else if (entry.isSymbolicLink()) {
+            if (isDirectory(child)) pending.push(child);
+            else if (identify(child).git?.commonDir === commonDir) return "overlap";
+          }
+        }
+      } finally {
+        listing.closeSync();
+      }
+    }
+    return "none";
+  } catch {
+    return "unknown";
+  }
 }
 function identify(target) {
   const physical = physicalPath(target);
@@ -279,23 +310,33 @@ function sharesLineage(left, right) {
 function insideParentSurface(surface, parent) {
   return parent.surfaces.some((owned) => pathWithin(surface.physical, owned.physical) || sharesLineage(surface, owned) && pathWithin(surface.git.relative, owned.git.relative));
 }
-function lineageRelation(left, right, checkouts) {
-  if (left.git && right.git) {
-    return sharesLineage(left, right) && overlaps(left.git.relative, right.git.relative) ? "overlap" : "none";
+function lineageRelation(left, right, checkouts, scans) {
+  if (sharesLineage(left, right)) {
+    return overlaps(left.git.relative, right.git.relative) ? "overlap" : "none";
   }
-  const [container, member] = left.git ? [right, left] : [left, right];
-  if (!member.git || outsideEveryRepository(container)) return "none";
-  const commonDir = member.git.commonDir;
-  if (!checkouts.has(commonDir)) checkouts.set(commonDir, repositoryCheckouts(commonDir));
-  const listing = checkouts.get(commonDir);
-  if (listing.roots.some((checkout) => pathWithin(checkout, container.physical))) return "overlap";
-  return listing.complete ? "none" : "unknown";
+  let uncertain = false;
+  for (const [container, member] of [[left, right], [right, left]]) {
+    if (!member.git || container.conservative === null && statSync(container.physical || "/", { throwIfNoEntry: false })?.isDirectory() !== true) continue;
+    const commonDir = member.git.commonDir;
+    if (!checkouts.has(commonDir)) checkouts.set(commonDir, repositoryCheckouts(commonDir));
+    const listing = checkouts.get(commonDir);
+    if (listing.roots.some((checkout) => pathWithin(checkout, container.physical))) return "overlap";
+    if (!listing.complete) {
+      const scanKey = `${commonDir}\0${container.physical}`;
+      if (!scans.has(scanKey)) scans.set(scanKey, repositoryInDirectory(container.physical || "/", commonDir));
+      const scanned = scans.get(scanKey);
+      if (scanned === "overlap") return "overlap";
+      uncertain ||= scanned === "unknown";
+    }
+  }
+  return uncertain ? "unknown" : "none";
 }
 function outsideEveryRepository(surface) {
   return surface.git === null && surface.conservative === null && statSync(surface.physical || "/", { throwIfNoEntry: false })?.isDirectory() !== true;
 }
 function findRootConflict(candidate, parent, actives) {
   const checkouts = /* @__PURE__ */ new Map();
+  const scans = /* @__PURE__ */ new Map();
   for (const active of actives) {
     if (active.root.rootId === candidate.root.parentRootId) continue;
     for (const requested of candidate.identity.surfaces) {
@@ -313,7 +354,7 @@ function findRootConflict(candidate, parent, actives) {
           if (outsideEveryRepository(requested)) continue;
           return { root: active.root, kind: "lineage-unresolved", requested, existing };
         }
-        const relation = lineageRelation(requested, existing, checkouts);
+        const relation = lineageRelation(requested, existing, checkouts, scans);
         if (relation !== "none") {
           return { root: active.root, kind: relation === "overlap" ? "lineage" : "lineage-unresolved", requested, existing };
         }
