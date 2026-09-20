@@ -19527,6 +19527,7 @@ var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
 var BROKER_REQUEST_TIMEOUT_MS = 2500;
 var BROKER_STARTUP_DEADLINE_MESSAGE = "The session message broker did not become ready before the startup deadline.";
 var SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE = "The session message request deadline expired.";
+var deadlineMetadata = /* @__PURE__ */ new WeakMap();
 function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
   return {
     stateDirectory,
@@ -19551,13 +19552,21 @@ function remainingMilliseconds(deadline, signal, message = SESSION_MESSAGE_REQUE
   return remaining;
 }
 async function withDeadline(timeoutMs, parentSignal, message, work) {
-  if (!Number.isFinite(timeoutMs) || timeoutMs < 1) throw deadlineError(message);
+  const parentDeadline = parentSignal ? deadlineMetadata.get(parentSignal) : void 0;
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw deadlineError(parentDeadline?.message ?? message);
+  const now = performance.now();
+  const requestedDeadline = now + timeoutMs;
+  const inherited = parentDeadline && parentDeadline.deadline <= requestedDeadline ? parentDeadline : void 0;
+  const deadline = inherited?.deadline ?? requestedDeadline;
+  const deadlineMessage = inherited?.message ?? message;
+  const remaining = deadline - now;
+  if (remaining < 1) throw deadlineError(deadlineMessage);
   const controller = new AbortController();
-  const deadline = performance.now() + timeoutMs;
   const onParentAbort = () => controller.abort(parentSignal ? signalError(parentSignal) : deadlineError(message));
   if (parentSignal?.aborted) onParentAbort();
   else parentSignal?.addEventListener("abort", onParentAbort, { once: true });
-  const timer = setTimeout(() => controller.abort(deadlineError(message)), timeoutMs);
+  deadlineMetadata.set(controller.signal, { deadline, message: deadlineMessage });
+  const timer = setTimeout(() => controller.abort(deadlineError(deadlineMessage)), remaining);
   let removeAbortListener = () => {
   };
   try {

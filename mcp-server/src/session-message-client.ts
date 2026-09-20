@@ -29,6 +29,7 @@ const SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 20_000;
 const BROKER_REQUEST_TIMEOUT_MS = 2_500;
 const BROKER_STARTUP_DEADLINE_MESSAGE = "The session message broker did not become ready before the startup deadline.";
 const SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE = "The session message request deadline expired.";
+const deadlineMetadata = new WeakMap<AbortSignal, { deadline: number; message: string }>();
 
 function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
   return {
@@ -68,13 +69,21 @@ async function withDeadline<T>(
   message: string,
   work: (signal: AbortSignal, deadline: number) => Promise<T>,
 ): Promise<T> {
-  if (!Number.isFinite(timeoutMs) || timeoutMs < 1) throw deadlineError(message);
+  const parentDeadline = parentSignal ? deadlineMetadata.get(parentSignal) : undefined;
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw deadlineError(parentDeadline?.message ?? message);
+  const now = performance.now();
+  const requestedDeadline = now + timeoutMs;
+  const inherited = parentDeadline && parentDeadline.deadline <= requestedDeadline ? parentDeadline : undefined;
+  const deadline = inherited?.deadline ?? requestedDeadline;
+  const deadlineMessage = inherited?.message ?? message;
+  const remaining = deadline - now;
+  if (remaining < 1) throw deadlineError(deadlineMessage);
   const controller = new AbortController();
-  const deadline = performance.now() + timeoutMs;
   const onParentAbort = () => controller.abort(parentSignal ? signalError(parentSignal) : deadlineError(message));
   if (parentSignal?.aborted) onParentAbort();
   else parentSignal?.addEventListener("abort", onParentAbort, { once: true });
-  const timer = setTimeout(() => controller.abort(deadlineError(message)), timeoutMs);
+  deadlineMetadata.set(controller.signal, { deadline, message: deadlineMessage });
+  const timer = setTimeout(() => controller.abort(deadlineError(deadlineMessage)), remaining);
   let removeAbortListener = () => {};
   try {
     throwIfAborted(controller.signal);
