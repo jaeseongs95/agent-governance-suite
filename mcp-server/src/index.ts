@@ -11,6 +11,7 @@ import {
   resolveRegistryPath,
   resolveSessionBoardDatabasePath,
   resolveToolSchemaProfile,
+  resolveTrustDatabasePath,
   resolveWorkflowDatabasePath,
 } from "./runtime-config.js";
 import { ContractValidator } from "./schema-validator.js";
@@ -21,6 +22,8 @@ import { WorkflowService } from "./workflow-service.js";
 import { HostAttestationProvider } from "./host-attestation.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { SqliteKoreanProseGlossary } from "./korean-prose-glossary.js";
+import { TrustStore } from "./trust-store.js";
+import { TrustService } from "./trust-service.js";
 
 async function main(): Promise<void> {
   const registryPath = resolveRegistryPath();
@@ -33,14 +36,18 @@ async function main(): Promise<void> {
     continuityPathAvailable = false;
   }
   const store = new SqliteWorkflowStore(workflowDatabasePath);
+  const trustStore = new TrustStore(resolveTrustDatabasePath());
   let continuityStore: SqliteContinuityStore | null = null;
   process.once("exit", () => {
     continuityStore?.close();
+    trustStore.close();
     store.close();
   });
 
   const validator = new ContractValidator();
   const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
+  // Neither bundled host currently exposes a cryptographically distinct direct-human approval event.
+  const trust = new TrustService(trustStore);
   const service = new WorkflowService(
     new FileSkillRegistry(registryPath, validator),
     validator,
@@ -60,7 +67,7 @@ async function main(): Promise<void> {
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath());
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust);
   await server.connect(new StdioServerTransport());
 }
 

@@ -34,7 +34,8 @@
           "envelopeField": { "enum": ["/authorization/allowedActions", "/authorization/prohibitedActions", "/authorization/approvalRequired"] },
           "effect": { "enum": ["allow", "prohibit", "require-approval"] },
           "authority": { "enum": ["system", "developer", "user", "project-instruction"] },
-          "sourceLocator": { "type": "string", "minLength": 1 }
+          "sourceLocator": { "type": "string", "minLength": 1 },
+          "sourceReceiptId": { "type": "string", "pattern": "^source-[A-Za-z0-9_-]{16,128}$" }
         }
       }
     },

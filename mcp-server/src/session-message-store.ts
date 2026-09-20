@@ -13,7 +13,8 @@ const MESSAGE_BYTES_LIMIT = 4 * 1024 * 1024;
 const CLAIM_LEASE_BASE_MS = 120_000;
 const CLAIM_LEASE_MAX_MS = 30 * 60_000;
 const RELAY_LEASE_MS = 15_000;
-const WAKE_TTL_MS = MESSAGE_TTL_MAX_SECONDS * 1000;
+export const WAKE_TTL_MS = 60 * 60_000;
+export const PRESENCE_LEASE_MS = 20_000;
 const CLAIM_MAX_MESSAGES = 10;
 
 export interface SessionIdentity {
@@ -29,6 +30,27 @@ export interface SessionMessage {
   expiresAt: string;
 }
 
+export type WakeVisibility = "silent" | "user-message" | "none";
+export type SessionPresenceState = "online" | "unreachable" | "ended" | "unknown";
+
+export interface SessionPresence {
+  host: string;
+  sessionId: string;
+  instanceId: string | null;
+  transport: string | null;
+  wakeVisibility: WakeVisibility;
+  canWakeSilently: boolean;
+  collaborationId: string | null;
+  workspaceId: string | null;
+  role: string | null;
+  startedAt: string | null;
+  heartbeatAt: string | null;
+  leaseUntil: string | null;
+  endedAt: string | null;
+  endReason: string | null;
+  state: SessionPresenceState;
+}
+
 function iso(milliseconds: number): string {
   return new Date(milliseconds).toISOString();
 }
@@ -38,8 +60,10 @@ function nonceDigest(nonce: string): string {
 }
 
 function boundedIdentity(value: SessionIdentity): void {
-  if (!value.host || value.host.length > 64 || !value.sessionId || value.sessionId.length > 200) {
-    throw new Error("A host and bounded sessionId are required.");
+  const hostPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/;
+  const sessionPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/;
+  if (!hostPattern.test(value.host) || !sessionPattern.test(value.sessionId)) {
+    throw new Error("host and sessionId must use bounded identifier characters.");
   }
 }
 
@@ -104,7 +128,26 @@ export class SessionMessageStore {
       session_id TEXT NOT NULL,
       expires_at TEXT NOT NULL,
       consumed_at TEXT
-    ) STRICT;`);
+    ) STRICT;
+    CREATE TABLE IF NOT EXISTS session_presence (
+      host TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      instance_id TEXT NOT NULL,
+      transport TEXT NOT NULL,
+      wake_visibility TEXT NOT NULL CHECK (wake_visibility IN ('silent', 'user-message', 'none')),
+      can_wake_silently INTEGER NOT NULL CHECK (can_wake_silently IN (0, 1)),
+      collaboration_id TEXT,
+      workspace_id TEXT,
+      role TEXT,
+      started_at TEXT NOT NULL,
+      heartbeat_at TEXT NOT NULL,
+      lease_until TEXT NOT NULL,
+      ended_at TEXT,
+      end_reason TEXT,
+      PRIMARY KEY (host, session_id, instance_id)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS session_presence_latest
+      ON session_presence (host, session_id, started_at DESC);`);
     const messageColumns = this.database.prepare("PRAGMA table_info(messages)").all() as Array<{ name: string }>;
     if (!messageColumns.some((column) => column.name === "delivery_attempts")) {
       this.database.exec("ALTER TABLE messages ADD COLUMN delivery_attempts INTEGER NOT NULL DEFAULT 0;");
@@ -282,7 +325,9 @@ export class SessionMessageStore {
       ON CONFLICT (host, session_id, transport) DO UPDATE SET
         relay_id = excluded.relay_id, pid = excluded.pid, parent_pid = excluded.parent_pid,
         lease_until = excluded.lease_until, updated_at = excluded.updated_at
-      WHERE relay_leases.lease_until <= excluded.updated_at OR relay_leases.relay_id = excluded.relay_id`)
+      WHERE relay_leases.lease_until <= excluded.updated_at
+        OR relay_leases.relay_id = excluded.relay_id
+        OR relay_leases.parent_pid = excluded.parent_pid`)
       .run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now);
     return result.changes === 1;
   }
@@ -354,5 +399,97 @@ export class SessionMessageStore {
       }
     }
     return true;
+  }
+
+  startPresence(input: SessionIdentity & {
+    instanceId: string;
+    transport: string;
+    wakeVisibility: WakeVisibility;
+    canWakeSilently: boolean;
+    collaborationId?: string;
+    workspaceId?: string;
+    role?: string;
+  }, nowMs = Date.now()): SessionPresence {
+    boundedIdentity(input);
+    if (!input.instanceId || input.instanceId.length > 128 || !input.transport || input.transport.length > 64) throw new Error("Invalid presence identity.");
+    for (const [name, value, maximum] of [
+      ["collaborationId", input.collaborationId, 200],
+      ["workspaceId", input.workspaceId, 500],
+      ["role", input.role, 100],
+    ] as const) {
+      if (value !== undefined && (!value || value.length > maximum)) throw new Error(`${name} is invalid.`);
+    }
+    const now = iso(nowMs);
+    this.database.prepare(`INSERT INTO session_presence (
+      host, session_id, instance_id, transport, wake_visibility, can_wake_silently,
+      collaboration_id, workspace_id, role, started_at, heartbeat_at, lease_until
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT (host, session_id, instance_id) DO UPDATE SET
+      transport = excluded.transport, wake_visibility = excluded.wake_visibility,
+      can_wake_silently = excluded.can_wake_silently, collaboration_id = excluded.collaboration_id,
+      workspace_id = excluded.workspace_id, role = excluded.role,
+      heartbeat_at = excluded.heartbeat_at, lease_until = excluded.lease_until,
+      ended_at = NULL, end_reason = NULL`).run(
+      input.host, input.sessionId, input.instanceId, input.transport, input.wakeVisibility,
+      input.canWakeSilently ? 1 : 0, input.collaborationId ?? null, input.workspaceId ?? null,
+      input.role ?? null, now, now, iso(nowMs + PRESENCE_LEASE_MS),
+    );
+    return this.presence(input, nowMs);
+  }
+
+  heartbeatPresence(target: SessionIdentity, instanceId: string, nowMs = Date.now()): boolean {
+    boundedIdentity(target);
+    if (!instanceId) throw new Error("presence instanceId is required.");
+    const row = this.database.prepare(`SELECT instance_id FROM session_presence
+      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`).get(target.host, target.sessionId, instanceId);
+    const selected = row as { instance_id: string } | undefined;
+    if (!selected) return false;
+    const now = iso(nowMs);
+    return this.database.prepare(`UPDATE session_presence SET heartbeat_at = ?, lease_until = ?
+      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`)
+      .run(now, iso(nowMs + PRESENCE_LEASE_MS), target.host, target.sessionId, selected.instance_id).changes === 1;
+  }
+
+  endPresence(target: SessionIdentity, reason: string, instanceId: string, nowMs = Date.now()): boolean {
+    boundedIdentity(target);
+    if (!reason || reason.length > 100) throw new Error("endReason is invalid.");
+    if (!instanceId) throw new Error("presence instanceId is required.");
+    const row = this.database.prepare(`SELECT instance_id FROM session_presence
+      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`).get(target.host, target.sessionId, instanceId);
+    const selected = row as { instance_id: string } | undefined;
+    if (!selected) return false;
+    const now = iso(nowMs);
+    return this.database.prepare(`UPDATE session_presence SET heartbeat_at = ?, lease_until = ?, ended_at = ?, end_reason = ?
+      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`)
+      .run(now, now, now, reason, target.host, target.sessionId, selected.instance_id).changes === 1;
+  }
+
+  presence(target: SessionIdentity, nowMs = Date.now()): SessionPresence {
+    boundedIdentity(target);
+    const row = this.database.prepare(`SELECT * FROM session_presence
+      WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1`)
+      .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
+    if (!row) return {
+      ...target, instanceId: null, transport: null, wakeVisibility: "none", canWakeSilently: false,
+      collaborationId: null, workspaceId: null, role: null, startedAt: null, heartbeatAt: null,
+      leaseUntil: null, endedAt: null, endReason: null, state: "unknown",
+    };
+    const endedAt = row.ended_at === null ? null : String(row.ended_at);
+    const leaseUntil = String(row.lease_until);
+    return {
+      host: String(row.host), sessionId: String(row.session_id), instanceId: String(row.instance_id),
+      transport: String(row.transport), wakeVisibility: row.wake_visibility as WakeVisibility,
+      canWakeSilently: Boolean(row.can_wake_silently), collaborationId: row.collaboration_id === null ? null : String(row.collaboration_id),
+      workspaceId: row.workspace_id === null ? null : String(row.workspace_id), role: row.role === null ? null : String(row.role),
+      startedAt: String(row.started_at), heartbeatAt: String(row.heartbeat_at), leaseUntil,
+      endedAt, endReason: row.end_reason === null ? null : String(row.end_reason),
+      state: endedAt ? "ended" : Date.parse(leaseUntil) > nowMs ? "online" : "unreachable",
+    };
+  }
+
+  listPresence(nowMs = Date.now()): SessionPresence[] {
+    const identities = this.database.prepare(`SELECT host, session_id FROM session_presence
+      GROUP BY host, session_id ORDER BY host, session_id`).all() as Array<{ host: string; session_id: string }>;
+    return identities.map((row) => this.presence({ host: row.host, sessionId: row.session_id }, nowMs));
   }
 }

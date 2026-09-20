@@ -62,19 +62,20 @@
       "path": "skills/task-contract",
       "source": "https://github.com/jaeseongs95/task-contract.git",
       "sourcePath": ".",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "versionSource": "skill-metadata",
       "ref": {
-        "kind": "tag",
-        "value": "v1.0.0",
+        "kind": "commit",
+        "value": "b14ffb36ed3be96cc4694d0b36054f21f69b577a",
         "commit": "b14ffb36ed3be96cc4694d0b36054f21f69b577a"
       },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:88df77436b0880e6d6033a022593e59b7db016b8cb90847a06937a2d4a10d91f",
-      "integratedChecksum": "sha256:ce882edf63d99459d2e979b721add56602b19e5868b4d0b0c1218c01aa26400a",
+      "integratedChecksum": "sha256:ebdc09b76a3303a7c185ca1cad201c4ee0c7a4eb16d297ce4df61c96c0354176",
       "checksumScope": "relative paths and normalized text bytes under skills/task-contract",
       "downstreamModifications": [
-        "Adapt validation scripts to resolve contracts and suite paths from the integrated plugin layout."
+        "Adapt validation scripts to resolve contracts and suite paths from the integrated plugin layout.",
+        "Preserve provenance receipt IDs while preventing receipts from authorizing actions or satisfying approval requirements."
       ]
     },
     {
@@ -102,19 +103,20 @@
       "path": "skills/blocker-diagnostician",
       "source": "https://github.com/jaeseongs95/blocker-diagnostician.git",
       "sourcePath": ".",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "versionSource": "skill-metadata",
       "ref": {
-        "kind": "tag",
-        "value": "v1.0.0",
+        "kind": "commit",
+        "value": "14ae3288535b1d2061a0ee1c537fa6773077a533",
         "commit": "14ae3288535b1d2061a0ee1c537fa6773077a533"
       },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:76ffb61ad815a82e3abd9137320cb233a77d9576b7e8cea3c381b6b8d020683e",
-      "integratedChecksum": "sha256:00d5eefd11ba5a46d9dddb6590fab9d556ae325d37f1d35755634247618f49cf",
+      "integratedChecksum": "sha256:a99482e176486b4e5587570400e92cd91db0ffdf1f8e246e0e54564b209ff246",
       "checksumScope": "relative paths and normalized text bytes under skills/blocker-diagnostician",
       "downstreamModifications": [
-        "Adapt validation and integration assets to the suite-level registry and shared contract layout."
+        "Adapt validation and integration assets to the suite-level registry and shared contract layout.",
+        "Require evidence-backed symptom, mechanism, root condition, and elimination observations for a confirmed cause."
       ]
     },
     {
@@ -238,7 +240,7 @@
       "path": "skills/recovery-strategy-selector",
       "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
       "sourcePath": "skills/recovery-strategy-selector",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "versionSource": "skill-metadata",
       "ref": {
         "kind": "commit",
@@ -247,9 +249,11 @@
       },
       "updatePolicy": "internal",
       "upstreamChecksum": "sha256:07ac3e0b5eb9a9c5f20eb1117f920a17de34553a0034ebb986f2d7215c261d96",
-      "integratedChecksum": "sha256:07ac3e0b5eb9a9c5f20eb1117f920a17de34553a0034ebb986f2d7215c261d96",
+      "integratedChecksum": "sha256:159fb90fce52db003a70a4a2f4e8284b4363392f125051e2b6f206bbca79ff09",
       "checksumScope": "relative paths and normalized text bytes under skills/recovery-strategy-selector",
-      "downstreamModifications": []
+      "downstreamModifications": [
+        "Bind each recovery strategy and next task seed to the confirmed cause and root-condition digest."
+      ]
     },
     {
       "skillId": "korean-prose-editor",

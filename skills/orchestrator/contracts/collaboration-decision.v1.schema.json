@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.local/orchestrator/contracts/collaboration-decision.v1.schema.json",
+  "title": "CollaborationDecision.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sourceOriginKind", "sourceReceiptId", "authorityEffect", "userDirective", "netBenefitCriteria", "auditSeparationRequired", "route"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "sourceOriginKind": { "enum": ["user-turn", "peer", "system", "developer", "project", "artifact"] },
+    "sourceReceiptId": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "pattern": "^source-[A-Za-z0-9_-]{16,128}$" }
+      ]
+    },
+    "authorityEffect": { "const": "none" },
+    "userDirective": { "enum": ["require", "forbid", "unspecified"] },
+    "netBenefitCriteria": { "$ref": "#/$defs/netBenefitCriteria" },
+    "auditSeparationRequired": { "type": "boolean" },
+    "route": { "enum": ["direct", "delegate", "audit-only", "needs-input"] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "sourceOriginKind": { "const": "user-turn" } }, "required": ["sourceOriginKind"] },
+      "then": { "properties": { "sourceReceiptId": { "type": "null" } } },
+      "else": {
+        "properties": {
+          "sourceReceiptId": { "type": "string", "pattern": "^source-[A-Za-z0-9_-]{16,128}$" },
+          "userDirective": { "const": "unspecified" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "netBenefitCriteria": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["independentlyCompletable", "parallelBottleneckReduced", "limitedContextSufficient", "singleWriterOwnership", "netBenefitAfterOverhead"],
+      "properties": {
+        "independentlyCompletable": { "type": "boolean" },
+        "parallelBottleneckReduced": { "type": "boolean" },
+        "limitedContextSufficient": { "type": "boolean" },
+        "singleWriterOwnership": { "type": "boolean" },
+        "netBenefitAfterOverhead": { "type": "boolean" }
+      }
+    }
+  }
+}

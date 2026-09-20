@@ -48,6 +48,11 @@ function optionalString(record: Record<string, unknown>, name: string): string |
   return Object.hasOwn(record, name) ? string(record[name], name) : undefined;
 }
 
+function boolean(value: unknown, name: string): boolean {
+  if (typeof value !== "boolean") throw new Error(`${name} must be a boolean.`);
+  return value;
+}
+
 function tokenMatches(actual: string, expected: string): boolean {
   const left = Buffer.from(actual);
   const right = Buffer.from(expected);
@@ -134,7 +139,7 @@ async function credentials(stateDirectory: string): Promise<{ key: string; certi
   return { key, certificate, token, fingerprint256: new X509Certificate(certificate).fingerprint256 };
 }
 
-function dispatch(store: SessionMessageStore, operation: string, payload: Record<string, unknown>): unknown {
+export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>): unknown {
   switch (operation) {
     case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL };
     case "send": {
@@ -173,6 +178,32 @@ function dispatch(store: SessionMessageStore, operation: string, payload: Record
       const target = identity(payload.target);
       return { alive: store.heartbeatRelay({ ...target, transport: string(payload.transport, "transport"), relayId: string(payload.relayId, "relayId") }) };
     }
+    case "presence-start": {
+      const target = identity(payload.target);
+      const wakeVisibility = string(payload.wakeVisibility, "wakeVisibility");
+      const collaborationId = optionalString(payload, "collaborationId");
+      const workspaceId = optionalString(payload, "workspaceId");
+      const role = optionalString(payload, "role");
+      if (wakeVisibility !== "silent" && wakeVisibility !== "user-message" && wakeVisibility !== "none") throw new Error("wakeVisibility is invalid.");
+      return { presence: store.startPresence({
+        ...target,
+        instanceId: string(payload.instanceId, "instanceId"),
+        transport: string(payload.transport, "transport"),
+        wakeVisibility,
+        canWakeSilently: boolean(payload.canWakeSilently, "canWakeSilently"),
+        ...(collaborationId === undefined ? {} : { collaborationId }),
+        ...(workspaceId === undefined ? {} : { workspaceId }),
+        ...(role === undefined ? {} : { role }),
+      }) };
+    }
+    case "presence-heartbeat": return { alive: store.heartbeatPresence(
+      identity(payload.target), string(payload.instanceId, "instanceId"),
+    ) };
+    case "presence-end": return { ended: store.endPresence(
+      identity(payload.target), string(payload.reason, "reason"), string(payload.instanceId, "instanceId"),
+    ) };
+    case "presence": return { presence: store.presence(identity(payload.target)) };
+    case "list-presence": return { sessions: store.listPresence() };
     case "reserve-wake": return { dispatch: store.reserveWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "release-wake": return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "consume-wake": return { consumed: store.consumeWake(identity(payload.target), string(payload.nonce, "nonce")) };
@@ -209,7 +240,7 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
         const request = JSON.parse(line) as BrokerRequest;
         if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
         const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
-        const data = dispatch(store, request.operation, payload);
+        const data = dispatchSessionMessageBrokerOperation(store, request.operation, payload);
         socket.end(`${JSON.stringify({ ok: true, data })}\n`);
       } catch (error) {
         socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed." })}\n`);

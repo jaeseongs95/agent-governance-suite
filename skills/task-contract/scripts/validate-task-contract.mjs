@@ -92,6 +92,13 @@ function assertAuthorizationBound(request, report) {
     { field: "/authorization/approvalRequired", effect: "require-approval", actions: authorization.approvalRequired },
   ];
   for (const evidence of request.authorizationEvidence) {
+    if (evidence.sourceReceiptId !== undefined && evidence.effect !== "prohibit") {
+      throw contractError("A provenance receipt cannot authorize an action or satisfy an approval requirement.", {
+        action: evidence.action,
+        effect: evidence.effect,
+        sourceReceiptId: evidence.sourceReceiptId,
+      });
+    }
     if (evidence.effect === "allow" && evidence.authority === "project-instruction") {
       throw contractError("Project instructions cannot expand allowed actions.", { action: evidence.action, sourceLocator: evidence.sourceLocator });
     }
@@ -132,7 +139,8 @@ function assertAuthorizationBound(request, report) {
         evidence.action === action &&
         evidence.effect === binding.effect &&
         evidence.authority === binding.authority &&
-        evidence.sourceLocator === binding.sourceLocator
+        evidence.sourceLocator === binding.sourceLocator &&
+        evidence.sourceReceiptId === binding.sourceReceiptId
       );
       if (evidenceMatches.length !== 1) {
         throw contractError("Authorization provenance must match exactly one request authority record.", { action, evidenceMatches: evidenceMatches.length });
@@ -166,7 +174,6 @@ export async function validateTaskContract(input) {
   assertNoOverlap(envelope.authorization.allowedActions, envelope.authorization.approvalRequired, "Allowed and approval-required actions must not overlap.");
   assertNoOverlap(envelope.authorization.prohibitedActions, envelope.authorization.approvalRequired, "Prohibited and approval-required actions must not overlap.");
   assertAuthorizationBound(request, report);
-
   const excludedPaths = envelope.scope.excluded.filter(isRepoRelativePosixPath);
   for (const unit of envelope.workUnits) {
     for (const target of unit.writeTargets) {

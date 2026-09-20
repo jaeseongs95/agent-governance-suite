@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.0.0",
   "skillId": "recovery-strategy-selector",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "enabled": true,
   "priority": 50,
   "providers": [

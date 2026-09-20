@@ -25,6 +25,22 @@ test("validates a high-risk contract while retaining deployment approval", async
   assert.deepEqual(result.taskEnvelope.authorization.approvalRequired, ["deploy to production"]);
 });
 
+test("preserves a restrictive provenance receipt without treating it as authority", async () => {
+  const restrictive = await fixture("normal/simple-read.json");
+  restrictive.request.authorizationEvidence[1].sourceReceiptId = "source-abcdefghijklmnop";
+  restrictive.report.authorizationProvenance[1].sourceReceiptId = "source-abcdefghijklmnop";
+  assert.equal((await validateTaskContract(restrictive)).verdict, "PASS");
+
+  const mismatched = clone(restrictive);
+  mismatched.report.authorizationProvenance[1].sourceReceiptId = "source-qrstuvwxyzabcdef";
+  await assert.rejects(validateTaskContract(mismatched), /match exactly one request authority record/u);
+
+  const authorizing = await fixture("boundary/high-risk.json");
+  authorizing.request.authorizationEvidence[0].sourceReceiptId = "source-abcdefghijklmnop";
+  authorizing.report.authorizationProvenance[0].sourceReceiptId = "source-abcdefghijklmnop";
+  await assert.rejects(validateTaskContract(authorizing), /cannot authorize an action/u);
+});
+
 test("rejects included and excluded overlap", async () => {
   const input = await fixture("failure/conflicting.json");
   await assert.rejects(validateTaskContract(input), /Included and excluded scope/u);

@@ -37,7 +37,15 @@ test("boundary: same message in different environments stays separate", async ()
 test("normal: confirmed cause requires and preserves direct evidence", async () => {
   const report = analyzeDiagnosis(await fixture("confirmed"));
   assert.equal(report.verdict, "CAUSE_CONFIRMED");
+  assert.equal(report.confirmedCause.causeId, "H1");
+  assert.equal(report.confirmedCause.rootCondition, "필수 설정 파일이 대상 경로에 없다.");
   assert.deepEqual(report.confirmedCause.evidenceBindings.map((item) => item.evidenceRef), ["tool:file-stat"]);
+});
+
+test("expected failure: a confirmed cause needs a symptom, mechanism, root condition, and evidence-backed elimination", async () => {
+  const input = await fixture("confirmed");
+  delete input.candidateHypotheses[0].causeAnalysis.eliminationObservation;
+  assert.throws(() => analyzeDiagnosis(input), /FailureEpisodeSet/u);
 });
 
 test("boundary: an external check without approval is not selected as executable", async () => {
@@ -283,7 +291,14 @@ test("multiple confirmed hypotheses are rejected by the single-cause contract", 
     statement: "실행 코드가 잘못된 경로를 계산한다.",
     supportingEvidence: ["logs/one.txt"],
     contradictingEvidence: [],
-    state: "confirmed"
+    state: "confirmed",
+    causeAnalysis: {
+      symptom: "경로 계산이 실패한다.",
+      mechanism: "실행 코드가 잘못된 경로를 계산한다.",
+      rootCondition: "경로 계산 구현이 잘못됐다.",
+      discriminatingEvidence: { statement: "로그가 계산된 경로를 보인다.", evidenceRefs: ["logs/one.txt"] },
+      eliminationObservation: { statement: "계산 결과가 파일 부재 가설을 제거한다.", evidenceRefs: ["logs/one.txt"] }
+    }
   });
   input.evidenceBindings.push({
     evidenceRef: "logs/one.txt",

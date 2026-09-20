@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { analyzeDiagnosis, requestArtifactDigest as diagnosisRequestDigest } from "../../skills/blocker-diagnostician/scripts/core.mjs";
 import {
   artifactDigest,
+  confirmedRootConditionDigest,
   selectionRequestDigest,
   strategyFingerprint,
   validateHandoff,
@@ -63,7 +64,7 @@ function selectionRequest() {
       { evidenceRef: "source-workflow-receipt", artifactDigest: digest(workflowReceipt), hypothesisIds: ["cause-cache-permission"], relation: "supports" },
     ],
     attemptedChecks: [],
-    candidateHypotheses: [{ id: "cause-cache-permission", causalLayer: "permission", statement: "The cache path lacks write permission.", supportingEvidence: ["cause-evidence", "source-task-envelope", "source-workflow-receipt"], contradictingEvidence: [], state: "confirmed" }],
+    candidateHypotheses: [{ id: "cause-cache-permission", causalLayer: "permission", statement: "The cache path lacks write permission.", supportingEvidence: ["cause-evidence", "source-task-envelope", "source-workflow-receipt"], contradictingEvidence: [], state: "confirmed", causeAnalysis: { symptom: "Cache writes fail with EACCES.", mechanism: "The writer reaches a path without write permission.", rootCondition: "The cache path lacks write permission.", discriminatingEvidence: { statement: "The file check identifies the denied path.", evidenceRefs: ["cause-evidence"] }, eliminationObservation: { statement: "The permission result rules out a serialization failure.", evidenceRefs: ["cause-evidence"] } } }],
     candidateTests: [],
     accessBlockers: [],
   };
@@ -91,6 +92,9 @@ function strategy(id, overrides = {}) {
     strategyId: id,
     summary: `Apply ${id}.`,
     mechanism: `mechanism-${id}`,
+    addressesCauseId: "cause-cache-permission",
+    rootConditionDigest: digest({ causeId: "cause-cache-permission", rootCondition: "The cache path lacks write permission." }),
+    rootConditionChange: `Change the denied cache-path condition with ${id}.`,
     actions: [{ name: "local-edit", target: "src/cache.ts" }],
     writeTargets: [`${id}.ts`],
     preconditions: [{ statement: "The cause evidence is current.", status: "satisfied", evidenceRefs: ["cause-evidence"] }],
@@ -128,7 +132,7 @@ function handoff(request, strategies, { verdict = "SELECTED", selected = strateg
     selectionRequestDigest: selectionRequestDigest(request),
     sourceTask: { taskId: request.sourceTask.envelope.taskId, envelopeDigest: request.sourceTask.digest },
     sourceWorkflow: { runId: request.sourceWorkflow.runId, revision: request.sourceWorkflow.revision, receiptDigest: request.sourceWorkflow.receiptDigest },
-    diagnosis: { reportDigest: request.diagnosis.digest, requestArtifactDigest: request.diagnosis.report.requestArtifactDigest, confirmedCauseId: request.diagnosis.report.confirmedCause.hypothesisId },
+    diagnosis: { reportDigest: request.diagnosis.digest, requestArtifactDigest: request.diagnosis.report.requestArtifactDigest, confirmedCauseId: request.diagnosis.report.confirmedCause.hypothesisId, rootConditionDigest: confirmedRootConditionDigest(request) },
     strategies,
     survivingStrategyIds,
     crossReview: review,
@@ -136,6 +140,8 @@ function handoff(request, strategies, { verdict = "SELECTED", selected = strateg
     nextTaskSeed: chosen ? {
       objective: request.sourceTask.envelope.objective,
       recoveryObjective: chosen.summary,
+      addressesCauseId: chosen.addressesCauseId,
+      rootConditionDigest: chosen.rootConditionDigest,
       scope: request.sourceTask.envelope.scope,
       acceptanceCriteria: request.sourceTask.envelope.acceptanceCriteria,
       constraints: [...request.sourceTask.envelope.constraints, ...request.constraints].sort(),
@@ -298,6 +304,22 @@ describe("recovery strategy selector", () => {
     });
     const output = handoff(request, [first, second], { verdict: "NEEDS_INPUT", selected: null });
     expect(validateHandoff(request, output).join("\n")).toMatch(/mechanism, actions, writeTargets/);
+  });
+
+  it("expected failure: rejects a recovery strategy bound to another cause", () => {
+    const request = selectionRequest();
+    const wrongCause = strategy("wrong-cause", { addressesCauseId: "other-cause" });
+    const rejected = strategy("unsafe", { mutatesPriorRun: true, objectiveGate: { verdict: "FAIL", reasons: ["prior-run-mutation"] } });
+    const output = handoff(request, [wrongCause, rejected]);
+    expect(validateHandoff(request, output).join("\n")).toMatch(/addressesCauseId/);
+  });
+
+  it("expected failure: rejects a recovery strategy bound to another root condition", () => {
+    const request = selectionRequest();
+    const wrongRoot = strategy("wrong-root", { rootConditionDigest: digest({ causeId: "cause-cache-permission", rootCondition: "A different condition." }) });
+    const rejected = strategy("unsafe", { mutatesPriorRun: true, objectiveGate: { verdict: "FAIL", reasons: ["prior-run-mutation"] } });
+    const output = handoff(request, [wrongRoot, rejected]);
+    expect(validateHandoff(request, output).join("\n")).toMatch(/rootConditionDigest|root condition/u);
   });
 
   it("expected failure: rejects bare approval objects and incomplete task contracts", async () => {

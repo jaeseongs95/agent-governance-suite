@@ -13,7 +13,7 @@
   ],
   "attemptedChecks": [],
   "candidateHypotheses": [
-    { "id": "H1", "causalLayer": "state", "statement": "필수 설정 파일이 대상 경로에 없다.", "supportingEvidence": ["tool:file-stat"], "contradictingEvidence": [], "state": "confirmed" }
+    { "id": "H1", "causalLayer": "state", "statement": "필수 설정 파일이 대상 경로에 없다.", "supportingEvidence": ["tool:file-stat"], "contradictingEvidence": [], "state": "confirmed", "causeAnalysis": { "symptom": "설정 파일 읽기가 ENOENT로 실패한다.", "mechanism": "설정 로더가 없는 파일을 열려고 한다.", "rootCondition": "필수 설정 파일이 대상 경로에 없다.", "discriminatingEvidence": { "statement": "file-stat이 대상 파일 부재를 보인다.", "evidenceRefs": ["tool:file-stat"] }, "eliminationObservation": { "statement": "파일 부재 관측이 권한 또는 파서 오류 가설을 제거한다.", "evidenceRefs": ["tool:file-stat"] } } }
   ],
   "candidateTests": [],
   "accessBlockers": []

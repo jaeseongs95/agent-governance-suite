@@ -45,10 +45,16 @@
     "cause": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["hypothesisId", "statement", "evidenceBindings"],
+      "required": ["causeId", "hypothesisId", "statement", "symptom", "mechanism", "rootCondition", "discriminatingEvidence", "eliminationObservation", "evidenceBindings"],
       "properties": {
+        "causeId": { "type": "string", "minLength": 1 },
         "hypothesisId": { "type": "string", "minLength": 1 },
         "statement": { "type": "string", "minLength": 1 },
+        "symptom": { "type": "string", "minLength": 1 },
+        "mechanism": { "type": "string", "minLength": 1 },
+        "rootCondition": { "type": "string", "minLength": 1 },
+        "discriminatingEvidence": { "$ref": "failure-episode-set.v1.schema.json#/$defs/evidenceStatement" },
+        "eliminationObservation": { "$ref": "failure-episode-set.v1.schema.json#/$defs/evidenceStatement" },
         "evidenceBindings": { "type": "array", "minItems": 1, "items": { "$ref": "failure-episode-set.v1.schema.json#/$defs/evidenceBinding" } }
       }
     }

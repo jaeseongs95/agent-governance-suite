@@ -238,6 +238,33 @@ export interface SessionBindingV1 {
   sessionId: string;
 }
 
+export type InputOriginKindV1 =
+  | "user-turn"
+  | "peer"
+  | "system"
+  | "developer"
+  | "project"
+  | "artifact";
+
+export interface InputSourceReceiptV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  receiptId: string;
+  originKind: InputOriginKindV1;
+  host: string;
+  sessionId: string;
+  eventId: string;
+  contentDigest: Sha256Digest;
+  observedAt: string;
+  expiresAt: string;
+  authorityEffect: "none" | "restrict-only";
+  attestation: {
+    kind: "host-direct-user-event" | "broker-peer-envelope" | "verified-internal-wake" | "unverified-host-event";
+    adapter: string;
+    capabilityVersion: string;
+  };
+  integrityToken: string;
+}
+
 export interface UpdateSessionStatusRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   summary: string;

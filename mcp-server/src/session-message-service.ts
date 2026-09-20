@@ -1,6 +1,11 @@
 import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
 import { randomUUID } from "node:crypto";
 import { sessionMessageRequest } from "./session-message-client.js";
+import type { SessionPresence } from "./session-message-store.js";
+
+export interface SessionPresenceList {
+  sessions: SessionPresence[];
+}
 
 function ok<T>(data: T): ApiResultV1<T> {
   return { schemaVersion: "1.0.0", ok: true, data, error: null };
@@ -61,6 +66,15 @@ export class SessionMessageService {
       return ok(data);
     } catch (error) {
       return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "The session message broker is unavailable.");
+    }
+  }
+
+  async listPresence(): Promise<ApiResultV1<SessionPresenceList>> {
+    try {
+      const data = await sessionMessageRequest<SessionPresenceList>("list-presence", {}, this.stateDirectory);
+      return ok(data);
+    } catch (error) {
+      return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "Session presence is unavailable.");
     }
   }
 }

@@ -74,7 +74,29 @@
         "statement": { "type": "string", "minLength": 1 },
         "supportingEvidence": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
         "contradictingEvidence": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
-        "state": { "enum": ["open", "supported", "refuted", "confirmed"] }
+        "state": { "enum": ["open", "supported", "refuted", "confirmed"] },
+        "causeAnalysis": { "$ref": "#/$defs/causeAnalysis" }
+      }
+    },
+    "causeAnalysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["symptom", "mechanism", "rootCondition", "discriminatingEvidence", "eliminationObservation"],
+      "properties": {
+        "symptom": { "type": "string", "minLength": 1 },
+        "mechanism": { "type": "string", "minLength": 1 },
+        "rootCondition": { "type": "string", "minLength": 1 },
+        "discriminatingEvidence": { "$ref": "#/$defs/evidenceStatement" },
+        "eliminationObservation": { "$ref": "#/$defs/evidenceStatement" }
+      }
+    },
+    "evidenceStatement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statement", "evidenceRefs"],
+      "properties": {
+        "statement": { "type": "string", "minLength": 1 },
+        "evidenceRefs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
       }
     },
     "test": {

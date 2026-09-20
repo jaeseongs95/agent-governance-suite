@@ -29,12 +29,24 @@ export function relayIdentityDecision(identity: ProcessIdentityState, previousUn
   return { proceed: false, stop: unknowns >= IDENTITY_UNKNOWN_LIMIT, unknowns };
 }
 
-interface RelayOptions {
+export type SessionMessageTransport = "codex-deferred" | "codex-queue" | "claude-inbox";
+
+export interface RelayOptions {
   host: string;
   sessionId: string;
-  transport: "codex-queue" | "claude-inbox";
+  instanceId: string;
+  transport: SessionMessageTransport;
   parentPid: number;
   parentStartToken: string;
+}
+
+export function transportWakeCapabilities(transport: SessionMessageTransport): {
+  wakeVisibility: "silent" | "user-message" | "none";
+  canWakeSilently: boolean;
+} {
+  if (transport === "claude-inbox") return { wakeVisibility: "silent", canWakeSilently: true };
+  if (transport === "codex-queue") return { wakeVisibility: "user-message", canWakeSilently: false };
+  return { wakeVisibility: "none", canWakeSilently: false };
 }
 
 export type WakeDispatchOutcome = "submitted" | "definite-failure" | "accepted-or-unknown";
@@ -137,12 +149,13 @@ export async function runSessionMessageRelay(options: RelayOptions): Promise<voi
   }
   if (!acquired) return;
 
-  let retryNonce: string | null = null;
-  let ringAttempts = 0;
-  let nextRingAt = 0;
-  let identityUnknowns = 0;
-  let nextIdentityCheck = Date.now() + IDENTITY_RECHECK_MS;
-  while (true) {
+  try {
+    let retryNonce: string | null = null;
+    let ringAttempts = 0;
+    let nextRingAt = 0;
+    let identityUnknowns = 0;
+    let nextIdentityCheck = Date.now() + IDENTITY_RECHECK_MS;
+    while (true) {
     if (!processExists(options.parentPid)) return;
     const now = Date.now();
     let checkedIdentity: ProcessIdentityState | null = null;
@@ -161,6 +174,11 @@ export async function runSessionMessageRelay(options: RelayOptions): Promise<voi
     try {
       const heartbeat = await sessionMessageRequest<{ alive: boolean }>("heartbeat-relay", { target, transport: options.transport, relayId });
       if (!heartbeat.alive) return;
+      await sessionMessageRequest("presence-heartbeat", { target, instanceId: options.instanceId });
+      if (options.transport === "codex-deferred") {
+        await delay(LOOP_MS);
+        continue;
+      }
       const pending = await sessionMessageRequest<{ count: number }>("pending", { target });
       if (pending.count === 0) {
         retryNonce = null;
@@ -204,16 +222,26 @@ export async function runSessionMessageRelay(options: RelayOptions): Promise<voi
     } catch {
       // Delivery remains durable in the broker and is retried on the next loop.
     }
-    await delay(LOOP_MS);
+      await delay(LOOP_MS);
+    }
+  } finally {
+    try {
+      await sessionMessageRequest("presence-end", {
+        target,
+        instanceId: options.instanceId,
+        reason: "host-process-ended",
+      }, undefined, { totalTimeoutMs: 3_000 });
+    } catch { /* Lease expiry still provides an unreachable fallback. */ }
   }
 }
 
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
   const host = argument("--host");
   const sessionId = argument("--session-id");
+  const instanceId = argument("--instance-id");
   const transport = argument("--transport");
   const parentPid = Number.parseInt(argument("--parent-pid") ?? "", 10);
   const parentStartToken = argument("--parent-start-token");
-  if (!host || !sessionId || (transport !== "codex-queue" && transport !== "claude-inbox") || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
-  else void runSessionMessageRelay({ host, sessionId, transport, parentPid, parentStartToken }).catch(() => { process.exitCode = 1; });
+  if (!host || !sessionId || !instanceId || (transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox") || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
+  else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken }).catch(() => { process.exitCode = 1; });
 }

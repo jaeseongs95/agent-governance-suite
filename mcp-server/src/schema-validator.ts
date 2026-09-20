@@ -18,6 +18,7 @@ import {
   type OpenConvergenceRootRequestV1,
   type PlanWorkflowRequestV1,
   type InspectContextRequestV1,
+  type InputSourceReceiptV1,
   type KoreanProseGlossaryLookupRequestV1,
   type KoreanProseGlossaryLookupResultV1,
   type ExecuteStateCleanupRequestV1,
@@ -61,6 +62,7 @@ export const contractSchemas = {
   executionContext: loadSchema("execution-context.v1.schema.json"),
   executionRequirement: loadSchema("execution-requirement.v1.schema.json"),
   taskEnvelope: loadSchema("task-envelope.v1.schema.json"),
+  inputSourceReceipt: loadSchema("input-source-receipt.v1.schema.json"),
   planWorkflowRequest: loadSchema("plan-workflow-request.v1.schema.json"),
   skillDescriptor: loadSchema("skill-descriptor.v1.schema.json"),
   skillDescriptorV2: loadSchema("skill-descriptor.v2.schema.json"),
@@ -158,6 +160,10 @@ export class ContractValidator {
 
   planWorkflowRequest(value: unknown): PlanWorkflowRequestV1 {
     return this.assert<PlanWorkflowRequestV1>("planWorkflowRequest", value);
+  }
+
+  inputSourceReceipt(value: unknown): InputSourceReceiptV1 {
+    return this.assert<InputSourceReceiptV1>("inputSourceReceipt", value);
   }
 
   skillDescriptorV2(value: unknown): SkillDescriptorV2 {

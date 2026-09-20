@@ -7,6 +7,8 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
 
+import type { ApiResultV1 } from "../../contracts/types.js";
+
 import {
   gateDecision,
   isReadOnlyCommand,
@@ -24,6 +26,7 @@ import { resolveSessionBoardDatabasePath } from "../../mcp-server/src/runtime-co
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
 import { GATE_REASON, handleSessionBoardHook, runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
+import { SessionMessageService, type SessionPresenceList } from "../../mcp-server/src/session-message-service.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "../mcp/version-fixtures.js";
@@ -218,7 +221,15 @@ describe("session board hook", () => {
 });
 
 describe("session board MCP tools", () => {
-  async function connect(databasePath: string | null): Promise<Client> {
+  function sessionMessages(
+    presence: ApiResultV1<SessionPresenceList> = { schemaVersion: "1.0.0", ok: false, data: null, error: { code: "MCP_UNAVAILABLE", message: "unavailable", details: null } },
+  ) {
+    const service = new SessionMessageService();
+    service.listPresence = async () => presence;
+    return service;
+  }
+
+  async function connect(databasePath: string | null, messages = sessionMessages()): Promise<Client> {
     const validator = new ContractValidator();
     const updates = new InMemoryPluginUpdateStore();
     updates.putPluginUpdateState({
@@ -227,7 +238,7 @@ describe("session board MCP tools", () => {
       lastSuccessfulCheckAt: "2026-09-19T00:00:00.000Z", nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null,
     });
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-    const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined, undefined, validator, "default", null, databasePath);
+    const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined, undefined, validator, "default", null, databasePath, messages);
     const client = new Client({ name: "session-board", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
@@ -276,11 +287,44 @@ describe("session board MCP tools", () => {
     expect(payload(await client.callTool({ name: "update_session_status", arguments: { summary: "릴리스 준비", _sessionBinding: binding } })).error?.code).toBe("INVALID_INPUT");
 
     const listed = payload(await client.callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } }));
-    expect(listed).toMatchObject({ ok: true, data: { sessions: [{ sessionId: "s1", summary: "릴리스 준비", current: false }] } });
+    expect(listed).toMatchObject({ ok: true, data: { sessions: [{ sessionId: "s1", summary: "릴리스 준비", current: false, presence: { state: "unknown", instanceId: null, wakeVisibility: "none", canWakeSilently: false } }] } });
     expect(payload(await (await connect(null)).callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } })).error?.code).toBe("MCP_UNAVAILABLE");
     const missing = boardPath();
     expect(payload(await (await connect(missing)).callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } }))).toMatchObject({ ok: true, data: { sessions: [] } });
     expect(payload(await (await connect(missing)).callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "x", _sessionBinding: binding } })).error?.code).toBe("MCP_UNAVAILABLE");
     expect(existsSync(missing)).toBe(false);
+  });
+
+  it("overlays matching broker presence and leaves missing sessions unknown", async () => {
+    const databasePath = boardPath();
+    const board = open(databasePath);
+    const now = new Date().toISOString();
+    setSummary(board, session(now, "online"), "온라인 작업");
+    setSummary(board, session(now, "missing"), "누락 작업");
+    const client = await connect(databasePath, sessionMessages({
+      schemaVersion: "1.0.0",
+      ok: true,
+      data: {
+        sessions: [{
+          host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", wakeVisibility: "silent",
+          canWakeSilently: true, collaborationId: "collaboration-1", workspaceId: "workspace-1", role: "worker",
+          startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",
+        }],
+      },
+      error: null,
+    }));
+
+    const listed = payload(await client.callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } }));
+    const sessions = (listed.data as { sessions: Array<{ sessionId: string; presence: unknown }> }).sessions;
+    expect(sessions.find((row) => row.sessionId === "online")?.presence).toEqual({
+      host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", wakeVisibility: "silent",
+      canWakeSilently: true, collaborationId: "collaboration-1", workspaceId: "workspace-1", role: "worker",
+      startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",
+    });
+    expect(sessions.find((row) => row.sessionId === "missing")?.presence).toEqual({
+      host: "claude-code", sessionId: "missing", instanceId: null, transport: null, wakeVisibility: "none",
+      canWakeSilently: false, collaborationId: null, workspaceId: null, role: null,
+      startedAt: null, heartbeatAt: null, leaseUntil: null, endedAt: null, endReason: null, state: "unknown",
+    });
   });
 });

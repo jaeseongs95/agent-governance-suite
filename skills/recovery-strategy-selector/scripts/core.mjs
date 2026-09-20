@@ -25,9 +25,17 @@ export function artifactDigest(value) {
 
 export const selectionRequestDigest = artifactDigest;
 
+export function confirmedRootConditionDigest(request) {
+  const cause = request.diagnosis.report.confirmedCause;
+  return artifactDigest({ causeId: cause.causeId, rootCondition: cause.rootCondition });
+}
+
 export function strategyFingerprint(strategy) {
   return artifactDigest({
     mechanism: strategy.mechanism,
+    addressesCauseId: strategy.addressesCauseId,
+    rootConditionDigest: strategy.rootConditionDigest,
+    rootConditionChange: strategy.rootConditionChange,
     actions: strategy.actions,
     writeTargets: strategy.writeTargets,
     preconditions: strategy.preconditions.map(({ statement }) => statement),
@@ -82,7 +90,8 @@ export function validateRequest(request) {
   if (receipt.runId !== request.sourceWorkflow.runId || receipt.revision !== request.sourceWorkflow.revision || receipt.state !== request.sourceWorkflow.state) throw new InputError("source workflow metadata가 receipt payload와 일치하지 않습니다.");
   if (!request.sourceWorkflow.receiptLocator || receipt.plan.taskId !== request.sourceTask.envelope.taskId || receipt.plan.taskDigest !== request.sourceTask.digest) throw new InputError("source workflow receipt가 원본 task envelope에 결속되지 않았습니다.");
   if (request.diagnosis.request.objective !== request.sourceTask.envelope.objective) throw new InputError("diagnosis request objective가 source task objective와 일치하지 않습니다.");
-  const causeId = request.diagnosis.report.confirmedCause.hypothesisId;
+  const causeId = request.diagnosis.report.confirmedCause.causeId;
+  if (causeId !== request.diagnosis.report.confirmedCause.hypothesisId) throw new InputError("confirmed diagnosis causeId와 hypothesisId가 일치하지 않습니다.");
   const causeBindings = request.diagnosis.report.confirmedCause.evidenceBindings;
   const hasBoundDigest = (expectedDigest) => causeBindings.some((binding) => binding.artifactDigest === expectedDigest && binding.relation === "supports" && binding.hypothesisIds.includes(causeId));
   if (!hasBoundDigest(request.sourceTask.digest)) throw new InputError("confirmed diagnosis가 source task envelope digest에 결속되지 않았습니다.");
@@ -99,6 +108,9 @@ function gateFor(strategy, request, auth) {
   if (!strategy.objectivePreserved) reasons.push("objective-not-preserved");
   if (!strategy.acceptanceCriteriaPreserved) reasons.push("acceptance-criteria-not-preserved");
   if (strategy.causeFit === "none") reasons.push("confirmed-cause-not-addressed");
+  if (strategy.addressesCauseId !== request.diagnosis.report.confirmedCause.causeId) reasons.push("confirmed-cause-id-mismatch");
+  if (strategy.rootConditionDigest !== confirmedRootConditionDigest(request)) reasons.push("confirmed-root-condition-mismatch");
+  if (!strategy.rootConditionChange.trim()) reasons.push("root-condition-change-missing");
   if (strategy.verificationStrength === "unavailable" || strategy.verificationPlan.length === 0) reasons.push("verification-unavailable");
   if (strategy.stopConditions.length === 0) reasons.push("stop-condition-missing");
   if (strategy.mutatesPriorRun) reasons.push("prior-run-mutation");
@@ -190,6 +202,8 @@ function validateTaskSeed(seed, selected, request, errors) {
   const source = request.sourceTask.envelope;
   if (seed.objective !== source.objective) errors.push("nextTaskSeed objective는 원래 objective를 보존해야 합니다.");
   if (seed.recoveryObjective !== selected.summary) errors.push("nextTaskSeed recoveryObjective는 선택 전략 summary와 일치해야 합니다.");
+  if (seed.addressesCauseId !== selected.addressesCauseId) errors.push("nextTaskSeed addressesCauseId는 선택 전략과 일치해야 합니다.");
+  if (seed.rootConditionDigest !== selected.rootConditionDigest) errors.push("nextTaskSeed rootConditionDigest는 선택 전략과 일치해야 합니다.");
   if (!selected.scopeExpansion && !equalValues(seed.scope, source.scope)) errors.push("scope expansion이 없는 nextTaskSeed는 원래 scope를 정확히 보존해야 합니다.");
   if (selected.scopeExpansion) {
     const included = new Set(seed.scope.included);
@@ -223,8 +237,9 @@ export function validateHandoff(request, handoff, frozenRequestDigest = null) {
   if (handoff.selectionRequestDigest !== expectedRequestDigest || expectedRequestDigest !== computedRequestDigest) errors.push("handoff가 외부에 동결된 selection request digest와 일치하지 않습니다.");
   if (!equalValues(handoff.sourceTask, { taskId: request.sourceTask.envelope.taskId, envelopeDigest: request.sourceTask.digest })) errors.push("handoff sourceTask 결속이 일치하지 않습니다.");
   if (!equalValues(handoff.sourceWorkflow, { runId: request.sourceWorkflow.runId, revision: request.sourceWorkflow.revision, receiptDigest: request.sourceWorkflow.receiptDigest })) errors.push("handoff sourceWorkflow 결속이 일치하지 않습니다.");
-  const causeId = request.diagnosis.report.confirmedCause.hypothesisId;
-  if (!equalValues(handoff.diagnosis, { reportDigest: request.diagnosis.digest, requestArtifactDigest: request.diagnosis.report.requestArtifactDigest, confirmedCauseId: causeId })) errors.push("handoff diagnosis 결속이 일치하지 않습니다.");
+  const causeId = request.diagnosis.report.confirmedCause.causeId;
+  const rootConditionDigest = confirmedRootConditionDigest(request);
+  if (!equalValues(handoff.diagnosis, { reportDigest: request.diagnosis.digest, requestArtifactDigest: request.diagnosis.report.requestArtifactDigest, confirmedCauseId: causeId, rootConditionDigest })) errors.push("handoff diagnosis 결속이 일치하지 않습니다.");
 
   const ids = handoff.strategies.map((item) => item.strategyId);
   if (new Set(ids).size !== ids.length) errors.push("strategyId는 고유해야 합니다.");
@@ -243,6 +258,8 @@ export function validateHandoff(request, handoff, frozenRequestDigest = null) {
     const expectedGate = gateFor(strategy, request, auth);
     if (strategy.objectiveGate.verdict !== expectedGate.verdict || !equalValues(sorted(strategy.objectiveGate.reasons), expectedGate.reasons)) errors.push(`strategy ${strategy.strategyId} Objective Gate 결과가 결정적 판정과 일치하지 않습니다.`);
     if (!equalValues(sorted(strategy.requiredAuthorization), expectedGate.requiredAuthorization)) errors.push(`strategy ${strategy.strategyId} requiredAuthorization이 권한 근거와 일치하지 않습니다.`);
+    if (strategy.addressesCauseId !== causeId) errors.push(`strategy ${strategy.strategyId} addressesCauseId가 confirmed cause와 일치하지 않습니다.`);
+    if (strategy.rootConditionDigest !== rootConditionDigest) errors.push(`strategy ${strategy.strategyId} rootConditionDigest가 confirmed root condition과 일치하지 않습니다.`);
     const refs = [...strategy.evidenceRefs, ...strategy.preconditions.flatMap((item) => item.evidenceRefs)];
     if (refs.some((ref) => !evidence.has(ref))) errors.push(`strategy ${strategy.strategyId}가 검증되지 않은 evidence를 참조합니다.`);
   }

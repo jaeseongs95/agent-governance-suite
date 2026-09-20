@@ -1,7 +1,7 @@
 # Agent Governance Suite 향후 로드맵
 
 <!-- release-version:start -->
-문서 기준일은 2026년 9월 20일이다. 현재 공개 릴리스는 `v2.1.2`이다. 이 릴리스는 사용자 홈의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제를 포함한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
+문서 기준일은 2026년 9월 20일이다. 현재 공개 릴리스는 `v2.2.0`이다. 이 릴리스는 사용자 홈의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제를 포함한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
 <!-- release-version:end -->
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
@@ -35,8 +35,8 @@
 | 0.6. 모델·추론 수준 안내 | 완료 | 요청 난도와 관측 가능한 현재 설정을 비교해 과다·적정·부족 여부 안내 | `model-effort-advisor`, `ModelEffortAdvice.v1`, 정상·경계·실패 fixture |
 | 1. 실행 전 신뢰성 | 부분 구현 | 평가 오류와 동시 작업 충돌을 조기에 차단 | 구현된 `evaluation-validity-auditor`, 계획된 `active-workspace-guard` |
 | 2. 복구 워크플로 | 구현됨 | blocker 진단 뒤 선택 가능한 복구 전략 제공 | `recovery-strategy-selector`, `RecoveryHandoff.v1` |
-| 3. 실행 환경과 연속성 | 부분 구현 | 실행 가능 여부를 먼저 확인하고 세션 복원을 표준화 | 계획된 `runtime-capability-profiler`, 구현된 로컬 task continuity |
-| 4. 신뢰 경계 강화 | 설계 후보 | bootstrap·증거·라우팅 선언의 신뢰 수준 향상 | `BootstrapReceipt.v1`, 증거 검증 경계 |
+| 3. 실행 환경과 연속성 | 부분 구현 | 실행 가능 여부를 먼저 확인하고 세션 복원을 표준화 | 구현된 exact-instance session presence와 로컬 task continuity, 계획된 `runtime-capability-profiler` |
+| 4. 신뢰 경계 강화 | 부분 구현 | bootstrap·증거·라우팅 선언의 신뢰 수준 향상 | provenance-only `InputSourceReceipt.v1`, 권한과 분리된 peer 입력, 남은 직접 사용자 attestation |
 | 5. 공급망과 운영 | 구현 완료·운영 설정 대기 | 원본 편입과 버전·릴리스 관리를 자동화 | source lock v2, draft 업데이트 PR workflow, 버전 단일 소스, 확인 기반 SQLite 정리 |
 
 ## 0단계: `v1.1.0` 후보 안정화

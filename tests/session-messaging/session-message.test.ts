@@ -21,12 +21,13 @@ import {
   SESSION_MESSAGE_PROTOCOL,
   waitForSessionMessageBrokerReady,
 } from "../../mcp-server/src/session-message-client.js";
+import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
 import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
-import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
+import { handleSessionMessageHook, sessionMessageTransport } from "../../mcp-server/src/session-message-hook.js";
 import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
-import { claudeWakeOutcome, codexWakeOutcome, relayIdentityDecision, shouldReleaseWake, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
-import { MESSAGE_BODY_MAX_BYTES, SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
+import { claudeWakeOutcome, codexWakeOutcome, relayIdentityDecision, shouldReleaseWake, transportWakeCapabilities, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
+import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
 import { processIdentityState } from "../../mcp-server/src/process-identity.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
@@ -122,6 +123,8 @@ describe("session message spool", () => {
     expect(reopened.pendingCount(spark, 125_000)).toBe(0);
 
     expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-a", pid: 1, parentPid: 1 }, 200_000)).toBe(true);
+    expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-c", pid: 3, parentPid: 1 }, 200_500)).toBe(true);
+    expect(reopened.heartbeatRelay({ ...spark, transport: "generic", relayId: "relay-a" }, 200_600)).toBe(false);
     expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-b", pid: 2, parentPid: 2 }, 201_000)).toBe(false);
     expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-b", pid: 2, parentPid: 2 }, 216_000)).toBe(true);
     reopened.send({ messageId: "wake-validation", sender: grok, target: spark, body: "wake" }, 219_000);
@@ -142,6 +145,24 @@ describe("session message spool", () => {
     expect(store.claim(target, 2000, { maxMessages: 1, maxBodyChars: 4 }).map((message) => message.messageId)).toEqual(["budget-0002"]);
     expect(() => store.claim(target, 2000, { maxMessages: 0 })).toThrow(/maxMessages/u);
     expect(() => store.claim(target, 2000, { maxBodyChars: 0 })).toThrow(/maxBodyChars/u);
+    store.close();
+  });
+
+  it("rejects newline, control, and unsafe host or session identifiers", () => {
+    const store = new SessionMessageStore(":memory:");
+    const safe = { host: "grok", sessionId: "safe-session" };
+    for (const invalid of [
+      { host: "grok\nhost", sessionId: "safe-session" },
+      { host: "grok\u0000host", sessionId: "safe-session" },
+      { host: "grok/host", sessionId: "safe-session" },
+      { host: "grok", sessionId: "unsafe session" },
+      { host: "grok", sessionId: "unsafe\tsession" },
+    ]) {
+      expect(() => store.send({ sender: invalid, target: safe, body: "invalid identity" }, 1000))
+        .toThrow(/bounded identifier characters/u);
+      expect(() => store.send({ sender: safe, target: invalid, body: "invalid identity" }, 1000))
+        .toThrow(/bounded identifier characters/u);
+    }
     store.close();
   });
 
@@ -177,6 +198,95 @@ describe("session message spool", () => {
     } finally {
       reopened.close();
     }
+  });
+
+  it("expires an unconsumed wake after one hour independently of message TTL", () => {
+    const store = new SessionMessageStore(":memory:");
+    const target = { host: "codex", sessionId: "wake-hour" };
+    store.send({
+      messageId: "wake-hour-message",
+      sender: { host: "claude-code", sessionId: "wake-hour-sender" },
+      target,
+      body: "still pending",
+      ttlSeconds: 7200,
+    }, 1000);
+    expect(WAKE_TTL_MS).toBe(60 * 60_000);
+    expect(store.reserveWake(target, "wake-hour-nonce-abcdefghijklmnop", 1000)).toBe(true);
+    expect(store.consumeWake(target, "wake-hour-nonce-abcdefghijklmnop", 1000 + 59 * 60_000)).toBe(true);
+    expect(store.reserveWake(target, "wake-hour-nonce-qrstuvwxyzabcdef", 1000 + 59 * 60_000)).toBe(false);
+    expect(store.reserveWake(target, "wake-hour-nonce-qrstuvwxyzabcdef", 1001 + WAKE_TTL_MS)).toBe(true);
+    store.close();
+  });
+
+  it("tracks portable presence generations and derives lifecycle state from the lease", () => {
+    const store = new SessionMessageStore(":memory:");
+    const target = { host: "spark", sessionId: "presence-session" };
+    expect(store.presence(target, 1000).state).toBe("unknown");
+    expect(store.startPresence({
+      ...target,
+      instanceId: "presence-instance-1",
+      transport: "generic",
+      wakeVisibility: "none",
+      canWakeSilently: false,
+      collaborationId: "collaboration-1",
+      workspaceId: "/portable/workspace",
+      role: "worker",
+    }, 1000)).toMatchObject({ state: "online", instanceId: "presence-instance-1" });
+    expect(store.presence(target, 1001 + PRESENCE_LEASE_MS).state).toBe("unreachable");
+    expect(store.heartbeatPresence(target, "presence-instance-1", 5000)).toBe(true);
+    expect(store.presence(target, 5000 + PRESENCE_LEASE_MS - 1).state).toBe("online");
+    expect(store.startPresence({
+      ...target,
+      instanceId: "presence-instance-2",
+      transport: "generic",
+      wakeVisibility: "silent",
+      canWakeSilently: true,
+    }, 6000)).toMatchObject({ state: "online", instanceId: "presence-instance-2" });
+    expect(store.endPresence(target, "session-end", "presence-instance-2", 7000)).toBe(true);
+    expect(store.presence(target, 7001)).toMatchObject({ state: "ended", instanceId: "presence-instance-2", endReason: "session-end" });
+    expect(store.listPresence(7001)).toHaveLength(1);
+    store.close();
+  });
+
+  it("does not let an explicit stale presence end offline the current generation", () => {
+    const store = new SessionMessageStore(":memory:");
+    const target = { host: "spark", sessionId: "presence-stale-end" };
+    const presence = {
+      ...target,
+      transport: "generic",
+      wakeVisibility: "none" as const,
+      canWakeSilently: false,
+    };
+    store.startPresence({ ...presence, instanceId: "presence-I1" }, 1000);
+    store.startPresence({ ...presence, instanceId: "presence-I2" }, 2000);
+
+    expect(store.endPresence(target, "session-end", "presence-I1", 3000)).toBe(true);
+    expect(store.presence(target, 3001)).toMatchObject({ state: "online", instanceId: "presence-I2" });
+    expect(store.endPresence(target, "session-end", "presence-I2", 4000)).toBe(true);
+    expect(store.presence(target, 4001)).toMatchObject({ state: "ended", instanceId: "presence-I2" });
+    store.close();
+  });
+
+  it("exposes presence lifecycle through vendor-neutral broker operations", () => {
+    const store = new SessionMessageStore(":memory:");
+    const target = { host: "generic-host", sessionId: "generic-session" };
+    expect(dispatchSessionMessageBrokerOperation(store, "presence-start", {
+      target,
+      instanceId: "generic-instance",
+      transport: "generic",
+      wakeVisibility: "none",
+      canWakeSilently: false,
+      workspaceId: "/portable/workspace",
+    })).toMatchObject({ presence: { state: "online", workspaceId: "/portable/workspace" } });
+    expect(dispatchSessionMessageBrokerOperation(store, "presence-heartbeat", { target, instanceId: "generic-instance" }))
+      .toEqual({ alive: true });
+    expect(dispatchSessionMessageBrokerOperation(store, "list-presence", {}))
+      .toMatchObject({ sessions: [{ host: target.host, sessionId: target.sessionId, state: "online" }] });
+    expect(dispatchSessionMessageBrokerOperation(store, "presence-end", { target, instanceId: "generic-instance", reason: "session-end" }))
+      .toEqual({ ended: true });
+    expect(dispatchSessionMessageBrokerOperation(store, "presence", { target }))
+      .toMatchObject({ presence: { state: "ended", endReason: "session-end" } });
+    store.close();
   });
 
   it("locks claim selection before a competing connection can reserve a wake", () => {
@@ -455,6 +565,16 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect([0, 1, 2, 5, 20].map(wakeBackoffDelay)).toEqual([30_000, 60_000, 120_000, 600_000, 600_000]);
   });
 
+  it("keeps Codex wake deferred by default and makes visible queue wake explicit", () => {
+    expect(sessionMessageTransport("codex", {})).toBe("codex-deferred");
+    expect(sessionMessageTransport("codex", { AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "0" })).toBe("codex-deferred");
+    expect(sessionMessageTransport("codex", { AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" })).toBe("codex-queue");
+    expect(sessionMessageTransport("claude-code", { AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" })).toBe("claude-inbox");
+    expect(transportWakeCapabilities("codex-deferred")).toEqual({ wakeVisibility: "none", canWakeSilently: false });
+    expect(transportWakeCapabilities("codex-queue")).toEqual({ wakeVisibility: "user-message", canWakeSilently: false });
+    expect(transportWakeCapabilities("claude-inbox")).toEqual({ wakeVisibility: "silent", canWakeSilently: true });
+  });
+
   it("releases Codex wake reservations only for definite submission failures", () => {
     expect(codexWakeOutcome(new Error("not started"), false)).toBe("definite-failure");
     expect(codexWakeOutcome(new Error("unknown delivery"), true)).toBe("accepted-or-unknown");
@@ -660,23 +780,33 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(database.includes(Buffer.from("cc-msg-socket-probe"))).toBe(false);
   }, 30_000);
 
-  it("keeps built-in hook context below the Claude injection limit", async () => {
+  it("keeps a maximum-size peer message within the hook context limit", async () => {
     const directory = stateDirectory();
     const previous = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
     process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = directory;
     try {
       const target = { host: "codex", sessionId: "budget-hook" };
+      const maximumBody = "~".repeat(MESSAGE_BODY_MAX_BYTES);
       for (const messageId of ["hook-budget-0001", "hook-budget-0002"]) {
         await runSessionMessageCli(JSON.stringify({
           operation: "send",
-          payload: { messageId, sender: { host: "grok", sessionId: "grok-budget" }, target, body: "x".repeat(4096), ttlSeconds: 600 },
+          payload: { messageId, sender: { host: "grok", sessionId: "grok-budget" }, target, body: maximumBody, ttlSeconds: 600 },
         }), directory);
       }
       const output = await handleSessionMessageHook({ hook_event_name: "UserPromptSubmit", session_id: target.sessionId }, "codex");
       const context = (output.hookSpecificOutput as { additionalContext: string }).additionalContext;
-      expect(context.length).toBeLessThanOrEqual(9_000);
+      const bodyOffset = context.indexOf(maximumBody);
+      const messageOffset = context.indexOf("messageId: hook-budget-0001");
+      const acknowledgeOffset = context.indexOf("acknowledgeAfterProcessing: hook-budget-0001");
+      expect(context.length).toBeLessThanOrEqual(8192);
+      expect(messageOffset).toBeGreaterThanOrEqual(0);
+      expect(acknowledgeOffset).toBeGreaterThanOrEqual(0);
+      expect(messageOffset).toBeLessThan(bodyOffset);
+      expect(acknowledgeOffset).toBeLessThan(bodyOffset);
       expect(context).toContain("hook-budget-0001");
       expect(context).not.toContain("hook-budget-0002");
+      await expect(runSessionMessageCli(JSON.stringify({ operation: "pending", payload: { target } }), directory))
+        .resolves.toMatchObject({ data: { count: 1 } });
     } finally {
       if (previous === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
       else process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = previous;
@@ -729,6 +859,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       hooks: Record<string, unknown>;
     };
     expect(config.hooks.Stop).toBeUndefined();
+    expect(config.hooks.SessionEnd).toBeDefined();
   });
 
   it("keeps Claude Code Stop context delivery enabled", async () => {

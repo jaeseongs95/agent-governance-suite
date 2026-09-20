@@ -26,7 +26,9 @@ import type { HostAttestationProvider } from "./host-attestation.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { ContractValidator } from "./schema-validator.js";
-import { SessionMessageService } from "./session-message-service.js";
+import { SessionMessageService, type SessionPresenceList } from "./session-message-service.js";
+import type { SessionPresence } from "./session-message-store.js";
+import { type TrustService } from "./trust-service.js";
 
 type ObjectSchema = Record<string, unknown> & {
   properties?: Record<string, unknown>;
@@ -211,12 +213,48 @@ function apiError(code: ErrorCode, message: string): ApiResultV1<never> {
  * Session board tools are an interface over the skill's board store. The PreToolUse hook writes the line with the
  * host's session identity and binds it here; this side validates the call and reads the board back.
  */
-function sessionBoardResult(
+function unknownPresence(host: string, sessionId: string): SessionPresence {
+  return {
+    host,
+    sessionId,
+    instanceId: null,
+    transport: null,
+    wakeVisibility: "none",
+    canWakeSilently: false,
+    collaborationId: null,
+    workspaceId: null,
+    role: null,
+    startedAt: null,
+    heartbeatAt: null,
+    leaseUntil: null,
+    endedAt: null,
+    endReason: null,
+    state: "unknown",
+  };
+}
+
+function withPresence<T extends { host: string; sessionId: string }>(
+  sessions: T[],
+  presence: ApiResultV1<SessionPresenceList>,
+): Array<T & { presence: SessionPresence }> {
+  const bySession = new Map(
+    presence.ok && presence.data
+      ? presence.data.sessions.map((item) => [`${item.host}\u0000${item.sessionId}`, item])
+      : [],
+  );
+  return sessions.map((session) => ({
+    ...session,
+    presence: bySession.get(`${session.host}\u0000${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId),
+  }));
+}
+
+async function sessionBoardResult(
   tool: "update_session_status" | "list_session_status",
   args: Record<string, unknown>,
   databasePath: string | null,
   validator: ContractValidator,
-): ApiResultV1<unknown> {
+  sessionMessages: SessionMessageService,
+): Promise<ApiResultV1<unknown>> {
   let summary: string | null = null;
   let binding: { host: string; sessionId: string } | null;
   try {
@@ -243,7 +281,12 @@ function sessionBoardResult(
   let board: ReturnType<typeof openBoard> | null = null;
   try {
     board = openBoard(databasePath);
-    if (tool === "list_session_status") return apiOk({ sessions: listSessions(board, new Date().toISOString(), binding) });
+    if (tool === "list_session_status") {
+      const sessions = listSessions(board, new Date().toISOString(), binding);
+      board.close();
+      board = null;
+      return apiOk({ sessions: withPresence(sessions, await sessionMessages.listPresence()) });
+    }
     const row = readSession(board, binding!.host, binding!.sessionId);
     return row && row.summary === summary
       ? apiOk(row)
@@ -306,6 +349,7 @@ export function createMcpServer(
   hostAttestation: HostAttestationProvider | null = null,
   sessionBoardPath: string | null = null,
   sessionMessages: SessionMessageService = new SessionMessageService(),
+  trust: TrustService | null = null,
 ): Server {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
@@ -341,6 +385,12 @@ export function createMcpServer(
         description: "Check the fixed Agent Governance Suite repository for a newer stable plugin tag without installing it.",
         inputSchema: updateCheckInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: false, destructiveHint: false, openWorldHint: true },
+      },
+      {
+        name: "get_trust_capabilities",
+        description: "Report the provenance and authority capabilities that this release can actually enforce.",
+        inputSchema: { type: "object", additionalProperties: false },
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "plan_workflow",
@@ -514,6 +564,13 @@ export function createMcpServer(
     } else {
       updateStatus = await updates.check(false);
       switch (request.params.name) {
+        case "get_trust_capabilities":
+          result = Object.keys(args).length > 0
+            ? invalidInput("get_trust_capabilities accepts no arguments.")
+            : trust
+            ? trust.capabilities()
+            : apiError("MCP_UNAVAILABLE", "The trust receipt store is unavailable.");
+          break;
         case "plan_workflow":
           result = attested("plan_workflow", (input) => service.planWorkflow(input, true));
           break;
@@ -577,7 +634,7 @@ export function createMcpServer(
           break;
         case "update_session_status":
         case "list_session_status":
-          result = sessionBoardResult(request.params.name, args, sessionBoardPath, validator);
+          result = await sessionBoardResult(request.params.name, args, sessionBoardPath, validator, sessionMessages);
           break;
         case "send_session_message":
           try {

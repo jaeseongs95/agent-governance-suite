@@ -51,21 +51,25 @@
     "diagnosis": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["reportDigest", "requestArtifactDigest", "confirmedCauseId"],
+      "required": ["reportDigest", "requestArtifactDigest", "confirmedCauseId", "rootConditionDigest"],
       "properties": {
         "reportDigest": { "$ref": "#/$defs/digest" },
         "requestArtifactDigest": { "$ref": "#/$defs/digest" },
-        "confirmedCauseId": { "type": "string", "minLength": 1 }
+        "confirmedCauseId": { "type": "string", "minLength": 1 },
+        "rootConditionDigest": { "$ref": "#/$defs/digest" }
       }
     },
     "strategy": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["strategyId", "summary", "mechanism", "actions", "writeTargets", "preconditions", "verificationPlan", "stopConditions", "failureImpact", "reversibility", "causeFit", "verificationStrength", "changeBreadth", "scopeExpansion", "objectivePreserved", "acceptanceCriteriaPreserved", "mutatesPriorRun", "repeatsPriorAttempt", "requiredAuthorization", "evidenceRefs", "strategyFingerprint", "objectiveGate"],
+        "required": ["strategyId", "summary", "mechanism", "addressesCauseId", "rootConditionDigest", "rootConditionChange", "actions", "writeTargets", "preconditions", "verificationPlan", "stopConditions", "failureImpact", "reversibility", "causeFit", "verificationStrength", "changeBreadth", "scopeExpansion", "objectivePreserved", "acceptanceCriteriaPreserved", "mutatesPriorRun", "repeatsPriorAttempt", "requiredAuthorization", "evidenceRefs", "strategyFingerprint", "objectiveGate"],
       "properties": {
         "strategyId": { "type": "string", "minLength": 1 },
         "summary": { "type": "string", "minLength": 1 },
         "mechanism": { "type": "string", "minLength": 1 },
+        "addressesCauseId": { "type": "string", "minLength": 1 },
+        "rootConditionDigest": { "$ref": "#/$defs/digest" },
+        "rootConditionChange": { "type": "string", "minLength": 1 },
         "actions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/action" } },
         "writeTargets": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
         "preconditions": { "type": "array", "items": { "$ref": "#/$defs/precondition" } },
@@ -146,10 +150,12 @@
     "taskSeed": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["objective", "recoveryObjective", "scope", "acceptanceCriteria", "constraints", "workUnits", "requiredCapabilities", "requestedActions", "verificationPlan"],
+        "required": ["objective", "recoveryObjective", "addressesCauseId", "rootConditionDigest", "scope", "acceptanceCriteria", "constraints", "workUnits", "requiredCapabilities", "requestedActions", "verificationPlan"],
       "properties": {
         "objective": { "type": "string", "minLength": 1 },
         "recoveryObjective": { "type": "string", "minLength": 1 },
+        "addressesCauseId": { "type": "string", "minLength": 1 },
+        "rootConditionDigest": { "$ref": "#/$defs/digest" },
         "scope": { "$ref": "#/$defs/scope" },
         "acceptanceCriteria": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
         "constraints": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },

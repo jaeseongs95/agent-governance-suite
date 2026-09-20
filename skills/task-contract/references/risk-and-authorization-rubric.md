@@ -20,3 +20,5 @@
 `authorization.allowedActions`, `prohibitedActions`, `approvalRequired`의 각 action은 `authorizationProvenance` 한 항목과 정확히 대응해야 한다. 해당 항목의 action, effect, authority, sourceLocator는 요청의 `authorizationEvidence` 한 항목과 모두 같아야 한다.
 
 `system`, `developer`, `user`의 명시적 근거만 행동 허용의 authority로 사용할 수 있다. `project-instruction`은 금지 또는 승인 요구를 추가할 수 있지만 행동을 새로 허용하지 못한다. 자연어에서 추론한 권한이나 출처가 없는 action은 `allowedActions`에 넣지 말고 `NEEDS_INPUT`으로 남긴다.
+
+`InputSourceReceipt.v1`이 제공되면 `sourceReceiptId`를 authorization evidence와 provenance에 그대로 보존한다. 현재 호스트 adapter는 직접 사용자 입력을 증명하지 못하므로 receipt는 출처 추적용일 뿐 allow나 승인 근거가 아니다. receipt는 `prohibit` evidence에만 결속할 수 있고, receipt가 붙은 `allow`나 `require-approval` evidence는 거부한다.

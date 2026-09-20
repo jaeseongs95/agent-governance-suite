@@ -9,6 +9,8 @@ When an agent says a task is finished, the suite checks whether the required con
 The same standard reaches past a single session. When several agent sessions on one computer work on the same repository or installation without knowing about each other, each can pass its own checks and still produce results that do not fit together. So every host shares one session board, and sessions message each other directly over a local TLS channel.
 
 <!-- release-version:start -->
+v2.2.0 records a source receipt before a peer message body is injected and keeps that receipt separate from authority, approval, and delegation. The trust store retains a digest and bounded metadata rather than the raw body, and peer input cannot create authority. Session listings now include presence bound to an exact runtime instance, so a stale instance cannot end a newer one. Codex wake delivery is deferred to the next user turn by default; visible queue wake must be enabled explicitly. Collaboration decisions distinguish the current user turn from non-authorizing sources, and a diagnostician's confirmed root condition stays digest-bound through recovery strategies and the next task seed.
+
 v2.1.0 lets AI host sessions working on the same computer send messages directly to each other. A local TLS 1.3 broker holds the body and tracks delivery until the receiver acknowledges it, and the wake bell that nudges a host is reserved at most once per target, so notifications cannot pile up across an unchanged pending interval. The session board and broker state live under `~/.agent-governance-suite`, a root every host shares. Each new Codex user request is recorded through the `UserPromptSubmit` hook, so the request boundary requires a fresh board summary before the session's next mutation. v2.1.1 rejects a session message whose body contains a NUL character at send time, removing a case where `node:sqlite` behaved differently across platforms. It also reads the Windows process start token through a lighter call, so a relay no longer fails to confirm its own host on a slow machine. v2.1.2 moves the check that reads the real OS token out of the parallel test suite into a step of its own, so verification no longer depends on how busy the machine is, and it waits longer for the broker to become ready on a slow Windows machine, so a first message is less likely to fail while the broker is still starting.
 
 - v2.0.0 — the major release that made both hosts share one session board and expanded the trust boundary
@@ -17,7 +19,7 @@ v2.1.0 lets AI host sessions working on the same computer send messages directly
 
 Release notes for earlier versions are in [`docs/`](docs/) (Korean). The candidate-v2 policy applied to `korean-prose-editor` in v1.16.0 was not part of the quality gate record (`0.3.0-gate-1`), so it remains unevaluated for quality.
 
-The current public release is `v2.1.2` and includes fifteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+The current public release is `v2.2.0` and includes fifteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
 
 ## Problems it handles
@@ -58,7 +60,7 @@ Node.js 22.13.0 or later is required.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.1.2
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.2.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -138,7 +140,7 @@ Start a new session after installation and call skills as `/agent-governance-sui
 | On explicit request | [`codex-token-usage-analyzer`](https://github.com/jaeseongs95/codex-token-usage-analyzer/tree/v0.1.0/skills/codex-token-usage-analyzer) | 0.1.0 | Aggregates local Codex token observations for threads, descendants, or projects and returns JSON with optional Markdown. |
 | Before work | `instruction-scope-resolver` | 1.0.0 | Finds the instructions and precedence rules that apply to the work target. |
 | Before work | `workspace-convention-profiler` | 1.0.0 | Records repository structure, commands, and test conventions with evidence. |
-| Before work | `task-contract` | 1.0.0 | Defines the objective, scope, risk, and completion criteria. |
+| Before work | [`task-contract`](https://github.com/jaeseongs95/task-contract/tree/b14ffb36ed3be96cc4694d0b36054f21f69b577a) | 1.1.0 | Defines the objective, scope, risk, and completion criteria while keeping provenance receipts separate from authority. |
 | During work | `coordinate-subagents` | 1.1.0 | Splits independent work and assigns ownership and verification duties. |
 | During work | `independent-deliberation-panel` | 1.0.0 | Reviews evidence and counterarguments for complex decisions. |
 | Convergence review | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 1.0.0 | Independently compares iteration contracts and frame changes before a new epoch can open. |
@@ -147,8 +149,8 @@ Start a new session after installation and call skills as `/agent-governance-sui
 | Implementation | `ponytail` | 4.10.0 | Instructs the agent to pick the simplest correct implementation when writing or changing code and at the governance implementation step, without unrequested features, abstractions or dependencies. |
 | Before completion | `acceptance-evidence-validator` | 1.0.0 | Verifies current evidence for every acceptance criterion. |
 | Before completion | `independent-audit-gate` | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
-| After a failure | `blocker-diagnostician` | 1.0.0 | Classifies repeated failures and selects the next diagnostic step. |
-| When selecting recovery | [`recovery-strategy-selector`](skills/recovery-strategy-selector/) | 0.1.0 | Applies an Objective Gate to strategies for a confirmed cause and creates a `RecoveryHandoff.v1` for a new task. |
+| After a failure | [`blocker-diagnostician`](https://github.com/jaeseongs95/blocker-diagnostician/tree/14ae3288535b1d2061a0ee1c537fa6773077a533) | 1.1.0 | Separates observed failures from hypotheses and binds the symptom, mechanism, and root condition to evidence. |
+| When selecting recovery | [`recovery-strategy-selector`](skills/recovery-strategy-selector/) | 0.2.0 | Applies an Objective Gate to strategies bound to the confirmed cause and root condition, then creates a `RecoveryHandoff.v1` for a new task. |
 | Before and after evaluation | [`evaluation-validity-auditor`](https://github.com/jaeseongs95/evaluation-validity-auditor/tree/v1.0.0) | 1.0.0 | Independently audits a frozen evaluation's design, inputs, judgments, and aggregation; only a `post-execution PASS` qualifies as quality or release evidence. |
 
 Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. `skills/source-lock.json` pins upstream paths, tags or commits, upstream/integrated checksums, and update policies, including the repository-native `model-effort-advisor`, `iteration-frame-auditor`, and `recovery-strategy-selector`; the `orchestrator` is tracked by current Git history.

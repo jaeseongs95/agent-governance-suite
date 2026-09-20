@@ -77,6 +77,22 @@ export function resolveSessionMessageStateDirectory(
   return path.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
 }
 
+/** Resolves the signed receipt store shared by every supported local host. */
+export function resolveTrustDatabasePath(
+  environment: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+  homeDirectory: string = homedir(),
+  currentWorkingDirectory: string = process.cwd(),
+): string {
+  void platform;
+  const configured = environment.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim();
+  if (configured) return path.resolve(currentWorkingDirectory, configured);
+  return path.join(
+    resolveSessionMessageStateDirectory(environment, platform, homeDirectory, currentWorkingDirectory),
+    "trust.sqlite3",
+  );
+}
+
 function besideWorkflowDatabase(
   variable: string,
   fileName: string,
