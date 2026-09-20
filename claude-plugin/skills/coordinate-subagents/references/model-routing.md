@@ -57,7 +57,35 @@ Inspect the current host schema and capabilities before setting an override. Nev
 
 For high-risk work, do not use a model class below `general` or effort below `high`. If a preset falls below that floor, promote the role to the same profile's `general-implementation` selection and then raise effort to `high` if needed.
 
-Use modes such as `Fast` and `Pro`, or effort levels such as `ultra` and `ultracode`, only when the user explicitly requests them and the current host documents and exposes the control. If a preferred override is unavailable but inherited execution is supported, delegate with the inherited configuration. If neither is supported, report the capability limit without changing the approved work's scope.
+Use modes such as `Fast` and `Pro`, or effort levels such as `ultra` and `ultracode`, only when the user explicitly requests them and the current host documents and exposes the control. If a preferred override is unavailable but inherited execution is supported and its observed settings satisfy the assignment's risk floor, delegate with the inherited configuration. Otherwise choose a supported adequate configuration or keep the unit pending; unknown inherited settings cannot establish a mandatory risk floor. If neither is supported, report the capability limit without changing the approved work's scope.
+
+## Resolve and record the actual dispatch
+
+Use the dependency-free [model-routing CLI](../scripts/model-routing.mjs) before dispatch:
+
+```text
+node <skill-root>/scripts/model-routing.mjs resolve <selection-input.json>
+```
+
+Supply `provider`, `profile` (default `balanced`), `role`, explicit `highRisk` (`true` is required for `independent-audit`), and `supported` entries `{model, modelClass, efforts}` from current host capabilities. Use `modelClass: null` when unknown; do not infer a class from a name. The bundled recommendation supplies maintainers' model classes for its listed models, not a host observation. Optional `user: {model, effort}` supports either override separately; optional `inherited: {model, effort}` is an observed inherited combination. When the host supports inheritance but hides its effective settings, set `inheritanceSupported: true` without inventing `inherited` values. This permits low-risk inheritance with `unverified` application; it never establishes a high-risk floor. Set `inheritOnly: true` when the host/context prevents overrides. Unknown providers can use a supported explicit user combination or inheritance. A partial user override uses a known inherited combination as its baseline when no provider recommendation exists; missing values remain explicit nulls rather than silently discarding the user choice. Application recording requires a declared provider adapter. A `blocked` result is not permission to weaken the risk floor.
+
+For example, this input selects a supported ordinary implementation configuration:
+
+```json
+{
+  "provider": "openai-codex", "profile": "balanced",
+  "role": "general-implementation", "highRisk": false,
+  "supported": [{"model": "gpt-5.6-terra", "modelClass": "general", "efforts": ["medium", "high"]}]
+}
+```
+
+Translate the returned `selection` into the current host adapter's actual fields. For Codex explicit delivery, pass both `model` and `reasoning_effort` with `fork_turns="none"` or a positive recent-turn count. For inherited delivery, pass neither override. Inspect the actual call rather than copying the intended selection into a record.
+
+After dispatch, run `node <skill-root>/scripts/model-routing.mjs record <dispatch-input.json>`. Supply `assignmentId`, `selectionReason`, the same selection input under `options`, `spawnArguments` containing the actual model, effort, and context arguments in the host adapter's field names, and `contextReason` for full history. For Codex, copy `model`, `reasoning_effort`, and `fork_turns` from the actual call; omitted `fork_turns` defaults to full history. The recorder derives `contextMode` and normalized `dispatched` from these arguments and rejects a contradictory optional `contextMode`. For adapters without a context field, provide `contextMode` (`limited` or `full-history`) explicitly. Keep task bodies and secrets out of the settings record. Supply `observation: null` if the response exposes no effective settings. Otherwise supply `{model, effort, source, reference}`: source is `spawn-result`, `host-task-view`, or an explicit `tool-contract` guaranteeing the passed combination; reference locates the evidence seen by the caller.
+
+The result distinguishes `applied`, `inherited`, and `unverified`. Passing both arguments alone does not prove application. Worker self-report, assumed parent settings, and later evaluator inspection are not caller-visible host evidence. Keep later inspection separate as posthoc evidence. If the observed settings differ, preserve them and investigate before relying on the worker for a mandatory risk floor. `unverified` never establishes that floor. The CLI validates records against supplied observations; it does not authenticate evidence, launch agents, or grant permission.
+
+For actual host verification, follow [the live dispatch check](live-dispatch-check.md). Deterministic routing tests do not prove host execution or concurrency.
 
 ## Diagnose before retrying
 

@@ -21,7 +21,7 @@ v2.1.0은 같은 컴퓨터에서 일하는 AI 호스트 세션들이 서로에�
 
 지난 릴리스의 변경 내역은 [`docs/`](docs/)의 릴리스 노트에 있습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 
-현재 공개 릴리스는 `v2.2.4`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+현재 공개 릴리스는 `v2.2.5`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -62,7 +62,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.2.4
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.2.5
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->

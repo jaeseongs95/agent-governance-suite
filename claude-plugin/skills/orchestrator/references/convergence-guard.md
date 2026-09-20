@@ -23,6 +23,8 @@ MCP가 반환한 `rootId`는 요약, 재개, 서브에이전트 handoff와 fresh
 
 첫 시도의 `priorFailure`는 `null`이다. 그 뒤에는 가장 최근 `AttemptOutcome.v1.failureFingerprint`, 검증 가능한 원인 가설, 변경 요약, 가설을 가르는 관측과 새 evidence reference를 사용한다. target 변화도 새 evidence도 없으면 전체 실행을 시작하지 않고 `blocker-diagnostician`으로 전환한다.
 
+시도 예산은 무의미한 반복을 막는 한도이며 오래된 target을 유지하는 최적화 목표가 아니다. 실제 통합 대상이 바뀌면 기존 run과 시도 기록을 삭제하거나 성공으로 바꾸지 말고 새 target을 evidence로 기록한다. 지금 재배치하고 다시 검증하는 비용이 나중의 충돌 해결과 전체 재검증 비용보다 작으면 새 target에 맞춰 작업을 재배치한다. 현재 epoch의 예산이 부족하면 오래된 target에서 계속 구현하지 말고 아래 독립 검토 절차로 진행하며, 재사용 가능한 조사·명세·증거는 다음 시도에 연결한다.
+
 ## 중단과 독립 검토
 
 - `NEW_EVIDENCE_REQUIRED`: 같은 실행을 반복하지 말고 실패 원인을 가르는 진단을 수행한다.

@@ -39,7 +39,7 @@ A required high-risk audit justifies a separate auditor, not implementation dele
 <!-- policy-contract: delegation.atomic-local -->
 <!-- policy-contract: delegation.allowed-exceptions -->
 
-Keep work local when the net-benefit conditions are not all confirmed, including multi-unit work that is sequential, shares a writer, needs the coordinator's full context, or would cost more to hand off and integrate. When approved delegation cannot run because dependencies, exclusive state, slots, tools, or permissions make it impossible, keep the work local and disclose the concrete reason. Task size and coordinator convenience do not override the net-benefit check. No implementation-delegation decision waives a required high-risk audit.
+Without an explicit delegation request, keep work local when the net-benefit conditions are not all confirmed, including multi-unit work that is sequential, shares a writer, needs the coordinator's full context, or would cost more to hand off and integrate. An explicit request waives the parallel-speedup and net-benefit requirements, not independent completion, sufficient context, single-writer ownership, available inputs, tools, slots, or permissions. When approved delegation cannot run because dependencies, exclusive state, slots, tools, or permissions make it impossible, keep the work local and disclose the concrete reason. Task size and coordinator convenience do not override the net-benefit check. No implementation-delegation decision waives a required high-risk audit.
 
 ## Resolve the delegation preference
 
@@ -90,7 +90,7 @@ Read [the delegation playbook](references/delegation-playbook.md) when preparing
 - Use follow-up messages to refine an existing assignment instead of silently duplicating it.
 <!-- policy-contract: integration.no-duplicate-retry -->
 - Do not dispatch another assignment with the same objective, input or candidate digest, and failure evidence unless a new discriminator or explicitly requested independent comparison changes the work.
-- Wait for delegated work with the collaboration mechanism provided by the host.
+- After dispatch, continue the coordinator-owned independent unit. Wait with the host collaboration mechanism only when the next useful action needs a delegated result or no independent local work remains. Collect completed results and dispatch queued ready work without waiting for unrelated agents.
 - Do not redo delegated work. Review evidence, compare alternatives, resolve conflicts, and integrate the results.
 - Resolve disagreements from requirements, current artifacts, and verification results rather than model identity.
 
@@ -111,7 +111,7 @@ Resolve each audit finding by fixing it, disproving it with evidence, or recordi
 
 ## Select models only when useful
 
-Read [the provider-neutral model-routing presets and host adapters](references/model-routing.md) before choosing an explicit model or reasoning override. First inspect the current host's supported combinations. User or host settings override the bundled profile; unsupported profile entries never block delegation when an inherited supported configuration can do the work.
+Read [the provider-neutral model-routing presets and host adapters](references/model-routing.md) before choosing an explicit model or reasoning override. Use its [packaged resolver](scripts/model-routing.mjs) before dispatch and its application record after dispatch; record requested settings, actual arguments, caller-visible observation, and fallback separately. First inspect the current host's supported combinations. User or host settings override the bundled profile; unsupported profile entries never block delegation when an inherited supported configuration can do the work.
 
 ## Complete the task
 
