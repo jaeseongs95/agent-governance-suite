@@ -1,0 +1,3 @@
+// Audit package snapshot: dependency parser-x 1.2.0; scanner reports vulnerable <1.3.
+// Scanner advisory body, lockfile, deployed dependency graph and parser callsites are unavailable.
+export const dependency = 'parser-x@1.2.0';

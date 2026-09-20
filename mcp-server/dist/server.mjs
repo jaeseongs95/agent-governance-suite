@@ -16282,20 +16282,20 @@ var SqliteContinuityStore = class {
       return { kind: "purged" };
     });
   }
-  setPendingMarker(taskCorrelation, epoch, source, revision, digest2, rootId, now) {
+  setPendingMarker(taskCorrelation, epoch, source, revision, digest3, rootId, now) {
     const result = this.database.prepare(`
       UPDATE continuity_tasks SET pending_source = ?, pending_revision = ?, pending_digest = ?,
         pending_root_id = ?, pending_consumed = 0, updated_at = ?
       WHERE task_correlation = ? AND current_epoch = ?
-    `).run(source, revision, digest2, rootId, now, taskCorrelation, epoch);
+    `).run(source, revision, digest3, rootId, now, taskCorrelation, epoch);
     return result.changes === 1;
   }
-  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest2, now) {
+  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest3, now) {
     const result = this.database.prepare(`
       UPDATE continuity_tasks SET pending_consumed = 1, last_auto_injected_revision = ?, updated_at = ?
       WHERE task_correlation = ? AND current_epoch = ? AND pending_source = 'workflow'
         AND pending_revision = ? AND pending_digest = ? AND pending_consumed = 0
-    `).run(revision, now, taskCorrelation, epoch, revision, digest2);
+    `).run(revision, now, taskCorrelation, epoch, revision, digest3);
     return result.changes === 1;
   }
   recordObservation(taskCorrelation, epoch, event, turnHash, success, now) {
@@ -17360,12 +17360,12 @@ var ContractValidator = class {
       });
     }
     const raw = readFileSync2(schemaPath);
-    const digest2 = `sha256:${createHash3("sha256").update(raw).digest("hex")}`;
-    if (digest2 !== reference.digest) {
+    const digest3 = `sha256:${createHash3("sha256").update(raw).digest("hex")}`;
+    if (digest3 !== reference.digest) {
       throw new WorkflowContractError("STALE_REVISION", `${label} schema changed after planning.`, {
         schemaPath: reference.path,
         expectedDigest: reference.digest,
-        actualDigest: digest2
+        actualDigest: digest3
       });
     }
     return JSON.parse(raw.toString("utf8"));
@@ -21908,6 +21908,67 @@ function validateDecisionRecordSemantics(record3) {
   return errors;
 }
 
+// skills/software-security-auditor/scripts/core.mjs
+import { createHash as createHash5 } from "node:crypto";
+function canonical(value) {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(",")}}`;
+  return JSON.stringify(value);
+}
+var digestBytes = (value) => `sha256:${createHash5("sha256").update(value).digest("hex")}`;
+var digest = (value) => digestBytes(canonical(value));
+var targetDigest = (request) => digest(request.target);
+function safeRelative(value) {
+  return typeof value === "string" && value.length > 0 && !/[\\:\x00-\x1f]/u.test(value) && !value.startsWith("/") && value.split("/").every((part) => part && part !== "." && part !== "..");
+}
+function validateSemantics(report) {
+  const errors = [];
+  const request = report.request;
+  if (report.requestDigest !== digest(request)) errors.push("REQUEST_DIGEST_MISMATCH");
+  if (report.targetDigest !== targetDigest(request)) errors.push("TARGET_DIGEST_MISMATCH");
+  const unique = (items, key, label) => {
+    const values = items.map((item) => item[key]);
+    if (new Set(values).size !== values.length) errors.push(`DUPLICATE_${label}`);
+    return new Set(values);
+  };
+  const paths = unique(request.target.files, "path", "TARGET_PATH");
+  unique(request.providedEvidence, "path", "PROVIDED_EVIDENCE");
+  const expected = unique(request.checks, "id", "REQUEST_CHECK");
+  const checks = unique(report.checks, "id", "CHECK");
+  const evidence = unique(report.evidence, "id", "EVIDENCE");
+  unique(report.findings, "id", "FINDING");
+  if (expected.size !== checks.size || [...expected].some((id) => !checks.has(id))) errors.push("CHECK_INVENTORY_MISMATCH");
+  for (const item of [...request.target.files, ...request.providedEvidence, ...report.evidence]) {
+    if (!safeRelative(item.path)) errors.push("UNSAFE_PATH");
+  }
+  for (const item of report.evidence) {
+    if (item.targetDigest !== report.targetDigest) errors.push("STALE_EVIDENCE");
+  }
+  const checkMap = new Map(report.checks.map((item) => [item.id, item]));
+  for (const item of [...report.checks, ...report.findings]) {
+    if (item.evidenceRefs.some((ref) => !evidence.has(ref))) errors.push("UNKNOWN_EVIDENCE");
+  }
+  for (const item of report.checks) {
+    if (item.status === "checked" && (item.evidenceRefs.length === 0 || item.method === "not-executed")) errors.push("CHECK_WITHOUT_EVIDENCE");
+    if (item.status !== "checked" && item.method !== "not-executed") errors.push("UNEXECUTED_CHECK_METHOD");
+  }
+  for (const item of report.findings) {
+    if (item.locations.some((location) => !paths.has(location.path))) errors.push("UNKNOWN_FINDING_LOCATION");
+    if (item.checkIds.some((id) => !expected.has(id) || checkMap.get(id)?.status !== "checked")) errors.push("UNVERIFIED_FINDING_CHECK");
+    if (item.status === "confirmed" && item.proof === "unverified") errors.push("UNVERIFIED_CONFIRMED_FINDING");
+    if (item.proof === "local-reproduction") {
+      if (!request.authorization.localReproduction || !item.checkIds.some((id) => checkMap.get(id)?.method === "local-reproduction")) errors.push("UNSUPPORTED_REPRODUCTION");
+    }
+  }
+  if (!request.authorization.localReproduction && report.checks.some((item) => item.method === "local-reproduction")) errors.push("UNAUTHORIZED_REPRODUCTION");
+  const missing = report.checks.filter((item) => item.status === "not-checked").length;
+  const checked = report.checks.filter((item) => item.status === "checked").length;
+  const expectedStatus = missing === 0 ? "complete" : checked > 0 ? "partial" : "blocked";
+  if (report.status !== expectedStatus) errors.push("STATUS_COVERAGE_MISMATCH");
+  if (missing > 0 && report.limitations.length === 0) errors.push("MISSING_LIMITATIONS");
+  return [...new Set(errors)];
+}
+
 // mcp-server/src/receipt-policy.ts
 var DIGEST2 = /^(?:sha256:)?[a-f0-9]{64}$/;
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -22101,7 +22162,7 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
 }
 
 // mcp-server/src/stage-output-file.ts
-import { createHash as createHash5 } from "node:crypto";
+import { createHash as createHash6 } from "node:crypto";
 import { closeSync, fstatSync, openSync, readSync } from "node:fs";
 import path9 from "node:path";
 var MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
@@ -22139,8 +22200,8 @@ function readLocalStageOutputFile(locator) {
 function loadStageOutputFile(reference, read = readLocalStageOutputFile) {
   const bytes = read(reference.locator);
   if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(reference.locator);
-  const digest2 = `sha256:${createHash5("sha256").update(bytes).digest("hex")}`;
-  if (digest2 !== reference.digest) {
+  const digest3 = `sha256:${createHash6("sha256").update(bytes).digest("hex")}`;
+  if (digest3 !== reference.digest) {
     throw new WorkflowContractError("INTEGRITY_FAILED", "outputFile content does not match its digest.", {
       locator: reference.locator,
       expected: reference.digest
@@ -22181,6 +22242,7 @@ var DETERMINISTIC_CAPABILITIES = /* @__PURE__ */ new Set([
   "korean-prose-finalization"
 ]);
 var HIGH_ASSURANCE_CAPABILITIES = /* @__PURE__ */ new Set([
+  "software-security-audit",
   "independent-deliberation",
   "independent-audit",
   "evaluation-validity-audit",
@@ -22966,6 +23028,10 @@ var WorkflowService = class {
       stage.outputSchema,
       result.output
     );
+    if (stage.requiredCapability === "software-security-audit" && providerResult.kind === "output") {
+      const errors = validateSemantics(providerResult.output);
+      if (errors.length) throw new WorkflowContractError("INVALID_INPUT", "Security audit report is inconsistent.", { errors });
+    }
     const rule = this.mappedState(stage, providerResult);
     if (result.state !== rule.state) {
       throw new WorkflowContractError("INVALID_TRANSITION", "Stage state does not match the provider state mapping.", {
@@ -23743,7 +23809,7 @@ var HostAttestationProvider = class {
 };
 
 // mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash6, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHash as createHash7, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
 import path10 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
@@ -23753,8 +23819,8 @@ var POLICY = {
   continuityPayloadRetentionDays: 30,
   continuityRecordRetentionDays: 180
 };
-function digest(value) {
-  return `sha256:${createHash6("sha256").update(JSON.stringify(value)).digest("hex")}`;
+function digest2(value) {
+  return `sha256:${createHash7("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function protection() {
   return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
@@ -23793,7 +23859,7 @@ var StateCleanupService = class {
         continuityRecord: new Date(created.getTime() - POLICY.continuityRecordRetentionDays * DAY_MS).toISOString()
       };
       const { workflow, continuity, protectedContinuityTasks, candidates } = this.currentCandidates(cutoffs);
-      const candidateDigest = digest(candidates);
+      const candidateDigest = digest2(candidates);
       const payload = {
         schemaVersion: "1.0.0",
         planId: randomUUID3(),
@@ -23842,7 +23908,7 @@ var StateCleanupService = class {
       this.assertDatabaseIdentity(payload);
       const current = this.currentCandidates(payload.cutoffs);
       const candidates = current.candidates;
-      const currentDigest = digest(candidates);
+      const currentDigest = digest2(candidates);
       if (currentDigest !== payload.candidateDigest || JSON.stringify(candidates) !== JSON.stringify(payload.candidates)) {
         throw new WorkflowContractError("STALE_REVISION", "State cleanup candidates changed after preview.", {
           planId: payload.planId,

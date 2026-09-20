@@ -1,0 +1,20 @@
+{
+  "normal": [
+    {
+      "id": "valid-complete",
+      "expected": "valid report even with confirmed findings"
+    }
+  ],
+  "boundary": [
+    {
+      "id": "partial",
+      "expected": "retain missing evidence"
+    }
+  ],
+  "failure": [
+    {
+      "id": "stale",
+      "expected": "reject changed target"
+    }
+  ]
+}

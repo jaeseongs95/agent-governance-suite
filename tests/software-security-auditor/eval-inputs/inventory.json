@@ -1,0 +1,74 @@
+[
+  {
+    "id": "web-01",
+    "profile": "web-api",
+    "source": "web-01/target.txt",
+    "request": "제공된 코드·환경 전제의 보안 문제를 정적 분석하고 confirmed/suspected/refuted와 근거·검사 공백을 보고한다. 실행 환경은 제공하지 않는다."
+  },
+  {
+    "id": "web-02",
+    "profile": "web-api",
+    "source": "web-02/target.txt",
+    "request": "제공된 코드·환경 전제의 보안 문제를 정적 분석하고 confirmed/suspected/refuted와 근거·검사 공백을 보고한다. 실행 환경은 제공하지 않는다."
+  },
+  {
+    "id": "web-03",
+    "profile": "web-api",
+    "source": "web-03/target.txt",
+    "request": "제공된 코드·환경 전제의 보안 문제를 정적 분석하고 confirmed/suspected/refuted와 근거·검사 공백을 보고한다. 실행 환경은 제공하지 않는다."
+  },
+  {
+    "id": "web-04",
+    "profile": "web-api",
+    "source": "web-04/target.txt",
+    "request": "제공된 코드·환경 전제의 보안 문제를 정적 분석하고 confirmed/suspected/refuted와 근거·검사 공백을 보고한다. 실행 환경은 제공하지 않는다."
+  },
+  {
+    "id": "web-05",
+    "profile": "web-api",
+    "source": "web-05/target.txt",
+    "request": "제공된 코드·환경 전제의 보안 문제를 정적 분석하고 confirmed/suspected/refuted와 근거·검사 공백을 보고한다. 실행 환경은 제공하지 않는다."
+  },
+  {
+    "id": "web-06",
+    "profile": "web-api",
+    "source": "web-06/target.txt",
+    "request": "제공된 코드·환경 전제의 보안 문제를 정적 분석하고 confirmed/suspected/refuted와 근거·검사 공백을 보고한다. 실행 환경은 제공하지 않는다."
+  },
+  {
+    "id": "cli-01",
+    "profile": "cli-mcp",
+    "source": "cli-01/target.txt",
+    "request": "제공된 코드·환경 전제의 보안 문제를 정적 분석하고 confirmed/suspected/refuted와 근거·검사 공백을 보고한다. 실행 환경은 제공하지 않는다."
+  },
+  {
+    "id": "cli-02",
+    "profile": "cli-mcp",
+    "source": "cli-02/target.txt",
+    "request": "제공된 코드·환경 전제의 보안 문제를 정적 분석하고 confirmed/suspected/refuted와 근거·검사 공백을 보고한다. 실행 환경은 제공하지 않는다."
+  },
+  {
+    "id": "cli-03",
+    "profile": "cli-mcp",
+    "source": "cli-03/target.txt",
+    "request": "제공된 코드·환경 전제의 보안 문제를 정적 분석하고 confirmed/suspected/refuted와 근거·검사 공백을 보고한다. 실행 환경은 제공하지 않는다."
+  },
+  {
+    "id": "cli-04",
+    "profile": "cli-mcp",
+    "source": "cli-04/target.txt",
+    "request": "제공된 코드·환경 전제의 보안 문제를 정적 분석하고 confirmed/suspected/refuted와 근거·검사 공백을 보고한다. 실행 환경은 제공하지 않는다."
+  },
+  {
+    "id": "cli-05",
+    "profile": "cli-mcp",
+    "source": "cli-05/target.txt",
+    "request": "제공된 코드·환경 전제의 보안 문제를 정적 분석하고 confirmed/suspected/refuted와 근거·검사 공백을 보고한다. 실행 환경은 제공하지 않는다."
+  },
+  {
+    "id": "cli-06",
+    "profile": "cli-mcp",
+    "source": "cli-06/target.txt",
+    "request": "제공된 코드·환경 전제의 보안 문제를 정적 분석하고 confirmed/suspected/refuted와 근거·검사 공백을 보고한다. 실행 환경은 제공하지 않는다."
+  }
+]

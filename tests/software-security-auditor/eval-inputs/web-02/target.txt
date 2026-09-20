@@ -1,0 +1,3 @@
+// All invoice routes use this registered middleware; db.find constrains both parameters.
+router.use('/invoices/:id', session, async (req,res,next) => { req.invoice = await db.find({id:req.params.id,tenant:req.user.tenant}); if (!req.invoice) return res.sendStatus(404); next(); });
+router.get('/invoices/:id', (req,res) => res.json(req.invoice));

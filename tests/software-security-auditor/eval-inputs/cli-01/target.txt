@@ -1,0 +1,2 @@
+// Authorized tool lets untrusted callers choose name; child_process.exec uses a shell.
+export function tool({name}) { return exec('convert '+name); }

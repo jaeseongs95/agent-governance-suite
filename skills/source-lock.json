@@ -344,6 +344,24 @@
         "Remove reviewing from the description's coding-task list and exclude code review, audits, verification, and completion checks, so implicit invocation does not load the skill during governance review stages.",
         "Scope persistence to responses that write or change code, and replace the Boundaries paragraph so reviews, audits, verification, completion reports and non-coding answers are excluded, user, project and repository instructions override the Output and test rules, requested behavior and acceptance criteria are never cut, and the Caveman pairing, which the suite does not ship, is dropped."
       ]
+    },
+    {
+      "skillId": "software-security-auditor",
+      "path": "skills/software-security-auditor",
+      "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
+      "sourcePath": "skills/software-security-auditor",
+      "version": "0.1.0",
+      "versionSource": "skill-metadata",
+      "ref": {
+        "kind": "commit",
+        "value": "ba2e494329a924e98175956af1a54fe6a42c6fc0",
+        "commit": "ba2e494329a924e98175956af1a54fe6a42c6fc0"
+      },
+      "updatePolicy": "internal",
+      "upstreamChecksum": "sha256:7346de58a9bdc9b8e5d283687326bacecf980f7997f4458b28782b69216d76a5",
+      "integratedChecksum": "sha256:7346de58a9bdc9b8e5d283687326bacecf980f7997f4458b28782b69216d76a5",
+      "checksumScope": "relative paths and normalized text bytes under skills/software-security-auditor",
+      "downstreamModifications": []
     }
   ]
 }

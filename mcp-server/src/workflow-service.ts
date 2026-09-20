@@ -38,6 +38,7 @@ import {
 } from "./convergence-logic.js";
 import { FileSkillRegistry, selectSkillByCapability } from "./registry.js";
 import { validateDecisionRecordSemantics } from "./decision-record-validator.js";
+import { validateSemantics as validateSecurityAudit } from "../../skills/software-security-auditor/scripts/core.mjs";
 import { ContractValidator } from "./schema-validator.js";
 import { assertReceiptPolicy, jsonPointer } from "./receipt-policy.js";
 import { loadStageOutputFile } from "./stage-output-file.js";
@@ -80,6 +81,7 @@ const DETERMINISTIC_CAPABILITIES = new Set<string>([
 ]);
 
 const HIGH_ASSURANCE_CAPABILITIES = new Set<string>([
+  "software-security-audit",
   "independent-deliberation",
   "independent-audit",
   "evaluation-validity-audit",
@@ -977,6 +979,10 @@ export class WorkflowService {
       stage.outputSchema,
       result.output,
     );
+    if (stage.requiredCapability === "software-security-audit" && providerResult.kind === "output") {
+      const errors = validateSecurityAudit(providerResult.output);
+      if (errors.length) throw new WorkflowContractError("INVALID_INPUT", "Security audit report is inconsistent.", { errors });
+    }
     const rule = this.mappedState(stage, providerResult);
     if (result.state !== rule.state) {
       throw new WorkflowContractError("INVALID_TRANSITION", "Stage state does not match the provider state mapping.", {

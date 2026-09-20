@@ -1,0 +1,2 @@
+// Project user input is ignored; complete read interface, immutable deployment file.
+export async function read() { return fs.readFile('/opt/app/public/help.txt','utf8'); }

@@ -1,0 +1,2 @@
+// Tool takes a session id; session admission, identity binding and store schema are unavailable.
+export async function status({sessionId}) { return store.lookup(sessionId); }

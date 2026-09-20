@@ -1,0 +1,2 @@
+// Executable route shape; db.get accepts any invoice id. Session middleware authenticates only.
+router.get('/invoices/:id', session, async (req,res) => res.json(await db.get(req.params.id)));

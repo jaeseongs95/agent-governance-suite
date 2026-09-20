@@ -147,6 +147,7 @@ Start a new session after installation and call skills as `/agent-governance-sui
 | Before and after changes | `change-scope-guardian` | 1.0.0 | Captures a baseline and checks whether the final change stayed in scope. |
 | Before changes | `mutation-risk-preflight` | 1.0.1 | Checks the target, authority, approval, and recovery conditions for risky mutations. |
 | Implementation | `ponytail` | 4.10.0 | Instructs the agent to pick the simplest correct implementation when writing or changing code and at the governance implementation step, without unrequested features, abstractions or dependencies. |
+| Security analysis requested | [`software-security-auditor`](skills/software-security-auditor/) | 0.1.0 | Audits web/API and CLI/MCP attack paths, controls, vulnerabilities and coverage gaps; existing gates decide completion. |
 | Before completion | `acceptance-evidence-validator` | 1.0.0 | Verifies current evidence for every acceptance criterion. |
 | Before completion | `independent-audit-gate` | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
 | After a failure | [`blocker-diagnostician`](https://github.com/jaeseongs95/blocker-diagnostician/tree/14ae3288535b1d2061a0ee1c537fa6773077a533) | 1.1.0 | Separates observed failures from hypotheses and binds the symptom, mechanism, and root condition to evidence. |

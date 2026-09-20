@@ -1,0 +1,2 @@
+// Mounted for any authenticated user; SQL driver executes literal query text.
+router.get('/search', session, async (req,res) => res.json(await db.query("SELECT * FROM notes WHERE title='"+req.query.q+"'")));

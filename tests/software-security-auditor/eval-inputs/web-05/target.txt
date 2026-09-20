@@ -1,0 +1,2 @@
+// Driver binds placeholders as values, never SQL syntax; session.tenant is server-issued.
+router.get('/search', session, async (req,res) => res.json(await db.query('SELECT * FROM notes WHERE tenant=? AND title=?',[req.user.tenant,req.query.q])));

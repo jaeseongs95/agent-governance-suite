@@ -1951,6 +1951,82 @@
           }
         }
       ]
+    },
+    {
+      "schemaVersion": "2.0.0",
+      "skillId": "software-security-auditor",
+      "version": "0.1.0",
+      "path": "./software-security-auditor",
+      "enabled": true,
+      "priority": 50,
+      "providers": [
+        {
+          "capabilities": [
+            "software-security-audit"
+          ],
+          "executionClass": "workflow",
+          "phase": "security-audit",
+          "phaseOrder": 65,
+          "requiredInputArtifacts": [
+            "security-audit-request"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "security-audit-request",
+              "sources": [
+                "workflow:security-audit-request"
+              ],
+              "operation": "require-external"
+            }
+          ],
+          "producedArtifacts": [
+            "security-audit-report"
+          ],
+          "outputSchema": "skills/software-security-auditor/contracts/security-audit-report.v1.schema.json",
+          "resultSchema": "skills/software-security-auditor/integration/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/status",
+            "values": {
+              "complete": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "partial": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "blocked": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "MISSING_EVIDENCE"
+                ]
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE"
+            ]
+          },
+          "selectionCriteria": [
+            "explicit-software-security-audit",
+            "security-analysis-required-by-acceptance-criteria"
+          ],
+          "preconditions": [
+            "A fixed security audit request and inspectable target are available."
+          ],
+          "failureHandling": {
+            "missingEvidence": "partial-or-blocked",
+            "stale": "new-snapshot-and-affected-analysis",
+            "invalidReport": "reject"
+          },
+          "gate": {
+            "kind": "none",
+            "policy": "none"
+          }
+        }
+      ]
     }
   ]
 }

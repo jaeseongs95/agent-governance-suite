@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "evaluator": "/root/security_behavior_eval",
+  "requestedModel": "gpt-5.6-sol",
+  "requestedReasoning": "high",
+  "observedConfiguration": "unverified",
+  "context": "none",
+  "oracleDisclosed": false,
+  "cases": 12,
+  "matched": 12,
+  "falseExecutionClaims": 0,
+  "limitations": [
+    "One synthetic static pass; not a general detection-rate or production-safety guarantee.",
+    "Worker model application and oracle isolation are cooperative tool/history observations, not external attestation."
+  ],
+  "files": {
+    "tests/software-security-auditor/eval-inputs/inventory.json": "sha256:d4fe1a87f721863c9961cf7683294d15dce7e3d6b88e46f825fbb2998cea86ed",
+    "tests/software-security-auditor/eval-inputs/cli-01/target.txt": "sha256:30808ad660b0270d80bdc6b5bdd11bfa75999ce14c2511104ca0d0de18dbc7b6",
+    "tests/software-security-auditor/eval-inputs/cli-02/target.txt": "sha256:a2256405fecf1ed4f8ac8e16c4739d5be63843a0a5047879fc53e0403600aa2d",
+    "tests/software-security-auditor/eval-inputs/cli-03/target.txt": "sha256:a9cdf9b0c42e463f35b47162ca33ee278c9da2a12b06d4ca8167504dbe2d1f69",
+    "tests/software-security-auditor/eval-inputs/cli-04/target.txt": "sha256:de142c4ccd9d985a280dfd685f95f7510233e6b5d4800cd54247904ca9b10296",
+    "tests/software-security-auditor/eval-inputs/cli-05/target.txt": "sha256:61a52c15e9b08221295fb96327950e75e115363a423b4552e766a7d7662738a8",
+    "tests/software-security-auditor/eval-inputs/cli-06/target.txt": "sha256:8147d7e86ebac178669b0ec1397928303f5bf815f8c4d70b36f1c45be3f259da",
+    "tests/software-security-auditor/eval-inputs/web-01/target.txt": "sha256:c0e1666663d50ce11d3300dc45dc2158c6d340898ce8228023a45351d136126d",
+    "tests/software-security-auditor/eval-inputs/web-02/target.txt": "sha256:13cbc3718089cb3d8194e9c1bfdb129815adca8d9ce20cc3ea5654fdd1357825",
+    "tests/software-security-auditor/eval-inputs/web-03/target.txt": "sha256:48a9c23f75948bd2f6bfe6d02ca2de3436e75cb50f7bbf6a3478e9e00031609a",
+    "tests/software-security-auditor/eval-inputs/web-04/target.txt": "sha256:697bb38323497e65fa05b58db2e026efe1229910c7d22ce38a1c800b8df09866",
+    "tests/software-security-auditor/eval-inputs/web-05/target.txt": "sha256:e5be1d6ac5487ea39486c05792232f93a554d7784ed45cb4aa74edebb6a24706",
+    "tests/software-security-auditor/eval-inputs/web-06/target.txt": "sha256:69eaf8ce532a2c5636d12cb1530ac954473f21bfc93f1281be2812f14633b22f",
+    "skills/software-security-auditor/SKILL.md": "sha256:ac113bc2d3eaf01206a7c917d914fc9339f544d24efecb3773f9969f07259f71",
+    "skills/software-security-auditor/references/cli-mcp.md": "sha256:08a551a35198d84e4449f03e35fcf29251d73688ad84461f0a93e832f9e3035a",
+    "skills/software-security-auditor/references/web-api.md": "sha256:00adebf91994623838cac5ff90a28bb7ac9455f24515c85fd80d721d8b17abe0",
+    "tests/software-security-auditor/eval-oracle.json": "sha256:53008a80f759bf4da2de1659115802f2db4dd512156a160027811882b8668174",
+    "tests/software-security-auditor/eval-results.json": "sha256:6b096bfeb39f8911eade287bd8adb19ed7d83b5cc93fd9cb93f3d9731a594b52"
+  },
+  "formatNormalization": [
+    {
+      "path": "tests/software-security-auditor/cases.json",
+      "evaluatedDigest": "sha256:297a12e82bcdf9642ce9dde36909cd163ec6b27f58499fe69e796bff1fe4c608",
+      "storedDigest": "sha256:1dbe6a525b98987b732116d3f73f3a1f08d0ae8dc802d9e19d32766b2f5a040d",
+      "change": "CRLF to LF only; JSON values unchanged"
+    },
+    {
+      "path": "tests/software-security-auditor/eval-inputs/inventory.json",
+      "evaluatedDigest": "sha256:e4bdd93fbdc822c7988204aa468ae611e39c6c79d7907c6384b436dfdc2f5cad",
+      "storedDigest": "sha256:d4fe1a87f721863c9961cf7683294d15dce7e3d6b88e46f825fbb2998cea86ed",
+      "change": "CRLF to LF only; JSON values unchanged"
+    },
+    {
+      "path": "tests/software-security-auditor/eval-oracle.json",
+      "evaluatedDigest": "sha256:e860e097c1d2651823fd7b081e458dc0b6962cd8fb258f99874a202fa16acc7a",
+      "storedDigest": "sha256:53008a80f759bf4da2de1659115802f2db4dd512156a160027811882b8668174",
+      "change": "CRLF to LF only; JSON values unchanged"
+    }
+  ]
+}

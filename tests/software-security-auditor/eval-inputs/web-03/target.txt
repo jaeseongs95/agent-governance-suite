@@ -1,0 +1,2 @@
+// Only this handler is available. Router mounting and row-level policy were not supplied.
+export async function invoice(req,res) { res.json(await db.get(req.params.id)); }

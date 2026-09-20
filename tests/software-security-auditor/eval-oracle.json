@@ -1,0 +1,62 @@
+[
+  {
+    "id": "web-01",
+    "expected": "confirmed",
+    "criterion": "Any signed-in account can read another account invoice; no ownership check."
+  },
+  {
+    "id": "web-02",
+    "expected": "refuted",
+    "criterion": "The mounted tenant middleware restricts the object."
+  },
+  {
+    "id": "web-03",
+    "expected": "suspected",
+    "criterion": "Missing router and DB policy prevent concluding exposed cross-tenant access."
+  },
+  {
+    "id": "web-04",
+    "expected": "confirmed",
+    "criterion": "User input reaches SQL query syntax unparameterized."
+  },
+  {
+    "id": "web-05",
+    "expected": "refuted",
+    "criterion": "Parameters cannot alter SQL syntax and tenant is constrained."
+  },
+  {
+    "id": "web-06",
+    "expected": "suspected",
+    "criterion": "Dependency warning is not proof of application exploitability; missing evidence must remain."
+  },
+  {
+    "id": "cli-01",
+    "expected": "confirmed",
+    "criterion": "Untrusted name reaches shell syntax."
+  },
+  {
+    "id": "cli-02",
+    "expected": "refuted",
+    "criterion": "No user-controlled input reaches command construction."
+  },
+  {
+    "id": "cli-03",
+    "expected": "suspected",
+    "criterion": "Execution capability exists but unauthorized reachability is unknown."
+  },
+  {
+    "id": "cli-04",
+    "expected": "confirmed",
+    "criterion": "Absolute or parent paths escape public root without confinement."
+  },
+  {
+    "id": "cli-05",
+    "expected": "refuted",
+    "criterion": "The caller cannot select a path."
+  },
+  {
+    "id": "cli-06",
+    "expected": "suspected",
+    "criterion": "Need caller/session ownership policy to establish unauthorized access."
+  }
+]

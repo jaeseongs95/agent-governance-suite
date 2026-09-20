@@ -1,0 +1,3 @@
+// Handler and executable are supplied; caller admission policy is absent.
+export function tool({command}) { return exec(command); }
+// Deployment may restrict this administrative tool to an operator; deployment configuration is unavailable.

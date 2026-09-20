@@ -1,0 +1,2 @@
+// This is the entire function. No caller argument, PATH or cwd is used to select the executable.
+export function version() { return execFile('/opt/app/bin/convert',['--version'],{env:{},cwd:'/opt/app'}); }

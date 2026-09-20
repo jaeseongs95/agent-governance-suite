@@ -1,0 +1,2 @@
+// Tool is callable by any project user. /workspace/private contains other projects.
+export async function read({file}) { return fs.readFile(path.resolve('/workspace/public',file),'utf8'); }
