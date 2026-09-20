@@ -285,6 +285,28 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toEqual({ protocolVersion: SESSION_MESSAGE_PROTOCOL });
   });
 
+  it("returns at the startup deadline while state preparation is still blocked and never spawns afterward", async () => {
+    const directory = stateDirectory();
+    let releasePreparation = () => {};
+    let markPreparationStarted = () => {};
+    const preparationStarted = new Promise<void>((resolve) => { markPreparationStarted = resolve; });
+    const blockedPreparation = new Promise<void>((resolve) => { releasePreparation = resolve; });
+    const startedAt = Date.now();
+    const startup = ensureSessionMessageBroker(directory, 500, undefined, async () => {
+      markPreparationStarted();
+      await blockedPreparation;
+    });
+
+    await preparationStarted;
+    await expect(startup).rejects.toThrow(/startup deadline/u);
+    expect(Date.now() - startedAt).toBeLessThan(1_500);
+
+    releasePreparation();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    await expect(optionalFile(path.join(directory, "broker.lock"))).resolves.toBeNull();
+    await expect(optionalFile(path.join(directory, "endpoint.json"))).resolves.toBeNull();
+  });
+
   it("enforces an absolute request deadline while a TLS peer keeps sending partial data", async () => {
     const directory = stateDirectory();
     await ensureSessionMessageBroker(directory);

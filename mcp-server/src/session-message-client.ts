@@ -26,6 +26,8 @@ class BrokerRequestRejected extends Error {}
 const BROKER_STARTUP_TIMEOUT_MS = 15_000;
 const SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 20_000;
 const BROKER_REQUEST_TIMEOUT_MS = 2_500;
+const BROKER_STARTUP_DEADLINE_MESSAGE = "The session message broker did not become ready before the startup deadline.";
+const SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE = "The session message request deadline expired.";
 
 function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
   return {
@@ -48,9 +50,14 @@ function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) throw signalError(signal);
 }
 
-function remainingMilliseconds(deadline: number): number {
+function remainingMilliseconds(
+  deadline: number,
+  signal?: AbortSignal,
+  message = SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE,
+): number {
+  throwIfAborted(signal);
   const remaining = deadline - Date.now();
-  if (remaining <= 0) throw deadlineError("The session message request deadline expired.");
+  if (remaining <= 0) throw deadlineError(message);
   return remaining;
 }
 
@@ -67,10 +74,17 @@ async function withDeadline<T>(
   if (parentSignal?.aborted) onParentAbort();
   else parentSignal?.addEventListener("abort", onParentAbort, { once: true });
   const timer = setTimeout(() => controller.abort(deadlineError(message)), timeoutMs);
+  let removeAbortListener = () => {};
   try {
     throwIfAborted(controller.signal);
-    return await work(controller.signal, deadline);
+    const aborted = new Promise<never>((_resolve, reject) => {
+      const onAbort = () => reject(signalError(controller.signal));
+      controller.signal.addEventListener("abort", onAbort, { once: true });
+      removeAbortListener = () => controller.signal.removeEventListener("abort", onAbort);
+    });
+    return await Promise.race([work(controller.signal, deadline), aborted]);
   } finally {
+    removeAbortListener();
     clearTimeout(timer);
     parentSignal?.removeEventListener("abort", onParentAbort);
   }
@@ -187,7 +201,7 @@ export async function waitForSessionMessageBrokerReady(
   timeoutMs = BROKER_STARTUP_TIMEOUT_MS,
   parentSignal?: AbortSignal,
 ): Promise<void> {
-  return withDeadline(timeoutMs, parentSignal, "The session message broker did not become ready before the startup deadline.", async (signal, deadline) => {
+  return withDeadline(timeoutMs, parentSignal, BROKER_STARTUP_DEADLINE_MESSAGE, async (signal, deadline) => {
     let spawnError: Error | null = null;
     const onError = (error: Error) => { spawnError = error; };
     child.once("error", onError);
@@ -200,9 +214,15 @@ export async function waitForSessionMessageBrokerReady(
             `The session message broker exited before it was ready (code ${String(child.exitCode)}, signal ${String(child.signalCode)}).`,
           );
         }
-        await delay(Math.min(100, remainingMilliseconds(deadline)), signal);
+        await delay(Math.min(100, remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE)), signal);
         try {
-          await requestSessionMessageOnce("ping", {}, stateDirectory, remainingMilliseconds(deadline), signal);
+          await requestSessionMessageOnce(
+            "ping",
+            {},
+            stateDirectory,
+            remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE),
+            signal,
+          );
           return;
         } catch (error) {
           throwIfAborted(signal);
@@ -219,18 +239,27 @@ export async function ensureSessionMessageBroker(
   stateDirectory = resolveSessionMessageStateDirectory(),
   timeoutMs = BROKER_STARTUP_TIMEOUT_MS,
   parentSignal?: AbortSignal,
+  prepareStateDirectory: (directory: string) => Promise<void> = async (directory) => {
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+    try { await chmod(directory, 0o700); } catch { /* Windows ACLs remain governed by the user profile. */ }
+  },
 ): Promise<void> {
-  return withDeadline(Math.min(BROKER_STARTUP_TIMEOUT_MS, timeoutMs), parentSignal, "The session message broker did not become ready before the startup deadline.", async (signal, deadline) => {
+  return withDeadline(Math.min(BROKER_STARTUP_TIMEOUT_MS, timeoutMs), parentSignal, BROKER_STARTUP_DEADLINE_MESSAGE, async (signal, deadline) => {
     try {
-      await requestSessionMessageOnce("ping", {}, stateDirectory, remainingMilliseconds(deadline), signal);
+      await requestSessionMessageOnce(
+        "ping",
+        {},
+        stateDirectory,
+        remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE),
+        signal,
+      );
       return;
     } catch (error) {
       throwIfAborted(signal);
       if (error instanceof BrokerRequestRejected) throw error;
-      await mkdir(stateDirectory, { recursive: true, mode: 0o700 });
+      await prepareStateDirectory(stateDirectory);
       throwIfAborted(signal);
-      try { await chmod(stateDirectory, 0o700); } catch { /* Windows ACLs remain governed by the user profile. */ }
-      remainingMilliseconds(deadline);
+      remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
       const adjacentBroker = fileURLToPath(new URL("./session-message-broker.mjs", import.meta.url));
       const brokerPath = existsSync(adjacentBroker)
         ? adjacentBroker
@@ -242,7 +271,12 @@ export async function ensureSessionMessageBroker(
         env: sessionMessageBrokerEnvironment(),
       });
       child.unref();
-      await waitForSessionMessageBrokerReady(stateDirectory, child, remainingMilliseconds(deadline), signal);
+      await waitForSessionMessageBrokerReady(
+        stateDirectory,
+        child,
+        remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE),
+        signal,
+      );
     }
   });
 }
@@ -254,15 +288,21 @@ export async function sessionMessageRequest<T>(
   options: { totalTimeoutMs?: number } = {},
 ): Promise<T> {
   const totalTimeoutMs = options.totalTimeoutMs ?? SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
-  return withDeadline(totalTimeoutMs, undefined, "The session message request deadline expired.", async (signal, deadline) => {
+  return withDeadline(totalTimeoutMs, undefined, SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE, async (signal, deadline) => {
     try {
-      return await requestSessionMessageOnce<T>(operation, payload, stateDirectory, remainingMilliseconds(deadline), signal);
+      return await requestSessionMessageOnce<T>(
+        operation,
+        payload,
+        stateDirectory,
+        remainingMilliseconds(deadline, signal),
+        signal,
+      );
     } catch (error) {
       throwIfAborted(signal);
       if (error instanceof BrokerRequestRejected) throw error;
-      await ensureSessionMessageBroker(stateDirectory, remainingMilliseconds(deadline), signal);
+      await ensureSessionMessageBroker(stateDirectory, remainingMilliseconds(deadline, signal), signal);
       throwIfAborted(signal);
-      return requestSessionMessageOnce<T>(operation, payload, stateDirectory, remainingMilliseconds(deadline), signal);
+      return requestSessionMessageOnce<T>(operation, payload, stateDirectory, remainingMilliseconds(deadline, signal), signal);
     }
   });
 }
