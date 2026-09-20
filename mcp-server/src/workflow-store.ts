@@ -9,7 +9,8 @@ import {
   type WorkflowReceiptV1,
   WorkflowContractError,
 } from "../../contracts/types.js";
-import { convergenceDigest, rootsOverlap } from "./convergence-logic.js";
+import { activeRootIdentity, convergenceDigest, planRootInsertion, type RootConflict } from "./convergence-logic.js";
+import { type RootIdentityV1 } from "./workspace-identity.js";
 
 export const PLAN_SIGNING_KEY = "plan-signing-key";
 
@@ -45,7 +46,8 @@ export interface WorkflowStore {
     expectedRevision: number,
     convergence?: { root: ConvergenceRootV1; expectedRootRevision: number; outcome: AttemptOutcomeV1 },
   ): boolean;
-  insertConvergenceRoot(root: ConvergenceRootV1): ConvergenceRootV1 | null;
+  /** Returns the blocking root and the reason, or null once the root is stored. */
+  insertConvergenceRoot(root: ConvergenceRootV1): RootConflict | null;
   getConvergenceSnapshot(rootId: string): ConvergenceSnapshot | null;
   updateConvergenceRoot(
     root: ConvergenceRootV1,
@@ -74,6 +76,7 @@ export class InMemoryWorkflowStore implements WorkflowStore {
   private readonly secrets = new Map<string, string>();
   private readonly executionObservations = new Map<string, string>();
   private readonly convergence = new Map<string, ConvergenceSnapshot>();
+  private readonly identities = new Map<string, RootIdentityV1>();
   private readonly guardedRuns = new Map<string, { rootId: string; leaseId: string }>();
   private runSequence = 0;
 
@@ -126,18 +129,25 @@ export class InMemoryWorkflowStore implements WorkflowStore {
     return true;
   }
 
-  insertConvergenceRoot(root: ConvergenceRootV1): ConvergenceRootV1 | null {
+  insertConvergenceRoot(root: ConvergenceRootV1): RootConflict | null {
     if (this.convergence.has(root.rootId)) {
       throw new WorkflowContractError("INVALID_INPUT", "Convergence root already exists.", { rootId: root.rootId });
     }
-    for (const snapshot of this.convergence.values()) {
-      if (["completed", "abandoned"].includes(snapshot.root.state)) continue;
-      if (root.parentRootId === snapshot.root.rootId) continue;
-      if (rootsOverlap(root, snapshot.root)) return clone(snapshot.root);
+    if (root.parentRootId && !this.convergence.has(root.parentRootId)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Parent convergence root was not found.", { rootId: root.parentRootId });
     }
+    const actives = [...this.convergence.values()]
+      .filter((snapshot) => !["completed", "abandoned"].includes(snapshot.root.state))
+      .map((snapshot) => {
+        const active = activeRootIdentity(snapshot.root, this.identities.get(snapshot.root.rootId) ?? null);
+        if (active.fresh) this.identities.set(snapshot.root.rootId, active.identity);
+        return active;
+      });
+    const plan = planRootInsertion(root, actives);
+    if (plan.conflict) return clone(plan.conflict);
+    this.identities.set(root.rootId, plan.identity);
     if (root.parentRootId) {
-      const parent = this.convergence.get(root.parentRootId);
-      if (!parent) throw new WorkflowContractError("INVALID_INPUT", "Parent convergence root was not found.", { rootId: root.parentRootId });
+      const parent = this.convergence.get(root.parentRootId)!;
       parent.root.state = "abandoned";
       parent.root.revision += 1;
       parent.root.updatedAt = root.createdAt;

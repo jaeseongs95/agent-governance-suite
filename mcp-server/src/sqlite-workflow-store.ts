@@ -18,7 +18,8 @@ import {
   type StoredPluginUpdateState,
 } from "./plugin-update-store.js";
 import { compareStableVersionNumbers } from "./plugin-version.js";
-import { normalizeWorkspaceLocator, rootsOverlap } from "./convergence-logic.js";
+import { activeRootIdentity, normalizeWorkspaceLocator, planRootInsertion, type RootConflict } from "./convergence-logic.js";
+import { type RootIdentityV1 } from "./workspace-identity.js";
 import {
   type ConvergenceSnapshot,
   type GuardedRunBinding,
@@ -45,6 +46,11 @@ export interface WorkflowCleanupPreview {
 interface ConvergenceRootRow {
   root_json: string;
   revision: number;
+}
+
+interface ActiveRootRow extends ConvergenceRootRow {
+  root_id: string;
+  identity_json: string | null;
 }
 
 interface ConvergenceLeaseRow {
@@ -222,26 +228,35 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     }));
   }
 
-  insertConvergenceRoot(root: ConvergenceRootV1): ConvergenceRootV1 | null {
+  insertConvergenceRoot(root: ConvergenceRootV1): RootConflict | null {
     return this.guard("Cannot persist the convergence root.", { rootId: root.rootId }, () => this.transaction(() => {
-      const rows = this.database.prepare(`
-        SELECT root_json, revision FROM convergence_roots
-        WHERE state NOT IN ('completed', 'abandoned')
-          AND (workspace_id = ? OR workspace_locator = ?)
-      `).all(root.frame.workspace.workspaceId, normalizeWorkspaceLocator(root.frame.workspace.locator)) as unknown as ConvergenceRootRow[];
-      for (const row of rows) {
-        const existing = JSON.parse(row.root_json) as ConvergenceRootV1;
-        if (root.parentRootId === existing.rootId) continue;
-        if (rootsOverlap(root, existing)) return existing;
+      const parentRow = root.parentRootId ? this.rootRow(root.parentRootId) : undefined;
+      if (root.parentRootId && !parentRow) {
+        throw new WorkflowContractError("INVALID_INPUT", "Parent convergence root was not found.", { rootId: root.parentRootId });
       }
-      if (root.parentRootId) {
-        const row = this.rootRow(root.parentRootId);
-        if (!row) throw new WorkflowContractError("INVALID_INPUT", "Parent convergence root was not found.", { rootId: root.parentRootId });
-        const parent = JSON.parse(row.root_json) as ConvergenceRootV1;
+      // ponytail: every active root is compared in process; index the derived identity if a ledger ever holds thousands.
+      const rows = this.database.prepare(`
+        SELECT roots.root_id, roots.root_json, roots.revision, identities.identity_json
+        FROM convergence_roots AS roots
+        LEFT JOIN convergence_root_identities AS identities ON identities.root_id = roots.root_id
+        WHERE roots.state NOT IN ('completed', 'abandoned')
+      `).all() as unknown as ActiveRootRow[];
+      const actives = rows.map((row) => {
+        const active = activeRootIdentity(
+          JSON.parse(row.root_json) as ConvergenceRootV1,
+          row.identity_json ? JSON.parse(row.identity_json) as RootIdentityV1 : null,
+        );
+        if (active.fresh) this.insertRootIdentity(row.root_id, active.identity, null, root.createdAt);
+        return active;
+      });
+      const plan = planRootInsertion(root, actives);
+      if (plan.conflict) return plan.conflict;
+      if (parentRow) {
+        const parent = JSON.parse(parentRow.root_json) as ConvergenceRootV1;
         parent.state = "abandoned";
         parent.revision += 1;
         parent.updatedAt = root.createdAt;
-        this.casRoot(parent, row.revision);
+        this.casRoot(parent, parentRow.revision);
       }
       this.database.prepare(`
         INSERT INTO convergence_roots (root_id, revision, state, workspace_id, workspace_locator, root_json, created_at, updated_at)
@@ -257,6 +272,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         root.updatedAt,
       );
       this.insertEpoch(root, root.createdAt);
+      this.insertRootIdentity(root.rootId, plan.identity, plan.match, root.createdAt);
       return null;
     }));
   }
@@ -593,6 +609,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       const deleteReviews = this.database.prepare("DELETE FROM convergence_reviews WHERE root_id = ?");
       const deleteLeases = this.database.prepare("DELETE FROM convergence_leases WHERE root_id = ?");
       const deleteEpochs = this.database.prepare("DELETE FROM convergence_epochs WHERE root_id = ?");
+      const deleteIdentity = this.database.prepare("DELETE FROM convergence_root_identities WHERE root_id = ?");
       const deleteRoot = this.database.prepare("DELETE FROM convergence_roots WHERE root_id = ?");
       const deleteRun = this.database.prepare("DELETE FROM workflow_runs WHERE run_id = ?");
       let deletedRuns = 0;
@@ -602,6 +619,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         deleteReviews.run(root.rootId);
         deleteLeases.run(root.rootId);
         deleteEpochs.run(root.rootId);
+        deleteIdentity.run(root.rootId);
         deleteRoot.run(root.rootId);
         for (const runId of root.runIds) {
           deletedRuns += Number(deleteRun.run(runId).changes);
@@ -685,6 +703,12 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
           ON convergence_roots(workspace_id, state);
         CREATE INDEX IF NOT EXISTS convergence_active_roots_by_locator
           ON convergence_roots(workspace_locator, state);
+        CREATE TABLE IF NOT EXISTS convergence_root_identities (
+          root_id TEXT PRIMARY KEY,
+          identity_json TEXT NOT NULL,
+          replacement_match TEXT CHECK (replacement_match IS NULL OR replacement_match IN ('physical', 'lineage')),
+          created_at TEXT NOT NULL
+        ) STRICT;
         CREATE TABLE IF NOT EXISTS convergence_epochs (
           root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
           epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
@@ -763,6 +787,18 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       WHERE root_id = ? AND revision = ?
     `).run(root.revision, root.state, JSON.stringify(root), root.updatedAt, root.rootId, expectedRevision);
     return Number(result.changes) === 1;
+  }
+
+  /**
+   * Derived from root_json, which is never rewritten. No foreign key and no schema version bump:
+   * a server without this table keeps opening and cleaning the same database, and rows it
+   * leaves behind are recomputed or ignored.
+   */
+  private insertRootIdentity(rootId: string, identity: RootIdentityV1, match: "physical" | "lineage" | null, createdAt: string): void {
+    this.database.prepare(`
+      INSERT OR IGNORE INTO convergence_root_identities (root_id, identity_json, replacement_match, created_at)
+      VALUES (?, ?, ?, ?)
+    `).run(rootId, JSON.stringify(identity), match, createdAt);
   }
 
   private insertEpoch(root: ConvergenceRootV1, createdAt: string): void {

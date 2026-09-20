@@ -34,9 +34,9 @@ import {
 } from "../../contracts/types.js";
 import {
   canonicalJson,
+  conflictDetails,
   convergenceDigest,
   frameDigests,
-  normalizeWorkspaceLocator,
 } from "./convergence-logic.js";
 import { FileSkillRegistry, selectSkillByCapability } from "./registry.js";
 import { validateDecisionRecordSemantics } from "./decision-record-validator.js";
@@ -213,12 +213,6 @@ export class WorkflowService {
             parentState: parent.state,
           });
         }
-        if (
-          parent.frame.workspace.workspaceId !== request.frame.workspace.workspaceId
-          || normalizeWorkspaceLocator(parent.frame.workspace.locator) !== normalizeWorkspaceLocator(request.frame.workspace.locator)
-        ) {
-          throw new WorkflowContractError("INVALID_INPUT", "A replacement root must remain bound to the same workspace.");
-        }
       }
 
       const now = new Date().toISOString();
@@ -238,13 +232,10 @@ export class WorkflowService {
         updatedAt: now,
       };
       this.validator.convergenceRoot(root);
-      const conflicting = this.store.insertConvergenceRoot(root);
-      if (conflicting) {
-        throw new WorkflowContractError("ROOT_CONFLICT", "An active convergence root already covers this workspace scope.", {
-          rootId: conflicting.rootId,
-          workspaceId: conflicting.frame.workspace.workspaceId,
-          scope: conflicting.taskEnvelope.scope.included,
-        });
+      // The store decides workspace binding and conflicts from server-derived identities, in the insert transaction.
+      const conflict = this.store.insertConvergenceRoot(root);
+      if (conflict) {
+        throw new WorkflowContractError("ROOT_CONFLICT", "An active convergence root already covers this workspace scope.", conflictDetails(conflict));
       }
       return clone(root);
     });
