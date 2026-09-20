@@ -96,6 +96,8 @@ export interface IdentifiedRoot {
   resolved: boolean;
   /** true: stored before identities existed, so nothing was ever observed about where it lives. */
   legacy: boolean;
+  /** true: the workspace key is the one stored for the root's current inputs, not one derived just now. */
+  observedWorkspace: boolean;
 }
 
 function normalizedScope(value: string, workspaceLocator: string): string {
@@ -103,53 +105,68 @@ function normalizedScope(value: string, workspaceLocator: string): string {
   return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }
 
-function surfaceDirectoryExists(surface: SurfaceIdentityV1): boolean {
-  const directory = surface.conservative ? surface.physical : path.posix.dirname(surface.physical);
-  return existsSync(directory || "/");
+/**
+ * Whether what is derived for a surface now was really seen. Identity is read from the nearest
+ * existing ancestor, so below a path that is gone it describes that ancestor: a deleted worktree
+ * nested in another checkout would be taken for a path of the outer checkout. With nothing
+ * observed earlier, a missing target cannot be told from a deleted checkout directory, so the
+ * path itself has to exist. A surface that was observed outside any checkout when the root was
+ * created only needs its directory, because a target file may not have been written yet.
+ */
+function surfaceBacked(surface: SurfaceIdentityV1, observedBefore: boolean): boolean {
+  const backing = observedBefore && !surface.conservative ? path.posix.dirname(surface.physical) : surface.physical;
+  return existsSync(backing || "/");
 }
 
 /**
- * Identity of a root that is already stored. An identity stored for the same inputs is kept for
- * every surface whose checkout was observed, because that checkout may be gone by now; surfaces
- * that were outside any checkout are looked at again, so a checkout created since is picked up.
- * A changed frame invalidates the stored identity. With nothing observed earlier, "no Git" and
- * "cannot tell" are different answers: unreadable Git evidence, or a surface outside any checkout
- * whose directory is gone, leaves the root unresolved. The caller persists the identity when
- * `fresh`; an unresolved one is never stored, so a later open retries.
+ * Identity of a root that is already stored. What was observed for the same inputs is kept as
+ * it was, surface by surface, because an observed checkout may be gone by now. A surface that
+ * was seen outside any checkout is looked at again, so a checkout created since is picked up. A
+ * changed frame invalidates the stored identity without making the root a legacy one. Whatever
+ * is derived now counts only when the workspace and the surface's directory exist; otherwise,
+ * or when Git evidence is unreadable, the root is unresolved: "no Git" and "cannot tell" are
+ * different answers. The caller persists the identity when `fresh`; an unresolved or guessed
+ * one is never stored, so a later open retries.
  */
 export function activeRootIdentity(
   root: ConvergenceRootV1,
   stored: StoredIdentity | null,
 ): IdentifiedRoot & { fresh: boolean; surfaceDigest: Sha256Digest } {
   const digest = surfaceDigest(root);
-  const legacy = stored === null;
   const observed = stored && stored.surfaceDigest === digest ? stored.identity : null;
+  const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest };
   if (observed && observed.surfaces.every((surface) => surface.git !== null)) {
-    return { root, identity: observed, resolved: true, legacy, fresh: false, surfaceDigest: digest };
+    return { ...known, identity: observed, resolved: true, fresh: false };
   }
-  let derived: RootIdentityV1;
+  let derived: RootIdentityV1 | null = null;
   try {
     derived = rootIdentity(root, true);
   } catch (cause) {
     if (!(cause instanceof WorkflowContractError)) throw cause;
-    if (observed) return { root, identity: observed, resolved: true, legacy, fresh: false, surfaceDigest: digest };
-    const locator = root.frame.workspace.locator;
+  }
+  const locator = root.frame.workspace.locator;
+  if (!observed && !derived) {
     const identity: RootIdentityV1 = {
       version: 1,
       workspacePhysical: normalizedScope(".", locator),
       surfaces: writeSurface(root).map((entry) => ({ entry, physical: normalizedScope(entry, locator), git: null, conservative: null })),
     };
-    return { root, identity, resolved: false, legacy, fresh: false, surfaceDigest: digest };
+    return { ...known, identity, resolved: false, fresh: false };
   }
+  let resolved = derived !== null && existsSync(locator);
+  const surfaces = (observed ?? derived!).surfaces.map((surface, index) => {
+    if (observed && surface.git !== null) return surface;
+    const current = derived?.surfaces[index];
+    if (current && surfaceBacked(current, observed !== null)) return current;
+    resolved = false;
+    return surface;
+  });
   const identity: RootIdentityV1 = {
-    ...derived,
-    surfaces: derived.surfaces.map((surface, index) => (
-      surface.git === null && observed?.surfaces[index]?.git ? observed.surfaces[index] : surface
-    )),
+    version: 1,
+    workspacePhysical: observed?.workspacePhysical ?? derived!.workspacePhysical,
+    surfaces,
   };
-  const resolved = observed !== null || identity.surfaces.every((surface) => surface.git !== null || surfaceDirectoryExists(surface));
-  const fresh = resolved && JSON.stringify(identity) !== JSON.stringify(observed);
-  return { root, identity, resolved, legacy, fresh, surfaceDigest: digest };
+  return { ...known, identity, resolved, fresh: resolved && JSON.stringify(identity) !== JSON.stringify(observed) };
 }
 
 export interface RootConflict {
@@ -264,18 +281,21 @@ export function findRootConflict(
 /**
  * How a replacement stays bound to its parent: the same physical workspace, or every surface
  * inside a repository the parent's stored identity already names. The stored identity is what
- * makes a deleted worktree replaceable from a sibling checkout. Nothing can be observed about an
- * unresolved root stored before identities existed, so only the rule that predates identities
- * applies to it (the same workspace id and the same locator string); that match is recorded as
- * `legacy-locator`, never as an observed binding.
+ * makes a deleted worktree replaceable from a sibling checkout. An unresolved root offers no
+ * lineage. If it was stored before identities existed, only the rule that predates identities
+ * applies (the same workspace id and the same locator string), recorded as `legacy-locator`,
+ * never as an observed binding; a root that ever had an identity does not gain that exception
+ * and stays bound to the workspace key stored for its current inputs.
  */
 export function replacementMatch(
   candidate: { root: ConvergenceRootV1; identity: RootIdentityV1 },
   parent: IdentifiedRoot,
 ): ReplacementMatch | null {
   if (!parent.resolved) {
-    const sameNamedWorkspace = parent.legacy
-      && parent.root.frame.workspace.workspaceId === candidate.root.frame.workspace.workspaceId
+    if (!parent.legacy) {
+      return parent.observedWorkspace && candidate.identity.workspacePhysical === parent.identity.workspacePhysical ? "physical" : null;
+    }
+    const sameNamedWorkspace = parent.root.frame.workspace.workspaceId === candidate.root.frame.workspace.workspaceId
       && normalizeWorkspaceLocator(parent.root.frame.workspace.locator) === normalizeWorkspaceLocator(candidate.root.frame.workspace.locator);
     return sameNamedWorkspace ? "legacy-locator" : null;
   }

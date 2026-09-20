@@ -1345,6 +1345,13 @@ async function gitFixture(): Promise<{ base: string; main: string; worktree: (na
   };
 }
 
+/** A stored root is only backfilled from what exists, so legacy fixtures need their target files. */
+async function touch(...segments: string[]): Promise<void> {
+  const target = join(...segments);
+  await mkdir(join(target, ".."), { recursive: true });
+  await writeFile(target, "", "utf8");
+}
+
 function frameAt(locator: string, workspaceId: string, targetLocator = "src/candidate.ts"): ConvergenceFrameV1 {
   return { ...frame({ workspaceId, targetLocator }), workspace: { workspaceId, locator } };
 }
@@ -1705,7 +1712,9 @@ describe("server-derived workspace identity", () => {
     const harness = await createHarness();
     const git = await gitFixture();
     const stored = openRoot(harness.service, taskFor("stored"), frameAt(git.main, "workspace-main"));
+    await touch(git.main, "src", "candidate.ts");
     const legacyWorkspace = await git.worktree("w1");
+    await touch(legacyWorkspace, "docs", "legacy.md");
     const legacy = openRoot(harness.service, taskFor("legacy", "docs/legacy.md"), frameAt(legacyWorkspace, "workspace-w1", "docs/legacy.md"));
     closeStore(harness.store);
 
@@ -1752,7 +1761,9 @@ describe("server-derived workspace identity", () => {
     const git = await gitFixture();
     const template = openRoot(donor.service, taskFor("racing"), frameAt(git.main, "workspace-main"));
     const harness = await createHarness();
-    openRoot(harness.service, taskFor("stored-earlier"), frameAt(await git.worktree("w1"), "workspace-w1"));
+    const earlier = await git.worktree("w1");
+    await touch(earlier, "src", "candidate.ts");
+    openRoot(harness.service, taskFor("stored-earlier"), frameAt(earlier, "workspace-w1"));
     dropIdentities(harness.databasePath);
 
     const source = `
@@ -1862,6 +1873,105 @@ describe("gated roots stored before identities existed", () => {
     expect(sibling.error?.code).toBe("ROOT_CONFLICT");
     expect(sibling.error?.details).toMatchObject({ rootId: gated.rootId, conflictKind: "lineage-unresolved" });
     expect(identityRows(harness.databasePath)).toHaveLength(0);
+  });
+
+  async function removeWorktree(git: Awaited<ReturnType<typeof gitFixture>>, checkout: string, name: string): Promise<void> {
+    await rm(checkout, { recursive: true, force: true });
+    await rm(join(git.main, ".git", "worktrees", name), { recursive: true, force: true });
+  }
+
+  it.each([
+    { name: "a target inside the nested worktree", locator: "checkout" as const, entry: "src/candidate.ts" },
+    { name: "the nested worktree itself as '.'", locator: "checkout" as const, entry: "." },
+    { name: "the nested worktree named from the outer checkout", locator: "main" as const, entry: ".worktrees/w1" },
+  ])("does not guess an identity for a legacy gated root on $name once that worktree is deleted", async ({ locator, entry }) => {
+    const harness = await createHarness();
+    const git = await gitFixture();
+    const nested = join(git.main, ".worktrees");
+    const checkout = await git.worktree("w1", nested);
+    await touch(checkout, "src", "candidate.ts");
+    const gated = openRoot(harness.service, taskFor("legacy-nested", entry), frameAt(locator === "main" ? git.main : checkout, "workspace-w1", entry));
+    gateRoot(harness.service, gated);
+    dropIdentities(harness.databasePath);
+    await removeWorktree(git, checkout, "w1");
+
+    const sibling = tryOpen(harness.service, taskFor("sibling"), frameAt(await git.worktree("w2", nested), "workspace-w2"));
+    expect(sibling.error?.code).toBe("ROOT_CONFLICT");
+    expect(sibling.error?.details).toMatchObject({ rootId: gated.rootId, conflictKind: "lineage-unresolved" });
+    expect(identityRows(harness.databasePath)).toHaveLength(0);
+    const kept = status(harness.service, gated.rootId).root;
+    expect({ frame: kept.frame, taskEnvelope: kept.taskEnvelope, frameDigest: kept.frameDigest, taskDigest: kept.taskDigest })
+      .toEqual({ frame: gated.frame, taskEnvelope: gated.taskEnvelope, frameDigest: gated.frameDigest, taskDigest: gated.taskDigest });
+  });
+
+  it("backfills a legacy root whose target exists and leaves one whose target file was never written unresolved", async () => {
+    const harness = await createHarness();
+    const git = await gitFixture();
+    const checkout = await git.worktree("w1", join(git.main, ".worktrees"));
+    await touch(checkout, "src", "candidate.ts");
+    const written = openRoot(harness.service, taskFor("written"), frameAt(checkout, "workspace-w1"));
+    const unwritten = openRoot(harness.service, taskFor("unwritten", "src/later.ts"), frameAt(checkout, "workspace-w1", "src/later.ts"));
+    dropIdentities(harness.databasePath);
+
+    expect(tryOpen(harness.service, taskFor("elsewhere", "docs/guide.md"), frameAt(checkout, "workspace-w1", "docs/guide.md")).error).toBeNull();
+    const rows = identityRows(harness.databasePath).map((row) => row.root_id);
+    expect(rows).toContain(written.rootId);
+    expect(rows).not.toContain(unwritten.rootId);
+    // Unresolved is not unblocked: the same target still conflicts physically.
+    expect(tryOpen(harness.service, taskFor("again", "src/later.ts"), frameAt(checkout, "workspace-w1", "src/later.ts")).error?.details)
+      .toMatchObject({ rootId: unwritten.rootId, conflictKind: "physical" });
+  });
+
+  it("keeps a checkout observed for the current inputs after it is deleted, surface by surface", async () => {
+    const harness = await createHarness();
+    const git = await gitFixture();
+    const nested = join(git.main, ".worktrees");
+    const checkout = await git.worktree("w1", nested);
+    await mkdir(join(git.base, "notes"), { recursive: true });
+
+    // Mixed observation: one surface inside the nested worktree, one outside every checkout.
+    const inside = "main/.worktrees/w1/src/candidate.ts";
+    const mixed = openRoot(
+      harness.service,
+      task({ taskId: "mixed", included: [inside, "notes/plan.md"], writeTargets: [inside] }),
+      frameAt(git.base, "workspace-base", inside),
+    );
+    gateRoot(harness.service, mixed);
+    await removeWorktree(git, checkout, "w1");
+
+    const pastMixed = tryOpen(harness.service, taskFor("past-mixed"), frameAt(await git.worktree("w2", nested), "workspace-w2"));
+    expect(pastMixed.error?.details).toMatchObject({ rootId: mixed.rootId, conflictKind: "lineage", existingEntry: inside });
+  });
+
+  it("does not reuse an identity observed for a replaced frame, and grants no legacy exception for it", async () => {
+    const harness = await createHarness();
+    const git = await gitFixture();
+    const nested = join(git.main, ".worktrees");
+    const second = await git.worktree("w3", nested);
+    const reframed = openRoot(harness.service, taskFor("reframed", "lib/first.ts"), frameAt(second, "workspace-w3", "lib/first.ts"));
+    const reviewed = failIntoReview(harness.service, reframed);
+    const moved = harness.service.resolveConvergenceGate({
+      schemaVersion: "1.0.0",
+      rootId: reframed.rootId,
+      expectedRevision: reviewed.root.revision,
+      review: review(reviewed, {
+        classification: "semantics-preserving",
+        route: "resume-new-epoch",
+        proposedFrame: { ...frame({ targetVersion: "reframed-epoch-2", targetLocator: "lib/second.ts" }), workspace: reframed.frame.workspace },
+      }, "review-reframed"),
+    });
+    expect(moved.error).toBeNull();
+    gateRoot(harness.service, moved.data!.root);
+
+    await removeWorktree(git, second, "w3");
+    const sibling = await git.worktree("w2", nested);
+
+    // The reframed root was never observed for its new inputs: unknown, not guessed, and no legacy exception.
+    const pastReframed = tryOpen(harness.service, taskFor("past-reframed", "lib/second.ts"), frameAt(sibling, "workspace-w2", "lib/second.ts"));
+    expect(pastReframed.error?.details).toMatchObject({ rootId: reframed.rootId, conflictKind: "lineage-unresolved" });
+    const sameName = tryOpen(harness.service, taskFor("same-name", "lib/second.ts"), frameAt(second, "workspace-w3", "lib/second.ts"), reframed.rootId);
+    expect(sameName.error?.code).toBe("INVALID_INPUT");
+    expect(sameName.error?.details).toMatchObject({ reason: "WORKSPACE_IDENTITY_UNRESOLVED" });
   });
 
   it("still replaces a gated legacy root of a deleted checkout when the same workspace is named", async () => {
