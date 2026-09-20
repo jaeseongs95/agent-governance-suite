@@ -402,7 +402,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     }), directory);
     expect((generatedId.data as { messageId: string }).messageId).toMatch(/^[0-9a-f-]{36}$/u);
 
-    const escapedBody = "\0".repeat(4000);
+    const escapedBody = "\u0001".repeat(4000);
     for (const messageId of ["escaped-0001", "escaped-0002"]) {
       await runSessionMessageCli(JSON.stringify({
         operation: "send",
@@ -443,6 +443,10 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
         payload: { messageId: "invalid-send-0001", sender: { host: "grok", sessionId: "g-1" }, target: invalidSendTarget, body: "invalid ttl", ttlSeconds: invalid },
       }), directory)).rejects.toThrow(/ttlSeconds must be an integer/u);
     }
+    await expect(runSessionMessageCli(JSON.stringify({
+      operation: "send",
+      payload: { messageId: "invalid-send-nul", sender: { host: "grok", sessionId: "g-1" }, target: invalidSendTarget, body: "nul\0body", ttlSeconds: 600 },
+    }), directory)).rejects.toThrow(/must not contain NUL/u);
     const pendingAfterInvalidSend = await runSessionMessageCli(JSON.stringify({ operation: "pending", payload: { target: invalidSendTarget } }), directory);
     expect(pendingAfterInvalidSend).toMatchObject({ data: { count: 0 } });
     await runSessionMessageCli(JSON.stringify({
@@ -462,7 +466,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       expectedMetadataIds.push(messageId);
       await runSessionMessageCli(JSON.stringify({
         operation: "send",
-        payload: { messageId, sender: metadataSender, target: metadataTarget, body: "\0".repeat(400), ttlSeconds: 600 },
+        payload: { messageId, sender: metadataSender, target: metadataTarget, body: "\u0001".repeat(400), ttlSeconds: 600 },
       }), directory);
     }
     const claimedMetadataIds: string[] = [];

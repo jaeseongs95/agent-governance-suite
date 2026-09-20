@@ -133,6 +133,7 @@ export class SessionMessageStore {
     boundedIdentity(input.sender);
     boundedIdentity(input.target);
     const bodyBytes = Buffer.byteLength(input.body, "utf8");
+    if (input.body.includes("\0")) throw new Error("body must not contain NUL characters.");
     if (!input.body.trim() || bodyBytes > MESSAGE_BODY_MAX_BYTES) throw new Error(`body must contain 1-${MESSAGE_BODY_MAX_BYTES} UTF-8 bytes.`);
     const ttlSeconds = input.ttlSeconds ?? MESSAGE_TTL_DEFAULT_SECONDS;
     if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) {
