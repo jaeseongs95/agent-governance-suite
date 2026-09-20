@@ -738,6 +738,50 @@ describe("local MCP convergence guard", () => {
     expect(status(restarted, root.rootId).root.retryRejections).toHaveLength(1);
   });
 
+  it("records a stale-fingerprint rejection without burning its evidence", async () => {
+    const harness = await createHarness();
+    const root = openRoot(harness.service);
+    let current = status(harness.service, root.rootId);
+    const attempt = claimAndStart(harness.service, current.root);
+    current = recordFailureAndStatus(harness.service, root.rootId, attempt.receipt);
+
+    const missing = harness.service.claimWorkflowAttempt(proposal(harness.service, current.root));
+    expect(missing.error?.code).toBe("NEW_EVIDENCE_REQUIRED");
+    expect(missing.error?.details).toMatchObject({ rootRevision: current.root.revision + 1 });
+
+    current = status(harness.service, root.rootId);
+    const wrongFingerprint = harness.service.claimWorkflowAttempt(proposal(harness.service, current.root, {
+      priorFailure: {
+        ...latestFailure(current, "test:wrong-fingerprint-evidence")!,
+        fingerprint: `sha256:${"0".repeat(64)}`,
+      },
+    }));
+    expect(wrongFingerprint.error?.code).toBe("NEW_EVIDENCE_REQUIRED");
+
+    current = status(harness.service, root.rootId);
+    expect(current.attemptsUsedInEpoch).toBe(1);
+    expect(current.root.state).toBe("open");
+    expect(current.root.retryRejections).toHaveLength(2);
+    expect(current.root.retryRejections?.map((item) => item.reason)).toEqual([
+      "stale-fingerprint",
+      "stale-fingerprint",
+    ]);
+    expect(current.root.retryRejections?.[0]?.evidenceRefs).toEqual([]);
+    expect(current.root.retryRejections?.[1]?.evidenceRefs).toEqual(["test:wrong-fingerprint-evidence"]);
+
+    closeStore(harness.store);
+    const restarted = serviceFor(harness.registryPath, trackStore(harness.databasePath));
+    current = status(restarted, root.rootId);
+    expect(current.root.retryRejections).toHaveLength(2);
+
+    // A stale fingerprint must not discard the diagnostics it carried.
+    const accepted = restarted.claimWorkflowAttempt(proposal(restarted, current.root, {
+      priorFailure: latestFailure(current, "test:wrong-fingerprint-evidence"),
+    }));
+    expect(accepted.error).toBeNull();
+    expect(accepted.data?.ordinal).toBe(2);
+  });
+
   it("reads a root stored before retry rejections existed", async () => {
     const harness = await createHarness();
     const root = openRoot(harness.service);
