@@ -3262,8 +3262,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path12) {
-      let input = path12;
+    function removeDotSegments(path13) {
+      let input = path13;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3672,8 +3672,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path12 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path12 && path12 !== "/" ? path12 : void 0;
+        const path13 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path13 && path13 !== "/" ? path13 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -8009,12 +8009,12 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f;
     };
-    function addFormats2(ajv, list, fs, exportName) {
+    function addFormats2(ajv, list, fs2, exportName) {
       var _a3;
       var _b;
       (_a3 = (_b = ajv.opts.code).formats) !== null && _a3 !== void 0 ? _a3 : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
       for (const f of list)
-        ajv.addFormat(f, fs[f]);
+        ajv.addFormat(f, fs2[f]);
     }
     module.exports = exports = formatsPlugin;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8205,10 +8205,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path12) {
-  if (!path12)
+function getElementAtPath(obj, path13) {
+  if (!path13)
     return obj;
-  return path12.reduce((acc, key) => acc?.[key], obj);
+  return path13.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -8620,11 +8620,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path12, issues) {
+function prefixIssues(path13, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path12);
+    iss.path.unshift(path13);
     return iss;
   });
 }
@@ -9053,16 +9053,16 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
 }
 function formatError(error2, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error3, path12 = []) => {
+  const processError = (error3, path13 = []) => {
     for (const issue2 of error3.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path12, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path13, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path12, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path13, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path12, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path13, ...issue2.path]);
       } else {
-        const fullpath = [...path12, ...issue2.path];
+        const fullpath = [...path13, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -16020,7 +16020,180 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 // mcp-server/src/convergence-logic.ts
 import { createHash as createHash2 } from "node:crypto";
+import { existsSync, statSync } from "node:fs";
+import path3 from "node:path";
+
+// mcp-server/src/workspace-identity.ts
+import fs from "node:fs";
 import path2 from "node:path";
+var WALK_LIMIT = 256;
+var READ_LIMIT = 4096;
+var URI_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]+:\/\//u;
+var GLOB_META = /[*?[\]{}]/u;
+var SEGMENT_SEPARATOR = process.platform === "win32" ? /[\\/]/u : /\//u;
+function isUnsupported(entry) {
+  if (URI_PATTERN.test(entry)) return true;
+  for (let index = 0; index < entry.length; index += 1) {
+    const code = entry.charCodeAt(index);
+    if (code <= 31 || code === 127) return true;
+  }
+  return false;
+}
+function assertSupportedScopeEntry(entry) {
+  if (isUnsupported(entry)) {
+    throw new WorkflowContractError(
+      "INVALID_INPUT",
+      "Scope entries must be file system paths without control characters.",
+      { reason: "UNSUPPORTED_SCOPE_ENTRY", entry }
+    );
+  }
+}
+function pathWithin(child, parent) {
+  return parent === "" || child === parent || child.startsWith(`${parent}/`);
+}
+function unresolved(target, cause) {
+  return new WorkflowContractError(
+    "INVALID_INPUT",
+    `Workspace identity cannot be resolved for ${target}: ${cause}.`,
+    { reason: "WORKSPACE_IDENTITY_UNRESOLVED", path: target, cause }
+  );
+}
+function normalizedKey(value) {
+  const slashed = process.platform === "win32" ? value.replaceAll("\\", "/").toLowerCase() : value;
+  return slashed.replace(/\/+$/u, "");
+}
+function physicalPath(target) {
+  let current = path2.resolve(target);
+  const suffix = [];
+  for (let depth = 0; depth < WALK_LIMIT; depth += 1) {
+    try {
+      const existing = fs.realpathSync.native(current);
+      return { real: path2.join(existing, ...suffix), existing };
+    } catch (error2) {
+      const code = error2.code;
+      const parent = path2.dirname(current);
+      if (code !== "ENOENT" && code !== "ENOTDIR" || parent === current) throw unresolved(target, code ?? "unreadable");
+      suffix.unshift(path2.basename(current));
+      current = parent;
+    }
+  }
+  throw unresolved(target, "walk limit reached");
+}
+function isDirectory(target) {
+  return fs.statSync(target, { throwIfNoEntry: false })?.isDirectory() === true;
+}
+function readHead(file) {
+  const descriptor = fs.openSync(file, "r");
+  try {
+    const buffer = Buffer.alloc(READ_LIMIT + 1);
+    const length = fs.readSync(descriptor, buffer, 0, READ_LIMIT + 1, 0);
+    if (length > READ_LIMIT) throw unresolved(file, "pointer file too large");
+    return buffer.toString("utf8", 0, length);
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}
+function discoverGit(physical) {
+  let evidence = physical.existing;
+  try {
+    let directory = isDirectory(physical.existing) ? physical.existing : path2.dirname(physical.existing);
+    for (let depth = 0; depth < WALK_LIMIT; depth += 1) {
+      evidence = path2.join(directory, ".git");
+      const stat = fs.statSync(evidence, { throwIfNoEntry: false });
+      if (stat) {
+        let gitDir = evidence;
+        if (!stat.isDirectory()) {
+          const pointer2 = /^gitdir: ([^\r\n]+)/u.exec(readHead(evidence))?.[1];
+          if (!pointer2) throw unresolved(evidence, "missing gitdir line");
+          gitDir = path2.resolve(directory, pointer2);
+          if (!isDirectory(gitDir)) throw unresolved(gitDir, "gitdir is not a directory");
+        }
+        let commonDir = gitDir;
+        evidence = path2.join(gitDir, "commondir");
+        if (fs.statSync(evidence, { throwIfNoEntry: false })) {
+          const pointer2 = readHead(evidence).trim();
+          if (!pointer2) throw unresolved(evidence, "empty commondir");
+          commonDir = path2.resolve(gitDir, pointer2);
+          if (!isDirectory(commonDir)) throw unresolved(commonDir, "commondir is not a directory");
+        }
+        return {
+          commonDir: normalizedKey(fs.realpathSync.native(commonDir)),
+          checkoutRoot: normalizedKey(directory),
+          relative: normalizedKey(path2.relative(directory, physical.real))
+        };
+      }
+      const parent = path2.dirname(directory);
+      if (parent === directory) return null;
+      directory = parent;
+    }
+    throw unresolved(physical.existing, "walk limit reached");
+  } catch (error2) {
+    if (error2 instanceof WorkflowContractError) throw error2;
+    throw unresolved(evidence, error2.code ?? "unreadable");
+  }
+}
+function repositoryCheckouts(commonDir) {
+  const roots = /* @__PURE__ */ new Set();
+  let complete = true;
+  try {
+    if (!isDirectory(commonDir)) return { roots: [], complete: false };
+    if (path2.basename(commonDir) === ".git") roots.add(normalizedKey(physicalPath(path2.dirname(commonDir)).real));
+    const worktrees = path2.join(commonDir, "worktrees");
+    if (fs.statSync(worktrees, { throwIfNoEntry: false })) {
+      const listing = fs.opendirSync(worktrees);
+      try {
+        for (let count = 0; ; count += 1) {
+          const name = listing.readSync()?.name;
+          if (name === void 0) break;
+          if (count >= WALK_LIMIT) {
+            complete = false;
+            break;
+          }
+          try {
+            const pointer2 = readHead(path2.join(worktrees, name, "gitdir")).trim();
+            if (!pointer2 || isUnsupported(pointer2) || normalizedKey(path2.basename(pointer2)) !== ".git") {
+              complete = false;
+              continue;
+            }
+            roots.add(normalizedKey(physicalPath(path2.dirname(path2.resolve(worktrees, name, pointer2))).real));
+          } catch {
+            complete = false;
+          }
+        }
+      } finally {
+        listing.closeSync();
+      }
+    }
+  } catch {
+    complete = false;
+  }
+  return { roots: [...roots], complete };
+}
+function identify(target) {
+  const physical = physicalPath(target);
+  return { physical: normalizedKey(physical.real), git: discoverGit(physical) };
+}
+function resolveRootIdentity(workspaceLocator, entries, options = {}) {
+  if (!options.legacy) for (const entry of entries) assertSupportedScopeEntry(entry);
+  const workspace = identify(workspaceLocator);
+  const surfaces = entries.map((entry) => {
+    if (isUnsupported(entry)) return { entry, ...workspace, conservative: "legacy-unsupported" };
+    const segments = entry.split(SEGMENT_SEPARATOR);
+    const globIndex = segments.findIndex((segment) => GLOB_META.test(segment));
+    if (globIndex === 0) {
+      return workspace.git ? { entry, physical: workspace.git.checkoutRoot, git: { ...workspace.git, relative: "" }, conservative: "leading-glob" } : { entry, ...workspace, conservative: "leading-glob" };
+    }
+    const target = globIndex < 0 ? entry : `${segments.slice(0, globIndex).join("/")}/`;
+    return {
+      entry,
+      ...identify(path2.resolve(workspaceLocator, target)),
+      conservative: globIndex < 0 ? null : "glob-prefix"
+    };
+  });
+  return { version: 1, workspacePhysical: workspace.physical, surfaces };
+}
+
+// mcp-server/src/convergence-logic.ts
 function canonicalJson(value, subject = "Convergence input") {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
@@ -16048,16 +16221,6 @@ function frameDigests(frame) {
     operationalDigest: convergenceDigest(frame.operationalSettings)
   };
 }
-function normalizedScope(value, workspaceLocator) {
-  const normalized = path2.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
-  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
-}
-function scopeEntryOverlaps(left, leftWorkspace, right, rightWorkspace) {
-  const a = normalizedScope(left, leftWorkspace);
-  const b2 = normalizedScope(right, rightWorkspace);
-  if (a === b2) return true;
-  return a.startsWith(`${b2}/`) || b2.startsWith(`${a}/`);
-}
 function writeSurface(root) {
   return [
     ...root.taskEnvelope.scope.included,
@@ -16065,25 +16228,160 @@ function writeSurface(root) {
     ...root.frame.targetArtifacts.map((artifact) => artifact.locator)
   ];
 }
-function rootsOverlap(left, right) {
-  const sameWorkspace = left.frame.workspace.workspaceId === right.frame.workspace.workspaceId || normalizeWorkspaceLocator(left.frame.workspace.locator) === normalizeWorkspaceLocator(right.frame.workspace.locator);
-  if (!sameWorkspace) return false;
-  const rightSurface = writeSurface(right);
-  return writeSurface(left).some((leftTarget) => rightSurface.some((rightTarget) => scopeEntryOverlaps(
-    leftTarget,
-    left.frame.workspace.locator,
-    rightTarget,
-    right.frame.workspace.locator
-  )));
+function rootIdentity(root, legacy = false) {
+  return resolveRootIdentity(root.frame.workspace.locator, writeSurface(root), { legacy });
+}
+function surfaceDigest(root) {
+  return convergenceDigest({ locator: root.frame.workspace.locator, entries: writeSurface(root) });
+}
+function normalizedScope(value, workspaceLocator) {
+  const normalized = path3.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
+  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
+}
+function surfaceDirectoryExists(surface) {
+  const directory = surface.conservative ? surface.physical : path3.posix.dirname(surface.physical);
+  return existsSync(directory || "/");
+}
+function activeRootIdentity(root, stored) {
+  const digest3 = surfaceDigest(root);
+  const legacy = stored === null;
+  const observed = stored && stored.surfaceDigest === digest3 ? stored.identity : null;
+  if (observed && observed.surfaces.every((surface) => surface.git !== null)) {
+    return { root, identity: observed, resolved: true, legacy, fresh: false, surfaceDigest: digest3 };
+  }
+  let derived;
+  try {
+    derived = rootIdentity(root, true);
+  } catch (cause) {
+    if (!(cause instanceof WorkflowContractError)) throw cause;
+    if (observed) return { root, identity: observed, resolved: true, legacy, fresh: false, surfaceDigest: digest3 };
+    const locator = root.frame.workspace.locator;
+    const identity2 = {
+      version: 1,
+      workspacePhysical: normalizedScope(".", locator),
+      surfaces: writeSurface(root).map((entry) => ({ entry, physical: normalizedScope(entry, locator), git: null, conservative: null }))
+    };
+    return { root, identity: identity2, resolved: false, legacy, fresh: false, surfaceDigest: digest3 };
+  }
+  const identity = {
+    ...derived,
+    surfaces: derived.surfaces.map((surface, index) => surface.git === null && observed?.surfaces[index]?.git ? observed.surfaces[index] : surface)
+  };
+  const resolved = observed !== null || identity.surfaces.every((surface) => surface.git !== null || surfaceDirectoryExists(surface));
+  const fresh = resolved && JSON.stringify(identity) !== JSON.stringify(observed);
+  return { root, identity, resolved, legacy, fresh, surfaceDigest: digest3 };
+}
+var GATED_STATES = ["needs-review", "needs-user"];
+function overlaps(left, right) {
+  return pathWithin(left, right) || pathWithin(right, left);
+}
+function sharesLineage(left, right) {
+  return left.git !== null && right.git !== null && left.git.commonDir === right.git.commonDir;
+}
+function insideParentSurface(surface, parent) {
+  return parent.surfaces.some((owned) => pathWithin(surface.physical, owned.physical) || sharesLineage(surface, owned) && pathWithin(surface.git.relative, owned.git.relative));
+}
+function lineageRelation(left, right, checkouts) {
+  if (left.git && right.git) {
+    return sharesLineage(left, right) && overlaps(left.git.relative, right.git.relative) ? "overlap" : "none";
+  }
+  const [container, member] = left.git ? [right, left] : [left, right];
+  if (!member.git || outsideEveryRepository(container)) return "none";
+  const commonDir = member.git.commonDir;
+  if (!checkouts.has(commonDir)) checkouts.set(commonDir, repositoryCheckouts(commonDir));
+  const listing = checkouts.get(commonDir);
+  if (listing.roots.some((checkout) => pathWithin(checkout, container.physical))) return "overlap";
+  return listing.complete ? "none" : "unknown";
+}
+function outsideEveryRepository(surface) {
+  return surface.git === null && surface.conservative === null && statSync(surface.physical || "/", { throwIfNoEntry: false })?.isDirectory() !== true;
+}
+function findRootConflict(candidate, parent, actives) {
+  const checkouts = /* @__PURE__ */ new Map();
+  for (const active of actives) {
+    if (active.root.rootId === candidate.root.parentRootId) continue;
+    for (const requested of candidate.identity.surfaces) {
+      for (const existing of active.identity.surfaces) {
+        if (overlaps(requested.physical, existing.physical)) {
+          return { root: active.root, kind: "physical", requested, existing };
+        }
+      }
+    }
+    if (!GATED_STATES.includes(active.root.state)) continue;
+    for (const requested of candidate.identity.surfaces) {
+      if (parent && insideParentSurface(requested, parent)) continue;
+      for (const existing of active.identity.surfaces) {
+        if (!active.resolved) {
+          if (outsideEveryRepository(requested)) continue;
+          return { root: active.root, kind: "lineage-unresolved", requested, existing };
+        }
+        const relation = lineageRelation(requested, existing, checkouts);
+        if (relation !== "none") {
+          return { root: active.root, kind: relation === "overlap" ? "lineage" : "lineage-unresolved", requested, existing };
+        }
+      }
+    }
+  }
+  return null;
+}
+function replacementMatch(candidate, parent) {
+  if (!parent.resolved) {
+    const sameNamedWorkspace = parent.legacy && parent.root.frame.workspace.workspaceId === candidate.root.frame.workspace.workspaceId && normalizeWorkspaceLocator(parent.root.frame.workspace.locator) === normalizeWorkspaceLocator(candidate.root.frame.workspace.locator);
+    return sameNamedWorkspace ? "legacy-locator" : null;
+  }
+  if (candidate.identity.workspacePhysical === parent.identity.workspacePhysical) return "physical";
+  const parentRepositories = new Set(parent.identity.surfaces.flatMap((surface) => surface.git ? [surface.git.commonDir] : []));
+  const sameLineage = candidate.identity.surfaces.length > 0 && candidate.identity.surfaces.every((surface) => surface.git !== null && parentRepositories.has(surface.git.commonDir));
+  return sameLineage ? "lineage" : null;
+}
+function planRootInsertion(root, actives) {
+  const identity = rootIdentity(root);
+  let parent = null;
+  let match = null;
+  if (root.parentRootId) {
+    parent = actives.find((active) => active.root.rootId === root.parentRootId) ?? null;
+    if (!parent || !GATED_STATES.includes(parent.root.state)) {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root may be replaced.", {
+        parentRootId: root.parentRootId,
+        parentState: parent?.root.state ?? null
+      });
+    }
+    match = replacementMatch({ root, identity }, parent);
+    if (!match) {
+      throw new WorkflowContractError("INVALID_INPUT", "A replacement root must remain bound to the same workspace.", {
+        parentRootId: root.parentRootId,
+        ...parent.resolved ? {} : { reason: "WORKSPACE_IDENTITY_UNRESOLVED" }
+      });
+    }
+  }
+  return {
+    identity,
+    surfaceDigest: surfaceDigest(root),
+    match,
+    conflict: findRootConflict({ root, identity }, parent?.identity ?? null, actives)
+  };
+}
+function conflictDetails(conflict) {
+  return {
+    rootId: conflict.root.rootId,
+    workspaceId: conflict.root.frame.workspace.workspaceId,
+    scope: conflict.root.taskEnvelope.scope.included,
+    blockerState: conflict.root.state,
+    conflictKind: conflict.kind,
+    ...conflict.kind === "lineage-unresolved" ? { reason: "WORKSPACE_IDENTITY_UNRESOLVED" } : {},
+    requestedEntry: conflict.requested.entry,
+    existingEntry: conflict.existing.entry,
+    conservativeExpansion: [conflict.requested.conservative, conflict.existing.conservative].filter((reason) => reason !== null)
+  };
 }
 function normalizeWorkspaceLocator(locator) {
-  const resolved = path2.resolve(locator);
+  const resolved = path3.resolve(locator);
   return process.platform === "win32" ? resolved.toLowerCase() : resolved;
 }
 
 // mcp-server/src/continuity-store.ts
 import { chmodSync, mkdirSync } from "node:fs";
-import path3 from "node:path";
+import path4 from "node:path";
 import { DatabaseSync } from "node:sqlite";
 var SCHEMA_VERSION = 2;
 var SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
@@ -16132,7 +16430,7 @@ var SqliteContinuityStore = class {
   constructor(databasePath) {
     this.databasePath = databasePath;
     if (!databasePath.trim()) throw new ContinuityStoreError("Continuity database path must not be empty.");
-    if (databasePath !== ":memory:") mkdirSync(path3.dirname(path3.resolve(databasePath)), { recursive: true, mode: 448 });
+    if (databasePath !== ":memory:") mkdirSync(path4.dirname(path4.resolve(databasePath)), { recursive: true, mode: 448 });
     let opened = null;
     try {
       opened = new DatabaseSync(databasePath);
@@ -16141,7 +16439,7 @@ var SqliteContinuityStore = class {
       this.database.exec("PRAGMA synchronous = FULL;");
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
-      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path3.resolve(databasePath), 384);
+      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path4.resolve(databasePath), 384);
     } catch (cause) {
       try {
         opened?.close();
@@ -16988,7 +17286,7 @@ var UnavailableContinuityService = class {
 // mcp-server/src/runtime-config.ts
 import { realpathSync } from "node:fs";
 import { homedir } from "node:os";
-import path4 from "node:path";
+import path5 from "node:path";
 import { fileURLToPath } from "node:url";
 function resolveRegistryPath(environment = process.env, moduleUrl = import.meta.url) {
   return environment.SKILL_REGISTRY_PATH ?? fileURLToPath(new URL("../../skills/registry.json", moduleUrl));
@@ -16998,48 +17296,48 @@ function resolveKoreanProseGlossaryPath(moduleUrl = import.meta.url) {
 }
 function resolveWorkflowDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   const configured = environment.AGENT_GOVERNANCE_DB_PATH?.trim();
-  if (configured) return path4.resolve(currentWorkingDirectory, configured);
-  return path4.resolve(userStateDirectory(environment, platform, homeDirectory), "workflows.sqlite3");
+  if (configured) return path5.resolve(currentWorkingDirectory, configured);
+  return path5.resolve(userStateDirectory(environment, platform, homeDirectory), "workflows.sqlite3");
 }
 function userStateDirectory(environment, platform, homeDirectory) {
   let stateRoot;
   if (platform === "win32") {
-    stateRoot = environment.LOCALAPPDATA?.trim() || path4.join(homeDirectory, "AppData", "Local");
+    stateRoot = environment.LOCALAPPDATA?.trim() || path5.join(homeDirectory, "AppData", "Local");
   } else if (platform === "darwin") {
-    stateRoot = path4.join(homeDirectory, "Library", "Application Support");
+    stateRoot = path5.join(homeDirectory, "Library", "Application Support");
   } else {
-    stateRoot = environment.XDG_STATE_HOME?.trim() || path4.join(homeDirectory, ".local", "state");
+    stateRoot = environment.XDG_STATE_HOME?.trim() || path5.join(homeDirectory, ".local", "state");
   }
-  return path4.resolve(stateRoot, "agent-governance-suite");
+  return path5.resolve(stateRoot, "agent-governance-suite");
 }
 function sharedUserStateDirectory(environment, homeDirectory) {
   const configured = environment.AGENT_GOVERNANCE_SHARED_STATE_DIR?.trim();
   if (configured) {
-    if (!path4.isAbsolute(configured)) {
+    if (!path5.isAbsolute(configured)) {
       throw new Error("AGENT_GOVERNANCE_SHARED_STATE_DIR must be an absolute path.");
     }
-    return path4.normalize(configured);
+    return path5.normalize(configured);
   }
-  return path4.resolve(homeDirectory, ".agent-governance-suite");
+  return path5.resolve(homeDirectory, ".agent-governance-suite");
 }
 function resolveSessionMessageStateDirectory(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   void platform;
   const configured = environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim();
-  if (configured) return path4.resolve(currentWorkingDirectory, configured);
-  return path4.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
+  if (configured) return path5.resolve(currentWorkingDirectory, configured);
+  return path5.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
 }
 function resolveTrustDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   void platform;
   const configured = environment.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim();
-  if (configured) return path4.resolve(currentWorkingDirectory, configured);
-  return path4.join(
+  if (configured) return path5.resolve(currentWorkingDirectory, configured);
+  return path5.join(
     resolveSessionMessageStateDirectory(environment, platform, homeDirectory, currentWorkingDirectory),
     "trust.sqlite3"
   );
 }
 function besideWorkflowDatabase(variable, fileName, environment, platform, homeDirectory, currentWorkingDirectory) {
   const configured = environment[variable]?.trim();
-  if (configured) return path4.resolve(currentWorkingDirectory, configured);
+  if (configured) return path5.resolve(currentWorkingDirectory, configured);
   const workflowPath = resolveWorkflowDatabasePath(
     environment,
     platform,
@@ -17047,7 +17345,7 @@ function besideWorkflowDatabase(variable, fileName, environment, platform, homeD
     currentWorkingDirectory
   );
   if (workflowPath === ":memory:") return ":memory:";
-  return path4.join(path4.dirname(workflowPath), fileName);
+  return path5.join(path5.dirname(workflowPath), fileName);
 }
 function resolveContinuityDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   return besideWorkflowDatabase("AGENT_GOVERNANCE_CONTINUITY_DB_PATH", "continuity.sqlite3", environment, platform, homeDirectory, currentWorkingDirectory);
@@ -17055,27 +17353,27 @@ function resolveContinuityDatabasePath(environment = process.env, platform = pro
 function resolveSessionBoardDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   void platform;
   const configured = environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH?.trim();
-  if (configured) return path4.resolve(currentWorkingDirectory, configured);
-  return path4.join(sharedUserStateDirectory(environment, homeDirectory), "session-board.sqlite3");
+  if (configured) return path5.resolve(currentWorkingDirectory, configured);
+  return path5.join(sharedUserStateDirectory(environment, homeDirectory), "session-board.sqlite3");
 }
 function canonicalDatabasePath(databasePath, platform) {
   if (databasePath === ":memory:") return null;
-  const absolute = path4.resolve(databasePath);
-  const unresolved = [];
+  const absolute = path5.resolve(databasePath);
+  const unresolved2 = [];
   let cursor = absolute;
   let resolved = absolute;
   while (true) {
     try {
-      resolved = path4.join(realpathSync.native(cursor), ...unresolved.reverse());
+      resolved = path5.join(realpathSync.native(cursor), ...unresolved2.reverse());
       break;
     } catch {
-      const parent = path4.dirname(cursor);
+      const parent = path5.dirname(cursor);
       if (parent === cursor) break;
-      unresolved.push(path4.basename(cursor));
+      unresolved2.push(path5.basename(cursor));
       cursor = parent;
     }
   }
-  const normalized = path4.normalize(resolved);
+  const normalized = path5.normalize(resolved);
   return platform === "win32" ? normalized.toLocaleLowerCase("en-US") : normalized;
 }
 function assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath, platform = process.platform) {
@@ -17097,11 +17395,11 @@ var import__ = __toESM(require__(), 1);
 var import_ajv_formats = __toESM(require_dist(), 1);
 import { createHash as createHash3 } from "node:crypto";
 import { readFileSync as readFileSync2, readdirSync } from "node:fs";
-import path5 from "node:path";
+import path6 from "node:path";
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path12 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path12, "utf8"));
+  const path13 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path13, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -17353,15 +17651,15 @@ var ContractValidator = class {
     return tokens;
   }
   assertSchemaFile(rootDirectory, reference, value, label) {
-    const root = path5.resolve(rootDirectory);
+    const root = path6.resolve(rootDirectory);
     const targetSchema = this.readBoundSchema(rootDirectory, reference, label);
     const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
     addFormats(ajv);
     const schemas = /* @__PURE__ */ new Map();
-    for (const directory of [path5.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
+    for (const directory of [path6.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
       for (const candidate of this.schemaFiles(directory)) {
         const schema = JSON.parse(readFileSync2(candidate, "utf8"));
-        const id = typeof schema.$id === "string" ? schema.$id : `file://${candidate.split(path5.sep).join("/")}`;
+        const id = typeof schema.$id === "string" ? schema.$id : `file://${candidate.split(path6.sep).join("/")}`;
         if (!schemas.has(id)) schemas.set(id, schema);
       }
     }
@@ -17377,9 +17675,9 @@ var ContractValidator = class {
     return value;
   }
   readBoundSchema(rootDirectory, reference, label) {
-    const root = path5.resolve(rootDirectory);
-    const schemaPath = path5.resolve(root, reference.path);
-    if (schemaPath !== root && !schemaPath.startsWith(`${root}${path5.sep}`)) {
+    const root = path6.resolve(rootDirectory);
+    const schemaPath = path6.resolve(root, reference.path);
+    if (schemaPath !== root && !schemaPath.startsWith(`${root}${path6.sep}`)) {
       throw new WorkflowContractError("INVALID_INPUT", `${label} schema escapes the plugin root.`, {
         schemaPath: reference.path
       });
@@ -17397,12 +17695,12 @@ var ContractValidator = class {
   }
   skillSchemaRoot(rootDirectory, schemaPath) {
     const segments = schemaPath.split("/");
-    return segments[0] === "skills" && segments[1] ? path5.join(rootDirectory, "skills", segments[1]) : path5.join(rootDirectory, "contracts");
+    return segments[0] === "skills" && segments[1] ? path6.join(rootDirectory, "skills", segments[1]) : path6.join(rootDirectory, "contracts");
   }
   schemaFiles(directory) {
     const files = [];
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      const candidate = path5.join(directory, entry.name);
+      const candidate = path6.join(directory, entry.name);
       if (entry.isDirectory()) files.push(...this.schemaFiles(candidate));
       else if (entry.isFile() && entry.name.endsWith(".schema.json")) files.push(candidate);
     }
@@ -17411,7 +17709,7 @@ var ContractValidator = class {
 };
 
 // mcp-server/src/server.ts
-import { existsSync as existsSync2 } from "node:fs";
+import { existsSync as existsSync3 } from "node:fs";
 
 // node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
 function isZ4Schema(s) {
@@ -19148,12 +19446,12 @@ var Server = class extends Protocol {
 
 // skills/session-board/scripts/board-store.mjs
 import { mkdirSync as mkdirSync2 } from "node:fs";
-import path6 from "node:path";
+import path7 from "node:path";
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 var SUMMARY_MAX_LENGTH = 200;
 var RETAIN_MS = 24 * 36e5;
 function openBoard(databasePath, { busyTimeoutMs = 5e3 } = {}) {
-  if (databasePath !== ":memory:") mkdirSync2(path6.dirname(path6.resolve(databasePath)), { recursive: true });
+  if (databasePath !== ":memory:") mkdirSync2(path7.dirname(path7.resolve(databasePath)), { recursive: true });
   const db = new DatabaseSync2(databasePath);
   try {
     db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
@@ -19531,10 +19829,10 @@ function compareText(left, right) {
 import { randomUUID } from "node:crypto";
 
 // mcp-server/src/session-message-client.ts
-import { existsSync } from "node:fs";
+import { existsSync as existsSync2 } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
-import path7 from "node:path";
+import path8 from "node:path";
 import { performance } from "node:perf_hooks";
 import tls from "node:tls";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
@@ -19557,9 +19855,9 @@ var deadlineMetadata = /* @__PURE__ */ new WeakMap();
 function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
   return {
     stateDirectory,
-    endpoint: path7.join(stateDirectory, "endpoint.json"),
-    token: path7.join(stateDirectory, "broker.token"),
-    certificate: path7.join(stateDirectory, "broker-cert.pem")
+    endpoint: path8.join(stateDirectory, "endpoint.json"),
+    token: path8.join(stateDirectory, "broker.token"),
+    certificate: path8.join(stateDirectory, "broker-cert.pem")
   };
 }
 function deadlineError(message) {
@@ -19761,7 +20059,7 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
       throwIfAborted(signal);
       assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
       const adjacentBroker = fileURLToPath2(new URL("./session-message-broker.mjs", import.meta.url));
-      const brokerPath = existsSync(adjacentBroker) ? adjacentBroker : fileURLToPath2(new URL("../dist/session-message-broker.mjs", import.meta.url));
+      const brokerPath = existsSync2(adjacentBroker) ? adjacentBroker : fileURLToPath2(new URL("../dist/session-message-broker.mjs", import.meta.url));
       const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
         detached: true,
         windowsHide: true,
@@ -20070,7 +20368,7 @@ async function sessionBoardResult(tool, args, databasePath, validator, sessionMe
     return apiError("BINDING_REQUIRED", "The plugin hook records the session board line and did not run for this call.");
   }
   if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
-  if (!existsSync2(databasePath)) {
+  if (!existsSync3(databasePath)) {
     return tool === "list_session_status" ? apiOk({ sessions: [] }) : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
   }
   let board = null;
@@ -20751,7 +21049,7 @@ var PluginUpdateService = class {
 
 // mcp-server/src/sqlite-workflow-store.ts
 import { chmodSync as chmodSync2, mkdirSync as mkdirSync3 } from "node:fs";
-import path8 from "node:path";
+import path9 from "node:path";
 import { DatabaseSync as DatabaseSync4 } from "node:sqlite";
 
 // mcp-server/src/workflow-store.ts
@@ -20765,6 +21063,7 @@ var InMemoryWorkflowStore = class {
   secrets = /* @__PURE__ */ new Map();
   executionObservations = /* @__PURE__ */ new Map();
   convergence = /* @__PURE__ */ new Map();
+  identities = /* @__PURE__ */ new Map();
   guardedRuns = /* @__PURE__ */ new Map();
   runSequence = 0;
   getOrCreateSecret(name, create) {
@@ -20810,14 +21109,19 @@ var InMemoryWorkflowStore = class {
     if (this.convergence.has(root.rootId)) {
       throw new WorkflowContractError("INVALID_INPUT", "Convergence root already exists.", { rootId: root.rootId });
     }
-    for (const snapshot of this.convergence.values()) {
-      if (["completed", "abandoned"].includes(snapshot.root.state)) continue;
-      if (root.parentRootId === snapshot.root.rootId) continue;
-      if (rootsOverlap(root, snapshot.root)) return clone2(snapshot.root);
+    if (root.parentRootId && !this.convergence.has(root.parentRootId)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Parent convergence root was not found.", { rootId: root.parentRootId });
     }
+    const actives = [...this.convergence.values()].filter((snapshot) => !["completed", "abandoned"].includes(snapshot.root.state)).map((snapshot) => {
+      const active = activeRootIdentity(snapshot.root, this.identities.get(snapshot.root.rootId) ?? null);
+      if (active.fresh) this.identities.set(snapshot.root.rootId, { identity: active.identity, surfaceDigest: active.surfaceDigest });
+      return active;
+    });
+    const plan = planRootInsertion(root, actives);
+    if (plan.conflict) return clone2(plan.conflict);
+    this.identities.set(root.rootId, { identity: plan.identity, surfaceDigest: plan.surfaceDigest });
     if (root.parentRootId) {
       const parent = this.convergence.get(root.parentRootId);
-      if (!parent) throw new WorkflowContractError("INVALID_INPUT", "Parent convergence root was not found.", { rootId: root.parentRootId });
       parent.root.state = "abandoned";
       parent.root.revision += 1;
       parent.root.updatedAt = root.createdAt;
@@ -20953,7 +21257,7 @@ var SqliteWorkflowStore = class {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
     }
     if (databasePath !== ":memory:") {
-      mkdirSync3(path8.dirname(path8.resolve(databasePath)), { recursive: true, mode: 448 });
+      mkdirSync3(path9.dirname(path9.resolve(databasePath)), { recursive: true, mode: 448 });
     }
     let openedDatabase = null;
     try {
@@ -20964,7 +21268,7 @@ var SqliteWorkflowStore = class {
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       if (databasePath !== ":memory:" && process.platform !== "win32") {
-        chmodSync2(path8.resolve(databasePath), 384);
+        chmodSync2(path9.resolve(databasePath), 384);
       }
     } catch (cause) {
       try {
@@ -21075,24 +21379,32 @@ var SqliteWorkflowStore = class {
   }
   insertConvergenceRoot(root) {
     return this.guard("Cannot persist the convergence root.", { rootId: root.rootId }, () => this.transaction(() => {
-      const rows = this.database.prepare(`
-        SELECT root_json, revision FROM convergence_roots
-        WHERE state NOT IN ('completed', 'abandoned')
-          AND (workspace_id = ? OR workspace_locator = ?)
-      `).all(root.frame.workspace.workspaceId, normalizeWorkspaceLocator(root.frame.workspace.locator));
-      for (const row of rows) {
-        const existing = JSON.parse(row.root_json);
-        if (root.parentRootId === existing.rootId) continue;
-        if (rootsOverlap(root, existing)) return existing;
+      const parentRow = root.parentRootId ? this.rootRow(root.parentRootId) : void 0;
+      if (root.parentRootId && !parentRow) {
+        throw new WorkflowContractError("INVALID_INPUT", "Parent convergence root was not found.", { rootId: root.parentRootId });
       }
-      if (root.parentRootId) {
-        const row = this.rootRow(root.parentRootId);
-        if (!row) throw new WorkflowContractError("INVALID_INPUT", "Parent convergence root was not found.", { rootId: root.parentRootId });
-        const parent = JSON.parse(row.root_json);
+      const rows = this.database.prepare(`
+        SELECT roots.root_id, roots.root_json, roots.revision, identities.identity_json, identities.surface_digest
+        FROM convergence_roots AS roots
+        LEFT JOIN convergence_root_identities AS identities ON identities.root_id = roots.root_id
+        WHERE roots.state NOT IN ('completed', 'abandoned')
+      `).all();
+      const actives = rows.map((row) => {
+        const active = activeRootIdentity(
+          JSON.parse(row.root_json),
+          row.identity_json && row.surface_digest ? { identity: JSON.parse(row.identity_json), surfaceDigest: row.surface_digest } : null
+        );
+        if (active.fresh) this.saveRootIdentity(row.root_id, active.identity, active.surfaceDigest, null, root.createdAt);
+        return active;
+      });
+      const plan = planRootInsertion(root, actives);
+      if (plan.conflict) return plan.conflict;
+      if (parentRow) {
+        const parent = JSON.parse(parentRow.root_json);
         parent.state = "abandoned";
         parent.revision += 1;
         parent.updatedAt = root.createdAt;
-        this.casRoot(parent, row.revision);
+        this.casRoot(parent, parentRow.revision);
       }
       this.database.prepare(`
         INSERT INTO convergence_roots (root_id, revision, state, workspace_id, workspace_locator, root_json, created_at, updated_at)
@@ -21108,6 +21420,7 @@ var SqliteWorkflowStore = class {
         root.updatedAt
       );
       this.insertEpoch(root, root.createdAt);
+      this.saveRootIdentity(root.rootId, plan.identity, plan.surfaceDigest, plan.match, root.createdAt);
       return null;
     }));
   }
@@ -21411,6 +21724,7 @@ var SqliteWorkflowStore = class {
       const deleteReviews = this.database.prepare("DELETE FROM convergence_reviews WHERE root_id = ?");
       const deleteLeases = this.database.prepare("DELETE FROM convergence_leases WHERE root_id = ?");
       const deleteEpochs = this.database.prepare("DELETE FROM convergence_epochs WHERE root_id = ?");
+      const deleteIdentity = this.database.prepare("DELETE FROM convergence_root_identities WHERE root_id = ?");
       const deleteRoot = this.database.prepare("DELETE FROM convergence_roots WHERE root_id = ?");
       const deleteRun = this.database.prepare("DELETE FROM workflow_runs WHERE run_id = ?");
       let deletedRuns = 0;
@@ -21420,6 +21734,7 @@ var SqliteWorkflowStore = class {
         deleteReviews.run(root.rootId);
         deleteLeases.run(root.rootId);
         deleteEpochs.run(root.rootId);
+        deleteIdentity.run(root.rootId);
         deleteRoot.run(root.rootId);
         for (const runId of root.runIds) {
           deletedRuns += Number(deleteRun.run(runId).changes);
@@ -21501,6 +21816,13 @@ var SqliteWorkflowStore = class {
           ON convergence_roots(workspace_id, state);
         CREATE INDEX IF NOT EXISTS convergence_active_roots_by_locator
           ON convergence_roots(workspace_locator, state);
+        CREATE TABLE IF NOT EXISTS convergence_root_identities (
+          root_id TEXT PRIMARY KEY,
+          identity_json TEXT NOT NULL,
+          surface_digest TEXT NOT NULL,
+          replacement_match TEXT CHECK (replacement_match IS NULL OR replacement_match IN ('physical', 'lineage', 'legacy-locator')),
+          created_at TEXT NOT NULL
+        ) STRICT;
         CREATE TABLE IF NOT EXISTS convergence_epochs (
           root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
           epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
@@ -21576,6 +21898,19 @@ var SqliteWorkflowStore = class {
       WHERE root_id = ? AND revision = ?
     `).run(root.revision, root.state, JSON.stringify(root), root.updatedAt, root.rootId, expectedRevision);
     return Number(result.changes) === 1;
+  }
+  /**
+   * Derived from root_json, which is never rewritten. No foreign key and no schema version bump:
+   * a server without this table keeps opening and cleaning the same database, and rows it
+   * leaves behind are recomputed or ignored. A refreshed identity replaces the stored one; how
+   * the root was bound to its parent is kept.
+   */
+  saveRootIdentity(rootId, identity, surfaceDigest2, match, createdAt) {
+    this.database.prepare(`
+      INSERT INTO convergence_root_identities (root_id, identity_json, surface_digest, replacement_match, created_at)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(root_id) DO UPDATE SET identity_json = excluded.identity_json, surface_digest = excluded.surface_digest
+    `).run(rootId, JSON.stringify(identity), surfaceDigest2, match, createdAt);
   }
   insertEpoch(root, createdAt) {
     this.database.prepare(`
@@ -22267,13 +22602,13 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
 // mcp-server/src/stage-output-file.ts
 import { createHash as createHash6 } from "node:crypto";
 import { closeSync, fstatSync, openSync, readSync } from "node:fs";
-import path9 from "node:path";
+import path10 from "node:path";
 var MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
 function unreadable(locator) {
   return new WorkflowContractError("INVALID_INPUT", "outputFile.locator is not a readable regular local file of at most 16 MiB.", { locator });
 }
 function readLocalStageOutputFile(locator) {
-  if (!path9.isAbsolute(locator)) {
+  if (!path10.isAbsolute(locator)) {
     throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must be an absolute local path.");
   }
   if (/^(?:\\\\|\/\/)/u.test(locator)) {
@@ -22453,9 +22788,6 @@ var WorkflowService = class {
             parentState: parent.state
           });
         }
-        if (parent.frame.workspace.workspaceId !== request.frame.workspace.workspaceId || normalizeWorkspaceLocator(parent.frame.workspace.locator) !== normalizeWorkspaceLocator(request.frame.workspace.locator)) {
-          throw new WorkflowContractError("INVALID_INPUT", "A replacement root must remain bound to the same workspace.");
-        }
       }
       const now = (/* @__PURE__ */ new Date()).toISOString();
       const digests = this.convergenceDigests(request.taskEnvelope, request.frame);
@@ -22474,13 +22806,9 @@ var WorkflowService = class {
         updatedAt: now
       };
       this.validator.convergenceRoot(root);
-      const conflicting = this.store.insertConvergenceRoot(root);
-      if (conflicting) {
-        throw new WorkflowContractError("ROOT_CONFLICT", "An active convergence root already covers this workspace scope.", {
-          rootId: conflicting.rootId,
-          workspaceId: conflicting.frame.workspace.workspaceId,
-          scope: conflicting.taskEnvelope.scope.included
-        });
+      const conflict = this.store.insertConvergenceRoot(root);
+      if (conflict) {
+        throw new WorkflowContractError("ROOT_CONFLICT", "An active convergence root already covers this workspace scope.", conflictDetails(conflict));
       }
       return clone2(root);
     });
@@ -23971,7 +24299,7 @@ var HostAttestationProvider = class {
 // mcp-server/src/state-cleanup-service.ts
 import { createHash as createHash7, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
-import path10 from "node:path";
+import path11 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
 var TOKEN_TTL_MS2 = 15 * 60 * 1e3;
 var POLICY = {
@@ -23986,7 +24314,7 @@ function protection() {
   return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
 }
 function databaseIdentity(databasePath) {
-  return databasePath === ":memory:" ? databasePath : path10.resolve(databasePath);
+  return databasePath === ":memory:" ? databasePath : path11.resolve(databasePath);
 }
 function apiError3(error2) {
   const normalized = error2 instanceof WorkflowContractError ? error2 : new WorkflowContractError("INVALID_INPUT", error2 instanceof Error ? error2.message : String(error2));
@@ -24221,9 +24549,9 @@ var StateCleanupService = class {
   }
   backupPath(databasePath, label, planId) {
     if (databasePath === ":memory:") throw new WorkflowContractError("INVALID_INPUT", "In-memory databases cannot be cleaned destructively.");
-    const directory = path10.join(path10.dirname(path10.resolve(databasePath)), "backups");
+    const directory = path11.join(path11.dirname(path11.resolve(databasePath)), "backups");
     mkdirSync4(directory, { recursive: true, mode: 448 });
-    return path10.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
+    return path11.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
   }
   protectBackup(targetPath) {
     if (process.platform !== "win32") chmodSync3(targetPath, 384);
@@ -24233,7 +24561,7 @@ var StateCleanupService = class {
 // mcp-server/src/trust-store.ts
 import { createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID4, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
 import { chmodSync as chmodSync4, mkdirSync as mkdirSync5 } from "node:fs";
-import path11 from "node:path";
+import path12 from "node:path";
 import { DatabaseSync as DatabaseSync5 } from "node:sqlite";
 var TRUST_SIGNING_KEY = "trust-signing-key";
 var SCHEMA_VERSION3 = 1;
@@ -24259,7 +24587,7 @@ var TrustStore = class {
   constructor(databasePath) {
     this.databasePath = databasePath;
     if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
-    if (databasePath !== ":memory:") mkdirSync5(path11.dirname(path11.resolve(databasePath)), { recursive: true, mode: 448 });
+    if (databasePath !== ":memory:") mkdirSync5(path12.dirname(path12.resolve(databasePath)), { recursive: true, mode: 448 });
     this.database = new DatabaseSync5(databasePath);
     try {
       this.database.exec("PRAGMA busy_timeout = 5000;");
@@ -24268,7 +24596,7 @@ var TrustStore = class {
       this.initializeSchema();
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
       if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
-      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync4(path11.resolve(databasePath), 384);
+      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync4(path12.resolve(databasePath), 384);
     } catch (cause) {
       try {
         this.database.close();
@@ -27778,15 +28106,15 @@ var vi = y((ls) => {
   } };
   ls.default = Am;
 });
-var ms = y((fs) => {
+var ms = y((fs2) => {
   "use strict";
-  Object.defineProperty(fs, "__esModule", { value: true });
+  Object.defineProperty(fs2, "__esModule", { value: true });
   var Mm = Bn(), Cm = Yo(), Dm = Wn(), xm = ei(), zm = ti(), Fm = mr(), Vm = ai(), Um = rs(), Km = ci(), Lm = fi(), Hm = mi(), Gm = hi(), Jm = pi(), Bm = yi(), Wm = $i(), Zm = vi();
   function Qm(t = false) {
     let e = [Hm.default, Gm.default, Jm.default, Bm.default, Wm.default, Zm.default, Vm.default, Um.default, Fm.default, Km.default, Lm.default];
     return t ? e.push(Cm.default, xm.default) : e.push(Mm.default, Dm.default), e.push(zm.default), e;
   }
-  fs.default = Qm;
+  fs2.default = Qm;
 });
 var ps = y((Dt) => {
   "use strict";

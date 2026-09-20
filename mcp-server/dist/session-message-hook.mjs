@@ -352,6 +352,9 @@ var WorkflowContractError = class extends Error {
   }
 };
 
+// mcp-server/src/workspace-identity.ts
+var SEGMENT_SEPARATOR = process.platform === "win32" ? /[\\/]/u : /\//u;
+
 // mcp-server/src/convergence-logic.ts
 function canonicalJson(value, subject = "Convergence input") {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
