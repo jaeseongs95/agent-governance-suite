@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
+import { performance } from "node:perf_hooks";
 import tls from "node:tls";
 import { fileURLToPath } from "node:url";
 
@@ -56,7 +57,7 @@ function remainingMilliseconds(
   message = SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE,
 ): number {
   throwIfAborted(signal);
-  const remaining = deadline - Date.now();
+  const remaining = deadline - performance.now();
   if (remaining <= 0) throw deadlineError(message);
   return remaining;
 }
@@ -69,7 +70,7 @@ async function withDeadline<T>(
 ): Promise<T> {
   if (!Number.isFinite(timeoutMs) || timeoutMs < 1) throw deadlineError(message);
   const controller = new AbortController();
-  const deadline = Date.now() + timeoutMs;
+  const deadline = performance.now() + timeoutMs;
   const onParentAbort = () => controller.abort(parentSignal ? signalError(parentSignal) : deadlineError(message));
   if (parentSignal?.aborted) onParentAbort();
   else parentSignal?.addEventListener("abort", onParentAbort, { once: true });

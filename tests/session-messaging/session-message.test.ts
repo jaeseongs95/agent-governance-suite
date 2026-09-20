@@ -307,6 +307,31 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     await expect(optionalFile(path.join(directory, "endpoint.json"))).resolves.toBeNull();
   });
 
+  it("handles a state-preparation rejection that arrives after the startup deadline", async () => {
+    const directory = stateDirectory();
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => { unhandled.push(reason); };
+    let rejectPreparation = (() => {}) as (error: Error) => void;
+    let markPreparationStarted = () => {};
+    const preparationStarted = new Promise<void>((resolve) => { markPreparationStarted = resolve; });
+    const blockedPreparation = new Promise<void>((_resolve, reject) => { rejectPreparation = reject; });
+    process.on("unhandledRejection", onUnhandled);
+    try {
+      const startup = ensureSessionMessageBroker(directory, 100, undefined, async () => {
+        markPreparationStarted();
+        await blockedPreparation;
+      });
+      await preparationStarted;
+      await expect(startup).rejects.toThrow(/startup deadline/u);
+
+      rejectPreparation(new Error("late state preparation failure"));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(unhandled).toEqual([]);
+    } finally {
+      process.off("unhandledRejection", onUnhandled);
+    }
+  });
+
   it("enforces an absolute request deadline while a TLS peer keeps sending partial data", async () => {
     const directory = stateDirectory();
     await ensureSessionMessageBroker(directory);
