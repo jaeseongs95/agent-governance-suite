@@ -10,8 +10,8 @@ export function processStartToken(pid: number, platform: NodeJS.Platform = proce
         "-NoProfile",
         "-NonInteractive",
         "-Command",
-        `(Get-CimInstance Win32_Process -Filter "ProcessId=${pid}").CreationDate.ToUniversalTime().ToString('o')`,
-      ], { encoding: "utf8", windowsHide: true, timeout: 3000, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
+        `(Get-Process -Id ${pid} -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')`,
+      ], { encoding: "utf8", windowsHide: true, timeout: 5000, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
     }
     if (platform === "linux") {
       const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
