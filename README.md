@@ -9,7 +9,7 @@ Agent Governance Suite는 여러 AI 호스트의 긴 작업에서 범위를 관�
 같은 기준을 세션 하나 밖으로 넓힙니다. 한 대의 컴퓨터에서 여러 에이전트 세션이 같은 저장소나 설치를 동시에 다루면서 서로의 작업을 모르면, 각 세션이 자기 검사를 통과해도 결과는 어긋날 수 있습니다. 그래서 모든 호스트가 세션 현황판 하나를 함께 쓰고, 세션끼리 로컬 TLS 채널로 직접 메시지를 주고받습니다.
 
 <!-- release-version:start -->
-v2.2.1은 v2.2.0의 동작을 유지하는 patch 릴리스입니다. Claude 생성물에서 Codex 전용 스킬 메타데이터를 제외해 호스트 경계를 다시 맞추고, 한·영 README의 스킬 표를 현재 registry와 source lock에 맞춥니다.
+v2.2.1은 v2.2.0의 동작을 유지하는 patch 릴리스입니다. Claude 생성물에서 Codex 전용 스킬 메타데이터를 제외해 호스트 경계를 다시 맞추고, 한·영 README의 스킬 표를 현재 registry와 source lock에 맞춥니다. 인증서 serial의 DER 인코딩을 정규화해 간헐적인 세션 메시지 broker 시작 실패도 제거합니다.
 
 v2.2.0은 세션 메시지의 본문을 주입하기 전에 출처 영수증을 기록하고, 이 영수증을 권한·승인·위임과 분리합니다. 영수증 저장소에는 원문 대신 digest와 제한된 메타데이터만 남고, peer 입력은 권한을 만들지 않습니다. 세션 현황에는 정확한 실행 instance에 결속된 presence가 함께 표시되며, 오래된 instance의 종료 신호가 새 instance를 종료하지 못합니다. Codex wake는 기본적으로 다음 사용자 turn까지 지연되고, 보이는 queue wake는 명시적으로 켜야 합니다. collaboration 판단은 현재 사용자 turn과 비권한 출처를 구분하며, blocker 진단의 확정 근본 조건은 recovery 전략과 새 작업 seed까지 digest로 이어집니다.
 
