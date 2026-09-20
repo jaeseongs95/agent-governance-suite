@@ -613,6 +613,121 @@ describe("WorkflowService", () => {
     expect(crossStageService.recordStageResult(second, true).error?.code).toBe("BINDING_INVALID");
   });
 
+  it("observes a failing stage without holding it to the assurance floor", async () => {
+    // Only a mandatory gate maps a provider verdict to "failed", so the run has to reach it.
+    async function failingAuditRun(
+      provider: TrustedExecutionContextProvider,
+      taskId: string,
+    ): Promise<ReturnType<WorkflowService["recordStageResult"]>> {
+      const { service } = await createService(skills, undefined, null, provider);
+      const planned = service.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task({ taskId }) }, true);
+      expect(planned.ok, planned.error?.message).toBe(true);
+      let receipt = service.startWorkflow(planned.data!).data!;
+      for (const stage of receipt.plan.stages.filter((item) => item.riskGate !== "mandatory")) {
+        const step = passedStage(receipt.runId, stage, receipt.revision);
+        delete step.executionContext;
+        const recorded = service.recordStageResult(step, true);
+        expect(recorded.ok, recorded.error?.message).toBe(true);
+        receipt = recorded.data!;
+      }
+      const auditStage = receipt.plan.stages.find((stage) => stage.riskGate === "mandatory")!;
+      const failing = passedStage(receipt.runId, auditStage, receipt.revision);
+      failing.output = {
+        ...failing.output,
+        output: { ...failing.output.output, gateVerdict: "FAIL" },
+        error: { code: "GATE_FAILED", message: "Independent audit failed.", details: null },
+      };
+      failing.state = "failed";
+      failing.error = failing.output.error;
+      delete failing.executionContext;
+      return service.recordStageResult(failing, true);
+    }
+
+    const observed = await failingAuditRun(trustedProvider(), "failing-observed");
+    expect(observed.ok, observed.error?.message).toBe(true);
+    expect(observed.data?.state).toBe("failed");
+    expect(observed.data?.stageResults.at(-1)?.executionContext).toMatchObject({
+      model: "fixture-frontier",
+      modelClass: "frontier",
+      reasoningEffort: "high",
+      actorId: "fixture-execution-actor",
+    });
+
+    // Below the floor is still worth recording on a failure: the point is knowing what ran.
+    const belowFloor = await failingAuditRun(
+      trustedProvider((binding) => (binding.stageId?.endsWith("independent-audit")
+        ? trustedExecutionContext(binding, {
+          model: "fixture-small",
+          modelClass: "lightweight",
+          reasoningEffort: "low",
+        })
+        : trustedExecutionContext(binding))),
+      "failing-below-floor",
+    );
+    expect(belowFloor.ok, belowFloor.error?.message).toBe(true);
+    expect(belowFloor.data?.stageResults.at(-1)?.executionContext).toMatchObject({
+      modelClass: "lightweight",
+      reasoningEffort: "low",
+    });
+
+    // An unobserved failure must still reach the ledger, or it turns into an abort and the
+    // attempt loses its failure fingerprint.
+    const unobserved = await failingAuditRun(
+      trustedProvider((binding) => (binding.stageId?.endsWith("independent-audit")
+        ? null
+        : trustedExecutionContext(binding))),
+      "failing-unobserved",
+    );
+    expect(unobserved.ok, unobserved.error?.message).toBe(true);
+    expect(unobserved.data?.stageResults.at(-1)?.executionContext ?? null).toBeNull();
+
+    // A forged observation is still refused on a failing stage.
+    const forged = await failingAuditRun(
+      trustedProvider((binding) => (binding.stageId?.endsWith("independent-audit")
+        ? trustedExecutionContext(binding, { runId: "not-this-run" })
+        : trustedExecutionContext(binding))),
+      "failing-forged",
+    );
+    expect(forged.error?.code).toBe("BINDING_INVALID");
+  });
+
+  it("still holds a passing stage to the assurance floor", async () => {
+    const { service } = await createService(
+      skills,
+      undefined,
+      null,
+      trustedProvider((binding) => trustedExecutionContext(binding, {
+        model: "fixture-small",
+        modelClass: "lightweight",
+        reasoningEffort: "low",
+      })),
+    );
+    const planned = service.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task({ taskId: "passing-floor" }) }, true);
+    expect(planned.error?.code).toBe("BINDING_INVALID");
+
+    const { service: stageService } = await createService(
+      skills,
+      undefined,
+      null,
+      trustedProvider((binding) => (binding.phase === "bootstrap"
+        ? trustedExecutionContext(binding)
+        : trustedExecutionContext(binding, {
+          model: "fixture-small",
+          modelClass: "lightweight",
+          reasoningEffort: "low",
+        }))),
+    );
+    const stagePlan = stageService.planWorkflow({
+      schemaVersion: "1.0.0",
+      taskEnvelope: task({ taskId: "passing-stage-floor" }),
+    }, true);
+    expect(stagePlan.ok, stagePlan.error?.message).toBe(true);
+    const receipt = stageService.startWorkflow(stagePlan.data!).data!;
+    const step = passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision);
+    delete step.executionContext;
+    expect(stageService.recordStageResult(step, true).error?.code).toBe("BINDING_INVALID");
+  });
+
   it("persists trusted observation claims across service restart", async () => {
     const databaseDirectory = await mkdtemp(join(tmpdir(), "skill-suite-observation-restart-"));
     temporaryDirectories.push(databaseDirectory);

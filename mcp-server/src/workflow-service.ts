@@ -663,7 +663,6 @@ export class WorkflowService {
         }
         if (
           requireTrustedExecutionContext
-          && result.state === "passed"
           && target.executionRequirement?.kind === "semantic"
         ) {
           const binding: ExecutionObservationBindingV1 = {
@@ -673,17 +672,24 @@ export class WorkflowService {
             stageId: target.stageId,
             revision: result.expectedRevision,
           };
-          trustedStageContext = this.observeTrustedExecutionContext(
-            binding,
-            `Stage '${target.stageId}'`,
-          );
-          this.assertTrustedExecutionContext(
-            target.executionRequirement,
-            trustedStageContext,
-            `Stage '${target.stageId}'`,
-            binding,
-          );
-          result.executionContext = clone(trustedStageContext);
+          const subject = `Stage '${target.stageId}'`;
+          // Only a passing stage has to clear the assurance floor. A failing one still records
+          // what ran when the host can see it: requiring attestation there would push legitimate
+          // unattested failures into abort_workflow, which drops the failure fingerprint.
+          const enforced = result.state === "passed";
+          trustedStageContext = enforced
+            ? this.observeTrustedExecutionContext(binding, subject)
+            : this.observeExecutionContext(binding);
+          if (trustedStageContext) {
+            this.assertTrustedExecutionContext(
+              target.executionRequirement,
+              trustedStageContext,
+              subject,
+              binding,
+              enforced,
+            );
+            result.executionContext = clone(trustedStageContext);
+          }
         }
 
         // A file-backed output is checked exactly like inline output; the receipt keeps only its reference.
@@ -1322,11 +1328,17 @@ export class WorkflowService {
     };
   }
 
+  /** What the host observed, or null when it observed nothing. */
+  private observeExecutionContext(binding: ExecutionObservationBindingV1): ExecutionContextV1 | null {
+    const context = this.trustedExecutionContextProvider?.observe(binding) ?? null;
+    return context ? clone(context) : null;
+  }
+
   private observeTrustedExecutionContext(
     binding: ExecutionObservationBindingV1,
     subject: string,
   ): ExecutionContextV1 {
-    const context = this.trustedExecutionContextProvider?.observe(binding) ?? null;
+    const context = this.observeExecutionContext(binding);
     if (!context) {
       throw new WorkflowContractError(
         "BINDING_REQUIRED",
@@ -1334,7 +1346,7 @@ export class WorkflowService {
         { binding },
       );
     }
-    return clone(context);
+    return context;
   }
 
   private assertTrustedExecutionContext(
@@ -1342,8 +1354,9 @@ export class WorkflowService {
     context: ExecutionContextV1,
     subject: string,
     binding: ExecutionObservationBindingV1,
+    enforceMinimum = true,
   ): void {
-    this.assertExecutionContext(requirement, context, subject);
+    this.assertExecutionContext(requirement, context, subject, enforceMinimum);
     this.assertTrustedExecutionBinding(context, subject, binding);
     this.assertTrustedExecutionFreshness(context, subject);
   }
@@ -1445,6 +1458,7 @@ export class WorkflowService {
     requirement: ExecutionRequirementV1,
     context: ExecutionContextV1 | null | undefined,
     subject: string,
+    enforceMinimum = true,
   ): void {
     if (requirement.kind === "deterministic") return;
     if (!context) {
@@ -1477,6 +1491,8 @@ export class WorkflowService {
         { requirement },
       );
     }
+
+    if (!enforceMinimum) return;
 
     const modelClassRank = MODEL_CLASS.indexOf(context.modelClass);
     const minimumModelClassRank = MODEL_CLASS.indexOf(minimumModelClass);
