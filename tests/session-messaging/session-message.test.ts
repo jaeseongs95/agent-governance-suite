@@ -332,6 +332,21 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     }
   });
 
+  it("preserves the top-level deadline reason when the event loop resumes after expiry", async () => {
+    const directory = stateDirectory();
+    const sleeper = new Int32Array(new SharedArrayBuffer(4));
+    const request = sessionMessageRequest("ping", {}, directory, {
+      totalTimeoutMs: 100,
+      prepareStateDirectory: async () => {
+        Atomics.wait(sleeper, 0, 0, 150);
+      },
+    });
+
+    await expect(request).rejects.toThrow(/request deadline expired/u);
+    await expect(optionalFile(path.join(directory, "broker.lock"))).resolves.toBeNull();
+    await expect(optionalFile(path.join(directory, "endpoint.json"))).resolves.toBeNull();
+  });
+
   it("enforces an absolute request deadline while a TLS peer keeps sending partial data", async () => {
     const directory = stateDirectory();
     await ensureSessionMessageBroker(directory);

@@ -19547,8 +19547,9 @@ function throwIfAborted(signal) {
 }
 function remainingMilliseconds(deadline, signal, message = SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE) {
   throwIfAborted(signal);
-  const remaining = deadline - performance.now();
-  if (remaining <= 0) throw deadlineError(message);
+  const inherited = signal ? deadlineMetadata.get(signal) : void 0;
+  const remaining = (inherited?.deadline ?? deadline) - performance.now();
+  if (remaining <= 0) throw deadlineError(inherited?.message ?? message);
   return remaining;
 }
 async function withDeadline(timeoutMs, parentSignal, message, work) {
@@ -19762,7 +19763,12 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
     } catch (error2) {
       throwIfAborted(signal);
       if (error2 instanceof BrokerRequestRejected) throw error2;
-      await ensureSessionMessageBroker(stateDirectory, remainingMilliseconds(deadline, signal), signal);
+      await ensureSessionMessageBroker(
+        stateDirectory,
+        remainingMilliseconds(deadline, signal),
+        signal,
+        options.prepareStateDirectory
+      );
       throwIfAborted(signal);
       return requestSessionMessageOnce(operation, payload, stateDirectory, remainingMilliseconds(deadline, signal), signal);
     }

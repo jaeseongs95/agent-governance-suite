@@ -58,8 +58,9 @@ function remainingMilliseconds(
   message = SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE,
 ): number {
   throwIfAborted(signal);
-  const remaining = deadline - performance.now();
-  if (remaining <= 0) throw deadlineError(message);
+  const inherited = signal ? deadlineMetadata.get(signal) : undefined;
+  const remaining = (inherited?.deadline ?? deadline) - performance.now();
+  if (remaining <= 0) throw deadlineError(inherited?.message ?? message);
   return remaining;
 }
 
@@ -295,7 +296,10 @@ export async function sessionMessageRequest<T>(
   operation: string,
   payload: Record<string, unknown>,
   stateDirectory = resolveSessionMessageStateDirectory(),
-  options: { totalTimeoutMs?: number } = {},
+  options: {
+    totalTimeoutMs?: number;
+    prepareStateDirectory?: (directory: string) => Promise<void>;
+  } = {},
 ): Promise<T> {
   const totalTimeoutMs = options.totalTimeoutMs ?? SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
   return withDeadline(totalTimeoutMs, undefined, SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE, async (signal, deadline) => {
@@ -310,7 +314,12 @@ export async function sessionMessageRequest<T>(
     } catch (error) {
       throwIfAborted(signal);
       if (error instanceof BrokerRequestRejected) throw error;
-      await ensureSessionMessageBroker(stateDirectory, remainingMilliseconds(deadline, signal), signal);
+      await ensureSessionMessageBroker(
+        stateDirectory,
+        remainingMilliseconds(deadline, signal),
+        signal,
+        options.prepareStateDirectory,
+      );
       throwIfAborted(signal);
       return requestSessionMessageOnce<T>(operation, payload, stateDirectory, remainingMilliseconds(deadline, signal), signal);
     }
