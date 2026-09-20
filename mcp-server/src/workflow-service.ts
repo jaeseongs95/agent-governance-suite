@@ -28,6 +28,7 @@ import {
   type TaskEnvelopeV1,
   type WorkflowPlanV1,
   type WorkflowReceiptV1,
+  type WorkflowState,
   WorkflowContractError,
 } from "../../contracts/types.js";
 import {
@@ -78,6 +79,13 @@ const KOREAN_PROSE_CAPABILITIES = [
 
 const DETERMINISTIC_CAPABILITIES = new Set<string>([
   "korean-prose-finalization",
+]);
+
+/** Receipt states that end a full attempt with a user decision, not a retryable failure. */
+const USER_GATE_RECEIPT_STATES = new Set<WorkflowState>([
+  "needs-input",
+  "needs-approval",
+  "needs-redesign",
 ]);
 
 const HIGH_ASSURANCE_CAPABILITIES = new Set<string>([
@@ -1707,10 +1715,15 @@ export class WorkflowService {
     const passed = receipt.state === "passed";
     const state: AttemptOutcomeV1["state"] = passed ? "passed" : aborted ? "aborted" : "failed";
     const attemptsUsed = consumedLeases(this.requireConvergenceSnapshot(root.rootId), root.currentEpoch).length;
-    if (!["needs-review", "needs-user", "abandoned"].includes(root.state)) {
-      if (passed) root.state = "completed";
-      else if (attemptsUsed >= root.frame.operationalSettings.maxAttemptsPerEpoch) root.state = "needs-review";
-      else root.state = "open";
+    const needsUser = USER_GATE_RECEIPT_STATES.has(receipt.state);
+    if (!["needs-user", "abandoned"].includes(root.state)) {
+      // A user decision ends the attempt, so it escalates even a pending frame review.
+      if (needsUser) root.state = "needs-user";
+      else if (root.state !== "needs-review") {
+        if (passed) root.state = "completed";
+        else if (attemptsUsed >= root.frame.operationalSettings.maxAttemptsPerEpoch) root.state = "needs-review";
+        else root.state = "open";
+      }
     }
     const failureFingerprint = passed ? null : convergenceDigest({
       state: receipt.state,

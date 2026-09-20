@@ -48,6 +48,9 @@ const descriptor: SkillDescriptorV2 = {
       values: {
         PASS: { state: "passed", errorRequired: false },
         FAIL: { state: "failed", errorRequired: true, allowedErrorCodes: ["GATE_FAILED"] },
+        NEEDS_INPUT: { state: "needs-input", errorRequired: false },
+        NEEDS_APPROVAL: { state: "needs-approval", errorRequired: false },
+        NEEDS_REDESIGN: { state: "needs-redesign", errorRequired: false },
       },
       default: "reject",
       adapterErrors: ["INVALID_INPUT", "MISSING_EVIDENCE"],
@@ -253,6 +256,34 @@ function failedStage(receipt: WorkflowReceiptV1): StageResultV1 {
     findings: ["candidate-rejected"],
     blockers: ["candidate-rejected"],
     error: { code: "GATE_FAILED", message: "The candidate did not pass.", details: null },
+  };
+}
+
+function userGateStage(receipt: WorkflowReceiptV1, verdict: string, state: StageResultV1["state"]): StageResultV1 {
+  const stage = receipt.plan.stages[0]!;
+  return {
+    schemaVersion: "1.0.0",
+    runId: receipt.runId,
+    stageId: stage.stageId,
+    expectedRevision: receipt.revision,
+    state,
+    output: {
+      schemaVersion: "1.0.0",
+      kind: "output",
+      output: { verdict },
+      artifacts: [],
+      error: null,
+    },
+    evidence: [{
+      artifactId: "user-decision-note",
+      kind: "user-input",
+      locator: "tests/results/user-decision.json",
+      verified: true,
+      note: "The attempt stopped for a user decision.",
+    }],
+    findings: ["user-decision-required"],
+    blockers: [],
+    error: null,
   };
 }
 
@@ -938,5 +969,64 @@ describe("local MCP convergence guard", () => {
     }));
     expect(attemptSeven.error?.code).toBe("FRAME_REVIEW_REQUIRED");
     expect(status(service, root.rootId).workflowRunIds).toHaveLength(6);
+  });
+
+  it.each([
+    { name: "needs-approval" as const, verdict: "NEEDS_APPROVAL" },
+    { name: "needs-input" as const, verdict: "NEEDS_INPUT" },
+    { name: "needs-redesign" as const, verdict: "NEEDS_REDESIGN" },
+  ])("returns the root to the user and requires a new user contract after a $name attempt", async ({ name, verdict }) => {
+    const { service } = await createHarness();
+    const root = openRoot(service);
+    const attempt = claimAndStart(service, root);
+
+    const recorded = service.recordStageResult(userGateStage(attempt.receipt, verdict, name));
+    expect(recorded.error).toBeNull();
+    expect(recorded.data?.state).toBe(name);
+
+    const current = status(service, root.rootId);
+    expect(current.root.state).toBe("needs-user");
+    expect(current.outcomes.at(-1)).toMatchObject({ ordinal: 1, state: "failed" });
+    expect(current.attemptsRemainingInEpoch).toBe(2);
+
+    const retry = service.claimWorkflowAttempt(proposal(service, current.root, {
+      frame: frame({ targetVersion: `after-${name}` }),
+      priorFailure: latestFailure(current, `test:${name}-evidence`),
+    }));
+    expect(retry.error?.code).toBe("FRAME_REVIEW_REQUIRED");
+    expect(status(service, root.rootId).leases).toHaveLength(1);
+
+    const bypass = service.resolveConvergenceGate({
+      schemaVersion: "1.0.0",
+      rootId: root.rootId,
+      expectedRevision: current.root.revision,
+      review: review(current, {
+        classification: "semantics-preserving",
+        route: "resume-new-epoch",
+        proposedFrame: frame({ targetVersion: `bypass-${name}` }),
+      }, `review-bypass-${name}`),
+    });
+    expect(bypass.error?.code).toBe("INVALID_TRANSITION");
+
+    const withoutApproval = service.openConvergenceRoot({
+      schemaVersion: "1.0.0",
+      parentRootId: root.rootId,
+      taskEnvelope: root.taskEnvelope,
+      frame: root.frame,
+      userApprovalRefs: [],
+    });
+    expect(withoutApproval.error?.code).toBe("INVALID_INPUT");
+
+    const approved = service.openConvergenceRoot({
+      schemaVersion: "1.0.0",
+      parentRootId: root.rootId,
+      taskEnvelope: root.taskEnvelope,
+      frame: root.frame,
+      userApprovalRefs: [`user-approval:${name}`],
+    });
+    expect(approved.error).toBeNull();
+    expect(approved.data).toMatchObject({ state: "open", currentEpoch: 1, parentRootId: root.rootId });
+    expect(status(service, root.rootId).root.state).toBe("abandoned");
+    expect(status(service, approved.data!.rootId).attemptsUsedInEpoch).toBe(0);
   });
 });
