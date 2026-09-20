@@ -138,6 +138,7 @@ Start a new session after installation and call skills as `/agent-governance-sui
 | --- | --- | --- | --- |
 | On request | `model-effort-advisor` | 0.1.0 | Compares an observed current model and reasoning effort with the request's difficulty and risk, then reports only material mismatches. |
 | On explicit request | [`codex-token-usage-analyzer`](https://github.com/jaeseongs95/codex-token-usage-analyzer/tree/v0.1.0/skills/codex-token-usage-analyzer) | 0.1.0 | Aggregates local Codex token observations for threads, descendants, or projects and returns JSON with optional Markdown. |
+| When editing Korean prose | [`korean-prose-editor`](https://github.com/jaeseongs95/korean-prose-editor/tree/c5df63749e2edfc8aa424f9935ee3cd4697d3c49/skills/korean-prose-editor) | 0.1.0 | Edits Korean READMEs, guides, reports, and other multi-paragraph prose naturally while preserving facts, numbers, quotations, links, code, and claim strength, then separately verifies and deterministically finalizes the result. |
 | Before work | `instruction-scope-resolver` | 1.0.0 | Finds the instructions and precedence rules that apply to the work target. |
 | Before work | `workspace-convention-profiler` | 1.0.0 | Records repository structure, commands, and test conventions with evidence. |
 | Before work | [`task-contract`](https://github.com/jaeseongs95/task-contract/tree/b14ffb36ed3be96cc4694d0b36054f21f69b577a) | 1.1.0 | Defines the objective, scope, risk, and completion criteria while keeping provenance receipts separate from authority. |
