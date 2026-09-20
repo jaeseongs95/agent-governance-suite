@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import path from "node:path";
 
 import {
@@ -11,6 +11,7 @@ import {
 } from "../../contracts/types.js";
 import {
   pathWithin,
+  repositoryCheckouts,
   resolveRootIdentity,
   type RootIdentityV1,
   type SurfaceIdentityV1,
@@ -77,11 +78,23 @@ export function rootIdentity(
   return resolveRootIdentity(root.frame.workspace.locator, writeSurface(root), { legacy });
 }
 
+/** Binds a stored identity to the inputs it was derived from; a review may replace the frame of a stored root. */
+export function surfaceDigest(root: { taskEnvelope: TaskEnvelopeV1; frame: ConvergenceFrameV1 }): Sha256Digest {
+  return convergenceDigest({ locator: root.frame.workspace.locator, entries: writeSurface(root) });
+}
+
+export interface StoredIdentity {
+  identity: RootIdentityV1;
+  surfaceDigest: string;
+}
+
 export interface IdentifiedRoot {
   root: ConvergenceRootV1;
   identity: RootIdentityV1;
-  /** false: the repository this root belongs to can no longer be read, so its lineage is unknown. */
+  /** false: the repository this root belongs to cannot be told any more, so its lineage is unknown. */
   resolved: boolean;
+  /** true: stored before identities existed, so nothing was ever observed about where it lives. */
+  legacy: boolean;
 }
 
 function normalizedScope(value: string, workspaceLocator: string): string {
@@ -89,47 +102,67 @@ function normalizedScope(value: string, workspaceLocator: string): string {
   return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }
 
+function surfaceDirectoryExists(surface: SurfaceIdentityV1): boolean {
+  const directory = surface.conservative ? surface.physical : path.posix.dirname(surface.physical);
+  return existsSync(directory || "/");
+}
+
 /**
- * Identity of a root that is already stored. A stored identity wins because the paths may be
- * gone by now. Without one it is derived and the caller persists it when `fresh`. A root
- * stored before identities existed is unresolved when its Git evidence is unreadable or its
- * workspace is gone: "no Git" and "cannot tell" are different answers. Nothing is stored for
- * it, so a later open retries.
+ * Identity of a root that is already stored. An identity stored for the same inputs is kept for
+ * every surface whose checkout was observed, because that checkout may be gone by now; surfaces
+ * that were outside any checkout are looked at again, so a checkout created since is picked up.
+ * A changed frame invalidates the stored identity. With nothing observed earlier, "no Git" and
+ * "cannot tell" are different answers: unreadable Git evidence, or a surface outside any checkout
+ * whose directory is gone, leaves the root unresolved. The caller persists the identity when
+ * `fresh`; an unresolved one is never stored, so a later open retries.
  */
 export function activeRootIdentity(
   root: ConvergenceRootV1,
-  stored: RootIdentityV1 | null,
-): IdentifiedRoot & { fresh: boolean } {
-  if (stored) return { root, identity: stored, resolved: true, fresh: false };
+  stored: StoredIdentity | null,
+): IdentifiedRoot & { fresh: boolean; surfaceDigest: Sha256Digest } {
+  const digest = surfaceDigest(root);
+  const legacy = stored === null;
+  const observed = stored && stored.surfaceDigest === digest ? stored.identity : null;
+  if (observed && observed.surfaces.every((surface) => surface.git !== null)) {
+    return { root, identity: observed, resolved: true, legacy, fresh: false, surfaceDigest: digest };
+  }
+  let derived: RootIdentityV1;
   try {
-    const resolved = existsSync(root.frame.workspace.locator);
-    return { root, identity: rootIdentity(root, true), resolved, fresh: resolved };
+    derived = rootIdentity(root, true);
   } catch (cause) {
     if (!(cause instanceof WorkflowContractError)) throw cause;
+    if (observed) return { root, identity: observed, resolved: true, legacy, fresh: false, surfaceDigest: digest };
     const locator = root.frame.workspace.locator;
-    return {
-      root,
-      identity: {
-        version: 1,
-        workspacePhysical: normalizedScope(".", locator),
-        surfaces: writeSurface(root).map((entry) => ({ entry, physical: normalizedScope(entry, locator), git: null, conservative: null })),
-      },
-      resolved: false,
-      fresh: false,
+    const identity: RootIdentityV1 = {
+      version: 1,
+      workspacePhysical: normalizedScope(".", locator),
+      surfaces: writeSurface(root).map((entry) => ({ entry, physical: normalizedScope(entry, locator), git: null, conservative: null })),
     };
+    return { root, identity, resolved: false, legacy, fresh: false, surfaceDigest: digest };
   }
+  const identity: RootIdentityV1 = {
+    ...derived,
+    surfaces: derived.surfaces.map((surface, index) => (
+      surface.git === null && observed?.surfaces[index]?.git ? observed.surfaces[index] : surface
+    )),
+  };
+  const resolved = observed !== null || identity.surfaces.every((surface) => surface.git !== null || surfaceDirectoryExists(surface));
+  const fresh = resolved && JSON.stringify(identity) !== JSON.stringify(observed);
+  return { root, identity, resolved, legacy, fresh, surfaceDigest: digest };
 }
 
 export interface RootConflict {
   root: ConvergenceRootV1;
   /**
    * physical: the same files. lineage: the same checkout-relative files of a gated root in another
-   * checkout of one repository. lineage-unresolved: a gated root whose repository cannot be read.
+   * checkout of one repository. lineage-unresolved: a gated root whose repository cannot be told.
    */
   kind: "physical" | "lineage" | "lineage-unresolved";
   requested: SurfaceIdentityV1;
   existing: SurfaceIdentityV1;
 }
+
+export type ReplacementMatch = "physical" | "lineage" | "legacy-locator";
 
 const GATED_STATES: ReadonlyArray<ConvergenceRootV1["state"]> = ["needs-review", "needs-user"];
 
@@ -147,24 +180,51 @@ function insideParentSurface(surface: SurfaceIdentityV1, parent: RootIdentityV1)
 }
 
 /**
+ * Whether two surfaces name the same checkout-relative files of one repository. A directory
+ * outside any checkout (a parent folder, a widened glob) has no Git identity of its own but can
+ * hold whole checkouts, so it overlaps a repository when it contains one of its checkouts.
+ */
+function lineageRelation(
+  left: SurfaceIdentityV1,
+  right: SurfaceIdentityV1,
+  checkouts: Map<string, ReturnType<typeof repositoryCheckouts>>,
+): "overlap" | "unknown" | "none" {
+  if (left.git && right.git) {
+    return sharesLineage(left, right) && overlaps(left.git.relative, right.git.relative) ? "overlap" : "none";
+  }
+  const [container, member] = left.git ? [right, left] : [left, right];
+  if (!member.git || outsideEveryRepository(container)) return "none";
+  const commonDir = member.git.commonDir;
+  if (!checkouts.has(commonDir)) checkouts.set(commonDir, repositoryCheckouts(commonDir));
+  const listing = checkouts.get(commonDir)!;
+  if (listing.roots.some((checkout) => pathWithin(checkout, container.physical))) return "overlap";
+  // A partial list of the repository's checkouts cannot show that the folder holds none of them.
+  return listing.complete ? "none" : "unknown";
+}
+
+/** A plain file path outside any checkout cannot share a repository's lineage; a directory there may hold checkouts. */
+function outsideEveryRepository(surface: SurfaceIdentityV1): boolean {
+  return surface.git === null
+    && surface.conservative === null
+    && statSync(surface.physical || "/", { throwIfNoEntry: false })?.isDirectory() !== true;
+}
+
+/**
  * The first active root that blocks the candidate. The same physical target always conflicts.
  * A gated root also blocks the same checkout-relative surface in every other checkout of its
  * repository, so moving to a sibling worktree does not lift the gate. An explicit replacement
  * keeps its parent's surface: two gated roots must not block each other's replacement, while
  * anything the replacement adds beyond that surface is still checked. A gated root of unknown
- * lineage blocks every surface that lies in a repository, because it cannot be shown unrelated;
- * surfaces outside any repository cannot share its lineage.
+ * lineage blocks every surface that cannot be shown to lie outside all repositories.
  */
 export function findRootConflict(
-  candidate: IdentifiedRoot,
+  candidate: { root: ConvergenceRootV1; identity: RootIdentityV1 },
   parent: RootIdentityV1 | null,
   actives: readonly IdentifiedRoot[],
 ): RootConflict | null {
+  const checkouts = new Map<string, ReturnType<typeof repositoryCheckouts>>();
   for (const active of actives) {
     if (active.root.rootId === candidate.root.parentRootId) continue;
-    const added = GATED_STATES.includes(active.root.state)
-      ? candidate.identity.surfaces.filter((surface) => !(parent && insideParentSurface(surface, parent)))
-      : [];
     for (const requested of candidate.identity.surfaces) {
       for (const existing of active.identity.surfaces) {
         if (overlaps(requested.physical, existing.physical)) {
@@ -172,12 +232,17 @@ export function findRootConflict(
         }
       }
     }
-    for (const requested of added) {
-      if (requested.git === null) continue;
+    if (!GATED_STATES.includes(active.root.state)) continue;
+    for (const requested of candidate.identity.surfaces) {
+      if (parent && insideParentSurface(requested, parent)) continue;
       for (const existing of active.identity.surfaces) {
-        if (!active.resolved) return { root: active.root, kind: "lineage-unresolved", requested, existing };
-        if (sharesLineage(requested, existing) && overlaps(requested.git.relative, existing.git!.relative)) {
-          return { root: active.root, kind: "lineage", requested, existing };
+        if (!active.resolved) {
+          if (outsideEveryRepository(requested)) continue;
+          return { root: active.root, kind: "lineage-unresolved", requested, existing };
+        }
+        const relation = lineageRelation(requested, existing, checkouts);
+        if (relation !== "none") {
+          return { root: active.root, kind: relation === "overlap" ? "lineage" : "lineage-unresolved", requested, existing };
         }
       }
     }
@@ -188,13 +253,25 @@ export function findRootConflict(
 /**
  * How a replacement stays bound to its parent: the same physical workspace, or every surface
  * inside a repository the parent's stored identity already names. The stored identity is what
- * makes a deleted worktree replaceable from a sibling checkout.
+ * makes a deleted worktree replaceable from a sibling checkout. Nothing can be observed about an
+ * unresolved root stored before identities existed, so only the rule that predates identities
+ * applies to it (the same workspace id and the same locator string); that match is recorded as
+ * `legacy-locator`, never as an observed binding.
  */
-export function replacementMatch(candidate: RootIdentityV1, parent: RootIdentityV1): "physical" | "lineage" | null {
-  if (candidate.workspacePhysical === parent.workspacePhysical) return "physical";
-  const parentRepositories = new Set(parent.surfaces.flatMap((surface) => (surface.git ? [surface.git.commonDir] : [])));
-  const sameLineage = candidate.surfaces.length > 0
-    && candidate.surfaces.every((surface) => surface.git !== null && parentRepositories.has(surface.git.commonDir));
+export function replacementMatch(
+  candidate: { root: ConvergenceRootV1; identity: RootIdentityV1 },
+  parent: IdentifiedRoot,
+): ReplacementMatch | null {
+  if (!parent.resolved) {
+    const sameNamedWorkspace = parent.legacy
+      && parent.root.frame.workspace.workspaceId === candidate.root.frame.workspace.workspaceId
+      && normalizeWorkspaceLocator(parent.root.frame.workspace.locator) === normalizeWorkspaceLocator(candidate.root.frame.workspace.locator);
+    return sameNamedWorkspace ? "legacy-locator" : null;
+  }
+  if (candidate.identity.workspacePhysical === parent.identity.workspacePhysical) return "physical";
+  const parentRepositories = new Set(parent.identity.surfaces.flatMap((surface) => (surface.git ? [surface.git.commonDir] : [])));
+  const sameLineage = candidate.identity.surfaces.length > 0
+    && candidate.identity.surfaces.every((surface) => surface.git !== null && parentRepositories.has(surface.git.commonDir));
   return sameLineage ? "lineage" : null;
 }
 
@@ -205,10 +282,10 @@ export function replacementMatch(candidate: RootIdentityV1, parent: RootIdentity
 export function planRootInsertion(
   root: ConvergenceRootV1,
   actives: readonly IdentifiedRoot[],
-): { identity: RootIdentityV1; match: "physical" | "lineage" | null; conflict: RootConflict | null } {
+): { identity: RootIdentityV1; surfaceDigest: Sha256Digest; match: ReplacementMatch | null; conflict: RootConflict | null } {
   const identity = rootIdentity(root);
   let parent: IdentifiedRoot | null = null;
-  let match: "physical" | "lineage" | null = null;
+  let match: ReplacementMatch | null = null;
   if (root.parentRootId) {
     parent = actives.find((active) => active.root.rootId === root.parentRootId) ?? null;
     if (!parent || !GATED_STATES.includes(parent.root.state)) {
@@ -217,7 +294,7 @@ export function planRootInsertion(
         parentState: parent?.root.state ?? null,
       });
     }
-    match = replacementMatch(identity, parent.identity);
+    match = replacementMatch({ root, identity }, parent);
     if (!match) {
       throw new WorkflowContractError("INVALID_INPUT", "A replacement root must remain bound to the same workspace.", {
         parentRootId: root.parentRootId,
@@ -225,7 +302,12 @@ export function planRootInsertion(
       });
     }
   }
-  return { identity, match, conflict: findRootConflict({ root, identity, resolved: true }, parent?.identity ?? null, actives) };
+  return {
+    identity,
+    surfaceDigest: surfaceDigest(root),
+    match,
+    conflict: findRootConflict({ root, identity }, parent?.identity ?? null, actives),
+  };
 }
 
 /** ROOT_CONFLICT details: which root blocks, whether it is gated, and why the entries collide. */

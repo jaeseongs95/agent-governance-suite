@@ -9,8 +9,13 @@ import {
   type WorkflowReceiptV1,
   WorkflowContractError,
 } from "../../contracts/types.js";
-import { activeRootIdentity, convergenceDigest, planRootInsertion, type RootConflict } from "./convergence-logic.js";
-import { type RootIdentityV1 } from "./workspace-identity.js";
+import {
+  activeRootIdentity,
+  convergenceDigest,
+  planRootInsertion,
+  type RootConflict,
+  type StoredIdentity,
+} from "./convergence-logic.js";
 
 export const PLAN_SIGNING_KEY = "plan-signing-key";
 
@@ -76,7 +81,7 @@ export class InMemoryWorkflowStore implements WorkflowStore {
   private readonly secrets = new Map<string, string>();
   private readonly executionObservations = new Map<string, string>();
   private readonly convergence = new Map<string, ConvergenceSnapshot>();
-  private readonly identities = new Map<string, RootIdentityV1>();
+  private readonly identities = new Map<string, StoredIdentity>();
   private readonly guardedRuns = new Map<string, { rootId: string; leaseId: string }>();
   private runSequence = 0;
 
@@ -140,12 +145,12 @@ export class InMemoryWorkflowStore implements WorkflowStore {
       .filter((snapshot) => !["completed", "abandoned"].includes(snapshot.root.state))
       .map((snapshot) => {
         const active = activeRootIdentity(snapshot.root, this.identities.get(snapshot.root.rootId) ?? null);
-        if (active.fresh) this.identities.set(snapshot.root.rootId, active.identity);
+        if (active.fresh) this.identities.set(snapshot.root.rootId, { identity: active.identity, surfaceDigest: active.surfaceDigest });
         return active;
       });
     const plan = planRootInsertion(root, actives);
     if (plan.conflict) return clone(plan.conflict);
-    this.identities.set(root.rootId, plan.identity);
+    this.identities.set(root.rootId, { identity: plan.identity, surfaceDigest: plan.surfaceDigest });
     if (root.parentRootId) {
       const parent = this.convergence.get(root.parentRootId)!;
       parent.root.state = "abandoned";

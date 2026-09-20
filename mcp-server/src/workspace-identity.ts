@@ -71,8 +71,10 @@ function physicalPath(target: string): { real: string; existing: string } {
       const existing = fs.realpathSync.native(current);
       return { real: path.join(existing, ...suffix), existing };
     } catch (error) {
+      // Only "no such path yet" walks up; EACCES, EPERM, ELOOP and the like mean "cannot tell".
+      const code = (error as NodeJS.ErrnoException).code;
       const parent = path.dirname(current);
-      if (parent === current) throw unresolved(target, (error as NodeJS.ErrnoException).code ?? "unreadable");
+      if ((code !== "ENOENT" && code !== "ENOTDIR") || parent === current) throw unresolved(target, code ?? "unreadable");
       suffix.unshift(path.basename(current));
       current = parent;
     }
@@ -87,8 +89,10 @@ function isDirectory(target: string): boolean {
 function readHead(file: string): string {
   const descriptor = fs.openSync(file, "r");
   try {
-    const buffer = Buffer.alloc(READ_LIMIT);
-    return buffer.toString("utf8", 0, fs.readSync(descriptor, buffer, 0, READ_LIMIT, 0));
+    const buffer = Buffer.alloc(READ_LIMIT + 1);
+    const length = fs.readSync(descriptor, buffer, 0, READ_LIMIT + 1, 0);
+    if (length > READ_LIMIT) throw unresolved(file, "pointer file too large");
+    return buffer.toString("utf8", 0, length);
   } finally {
     fs.closeSync(descriptor);
   }
@@ -133,6 +137,53 @@ function discoverGit(physical: { real: string; existing: string }): SurfaceIdent
     if (error instanceof WorkflowContractError) throw error;
     throw unresolved(evidence, (error as NodeJS.ErrnoException).code ?? "unreadable");
   }
+}
+
+/**
+ * Checkout roots registered for a repository: the main checkout when the common dir is a
+ * `.git` directory, plus every linked worktree listed under `<commonDir>/worktrees`.
+ * Bounded; never throws. Returns normalized keys. `complete` is false whenever the list may
+ * miss a checkout (common dir gone, unreadable listing, a broken registration, too many
+ * entries), so a caller never reads a partial list as "no checkout there".
+ */
+export function repositoryCheckouts(commonDir: string): { roots: string[]; complete: boolean } {
+  const roots = new Set<string>();
+  let complete = true;
+  try {
+    if (!isDirectory(commonDir)) return { roots: [], complete: false };
+    if (path.basename(commonDir) === ".git") roots.add(normalizedKey(physicalPath(path.dirname(commonDir)).real));
+    const worktrees = path.join(commonDir, "worktrees");
+    // A repository without linked worktrees has no `worktrees` directory.
+    if (fs.statSync(worktrees, { throwIfNoEntry: false })) {
+      const listing = fs.opendirSync(worktrees);
+      try {
+        for (let count = 0; ; count += 1) {
+          const name = listing.readSync()?.name;
+          if (name === undefined) break;
+          if (count >= WALK_LIMIT) {
+            complete = false;
+            break;
+          }
+          try {
+            // `gitdir` names the worktree's `.git` file; like Git, anything else is an invalid registration.
+            const pointer = readHead(path.join(worktrees, name, "gitdir")).trim();
+            if (!pointer || isUnsupported(pointer) || normalizedKey(path.basename(pointer)) !== ".git") {
+              complete = false;
+              continue;
+            }
+            roots.add(normalizedKey(physicalPath(path.dirname(path.resolve(worktrees, name, pointer))).real));
+          } catch {
+            complete = false;
+          }
+        }
+      } finally {
+        listing.closeSync();
+      }
+    }
+  } catch {
+    complete = false;
+  }
+  return { roots: [...roots], complete };
 }
 
 function identify(target: string): Pick<SurfaceIdentityV1, "physical" | "git"> {

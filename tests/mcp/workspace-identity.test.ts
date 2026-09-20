@@ -1,12 +1,13 @@
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { WorkflowContractError } from "../../contracts/types.js";
 import {
   assertSupportedScopeEntry,
   pathWithin,
+  repositoryCheckouts,
   resolveRootIdentity,
 } from "../../mcp-server/src/workspace-identity.js";
 
@@ -41,11 +42,12 @@ function mainCheckout(root: string, name = "main"): string {
   return checkout;
 }
 
-/** Linked worktree: `.git` file pointing at `<gitDir>/worktrees/<name>` whose commondir is `../..`. */
+/** Linked worktree: `.git` file pointing at `<gitDir>/worktrees/<name>` whose commondir is `../..`, registered in its `gitdir`. */
 function linkedWorktree(root: string, gitDir: string, name: string): string {
   const checkout = join(root, name);
   const worktreeGitDir = join(gitDir, "worktrees", name);
   write(join(worktreeGitDir, "commondir"), "../..\n");
+  write(join(worktreeGitDir, "gitdir"), `${join(checkout, ".git")}\n`);
   write(join(checkout, ".git"), `gitdir: ${worktreeGitDir}\n`);
   write(join(checkout, "src", "a.ts"));
   return checkout;
@@ -145,6 +147,19 @@ describe("resolveRootIdentity Git discovery", () => {
     expect(failure(() => resolveRootIdentity(root, ["w1/src/a.ts"]))).toEqual(unresolved);
   });
 
+  it("throws WORKSPACE_IDENTITY_UNRESOLVED for an oversized .git pointer or commondir instead of parsing its head", () => {
+    const root = fixtureRoot();
+    const main = mainCheckout(root);
+    const store = join(root, "store");
+    mkdirSync(store);
+    write(join(root, "big-pointer", ".git"), `gitdir: ${store}\n${"#".repeat(4096)}`);
+    const worktree = linkedWorktree(root, join(main, ".git"), "w1");
+    write(join(main, ".git", "worktrees", "w1", "commondir"), `../..\n${" ".repeat(4096)}`);
+
+    expect(failure(() => resolveRootIdentity(join(root, "big-pointer"), ["a.ts"]))).toEqual(unresolved);
+    expect(failure(() => resolveRootIdentity(worktree, ["src/a.ts"]))).toEqual(unresolved);
+  });
+
   it("returns git null when no checkout contains the surface", () => {
     const root = fixtureRoot();
     write(join(root, "plain", "a.ts"));
@@ -173,6 +188,50 @@ describe("resolveRootIdentity physical keys", () => {
       git: { checkoutRoot: key(main), relative: "ghost/workspace/a.ts" },
     });
     expect(resolveRootIdentity(join(main, "ghost", "workspace"), ["a.ts"])).toEqual(ghost);
+  });
+
+  it("falls back to the existing ancestor below a file, where realpath reports ENOTDIR or ENOENT", () => {
+    const root = fixtureRoot();
+    const main = mainCheckout(root);
+
+    const surface = resolveRootIdentity(main, ["src/a.ts/child"]).surfaces[0];
+
+    expect(surface).toMatchObject({
+      physical: key(main, "src", "a.ts", "child"),
+      git: { checkoutRoot: key(main), relative: "src/a.ts/child" },
+    });
+  });
+
+  it("throws WORKSPACE_IDENTITY_UNRESOLVED for a link loop instead of falling back to an unresolved key", () => {
+    const root = fixtureRoot();
+    const main = mainCheckout(root);
+    try {
+      symlinkSync(join(main, "b"), join(main, "a"), "junction");
+      symlinkSync(join(main, "a"), join(main, "b"), "junction");
+    } catch {
+      return; // The platform refuses links without elevation.
+    }
+
+    expect(failure(() => resolveRootIdentity(main, ["a/new.ts"]))).toEqual(unresolved);
+    expect(failure(() => resolveRootIdentity(join(main, "a"), ["x.ts"]))).toEqual(unresolved);
+  });
+
+  it("reports the errno code when realpath fails for another reason than absence", () => {
+    const root = fixtureRoot();
+    const main = mainCheckout(root);
+    const native = vi.spyOn(realpathSync, "native").mockImplementation(() => {
+      throw Object.assign(new Error("denied"), { code: "EACCES" });
+    });
+    let details: unknown = null;
+    try {
+      resolveRootIdentity(main, ["src/a.ts"]);
+    } catch (error) {
+      details = error instanceof WorkflowContractError ? error.details : error;
+    } finally {
+      native.mockRestore();
+    }
+
+    expect(details).toMatchObject({ reason: "WORKSPACE_IDENTITY_UNRESOLVED", cause: "EACCES" });
   });
 
   it("gives a junction or symlink alias the physical key of its target", () => {
@@ -271,6 +330,72 @@ describe("resolveRootIdentity entry classes", () => {
       git: { commonDir: key(main, ".git"), checkoutRoot: key(main), relative: "src" },
       conservative: "legacy-unsupported",
     })));
+  });
+});
+
+describe("repositoryCheckouts", () => {
+  it("lists the main checkout and its linked worktrees with the keys resolveRootIdentity reports", () => {
+    const root = fixtureRoot();
+    const main = mainCheckout(root);
+    const first = linkedWorktree(root, join(main, ".git"), "w1");
+    const second = linkedWorktree(root, join(main, ".git"), "w2");
+    const commonDir = key(main, ".git");
+
+    const listing = repositoryCheckouts(commonDir);
+    const checkouts = [...listing.roots].sort();
+
+    expect(listing.complete).toBe(true);
+    expect(checkouts).toEqual([key(main), key(first), key(second)].sort());
+    expect(checkouts).toEqual([main, first, second]
+      .map((checkout) => resolveRootIdentity(checkout, ["src/a.ts"]).surfaces[0]?.git)
+      .map((git) => (git?.commonDir === commonDir ? git.checkoutRoot : null))
+      .sort());
+  });
+
+  it("keeps a deleted checkout, resolves a relative gitdir and lists no checkout twice", () => {
+    const root = fixtureRoot();
+    const main = mainCheckout(root);
+    const gone = linkedWorktree(root, join(main, ".git"), "gone");
+    rmSync(gone, { recursive: true, force: true });
+    const relative = linkedWorktree(root, join(main, ".git"), "rel");
+    write(join(main, ".git", "worktrees", "rel", "gitdir"), "../../../../rel/.git\n");
+    write(join(main, ".git", "worktrees", "rel-again", "gitdir"), `${join(relative, ".git")}\r\n`);
+
+    const listing = repositoryCheckouts(key(main, ".git"));
+    expect([...listing.roots].sort()).toEqual([key(main), key(gone), key(relative)].sort());
+    expect(listing.complete).toBe(true);
+  });
+
+  it("skips malformed, empty, oversized and missing gitdir registrations and reports the list as partial", () => {
+    const root = fixtureRoot();
+    const main = mainCheckout(root);
+    const worktree = linkedWorktree(root, join(main, ".git"), "w1");
+    const registry = join(main, ".git", "worktrees");
+    write(join(registry, "empty", "gitdir"), "\n");
+    write(join(registry, "two-lines", "gitdir"), `${join(root, "x", ".git")}\n${join(root, "y", ".git")}\n`);
+    write(join(registry, "not-dot-git", "gitdir"), `${join(root, "z")}\n`);
+    write(join(registry, "oversized", "gitdir"), `${join(root, "big", ".git")}\n${" ".repeat(4096)}`);
+    mkdirSync(join(registry, "no-gitdir"));
+    write(join(registry, "a-file"));
+
+    const listing = repositoryCheckouts(key(main, ".git"));
+    expect([...listing.roots].sort()).toEqual([key(main), key(worktree)].sort());
+    // A registration that cannot be read may name a checkout, so the list must not be read as exhaustive.
+    expect(listing.complete).toBe(false);
+  });
+
+  it("lists only the worktrees of a bare repository and nothing for a missing common dir", () => {
+    const root = fixtureRoot();
+    const bare = join(root, "bare.git");
+    const worktree = linkedWorktree(root, bare, "bw");
+    const main = mainCheckout(root);
+
+    expect(repositoryCheckouts(key(bare))).toEqual({ roots: [key(worktree)], complete: true });
+    // No `worktrees` directory is a complete answer; a common dir that is gone is not.
+    expect(repositoryCheckouts(key(main, ".git"))).toEqual({ roots: [key(main)], complete: true });
+    for (const missing of [key(root, "nowhere", ".git"), key(root, "nowhere.git"), "", "bad\u0000dir/.git"]) {
+      expect(repositoryCheckouts(missing)).toEqual({ roots: [], complete: false });
+    }
   });
 });
 

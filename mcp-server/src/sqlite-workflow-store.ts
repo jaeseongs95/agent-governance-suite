@@ -18,7 +18,13 @@ import {
   type StoredPluginUpdateState,
 } from "./plugin-update-store.js";
 import { compareStableVersionNumbers } from "./plugin-version.js";
-import { activeRootIdentity, normalizeWorkspaceLocator, planRootInsertion, type RootConflict } from "./convergence-logic.js";
+import {
+  activeRootIdentity,
+  normalizeWorkspaceLocator,
+  planRootInsertion,
+  type ReplacementMatch,
+  type RootConflict,
+} from "./convergence-logic.js";
 import { type RootIdentityV1 } from "./workspace-identity.js";
 import {
   type ConvergenceSnapshot,
@@ -51,6 +57,7 @@ interface ConvergenceRootRow {
 interface ActiveRootRow extends ConvergenceRootRow {
   root_id: string;
   identity_json: string | null;
+  surface_digest: string | null;
 }
 
 interface ConvergenceLeaseRow {
@@ -236,7 +243,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       }
       // ponytail: every active root is compared in process; index the derived identity if a ledger ever holds thousands.
       const rows = this.database.prepare(`
-        SELECT roots.root_id, roots.root_json, roots.revision, identities.identity_json
+        SELECT roots.root_id, roots.root_json, roots.revision, identities.identity_json, identities.surface_digest
         FROM convergence_roots AS roots
         LEFT JOIN convergence_root_identities AS identities ON identities.root_id = roots.root_id
         WHERE roots.state NOT IN ('completed', 'abandoned')
@@ -244,9 +251,11 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       const actives = rows.map((row) => {
         const active = activeRootIdentity(
           JSON.parse(row.root_json) as ConvergenceRootV1,
-          row.identity_json ? JSON.parse(row.identity_json) as RootIdentityV1 : null,
+          row.identity_json && row.surface_digest
+            ? { identity: JSON.parse(row.identity_json) as RootIdentityV1, surfaceDigest: row.surface_digest }
+            : null,
         );
-        if (active.fresh) this.insertRootIdentity(row.root_id, active.identity, null, root.createdAt);
+        if (active.fresh) this.saveRootIdentity(row.root_id, active.identity, active.surfaceDigest, null, root.createdAt);
         return active;
       });
       const plan = planRootInsertion(root, actives);
@@ -272,7 +281,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         root.updatedAt,
       );
       this.insertEpoch(root, root.createdAt);
-      this.insertRootIdentity(root.rootId, plan.identity, plan.match, root.createdAt);
+      this.saveRootIdentity(root.rootId, plan.identity, plan.surfaceDigest, plan.match, root.createdAt);
       return null;
     }));
   }
@@ -706,7 +715,8 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         CREATE TABLE IF NOT EXISTS convergence_root_identities (
           root_id TEXT PRIMARY KEY,
           identity_json TEXT NOT NULL,
-          replacement_match TEXT CHECK (replacement_match IS NULL OR replacement_match IN ('physical', 'lineage')),
+          surface_digest TEXT NOT NULL,
+          replacement_match TEXT CHECK (replacement_match IS NULL OR replacement_match IN ('physical', 'lineage', 'legacy-locator')),
           created_at TEXT NOT NULL
         ) STRICT;
         CREATE TABLE IF NOT EXISTS convergence_epochs (
@@ -792,13 +802,21 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   /**
    * Derived from root_json, which is never rewritten. No foreign key and no schema version bump:
    * a server without this table keeps opening and cleaning the same database, and rows it
-   * leaves behind are recomputed or ignored.
+   * leaves behind are recomputed or ignored. A refreshed identity replaces the stored one; how
+   * the root was bound to its parent is kept.
    */
-  private insertRootIdentity(rootId: string, identity: RootIdentityV1, match: "physical" | "lineage" | null, createdAt: string): void {
+  private saveRootIdentity(
+    rootId: string,
+    identity: RootIdentityV1,
+    surfaceDigest: string,
+    match: ReplacementMatch | null,
+    createdAt: string,
+  ): void {
     this.database.prepare(`
-      INSERT OR IGNORE INTO convergence_root_identities (root_id, identity_json, replacement_match, created_at)
-      VALUES (?, ?, ?, ?)
-    `).run(rootId, JSON.stringify(identity), match, createdAt);
+      INSERT INTO convergence_root_identities (root_id, identity_json, surface_digest, replacement_match, created_at)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(root_id) DO UPDATE SET identity_json = excluded.identity_json, surface_digest = excluded.surface_digest
+    `).run(rootId, JSON.stringify(identity), surfaceDigest, match, createdAt);
   }
 
   private insertEpoch(root: ConvergenceRootV1, createdAt: string): void {
