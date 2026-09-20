@@ -8,9 +8,11 @@ import { fileURLToPath } from "node:url";
 
 import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
 import { SessionMessageStore, type SessionIdentity } from "./session-message-store.js";
+import type { InputObservationKind } from "./input-observation.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
 
 const IDLE_EXIT_MS = 60_000;
+export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities"] as const;
 
 interface BrokerRequest {
   protocolVersion: string;
@@ -52,6 +54,14 @@ function optionalString(record: Record<string, unknown>, name: string): string |
 function boolean(value: unknown, name: string): boolean {
   if (typeof value !== "boolean") throw new Error(`${name} must be a boolean.`);
   return value;
+}
+
+function supportedInjection(value: unknown): InputObservationKind[] {
+  const allowed = new Set<InputObservationKind>(["user-input", "peer-wake", "tool-boundary", "turn-end", "unknown"]);
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string" || !allowed.has(item as InputObservationKind))) {
+    throw new Error("supportedInjection is invalid.");
+  }
+  return [...new Set(value)] as InputObservationKind[];
 }
 
 function tokenMatches(actual: string, expected: string): boolean {
@@ -142,7 +152,7 @@ async function credentials(stateDirectory: string): Promise<{ key: string; certi
 
 export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>): unknown {
   switch (operation) {
-    case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL };
+    case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: SESSION_MESSAGE_BROKER_CAPABILITIES };
     case "send": {
       const messageId = optionalString(payload, "messageId");
       const ttlSeconds = optionalInteger(payload, "ttlSeconds");
@@ -161,6 +171,39 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         ...(maxMessages === undefined ? {} : { maxMessages }),
         ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
       }) };
+    }
+    case "claim-wake": {
+      const maxMessages = optionalInteger(payload, "maxMessages");
+      const maxBodyChars = optionalInteger(payload, "maxBodyChars");
+      const nonces = Array.isArray(payload.nonces) ? payload.nonces.map((value) => string(value, "nonce")) : [];
+      return store.claimWake(identity(payload.target), nonces, Date.now(), {
+        ...(maxMessages === undefined ? {} : { maxMessages }),
+        ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
+      });
+    }
+    case "observe-native-input": {
+      store.observeNativeInput(identity(payload.target));
+      return { observed: true };
+    }
+    case "claim-deferred": {
+      const maxMessages = optionalInteger(payload, "maxMessages");
+      const maxBodyChars = optionalInteger(payload, "maxBodyChars");
+      return { messages: store.claimDeferred(identity(payload.target), Date.now(), {
+        ...(maxMessages === undefined ? {} : { maxMessages }),
+        ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
+      }) };
+    }
+    case "claim-turn-end": {
+      const maxMessages = optionalInteger(payload, "maxMessages");
+      const maxBodyChars = optionalInteger(payload, "maxBodyChars");
+      return { messages: store.claimTurnEnd(identity(payload.target), Date.now(), {
+        ...(maxMessages === undefined ? {} : { maxMessages }),
+        ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
+      }) };
+    }
+    case "clear-deferred": {
+      store.clearDeferred(identity(payload.target));
+      return { cleared: true };
     }
     case "acknowledge": return { acknowledged: store.acknowledge(identity(payload.target), Array.isArray(payload.messageIds) ? payload.messageIds.map((value) => string(value, "messageId")) : []) };
     case "status": return { status: store.status(identity(payload.sender), string(payload.messageId, "messageId")) };
@@ -185,13 +228,17 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       const collaborationId = optionalString(payload, "collaborationId");
       const workspaceId = optionalString(payload, "workspaceId");
       const role = optionalString(payload, "role");
+      const idleWake = optionalString(payload, "idleWake") ?? wakeVisibility;
+      const injection = Object.hasOwn(payload, "supportedInjection") ? supportedInjection(payload.supportedInjection) : [];
       if (wakeVisibility !== "silent" && wakeVisibility !== "user-message" && wakeVisibility !== "none") throw new Error("wakeVisibility is invalid.");
+      if (idleWake !== "silent" && idleWake !== "user-message" && idleWake !== "none") throw new Error("idleWake is invalid.");
       return { presence: store.startPresence({
         ...target,
         instanceId: string(payload.instanceId, "instanceId"),
         transport: string(payload.transport, "transport"),
         wakeVisibility,
         canWakeSilently: boolean(payload.canWakeSilently, "canWakeSilently"),
+        deliveryCapabilities: { supportedInjection: injection, idleWake },
         ...(collaborationId === undefined ? {} : { collaborationId }),
         ...(workspaceId === undefined ? {} : { workspaceId }),
         ...(role === undefined ? {} : { role }),

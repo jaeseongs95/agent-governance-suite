@@ -238,6 +238,54 @@ export interface SessionBindingV1 {
   sessionId: string;
 }
 
+export interface CollaborationSessionBindingV1 extends SessionBindingV1 {
+  actorKind?: "main" | "subagent" | "unknown";
+  observedBy?: string;
+  assurance?: string;
+}
+
+export type CollaborationSourceOriginKindV1 = InputOriginKindV1 | "unknown" | "tool" | "delegated";
+
+export interface CollaborationDecisionV1 {
+  schemaVersion: "1.0.0" | "1.1.0" | "1.2.0";
+  sourceOriginKind: CollaborationSourceOriginKindV1;
+  sourceReceiptId: string | null;
+  authorityEffect: "none";
+  userDirective: "require" | "forbid" | "unspecified";
+  netBenefitCriteria: {
+    independentlyCompletable: boolean;
+    parallelBottleneckReduced: boolean;
+    limitedContextSufficient: boolean;
+    singleWriterOwnership: boolean;
+    netBenefitAfterOverhead: boolean;
+  };
+  fullHistoryContext?: { sufficient: boolean; reason: string };
+  auditSeparationRequired: boolean;
+  route: "direct" | "delegate" | "audit-only" | "needs-input";
+}
+
+export interface ValidateCollaborationDecisionRequestV1 {
+  decision: CollaborationDecisionV1;
+  _sessionBinding?: CollaborationSessionBindingV1;
+}
+
+export interface CollaborationDecisionValidationV1 {
+  structuralValidity: "valid" | "invalid";
+  structuralErrors: string[];
+  receiptFound: boolean;
+  receiptIntegrity: "valid" | "invalid" | null;
+  receiptBoundToCaller: boolean | null;
+  receiptFreshness: "fresh" | "stale" | null;
+  sourceClaimMatch: boolean | null;
+  callerObservation: CollaborationSessionBindingV1 | null;
+  callerBindingAssurance: "observational" | null;
+  authorityCapabilities: {
+    directUserInputAttestation: false;
+    authorityIssuance: false;
+    scopedDelegation: false;
+  };
+}
+
 export type InputOriginKindV1 =
   | "user-turn"
   | "peer"

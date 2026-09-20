@@ -45,7 +45,10 @@ it("retries transient endpoint publication failures and serves the published end
   const { directory, child } = await launch("transient");
   await waitForSessionMessageBrokerReady(directory, child, 3000);
   expect(JSON.parse(await readFile(path.join(directory, "endpoint.json"), "utf8")).pid).toBe(child.pid);
-  await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toEqual({ protocolVersion: "1.0.0" });
+  await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
+    protocolVersion: "1.0.0",
+    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities"],
+  });
   expect((await readdir(directory)).filter((name) => name.endsWith(".tmp"))).toEqual([]);
 });
 
@@ -62,7 +65,10 @@ it.each(["permanent", "ENOSPC", "credentials", "database"])("releases startup re
   const recovered = spawn(process.execPath, [broker, "--state-directory", directory], { windowsHide: true, stdio: "ignore" });
   children.push(recovered);
   await waitForSessionMessageBrokerReady(directory, recovered, 3000);
-  await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toEqual({ protocolVersion: "1.0.0" });
+  await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
+    protocolVersion: "1.0.0",
+    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities"],
+  });
 });
 
 it("delivers and acknowledges a message using only the packaged CLI and broker", async () => {

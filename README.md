@@ -9,6 +9,8 @@ Agent Governance Suite는 여러 AI 호스트의 긴 작업에서 범위를 관�
 같은 기준을 세션 하나 밖으로 넓힙니다. 한 대의 컴퓨터에서 여러 에이전트 세션이 같은 저장소나 설치를 동시에 다루면서 서로의 작업을 모르면, 각 세션이 자기 검사를 통과해도 결과는 어긋날 수 있습니다. 그래서 모든 호스트가 세션 현황판 하나를 함께 쓰고, 세션끼리 로컬 TLS 채널로 직접 메시지를 주고받습니다.
 
 <!-- release-version:start -->
+v2.3.0은 입력 출처 주장과 영수증 검사를 구분하고, 사용자 입력 옆의 peer 본문 주입을 이연하며, 관측 가능한 서브에이전트의 부모 수신함 사용과 작업공간 별칭을 통한 root 우회를 보강합니다. 공통 계약은 플랫폼 중립이며 제품별 이벤트는 adapter에서 처리합니다. 일반 worktree 병렬 작업은 유지합니다. 승인 발급이나 OS 실행 통제를 제공하는 릴리스는 아닙니다. [입력·작업 경계와 한계](docs/input-boundaries.md)를 확인하세요.
+
 v2.2.2는 훅 번들 경계를 바로잡는 patch 릴리스입니다. 실행 전용 session-message relay 진입점을 import 가능한 코어에서 분리해 Codex 훅이 잘못된 relay 인자 검사로 실패하지 않게 하고, 완성된 훅 번들의 종료 코드를 직접 검증합니다. `SessionEnd`는 Codex의 공식 기본 timeout을 사용해 clamping 경고도 없앴습니다.
 
 v2.2.0은 세션 메시지의 본문을 주입하기 전에 출처 영수증을 기록하고, 이 영수증을 권한·승인·위임과 분리합니다. 영수증 저장소에는 원문 대신 digest와 제한된 메타데이터만 남고, peer 입력은 권한을 만들지 않습니다. 세션 현황에는 정확한 실행 instance에 결속된 presence가 함께 표시되며, 오래된 instance의 종료 신호가 새 instance를 종료하지 못합니다. Codex wake는 기본적으로 다음 사용자 turn까지 지연되고, 보이는 queue wake는 명시적으로 켜야 합니다. collaboration 판단은 현재 사용자 turn과 비권한 출처를 구분하며, blocker 진단의 확정 근본 조건은 recovery 전략과 새 작업 seed까지 digest로 이어집니다.
@@ -21,7 +23,7 @@ v2.1.0은 같은 컴퓨터에서 일하는 AI 호스트 세션들이 서로에�
 
 지난 릴리스의 변경 내역은 [`docs/`](docs/)의 릴리스 노트에 있습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 
-현재 공개 릴리스는 `v2.2.6`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+현재 공개 릴리스는 `v2.3.0`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -62,7 +64,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.2.6
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.3.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->

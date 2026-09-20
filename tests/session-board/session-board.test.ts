@@ -148,13 +148,16 @@ describe("session board hook", () => {
     const updated = run(tool(boardTool("update_session_status"), { schemaVersion: "1.0.0", summary: "현황판 구현", _sessionBinding: { host: "x", sessionId: "forged" } }), 8);
     expect(updated).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "allow", updatedInput: { schemaVersion: "1.0.0", summary: "현황판 구현", _sessionBinding: { host: "claude-code", sessionId: "s1" } } } });
 
-    run(input("UserPromptSubmit"), 9);
-    expect(decision(run(tool("Agent"), 10))).toBe("deny");
-    const row = listSessions(board, at(11))[0];
+    run(input("UserPromptSubmit", { agent_id: "sub-1", prompt: "서브에이전트 입력" }), 9);
+    expect(listSessions(board, at(9))[0]).toMatchObject({ summary: "현황판 구현", stale: false });
+
+    run(input("UserPromptSubmit"), 10);
+    expect(decision(run(tool("Agent"), 11))).toBe("deny");
+    const row = listSessions(board, at(12))[0];
     expect(row).toMatchObject({ sessionId: "s1", cwd: "D:/work/repo", summary: "현황판 구현", stale: true });
     expect(JSON.stringify(listSessions(board, at(11)))).not.toContain("비밀 요청 원문");
 
-    const listed = run(tool(boardTool("list_session_status"), { schemaVersion: "1.0.0" }, { agent_id: "sub-1" }), 12);
+    const listed = run(tool(boardTool("list_session_status"), { schemaVersion: "1.0.0" }, { agent_id: "sub-1" }), 13);
     expect(listed).toMatchObject({ hookSpecificOutput: { permissionDecision: "allow", updatedInput: { _sessionBinding: { host: "claude-code", sessionId: "s1" } } } });
   });
 
@@ -307,7 +310,8 @@ describe("session board MCP tools", () => {
       data: {
         sessions: [{
           host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", wakeVisibility: "silent",
-          canWakeSilently: true, collaborationId: "collaboration-1", workspaceId: "workspace-1", role: "worker",
+          canWakeSilently: true, deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "silent" },
+          collaborationId: "collaboration-1", workspaceId: "workspace-1", role: "worker",
           startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",
         }],
       },
@@ -318,12 +322,13 @@ describe("session board MCP tools", () => {
     const sessions = (listed.data as { sessions: Array<{ sessionId: string; presence: unknown }> }).sessions;
     expect(sessions.find((row) => row.sessionId === "online")?.presence).toEqual({
       host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", wakeVisibility: "silent",
-      canWakeSilently: true, collaborationId: "collaboration-1", workspaceId: "workspace-1", role: "worker",
+      canWakeSilently: true, deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "silent" },
+      collaborationId: "collaboration-1", workspaceId: "workspace-1", role: "worker",
       startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",
     });
     expect(sessions.find((row) => row.sessionId === "missing")?.presence).toEqual({
       host: "claude-code", sessionId: "missing", instanceId: null, transport: null, wakeVisibility: "none",
-      canWakeSilently: false, collaborationId: null, workspaceId: null, role: null,
+      canWakeSilently: false, deliveryCapabilities: { supportedInjection: [], idleWake: "none" }, collaborationId: null, workspaceId: null, role: null,
       startedAt: null, heartbeatAt: null, leaseUntil: null, endedAt: null, endReason: null, state: "unknown",
     });
   });

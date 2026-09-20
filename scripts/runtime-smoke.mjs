@@ -35,6 +35,8 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     environment.AGENT_GOVERNANCE_DB_PATH = path.join(cleanRoot, "state", "workflows.sqlite3");
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = path.join(cleanRoot, "state", "continuity.sqlite3");
     environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = path.join(cleanRoot, "state", "session-board.sqlite3");
+    environment.AGENT_GOVERNANCE_TRUST_DB_PATH = path.join(cleanRoot, "state", "trust.sqlite3");
+    environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = path.join(cleanRoot, "state", "messaging");
     // Runs a clean-room script (a path relative to the clean root) with the given stdin text.
     const runNode = (script, input) => spawnSync(process.execPath, [path.join(cleanRoot, ...script.split("/"))], {
       cwd: cleanRoot,
@@ -129,6 +131,12 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "runtime-smoke", version: "1.0.0" } } },
       { jsonrpc: "2.0", method: "notifications/initialized", params: {} },
       { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "lookup_korean_prose_terms", arguments: { schemaVersion: "1.0.0", sourceText, sourceDigest: createHash("sha256").update(sourceText).digest("hex") } } },
+      { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "validate_collaboration_decision", arguments: { decision: {
+        schemaVersion: "1.2.0", sourceOriginKind: "unknown", sourceReceiptId: null,
+        authorityEffect: "none", userDirective: "unspecified", auditSeparationRequired: false, route: "direct",
+        netBenefitCriteria: { independentlyCompletable: true, parallelBottleneckReduced: true,
+          limitedContextSufficient: true, singleWriterOwnership: true, netBenefitAfterOverhead: true },
+      } } } },
     ].map((message) => JSON.stringify(message)).join("\n");
     const serverResult = runNode("mcp-server/dist/server.mjs", `${lookupInput}\n`);
     if (serverResult.error || serverResult.status !== 0) {
@@ -138,6 +146,13 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     const lookupEnvelope = lookupResponse?.result?.content?.[0]?.text ? JSON.parse(lookupResponse.result.content[0].text) : null;
     if (lookupEnvelope?.ok !== true || lookupEnvelope.data?.status !== "matched" || lookupEnvelope.data.matches?.length !== 2) {
       throw new Error(`MCP glossary lookup returned an unexpected clean-room result.\n${serverResult.stdout ?? ""}`);
+    }
+    const validationResponse = String(serverResult.stdout).split(/\r?\n/u).filter(Boolean).map((line) => JSON.parse(line)).find((message) => message.id === 3);
+    const validationEnvelope = validationResponse?.result?.content?.[0]?.text ? JSON.parse(validationResponse.result.content[0].text) : null;
+    if (validationEnvelope?.ok !== true || validationEnvelope.data?.structuralValidity !== "valid"
+      || validationEnvelope.data.receiptFound !== false || validationEnvelope.data.receiptBoundToCaller !== null
+      || validationEnvelope.data.authorityCapabilities?.authorityIssuance !== false) {
+      throw new Error(`MCP provenance validation failed its node_modules-free smoke check.\n${serverResult.stdout ?? ""}`);
     }
 
     const workspace = path.join(cleanRoot, "resolver-fixture");

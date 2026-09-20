@@ -156,6 +156,10 @@ const updateCheckInputSchema = {
   },
 } as const;
 
+const sendSessionMessageInputSchema = structuredClone(contractSchemas.sendSessionMessageRequest) as ObjectSchema;
+const sendBodySchema = sendSessionMessageInputSchema.properties?.body as Record<string, unknown> | undefined;
+if (sendBodySchema) sendBodySchema.description = "A non-empty message body limited to 4096 UTF-8 bytes by the service.";
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -221,6 +225,7 @@ function unknownPresence(host: string, sessionId: string): SessionPresence {
     transport: null,
     wakeVisibility: "none",
     canWakeSilently: false,
+    deliveryCapabilities: { supportedInjection: [], idleWake: "none" },
     collaborationId: null,
     workspaceId: null,
     role: null,
@@ -393,6 +398,12 @@ export function createMcpServer(
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
+        name: "validate_collaboration_decision",
+        description: "Validate a collaboration decision structurally and report independent receipt provenance observations without issuing authority or attesting direct user input.",
+        inputSchema: contractSchemas.validateCollaborationDecisionRequest,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
         name: "plan_workflow",
         description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose.",
         inputSchema: planWorkflowToolInputSchema(toolSchemaProfile),
@@ -515,7 +526,7 @@ export function createMcpServer(
       {
         name: "send_session_message",
         description: "Send a bounded, expiring peer message to any local AI host/session through the loopback TLS 1.3 broker. The hook binds the sender identity.",
-        inputSchema: contractSchemas.sendSessionMessageRequest,
+        inputSchema: sendSessionMessageInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
@@ -570,6 +581,17 @@ export function createMcpServer(
             : trust
             ? trust.capabilities()
             : apiError("MCP_UNAVAILABLE", "The trust receipt store is unavailable.");
+          break;
+        case "validate_collaboration_decision":
+          if (!trust) {
+            result = apiError("MCP_UNAVAILABLE", "The trust receipt store is unavailable.");
+            break;
+          }
+          try {
+            result = trust.validateCollaborationDecision(validator.validateCollaborationDecisionRequest(args));
+          } catch (error) {
+            result = invalidInput(error instanceof Error ? error.message : "Collaboration decision validation input is invalid.");
+          }
           break;
         case "plan_workflow":
           result = attested("plan_workflow", (input) => service.planWorkflow(input, true));

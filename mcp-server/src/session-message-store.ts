@@ -3,9 +3,10 @@ import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 
-import { SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
+import { SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
+import type { DeliveryCapabilities, InputObservationKind } from "./input-observation.js";
 
-export const MESSAGE_BODY_MAX_BYTES = 4096;
+export const MESSAGE_BODY_MAX_BYTES = SESSION_MESSAGE_BODY_MAX_BYTES;
 export const MESSAGE_TTL_DEFAULT_SECONDS = 3600;
 export const MESSAGE_TTL_MAX_SECONDS = 86400;
 const MESSAGE_LIMIT = 1000;
@@ -25,9 +26,12 @@ export interface SessionIdentity {
 export interface SessionMessage {
   messageId: string;
   sender: SessionIdentity;
+  recipient: SessionIdentity;
   body: string;
   createdAt: string;
   expiresAt: string;
+  deliveryAttempt: number;
+  firstDeliveredAt: string | null;
 }
 
 export type WakeVisibility = "silent" | "user-message" | "none";
@@ -40,6 +44,7 @@ export interface SessionPresence {
   transport: string | null;
   wakeVisibility: WakeVisibility;
   canWakeSilently: boolean;
+  deliveryCapabilities: DeliveryCapabilities;
   collaborationId: string | null;
   workspaceId: string | null;
   role: string | null;
@@ -67,13 +72,20 @@ function boundedIdentity(value: SessionIdentity): void {
   }
 }
 
-function claimedMessage(row: Record<string, unknown>): SessionMessage {
+function claimedMessage(
+  row: Record<string, unknown>,
+  deliveryAttempt = Number(row.delivery_attempts),
+  firstDeliveredAt = row.first_delivered_at === null ? null : String(row.first_delivered_at),
+): SessionMessage {
   return {
     messageId: String(row.message_id),
     sender: { host: String(row.sender_host), sessionId: String(row.sender_session_id) },
+    recipient: { host: String(row.target_host), sessionId: String(row.target_session_id) },
     body: String(row.body),
     createdAt: String(row.created_at),
     expiresAt: String(row.expires_at),
+    deliveryAttempt,
+    firstDeliveredAt,
   };
 }
 
@@ -107,6 +119,7 @@ export class SessionMessageStore {
       claimed_at TEXT,
       claim_until TEXT,
       delivery_attempts INTEGER NOT NULL DEFAULT 0,
+      first_delivered_at TEXT,
       acknowledged_at TEXT
     ) STRICT;
     CREATE INDEX IF NOT EXISTS messages_target_pending
@@ -136,6 +149,8 @@ export class SessionMessageStore {
       transport TEXT NOT NULL,
       wake_visibility TEXT NOT NULL CHECK (wake_visibility IN ('silent', 'user-message', 'none')),
       can_wake_silently INTEGER NOT NULL CHECK (can_wake_silently IN (0, 1)),
+      supported_injection TEXT NOT NULL DEFAULT '[]',
+      idle_wake TEXT NOT NULL DEFAULT 'none' CHECK (idle_wake IN ('silent', 'user-message', 'none')),
       collaboration_id TEXT,
       workspace_id TEXT,
       role TEXT,
@@ -148,9 +163,34 @@ export class SessionMessageStore {
     ) STRICT;
     CREATE INDEX IF NOT EXISTS session_presence_latest
       ON session_presence (host, session_id, started_at DESC);`);
-    const messageColumns = this.database.prepare("PRAGMA table_info(messages)").all() as Array<{ name: string }>;
-    if (!messageColumns.some((column) => column.name === "delivery_attempts")) {
-      this.database.exec("ALTER TABLE messages ADD COLUMN delivery_attempts INTEGER NOT NULL DEFAULT 0;");
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const messageColumns = this.database.prepare("PRAGMA table_info(messages)").all() as Array<{ name: string }>;
+      if (!messageColumns.some((column) => column.name === "delivery_attempts")) {
+        this.database.exec("ALTER TABLE messages ADD COLUMN delivery_attempts INTEGER NOT NULL DEFAULT 0;");
+      }
+      if (!messageColumns.some((column) => column.name === "first_delivered_at")) {
+        this.database.exec("ALTER TABLE messages ADD COLUMN first_delivered_at TEXT;");
+      }
+      const presenceColumns = this.database.prepare("PRAGMA table_info(session_presence)").all() as Array<{ name: string }>;
+      if (!presenceColumns.some((column) => column.name === "supported_injection")) {
+        this.database.exec("ALTER TABLE session_presence ADD COLUMN supported_injection TEXT NOT NULL DEFAULT '[]';");
+      }
+      if (!presenceColumns.some((column) => column.name === "idle_wake")) {
+        this.database.exec("ALTER TABLE session_presence ADD COLUMN idle_wake TEXT NOT NULL DEFAULT 'none';");
+        this.database.exec("UPDATE session_presence SET idle_wake = wake_visibility;");
+      }
+      this.database.exec(`CREATE TABLE IF NOT EXISTS input_observations (
+        host TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        deferred_tool_claim INTEGER NOT NULL DEFAULT 0 CHECK (deferred_tool_claim IN (0, 1)),
+        observed_at TEXT NOT NULL,
+        PRIMARY KEY (host, session_id)
+      ) STRICT;`);
+      this.database.exec("COMMIT");
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
     }
   }
 
@@ -210,8 +250,7 @@ export class SessionMessageStore {
     return { messageId, createdAt, expiresAt, duplicate: false };
   }
 
-  claim(target: SessionIdentity, nowMs = Date.now(), limits: ClaimLimits = {}): SessionMessage[] {
-    boundedIdentity(target);
+  private claimLocked(target: SessionIdentity, nowMs: number, limits: ClaimLimits): SessionMessage[] {
     const maxMessages = limits.maxMessages ?? CLAIM_MAX_MESSAGES;
     const maxBodyChars = limits.maxBodyChars ?? SESSION_MESSAGE_MAX_RESPONSE_BYTES;
     if (!Number.isInteger(maxMessages) || maxMessages < 1 || maxMessages > CLAIM_MAX_MESSAGES) {
@@ -220,49 +259,141 @@ export class SessionMessageStore {
     if (!Number.isInteger(maxBodyChars) || maxBodyChars < 1 || maxBodyChars > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
       throw new Error(`maxBodyChars must be an integer from 1 to ${SESSION_MESSAGE_MAX_RESPONSE_BYTES}.`);
     }
-    this.prune(nowMs);
     const now = iso(nowMs);
-    const statement = this.database.prepare("UPDATE messages SET claimed_at = ?, claim_until = ?, delivery_attempts = delivery_attempts + 1 WHERE message_id = ? AND acknowledged_at IS NULL AND (claim_until IS NULL OR claim_until <= ?)");
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
-      const rows = this.database.prepare(`SELECT * FROM messages
+    const statement = this.database.prepare(`UPDATE messages SET claimed_at = ?, claim_until = ?,
+      delivery_attempts = delivery_attempts + 1,
+      first_delivered_at = CASE WHEN delivery_attempts = 0 THEN COALESCE(first_delivered_at, ?) ELSE first_delivered_at END
+      WHERE message_id = ? AND acknowledged_at IS NULL AND (claim_until IS NULL OR claim_until <= ?)`);
+    const rows = this.database.prepare(`SELECT * FROM messages
         WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
           AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?)
         ORDER BY created_at ASC LIMIT ?`).all(target.host, target.sessionId, now, now, maxMessages) as Array<Record<string, unknown>>;
-      const selected: Array<Record<string, unknown>> = [];
-      const projected: SessionMessage[] = [];
-      let bodyChars = 0;
-      for (const row of rows) {
-        const message = claimedMessage(row);
-        const next = [...projected, message];
-        if (bodyChars + message.body.length > maxBodyChars || claimResponseBytes(next) > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
-          if (selected.length === 0) throw new Error("The next message exceeds the caller claim budget.");
-          break;
-        }
-        selected.push(row);
-        projected.push(message);
-        bodyChars += message.body.length;
+    const selected: Array<Record<string, unknown>> = [];
+    const projected: SessionMessage[] = [];
+    let bodyChars = 0;
+    for (const row of rows) {
+      const attempts = Number(row.delivery_attempts ?? 0);
+      const firstDeliveredAt = row.first_delivered_at ? String(row.first_delivered_at) : attempts === 0 ? now : null;
+      const message = claimedMessage(row, attempts + 1, firstDeliveredAt);
+      const next = [...projected, message];
+      if (bodyChars + message.body.length > maxBodyChars || claimResponseBytes(next) > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
+        if (selected.length === 0) throw new Error("The next message exceeds the caller claim budget.");
+        break;
       }
-      if (selected.length === 0) {
-        this.database.exec("COMMIT");
-        return [];
-      }
-      const claimed = selected.filter((row) => {
-        const attempts = Number(row.delivery_attempts ?? 0);
-        const leaseMs = Math.min(CLAIM_LEASE_MAX_MS, CLAIM_LEASE_BASE_MS * 2 ** Math.min(attempts, 4));
-        return statement.run(now, iso(nowMs + leaseMs), String(row.message_id), now).changes === 1;
-      });
-      if (claimed.length > 0) {
-        this.database.prepare(`UPDATE wake_nonces SET consumed_at = ?
-          WHERE host = ? AND session_id = ? AND consumed_at IS NULL AND expires_at > ?`)
-          .run(now, target.host, target.sessionId, now);
-      }
+      selected.push(row);
+      projected.push(message);
+      bodyChars += message.body.length;
+    }
+    return selected.flatMap((row) => {
+      const attempts = Number(row.delivery_attempts ?? 0);
+      const leaseMs = Math.min(CLAIM_LEASE_MAX_MS, CLAIM_LEASE_BASE_MS * 2 ** Math.min(attempts, 4));
+      const firstDeliveredAt = row.first_delivered_at ? String(row.first_delivered_at) : attempts === 0 ? now : null;
+      return statement.run(now, iso(nowMs + leaseMs), now, String(row.message_id), now).changes === 1
+        ? [claimedMessage(row, attempts + 1, firstDeliveredAt)]
+        : [];
+    });
+  }
+
+  private consumePendingWakes(target: SessionIdentity, nowMs: number): void {
+    const now = iso(nowMs);
+    this.database.prepare(`UPDATE wake_nonces SET consumed_at = ?
+      WHERE host = ? AND session_id = ? AND consumed_at IS NULL AND expires_at > ?`)
+      .run(now, target.host, target.sessionId, now);
+  }
+
+  claim(target: SessionIdentity, nowMs = Date.now(), limits: ClaimLimits = {}): SessionMessage[] {
+    boundedIdentity(target);
+    this.prune(nowMs);
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const claimed = this.claimLocked(target, nowMs, limits);
+      if (claimed.length > 0) this.consumePendingWakes(target, nowMs);
       this.database.exec("COMMIT");
-      return claimed.map(claimedMessage);
+      return claimed;
     } catch (error) {
       this.database.exec("ROLLBACK");
       throw error;
     }
+  }
+
+  claimWake(target: SessionIdentity, nonces: string[], nowMs = Date.now(), limits: ClaimLimits = {}): { recognized: boolean; messages: SessionMessage[] } {
+    boundedIdentity(target);
+    if (nonces.length < 1 || nonces.length > 10 || nonces.some((nonce) => nonce.length < 16 || nonce.length > 200)) {
+      throw new Error("wake nonces are invalid.");
+    }
+    const digests = [...new Set(nonces.map(nonceDigest))];
+    this.prune(nowMs);
+    const now = iso(nowMs);
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const recognized = digests.every((digest) => Boolean(this.database.prepare(`SELECT 1 FROM wake_nonces
+        WHERE nonce_digest = ? AND host = ? AND session_id = ? AND consumed_at IS NULL AND expires_at > ?`)
+        .get(digest, target.host, target.sessionId, now)));
+      if (!recognized) {
+        this.database.exec("COMMIT");
+        return { recognized: false, messages: [] };
+      }
+      const messages = this.claimLocked(target, nowMs, limits);
+      const consume = this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ? AND consumed_at IS NULL");
+      for (const digest of digests) consume.run(now, digest);
+      this.database.exec("COMMIT");
+      return { recognized: true, messages };
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  observeNativeInput(target: SessionIdentity, nowMs = Date.now()): void {
+    boundedIdentity(target);
+    this.database.prepare(`INSERT INTO input_observations (host, session_id, deferred_tool_claim, observed_at)
+      VALUES (?, ?, 1, ?) ON CONFLICT (host, session_id) DO UPDATE SET deferred_tool_claim = 1, observed_at = excluded.observed_at`)
+      .run(target.host, target.sessionId, iso(nowMs));
+  }
+
+  claimDeferred(target: SessionIdentity, nowMs = Date.now(), limits: ClaimLimits = {}): SessionMessage[] {
+    boundedIdentity(target);
+    this.prune(nowMs);
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const row = this.database.prepare(`SELECT deferred_tool_claim FROM input_observations
+        WHERE host = ? AND session_id = ?`).get(target.host, target.sessionId) as { deferred_tool_claim: number } | undefined;
+      let messages: SessionMessage[] = [];
+      if (row?.deferred_tool_claim === 1) {
+        this.database.prepare(`UPDATE input_observations SET deferred_tool_claim = 0
+          WHERE host = ? AND session_id = ?`).run(target.host, target.sessionId);
+      } else if (row) {
+        this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
+        messages = this.claimLocked(target, nowMs, limits);
+      }
+      if (messages.length > 0) this.consumePendingWakes(target, nowMs);
+      this.database.exec("COMMIT");
+      return messages;
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  claimTurnEnd(target: SessionIdentity, nowMs = Date.now(), limits: ClaimLimits = {}): SessionMessage[] {
+    boundedIdentity(target);
+    this.prune(nowMs);
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
+      const messages = this.claimLocked(target, nowMs, limits);
+      if (messages.length > 0) this.consumePendingWakes(target, nowMs);
+      this.database.exec("COMMIT");
+      return messages;
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  clearDeferred(target: SessionIdentity): void {
+    boundedIdentity(target);
+    this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
   }
 
   acknowledge(target: SessionIdentity, messageIds: string[], nowMs = Date.now()): number {
@@ -288,7 +419,7 @@ export class SessionMessageStore {
     boundedIdentity(sender);
     this.prune(nowMs);
     const row = this.database.prepare(`SELECT message_id, target_host, target_session_id, created_at, expires_at,
-      claimed_at, acknowledged_at FROM messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ?`)
+      claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ?`)
       .get(messageId, sender.host, sender.sessionId) as Record<string, unknown> | undefined;
     if (!row) return null;
     return {
@@ -298,6 +429,8 @@ export class SessionMessageStore {
       expiresAt: row.expires_at,
       claimedAt: row.claimed_at ?? null,
       acknowledgedAt: row.acknowledged_at ?? null,
+      deliveryAttempts: Number(row.delivery_attempts),
+      firstDeliveredAt: row.first_delivered_at ?? null,
       state: row.acknowledged_at ? "acknowledged" : row.claimed_at ? "delivered" : "queued",
     };
   }
@@ -406,6 +539,7 @@ export class SessionMessageStore {
     transport: string;
     wakeVisibility: WakeVisibility;
     canWakeSilently: boolean;
+    deliveryCapabilities?: DeliveryCapabilities;
     collaborationId?: string;
     workspaceId?: string;
     role?: string;
@@ -421,17 +555,19 @@ export class SessionMessageStore {
     }
     const now = iso(nowMs);
     this.database.prepare(`INSERT INTO session_presence (
-      host, session_id, instance_id, transport, wake_visibility, can_wake_silently,
+      host, session_id, instance_id, transport, wake_visibility, can_wake_silently, supported_injection, idle_wake,
       collaboration_id, workspace_id, role, started_at, heartbeat_at, lease_until
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT (host, session_id, instance_id) DO UPDATE SET
       transport = excluded.transport, wake_visibility = excluded.wake_visibility,
-      can_wake_silently = excluded.can_wake_silently, collaboration_id = excluded.collaboration_id,
+      can_wake_silently = excluded.can_wake_silently, supported_injection = excluded.supported_injection,
+      idle_wake = excluded.idle_wake, collaboration_id = excluded.collaboration_id,
       workspace_id = excluded.workspace_id, role = excluded.role,
       heartbeat_at = excluded.heartbeat_at, lease_until = excluded.lease_until,
       ended_at = NULL, end_reason = NULL`).run(
       input.host, input.sessionId, input.instanceId, input.transport, input.wakeVisibility,
-      input.canWakeSilently ? 1 : 0, input.collaborationId ?? null, input.workspaceId ?? null,
+      input.canWakeSilently ? 1 : 0, JSON.stringify(input.deliveryCapabilities?.supportedInjection ?? []),
+      input.deliveryCapabilities?.idleWake ?? input.wakeVisibility, input.collaborationId ?? null, input.workspaceId ?? null,
       input.role ?? null, now, now, iso(nowMs + PRESENCE_LEASE_MS),
     );
     return this.presence(input, nowMs);
@@ -471,6 +607,7 @@ export class SessionMessageStore {
       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
     if (!row) return {
       ...target, instanceId: null, transport: null, wakeVisibility: "none", canWakeSilently: false,
+      deliveryCapabilities: { supportedInjection: [], idleWake: "none" },
       collaborationId: null, workspaceId: null, role: null, startedAt: null, heartbeatAt: null,
       leaseUntil: null, endedAt: null, endReason: null, state: "unknown",
     };
@@ -480,6 +617,10 @@ export class SessionMessageStore {
       host: String(row.host), sessionId: String(row.session_id), instanceId: String(row.instance_id),
       transport: String(row.transport), wakeVisibility: row.wake_visibility as WakeVisibility,
       canWakeSilently: Boolean(row.can_wake_silently), collaborationId: row.collaboration_id === null ? null : String(row.collaboration_id),
+      deliveryCapabilities: {
+        supportedInjection: JSON.parse(String(row.supported_injection)) as InputObservationKind[],
+        idleWake: row.idle_wake as DeliveryCapabilities["idleWake"],
+      },
       workspaceId: row.workspace_id === null ? null : String(row.workspace_id), role: row.role === null ? null : String(row.role),
       startedAt: String(row.started_at), heartbeatAt: String(row.heartbeat_at), leaseUntil,
       endedAt, endReason: row.end_reason === null ? null : String(row.end_reason),

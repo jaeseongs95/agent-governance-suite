@@ -14,7 +14,9 @@ import {
   touchSession,
 } from "../../skills/session-board/scripts/board-store.mjs";
 import { resolveSessionBoardDatabasePath } from "./runtime-config.js";
-import { parseWakeMessages, sessionMessageRequest } from "./session-message-client.js";
+import { sessionMessageRequest } from "./session-message-client.js";
+import { adaptHostInput } from "./host-input-adapter.js";
+import { isObservedSubagent } from "./input-observation.js";
 
 type HookInput = Record<string, unknown>;
 type Board = ReturnType<typeof openBoard>;
@@ -26,32 +28,25 @@ const SHELL_TOOLS = new Set(["Bash", "PowerShell", "shell", "local_shell", "exec
 
 export const GATE_REASON = "세션 현황판: 이 요청에서 무엇을 하는지 한 줄로 먼저 적어야 합니다. update_session_status를 {\"schemaVersion\":\"1.0.0\",\"summary\":\"<무엇을 · 어디서(브랜치) · 다음 외부 작업>\"}로 호출한 뒤 다시 시도하세요. 같은 작업이 이어지면 같은 문장도 됩니다. 도구를 쓸 수 없으면 그대로 다시 시도하세요. 다음 시도는 허용됩니다.";
 
-function text(value: unknown): string {
-  return typeof value === "string" ? value : "";
-}
-
-function record(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
-}
-
 function preToolUse(permissionDecision: "allow" | "deny", extra: Record<string, unknown>): Record<string, unknown> {
   return { hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision, ...extra } };
 }
 
 /** Maps one host hook event onto the board; identity always comes from the hook input, never from the model. */
 export function handleSessionBoardHook(input: HookInput, board: Board, host: string, now: string = new Date().toISOString(), verifiedInternalWake = false): Record<string, unknown> {
-  const sessionId = text(input.session_id);
+  const adapted = adaptHostInput(input, host);
+  const observation = adapted.observation;
+  const sessionId = observation.sessionId;
   if (!sessionId) return {};
-  const session = { host, sessionId, cwd: text(input.cwd) || process.cwd(), now };
-  const event = text(input.hook_event_name);
-  const subagent = text(input.agent_id) !== "";
+  const session = { host, sessionId, cwd: observation.workspaceId || process.cwd(), now };
+  const subagent = isObservedSubagent(observation);
 
-  if (event === "SessionStart") {
+  if (adapted.lifecycle === "start") {
     pruneSessions(board, now);
     touchSession(board, session);
     return {};
   }
-  if (event === "UserPromptSubmit") {
+  if (observation.kind === "user-input") {
     if (!subagent) {
       pruneSessions(board, now);
       if (verifiedInternalWake) touchSession(board, session);
@@ -59,10 +54,10 @@ export function handleSessionBoardHook(input: HookInput, board: Board, host: str
     }
     return {};
   }
-  if (event !== "PreToolUse") return {};
+  if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "before") return {};
 
-  const toolName = text(input.tool_name);
-  const toolInput = record(input.tool_input);
+  const toolName = observation.toolName ?? "";
+  const toolInput = observation.toolInput ?? {};
   const localTool = toolName.split("__").at(-1) ?? "";
   if (toolName.startsWith("mcp__") && BOARD_TOOLS.has(localTool)) {
     if (localTool === "update_session_status") {
@@ -85,20 +80,21 @@ export async function runSessionBoardHook(host: string, raw: string): Promise<st
   let board: Board | null = null;
   try {
     const input = JSON.parse(raw) as HookInput;
+    const observation = adaptHostInput(input, host).observation;
     let verifiedInternalWake = false;
-    if (text(input.hook_event_name) === "UserPromptSubmit") {
-      const parsed = parseWakeMessages(input.prompt);
-      const sessionId = text(input.session_id);
-      let allRecognized = parsed.nonces.length > 0;
+    if (observation.kind === "user-input") {
+      const nonces = observation.wakeCandidates ?? [];
+      const sessionId = observation.sessionId;
+      let allRecognized = nonces.length > 0;
       if (sessionId) {
-        for (const nonce of parsed.nonces) {
+        for (const nonce of nonces) {
           try {
             const result = await sessionMessageRequest<{ consumed: boolean }>("consume-wake", { target: { host, sessionId }, nonce });
             allRecognized &&= result.consumed;
           } catch { allRecognized = false; }
         }
       } else allRecognized = false;
-      verifiedInternalWake = parsed.wakeOnly && allRecognized;
+      verifiedInternalWake = observation.wakeOnly === true && allRecognized;
     }
     board = openBoard(resolveSessionBoardDatabasePath(), { busyTimeoutMs: 500 });
     const output = handleSessionBoardHook(input, board, host, new Date().toISOString(), verifiedInternalWake);

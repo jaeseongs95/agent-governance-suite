@@ -132,6 +132,7 @@ describe("bundled STDIO MCP server", () => {
         "lookup_korean_prose_terms",
         "check_for_updates",
         "get_trust_capabilities",
+        "validate_collaboration_decision",
         "plan_workflow",
         "open_convergence_root",
         "claim_workflow_attempt",
@@ -245,6 +246,7 @@ describe("bundled STDIO MCP server", () => {
         "lookup_korean_prose_terms",
         "check_for_updates",
         "get_trust_capabilities",
+        "validate_collaboration_decision",
         "plan_workflow",
         "open_convergence_root",
         "claim_workflow_attempt",
@@ -283,6 +285,7 @@ describe("bundled STDIO MCP server", () => {
         openWorldHint: true,
       });
       expect(listed.tools.find((tool) => tool.name === "get_workflow_status")?.annotations?.readOnlyHint).toBe(true);
+      expect(listed.tools.find((tool) => tool.name === "validate_collaboration_decision")?.annotations?.readOnlyHint).toBe(true);
       expect(listed.tools.find((tool) => tool.name === "start_workflow")?.annotations?.readOnlyHint).toBe(false);
       expect(listed.tools.find((tool) => tool.name === "prepare_state_cleanup")?.annotations).toMatchObject({
         readOnlyHint: true,

@@ -143,10 +143,14 @@ export class TrustStore {
   }
 
   verify(receipt: InputSourceReceiptV1): boolean {
-    const { integrityToken, ...unsigned } = receipt;
-    const actual = Buffer.from(integrityToken, "base64url");
-    const expected = createHmac("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
-    return actual.length === expected.length && timingSafeEqual(actual, expected);
+    try {
+      const { integrityToken, ...unsigned } = receipt;
+      const actual = Buffer.from(integrityToken, "base64url");
+      const expected = createHmac("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
+      return actual.length === expected.length && timingSafeEqual(actual, expected);
+    } catch {
+      return false;
+    }
   }
 
   close(): void {

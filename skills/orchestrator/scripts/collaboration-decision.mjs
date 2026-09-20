@@ -1,11 +1,6 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { Ajv2020 } from "../../../runtime/schema-validation.mjs";
+import schema from "../contracts/collaboration-decision.v1.schema.json" with { type: "json" };
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const schema = JSON.parse(readFileSync(path.join(root, "contracts", "collaboration-decision.v1.schema.json"), "utf8"));
 const validateSchema = new Ajv2020({ allErrors: true, strict: true }).compile(schema);
 
 const criteriaKeys = [
@@ -41,4 +36,14 @@ export function validateCollaborationDecision(decision) {
   if (!validateSchema(decision)) return (validateSchema.errors ?? []).map((error) => `${error.instancePath || "/"} ${error.message}`);
   const expectedRoute = deriveCollaborationRoute(decision);
   return decision.route === expectedRoute ? [] : [`route must be ${expectedRoute} for the declared directive, benefit criteria, and audit separation.`];
+}
+
+export function collaborationDecisionStructuralDiagnostic(decision) {
+  const errors = validateCollaborationDecision(decision);
+  return {
+    scope: "structural-only",
+    valid: errors.length === 0,
+    errors,
+    diagnostic: "This check validates the schema and deterministic route only; it does not read or authenticate source receipts.",
+  };
 }

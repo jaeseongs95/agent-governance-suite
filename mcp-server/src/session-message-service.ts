@@ -2,6 +2,7 @@ import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/t
 import { randomUUID } from "node:crypto";
 import { sessionMessageRequest } from "./session-message-client.js";
 import type { SessionPresence } from "./session-message-store.js";
+import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
 
 export interface SessionPresenceList {
   sessions: SessionPresence[];
@@ -33,6 +34,9 @@ export class SessionMessageService {
   async send(args: Record<string, unknown>): Promise<ApiResultV1<unknown>> {
     const sender = binding(args._sessionBinding);
     if (!sender) return failure("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
+    if (typeof args.body !== "string" || !args.body.trim() || args.body.includes("\0") || Buffer.byteLength(args.body, "utf8") > SESSION_MESSAGE_BODY_MAX_BYTES) {
+      return failure("INVALID_INPUT", `body must contain 1-${SESSION_MESSAGE_BODY_MAX_BYTES} UTF-8 bytes and no NUL characters.`);
+    }
     try {
       const data = await sessionMessageRequest("send", {
         sender,
@@ -72,7 +76,10 @@ export class SessionMessageService {
   async listPresence(): Promise<ApiResultV1<SessionPresenceList>> {
     try {
       const data = await sessionMessageRequest<SessionPresenceList>("list-presence", {}, this.stateDirectory);
-      return ok(data);
+      return ok({ sessions: data.sessions.map((session) => ({
+        ...session,
+        deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
+      })) });
     } catch (error) {
       return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "Session presence is unavailable.");
     }

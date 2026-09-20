@@ -24,7 +24,21 @@ describe("CollaborationDecision.v1", () => {
     const historical = { ...base(), schemaVersion: "1.0.0", auditSeparationRequired: true, route: "audit-only" };
     expect(validateCollaborationDecision(historical)).toEqual([]);
     expect(validateCollaborationDecision({ ...historical, schemaVersion: "1.1.0", route: "delegate" })).toEqual([]);
+    const historicalPeer = { ...base(), schemaVersion: "1.1.0", sourceOriginKind: "peer", sourceReceiptId: null, userDirective: "unspecified", route: "direct" };
+    expect(validateCollaborationDecision(historicalPeer).length).toBeGreaterThan(0);
     expect(validateCollaborationDecision({ ...historical, fullHistoryContext: { sufficient: true, reason: "Prior decisions" } }).length).toBeGreaterThan(0);
+  });
+
+  it("accepts nullable bounded provenance claims only in 1.2", () => {
+    const artifact = { ...base(), schemaVersion: "1.2.0", sourceOriginKind: "artifact", sourceReceiptId: null, route: "direct" };
+    expect(validateCollaborationDecision(artifact)).toEqual([]);
+    for (const sourceOriginKind of ["unknown", "tool", "delegated"]) {
+      const decision = { ...artifact, sourceOriginKind };
+      expect(validateCollaborationDecision(decision)).toEqual([]);
+      expect(validateCollaborationDecision({ ...decision, userDirective: "require", route: "delegate" }).length).toBeGreaterThan(0);
+    }
+    expect(validateCollaborationDecision({ ...base(), schemaVersion: "1.2.0", userDirective: "require" })).toEqual([]);
+    expect(validateCollaborationDecision({ ...base(), schemaVersion: "1.2.0", userDirective: "forbid", route: "direct" })).toEqual([]);
   });
 
   it("allows sufficient full history only for explicit delegation", () => {

@@ -400,32 +400,91 @@ function parseWakeMessages(value) {
   return { nonces: [...new Set(nonces)], wakeOnly };
 }
 
-// mcp-server/src/session-board-hook.ts
-var BOARD_TOOLS = /* @__PURE__ */ new Set(["update_session_status", "list_session_status"]);
-var GATED_TOOLS = /* @__PURE__ */ new Set(["Edit", "Write", "MultiEdit", "NotebookEdit", "Bash", "PowerShell", "Agent", "Task", "shell", "local_shell", "exec_command", "apply_patch"]);
-var SHELL_TOOLS = /* @__PURE__ */ new Set(["Bash", "PowerShell", "shell", "local_shell", "exec_command"]);
-var GATE_REASON = '\uC138\uC158 \uD604\uD669\uD310: \uC774 \uC694\uCCAD\uC5D0\uC11C \uBB34\uC5C7\uC744 \uD558\uB294\uC9C0 \uD55C \uC904\uB85C \uBA3C\uC800 \uC801\uC5B4\uC57C \uD569\uB2C8\uB2E4. update_session_status\uB97C {"schemaVersion":"1.0.0","summary":"<\uBB34\uC5C7\uC744 \xB7 \uC5B4\uB514\uC11C(\uBE0C\uB79C\uCE58) \xB7 \uB2E4\uC74C \uC678\uBD80 \uC791\uC5C5>"}\uB85C \uD638\uCD9C\uD55C \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694. \uAC19\uC740 \uC791\uC5C5\uC774 \uC774\uC5B4\uC9C0\uBA74 \uAC19\uC740 \uBB38\uC7A5\uB3C4 \uB429\uB2C8\uB2E4. \uB3C4\uAD6C\uB97C \uC4F8 \uC218 \uC5C6\uC73C\uBA74 \uADF8\uB300\uB85C \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694. \uB2E4\uC74C \uC2DC\uB3C4\uB294 \uD5C8\uC6A9\uB429\uB2C8\uB2E4.';
+// mcp-server/src/session-message-relay.ts
+var IDENTITY_RECHECK_MS = 10 * 6e4;
+var WAKE_BACKOFF_MAX_MS = 10 * 6e4;
+
+// mcp-server/src/host-input-adapter.ts
 function text(value) {
   return typeof value === "string" ? value : "";
 }
 function record(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
+function actorObservation(input, host) {
+  if (!Object.hasOwn(input, "agent_id")) return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
+  if (typeof input.agent_id !== "string") return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
+  return {
+    kind: text(input.agent_id) ? "subagent" : "main",
+    observedBy: `${host}:hook-payload`,
+    assurance: "observed"
+  };
+}
+function adaptHostInput(input, host) {
+  const event = text(input.hook_event_name);
+  let kind = "unknown";
+  let lifecycle = "none";
+  let boundaryPhase;
+  if (event === "SessionStart") lifecycle = "start";
+  else if (event === "SessionEnd") {
+    kind = "turn-end";
+    lifecycle = "end";
+  } else if (event === "UserPromptSubmit") kind = "user-input";
+  else if (event === "PreToolUse") {
+    kind = "tool-boundary";
+    boundaryPhase = "before";
+  } else if (event === "PostToolUse") {
+    kind = "tool-boundary";
+    boundaryPhase = "after";
+  } else if (event === "Stop") kind = "turn-end";
+  const wake = kind === "user-input" ? parseWakeMessages(input.prompt) : { nonces: [], wakeOnly: false };
+  const workspaceId = text(input.workspace_id) || text(input.cwd);
+  const collaborationId = text(input.collaboration_id);
+  const role = text(input.role);
+  return {
+    lifecycle,
+    outputEventName: event,
+    observation: {
+      host,
+      sessionId: text(input.session_id),
+      kind,
+      actor: actorObservation(input, host),
+      ...boundaryPhase === void 0 ? {} : { boundaryPhase },
+      ...kind === "tool-boundary" ? { toolName: text(input.tool_name), toolInput: record(input.tool_input) } : {},
+      ...kind === "user-input" ? { wakeCandidates: wake.nonces, wakeOnly: wake.wakeOnly } : {},
+      ...workspaceId ? { workspaceId } : {},
+      ...collaborationId ? { collaborationId } : {},
+      ...role ? { role } : {}
+    }
+  };
+}
+
+// mcp-server/src/input-observation.ts
+function isObservedSubagent(observation) {
+  return observation.actor.kind === "subagent" && observation.actor.assurance === "observed";
+}
+
+// mcp-server/src/session-board-hook.ts
+var BOARD_TOOLS = /* @__PURE__ */ new Set(["update_session_status", "list_session_status"]);
+var GATED_TOOLS = /* @__PURE__ */ new Set(["Edit", "Write", "MultiEdit", "NotebookEdit", "Bash", "PowerShell", "Agent", "Task", "shell", "local_shell", "exec_command", "apply_patch"]);
+var SHELL_TOOLS = /* @__PURE__ */ new Set(["Bash", "PowerShell", "shell", "local_shell", "exec_command"]);
+var GATE_REASON = '\uC138\uC158 \uD604\uD669\uD310: \uC774 \uC694\uCCAD\uC5D0\uC11C \uBB34\uC5C7\uC744 \uD558\uB294\uC9C0 \uD55C \uC904\uB85C \uBA3C\uC800 \uC801\uC5B4\uC57C \uD569\uB2C8\uB2E4. update_session_status\uB97C {"schemaVersion":"1.0.0","summary":"<\uBB34\uC5C7\uC744 \xB7 \uC5B4\uB514\uC11C(\uBE0C\uB79C\uCE58) \xB7 \uB2E4\uC74C \uC678\uBD80 \uC791\uC5C5>"}\uB85C \uD638\uCD9C\uD55C \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694. \uAC19\uC740 \uC791\uC5C5\uC774 \uC774\uC5B4\uC9C0\uBA74 \uAC19\uC740 \uBB38\uC7A5\uB3C4 \uB429\uB2C8\uB2E4. \uB3C4\uAD6C\uB97C \uC4F8 \uC218 \uC5C6\uC73C\uBA74 \uADF8\uB300\uB85C \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694. \uB2E4\uC74C \uC2DC\uB3C4\uB294 \uD5C8\uC6A9\uB429\uB2C8\uB2E4.';
 function preToolUse(permissionDecision, extra) {
   return { hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision, ...extra } };
 }
 function handleSessionBoardHook(input, board, host, now = (/* @__PURE__ */ new Date()).toISOString(), verifiedInternalWake = false) {
-  const sessionId = text(input.session_id);
+  const adapted = adaptHostInput(input, host);
+  const observation = adapted.observation;
+  const sessionId = observation.sessionId;
   if (!sessionId) return {};
-  const session = { host, sessionId, cwd: text(input.cwd) || process.cwd(), now };
-  const event = text(input.hook_event_name);
-  const subagent = text(input.agent_id) !== "";
-  if (event === "SessionStart") {
+  const session = { host, sessionId, cwd: observation.workspaceId || process.cwd(), now };
+  const subagent = isObservedSubagent(observation);
+  if (adapted.lifecycle === "start") {
     pruneSessions(board, now);
     touchSession(board, session);
     return {};
   }
-  if (event === "UserPromptSubmit") {
+  if (observation.kind === "user-input") {
     if (!subagent) {
       pruneSessions(board, now);
       if (verifiedInternalWake) touchSession(board, session);
@@ -433,9 +492,9 @@ function handleSessionBoardHook(input, board, host, now = (/* @__PURE__ */ new D
     }
     return {};
   }
-  if (event !== "PreToolUse") return {};
-  const toolName = text(input.tool_name);
-  const toolInput = record(input.tool_input);
+  if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "before") return {};
+  const toolName = observation.toolName ?? "";
+  const toolInput = observation.toolInput ?? {};
   const localTool = toolName.split("__").at(-1) ?? "";
   if (toolName.startsWith("mcp__") && BOARD_TOOLS.has(localTool)) {
     if (localTool === "update_session_status") {
@@ -455,13 +514,14 @@ async function runSessionBoardHook(host, raw) {
   let board = null;
   try {
     const input = JSON.parse(raw);
+    const observation = adaptHostInput(input, host).observation;
     let verifiedInternalWake = false;
-    if (text(input.hook_event_name) === "UserPromptSubmit") {
-      const parsed = parseWakeMessages(input.prompt);
-      const sessionId = text(input.session_id);
-      let allRecognized = parsed.nonces.length > 0;
+    if (observation.kind === "user-input") {
+      const nonces = observation.wakeCandidates ?? [];
+      const sessionId = observation.sessionId;
+      let allRecognized = nonces.length > 0;
       if (sessionId) {
-        for (const nonce of parsed.nonces) {
+        for (const nonce of nonces) {
           try {
             const result = await sessionMessageRequest("consume-wake", { target: { host, sessionId }, nonce });
             allRecognized &&= result.consumed;
@@ -470,7 +530,7 @@ async function runSessionBoardHook(host, raw) {
           }
         }
       } else allRecognized = false;
-      verifiedInternalWake = parsed.wakeOnly && allRecognized;
+      verifiedInternalWake = observation.wakeOnly === true && allRecognized;
     }
     board = openBoard(resolveSessionBoardDatabasePath(), { busyTimeoutMs: 500 });
     const output = handleSessionBoardHook(input, board, host, (/* @__PURE__ */ new Date()).toISOString(), verifiedInternalWake);

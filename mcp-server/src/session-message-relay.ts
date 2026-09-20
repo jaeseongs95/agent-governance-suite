@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 
 import { newWakeNonce, sessionMessageRequest, wakeMessage } from "./session-message-client.js";
 import { processExists, processIdentityState, type ProcessIdentityState } from "./process-identity.js";
+import type { DeliveryCapabilities } from "./input-observation.js";
 
 const LOOP_MS = 5000;
 const IDENTITY_RECHECK_MS = 10 * 60_000;
@@ -42,9 +43,14 @@ export function transportWakeCapabilities(transport: SessionMessageTransport): {
   wakeVisibility: "silent" | "user-message" | "none";
   canWakeSilently: boolean;
 } {
-  if (transport === "claude-inbox") return { wakeVisibility: "silent", canWakeSilently: true };
-  if (transport === "codex-queue") return { wakeVisibility: "user-message", canWakeSilently: false };
-  return { wakeVisibility: "none", canWakeSilently: false };
+  const idleWake = transportDeliveryCapabilities(transport).idleWake;
+  return { wakeVisibility: idleWake, canWakeSilently: idleWake === "silent" };
+}
+
+export function transportDeliveryCapabilities(transport: SessionMessageTransport): DeliveryCapabilities {
+  if (transport === "claude-inbox") return { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "silent" };
+  if (transport === "codex-queue") return { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" };
+  return { supportedInjection: ["tool-boundary"], idleWake: "none" };
 }
 
 export type WakeDispatchOutcome = "submitted" | "definite-failure" | "accepted-or-unknown";
