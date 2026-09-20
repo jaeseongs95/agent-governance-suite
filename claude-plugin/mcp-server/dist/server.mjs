@@ -16058,10 +16058,18 @@ function scopeEntryOverlaps(left, leftWorkspace, right, rightWorkspace) {
   if (a === b) return true;
   return a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
 }
+function writeSurface(root) {
+  return [
+    ...root.taskEnvelope.scope.included,
+    ...root.taskEnvelope.workUnits.flatMap((unit) => unit.writeTargets),
+    ...root.frame.targetArtifacts.map((artifact) => artifact.locator)
+  ];
+}
 function rootsOverlap(left, right) {
   const sameWorkspace = left.frame.workspace.workspaceId === right.frame.workspace.workspaceId || normalizeWorkspaceLocator(left.frame.workspace.locator) === normalizeWorkspaceLocator(right.frame.workspace.locator);
   if (!sameWorkspace) return false;
-  return left.taskEnvelope.scope.included.some((leftTarget) => right.taskEnvelope.scope.included.some((rightTarget) => scopeEntryOverlaps(
+  const rightSurface = writeSurface(right);
+  return writeSurface(left).some((leftTarget) => rightSurface.some((rightTarget) => scopeEntryOverlaps(
     leftTarget,
     left.frame.workspace.locator,
     rightTarget,
@@ -19253,7 +19261,7 @@ function inlineSchemaReferences(schema, documents) {
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "2.2.2",
+  version: "2.2.3",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
@@ -22304,6 +22312,11 @@ var KOREAN_PROSE_CAPABILITIES = [
 var DETERMINISTIC_CAPABILITIES = /* @__PURE__ */ new Set([
   "korean-prose-finalization"
 ]);
+var USER_GATE_RECEIPT_STATES = /* @__PURE__ */ new Set([
+  "needs-input",
+  "needs-approval",
+  "needs-redesign"
+]);
 var HIGH_ASSURANCE_CAPABILITIES = /* @__PURE__ */ new Set([
   "software-security-audit",
   "independent-deliberation",
@@ -22531,20 +22544,42 @@ var WorkflowService = class {
           });
         }
         if (!proposal.priorFailure || proposal.priorFailure.fingerprint !== latestOutcome.failureFingerprint) {
-          throw new WorkflowContractError("NEW_EVIDENCE_REQUIRED", "A retry must bind the latest failure fingerprint and a discriminating hypothesis.", {
-            expectedFingerprint: latestOutcome.failureFingerprint
-          });
+          this.rejectRetry(
+            root,
+            {
+              epoch: root.currentEpoch,
+              reason: "stale-fingerprint",
+              actorId: proposal.actorId,
+              expectedFingerprint: latestOutcome.failureFingerprint,
+              targetDigest: proposedDigests.targetDigest,
+              evidenceRefs: proposal.priorFailure?.evidenceRefs ?? [],
+              rejectedAt: (/* @__PURE__ */ new Date()).toISOString()
+            },
+            "A retry must bind the latest failure fingerprint and a discriminating hypothesis.",
+            { expectedFingerprint: latestOutcome.failureFingerprint }
+          );
         }
         const priorLease = attempts.at(-1);
         const priorProposal = snapshot.proposals.find((item) => convergenceDigest(item) === priorLease.proposalDigest);
         const sameTarget = proposedDigests.targetDigest === priorLease.targetDigest;
-        const oldEvidence = new Set(priorProposal?.priorFailure?.evidenceRefs ?? []);
+        const burned = (root.retryRejections ?? []).filter((item) => item.reason === "stale-evidence").flatMap((item) => item.evidenceRefs);
+        const oldEvidence = /* @__PURE__ */ new Set([...priorProposal?.priorFailure?.evidenceRefs ?? [], ...burned]);
         const hasNewEvidence = proposal.priorFailure.evidenceRefs.some((reference) => !oldEvidence.has(reference));
         if (sameTarget && !hasNewEvidence) {
-          throw new WorkflowContractError("NEW_EVIDENCE_REQUIRED", "The proposed retry changes neither the target nor the observed evidence.", {
-            rootId: root.rootId,
-            route: "diagnose"
-          });
+          this.rejectRetry(
+            root,
+            {
+              epoch: root.currentEpoch,
+              reason: "stale-evidence",
+              actorId: proposal.actorId,
+              expectedFingerprint: latestOutcome.failureFingerprint,
+              targetDigest: proposedDigests.targetDigest,
+              evidenceRefs: proposal.priorFailure.evidenceRefs,
+              rejectedAt: (/* @__PURE__ */ new Date()).toISOString()
+            },
+            "The proposed retry changes neither the target nor the observed evidence.",
+            { rootId: root.rootId, route: "diagnose" }
+          );
         }
       }
       const now = /* @__PURE__ */ new Date();
@@ -22678,7 +22713,7 @@ var WorkflowService = class {
       this.assertReviewRoute(review);
       const updatedRoot = bumpedRoot(root, review.reviewedAt);
       if (review.route === "stop") {
-        updatedRoot.state = "abandoned";
+        updatedRoot.state = "needs-user";
       } else if (review.classification === "semantics-changing" || review.route === "needs-user") {
         updatedRoot.state = "needs-user";
       } else if (review.route === "panel" || review.route === "diagnose") {
@@ -22793,7 +22828,7 @@ var WorkflowService = class {
             `Stage '${target.stageId}' has no execution assurance requirement and cannot pass through the strict MCP boundary.`
           );
         }
-        if (requireTrustedExecutionContext && result.state === "passed" && target.executionRequirement?.kind === "semantic") {
+        if (requireTrustedExecutionContext && target.executionRequirement?.kind === "semantic") {
           const binding2 = {
             phase: "stage",
             taskId: receipt.plan.taskId,
@@ -22801,17 +22836,19 @@ var WorkflowService = class {
             stageId: target.stageId,
             revision: result.expectedRevision
           };
-          trustedStageContext = this.observeTrustedExecutionContext(
-            binding2,
-            `Stage '${target.stageId}'`
-          );
-          this.assertTrustedExecutionContext(
-            target.executionRequirement,
-            trustedStageContext,
-            `Stage '${target.stageId}'`,
-            binding2
-          );
-          result.executionContext = clone2(trustedStageContext);
+          const subject = `Stage '${target.stageId}'`;
+          const enforced = result.state === "passed";
+          trustedStageContext = enforced ? this.observeTrustedExecutionContext(binding2, subject) : this.observeExecutionContext(binding2);
+          if (trustedStageContext) {
+            this.assertTrustedExecutionContext(
+              target.executionRequirement,
+              trustedStageContext,
+              subject,
+              binding2,
+              enforced
+            );
+            result.executionContext = clone2(trustedStageContext);
+          }
         }
         const checked = loadedOutput === void 0 ? result : { ...result, output: { ...result.output, output: loadedOutput } };
         this.assertPlannedInputsAvailable(receipt, target);
@@ -23339,8 +23376,13 @@ var WorkflowService = class {
       observationRequired: true
     };
   }
-  observeTrustedExecutionContext(binding2, subject) {
+  /** What the host observed, or null when it observed nothing. */
+  observeExecutionContext(binding2) {
     const context = this.trustedExecutionContextProvider?.observe(binding2) ?? null;
+    return context ? clone2(context) : null;
+  }
+  observeTrustedExecutionContext(binding2, subject) {
+    const context = this.observeExecutionContext(binding2);
     if (!context) {
       throw new WorkflowContractError(
         "BINDING_REQUIRED",
@@ -23348,10 +23390,10 @@ var WorkflowService = class {
         { binding: binding2 }
       );
     }
-    return clone2(context);
+    return context;
   }
-  assertTrustedExecutionContext(requirement, context, subject, binding2) {
-    this.assertExecutionContext(requirement, context, subject);
+  assertTrustedExecutionContext(requirement, context, subject, binding2, enforceMinimum = true) {
+    this.assertExecutionContext(requirement, context, subject, enforceMinimum);
     this.assertTrustedExecutionBinding(context, subject, binding2);
     this.assertTrustedExecutionFreshness(context, subject);
   }
@@ -23422,7 +23464,7 @@ var WorkflowService = class {
       }
     }
   }
-  assertExecutionContext(requirement, context, subject) {
+  assertExecutionContext(requirement, context, subject, enforceMinimum = true) {
     if (requirement.kind === "deterministic") return;
     if (!context) {
       throw new WorkflowContractError(
@@ -23447,6 +23489,7 @@ var WorkflowService = class {
         { requirement }
       );
     }
+    if (!enforceMinimum) return;
     const modelClassRank = MODEL_CLASS.indexOf(context.modelClass);
     const minimumModelClassRank = MODEL_CLASS.indexOf(minimumModelClass);
     const reasoningRank = REASONING_EFFORT.indexOf(context.reasoningEffort);
@@ -23590,6 +23633,24 @@ var WorkflowService = class {
     this.assertReceipt(receipt);
     return receipt;
   }
+  /** Records a rejected retry on the root before failing, so its evidence cannot return as new. */
+  rejectRetry(root, entry, message, details) {
+    const recorded = root.retryRejections ?? [];
+    const identity = (item) => convergenceDigest({ ...item, rejectedAt: "" });
+    let rootRevision = root.revision;
+    if (!recorded.some((item) => identity(item) === identity(entry))) {
+      const updated = bumpedRoot(root, entry.rejectedAt);
+      updated.retryRejections = [...recorded, entry];
+      this.validator.convergenceRoot(updated);
+      if (!this.store.updateConvergenceRoot(updated, root.revision)) {
+        throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while recording the rejected retry.", {
+          rootId: root.rootId
+        });
+      }
+      rootRevision = updated.revision;
+    }
+    throw new WorkflowContractError("NEW_EVIDENCE_REQUIRED", message, { ...details, rootRevision });
+  }
   moveRootToReview(root) {
     const updated = bumpedRoot(root, (/* @__PURE__ */ new Date()).toISOString());
     updated.state = "needs-review";
@@ -23676,10 +23737,14 @@ var WorkflowService = class {
     const passed = receipt.state === "passed";
     const state = passed ? "passed" : aborted2 ? "aborted" : "failed";
     const attemptsUsed = consumedLeases(this.requireConvergenceSnapshot(root.rootId), root.currentEpoch).length;
-    if (!["needs-review", "needs-user", "abandoned"].includes(root.state)) {
-      if (passed) root.state = "completed";
-      else if (attemptsUsed >= root.frame.operationalSettings.maxAttemptsPerEpoch) root.state = "needs-review";
-      else root.state = "open";
+    const needsUser = USER_GATE_RECEIPT_STATES.has(receipt.state);
+    if (!["needs-user", "abandoned"].includes(root.state)) {
+      if (needsUser) root.state = "needs-user";
+      else if (root.state !== "needs-review") {
+        if (passed) root.state = "completed";
+        else if (attemptsUsed >= root.frame.operationalSettings.maxAttemptsPerEpoch) root.state = "needs-review";
+        else root.state = "open";
+      }
     }
     const failureFingerprint = passed ? null : convergenceDigest({
       state: receipt.state,
