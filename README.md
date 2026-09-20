@@ -9,6 +9,8 @@ Agent Governance Suite는 여러 AI 호스트의 긴 작업에서 범위를 관�
 같은 기준을 세션 하나 밖으로 넓힙니다. 한 대의 컴퓨터에서 여러 에이전트 세션이 같은 저장소나 설치를 동시에 다루면서 서로의 작업을 모르면, 각 세션이 자기 검사를 통과해도 결과는 어긋날 수 있습니다. 그래서 모든 호스트가 세션 현황판 하나를 함께 쓰고, 세션끼리 로컬 TLS 채널로 직접 메시지를 주고받습니다.
 
 <!-- release-version:start -->
+v2.2.1은 v2.2.0의 동작을 유지하는 patch 릴리스입니다. Claude 생성물에서 Codex 전용 스킬 메타데이터를 제외해 호스트 경계를 다시 맞추고, 한·영 README의 스킬 표를 현재 registry와 source lock에 맞춥니다.
+
 v2.2.0은 세션 메시지의 본문을 주입하기 전에 출처 영수증을 기록하고, 이 영수증을 권한·승인·위임과 분리합니다. 영수증 저장소에는 원문 대신 digest와 제한된 메타데이터만 남고, peer 입력은 권한을 만들지 않습니다. 세션 현황에는 정확한 실행 instance에 결속된 presence가 함께 표시되며, 오래된 instance의 종료 신호가 새 instance를 종료하지 못합니다. Codex wake는 기본적으로 다음 사용자 turn까지 지연되고, 보이는 queue wake는 명시적으로 켜야 합니다. collaboration 판단은 현재 사용자 turn과 비권한 출처를 구분하며, blocker 진단의 확정 근본 조건은 recovery 전략과 새 작업 seed까지 digest로 이어집니다.
 
 v2.1.0은 같은 컴퓨터에서 일하는 AI 호스트 세션들이 서로에게 직접 메시지를 보낼 수 있게 합니다. 로컬 TLS 1.3 broker가 본문을 보관하고 수신 측이 ACK할 때까지 전달을 추적하며, 호스트를 깨우는 wake bell은 target마다 소비되지 않은 것 하나만 예약해 같은 대기 구간에서 알림이 반복해 쌓이지 않습니다. 세션 현황판과 broker 상태는 모든 호스트가 함께 쓰는 `~/.agent-governance-suite` 아래에 둡니다. Codex의 새 사용자 요청은 `UserPromptSubmit` 훅으로 기록해, 같은 세션의 다음 변경 전에 현황판 한 줄을 다시 갱신하도록 요청 경계를 맞춥니다. v2.1.1은 세션 메시지 본문에 NUL 문자가 들어가면 보내는 단계에서 거부해, 플랫폼마다 `node:sqlite` 동작이 달라지는 경우를 없앱니다. 또 Windows에서 프로세스 시작 토큰을 더 가벼운 방법으로 읽어, 느린 환경에서 relay가 자기 호스트를 확인하지 못하던 문제를 고칩니다. v2.1.2는 실제 OS 토큰을 읽는 확인을 병렬 테스트에서 떼어 전용 단계로 옮겨 검증 결과가 기계 부하에 흔들리지 않게 하고, 느린 Windows 환경에서 broker가 준비될 때까지 더 기다립니다. 첫 메시지를 보낼 때 broker 기동이 늦어 실패하던 경우가 줄어듭니다.
@@ -19,7 +21,7 @@ v2.1.0은 같은 컴퓨터에서 일하는 AI 호스트 세션들이 서로에�
 
 지난 릴리스의 변경 내역은 [`docs/`](docs/)의 릴리스 노트에 있습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 
-현재 공개 릴리스는 `v2.2.0`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+현재 공개 릴리스는 `v2.2.1`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -60,7 +62,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.2.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.2.1
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
