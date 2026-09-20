@@ -53,6 +53,10 @@ function isExcludedSkillPath(relativePath) {
   return EXCLUDED_SKILLS.some((skill) => relativePath.startsWith(`skills/${skill}/`));
 }
 
+function isCodexOnlySkillPath(relativePath) {
+  return /^skills\/[^/]+\/agents\/openai\.yaml$/u.test(relativePath);
+}
+
 function isModelVisible(relativePath) {
   return /^skills\/[^/]+\/SKILL\.md$/u.test(relativePath)
     || /^skills\/[^/]+\/references\/.+\.md$/u.test(relativePath)
@@ -204,7 +208,7 @@ export async function renderClaudePlugin(root = ROOT) {
 
   for (const relativePath of tracked) {
     const shared = SHARED_FILES.includes(relativePath) || SHARED_ROOTS.some((prefix) => relativePath.startsWith(prefix));
-    if (!shared || isExcludedSkillPath(relativePath)) continue;
+    if (!shared || isExcludedSkillPath(relativePath) || isCodexOnlySkillPath(relativePath)) continue;
     let content = await readFile(path.join(root, relativePath));
     if (relativePath === "skills/registry.json") {
       registry = withoutExcludedSkills(JSON.parse(content.toString("utf8")), "skills");

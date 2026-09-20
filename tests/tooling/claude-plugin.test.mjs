@@ -12,6 +12,7 @@ import {
   findCodexOnlyWording,
   mapSkillInvocations,
   OUTPUT_DIRECTORY,
+  renderClaudePlugin,
   replaceFrontmatterDescription,
   reportClaudePluginDrift,
 } from "../../scripts/build-claude-plugin.mjs";
@@ -247,6 +248,11 @@ describe("generated Claude plugin", () => {
 });
 
 describe("Claude overlay safeguards", () => {
+  it("does not render Codex-only OpenAI agent metadata", async () => {
+    const files = await renderClaudePlugin(root);
+    expect([...files.keys()].filter((file) => /^skills\/[^/]+\/agents\/openai\.yaml$/u.test(file))).toEqual([]);
+  });
+
   it("reports Codex-only wording in model-visible files except dual-host documents", () => {
     const files = new Map([
       ["skills/example/SKILL.md", Buffer.from("Use `fork_turns:none` for reviewers.\n")],

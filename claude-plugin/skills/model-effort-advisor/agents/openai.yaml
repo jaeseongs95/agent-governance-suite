@@ -1,7 +1,0 @@
-interface:
-  display_name: "Model Effort Advisor"
-  short_description: "요청에 맞는 모델과 추론 수준을 조용히 점검"
-  default_prompt: "Use $model-effort-advisor to check whether my current model and reasoning effort fit this request."
-
-policy:
-  allow_implicit_invocation: true
