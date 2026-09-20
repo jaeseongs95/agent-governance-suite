@@ -9,7 +9,7 @@ Agent Governance Suite는 여러 AI 호스트의 긴 작업에서 범위를 관�
 같은 기준을 세션 하나 밖으로 넓힙니다. 한 대의 컴퓨터에서 여러 에이전트 세션이 같은 저장소나 설치를 동시에 다루면서 서로의 작업을 모르면, 각 세션이 자기 검사를 통과해도 결과는 어긋날 수 있습니다. 그래서 모든 호스트가 세션 현황판 하나를 함께 쓰고, 세션끼리 로컬 TLS 채널로 직접 메시지를 주고받습니다.
 
 <!-- release-version:start -->
-v2.1.0은 같은 컴퓨터에서 일하는 AI 호스트 세션들이 서로에게 직접 메시지를 보낼 수 있게 합니다. 로컬 TLS 1.3 broker가 본문을 보관하고 수신 측이 ACK할 때까지 전달을 추적하며, 호스트를 깨우는 wake bell은 target마다 소비되지 않은 것 하나만 예약해 같은 대기 구간에서 알림이 반복해 쌓이지 않습니다. 세션 현황판과 broker 상태는 모든 호스트가 함께 쓰는 `~/.agent-governance-suite` 아래에 둡니다. Codex의 새 사용자 요청은 `UserPromptSubmit` 훅으로 기록해, 같은 세션의 다음 변경 전에 현황판 한 줄을 다시 갱신하도록 요청 경계를 맞춥니다. v2.1.1은 세션 메시지 본문에 NUL 문자가 들어가면 보내는 단계에서 거부해, 플랫폼마다 `node:sqlite` 동작이 달라지는 경우를 없앱니다. 또 Windows에서 프로세스 시작 토큰을 더 가벼운 방법으로 읽어, 느린 환경에서 relay가 자기 호스트를 확인하지 못하던 문제를 고칩니다.
+v2.1.0은 같은 컴퓨터에서 일하는 AI 호스트 세션들이 서로에게 직접 메시지를 보낼 수 있게 합니다. 로컬 TLS 1.3 broker가 본문을 보관하고 수신 측이 ACK할 때까지 전달을 추적하며, 호스트를 깨우는 wake bell은 target마다 소비되지 않은 것 하나만 예약해 같은 대기 구간에서 알림이 반복해 쌓이지 않습니다. 세션 현황판과 broker 상태는 모든 호스트가 함께 쓰는 `~/.agent-governance-suite` 아래에 둡니다. Codex의 새 사용자 요청은 `UserPromptSubmit` 훅으로 기록해, 같은 세션의 다음 변경 전에 현황판 한 줄을 다시 갱신하도록 요청 경계를 맞춥니다. v2.1.1은 세션 메시지 본문에 NUL 문자가 들어가면 보내는 단계에서 거부해, 플랫폼마다 `node:sqlite` 동작이 달라지는 경우를 없앱니다. 또 Windows에서 프로세스 시작 토큰을 더 가벼운 방법으로 읽어, 느린 환경에서 relay가 자기 호스트를 확인하지 못하던 문제를 고칩니다. v2.1.2는 동작을 바꾸지 않습니다. 실제 OS 토큰을 읽는 확인을 병렬 테스트에서 떼어 전용 단계로 옮겨, 검증 결과가 기계 부하에 흔들리지 않게 했습니다.
 
 - v2.0.0 — 세션 현황판을 두 호스트가 함께 쓰도록 바꾸면서 신뢰 경계를 확장한 major 릴리스
 - v1.21.0 — 같은 컴퓨터에서 동시에 일하는 세션들이 서로의 작업을 알 수 있도록 세션 현황판(`session-board`)을 도입
@@ -17,7 +17,7 @@ v2.1.0은 같은 컴퓨터에서 일하는 AI 호스트 세션들이 서로에�
 
 지난 릴리스의 변경 내역은 [`docs/`](docs/)의 릴리스 노트에 있습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 
-현재 공개 릴리스는 `v2.1.1`이며 거버넌스 전문 스킬 15개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+현재 공개 릴리스는 `v2.1.2`이며 거버넌스 전문 스킬 15개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -58,7 +58,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.1.1
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.1.2
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
