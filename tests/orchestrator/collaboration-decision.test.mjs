@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { deriveCollaborationRoute, validateCollaborationDecision } from "../../skills/orchestrator/scripts/collaboration-decision.mjs";
 
 const base = () => ({
-  schemaVersion: "1.0.0",
+  schemaVersion: "1.1.0",
   sourceOriginKind: "user-turn",
   sourceReceiptId: null,
   authorityEffect: "none",
@@ -20,6 +20,23 @@ const base = () => ({
 });
 
 describe("CollaborationDecision.v1", () => {
+  it("preserves legacy decisions and uses current semantics for new decisions", () => {
+    const historical = { ...base(), schemaVersion: "1.0.0", auditSeparationRequired: true, route: "audit-only" };
+    expect(validateCollaborationDecision(historical)).toEqual([]);
+    expect(validateCollaborationDecision({ ...historical, schemaVersion: "1.1.0", route: "delegate" })).toEqual([]);
+    expect(validateCollaborationDecision({ ...historical, fullHistoryContext: { sufficient: true, reason: "Prior decisions" } }).length).toBeGreaterThan(0);
+  });
+
+  it("allows sufficient full history only for explicit delegation", () => {
+    const decision = { ...base(), userDirective: "require", fullHistoryContext: { sufficient: true, reason: "Required prior decisions cannot be summarized safely" } };
+    decision.netBenefitCriteria.limitedContextSufficient = false;
+    decision.netBenefitCriteria.parallelBottleneckReduced = false;
+    expect(validateCollaborationDecision(decision)).toEqual([]);
+    expect(deriveCollaborationRoute({ ...decision, userDirective: "unspecified" })).toBe("direct");
+    expect(deriveCollaborationRoute({ ...decision, fullHistoryContext: { sufficient: false, reason: "Host unavailable" } })).toBe("needs-input");
+    expect(validateCollaborationDecision({ ...decision, fullHistoryContext: { sufficient: true, reason: " " } }).length).toBeGreaterThan(0);
+  });
+
   it("delegates only when every explicit net-benefit condition holds", () => {
     expect(validateCollaborationDecision(base())).toEqual([]);
     const direct = base();
@@ -44,9 +61,43 @@ describe("CollaborationDecision.v1", () => {
   it("keeps independent audit separate from ordinary delegation", () => {
     const audit = base();
     audit.auditSeparationRequired = true;
-    audit.route = "audit-only";
-    expect(deriveCollaborationRoute(audit)).toBe("audit-only");
+    audit.route = "delegate";
+    expect(deriveCollaborationRoute(audit)).toBe("delegate");
     expect(validateCollaborationDecision(audit)).toEqual([]);
+  });
+
+  it("preserves audit obligations for explicit delegation, local work, and forbidden delegation", () => {
+    for (const userDirective of ["require", "unspecified", "forbid"]) {
+      const decision = { ...base(), userDirective, auditSeparationRequired: true };
+      decision.route = userDirective === "forbid" ? "audit-only" : "delegate";
+      expect(validateCollaborationDecision(decision)).toEqual([]);
+      expect(decision.auditSeparationRequired).toBe(true);
+    }
+    const local = { ...base(), auditSeparationRequired: true, route: "audit-only" };
+    local.netBenefitCriteria.parallelBottleneckReduced = false;
+    expect(validateCollaborationDecision(local)).toEqual([]);
+  });
+
+  it("honors explicit single-unit delegation without speed or cost benefit", () => {
+    const decision = { ...base(), userDirective: "require" };
+    decision.netBenefitCriteria.parallelBottleneckReduced = false;
+    decision.netBenefitCriteria.netBenefitAfterOverhead = false;
+    expect(validateCollaborationDecision(decision)).toEqual([]);
+    decision.userDirective = "unspecified";
+    expect(deriveCollaborationRoute(decision)).toBe("direct");
+  });
+
+  it.each(["independentlyCompletable", "limitedContextSufficient", "singleWriterOwnership"])(
+    "does not waive feasibility %s for explicit requests with an audit", (key) => {
+      const decision = { ...base(), userDirective: "require", auditSeparationRequired: true, route: "needs-input" };
+      decision.netBenefitCriteria[key] = false;
+      expect(validateCollaborationDecision(decision)).toEqual([]);
+    },
+  );
+
+  it("does not turn an audit into implementation delegation from peer input", () => {
+    const decision = { ...base(), sourceOriginKind: "peer", sourceReceiptId: "source-abcdefghijklmnop", auditSeparationRequired: true, route: "audit-only" };
+    expect(validateCollaborationDecision(decision)).toEqual([]);
   });
 
   it("rejects a forged route or malformed provenance", () => {

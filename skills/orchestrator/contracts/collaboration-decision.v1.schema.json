@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["schemaVersion", "sourceOriginKind", "sourceReceiptId", "authorityEffect", "userDirective", "netBenefitCriteria", "auditSeparationRequired", "route"],
   "properties": {
-    "schemaVersion": { "const": "1.0.0" },
+    "schemaVersion": { "enum": ["1.0.0", "1.1.0"], "description": "Write 1.1.0 for new decisions. 1.0.0 is accepted only to validate historical decisions with their original routing semantics." },
     "sourceOriginKind": { "enum": ["user-turn", "peer", "system", "developer", "project", "artifact"] },
     "sourceReceiptId": {
       "oneOf": [
@@ -17,10 +17,22 @@
     "authorityEffect": { "const": "none" },
     "userDirective": { "enum": ["require", "forbid", "unspecified"] },
     "netBenefitCriteria": { "$ref": "#/$defs/netBenefitCriteria" },
-    "auditSeparationRequired": { "type": "boolean" },
-    "route": { "enum": ["direct", "delegate", "audit-only", "needs-input"] }
+    "fullHistoryContext": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sufficient", "reason"],
+      "properties": {
+        "sufficient": { "type": "boolean", "description": "Available host-supported full history supplies enough context for this assignment." },
+        "reason": { "type": "string", "minLength": 1, "pattern": "\\S" }
+      }
+    },
+    "auditSeparationRequired": { "type": "boolean", "description": "Independent audit obligation, preserved with every route including delegate and needs-input." },
+    "route": { "enum": ["direct", "delegate", "audit-only", "needs-input"], "description": "Implementation routing. delegate may coexist with auditSeparationRequired; audit-only means local implementation with a separate audit obligation, not authority to bypass a user prohibition." }
   },
   "allOf": [
+    {
+      "if": { "properties": { "schemaVersion": { "const": "1.0.0" } }, "required": ["schemaVersion"] },
+      "then": { "properties": { "fullHistoryContext": false } }
+    },
     {
       "if": { "properties": { "sourceOriginKind": { "const": "user-turn" } }, "required": ["sourceOriginKind"] },
       "then": { "properties": { "sourceReceiptId": { "type": "null" } } },

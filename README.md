@@ -146,7 +146,7 @@ Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다
 | 시작 전 | [`instruction-scope-resolver`](https://github.com/jaeseongs95/instruction-scope-resolver/tree/v1.0.0) | 1.0.0 | 작업 대상에 적용되는 지침의 범위와 우선순위를 확인합니다. |
 | 시작 전 | [`workspace-convention-profiler`](https://github.com/jaeseongs95/workspace-convention-profiler/tree/v1.0.0) | 1.0.0 | 저장소의 구조, 도구, 관례, 검증 명령을 조사합니다. |
 | 시작 전 | [`task-contract`](https://github.com/jaeseongs95/task-contract/tree/b14ffb36ed3be96cc4694d0b36054f21f69b577a) | 1.1.0 | 요청의 목표, 범위, 수용 기준, 위험도, 권한을 구조화하고 출처 영수증을 권한과 분리합니다. |
-| 진행 중 | [`coordinate-subagents`](https://github.com/jaeseongs95/coordinate-subagents/tree/v1.1.0/skills/coordinate-subagents) | 1.1.0 | 독립 작업을 나누고 담당 영역과 검증 책임을 정합니다. |
+| 진행 중 | [`coordinate-subagents`](https://github.com/jaeseongs95/coordinate-subagents/tree/v1.1.0/skills/coordinate-subagents) | 1.1.0 | 독립 작업의 병렬 위임, 담당 영역·검증 책임과 모델 설정 적용 기록을 관리합니다. |
 | 진행 중 | [`independent-deliberation-panel`](https://github.com/jaeseongs95/independent-deliberation-panel/tree/v1.0.0) | 1.0.0 | 복잡한 결정의 근거와 반론을 여러 독립 관점에서 검토합니다. |
 | 수렴 검토 | [`iteration-frame-auditor`](https://github.com/jaeseongs95/agent-governance-suite/tree/560aea5739887a0bb279ff3c5286b1acea296ff0/skills/iteration-frame-auditor) | 1.0.0 | 반복 시도의 계약과 frame 변경을 독립적으로 비교해 새 epoch 허용 여부를 판정합니다. |
 | 변경 전후 | [`change-scope-guardian`](https://github.com/jaeseongs95/change-scope-guardian/tree/v1.0.0) | 1.0.0 | 변경 전 기준선과 현재 Git 변경 사항을 비교해 요청 범위 밖의 파일을 찾습니다. |

@@ -13,11 +13,13 @@
         "value": "v1.1.0",
         "commit": "404ed8738216d047265f960c8dacb9c7d8cfa8af"
       },
-      "updatePolicy": "auto-pr",
+      "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:6298059722111d33add2d1933ad0fc0ae166e477f27aa5b976b8b12e8185f1bd",
-      "integratedChecksum": "sha256:6298059722111d33add2d1933ad0fc0ae166e477f27aa5b976b8b12e8185f1bd",
+      "integratedChecksum": "sha256:f38e1ffc462311ff797168092f40a28ccfebfc84d9fe132e00154d5e13878a51",
       "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents",
-      "downstreamModifications": []
+      "downstreamModifications": [
+        "Separate explicit delegation feasibility from automatic net benefit; track model dispatch evidence and useful parallel execution with a dependency-free routing CLI."
+      ]
     },
     {
       "skillId": "independent-audit-gate",
