@@ -334,8 +334,8 @@
       "versionSource": "skill-metadata",
       "ref": {
         "kind": "commit",
-        "value": "ba2e494329a924e98175956af1a54fe6a42c6fc0",
-        "commit": "ba2e494329a924e98175956af1a54fe6a42c6fc0"
+        "value": "7c48fdaff8a8e08ca1209591bc5cac2fa7310f32",
+        "commit": "7c48fdaff8a8e08ca1209591bc5cac2fa7310f32"
       },
       "updatePolicy": "internal",
       "upstreamChecksum": "sha256:7346de58a9bdc9b8e5d283687326bacecf980f7997f4458b28782b69216d76a5",
