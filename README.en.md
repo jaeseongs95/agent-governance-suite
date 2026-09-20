@@ -4,10 +4,20 @@
 
 Agent Governance Suite is a set of local plugins that keeps scope, risky changes, verification evidence, and independent review in one workflow across AI hosts. Shared skills, contracts, and MCP tools are host-neutral; Codex, Claude Code, and other runtime differences stay in adapters and overlays.
 
-When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed.
+When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed. The premise of this plugin is that such a judgement must not rest on instructions alone. The local MCP server freezes the plan, then checks stage order, result shapes, evidence, and audit conditions itself, and refuses a stage that does not meet them.
+
+The same standard reaches past a single session. When several agent sessions on one computer work on the same repository or installation without knowing about each other, each can pass its own checks and still produce results that do not fit together. So every host shares one session board, and sessions message each other directly over a local TLS channel.
 
 <!-- release-version:start -->
-The current public release is `v2.1.0` and includes fifteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow. v2.0.1 records each new Codex user request through the `UserPromptSubmit` hook, restoring the request boundary that requires a fresh board summary before the session's next mutation. A 2026-09-19 Codex desktop check verified the trusted hook's first shell-call denial, MCP input binding, and the shared Claude Code and Codex session listing. v2.0.0 was the major release that made both hosts share one board and expanded the trust boundary. v1.21.0 added the session board (`session-board`) so sessions working on the same machine can see each other's work. Each session keeps its session id, working directory and a one-line current-work summary in local SQLite, readable through `list_session_status`. For each user request, `update_session_status` must be called before the first file change, command or subagent run; otherwise the hook denies that call once. v1.20.3 made high-impact Claude Code work plan as orchestrated workflows: the orchestrator guidance now says to write `orchestration.requested: true` and to record every required artifact of a stage. `record_stage_result` also accepts artifact digests with or without the `sha256:` prefix, whichever form the provider declares, which reduces avoidable rejections. v1.20.2 refactored the MCP server and repository scripts without changing behavior: MCP tools, schemas, and the SQLite format are unchanged, and the continuity hook bundle drops the unused schema validator (now about 90 KB). v1.20.1 fixed host attestation in interactive Claude Code sessions, where it always failed and orchestrated workflows could not start. Interactive sessions write the message that issued a tool call to the transcript only after the call returns, so the hook now attests from the current model it recorded at session start or model switch, or from the latest message already written. v1.20.0 attached the MIT-licensed `ponytail` skill to the implementation step: the orchestrator requests the `minimal-implementation` capability for requests that write or change code, and the skill instructs the agent to pick the simplest implementation without unneeded features, abstractions, or dependencies. It also applies to everyday coding that does not go through the orchestrator: the session intake rule leads Claude Code to call it, and the skill description does so in Codex. The upstream always-on hooks and helper skills are not included. v1.19.0 lets `record_stage_result` take large provider outputs by local file reference and SHA-256, so stage outputs that grow with repository size no longer stop orchestrated workflows. The candidate-v2 policies applied to `korean-prose-editor` in v1.16.0 were not covered by the quality-gate pass (`0.3.0-gate-1`) and have not been quality-evaluated yet.
+v2.1.0 lets AI host sessions working on the same computer send messages directly to each other. A local TLS 1.3 broker holds the body and tracks delivery until the receiver acknowledges it, and the wake bell that nudges a host is reserved at most once per target, so notifications cannot pile up across an unchanged pending interval. The session board and broker state live under `~/.agent-governance-suite`, a root every host shares. Each new Codex user request is recorded through the `UserPromptSubmit` hook, so the request boundary requires a fresh board summary before the session's next mutation.
+
+- v2.0.0 — the major release that made both hosts share one session board and expanded the trust boundary
+- v1.21.0 — added the session board (`session-board`) so sessions working on the same machine can see each other's work
+- v1.20.0 — connected the MIT skill `ponytail` to the implementation step
+
+Release notes for earlier versions are in [`docs/`](docs/) (Korean). The candidate-v2 policy applied to `korean-prose-editor` in v1.16.0 was not part of the quality gate record (`0.3.0-gate-1`), so it remains unevaluated for quality.
+
+The current public release is `v2.1.0` and includes fifteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
 
 ## Problems it handles
@@ -20,6 +30,8 @@ The current public release is `v2.1.0` and includes fifteen governance specialis
 | An agent reports completion without running the required checks | Requires current evidence for each acceptance criterion. |
 | An implementer audits their own work or reuses an old audit | Checks actor separation, target identity, and audit freshness. |
 | The same failure is retried without new evidence | Groups failure episodes and identifies the next useful diagnostic check. |
+| Several agent sessions touch the same repository or installation at once | Each session writes a one-line summary to the shared board, and hard-to-reverse steps such as a merge or an install start by reading what the other sessions are doing. |
+| Someone copies information between sessions by hand | Sessions message each other over a local TLS channel, and delivery is tracked until the receiver acknowledges it. |
 
 The orchestrator does not run every specialist for every request. It selects the roles the task needs, and a simple request can call one specialist directly.
 
@@ -38,6 +50,8 @@ The orchestrator selects only the checks required by the request and puts them i
 
 For orchestrated workflows, the plan now also binds the execution capability of semantic stages. Bootstrap and each semantic stage receive a minimum model class and reasoning-effort floor based on role and risk. If the actual runtime metadata is missing or below that floor, the MCP layer rejects a `passed` result. The policy therefore prevents a weaker session configuration from silently satisfying a higher-assurance stage without pinning the suite to one product model.
 
+Checking does not stop at the edge of one session. What other sessions on the same computer are doing is read from the shared board, and anything they need to know is sent over a local TLS channel. See [Working across sessions](#working-across-sessions).
+
 ## Install and try it
 
 Node.js 22.13.0 or later is required.
@@ -50,8 +64,6 @@ codex plugin add agent-governance-suite@agent-governance
 <!-- release-install:end -->
 
 Start a new Codex session after installation so Codex can load the bundled skills and MCP tools. Then call the orchestrator:
-
-The task-continuity lifecycle hook runs only after you review and trust its current definition in Codex `/hooks` following installation or a hook change. Existing specialist skills and workflow MCP operations continue to work when the untrusted hook is skipped. The session board hook needs the same trust. In Codex it runs on session start, user prompt submission, and before tool calls, and uses the same shared board file as Claude Code. A 2026-09-19 Codex desktop check verified `deny` for `exec_command`, `_sessionBinding` injection through `updatedInput` for `update_session_status`, the `mcp__agent_governance_suite__...` tool name, and a shared listing of both Codex and Claude Code sessions. `apply_patch` also proceeded normally after the status update. The board is pull-based: another session sees an update when it next reads the list; the board does not push real-time messages to or interrupt a running session.
 
 ```text
 Use $orchestrator to define the scope and success criteria for this task, then manage the required checks and completion evidence: <your task>
@@ -72,9 +84,17 @@ node scripts/check-runtime.mjs
 
 Each specialist remains available when the MCP server is unavailable. Orchestrated runs that enforce stage order and issue a final receipt require the MCP server.
 
+A hook runs only after you review and trust its current definition in Codex `/hooks` following installation or a hook change. This applies to both the task-continuity lifecycle hook and the session board hook. Existing specialist skills and workflow MCP operations continue to work when an untrusted hook is skipped. In Codex the board hook runs on session start, user prompt submission, and before tool calls, and uses the same shared board file as Claude Code.
+
+## Working across sessions
+
+When one person runs several agent sessions on the same computer, the checks inside each session are not enough on their own. A session needs to know whether another one is editing the same files or about to change the same installation. The board shows that state; session messages carry the content. Both live in state that every local host shares.
+
+The session board keeps each session's host, session id, working directory, and a one-line current-work summary in local SQLite, read through `list_session_status`. For each user request a session must write that line with `update_session_status` before its first file change, command, or subagent run; without it the hook denies that call once and allows the next attempt. The board is pull-based: another session sees an update when it next reads the list, so the board by itself neither wakes nor interrupts a running session. Do not put request text, secrets, or personal data in the line.
+
 ### Local session messages
 
-`send_session_message` accepts `targetHost`, `targetSessionId`, and a body of at most 4096 UTF-8 bytes, then stores it in a local TLS 1.3 broker. A receiving hook claims the body as untrusted peer context, and the processing model must call `acknowledge_session_messages` to complete delivery. Before ACK, the message becomes eligible for redelivery with exponential backoff when its claim lease expires. `get_session_message_status` reports `queued`, `delivered`, or `acknowledged`. TTL defaults to one hour and may be 30 seconds to 24 hours; the spool is capped at 1000 unacknowledged messages or 4 MiB of body text. The TLS spool and ACK provide durable body delivery; the wake bell that nudges a host is a best-effort notification. The broker reserves at most one unconsumed bell per target so an unchanged pending interval cannot keep appending queue entries. The actual user-prompt hook must consume that bell before another can be sent, and an ambiguous result after submission starts is not retried to avoid duplicates. If a wake is lost, the next hook or turn checks the same spool again.
+Where the board shows state, session messages carry content. `send_session_message` accepts `targetHost`, `targetSessionId`, and a body of at most 4096 UTF-8 bytes, then stores it in a local TLS 1.3 broker. A receiving hook claims the body as untrusted peer context, and the processing model must call `acknowledge_session_messages` to complete delivery. Before ACK, the message becomes eligible for redelivery with exponential backoff when its claim lease expires. `get_session_message_status` reports `queued`, `delivered`, or `acknowledged`. TTL defaults to one hour and may be 30 seconds to 24 hours; the spool is capped at 1000 unacknowledged messages or 4 MiB of body text. The TLS spool and ACK provide durable body delivery; the wake bell that nudges a host is a best-effort notification. The broker reserves at most one unconsumed bell per target so an unchanged pending interval cannot keep appending queue entries. The actual user-prompt hook must consume that bell before another can be sent, and an ambiguous result after submission starts is not retried to avoid duplicates. If a wake is lost, the next hook or turn checks the same spool again.
 
 The broker starts lazily under `~/.agent-governance-suite/session-messaging/`, a shared root used by every host, and binds only to an ephemeral `127.0.0.1` port. An absolute `AGENT_GOVERNANCE_SHARED_STATE_DIR` may override that root. It pins the SHA-256 fingerprint of a P-256 self-signed certificate generated with Node's built-in crypto module and also checks a separate 256-bit token inside TLS. Message bodies never go through Codex command arguments or the Claude inbox; those adapters carry only a small wake bell with a random nonce bound to its target. Delayed or duplicate copies of the same bell remain recognizable within the TTL but grant neither message delivery nor authority. The message database does not store the private key, broker token, Claude inbox token, or inbox socket path.
 
@@ -86,7 +106,7 @@ The common protocol treats `host` as an arbitrary string. Codex and Claude Code 
 
 TLS prevents plaintext exposure on loopback and rejects an incorrectly identified broker. It does not isolate a malicious process running as the same OS user, which can read or alter the user's key, token, or database files. Do not treat this channel as a user-to-user security boundary or as delegated approval.
 
-### Use with Claude Code
+## Use with Claude Code
 
 The Claude Code distribution lives separately in `claude-plugin/`. It shares no files, hooks, or MCP configuration with the Codex plugin; among local state, only the session board and TLS session-message broker are shared across hosts.
 

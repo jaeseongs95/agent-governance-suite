@@ -4,10 +4,20 @@
 
 Agent Governance Suite는 여러 AI 호스트의 긴 작업에서 범위를 관리하고 위험한 변경을 사전에 점검하며, 증거 검증과 독립 감사를 하나의 워크플로로 연결하는 로컬 플러그인 모음입니다. 공용 스킬·계약·MCP는 호스트 중립이며 Codex, Claude Code와 다른 런타임의 차이는 adapter와 overlay에 둡니다.
 
-에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다.
+에이전트가 작업을 완료했다고 보고해도 필요한 조건을 실제로 충족하지 않았다면 다음 단계로 넘어가지 않습니다. 테스트 근거가 없거나, 구현자가 자신의 결과를 감사했거나, 현재 변경과 맞지 않는 예전 감사 결과를 제출한 경우에는 워크플로 완료를 거절합니다. 이 판단을 지침으로만 두지 않는 것이 이 플러그인의 전제입니다. 로컬 MCP 서버가 계획을 고정한 뒤 단계 순서, 결과 형식, 증거와 감사 조건을 직접 검사하고, 조건을 채우지 못한 단계는 완료로 받지 않습니다.
+
+같은 기준을 세션 하나 밖으로 넓힙니다. 한 대의 컴퓨터에서 여러 에이전트 세션이 같은 저장소나 설치를 동시에 다루면서 서로의 작업을 모르면, 각 세션이 자기 검사를 통과해도 결과는 어긋날 수 있습니다. 그래서 모든 호스트가 세션 현황판 하나를 함께 쓰고, 세션끼리 로컬 TLS 채널로 직접 메시지를 주고받습니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v2.1.0`이며 거버넌스 전문 스킬 15개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다. v2.0.1은 Codex의 새 사용자 요청을 `UserPromptSubmit` 훅으로 기록해, 같은 세션의 다음 변경 전에 현황판 한 줄을 다시 갱신하도록 요청 경계를 바로잡았습니다. 2026-09-19 Codex 데스크톱에서 신뢰한 훅의 첫 셸 호출 거부, MCP 입력 결속과 Claude Code·Codex 공용 현황판 조회를 실검증했습니다. v2.0.0은 세션 현황판을 두 호스트가 함께 쓰도록 바꾸면서 신뢰 경계를 확장한 major 릴리스였습니다. v1.21.0은 같은 컴퓨터에서 동시에 일하는 세션들이 서로의 작업을 알 수 있도록 세션 현황판(`session-board`)을 더했습니다. 세션마다 세션 ID, 작업 디렉터리, 지금 하는 일 한 줄을 로컬 SQLite에 두고 `list_session_status`로 읽습니다. 사용자 요청마다 처음 파일을 고치거나 명령·서브에이전트를 실행하기 전에 `update_session_status`로 한 줄을 적어야 하며, 적지 않았으면 훅이 그 호출을 한 번 거부합니다. v1.20.3은 Claude Code에서 실패 영향이 큰 작업이 orchestrated workflow로 계획되도록 오케스트레이터 지침에 `orchestration.requested: true`를 적는 규칙과 stage마다 필수 산출물을 모두 기록하는 규칙을 넣었습니다. 또 provider마다 달랐던 artifact digest 표기(`sha256:` 접두사 유무)를 `record_stage_result`가 어느 쪽이든 받게 해 불필요한 거절을 줄였습니다. v1.20.2는 동작을 바꾸지 않고 MCP 서버와 저장소 스크립트의 중복을 정리했습니다. MCP 도구·schema와 SQLite 형식은 그대로이며, continuity hook 번들에서 쓰지 않던 schema validator를 빼 번들이 약 90KB로 줄었습니다. v1.20.1은 Claude Code 대화형 세션에서 실행 보증(host attestation)이 항상 실패해 orchestrated workflow를 시작할 수 없던 결함을 고쳤습니다. 대화형 세션은 도구를 호출한 메시지를 호출이 끝난 뒤에 transcript에 쓰므로, 이제 훅이 세션 시작·모델 전환 때 기록한 현재 모델이나 이미 기록된 직전 메시지의 모델로 증명합니다. v1.20.0은 MIT 공개 스킬 `ponytail`을 구현 단계에 붙였습니다. orchestrator는 코드를 작성·수정하는 단계가 있는 요청에 `minimal-implementation` capability를 요청하고, 이 스킬은 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르도록 안내합니다. orchestrator를 거치지 않는 평소 코드 작업에서도 쓰이며, Claude Code에서는 세션 접수 규칙이, Codex에서는 스킬 설명이 호출을 이끕니다. 원본의 항상 켜짐 훅과 보조 스킬은 넣지 않았습니다. v1.19.0은 `record_stage_result`가 큰 provider 출력을 로컬 파일 참조와 SHA-256으로 받게 해, 저장소 크기에 비례하는 stage 출력 때문에 orchestrated workflow가 중단되던 문제를 없앴습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
+v2.1.0은 같은 컴퓨터에서 일하는 AI 호스트 세션들이 서로에게 직접 메시지를 보낼 수 있게 합니다. 로컬 TLS 1.3 broker가 본문을 보관하고 수신 측이 ACK할 때까지 전달을 추적하며, 호스트를 깨우는 wake bell은 target마다 소비되지 않은 것 하나만 예약해 같은 대기 구간에서 알림이 반복해 쌓이지 않습니다. 세션 현황판과 broker 상태는 모든 호스트가 함께 쓰는 `~/.agent-governance-suite` 아래에 둡니다. Codex의 새 사용자 요청은 `UserPromptSubmit` 훅으로 기록해, 같은 세션의 다음 변경 전에 현황판 한 줄을 다시 갱신하도록 요청 경계를 맞춥니다.
+
+- v2.0.0 — 세션 현황판을 두 호스트가 함께 쓰도록 바꾸면서 신뢰 경계를 확장한 major 릴리스
+- v1.21.0 — 같은 컴퓨터에서 동시에 일하는 세션들이 서로의 작업을 알 수 있도록 세션 현황판(`session-board`)을 도입
+- v1.20.0 — MIT 공개 스킬 `ponytail`을 구현 단계에 연결
+
+지난 릴리스의 변경 내역은 [`docs/`](docs/)의 릴리스 노트에 있습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
+
+현재 공개 릴리스는 `v2.1.0`이며 거버넌스 전문 스킬 15개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -20,6 +30,8 @@ Agent Governance Suite는 여러 AI 호스트의 긴 작업에서 범위를 관�
 | 테스트 없이 작업을 완료했다고 보고한다 | 각 수용 기준을 뒷받침하는 증거가 있고, 그 증거가 현재 결과를 가리키는지 확인합니다. |
 | 구현자가 자신의 작업을 감사하거나 이전 감사 결과를 재사용한다 | 구현자와 감사자가 분리됐는지, 감사 대상이 현재 결과와 일치하는지, 감사 결과가 아직 유효한지 검사합니다. |
 | 같은 실패를 근거 없이 반복한다 | 실패 기록에서 관측 사실과 원인 가설을 분리하고, 새 정보를 얻을 다음 판별 검사를 정합니다. |
+| 여러 에이전트 세션이 같은 저장소나 설치를 동시에 건드린다 | 세션마다 지금 하는 일 한 줄을 공용 현황판에 적고, 병합·설치처럼 되돌리기 어려운 단계 전에 다른 세션의 작업을 확인합니다. |
+| 세션 사이에 전할 내용을 사람이 직접 옮겨 붙인다 | 로컬 TLS 채널로 세션끼리 직접 메시지를 보내고, 수신 측이 ACK할 때까지 전달 상태를 추적합니다. |
 
 모든 요청에 전문 스킬을 전부 실행하지는 않습니다. 오케스트레이터는 작업에 필요한 역할만 선택하며, 간단한 요청에는 전문 스킬 하나를 직접 사용할 수 있습니다.
 
@@ -38,6 +50,8 @@ flowchart LR
 
 오케스트레이션 workflow에서는 의미 판단 단계의 실행 능력도 계획에 포함합니다. bootstrap과 각 semantic stage는 역할·위험도에 따라 최소 model class와 reasoning effort가 정해지며, 실제 실행에서 관측한 값이 없거나 하한보다 낮으면 MCP가 `passed` 결과를 거절합니다. 따라서 같은 스킬이더라도 낮은 세션 설정이 높은 신뢰도의 stage로 조용히 통과하는 경로를 차단합니다. 특정 제품 모델은 고정하지 않습니다.
 
+검사는 세션 하나 안에서 끝나지 않습니다. 같은 컴퓨터의 다른 세션이 무엇을 하고 있는지는 공용 현황판에서 확인하고, 전해야 할 내용은 로컬 TLS 채널로 직접 보냅니다. [세션 사이 협업](#세션-사이-협업)을 참고하세요.
+
 ## 설치하고 사용하기
 
 Node.js 22.13.0 이상이 필요합니다.
@@ -50,8 +64,6 @@ codex plugin add agent-governance-suite@agent-governance
 <!-- release-install:end -->
 
 설치를 마치면 새 Codex 세션을 시작합니다. 전체 워크플로를 사용하려면 다음과 같이 요청합니다.
-
-Task continuity lifecycle Hook은 처음 설치하거나 정의가 바뀐 뒤 Codex의 `/hooks`에서 내용을 검토하고 신뢰해야 실행됩니다. 신뢰하지 않아 Hook이 생략되어도 기존 전문 스킬과 workflow MCP는 계속 동작합니다. 세션 현황판 Hook도 같은 방식으로 신뢰해야 실행됩니다. Codex에서는 세션 시작, 사용자 프롬프트 제출과 도구 호출 전 이벤트에 걸려 있고 Claude Code와 같은 공용 현황판 파일을 씁니다. 2026-09-19 Codex 데스크톱에서 `exec_command`의 `deny`, `update_session_status`의 `_sessionBinding` 입력 수정(`updatedInput`), `mcp__agent_governance_suite__...` 도구 이름과 두 호스트의 공용 현황판 조회를 확인했습니다. `apply_patch`도 상태 갱신 뒤 정상 통과했습니다. 현황판은 다른 세션이 다음에 목록을 읽을 때 상태를 확인하는 방식이며, 실행 중인 세션에 메시지를 실시간 전달하거나 그 작업을 중단시키지는 않습니다.
 
 ```text
 $orchestrator를 사용해 이 작업의 범위와 성공 조건을 정하고, 필요한 검증과 완료 근거를 관리해 줘: <작업 내용>
@@ -72,9 +84,17 @@ node scripts/check-runtime.mjs
 
 MCP 서버가 시작되지 않아도 개별 전문 스킬은 직접 호출할 수 있습니다. 단계 순서를 강제하고 완료 결과를 만드는 통합 작업에는 MCP 서버가 필요합니다.
 
+Hook은 처음 설치하거나 정의가 바뀐 뒤 Codex의 `/hooks`에서 내용을 검토하고 신뢰해야 실행됩니다. task continuity lifecycle Hook과 세션 현황판 Hook 모두 같습니다. 신뢰하지 않아 Hook이 생략되어도 기존 전문 스킬과 workflow MCP는 계속 동작합니다. 현황판 Hook은 Codex에서 세션 시작, 사용자 프롬프트 제출과 도구 호출 전 이벤트에 걸려 있고 Claude Code와 같은 공용 현황판 파일을 씁니다.
+
+## 세션 사이 협업
+
+한 사람이 같은 컴퓨터에서 여러 에이전트 세션을 동시에 돌리면, 각 세션의 검사만으로는 충분하지 않습니다. 다른 세션이 같은 파일을 고치고 있는지, 같은 설치를 바꾸려는지 알아야 합니다. 현황판은 그 상태를 보여 주고, 세션 메시지는 필요한 내용을 직접 전합니다. 둘 다 모든 로컬 호스트가 함께 쓰는 상태입니다.
+
+세션 현황판은 세션마다 host, 세션 ID, 작업 디렉터리와 지금 하는 일 한 줄을 로컬 SQLite에 두고 `list_session_status`로 읽습니다. 사용자 요청마다 처음 파일을 고치거나 명령·서브에이전트를 실행하기 전에 `update_session_status`로 한 줄을 적어야 하며, 적지 않았으면 Hook이 그 호출을 한 번 거부하고 다음 시도는 허용합니다. 현황판은 다른 세션이 다음에 목록을 읽을 때 확인하는 방식이라, 그 자체로는 실행 중인 세션을 깨우거나 중단시키지 않습니다. 한 줄에 요청 원문이나 비밀, 개인정보를 적지 않습니다.
+
 ### 로컬 세션 메시지
 
-`send_session_message`는 `targetHost`, `targetSessionId`와 최대 4096 UTF-8 byte의 본문을 받아 로컬 TLS 1.3 broker에 저장합니다. 수신 훅은 본문을 비신뢰 peer context로 claim하고, 처리한 모델이 `acknowledge_session_messages`를 호출해야 완료됩니다. ACK 전에는 claim lease가 끝난 뒤 지수 backoff로 다시 전달될 수 있으며, `get_session_message_status`는 `queued`, `delivered`, `acknowledged` 상태를 보여 줍니다. 기본 TTL은 1시간이고 30초부터 24시간까지 지정할 수 있으며, spool은 미ACK 메시지 1000개 또는 본문 합계 4 MiB로 제한됩니다. TLS spool과 ACK가 본문 전달의 내구성을 맡고, host를 깨우는 wake bell은 유실될 수 있는 알림입니다. broker는 target마다 소비되지 않은 bell을 하나만 예약해 같은 pending 구간에서 queue가 반복해서 쌓이지 않게 합니다. 실제 사용자 프롬프트 훅이 bell을 소비해야 다음 bell을 보낼 수 있으며, 전송 요청을 시작한 뒤 결과가 불명확하면 중복을 피하려고 다시 보내지 않습니다. wake가 유실돼도 다음 hook이나 turn이 같은 spool을 다시 확인합니다.
+현황판이 상태를 보여 준다면, 세션 메시지는 내용을 전합니다. `send_session_message`는 `targetHost`, `targetSessionId`와 최대 4096 UTF-8 byte의 본문을 받아 로컬 TLS 1.3 broker에 저장합니다. 수신 훅은 본문을 비신뢰 peer context로 claim하고, 처리한 모델이 `acknowledge_session_messages`를 호출해야 완료됩니다. ACK 전에는 claim lease가 끝난 뒤 지수 backoff로 다시 전달될 수 있으며, `get_session_message_status`는 `queued`, `delivered`, `acknowledged` 상태를 보여 줍니다. 기본 TTL은 1시간이고 30초부터 24시간까지 지정할 수 있으며, spool은 미ACK 메시지 1000개 또는 본문 합계 4 MiB로 제한됩니다. TLS spool과 ACK가 본문 전달의 내구성을 맡고, host를 깨우는 wake bell은 유실될 수 있는 알림입니다. broker는 target마다 소비되지 않은 bell을 하나만 예약해 같은 pending 구간에서 queue가 반복해서 쌓이지 않게 합니다. 실제 사용자 프롬프트 훅이 bell을 소비해야 다음 bell을 보낼 수 있으며, 전송 요청을 시작한 뒤 결과가 불명확하면 중복을 피하려고 다시 보내지 않습니다. wake가 유실돼도 다음 hook이나 turn이 같은 spool을 다시 확인합니다.
 
 broker는 모든 호스트가 함께 쓰는 `~/.agent-governance-suite/session-messaging/`에서 필요할 때 시작하고 `127.0.0.1`에만 임의 포트로 바인딩합니다. 공용 루트는 절대 경로인 `AGENT_GOVERNANCE_SHARED_STATE_DIR`로 바꿀 수 있습니다. Node 내장 암호 모듈로 만든 P-256 자체서명 인증서의 SHA-256 fingerprint를 pin하고, 별도 256-bit token도 TLS 안에서 확인합니다. 본문은 Codex 명령행이나 Claude inbox에 넣지 않으며, 두 adapter는 target에 묶인 무작위 nonce가 든 작은 wake bell만 보냅니다. 지연·중복된 같은 bell도 TTL 안에서는 내부 wake로 인식하지만 본문 전달이나 권한을 부여하지 않습니다. 개인 키·broker token·Claude inbox token과 socket 경로는 메시지 DB에 저장하지 않습니다.
 
@@ -86,7 +106,7 @@ broker는 모든 호스트가 함께 쓰는 `~/.agent-governance-suite/session-m
 
 TLS는 loopback 구간의 평문 노출과 잘못된 broker 연결을 막지만, 같은 OS 사용자 권한으로 실행되는 악성 프로세스를 격리하지는 못합니다. 그런 프로세스는 사용자 상태의 키·token·DB를 읽거나 바꿀 수 있으므로, 이 기능을 사용자 간 보안 경계나 승인 위임 수단으로 사용하면 안 됩니다.
 
-### Claude Code에서 사용하기
+## Claude Code에서 사용하기
 
 Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다. Codex 플러그인과 파일·훅·MCP 설정을 공유하지 않고, 상태 가운데 세션 현황판과 TLS 세션 메시지 broker만 모든 로컬 호스트가 함께 씁니다.
 
