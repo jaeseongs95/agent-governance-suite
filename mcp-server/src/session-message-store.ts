@@ -293,13 +293,6 @@ export class SessionMessageStore {
     return result.changes === 1;
   }
 
-  issueWake(target: SessionIdentity, nonce: string, nowMs = Date.now()): void {
-    boundedIdentity(target);
-    if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
-    this.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at) VALUES (?, ?, ?, ?)")
-      .run(nonceDigest(nonce), target.host, target.sessionId, iso(nowMs + WAKE_TTL_MS));
-  }
-
   reserveWake(target: SessionIdentity, nonce: string, nowMs = Date.now()): boolean {
     boundedIdentity(target);
     if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");

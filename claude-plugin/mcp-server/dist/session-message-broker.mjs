@@ -262,11 +262,6 @@ var SessionMessageStore = class {
       WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?`).run(iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId);
     return result.changes === 1;
   }
-  issueWake(target, nonce, nowMs = Date.now()) {
-    boundedIdentity(target);
-    if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
-    this.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at) VALUES (?, ?, ?, ?)").run(nonceDigest(nonce), target.host, target.sessionId, iso(nowMs + WAKE_TTL_MS));
-  }
   reserveWake(target, nonce, nowMs = Date.now()) {
     boundedIdentity(target);
     if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
@@ -531,10 +526,6 @@ function dispatch(store, operation, payload) {
     case "heartbeat-relay": {
       const target = identity(payload.target);
       return { alive: store.heartbeatRelay({ ...target, transport: string(payload.transport, "transport"), relayId: string(payload.relayId, "relayId") }) };
-    }
-    case "issue-wake": {
-      store.issueWake(identity(payload.target), string(payload.nonce, "nonce"));
-      return { issued: true };
     }
     case "reserve-wake":
       return { dispatch: store.reserveWake(identity(payload.target), string(payload.nonce, "nonce")) };

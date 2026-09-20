@@ -21,7 +21,7 @@ import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.j
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
-import { relayIdentityDecision, wakeBackoffDelay } from "../../mcp-server/src/session-message-relay.js";
+import { claudeWakeOutcome, codexWakeOutcome, relayIdentityDecision, shouldReleaseWake, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
 import { MESSAGE_BODY_MAX_BYTES, SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 import { processIdentityState, processStartToken, processStillMatches } from "../../mcp-server/src/process-identity.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
@@ -98,7 +98,8 @@ describe("session message spool", () => {
     expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-a", pid: 1, parentPid: 1 }, 200_000)).toBe(true);
     expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-b", pid: 2, parentPid: 2 }, 201_000)).toBe(false);
     expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-b", pid: 2, parentPid: 2 }, 216_000)).toBe(true);
-    reopened.issueWake(spark, "nonce-abcdefghijklmnop", 220_000);
+    reopened.send({ messageId: "wake-validation", sender: grok, target: spark, body: "wake" }, 219_000);
+    expect(reopened.reserveWake(spark, "nonce-abcdefghijklmnop", 220_000)).toBe(true);
     expect(reopened.consumeWake(spark, "nonce-abcdefghijklmnop", 221_000)).toBe(true);
     expect(reopened.consumeWake(spark, "nonce-abcdefghijklmnop", 222_000)).toBe(true);
     expect(reopened.consumeWake(spark, "nonce-abcdefghijklmnop", 220_000 + 86_400_000)).toBe(false);
@@ -271,7 +272,14 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       }));
       const issued = "a".repeat(32);
       const unissued = "b".repeat(32);
-      await sessionMessageRequest("issue-wake", { target: { host: "claude-code", sessionId }, nonce: issued }, directory);
+      const target = { host: "claude-code", sessionId };
+      await sessionMessageRequest("send", {
+        messageId: "merged-wake-message",
+        sender: { host: "grok", sessionId: "merged-wake-sender" },
+        target,
+        body: "wake",
+      }, directory);
+      await expect(sessionMessageRequest("reserve-wake", { target, nonce: issued }, directory)).resolves.toEqual({ dispatch: true });
       await runSessionBoardHook("claude-code", hook("UserPromptSubmit", {
         prompt: `[agent-governance-suite:wake:${issued}]\n[agent-governance-suite:wake:${unissued}]`,
       }));
@@ -287,6 +295,34 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
 
   it("backs off definite wake submission failures without exceeding ten minutes", () => {
     expect([0, 1, 2, 5, 20].map(wakeBackoffDelay)).toEqual([30_000, 60_000, 120_000, 600_000, 600_000]);
+  });
+
+  it("releases Codex wake reservations only for definite submission failures", () => {
+    expect(codexWakeOutcome(new Error("not started"), false)).toBe("definite-failure");
+    expect(codexWakeOutcome(new Error("unknown delivery"), true)).toBe("accepted-or-unknown");
+    expect(codexWakeOutcome(null, true)).toBe("submitted");
+    expect(shouldReleaseWake("definite-failure")).toBe(true);
+    expect(shouldReleaseWake("accepted-or-unknown")).toBe(false);
+    expect(shouldReleaseWake("submitted")).toBe(false);
+  });
+
+  it("retains Claude wake reservations whenever the inbox may have accepted bytes", () => {
+    expect(claudeWakeOutcome(true, false, false)).toBe("definite-failure");
+    expect(claudeWakeOutcome(true, true, false)).toBe("accepted-or-unknown");
+    expect(claudeWakeOutcome(true, true, true)).toBe("accepted-or-unknown");
+    expect(claudeWakeOutcome(false, true, true)).toBe("submitted");
+  });
+
+  it("retries only a definitely failed wake whose reservation was released", () => {
+    for (const outcome of ["submitted", "accepted-or-unknown", "definite-failure"] as const) {
+      for (const released of [false, true]) {
+        const state = wakeRetryState(outcome, released, 2, 10_000);
+        const expectedRetry = outcome === "definite-failure" && released;
+        expect(state).toEqual(expectedRetry
+          ? { retry: true, nextRingAt: 130_000, ringAttempts: 3 }
+          : { retry: false, nextRingAt: 0, ringAttempts: 0 });
+      }
+    }
   });
 
   it("serializes wake reservation and release through the TLS broker", async () => {
@@ -305,6 +341,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     await expect(sessionMessageRequest("reserve-wake", { target, nonce: second }, directory)).resolves.toEqual({ dispatch: false });
     await expect(sessionMessageRequest("release-wake", { target, nonce: first }, directory)).resolves.toEqual({ released: true });
     await expect(sessionMessageRequest("reserve-wake", { target, nonce: second }, directory)).resolves.toEqual({ dispatch: true });
+    await expect(sessionMessageRequest("issue-wake", { target, nonce: second }, directory)).rejects.toThrow(/Unknown broker operation/u);
   });
 
   it("stops relay acquisition after three consecutive unknown identity checks", () => {
@@ -576,7 +613,7 @@ describe("session message MCP tools", () => {
     return client;
   }
 
-  const payload = (response: unknown) => JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: Record<string, unknown>; error: { code: string } | null };
+  const payload = (response: unknown) => JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: Record<string, unknown>; error: { code: string; message: string } | null };
 
   it("validates bound send, status, and acknowledgement calls", async () => {
     const directory = stateDirectory();
@@ -587,7 +624,7 @@ describe("session message MCP tools", () => {
     expect(unbound.error?.code).toBe("BINDING_REQUIRED");
 
     const sent = payload(await client.callTool({ name: "send_session_message", arguments: { schemaVersion: "1.0.0", targetHost: target.host, targetSessionId: target.sessionId, body: "hello", messageId: "mcp-msg-0001", _sessionBinding: sender } }));
-    expect(sent).toMatchObject({ ok: true, data: { messageId: "mcp-msg-0001" } });
+    expect(sent, sent.error?.message).toMatchObject({ ok: true, data: { messageId: "mcp-msg-0001" } });
     expect(payload(await client.callTool({ name: "get_session_message_status", arguments: { schemaVersion: "1.0.0", messageId: "mcp-msg-0001", _sessionBinding: sender } }))).toMatchObject({ ok: true, data: { status: { state: "queued" } } });
 
     const claimed = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target } }), directory);

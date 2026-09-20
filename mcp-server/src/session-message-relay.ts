@@ -37,7 +37,32 @@ interface RelayOptions {
   parentStartToken: string;
 }
 
-type WakeDispatchOutcome = "submitted" | "definite-failure" | "accepted-or-unknown";
+export type WakeDispatchOutcome = "submitted" | "definite-failure" | "accepted-or-unknown";
+
+export function codexWakeOutcome(error: unknown, spawned: boolean): WakeDispatchOutcome {
+  return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
+}
+
+export function claudeWakeOutcome(hadError: boolean, connected: boolean, wrote: boolean): WakeDispatchOutcome {
+  return !hadError && wrote ? "submitted" : connected || wrote ? "accepted-or-unknown" : "definite-failure";
+}
+
+export function shouldReleaseWake(outcome: WakeDispatchOutcome): boolean {
+  return outcome === "definite-failure";
+}
+
+export function wakeRetryState(outcome: WakeDispatchOutcome, released: boolean, attempt: number, now: number): {
+  retry: boolean;
+  nextRingAt: number;
+  ringAttempts: number;
+} {
+  const retry = outcome === "definite-failure" && released;
+  return {
+    retry,
+    nextRingAt: retry ? now + wakeBackoffDelay(attempt) : 0,
+    ringAttempts: retry ? attempt + 1 : 0,
+  };
+}
 
 function argument(name: string): string | null {
   const index = process.argv.indexOf(name);
@@ -47,10 +72,7 @@ function argument(name: string): string | null {
 async function ringCodex(sessionId: string, message: string): Promise<WakeDispatchOutcome> {
   return new Promise<WakeDispatchOutcome>((resolve) => {
     let spawned = false;
-    const child = execFile("codex", ["queue", "--thread", sessionId, "--message", message], { windowsHide: true, timeout: 10_000 }, (error) => {
-      if (!error) resolve("submitted");
-      else resolve(spawned ? "accepted-or-unknown" : "definite-failure");
-    });
+    const child = execFile("codex", ["queue", "--thread", sessionId, "--message", message], { windowsHide: true, timeout: 10_000 }, (error) => resolve(codexWakeOutcome(error, spawned)));
     child.once("spawn", () => { spawned = true; });
   });
 }
@@ -79,8 +101,8 @@ async function ringClaude(message: string): Promise<WakeDispatchOutcome> {
         finish("accepted-or-unknown");
       }
     });
-    socket.once("close", (hadError) => finish(!hadError && wrote ? "submitted" : connected || wrote ? "accepted-or-unknown" : "definite-failure"));
-    socket.once("error", () => finish(connected || wrote ? "accepted-or-unknown" : "definite-failure"));
+    socket.once("close", (hadError) => finish(claudeWakeOutcome(hadError, connected, wrote)));
+    socket.once("error", () => finish(claudeWakeOutcome(true, connected, wrote)));
   });
 }
 
@@ -168,16 +190,15 @@ export async function runSessionMessageRelay(options: RelayOptions): Promise<voi
           const outcome = options.transport === "codex-queue"
             ? await ringCodex(options.sessionId, bell)
             : await ringClaude(bell);
-          if (outcome === "definite-failure") {
-            const released: { released: boolean } = await sessionMessageRequest<{ released: boolean }>("release-wake", { target, nonce });
-            retryNonce = released.released ? nonce : null;
-            nextRingAt = released.released ? now + wakeBackoffDelay(ringAttempts) : 0;
-            ringAttempts = released.released ? ringAttempts + 1 : 0;
-          } else {
-            retryNonce = null;
-            ringAttempts = 0;
-            nextRingAt = 0;
+          let released = false;
+          if (shouldReleaseWake(outcome)) {
+            const result = await sessionMessageRequest<{ released: boolean }>("release-wake", { target, nonce });
+            released = result.released;
           }
+          const retry = wakeRetryState(outcome, released, ringAttempts, now);
+          retryNonce = retry.retry ? nonce : null;
+          nextRingAt = retry.nextRingAt;
+          ringAttempts = retry.ringAttempts;
         }
       }
     } catch {

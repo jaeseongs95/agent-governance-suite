@@ -228,6 +228,23 @@ function relayIdentityDecision(identity, previousUnknowns) {
   const unknowns = previousUnknowns + 1;
   return { proceed: false, stop: unknowns >= IDENTITY_UNKNOWN_LIMIT, unknowns };
 }
+function codexWakeOutcome(error, spawned) {
+  return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
+}
+function claudeWakeOutcome(hadError, connected, wrote) {
+  return !hadError && wrote ? "submitted" : connected || wrote ? "accepted-or-unknown" : "definite-failure";
+}
+function shouldReleaseWake(outcome) {
+  return outcome === "definite-failure";
+}
+function wakeRetryState(outcome, released, attempt, now) {
+  const retry = outcome === "definite-failure" && released;
+  return {
+    retry,
+    nextRingAt: retry ? now + wakeBackoffDelay(attempt) : 0,
+    ringAttempts: retry ? attempt + 1 : 0
+  };
+}
 function argument(name) {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] ?? null : null;
@@ -235,10 +252,7 @@ function argument(name) {
 async function ringCodex(sessionId, message) {
   return new Promise((resolve) => {
     let spawned = false;
-    const child = execFile("codex", ["queue", "--thread", sessionId, "--message", message], { windowsHide: true, timeout: 1e4 }, (error) => {
-      if (!error) resolve("submitted");
-      else resolve(spawned ? "accepted-or-unknown" : "definite-failure");
-    });
+    const child = execFile("codex", ["queue", "--thread", sessionId, "--message", message], { windowsHide: true, timeout: 1e4 }, (error) => resolve(codexWakeOutcome(error, spawned)));
     child.once("spawn", () => {
       spawned = true;
     });
@@ -270,8 +284,8 @@ ${JSON.stringify({ type: "user", message: { role: "user", content: message }, pr
         finish("accepted-or-unknown");
       }
     });
-    socket.once("close", (hadError) => finish(!hadError && wrote ? "submitted" : connected || wrote ? "accepted-or-unknown" : "definite-failure"));
-    socket.once("error", () => finish(connected || wrote ? "accepted-or-unknown" : "definite-failure"));
+    socket.once("close", (hadError) => finish(claudeWakeOutcome(hadError, connected, wrote)));
+    socket.once("error", () => finish(claudeWakeOutcome(true, connected, wrote)));
   });
 }
 async function delay2(milliseconds) {
@@ -355,16 +369,15 @@ async function runSessionMessageRelay(options) {
         } else {
           const bell = wakeMessage(nonce);
           const outcome = options.transport === "codex-queue" ? await ringCodex(options.sessionId, bell) : await ringClaude(bell);
-          if (outcome === "definite-failure") {
-            const released = await sessionMessageRequest("release-wake", { target, nonce });
-            retryNonce = released.released ? nonce : null;
-            nextRingAt = released.released ? now + wakeBackoffDelay(ringAttempts) : 0;
-            ringAttempts = released.released ? ringAttempts + 1 : 0;
-          } else {
-            retryNonce = null;
-            ringAttempts = 0;
-            nextRingAt = 0;
+          let released = false;
+          if (shouldReleaseWake(outcome)) {
+            const result = await sessionMessageRequest("release-wake", { target, nonce });
+            released = result.released;
           }
+          const retry = wakeRetryState(outcome, released, ringAttempts, now);
+          retryNonce = retry.retry ? nonce : null;
+          nextRingAt = retry.nextRingAt;
+          ringAttempts = retry.ringAttempts;
         }
       }
     } catch {
@@ -384,7 +397,11 @@ if (path3.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
   });
 }
 export {
+  claudeWakeOutcome,
+  codexWakeOutcome,
   relayIdentityDecision,
   runSessionMessageRelay,
-  wakeBackoffDelay
+  shouldReleaseWake,
+  wakeBackoffDelay,
+  wakeRetryState
 };

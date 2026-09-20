@@ -173,10 +173,6 @@ function dispatch(store: SessionMessageStore, operation: string, payload: Record
       const target = identity(payload.target);
       return { alive: store.heartbeatRelay({ ...target, transport: string(payload.transport, "transport"), relayId: string(payload.relayId, "relayId") }) };
     }
-    case "issue-wake": {
-      store.issueWake(identity(payload.target), string(payload.nonce, "nonce"));
-      return { issued: true };
-    }
     case "reserve-wake": return { dispatch: store.reserveWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "release-wake": return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "consume-wake": return { consumed: store.consumeWake(identity(payload.target), string(payload.nonce, "nonce")) };
