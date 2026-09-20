@@ -6,6 +6,7 @@ import { closeSync, existsSync, openSync, readFileSync, renameSync, rmSync, writ
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import path2 from "node:path";
 import tls from "node:tls";
+import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 // mcp-server/src/session-message-protocol.ts
@@ -709,6 +710,18 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload) {
       throw new Error("Unknown broker operation.");
   }
 }
+async function publishEndpoint(temporary, endpointPath) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      renameSync(temporary, endpointPath);
+      return;
+    } catch (error) {
+      const code = error.code;
+      if (attempt >= 4 || !["EPERM", "EACCES", "EBUSY"].includes(code ?? "")) throw error;
+      await delay(50 * 2 ** attempt);
+    }
+  }
+}
 async function startSessionMessageBroker(stateDirectory) {
   await mkdir(stateDirectory, { recursive: true, mode: 448 });
   try {
@@ -720,49 +733,41 @@ async function startSessionMessageBroker(stateDirectory) {
   if (lockDescriptor === null) return "already-running";
   const endpointPath = path2.join(stateDirectory, "endpoint.json");
   const databasePath = path2.join(stateDirectory, "session-messages.sqlite3");
-  const { key, certificate, token, fingerprint256 } = await credentials(stateDirectory);
-  const store = new SessionMessageStore(databasePath);
-  let lastActivity = Date.now();
-  const server = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
-    lastActivity = Date.now();
-    let buffer = "";
-    socket.setTimeout(5e3, () => socket.destroy());
-    socket.on("data", (chunk) => {
-      buffer += chunk.toString("utf8");
-      if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_REQUEST_BYTES) {
-        socket.end(`${JSON.stringify({ ok: false, error: "Request exceeds the broker limit." })}
-`);
-        return;
-      }
-      const newline = buffer.indexOf("\n");
-      if (newline < 0) return;
-      const line = buffer.slice(0, newline);
-      buffer = "";
-      try {
-        const request = JSON.parse(line);
-        if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
-        const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
-        const data = dispatchSessionMessageBrokerOperation(store, request.operation, payload);
-        socket.end(`${JSON.stringify({ ok: true, data })}
-`);
-      } catch (error) {
-        socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed." })}
-`);
-      }
-    });
-  });
+  let store;
+  let server;
+  let temporary;
+  let published = false;
+  let cleaned = false;
+  let idleTimer;
+  const sockets = /* @__PURE__ */ new Set();
+  const onSignal = () => {
+    cleanup();
+    process.exit(0);
+  };
   const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    clearInterval(idleTimer);
+    for (const socket of sockets) socket.destroy();
     try {
-      server.close();
+      server?.close();
     } catch {
     }
     try {
-      store.close();
+      store?.close();
     } catch {
     }
-    try {
-      rmSync(endpointPath, { force: true });
-    } catch {
+    if (published) {
+      try {
+        rmSync(endpointPath, { force: true });
+      } catch {
+      }
+    }
+    if (temporary) {
+      try {
+        rmSync(temporary, { force: true });
+      } catch {
+      }
     }
     try {
       closeSync(lockDescriptor);
@@ -772,48 +777,92 @@ async function startSessionMessageBroker(stateDirectory) {
       rmSync(lockPath, { force: true });
     } catch {
     }
+    process.off("exit", cleanup);
+    process.off("SIGTERM", onSignal);
+    process.off("SIGINT", onSignal);
   };
   process.once("exit", cleanup);
-  process.once("SIGTERM", () => {
-    cleanup();
-    process.exit(0);
-  });
-  process.once("SIGINT", () => {
-    cleanup();
-    process.exit(0);
-  });
-  await new Promise((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", () => resolve());
-  });
-  const address = server.address();
-  if (!address || typeof address === "string") throw new Error("The broker did not receive a TCP port.");
-  const endpoint = {
-    protocolVersion: SESSION_MESSAGE_PROTOCOL,
-    address: "127.0.0.1",
-    port: address.port,
-    pid: process.pid,
-    startedAt: (/* @__PURE__ */ new Date()).toISOString(),
-    certificateFingerprint256: fingerprint256
-  };
-  const temporary = `${endpointPath}.${process.pid}.${createHash2("sha256").update(String(Date.now())).digest("hex").slice(0, 8)}.tmp`;
-  writeFileSync(temporary, `${JSON.stringify(endpoint)}
+  process.once("SIGTERM", onSignal);
+  process.once("SIGINT", onSignal);
+  try {
+    const { key, certificate, token, fingerprint256 } = await credentials(stateDirectory);
+    const activeStore = new SessionMessageStore(databasePath);
+    store = activeStore;
+    let lastActivity = Date.now();
+    const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
+      lastActivity = Date.now();
+      let buffer = "";
+      socket.setTimeout(5e3, () => socket.destroy());
+      socket.on("data", (chunk) => {
+        buffer += chunk.toString("utf8");
+        if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_REQUEST_BYTES) {
+          socket.end(`${JSON.stringify({ ok: false, error: "Request exceeds the broker limit." })}
+`);
+          return;
+        }
+        const newline = buffer.indexOf("\n");
+        if (newline < 0) return;
+        const line = buffer.slice(0, newline);
+        buffer = "";
+        try {
+          const request = JSON.parse(line);
+          if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
+          const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
+          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload);
+          socket.end(`${JSON.stringify({ ok: true, data })}
+`);
+        } catch (error) {
+          socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed." })}
+`);
+        }
+      });
+    });
+    server = activeServer;
+    activeServer.on("connection", (socket) => {
+      sockets.add(socket);
+      socket.once("close", () => sockets.delete(socket));
+    });
+    await new Promise((resolve, reject) => {
+      activeServer.once("error", reject);
+      activeServer.listen(0, "127.0.0.1", () => resolve());
+    });
+    const address = activeServer.address();
+    if (!address || typeof address === "string") throw new Error("The broker did not receive a TCP port.");
+    const endpoint = {
+      protocolVersion: SESSION_MESSAGE_PROTOCOL,
+      address: "127.0.0.1",
+      port: address.port,
+      pid: process.pid,
+      startedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      certificateFingerprint256: fingerprint256
+    };
+    temporary = `${endpointPath}.${process.pid}.${createHash2("sha256").update(String(Date.now())).digest("hex").slice(0, 8)}.tmp`;
+    writeFileSync(temporary, `${JSON.stringify(endpoint)}
 `, { encoding: "utf8", mode: 384 });
-  renameSync(temporary, endpointPath);
-  const idleTimer = setInterval(() => {
-    if (Date.now() - lastActivity < IDLE_EXIT_MS) return;
+    await publishEndpoint(temporary, endpointPath);
+    published = true;
+    idleTimer = setInterval(() => {
+      if (Date.now() - lastActivity < IDLE_EXIT_MS) return;
+      cleanup();
+      process.exit(0);
+    }, 5e3);
+    idleTimer.unref();
+    return "started";
+  } catch (error) {
     cleanup();
-    process.exit(0);
-  }, 5e3);
-  idleTimer.unref();
-  return "started";
+    throw error;
+  }
 }
 if (path2.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
   const stateDirectory = argument("--state-directory");
   if (!stateDirectory) process.exitCode = 2;
   else void startSessionMessageBroker(path2.resolve(stateDirectory)).then((result) => {
     if (result === "already-running") process.exit(0);
-  }).catch(() => {
+  }).catch((error) => {
+    const code = error?.code;
+    const safeCode = typeof code === "string" && /^[A-Z0-9_]+$/u.test(code) ? code : "STARTUP_FAILED";
+    process.stderr.write(`Session message broker startup failed (${safeCode}).
+`);
     process.exitCode = 1;
   });
 }
