@@ -1,0 +1,343 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/model-application-request.v2.schema.json",
+  "title": "model-application-request.v2",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "2.0.0"
+    },
+    "binding": {
+      "$ref": "#/$defs/binding"
+    },
+    "decisionDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "target": {
+      "$ref": "#/$defs/target"
+    },
+    "dispatched": {
+      "$ref": "#/$defs/selection"
+    },
+    "dispatchedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "observation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/observation"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "binding",
+    "decisionDigest",
+    "target",
+    "dispatched",
+    "dispatchedAt"
+  ],
+  "$defs": {
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "assignmentId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "taskId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "runId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "stageId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "attemptId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "inputDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "candidateDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "assignmentId",
+        "taskId",
+        "runId",
+        "stageId",
+        "attemptId",
+        "revision",
+        "inputDigest",
+        "candidateDigest"
+      ]
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "binding": {
+          "$ref": "#/$defs/binding"
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        },
+        "decisionDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "source": {
+          "enum": [
+            "host-event",
+            "tool-result",
+            "agent-self-report"
+          ]
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "resolvedModel": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "modelOrigin": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              }
+            },
+            "required": [
+              "resolvedModel",
+              "modelOrigin"
+            ]
+          },
+          "maxItems": 32,
+          "uniqueItems": true
+        },
+        "nativeReasoning": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/reasoning"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "runtimeMode": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "terminalOutcome": {
+          "enum": [
+            "succeeded",
+            "failed",
+            "cancelled",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "binding",
+        "target",
+        "decisionDigest",
+        "source",
+        "reference",
+        "observedAt",
+        "models",
+        "nativeReasoning",
+        "runtimeMode",
+        "terminalOutcome"
+      ]
+    },
+    "reasoning": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "enum"
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$",
+              "not": {
+                "enum": [
+                  "ultra",
+                  "ultracode"
+                ]
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "token-budget"
+            },
+            "budgetTokens": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000000
+            }
+          },
+          "required": [
+            "kind",
+            "budgetTokens"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "toggle"
+            },
+            "enabled": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "enabled"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "not-exposed"
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        }
+      ]
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "resolvedModel": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "modelOrigin": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "servingProvider": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "accessPath": {
+          "enum": [
+            "subscription",
+            "api",
+            "enterprise",
+            "unknown"
+          ]
+        },
+        "nativeReasoning": {
+          "$ref": "#/$defs/reasoning"
+        },
+        "runtimeMode": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        }
+      },
+      "required": [
+        "model",
+        "resolvedModel",
+        "modelOrigin",
+        "servingProvider",
+        "accessPath",
+        "nativeReasoning",
+        "runtimeMode"
+      ]
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actorId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "host": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "sessionId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "instanceId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        }
+      },
+      "required": [
+        "actorId",
+        "host",
+        "sessionId",
+        "instanceId"
+      ]
+    }
+  }
+}

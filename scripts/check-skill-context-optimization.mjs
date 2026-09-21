@@ -1,10 +1,13 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
+// The proof covers the v2.4 optimization, whose candidate is pinned here. Later releases change skills on purpose;
+// scripts/check-skill-loading-contract.mjs checks the current tree's loading invariants instead.
+const CANDIDATE = "b3c232f5113d956b6d3aeebdf26a19ed36ef49d1";
 const TARGETS = [
   "acceptance-evidence-validator",
   "blocker-diagnostician",
@@ -39,6 +42,10 @@ function baselineFile(path) {
   return git("show", `${BASELINE}:${path}`);
 }
 
+function candidateFile(path) {
+  return git("show", `${CANDIDATE}:${path}`);
+}
+
 function frontmatter(bytes) {
   const end = bytes.indexOf(Buffer.from("\n---\n"), 4);
   return bytes.subarray(0, end < 0 ? 0 : end + 5);
@@ -51,6 +58,10 @@ function sameSet(left, right) {
 export function reconstructOptimizedSkill(skillId, root = ROOT) {
   const candidate = readFileSync(join(root, "skills", skillId, "SKILL.md"));
   const detail = readFileSync(join(root, "skills", skillId, "references", "entry-details.md"));
+  return reconstruct(skillId, candidate, detail);
+}
+
+function reconstruct(skillId, candidate, detail) {
   const baselineRelativeDetail = Buffer.from(detail.toString("utf8").replace(/\]\((?![A-Za-z][A-Za-z0-9+.-]*:|#|\/)([^)\s]+)\)/gu, (_match, target) => `](${posix.normalize(posix.join("references", target))})`));
   const markerIndex = candidate.indexOf(NAVIGATION);
   if (markerIndex < 0) throw new Error(`${skillId}: navigation marker is missing`);
@@ -60,17 +71,9 @@ export function reconstructOptimizedSkill(skillId, root = ROOT) {
 
 export function checkSkillContextOptimization() {
   const errors = [];
-  const detailOwners = readdirSync(join(ROOT, "skills"), { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .filter((skillId) => {
-      try {
-        readFileSync(join(ROOT, "skills", skillId, "references", "entry-details.md"));
-        return true;
-      } catch {
-        return false;
-      }
-    });
+  const detailOwners = git("ls-tree", "-r", "--name-only", CANDIDATE, "--", "skills").toString("utf8").split(/\r?\n/u)
+    .map((path) => /^skills\/([^/]+)\/references\/entry-details\.md$/u.exec(path)?.[1])
+    .filter(Boolean);
   if (!sameSet(detailOwners, TARGETS)) errors.push("target skill set does not match the 20 reviewed optimization targets");
 
   let baselineBytes = 0;
@@ -80,10 +83,10 @@ export function checkSkillContextOptimization() {
     const skillPath = `skills/${skillId}/SKILL.md`;
     const detailPath = `skills/${skillId}/references/entry-details.md`;
     const baseline = baselineFile(skillPath);
-    const candidate = readFileSync(join(ROOT, ...skillPath.split("/")));
+    const candidate = candidateFile(skillPath);
     const markerIndex = candidate.indexOf(NAVIGATION);
     const markerCount = candidate.toString("utf8").split("<!-- optimization-navigation:start").length - 1;
-    const reconstructed = markerIndex < 0 ? Buffer.alloc(0) : reconstructOptimizedSkill(skillId);
+    const reconstructed = markerIndex < 0 ? Buffer.alloc(0) : reconstruct(skillId, candidate, candidateFile(detailPath));
 
     if (markerCount !== 1 || markerIndex < 0) errors.push(`${skillId}: navigation marker must occur exactly once`);
     if (!reconstructed.equals(baseline)) errors.push(`${skillId}: SKILL.md plus entry-details.md does not reconstruct the baseline byte-for-byte`);
@@ -91,11 +94,11 @@ export function checkSkillContextOptimization() {
     if (candidate.length >= baseline.length) errors.push(`${skillId}: initial SKILL.md did not shrink`);
 
     const descriptorPath = `skills/${skillId}/agents/openai.yaml`;
-    if (!readFileSync(join(ROOT, ...descriptorPath.split("/"))).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
+    if (!candidateFile(descriptorPath).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
 
     const allowed = new Set([skillPath, detailPath]);
     if (README_CHANGES.has(skillId)) allowed.add(`skills/${skillId}/README.md`);
-    const changed = git("diff", "--name-only", BASELINE, "--", `skills/${skillId}`).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
+    const changed = git("diff", "--name-only", BASELINE, CANDIDATE, "--", `skills/${skillId}`).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
     const unexpected = changed.filter((path) => !allowed.has(path));
     if (unexpected.length) errors.push(`${skillId}: unexpected skill-owned changes: ${unexpected.join(", ")}`);
 
@@ -104,12 +107,13 @@ export function checkSkillContextOptimization() {
     skills.push({ skillId, baselineBytes: baseline.length, candidateBytes: candidate.length, reducedBytes: baseline.length - candidate.length });
   }
 
-  if (!readFileSync(join(ROOT, "skills", "registry.json")).equals(baselineFile("skills/registry.json"))) errors.push("skills/registry.json changed");
-  if (git("diff", "--name-only", BASELINE, "--", "skills/ponytail").toString("utf8").trim()) errors.push("excluded skill ponytail changed");
+  if (!candidateFile("skills/registry.json").equals(baselineFile("skills/registry.json"))) errors.push("skills/registry.json changed");
+  if (git("diff", "--name-only", BASELINE, CANDIDATE, "--", "skills/ponytail").toString("utf8").trim()) errors.push("excluded skill ponytail changed");
   if (candidateBytes >= baselineBytes) errors.push("combined initial SKILL.md bytes did not shrink");
 
   return {
     baselineRevision: BASELINE,
+    candidateRevision: CANDIDATE,
     pass: errors.length === 0,
     errors,
     totals: {

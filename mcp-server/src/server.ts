@@ -29,6 +29,7 @@ import { ContractValidator } from "./schema-validator.js";
 import { SessionMessageService, type SessionPresenceList } from "./session-message-service.js";
 import type { SessionPresence } from "./session-message-store.js";
 import { type TrustService } from "./trust-service.js";
+import { type ModelRoutingGateway, unavailableModelRouting } from "./model-routing-service.js";
 
 type ObjectSchema = Record<string, unknown> & {
   properties?: Record<string, unknown>;
@@ -155,6 +156,39 @@ const updateCheckInputSchema = {
     force: { type: "boolean", default: false },
   },
 } as const;
+
+const queryModelCatalogInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    provider: { type: "string" },
+    role: { type: "string" },
+    model: { type: "string" },
+    includeSources: { type: "boolean" },
+  },
+} as const;
+
+// The application request keeps its own local $defs, so they move to the root of the wrapping tool schema.
+const { $defs: applicationDefinitions, ...applicationRequestSchema } = embeddedSchema(contractSchemas.modelApplicationRequestV2) as ObjectSchema & { $defs?: Record<string, unknown> };
+const recordModelApplicationInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["application"],
+  properties: {
+    application: { $ref: "#/$defs/application" },
+    observationToken: { type: ["string", "null"], pattern: "^[a-f0-9]{48}$" },
+  },
+  $defs: { ...applicationDefinitions, application: applicationRequestSchema },
+} as const;
+
+/** The Anthropic API rejects top-level combinators; the advertised copy drops them and the server still validates exactly. */
+function resolveModelAssignmentInputSchema(profile: ToolSchemaProfile): Record<string, unknown> {
+  if (profile !== "anthropic") return contractSchemas.modelSelectionRequestV2;
+  const schema = structuredClone(contractSchemas.modelSelectionRequestV2);
+  delete schema.allOf;
+  schema.description = "ModelSelectionRequest.v2. The server validates the exact contract, including that independent-audit requires highRisk: true.";
+  return schema;
+}
 
 const sendSessionMessageInputSchema = structuredClone(contractSchemas.sendSessionMessageRequest) as ObjectSchema;
 const sendBodySchema = sendSessionMessageInputSchema.properties?.body as Record<string, unknown> | undefined;
@@ -355,6 +389,7 @@ export function createMcpServer(
   sessionBoardPath: string | null = null,
   sessionMessages: SessionMessageService = new SessionMessageService(),
   trust: TrustService | null = null,
+  modelRouting: ModelRoutingGateway = unavailableModelRouting(),
 ): Server {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
@@ -541,6 +576,24 @@ export function createMcpServer(
         inputSchema: contractSchemas.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
+      {
+        name: "query_model_catalog",
+        description: "Query a reviewed offline model catalog subset. Catalog presence is not host access or live execution verification.",
+        inputSchema: queryModelCatalogInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "resolve_model_assignment",
+        description: "Produce and store a capability-filtered model assignment proposal. It does not approve work, acquire a lease, reserve a worker or launch any host.",
+        inputSchema: resolveModelAssignmentInputSchema(toolSchemaProfile),
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "record_model_application",
+        description: "Store bound model, native reasoning and runtime mode diagnostics. Raw observations stay unverified, host observation tokens are single-use, and the record never satisfies the workflow trusted execution gate.",
+        inputSchema: recordModelApplicationInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
+      },
     ]),
   }));
 
@@ -680,6 +733,25 @@ export function createMcpServer(
             result = await sessionMessages.status(args);
           } catch (error) {
             result = invalidInput(error instanceof Error ? error.message : "Session message status input is invalid.");
+          }
+          break;
+        case "query_model_catalog":
+          result = modelRouting.call(request.params.name, args) as ApiResultV1<unknown>;
+          break;
+        case "resolve_model_assignment":
+          try {
+            validator.modelSelectionRequestV2(args);
+            result = modelRouting.call(request.params.name, args) as ApiResultV1<unknown>;
+          } catch (error) {
+            result = invalidInput(error instanceof Error ? error.message : "Model selection request is invalid.");
+          }
+          break;
+        case "record_model_application":
+          try {
+            validator.modelApplicationRequestV2(args.application);
+            result = modelRouting.call(request.params.name, args) as ApiResultV1<unknown>;
+          } catch (error) {
+            result = invalidInput(error instanceof Error ? error.message : "Model application record is invalid.");
           }
           break;
         case "execute_state_cleanup":

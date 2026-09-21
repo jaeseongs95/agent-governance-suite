@@ -4,10 +4,10 @@
     {
       "skillId": "coordinate-subagents",
       "path": "skills/coordinate-subagents",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:e4e7fb776d482d07403ecd7efa44fd57b3c0d950738fc84fd769a277e7b0012b",
+      "integratedChecksum": "sha256:c71735c61227a1699a99b6451dc6d6ab2c0a51d7e9741cc94ccc56e41fa98368",
       "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
     },
     {

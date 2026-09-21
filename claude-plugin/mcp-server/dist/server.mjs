@@ -2048,7 +2048,7 @@ var require_fast_deep_equal = __commonJS({
       if (a === b2) return true;
       if (a && b2 && typeof a == "object" && typeof b2 == "object") {
         if (a.constructor !== b2.constructor) return false;
-        var length, i, keys;
+        var length, i, keys2;
         if (Array.isArray(a)) {
           length = a.length;
           if (length != b2.length) return false;
@@ -2059,13 +2059,13 @@ var require_fast_deep_equal = __commonJS({
         if (a.constructor === RegExp) return a.source === b2.source && a.flags === b2.flags;
         if (a.valueOf !== Object.prototype.valueOf) return a.valueOf() === b2.valueOf();
         if (a.toString !== Object.prototype.toString) return a.toString() === b2.toString();
-        keys = Object.keys(a);
-        length = keys.length;
+        keys2 = Object.keys(a);
+        length = keys2.length;
         if (length !== Object.keys(b2).length) return false;
         for (i = length; i-- !== 0; )
-          if (!Object.prototype.hasOwnProperty.call(b2, keys[i])) return false;
+          if (!Object.prototype.hasOwnProperty.call(b2, keys2[i])) return false;
         for (i = length; i-- !== 0; ) {
-          var key = keys[i];
+          var key = keys2[i];
           if (!equal(a[key], b2[key])) return false;
         }
         return true;
@@ -3262,8 +3262,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path13) {
-      let input = path13;
+    function removeDotSegments(path14) {
+      let input = path14;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3672,8 +3672,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path13 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path13 && path13 !== "/" ? path13 : void 0;
+        const path14 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path14 && path14 !== "/" ? path14 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -4624,7 +4624,7 @@ var require_core = __commonJS({
       errorsText(errors = this.errors, { separator = ", ", dataVar = "data" } = {}) {
         if (!errors || errors.length === 0)
           return "No errors";
-        return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text, msg) => text + separator + msg);
+        return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text2, msg) => text2 + separator + msg);
       }
       $dataMetaSchema(metaSchema, keywordsJsonPointers) {
         const rules = this.RULES.all;
@@ -8161,9 +8161,9 @@ function floatSafeRemainder(val, step) {
   return ratio - roundedRatio;
 }
 var EVALUATING = /* @__PURE__ */ Symbol("evaluating");
-function defineLazy(object4, key, getter) {
+function defineLazy(object5, key, getter) {
   let value = void 0;
-  Object.defineProperty(object4, key, {
+  Object.defineProperty(object5, key, {
     get() {
       if (value === EVALUATING) {
         return void 0;
@@ -8175,7 +8175,7 @@ function defineLazy(object4, key, getter) {
       return value;
     },
     set(v) {
-      Object.defineProperty(object4, key, {
+      Object.defineProperty(object5, key, {
         value: v
         // configurable: true,
       });
@@ -8205,18 +8205,18 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path13) {
-  if (!path13)
+function getElementAtPath(obj, path14) {
+  if (!path14)
     return obj;
-  return path13.reduce((acc, key) => acc?.[key], obj);
+  return path14.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
-  const keys = Object.keys(promisesObj);
-  const promises = keys.map((key) => promisesObj[key]);
+  const keys2 = Object.keys(promisesObj);
+  const promises = keys2.map((key) => promisesObj[key]);
   return Promise.all(promises).then((results) => {
     const resolvedObj = {};
-    for (let i = 0; i < keys.length; i++) {
-      resolvedObj[keys[i]] = results[i];
+    for (let i = 0; i < keys2.length; i++) {
+      resolvedObj[keys2[i]] = results[i];
     }
     return resolvedObj;
   });
@@ -8620,11 +8620,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path13, issues) {
+function prefixIssues(path14, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path13);
+    iss.path.unshift(path14);
     return iss;
   });
 }
@@ -9053,16 +9053,16 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
 }
 function formatError(error2, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error3, path13 = []) => {
+  const processError = (error3, path14 = []) => {
     for (const issue2 of error3.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path13, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path14, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path13, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path14, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path13, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path14, ...issue2.path]);
       } else {
-        const fullpath = [...path13, ...issue2.path];
+        const fullpath = [...path14, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -10326,10 +10326,10 @@ function handlePropertyResult(result, final, key, input, optin, optout) {
 }
 var NO_SYMBOL_KEYS = [];
 function normalizeDef(def) {
-  const keys = Object.keys(def.shape);
+  const keys2 = Object.keys(def.shape);
   const ownSymbols = Object.getOwnPropertySymbols(def.shape);
   const symbolKeys = ownSymbols.length ? ownSymbols : NO_SYMBOL_KEYS;
-  const allKeys = symbolKeys.length ? [...keys, ...symbolKeys] : keys;
+  const allKeys = symbolKeys.length ? [...keys2, ...symbolKeys] : keys2;
   for (const k of allKeys) {
     if (!def.shape?.[k]?._zod?.traits?.has("$ZodType")) {
       throw new Error(`Invalid element at key "${String(k)}": expected a Zod schema`);
@@ -10341,8 +10341,8 @@ function normalizeDef(def) {
     allKeys,
     symbolKeys,
     // string-only: handleCatchall matches it against `for...in`, which never yields a symbol
-    keySet: new Set(keys),
-    numKeys: keys.length,
+    keySet: new Set(keys2),
+    numKeys: keys2.length,
     optionalKeys: new Set(okeys)
   };
 }
@@ -10787,19 +10787,19 @@ function handleIntersectionResults(result, left, right) {
   let unrecIssue;
   const keyIssues = /* @__PURE__ */ new Map();
   const collect = (iss, side) => {
-    let keys;
+    let keys2;
     if (iss.code === "unrecognized_keys" && !iss.path?.length) {
       unrecIssue ?? (unrecIssue = iss);
-      keys = iss.keys;
+      keys2 = iss.keys;
     } else if (iss.code === "invalid_key" && iss.origin === "record" && iss.path?.length === 1) {
       const k = String(iss.path[0]);
       if (!keyIssues.has(k))
         keyIssues.set(k, iss);
-      keys = [k];
+      keys2 = [k];
     } else {
       return false;
     }
-    for (const k of keys) {
+    for (const k of keys2) {
       if (!unrecKeys.has(k))
         unrecKeys.set(k, {});
       unrecKeys.get(k)[side] = true;
@@ -12433,8 +12433,8 @@ function compactTypeUnion(schema) {
     if (!option || typeof option !== "object")
       return;
     compactTypeUnion(option);
-    const keys = Object.keys(option);
-    if (keys.length !== 1 || keys[0] !== "type")
+    const keys2 = Object.keys(option);
+    if (keys2.length !== 1 || keys2[0] !== "type")
       return;
     const type = option.type;
     for (const member of Array.isArray(type) ? type : [type]) {
@@ -12468,8 +12468,8 @@ function foldObjects(members2) {
   }
   const properties = {};
   const required2 = /* @__PURE__ */ new Set();
-  for (const object4 of objects) {
-    for (const key in object4.properties) {
+  for (const object5 of objects) {
+    for (const key in object5.properties) {
       if (Object.prototype.hasOwnProperty.call(properties, key))
         continue;
       const parts = [];
@@ -12483,18 +12483,18 @@ function foldObjects(members2) {
       const merged = parts.length === 1 ? parts[0] : foldObjects(parts) ?? { allOf: parts };
       assignProp(properties, key, merged);
     }
-    for (const key of object4.required ?? [])
+    for (const key of object5.required ?? [])
       required2.add(key);
   }
   const folded = { type: "object", properties };
   if (required2.size)
     folded.required = [...required2];
-  if (objects.every((object4) => object4.additionalProperties === false)) {
+  if (objects.every((object5) => object5.additionalProperties === false)) {
     folded.additionalProperties = false;
   } else {
     const constraints = [];
-    for (const object4 of objects) {
-      const constraint = undeclaredConstraint(object4);
+    for (const object5 of objects) {
+      const constraint = undeclaredConstraint(object5);
       if (constraint && !constraints.some((seen) => JSON.stringify(seen) === JSON.stringify(constraint)))
         constraints.push(constraint);
     }
@@ -13932,11 +13932,11 @@ var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
   inst._zod.processJSONSchema = (ctx, json, params) => enumProcessor(inst, ctx, json, params);
   inst.enum = def.entries;
   inst.options = Object.values(def.entries);
-  const keys = new Set(Object.keys(def.entries));
+  const keys2 = new Set(Object.keys(def.entries));
   inst.extract = (values, params) => {
     const newEntries = {};
     for (const value of values) {
-      if (keys.has(value)) {
+      if (keys2.has(value)) {
         newEntries[value] = def.entries[value];
       } else
         throw new Error(`Key ${value} not found in enum`);
@@ -13951,7 +13951,7 @@ var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
   inst.exclude = (values, params) => {
     const newEntries = { ...def.entries };
     for (const value of values) {
-      if (keys.has(value)) {
+      if (keys2.has(value)) {
         delete newEntries[value];
       } else
         throw new Error(`Key ${value} not found in enum`);
@@ -16282,10 +16282,10 @@ function surfaceBacked(surface, observedOutsideCheckouts) {
   return existsSync((unchanged ? path3.posix.dirname(surface.physical) : surface.physical) || "/");
 }
 function activeRootIdentity(root, stored) {
-  const digest3 = surfaceDigest(root);
-  const observed = stored && stored.surfaceDigest === digest3 ? stored.identity : null;
+  const digest4 = surfaceDigest(root);
+  const observed = stored && stored.surfaceDigest === digest4 ? stored.identity : null;
   const wasInferred = (index) => observed !== null && stored.inferred[index] === true;
-  const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest3 };
+  const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest4 };
   if (observed && observed.surfaces.every((surface, index) => surface.git !== null && !wasInferred(index))) {
     return { ...known, identity: observed, resolved: true, fresh: false, inferred: stored.inferred };
   }
@@ -16454,9 +16454,9 @@ import path4 from "node:path";
 import { DatabaseSync } from "node:sqlite";
 var SCHEMA_VERSION = 2;
 var SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
-function hasExactKeys(value, keys) {
+function hasExactKeys(value, keys2) {
   const actual = Object.keys(value).sort();
-  const expected = [...keys].sort();
+  const expected = [...keys2].sort();
   return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
 }
 function isBodyFreeRequestReceipt(value) {
@@ -16657,20 +16657,20 @@ var SqliteContinuityStore = class {
       return { kind: "purged" };
     });
   }
-  setPendingMarker(taskCorrelation, epoch, source, revision, digest3, rootId, now) {
+  setPendingMarker(taskCorrelation, epoch, source, revision, digest4, rootId, now) {
     const result = this.database.prepare(`
       UPDATE continuity_tasks SET pending_source = ?, pending_revision = ?, pending_digest = ?,
         pending_root_id = ?, pending_consumed = 0, updated_at = ?
       WHERE task_correlation = ? AND current_epoch = ?
-    `).run(source, revision, digest3, rootId, now, taskCorrelation, epoch);
+    `).run(source, revision, digest4, rootId, now, taskCorrelation, epoch);
     return result.changes === 1;
   }
-  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest3, now) {
+  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest4, now) {
     const result = this.database.prepare(`
       UPDATE continuity_tasks SET pending_consumed = 1, last_auto_injected_revision = ?, updated_at = ?
       WHERE task_correlation = ? AND current_epoch = ? AND pending_source = 'workflow'
         AND pending_revision = ? AND pending_digest = ? AND pending_consumed = 0
-    `).run(revision, now, taskCorrelation, epoch, revision, digest3);
+    `).run(revision, now, taskCorrelation, epoch, revision, digest4);
     return result.changes === 1;
   }
   recordObservation(taskCorrelation, epoch, event, turnHash, success, now) {
@@ -17467,8 +17467,8 @@ import { readFileSync as readFileSync2, readdirSync } from "node:fs";
 import path6 from "node:path";
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path13 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path13, "utf8"));
+  const path14 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path14, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -17514,7 +17514,15 @@ var contractSchemas = {
   stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
   stateCleanupReceipt: loadSchema("state-cleanup-receipt.v1.schema.json"),
   koreanProseGlossaryLookupRequest: loadSchema("korean-prose-glossary-lookup-request.v1.schema.json"),
-  koreanProseGlossaryLookupResult: loadSchema("korean-prose-glossary-lookup-result.v1.schema.json")
+  koreanProseGlossaryLookupResult: loadSchema("korean-prose-glossary-lookup-result.v1.schema.json"),
+  modelCatalogV1: loadSchema("model-catalog.v1.schema.json"),
+  modelRoutingPolicyV1: loadSchema("model-routing-policy.v1.schema.json"),
+  hostModelCapabilitiesV1: loadSchema("host-model-capabilities.v1.schema.json"),
+  modelSelectionRequestV2: loadSchema("model-selection-request.v2.schema.json"),
+  modelRoutingDecisionV2: loadSchema("model-routing-decision.v2.schema.json"),
+  modelApplicationRequestV2: loadSchema("model-application-request.v2.schema.json"),
+  modelApplicationRecordV2: loadSchema("model-application-record.v2.schema.json"),
+  modelEvaluationRecordV1: loadSchema("model-evaluation-record.v1.schema.json")
 };
 function artifactDigestView(declared) {
   let items = declared.properties?.artifacts?.items;
@@ -17674,6 +17682,30 @@ var ContractValidator = class {
   pluginUpdateNotice(value) {
     return this.assert("pluginUpdateNotice", value);
   }
+  modelCatalogV1(value) {
+    return this.assert("modelCatalogV1", value);
+  }
+  modelRoutingPolicyV1(value) {
+    return this.assert("modelRoutingPolicyV1", value);
+  }
+  hostModelCapabilitiesV1(value) {
+    return this.assert("hostModelCapabilitiesV1", value);
+  }
+  modelSelectionRequestV2(value) {
+    return this.assert("modelSelectionRequestV2", value);
+  }
+  modelRoutingDecisionV2(value) {
+    return this.assert("modelRoutingDecisionV2", value);
+  }
+  modelApplicationRequestV2(value) {
+    return this.assert("modelApplicationRequestV2", value);
+  }
+  modelApplicationRecordV2(value) {
+    return this.assert("modelApplicationRecordV2", value);
+  }
+  modelEvaluationRecordV1(value) {
+    return this.assert("modelEvaluationRecordV1", value);
+  }
   providerResult(rootDirectory, resultSchema, outputSchema, value) {
     const declared = this.readBoundSchema(rootDirectory, resultSchema, "provider result");
     const declaresVersion = Boolean(declared.properties && Object.prototype.hasOwnProperty.call(declared.properties, "schemaVersion"));
@@ -17752,12 +17784,12 @@ var ContractValidator = class {
       });
     }
     const raw = readFileSync2(schemaPath);
-    const digest3 = `sha256:${createHash3("sha256").update(raw).digest("hex")}`;
-    if (digest3 !== reference.digest) {
+    const digest4 = `sha256:${createHash3("sha256").update(raw).digest("hex")}`;
+    if (digest4 !== reference.digest) {
       throw new WorkflowContractError("STALE_REVISION", `${label} schema changed after planning.`, {
         schemaPath: reference.path,
         expectedDigest: reference.digest,
-        actualDigest: digest3
+        actualDigest: digest4
       });
     }
     return JSON.parse(raw.toString("utf8"));
@@ -19774,8 +19806,8 @@ var SqliteKoreanProseGlossary = class {
     };
   }
 };
-function parseGlossarySeed(text) {
-  const entries = text.split(/\r?\n/u).filter((line) => line.trim().length > 0).map((line, index) => {
+function parseGlossarySeed(text2) {
+  const entries = text2.split(/\r?\n/u).filter((line) => line.trim().length > 0).map((line, index) => {
     try {
       return JSON.parse(line);
     } catch {
@@ -19838,8 +19870,8 @@ function loadGlossary(databasePath) {
 function validateSeedEntry(value, line) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`Glossary seed line ${line} must be an object.`);
   const item = value;
-  const keys = Object.keys(item).sort().join(",");
-  if (keys !== ["active", "canonicalForm", "entryId", "forms", "policy", "priority", "sourceRef"].sort().join(",")) throw new Error(`Glossary seed line ${line} has unexpected or missing fields.`);
+  const keys2 = Object.keys(item).sort().join(",");
+  if (keys2 !== ["active", "canonicalForm", "entryId", "forms", "policy", "priority", "sourceRef"].sort().join(",")) throw new Error(`Glossary seed line ${line} has unexpected or missing fields.`);
   if (typeof item.entryId !== "string" || !ENTRY_ID.test(item.entryId)) throw new Error(`Glossary seed line ${line} has an invalid entryId.`);
   if (typeof item.canonicalForm !== "string" || item.canonicalForm.length === 0 || item.canonicalForm !== item.canonicalForm.normalize("NFC")) throw new Error(`Glossary seed line ${line} has a non-NFC or empty canonicalForm.`);
   if (typeof item.policy !== "string" || !POLICIES.has(item.policy)) throw new Error(`Glossary seed line ${line} has an invalid policy.`);
@@ -20240,6 +20272,947 @@ var SessionMessageService = class {
   }
 };
 
+// mcp-server/src/model-routing-service.ts
+import { DatabaseSync as DatabaseSync4 } from "node:sqlite";
+import { fileURLToPath as fileURLToPath4 } from "node:url";
+
+// skills/coordinate-subagents/scripts/model-routing-core.mjs
+import { createHash as createHash5 } from "node:crypto";
+var ROLES = Object.freeze(["discovery", "general-implementation", "complex-reasoning", "independent-audit"]);
+var ORIGINS = Object.freeze(["openai", "anthropic", "google", "xai", "mistral", "amazon", "cohere", "meta"]);
+var TRAITS = Object.freeze(["architecture-decision", "code-change", "diagnosis", "source-research", "google-app-operation", "context-repair", "multimodal-input"]);
+var CLASSES = ["lightweight", "general", "deep", "frontier"];
+var SOURCES = ["configuration", "tool-contract", "host-observation", "live-probe"];
+var DIGEST2 = /^sha256:[a-f0-9]{64}$/u;
+var ID = /^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$/u;
+var BIND_KEYS = ["assignmentId", "taskId", "runId", "stageId", "attemptId", "revision", "inputDigest", "candidateDigest"];
+var TARGET_KEYS = ["actorId", "host", "sessionId", "instanceId"];
+var RoutingError = class extends Error {
+  constructor(code, message) {
+    super(message);
+    this.name = "RoutingError";
+    this.code = code;
+  }
+};
+function assert2(condition, code, message = code) {
+  if (!condition) throw new RoutingError(code, message);
+}
+function object3(value, name) {
+  assert2(value && typeof value === "object" && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype, "INVALID_INPUT", `${name} must be a plain JSON object`);
+  return value;
+}
+function keys(value, allowed, required2 = allowed, name = "object") {
+  object3(value, name);
+  assert2(Object.keys(value).every((k) => allowed.includes(k)), "INVALID_INPUT", `${name}: unexpected field`);
+  assert2(required2.every((k) => Object.hasOwn(value, k)), "INVALID_INPUT", `${name}: required field missing`);
+}
+function text(value, name, maximum = 512) {
+  assert2(typeof value === "string" && value.trim().length > 0 && Buffer.byteLength(value, "utf8") <= maximum && !value.includes("\0"), "INVALID_INPUT", `${name}: non-empty bounded string required`);
+}
+function identifier(value, name) {
+  assert2(typeof value === "string" && ID.test(value), "INVALID_INPUT", `${name}: invalid identifier`);
+}
+function digestValue(value, name) {
+  assert2(typeof value === "string" && DIGEST2.test(value), "INVALID_INPUT", `${name}: sha256 digest required`);
+}
+function instant(value, name) {
+  assert2(typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value, "INVALID_INPUT", `${name}: canonical UTC timestamp required`);
+  return Date.parse(value);
+}
+function integer2(value, name, min = 0, max = Number.MAX_SAFE_INTEGER) {
+  assert2(Number.isSafeInteger(value) && value >= min && value <= max, "INVALID_INPUT", `${name}: invalid integer`);
+}
+function strings(value, name, allowed, maximum = 128) {
+  assert2(Array.isArray(value) && value.length <= maximum && value.every((v) => typeof v === "string" && (allowed ? allowed.includes(v) : v.length > 0 && v.length <= 200)) && new Set(value).size === value.length, "INVALID_INPUT", `${name}: unique bounded array required`);
+}
+function bool(value, name) {
+  assert2(typeof value === "boolean", "INVALID_INPUT", `${name}: boolean required`);
+}
+function canonical(value) {
+  const seen = /* @__PURE__ */ new Set();
+  const visit = (v) => {
+    if (v === null || typeof v === "string" || typeof v === "boolean") return JSON.stringify(v);
+    if (typeof v === "number") {
+      assert2(Number.isFinite(v), "INVALID_INPUT", "Non-finite JSON number");
+      return JSON.stringify(v);
+    }
+    assert2(v && typeof v === "object" && !seen.has(v), "INVALID_INPUT", "Non-JSON or cyclic value");
+    seen.add(v);
+    let result;
+    if (Array.isArray(v)) result = `[${Array.from(v, visit).join(",")}]`;
+    else {
+      object3(v, "canonical object");
+      result = `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${visit(v[k])}`).join(",")}}`;
+    }
+    seen.delete(v);
+    return result;
+  };
+  return visit(value);
+}
+function digest(value) {
+  return `sha256:${createHash5("sha256").update(canonical(value)).digest("hex")}`;
+}
+function seal(value, field) {
+  const out = structuredClone(value);
+  delete out[field];
+  return { ...out, [field]: digest(out) };
+}
+function verifySeal(value, field) {
+  digestValue(value[field], field);
+  const content = { ...value };
+  delete content[field];
+  assert2(digest(content) === value[field], "DIGEST_MISMATCH", `${field} does not match contents`);
+}
+function validateBinding(binding2) {
+  keys(binding2, BIND_KEYS);
+  for (const k of BIND_KEYS.slice(0, 5)) identifier(binding2[k], k);
+  integer2(binding2.revision, "revision");
+  digestValue(binding2.inputDigest, "inputDigest");
+  digestValue(binding2.candidateDigest, "candidateDigest");
+  return binding2;
+}
+function validateTarget(target) {
+  keys(target, TARGET_KEYS);
+  for (const k of TARGET_KEYS) identifier(target[k], k);
+  return target;
+}
+function validateReasoning(control) {
+  object3(control, "nativeReasoning");
+  if (control.kind === "enum") {
+    keys(control, ["kind", "value"]);
+    identifier(control.value, "reasoning enum");
+    assert2(!["ultra", "ultracode"].includes(control.value.toLowerCase()), "RUNTIME_IS_NOT_EFFORT");
+  } else if (control.kind === "token-budget") {
+    keys(control, ["kind", "budgetTokens"]);
+    integer2(control.budgetTokens, "budgetTokens", 1, 1e7);
+  } else if (control.kind === "toggle") {
+    keys(control, ["kind", "enabled"]);
+    bool(control.enabled, "enabled");
+  } else {
+    keys(control, ["kind"]);
+    assert2(control.kind === "not-exposed", "INVALID_INPUT", "Unknown native reasoning control");
+  }
+  return control;
+}
+function validateSelection(value) {
+  keys(value, ["model", "resolvedModel", "modelOrigin", "servingProvider", "accessPath", "nativeReasoning", "runtimeMode"]);
+  for (const k of ["model", "resolvedModel", "modelOrigin", "servingProvider", "runtimeMode"]) identifier(value[k], k);
+  assert2(["subscription", "api", "enterprise", "unknown"].includes(value.accessPath), "INVALID_INPUT", "Invalid accessPath");
+  validateReasoning(value.nativeReasoning);
+  return value;
+}
+function validateCapabilities(snapshot) {
+  keys(snapshot, ["schemaVersion", "host", "hostVersion", "adapterVersion", "actorId", "sessionId", "instanceId", "observedAt", "expiresAt", "supportedBindings", "executionCapabilities", "source", "sourceReference", "snapshotDigest"]);
+  assert2(snapshot.schemaVersion === "1.0.0", "INVALID_INPUT", "HostModelCapabilities.v1 required");
+  validateTarget(Object.fromEntries(TARGET_KEYS.map((k) => [k, snapshot[k]])));
+  text(snapshot.hostVersion, "hostVersion");
+  text(snapshot.adapterVersion, "adapterVersion");
+  const start = instant(snapshot.observedAt, "observedAt"), end = instant(snapshot.expiresAt, "expiresAt");
+  assert2(end > start && end - start <= 864e5, "INVALID_INPUT", "Capability validity must be 0 < ttl <= 24h");
+  assert2(SOURCES.includes(snapshot.source), "INVALID_INPUT", "Agent self-report is not a capability source");
+  text(snapshot.sourceReference, "sourceReference");
+  const ex = snapshot.executionCapabilities;
+  keys(ex, ["dispatch", "observe", "cancel", "resume", "filesystem", "tools", "approvals", "isolation", "inputModalities"]);
+  for (const k of ["dispatch", "observe", "cancel", "resume"]) assert2([true, false, "unknown"].includes(ex[k]), "INVALID_INPUT", `Invalid ${k} capability`);
+  assert2(["none", "read", "write", "unknown"].includes(ex.filesystem), "INVALID_INPUT", "Invalid filesystem capability");
+  strings(ex.tools, "tools");
+  strings(ex.inputModalities, "inputModalities", ["text", "image", "audio", "video"]);
+  assert2(["enforced", "unknown"].includes(ex.approvals), "INVALID_INPUT", "Invalid approval boundary");
+  assert2(["process", "sandbox", "remote", "unknown"].includes(ex.isolation), "INVALID_INPUT", "Invalid isolation");
+  assert2(Array.isArray(snapshot.supportedBindings) && snapshot.supportedBindings.length <= 256, "INVALID_INPUT", "Invalid supported bindings");
+  const seen = /* @__PURE__ */ new Set();
+  for (const binding2 of snapshot.supportedBindings) {
+    keys(binding2, ["model", "resolvedModel", "modelOrigin", "servingProvider", "accessPath", "nativeReasoning", "runtimeMode", "invocationSurface", "observableFields", "aliasResolution", "possibleFallbacks"]);
+    validateSelection(Object.fromEntries(["model", "resolvedModel", "modelOrigin", "servingProvider", "accessPath", "nativeReasoning", "runtimeMode"].map((k) => [k, binding2[k]])));
+    assert2(["local-subagent", "peer-session", "headless"].includes(binding2.invocationSurface), "INVALID_INPUT", "Invalid invocationSurface");
+    strings(binding2.observableFields, "observableFields", ["model", "reasoning", "runtimeMode"]);
+    if (binding2.aliasResolution !== null) {
+      keys(binding2.aliasResolution, ["alias", "resolvedModel", "sourceReference"]);
+      identifier(binding2.aliasResolution.alias, "alias");
+      identifier(binding2.aliasResolution.resolvedModel, "resolvedModel");
+      text(binding2.aliasResolution.sourceReference, "alias evidence");
+      assert2(binding2.aliasResolution.alias === binding2.model && binding2.aliasResolution.resolvedModel === binding2.resolvedModel, "INVALID_INPUT", "Alias resolution conflicts with binding");
+    }
+    assert2(Array.isArray(binding2.possibleFallbacks) && binding2.possibleFallbacks.length <= 32, "INVALID_INPUT");
+    for (const f of binding2.possibleFallbacks) {
+      keys(f, ["resolvedModel", "modelOrigin"]);
+      identifier(f.resolvedModel, "fallback model");
+      identifier(f.modelOrigin, "fallback origin");
+    }
+    const key = digest(binding2);
+    assert2(!seen.has(key), "INVALID_INPUT", "Duplicate binding");
+    seen.add(key);
+  }
+  verifySeal(snapshot, "snapshotDigest");
+  return snapshot;
+}
+function validatePolicy(policy) {
+  keys(policy, ["schemaVersion", "allowedOrigins", "enabledHosts", "allowedAccessPaths", "allowPreview", "allowSeedModels", "maxCatalogAgeDays", "profileOrder", "traitOrder", "controlOrder", "modelMinimums", "highRiskNativeFloor", "fullHistoryInheritanceHosts"]);
+  assert2(policy.schemaVersion === "1.0.0", "INVALID_INPUT");
+  strings(policy.allowedOrigins, "allowedOrigins", ORIGINS);
+  strings(policy.enabledHosts, "enabledHosts");
+  strings(policy.allowedAccessPaths, "allowedAccessPaths", ["subscription", "api", "enterprise"]);
+  bool(policy.allowPreview, "allowPreview");
+  bool(policy.allowSeedModels, "allowSeedModels");
+  integer2(policy.maxCatalogAgeDays, "maxCatalogAgeDays", 1, 366);
+  keys(policy.profileOrder, ["economy", "balanced", "quality"]);
+  for (const profile of Object.values(policy.profileOrder)) {
+    keys(profile, ROLES);
+    for (const v of Object.values(profile)) strings(v, "model order");
+  }
+  keys(policy.traitOrder, TRAITS, []);
+  for (const v of Object.values(policy.traitOrder)) strings(v, "trait order");
+  assert2(Array.isArray(policy.controlOrder) && policy.controlOrder.length <= 256, "INVALID_INPUT");
+  const seen = /* @__PURE__ */ new Set();
+  for (const rule of policy.controlOrder) {
+    keys(rule, ["host", "role", "profile", "controls"]);
+    identifier(rule.host, "control host");
+    assert2(ROLES.includes(rule.role) && ["economy", "balanced", "quality"].includes(rule.profile), "INVALID_INPUT");
+    assert2(Array.isArray(rule.controls) && rule.controls.length <= 32, "INVALID_INPUT");
+    for (const control of rule.controls) validateReasoning(control);
+    const key = `${rule.host}/${rule.role}/${rule.profile}`;
+    assert2(!seen.has(key), "INVALID_INPUT", "Duplicate control order");
+    seen.add(key);
+  }
+  assert2(Array.isArray(policy.modelMinimums) && policy.modelMinimums.length <= 256, "INVALID_INPUT");
+  const minimumModels = /* @__PURE__ */ new Set();
+  for (const rule of policy.modelMinimums) {
+    keys(rule, ["model", "enumValues"]);
+    identifier(rule.model, "minimum model");
+    strings(rule.enumValues, "minimum enumValues", null, 32);
+    assert2(rule.enumValues.length > 0 && !minimumModels.has(rule.model), "INVALID_INPUT", "Duplicate or empty model minimum");
+    minimumModels.add(rule.model);
+  }
+  assert2(Array.isArray(policy.highRiskNativeFloor) && policy.highRiskNativeFloor.length <= 64, "INVALID_INPUT");
+  const floorHosts = /* @__PURE__ */ new Set();
+  for (const rule of policy.highRiskNativeFloor) {
+    keys(rule, ["host", "modelOrigins", "minimumModelClass", "enumValues"]);
+    identifier(rule.host, "floor host");
+    strings(rule.modelOrigins, "floor modelOrigins", ORIGINS, 32);
+    assert2(CLASSES.includes(rule.minimumModelClass), "INVALID_INPUT");
+    strings(rule.enumValues, "floor enumValues", null, 32);
+    assert2(rule.modelOrigins.length > 0 && rule.enumValues.length > 0 && !floorHosts.has(rule.host), "INVALID_INPUT", "Duplicate or empty high-risk floor");
+    floorHosts.add(rule.host);
+  }
+  strings(policy.fullHistoryInheritanceHosts, "fullHistoryInheritanceHosts", null, 64);
+  return policy;
+}
+function validateRequest(request) {
+  keys(request, ["schemaVersion", "binding", "role", "highRisk", "profile", "taskTraits", "requirements", "user"], ["schemaVersion", "binding", "role", "highRisk", "requirements"]);
+  assert2(request.schemaVersion === "2.0.0", "INVALID_INPUT", "ModelSelectionRequest.v2 required");
+  validateBinding(request.binding);
+  assert2(ROLES.includes(request.role), "INVALID_INPUT", "Unknown role");
+  bool(request.highRisk, "highRisk");
+  assert2(request.role !== "independent-audit" || request.highRisk, "INVALID_INPUT", "Independent audit requires highRisk");
+  assert2(["economy", "balanced", "quality"].includes(request.profile ?? "balanced"), "INVALID_INPUT", "Unknown profile");
+  strings(request.taskTraits ?? [], "taskTraits", TRAITS);
+  const req = request.requirements;
+  keys(req, ["inputModalities", "tools", "filesystem", "allowedSurfaces", "allowedRuntimeModes", "allowNestedDelegation", "requireObservable", "excludedActors", "excludedSessions", "contextMode"], ["inputModalities", "tools", "filesystem", "allowedSurfaces", "allowedRuntimeModes", "allowNestedDelegation", "requireObservable", "excludedActors", "excludedSessions", "contextMode"]);
+  strings(req.inputModalities, "inputModalities", ["text", "image", "audio", "video"]);
+  strings(req.tools, "tools");
+  assert2(["none", "read", "write"].includes(req.filesystem), "INVALID_INPUT");
+  strings(req.allowedSurfaces, "allowedSurfaces", ["local-subagent", "peer-session", "headless"]);
+  strings(req.allowedRuntimeModes, "allowedRuntimeModes");
+  bool(req.allowNestedDelegation, "allowNestedDelegation");
+  strings(req.requireObservable, "requireObservable", ["model", "reasoning", "runtimeMode"]);
+  strings(req.excludedActors, "excludedActors");
+  strings(req.excludedSessions, "excludedSessions");
+  assert2(["limited", "full-history"].includes(req.contextMode), "INVALID_INPUT");
+  if (request.user) {
+    keys(request.user, ["strength", "model", "host", "nativeReasoning", "runtimeMode"], ["strength"]);
+    assert2(["required", "preferred"].includes(request.user.strength), "INVALID_INPUT", "Invalid preference strength");
+    assert2(Object.keys(request.user).length > 1, "INVALID_INPUT", "Empty preference");
+    for (const k of ["model", "host", "runtimeMode"]) if (Object.hasOwn(request.user, k)) identifier(request.user[k], k);
+    if (request.user.nativeReasoning) validateReasoning(request.user.nativeReasoning);
+  }
+  return request;
+}
+function validateCatalog(catalog) {
+  keys(catalog, ["schemaVersion", "snapshotDate", "models", "hosts", "sources", "catalogDigest"]);
+  assert2(catalog.schemaVersion === "1.0.0", "INVALID_INPUT");
+  instant(catalog.snapshotDate, "snapshotDate");
+  assert2(Array.isArray(catalog.models) && catalog.models.length <= 512, "INVALID_INPUT");
+  assert2(Array.isArray(catalog.hosts) && Array.isArray(catalog.sources), "INVALID_INPUT");
+  const sourceIds = /* @__PURE__ */ new Set();
+  for (const source of catalog.sources) {
+    keys(source, ["id", "url", "checkedAt", "evidenceKind", "note"]);
+    identifier(source.id, "source id");
+    assert2(!sourceIds.has(source.id), "INVALID_INPUT", "Duplicate source");
+    sourceIds.add(source.id);
+    text(source.url, "source URL", 2048);
+    assert2(/^(?:https:\/\/|plan:|repository:)/u.test(source.url), "INVALID_INPUT");
+    instant(source.checkedAt, "checkedAt");
+    assert2(["official-document", "baseline-source", "user-plan"].includes(source.evidenceKind), "INVALID_INPUT");
+    text(source.note, "source note", 4096);
+  }
+  const hosts = /* @__PURE__ */ new Set();
+  for (const host of catalog.hosts) {
+    keys(host, ["id", "defaultEnabled", "autoDispatch", "status", "sourceIds", "requiredCapabilities", "unknownCapabilities"]);
+    identifier(host.id, "host id");
+    assert2(!hosts.has(host.id), "INVALID_INPUT", "Duplicate host");
+    hosts.add(host.id);
+    bool(host.defaultEnabled, "defaultEnabled");
+    bool(host.autoDispatch, "autoDispatch");
+    assert2(["baseline", "experimental", "descriptor-only"].includes(host.status), "INVALID_INPUT");
+    strings(host.sourceIds, "sourceIds");
+    assert2(host.sourceIds.length > 0 && host.sourceIds.every((s) => sourceIds.has(s)), "CATALOG_SOURCE_MISSING");
+    strings(host.requiredCapabilities, "requiredCapabilities");
+    strings(host.unknownCapabilities, "unknownCapabilities");
+  }
+  const ids = /* @__PURE__ */ new Set(), aliases = /* @__PURE__ */ new Set();
+  for (const model of catalog.models) {
+    keys(model, ["id", "modelOrigin", "aliases", "modelClass", "status", "verification", "roles", "taskTraits", "nativeKinds", "inputModalities", "contextTokens", "abilityScore", "officialPositioning", "recommendationBasis", "sourceIds", "checkedAt"]);
+    identifier(model.id, "model id");
+    assert2(!ids.has(model.id), "INVALID_INPUT", "Duplicate model");
+    ids.add(model.id);
+    assert2(ORIGINS.includes(model.modelOrigin), "ORIGIN_EXCLUDED", "Catalog contains excluded origin");
+    strings(model.aliases, "aliases");
+    for (const alias of [model.id, ...model.aliases]) {
+      assert2(!aliases.has(alias), "INVALID_INPUT", "Conflicting model alias");
+      aliases.add(alias);
+    }
+    assert2(CLASSES.includes(model.modelClass), "INVALID_INPUT");
+    assert2(["stable", "preview", "seed", "retired"].includes(model.status), "INVALID_INPUT");
+    strings(model.verification, "verification", ["documented", "baseline-seed", "contract-tested", "live-verified", "locally-evaluated"]);
+    strings(model.roles, "roles", ROLES);
+    strings(model.taskTraits, "taskTraits", TRAITS);
+    strings(model.nativeKinds, "nativeKinds", ["enum", "token-budget", "toggle", "not-exposed"]);
+    strings(model.inputModalities, "inputModalities", ["text", "image", "audio", "video"]);
+    if (model.contextTokens !== null) integer2(model.contextTokens, "contextTokens", 1);
+    assert2(model.abilityScore === null, "INVALID_INPUT", "No measured ability ranking is bundled");
+    assert2(model.officialPositioning === null || typeof model.officialPositioning === "string", "INVALID_INPUT");
+    text(model.recommendationBasis, "recommendationBasis", 2048);
+    strings(model.sourceIds, "sourceIds");
+    assert2(model.sourceIds.length > 0 && model.sourceIds.every((s) => sourceIds.has(s)), "CATALOG_SOURCE_MISSING");
+    instant(model.checkedAt, "model checkedAt");
+  }
+  verifySeal(catalog, "catalogDigest");
+  return catalog;
+}
+function catalogModel(catalog, name) {
+  return catalog.models.find((m) => m.id === name || m.aliases.includes(name));
+}
+function exactModel(catalog, name) {
+  return catalog.models.find((m) => m.id === name);
+}
+function matchesPreference(candidate, pref, catalog) {
+  if (!pref) return false;
+  const m = pref.model ? catalogModel(catalog, pref.model) : null;
+  return (!pref.model || m?.id === candidate.model?.id) && (!pref.host || pref.host === candidate.snapshot.host) && (!pref.runtimeMode || pref.runtimeMode === candidate.binding.runtimeMode) && (!pref.nativeReasoning || canonical(pref.nativeReasoning) === canonical(candidate.binding.nativeReasoning));
+}
+function legacyFloor(binding2, host, model, policy) {
+  const rule = policy.highRiskNativeFloor.find((r) => r.host === host);
+  if (!rule || binding2.nativeReasoning.kind !== "enum" || binding2.runtimeMode !== "standard") return false;
+  if (!model || CLASSES.indexOf(model.modelClass) < CLASSES.indexOf(rule.minimumModelClass)) return false;
+  if (!rule.modelOrigins.includes(model.modelOrigin) || !model.nativeKinds.includes("enum")) return false;
+  return rule.enumValues.includes(binding2.nativeReasoning.value);
+}
+function belowModelMinimum(binding2, model, policy) {
+  const rule = model && policy.modelMinimums.find((r) => r.model === model.id);
+  return Boolean(rule) && !(binding2.nativeReasoning.kind === "enum" && rule.enumValues.includes(binding2.nativeReasoning.value));
+}
+function selectionFrom(binding2) {
+  return Object.fromEntries(["model", "resolvedModel", "modelOrigin", "servingProvider", "accessPath", "nativeReasoning", "runtimeMode"].map((k) => [k, structuredClone(binding2[k])]));
+}
+function lexical(a, b2) {
+  return a < b2 ? -1 : a > b2 ? 1 : 0;
+}
+function resolveV2(request, { catalog, policy, capabilities, now }) {
+  validateRequest(request);
+  validateCatalog(catalog);
+  validatePolicy(policy);
+  const nowMs = instant(now, "now");
+  assert2(Array.isArray(capabilities) && capabilities.length <= 256, "INVALID_INPUT", "Capability list too large");
+  const rejectedCandidates = [], candidates = [], validSnapshotDigests = [], seenSnapshots = /* @__PURE__ */ new Set();
+  const reject = (candidateKey, reasonCodes) => rejectedCandidates.push({ candidateKey, reasonCodes: [...new Set(reasonCodes)].sort() });
+  for (const snapshot of capabilities) {
+    try {
+      validateCapabilities(snapshot);
+    } catch (error2) {
+      reject(`invalid:${digest(snapshot)}`, [error2.code ?? "INVALID_CAPABILITY"]);
+      continue;
+    }
+    assert2(!seenSnapshots.has(snapshot.snapshotDigest), "INVALID_INPUT", "Duplicate capability snapshot");
+    seenSnapshots.add(snapshot.snapshotDigest);
+    validSnapshotDigests.push(snapshot.snapshotDigest);
+    const host = catalog.hosts.find((h) => h.id === snapshot.host);
+    for (const b2 of snapshot.supportedBindings) {
+      const key = digest({ snapshotDigest: snapshot.snapshotDigest, binding: b2 });
+      const reason = [], m = exactModel(catalog, b2.resolvedModel);
+      if (!m) reason.push("UNRESOLVED_MODEL");
+      if (!policy.allowedOrigins.includes(b2.modelOrigin) || !ORIGINS.includes(b2.modelOrigin)) reason.push("ORIGIN_EXCLUDED");
+      if (m && m.modelOrigin !== b2.modelOrigin) reason.push("ORIGIN_MISMATCH");
+      if (b2.model !== b2.resolvedModel && (!b2.aliasResolution || !m?.aliases.includes(b2.model))) reason.push("ALIAS_UNVERIFIED");
+      for (const f of b2.possibleFallbacks) {
+        const fm = exactModel(catalog, f.resolvedModel);
+        if (!fm || fm.modelOrigin !== f.modelOrigin || !policy.allowedOrigins.includes(f.modelOrigin)) reason.push("FALLBACK_ORIGIN_UNVERIFIED");
+      }
+      if (b2.possibleFallbacks.length && (request.highRisk || request.user?.strength === "required" || request.requirements.requireObservable.length)) reason.push("FALLBACK_NOT_PINNED");
+      if (!host || !policy.enabledHosts.includes(snapshot.host)) reason.push("HOST_DISABLED");
+      if (!host?.autoDispatch) reason.push("RUNTIME_NOT_ENABLED");
+      if (Date.parse(snapshot.observedAt) > nowMs || Date.parse(snapshot.expiresAt) <= nowMs) reason.push("CAPABILITY_EXPIRED");
+      if (Date.parse(catalog.snapshotDate) > nowMs || nowMs - Date.parse(catalog.snapshotDate) > policy.maxCatalogAgeDays * 864e5) reason.push("CATALOG_STALE");
+      if (m?.status === "retired" || m?.status === "preview" && !policy.allowPreview || m?.status === "seed" && !policy.allowSeedModels) reason.push("MODEL_STATUS_BLOCKED");
+      if (m && (!m.roles.includes(request.role) || (request.taskTraits ?? []).some((t) => !m.taskTraits.includes(t)))) reason.push("TASK_NOT_SUITABLE");
+      if (m && !m.nativeKinds.includes(b2.nativeReasoning.kind)) reason.push("CONTROL_NOT_SUPPORTED");
+      if (belowModelMinimum(b2, m, policy)) reason.push("MODEL_MINIMUM_NOT_MET");
+      if (!policy.allowedAccessPaths.includes(b2.accessPath)) reason.push("ACCESS_PATH_NOT_APPROVED");
+      const ex = snapshot.executionCapabilities, req = request.requirements;
+      if (ex.dispatch !== true || ex.approvals !== "enforced" || ex.isolation === "unknown") reason.push("EXECUTION_BOUNDARY_UNKNOWN");
+      if (!req.allowedSurfaces.includes(b2.invocationSurface)) reason.push("SURFACE_NOT_ALLOWED");
+      if (req.inputModalities.some((x) => !ex.inputModalities.includes(x) || !m?.inputModalities.includes(x))) reason.push("INPUT_NOT_SUPPORTED");
+      if (req.tools.some((t) => !ex.tools.includes(t))) reason.push("TOOLS_NOT_SUPPORTED");
+      if (["none", "read", "write"].indexOf(ex.filesystem) < ["none", "read", "write"].indexOf(req.filesystem)) reason.push("FILESYSTEM_NOT_SUPPORTED");
+      if (!req.allowedRuntimeModes.includes(b2.runtimeMode)) reason.push("RUNTIME_MODE_NOT_ALLOWED");
+      if (b2.runtimeMode !== "standard" && !req.allowNestedDelegation) reason.push("NESTED_DELEGATION_FORBIDDEN");
+      if (req.requireObservable.some((f) => !b2.observableFields.includes(f))) reason.push("OBSERVABILITY_INSUFFICIENT");
+      if (req.excludedActors.includes(snapshot.actorId) || req.excludedSessions.includes(`${snapshot.host}/${snapshot.sessionId}`)) reason.push("INDEPENDENCE_CONFLICT");
+      if (request.highRisk && (!legacyFloor(b2, snapshot.host, m, policy) || snapshot.source === "configuration" || !["model", "reasoning", "runtimeMode"].every((f) => b2.observableFields.includes(f)))) reason.push("HIGH_RISK_FLOOR_UNPROVEN");
+      if (req.contextMode === "full-history" && policy.fullHistoryInheritanceHosts.includes(snapshot.host)) reason.push("FULL_HISTORY_REQUIRES_LEGACY_INHERITANCE");
+      const candidate2 = { key, model: m, snapshot, binding: b2 };
+      if (request.user?.strength === "required" && !matchesPreference(candidate2, request.user, catalog)) reason.push("REQUIRED_CHOICE_UNAVAILABLE");
+      if (reason.length) reject(key, reason);
+      else candidates.push(candidate2);
+    }
+  }
+  const profile = request.profile ?? "balanced";
+  const seed = policy.profileOrder[profile][request.role];
+  const traitSeed = [...new Set((request.taskTraits ?? []).slice().sort().flatMap((t) => policy.traitOrder[t] ?? []))];
+  function rank(candidate2) {
+    const preferred = matchesPreference(candidate2, request.user, catalog) ? 0 : 1;
+    const position = (a) => a.includes(candidate2.model.id) ? a.indexOf(candidate2.model.id) : a.length;
+    const controls = policy.controlOrder.find((r) => r.host === candidate2.snapshot.host && r.role === request.role && r.profile === profile)?.controls ?? [];
+    const controlRank = controls.findIndex((c) => canonical(c) === canonical(candidate2.binding.nativeReasoning));
+    return [preferred, position(traitSeed), position(seed), controlRank < 0 ? controls.length : controlRank, candidate2.key];
+  }
+  candidates.sort((a, b2) => {
+    const x = rank(a), y2 = rank(b2);
+    for (let i = 0; i < 4; i++) if (x[i] !== y2[i]) return x[i] - y2[i];
+    return lexical(x[4], y2[4]);
+  });
+  const candidate = candidates[0];
+  const fallback = candidate && request.user?.strength === "preferred" && !matchesPreference(candidate, request.user, catalog) ? "PREFERRED_CHOICE_UNAVAILABLE" : null;
+  return seal({
+    schemaVersion: "2.0.0",
+    binding: structuredClone(request.binding),
+    requestDigest: digest(request),
+    catalogDigest: catalog.catalogDigest,
+    policyDigest: digest(policy),
+    capabilitySetDigest: digest(validSnapshotDigests.sort()),
+    capabilitySnapshotDigest: candidate?.snapshot.snapshotDigest ?? null,
+    requested: structuredClone(request.user ?? null),
+    selected: candidate ? selectionFrom(candidate.binding) : null,
+    target: candidate ? Object.fromEntries(TARGET_KEYS.map((k) => [k, candidate.snapshot[k]])) : null,
+    invocationSurface: candidate?.binding.invocationSurface ?? null,
+    status: candidate ? "selected" : "blocked",
+    executionAuthorized: false,
+    trustedGateSatisfied: false,
+    selectionReasonCodes: candidate ? [fallback ?? "REVIEWED_SEED_AND_CAPABILITY_MATCH"] : [request.user?.strength === "required" ? "REQUIRED_CHOICE_UNAVAILABLE" : "NO_ELIGIBLE_CANDIDATE"],
+    rejectedCandidates: rejectedCandidates.sort((a, b2) => lexical(a.candidateKey, b2.candidateKey)),
+    fallbackReason: fallback
+  }, "decisionDigest");
+}
+function fieldVerification(expected, actual, admitted) {
+  if (actual === null || actual === void 0 || !admitted) return "unverified";
+  return canonical(expected) === canonical(actual) ? "matched" : "mismatch";
+}
+function recordV2(input, { request, decision, catalog, policy, capabilities, now, admittedObservation = null }) {
+  keys(input, ["schemaVersion", "binding", "decisionDigest", "target", "dispatched", "dispatchedAt", "observation"], ["schemaVersion", "binding", "decisionDigest", "target", "dispatched", "dispatchedAt"]);
+  assert2(input.schemaVersion === "2.0.0", "INVALID_INPUT");
+  instant(input.dispatchedAt, "dispatchedAt");
+  assert2(input.dispatchedAt === now, "DISPATCH_TIME_MISMATCH");
+  validateBinding(input.binding);
+  validateTarget(input.target);
+  validateSelection(input.dispatched);
+  verifySeal(decision, "decisionDigest");
+  assert2(decision.status === "selected", "ASSIGNMENT_BLOCKED");
+  assert2(canonical(input.binding) === canonical(decision.binding) && canonical(input.target) === canonical(decision.target) && input.decisionDigest === decision.decisionDigest, "BINDING_MISMATCH");
+  assert2(digest(request) === decision.requestDigest, "BINDING_MISMATCH");
+  assert2(canonical(input.dispatched) === canonical(decision.selected), "DISPATCH_MISMATCH", "Actual invocation must match selected configuration");
+  assert2(resolveV2(request, { catalog, policy, capabilities, now }).decisionDigest === decision.decisionDigest, "RECORD_REVALIDATION_FAILED");
+  const observation = admittedObservation ?? input.observation ?? null;
+  if (observation !== null) {
+    keys(observation, ["binding", "target", "decisionDigest", "source", "reference", "observedAt", "models", "nativeReasoning", "runtimeMode", "terminalOutcome"]);
+    validateBinding(observation.binding);
+    validateTarget(observation.target);
+    assert2(canonical(observation.binding) === canonical(input.binding) && canonical(observation.target) === canonical(input.target) && observation.decisionDigest === input.decisionDigest, "OBSERVATION_BINDING_MISMATCH");
+    assert2(["host-event", "tool-result", "agent-self-report"].includes(observation.source), "INVALID_INPUT");
+    text(observation.reference, "observation reference");
+    instant(observation.observedAt, "observedAt");
+    assert2(Date.parse(observation.observedAt) >= Date.parse(now), "OBSERVATION_PREDATES_DISPATCH");
+    assert2(Array.isArray(observation.models) && observation.models.length <= 32, "INVALID_INPUT");
+    for (const model of observation.models) {
+      keys(model, ["resolvedModel", "modelOrigin"]);
+      identifier(model.resolvedModel, "observed model");
+      identifier(model.modelOrigin, "observed origin");
+    }
+    if (observation.nativeReasoning !== null) validateReasoning(observation.nativeReasoning);
+    if (observation.runtimeMode !== null) identifier(observation.runtimeMode, "runtimeMode");
+    assert2(["succeeded", "failed", "cancelled", "unknown"].includes(observation.terminalOutcome), "INVALID_INPUT");
+  }
+  const admitted = admittedObservation !== null && observation.source !== "agent-self-report";
+  const observedModels = observation?.models ?? [];
+  const expectedModels = [{ resolvedModel: decision.selected.resolvedModel, modelOrigin: decision.selected.modelOrigin }];
+  const modelVerification = fieldVerification(expectedModels, observedModels.length ? observedModels : null, admitted);
+  const reasoningVerification = fieldVerification(decision.selected.nativeReasoning, observation?.nativeReasoning, admitted);
+  const runtimeModeVerification = fieldVerification(decision.selected.runtimeMode, observation?.runtimeMode, admitted);
+  const mismatch = [modelVerification, reasoningVerification, runtimeModeVerification].includes("mismatch");
+  const originValid = observedModels.length > 0 && observedModels.every((m) => policy.allowedOrigins.includes(m.modelOrigin) && exactModel(catalog, m.resolvedModel)?.modelOrigin === m.modelOrigin);
+  return seal({
+    schemaVersion: "2.0.0",
+    binding: structuredClone(input.binding),
+    target: structuredClone(input.target),
+    decisionDigest: input.decisionDigest,
+    requestDigest: decision.requestDigest,
+    catalogDigest: decision.catalogDigest,
+    policyDigest: decision.policyDigest,
+    capabilitySnapshotDigest: decision.capabilitySnapshotDigest,
+    requested: decision.requested,
+    selected: decision.selected,
+    dispatched: structuredClone(input.dispatched),
+    dispatchedAt: input.dispatchedAt,
+    observed: structuredClone(observation),
+    modelVerification,
+    reasoningVerification,
+    runtimeModeVerification,
+    originVerified: admitted && originValid,
+    status: mismatch ? "mismatch" : admitted && originValid && [modelVerification, reasoningVerification, runtimeModeVerification].every((v) => v === "matched") ? "matched" : "unverified",
+    terminalOutcome: admitted ? observation.terminalOutcome : "unknown",
+    observationAdmitted: admitted,
+    // Existing trusted execution-context/gate must still run; this is a separate evidence artifact.
+    trustedGateSatisfied: false,
+    artifactOnly: true
+  }, "recordDigest");
+}
+
+// skills/coordinate-subagents/scripts/model-catalog.mjs
+import { readFileSync as readFileSync3, realpathSync as realpathSync2 } from "node:fs";
+import { createHash as createHash6 } from "node:crypto";
+import path9 from "node:path";
+import { fileURLToPath as fileURLToPath3, pathToFileURL } from "node:url";
+var defaultCatalogDirectory = fileURLToPath3(new URL("../references/model-catalog/", import.meta.url));
+function localFile(directory, relative, expectedDigest = null) {
+  assert2(typeof relative === "string" && !path9.isAbsolute(relative) && !relative.split(/[\\/]/u).includes(".."), "INVALID_CATALOG_PATH");
+  const root = realpathSync2(directory), file = realpathSync2(path9.join(root, relative));
+  const rel = path9.relative(root, file);
+  assert2(rel && !rel.startsWith("..") && !path9.isAbsolute(rel), "INVALID_CATALOG_PATH");
+  const bytes = readFileSync3(file);
+  assert2(bytes.length <= 2 * 1024 * 1024, "CATALOG_TOO_LARGE");
+  if (expectedDigest !== null) assert2(createHash6("sha256").update(bytes).digest("hex") === expectedDigest, "CATALOG_FILE_DIGEST_MISMATCH");
+  return JSON.parse(bytes.toString("utf8"));
+}
+function catalogIndex(directory = defaultCatalogDirectory) {
+  const index = localFile(directory, "index.json");
+  keys(index, ["schemaVersion", "snapshotDate", "providers", "hostsFile", "sourcesFile", "hostsSha256", "sourcesSha256"]);
+  assert2(index.schemaVersion === "1.0.0" && Array.isArray(index.providers), "INVALID_CATALOG");
+  const seen = /* @__PURE__ */ new Set();
+  for (const p of index.providers) {
+    keys(p, ["provider", "file", "sha256", "roles"]);
+    assert2(ORIGINS.includes(p.provider) && !seen.has(p.provider), "ORIGIN_EXCLUDED");
+    seen.add(p.provider);
+    assert2(/^[a-f0-9]{64}$/u.test(p.sha256), "INVALID_CATALOG");
+  }
+  return index;
+}
+function loadCatalog({ directory = defaultCatalogDirectory, providers = null, role = null } = {}) {
+  if (providers !== null) assert2(Array.isArray(providers) && providers.every((p) => ORIGINS.includes(p)), "INVALID_FILTER");
+  if (role !== null) assert2(ROLES.includes(role), "INVALID_FILTER");
+  const index = catalogIndex(directory);
+  const records = index.providers.filter((p) => (providers === null || providers.includes(p.provider)) && (role === null || p.roles.includes(role)));
+  const models = records.flatMap((p) => {
+    const shard = localFile(directory, p.file, p.sha256);
+    keys(shard, ["schemaVersion", "provider", "models"]);
+    assert2(shard.schemaVersion === "1.0.0" && shard.provider === p.provider && Array.isArray(shard.models), "INVALID_CATALOG");
+    assert2(shard.models.every((m) => m.modelOrigin === p.provider), "ORIGIN_MISMATCH");
+    return role === null ? shard.models : shard.models.filter((m) => m.roles.includes(role));
+  });
+  return validateCatalog(seal({
+    schemaVersion: "1.0.0",
+    snapshotDate: index.snapshotDate,
+    models,
+    hosts: localFile(directory, index.hostsFile, index.hostsSha256),
+    sources: localFile(directory, index.sourcesFile, index.sourcesSha256)
+  }, "catalogDigest"));
+}
+function loadPolicy(directory = defaultCatalogDirectory) {
+  return validatePolicy(localFile(directory, "policy.json"));
+}
+function queryCatalog(query = {}, directory = defaultCatalogDirectory) {
+  keys(query, ["provider", "role", "model", "includeSources"], []);
+  const catalog = loadCatalog({ directory, providers: query.provider ? [query.provider] : null, role: query.role ?? null });
+  const models = catalog.models.filter((m) => !query.model || m.id === query.model || m.aliases.includes(query.model));
+  return {
+    schemaVersion: "1.0.0",
+    catalogDigest: catalog.catalogDigest,
+    models,
+    ...query.includeSources === true ? { sources: catalog.sources.filter((s) => models.some((m) => m.sourceIds.includes(s.id))) } : {},
+    liveVerified: false
+  };
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href && import.meta.url.endsWith("/model-catalog.mjs")) {
+  try {
+    const [operation = "index", value, ...extra] = process.argv.slice(2);
+    assert2(extra.length === 0 && ["index", "validate", "query"].includes(operation), "USAGE", "model-catalog.mjs index|validate|query [query.json]");
+    if (operation === "index") console.log(JSON.stringify(catalogIndex(), null, 2));
+    else if (operation === "validate") {
+      const catalog = loadCatalog();
+      loadPolicy();
+      console.log(JSON.stringify({ valid: true, models: catalog.models.length, catalogDigest: catalog.catalogDigest }));
+    } else console.log(JSON.stringify(queryCatalog(value ? JSON.parse(readFileSync3(value, "utf8")) : {}), null, 2));
+  } catch (error2) {
+    console.error(`${error2.code ?? "ERROR"}: ${error2.message}`);
+    process.exitCode = 1;
+  }
+}
+
+// skills/coordinate-subagents/scripts/model-routing-service-core.mjs
+var ModelRoutingServiceCore = class {
+  constructor({ store = null, catalogDirectory = defaultCatalogDirectory, clock = () => (/* @__PURE__ */ new Date()).toISOString(), historyProvider = null } = {}) {
+    this.store = store;
+    this.catalogDirectory = catalogDirectory;
+    this.clock = clock;
+    this.historyProvider = historyProvider;
+  }
+  query(input) {
+    return queryCatalog(input, this.catalogDirectory);
+  }
+  resolve(input) {
+    validateRequest(input);
+    let request = structuredClone(input);
+    if (request.role === "independent-audit") {
+      assert2(this.historyProvider, "AUDIT_HISTORY_PROVIDER_REQUIRED");
+      const history = this.historyProvider(request.binding);
+      assert2(history && Array.isArray(history.actors) && Array.isArray(history.sessions), "AUDIT_HISTORY_UNAVAILABLE");
+      request.requirements.excludedActors = [.../* @__PURE__ */ new Set([...request.requirements.excludedActors, ...history.actors])].sort();
+      request.requirements.excludedSessions = [.../* @__PURE__ */ new Set([...request.requirements.excludedSessions, ...history.sessions])].sort();
+    }
+    const now = this.clock(), capabilities = this.store?.capabilities() ?? [];
+    const environment = { catalog: loadCatalog({ directory: this.catalogDirectory }), policy: loadPolicy(this.catalogDirectory), capabilities, now };
+    const decision = resolveV2(request, environment);
+    if (this.store) this.store.saveDecision(request, environment, decision, now);
+    return decision;
+  }
+  record(input) {
+    keys(input, ["application", "observationToken"], ["application"]);
+    assert2(this.store, "ROUTING_STORE_UNAVAILABLE");
+    const entry = this.store.decision(input.application?.decisionDigest);
+    assert2(entry, "DECISION_UNKNOWN");
+    const now = this.clock();
+    instant(now, "now");
+    assert2(Date.parse(input.application.dispatchedAt) <= Date.parse(now), "DISPATCH_TIME_IN_FUTURE");
+    const token = input.observationToken ?? null;
+    if (token !== null) {
+      assert2(typeof token === "string" && /^[a-f0-9]{48}$/u.test(token), "INVALID_OBSERVATION_TOKEN");
+      const dispatch = this.store.dispatch(digest({ binding: input.application.binding }));
+      assert2(dispatch && dispatch.dispatched_at === input.application.dispatchedAt && dispatch.decision_digest === input.application.decisionDigest, "DISPATCH_TIME_MISMATCH");
+    }
+    return this.store.recordApplication(input.application, token, (admittedObservation) => recordV2(input.application, { ...entry.environment, now: input.application.dispatchedAt, request: entry.request, decision: entry.decision, admittedObservation }), now);
+  }
+  call(name, input) {
+    try {
+      assert2(Buffer.byteLength(canonical(input), "utf8") <= 1024 * 1024, "REQUEST_TOO_LARGE");
+      const data = name === "query_model_catalog" ? this.query(input) : name === "resolve_model_assignment" ? this.resolve(input) : name === "record_model_application" ? this.record(input) : (() => {
+        throw new RoutingError("UNKNOWN_TOOL", "Unknown model routing tool");
+      })();
+      return { schemaVersion: "1.0.0", ok: true, data, error: null };
+    } catch (error2) {
+      const routing = error2 instanceof RoutingError;
+      return { schemaVersion: "1.0.0", ok: false, data: null, error: { code: routing ? "INVALID_INPUT" : "MCP_UNAVAILABLE", message: error2.message, details: { routingCode: routing ? error2.code : "ROUTING_ERROR" } } };
+    }
+  }
+};
+
+// skills/coordinate-subagents/scripts/model-evaluation.mjs
+import { readFileSync as readFileSync4 } from "node:fs";
+import { pathToFileURL as pathToFileURL2 } from "node:url";
+function validateEvaluation(r) {
+  keys(r, ["schemaVersion", "binding", "host", "hostVersion", "adapterVersion", "resolvedModel", "runtimeMode", "scenario", "nativeReasoning", "tools", "permissionsDigest", "harnessDigest", "testResult", "reworkCount", "evidenceRejections", "goalMaintainedAfterCorrection", "failureKind", "elapsedMs", "waitMs", "usage", "cost", "sourceReference", "observedAt", "recordDigest"]);
+  assert2(r.schemaVersion === "1.0.0", "INVALID_INPUT");
+  validateBinding(r.binding);
+  validateReasoning(r.nativeReasoning);
+  for (const k of ["host", "hostVersion", "adapterVersion", "resolvedModel", "runtimeMode", "scenario", "sourceReference"]) text(r[k], k);
+  digestValue(r.permissionsDigest, "permissionsDigest");
+  digestValue(r.harnessDigest, "harnessDigest");
+  instant(r.observedAt, "observedAt");
+  assert2(Array.isArray(r.tools) && r.tools.every((t) => typeof t === "string") && new Set(r.tools).size === r.tools.length, "INVALID_INPUT");
+  assert2(["passed", "failed", "not-run"].includes(r.testResult), "INVALID_INPUT");
+  for (const k of ["reworkCount", "evidenceRejections"]) assert2(Number.isSafeInteger(r[k]) && r[k] >= 0, "INVALID_INPUT");
+  assert2([true, false, null].includes(r.goalMaintainedAfterCorrection), "INVALID_INPUT");
+  assert2([null, "information", "authority", "capability", "rate-limit", "quality", "timeout", "protocol", "unknown"].includes(r.failureKind), "INVALID_INPUT");
+  for (const k of ["elapsedMs", "waitMs"]) assert2(r[k] === null || Number.isSafeInteger(r[k]) && r[k] >= 0, "INVALID_INPUT");
+  keys(r.usage, ["input", "output", "reasoning", "cacheRead", "cacheWrite", "toolCalls"]);
+  assert2(Object.values(r.usage).every((n) => n === null || Number.isSafeInteger(n) && n >= 0), "INVALID_INPUT");
+  keys(r.cost, ["basis", "amount", "currency", "unit", "sourceReference"]);
+  assert2(["actualBilling", "apiPriceEstimate", "subscriptionUsage", "unknown"].includes(r.cost.basis), "INVALID_INPUT");
+  if (r.cost.basis === "unknown") assert2(r.cost.amount === null && r.cost.currency === null && r.cost.unit === null, "INVALID_INPUT", "Unknown cost cannot report a number");
+  else {
+    assert2(typeof r.cost.amount === "number" && Number.isFinite(r.cost.amount) && r.cost.amount >= 0, "INVALID_INPUT");
+    text(r.cost.sourceReference, "cost source");
+    if (r.cost.basis === "subscriptionUsage") {
+      assert2(r.cost.currency === null, "INVALID_INPUT", "Subscription usage is not API billing");
+      text(r.cost.unit, "usage unit");
+    } else assert2(typeof r.cost.currency === "string" && /^[A-Z]{3}$/u.test(r.cost.currency) && r.cost.unit === null, "INVALID_INPUT");
+  }
+  verifySeal(r, "recordDigest");
+  return r;
+}
+function evaluationCohort(r) {
+  return digest({
+    host: r.host,
+    hostVersion: r.hostVersion,
+    adapterVersion: r.adapterVersion,
+    resolvedModel: r.resolvedModel,
+    nativeReasoning: r.nativeReasoning,
+    runtimeMode: r.runtimeMode,
+    scenario: r.scenario,
+    inputDigest: r.binding.inputDigest,
+    candidateDigest: r.binding.candidateDigest,
+    tools: r.tools.slice().sort(),
+    permissionsDigest: r.permissionsDigest,
+    harnessDigest: r.harnessDigest
+  });
+}
+function aggregateEvaluations(records) {
+  assert2(Array.isArray(records) && records.length <= 1e5, "INVALID_INPUT");
+  const cohorts = /* @__PURE__ */ new Map(), seen = /* @__PURE__ */ new Map();
+  for (const r of records) {
+    validateEvaluation(r);
+    const sampleKey = digest({ binding: r.binding, host: r.host, scenario: r.scenario });
+    if (seen.has(sampleKey)) {
+      assert2(seen.get(sampleKey) === r.recordDigest, "EVALUATION_SAMPLE_CONFLICT");
+      continue;
+    }
+    seen.set(sampleKey, r.recordDigest);
+    const key = evaluationCohort(r);
+    if (!cohorts.has(key)) cohorts.set(key, { cohortDigest: key, samples: 0, tested: 0, passed: 0, failed: 0, notRun: 0, reworkCount: 0, evidenceRejections: 0, correctionSamples: 0, correctionMaintained: 0, costs: [], timing: { elapsedMsTotal: 0, elapsedMsSamples: 0, waitMsTotal: 0, waitMsSamples: 0 }, usage: Object.fromEntries(Object.keys(r.usage).map((k) => [k, { total: 0, samples: 0 }])) });
+    const c = cohorts.get(key);
+    c.samples++;
+    if (r.testResult === "not-run") c.notRun++;
+    else {
+      c.tested++;
+      c[r.testResult === "passed" ? "passed" : "failed"]++;
+    }
+    c.reworkCount += r.reworkCount;
+    c.evidenceRejections += r.evidenceRejections;
+    if (r.goalMaintainedAfterCorrection !== null) {
+      c.correctionSamples++;
+      if (r.goalMaintainedAfterCorrection) c.correctionMaintained++;
+    }
+    for (const k of ["elapsedMs", "waitMs"]) if (r[k] !== null) {
+      c.timing[`${k}Total`] += r[k];
+      c.timing[`${k}Samples`]++;
+    }
+    for (const [k, v] of Object.entries(r.usage)) if (v !== null) {
+      c.usage[k].total += v;
+      c.usage[k].samples++;
+    }
+    if (r.cost.basis !== "unknown") {
+      let cost = c.costs.find((x) => x.basis === r.cost.basis && x.currency === r.cost.currency && x.unit === r.cost.unit);
+      if (!cost) {
+        cost = { basis: r.cost.basis, currency: r.cost.currency, unit: r.cost.unit, amount: 0, samples: 0 };
+        c.costs.push(cost);
+      }
+      cost.amount += r.cost.amount;
+      cost.samples++;
+    }
+  }
+  return { schemaVersion: "1.0.0", policyChanged: false, cohorts: [...cohorts.values()].sort((a, b2) => a.cohortDigest < b2.cohortDigest ? -1 : 1) };
+}
+if (process.argv[1] && import.meta.url === pathToFileURL2(process.argv[1]).href && import.meta.url.endsWith("/model-evaluation.mjs")) {
+  try {
+    assert2(process.argv.length === 3, "USAGE", "model-evaluation.mjs records.json");
+    console.log(JSON.stringify(aggregateEvaluations(JSON.parse(readFileSync4(process.argv[2], "utf8"))), null, 2));
+  } catch (error2) {
+    console.error(`${error2.code ?? "ERROR"}: ${error2.message}`);
+    process.exitCode = 1;
+  }
+}
+
+// skills/coordinate-subagents/scripts/model-routing-store.mjs
+function transaction(db, fn) {
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const result = fn();
+    db.exec("COMMIT");
+    return result;
+  } catch (error2) {
+    db.exec("ROLLBACK");
+    throw error2;
+  }
+}
+var ModelRoutingStore = class {
+  constructor(database) {
+    assert2(database && typeof database.prepare === "function" && typeof database.exec === "function", "SQLITE_CONNECTION_REQUIRED");
+    this.database = database;
+    database.exec(`
+      CREATE TABLE IF NOT EXISTS ags_model_capabilities_v1 (
+        host TEXT NOT NULL, session_id TEXT NOT NULL, instance_id TEXT NOT NULL,
+        observed_at TEXT NOT NULL, expires_at TEXT NOT NULL, snapshot_digest TEXT NOT NULL UNIQUE, payload TEXT NOT NULL,
+        PRIMARY KEY(host,session_id,instance_id)
+      ) STRICT;
+      CREATE TABLE IF NOT EXISTS ags_model_receipts_v1 (
+        nonce TEXT PRIMARY KEY, kind TEXT NOT NULL, binding_digest TEXT, payload TEXT NOT NULL,
+        expires_at TEXT NOT NULL, consumed_at TEXT
+      ) STRICT;
+      CREATE TABLE IF NOT EXISTS ags_model_decisions_v2 (
+        decision_digest TEXT PRIMARY KEY, binding_digest TEXT NOT NULL, request_json TEXT NOT NULL,
+        environment_json TEXT NOT NULL, payload TEXT NOT NULL, resolved_at TEXT NOT NULL
+      ) STRICT;
+      CREATE TABLE IF NOT EXISTS ags_model_applications_v2 (
+        record_digest TEXT PRIMARY KEY, decision_digest TEXT NOT NULL, binding_digest TEXT NOT NULL,
+        payload TEXT NOT NULL, recorded_at TEXT NOT NULL
+      ) STRICT;
+      CREATE TABLE IF NOT EXISTS ags_model_dispatches_v2 (
+        dispatch_key TEXT PRIMARY KEY, assignment_id TEXT NOT NULL, write_key TEXT,
+        decision_digest TEXT NOT NULL, state TEXT NOT NULL,
+        revision INTEGER NOT NULL, delivery_ack INTEGER NOT NULL DEFAULT 0,
+        observation_reference TEXT, dispatched_at TEXT, payload TEXT NOT NULL
+      ) STRICT;
+      CREATE UNIQUE INDEX IF NOT EXISTS ags_model_active_write_v2
+        ON ags_model_dispatches_v2(write_key)
+        WHERE write_key IS NOT NULL AND state IN ('reserved','accepted','running','unknown');
+      CREATE TABLE IF NOT EXISTS ags_model_evaluations_v1 (
+        record_digest TEXT PRIMARY KEY, payload TEXT NOT NULL
+      ) STRICT;
+    `);
+  }
+  publishCapability(receipt, signer, presence, now) {
+    const snapshot = signer.verify(receipt, "capability", now);
+    validateCapabilities(snapshot);
+    assert2(presence && presence.host === snapshot.host && presence.sessionId === snapshot.sessionId && presence.instanceId === snapshot.instanceId && presence.state === "online" && instant(presence.leaseUntil, "leaseUntil") > instant(now, "now"), "CAPABILITY_PRESENCE_MISMATCH");
+    assert2(instant(snapshot.observedAt, "observedAt") <= Date.parse(now) && instant(snapshot.expiresAt, "expiresAt") > Date.parse(now), "CAPABILITY_EXPIRED");
+    return transaction(this.database, () => {
+      assert2(!this.database.prepare("SELECT nonce FROM ags_model_receipts_v1 WHERE nonce=?").get(receipt.nonce), "RECEIPT_REPLAY");
+      const old = this.database.prepare("SELECT observed_at,snapshot_digest FROM ags_model_capabilities_v1 WHERE host=? AND session_id=? AND instance_id=?").get(snapshot.host, snapshot.sessionId, snapshot.instanceId);
+      assert2(!old || old.observed_at < snapshot.observedAt || old.observed_at === snapshot.observedAt && old.snapshot_digest === snapshot.snapshotDigest, "CAPABILITY_REVISION_REGRESSION");
+      this.database.prepare(`INSERT INTO ags_model_capabilities_v1 VALUES (?,?,?,?,?,?,?) ON CONFLICT(host,session_id,instance_id) DO UPDATE SET observed_at=excluded.observed_at,expires_at=excluded.expires_at,snapshot_digest=excluded.snapshot_digest,payload=excluded.payload`).run(snapshot.host, snapshot.sessionId, snapshot.instanceId, snapshot.observedAt, snapshot.expiresAt, snapshot.snapshotDigest, canonical(snapshot));
+      this.database.prepare("INSERT INTO ags_model_receipts_v1 VALUES (?,?,?,?,?,?)").run(receipt.nonce, "capability", null, canonical(snapshot), receipt.expiresAt, now);
+      return { snapshotDigest: snapshot.snapshotDigest };
+    });
+  }
+  capabilities() {
+    return this.database.prepare("SELECT payload FROM ags_model_capabilities_v1 ORDER BY host,session_id,instance_id").all().map((r) => JSON.parse(r.payload));
+  }
+  saveDecision(request, environment, decision, now) {
+    verifySeal(decision, "decisionDigest");
+    validateBinding(decision.binding);
+    instant(now, "now");
+    const payload = canonical(decision);
+    const old = this.database.prepare("SELECT payload FROM ags_model_decisions_v2 WHERE decision_digest=?").get(decision.decisionDigest);
+    assert2(!old || old.payload === payload, "DECISION_CONFLICT");
+    this.database.prepare("INSERT OR IGNORE INTO ags_model_decisions_v2 VALUES (?,?,?,?,?,?)").run(decision.decisionDigest, digest(decision.binding), canonical(request), canonical(environment), payload, now);
+    return decision;
+  }
+  decision(id) {
+    const row = this.database.prepare("SELECT * FROM ags_model_decisions_v2 WHERE decision_digest=?").get(id);
+    return row ? { request: JSON.parse(row.request_json), environment: JSON.parse(row.environment_json), decision: JSON.parse(row.payload), resolvedAt: row.resolved_at } : null;
+  }
+  publishObservation(receipt, signer, now) {
+    const observation = signer.verify(receipt, "observation", now);
+    validateBinding(observation.binding);
+    validateTarget(observation.target);
+    const entry = this.decision(observation.decisionDigest);
+    assert2(entry, "DECISION_UNKNOWN");
+    assert2(digest(observation.binding) === digest(entry.decision.binding) && canonical(observation.target) === canonical(entry.decision.target) && observation.source !== "agent-self-report", "OBSERVATION_BINDING_MISMATCH");
+    const dispatch = this.dispatch(digest({ binding: observation.binding }));
+    assert2(dispatch && dispatch.decision_digest === observation.decisionDigest && dispatch.dispatched_at && ["running", "unknown", "succeeded", "failed", "cancelled"].includes(dispatch.state), "DISPATCH_NOT_OBSERVED");
+    assert2(instant(observation.observedAt, "observedAt") >= Date.parse(dispatch.dispatched_at), "OBSERVATION_PREDATES_DISPATCH");
+    assert2(Date.parse(observation.observedAt) <= instant(now, "now"), "OBSERVATION_IN_FUTURE");
+    this.database.prepare("INSERT INTO ags_model_receipts_v1 VALUES (?,?,?,?,?,NULL)").run(receipt.nonce, "observation", digest(observation.binding), canonical(observation), receipt.expiresAt);
+    return receipt.nonce;
+  }
+  /** The callback must validate the entire record before token consumption commits. */
+  recordApplication(input, observationToken, makeRecord, now) {
+    instant(now, "now");
+    return transaction(this.database, () => {
+      let observation = null;
+      if (observationToken !== null) {
+        const row = this.database.prepare("SELECT * FROM ags_model_receipts_v1 WHERE nonce=? AND kind=?").get(observationToken, "observation");
+        assert2(row && !row.consumed_at && row.expires_at > now, "OBSERVATION_TOKEN_UNAVAILABLE");
+        assert2(row.binding_digest === digest(input.binding), "OBSERVATION_BINDING_MISMATCH");
+        observation = JSON.parse(row.payload);
+      }
+      const record3 = makeRecord(observation);
+      verifySeal(record3, "recordDigest");
+      const old = this.database.prepare("SELECT payload FROM ags_model_applications_v2 WHERE record_digest=?").get(record3.recordDigest);
+      assert2(!old || old.payload === canonical(record3), "RECORD_CONFLICT");
+      this.database.prepare("INSERT OR IGNORE INTO ags_model_applications_v2 VALUES (?,?,?,?,?)").run(record3.recordDigest, record3.decisionDigest, digest(record3.binding), canonical(record3), now);
+      if (observationToken !== null) this.database.prepare("UPDATE ags_model_receipts_v1 SET consumed_at=? WHERE nonce=?").run(now, observationToken);
+      return { record: record3, artifact: { kind: "model-application.v2", uri: `ags-model-record:${record3.recordDigest.slice(7)}`, digest: record3.recordDigest } };
+    });
+  }
+  application(recordDigest) {
+    const row = this.database.prepare("SELECT payload FROM ags_model_applications_v2 WHERE record_digest=?").get(recordDigest);
+    return row ? JSON.parse(row.payload) : null;
+  }
+  reserveDispatch(decision, { write = false } = {}) {
+    verifySeal(decision, "decisionDigest");
+    assert2(decision.status === "selected", "ASSIGNMENT_BLOCKED");
+    const b2 = decision.binding, key = digest({ binding: b2 });
+    const writeKey = write ? digest({ taskId: b2.taskId, runId: b2.runId, stageId: b2.stageId }) : null;
+    return transaction(this.database, () => {
+      const old = this.database.prepare("SELECT * FROM ags_model_dispatches_v2 WHERE dispatch_key=?").get(key);
+      if (old) {
+        assert2(old.decision_digest === decision.decisionDigest, "DISPATCH_DECISION_CONFLICT");
+        return { dispatchKey: key, duplicate: true, state: old.state, revision: old.revision };
+      }
+      if (writeKey) assert2(!this.database.prepare("SELECT dispatch_key FROM ags_model_dispatches_v2 WHERE write_key=? AND state IN ('reserved','accepted','running','unknown')").get(writeKey), "AMBIGUOUS_WRITE_ACTIVE");
+      this.database.prepare("INSERT INTO ags_model_dispatches_v2 VALUES (?,?,?,?, 'reserved',0,0,NULL,NULL,?)").run(key, b2.assignmentId, writeKey, decision.decisionDigest, canonical(decision));
+      return { dispatchKey: key, duplicate: false, state: "reserved", revision: 0 };
+    });
+  }
+  acknowledgeDelivery(key) {
+    const result = this.database.prepare("UPDATE ags_model_dispatches_v2 SET delivery_ack=1 WHERE dispatch_key=?").run(key);
+    assert2(result.changes === 1, "DISPATCH_UNKNOWN");
+    return { delivered: true, accepted: false, completed: false };
+  }
+  dispatch(key) {
+    return this.database.prepare("SELECT * FROM ags_model_dispatches_v2 WHERE dispatch_key=?").get(key) ?? null;
+  }
+  transition(key, expectedRevision, state, reference = null, now = null) {
+    const allowed = { reserved: ["accepted", "unknown", "not-started"], accepted: ["running", "unknown", "not-started"], running: ["succeeded", "failed", "cancelled", "unknown"], unknown: ["succeeded", "failed", "cancelled", "not-started"], succeeded: [], failed: [], cancelled: [], "not-started": [] };
+    return transaction(this.database, () => {
+      const row = this.dispatch(key);
+      assert2(row && row.revision === expectedRevision, "DISPATCH_REVISION_CONFLICT");
+      assert2(allowed[row.state]?.includes(state), "DISPATCH_INVALID_TRANSITION");
+      if (["succeeded", "failed", "cancelled", "not-started"].includes(state)) assert2(typeof reference === "string" && reference.length > 0, "TERMINAL_EVIDENCE_REQUIRED");
+      if (state === "running") instant(now, "dispatchedAt");
+      const result = this.database.prepare("UPDATE ags_model_dispatches_v2 SET state=?,revision=revision+1,observation_reference=?,dispatched_at=COALESCE(dispatched_at,?) WHERE dispatch_key=? AND revision=?").run(state, reference, state === "running" ? now : null, key, expectedRevision);
+      assert2(result.changes === 1, "DISPATCH_REVISION_CONFLICT");
+      return { dispatchKey: key, state, revision: expectedRevision + 1 };
+    });
+  }
+  saveEvaluation(record3) {
+    validateEvaluation(record3);
+    this.database.prepare("INSERT OR IGNORE INTO ags_model_evaluations_v1 VALUES (?,?)").run(record3.recordDigest, canonical(record3));
+    return record3.recordDigest;
+  }
+  evaluations() {
+    return this.database.prepare("SELECT payload FROM ags_model_evaluations_v1 ORDER BY record_digest").all().map((r) => JSON.parse(r.payload));
+  }
+};
+
+// mcp-server/src/model-routing-service.ts
+var MODEL_CATALOG_DIRECTORY = fileURLToPath4(new URL("../../skills/coordinate-subagents/references/model-catalog/", import.meta.url));
+function unavailableModelRouting() {
+  return new ModelRoutingServiceCore({ catalogDirectory: MODEL_CATALOG_DIRECTORY });
+}
+function openModelRoutingService(databasePath) {
+  let database = null;
+  try {
+    database = new DatabaseSync4(databasePath);
+    database.exec("PRAGMA busy_timeout = 5000;");
+    database.exec("PRAGMA synchronous = FULL;");
+    const service = new ModelRoutingServiceCore({ catalogDirectory: MODEL_CATALOG_DIRECTORY, store: new ModelRoutingStore(database) });
+    const opened = database;
+    return { service, close: () => opened.close() };
+  } catch {
+    database?.close();
+    return { service: unavailableModelRouting(), close: () => {
+    } };
+  }
+}
+
 // mcp-server/src/server.ts
 var responseModeProperty = { enum: ["compact", "full"], default: "full" };
 function toolSchema(source, options = {}) {
@@ -20349,13 +21322,41 @@ var updateCheckInputSchema = {
     force: { type: "boolean", default: false }
   }
 };
+var queryModelCatalogInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    provider: { type: "string" },
+    role: { type: "string" },
+    model: { type: "string" },
+    includeSources: { type: "boolean" }
+  }
+};
+var { $defs: applicationDefinitions, ...applicationRequestSchema } = embeddedSchema(contractSchemas.modelApplicationRequestV2);
+var recordModelApplicationInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["application"],
+  properties: {
+    application: { $ref: "#/$defs/application" },
+    observationToken: { type: ["string", "null"], pattern: "^[a-f0-9]{48}$" }
+  },
+  $defs: { ...applicationDefinitions, application: applicationRequestSchema }
+};
+function resolveModelAssignmentInputSchema(profile) {
+  if (profile !== "anthropic") return contractSchemas.modelSelectionRequestV2;
+  const schema = structuredClone(contractSchemas.modelSelectionRequestV2);
+  delete schema.allOf;
+  schema.description = "ModelSelectionRequest.v2. The server validates the exact contract, including that independent-audit requires highRisk: true.";
+  return schema;
+}
 var sendSessionMessageInputSchema = structuredClone(contractSchemas.sendSessionMessageRequest);
 var sendBodySchema = sendSessionMessageInputSchema.properties?.body;
 if (sendBodySchema) sendBodySchema.description = "A non-empty message body limited to 4096 UTF-8 bytes by the service.";
 function asRecord(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
-function integer2(value) {
+function integer3(value) {
   return typeof value === "number" && Number.isInteger(value) ? value : Number.NaN;
 }
 function responseMode(args, field) {
@@ -20480,7 +21481,7 @@ function serverInstructions(profile = "default") {
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, modelRouting = unavailableModelRouting()) {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -20658,6 +21659,24 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         description: "Read queued, delivered, or acknowledged status for a message sent by this bound session.",
         inputSchema: contractSchemas.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "query_model_catalog",
+        description: "Query a reviewed offline model catalog subset. Catalog presence is not host access or live execution verification.",
+        inputSchema: queryModelCatalogInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "resolve_model_assignment",
+        description: "Produce and store a capability-filtered model assignment proposal. It does not approve work, acquire a lease, reserve a worker or launch any host.",
+        inputSchema: resolveModelAssignmentInputSchema(toolSchemaProfile),
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "record_model_application",
+        description: "Store bound model, native reasoning and runtime mode diagnostics. Raw observations stay unverified, host observation tokens are single-use, and the record never satisfies the workflow trusted execution gate.",
+        inputSchema: recordModelApplicationInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       }
     ])
   }));
@@ -20738,10 +21757,10 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
           result = withMode("detail", () => service.getWorkflowStatus(String(args.runId ?? "")), workflowStatusSummary);
           break;
         case "finalize_workflow":
-          result = withMode("responseMode", () => service.finalizeWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision)), workflowStatusSummary);
+          result = withMode("responseMode", () => service.finalizeWorkflow(String(args.runId ?? ""), integer3(args.expectedRevision)), workflowStatusSummary);
           break;
         case "abort_workflow":
-          result = withMode("responseMode", () => service.abortWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision)), workflowStatusSummary);
+          result = withMode("responseMode", () => service.abortWorkflow(String(args.runId ?? ""), integer3(args.expectedRevision)), workflowStatusSummary);
           break;
         case "checkpoint_context":
           result = continuity.checkpointContext(args);
@@ -20787,6 +21806,25 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             result = await sessionMessages.status(args);
           } catch (error2) {
             result = invalidInput(error2 instanceof Error ? error2.message : "Session message status input is invalid.");
+          }
+          break;
+        case "query_model_catalog":
+          result = modelRouting.call(request.params.name, args);
+          break;
+        case "resolve_model_assignment":
+          try {
+            validator.modelSelectionRequestV2(args);
+            result = modelRouting.call(request.params.name, args);
+          } catch (error2) {
+            result = invalidInput(error2 instanceof Error ? error2.message : "Model selection request is invalid.");
+          }
+          break;
+        case "record_model_application":
+          try {
+            validator.modelApplicationRequestV2(args.application);
+            result = modelRouting.call(request.params.name, args);
+          } catch (error2) {
+            result = invalidInput(error2 instanceof Error ? error2.message : "Model application record is invalid.");
           }
           break;
         case "execute_state_cleanup":
@@ -20879,8 +21917,8 @@ function isRecord(value) {
 }
 function remoteReference(value) {
   if (!isRecord(value) || typeof value.ref !== "string" || !isRecord(value.object)) return null;
-  const object4 = value.object;
-  return typeof object4.sha === "string" && typeof object4.type === "string" && typeof object4.url === "string" ? { ref: value.ref, object: { sha: object4.sha, type: object4.type, url: object4.url } } : null;
+  const object5 = value.object;
+  return typeof object5.sha === "string" && typeof object5.type === "string" && typeof object5.url === "string" ? { ref: value.ref, object: { sha: object5.sha, type: object5.type, url: object5.url } } : null;
 }
 var PluginUpdateService = class {
   constructor(store, options = {}) {
@@ -21083,11 +22121,11 @@ var PluginUpdateService = class {
       if (!isRecord(value) || !isRecord(value.object)) {
         throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object response was invalid.");
       }
-      const object4 = value.object;
-      if (typeof object4.sha !== "string" || typeof object4.type !== "string" || typeof object4.url !== "string") {
+      const object5 = value.object;
+      if (typeof object5.sha !== "string" || typeof object5.type !== "string" || typeof object5.url !== "string") {
         throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object target was invalid.");
       }
-      current = { sha: object4.sha, type: object4.type, url: object4.url };
+      current = { sha: object5.sha, type: object5.type, url: object5.url };
     }
     throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag indirection exceeded the supported depth.");
   }
@@ -21118,8 +22156,8 @@ var PluginUpdateService = class {
 
 // mcp-server/src/sqlite-workflow-store.ts
 import { chmodSync as chmodSync2, mkdirSync as mkdirSync3 } from "node:fs";
-import path9 from "node:path";
-import { DatabaseSync as DatabaseSync4 } from "node:sqlite";
+import path10 from "node:path";
+import { DatabaseSync as DatabaseSync5 } from "node:sqlite";
 
 // mcp-server/src/workflow-store.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
@@ -21328,18 +22366,18 @@ var SqliteWorkflowStore = class {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
     }
     if (databasePath !== ":memory:") {
-      mkdirSync3(path9.dirname(path9.resolve(databasePath)), { recursive: true, mode: 448 });
+      mkdirSync3(path10.dirname(path10.resolve(databasePath)), { recursive: true, mode: 448 });
     }
     let openedDatabase = null;
     try {
-      openedDatabase = new DatabaseSync4(databasePath);
+      openedDatabase = new DatabaseSync5(databasePath);
       this.database = openedDatabase;
       this.database.exec("PRAGMA busy_timeout = 5000;");
       this.database.exec("PRAGMA synchronous = FULL;");
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       if (databasePath !== ":memory:" && process.platform !== "win32") {
-        chmodSync2(path9.resolve(databasePath), 384);
+        chmodSync2(path10.resolve(databasePath), 384);
       }
     } catch (cause) {
       try {
@@ -21755,7 +22793,7 @@ var SqliteWorkflowStore = class {
     }
     this.guard("Cannot create a verified workflow cleanup backup.", { targetPath }, () => {
       this.database.prepare("VACUUM INTO ?").run(targetPath);
-      const backup = new DatabaseSync4(targetPath, { readOnly: true });
+      const backup = new DatabaseSync5(targetPath, { readOnly: true });
       try {
         const result = backup.prepare("PRAGMA integrity_check").get();
         if (result.integrity_check !== "ok") throw new Error(`integrity_check returned ${result.integrity_check}`);
@@ -22083,7 +23121,7 @@ var FORBIDDEN_KEYS = /* @__PURE__ */ new Set([
   "execution_directive",
   "tool_directive"
 ]);
-function object3(value) {
+function object4(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
 function array2(value) {
@@ -22103,7 +23141,7 @@ function duplicateFree(values) {
 }
 function validateDecisionRecordSemantics(record3) {
   const errors = [];
-  const preflight = object3(record3.preflight);
+  const preflight = object4(record3.preflight);
   const requiredCapabilities = stringArray(preflight.required_capabilities);
   const observedCapabilities = stringArray(preflight.observed_capabilities);
   const missingCapabilities = stringArray(preflight.missing_capabilities);
@@ -22117,11 +23155,11 @@ function validateDecisionRecordSemantics(record3) {
   if (!sameValues(expectedMissing, missingSet)) {
     errors.push("preflight missing capabilities must exactly equal required minus observed");
   }
-  const caseBrief = object3(record3.case_brief);
+  const caseBrief = object4(record3.case_brief);
   if (!isDeepStrictEqual(caseBrief.constraints, record3.constraints)) {
     errors.push("case_brief constraints must match record constraints");
   }
-  const run = object3(record3.run);
+  const run = object4(record3.run);
   const stage = run.stage;
   const assurance = run.assurance;
   const cap = run.worker_cap;
@@ -22129,7 +23167,7 @@ function validateDecisionRecordSemantics(record3) {
   if (run.capability_shortfall !== missingSet.size > 0) {
     errors.push("run capability_shortfall must match preflight missing capabilities");
   }
-  const workers = array2(run.workers).map(object3);
+  const workers = array2(run.workers).map(object4);
   const workerById = /* @__PURE__ */ new Map();
   for (const worker of workers) {
     const id = worker.id;
@@ -22154,7 +23192,7 @@ function validateDecisionRecordSemantics(record3) {
   const eligibleJudge = (worker) => Boolean(
     worker && worker.classification === "judge" && worker.is_judge === true && worker.instantiated === true && worker.status === "completed" && worker.blind_round1 === false && worker.context_isolated === true && isDeepStrictEqual(participated(worker), ["final_judge"])
   );
-  const failures = array2(run.failures).map(object3);
+  const failures = array2(run.failures).map(object4);
   const failureIds = failures.map((failure3) => failure3.worker_id).filter((id) => typeof id === "string");
   const declaredFailed = new Set([...workerById].filter(([, worker]) => worker.status === "failed").map(([id]) => id));
   if (!duplicateFree(failureIds) || !sameValues(new Set(failureIds), declaredFailed) || failures.some((failure3) => !nonempty(failure3.reason))) {
@@ -22209,7 +23247,7 @@ function validateDecisionRecordSemantics(record3) {
     errors.push("MEDIUM fresh Judge must be completed, isolated, and unreused");
   }
   if (fallback !== null) {
-    const fallbackObject = object3(fallback);
+    const fallbackObject = object4(fallback);
     if (fallbackObject.provisional !== true || !nonempty(fallbackObject.reason) || judgeId !== null) {
       errors.push("Judge fallback must be provisional, explained, and exclusive of a fresh Judge");
     }
@@ -22219,7 +23257,7 @@ function validateDecisionRecordSemantics(record3) {
     if (run.strict === true) errors.push("strict execution cannot use a Judge fallback");
   }
   if (strictShortfall) {
-    const cross2 = object3(record3.cross_examination);
+    const cross2 = object4(record3.cross_examination);
     const emptyRunFields = ["workers", "completed_worker_ids", "reused_worker_ids", "failures", "specialist_additions", "redeliberations"];
     const emptyRootFields = ["panel_manifest", "material_claims", "issue_ledger", "axis_decisions"];
     if (assurance !== "provisional" || record3.consensus_proposal !== null || judgeId !== null || fallback !== null || instantiated.size > 0 || missingSet.size === 0 || emptyRunFields.some((field) => array2(run[field]).length > 0) || emptyRootFields.some((field) => array2(record3[field]).length > 0) || cross2.decision !== "skip" || !nonempty(cross2.reason) || ["trigger_items", "selected_item_ids", "coverage", "followups"].some((field) => array2(cross2[field]).length > 0)) {
@@ -22232,14 +23270,14 @@ function validateDecisionRecordSemantics(record3) {
     if (reviewerIds.size < 2 || reviewerIds.size > 3) errors.push("MEDIUM requires two or three reviewers");
     if (assurance === "independent" && judgeId === null) errors.push("MEDIUM independent assurance requires a fresh Judge");
   }
-  const specialists = array2(run.specialist_additions).map(object3);
+  const specialists = array2(run.specialist_additions).map(object4);
   if (specialists.length > 1) errors.push("at most one specialist addition is allowed");
   const specialistIds = [];
   for (const specialist of specialists) {
     const workerId = specialist.worker_id;
     if (typeof workerId === "string") specialistIds.push(workerId);
     const worker = typeof workerId === "string" ? workerById.get(workerId) : void 0;
-    const admission = object3(specialist.admission);
+    const admission = object4(specialist.admission);
     if (!nonempty(specialist.admission_reason) || !nonempty(specialist.reason) || specialist.classification !== "adaptive_specialist" || worker?.classification !== "adaptive_specialist" || worker.status !== "completed" || worker.instantiated !== true || worker.is_judge === true || worker.blind_round1 !== false || worker.context_isolated !== true || !participated(worker).includes("adaptive_specialist") || admission.material_gap !== true || admission.distinct_capability !== true || admission.verdict_change_possible !== true || admission.cap_available !== true) {
       errors.push("specialist admission contract is invalid");
     }
@@ -22248,7 +23286,7 @@ function validateDecisionRecordSemantics(record3) {
   if (!duplicateFree(specialistIds) || !sameValues(new Set(specialistIds), declaredSpecialists)) {
     errors.push("specialist additions must identify every completed specialist");
   }
-  const redeliberations = array2(run.redeliberations).map(object3);
+  const redeliberations = array2(run.redeliberations).map(object4);
   if (redeliberations.length > 1) errors.push("at most one re-deliberation is allowed");
   for (const redeliberation of redeliberations) {
     const scope = stringArray(redeliberation.impacted_scope);
@@ -22264,12 +23302,12 @@ function validateDecisionRecordSemantics(record3) {
     }
   }
   const claimStatuses = /* @__PURE__ */ new Map();
-  for (const claim2 of array2(record3.material_claims).map(object3)) {
+  for (const claim2 of array2(record3.material_claims).map(object4)) {
     if (!nonempty(claim2.id) || claimStatuses.has(claim2.id)) {
       errors.push("material claim ids must be unique nonempty strings");
       continue;
     }
-    const provenance = array2(claim2.provenance).map(object3);
+    const provenance = array2(claim2.provenance).map(object4);
     if (!provenance.length) errors.push("material claims require provenance");
     const statuses = /* @__PURE__ */ new Set();
     for (const source of provenance) {
@@ -22300,22 +23338,22 @@ function validateDecisionRecordSemantics(record3) {
   if ([...requiredConstraints].some((constraint) => !constraints.has(constraint))) {
     errors.push("required constraints must be declared constraints");
   }
-  const issues = array2(record3.issue_ledger).map(object3);
+  const issues = array2(record3.issue_ledger).map(object4);
   for (const issue2 of issues) {
     if (!ISSUE_STATUSES.has(String(issue2.status))) errors.push("issue ledger has invalid status");
   }
-  const observability = object3(record3.observability);
+  const observability = object4(record3.observability);
   for (const value of Object.values(observability)) {
     if (typeof value === "string" && value !== "NOT_OBSERVABLE") errors.push("observability strings must be NOT_OBSERVABLE");
   }
   if (typeof observability.worker_count === "number" && observability.worker_count !== instantiated.size) {
     errors.push("observability worker_count must match instantiated workers");
   }
-  const cross = object3(record3.cross_examination);
-  const triggers = array2(cross.trigger_items).map(object3);
+  const cross = object4(record3.cross_examination);
+  const triggers = array2(cross.trigger_items).map(object4);
   const selected = stringArray(cross.selected_item_ids);
-  const coverage = array2(cross.coverage).map(object3);
-  const followups = array2(cross.followups).map(object3);
+  const coverage = array2(cross.coverage).map(object4);
+  const followups = array2(cross.followups).map(object4);
   if (!nonempty(cross.reason)) errors.push("cross-examination requires a reason");
   const triggerOrigins = /* @__PURE__ */ new Map();
   for (const trigger of triggers) {
@@ -22357,7 +23395,7 @@ function validateDecisionRecordSemantics(record3) {
     }
   }
   if ([...followupCounts.values()].some((count) => count > 1)) errors.push("reviewers may receive at most one cross follow-up");
-  const axes = array2(record3.axis_decisions).map(object3);
+  const axes = array2(record3.axis_decisions).map(object4);
   const axisNames = /* @__PURE__ */ new Set();
   for (const axis of axes) {
     if (!nonempty(axis.axis) || axisNames.has(axis.axis)) {
@@ -22382,7 +23420,7 @@ function validateDecisionRecordSemantics(record3) {
   if (assurance === "independent" && (missingSet.size || failures.length || reused.size)) {
     errors.push("independent assurance requires no missing capability, failures, or reuse");
   }
-  const proposal = object3(record3.consensus_proposal);
+  const proposal = object4(record3.consensus_proposal);
   const status = proposal.status;
   const supported = stringArray(proposal.supported_by_verified_claims);
   if ((status === "consensus" || status === "conditional_consensus") && (!supported.length || !axes.length)) {
@@ -22394,7 +23432,7 @@ function validateDecisionRecordSemantics(record3) {
   }
   const satisfied = stringArray(proposal.satisfied_constraints);
   if (satisfied.some((constraint) => !constraints.has(constraint))) errors.push("consensus references undeclared constraints");
-  const alignment = array2(proposal.axis_alignment).map(object3);
+  const alignment = array2(proposal.axis_alignment).map(object4);
   const alignedAxes = alignment.map((entry) => String(entry.axis));
   if (status !== "no_consensus" && (!duplicateFree(alignedAxes) || !sameValues(new Set(alignedAxes), axisNames))) {
     errors.push("consensus must link every decision axis exactly once");
@@ -22402,7 +23440,7 @@ function validateDecisionRecordSemantics(record3) {
   if (status !== "no_consensus" && alignment.some((entry) => entry.decision_ref !== entry.axis)) {
     errors.push("consensus decision_ref must match its axis");
   }
-  const materialDissent = array2(proposal.unresolved_dissent).map(object3).some((item) => item.material === true);
+  const materialDissent = array2(proposal.unresolved_dissent).map(object4).some((item) => item.material === true);
   if (status === "consensus") {
     if (!nonempty(proposal.action) || array2(proposal.conditions).length || materialDissent) errors.push("unconditional consensus shape is invalid");
     if (issues.some((issue2) => issue2.status === "UNRESOLVED" || issue2.status === "NOT_OBSERVABLE")) errors.push("unresolved issues prevent consensus");
@@ -22423,22 +23461,22 @@ function validateDecisionRecordSemantics(record3) {
 }
 
 // skills/software-security-auditor/scripts/core.mjs
-import { createHash as createHash5 } from "node:crypto";
-function canonical(value) {
-  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
-  if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(",")}}`;
+import { createHash as createHash7 } from "node:crypto";
+function canonical2(value) {
+  if (Array.isArray(value)) return `[${value.map(canonical2).join(",")}]`;
+  if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical2(value[key])}`).join(",")}}`;
   return JSON.stringify(value);
 }
-var digestBytes = (value) => `sha256:${createHash5("sha256").update(value).digest("hex")}`;
-var digest = (value) => digestBytes(canonical(value));
-var targetDigest = (request) => digest(request.target);
+var digestBytes = (value) => `sha256:${createHash7("sha256").update(value).digest("hex")}`;
+var digest2 = (value) => digestBytes(canonical2(value));
+var targetDigest = (request) => digest2(request.target);
 function safeRelative(value) {
   return typeof value === "string" && value.length > 0 && !/[\\:\x00-\x1f]/u.test(value) && !value.startsWith("/") && value.split("/").every((part) => part && part !== "." && part !== "..");
 }
 function validateSemantics(report) {
   const errors = [];
   const request = report.request;
-  if (report.requestDigest !== digest(request)) errors.push("REQUEST_DIGEST_MISMATCH");
+  if (report.requestDigest !== digest2(request)) errors.push("REQUEST_DIGEST_MISMATCH");
   if (report.targetDigest !== targetDigest(request)) errors.push("TARGET_DIGEST_MISMATCH");
   const unique = (items, key, label) => {
     const values = items.map((item) => item[key]);
@@ -22484,7 +23522,7 @@ function validateSemantics(report) {
 }
 
 // mcp-server/src/receipt-policy.ts
-var DIGEST2 = /^(?:sha256:)?[a-f0-9]{64}$/;
+var DIGEST3 = /^(?:sha256:)?[a-f0-9]{64}$/;
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 var RFC3339_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 var REFERENCE = /^(?:artifact|digest|schema|urn|run|stage|commit|test|file|document|tool):(?:\/\/)?[A-Za-z0-9][A-Za-z0-9._~:/?#@!$&'()*+,;=%-]{7,}$/;
@@ -22535,7 +23573,7 @@ function jsonPointer(value, pointer2) {
   }, value);
 }
 function isOpaqueReference(value) {
-  return DIGEST2.test(value) || UUID.test(value) || REFERENCE.test(value);
+  return DIGEST3.test(value) || UUID.test(value) || REFERENCE.test(value);
 }
 function isSafeScalar(value) {
   return isOpaqueReference(value) || RFC3339_TIMESTAMP.test(value);
@@ -22600,7 +23638,7 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
     }
     assertSafeString(artifact.schemaId, fixedTokens, `/output/artifacts/${index}/schemaId`);
     assertSafeString(artifact.locator, fixedTokens, `/output/artifacts/${index}/locator`);
-    if (!DIGEST2.test(artifact.digest) || !DIGEST2.test(artifact.targetDigest)) {
+    if (!DIGEST3.test(artifact.digest) || !DIGEST3.test(artifact.targetDigest)) {
       throw new WorkflowContractError("INVALID_INPUT", "Reference-only artifact digests must be opaque SHA-256 references.", {
         stageId: stage.stageId,
         artifactId: artifact.artifactId
@@ -22676,15 +23714,15 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
 }
 
 // mcp-server/src/stage-output-file.ts
-import { createHash as createHash6 } from "node:crypto";
+import { createHash as createHash8 } from "node:crypto";
 import { closeSync, fstatSync, openSync, readSync } from "node:fs";
-import path10 from "node:path";
+import path11 from "node:path";
 var MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
 function unreadable(locator) {
   return new WorkflowContractError("INVALID_INPUT", "outputFile.locator is not a readable regular local file of at most 16 MiB.", { locator });
 }
 function readLocalStageOutputFile(locator) {
-  if (!path10.isAbsolute(locator)) {
+  if (!path11.isAbsolute(locator)) {
     throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must be an absolute local path.");
   }
   if (/^(?:\\\\|\/\/)/u.test(locator)) {
@@ -22714,8 +23752,8 @@ function readLocalStageOutputFile(locator) {
 function loadStageOutputFile(reference, read = readLocalStageOutputFile) {
   const bytes = read(reference.locator);
   if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(reference.locator);
-  const digest3 = `sha256:${createHash6("sha256").update(bytes).digest("hex")}`;
-  if (digest3 !== reference.digest) {
+  const digest4 = `sha256:${createHash8("sha256").update(bytes).digest("hex")}`;
+  if (digest4 !== reference.digest) {
     throw new WorkflowContractError("INTEGRITY_FAILED", "outputFile content does not match its digest.", {
       locator: reference.locator,
       expected: reference.digest
@@ -24373,9 +25411,9 @@ var HostAttestationProvider = class {
 };
 
 // mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash7, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHash as createHash9, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
-import path11 from "node:path";
+import path12 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
 var TOKEN_TTL_MS2 = 15 * 60 * 1e3;
 var POLICY = {
@@ -24383,14 +25421,14 @@ var POLICY = {
   continuityPayloadRetentionDays: 30,
   continuityRecordRetentionDays: 180
 };
-function digest2(value) {
-  return `sha256:${createHash7("sha256").update(JSON.stringify(value)).digest("hex")}`;
+function digest3(value) {
+  return `sha256:${createHash9("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function protection() {
   return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
 }
 function databaseIdentity(databasePath) {
-  return databasePath === ":memory:" ? databasePath : path11.resolve(databasePath);
+  return databasePath === ":memory:" ? databasePath : path12.resolve(databasePath);
 }
 function apiError3(error2) {
   const normalized = error2 instanceof WorkflowContractError ? error2 : new WorkflowContractError("INVALID_INPUT", error2 instanceof Error ? error2.message : String(error2));
@@ -24423,7 +25461,7 @@ var StateCleanupService = class {
         continuityRecord: new Date(created.getTime() - POLICY.continuityRecordRetentionDays * DAY_MS).toISOString()
       };
       const { workflow, continuity, protectedContinuityTasks, candidates } = this.currentCandidates(cutoffs);
-      const candidateDigest = digest2(candidates);
+      const candidateDigest = digest3(candidates);
       const payload = {
         schemaVersion: "1.0.0",
         planId: randomUUID3(),
@@ -24472,7 +25510,7 @@ var StateCleanupService = class {
       this.assertDatabaseIdentity(payload);
       const current = this.currentCandidates(payload.cutoffs);
       const candidates = current.candidates;
-      const currentDigest = digest2(candidates);
+      const currentDigest = digest3(candidates);
       if (currentDigest !== payload.candidateDigest || JSON.stringify(candidates) !== JSON.stringify(payload.candidates)) {
         throw new WorkflowContractError("STALE_REVISION", "State cleanup candidates changed after preview.", {
           planId: payload.planId,
@@ -24625,9 +25663,9 @@ var StateCleanupService = class {
   }
   backupPath(databasePath, label, planId) {
     if (databasePath === ":memory:") throw new WorkflowContractError("INVALID_INPUT", "In-memory databases cannot be cleaned destructively.");
-    const directory = path11.join(path11.dirname(path11.resolve(databasePath)), "backups");
+    const directory = path12.join(path12.dirname(path12.resolve(databasePath)), "backups");
     mkdirSync4(directory, { recursive: true, mode: 448 });
-    return path11.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
+    return path12.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
   }
   protectBackup(targetPath) {
     if (process.platform !== "win32") chmodSync3(targetPath, 384);
@@ -24637,8 +25675,8 @@ var StateCleanupService = class {
 // mcp-server/src/trust-store.ts
 import { createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID4, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
 import { chmodSync as chmodSync4, mkdirSync as mkdirSync5 } from "node:fs";
-import path12 from "node:path";
-import { DatabaseSync as DatabaseSync5 } from "node:sqlite";
+import path13 from "node:path";
+import { DatabaseSync as DatabaseSync6 } from "node:sqlite";
 var TRUST_SIGNING_KEY = "trust-signing-key";
 var SCHEMA_VERSION3 = 1;
 var INPUT_SOURCE_KEYS = /* @__PURE__ */ new Set([
@@ -24663,8 +25701,8 @@ var TrustStore = class {
   constructor(databasePath) {
     this.databasePath = databasePath;
     if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
-    if (databasePath !== ":memory:") mkdirSync5(path12.dirname(path12.resolve(databasePath)), { recursive: true, mode: 448 });
-    this.database = new DatabaseSync5(databasePath);
+    if (databasePath !== ":memory:") mkdirSync5(path13.dirname(path13.resolve(databasePath)), { recursive: true, mode: 448 });
+    this.database = new DatabaseSync6(databasePath);
     try {
       this.database.exec("PRAGMA busy_timeout = 5000;");
       this.database.exec("PRAGMA synchronous = FULL;");
@@ -24672,7 +25710,7 @@ var TrustStore = class {
       this.initializeSchema();
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
       if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
-      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync4(path12.resolve(databasePath), 384);
+      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync4(path13.resolve(databasePath), 384);
     } catch (cause) {
       try {
         this.database.close();
@@ -28956,9 +29994,11 @@ async function main() {
   }
   const store = new SqliteWorkflowStore(workflowDatabasePath);
   const trustStore = new TrustStore(resolveTrustDatabasePath());
+  const modelRouting = openModelRoutingService(workflowDatabasePath);
   let continuityStore = null;
   process.once("exit", () => {
     continuityStore?.close();
+    modelRouting.close();
     trustStore.close();
     store.close();
   });
@@ -28983,7 +30023,7 @@ async function main() {
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), void 0, trust);
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), void 0, trust, modelRouting.service);
   await server.connect(new StdioServerTransport());
 }
 void main().catch((error2) => {

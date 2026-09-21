@@ -24,6 +24,7 @@ import { StateCleanupService } from "./state-cleanup-service.js";
 import { SqliteKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { TrustStore } from "./trust-store.js";
 import { TrustService } from "./trust-service.js";
+import { openModelRoutingService } from "./model-routing-service.js";
 
 async function main(): Promise<void> {
   const registryPath = resolveRegistryPath();
@@ -37,9 +38,12 @@ async function main(): Promise<void> {
   }
   const store = new SqliteWorkflowStore(workflowDatabasePath);
   const trustStore = new TrustStore(resolveTrustDatabasePath());
+  // Additive routing tables share the workflow database, which the workflow store has already created.
+  const modelRouting = openModelRoutingService(workflowDatabasePath);
   let continuityStore: SqliteContinuityStore | null = null;
   process.once("exit", () => {
     continuityStore?.close();
+    modelRouting.close();
     trustStore.close();
     store.close();
   });
@@ -67,7 +71,7 @@ async function main(): Promise<void> {
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust);
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, modelRouting.service);
   await server.connect(new StdioServerTransport());
 }
 

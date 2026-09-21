@@ -1,0 +1,374 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/host-model-capabilities.v1.schema.json",
+  "title": "host-model-capabilities.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "host": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+    },
+    "hostVersion": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+    },
+    "adapterVersion": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+    },
+    "actorId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+    },
+    "sessionId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+    },
+    "instanceId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+    },
+    "observedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "supportedBindings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/supportedBinding"
+      },
+      "maxItems": 256,
+      "uniqueItems": true
+    },
+    "executionCapabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dispatch": {
+          "enum": [
+            true,
+            false,
+            "unknown"
+          ]
+        },
+        "observe": {
+          "enum": [
+            true,
+            false,
+            "unknown"
+          ]
+        },
+        "cancel": {
+          "enum": [
+            true,
+            false,
+            "unknown"
+          ]
+        },
+        "resume": {
+          "enum": [
+            true,
+            false,
+            "unknown"
+          ]
+        },
+        "filesystem": {
+          "enum": [
+            "none",
+            "read",
+            "write",
+            "unknown"
+          ]
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "approvals": {
+          "enum": [
+            "enforced",
+            "unknown"
+          ]
+        },
+        "isolation": {
+          "enum": [
+            "process",
+            "sandbox",
+            "remote",
+            "unknown"
+          ]
+        },
+        "inputModalities": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "text",
+              "image",
+              "audio",
+              "video"
+            ]
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "dispatch",
+        "observe",
+        "cancel",
+        "resume",
+        "filesystem",
+        "tools",
+        "approvals",
+        "isolation",
+        "inputModalities"
+      ]
+    },
+    "source": {
+      "enum": [
+        "configuration",
+        "tool-contract",
+        "host-observation",
+        "live-probe"
+      ]
+    },
+    "sourceReference": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "snapshotDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "host",
+    "hostVersion",
+    "adapterVersion",
+    "actorId",
+    "sessionId",
+    "instanceId",
+    "observedAt",
+    "expiresAt",
+    "supportedBindings",
+    "executionCapabilities",
+    "source",
+    "sourceReference",
+    "snapshotDigest"
+  ],
+  "$defs": {
+    "reasoning": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "enum"
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$",
+              "not": {
+                "enum": [
+                  "ultra",
+                  "ultracode"
+                ]
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "token-budget"
+            },
+            "budgetTokens": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000000
+            }
+          },
+          "required": [
+            "kind",
+            "budgetTokens"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "toggle"
+            },
+            "enabled": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "enabled"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "not-exposed"
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        }
+      ]
+    },
+    "supportedBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "resolvedModel": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "modelOrigin": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "servingProvider": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "accessPath": {
+          "enum": [
+            "subscription",
+            "api",
+            "enterprise",
+            "unknown"
+          ]
+        },
+        "nativeReasoning": {
+          "$ref": "#/$defs/reasoning"
+        },
+        "runtimeMode": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "invocationSurface": {
+          "enum": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ]
+        },
+        "observableFields": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "model",
+              "reasoning",
+              "runtimeMode"
+            ]
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "aliasResolution": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "alias": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+                },
+                "resolvedModel": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+                },
+                "sourceReference": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                }
+              },
+              "required": [
+                "alias",
+                "resolvedModel",
+                "sourceReference"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "possibleFallbacks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "resolvedModel": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "modelOrigin": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              }
+            },
+            "required": [
+              "resolvedModel",
+              "modelOrigin"
+            ]
+          },
+          "maxItems": 32,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "model",
+        "resolvedModel",
+        "modelOrigin",
+        "servingProvider",
+        "accessPath",
+        "nativeReasoning",
+        "runtimeMode",
+        "invocationSurface",
+        "observableFields",
+        "aliasResolution",
+        "possibleFallbacks"
+      ]
+    }
+  }
+}

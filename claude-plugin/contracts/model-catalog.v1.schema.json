@@ -1,0 +1,332 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/model-catalog.v1.schema.json",
+  "title": "model-catalog.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "snapshotDate": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "models": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/model"
+      },
+      "maxItems": 512,
+      "uniqueItems": true
+    },
+    "hosts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/host"
+      },
+      "maxItems": 128,
+      "uniqueItems": true
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source"
+      },
+      "maxItems": 128,
+      "uniqueItems": true
+    },
+    "catalogDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "snapshotDate",
+    "models",
+    "hosts",
+    "sources",
+    "catalogDigest"
+  ],
+  "$defs": {
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "defaultEnabled": {
+          "type": "boolean"
+        },
+        "autoDispatch": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "baseline",
+            "experimental",
+            "descriptor-only"
+          ]
+        },
+        "sourceIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "requiredCapabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "unknownCapabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "defaultEnabled",
+        "autoDispatch",
+        "status",
+        "sourceIds",
+        "requiredCapabilities",
+        "unknownCapabilities"
+      ]
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "modelOrigin": {
+          "enum": [
+            "openai",
+            "anthropic",
+            "google",
+            "xai",
+            "mistral",
+            "amazon",
+            "cohere",
+            "meta"
+          ]
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "modelClass": {
+          "enum": [
+            "lightweight",
+            "general",
+            "deep",
+            "frontier"
+          ]
+        },
+        "status": {
+          "enum": [
+            "stable",
+            "preview",
+            "seed",
+            "retired"
+          ]
+        },
+        "verification": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "documented",
+              "baseline-seed",
+              "contract-tested",
+              "live-verified",
+              "locally-evaluated"
+            ]
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "discovery",
+              "general-implementation",
+              "complex-reasoning",
+              "independent-audit"
+            ]
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "taskTraits": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "architecture-decision",
+              "code-change",
+              "diagnosis",
+              "source-research",
+              "google-app-operation",
+              "context-repair",
+              "multimodal-input"
+            ]
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "nativeKinds": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "enum",
+              "token-budget",
+              "toggle",
+              "not-exposed"
+            ]
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "inputModalities": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "text",
+              "image",
+              "audio",
+              "video"
+            ]
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "contextTokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "abilityScore": {
+          "const": null
+        },
+        "officialPositioning": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recommendationBasis": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "sourceIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "checkedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "id",
+        "modelOrigin",
+        "aliases",
+        "modelClass",
+        "status",
+        "verification",
+        "roles",
+        "taskTraits",
+        "nativeKinds",
+        "inputModalities",
+        "contextTokens",
+        "abilityScore",
+        "officialPositioning",
+        "recommendationBasis",
+        "sourceIds",
+        "checkedAt"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^(https://|plan:|repository:)",
+          "maxLength": 2048
+        },
+        "checkedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "evidenceKind": {
+          "enum": [
+            "official-document",
+            "baseline-source",
+            "user-plan"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        }
+      },
+      "required": [
+        "id",
+        "url",
+        "checkedAt",
+        "evidenceKind",
+        "note"
+      ]
+    }
+  }
+}

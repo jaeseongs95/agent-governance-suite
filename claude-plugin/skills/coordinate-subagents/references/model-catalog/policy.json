@@ -1,0 +1,889 @@
+{
+  "schemaVersion": "1.0.0",
+  "allowedOrigins": [
+    "openai",
+    "anthropic",
+    "google",
+    "xai",
+    "mistral",
+    "amazon",
+    "cohere",
+    "meta"
+  ],
+  "enabledHosts": [
+    "openai-codex",
+    "anthropic-claude-code"
+  ],
+  "allowedAccessPaths": [
+    "subscription",
+    "enterprise"
+  ],
+  "allowPreview": false,
+  "allowSeedModels": false,
+  "maxCatalogAgeDays": 30,
+  "controlOrder": [
+    {
+      "host": "openai-codex",
+      "role": "discovery",
+      "profile": "economy",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "openai-codex",
+      "role": "general-implementation",
+      "profile": "economy",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "openai-codex",
+      "role": "complex-reasoning",
+      "profile": "economy",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "openai-codex",
+      "role": "independent-audit",
+      "profile": "economy",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "openai-codex",
+      "role": "discovery",
+      "profile": "balanced",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "openai-codex",
+      "role": "general-implementation",
+      "profile": "balanced",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "openai-codex",
+      "role": "complex-reasoning",
+      "profile": "balanced",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "openai-codex",
+      "role": "independent-audit",
+      "profile": "balanced",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "openai-codex",
+      "role": "discovery",
+      "profile": "quality",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "openai-codex",
+      "role": "general-implementation",
+      "profile": "quality",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "openai-codex",
+      "role": "complex-reasoning",
+      "profile": "quality",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "openai-codex",
+      "role": "independent-audit",
+      "profile": "quality",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "anthropic-claude-code",
+      "role": "discovery",
+      "profile": "economy",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "anthropic-claude-code",
+      "role": "general-implementation",
+      "profile": "economy",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "anthropic-claude-code",
+      "role": "complex-reasoning",
+      "profile": "economy",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "anthropic-claude-code",
+      "role": "independent-audit",
+      "profile": "economy",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "anthropic-claude-code",
+      "role": "discovery",
+      "profile": "balanced",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "anthropic-claude-code",
+      "role": "general-implementation",
+      "profile": "balanced",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "anthropic-claude-code",
+      "role": "complex-reasoning",
+      "profile": "balanced",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "anthropic-claude-code",
+      "role": "independent-audit",
+      "profile": "balanced",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "anthropic-claude-code",
+      "role": "discovery",
+      "profile": "quality",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "anthropic-claude-code",
+      "role": "general-implementation",
+      "profile": "quality",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "anthropic-claude-code",
+      "role": "complex-reasoning",
+      "profile": "quality",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    },
+    {
+      "host": "anthropic-claude-code",
+      "role": "independent-audit",
+      "profile": "quality",
+      "controls": [
+        {
+          "kind": "enum",
+          "value": "xhigh"
+        },
+        {
+          "kind": "enum",
+          "value": "high"
+        },
+        {
+          "kind": "enum",
+          "value": "medium"
+        },
+        {
+          "kind": "enum",
+          "value": "max"
+        },
+        {
+          "kind": "enum",
+          "value": "low"
+        },
+        {
+          "kind": "not-exposed"
+        }
+      ]
+    }
+  ],
+  "profileOrder": {
+    "economy": {
+      "discovery": [
+        "gpt-5.6-luna",
+        "claude-haiku-4-5-20251001",
+        "gemini-2.5-flash-lite"
+      ],
+      "general-implementation": [
+        "gpt-5.6-terra",
+        "claude-sonnet-5",
+        "gemini-3.8-flash",
+        "grok-4.5"
+      ],
+      "complex-reasoning": [
+        "gpt-5.6-sol",
+        "claude-opus-5",
+        "gpt-6-astra",
+        "claude-fable-5",
+        "grok-4.5"
+      ],
+      "independent-audit": [
+        "gpt-6-astra",
+        "claude-fable-5",
+        "gpt-5.6-sol",
+        "claude-opus-5"
+      ]
+    },
+    "balanced": {
+      "discovery": [
+        "gpt-5.6-luna",
+        "claude-haiku-4-5-20251001",
+        "gemini-2.5-flash-lite"
+      ],
+      "general-implementation": [
+        "gpt-5.6-terra",
+        "claude-sonnet-5",
+        "gemini-3.8-flash",
+        "grok-4.5"
+      ],
+      "complex-reasoning": [
+        "gpt-5.6-sol",
+        "claude-opus-5",
+        "gpt-6-astra",
+        "claude-fable-5",
+        "grok-4.5"
+      ],
+      "independent-audit": [
+        "gpt-6-astra",
+        "claude-fable-5",
+        "gpt-5.6-sol",
+        "claude-opus-5"
+      ]
+    },
+    "quality": {
+      "discovery": [
+        "gpt-5.6-terra",
+        "claude-sonnet-5",
+        "gpt-5.6-luna",
+        "claude-haiku-4-5-20251001",
+        "gemini-2.5-flash-lite"
+      ],
+      "general-implementation": [
+        "gpt-5.6-sol",
+        "claude-opus-5",
+        "gpt-5.6-terra",
+        "claude-sonnet-5",
+        "gemini-3.8-flash",
+        "grok-4.5"
+      ],
+      "complex-reasoning": [
+        "gpt-6-astra",
+        "claude-fable-5",
+        "gpt-5.6-sol",
+        "claude-opus-5"
+      ],
+      "independent-audit": [
+        "gpt-6-astra",
+        "claude-fable-5",
+        "gpt-5.6-sol",
+        "claude-opus-5"
+      ]
+    }
+  },
+  "traitOrder": {
+    "architecture-decision": [
+      "gpt-6-astra",
+      "claude-fable-5"
+    ],
+    "code-change": [
+      "gpt-5.6-sol",
+      "claude-opus-5",
+      "gpt-5.6-terra",
+      "claude-sonnet-5"
+    ],
+    "source-research": [
+      "gpt-5.6-luna",
+      "claude-haiku-4-5-20251001",
+      "gemini-2.5-flash-lite"
+    ],
+    "context-repair": [
+      "gpt-6-astra",
+      "claude-fable-5"
+    ]
+  },
+  "modelMinimums": [
+    {
+      "model": "gpt-5.6-luna",
+      "enumValues": [
+        "high",
+        "xhigh",
+        "max"
+      ]
+    }
+  ],
+  "highRiskNativeFloor": [
+    {
+      "host": "openai-codex",
+      "modelOrigins": [
+        "openai"
+      ],
+      "minimumModelClass": "general",
+      "enumValues": [
+        "high",
+        "xhigh",
+        "max"
+      ]
+    },
+    {
+      "host": "anthropic-claude-code",
+      "modelOrigins": [
+        "anthropic"
+      ],
+      "minimumModelClass": "general",
+      "enumValues": [
+        "high",
+        "xhigh",
+        "max"
+      ]
+    }
+  ],
+  "fullHistoryInheritanceHosts": [
+    "openai-codex"
+  ]
+}

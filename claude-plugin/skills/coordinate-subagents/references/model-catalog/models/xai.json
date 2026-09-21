@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "provider": "xai",
+  "models": [
+    {
+      "id": "grok-4.5",
+      "modelOrigin": "xai",
+      "aliases": [],
+      "modelClass": "deep",
+      "status": "stable",
+      "verification": [
+        "documented"
+      ],
+      "roles": [
+        "discovery",
+        "general-implementation",
+        "complex-reasoning",
+        "independent-audit"
+      ],
+      "taskTraits": [
+        "architecture-decision",
+        "code-change",
+        "diagnosis",
+        "source-research",
+        "context-repair",
+        "multimodal-input"
+      ],
+      "nativeKinds": [
+        "enum",
+        "not-exposed"
+      ],
+      "inputModalities": [
+        "text",
+        "image"
+      ],
+      "contextTokens": 500000,
+      "abilityScore": null,
+      "officialPositioning": null,
+      "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+      "sourceIds": [
+        "GROK"
+      ],
+      "checkedAt": "2026-09-21T00:00:00.000Z"
+    }
+  ]
+}

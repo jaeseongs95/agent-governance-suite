@@ -1,0 +1,86 @@
+[
+  {
+    "id": "PLAN",
+    "url": "plan:AGS_v2.5.0_implementation_plan.ko.md",
+    "checkedAt": "2026-09-21T00:00:00.000Z",
+    "evidenceKind": "user-plan",
+    "note": "Role allocation hypotheses, not measured ability rankings or live host support."
+  },
+  {
+    "id": "BASELINE",
+    "url": "repository:b3c232f5113d956b6d3aeebdf26a19ed36ef49d1/skills/coordinate-subagents/references/model-routing-presets.json",
+    "checkedAt": "2026-09-21T00:00:00.000Z",
+    "evidenceKind": "baseline-source",
+    "note": "Existing model families and role/class policy; not proof of actual settings."
+  },
+  {
+    "id": "OPENAI",
+    "url": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+    "checkedAt": "2026-09-21T00:00:00.000Z",
+    "evidenceKind": "official-document",
+    "note": "Astra ID and native enum documented; account capability must be separately observed."
+  },
+  {
+    "id": "CODEX",
+    "url": "https://learn.chatgpt.com/docs/models",
+    "checkedAt": "2026-09-21T00:00:00.000Z",
+    "evidenceKind": "official-document",
+    "note": "CLI model selection; Ultra is orchestration, not native reasoning effort."
+  },
+  {
+    "id": "CLAUDE",
+    "url": "https://platform.claude.com/docs/en/about-claude/models/overview",
+    "checkedAt": "2026-09-21T00:00:00.000Z",
+    "evidenceKind": "official-document",
+    "note": "Fable 5, Opus 5, Sonnet 5 and Haiku 4.5 families. A newer family seed is not declared verified by this page."
+  },
+  {
+    "id": "CLAUDE-CODE",
+    "url": "https://code.claude.com/docs/en/model-config",
+    "checkedAt": "2026-09-21T00:00:00.000Z",
+    "evidenceKind": "official-document",
+    "note": "Native per-model effort; unsupported levels and organization limits may be clamped. Ultracode is separate."
+  },
+  {
+    "id": "GEMINI",
+    "url": "https://ai.google.dev/gemini-api/docs/models",
+    "checkedAt": "2026-09-21T00:00:00.000Z",
+    "evidenceKind": "official-document",
+    "note": "Model catalog; host/model configuration is separate from API availability."
+  },
+  {
+    "id": "GEMINI-CLI",
+    "url": "https://geminicli.com/docs/cli/headless/",
+    "checkedAt": "2026-09-21T00:00:00.000Z",
+    "evidenceKind": "official-document",
+    "note": "stream-json init/message/tool/error/result and headless exit codes; init alone is insufficient model evidence."
+  },
+  {
+    "id": "GROK",
+    "url": "https://docs.x.ai/developers/models",
+    "checkedAt": "2026-09-21T00:00:00.000Z",
+    "evidenceKind": "official-document",
+    "note": "grok-4.5 model documented; no host-based origin inference."
+  },
+  {
+    "id": "GROK-BUILD",
+    "url": "https://docs.x.ai/build/cli/headless-scripting",
+    "checkedAt": "2026-09-21T00:00:00.000Z",
+    "evidenceKind": "official-document",
+    "note": "Headless argv and ACP JSON-RPC protocol. Streaming-json event details must be version-verified."
+  },
+  {
+    "id": "MISTRAL",
+    "url": "https://docs.mistral.ai/resources/changelogs",
+    "checkedAt": "2026-09-21T00:00:00.000Z",
+    "evidenceKind": "official-document",
+    "note": "mistral-medium-3-5 and mistral-small-2603. Only Mistral-origin models are included, not third-party hosted models."
+  },
+  {
+    "id": "COHERE",
+    "url": "https://docs.cohere.com/v1/changelog/command-a-plus-05-2026",
+    "checkedAt": "2026-09-21T00:00:00.000Z",
+    "evidenceKind": "official-document",
+    "note": "Command A+ model family and multimodal/agentic positioning; no dedicated execution adapter in this package."
+  }
+]

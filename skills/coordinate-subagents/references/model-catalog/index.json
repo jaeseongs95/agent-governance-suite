@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "1.0.0",
+  "snapshotDate": "2026-09-21T00:00:00.000Z",
+  "providers": [
+    {
+      "provider": "openai",
+      "file": "models/openai.json",
+      "sha256": "0321e043f644221deeda41a06a28afa0b87bf844415c08052dcf0fc47f55fa46",
+      "roles": [
+        "complex-reasoning",
+        "discovery",
+        "general-implementation",
+        "independent-audit"
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "file": "models/anthropic.json",
+      "sha256": "437fa44617a9016ab55e2faf8e5a6d755f26bcc33b3390947823e6896d916f3f",
+      "roles": [
+        "complex-reasoning",
+        "discovery",
+        "general-implementation",
+        "independent-audit"
+      ]
+    },
+    {
+      "provider": "google",
+      "file": "models/google.json",
+      "sha256": "dc676ed6bb75c6515b9415d417d8618717b1a6f0b9e9b2d151fcc10940d8854c",
+      "roles": [
+        "complex-reasoning",
+        "discovery",
+        "general-implementation",
+        "independent-audit"
+      ]
+    },
+    {
+      "provider": "xai",
+      "file": "models/xai.json",
+      "sha256": "338ec89740b1b146d2a6c30d809596b0bd13ccb32b52343b2994a3885051f3f2",
+      "roles": [
+        "complex-reasoning",
+        "discovery",
+        "general-implementation",
+        "independent-audit"
+      ]
+    },
+    {
+      "provider": "mistral",
+      "file": "models/mistral.json",
+      "sha256": "11d060a1a8e298a80e98322bc0c99844ace8d5579d1145bcb37d6013c250108b",
+      "roles": [
+        "complex-reasoning",
+        "discovery",
+        "general-implementation",
+        "independent-audit"
+      ]
+    },
+    {
+      "provider": "amazon",
+      "file": "models/amazon.json",
+      "sha256": "0ab4fde00c7b519e1c23a538adaab3e664d756277bd878ae3635d402e949a01b",
+      "roles": [
+        "complex-reasoning",
+        "discovery",
+        "general-implementation",
+        "independent-audit"
+      ]
+    },
+    {
+      "provider": "cohere",
+      "file": "models/cohere.json",
+      "sha256": "2f13f7a11cbc1db8f565367607989fa4a08160d99cf2ecff5d472505e6aae02c",
+      "roles": [
+        "complex-reasoning",
+        "discovery",
+        "general-implementation",
+        "independent-audit"
+      ]
+    },
+    {
+      "provider": "meta",
+      "file": "models/meta.json",
+      "sha256": "e5cf34c46293264cc65ca96a36378011a707662e678d22dfb7400c572fa2d25e",
+      "roles": [
+        "complex-reasoning",
+        "discovery",
+        "general-implementation",
+        "independent-audit"
+      ]
+    }
+  ],
+  "hostsFile": "hosts.json",
+  "sourcesFile": "sources.json",
+  "hostsSha256": "f7672087d49d75a36aa43d2a2539c30cc6a1bad402067edbf6ba2db6abf09f6d",
+  "sourcesSha256": "bca0d3c5c92a16eae00ba186b97a4552f9c9d182f6a3165fdc2f42d38e46f47b"
+}

@@ -44,6 +44,14 @@ import {
   type WorkflowPlanV1,
   type WorkflowReceiptV1,
   type WorkflowStatusSummaryV1,
+  type HostModelCapabilitiesV1,
+  type ModelApplicationRecordV2,
+  type ModelApplicationRequestV2,
+  type ModelCatalogV1,
+  type ModelEvaluationRecordV1,
+  type ModelRoutingDecisionV2,
+  type ModelRoutingPolicyV1,
+  type ModelSelectionRequestV2,
   WorkflowContractError,
 } from "../../contracts/types.js";
 
@@ -101,6 +109,14 @@ export const contractSchemas = {
   stateCleanupReceipt: loadSchema("state-cleanup-receipt.v1.schema.json"),
   koreanProseGlossaryLookupRequest: loadSchema("korean-prose-glossary-lookup-request.v1.schema.json"),
   koreanProseGlossaryLookupResult: loadSchema("korean-prose-glossary-lookup-result.v1.schema.json"),
+  modelCatalogV1: loadSchema("model-catalog.v1.schema.json"),
+  modelRoutingPolicyV1: loadSchema("model-routing-policy.v1.schema.json"),
+  hostModelCapabilitiesV1: loadSchema("host-model-capabilities.v1.schema.json"),
+  modelSelectionRequestV2: loadSchema("model-selection-request.v2.schema.json"),
+  modelRoutingDecisionV2: loadSchema("model-routing-decision.v2.schema.json"),
+  modelApplicationRequestV2: loadSchema("model-application-request.v2.schema.json"),
+  modelApplicationRecordV2: loadSchema("model-application-record.v2.schema.json"),
+  modelEvaluationRecordV1: loadSchema("model-evaluation-record.v1.schema.json"),
 };
 
 // Providers declare artifact digests either bare or sha256:-prefixed. A SHA-256 digest that misses the
@@ -306,6 +322,38 @@ export class ContractValidator {
 
   pluginUpdateNotice(value: unknown): PluginUpdateNoticeV1 {
     return this.assert<PluginUpdateNoticeV1>("pluginUpdateNotice", value);
+  }
+
+  modelCatalogV1(value: unknown): ModelCatalogV1 {
+    return this.assert<ModelCatalogV1>("modelCatalogV1", value);
+  }
+
+  modelRoutingPolicyV1(value: unknown): ModelRoutingPolicyV1 {
+    return this.assert<ModelRoutingPolicyV1>("modelRoutingPolicyV1", value);
+  }
+
+  hostModelCapabilitiesV1(value: unknown): HostModelCapabilitiesV1 {
+    return this.assert<HostModelCapabilitiesV1>("hostModelCapabilitiesV1", value);
+  }
+
+  modelSelectionRequestV2(value: unknown): ModelSelectionRequestV2 {
+    return this.assert<ModelSelectionRequestV2>("modelSelectionRequestV2", value);
+  }
+
+  modelRoutingDecisionV2(value: unknown): ModelRoutingDecisionV2 {
+    return this.assert<ModelRoutingDecisionV2>("modelRoutingDecisionV2", value);
+  }
+
+  modelApplicationRequestV2(value: unknown): ModelApplicationRequestV2 {
+    return this.assert<ModelApplicationRequestV2>("modelApplicationRequestV2", value);
+  }
+
+  modelApplicationRecordV2(value: unknown): ModelApplicationRecordV2 {
+    return this.assert<ModelApplicationRecordV2>("modelApplicationRecordV2", value);
+  }
+
+  modelEvaluationRecordV1(value: unknown): ModelEvaluationRecordV1 {
+    return this.assert<ModelEvaluationRecordV1>("modelEvaluationRecordV1", value);
   }
 
   providerResult(

@@ -148,7 +148,7 @@ Select a skill name to open its suite-local path. The `ponytail` exception links
 | Before work | [`instruction-scope-resolver`](skills/instruction-scope-resolver/) | 1.0.0 | Finds the instructions and precedence rules that apply to the work target. |
 | Before work | [`workspace-convention-profiler`](skills/workspace-convention-profiler/) | 1.0.0 | Records repository structure, commands, and test conventions with evidence. |
 | Before work | [`task-contract`](skills/task-contract/) | 1.1.0 | Defines the objective, scope, risk, and completion criteria while keeping provenance receipts separate from authority. |
-| During work | [`coordinate-subagents`](skills/coordinate-subagents/) | 1.1.0 | Coordinates parallel independent work, ownership, verification duties, and model application records. |
+| During work | [`coordinate-subagents`](skills/coordinate-subagents/) | 1.2.0 | Coordinates parallel independent work, ownership, verification duties, model application records, and v2 model assignment proposals from a reviewed catalog. |
 | During work | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | 1.0.0 | Reviews evidence and counterarguments for complex decisions. |
 | Convergence review | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 1.0.0 | Independently compares iteration contracts and frame changes before a new epoch can open. |
 | Before and after changes | [`change-scope-guardian`](skills/change-scope-guardian/) | 1.0.0 | Captures a baseline and checks whether the final change stayed in scope. |
@@ -189,6 +189,7 @@ git diff --check
 - [Operations and reference](docs/operations.md) (Korean)
 - [Development reference](docs/development.md) (Korean)
 - [Release checklist](docs/release.md) (Korean)
+- [Model routing v2](docs/model-routing-v2.md) (Korean)
 - [Additional skill implementation plan](docs/additional-skills-implementation-plan.md) (Korean)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)

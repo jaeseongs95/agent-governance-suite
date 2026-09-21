@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
+import { loadCatalog, loadPolicy } from "./model-catalog.mjs";
+import { keys, recordV2, resolveV2 } from "./model-routing-core.mjs";
+
 const presets = JSON.parse(readFileSync(new URL("../references/model-routing-presets.json", import.meta.url), "utf8"));
 const classes = presets.model_class_order;
 const efforts = presets.effort_order;
@@ -132,14 +135,25 @@ export function recordModelApplication(input) {
   };
 }
 
+// Versioned CLI input is a diagnostic: the supplied snapshots never publish capabilities or authorize dispatch.
+function runVersioned(operation, input) {
+  keys(input, ["schemaVersion", "request", "capabilities", "now", "application"], ["schemaVersion", "request", "capabilities", "now"]);
+  const environment = { catalog: loadCatalog(), policy: loadPolicy(), capabilities: input.capabilities, now: input.now };
+  const decision = resolveV2(input.request, environment);
+  return operation === "resolve" ? decision : recordV2(input.application, { ...environment, request: input.request, decision });
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const [operation, inputPath, ...extra] = process.argv.slice(2);
     check(["resolve", "record"].includes(operation) && inputPath && extra.length === 0, "Usage: node model-routing.mjs resolve|record input.json");
     const input = JSON.parse(readFileSync(inputPath, "utf8"));
-    const result = operation === "resolve" ? resolveModelSelection(input) : recordModelApplication(input);
+    // Only an explicit 2.0.0 wrapper takes the versioned path; every other input keeps the v1 behavior.
+    const result = input?.schemaVersion === "2.0.0"
+      ? runVersioned(operation, input)
+      : operation === "resolve" ? resolveModelSelection(input) : recordModelApplication(input);
     console.log(JSON.stringify(result, null, 2));
-    if (result.delivery === "blocked") process.exitCode = 1;
+    if (result.delivery === "blocked" || result.status === "blocked") process.exitCode = 1;
   } catch (error) {
     console.error(error.message);
     process.exitCode = 1;

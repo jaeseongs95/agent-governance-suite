@@ -1,0 +1,346 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/model-selection-request.v2.schema.json",
+  "title": "model-selection-request.v2",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "2.0.0"
+    },
+    "binding": {
+      "$ref": "#/$defs/binding"
+    },
+    "role": {
+      "enum": [
+        "discovery",
+        "general-implementation",
+        "complex-reasoning",
+        "independent-audit"
+      ]
+    },
+    "highRisk": {
+      "type": "boolean"
+    },
+    "profile": {
+      "enum": [
+        "economy",
+        "balanced",
+        "quality"
+      ]
+    },
+    "taskTraits": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "architecture-decision",
+          "code-change",
+          "diagnosis",
+          "source-research",
+          "google-app-operation",
+          "context-repair",
+          "multimodal-input"
+        ]
+      },
+      "maxItems": 128,
+      "uniqueItems": true
+    },
+    "requirements": {
+      "$ref": "#/$defs/requirements"
+    },
+    "user": {
+      "$ref": "#/$defs/preference"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "binding",
+    "role",
+    "highRisk",
+    "requirements"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "role": {
+            "const": "independent-audit"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
+      "then": {
+        "properties": {
+          "highRisk": {
+            "const": true
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "assignmentId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "taskId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "runId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "stageId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "attemptId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "inputDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "candidateDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "assignmentId",
+        "taskId",
+        "runId",
+        "stageId",
+        "attemptId",
+        "revision",
+        "inputDigest",
+        "candidateDigest"
+      ]
+    },
+    "preference": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strength": {
+          "enum": [
+            "required",
+            "preferred"
+          ]
+        },
+        "model": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "host": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "nativeReasoning": {
+          "$ref": "#/$defs/reasoning"
+        },
+        "runtimeMode": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        }
+      },
+      "required": [
+        "strength"
+      ],
+      "minProperties": 2
+    },
+    "reasoning": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "enum"
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$",
+              "not": {
+                "enum": [
+                  "ultra",
+                  "ultracode"
+                ]
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "token-budget"
+            },
+            "budgetTokens": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000000
+            }
+          },
+          "required": [
+            "kind",
+            "budgetTokens"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "toggle"
+            },
+            "enabled": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "enabled"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "not-exposed"
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        }
+      ]
+    },
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inputModalities": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "text",
+              "image",
+              "audio",
+              "video"
+            ]
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "filesystem": {
+          "enum": [
+            "none",
+            "read",
+            "write"
+          ]
+        },
+        "allowedSurfaces": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "local-subagent",
+              "peer-session",
+              "headless"
+            ]
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "allowedRuntimeModes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "allowNestedDelegation": {
+          "type": "boolean"
+        },
+        "requireObservable": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "model",
+              "reasoning",
+              "runtimeMode"
+            ]
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "excludedActors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "excludedSessions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "contextMode": {
+          "enum": [
+            "limited",
+            "full-history"
+          ]
+        }
+      },
+      "required": [
+        "inputModalities",
+        "tools",
+        "filesystem",
+        "allowedSurfaces",
+        "allowedRuntimeModes",
+        "allowNestedDelegation",
+        "requireObservable",
+        "excludedActors",
+        "excludedSessions",
+        "contextMode"
+      ]
+    }
+  }
+}

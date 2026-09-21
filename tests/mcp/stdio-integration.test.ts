@@ -156,6 +156,9 @@ describe("bundled STDIO MCP server", () => {
         "send_session_message",
         "acknowledge_session_messages",
         "get_session_message_status",
+        "query_model_catalog",
+        "resolve_model_assignment",
+        "record_model_application",
       ]);
       expect(listed.tools.every((tool) => tool.inputSchema.type === "object")).toBe(true);
       const sourceText = "MCP와 SQLite는 보호하고 데이터 베이스는 문맥을 확인한다.";
@@ -165,6 +168,10 @@ describe("bundled STDIO MCP server", () => {
       }));
       expect(glossary.ok).toBe(true);
       expect(glossary.data).toMatchObject({ status: "matched", sourceDigest: createHash("sha256").update(sourceText).digest("hex") });
+      // The bundled server must find the catalog beside the skill, not beside mcp-server/dist.
+      const catalog = toolData<{ models: unknown[] }>(await client.callTool({ name: "query_model_catalog", arguments: { provider: "openai" } }));
+      expect(catalog.ok).toBe(true);
+      expect(catalog.data?.models.length).toBeGreaterThan(0);
       const workflowDatabase = new DatabaseSync(environment.AGENT_GOVERNANCE_DB_PATH!, { readOnly: true });
       expect(workflowDatabase.prepare("SELECT COUNT(*) AS count FROM workflow_runs").get()).toEqual({ count: 0 });
       workflowDatabase.close();
@@ -270,6 +277,9 @@ describe("bundled STDIO MCP server", () => {
         "send_session_message",
         "acknowledge_session_messages",
         "get_session_message_status",
+        "query_model_catalog",
+        "resolve_model_assignment",
+        "record_model_application",
       ]);
       expect(listed.tools.find((tool) => tool.name === "plan_workflow")?.annotations).toMatchObject({
         readOnlyHint: false,

@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "b3c232f5113d956b6d3aeebdf26a19ed36ef49d1",
+  "skills": [
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "maxBytes": 1795,
+      "frontmatterSha256": "20174a138dedbb6f8dcc2a86ccc3fa11d1bebeed84e678db1c5faa977bb69e6e",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/SKILL.md",
+      "maxBytes": 1981,
+      "frontmatterSha256": "790cf7225032f303123577bba53edb35950ba58aad8886d5c2496b643cc066c9",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "maxBytes": 2184,
+      "frontmatterSha256": "ca85a0fd2f934505efcaec1ee58b5bb4b12d7cd0466e83c0f63f129b7b3652af",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/codex-token-usage-analyzer/SKILL.md",
+      "maxBytes": 1405,
+      "frontmatterSha256": "0c721d2afa9d2ea914415c2053fd8420a46f95edf693c0aa873a91e8f2756f40",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "maxBytes": 1944,
+      "frontmatterSha256": "fe0431c23d52fc038eef4b872f68b73eee514ccabf35de5d9a95f2df5b928a82",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/coordinate-subagents/SKILL.md",
+      "maxBytes": 2191,
+      "frontmatterSha256": "0988c6d14aead80bfc60b4bb19f0955021c2d4e6783f7be62b8ff3ef4f64743d",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "maxBytes": 1585,
+      "frontmatterSha256": "12b8b9fd4685db1ceee87c0996f15e63c3c899a9e968c7f8585c29792410df0e",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/independent-audit-gate/SKILL.md",
+      "maxBytes": 3301,
+      "frontmatterSha256": "58bd2352295dcc6a6775bd39eb6b0b2267a4e2565810740a9340dda8e193dbd8",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/SKILL.md",
+      "maxBytes": 5256,
+      "frontmatterSha256": "e2275735364cde10a2611066d5338db264538f5419c2ec90270fd50295cf191c",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "maxBytes": 2068,
+      "frontmatterSha256": "6088e0e2dea8d48fa620101080c31b68260a5edab91b6bcf89cb9d37deb90bd9",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "maxBytes": 1947,
+      "frontmatterSha256": "8c03e7c9b430176fa54bfe5d6853f303ac01eea96efa40fffaa9deaa3ced55ef",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "maxBytes": 2053,
+      "frontmatterSha256": "c9f50e41b0811ade48ea68c6f1126b4775ac8e40487a43be4e1cf561615cfd9b",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "maxBytes": 2024,
+      "frontmatterSha256": "770af6ca066b9da7e8efc954212f7708ffd7c05dcdf9a4f1991ebce0f01f8680",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "maxBytes": 2140,
+      "frontmatterSha256": "8ef823b143bfeca56660bd40eac8922c16b7e562a4f92a3da34c2025d85af666",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "maxBytes": 4585,
+      "frontmatterSha256": "8f1f57524fff7c9648e22bfbe145009bd60d69b81db3b22ee49f4e8bc2d88623",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "maxBytes": 6975,
+      "frontmatterSha256": "9f602206714c510e158a99c16f1e17bea792258e3f063cacb591195b9b4050bd",
+      "conditionalNavigation": false
+    },
+    {
+      "path": "skills/recovery-strategy-selector/SKILL.md",
+      "maxBytes": 1166,
+      "frontmatterSha256": "a3366c7fff440148b3eb65590d1d04de88db4562f5e0ba2fc77660004f89563c",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/session-board/SKILL.md",
+      "maxBytes": 2918,
+      "frontmatterSha256": "29635623e027f7b05026e8cbf7cb017c381d1d195299b051d646a4e21338c4b5",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "maxBytes": 1944,
+      "frontmatterSha256": "44204d674fd516f76413b5cc5411f582dbea23035b829e90355161b75eaf8b82",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/task-contract/SKILL.md",
+      "maxBytes": 1500,
+      "frontmatterSha256": "a45d487bfbee19483076fad3574106db8e01038a3e47e2b49f33c00b2bdd46ac",
+      "conditionalNavigation": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/SKILL.md",
+      "maxBytes": 1866,
+      "frontmatterSha256": "09fa15bd164e78a8d74aa3a1d2eb2d1677073ef6acee4d2dde498301f8492f88",
+      "conditionalNavigation": true
+    }
+  ]
+}

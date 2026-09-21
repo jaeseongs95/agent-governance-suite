@@ -66,6 +66,10 @@ Codex와 Claude Code relay는 `(host, sessionId, transport)` lease로 하나만 
 
 이 경계가 막는 것은 loopback 구간의 평문 관찰, 우연한 다른 서비스 연결과 잘못된 broker endpoint입니다. 같은 OS 사용자 권한의 악성 프로세스는 상태 디렉터리의 인증서 키·token·DB를 읽거나 바꿀 수 있으므로 막지 못합니다. 따라서 TLS나 추가 HMAC을 같은 사용자 프로세스 사이의 강한 신원 격리로 설명하지 않으며, peer 메시지는 승인·권한·외부 변경 의사를 대신하지 않습니다.
 
+## 모델 배정 v2
+
+`query_model_catalog`, `resolve_model_assignment`, `record_model_application`은 `coordinate-subagents`가 소유한 routing 엔진 하나를 부르는 MCP façade입니다. 결정과 적용 기록은 workflow DB의 추가 `ags_model_*` 테이블에 저장하며, 배정 제안일 뿐 실행 승인·lease·trusted execution gate를 대신하지 않습니다. 호스트 capability 발행과 관측 admission hook은 아직 연결하지 않았으므로 MCP resolve는 `blocked`로 끝납니다. 자세한 계약과 rollback은 [Model routing v2](model-routing-v2.md)를 봅니다.
+
 ## 플러그인 업데이트 알림
 
 MCP 서버는 고정된 공개 저장소에서 `vMAJOR.MINOR.PATCH` 형식의 안정 tag만 확인합니다. 성공한 결과는 같은 SQLite DB의 `plugin_update_state`에 24시간 동안 보관하고, 실패하면 마지막 성공 결과를 유지한 채 1시간 뒤 다시 시도합니다. 업데이트 확인 오류는 workflow 상태나 도구 결과를 바꾸지 않습니다.

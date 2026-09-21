@@ -1,5 +1,7 @@
 export const SKILL_RUNTIME_ENTRYPOINTS = Object.freeze([
   { path: "skills/coordinate-subagents/scripts/model-routing.mjs", expectedExitCode: 1, outputIncludes: "Usage:" },
+  { path: "skills/coordinate-subagents/scripts/model-catalog.mjs", expectedExitCode: 0, outputIncludes: '"providers"' },
+  { path: "skills/coordinate-subagents/scripts/model-evaluation.mjs", expectedExitCode: 1, outputIncludes: "USAGE" },
   { path: "skills/software-security-auditor/scripts/cli.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
   { path: "skills/acceptance-evidence-validator/scripts/cli.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
   { path: "skills/acceptance-evidence-validator/scripts/validate-report.mjs", expectedExitCode: 1, outputIncludes: "validation input schema validation failed" },

@@ -1,0 +1,125 @@
+{
+  "schemaVersion": "1.0.0",
+  "provider": "google",
+  "models": [
+    {
+      "id": "gemini-3.8-flash",
+      "modelOrigin": "google",
+      "aliases": [],
+      "modelClass": "general",
+      "status": "seed",
+      "verification": [
+        "baseline-seed"
+      ],
+      "roles": [
+        "discovery",
+        "general-implementation",
+        "complex-reasoning",
+        "independent-audit"
+      ],
+      "taskTraits": [
+        "architecture-decision",
+        "code-change",
+        "diagnosis",
+        "source-research",
+        "context-repair",
+        "multimodal-input"
+      ],
+      "nativeKinds": [
+        "enum",
+        "token-budget",
+        "not-exposed"
+      ],
+      "inputModalities": [
+        "text",
+        "image"
+      ],
+      "contextTokens": null,
+      "abilityScore": null,
+      "officialPositioning": null,
+      "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+      "sourceIds": [
+        "PLAN"
+      ],
+      "checkedAt": "2026-09-21T00:00:00.000Z"
+    },
+    {
+      "id": "gemini-3.1-pro-preview",
+      "modelOrigin": "google",
+      "aliases": [],
+      "modelClass": "deep",
+      "status": "preview",
+      "verification": [
+        "documented"
+      ],
+      "roles": [
+        "discovery",
+        "general-implementation",
+        "complex-reasoning",
+        "independent-audit"
+      ],
+      "taskTraits": [
+        "architecture-decision",
+        "code-change",
+        "diagnosis",
+        "source-research",
+        "context-repair",
+        "multimodal-input"
+      ],
+      "nativeKinds": [
+        "enum",
+        "not-exposed"
+      ],
+      "inputModalities": [
+        "text",
+        "image"
+      ],
+      "contextTokens": null,
+      "abilityScore": null,
+      "officialPositioning": null,
+      "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+      "sourceIds": [
+        "GEMINI"
+      ],
+      "checkedAt": "2026-09-21T00:00:00.000Z"
+    },
+    {
+      "id": "gemini-2.5-flash-lite",
+      "modelOrigin": "google",
+      "aliases": [],
+      "modelClass": "lightweight",
+      "status": "stable",
+      "verification": [
+        "documented"
+      ],
+      "roles": [
+        "discovery"
+      ],
+      "taskTraits": [
+        "architecture-decision",
+        "code-change",
+        "diagnosis",
+        "source-research",
+        "context-repair",
+        "multimodal-input"
+      ],
+      "nativeKinds": [
+        "token-budget",
+        "toggle",
+        "not-exposed"
+      ],
+      "inputModalities": [
+        "text",
+        "image"
+      ],
+      "contextTokens": null,
+      "abilityScore": null,
+      "officialPositioning": null,
+      "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+      "sourceIds": [
+        "GEMINI"
+      ],
+      "checkedAt": "2026-09-21T00:00:00.000Z"
+    }
+  ]
+}

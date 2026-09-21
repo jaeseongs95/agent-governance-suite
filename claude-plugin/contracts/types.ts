@@ -997,3 +997,14 @@ export class WorkflowContractError extends Error {
     return { code: this.code, message: this.message, details: this.details };
   }
 }
+
+export type {
+  HostModelCapabilitiesV1,
+  ModelApplicationRecordV2,
+  ModelApplicationRequestV2,
+  ModelCatalogV1,
+  ModelEvaluationRecordV1,
+  ModelRoutingDecisionV2,
+  ModelRoutingPolicyV1,
+  ModelSelectionRequestV2,
+} from "./model-routing-types.js";

@@ -1,0 +1,510 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/model-routing-policy.v1.schema.json",
+  "title": "model-routing-policy.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "allowedOrigins": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "openai",
+          "anthropic",
+          "google",
+          "xai",
+          "mistral",
+          "amazon",
+          "cohere",
+          "meta"
+        ]
+      },
+      "maxItems": 128,
+      "uniqueItems": true
+    },
+    "enabledHosts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+      },
+      "maxItems": 128,
+      "uniqueItems": true
+    },
+    "allowedAccessPaths": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "subscription",
+          "api",
+          "enterprise"
+        ]
+      },
+      "maxItems": 128,
+      "uniqueItems": true
+    },
+    "allowPreview": {
+      "type": "boolean"
+    },
+    "allowSeedModels": {
+      "type": "boolean"
+    },
+    "maxCatalogAgeDays": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 366
+    },
+    "profileOrder": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "economy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "discovery": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "maxItems": 128,
+              "uniqueItems": true
+            },
+            "general-implementation": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "maxItems": 128,
+              "uniqueItems": true
+            },
+            "complex-reasoning": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "maxItems": 128,
+              "uniqueItems": true
+            },
+            "independent-audit": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "maxItems": 128,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ]
+        },
+        "balanced": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "discovery": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "maxItems": 128,
+              "uniqueItems": true
+            },
+            "general-implementation": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "maxItems": 128,
+              "uniqueItems": true
+            },
+            "complex-reasoning": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "maxItems": 128,
+              "uniqueItems": true
+            },
+            "independent-audit": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "maxItems": 128,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ]
+        },
+        "quality": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "discovery": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "maxItems": 128,
+              "uniqueItems": true
+            },
+            "general-implementation": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "maxItems": 128,
+              "uniqueItems": true
+            },
+            "complex-reasoning": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "maxItems": 128,
+              "uniqueItems": true
+            },
+            "independent-audit": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              },
+              "maxItems": 128,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ]
+        }
+      },
+      "required": [
+        "economy",
+        "balanced",
+        "quality"
+      ]
+    },
+    "traitOrder": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "architecture-decision": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "code-change": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "diagnosis": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "source-research": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "google-app-operation": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "context-repair": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "multimodal-input": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        }
+      },
+      "required": []
+    },
+    "controlOrder": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "host": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "role": {
+            "enum": [
+              "discovery",
+              "general-implementation",
+              "complex-reasoning",
+              "independent-audit"
+            ]
+          },
+          "profile": {
+            "enum": [
+              "economy",
+              "balanced",
+              "quality"
+            ]
+          },
+          "controls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/reasoning"
+            },
+            "maxItems": 32,
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "host",
+          "role",
+          "profile",
+          "controls"
+        ]
+      },
+      "maxItems": 256,
+      "uniqueItems": true
+    },
+    "modelMinimums": {
+      "description": "Per-model native reasoning minimums. A binding for a listed model must use one of the enum values.",
+      "type": "array",
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "model",
+          "enumValues"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$"
+          },
+          "enumValues": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$"
+            },
+            "minItems": 1,
+            "maxItems": 32,
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "highRiskNativeFloor": {
+      "description": "Hosts whose native enum reasoning, observed for model, reasoning and runtime mode, can show the existing high-risk floor. Hosts without an entry never satisfy it.",
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "host",
+          "modelOrigins",
+          "minimumModelClass",
+          "enumValues"
+        ],
+        "properties": {
+          "host": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$"
+          },
+          "modelOrigins": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$"
+            },
+            "minItems": 1,
+            "maxItems": 32,
+            "uniqueItems": true
+          },
+          "minimumModelClass": {
+            "enum": [
+              "lightweight",
+              "general",
+              "deep",
+              "frontier"
+            ]
+          },
+          "enumValues": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$"
+            },
+            "minItems": 1,
+            "maxItems": 32,
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "fullHistoryInheritanceHosts": {
+      "description": "Hosts whose full-history context requires legacy inheritance instead of explicit v2 overrides.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$"
+      },
+      "maxItems": 64,
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "allowedOrigins",
+    "enabledHosts",
+    "allowedAccessPaths",
+    "allowPreview",
+    "allowSeedModels",
+    "maxCatalogAgeDays",
+    "profileOrder",
+    "traitOrder",
+    "controlOrder",
+    "modelMinimums",
+    "highRiskNativeFloor",
+    "fullHistoryInheritanceHosts"
+  ],
+  "$defs": {
+    "reasoning": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "enum"
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$",
+              "not": {
+                "enum": [
+                  "ultra",
+                  "ultracode"
+                ]
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "token-budget"
+            },
+            "budgetTokens": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000000
+            }
+          },
+          "required": [
+            "kind",
+            "budgetTokens"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "toggle"
+            },
+            "enabled": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "enabled"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "not-exposed"
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        }
+      ]
+    }
+  }
+}

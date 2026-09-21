@@ -1,0 +1,220 @@
+{
+  "schemaVersion": "1.0.0",
+  "provider": "anthropic",
+  "models": [
+    {
+      "id": "claude-fable-5",
+      "modelOrigin": "anthropic",
+      "aliases": [
+        "fable"
+      ],
+      "modelClass": "frontier",
+      "status": "stable",
+      "verification": [
+        "documented"
+      ],
+      "roles": [
+        "discovery",
+        "general-implementation",
+        "complex-reasoning",
+        "independent-audit"
+      ],
+      "taskTraits": [
+        "architecture-decision",
+        "code-change",
+        "diagnosis",
+        "source-research",
+        "context-repair",
+        "multimodal-input"
+      ],
+      "nativeKinds": [
+        "enum",
+        "not-exposed"
+      ],
+      "inputModalities": [
+        "text",
+        "image"
+      ],
+      "contextTokens": 1000000,
+      "abilityScore": null,
+      "officialPositioning": null,
+      "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+      "sourceIds": [
+        "CLAUDE",
+        "CLAUDE-CODE",
+        "PLAN"
+      ],
+      "checkedAt": "2026-09-21T00:00:00.000Z"
+    },
+    {
+      "id": "claude-fable-5-1",
+      "modelOrigin": "anthropic",
+      "aliases": [],
+      "modelClass": "frontier",
+      "status": "seed",
+      "verification": [
+        "baseline-seed"
+      ],
+      "roles": [
+        "discovery",
+        "general-implementation",
+        "complex-reasoning",
+        "independent-audit"
+      ],
+      "taskTraits": [
+        "architecture-decision",
+        "code-change",
+        "diagnosis",
+        "source-research",
+        "context-repair",
+        "multimodal-input"
+      ],
+      "nativeKinds": [
+        "enum",
+        "not-exposed"
+      ],
+      "inputModalities": [
+        "text",
+        "image"
+      ],
+      "contextTokens": null,
+      "abilityScore": null,
+      "officialPositioning": null,
+      "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+      "sourceIds": [
+        "PLAN"
+      ],
+      "checkedAt": "2026-09-21T00:00:00.000Z"
+    },
+    {
+      "id": "claude-opus-5",
+      "modelOrigin": "anthropic",
+      "aliases": [
+        "opus"
+      ],
+      "modelClass": "deep",
+      "status": "stable",
+      "verification": [
+        "documented"
+      ],
+      "roles": [
+        "discovery",
+        "general-implementation",
+        "complex-reasoning",
+        "independent-audit"
+      ],
+      "taskTraits": [
+        "architecture-decision",
+        "code-change",
+        "diagnosis",
+        "source-research",
+        "context-repair",
+        "multimodal-input"
+      ],
+      "nativeKinds": [
+        "enum",
+        "not-exposed"
+      ],
+      "inputModalities": [
+        "text",
+        "image"
+      ],
+      "contextTokens": 1000000,
+      "abilityScore": null,
+      "officialPositioning": null,
+      "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+      "sourceIds": [
+        "CLAUDE",
+        "CLAUDE-CODE",
+        "PLAN"
+      ],
+      "checkedAt": "2026-09-21T00:00:00.000Z"
+    },
+    {
+      "id": "claude-sonnet-5",
+      "modelOrigin": "anthropic",
+      "aliases": [
+        "sonnet"
+      ],
+      "modelClass": "general",
+      "status": "stable",
+      "verification": [
+        "documented"
+      ],
+      "roles": [
+        "discovery",
+        "general-implementation",
+        "complex-reasoning",
+        "independent-audit"
+      ],
+      "taskTraits": [
+        "architecture-decision",
+        "code-change",
+        "diagnosis",
+        "source-research",
+        "context-repair",
+        "multimodal-input"
+      ],
+      "nativeKinds": [
+        "enum",
+        "not-exposed"
+      ],
+      "inputModalities": [
+        "text",
+        "image"
+      ],
+      "contextTokens": 1000000,
+      "abilityScore": null,
+      "officialPositioning": null,
+      "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+      "sourceIds": [
+        "CLAUDE",
+        "CLAUDE-CODE",
+        "PLAN"
+      ],
+      "checkedAt": "2026-09-21T00:00:00.000Z"
+    },
+    {
+      "id": "claude-haiku-4-5-20251001",
+      "modelOrigin": "anthropic",
+      "aliases": [
+        "haiku",
+        "claude-haiku-4-5"
+      ],
+      "modelClass": "lightweight",
+      "status": "stable",
+      "verification": [
+        "documented"
+      ],
+      "roles": [
+        "discovery"
+      ],
+      "taskTraits": [
+        "architecture-decision",
+        "code-change",
+        "diagnosis",
+        "source-research",
+        "context-repair",
+        "multimodal-input"
+      ],
+      "nativeKinds": [
+        "token-budget",
+        "toggle",
+        "not-exposed"
+      ],
+      "inputModalities": [
+        "text",
+        "image"
+      ],
+      "contextTokens": 200000,
+      "abilityScore": null,
+      "officialPositioning": null,
+      "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+      "sourceIds": [
+        "CLAUDE",
+        "CLAUDE-CODE"
+      ],
+      "checkedAt": "2026-09-21T00:00:00.000Z"
+    }
+  ]
+}

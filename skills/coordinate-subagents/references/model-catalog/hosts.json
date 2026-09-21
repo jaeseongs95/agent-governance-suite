@@ -1,0 +1,107 @@
+[
+  {
+    "id": "openai-codex",
+    "defaultEnabled": true,
+    "autoDispatch": true,
+    "status": "baseline",
+    "sourceIds": [
+      "CODEX"
+    ],
+    "requiredCapabilities": [
+      "dispatch",
+      "approvals",
+      "terminalOutcome",
+      "sessionIdentity"
+    ],
+    "unknownCapabilities": []
+  },
+  {
+    "id": "anthropic-claude-code",
+    "defaultEnabled": true,
+    "autoDispatch": true,
+    "status": "baseline",
+    "sourceIds": [
+      "CLAUDE-CODE"
+    ],
+    "requiredCapabilities": [
+      "dispatch",
+      "approvals",
+      "terminalOutcome",
+      "sessionIdentity"
+    ],
+    "unknownCapabilities": []
+  },
+  {
+    "id": "gemini-cli",
+    "defaultEnabled": false,
+    "autoDispatch": true,
+    "status": "experimental",
+    "sourceIds": [
+      "GEMINI-CLI"
+    ],
+    "requiredCapabilities": [
+      "dispatch",
+      "approvals",
+      "terminalOutcome",
+      "sessionIdentity"
+    ],
+    "unknownCapabilities": []
+  },
+  {
+    "id": "grok-build",
+    "defaultEnabled": false,
+    "autoDispatch": true,
+    "status": "experimental",
+    "sourceIds": [
+      "GROK-BUILD"
+    ],
+    "requiredCapabilities": [
+      "dispatch",
+      "approvals",
+      "terminalOutcome",
+      "sessionIdentity"
+    ],
+    "unknownCapabilities": []
+  },
+  {
+    "id": "gemini-api",
+    "defaultEnabled": false,
+    "autoDispatch": false,
+    "status": "descriptor-only",
+    "sourceIds": [
+      "GEMINI"
+    ],
+    "requiredCapabilities": [
+      "dispatch",
+      "approvals",
+      "terminalOutcome",
+      "sessionIdentity"
+    ],
+    "unknownCapabilities": []
+  },
+  {
+    "id": "gemini-spark",
+    "defaultEnabled": false,
+    "autoDispatch": false,
+    "status": "descriptor-only",
+    "sourceIds": [
+      "PLAN"
+    ],
+    "requiredCapabilities": [
+      "dispatch",
+      "approvals",
+      "terminalOutcome",
+      "sessionIdentity"
+    ],
+    "unknownCapabilities": [
+      "externalDispatch",
+      "sessionIdentity",
+      "modelSelection",
+      "effortSelection",
+      "approvalBoundary",
+      "cancel",
+      "terminalOutcome",
+      "evidenceReference"
+    ]
+  }
+]

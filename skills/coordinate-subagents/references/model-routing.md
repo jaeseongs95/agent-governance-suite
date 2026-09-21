@@ -87,6 +87,8 @@ The result distinguishes `applied`, `inherited`, and `unverified`. Passing both 
 
 For actual host verification, follow [the live dispatch check](live-dispatch-check.md). Deterministic routing tests do not prove host execution or concurrency.
 
+For an assignment with `schemaVersion: "2.0.0"`, read [versioned model assignment](model-routing-v2.md) instead of the input and record formats above; otherwise do not read it.
+
 ## Diagnose before retrying
 
 <!-- policy-contract: routing.no-mechanical-retry -->
