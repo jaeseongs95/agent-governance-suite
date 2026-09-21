@@ -29,7 +29,7 @@ At the first point in each task when delegation will occur, check whether the us
 
 Continue safe preparation while an answer is pending. If no answer is available before dispatch or the host cannot ask, use `balanced` and proceed. Never infer a subscription plan from model availability or usage observations; use plan details only when the user or host provides them. A preference may tune supported runtime model and effort settings, but it must not trigger delegation, increase agent count, change batching, expand authority, or waive required independent audits.
 
-Read [the provider-neutral model-routing presets and host adapters](references/model-routing.md) for the profile definitions.
+Read [the provider-neutral model-routing presets and host adapters](model-routing.md) for the profile definitions.
 
 ## Assign work
 
@@ -59,7 +59,7 @@ Use a limited-history or no-history fork by default. Supply the brief, source lo
 
 Give one writer ownership of each shared file or external state. Sequence work when ownership cannot be separated safely. A subagent owns investigation, implementation, deliverable preparation, and verification inside its assigned scope and must coordinate before changing another owner's area.
 
-Read [the delegation playbook](references/delegation-playbook.md) when preparing briefs, batching work, resolving ownership conflicts, handling failed dispatch, or running an audit.
+Read [the delegation playbook](delegation-playbook.md) when preparing briefs, batching work, resolving ownership conflicts, handling failed dispatch, or running an audit.
 
 ## Coordinate and integrate
 
@@ -90,4 +90,4 @@ Resolve each audit finding by fixing it, disproving it with evidence, or recordi
 
 ## Select models only when useful
 
-Read [the provider-neutral model-routing presets and host adapters](references/model-routing.md) before choosing an explicit model or reasoning override. Use its [packaged resolver](scripts/model-routing.mjs) before dispatch and its application record after dispatch; record requested settings, actual arguments, caller-visible observation, and fallback separately. First inspect the current host's supported combinations. User or host settings override the bundled profile; unsupported profile entries never block delegation when an inherited supported configuration can do the work.
+Read [the provider-neutral model-routing presets and host adapters](model-routing.md) before choosing an explicit model or reasoning override. Use its [packaged resolver](../scripts/model-routing.mjs) before dispatch and its application record after dispatch; record requested settings, actual arguments, caller-visible observation, and fallback separately. First inspect the current host's supported combinations. User or host settings override the bundled profile; unsupported profile entries never block delegation when an inherited supported configuration can do the work.

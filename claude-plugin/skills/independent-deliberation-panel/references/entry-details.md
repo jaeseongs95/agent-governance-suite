@@ -15,11 +15,11 @@
 
 ## 다른 스킬과의 경계
 
-이 패널은 설계·판단을 숙고하며 구현·배포의 final audit gate를 대신하지 않는다. v1.0은 standalone 스킬이고 plugin, orchestrator, audit-gate를 실행하지 않는다. 미래 오케스트레이터가 결과를 소비할 때는 `include_decision_record: true`로 호출하고 [integration contract](references/integration-contract.md)를 따른다.
+이 패널은 설계·판단을 숙고하며 구현·배포의 final audit gate를 대신하지 않는다. v1.0은 standalone 스킬이고 plugin, orchestrator, audit-gate를 실행하지 않는다. 미래 오케스트레이터가 결과를 소비할 때는 `include_decision_record: true`로 호출하고 [integration contract](integration-contract.md)를 따른다.
 
 ## v1.0 흐름
 
-정확히 다음 순서로 진행한다. 각 단계의 상세 실행·예산·fallback 규칙은 [references/orchestration-policy.md](references/orchestration-policy.md)를 해당 단계에서만 읽는다. 역할을 구성할 때만 [references/role-catalog.md](references/role-catalog.md)를, 구조화된 기록이나 최종 dossier를 만들 때만 [references/evidence-and-verdict-schema.md](references/evidence-and-verdict-schema.md)를 읽는다.
+정확히 다음 순서로 진행한다. 각 단계의 상세 실행·예산·fallback 규칙은 [references/orchestration-policy.md](orchestration-policy.md)를 해당 단계에서만 읽는다. 역할을 구성할 때만 [references/role-catalog.md](role-catalog.md)를, 구조화된 기록이나 최종 dossier를 만들 때만 [references/evidence-and-verdict-schema.md](evidence-and-verdict-schema.md)를 읽는다.
 
 0. **Capability preflight** — 현재 호스트가 노출한 도구와 상태에서 blind review, fresh Judge, 사용 가능한 모델·추론 수준, worker 슬롯, 원자료 접근과 증거 검증 수단을 확인한다. 숨은 시스템 프롬프트나 provider 내부 상태는 검사하지 않는다. 관찰할 수 없는 required capability는 충족으로 추정하지 않고 missing으로 기록한다. LOW의 기본 `degraded_ok` 경로에서 panel·Judge·specialist capability는 required가 아니다. `strict`에서 필수 capability가 없으면 약한 보증으로 조용히 대체하지 않는다.
 1. **Framing** — 결정 질문, 사실·가정·제약·미지수·성공 기준·실패 모드를 case brief로 고정하고 실행 모드와 보증 목표를 기록한다.

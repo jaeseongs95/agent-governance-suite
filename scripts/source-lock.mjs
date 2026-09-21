@@ -105,7 +105,7 @@ export async function verifySourceLockOffline() {
         if (error?.code !== "ENOENT") throw error;
       }
       const checksum = await computeDirectoryChecksum(path.join(ROOT, source.path));
-      if (checksum !== source.integratedChecksum) errors.push(`integrated checksum mismatch for ${label}`);
+      if (checksum !== source.integratedChecksum) errors.push(`integrated checksum mismatch for ${label}: expected ${source.integratedChecksum}, actual ${checksum}`);
     } catch (error) {
       errors.push(`cannot verify source ${label}: ${error instanceof Error ? error.message : String(error)}`);
     }

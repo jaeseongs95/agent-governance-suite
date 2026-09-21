@@ -31,6 +31,7 @@ EXPECTED_VERSION = locked_version(EXPECTED_NAME)
 
 REQUIRED_FILES = (
     "SKILL.md",
+    "references/entry-details.md",
     "agents/openai.yaml",
     "references/audit-protocol.md",
     "references/orchestrator-integration.md",
@@ -191,6 +192,8 @@ def main() -> int:
 
     skill_path = root / "SKILL.md"
     skill_text = read_utf8(skill_path, errors) if skill_path.is_file() else ""
+    detail_path = root / "references" / "entry-details.md"
+    instruction_text = skill_text + "\n" + (read_utf8(detail_path, errors) if detail_path.is_file() else "")
     frontmatter = parse_frontmatter(skill_text, errors) if skill_text else {}
 
     name = frontmatter.get("name", "")
@@ -208,7 +211,7 @@ def main() -> int:
     if version != EXPECTED_VERSION:
         errors.append(f"SKILL.md: metadata.version must be {EXPECTED_VERSION!r}, got {version!r}")
     validate_output_contract(skill_text, errors)
-    validate_orchestrator_handoff(root, skill_text, errors)
+    validate_orchestrator_handoff(root, instruction_text, errors)
 
     openai_path = root / "agents/openai.yaml"
     openai_text = read_utf8(openai_path, errors) if openai_path.is_file() else ""

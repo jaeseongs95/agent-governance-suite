@@ -5,7 +5,7 @@
 - `pre-execution`에서는 동결 시점, case inventory, 역할 독립성, 판정 방법, artifact digest와 provenance를 확인한다. 이 단계의 `PASS`는 결과 유효성을 인증하지 않는다.
 - `post-execution`에서는 같은 검사를 다시 수행하고 모든 run·case·criterion, 실패·timeout, 결과 레코드와 공개 집계를 재계산한다. 품질 또는 릴리스 근거로는 이 단계의 `PASS`만 사용한다.
 
-판정 전에 [감사 프로토콜](references/audit-protocol.md)을 읽는다. 결정적 검사는 CLI로 실행한다.
+판정 전에 [감사 프로토콜](audit-protocol.md)을 읽는다. 결정적 검사는 CLI로 실행한다.
 
 ```bash
 node scripts/cli.mjs --input request.json --artifact-root evidence

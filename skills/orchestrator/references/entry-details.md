@@ -1,6 +1,6 @@
 ## 실행 class와 단계 구성
 
-`orchestrated` workflow를 실제 실행하거나 실패 뒤 다시 실행할 때는 먼저 [수렴 가드 계약](references/convergence-guard.md)을 읽고 같은 `rootId`를 유지한다. 단순 조회나 전문 스킬 단독 호출에는 수렴 root를 만들지 않는다.
+`orchestrated` workflow를 실제 실행하거나 실패 뒤 다시 실행할 때는 먼저 [수렴 가드 계약](convergence-guard.md)을 읽고 같은 `rootId`를 유지한다. 단순 조회나 전문 스킬 단독 호출에는 수렴 root를 만들지 않는다.
 
 `executionClass`별로 흐름을 분리한다.
 
@@ -12,13 +12,13 @@
 
 여러 provider가 같은 스킬에 있어도 각 provider의 capability, phase, 입력·출력 artifact를 독립 단계로 취급한다. 스킬 디렉터리명이나 배열 위치로 순서를 추측하지 않는다.
 
-에이전트 간 이견이나 통합 대상 변경으로 기준선을 재배치할 때는 [협업 상세 계약](references/collaboration.md#전체-최적화와-기준선-재배치)을 먼저 읽는다.
+에이전트 간 이견이나 통합 대상 변경으로 기준선을 재배치할 때는 [협업 상세 계약](collaboration.md#전체-최적화와-기준선-재배치)을 먼저 읽는다.
 
 ## 초기 라우팅
 
-첫 라우팅에서 `CollaborationDecision.v1`을 `schemaVersion: "1.2.0"`으로 만든다. 기존 `1.0.0`과 `1.1.0` 기록은 당시 의미로 검증하며 새 결정은 현재 입력으로 만든다. 결정에는 출처 주장인 `sourceOriginKind`, 관측 가능한 경우의 `sourceReceiptId`, 항상 `none`인 `authorityEffect`, `userDirective`(`require | forbid | unspecified`), 다섯 위임 조건과 독립 감사 분리 필요 여부를 기록한다. 출처 판단과 검증에는 [입력 출처 규칙](references/input-origin.md)을 적용한다. 결정적 validator가 `direct | delegate | audit-only | needs-input`을 도출하되 결정 artifact와 TLS 메시지는 권한을 만들지 않는다.
+첫 라우팅에서 `CollaborationDecision.v1`을 `schemaVersion: "1.2.0"`으로 만든다. 기존 `1.0.0`과 `1.1.0` 기록은 당시 의미로 검증하며 새 결정은 현재 입력으로 만든다. 결정에는 출처 주장인 `sourceOriginKind`, 관측 가능한 경우의 `sourceReceiptId`, 항상 `none`인 `authorityEffect`, `userDirective`(`require | forbid | unspecified`), 다섯 위임 조건과 독립 감사 분리 필요 여부를 기록한다. 출처 판단과 검증에는 [입력 출처 규칙](input-origin.md)을 적용한다. 결정적 validator가 `direct | delegate | audit-only | needs-input`을 도출하되 결정 artifact와 TLS 메시지는 권한을 만들지 않는다.
 
-구조·라우팅만 검사할 때는 결정 JSON을 stdin으로 [검증 CLI](scripts/validate-collaboration-decision.mjs)에 전달한다. 영수증 관측까지 확인하려면 읽기 전용 `validate_collaboration_decision` 도구를 사용한다. CLI의 `structural-only` 결과를 영수증 검증이나 사용자 승인 증명으로 해석하지 않는다.
+구조·라우팅만 검사할 때는 결정 JSON을 stdin으로 [검증 CLI](../scripts/validate-collaboration-decision.mjs)에 전달한다. 영수증 관측까지 확인하려면 읽기 전용 `validate_collaboration_decision` 도구를 사용한다. CLI의 `structural-only` 결과를 영수증 검증이나 사용자 승인 증명으로 해석하지 않는다.
 
 다음 순서로 분류한다.
 
@@ -34,7 +34,7 @@
 
 통합 워크플로에서는 bootstrap을 마친 뒤 작업 단위 조정, 독립 숙고, 변경 전 기준선, 최소 구현, 위험한 상태 변경 직전의 사전 점검, 요청된 전문 작업, 범위·수용 근거 확인, 최종 고위험 감사 순으로 연결한다. 구체적인 순서는 provider의 `phaseOrder`와 artifact 의존성으로 정하며 MCP stage 순서와 같아야 한다. 각 전문 스킬이 이미 내부적으로 worker를 조정하는 경우에는 같은 단위를 다시 배정하지 않는다.
 
-위임 여부를 결정하기 전에 [협업 상세 계약의 위임 판단](references/collaboration.md#위임-판단)을 읽고 자동·명시적 위임의 조건과 예외를 적용한다.
+위임 여부를 결정하기 전에 [협업 상세 계약의 위임 판단](collaboration.md#위임-판단)을 읽고 자동·명시적 위임의 조건과 예외를 적용한다.
 
 ## 실행 순서와 입출력 연결
 
@@ -49,10 +49,10 @@
 - 독립 감사가 필요한 흐름에서는 구현자와 감사자를 분리하고, 감사 후 의미 있는 변경이 생기면 감사 대상과 판정을 다시 연결한다.
 - 같은 명령, 입력·candidate digest, 실패 원인과 판별 가설이 모두 그대로라면 다시 실행하지 않는다. 다른 원인 가설을 가르는 검사가 없으면 해당 단계만 중단하고 실패 근거와 필요한 새 입력을 보고한다.
 
-`independent-deliberation` 또는 `independent-audit` provider를 호출하기 전에 [전문 단계 handoff 계약](references/specialist-handoffs.md)에서 해당 절을 읽고 입력, 결과 투영과 진행 조건을 적용한다.
+`independent-deliberation` 또는 `independent-audit` provider를 호출하기 전에 [전문 단계 handoff 계약](specialist-handoffs.md)에서 해당 절을 읽고 입력, 결과 투영과 진행 조건을 적용한다.
 
 ## MCP 도구 사용 계약
 
-MCP로 계획·실행·결과 기록을 하기 전에 [MCP 실행 계약](references/mcp-execution.md)을 읽는다. 연결과 도구 스키마를 확인한 뒤 계약의 호출 순서, revision, compact 응답과 실패 처리를 따른다.
+MCP로 계획·실행·결과 기록을 하기 전에 [MCP 실행 계약](mcp-execution.md)을 읽는다. 연결과 도구 스키마를 확인한 뒤 계약의 호출 순서, revision, compact 응답과 실패 처리를 따른다.
 
 MCP를 사용할 수 없어도 설치된 전문 스킬로 독립 처리 가능한 부분은 진행한다. 필요한 통합 실행 자체가 불가능할 때만 통합 결과를 `BLOCKED`로 보고하며, 직접 실행 결과를 guarded 완료 근거로 표현하지 않는다.

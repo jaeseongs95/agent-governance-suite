@@ -2,7 +2,7 @@
 
 `FailureEpisodeSet.v1`을 받는다. 각 episode에는 작업, caller가 선별한 안정적인 failure tuple, 환경 digest와 evidence locator를 둔다. `evidenceBindings`에는 evidence artifact digest, 결속된 가설 ID와 `supports | refutes` 관계를 기록한다. 후보 가설과 후보 검사의 의미는 에이전트가 증거를 읽고 작성하며, 스크립트는 fingerprint, 중복 검사, 권한과 결과 분기만 결정적으로 검증한다.
 
-진단 전에 [references/diagnosis-protocol.md](references/diagnosis-protocol.md)를 읽는다.
+진단 전에 [references/diagnosis-protocol.md](diagnosis-protocol.md)를 읽는다.
 
 ```bash
 node scripts/cluster-failures.mjs --input failures.json

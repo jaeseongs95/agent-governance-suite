@@ -6,4 +6,4 @@
 4. `excluded`, `unplanned`, `preexisting-overlap`, `ownership-unknown`을 근거 경로와 함께 보고한다.
 5. `PASS`, `NEEDS_APPROVAL`, `BLOCKED`, `INCONCLUSIVE` 중 하나만 반환한다.
 
-경로 판정 규칙은 [references/path-policy.md](references/path-policy.md), verdict 조건은 [references/verdict-rules.md](references/verdict-rules.md)를 읽는다.
+경로 판정 규칙은 [references/path-policy.md](path-policy.md), verdict 조건은 [references/verdict-rules.md](verdict-rules.md)를 읽는다.

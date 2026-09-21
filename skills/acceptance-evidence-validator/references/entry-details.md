@@ -2,7 +2,7 @@
 
 `AcceptanceEvidenceInput.v1`을 받는다. 최소 입력은 `TaskEnvelope.v1`, 고정 대상 식별자와 digest, 기준에 연결된 evidence다. evidence에는 locator, 검증 여부, 대상 digest, `supports | refutes` 방향이 있어야 한다.
 
-판정 전에 [references/evidence-protocol.md](references/evidence-protocol.md)를 읽는다. 기계적인 일대일 대응과 stale 검사는 다음 명령으로 재현할 수 있다.
+판정 전에 [references/evidence-protocol.md](evidence-protocol.md)를 읽는다. 기계적인 일대일 대응과 stale 검사는 다음 명령으로 재현할 수 있다.
 
 ```bash
 node scripts/cli.mjs --input request.json

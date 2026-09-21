@@ -2,7 +2,7 @@
 
 `RecoveryStrategySelectionRequest.v1`을 받는다. 입력에는 `CAUSE_CONFIRMED`인 `DiagnosisReport.v1`과 그 원본 diagnosis request·외부 동결 digest, 원본 `TaskEnvelope.v1`, 실패한 `WorkflowReceipt.v1` payload·locator·digest, 기존 시도 fingerprint, 현재 제약과 권한 근거를 포함한다.
 
-전략을 만들기 전에 [선택 프로토콜](references/selection-protocol.md)을 읽는다. 요청을 작성한 뒤 `digest-request.mjs`의 digest를 외부 상태에 동결하고, handoff는 `validate-handoff.mjs`로 검증한다.
+전략을 만들기 전에 [선택 프로토콜](selection-protocol.md)을 읽는다. 요청을 작성한 뒤 `digest-request.mjs`의 digest를 외부 상태에 동결하고, handoff는 `validate-handoff.mjs`로 검증한다.
 
 ```bash
 node scripts/digest-request.mjs --input selection-request.json

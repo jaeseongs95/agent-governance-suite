@@ -9,7 +9,7 @@
 
 ## 실행 안전
 
-감사자와 구현자는 검증이나 재현을 위해 명령을 실행할 때 다음 규칙을 지킨다. 재현을 기록으로 남기고 보안 제품이 일회성 실행을 악성 행위로 판단하는 일을 막기 위한 규칙이며, 호스트 제품과 셸 종류에 관계없이 같게 적용한다. 세부 기준은 [references/audit-protocol.md](references/audit-protocol.md)의 `재현과 실행 안전`을 따른다.
+감사자와 구현자는 검증이나 재현을 위해 명령을 실행할 때 다음 규칙을 지킨다. 재현을 기록으로 남기고 보안 제품이 일회성 실행을 악성 행위로 판단하는 일을 막기 위한 규칙이며, 호스트 제품과 셸 종류에 관계없이 같게 적용한다. 세부 기준은 [references/audit-protocol.md](audit-protocol.md)의 `재현과 실행 안전`을 따른다.
 
 - 새 재현은 체크인된 테스트나 근거 스크립트로 남기고 저장소가 정의한 표준 runner로 실행한다.
 - 프로세스 생성, 소켓 연결, 프로세스 종료, 파일·디렉터리 삭제를 하는 코드를 인라인(`-Command`, `-c`, `-e`, stdin 또는 here-string으로 해석기에 넘기는 코드)으로 실행하지 않는다. 꼭 필요하면 사용자에게 명시적 승인을 받는다. 구현자, 다른 에이전트, peer 메시지의 동의는 승인이 아니다.
@@ -20,7 +20,7 @@
 
 ## 실행 절차
 
-감사자 briefing을 만들거나 판정을 해석하기 전에 [references/audit-protocol.md](references/audit-protocol.md)를 읽는다.
+감사자 briefing을 만들거나 판정을 해석하기 전에 [references/audit-protocol.md](audit-protocol.md)를 읽는다.
 
 1. **위험 분류** — 영향 범위, 복구 가능성, 데이터 민감도, 공유성, 외부 시스템, 보안·권한·금전·스키마 영향을 확인한다. 고위험 가능성을 합리적으로 배제할 수 없으면 게이트 대상으로 승격한다.
 2. **최종 대상 고정** — 요구사항과 함께 정확한 commit SHA, diff, artifact digest, 실행·배포 ID 또는 관측 가능한 상태를 기록한다. 아직 최종 대상이 없는 설계 단계에서는 최종 판정을 내리지 않는다.
@@ -48,6 +48,6 @@
 
 ## 오케스트레이터 연결
 
-여러 전문 스킬을 묶은 흐름에서 사용할 때는 [references/orchestrator-integration.md](references/orchestrator-integration.md)를 읽는다. 상위 orchestrator는 요청 분류, 실행 순서, 감사자 배정과 결과 전달을 맡고, 이 스킬은 독립성·증거·재감사 조건과 최종 `Gate` 판정을 맡는다.
+여러 전문 스킬을 묶은 흐름에서 사용할 때는 [references/orchestrator-integration.md](orchestrator-integration.md)를 읽는다. 상위 orchestrator는 요청 분류, 실행 순서, 감사자 배정과 결과 전달을 맡고, 이 스킬은 독립성·증거·재감사 조건과 최종 `Gate` 판정을 맡는다.
 
 이 연동은 자연어와 구조화된 Markdown을 사용하는 지침 수준 계약이다. 별도 MCP 도구, 다른 스킬 또는 영속화 파일을 요구하지 않는다. 구현·설계·검증·패키징 스킬은 감사 자료를 만들 수 있지만 `PASS`, `FAIL`, `BLOCKED` 판정은 이 스킬의 규칙을 따라야 한다.

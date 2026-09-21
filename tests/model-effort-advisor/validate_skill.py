@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SKILL = ROOT / "skills" / "model-effort-advisor" / "SKILL.md"
+DETAIL = ROOT / "skills" / "model-effort-advisor" / "references" / "entry-details.md"
 CASES = Path(__file__).with_name("behavior-cases.json")
 
 
@@ -12,7 +13,7 @@ def require(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-text = SKILL.read_text(encoding="utf-8")
+text = SKILL.read_text(encoding="utf-8") + "\n" + DETAIL.read_text(encoding="utf-8")
 for required in [
     "현재 선택을 관측할 수 없는 일반 작업에서는",
     "runtime",

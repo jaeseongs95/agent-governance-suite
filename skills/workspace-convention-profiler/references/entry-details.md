@@ -9,8 +9,8 @@
 ## 절차
 
 1. workspace root, 작업 목적, 대상 경로와 이미 해석된 지침 참조를 확인한다.
-2. [발견 규칙](references/discovery-rules.md)에 따라 허용된 선언 파일과 디렉터리 구조를 읽는다.
-3. 각 관례에 [근거 신뢰도](references/evidence-confidence.md)를 붙인다.
+2. [발견 규칙](discovery-rules.md)에 따라 허용된 선언 파일과 디렉터리 구조를 읽는다.
+3. 각 관례에 [근거 신뢰도](evidence-confidence.md)를 붙인다.
 4. `scripts/profile-workspace.mjs`에 `WorkspaceProfileRequest.v1` JSON을 전달해 결정적 profile과 fingerprint를 만든다.
 5. confirmed 항목의 근거, 충돌한 명령, 열린 질문과 제한사항을 직접 대조한다.
 6. 구조화된 `WorkspaceConventionProfile.v1`과 짧은 사용자용 요약을 반환한다.

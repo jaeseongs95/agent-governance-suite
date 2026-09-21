@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -51,10 +51,11 @@ function sameSet(left, right) {
 export function reconstructOptimizedSkill(skillId, root = ROOT) {
   const candidate = readFileSync(join(root, "skills", skillId, "SKILL.md"));
   const detail = readFileSync(join(root, "skills", skillId, "references", "entry-details.md"));
+  const baselineRelativeDetail = Buffer.from(detail.toString("utf8").replace(/\]\((?![A-Za-z][A-Za-z0-9+.-]*:|#|\/)([^)\s]+)\)/gu, (_match, target) => `](${posix.normalize(posix.join("references", target))})`));
   const markerIndex = candidate.indexOf(NAVIGATION);
   if (markerIndex < 0) throw new Error(`${skillId}: navigation marker is missing`);
   const suffix = NO_SEPARATOR_SUFFIX.has(skillId) ? Buffer.alloc(0) : Buffer.from("\n");
-  return Buffer.concat([candidate.subarray(0, markerIndex), detail, suffix, candidate.subarray(markerIndex + NAVIGATION.length)]);
+  return Buffer.concat([candidate.subarray(0, markerIndex), baselineRelativeDetail, suffix, candidate.subarray(markerIndex + NAVIGATION.length)]);
 }
 
 export function checkSkillContextOptimization() {

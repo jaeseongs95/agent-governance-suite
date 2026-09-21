@@ -8,7 +8,7 @@
 - fresh-context reviewer ID와 모든 implementation actor ID
 - contract/control/target 비교와 attempt 결과를 직접 확인할 evidence inventory
 
-검토 전에 [references/review-protocol.md](references/review-protocol.md)를 읽는다. 원 request를 받은 뒤 먼저 digest를 외부 workflow 상태에 동결한다.
+검토 전에 [references/review-protocol.md](review-protocol.md)를 읽는다. 원 request를 받은 뒤 먼저 digest를 외부 workflow 상태에 동결한다.
 
 ```bash
 node scripts/digest-request.mjs --input audit-request.json
