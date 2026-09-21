@@ -1,23 +1,28 @@
-import { assert, keys, digest, canonical, instant, verifySeal, recordV2, resolveV2, validateRequest, RoutingError } from './model-routing-core.mjs';
+import { assert, keys, digest, canonical, instant, verifySeal, recordV2, resolveV2, validateRequest, validateCapabilities, RoutingError } from './model-routing-core.mjs';
 import { defaultCatalogDirectory, loadCatalog, loadPolicy, queryCatalog } from './model-catalog.mjs';
 
 /** Tool calls over the skill-owned engine. The MCP server passes an explicit catalog directory. */
 export class ModelRoutingServiceCore {
   constructor({store=null,catalogDirectory=defaultCatalogDirectory,clock=()=>new Date().toISOString(),historyProvider=null}={}){this.store=store;this.catalogDirectory=catalogDirectory;this.clock=clock;this.historyProvider=historyProvider;}
   query(input){return queryCatalog(input,this.catalogDirectory);}
-  resolve(input){
+  resolve(input, suppliedCapabilities){
     validateRequest(input);
     // Independent role history is read from the caller's existing governance service,
     // not invented from the model family. No history provider => auditor proposal blocked.
     let request=structuredClone(input);
+    const now=this.clock(),capabilities=suppliedCapabilities??this.store?.capabilities()??[];
     if(request.role==='independent-audit'){
       assert(this.historyProvider,'AUDIT_HISTORY_PROVIDER_REQUIRED');
       const history=this.historyProvider(request.binding);
       assert(history&&Array.isArray(history.actors)&&Array.isArray(history.sessions),'AUDIT_HISTORY_UNAVAILABLE');
       request.requirements.excludedActors=[...new Set([...request.requirements.excludedActors,...history.actors])].sort();
-      request.requirements.excludedSessions=[...new Set([...request.requirements.excludedSessions,...history.sessions])].sort();
+      const actorSessions=[];
+      for(const snapshot of capabilities){
+        try{validateCapabilities(snapshot);}catch{continue;}
+        if(request.requirements.excludedActors.includes(snapshot.actorId))actorSessions.push(`${snapshot.host}/${snapshot.sessionId}`);
+      }
+      request.requirements.excludedSessions=[...new Set([...request.requirements.excludedSessions,...history.sessions,...actorSessions])].sort();
     }
-    const now=this.clock(),capabilities=this.store?.capabilities()??[];
     const environment={catalog:loadCatalog({directory:this.catalogDirectory}),policy:loadPolicy(this.catalogDirectory),capabilities,now};
     const decision=resolveV2(request,environment);
     if(this.store)this.store.saveDecision(request,environment,decision,now);
@@ -36,10 +41,10 @@ export class ModelRoutingServiceCore {
     }
     return this.store.recordApplication(input.application,token,admittedObservation=>recordV2(input.application,{...entry.environment,now:input.application.dispatchedAt,request:entry.request,decision:entry.decision,admittedObservation}),now);
   }
-  call(name,input){
+  call(name,input,suppliedCapabilities){
     try{
       assert(Buffer.byteLength(canonical(input),'utf8')<=1024*1024,'REQUEST_TOO_LARGE');
-      const data=name==='query_model_catalog'?this.query(input):name==='resolve_model_assignment'?this.resolve(input):name==='record_model_application'?this.record(input):(()=>{throw new RoutingError('UNKNOWN_TOOL','Unknown model routing tool');})();
+      const data=name==='query_model_catalog'?this.query(input):name==='resolve_model_assignment'?this.resolve(input,suppliedCapabilities):name==='record_model_application'?this.record(input):(()=>{throw new RoutingError('UNKNOWN_TOOL','Unknown model routing tool');})();
       return {schemaVersion:'1.0.0',ok:true,data,error:null};
     }catch(error){
       // Routing rejections are input problems; anything else (for example a locked database) is an unavailable store.

@@ -556,7 +556,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     ]);
     await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
       protocolVersion: SESSION_MESSAGE_PROTOCOL,
-      capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities"],
+      capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "model-capabilities.v1"],
     });
   });
 

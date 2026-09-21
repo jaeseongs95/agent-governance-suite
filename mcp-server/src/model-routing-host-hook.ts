@@ -12,6 +12,7 @@ import { claudeCodeActorId, findToolUseObservation, transcriptCandidates } from 
 import { isReasoningEffort, lowerReasoningEffort } from "./host-attestation.js";
 import { resolveSessionMessageStateDirectory, resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { requestSessionMessageOnce } from "./session-message-client.js";
+import { publishSharedModelCapability } from "./model-capability-client.js";
 import type { SessionPresence } from "./session-message-store.js";
 import { ContractValidator } from "./schema-validator.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
@@ -230,6 +231,16 @@ async function main(): Promise<void> {
     const output = handleNativeRoutingHook(input, host, { store, signer: new RoutingObservationSigner(Buffer.from(key, "base64url")),
       presence: observed.presence, now: new Date().toISOString(), models: query.models as ModelCatalogV1["models"],
       ...(contract === undefined ? {} : { hostContract: contract }) });
+    if (input.hook_event_name === "PreToolUse" && ROOT_TOOLS.exec(String(input.tool_name))?.[1] === "resolve_model_assignment" && !text(input.agent_id)) {
+      const validator = new ContractValidator();
+      const snapshot = store.capabilities().map(value => validator.hostModelCapabilitiesV1(value))
+        .find(value => value.host === HOST_IDS[host] && value.sessionId === input.session_id && value.instanceId === observed.presence.instanceId);
+      if (snapshot) {
+        // Publishing shared metadata is independent of local observation and never dispatches a worker.
+        const shared = await publishSharedModelCapability(snapshot, { host, sessionId: snapshot.sessionId, instanceId: snapshot.instanceId }, stateDirectory, { timeoutMs: 1000 });
+        if (shared === "unavailable") process.stderr.write("AGS shared model capability unavailable; local observation preserved.\n");
+      }
+    }
     if (Object.keys(output).length) process.stdout.write(JSON.stringify(output));
   } catch {
     // Native hooks are optional observers, not approval gates. Never emit raw payloads, secrets or transcript text.

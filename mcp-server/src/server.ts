@@ -741,7 +741,8 @@ export function createMcpServer(
         case "resolve_model_assignment":
           try {
             validator.modelSelectionRequestV2(args);
-            result = modelRouting.call(request.params.name, args) as ApiResultV1<unknown>;
+            result = (modelRouting.resolveFromBroker ? await modelRouting.resolveFromBroker(args)
+              : modelRouting.call(request.params.name, args)) as ApiResultV1<unknown>;
           } catch (error) {
             result = invalidInput(error instanceof Error ? error.message : "Model selection request is invalid.");
           }

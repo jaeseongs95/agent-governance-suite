@@ -3,8 +3,8 @@ export interface RoutingServiceOptions {store?:unknown;catalogDirectory?:string;
 export declare class ModelRoutingServiceCore {
   constructor(options?:RoutingServiceOptions);
   query(input:unknown):unknown;
-  resolve(input:unknown):unknown;
+  resolve(input:unknown,suppliedCapabilities?:unknown[]):unknown;
   record(input:unknown):unknown;
-  call(name:string,input:unknown):RoutingApiResult;
+  call(name:string,input:unknown,suppliedCapabilities?:unknown[]):RoutingApiResult;
 }
 export declare function checkApplicationArtifactBinding(record:unknown,context:{binding:unknown;target:unknown;requiredFields?:string[];store?:unknown}):unknown;

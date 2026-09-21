@@ -8161,9 +8161,9 @@ function floatSafeRemainder(val, step) {
   return ratio - roundedRatio;
 }
 var EVALUATING = /* @__PURE__ */ Symbol("evaluating");
-function defineLazy(object5, key, getter) {
+function defineLazy(object6, key, getter) {
   let value = void 0;
-  Object.defineProperty(object5, key, {
+  Object.defineProperty(object6, key, {
     get() {
       if (value === EVALUATING) {
         return void 0;
@@ -8175,7 +8175,7 @@ function defineLazy(object5, key, getter) {
       return value;
     },
     set(v) {
-      Object.defineProperty(object5, key, {
+      Object.defineProperty(object6, key, {
         value: v
         // configurable: true,
       });
@@ -11309,7 +11309,7 @@ function isRecursive(inst, stack) {
     return true;
   stack.add(inst);
   let result = false;
-  const check = (child) => {
+  const check3 = (child) => {
     if (!result && child?._zod && isRecursive(child, stack))
       result = true;
   };
@@ -11318,33 +11318,33 @@ function isRecursive(inst, stack) {
   switch (kind) {
     case "object": {
       for (const key of Reflect.ownKeys(def.shape))
-        check(def.shape[key]);
-      check(def.catchall);
+        check3(def.shape[key]);
+      check3(def.catchall);
       break;
     }
     case "array":
-      check(def.element);
+      check3(def.element);
       break;
     case "tuple":
       for (const el of def.items)
-        check(el);
-      check(def.rest);
+        check3(el);
+      check3(def.rest);
       break;
     case "record":
     case "map":
-      check(def.keyType);
-      check(def.valueType);
+      check3(def.keyType);
+      check3(def.valueType);
       break;
     case "set":
-      check(def.valueType);
+      check3(def.valueType);
       break;
     case "union":
       for (const el of def.options)
-        check(el);
+        check3(el);
       break;
     case "intersection":
-      check(def.left);
-      check(def.right);
+      check3(def.left);
+      check3(def.right);
       break;
     case "optional":
     case "nullable":
@@ -11355,19 +11355,19 @@ function isRecursive(inst, stack) {
     case "nonoptional":
     case "promise":
     case "success":
-      check(def.innerType);
+      check3(def.innerType);
       break;
     case "pipe":
-      check(def.in);
-      check(def.out);
+      check3(def.in);
+      check3(def.out);
       break;
     case "function":
-      check(def.input);
-      check(def.output);
+      check3(def.input);
+      check3(def.output);
       break;
     // reading `_zod.innerType` resolves the getter once and caches it
     case "lazy":
-      check(inst._zod.innerType);
+      check3(inst._zod.innerType);
       break;
     // a leaf by choice: `parts` are regex fragments, not data positions
     case "template_literal":
@@ -11402,10 +11402,10 @@ function isRecursive(inst, stack) {
         if (!value || typeof value !== "object")
           continue;
         if (value._zod)
-          check(value);
+          check3(value);
         else if (Array.isArray(value))
           for (const el of value)
-            check(el);
+            check3(el);
       }
     }
   }
@@ -12468,8 +12468,8 @@ function foldObjects(members2) {
   }
   const properties = {};
   const required2 = /* @__PURE__ */ new Set();
-  for (const object5 of objects) {
-    for (const key in object5.properties) {
+  for (const object6 of objects) {
+    for (const key in object6.properties) {
       if (Object.prototype.hasOwnProperty.call(properties, key))
         continue;
       const parts = [];
@@ -12483,18 +12483,18 @@ function foldObjects(members2) {
       const merged = parts.length === 1 ? parts[0] : foldObjects(parts) ?? { allOf: parts };
       assignProp(properties, key, merged);
     }
-    for (const key of object5.required ?? [])
+    for (const key of object6.required ?? [])
       required2.add(key);
   }
   const folded = { type: "object", properties };
   if (required2.size)
     folded.required = [...required2];
-  if (objects.every((object5) => object5.additionalProperties === false)) {
+  if (objects.every((object6) => object6.additionalProperties === false)) {
     folded.additionalProperties = false;
   } else {
     const constraints = [];
-    for (const object5 of objects) {
-      const constraint = undeclaredConstraint(object5);
+    for (const object6 of objects) {
+      const constraint = undeclaredConstraint(object6);
       if (constraint && !constraints.some((seen) => JSON.stringify(seen) === JSON.stringify(constraint)))
         constraints.push(constraint);
     }
@@ -13297,8 +13297,8 @@ var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
     reg.add(this, meta2);
     return this;
   },
-  refine(check, params) {
-    return this.check(refine(check, params));
+  refine(check3, params) {
+    return this.check(refine(check3, params));
   },
   superRefine(refinement, params) {
     return this.check(superRefine(refinement, params));
@@ -20876,17 +20876,26 @@ var ModelRoutingServiceCore = class {
   query(input) {
     return queryCatalog(input, this.catalogDirectory);
   }
-  resolve(input) {
+  resolve(input, suppliedCapabilities) {
     validateRequest(input);
     let request = structuredClone(input);
+    const now = this.clock(), capabilities = suppliedCapabilities ?? this.store?.capabilities() ?? [];
     if (request.role === "independent-audit") {
       assert2(this.historyProvider, "AUDIT_HISTORY_PROVIDER_REQUIRED");
       const history = this.historyProvider(request.binding);
       assert2(history && Array.isArray(history.actors) && Array.isArray(history.sessions), "AUDIT_HISTORY_UNAVAILABLE");
       request.requirements.excludedActors = [.../* @__PURE__ */ new Set([...request.requirements.excludedActors, ...history.actors])].sort();
-      request.requirements.excludedSessions = [.../* @__PURE__ */ new Set([...request.requirements.excludedSessions, ...history.sessions])].sort();
+      const actorSessions = [];
+      for (const snapshot of capabilities) {
+        try {
+          validateCapabilities(snapshot);
+        } catch {
+          continue;
+        }
+        if (request.requirements.excludedActors.includes(snapshot.actorId)) actorSessions.push(`${snapshot.host}/${snapshot.sessionId}`);
+      }
+      request.requirements.excludedSessions = [.../* @__PURE__ */ new Set([...request.requirements.excludedSessions, ...history.sessions, ...actorSessions])].sort();
     }
-    const now = this.clock(), capabilities = this.store?.capabilities() ?? [];
     const environment = { catalog: loadCatalog({ directory: this.catalogDirectory }), policy: loadPolicy(this.catalogDirectory), capabilities, now };
     const decision = resolveV2(request, environment);
     if (this.store) this.store.saveDecision(request, environment, decision, now);
@@ -20908,10 +20917,10 @@ var ModelRoutingServiceCore = class {
     }
     return this.store.recordApplication(input.application, token, (admittedObservation) => recordV2(input.application, { ...entry.environment, now: input.application.dispatchedAt, request: entry.request, decision: entry.decision, admittedObservation }), now);
   }
-  call(name, input) {
+  call(name, input, suppliedCapabilities) {
     try {
       assert2(Buffer.byteLength(canonical(input), "utf8") <= 1024 * 1024, "REQUEST_TOO_LARGE");
-      const data = name === "query_model_catalog" ? this.query(input) : name === "resolve_model_assignment" ? this.resolve(input) : name === "record_model_application" ? this.record(input) : (() => {
+      const data = name === "query_model_catalog" ? this.query(input) : name === "resolve_model_assignment" ? this.resolve(input, suppliedCapabilities) : name === "record_model_application" ? this.record(input) : (() => {
         throw new RoutingError("UNKNOWN_TOOL", "Unknown model routing tool");
       })();
       return { schemaVersion: "1.0.0", ok: true, data, error: null };
@@ -21388,12 +21397,129 @@ var ModelRoutingStore = class {
   }
 };
 
+// mcp-server/src/model-capability-client.ts
+import { performance as performance2 } from "node:perf_hooks";
+
+// mcp-server/src/session-model-capabilities.ts
+var MODEL_CAPABILITY_FEATURE = "model-capabilities.v1";
+var MODEL_CAPABILITY_MAX_BYTES = 16 * 1024;
+var MODEL_CAPABILITY_MAX_SLOTS = 256;
+function check(condition, message) {
+  if (!condition) throw new Error(message);
+}
+function object4(value) {
+  check(value && typeof value === "object" && !Array.isArray(value), "Expected a capability object.");
+  return value;
+}
+function exact(value, fields) {
+  check(Object.keys(value).length === fields.length && fields.every((key) => Object.hasOwn(value, key)), "Invalid capability fields.");
+}
+function capabilitySlot(identity) {
+  return convergenceDigest(identity).slice(7);
+}
+function validateCapabilityPublication(raw, validator, nowMs) {
+  const value = object4(raw);
+  exact(value, ["schemaVersion", "identity", "snapshot"]);
+  check(value.schemaVersion === "1.0.0", "Unsupported capability exchange version.");
+  const identity = object4(value.identity);
+  exact(identity, ["host", "sessionId", "instanceId"]);
+  for (const field of ["host", "sessionId", "instanceId"]) {
+    const maximum = field === "host" ? 64 : field === "instanceId" ? 128 : 200;
+    check(typeof identity[field] === "string" && identity[field].length <= maximum && /^[A-Za-z0-9][A-Za-z0-9._:-]*$/u.test(identity[field]), "Invalid capability transport identity.");
+  }
+  check(Buffer.byteLength(canonicalJson(value), "utf8") <= MODEL_CAPABILITY_MAX_BYTES, "Capability publication exceeds the size limit.");
+  const snapshot = validator.hostModelCapabilitiesV1(value.snapshot);
+  check(snapshot.sessionId === identity.sessionId && snapshot.instanceId === identity.instanceId, "Capability session/instance mismatch.");
+  const { snapshotDigest, ...unsigned } = snapshot;
+  check(convergenceDigest(unsigned) === snapshotDigest, "Capability digest mismatch.");
+  const start = Date.parse(snapshot.observedAt), end = Date.parse(snapshot.expiresAt);
+  check(Number.isFinite(nowMs) && start <= nowMs && end > nowMs && end - start <= 3e5, "Capability is expired, future-dated or exceeds the five-minute sharing lifetime.");
+  return { schemaVersion: "1.0.0", identity: { host: String(identity.host), sessionId: String(identity.sessionId), instanceId: String(identity.instanceId) }, snapshot };
+}
+function validateCapabilityEntry(raw, validator, nowMs) {
+  const entry = object4(raw);
+  exact(entry, ["schemaVersion", "identity", "snapshot", "presenceLeaseUntil"]);
+  const { presenceLeaseUntil, ...publication } = entry;
+  check(typeof presenceLeaseUntil === "string" && Date.parse(presenceLeaseUntil) > nowMs, "Shared capability presence lease expired.");
+  return { ...validateCapabilityPublication(publication, validator, nowMs), presenceLeaseUntil };
+}
+
+// mcp-server/src/model-capability-client.ts
+function check2(condition, message) {
+  if (!condition) throw new Error(message);
+}
+function requester(directory, options) {
+  const deadline = performance2.now() + (options.timeoutMs ?? 1500);
+  return (operation, payload) => {
+    const remaining = deadline - performance2.now();
+    check2(remaining > 0, "Capability exchange deadline expired.");
+    return (options.request ?? requestSessionMessageOnce)(operation, payload, directory, remaining);
+  };
+}
+async function negotiate(call) {
+  const ping = await call("ping", {});
+  check2(ping?.protocolVersion === SESSION_MESSAGE_PROTOCOL && Array.isArray(ping.capabilities), "Invalid capability negotiation response.");
+  return ping.capabilities.includes(MODEL_CAPABILITY_FEATURE);
+}
+async function readSharedModelCapabilities(directory = resolveSessionMessageStateDirectory(), options = {}) {
+  try {
+    const call = requester(directory, options), clock = options.clock ?? Date.now;
+    if (!await negotiate(call)) return { status: "unsupported", entries: [] };
+    const validator = new ContractValidator(), entries = [], seen = /* @__PURE__ */ new Set();
+    let cursor = null, revision = null, presenceDigest = null;
+    for (let pageCount = 0; pageCount < MODEL_CAPABILITY_MAX_SLOTS; pageCount += 1) {
+      const page = await call("list-model-capabilities", { cursor });
+      check2(page && Object.keys(page).sort().join(",") === "entries,nextCursor,presenceDigest,revision,schemaVersion" && page.schemaVersion === "1.0.0" && Number.isSafeInteger(page.revision) && page.revision >= 0 && Array.isArray(page.entries), "Invalid capability page.");
+      check2(Buffer.byteLength(JSON.stringify({ ok: true, data: page }), "utf8") + 1 <= SESSION_MESSAGE_MAX_RESPONSE_BYTES, "Capability page exceeds broker limit.");
+      check2(revision === null || revision === page.revision, "Capability page revisions differ.");
+      revision = page.revision;
+      check2(typeof page.presenceDigest === "string" && /^sha256:[a-f0-9]{64}$/u.test(page.presenceDigest) && (presenceDigest === null || presenceDigest === page.presenceDigest), "Capability presence changed while paging.");
+      presenceDigest = page.presenceDigest;
+      let last = cursor?.after ?? "";
+      for (const raw of page.entries) {
+        const entry = validateCapabilityEntry(raw, validator, clock()), slot = capabilitySlot(entry.identity);
+        check2(slot > last && !seen.has(slot), "Capability pages repeat or regress.");
+        seen.add(slot);
+        entries.push(entry);
+        last = slot;
+        check2(entries.length <= MODEL_CAPABILITY_MAX_SLOTS, "Capability set exceeds resolver limit.");
+      }
+      if (page.nextCursor === null) {
+        for (const entry of entries) validateCapabilityEntry(entry, validator, clock());
+        return { status: "available", entries };
+      }
+      check2(page.entries.length > 0 && Object.keys(page.nextCursor).sort().join(",") === "after,presenceDigest,revision" && page.nextCursor.revision === revision && page.nextCursor.presenceDigest === presenceDigest && typeof page.nextCursor.after === "string" && /^[a-f0-9]{64}$/u.test(page.nextCursor.after) && page.nextCursor.after >= last && page.nextCursor.after > (cursor?.after ?? ""), "Capability cursor did not advance.");
+      cursor = page.nextCursor;
+    }
+    throw new Error("Capability paging bound exceeded.");
+  } catch {
+    return { status: "unavailable", entries: [] };
+  }
+}
+function mergeRoutingCapabilities(local, shared) {
+  const remote = shared.status === "available" ? shared.entries.map((entry) => entry.snapshot) : [];
+  const managed = new Set(remote.map((snapshot) => `${snapshot.host}\0${snapshot.sessionId}`));
+  const retained = local.filter((raw) => {
+    const snapshot = raw;
+    return snapshot && !snapshot.sourceReference?.startsWith("native-hook:") && !managed.has(`${snapshot.host}\0${snapshot.sessionId}`);
+  });
+  const slots = /* @__PURE__ */ new Map();
+  for (const snapshot of [...retained, ...remote]) {
+    const s = snapshot, key = canonicalJson([s.host, s.sessionId, s.instanceId]);
+    const previous = slots.get(key);
+    check2(!previous || canonicalJson(previous) === canonicalJson(snapshot), "Conflicting shared capability routing identities.");
+    slots.set(key, snapshot);
+  }
+  check2(slots.size <= MODEL_CAPABILITY_MAX_SLOTS, "Combined capability set exceeds resolver limit.");
+  return [...slots.entries()].sort(([a], [b2]) => a < b2 ? -1 : a > b2 ? 1 : 0).map(([, snapshot]) => snapshot);
+}
+
 // mcp-server/src/model-routing-service.ts
 var MODEL_CATALOG_DIRECTORY = fileURLToPath4(new URL("../../skills/coordinate-subagents/references/model-catalog/", import.meta.url));
 function unavailableModelRouting() {
   return new ModelRoutingServiceCore({ catalogDirectory: MODEL_CATALOG_DIRECTORY });
 }
-function openModelRoutingService(databasePath, workflow) {
+function openModelRoutingService(databasePath, workflow, readCapabilities = readSharedModelCapabilities) {
   let database = null;
   try {
     database = new DatabaseSync4(databasePath);
@@ -21402,6 +21528,18 @@ function openModelRoutingService(databasePath, workflow) {
     const store = new ModelRoutingStore(database);
     const bridge = workflow ? new ModelRoutingWorkflowBridge(workflow, store) : null;
     const service = new ModelRoutingServiceCore({ catalogDirectory: MODEL_CATALOG_DIRECTORY, store, historyProvider: bridge?.history ?? null });
+    service.resolveFromBroker = async (input) => {
+      try {
+        const shared = await readCapabilities();
+        return service.call("resolve_model_assignment", input, mergeRoutingCapabilities(store.capabilities(), shared));
+      } catch {
+        return { schemaVersion: "1.0.0", ok: false, data: null, error: {
+          code: "MCP_UNAVAILABLE",
+          message: "Model capability exchange is unavailable or inconsistent.",
+          details: { routingCode: "CAPABILITY_EXCHANGE_UNAVAILABLE" }
+        } };
+      }
+    };
     const opened = database;
     return { service, bridge, close: () => opened.close() };
   } catch {
@@ -22012,7 +22150,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         case "resolve_model_assignment":
           try {
             validator.modelSelectionRequestV2(args);
-            result = modelRouting.call(request.params.name, args);
+            result = modelRouting.resolveFromBroker ? await modelRouting.resolveFromBroker(args) : modelRouting.call(request.params.name, args);
           } catch (error2) {
             result = invalidInput(error2 instanceof Error ? error2.message : "Model selection request is invalid.");
           }
@@ -22115,8 +22253,8 @@ function isRecord(value) {
 }
 function remoteReference(value) {
   if (!isRecord(value) || typeof value.ref !== "string" || !isRecord(value.object)) return null;
-  const object5 = value.object;
-  return typeof object5.sha === "string" && typeof object5.type === "string" && typeof object5.url === "string" ? { ref: value.ref, object: { sha: object5.sha, type: object5.type, url: object5.url } } : null;
+  const object6 = value.object;
+  return typeof object6.sha === "string" && typeof object6.type === "string" && typeof object6.url === "string" ? { ref: value.ref, object: { sha: object6.sha, type: object6.type, url: object6.url } } : null;
 }
 var PluginUpdateService = class {
   constructor(store, options = {}) {
@@ -22319,11 +22457,11 @@ var PluginUpdateService = class {
       if (!isRecord(value) || !isRecord(value.object)) {
         throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object response was invalid.");
       }
-      const object5 = value.object;
-      if (typeof object5.sha !== "string" || typeof object5.type !== "string" || typeof object5.url !== "string") {
+      const object6 = value.object;
+      if (typeof object6.sha !== "string" || typeof object6.type !== "string" || typeof object6.url !== "string") {
         throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object target was invalid.");
       }
-      current = { sha: object5.sha, type: object5.type, url: object5.url };
+      current = { sha: object6.sha, type: object6.type, url: object6.url };
     }
     throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag indirection exceeded the supported depth.");
   }
@@ -23319,7 +23457,7 @@ var FORBIDDEN_KEYS = /* @__PURE__ */ new Set([
   "execution_directive",
   "tool_directive"
 ]);
-function object4(value) {
+function object5(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
 function array2(value) {
@@ -23339,7 +23477,7 @@ function duplicateFree(values) {
 }
 function validateDecisionRecordSemantics(record3) {
   const errors = [];
-  const preflight = object4(record3.preflight);
+  const preflight = object5(record3.preflight);
   const requiredCapabilities = stringArray(preflight.required_capabilities);
   const observedCapabilities = stringArray(preflight.observed_capabilities);
   const missingCapabilities = stringArray(preflight.missing_capabilities);
@@ -23353,11 +23491,11 @@ function validateDecisionRecordSemantics(record3) {
   if (!sameValues(expectedMissing, missingSet)) {
     errors.push("preflight missing capabilities must exactly equal required minus observed");
   }
-  const caseBrief = object4(record3.case_brief);
+  const caseBrief = object5(record3.case_brief);
   if (!isDeepStrictEqual(caseBrief.constraints, record3.constraints)) {
     errors.push("case_brief constraints must match record constraints");
   }
-  const run = object4(record3.run);
+  const run = object5(record3.run);
   const stage = run.stage;
   const assurance = run.assurance;
   const cap = run.worker_cap;
@@ -23365,7 +23503,7 @@ function validateDecisionRecordSemantics(record3) {
   if (run.capability_shortfall !== missingSet.size > 0) {
     errors.push("run capability_shortfall must match preflight missing capabilities");
   }
-  const workers = array2(run.workers).map(object4);
+  const workers = array2(run.workers).map(object5);
   const workerById = /* @__PURE__ */ new Map();
   for (const worker of workers) {
     const id = worker.id;
@@ -23390,7 +23528,7 @@ function validateDecisionRecordSemantics(record3) {
   const eligibleJudge = (worker) => Boolean(
     worker && worker.classification === "judge" && worker.is_judge === true && worker.instantiated === true && worker.status === "completed" && worker.blind_round1 === false && worker.context_isolated === true && isDeepStrictEqual(participated(worker), ["final_judge"])
   );
-  const failures = array2(run.failures).map(object4);
+  const failures = array2(run.failures).map(object5);
   const failureIds = failures.map((failure3) => failure3.worker_id).filter((id) => typeof id === "string");
   const declaredFailed = new Set([...workerById].filter(([, worker]) => worker.status === "failed").map(([id]) => id));
   if (!duplicateFree(failureIds) || !sameValues(new Set(failureIds), declaredFailed) || failures.some((failure3) => !nonempty(failure3.reason))) {
@@ -23445,7 +23583,7 @@ function validateDecisionRecordSemantics(record3) {
     errors.push("MEDIUM fresh Judge must be completed, isolated, and unreused");
   }
   if (fallback !== null) {
-    const fallbackObject = object4(fallback);
+    const fallbackObject = object5(fallback);
     if (fallbackObject.provisional !== true || !nonempty(fallbackObject.reason) || judgeId !== null) {
       errors.push("Judge fallback must be provisional, explained, and exclusive of a fresh Judge");
     }
@@ -23455,7 +23593,7 @@ function validateDecisionRecordSemantics(record3) {
     if (run.strict === true) errors.push("strict execution cannot use a Judge fallback");
   }
   if (strictShortfall) {
-    const cross2 = object4(record3.cross_examination);
+    const cross2 = object5(record3.cross_examination);
     const emptyRunFields = ["workers", "completed_worker_ids", "reused_worker_ids", "failures", "specialist_additions", "redeliberations"];
     const emptyRootFields = ["panel_manifest", "material_claims", "issue_ledger", "axis_decisions"];
     if (assurance !== "provisional" || record3.consensus_proposal !== null || judgeId !== null || fallback !== null || instantiated.size > 0 || missingSet.size === 0 || emptyRunFields.some((field) => array2(run[field]).length > 0) || emptyRootFields.some((field) => array2(record3[field]).length > 0) || cross2.decision !== "skip" || !nonempty(cross2.reason) || ["trigger_items", "selected_item_ids", "coverage", "followups"].some((field) => array2(cross2[field]).length > 0)) {
@@ -23468,14 +23606,14 @@ function validateDecisionRecordSemantics(record3) {
     if (reviewerIds.size < 2 || reviewerIds.size > 3) errors.push("MEDIUM requires two or three reviewers");
     if (assurance === "independent" && judgeId === null) errors.push("MEDIUM independent assurance requires a fresh Judge");
   }
-  const specialists = array2(run.specialist_additions).map(object4);
+  const specialists = array2(run.specialist_additions).map(object5);
   if (specialists.length > 1) errors.push("at most one specialist addition is allowed");
   const specialistIds = [];
   for (const specialist of specialists) {
     const workerId = specialist.worker_id;
     if (typeof workerId === "string") specialistIds.push(workerId);
     const worker = typeof workerId === "string" ? workerById.get(workerId) : void 0;
-    const admission = object4(specialist.admission);
+    const admission = object5(specialist.admission);
     if (!nonempty(specialist.admission_reason) || !nonempty(specialist.reason) || specialist.classification !== "adaptive_specialist" || worker?.classification !== "adaptive_specialist" || worker.status !== "completed" || worker.instantiated !== true || worker.is_judge === true || worker.blind_round1 !== false || worker.context_isolated !== true || !participated(worker).includes("adaptive_specialist") || admission.material_gap !== true || admission.distinct_capability !== true || admission.verdict_change_possible !== true || admission.cap_available !== true) {
       errors.push("specialist admission contract is invalid");
     }
@@ -23484,7 +23622,7 @@ function validateDecisionRecordSemantics(record3) {
   if (!duplicateFree(specialistIds) || !sameValues(new Set(specialistIds), declaredSpecialists)) {
     errors.push("specialist additions must identify every completed specialist");
   }
-  const redeliberations = array2(run.redeliberations).map(object4);
+  const redeliberations = array2(run.redeliberations).map(object5);
   if (redeliberations.length > 1) errors.push("at most one re-deliberation is allowed");
   for (const redeliberation of redeliberations) {
     const scope = stringArray(redeliberation.impacted_scope);
@@ -23500,12 +23638,12 @@ function validateDecisionRecordSemantics(record3) {
     }
   }
   const claimStatuses = /* @__PURE__ */ new Map();
-  for (const claim2 of array2(record3.material_claims).map(object4)) {
+  for (const claim2 of array2(record3.material_claims).map(object5)) {
     if (!nonempty(claim2.id) || claimStatuses.has(claim2.id)) {
       errors.push("material claim ids must be unique nonempty strings");
       continue;
     }
-    const provenance = array2(claim2.provenance).map(object4);
+    const provenance = array2(claim2.provenance).map(object5);
     if (!provenance.length) errors.push("material claims require provenance");
     const statuses = /* @__PURE__ */ new Set();
     for (const source of provenance) {
@@ -23536,22 +23674,22 @@ function validateDecisionRecordSemantics(record3) {
   if ([...requiredConstraints].some((constraint) => !constraints.has(constraint))) {
     errors.push("required constraints must be declared constraints");
   }
-  const issues = array2(record3.issue_ledger).map(object4);
+  const issues = array2(record3.issue_ledger).map(object5);
   for (const issue2 of issues) {
     if (!ISSUE_STATUSES.has(String(issue2.status))) errors.push("issue ledger has invalid status");
   }
-  const observability = object4(record3.observability);
+  const observability = object5(record3.observability);
   for (const value of Object.values(observability)) {
     if (typeof value === "string" && value !== "NOT_OBSERVABLE") errors.push("observability strings must be NOT_OBSERVABLE");
   }
   if (typeof observability.worker_count === "number" && observability.worker_count !== instantiated.size) {
     errors.push("observability worker_count must match instantiated workers");
   }
-  const cross = object4(record3.cross_examination);
-  const triggers = array2(cross.trigger_items).map(object4);
+  const cross = object5(record3.cross_examination);
+  const triggers = array2(cross.trigger_items).map(object5);
   const selected = stringArray(cross.selected_item_ids);
-  const coverage = array2(cross.coverage).map(object4);
-  const followups = array2(cross.followups).map(object4);
+  const coverage = array2(cross.coverage).map(object5);
+  const followups = array2(cross.followups).map(object5);
   if (!nonempty(cross.reason)) errors.push("cross-examination requires a reason");
   const triggerOrigins = /* @__PURE__ */ new Map();
   for (const trigger of triggers) {
@@ -23593,7 +23731,7 @@ function validateDecisionRecordSemantics(record3) {
     }
   }
   if ([...followupCounts.values()].some((count) => count > 1)) errors.push("reviewers may receive at most one cross follow-up");
-  const axes = array2(record3.axis_decisions).map(object4);
+  const axes = array2(record3.axis_decisions).map(object5);
   const axisNames = /* @__PURE__ */ new Set();
   for (const axis of axes) {
     if (!nonempty(axis.axis) || axisNames.has(axis.axis)) {
@@ -23618,7 +23756,7 @@ function validateDecisionRecordSemantics(record3) {
   if (assurance === "independent" && (missingSet.size || failures.length || reused.size)) {
     errors.push("independent assurance requires no missing capability, failures, or reuse");
   }
-  const proposal = object4(record3.consensus_proposal);
+  const proposal = object5(record3.consensus_proposal);
   const status = proposal.status;
   const supported = stringArray(proposal.supported_by_verified_claims);
   if ((status === "consensus" || status === "conditional_consensus") && (!supported.length || !axes.length)) {
@@ -23630,7 +23768,7 @@ function validateDecisionRecordSemantics(record3) {
   }
   const satisfied = stringArray(proposal.satisfied_constraints);
   if (satisfied.some((constraint) => !constraints.has(constraint))) errors.push("consensus references undeclared constraints");
-  const alignment = array2(proposal.axis_alignment).map(object4);
+  const alignment = array2(proposal.axis_alignment).map(object5);
   const alignedAxes = alignment.map((entry) => String(entry.axis));
   if (status !== "no_consensus" && (!duplicateFree(alignedAxes) || !sameValues(new Set(alignedAxes), axisNames))) {
     errors.push("consensus must link every decision axis exactly once");
@@ -23638,7 +23776,7 @@ function validateDecisionRecordSemantics(record3) {
   if (status !== "no_consensus" && alignment.some((entry) => entry.decision_ref !== entry.axis)) {
     errors.push("consensus decision_ref must match its axis");
   }
-  const materialDissent = array2(proposal.unresolved_dissent).map(object4).some((item) => item.material === true);
+  const materialDissent = array2(proposal.unresolved_dissent).map(object5).some((item) => item.material === true);
   if (status === "consensus") {
     if (!nonempty(proposal.action) || array2(proposal.conditions).length || materialDissent) errors.push("unconditional consensus shape is invalid");
     if (issues.some((issue2) => issue2.status === "UNRESOLVED" || issue2.status === "NOT_OBSERVABLE")) errors.push("unresolved issues prevent consensus");

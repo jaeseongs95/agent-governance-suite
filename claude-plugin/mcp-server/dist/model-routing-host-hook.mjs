@@ -3258,8 +3258,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path10) {
-      let input = path10;
+    function removeDotSegments(path11) {
+      let input = path11;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3668,8 +3668,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path10 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path10 && path10 !== "/" ? path10 : void 0;
+        const path11 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path11 && path11 !== "/" ? path11 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -8021,7 +8021,7 @@ var require_dist = __commonJS({
 // mcp-server/src/model-routing-host-hook.ts
 import { randomBytes as randomBytes2 } from "node:crypto";
 import { closeSync, existsSync as existsSync2, openSync, readSync, statSync as statSync2 } from "node:fs";
-import path9 from "node:path";
+import path10 from "node:path";
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
@@ -8944,17 +8944,26 @@ var ModelRoutingServiceCore = class {
   query(input) {
     return queryCatalog(input, this.catalogDirectory);
   }
-  resolve(input) {
+  resolve(input, suppliedCapabilities) {
     validateRequest(input);
     let request = structuredClone(input);
+    const now = this.clock(), capabilities = suppliedCapabilities ?? this.store?.capabilities() ?? [];
     if (request.role === "independent-audit") {
       assert(this.historyProvider, "AUDIT_HISTORY_PROVIDER_REQUIRED");
       const history = this.historyProvider(request.binding);
       assert(history && Array.isArray(history.actors) && Array.isArray(history.sessions), "AUDIT_HISTORY_UNAVAILABLE");
       request.requirements.excludedActors = [.../* @__PURE__ */ new Set([...request.requirements.excludedActors, ...history.actors])].sort();
-      request.requirements.excludedSessions = [.../* @__PURE__ */ new Set([...request.requirements.excludedSessions, ...history.sessions])].sort();
+      const actorSessions = [];
+      for (const snapshot of capabilities) {
+        try {
+          validateCapabilities(snapshot);
+        } catch {
+          continue;
+        }
+        if (request.requirements.excludedActors.includes(snapshot.actorId)) actorSessions.push(`${snapshot.host}/${snapshot.sessionId}`);
+      }
+      request.requirements.excludedSessions = [.../* @__PURE__ */ new Set([...request.requirements.excludedSessions, ...history.sessions, ...actorSessions])].sort();
     }
-    const now = this.clock(), capabilities = this.store?.capabilities() ?? [];
     const environment = { catalog: loadCatalog({ directory: this.catalogDirectory }), policy: loadPolicy(this.catalogDirectory), capabilities, now };
     const decision = resolveV2(request, environment);
     if (this.store) this.store.saveDecision(request, environment, decision, now);
@@ -8976,10 +8985,10 @@ var ModelRoutingServiceCore = class {
     }
     return this.store.recordApplication(input.application, token, (admittedObservation) => recordV2(input.application, { ...entry.environment, now: input.application.dispatchedAt, request: entry.request, decision: entry.decision, admittedObservation }), now);
   }
-  call(name, input) {
+  call(name, input, suppliedCapabilities) {
     try {
       assert(Buffer.byteLength(canonical(input), "utf8") <= 1024 * 1024, "REQUEST_TOO_LARGE");
-      const data = name === "query_model_catalog" ? this.query(input) : name === "resolve_model_assignment" ? this.resolve(input) : name === "record_model_application" ? this.record(input) : (() => {
+      const data = name === "query_model_catalog" ? this.query(input) : name === "resolve_model_assignment" ? this.resolve(input, suppliedCapabilities) : name === "record_model_application" ? this.record(input) : (() => {
         throw new RoutingError("UNKNOWN_TOOL", "Unknown model routing tool");
       })();
       return { schemaVersion: "1.0.0", ok: true, data, error: null };
@@ -9638,6 +9647,11 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
   });
 }
 
+// mcp-server/src/model-capability-client.ts
+import { readFile as readFile2 } from "node:fs/promises";
+import path8 from "node:path";
+import { performance as performance2 } from "node:perf_hooks";
+
 // mcp-server/src/schema-validator.ts
 var import__ = __toESM(require__(), 1);
 var import_ajv_formats = __toESM(require_dist(), 1);
@@ -9646,8 +9660,8 @@ import { readFileSync as readFileSync3, readdirSync } from "node:fs";
 import path7 from "node:path";
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path10 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync3(path10, "utf8"));
+  const path11 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync3(path11, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -9988,9 +10002,53 @@ var ContractValidator = class {
   }
 };
 
+// mcp-server/src/session-model-capabilities.ts
+import { createHmac as createHmac2 } from "node:crypto";
+var MODEL_CAPABILITY_FEATURE = "model-capabilities.v1";
+var MODEL_CAPABILITY_MAX_BYTES = 16 * 1024;
+function check(condition, message) {
+  if (!condition) throw new Error(message);
+}
+function capabilitySigner(brokerToken) {
+  check(/^[A-Za-z0-9_-]{43}$/u.test(brokerToken), "Invalid broker credential.");
+  return new RoutingObservationSigner(createHmac2("sha256", brokerToken).update("ags:session-model-capabilities:v1").digest());
+}
+
+// mcp-server/src/model-capability-client.ts
+function check2(condition, message) {
+  if (!condition) throw new Error(message);
+}
+function requester(directory, options) {
+  const deadline = performance2.now() + (options.timeoutMs ?? 1500);
+  return (operation, payload) => {
+    const remaining = deadline - performance2.now();
+    check2(remaining > 0, "Capability exchange deadline expired.");
+    return (options.request ?? requestSessionMessageOnce)(operation, payload, directory, remaining);
+  };
+}
+async function negotiate(call) {
+  const ping = await call("ping", {});
+  check2(ping?.protocolVersion === SESSION_MESSAGE_PROTOCOL && Array.isArray(ping.capabilities), "Invalid capability negotiation response.");
+  return ping.capabilities.includes(MODEL_CAPABILITY_FEATURE);
+}
+async function publishSharedModelCapability(snapshot, identity, directory = resolveSessionMessageStateDirectory(), options = {}) {
+  try {
+    const call = requester(directory, options);
+    if (!await negotiate(call)) return "unsupported";
+    const token = (await readFile2(path8.join(directory, "broker.token"), "utf8")).trim();
+    const now = new Date((options.clock ?? Date.now)()).toISOString();
+    const receipt = capabilitySigner(token).issue("capability", { schemaVersion: "1.0.0", identity, snapshot }, { issuedAt: now, expiresAt: snapshot.expiresAt });
+    const result = await call("publish-model-capability", { receipt });
+    check2(result?.snapshotDigest === snapshot.snapshotDigest, "Capability publication was not acknowledged.");
+    return "published";
+  } catch {
+    return "unavailable";
+  }
+}
+
 // mcp-server/src/sqlite-workflow-store.ts
 import { chmodSync, mkdirSync } from "node:fs";
-import path8 from "node:path";
+import path9 from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 // mcp-server/src/plugin-version.ts
@@ -10061,7 +10119,7 @@ var SqliteWorkflowStore = class {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
     }
     if (databasePath !== ":memory:") {
-      mkdirSync(path8.dirname(path8.resolve(databasePath)), { recursive: true, mode: 448 });
+      mkdirSync(path9.dirname(path9.resolve(databasePath)), { recursive: true, mode: 448 });
     }
     let openedDatabase = null;
     try {
@@ -10072,7 +10130,7 @@ var SqliteWorkflowStore = class {
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       if (databasePath !== ":memory:" && process.platform !== "win32") {
-        chmodSync(path8.resolve(databasePath), 384);
+        chmodSync(path9.resolve(databasePath), 384);
       }
     } catch (cause) {
       try {
@@ -10815,11 +10873,11 @@ function object2(value) {
 function text3(value) {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
-function check(condition, message) {
+function check3(condition, message) {
   if (!condition) throw new Error(message);
 }
 function nativeRoutingActor(host, sessionId, agentId) {
-  check(SAFE_ID.test(sessionId) && (agentId === null || SAFE_ID.test(agentId)), "Invalid native hook identity.");
+  check3(SAFE_ID.test(sessionId) && (agentId === null || SAFE_ID.test(agentId)), "Invalid native hook identity.");
   const claude = claudeCodeActorId(sessionId, agentId);
   return host === "claude-code" ? claude : claude.replace(/^claude-code:/u, "codex:");
 }
@@ -10842,7 +10900,7 @@ function readNativeTranscript(file) {
 }
 function nativeRoutingSettings(input, host, models, readTranscript = readNativeTranscript) {
   const session = text3(input.session_id), agent = text3(input.agent_id), call = text3(input.tool_use_id);
-  check(session && SAFE_ID.test(session) && (!agent || SAFE_ID.test(agent)) && call && SAFE_ID.test(call), "Native tool event identity is missing.");
+  check3(session && SAFE_ID.test(session) && (!agent || SAFE_ID.test(agent)) && call && SAFE_ID.test(call), "Native tool event identity is missing.");
   let model = null;
   let effort = null;
   if (host === "codex") {
@@ -10879,8 +10937,8 @@ function capabilitySnapshot(input, host, settings, deps) {
   const target = { host: HOST_IDS[host], sessionId: presence.sessionId, instanceId: presence.instanceId, actorId: nativeRoutingActor(host, presence.sessionId, text3(input.agent_id)) };
   const contract = deps.hostContract === void 0 ? null : object2(deps.hostContract);
   if (contract) {
-    check(Object.keys(contract).every((key) => ["schemaVersion", "host", "hostVersion", "supportedBindings", "executionCapabilities", "sourceReference"].includes(key)), "Unsupported native contract field.");
-    check(contract.schemaVersion === "1.0.0" && contract.host === target.host, "Native contract host/version mismatch.");
+    check3(Object.keys(contract).every((key) => ["schemaVersion", "host", "hostVersion", "supportedBindings", "executionCapabilities", "sourceReference"].includes(key)), "Unsupported native contract field.");
+    check3(contract.schemaVersion === "1.0.0" && contract.host === target.host, "Native contract host/version mismatch.");
   }
   const binding = observed ? [{
     model: observed.resolvedModel,
@@ -10918,9 +10976,9 @@ function handleNativeRoutingHook(input, host, deps) {
   const tool = ROOT_TOOLS.exec(text3(input.tool_name) ?? "")?.[1];
   const event = input.hook_event_name;
   if (!tool || !["PreToolUse", "PostToolUse"].includes(String(event))) return {};
-  check(Number.isFinite(Date.parse(deps.now)) && new Date(deps.now).toISOString() === deps.now, "Invalid observation time.");
+  check3(Number.isFinite(Date.parse(deps.now)) && new Date(deps.now).toISOString() === deps.now, "Invalid observation time.");
   const { presence, store, signer, now } = deps;
-  check(presence.host === host && presence.sessionId === input.session_id && presence.instanceId && presence.state === "online" && presence.leaseUntil && Date.parse(presence.leaseUntil) > Date.parse(now), "Native session instance is not current.");
+  check3(presence.host === host && presence.sessionId === input.session_id && presence.instanceId && presence.state === "online" && presence.leaseUntil && Date.parse(presence.leaseUntil) > Date.parse(now), "Native session instance is not current.");
   const settings = nativeRoutingSettings(input, host, deps.models, deps.readTranscript);
   const expiresAt = new Date(Date.parse(now) + 6e4).toISOString();
   if (tool === "resolve_model_assignment") {
@@ -10931,11 +10989,11 @@ function handleNativeRoutingHook(input, host, deps) {
   }
   const args = object2(input.tool_input), application = object2(args.application);
   const target = object2(application.target);
-  check(target.host === HOST_IDS[host] && target.sessionId === presence.sessionId && target.instanceId === presence.instanceId && target.actorId === nativeRoutingActor(host, presence.sessionId, text3(input.agent_id)), "The tool issuer is not the recorded routing actor.");
+  check3(target.host === HOST_IDS[host] && target.sessionId === presence.sessionId && target.instanceId === presence.instanceId && target.actorId === nativeRoutingActor(host, presence.sessionId, text3(input.agent_id)), "The tool issuer is not the recorded routing actor.");
   const entry = store.decision(String(application.decisionDigest ?? ""));
-  check(entry && canonicalJson(entry.decision.binding) === canonicalJson(application.binding) && canonicalJson(entry.decision.target) === canonicalJson(target), "Native observation task binding mismatch.");
+  check3(entry && canonicalJson(entry.decision.binding) === canonicalJson(application.binding) && canonicalJson(entry.decision.target) === canonicalJson(target), "Native observation task binding mismatch.");
   const dispatch = store.dispatch(convergenceDigest({ binding: application.binding }));
-  check(dispatch && dispatch.decision_digest === entry.decision.decisionDigest && dispatch.dispatched_at === application.dispatchedAt, "A matching native dispatch has not been registered.");
+  check3(dispatch && dispatch.decision_digest === entry.decision.decisionDigest && dispatch.dispatched_at === application.dispatchedAt, "A matching native dispatch has not been registered.");
   if (settings.models.length === 0 && settings.nativeReasoning === null) return {};
   const observation = {
     binding: entry.decision.binding,
@@ -10953,16 +11011,16 @@ function handleNativeRoutingHook(input, host, deps) {
     const content = Array.isArray(result2.content) ? result2.content : [];
     const output = content.find((item) => object2(item).type === "text");
     const response = object2(JSON.parse(String(object2(output).text ?? "null")));
-    check(result2.isError !== true && response.ok === true, "The routing record call did not succeed.");
+    check3(result2.isError !== true && response.ok === true, "The routing record call did not succeed.");
     previous = new ContractValidator().modelApplicationRecordV2(object2(response.data).record);
-    check(canonicalJson(store.application(previous.recordDigest)) === canonicalJson(previous) && previous.decisionDigest === application.decisionDigest && canonicalJson(previous.binding) === canonicalJson(application.binding) && previous.dispatchedAt === application.dispatchedAt, "Native post-tool record is not stored for this application.");
+    check3(canonicalJson(store.application(previous.recordDigest)) === canonicalJson(previous) && previous.decisionDigest === application.decisionDigest && canonicalJson(previous.binding) === canonicalJson(application.binding) && previous.dispatchedAt === application.dispatchedAt, "Native post-tool record is not stored for this application.");
     if (previous.observationAdmitted) return {};
   }
   store.bindNativeHookObservation(application, signer.issue("observation", observation, { issuedAt: now, expiresAt }), signer, now);
   if (event === "PreToolUse") return {};
   const service = new ModelRoutingServiceCore({ store, clock: () => now });
   const result = service.call("record_model_application", { application });
-  check(result.ok, "Native post-tool record admission failed.");
+  check3(result.ok, "Native post-tool record admission failed.");
   const recorded = new ContractValidator().modelApplicationRecordV2(object2(result.data).record);
   return { hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: JSON.stringify({
     kind: "ags-model-application-observation",
@@ -10982,7 +11040,7 @@ function boundedStdin() {
     const chunk = Buffer.alloc(16384), count = readSync(0, chunk, 0, chunk.length, null);
     if (!count) break;
     total += count;
-    check(total <= MAX_INPUT, "Native hook input exceeds the size limit.");
+    check3(total <= MAX_INPUT, "Native hook input exceeds the size limit.");
     chunks.push(chunk.subarray(0, count));
   }
   return Buffer.concat(chunks).toString("utf8");
@@ -10992,11 +11050,11 @@ async function main() {
   let database = null;
   try {
     const [flag, host, ...extra] = process.argv.slice(2);
-    check(flag === "--host" && (host === "codex" || host === "claude-code") && extra.length === 0, "Expected --host codex|claude-code.");
+    check3(flag === "--host" && (host === "codex" || host === "claude-code") && extra.length === 0, "Expected --host codex|claude-code.");
     const input = object2(JSON.parse(boundedStdin()));
     if (!ROOT_TOOLS.test(String(input.tool_name ?? "")) || !["PreToolUse", "PostToolUse"].includes(String(input.hook_event_name))) return;
     const stateDirectory = resolveSessionMessageStateDirectory();
-    if (!existsSync2(path9.join(stateDirectory, "endpoint.json"))) return;
+    if (!existsSync2(path10.join(stateDirectory, "endpoint.json"))) return;
     const observed = await requestSessionMessageOnce("presence", { target: { host, sessionId: input.session_id } }, stateDirectory, 1500);
     const databasePath = resolveWorkflowDatabasePath();
     workflow = new SqliteWorkflowStore(databasePath);
@@ -11005,7 +11063,7 @@ async function main() {
     database.exec("PRAGMA busy_timeout = 1500;");
     const store = new ModelRoutingStore(database);
     const query = object2(new ModelRoutingServiceCore({ catalogDirectory: CATALOG }).query({ provider: host === "codex" ? "openai" : "anthropic" }));
-    const contractPath = path9.join(path9.dirname(databasePath), "model-routing-native", `${HOST_IDS[host]}.json`);
+    const contractPath = path10.join(path10.dirname(databasePath), "model-routing-native", `${HOST_IDS[host]}.json`);
     const contract = existsSync2(contractPath) ? JSON.parse(readNativeTranscript(contractPath) ?? "null") : void 0;
     const output = handleNativeRoutingHook(input, host, {
       store,
@@ -11015,6 +11073,14 @@ async function main() {
       models: query.models,
       ...contract === void 0 ? {} : { hostContract: contract }
     });
+    if (input.hook_event_name === "PreToolUse" && ROOT_TOOLS.exec(String(input.tool_name))?.[1] === "resolve_model_assignment" && !text3(input.agent_id)) {
+      const validator = new ContractValidator();
+      const snapshot = store.capabilities().map((value) => validator.hostModelCapabilitiesV1(value)).find((value) => value.host === HOST_IDS[host] && value.sessionId === input.session_id && value.instanceId === observed.presence.instanceId);
+      if (snapshot) {
+        const shared = await publishSharedModelCapability(snapshot, { host, sessionId: snapshot.sessionId, instanceId: snapshot.instanceId }, stateDirectory, { timeoutMs: 1e3 });
+        if (shared === "unavailable") process.stderr.write("AGS shared model capability unavailable; local observation preserved.\n");
+      }
+    }
     if (Object.keys(output).length) process.stdout.write(JSON.stringify(output));
   } catch {
     process.stderr.write("AGS native routing observation unavailable; no execution assurance was added.\n");
@@ -11023,7 +11089,7 @@ async function main() {
     workflow?.close();
   }
 }
-if (process.argv[1] && path9.resolve(process.argv[1]) === fileURLToPath2(import.meta.url) && /\/model-routing-host-hook\.(?:ts|mjs)$/u.test(import.meta.url)) await main();
+if (process.argv[1] && path10.resolve(process.argv[1]) === fileURLToPath2(import.meta.url) && /\/model-routing-host-hook\.(?:ts|mjs)$/u.test(import.meta.url)) await main();
 export {
   handleNativeRoutingHook,
   nativeRoutingActor,

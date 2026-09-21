@@ -10,6 +10,8 @@ import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_PROTOCOL } from "./s
 import { SessionMessageStore, type SessionIdentity } from "./session-message-store.js";
 import type { InputObservationKind } from "./input-observation.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
+import { SessionModelCapabilityStore, capabilitySigner, MODEL_CAPABILITY_FEATURE } from "./session-model-capabilities.js";
+import type { RoutingObserverReceipt } from "../../skills/coordinate-subagents/scripts/model-routing-store.mjs";
 
 const IDLE_EXIT_MS = 60_000;
 export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities"] as const;
@@ -150,9 +152,18 @@ async function credentials(stateDirectory: string): Promise<{ key: string; certi
   return { key, certificate, token, fingerprint256: new X509Certificate(certificate).fingerprint256 };
 }
 
-export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>): unknown {
+export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>, modelCapabilities?: SessionModelCapabilityStore): unknown {
   switch (operation) {
-    case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: SESSION_MESSAGE_BROKER_CAPABILITIES };
+    case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: [...SESSION_MESSAGE_BROKER_CAPABILITIES, ...(modelCapabilities ? [MODEL_CAPABILITY_FEATURE] : [])] };
+    case "publish-model-capability": {
+      if (!modelCapabilities) throw new Error("Model capability exchange is unavailable.");
+      if (Object.keys(payload).length !== 1 || !Object.hasOwn(payload, "receipt")) throw new Error("A signed capability receipt is required.");
+      return modelCapabilities.publish(payload.receipt as RoutingObserverReceipt);
+    }
+    case "list-model-capabilities": {
+      if (!modelCapabilities) throw new Error("Model capability exchange is unavailable.");
+      return modelCapabilities.list(payload);
+    }
     case "send": {
       const messageId = optionalString(payload, "messageId");
       const ttlSeconds = optionalInteger(payload, "ttlSeconds");
@@ -314,6 +325,9 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
     const { key, certificate, token, fingerprint256 } = await credentials(stateDirectory);
     const activeStore = new SessionMessageStore(databasePath);
     store = activeStore;
+    let modelCapabilities: SessionModelCapabilityStore | undefined;
+    try { modelCapabilities = new SessionModelCapabilityStore(activeStore, capabilitySigner(token)); }
+    catch { /* Optional exchange failures must not disable legacy messaging. */ }
     let lastActivity = Date.now();
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
       lastActivity = Date.now();
@@ -335,7 +349,7 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
           const request = JSON.parse(line) as BrokerRequest;
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
-          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload);
+          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, modelCapabilities);
           socket.end(`${JSON.stringify({ ok: true, data })}\n`);
         } catch (error) {
           socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed." })}\n`);

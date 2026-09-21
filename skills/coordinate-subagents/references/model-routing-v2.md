@@ -9,7 +9,7 @@ A v2 decision is a proposal. `executionAuthorized` and `trustedGateSatisfied` ar
 ## Supply the inputs
 
 - `ModelSelectionRequest.v2` (`contracts/model-selection-request.v2.schema.json`): the binding (assignment, task, run, stage, attempt, revision, input and candidate digests), role, `highRisk`, optional profile and task traits, requirements, and an optional user preference. A `required` preference blocks instead of silently substituting; a `preferred` one records `PREFERRED_CHOICE_UNAVAILABLE` when another model is chosen.
-- Capability snapshots (`HostModelCapabilities.v1`) come from a host boundary. Never take them from the request or from a worker's self-report. The MCP resolver reads only stored snapshots; with none, the decision is `blocked`.
+- Capability snapshots (`HostModelCapabilities.v1`) come from a host boundary. Never take them from the request or from a worker's self-report. The MCP resolver reads a negotiated, authenticated snapshot set from the local session broker plus non-native local adapter snapshots. It never accepts capabilities from tool arguments. With none, the decision is `blocked`.
 - The reviewed catalog under `references/model-catalog/` (index, provider shards, hosts, sources) and its `policy.json`. Read the index and only the shards the assignment needs; do not copy catalog records into the conversation.
 
 ## Understand the selection
@@ -31,8 +31,16 @@ The dispatched settings must equal the selection, and the binding, target and de
 
 ## Know the current limits
 
-`scripts/adapters/` holds native subagent argument builders, opt-in headless adapters for `gemini-cli` and `grok-build` (disabled by default and not live-verified; argv only, no shell, bounded time and output), and the `gemini-spark` runtime descriptor (`autoDispatch: false`). Native observation hooks and workflow-owned audit history are connected. Without established capability/permission boundaries the resolver remains `blocked`; missing observed fields remain `unverified`. Broker feature negotiation and automatic peer dispatch are not connected yet. Native tool-issuer observations do not prove the whole assignment's mode or terminal outcome.
+`scripts/adapters/` holds native subagent argument builders, opt-in headless adapters for `gemini-cli` and `grok-build` (disabled by default and not live-verified; argv only, no shell, bounded time and output), and the `gemini-spark` runtime descriptor (`autoDispatch: false`). Native observation hooks and workflow-owned audit history are connected. Without established capability/permission boundaries the resolver remains `blocked`; missing observed fields remain `unverified`. Broker capability negotiation/publication/discovery is connected. Assignment acceptance and automatic peer dispatch are not connected yet. Native tool-issuer observations do not prove the whole assignment's mode or terminal outcome.
 
 ## Native observation hook
 
 The installed native observer binds `record_model_application` to the current tool issuer's host/session/instance and a previously registered dispatch. It never creates a dispatch or changes an approval. Current-tool observations are not whole-assignment completion evidence: missing effort/mode remains unknown and terminal outcome remains unknown. A delayed exact transcript may produce a new admitted diagnostic artifact after the call; use that returned URI without rewriting the earlier record. The existing high-risk execution gate still applies. Capability snapshots without established execution boundaries do not authorize new assignments.
+
+## Shared capability discovery
+
+The native hook publishes its validated parent-session snapshot to the existing local TLS broker only after `model-capabilities.v1` is negotiated. The broker checks a domain-separated signed receipt, session/instance liveness, expiry and the snapshot digest. Configuration remains configuration; neither a transport ACK nor a shared snapshot is execution authority. Child publication does not replace the parent slot.
+
+`resolve_model_assignment` reads a fresh, complete shared set per call without importing remote capabilities into the workflow DB. Paging binds both the publication revision and live session state. Ended, expired or replaced sessions are omitted. Partial/changed/malformed pages are discarded. Native-hook local snapshots are not resurrected when shared liveness cannot be established; independent local adapters and all v1 paths keep their existing behavior. The selected decision preserves the exact snapshot digest/source and remains a proposal requiring dispatch-time revalidation, an existing lease, file ownership and independent audit.
+
+Capability exchange adds no worker launch, shell execution, workflow acceptance, completion transition or model-callable publication tool. Old brokers receive no new operation; normal messaging and its 4096-byte bodies remain unchanged.
