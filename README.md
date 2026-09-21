@@ -9,7 +9,7 @@ Agent Governance Suite는 여러 AI 호스트의 긴 작업에서 범위를 관�
 같은 기준을 세션 하나 밖으로 넓힙니다. 한 대의 컴퓨터에서 여러 에이전트 세션이 같은 저장소나 설치를 동시에 다루면서 서로의 작업을 모르면, 각 세션이 자기 검사를 통과해도 결과는 어긋날 수 있습니다. 그래서 모든 호스트가 세션 현황판 하나를 함께 쓰고, 세션끼리 로컬 TLS 채널로 직접 메시지를 주고받습니다.
 
 <!-- release-version:start -->
-v2.3.0은 입력 출처 주장과 영수증 검사를 구분하고, 사용자 입력 옆의 peer 본문 주입을 이연하며, 관측 가능한 서브에이전트의 부모 수신함 사용과 작업공간 별칭을 통한 root 우회를 보강합니다. 공통 계약은 플랫폼 중립이며 제품별 이벤트는 adapter에서 처리합니다. 일반 worktree 병렬 작업은 유지합니다. 승인 발급이나 OS 실행 통제를 제공하는 릴리스는 아닙니다. [입력·작업 경계와 한계](docs/input-boundaries.md)를 확인하세요.
+v2.4.0은 `orchestrator`를 포함한 20개 스킬의 상세 절차를 조건부 reference로 분리해 초기 `SKILL.md` 합계를 60.361863% 줄입니다. 활성화 계약, frontmatter, descriptor와 이동한 지침은 그대로 유지하며, 결정적 복원 검사와 전체 배포 검증으로 이를 확인합니다. 외부 fork인 `ponytail`은 변경하지 않습니다. 자세한 범위와 한계는 [v2.4.0 릴리스 노트](docs/release-notes-v2.4.0.md)에 있습니다.
 
 v2.2.2는 훅 번들 경계를 바로잡는 patch 릴리스입니다. 실행 전용 session-message relay 진입점을 import 가능한 코어에서 분리해 Codex 훅이 잘못된 relay 인자 검사로 실패하지 않게 하고, 완성된 훅 번들의 종료 코드를 직접 검증합니다. `SessionEnd`는 Codex의 공식 기본 timeout을 사용해 clamping 경고도 없앴습니다.
 
@@ -23,7 +23,7 @@ v2.1.0은 같은 컴퓨터에서 일하는 AI 호스트 세션들이 서로에�
 
 지난 릴리스의 변경 내역은 [`docs/`](docs/)의 릴리스 노트에 있습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 
-현재 공개 릴리스는 `v2.3.0`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+현재 공개 릴리스는 `v2.4.0`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -64,7 +64,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.3.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.4.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->

@@ -9,7 +9,7 @@ When an agent says a task is finished, the suite checks whether the required con
 The same standard reaches past a single session. When several agent sessions on one computer work on the same repository or installation without knowing about each other, each can pass its own checks and still produce results that do not fit together. So every host shares one session board, and sessions message each other directly over a local TLS channel.
 
 <!-- release-version:start -->
-v2.3.0 separates input-origin claims from receipt checks, defers peer-body injection beside user input, and hardens observable subagent inbox boundaries and convergence-root workspace alias checks. Common contracts remain host-neutral, with product events mapped by adapters. Normal worktree concurrency remains available. This release does not provide approval issuance or OS execution enforcement. See the [input and workspace boundaries](docs/input-boundaries.md) (Korean) for guarantees and limitations.
+v2.4.0 moves detailed procedures for twenty skills, including `orchestrator`, behind conditional references and reduces their combined initial `SKILL.md` size by 60.361863%. Activation contracts, frontmatter, descriptors, and relocated instructions remain intact and are checked by deterministic reconstruction and full distribution validation. The external `ponytail` fork is unchanged. See the [v2.4.0 release notes](docs/release-notes-v2.4.0.md) (Korean) for scope and limitations.
 
 v2.2.2 is a patch release that restores the hook bundle boundary. It separates the executable session-message relay entrypoint from the importable core so Codex hooks no longer fail through the relay argument parser, directly tests the packaged hook exit code, and uses Codex's documented default `SessionEnd` timeout without a clamping warning.
 
@@ -23,7 +23,7 @@ v2.1.0 lets AI host sessions working on the same computer send messages directly
 
 Release notes for earlier versions are in [`docs/`](docs/) (Korean). The candidate-v2 policy applied to `korean-prose-editor` in v1.16.0 was not part of the quality gate record (`0.3.0-gate-1`), so it remains unevaluated for quality.
 
-The current public release is `v2.3.0` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+The current public release is `v2.4.0` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
 
 ## Problems it handles
@@ -64,7 +64,7 @@ Node.js 22.13.0 or later is required.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.3.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.4.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
