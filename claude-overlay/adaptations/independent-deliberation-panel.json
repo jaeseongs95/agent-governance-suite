@@ -7,12 +7,12 @@
       "replace": "적용 가능한 `CLAUDE.md`(import된 `AGENTS.md` 포함)와 상위 지침을 먼저 따른다."
     },
     {
-      "file": "SKILL.md",
+      "file": "references/entry-details.md",
       "find": "상위 시스템·개발자·적용 가능한 `AGENTS.md` 지침이 항상 우선한다.",
       "replace": "상위 시스템·개발자·적용 가능한 `CLAUDE.md`(import된 `AGENTS.md` 포함) 지침이 항상 우선한다."
     },
     {
-      "file": "SKILL.md",
+      "file": "references/entry-details.md",
       "find": "reviewer를 `fork_turns:none`과 완결된 중립 briefing으로 시작한다.",
       "replace": "reviewer를 fork가 아닌 새 서브에이전트(가능하면 `agent-governance-suite:deliberation-reviewer`)와 완결된 중립 briefing으로 시작한다."
     },

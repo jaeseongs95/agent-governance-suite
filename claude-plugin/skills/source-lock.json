@@ -1,307 +1,140 @@
 {
-  "schemaVersion": "2.0.0",
+  "schemaVersion": "3.0.0",
   "sources": [
     {
       "skillId": "coordinate-subagents",
       "path": "skills/coordinate-subagents",
-      "source": "https://github.com/jaeseongs95/coordinate-subagents.git",
-      "sourcePath": "skills/coordinate-subagents",
       "version": "1.1.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "tag",
-        "value": "v1.1.0",
-        "commit": "404ed8738216d047265f960c8dacb9c7d8cfa8af"
-      },
-      "updatePolicy": "notify-only",
-      "upstreamChecksum": "sha256:6298059722111d33add2d1933ad0fc0ae166e477f27aa5b976b8b12e8185f1bd",
-      "integratedChecksum": "sha256:f38e1ffc462311ff797168092f40a28ccfebfc84d9fe132e00154d5e13878a51",
-      "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents",
-      "downstreamModifications": [
-        "Separate explicit delegation feasibility from automatic net benefit; track model dispatch evidence and useful parallel execution with a dependency-free routing CLI."
-      ]
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:57d3765c0f573b5f59ce5e1fc72516c8c7011d155ae5084ca4379698315a3944",
+      "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
     },
     {
       "skillId": "independent-audit-gate",
       "path": "skills/independent-audit-gate",
-      "source": "https://github.com/jaeseongs95/codex-independent-audit-gate.git",
-      "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "tag",
-        "value": "v1.0.0",
-        "commit": "7570524b1536706911b5ad822c7010d60030d9e1"
-      },
-      "updatePolicy": "notify-only",
-      "upstreamChecksum": "sha256:31d76def511b3e90cb3acd4a01bb06f512bf1d68c8ff815d2ebf5cc3f0d2cbad",
-      "integratedChecksum": "sha256:11e9534f90e9e03de65eb34b3b7fca0ddbca1c4fe217d5fecce34a04679b8eed",
-      "checksumScope": "relative paths and normalized text bytes under skills/independent-audit-gate",
-      "downstreamModifications": [
-        "Add vendor-neutral execution safety rules for reproducible audits and EDR-safe validation."
-      ]
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:116bec0cc1bc58720763dded00622c13260cbfe60821e934ac04324880864b70",
+      "checksumScope": "relative paths and normalized text bytes under skills/independent-audit-gate"
     },
     {
       "skillId": "independent-deliberation-panel",
       "path": "skills/independent-deliberation-panel",
-      "source": "https://github.com/jaeseongs95/independent-deliberation-panel.git",
-      "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "tag",
-        "value": "v1.0.0",
-        "commit": "877c11b8e1369a1dff3b5d208327f6604bd3dff2"
-      },
-      "updatePolicy": "auto-pr",
-      "upstreamChecksum": "sha256:6dc8c9a1128ad1ac6b2ff74f4307cf9f3dcbae7cbfa3a02a9222657713bcf31e",
-      "integratedChecksum": "sha256:6dc8c9a1128ad1ac6b2ff74f4307cf9f3dcbae7cbfa3a02a9222657713bcf31e",
-      "checksumScope": "relative paths and normalized text bytes under skills/independent-deliberation-panel",
-      "downstreamModifications": []
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:e118b23e708b7e935824efc9f464a11d26ce740750a1a20d27ee9f01790df134",
+      "checksumScope": "relative paths and normalized text bytes under skills/independent-deliberation-panel"
     },
     {
       "skillId": "task-contract",
       "path": "skills/task-contract",
-      "source": "https://github.com/jaeseongs95/task-contract.git",
-      "sourcePath": ".",
       "version": "1.1.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "commit",
-        "value": "b14ffb36ed3be96cc4694d0b36054f21f69b577a",
-        "commit": "b14ffb36ed3be96cc4694d0b36054f21f69b577a"
-      },
-      "updatePolicy": "notify-only",
-      "upstreamChecksum": "sha256:88df77436b0880e6d6033a022593e59b7db016b8cb90847a06937a2d4a10d91f",
-      "integratedChecksum": "sha256:ebdc09b76a3303a7c185ca1cad201c4ee0c7a4eb16d297ce4df61c96c0354176",
-      "checksumScope": "relative paths and normalized text bytes under skills/task-contract",
-      "downstreamModifications": [
-        "Adapt validation scripts to resolve contracts and suite paths from the integrated plugin layout.",
-        "Preserve provenance receipt IDs while preventing receipts from authorizing actions or satisfying approval requirements."
-      ]
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:eb28f4da8b94864622a538a0cfb7ceaed0d7c00e6834100969a8b7f758e0fffd",
+      "checksumScope": "relative paths and normalized text bytes under skills/task-contract"
     },
     {
       "skillId": "acceptance-evidence-validator",
       "path": "skills/acceptance-evidence-validator",
-      "source": "https://github.com/jaeseongs95/acceptance-evidence-validator.git",
-      "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "tag",
-        "value": "v1.0.0",
-        "commit": "ad545c367e118a21b0cabfcd5b56fdf3b58e0ef5"
-      },
-      "updatePolicy": "notify-only",
-      "upstreamChecksum": "sha256:b417604d2600a3c09aadc9ffa2ae9d435aaa0dc2e28ccae457f8dda069ad166a",
-      "integratedChecksum": "sha256:193162ef7b982a66488a9a9c7360f76b5f4e36737b612f1c066f7b6391b8af27",
-      "checksumScope": "relative paths and normalized text bytes under skills/acceptance-evidence-validator",
-      "downstreamModifications": [
-        "Adapt validation and integration assets to the suite-level registry and shared contract layout."
-      ]
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:ecd0882a37d0321dd24070c308fda75e872b8fc986a170285dbfe8bb149c3f27",
+      "checksumScope": "relative paths and normalized text bytes under skills/acceptance-evidence-validator"
     },
     {
       "skillId": "blocker-diagnostician",
       "path": "skills/blocker-diagnostician",
-      "source": "https://github.com/jaeseongs95/blocker-diagnostician.git",
-      "sourcePath": ".",
       "version": "1.1.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "commit",
-        "value": "14ae3288535b1d2061a0ee1c537fa6773077a533",
-        "commit": "14ae3288535b1d2061a0ee1c537fa6773077a533"
-      },
-      "updatePolicy": "notify-only",
-      "upstreamChecksum": "sha256:76ffb61ad815a82e3abd9137320cb233a77d9576b7e8cea3c381b6b8d020683e",
-      "integratedChecksum": "sha256:a99482e176486b4e5587570400e92cd91db0ffdf1f8e246e0e54564b209ff246",
-      "checksumScope": "relative paths and normalized text bytes under skills/blocker-diagnostician",
-      "downstreamModifications": [
-        "Adapt validation and integration assets to the suite-level registry and shared contract layout.",
-        "Require evidence-backed symptom, mechanism, root condition, and elimination observations for a confirmed cause."
-      ]
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:e32fb435d64c33207a1bc5171e12d6aea76378573d15d0d34dee5d6d550850f3",
+      "checksumScope": "relative paths and normalized text bytes under skills/blocker-diagnostician"
     },
     {
       "skillId": "workspace-convention-profiler",
       "path": "skills/workspace-convention-profiler",
-      "source": "https://github.com/jaeseongs95/workspace-convention-profiler.git",
-      "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "tag",
-        "value": "v1.0.0",
-        "commit": "6bc5cf4e65a4f5fb0dd5e2e01ba6a3428de63405"
-      },
-      "updatePolicy": "notify-only",
-      "upstreamChecksum": "sha256:0edcf71b974eeaac33128d8fea2b22026d3b50242106bea2eb61703b240e34d0",
-      "integratedChecksum": "sha256:7af2162e2651210fbafeb709c303868a79334a1820b107241ef608f7a0bbcccf",
-      "checksumScope": "relative paths and normalized text bytes under skills/workspace-convention-profiler",
-      "downstreamModifications": [
-        "Adapt validation and integration assets to the suite-level registry and shared contract layout."
-      ]
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:074f2e81c1fc55ef2f71807b791faa5819251d906658a8e0691383ae8a666deb",
+      "checksumScope": "relative paths and normalized text bytes under skills/workspace-convention-profiler"
     },
     {
       "skillId": "mutation-risk-preflight",
       "path": "skills/mutation-risk-preflight",
-      "source": "https://github.com/jaeseongs95/mutation-risk-preflight.git",
-      "sourcePath": ".",
       "version": "1.0.1",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "tag",
-        "value": "v1.0.1",
-        "commit": "63d98201ae80dfae89d6cf41cbaec815c441e9fa"
-      },
-      "updatePolicy": "notify-only",
-      "upstreamChecksum": "sha256:bb9c97cdb7e7daf47bfc9fd4ebebe2c7782f35fce22afe5ed46ccf2a0e85083a",
-      "integratedChecksum": "sha256:c19678651216d4d74f88c42860f721960bc33a050bf8c8e405b4e6cd7ed966b7",
-      "checksumScope": "relative paths and normalized text bytes under skills/mutation-risk-preflight",
-      "downstreamModifications": [
-        "Adapt validation and integration assets to the suite-level registry and shared contract layout."
-      ]
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:0d597867ecadbfb66bf0abe2f903b9fdc81d8d35d618b9af042731d09f3f64af",
+      "checksumScope": "relative paths and normalized text bytes under skills/mutation-risk-preflight"
     },
     {
       "skillId": "instruction-scope-resolver",
       "path": "skills/instruction-scope-resolver",
-      "source": "https://github.com/jaeseongs95/instruction-scope-resolver.git",
-      "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "tag",
-        "value": "v1.0.0",
-        "commit": "f8e459ebc826acbe9eb711128422b0f35f54bc98"
-      },
-      "updatePolicy": "notify-only",
-      "upstreamChecksum": "sha256:85485144ba8ffd9e558761f1dc9e5186aa54eac955c31f745812655310f7d3dc",
-      "integratedChecksum": "sha256:2bd6c1fc0f4504648d3e0b9182bb968bc9827d43e70577aa12e5089ea8308293",
-      "checksumScope": "relative paths and normalized text bytes under skills/instruction-scope-resolver",
-      "downstreamModifications": [
-        "Adapt validation and integration assets to the suite-level registry and shared contract layout."
-      ]
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:7d2a86796ce43184e779d244f01bd499d8b872f44a37d76902a5a58e7c4ee86a",
+      "checksumScope": "relative paths and normalized text bytes under skills/instruction-scope-resolver"
     },
     {
       "skillId": "change-scope-guardian",
       "path": "skills/change-scope-guardian",
-      "source": "https://github.com/jaeseongs95/change-scope-guardian.git",
-      "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "version-file",
-      "ref": {
-        "kind": "tag",
-        "value": "v1.0.0",
-        "commit": "531e820503bbefbb8cba9848657d42b3a5771587"
-      },
-      "updatePolicy": "notify-only",
-      "upstreamChecksum": "sha256:78c3275447af625639884e11da5c615c2f928f437503699df3b2a9f2893f94b5",
-      "integratedChecksum": "sha256:03bc40dd26356bc9b678db76d70f22474eb3812fa12711b96666dcf8ad7a533c",
-      "checksumScope": "relative paths and normalized text bytes under skills/change-scope-guardian",
-      "downstreamModifications": [
-        "Adapt validation and integration assets to the suite-level registry and shared contract layout."
-      ]
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:78419150839307dc8dbf94607b8ef426ed1a6028cf52b5a708aa15a8df001137",
+      "checksumScope": "relative paths and normalized text bytes under skills/change-scope-guardian"
     },
     {
       "skillId": "model-effort-advisor",
       "path": "skills/model-effort-advisor",
-      "source": "https://github.com/jaeseongs95/model-effort-advisor.git",
-      "sourcePath": "skills/model-effort-advisor",
       "version": "0.1.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "tag",
-        "value": "v0.1.0",
-        "commit": "dfb806545e978bf03d6e1d6cc65707152629b271"
-      },
-      "updatePolicy": "auto-pr",
-      "upstreamChecksum": "sha256:9a2871ff97553884eea9e93e1b46464631b47fc2d2be7b50b0cd5ec5031e429c",
-      "integratedChecksum": "sha256:9a2871ff97553884eea9e93e1b46464631b47fc2d2be7b50b0cd5ec5031e429c",
-      "checksumScope": "relative paths and normalized text bytes under skills/model-effort-advisor",
-      "downstreamModifications": []
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:4bd281f54c8ae826e966826b85c72028693628cde461ce51c2c8942e19e59dd0",
+      "checksumScope": "relative paths and normalized text bytes under skills/model-effort-advisor"
     },
     {
       "skillId": "iteration-frame-auditor",
       "path": "skills/iteration-frame-auditor",
-      "source": "https://github.com/jaeseongs95/iteration-frame-auditor.git",
-      "sourcePath": "skills/iteration-frame-auditor",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "tag",
-        "value": "v1.0.0",
-        "commit": "7d9f9122a4e0fa2c3a84901317f0d95a2b7fd677"
-      },
-      "updatePolicy": "auto-pr",
-      "upstreamChecksum": "sha256:86360c7a8573dafc3317931a4b161d5a5c44a65be42d35106c7996fa4e5fecb9",
-      "integratedChecksum": "sha256:86360c7a8573dafc3317931a4b161d5a5c44a65be42d35106c7996fa4e5fecb9",
-      "checksumScope": "relative paths and normalized text bytes under skills/iteration-frame-auditor",
-      "downstreamModifications": []
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:997915f79086aa52ccddb30936d33ed90e248c870c370c76afaf1e33a80067ec",
+      "checksumScope": "relative paths and normalized text bytes under skills/iteration-frame-auditor"
     },
     {
       "skillId": "recovery-strategy-selector",
       "path": "skills/recovery-strategy-selector",
-      "source": "https://github.com/jaeseongs95/agent-governance-suite.git",
-      "sourcePath": "skills/recovery-strategy-selector",
       "version": "0.2.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "commit",
-        "value": "cf0538aaeef69eb855d1caf8436fe7a92c04cb0e",
-        "commit": "cf0538aaeef69eb855d1caf8436fe7a92c04cb0e"
-      },
       "updatePolicy": "internal",
-      "upstreamChecksum": "sha256:07ac3e0b5eb9a9c5f20eb1117f920a17de34553a0034ebb986f2d7215c261d96",
-      "integratedChecksum": "sha256:159fb90fce52db003a70a4a2f4e8284b4363392f125051e2b6f206bbca79ff09",
-      "checksumScope": "relative paths and normalized text bytes under skills/recovery-strategy-selector",
-      "downstreamModifications": [
-        "Bind each recovery strategy and next task seed to the confirmed cause and root-condition digest."
-      ]
+      "integratedChecksum": "sha256:60f97c50491a71cef7adc3484fabed4bff2c3b2b317196bcecb79d750314d1a9",
+      "checksumScope": "relative paths and normalized text bytes under skills/recovery-strategy-selector"
     },
     {
       "skillId": "korean-prose-editor",
       "path": "skills/korean-prose-editor",
-      "source": "https://github.com/jaeseongs95/korean-prose-editor.git",
-      "sourcePath": "skills/korean-prose-editor",
       "version": "0.1.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "commit",
-        "value": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49",
-        "commit": "c5df63749e2edfc8aa424f9935ee3cd4697d3c49"
-      },
-      "updatePolicy": "notify-only",
-      "upstreamChecksum": "sha256:a88252aa9c4e654458ecc7eed282d26c022ca9f5db858f87f3237decc622feb8",
-      "integratedChecksum": "sha256:27face62dd8c3ecd91127fdfb70d0f49e55054c5ff96a97179174224cfc54269",
-      "checksumScope": "relative paths and normalized text bytes under skills/korean-prose-editor",
-      "downstreamModifications": [
-        "Control runtime activation consistently across the skill instruction, descriptor, and implicit-invocation policy.",
-        "Retain the suite-level frozen-evaluation preflight contract.",
-        "Document canonical cycle receipt verification in the integration copy.",
-        "Ship a reviewed SQLite glossary and bind one read-only MCP lookup across the Korean prose roles.",
-        "Enable the integrated provider, direct descriptor, and implicit invocation under explicit release approval while preserving the incomplete quality-gate record.",
-        "Expand the reviewed glossary to data version 1.2.0 with 199 official GitHub Korean glossary terms, a context-sensitive policy split, and a reviewed replacement for the user-facing phrase 완료 영수증.",
-        "Narrow the user-facing jargon exception so a document being technical no longer excludes its prose, and judge each expression by whether it defines a contract or identifier.",
-        "Deactivate completion-result-ko after the 2026-09-18 independent deliberation (unsupported sourceRef, no external usage), correct its provenance and priority, raise the glossary data version to 1.2.1, and state in the rubric and the selection/editing policies that the literal-metaphor rule does not replace the keep-when-unconfirmed default.",
-        "Apply candidate-v2 selection, bidirectional editing, and verification policies after the terminal private evaluation failure."
-      ]
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:da89a034d11a63052ccbd24da1d94351bfb4470bd1387199e5c7e8bfd5d0862b",
+      "checksumScope": "relative paths and normalized text bytes under skills/korean-prose-editor"
     },
     {
       "skillId": "evaluation-validity-auditor",
       "path": "skills/evaluation-validity-auditor",
-      "source": "https://github.com/jaeseongs95/evaluation-validity-auditor.git",
-      "sourcePath": ".",
       "version": "1.0.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "tag",
-        "value": "v1.0.0",
-        "commit": "d1d564462ae93e205b27bcc1443ee17d04a97dcf"
-      },
-      "updatePolicy": "auto-pr",
-      "upstreamChecksum": "sha256:083ee804efcbe785ca87c6f7a1e20e5cd71732bcc44c7e8e8546336a412f8f24",
-      "integratedChecksum": "sha256:083ee804efcbe785ca87c6f7a1e20e5cd71732bcc44c7e8e8546336a412f8f24",
-      "checksumScope": "relative paths and normalized text bytes under skills/evaluation-validity-auditor",
-      "downstreamModifications": []
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:931bd972a0246cedf317d710e25832407185816f05be76216b5d4175c2af621d",
+      "checksumScope": "relative paths and normalized text bytes under skills/evaluation-validity-auditor"
     },
     {
       "skillId": "ponytail",
@@ -330,20 +163,11 @@
     {
       "skillId": "software-security-auditor",
       "path": "skills/software-security-auditor",
-      "source": "https://github.com/jaeseongs95/software-security-auditor.git",
-      "sourcePath": "skills/software-security-auditor",
       "version": "0.1.0",
       "versionSource": "skill-metadata",
-      "ref": {
-        "kind": "tag",
-        "value": "v0.1.0",
-        "commit": "8273db3d3fc52a7a9c36e73f9888b5fe44c69fe3"
-      },
-      "updatePolicy": "auto-pr",
-      "upstreamChecksum": "sha256:7346de58a9bdc9b8e5d283687326bacecf980f7997f4458b28782b69216d76a5",
-      "integratedChecksum": "sha256:7346de58a9bdc9b8e5d283687326bacecf980f7997f4458b28782b69216d76a5",
-      "checksumScope": "relative paths and normalized text bytes under skills/software-security-auditor",
-      "downstreamModifications": []
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:3eb23652633617860dbf33d84de7093fcd030b46259e48675aa369ab868b2c10",
+      "checksumScope": "relative paths and normalized text bytes under skills/software-security-auditor"
     }
   ]
 }
