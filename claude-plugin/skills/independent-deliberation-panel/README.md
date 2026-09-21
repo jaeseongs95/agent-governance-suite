@@ -19,7 +19,7 @@
 `independent-deliberation-panel`은 Agent Governance Suite 플러그인에 포함되어 있으므로 별도 clone이나 스킬 설치가 필요하지 않습니다. Codex에서는 플러그인 marketplace를 추가한 뒤 suite를 설치합니다.
 
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.3.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.4.0
 codex plugin install agent-governance-suite@agent-governance
 ```
 
