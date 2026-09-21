@@ -16,16 +16,9 @@ workspace root, 대상 경로와 caller가 읽도록 허용한 instruction root�
 
 대상이 아직 없다면 `mayNotExist: true`를 명시한다. 허용된 root 밖의 경로, 외부를 가리키는 symlink·junction, 읽을 수 없는 지침 파일은 임의로 우회하지 않는다.
 
-## 실행
-
-1. 요청 JSON을 `node scripts/resolve-instruction-files.mjs`의 stdin으로 전달한다.
-2. 성공 응답의 `output.verdict`가 `ANALYSIS_REQUIRED`인지 확인하고, `instructionFileManifest`에 기록된 파일을 precedence 순서대로 모두 읽는다.
-3. [resolution-model.md](references/resolution-model.md)에 따라 넓은 범위의 규칙부터 적용한다.
-4. 자연어 규칙이 충돌하면 [conflict-classification.md](references/conflict-classification.md)에 따라 `activeRules`, `overriddenRules`, `unresolvedConflicts`를 채우고 `analysisStatus`를 `complete`로 바꾼다. 스크립트 결과만으로 의미 충돌을 해소했다고 주장하지 않는다.
-5. 미해결 충돌이 작업 범위, 권한 또는 완료 조건을 바꾸면 `NEEDS_INPUT`으로 반환한다.
-
-스크립트는 JSON만 stdout으로 출력한다. 직접 호출에서는 MCP 없이 구조화 결과와 짧은 사용자용 요약을 함께 제공한다.
-
+<!-- optimization-navigation:start condition="the skill is activated for the request" reference="references/entry-details.md" do-not-load-otherwise="true" -->
+- If the skill is activated for the request, read [entry details](references/entry-details.md) before producing any result or taking any action; otherwise do not read it.
+<!-- optimization-navigation:end -->
 ## 출력과 실패 처리
 
 출력은 `InstructionScopeResolution.v1`을 따른다. 파일 chain, SHA-256, 활성 규칙의 원본 위치와 미해결 충돌을 보존한다.
