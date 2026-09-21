@@ -1,0 +1,8 @@
+{
+  "baseCommit": "8305da8405bf4610101019bd461e262c8f3e8f5a",
+  "sha256": {
+    "mcp-server/dist/server.mjs": "e772e5d8c92c12afdf4e949ab0389a48545340804158f9384421ebb35150ffde",
+    "claude-plugin/mcp-server/dist/server.mjs": "e772e5d8c92c12afdf4e949ab0389a48545340804158f9384421ebb35150ffde"
+  },
+  "scope": "Only generated bundles for the P5 workflow bridge; not a release attestation."
+}

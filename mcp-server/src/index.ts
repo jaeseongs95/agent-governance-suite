@@ -18,7 +18,7 @@ import { ContractValidator } from "./schema-validator.js";
 import { createMcpServer } from "./server.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
-import { WorkflowService } from "./workflow-service.js";
+import { RoutingAwareWorkflowService } from "./routing-aware-workflow-service.js";
 import { HostAttestationProvider } from "./host-attestation.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { SqliteKoreanProseGlossary } from "./korean-prose-glossary.js";
@@ -39,7 +39,7 @@ async function main(): Promise<void> {
   const store = new SqliteWorkflowStore(workflowDatabasePath);
   const trustStore = new TrustStore(resolveTrustDatabasePath());
   // Additive routing tables share the workflow database, which the workflow store has already created.
-  const modelRouting = openModelRoutingService(workflowDatabasePath);
+  const modelRouting = openModelRoutingService(workflowDatabasePath, store);
   let continuityStore: SqliteContinuityStore | null = null;
   process.once("exit", () => {
     continuityStore?.close();
@@ -52,7 +52,8 @@ async function main(): Promise<void> {
   const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
   // Neither bundled host currently exposes a cryptographically distinct direct-human approval event.
   const trust = new TrustService(trustStore);
-  const service = new WorkflowService(
+  const service = new RoutingAwareWorkflowService(
+    modelRouting.bridge,
     new FileSkillRegistry(registryPath, validator),
     validator,
     store,
