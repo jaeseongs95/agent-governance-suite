@@ -29,6 +29,7 @@
     "source:check": "node scripts/check-source-lock.mjs",
     "source:verify": "node scripts/check-source-lock.mjs --remote",
     "source:updates": "node scripts/check-upstream-updates.mjs",
+    "skills:context-check": "node scripts/check-skill-context-optimization.mjs",
     "eval:preflight": "tsx scripts/verify-korean-prose-evaluation-preflight.ts",
     "eval:readiness": "tsx scripts/verify-korean-prose-readiness.ts",
     "eval:receipt": "tsx scripts/record-korean-prose-run.ts",
