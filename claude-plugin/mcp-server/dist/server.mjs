@@ -20921,6 +20921,180 @@ var ModelRoutingServiceCore = class {
     }
   }
 };
+function checkApplicationArtifactBinding(record3, { binding: binding2, target, requiredFields = [], store = null }) {
+  verifySeal(record3, "recordDigest");
+  if (requiredFields.length) assert2(store && canonical(store.application(record3.recordDigest)) === canonical(record3) && record3.observationAdmitted, "PERSISTED_HOST_OBSERVATION_REQUIRED");
+  assert2(canonical(record3.binding) === canonical(binding2) && canonical(record3.target) === canonical(target), "STAGE_ARTIFACT_BINDING_MISMATCH");
+  const map = { model: record3.modelVerification, reasoning: record3.reasoningVerification, runtimeMode: record3.runtimeModeVerification };
+  assert2(requiredFields.every((k) => Object.hasOwn(map, k) && map[k] === "matched"), "REQUIRED_OBSERVATION_UNVERIFIED");
+  return { diagnosticArtifactAccepted: true, trustedExecutionGateSatisfied: false, uri: `ags-model-record:${record3.recordDigest.slice(7)}`, digest: record3.recordDigest };
+}
+
+// mcp-server/src/model-routing-workflow.ts
+var MODEL_APPLICATION_SCHEMA = "https://skill-suite.local/contracts/model-application-record.v2.schema.json";
+var PREFIX = "ags-model-record:";
+var MAX_HISTORY = 1e4;
+function requireCondition(condition, message) {
+  if (!condition) throw new WorkflowContractError("BINDING_INVALID", message);
+}
+function asRecord(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+function routingReference(value) {
+  const item = asRecord(value);
+  return item.schemaId === MODEL_APPLICATION_SCHEMA || typeof item.locator === "string" && item.locator.startsWith(PREFIX);
+}
+function hasModelRoutingArtifacts(value) {
+  const result = asRecord(value);
+  const artifacts = asRecord(result.output).artifacts;
+  return Array.isArray(artifacts) && artifacts.some(routingReference) || Array.isArray(result.evidence) && result.evidence.some(routingReference);
+}
+var ModelRoutingWorkflowBridge = class {
+  constructor(workflow, routing, validator = new ContractValidator()) {
+    this.workflow = workflow;
+    this.routing = routing;
+    this.validator = validator;
+  }
+  workflow;
+  routing;
+  validator;
+  current(binding2) {
+    const receipt = this.workflow.getRun(binding2.runId);
+    requireCondition(receipt && receipt.plan.taskId === binding2.taskId, "Routing task/run binding does not match the workflow.");
+    requireCondition(receipt.state === "running" && receipt.revision === binding2.revision, "Routing binding has a stale workflow revision or an inactive run.");
+    const stage = receipt.plan.stages.find((item) => item.stageId === binding2.stageId);
+    requireCondition(stage && stage.state === "ready" && receipt.plan.currentStageId === stage.stageId, "Routing binding is not the current ready stage.");
+    const guarded = this.workflow.getGuardedRunBinding(binding2.runId);
+    requireCondition(guarded && guarded.lease.state === "consumed" && guarded.lease.leaseId === binding2.attemptId, "Routing binding requires the run's consumed workflow lease as attemptId.");
+    requireCondition(guarded.root.state === "open", "Routing lineage is not open.");
+    requireCondition(binding2.candidateDigest === guarded.lease.targetDigest || guarded.proposal.frame.targetArtifacts.some((item) => item.digest === binding2.candidateDigest), "Routing candidate is not in the frozen attempt frame.");
+    return { receipt, guarded };
+  }
+  /** Include all known participants conservatively, including failed/ambiguous dispatches and ancestors. */
+  history = (rawBinding, excludeDecisionDigest = null) => {
+    const bindingSchema = this.validator.modelSelectionRequestV2({
+      schemaVersion: "2.0.0",
+      binding: rawBinding,
+      role: "independent-audit",
+      highRisk: true,
+      requirements: {
+        inputModalities: [],
+        tools: [],
+        filesystem: "none",
+        allowedSurfaces: [],
+        allowedRuntimeModes: [],
+        allowNestedDelegation: false,
+        requireObservable: [],
+        excludedActors: [],
+        excludedSessions: [],
+        contextMode: "limited"
+      }
+    });
+    const { guarded } = this.current(bindingSchema.binding);
+    const actors = /* @__PURE__ */ new Set();
+    const sessions = /* @__PURE__ */ new Set();
+    const roots = /* @__PURE__ */ new Set();
+    const runs = /* @__PURE__ */ new Set();
+    let rootId = guarded.root.rootId;
+    while (rootId !== null) {
+      requireCondition(!roots.has(rootId) && roots.size < 128, "Routing audit lineage is cyclic or exceeds the history bound.");
+      roots.add(rootId);
+      const snapshot = this.workflow.getConvergenceSnapshot(rootId);
+      requireCondition(snapshot, "Routing audit lineage is incomplete.");
+      for (const proposal of snapshot.proposals) actors.add(proposal.actorId);
+      for (const lease of snapshot.leases) actors.add(lease.actorId);
+      for (const runId of snapshot.workflowRunIds) {
+        requireCondition(!runs.has(runId) && runs.size < MAX_HISTORY, "Routing audit run history is inconsistent or too large.");
+        runs.add(runId);
+        const receipt = this.workflow.getRun(runId);
+        requireCondition(receipt, "Routing audit workflow receipt is missing.");
+        const bootstrap = receipt.plan.bootstrapExecution?.context?.actorId;
+        if (bootstrap) actors.add(bootstrap);
+        for (const result of receipt.stageResults) {
+          if (result.executionContext?.actorId) actors.add(result.executionContext.actorId);
+        }
+        const rows = this.routing.database.prepare(
+          "SELECT payload FROM ags_model_dispatches_v2 WHERE json_extract(payload, '$.binding.runId') = ? LIMIT ?"
+        ).all(runId, MAX_HISTORY + 1);
+        requireCondition(rows.length <= MAX_HISTORY, "Routing audit dispatch history is too large.");
+        for (const row of rows) {
+          const decision = this.validator.modelRoutingDecisionV2(JSON.parse(row.payload));
+          const { decisionDigest, ...unsigned } = decision;
+          requireCondition(
+            convergenceDigest(unsigned) === decisionDigest && decision.binding.runId === runId && decision.target,
+            "Routing audit dispatch history is corrupt."
+          );
+          if (decision.decisionDigest === excludeDecisionDigest) continue;
+          actors.add(decision.target.actorId);
+          sessions.add(`${decision.target.host}/${decision.target.sessionId}`);
+        }
+      }
+      rootId = snapshot.root.parentRootId;
+    }
+    requireCondition(runs.has(bindingSchema.binding.runId), "Routing audit lineage omits the requested run.");
+    for (const raw of this.routing.capabilities()) {
+      const capability = this.validator.hostModelCapabilitiesV1(raw);
+      if (actors.has(capability.actorId)) sessions.add(`${capability.host}/${capability.sessionId}`);
+    }
+    requireCondition(actors.size <= MAX_HISTORY && sessions.size <= MAX_HISTORY, "Routing audit participant history is too large.");
+    return { actors: [...actors].sort(), sessions: [...sessions].sort() };
+  };
+  /** Validate optional diagnostic references before the existing stage/attestation gates run. */
+  validateStageArtifacts(result) {
+    const artifacts = result.output.artifacts.filter(routingReference);
+    const ids = /* @__PURE__ */ new Set();
+    for (const artifact of artifacts) {
+      requireCondition(!ids.has(artifact.artifactId), "Duplicate routing artifact ID.");
+      ids.add(artifact.artifactId);
+      requireCondition(
+        artifact.schemaId === MODEL_APPLICATION_SCHEMA && /^ags-model-record:[a-f0-9]{64}$/u.test(artifact.locator),
+        "Routing artifact requires the versioned schema and exact stored-record URI."
+      );
+      const recordDigest = `sha256:${artifact.locator.slice(PREFIX.length)}`;
+      requireCondition(
+        (artifact.digest.startsWith("sha256:") ? artifact.digest : `sha256:${artifact.digest}`) === recordDigest,
+        "Routing artifact URI and digest disagree."
+      );
+      const record3 = this.validator.modelApplicationRecordV2(this.routing.application(recordDigest));
+      const row = this.routing.database.prepare("SELECT request_json,payload FROM ags_model_decisions_v2 WHERE decision_digest=?").get(record3.decisionDigest);
+      requireCondition(row, "Routing application has no stored decision.");
+      const decision = this.validator.modelRoutingDecisionV2(JSON.parse(row.payload));
+      const request = this.validator.modelSelectionRequestV2(JSON.parse(row.request_json));
+      const { decisionDigest, ...unsigned } = decision;
+      requireCondition(
+        convergenceDigest(unsigned) === decisionDigest && convergenceDigest(request) === decision.requestDigest && record3.requestDigest === decision.requestDigest && canonicalJson(request.binding) === canonicalJson(decision.binding) && record3.catalogDigest === decision.catalogDigest && record3.policyDigest === decision.policyDigest && record3.capabilitySnapshotDigest === decision.capabilitySnapshotDigest && canonicalJson(record3.selected) === canonicalJson(decision.selected),
+        "Routing application decision/request binding is corrupt."
+      );
+      requireCondition(
+        record3.recordDigest === recordDigest && record3.binding.runId === result.runId && record3.binding.stageId === result.stageId && record3.binding.revision === result.expectedRevision,
+        "Routing application belongs to a different run, stage or revision."
+      );
+      this.current(record3.binding);
+      requireCondition(artifact.targetDigest === record3.binding.candidateDigest, "Routing artifact candidate digest does not match its application.");
+      const requiredFields = result.state === "passed" ? [.../* @__PURE__ */ new Set([...request.requirements.requireObservable, ...request.highRisk ? ["model", "reasoning", "runtimeMode"] : []])] : [];
+      checkApplicationArtifactBinding(record3, { binding: decision.binding, target: decision.target, requiredFields, store: this.routing });
+      if (result.state === "passed" && request.highRisk) {
+        requireCondition(
+          record3.observationAdmitted && record3.originVerified && record3.terminalOutcome === "succeeded",
+          "Passing high-risk routing evidence requires an admitted successful host outcome."
+        );
+      }
+      if (result.state === "passed" && request.role === "independent-audit") {
+        const history = this.history(record3.binding, record3.decisionDigest);
+        requireCondition(
+          !history.actors.includes(record3.target.actorId) && !history.sessions.includes(`${record3.target.host}/${record3.target.sessionId}`) && !request.requirements.excludedActors.includes(record3.target.actorId) && !request.requirements.excludedSessions.includes(`${record3.target.host}/${record3.target.sessionId}`),
+          "Routing audit actor participated before final adoption."
+        );
+      }
+    }
+    for (const evidence of result.evidence.filter(routingReference)) {
+      requireCondition(
+        artifacts.some((artifact) => artifact.artifactId === evidence.artifactId && artifact.locator === evidence.locator),
+        "Routing evidence has no matching validated artifact."
+      );
+    }
+  }
+};
 
 // skills/coordinate-subagents/scripts/model-evaluation.mjs
 import { readFileSync as readFileSync4 } from "node:fs";
@@ -21197,18 +21371,20 @@ var MODEL_CATALOG_DIRECTORY = fileURLToPath4(new URL("../../skills/coordinate-su
 function unavailableModelRouting() {
   return new ModelRoutingServiceCore({ catalogDirectory: MODEL_CATALOG_DIRECTORY });
 }
-function openModelRoutingService(databasePath) {
+function openModelRoutingService(databasePath, workflow) {
   let database = null;
   try {
     database = new DatabaseSync4(databasePath);
     database.exec("PRAGMA busy_timeout = 5000;");
     database.exec("PRAGMA synchronous = FULL;");
-    const service = new ModelRoutingServiceCore({ catalogDirectory: MODEL_CATALOG_DIRECTORY, store: new ModelRoutingStore(database) });
+    const store = new ModelRoutingStore(database);
+    const bridge = workflow ? new ModelRoutingWorkflowBridge(workflow, store) : null;
+    const service = new ModelRoutingServiceCore({ catalogDirectory: MODEL_CATALOG_DIRECTORY, store, historyProvider: bridge?.history ?? null });
     const opened = database;
-    return { service, close: () => opened.close() };
+    return { service, bridge, close: () => opened.close() };
   } catch {
     database?.close();
-    return { service: unavailableModelRouting(), close: () => {
+    return { service: unavailableModelRouting(), bridge: null, close: () => {
     } };
   }
 }
@@ -21353,7 +21529,7 @@ function resolveModelAssignmentInputSchema(profile) {
 var sendSessionMessageInputSchema = structuredClone(contractSchemas.sendSessionMessageRequest);
 var sendBodySchema = sendSessionMessageInputSchema.properties?.body;
 if (sendBodySchema) sendBodySchema.description = "A non-empty message body limited to 4096 UTF-8 bytes by the service.";
-function asRecord(value) {
+function asRecord2(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
 function integer3(value) {
@@ -21681,7 +21857,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
     ])
   }));
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const args = asRecord(request.params.arguments);
+    const args = asRecord2(request.params.arguments);
     const attested = (tool, call) => hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
     const withMode = (field, call, project) => {
       const mode = responseMode(args, field);
@@ -23772,7 +23948,7 @@ function loadStageOutputFile(reference, read = readLocalStageOutputFile) {
 }
 
 // mcp-server/src/workflow-service.ts
-function asRecord2(value) {
+function asRecord3(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
 function apiOk2(data) {
@@ -24119,7 +24295,7 @@ var WorkflowService = class {
     });
   }
   normalizeAttemptProposal(rawProposal) {
-    const candidate = asRecord2(rawProposal);
+    const candidate = asRecord3(rawProposal);
     const hasTaskEnvelope = Object.hasOwn(candidate, "taskEnvelope");
     const hasFrame = Object.hasOwn(candidate, "frame");
     if (hasTaskEnvelope !== hasFrame) {
@@ -24135,7 +24311,7 @@ var WorkflowService = class {
     });
   }
   normalizeGuardedWorkflowStartRequest(rawRequest) {
-    const candidate = asRecord2(rawRequest);
+    const candidate = asRecord3(rawRequest);
     if (Object.hasOwn(candidate, "plan")) return this.validator.guardedWorkflowStartRequest(rawRequest);
     const leaseId = typeof candidate.leaseId === "string" ? candidate.leaseId : "";
     const binding2 = this.store.getAttemptLease(leaseId);
@@ -24250,7 +24426,7 @@ var WorkflowService = class {
   }
   recordStageResult(rawResult, requireTrustedExecutionContext = false) {
     try {
-      const callerResult = asRecord2(rawResult);
+      const callerResult = asRecord3(rawResult);
       if (requireTrustedExecutionContext && Object.prototype.hasOwnProperty.call(callerResult, "executionContext")) {
         throw new WorkflowContractError(
           "BINDING_INVALID",
@@ -25299,6 +25475,27 @@ var WorkflowService = class {
       message: "Workflow request could not be processed.",
       details: { cause: error2 instanceof Error ? error2.message : String(error2) }
     };
+  }
+};
+
+// mcp-server/src/routing-aware-workflow-service.ts
+var RoutingAwareWorkflowService = class extends WorkflowService {
+  constructor(routingBridge, ...args) {
+    super(...args);
+    this.routingBridge = routingBridge;
+  }
+  routingBridge;
+  routingValidator = new ContractValidator();
+  recordStageResult(rawResult, requireTrustedExecutionContext = false) {
+    if (hasModelRoutingArtifacts(rawResult)) {
+      try {
+        if (!this.routingBridge) throw new WorkflowContractError("BINDING_REQUIRED", "Model routing evidence storage is unavailable.");
+        this.routingBridge.validateStageArtifacts(this.routingValidator.stageResult(rawResult));
+      } catch (error2) {
+        return { schemaVersion: "1.0.0", ok: false, data: null, error: error2 instanceof WorkflowContractError ? error2.toBody() : { code: "BINDING_INVALID", message: error2 instanceof Error ? error2.message : "Routing evidence validation failed.", details: null } };
+      }
+    }
+    return super.recordStageResult(rawResult, requireTrustedExecutionContext);
   }
 };
 
@@ -29994,7 +30191,7 @@ async function main() {
   }
   const store = new SqliteWorkflowStore(workflowDatabasePath);
   const trustStore = new TrustStore(resolveTrustDatabasePath());
-  const modelRouting = openModelRoutingService(workflowDatabasePath);
+  const modelRouting = openModelRoutingService(workflowDatabasePath, store);
   let continuityStore = null;
   process.once("exit", () => {
     continuityStore?.close();
@@ -30005,7 +30202,8 @@ async function main() {
   const validator = new ContractValidator();
   const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
   const trust = new TrustService(trustStore);
-  const service = new WorkflowService(
+  const service = new RoutingAwareWorkflowService(
+    modelRouting.bridge,
     new FileSkillRegistry(registryPath, validator),
     validator,
     store,
