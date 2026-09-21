@@ -1,0 +1,87 @@
+name: Model routing integration verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/v250-model-routing-integration
+
+permissions:
+  contents: read
+
+concurrency:
+  group: model-routing-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: ['22', '24']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Archive exact candidate source
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '22'
+        shell: bash
+        run: |
+          mkdir -p evidence
+          git rev-parse HEAD > evidence/commit.txt
+          git archive --format=tar HEAD > evidence/source.tar
+      - name: Retain source independently of validation result
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '22'
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-routing-source-${{ github.sha }}
+          path: evidence/
+          retention-days: 7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install frozen dependencies
+        shell: bash
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+      - name: Check committed artifacts before rebuilding
+        shell: bash
+        run: |
+          pnpm bundle:check
+          pnpm claude:drift
+          pnpm release:check
+          pnpm source:check
+      - name: Validate and test exact candidate
+        shell: bash
+        env:
+          PYTHONUTF8: '1'
+        run: |
+          pnpm lint
+          pnpm build
+          pnpm test
+          pnpm runtime:check
+          pnpm validate:all
+          pnpm validate:official
+          git diff --check
+      - name: Record final working tree status
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p evidence
+          git status --porcelain=v1 > evidence/working-tree.txt
+          git rev-parse HEAD > evidence/commit.txt
+      - name: Retain validation metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-routing-verification-${{ matrix.os }}-${{ matrix.node }}-${{ github.sha }}
+          path: evidence/*.txt
+          retention-days: 14
