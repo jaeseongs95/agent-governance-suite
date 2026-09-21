@@ -20979,6 +20979,30 @@ var ModelRoutingWorkflowBridge = class {
     requireCondition(binding2.candidateDigest === guarded.lease.targetDigest || guarded.proposal.frame.targetArtifacts.some((item) => item.digest === binding2.candidateDigest), "Routing candidate is not in the frozen attempt frame.");
     return { receipt, guarded };
   }
+  /** Read-only handoff admission, not a lease issuer or an execution approval. */
+  validatePeerHandoff(rawRequest, receiverActor = null) {
+    const request = this.validator.modelSelectionRequestV2(rawRequest);
+    const { guarded } = this.current(request.binding);
+    requireCondition(guarded.outcome === null, "The workflow attempt already has an outcome.");
+    const authorization = guarded.proposal.taskEnvelope.authorization;
+    requireCondition(
+      guarded.proposal.taskEnvelope.riskLevel !== "high" || request.highRisk,
+      "A peer handoff cannot downgrade the task risk."
+    );
+    const required2 = /* @__PURE__ */ new Set([
+      ...request.requirements.tools,
+      ...request.requirements.filesystem === "none" ? [] : ["read"],
+      ...request.requirements.filesystem === "write" ? ["write"] : []
+    ]);
+    requireCondition([...required2].every((action) => authorization.allowedActions.includes(action) && !authorization.prohibitedActions.includes(action)), "Peer tools or filesystem exceed the local task authorization.");
+    if (receiverActor !== null) {
+      requireCondition(guarded.lease.actorId === receiverActor, "The receiver is not the existing local lease owner.");
+      requireCondition(!request.requirements.excludedActors.includes(receiverActor), "The peer actor is excluded.");
+      if (request.role === "independent-audit") {
+        requireCondition(!this.history(request.binding).actors.includes(receiverActor), "The peer auditor participated in the workflow.");
+      }
+    }
+  }
   /** Include all known participants conservatively, including failed/ambiguous dispatches and ancestors. */
   history = (rawBinding, excludeDecisionDigest = null) => {
     const bindingSchema = this.validator.modelSelectionRequestV2({

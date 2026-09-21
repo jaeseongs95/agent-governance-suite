@@ -54,6 +54,30 @@ export class ModelRoutingWorkflowBridge {
     return { receipt, guarded };
   }
 
+  /** Read-only handoff admission, not a lease issuer or an execution approval. */
+  validatePeerHandoff(rawRequest: unknown, receiverActor: string | null = null): void {
+    const request = this.validator.modelSelectionRequestV2(rawRequest);
+    const { guarded } = this.current(request.binding);
+    requireCondition(guarded.outcome === null, "The workflow attempt already has an outcome.");
+    const authorization = guarded.proposal.taskEnvelope.authorization;
+    requireCondition(guarded.proposal.taskEnvelope.riskLevel !== "high" || request.highRisk,
+      "A peer handoff cannot downgrade the task risk.");
+    const required = new Set([...request.requirements.tools,
+      ...(request.requirements.filesystem === "none" ? [] : ["read"]),
+      ...(request.requirements.filesystem === "write" ? ["write"] : [])]);
+    requireCondition([...required].every(action => authorization.allowedActions.includes(action)
+      && !authorization.prohibitedActions.includes(action)), "Peer tools or filesystem exceed the local task authorization.");
+    if (receiverActor !== null) {
+      // This increment admits only an already-authorized local lease owner. It does not import
+      // a foreign task/lease or infer a new delegation grant from a message or model selection.
+      requireCondition(guarded.lease.actorId === receiverActor, "The receiver is not the existing local lease owner.");
+      requireCondition(!request.requirements.excludedActors.includes(receiverActor), "The peer actor is excluded.");
+      if (request.role === "independent-audit") {
+        requireCondition(!this.history(request.binding).actors.includes(receiverActor), "The peer auditor participated in the workflow.");
+      }
+    }
+  }
+
   /** Include all known participants conservatively, including failed/ambiguous dispatches and ancestors. */
   history = (rawBinding: unknown, excludeDecisionDigest: string | null = null): { actors: string[]; sessions: string[] } => {
     // Reuse the versioned binding schema rather than accepting caller-authored history.

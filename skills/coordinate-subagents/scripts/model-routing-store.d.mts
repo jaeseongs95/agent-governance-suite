@@ -9,6 +9,8 @@ export declare class RoutingObservationSigner {
 export declare class ModelRoutingStore {
   readonly database:DatabaseSync;
   constructor(database:DatabaseSync);
+  reserveDispatch(decision:ModelRoutingDecisionV2,options?:{write?:boolean}):{dispatchKey:string;duplicate:boolean;state:string;revision:number};
+  transition(key:string,revision:number,state:string,reference?:string|null,now?:string|null):{dispatchKey:string;state:string;revision:number};
   capabilities():unknown[];
   application(digest:string):unknown;
   decision(digest:string):{request:ModelSelectionRequestV2;decision:ModelRoutingDecisionV2;environment:{catalog:ModelCatalogV1;policy:ModelRoutingPolicyV1;capabilities:HostModelCapabilitiesV1[];now:string};resolvedAt:string}|null;

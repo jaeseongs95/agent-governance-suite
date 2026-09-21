@@ -14,6 +14,7 @@ const requiredFiles = [
   "mcp-server/dist/continuity-hook.mjs",
   "mcp-server/dist/host-attestation-hook.mjs",
   "mcp-server/dist/model-routing-host-hook.mjs",
+  "mcp-server/dist/model-routing-peer-cli.mjs",
   "mcp-server/dist/session-board-hook.mjs",
   "mcp-server/dist/session-message-broker.mjs",
   "mcp-server/dist/session-message-cli.mjs",

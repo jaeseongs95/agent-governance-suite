@@ -14,6 +14,8 @@ import { adaptHostInput, hostDeliveryProfile, type SupportedHookHost } from "./h
 import { isObservedSubagent, supportsInjection } from "./input-observation.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "./session-message-protocol.js";
 
+import { observeNativePeerHandoff } from "./model-routing-peer-native.js";
+
 const SESSION_BOUND_TOOLS = new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
 const SUBAGENT_DENIED_TOOLS = new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
 const HOST_CLAIM_MAX_MESSAGES = 1;
@@ -201,9 +203,18 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       await sessionMessageRequest("clear-deferred", { target }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
     }
   }
-  return messages.length > 0
-    ? additionalContext(adapted.outputEventName, sessionMessageEnvelope(recordPeerMessages(host, sessionId, messages)))
-    : {};
+  if (messages.length === 0) return {};
+  const recorded = recordPeerMessages(host, sessionId, messages);
+  let context = sessionMessageEnvelope(recorded);
+  // Optional typed handoff processing never claims a second message or acknowledges unrelated work.
+  // The original peer warning/provenance remains intact, including when admission is unavailable.
+  for (const message of recorded) {
+    const result = await observeNativePeerHandoff(host, input, message);
+    if (!result) continue;
+    const appended = `${context}\nNative handoff diagnostic (not execution permission): ${JSON.stringify(result)}`;
+    if (Buffer.byteLength(appended, "utf8") <= SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES) context = appended;
+  }
+  return additionalContext(adapted.outputEventName, context);
 }
 
 /** Every broker failure is fail-open so messaging never blocks the host. */

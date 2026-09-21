@@ -22,7 +22,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     await mkdir(path.join(cleanRoot, "mcp-server", "dist"), { recursive: true });
     await Promise.all([
       ...["contracts", "runtime", "skills"].map((directory) => cp(path.join(sourceRoot, directory), path.join(cleanRoot, directory), { recursive: true })),
-      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "model-routing-host-hook.mjs", "session-board-hook.mjs"].map((bundle) => (
+      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "model-routing-host-hook.mjs", "model-routing-peer-cli.mjs", "session-board-hook.mjs"].map((bundle) => (
         cp(path.join(sourceRoot, "mcp-server", "dist", bundle), path.join(cleanRoot, "mcp-server", "dist", bundle))
       )),
     ]);
@@ -32,6 +32,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     delete environment.AGENT_GOVERNANCE_ROOT;
     delete environment.NODE_OPTIONS;
     delete environment.NODE_PATH;
+    environment.AGENT_GOVERNANCE_PEER_ROUTING = "0";
     environment.AGENT_GOVERNANCE_DB_PATH = path.join(cleanRoot, "state", "workflows.sqlite3");
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = path.join(cleanRoot, "state", "continuity.sqlite3");
     environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = path.join(cleanRoot, "state", "session-board.sqlite3");
@@ -68,6 +69,11 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     }
 
     for (const host of ["codex", "claude-code"]) {
+      const peer = runNode("mcp-server/dist/model-routing-peer-cli.mjs", "{}\n", ["--host", host]);
+      if (peer.error || peer.status !== 1 || !peer.stdout.includes('"error":"PEER_HANDOFF_UNAVAILABLE"')
+        || /ERR_MODULE_NOT_FOUND|Cannot find package/u.test(peer.stderr ?? "")) {
+        throw new Error(`Peer handoff CLI failed its opt-out clean-room check for ${host}.`);
+      }
       const observed = runNode("mcp-server/dist/model-routing-host-hook.mjs", "{}\n", ["--host", host]);
       if (observed.error || observed.status !== 0 || observed.stdout !== "" || /AGS native routing observation unavailable|ERR_MODULE_NOT_FOUND|Cannot find package/u.test(observed.stderr ?? "")) {
         throw new Error(`Native routing hook failed its dependency-free ${host} smoke check.\n${observed.stderr ?? ""}`);

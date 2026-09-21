@@ -31,6 +31,12 @@ export const RUNTIME_BUNDLES = Object.freeze([
     executable: true,
   }),
   Object.freeze({
+    id: "model-routing-peer-cli",
+    entry: "mcp-server/src/model-routing-peer-cli.ts",
+    output: "mcp-server/dist/model-routing-peer-cli.mjs",
+    executable: true,
+  }),
+  Object.freeze({
     id: "model-routing-host-hook",
     entry: "mcp-server/src/model-routing-host-hook.ts",
     output: "mcp-server/dist/model-routing-host-hook.mjs",
