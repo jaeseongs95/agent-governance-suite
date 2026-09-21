@@ -34,6 +34,7 @@ jobs:
           mkdir -p evidence
           git rev-parse HEAD > evidence/commit.txt
           git archive --format=tar HEAD > evidence/source.tar
+          git bundle create evidence/history.bundle --all
       - name: Retain source independently of validation result
         if: matrix.os == 'ubuntu-latest' && matrix.node == '22'
         uses: actions/upload-artifact@v4
@@ -52,6 +53,21 @@ jobs:
         run: |
           corepack enable
           pnpm install --frozen-lockfile
+      - name: Archive locked Linux dependencies
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '22'
+        shell: bash
+        run: |
+          tar -czf evidence/dependencies.tgz node_modules
+          cp pnpm-lock.yaml evidence/pnpm-lock.yaml
+      - name: Retain offline reproduction dependencies
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '22'
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-routing-dependencies-${{ github.sha }}
+          path: |
+            evidence/dependencies.tgz
+            evidence/pnpm-lock.yaml
+          retention-days: 1
       - name: Check committed artifacts before rebuilding
         shell: bash
         run: |
@@ -80,7 +96,11 @@ jobs:
           git rev-parse HEAD > evidence/commit.txt
       - name: Retain validation metadata
         if: always()
-        uses: actions/upload-artifact@v4
+        shell: bash
+        run: |
+          echo 'Live vendor accounts and independent audits are not exercised by this workflow.' >> evidence/commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: model-routing-verification-${{ matrix.os }}-${{ matrix.node }}-${{ github.sha }}
           path: evidence/*.txt
