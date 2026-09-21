@@ -28,7 +28,7 @@ export class ModelRoutingServiceCore {
     const entry=this.store.decision(input.application?.decisionDigest);assert(entry,'DECISION_UNKNOWN');
     const now=this.clock();instant(now,'now');
     assert(Date.parse(input.application.dispatchedAt)<=Date.parse(now),'DISPATCH_TIME_IN_FUTURE');
-    const token=input.observationToken??null;
+    const token=this.store.nativeHookObservationToken(input.application)??input.observationToken??null;
     if(token!==null){
       assert(typeof token==='string'&&/^[a-f0-9]{48}$/u.test(token),'INVALID_OBSERVATION_TOKEN');
       const dispatch=this.store.dispatch(digest({binding:input.application.binding}));

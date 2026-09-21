@@ -951,6 +951,7 @@ async function startSessionMessageBroker(stateDirectory) {
     let lastActivity = Date.now();
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
       lastActivity = Date.now();
+      socket.on("error", () => socket.destroy());
       let buffer = "";
       socket.setTimeout(5e3, () => socket.destroy());
       socket.on("data", (chunk) => {
@@ -980,6 +981,7 @@ async function startSessionMessageBroker(stateDirectory) {
     server = activeServer;
     activeServer.on("connection", (socket) => {
       sockets.add(socket);
+      socket.on("error", () => socket.destroy());
       socket.once("close", () => sockets.delete(socket));
     });
     await new Promise((resolve, reject) => {
