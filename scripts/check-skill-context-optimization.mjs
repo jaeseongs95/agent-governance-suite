@@ -48,6 +48,15 @@ function sameSet(left, right) {
   return left.length === right.length && [...left].sort().every((value, index) => value === [...right].sort()[index]);
 }
 
+export function reconstructOptimizedSkill(skillId, root = ROOT) {
+  const candidate = readFileSync(join(root, "skills", skillId, "SKILL.md"));
+  const detail = readFileSync(join(root, "skills", skillId, "references", "entry-details.md"));
+  const markerIndex = candidate.indexOf(NAVIGATION);
+  if (markerIndex < 0) throw new Error(`${skillId}: navigation marker is missing`);
+  const suffix = NO_SEPARATOR_SUFFIX.has(skillId) ? Buffer.alloc(0) : Buffer.from("\n");
+  return Buffer.concat([candidate.subarray(0, markerIndex), detail, suffix, candidate.subarray(markerIndex + NAVIGATION.length)]);
+}
+
 export function checkSkillContextOptimization() {
   const errors = [];
   const detailOwners = readdirSync(join(ROOT, "skills"), { withFileTypes: true })
@@ -71,13 +80,9 @@ export function checkSkillContextOptimization() {
     const detailPath = `skills/${skillId}/references/entry-details.md`;
     const baseline = baselineFile(skillPath);
     const candidate = readFileSync(join(ROOT, ...skillPath.split("/")));
-    const detail = readFileSync(join(ROOT, ...detailPath.split("/")));
     const markerIndex = candidate.indexOf(NAVIGATION);
     const markerCount = candidate.toString("utf8").split("<!-- optimization-navigation:start").length - 1;
-    const suffix = NO_SEPARATOR_SUFFIX.has(skillId) ? Buffer.alloc(0) : Buffer.from("\n");
-    const reconstructed = markerIndex < 0
-      ? Buffer.alloc(0)
-      : Buffer.concat([candidate.subarray(0, markerIndex), detail, suffix, candidate.subarray(markerIndex + NAVIGATION.length)]);
+    const reconstructed = markerIndex < 0 ? Buffer.alloc(0) : reconstructOptimizedSkill(skillId);
 
     if (markerCount !== 1 || markerIndex < 0) errors.push(`${skillId}: navigation marker must occur exactly once`);
     if (!reconstructed.equals(baseline)) errors.push(`${skillId}: SKILL.md plus entry-details.md does not reconstruct the baseline byte-for-byte`);

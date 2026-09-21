@@ -16,10 +16,12 @@ afterEach(async () => {
 
 describe("Korean prose evaluation preflight", () => {
   it("requires every frozen model phase to pass the repository preflight", async () => {
-    const [skill, integration] = await Promise.all([
+    const [entry, detail, integration] = await Promise.all([
       readFile(new URL("../../skills/korean-prose-editor/SKILL.md", import.meta.url), "utf8"),
+      readFile(new URL("../../skills/korean-prose-editor/references/entry-details.md", import.meta.url), "utf8"),
       readFile(new URL("../../skills/korean-prose-editor/references/integration.md", import.meta.url), "utf8"),
     ]);
+    const skill = `${entry}\n${detail}`;
 
     expect(skill).toContain("`eval:preflight`");
     expect(skill).toContain("실패하면 해당 provider와 이후 단계를 호출하지 않으며");

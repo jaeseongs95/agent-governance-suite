@@ -50,7 +50,7 @@ describe("ponytail at the implementation step", () => {
 
   it("keeps the implementation-stage boundaries in the shared and Claude orchestrator copies", () => {
     for (const copy of ["skills/orchestrator/SKILL.md", "claude-plugin/skills/orchestrator/SKILL.md"]) {
-      const text = readFileSync(`${root}${copy}`, "utf8");
+      const text = `${readFileSync(`${root}${copy}`, "utf8")}\n${readFileSync(`${root}${copy.replace("SKILL.md", "references/entry-details.md")}`, "utf8")}`;
       expect(text).toContain("이 단계는 변경 전 기준선 뒤, 위험한 상태 변경의 사전 점검과 범위·수용 근거 확인 전에 실행된다.");
       expect(text).toContain("배포·push·태그처럼 사전 점검 대상인 작업은 사전 점검 뒤에 실행하고");
       expect(text).toContain("범위와 수용 기준은 명시적 요청으로 보고 줄이지 않으며");

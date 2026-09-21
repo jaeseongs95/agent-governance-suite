@@ -28,7 +28,7 @@ describe("installed skill runtime", () => {
     const skills = (await readdir(skillRoot, { withFileTypes: true })).filter((entry) => entry.isDirectory());
     const documented = new Set();
     for (const skill of skills) {
-      for (const document of ["SKILL.md", "README.md"]) {
+      for (const document of ["SKILL.md", "README.md", "references/entry-details.md"]) {
         const contents = await readFile(path.join(skillRoot, skill.name, document), "utf8").catch(() => "");
         for (const match of contents.matchAll(/scripts\/([A-Za-z0-9_.-]+\.mjs)/gu)) {
           documented.add(`skills/${skill.name}/scripts/${match[1]}`);

@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { expect, it } from "vitest";
+import { reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
 
 it("preserves the recorded blind static evaluation, not a fresh model evaluation", () => {
   const load = (file) => JSON.parse(readFileSync(new URL(file, import.meta.url), "utf8"));
@@ -16,7 +17,9 @@ it("preserves the recorded blind static evaluation, not a fresh model evaluation
     expect(actual.evidence.length).toBeGreaterThan(0);
   }
   for (const [file, expected] of Object.entries(receipt.files)) {
-    const bytes = readFileSync(new URL(`../../${file}`, import.meta.url));
+    const bytes = file === "skills/software-security-auditor/SKILL.md"
+      ? reconstructOptimizedSkill("software-security-auditor")
+      : readFileSync(new URL(`../../${file}`, import.meta.url));
     expect(`sha256:${createHash("sha256").update(bytes).digest("hex")}`, file).toBe(expected);
   }
 });

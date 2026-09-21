@@ -21,7 +21,9 @@ interface BehaviorCase {
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const fixturePath = fileURLToPath(new URL("../orchestrator/behavior-cases.json", import.meta.url));
-const orchestratorInstructions = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8");
+const orchestratorInstructions = ["SKILL.md", "references/entry-details.md"]
+  .map((file) => readFileSync(new URL(`../../skills/orchestrator/${file}`, import.meta.url), "utf8"))
+  .join("\n");
 const fixture = JSON.parse(readFileSync(fixturePath, "utf8")) as { cases: BehaviorCase[] };
 
 describe("orchestrator behavior fixtures", () => {
