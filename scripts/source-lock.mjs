@@ -14,6 +14,14 @@ const IMPORT_ALLOWLIST = new Set([
   "README.md", "LICENSE", "COMPATIBILITY.md", "CHANGELOG.md", "VERSION",
 ]);
 
+function isInternalSource(source) {
+  return source?.updatePolicy === "internal";
+}
+
+function isExternalSource(source) {
+  return source?.updatePolicy === "auto-pr" || source?.updatePolicy === "notify-only";
+}
+
 export function compareVersions(left, right) {
   const a = left.split(".").map(Number);
   const b = right.split(".").map(Number);
@@ -40,8 +48,8 @@ export async function verifySourceLockOffline() {
     readJson(path.join(ROOT, "skills", "registry.json")),
   ]);
   const errors = [];
-  if (lock.schemaVersion !== "2.0.0" || !Array.isArray(lock.sources)) {
-    return ["skills/source-lock.json must be a v2 sources document"];
+  if (lock.schemaVersion !== "3.0.0" || !Array.isArray(lock.sources)) {
+    return ["skills/source-lock.json must be a v3 sources document"];
   }
   const registrySkills = Array.isArray(registry.skills) ? registry.skills : [];
   const registryById = new Map(registrySkills.map((skill) => [skill.skillId, skill]));
@@ -55,22 +63,28 @@ export async function verifySourceLockOffline() {
     if (source.path !== `skills/${label}`) errors.push(`invalid source lock path for ${label}`);
     if (!["auto-pr", "notify-only", "internal"].includes(source.updatePolicy)) errors.push(`invalid update policy for ${label}`);
     if (!SEMVER.test(source.version ?? "")) errors.push(`invalid source version for ${label}`);
-    if (!SHA.test(source.ref?.commit ?? "")) errors.push(`invalid source commit for ${label}`);
-    if (source.ref?.kind === "tag" && source.ref.value !== `v${source.version}`) errors.push(`tag/version mismatch for ${label}`);
-    if (source.ref?.kind === "commit" && source.ref.value !== source.ref.commit) errors.push(`commit ref mismatch for ${label}`);
-    if (!DIGEST.test(source.upstreamChecksum ?? "") || !DIGEST.test(source.integratedChecksum ?? "")) {
-      errors.push(`invalid source checksum for ${label}`);
-    }
-    if (!Array.isArray(source.downstreamModifications)) errors.push(`downstream modifications must be an array for ${label}`);
-    if ((source.downstreamModifications?.length ?? 0) === 0 && source.upstreamChecksum !== source.integratedChecksum) {
-      errors.push(`unmodified source checksums differ for ${label}`);
-    }
-    if ((source.downstreamModifications?.length ?? 0) > 0 && source.updatePolicy === "auto-pr") {
-      errors.push(`modified source cannot use auto-pr for ${label}`);
-    }
-    // A commit pin carries content no stable tag names, so the version no longer identifies what is integrated.
-    if (source.updatePolicy === "auto-pr" && source.ref?.kind !== "tag") {
-      errors.push(`auto-pr source must be pinned to a stable tag for ${label}`);
+    if (!DIGEST.test(source.integratedChecksum ?? "")) errors.push(`invalid integrated checksum for ${label}`);
+    if (isInternalSource(source)) {
+      const externalFields = ["source", "sourcePath", "ref", "upstreamChecksum", "downstreamModifications"];
+      if (externalFields.some((field) => Object.hasOwn(source, field))) {
+        errors.push(`internal source carries external provenance for ${label}`);
+      }
+    } else {
+      if (!SHA.test(source.ref?.commit ?? "")) errors.push(`invalid source commit for ${label}`);
+      if (source.ref?.kind === "tag" && source.ref.value !== `v${source.version}`) errors.push(`tag/version mismatch for ${label}`);
+      if (source.ref?.kind === "commit" && source.ref.value !== source.ref.commit) errors.push(`commit ref mismatch for ${label}`);
+      if (!DIGEST.test(source.upstreamChecksum ?? "")) errors.push(`invalid upstream checksum for ${label}`);
+      if (!Array.isArray(source.downstreamModifications)) errors.push(`downstream modifications must be an array for ${label}`);
+      if ((source.downstreamModifications?.length ?? 0) === 0 && source.upstreamChecksum !== source.integratedChecksum) {
+        errors.push(`unmodified source checksums differ for ${label}`);
+      }
+      if ((source.downstreamModifications?.length ?? 0) > 0 && source.updatePolicy === "auto-pr") {
+        errors.push(`modified source cannot use auto-pr for ${label}`);
+      }
+      // A commit pin carries content no stable tag names, so the version no longer identifies what is integrated.
+      if (source.updatePolicy === "auto-pr" && source.ref?.kind !== "tag") {
+        errors.push(`auto-pr source must be pinned to a stable tag for ${label}`);
+      }
     }
     try {
       const version = await readSkillVersion(path.join(ROOT, source.path));
@@ -169,6 +183,7 @@ export async function verifySourceLockRemote() {
   const lock = await readJson(path.join(ROOT, "skills", "source-lock.json"));
   const errors = [];
   for (const source of lock.sources ?? []) {
+    if (!isExternalSource(source)) continue;
     const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "source-lock-verify-"));
     try {
       const repository = path.join(temporaryDirectory, "repository");
@@ -210,7 +225,7 @@ export async function discoverUpstreamUpdates() {
   const lock = await readJson(path.join(ROOT, "skills", "source-lock.json"));
   const results = [];
   for (const source of lock.sources ?? []) {
-    if (source.updatePolicy === "internal") continue;
+    if (!isExternalSource(source)) continue;
     // Keep this key order: the JSON report is compared as written.
     const report = (latest, error) => ({
       skillId: source.skillId,

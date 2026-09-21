@@ -15,7 +15,6 @@ import {
 import { preflightStructuredKoreanProseEvaluation } from "../../scripts/korean-prose-evaluation-preflight.js";
 
 const temporaryDirectories: string[] = [];
-const sourceCommit = "c5df63749e2edfc8aa424f9935ee3cd4697d3c49";
 const repositoryRoot = path.resolve(import.meta.dirname, "../..");
 
 afterEach(async () => {
@@ -112,16 +111,18 @@ async function createReadinessFixture(options: {
   const validityEvidence = `${JSON.stringify({ sourceReview: "fixture", overlapReview: "fixture", strataReview: "fixture" })}\n`;
   const invalidCorpusEvidence = `${JSON.stringify({ schemaVersion: "1.0.0", frameId: "0.1.0-rc1", disposition: "invalid-corpus", status: "terminal" })}\n`;
   const failedRecoveryEvidence = `${JSON.stringify({ schemaVersion: "1.0.0", frameId: "0.1.0-rc2", disposition: "failed-recovery", status: "terminal" })}\n`;
+  const suiteRevision = execFileSync("git", ["rev-parse", "HEAD"], { cwd: repositoryRoot, encoding: "utf8" }).trim();
+  const integratedSkillChecksum = await computeDirectoryChecksum(path.join(repositoryRoot, "skills", "korean-prose-editor"));
   const framePayload = {
     schemaVersion: "1.0.0",
     frameId: "0.2.0-private-1",
     status: "frozen",
     createdAt: "2026-09-13T00:00:00.000Z",
     candidate: {
-      suiteRevision: execFileSync("git", ["rev-parse", "HEAD"], { cwd: repositoryRoot, encoding: "utf8" }).trim(),
-      skillSourceCommit: sourceCommit,
-      skillSourceChecksum: "sha256:a88252aa9c4e654458ecc7eed282d26c022ca9f5db858f87f3237decc622feb8",
-      integratedSkillChecksum: await computeDirectoryChecksum(path.join(repositoryRoot, "skills", "korean-prose-editor")),
+      suiteRevision,
+      skillSourceCommit: suiteRevision,
+      skillSourceChecksum: integratedSkillChecksum,
+      integratedSkillChecksum,
       toolchainDigest: await computeKoreanProseToolchainDigest(repositoryRoot),
     },
     corpus: {

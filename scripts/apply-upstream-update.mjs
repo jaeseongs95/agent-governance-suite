@@ -11,7 +11,7 @@ if (!skillId || !requestedTag) throw new Error("Usage: node scripts/apply-upstre
 
 const lock = await readJson(path.join(ROOT, "skills", "source-lock.json"));
 const source = lock.sources.find((entry) => entry.skillId === skillId);
-if (!source || source.updatePolicy !== "auto-pr" || source.downstreamModifications.length > 0) {
+if (!source || source.updatePolicy !== "auto-pr" || !Array.isArray(source.downstreamModifications) || source.downstreamModifications.length > 0) {
   throw new Error(`${skillId} is not eligible for an automatic update`);
 }
 const update = (await discoverUpstreamUpdates()).find((entry) => entry.skillId === skillId);

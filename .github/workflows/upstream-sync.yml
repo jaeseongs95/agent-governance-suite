@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Verify pinned upstream refs and checksums
+      - name: Verify pinned external refs and checksums
         run: node scripts/check-source-lock.mjs --remote
       - name: Discover exact stable semantic-version tags
         run: node scripts/check-upstream-updates.mjs upstream-report.json

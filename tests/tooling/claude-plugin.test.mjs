@@ -251,6 +251,8 @@ describe("Claude overlay safeguards", () => {
   it("does not render Codex-only OpenAI agent metadata", async () => {
     const files = await renderClaudePlugin(root);
     expect([...files.keys()].filter((file) => /^skills\/[^/]+\/agents\/openai\.yaml$/u.test(file))).toEqual([]);
+    expect(files.has("contracts/source-lock.v3.schema.json")).toBe(true);
+    expect(files.has("contracts/source-lock.v2.schema.json")).toBe(false);
   });
 
   it("reports Codex-only wording in model-visible files except dual-host documents", () => {

@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { computeDirectoryChecksum } from "../../scripts/lib.mjs";
+
 const root = path.resolve(import.meta.dirname, "../..");
 const temporaryDirectories = [];
 
@@ -13,7 +15,7 @@ async function createSuiteRoot() {
   await mkdir(path.join(directory, "skills"), { recursive: true });
   await mkdir(path.join(directory, "tests"), { recursive: true });
   await writeFile(path.join(directory, "skills", "registry.json"), '{"schemaVersion":"2.0.0","skills":[]}\n');
-  await writeFile(path.join(directory, "skills", "source-lock.json"), '{"schemaVersion":"2.0.0","sources":[]}\n');
+  await writeFile(path.join(directory, "skills", "source-lock.json"), '{"schemaVersion":"3.0.0","sources":[]}\n');
   return directory;
 }
 
@@ -213,6 +215,122 @@ describe("skill maintenance commands", () => {
     const autoPr = runScript("check-source-lock.mjs", [], suiteRoot);
     expect(autoPr.status).not.toBe(0);
     expect(`${autoPr.stdout}${autoPr.stderr}`).toContain(pinMessage);
+  });
+
+  it("keeps a suite-managed source fully offline, including remote verification", async () => {
+    const suiteRoot = await createSuiteRoot();
+    const skillDirectory = path.join(suiteRoot, "skills", "suite-managed-skill");
+    await mkdir(skillDirectory, { recursive: true });
+    await writeFile(path.join(skillDirectory, "SKILL.md"), "---\nname: suite-managed-skill\ndescription: Is managed by this suite.\nmetadata:\n  version: 0.1.0\n---\n");
+    const integratedChecksum = await computeDirectoryChecksum(skillDirectory);
+    await writeFile(path.join(suiteRoot, "skills", "registry.json"), JSON.stringify({
+      schemaVersion: "2.0.0",
+      skills: [{ skillId: "suite-managed-skill", version: "0.1.0", path: "./suite-managed-skill" }],
+    }));
+    await writeFile(path.join(suiteRoot, "skills", "source-lock.json"), `${JSON.stringify({
+      schemaVersion: "3.0.0",
+      sources: [{
+        skillId: "suite-managed-skill",
+        path: "skills/suite-managed-skill",
+        version: "0.1.0",
+        versionSource: "skill-metadata",
+        updatePolicy: "internal",
+        integratedChecksum,
+        checksumScope: "relative paths and normalized text bytes under skills/suite-managed-skill",
+      }],
+    })}\n`);
+
+    const result = runScript("check-source-lock.mjs", ["--remote"], suiteRoot);
+    expect(result.status, result.stderr).toBe(0);
+  });
+
+  it("does not discover upstream updates for a suite-managed source", async () => {
+    const suiteRoot = await createSuiteRoot();
+    await writeFile(path.join(suiteRoot, "skills", "source-lock.json"), `${JSON.stringify({
+      schemaVersion: "3.0.0",
+      sources: [{
+        skillId: "suite-managed-skill",
+        path: "skills/suite-managed-skill",
+        version: "0.1.0",
+        versionSource: "skill-metadata",
+        updatePolicy: "internal",
+        integratedChecksum: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        checksumScope: "relative paths and normalized text bytes under skills/suite-managed-skill",
+      }],
+    })}\n`);
+
+    const result = runScript("check-upstream-updates.mjs", [], suiteRoot);
+    expect(result.status, result.stderr).toBe(0);
+    expect(JSON.parse(result.stdout).all).toEqual([]);
+  });
+
+  it("rejects a suite-managed source before attempting an upstream lookup", async () => {
+    const suiteRoot = await createSuiteRoot();
+    await writeFile(path.join(suiteRoot, "skills", "source-lock.json"), `${JSON.stringify({
+      schemaVersion: "3.0.0",
+      sources: [{
+        skillId: "suite-managed-skill",
+        path: "skills/suite-managed-skill",
+        version: "0.1.0",
+        versionSource: "skill-metadata",
+        updatePolicy: "internal",
+        integratedChecksum: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        checksumScope: "relative paths and normalized text bytes under skills/suite-managed-skill",
+      }],
+    })}\n`);
+
+    const result = runScript("apply-upstream-update.mjs", ["suite-managed-skill", "v0.1.1"], suiteRoot);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("not eligible for an automatic update");
+  });
+
+  it("refuses to replace a suite-managed skill through the external importer", async () => {
+    const suiteRoot = await createSuiteRoot();
+    const { source, commits } = await createVersionedSource(["0.2.0", "0.2.1"]);
+    const base = ["--source", source, "--skill-path", ".", "--phase", "validation", "--capability", "ref-validation"];
+    expect(runScript("import-skill.mjs", [...base, "--ref", commits[0]], suiteRoot).status).toBe(0);
+    const lockPath = path.join(suiteRoot, "skills", "source-lock.json");
+    const lock = JSON.parse(await readFile(lockPath, "utf8"));
+    lock.sources[0] = {
+      skillId: "versioned-skill",
+      path: "skills/versioned-skill",
+      version: "0.2.0",
+      versionSource: "skill-metadata",
+      updatePolicy: "internal",
+      integratedChecksum: lock.sources[0].integratedChecksum,
+      checksumScope: "relative paths and normalized text bytes under skills/versioned-skill",
+    };
+    await writeFile(lockPath, `${JSON.stringify(lock, null, 2)}\n`);
+
+    const result = runScript("import-skill.mjs", [...base, "--ref", commits[1], "--replace", "true"], suiteRoot);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("suite-managed");
+    expect(await readFile(path.join(suiteRoot, "skills", "versioned-skill", "SKILL.md"), "utf8")).toContain("version: 0.2.0");
+  });
+
+  it("keeps suite-owned skill documentation free of retired standalone installation guidance", async () => {
+    const documents = [
+      ["independent-audit-gate", path.join(root, "skills", "independent-audit-gate", "README.md")],
+      ["independent-deliberation-panel", path.join(root, "skills", "independent-deliberation-panel", "README.md")],
+    ];
+    const forbidden = [
+      "codex-independent-audit-gate",
+      "jaeseongs95/independent-deliberation-panel",
+      "git clone",
+      "git pull",
+      "skill-installer",
+      "standalone",
+      "plugin unavailable",
+      "plugin unsupported",
+    ];
+
+    for (const [skillId, documentPath] of documents) {
+      const document = await readFile(documentPath, "utf8");
+      expect(document).toContain("agent-governance-suite");
+      expect(document).toContain(`skills/${skillId}/`);
+      expect(document).toContain("codex plugin install");
+      for (const text of forbidden) expect(document.toLowerCase()).not.toContain(text);
+    }
   });
 });
 

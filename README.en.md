@@ -136,32 +136,32 @@ Start a new session after installation and call skills as `/agent-governance-sui
 
 ## Included skills
 
-Select a skill name to open the source repository and revision for the version shown in the table.
+Select a skill name to open its suite-local path. The `ponytail` exception links to the pinned external source shown in the table.
 
 `When` identifies the work situation in which a skill is reviewed or called. It is not a fixed order to run from top to bottom; select only the skills that match the risk and current state of the request. Each phase is defined in [Operations and reference](docs/operations.md) (Korean).
 
 | When | Skill | Version | Responsibility |
 | --- | --- | --- | --- |
-| On request | [`model-effort-advisor`](https://github.com/jaeseongs95/model-effort-advisor/tree/v0.1.0/skills/model-effort-advisor) | 0.1.0 | Compares an observed current model and reasoning effort with the request's difficulty and risk, then reports only material mismatches. |
-| On explicit request | [`codex-token-usage-analyzer`](https://github.com/jaeseongs95/codex-token-usage-analyzer/tree/v0.1.0/skills/codex-token-usage-analyzer) | 0.1.0 | Aggregates local Codex token observations for threads, descendants, or projects and returns JSON with optional Markdown. |
-| When editing Korean prose | [`korean-prose-editor`](https://github.com/jaeseongs95/korean-prose-editor/tree/c5df63749e2edfc8aa424f9935ee3cd4697d3c49/skills/korean-prose-editor) | 0.1.0 | Edits Korean READMEs, guides, reports, and other multi-paragraph prose naturally while preserving facts, numbers, quotations, links, code, and claim strength, then separately verifies and deterministically finalizes the result. |
-| Before work | [`instruction-scope-resolver`](https://github.com/jaeseongs95/instruction-scope-resolver/tree/v1.0.0) | 1.0.0 | Finds the instructions and precedence rules that apply to the work target. |
-| Before work | [`workspace-convention-profiler`](https://github.com/jaeseongs95/workspace-convention-profiler/tree/v1.0.0) | 1.0.0 | Records repository structure, commands, and test conventions with evidence. |
-| Before work | [`task-contract`](https://github.com/jaeseongs95/task-contract/tree/b14ffb36ed3be96cc4694d0b36054f21f69b577a) | 1.1.0 | Defines the objective, scope, risk, and completion criteria while keeping provenance receipts separate from authority. |
-| During work | [`coordinate-subagents`](https://github.com/jaeseongs95/coordinate-subagents/tree/v1.1.0/skills/coordinate-subagents) | 1.1.0 | Coordinates parallel independent work, ownership, verification duties, and model application records. |
-| During work | [`independent-deliberation-panel`](https://github.com/jaeseongs95/independent-deliberation-panel/tree/v1.0.0) | 1.0.0 | Reviews evidence and counterarguments for complex decisions. |
-| Convergence review | [`iteration-frame-auditor`](https://github.com/jaeseongs95/iteration-frame-auditor/tree/v1.0.0/skills/iteration-frame-auditor) | 1.0.0 | Independently compares iteration contracts and frame changes before a new epoch can open. |
-| Before and after changes | [`change-scope-guardian`](https://github.com/jaeseongs95/change-scope-guardian/tree/v1.0.0) | 1.0.0 | Captures a baseline and checks whether the final change stayed in scope. |
-| Before changes | [`mutation-risk-preflight`](https://github.com/jaeseongs95/mutation-risk-preflight/tree/v1.0.1) | 1.0.1 | Checks the target, authority, approval, and recovery conditions for risky mutations. |
+| On request | [`model-effort-advisor`](skills/model-effort-advisor/) | 0.1.0 | Compares an observed current model and reasoning effort with the request's difficulty and risk, then reports only material mismatches. |
+| On explicit request | [`codex-token-usage-analyzer`](skills/codex-token-usage-analyzer/) | 0.1.0 | Aggregates local Codex token observations for threads, descendants, or projects and returns JSON with optional Markdown. |
+| When editing Korean prose | [`korean-prose-editor`](skills/korean-prose-editor/) | 0.1.0 | Edits Korean READMEs, guides, reports, and other multi-paragraph prose naturally while preserving facts, numbers, quotations, links, code, and claim strength, then separately verifies and deterministically finalizes the result. |
+| Before work | [`instruction-scope-resolver`](skills/instruction-scope-resolver/) | 1.0.0 | Finds the instructions and precedence rules that apply to the work target. |
+| Before work | [`workspace-convention-profiler`](skills/workspace-convention-profiler/) | 1.0.0 | Records repository structure, commands, and test conventions with evidence. |
+| Before work | [`task-contract`](skills/task-contract/) | 1.1.0 | Defines the objective, scope, risk, and completion criteria while keeping provenance receipts separate from authority. |
+| During work | [`coordinate-subagents`](skills/coordinate-subagents/) | 1.1.0 | Coordinates parallel independent work, ownership, verification duties, and model application records. |
+| During work | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | 1.0.0 | Reviews evidence and counterarguments for complex decisions. |
+| Convergence review | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 1.0.0 | Independently compares iteration contracts and frame changes before a new epoch can open. |
+| Before and after changes | [`change-scope-guardian`](skills/change-scope-guardian/) | 1.0.0 | Captures a baseline and checks whether the final change stayed in scope. |
+| Before changes | [`mutation-risk-preflight`](skills/mutation-risk-preflight/) | 1.0.1 | Checks the target, authority, approval, and recovery conditions for risky mutations. |
 | Implementation | [`ponytail`](https://github.com/jaeseongs95/ponytail/tree/83b2cbc3bc50df3030c49d1dfe598ccefe850a85/skills/ponytail) | 4.10.0 | Instructs the agent to pick the simplest correct implementation when writing or changing code and at the governance implementation step, without unrequested features, abstractions or dependencies. |
-| Security analysis requested | [`software-security-auditor`](https://github.com/jaeseongs95/software-security-auditor/tree/v0.1.0/skills/software-security-auditor) | 0.1.0 | Audits web/API and CLI/MCP attack paths, controls, vulnerabilities and coverage gaps; existing gates decide completion. |
-| Before completion | [`acceptance-evidence-validator`](https://github.com/jaeseongs95/acceptance-evidence-validator/tree/v1.0.0) | 1.0.0 | Verifies current evidence for every acceptance criterion. |
-| Before completion | [`independent-audit-gate`](https://github.com/jaeseongs95/codex-independent-audit-gate/tree/v1.0.0) | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
-| After a failure | [`blocker-diagnostician`](https://github.com/jaeseongs95/blocker-diagnostician/tree/14ae3288535b1d2061a0ee1c537fa6773077a533) | 1.1.0 | Separates observed failures from hypotheses and binds the symptom, mechanism, and root condition to evidence. |
-| When selecting recovery | [`recovery-strategy-selector`](https://github.com/jaeseongs95/agent-governance-suite/tree/cf0538aaeef69eb855d1caf8436fe7a92c04cb0e/skills/recovery-strategy-selector) | 0.2.0 | Applies an Objective Gate to strategies bound to the confirmed cause and root condition, then creates a `RecoveryHandoff.v1` for a new task. |
-| Before and after evaluation | [`evaluation-validity-auditor`](https://github.com/jaeseongs95/evaluation-validity-auditor/tree/v1.0.0) | 1.0.0 | Independently audits a frozen evaluation's design, inputs, judgments, and aggregation; only a `post-execution PASS` qualifies as quality or release evidence. |
+| Security analysis requested | [`software-security-auditor`](skills/software-security-auditor/) | 0.1.0 | Audits web/API and CLI/MCP attack paths, controls, vulnerabilities and coverage gaps; existing gates decide completion. |
+| Before completion | [`acceptance-evidence-validator`](skills/acceptance-evidence-validator/) | 1.0.0 | Verifies current evidence for every acceptance criterion. |
+| Before completion | [`independent-audit-gate`](skills/independent-audit-gate/) | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
+| After a failure | [`blocker-diagnostician`](skills/blocker-diagnostician/) | 1.1.0 | Separates observed failures from hypotheses and binds the symptom, mechanism, and root condition to evidence. |
+| When selecting recovery | [`recovery-strategy-selector`](skills/recovery-strategy-selector/) | 0.2.0 | Applies an Objective Gate to strategies bound to the confirmed cause and root condition, then creates a `RecoveryHandoff.v1` for a new task. |
+| Before and after evaluation | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | 1.0.0 | Independently audits a frozen evaluation's design, inputs, judgments, and aggregation; only a `post-execution PASS` qualifies as quality or release evidence. |
 
-Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. `skills/source-lock.json` pins upstream paths, tags or commits, upstream/integrated checksums, and update policies, for both independently published and repository-managed skills; the `orchestrator` is tracked by current Git history.
+Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. Suite-managed specialists are pinned by local version, integrated checksum, and the `internal` policy in `skills/source-lock.json`; independently published skills additionally pin their upstream path, tag or commit, upstream checksum, and update policy. The `orchestrator` is tracked by current Git history.
 
 ## Development and validation
 

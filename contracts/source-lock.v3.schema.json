@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/source-lock.v3.schema.json",
+  "title": "SourceLock.v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sources"],
+  "properties": {
+    "schemaVersion": { "const": "3.0.0" },
+    "sources": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/internalSource" },
+          { "$ref": "#/$defs/externalSource" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "value", "commit"],
+      "properties": {
+        "kind": { "enum": ["tag", "commit"] },
+        "value": { "type": "string", "minLength": 1 },
+        "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+      }
+    },
+    "internalSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skillId", "path", "version", "versionSource", "updatePolicy",
+        "integratedChecksum", "checksumScope"
+      ],
+      "properties": {
+        "skillId": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "path": { "type": "string", "pattern": "^skills/[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "versionSource": { "enum": ["skill-metadata", "version-file"] },
+        "updatePolicy": { "const": "internal" },
+        "integratedChecksum": { "$ref": "#/$defs/sha256" },
+        "checksumScope": { "type": "string", "minLength": 1 }
+      }
+    },
+    "externalSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skillId", "path", "source", "sourcePath", "version", "versionSource",
+        "ref", "updatePolicy", "upstreamChecksum", "integratedChecksum",
+        "checksumScope", "downstreamModifications"
+      ],
+      "properties": {
+        "skillId": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "path": { "type": "string", "pattern": "^skills/[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "source": { "type": "string", "minLength": 1 },
+        "sourcePath": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "versionSource": { "enum": ["skill-metadata", "version-file"] },
+        "ref": { "$ref": "#/$defs/ref" },
+        "updatePolicy": { "enum": ["auto-pr", "notify-only"] },
+        "upstreamChecksum": { "$ref": "#/$defs/sha256" },
+        "integratedChecksum": { "$ref": "#/$defs/sha256" },
+        "checksumScope": { "type": "string", "minLength": 1 },
+        "downstreamModifications": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

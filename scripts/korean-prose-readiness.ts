@@ -588,19 +588,18 @@ async function assertPinnedCandidate(frame: EvaluationFrame, evaluationRoot: str
   const sources = Array.isArray(sourceLock.sources) ? sourceLock.sources : [];
   const source = sources.find((item) => item && typeof item === "object"
     && (item as Record<string, unknown>).skillId === "korean-prose-editor") as Record<string, unknown> | undefined;
-  const sourceRef = source?.ref && typeof source.ref === "object"
-    ? source.ref as Record<string, unknown>
-    : undefined;
+  const suiteRevision = repositoryRevision(repositoryRoot);
   const repositorySkillChecksum = await computeDirectoryChecksum(path.join(repositoryRoot, "skills", "korean-prose-editor"));
   const evaluationSkillChecksum = await computeDirectoryChecksum(path.join(evaluationRoot, "skills", "korean-prose-editor"));
   if (!source
-    || frame.candidate.skillSourceCommit !== sourceRef?.commit
-    || frame.candidate.skillSourceChecksum !== source.upstreamChecksum
-    || frame.candidate.suiteRevision !== repositoryRevision(repositoryRoot)
+    || source.updatePolicy !== "internal"
+    || frame.candidate.skillSourceCommit !== suiteRevision
+    || frame.candidate.skillSourceChecksum !== source.integratedChecksum
+    || frame.candidate.suiteRevision !== suiteRevision
     || frame.candidate.integratedSkillChecksum !== evaluationSkillChecksum
     || evaluationSkillChecksum !== repositorySkillChecksum
     || frame.candidate.toolchainDigest !== await computeKoreanProseToolchainDigest(repositoryRoot)) {
-    throw new Error("evaluation frame does not use the repository-pinned Korean prose source");
+    throw new Error("evaluation frame does not use the suite-managed Korean prose snapshot");
   }
 }
 

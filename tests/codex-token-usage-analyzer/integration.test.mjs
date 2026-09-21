@@ -63,7 +63,7 @@ afterEach(async () => {
 });
 
 describe("codex-token-usage-analyzer integration", () => {
-  it("pins the explicit-only provider and source tag in every integration surface", async () => {
+  it("pins the explicit-only provider in the suite-managed source lock", async () => {
     const [registry, sourceLock, directDescriptor, openai] = await Promise.all([
       readFile(path.join(root, "skills", "registry.json"), "utf8").then(JSON.parse),
       readFile(path.join(root, "skills", "source-lock.json"), "utf8").then(JSON.parse),
@@ -76,13 +76,11 @@ describe("codex-token-usage-analyzer integration", () => {
     expect(descriptor.providers[0]).toMatchObject({ capabilities: ["local-codex-token-usage-analysis"], executionClass: "workflow", phase: "usage-analysis" });
     expect(directDescriptor.providers[0].selectionCriteria).toEqual(["explicit-codex-token-usage-analysis-request"]);
     expect(openai).toMatch(/^\s*allow_implicit_invocation:\s*false\s*$/mu);
-    expect(source).toMatchObject({ source: "https://github.com/jaeseongs95/codex-token-usage-analyzer.git", sourcePath: "skills/codex-token-usage-analyzer", version: "0.1.0", updatePolicy: "notify-only" });
-    expect(source.ref).toEqual({ kind: "tag", value: "v0.1.0", commit: "68843ce943e87767ed9605cb19f3074452cabf89" });
-    expect(source.upstreamChecksum).toBe("sha256:e88e4c76c30b53e5a536a7a82280f9b8124768a37c16ea7f13cbfa7f282d9bfe");
-    expect(source.integratedChecksum).toBe("sha256:c314d497e7ef63e314ee44827bf41b0a20a05eb5b22f37f640538bfe4c071fd8");
-    expect(source.downstreamModifications).toEqual([
-      "Treat the optional Markdown export as a provider result artifact rather than a mandatory workflow completion artifact."
-    ]);
+    expect(source).toMatchObject({ version: "0.1.0", updatePolicy: "internal" });
+    expect(source).not.toHaveProperty("source");
+    expect(source).not.toHaveProperty("ref");
+    expect(source).not.toHaveProperty("upstreamChecksum");
+    expect(source.integratedChecksum).toMatch(/^sha256:[a-f0-9]{64}$/u);
   });
 
   it("compiles every public contract with strict Ajv", async () => {

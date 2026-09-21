@@ -136,32 +136,32 @@ Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다
 
 ## 포함된 스킬
 
-스킬 이름을 누르면 표에 표시된 버전의 원본 저장소로 이동합니다.
+스킬 이름을 누르면 suite에 통합된 해당 스킬 경로로 이동합니다. 예외로 `ponytail`은 표에 표시된 고정 외부 원본을 가리킵니다.
 
 `시점`은 각 스킬을 어떤 작업 상황에서 검토하거나 호출하는지 보여 주는 안내입니다. 위에서 아래로 모든 스킬을 실행하라는 고정 순서가 아니며, 요청의 위험도와 현재 상태에 맞는 스킬만 선택합니다. 각 시점의 정의는 [운영과 참고](docs/operations.md#스킬-시점-안내)에 있습니다.
 
 | 시점 | 스킬 | 버전 | 역할 |
 | --- | --- | --- | --- |
-| 요청 직후 | [`model-effort-advisor`](https://github.com/jaeseongs95/model-effort-advisor/tree/v0.1.0/skills/model-effort-advisor) | 0.1.0 | 관측 가능한 현재 모델·추론 수준이 요청 난도와 위험에 비해 과한지 또는 부족한지 확인하고, 유의미한 차이만 안내합니다. |
-| 명시 요청 시 | [`codex-token-usage-analyzer`](https://github.com/jaeseongs95/codex-token-usage-analyzer/tree/v0.1.0/skills/codex-token-usage-analyzer) | 0.1.0 | 로컬 Codex 로그에서 작업·하위 작업·프로젝트의 token 사용량을 집계하고 JSON과 선택적 Markdown으로 보고합니다. |
-| 한국어 산문 편집 시 | [`korean-prose-editor`](https://github.com/jaeseongs95/korean-prose-editor/tree/c5df63749e2edfc8aa424f9935ee3cd4697d3c49/skills/korean-prose-editor) | 0.1.0 | 한국어 README·안내문·보고서와 여러 문단의 산문을 사실·숫자·인용·링크·코드·주장 강도를 보존하며 자연스럽게 편집하고, 결과를 별도 검증해 결정적으로 최종화합니다. |
-| 시작 전 | [`instruction-scope-resolver`](https://github.com/jaeseongs95/instruction-scope-resolver/tree/v1.0.0) | 1.0.0 | 작업 대상에 적용되는 지침의 범위와 우선순위를 확인합니다. |
-| 시작 전 | [`workspace-convention-profiler`](https://github.com/jaeseongs95/workspace-convention-profiler/tree/v1.0.0) | 1.0.0 | 저장소의 구조, 도구, 관례, 검증 명령을 조사합니다. |
-| 시작 전 | [`task-contract`](https://github.com/jaeseongs95/task-contract/tree/b14ffb36ed3be96cc4694d0b36054f21f69b577a) | 1.1.0 | 요청의 목표, 범위, 수용 기준, 위험도, 권한을 구조화하고 출처 영수증을 권한과 분리합니다. |
-| 진행 중 | [`coordinate-subagents`](https://github.com/jaeseongs95/coordinate-subagents/tree/v1.1.0/skills/coordinate-subagents) | 1.1.0 | 독립 작업의 병렬 위임, 담당 영역·검증 책임과 모델 설정 적용 기록을 관리합니다. |
-| 진행 중 | [`independent-deliberation-panel`](https://github.com/jaeseongs95/independent-deliberation-panel/tree/v1.0.0) | 1.0.0 | 복잡한 결정의 근거와 반론을 여러 독립 관점에서 검토합니다. |
-| 수렴 검토 | [`iteration-frame-auditor`](https://github.com/jaeseongs95/iteration-frame-auditor/tree/v1.0.0/skills/iteration-frame-auditor) | 1.0.0 | 반복 시도의 계약과 frame 변경을 독립적으로 비교해 새 epoch 허용 여부를 판정합니다. |
-| 변경 전후 | [`change-scope-guardian`](https://github.com/jaeseongs95/change-scope-guardian/tree/v1.0.0) | 1.0.0 | 변경 전 기준선과 현재 Git 변경 사항을 비교해 요청 범위 밖의 파일을 찾습니다. |
-| 변경 전 | [`mutation-risk-preflight`](https://github.com/jaeseongs95/mutation-risk-preflight/tree/v1.0.1) | 1.0.1 | 위험한 변경을 실행하기 전에 대상, 승인, 영향 범위, 복구 조건을 점검합니다. |
+| 요청 직후 | [`model-effort-advisor`](skills/model-effort-advisor/) | 0.1.0 | 관측 가능한 현재 모델·추론 수준이 요청 난도와 위험에 비해 과한지 또는 부족한지 확인하고, 유의미한 차이만 안내합니다. |
+| 명시 요청 시 | [`codex-token-usage-analyzer`](skills/codex-token-usage-analyzer/) | 0.1.0 | 로컬 Codex 로그에서 작업·하위 작업·프로젝트의 token 사용량을 집계하고 JSON과 선택적 Markdown으로 보고합니다. |
+| 한국어 산문 편집 시 | [`korean-prose-editor`](skills/korean-prose-editor/) | 0.1.0 | 한국어 README·안내문·보고서와 여러 문단의 산문을 사실·숫자·인용·링크·코드·주장 강도를 보존하며 자연스럽게 편집하고, 결과를 별도 검증해 결정적으로 최종화합니다. |
+| 시작 전 | [`instruction-scope-resolver`](skills/instruction-scope-resolver/) | 1.0.0 | 작업 대상에 적용되는 지침의 범위와 우선순위를 확인합니다. |
+| 시작 전 | [`workspace-convention-profiler`](skills/workspace-convention-profiler/) | 1.0.0 | 저장소의 구조, 도구, 관례, 검증 명령을 조사합니다. |
+| 시작 전 | [`task-contract`](skills/task-contract/) | 1.1.0 | 요청의 목표, 범위, 수용 기준, 위험도, 권한을 구조화하고 출처 영수증을 권한과 분리합니다. |
+| 진행 중 | [`coordinate-subagents`](skills/coordinate-subagents/) | 1.1.0 | 독립 작업의 병렬 위임, 담당 영역·검증 책임과 모델 설정 적용 기록을 관리합니다. |
+| 진행 중 | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | 1.0.0 | 복잡한 결정의 근거와 반론을 여러 독립 관점에서 검토합니다. |
+| 수렴 검토 | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 1.0.0 | 반복 시도의 계약과 frame 변경을 독립적으로 비교해 새 epoch 허용 여부를 판정합니다. |
+| 변경 전후 | [`change-scope-guardian`](skills/change-scope-guardian/) | 1.0.0 | 변경 전 기준선과 현재 Git 변경 사항을 비교해 요청 범위 밖의 파일을 찾습니다. |
+| 변경 전 | [`mutation-risk-preflight`](skills/mutation-risk-preflight/) | 1.0.1 | 위험한 변경을 실행하기 전에 대상, 승인, 영향 범위, 복구 조건을 점검합니다. |
 | 구현 | [`ponytail`](https://github.com/jaeseongs95/ponytail/tree/83b2cbc3bc50df3030c49d1dfe598ccefe850a85/skills/ponytail) | 4.10.0 | 코드를 작성·수정할 때와 거버넌스 흐름의 구현 단계에서 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르도록 안내합니다. |
-| 보안 분석 요청 시 | [`software-security-auditor`](https://github.com/jaeseongs95/software-security-auditor/tree/v0.1.0/skills/software-security-auditor) | 0.1.0 | 웹·API와 CLI·MCP의 공격 경로·방어 통제·취약점·검사 공백을 보고하며 완료 판정은 기존 게이트에 맡깁니다. |
-| 완료 전 | [`acceptance-evidence-validator`](https://github.com/jaeseongs95/acceptance-evidence-validator/tree/v1.0.0) | 1.0.0 | 수용 기준마다 현재 결과를 뒷받침하는 증거가 있는지 검사합니다. |
-| 완료 전 | [`independent-audit-gate`](https://github.com/jaeseongs95/codex-independent-audit-gate/tree/v1.0.0) | 1.0.0 | 구현자와 분리된 감사자가 고위험 변경과 검증 근거를 확인합니다. |
-| 문제 발생 시 | [`blocker-diagnostician`](https://github.com/jaeseongs95/blocker-diagnostician/tree/14ae3288535b1d2061a0ee1c537fa6773077a533) | 1.1.0 | 실패를 관측 사실과 원인 가설로 나누고, 증상·메커니즘·근본 조건까지 evidence에 결속합니다. |
-| 복구 선택 시 | [`recovery-strategy-selector`](https://github.com/jaeseongs95/agent-governance-suite/tree/cf0538aaeef69eb855d1caf8436fe7a92c04cb0e/skills/recovery-strategy-selector) | 0.2.0 | 확정된 원인과 근본 조건에 결속된 복구 전략을 Objective Gate로 비교하고 새 작업용 `RecoveryHandoff.v1`을 만듭니다. |
-| 평가 전후 | [`evaluation-validity-auditor`](https://github.com/jaeseongs95/evaluation-validity-auditor/tree/v1.0.0) | 1.0.0 | 동결된 평가의 설계·입력·판정·집계를 독립적으로 감사하며, `post-execution PASS`만 품질·릴리스 근거로 허용합니다. |
+| 보안 분석 요청 시 | [`software-security-auditor`](skills/software-security-auditor/) | 0.1.0 | 웹·API와 CLI·MCP의 공격 경로·방어 통제·취약점·검사 공백을 보고하며 완료 판정은 기존 게이트에 맡깁니다. |
+| 완료 전 | [`acceptance-evidence-validator`](skills/acceptance-evidence-validator/) | 1.0.0 | 수용 기준마다 현재 결과를 뒷받침하는 증거가 있는지 검사합니다. |
+| 완료 전 | [`independent-audit-gate`](skills/independent-audit-gate/) | 1.0.0 | 구현자와 분리된 감사자가 고위험 변경과 검증 근거를 확인합니다. |
+| 문제 발생 시 | [`blocker-diagnostician`](skills/blocker-diagnostician/) | 1.1.0 | 실패를 관측 사실과 원인 가설로 나누고, 증상·메커니즘·근본 조건까지 evidence에 결속합니다. |
+| 복구 선택 시 | [`recovery-strategy-selector`](skills/recovery-strategy-selector/) | 0.2.0 | 확정된 원인과 근본 조건에 결속된 복구 전략을 Objective Gate로 비교하고 새 작업용 `RecoveryHandoff.v1`을 만듭니다. |
+| 평가 전후 | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | 1.0.0 | 동결된 평가의 설계·입력·판정·집계를 독립적으로 감사하며, `post-execution PASS`만 품질·릴리스 근거로 허용합니다. |
 
-각 전문 스킬은 단독으로 호출할 수 있습니다. 둘 이상의 역할을 연결하려면 [`$orchestrator`](skills/orchestrator/)를 사용합니다. 독립 저장소로 배포하는 전문 스킬과 통합 저장소에서 관리하는 스킬의 원본 경로·tag 또는 commit·원본/통합 `checksum`·업데이트 정책은 [`skills/source-lock.json`](skills/source-lock.json)에 고정되어 있으며, `orchestrator`는 현재 Git 이력으로 추적합니다.
+각 전문 스킬은 단독으로 호출할 수 있습니다. 둘 이상의 역할을 연결하려면 [`$orchestrator`](skills/orchestrator/)를 사용합니다. 통합 저장소에서 관리하는 전문 스킬은 로컬 version·통합 `checksum`·`internal` 정책으로, 독립 배포하는 스킬은 원본 경로·tag 또는 commit·원본/통합 `checksum`·업데이트 정책으로 [`skills/source-lock.json`](skills/source-lock.json)에 고정됩니다. `orchestrator`는 현재 Git 이력으로 추적합니다.
 
 ## 개발과 검증
 

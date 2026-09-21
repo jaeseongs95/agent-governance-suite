@@ -65,8 +65,12 @@ try {
   const registryOriginal = await readFile(registryPath, "utf8");
   const lockOriginal = await readFile(lockPath, "utf8");
   const lockDocument = await readJson(lockPath);
-  if (lockDocument.schemaVersion !== "2.0.0") throw new Error("skills/source-lock.json must use schemaVersion 2.0.0");
+  if (lockDocument.schemaVersion !== "3.0.0") throw new Error("skills/source-lock.json must use schemaVersion 3.0.0");
   const entries = lockDocument.sources;
+  const existingLock = entries.find((entry) => entry.skillId === name);
+  if (existingLock?.updatePolicy === "internal") {
+    throw new Error(`${name} is suite-managed and cannot be replaced by an external import`);
+  }
   const checksumValue = await computeDirectoryChecksum(stagedSkill);
   let sourceDescriptor;
   try {
@@ -122,7 +126,7 @@ try {
     }
   }
   const refKind = /^v\d+\.\d+\.\d+$/u.test(args.ref) ? "tag" : "commit";
-  const updatePolicy = entries.find((entry) => entry.skillId === name)?.updatePolicy ?? "notify-only";
+  const updatePolicy = existingLock?.updatePolicy ?? "notify-only";
   if (updatePolicy === "auto-pr" && refKind !== "tag") {
     throw new Error(`${name} uses auto-pr and must be imported from a stable vX.Y.Z tag; release upstream first or set its updatePolicy to notify-only`);
   }

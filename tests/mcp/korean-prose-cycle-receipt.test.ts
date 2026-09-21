@@ -415,8 +415,8 @@ async function createCycleFixture(): Promise<string> {
     createdAt: "2026-09-13T00:00:00.000Z",
     candidate: {
       suiteRevision: execFileSync("git", ["rev-parse", "HEAD"], { cwd: repositoryRoot, encoding: "utf8" }).trim(),
-      skillSourceCommit: "c5df63749e2edfc8aa424f9935ee3cd4697d3c49",
-      skillSourceChecksum: "sha256:a88252aa9c4e654458ecc7eed282d26c022ca9f5db858f87f3237decc622feb8",
+      skillSourceCommit: execFileSync("git", ["rev-parse", "HEAD"], { cwd: repositoryRoot, encoding: "utf8" }).trim(),
+      skillSourceChecksum: await computeDirectoryChecksum(join(repositoryRoot, "skills", "korean-prose-editor")),
       integratedSkillChecksum: await computeDirectoryChecksum(join(evaluationRoot, "skills", "korean-prose-editor")),
       toolchainDigest: await computeKoreanProseToolchainDigest(repositoryRoot),
     },

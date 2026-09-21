@@ -89,16 +89,14 @@ describe("evaluation-validity-auditor suite descriptor", () => {
     ]);
   });
 
-  it("pins the unmodified v1.0.0 tag commit and checksum with auto-pr updates", () => {
+  it("records the suite-managed v1.0.0 checksum without external provenance", () => {
     const lock = JSON.parse(readFileSync(new URL("../../skills/source-lock.json", import.meta.url), "utf8"));
     const source = lock.sources.find((candidate) => candidate.skillId === "evaluation-validity-auditor");
-    expect(source).toMatchObject({
-      ref: { kind: "tag", value: "v1.0.0", commit: "d1d564462ae93e205b27bcc1443ee17d04a97dcf" },
-      updatePolicy: "auto-pr",
-      upstreamChecksum: "sha256:083ee804efcbe785ca87c6f7a1e20e5cd71732bcc44c7e8e8546336a412f8f24",
-      integratedChecksum: "sha256:083ee804efcbe785ca87c6f7a1e20e5cd71732bcc44c7e8e8546336a412f8f24",
-      downstreamModifications: [],
-    });
+    expect(source).toMatchObject({ updatePolicy: "internal" });
+    expect(source).not.toHaveProperty("source");
+    expect(source).not.toHaveProperty("ref");
+    expect(source).not.toHaveProperty("upstreamChecksum");
+    expect(source.integratedChecksum).toMatch(/^sha256:[a-f0-9]{64}$/u);
   });
 
   it("accepts a safe post-execution PASS receipt and still rejects free text", async () => {

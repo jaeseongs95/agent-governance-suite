@@ -14,23 +14,23 @@
 
 단일 사실 조회, 짧은 요약, 계산, 문법 수정, 정형 변환에는 사용하지 않습니다.
 
-## 설치
+## 설치와 경로
 
-이 저장소는 standalone Codex 스킬을 배포합니다. 아직 plugin이나 marketplace 패키지는 아니며, 여러 스킬을 묶는 오케스트레이션 플러그인은 이후 별도 프로젝트에서 연결합니다. Codex가 읽는 저장소 범위 경로와 사용자 범위 경로는 [OpenAI Skills 문서](https://learn.chatgpt.com/docs/build-skills)에 설명되어 있습니다.
+`independent-deliberation-panel`은 Agent Governance Suite 플러그인에 포함되어 있으므로 별도 clone이나 스킬 설치가 필요하지 않습니다. Codex에서는 플러그인 marketplace를 추가한 뒤 suite를 설치합니다.
 
-저장소 하나에서만 사용하려면 해당 저장소 루트에서 다음처럼 설치합니다.
-
-```powershell
-git clone --branch v1.0.0 --depth 1 https://github.com/jaeseongs95/independent-deliberation-panel.git .agents/skills/independent-deliberation-panel
+```bash
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.3.0
+codex plugin install agent-governance-suite@agent-governance
 ```
 
-개인 환경에 설치하려면 Codex에서 다음과 같이 요청할 수 있습니다.
+Claude Code에서는 같은 suite를 marketplace에서 설치합니다.
 
 ```text
-$skill-installer로 jaeseongs95/independent-deliberation-panel의 v1.0.0을 사용자 스킬로 설치해 줘.
+/plugin marketplace add jaeseongs95/agent-governance-suite
+/plugin install agent-governance-suite@agent-governance
 ```
 
-같은 이름의 이전 설치본이 있으면 먼저 변경 사항을 확인해야 합니다. 설치 후 스킬이 보이지 않으면 Codex를 다시 시작합니다.
+소스 checkout에서 이 스킬은 `skills/independent-deliberation-panel/`에 있습니다. Claude 배포물은 `pnpm claude:build`가 `claude-plugin/skills/independent-deliberation-panel/`에 생성하며, 생성 경로는 직접 수정하지 않습니다.
 
 ## 사용
 
@@ -128,17 +128,15 @@ python scripts/summarize_evals.py --results-dir evals/results --behavior-gate
 
 스킬 호출은 파일 수정, 배포, 외부 메시지 같은 권한을 추가하지 않습니다. reviewer에게 제공하는 코드, 문서, 웹 페이지와 모델 출력은 비신뢰 입력으로 취급합니다.
 
-1.0은 standalone 스킬입니다. 영속 memory, 과거 실행 기반 역할 추천, 자동 Astra 승격, 실제 청구 비용 최적화, plugin, orchestrator, audit-gate 구현·배포를 지원하지 않습니다. 모델·토큰·비용 정보가 실행 환경에서 관찰되지 않으면 추정하지 않습니다.
+이 suite-managed 스킬은 영속 memory, 과거 실행 기반 역할 추천, 자동 Astra 승격이나 실제 청구 비용 최적화를 제공하지 않습니다. 모델·토큰·비용 정보가 실행 환경에서 관찰되지 않으면 추정하지 않습니다.
 
 비대화형 `codex exec` 호스트가 실제 subagent spawn 이벤트를 제공하지 않으면 live eval은 통과할 수 없습니다. 하네스는 이 경우 record에 적힌 worker를 실제 worker로 인정하지 않고 실패합니다. 앱이나 대화형 CLI에서 subagent가 지원되더라도 비대화형 실행의 지원 여부를 같다고 추정하지 않습니다.
 
-## 향후 오케스트레이션 연결
+## Suite 오케스트레이션 연결
 
-미래 오케스트레이션 플러그인은 `include_decision_record: true`로 이 스킬을 호출하고 `DecisionRecord.v1`을 검증해 다음 단계를 선택할 수 있습니다. 연결 규칙은 [integration contract](references/integration-contract.md)에 정리했습니다.
+orchestrator는 복잡하거나 실패 비용이 큰 판단에 이 스킬을 선택할 수 있습니다. `include_decision_record: true`의 `DecisionRecord.v1`은 선택적 로컬 실행 기록이며 final audit 증명이나 cross-skill handoff가 아닙니다. suite는 이를 비신뢰 입력으로 다루고 자체 권한, 실행 lifecycle과 handoff 계약을 소유합니다.
 
-`DecisionRecord.v1`은 선택적 로컬 실행 기록이며 final audit 증명이나 cross-skill handoff가 아닙니다. 플러그인은 이를 비신뢰 입력으로 다루고 자체 권한, 실행 lifecycle과 handoff 계약을 소유해야 합니다. 이 standalone 스킬에는 플러그인 의존성이나 연결 코드가 없습니다.
-
-별도 final audit skill이나 audit-gate는 추후 오케스트레이션 플러그인의 책임입니다.
+연결 규칙은 [integration contract](references/integration-contract.md)에 정리했습니다. final audit은 suite의 `skills/independent-audit-gate/`가 별도의 역할로 처리합니다.
 
 ## 라이선스
 

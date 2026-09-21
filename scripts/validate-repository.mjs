@@ -12,7 +12,7 @@ const requiredFiles = [
   ".mcp.json",
   "skills/registry.json",
   "skills/source-lock.json",
-  "contracts/source-lock.v2.schema.json",
+  "contracts/source-lock.v3.schema.json",
   "release/version.json",
   "mcp-server/dist/server.mjs",
   "mcp-server/dist/continuity-hook.mjs",
@@ -114,7 +114,7 @@ if (errors.length === 0) {
   }
 
   const sourceLock = await readJson(path.join(ROOT, "skills", "source-lock.json"));
-  const sourceLockSchema = await readJson(path.join(ROOT, "contracts", "source-lock.v2.schema.json"));
+  const sourceLockSchema = await readJson(path.join(ROOT, "contracts", "source-lock.v3.schema.json"));
   const validateSourceLock = ajv.compile(sourceLockSchema);
   if (!validateSourceLock(sourceLock)) {
     errors.push(`invalid source lock: ${ajv.errorsText(validateSourceLock.errors)}`);
