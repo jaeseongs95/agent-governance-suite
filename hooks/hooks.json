@@ -102,6 +102,17 @@
     ],
     "PreToolUse": [
       {
+        "matcher": "^mcp__agent[-_]governance[-_]suite__(resolve_model_assignment|record_model_application)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/model-routing-host-hook.mjs\" --host codex",
+            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\model-routing-host-hook.mjs\" --host codex",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "^mcp__agent[-_]governance[-_]suite__(send_session_message|acknowledge_session_messages|get_session_message_status|validate_collaboration_decision)$",
         "hooks": [
           {
@@ -147,6 +158,18 @@
       }
     ],
     "PostToolUse": [
+      {
+        "matcher": "^mcp__agent[-_]governance[-_]suite__record_model_application$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/model-routing-host-hook.mjs\" --host codex",
+            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\model-routing-host-hook.mjs\" --host codex",
+            "timeout": 5,
+            "additionalContextLimit": 1200
+          }
+        ]
+      },
       {
         "hooks": [
           {

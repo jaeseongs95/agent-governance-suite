@@ -1,0 +1,19 @@
+{
+  "baseCommit": "0fd9220ed603e73b35f9127041d0d7b3bd21ab15",
+  "sha256": {
+    "claude-plugin/hooks/hooks.json": "c7acc7a9caf21469b78835a04c7d181e8fd265bc9976c727f71fc5abcab0916a",
+    "claude-plugin/hooks/model-routing-host-hook.mjs": "74414b94b674ea259d91bd039a4891c3360aac86ae676a28718c08c9e91e905a",
+    "claude-plugin/mcp-server/dist/model-routing-host-hook.mjs": "7daf9b6e1da0e61728091db87523cd86d120e0fc8f5ad1f77475de08ead81977",
+    "claude-plugin/mcp-server/dist/server.mjs": "5a9df1db0271c263c5f3a8768b39e6b987761fb61d422d249e31a48fd7c0bdb5",
+    "claude-plugin/mcp-server/dist/session-message-broker.mjs": "cffbacb4bca96341f84be6191a6289f19b5584e11aa29a8d54eda0b0f83ef8dc",
+    "claude-plugin/skills/coordinate-subagents/references/model-routing-v2.md": "c0ae05c7d161a485180fc08539e7d665b78cac5d8bb5680cfd0a03a2a435568c",
+    "claude-plugin/skills/coordinate-subagents/scripts/model-routing-service-core.mjs": "eebee33b2197119ad250861cef9f90a1080f4f857e872ee5f0b8f34a7a1e7a82",
+    "claude-plugin/skills/coordinate-subagents/scripts/model-routing-store.d.mts": "272bec0392629a77be3f7563253c2221d0fcaf81adadf0622a5b4e54dc7711e3",
+    "claude-plugin/skills/coordinate-subagents/scripts/model-routing-store.mjs": "6f6496fa0b63616f8fafb1a215b8b715bb83be01086b12161db34fdd871fbd8c",
+    "claude-plugin/skills/source-lock.json": "e11dba1792c616ab48e1db7b61f30e1a928e7d8a8337d9ca39e5154335aeb4fa",
+    "mcp-server/dist/model-routing-host-hook.mjs": "7daf9b6e1da0e61728091db87523cd86d120e0fc8f5ad1f77475de08ead81977",
+    "mcp-server/dist/server.mjs": "5a9df1db0271c263c5f3a8768b39e6b987761fb61d422d249e31a48fd7c0bdb5",
+    "mcp-server/dist/session-message-broker.mjs": "cffbacb4bca96341f84be6191a6289f19b5584e11aa29a8d54eda0b0f83ef8dc"
+  },
+  "scope": "Only generated P3 native observer files; not a release or live-account attestation."
+}

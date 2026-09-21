@@ -317,6 +317,8 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
     let lastActivity = Date.now();
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
       lastActivity = Date.now();
+      // A peer can reset after reading a response. Isolate that socket failure from the broker.
+      socket.on("error", () => socket.destroy());
       let buffer = "";
       socket.setTimeout(5000, () => socket.destroy());
       socket.on("data", (chunk: Buffer) => {
@@ -343,6 +345,8 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
     server = activeServer;
     activeServer.on("connection", (socket: tls.TLSSocket) => {
       sockets.add(socket);
+      // Includes connections that fail before the TLS handshake completes.
+      socket.on("error", () => socket.destroy());
       socket.once("close", () => sockets.delete(socket));
     });
     await new Promise<void>((resolve, reject) => {

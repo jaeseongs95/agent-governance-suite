@@ -115,6 +115,7 @@ describe("generated Claude plugin", () => {
       "${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs",
       "${CLAUDE_PLUGIN_ROOT}/hooks/session-board-hook.mjs",
       "${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs",
+      "${CLAUDE_PLUGIN_ROOT}/hooks/model-routing-host-hook.mjs",
     ];
     for (const groups of Object.values(claudeHooks.hooks)) {
       for (const hook of groups.flatMap((group) => group.hooks)) {

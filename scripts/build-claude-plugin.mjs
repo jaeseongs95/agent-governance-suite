@@ -24,6 +24,7 @@ const SHARED_FILES = Object.freeze([
   "mcp-server/dist/server.mjs",
   "mcp-server/dist/continuity-hook.mjs",
   "mcp-server/dist/host-attestation-hook.mjs",
+  "mcp-server/dist/model-routing-host-hook.mjs",
   "mcp-server/dist/session-board-hook.mjs",
   "mcp-server/dist/session-message-broker.mjs",
   "mcp-server/dist/session-message-relay.mjs",

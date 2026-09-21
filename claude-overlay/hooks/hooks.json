@@ -89,6 +89,19 @@
     ],
     "PreToolUse": [
       {
+        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(resolve_model_assignment|record_model_application)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/model-routing-host-hook.mjs"
+            ],
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(send_session_message|acknowledge_session_messages|get_session_message_status|validate_collaboration_decision)$",
         "hooks": [
           {
@@ -188,6 +201,19 @@
       }
     ],
     "PostToolUse": [
+      {
+        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__record_model_application$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/model-routing-host-hook.mjs"
+            ],
+            "timeout": 5
+          }
+        ]
+      },
       {
         "hooks": [
           {

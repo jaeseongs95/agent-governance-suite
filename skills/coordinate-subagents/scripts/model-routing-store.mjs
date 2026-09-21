@@ -1,6 +1,6 @@
 /** Additive tables on a caller-owned SQLite connection. No existing rows or user_version rewritten. */
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { assert, canonical, digest, keys, instant, validateCapabilities, validateBinding, validateTarget, verifySeal } from './model-routing-core.mjs';
+import { assert, canonical, digest, keys, instant, validateCapabilities, validateBinding, validateTarget, verifySeal, recordV2 } from './model-routing-core.mjs';
 import { validateEvaluation } from './model-evaluation.mjs';
 
 function transaction(db,fn){db.exec('BEGIN IMMEDIATE');try{const result=fn();db.exec('COMMIT');return result;}catch(error){db.exec('ROLLBACK');throw error;}}
@@ -56,6 +56,9 @@ export class ModelRoutingStore {
       CREATE UNIQUE INDEX IF NOT EXISTS ags_model_active_write_v2
         ON ags_model_dispatches_v2(write_key)
         WHERE write_key IS NOT NULL AND state IN ('reserved','accepted','running','unknown');
+      CREATE TABLE IF NOT EXISTS ags_model_native_hook_receipts_v1 (
+        application_digest TEXT PRIMARY KEY, receipt_nonce TEXT NOT NULL UNIQUE
+      ) STRICT;
       CREATE TABLE IF NOT EXISTS ags_model_evaluations_v1 (
         record_digest TEXT PRIMARY KEY, payload TEXT NOT NULL
       ) STRICT;
@@ -93,6 +96,27 @@ export class ModelRoutingStore {
     assert(Date.parse(observation.observedAt)<=instant(now,'now'),'OBSERVATION_IN_FUTURE');
     this.database.prepare('INSERT INTO ags_model_receipts_v1 VALUES (?,?,?,?,?,NULL)').run(receipt.nonce,'observation',digest(observation.binding),canonical(observation),receipt.expiresAt);
     return receipt.nonce;
+  }
+  /** Native hook admission is bound to exact application bytes; a caller cannot move it to another request. */
+  bindNativeHookObservation(application,receipt,signer,now){
+    return transaction(this.database,()=>{
+      const observed=signer.verify(receipt,'observation',now);
+      const entry=this.decision(application.decisionDigest);assert(entry,'DECISION_UNKNOWN');
+      const dispatch=this.dispatch(digest({binding:application.binding}));
+      assert(dispatch&&dispatch.decision_digest===application.decisionDigest&&dispatch.dispatched_at===application.dispatchedAt,'DISPATCH_TIME_MISMATCH');
+      assert(instant(application.dispatchedAt,'dispatchedAt')<=instant(now,'now'),'DISPATCH_TIME_IN_FUTURE');
+      // Validate with the same pure recorder before persisting any native receipt association.
+      recordV2(application,{...entry.environment,now:application.dispatchedAt,request:entry.request,decision:entry.decision,admittedObservation:observed});
+      const nonce=this.publishObservation(receipt,signer,now);
+      this.database.prepare(`INSERT INTO ags_model_native_hook_receipts_v1 VALUES (?,?)
+        ON CONFLICT(application_digest) DO UPDATE SET receipt_nonce=excluded.receipt_nonce`).run(digest(application),nonce);
+      return {bound:true};
+    });
+  }
+  nativeHookObservationToken(application){
+    // Return consumed/expired tokens too: recordApplication must reject replay, never silently downgrade it.
+    return this.database.prepare('SELECT receipt_nonce FROM ags_model_native_hook_receipts_v1 WHERE application_digest=?')
+      .get(digest(application))?.receipt_nonce??null;
   }
   /** The callback must validate the entire record before token consumption commits. */
   recordApplication(input,observationToken,makeRecord,now){

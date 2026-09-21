@@ -22,7 +22,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     await mkdir(path.join(cleanRoot, "mcp-server", "dist"), { recursive: true });
     await Promise.all([
       ...["contracts", "runtime", "skills"].map((directory) => cp(path.join(sourceRoot, directory), path.join(cleanRoot, directory), { recursive: true })),
-      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "session-board-hook.mjs"].map((bundle) => (
+      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "model-routing-host-hook.mjs", "session-board-hook.mjs"].map((bundle) => (
         cp(path.join(sourceRoot, "mcp-server", "dist", bundle), path.join(cleanRoot, "mcp-server", "dist", bundle))
       )),
     ]);
@@ -38,7 +38,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     environment.AGENT_GOVERNANCE_TRUST_DB_PATH = path.join(cleanRoot, "state", "trust.sqlite3");
     environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = path.join(cleanRoot, "state", "messaging");
     // Runs a clean-room script (a path relative to the clean root) with the given stdin text.
-    const runNode = (script, input) => spawnSync(process.execPath, [path.join(cleanRoot, ...script.split("/"))], {
+    const runNode = (script, input, args = []) => spawnSync(process.execPath, [path.join(cleanRoot, ...script.split("/")), ...args], {
       cwd: cleanRoot,
       encoding: "utf8",
       env: environment,
@@ -65,6 +65,13 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
         throw new Error(`${entrypoint.path} leaked an unbundled runtime dependency.\n${output}`);
       }
       results.push({ path: entrypoint.path, exitCode: result.status });
+    }
+
+    for (const host of ["codex", "claude-code"]) {
+      const observed = runNode("mcp-server/dist/model-routing-host-hook.mjs", "{}\n", ["--host", host]);
+      if (observed.error || observed.status !== 0 || observed.stdout !== "" || /AGS native routing observation unavailable|ERR_MODULE_NOT_FOUND|Cannot find package/u.test(observed.stderr ?? "")) {
+        throw new Error(`Native routing hook failed its dependency-free ${host} smoke check.\n${observed.stderr ?? ""}`);
+      }
     }
 
     const hookResult = runNode(
