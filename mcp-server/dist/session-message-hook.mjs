@@ -7549,7 +7549,7 @@ var require_formats = __commonJS({
     }
     var TIME = /^(\d\d):(\d\d):(\d\d(?:\.\d+)?)(z|([+-])(\d\d)(?::?(\d\d))?)?$/i;
     function getTime(strictTimeZone) {
-      return function time(str) {
+      return function time2(str) {
         const matches = TIME.exec(str);
         if (!matches)
           return false;
@@ -7595,10 +7595,10 @@ var require_formats = __commonJS({
     }
     var DATE_TIME_SEPARATOR = /t|\s/i;
     function getDateTime(strictTimeZone) {
-      const time = getTime(strictTimeZone);
+      const time2 = getTime(strictTimeZone);
       return function date_time(str) {
         const dateTime = str.split(DATE_TIME_SEPARATOR);
-        return dateTime.length === 2 && date(dateTime[0]) && time(dateTime[1]);
+        return dateTime.length === 2 && date(dateTime[0]) && time2(dateTime[1]);
       };
     }
     function compareDateTime(dt1, dt2) {
@@ -10961,6 +10961,132 @@ var import_ajv_formats = __toESM(require_dist(), 1);
 import { createHash as createHash4 } from "node:crypto";
 import { readFileSync as readFileSync4, readdirSync } from "node:fs";
 import path8 from "node:path";
+
+// mcp-server/src/semantic-contract-invariants.ts
+function requireContract(condition, message) {
+  if (!condition) throw new WorkflowContractError("INVALID_INPUT", message);
+}
+function assertSemanticJson(value) {
+  try {
+    canonical(value);
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", "Semantic contracts require finite, plain JSON values.");
+  }
+}
+function same(a, b, name) {
+  requireContract(canonical(a) === canonical(b), `Semantic contract binding mismatch: ${name}.`);
+}
+function seal2(value, field) {
+  try {
+    verifySeal(value, field);
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", `Semantic contract digest mismatch: ${field}.`);
+  }
+}
+function time(value) {
+  try {
+    return instant(value, "semantic timestamp");
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", "Canonical UTC semantic timestamp required.");
+  }
+}
+function assertSemanticRequestIntegrity(request) {
+  seal2(request, "requestDigest");
+  same(request.stateDigest, digest(request.state), "stateDigest");
+  same(request.questionDigest, digest(request.question), "questionDigest");
+  same(request.eligibleSetDigest, digest(request.eligibleSet), "eligibleSetDigest");
+  same(request.optionMappingDigest, digest(request.options), "optionMappingDigest");
+  if (request.state.summaryDigest !== null) {
+    same(request.state.summaryDigest, digest(request.state.text), "summaryDigest");
+  }
+  requireContract(request.state.sources.some((source) => source.kind === "task" && source.id === request.binding.taskId), "Task source must match the routing binding.");
+  requireContract(time(request.expiresAt) > time(request.requestedAt), "Semantic request expiry must follow requestedAt.");
+  const candidates = new Map(request.eligibleSet.map((candidate) => [candidate.candidateKey, candidate]));
+  requireContract(candidates.size === request.eligibleSet.length, "Duplicate eligible candidate key.");
+  const ranked = [...request.eligibleSet].sort((a, b) => a.baselineRank - b.baselineRank);
+  requireContract(ranked.every((candidate, index) => candidate.baselineRank === index), "Baseline ranks must be unique and contiguous from zero.");
+  requireContract(ranked.every((candidate, index) => index === 0 || candidate.preferenceGroup >= ranked[index - 1].preferenceGroup), "Baseline preference groups must be ordered.");
+  const ids = /* @__PURE__ */ new Set();
+  const models = /* @__PURE__ */ new Set();
+  const mapped = /* @__PURE__ */ new Set();
+  for (const option of request.options) {
+    requireContract(!ids.has(option.optionId) && !models.has(option.model), "Each model must have one unique option ID.");
+    ids.add(option.optionId);
+    models.add(option.model);
+    for (const key of option.candidateKeys) {
+      const candidate = candidates.get(key);
+      requireContract(candidate && candidate.model === option.model && !mapped.has(key), "Option mapping must reference distinct eligible candidates of the same model.");
+      mapped.add(key);
+    }
+  }
+  requireContract(mapped.size === candidates.size, "Option mapping must cover the eligible set exactly.");
+}
+function assertSemanticAdviceIntegrity(advice) {
+  seal2(advice, "adviceDigest");
+  requireContract(time(advice.expiresAt) > time(advice.evaluatedAt), "Advice expiry must follow evaluatedAt.");
+}
+function assertSemanticAdviceBinding(advice, request) {
+  const fields = ["evaluationId", "binding", "effectiveRoutingRequestDigest", "stateDigest", "questionDigest", "catalogDigest", "routingPolicyDigest", "semanticPolicyDigest", "capabilitySetDigest", "eligibleSetDigest", "optionMappingDigest", "provider", "reducerVersion", "expiresAt"];
+  for (const field of fields) same(advice[field], request[field], field);
+  same(advice.semanticRequestDigest, request.requestDigest, "semanticRequestDigest");
+  requireContract(time(advice.evaluatedAt) >= time(request.requestedAt), "Advice cannot precede its evaluation request.");
+  const optionIds = new Set(request.options.map((option) => option.optionId));
+  requireContract(advice.choice.selectedOptionIds.every((id) => optionIds.has(id)), "Advice selected an option outside the prepared request.");
+}
+function assertSemanticPolicyConsistency(policy) {
+  if (policy.mode === "assist" && policy.adoption.status === "validated") {
+    requireContract(policy.egress.allowedProviders.includes(policy.adoption.provider.id), "Validated provider must be explicitly allowed for assist.");
+  }
+}
+function assertSemanticAssignmentBinding(request) {
+  same(request.taskRef.taskId, request.routingRequest.binding.taskId, "taskRef.taskId");
+}
+function assertSemanticDecisionIntegrity(decision) {
+  seal2(decision, "decisionDigest");
+}
+function assertSemanticDecisionBinding(decision, advice, request) {
+  requireContract(request.mode === "assist", "Only an adopted assist evaluation can produce a v3 decision.");
+  same(decision.binding, advice.binding, "decision.binding");
+  same(decision.requestDigest, advice.effectiveRoutingRequestDigest, "decision.requestDigest");
+  same(decision.catalogDigest, advice.catalogDigest, "decision.catalogDigest");
+  same(decision.policyDigest, advice.routingPolicyDigest, "decision.policyDigest");
+  same(decision.capabilitySetDigest, advice.capabilitySetDigest, "decision.capabilitySetDigest");
+  const fields = ["adviceDigest", "semanticRequestDigest", "semanticPolicyDigest", "eligibleSetDigest", "optionMappingDigest", "reducerVersion"];
+  for (const field of fields) same(decision.semantic[field], advice[field], `decision.semantic.${field}`);
+  const option = request.options.find((item) => item.optionId === decision.semantic.selectedOptionId);
+  requireContract(option && advice.choice.selectedOptionIds.includes(option.optionId) && option.model === decision.selected.model, "Selected model must match an advised prepared option.");
+}
+function assertSemanticApplicationBinding(application, decision) {
+  same(application.binding, decision.binding, "application.binding");
+  same(application.target, decision.target, "application.target");
+  same(application.decisionDigest, decision.decisionDigest, "application.decisionDigest");
+  same(application.semanticAdviceDigest, decision.semantic.adviceDigest, "application.semanticAdviceDigest");
+  same(application.dispatched, decision.selected, "application.dispatched");
+  time(application.dispatchedAt);
+  if (application.observation) {
+    requireContract(time(application.observation.observedAt) >= time(application.dispatchedAt), "Observation cannot precede dispatch.");
+    same(application.observation.binding, application.binding, "observation.binding");
+    same(application.observation.target, application.target, "observation.target");
+    same(application.observation.decisionDigest, application.decisionDigest, "observation.decisionDigest");
+  }
+}
+function assertSemanticRecordIntegrity(record3) {
+  seal2(record3, "recordDigest");
+  time(record3.dispatchedAt);
+  if (record3.observed) {
+    requireContract(time(record3.observed.observedAt) >= time(record3.dispatchedAt), "Observation cannot precede dispatch.");
+    same(record3.observed.binding, record3.binding, "record.observed.binding");
+    same(record3.observed.target, record3.target, "record.observed.target");
+    same(record3.observed.decisionDigest, record3.decisionDigest, "record.observed.decisionDigest");
+  }
+}
+function assertSemanticRecordBinding(record3, decision) {
+  const fields = ["binding", "target", "decisionDigest", "requestDigest", "catalogDigest", "policyDigest", "capabilitySnapshotDigest", "requested", "selected", "semantic"];
+  for (const field of fields) same(record3[field], decision[field], `record.${field}`);
+  same(record3.dispatched, decision.selected, "record.dispatched");
+}
+
+// mcp-server/src/schema-validator.ts
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
   const path14 = new URL(`../../contracts/${fileName}`, import.meta.url);
@@ -11018,7 +11144,15 @@ var contractSchemas = {
   modelRoutingDecisionV2: loadSchema("model-routing-decision.v2.schema.json"),
   modelApplicationRequestV2: loadSchema("model-application-request.v2.schema.json"),
   modelApplicationRecordV2: loadSchema("model-application-record.v2.schema.json"),
-  modelEvaluationRecordV1: loadSchema("model-evaluation-record.v1.schema.json")
+  modelEvaluationRecordV1: loadSchema("model-evaluation-record.v1.schema.json"),
+  semanticDecisionQuestionV1: loadSchema("semantic-decision-question.v1.schema.json"),
+  semanticDecisionRequestV1: loadSchema("semantic-decision-request.v1.schema.json"),
+  semanticDecisionAdviceV1: loadSchema("semantic-decision-advice.v1.schema.json"),
+  semanticDecisionPolicyV1: loadSchema("semantic-decision-policy.v1.schema.json"),
+  semanticModelAssignmentRequestV1: loadSchema("semantic-model-assignment-request.v1.schema.json"),
+  modelRoutingDecisionV3: loadSchema("model-routing-decision.v3.schema.json"),
+  modelApplicationRequestV3: loadSchema("model-application-request.v3.schema.json"),
+  modelApplicationRecordV3: loadSchema("model-application-record.v3.schema.json")
 };
 function artifactDigestView(declared) {
   let items = declared.properties?.artifacts?.items;
@@ -11201,6 +11335,75 @@ var ContractValidator = class {
   }
   modelEvaluationRecordV1(value) {
     return this.assert("modelEvaluationRecordV1", value);
+  }
+  /** New-contract validation only: legacy Ajv acceptance and v2 runtime methods are unchanged. */
+  assertSemantic(name, value) {
+    assertSemanticJson(value);
+    return this.assert(name, value);
+  }
+  semanticDecisionQuestionV1(value) {
+    const result = this.assertSemantic("semanticDecisionQuestionV1", value);
+    return result;
+  }
+  semanticDecisionRequestV1(value) {
+    const result = this.assertSemantic("semanticDecisionRequestV1", value);
+    assertSemanticRequestIntegrity(result);
+    return result;
+  }
+  semanticDecisionAdviceV1(value) {
+    const result = this.assertSemantic("semanticDecisionAdviceV1", value);
+    assertSemanticAdviceIntegrity(result);
+    return result;
+  }
+  semanticDecisionPolicyV1(value) {
+    const result = this.assertSemantic("semanticDecisionPolicyV1", value);
+    assertSemanticPolicyConsistency(result);
+    return result;
+  }
+  semanticModelAssignmentRequestV1(value) {
+    const result = this.assertSemantic("semanticModelAssignmentRequestV1", value);
+    assertSemanticAssignmentBinding(result);
+    return result;
+  }
+  modelRoutingDecisionV3(value) {
+    const result = this.assertSemantic("modelRoutingDecisionV3", value);
+    assertSemanticDecisionIntegrity(result);
+    return result;
+  }
+  modelApplicationRequestV3(value) {
+    const result = this.assertSemantic("modelApplicationRequestV3", value);
+    return result;
+  }
+  modelApplicationRecordV3(value) {
+    const result = this.assertSemantic("modelApplicationRecordV3", value);
+    assertSemanticRecordIntegrity(result);
+    return result;
+  }
+  /** Cross-artifact integrity is necessary, not proof of AGS admission or execution permission. */
+  semanticDecisionAdviceForRequestV1(value, requestValue) {
+    const request = this.semanticDecisionRequestV1(requestValue);
+    const advice = this.semanticDecisionAdviceV1(value);
+    assertSemanticAdviceBinding(advice, request);
+    return advice;
+  }
+  modelRoutingDecisionForAdviceV3(value, adviceValue, requestValue) {
+    const request = this.semanticDecisionRequestV1(requestValue);
+    const advice = this.semanticDecisionAdviceForRequestV1(adviceValue, request);
+    const decision = this.modelRoutingDecisionV3(value);
+    assertSemanticDecisionBinding(decision, advice, request);
+    return decision;
+  }
+  modelApplicationRequestForDecisionV3(value, decisionValue) {
+    const decision = this.modelRoutingDecisionV3(decisionValue);
+    const application = this.modelApplicationRequestV3(value);
+    assertSemanticApplicationBinding(application, decision);
+    return application;
+  }
+  modelApplicationRecordForDecisionV3(value, decisionValue) {
+    const decision = this.modelRoutingDecisionV3(decisionValue);
+    const record3 = this.modelApplicationRecordV3(value);
+    assertSemanticRecordBinding(record3, decision);
+    return record3;
   }
   providerResult(rootDirectory, resultSchema, outputSchema, value) {
     const declared = this.readBoundSchema(rootDirectory, resultSchema, "provider result");

@@ -52,8 +52,30 @@ import {
   type ModelRoutingDecisionV2,
   type ModelRoutingPolicyV1,
   type ModelSelectionRequestV2,
+  type SemanticDecisionQuestionV1,
+  type SemanticDecisionRequestV1,
+  type SemanticDecisionAdviceV1,
+  type SemanticDecisionPolicyV1,
+  type SemanticModelAssignmentRequestV1,
+  type ModelRoutingDecisionV3,
+  type ModelApplicationRequestV3,
+  type ModelApplicationRecordV3,
   WorkflowContractError,
 } from "../../contracts/types.js";
+
+import {
+  assertSemanticJson,
+  assertSemanticRequestIntegrity,
+  assertSemanticAdviceIntegrity,
+  assertSemanticAdviceBinding,
+  assertSemanticPolicyConsistency,
+  assertSemanticAssignmentBinding,
+  assertSemanticDecisionIntegrity,
+  assertSemanticDecisionBinding,
+  assertSemanticApplicationBinding,
+  assertSemanticRecordIntegrity,
+  assertSemanticRecordBinding,
+} from "./semantic-contract-invariants.js";
 
 type JsonSchema = Record<string, unknown>;
 const addFormats = addFormatsModule as unknown as FormatsPlugin;
@@ -117,6 +139,14 @@ export const contractSchemas = {
   modelApplicationRequestV2: loadSchema("model-application-request.v2.schema.json"),
   modelApplicationRecordV2: loadSchema("model-application-record.v2.schema.json"),
   modelEvaluationRecordV1: loadSchema("model-evaluation-record.v1.schema.json"),
+  semanticDecisionQuestionV1: loadSchema("semantic-decision-question.v1.schema.json"),
+  semanticDecisionRequestV1: loadSchema("semantic-decision-request.v1.schema.json"),
+  semanticDecisionAdviceV1: loadSchema("semantic-decision-advice.v1.schema.json"),
+  semanticDecisionPolicyV1: loadSchema("semantic-decision-policy.v1.schema.json"),
+  semanticModelAssignmentRequestV1: loadSchema("semantic-model-assignment-request.v1.schema.json"),
+  modelRoutingDecisionV3: loadSchema("model-routing-decision.v3.schema.json"),
+  modelApplicationRequestV3: loadSchema("model-application-request.v3.schema.json"),
+  modelApplicationRecordV3: loadSchema("model-application-record.v3.schema.json"),
 };
 
 // Providers declare artifact digests either bare or sha256:-prefixed. A SHA-256 digest that misses the
@@ -354,6 +384,88 @@ export class ContractValidator {
 
   modelEvaluationRecordV1(value: unknown): ModelEvaluationRecordV1 {
     return this.assert<ModelEvaluationRecordV1>("modelEvaluationRecordV1", value);
+  }
+
+  /** New-contract validation only: legacy Ajv acceptance and v2 runtime methods are unchanged. */
+  private assertSemantic<T>(name: keyof ContractValidator["validators"], value: unknown): T {
+    assertSemanticJson(value);
+    return this.assert<T>(name, value);
+  }
+
+  semanticDecisionQuestionV1(value: unknown): SemanticDecisionQuestionV1 {
+    const result = this.assertSemantic<SemanticDecisionQuestionV1>("semanticDecisionQuestionV1", value);
+    return result;
+  }
+
+  semanticDecisionRequestV1(value: unknown): SemanticDecisionRequestV1 {
+    const result = this.assertSemantic<SemanticDecisionRequestV1>("semanticDecisionRequestV1", value);
+    assertSemanticRequestIntegrity(result);
+    return result;
+  }
+
+  semanticDecisionAdviceV1(value: unknown): SemanticDecisionAdviceV1 {
+    const result = this.assertSemantic<SemanticDecisionAdviceV1>("semanticDecisionAdviceV1", value);
+    assertSemanticAdviceIntegrity(result);
+    return result;
+  }
+
+  semanticDecisionPolicyV1(value: unknown): SemanticDecisionPolicyV1 {
+    const result = this.assertSemantic<SemanticDecisionPolicyV1>("semanticDecisionPolicyV1", value);
+    assertSemanticPolicyConsistency(result);
+    return result;
+  }
+
+  semanticModelAssignmentRequestV1(value: unknown): SemanticModelAssignmentRequestV1 {
+    const result = this.assertSemantic<SemanticModelAssignmentRequestV1>("semanticModelAssignmentRequestV1", value);
+    assertSemanticAssignmentBinding(result);
+    return result;
+  }
+
+  modelRoutingDecisionV3(value: unknown): ModelRoutingDecisionV3 {
+    const result = this.assertSemantic<ModelRoutingDecisionV3>("modelRoutingDecisionV3", value);
+    assertSemanticDecisionIntegrity(result);
+    return result;
+  }
+
+  modelApplicationRequestV3(value: unknown): ModelApplicationRequestV3 {
+    const result = this.assertSemantic<ModelApplicationRequestV3>("modelApplicationRequestV3", value);
+    return result;
+  }
+
+  modelApplicationRecordV3(value: unknown): ModelApplicationRecordV3 {
+    const result = this.assertSemantic<ModelApplicationRecordV3>("modelApplicationRecordV3", value);
+    assertSemanticRecordIntegrity(result);
+    return result;
+  }
+
+  /** Cross-artifact integrity is necessary, not proof of AGS admission or execution permission. */
+  semanticDecisionAdviceForRequestV1(value: unknown, requestValue: unknown): SemanticDecisionAdviceV1 {
+    const request = this.semanticDecisionRequestV1(requestValue);
+    const advice = this.semanticDecisionAdviceV1(value);
+    assertSemanticAdviceBinding(advice, request);
+    return advice;
+  }
+
+  modelRoutingDecisionForAdviceV3(value: unknown, adviceValue: unknown, requestValue: unknown): ModelRoutingDecisionV3 {
+    const request = this.semanticDecisionRequestV1(requestValue);
+    const advice = this.semanticDecisionAdviceForRequestV1(adviceValue, request);
+    const decision = this.modelRoutingDecisionV3(value);
+    assertSemanticDecisionBinding(decision, advice, request);
+    return decision;
+  }
+
+  modelApplicationRequestForDecisionV3(value: unknown, decisionValue: unknown): ModelApplicationRequestV3 {
+    const decision = this.modelRoutingDecisionV3(decisionValue);
+    const application = this.modelApplicationRequestV3(value);
+    assertSemanticApplicationBinding(application, decision);
+    return application;
+  }
+
+  modelApplicationRecordForDecisionV3(value: unknown, decisionValue: unknown): ModelApplicationRecordV3 {
+    const decision = this.modelRoutingDecisionV3(decisionValue);
+    const record = this.modelApplicationRecordV3(value);
+    assertSemanticRecordBinding(record, decision);
+    return record;
   }
 
   providerResult(

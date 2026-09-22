@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/model-application-record.v3.schema.json",
+  "title": "model-application-record.v3",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "binding": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/binding"
+    },
+    "target": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/target"
+    },
+    "decisionDigest": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/decisionDigest"
+    },
+    "requestDigest": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/requestDigest"
+    },
+    "catalogDigest": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/catalogDigest"
+    },
+    "policyDigest": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/policyDigest"
+    },
+    "capabilitySnapshotDigest": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/capabilitySnapshotDigest"
+    },
+    "requested": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/requested"
+    },
+    "selected": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/selected"
+    },
+    "dispatched": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/dispatched"
+    },
+    "dispatchedAt": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/dispatchedAt"
+    },
+    "observed": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/observed"
+    },
+    "modelVerification": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/modelVerification"
+    },
+    "reasoningVerification": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/reasoningVerification"
+    },
+    "runtimeModeVerification": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/runtimeModeVerification"
+    },
+    "originVerified": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/originVerified"
+    },
+    "status": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/status"
+    },
+    "terminalOutcome": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/terminalOutcome"
+    },
+    "observationAdmitted": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/observationAdmitted"
+    },
+    "trustedGateSatisfied": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/trustedGateSatisfied"
+    },
+    "artifactOnly": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/artifactOnly"
+    },
+    "recordDigest": {
+      "$ref": "https://skill-suite.local/contracts/model-application-record.v2.schema.json#/properties/recordDigest"
+    },
+    "schemaVersion": {
+      "const": "3.0.0"
+    },
+    "semantic": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v3.schema.json#/properties/semantic"
+    }
+  },
+  "required": [
+    "binding",
+    "target",
+    "decisionDigest",
+    "requestDigest",
+    "catalogDigest",
+    "policyDigest",
+    "capabilitySnapshotDigest",
+    "requested",
+    "selected",
+    "dispatched",
+    "dispatchedAt",
+    "observed",
+    "modelVerification",
+    "reasoningVerification",
+    "runtimeModeVerification",
+    "originVerified",
+    "status",
+    "terminalOutcome",
+    "observationAdmitted",
+    "trustedGateSatisfied",
+    "artifactOnly",
+    "recordDigest",
+    "schemaVersion",
+    "semantic"
+  ]
+}

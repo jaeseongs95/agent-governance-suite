@@ -1,0 +1,59 @@
+{
+  "sourceCommit": "6e96640066e20358ba523beba505c64a4d330ccc",
+  "sourceTree": "119ad98fedbf470000f7674336d0c0b03aba7a1f",
+  "snapshotCommit": "6e248d48297196453b51f7793b6adf025d9af54f",
+  "snapshotTree": "ce125336912f8e16ddc95933a4a4a563e17bb9ac",
+  "baselineRun": 35678507919,
+  "baselineArtifact": 10672994887,
+  "remote": {
+    "node": "v22.23.2",
+    "pnpm": "11.19.0",
+    "commandResults": {
+      "bundle-before": 0,
+      "claude-drift": 0,
+      "lint": 0,
+      "build": 0,
+      "focused": 0,
+      "full": 0,
+      "runtime": 0,
+      "validate-all": 0,
+      "validate-official": 1,
+      "source": 0,
+      "bundle-after": 0,
+      "diff-check": 0
+    },
+    "focused": {
+      "passed": 385,
+      "failed": 0
+    },
+    "full": {
+      "passed": 986,
+      "failed": 0,
+      "skipped": 1
+    },
+    "official": "ENOENT: /home/runner/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py"
+  },
+  "local": {
+    "node": "v22.16.0",
+    "command": "node node_modules/vitest/vitest.mjs run",
+    "passed": 980,
+    "failed": 6,
+    "skipped": 1,
+    "failures": [
+      "and BLOCKED reports to their fixed workflow error states 452ms",
+      " tests/mcp/convergence-guard.test.ts > local MCP convergence guard > allows only one competing lease claim across two SQLite connections",
+      " tests/mcp/convergence-guard.test.ts > local MCP convergence guard > allows only one trusted observation claim across two SQLite connections",
+      " tests/mcp/model-capability-exchange-install.test.mjs > P5 actual TLS capability exchange and MCP resolver > keeps an actual old broker working with no new command or schema writes",
+      " tests/session-messaging/session-message.test.ts > session message spool > allows one wake claim across two concurrent SQLite connections",
+      " tests/tooling/commands.test.mjs > skill maintenance commands > forwards pnpm script arguments without a standalone separator",
+      " tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves every optimized skill while reducing its initial load"
+    ],
+    "limits": [
+      "pnpm missing; npm_execpath absent",
+      "Node TS worker support differs from Node22.23.2",
+      "historical Git objects absent in reconstructed checkout"
+    ]
+  },
+  "goldenCases": 21,
+  "pastRunCountsReused": false
+}

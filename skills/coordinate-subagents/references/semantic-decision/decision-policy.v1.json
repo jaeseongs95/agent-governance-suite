@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "semantic-model-ranking",
+  "version": "1.0.0",
+  "mode": "off",
+  "purpose": "model-ranking",
+  "assistScope": {
+    "highRisk": false,
+    "independentAudit": false,
+    "preserveRequired": true,
+    "preservePreferred": true,
+    "selectionUnit": "model",
+    "tieBreak": "baseline-order"
+  },
+  "adoption": {
+    "status": "unvalidated",
+    "minimumConfidence": null,
+    "evidenceDigest": null
+  },
+  "egress": {
+    "enabled": false,
+    "allowedProviders": []
+  }
+}

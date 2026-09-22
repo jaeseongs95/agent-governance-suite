@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/model-routing-decision.v3.schema.json",
+  "title": "model-routing-decision.v3",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "binding": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v2.schema.json#/properties/binding"
+    },
+    "requestDigest": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v2.schema.json#/properties/requestDigest"
+    },
+    "catalogDigest": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v2.schema.json#/properties/catalogDigest"
+    },
+    "policyDigest": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v2.schema.json#/properties/policyDigest"
+    },
+    "capabilitySetDigest": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v2.schema.json#/properties/capabilitySetDigest"
+    },
+    "capabilitySnapshotDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "requested": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v2.schema.json#/properties/requested"
+    },
+    "selected": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v2.schema.json#/$defs/selection"
+    },
+    "target": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v2.schema.json#/$defs/target"
+    },
+    "invocationSurface": {
+      "enum": [
+        "local-subagent",
+        "peer-session",
+        "headless"
+      ]
+    },
+    "status": {
+      "const": "selected"
+    },
+    "executionAuthorized": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v2.schema.json#/properties/executionAuthorized"
+    },
+    "trustedGateSatisfied": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v2.schema.json#/properties/trustedGateSatisfied"
+    },
+    "selectionReasonCodes": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v2.schema.json#/properties/selectionReasonCodes"
+    },
+    "rejectedCandidates": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v2.schema.json#/properties/rejectedCandidates"
+    },
+    "fallbackReason": {
+      "type": "null"
+    },
+    "decisionDigest": {
+      "$ref": "https://skill-suite.local/contracts/model-routing-decision.v2.schema.json#/properties/decisionDigest"
+    },
+    "schemaVersion": {
+      "const": "3.0.0"
+    },
+    "semantic": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "const": "assist"
+        },
+        "adviceDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "semanticRequestDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "semanticPolicyDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "eligibleSetDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "optionMappingDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "reducerVersion": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "selectedOptionId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "baselineDecisionDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "mode",
+        "adviceDigest",
+        "semanticRequestDigest",
+        "semanticPolicyDigest",
+        "eligibleSetDigest",
+        "optionMappingDigest",
+        "reducerVersion",
+        "selectedOptionId",
+        "baselineDecisionDigest"
+      ]
+    }
+  },
+  "required": [
+    "binding",
+    "requestDigest",
+    "catalogDigest",
+    "policyDigest",
+    "capabilitySetDigest",
+    "capabilitySnapshotDigest",
+    "requested",
+    "selected",
+    "target",
+    "invocationSurface",
+    "status",
+    "executionAuthorized",
+    "trustedGateSatisfied",
+    "selectionReasonCodes",
+    "rejectedCandidates",
+    "fallbackReason",
+    "decisionDigest",
+    "schemaVersion",
+    "semantic"
+  ]
+}

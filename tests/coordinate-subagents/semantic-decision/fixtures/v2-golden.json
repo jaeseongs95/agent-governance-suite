@@ -1,0 +1,4348 @@
+{
+  "schemaVersion": "1.0.0",
+  "provenance": {
+    "sourceCommit": "6e96640066e20358ba523beba505c64a4d330ccc",
+    "sourceTree": "119ad98fedbf470000f7674336d0c0b03aba7a1f",
+    "snapshotCommit": "6e248d48297196453b51f7793b6adf025d9af54f",
+    "snapshotTree": "ce125336912f8e16ddc95933a4a4a563e17bb9ac",
+    "capturedAt": "2026-09-22T02:24:55.389Z",
+    "node": "v22.16.0",
+    "sourceUnmodified": true
+  },
+  "schemaSha256": {
+    "model-selection-request.v2.schema.json": "de3619aa8702d3ee736abf00380cd057e09caef28725f457a1cb66c7887f08b1",
+    "model-routing-decision.v2.schema.json": "e4d808b7c8a49f4a6981ac2fb3dde322ed633f2ebe8d08d97fa194e99f0dba49",
+    "model-application-request.v2.schema.json": "5040a147c1eb165b657be56dfd687effe5b363df1af912019d35af0a414b05d0",
+    "model-application-record.v2.schema.json": "17c1c2a499aa1bbe8211e8296719bc9dbad1ed1bfb9aba7c75c209d58d9d1014"
+  },
+  "environment": {
+    "catalog": {
+      "schemaVersion": "1.0.0",
+      "snapshotDate": "2026-09-21T00:00:00.000Z",
+      "models": [
+        {
+          "id": "gpt-6-astra",
+          "modelOrigin": "openai",
+          "aliases": [],
+          "modelClass": "frontier",
+          "status": "stable",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": 1050000,
+          "abilityScore": null,
+          "officialPositioning": "Complex end-to-end work, coding and research (vendor positioning).",
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "OPENAI",
+            "BASELINE",
+            "PLAN"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "gpt-5.6-sol",
+          "modelOrigin": "openai",
+          "aliases": [],
+          "modelClass": "deep",
+          "status": "stable",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": null,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "BASELINE",
+            "CODEX",
+            "PLAN"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "gpt-5.6-terra",
+          "modelOrigin": "openai",
+          "aliases": [],
+          "modelClass": "general",
+          "status": "stable",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": null,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "BASELINE",
+            "CODEX",
+            "PLAN"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "gpt-5.6-luna",
+          "modelOrigin": "openai",
+          "aliases": [],
+          "modelClass": "lightweight",
+          "status": "stable",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": null,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "BASELINE",
+            "CODEX",
+            "PLAN"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "claude-fable-5",
+          "modelOrigin": "anthropic",
+          "aliases": [
+            "fable"
+          ],
+          "modelClass": "frontier",
+          "status": "stable",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": 1000000,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "CLAUDE",
+            "CLAUDE-CODE",
+            "PLAN"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "claude-fable-5-1",
+          "modelOrigin": "anthropic",
+          "aliases": [],
+          "modelClass": "frontier",
+          "status": "seed",
+          "verification": [
+            "baseline-seed"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": null,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "PLAN"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "claude-opus-5",
+          "modelOrigin": "anthropic",
+          "aliases": [
+            "opus"
+          ],
+          "modelClass": "deep",
+          "status": "stable",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": 1000000,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "CLAUDE",
+            "CLAUDE-CODE",
+            "PLAN"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "claude-sonnet-5",
+          "modelOrigin": "anthropic",
+          "aliases": [
+            "sonnet"
+          ],
+          "modelClass": "general",
+          "status": "stable",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": 1000000,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "CLAUDE",
+            "CLAUDE-CODE",
+            "PLAN"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "claude-haiku-4-5-20251001",
+          "modelOrigin": "anthropic",
+          "aliases": [
+            "haiku",
+            "claude-haiku-4-5"
+          ],
+          "modelClass": "lightweight",
+          "status": "stable",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "token-budget",
+            "toggle",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": 200000,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "CLAUDE",
+            "CLAUDE-CODE"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "gemini-3.8-flash",
+          "modelOrigin": "google",
+          "aliases": [],
+          "modelClass": "general",
+          "status": "seed",
+          "verification": [
+            "baseline-seed"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "token-budget",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": null,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "PLAN"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "gemini-3.1-pro-preview",
+          "modelOrigin": "google",
+          "aliases": [],
+          "modelClass": "deep",
+          "status": "preview",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": null,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "GEMINI"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "gemini-2.5-flash-lite",
+          "modelOrigin": "google",
+          "aliases": [],
+          "modelClass": "lightweight",
+          "status": "stable",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "token-budget",
+            "toggle",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": null,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "GEMINI"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "grok-4.5",
+          "modelOrigin": "xai",
+          "aliases": [],
+          "modelClass": "deep",
+          "status": "stable",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": 500000,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "GROK"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "mistral-medium-3-5",
+          "modelOrigin": "mistral",
+          "aliases": [],
+          "modelClass": "deep",
+          "status": "stable",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": null,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "MISTRAL"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "mistral-small-2603",
+          "modelOrigin": "mistral",
+          "aliases": [],
+          "modelClass": "general",
+          "status": "stable",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "toggle",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": null,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "MISTRAL"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "amazon.nova-pro-v1:0",
+          "modelOrigin": "amazon",
+          "aliases": [],
+          "modelClass": "general",
+          "status": "seed",
+          "verification": [
+            "baseline-seed"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": null,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "PLAN"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "command-a-plus-05-2026",
+          "modelOrigin": "cohere",
+          "aliases": [],
+          "modelClass": "general",
+          "status": "stable",
+          "verification": [
+            "documented"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "enum",
+            "token-budget",
+            "toggle",
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": null,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "COHERE"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "muse-spark",
+          "modelOrigin": "meta",
+          "aliases": [],
+          "modelClass": "deep",
+          "status": "seed",
+          "verification": [
+            "baseline-seed"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": null,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "PLAN"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        },
+        {
+          "id": "llama-4-maverick",
+          "modelOrigin": "meta",
+          "aliases": [],
+          "modelClass": "general",
+          "status": "seed",
+          "verification": [
+            "baseline-seed"
+          ],
+          "roles": [
+            "discovery",
+            "general-implementation",
+            "complex-reasoning",
+            "independent-audit"
+          ],
+          "taskTraits": [
+            "architecture-decision",
+            "code-change",
+            "diagnosis",
+            "source-research",
+            "context-repair",
+            "multimodal-input"
+          ],
+          "nativeKinds": [
+            "not-exposed"
+          ],
+          "inputModalities": [
+            "text",
+            "image"
+          ],
+          "contextTokens": null,
+          "abilityScore": null,
+          "officialPositioning": null,
+          "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+          "sourceIds": [
+            "PLAN"
+          ],
+          "checkedAt": "2026-09-21T00:00:00.000Z"
+        }
+      ],
+      "hosts": [
+        {
+          "id": "openai-codex",
+          "defaultEnabled": true,
+          "autoDispatch": true,
+          "status": "baseline",
+          "sourceIds": [
+            "CODEX"
+          ],
+          "requiredCapabilities": [
+            "dispatch",
+            "approvals",
+            "terminalOutcome",
+            "sessionIdentity"
+          ],
+          "unknownCapabilities": []
+        },
+        {
+          "id": "anthropic-claude-code",
+          "defaultEnabled": true,
+          "autoDispatch": true,
+          "status": "baseline",
+          "sourceIds": [
+            "CLAUDE-CODE"
+          ],
+          "requiredCapabilities": [
+            "dispatch",
+            "approvals",
+            "terminalOutcome",
+            "sessionIdentity"
+          ],
+          "unknownCapabilities": []
+        },
+        {
+          "id": "gemini-cli",
+          "defaultEnabled": false,
+          "autoDispatch": true,
+          "status": "experimental",
+          "sourceIds": [
+            "GEMINI-CLI"
+          ],
+          "requiredCapabilities": [
+            "dispatch",
+            "approvals",
+            "terminalOutcome",
+            "sessionIdentity"
+          ],
+          "unknownCapabilities": []
+        },
+        {
+          "id": "grok-build",
+          "defaultEnabled": false,
+          "autoDispatch": true,
+          "status": "experimental",
+          "sourceIds": [
+            "GROK-BUILD"
+          ],
+          "requiredCapabilities": [
+            "dispatch",
+            "approvals",
+            "terminalOutcome",
+            "sessionIdentity"
+          ],
+          "unknownCapabilities": []
+        },
+        {
+          "id": "gemini-api",
+          "defaultEnabled": false,
+          "autoDispatch": false,
+          "status": "descriptor-only",
+          "sourceIds": [
+            "GEMINI"
+          ],
+          "requiredCapabilities": [
+            "dispatch",
+            "approvals",
+            "terminalOutcome",
+            "sessionIdentity"
+          ],
+          "unknownCapabilities": []
+        },
+        {
+          "id": "gemini-spark",
+          "defaultEnabled": false,
+          "autoDispatch": false,
+          "status": "descriptor-only",
+          "sourceIds": [
+            "PLAN"
+          ],
+          "requiredCapabilities": [
+            "dispatch",
+            "approvals",
+            "terminalOutcome",
+            "sessionIdentity"
+          ],
+          "unknownCapabilities": [
+            "externalDispatch",
+            "sessionIdentity",
+            "modelSelection",
+            "effortSelection",
+            "approvalBoundary",
+            "cancel",
+            "terminalOutcome",
+            "evidenceReference"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "PLAN",
+          "url": "plan:AGS_v2.5.0_implementation_plan.ko.md",
+          "checkedAt": "2026-09-21T00:00:00.000Z",
+          "evidenceKind": "user-plan",
+          "note": "Role allocation hypotheses, not measured ability rankings or live host support."
+        },
+        {
+          "id": "BASELINE",
+          "url": "repository:b3c232f5113d956b6d3aeebdf26a19ed36ef49d1/skills/coordinate-subagents/references/model-routing-presets.json",
+          "checkedAt": "2026-09-21T00:00:00.000Z",
+          "evidenceKind": "baseline-source",
+          "note": "Existing model families and role/class policy; not proof of actual settings."
+        },
+        {
+          "id": "OPENAI",
+          "url": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+          "checkedAt": "2026-09-21T00:00:00.000Z",
+          "evidenceKind": "official-document",
+          "note": "Astra ID and native enum documented; account capability must be separately observed."
+        },
+        {
+          "id": "CODEX",
+          "url": "https://learn.chatgpt.com/docs/models",
+          "checkedAt": "2026-09-21T00:00:00.000Z",
+          "evidenceKind": "official-document",
+          "note": "CLI model selection; Ultra is orchestration, not native reasoning effort."
+        },
+        {
+          "id": "CLAUDE",
+          "url": "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "checkedAt": "2026-09-21T00:00:00.000Z",
+          "evidenceKind": "official-document",
+          "note": "Fable 5, Opus 5, Sonnet 5 and Haiku 4.5 families. A newer family seed is not declared verified by this page."
+        },
+        {
+          "id": "CLAUDE-CODE",
+          "url": "https://code.claude.com/docs/en/model-config",
+          "checkedAt": "2026-09-21T00:00:00.000Z",
+          "evidenceKind": "official-document",
+          "note": "Native per-model effort; unsupported levels and organization limits may be clamped. Ultracode is separate."
+        },
+        {
+          "id": "GEMINI",
+          "url": "https://ai.google.dev/gemini-api/docs/models",
+          "checkedAt": "2026-09-21T00:00:00.000Z",
+          "evidenceKind": "official-document",
+          "note": "Model catalog; host/model configuration is separate from API availability."
+        },
+        {
+          "id": "GEMINI-CLI",
+          "url": "https://geminicli.com/docs/cli/headless/",
+          "checkedAt": "2026-09-21T00:00:00.000Z",
+          "evidenceKind": "official-document",
+          "note": "stream-json init/message/tool/error/result and headless exit codes; init alone is insufficient model evidence."
+        },
+        {
+          "id": "GROK",
+          "url": "https://docs.x.ai/developers/models",
+          "checkedAt": "2026-09-21T00:00:00.000Z",
+          "evidenceKind": "official-document",
+          "note": "grok-4.5 model documented; no host-based origin inference."
+        },
+        {
+          "id": "GROK-BUILD",
+          "url": "https://docs.x.ai/build/cli/headless-scripting",
+          "checkedAt": "2026-09-21T00:00:00.000Z",
+          "evidenceKind": "official-document",
+          "note": "Headless argv and ACP JSON-RPC protocol. Streaming-json event details must be version-verified."
+        },
+        {
+          "id": "MISTRAL",
+          "url": "https://docs.mistral.ai/resources/changelogs",
+          "checkedAt": "2026-09-21T00:00:00.000Z",
+          "evidenceKind": "official-document",
+          "note": "mistral-medium-3-5 and mistral-small-2603. Only Mistral-origin models are included, not third-party hosted models."
+        },
+        {
+          "id": "COHERE",
+          "url": "https://docs.cohere.com/v1/changelog/command-a-plus-05-2026",
+          "checkedAt": "2026-09-21T00:00:00.000Z",
+          "evidenceKind": "official-document",
+          "note": "Command A+ model family and multimodal/agentic positioning; no dedicated execution adapter in this package."
+        }
+      ],
+      "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34"
+    },
+    "policy": {
+      "schemaVersion": "1.0.0",
+      "allowedOrigins": [
+        "openai",
+        "anthropic",
+        "google",
+        "xai",
+        "mistral",
+        "amazon",
+        "cohere",
+        "meta"
+      ],
+      "enabledHosts": [
+        "openai-codex",
+        "anthropic-claude-code"
+      ],
+      "allowedAccessPaths": [
+        "subscription",
+        "enterprise"
+      ],
+      "allowPreview": false,
+      "allowSeedModels": false,
+      "maxCatalogAgeDays": 30,
+      "controlOrder": [
+        {
+          "host": "openai-codex",
+          "role": "discovery",
+          "profile": "economy",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "openai-codex",
+          "role": "general-implementation",
+          "profile": "economy",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "openai-codex",
+          "role": "complex-reasoning",
+          "profile": "economy",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "openai-codex",
+          "role": "independent-audit",
+          "profile": "economy",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "openai-codex",
+          "role": "discovery",
+          "profile": "balanced",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "openai-codex",
+          "role": "general-implementation",
+          "profile": "balanced",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "openai-codex",
+          "role": "complex-reasoning",
+          "profile": "balanced",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "openai-codex",
+          "role": "independent-audit",
+          "profile": "balanced",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "openai-codex",
+          "role": "discovery",
+          "profile": "quality",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "openai-codex",
+          "role": "general-implementation",
+          "profile": "quality",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "openai-codex",
+          "role": "complex-reasoning",
+          "profile": "quality",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "openai-codex",
+          "role": "independent-audit",
+          "profile": "quality",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "anthropic-claude-code",
+          "role": "discovery",
+          "profile": "economy",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "anthropic-claude-code",
+          "role": "general-implementation",
+          "profile": "economy",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "anthropic-claude-code",
+          "role": "complex-reasoning",
+          "profile": "economy",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "anthropic-claude-code",
+          "role": "independent-audit",
+          "profile": "economy",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "anthropic-claude-code",
+          "role": "discovery",
+          "profile": "balanced",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "anthropic-claude-code",
+          "role": "general-implementation",
+          "profile": "balanced",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "anthropic-claude-code",
+          "role": "complex-reasoning",
+          "profile": "balanced",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "anthropic-claude-code",
+          "role": "independent-audit",
+          "profile": "balanced",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "anthropic-claude-code",
+          "role": "discovery",
+          "profile": "quality",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "anthropic-claude-code",
+          "role": "general-implementation",
+          "profile": "quality",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "anthropic-claude-code",
+          "role": "complex-reasoning",
+          "profile": "quality",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        },
+        {
+          "host": "anthropic-claude-code",
+          "role": "independent-audit",
+          "profile": "quality",
+          "controls": [
+            {
+              "kind": "enum",
+              "value": "xhigh"
+            },
+            {
+              "kind": "enum",
+              "value": "high"
+            },
+            {
+              "kind": "enum",
+              "value": "medium"
+            },
+            {
+              "kind": "enum",
+              "value": "max"
+            },
+            {
+              "kind": "enum",
+              "value": "low"
+            },
+            {
+              "kind": "not-exposed"
+            }
+          ]
+        }
+      ],
+      "profileOrder": {
+        "economy": {
+          "discovery": [
+            "gpt-5.6-luna",
+            "claude-haiku-4-5-20251001",
+            "gemini-2.5-flash-lite"
+          ],
+          "general-implementation": [
+            "gpt-5.6-terra",
+            "claude-sonnet-5",
+            "gemini-3.8-flash",
+            "grok-4.5"
+          ],
+          "complex-reasoning": [
+            "gpt-5.6-sol",
+            "claude-opus-5",
+            "gpt-6-astra",
+            "claude-fable-5",
+            "grok-4.5"
+          ],
+          "independent-audit": [
+            "gpt-6-astra",
+            "claude-fable-5",
+            "gpt-5.6-sol",
+            "claude-opus-5"
+          ]
+        },
+        "balanced": {
+          "discovery": [
+            "gpt-5.6-luna",
+            "claude-haiku-4-5-20251001",
+            "gemini-2.5-flash-lite"
+          ],
+          "general-implementation": [
+            "gpt-5.6-terra",
+            "claude-sonnet-5",
+            "gemini-3.8-flash",
+            "grok-4.5"
+          ],
+          "complex-reasoning": [
+            "gpt-5.6-sol",
+            "claude-opus-5",
+            "gpt-6-astra",
+            "claude-fable-5",
+            "grok-4.5"
+          ],
+          "independent-audit": [
+            "gpt-6-astra",
+            "claude-fable-5",
+            "gpt-5.6-sol",
+            "claude-opus-5"
+          ]
+        },
+        "quality": {
+          "discovery": [
+            "gpt-5.6-terra",
+            "claude-sonnet-5",
+            "gpt-5.6-luna",
+            "claude-haiku-4-5-20251001",
+            "gemini-2.5-flash-lite"
+          ],
+          "general-implementation": [
+            "gpt-5.6-sol",
+            "claude-opus-5",
+            "gpt-5.6-terra",
+            "claude-sonnet-5",
+            "gemini-3.8-flash",
+            "grok-4.5"
+          ],
+          "complex-reasoning": [
+            "gpt-6-astra",
+            "claude-fable-5",
+            "gpt-5.6-sol",
+            "claude-opus-5"
+          ],
+          "independent-audit": [
+            "gpt-6-astra",
+            "claude-fable-5",
+            "gpt-5.6-sol",
+            "claude-opus-5"
+          ]
+        }
+      },
+      "traitOrder": {
+        "architecture-decision": [
+          "gpt-6-astra",
+          "claude-fable-5"
+        ],
+        "code-change": [
+          "gpt-5.6-sol",
+          "claude-opus-5",
+          "gpt-5.6-terra",
+          "claude-sonnet-5"
+        ],
+        "source-research": [
+          "gpt-5.6-luna",
+          "claude-haiku-4-5-20251001",
+          "gemini-2.5-flash-lite"
+        ],
+        "context-repair": [
+          "gpt-6-astra",
+          "claude-fable-5"
+        ]
+      },
+      "modelMinimums": [
+        {
+          "model": "gpt-5.6-luna",
+          "enumValues": [
+            "high",
+            "xhigh",
+            "max"
+          ]
+        }
+      ],
+      "highRiskNativeFloor": [
+        {
+          "host": "openai-codex",
+          "modelOrigins": [
+            "openai"
+          ],
+          "minimumModelClass": "general",
+          "enumValues": [
+            "high",
+            "xhigh",
+            "max"
+          ]
+        },
+        {
+          "host": "anthropic-claude-code",
+          "modelOrigins": [
+            "anthropic"
+          ],
+          "minimumModelClass": "general",
+          "enumValues": [
+            "high",
+            "xhigh",
+            "max"
+          ]
+        }
+      ],
+      "fullHistoryInheritanceHosts": [
+        "openai-codex"
+      ]
+    },
+    "capabilities": [
+      {
+        "schemaVersion": "1.0.0",
+        "host": "openai-codex",
+        "hostVersion": "fixture-1",
+        "adapterVersion": "2.5.0",
+        "actorId": "actor-1",
+        "sessionId": "session-1",
+        "instanceId": "instance-1",
+        "observedAt": "2026-09-21T12:00:00.000Z",
+        "expiresAt": "2026-09-21T12:04:00.000Z",
+        "supportedBindings": [
+          {
+            "model": "gpt-5.6-terra",
+            "resolvedModel": "gpt-5.6-terra",
+            "modelOrigin": "openai",
+            "servingProvider": "openai",
+            "accessPath": "subscription",
+            "nativeReasoning": {
+              "kind": "enum",
+              "value": "high"
+            },
+            "runtimeMode": "standard",
+            "invocationSurface": "local-subagent",
+            "observableFields": [
+              "model",
+              "reasoning",
+              "runtimeMode"
+            ],
+            "aliasResolution": null,
+            "possibleFallbacks": []
+          }
+        ],
+        "executionCapabilities": {
+          "dispatch": true,
+          "observe": true,
+          "cancel": true,
+          "resume": false,
+          "filesystem": "write",
+          "tools": [
+            "read",
+            "write"
+          ],
+          "approvals": "enforced",
+          "isolation": "sandbox",
+          "inputModalities": [
+            "text",
+            "image"
+          ]
+        },
+        "source": "host-observation",
+        "sourceReference": "fixture:capability",
+        "snapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d"
+      }
+    ],
+    "now": "2026-09-21T12:00:00.000Z"
+  },
+  "cases": [
+    {
+      "name": "default",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {},
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d",
+        "requested": null,
+        "selected": {
+          "model": "gpt-5.6-terra",
+          "resolvedModel": "gpt-5.6-terra",
+          "modelOrigin": "openai",
+          "servingProvider": "openai",
+          "accessPath": "subscription",
+          "nativeReasoning": {
+            "kind": "enum",
+            "value": "high"
+          },
+          "runtimeMode": "standard"
+        },
+        "target": {
+          "actorId": "actor-1",
+          "host": "openai-codex",
+          "sessionId": "session-1",
+          "instanceId": "instance-1"
+        },
+        "invocationSurface": "local-subagent",
+        "status": "selected",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "REVIEWED_SEED_AND_CAPABILITY_MATCH"
+        ],
+        "rejectedCandidates": [],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:f73a20392873eb5b21f45b9a17eefc008ae13b8f237847cc23bb5fe7576fe23e"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":\"sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d\",\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:f73a20392873eb5b21f45b9a17eefc008ae13b8f237847cc23bb5fe7576fe23e\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":\"local-subagent\",\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[],\"requestDigest\":\"sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":{\"accessPath\":\"subscription\",\"model\":\"gpt-5.6-terra\",\"modelOrigin\":\"openai\",\"nativeReasoning\":{\"kind\":\"enum\",\"value\":\"high\"},\"resolvedModel\":\"gpt-5.6-terra\",\"runtimeMode\":\"standard\",\"servingProvider\":\"openai\"},\"selectionReasonCodes\":[\"REVIEWED_SEED_AND_CAPABILITY_MATCH\"],\"status\":\"selected\",\"target\":{\"actorId\":\"actor-1\",\"host\":\"openai-codex\",\"instanceId\":\"instance-1\",\"sessionId\":\"session-1\"},\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "no-capability",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {
+        "capabilities": []
+      },
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "capabilitySnapshotDigest": null,
+        "requested": null,
+        "selected": null,
+        "target": null,
+        "invocationSurface": null,
+        "status": "blocked",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "NO_ELIGIBLE_CANDIDATE"
+        ],
+        "rejectedCandidates": [],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:db4c142e1898a8709c8c2cdc4f216cd84ae292f1280347fc9182b3e218eb8a8d"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\",\"capabilitySnapshotDigest\":null,\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:db4c142e1898a8709c8c2cdc4f216cd84ae292f1280347fc9182b3e218eb8a8d\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":null,\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[],\"requestDigest\":\"sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":null,\"selectionReasonCodes\":[\"NO_ELIGIBLE_CANDIDATE\"],\"status\":\"blocked\",\"target\":null,\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "required-gpt-5.6-terra",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        },
+        "user": {
+          "strength": "required",
+          "model": "gpt-5.6-terra"
+        }
+      },
+      "environmentPatch": {},
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:dcd225dc533d85d001fa094f401e4760261933bd237f5edd52e2e7a46a00964e",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d",
+        "requested": {
+          "strength": "required",
+          "model": "gpt-5.6-terra"
+        },
+        "selected": {
+          "model": "gpt-5.6-terra",
+          "resolvedModel": "gpt-5.6-terra",
+          "modelOrigin": "openai",
+          "servingProvider": "openai",
+          "accessPath": "subscription",
+          "nativeReasoning": {
+            "kind": "enum",
+            "value": "high"
+          },
+          "runtimeMode": "standard"
+        },
+        "target": {
+          "actorId": "actor-1",
+          "host": "openai-codex",
+          "sessionId": "session-1",
+          "instanceId": "instance-1"
+        },
+        "invocationSurface": "local-subagent",
+        "status": "selected",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "REVIEWED_SEED_AND_CAPABILITY_MATCH"
+        ],
+        "rejectedCandidates": [],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:fac6eebf4ac0818c6e92180fb46a675358e4c13044c3205902d71848435008c2"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":\"sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d\",\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:fac6eebf4ac0818c6e92180fb46a675358e4c13044c3205902d71848435008c2\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":\"local-subagent\",\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[],\"requestDigest\":\"sha256:dcd225dc533d85d001fa094f401e4760261933bd237f5edd52e2e7a46a00964e\",\"requested\":{\"model\":\"gpt-5.6-terra\",\"strength\":\"required\"},\"schemaVersion\":\"2.0.0\",\"selected\":{\"accessPath\":\"subscription\",\"model\":\"gpt-5.6-terra\",\"modelOrigin\":\"openai\",\"nativeReasoning\":{\"kind\":\"enum\",\"value\":\"high\"},\"resolvedModel\":\"gpt-5.6-terra\",\"runtimeMode\":\"standard\",\"servingProvider\":\"openai\"},\"selectionReasonCodes\":[\"REVIEWED_SEED_AND_CAPABILITY_MATCH\"],\"status\":\"selected\",\"target\":{\"actorId\":\"actor-1\",\"host\":\"openai-codex\",\"instanceId\":\"instance-1\",\"sessionId\":\"session-1\"},\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "required-missing-model",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        },
+        "user": {
+          "strength": "required",
+          "model": "missing-model"
+        }
+      },
+      "environmentPatch": {},
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:4e18c998c76136c34df21b7684f3f08084902909455ed593050378fc0455d5e2",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": null,
+        "requested": {
+          "strength": "required",
+          "model": "missing-model"
+        },
+        "selected": null,
+        "target": null,
+        "invocationSurface": null,
+        "status": "blocked",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "REQUIRED_CHOICE_UNAVAILABLE"
+        ],
+        "rejectedCandidates": [
+          {
+            "candidateKey": "sha256:158af9186ca353a4be726424fc2b5c26b8db73a61f389bcd2c6d8a4f2fa40b90",
+            "reasonCodes": [
+              "REQUIRED_CHOICE_UNAVAILABLE"
+            ]
+          }
+        ],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:678d7043f32eb96e7b611f1e380e612ae344ae6cec7094f032b44ddc4a4e0ea0"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":null,\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:678d7043f32eb96e7b611f1e380e612ae344ae6cec7094f032b44ddc4a4e0ea0\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":null,\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[{\"candidateKey\":\"sha256:158af9186ca353a4be726424fc2b5c26b8db73a61f389bcd2c6d8a4f2fa40b90\",\"reasonCodes\":[\"REQUIRED_CHOICE_UNAVAILABLE\"]}],\"requestDigest\":\"sha256:4e18c998c76136c34df21b7684f3f08084902909455ed593050378fc0455d5e2\",\"requested\":{\"model\":\"missing-model\",\"strength\":\"required\"},\"schemaVersion\":\"2.0.0\",\"selected\":null,\"selectionReasonCodes\":[\"REQUIRED_CHOICE_UNAVAILABLE\"],\"status\":\"blocked\",\"target\":null,\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "preferred-gpt-5.6-terra",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        },
+        "user": {
+          "strength": "preferred",
+          "model": "gpt-5.6-terra"
+        }
+      },
+      "environmentPatch": {},
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:9fa08a26493124842256a104f1a2b66958ce8d0aabfeaa0daa80a67fbae39a45",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d",
+        "requested": {
+          "strength": "preferred",
+          "model": "gpt-5.6-terra"
+        },
+        "selected": {
+          "model": "gpt-5.6-terra",
+          "resolvedModel": "gpt-5.6-terra",
+          "modelOrigin": "openai",
+          "servingProvider": "openai",
+          "accessPath": "subscription",
+          "nativeReasoning": {
+            "kind": "enum",
+            "value": "high"
+          },
+          "runtimeMode": "standard"
+        },
+        "target": {
+          "actorId": "actor-1",
+          "host": "openai-codex",
+          "sessionId": "session-1",
+          "instanceId": "instance-1"
+        },
+        "invocationSurface": "local-subagent",
+        "status": "selected",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "REVIEWED_SEED_AND_CAPABILITY_MATCH"
+        ],
+        "rejectedCandidates": [],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:59ff1a9485f210426118717dc82a19febcf1e23041b2a91d86f4978a9741a06a"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":\"sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d\",\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:59ff1a9485f210426118717dc82a19febcf1e23041b2a91d86f4978a9741a06a\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":\"local-subagent\",\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[],\"requestDigest\":\"sha256:9fa08a26493124842256a104f1a2b66958ce8d0aabfeaa0daa80a67fbae39a45\",\"requested\":{\"model\":\"gpt-5.6-terra\",\"strength\":\"preferred\"},\"schemaVersion\":\"2.0.0\",\"selected\":{\"accessPath\":\"subscription\",\"model\":\"gpt-5.6-terra\",\"modelOrigin\":\"openai\",\"nativeReasoning\":{\"kind\":\"enum\",\"value\":\"high\"},\"resolvedModel\":\"gpt-5.6-terra\",\"runtimeMode\":\"standard\",\"servingProvider\":\"openai\"},\"selectionReasonCodes\":[\"REVIEWED_SEED_AND_CAPABILITY_MATCH\"],\"status\":\"selected\",\"target\":{\"actorId\":\"actor-1\",\"host\":\"openai-codex\",\"instanceId\":\"instance-1\",\"sessionId\":\"session-1\"},\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "preferred-missing-model",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        },
+        "user": {
+          "strength": "preferred",
+          "model": "missing-model"
+        }
+      },
+      "environmentPatch": {},
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:ade0916ce1251b1392c95d1f56989834c8f2383b83d8c7eda8112787ecd3ab83",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d",
+        "requested": {
+          "strength": "preferred",
+          "model": "missing-model"
+        },
+        "selected": {
+          "model": "gpt-5.6-terra",
+          "resolvedModel": "gpt-5.6-terra",
+          "modelOrigin": "openai",
+          "servingProvider": "openai",
+          "accessPath": "subscription",
+          "nativeReasoning": {
+            "kind": "enum",
+            "value": "high"
+          },
+          "runtimeMode": "standard"
+        },
+        "target": {
+          "actorId": "actor-1",
+          "host": "openai-codex",
+          "sessionId": "session-1",
+          "instanceId": "instance-1"
+        },
+        "invocationSurface": "local-subagent",
+        "status": "selected",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "PREFERRED_CHOICE_UNAVAILABLE"
+        ],
+        "rejectedCandidates": [],
+        "fallbackReason": "PREFERRED_CHOICE_UNAVAILABLE",
+        "decisionDigest": "sha256:d2ab6c7001916edba8a5d144ef58cbe518222ee169bcba1e69100dab557a93b8"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":\"sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d\",\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:d2ab6c7001916edba8a5d144ef58cbe518222ee169bcba1e69100dab557a93b8\",\"executionAuthorized\":false,\"fallbackReason\":\"PREFERRED_CHOICE_UNAVAILABLE\",\"invocationSurface\":\"local-subagent\",\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[],\"requestDigest\":\"sha256:ade0916ce1251b1392c95d1f56989834c8f2383b83d8c7eda8112787ecd3ab83\",\"requested\":{\"model\":\"missing-model\",\"strength\":\"preferred\"},\"schemaVersion\":\"2.0.0\",\"selected\":{\"accessPath\":\"subscription\",\"model\":\"gpt-5.6-terra\",\"modelOrigin\":\"openai\",\"nativeReasoning\":{\"kind\":\"enum\",\"value\":\"high\"},\"resolvedModel\":\"gpt-5.6-terra\",\"runtimeMode\":\"standard\",\"servingProvider\":\"openai\"},\"selectionReasonCodes\":[\"PREFERRED_CHOICE_UNAVAILABLE\"],\"status\":\"selected\",\"target\":{\"actorId\":\"actor-1\",\"host\":\"openai-codex\",\"instanceId\":\"instance-1\",\"sessionId\":\"session-1\"},\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "high-risk",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": true,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {},
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:752c17ddfcdede884dce552ded4f7d7cc55d366cfa3aafc271afec5d05806d58",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d",
+        "requested": null,
+        "selected": {
+          "model": "gpt-5.6-terra",
+          "resolvedModel": "gpt-5.6-terra",
+          "modelOrigin": "openai",
+          "servingProvider": "openai",
+          "accessPath": "subscription",
+          "nativeReasoning": {
+            "kind": "enum",
+            "value": "high"
+          },
+          "runtimeMode": "standard"
+        },
+        "target": {
+          "actorId": "actor-1",
+          "host": "openai-codex",
+          "sessionId": "session-1",
+          "instanceId": "instance-1"
+        },
+        "invocationSurface": "local-subagent",
+        "status": "selected",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "REVIEWED_SEED_AND_CAPABILITY_MATCH"
+        ],
+        "rejectedCandidates": [],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:844bc2e94e3de950fd4030dfb47dc23edacb4919069d2a976cd4e3d0294fefaf"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":\"sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d\",\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:844bc2e94e3de950fd4030dfb47dc23edacb4919069d2a976cd4e3d0294fefaf\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":\"local-subagent\",\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[],\"requestDigest\":\"sha256:752c17ddfcdede884dce552ded4f7d7cc55d366cfa3aafc271afec5d05806d58\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":{\"accessPath\":\"subscription\",\"model\":\"gpt-5.6-terra\",\"modelOrigin\":\"openai\",\"nativeReasoning\":{\"kind\":\"enum\",\"value\":\"high\"},\"resolvedModel\":\"gpt-5.6-terra\",\"runtimeMode\":\"standard\",\"servingProvider\":\"openai\"},\"selectionReasonCodes\":[\"REVIEWED_SEED_AND_CAPABILITY_MATCH\"],\"status\":\"selected\",\"target\":{\"actorId\":\"actor-1\",\"host\":\"openai-codex\",\"instanceId\":\"instance-1\",\"sessionId\":\"session-1\"},\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "audit-actor-excluded",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "independent-audit",
+        "highRisk": true,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [
+            "actor-1"
+          ],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {},
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:46a04fb80359e110b5d33ba1be00789337402b6887d51e36852696f534390714",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": null,
+        "requested": null,
+        "selected": null,
+        "target": null,
+        "invocationSurface": null,
+        "status": "blocked",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "NO_ELIGIBLE_CANDIDATE"
+        ],
+        "rejectedCandidates": [
+          {
+            "candidateKey": "sha256:158af9186ca353a4be726424fc2b5c26b8db73a61f389bcd2c6d8a4f2fa40b90",
+            "reasonCodes": [
+              "INDEPENDENCE_CONFLICT"
+            ]
+          }
+        ],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:d1c2fbe5835265beaec3d91d23979652ecc9f131da29178bbf5e3a0a6eea130b"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":null,\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:d1c2fbe5835265beaec3d91d23979652ecc9f131da29178bbf5e3a0a6eea130b\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":null,\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[{\"candidateKey\":\"sha256:158af9186ca353a4be726424fc2b5c26b8db73a61f389bcd2c6d8a4f2fa40b90\",\"reasonCodes\":[\"INDEPENDENCE_CONFLICT\"]}],\"requestDigest\":\"sha256:46a04fb80359e110b5d33ba1be00789337402b6887d51e36852696f534390714\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":null,\"selectionReasonCodes\":[\"NO_ELIGIBLE_CANDIDATE\"],\"status\":\"blocked\",\"target\":null,\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "audit-session-excluded",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "independent-audit",
+        "highRisk": true,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [
+            "openai-codex/session-1"
+          ],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {},
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:4524af4439e70974bb255005e93d730a2f2dfaed2cec81a6475086a8d0bfb14d",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": null,
+        "requested": null,
+        "selected": null,
+        "target": null,
+        "invocationSurface": null,
+        "status": "blocked",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "NO_ELIGIBLE_CANDIDATE"
+        ],
+        "rejectedCandidates": [
+          {
+            "candidateKey": "sha256:158af9186ca353a4be726424fc2b5c26b8db73a61f389bcd2c6d8a4f2fa40b90",
+            "reasonCodes": [
+              "INDEPENDENCE_CONFLICT"
+            ]
+          }
+        ],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:ff8453c129502e8fc54f5faed3efe6d797b89d0596fe41349d24d0ea4e2dccae"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":null,\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:ff8453c129502e8fc54f5faed3efe6d797b89d0596fe41349d24d0ea4e2dccae\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":null,\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[{\"candidateKey\":\"sha256:158af9186ca353a4be726424fc2b5c26b8db73a61f389bcd2c6d8a4f2fa40b90\",\"reasonCodes\":[\"INDEPENDENCE_CONFLICT\"]}],\"requestDigest\":\"sha256:4524af4439e70974bb255005e93d730a2f2dfaed2cec81a6475086a8d0bfb14d\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":null,\"selectionReasonCodes\":[\"NO_ELIGIBLE_CANDIDATE\"],\"status\":\"blocked\",\"target\":null,\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "expired-capability",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {
+        "now": "2026-09-21T12:04:00.000Z"
+      },
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": null,
+        "requested": null,
+        "selected": null,
+        "target": null,
+        "invocationSurface": null,
+        "status": "blocked",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "NO_ELIGIBLE_CANDIDATE"
+        ],
+        "rejectedCandidates": [
+          {
+            "candidateKey": "sha256:158af9186ca353a4be726424fc2b5c26b8db73a61f389bcd2c6d8a4f2fa40b90",
+            "reasonCodes": [
+              "CAPABILITY_EXPIRED"
+            ]
+          }
+        ],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:245a2a94a3077e534eba82be6f14ded87ee80edafe57a44e6d3a00ea8955748e"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":null,\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:245a2a94a3077e534eba82be6f14ded87ee80edafe57a44e6d3a00ea8955748e\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":null,\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[{\"candidateKey\":\"sha256:158af9186ca353a4be726424fc2b5c26b8db73a61f389bcd2c6d8a4f2fa40b90\",\"reasonCodes\":[\"CAPABILITY_EXPIRED\"]}],\"requestDigest\":\"sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":null,\"selectionReasonCodes\":[\"NO_ELIGIBLE_CANDIDATE\"],\"status\":\"blocked\",\"target\":null,\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "stale-catalog",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {
+        "now": "2026-11-25T12:00:00.000Z"
+      },
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": null,
+        "requested": null,
+        "selected": null,
+        "target": null,
+        "invocationSurface": null,
+        "status": "blocked",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "NO_ELIGIBLE_CANDIDATE"
+        ],
+        "rejectedCandidates": [
+          {
+            "candidateKey": "sha256:158af9186ca353a4be726424fc2b5c26b8db73a61f389bcd2c6d8a4f2fa40b90",
+            "reasonCodes": [
+              "CAPABILITY_EXPIRED",
+              "CATALOG_STALE"
+            ]
+          }
+        ],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:b2a7cfa74b1e8d6a5109cc822e657e1475c9d2b022a2b89267af4d370aeef722"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":null,\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:b2a7cfa74b1e8d6a5109cc822e657e1475c9d2b022a2b89267af4d370aeef722\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":null,\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[{\"candidateKey\":\"sha256:158af9186ca353a4be726424fc2b5c26b8db73a61f389bcd2c6d8a4f2fa40b90\",\"reasonCodes\":[\"CAPABILITY_EXPIRED\",\"CATALOG_STALE\"]}],\"requestDigest\":\"sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":null,\"selectionReasonCodes\":[\"NO_ELIGIBLE_CANDIDATE\"],\"status\":\"blocked\",\"target\":null,\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "required-observation",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [
+            "model",
+            "reasoning"
+          ],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {
+        "capabilities": [
+          {
+            "schemaVersion": "1.0.0",
+            "host": "openai-codex",
+            "hostVersion": "fixture-1",
+            "adapterVersion": "2.5.0",
+            "actorId": "actor-1",
+            "sessionId": "session-1",
+            "instanceId": "instance-1",
+            "observedAt": "2026-09-21T12:00:00.000Z",
+            "expiresAt": "2026-09-21T12:04:00.000Z",
+            "supportedBindings": [
+              {
+                "model": "gpt-5.6-terra",
+                "resolvedModel": "gpt-5.6-terra",
+                "modelOrigin": "openai",
+                "servingProvider": "openai",
+                "accessPath": "subscription",
+                "nativeReasoning": {
+                  "kind": "enum",
+                  "value": "high"
+                },
+                "runtimeMode": "standard",
+                "invocationSurface": "local-subagent",
+                "observableFields": [
+                  "model"
+                ],
+                "aliasResolution": null,
+                "possibleFallbacks": []
+              }
+            ],
+            "executionCapabilities": {
+              "dispatch": true,
+              "observe": true,
+              "cancel": true,
+              "resume": false,
+              "filesystem": "write",
+              "tools": [
+                "read",
+                "write"
+              ],
+              "approvals": "enforced",
+              "isolation": "sandbox",
+              "inputModalities": [
+                "text",
+                "image"
+              ]
+            },
+            "source": "host-observation",
+            "sourceReference": "fixture:capability",
+            "snapshotDigest": "sha256:b12895b5ec583877aeadf96cfc7bfdd7ed1ad2df9df4e588a70ee7c80dcd6e0a"
+          }
+        ]
+      },
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:5b463f22d3da042d4dc8d0299efebfa0b2584bfd9a9ee75829c628dee57eb038",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:d7c1842439125acf364ec5070c9c6f740e0773c7c414a10a1162fd3482f843f4",
+        "capabilitySnapshotDigest": null,
+        "requested": null,
+        "selected": null,
+        "target": null,
+        "invocationSurface": null,
+        "status": "blocked",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "NO_ELIGIBLE_CANDIDATE"
+        ],
+        "rejectedCandidates": [
+          {
+            "candidateKey": "sha256:9dbadeef58f3fa04de2794b6f61075dfcceab7602e12a207f5e24771a2f764cc",
+            "reasonCodes": [
+              "OBSERVABILITY_INSUFFICIENT"
+            ]
+          }
+        ],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:785ee9a9761bd333116795434be8cbef022d4a88146b6ede23329e530d3780d7"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:d7c1842439125acf364ec5070c9c6f740e0773c7c414a10a1162fd3482f843f4\",\"capabilitySnapshotDigest\":null,\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:785ee9a9761bd333116795434be8cbef022d4a88146b6ede23329e530d3780d7\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":null,\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[{\"candidateKey\":\"sha256:9dbadeef58f3fa04de2794b6f61075dfcceab7602e12a207f5e24771a2f764cc\",\"reasonCodes\":[\"OBSERVABILITY_INSUFFICIENT\"]}],\"requestDigest\":\"sha256:5b463f22d3da042d4dc8d0299efebfa0b2584bfd9a9ee75829c628dee57eb038\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":null,\"selectionReasonCodes\":[\"NO_ELIGIBLE_CANDIDATE\"],\"status\":\"blocked\",\"target\":null,\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "full-history",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "full-history"
+        }
+      },
+      "environmentPatch": {},
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:4fcb7ff10374bfc3ca7441f1a15863b53ba43769163855a7f2c8e6c5e1a53e5e",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": null,
+        "requested": null,
+        "selected": null,
+        "target": null,
+        "invocationSurface": null,
+        "status": "blocked",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "NO_ELIGIBLE_CANDIDATE"
+        ],
+        "rejectedCandidates": [
+          {
+            "candidateKey": "sha256:158af9186ca353a4be726424fc2b5c26b8db73a61f389bcd2c6d8a4f2fa40b90",
+            "reasonCodes": [
+              "FULL_HISTORY_REQUIRES_LEGACY_INHERITANCE"
+            ]
+          }
+        ],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:1f29d3cb474aec693430852120ab627d4802480d22bd486002f86b36092ed40f"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":null,\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:1f29d3cb474aec693430852120ab627d4802480d22bd486002f86b36092ed40f\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":null,\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[{\"candidateKey\":\"sha256:158af9186ca353a4be726424fc2b5c26b8db73a61f389bcd2c6d8a4f2fa40b90\",\"reasonCodes\":[\"FULL_HISTORY_REQUIRES_LEGACY_INHERITANCE\"]}],\"requestDigest\":\"sha256:4fcb7ff10374bfc3ca7441f1a15863b53ba43769163855a7f2c8e6c5e1a53e5e\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":null,\"selectionReasonCodes\":[\"NO_ELIGIBLE_CANDIDATE\"],\"status\":\"blocked\",\"target\":null,\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "disallowed-fallback-origin",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {
+        "capabilities": [
+          {
+            "schemaVersion": "1.0.0",
+            "host": "openai-codex",
+            "hostVersion": "fixture-1",
+            "adapterVersion": "2.5.0",
+            "actorId": "actor-1",
+            "sessionId": "session-1",
+            "instanceId": "instance-1",
+            "observedAt": "2026-09-21T12:00:00.000Z",
+            "expiresAt": "2026-09-21T12:04:00.000Z",
+            "supportedBindings": [
+              {
+                "model": "gpt-5.6-terra",
+                "resolvedModel": "gpt-5.6-terra",
+                "modelOrigin": "openai",
+                "servingProvider": "openai",
+                "accessPath": "subscription",
+                "nativeReasoning": {
+                  "kind": "enum",
+                  "value": "high"
+                },
+                "runtimeMode": "standard",
+                "invocationSurface": "local-subagent",
+                "observableFields": [
+                  "model",
+                  "reasoning",
+                  "runtimeMode"
+                ],
+                "aliasResolution": null,
+                "possibleFallbacks": [
+                  {
+                    "resolvedModel": "foreign-model",
+                    "modelOrigin": "blocked-origin"
+                  }
+                ]
+              }
+            ],
+            "executionCapabilities": {
+              "dispatch": true,
+              "observe": true,
+              "cancel": true,
+              "resume": false,
+              "filesystem": "write",
+              "tools": [
+                "read",
+                "write"
+              ],
+              "approvals": "enforced",
+              "isolation": "sandbox",
+              "inputModalities": [
+                "text",
+                "image"
+              ]
+            },
+            "source": "host-observation",
+            "sourceReference": "fixture:capability",
+            "snapshotDigest": "sha256:2b5c716406ea508005c8b508112a752ef0e765af144018a0983f7cc88d95045c"
+          }
+        ]
+      },
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:a47c40a13107f0a5f0c6c6285c30cb23ac0ad947c4122571db196f215c5d00fb",
+        "capabilitySnapshotDigest": null,
+        "requested": null,
+        "selected": null,
+        "target": null,
+        "invocationSurface": null,
+        "status": "blocked",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "NO_ELIGIBLE_CANDIDATE"
+        ],
+        "rejectedCandidates": [
+          {
+            "candidateKey": "sha256:bd61c57a49213274625cda6e21ef398107a070c1c4991ec8517f1b7bf2ff271d",
+            "reasonCodes": [
+              "FALLBACK_ORIGIN_UNVERIFIED"
+            ]
+          }
+        ],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:321dc7f3dec7e9731c1438873afbe6decef5104d723c3040abcaa4b8cf69095c"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:a47c40a13107f0a5f0c6c6285c30cb23ac0ad947c4122571db196f215c5d00fb\",\"capabilitySnapshotDigest\":null,\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:321dc7f3dec7e9731c1438873afbe6decef5104d723c3040abcaa4b8cf69095c\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":null,\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[{\"candidateKey\":\"sha256:bd61c57a49213274625cda6e21ef398107a070c1c4991ec8517f1b7bf2ff271d\",\"reasonCodes\":[\"FALLBACK_ORIGIN_UNVERIFIED\"]}],\"requestDigest\":\"sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":null,\"selectionReasonCodes\":[\"NO_ELIGIBLE_CANDIDATE\"],\"status\":\"blocked\",\"target\":null,\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "high-risk-floor",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": true,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {
+        "capabilities": [
+          {
+            "schemaVersion": "1.0.0",
+            "host": "openai-codex",
+            "hostVersion": "fixture-1",
+            "adapterVersion": "2.5.0",
+            "actorId": "actor-1",
+            "sessionId": "session-1",
+            "instanceId": "instance-1",
+            "observedAt": "2026-09-21T12:00:00.000Z",
+            "expiresAt": "2026-09-21T12:04:00.000Z",
+            "supportedBindings": [
+              {
+                "model": "gpt-5.6-terra",
+                "resolvedModel": "gpt-5.6-terra",
+                "modelOrigin": "openai",
+                "servingProvider": "openai",
+                "accessPath": "subscription",
+                "nativeReasoning": {
+                  "kind": "enum",
+                  "value": "low"
+                },
+                "runtimeMode": "standard",
+                "invocationSurface": "local-subagent",
+                "observableFields": [
+                  "model",
+                  "reasoning",
+                  "runtimeMode"
+                ],
+                "aliasResolution": null,
+                "possibleFallbacks": []
+              }
+            ],
+            "executionCapabilities": {
+              "dispatch": true,
+              "observe": true,
+              "cancel": true,
+              "resume": false,
+              "filesystem": "write",
+              "tools": [
+                "read",
+                "write"
+              ],
+              "approvals": "enforced",
+              "isolation": "sandbox",
+              "inputModalities": [
+                "text",
+                "image"
+              ]
+            },
+            "source": "host-observation",
+            "sourceReference": "fixture:capability",
+            "snapshotDigest": "sha256:ccd9bb08e8f6497b2bc404c9e22408c5ce1cd61891e98d7a37867c0c8f92c4b2"
+          }
+        ]
+      },
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:752c17ddfcdede884dce552ded4f7d7cc55d366cfa3aafc271afec5d05806d58",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:458943d67c2060d0a4695e0919f3b2c9dca5efbaf2cf31738f7247e6b35628e0",
+        "capabilitySnapshotDigest": null,
+        "requested": null,
+        "selected": null,
+        "target": null,
+        "invocationSurface": null,
+        "status": "blocked",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "NO_ELIGIBLE_CANDIDATE"
+        ],
+        "rejectedCandidates": [
+          {
+            "candidateKey": "sha256:5f0dfaa50753aa20ca72ff5c8d952917e3eecc3146fbc90a7f31ad06099ac3cc",
+            "reasonCodes": [
+              "HIGH_RISK_FLOOR_UNPROVEN"
+            ]
+          }
+        ],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:8c3dbdbb8b666561ebfa40b008700cbaac311802b7b188e59002be3da33bc8da"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:458943d67c2060d0a4695e0919f3b2c9dca5efbaf2cf31738f7247e6b35628e0\",\"capabilitySnapshotDigest\":null,\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:8c3dbdbb8b666561ebfa40b008700cbaac311802b7b188e59002be3da33bc8da\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":null,\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[{\"candidateKey\":\"sha256:5f0dfaa50753aa20ca72ff5c8d952917e3eecc3146fbc90a7f31ad06099ac3cc\",\"reasonCodes\":[\"HIGH_RISK_FLOOR_UNPROVEN\"]}],\"requestDigest\":\"sha256:752c17ddfcdede884dce552ded4f7d7cc55d366cfa3aafc271afec5d05806d58\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":null,\"selectionReasonCodes\":[\"NO_ELIGIBLE_CANDIDATE\"],\"status\":\"blocked\",\"target\":null,\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "candidate-order-forward",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {
+        "capabilities": [
+          {
+            "schemaVersion": "1.0.0",
+            "host": "openai-codex",
+            "hostVersion": "fixture-1",
+            "adapterVersion": "2.5.0",
+            "actorId": "actor-1",
+            "sessionId": "session-1",
+            "instanceId": "instance-1",
+            "observedAt": "2026-09-21T12:00:00.000Z",
+            "expiresAt": "2026-09-21T12:04:00.000Z",
+            "supportedBindings": [
+              {
+                "model": "gpt-5.6-terra",
+                "resolvedModel": "gpt-5.6-terra",
+                "modelOrigin": "openai",
+                "servingProvider": "openai",
+                "accessPath": "subscription",
+                "nativeReasoning": {
+                  "kind": "enum",
+                  "value": "high"
+                },
+                "runtimeMode": "standard",
+                "invocationSurface": "local-subagent",
+                "observableFields": [
+                  "model",
+                  "reasoning",
+                  "runtimeMode"
+                ],
+                "aliasResolution": null,
+                "possibleFallbacks": []
+              }
+            ],
+            "executionCapabilities": {
+              "dispatch": true,
+              "observe": true,
+              "cancel": true,
+              "resume": false,
+              "filesystem": "write",
+              "tools": [
+                "read",
+                "write"
+              ],
+              "approvals": "enforced",
+              "isolation": "sandbox",
+              "inputModalities": [
+                "text",
+                "image"
+              ]
+            },
+            "source": "host-observation",
+            "sourceReference": "fixture:capability",
+            "snapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d"
+          },
+          {
+            "schemaVersion": "1.0.0",
+            "host": "openai-codex",
+            "hostVersion": "fixture-1",
+            "adapterVersion": "2.5.0",
+            "actorId": "actor-2",
+            "sessionId": "session-2",
+            "instanceId": "instance-2",
+            "observedAt": "2026-09-21T12:00:00.000Z",
+            "expiresAt": "2026-09-21T12:04:00.000Z",
+            "supportedBindings": [
+              {
+                "model": "gpt-5.6-terra",
+                "resolvedModel": "gpt-5.6-terra",
+                "modelOrigin": "openai",
+                "servingProvider": "openai",
+                "accessPath": "subscription",
+                "nativeReasoning": {
+                  "kind": "enum",
+                  "value": "high"
+                },
+                "runtimeMode": "standard",
+                "invocationSurface": "local-subagent",
+                "observableFields": [
+                  "model",
+                  "reasoning",
+                  "runtimeMode"
+                ],
+                "aliasResolution": null,
+                "possibleFallbacks": []
+              }
+            ],
+            "executionCapabilities": {
+              "dispatch": true,
+              "observe": true,
+              "cancel": true,
+              "resume": false,
+              "filesystem": "write",
+              "tools": [
+                "read",
+                "write"
+              ],
+              "approvals": "enforced",
+              "isolation": "sandbox",
+              "inputModalities": [
+                "text",
+                "image"
+              ]
+            },
+            "source": "host-observation",
+            "sourceReference": "fixture:capability",
+            "snapshotDigest": "sha256:7216683e2e78ff016367e755843b6d5aa6c8d55b52f5bc22548f5ff8648f548f"
+          }
+        ]
+      },
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:2b0ecd65baaddebab2848f623b4ad12776595daa3600e393f15b4225bc58a613",
+        "capabilitySnapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d",
+        "requested": null,
+        "selected": {
+          "model": "gpt-5.6-terra",
+          "resolvedModel": "gpt-5.6-terra",
+          "modelOrigin": "openai",
+          "servingProvider": "openai",
+          "accessPath": "subscription",
+          "nativeReasoning": {
+            "kind": "enum",
+            "value": "high"
+          },
+          "runtimeMode": "standard"
+        },
+        "target": {
+          "actorId": "actor-1",
+          "host": "openai-codex",
+          "sessionId": "session-1",
+          "instanceId": "instance-1"
+        },
+        "invocationSurface": "local-subagent",
+        "status": "selected",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "REVIEWED_SEED_AND_CAPABILITY_MATCH"
+        ],
+        "rejectedCandidates": [],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:8b3addbd1cd1a328b3aa15d81c7ef4c1538362c607f6d5ffd297a32b3c35fcdf"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:2b0ecd65baaddebab2848f623b4ad12776595daa3600e393f15b4225bc58a613\",\"capabilitySnapshotDigest\":\"sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d\",\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:8b3addbd1cd1a328b3aa15d81c7ef4c1538362c607f6d5ffd297a32b3c35fcdf\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":\"local-subagent\",\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[],\"requestDigest\":\"sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":{\"accessPath\":\"subscription\",\"model\":\"gpt-5.6-terra\",\"modelOrigin\":\"openai\",\"nativeReasoning\":{\"kind\":\"enum\",\"value\":\"high\"},\"resolvedModel\":\"gpt-5.6-terra\",\"runtimeMode\":\"standard\",\"servingProvider\":\"openai\"},\"selectionReasonCodes\":[\"REVIEWED_SEED_AND_CAPABILITY_MATCH\"],\"status\":\"selected\",\"target\":{\"actorId\":\"actor-1\",\"host\":\"openai-codex\",\"instanceId\":\"instance-1\",\"sessionId\":\"session-1\"},\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "candidate-order-reversed",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {
+        "capabilities": [
+          {
+            "schemaVersion": "1.0.0",
+            "host": "openai-codex",
+            "hostVersion": "fixture-1",
+            "adapterVersion": "2.5.0",
+            "actorId": "actor-2",
+            "sessionId": "session-2",
+            "instanceId": "instance-2",
+            "observedAt": "2026-09-21T12:00:00.000Z",
+            "expiresAt": "2026-09-21T12:04:00.000Z",
+            "supportedBindings": [
+              {
+                "model": "gpt-5.6-terra",
+                "resolvedModel": "gpt-5.6-terra",
+                "modelOrigin": "openai",
+                "servingProvider": "openai",
+                "accessPath": "subscription",
+                "nativeReasoning": {
+                  "kind": "enum",
+                  "value": "high"
+                },
+                "runtimeMode": "standard",
+                "invocationSurface": "local-subagent",
+                "observableFields": [
+                  "model",
+                  "reasoning",
+                  "runtimeMode"
+                ],
+                "aliasResolution": null,
+                "possibleFallbacks": []
+              }
+            ],
+            "executionCapabilities": {
+              "dispatch": true,
+              "observe": true,
+              "cancel": true,
+              "resume": false,
+              "filesystem": "write",
+              "tools": [
+                "read",
+                "write"
+              ],
+              "approvals": "enforced",
+              "isolation": "sandbox",
+              "inputModalities": [
+                "text",
+                "image"
+              ]
+            },
+            "source": "host-observation",
+            "sourceReference": "fixture:capability",
+            "snapshotDigest": "sha256:7216683e2e78ff016367e755843b6d5aa6c8d55b52f5bc22548f5ff8648f548f"
+          },
+          {
+            "schemaVersion": "1.0.0",
+            "host": "openai-codex",
+            "hostVersion": "fixture-1",
+            "adapterVersion": "2.5.0",
+            "actorId": "actor-1",
+            "sessionId": "session-1",
+            "instanceId": "instance-1",
+            "observedAt": "2026-09-21T12:00:00.000Z",
+            "expiresAt": "2026-09-21T12:04:00.000Z",
+            "supportedBindings": [
+              {
+                "model": "gpt-5.6-terra",
+                "resolvedModel": "gpt-5.6-terra",
+                "modelOrigin": "openai",
+                "servingProvider": "openai",
+                "accessPath": "subscription",
+                "nativeReasoning": {
+                  "kind": "enum",
+                  "value": "high"
+                },
+                "runtimeMode": "standard",
+                "invocationSurface": "local-subagent",
+                "observableFields": [
+                  "model",
+                  "reasoning",
+                  "runtimeMode"
+                ],
+                "aliasResolution": null,
+                "possibleFallbacks": []
+              }
+            ],
+            "executionCapabilities": {
+              "dispatch": true,
+              "observe": true,
+              "cancel": true,
+              "resume": false,
+              "filesystem": "write",
+              "tools": [
+                "read",
+                "write"
+              ],
+              "approvals": "enforced",
+              "isolation": "sandbox",
+              "inputModalities": [
+                "text",
+                "image"
+              ]
+            },
+            "source": "host-observation",
+            "sourceReference": "fixture:capability",
+            "snapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d"
+          }
+        ]
+      },
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:2b0ecd65baaddebab2848f623b4ad12776595daa3600e393f15b4225bc58a613",
+        "capabilitySnapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d",
+        "requested": null,
+        "selected": {
+          "model": "gpt-5.6-terra",
+          "resolvedModel": "gpt-5.6-terra",
+          "modelOrigin": "openai",
+          "servingProvider": "openai",
+          "accessPath": "subscription",
+          "nativeReasoning": {
+            "kind": "enum",
+            "value": "high"
+          },
+          "runtimeMode": "standard"
+        },
+        "target": {
+          "actorId": "actor-1",
+          "host": "openai-codex",
+          "sessionId": "session-1",
+          "instanceId": "instance-1"
+        },
+        "invocationSurface": "local-subagent",
+        "status": "selected",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "REVIEWED_SEED_AND_CAPABILITY_MATCH"
+        ],
+        "rejectedCandidates": [],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:8b3addbd1cd1a328b3aa15d81c7ef4c1538362c607f6d5ffd297a32b3c35fcdf"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:2b0ecd65baaddebab2848f623b4ad12776595daa3600e393f15b4225bc58a613\",\"capabilitySnapshotDigest\":\"sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d\",\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:8b3addbd1cd1a328b3aa15d81c7ef4c1538362c607f6d5ffd297a32b3c35fcdf\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":\"local-subagent\",\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[],\"requestDigest\":\"sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":{\"accessPath\":\"subscription\",\"model\":\"gpt-5.6-terra\",\"modelOrigin\":\"openai\",\"nativeReasoning\":{\"kind\":\"enum\",\"value\":\"high\"},\"resolvedModel\":\"gpt-5.6-terra\",\"runtimeMode\":\"standard\",\"servingProvider\":\"openai\"},\"selectionReasonCodes\":[\"REVIEWED_SEED_AND_CAPABILITY_MATCH\"],\"status\":\"selected\",\"target\":{\"actorId\":\"actor-1\",\"host\":\"openai-codex\",\"instanceId\":\"instance-1\",\"sessionId\":\"session-1\"},\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "malformed-and-valid",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {
+        "capabilities": [
+          {
+            "schemaVersion": "1.0.0",
+            "host": "openai-codex",
+            "hostVersion": "fixture-1",
+            "adapterVersion": "2.5.0",
+            "actorId": "actor-1",
+            "sessionId": "session-1",
+            "instanceId": "instance-1",
+            "observedAt": "2026-09-21T12:00:00.000Z",
+            "expiresAt": "2026-09-21T12:04:00.000Z",
+            "supportedBindings": [
+              {
+                "model": "gpt-5.6-terra",
+                "resolvedModel": "gpt-5.6-terra",
+                "modelOrigin": "openai",
+                "servingProvider": "openai",
+                "accessPath": "subscription",
+                "nativeReasoning": {
+                  "kind": "enum",
+                  "value": "high"
+                },
+                "runtimeMode": "standard",
+                "invocationSurface": "local-subagent",
+                "observableFields": [
+                  "model",
+                  "reasoning",
+                  "runtimeMode"
+                ],
+                "aliasResolution": null,
+                "possibleFallbacks": []
+              }
+            ],
+            "executionCapabilities": {
+              "dispatch": true,
+              "observe": true,
+              "cancel": true,
+              "resume": false,
+              "filesystem": "write",
+              "tools": [
+                "read",
+                "write"
+              ],
+              "approvals": "enforced",
+              "isolation": "sandbox",
+              "inputModalities": [
+                "text",
+                "image"
+              ]
+            },
+            "source": "agent-self-report",
+            "sourceReference": "fixture:capability",
+            "snapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d"
+          },
+          {
+            "schemaVersion": "1.0.0",
+            "host": "openai-codex",
+            "hostVersion": "fixture-1",
+            "adapterVersion": "2.5.0",
+            "actorId": "actor-1",
+            "sessionId": "session-1",
+            "instanceId": "instance-1",
+            "observedAt": "2026-09-21T12:00:00.000Z",
+            "expiresAt": "2026-09-21T12:04:00.000Z",
+            "supportedBindings": [
+              {
+                "model": "gpt-5.6-terra",
+                "resolvedModel": "gpt-5.6-terra",
+                "modelOrigin": "openai",
+                "servingProvider": "openai",
+                "accessPath": "subscription",
+                "nativeReasoning": {
+                  "kind": "enum",
+                  "value": "high"
+                },
+                "runtimeMode": "standard",
+                "invocationSurface": "local-subagent",
+                "observableFields": [
+                  "model",
+                  "reasoning",
+                  "runtimeMode"
+                ],
+                "aliasResolution": null,
+                "possibleFallbacks": []
+              }
+            ],
+            "executionCapabilities": {
+              "dispatch": true,
+              "observe": true,
+              "cancel": true,
+              "resume": false,
+              "filesystem": "write",
+              "tools": [
+                "read",
+                "write"
+              ],
+              "approvals": "enforced",
+              "isolation": "sandbox",
+              "inputModalities": [
+                "text",
+                "image"
+              ]
+            },
+            "source": "host-observation",
+            "sourceReference": "fixture:capability",
+            "snapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d"
+          }
+        ]
+      },
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d",
+        "requested": null,
+        "selected": {
+          "model": "gpt-5.6-terra",
+          "resolvedModel": "gpt-5.6-terra",
+          "modelOrigin": "openai",
+          "servingProvider": "openai",
+          "accessPath": "subscription",
+          "nativeReasoning": {
+            "kind": "enum",
+            "value": "high"
+          },
+          "runtimeMode": "standard"
+        },
+        "target": {
+          "actorId": "actor-1",
+          "host": "openai-codex",
+          "sessionId": "session-1",
+          "instanceId": "instance-1"
+        },
+        "invocationSurface": "local-subagent",
+        "status": "selected",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "REVIEWED_SEED_AND_CAPABILITY_MATCH"
+        ],
+        "rejectedCandidates": [
+          {
+            "candidateKey": "invalid:sha256:978600e4dc2c9a9b390ca4f6bd5329542b78c012ea24db4bb1aa2bc7f59d4f89",
+            "reasonCodes": [
+              "INVALID_INPUT"
+            ]
+          }
+        ],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:cefb92d858a53b368e7f38298ee76dab353d3fb196d62ebd159936b5eefa8fca"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":\"sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d\",\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:cefb92d858a53b368e7f38298ee76dab353d3fb196d62ebd159936b5eefa8fca\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":\"local-subagent\",\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[{\"candidateKey\":\"invalid:sha256:978600e4dc2c9a9b390ca4f6bd5329542b78c012ea24db4bb1aa2bc7f59d4f89\",\"reasonCodes\":[\"INVALID_INPUT\"]}],\"requestDigest\":\"sha256:983100a64b9128fe74d1527fc7735f35933f9372a3730b3ed42937b55e8d5d9c\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":{\"accessPath\":\"subscription\",\"model\":\"gpt-5.6-terra\",\"modelOrigin\":\"openai\",\"nativeReasoning\":{\"kind\":\"enum\",\"value\":\"high\"},\"resolvedModel\":\"gpt-5.6-terra\",\"runtimeMode\":\"standard\",\"servingProvider\":\"openai\"},\"selectionReasonCodes\":[\"REVIEWED_SEED_AND_CAPABILITY_MATCH\"],\"status\":\"selected\",\"target\":{\"actorId\":\"actor-1\",\"host\":\"openai-codex\",\"instanceId\":\"instance-1\",\"sessionId\":\"session-1\"},\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "nested-delegation",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "balanced",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": true,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {},
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:8fc12f3d0bee6a6e65fca335d58ceb5facae15f4823db16f6c3f464b73d4c7e8",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d",
+        "requested": null,
+        "selected": {
+          "model": "gpt-5.6-terra",
+          "resolvedModel": "gpt-5.6-terra",
+          "modelOrigin": "openai",
+          "servingProvider": "openai",
+          "accessPath": "subscription",
+          "nativeReasoning": {
+            "kind": "enum",
+            "value": "high"
+          },
+          "runtimeMode": "standard"
+        },
+        "target": {
+          "actorId": "actor-1",
+          "host": "openai-codex",
+          "sessionId": "session-1",
+          "instanceId": "instance-1"
+        },
+        "invocationSurface": "local-subagent",
+        "status": "selected",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "REVIEWED_SEED_AND_CAPABILITY_MATCH"
+        ],
+        "rejectedCandidates": [],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:4332dc079fc8b37449ade3180c2f74334a2bc3a8decb0012050ea02fc7c32434"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":\"sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d\",\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:4332dc079fc8b37449ade3180c2f74334a2bc3a8decb0012050ea02fc7c32434\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":\"local-subagent\",\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[],\"requestDigest\":\"sha256:8fc12f3d0bee6a6e65fca335d58ceb5facae15f4823db16f6c3f464b73d4c7e8\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":{\"accessPath\":\"subscription\",\"model\":\"gpt-5.6-terra\",\"modelOrigin\":\"openai\",\"nativeReasoning\":{\"kind\":\"enum\",\"value\":\"high\"},\"resolvedModel\":\"gpt-5.6-terra\",\"runtimeMode\":\"standard\",\"servingProvider\":\"openai\"},\"selectionReasonCodes\":[\"REVIEWED_SEED_AND_CAPABILITY_MATCH\"],\"status\":\"selected\",\"target\":{\"actorId\":\"actor-1\",\"host\":\"openai-codex\",\"instanceId\":\"instance-1\",\"sessionId\":\"session-1\"},\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "profile-economy",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "economy",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {},
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:68a5c8329a61c95556bafd5e923750022ec8c22b4cec67b68c2d7e44f580cba7",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d",
+        "requested": null,
+        "selected": {
+          "model": "gpt-5.6-terra",
+          "resolvedModel": "gpt-5.6-terra",
+          "modelOrigin": "openai",
+          "servingProvider": "openai",
+          "accessPath": "subscription",
+          "nativeReasoning": {
+            "kind": "enum",
+            "value": "high"
+          },
+          "runtimeMode": "standard"
+        },
+        "target": {
+          "actorId": "actor-1",
+          "host": "openai-codex",
+          "sessionId": "session-1",
+          "instanceId": "instance-1"
+        },
+        "invocationSurface": "local-subagent",
+        "status": "selected",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "REVIEWED_SEED_AND_CAPABILITY_MATCH"
+        ],
+        "rejectedCandidates": [],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:e84409edfe2d786acc3ef1a4a375c74bfc9eff528bfc3c099a6f827a304f924a"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":\"sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d\",\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:e84409edfe2d786acc3ef1a4a375c74bfc9eff528bfc3c099a6f827a304f924a\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":\"local-subagent\",\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[],\"requestDigest\":\"sha256:68a5c8329a61c95556bafd5e923750022ec8c22b4cec67b68c2d7e44f580cba7\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":{\"accessPath\":\"subscription\",\"model\":\"gpt-5.6-terra\",\"modelOrigin\":\"openai\",\"nativeReasoning\":{\"kind\":\"enum\",\"value\":\"high\"},\"resolvedModel\":\"gpt-5.6-terra\",\"runtimeMode\":\"standard\",\"servingProvider\":\"openai\"},\"selectionReasonCodes\":[\"REVIEWED_SEED_AND_CAPABILITY_MATCH\"],\"status\":\"selected\",\"target\":{\"actorId\":\"actor-1\",\"host\":\"openai-codex\",\"instanceId\":\"instance-1\",\"sessionId\":\"session-1\"},\"trustedGateSatisfied\":false}"
+    },
+    {
+      "name": "profile-quality",
+      "request": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "role": "general-implementation",
+        "highRisk": false,
+        "profile": "quality",
+        "taskTraits": [
+          "code-change"
+        ],
+        "requirements": {
+          "inputModalities": [
+            "text"
+          ],
+          "tools": [
+            "read"
+          ],
+          "filesystem": "read",
+          "allowedSurfaces": [
+            "local-subagent",
+            "peer-session",
+            "headless"
+          ],
+          "allowedRuntimeModes": [
+            "standard"
+          ],
+          "allowNestedDelegation": false,
+          "requireObservable": [],
+          "excludedActors": [],
+          "excludedSessions": [],
+          "contextMode": "limited"
+        }
+      },
+      "environmentPatch": {},
+      "expected": {
+        "schemaVersion": "2.0.0",
+        "binding": {
+          "assignmentId": "assignment-1",
+          "taskId": "task-1",
+          "runId": "run-1",
+          "stageId": "stage-1",
+          "attemptId": "attempt-1",
+          "revision": 1,
+          "inputDigest": "sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0",
+          "candidateDigest": "sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c"
+        },
+        "requestDigest": "sha256:44b761db52996aa343a12ab4f9faac955691fa80f8112feae1374095e47bf99a",
+        "catalogDigest": "sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34",
+        "policyDigest": "sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22",
+        "capabilitySetDigest": "sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23",
+        "capabilitySnapshotDigest": "sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d",
+        "requested": null,
+        "selected": {
+          "model": "gpt-5.6-terra",
+          "resolvedModel": "gpt-5.6-terra",
+          "modelOrigin": "openai",
+          "servingProvider": "openai",
+          "accessPath": "subscription",
+          "nativeReasoning": {
+            "kind": "enum",
+            "value": "high"
+          },
+          "runtimeMode": "standard"
+        },
+        "target": {
+          "actorId": "actor-1",
+          "host": "openai-codex",
+          "sessionId": "session-1",
+          "instanceId": "instance-1"
+        },
+        "invocationSurface": "local-subagent",
+        "status": "selected",
+        "executionAuthorized": false,
+        "trustedGateSatisfied": false,
+        "selectionReasonCodes": [
+          "REVIEWED_SEED_AND_CAPABILITY_MATCH"
+        ],
+        "rejectedCandidates": [],
+        "fallbackReason": null,
+        "decisionDigest": "sha256:d35fabe49a182896b1efe47bf98876b682196b8a8a1fc5d00f40debe097c2e53"
+      },
+      "expectedCanonical": "{\"binding\":{\"assignmentId\":\"assignment-1\",\"attemptId\":\"attempt-1\",\"candidateDigest\":\"sha256:6201e275c993fded1b6a1b7b64f106686c702d9fdff8af32b560aad5d781015c\",\"inputDigest\":\"sha256:48aed2374cea5f3bbbee1c8742439be758dcc1e999e0e3f0e03c1ee80e3565a0\",\"revision\":1,\"runId\":\"run-1\",\"stageId\":\"stage-1\",\"taskId\":\"task-1\"},\"capabilitySetDigest\":\"sha256:5993a01deb9f324153720307a2ef94c365bcafb25ddfaaf7bd80bea86a66ad23\",\"capabilitySnapshotDigest\":\"sha256:0f917ef35d59c1fb7feb0c4052431823fd73ddcab6bf829804b6c68d807d306d\",\"catalogDigest\":\"sha256:1481a90499a4caaf7be7a359f3eb233d462b1d17d636fadf979cd316c1492f34\",\"decisionDigest\":\"sha256:d35fabe49a182896b1efe47bf98876b682196b8a8a1fc5d00f40debe097c2e53\",\"executionAuthorized\":false,\"fallbackReason\":null,\"invocationSurface\":\"local-subagent\",\"policyDigest\":\"sha256:cd9a4a8ab6908947921d1c39c48b0cadf116d8a70e31d6db974d8197e97c1d22\",\"rejectedCandidates\":[],\"requestDigest\":\"sha256:44b761db52996aa343a12ab4f9faac955691fa80f8112feae1374095e47bf99a\",\"requested\":null,\"schemaVersion\":\"2.0.0\",\"selected\":{\"accessPath\":\"subscription\",\"model\":\"gpt-5.6-terra\",\"modelOrigin\":\"openai\",\"nativeReasoning\":{\"kind\":\"enum\",\"value\":\"high\"},\"resolvedModel\":\"gpt-5.6-terra\",\"runtimeMode\":\"standard\",\"servingProvider\":\"openai\"},\"selectionReasonCodes\":[\"REVIEWED_SEED_AND_CAPABILITY_MATCH\"],\"status\":\"selected\",\"target\":{\"actorId\":\"actor-1\",\"host\":\"openai-codex\",\"instanceId\":\"instance-1\",\"sessionId\":\"session-1\"},\"trustedGateSatisfied\":false}"
+    }
+  ]
+}

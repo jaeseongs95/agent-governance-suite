@@ -7553,7 +7553,7 @@ var require_formats = __commonJS({
     }
     var TIME = /^(\d\d):(\d\d):(\d\d(?:\.\d+)?)(z|([+-])(\d\d)(?::?(\d\d))?)?$/i;
     function getTime(strictTimeZone) {
-      return function time3(str) {
+      return function time4(str) {
         const matches = TIME.exec(str);
         if (!matches)
           return false;
@@ -7599,10 +7599,10 @@ var require_formats = __commonJS({
     }
     var DATE_TIME_SEPARATOR = /t|\s/i;
     function getDateTime(strictTimeZone) {
-      const time3 = getTime(strictTimeZone);
+      const time4 = getTime(strictTimeZone);
       return function date_time(str) {
         const dateTime = str.split(DATE_TIME_SEPARATOR);
-        return dateTime.length === 2 && date3(dateTime[0]) && time3(dateTime[1]);
+        return dateTime.length === 2 && date3(dateTime[0]) && time4(dateTime[1]);
       };
     }
     function compareDateTime(dt1, dt2) {
@@ -17462,9 +17462,644 @@ function resolveHostAttestation(environment = process.env) {
 // mcp-server/src/schema-validator.ts
 var import__ = __toESM(require__(), 1);
 var import_ajv_formats = __toESM(require_dist(), 1);
-import { createHash as createHash3 } from "node:crypto";
+import { createHash as createHash4 } from "node:crypto";
 import { readFileSync as readFileSync2, readdirSync } from "node:fs";
 import path6 from "node:path";
+
+// skills/coordinate-subagents/scripts/model-routing-core.mjs
+import { createHash as createHash3 } from "node:crypto";
+var ROLES = Object.freeze(["discovery", "general-implementation", "complex-reasoning", "independent-audit"]);
+var ORIGINS = Object.freeze(["openai", "anthropic", "google", "xai", "mistral", "amazon", "cohere", "meta"]);
+var TRAITS = Object.freeze(["architecture-decision", "code-change", "diagnosis", "source-research", "google-app-operation", "context-repair", "multimodal-input"]);
+var CLASSES = ["lightweight", "general", "deep", "frontier"];
+var SOURCES = ["configuration", "tool-contract", "host-observation", "live-probe"];
+var DIGEST = /^sha256:[a-f0-9]{64}$/u;
+var ID = /^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$/u;
+var BIND_KEYS = ["assignmentId", "taskId", "runId", "stageId", "attemptId", "revision", "inputDigest", "candidateDigest"];
+var TARGET_KEYS = ["actorId", "host", "sessionId", "instanceId"];
+var RoutingError = class extends Error {
+  constructor(code, message) {
+    super(message);
+    this.name = "RoutingError";
+    this.code = code;
+  }
+};
+function assert2(condition, code, message = code) {
+  if (!condition) throw new RoutingError(code, message);
+}
+function object2(value, name) {
+  assert2(value && typeof value === "object" && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype, "INVALID_INPUT", `${name} must be a plain JSON object`);
+  return value;
+}
+function keys(value, allowed, required2 = allowed, name = "object") {
+  object2(value, name);
+  assert2(Object.keys(value).every((k) => allowed.includes(k)), "INVALID_INPUT", `${name}: unexpected field`);
+  assert2(required2.every((k) => Object.hasOwn(value, k)), "INVALID_INPUT", `${name}: required field missing`);
+}
+function text(value, name, maximum = 512) {
+  assert2(typeof value === "string" && value.trim().length > 0 && Buffer.byteLength(value, "utf8") <= maximum && !value.includes("\0"), "INVALID_INPUT", `${name}: non-empty bounded string required`);
+}
+function identifier(value, name) {
+  assert2(typeof value === "string" && ID.test(value), "INVALID_INPUT", `${name}: invalid identifier`);
+}
+function digestValue(value, name) {
+  assert2(typeof value === "string" && DIGEST.test(value), "INVALID_INPUT", `${name}: sha256 digest required`);
+}
+function instant(value, name) {
+  assert2(typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value, "INVALID_INPUT", `${name}: canonical UTC timestamp required`);
+  return Date.parse(value);
+}
+function integer2(value, name, min = 0, max = Number.MAX_SAFE_INTEGER) {
+  assert2(Number.isSafeInteger(value) && value >= min && value <= max, "INVALID_INPUT", `${name}: invalid integer`);
+}
+function strings(value, name, allowed, maximum = 128) {
+  assert2(Array.isArray(value) && value.length <= maximum && value.every((v) => typeof v === "string" && (allowed ? allowed.includes(v) : v.length > 0 && v.length <= 200)) && new Set(value).size === value.length, "INVALID_INPUT", `${name}: unique bounded array required`);
+}
+function bool(value, name) {
+  assert2(typeof value === "boolean", "INVALID_INPUT", `${name}: boolean required`);
+}
+function canonical(value) {
+  const seen = /* @__PURE__ */ new Set();
+  const visit = (v) => {
+    if (v === null || typeof v === "string" || typeof v === "boolean") return JSON.stringify(v);
+    if (typeof v === "number") {
+      assert2(Number.isFinite(v), "INVALID_INPUT", "Non-finite JSON number");
+      return JSON.stringify(v);
+    }
+    assert2(v && typeof v === "object" && !seen.has(v), "INVALID_INPUT", "Non-JSON or cyclic value");
+    seen.add(v);
+    let result;
+    if (Array.isArray(v)) result = `[${Array.from(v, visit).join(",")}]`;
+    else {
+      object2(v, "canonical object");
+      result = `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${visit(v[k])}`).join(",")}}`;
+    }
+    seen.delete(v);
+    return result;
+  };
+  return visit(value);
+}
+function digest(value) {
+  return `sha256:${createHash3("sha256").update(canonical(value)).digest("hex")}`;
+}
+function seal(value, field) {
+  const out = structuredClone(value);
+  delete out[field];
+  return { ...out, [field]: digest(out) };
+}
+function verifySeal(value, field) {
+  digestValue(value[field], field);
+  const content = { ...value };
+  delete content[field];
+  assert2(digest(content) === value[field], "DIGEST_MISMATCH", `${field} does not match contents`);
+}
+function validateBinding(binding2) {
+  keys(binding2, BIND_KEYS);
+  for (const k of BIND_KEYS.slice(0, 5)) identifier(binding2[k], k);
+  integer2(binding2.revision, "revision");
+  digestValue(binding2.inputDigest, "inputDigest");
+  digestValue(binding2.candidateDigest, "candidateDigest");
+  return binding2;
+}
+function validateTarget(target) {
+  keys(target, TARGET_KEYS);
+  for (const k of TARGET_KEYS) identifier(target[k], k);
+  return target;
+}
+function validateReasoning(control) {
+  object2(control, "nativeReasoning");
+  if (control.kind === "enum") {
+    keys(control, ["kind", "value"]);
+    identifier(control.value, "reasoning enum");
+    assert2(!["ultra", "ultracode"].includes(control.value.toLowerCase()), "RUNTIME_IS_NOT_EFFORT");
+  } else if (control.kind === "token-budget") {
+    keys(control, ["kind", "budgetTokens"]);
+    integer2(control.budgetTokens, "budgetTokens", 1, 1e7);
+  } else if (control.kind === "toggle") {
+    keys(control, ["kind", "enabled"]);
+    bool(control.enabled, "enabled");
+  } else {
+    keys(control, ["kind"]);
+    assert2(control.kind === "not-exposed", "INVALID_INPUT", "Unknown native reasoning control");
+  }
+  return control;
+}
+function validateSelection(value) {
+  keys(value, ["model", "resolvedModel", "modelOrigin", "servingProvider", "accessPath", "nativeReasoning", "runtimeMode"]);
+  for (const k of ["model", "resolvedModel", "modelOrigin", "servingProvider", "runtimeMode"]) identifier(value[k], k);
+  assert2(["subscription", "api", "enterprise", "unknown"].includes(value.accessPath), "INVALID_INPUT", "Invalid accessPath");
+  validateReasoning(value.nativeReasoning);
+  return value;
+}
+function validateCapabilities(snapshot) {
+  keys(snapshot, ["schemaVersion", "host", "hostVersion", "adapterVersion", "actorId", "sessionId", "instanceId", "observedAt", "expiresAt", "supportedBindings", "executionCapabilities", "source", "sourceReference", "snapshotDigest"]);
+  assert2(snapshot.schemaVersion === "1.0.0", "INVALID_INPUT", "HostModelCapabilities.v1 required");
+  validateTarget(Object.fromEntries(TARGET_KEYS.map((k) => [k, snapshot[k]])));
+  text(snapshot.hostVersion, "hostVersion");
+  text(snapshot.adapterVersion, "adapterVersion");
+  const start = instant(snapshot.observedAt, "observedAt"), end = instant(snapshot.expiresAt, "expiresAt");
+  assert2(end > start && end - start <= 864e5, "INVALID_INPUT", "Capability validity must be 0 < ttl <= 24h");
+  assert2(SOURCES.includes(snapshot.source), "INVALID_INPUT", "Agent self-report is not a capability source");
+  text(snapshot.sourceReference, "sourceReference");
+  const ex = snapshot.executionCapabilities;
+  keys(ex, ["dispatch", "observe", "cancel", "resume", "filesystem", "tools", "approvals", "isolation", "inputModalities"]);
+  for (const k of ["dispatch", "observe", "cancel", "resume"]) assert2([true, false, "unknown"].includes(ex[k]), "INVALID_INPUT", `Invalid ${k} capability`);
+  assert2(["none", "read", "write", "unknown"].includes(ex.filesystem), "INVALID_INPUT", "Invalid filesystem capability");
+  strings(ex.tools, "tools");
+  strings(ex.inputModalities, "inputModalities", ["text", "image", "audio", "video"]);
+  assert2(["enforced", "unknown"].includes(ex.approvals), "INVALID_INPUT", "Invalid approval boundary");
+  assert2(["process", "sandbox", "remote", "unknown"].includes(ex.isolation), "INVALID_INPUT", "Invalid isolation");
+  assert2(Array.isArray(snapshot.supportedBindings) && snapshot.supportedBindings.length <= 256, "INVALID_INPUT", "Invalid supported bindings");
+  const seen = /* @__PURE__ */ new Set();
+  for (const binding2 of snapshot.supportedBindings) {
+    keys(binding2, ["model", "resolvedModel", "modelOrigin", "servingProvider", "accessPath", "nativeReasoning", "runtimeMode", "invocationSurface", "observableFields", "aliasResolution", "possibleFallbacks"]);
+    validateSelection(Object.fromEntries(["model", "resolvedModel", "modelOrigin", "servingProvider", "accessPath", "nativeReasoning", "runtimeMode"].map((k) => [k, binding2[k]])));
+    assert2(["local-subagent", "peer-session", "headless"].includes(binding2.invocationSurface), "INVALID_INPUT", "Invalid invocationSurface");
+    strings(binding2.observableFields, "observableFields", ["model", "reasoning", "runtimeMode"]);
+    if (binding2.aliasResolution !== null) {
+      keys(binding2.aliasResolution, ["alias", "resolvedModel", "sourceReference"]);
+      identifier(binding2.aliasResolution.alias, "alias");
+      identifier(binding2.aliasResolution.resolvedModel, "resolvedModel");
+      text(binding2.aliasResolution.sourceReference, "alias evidence");
+      assert2(binding2.aliasResolution.alias === binding2.model && binding2.aliasResolution.resolvedModel === binding2.resolvedModel, "INVALID_INPUT", "Alias resolution conflicts with binding");
+    }
+    assert2(Array.isArray(binding2.possibleFallbacks) && binding2.possibleFallbacks.length <= 32, "INVALID_INPUT");
+    for (const f of binding2.possibleFallbacks) {
+      keys(f, ["resolvedModel", "modelOrigin"]);
+      identifier(f.resolvedModel, "fallback model");
+      identifier(f.modelOrigin, "fallback origin");
+    }
+    const key = digest(binding2);
+    assert2(!seen.has(key), "INVALID_INPUT", "Duplicate binding");
+    seen.add(key);
+  }
+  verifySeal(snapshot, "snapshotDigest");
+  return snapshot;
+}
+function validatePolicy(policy) {
+  keys(policy, ["schemaVersion", "allowedOrigins", "enabledHosts", "allowedAccessPaths", "allowPreview", "allowSeedModels", "maxCatalogAgeDays", "profileOrder", "traitOrder", "controlOrder", "modelMinimums", "highRiskNativeFloor", "fullHistoryInheritanceHosts"]);
+  assert2(policy.schemaVersion === "1.0.0", "INVALID_INPUT");
+  strings(policy.allowedOrigins, "allowedOrigins", ORIGINS);
+  strings(policy.enabledHosts, "enabledHosts");
+  strings(policy.allowedAccessPaths, "allowedAccessPaths", ["subscription", "api", "enterprise"]);
+  bool(policy.allowPreview, "allowPreview");
+  bool(policy.allowSeedModels, "allowSeedModels");
+  integer2(policy.maxCatalogAgeDays, "maxCatalogAgeDays", 1, 366);
+  keys(policy.profileOrder, ["economy", "balanced", "quality"]);
+  for (const profile of Object.values(policy.profileOrder)) {
+    keys(profile, ROLES);
+    for (const v of Object.values(profile)) strings(v, "model order");
+  }
+  keys(policy.traitOrder, TRAITS, []);
+  for (const v of Object.values(policy.traitOrder)) strings(v, "trait order");
+  assert2(Array.isArray(policy.controlOrder) && policy.controlOrder.length <= 256, "INVALID_INPUT");
+  const seen = /* @__PURE__ */ new Set();
+  for (const rule of policy.controlOrder) {
+    keys(rule, ["host", "role", "profile", "controls"]);
+    identifier(rule.host, "control host");
+    assert2(ROLES.includes(rule.role) && ["economy", "balanced", "quality"].includes(rule.profile), "INVALID_INPUT");
+    assert2(Array.isArray(rule.controls) && rule.controls.length <= 32, "INVALID_INPUT");
+    for (const control of rule.controls) validateReasoning(control);
+    const key = `${rule.host}/${rule.role}/${rule.profile}`;
+    assert2(!seen.has(key), "INVALID_INPUT", "Duplicate control order");
+    seen.add(key);
+  }
+  assert2(Array.isArray(policy.modelMinimums) && policy.modelMinimums.length <= 256, "INVALID_INPUT");
+  const minimumModels = /* @__PURE__ */ new Set();
+  for (const rule of policy.modelMinimums) {
+    keys(rule, ["model", "enumValues"]);
+    identifier(rule.model, "minimum model");
+    strings(rule.enumValues, "minimum enumValues", null, 32);
+    assert2(rule.enumValues.length > 0 && !minimumModels.has(rule.model), "INVALID_INPUT", "Duplicate or empty model minimum");
+    minimumModels.add(rule.model);
+  }
+  assert2(Array.isArray(policy.highRiskNativeFloor) && policy.highRiskNativeFloor.length <= 64, "INVALID_INPUT");
+  const floorHosts = /* @__PURE__ */ new Set();
+  for (const rule of policy.highRiskNativeFloor) {
+    keys(rule, ["host", "modelOrigins", "minimumModelClass", "enumValues"]);
+    identifier(rule.host, "floor host");
+    strings(rule.modelOrigins, "floor modelOrigins", ORIGINS, 32);
+    assert2(CLASSES.includes(rule.minimumModelClass), "INVALID_INPUT");
+    strings(rule.enumValues, "floor enumValues", null, 32);
+    assert2(rule.modelOrigins.length > 0 && rule.enumValues.length > 0 && !floorHosts.has(rule.host), "INVALID_INPUT", "Duplicate or empty high-risk floor");
+    floorHosts.add(rule.host);
+  }
+  strings(policy.fullHistoryInheritanceHosts, "fullHistoryInheritanceHosts", null, 64);
+  return policy;
+}
+function validateRequest(request) {
+  keys(request, ["schemaVersion", "binding", "role", "highRisk", "profile", "taskTraits", "requirements", "user"], ["schemaVersion", "binding", "role", "highRisk", "requirements"]);
+  assert2(request.schemaVersion === "2.0.0", "INVALID_INPUT", "ModelSelectionRequest.v2 required");
+  validateBinding(request.binding);
+  assert2(ROLES.includes(request.role), "INVALID_INPUT", "Unknown role");
+  bool(request.highRisk, "highRisk");
+  assert2(request.role !== "independent-audit" || request.highRisk, "INVALID_INPUT", "Independent audit requires highRisk");
+  assert2(["economy", "balanced", "quality"].includes(request.profile ?? "balanced"), "INVALID_INPUT", "Unknown profile");
+  strings(request.taskTraits ?? [], "taskTraits", TRAITS);
+  const req = request.requirements;
+  keys(req, ["inputModalities", "tools", "filesystem", "allowedSurfaces", "allowedRuntimeModes", "allowNestedDelegation", "requireObservable", "excludedActors", "excludedSessions", "contextMode"], ["inputModalities", "tools", "filesystem", "allowedSurfaces", "allowedRuntimeModes", "allowNestedDelegation", "requireObservable", "excludedActors", "excludedSessions", "contextMode"]);
+  strings(req.inputModalities, "inputModalities", ["text", "image", "audio", "video"]);
+  strings(req.tools, "tools");
+  assert2(["none", "read", "write"].includes(req.filesystem), "INVALID_INPUT");
+  strings(req.allowedSurfaces, "allowedSurfaces", ["local-subagent", "peer-session", "headless"]);
+  strings(req.allowedRuntimeModes, "allowedRuntimeModes");
+  bool(req.allowNestedDelegation, "allowNestedDelegation");
+  strings(req.requireObservable, "requireObservable", ["model", "reasoning", "runtimeMode"]);
+  strings(req.excludedActors, "excludedActors");
+  strings(req.excludedSessions, "excludedSessions");
+  assert2(["limited", "full-history"].includes(req.contextMode), "INVALID_INPUT");
+  if (request.user) {
+    keys(request.user, ["strength", "model", "host", "nativeReasoning", "runtimeMode"], ["strength"]);
+    assert2(["required", "preferred"].includes(request.user.strength), "INVALID_INPUT", "Invalid preference strength");
+    assert2(Object.keys(request.user).length > 1, "INVALID_INPUT", "Empty preference");
+    for (const k of ["model", "host", "runtimeMode"]) if (Object.hasOwn(request.user, k)) identifier(request.user[k], k);
+    if (request.user.nativeReasoning) validateReasoning(request.user.nativeReasoning);
+  }
+  return request;
+}
+function validateCatalog(catalog) {
+  keys(catalog, ["schemaVersion", "snapshotDate", "models", "hosts", "sources", "catalogDigest"]);
+  assert2(catalog.schemaVersion === "1.0.0", "INVALID_INPUT");
+  instant(catalog.snapshotDate, "snapshotDate");
+  assert2(Array.isArray(catalog.models) && catalog.models.length <= 512, "INVALID_INPUT");
+  assert2(Array.isArray(catalog.hosts) && Array.isArray(catalog.sources), "INVALID_INPUT");
+  const sourceIds = /* @__PURE__ */ new Set();
+  for (const source of catalog.sources) {
+    keys(source, ["id", "url", "checkedAt", "evidenceKind", "note"]);
+    identifier(source.id, "source id");
+    assert2(!sourceIds.has(source.id), "INVALID_INPUT", "Duplicate source");
+    sourceIds.add(source.id);
+    text(source.url, "source URL", 2048);
+    assert2(/^(?:https:\/\/|plan:|repository:)/u.test(source.url), "INVALID_INPUT");
+    instant(source.checkedAt, "checkedAt");
+    assert2(["official-document", "baseline-source", "user-plan"].includes(source.evidenceKind), "INVALID_INPUT");
+    text(source.note, "source note", 4096);
+  }
+  const hosts = /* @__PURE__ */ new Set();
+  for (const host of catalog.hosts) {
+    keys(host, ["id", "defaultEnabled", "autoDispatch", "status", "sourceIds", "requiredCapabilities", "unknownCapabilities"]);
+    identifier(host.id, "host id");
+    assert2(!hosts.has(host.id), "INVALID_INPUT", "Duplicate host");
+    hosts.add(host.id);
+    bool(host.defaultEnabled, "defaultEnabled");
+    bool(host.autoDispatch, "autoDispatch");
+    assert2(["baseline", "experimental", "descriptor-only"].includes(host.status), "INVALID_INPUT");
+    strings(host.sourceIds, "sourceIds");
+    assert2(host.sourceIds.length > 0 && host.sourceIds.every((s) => sourceIds.has(s)), "CATALOG_SOURCE_MISSING");
+    strings(host.requiredCapabilities, "requiredCapabilities");
+    strings(host.unknownCapabilities, "unknownCapabilities");
+  }
+  const ids = /* @__PURE__ */ new Set(), aliases = /* @__PURE__ */ new Set();
+  for (const model of catalog.models) {
+    keys(model, ["id", "modelOrigin", "aliases", "modelClass", "status", "verification", "roles", "taskTraits", "nativeKinds", "inputModalities", "contextTokens", "abilityScore", "officialPositioning", "recommendationBasis", "sourceIds", "checkedAt"]);
+    identifier(model.id, "model id");
+    assert2(!ids.has(model.id), "INVALID_INPUT", "Duplicate model");
+    ids.add(model.id);
+    assert2(ORIGINS.includes(model.modelOrigin), "ORIGIN_EXCLUDED", "Catalog contains excluded origin");
+    strings(model.aliases, "aliases");
+    for (const alias of [model.id, ...model.aliases]) {
+      assert2(!aliases.has(alias), "INVALID_INPUT", "Conflicting model alias");
+      aliases.add(alias);
+    }
+    assert2(CLASSES.includes(model.modelClass), "INVALID_INPUT");
+    assert2(["stable", "preview", "seed", "retired"].includes(model.status), "INVALID_INPUT");
+    strings(model.verification, "verification", ["documented", "baseline-seed", "contract-tested", "live-verified", "locally-evaluated"]);
+    strings(model.roles, "roles", ROLES);
+    strings(model.taskTraits, "taskTraits", TRAITS);
+    strings(model.nativeKinds, "nativeKinds", ["enum", "token-budget", "toggle", "not-exposed"]);
+    strings(model.inputModalities, "inputModalities", ["text", "image", "audio", "video"]);
+    if (model.contextTokens !== null) integer2(model.contextTokens, "contextTokens", 1);
+    assert2(model.abilityScore === null, "INVALID_INPUT", "No measured ability ranking is bundled");
+    assert2(model.officialPositioning === null || typeof model.officialPositioning === "string", "INVALID_INPUT");
+    text(model.recommendationBasis, "recommendationBasis", 2048);
+    strings(model.sourceIds, "sourceIds");
+    assert2(model.sourceIds.length > 0 && model.sourceIds.every((s) => sourceIds.has(s)), "CATALOG_SOURCE_MISSING");
+    instant(model.checkedAt, "model checkedAt");
+  }
+  verifySeal(catalog, "catalogDigest");
+  return catalog;
+}
+function catalogModel(catalog, name) {
+  return catalog.models.find((m) => m.id === name || m.aliases.includes(name));
+}
+function exactModel(catalog, name) {
+  return catalog.models.find((m) => m.id === name);
+}
+function matchesPreference(candidate, pref, catalog) {
+  if (!pref) return false;
+  const m = pref.model ? catalogModel(catalog, pref.model) : null;
+  return (!pref.model || m?.id === candidate.model?.id) && (!pref.host || pref.host === candidate.snapshot.host) && (!pref.runtimeMode || pref.runtimeMode === candidate.binding.runtimeMode) && (!pref.nativeReasoning || canonical(pref.nativeReasoning) === canonical(candidate.binding.nativeReasoning));
+}
+function legacyFloor(binding2, host, model, policy) {
+  const rule = policy.highRiskNativeFloor.find((r) => r.host === host);
+  if (!rule || binding2.nativeReasoning.kind !== "enum" || binding2.runtimeMode !== "standard") return false;
+  if (!model || CLASSES.indexOf(model.modelClass) < CLASSES.indexOf(rule.minimumModelClass)) return false;
+  if (!rule.modelOrigins.includes(model.modelOrigin) || !model.nativeKinds.includes("enum")) return false;
+  return rule.enumValues.includes(binding2.nativeReasoning.value);
+}
+function belowModelMinimum(binding2, model, policy) {
+  const rule = model && policy.modelMinimums.find((r) => r.model === model.id);
+  return Boolean(rule) && !(binding2.nativeReasoning.kind === "enum" && rule.enumValues.includes(binding2.nativeReasoning.value));
+}
+function selectionFrom(binding2) {
+  return Object.fromEntries(["model", "resolvedModel", "modelOrigin", "servingProvider", "accessPath", "nativeReasoning", "runtimeMode"].map((k) => [k, structuredClone(binding2[k])]));
+}
+function lexical(a, b2) {
+  return a < b2 ? -1 : a > b2 ? 1 : 0;
+}
+function resolveV2(request, { catalog, policy, capabilities, now }) {
+  validateRequest(request);
+  validateCatalog(catalog);
+  validatePolicy(policy);
+  const nowMs = instant(now, "now");
+  assert2(Array.isArray(capabilities) && capabilities.length <= 256, "INVALID_INPUT", "Capability list too large");
+  const rejectedCandidates = [], candidates = [], validSnapshotDigests = [], seenSnapshots = /* @__PURE__ */ new Set();
+  const reject = (candidateKey, reasonCodes) => rejectedCandidates.push({ candidateKey, reasonCodes: [...new Set(reasonCodes)].sort() });
+  for (const snapshot of capabilities) {
+    try {
+      validateCapabilities(snapshot);
+    } catch (error2) {
+      reject(`invalid:${digest(snapshot)}`, [error2.code ?? "INVALID_CAPABILITY"]);
+      continue;
+    }
+    assert2(!seenSnapshots.has(snapshot.snapshotDigest), "INVALID_INPUT", "Duplicate capability snapshot");
+    seenSnapshots.add(snapshot.snapshotDigest);
+    validSnapshotDigests.push(snapshot.snapshotDigest);
+    const host = catalog.hosts.find((h) => h.id === snapshot.host);
+    for (const b2 of snapshot.supportedBindings) {
+      const key = digest({ snapshotDigest: snapshot.snapshotDigest, binding: b2 });
+      const reason = [], m = exactModel(catalog, b2.resolvedModel);
+      if (!m) reason.push("UNRESOLVED_MODEL");
+      if (!policy.allowedOrigins.includes(b2.modelOrigin) || !ORIGINS.includes(b2.modelOrigin)) reason.push("ORIGIN_EXCLUDED");
+      if (m && m.modelOrigin !== b2.modelOrigin) reason.push("ORIGIN_MISMATCH");
+      if (b2.model !== b2.resolvedModel && (!b2.aliasResolution || !m?.aliases.includes(b2.model))) reason.push("ALIAS_UNVERIFIED");
+      for (const f of b2.possibleFallbacks) {
+        const fm = exactModel(catalog, f.resolvedModel);
+        if (!fm || fm.modelOrigin !== f.modelOrigin || !policy.allowedOrigins.includes(f.modelOrigin)) reason.push("FALLBACK_ORIGIN_UNVERIFIED");
+      }
+      if (b2.possibleFallbacks.length && (request.highRisk || request.user?.strength === "required" || request.requirements.requireObservable.length)) reason.push("FALLBACK_NOT_PINNED");
+      if (!host || !policy.enabledHosts.includes(snapshot.host)) reason.push("HOST_DISABLED");
+      if (!host?.autoDispatch) reason.push("RUNTIME_NOT_ENABLED");
+      if (Date.parse(snapshot.observedAt) > nowMs || Date.parse(snapshot.expiresAt) <= nowMs) reason.push("CAPABILITY_EXPIRED");
+      if (Date.parse(catalog.snapshotDate) > nowMs || nowMs - Date.parse(catalog.snapshotDate) > policy.maxCatalogAgeDays * 864e5) reason.push("CATALOG_STALE");
+      if (m?.status === "retired" || m?.status === "preview" && !policy.allowPreview || m?.status === "seed" && !policy.allowSeedModels) reason.push("MODEL_STATUS_BLOCKED");
+      if (m && (!m.roles.includes(request.role) || (request.taskTraits ?? []).some((t) => !m.taskTraits.includes(t)))) reason.push("TASK_NOT_SUITABLE");
+      if (m && !m.nativeKinds.includes(b2.nativeReasoning.kind)) reason.push("CONTROL_NOT_SUPPORTED");
+      if (belowModelMinimum(b2, m, policy)) reason.push("MODEL_MINIMUM_NOT_MET");
+      if (!policy.allowedAccessPaths.includes(b2.accessPath)) reason.push("ACCESS_PATH_NOT_APPROVED");
+      const ex = snapshot.executionCapabilities, req = request.requirements;
+      if (ex.dispatch !== true || ex.approvals !== "enforced" || ex.isolation === "unknown") reason.push("EXECUTION_BOUNDARY_UNKNOWN");
+      if (!req.allowedSurfaces.includes(b2.invocationSurface)) reason.push("SURFACE_NOT_ALLOWED");
+      if (req.inputModalities.some((x) => !ex.inputModalities.includes(x) || !m?.inputModalities.includes(x))) reason.push("INPUT_NOT_SUPPORTED");
+      if (req.tools.some((t) => !ex.tools.includes(t))) reason.push("TOOLS_NOT_SUPPORTED");
+      if (["none", "read", "write"].indexOf(ex.filesystem) < ["none", "read", "write"].indexOf(req.filesystem)) reason.push("FILESYSTEM_NOT_SUPPORTED");
+      if (!req.allowedRuntimeModes.includes(b2.runtimeMode)) reason.push("RUNTIME_MODE_NOT_ALLOWED");
+      if (b2.runtimeMode !== "standard" && !req.allowNestedDelegation) reason.push("NESTED_DELEGATION_FORBIDDEN");
+      if (req.requireObservable.some((f) => !b2.observableFields.includes(f))) reason.push("OBSERVABILITY_INSUFFICIENT");
+      if (req.excludedActors.includes(snapshot.actorId) || req.excludedSessions.includes(`${snapshot.host}/${snapshot.sessionId}`)) reason.push("INDEPENDENCE_CONFLICT");
+      if (request.highRisk && (!legacyFloor(b2, snapshot.host, m, policy) || snapshot.source === "configuration" || !["model", "reasoning", "runtimeMode"].every((f) => b2.observableFields.includes(f)))) reason.push("HIGH_RISK_FLOOR_UNPROVEN");
+      if (req.contextMode === "full-history" && policy.fullHistoryInheritanceHosts.includes(snapshot.host)) reason.push("FULL_HISTORY_REQUIRES_LEGACY_INHERITANCE");
+      const candidate2 = { key, model: m, snapshot, binding: b2 };
+      if (request.user?.strength === "required" && !matchesPreference(candidate2, request.user, catalog)) reason.push("REQUIRED_CHOICE_UNAVAILABLE");
+      if (reason.length) reject(key, reason);
+      else candidates.push(candidate2);
+    }
+  }
+  const profile = request.profile ?? "balanced";
+  const seed = policy.profileOrder[profile][request.role];
+  const traitSeed = [...new Set((request.taskTraits ?? []).slice().sort().flatMap((t) => policy.traitOrder[t] ?? []))];
+  function rank(candidate2) {
+    const preferred = matchesPreference(candidate2, request.user, catalog) ? 0 : 1;
+    const position = (a) => a.includes(candidate2.model.id) ? a.indexOf(candidate2.model.id) : a.length;
+    const controls = policy.controlOrder.find((r) => r.host === candidate2.snapshot.host && r.role === request.role && r.profile === profile)?.controls ?? [];
+    const controlRank = controls.findIndex((c) => canonical(c) === canonical(candidate2.binding.nativeReasoning));
+    return [preferred, position(traitSeed), position(seed), controlRank < 0 ? controls.length : controlRank, candidate2.key];
+  }
+  candidates.sort((a, b2) => {
+    const x = rank(a), y2 = rank(b2);
+    for (let i = 0; i < 4; i++) if (x[i] !== y2[i]) return x[i] - y2[i];
+    return lexical(x[4], y2[4]);
+  });
+  const candidate = candidates[0];
+  const fallback = candidate && request.user?.strength === "preferred" && !matchesPreference(candidate, request.user, catalog) ? "PREFERRED_CHOICE_UNAVAILABLE" : null;
+  return seal({
+    schemaVersion: "2.0.0",
+    binding: structuredClone(request.binding),
+    requestDigest: digest(request),
+    catalogDigest: catalog.catalogDigest,
+    policyDigest: digest(policy),
+    capabilitySetDigest: digest(validSnapshotDigests.sort()),
+    capabilitySnapshotDigest: candidate?.snapshot.snapshotDigest ?? null,
+    requested: structuredClone(request.user ?? null),
+    selected: candidate ? selectionFrom(candidate.binding) : null,
+    target: candidate ? Object.fromEntries(TARGET_KEYS.map((k) => [k, candidate.snapshot[k]])) : null,
+    invocationSurface: candidate?.binding.invocationSurface ?? null,
+    status: candidate ? "selected" : "blocked",
+    executionAuthorized: false,
+    trustedGateSatisfied: false,
+    selectionReasonCodes: candidate ? [fallback ?? "REVIEWED_SEED_AND_CAPABILITY_MATCH"] : [request.user?.strength === "required" ? "REQUIRED_CHOICE_UNAVAILABLE" : "NO_ELIGIBLE_CANDIDATE"],
+    rejectedCandidates: rejectedCandidates.sort((a, b2) => lexical(a.candidateKey, b2.candidateKey)),
+    fallbackReason: fallback
+  }, "decisionDigest");
+}
+function fieldVerification(expected, actual, admitted) {
+  if (actual === null || actual === void 0 || !admitted) return "unverified";
+  return canonical(expected) === canonical(actual) ? "matched" : "mismatch";
+}
+function recordV2(input, { request, decision, catalog, policy, capabilities, now, admittedObservation = null }) {
+  keys(input, ["schemaVersion", "binding", "decisionDigest", "target", "dispatched", "dispatchedAt", "observation"], ["schemaVersion", "binding", "decisionDigest", "target", "dispatched", "dispatchedAt"]);
+  assert2(input.schemaVersion === "2.0.0", "INVALID_INPUT");
+  instant(input.dispatchedAt, "dispatchedAt");
+  assert2(input.dispatchedAt === now, "DISPATCH_TIME_MISMATCH");
+  validateBinding(input.binding);
+  validateTarget(input.target);
+  validateSelection(input.dispatched);
+  verifySeal(decision, "decisionDigest");
+  assert2(decision.status === "selected", "ASSIGNMENT_BLOCKED");
+  assert2(canonical(input.binding) === canonical(decision.binding) && canonical(input.target) === canonical(decision.target) && input.decisionDigest === decision.decisionDigest, "BINDING_MISMATCH");
+  assert2(digest(request) === decision.requestDigest, "BINDING_MISMATCH");
+  assert2(canonical(input.dispatched) === canonical(decision.selected), "DISPATCH_MISMATCH", "Actual invocation must match selected configuration");
+  assert2(resolveV2(request, { catalog, policy, capabilities, now }).decisionDigest === decision.decisionDigest, "RECORD_REVALIDATION_FAILED");
+  const observation = admittedObservation ?? input.observation ?? null;
+  if (observation !== null) {
+    keys(observation, ["binding", "target", "decisionDigest", "source", "reference", "observedAt", "models", "nativeReasoning", "runtimeMode", "terminalOutcome"]);
+    validateBinding(observation.binding);
+    validateTarget(observation.target);
+    assert2(canonical(observation.binding) === canonical(input.binding) && canonical(observation.target) === canonical(input.target) && observation.decisionDigest === input.decisionDigest, "OBSERVATION_BINDING_MISMATCH");
+    assert2(["host-event", "tool-result", "agent-self-report"].includes(observation.source), "INVALID_INPUT");
+    text(observation.reference, "observation reference");
+    instant(observation.observedAt, "observedAt");
+    assert2(Date.parse(observation.observedAt) >= Date.parse(now), "OBSERVATION_PREDATES_DISPATCH");
+    assert2(Array.isArray(observation.models) && observation.models.length <= 32, "INVALID_INPUT");
+    for (const model of observation.models) {
+      keys(model, ["resolvedModel", "modelOrigin"]);
+      identifier(model.resolvedModel, "observed model");
+      identifier(model.modelOrigin, "observed origin");
+    }
+    if (observation.nativeReasoning !== null) validateReasoning(observation.nativeReasoning);
+    if (observation.runtimeMode !== null) identifier(observation.runtimeMode, "runtimeMode");
+    assert2(["succeeded", "failed", "cancelled", "unknown"].includes(observation.terminalOutcome), "INVALID_INPUT");
+  }
+  const admitted = admittedObservation !== null && observation.source !== "agent-self-report";
+  const observedModels = observation?.models ?? [];
+  const expectedModels = [{ resolvedModel: decision.selected.resolvedModel, modelOrigin: decision.selected.modelOrigin }];
+  const modelVerification = fieldVerification(expectedModels, observedModels.length ? observedModels : null, admitted);
+  const reasoningVerification = fieldVerification(decision.selected.nativeReasoning, observation?.nativeReasoning, admitted);
+  const runtimeModeVerification = fieldVerification(decision.selected.runtimeMode, observation?.runtimeMode, admitted);
+  const mismatch = [modelVerification, reasoningVerification, runtimeModeVerification].includes("mismatch");
+  const originValid = observedModels.length > 0 && observedModels.every((m) => policy.allowedOrigins.includes(m.modelOrigin) && exactModel(catalog, m.resolvedModel)?.modelOrigin === m.modelOrigin);
+  return seal({
+    schemaVersion: "2.0.0",
+    binding: structuredClone(input.binding),
+    target: structuredClone(input.target),
+    decisionDigest: input.decisionDigest,
+    requestDigest: decision.requestDigest,
+    catalogDigest: decision.catalogDigest,
+    policyDigest: decision.policyDigest,
+    capabilitySnapshotDigest: decision.capabilitySnapshotDigest,
+    requested: decision.requested,
+    selected: decision.selected,
+    dispatched: structuredClone(input.dispatched),
+    dispatchedAt: input.dispatchedAt,
+    observed: structuredClone(observation),
+    modelVerification,
+    reasoningVerification,
+    runtimeModeVerification,
+    originVerified: admitted && originValid,
+    status: mismatch ? "mismatch" : admitted && originValid && [modelVerification, reasoningVerification, runtimeModeVerification].every((v) => v === "matched") ? "matched" : "unverified",
+    terminalOutcome: admitted ? observation.terminalOutcome : "unknown",
+    observationAdmitted: admitted,
+    // Existing trusted execution-context/gate must still run; this is a separate evidence artifact.
+    trustedGateSatisfied: false,
+    artifactOnly: true
+  }, "recordDigest");
+}
+
+// mcp-server/src/semantic-contract-invariants.ts
+function requireContract(condition, message) {
+  if (!condition) throw new WorkflowContractError("INVALID_INPUT", message);
+}
+function assertSemanticJson(value) {
+  try {
+    canonical(value);
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", "Semantic contracts require finite, plain JSON values.");
+  }
+}
+function same(a, b2, name) {
+  requireContract(canonical(a) === canonical(b2), `Semantic contract binding mismatch: ${name}.`);
+}
+function seal2(value, field) {
+  try {
+    verifySeal(value, field);
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", `Semantic contract digest mismatch: ${field}.`);
+  }
+}
+function time3(value) {
+  try {
+    return instant(value, "semantic timestamp");
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", "Canonical UTC semantic timestamp required.");
+  }
+}
+function assertSemanticRequestIntegrity(request) {
+  seal2(request, "requestDigest");
+  same(request.stateDigest, digest(request.state), "stateDigest");
+  same(request.questionDigest, digest(request.question), "questionDigest");
+  same(request.eligibleSetDigest, digest(request.eligibleSet), "eligibleSetDigest");
+  same(request.optionMappingDigest, digest(request.options), "optionMappingDigest");
+  if (request.state.summaryDigest !== null) {
+    same(request.state.summaryDigest, digest(request.state.text), "summaryDigest");
+  }
+  requireContract(request.state.sources.some((source) => source.kind === "task" && source.id === request.binding.taskId), "Task source must match the routing binding.");
+  requireContract(time3(request.expiresAt) > time3(request.requestedAt), "Semantic request expiry must follow requestedAt.");
+  const candidates = new Map(request.eligibleSet.map((candidate) => [candidate.candidateKey, candidate]));
+  requireContract(candidates.size === request.eligibleSet.length, "Duplicate eligible candidate key.");
+  const ranked = [...request.eligibleSet].sort((a, b2) => a.baselineRank - b2.baselineRank);
+  requireContract(ranked.every((candidate, index) => candidate.baselineRank === index), "Baseline ranks must be unique and contiguous from zero.");
+  requireContract(ranked.every((candidate, index) => index === 0 || candidate.preferenceGroup >= ranked[index - 1].preferenceGroup), "Baseline preference groups must be ordered.");
+  const ids = /* @__PURE__ */ new Set();
+  const models = /* @__PURE__ */ new Set();
+  const mapped = /* @__PURE__ */ new Set();
+  for (const option of request.options) {
+    requireContract(!ids.has(option.optionId) && !models.has(option.model), "Each model must have one unique option ID.");
+    ids.add(option.optionId);
+    models.add(option.model);
+    for (const key of option.candidateKeys) {
+      const candidate = candidates.get(key);
+      requireContract(candidate && candidate.model === option.model && !mapped.has(key), "Option mapping must reference distinct eligible candidates of the same model.");
+      mapped.add(key);
+    }
+  }
+  requireContract(mapped.size === candidates.size, "Option mapping must cover the eligible set exactly.");
+}
+function assertSemanticAdviceIntegrity(advice) {
+  seal2(advice, "adviceDigest");
+  requireContract(time3(advice.expiresAt) > time3(advice.evaluatedAt), "Advice expiry must follow evaluatedAt.");
+}
+function assertSemanticAdviceBinding(advice, request) {
+  const fields = ["evaluationId", "binding", "effectiveRoutingRequestDigest", "stateDigest", "questionDigest", "catalogDigest", "routingPolicyDigest", "semanticPolicyDigest", "capabilitySetDigest", "eligibleSetDigest", "optionMappingDigest", "provider", "reducerVersion", "expiresAt"];
+  for (const field of fields) same(advice[field], request[field], field);
+  same(advice.semanticRequestDigest, request.requestDigest, "semanticRequestDigest");
+  requireContract(time3(advice.evaluatedAt) >= time3(request.requestedAt), "Advice cannot precede its evaluation request.");
+  const optionIds = new Set(request.options.map((option) => option.optionId));
+  requireContract(advice.choice.selectedOptionIds.every((id) => optionIds.has(id)), "Advice selected an option outside the prepared request.");
+}
+function assertSemanticPolicyConsistency(policy) {
+  if (policy.mode === "assist" && policy.adoption.status === "validated") {
+    requireContract(policy.egress.allowedProviders.includes(policy.adoption.provider.id), "Validated provider must be explicitly allowed for assist.");
+  }
+}
+function assertSemanticAssignmentBinding(request) {
+  same(request.taskRef.taskId, request.routingRequest.binding.taskId, "taskRef.taskId");
+}
+function assertSemanticDecisionIntegrity(decision) {
+  seal2(decision, "decisionDigest");
+}
+function assertSemanticDecisionBinding(decision, advice, request) {
+  requireContract(request.mode === "assist", "Only an adopted assist evaluation can produce a v3 decision.");
+  same(decision.binding, advice.binding, "decision.binding");
+  same(decision.requestDigest, advice.effectiveRoutingRequestDigest, "decision.requestDigest");
+  same(decision.catalogDigest, advice.catalogDigest, "decision.catalogDigest");
+  same(decision.policyDigest, advice.routingPolicyDigest, "decision.policyDigest");
+  same(decision.capabilitySetDigest, advice.capabilitySetDigest, "decision.capabilitySetDigest");
+  const fields = ["adviceDigest", "semanticRequestDigest", "semanticPolicyDigest", "eligibleSetDigest", "optionMappingDigest", "reducerVersion"];
+  for (const field of fields) same(decision.semantic[field], advice[field], `decision.semantic.${field}`);
+  const option = request.options.find((item) => item.optionId === decision.semantic.selectedOptionId);
+  requireContract(option && advice.choice.selectedOptionIds.includes(option.optionId) && option.model === decision.selected.model, "Selected model must match an advised prepared option.");
+}
+function assertSemanticApplicationBinding(application, decision) {
+  same(application.binding, decision.binding, "application.binding");
+  same(application.target, decision.target, "application.target");
+  same(application.decisionDigest, decision.decisionDigest, "application.decisionDigest");
+  same(application.semanticAdviceDigest, decision.semantic.adviceDigest, "application.semanticAdviceDigest");
+  same(application.dispatched, decision.selected, "application.dispatched");
+  time3(application.dispatchedAt);
+  if (application.observation) {
+    requireContract(time3(application.observation.observedAt) >= time3(application.dispatchedAt), "Observation cannot precede dispatch.");
+    same(application.observation.binding, application.binding, "observation.binding");
+    same(application.observation.target, application.target, "observation.target");
+    same(application.observation.decisionDigest, application.decisionDigest, "observation.decisionDigest");
+  }
+}
+function assertSemanticRecordIntegrity(record3) {
+  seal2(record3, "recordDigest");
+  time3(record3.dispatchedAt);
+  if (record3.observed) {
+    requireContract(time3(record3.observed.observedAt) >= time3(record3.dispatchedAt), "Observation cannot precede dispatch.");
+    same(record3.observed.binding, record3.binding, "record.observed.binding");
+    same(record3.observed.target, record3.target, "record.observed.target");
+    same(record3.observed.decisionDigest, record3.decisionDigest, "record.observed.decisionDigest");
+  }
+}
+function assertSemanticRecordBinding(record3, decision) {
+  const fields = ["binding", "target", "decisionDigest", "requestDigest", "catalogDigest", "policyDigest", "capabilitySnapshotDigest", "requested", "selected", "semantic"];
+  for (const field of fields) same(record3[field], decision[field], `record.${field}`);
+  same(record3.dispatched, decision.selected, "record.dispatched");
+}
+
+// mcp-server/src/schema-validator.ts
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
   const path14 = new URL(`../../contracts/${fileName}`, import.meta.url);
@@ -17522,7 +18157,15 @@ var contractSchemas = {
   modelRoutingDecisionV2: loadSchema("model-routing-decision.v2.schema.json"),
   modelApplicationRequestV2: loadSchema("model-application-request.v2.schema.json"),
   modelApplicationRecordV2: loadSchema("model-application-record.v2.schema.json"),
-  modelEvaluationRecordV1: loadSchema("model-evaluation-record.v1.schema.json")
+  modelEvaluationRecordV1: loadSchema("model-evaluation-record.v1.schema.json"),
+  semanticDecisionQuestionV1: loadSchema("semantic-decision-question.v1.schema.json"),
+  semanticDecisionRequestV1: loadSchema("semantic-decision-request.v1.schema.json"),
+  semanticDecisionAdviceV1: loadSchema("semantic-decision-advice.v1.schema.json"),
+  semanticDecisionPolicyV1: loadSchema("semantic-decision-policy.v1.schema.json"),
+  semanticModelAssignmentRequestV1: loadSchema("semantic-model-assignment-request.v1.schema.json"),
+  modelRoutingDecisionV3: loadSchema("model-routing-decision.v3.schema.json"),
+  modelApplicationRequestV3: loadSchema("model-application-request.v3.schema.json"),
+  modelApplicationRecordV3: loadSchema("model-application-record.v3.schema.json")
 };
 function artifactDigestView(declared) {
   let items = declared.properties?.artifacts?.items;
@@ -17706,6 +18349,75 @@ var ContractValidator = class {
   modelEvaluationRecordV1(value) {
     return this.assert("modelEvaluationRecordV1", value);
   }
+  /** New-contract validation only: legacy Ajv acceptance and v2 runtime methods are unchanged. */
+  assertSemantic(name, value) {
+    assertSemanticJson(value);
+    return this.assert(name, value);
+  }
+  semanticDecisionQuestionV1(value) {
+    const result = this.assertSemantic("semanticDecisionQuestionV1", value);
+    return result;
+  }
+  semanticDecisionRequestV1(value) {
+    const result = this.assertSemantic("semanticDecisionRequestV1", value);
+    assertSemanticRequestIntegrity(result);
+    return result;
+  }
+  semanticDecisionAdviceV1(value) {
+    const result = this.assertSemantic("semanticDecisionAdviceV1", value);
+    assertSemanticAdviceIntegrity(result);
+    return result;
+  }
+  semanticDecisionPolicyV1(value) {
+    const result = this.assertSemantic("semanticDecisionPolicyV1", value);
+    assertSemanticPolicyConsistency(result);
+    return result;
+  }
+  semanticModelAssignmentRequestV1(value) {
+    const result = this.assertSemantic("semanticModelAssignmentRequestV1", value);
+    assertSemanticAssignmentBinding(result);
+    return result;
+  }
+  modelRoutingDecisionV3(value) {
+    const result = this.assertSemantic("modelRoutingDecisionV3", value);
+    assertSemanticDecisionIntegrity(result);
+    return result;
+  }
+  modelApplicationRequestV3(value) {
+    const result = this.assertSemantic("modelApplicationRequestV3", value);
+    return result;
+  }
+  modelApplicationRecordV3(value) {
+    const result = this.assertSemantic("modelApplicationRecordV3", value);
+    assertSemanticRecordIntegrity(result);
+    return result;
+  }
+  /** Cross-artifact integrity is necessary, not proof of AGS admission or execution permission. */
+  semanticDecisionAdviceForRequestV1(value, requestValue) {
+    const request = this.semanticDecisionRequestV1(requestValue);
+    const advice = this.semanticDecisionAdviceV1(value);
+    assertSemanticAdviceBinding(advice, request);
+    return advice;
+  }
+  modelRoutingDecisionForAdviceV3(value, adviceValue, requestValue) {
+    const request = this.semanticDecisionRequestV1(requestValue);
+    const advice = this.semanticDecisionAdviceForRequestV1(adviceValue, request);
+    const decision = this.modelRoutingDecisionV3(value);
+    assertSemanticDecisionBinding(decision, advice, request);
+    return decision;
+  }
+  modelApplicationRequestForDecisionV3(value, decisionValue) {
+    const decision = this.modelRoutingDecisionV3(decisionValue);
+    const application = this.modelApplicationRequestV3(value);
+    assertSemanticApplicationBinding(application, decision);
+    return application;
+  }
+  modelApplicationRecordForDecisionV3(value, decisionValue) {
+    const decision = this.modelRoutingDecisionV3(decisionValue);
+    const record3 = this.modelApplicationRecordV3(value);
+    assertSemanticRecordBinding(record3, decision);
+    return record3;
+  }
   providerResult(rootDirectory, resultSchema, outputSchema, value) {
     const declared = this.readBoundSchema(rootDirectory, resultSchema, "provider result");
     const declaresVersion = Boolean(declared.properties && Object.prototype.hasOwnProperty.call(declared.properties, "schemaVersion"));
@@ -17784,7 +18496,7 @@ var ContractValidator = class {
       });
     }
     const raw = readFileSync2(schemaPath);
-    const digest4 = `sha256:${createHash3("sha256").update(raw).digest("hex")}`;
+    const digest4 = `sha256:${createHash4("sha256").update(raw).digest("hex")}`;
     if (digest4 !== reference.digest) {
       throw new WorkflowContractError("STALE_REVISION", `${label} schema changed after planning.`, {
         schemaPath: reference.path,
@@ -19727,11 +20439,11 @@ function convergenceStatusSummary(status) {
 }
 
 // mcp-server/src/korean-prose-glossary.ts
-import { createHash as createHash4 } from "node:crypto";
+import { createHash as createHash5 } from "node:crypto";
 import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 var KOREAN_PROSE_GLOSSARY_MAX_SOURCE_LENGTH = 2e5;
 var KOREAN_PROSE_GLOSSARY_MAX_MATCHES = 256;
-var DIGEST = /^[a-f0-9]{64}$/u;
+var DIGEST2 = /^[a-f0-9]{64}$/u;
 var ENTRY_ID = /^[a-z0-9][a-z0-9-]*$/u;
 var POLICIES = /* @__PURE__ */ new Set(["protect", "prefer", "allow", "avoid"]);
 var FORM_KINDS = /* @__PURE__ */ new Set(["canonical", "alias", "discouraged"]);
@@ -19753,7 +20465,7 @@ var SqliteKoreanProseGlossary = class {
   databasePath;
   lookup(request) {
     const sourceDigest = sha256(request.sourceText);
-    if (request.schemaVersion !== "1.0.0" || !DIGEST.test(request.sourceDigest) || request.sourceDigest !== sourceDigest) {
+    if (request.schemaVersion !== "1.0.0" || !DIGEST2.test(request.sourceDigest) || request.sourceDigest !== sourceDigest) {
       throw new Error("The caller sourceDigest does not match sourceText.");
     }
     if (request.sourceText.length > KOREAN_PROSE_GLOSSARY_MAX_SOURCE_LENGTH) {
@@ -19848,7 +20560,7 @@ function loadGlossary(databasePath) {
     if (!integrity || Object.values(integrity)[0] !== "ok") throw new Error("Glossary database integrity check failed.");
     const metadataRows = database.prepare("SELECT key, value FROM metadata ORDER BY key").all();
     const metadata = new Map(metadataRows.map((row) => [row.key, row.value]));
-    if (metadata.get("schemaVersion") !== "1.0.0" || !metadata.get("glossaryId") || !metadata.get("glossaryVersion") || !DIGEST.test(metadata.get("contentDigest") ?? "")) throw new Error("Glossary metadata is invalid.");
+    if (metadata.get("schemaVersion") !== "1.0.0" || !metadata.get("glossaryId") || !metadata.get("glossaryVersion") || !DIGEST2.test(metadata.get("contentDigest") ?? "")) throw new Error("Glossary metadata is invalid.");
     const rows = database.prepare("SELECT entry_id, canonical_form, policy, source_ref, priority, active FROM entries ORDER BY entry_id").all();
     const formRows = database.prepare("SELECT entry_id, surface, form_kind FROM forms ORDER BY entry_id, form_id").all();
     const entries = rows.map((row) => ({
@@ -19915,7 +20627,7 @@ function unavailableResult(sourceText) {
   return { schemaVersion: "1.0.0", status: "unavailable", sourceDigest: sha256(sourceText), glossary: null, matches: [], matchSetDigest: null, warnings: ["GLOSSARY_UNAVAILABLE"] };
 }
 function sha256(value) {
-  return createHash4("sha256").update(value).digest("hex");
+  return createHash5("sha256").update(value).digest("hex");
 }
 function stableJson(value) {
   if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
@@ -20275,515 +20987,6 @@ var SessionMessageService = class {
 // mcp-server/src/model-routing-service.ts
 import { DatabaseSync as DatabaseSync4 } from "node:sqlite";
 import { fileURLToPath as fileURLToPath4 } from "node:url";
-
-// skills/coordinate-subagents/scripts/model-routing-core.mjs
-import { createHash as createHash5 } from "node:crypto";
-var ROLES = Object.freeze(["discovery", "general-implementation", "complex-reasoning", "independent-audit"]);
-var ORIGINS = Object.freeze(["openai", "anthropic", "google", "xai", "mistral", "amazon", "cohere", "meta"]);
-var TRAITS = Object.freeze(["architecture-decision", "code-change", "diagnosis", "source-research", "google-app-operation", "context-repair", "multimodal-input"]);
-var CLASSES = ["lightweight", "general", "deep", "frontier"];
-var SOURCES = ["configuration", "tool-contract", "host-observation", "live-probe"];
-var DIGEST2 = /^sha256:[a-f0-9]{64}$/u;
-var ID = /^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$/u;
-var BIND_KEYS = ["assignmentId", "taskId", "runId", "stageId", "attemptId", "revision", "inputDigest", "candidateDigest"];
-var TARGET_KEYS = ["actorId", "host", "sessionId", "instanceId"];
-var RoutingError = class extends Error {
-  constructor(code, message) {
-    super(message);
-    this.name = "RoutingError";
-    this.code = code;
-  }
-};
-function assert2(condition, code, message = code) {
-  if (!condition) throw new RoutingError(code, message);
-}
-function object3(value, name) {
-  assert2(value && typeof value === "object" && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype, "INVALID_INPUT", `${name} must be a plain JSON object`);
-  return value;
-}
-function keys(value, allowed, required2 = allowed, name = "object") {
-  object3(value, name);
-  assert2(Object.keys(value).every((k) => allowed.includes(k)), "INVALID_INPUT", `${name}: unexpected field`);
-  assert2(required2.every((k) => Object.hasOwn(value, k)), "INVALID_INPUT", `${name}: required field missing`);
-}
-function text(value, name, maximum = 512) {
-  assert2(typeof value === "string" && value.trim().length > 0 && Buffer.byteLength(value, "utf8") <= maximum && !value.includes("\0"), "INVALID_INPUT", `${name}: non-empty bounded string required`);
-}
-function identifier(value, name) {
-  assert2(typeof value === "string" && ID.test(value), "INVALID_INPUT", `${name}: invalid identifier`);
-}
-function digestValue(value, name) {
-  assert2(typeof value === "string" && DIGEST2.test(value), "INVALID_INPUT", `${name}: sha256 digest required`);
-}
-function instant(value, name) {
-  assert2(typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value, "INVALID_INPUT", `${name}: canonical UTC timestamp required`);
-  return Date.parse(value);
-}
-function integer2(value, name, min = 0, max = Number.MAX_SAFE_INTEGER) {
-  assert2(Number.isSafeInteger(value) && value >= min && value <= max, "INVALID_INPUT", `${name}: invalid integer`);
-}
-function strings(value, name, allowed, maximum = 128) {
-  assert2(Array.isArray(value) && value.length <= maximum && value.every((v) => typeof v === "string" && (allowed ? allowed.includes(v) : v.length > 0 && v.length <= 200)) && new Set(value).size === value.length, "INVALID_INPUT", `${name}: unique bounded array required`);
-}
-function bool(value, name) {
-  assert2(typeof value === "boolean", "INVALID_INPUT", `${name}: boolean required`);
-}
-function canonical(value) {
-  const seen = /* @__PURE__ */ new Set();
-  const visit = (v) => {
-    if (v === null || typeof v === "string" || typeof v === "boolean") return JSON.stringify(v);
-    if (typeof v === "number") {
-      assert2(Number.isFinite(v), "INVALID_INPUT", "Non-finite JSON number");
-      return JSON.stringify(v);
-    }
-    assert2(v && typeof v === "object" && !seen.has(v), "INVALID_INPUT", "Non-JSON or cyclic value");
-    seen.add(v);
-    let result;
-    if (Array.isArray(v)) result = `[${Array.from(v, visit).join(",")}]`;
-    else {
-      object3(v, "canonical object");
-      result = `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${visit(v[k])}`).join(",")}}`;
-    }
-    seen.delete(v);
-    return result;
-  };
-  return visit(value);
-}
-function digest(value) {
-  return `sha256:${createHash5("sha256").update(canonical(value)).digest("hex")}`;
-}
-function seal(value, field) {
-  const out = structuredClone(value);
-  delete out[field];
-  return { ...out, [field]: digest(out) };
-}
-function verifySeal(value, field) {
-  digestValue(value[field], field);
-  const content = { ...value };
-  delete content[field];
-  assert2(digest(content) === value[field], "DIGEST_MISMATCH", `${field} does not match contents`);
-}
-function validateBinding(binding2) {
-  keys(binding2, BIND_KEYS);
-  for (const k of BIND_KEYS.slice(0, 5)) identifier(binding2[k], k);
-  integer2(binding2.revision, "revision");
-  digestValue(binding2.inputDigest, "inputDigest");
-  digestValue(binding2.candidateDigest, "candidateDigest");
-  return binding2;
-}
-function validateTarget(target) {
-  keys(target, TARGET_KEYS);
-  for (const k of TARGET_KEYS) identifier(target[k], k);
-  return target;
-}
-function validateReasoning(control) {
-  object3(control, "nativeReasoning");
-  if (control.kind === "enum") {
-    keys(control, ["kind", "value"]);
-    identifier(control.value, "reasoning enum");
-    assert2(!["ultra", "ultracode"].includes(control.value.toLowerCase()), "RUNTIME_IS_NOT_EFFORT");
-  } else if (control.kind === "token-budget") {
-    keys(control, ["kind", "budgetTokens"]);
-    integer2(control.budgetTokens, "budgetTokens", 1, 1e7);
-  } else if (control.kind === "toggle") {
-    keys(control, ["kind", "enabled"]);
-    bool(control.enabled, "enabled");
-  } else {
-    keys(control, ["kind"]);
-    assert2(control.kind === "not-exposed", "INVALID_INPUT", "Unknown native reasoning control");
-  }
-  return control;
-}
-function validateSelection(value) {
-  keys(value, ["model", "resolvedModel", "modelOrigin", "servingProvider", "accessPath", "nativeReasoning", "runtimeMode"]);
-  for (const k of ["model", "resolvedModel", "modelOrigin", "servingProvider", "runtimeMode"]) identifier(value[k], k);
-  assert2(["subscription", "api", "enterprise", "unknown"].includes(value.accessPath), "INVALID_INPUT", "Invalid accessPath");
-  validateReasoning(value.nativeReasoning);
-  return value;
-}
-function validateCapabilities(snapshot) {
-  keys(snapshot, ["schemaVersion", "host", "hostVersion", "adapterVersion", "actorId", "sessionId", "instanceId", "observedAt", "expiresAt", "supportedBindings", "executionCapabilities", "source", "sourceReference", "snapshotDigest"]);
-  assert2(snapshot.schemaVersion === "1.0.0", "INVALID_INPUT", "HostModelCapabilities.v1 required");
-  validateTarget(Object.fromEntries(TARGET_KEYS.map((k) => [k, snapshot[k]])));
-  text(snapshot.hostVersion, "hostVersion");
-  text(snapshot.adapterVersion, "adapterVersion");
-  const start = instant(snapshot.observedAt, "observedAt"), end = instant(snapshot.expiresAt, "expiresAt");
-  assert2(end > start && end - start <= 864e5, "INVALID_INPUT", "Capability validity must be 0 < ttl <= 24h");
-  assert2(SOURCES.includes(snapshot.source), "INVALID_INPUT", "Agent self-report is not a capability source");
-  text(snapshot.sourceReference, "sourceReference");
-  const ex = snapshot.executionCapabilities;
-  keys(ex, ["dispatch", "observe", "cancel", "resume", "filesystem", "tools", "approvals", "isolation", "inputModalities"]);
-  for (const k of ["dispatch", "observe", "cancel", "resume"]) assert2([true, false, "unknown"].includes(ex[k]), "INVALID_INPUT", `Invalid ${k} capability`);
-  assert2(["none", "read", "write", "unknown"].includes(ex.filesystem), "INVALID_INPUT", "Invalid filesystem capability");
-  strings(ex.tools, "tools");
-  strings(ex.inputModalities, "inputModalities", ["text", "image", "audio", "video"]);
-  assert2(["enforced", "unknown"].includes(ex.approvals), "INVALID_INPUT", "Invalid approval boundary");
-  assert2(["process", "sandbox", "remote", "unknown"].includes(ex.isolation), "INVALID_INPUT", "Invalid isolation");
-  assert2(Array.isArray(snapshot.supportedBindings) && snapshot.supportedBindings.length <= 256, "INVALID_INPUT", "Invalid supported bindings");
-  const seen = /* @__PURE__ */ new Set();
-  for (const binding2 of snapshot.supportedBindings) {
-    keys(binding2, ["model", "resolvedModel", "modelOrigin", "servingProvider", "accessPath", "nativeReasoning", "runtimeMode", "invocationSurface", "observableFields", "aliasResolution", "possibleFallbacks"]);
-    validateSelection(Object.fromEntries(["model", "resolvedModel", "modelOrigin", "servingProvider", "accessPath", "nativeReasoning", "runtimeMode"].map((k) => [k, binding2[k]])));
-    assert2(["local-subagent", "peer-session", "headless"].includes(binding2.invocationSurface), "INVALID_INPUT", "Invalid invocationSurface");
-    strings(binding2.observableFields, "observableFields", ["model", "reasoning", "runtimeMode"]);
-    if (binding2.aliasResolution !== null) {
-      keys(binding2.aliasResolution, ["alias", "resolvedModel", "sourceReference"]);
-      identifier(binding2.aliasResolution.alias, "alias");
-      identifier(binding2.aliasResolution.resolvedModel, "resolvedModel");
-      text(binding2.aliasResolution.sourceReference, "alias evidence");
-      assert2(binding2.aliasResolution.alias === binding2.model && binding2.aliasResolution.resolvedModel === binding2.resolvedModel, "INVALID_INPUT", "Alias resolution conflicts with binding");
-    }
-    assert2(Array.isArray(binding2.possibleFallbacks) && binding2.possibleFallbacks.length <= 32, "INVALID_INPUT");
-    for (const f of binding2.possibleFallbacks) {
-      keys(f, ["resolvedModel", "modelOrigin"]);
-      identifier(f.resolvedModel, "fallback model");
-      identifier(f.modelOrigin, "fallback origin");
-    }
-    const key = digest(binding2);
-    assert2(!seen.has(key), "INVALID_INPUT", "Duplicate binding");
-    seen.add(key);
-  }
-  verifySeal(snapshot, "snapshotDigest");
-  return snapshot;
-}
-function validatePolicy(policy) {
-  keys(policy, ["schemaVersion", "allowedOrigins", "enabledHosts", "allowedAccessPaths", "allowPreview", "allowSeedModels", "maxCatalogAgeDays", "profileOrder", "traitOrder", "controlOrder", "modelMinimums", "highRiskNativeFloor", "fullHistoryInheritanceHosts"]);
-  assert2(policy.schemaVersion === "1.0.0", "INVALID_INPUT");
-  strings(policy.allowedOrigins, "allowedOrigins", ORIGINS);
-  strings(policy.enabledHosts, "enabledHosts");
-  strings(policy.allowedAccessPaths, "allowedAccessPaths", ["subscription", "api", "enterprise"]);
-  bool(policy.allowPreview, "allowPreview");
-  bool(policy.allowSeedModels, "allowSeedModels");
-  integer2(policy.maxCatalogAgeDays, "maxCatalogAgeDays", 1, 366);
-  keys(policy.profileOrder, ["economy", "balanced", "quality"]);
-  for (const profile of Object.values(policy.profileOrder)) {
-    keys(profile, ROLES);
-    for (const v of Object.values(profile)) strings(v, "model order");
-  }
-  keys(policy.traitOrder, TRAITS, []);
-  for (const v of Object.values(policy.traitOrder)) strings(v, "trait order");
-  assert2(Array.isArray(policy.controlOrder) && policy.controlOrder.length <= 256, "INVALID_INPUT");
-  const seen = /* @__PURE__ */ new Set();
-  for (const rule of policy.controlOrder) {
-    keys(rule, ["host", "role", "profile", "controls"]);
-    identifier(rule.host, "control host");
-    assert2(ROLES.includes(rule.role) && ["economy", "balanced", "quality"].includes(rule.profile), "INVALID_INPUT");
-    assert2(Array.isArray(rule.controls) && rule.controls.length <= 32, "INVALID_INPUT");
-    for (const control of rule.controls) validateReasoning(control);
-    const key = `${rule.host}/${rule.role}/${rule.profile}`;
-    assert2(!seen.has(key), "INVALID_INPUT", "Duplicate control order");
-    seen.add(key);
-  }
-  assert2(Array.isArray(policy.modelMinimums) && policy.modelMinimums.length <= 256, "INVALID_INPUT");
-  const minimumModels = /* @__PURE__ */ new Set();
-  for (const rule of policy.modelMinimums) {
-    keys(rule, ["model", "enumValues"]);
-    identifier(rule.model, "minimum model");
-    strings(rule.enumValues, "minimum enumValues", null, 32);
-    assert2(rule.enumValues.length > 0 && !minimumModels.has(rule.model), "INVALID_INPUT", "Duplicate or empty model minimum");
-    minimumModels.add(rule.model);
-  }
-  assert2(Array.isArray(policy.highRiskNativeFloor) && policy.highRiskNativeFloor.length <= 64, "INVALID_INPUT");
-  const floorHosts = /* @__PURE__ */ new Set();
-  for (const rule of policy.highRiskNativeFloor) {
-    keys(rule, ["host", "modelOrigins", "minimumModelClass", "enumValues"]);
-    identifier(rule.host, "floor host");
-    strings(rule.modelOrigins, "floor modelOrigins", ORIGINS, 32);
-    assert2(CLASSES.includes(rule.minimumModelClass), "INVALID_INPUT");
-    strings(rule.enumValues, "floor enumValues", null, 32);
-    assert2(rule.modelOrigins.length > 0 && rule.enumValues.length > 0 && !floorHosts.has(rule.host), "INVALID_INPUT", "Duplicate or empty high-risk floor");
-    floorHosts.add(rule.host);
-  }
-  strings(policy.fullHistoryInheritanceHosts, "fullHistoryInheritanceHosts", null, 64);
-  return policy;
-}
-function validateRequest(request) {
-  keys(request, ["schemaVersion", "binding", "role", "highRisk", "profile", "taskTraits", "requirements", "user"], ["schemaVersion", "binding", "role", "highRisk", "requirements"]);
-  assert2(request.schemaVersion === "2.0.0", "INVALID_INPUT", "ModelSelectionRequest.v2 required");
-  validateBinding(request.binding);
-  assert2(ROLES.includes(request.role), "INVALID_INPUT", "Unknown role");
-  bool(request.highRisk, "highRisk");
-  assert2(request.role !== "independent-audit" || request.highRisk, "INVALID_INPUT", "Independent audit requires highRisk");
-  assert2(["economy", "balanced", "quality"].includes(request.profile ?? "balanced"), "INVALID_INPUT", "Unknown profile");
-  strings(request.taskTraits ?? [], "taskTraits", TRAITS);
-  const req = request.requirements;
-  keys(req, ["inputModalities", "tools", "filesystem", "allowedSurfaces", "allowedRuntimeModes", "allowNestedDelegation", "requireObservable", "excludedActors", "excludedSessions", "contextMode"], ["inputModalities", "tools", "filesystem", "allowedSurfaces", "allowedRuntimeModes", "allowNestedDelegation", "requireObservable", "excludedActors", "excludedSessions", "contextMode"]);
-  strings(req.inputModalities, "inputModalities", ["text", "image", "audio", "video"]);
-  strings(req.tools, "tools");
-  assert2(["none", "read", "write"].includes(req.filesystem), "INVALID_INPUT");
-  strings(req.allowedSurfaces, "allowedSurfaces", ["local-subagent", "peer-session", "headless"]);
-  strings(req.allowedRuntimeModes, "allowedRuntimeModes");
-  bool(req.allowNestedDelegation, "allowNestedDelegation");
-  strings(req.requireObservable, "requireObservable", ["model", "reasoning", "runtimeMode"]);
-  strings(req.excludedActors, "excludedActors");
-  strings(req.excludedSessions, "excludedSessions");
-  assert2(["limited", "full-history"].includes(req.contextMode), "INVALID_INPUT");
-  if (request.user) {
-    keys(request.user, ["strength", "model", "host", "nativeReasoning", "runtimeMode"], ["strength"]);
-    assert2(["required", "preferred"].includes(request.user.strength), "INVALID_INPUT", "Invalid preference strength");
-    assert2(Object.keys(request.user).length > 1, "INVALID_INPUT", "Empty preference");
-    for (const k of ["model", "host", "runtimeMode"]) if (Object.hasOwn(request.user, k)) identifier(request.user[k], k);
-    if (request.user.nativeReasoning) validateReasoning(request.user.nativeReasoning);
-  }
-  return request;
-}
-function validateCatalog(catalog) {
-  keys(catalog, ["schemaVersion", "snapshotDate", "models", "hosts", "sources", "catalogDigest"]);
-  assert2(catalog.schemaVersion === "1.0.0", "INVALID_INPUT");
-  instant(catalog.snapshotDate, "snapshotDate");
-  assert2(Array.isArray(catalog.models) && catalog.models.length <= 512, "INVALID_INPUT");
-  assert2(Array.isArray(catalog.hosts) && Array.isArray(catalog.sources), "INVALID_INPUT");
-  const sourceIds = /* @__PURE__ */ new Set();
-  for (const source of catalog.sources) {
-    keys(source, ["id", "url", "checkedAt", "evidenceKind", "note"]);
-    identifier(source.id, "source id");
-    assert2(!sourceIds.has(source.id), "INVALID_INPUT", "Duplicate source");
-    sourceIds.add(source.id);
-    text(source.url, "source URL", 2048);
-    assert2(/^(?:https:\/\/|plan:|repository:)/u.test(source.url), "INVALID_INPUT");
-    instant(source.checkedAt, "checkedAt");
-    assert2(["official-document", "baseline-source", "user-plan"].includes(source.evidenceKind), "INVALID_INPUT");
-    text(source.note, "source note", 4096);
-  }
-  const hosts = /* @__PURE__ */ new Set();
-  for (const host of catalog.hosts) {
-    keys(host, ["id", "defaultEnabled", "autoDispatch", "status", "sourceIds", "requiredCapabilities", "unknownCapabilities"]);
-    identifier(host.id, "host id");
-    assert2(!hosts.has(host.id), "INVALID_INPUT", "Duplicate host");
-    hosts.add(host.id);
-    bool(host.defaultEnabled, "defaultEnabled");
-    bool(host.autoDispatch, "autoDispatch");
-    assert2(["baseline", "experimental", "descriptor-only"].includes(host.status), "INVALID_INPUT");
-    strings(host.sourceIds, "sourceIds");
-    assert2(host.sourceIds.length > 0 && host.sourceIds.every((s) => sourceIds.has(s)), "CATALOG_SOURCE_MISSING");
-    strings(host.requiredCapabilities, "requiredCapabilities");
-    strings(host.unknownCapabilities, "unknownCapabilities");
-  }
-  const ids = /* @__PURE__ */ new Set(), aliases = /* @__PURE__ */ new Set();
-  for (const model of catalog.models) {
-    keys(model, ["id", "modelOrigin", "aliases", "modelClass", "status", "verification", "roles", "taskTraits", "nativeKinds", "inputModalities", "contextTokens", "abilityScore", "officialPositioning", "recommendationBasis", "sourceIds", "checkedAt"]);
-    identifier(model.id, "model id");
-    assert2(!ids.has(model.id), "INVALID_INPUT", "Duplicate model");
-    ids.add(model.id);
-    assert2(ORIGINS.includes(model.modelOrigin), "ORIGIN_EXCLUDED", "Catalog contains excluded origin");
-    strings(model.aliases, "aliases");
-    for (const alias of [model.id, ...model.aliases]) {
-      assert2(!aliases.has(alias), "INVALID_INPUT", "Conflicting model alias");
-      aliases.add(alias);
-    }
-    assert2(CLASSES.includes(model.modelClass), "INVALID_INPUT");
-    assert2(["stable", "preview", "seed", "retired"].includes(model.status), "INVALID_INPUT");
-    strings(model.verification, "verification", ["documented", "baseline-seed", "contract-tested", "live-verified", "locally-evaluated"]);
-    strings(model.roles, "roles", ROLES);
-    strings(model.taskTraits, "taskTraits", TRAITS);
-    strings(model.nativeKinds, "nativeKinds", ["enum", "token-budget", "toggle", "not-exposed"]);
-    strings(model.inputModalities, "inputModalities", ["text", "image", "audio", "video"]);
-    if (model.contextTokens !== null) integer2(model.contextTokens, "contextTokens", 1);
-    assert2(model.abilityScore === null, "INVALID_INPUT", "No measured ability ranking is bundled");
-    assert2(model.officialPositioning === null || typeof model.officialPositioning === "string", "INVALID_INPUT");
-    text(model.recommendationBasis, "recommendationBasis", 2048);
-    strings(model.sourceIds, "sourceIds");
-    assert2(model.sourceIds.length > 0 && model.sourceIds.every((s) => sourceIds.has(s)), "CATALOG_SOURCE_MISSING");
-    instant(model.checkedAt, "model checkedAt");
-  }
-  verifySeal(catalog, "catalogDigest");
-  return catalog;
-}
-function catalogModel(catalog, name) {
-  return catalog.models.find((m) => m.id === name || m.aliases.includes(name));
-}
-function exactModel(catalog, name) {
-  return catalog.models.find((m) => m.id === name);
-}
-function matchesPreference(candidate, pref, catalog) {
-  if (!pref) return false;
-  const m = pref.model ? catalogModel(catalog, pref.model) : null;
-  return (!pref.model || m?.id === candidate.model?.id) && (!pref.host || pref.host === candidate.snapshot.host) && (!pref.runtimeMode || pref.runtimeMode === candidate.binding.runtimeMode) && (!pref.nativeReasoning || canonical(pref.nativeReasoning) === canonical(candidate.binding.nativeReasoning));
-}
-function legacyFloor(binding2, host, model, policy) {
-  const rule = policy.highRiskNativeFloor.find((r) => r.host === host);
-  if (!rule || binding2.nativeReasoning.kind !== "enum" || binding2.runtimeMode !== "standard") return false;
-  if (!model || CLASSES.indexOf(model.modelClass) < CLASSES.indexOf(rule.minimumModelClass)) return false;
-  if (!rule.modelOrigins.includes(model.modelOrigin) || !model.nativeKinds.includes("enum")) return false;
-  return rule.enumValues.includes(binding2.nativeReasoning.value);
-}
-function belowModelMinimum(binding2, model, policy) {
-  const rule = model && policy.modelMinimums.find((r) => r.model === model.id);
-  return Boolean(rule) && !(binding2.nativeReasoning.kind === "enum" && rule.enumValues.includes(binding2.nativeReasoning.value));
-}
-function selectionFrom(binding2) {
-  return Object.fromEntries(["model", "resolvedModel", "modelOrigin", "servingProvider", "accessPath", "nativeReasoning", "runtimeMode"].map((k) => [k, structuredClone(binding2[k])]));
-}
-function lexical(a, b2) {
-  return a < b2 ? -1 : a > b2 ? 1 : 0;
-}
-function resolveV2(request, { catalog, policy, capabilities, now }) {
-  validateRequest(request);
-  validateCatalog(catalog);
-  validatePolicy(policy);
-  const nowMs = instant(now, "now");
-  assert2(Array.isArray(capabilities) && capabilities.length <= 256, "INVALID_INPUT", "Capability list too large");
-  const rejectedCandidates = [], candidates = [], validSnapshotDigests = [], seenSnapshots = /* @__PURE__ */ new Set();
-  const reject = (candidateKey, reasonCodes) => rejectedCandidates.push({ candidateKey, reasonCodes: [...new Set(reasonCodes)].sort() });
-  for (const snapshot of capabilities) {
-    try {
-      validateCapabilities(snapshot);
-    } catch (error2) {
-      reject(`invalid:${digest(snapshot)}`, [error2.code ?? "INVALID_CAPABILITY"]);
-      continue;
-    }
-    assert2(!seenSnapshots.has(snapshot.snapshotDigest), "INVALID_INPUT", "Duplicate capability snapshot");
-    seenSnapshots.add(snapshot.snapshotDigest);
-    validSnapshotDigests.push(snapshot.snapshotDigest);
-    const host = catalog.hosts.find((h) => h.id === snapshot.host);
-    for (const b2 of snapshot.supportedBindings) {
-      const key = digest({ snapshotDigest: snapshot.snapshotDigest, binding: b2 });
-      const reason = [], m = exactModel(catalog, b2.resolvedModel);
-      if (!m) reason.push("UNRESOLVED_MODEL");
-      if (!policy.allowedOrigins.includes(b2.modelOrigin) || !ORIGINS.includes(b2.modelOrigin)) reason.push("ORIGIN_EXCLUDED");
-      if (m && m.modelOrigin !== b2.modelOrigin) reason.push("ORIGIN_MISMATCH");
-      if (b2.model !== b2.resolvedModel && (!b2.aliasResolution || !m?.aliases.includes(b2.model))) reason.push("ALIAS_UNVERIFIED");
-      for (const f of b2.possibleFallbacks) {
-        const fm = exactModel(catalog, f.resolvedModel);
-        if (!fm || fm.modelOrigin !== f.modelOrigin || !policy.allowedOrigins.includes(f.modelOrigin)) reason.push("FALLBACK_ORIGIN_UNVERIFIED");
-      }
-      if (b2.possibleFallbacks.length && (request.highRisk || request.user?.strength === "required" || request.requirements.requireObservable.length)) reason.push("FALLBACK_NOT_PINNED");
-      if (!host || !policy.enabledHosts.includes(snapshot.host)) reason.push("HOST_DISABLED");
-      if (!host?.autoDispatch) reason.push("RUNTIME_NOT_ENABLED");
-      if (Date.parse(snapshot.observedAt) > nowMs || Date.parse(snapshot.expiresAt) <= nowMs) reason.push("CAPABILITY_EXPIRED");
-      if (Date.parse(catalog.snapshotDate) > nowMs || nowMs - Date.parse(catalog.snapshotDate) > policy.maxCatalogAgeDays * 864e5) reason.push("CATALOG_STALE");
-      if (m?.status === "retired" || m?.status === "preview" && !policy.allowPreview || m?.status === "seed" && !policy.allowSeedModels) reason.push("MODEL_STATUS_BLOCKED");
-      if (m && (!m.roles.includes(request.role) || (request.taskTraits ?? []).some((t) => !m.taskTraits.includes(t)))) reason.push("TASK_NOT_SUITABLE");
-      if (m && !m.nativeKinds.includes(b2.nativeReasoning.kind)) reason.push("CONTROL_NOT_SUPPORTED");
-      if (belowModelMinimum(b2, m, policy)) reason.push("MODEL_MINIMUM_NOT_MET");
-      if (!policy.allowedAccessPaths.includes(b2.accessPath)) reason.push("ACCESS_PATH_NOT_APPROVED");
-      const ex = snapshot.executionCapabilities, req = request.requirements;
-      if (ex.dispatch !== true || ex.approvals !== "enforced" || ex.isolation === "unknown") reason.push("EXECUTION_BOUNDARY_UNKNOWN");
-      if (!req.allowedSurfaces.includes(b2.invocationSurface)) reason.push("SURFACE_NOT_ALLOWED");
-      if (req.inputModalities.some((x) => !ex.inputModalities.includes(x) || !m?.inputModalities.includes(x))) reason.push("INPUT_NOT_SUPPORTED");
-      if (req.tools.some((t) => !ex.tools.includes(t))) reason.push("TOOLS_NOT_SUPPORTED");
-      if (["none", "read", "write"].indexOf(ex.filesystem) < ["none", "read", "write"].indexOf(req.filesystem)) reason.push("FILESYSTEM_NOT_SUPPORTED");
-      if (!req.allowedRuntimeModes.includes(b2.runtimeMode)) reason.push("RUNTIME_MODE_NOT_ALLOWED");
-      if (b2.runtimeMode !== "standard" && !req.allowNestedDelegation) reason.push("NESTED_DELEGATION_FORBIDDEN");
-      if (req.requireObservable.some((f) => !b2.observableFields.includes(f))) reason.push("OBSERVABILITY_INSUFFICIENT");
-      if (req.excludedActors.includes(snapshot.actorId) || req.excludedSessions.includes(`${snapshot.host}/${snapshot.sessionId}`)) reason.push("INDEPENDENCE_CONFLICT");
-      if (request.highRisk && (!legacyFloor(b2, snapshot.host, m, policy) || snapshot.source === "configuration" || !["model", "reasoning", "runtimeMode"].every((f) => b2.observableFields.includes(f)))) reason.push("HIGH_RISK_FLOOR_UNPROVEN");
-      if (req.contextMode === "full-history" && policy.fullHistoryInheritanceHosts.includes(snapshot.host)) reason.push("FULL_HISTORY_REQUIRES_LEGACY_INHERITANCE");
-      const candidate2 = { key, model: m, snapshot, binding: b2 };
-      if (request.user?.strength === "required" && !matchesPreference(candidate2, request.user, catalog)) reason.push("REQUIRED_CHOICE_UNAVAILABLE");
-      if (reason.length) reject(key, reason);
-      else candidates.push(candidate2);
-    }
-  }
-  const profile = request.profile ?? "balanced";
-  const seed = policy.profileOrder[profile][request.role];
-  const traitSeed = [...new Set((request.taskTraits ?? []).slice().sort().flatMap((t) => policy.traitOrder[t] ?? []))];
-  function rank(candidate2) {
-    const preferred = matchesPreference(candidate2, request.user, catalog) ? 0 : 1;
-    const position = (a) => a.includes(candidate2.model.id) ? a.indexOf(candidate2.model.id) : a.length;
-    const controls = policy.controlOrder.find((r) => r.host === candidate2.snapshot.host && r.role === request.role && r.profile === profile)?.controls ?? [];
-    const controlRank = controls.findIndex((c) => canonical(c) === canonical(candidate2.binding.nativeReasoning));
-    return [preferred, position(traitSeed), position(seed), controlRank < 0 ? controls.length : controlRank, candidate2.key];
-  }
-  candidates.sort((a, b2) => {
-    const x = rank(a), y2 = rank(b2);
-    for (let i = 0; i < 4; i++) if (x[i] !== y2[i]) return x[i] - y2[i];
-    return lexical(x[4], y2[4]);
-  });
-  const candidate = candidates[0];
-  const fallback = candidate && request.user?.strength === "preferred" && !matchesPreference(candidate, request.user, catalog) ? "PREFERRED_CHOICE_UNAVAILABLE" : null;
-  return seal({
-    schemaVersion: "2.0.0",
-    binding: structuredClone(request.binding),
-    requestDigest: digest(request),
-    catalogDigest: catalog.catalogDigest,
-    policyDigest: digest(policy),
-    capabilitySetDigest: digest(validSnapshotDigests.sort()),
-    capabilitySnapshotDigest: candidate?.snapshot.snapshotDigest ?? null,
-    requested: structuredClone(request.user ?? null),
-    selected: candidate ? selectionFrom(candidate.binding) : null,
-    target: candidate ? Object.fromEntries(TARGET_KEYS.map((k) => [k, candidate.snapshot[k]])) : null,
-    invocationSurface: candidate?.binding.invocationSurface ?? null,
-    status: candidate ? "selected" : "blocked",
-    executionAuthorized: false,
-    trustedGateSatisfied: false,
-    selectionReasonCodes: candidate ? [fallback ?? "REVIEWED_SEED_AND_CAPABILITY_MATCH"] : [request.user?.strength === "required" ? "REQUIRED_CHOICE_UNAVAILABLE" : "NO_ELIGIBLE_CANDIDATE"],
-    rejectedCandidates: rejectedCandidates.sort((a, b2) => lexical(a.candidateKey, b2.candidateKey)),
-    fallbackReason: fallback
-  }, "decisionDigest");
-}
-function fieldVerification(expected, actual, admitted) {
-  if (actual === null || actual === void 0 || !admitted) return "unverified";
-  return canonical(expected) === canonical(actual) ? "matched" : "mismatch";
-}
-function recordV2(input, { request, decision, catalog, policy, capabilities, now, admittedObservation = null }) {
-  keys(input, ["schemaVersion", "binding", "decisionDigest", "target", "dispatched", "dispatchedAt", "observation"], ["schemaVersion", "binding", "decisionDigest", "target", "dispatched", "dispatchedAt"]);
-  assert2(input.schemaVersion === "2.0.0", "INVALID_INPUT");
-  instant(input.dispatchedAt, "dispatchedAt");
-  assert2(input.dispatchedAt === now, "DISPATCH_TIME_MISMATCH");
-  validateBinding(input.binding);
-  validateTarget(input.target);
-  validateSelection(input.dispatched);
-  verifySeal(decision, "decisionDigest");
-  assert2(decision.status === "selected", "ASSIGNMENT_BLOCKED");
-  assert2(canonical(input.binding) === canonical(decision.binding) && canonical(input.target) === canonical(decision.target) && input.decisionDigest === decision.decisionDigest, "BINDING_MISMATCH");
-  assert2(digest(request) === decision.requestDigest, "BINDING_MISMATCH");
-  assert2(canonical(input.dispatched) === canonical(decision.selected), "DISPATCH_MISMATCH", "Actual invocation must match selected configuration");
-  assert2(resolveV2(request, { catalog, policy, capabilities, now }).decisionDigest === decision.decisionDigest, "RECORD_REVALIDATION_FAILED");
-  const observation = admittedObservation ?? input.observation ?? null;
-  if (observation !== null) {
-    keys(observation, ["binding", "target", "decisionDigest", "source", "reference", "observedAt", "models", "nativeReasoning", "runtimeMode", "terminalOutcome"]);
-    validateBinding(observation.binding);
-    validateTarget(observation.target);
-    assert2(canonical(observation.binding) === canonical(input.binding) && canonical(observation.target) === canonical(input.target) && observation.decisionDigest === input.decisionDigest, "OBSERVATION_BINDING_MISMATCH");
-    assert2(["host-event", "tool-result", "agent-self-report"].includes(observation.source), "INVALID_INPUT");
-    text(observation.reference, "observation reference");
-    instant(observation.observedAt, "observedAt");
-    assert2(Date.parse(observation.observedAt) >= Date.parse(now), "OBSERVATION_PREDATES_DISPATCH");
-    assert2(Array.isArray(observation.models) && observation.models.length <= 32, "INVALID_INPUT");
-    for (const model of observation.models) {
-      keys(model, ["resolvedModel", "modelOrigin"]);
-      identifier(model.resolvedModel, "observed model");
-      identifier(model.modelOrigin, "observed origin");
-    }
-    if (observation.nativeReasoning !== null) validateReasoning(observation.nativeReasoning);
-    if (observation.runtimeMode !== null) identifier(observation.runtimeMode, "runtimeMode");
-    assert2(["succeeded", "failed", "cancelled", "unknown"].includes(observation.terminalOutcome), "INVALID_INPUT");
-  }
-  const admitted = admittedObservation !== null && observation.source !== "agent-self-report";
-  const observedModels = observation?.models ?? [];
-  const expectedModels = [{ resolvedModel: decision.selected.resolvedModel, modelOrigin: decision.selected.modelOrigin }];
-  const modelVerification = fieldVerification(expectedModels, observedModels.length ? observedModels : null, admitted);
-  const reasoningVerification = fieldVerification(decision.selected.nativeReasoning, observation?.nativeReasoning, admitted);
-  const runtimeModeVerification = fieldVerification(decision.selected.runtimeMode, observation?.runtimeMode, admitted);
-  const mismatch = [modelVerification, reasoningVerification, runtimeModeVerification].includes("mismatch");
-  const originValid = observedModels.length > 0 && observedModels.every((m) => policy.allowedOrigins.includes(m.modelOrigin) && exactModel(catalog, m.resolvedModel)?.modelOrigin === m.modelOrigin);
-  return seal({
-    schemaVersion: "2.0.0",
-    binding: structuredClone(input.binding),
-    target: structuredClone(input.target),
-    decisionDigest: input.decisionDigest,
-    requestDigest: decision.requestDigest,
-    catalogDigest: decision.catalogDigest,
-    policyDigest: decision.policyDigest,
-    capabilitySnapshotDigest: decision.capabilitySnapshotDigest,
-    requested: decision.requested,
-    selected: decision.selected,
-    dispatched: structuredClone(input.dispatched),
-    dispatchedAt: input.dispatchedAt,
-    observed: structuredClone(observation),
-    modelVerification,
-    reasoningVerification,
-    runtimeModeVerification,
-    originVerified: admitted && originValid,
-    status: mismatch ? "mismatch" : admitted && originValid && [modelVerification, reasoningVerification, runtimeModeVerification].every((v) => v === "matched") ? "matched" : "unverified",
-    terminalOutcome: admitted ? observation.terminalOutcome : "unknown",
-    observationAdmitted: admitted,
-    // Existing trusted execution-context/gate must still run; this is a separate evidence artifact.
-    trustedGateSatisfied: false,
-    artifactOnly: true
-  }, "recordDigest");
-}
 
 // skills/coordinate-subagents/scripts/model-catalog.mjs
 import { readFileSync as readFileSync3, realpathSync as realpathSync2 } from "node:fs";

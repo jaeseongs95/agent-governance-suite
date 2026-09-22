@@ -1,0 +1,39 @@
+{
+  "node": "v22.16.0",
+  "checks": {
+    "official": 1,
+    "typecheck": 0,
+    "full": 1,
+    "lint": 0,
+    "claude-drift": 0,
+    "diff": 0,
+    "source": 0,
+    "bundle": 0,
+    "validate-all": 0,
+    "runtime": 0
+  },
+  "contracts": {
+    "passed": 99,
+    "failed": 0
+  },
+  "contractsIncludingLegacy": {
+    "passed": 101,
+    "failed": 0
+  },
+  "full": {
+    "passed": 1079,
+    "failed": 6,
+    "skipped": 1
+  },
+  "sameBaselineFailureNames": true,
+  "failureNames": [
+    "tests/mcp/convergence-guard.test.ts > local MCP convergence guard > allows only one competing lease claim across two SQLite connections",
+    "tests/mcp/convergence-guard.test.ts > local MCP convergence guard > allows only one trusted observation claim across two SQLite connections",
+    "tests/mcp/model-capability-exchange-install.test.mjs > P5 actual TLS capability exchange and MCP resolver > keeps an actual old broker working with no new command or schema writes",
+    "tests/session-messaging/session-message.test.ts > session message spool > allows one wake claim across two concurrent SQLite connections",
+    "tests/tooling/commands.test.mjs > skill maintenance commands > forwards pnpm script arguments without a standalone separator",
+    "tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves every optimized skill while reducing its initial load"
+  ],
+  "newRegressionObserved": false,
+  "scope": "Local fixture/runtime verification; not vendor/account or release verification"
+}

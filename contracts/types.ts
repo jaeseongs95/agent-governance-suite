@@ -1,3 +1,5 @@
+import type { ModelSelectionRequestV2, ModelRoutingDecisionV2, ModelApplicationRequestV2, ModelApplicationRecordV2 } from "./model-routing-types.js";
+
 /** Public v1 values. Do not add ad-hoc states or error codes at call sites. */
 export const CONTRACT_VERSION = "1.0.0" as const;
 
@@ -1008,3 +1010,164 @@ export type {
   ModelRoutingPolicyV1,
   ModelSelectionRequestV2,
 } from "./model-routing-types.js";
+
+
+/** v2.6/S1a: declarative semantic contracts only; validation does not grant admission or execution. */
+export interface SemanticDecisionProviderV1 {
+  id: string;
+  model: string;
+  adapterVersion: string;
+  /** Null means not reported/pinnable; it is never invented by the adapter. */
+  providerVersion: string | null;
+  modelVersion: string | null;
+}
+
+export interface SemanticDecisionQuestionV1 {
+  schemaVersion: "1.0.0";
+  id: string;
+  version: string;
+  kind: "Choice";
+  purpose: "model-ranking";
+  text: string;
+  selectionUnit: "model";
+  tieBreak: "baseline-order";
+}
+
+export interface SemanticDecisionStateV1 {
+  text: string;
+  sources: Array<{ kind: "task" | "frame" | "artifact"; id: string; digest: string }>;
+  /** Digest of canonical JSON text when text is a summary; source references remain mandatory. */
+  summaryDigest: string | null;
+}
+
+export interface SemanticEligibleCandidateV1 {
+  candidateKey: string;
+  model: string;
+  preferenceGroup: number;
+  baselineRank: number;
+}
+
+export interface SemanticModelOptionV1 {
+  optionId: string;
+  model: string;
+  candidateKeys: string[];
+}
+
+export interface SemanticEvaluationBindingV1 {
+  evaluationId: string;
+  binding: ModelSelectionRequestV2["binding"];
+  effectiveRoutingRequestDigest: string;
+  stateDigest: string;
+  questionDigest: string;
+  catalogDigest: string;
+  routingPolicyDigest: string;
+  semanticPolicyDigest: string;
+  capabilitySetDigest: string;
+  eligibleSetDigest: string;
+  optionMappingDigest: string;
+  provider: SemanticDecisionProviderV1;
+  reducerVersion: string;
+}
+
+/** AGS-internal prepared evaluation. Never register this as an MCP tool input. */
+export interface SemanticDecisionRequestV1 extends SemanticEvaluationBindingV1 {
+  schemaVersion: "1.0.0";
+  mode: "shadow" | "assist";
+  state: SemanticDecisionStateV1;
+  question: SemanticDecisionQuestionV1;
+  eligibleSet: SemanticEligibleCandidateV1[];
+  options: SemanticModelOptionV1[];
+  requestedAt: string;
+  expiresAt: string;
+  requestDigest: string;
+}
+
+/** External Choice normalization, not a registered advice artifact or an authority receipt. */
+export interface SemanticChoiceV1 {
+  kind: "Choice";
+  /** Co-best model options. Order has no ranking/host-control meaning. */
+  selectedOptionIds: string[];
+  /** Uncalibrated provider confidence; null cannot satisfy a numeric adoption threshold. */
+  confidence: number | null;
+}
+
+/** AGS-registered immutable bytes; local admission metadata deliberately lives outside the wire contract. */
+export interface SemanticDecisionAdviceV1 extends SemanticEvaluationBindingV1 {
+  schemaVersion: "1.0.0";
+  semanticRequestDigest: string;
+  choice: SemanticChoiceV1;
+  evaluatedAt: string;
+  expiresAt: string;
+  adviceDigest: string;
+}
+
+export type SemanticAdoptionPolicyV1 =
+  | { status: "unvalidated"; minimumConfidence: null; evidenceDigest: null }
+  | {
+      status: "validated";
+      minimumConfidence: number;
+      evidenceDigest: string;
+      provider: SemanticDecisionProviderV1;
+      questionDigest: string;
+      reducerVersion: string;
+    };
+
+export interface SemanticDecisionPolicyV1 {
+  schemaVersion: "1.0.0";
+  id: string;
+  version: string;
+  mode: "off" | "shadow" | "assist";
+  purpose: "model-ranking";
+  assistScope: {
+    highRisk: false;
+    independentAudit: false;
+    preserveRequired: true;
+    preservePreferred: true;
+    selectionUnit: "model";
+    tieBreak: "baseline-order";
+  };
+  adoption: SemanticAdoptionPolicyV1;
+  egress: { enabled: boolean; allowedProviders: string[] };
+}
+
+/** Caller may supply routing input and references, never prepared state/policy/capability/admission. */
+export interface SemanticModelAssignmentRequestV1 {
+  schemaVersion: "1.0.0";
+  routingRequest: ModelSelectionRequestV2;
+  taskRef: { taskId: string; frameId?: string; artifactIds?: string[] };
+}
+
+export interface SemanticDecisionUseV1 {
+  mode: "assist";
+  adviceDigest: string;
+  semanticRequestDigest: string;
+  semanticPolicyDigest: string;
+  eligibleSetDigest: string;
+  optionMappingDigest: string;
+  reducerVersion: string;
+  selectedOptionId: string;
+  baselineDecisionDigest: string;
+}
+
+/** Only advice-adopting assist uses v3; off/shadow/fallback remain v2. */
+export interface ModelRoutingDecisionV3 extends Omit<ModelRoutingDecisionV2,
+  "schemaVersion" | "selected" | "target" | "invocationSurface" | "status" | "fallbackReason" | "capabilitySnapshotDigest"> {
+  schemaVersion: "3.0.0";
+  selected: NonNullable<ModelRoutingDecisionV2["selected"]>;
+  target: NonNullable<ModelRoutingDecisionV2["target"]>;
+  invocationSurface: NonNullable<ModelRoutingDecisionV2["invocationSurface"]>;
+  status: "selected";
+  fallbackReason: null;
+  capabilitySnapshotDigest: string;
+  semantic: SemanticDecisionUseV1;
+}
+
+export interface ModelApplicationRequestV3 extends Omit<ModelApplicationRequestV2, "schemaVersion"> {
+  schemaVersion: "3.0.0";
+  semanticAdviceDigest: string;
+}
+
+export interface ModelApplicationRecordV3 extends Omit<ModelApplicationRecordV2, "schemaVersion"> {
+  schemaVersion: "3.0.0";
+  semantic: SemanticDecisionUseV1;
+}
