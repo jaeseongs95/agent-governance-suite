@@ -1,0 +1,73 @@
+name: Semantic contract verification
+
+on:
+  push:
+    branches:
+      - codex/v260-semantic-decision-layer
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install frozen dependencies
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+      - name: Capture pre-build workspace and provenance
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/semantic-evidence"
+          git rev-parse HEAD > "$RUNNER_TEMP/semantic-evidence/commit.txt"
+          git rev-parse 'HEAD^{tree}' > "$RUNNER_TEMP/semantic-evidence/tree.txt"
+          git status --porcelain=v1 > "$RUNNER_TEMP/semantic-evidence/status-before.txt"
+          git ls-files -z > "$RUNNER_TEMP/semantic-evidence/tracked-files.bin"
+          node --version > "$RUNNER_TEMP/semantic-evidence/node.txt"
+          pnpm --version > "$RUNNER_TEMP/semantic-evidence/pnpm.txt"
+          uname -a > "$RUNNER_TEMP/semantic-evidence/os.txt"
+          # Repository/dependency bytes only. Never archive .git, credentials or runner home.
+          tar --exclude='./.git' -czf "$RUNNER_TEMP/semantic-evidence/prebuild-workspace.tar.gz" .
+      - name: Verify in order and retain every exit code
+        shell: bash
+        run: |
+          set +e
+          out="$RUNNER_TEMP/semantic-evidence"
+          run_check() {
+            name="$1"; shift
+            "$@" > "$out/$name.log" 2>&1
+            code=$?
+            printf '%s\t%s\n' "$name" "$code" >> "$out/results.tsv"
+          }
+          run_check bundle-before pnpm bundle:check
+          run_check claude-drift pnpm claude:drift
+          run_check lint pnpm lint
+          run_check build pnpm build
+          run_check focused pnpm exec vitest run tests/coordinate-subagents/model-routing-v2 tests/coordinate-subagents/semantic-decision tests/mcp/model-routing-service.test.ts tests/mcp/model-routing-workflow.test.mjs tests/mcp/model-routing-host-hook.test.mjs tests/mcp/session-model-capabilities.test.mjs tests/mcp/model-peer-handoff.test.mjs tests/mcp/model-peer-preflight.test.mjs tests/mcp/model-peer-start.test.mjs tests/runtime/runtime-smoke.test.mjs
+          run_check full pnpm test
+          run_check runtime pnpm runtime:check
+          run_check validate-all pnpm validate:all
+          run_check validate-official pnpm validate:official
+          run_check source pnpm source:check
+          run_check bundle-after pnpm bundle:check
+          run_check diff-check git diff --check
+          git diff --binary > "$out/generated.patch"
+          git status --porcelain=v1 > "$out/status-after.txt"
+          cat "$out/results.tsv"
+          # Retain failures as evidence rather than hiding them behind later successes.
+          awk -F '\t' '$2 != 0 {failed=1} END {exit failed}' "$out/results.tsv"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semantic-contract-evidence-${{ github.sha }}
+          path: ${{ runner.temp }}/semantic-evidence/
+          retention-days: 14
