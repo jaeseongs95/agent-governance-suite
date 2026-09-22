@@ -16,8 +16,8 @@ jobs:
       contents: write
     env:
       BASE_SHA: 07e8794f3ff7d24cf21d2754e24009bf30ed9b5b
-      PARENT_SHA: e3f194f62a682e6af033e37137d2087e2bc47079
-      EXPECTED_TREE: 82741c276b5fe080b1961bce4329b71f062abaf2
+      PARENT_SHA: c6a61405127799d29765e06fcf41c6dbf44dc6f2
+      EXPECTED_TREE: 119ad98fedbf470000f7674336d0c0b03aba7a1f
       PATCH_SHA256: d2543d0039ddb756c1ec2669f6ae470088f38e13569d5bf587d5fd97a8e3b61f
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +58,9 @@ jobs:
           writeFileSync(path.join(process.env.RUNNER_TEMP, 'peer-start.patch'), patch);
           NODE
           git rm -- .ags-delivery/peer-start-1.brpart .ags-delivery/peer-start-2.brpart .ags-delivery/peer-start-3.brpart .github/workflows/verify-peer-start-once.yml
-          git apply --index --whitespace=error-all "$RUNNER_TEMP/peer-start.patch"
+          # The locally verified candidate removes the fixture's one extra EOF blank line.
+          # The expected tree below pins every byte after this whitespace-only repair.
+          git apply --index --whitespace=fix "$RUNNER_TEMP/peer-start.patch"
           pnpm build
           pnpm claude:build
           git add -A
@@ -137,6 +139,7 @@ jobs:
           const manifest={schemaVersion:1,repository:repo,branch:'codex/v250-model-routing-integration',baseCommit:process.env.BASE_SHA,
             deliveryCommit:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,node:process.version,
             baseTree:git('rev-parse',`${process.env.BASE_SHA}^{tree}`),expectedTree:process.env.EXPECTED_TREE,sourcePatchSha256:process.env.PATCH_SHA256,
+            sourcePatchWhitespacePolicy:'git apply --whitespace=fix; exact final tree asserted',
             focused:summary('peer-start-focused.json',process.env.FOCUSED_OUTCOME),full:summary('peer-start-full.json',process.env.FULL_OUTCOME),
             officialValidator:{outcome:process.env.OFFICIAL_OUTCOME,log:'peer-start-official.log'},branchUpdated:false,entries};
           const bytes=Buffer.from(JSON.stringify(manifest,null,2)+'\n');
