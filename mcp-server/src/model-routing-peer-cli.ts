@@ -12,13 +12,20 @@ export async function runModelPeerCli(host: NativeRoutingHost, raw: string): Pro
   const request = peerObject(JSON.parse(raw)); peerExact(request, ["operation", "nativeContext", "payload"]);
   const context = peerObject(request.nativeContext), payload = peerObject(request.payload);
   peerCheck(Object.keys(context).every(key => ["session_id", "instance_id"].includes(key)), "Unsupported native context field.");
-  peerCheck(["send", "receive", "status", "preflight"].includes(String(request.operation)), "Unsupported peer handoff operation.");
+  peerCheck(["send", "receive", "status", "preflight", "start"].includes(String(request.operation)), "Unsupported peer handoff operation.");
   const opened = await openNativePeerSession(host, context);
   try {
     if (request.operation === "send") {
       peerExact(payload, ["decisionDigest", "delta", "inputReferences"]);
       peerCheck(typeof payload.decisionDigest === "string" && typeof payload.delta === "string" && Array.isArray(payload.inputReferences), "Invalid send arguments.");
       return await opened.session.send(payload.decisionDigest, { delta: payload.delta, inputReferences: payload.inputReferences });
+    }
+    if (request.operation === "start") {
+      peerExact(payload, ["packetId", "expectedRevision"]);
+      peerCheck(typeof payload.packetId === "string" && typeof payload.expectedRevision === "number"
+        && Number.isSafeInteger(payload.expectedRevision) && payload.expectedRevision >= 1
+        && payload.expectedRevision < Number.MAX_SAFE_INTEGER, "Invalid start claim arguments.");
+      return await opened.session.start(payload.packetId, payload.expectedRevision);
     }
     if (request.operation === "status" || request.operation === "preflight") {
       peerExact(payload, ["packetId"]); peerCheck(typeof payload.packetId === "string", "Invalid packet ID.");

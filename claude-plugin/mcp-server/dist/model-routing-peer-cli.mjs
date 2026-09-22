@@ -8856,6 +8856,31 @@ var ModelRoutingStore = class {
       return { dispatchKey: key, state, revision: expectedRevision + 1 };
     });
   }
+  /**
+   * Internal one-use start primitive, not a bearer permit or human authorization.
+   * The native adapter's synchronous callback must re-read local governance under this
+   * database's writer lock, after ALL network awaits, and return its current ISO instant.
+   * A failed callback/CAS rolls back; a committed claim is never automatically retried.
+   */
+  claimExecutionStart(key, expectedRevision, decisionDigest, revalidate) {
+    assert(Number.isSafeInteger(expectedRevision) && expectedRevision >= 1 && expectedRevision < Number.MAX_SAFE_INTEGER, "DISPATCH_REVISION_CONFLICT");
+    assert(typeof revalidate === "function", "START_REVALIDATION_REQUIRED");
+    return transaction(this.database, () => {
+      const row = this.dispatch(key);
+      assert(row && row.revision === expectedRevision, "DISPATCH_REVISION_CONFLICT");
+      assert(row.state === "accepted" && row.dispatched_at === null, "DISPATCH_START_UNAVAILABLE");
+      assert(row.decision_digest === decisionDigest, "DISPATCH_DECISION_CONFLICT");
+      const now = revalidate();
+      assert(typeof now === "string", "START_REVALIDATION_MUST_BE_SYNCHRONOUS");
+      instant(now, "dispatchedAt");
+      assert(canonical({ ...this.dispatch(key) }) === canonical({ ...row }), "DISPATCH_START_CONFLICT");
+      const result = this.database.prepare(`UPDATE ags_model_dispatches_v2
+        SET state='running',revision=revision+1,dispatched_at=?
+        WHERE dispatch_key=? AND revision=? AND state='accepted' AND dispatched_at IS NULL AND decision_digest=?`).run(now, key, expectedRevision, decisionDigest);
+      assert(result.changes === 1, "DISPATCH_START_CONFLICT");
+      return { dispatchKey: key, state: "running", revision: expectedRevision + 1, dispatchedAt: now, startClaimAcquired: true };
+    });
+  }
   saveEvaluation(record2) {
     validateEvaluation(record2);
     this.database.prepare("INSERT OR IGNORE INTO ags_model_evaluations_v1 VALUES (?,?)").run(record2.recordDigest, canonical(record2));
@@ -11768,20 +11793,8 @@ var ModelRoutingPeerSession = class {
   }
   /** Read-only diagnostic. A passing check is neither a start claim nor a reusable execution permit. */
   async preflight(packetId) {
-    const started = performance3.now(), io = this.exchange();
-    const before = this.acceptedForPreflight(packetId);
-    this.options.workflowBridge.validatePeerExecutionPreflight(before.entry.request, this.options.actorId);
-    const current = await this.current(before.entry, io);
-    peerCheck(canonicalJson(current.transport) === canonicalJson(this.options.identity), "The selected capability belongs to another native transport.");
-    const sender = await this.alive(before.packet.sender, io.call);
-    const recipient = await this.alive(before.packet.recipient, io.call);
-    const now = new Date(this.clock()).toISOString();
-    peerCheck(peerInstant(sender.leaseUntil) > peerInstant(now) && peerInstant(recipient.leaseUntil) > peerInstant(now), "Peer presence expired during execution preflight.");
-    const after = this.acceptedForPreflight(packetId);
-    peerCheck(canonicalJson(before) === canonicalJson(after), "The accepted handoff changed during execution preflight.");
-    this.options.workflowBridge.validatePeerExecutionPreflight(after.entry.request, this.options.actorId);
-    this.revalidateCurrent(after.entry, mergeRoutingCapabilities(this.options.store.capabilities(), current.shared), recipient, now);
-    peerCheck(performance3.now() - started < (this.options.timeoutMs ?? 4e3), "Peer execution preflight deadline expired.");
+    const observed = await this.observeExecutionPreflight(packetId);
+    const { after, now } = this.finishExecutionPreflight(packetId, observed);
     return {
       packetId,
       decisionDigest: after.entry.decision.decisionDigest,
@@ -11796,6 +11809,58 @@ var ModelRoutingPeerSession = class {
       executionAuthorized: false,
       trustedGateSatisfied: false
     };
+  }
+  /** Claim only. No executor, observation, reusable token, new lease or approval is created here. */
+  async start(packetId, expectedRevision) {
+    peerCheck(
+      Number.isSafeInteger(expectedRevision) && expectedRevision >= 1 && expectedRevision < Number.MAX_SAFE_INTEGER,
+      "Invalid expected dispatch revision."
+    );
+    const observed = await this.observeExecutionPreflight(packetId, expectedRevision);
+    const { entry, dispatch } = observed.before;
+    const claim = this.options.store.claimExecutionStart(
+      dispatch.dispatch_key,
+      expectedRevision,
+      entry.decision.decisionDigest,
+      () => this.finishExecutionPreflight(packetId, observed).now
+    );
+    return {
+      packetId,
+      decisionDigest: entry.decision.decisionDigest,
+      dispatchKey: claim.dispatchKey,
+      dispatchRevision: claim.revision,
+      dispatchState: claim.state,
+      dispatchedAt: claim.dispatchedAt,
+      startClaimAcquired: true,
+      requiresNativeExecutor: true,
+      executionStarted: false,
+      executionState: "not-observed",
+      completed: false,
+      executionAuthorized: false,
+      trustedGateSatisfied: false
+    };
+  }
+  async observeExecutionPreflight(packetId, expectedRevision = null) {
+    const started = performance3.now(), io = this.exchange();
+    const before = this.acceptedForPreflight(packetId);
+    peerCheck(expectedRevision === null || before.dispatch.revision === expectedRevision, "Peer dispatch revision changed before start.");
+    this.options.workflowBridge.validatePeerExecutionPreflight(before.entry.request, this.options.actorId);
+    const current = await this.current(before.entry, io);
+    peerCheck(canonicalJson(current.transport) === canonicalJson(this.options.identity), "The selected capability belongs to another native transport.");
+    const sender = await this.alive(before.packet.sender, io.call);
+    const recipient = await this.alive(before.packet.recipient, io.call);
+    return { started, before, current, sender, recipient };
+  }
+  finishExecutionPreflight(packetId, observed) {
+    const { started, before, current, sender, recipient } = observed;
+    const now = new Date(this.clock()).toISOString();
+    peerCheck(peerInstant(sender.leaseUntil) > peerInstant(now) && peerInstant(recipient.leaseUntil) > peerInstant(now), "Peer presence expired during execution preflight.");
+    const after = this.acceptedForPreflight(packetId);
+    peerCheck(canonicalJson(before) === canonicalJson(after), "The accepted handoff changed during execution preflight.");
+    this.options.workflowBridge.validatePeerExecutionPreflight(after.entry.request, this.options.actorId);
+    this.revalidateCurrent(after.entry, mergeRoutingCapabilities(this.options.store.capabilities(), current.shared), recipient, now);
+    peerCheck(performance3.now() - started < (this.options.timeoutMs ?? 4e3), "Peer execution preflight deadline expired.");
+    return { after, now };
   }
   acceptedForPreflight(packetId) {
     peerCheck(typeof packetId === "string" && /^ags-peer-[a-f0-9]{64}$/u.test(packetId), "Invalid preflight packet ID.");
@@ -11969,13 +12034,18 @@ async function runModelPeerCli(host, raw) {
   peerExact(request, ["operation", "nativeContext", "payload"]);
   const context = peerObject(request.nativeContext), payload = peerObject(request.payload);
   peerCheck(Object.keys(context).every((key) => ["session_id", "instance_id"].includes(key)), "Unsupported native context field.");
-  peerCheck(["send", "receive", "status", "preflight"].includes(String(request.operation)), "Unsupported peer handoff operation.");
+  peerCheck(["send", "receive", "status", "preflight", "start"].includes(String(request.operation)), "Unsupported peer handoff operation.");
   const opened = await openNativePeerSession(host, context);
   try {
     if (request.operation === "send") {
       peerExact(payload, ["decisionDigest", "delta", "inputReferences"]);
       peerCheck(typeof payload.decisionDigest === "string" && typeof payload.delta === "string" && Array.isArray(payload.inputReferences), "Invalid send arguments.");
       return await opened.session.send(payload.decisionDigest, { delta: payload.delta, inputReferences: payload.inputReferences });
+    }
+    if (request.operation === "start") {
+      peerExact(payload, ["packetId", "expectedRevision"]);
+      peerCheck(typeof payload.packetId === "string" && typeof payload.expectedRevision === "number" && Number.isSafeInteger(payload.expectedRevision) && payload.expectedRevision >= 1 && payload.expectedRevision < Number.MAX_SAFE_INTEGER, "Invalid start claim arguments.");
+      return await opened.session.start(payload.packetId, payload.expectedRevision);
     }
     if (request.operation === "status" || request.operation === "preflight") {
       peerExact(payload, ["packetId"]);

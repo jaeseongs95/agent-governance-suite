@@ -162,6 +162,33 @@ export class ModelRoutingStore {
       assert(result.changes===1,'DISPATCH_REVISION_CONFLICT');return {dispatchKey:key,state,revision:expectedRevision+1};
     });
   }
+  /**
+   * Internal one-use start primitive, not a bearer permit or human authorization.
+   * The native adapter's synchronous callback must re-read local governance under this
+   * database's writer lock, after ALL network awaits, and return its current ISO instant.
+   * A failed callback/CAS rolls back; a committed claim is never automatically retried.
+   */
+  claimExecutionStart(key,expectedRevision,decisionDigest,revalidate){
+    assert(Number.isSafeInteger(expectedRevision)&&expectedRevision>=1&&expectedRevision<Number.MAX_SAFE_INTEGER,'DISPATCH_REVISION_CONFLICT');
+    assert(typeof revalidate==='function','START_REVALIDATION_REQUIRED');
+    return transaction(this.database,()=>{
+      const row=this.dispatch(key);
+      assert(row&&row.revision===expectedRevision,'DISPATCH_REVISION_CONFLICT');
+      assert(row.state==='accepted'&&row.dispatched_at===null,'DISPATCH_START_UNAVAILABLE');
+      assert(row.decision_digest===decisionDigest,'DISPATCH_DECISION_CONFLICT');
+      const now=revalidate();
+      assert(typeof now==='string','START_REVALIDATION_MUST_BE_SYNCHRONOUS');
+      instant(now,'dispatchedAt');
+      // The callback is read-only. Reject same-connection changes as well as a stale caller.
+      assert(canonical({...this.dispatch(key)})===canonical({...row}),'DISPATCH_START_CONFLICT');
+      const result=this.database.prepare(`UPDATE ags_model_dispatches_v2
+        SET state='running',revision=revision+1,dispatched_at=?
+        WHERE dispatch_key=? AND revision=? AND state='accepted' AND dispatched_at IS NULL AND decision_digest=?`)
+        .run(now,key,expectedRevision,decisionDigest);
+      assert(result.changes===1,'DISPATCH_START_CONFLICT');
+      return {dispatchKey:key,state:'running',revision:expectedRevision+1,dispatchedAt:now,startClaimAcquired:true};
+    });
+  }
   saveEvaluation(record){validateEvaluation(record);this.database.prepare('INSERT OR IGNORE INTO ags_model_evaluations_v1 VALUES (?,?)').run(record.recordDigest,canonical(record));return record.recordDigest;}
   evaluations(){return this.database.prepare('SELECT payload FROM ags_model_evaluations_v1 ORDER BY record_digest').all().map(r=>JSON.parse(r.payload));}
 }

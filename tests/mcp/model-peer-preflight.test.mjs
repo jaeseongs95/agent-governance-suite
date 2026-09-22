@@ -1,72 +1,15 @@
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ModelRoutingStore } from '../../skills/coordinate-subagents/scripts/model-routing-store.mjs';
 import { ModelRoutingServiceCore } from '../../skills/coordinate-subagents/scripts/model-routing-service-core.mjs';
 import { ModelPeerPacketSigner, peerMessageId } from '../../mcp-server/src/model-peer-packet.js';
-import { SessionMessageStore } from '../../mcp-server/src/session-message-store.js';
-import { SessionModelCapabilityStore, capabilitySigner, MODEL_CAPABILITY_FEATURE } from '../../mcp-server/src/session-model-capabilities.js';
 import { encodePeerAssignment } from '../../skills/coordinate-subagents/scripts/model-routing-peer.mjs';
 import { digest, resolveV2, seal } from '../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
-import { createPeerWorkflow, SENDER, RECEIVER, TOKEN } from './peer-handoff-fixtures.mjs';
+import { SENDER, RECEIVER, TOKEN } from './peer-handoff-fixtures.mjs';
+import { fixture, accepted, retained, lastAwait } from './peer-execution-fixtures.mjs';
 import { NOW } from '../coordinate-subagents/model-routing-v2/fixtures.mjs';
 
-const cleanups = [];
-afterEach(() => { vi.restoreAllMocks(); while (cleanups.length) cleanups.pop()(); });
-function fixture() {
-  const directory = mkdtempSync(join(tmpdir(), 'ags-peer-preflight-'));
-  cleanups.push(() => rmSync(directory, { recursive: true, force: true }));
-  let now = Date.parse(NOW);
-  vi.spyOn(Date, 'now').mockImplementation(() => now);
-  const h = createPeerWorkflow(directory, { now }); cleanups.push(h.close);
-  const sessions = new SessionMessageStore(join(directory, 'messages.sqlite3')); cleanups.push(() => sessions.close());
-  for (const identity of [SENDER, RECEIVER]) sessions.startPresence({ ...identity, transport: 'fixture', wakeVisibility: 'none', canWakeSilently: false }, now);
-  const caps = new SessionModelCapabilityStore(sessions, capabilitySigner(TOKEN));
-  const publish = snapshot => caps.publish(capabilitySigner(TOKEN).issue('capability', {
-    schemaVersion: '1.0.0', identity: RECEIVER, snapshot,
-  }, { issuedAt: snapshot.observedAt, expiresAt: snapshot.expiresAt }), now);
-  publish(h.cap);
-  const calls = [];
-  const transport = async (operation, payload) => {
-    calls.push(operation);
-    switch (operation) {
-      case 'ping': return { protocolVersion: '1.0.0', capabilities: [MODEL_CAPABILITY_FEATURE] };
-      case 'list-model-capabilities': return caps.list(payload, now);
-      case 'presence': return { presence: sessions.presence(payload.target, now) };
-      case 'send': return sessions.send(payload, now);
-      case 'status': return { status: sessions.status(payload.sender, payload.messageId, now) };
-      default: throw new Error(`Unexpected operation: ${operation}`);
-    }
-  };
-  const sender = h.peer(SENDER, { request: transport, clock: () => now });
-  const receiver = h.peer(RECEIVER, { request: transport, clock: () => now });
-  const claim = identity => sessions.claim(identity, now, { maxMessages: 10, maxBodyChars: 32768 });
-  return { ...h, sessions, caps, sender, receiver, transport, calls, claim, publish, now: () => now,
-    advance: ms => { now += ms; }, key: digest({ binding: h.req.binding }) };
-}
-async function accepted(h) {
-  const sent = await h.sender.send(h.decision.decisionDigest);
-  expect((await h.receiver.receive(h.claim(RECEIVER)[0])).handoffState).toBe('accepted');
-  return sent.packetId;
-}
-function retained(h) {
-  return {
-    dispatch: h.routing.dispatch(h.key), run: h.workflow.getRun(h.run.runId), guarded: h.workflow.getGuardedRunBinding(h.run.runId),
-    transfers: h.database.prepare('SELECT * FROM ags_model_peer_transfers_v1 ORDER BY packet_id,direction').all(),
-    records: h.database.prepare('SELECT * FROM ags_model_applications_v2').all(),
-    receipts: h.database.prepare('SELECT * FROM ags_model_receipts_v1').all(),
-  };
-}
-function lastAwait(h, change) {
-  let reads = 0;
-  return h.peer(RECEIVER, { clock: h.now, request: async (...args) => {
-    const result = await h.transport(...args);
-    if (args[0] === 'presence' && ++reads === 4) change(result);
-    return result;
-  } });
-}
+afterEach(() => vi.restoreAllMocks());
 
 describe('accepted peer execution preflight (no worker start)', () => {
   it('rechecks an accepted inbound packet without changing any workflow, reservation, receipt or message', async () => {
@@ -79,28 +22,32 @@ describe('accepted peer execution preflight (no worker start)', () => {
     expect(retained(h)).toEqual(before);
     expect(h.calls.slice(count).every(op => ['ping', 'list-model-capabilities', 'presence'].includes(op))).toBe(true);
   });
+});
+
+describe.each(['preflight', 'start'])('%s rejects unsafe accepted work without changing it', operation => {
+  const check = (receiver, id) => operation === 'start' ? receiver.start(id, 1) : receiver.preflight(id);
   it('does not treat a delivered ACK or an outbound accepted receipt as receiver admission', async () => {
     const h = fixture(), sent = await h.sender.send(h.decision.decisionDigest);
     const message = h.claim(RECEIVER)[0];
     h.sessions.acknowledge(RECEIVER, [sent.packetId], h.now());
-    await expect(h.receiver.preflight(sent.packetId)).rejects.toThrow(/accepted inbound/u);
+    await expect(check(h.receiver, sent.packetId)).rejects.toThrow(/accepted inbound/u);
     expect(h.routing.dispatch(h.key)).toBeNull();
     await h.receiver.receive(message);
     await h.sender.receive(h.claim(SENDER)[0]);
-    await expect(h.sender.preflight(sent.packetId)).rejects.toThrow(/receiver/u);
+    await expect(check(h.sender, sent.packetId)).rejects.toThrow(/receiver/u);
   });
   it.each(['reserved', 'running', 'unknown', 'succeeded', 'failed', 'cancelled', 'not-started'])('never reopens or starts an existing %s dispatch', async state => {
     const h = fixture(), id = await accepted(h);
     h.database.prepare('UPDATE ags_model_dispatches_v2 SET state=? WHERE dispatch_key=?').run(state, h.key);
     const before = retained(h);
-    await expect(h.receiver.preflight(id)).rejects.toThrow(/dispatch/u);
+    await expect(check(h.receiver, id)).rejects.toThrow(/dispatch/iu);
     expect(retained(h)).toEqual(before);
   });
   it.each(['actor', 'instance', 'host'])('rejects a different local %s without mutating acceptance', async kind => {
     const h = fixture(), id = await accepted(h), before = retained(h);
     const receiver = h.peer({ ...RECEIVER, ...(kind === 'instance' ? { instanceId: 'replacement' } : {}),
       ...(kind === 'host' ? { host: 'claude-code' } : {}) }, { actor: kind === 'actor' ? 'other' : h.actorId, request: h.transport, clock: h.now });
-    await expect(receiver.preflight(id)).rejects.toThrow(/actor|receiver/u); expect(retained(h)).toEqual(before);
+    await expect(check(receiver, id)).rejects.toThrow(/actor|receiver/u); expect(retained(h)).toEqual(before);
   });
   it.each(['sender', 'recipient', 'capability'])('rejects expired or replaced %s observations', async kind => {
     const h = fixture(), id = await accepted(h), before = retained(h);
@@ -110,11 +57,11 @@ describe('accepted peer execution preflight (no worker start)', () => {
       const identity = kind === 'sender' ? SENDER : RECEIVER;
       h.sessions.startPresence({ ...identity, instanceId: 'replacement', transport: 'fixture', wakeVisibility: 'none', canWakeSilently: false }, h.now());
     }
-    await expect(h.receiver.preflight(id)).rejects.toThrow(); expect(retained(h)).toEqual(before);
+    await expect(check(h.receiver, id)).rejects.toThrow(); expect(retained(h)).toEqual(before);
   });
   it('does not refresh expired proposal signatures or release their accepted write exclusions', async () => {
     const h = fixture(), id = await accepted(h), before = retained(h); h.advance(60000);
-    await expect(h.receiver.preflight(id)).rejects.toThrow(/expired/u); expect(retained(h)).toEqual(before);
+    await expect(check(h.receiver, id)).rejects.toThrow(/expired/u); expect(retained(h)).toEqual(before);
     const replacement = seal({ ...h.decision, binding: { ...h.req.binding, assignmentId: 'replacement', revision: h.req.binding.revision + 1 } }, 'decisionDigest');
     expect(() => h.routing.reserveDispatch(replacement, { write: true })).toThrow(/AMBIGUOUS_WRITE_ACTIVE/u);
   });
@@ -122,13 +69,13 @@ describe('accepted peer execution preflight (no worker start)', () => {
     const h = fixture(), id = await accepted(h), request = structuredClone(h.req);
     request.binding[field] = field.endsWith('Digest') ? digest('changed') : field === 'revision' ? request.binding.revision + 1 : 'other';
     h.database.prepare('UPDATE ags_model_decisions_v2 SET request_json=? WHERE decision_digest=?').run(JSON.stringify(request), h.decision.decisionDigest);
-    const before = retained(h); await expect(h.receiver.preflight(id)).rejects.toThrow(); expect(retained(h)).toEqual(before);
+    const before = retained(h); await expect(check(h.receiver, id)).rejects.toThrow(); expect(retained(h)).toEqual(before);
   });
   it.each(['body', 'reply', 'write_key', 'payload', 'dispatched_at'])('rejects corrupt accepted %s metadata', async field => {
     const h = fixture(), id = await accepted(h);
     if (field === 'body' || field === 'reply') h.database.prepare(`UPDATE ags_model_peer_transfers_v1 SET ${field}='{}' WHERE packet_id=? AND direction='inbound'`).run(id);
     else h.database.prepare(`UPDATE ags_model_dispatches_v2 SET ${field}=? WHERE dispatch_key=?`).run(field === 'dispatched_at' ? NOW : 'corrupt', h.key);
-    const before = retained(h); await expect(h.receiver.preflight(id)).rejects.toThrow(); expect(retained(h)).toEqual(before);
+    const before = retained(h); await expect(check(h.receiver, id)).rejects.toThrow(); expect(retained(h)).toEqual(before);
   });
   it.each(['revision', 'lease-owner', 'lease-state', 'outcome', 'risk', 'permission', 'prohibition', 'approval'])('rechecks local %s after the last asynchronous request', async kind => {
     const h = fixture(), id = await accepted(h), originalRun = h.workflow.getRun.bind(h.workflow), original = h.workflow.getGuardedRunBinding.bind(h.workflow);
@@ -146,14 +93,14 @@ describe('accepted peer execution preflight (no worker start)', () => {
         return b;
       });
     });
-    await expect(receiver.preflight(id)).rejects.toThrow();
+    await expect(check(receiver, id)).rejects.toThrow();
     expect(h.routing.dispatch(h.key)).toMatchObject({ state: 'accepted', revision: 1, dispatched_at: null });
   });
   it.each(['running', 'unknown'])('preserves a competing %s transition on a second SQLite connection', async state => {
     const h = fixture(), id = await accepted(h), db = new DatabaseSync(h.path), other = new ModelRoutingStore(db);
     try {
       const receiver = lastAwait(h, () => other.transition(h.key, 1, state, null, state === 'running' ? NOW : null));
-      await expect(receiver.preflight(id)).rejects.toThrow(/dispatch/u);
+      await expect(check(receiver, id)).rejects.toThrow(/dispatch/iu);
       expect(other.dispatch(h.key)).toMatchObject({ state, revision: 2 });
       expect(h.receiver.journal.get(id, 'inbound').state).toBe('accepted');
     } finally { db.close(); }
@@ -170,7 +117,7 @@ describe('accepted peer execution preflight (no worker start)', () => {
       }
       return response;
     } });
-    await expect(receiver.preflight(id)).rejects.toThrow(/presence expired/u);
+    await expect(check(receiver, id)).rejects.toThrow(/presence expired/u);
     expect(h.routing.dispatch(h.key).state).toBe('accepted');
   });
   it('re-reads newly available local capabilities after the final network await', async () => {
@@ -178,19 +125,19 @@ describe('accepted peer execution preflight (no worker start)', () => {
     const receiver = lastAwait(h, () => vi.spyOn(h.routing, 'capabilities').mockReturnValue([
       seal({ ...h.cap, actorId: 'additional-worker', sessionId: 'additional-session', instanceId: 'additional-instance' }, 'snapshotDigest'),
     ]));
-    await expect(receiver.preflight(id)).rejects.toThrow(); expect(retained(h)).toEqual(before);
+    await expect(check(receiver, id)).rejects.toThrow(); expect(retained(h)).toEqual(before);
   });
   it('fails closed on broker errors without converting acceptance to not-started', async () => {
     const h = fixture(), id = await accepted(h), before = retained(h);
     const receiver = h.peer(RECEIVER, { clock: h.now, request: async () => { throw new Error('offline'); } });
-    await expect(receiver.preflight(id)).rejects.toThrow(); expect(retained(h)).toEqual(before);
+    await expect(check(receiver, id)).rejects.toThrow(); expect(retained(h)).toEqual(before);
   });
   it('re-resolves current catalog/policy after the final await instead of trusting the earlier check', async () => {
     const h = fixture(), id = await accepted(h), before = retained(h), original = ModelRoutingServiceCore.prototype.resolve;
     const receiver = lastAwait(h, () => vi.spyOn(ModelRoutingServiceCore.prototype, 'resolve').mockImplementation(function (...args) {
       const fresh = original.apply(this, args); return { ...fresh, policyDigest: digest('changed-policy'), decisionDigest: digest('changed-decision') };
     }));
-    await expect(receiver.preflight(id)).rejects.toThrow(/selection changed/u); expect(retained(h)).toEqual(before);
+    await expect(check(receiver, id)).rejects.toThrow(/selection changed/u); expect(retained(h)).toEqual(before);
   });
   it('checks current audit history even when an accepted packet is already stored', async () => {
     const h = fixture(), req = { ...h.req, role: 'independent-audit', highRisk: true }, decision = resolveV2(req, h.env);
@@ -205,7 +152,7 @@ describe('accepted peer execution preflight (no worker start)', () => {
         reason: 'HANDOFF_ACCEPTED', executionStarted: false, completed: false } });
     h.receiver.journal.settle(id, 'accepted', reply, 'inbound');
     h.routing.reserveDispatch(decision, { write: true }); h.routing.transition(h.key, 0, 'accepted');
-    await expect(h.receiver.preflight(id)).rejects.toThrow(/auditor participated/u);
+    await expect(check(h.receiver, id)).rejects.toThrow(/auditor participated/u);
     expect(h.routing.dispatch(h.key).state).toBe('accepted');
   });
 });

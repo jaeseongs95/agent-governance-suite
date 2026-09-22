@@ -96,6 +96,50 @@ describe('installed opt-in peer handoff over the original TLS spool',()=>{
       expect(h.routing.dispatch(key)).toMatchObject({state:'unknown',revision:2,dispatched_at:null});
     });
   },30000);
+  it('grants exactly one installed CLI process the start claim after both read-only preflights pass',async()=>{
+    await withInstall(async({h,cli,hook,request})=>{
+      const sent=await cli(source,'send',{decisionDigest:h.decision.decisionDigest,delta:'원자적 시작권 검사',inputReferences:[]});
+      expect(sent.code,sent.stderr).toBe(0);const packetId=JSON.parse(sent.stdout).data.packetId;
+      expect((await hook(target)).code).toBe(0);
+      const key=digest({binding:h.req.binding}),run=h.workflow.getRun(h.run.runId),guarded=h.workflow.getGuardedRunBinding(h.run.runId);
+      const checks=await Promise.all([cli(target,'preflight',{packetId}),cli(target,'preflight',{packetId})]);
+      for(const result of checks)expect(JSON.parse(result.stdout)).toMatchObject({ok:true,data:{preflightPassed:true,dispatchRevision:1}});
+      const results=await Promise.all([cli(target,'start',{packetId,expectedRevision:1}),cli(target,'start',{packetId,expectedRevision:1})]);
+      expect(results.map(result=>result.code).sort()).toEqual([0,1]);
+      const winner=JSON.parse(results.find(result=>result.code===0).stdout);
+      expect(winner).toMatchObject({ok:true,data:{startClaimAcquired:true,dispatchState:'running',dispatchRevision:2,
+        requiresNativeExecutor:true,executionStarted:false,executionAuthorized:false,trustedGateSatisfied:false,completed:false}});
+      expect(h.routing.dispatch(key)).toMatchObject({state:'running',revision:2,dispatched_at:winner.data.dispatchedAt});
+      expect(h.workflow.getRun(h.run.runId)).toEqual(run);expect(h.workflow.getGuardedRunBinding(h.run.runId)).toEqual(guarded);
+      const before=h.routing.dispatch(key);
+      expect((await cli(target,'start',{packetId,expectedRevision:2})).code).toBe(1);
+      expect(h.routing.dispatch(key)).toEqual(before);
+      expect(h.database.prepare('SELECT COUNT(*) AS n FROM ags_model_applications_v2').get().n).toBe(0);
+      await request('send',{sender:source,target,body:'ordinary message after start claim'});
+      expect(JSON.parse((await hook(target)).stdout).hookSpecificOutput.additionalContext).toContain('ordinary message after start claim');
+    });
+  },30000);
+  it('rejects caller authority, stale revisions and unknown work on the installed start surface',async()=>{
+    await withInstall(async({h,cli,hook,dir})=>{
+      const sent=await cli(source,'send',{decisionDigest:h.decision.decisionDigest,delta:'시작권 경계 검사',inputReferences:[]});
+      expect(sent.code,sent.stderr).toBe(0);const packetId=JSON.parse(sent.stdout).data.packetId;
+      expect((await hook(target)).code).toBe(0);
+      const key=digest({binding:h.req.binding}),before=h.routing.dispatch(key);
+      for(const payload of [{packetId},{packetId,expectedRevision:'1'},{packetId,expectedRevision:2},
+        {packetId,expectedRevision:1,executionAuthorized:true,token:'do-not-copy-start-secret'},
+        {packetId,expectedRevision:1,program:'touch',command:join(dir,'must-not-execute')},
+        {packetId,expectedRevision:1,approval:true},{packetId,expectedRevision:1,request:h.req}]){
+        const result=await cli(target,'start',payload);expect(result.code).toBe(1);
+        expect(result.stdout).not.toContain('do-not-copy-start-secret');expect(h.routing.dispatch(key)).toEqual(before);
+      }
+      expect((await cli(source,'start',{packetId,expectedRevision:1})).code).toBe(1);
+      expect((await cli(target,'start',{packetId,expectedRevision:1},{AGENT_GOVERNANCE_PEER_ROUTING:'0'})).code).toBe(1);
+      h.routing.transition(key,1,'unknown');
+      expect((await cli(target,'start',{packetId,expectedRevision:2})).code).toBe(1);
+      expect(h.routing.dispatch(key)).toMatchObject({state:'unknown',revision:2,dispatched_at:null});
+      expect(existsSync(join(dir,'must-not-execute'))).toBe(false);
+    });
+  },30000);
   it('keeps opted-out native sessions on the original untrusted message path',async()=>{
     await withInstall(async({h,cli,hook})=>{
       const sent=await cli(source,'send',{decisionDigest:h.decision.decisionDigest,delta:'조회 참고',inputReferences:[]});expect(JSON.parse(sent.stdout).ok).toBe(true);

@@ -68,6 +68,7 @@ unknown write 예약을 해제하거나 `not-started`로 바꾸지 않는다. �
 native hook → CLI preflight 경로를 실행한다. 벤더 모델 프로세스나 실제 계정 실행 테스트는 아니다.
 실제 수행 결과와 환경 차이는 커밋 및 이번 작업의 검증 기록에 따로 남긴다.
 
-다음 단위는 preflight 뒤의 원자적 시작 claim과 승인된 native executor 연결이다.
+P5-4b의 원자적 시작 claim은 [별도 계약](model-routing-p5-execution-start.ko.md)에 정의한다.
+read-only preflight의 의미는 그대로이며, 승인된 native executor 연결은 P5-4c에 남는다.
 수신 작업 준비/매핑, task-specific approval 검증, terminal evidence, unknown/cancel 복구,
 P6/P7 및 A22 live 검증은 아직 남아 있다. main/tag/Release와 사용자 설치 캐시는 변경하지 않는다.

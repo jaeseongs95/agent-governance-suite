@@ -150,15 +150,42 @@ export class ModelRoutingPeerSession {
   }
   /** Read-only diagnostic. A passing check is neither a start claim nor a reusable execution permit. */
   async preflight(packetId: string) {
+    const observed = await this.observeExecutionPreflight(packetId);
+    const { after, now } = this.finishExecutionPreflight(packetId, observed);
+    return { packetId, decisionDigest: after.entry.decision.decisionDigest, dispatchKey: after.dispatch.dispatch_key,
+      dispatchRevision: after.dispatch.revision, checkedAt: now, preflightPassed: true, requiresAtomicStart: true,
+      executionStarted: false, executionState: "not-observed", completed: false, executionAuthorized: false, trustedGateSatisfied: false };
+  }
+  /** Claim only. No executor, observation, reusable token, new lease or approval is created here. */
+  async start(packetId: string, expectedRevision: number) {
+    peerCheck(Number.isSafeInteger(expectedRevision) && expectedRevision >= 1 && expectedRevision < Number.MAX_SAFE_INTEGER,
+      "Invalid expected dispatch revision.");
+    const observed = await this.observeExecutionPreflight(packetId, expectedRevision);
+    const { entry, dispatch } = observed.before;
+    // BEGIN IMMEDIATE excludes other writers before the final local reads. The workflow
+    // bridge reads the same local database; no network await may enter this callback.
+    const claim = this.options.store.claimExecutionStart(dispatch.dispatch_key, expectedRevision, entry.decision.decisionDigest,
+      () => this.finishExecutionPreflight(packetId, observed).now);
+    return { packetId, decisionDigest: entry.decision.decisionDigest, dispatchKey: claim.dispatchKey,
+      dispatchRevision: claim.revision, dispatchState: claim.state, dispatchedAt: claim.dispatchedAt, startClaimAcquired: true,
+      requiresNativeExecutor: true, executionStarted: false, executionState: "not-observed", completed: false,
+      executionAuthorized: false, trustedGateSatisfied: false };
+  }
+  private async observeExecutionPreflight(packetId: string, expectedRevision: number | null = null) {
     const started = performance.now(), io = this.exchange();
     const before = this.acceptedForPreflight(packetId);
+    peerCheck(expectedRevision === null || before.dispatch.revision === expectedRevision, "Peer dispatch revision changed before start.");
     this.options.workflowBridge.validatePeerExecutionPreflight(before.entry.request, this.options.actorId);
     const current = await this.current(before.entry, io);
     peerCheck(canonicalJson(current.transport) === canonicalJson(this.options.identity), "The selected capability belongs to another native transport.");
     const sender = await this.alive(before.packet.sender, io.call);
     const recipient = await this.alive(before.packet.recipient, io.call);
+    return { started, before, current, sender, recipient };
+  }
+  private finishExecutionPreflight(packetId: string, observed: Awaited<ReturnType<ModelRoutingPeerSession["observeExecutionPreflight"]>>) {
     // Any awaited request can outlive an earlier observation. Use a new clock and local snapshot
     // after the final await, and reject competing dispatch/authorization changes without undoing them.
+    const { started, before, current, sender, recipient } = observed;
     const now = new Date(this.clock()).toISOString();
     peerCheck(peerInstant(sender.leaseUntil) > peerInstant(now) && peerInstant(recipient.leaseUntil) > peerInstant(now), "Peer presence expired during execution preflight.");
     const after = this.acceptedForPreflight(packetId);
@@ -166,9 +193,7 @@ export class ModelRoutingPeerSession {
     this.options.workflowBridge.validatePeerExecutionPreflight(after.entry.request, this.options.actorId);
     this.revalidateCurrent(after.entry, mergeRoutingCapabilities(this.options.store.capabilities(), current.shared), recipient, now);
     peerCheck(performance.now() - started < (this.options.timeoutMs ?? 4000), "Peer execution preflight deadline expired.");
-    return { packetId, decisionDigest: after.entry.decision.decisionDigest, dispatchKey: after.dispatch.dispatch_key,
-      dispatchRevision: after.dispatch.revision, checkedAt: now, preflightPassed: true, requiresAtomicStart: true,
-      executionStarted: false, executionState: "not-observed", completed: false, executionAuthorized: false, trustedGateSatisfied: false };
+    return { after, now };
   }
   private acceptedForPreflight(packetId: string) {
     peerCheck(typeof packetId === "string" && /^ags-peer-[a-f0-9]{64}$/u.test(packetId), "Invalid preflight packet ID.");
