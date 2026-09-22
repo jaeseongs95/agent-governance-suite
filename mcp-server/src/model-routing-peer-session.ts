@@ -18,6 +18,16 @@ import { ModelPeerPacketSigner, peerCheck, peerMessageId, peerReceipt, peerInsta
 import { ContractValidator } from "./schema-validator.js";
 
 type Entry = NonNullable<ReturnType<ModelRoutingStore["decision"]>>;
+interface PeerPreflightDispatch {
+  dispatch_key: string;
+  assignment_id: string;
+  write_key: string | null;
+  decision_digest: string;
+  state: string;
+  revision: number;
+  dispatched_at: string | null;
+  payload: string;
+}
 export interface ModelPeerSessionOptions {
   store: ModelRoutingStore;
   workflowBridge: ModelRoutingWorkflowBridge;
@@ -79,13 +89,17 @@ export class ModelRoutingPeerSession {
     await this.alive(this.options.identity, io.call);
     const capabilities = mergeRoutingCapabilities(this.options.store.capabilities(), shared);
     const now = new Date(this.clock()).toISOString();
-    // A new policy/catalog or participation history must be detected, not replaced with frozen data.
+    const environment = this.revalidateCurrent(entry, capabilities, presence, now);
+    return { environment, transport: remote.identity, expiresAt: remote.snapshot.expiresAt, shared };
+  }
+  private revalidateCurrent(entry: Entry, capabilities: ReturnType<typeof mergeRoutingCapabilities>, presence: SessionPresence, now: string) {
+    // Re-read policy/catalog and participation history; never substitute the frozen selection inputs.
     const fresh = new ModelRoutingServiceCore({ catalogDirectory: MODEL_CATALOG_DIRECTORY, clock: () => now, historyProvider: this.options.workflowBridge.history })
       .resolve(entry.request, capabilities) as ModelRoutingDecisionV2;
-    peerCheck(fresh.decisionDigest === entry.decision.decisionDigest, "Peer selection changed; resolve a new decision before sending.");
-    const environment = { ...entry.environment, capabilities, now, presence: { ...presence, host: target.host } };
+    peerCheck(fresh.decisionDigest === entry.decision.decisionDigest, "Peer selection changed; resolve a new decision before dispatch.");
+    const environment = { ...entry.environment, capabilities, now, presence: { ...presence, host: entry.decision.target!.host } };
     preflightPeerAssignment(entry.request, entry.decision, environment);
-    return { environment, transport: remote.identity, expiresAt: remote.snapshot.expiresAt };
+    return environment;
   }
   private async transmit(body: string, io: ReturnType<ModelRoutingPeerSession["exchange"]>) {
     const packet = this.options.signer.verify(body, this.clock());
@@ -133,6 +147,59 @@ export class ModelRoutingPeerSession {
     try { delivery = await this.exchange().call("status", { sender: { host: packet.sender.host, sessionId: packet.sender.sessionId }, messageId: packetId }); } catch { /* Unknown delivery is not a rejection. */ }
     return { packetId, handoffState: transfer.state, accepted: transfer.state === "accepted", delivery,
       executionStarted: false, executionState: "not-observed", completed: false, executionAuthorized: false, trustedGateSatisfied: false };
+  }
+  /** Read-only diagnostic. A passing check is neither a start claim nor a reusable execution permit. */
+  async preflight(packetId: string) {
+    const started = performance.now(), io = this.exchange();
+    const before = this.acceptedForPreflight(packetId);
+    this.options.workflowBridge.validatePeerExecutionPreflight(before.entry.request, this.options.actorId);
+    const current = await this.current(before.entry, io);
+    peerCheck(canonicalJson(current.transport) === canonicalJson(this.options.identity), "The selected capability belongs to another native transport.");
+    const sender = await this.alive(before.packet.sender, io.call);
+    const recipient = await this.alive(before.packet.recipient, io.call);
+    // Any awaited request can outlive an earlier observation. Use a new clock and local snapshot
+    // after the final await, and reject competing dispatch/authorization changes without undoing them.
+    const now = new Date(this.clock()).toISOString();
+    peerCheck(peerInstant(sender.leaseUntil) > peerInstant(now) && peerInstant(recipient.leaseUntil) > peerInstant(now), "Peer presence expired during execution preflight.");
+    const after = this.acceptedForPreflight(packetId);
+    peerCheck(canonicalJson(before) === canonicalJson(after), "The accepted handoff changed during execution preflight.");
+    this.options.workflowBridge.validatePeerExecutionPreflight(after.entry.request, this.options.actorId);
+    this.revalidateCurrent(after.entry, mergeRoutingCapabilities(this.options.store.capabilities(), current.shared), recipient, now);
+    peerCheck(performance.now() - started < (this.options.timeoutMs ?? 4000), "Peer execution preflight deadline expired.");
+    return { packetId, decisionDigest: after.entry.decision.decisionDigest, dispatchKey: after.dispatch.dispatch_key,
+      dispatchRevision: after.dispatch.revision, checkedAt: now, preflightPassed: true, requiresAtomicStart: true,
+      executionStarted: false, executionState: "not-observed", completed: false, executionAuthorized: false, trustedGateSatisfied: false };
+  }
+  private acceptedForPreflight(packetId: string) {
+    peerCheck(typeof packetId === "string" && /^ags-peer-[a-f0-9]{64}$/u.test(packetId), "Invalid preflight packet ID.");
+    const transfer = this.journal.get(packetId, "inbound");
+    peerCheck(transfer?.state === "accepted" && transfer.reply !== null, "Execution preflight requires an accepted inbound handoff.");
+    const packet = this.options.signer.verify(transfer.body, this.clock());
+    peerCheck(packet.kind === "proposal" && peerMessageId(transfer.body) === packetId && transfer.expiresAt === packet.expiresAt
+      && canonicalJson(packet.recipient) === canonicalJson(this.options.identity), "The accepted handoff belongs to another packet or receiver instance.");
+    const entry = this.entry(transfer.decisionDigest); packetMatchesDecision(packet, entry.decision);
+    const target = entry.decision.target!;
+    peerCheck(target.actorId === this.options.actorId && target.sessionId === this.options.identity.sessionId
+      && target.instanceId === this.options.identity.instanceId, "The accepted handoff belongs to another local actor.");
+    // The immutable receipt is historical admission evidence, not a new permission or refreshed TTL.
+    const storedReply = JSON.parse(transfer.reply) as PeerPacket;
+    const reply = this.options.signer.verify(transfer.reply, peerInstant(storedReply.issuedAt));
+    const receipt = peerReceipt(reply);
+    peerCheck(peerInstant(reply.issuedAt) >= peerInstant(packet.issuedAt) && peerInstant(reply.issuedAt) <= this.clock()
+      && canonicalJson(reply.sender) === canonicalJson(packet.recipient) && canonicalJson(reply.recipient) === canonicalJson(packet.sender)
+      && receipt.proposalId === packetId && receipt.decisionDigest === entry.decision.decisionDigest
+      && receipt.bindingDigest === convergenceDigest(entry.request.binding) && receipt.disposition === "accepted", "Invalid local acceptance receipt.");
+    const binding = entry.request.binding, dispatchKey = convergenceDigest({ binding });
+    const dispatch = this.options.store.database.prepare("SELECT * FROM ags_model_dispatches_v2 WHERE dispatch_key=?")
+      .get(dispatchKey) as unknown as PeerPreflightDispatch | undefined;
+    peerCheck(dispatch && dispatch.state === "accepted" && dispatch.dispatched_at === null
+      && Number.isSafeInteger(dispatch.revision) && dispatch.revision >= 1
+      && dispatch.assignment_id === binding.assignmentId && dispatch.decision_digest === entry.decision.decisionDigest
+      && canonicalJson(JSON.parse(dispatch.payload)) === canonicalJson(entry.decision), "The accepted dispatch is missing, changed or already started.");
+    const writeKey = entry.request.requirements.filesystem === "write"
+      ? convergenceDigest({ taskId: binding.taskId, runId: binding.runId, stageId: binding.stageId }) : null;
+    peerCheck(dispatch.write_key === writeKey, "The accepted dispatch does not retain its write exclusion.");
+    return { transfer, packet, entry, dispatch };
   }
   async receive(message: SessionMessage) {
     const io = this.exchange(), packet = this.options.signer.verifyMessage(message, this.options.identity, this.clock());

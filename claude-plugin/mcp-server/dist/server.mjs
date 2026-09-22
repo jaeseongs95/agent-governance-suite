@@ -21003,6 +21003,16 @@ var ModelRoutingWorkflowBridge = class {
       }
     }
   }
+  /** No approval adapter is connected yet: explicit task approvals must not be inferred from acceptance. */
+  validatePeerExecutionPreflight(rawRequest, receiverActor) {
+    this.validatePeerHandoff(rawRequest, receiverActor);
+    const request = this.validator.modelSelectionRequestV2(rawRequest);
+    const { guarded } = this.current(request.binding);
+    requireCondition(
+      guarded.proposal.taskEnvelope.authorization.approvalRequired.length === 0,
+      "Execution preflight cannot verify task-specific approvals without the native approval adapter."
+    );
+  }
   /** Include all known participants conservatively, including failed/ambiguous dispatches and ancestors. */
   history = (rawBinding, excludeDecisionDigest = null) => {
     const bindingSchema = this.validator.modelSelectionRequestV2({

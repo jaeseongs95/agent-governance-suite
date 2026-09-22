@@ -12,7 +12,7 @@ export async function runModelPeerCli(host: NativeRoutingHost, raw: string): Pro
   const request = peerObject(JSON.parse(raw)); peerExact(request, ["operation", "nativeContext", "payload"]);
   const context = peerObject(request.nativeContext), payload = peerObject(request.payload);
   peerCheck(Object.keys(context).every(key => ["session_id", "instance_id"].includes(key)), "Unsupported native context field.");
-  peerCheck(["send", "receive", "status"].includes(String(request.operation)), "Unsupported peer handoff operation.");
+  peerCheck(["send", "receive", "status", "preflight"].includes(String(request.operation)), "Unsupported peer handoff operation.");
   const opened = await openNativePeerSession(host, context);
   try {
     if (request.operation === "send") {
@@ -20,9 +20,9 @@ export async function runModelPeerCli(host: NativeRoutingHost, raw: string): Pro
       peerCheck(typeof payload.decisionDigest === "string" && typeof payload.delta === "string" && Array.isArray(payload.inputReferences), "Invalid send arguments.");
       return await opened.session.send(payload.decisionDigest, { delta: payload.delta, inputReferences: payload.inputReferences });
     }
-    if (request.operation === "status") {
+    if (request.operation === "status" || request.operation === "preflight") {
       peerExact(payload, ["packetId"]); peerCheck(typeof payload.packetId === "string", "Invalid packet ID.");
-      return await opened.session.status(payload.packetId);
+      return request.operation === "preflight" ? await opened.session.preflight(payload.packetId) : await opened.session.status(payload.packetId);
     }
     peerExact(payload, ["message"]);
     return await opened.session.receive(payload.message as SessionMessage);

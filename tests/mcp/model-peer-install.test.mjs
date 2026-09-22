@@ -76,6 +76,26 @@ describe('installed opt-in peer handoff over the original TLS spool',()=>{
       expect(JSON.parse((await hook(target)).stdout).hookSpecificOutput.additionalContext).toContain('ordinary peer message after handoff');
     });
   },30000);
+  it('checks accepted work from the installed receiver CLI without issuing execution permission',async()=>{
+    await withInstall(async({h,cli,hook})=>{
+      const sent=await cli(source,'send',{decisionDigest:h.decision.decisionDigest,delta:'실행 전 검사',inputReferences:[]});
+      expect(sent.code,sent.stderr).toBe(0);const packetId=JSON.parse(sent.stdout).data.packetId;
+      expect((await hook(target)).code).toBe(0);
+      const key=digest({binding:h.req.binding}),before=h.routing.dispatch(key),run=h.workflow.getRun(h.run.runId);
+      const checked=await cli(target,'preflight',{packetId});expect(checked.code,checked.stderr).toBe(0);
+      expect(JSON.parse(checked.stdout)).toMatchObject({ok:true,data:{preflightPassed:true,requiresAtomicStart:true,
+        dispatchRevision:1,executionAuthorized:false,executionStarted:false,trustedGateSatisfied:false,completed:false}});
+      expect(h.routing.dispatch(key)).toEqual(before);expect(h.workflow.getRun(h.run.runId)).toEqual(run);
+      expect((await cli(source,'preflight',{packetId})).code).toBe(1);
+      expect((await cli(target,'preflight',{packetId},{AGENT_GOVERNANCE_PEER_ROUTING:'0'})).code).toBe(1);
+      const forged=await cli(target,'preflight',{packetId,executionAuthorized:true,token:'never-copy-this'});
+      expect(forged.code).toBe(1);expect(forged.stdout).not.toContain('never-copy-this');
+      h.routing.transition(key,1,'unknown');
+      const blocked=await cli(target,'preflight',{packetId});expect(blocked.code).toBe(1);
+      expect(JSON.parse(blocked.stdout)).toMatchObject({ok:false,error:'PEER_HANDOFF_UNAVAILABLE',executionStarted:false});
+      expect(h.routing.dispatch(key)).toMatchObject({state:'unknown',revision:2,dispatched_at:null});
+    });
+  },30000);
   it('keeps opted-out native sessions on the original untrusted message path',async()=>{
     await withInstall(async({h,cli,hook})=>{
       const sent=await cli(source,'send',{decisionDigest:h.decision.decisionDigest,delta:'조회 참고',inputReferences:[]});expect(JSON.parse(sent.stdout).ok).toBe(true);
