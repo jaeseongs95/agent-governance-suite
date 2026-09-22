@@ -1,0 +1,181 @@
+name: Semantic S1b verification
+
+on:
+  push:
+    branches:
+      - codex/v260-semantic-decision-layer
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: contains(github.event.head_commit.message, '[semantic-s1b-bootstrap]') || contains(github.event.head_commit.message, '[apply-semantic-s1b]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install frozen dependencies and check untouched bundles
+        shell: bash
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+          mkdir -p "$RUNNER_TEMP/s1b-evidence"
+          pnpm bundle:check > "$RUNNER_TEMP/s1b-evidence/bundle-initial.log" 2>&1
+          git rev-parse HEAD > "$RUNNER_TEMP/s1b-evidence/trigger-commit.txt"
+          git rev-parse 'HEAD^{tree}' > "$RUNNER_TEMP/s1b-evidence/trigger-tree.txt"
+          git status --porcelain=v1 > "$RUNNER_TEMP/s1b-evidence/status-initial.txt"
+          node --version > "$RUNNER_TEMP/s1b-evidence/node.txt"
+          pnpm --version > "$RUNNER_TEMP/s1b-evidence/pnpm.txt"
+      - name: Export exact bootstrap sources and Git history
+        if: contains(github.event.head_commit.message, '[semantic-s1b-bootstrap]')
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/s1b-bootstrap"
+          git archive --format=tar.gz HEAD > "$RUNNER_TEMP/s1b-bootstrap/source.tar.gz"
+          git bundle create "$RUNNER_TEMP/s1b-bootstrap/repository.bundle" HEAD
+          git rev-parse HEAD > "$RUNNER_TEMP/s1b-bootstrap/commit.txt"
+          git rev-parse 'HEAD^{tree}' > "$RUNNER_TEMP/s1b-bootstrap/tree.txt"
+          cd "$RUNNER_TEMP/s1b-bootstrap"
+          sha256sum source.tar.gz repository.bundle > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: contains(github.event.head_commit.message, '[semantic-s1b-bootstrap]')
+        with:
+          name: semantic-s1b-bootstrap-${{ github.sha }}
+          path: ${{ runner.temp }}/s1b-bootstrap/
+          retention-days: 3
+      - name: Apply only an explicitly requested byte-checked S1b candidate
+        if: contains(github.event.head_commit.message, '[apply-semantic-s1b]')
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'node:fs';
+          import { createHash } from 'node:crypto';
+          import { brotliDecompressSync } from 'node:zlib';
+          import { execFileSync } from 'node:child_process';
+          import { join } from 'node:path';
+          const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+          const hash = value => createHash('sha256').update(value).digest('hex');
+          const file = 'docs/semantic-decision/s1b-candidate.json';
+          const raw = readFileSync(file);
+          if (raw.length > 128 * 1024) throw new Error('Oversized envelope');
+          const envelope = JSON.parse(raw);
+          if (envelope.encoding !== 'brotli-base64' || typeof envelope.data !== 'string' || !/^[A-Za-z0-9+/=]+$/.test(envelope.data)) throw new Error('Invalid encoding');
+          const bytes = brotliDecompressSync(Buffer.from(envelope.data, 'base64'), { maxOutputLength: 4 * 1024 * 1024 });
+          if (hash(bytes) !== envelope.sha256) throw new Error('Payload digest mismatch');
+          const candidate = JSON.parse(bytes);
+          if (candidate.format !== 'ags-checked-source-patch.v1' || git('rev-parse', 'HEAD^') !== candidate.baseCommit) throw new Error('Candidate base moved');
+          if (process.env.GITHUB_REF !== 'refs/heads/codex/v260-semantic-decision-layer') throw new Error('Wrong branch');
+          const allowed = new Set([
+            'skills/coordinate-subagents/scripts/model-routing-core.mjs',
+            'skills/coordinate-subagents/scripts/model-routing-core.d.mts',
+            'skills/source-lock.json',
+            'tests/coordinate-subagents/semantic-decision/eligible-candidates.test.mjs',
+            'docs/semantic-decision/eligible-candidates-S1b.ko.md',
+            'docs/semantic-decision/evidence/s1b-local-summary.json',
+            'docs/semantic-decision/evidence/s1b-local-log-hashes.json',
+            'mcp-server/dist/model-routing-host-hook.mjs',
+            'mcp-server/dist/model-routing-peer-cli.mjs',
+            'mcp-server/dist/server.mjs',
+            'mcp-server/dist/session-message-broker.mjs',
+            'mcp-server/dist/session-message-hook.mjs',
+          ]);
+          if (!Array.isArray(candidate.files) || !candidate.files.length || candidate.files.length > allowed.size) throw new Error('Invalid inventory');
+          const paths = candidate.files.map(row => row.path);
+          if (new Set(paths).size !== paths.length || paths.some(path => !allowed.has(path))) throw new Error('Path outside S1b');
+          for (const row of candidate.files) {
+            if (row.beforeBlob === null ? existsSync(row.path) : !existsSync(row.path) || git('hash-object', row.path) !== row.beforeBlob) throw new Error(`Base file differs: ${row.path}`);
+          }
+          if (hash(candidate.patch) !== candidate.patchSha256) throw new Error('Patch digest mismatch');
+          const patch = join(process.env.RUNNER_TEMP, 's1b-checked.patch');
+          writeFileSync(patch, candidate.patch);
+          git('apply', '--check', '--index', patch);
+          git('apply', '--index', patch);
+          // Build generated files from the same frozen dependencies as the local candidate.
+          execFileSync('pnpm', ['build'], { stdio: 'inherit' });
+          for (const row of candidate.files) {
+            if (hash(readFileSync(row.path)) !== row.sha256) throw new Error(`Applied bytes differ: ${row.path}`);
+          }
+          unlinkSync(file);
+          git('add', '--', ...paths);
+          git('add', '-u', '--', file);
+          if (git('write-tree') !== candidate.expectedTree) throw new Error('Unexpected tree or unlisted change');
+          const out = join(process.env.RUNNER_TEMP, 's1b-evidence');
+          writeFileSync(join(out, 'expected-tree.txt'), candidate.expectedTree + '\n');
+          writeFileSync(join(out, 'candidate-manifest.json'), JSON.stringify({ ...candidate, patch: undefined }, null, 2) + '\n');
+          NODE
+      - name: Verify candidate and preserve every exit code
+        if: contains(github.event.head_commit.message, '[apply-semantic-s1b]')
+        shell: bash
+        run: |
+          set +e
+          out="$RUNNER_TEMP/s1b-evidence"
+          git write-tree > "$out/verification-tree.txt"
+          run_check() {
+            name="$1"; shift
+            timeout 600 "$@" > "$out/$name.log" 2>&1
+            printf '%s\t%s\n' "$name" "$?" | tee -a "$out/results.tsv"
+          }
+          run_check bundle-before pnpm bundle:check
+          run_check claude-drift pnpm claude:drift
+          run_check lint pnpm lint
+          run_check build pnpm build
+          run_check contracts pnpm exec vitest run tests/coordinate-subagents/semantic-decision tests/coordinate-subagents/model-routing-v2/contracts.test.mjs
+          run_check focused pnpm exec vitest run tests/coordinate-subagents/model-routing-v2 tests/coordinate-subagents/semantic-decision tests/mcp/model-routing-service.test.ts tests/mcp/model-routing-workflow.test.mjs tests/mcp/model-routing-host-hook.test.mjs tests/mcp/session-model-capabilities.test.mjs tests/mcp/model-peer-handoff.test.mjs tests/mcp/model-peer-preflight.test.mjs tests/mcp/model-peer-start.test.mjs tests/runtime/runtime-smoke.test.mjs
+          run_check full pnpm test
+          run_check runtime pnpm runtime:check
+          run_check validate-all pnpm validate:all
+          run_check validate-official pnpm validate:official
+          run_check source pnpm source:check
+          run_check bundle-after pnpm bundle:check
+          run_check diff-check bash -c 'git diff --check && git diff --cached --check'
+          git status --porcelain=v1 > "$out/status-after.txt"
+          git diff --binary > "$out/unstaged.patch"
+      - name: Fast-forward only the exact checked feature branch
+        if: contains(github.event.head_commit.message, '[apply-semantic-s1b]')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/s1b-evidence"
+          [ "$(wc -l < "$out/results.tsv")" = 13 ]
+          awk -F '\t' '$1 != "validate-official" && $2 != 0 {failed=1} END {exit failed}' "$out/results.tsv"
+          official=$(awk -F '\t' '$1 == "validate-official" {print $2}' "$out/results.tsv")
+          if [ "$official" != 0 ]; then
+            grep -q 'ENOENT' "$out/validate-official.log"
+            grep -q '/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py' "$out/validate-official.log"
+          fi
+          [ "$(git write-tree)" = "$(cat "$out/expected-tree.txt")" ]
+          git diff --exit-code
+          target=refs/heads/codex/v260-semantic-decision-layer
+          [ "$(git ls-remote origin "$target" | cut -f1)" = "$SOURCE_SHA" ]
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'refactor: extract pure v2 candidate filtering and baseline ranking'
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth" git push origin "HEAD:$target"
+          git rev-parse HEAD > "$out/final-commit.txt"
+          git rev-parse 'HEAD^{tree}' > "$out/final-tree.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semantic-s1b-evidence-${{ github.sha }}
+          path: ${{ runner.temp }}/s1b-evidence/
+          retention-days: 14
+      - name: Report all nonzero checks including unavailable official validation
+        if: always() && contains(github.event.head_commit.message, '[apply-semantic-s1b]')
+        shell: bash
+        run: |
+          test -f "$RUNNER_TEMP/s1b-evidence/results.tsv"
+          awk -F '\t' '$2 != 0 {failed=1} END {exit failed}' "$RUNNER_TEMP/s1b-evidence/results.tsv"
