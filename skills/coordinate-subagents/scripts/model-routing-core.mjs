@@ -230,8 +230,13 @@ function belowModelMinimum(binding, model, policy) {
 function selectionFrom(binding) { return Object.fromEntries(['model', 'resolvedModel', 'modelOrigin', 'servingProvider', 'accessPath', 'nativeReasoning', 'runtimeMode'].map(k => [k, structuredClone(binding[k])])); }
 function lexical(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
 
-/** dependencies are caller-supplied *server owned* snapshots, not request authority. */
-export function resolveV2(request, { catalog, policy, capabilities, now }) {
+/**
+ * Pure hard-filter projection of caller-supplied *server owned* snapshots.
+ * Returned candidates retain their exact model/host/native-control binding; they
+ * are detached data, not admission receipts or execution authority. The digest
+ * covers all structurally valid snapshots, including expired/rejected ones.
+ */
+export function collectEligibleCandidatesV2(request, { catalog, policy, capabilities, now }) {
   validateRequest(request); validateCatalog(catalog); validatePolicy(policy);
   const nowMs = instant(now, 'now');
   assert(Array.isArray(capabilities) && capabilities.length <= 256, 'INVALID_INPUT', 'Capability list too large');
@@ -280,6 +285,19 @@ export function resolveV2(request, { catalog, policy, capabilities, now }) {
       if (reason.length) reject(key, reason); else candidates.push(candidate);
     }
   }
+  return structuredClone({
+    candidates: candidates.sort((a, b) => lexical(a.key, b.key)),
+    rejectedCandidates: rejectedCandidates.sort((a, b) => lexical(a.candidateKey, b.candidateKey)),
+    capabilitySetDigest: digest(validSnapshotDigests.sort()),
+  });
+}
+
+/**
+ * Pure legacy ordering of already-eligible candidates from the same request and
+ * environment. This is not an eligibility validator: callers must collect again
+ * when inputs change. No model score creates a host binding or native setting.
+ */
+export function rankBaselineCandidatesV2(candidates, request, { catalog, policy }) {
   const profile = request.profile ?? 'balanced';
   const seed = policy.profileOrder[profile][request.role];
   const traitSeed = [...new Set((request.taskTraits ?? []).slice().sort().flatMap(t => policy.traitOrder[t] ?? []))];
@@ -290,19 +308,25 @@ export function resolveV2(request, { catalog, policy, capabilities, now }) {
     const controlRank = controls.findIndex(c => canonical(c) === canonical(candidate.binding.nativeReasoning));
     return [preferred, position(traitSeed), position(seed), controlRank < 0 ? controls.length : controlRank, candidate.key];
   }
-  candidates.sort((a, b) => { const x = rank(a), y = rank(b); for (let i = 0; i < 4; i++) if (x[i] !== y[i]) return x[i] - y[i]; return lexical(x[4], y[4]); });
-  const candidate = candidates[0];
+  return structuredClone(candidates).sort((a, b) => { const x = rank(a), y = rank(b); for (let i = 0; i < 4; i++) if (x[i] !== y[i]) return x[i] - y[i]; return lexical(x[4], y[4]); });
+}
+
+/** dependencies are caller-supplied *server owned* snapshots, not request authority. */
+export function resolveV2(request, environment) {
+  const { catalog, policy } = environment;
+  const { candidates, rejectedCandidates, capabilitySetDigest } = collectEligibleCandidatesV2(request, environment);
+  const [candidate] = rankBaselineCandidatesV2(candidates, request, environment);
   const fallback = candidate && request.user?.strength === 'preferred' && !matchesPreference(candidate, request.user, catalog) ? 'PREFERRED_CHOICE_UNAVAILABLE' : null;
   return seal({
     schemaVersion: '2.0.0', binding: structuredClone(request.binding), requestDigest: digest(request),
-    catalogDigest: catalog.catalogDigest, policyDigest: digest(policy), capabilitySetDigest: digest(validSnapshotDigests.sort()),
+    catalogDigest: catalog.catalogDigest, policyDigest: digest(policy), capabilitySetDigest,
     capabilitySnapshotDigest: candidate?.snapshot.snapshotDigest ?? null,
     requested: structuredClone(request.user ?? null), selected: candidate ? selectionFrom(candidate.binding) : null,
     target: candidate ? Object.fromEntries(TARGET_KEYS.map(k => [k, candidate.snapshot[k]])) : null,
     invocationSurface: candidate?.binding.invocationSurface ?? null,
     status: candidate ? 'selected' : 'blocked', executionAuthorized: false, trustedGateSatisfied: false,
     selectionReasonCodes: candidate ? [fallback ?? 'REVIEWED_SEED_AND_CAPABILITY_MATCH'] : [request.user?.strength === 'required' ? 'REQUIRED_CHOICE_UNAVAILABLE' : 'NO_ELIGIBLE_CANDIDATE'],
-    rejectedCandidates: rejectedCandidates.sort((a, b) => lexical(a.candidateKey, b.candidateKey)), fallbackReason: fallback,
+    rejectedCandidates, fallbackReason: fallback,
   }, 'decisionDigest');
 }
 

@@ -17807,7 +17807,7 @@ function selectionFrom(binding2) {
 function lexical(a, b2) {
   return a < b2 ? -1 : a > b2 ? 1 : 0;
 }
-function resolveV2(request, { catalog, policy, capabilities, now }) {
+function collectEligibleCandidatesV2(request, { catalog, policy, capabilities, now }) {
   validateRequest(request);
   validateCatalog(catalog);
   validatePolicy(policy);
@@ -17859,28 +17859,39 @@ function resolveV2(request, { catalog, policy, capabilities, now }) {
       if (req.excludedActors.includes(snapshot.actorId) || req.excludedSessions.includes(`${snapshot.host}/${snapshot.sessionId}`)) reason.push("INDEPENDENCE_CONFLICT");
       if (request.highRisk && (!legacyFloor(b2, snapshot.host, m, policy) || snapshot.source === "configuration" || !["model", "reasoning", "runtimeMode"].every((f) => b2.observableFields.includes(f)))) reason.push("HIGH_RISK_FLOOR_UNPROVEN");
       if (req.contextMode === "full-history" && policy.fullHistoryInheritanceHosts.includes(snapshot.host)) reason.push("FULL_HISTORY_REQUIRES_LEGACY_INHERITANCE");
-      const candidate2 = { key, model: m, snapshot, binding: b2 };
-      if (request.user?.strength === "required" && !matchesPreference(candidate2, request.user, catalog)) reason.push("REQUIRED_CHOICE_UNAVAILABLE");
+      const candidate = { key, model: m, snapshot, binding: b2 };
+      if (request.user?.strength === "required" && !matchesPreference(candidate, request.user, catalog)) reason.push("REQUIRED_CHOICE_UNAVAILABLE");
       if (reason.length) reject(key, reason);
-      else candidates.push(candidate2);
+      else candidates.push(candidate);
     }
   }
+  return structuredClone({
+    candidates: candidates.sort((a, b2) => lexical(a.key, b2.key)),
+    rejectedCandidates: rejectedCandidates.sort((a, b2) => lexical(a.candidateKey, b2.candidateKey)),
+    capabilitySetDigest: digest(validSnapshotDigests.sort())
+  });
+}
+function rankBaselineCandidatesV2(candidates, request, { catalog, policy }) {
   const profile = request.profile ?? "balanced";
   const seed = policy.profileOrder[profile][request.role];
   const traitSeed = [...new Set((request.taskTraits ?? []).slice().sort().flatMap((t) => policy.traitOrder[t] ?? []))];
-  function rank(candidate2) {
-    const preferred = matchesPreference(candidate2, request.user, catalog) ? 0 : 1;
-    const position = (a) => a.includes(candidate2.model.id) ? a.indexOf(candidate2.model.id) : a.length;
-    const controls = policy.controlOrder.find((r) => r.host === candidate2.snapshot.host && r.role === request.role && r.profile === profile)?.controls ?? [];
-    const controlRank = controls.findIndex((c) => canonical(c) === canonical(candidate2.binding.nativeReasoning));
-    return [preferred, position(traitSeed), position(seed), controlRank < 0 ? controls.length : controlRank, candidate2.key];
+  function rank(candidate) {
+    const preferred = matchesPreference(candidate, request.user, catalog) ? 0 : 1;
+    const position = (a) => a.includes(candidate.model.id) ? a.indexOf(candidate.model.id) : a.length;
+    const controls = policy.controlOrder.find((r) => r.host === candidate.snapshot.host && r.role === request.role && r.profile === profile)?.controls ?? [];
+    const controlRank = controls.findIndex((c) => canonical(c) === canonical(candidate.binding.nativeReasoning));
+    return [preferred, position(traitSeed), position(seed), controlRank < 0 ? controls.length : controlRank, candidate.key];
   }
-  candidates.sort((a, b2) => {
+  return structuredClone(candidates).sort((a, b2) => {
     const x = rank(a), y2 = rank(b2);
     for (let i = 0; i < 4; i++) if (x[i] !== y2[i]) return x[i] - y2[i];
     return lexical(x[4], y2[4]);
   });
-  const candidate = candidates[0];
+}
+function resolveV2(request, environment) {
+  const { catalog, policy } = environment;
+  const { candidates, rejectedCandidates, capabilitySetDigest } = collectEligibleCandidatesV2(request, environment);
+  const [candidate] = rankBaselineCandidatesV2(candidates, request, environment);
   const fallback = candidate && request.user?.strength === "preferred" && !matchesPreference(candidate, request.user, catalog) ? "PREFERRED_CHOICE_UNAVAILABLE" : null;
   return seal({
     schemaVersion: "2.0.0",
@@ -17888,7 +17899,7 @@ function resolveV2(request, { catalog, policy, capabilities, now }) {
     requestDigest: digest(request),
     catalogDigest: catalog.catalogDigest,
     policyDigest: digest(policy),
-    capabilitySetDigest: digest(validSnapshotDigests.sort()),
+    capabilitySetDigest,
     capabilitySnapshotDigest: candidate?.snapshot.snapshotDigest ?? null,
     requested: structuredClone(request.user ?? null),
     selected: candidate ? selectionFrom(candidate.binding) : null,
@@ -17898,7 +17909,7 @@ function resolveV2(request, { catalog, policy, capabilities, now }) {
     executionAuthorized: false,
     trustedGateSatisfied: false,
     selectionReasonCodes: candidate ? [fallback ?? "REVIEWED_SEED_AND_CAPABILITY_MATCH"] : [request.user?.strength === "required" ? "REQUIRED_CHOICE_UNAVAILABLE" : "NO_ELIGIBLE_CANDIDATE"],
-    rejectedCandidates: rejectedCandidates.sort((a, b2) => lexical(a.candidateKey, b2.candidateKey)),
+    rejectedCandidates,
     fallbackReason: fallback
   }, "decisionDigest");
 }

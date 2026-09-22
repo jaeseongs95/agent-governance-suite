@@ -1,0 +1,391 @@
+{
+  "algorithm": "sha256",
+  "root": "delivery evidence/local-and-baseline (outside repository)",
+  "files": [
+    {
+      "path": "baseline/build.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "baseline/bundle-after.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "baseline/bundle-before.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "baseline/catalog.log",
+      "sha256": "3caf199ee5ef24cbd7339d355965bc69c6d7db30b875478971a22aebc41886ee",
+      "bytes": 117
+    },
+    {
+      "path": "baseline/claude-drift.log",
+      "sha256": "499fa62438a541d5e2203003b42f9bfe401116a56e7a4d8c71dc9ac77fe38490",
+      "bytes": 1562
+    },
+    {
+      "path": "baseline/commands.json",
+      "sha256": "ca7a10663214dcafd19358bce047229249b9f446741a78f625527d115b95fe95",
+      "bytes": 3195
+    },
+    {
+      "path": "baseline/contracts.json",
+      "sha256": "1889476c76954fa03e50e0bed59c25686155a91ff418da3c3e44dd231ba99541",
+      "bytes": 29255
+    },
+    {
+      "path": "baseline/contracts.log",
+      "sha256": "f96b140d57bef1d9e6365e573f4d6fc55b5b244b414ef8a789a52373496322e0",
+      "bytes": 70
+    },
+    {
+      "path": "baseline/diff.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "baseline/eslint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "baseline/full.json",
+      "sha256": "fc872c359ebb8d636a74cc9e87faea59da5fcbe311cee09b3b7c2dbfaf0dd2c1",
+      "bytes": 385800
+    },
+    {
+      "path": "baseline/full.log",
+      "sha256": "24e2f63b528de0c9a0b6319d621233d551a6f63911ad58f977890ccc95d7cdc4",
+      "bytes": 5777
+    },
+    {
+      "path": "baseline/glossary.log",
+      "sha256": "af40c38fa96a2384d584a3fe45722259c710ad56cf3f6db7369cf88c93922fbe",
+      "bytes": 325
+    },
+    {
+      "path": "baseline/official.log",
+      "sha256": "c0361e61bb0aa25f6b50557e00c81e67bd4db494623d5e5c2ba100b7180206a5",
+      "bytes": 705
+    },
+    {
+      "path": "baseline/python-validations-rerun.json",
+      "sha256": "7e812d98e3db410f63662f434411419bfbc9f55f767070466932c848f6e72f26",
+      "bytes": 240
+    },
+    {
+      "path": "baseline/python-validations-rerun.log",
+      "sha256": "c657b13f6875df6a1de1f16a3bf1670a67a2a5acba68b87c74b86b558a2d263b",
+      "bytes": 502
+    },
+    {
+      "path": "baseline/python-validations.log",
+      "sha256": "790c42abe2dd9c04ab9c2e6739b520d84ef7c84949ee37048726955120f9e731",
+      "bytes": 1067
+    },
+    {
+      "path": "baseline/repository.log",
+      "sha256": "80e7d2a48d25368561703c6bbe65921d9f99fa58b5b3e2c9ccf8d76f42f8bb9d",
+      "bytes": 18
+    },
+    {
+      "path": "baseline/runtime.log",
+      "sha256": "0622bc7eb4e1f3f50a0e8f90bfc598ec13ba5a7ed072bb8b208cc6fe92cfc47e",
+      "bytes": 48
+    },
+    {
+      "path": "baseline/skill-loading.log",
+      "sha256": "baa0660346970ea4494520c89df183eaf31941e6be0321e0de75f3c0e04675b2",
+      "bytes": 145
+    },
+    {
+      "path": "baseline/source.log",
+      "sha256": "728a33f700e6eae743c9c96fd7bac27f275fd50f7aed309d8bd67c5e2ed2ce6d",
+      "bytes": 26
+    },
+    {
+      "path": "baseline/typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "baseline-progress.log",
+      "sha256": "e76279f192a84cbc6fbb37999167c437475e3c35f59292068b7d2f0263ffa396",
+      "bytes": 355
+    },
+    {
+      "path": "baseline-rerun-progress.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "differential-cases.json",
+      "sha256": "a6be7c474d5859011ff973a34d03eaa9078df58d92e7f942798f65e7287f483c",
+      "bytes": 120595
+    },
+    {
+      "path": "differential-result.json",
+      "sha256": "e315961d533298c2eb1d37a0ab19878cfcf83357f87ebad56c4f45109114eda5",
+      "bytes": 726
+    },
+    {
+      "path": "differential.mjs",
+      "sha256": "77231fc4e7260d791f8288abb4b61410903330b5054abac4424f693b84076b4d",
+      "bytes": 5708
+    },
+    {
+      "path": "final-eslint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "final-repository.log",
+      "sha256": "80e7d2a48d25368561703c6bbe65921d9f99fa58b5b3e2c9ccf8d76f42f8bb9d",
+      "bytes": 18
+    },
+    {
+      "path": "first-golden.log",
+      "sha256": "d44ba4db4c5377bab58a65ad68accbf30a0e34610611d55d5281182b7a533fd6",
+      "bytes": 619
+    },
+    {
+      "path": "implementation/build.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "implementation/bundle-after.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "implementation/bundle-before.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "implementation/catalog.log",
+      "sha256": "3caf199ee5ef24cbd7339d355965bc69c6d7db30b875478971a22aebc41886ee",
+      "bytes": 117
+    },
+    {
+      "path": "implementation/claude-drift.log",
+      "sha256": "215760a5ee09777fe593583f75e9ad469d70e392d3b33efa5c63490e4f713585",
+      "bytes": 1648
+    },
+    {
+      "path": "implementation/commands.json",
+      "sha256": "12653c7ba3190a6fbca11dd3912be0527eaec0dbd099c3b1a0f26f85ed37ccdc",
+      "bytes": 3208
+    },
+    {
+      "path": "implementation/contracts.json",
+      "sha256": "27c0cf69a4ff0efeca0554d644dbb6ba2c942227aefcc860c3e752eee829ae4e",
+      "bytes": 50350
+    },
+    {
+      "path": "implementation/contracts.log",
+      "sha256": "93edca8549c2e2a0e7ca69fb99a59c3178a98518af36a04a9ada10bae6ee5377",
+      "bytes": 76
+    },
+    {
+      "path": "implementation/diff.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "implementation/eslint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "implementation/full.json",
+      "sha256": "0cbad794d0ec15bef2066e703710a780fdad59ed5781622e9ed564e1e4d72f54",
+      "bytes": 406174
+    },
+    {
+      "path": "implementation/full.log",
+      "sha256": "5fd2d89d5a5f5866235f0c083402a5049297c26fab80f7cd2a35666b18d63610",
+      "bytes": 5798
+    },
+    {
+      "path": "implementation/glossary.log",
+      "sha256": "1ab94ed48cef39f3127321b5082c0e93007fbc2223350ca87bbd8d1e2181bd0d",
+      "bytes": 325
+    },
+    {
+      "path": "implementation/official.log",
+      "sha256": "2651663b27ec40fbf070b022dc09c70feb144dae43faeb2748c20ec93cafcfb7",
+      "bytes": 696
+    },
+    {
+      "path": "implementation/python-validations.log",
+      "sha256": "330efb04bd07fd6bde50df0a892b4873371284537bad582dac1548a8c698f229",
+      "bytes": 493
+    },
+    {
+      "path": "implementation/repository.log",
+      "sha256": "80e7d2a48d25368561703c6bbe65921d9f99fa58b5b3e2c9ccf8d76f42f8bb9d",
+      "bytes": 18
+    },
+    {
+      "path": "implementation/runtime.log",
+      "sha256": "0622bc7eb4e1f3f50a0e8f90bfc598ec13ba5a7ed072bb8b208cc6fe92cfc47e",
+      "bytes": 48
+    },
+    {
+      "path": "implementation/skill-loading.log",
+      "sha256": "baa0660346970ea4494520c89df183eaf31941e6be0321e0de75f3c0e04675b2",
+      "bytes": 145
+    },
+    {
+      "path": "implementation/source.log",
+      "sha256": "728a33f700e6eae743c9c96fd7bac27f275fd50f7aed309d8bd67c5e2ed2ce6d",
+      "bytes": 26
+    },
+    {
+      "path": "implementation/typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "implementation-progress.log",
+      "sha256": "d0aa6864838edffff7e86cdd9c6ee9415b1513e36f7452adad86656f7a3f512d",
+      "bytes": 457
+    },
+    {
+      "path": "new-tests-first.log",
+      "sha256": "0ceda9289c9bbab18cdbe58a520f80d5b8aad6dde678f3cf6850a5140bc739a8",
+      "bytes": 616
+    },
+    {
+      "path": "original-core.mjs",
+      "sha256": "d96388920c0f63063a2519425b39f2ad2ee04954269983fd25d60b18d5397f41",
+      "bytes": 34727
+    },
+    {
+      "path": "remote-baseline/build.log",
+      "sha256": "0160a3e8b2f7d1c2c7c5e4b5f891d930d6f869b19a0a9485ed014bfb144d3da4",
+      "bytes": 94
+    },
+    {
+      "path": "remote-baseline/bundle-after.log",
+      "sha256": "140d9a66d4fd73d9e90b1689d23bf23c68fbe54f705ceb797988a70fa6ebc5d9",
+      "bytes": 85
+    },
+    {
+      "path": "remote-baseline/bundle-before.log",
+      "sha256": "7af20a65e7aec133669a3a6a55b623338758034cd6298ef545da3f0f0465f56f",
+      "bytes": 85
+    },
+    {
+      "path": "remote-baseline/bundle-initial.log",
+      "sha256": "140d9a66d4fd73d9e90b1689d23bf23c68fbe54f705ceb797988a70fa6ebc5d9",
+      "bytes": 85
+    },
+    {
+      "path": "remote-baseline/claude-drift.log",
+      "sha256": "bb093581f5a3e16df03b60bbf88d5f564e29d8308e99b7398bb5aa1f7d9c0607",
+      "bytes": 1690
+    },
+    {
+      "path": "remote-baseline/contracts.log",
+      "sha256": "adef685f70e1e8e734b51416bf696ef83cca42f5b56618ac4ea3aa2de5c18f7a",
+      "bytes": 1364
+    },
+    {
+      "path": "remote-baseline/diff-check.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "remote-baseline/focused.log",
+      "sha256": "bd175ace834bf83c23e778cec9489b7c2a7c9a33da3a53472e05bee7c3b0d6e0",
+      "bytes": 30751
+    },
+    {
+      "path": "remote-baseline/full.log",
+      "sha256": "ddae1ef1c6fb46bcc693699848b2cc6bb765f86c76d89c9474e1411e916e583c",
+      "bytes": 79380
+    },
+    {
+      "path": "remote-baseline/lint.log",
+      "sha256": "04ce21a1dc204d2f83120561f84893335d8961dd6a2559efe7a839ec008f3306",
+      "bytes": 122
+    },
+    {
+      "path": "remote-baseline/node.txt",
+      "sha256": "c42fcf0db5a550bda2f566fcdc21955df3e5a8ec3aeb90ac533f3776e7fce32a",
+      "bytes": 9
+    },
+    {
+      "path": "remote-baseline/os.txt",
+      "sha256": "304b2da1acb50873067f72c7ff2aa0940963426a8b023c07c072675b28aab35d",
+      "bytes": 113
+    },
+    {
+      "path": "remote-baseline/pnpm.txt",
+      "sha256": "005206ab803f8881d8227540b7980b37e723b69a8849edb31734a90b7e7964e2",
+      "bytes": 8
+    },
+    {
+      "path": "remote-baseline/results.tsv",
+      "sha256": "cf692ae9d4b09ffca3a05aa7b0ca1db1168199b9b1a7163ce331879d258d2212",
+      "bytes": 157
+    },
+    {
+      "path": "remote-baseline/runtime.log",
+      "sha256": "ccba5271cfc41f1b1f4f57cf7b51305d8786c6e1aa9230319201b83986e76b96",
+      "bytes": 134
+    },
+    {
+      "path": "remote-baseline/source.log",
+      "sha256": "3dcc38727810bc1f57714778bb70e7452f1cdf1c9227a3d3c5218f4504bb6625",
+      "bytes": 116
+    },
+    {
+      "path": "remote-baseline/status-after.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "remote-baseline/status-initial.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "remote-baseline/trigger-commit.txt",
+      "sha256": "9f9502611b3aa65426eaf7cca7ea44d1de7188586f5871caee1c824d294f7795",
+      "bytes": 41
+    },
+    {
+      "path": "remote-baseline/trigger-tree.txt",
+      "sha256": "2b1115c88fadb881062a1ca5ae8160dd35abf287c797a3e6e87ce68f4afc0499",
+      "bytes": 41
+    },
+    {
+      "path": "remote-baseline/validate-all.log",
+      "sha256": "2c3a7625311a33ed1819b3c0a6120c3764b47b81e724a65a22457216a4d6a007",
+      "bytes": 1451
+    },
+    {
+      "path": "remote-baseline/validate-official.log",
+      "sha256": "b251ce60265ddc06c2fc8a6b56f1f613bd73687df1eb699e612971f7e68de20a",
+      "bytes": 884
+    },
+    {
+      "path": "remote-baseline/verification-tree.txt",
+      "sha256": "2b1115c88fadb881062a1ca5ae8160dd35abf287c797a3e6e87ce68f4afc0499",
+      "bytes": 41
+    },
+    {
+      "path": "untouched-bundle.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ]
+}

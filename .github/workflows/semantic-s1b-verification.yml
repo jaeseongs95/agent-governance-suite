@@ -69,24 +69,10 @@ jobs:
           if (raw.length > 128 * 1024) throw new Error('Oversized envelope');
           const envelope = JSON.parse(raw);
           if (envelope.encoding !== 'brotli-base64' || typeof envelope.data !== 'string' || !/^[A-Za-z0-9+/=]+$/.test(envelope.data)) throw new Error('Invalid encoding');
-          const candidateBlob = git('hash-object', file);
-          const damagedBlob = '6d5fd9f53307d86165692985ce7d426b4179e632';
-          const repairMarker = 'AKcgJ8eII';
-          const repairedMarker = 'AKcgJx8eII';
-          let repairedTransport = false;
-          if (candidateBlob === damagedBlob) {
-            const occurrences = envelope.data.split(repairMarker).length - 1;
-            if (occurrences !== 1) throw new Error('Known transport corruption is not uniquely repairable');
-            envelope.data = envelope.data.replace(repairMarker, repairedMarker);
-            repairedTransport = true;
-          }
-          const compressed = Buffer.from(envelope.data, 'base64');
-          const bytes = brotliDecompressSync(compressed, { maxOutputLength: 4 * 1024 * 1024 });
+          const bytes = brotliDecompressSync(Buffer.from(envelope.data, 'base64'), { maxOutputLength: 4 * 1024 * 1024 });
           if (hash(bytes) !== envelope.sha256) throw new Error('Payload digest mismatch');
           const candidate = JSON.parse(bytes);
-          const directBase = git('rev-parse', 'HEAD^');
-          const repairBase = repairedTransport ? git('rev-parse', 'HEAD^^') : null;
-          if (candidate.format !== 'ags-checked-source-patch.v1' || (candidate.baseCommit !== directBase && candidate.baseCommit !== repairBase)) throw new Error('Candidate base moved');
+          if (candidate.format !== 'ags-checked-source-patch.v1' || git('rev-parse', 'HEAD^') !== candidate.baseCommit) throw new Error('Candidate base moved');
           if (process.env.GITHUB_REF !== 'refs/heads/codex/v260-semantic-decision-layer') throw new Error('Wrong branch');
           const allowed = new Set([
             'skills/coordinate-subagents/scripts/model-routing-core.mjs',
@@ -121,9 +107,6 @@ jobs:
           unlinkSync(file);
           git('add', '--', ...paths);
           git('add', '-u', '--', file);
-          if (repairedTransport) {
-            execFileSync('git', ['checkout', candidate.baseCommit, '--', '.github/workflows/semantic-s1b-verification.yml'], { stdio: 'inherit' });
-          }
           if (git('write-tree') !== candidate.expectedTree) throw new Error('Unexpected tree or unlisted change');
           const out = join(process.env.RUNNER_TEMP, 's1b-evidence');
           writeFileSync(join(out, 'expected-tree.txt'), candidate.expectedTree + '\n');

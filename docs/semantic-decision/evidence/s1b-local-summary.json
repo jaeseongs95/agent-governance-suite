@@ -1,0 +1,510 @@
+{
+  "phase": "S1b",
+  "status": "local-checks-complete; remote-candidate-verification-required",
+  "branch": "codex/v260-semantic-decision-layer",
+  "originalCommit": "d52afb6f3f982def9bd010a339d6118b72317c07",
+  "verificationSupportCommit": "30f244d6b170058faab84c3613d4aae10db53ef7",
+  "verificationSupportTree": "18875ddf328faab899d9298bf5ebc21828561558",
+  "environment": {
+    "node": "v22.16.0",
+    "platform": "Linux",
+    "pnpm": "not installed; direct node entrypoints used",
+    "dependencies": "Physically copied from verified frozen pnpm 11.19.0 CI prebuild artifact 10672904674; pnpm install not executed locally."
+  },
+  "sourceAcquisition": {
+    "directGitHubClone": "DNS failure",
+    "gitHistory": "Real Git bundle from current-session bootstrap artifact 10674434249; commit/tree and archive hashes verified; not synthetic history",
+    "userPcModified": false
+  },
+  "untouchedBundleBeforeAnyImplementation": {
+    "command": [
+      "node",
+      "scripts/check-bundle.mjs"
+    ],
+    "exitCode": 0,
+    "log": "untouched-bundle.log"
+  },
+  "baseline": {
+    "full": {
+      "passed": 1081,
+      "failed": 4,
+      "skipped": 1,
+      "failureNames": [
+        {
+          "file": "tests/mcp/convergence-guard.test.ts",
+          "name": "local MCP convergence guard allows only one competing lease claim across two SQLite connections"
+        },
+        {
+          "file": "tests/mcp/convergence-guard.test.ts",
+          "name": "local MCP convergence guard allows only one trusted observation claim across two SQLite connections"
+        },
+        {
+          "file": "tests/session-messaging/session-message.test.ts",
+          "name": "session message spool allows one wake claim across two concurrent SQLite connections"
+        },
+        {
+          "file": "tests/tooling/commands.test.mjs",
+          "name": "skill maintenance commands forwards pnpm script arguments without a standalone separator"
+        }
+      ]
+    },
+    "contracts": {
+      "passed": 101,
+      "failed": 0,
+      "skipped": 0,
+      "failureNames": []
+    },
+    "commands": [
+      {
+        "check": "bundle-before",
+        "command": [
+          "node",
+          "scripts/check-bundle.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.417
+      },
+      {
+        "check": "claude-drift",
+        "command": [
+          "node",
+          "scripts/build-claude-plugin.mjs",
+          "--drift"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.214
+      },
+      {
+        "check": "typecheck",
+        "command": [
+          "node",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 3.663
+      },
+      {
+        "check": "eslint",
+        "command": [
+          "node",
+          "node_modules/eslint/bin/eslint.js",
+          "."
+        ],
+        "exitCode": 0,
+        "durationSeconds": 6.45
+      },
+      {
+        "check": "repository",
+        "command": [
+          "node",
+          "scripts/validate-repository.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.465
+      },
+      {
+        "check": "build",
+        "command": [
+          "node",
+          "scripts/build.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.365
+      },
+      {
+        "check": "contracts",
+        "command": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "tests/coordinate-subagents/semantic-decision",
+          "tests/coordinate-subagents/model-routing-v2/contracts.test.mjs",
+          "--reporter=json",
+          "--outputFile=/mnt/data/s1b-evidence/baseline/contracts.json"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 2.195
+      },
+      {
+        "check": "full",
+        "command": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--reporter=json",
+          "--outputFile=/mnt/data/s1b-evidence/baseline/full.json"
+        ],
+        "exitCode": 1,
+        "durationSeconds": 226.553
+      },
+      {
+        "check": "runtime",
+        "command": [
+          "node",
+          "scripts/check-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 9.878
+      },
+      {
+        "check": "python-validations",
+        "command": [
+          "node",
+          "scripts/run-python-validations.mjs"
+        ],
+        "exitCode": 1,
+        "durationSeconds": 68.092
+      },
+      {
+        "check": "glossary",
+        "command": [
+          "node",
+          "node_modules/tsx/dist/cli.mjs",
+          "scripts/korean-prose-glossary.ts",
+          "--mode",
+          "check"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.467
+      },
+      {
+        "check": "skill-loading",
+        "command": [
+          "node",
+          "scripts/check-skill-loading-contract.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.132
+      },
+      {
+        "check": "catalog",
+        "command": [
+          "node",
+          "skills/coordinate-subagents/scripts/model-catalog.mjs",
+          "validate"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.115
+      },
+      {
+        "check": "official",
+        "command": [
+          "node",
+          "scripts/validate-official.mjs"
+        ],
+        "exitCode": 1,
+        "durationSeconds": 0.065
+      },
+      {
+        "check": "source",
+        "command": [
+          "node",
+          "scripts/check-source-lock.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.172
+      },
+      {
+        "check": "bundle-after",
+        "command": [
+          "node",
+          "scripts/check-bundle.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.826
+      },
+      {
+        "check": "diff",
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.065
+      }
+    ],
+    "pythonValidationRerun": {
+      "command": [
+        "node",
+        "scripts/run-python-validations.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 51.507,
+      "reason": "Sequential rerun after baseline timeout under concurrent local full regression; initial log preserved."
+    }
+  },
+  "implementation": {
+    "full": {
+      "passed": 1156,
+      "failed": 4,
+      "skipped": 1,
+      "failureNames": [
+        {
+          "file": "tests/mcp/convergence-guard.test.ts",
+          "name": "local MCP convergence guard allows only one competing lease claim across two SQLite connections"
+        },
+        {
+          "file": "tests/mcp/convergence-guard.test.ts",
+          "name": "local MCP convergence guard allows only one trusted observation claim across two SQLite connections"
+        },
+        {
+          "file": "tests/session-messaging/session-message.test.ts",
+          "name": "session message spool allows one wake claim across two concurrent SQLite connections"
+        },
+        {
+          "file": "tests/tooling/commands.test.mjs",
+          "name": "skill maintenance commands forwards pnpm script arguments without a standalone separator"
+        }
+      ]
+    },
+    "contracts": {
+      "passed": 176,
+      "failed": 0,
+      "skipped": 0,
+      "failureNames": []
+    },
+    "newVitestTests": 75,
+    "commands": [
+      {
+        "check": "bundle-before",
+        "command": [
+          "node",
+          "scripts/check-bundle.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.519
+      },
+      {
+        "check": "claude-drift",
+        "command": [
+          "node",
+          "scripts/build-claude-plugin.mjs",
+          "--drift"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.215
+      },
+      {
+        "check": "typecheck",
+        "command": [
+          "node",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 3.612
+      },
+      {
+        "check": "eslint",
+        "command": [
+          "node",
+          "node_modules/eslint/bin/eslint.js",
+          "."
+        ],
+        "exitCode": 0,
+        "durationSeconds": 7.033
+      },
+      {
+        "check": "repository",
+        "command": [
+          "node",
+          "scripts/validate-repository.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.467
+      },
+      {
+        "check": "build",
+        "command": [
+          "node",
+          "scripts/build.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.415
+      },
+      {
+        "check": "contracts",
+        "command": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "tests/coordinate-subagents/semantic-decision",
+          "tests/coordinate-subagents/model-routing-v2/contracts.test.mjs",
+          "--reporter=json",
+          "--outputFile=/mnt/data/s1b-evidence/implementation/contracts.json"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 3.186
+      },
+      {
+        "check": "full",
+        "command": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--reporter=json",
+          "--outputFile=/mnt/data/s1b-evidence/implementation/full.json"
+        ],
+        "exitCode": 1,
+        "durationSeconds": 241.041
+      },
+      {
+        "check": "runtime",
+        "command": [
+          "node",
+          "scripts/check-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 6.136
+      },
+      {
+        "check": "python-validations",
+        "command": [
+          "node",
+          "scripts/run-python-validations.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 51.326
+      },
+      {
+        "check": "glossary",
+        "command": [
+          "node",
+          "node_modules/tsx/dist/cli.mjs",
+          "scripts/korean-prose-glossary.ts",
+          "--mode",
+          "check"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.268
+      },
+      {
+        "check": "skill-loading",
+        "command": [
+          "node",
+          "scripts/check-skill-loading-contract.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.064
+      },
+      {
+        "check": "catalog",
+        "command": [
+          "node",
+          "skills/coordinate-subagents/scripts/model-catalog.mjs",
+          "validate"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.064
+      },
+      {
+        "check": "official",
+        "command": [
+          "node",
+          "scripts/validate-official.mjs"
+        ],
+        "exitCode": 1,
+        "durationSeconds": 0.032
+      },
+      {
+        "check": "source",
+        "command": [
+          "node",
+          "scripts/check-source-lock.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.114
+      },
+      {
+        "check": "bundle-after",
+        "command": [
+          "node",
+          "scripts/check-bundle.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.365
+      },
+      {
+        "check": "diff",
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.066
+      }
+    ]
+  },
+  "localFailureComparison": {
+    "identicalFailureNames": true,
+    "workerTsFailures": 3,
+    "pnpmContextFailures": 1,
+    "notes": "Node v22.16.0 worker .ts execution and missing npm_execpath; no tests were changed or skipped to hide failures. Initial baseline-only Python validator timeout occurred while local suites ran concurrently; sequential rerun passed and both logs are retained."
+  },
+  "golden": {
+    "path": "tests/coordinate-subagents/semantic-decision/fixtures/v2-golden.json",
+    "cases": 21,
+    "expectedChanged": false,
+    "sha256": "6e6ab050a229b4ae9aeb2e767722f69498a873bed02a3854c4e351c13749d54f"
+  },
+  "independentDifferential": {
+    "seed": 1729,
+    "cases": 512,
+    "passed": 512,
+    "failed": 0,
+    "counts": {
+      "INVALID_INPUT": 36,
+      "blocked": 386,
+      "selected": 90
+    },
+    "originalCommit": "d52afb6f3f982def9bd010a339d6118b72317c07",
+    "originalCoreSha256": "d96388920c0f63063a2519425b39f2ad2ee04954269983fd25d60b18d5397f41",
+    "currentCoreSha256": "929927cf5ac1fb17dce820950c55c99e67d203a658c62da48cd763059e1225c0",
+    "recordAndDispatchSourceByteIdentical": true,
+    "coverage": "Deterministic offline differential cases; full serialized/canonical/digest or exception identity. Not live/provider evaluation.",
+    "casesDigest": "sha256:292fba11b7b064cd023b6ceebb9a28a8023f562a1b848bed4c657b1431e7f0fc",
+    "nowFixture": "2026-09-21T12:00:00.000Z"
+  },
+  "remoteBaselineThisSession": {
+    "commit": "30f244d6b170058faab84c3613d4aae10db53ef7",
+    "runId": 35682540580,
+    "artifactId": 10675501748,
+    "artifactSha256": "451beafc051e3fcb4faeab542d85f145d17aa593df2ce03a1edc19569b54c15d",
+    "full": {
+      "passed": 1085,
+      "failed": 0,
+      "skipped": 1
+    },
+    "focused": {
+      "passed": 484,
+      "failed": 0
+    },
+    "contracts": {
+      "passed": 101,
+      "failed": 0
+    },
+    "results": {
+      "bundle-before": 0,
+      "claude-drift": 0,
+      "lint": 0,
+      "build": 0,
+      "contracts": 0,
+      "focused": 0,
+      "full": 0,
+      "runtime": 0,
+      "validate-all": 0,
+      "validate-official": 1,
+      "source": 0,
+      "bundle-after": 0,
+      "diff-check": 0
+    }
+  },
+  "limitations": [
+    "Official validator absent (ENOENT), not passed locally or on remote baseline.",
+    "Candidate remote verification is not represented by the baseline counts.",
+    "No live/provider API, quality measurement, Windows matrix, release, install, semantic activation or S1c/S2 implementation."
+  ]
+}

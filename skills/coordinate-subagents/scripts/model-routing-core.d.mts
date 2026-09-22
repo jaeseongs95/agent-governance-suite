@@ -1,4 +1,4 @@
-/** Declarations for the existing pure v2 core; no runtime behavior is changed. */
+/** Declarations for the pure v2 core and its internal, non-authorizing projections. */
 import type {
   HostModelCapabilitiesV1, ModelCatalogV1, ModelRoutingPolicyV1,
   ModelSelectionRequestV2, ModelRoutingDecisionV2, ModelApplicationRequestV2,
@@ -40,6 +40,25 @@ export declare function legacyFloor(
   model: ModelCatalogV1["models"][number] | undefined,
   policy: ModelRoutingPolicyV1,
 ): boolean;
+/** Internal data only; not a wire contract, admission receipt, or host observation. */
+export type EligibleCandidateV2 = {
+  key: string;
+  model: ModelCatalogV1["models"][number];
+  snapshot: HostModelCapabilitiesV1;
+  binding: HostModelCapabilitiesV1["supportedBindings"][number];
+};
+export type EligibleCandidatesV2 = {
+  candidates: EligibleCandidateV2[];
+  rejectedCandidates: ModelRoutingDecisionV2["rejectedCandidates"];
+  capabilitySetDigest: ModelRoutingDecisionV2["capabilitySetDigest"];
+};
+export declare function collectEligibleCandidatesV2(request: ModelSelectionRequestV2, environment: RoutingEnvironmentV2): EligibleCandidatesV2;
+/** Reorders a detached copy; does not validate or admit caller-made candidates. */
+export declare function rankBaselineCandidatesV2(
+  candidates: readonly EligibleCandidateV2[],
+  request: ModelSelectionRequestV2,
+  environment: Pick<RoutingEnvironmentV2, "catalog" | "policy">,
+): EligibleCandidateV2[];
 export declare function resolveV2(request: ModelSelectionRequestV2, environment: RoutingEnvironmentV2): ModelRoutingDecisionV2;
 export declare function revalidateDispatch(request: ModelSelectionRequestV2, decision: ModelRoutingDecisionV2, environment: RoutingEnvironmentV2 & { presence: { host: string; sessionId: string; instanceId: string; state: string; leaseUntil: string } }): { decisionDigest: string; preflight: "current"; executionAuthorized: false };
 export declare function recordV2(input: ModelApplicationRequestV2, environment: RoutingEnvironmentV2 & {
