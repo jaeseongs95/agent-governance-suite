@@ -1,0 +1,160 @@
+name: Verify atomic peer execution start claim
+
+on:
+  push:
+    branches: [codex/v250-model-routing-integration]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: contains(github.event.head_commit.message, '[verify-peer-start]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      BASE_SHA: 07e8794f3ff7d24cf21d2754e24009bf30ed9b5b
+      PARENT_SHA: e3f194f62a682e6af033e37137d2087e2bc47079
+      EXPECTED_TREE: 82741c276b5fe080b1961bce4329b71f062abaf2
+      PATCH_SHA256: d2543d0039ddb756c1ec2669f6ae470088f38e13569d5bf587d5fd97a8e3b61f
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify unchanged baseline before rebuilding
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PARENT_SHA"
+          test "$(git rev-parse "$BASE_SHA^{tree}")" = 548b66e34669f9223b36e448141059d4d88f8e50
+          test -z "$(git status --porcelain)"
+          corepack enable
+          pnpm install --frozen-lockfile
+          pnpm bundle:check
+      - name: Restore and validate the exact candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          import { createHash } from 'node:crypto';
+          import { brotliDecompressSync } from 'node:zlib';
+          import path from 'node:path';
+          const hashes = ['b427ba56e35597a5d83b523803a91649e22716d8','443cf1c725f1a6541f2936b6f95fe810a8e6cf2f','474ea71ea31f2255ece2033bbc01e69cb16b9912'];
+          const parts = hashes.map((hash, index) => {
+            const b = readFileSync(`.ags-delivery/peer-start-${index + 1}.brpart`);
+            if (createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${b.length}\0`), b])).digest('hex') !== hash) throw new Error('Transfer hash differs');
+            return b;
+          });
+          const patch = brotliDecompressSync(Buffer.concat(parts), { maxOutputLength: 1024 * 1024 });
+          if (createHash('sha256').update(patch).digest('hex') !== process.env.PATCH_SHA256) throw new Error('Source patch differs');
+          writeFileSync(path.join(process.env.RUNNER_TEMP, 'peer-start.patch'), patch);
+          NODE
+          git rm -- .ags-delivery/peer-start-1.brpart .ags-delivery/peer-start-2.brpart .ags-delivery/peer-start-3.brpart .github/workflows/verify-peer-start-once.yml
+          git apply --index --whitespace=error-all "$RUNNER_TEMP/peer-start.patch"
+          pnpm build
+          pnpm claude:build
+          git add -A
+          test "$(git write-tree)" = "$EXPECTED_TREE"
+          git diff --cached --check
+          pnpm bundle:check
+          pnpm claude:check
+          pnpm source:check
+          pnpm lint
+          pnpm runtime:check
+          pnpm validate:all
+      - name: Focused peer start and routing regression
+        id: focused
+        shell: bash
+        run: |
+          pnpm exec vitest run tests/coordinate-subagents/model-routing-v2 tests/mcp/model-routing-service.test.ts tests/mcp/model-routing-workflow.test.mjs tests/mcp/model-routing-host-hook.test.mjs tests/mcp/model-routing-host-install.test.mjs tests/mcp/session-model-capabilities.test.mjs tests/mcp/model-capability-exchange-install.test.mjs tests/mcp/model-peer-handoff.test.mjs tests/mcp/model-peer-install.test.mjs tests/mcp/model-peer-preflight.test.mjs tests/mcp/model-peer-start.test.mjs tests/mcp/host-attestation.test.ts tests/mcp/host-attestation-hook.test.ts tests/tooling/claude-plugin.test.mjs tests/runtime/runtime-smoke.test.mjs --maxWorkers=4 --reporter=json --outputFile="$RUNNER_TEMP/peer-start-focused.json"
+      - name: Full regression reported separately
+        id: full
+        continue-on-error: true
+        shell: bash
+        run: |
+          pnpm test --maxWorkers=4 --reporter=json --outputFile="$RUNNER_TEMP/peer-start-full.json"
+      - name: Official validator availability reported separately
+        id: official
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm validate:official 2>&1 | tee "$RUNNER_TEMP/peer-start-official.log"
+      - name: Publish immutable candidate blobs and verification manifest only
+        id: manifest
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FOCUSED_OUTCOME: ${{ steps.focused.outcome }}
+          FULL_OUTCOME: ${{ steps.full.outcome }}
+          OFFICIAL_OUTCOME: ${{ steps.official.outcome }}
+        run: |
+          set -euo pipefail
+          git add -A
+          test "$(git write-tree)" = "$EXPECTED_TREE"
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+          import { createHash } from 'node:crypto';
+          import { execFileSync } from 'node:child_process';
+          import path from 'node:path';
+          const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+          const repo = process.env.GITHUB_REPOSITORY;
+          if (repo !== 'jaeseongs95/agent-governance-suite' || process.env.GITHUB_REF !== 'refs/heads/codex/v250-model-routing-integration') throw new Error('Unexpected repository or branch');
+          const blobHash = b => createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${b.length}\0`), b])).digest('hex');
+          async function blob(bytes) {
+            const response = await fetch(`https://api.github.com/repos/${repo}/git/blobs`, {
+              method: 'POST', signal: AbortSignal.timeout(45000),
+              headers: { Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+              body: JSON.stringify({ content: bytes.toString('base64'), encoding: 'base64' }),
+            });
+            if (!response.ok) throw new Error(`Blob publication HTTP ${response.status}`);
+            const result = await response.json();
+            if (result.sha !== blobHash(bytes)) throw new Error('Published blob differs');
+            return result.sha;
+          }
+          const changed = execFileSync('git', ['diff','--cached','--name-status','--no-renames','-z',process.env.BASE_SHA], {encoding:'utf8'}).split('\0').filter(Boolean);
+          if (changed.length !== 48) throw new Error('Expected exactly 24 candidate files');
+          const entries = [];
+          for (let i=0;i<changed.length;i+=2) {
+            const status=changed[i],file=changed[i+1];
+            if (!['A','M'].includes(status) || file.startsWith('/') || file.split('/').includes('..') || file.startsWith('.ags-delivery/') || file.startsWith('.github/')) throw new Error('Unexpected source change');
+            const bytes=readFileSync(file), mode=git('ls-files','--stage','--',file).split(' ')[0];
+            if (mode !== '100644' || git('rev-parse',`:${file}`) !== blobHash(bytes)) throw new Error('Unstaged candidate bytes');
+            entries.push({path:file,mode,type:'blob',sha:await blob(bytes)});
+          }
+          function summary(file,outcome) {
+            const r=JSON.parse(readFileSync(path.join(process.env.RUNNER_TEMP,file),'utf8'));
+            return {outcome,success:r.success,total:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests};
+          }
+          const manifest={schemaVersion:1,repository:repo,branch:'codex/v250-model-routing-integration',baseCommit:process.env.BASE_SHA,
+            deliveryCommit:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,node:process.version,
+            baseTree:git('rev-parse',`${process.env.BASE_SHA}^{tree}`),expectedTree:process.env.EXPECTED_TREE,sourcePatchSha256:process.env.PATCH_SHA256,
+            focused:summary('peer-start-focused.json',process.env.FOCUSED_OUTCOME),full:summary('peer-start-full.json',process.env.FULL_OUTCOME),
+            officialValidator:{outcome:process.env.OFFICIAL_OUTCOME,log:'peer-start-official.log'},branchUpdated:false,entries};
+          const bytes=Buffer.from(JSON.stringify(manifest,null,2)+'\n');
+          writeFileSync(path.join(process.env.RUNNER_TEMP,'peer-start-manifest.json'),bytes);
+          const sha=await blob(bytes);appendFileSync(process.env.GITHUB_OUTPUT,`sha=${sha}\n`);
+          console.log(`MANIFEST_BLOB=${sha}; no tree, commit or ref was published by this job`);
+          NODE
+      - name: Verified peer start manifest ${{ steps.manifest.outputs.sha }}
+        run: echo 'The connector finalizes the exact tested tree; this workflow never moves a ref.'
+      - name: Preserve verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-start-verification-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/peer-start-focused.json
+            ${{ runner.temp }}/peer-start-full.json
+            ${{ runner.temp }}/peer-start-manifest.json
+            ${{ runner.temp }}/peer-start-official.log
+          if-no-files-found: warn
+          retention-days: 14
