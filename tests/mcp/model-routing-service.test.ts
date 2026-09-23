@@ -74,6 +74,13 @@ describe("model routing MCP facade", () => {
       expect((await call(client, "resolve_model_assignment", selectionRequest({ role: "independent-audit" }))).error?.code).toBe("INVALID_INPUT");
       const unstored = await call(client, "record_model_application", { application: applicationRequest });
       expect(unstored.error?.details).toMatchObject({ routingCode: "ROUTING_STORE_UNAVAILABLE" });
+      const v3Application = { ...applicationRequest, schemaVersion: "3.0.0", semanticAdviceDigest: digest };
+      const listed = await client.listTools();
+      const recordSchema = listed.tools.find((tool) => tool.name === "record_model_application")?.inputSchema;
+      expect(JSON.stringify(recordSchema)).toContain('"applicationV3"');
+      expect(JSON.stringify(recordSchema)).toContain('"semanticAdviceDigest"');
+      expect((await call(client, "record_model_application", { application: v3Application })).error?.details)
+        .toMatchObject({ routingCode: "ROUTING_STORE_UNAVAILABLE" });
       expect((await call(client, "record_model_application", { application: {} })).error?.code).toBe("INVALID_INPUT");
     } finally {
       await client.close();

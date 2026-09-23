@@ -184,15 +184,22 @@ const queryModelCatalogInputSchema = {
 
 // The application request keeps its own local $defs, so they move to the root of the wrapping tool schema.
 const { $defs: applicationDefinitions, ...applicationRequestSchema } = embeddedSchema(contractSchemas.modelApplicationRequestV2) as ObjectSchema & { $defs?: Record<string, unknown> };
+const v3ApplicationRequestSchema: ObjectSchema = {
+  ...structuredClone(applicationRequestSchema),
+  properties: { ...applicationRequestSchema.properties, schemaVersion: { const: "3.0.0" },
+    semanticAdviceDigest: (contractSchemas.modelApplicationRequestV3 as ObjectSchema).properties?.semanticAdviceDigest },
+  required: [...(applicationRequestSchema.required ?? []), "semanticAdviceDigest"],
+};
 const recordModelApplicationInputSchema = {
   type: "object",
   additionalProperties: false,
   required: ["application"],
   properties: {
-    application: { $ref: "#/$defs/application" },
+    application: { oneOf: [{ $ref: "#/$defs/applicationV2" }, { $ref: "#/$defs/applicationV3" }] },
     observationToken: { type: ["string", "null"], pattern: "^[a-f0-9]{48}$" },
   },
-  $defs: { ...applicationDefinitions, application: applicationRequestSchema },
+  $defs: { ...applicationDefinitions, applicationV2: applicationRequestSchema,
+    applicationV3: v3ApplicationRequestSchema },
 } as const;
 
 /** The Anthropic API rejects top-level combinators; the advertised copy drops them and the server still validates exactly. */
@@ -794,7 +801,9 @@ export function createMcpServer(
           break;
         case "record_model_application":
           try {
-            validator.modelApplicationRequestV2(args.application);
+            if ((args.application as { schemaVersion?: string } | undefined)?.schemaVersion === "3.0.0")
+              validator.modelApplicationRequestV3(args.application);
+            else validator.modelApplicationRequestV2(args.application);
             result = modelRouting.call(request.params.name, args) as ApiResultV1<unknown>;
           } catch (error) {
             result = invalidInput(error instanceof Error ? error.message : "Model application record is invalid.");

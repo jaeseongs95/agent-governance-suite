@@ -13586,11 +13586,20 @@ if (process.argv[1] && import.meta.url === pathToFileURL2(process.argv[1]).href 
 
 // skills/coordinate-subagents/scripts/model-routing-service-core.mjs
 var ModelRoutingServiceCore = class {
-  constructor({ store = null, catalogDirectory = defaultCatalogDirectory, clock = () => (/* @__PURE__ */ new Date()).toISOString(), historyProvider = null } = {}) {
+  constructor({ store = null, catalogDirectory = defaultCatalogDirectory, clock = () => (/* @__PURE__ */ new Date()).toISOString(), historyProvider = null, recordV3 = null, readRecord = null } = {}) {
     this.store = store;
     this.catalogDirectory = catalogDirectory;
     this.clock = clock;
     this.historyProvider = historyProvider;
+    this.recordV3 = recordV3;
+    this.readRecord = readRecord;
+  }
+  application(recordDigest) {
+    assert(this.store, "ROUTING_STORE_UNAVAILABLE");
+    if (this.readRecord) return this.readRecord(recordDigest);
+    const record2 = this.store.application(recordDigest);
+    assert(record2?.schemaVersion !== "3.0.0", "V3_RECORD_READER_UNAVAILABLE");
+    return record2;
   }
   query(input) {
     return queryCatalog(input, this.catalogDirectory);
@@ -13623,6 +13632,10 @@ var ModelRoutingServiceCore = class {
   record(input) {
     keys(input, ["application", "observationToken"], ["application"]);
     assert(this.store, "ROUTING_STORE_UNAVAILABLE");
+    if (input.application?.schemaVersion === "3.0.0") {
+      assert(typeof this.recordV3 === "function", "V3_RECORD_SERVICE_UNAVAILABLE");
+      return this.recordV3(input.application, input.observationToken ?? null, this.clock());
+    }
     const entry = this.store.decision(input.application?.decisionDigest);
     assert(entry, "DECISION_UNKNOWN");
     const now = this.clock();
