@@ -121,9 +121,22 @@ test('B08 commits one intent after pins and replays without treating commit as e
   });
 });
 
-test('B08 rejects other intent reuse, expired holds, policy drift, and binding drift', async () => {
+test('B08 replays the same committed intent after reservation and lease expiry', async () => {
+  await isolated(async ({ db, admissions, commit, prepareBinding, setTime }) => {
+    const admitted = admissions.admitIdempotent(request());
+    assert.equal(admitted.kind, 'admitted');
+    await prepareBinding(admitted.reservationId);
+    const input = { reservationId: admitted.reservationId, intentId: 'intent-1' };
+    assert.equal(commit.commit(input).replayed, false);
+    setTime('2026-09-23T00:31:00.000Z');
+    assert.deepEqual(commit.commit(input), { kind: 'committed', ...input, replayed: true });
+    assert.equal(db.prepare('SELECT count(*) AS n FROM resource_intents').get().n, 1);
+  });
+});
+
+test('B08 rejects other intent reuse, policy drift, and binding drift', async () => {
   await isolated(async ({ db, retention, admissions, commit, prepareBinding,
-    getBinding, setBinding, setPolicies, setTime }) => {
+    getBinding, setBinding, setPolicies }) => {
     const admitted = admissions.admitIdempotent(request());
     assert.equal(admitted.kind, 'admitted');
     await prepareBinding(admitted.reservationId);
@@ -148,12 +161,24 @@ test('B08 rejects other intent reuse, expired holds, policy drift, and binding d
     await prepareBinding(next.reservationId);
     assert.throws(() => commit.commit({ reservationId: next.reservationId, intentId: 'intent-1' }),
       { code: 'REQUEST_CONFLICT' });
-    setTime('2026-09-23T00:31:00.000Z');
-    assert.throws(() => commit.commit({ reservationId: next.reservationId, intentId: 'intent-3' }),
-      { code: 'REQUEST_CONFLICT' });
     assert.equal(db.prepare('SELECT state FROM resource_reservations WHERE reservation_id = ?')
       .get(next.reservationId).state, 'held');
     assert.equal(retention.replayState(getBinding().references[0].ref), 'unknown');
+  });
+});
+
+test('B08 rejects first commit of an expired held reservation while lease remains valid', async () => {
+  await isolated(async ({ db, admissions, commit, prepareBinding, setTime, setLeaseExpiry }) => {
+    const admitted = admissions.admitIdempotent(request());
+    assert.equal(admitted.kind, 'admitted');
+    await prepareBinding(admitted.reservationId);
+    setLeaseExpiry('2026-09-23T01:00:00.000Z');
+    setTime('2026-09-23T00:31:00.000Z');
+    assert.throws(() => commit.commit({ reservationId: admitted.reservationId,
+      intentId: 'intent-1' }), { code: 'REQUEST_CONFLICT', message: 'Reservation is expired.' });
+    assert.equal(db.prepare('SELECT state FROM resource_reservations WHERE reservation_id = ?')
+      .get(admitted.reservationId).state, 'held');
+    assert.equal(db.prepare('SELECT count(*) AS n FROM resource_intents').get().n, 0);
   });
 });
 
@@ -181,6 +206,35 @@ test('B08 journal fault leaves pending orphan pins and same intent retry publish
       assert.deepEqual(published.prepare('SELECT phase FROM artifact_retention_pins ORDER BY reference_id')
         .all().map(row => row.phase), ['published', 'published']);
     } finally { published.close(); }
+  });
+});
+
+test('B08 replays a committed intent after expiry to finish pin publication', async () => {
+  await isolated(async ({ db, retention, retentionPath, admissions, commit,
+    prepareBinding, setTime }) => {
+    const admitted = admissions.admitIdempotent(request());
+    assert.equal(admitted.kind, 'admitted');
+    await prepareBinding(admitted.reservationId);
+    const input = { reservationId: admitted.reservationId, intentId: 'intent-1' };
+    const publish = retention.referencePublished.bind(retention);
+    retention.referencePublished = () => { throw new Error('forced publish fault'); };
+    assert.throws(() => commit.commit(input), /forced publish fault/u);
+    retention.referencePublished = publish;
+    assert.equal(db.prepare('SELECT state FROM resource_reservations WHERE reservation_id = ?')
+      .get(admitted.reservationId).state, 'committed');
+    const pending = new DatabaseSync(retentionPath);
+    try {
+      assert.deepEqual(pending.prepare('SELECT phase FROM artifact_retention_pins ORDER BY reference_id')
+        .all().map(row => row.phase), ['pending', 'pending']);
+    } finally { pending.close(); }
+    setTime('2026-09-23T00:31:00.000Z');
+    assert.deepEqual(commit.commit(input), { kind: 'committed', ...input, replayed: true });
+    assert.equal(db.prepare('SELECT count(*) AS n FROM resource_intents').get().n, 1);
+    const metadata = new DatabaseSync(retentionPath);
+    try {
+      assert.deepEqual(metadata.prepare('SELECT phase FROM artifact_retention_pins ORDER BY reference_id')
+        .all().map(row => row.phase), ['published', 'published']);
+    } finally { metadata.close(); }
   });
 });
 

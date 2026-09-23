@@ -148,16 +148,6 @@ export class ResourceReservationCommitStore {
     }
     const nowMs = Date.parse(this.clock());
     if (!Number.isFinite(nowMs)) invalid("Trusted resource clock is invalid.");
-    const lease = this.currentLease();
-    const leaseExpiryMs = typeof lease?.expiresAt === "string" ? Date.parse(lease.expiresAt) : NaN;
-    if (!lease || lease.authorityId !== this.authority.authorityId || lease.realmId !== this.authority.realmId
-      || typeof lease.ownerId !== "string" || !idPattern.test(lease.ownerId)
-      || typeof lease.leaseId !== "string" || !idPattern.test(lease.leaseId)
-      || !Number.isSafeInteger(lease.epoch) || lease.epoch !== binding.leaseEpoch
-      || typeof lease.expiresAt !== "string" || !Number.isFinite(leaseExpiryMs)
-      || leaseExpiryMs <= nowMs) {
-      conflict("Current resource authority lease is stale or changed.");
-    }
     const reservation = this.database.prepare(`SELECT reservation_id,request_key,request_digest,
       task_id,run_id,slot_id,attempt_id,plan_revision,lease_epoch,state,expires_at
       FROM resource_reservations WHERE reservation_id = ?`).get(request.reservationId) as
@@ -168,7 +158,7 @@ export class ResourceReservationCommitStore {
       || reservation.task_id !== binding.taskId || reservation.run_id !== binding.runId
       || reservation.slot_id !== binding.slotId || reservation.attempt_id !== binding.attemptId
       || reservation.plan_revision !== binding.planRevision || reservation.lease_epoch !== binding.leaseEpoch
-      || !Number.isFinite(reservationExpiryMs) || reservationExpiryMs <= nowMs) {
+      || !Number.isFinite(reservationExpiryMs)) {
       conflict("Reservation is expired or differs from the trusted binding.");
     }
     const admission = this.database.prepare(`SELECT request_digest,request_json,state,reservation_id
@@ -187,6 +177,20 @@ export class ResourceReservationCommitStore {
       || intent.reservation_id !== request.reservationId
       || intent.request_digest !== binding.requestDigest)) {
       conflict("A different intent already owns the reservation or intent ID.");
+    }
+    // An existing durable commit only finishes retention publication; it cannot launch work.
+    if (reservation.state !== "committed" || intent?.state !== "committed") {
+      const lease = this.currentLease();
+      const leaseExpiryMs = typeof lease?.expiresAt === "string" ? Date.parse(lease.expiresAt) : NaN;
+      if (!lease || lease.authorityId !== this.authority.authorityId || lease.realmId !== this.authority.realmId
+        || typeof lease.ownerId !== "string" || !idPattern.test(lease.ownerId)
+        || typeof lease.leaseId !== "string" || !idPattern.test(lease.leaseId)
+        || !Number.isSafeInteger(lease.epoch) || lease.epoch !== binding.leaseEpoch
+        || typeof lease.expiresAt !== "string" || !Number.isFinite(leaseExpiryMs)
+        || leaseExpiryMs <= nowMs) {
+        conflict("Current resource authority lease is stale or changed.");
+      }
+      if (reservationExpiryMs <= nowMs) conflict("Reservation is expired.");
     }
     return { reservation, intent };
   }
