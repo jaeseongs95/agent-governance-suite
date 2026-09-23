@@ -1,4 +1,4 @@
-/** Optional server-owned semantic composition. No provider or adoption authority is installed yet. */
+/** Optional server-owned semantic composition. Registration grants no call or adoption authority. */
 import { DatabaseSync } from "node:sqlite";
 
 import semanticPolicyJson from "../../../skills/coordinate-subagents/references/semantic-decision/decision-policy.v1.json" with { type: "json" };
@@ -9,7 +9,8 @@ import { MODEL_CATALOG_DIRECTORY } from "../model-routing-service.js";
 import { mergeRoutingCapabilities, readSharedModelCapabilities } from "../model-capability-client.js";
 import { ContractValidator } from "../schema-validator.js";
 import { SemanticEvaluationIntentStore } from "../semantic/evaluation-intent.js";
-import { SemanticProviderRegistry } from "../semantic/provider-registry.js";
+import { createOptionalJevRegistry, type JevRegistryResult } from "../semantic/provider-registry.js";
+import { JEV_ENDPOINT } from "../semantic/providers/jev/http-client.js";
 import { createSemanticGateway, type SemanticMcpGateway } from "./semantic-gateway.js";
 import { SemanticRoutingService, type ServerSemanticEvidenceReader } from "./semantic-service.js";
 import type { WorkflowStore } from "../workflow-store.js";
@@ -17,13 +18,40 @@ import type { WorkflowStore } from "../workflow-store.js";
 export interface OpenSemanticService {
   gateway: SemanticMcpGateway;
   journal: SemanticEvaluationIntentStore;
-  registry: SemanticProviderRegistry;
+  registry: JevRegistryResult["registry"];
+  jev: Omit<JevRegistryResult, "registry">;
   close(): void;
+}
+
+type JevRootInput = {
+  enabled: boolean;
+  egressConfig?: unknown;
+  credential: () => string | null;
+  /** A candidate identity comparison only; this does not change the service policy. */
+  adoption?: unknown;
+};
+
+function configuredJevRoute(value: unknown, validator: ContractValidator): boolean {
+  try {
+    const config = validator.semanticEgressConfigV1(typeof value === "string" ? JSON.parse(value) : value);
+    return config.enabled && config.routes.filter(route => route.providerId === "jev"
+      && route.endpoint === JEV_ENDPOINT && route.accessPaths.includes("api")
+      && (["routing", "question", "catalog"] as const)
+        .every(category => route.dataCategories.includes(category))).length === 1;
+  } catch { return false; }
+}
+
+function environmentJev(): JevRootInput {
+  return { enabled: process.env.AGENT_GOVERNANCE_JEV_ENABLED === "true",
+    egressConfig: process.env.AGENT_GOVERNANCE_SEMANTIC_EGRESS_CONFIG,
+    credential: () => process.env.TYPESAFE_API_KEY ?? null,
+    adoption: process.env.AGENT_GOVERNANCE_JEV_ADOPTION_CANDIDATE };
 }
 
 /** Opening is optional: a failed semantic schema/catalog never prevents the existing MCP server from booting. */
 export function openSemanticService(databasePath: string,
-  workflow: Pick<WorkflowStore, "getGuardedRunSnapshot">): OpenSemanticService | null {
+  workflow: Pick<WorkflowStore, "getGuardedRunSnapshot">,
+  jevInput: JevRootInput = environmentJev()): OpenSemanticService | null {
   let database: DatabaseSync | null = null;
   try {
     const validator = new ContractValidator();
@@ -34,7 +62,19 @@ export function openSemanticService(databasePath: string,
     database.exec("PRAGMA busy_timeout = 5000; PRAGMA synchronous = FULL;");
     const routing = new ModelRoutingStore(database);
     const journal = new SemanticEvaluationIntentStore(database);
-    const registry = new SemanticProviderRegistry();
+    let adoption = policy.adoption;
+    if (jevInput.adoption !== undefined) {
+      try {
+        const candidate = typeof jevInput.adoption === "string"
+          ? JSON.parse(jevInput.adoption) : jevInput.adoption;
+        adoption = validator.semanticDecisionPolicyV1({ ...policy, adoption: candidate }).adoption;
+      } catch { /* An invalid candidate grants no adoption. */ }
+    }
+    const jev = jevInput.enabled && configuredJevRoute(jevInput.egressConfig, validator)
+      ? createOptionalJevRegistry({ enabled: true, credential: jevInput.credential,
+        timeoutMs: 30_000, maxResponseBytes: 256 * 1024,
+        adoption })
+      : createOptionalJevRegistry();
     const adoptionReader = { read: () => null } satisfies ServerSemanticEvidenceReader;
     const service = new SemanticRoutingService(routing, workflow, null, async () => {
       const shared = await readSharedModelCapabilities();
@@ -46,7 +86,9 @@ export function openSemanticService(databasePath: string,
       } };
     }, adoptionReader);
     const opened = database;
-    return { gateway: createSemanticGateway(service), journal, registry, close: () => opened.close() };
+    const { registry, ...jevStatus } = jev;
+    return { gateway: createSemanticGateway(service), journal, registry, jev: jevStatus,
+      close: () => opened.close() };
   } catch {
     database?.close();
     return null;
