@@ -25,6 +25,7 @@ import { SqliteKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { TrustStore } from "./trust-store.js";
 import { TrustService } from "./trust-service.js";
 import { openModelRoutingService } from "./model-routing-service.js";
+import { VmCurrentInvocation } from "./host-integration/vm-current-invocation.js";
 
 async function main(): Promise<void> {
   const registryPath = resolveRegistryPath();
@@ -50,6 +51,7 @@ async function main(): Promise<void> {
 
   const validator = new ContractValidator();
   const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
+  const vmInvocation = process.env.AGENT_GOVERNANCE_VM_PIN_PATH ? new VmCurrentInvocation() : null;
   // Neither bundled host currently exposes a cryptographically distinct direct-human approval event.
   const trust = new TrustService(trustStore);
   const service = new RoutingAwareWorkflowService(
@@ -72,7 +74,7 @@ async function main(): Promise<void> {
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, modelRouting.service);
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, modelRouting.service, vmInvocation);
   await server.connect(new StdioServerTransport());
 }
 

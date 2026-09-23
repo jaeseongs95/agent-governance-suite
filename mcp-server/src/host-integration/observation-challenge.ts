@@ -59,6 +59,9 @@ export interface VmInvocationSource {
     tool: string;
     arguments: Record<string, unknown>;
     binding: HostObservationBindingV1;
+    registration?: Record<string, unknown>;
+    registrationDigest?: string;
+    serverEpoch?: string;
   };
 }
 
@@ -88,8 +91,9 @@ function safeJson(value: unknown): boolean {
 }
 
 /** Only operator configuration supplies pins; MCP input and VM caller data never select a key. */
-export function registerVmObservationReader(source: VmInvocationSource): HostObservationReader {
-  if (!source || typeof source.readCurrentInvocation !== "function") throw invalid("VM invocation source is unavailable");
+export function readPinnedVmEnvelope(envelopeValue: unknown): { body: Record<string, unknown>; bytes: Buffer; pin: { installationId: string; hostId: string } } {
+  const envelope = record(envelopeValue);
+  if (!envelope || !exactKeys(envelope, ["body", "signature", "keyId"]) || !nonempty(envelope.keyId)) throw invalid("VM signed envelope is malformed");
   const pinPath = process.env[VM_PIN_PATH_ENV];
   if (!pinPath || !path.isAbsolute(pinPath)) throw invalid("operator VM pin file is unavailable");
   const readPins = () => {
@@ -120,7 +124,28 @@ export function registerVmObservationReader(source: VmInvocationSource): HostObs
     }
     return pins;
   };
-  readPins();
+  const pin = readPins().get(envelope.keyId);
+  if (!pin) throw invalid("VM producer key is not pinned");
+  const bytes = encodedBytes(envelope.body);
+  const signature = encodedBytes(envelope.signature);
+  if (signature.length !== 64 || !verify(null, bytes, pin.key, signature)) throw invalid("VM receipt signature mismatch");
+  let decoded: unknown;
+  try { decoded = JSON.parse(bytes.toString("utf8")); }
+  catch { throw invalid("VM receipt body is malformed"); }
+  const body = record(decoded);
+  if (!body || !safeJson(body) || Buffer.from(canonicalJson(body), "utf8").compare(bytes) !== 0) throw invalid("VM receipt body is not canonical");
+  const producer = record(body.producer);
+  if (!producer || producer.keyId !== envelope.keyId || producer.installationId !== pin.installationId
+      || producer.hostId !== pin.hostId) throw invalid("VM receipt source or binding is invalid");
+  return { body, bytes, pin };
+}
+
+export function registerVmObservationReader(source: VmInvocationSource): HostObservationReader {
+  if (!source || typeof source.readCurrentInvocation !== "function") throw invalid("VM invocation source is unavailable");
+  // Fail at registration when the operator has not supplied a usable pin file.
+  const pinPath = process.env[VM_PIN_PATH_ENV];
+  if (!pinPath || !path.isAbsolute(pinPath)) throw invalid("operator VM pin file is unavailable");
+  try { JSON.parse(readFileSync(pinPath, "utf8")); } catch { throw invalid("operator VM pin file is unavailable"); }
   const readVerified = (): VerifiedVmObservation => {
     const current = source.readCurrentInvocation();
     const envelope = record(current?.receipt);
@@ -130,20 +155,13 @@ export function registerVmObservationReader(source: VmInvocationSource): HostObs
         || !nonempty(envelope.keyId) || !argumentsValue || !expected
         || !exactKeys(expected, ["invocationId", "turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"])
         || !nonempty(current.tool)) throw invalid("VM invocation context is malformed");
-    const pin = readPins().get(envelope.keyId);
-    if (!pin) throw invalid("VM producer key is not pinned");
-    const bytes = encodedBytes(envelope.body);
-    const signature = encodedBytes(envelope.signature);
-    if (signature.length !== 64 || !verify(null, bytes, pin.key, signature)) throw invalid("VM receipt signature mismatch");
-    let decoded: unknown;
-    try { decoded = JSON.parse(bytes.toString("utf8")); }
-    catch { throw invalid("VM receipt body is malformed"); }
-    const body = record(decoded);
-    if (!body || !safeJson(body) || !exactKeys(body, ["version", "domain", "producer", "binding", "terminal", "core", "invocation", "nonce", "issuedAt", "expiresAt"])
-        || Buffer.from(canonicalJson(body), "utf8").compare(bytes) !== 0) throw invalid("VM receipt body is not canonical");
+    const { body, bytes, pin } = readPinnedVmEnvelope(envelope);
+    const v2 = body.version === 2;
+    if (current.registration && !v2) throw invalid("VM authenticated dispatch requires receipt version 2");
+    if (!exactKeys(body, ["version", "domain", "producer", "binding", "terminal", "core", "invocation", "nonce", "issuedAt", "expiresAt", ...(v2 ? ["transport"] : [])])) throw invalid("VM receipt body is not canonical");
     const producer = record(body.producer), binding = record(body.binding);
     const terminal = record(body.terminal), core = record(body.core), invocation = record(body.invocation);
-    if (body.version !== 1 || body.domain !== VM_DOMAIN || !producer || !binding || !terminal || !core || !invocation
+    if ((body.version !== 1 && body.version !== 2) || body.domain !== VM_DOMAIN || !producer || !binding || !terminal || !core || !invocation
         || !exactKeys(producer, ["installationId", "keyId", "hostId", "instanceId"])
         || !exactKeys(binding, ["invocationId", "turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"])
         || !exactKeys(terminal, ["eventId", "callId", "threadId", "turnId", "status", "observedAt", "model", "effort", "provenance", "digest"])
@@ -170,6 +188,21 @@ export function registerVmObservationReader(source: VmInvocationSource): HostObs
     }
     for (const field of ["invocationId", "turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) {
       if (binding[field] !== expected[field]) throw invalid(`VM ${field} binding mismatch`);
+    }
+    if (v2) {
+      const registration = record(current.registration);
+      const transport = record(body.transport);
+      if (!registration || !transport || !exactKeys(transport, ["serverEpoch", "registrationDigest"])
+          || transport.serverEpoch !== current.serverEpoch || transport.registrationDigest !== current.registrationDigest
+          || registration.serverEpoch !== current.serverEpoch) throw invalid("VM transport binding mismatch");
+      for (const field of ["producer", "terminal", "core", "invocation"]) {
+        if (canonicalJson(body[field]) !== canonicalJson(registration[field])) throw invalid(`VM ${field} registration mismatch`);
+      }
+      const registeredBinding = record(registration.binding);
+      if (!registeredBinding || Object.keys(registeredBinding).some((field) => registeredBinding[field] !== binding[field])
+          || Object.keys(binding).some((field) => field !== "invocationId" && !Object.hasOwn(registeredBinding, field))) {
+        throw invalid("VM registration binding mismatch");
+      }
     }
     const { _hostAttestation, ...unsignedArguments } = argumentsValue;
     if (_hostAttestation === undefined || canonicalJson(_hostAttestation) !== canonicalJson(envelope)

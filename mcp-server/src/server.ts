@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { z } from "zod";
 
 import {
   type ApiResultV1,
@@ -30,6 +31,7 @@ import { SessionMessageService, type SessionPresenceList } from "./session-messa
 import type { SessionPresence } from "./session-message-store.js";
 import { type TrustService } from "./trust-service.js";
 import { type ModelRoutingGateway, unavailableModelRouting } from "./model-routing-service.js";
+import type { VmCurrentInvocation } from "./host-integration/vm-current-invocation.js";
 
 type ObjectSchema = Record<string, unknown> & {
   properties?: Record<string, unknown>;
@@ -390,12 +392,21 @@ export function createMcpServer(
   sessionMessages: SessionMessageService = new SessionMessageService(),
   trust: TrustService | null = null,
   modelRouting: ModelRoutingGateway = unavailableModelRouting(),
+  vmInvocation: VmCurrentInvocation | null = null,
 ): Server {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} }, ...(instructions === undefined ? {} : { instructions }) },
   );
+
+  if (vmInvocation) {
+    server.setRequestHandler(z.object({ method: z.literal("vm/hello"), params: z.object({}) }),
+      async () => ({ serverEpoch: vmInvocation.serverEpoch }));
+    server.setRequestHandler(z.object({ method: z.literal("vm/reserve_dispatch"),
+      params: z.object({ registration: z.unknown() }) }),
+    async (request) => vmInvocation.reserve(request.params.registration));
+  }
 
   const contractDocuments = Object.values(contractSchemas) as Array<Record<string, unknown>>;
   // Anthropic hosts cannot resolve $ref in tool schemas, so they receive fully inlined copies.
@@ -597,7 +608,8 @@ export function createMcpServer(
     ]),
   }));
 
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
+    const handle = async () => {
     const args = asRecord(request.params.arguments);
     // Only a host with an attestation adapter strips and verifies the hook token.
     const attested = <T>(tool: string, call: (input: Record<string, unknown>) => T): T =>
@@ -778,6 +790,10 @@ export function createMcpServer(
     const notice = updateStatus ? updates.takeNotice(updateStatus) : null;
     if (notice) response.content.push({ type: "text", text: JSON.stringify(notice) });
     return response;
+    };
+    return vmInvocation
+      ? vmInvocation.runCurrentRequest(extra.requestId, request.params.name, asRecord(request.params.arguments), handle)
+      : handle();
   });
 
   return server;
