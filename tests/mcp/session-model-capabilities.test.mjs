@@ -10,26 +10,28 @@ import { dispatchSessionMessageBrokerOperation } from '../../mcp-server/src/sess
 import { SESSION_MESSAGE_PROTOCOL, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from '../../mcp-server/src/session-message-protocol.js';
 import { canonicalJson } from '../../mcp-server/src/convergence-logic.js';
 import { ModelRoutingServiceCore } from '../../skills/coordinate-subagents/scripts/model-routing-service-core.mjs';
+import { loadCatalog } from '../../skills/coordinate-subagents/scripts/model-catalog.mjs';
 import { seal, resolveV2 } from '../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
 import { capability, request, environment, NOW } from '../coordinate-subagents/model-routing-v2/fixtures.mjs';
 
 const start=Date.parse(NOW),at=delta=>new Date(start+delta).toISOString(),token='K'.repeat(43);
 const dispose=[];
 afterEach(()=>{while(dispose.length)dispose.pop()();});
-function harness(){
+function harness(now=NOW){
+  const currentStart=Date.parse(now),currentAt=delta=>new Date(currentStart+delta).toISOString();
   const dir=mkdtempSync(join(tmpdir(),'ags-cap-exchange-'));dispose.push(()=>rmSync(dir,{recursive:true,force:true}));
   writeFileSync(join(dir,'broker.token'),token);
   const sessions=new SessionMessageStore(join(dir,'messages.sqlite3'));dispose.push(()=>sessions.close());
   const signer=capabilitySigner(token),store=new SessionModelCapabilityStore(sessions,signer);
   function setup(id='s-1',changes={}){
     const identity={host:'native-adapter',sessionId:id,instanceId:'i-1'};
-    sessions.startPresence({...identity,transport:'test',wakeVisibility:'none',canWakeSilently:false},start);
-    const snapshot=capability({sessionId:id,instanceId:'i-1',expiresAt:at(60000),...changes});
+    sessions.startPresence({...identity,transport:'test',wakeVisibility:'none',canWakeSilently:false},currentStart);
+    const snapshot=capability({sessionId:id,instanceId:'i-1',observedAt:now,expiresAt:currentAt(60000),...changes});
     return {schemaVersion:'1.0.0',identity,snapshot};
   }
-  const sign=(publication,issuedAt=NOW)=>signer.issue('capability',publication,{issuedAt,expiresAt:publication.snapshot.expiresAt});
+  const sign=(publication,issuedAt=now)=>signer.issue('capability',publication,{issuedAt,expiresAt:publication.snapshot.expiresAt});
   const wire=async(operation,payload)=>operation==='ping'?{protocolVersion:SESSION_MESSAGE_PROTOCOL,capabilities:[MODEL_CAPABILITY_FEATURE]}:
-    operation==='list-model-capabilities'?store.list(payload,start):operation==='publish-model-capability'?store.publish(payload.receipt,start):Promise.reject(new Error('unexpected operation'));
+    operation==='list-model-capabilities'?store.list(payload,currentStart):operation==='publish-model-capability'?store.publish(payload.receipt,currentStart):Promise.reject(new Error('unexpected operation'));
   return{dir,sessions,signer,store,setup,sign,wire};
 }
 function resign(receipt){const unsigned={...receipt};delete unsigned.mac;return{...unsigned,mac:createHmac('sha256',createHmac('sha256',token).update('ags:session-model-capabilities:v1').digest()).update(canonicalJson(unsigned)).digest('hex')};}
@@ -211,9 +213,9 @@ describe('P5 broker negotiation and resolver feed',()=>{
     expect(result.data.rejectedCandidates.every(c=>c.reasonCodes.includes('INDEPENDENCE_CONFLICT'))).toBe(true);
   });
   it('does not confuse a broker publication with task dispatch or completion',()=>{
-    const h=harness(),pub=h.setup();h.store.publish(h.sign(pub),start);
+    const now=loadCatalog().snapshotDate,h=harness(now),pub=h.setup();h.store.publish(h.sign(pub),Date.parse(now));
     expect(h.sessions.database.prepare("SELECT name FROM sqlite_master WHERE name LIKE 'ags_model_dispatch%'").all()).toEqual([]);
-    const result=new ModelRoutingServiceCore({clock:()=>NOW}).call('resolve_model_assignment',request(),[pub.snapshot]);
+    const result=new ModelRoutingServiceCore({clock:()=>now}).call('resolve_model_assignment',request(),[pub.snapshot]);
     expect(result.data).toMatchObject({status:'selected',executionAuthorized:false,trustedGateSatisfied:false});
   });
   it('does not publish with missing or malformed broker credentials',async()=>{
