@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   verify:
+    if: contains(github.event.head_commit.message, '[apply-semantic-contracts]')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
