@@ -2,7 +2,7 @@
 import type { ModelSelectionRequestV2 } from "../../../contracts/model-routing-types.js";
 import type { SemanticDecisionPolicyV1 } from "../../../contracts/types.js";
 import {
-  assert, canonical, collectEligibleCandidatesV2, digest, instant,
+  assert, canonical, collectEligibleCandidatesV2, digest, instant, verifySeal,
   type RoutingEnvironmentV2,
 } from "../../../skills/coordinate-subagents/scripts/model-routing-core.mjs";
 import { ModelRoutingStore } from "../../../skills/coordinate-subagents/scripts/model-routing-store.mjs";
@@ -50,7 +50,9 @@ export function revalidateStoredSemanticDispatch(
   assert(reference && reference.baseline_decision_digest === decision.semantic.baselineDecisionDigest
     && reference.advice_digest === decision.semantic.adviceDigest, "SEMANTIC_REFERENCE_MISMATCH");
   const baseline = readDecision(store, reference.baseline_decision_digest, validator);
-  assert(baseline?.decision.schemaVersion === "2.0.0"
+  assert(baseline?.decision.schemaVersion === "2.0.0", "BASELINE_MISMATCH");
+  verifySeal(baseline.decision, "decisionDigest");
+  assert(baseline.decision.decisionDigest === reference.baseline_decision_digest
     && canonical(baseline.request) === canonical(request)
     && canonical(baseline.environment) === canonical(environment), "BASELINE_MISMATCH");
   const intent = journal.get(reference.evaluation_id);

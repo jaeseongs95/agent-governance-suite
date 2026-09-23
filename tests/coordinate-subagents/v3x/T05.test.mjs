@@ -7,7 +7,7 @@ import { revalidateStoredSemanticDispatch } from '../../../mcp-server/src/routin
 import { SemanticAdviceAdmissionStore } from '../../../mcp-server/src/semantic/advice-admission.ts';
 import { SemanticEvaluationIntentStore } from '../../../mcp-server/src/semantic/evaluation-intent.ts';
 import {
-  collectEligibleCandidatesV2, digest, getBaselineCandidateMetadataV2, resolveV2, seal,
+  canonical, collectEligibleCandidatesV2, digest, getBaselineCandidateMetadataV2, resolveV2, seal,
 } from '../../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
 import { ModelRoutingStore } from '../../../skills/coordinate-subagents/scripts/model-routing-store.mjs';
 import { projectSemanticCandidatesV1 } from '../../../skills/coordinate-subagents/scripts/semantic/candidate-projection.mjs';
@@ -96,6 +96,27 @@ test('missing writer reference and advice expired at the recorded decision time 
   expired.db.prepare('UPDATE ags_model_decisions_v2 SET resolved_at=? WHERE decision_digest=?')
     .run(END, expired.decision.decisionDigest);
   assert.throws(() => preflight(expired), { code: 'REPLAY_TIME_MISMATCH' });
+});
+
+test('resealed baseline payload at the original row key fails historical reference integrity', () => {
+  const f = fixture();
+  const baselineDigest = f.decision.semantic.baselineDecisionDigest;
+  const row = f.db.prepare('SELECT payload FROM ags_model_decisions_v2 WHERE decision_digest=?')
+    .get(baselineDigest);
+  const baseline = JSON.parse(row.payload);
+  const changed = seal({ ...baseline, selectionReasonCodes: ['TAMPERED'] }, 'decisionDigest');
+  f.db.prepare('UPDATE ags_model_decisions_v2 SET payload=? WHERE decision_digest=?')
+    .run(canonical(changed), baselineDigest);
+  assert.throws(() => preflight(f), { code: 'BASELINE_MISMATCH' });
+
+  const unsealed = fixture();
+  const originalDigest = unsealed.decision.semantic.baselineDecisionDigest;
+  const original = JSON.parse(unsealed.db.prepare(
+    'SELECT payload FROM ags_model_decisions_v2 WHERE decision_digest=?').get(originalDigest).payload);
+  original.selectionReasonCodes = ['TAMPERED'];
+  unsealed.db.prepare('UPDATE ags_model_decisions_v2 SET payload=? WHERE decision_digest=?')
+    .run(canonical(original), originalDigest);
+  assert.throws(() => preflight(unsealed), { code: 'DIGEST_MISMATCH' });
 });
 
 test('current authorization, lease, revision, policy, capability and presence drift fail closed', () => {
