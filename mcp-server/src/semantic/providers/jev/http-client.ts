@@ -1,4 +1,5 @@
 import type { BoundedProviderControl } from "../../provider-runner.js";
+import { performance } from "node:perf_hooks";
 import { checkJevPayloadBytes } from "./request-limits.js";
 
 export const JEV_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
@@ -40,7 +41,13 @@ export class JevHttpClient {
     const cancel = () => aborter.abort();
     control.signal.addEventListener("abort", cancel, { once: true });
     let expired = false;
-    const timer = setTimeout(() => { expired = true; aborter.abort(); }, this.options.timeoutMs);
+    const deadlineAt = performance.now() + this.options.timeoutMs;
+    const expire = () => { expired = true; aborter.abort(); };
+    const pastDeadline = () => {
+      if (!expired && performance.now() >= deadlineAt) expire();
+      return expired;
+    };
+    const timer = setTimeout(expire, this.options.timeoutMs);
     try {
       if (control.signal.aborted) return { status: "uncertain", providerAccepted: "unknown" };
       const response = await (this.options.fetcher ?? fetch)(JEV_ENDPOINT, {
@@ -48,7 +55,7 @@ export class JevHttpClient {
         headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
         body: requestText,
       });
-      if (expired) return { status: "timeout", providerAccepted: "unknown" };
+      if (pastDeadline()) return { status: "timeout", providerAccepted: "unknown" };
       if (control.signal.aborted) return { status: "uncertain", providerAccepted: "unknown" };
       if (response.redirected || (response.url && response.url !== JEV_ENDPOINT)
         || (response.status >= 300 && response.status < 400)) {
@@ -66,23 +73,26 @@ export class JevHttpClient {
           if (part.done) { complete = true; break; }
           bytes += part.value.byteLength;
           control.onOutput(part.value);
-          if (bytes > this.options.maxResponseBytes || control.signal.aborted || expired) {
-            return { status: expired ? "timeout" : "uncertain", providerAccepted: "unknown" };
+          if (bytes > this.options.maxResponseBytes || control.signal.aborted || pastDeadline()) {
+            return { status: pastDeadline() ? "timeout" : "uncertain", providerAccepted: "unknown" };
           }
           chunks.push(part.value);
         }
       } finally {
         if (!complete) void reader.cancel().catch(() => {});
       }
-      if (control.signal.aborted || expired) {
-        return { status: expired ? "timeout" : "uncertain", providerAccepted: "unknown" };
+      if (control.signal.aborted || pastDeadline()) {
+        return { status: pastDeadline() ? "timeout" : "uncertain", providerAccepted: "unknown" };
       }
       try {
         const body = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)));
+        if (pastDeadline() || control.signal.aborted) {
+          return { status: pastDeadline() ? "timeout" : "uncertain", providerAccepted: "unknown" };
+        }
         return { status: "response", body, providerAccepted: "confirmed" };
       } catch { return { status: "uncertain", providerAccepted: "unknown" }; }
     } catch {
-      return { status: expired ? "timeout" : "uncertain", providerAccepted: "unknown" };
+      return { status: pastDeadline() ? "timeout" : "uncertain", providerAccepted: "unknown" };
     } finally {
       clearTimeout(timer);
       control.signal.removeEventListener("abort", cancel);

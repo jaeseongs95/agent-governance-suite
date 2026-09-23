@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { performance } from 'node:perf_hooks';
 import { test } from 'vitest';
 
 import { JevHttpClient, JEV_ENDPOINT } from '../../../mcp-server/src/semantic/providers/jev/http-client.ts';
@@ -90,4 +91,14 @@ test('J05 honors runner output cancellation and keeps credential errors private'
     return true;
   });
   assert.equal(calls, 1);
+});
+
+test('J05 rejects success after a synchronously blocked fetch exceeds its monotonic deadline', async () => {
+  const transport = client(() => {
+    const until = performance.now() + 30;
+    while (performance.now() < until) { /* Mock a blocking transport callback. */ }
+    return Promise.resolve(new globalThis.Response('{}', { status: 200 }));
+  }, { timeoutMs: 5 });
+  assert.deepEqual(await transport.post(task, control()),
+    { status: 'timeout', providerAccepted: 'unknown' });
 });
