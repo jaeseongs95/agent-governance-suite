@@ -53,6 +53,13 @@ export type EligibleCandidatesV2 = {
   capabilitySetDigest: ModelRoutingDecisionV2["capabilitySetDigest"];
 };
 export declare function collectEligibleCandidatesV2(request: ModelSelectionRequestV2, environment: RoutingEnvironmentV2): EligibleCandidatesV2;
+/** Detached baseline order only; not a wire contract or admission receipt. */
+export type BaselineCandidateMetadataV2 = { candidateKey: string; preferenceGroup: number; baselineRank: number };
+export declare function getBaselineCandidateMetadataV2(
+  candidates: readonly EligibleCandidateV2[],
+  request: ModelSelectionRequestV2,
+  environment: Pick<RoutingEnvironmentV2, "catalog" | "policy">,
+): BaselineCandidateMetadataV2[];
 /** Reorders a detached copy; does not validate or admit caller-made candidates. */
 export declare function rankBaselineCandidatesV2(
   candidates: readonly EligibleCandidateV2[],

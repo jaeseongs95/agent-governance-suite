@@ -45,7 +45,9 @@ test('all new TS declarations and schemas agree structurally in both directions,
     strict: true, exactOptionalPropertyTypes: true, skipLibCheck: true, types: [] };
   const host = ts.createCompilerHost(options);
   const original = host.getSourceFile.bind(host);
-  host.getSourceFile = (file, version, onError, shouldCreate) => file === virtual
+  const originalFileExists = host.fileExists.bind(host);
+  host.fileExists = file => path.normalize(file) === virtual || originalFileExists(file);
+  host.getSourceFile = (file, version, onError, shouldCreate) => path.normalize(file) === virtual
     ? ts.createSourceFile(file, source, version, true) : original(file, version, onError, shouldCreate);
   const program = ts.createProgram([virtual], options, host), checker = program.getTypeChecker();
   const errors = ts.getPreEmitDiagnostics(program).filter(item => item.category === ts.DiagnosticCategory.Error);

@@ -8433,7 +8433,7 @@ function collectEligibleCandidatesV2(request, { catalog, policy, capabilities, n
     capabilitySetDigest: digest(validSnapshotDigests.sort())
   });
 }
-function rankBaselineCandidatesV2(candidates, request, { catalog, policy }) {
+function rankedBaselineEntriesV2(candidates, request, { catalog, policy }) {
   const profile = request.profile ?? "balanced";
   const seed = policy.profileOrder[profile][request.role];
   const traitSeed = [...new Set((request.taskTraits ?? []).slice().sort().flatMap((t) => policy.traitOrder[t] ?? []))];
@@ -8444,11 +8444,14 @@ function rankBaselineCandidatesV2(candidates, request, { catalog, policy }) {
     const controlRank = controls.findIndex((c) => canonical(c) === canonical(candidate.binding.nativeReasoning));
     return [preferred, position(traitSeed), position(seed), controlRank < 0 ? controls.length : controlRank, candidate.key];
   }
-  return structuredClone(candidates).sort((a, b) => {
-    const x = rank(a), y = rank(b);
+  return structuredClone(candidates).map((candidate) => ({ candidate, order: rank(candidate) })).sort((a, b) => {
+    const x = a.order, y = b.order;
     for (let i = 0; i < 4; i++) if (x[i] !== y[i]) return x[i] - y[i];
     return lexical(x[4], y[4]);
   });
+}
+function rankBaselineCandidatesV2(candidates, request, environment) {
+  return rankedBaselineEntriesV2(candidates, request, environment).map(({ candidate }) => candidate);
 }
 function resolveV2(request, environment) {
   const { catalog, policy } = environment;

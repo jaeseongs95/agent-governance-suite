@@ -301,13 +301,15 @@ test('pure helper declarations preserve concrete candidate/binding types and rea
   const root = fileURLToPath(new URL('../../../', import.meta.url));
   const virtual = path.join(root, 'contracts', '__eligible_candidates_virtual.ts');
   const source = `
-    import { collectEligibleCandidatesV2, rankBaselineCandidatesV2, type EligibleCandidateV2, type RoutingEnvironmentV2 } from '../skills/coordinate-subagents/scripts/model-routing-core.mjs';
+    import { collectEligibleCandidatesV2, getBaselineCandidateMetadataV2, rankBaselineCandidatesV2, type EligibleCandidateV2, type RoutingEnvironmentV2 } from '../skills/coordinate-subagents/scripts/model-routing-core.mjs';
     import type { ModelSelectionRequestV2, ModelRoutingDecisionV2, HostModelCapabilitiesV1, ModelCatalogV1 } from './model-routing-types.js';
     declare const req: ModelSelectionRequestV2;
     declare const env: RoutingEnvironmentV2;
     const pool = collectEligibleCandidatesV2(req, env);
     const readonlyCandidates: readonly EligibleCandidateV2[] = pool.candidates;
     const result: EligibleCandidateV2[] = rankBaselineCandidatesV2(readonlyCandidates, req, env);
+    const metadata = getBaselineCandidateMetadataV2(readonlyCandidates, req, env);
+    const rank: number = metadata[0]!.baselineRank;
     const binding: HostModelCapabilitiesV1['supportedBindings'][number] = result[0]!.binding;
     const model: ModelCatalogV1['models'][number] = result[0]!.model;
     const rejected: ModelRoutingDecisionV2['rejectedCandidates'] = pool.rejectedCandidates;
@@ -317,11 +319,15 @@ test('pure helper declarations preserve concrete candidate/binding types and rea
     rankBaselineCandidatesV2(['model-only'], req, env);
     // @ts-expect-error A candidate projection grants no execution authority.
     const authority: true = pool.executionAuthorized;
+    // @ts-expect-error Baseline metadata grants no execution authority.
+    const metadataAuthority: true = metadata[0]!.executionAuthorized;
   `;
   const options = { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.NodeNext, moduleResolution: ts.ModuleResolutionKind.NodeNext,
     strict: true, noUncheckedIndexedAccess: true, exactOptionalPropertyTypes: true, skipLibCheck: true, types: [] };
   const host = ts.createCompilerHost(options), original = host.getSourceFile.bind(host);
-  host.getSourceFile = (file, version, onError, shouldCreate) => file === virtual
+  const originalFileExists = host.fileExists.bind(host);
+  host.fileExists = file => path.normalize(file) === virtual || originalFileExists(file);
+  host.getSourceFile = (file, version, onError, shouldCreate) => path.normalize(file) === virtual
     ? ts.createSourceFile(file, source, version, true) : original(file, version, onError, shouldCreate);
   const program = ts.createProgram([virtual], options, host);
   const errors = ts.getPreEmitDiagnostics(program).filter(item => item.category === ts.DiagnosticCategory.Error);
