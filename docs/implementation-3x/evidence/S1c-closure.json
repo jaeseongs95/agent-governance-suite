@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "S09",
+  "scope": "S1c focused closure, not operational semantic adoption",
+  "result": "COMPLETED",
+  "testedIdentity": {
+    "branch": "codex/v260-semantic-decision-layer",
+    "commit": "6f2e9da09cc3d865abaeee828a11021abfe7b1e8",
+    "tree": "cf1bc30acebf9fcb4a58a293019c164e7a07d070",
+    "remoteRefAtStart": "6f2e9da09cc3d865abaeee828a11021abfe7b1e8",
+    "worktreeBeforeAndAfterChecks": "clean"
+  },
+  "environment": {
+    "platform": "win32/x64",
+    "node": "v24.19.0",
+    "pnpmGlobal": "12.4.1",
+    "pnpmProjectRunner": "11.19.0",
+    "vitest": "5.0.0"
+  },
+  "checks": [
+    {
+      "command": "git -C agent-governance-suite pull origin codex/v260-semantic-decision-layer",
+      "exitCode": 0,
+      "result": "PASS",
+      "evidence": "Already up to date; HEAD and remote ref both 6f2e9da09cc3d865abaeee828a11021abfe7b1e8",
+      "tree": "cf1bc30acebf9fcb4a58a293019c164e7a07d070"
+    },
+    {
+      "command": "pnpm --dir agent-governance-suite bundle:check",
+      "phase": "before build",
+      "exitCode": 0,
+      "result": "PASS",
+      "evidence": "node scripts/check-bundle.mjs exited 0",
+      "tree": "cf1bc30acebf9fcb4a58a293019c164e7a07d070"
+    },
+    {
+      "command": "pnpm --dir agent-governance-suite exec vitest run tests/coordinate-subagents/v3x tests/coordinate-subagents/semantic-decision",
+      "exitCode": 0,
+      "result": "PASS",
+      "evidence": "12 test files passed, 208 tests passed; includes S01-S08 and semantic contracts, eligible candidates, type parity, legacy golden",
+      "tree": "cf1bc30acebf9fcb4a58a293019c164e7a07d070"
+    },
+    {
+      "command": "pnpm --dir agent-governance-suite exec tsc --noEmit",
+      "exitCode": 0,
+      "result": "PASS",
+      "evidence": "TypeScript no-emit check exited 0",
+      "tree": "cf1bc30acebf9fcb4a58a293019c164e7a07d070"
+    },
+    {
+      "command": "pnpm --dir agent-governance-suite source:check",
+      "exitCode": 0,
+      "result": "PASS",
+      "evidence": "source lock is consistent",
+      "tree": "cf1bc30acebf9fcb4a58a293019c164e7a07d070"
+    },
+    {
+      "command": "pnpm --dir agent-governance-suite lint",
+      "exitCode": 0,
+      "result": "PASS",
+      "evidence": "ESLint exited 0; repository: valid",
+      "tree": "cf1bc30acebf9fcb4a58a293019c164e7a07d070"
+    },
+    {
+      "command": "pnpm --dir agent-governance-suite build",
+      "exitCode": 0,
+      "result": "PASS",
+      "evidence": "tsc --noEmit and node scripts/build.mjs exited 0; tracked worktree stayed clean",
+      "tree": "cf1bc30acebf9fcb4a58a293019c164e7a07d070"
+    },
+    {
+      "command": "pnpm --dir agent-governance-suite bundle:check",
+      "phase": "after build",
+      "exitCode": 0,
+      "result": "PASS",
+      "evidence": "node scripts/check-bundle.mjs exited 0",
+      "tree": "cf1bc30acebf9fcb4a58a293019c164e7a07d070"
+    },
+    {
+      "command": "git -C agent-governance-suite diff --check",
+      "exitCode": 0,
+      "result": "PASS",
+      "evidence": "No whitespace errors; worktree clean before evidence authoring",
+      "tree": "cf1bc30acebf9fcb4a58a293019c164e7a07d070"
+    },
+    {
+      "command": "Get-FileHash -LiteralPath 'agent-governance-suite/tests/coordinate-subagents/semantic-decision/fixtures/v2-golden.json' -Algorithm SHA256 | Select-Object -ExpandProperty Hash",
+      "exitCode": 0,
+      "result": "PASS",
+      "evidence": "6e6ab050a229b4ae9aeb2e767722f69498a873bed02a3854c4e351c13749d54f, identical to S08 frozen hash",
+      "tree": "cf1bc30acebf9fcb4a58a293019c164e7a07d070"
+    }
+  ],
+  "notRun": [
+    "GitHub Actions/CI completion was not observed",
+    "Full pnpm test and global validate:all/validate:official were deferred to release shards",
+    "runtime:check and live provider/DB/MCP admission were outside S1c closure",
+    "S09.test.mjs is a planned test path and did not exist; the existing focused suites above were run"
+  ],
+  "operationalAdoptionEnabled": false
+}
