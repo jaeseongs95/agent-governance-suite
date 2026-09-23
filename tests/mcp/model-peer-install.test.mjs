@@ -11,6 +11,7 @@ import { requestSessionMessageOnce, waitForSessionMessageBrokerReady } from '../
 import { publishSharedModelCapability } from '../../mcp-server/src/model-capability-client.js';
 import { createPeerWorkflow } from './peer-handoff-fixtures.mjs';
 import { digest } from '../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
+import { loadCatalog } from '../../skills/coordinate-subagents/scripts/model-catalog.mjs';
 
 const root=resolve(import.meta.dirname,'../..');
 const source={host:'claude-code',sessionId:'peer-source',instanceId:'source-instance'};
@@ -42,7 +43,7 @@ async function withInstall(work){
     broker.stderr.on('data',chunk=>{brokerLog+=chunk;});await waitForSessionMessageBrokerReady(state,broker,6000);
     const request=(operation,payload)=>requestSessionMessageOnce(operation,payload,state,2500);
     for(const id of [source,target])await request('presence-start',{target:{host:id.host,sessionId:id.sessionId},instanceId:id.instanceId,transport:'fixture',wakeVisibility:'none',canWakeSilently:false,supportedInjection:['turn-end','tool-boundary'],idleWake:'none'});
-    h=createPeerWorkflow(data,{target,now:Date.now()});
+    h=createPeerWorkflow(data,{target,now:Date.now(),catalog:loadCatalog({directory:join(install,'skills','coordinate-subagents','references','model-catalog')})});
     expect(await publishSharedModelCapability(h.cap,target,state,{timeoutMs:2500})).toBe('published');
     const cli=(id,operation,payload,extra={})=>exec(join(install,'mcp-server/dist/model-routing-peer-cli.mjs'),['--host',id.host],{operation,nativeContext:{session_id:id.sessionId,instance_id:id.instanceId},payload},{...env,...extra},install);
     const hook=(id,extra={})=>exec(join(install,'hooks/session-message-hook.mjs'),[],{hook_event_name:'Stop',session_id:id.sessionId,stop_hook_active:false},{...env,...extra},install);
