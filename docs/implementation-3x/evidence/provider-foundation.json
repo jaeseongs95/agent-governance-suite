@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "P12",
+  "kind": "fake-provider-flow-verification",
+  "result": "COMPLETED",
+  "testedBase": {
+    "branch": "codex/v3x-p03-capability-projection",
+    "commit": "2ccec4fab618b64c99f4dba10430f3c658a1514a"
+  },
+  "environment": {
+    "platform": "win32/x64",
+    "node": "v24.19.0",
+    "projectPnpm": "11.19.0",
+    "provider": "FakeSemanticDecisionProvider",
+    "clock": "fixed fixture timestamps"
+  },
+  "checks": [
+    {
+      "command": "pnpm exec vitest run tests/coordinate-subagents/v3x/P12.test.mjs tests/coordinate-subagents/v3x/P11.test.mjs tests/coordinate-subagents/v3x/P10.test.mjs tests/coordinate-subagents/v3x/P09.test.mjs tests/coordinate-subagents/v3x/P08-b.test.mjs tests/coordinate-subagents/v3x/P05.test.mjs tests/coordinate-subagents/v3x/S07.test.mjs",
+      "result": "PASS",
+      "evidence": "7 test files, 35 tests passed; P12 contributed 4 tests"
+    },
+    {
+      "command": "pnpm build",
+      "result": "PASS",
+      "evidence": "TypeScript no-emit and build script exited 0"
+    },
+    {
+      "command": "pnpm lint",
+      "result": "PASS",
+      "evidence": "ESLint and repository validation exited 0"
+    },
+    {
+      "command": "pnpm source:check",
+      "result": "PASS",
+      "evidence": "source lock is consistent"
+    },
+    {
+      "command": "pnpm bundle:check",
+      "result": "PASS",
+      "evidence": "bundle checker exited 0"
+    }
+  ],
+  "observations": {
+    "accessDenied": "A caller with a different actor ID could not prepare the guarded request.",
+    "normal": "One fake call and one test budget callback led to recorded raw result, one server-owned advice registration and a pinned A04 manifest.",
+    "off": "Off mode returned before a provider call or evaluation intent; fake call count remained zero.",
+    "timeout": "Fake timeout returned uncertain; no raw result or advice registration was admitted.",
+    "forgery": "A provider result with an extra forged evaluationId became uncertain; no raw result or advice registration was stored.",
+    "replay": "ReplayMaterialLoader loaded the published manifest with the same registered advice digest; S07 replay decision digest matched direct archived-input replay and executionAuthorized was false."
+  },
+  "limits": [
+    "All provider and adoption observations are test-only fixtures, not live provider or host evidence.",
+    "The test budget callback and consumption reader are injected fixtures; live atomic reservation and consumption journal wiring remain unobserved.",
+    "No operational assist default or execution authorization was enabled."
+  ]
+}
