@@ -1190,6 +1190,28 @@ export interface SemanticDecisionPolicyV1 {
   egress: { enabled: boolean; allowedProviders: string[] };
 }
 
+export type SemanticEgressAccessPathV1 = "subscription" | "api" | "enterprise";
+export type SemanticEgressDataCategoryV1 = "routing" | "question" | "task" | "frame" | "artifact" | "catalog";
+
+/** Operator-owned configuration; never accepted through a model-callable request. */
+export type SemanticEgressConfigV1 =
+  | { schemaVersion: "1.0.0"; enabled: false }
+  | {
+      schemaVersion: "1.0.0";
+      enabled: true;
+      approval: { source: string; revision: number; decisionId: string };
+      routes: Array<{
+        providerId: string;
+        endpoint: string;
+        dataCategories: SemanticEgressDataCategoryV1[];
+        accessPaths: SemanticEgressAccessPathV1[];
+      }>;
+      budget: {
+        requests: { max: number; basis: "evaluation" };
+        cost: { maxMicros: number; currency: string; basis: "evaluation" };
+      };
+    };
+
 /** Caller may supply routing input and references, never prepared state/policy/capability/admission. */
 export interface SemanticModelAssignmentRequestV1 {
   schemaVersion: "1.0.0";

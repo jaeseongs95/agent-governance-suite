@@ -10691,6 +10691,7 @@ var contractSchemas = {
   semanticDecisionRequestV1: loadSchema("semantic-decision-request.v1.schema.json"),
   semanticDecisionAdviceV1: loadSchema("semantic-decision-advice.v1.schema.json"),
   semanticDecisionPolicyV1: loadSchema("semantic-decision-policy.v1.schema.json"),
+  semanticEgressConfigV1: loadSchema("semantic-egress-config.v1.schema.json"),
   semanticModelAssignmentRequestV1: loadSchema("semantic-model-assignment-request.v1.schema.json"),
   modelRoutingDecisionV3: loadSchema("model-routing-decision.v3.schema.json"),
   modelApplicationRequestV3: loadSchema("model-application-request.v3.schema.json"),
@@ -10985,6 +10986,9 @@ var ContractValidator = class {
     const result = this.assertSemantic("semanticDecisionPolicyV1", value);
     assertSemanticPolicyConsistency(result);
     return result;
+  }
+  semanticEgressConfigV1(value) {
+    return this.assertSemantic("semanticEgressConfigV1", value);
   }
   semanticModelAssignmentRequestV1(value) {
     const result = this.assertSemantic("semanticModelAssignmentRequestV1", value);
