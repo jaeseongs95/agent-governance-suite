@@ -14295,6 +14295,11 @@ var ModelRoutingStore = class {
         decision_digest TEXT PRIMARY KEY, binding_digest TEXT NOT NULL, request_json TEXT NOT NULL,
         environment_json TEXT NOT NULL, payload TEXT NOT NULL, resolved_at TEXT NOT NULL
       ) STRICT;
+      CREATE TABLE IF NOT EXISTS ags_model_decision_refs_v3 (
+        decision_digest TEXT PRIMARY KEY, baseline_decision_digest TEXT NOT NULL,
+        evaluation_id TEXT NOT NULL UNIQUE, registration_id TEXT NOT NULL UNIQUE,
+        advice_digest TEXT NOT NULL
+      ) STRICT;
       CREATE TABLE IF NOT EXISTS ags_model_applications_v2 (
         record_digest TEXT PRIMARY KEY, decision_digest TEXT NOT NULL, binding_digest TEXT NOT NULL,
         payload TEXT NOT NULL, recorded_at TEXT NOT NULL
@@ -14334,6 +14339,7 @@ var ModelRoutingStore = class {
     return this.database.prepare("SELECT payload FROM ags_model_capabilities_v1 ORDER BY host,session_id,instance_id").all().map((r) => JSON.parse(r.payload));
   }
   saveDecision(request, environment, decision, now) {
+    assert(decision?.schemaVersion === "2.0.0", "V3_WRITER_REQUIRED");
     verifySeal(decision, "decisionDigest");
     validateBinding(decision.binding);
     instant(now, "now");
