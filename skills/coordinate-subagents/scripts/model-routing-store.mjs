@@ -1,9 +1,25 @@
 /** Additive tables on a caller-owned SQLite connection. No existing rows or user_version rewritten. */
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import v2DecisionSchema from '../../../contracts/model-routing-decision.v2.schema.json' with { type: 'json' };
+import v3DecisionSchema from '../../../contracts/model-routing-decision.v3.schema.json' with { type: 'json' };
+import { Ajv2020 } from '../../../runtime/schema-validation.mjs';
 import { assert, canonical, digest, keys, instant, validateCapabilities, validateBinding, validateTarget, verifySeal, recordV2 } from './model-routing-core.mjs';
 import { validateEvaluation } from './model-evaluation.mjs';
 
 function transaction(db,fn){db.exec('BEGIN IMMEDIATE');try{const result=fn();db.exec('COMMIT');return result;}catch(error){db.exec('ROLLBACK');throw error;}}
+
+const decisionSchemas = new Ajv2020({ allErrors: true, strict: false });
+decisionSchemas.addSchema(v2DecisionSchema);
+const validateDecisionV3 = decisionSchemas.compile(v3DecisionSchema);
+function readDecisionPayload(payload,id){
+  const decision=JSON.parse(payload);
+  if(decision?.schemaVersion==='2.0.0')return decision;
+  assert(decision?.schemaVersion==='3.0.0','UNSUPPORTED_DECISION_VERSION');
+  assert(validateDecisionV3(decision),'INVALID_INPUT','Stored v3 decision does not match its contract');
+  verifySeal(decision,'decisionDigest');
+  assert(decision.decisionDigest===id,'DECISION_DIGEST_MISMATCH');
+  return decision;
+}
 
 /** Local integrity proof only: a same-OS-user process can read the key. NOT human authorization. */
 export class RoutingObservationSigner {
@@ -85,7 +101,7 @@ export class ModelRoutingStore {
     this.database.prepare('INSERT OR IGNORE INTO ags_model_decisions_v2 VALUES (?,?,?,?,?,?)').run(decision.decisionDigest,digest(decision.binding),canonical(request),canonical(environment),payload,now);
     return decision;
   }
-  decision(id){const row=this.database.prepare('SELECT * FROM ags_model_decisions_v2 WHERE decision_digest=?').get(id);return row?{request:JSON.parse(row.request_json),environment:JSON.parse(row.environment_json),decision:JSON.parse(row.payload),resolvedAt:row.resolved_at}:null;}
+  decision(id){const row=this.database.prepare('SELECT * FROM ags_model_decisions_v2 WHERE decision_digest=?').get(id);return row?{request:JSON.parse(row.request_json),environment:JSON.parse(row.environment_json),decision:readDecisionPayload(row.payload,id),resolvedAt:row.resolved_at}:null;}
   publishObservation(receipt,signer,now){
     const observation=signer.verify(receipt,'observation',now);validateBinding(observation.binding);validateTarget(observation.target);
     const entry=this.decision(observation.decisionDigest);assert(entry,'DECISION_UNKNOWN');

@@ -17,7 +17,7 @@ import { ModelPeerPacketSigner, peerCheck, peerMessageId, peerReceipt, peerInsta
   packetMatchesDecision, type PeerPacket, type PeerDisposition } from "./model-peer-packet.js";
 import { ContractValidator } from "./schema-validator.js";
 
-type Entry = NonNullable<ReturnType<ModelRoutingStore["decision"]>>;
+type Entry = Omit<NonNullable<ReturnType<ModelRoutingStore["decision"]>>, "decision"> & { decision: ModelRoutingDecisionV2 };
 interface PeerPreflightDispatch {
   dispatch_key: string;
   assignment_id: string;
@@ -67,7 +67,7 @@ export class ModelRoutingPeerSession {
       && canonicalJson(request.binding) === canonicalJson(decision.binding)
       && decision.status === "selected" && decision.invocationSurface === "peer-session" && decision.target,
     "The stored peer decision is invalid or not a peer-session selection.");
-    return entry;
+    return { ...entry, decision };
   }
   private async alive(identity: CapabilityIdentity, call: ReturnType<ModelRoutingPeerSession["exchange"]>["call"]): Promise<SessionPresence> {
     const response = await call("presence", { target: { host: identity.host, sessionId: identity.sessionId } }) as { presence?: SessionPresence } | null;
