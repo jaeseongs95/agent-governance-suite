@@ -1,0 +1,23 @@
+HTTP/1.1 200 OK
+Date: Wed, 23 Sep 2026 12:31:19 GMT
+Content-Type: text/markdown; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+CF-Ray: a3f990d2a936b2de-ICN
+CF-Cache-Status: EXPIRED
+Cache-Control: public, max-age=0, must-revalidate
+Content-Disposition: inline
+x-vercel-id: iad1::iad1::4ctdf-1790166679654-b6b5162469aa
+Last-Modified: Wed, 23 Sep 2026 12:31:19 GMT
+Link: </llms.txt>; rel="llms-txt", </llms-full.txt>; rel="llms-full-txt", </.well-known/api-catalog>; rel="api-catalog", </.well-known/mcp/server-card.json>; rel="mcp-server-card", </.well-known/agent-card.json>; rel="agent-card", </.well-known/agent-skills/index.json>; rel="agent-skills"
+Server: cloudflare
+Strict-Transport-Security: max-age=63072000
+Vary: rsc, accept-encoding
+content-security-policy: default-src 'none'
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-llms-txt: /llms.txt
+x-matched-path: /_mintlify/_markdown/_sites/[subdomain]/[[...slug]]
+x-robots-tag: noindex, nofollow
+x-vercel-cache: HIT
+alt-svc: h3=":443"; ma=86400
