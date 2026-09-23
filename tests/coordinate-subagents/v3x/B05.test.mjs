@@ -77,7 +77,8 @@ test('B05 uses one outer transaction, sorted pools, one reservation and idempote
     db.exec = sql => { statements.push(sql); return exec(sql); };
     const first = store.admit(request());
     assert.equal(first.kind, 'admitted');
-    assert.deepEqual(statements, ['BEGIN IMMEDIATE;', 'COMMIT;']);
+    assert.deepEqual(statements, ['BEGIN IMMEDIATE;', 'SAVEPOINT resource_admission_candidate;',
+      'RELEASE resource_admission_candidate;', 'COMMIT;']);
     assert.deepEqual(order, ids);
     assert.deepEqual(ledger(db).holds.map(row => row.pool_id), ids);
     assert.equal(ledger(db).reservations.length, 1);
@@ -107,7 +108,10 @@ test('B05 failure at last sorted pool or last window leaves no partial hold', as
     const store = new ResourcePoolsAdmissionStore(db, config, policies, () => now);
     assert.deepEqual(store.admit(request()), { kind: 'rejected', reason: 'INSUFFICIENT_LOCAL_CAPACITY',
       failedPool: { accountScope, resourcePoolId: 'z-pool' } });
-    assert.deepEqual(ledger(db), { reservations: [], holds: [], requests: [] });
+    assert.deepEqual(ledger(db).reservations, []);
+    assert.deepEqual(ledger(db).holds, []);
+    assert.deepEqual(ledger(db).requests.map(row => ({ ...row })),
+      [{ request_key: 'request-1', state: 'rejected' }]);
   }, insufficient);
   const twoWindows = [response('a-pool'), response('z-pool', [window('z-pool'), window('z-pool', 7, 'monthly')])];
   const twoPolicies = [policy('a-pool'), policy('z-pool', ['weekly', 'monthly'])];
@@ -116,7 +120,10 @@ test('B05 failure at last sorted pool or last window leaves no partial hold', as
     const input = request();
     input.pools[0].windows.push({ windowId: 'monthly', amount: 5, unit: 'request' });
     assert.equal(store.admit(input).kind, 'rejected');
-    assert.deepEqual(ledger(db), { reservations: [], holds: [], requests: [] });
+    assert.deepEqual(ledger(db).reservations, []);
+    assert.deepEqual(ledger(db).holds, []);
+    assert.deepEqual(ledger(db).requests.map(row => ({ ...row })),
+      [{ request_key: 'request-1', state: 'rejected' }]);
   }, twoWindows, twoPolicies);
 });
 
