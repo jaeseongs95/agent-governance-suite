@@ -45,6 +45,8 @@ test('B14-a unnegotiated, unknown-version, unknown-operation and role claims fai
   assert.throws(() => validateResourceBrokerRequest({ ...read, args: { ...read.args, remaining: 100 } }, true, 'reader'));
   assert.throws(() => validateResourceBrokerRequest(read, true, 'owner'));
   assert.throws(() => validateResourceBrokerRequest(read, true, 'admin'));
+  assert.throws(() => validateResourceBrokerRequest(read, true, ['reader']));
+  assert.throws(() => validateResourceBrokerRequest(read, ['true'], 'reader'));
   assert.deepEqual(RESOURCE_BROKER_ALLOWED_OPERATIONS.collector, ['collect-observation']);
 });
 
@@ -148,4 +150,49 @@ test('B14-a read and settlement results reject malformed nested evidence', () =>
   assert.throws(() => validateResourceBrokerResult(reply(reconcile,
     { kind: 'applied', projection: { ...projection, internalSlotBudget: {
       unit: 'token', reservedAmount: 0, observedUse: null } } }), reconcile));
+});
+
+test('B14-a enum fields reject array, null and numeric coercion on both wire directions', () => {
+  const reply = (request, result) => ({ schemaVersion: '1.0.0',
+    requestId: request.requestId, operation: request.operation,
+    kind: 'resource-result', result });
+  const uncertain = wire('mark-uncertain',
+    { reservationId: 'reservation-1', reason: 'response-timeout' });
+  const reserve = wire('admit-pool', { request: admission });
+  const collect = wire('collect-observation', { collectorId: 'provider-1' });
+  const rolloverRequest = wire('read-rollover',
+    { accountScope, poolId: 'pool-1', windowId: 'weekly' });
+  const rollover = { observationId: digest, resetEpoch: 2, revision: 1,
+    carryover: [{ reservationId: 'reservation-1', originalResetEpoch: 1,
+      state: 'settled', intentId: null, heldAmount: 1, unit: 'request',
+      coverage: 'unknown', observedAmount: null, inclusion: 'unknown' }] };
+  const reconciliationRequest = wire('read-reconciliation',
+    { accountScope, poolId: 'pool-1', windowId: 'weekly' });
+  const projection = { providerMetric: { unit: 'request', metricKind: 'used',
+    observedAmount: 1, coverage: 'complete', knownExcludedDelta: 0, projectedAmount: 1 },
+  internalSlotBudget: { unit: 'slot', reservedAmount: 0, observedUse: null },
+  eventInclusion: [{ eventId: 'event-1', status: 'included' }], needsReconciliation: false };
+  const settle = wire('settle-reservation', { evidenceRef: 'evidence-1' });
+  const settled = { kind: 'settled', reservationId: 'reservation-1', replayed: false,
+    coverage: 'unknown', observed: [{ accountScope, poolId: 'pool-1', windowId: 'weekly',
+      unit: 'request', estimatedAmount: 1, observedAmount: null, coverage: 'unknown' }] };
+  for (const bad of [['response-timeout'], null, 1]) {
+    assert.throws(() => validateResourceBrokerRequest({ ...uncertain,
+      args: { ...uncertain.args, reason: bad } }, true, 'owner'));
+    assert.throws(() => validateResourceBrokerResult(reply(reserve,
+      { kind: bad === 1 ? 1 : bad === null ? null : ['admitted'],
+        reservationId: 'reservation-1' }), reserve));
+    assert.throws(() => validateResourceBrokerResult(reply(collect,
+      { kind: bad === 1 ? 1 : bad === null ? null : ['applied'],
+        observationId: digest }), collect));
+    assert.throws(() => validateResourceBrokerResult(reply(rolloverRequest, { ...rollover,
+      carryover: [{ ...rollover.carryover[0], state: bad === 1 ? 1 : bad === null ? null : ['settled'] }] }),
+    rolloverRequest));
+    assert.throws(() => validateResourceBrokerResult(reply(reconciliationRequest, { ...projection,
+      providerMetric: { ...projection.providerMetric, metricKind: bad === 1 ? 1 : bad === null ? null : ['used'] } }),
+    reconciliationRequest));
+    assert.throws(() => validateResourceBrokerResult(reply(settle, { ...settled,
+      observed: [{ ...settled.observed[0], coverage: bad === 1 ? 1 : bad === null ? null : ['unknown'] }] }),
+    settle));
+  }
 });

@@ -76,6 +76,9 @@ function exact(raw: Record<string, unknown>, keys: readonly string[]): void {
     "Invalid resource broker fields.");
 }
 function key(value: unknown): value is string { return typeof value === "string" && id.test(value); }
+function oneOf(value: unknown, allowed: readonly string[]): value is string {
+  return typeof value === "string" && allowed.includes(value);
+}
 function amount(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0;
 }
@@ -95,10 +98,10 @@ function validateRolloverResult(result: Record<string, unknown>): void {
     check(key(item.reservationId) && !seen.has(item.reservationId)
       && Number.isSafeInteger(item.originalResetEpoch) && Number(item.originalResetEpoch) >= 0
       && Number(item.originalResetEpoch) < Number(result.resetEpoch)
-      && ["held", "committed", "uncertain", "settled"].includes(String(item.state))
+      && oneOf(item.state, ["held", "committed", "uncertain", "settled"])
       && (item.intentId === null || key(item.intentId)) && amount(item.heldAmount)
       && key(item.unit) && (item.coverage === null
-        || ["partial", "complete", "unknown"].includes(String(item.coverage)))
+        || oneOf(item.coverage, ["partial", "complete", "unknown"]))
       && optionalAmount(item.observedAmount) && item.inclusion === "unknown",
     "Invalid rollover carryover.");
     seen.add(item.reservationId);
@@ -110,9 +113,9 @@ function validateReconciliationResult(result: Record<string, unknown>): void {
   const metric = object(result.providerMetric), budget = object(result.internalSlotBudget);
   exact(metric, ["unit", "metricKind", "observedAmount", "coverage", "knownExcludedDelta", "projectedAmount"]);
   exact(budget, ["unit", "reservedAmount", "observedUse"]);
-  check(key(metric.unit) && ["used", "remaining"].includes(String(metric.metricKind))
+  check(key(metric.unit) && oneOf(metric.metricKind, ["used", "remaining"])
     && optionalAmount(metric.observedAmount)
-    && ["partial", "complete", "unknown"].includes(String(metric.coverage))
+    && oneOf(metric.coverage, ["partial", "complete", "unknown"])
     && amount(metric.knownExcludedDelta)
     && (metric.projectedAmount === null || typeof metric.projectedAmount === "number"
       && Number.isFinite(metric.projectedAmount))
@@ -125,7 +128,7 @@ function validateReconciliationResult(result: Record<string, unknown>): void {
     const item = object(raw);
     exact(item, ["eventId", "status"]);
     check(key(item.eventId) && !seen.has(item.eventId)
-      && ["included", "excluded", "unknown", "different-unit"].includes(String(item.status)),
+      && oneOf(item.status, ["included", "excluded", "unknown", "different-unit"]),
     "Invalid reconciliation event inclusion.");
     seen.add(item.eventId);
   }
@@ -144,8 +147,9 @@ export function negotiateResourceAdmission(rawPing: unknown): boolean {
  * Evidence refs are resolved by the owner; no caller JSON becomes verified evidence. */
 export function validateResourceBrokerRequest(raw: unknown, featureAvailable: boolean,
   role: ResourceBrokerRole): ResourceBrokerRequestV1 {
-  check(featureAvailable, "Resource admission was not negotiated.");
-  check(Object.hasOwn(RESOURCE_BROKER_ALLOWED_OPERATIONS, role), "Unknown resource broker role.");
+  check(featureAvailable === true, "Resource admission was not negotiated.");
+  check(typeof role === "string" && Object.hasOwn(RESOURCE_BROKER_ALLOWED_OPERATIONS, role),
+    "Unknown resource broker role.");
   const request = object(raw);
   exact(request, ["schemaVersion", "feature", "requestId", "operation", "args"]);
   check(request.schemaVersion === "1.0.0" && request.feature === RESOURCE_ADMISSION_FEATURE,
@@ -173,7 +177,7 @@ export function validateResourceBrokerRequest(raw: unknown, featureAvailable: bo
         && Object.hasOwn(args, "reservationId") && key(args.reservationId)
         && (!Object.hasOwn(args, "evidenceRef") || key(args.evidenceRef)), "Invalid release reference."); break;
     case "mark-uncertain": exact(args, ["reservationId", "reason"]);
-      check(key(args.reservationId) && ["response-timeout", "receipt-lost", "owner-restarted"].includes(String(args.reason)),
+      check(key(args.reservationId) && oneOf(args.reason, ["response-timeout", "receipt-lost", "owner-restarted"]),
         "Invalid uncertainty signal."); break;
     case "settle-reservation": exact(args, ["evidenceRef"]); check(key(args.evidenceRef), "Invalid settlement reference."); break;
     case "reconcile-usage": {
@@ -205,8 +209,8 @@ export function validateResourceBrokerResult(raw: unknown,
   const result = object(reply.result);
   if (request.operation === "read-observation") {
     const response = validateCollectorResponseV1(result, {
-      collectorId: String(result.collectorId), source: result.source as CollectorSourceV1,
-      accountScope: String(result.accountScope), resourcePoolId: String(result.resourcePoolId),
+      collectorId: result.collectorId as string, source: result.source as CollectorSourceV1,
+      accountScope: result.accountScope as string, resourcePoolId: result.resourcePoolId as string,
     });
     check(`sha256:${createHash("sha256").update(canonicalJson(response)).digest("hex")}`
       === request.args.observationId, "Observation result digest differs from the request.");
@@ -215,7 +219,7 @@ export function validateResourceBrokerResult(raw: unknown,
   } else if (request.operation === "read-reconciliation") {
     validateReconciliationResult(result);
   } else if (request.operation === "admit-pool" || request.operation === "admit-pools") {
-    check(["admitted", "rejected", "deferred"].includes(String(result.kind)), "Invalid admission result.");
+    check(oneOf(result.kind, ["admitted", "rejected", "deferred"]), "Invalid admission result.");
     if (result.kind === "admitted") {
       exact(result, request.operation === "admit-pool" ? ["kind", "reservationId"]
         : ["kind", "reservationId", "poolCount"]);
@@ -247,12 +251,12 @@ export function validateResourceBrokerResult(raw: unknown,
     "Resource receipt is missing or mismatched.");
   } else if (request.operation === "collect-observation") {
     exact(result, ["kind", "observationId"]);
-    check(["applied", "duplicate", "out-of-order", "resync-required"].includes(String(result.kind))
+    check(oneOf(result.kind, ["applied", "duplicate", "out-of-order", "resync-required"])
       && (result.observationId === null || typeof result.observationId === "string"
         && digest.test(result.observationId)), "Invalid collector result.");
   } else if (request.operation === "reconcile-usage") {
     exact(result, ["kind", "projection"]);
-    check(["applied", "duplicate", "stale"].includes(String(result.kind))
+    check(oneOf(result.kind, ["applied", "duplicate", "stale"])
       && (result.kind === "stale" ? result.projection === null : result.projection !== null),
     "Invalid reconciliation result.");
     if (result.projection !== null) validateReconciliationResult(object(result.projection));
@@ -263,7 +267,7 @@ export function validateResourceBrokerResult(raw: unknown,
     "Invalid commit result.");
   } else if (request.operation === "release-reservation") {
     exact(result, ["kind", "reservationId"]);
-    check(["released", "already-released"].includes(String(result.kind))
+    check(oneOf(result.kind, ["released", "already-released"])
       && result.reservationId === request.args.reservationId, "Invalid release result.");
   } else if (request.operation === "mark-uncertain") {
     exact(result, ["kind", "reservationId", "intentId", "replayed"]);
@@ -272,9 +276,9 @@ export function validateResourceBrokerResult(raw: unknown,
     "Invalid uncertainty result.");
   } else if (request.operation === "settle-reservation") {
     exact(result, ["kind", "reservationId", "replayed", "coverage", "observed"]);
-    check(["recorded", "settled"].includes(String(result.kind)) && key(result.reservationId)
+    check(oneOf(result.kind, ["recorded", "settled"]) && key(result.reservationId)
       && typeof result.replayed === "boolean"
-      && ["partial", "complete", "unknown"].includes(String(result.coverage))
+      && oneOf(result.coverage, ["partial", "complete", "unknown"])
       && Array.isArray(result.observed), "Invalid settlement result.");
     for (const raw of result.observed) {
       const item = object(raw);
@@ -283,7 +287,7 @@ export function validateResourceBrokerResult(raw: unknown,
       check(typeof item.accountScope === "string" && account.test(item.accountScope)
         && key(item.poolId) && key(item.windowId) && key(item.unit)
         && amount(item.estimatedAmount) && optionalAmount(item.observedAmount)
-        && ["partial", "complete", "unknown"].includes(String(item.coverage)),
+        && oneOf(item.coverage, ["partial", "complete", "unknown"]),
       "Invalid settled usage observation.");
     }
   }
