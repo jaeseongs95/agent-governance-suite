@@ -1260,3 +1260,39 @@ export interface ResourceStateSnapshotV1 {
     expiresAt: string;
   }>;
 }
+
+/** Policy approval is a claim until an authority authenticates its evidence digest. */
+export interface ResourcePolicyV1 {
+  schemaVersion: "1.0.0";
+  policyId: string;
+  revision: number;
+  accountScope: string;
+  resourcePoolId: string;
+  approval: ResourcePolicyApprovalV1;
+  allowedAccessPaths: Array<"subscription" | "api" | "enterprise">;
+  paidAccessApproval?: ResourcePolicyApprovalV1;
+  onUnknown: "block" | "defer";
+  onStale: "block" | "defer";
+  rolePriorities?: Array<{ roleId: string; priority: number }>;
+  preferenceOverride?: {
+    mode: "preferred-over-required" | "preferred-through-hard-reserve";
+    reason: string;
+    approval: ResourcePolicyApprovalV1;
+  };
+  windows: Array<{
+    windowId: string;
+    bucketId: string;
+    unit: string;
+    hardLimit?: { minimumRemaining: number };
+    reservePolicy?: {
+      hardReserve?: { minimumRemaining: number; protectedRoleIds: string[] };
+      softConservation?: { enterBelowRemaining: number };
+    };
+  }>;
+}
+
+export interface ResourcePolicyApprovalV1 {
+  approvedBy: string;
+  approvedAt: string;
+  evidenceDigest: string;
+}

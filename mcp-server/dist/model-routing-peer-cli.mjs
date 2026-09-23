@@ -10669,7 +10669,8 @@ var contractSchemas = {
   modelRoutingDecisionV3: loadSchema("model-routing-decision.v3.schema.json"),
   modelApplicationRequestV3: loadSchema("model-application-request.v3.schema.json"),
   modelApplicationRecordV3: loadSchema("model-application-record.v3.schema.json"),
-  resourceStateSnapshotV1: loadSchema("resource-state-snapshot.v1.schema.json")
+  resourceStateSnapshotV1: loadSchema("resource-state-snapshot.v1.schema.json"),
+  resourcePolicyV1: loadSchema("resource-policy.v1.schema.json")
 };
 function artifactDigestView(declared) {
   let items = declared.properties?.artifacts?.items;
@@ -10903,6 +10904,19 @@ var ContractValidator = class {
       throw new WorkflowContractError("INVALID_INPUT", "Resource windows must have unique IDs and expire after observation.");
     }
     return snapshot;
+  }
+  resourcePolicyV1(value) {
+    const policy = this.assert("resourcePolicyV1", value);
+    const windows = policy.windows;
+    if (new Set(windows.map((window) => window.windowId)).size !== windows.length || new Set(policy.rolePriorities?.map((role) => role.roleId)).size !== (policy.rolePriorities?.length ?? 0) || windows.some((window) => {
+      const hardLimit = window.hardLimit?.minimumRemaining ?? 0;
+      const hardReserve = window.reservePolicy?.hardReserve?.minimumRemaining;
+      const softConservation = window.reservePolicy?.softConservation?.enterBelowRemaining;
+      return hardReserve !== void 0 && hardReserve < hardLimit || softConservation !== void 0 && softConservation < (hardReserve ?? hardLimit);
+    })) {
+      throw new WorkflowContractError("INVALID_INPUT", "Resource policy windows, role priorities, and remaining floors must be consistent.");
+    }
+    return policy;
   }
   /** New-contract validation only: legacy Ajv acceptance and v2 runtime methods are unchanged. */
   assertSemantic(name, value) {
