@@ -10,11 +10,9 @@ permissions:
 
 jobs:
   verify:
-    if: contains(github.event.head_commit.message, '[apply-semantic-contracts]')
+    if: github.event.head_commit.message == '[verify-semantic-contracts]'
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,74 +34,6 @@ jobs:
           node --version > "$RUNNER_TEMP/semantic-evidence/node.txt"
           pnpm --version > "$RUNNER_TEMP/semantic-evidence/pnpm.txt"
           uname -a > "$RUNNER_TEMP/semantic-evidence/os.txt"
-      - name: Apply an explicitly requested, byte-checked S1a candidate
-        if: contains(github.event.head_commit.message, '[apply-semantic-contracts]')
-        shell: bash
-        run: |
-          node --input-type=module <<'NODE'
-          import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'node:fs';
-          import { createHash } from 'node:crypto';
-          import { brotliDecompressSync } from 'node:zlib';
-          import { execFileSync } from 'node:child_process';
-          import { join } from 'node:path';
-          const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
-          const sha256 = data => createHash('sha256').update(data).digest('hex');
-          const file = 'docs/semantic-decision/s1a-candidate.json';
-          const raw = readFileSync(file);
-          if (raw.length > 1024 * 1024) throw new Error('Candidate envelope is too large');
-          const envelope = JSON.parse(raw);
-          if (envelope.encoding !== 'brotli-base64-parts') throw new Error('Unsupported candidate encoding');
-          if (!Array.isArray(envelope.parts) || !envelope.parts.length || envelope.parts.length > 16 || new Set(envelope.parts).size !== envelope.parts.length) throw new Error('Invalid candidate parts');
-          const encoded = envelope.parts.map(part => {
-            if (!/^docs\/semantic-decision\/s1a-candidate\.[0-9]{2}\.part$/.test(part)) throw new Error('Invalid part path');
-            const bytes = readFileSync(part, 'utf8');
-            if (bytes.length > 12000 || !/^[A-Za-z0-9+/=]+$/.test(bytes)) throw new Error('Invalid part bytes');
-            return bytes;
-          }).join('');
-          const decoded = brotliDecompressSync(Buffer.from(encoded, 'base64'), { maxOutputLength: 8 * 1024 * 1024 });
-          if (sha256(decoded) !== envelope.sha256) throw new Error('Candidate bytes differ from the checked payload');
-          const candidate = JSON.parse(decoded);
-          if (candidate.format !== 'ags-checked-source-patch.v1' || git('rev-parse', 'HEAD^') !== candidate.baseCommit) throw new Error('Candidate base moved');
-          if (process.env.GITHUB_REF !== 'refs/heads/codex/v260-semantic-decision-layer') throw new Error('Wrong branch');
-          if (!Array.isArray(candidate.files) || !candidate.files.length || candidate.files.length > 64) throw new Error('Invalid candidate inventory');
-          const workflow = '.github/workflows/semantic-contract-verification.yml';
-          const allowed = p => typeof p === 'string' && !p.includes('..') && (
-            /^contracts\/(?:types\.ts|(?:semantic-[a-z-]+\.v1|model-(?:routing-decision|application-request|application-record)\.v3)\.schema\.json)$/.test(p) ||
-            /^mcp-server\/src\/(?:schema-validator|semantic-contract-invariants)\.ts$/.test(p) ||
-            /^mcp-server\/dist\/(?:server|model-routing-host-hook|model-routing-peer-cli|session-message-broker|session-message-hook)\.mjs$/.test(p) ||
-            p === 'skills/source-lock.json' || p === 'skills/coordinate-subagents/scripts/model-routing-core.d.mts' ||
-            /^skills\/coordinate-subagents\/references\/semantic-decision\/(?:decision-policy\.v1\.json|questions\/model-ranking\.v1\.json)$/.test(p) ||
-            /^tests\/coordinate-subagents\/semantic-decision\/[A-Za-z0-9_./-]+\.(?:mjs|json|ts)$/.test(p) ||
-            /^docs\/semantic-decision\/[A-Za-z0-9_./-]+\.(?:md|json)$/.test(p) || p === workflow);
-          const paths = candidate.files.map(row => row.path);
-          if (new Set(paths).size !== paths.length || paths.some(p => !allowed(p) || p === file)) throw new Error('Candidate path outside S1a');
-          for (const row of candidate.files) {
-            if (row.path === workflow) {
-              if (sha256(readFileSync(row.path)) !== row.sha256) throw new Error('Verification workflow differs');
-              continue;
-            }
-            if (row.beforeBlob === null ? existsSync(row.path) : !existsSync(row.path) || git('hash-object', row.path) !== row.beforeBlob) throw new Error(`Base file differs: ${row.path}`);
-          }
-          const patchPath = join(process.env.RUNNER_TEMP, 'checked-semantic.patch');
-          if (sha256(candidate.patch) !== candidate.patchSha256) throw new Error('Patch digest mismatch');
-          writeFileSync(patchPath, candidate.patch);
-          git('apply', '--check', '--index', patchPath);
-          git('apply', '--index', patchPath);
-          // Generated bundles are rebuilt from the frozen dependencies, then compared to locally checked hashes.
-          execFileSync('pnpm', ['build'], { stdio: 'inherit' });
-          for (const row of candidate.files) {
-            if (sha256(readFileSync(row.path)) !== row.sha256) throw new Error(`Applied bytes differ: ${row.path}`);
-          }
-          unlinkSync(file);
-          for (const part of envelope.parts) unlinkSync(part);
-          git('add', '--', ...paths);
-          git('add', '-u', '--', file, ...envelope.parts);
-          if (git('write-tree') !== candidate.expectedTree) throw new Error('Unexpected candidate tree');
-          const out = join(process.env.RUNNER_TEMP, 'semantic-evidence');
-          writeFileSync(join(out, 'expected-tree.txt'), candidate.expectedTree + '\n');
-          writeFileSync(join(out, 'candidate-manifest.json'), JSON.stringify({ ...candidate, patch: undefined }, null, 2) + '\n');
-          console.log(`Prepared exact candidate tree ${candidate.expectedTree}; no branch ref has moved.`);
-          NODE
       - name: Verify in order and retain every exit code
         shell: bash
         run: |
@@ -131,35 +61,6 @@ jobs:
           run_check diff-check bash -c 'git diff --check && git diff --cached --check'
           git status --porcelain=v1 > "$out/status-after.txt"
           git diff --binary > "$out/unstaged.patch"
-      - name: Fast-forward only the checked S1a feature branch
-        if: contains(github.event.head_commit.message, '[apply-semantic-contracts]')
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SOURCE_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          out="$RUNNER_TEMP/semantic-evidence"
-          # Never waive a routing/security regression as a generic CI failure.
-          awk -F '\t' '$1 != "validate-official" && $2 != 0 {failed=1} END {exit failed}' "$out/results.tsv"
-          official=$(awk -F '\t' '$1 == "validate-official" {print $2}' "$out/results.tsv")
-          if [ "$official" != 0 ]; then
-            grep -q 'ENOENT' "$out/validate-official.log"
-            grep -q '/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py' "$out/validate-official.log"
-          fi
-          expected=$(cat "$out/expected-tree.txt")
-          [ "$(git write-tree)" = "$expected" ]
-          git diff --exit-code
-          target=refs/heads/codex/v260-semantic-decision-layer
-          [ "$(git ls-remote origin "$target" | cut -f1)" = "$SOURCE_SHA" ]
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'feat: freeze semantic decision and v3 contracts without enabling routing'
-          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
-          echo "::add-mask::$auth"
-          GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth" git push origin "HEAD:$target"
-          git rev-parse HEAD > "$out/final-commit.txt"
-          git rev-parse 'HEAD^{tree}' > "$out/final-tree.txt"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
