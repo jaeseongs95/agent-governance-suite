@@ -51,8 +51,23 @@ test('J03 rejects unknown options, partial answers and malformed distributions',
       probabilities: { 'option-a': 0.2, 'option-b': 0.8 } } } },
     { ...raw, answers: { model_choice: { ...raw.answers.model_choice,
       probabilities: { 'option-a': Number.NaN, 'option-b': 0.2 } } } },
+    { ...raw, answers: { model_choice: { ...raw.answers.model_choice,
+      probabilities: { 'option-a': 0, 'option-b': 0 } } } },
+    { ...raw, answers: { model_choice: { ...raw.answers.model_choice,
+      probabilities: { 'option-a': 0.8, 'option-b': 0.8 } } } },
   ];
   for (const value of invalid) assert.deepEqual(mapJevChoiceResponse(value, prepared), { status: 'invalid' });
+  const rounded = { ...raw, answers: { model_choice: { ...raw.answers.model_choice,
+    probabilities: { 'option-a': 0.8, 'option-b': 0.195 } } } };
+  assert.equal(mapJevChoiceResponse(rounded, prepared).status, 'success');
+});
+
+test('J03 rejects a prepared request sealed for another model', () => {
+  const { prepared, raw } = fixture();
+  const wrongPrepared = resealRequest({ ...prepared, provider: { ...prepared.provider,
+    model: 'other-model' } });
+  assert.throws(() => mapJevChoiceResponse({ ...raw, model: 'other-model' }, wrongPrepared),
+    /pinned Jev model/);
 });
 
 test('J03 keeps null or missing confidence out of success and treats explicit null answer as abstention', () => {

@@ -5,6 +5,9 @@ import { type SemanticProviderResultV1 } from "../../provider-port.js";
 import { JEV_MODEL_CHOICE_QUESTION_ID } from "./request-mapper.js";
 
 type JsonObject = Record<string, unknown>;
+const JEV_MODEL_ID = "jev-1.13.0";
+// Local rounding allowance; the upstream contract does not specify a tolerance.
+const PROBABILITY_SUM_TOLERANCE = 0.01;
 const object = (value: unknown): value is JsonObject => value !== null
   && typeof value === "object" && !Array.isArray(value);
 const probability = (value: unknown): value is number => typeof value === "number"
@@ -19,6 +22,9 @@ export function mapJevChoiceResponse(
   verifySeal(prepared, "requestDigest");
   if (prepared.optionMappingDigest !== digest(prepared.options)) {
     throw new TypeError("Jev response mapping requires a consistent prepared option set.");
+  }
+  if (prepared.provider.model !== JEV_MODEL_ID) {
+    throw new TypeError("Jev response mapping requires the pinned Jev model.");
   }
   if (raw === null) return { status: "abstained" };
   if (!object(raw) || raw.model !== prepared.provider.model || !object(raw.answers)
@@ -42,7 +48,9 @@ export function mapJevChoiceResponse(
     return { status: "invalid" };
   }
   const selected = probabilities[answer.choice] as number;
-  if (Object.values(probabilities).some(value => (value as number) > selected)) {
+  const values = Object.values(probabilities) as number[];
+  if (Math.abs(values.reduce((sum, value) => sum + value, 0) - 1) > PROBABILITY_SUM_TOLERANCE
+    || values.some(value => value > selected)) {
     return { status: "invalid" };
   }
   return { status: "success", choice: {
