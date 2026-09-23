@@ -5,6 +5,10 @@ import { tagEvaluationCostV1 } from './metric-units.mjs';
 const SCOPE = Object.freeze(ratecard.scope);
 const RATES = Object.freeze(Object.fromEntries(Object.entries(ratecard.rates)
   .map(([model, rates]) => [model, Object.freeze(rates)])));
+const AS_OF_DATE = ratecard.asOfDate;
+Object.freeze(ratecard.source);
+Object.freeze(ratecard.rates);
+Object.freeze(ratecard);
 const UNKNOWN = Object.freeze({ basis: 'unknown', amount: null, currency: null, unit: null, sourceReference: null });
 const unknown = reason => ({ status: 'unknown', reason, cost: UNKNOWN });
 
@@ -45,7 +49,7 @@ export function estimateClaudeApiTokenCost({ modelId, pricingDate, scope, usage,
     tagEvaluationCostV1(existingCost);
     return { status: 'preserved', cost: existingCost };
   }
-  if (pricingDate !== ratecard.asOfDate || !scope || Object.keys(scope).length !== Object.keys(SCOPE).length
+  if (pricingDate !== AS_OF_DATE || !scope || Object.keys(scope).length !== Object.keys(SCOPE).length
     || Object.entries(SCOPE).some(([key, value]) => scope[key] !== value)) return unknown('UNSUPPORTED_PRICE_SCOPE');
   const rates = RATES[modelId];
   if (!rates) return unknown('UNKNOWN_MODEL_RATE');
@@ -73,7 +77,7 @@ export function estimateClaudeApiTokenCost({ modelId, pricingDate, scope, usage,
   const amount = exactAmount(units);
   if (amount === null) return unknown('PRECISION_LOSS');
   const cost = { basis: 'apiPriceEstimate', amount, currency: 'USD', unit: null,
-    sourceReference: `ratecard:anthropic-${ratecard.asOfDate}` };
+    sourceReference: `ratecard:anthropic-${AS_OF_DATE}` };
   tagEvaluationCostV1(cost);
   return { status: 'estimated', cost, toolFeesIncluded: false };
 }

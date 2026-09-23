@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'vitest';
 import { estimateClaudeApiTokenCost } from '../../../skills/coordinate-subagents/scripts/resource/model-cost-estimate.mjs';
+import sharedRatecard from '../../../skills/coordinate-subagents/references/model-catalog/pricing/anthropic-2026-09-23.json' with { type: 'json' };
 
 const card = JSON.parse(readFileSync(new URL('../../../skills/coordinate-subagents/references/model-catalog/pricing/anthropic-2026-09-23.json', import.meta.url)));
 const scope = card.scope;
@@ -51,6 +52,9 @@ test('M07 uses TTL detail once and treats thinking as an output breakdown', () =
 });
 
 test('M07 cannot invent a standard API price for another scope, date, or model', () => {
+  assert.throws(() => { sharedRatecard.asOfDate = '2026-09-24'; }, TypeError);
+  assert.throws(() => { sharedRatecard.rates['claude-opus-5-5'].cacheRead = '0.40'; }, TypeError);
+  assert.equal(estimate('claude-opus-5-5').cost.sourceReference, 'ratecard:anthropic-2026-09-23');
   for (const changed of [
     { scope: { ...scope, servingProvider: 'bedrock' } },
     { scope: { ...scope, accessPath: 'subscription' } },
