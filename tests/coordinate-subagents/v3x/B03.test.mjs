@@ -3,6 +3,8 @@ import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { setTimeout as delay } from 'node:timers/promises';
+import { Worker } from 'node:worker_threads';
 import { test } from 'vitest';
 
 import { resolveResourceAuthorityConfig } from '../../../mcp-server/src/resource/authority-config.ts';
@@ -56,6 +58,113 @@ test('B03 two connections admit latest/older responses without replacing the lat
       results.filter(result => result.kind === 'applied').length);
   });
 });
+
+function waitFor(worker, type) {
+  return new Promise((resolve, reject) => {
+    const onMessage = message => {
+      if (message.type !== type) return;
+      cleanup();
+      resolve(message);
+    };
+    const onError = error => { cleanup(); reject(error); };
+    const onExit = code => { cleanup(); reject(new Error(`B03 worker exited before ${type}: ${code}`)); };
+    const cleanup = () => {
+      worker.off('message', onMessage);
+      worker.off('error', onError);
+      worker.off('exit', onExit);
+    };
+    worker.on('message', onMessage);
+    worker.once('error', onError);
+    worker.once('exit', onExit);
+  });
+}
+
+async function competingAdmissions(first, second, rollbackFirst) {
+  const root = mkdtempSync(path.join(tmpdir(), 'ags-b03-race-'));
+  const shared = path.join(root, 'shared');
+  mkdirSync(shared);
+  const config = resolveResourceAuthorityConfig({ AGENT_GOVERNANCE_SHARED_STATE_DIR: shared }, process.platform, root);
+  const barrier = new SharedArrayBuffer(4);
+  const workers = [first, second].map((response, index) => new Worker(
+    new URL('./fixtures/b03-admission-worker.mjs', import.meta.url),
+    { execArgv: ['--import', 'tsx'], workerData: {
+      config, response, barrier, hold: index === 0, fail: index === 0 && rollbackFirst,
+    } },
+  ));
+  try {
+    await Promise.all(workers.map(worker => waitFor(worker, 'ready')));
+    const armed = waitFor(workers[0], 'armed');
+    workers[0].postMessage('arm');
+    await armed;
+
+    const holding = waitFor(workers[0], 'holding');
+    const firstResult = waitFor(workers[0], 'result');
+    workers[0].postMessage('admit');
+    await holding;
+
+    const collected = waitFor(workers[1], 'collected');
+    const writeAttempt = waitFor(workers[1], 'write-attempt');
+    const secondResult = waitFor(workers[1], 'result');
+    workers[1].postMessage('admit');
+    await collected;
+    await writeAttempt;
+    let secondSettled = false;
+    void secondResult.then(() => { secondSettled = true; }, () => { secondSettled = true; });
+    await delay(100);
+    assert.equal(secondSettled, false, 'second connection must wait while the first holds the SQLite write lock');
+
+    Atomics.store(new Int32Array(barrier), 0, 1);
+    Atomics.notify(new Int32Array(barrier), 0);
+    const outcomes = await Promise.all([firstResult, secondResult]);
+    const db = new DatabaseSync(config.databasePath);
+    try {
+      const store = new ResourceObservationStore(db, config, [fake([])]);
+      const events = db.prepare('SELECT observation_id, sequence FROM resource_observations ORDER BY sequence').all();
+      const windows = db.prepare('SELECT window_id, observation_id, revision, remaining FROM resource_window_observations').all();
+      const pools = db.prepare('SELECT COUNT(*) AS n FROM resource_pools').get().n;
+      const readback = events.map(event => store.getObservation(event.observation_id));
+      return { outcomes, events, windows, pools, readback };
+    } finally { db.close(); }
+  } finally {
+    Atomics.store(new Int32Array(barrier), 0, 1);
+    Atomics.notify(new Int32Array(barrier), 0);
+    await Promise.all(workers.map(worker => worker.terminate()));
+    rmSync(root, { recursive: true, force: true });
+  }
+}
+
+test('B03 independent SQLite connections serialize latest/older admissions in both commit orders', async () => {
+  for (const [first, second, expectedKinds, expectedSequences] of [
+    [full(2, 2, 60), full(1, 1, 70), ['applied', 'out-of-order'], [2]],
+    [full(1, 1, 70), full(2, 2, 60), ['applied', 'applied'], [1, 2]],
+  ]) {
+    const state = await competingAdmissions(first, second, false);
+    assert.deepEqual(state.outcomes.map(outcome => outcome.result?.kind), expectedKinds);
+    assert.deepEqual(state.events.map(event => event.sequence), expectedSequences);
+    assert.deepEqual(state.readback, expectedSequences.map(sequence => sequence === first.sequence ? first : second));
+    assert.equal(state.pools, 1);
+    assert.equal(state.windows.length, 1);
+    assert.equal(state.windows[0].window_id, 'weekly');
+    assert.equal(state.windows[0].revision, 2);
+    assert.equal(state.windows[0].remaining, 60);
+    assert.equal(state.windows[0].observation_id, state.events.at(-1).observation_id);
+  }
+}, 20_000);
+
+test('B03 rollback under a competing writer leaves no partial evidence or window', async () => {
+  const first = full(1, 1, 70);
+  const second = full(2, 2, 60);
+  const state = await competingAdmissions(first, second, true);
+  assert.match(state.outcomes[0].error?.message ?? '', /b03 rollback/u);
+  assert.equal(state.outcomes[1].result?.kind, 'applied');
+  assert.deepEqual(state.events.map(event => event.sequence), [2]);
+  assert.deepEqual(state.readback, [second]);
+  assert.equal(state.pools, 1);
+  assert.equal(state.windows.length, 1);
+  assert.equal(state.windows[0].revision, 2);
+  assert.equal(state.windows[0].remaining, 60);
+  assert.equal(state.windows[0].observation_id, state.events[0].observation_id);
+}, 20_000);
 
 test('B03 duplicate is idempotent, conflicting bytes fail, and raw model input or source spoofing is rejected', async () => {
   await isolated(async open => {
