@@ -139,7 +139,7 @@ export function resolveSessionBoardDatabasePath(
   return path.join(sharedUserStateDirectory(environment, homeDirectory), "session-board.sqlite3");
 }
 
-function canonicalDatabasePath(databasePath: string, platform: NodeJS.Platform): string | null {
+export function canonicalDatabasePath(databasePath: string, platform: NodeJS.Platform): string | null {
   if (databasePath === ":memory:") return null;
   const absolute = path.resolve(databasePath);
   const unresolved: string[] = [];
@@ -158,6 +158,14 @@ function canonicalDatabasePath(databasePath: string, platform: NodeJS.Platform):
   }
   const normalized = path.normalize(resolved);
   return platform === "win32" ? normalized.toLocaleLowerCase("en-US") : normalized;
+}
+
+/** One resource ledger for every workflow using this user's shared realm. */
+export function resolveResourceDatabasePath(
+  environment: NodeJS.ProcessEnv = process.env,
+  homeDirectory: string = homedir(),
+): string {
+  return path.join(sharedUserStateDirectory(environment, homeDirectory), "resource.sqlite3");
 }
 
 /** Rejects aliases that would mix optional continuity tables into workflow state. */
