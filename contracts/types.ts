@@ -1231,3 +1231,32 @@ export interface ModelApplicationRecordV3 extends Omit<ModelApplicationRecordV2,
   schemaVersion: "3.0.0";
   semantic: SemanticDecisionUseV1;
 }
+
+/** One shared pool can have several independent windows; model bindings live in a separate contract. */
+export interface ResourceStateSnapshotV1 {
+  schemaVersion: "1.0.0";
+  /** Keyed pseudonym, never a raw account identifier or credential. */
+  accountScope: string;
+  resourcePoolId: string;
+  accessPath: "subscription" | "api" | "enterprise";
+  windows: Array<{
+    windowId: string;
+    resetEpoch: number;
+    resetAt: string | null;
+    revision: number;
+    limitBucket: {
+      bucketId: string;
+      kind: "tokens" | "requests" | "subscription-percent" | "billing" | "credits" | "concurrency";
+      unit: string;
+      limit: number | null;
+      remaining: number | null;
+    };
+    coverage: "complete" | "partial" | "unknown";
+    source: {
+      kind: "host-observation" | "provider-observation" | "configured" | "user-declared";
+      evidenceDigest: string | null;
+    };
+    observedAt: string;
+    expiresAt: string;
+  }>;
+}

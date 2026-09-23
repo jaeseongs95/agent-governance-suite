@@ -69,6 +69,7 @@ import {
   type ModelRoutingDecisionV3,
   type ModelApplicationRequestV3,
   type ModelApplicationRecordV3,
+  type ResourceStateSnapshotV1,
   WorkflowContractError,
 } from "../../contracts/types.js";
 
@@ -159,6 +160,7 @@ export const contractSchemas = {
   modelRoutingDecisionV3: loadSchema("model-routing-decision.v3.schema.json"),
   modelApplicationRequestV3: loadSchema("model-application-request.v3.schema.json"),
   modelApplicationRecordV3: loadSchema("model-application-record.v3.schema.json"),
+  resourceStateSnapshotV1: loadSchema("resource-state-snapshot.v1.schema.json"),
 };
 
 // Providers declare artifact digests either bare or sha256:-prefixed. A SHA-256 digest that misses the
@@ -452,6 +454,15 @@ export class ContractValidator {
 
   modelEvaluationRecordV1(value: unknown): ModelEvaluationRecordV1 {
     return this.assert<ModelEvaluationRecordV1>("modelEvaluationRecordV1", value);
+  }
+
+  resourceStateSnapshotV1(value: unknown): ResourceStateSnapshotV1 {
+    const snapshot = this.assert<ResourceStateSnapshotV1>("resourceStateSnapshotV1", value);
+    if (new Set(snapshot.windows.map((window) => window.windowId)).size !== snapshot.windows.length
+      || snapshot.windows.some((window) => Date.parse(window.expiresAt) <= Date.parse(window.observedAt))) {
+      throw new WorkflowContractError("INVALID_INPUT", "Resource windows must have unique IDs and expire after observation.");
+    }
+    return snapshot;
   }
 
   /** New-contract validation only: legacy Ajv acceptance and v2 runtime methods are unchanged. */
