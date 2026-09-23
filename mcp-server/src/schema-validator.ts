@@ -14,6 +14,11 @@ import {
   type ConvergenceStatusSummaryV1,
   type ConvergenceStatusV1,
   type CheckpointContextRequestV1,
+  type CheckpointDeltaV1,
+  type CheckpointDeltaReceiverV1,
+  type CheckpointDeltaStateAckV1,
+  type CheckpointDeltaTransportAckV1,
+  CHECKPOINT_DELTA_MAX_BYTES,
   type ArtifactRefV1,
   type ArtifactHashDomainV1,
   type ContinuityEvidenceRefV1,
@@ -120,6 +125,7 @@ export const contractSchemas = {
   convergenceStatusSummary: loadSchema("convergence-status-summary.v1.schema.json"),
   responseMode: loadSchema("response-mode.v1.schema.json"),
   checkpointContextRequest: loadSchema("checkpoint-context-request.v1.schema.json"),
+  checkpointDelta: loadSchema("checkpoint-delta.v1.schema.json"),
   artifactRef: loadSchema("artifact-ref.v1.schema.json"),
   inspectContextRequest: loadSchema("inspect-context-request.v1.schema.json"),
   loadContextRequest: loadSchema("load-context-request.v1.schema.json"),
@@ -198,6 +204,12 @@ export class ContractValidator {
     );
     this.validators.checkpointEvidenceRef = ajv.getSchema(
       `${contractSchemas.checkpointContextRequest.$id as string}#/$defs/evidenceRef`,
+    )!;
+    this.validators.checkpointDeltaStateAck = ajv.getSchema(
+      `${contractSchemas.checkpointDelta.$id as string}#/$defs/stateAck`,
+    )!;
+    this.validators.checkpointDeltaTransportAck = ajv.getSchema(
+      `${contractSchemas.checkpointDelta.$id as string}#/$defs/transportAck`,
     )!;
   }
 
@@ -292,6 +304,38 @@ export class ContractValidator {
 
   checkpointContextRequest(value: unknown): CheckpointContextRequestV1 {
     return this.assert<CheckpointContextRequestV1>("checkpointContextRequest", value);
+  }
+
+  checkpointDelta(value: unknown): CheckpointDeltaV1 {
+    const delta = this.assert<CheckpointDeltaV1>("checkpointDelta", value);
+    if (new Set(delta.operations.map((operation) => operation.path)).size !== delta.operations.length) {
+      throw new WorkflowContractError("INVALID_INPUT", "Checkpoint delta cannot set one field twice.");
+    }
+    if (Buffer.byteLength(canonicalJson(delta), "utf8") > CHECKPOINT_DELTA_MAX_BYTES) {
+      throw new WorkflowContractError("INVALID_INPUT", "Checkpoint delta exceeds the UTF-8 body limit.");
+    }
+    return delta;
+  }
+
+  checkpointDeltaForReceiver(value: unknown, expected: {
+    receiver: CheckpointDeltaReceiverV1; contextGeneration: number;
+  }): CheckpointDeltaV1 {
+    const delta = this.checkpointDelta(value);
+    if (delta.contextGeneration !== expected.contextGeneration
+      || delta.receiver.host !== expected.receiver.host
+      || delta.receiver.sessionId !== expected.receiver.sessionId
+      || delta.receiver.instanceId !== expected.receiver.instanceId) {
+      throw new WorkflowContractError("GATE_FAILED", "Checkpoint delta receiver or generation changed.");
+    }
+    return delta;
+  }
+
+  checkpointDeltaStateAck(value: unknown): CheckpointDeltaStateAckV1 {
+    return this.assert<CheckpointDeltaStateAckV1>("checkpointDeltaStateAck", value);
+  }
+
+  checkpointDeltaTransportAck(value: unknown): CheckpointDeltaTransportAckV1 {
+    return this.assert<CheckpointDeltaTransportAckV1>("checkpointDeltaTransportAck", value);
   }
 
   artifactRef(value: unknown): ArtifactRefV1 {

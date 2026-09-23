@@ -187,6 +187,52 @@ export interface CheckpointContextRequestV1 {
   _continuityBinding: string;
 }
 
+export const CHECKPOINT_DELTA_MAX_BYTES = 4096;
+export interface CheckpointDeltaReceiverV1 {
+  host: string;
+  sessionId: string;
+  instanceId: string;
+}
+export type CheckpointDeltaOperationV1 =
+  | { op: "set"; path: "/status"; value: CheckpointContextRequestV1["status"] }
+  | { op: "set"; path: "/core/objective"; value: string }
+  | { op: "set"; path: "/core/completionCriteria" | "/core/constraints" | "/core/decisions" | "/core/progress" | "/core/blockers" | "/core/nextActions"; value: string[] }
+  | { op: "set"; path: "/evidenceRefs"; value: ContinuityEvidenceRefV1[] };
+
+/** Syntax and identity only. A07 applies it to a verified base and checks target digest. */
+export interface CheckpointDeltaV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  taskId: string;
+  revision: number;
+  receiver: CheckpointDeltaReceiverV1;
+  contextGeneration: number;
+  sequence: number;
+  baseCheckpointDigest: Sha256Digest;
+  targetCheckpointDigest: Sha256Digest;
+  operations: CheckpointDeltaOperationV1[];
+  description?: string;
+}
+
+/** Only receiver state commit may produce this acknowledgement. */
+export interface CheckpointDeltaStateAckV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "checkpoint-delta-state";
+  taskId: string;
+  revision: number;
+  receiver: CheckpointDeltaReceiverV1;
+  contextGeneration: number;
+  sequence: number;
+  targetCheckpointDigest: Sha256Digest;
+}
+
+/** Delivery alone does not attest checkpoint application. */
+export interface CheckpointDeltaTransportAckV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "checkpoint-delta-transport";
+  deliveryId: string;
+  receiver: CheckpointDeltaReceiverV1;
+}
+
 export interface ContinuitySnapshotV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   source: "direct";

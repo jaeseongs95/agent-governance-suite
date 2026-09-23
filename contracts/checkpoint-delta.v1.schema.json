@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/checkpoint-delta.v1.schema.json",
+  "title": "CheckpointDelta.v1",
+  "description": "Bounded replacement of named checkpoint fields; transport receipt is not state application.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "taskId", "revision", "receiver", "contextGeneration", "sequence", "baseCheckpointDigest", "targetCheckpointDigest", "operations"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "revision": { "$ref": "#/$defs/nonnegativeSafeInteger" },
+    "receiver": { "$ref": "#/$defs/receiver" },
+    "contextGeneration": { "$ref": "#/$defs/nonnegativeSafeInteger" },
+    "sequence": { "$ref": "#/$defs/positiveSafeInteger" },
+    "baseCheckpointDigest": { "$ref": "#/$defs/digest" },
+    "targetCheckpointDigest": { "$ref": "#/$defs/digest" },
+    "operations": { "type": "array", "minItems": 1, "maxItems": 9, "items": { "$ref": "#/$defs/operation" } },
+    "description": { "type": "string", "maxLength": 1024 }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "nonnegativeSafeInteger": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "positiveSafeInteger": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+    "receiver": {
+      "type": "object", "additionalProperties": false,
+      "required": ["host", "sessionId", "instanceId"],
+      "properties": {
+        "host": { "$ref": "#/$defs/id" },
+        "sessionId": { "$ref": "#/$defs/id" },
+        "instanceId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "operation": {
+      "oneOf": [
+        { "$ref": "#/$defs/statusSet" },
+        { "$ref": "#/$defs/objectiveSet" },
+        { "$ref": "#/$defs/stringsSet" },
+        { "$ref": "#/$defs/evidenceSet" }
+      ]
+    },
+    "statusSet": {
+      "type": "object", "additionalProperties": false,
+      "required": ["op", "path", "value"],
+      "properties": { "op": { "const": "set" }, "path": { "const": "/status" }, "value": { "enum": ["active", "paused", "completed"] } }
+    },
+    "objectiveSet": {
+      "type": "object", "additionalProperties": false,
+      "required": ["op", "path", "value"],
+      "properties": { "op": { "const": "set" }, "path": { "const": "/core/objective" },
+        "value": { "type": "string", "minLength": 1, "maxLength": 4000 } }
+    },
+    "stringsSet": {
+      "type": "object", "additionalProperties": false,
+      "required": ["op", "path", "value"],
+      "properties": {
+        "op": { "const": "set" },
+        "path": { "enum": ["/core/completionCriteria", "/core/constraints", "/core/decisions", "/core/progress", "/core/blockers", "/core/nextActions"] },
+        "value": { "$ref": "checkpoint-context-request.v1.schema.json#/$defs/boundedStrings" }
+      }
+    },
+    "evidenceSet": {
+      "type": "object", "additionalProperties": false,
+      "required": ["op", "path", "value"],
+      "properties": {
+        "op": { "const": "set" }, "path": { "const": "/evidenceRefs" },
+        "value": { "type": "array", "maxItems": 128, "items": { "$ref": "checkpoint-context-request.v1.schema.json#/$defs/evidenceRef" } }
+      }
+    },
+    "stateAck": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "taskId", "revision", "receiver", "contextGeneration", "sequence", "targetCheckpointDigest"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" }, "kind": { "const": "checkpoint-delta-state" },
+        "taskId": { "$ref": "#/$defs/id" }, "revision": { "$ref": "#/$defs/nonnegativeSafeInteger" },
+        "receiver": { "$ref": "#/$defs/receiver" },
+        "contextGeneration": { "$ref": "#/$defs/nonnegativeSafeInteger" },
+        "sequence": { "$ref": "#/$defs/positiveSafeInteger" },
+        "targetCheckpointDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "transportAck": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "deliveryId", "receiver"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" }, "kind": { "const": "checkpoint-delta-transport" },
+        "deliveryId": { "$ref": "#/$defs/id" }, "receiver": { "$ref": "#/$defs/receiver" }
+      }
+    }
+  }
+}

@@ -9045,6 +9045,7 @@ import path3 from "node:path";
 
 // contracts/types.ts
 var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
+var CHECKPOINT_DELTA_MAX_BYTES = 4096;
 var WorkflowContractError = class extends Error {
   constructor(code, message, details = null) {
     super(message);
@@ -9858,6 +9859,7 @@ var contractSchemas = {
   convergenceStatusSummary: loadSchema("convergence-status-summary.v1.schema.json"),
   responseMode: loadSchema("response-mode.v1.schema.json"),
   checkpointContextRequest: loadSchema("checkpoint-context-request.v1.schema.json"),
+  checkpointDelta: loadSchema("checkpoint-delta.v1.schema.json"),
   artifactRef: loadSchema("artifact-ref.v1.schema.json"),
   inspectContextRequest: loadSchema("inspect-context-request.v1.schema.json"),
   loadContextRequest: loadSchema("load-context-request.v1.schema.json"),
@@ -9927,6 +9929,12 @@ var ContractValidator = class {
     );
     this.validators.checkpointEvidenceRef = ajv.getSchema(
       `${contractSchemas.checkpointContextRequest.$id}#/$defs/evidenceRef`
+    );
+    this.validators.checkpointDeltaStateAck = ajv.getSchema(
+      `${contractSchemas.checkpointDelta.$id}#/$defs/stateAck`
+    );
+    this.validators.checkpointDeltaTransportAck = ajv.getSchema(
+      `${contractSchemas.checkpointDelta.$id}#/$defs/transportAck`
     );
   }
   assert(name, value) {
@@ -10000,6 +10008,29 @@ var ContractValidator = class {
   }
   checkpointContextRequest(value) {
     return this.assert("checkpointContextRequest", value);
+  }
+  checkpointDelta(value) {
+    const delta = this.assert("checkpointDelta", value);
+    if (new Set(delta.operations.map((operation) => operation.path)).size !== delta.operations.length) {
+      throw new WorkflowContractError("INVALID_INPUT", "Checkpoint delta cannot set one field twice.");
+    }
+    if (Buffer.byteLength(canonicalJson(delta), "utf8") > CHECKPOINT_DELTA_MAX_BYTES) {
+      throw new WorkflowContractError("INVALID_INPUT", "Checkpoint delta exceeds the UTF-8 body limit.");
+    }
+    return delta;
+  }
+  checkpointDeltaForReceiver(value, expected) {
+    const delta = this.checkpointDelta(value);
+    if (delta.contextGeneration !== expected.contextGeneration || delta.receiver.host !== expected.receiver.host || delta.receiver.sessionId !== expected.receiver.sessionId || delta.receiver.instanceId !== expected.receiver.instanceId) {
+      throw new WorkflowContractError("GATE_FAILED", "Checkpoint delta receiver or generation changed.");
+    }
+    return delta;
+  }
+  checkpointDeltaStateAck(value) {
+    return this.assert("checkpointDeltaStateAck", value);
+  }
+  checkpointDeltaTransportAck(value) {
+    return this.assert("checkpointDeltaTransportAck", value);
   }
   artifactRef(value) {
     return this.assert("artifactRef", value);
