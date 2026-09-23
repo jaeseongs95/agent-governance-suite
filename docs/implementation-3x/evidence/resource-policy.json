@@ -1,0 +1,140 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "R14",
+  "scope": "Fixed offline resource-policy replay; inputs and expected outputs are claims, not admitted usage or a reservation",
+  "now": "2026-09-23T12:00:00Z",
+  "snapshot": {
+    "schemaVersion": "1.0.0",
+    "accountScope": "acct-hmac-sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "resourcePoolId": "shared-pool",
+    "accessPath": "subscription",
+    "windows": [
+      {
+        "windowId": "short",
+        "resetEpoch": 1,
+        "resetAt": "2026-09-24T00:00:00Z",
+        "revision": 7,
+        "limitBucket": { "bucketId": "short-bucket", "kind": "requests", "unit": "request", "limit": 100, "remaining": 70 },
+        "coverage": "complete",
+        "source": { "kind": "host-observation", "evidenceDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+        "observedAt": "2026-09-23T11:00:00Z",
+        "expiresAt": "2026-09-23T13:00:00Z"
+      },
+      {
+        "windowId": "weekly",
+        "resetEpoch": 2,
+        "resetAt": "2026-09-30T00:00:00Z",
+        "revision": 4,
+        "limitBucket": { "bucketId": "weekly-bucket", "kind": "requests", "unit": "request", "limit": 100, "remaining": 70 },
+        "coverage": "complete",
+        "source": { "kind": "host-observation", "evidenceDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+        "observedAt": "2026-09-23T11:00:00Z",
+        "expiresAt": "2026-09-23T13:00:00Z"
+      }
+    ]
+  },
+  "policy": {
+    "schemaVersion": "1.0.0",
+    "policyId": "pool-policy",
+    "revision": 3,
+    "accountScope": "acct-hmac-sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "resourcePoolId": "shared-pool",
+    "approval": { "approvedBy": "fixture-operator", "approvedAt": "2026-09-23T00:00:00Z", "evidenceDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+    "allowedAccessPaths": ["subscription"],
+    "onUnknown": "defer",
+    "onStale": "block",
+    "rolePriorities": [
+      { "roleId": "audit", "priority": 0 },
+      { "roleId": "bulk", "priority": 2 }
+    ],
+    "windows": [
+      {
+        "windowId": "short", "bucketId": "short-bucket", "unit": "request",
+        "hardLimit": { "minimumRemaining": 0 },
+        "reservePolicy": {
+          "hardReserve": { "minimumRemaining": 10, "protectedRoleIds": ["audit"] },
+          "softConservation": { "enterBelowRemaining": 30 }
+        }
+      },
+      {
+        "windowId": "weekly", "bucketId": "weekly-bucket", "unit": "request",
+        "hardLimit": { "minimumRemaining": 0 },
+        "reservePolicy": {
+          "hardReserve": { "minimumRemaining": 10, "protectedRoleIds": ["audit"] },
+          "softConservation": { "enterBelowRemaining": 30 }
+        }
+      }
+    ]
+  },
+  "policyCases": [
+    { "id": "normal", "remaining": [70, 70], "expectedState": "NORMAL", "expectedDisposition": "none", "expectedReasons": ["ABOVE_POLICY_FLOORS", "ABOVE_POLICY_FLOORS"] },
+    { "id": "short-exhausted", "remaining": [0, 70], "expectedState": "UNAVAILABLE", "expectedDisposition": "block", "expectedReasons": ["EXHAUSTED_WINDOW", "ABOVE_POLICY_FLOORS"] },
+    { "id": "weekly-exhausted", "remaining": [70, 0], "expectedState": "UNAVAILABLE", "expectedDisposition": "block", "expectedReasons": ["ABOVE_POLICY_FLOORS", "EXHAUSTED_WINDOW"] },
+    { "id": "short-soft", "remaining": [29, 70], "expectedState": "CONSERVE", "expectedDisposition": "none", "expectedReasons": ["SOFT_CONSERVATION", "ABOVE_POLICY_FLOORS"] },
+    { "id": "weekly-reserve", "remaining": [70, 10], "expectedState": "RESERVE", "expectedDisposition": "none", "expectedReasons": ["ABOVE_POLICY_FLOORS", "HARD_RESERVE"] },
+    { "id": "short-unknown", "remaining": [null, 70], "expectedState": "UNKNOWN", "expectedDisposition": "defer", "expectedReasons": ["UNKNOWN_WINDOW", "ABOVE_POLICY_FLOORS"] },
+    { "id": "weekly-stale", "remaining": [70, 70], "staleWindow": "weekly", "expectedState": "UNKNOWN", "expectedDisposition": "block", "expectedReasons": ["ABOVE_POLICY_FLOORS", "STALE_WINDOW"] }
+  ],
+  "preferenceCases": [
+    { "id": "protected-reserve", "remaining": [10, 70], "strength": "required", "roleId": "audit", "expectedAdmission": "allow", "expectedRank": 0 },
+    { "id": "bulk-reserve", "remaining": [10, 70], "strength": "preferred", "roleId": "bulk", "expectedAdmission": "block", "expectedRank": 1 },
+    { "id": "preferred-soft", "remaining": [29, 70], "strength": "preferred", "roleId": "bulk", "expectedAdmission": "allow", "expectedRank": 1 },
+    { "id": "required-normal", "remaining": [70, 70], "strength": "required", "roleId": "bulk", "expectedAdmission": "allow", "expectedRank": 0 },
+    { "id": "preferred-unknown", "remaining": [null, 70], "strength": "preferred", "roleId": "bulk", "expectedAdmission": "defer", "expectedRank": 1 }
+  ],
+  "roleCase": {
+    "remaining": [12, 12],
+    "estimateByWindow": [
+      { "windowId": "short", "unit": "request", "phases": { "work": 1, "judgment": 2, "review": 0, "handoff": 0 } },
+      { "windowId": "weekly", "unit": "request", "phases": { "work": 1, "judgment": 2, "review": 0, "handoff": 0 } }
+    ],
+    "expectedRanked": ["audit"],
+    "expectedRejected": [{ "optionId": "bulk", "disposition": "defer", "reason": "HARD_RESERVE" }],
+    "expectedProjectedRemaining": [9, 9]
+  },
+  "rolePriorityCase": {
+    "remaining": [40, 40],
+    "expectedRanked": ["audit", "bulk"],
+    "expectedRejected": []
+  },
+  "mixedUnitCase": {
+    "remaining": [70, 40],
+    "weeklyBucketKind": "tokens",
+    "weeklyUnit": "token",
+    "estimates": [
+      { "windowId": "short", "unit": "request", "phases": { "work": 1, "judgment": 1, "review": 0, "handoff": 0 } },
+      { "windowId": "weekly", "unit": "token", "phases": { "work": 2, "judgment": 1, "review": 0, "handoff": 0 } }
+    ],
+    "expectedState": "NORMAL",
+    "expectedPlanned": [
+      { "windowId": "short", "unit": "request", "required": 2, "projectedRemaining": 68 },
+      { "windowId": "weekly", "unit": "token", "required": 3, "projectedRemaining": 37 }
+    ]
+  },
+  "workEstimate": {
+    "input": {
+      "accessPath": "subscription", "unit": "request",
+      "phaseEstimates": {
+        "work": { "unit": "request", "amount": 2 },
+        "judgment": { "unit": "request", "amount": 1 },
+        "review": { "unit": "request", "amount": 1 },
+        "handoff": { "unit": "request", "amount": 1 }
+      },
+      "authorizedMaximum": 6,
+      "runtimeCap": { "supported": true, "amount": 6, "mechanism": "runtime-cap" }
+    },
+    "expected": {
+      "estimate": 5, "authorizedMaximum": 6, "proposedRuntimeCap": 6,
+      "runtimeEnforceableCap": null, "hardEnforced": false, "quantitativeReservation": null
+    }
+  },
+  "stability": {
+    "input": {
+      "candidateState": "NORMAL", "previousPolicyState": "CONSERVE",
+      "enteredAt": "2026-09-23T12:00:00Z", "now": "2026-09-23T12:00:30Z",
+      "policyVersion": 3, "previousPolicyVersion": 3, "minimumHoldMs": 60000
+    },
+    "expected": { "state": "CONSERVE", "enteredAt": "2026-09-23T12:00:00Z", "reasonCode": "MINIMUM_HOLD" }
+  },
+  "v2GoldenSha256": "6e6ab050a229b4ae9aeb2e767722f69498a873bed02a3854c4e351c13749d54f"
+}
