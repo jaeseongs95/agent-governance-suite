@@ -72,6 +72,13 @@ export class SemanticReplaySnapshotPublisher {
     requireValue(record(input.materials) && Object.keys(input.materials).length === roles.length
       && roles.every(role => Object.hasOwn(input.materials, role)),
     "Replay requires exactly five material references.");
+    const materials = {} as SnapshotInputs;
+    for (const role of roles) {
+      const ref = this.validator.artifactRef(input.materials[role]);
+      requireValue(ref.mediaType === "application/json", "Replay material must be JSON.");
+      materials[role] = { schemaVersion: ref.schemaVersion, namespace: ref.namespace, id: ref.id,
+        digest: ref.digest, hashDomain: ref.hashDomain, size: ref.size, mediaType: ref.mediaType };
+    }
     const registration = this.admission.get(input.evaluationId);
     const intent = this.intents.get(input.evaluationId);
     const consumed = this.consumption.read(input.evaluationId);
@@ -87,7 +94,7 @@ export class SemanticReplaySnapshotPublisher {
     "Replay request and registration diverged.");
 
     // Read every named immutable object before any pin or manifest publication.
-    const bytes = await Promise.all(roles.map(role => this.access.read(input.materials[role])));
+    const bytes = await Promise.all(roles.map(role => this.access.read(materials[role])));
     const values = bytes.map((content) => {
       try { return JSON.parse(content.toString("utf8")) as unknown; }
       catch { throw new WorkflowContractError("INTEGRITY_FAILED", "Replay material is not JSON."); }
@@ -117,22 +124,23 @@ export class SemanticReplaySnapshotPublisher {
     requireValue(canonical(advice) === canonical(registration.advice),
       "Replay advice differs from the consumed registration.");
     const adoption = record(archived.adoption);
-    requireValue(adoption?.status === "eligible" && typeof adoption.evidenceDigest === "string"
+    requireValue(adoption?.status === "eligible" && Object.keys(adoption).length === 2
+      && typeof adoption.evidenceDigest === "string"
       && /^sha256:[a-f0-9]{64}$/u.test(adoption.evidenceDigest)
       && canonical(adoption) === canonical(consumed.adoption)
       && decisionTime === consumed.decisionTime,
     "Replay adoption material is incomplete.");
 
     const owner = `semantic-replay:${registration.registrationId}`;
-    for (const role of roles) this.retention.pin(input.materials[role], owner, role);
-    const manifestRef = await this.snapshots.publish(input.materials);
+    for (const role of roles) this.retention.pin(materials[role], owner, role);
+    const manifestRef = await this.snapshots.publish(materials);
     this.retention.pin(manifestRef, owner, "manifest");
     const readback = new SnapshotSetStore(this.root, this.principal, [
       ...this.grants, { ref: manifestRef, workspaceId: this.principal.workspaceId,
         taskId: this.taskId },
     ]);
     const manifest = await readback.load(manifestRef);
-    requireValue(canonical(manifest.inputs) === canonical(input.materials),
+    requireValue(canonical(manifest.inputs) === canonical(materials),
       "Published replay manifest differs from its members.");
     for (const role of [...roles, "manifest"] as const) this.retention.referencePublished(owner, role);
     return { manifestRef, registrationId: registration.registrationId,

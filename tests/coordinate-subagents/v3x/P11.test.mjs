@@ -13,7 +13,7 @@ import { SqliteWorkflowStore } from '../../../mcp-server/src/sqlite-workflow-sto
 import { SemanticAdviceAdmissionStore } from '../../../mcp-server/src/semantic/advice-admission.ts';
 import { SemanticEvaluationIntentStore } from '../../../mcp-server/src/semantic/evaluation-intent.ts';
 import { SemanticReplaySnapshotPublisher } from '../../../mcp-server/src/semantic/replay-snapshot.ts';
-import { canonical, collectEligibleCandidatesV2, digest, getBaselineCandidateMetadataV2 } from '../../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
+import { canonical, collectEligibleCandidatesV2, digest, getBaselineCandidateMetadataV2, seal } from '../../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
 import { projectSemanticCandidatesV1 } from '../../../skills/coordinate-subagents/scripts/semantic/candidate-projection.mjs';
 import { SEMANTIC_REDUCER_VERSION_V1 } from '../../../skills/coordinate-subagents/scripts/semantic/replay.mjs';
 import { contracts, resealRequest } from '../semantic-decision/fixtures/contracts.mjs';
@@ -64,7 +64,7 @@ async function fixture(run, omitted = null) {
       adviceDigest: registered.advice.adviceDigest, adoption: archive.adoption, decisionTime: LATER };
     const consumption = { read: () => consumed };
     const publisher = new SemanticReplaySnapshotPublisher(root, principal, grants, retention, admission, intents, consumption);
-    await run({ root, request, registered, refs, principal, grants, publisher, retention,
+    await run({ root, request, registered, refs, principal, grants, publisher, retention, material,
       admission, intents, consumption, getConsumption: () => consumed,
       setConsumption: value => { consumed = value; } });
   } finally {
@@ -92,6 +92,59 @@ test('P11 publishes a pinned A04 manifest with the exact consumed P10 advice and
       assert.equal(retention.replayState(ref), 'not-tombstoned');
       assert.equal(retention.tombstone(ref), 'pinned');
     }
+  });
+});
+
+test('P11 fixes all material references before the first asynchronous read', async () => {
+  await fixture(async ({ root, request, registered, refs, principal, grants,
+    retention, admission, intents, consumption }) => {
+    const other = seal({ ...registered.advice, choice: {
+      ...registered.advice.choice, confidence: 0.5 } }, 'adviceDigest');
+    const bytes = Buffer.from(canonical(other), 'utf8');
+    const alternative = { ...refs.advice, id: 'other-advice', size: bytes.length,
+      digest: `sha256:${createHash('sha256').update(bytes).digest('hex')}` };
+    await new RawContentStore(root).put(alternative, bytes);
+    const publisher = new SemanticReplaySnapshotPublisher(root, principal,
+      [...grants, { ref: alternative, ...principal }], retention, admission, intents, consumption);
+    const materials = { ...refs };
+    const originalRead = publisher.access.read.bind(publisher.access);
+    let changed = false;
+    publisher.access.read = async ref => {
+      const content = await originalRead(ref);
+      if (!changed) { changed = true; materials.advice = alternative; }
+      return content;
+    };
+    const published = await publisher.publish({ evaluationId: request.evaluationId, materials });
+    const manifest = await new SnapshotSetStore(root, principal,
+      [...grants, { ref: published.manifestRef, ...principal }]).load(published.manifestRef);
+    assert.deepEqual(manifest.inputs.advice, refs.advice);
+    assert.equal(published.adviceDigest, registered.advice.adviceDigest);
+  });
+});
+
+test('P11 rejects non-JSON member media type and extra adoption fields before publish', async () => {
+  await fixture(async ({ root, request, refs, principal, grants, retention,
+    admission, intents, consumption, material }) => {
+    const nonJson = { ...refs.capability, mediaType: 'application/octet-stream' };
+    const altered = { ...refs, capability: nonJson };
+    const alteredGrants = grants.map(grant => grant.ref.id === refs.capability.id
+      ? { ...grant, ref: nonJson } : grant);
+    const publisher = new SemanticReplaySnapshotPublisher(root, principal, alteredGrants,
+      retention, admission, intents, consumption);
+    await assert.rejects(() => publisher.publish({ evaluationId: request.evaluationId,
+      materials: altered }), { code: 'GATE_FAILED' });
+
+    const archive = { ...material.request,
+      adoption: { ...material.request.adoption, callerApproved: true } };
+    const bytes = Buffer.from(canonical(archive), 'utf8');
+    const changedRequest = { ...refs.request, id: 'extra-adoption', size: bytes.length,
+      digest: `sha256:${createHash('sha256').update(bytes).digest('hex')}` };
+    await new RawContentStore(root).put(changedRequest, bytes);
+    const otherPublisher = new SemanticReplaySnapshotPublisher(root, principal,
+      [...grants, { ref: changedRequest, ...principal }], retention, admission, intents, consumption);
+    await assert.rejects(() => otherPublisher.publish({ evaluationId: request.evaluationId,
+      materials: { ...refs, request: changedRequest } }), { code: 'GATE_FAILED' });
+    assert.equal(retention.replayState(refs.request), 'unknown');
   });
 });
 
