@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "modelId": "claude-opus-5-5",
+  "documentSupported": true,
+  "installedHostBinding": "unknown",
+  "efforts": ["low", "medium", "high", "xhigh", "max"],
+  "apiDefaultEffort": "medium",
+  "messagesApi": {
+    "supportedThinkingTypes": ["adaptive"],
+    "unsupportedToolChoices": ["any", "tool"],
+    "unsupportedComputerTool": {
+      "anthropic-api": "computer_20251124",
+      "google-cloud": "computer_20251124"
+    }
+  },
+  "sources": [
+    "https://platform.claude.com/docs/en/models/opus-5-5/migration-guide",
+    "https://platform.claude.com/docs/en/build-with-claude/effort",
+    "https://code.claude.com/docs/en/model-config"
+  ]
+}
