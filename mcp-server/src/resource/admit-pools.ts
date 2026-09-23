@@ -7,6 +7,7 @@ import { ContractValidator } from "../schema-validator.js";
 import { type PoolAdmissionRequestV1, reservePoolInTransaction,
   validatePoolAdmissionRequestV1 } from "./admit-pool.js";
 import type { ResourceAuthorityConfig } from "./authority-config.js";
+import { reservationIdempotencyKeyV1 } from "./reservation-idempotency.js";
 import { initializeResourceStoreSchema } from "./store-schema.js";
 
 type Pool = Pick<PoolAdmissionRequestV1, "accountScope" | "resourcePoolId" | "windows">;
@@ -69,6 +70,21 @@ export class ResourcePoolsAdmissionStore {
     }
   }
 
+  admitIdempotent(request: Omit<MultiPoolAdmissionRequestV1, "requestKey">): MultiPoolAdmissionResultV1 {
+    if (!request || typeof request !== "object" || Object.hasOwn(request, "requestKey")) {
+      invalid("An idempotent admission request must not supply a request key.");
+    }
+    const input = validateMultiPoolAdmissionRequestV1({ ...request, requestKey: "pending-key" });
+    const body = { taskId: input.taskId, runId: input.runId, slotId: input.slotId,
+      attemptId: input.attemptId, planRevision: input.planRevision, leaseEpoch: input.leaseEpoch,
+      expiresAt: input.expiresAt };
+    const requestDigest = `sha256:${createHash("sha256")
+      .update(canonicalJson({ ...body, pools: [...input.pools].sort(compare) })).digest("hex")}`;
+    const key = reservationIdempotencyKeyV1({ taskId: input.taskId, runId: input.runId,
+      slotId: input.slotId, attemptId: input.attemptId, planRevision: input.planRevision, requestDigest });
+    return this.admit({ ...input, requestKey: key });
+  }
+
   admit(request: MultiPoolAdmissionRequestV1): MultiPoolAdmissionResultV1 {
     const input = validateMultiPoolAdmissionRequestV1(request);
     const sorted = [...input.pools].sort(compare);
@@ -100,13 +116,26 @@ export class ResourcePoolsAdmissionStore {
         if (existing.request_digest !== digest || existing.request_json !== boundRequest) {
           conflict("Multi-pool request key has conflicting evidence.");
         }
-        if (existing.state !== "admitted" || !existing.result_json || !existing.reservation_id) {
+        if (!existing.result_json) {
           corrupt("Stored multi-pool admission request is incomplete.");
         }
         let result: MultiPoolAdmissionResultV1;
         try { result = JSON.parse(existing.result_json) as MultiPoolAdmissionResultV1; }
         catch { corrupt("Stored multi-pool result is not JSON."); }
-        if (result.kind !== "admitted" || result.reservationId !== existing.reservation_id
+        if (!result || typeof result !== "object" || Array.isArray(result)
+          || canonicalJson(result) !== existing.result_json) {
+          corrupt("Stored multi-pool admission result is invalid.");
+        }
+        if (existing.state === "rejected" || existing.state === "deferred") {
+          if (existing.reservation_id !== null || result.kind !== existing.state
+            || typeof result.reason !== "string" || !result.failedPool) {
+            corrupt("Stored multi-pool refusal is invalid.");
+          }
+          this.database.exec("COMMIT;");
+          return result;
+        }
+        if (existing.state !== "admitted" || !existing.reservation_id
+          || result.kind !== "admitted" || result.reservationId !== existing.reservation_id
           || result.poolCount !== sorted.length || canonicalJson(result) !== existing.result_json) {
           corrupt("Stored multi-pool admission result is invalid.");
         }
@@ -123,6 +152,15 @@ export class ResourcePoolsAdmissionStore {
         }
         return result;
       }
+      const other = this.database.prepare(`SELECT request_key FROM resource_admission_requests
+        WHERE plan_revision = ? AND json_extract(request_json, '$.taskId') = ?
+          AND json_extract(request_json, '$.runId') = ?
+          AND json_extract(request_json, '$.slotId') = ?
+          AND json_extract(request_json, '$.attemptId') = ? LIMIT 1`).get(
+        input.planRevision, input.taskId, input.runId, input.slotId, input.attemptId) as
+        { request_key: string } | undefined;
+      if (other) conflict("Admission identity has a different request key or payload.");
+      this.database.exec("SAVEPOINT resource_admission_candidate;");
       const reservationId = randomUUID();
       this.database.prepare(`INSERT INTO resource_reservations
         (reservation_id,request_key,request_digest,task_id,run_id,slot_id,attempt_id,
@@ -132,11 +170,18 @@ export class ResourcePoolsAdmissionStore {
       for (const item of prepared) {
         const outcome = reservePoolInTransaction(this.database, item.policy, item.poolRequest, reservationId, now);
         if (outcome.kind !== "admitted") {
-          this.database.exec("ROLLBACK;");
-          return { ...outcome, failedPool: { accountScope: item.pool.accountScope,
-            resourcePoolId: item.pool.resourcePoolId } };
+          const result: MultiPoolAdmissionResultV1 = { ...outcome,
+            failedPool: { accountScope: item.pool.accountScope, resourcePoolId: item.pool.resourcePoolId } };
+          this.database.exec("ROLLBACK TO resource_admission_candidate; RELEASE resource_admission_candidate;");
+          this.database.prepare(`INSERT INTO resource_admission_requests
+            (request_key,request_digest,plan_revision,request_json,state,result_json,reservation_id)
+            VALUES (?,?,?,?,?,?,NULL)`).run(input.requestKey, digest, input.planRevision,
+            boundRequest, result.kind, canonicalJson(result));
+          this.database.exec("COMMIT;");
+          return result;
         }
       }
+      this.database.exec("RELEASE resource_admission_candidate;");
       const result: MultiPoolAdmissionResultV1 = { kind: "admitted", reservationId, poolCount: sorted.length };
       this.database.prepare(`INSERT INTO resource_admission_requests
         (request_key,request_digest,plan_revision,request_json,state,result_json,reservation_id)
