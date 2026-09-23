@@ -53,6 +53,16 @@ test('M07 uses TTL detail once and treats thinking as an output breakdown', () =
   assert.equal(estimate('claude-opus-5-5', unknownTtl).reason, 'CACHE_TTL_UNKNOWN');
   assert.equal(estimate('claude-opus-5-5', { ...unknownTtl, cache_creation_input_tokens: 1000000 }).reason,
     'CACHE_TTL_UNKNOWN');
+  const inheritedKnown = Object.create({ ephemeral_5m_input_tokens: 1000000,
+    ephemeral_1h_input_tokens: 0 });
+  const inheritedUnknown = Object.assign(Object.create({ ephemeral_2h_input_tokens: 1000000 }),
+    { ephemeral_5m_input_tokens: 0, ephemeral_1h_input_tokens: 0 });
+  const accessorTtl = { ephemeral_1h_input_tokens: 0 };
+  Object.defineProperty(accessorTtl, 'ephemeral_5m_input_tokens', { get() { throw Error('getter called'); } });
+  for (const creation of [inheritedKnown, inheritedUnknown, accessorTtl, [], 1, 'invalid']) {
+    assert.equal(estimate('claude-opus-5-5', { ...zero(), cache_creation_input_tokens: undefined,
+      cache_creation: creation }).reason, 'CACHE_TTL_UNKNOWN');
+  }
   assert.equal(estimate('claude-opus-5-5', { ...usage, output_tokens_details: { thinking_tokens: 1000001 } }).reason,
     'THINKING_EXCEEDS_OUTPUT');
 });

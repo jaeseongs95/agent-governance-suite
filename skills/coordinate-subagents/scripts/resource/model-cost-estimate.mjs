@@ -17,6 +17,16 @@ function count(value) {
   return BigInt(value);
 }
 
+function knownTtlRecord(value) {
+  if (typeof value !== 'object' || value === null) return false;
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) return false;
+  const keys = Reflect.ownKeys(value);
+  return keys.length === 2
+    && keys.includes('ephemeral_5m_input_tokens') && keys.includes('ephemeral_1h_input_tokens')
+    && keys.every(key => 'value' in Object.getOwnPropertyDescriptor(value, key));
+}
+
 function cents(rate) {
   const [whole, fraction = ''] = rate.split('.');
   assert(/^\d+$/u.test(whole) && /^\d{0,2}$/u.test(fraction), 'INVALID_RATECARD');
@@ -66,9 +76,7 @@ export function estimateClaudeApiTokenCost({ modelId, pricingDate, scope, usage,
   if (creation == null && total == null) return unknown('CACHE_TTL_UNKNOWN');
   if (total != null) count(total);
   if (creation == null && total !== 0) return unknown('CACHE_TTL_UNKNOWN');
-  if (creation != null && Object.keys(creation).some(key =>
-    key !== 'ephemeral_5m_input_tokens' && key !== 'ephemeral_1h_input_tokens'))
-    return unknown('CACHE_TTL_UNKNOWN');
+  if (creation != null && !knownTtlRecord(creation)) return unknown('CACHE_TTL_UNKNOWN');
   const write5m = creation == null ? 0n : count(creation.ephemeral_5m_input_tokens);
   const write1h = creation == null ? 0n : count(creation.ephemeral_1h_input_tokens);
   if (total != null && BigInt(total) !== write5m + write1h) return unknown('CACHE_TOTAL_MISMATCH');
