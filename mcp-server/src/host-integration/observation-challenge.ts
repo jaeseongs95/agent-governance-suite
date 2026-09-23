@@ -42,23 +42,20 @@ export interface HostObservationReader {
 }
 
 type ChallengeStore = Pick<WorkflowStore, "getOrCreateSecret" | "claimExecutionObservation">;
-const readerDomains = new WeakMap<HostObservationReader, "host" | "test">();
+const testReaders = new WeakSet<HostObservationReader>();
 
-function registerReader(readCurrentInvocation: () => unknown, domain: "host" | "test"): HostObservationReader {
-  if (typeof readCurrentInvocation !== "function") throw invalid("host observation reader must be a function");
-  const reader = Object.freeze({ readCurrentInvocation });
-  readerDomains.set(reader, domain);
-  return reader;
-}
-
-/** Only privileged host adapter wiring may register its host-controlled event reader here. */
+/** No VM host producer is wired yet. A callback cannot authenticate its own provenance. */
 export function registerHostObservationReader(readCurrentInvocation: () => unknown): HostObservationReader {
-  return registerReader(readCurrentInvocation, "host");
+  void readCurrentInvocation;
+  throw invalid("trusted host observation unavailable: no privileged host producer is connected");
 }
 
-/** Test observations are permanently separated from the host challenge key and verifier. */
+/** Test observations exercise the binding contract but never create host authority. */
 export function registerTestObservationReader(readCurrentInvocation: () => unknown): HostObservationReader {
-  return registerReader(readCurrentInvocation, "test");
+  if (typeof readCurrentInvocation !== "function") throw invalid("test observation reader must be a function");
+  const reader = Object.freeze({ readCurrentInvocation });
+  testReaders.add(reader);
+  return reader;
 }
 
 function invalid(message: string): Error { return new Error(`Invalid observation challenge: ${message}`); }
@@ -107,8 +104,9 @@ function sameObservation(left: HostInvocationObservationV1, right: HostInvocatio
 }
 
 /**
- * The real reader must be wired by a privileged host adapter to its current invocation event.
- * The test domain has a different key and is never accepted by a host authority. A challenge
+ * Host issuance remains closed until a privileged adapter can supply independently verified
+ * invocation observations. Test readers cannot be promoted through a source string or callback.
+ * The test domain uses its own key and no host authority is constructible yet. A challenge
  * binds an observation; it does not prove a self-report, authorize human approval, or authenticate
  * a requested model setting. The V04 signer and server verifier must use this same boundary.
  */
@@ -122,9 +120,9 @@ export class ObservationChallengeAuthority {
     private readonly clock: () => Date = () => new Date(),
   ) {
     if (domain !== "host" && domain !== "test") throw invalid("challenge domain is unsupported");
-    if (!reader || readerDomains.get(reader) !== domain) throw invalid("registered reader domain mismatch");
-    const secretName = domain === "host" ? "host_observation_challenge_v1" : "test_observation_challenge_v1";
-    this.key = Buffer.from(store.getOrCreateSecret(secretName, () => randomBytes(32).toString("base64url")), "base64url");
+    if (domain === "host") throw invalid("trusted host observation unavailable: no privileged host producer is connected");
+    if (!reader || !testReaders.has(reader)) throw invalid("registered reader domain mismatch");
+    this.key = Buffer.from(store.getOrCreateSecret("test_observation_challenge_v1", () => randomBytes(32).toString("base64url")), "base64url");
     if (this.key.length !== 32) throw invalid("stored challenge key is invalid");
   }
 
