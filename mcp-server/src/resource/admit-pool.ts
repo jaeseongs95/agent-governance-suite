@@ -29,6 +29,9 @@ export type PoolAdmissionResultV1 =
 type WindowRow = { window_id: string; observation_id: string; reset_epoch: number; revision: number;
   bucket_id: string; unit: string; remaining: number | null; observed_at: string; expires_at: string;
   payload_digest: string; payload_json: string; collector_id: string; sequence: number };
+type SettledHold = { reservation_id: string; reset_epoch: number; unit: string;
+  coverage: string | null; observed_amount: number | null; updated_at: string | null;
+  coverage_unit: string | null };
 
 const validator = new ContractValidator();
 const idPattern = /^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$/u;
@@ -115,6 +118,46 @@ function evidenceWindow(row: WindowRow, accountScope: string, poolId: string) {
   return window;
 }
 
+function reconciledRemaining(database: DatabaseSync, row: WindowRow,
+  accountScope: string, poolId: string): number | null {
+  const exists = database.prepare(`SELECT 1 FROM sqlite_schema
+    WHERE type='table' AND name='resource_usage_reconciliation'`).get();
+  if (!exists) return null;
+  const stored = database.prepare(`SELECT observation_id,ledger_digest,projection_digest,projection_json
+    FROM resource_usage_reconciliation WHERE account_scope=? AND pool_id=? AND window_id=?`).get(
+    accountScope, poolId, row.window_id) as { observation_id: string; ledger_digest: string;
+      projection_digest: string; projection_json: string } | undefined;
+  if (!stored || stored.observation_id !== row.observation_id) return null;
+  const hash = (value: string) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
+  if (hash(stored.projection_json) !== stored.projection_digest) corrupt("Reconciliation projection is corrupt.");
+  const holds = database.prepare(`SELECT h.reservation_id,h.reset_epoch,h.amount,h.unit,r.state
+    FROM resource_reservation_holds h JOIN resource_reservations r USING(reservation_id)
+    WHERE h.account_scope=? AND h.pool_id=? AND h.window_id=? ORDER BY h.reservation_id`)
+    .all(accountScope, poolId, row.window_id);
+  const events = database.prepare(`SELECT * FROM resource_usage_events
+    WHERE account_scope=? AND pool_id=? AND window_id=? ORDER BY event_id,reservation_id`)
+    .all(accountScope, poolId, row.window_id);
+  const coverage = database.prepare(`SELECT reservation_id,coverage,observed_amount,unit,updated_at
+    FROM resource_usage_coverage WHERE account_scope=? AND pool_id=? AND window_id=?
+    ORDER BY reservation_id`).all(accountScope, poolId, row.window_id);
+  const terminals = database.prepare(`SELECT t.* FROM resource_terminal_evidence t
+    JOIN resource_reservation_holds h ON h.reservation_id=t.reservation_id
+    WHERE h.account_scope=? AND h.pool_id=? AND h.window_id=?
+    ORDER BY t.evidence_id`).all(accountScope, poolId, row.window_id);
+  if (hash(canonicalJson({ holds, events, coverage, terminals })) !== stored.ledger_digest) return null;
+  let projection: { needsReconciliation?: boolean; providerMetric?: {
+    unit?: string; metricKind?: string; coverage?: string;
+    observedAmount?: number | null; projectedAmount?: number | null } };
+  try { projection = JSON.parse(stored.projection_json) as typeof projection; }
+  catch { corrupt("Reconciliation projection is not JSON."); }
+  const metric = projection.providerMetric;
+  if (projection.needsReconciliation !== false || metric?.unit !== row.unit
+    || metric.metricKind !== "remaining" || metric.coverage !== "complete"
+    || metric.observedAmount !== row.remaining || typeof metric.projectedAmount !== "number"
+    || !Number.isFinite(metric.projectedAmount)) return null;
+  return metric.projectedAmount;
+}
+
 /** Requires an existing BEGIN IMMEDIATE transaction and reservation header; does not commit or roll back. */
 export function reservePoolInTransaction(database: DatabaseSync, policy: ResourcePolicyV1,
   request: PoolAdmissionRequestV1, reservationId: string, now: string): PoolAdmissionResultV1 {
@@ -168,6 +211,40 @@ export function reservePoolInTransaction(database: DatabaseSync, policy: Resourc
     if (nowMs < Date.parse(window.observedAt) || nowMs >= Date.parse(window.expiresAt)) {
       return unknown(approved, "OBSERVATION_STALE", true);
     }
+    const settled = database.prepare(`SELECT h.reservation_id,h.reset_epoch,h.unit,
+      c.coverage,c.observed_amount,c.updated_at,c.unit AS coverage_unit
+      FROM resource_reservation_holds h
+      JOIN resource_reservations r ON r.reservation_id=h.reservation_id
+      LEFT JOIN resource_usage_coverage c ON c.reservation_id=h.reservation_id
+        AND c.account_scope=h.account_scope AND c.pool_id=h.pool_id AND c.window_id=h.window_id
+      WHERE h.account_scope=? AND h.pool_id=? AND h.window_id=? AND r.state='settled'`)
+      .all(input.accountScope, input.resourcePoolId, rule.windowId) as SettledHold[];
+    if (settled.some(item => item.unit !== rule.unit
+      || item.coverage_unit !== null && item.coverage_unit !== rule.unit)) {
+      return { kind: "rejected", reason: "SETTLED_USAGE_UNIT_MISMATCH" };
+    }
+    if (settled.some(item => item.coverage !== "complete" || item.observed_amount === null
+      || item.reset_epoch !== row.reset_epoch)) {
+      return unknown(approved, "SETTLED_USAGE_UNKNOWN");
+    }
+    if (settled.length) {
+      const hasOrigin = database.prepare(`SELECT 1 FROM sqlite_schema
+        WHERE type='table' AND name='resource_settlement_projection'`).get();
+      if (!hasOrigin) return unknown(approved, "SETTLED_USAGE_UNKNOWN");
+      for (const item of settled) {
+        const origin = database.prepare(`SELECT row_digest FROM resource_settlement_projection
+          WHERE reservation_id=? AND account_scope=? AND pool_id=? AND window_id=?`).get(
+          item.reservation_id, input.accountScope, input.resourcePoolId, rule.windowId) as
+          { row_digest: string } | undefined;
+        const rowDigest = `sha256:${createHash("sha256").update(canonicalJson({
+          coverage: item.coverage, observedAmount: item.observed_amount,
+          unit: item.coverage_unit, updatedAt: item.updated_at })).digest("hex")}`;
+        if (origin?.row_digest !== rowDigest) return unknown(approved, "SETTLED_USAGE_UNKNOWN");
+      }
+    }
+    const remaining = settled.length
+      ? reconciledRemaining(database, row, input.accountScope, input.resourcePoolId) : row.remaining;
+    if (remaining === null) return unknown(approved, "SNAPSHOT_COVERAGE_UNKNOWN");
     const prior = database.prepare(`SELECT h.amount, h.unit FROM resource_reservation_holds h
       JOIN resource_reservations r ON r.reservation_id = h.reservation_id
       WHERE h.account_scope = ? AND h.pool_id = ? AND h.window_id = ?
@@ -180,7 +257,7 @@ export function reservePoolInTransaction(database: DatabaseSync, policy: Resourc
     // A protected-role exception requires an authenticated slot reader; B04 applies the reserve to every request.
     const floor = Math.max(rule.hardLimit?.minimumRemaining ?? 0,
       rule.reservePolicy?.hardReserve?.minimumRemaining ?? 0);
-    if (!covers(row.remaining, floor, cost.amount, prior.map(item => item.amount))) {
+    if (remaining < 0 || !covers(remaining, floor, cost.amount, prior.map(item => item.amount))) {
       return { kind: "rejected", reason: "INSUFFICIENT_LOCAL_CAPACITY" };
     }
     holds.push({ windowId: rule.windowId, resetEpoch: row.reset_epoch, amount: cost.amount, unit: rule.unit });
