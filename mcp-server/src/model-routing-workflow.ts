@@ -4,6 +4,7 @@ import { checkApplicationArtifactBinding } from "../../skills/coordinate-subagen
 import type { ModelRoutingStore } from "../../skills/coordinate-subagents/scripts/model-routing-store.mjs";
 import { canonicalJson, convergenceDigest } from "./convergence-logic.js";
 import { ContractValidator } from "./schema-validator.js";
+import { isSemanticDecisionReference, validateSemanticDecisionArtifact } from "./routing-v3/workflow-binding.js";
 import type { WorkflowStore } from "./workflow-store.js";
 
 export const MODEL_APPLICATION_SCHEMA = "https://skill-suite.local/contracts/model-application-record.v2.schema.json";
@@ -21,7 +22,8 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function routingReference(value: unknown): boolean {
   const item = asRecord(value);
-  return item.schemaId === MODEL_APPLICATION_SCHEMA || (typeof item.locator === "string" && item.locator.startsWith(PREFIX));
+  return item.schemaId === MODEL_APPLICATION_SCHEMA || (typeof item.locator === "string" && item.locator.startsWith(PREFIX))
+    || isSemanticDecisionReference(item);
 }
 
 /** Inspect only the existing artifact/evidence slots, never a worker's free-form output. */
@@ -151,6 +153,10 @@ export class ModelRoutingWorkflowBridge {
     for (const artifact of artifacts) {
       requireCondition(!ids.has(artifact.artifactId), "Duplicate routing artifact ID.");
       ids.add(artifact.artifactId);
+      if (isSemanticDecisionReference(artifact)) {
+        validateSemanticDecisionArtifact(this.workflow, this.routing, artifact, result);
+        continue;
+      }
       requireCondition(artifact.schemaId === MODEL_APPLICATION_SCHEMA && /^ags-model-record:[a-f0-9]{64}$/u.test(artifact.locator),
         "Routing artifact requires the versioned schema and exact stored-record URI.");
       const recordDigest = `sha256:${artifact.locator.slice(PREFIX.length)}`;
