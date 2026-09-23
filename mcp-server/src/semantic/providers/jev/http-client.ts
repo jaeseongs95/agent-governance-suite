@@ -90,7 +90,9 @@ export class JevHttpClient {
           return { status: pastDeadline() ? "timeout" : "uncertain", providerAccepted: "unknown" };
         }
         return { status: "response", body, providerAccepted: "confirmed" };
-      } catch { return { status: "uncertain", providerAccepted: "unknown" }; }
+      } catch {
+        return { status: pastDeadline() ? "timeout" : "uncertain", providerAccepted: "unknown" };
+      }
     } catch {
       return { status: pastDeadline() ? "timeout" : "uncertain", providerAccepted: "unknown" };
     } finally {

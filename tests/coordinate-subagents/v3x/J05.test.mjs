@@ -102,3 +102,23 @@ test('J05 rejects success after a synchronously blocked fetch exceeds its monoto
   assert.deepEqual(await transport.post(task, control()),
     { status: 'timeout', providerAccepted: 'unknown' });
 });
+
+test('J05 keeps timeout classification when a delayed JSON parse fails', async () => {
+  const originalParse = globalThis.JSON.parse;
+  let enteredParse = false;
+  globalThis.JSON.parse = () => {
+    enteredParse = true;
+    const until = performance.now() + 550;
+    while (performance.now() < until) { /* Mock a blocking decoder before failure. */ }
+    throw new SyntaxError('malformed response');
+  };
+  try {
+    const transport = client(async () => new globalThis.Response('not-json', { status: 200 }),
+      { timeoutMs: 500 });
+    assert.deepEqual(await transport.post(task, control()),
+      { status: 'timeout', providerAccepted: 'unknown' });
+    assert.equal(enteredParse, true);
+  } finally {
+    globalThis.JSON.parse = originalParse;
+  }
+});
