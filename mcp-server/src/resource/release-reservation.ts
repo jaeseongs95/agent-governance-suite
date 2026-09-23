@@ -1,6 +1,8 @@
+import { createHash } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 
 import { WorkflowContractError } from "../../../contracts/types.js";
+import { canonicalJson } from "../convergence-logic.js";
 import type { ResourceAuthorityConfig } from "./authority-config.js";
 import { initializeResourceStoreSchema } from "./store-schema.js";
 
@@ -24,10 +26,12 @@ export type TrustedDispatchBindingV1 = {
 export type ReservationReleaseRequestV1 = { reservationId: string; noStartReceipt?: unknown };
 export type ReservationReleaseResultV1 = { kind: "released" | "already-released"; reservationId: string };
 
-type ReservationRow = { reservation_id: string; request_key: string; request_digest: string; lease_epoch: number;
-  state: string; expires_at: string };
+type ReservationRow = { reservation_id: string; request_key: string; request_digest: string;
+  task_id: string; run_id: string; slot_id: string; attempt_id: string;
+  plan_revision: number; lease_epoch: number; state: string; expires_at: string };
 type IntentRow = { intent_id: string; request_digest: string; state: string; created_at: string };
-type AdmissionRow = { request_digest: string; state: string; reservation_id: string | null };
+type AdmissionRow = { request_digest: string; request_json: string; state: string;
+  reservation_id: string | null };
 
 function invalid(message: string): never { throw new WorkflowContractError("INVALID_INPUT", message); }
 function conflict(message: string): never { throw new WorkflowContractError("REQUEST_CONFLICT", message); }
@@ -57,11 +61,11 @@ export class ResourceReservationReleaseStore {
     try {
       this.assertAuthority();
       const reservation = this.database.prepare(`SELECT reservation_id,request_key,request_digest,
-        lease_epoch,state,expires_at
+        task_id,run_id,slot_id,attempt_id,plan_revision,lease_epoch,state,expires_at
         FROM resource_reservations WHERE reservation_id = ?`).get(request.reservationId) as
         ReservationRow | undefined;
       if (!reservation) conflict("Reservation does not exist.");
-      const admission = this.database.prepare(`SELECT request_digest,state,reservation_id
+      const admission = this.database.prepare(`SELECT request_digest,request_json,state,reservation_id
         FROM resource_admission_requests WHERE request_key = ?`).get(reservation.request_key) as
         AdmissionRow | undefined;
       if (!admission || admission.state !== "admitted"
@@ -69,6 +73,7 @@ export class ResourceReservationReleaseStore {
         || admission.request_digest !== reservation.request_digest) {
         corrupt("Reservation has no matching admitted request journal.");
       }
+      this.assertAdmission(admission, reservation);
       if (this.hasLaunchEvidence(request.reservationId)) {
         conflict("Observed dispatch or usage prevents pre-dispatch release.");
       }
@@ -106,6 +111,24 @@ export class ResourceReservationReleaseStore {
     if (!marker || marker.realm_id !== this.authority.realmId
       || marker.authority_id !== this.authority.authorityId || marker.owner_mode !== "single-broker") {
       corrupt("Resource ledger authority marker changed.");
+    }
+  }
+
+  private assertAdmission(admission: AdmissionRow, reservation: ReservationRow): void {
+    let bound: Record<string, unknown>;
+    try { bound = JSON.parse(admission.request_json) as Record<string, unknown>; }
+    catch { corrupt("Admission request journal is not JSON."); }
+    if (!bound || typeof bound !== "object" || Array.isArray(bound)
+      || canonicalJson(bound) !== admission.request_json
+      || !digestPattern.test(reservation.request_digest)
+      || `sha256:${createHash("sha256").update(admission.request_json).digest("hex")}`
+        !== reservation.request_digest
+      || bound.requestKey !== reservation.request_key || bound.taskId !== reservation.task_id
+      || bound.runId !== reservation.run_id || bound.slotId !== reservation.slot_id
+      || bound.attemptId !== reservation.attempt_id || bound.planRevision !== reservation.plan_revision
+      || bound.leaseEpoch !== reservation.lease_epoch || bound.expiresAt !== reservation.expires_at
+      || !validTime(reservation.expires_at)) {
+      corrupt("Admission request journal diverged from its reservation.");
     }
   }
 

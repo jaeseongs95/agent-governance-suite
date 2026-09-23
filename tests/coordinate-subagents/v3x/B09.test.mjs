@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -6,10 +7,17 @@ import { DatabaseSync } from 'node:sqlite';
 import { Worker } from 'node:worker_threads';
 import { test } from 'vitest';
 
+import { canonicalJson } from '../../../mcp-server/src/convergence-logic.ts';
 import { resolveResourceAuthorityConfig } from '../../../mcp-server/src/resource/authority-config.ts';
 import { ResourceReservationReleaseStore } from '../../../mcp-server/src/resource/release-reservation.ts';
 
-const digest = `sha256:${'a'.repeat(64)}`;
+const accountScope = `acct-hmac-sha256:${'c'.repeat(64)}`;
+const requestJson = canonicalJson({ requestKey: 'request-1', taskId: 'task-1', runId: 'run-1',
+  slotId: 'slot-1', attemptId: 'attempt-1', planRevision: 1, leaseEpoch: 1,
+  accountScope, resourcePoolId: 'pool-1', expiresAt: '2026-09-23T00:06:00.000Z',
+  windows: [{ windowId: 'weekly', amount: 4, unit: 'request' }],
+  policyDigest: `sha256:${'d'.repeat(64)}` });
+const digest = `sha256:${createHash('sha256').update(requestJson).digest('hex')}`;
 const jobDigest = `sha256:${'b'.repeat(64)}`;
 const now = '2026-09-23T00:10:00.000Z';
 const intentCreated = '2026-09-23T00:02:00.000Z';
@@ -35,7 +43,7 @@ async function isolated(state, withIntent, run) {
       input => input === opaqueReceipt ? verified : null,
       () => binding, () => currentTime);
     db.prepare(`INSERT INTO resource_pools(account_scope,pool_id,access_path)
-      VALUES ('account-1','pool-1','subscription')`).run();
+      VALUES (?,'pool-1','subscription')`).run(accountScope);
     db.prepare(`INSERT INTO resource_reservations
       (reservation_id,request_key,request_digest,task_id,run_id,slot_id,attempt_id,
         plan_revision,lease_epoch,state,created_at,expires_at)
@@ -44,10 +52,10 @@ async function isolated(state, withIntent, run) {
       '2026-09-23T00:00:00.000Z', '2026-09-23T00:06:00.000Z');
     db.prepare(`INSERT INTO resource_admission_requests
       (request_key,request_digest,plan_revision,request_json,state,reservation_id)
-      VALUES (?,?,?,?,?,?)`).run('request-1', digest, 1, '{}', 'admitted', reservationId);
+      VALUES (?,?,?,?,?,?)`).run('request-1', digest, 1, requestJson, 'admitted', reservationId);
     db.prepare(`INSERT INTO resource_reservation_holds
       (reservation_id,account_scope,pool_id,window_id,reset_epoch,amount,unit)
-      VALUES (?,?,?,?,?,?,?)`).run(reservationId, 'account-1', 'pool-1', 'weekly', 1, 4, 'request');
+      VALUES (?,?,?,?,?,?,?)`).run(reservationId, accountScope, 'pool-1', 'weekly', 1, 4, 'request');
     if (withIntent) db.prepare(`INSERT INTO resource_intents
       (intent_id,reservation_id,request_digest,state,created_at,updated_at)
       VALUES (?,?,?,'committed',?,?)`).run(intentId, reservationId, digest, intentCreated, intentCreated);
@@ -103,6 +111,36 @@ test('B09 keeps committed reservation for timeout, not-found, cancel ACK and use
     }
     assert.throws(() => release.release({ reservationId }), { code: 'REQUEST_CONFLICT' });
     assert.equal(state(db, reservationId), 'committed');
+  });
+});
+
+test('B09 retains held and committed holds when admission request bytes are corrupted', async () => {
+  for (const reservationState of ['held', 'committed']) {
+    await isolated(reservationState, reservationState === 'committed', async ({
+      db, release, reservationId, opaqueReceipt,
+    }) => {
+      db.prepare(`UPDATE resource_admission_requests SET request_json = '{}'
+        WHERE reservation_id = ?`).run(reservationId);
+      const input = { reservationId, ...(reservationState === 'committed'
+        ? { noStartReceipt: opaqueReceipt } : {}) };
+      assert.throws(() => release.release(input), { code: 'INTEGRITY_FAILED' });
+      assert.equal(state(db, reservationId), reservationState);
+      assert.equal(db.prepare('SELECT count(*) AS n FROM resource_reservation_holds').get().n, 1);
+    });
+  }
+});
+
+test('B09 rejects a rehashed journal that changes the reservation binding', async () => {
+  await isolated('held', false, async ({ db, release, reservationId }) => {
+    const changedJson = canonicalJson({ ...JSON.parse(requestJson), slotId: 'other-slot' });
+    const changedDigest = `sha256:${createHash('sha256').update(changedJson).digest('hex')}`;
+    db.prepare(`UPDATE resource_admission_requests SET request_json = ?, request_digest = ?
+      WHERE reservation_id = ?`).run(changedJson, changedDigest, reservationId);
+    db.prepare(`UPDATE resource_reservations SET request_digest = ? WHERE reservation_id = ?`)
+      .run(changedDigest, reservationId);
+    assert.throws(() => release.release({ reservationId }), { code: 'INTEGRITY_FAILED' });
+    assert.equal(state(db, reservationId), 'held');
+    assert.equal(db.prepare('SELECT count(*) AS n FROM resource_reservation_holds').get().n, 1);
   });
 });
 
