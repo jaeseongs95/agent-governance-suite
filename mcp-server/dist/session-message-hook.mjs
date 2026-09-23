@@ -14012,6 +14012,13 @@ function rankedBaselineEntriesV2(candidates, request, { catalog, policy }) {
     return lexical(x[4], y2[4]);
   });
 }
+function getBaselineCandidateMetadataV2(candidates, request, environment) {
+  return rankedBaselineEntriesV2(candidates, request, environment).map(({ candidate, order }, baselineRank) => ({
+    candidateKey: candidate.key,
+    preferenceGroup: order[0],
+    baselineRank
+  }));
+}
 function rankBaselineCandidatesV2(candidates, request, environment) {
   return rankedBaselineEntriesV2(candidates, request, environment).map(({ candidate }) => candidate);
 }
@@ -14229,6 +14236,197 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href &
   }
 }
 
+// skills/coordinate-subagents/scripts/semantic/candidate-projection.mjs
+function projectSemanticCandidatesV1(candidates, metadata) {
+  assert(Array.isArray(candidates) && candidates.length <= 65536, "INVALID_INPUT", "Invalid candidate list");
+  assert(Array.isArray(metadata) && metadata.length === candidates.length, "INVALID_INPUT", "Incomplete baseline metadata");
+  if (candidates.length === 0) return null;
+  const byKey = /* @__PURE__ */ new Map();
+  for (const candidate of candidates) {
+    keys(candidate, ["key", "model", "snapshot", "binding"]);
+    digestValue(candidate.key, "candidate key");
+    validateCapabilities(candidate.snapshot);
+    identifier(candidate.model?.id, "candidate model");
+    assert(candidate.model.id === candidate.binding?.resolvedModel, "INVALID_INPUT", "Candidate model differs from binding");
+    assert(candidate.snapshot.supportedBindings.some((binding) => canonical(binding) === canonical(candidate.binding)), "INVALID_INPUT", "Binding absent from snapshot");
+    assert(candidate.key === digest({ snapshotDigest: candidate.snapshot.snapshotDigest, binding: candidate.binding }), "DIGEST_MISMATCH", "Candidate key differs from binding");
+    assert(!byKey.has(candidate.key), "INVALID_INPUT", "Duplicate candidate key");
+    byKey.set(candidate.key, candidate);
+  }
+  const seen = /* @__PURE__ */ new Set();
+  for (const item of metadata) keys(item, ["candidateKey", "preferenceGroup", "baselineRank"]);
+  const eligibleSet = [...metadata].sort((a, b2) => a.baselineRank - b2.baselineRank).map((item, baselineRank) => {
+    const candidate = byKey.get(item.candidateKey);
+    assert(candidate && !seen.has(item.candidateKey), "INVALID_INPUT", "Missing or duplicate baseline candidate");
+    assert(item.baselineRank === baselineRank && Number.isSafeInteger(item.preferenceGroup) && item.preferenceGroup >= 0, "INVALID_INPUT", "Invalid baseline order");
+    seen.add(item.candidateKey);
+    return { candidateKey: item.candidateKey, model: candidate.model.id, preferenceGroup: item.preferenceGroup, baselineRank };
+  });
+  assert(eligibleSet.every((item, index) => index === 0 || item.preferenceGroup >= eligibleSet[index - 1].preferenceGroup), "INVALID_INPUT", "Preference groups out of order");
+  const byModel = /* @__PURE__ */ new Map();
+  for (const item of eligibleSet) {
+    if (!byModel.has(item.model)) byModel.set(item.model, []);
+    byModel.get(item.model).push(item.candidateKey);
+  }
+  assert(byModel.size <= 256, "INVALID_INPUT", "Too many model options");
+  const options = [...byModel].sort(([a], [b2]) => a < b2 ? -1 : a > b2 ? 1 : 0).map(([model, candidateKeys]) => ({ optionId: model, model, candidateKeys: candidateKeys.sort() }));
+  return { eligibleSet, options };
+}
+
+// skills/coordinate-subagents/scripts/semantic/prepared-input-check.mjs
+function assertPreparedSemanticInputV1(prepared, routingRequest, environment, evaluationTime) {
+  const at = instant(evaluationTime, "evaluationTime");
+  assert(environment.now === evaluationTime, "EVALUATION_TIME_MISMATCH", "Routing inputs must use the supplied evaluation time");
+  assert(prepared.schemaVersion === "1.0.0", "INVALID_INPUT", "SemanticDecisionRequest.v1 required");
+  verifySeal(prepared, "requestDigest");
+  assert(instant(prepared.requestedAt, "requestedAt") <= at && at < instant(prepared.expiresAt, "expiresAt"), "EVALUATION_TIME_MISMATCH", "Prepared request is not current at evaluation time");
+  assert(canonical(prepared.binding) === canonical(routingRequest.binding), "BINDING_MISMATCH", "Routing binding changed");
+  assert(prepared.effectiveRoutingRequestDigest === digest(routingRequest), "BINDING_MISMATCH", "Routing request changed");
+  assert(prepared.stateDigest === digest(prepared.state) && prepared.questionDigest === digest(prepared.question), "DIGEST_MISMATCH", "Prepared state or question changed");
+  assert(prepared.state.summaryDigest === null || prepared.state.summaryDigest === digest(prepared.state.text), "DIGEST_MISMATCH", "Prepared summary changed");
+  const pool = collectEligibleCandidatesV2(routingRequest, environment);
+  const metadata = getBaselineCandidateMetadataV2(pool.candidates, routingRequest, environment);
+  const projection = projectSemanticCandidatesV1(pool.candidates, metadata);
+  assert(projection !== null, "NO_ELIGIBLE_CANDIDATE", "Use the existing v2 blocked decision");
+  assert(prepared.catalogDigest === environment.catalog.catalogDigest && prepared.routingPolicyDigest === digest(environment.policy) && prepared.capabilitySetDigest === pool.capabilitySetDigest, "BINDING_MISMATCH", "Routing inputs changed");
+  assert(prepared.eligibleSetDigest === digest(prepared.eligibleSet) && prepared.optionMappingDigest === digest(prepared.options), "DIGEST_MISMATCH", "Prepared mapping digest differs from contents");
+  assert(canonical(prepared.eligibleSet) === canonical(projection.eligibleSet) && canonical(prepared.options) === canonical(projection.options), "PREPARED_INPUT_MISMATCH", "Prepared candidates or options differ from recomputation");
+  return true;
+}
+
+// skills/coordinate-subagents/scripts/semantic/reducer.mjs
+var bindingFields = [
+  "evaluationId",
+  "binding",
+  "effectiveRoutingRequestDigest",
+  "stateDigest",
+  "questionDigest",
+  "catalogDigest",
+  "routingPolicyDigest",
+  "semanticPolicyDigest",
+  "capabilitySetDigest",
+  "eligibleSetDigest",
+  "optionMappingDigest",
+  "provider",
+  "reducerVersion"
+];
+var selectionFields = [
+  "model",
+  "resolvedModel",
+  "modelOrigin",
+  "servingProvider",
+  "accessPath",
+  "nativeReasoning",
+  "runtimeMode"
+];
+var targetFields = ["actorId", "host", "sessionId", "instanceId"];
+var pick = (value, fields) => Object.fromEntries(fields.map((key) => [key, structuredClone(value[key])]));
+function reduceSemanticDecisionV1({ prepared, advice, adoption, baselineDecision, candidates }) {
+  assert(adoption?.status === "eligible", "ADOPTION_NOT_ELIGIBLE");
+  assert(
+    prepared?.mode === "assist" && baselineDecision?.schemaVersion === "2.0.0" && baselineDecision.status === "selected" && baselineDecision.fallbackReason === null,
+    "INVALID_INPUT",
+    "Assist and selected v2 baseline without fallback required"
+  );
+  verifySeal(prepared, "requestDigest");
+  verifySeal(advice, "adviceDigest");
+  verifySeal(baselineDecision, "decisionDigest");
+  assert(bindingFields.every((key) => canonical(prepared[key]) === canonical(advice[key])) && advice.semanticRequestDigest === prepared.requestDigest, "ADVICE_BINDING_MISMATCH");
+  assert(canonical(prepared.binding) === canonical(baselineDecision.binding) && prepared.effectiveRoutingRequestDigest === baselineDecision.requestDigest && prepared.catalogDigest === baselineDecision.catalogDigest && prepared.routingPolicyDigest === baselineDecision.policyDigest && prepared.capabilitySetDigest === baselineDecision.capabilitySetDigest && baselineDecision.executionAuthorized === false && baselineDecision.trustedGateSatisfied === false, "BASELINE_MISMATCH");
+  assert(prepared.eligibleSetDigest === digest(prepared.eligibleSet) && prepared.optionMappingDigest === digest(prepared.options), "DIGEST_MISMATCH");
+  assert(Array.isArray(prepared.eligibleSet) && prepared.eligibleSet.length > 0 && Array.isArray(prepared.options) && prepared.options.length > 0 && Array.isArray(candidates) && candidates.length === prepared.eligibleSet.length, "INVALID_INPUT");
+  const byKey = /* @__PURE__ */ new Map();
+  for (const candidate of candidates) {
+    validateCapabilities(candidate.snapshot);
+    assert(candidate.key === digest({ snapshotDigest: candidate.snapshot.snapshotDigest, binding: candidate.binding }) && candidate.model?.id === candidate.binding?.resolvedModel && candidate.snapshot.supportedBindings.some((binding) => canonical(binding) === canonical(candidate.binding)) && !byKey.has(candidate.key), "CANDIDATE_MISMATCH");
+    byKey.set(candidate.key, candidate);
+  }
+  const eligible = prepared.eligibleSet;
+  const eligibleByKey = /* @__PURE__ */ new Map();
+  for (const [rank, item] of eligible.entries()) {
+    assert(item.baselineRank === rank && Number.isSafeInteger(item.preferenceGroup) && item.preferenceGroup >= 0 && (rank === 0 || item.preferenceGroup >= eligible[rank - 1].preferenceGroup) && !eligibleByKey.has(item.candidateKey) && byKey.get(item.candidateKey)?.model.id === item.model, "ELIGIBLE_SET_MISMATCH");
+    eligibleByKey.set(item.candidateKey, item);
+  }
+  const first = byKey.get(eligible[0].candidateKey);
+  assert(canonical(baselineDecision.selected) === canonical(pick(first.binding, selectionFields)) && canonical(baselineDecision.target) === canonical(pick(first.snapshot, targetFields)) && baselineDecision.invocationSurface === first.binding.invocationSurface && baselineDecision.capabilitySnapshotDigest === first.snapshot.snapshotDigest, "BASELINE_MISMATCH");
+  const optionById = /* @__PURE__ */ new Map(), mapped = /* @__PURE__ */ new Set();
+  for (const option of prepared.options) {
+    assert(!optionById.has(option.optionId) && Array.isArray(option.candidateKeys) && option.candidateKeys.length > 0, "OPTION_MAPPING_MISMATCH");
+    optionById.set(option.optionId, option);
+    for (const key of option.candidateKeys) {
+      assert(eligibleByKey.has(key) && !mapped.has(key) && eligibleByKey.get(key).model === option.model, "OPTION_MAPPING_MISMATCH");
+      mapped.add(key);
+    }
+  }
+  assert(mapped.size === eligibleByKey.size && Array.isArray(advice.choice?.selectedOptionIds) && advice.choice.selectedOptionIds.length > 0 && new Set(advice.choice.selectedOptionIds).size === advice.choice.selectedOptionIds.length, "OPTION_MAPPING_MISMATCH");
+  const selected = /* @__PURE__ */ new Set();
+  for (const id of advice.choice.selectedOptionIds) {
+    const option = optionById.get(id);
+    assert(option, "UNKNOWN_OPTION");
+    for (const key of option.candidateKeys) selected.add(key);
+  }
+  const winner = eligible.find((item) => item.preferenceGroup === eligible[0].preferenceGroup && selected.has(item.candidateKey));
+  assert(winner, "PREFERENCE_GROUP_VIOLATION");
+  const concrete = byKey.get(winner.candidateKey);
+  const selectedOptionId = advice.choice.selectedOptionIds.find((id) => optionById.get(id).candidateKeys.includes(winner.candidateKey));
+  const semantic = {
+    mode: "assist",
+    adviceDigest: advice.adviceDigest,
+    semanticRequestDigest: prepared.requestDigest,
+    semanticPolicyDigest: prepared.semanticPolicyDigest,
+    eligibleSetDigest: prepared.eligibleSetDigest,
+    optionMappingDigest: prepared.optionMappingDigest,
+    reducerVersion: prepared.reducerVersion,
+    selectedOptionId,
+    baselineDecisionDigest: baselineDecision.decisionDigest
+  };
+  return seal({
+    ...structuredClone(baselineDecision),
+    schemaVersion: "3.0.0",
+    capabilitySnapshotDigest: concrete.snapshot.snapshotDigest,
+    selected: pick(concrete.binding, selectionFields),
+    target: pick(concrete.snapshot, targetFields),
+    invocationSurface: concrete.binding.invocationSurface,
+    status: "selected",
+    executionAuthorized: false,
+    trustedGateSatisfied: false,
+    selectionReasonCodes: [.../* @__PURE__ */ new Set([
+      ...baselineDecision.selectionReasonCodes.filter((code) => code === "PREFERRED_CHOICE_UNAVAILABLE"),
+      "SEMANTIC_ADVICE_ADOPTED"
+    ])],
+    fallbackReason: null,
+    semantic
+  }, "decisionDigest");
+}
+
+// skills/coordinate-subagents/scripts/semantic/replay.mjs
+var SEMANTIC_REDUCER_VERSION_V1 = "semantic-reducer-v1";
+function replaySemanticDecisionV1({
+  routingRequest,
+  environment,
+  prepared,
+  advice,
+  adoption,
+  decisionTime,
+  reducerVersion
+} = {}) {
+  assert(
+    routingRequest && environment && prepared && advice && adoption && decisionTime && reducerVersion,
+    "REPLAY_INPUT_MISSING"
+  );
+  assert(reducerVersion === SEMANTIC_REDUCER_VERSION_V1 && prepared.reducerVersion === reducerVersion && advice.reducerVersion === reducerVersion, "UNSUPPORTED_REDUCER");
+  assert(adoption.status === "eligible", "ADOPTION_NOT_ELIGIBLE");
+  digestValue(adoption.evidenceDigest, "adoption evidenceDigest");
+  assert(environment.now === decisionTime, "REPLAY_TIME_MISMATCH");
+  const at = instant(decisionTime, "decisionTime");
+  verifySeal(advice, "adviceDigest");
+  assert(advice.schemaVersion === "1.0.0" && advice.expiresAt === prepared.expiresAt && instant(prepared.requestedAt, "requestedAt") <= instant(advice.evaluatedAt, "evaluatedAt") && instant(advice.evaluatedAt, "evaluatedAt") <= at && at < instant(advice.expiresAt, "advice expiresAt"), "REPLAY_TIME_MISMATCH");
+  assertPreparedSemanticInputV1(prepared, routingRequest, environment, decisionTime);
+  const { candidates } = collectEligibleCandidatesV2(routingRequest, environment);
+  const baselineDecision = resolveV2(routingRequest, environment);
+  return reduceSemanticDecisionV1({ prepared, advice, adoption, baselineDecision, candidates });
+}
+
 // skills/coordinate-subagents/scripts/model-routing-store.mjs
 function transaction(db, fn) {
   db.exec("BEGIN IMMEDIATE");
@@ -14295,6 +14493,11 @@ var ModelRoutingStore = class {
         decision_digest TEXT PRIMARY KEY, binding_digest TEXT NOT NULL, request_json TEXT NOT NULL,
         environment_json TEXT NOT NULL, payload TEXT NOT NULL, resolved_at TEXT NOT NULL
       ) STRICT;
+      CREATE TABLE IF NOT EXISTS ags_model_decision_refs_v3 (
+        decision_digest TEXT PRIMARY KEY, baseline_decision_digest TEXT NOT NULL,
+        evaluation_id TEXT NOT NULL UNIQUE, registration_id TEXT NOT NULL UNIQUE,
+        advice_digest TEXT NOT NULL
+      ) STRICT;
       CREATE TABLE IF NOT EXISTS ags_model_applications_v2 (
         record_digest TEXT PRIMARY KEY, decision_digest TEXT NOT NULL, binding_digest TEXT NOT NULL,
         payload TEXT NOT NULL, recorded_at TEXT NOT NULL
@@ -14334,6 +14537,7 @@ var ModelRoutingStore = class {
     return this.database.prepare("SELECT payload FROM ags_model_capabilities_v1 ORDER BY host,session_id,instance_id").all().map((r) => JSON.parse(r.payload));
   }
   saveDecision(request, environment, decision, now) {
+    assert(decision?.schemaVersion === "2.0.0", "V3_WRITER_REQUIRED");
     verifySeal(decision, "decisionDigest");
     validateBinding(decision.binding);
     instant(now, "now");
@@ -14342,6 +14546,55 @@ var ModelRoutingStore = class {
     assert(!old || old.payload === payload, "DECISION_CONFLICT");
     this.database.prepare("INSERT OR IGNORE INTO ags_model_decisions_v2 VALUES (?,?,?,?,?,?)").run(decision.decisionDigest, digest(decision.binding), canonical(request), canonical(environment), payload, now);
     return decision;
+  }
+  /** Recompute from the registered advice and frozen v2 inputs before committing both rows. */
+  saveRegisteredDecisionV3(input) {
+    keys(input, ["request", "environment", "prepared", "advice", "adoption", "evaluationId", "registrationId", "baselineDecisionDigest", "now"]);
+    const { request, environment, prepared, advice, adoption, evaluationId, registrationId, baselineDecisionDigest, now } = input;
+    instant(now, "now");
+    const requestJson = canonical(request), environmentJson = canonical(environment);
+    const preparedJson = canonical(prepared), adviceJson = canonical(advice);
+    return transaction(this.database, () => {
+      const baseline = this.database.prepare("SELECT * FROM ags_model_decisions_v2 WHERE decision_digest=?").get(baselineDecisionDigest);
+      assert(baseline && baseline.request_json === requestJson && baseline.environment_json === environmentJson && JSON.parse(baseline.payload).schemaVersion === "2.0.0", "BASELINE_MISMATCH");
+      const registration = this.database.prepare(`SELECT a.*,q.request_json
+        FROM ags_semantic_advice_v1 a JOIN ags_semantic_requests_v1 q USING (evaluation_id)
+        JOIN ags_semantic_intents_v1 i USING (evaluation_id)
+        WHERE a.evaluation_id=? AND a.registration_id=? AND i.state='recorded'`).get(evaluationId, registrationId);
+      assert(registration && registration.request_json === preparedJson && registration.advice_json === adviceJson && registration.request_digest === prepared.requestDigest && registration.advice_digest === advice.adviceDigest, "ADVICE_REGISTRATION_MISMATCH");
+      const decision = replaySemanticDecisionV1({
+        routingRequest: request,
+        environment: { ...environment, now },
+        prepared,
+        advice,
+        adoption,
+        decisionTime: now,
+        reducerVersion: SEMANTIC_REDUCER_VERSION_V1
+      });
+      assert(validateDecisionV3(decision), "INVALID_INPUT", "v3 decision does not match its contract");
+      verifySeal(decision, "decisionDigest");
+      validateBinding(decision.binding);
+      const decisionJson = canonical(decision);
+      assert(decision.semantic.adviceDigest === advice.adviceDigest && decision.semantic.semanticRequestDigest === prepared.requestDigest && decision.semantic.baselineDecisionDigest === baselineDecisionDigest && decision.requestDigest === JSON.parse(baseline.payload).requestDigest, "ADVICE_REGISTRATION_MISMATCH");
+      const reference = {
+        decision_digest: decision.decisionDigest,
+        baseline_decision_digest: baselineDecisionDigest,
+        evaluation_id: evaluationId,
+        registration_id: registrationId,
+        advice_digest: advice.adviceDigest
+      };
+      const existing = this.database.prepare("SELECT * FROM ags_model_decision_refs_v3 WHERE evaluation_id=? OR registration_id=? OR decision_digest=?").all(evaluationId, registrationId, decision.decisionDigest);
+      assert(existing.every((row) => canonical({ ...row }) === canonical(reference)), "DECISION_CONFLICT");
+      const old = this.database.prepare("SELECT * FROM ags_model_decisions_v2 WHERE decision_digest=?").get(decision.decisionDigest);
+      assert(!old || old.request_json === requestJson && old.environment_json === environmentJson && old.payload === decisionJson, "DECISION_CONFLICT");
+      if (old) {
+        assert(existing.length === 1, "DECISION_REFERENCE_MISSING");
+        return decision;
+      }
+      this.database.prepare("INSERT INTO ags_model_decisions_v2 VALUES (?,?,?,?,?,?)").run(decision.decisionDigest, digest(decision.binding), requestJson, environmentJson, decisionJson, now);
+      this.database.prepare("INSERT INTO ags_model_decision_refs_v3 VALUES (?,?,?,?,?)").run(decision.decisionDigest, baselineDecisionDigest, evaluationId, registrationId, advice.adviceDigest);
+      return decision;
+    });
   }
   decision(id) {
     const row = this.database.prepare("SELECT * FROM ags_model_decisions_v2 WHERE decision_digest=?").get(id);
