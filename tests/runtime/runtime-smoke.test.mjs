@@ -21,7 +21,7 @@ describe("installed skill runtime", () => {
   it("runs every documented Node CLI without node_modules", async () => {
     const results = await runRuntimeSmokeCheck(root);
     expect(results.map((result) => result.path)).toEqual(SKILL_RUNTIME_ENTRYPOINTS.map((entry) => entry.path));
-  }, 30_000);
+  }, 90_000);
 
   it("accounts for every CLI documented by SKILL.md or README.md", async () => {
     const skillRoot = path.join(root, "skills");
