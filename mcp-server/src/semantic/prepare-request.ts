@@ -2,6 +2,7 @@ import type {
   SemanticDecisionPolicyV1, SemanticDecisionProviderV1, SemanticDecisionQuestionV1,
   SemanticDecisionRequestV1,
 } from "../../../contracts/types.js";
+import { WorkflowContractError } from "../../../contracts/types.js";
 import {
   collectEligibleCandidatesV2, digest, getBaselineCandidateMetadataV2, seal,
   type RoutingEnvironmentV2,
@@ -33,6 +34,20 @@ export function prepareSemanticRequest(input: {
   const policy = validator.semanticDecisionPolicyV1(input.semanticPolicy);
   if (policy.mode === "off") throw new TypeError("Semantic evaluation is disabled.");
   const routingRequest = assignment.routingRequest;
+  const task = resolved.task;
+  if ((task.riskLevel === "high" || task.riskLevel === "critical") && !routingRequest.highRisk) {
+    throw new WorkflowContractError("GATE_FAILED", "Routing request downgrades the authorized task risk.");
+  }
+  const requiredActions = new Set([
+    ...routingRequest.requirements.tools,
+    ...(routingRequest.requirements.filesystem === "none" ? [] : ["read"]),
+    ...(routingRequest.requirements.filesystem === "write" ? ["write"] : []),
+  ]);
+  if ([...requiredActions].some(action => !task.authorization.allowedActions.includes(action)
+    || task.authorization.prohibitedActions.includes(action)
+    || task.authorization.approvalRequired.includes(action))) {
+    throw new WorkflowContractError("GATE_FAILED", "Routing tools or filesystem exceed approved task actions.");
+  }
   const pool = collectEligibleCandidatesV2(routingRequest, input.environment);
   const metadata = getBaselineCandidateMetadataV2(pool.candidates, routingRequest, input.environment);
   const mapping = projectSemanticCandidatesV1(pool.candidates, metadata);
