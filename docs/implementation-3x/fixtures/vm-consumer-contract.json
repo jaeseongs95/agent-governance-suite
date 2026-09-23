@@ -1,0 +1,89 @@
+{
+  "format": "vm-consumer-contract-v1",
+  "consumerRef": "ffe3dfa7afc8037adb7199527b6befb56f5d9744",
+  "sourceFiles": {
+    "G": {"path": "src/flowmarshal/engine/governance_gate.py", "sha256": "cc5fca4ebb467865018e1064c736df55c10f10730cbc58d143aaa368a794d0bf"},
+    "C": {"path": "src/flowmarshal/engine/governance_conformance.py", "sha256": "b36befa37df8e27b2eb3e37c0d752aa9379773a43ea4dea7e23821fedfea8428"},
+    "CLI": {"path": "src/flowmarshal/engine/cli.py", "sha256": "117e7a4aa9774ca942cb8a6ae83a8a390fddc691a90ac6978729f2a0fdfb9cbc"},
+    "TG": {"path": "tests/test_engine_governance_gate.py", "sha256": "7533334f819b23639d67b9a29fe0eec962deceb5d37016b80d367679cd565370"},
+    "TC": {"path": "tests/test_engine_governance_conformance.py", "sha256": "26041ef2c0492aecbe719e8a8982d5ed6168dad6ed347b9db9ebe4d117e846f2"}
+  },
+  "requirements": [
+    {"id": "manifest-loader", "source": ["G", "TG"], "symbols": ["GovernancePlugin.preflight", "PluginSurfaceTests"], "fields": ["format", "entryPoints[].id", "entryPoints[].path", "entryPoints[].executionClosure[]"], "status": "confirmed"},
+    {"id": "entry-points", "source": ["G"], "symbols": ["CONSUMED_SURFACE.entry_points"], "ids": ["mcp-server", "host-attestation-cli", "scope-baseline", "scope-compare", "acceptance-cli"], "status": "confirmed"},
+    {"id": "model-classes", "source": ["G", "TG"], "symbols": ["load_model_classes", "PluginSurfaceTests.test_model_class_table_is_rejected_before_typed_use"], "fields": ["format", "classes"], "status": "confirmed"},
+    {"id": "attestation-cli", "source": ["G", "TG"], "symbols": ["GovernancePlugin.call", "PluginSurfaceTests.test_signing_submits_the_host_and_the_class_from_the_injected_table"], "fields": ["host", "tool", "input", "model", "modelClass", "reasoningEffort", "actorId", "token", "_hostAttestation"], "status": "confirmed"},
+    {"id": "mcp-envelope", "source": ["G"], "symbols": ["mcp_envelope", "mcp_data"], "fields": ["content[0].text", "ok", "data"], "status": "confirmed"},
+    {"id": "mcp-operations", "source": ["G", "C"], "symbols": ["CONSUMED_SURFACE.mcp_tools", "_Probe.run"], "ids": ["plan_workflow", "open_convergence_root", "claim_workflow_attempt", "start_guarded_workflow", "record_stage_result", "finalize_workflow", "abort_workflow"], "status": "confirmed"},
+    {"id": "script-outputs", "source": ["G", "C"], "symbols": ["CONSUMED_SURFACE.scripts", "_Probe.script"], "ids": ["scope-baseline", "scope-compare", "acceptance-cli"], "status": "confirmed"},
+    {"id": "conformance", "source": ["C", "CLI", "TC"], "symbols": ["CHECKS", "run_conformance", "_cmd_governance_check_plugin", "ConformanceFake"], "status": "confirmed"},
+    {"id": "actual-ags-bundle-paths", "source": ["G", "TG"], "symbols": ["GovernancePlugin.preflight", "PluginSurfaceTests.PATHS"], "status": "unconfirmed", "reason": "consumer loads paths from supplied manifest; test paths are fake only"},
+    {"id": "signer-token-wire-format", "source": ["G"], "symbols": ["GovernancePlugin.call"], "status": "unsupported", "reason": "consumer only reads token as a string"}
+  ],
+  "fixtures": {
+    "manifest": {
+      "provenance": "TG.PluginSurfaceTests.setUp fake plugin; not an AGS package path",
+      "source": ["G", "TG"],
+      "valid": {
+        "format": "agent-governance-suite.host-integration.v1",
+        "plugin": {"id": "fake", "version": "9.9.9"},
+        "entryPoints": [
+          {"id": "mcp-server", "path": "dist/server.mjs", "executionClosure": ["dist/server.mjs", "data/schema.json"]},
+          {"id": "host-attestation-cli", "path": "dist/sign.mjs", "executionClosure": ["dist/sign.mjs", "data/schema.json"]},
+          {"id": "scope-baseline", "path": "moved/baseline.mjs", "executionClosure": ["moved/baseline.mjs", "data/schema.json"]},
+          {"id": "scope-compare", "path": "moved/compare.mjs", "executionClosure": ["moved/compare.mjs", "data/schema.json"]},
+          {"id": "acceptance-cli", "path": "moved/cli.mjs", "executionClosure": ["moved/cli.mjs", "data/schema.json"]}
+        ]
+      },
+      "requiredPresentFiles": ["dist/server.mjs", "dist/sign.mjs", "moved/baseline.mjs", "moved/compare.mjs", "moved/cli.mjs", "data/schema.json"],
+      "reject": [
+        {"id": "wrong-format", "mutation": {"format": "agent-governance-suite.host-integration.v2"}, "check": "manifest_format"},
+        {"id": "missing-scope-compare", "mutation": {"removeEntryPointId": "scope-compare"}, "check": "entry_point:scope-compare"},
+        {"id": "escaping-closure", "mutation": {"appendClosure": {"entryPointId": "mcp-server", "path": "../outside.json"}}, "check": "closure_file"}
+      ]
+    },
+    "modelClasses": {
+      "source": ["G", "TG"],
+      "valid": {"format": "flowmarshal-governance-model-classes-v1", "classes": {"observed-model": "deep"}},
+      "reject": {"format": "flowmarshal-governance-model-classes-v1", "classes": {"observed-model": "huge"}},
+      "rejectCheck": "model_class_table"
+    },
+    "attestation": {
+      "source": ["G", "TG"],
+      "validStdin": {"host": "flowmarshal-engine", "tool": "plan_workflow", "input": {"a": 1}, "model": "observed-model", "modelClass": "deep", "reasoningEffort": "high", "actorId": "actor"},
+      "validStdoutShape": {"token": "string"},
+      "mcpArgumentAdded": "_hostAttestation",
+      "reject": [{"id": "missing-token", "stdout": {"signed": "no token field"}, "check": "host_attestation_output"}, {"id": "bad-json", "stdout": "not json", "check": "host_attestation_output"}]
+    },
+    "mcp": {
+      "source": ["G", "C", "TG", "TC"],
+      "validEnvelope": {"content": [{"type": "text", "text": "{\"ok\":true,\"data\":{\"rootId\":\"root-1\",\"revision\":0},\"error\":null}"}]},
+      "planData": {"executionMode": "orchestrated", "stages": [
+        {"stageId": "stage-1", "requiredCapability": "change-scope-baseline-capture", "executionRequirement": {"minimumModelClass": "general"}},
+        {"stageId": "stage-2", "requiredCapability": "minimal-implementation", "executionRequirement": {"minimumModelClass": "general"}},
+        {"stageId": "stage-3", "requiredCapability": "change-scope-assurance", "executionRequirement": {"minimumModelClass": "general"}},
+        {"stageId": "stage-4", "requiredCapability": "acceptance-evidence-validation", "executionRequirement": {"minimumModelClass": "deep"}}
+      ]},
+      "dataShapes": {
+        "open_convergence_root": {"rootId": "string", "revision": "integer"},
+        "claim_workflow_attempt": {"leaseId": "string", "rootRevision": "integer"},
+        "start_guarded_workflow": {"runId": "string", "revision": "integer"},
+        "record_stage_result": {"revision": "integer"},
+        "finalize_workflow": {"state": "passed"},
+        "abort_workflow": {"state": "aborted"}
+      },
+      "reject": [{"id": "unsigned-plan", "tool": "plan_workflow", "envelope": {"ok": false, "data": null, "error": {"code": "BINDING_REQUIRED", "message": "token"}}}, {"id": "direct-plan", "tool": "plan_workflow", "dataMutation": {"executionMode": "direct"}, "check": "plan_shape"}]
+    },
+    "scripts": {
+      "source": ["G", "C", "TG", "TC"],
+      "stdoutShapes": {
+        "scope-baseline": {"manifestSha256": "string", "entries": "array"},
+        "scope-compare": {"verdict": "PASS", "summary": "object", "findings": "array", "currentDigest": "string"},
+        "acceptance-cli": {"verdict": "PASS"}
+      },
+      "reject": [{"id": "scope-out-of-scope", "entryPoint": "scope-compare", "expected": "verdict != PASS"}, {"id": "acceptance-refuted", "entryPoint": "acceptance-cli", "expected": "verdict != PASS"}]
+    }
+  },
+  "conformanceCheckIds": ["attestation_required", "plan", "root", "claim", "start", "abort", "baseline", "record_baseline", "scope_out_of_scope", "scope_in_scope", "record_implementation", "record_scope", "acceptance_refuted", "acceptance", "record_acceptance", "finalize"],
+  "observedAgsConformance": "not_run"
+}
