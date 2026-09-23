@@ -1296,3 +1296,28 @@ export interface ResourcePolicyApprovalV1 {
   approvedAt: string;
   evidenceDigest: string;
 }
+
+/** Approved assignment projection; the server must compare it to its current approved slot set. */
+export interface RoleSlotV1 {
+  schemaVersion: "1.0.0";
+  kind: "role-slot-projection";
+  slotId: string;
+  authorization: {
+    taskId: string;
+    runId: string;
+    stageId: string;
+    assignmentId: string;
+    planRevision: number;
+    planDigest: string;
+    authorizationDigest: string;
+  };
+  slotIndex: number;
+  slotCount: number;
+  purpose: string;
+  routingRole: ModelSelectionRequestV2["role"];
+  riskLevel: RiskLevel;
+  highRisk: boolean;
+  independenceRequired: boolean;
+  requirements: ModelSelectionRequestV2["requirements"];
+  executionAuthorized: false;
+}
