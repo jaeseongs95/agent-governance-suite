@@ -7,6 +7,7 @@ import type { WorkflowStore } from "./workflow-store.js";
 
 import { ModelRoutingStore } from "../../skills/coordinate-subagents/scripts/model-routing-store.mjs";
 import { readSharedModelCapabilities, mergeRoutingCapabilities, type SharedCapabilityResult } from "./model-capability-client.js";
+import { readStoredModelApplication, recordHistoricalSemanticApplication } from "./routing-v3/application-service.js";
 
 /**
  * One MCP facade over the skill-owned routing engine: no second router and no trusted gate. The catalog path is
@@ -33,7 +34,10 @@ export function openModelRoutingService(databasePath: string, workflow?: Workflo
     database.exec("PRAGMA synchronous = FULL;");
     const store = new ModelRoutingStore(database);
     const bridge = workflow ? new ModelRoutingWorkflowBridge(workflow, store) : null;
-    const service: ModelRoutingGateway = new ModelRoutingServiceCore({ catalogDirectory: MODEL_CATALOG_DIRECTORY, store, historyProvider: bridge?.history ?? null });
+    const service: ModelRoutingGateway = new ModelRoutingServiceCore({ catalogDirectory: MODEL_CATALOG_DIRECTORY, store,
+      historyProvider: bridge?.history ?? null,
+      recordV3: (application, token, now) => recordHistoricalSemanticApplication(store, application, token, now),
+      readRecord: (recordDigest) => readStoredModelApplication(store, recordDigest) });
     service.resolveFromBroker = async (input) => {
       try {
         // Per-call snapshots: concurrent requests never mutate a shared provider/cache.

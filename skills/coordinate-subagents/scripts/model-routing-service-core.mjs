@@ -3,7 +3,14 @@ import { defaultCatalogDirectory, loadCatalog, loadPolicy, queryCatalog } from '
 
 /** Tool calls over the skill-owned engine. The MCP server passes an explicit catalog directory. */
 export class ModelRoutingServiceCore {
-  constructor({store=null,catalogDirectory=defaultCatalogDirectory,clock=()=>new Date().toISOString(),historyProvider=null}={}){this.store=store;this.catalogDirectory=catalogDirectory;this.clock=clock;this.historyProvider=historyProvider;}
+  constructor({store=null,catalogDirectory=defaultCatalogDirectory,clock=()=>new Date().toISOString(),historyProvider=null,recordV3=null,readRecord=null}={}){this.store=store;this.catalogDirectory=catalogDirectory;this.clock=clock;this.historyProvider=historyProvider;this.recordV3=recordV3;this.readRecord=readRecord;}
+  application(recordDigest){
+    assert(this.store,'ROUTING_STORE_UNAVAILABLE');
+    if(this.readRecord)return this.readRecord(recordDigest);
+    const record=this.store.application(recordDigest);
+    assert(record?.schemaVersion!=='3.0.0','V3_RECORD_READER_UNAVAILABLE');
+    return record;
+  }
   query(input){return queryCatalog(input,this.catalogDirectory);}
   resolve(input, suppliedCapabilities){
     validateRequest(input);
@@ -30,6 +37,10 @@ export class ModelRoutingServiceCore {
   }
   record(input){
     keys(input,['application','observationToken'],['application']);assert(this.store,'ROUTING_STORE_UNAVAILABLE');
+    if(input.application?.schemaVersion==='3.0.0'){
+      assert(typeof this.recordV3==='function','V3_RECORD_SERVICE_UNAVAILABLE');
+      return this.recordV3(input.application,input.observationToken??null,this.clock());
+    }
     const entry=this.store.decision(input.application?.decisionDigest);assert(entry,'DECISION_UNKNOWN');
     const now=this.clock();instant(now,'now');
     assert(Date.parse(input.application.dispatchedAt)<=Date.parse(now),'DISPATCH_TIME_IN_FUTURE');

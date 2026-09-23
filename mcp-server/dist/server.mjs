@@ -34022,11 +34022,20 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href &
 
 // skills/coordinate-subagents/scripts/model-routing-service-core.mjs
 var ModelRoutingServiceCore = class {
-  constructor({ store = null, catalogDirectory = defaultCatalogDirectory, clock = () => (/* @__PURE__ */ new Date()).toISOString(), historyProvider = null } = {}) {
+  constructor({ store = null, catalogDirectory = defaultCatalogDirectory, clock = () => (/* @__PURE__ */ new Date()).toISOString(), historyProvider = null, recordV3 = null, readRecord = null } = {}) {
     this.store = store;
     this.catalogDirectory = catalogDirectory;
     this.clock = clock;
     this.historyProvider = historyProvider;
+    this.recordV3 = recordV3;
+    this.readRecord = readRecord;
+  }
+  application(recordDigest) {
+    assert2(this.store, "ROUTING_STORE_UNAVAILABLE");
+    if (this.readRecord) return this.readRecord(recordDigest);
+    const record5 = this.store.application(recordDigest);
+    assert2(record5?.schemaVersion !== "3.0.0", "V3_RECORD_READER_UNAVAILABLE");
+    return record5;
   }
   query(input2) {
     return queryCatalog(input2, this.catalogDirectory);
@@ -34059,6 +34068,10 @@ var ModelRoutingServiceCore = class {
   record(input2) {
     keys(input2, ["application", "observationToken"], ["application"]);
     assert2(this.store, "ROUTING_STORE_UNAVAILABLE");
+    if (input2.application?.schemaVersion === "3.0.0") {
+      assert2(typeof this.recordV3 === "function", "V3_RECORD_SERVICE_UNAVAILABLE");
+      return this.recordV3(input2.application, input2.observationToken ?? null, this.clock());
+    }
     const entry = this.store.decision(input2.application?.decisionDigest);
     assert2(entry, "DECISION_UNKNOWN");
     const now = this.clock();
@@ -39472,6 +39485,91 @@ function mergeRoutingCapabilities(local, shared) {
   return [...slots.entries()].sort(([a], [b2]) => a < b2 ? -1 : a > b2 ? 1 : 0).map(([, snapshot]) => snapshot);
 }
 
+// mcp-server/src/routing-v3/observation-admission.ts
+function recordSemanticApplicationWithAdmission(store, value, observationToken, now) {
+  const validator2 = new ContractValidator();
+  const input2 = validator2.modelApplicationRequestV3(value);
+  const entry = readDecision(store, input2.decisionDigest, validator2);
+  if (entry?.decision.schemaVersion !== "3.0.0") throw new RoutingError("STORED_V3_REQUIRED", "STORED_V3_REQUIRED");
+  const decision = entry.decision;
+  validator2.modelApplicationRequestForDecisionV3(input2, decision);
+  assert2(instant(input2.dispatchedAt, "dispatchedAt") <= instant(now, "now"), "DISPATCH_TIME_IN_FUTURE");
+  const token = store.nativeHookObservationToken(input2) ?? observationToken;
+  if (token !== null) assert2(/^[a-f0-9]{48}$/u.test(token), "INVALID_OBSERVATION_TOKEN");
+  return store.recordApplication(input2, token, (admittedObservation) => {
+    const record5 = recordSemanticApplicationV3(input2, {
+      request: entry.request,
+      decision,
+      catalog: entry.environment.catalog,
+      policy: entry.environment.policy,
+      now: input2.dispatchedAt,
+      admittedObservation
+    });
+    return validator2.modelApplicationRecordForDecisionV3(record5, decision);
+  }, now);
+}
+
+// mcp-server/src/routing-v3/application-service.ts
+var selection = (binding2) => Object.fromEntries(
+  ["model", "resolvedModel", "modelOrigin", "servingProvider", "accessPath", "nativeReasoning", "runtimeMode"].map((key) => [key, binding2[key]])
+);
+function assertHistoricalSelection(entry, dispatchedAt) {
+  const { decision } = entry;
+  assert2(
+    canonical(entry.request.binding) === canonical(decision.binding) && instant(dispatchedAt, "dispatchedAt") >= instant(entry.resolvedAt, "resolvedAt"),
+    "HISTORICAL_DISPATCH_INVALID"
+  );
+  const pool = collectEligibleCandidatesV2(entry.request, { ...entry.environment, now: dispatchedAt });
+  assert2(pool.capabilitySetDigest === decision.capabilitySetDigest && pool.candidates.some((candidate) => candidate.snapshot.snapshotDigest === decision.capabilitySnapshotDigest && canonical({
+    actorId: candidate.snapshot.actorId,
+    host: candidate.snapshot.host,
+    sessionId: candidate.snapshot.sessionId,
+    instanceId: candidate.snapshot.instanceId
+  }) === canonical(decision.target) && canonical(selection(candidate.binding)) === canonical(decision.selected) && candidate.binding.invocationSurface === decision.invocationSurface), "HISTORICAL_DISPATCH_INVALID");
+}
+function recordHistoricalSemanticApplication(store, value, observationToken, now) {
+  const validator2 = new ContractValidator();
+  const input2 = validator2.modelApplicationRequestV3(value);
+  const entry = readDecision(store, input2.decisionDigest, validator2);
+  assert2(entry?.decision.schemaVersion === "3.0.0", "STORED_V3_REQUIRED");
+  const decision = entry.decision;
+  validator2.modelApplicationRequestForDecisionV3(input2, decision);
+  assertHistoricalSelection({ ...entry, decision }, input2.dispatchedAt);
+  return recordSemanticApplicationWithAdmission(store, input2, observationToken, now);
+}
+function readStoredModelApplication(store, recordDigest) {
+  const raw = store.application(recordDigest);
+  if (raw === null) return null;
+  const validator2 = new ContractValidator();
+  const record5 = raw.schemaVersion === "3.0.0" ? validator2.modelApplicationRecordV3(raw) : validator2.modelApplicationRecordV2(raw);
+  verifySeal(record5, "recordDigest");
+  assert2(record5.recordDigest === recordDigest, "RECORD_DIGEST_MISMATCH");
+  const entry = readDecision(store, record5.decisionDigest, validator2);
+  assert2(entry && entry.decision.schemaVersion === record5.schemaVersion && digest(entry.request) === record5.requestDigest && canonical(entry.request.binding) === canonical(record5.binding), "RECORD_DECISION_MISMATCH");
+  if (record5.schemaVersion === "3.0.0") {
+    assert2(entry.decision.schemaVersion === "3.0.0", "RECORD_DECISION_MISMATCH");
+    const dispatch = store.dispatch(digest({ binding: record5.binding }));
+    assert2(dispatch?.decision_digest === record5.decisionDigest && dispatch.dispatched_at === record5.dispatchedAt, "RECORD_DISPATCH_MISMATCH");
+    assertHistoricalSelection({ ...entry, decision: entry.decision }, record5.dispatchedAt);
+    return validator2.modelApplicationRecordForDecisionV3(record5, entry.decision);
+  }
+  for (const field of [
+    "binding",
+    "target",
+    "requested",
+    "selected",
+    "decisionDigest",
+    "requestDigest",
+    "catalogDigest",
+    "policyDigest",
+    "capabilitySnapshotDigest"
+  ]) {
+    assert2(canonical(record5[field]) === canonical(entry.decision[field]), "RECORD_DECISION_MISMATCH");
+  }
+  assert2(canonical(record5.dispatched) === canonical(entry.decision.selected), "RECORD_DECISION_MISMATCH");
+  return record5;
+}
+
 // mcp-server/src/model-routing-service.ts
 var MODEL_CATALOG_DIRECTORY = fileURLToPath4(new URL("../../skills/coordinate-subagents/references/model-catalog/", import.meta.url));
 function unavailableModelRouting() {
@@ -39485,7 +39583,13 @@ function openModelRoutingService(databasePath, workflow, readCapabilities = read
     database.exec("PRAGMA synchronous = FULL;");
     const store = new ModelRoutingStore(database);
     const bridge = workflow ? new ModelRoutingWorkflowBridge(workflow, store) : null;
-    const service = new ModelRoutingServiceCore({ catalogDirectory: MODEL_CATALOG_DIRECTORY, store, historyProvider: bridge?.history ?? null });
+    const service = new ModelRoutingServiceCore({
+      catalogDirectory: MODEL_CATALOG_DIRECTORY,
+      store,
+      historyProvider: bridge?.history ?? null,
+      recordV3: (application, token, now) => recordHistoricalSemanticApplication(store, application, token, now),
+      readRecord: (recordDigest) => readStoredModelApplication(store, recordDigest)
+    });
     service.resolveFromBroker = async (input2) => {
       try {
         const shared = await readCapabilities();
@@ -39642,15 +39746,28 @@ var queryModelCatalogInputSchema = {
   }
 };
 var { $defs: applicationDefinitions, ...applicationRequestSchema } = embeddedSchema(contractSchemas.modelApplicationRequestV2);
+var v3ApplicationRequestSchema = {
+  ...structuredClone(applicationRequestSchema),
+  properties: {
+    ...applicationRequestSchema.properties,
+    schemaVersion: { const: "3.0.0" },
+    semanticAdviceDigest: contractSchemas.modelApplicationRequestV3.properties?.semanticAdviceDigest
+  },
+  required: [...applicationRequestSchema.required ?? [], "semanticAdviceDigest"]
+};
 var recordModelApplicationInputSchema = {
   type: "object",
   additionalProperties: false,
   required: ["application"],
   properties: {
-    application: { $ref: "#/$defs/application" },
+    application: { oneOf: [{ $ref: "#/$defs/applicationV2" }, { $ref: "#/$defs/applicationV3" }] },
     observationToken: { type: ["string", "null"], pattern: "^[a-f0-9]{48}$" }
   },
-  $defs: { ...applicationDefinitions, application: applicationRequestSchema }
+  $defs: {
+    ...applicationDefinitions,
+    applicationV2: applicationRequestSchema,
+    applicationV3: v3ApplicationRequestSchema
+  }
 };
 function resolveModelAssignmentInputSchema(profile) {
   if (profile !== "anthropic") return contractSchemas.modelSelectionRequestV2;
@@ -40162,7 +40279,9 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             break;
           case "record_model_application":
             try {
-              validator2.modelApplicationRequestV2(args.application);
+              if (args.application?.schemaVersion === "3.0.0")
+                validator2.modelApplicationRequestV3(args.application);
+              else validator2.modelApplicationRequestV2(args.application);
               result = modelRouting.call(request.params.name, args);
             } catch (error61) {
               result = invalidInput(error61 instanceof Error ? error61.message : "Model application record is invalid.");
