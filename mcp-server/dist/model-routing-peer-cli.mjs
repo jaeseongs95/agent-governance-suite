@@ -15617,6 +15617,113 @@ var ContractValidator = class {
   }
 };
 
+// mcp-server/src/routing-v3/decision-codec.ts
+function readDecision(store, digest3, validator) {
+  const entry = store.decision(digest3);
+  if (!entry) return null;
+  switch (entry.decision.schemaVersion) {
+    case "2.0.0":
+      return { ...entry, decision: validator.modelRoutingDecisionV2(entry.decision) };
+    case "3.0.0":
+      return { ...entry, decision: validator.modelRoutingDecisionV3(entry.decision) };
+  }
+  throw new WorkflowContractError("INVALID_INPUT", "Unsupported model routing decision version.");
+}
+
+// mcp-server/src/routing-v3/workflow-binding.ts
+var MODEL_DECISION_V3_SCHEMA = "https://skill-suite.local/contracts/model-routing-decision.v3.schema.json";
+var MODEL_DECISION_V3_PREFIX = "ags-model-decision:";
+function requireBinding(condition, message) {
+  if (!condition) throw new WorkflowContractError("BINDING_INVALID", message);
+}
+function isSemanticDecisionReference(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const ref = value;
+  return ref.schemaId === MODEL_DECISION_V3_SCHEMA || typeof ref.locator === "string" && ref.locator.startsWith(MODEL_DECISION_V3_PREFIX);
+}
+function validateSemanticDecisionArtifact(workflow, routing, artifact, result) {
+  requireBinding(
+    artifact.verified === false,
+    "A semantic decision reference is diagnostic, not verified execution evidence."
+  );
+  requireBinding(
+    artifact.schemaId === MODEL_DECISION_V3_SCHEMA && /^ags-model-decision:[a-f0-9]{64}$/u.test(artifact.locator),
+    "Semantic artifact requires the v3 schema and exact stored-decision URI."
+  );
+  const decisionDigest = `sha256:${artifact.locator.slice(MODEL_DECISION_V3_PREFIX.length)}`;
+  requireBinding(
+    (artifact.digest.startsWith("sha256:") ? artifact.digest : `sha256:${artifact.digest}`) === decisionDigest,
+    "Semantic artifact URI and digest disagree."
+  );
+  const { decision, request } = validateStoredSemanticWorkflowBinding(workflow, routing, decisionDigest);
+  requireBinding(
+    decision.binding.runId === result.runId && decision.binding.stageId === result.stageId && decision.binding.revision === result.expectedRevision && artifact.targetDigest === decision.binding.candidateDigest,
+    "Semantic artifact belongs to a different run, stage, revision or candidate."
+  );
+  return { decision, request };
+}
+function validateStoredSemanticWorkflowBinding(workflow, routing, decisionDigest) {
+  const entry = readDecision(routing, decisionDigest, new ContractValidator());
+  requireBinding(entry?.decision.schemaVersion === "3.0.0", "Semantic artifact has no stored v3 decision.");
+  const { decision } = entry;
+  verifySeal(decision, "decisionDigest");
+  requireBinding(decision.decisionDigest === decisionDigest, "Semantic decision row key does not match its payload.");
+  const request = new ContractValidator().modelSelectionRequestV2(entry.request);
+  const reference = routing.database.prepare(`SELECT baseline_decision_digest,advice_digest
+    FROM ags_model_decision_refs_v3 WHERE decision_digest=?`).get(decisionDigest);
+  requireBinding(
+    reference?.baseline_decision_digest === decision.semantic.baselineDecisionDigest && reference.advice_digest === decision.semantic.adviceDigest,
+    "Semantic artifact has no matching registered decision reference."
+  );
+  requireBinding(
+    digest(request) === decision.requestDigest && canonical(request.binding) === canonical(decision.binding) && decision.status === "selected" && decision.target && decision.executionAuthorized === false && decision.trustedGateSatisfied === false,
+    "Semantic decision and request binding disagree."
+  );
+  validateCurrentBinding(workflow, request, decision);
+  return { decision, request };
+}
+function validateCurrentBinding(workflow, request, decision) {
+  const binding = decision.binding;
+  const snapshot = workflow.getGuardedRunSnapshot(binding.runId);
+  requireBinding(snapshot, "Semantic artifact has no guarded workflow snapshot.");
+  const { receipt, guarded } = snapshot;
+  requireBinding(
+    receipt.runId === binding.runId && receipt.plan.taskId === binding.taskId && receipt.state === "running" && receipt.revision === binding.revision,
+    "Semantic artifact has no current workflow run."
+  );
+  const stage = receipt.plan.stages.find((item) => item.stageId === binding.stageId);
+  requireBinding(
+    stage?.state === "ready" && receipt.plan.currentStageId === binding.stageId,
+    "Semantic artifact is not for the current ready stage."
+  );
+  requireBinding(
+    guarded.root.state === "open" && guarded.outcome === null && guarded.lease.state === "consumed" && guarded.lease.leaseId === binding.attemptId,
+    "Semantic artifact requires the current consumed workflow lease."
+  );
+  requireBinding(
+    guarded.root.taskEnvelope.taskId === binding.taskId && guarded.root.taskDigest === convergenceDigest(guarded.root.taskEnvelope) && guarded.root.frameDigest === convergenceDigest(guarded.root.frame) && guarded.root.targetDigest === convergenceDigest(guarded.root.frame.targetArtifacts) && guarded.proposal.rootId === guarded.root.rootId && guarded.lease.rootId === guarded.root.rootId && guarded.lease.taskDigest === guarded.root.taskDigest && guarded.lease.frameDigest === guarded.root.frameDigest && guarded.lease.targetDigest === guarded.root.targetDigest && convergenceDigest(guarded.proposal.taskEnvelope) === guarded.root.taskDigest && convergenceDigest(guarded.proposal.frame) === guarded.root.frameDigest && receipt.plan.taskDigest === guarded.root.taskDigest && receipt.plan.integrityToken === guarded.lease.planIntegrityToken && (binding.candidateDigest === guarded.lease.targetDigest || guarded.root.frame.targetArtifacts.some((item) => item.digest === binding.candidateDigest)),
+    "Semantic artifact candidate is outside the frozen attempt frame."
+  );
+  const task = guarded.proposal.taskEnvelope;
+  requireBinding(
+    !["high", "critical"].includes(task.riskLevel) || request.highRisk,
+    "A semantic decision cannot downgrade the task risk."
+  );
+  const required = /* @__PURE__ */ new Set([
+    ...request.requirements.tools,
+    ...request.requirements.filesystem === "none" ? [] : ["read"],
+    ...request.requirements.filesystem === "write" ? ["write"] : []
+  ]);
+  requireBinding(
+    [...required].every((action) => task.authorization.allowedActions.includes(action) && !task.authorization.prohibitedActions.includes(action)),
+    "Semantic decision exceeds local task authorization."
+  );
+  requireBinding(
+    task.authorization.approvalRequired.length === 0,
+    "Semantic decision cannot satisfy task-specific approvals without a native approval adapter."
+  );
+}
+
 // mcp-server/src/model-routing-workflow.ts
 var MODEL_APPLICATION_SCHEMA = "https://skill-suite.local/contracts/model-application-record.v2.schema.json";
 var PREFIX = "ags-model-record:";
@@ -15629,7 +15736,7 @@ function asRecord(value) {
 }
 function routingReference(value) {
   const item = asRecord(value);
-  return item.schemaId === MODEL_APPLICATION_SCHEMA || typeof item.locator === "string" && item.locator.startsWith(PREFIX);
+  return item.schemaId === MODEL_APPLICATION_SCHEMA || typeof item.locator === "string" && item.locator.startsWith(PREFIX) || isSemanticDecisionReference(item);
 }
 var ModelRoutingWorkflowBridge = class {
   constructor(workflow, routing, validator = new ContractValidator()) {
@@ -15734,7 +15841,8 @@ var ModelRoutingWorkflowBridge = class {
         ).all(runId, MAX_HISTORY + 1);
         requireCondition(rows.length <= MAX_HISTORY, "Routing audit dispatch history is too large.");
         for (const row of rows) {
-          const decision = this.validator.modelRoutingDecisionV2(JSON.parse(row.payload));
+          const raw = JSON.parse(row.payload);
+          const decision = raw.schemaVersion === "3.0.0" ? this.validator.modelRoutingDecisionV3(raw) : this.validator.modelRoutingDecisionV2(raw);
           const { decisionDigest, ...unsigned } = decision;
           requireCondition(
             convergenceDigest(unsigned) === decisionDigest && decision.binding.runId === runId && decision.target,
@@ -15762,6 +15870,21 @@ var ModelRoutingWorkflowBridge = class {
     for (const artifact of artifacts) {
       requireCondition(!ids.has(artifact.artifactId), "Duplicate routing artifact ID.");
       ids.add(artifact.artifactId);
+      if (isSemanticDecisionReference(artifact)) {
+        const { decision: decision2, request: request2 } = validateSemanticDecisionArtifact(this.workflow, this.routing, artifact, result);
+        requireCondition(
+          result.evidence.every((item) => item.artifactId !== artifact.artifactId || item.verified === false),
+          "Semantic diagnostic evidence cannot satisfy a verified stage gate."
+        );
+        if (result.state === "passed" && request2.role === "independent-audit") {
+          const history = this.history(decision2.binding, decision2.decisionDigest);
+          requireCondition(
+            !history.actors.includes(decision2.target.actorId) && !history.sessions.includes(`${decision2.target.host}/${decision2.target.sessionId}`) && !request2.requirements.excludedActors.includes(decision2.target.actorId) && !request2.requirements.excludedSessions.includes(`${decision2.target.host}/${decision2.target.sessionId}`),
+            "Semantic audit actor participated before final adoption."
+          );
+        }
+        continue;
+      }
       requireCondition(
         artifact.schemaId === MODEL_APPLICATION_SCHEMA && /^ags-model-record:[a-f0-9]{64}$/u.test(artifact.locator),
         "Routing artifact requires the versioned schema and exact stored-record URI."
@@ -15808,9 +15931,14 @@ var ModelRoutingWorkflowBridge = class {
       }
     }
     for (const evidence of result.evidence.filter(routingReference)) {
+      const artifact = artifacts.find((item) => item.artifactId === evidence.artifactId && item.locator === evidence.locator);
       requireCondition(
-        artifacts.some((artifact) => artifact.artifactId === evidence.artifactId && artifact.locator === evidence.locator),
+        artifact,
         "Routing evidence has no matching validated artifact."
+      );
+      requireCondition(
+        !isSemanticDecisionReference(artifact) || evidence.verified === false,
+        "Semantic diagnostic evidence cannot satisfy a verified stage gate."
       );
     }
   }

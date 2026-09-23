@@ -4,6 +4,7 @@ import { checkApplicationArtifactBinding } from "../../skills/coordinate-subagen
 import type { ModelRoutingStore } from "../../skills/coordinate-subagents/scripts/model-routing-store.mjs";
 import { canonicalJson, convergenceDigest } from "./convergence-logic.js";
 import { ContractValidator } from "./schema-validator.js";
+import { isSemanticDecisionReference, validateSemanticDecisionArtifact } from "./routing-v3/workflow-binding.js";
 import type { WorkflowStore } from "./workflow-store.js";
 
 export const MODEL_APPLICATION_SCHEMA = "https://skill-suite.local/contracts/model-application-record.v2.schema.json";
@@ -21,7 +22,8 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function routingReference(value: unknown): boolean {
   const item = asRecord(value);
-  return item.schemaId === MODEL_APPLICATION_SCHEMA || (typeof item.locator === "string" && item.locator.startsWith(PREFIX));
+  return item.schemaId === MODEL_APPLICATION_SCHEMA || (typeof item.locator === "string" && item.locator.startsWith(PREFIX))
+    || isSemanticDecisionReference(item);
 }
 
 /** Inspect only the existing artifact/evidence slots, never a worker's free-form output. */
@@ -123,7 +125,10 @@ export class ModelRoutingWorkflowBridge {
         ).all(runId, MAX_HISTORY + 1) as Array<{ payload: string }>;
         requireCondition(rows.length <= MAX_HISTORY, "Routing audit dispatch history is too large.");
         for (const row of rows) {
-          const decision = this.validator.modelRoutingDecisionV2(JSON.parse(row.payload));
+          const raw = JSON.parse(row.payload) as { schemaVersion?: string };
+          const decision = raw.schemaVersion === "3.0.0"
+            ? this.validator.modelRoutingDecisionV3(raw)
+            : this.validator.modelRoutingDecisionV2(raw);
           const { decisionDigest, ...unsigned } = decision;
           requireCondition(convergenceDigest(unsigned) === decisionDigest && decision.binding.runId === runId && decision.target,
             "Routing audit dispatch history is corrupt.");
@@ -151,6 +156,20 @@ export class ModelRoutingWorkflowBridge {
     for (const artifact of artifacts) {
       requireCondition(!ids.has(artifact.artifactId), "Duplicate routing artifact ID.");
       ids.add(artifact.artifactId);
+      if (isSemanticDecisionReference(artifact)) {
+        const { decision, request } = validateSemanticDecisionArtifact(this.workflow, this.routing, artifact, result);
+        requireCondition(result.evidence.every(item => item.artifactId !== artifact.artifactId || item.verified === false),
+          "Semantic diagnostic evidence cannot satisfy a verified stage gate.");
+        if (result.state === "passed" && request.role === "independent-audit") {
+          const history = this.history(decision.binding, decision.decisionDigest);
+          requireCondition(!history.actors.includes(decision.target.actorId)
+            && !history.sessions.includes(`${decision.target.host}/${decision.target.sessionId}`)
+            && !request.requirements.excludedActors.includes(decision.target.actorId)
+            && !request.requirements.excludedSessions.includes(`${decision.target.host}/${decision.target.sessionId}`),
+          "Semantic audit actor participated before final adoption.");
+        }
+        continue;
+      }
       requireCondition(artifact.schemaId === MODEL_APPLICATION_SCHEMA && /^ags-model-record:[a-f0-9]{64}$/u.test(artifact.locator),
         "Routing artifact requires the versioned schema and exact stored-record URI.");
       const recordDigest = `sha256:${artifact.locator.slice(PREFIX.length)}`;
@@ -194,8 +213,11 @@ export class ModelRoutingWorkflowBridge {
       }
     }
     for (const evidence of result.evidence.filter(routingReference)) {
-      requireCondition(artifacts.some(artifact => artifact.artifactId === evidence.artifactId && artifact.locator === evidence.locator),
+      const artifact = artifacts.find(item => item.artifactId === evidence.artifactId && item.locator === evidence.locator);
+      requireCondition(artifact,
         "Routing evidence has no matching validated artifact.");
+      requireCondition(!isSemanticDecisionReference(artifact) || evidence.verified === false,
+        "Semantic diagnostic evidence cannot satisfy a verified stage gate.");
     }
   }
 }
