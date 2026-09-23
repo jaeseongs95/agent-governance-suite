@@ -11,12 +11,15 @@ import { ModelRoutingWorkflowBridge } from '../../mcp-server/src/model-routing-w
 import { ModelPeerPacketSigner } from '../../mcp-server/src/model-peer-packet.js';
 import { ModelRoutingPeerSession } from '../../mcp-server/src/model-routing-peer-session.js';
 import { nativeRoutingActor } from '../../mcp-server/src/model-routing-host-hook.js';
+import { loadCatalog } from '../../skills/coordinate-subagents/scripts/model-catalog.mjs';
 import { request, environment, capability } from '../coordinate-subagents/model-routing-v2/fixtures.mjs';
 import { digest, resolveV2, seal } from '../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
 
 export const SENDER={host:'codex',sessionId:'peer-source',instanceId:'source-instance'};
 export const RECEIVER={host:'codex',sessionId:'peer-target',instanceId:'target-instance'};
 export const TOKEN=Buffer.alloc(32,21).toString('base64url');
+const PEER_CATALOG=loadCatalog();
+export const PEER_NOW=PEER_CATALOG.snapshotDate;
 export function must(result){if(!result.ok)throw new Error(JSON.stringify(result.error));return result.data;}
 export function createPeerWorkflow(directory,{now=Date.now(),target=RECEIVER,highRisk=false,authorization}={}){
   mkdirSync(join(directory,'skills'),{recursive:true});mkdirSync(join(directory,'contracts'),{recursive:true});
@@ -45,7 +48,7 @@ export function createPeerWorkflow(directory,{now=Date.now(),target=RECEIVER,hig
   cap=seal({...cap,supportedBindings:cap.supportedBindings.map(item=>({...item,invocationSurface:'peer-session'}))},'snapshotDigest');
   const req=request();req.binding={...req.binding,taskId:task.taskId,runId:run.runId,stageId:run.plan.currentStageId,revision:run.revision,attemptId:lease.leaseId};
   req.requirements.filesystem='write';req.requirements.allowedSurfaces=['peer-session'];
-  const env=environment({capabilities:[cap],now:new Date(now).toISOString()}),decision=resolveV2(req,env);
+  const env=environment({catalog:structuredClone(PEER_CATALOG),capabilities:[cap],now:new Date(now).toISOString()}),decision=resolveV2(req,env);
   if(decision.status!=='selected')throw new Error(JSON.stringify(decision));routing.saveDecision(req,env,decision,new Date(now).toISOString());
   const bridge=new ModelRoutingWorkflowBridge(workflow,routing);
   function peer(identity,{actor=identity.sessionId===target.sessionId?actorId:nativeRoutingActor(identity.host,identity.sessionId,null),request:transport,clock=Date.now,stateDirectory=directory,timeoutMs=10000}={}){

@@ -5,9 +5,8 @@ import { ModelRoutingServiceCore } from '../../skills/coordinate-subagents/scrip
 import { ModelPeerPacketSigner, peerMessageId } from '../../mcp-server/src/model-peer-packet.js';
 import { encodePeerAssignment } from '../../skills/coordinate-subagents/scripts/model-routing-peer.mjs';
 import { digest, resolveV2, seal } from '../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
-import { SENDER, RECEIVER, TOKEN } from './peer-handoff-fixtures.mjs';
+import { SENDER, RECEIVER, TOKEN, PEER_NOW as NOW } from './peer-handoff-fixtures.mjs';
 import { fixture, accepted, retained, lastAwait } from './peer-execution-fixtures.mjs';
-import { NOW } from '../coordinate-subagents/model-routing-v2/fixtures.mjs';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -77,7 +76,7 @@ describe.each(['preflight', 'start'])('%s rejects unsafe accepted work without c
     else h.database.prepare(`UPDATE ags_model_dispatches_v2 SET ${field}=? WHERE dispatch_key=?`).run(field === 'dispatched_at' ? NOW : 'corrupt', h.key);
     const before = retained(h); await expect(check(h.receiver, id)).rejects.toThrow(); expect(retained(h)).toEqual(before);
   });
-  it.each(['revision', 'lease-owner', 'lease-state', 'outcome', 'risk', 'permission', 'prohibition', 'approval'])('rechecks local %s after the last asynchronous request', async kind => {
+  it.each(['revision', 'lease-owner', 'lease-state', 'outcome', 'risk-high', 'risk-critical', 'permission', 'prohibition', 'approval'])('rechecks local %s after the last asynchronous request', async kind => {
     const h = fixture(), id = await accepted(h), originalRun = h.workflow.getRun.bind(h.workflow), original = h.workflow.getGuardedRunBinding.bind(h.workflow);
     const receiver = lastAwait(h, () => {
       if (kind === 'revision') vi.spyOn(h.workflow, 'getRun').mockImplementation(run => ({ ...originalRun(run), revision: h.req.binding.revision + 1 }));
@@ -86,7 +85,7 @@ describe.each(['preflight', 'start'])('%s rejects unsafe accepted work without c
         if (kind === 'lease-owner') b.lease.actorId = 'other';
         if (kind === 'lease-state') b.lease.state = 'released';
         if (kind === 'outcome') b.outcome = { state: 'succeeded' };
-        if (kind === 'risk') b.proposal.taskEnvelope.riskLevel = 'high';
+        if (kind.startsWith('risk-')) b.proposal.taskEnvelope.riskLevel = kind.slice(5);
         if (kind === 'permission') b.proposal.taskEnvelope.authorization.allowedActions = ['read'];
         if (kind === 'prohibition') b.proposal.taskEnvelope.authorization.prohibitedActions = ['write'];
         if (kind === 'approval') b.proposal.taskEnvelope.authorization.approvalRequired = ['write'];

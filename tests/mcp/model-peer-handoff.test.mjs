@@ -12,8 +12,7 @@ import { SessionMessageStore } from '../../mcp-server/src/session-message-store.
 import { SessionModelCapabilityStore, capabilitySigner, MODEL_CAPABILITY_FEATURE } from '../../mcp-server/src/session-model-capabilities.js';
 import { encodePeerAssignment, acceptPeerAssignment, MODEL_ROUTING_PEER_FEATURE } from '../../skills/coordinate-subagents/scripts/model-routing-peer.mjs';
 import { digest, seal, resolveV2 } from '../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
-import { createPeerWorkflow, SENDER, RECEIVER, TOKEN } from './peer-handoff-fixtures.mjs';
-import { NOW } from '../coordinate-subagents/model-routing-v2/fixtures.mjs';
+import { createPeerWorkflow, SENDER, RECEIVER, TOKEN, PEER_NOW as NOW } from './peer-handoff-fixtures.mjs';
 
 const cleanups=[];afterEach(()=>{vi.restoreAllMocks();while(cleanups.length)cleanups.pop()();});
 function fixture(){

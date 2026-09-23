@@ -77,8 +77,35 @@ function admitted(h, overrides={}) {
   const token=h.routing.publishObservation(signer.issue('observation',observation(req,decision),{issuedAt:NOW,expiresAt:END}),signer,LATER);
   return h.core.record({application:application(req,decision),observationToken:token}).record;
 }
+function withTaskRisk(h,riskLevel) {
+  const original=h.workflow.getGuardedRunBinding.bind(h.workflow);
+  vi.spyOn(h.workflow,'getGuardedRunBinding').mockImplementation(runId=>{
+    const guarded=structuredClone(original(runId));
+    guarded.proposal.taskEnvelope.riskLevel=riskLevel;
+    return guarded;
+  });
+}
 
 describe('workflow-owned model routing bridge',()=>{
+  it.each(['high','critical'])('rejects a %s task handoff and artifact with highRisk false',riskLevel=>{
+    const h=harness();withTaskRisk(h,riskLevel);
+    expect(()=>h.opened.bridge.validatePeerHandoff(h.req)).toThrow(/downgrade/u);
+    expect(h.service.recordStageResult(h.result).error.message).toMatch(/downgrade/u);
+    expect(h.workflow.getRun(h.run.runId).stageResults).toHaveLength(0);
+  });
+  it.each(['high','critical'])('admits a %s task with highRisk true when its artifact has host evidence',riskLevel=>{
+    const h=harness(),req={...h.req,highRisk:true};withTaskRisk(h,riskLevel);
+    expect(()=>h.opened.bridge.validatePeerHandoff(req)).not.toThrow();
+    const record=admitted(h,{highRisk:true});
+    expect(()=>h.opened.bridge.validateStageArtifacts(attach(h,record))).not.toThrow();
+    data(h.service.recordStageResult(attach(h,record)));
+    expect(h.workflow.getRun(h.run.runId).stageResults).toHaveLength(1);
+  });
+  it('keeps a low task handoff and diagnostic artifact available with highRisk false',()=>{
+    const h=harness();
+    expect(()=>h.opened.bridge.validatePeerHandoff(h.req)).not.toThrow();
+    expect(()=>h.opened.bridge.validateStageArtifacts(h.result)).not.toThrow();
+  });
   it('connects the production history provider and excludes known implementers',()=>{
     const h=harness(),history=h.opened.bridge.history(h.req.binding);
     expect(history.actors).toContain('implementer');
