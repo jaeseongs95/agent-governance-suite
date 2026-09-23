@@ -81,6 +81,7 @@ async function main(): Promise<void> {
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
   if (process.env.AGENT_GOVERNANCE_SEMANTIC_ROUTING_ENABLED === "true") {
     semantic = openSemanticService(workflowDatabasePath, store);
+    if (semantic) process.stderr.write(`Semantic Jev registry: ${semantic.jev.status}; adoption: ${semantic.jev.adoption}\n`);
   }
   const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, modelRouting.service, vmInvocation,
     { enabled: semantic !== null, gateway: semantic?.gateway ?? null });
