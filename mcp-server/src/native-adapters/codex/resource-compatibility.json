@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "H01-a",
+  "capturedAtUtc": "2026-09-23T11:02:52Z",
+  "officialSchema": {
+    "repositoryRef": "openai/codex@a69d757cd8ef8310001186865911b69e4b4175e5",
+    "read": {
+      "url": "https://github.com/openai/codex/blob/a69d757cd8ef8310001186865911b69e4b4175e5/codex-rs/app-server-protocol/schema/json/v2/GetAccountRateLimitsResponse.json",
+      "sha256": "76bc91758269a89f57cd16c618b91c1fba76aca3e9d2b6186205e6f107d6b28c"
+    },
+    "notification": {
+      "url": "https://github.com/openai/codex/blob/a69d757cd8ef8310001186865911b69e4b4175e5/codex-rs/app-server-protocol/schema/json/v2/AccountRateLimitsUpdatedNotification.json",
+      "sha256": "8252ed2af807bebce56e9c042b6848300c7c52ba7a8162dc50d320709fa3b078"
+    }
+  },
+  "installedRuntime": {
+    "cliVersion": "codex-cli 0.155.1",
+    "executable": "%LOCALAPPDATA%/Programs/OpenAI/Codex/bin/codex.exe",
+    "executableSha256": "eba0f32c976667cb9298efafd98513e823eeda7b576a03ec658bb8be8d336316",
+    "generatedSchemaCommand": "codex app-server generate-json-schema --out <temporary-directory>",
+    "clientRequestSchemaSha256": "85d6d137bab416d9ad47982adf354d707713042da5d37f934d0b2ed386e53ca4",
+    "serverNotificationSchemaSha256": "0a1c81641a6a2f009d7d6e3e26e8b99e6522f34d749cb1a2d5f182bbc395fcc3",
+    "readSchemaSha256": "76bc91758269a89f57cd16c618b91c1fba76aca3e9d2b6186205e6f107d6b28c",
+    "notificationSchemaSha256": "8252ed2af807bebce56e9c042b6848300c7c52ba7a8162dc50d320709fa3b078"
+  },
+  "capabilities": {
+    "read": {
+      "method": "account/rateLimits/read",
+      "documentSupported": true,
+      "installedSchemaSupported": true,
+      "observed": true
+    },
+    "notification": {
+      "method": "account/rateLimits/updated",
+      "documentSupported": true,
+      "installedSchemaSupported": true,
+      "observed": false
+    }
+  },
+  "redactedReadCapture": {
+    "method": "account/rateLimits/read",
+    "result": "success",
+    "rawResultSha256": "ab967655a2f7adac6c6dac29dd1ce88dbcc663c775d87618307963e463a649bf",
+    "rawResultStored": false,
+    "topLevelFields": ["accountId", "ordinaryUsageAllowed", "rateLimitResetCredits", "rateLimitUpsell", "rateLimits", "rateLimitsByLimitId"],
+    "bucketCount": 1,
+    "bucketFields": ["credits", "individualLimit", "limitId", "limitName", "normalModelSlug", "planType", "primary", "rateLimitReachedType", "secondary", "spendControlReached"],
+    "windowPresence": { "primary": true, "secondary": false },
+    "observedWindowFields": ["resetsAt", "usedPercent", "windowDurationMins"]
+  },
+  "resourceProjectionBoundary": {
+    "bucketSource": "rateLimitsByLimitId when present; rateLimits is the legacy single-bucket view",
+    "windowSource": "primary and secondary are nullable RateLimitWindow values",
+    "quantitySource": "usedPercent is observed; absolute limit and remaining are not exposed by RateLimitWindow",
+    "source": "app-server read; collector provenance and account-scope binding are unverified",
+    "sequence": null,
+    "coverage": null,
+    "collectorResponseAdmitted": false
+  }
+}
