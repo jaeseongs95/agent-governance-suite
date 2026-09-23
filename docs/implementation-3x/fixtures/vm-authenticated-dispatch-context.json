@@ -1,0 +1,193 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "contract-only; not product admission evidence",
+  "mechanism": "dedicated-stdio/server-epoch/server-reserved-jsonrpc-id/signed-core-registration",
+  "serverEpoch": "epoch-1",
+  "hostBuild": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "modelPolicy": {
+    "version": 1,
+    "hostId": "flowmarshal-engine",
+    "hostBuild": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "exactModelId": "observed-model-1",
+    "modelClass": "general"
+  },
+  "pin": {
+    "keyId": "operator-pinned-key-1",
+    "installationId": "vm-installation-1",
+    "hostBuild": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "modelPolicyVersion": 1,
+    "actorId": "vm-producer:vm-installation-1"
+  },
+  "reservations": {
+    "A": {
+      "callId": "vm-call-A",
+      "epoch": "epoch-1",
+      "registrationNonce": "registration-A",
+      "binding": {
+        "invocationId": "vm-call-A",
+        "turnId": "terminal-turn-1",
+        "taskId": "task-1",
+        "runId": null,
+        "attemptId": null,
+        "hostId": "flowmarshal-engine",
+        "sessionId": "vm-session-1",
+        "instanceId": "vm-instance-1"
+      },
+      "tool": "plan_workflow",
+      "inputDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "terminalEventId": "terminal-event-1",
+      "terminalCallId": "terminal-call-1",
+      "modelId": "observed-model-1",
+      "effort": "high"
+    },
+    "B": {
+      "callId": "vm-call-B",
+      "epoch": "epoch-1",
+      "registrationNonce": "registration-B",
+      "binding": {
+        "invocationId": "vm-call-B",
+        "turnId": "terminal-turn-1",
+        "taskId": "task-1",
+        "runId": null,
+        "attemptId": null,
+        "hostId": "flowmarshal-engine",
+        "sessionId": "vm-session-1",
+        "instanceId": "vm-instance-1"
+      },
+      "tool": "plan_workflow",
+      "inputDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "terminalEventId": "terminal-event-1",
+      "terminalCallId": "terminal-call-1",
+      "modelId": "observed-model-1",
+      "effort": "high"
+    },
+    "baseline": {
+      "callId": "vm-call-baseline",
+      "epoch": "epoch-1",
+      "registrationNonce": "registration-baseline",
+      "binding": {
+        "invocationId": "vm-call-baseline",
+        "turnId": "terminal-turn-2",
+        "taskId": "task-1",
+        "runId": "run-1",
+        "attemptId": null,
+        "hostId": "flowmarshal-engine",
+        "sessionId": "vm-session-1",
+        "instanceId": "vm-instance-1"
+      },
+      "tool": "record_stage_result",
+      "inputDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "terminalEventId": "terminal-event-2",
+      "terminalCallId": "terminal-call-2",
+      "modelId": "observed-model-1",
+      "effort": "high"
+    },
+    "stage": {
+      "callId": "vm-call-stage",
+      "epoch": "epoch-1",
+      "registrationNonce": "registration-stage",
+      "binding": {
+        "invocationId": "vm-call-stage",
+        "turnId": "terminal-turn-2",
+        "taskId": "task-1",
+        "runId": "run-1",
+        "attemptId": "attempt-1",
+        "hostId": "flowmarshal-engine",
+        "sessionId": "vm-session-1",
+        "instanceId": "vm-instance-1"
+      },
+      "tool": "record_stage_result",
+      "inputDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "terminalEventId": "terminal-event-3",
+      "terminalCallId": "terminal-call-3",
+      "modelId": "observed-model-1",
+      "effort": "high"
+    }
+  },
+  "cases": [
+    {
+      "id": "A_current_request",
+      "steps": [
+        { "requestId": "vm-call-A", "receipt": "A", "expected": "admission_candidate", "claim": "A" }
+      ]
+    },
+    {
+      "id": "B_first_use_of_A_receipt_then_A",
+      "steps": [
+        { "requestId": "vm-call-B", "receipt": "A", "expected": "reject_before_claim", "claim": null },
+        { "requestId": "vm-call-A", "receipt": "A", "expected": "admission_candidate", "claim": "A" }
+      ]
+    },
+    {
+      "id": "same_connection_other_call_id",
+      "steps": [
+        { "requestId": "vm-call-B", "receipt": "A", "expected": "reject_before_claim", "claim": null }
+      ]
+    },
+    {
+      "id": "concurrent_calls_swapped_receipts",
+      "steps": [
+        { "requestId": "vm-call-A", "receipt": "B", "expected": "reject_before_claim", "claim": null },
+        { "requestId": "vm-call-B", "receipt": "A", "expected": "reject_before_claim", "claim": null },
+        { "requestId": "vm-call-A", "receipt": "A", "expected": "admission_candidate", "claim": "A" },
+        { "requestId": "vm-call-B", "receipt": "B", "expected": "admission_candidate", "claim": "B" }
+      ]
+    },
+    {
+      "id": "old_epoch_after_restart",
+      "steps": [
+        { "requestId": "vm-call-A", "receipt": "A", "currentEpoch": "epoch-2", "expected": "reject_before_claim", "claim": null }
+      ]
+    },
+    {
+      "id": "baseline_before_worker_attempt",
+      "steps": [
+        { "requestId": "vm-call-baseline", "receipt": "baseline", "coreLedgerAttemptAbsent": true, "expected": "admission_candidate", "claim": "baseline" }
+      ]
+    },
+    {
+      "id": "baseline_null_without_core_ledger_proof",
+      "steps": [
+        { "requestId": "vm-call-baseline", "receipt": "baseline", "coreLedgerAttemptAbsent": false, "expected": "unsupported_before_claim", "claim": null }
+      ]
+    },
+    {
+      "id": "stage_attempt_from_different_call",
+      "steps": [
+        { "requestId": "vm-call-stage", "receipt": "stage", "receiptAttemptId": "attempt-2", "expected": "reject_before_claim", "claim": null }
+      ]
+    },
+    {
+      "id": "registration_receipt_terminal_mismatch",
+      "steps": [
+        { "requestId": "vm-call-A", "receipt": "A", "receiptTerminalEventId": "other-terminal-event", "expected": "reject_before_claim", "claim": null },
+        { "requestId": "vm-call-A", "receipt": "A", "receiptModelId": "other-signed-model", "expected": "reject_before_claim", "claim": null },
+        { "requestId": "vm-call-A", "receipt": "A", "receiptEffort": "low", "expected": "reject_before_claim", "claim": null }
+      ]
+    },
+    {
+      "id": "unknown_exact_model_or_host_build",
+      "steps": [
+        { "requestId": "vm-call-A", "receipt": "A", "observedModelId": "unregistered-model", "expected": "unsupported_before_claim", "claim": null },
+        { "requestId": "vm-call-A", "receipt": "A", "hostBuild": "unverified-build", "expected": "unsupported_before_claim", "claim": null }
+      ]
+    },
+    {
+      "id": "revoked_pin",
+      "steps": [
+        { "requestId": "vm-call-A", "receipt": "A", "pinActive": false, "expected": "reject_before_claim", "claim": null }
+      ]
+    },
+    {
+      "id": "caller_only_metadata_or_legacy_cli",
+      "steps": [
+        { "requestId": "caller-chosen", "receipt": "A", "expected": "unsupported_before_claim", "claim": null }
+      ]
+    }
+  ],
+  "registrationCases": [
+    { "id": "copied_sideband_same_epoch", "registration": "A", "alreadyReserved": true, "expected": "reject_no_new_reservation" },
+    { "id": "copied_sideband_new_process", "registration": "A", "currentEpoch": "epoch-2", "expected": "reject_no_new_reservation" },
+    { "id": "untrusted_pipe_writer_or_caller_chosen_id", "registration": "A", "coreOwnedTransport": false, "expected": "unsupported" }
+  ]
+}
