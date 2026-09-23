@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "H06-a",
+  "capturedAtUtc": "2026-09-23T11:21:04Z",
+  "documentSources": [
+    {
+      "surface": "messages-api-usage",
+      "url": "https://platform.claude.com/docs/en/api/messages/create",
+      "checkedDate": "2026-09-23"
+    },
+    {
+      "surface": "prompt-cache-ttl-breakdown",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching",
+      "checkedDate": "2026-09-23"
+    },
+    {
+      "surface": "agent-sdk-usage-scope",
+      "url": "https://code.claude.com/docs/en/agent-sdk/cost-tracking",
+      "checkedDate": "2026-09-23"
+    },
+    {
+      "surface": "agent-sdk-rate-limit-event",
+      "url": "https://code.claude.com/docs/en/agent-sdk/typescript",
+      "checkedDate": "2026-09-23"
+    },
+    {
+      "surface": "agent-sdk-experimental-get-usage",
+      "url": "https://unpkg.com/@anthropic-ai/claude-agent-sdk@0.3.185/sdk.d.ts",
+      "packageVersion": "0.3.185",
+      "sha256": "af9d048d247743cdae22a045724781dc7995d7896c5e775697406b6a0c38b62e",
+      "checkedDate": "2026-09-23"
+    },
+    {
+      "surface": "claude-code-cli-json-output",
+      "url": "https://code.claude.com/docs/en/cli-reference",
+      "checkedDate": "2026-09-23"
+    }
+  ],
+  "installedInspection": {
+    "claudeCodeVersion": "2.1.280",
+    "executable": "%USERPROFILE%/.local/bin/claude.exe",
+    "executableSha256": "0e4195524b73eb77efbdf3e2b36de5322a29f0ca575dfd2d9b4f946b1d425469",
+    "cliJsonAndStreamJsonFlags": true,
+    "repositoryTypeScriptAgentSdkPresent": false,
+    "repositoryTypeScriptMessagesSdkPresent": false,
+    "pythonAgentSdkPresent": false,
+    "pythonMessagesSdkPresent": false,
+    "liveCallPerformedByTask": false
+  },
+  "observedOpus55Sample": {
+    "surface": "local-claude-code-transcript",
+    "observedAtUtc": "2026-09-23T11:19:40.516Z",
+    "producerVersion": "2.1.280",
+    "modelId": "claude-opus-5-5",
+    "privateEventStored": false,
+    "eventSha256": "869a57606df73dd09a097bd3c275b151004ee9404e067d7836809238a9f3e338",
+    "usageObjectSha256": "21f120c208ee632b3b83ad14565a49e2c1bfa4625a220f03e6ad1599c71a7b96",
+    "usageFields": ["cache_creation", "cache_creation_input_tokens", "cache_read_input_tokens", "inference_geo", "input_tokens", "output_tokens", "service_tier"],
+    "cacheCreationFields": ["ephemeral_1h_input_tokens", "ephemeral_5m_input_tokens"],
+    "tokenFieldsNumeric": true,
+    "cacheCreationSummaryEqualsTtlBreakdown": true,
+    "perStepOutputTokensAuthoritative": false,
+    "speedFieldObserved": false,
+    "quotaWindowObserved": false
+  },
+  "surfaceStates": {
+    "messagesApiUsage": { "documentSupported": true, "installedSdkSupported": "unknown", "observedByTask": false },
+    "agentSdkResultUsage": { "documentSupported": true, "installedSdkSupported": "unknown", "observedByTask": false },
+    "agentSdkRateLimitEvent": {
+      "documentSupported": true,
+      "creditsRequiredFieldsMinimumClaudeCodeVersion": "2.1.181",
+      "installedSdkSupported": "unknown",
+      "observedByTask": false,
+      "referenceOptionalFields": ["resetsAt", "utilization"],
+      "packageDeclaredOptionalFields": ["rateLimitType", "resetsAt", "utilization"]
+    },
+    "agentSdkExperimentalGetUsage": {
+      "packageDeclared": true,
+      "packageVersion": "0.3.185",
+      "stability": "experimental-may-change",
+      "installedSdkSupported": "unknown",
+      "observedByTask": false,
+      "rateLimitsAvailable": null,
+      "documentedWindowKeys": ["five_hour", "seven_day", "seven_day_oauth_apps", "seven_day_opus", "seven_day_sonnet"],
+      "windowFields": ["utilization", "resets_at"]
+    },
+    "claudeCodeTranscriptUsage": { "documentSupported": true, "installedHostSupported": true, "observed": true },
+    "subscriptionRemainingWindow": { "completeBucketCoverageDocumented": false, "observed": false, "availability": "unavailable-on-inspected-host" }
+  },
+  "resourceProjectionBoundary": {
+    "source": "local Claude Code transcript event; AGS collector registration and account scope unverified",
+    "accountScope": null,
+    "resourceWindow": null,
+    "sequence": null,
+    "coverage": null,
+    "subscriptionRemainingPercent": null,
+    "tokenToSubscriptionPercentConversion": false,
+    "cacheCreationAccounting": "summary is the total of TTL details, never an additional bucket",
+    "missingCacheTtl": "unknown",
+    "speed": "unknown",
+    "collectorResponseAdmitted": false
+  },
+  "apiRatecardBoundary": {
+    "basis": "apiPriceEstimate",
+    "source": "MODEL_UPDATE.json r3 and https://platform.claude.com/docs/en/about-claude/pricing",
+    "subscriptionConversion": null,
+    "actualBillingObserved": false
+  }
+}
