@@ -13408,7 +13408,7 @@ function assertSemanticJson(value) {
 function same(a, b2, name) {
   requireContract(canonical(a) === canonical(b2), `Semantic contract binding mismatch: ${name}.`);
 }
-function seal(value, field) {
+function seal2(value, field) {
   try {
     verifySeal(value, field);
   } catch {
@@ -13423,7 +13423,7 @@ function time(value) {
   }
 }
 function assertSemanticRequestIntegrity(request) {
-  seal(request, "requestDigest");
+  seal2(request, "requestDigest");
   same(request.stateDigest, digest(request.state), "stateDigest");
   same(request.questionDigest, digest(request.question), "questionDigest");
   same(request.eligibleSetDigest, digest(request.eligibleSet), "eligibleSetDigest");
@@ -13454,7 +13454,7 @@ function assertSemanticRequestIntegrity(request) {
   requireContract(mapped.size === candidates.size, "Option mapping must cover the eligible set exactly.");
 }
 function assertSemanticAdviceIntegrity(advice) {
-  seal(advice, "adviceDigest");
+  seal2(advice, "adviceDigest");
   requireContract(time(advice.expiresAt) > time(advice.evaluatedAt), "Advice expiry must follow evaluatedAt.");
 }
 function assertSemanticAdviceBinding(advice, request) {
@@ -13474,7 +13474,7 @@ function assertSemanticAssignmentBinding(request) {
   same(request.taskRef.taskId, request.routingRequest.binding.taskId, "taskRef.taskId");
 }
 function assertSemanticDecisionIntegrity(decision) {
-  seal(decision, "decisionDigest");
+  seal2(decision, "decisionDigest");
 }
 function assertSemanticDecisionBinding(decision, advice, request) {
   requireContract(request.mode === "assist", "Only an adopted assist evaluation can produce a v3 decision.");
@@ -13503,7 +13503,7 @@ function assertSemanticApplicationBinding(application, decision) {
   }
 }
 function assertSemanticRecordIntegrity(record) {
-  seal(record, "recordDigest");
+  seal2(record, "recordDigest");
   time(record.dispatchedAt);
   if (record.observed) {
     requireContract(time(record.observed.observedAt) >= time(record.dispatchedAt), "Observation cannot precede dispatch.");
