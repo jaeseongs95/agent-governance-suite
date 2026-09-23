@@ -17,14 +17,13 @@ function count(value) {
   return BigInt(value);
 }
 
-function knownTtlRecord(value) {
+function exactOwnDataRecord(value, expectedKeys) {
   if (typeof value !== 'object' || value === null) return false;
   const prototype = Object.getPrototypeOf(value);
   if (prototype !== Object.prototype && prototype !== null) return false;
   const keys = Reflect.ownKeys(value);
-  return keys.length === 2
-    && keys.includes('ephemeral_5m_input_tokens') && keys.includes('ephemeral_1h_input_tokens')
-    && keys.every(key => 'value' in Object.getOwnPropertyDescriptor(value, key));
+  return keys.length === expectedKeys.length && expectedKeys.every(key =>
+    Object.hasOwn(value, key) && 'value' in Object.getOwnPropertyDescriptor(value, key));
 }
 
 function cents(rate) {
@@ -59,7 +58,7 @@ export function estimateClaudeApiTokenCost({ modelId, pricingDate, scope, usage,
     tagEvaluationCostV1(existingCost);
     return { status: 'preserved', cost: existingCost };
   }
-  if (pricingDate !== AS_OF_DATE || !scope || Object.keys(scope).length !== Object.keys(SCOPE).length
+  if (pricingDate !== AS_OF_DATE || !exactOwnDataRecord(scope, Object.keys(SCOPE))
     || Object.entries(SCOPE).some(([key, value]) => scope[key] !== value)) return unknown('UNSUPPORTED_PRICE_SCOPE');
   if (typeof modelId !== 'string' || !Object.hasOwn(RATES, modelId)) return unknown('UNKNOWN_MODEL_RATE');
   const rates = RATES[modelId];
@@ -76,7 +75,8 @@ export function estimateClaudeApiTokenCost({ modelId, pricingDate, scope, usage,
   if (creation == null && total == null) return unknown('CACHE_TTL_UNKNOWN');
   if (total != null) count(total);
   if (creation == null && total !== 0) return unknown('CACHE_TTL_UNKNOWN');
-  if (creation != null && !knownTtlRecord(creation)) return unknown('CACHE_TTL_UNKNOWN');
+  if (creation != null && !exactOwnDataRecord(creation,
+    ['ephemeral_5m_input_tokens', 'ephemeral_1h_input_tokens'])) return unknown('CACHE_TTL_UNKNOWN');
   const write5m = creation == null ? 0n : count(creation.ephemeral_5m_input_tokens);
   const write1h = creation == null ? 0n : count(creation.ephemeral_1h_input_tokens);
   if (total != null && BigInt(total) !== write5m + write1h) return unknown('CACHE_TOTAL_MISMATCH');

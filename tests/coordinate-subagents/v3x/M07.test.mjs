@@ -71,6 +71,15 @@ test('M07 cannot invent a standard API price for another scope, date, or model',
   assert.throws(() => { sharedRatecard.asOfDate = '2026-09-24'; }, TypeError);
   assert.throws(() => { sharedRatecard.rates['claude-opus-5-5'].cacheRead = '0.40'; }, TypeError);
   assert.equal(estimate('claude-opus-5-5').cost.sourceReference, 'ratecard:anthropic-2026-09-23');
+  const inheritedScope = Object.assign(Object.create({ servingProvider: scope.servingProvider }),
+    Object.fromEntries(Object.entries(scope).filter(([key]) => key !== 'servingProvider')));
+  inheritedScope.extra = true;
+  assert.equal(estimate('claude-opus-5-5', zero(), { scope: inheritedScope }).reason,
+    'UNSUPPORTED_PRICE_SCOPE');
+  const accessorScope = { ...scope };
+  Object.defineProperty(accessorScope, 'servingProvider', { get() { throw Error('getter called'); } });
+  assert.equal(estimate('claude-opus-5-5', zero(), { scope: accessorScope }).reason,
+    'UNSUPPORTED_PRICE_SCOPE');
   for (const changed of [
     { scope: { ...scope, servingProvider: 'bedrock' } },
     { scope: { ...scope, accessPath: 'subscription' } },
