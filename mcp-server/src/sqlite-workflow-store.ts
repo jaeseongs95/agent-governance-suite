@@ -30,6 +30,7 @@ import { type RootIdentityV1 } from "./workspace-identity.js";
 import {
   type ConvergenceSnapshot,
   type GuardedRunBinding,
+  type GuardedRunSnapshot,
   type WorkflowStore,
 } from "./workflow-store.js";
 
@@ -427,6 +428,36 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         lease: JSON.parse(leaseRow.lease_json) as AttemptLeaseV1,
         outcome: outcomeRow?.outcome_json ? JSON.parse(outcomeRow.outcome_json) as AttemptOutcomeV1 : null,
       };
+    });
+  }
+
+  getGuardedRunSnapshot(runId: string): GuardedRunSnapshot | null {
+    return this.guard("Cannot read the guarded workflow snapshot.", { runId }, () => {
+      const row = this.database.prepare(`
+        SELECT r.revision AS run_revision, r.receipt_json, c.revision AS root_revision, c.root_json,
+          l.lease_json, l.proposal_json, a.outcome_json
+        FROM workflow_runs AS r
+        JOIN workflow_attempt_links AS x ON x.run_id = r.run_id
+        JOIN convergence_roots AS c ON c.root_id = x.root_id
+        JOIN convergence_leases AS l ON l.lease_id = x.lease_id AND l.root_id = x.root_id
+        JOIN convergence_attempts AS a ON a.run_id = r.run_id AND a.lease_id = x.lease_id
+        WHERE r.run_id = ?
+      `).get(runId) as {
+        run_revision: number; receipt_json: string; root_revision: number; root_json: string;
+        lease_json: string; proposal_json: string; outcome_json: string | null;
+      } | undefined;
+      if (!row) return null;
+      const receipt = JSON.parse(row.receipt_json) as WorkflowReceiptV1;
+      const root = JSON.parse(row.root_json) as ConvergenceRootV1;
+      if (receipt.runId !== runId || receipt.revision !== row.run_revision || root.revision !== row.root_revision) {
+        throw new WorkflowContractError("INVALID_INPUT", "Stored guarded workflow snapshot metadata does not match its payload.", { runId });
+      }
+      return { receipt, guarded: {
+        root,
+        proposal: JSON.parse(row.proposal_json) as AttemptProposalV1,
+        lease: JSON.parse(row.lease_json) as AttemptLeaseV1,
+        outcome: row.outcome_json ? JSON.parse(row.outcome_json) as AttemptOutcomeV1 : null,
+      } };
     });
   }
 

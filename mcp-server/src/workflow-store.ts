@@ -40,6 +40,12 @@ export interface GuardedRunBinding {
   outcome: AttemptOutcomeV1 | null;
 }
 
+/** Receipt and guarded binding from one store snapshot. */
+export interface GuardedRunSnapshot {
+  receipt: WorkflowReceiptV1;
+  guarded: GuardedRunBinding;
+}
+
 export interface WorkflowStore {
   getOrCreateSecret(name: string, create: () => string): string;
   claimExecutionObservation(observationId: string, expiresAt: string, consumedAt: string): boolean;
@@ -74,6 +80,7 @@ export interface WorkflowStore {
     consumedAt: string,
   ): GuardedRunBinding | null;
   getGuardedRunBinding(runId: string): GuardedRunBinding | null;
+  getGuardedRunSnapshot(runId: string): GuardedRunSnapshot | null;
 }
 
 export class InMemoryWorkflowStore implements WorkflowStore {
@@ -256,6 +263,12 @@ export class InMemoryWorkflowStore implements WorkflowStore {
       lease: clone(lease),
       outcome: clone(snapshot.outcomes.find((item) => item.workflowRunId === runId) ?? null),
     };
+  }
+
+  getGuardedRunSnapshot(runId: string): GuardedRunSnapshot | null {
+    const receipt = this.getRun(runId);
+    const guarded = this.getGuardedRunBinding(runId);
+    return receipt && guarded ? { receipt, guarded } : null;
   }
 }
 

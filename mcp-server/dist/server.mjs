@@ -23151,6 +23151,11 @@ var InMemoryWorkflowStore = class {
       outcome: clone2(snapshot.outcomes.find((item) => item.workflowRunId === runId) ?? null)
     };
   }
+  getGuardedRunSnapshot(runId) {
+    const receipt = this.getRun(runId);
+    const guarded = this.getGuardedRunBinding(runId);
+    return receipt && guarded ? { receipt, guarded } : null;
+  }
 };
 function createPlanSigningKey() {
   return randomBytes2(32).toString("base64url");
@@ -23494,6 +23499,32 @@ var SqliteWorkflowStore = class {
         lease: JSON.parse(leaseRow.lease_json),
         outcome: outcomeRow?.outcome_json ? JSON.parse(outcomeRow.outcome_json) : null
       };
+    });
+  }
+  getGuardedRunSnapshot(runId) {
+    return this.guard("Cannot read the guarded workflow snapshot.", { runId }, () => {
+      const row = this.database.prepare(`
+        SELECT r.revision AS run_revision, r.receipt_json, c.revision AS root_revision, c.root_json,
+          l.lease_json, l.proposal_json, a.outcome_json
+        FROM workflow_runs AS r
+        JOIN workflow_attempt_links AS x ON x.run_id = r.run_id
+        JOIN convergence_roots AS c ON c.root_id = x.root_id
+        JOIN convergence_leases AS l ON l.lease_id = x.lease_id AND l.root_id = x.root_id
+        JOIN convergence_attempts AS a ON a.run_id = r.run_id AND a.lease_id = x.lease_id
+        WHERE r.run_id = ?
+      `).get(runId);
+      if (!row) return null;
+      const receipt = JSON.parse(row.receipt_json);
+      const root = JSON.parse(row.root_json);
+      if (receipt.runId !== runId || receipt.revision !== row.run_revision || root.revision !== row.root_revision) {
+        throw new WorkflowContractError("INVALID_INPUT", "Stored guarded workflow snapshot metadata does not match its payload.", { runId });
+      }
+      return { receipt, guarded: {
+        root,
+        proposal: JSON.parse(row.proposal_json),
+        lease: JSON.parse(row.lease_json),
+        outcome: row.outcome_json ? JSON.parse(row.outcome_json) : null
+      } };
     });
   }
   getPluginUpdateState(targetId) {
