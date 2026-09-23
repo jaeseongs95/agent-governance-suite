@@ -1,11 +1,23 @@
+import { gunzipSync } from "node:zlib";
+
 import type { ArtifactRefV1, CheckpointDeltaV1, ContinuitySnapshotV1 } from "../../../contracts/types.js";
 import { WorkflowContractError } from "../../../contracts/types.js";
 import { convergenceDigest } from "../convergence-logic.js";
 import type { DeltaReceiverScope } from "../continuity-store.js";
 import { ContractValidator } from "../schema-validator.js";
 import { ArtifactReferenceAccess } from "./reference-access.js";
+import { verifyTransportReadback, type TransportReadback } from "./transport-verification.js";
 
 const digestPattern = /^sha256:[a-f0-9]{64}$/u;
+
+export interface ResyncTransport {
+  /** Trusted manifest metadata, never copied from an already parsed checkpoint. */
+  encoding?: TransportReadback["encoding"];
+  raw?: TransportReadback["raw"];
+  /** Observation only; codec behavior cannot be replaced by a caller. */
+  onParse?: () => void;
+  onDecompress?: () => void;
+}
 
 /** A08 gate: only an access-checked full checkpoint can restore a missing receiver base. */
 export class CheckpointDeltaResync {
@@ -14,11 +26,14 @@ export class CheckpointDeltaResync {
   private targetDigest: string;
   private checkpoint: ContinuitySnapshotV1 | null = null;
   private version = 0;
+  private readonly transport: ResyncTransport;
 
   /** Scope and target digest must come from trusted receiver state, not a delta or ACK. */
-  constructor(private readonly access: ArtifactReferenceAccess, scope: DeltaReceiverScope, targetDigest: string) {
+  constructor(private readonly access: ArtifactReferenceAccess, scope: DeltaReceiverScope,
+    targetDigest: string, transport: ResyncTransport = {}) {
     this.scope = cloneScope(scope);
     this.targetDigest = checkedDigest(targetDigest);
+    this.transport = { ...transport, ...(transport.raw ? { raw: { ...transport.raw } } : {}) };
   }
 
   get status(): "resync-required" | "ready" { return this.checkpoint ? "ready" : "resync-required"; }
@@ -39,7 +54,9 @@ export class CheckpointDeltaResync {
 
   async resume(value: unknown): Promise<ContinuitySnapshotV1> {
     const ref: ArtifactRefV1 = this.validator.artifactRef(value);
-    if (ref.namespace !== "task" || ref.hashDomain !== "raw-bytes" || ref.mediaType !== "application/json") {
+    const encoding = this.transport.encoding ?? "identity";
+    if (ref.namespace !== "task" || ref.hashDomain !== "raw-bytes"
+      || ref.mediaType !== (encoding === "gzip" ? "application/gzip" : "application/json")) {
       throw new WorkflowContractError("INVALID_INPUT", "Resync requires a task-scoped raw JSON checkpoint reference.");
     }
     const version = this.version;
@@ -49,9 +66,21 @@ export class CheckpointDeltaResync {
     if (version !== this.version || !sameScope(scope, this.scope) || expected !== this.targetDigest) {
       throw new WorkflowContractError("GATE_FAILED", "Resync target changed during checkpoint read.");
     }
-    let parsed: unknown;
-    try { parsed = JSON.parse(bytes.toString("utf8")) as unknown; }
-    catch { throw new WorkflowContractError("INTEGRITY_FAILED", "Checkpoint reference is not JSON."); }
+    const parsed = verifyTransportReadback({ ref, bytes, expectedNamespace: "task",
+      encoding, ...(this.transport.raw ? { raw: this.transport.raw } : {}) }, {
+      decode: (verified) => {
+        this.transport.onParse?.();
+        try { return JSON.parse(Buffer.from(verified).toString("utf8")) as unknown; }
+        catch { throw new WorkflowContractError("INTEGRITY_FAILED", "Checkpoint reference is not JSON."); }
+      },
+      ...(encoding === "gzip" ? { decompress: (verified: Uint8Array) => {
+        this.transport.onDecompress?.();
+        return gunzipSync(verified, { maxOutputLength: Math.max(1, this.transport.raw?.size ?? 0) });
+      } } : {}),
+    });
+    if (version !== this.version || !sameScope(scope, this.scope) || expected !== this.targetDigest) {
+      throw new WorkflowContractError("GATE_FAILED", "Resync target changed during checkpoint verification.");
+    }
     const snapshot = this.validator.continuitySnapshot(parsed);
     const { snapshotDigest, ...content } = snapshot;
     if (snapshot.taskCorrelation !== scope.taskId || snapshot.epoch !== scope.epoch
