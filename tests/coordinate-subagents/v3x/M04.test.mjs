@@ -30,10 +30,18 @@ test('M04 rejects unsupported native controls and keeps API fields off the manag
 test('M04 checks Opus 5.5 Messages API thinking, tool and computer settings before a call', () => {
   assert.equal(code({ ...base, thinking: { type: 'disabled' } }), 'UNSUPPORTED_THINKING');
   assert.equal(code({ ...base, thinking: { type: 'enabled', budget_tokens: 4096 } }), 'UNSUPPORTED_THINKING');
+  assert.equal(code({ ...base, thinking: { type: 'bogus' } }), 'UNSUPPORTED_THINKING');
+  assert.equal(guardClaudeModelRequest({ ...base, thinking: { type: 'adaptive' } }).status, 'compatible-settings');
   for (const type of ['any', 'tool']) assert.equal(code({ ...base, toolChoice: { type } }), 'UNSUPPORTED_FORCED_TOOL');
   assert.equal(code({ ...base, computerTool: { platform: 'anthropic-api', type: 'computer_20251124' } }), 'UNSUPPORTED_COMPUTER_TOOL');
   assert.equal(code({ ...base, computerTool: { platform: 'google-cloud', type: 'computer_20251124' } }), 'UNSUPPORTED_COMPUTER_TOOL');
   assert.equal(guardClaudeModelRequest({ ...base, computerTool: { platform: 'bedrock', type: 'computer_20251124' } }).status, 'compatible-settings');
+  const actualTool = { type: 'computer_20251124', name: 'computer' };
+  for (const platform of ['anthropic-api', 'google-cloud']) {
+    assert.equal(code({ ...base, platform, tools: [actualTool] }), 'UNSUPPORTED_COMPUTER_TOOL');
+  }
+  assert.equal(guardClaudeModelRequest({ ...base, platform: 'bedrock', tools: [actualTool] }).status, 'compatible-settings');
+  assert.equal(code({ ...base, tools: [actualTool] }), 'COMPUTER_PLATFORM_UNKNOWN');
 });
 
 test('M04 never treats auto or a missing tool result as fulfillment of a required tool', () => {

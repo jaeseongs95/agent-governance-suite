@@ -6,7 +6,7 @@
   "efforts": ["low", "medium", "high", "xhigh", "max"],
   "apiDefaultEffort": "medium",
   "messagesApi": {
-    "unsupportedThinkingTypes": ["disabled", "enabled"],
+    "supportedThinkingTypes": ["adaptive"],
     "unsupportedToolChoices": ["any", "tool"],
     "unsupportedComputerTool": {
       "anthropic-api": "computer_20251124",

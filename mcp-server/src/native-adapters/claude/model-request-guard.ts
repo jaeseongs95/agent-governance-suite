@@ -10,9 +10,10 @@ type CommonRequest = { modelId: string; nativeControl: NativeControl; minimumEff
 export type ClaudeManagedRequest = CommonRequest & { surface: "claude-code-managed" };
 export type ClaudeMessagesRequest = CommonRequest & {
   surface: "messages-api-direct";
+  platform?: "anthropic-api" | "google-cloud" | "bedrock";
   thinking?: { type: string; budget_tokens?: number };
   toolChoice?: { type: string; name?: string };
-  tools?: Array<{ name: string; strict?: boolean }>;
+  tools?: Array<{ type?: string; name?: string; strict?: boolean }>;
   structuredOutput?: boolean;
   requiredTool?: {
     name: string;
@@ -57,16 +58,20 @@ export function guardClaudeModelRequest(request: ClaudeRequest): GuardResult {
     return unsupported("EFFORT_BELOW_FLOOR", "minimumEffort");
 
   if (request.surface === "messages-api-direct") {
-    if (request.thinking && (compatibility.messagesApi.unsupportedThinkingTypes.includes(request.thinking.type)
+    if (request.thinking && (!compatibility.messagesApi.supportedThinkingTypes.includes(request.thinking.type)
       || request.thinking.budget_tokens !== undefined)) return unsupported("UNSUPPORTED_THINKING", "thinking");
     if (request.toolChoice && (compatibility.messagesApi.unsupportedToolChoices.includes(request.toolChoice.type)
       || !["auto", "none"].includes(request.toolChoice.type)))
       return unsupported("UNSUPPORTED_FORCED_TOOL", "toolChoice.type");
-    if (request.computerTool) {
-      if (!["anthropic-api", "google-cloud", "bedrock"].includes(request.computerTool.platform))
-        return unsupported("COMPUTER_PLATFORM_UNKNOWN", "computerTool.platform");
-      const blocked = compatibility.messagesApi.unsupportedComputerTool[request.computerTool.platform as keyof typeof compatibility.messagesApi.unsupportedComputerTool];
-      if (blocked === request.computerTool.type) return unsupported("UNSUPPORTED_COMPUTER_TOOL", "computerTool.type");
+    const computerTypes = [...(request.tools ?? []).map(tool => tool.type).filter((type): type is string => typeof type === "string" && type.startsWith("computer_")),
+      ...(request.computerTool ? [request.computerTool.type] : [])];
+    if (computerTypes.length) {
+      const platform = request.platform ?? request.computerTool?.platform;
+      if (!platform || !["anthropic-api", "google-cloud", "bedrock"].includes(platform)
+        || request.computerTool && request.platform && request.computerTool.platform !== request.platform)
+        return unsupported("COMPUTER_PLATFORM_UNKNOWN", "platform");
+      const blocked = compatibility.messagesApi.unsupportedComputerTool[platform as keyof typeof compatibility.messagesApi.unsupportedComputerTool];
+      if (computerTypes.includes(blocked)) return unsupported("UNSUPPORTED_COMPUTER_TOOL", "tools");
     }
     if (request.requiredTool) {
       const required = request.requiredTool;
