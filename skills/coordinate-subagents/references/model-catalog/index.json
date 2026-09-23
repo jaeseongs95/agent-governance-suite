@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "snapshotDate": "2026-09-21T00:00:00.000Z",
+  "snapshotDate": "2026-09-23T00:00:00.000Z",
   "providers": [
     {
       "provider": "openai",
@@ -16,7 +16,7 @@
     {
       "provider": "anthropic",
       "file": "models/anthropic.json",
-      "sha256": "437fa44617a9016ab55e2faf8e5a6d755f26bcc33b3390947823e6896d916f3f",
+      "sha256": "1349d71277f6a3261f51794dab7b87b215e1d2030a27c0870926d43c2959edd6",
       "roles": [
         "complex-reasoning",
         "discovery",
@@ -94,5 +94,5 @@
   "hostsFile": "hosts.json",
   "sourcesFile": "sources.json",
   "hostsSha256": "f7672087d49d75a36aa43d2a2539c30cc6a1bad402067edbf6ba2db6abf09f6d",
-  "sourcesSha256": "bca0d3c5c92a16eae00ba186b97a4552f9c9d182f6a3165fdc2f42d38e46f47b"
+  "sourcesSha256": "688978a175889003c7e8e1fc4bb6efc775172d0e670a2c51a8c39e3eee8b57e1"
 }

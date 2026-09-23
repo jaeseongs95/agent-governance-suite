@@ -1,5 +1,8 @@
-import {loadCatalog,loadPolicy} from '../../../skills/coordinate-subagents/scripts/model-catalog.mjs';
+import {loadPolicy} from '../../../skills/coordinate-subagents/scripts/model-catalog.mjs';
+import {readFileSync} from 'node:fs';
 import {digest,seal,resolveV2} from '../../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
+// The v2 fixture clock predates newer catalogs; replay its immutable golden snapshot.
+const historicalCatalog=JSON.parse(readFileSync(new URL('../semantic-decision/fixtures/v2-golden.json',import.meta.url),'utf8')).environment.catalog;
 export const NOW='2026-09-21T12:00:00.000Z';
 export const LATER='2026-09-21T12:01:00.000Z';
 export const END='2026-09-21T12:04:00.000Z';
@@ -8,7 +11,7 @@ export function selection(overrides={}){return {model:'gpt-5.6-terra',resolvedMo
 export function capability(overrides={},bindingOverrides={}){
  return seal({schemaVersion:'1.0.0',host:'openai-codex',hostVersion:'fixture-1',adapterVersion:'2.5.0',actorId:'actor-1',sessionId:'session-1',instanceId:'instance-1',observedAt:NOW,expiresAt:END,supportedBindings:[{...selection(bindingOverrides),invocationSurface:'local-subagent',observableFields:['model','reasoning','runtimeMode'],aliasResolution:null,possibleFallbacks:[]}],executionCapabilities:{dispatch:true,observe:true,cancel:true,resume:false,filesystem:'write',tools:['read','write'],approvals:'enforced',isolation:'sandbox',inputModalities:['text','image']},source:'host-observation',sourceReference:'fixture:capability',...overrides},'snapshotDigest');
 }
-export function environment(overrides={}){return {catalog:loadCatalog(),policy:loadPolicy(),capabilities:[capability()],now:NOW,...overrides};}
+export function environment(overrides={}){return {catalog:structuredClone(historicalCatalog),policy:loadPolicy(),capabilities:[capability()],now:NOW,...overrides};}
 export function presence(overrides={}){return {host:'openai-codex',sessionId:'session-1',instanceId:'instance-1',state:'online',leaseUntil:END,...overrides};}
 export function fixture(overrides={}){const req=request(),env=environment(overrides),decision=resolveV2(req,env);return {req,env,decision};}
 export function application(req,decision,overrides={}){return {schemaVersion:'2.0.0',binding:req.binding,decisionDigest:decision.decisionDigest,target:decision.target,dispatched:decision.selected,dispatchedAt:NOW,...overrides};}
