@@ -112,6 +112,22 @@ test('exact verified host model and pinned installation produce only the produce
   }
 });
 
+test('malformed operator policy types cannot produce a model class', () => {
+  for (const [collection, field, value] of [
+    ['models', 'modelClass', ['deep']],
+    ['models', 'modelClass', { value: 'deep' }],
+    ['models', 'modelClass', 1],
+    ['models', 'status', ['verified']],
+    ['hostBuilds', 'status', ['verified']],
+    ['pins', 'status', ['active']],
+    ['pins', 'hostBuildDigest', [build]],
+  ]) {
+    const f = fixture();
+    f.config[collection][0][field] = value;
+    assert.throws(() => VmModelPolicy.fixture(f.config), /registry is malformed/);
+  }
+});
+
 test('unknown alias, retired model, unverified host and policy version mismatch are unsupported before claim', async () => {
   for (const [name, change, expected] of [
     ['alias', (_config, body) => { body.terminal.model = 'alias-model'; }, /exact observed host model is unsupported/],

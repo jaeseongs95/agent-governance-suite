@@ -28969,10 +28969,10 @@ function surfaceBacked(surface, observedOutsideCheckouts) {
   return existsSync((unchanged ? path3.posix.dirname(surface.physical) : surface.physical) || "/");
 }
 function activeRootIdentity(root, stored) {
-  const digest4 = surfaceDigest(root);
-  const observed = stored && stored.surfaceDigest === digest4 ? stored.identity : null;
+  const digest5 = surfaceDigest(root);
+  const observed = stored && stored.surfaceDigest === digest5 ? stored.identity : null;
   const wasInferred = (index) => observed !== null && stored.inferred[index] === true;
-  const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest4 };
+  const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest5 };
   if (observed && observed.surfaces.every((surface, index) => surface.git !== null && !wasInferred(index))) {
     return { ...known, identity: observed, resolved: true, fresh: false, inferred: stored.inferred };
   }
@@ -29469,20 +29469,20 @@ var SqliteContinuityStore = class {
       return { kind: "purged" };
     });
   }
-  setPendingMarker(taskCorrelation, epoch, source, revision, digest4, rootId, now) {
+  setPendingMarker(taskCorrelation, epoch, source, revision, digest5, rootId, now) {
     const result = this.database.prepare(`
       UPDATE continuity_tasks SET pending_source = ?, pending_revision = ?, pending_digest = ?,
         pending_root_id = ?, pending_consumed = 0, updated_at = ?
       WHERE task_correlation = ? AND current_epoch = ?
-    `).run(source, revision, digest4, rootId, now, taskCorrelation, epoch);
+    `).run(source, revision, digest5, rootId, now, taskCorrelation, epoch);
     return result.changes === 1;
   }
-  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest4, now) {
+  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest5, now) {
     const result = this.database.prepare(`
       UPDATE continuity_tasks SET pending_consumed = 1, last_auto_injected_revision = ?, updated_at = ?
       WHERE task_correlation = ? AND current_epoch = ? AND pending_source = 'workflow'
         AND pending_revision = ? AND pending_digest = ? AND pending_consumed = 0
-    `).run(revision, now, taskCorrelation, epoch, revision, digest4);
+    `).run(revision, now, taskCorrelation, epoch, revision, digest5);
     return result.changes === 1;
   }
   recordObservation(taskCorrelation, epoch, event, turnHash, success2, now) {
@@ -31441,12 +31441,12 @@ var ContractValidator = class {
       });
     }
     const raw = readFileSync2(schemaPath);
-    const digest4 = `sha256:${createHash4("sha256").update(raw).digest("hex")}`;
-    if (digest4 !== reference.digest) {
+    const digest5 = `sha256:${createHash4("sha256").update(raw).digest("hex")}`;
+    if (digest5 !== reference.digest) {
       throw new WorkflowContractError("STALE_REVISION", `${label} schema changed after planning.`, {
         schemaPath: reference.path,
         expectedDigest: reference.digest,
-        actualDigest: digest4
+        actualDigest: digest5
       });
     }
     return JSON.parse(raw.toString("utf8"));
@@ -41849,8 +41849,8 @@ function readLocalStageOutputFile(locator) {
 function loadStageOutputFile(reference, read = readLocalStageOutputFile) {
   const bytes = read(reference.locator);
   if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(reference.locator);
-  const digest4 = `sha256:${createHash8("sha256").update(bytes).digest("hex")}`;
-  if (digest4 !== reference.digest) {
+  const digest5 = `sha256:${createHash8("sha256").update(bytes).digest("hex")}`;
+  if (digest5 !== reference.digest) {
     throw new WorkflowContractError("INTEGRITY_FAILED", "outputFile content does not match its digest.", {
       locator: reference.locator,
       expected: reference.digest
@@ -44644,6 +44644,12 @@ function exact3(value, keys2) {
 function nonempty3(value) {
   return typeof value === "string" && value.trim().length > 0;
 }
+function digest4(value) {
+  return typeof value === "string" && DIGEST4.test(value);
+}
+function listed(value, options) {
+  return typeof value === "string" && options.includes(value);
+}
 function fail(message) {
   throw new Error(`VM operator policy unavailable: ${message}`);
 }
@@ -44655,7 +44661,7 @@ function parsePolicy(value) {
   const keys2 = /* @__PURE__ */ new Set(), installations = /* @__PURE__ */ new Map(), builds = /* @__PURE__ */ new Set(), models = /* @__PURE__ */ new Set();
   for (const entry of raw.pins) {
     const pin = object7(entry);
-    if (!exact3(pin, ["keyId", "installationId", "hostId", "publicKeySpki", "hostBuildDigest", "modelPolicyVersion", "status"]) || !nonempty3(pin.keyId) || !nonempty3(pin.installationId) || pin.hostId !== "flowmarshal-engine" || typeof pin.publicKeySpki !== "string" || !DIGEST4.test(String(pin.hostBuildDigest)) || !nonempty3(pin.modelPolicyVersion) || !["active", "revoked"].includes(String(pin.status)) || keys2.has(pin.keyId) || installations.has(pin.installationId) && installations.get(pin.installationId) !== pin.hostBuildDigest) {
+    if (!exact3(pin, ["keyId", "installationId", "hostId", "publicKeySpki", "hostBuildDigest", "modelPolicyVersion", "status"]) || !nonempty3(pin.keyId) || !nonempty3(pin.installationId) || pin.hostId !== "flowmarshal-engine" || typeof pin.publicKeySpki !== "string" || !digest4(pin.hostBuildDigest) || !nonempty3(pin.modelPolicyVersion) || !listed(pin.status, ["active", "revoked"]) || keys2.has(pin.keyId) || installations.has(pin.installationId) && installations.get(pin.installationId) !== pin.hostBuildDigest) {
       fail("pin registry is malformed");
     }
     keys2.add(pin.keyId);
@@ -44671,12 +44677,12 @@ function parsePolicy(value) {
   }
   for (const entry of raw.hostBuilds) {
     const host = object7(entry);
-    if (!exact3(host, ["hostId", "hostBuildDigest", "status"]) || host.hostId !== "flowmarshal-engine" || !DIGEST4.test(String(host.hostBuildDigest)) || !["verified", "unverified"].includes(String(host.status)) || builds.has(host.hostBuildDigest)) fail("host build registry is malformed");
+    if (!exact3(host, ["hostId", "hostBuildDigest", "status"]) || host.hostId !== "flowmarshal-engine" || !digest4(host.hostBuildDigest) || !listed(host.status, ["verified", "unverified"]) || builds.has(host.hostBuildDigest)) fail("host build registry is malformed");
     builds.add(host.hostBuildDigest);
   }
   for (const entry of raw.models) {
     const model = object7(entry);
-    if (!exact3(model, ["hostId", "hostBuildDigest", "observedModelId", "modelClass", "status"]) || model.hostId !== "flowmarshal-engine" || !DIGEST4.test(String(model.hostBuildDigest)) || !nonempty3(model.observedModelId) || !MODEL_CLASSES.includes(String(model.modelClass)) || !["verified", "unverified", "retired"].includes(String(model.status))) fail("model registry is malformed");
+    if (!exact3(model, ["hostId", "hostBuildDigest", "observedModelId", "modelClass", "status"]) || model.hostId !== "flowmarshal-engine" || !digest4(model.hostBuildDigest) || !nonempty3(model.observedModelId) || !listed(model.modelClass, MODEL_CLASSES) || !listed(model.status, ["verified", "unverified", "retired"])) fail("model registry is malformed");
     const identity = `${model.hostId}\0${model.hostBuildDigest}\0${model.observedModelId}`;
     if (models.has(identity)) fail("duplicate model mapping");
     models.add(identity);

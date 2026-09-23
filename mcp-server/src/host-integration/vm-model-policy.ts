@@ -33,6 +33,10 @@ function exact(value: JsonObject | null, keys: string[]): boolean {
   return !!value && Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
 }
 function nonempty(value: unknown): value is string { return typeof value === "string" && value.trim().length > 0; }
+function digest(value: unknown): value is string { return typeof value === "string" && DIGEST.test(value); }
+function listed(value: unknown, options: readonly string[]): value is string {
+  return typeof value === "string" && options.includes(value);
+}
 function fail(message: string): never { throw new Error(`VM operator policy unavailable: ${message}`); }
 
 function parsePolicy(value: unknown): Policy {
@@ -47,8 +51,8 @@ function parsePolicy(value: unknown): Policy {
     const pin = object(entry);
     if (!exact(pin, ["keyId", "installationId", "hostId", "publicKeySpki", "hostBuildDigest", "modelPolicyVersion", "status"])
         || !nonempty(pin!.keyId) || !nonempty(pin!.installationId) || pin!.hostId !== "flowmarshal-engine"
-        || typeof pin!.publicKeySpki !== "string" || !DIGEST.test(String(pin!.hostBuildDigest))
-        || !nonempty(pin!.modelPolicyVersion) || !["active", "revoked"].includes(String(pin!.status))
+        || typeof pin!.publicKeySpki !== "string" || !digest(pin!.hostBuildDigest)
+        || !nonempty(pin!.modelPolicyVersion) || !listed(pin!.status, ["active", "revoked"])
         || keys.has(pin!.keyId)
         || (installations.has(pin!.installationId as string)
           && installations.get(pin!.installationId as string) !== pin!.hostBuildDigest)) {
@@ -66,16 +70,16 @@ function parsePolicy(value: unknown): Policy {
   for (const entry of raw!.hostBuilds as unknown[]) {
     const host = object(entry);
     if (!exact(host, ["hostId", "hostBuildDigest", "status"]) || host!.hostId !== "flowmarshal-engine"
-        || !DIGEST.test(String(host!.hostBuildDigest)) || !["verified", "unverified"].includes(String(host!.status))
+        || !digest(host!.hostBuildDigest) || !listed(host!.status, ["verified", "unverified"])
         || builds.has(host!.hostBuildDigest as string)) fail("host build registry is malformed");
     builds.add(host!.hostBuildDigest as string);
   }
   for (const entry of raw!.models as unknown[]) {
     const model = object(entry);
     if (!exact(model, ["hostId", "hostBuildDigest", "observedModelId", "modelClass", "status"])
-        || model!.hostId !== "flowmarshal-engine" || !DIGEST.test(String(model!.hostBuildDigest))
-        || !nonempty(model!.observedModelId) || !MODEL_CLASSES.includes(String(model!.modelClass))
-        || !["verified", "unverified", "retired"].includes(String(model!.status))) fail("model registry is malformed");
+        || model!.hostId !== "flowmarshal-engine" || !digest(model!.hostBuildDigest)
+        || !nonempty(model!.observedModelId) || !listed(model!.modelClass, MODEL_CLASSES)
+        || !listed(model!.status, ["verified", "unverified", "retired"])) fail("model registry is malformed");
     const identity = `${model!.hostId}\u0000${model!.hostBuildDigest}\u0000${model!.observedModelId}`;
     if (models.has(identity)) fail("duplicate model mapping");
     models.add(identity);
