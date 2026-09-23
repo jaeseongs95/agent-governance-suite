@@ -46152,7 +46152,8 @@ function environmentJev() {
   return {
     enabled: process.env.AGENT_GOVERNANCE_JEV_ENABLED === "true",
     egressConfig: process.env.AGENT_GOVERNANCE_SEMANTIC_EGRESS_CONFIG,
-    credential: () => process.env.TYPESAFE_API_KEY ?? null
+    credential: () => process.env.TYPESAFE_API_KEY ?? null,
+    adoption: process.env.AGENT_GOVERNANCE_JEV_ADOPTION_CANDIDATE
   };
 }
 function openSemanticService(databasePath, workflow, jevInput = environmentJev()) {
@@ -46166,12 +46167,20 @@ function openSemanticService(databasePath, workflow, jevInput = environmentJev()
     database.exec("PRAGMA busy_timeout = 5000; PRAGMA synchronous = FULL;");
     const routing = new ModelRoutingStore(database);
     const journal = new SemanticEvaluationIntentStore(database);
+    let adoption = policy.adoption;
+    if (jevInput.adoption !== void 0) {
+      try {
+        const candidate = typeof jevInput.adoption === "string" ? JSON.parse(jevInput.adoption) : jevInput.adoption;
+        adoption = validator2.semanticDecisionPolicyV1({ ...policy, adoption: candidate }).adoption;
+      } catch {
+      }
+    }
     const jev = jevInput.enabled && configuredJevRoute(jevInput.egressConfig, validator2) ? createOptionalJevRegistry({
       enabled: true,
       credential: jevInput.credential,
       timeoutMs: 3e4,
       maxResponseBytes: 256 * 1024,
-      adoption: jevInput.adoption ?? policy.adoption
+      adoption
     }) : createOptionalJevRegistry();
     const adoptionReader = { read: () => null };
     const service = new SemanticRoutingService(routing, workflow, null, async () => {
@@ -46473,6 +46482,8 @@ async function main() {
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
   if (process.env.AGENT_GOVERNANCE_SEMANTIC_ROUTING_ENABLED === "true") {
     semantic = openSemanticService(workflowDatabasePath, store);
+    if (semantic) process.stderr.write(`Semantic Jev registry: ${semantic.jev.status}; adoption: ${semantic.jev.adoption}
+`);
   }
   const server = createMcpServer(
     service,

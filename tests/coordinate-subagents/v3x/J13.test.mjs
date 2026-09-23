@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { getDefaultEnvironment, StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { test } from 'vitest';
+import { build } from 'esbuild';
+import { afterAll, beforeAll, test, vi } from 'vitest';
 
-import { openSemanticService } from '../../../mcp-server/src/routing-v3/open-semantic-service.ts';
 import { JEV_ENDPOINT } from '../../../mcp-server/src/semantic/providers/jev/http-client.ts';
 import { jevProviderIdentity } from '../../../mcp-server/src/semantic/providers/jev/provider.ts';
 import { InMemoryWorkflowStore } from '../../../mcp-server/src/workflow-store.ts';
@@ -17,6 +17,20 @@ import { contracts } from '../semantic-decision/fixtures/contracts.mjs';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 const bundle = fileURLToPath(new URL('../../../mcp-server/dist/server.mjs', import.meta.url));
+let openSemanticService;
+let rootBundleDirectory;
+
+beforeAll(async () => {
+  rootBundleDirectory = await mkdtemp(join(tmpdir(), 'ags-j13-built-root-'));
+  const result = await build({ entryPoints: [join(root, 'mcp-server/src/routing-v3/open-semantic-service.ts')],
+    bundle: true, platform: 'node', format: 'esm', target: 'node22', write: false,
+    // Production bundle sits at mcp-server/dist; preserve that location for bundled resource paths.
+    define: { 'import.meta.url': JSON.stringify(pathToFileURL(bundle).href) } });
+  const builtPath = join(rootBundleDirectory, 'root.mjs');
+  await writeFile(builtPath, result.outputFiles[0].contents);
+  ({ openSemanticService } = await import(pathToFileURL(builtPath).href));
+});
+afterAll(async () => { if (rootBundleDirectory) await rm(rootBundleDirectory, { recursive: true, force: true }); });
 const egressConfig = { schemaVersion: '1.0.0', enabled: true,
   approval: { source: 'operator', revision: 1, decisionId: 'decision-1' },
   routes: [{ providerId: 'jev', endpoint: JEV_ENDPOINT,
@@ -32,7 +46,7 @@ async function withService(jevInput, inspect) {
   finally { opened?.close(); await rm(directory, { recursive: true, force: true }); }
 }
 
-test('J13 root requires explicit on, exact egress route and credential; registry never activates assist', async () => {
+test('J13 built root requires explicit on, exact egress route and credential; registry never activates assist', async () => {
   for (const jevInput of [input({ enabled: false }), input({ egressConfig: undefined }),
     input({ egressConfig: { ...egressConfig, enabled: false } }),
     input({ egressConfig: { ...egressConfig, routes: [{ ...egressConfig.routes[0], endpoint: 'https://elsewhere.test/' }] } }),
@@ -55,7 +69,7 @@ test('J13 root requires explicit on, exact egress route and credential; registry
   });
 });
 
-test('J13 root detects prior provider identity drift without adopting advice', async () => {
+test('J13 built root detects prior provider identity drift without adopting advice', async () => {
   const current = jevProviderIdentity();
   const adoption = provider => ({ status: 'validated', minimumConfidence: 0.5,
     evidenceDigest: digest('evidence'), provider, questionDigest: digest('question'),
@@ -71,11 +85,22 @@ test('J13 root detects prior provider identity drift without adopting advice', a
   });
 });
 
-test('J13 built normal entrypoint boots off, credential-missing and on without a Jev call or adoption', async () => {
+test('J13 built normal entrypoint distinguishes registration and drift without a Jev call or adoption', async () => {
+  const driftedAdoption = { status: 'validated', minimumConfidence: 0.5,
+    evidenceDigest: digest('evidence'),
+    provider: { ...jevProviderIdentity(), adapterVersion: 'old' },
+    questionDigest: digest('question'), reducerVersion: '1.0.0' };
   for (const variant of [
-    { enabled: 'false', credential: 'test-token' },
-    { enabled: 'true', credential: '' },
-    { enabled: 'true', credential: 'test-token' },
+    { enabled: 'false', credential: 'test-token', config: egressConfig, expected: 'off; adoption: unvalidated' },
+    { enabled: 'true', credential: 'test-token', config: undefined, expected: 'off; adoption: unvalidated' },
+    { enabled: 'true', credential: 'test-token', config: { ...egressConfig, enabled: false }, expected: 'off; adoption: unvalidated' },
+    { enabled: 'true', credential: 'test-token', config: '{bad-json', expected: 'off; adoption: unvalidated' },
+    { enabled: 'true', credential: 'test-token', config: { ...egressConfig,
+      routes: [{ ...egressConfig.routes[0], endpoint: 'https://elsewhere.test/' }] }, expected: 'off; adoption: unvalidated' },
+    { enabled: 'true', credential: '', config: egressConfig, expected: 'credential-unavailable; adoption: unvalidated' },
+    { enabled: 'true', credential: 'test-token', config: egressConfig, expected: 'registered; adoption: unvalidated' },
+    { enabled: 'true', credential: 'test-token', config: egressConfig,
+      adoption: driftedAdoption, expected: 'registered; adoption: drift' },
   ]) {
     const directory = await mkdtemp(join(tmpdir(), 'ags-j13-stdio-'));
     const databasePath = join(directory, 'workflow.sqlite3');
@@ -87,14 +112,19 @@ test('J13 built normal entrypoint boots off, credential-missing and on without a
       AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: join(directory, 'sessions.sqlite3'),
       AGENT_GOVERNANCE_SEMANTIC_ROUTING_ENABLED: 'true',
       AGENT_GOVERNANCE_JEV_ENABLED: variant.enabled,
-      AGENT_GOVERNANCE_SEMANTIC_EGRESS_CONFIG: JSON.stringify(egressConfig),
+      AGENT_GOVERNANCE_SEMANTIC_EGRESS_CONFIG: typeof variant.config === 'string'
+        ? variant.config : variant.config ? JSON.stringify(variant.config) : '',
+      AGENT_GOVERNANCE_JEV_ADOPTION_CANDIDATE: variant.adoption ? JSON.stringify(variant.adoption) : '',
       TYPESAFE_API_KEY: variant.credential,
     });
     const transport = new StdioClientTransport({ command: process.execPath, args: [bundle],
       cwd: root, env, stderr: 'pipe' });
     const client = new Client({ name: 'j13-entrypoint-test', version: '1.0.0' });
+    let stderr = '';
+    transport.stderr.on('data', chunk => { stderr += chunk.toString(); });
     try {
       await client.connect(transport);
+      await vi.waitFor(() => assert.ok(stderr.includes(`Semantic Jev registry: ${variant.expected}\n`), stderr));
       assert.equal((await client.listTools()).tools.some(tool => tool.name === 'resolve_semantic_model_assignment'), true);
       const response = JSON.parse((await client.callTool({ name: 'resolve_semantic_model_assignment',
         arguments: contracts().assignment })).content[0].text);
@@ -113,4 +143,4 @@ test('J13 built normal entrypoint boots off, credential-missing and on without a
       }
     }
   }
-}, 30000);
+}, 60000);
