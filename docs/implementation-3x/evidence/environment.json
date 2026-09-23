@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "X01",
+  "observedAtUtc": "2026-09-23T05:55:02Z",
+  "result": "COMPLETED",
+  "sourceIdentity": {
+    "repository": "https://github.com/jaeseongs95/agent-governance-suite.git",
+    "worktree": "D:/codex/거버전스 3.0/agent-governance-suite-x01",
+    "branch": "codex/v3x-x01-environment-baseline",
+    "headBeforeEvidence": "4b1a94ab6b28f6af02c21aadd9408bee43c6a3f0",
+    "treeBeforeEvidence": "b3f117acfd183b14ea4de379220cd90b5a2f4193",
+    "originDesignBranchAtObservation": "4b1a94ab6b28f6af02c21aadd9408bee43c6a3f0",
+    "worktreeBeforeChecks": "clean",
+    "worktreeAfterChecksBeforeEvidence": "clean"
+  },
+  "environment": {
+    "platform": "win32/x64",
+    "node": "v24.19.0",
+    "nodeRequirement": ">=22.13",
+    "pnpm": "11.19.0",
+    "packageManagerRequirement": "pnpm@11.19.0",
+    "corepack": "0.35.0",
+    "nodeModulesBeforeInstall": false,
+    "nodeModulesAfterInstall": true,
+    "nodeModulesIgnoredByGit": true
+  },
+  "inputs": {
+    "packageJsonSha256": "13a415b7212e217f5db64ec8f7e62f4113b8c74319cde78e70ff35b1cb5950a4",
+    "pnpmLockfileVersion": "9.0",
+    "pnpmLockfileSha256": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+    "trackedGeneratedFilesAtStart": 453,
+    "trackedRuntimeBundle": "mcp-server/dist/server.mjs",
+    "trackedRuntimeBundleSha256": "68a1f0551764502ae7425d7b8b775553b43204846268a7753a812a694456569f",
+    "trackedClaudeManifest": "claude-plugin/.claude-plugin/plugin.json"
+  },
+  "checks": [
+    {
+      "command": "pnpm install --frozen-lockfile --prefer-offline",
+      "exitCode": 0,
+      "result": "PASS",
+      "observation": "Lockfile resolution skipped; 217 packages reused from the local content-addressable store, 0 downloaded; pnpm 11.19.0."
+    },
+    {
+      "command": "pnpm bundle:check",
+      "phase": "before build",
+      "exitCode": 0,
+      "result": "PASS",
+      "observation": "Committed runtime bundles matched fresh temporary builds."
+    },
+    {
+      "command": "pnpm source:check",
+      "exitCode": 0,
+      "result": "PASS",
+      "observation": "source lock is consistent"
+    },
+    {
+      "command": "pnpm exec vitest run tests/coordinate-subagents/v3x/S01.test.mjs",
+      "exitCode": 0,
+      "result": "PASS",
+      "observation": "1 test file and 3 tests passed."
+    },
+    {
+      "command": "pnpm exec tsc --noEmit",
+      "exitCode": 0,
+      "result": "PASS",
+      "observation": "TypeScript check completed without diagnostics."
+    }
+  ],
+  "scope": {
+    "productSourceChanged": false,
+    "dependenciesUpgraded": false,
+    "lockfileChanged": false,
+    "generatedFilesChanged": false,
+    "networkDownloadRequired": false,
+    "ci": "NOT_RUN",
+    "fullRepositorySuite": "NOT_RUN"
+  }
+}
