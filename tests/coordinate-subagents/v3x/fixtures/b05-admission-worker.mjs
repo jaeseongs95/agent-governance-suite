@@ -1,0 +1,40 @@
+import { DatabaseSync } from 'node:sqlite';
+import { parentPort, workerData } from 'node:worker_threads';
+
+import { ResourcePoolsAdmissionStore } from '../../../../mcp-server/src/resource/admit-pools.ts';
+
+const { config, policies, request, now, barrier, hold, fail } = workerData;
+const signal = new Int32Array(barrier);
+const db = new DatabaseSync(config.databasePath);
+const store = new ResourcePoolsAdmissionStore(db, config, policies, () => now);
+const exec = db.exec.bind(db);
+db.exec = sql => {
+  if (!hold && sql === 'BEGIN IMMEDIATE;') parentPort.postMessage({ type: 'write-attempt' });
+  if (hold && fail && sql === 'COMMIT;') throw new Error('b05 rollback');
+  return exec(sql);
+};
+db.function('b05_hold', () => {
+  if (!hold) return;
+  parentPort.postMessage({ type: 'holding' });
+  if (Atomics.wait(signal, 0, 0, 5000) !== 'ok') throw new Error('B05 lock barrier timed out.');
+});
+
+parentPort.on('message', command => {
+  try {
+    if (command === 'arm') {
+      db.exec(`CREATE TRIGGER b05_hold AFTER INSERT ON resource_reservation_holds
+        WHEN NEW.pool_id = 'z-pool'
+          AND (SELECT request_key FROM resource_reservations WHERE reservation_id = NEW.reservation_id)
+            = '${request.requestKey}' BEGIN SELECT b05_hold(); END;`);
+      parentPort.postMessage({ type: 'armed' });
+    } else if (command === 'admit') {
+      parentPort.postMessage({ type: 'result', result: store.admit(request) });
+    } else {
+      throw new Error('Unexpected B05 worker command.');
+    }
+  } catch (error) {
+    parentPort.postMessage({ type: 'result', error: { code: error.code ?? null, message: error.message } });
+  }
+});
+
+parentPort.postMessage({ type: 'ready' });
