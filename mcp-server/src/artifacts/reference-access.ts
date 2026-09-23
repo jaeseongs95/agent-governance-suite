@@ -102,13 +102,17 @@ export class ArtifactReferenceAccess {
 }
 
 function validateScope(value: ArtifactAccessPrincipal): void {
-  if (!validId(value.workspaceId) || (value.taskId !== undefined && !validId(value.taskId))) {
+  if (!validId(value.workspaceId) || (value.taskId !== undefined && !validTaskId(value.taskId))) {
     throw new WorkflowContractError("INVALID_INPUT", "Artifact access scope contains an invalid ID.");
   }
 }
 
 function validId(value: unknown): value is string {
   return typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._-]{0,255}$/u.test(value);
+}
+
+function validTaskId(value: unknown): value is string {
+  return validId(value) || (typeof value === "string" && /^hmac-sha256:[a-f0-9]{64}$/u.test(value));
 }
 
 function ancestorPaths(root: string): string[] {
