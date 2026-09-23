@@ -2,7 +2,11 @@ import { chmodSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-import type { ContinuitySnapshotV1, StateCleanupPlanV1 } from "../../contracts/types.js";
+import type {
+  CheckpointDeltaReceiverV1, CheckpointDeltaStateAckV1, CheckpointDeltaV1,
+  ContinuitySnapshotV1, StateCleanupPlanV1,
+} from "../../contracts/types.js";
+import { convergenceDigest } from "./convergence-logic.js";
 
 export interface ContinuityTaskRecord {
   taskCorrelation: string;
@@ -48,6 +52,32 @@ interface MetadataRow { value: string }
 interface RequestRow { command_digest: string; result_json: string }
 interface RequestPayloadRow { request_hash: string; result_json: string }
 interface TombstoneRow { revision: number; payload_digest: string; purged_at: string }
+interface DeltaRow {
+  receiver_host: string; receiver_session: string; receiver_instance: string;
+  context_generation: number; sequence: number; checkpoint_digest: string;
+  origin_digest: string;
+  checkpoint_json: string; last_delta_digest: string | null; state_ack_json: string | null;
+}
+
+export interface DeltaReceiverScope {
+  taskId: string;
+  epoch: number;
+  receiver: CheckpointDeltaReceiverV1;
+  contextGeneration: number;
+}
+
+export type DeltaCommitResult =
+  | { kind: "applied" | "replay"; ack: CheckpointDeltaStateAckV1 }
+  | { kind: "stale" | "receiver-mismatch" | "out-of-order" };
+
+export interface DeltaCommitFunctions {
+  validateCheckpoint(value: unknown): ContinuitySnapshotV1;
+  validateAck(value: unknown): CheckpointDeltaStateAckV1;
+  apply(base: ContinuitySnapshotV1, delta: CheckpointDeltaV1, expected: {
+    taskId: string; revision: number; receiver: CheckpointDeltaReceiverV1;
+    contextGeneration: number; sequence: number;
+  }): ContinuitySnapshotV1;
+}
 
 export interface ContinuityCleanupPreview {
   snapshots: StateCleanupPlanV1["candidates"]["continuitySnapshots"];
@@ -55,7 +85,7 @@ export interface ContinuityCleanupPreview {
   protectedActiveTasks: number;
 }
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 const SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
 
 function hasExactKeys(value: Record<string, unknown>, keys: string[]): boolean {
@@ -111,6 +141,11 @@ function taskRecord(row: TaskRow): ContinuityTaskRecord {
   };
 }
 
+function validSnapshotDigest(snapshot: ContinuitySnapshotV1): boolean {
+  const { snapshotDigest, ...content } = snapshot;
+  return convergenceDigest(content) === snapshotDigest;
+}
+
 export class SqliteContinuityStore {
   private readonly database: DatabaseSync;
   private closed = false;
@@ -164,16 +199,19 @@ export class SqliteContinuityStore {
   }
 
   rotateEpoch(taskCorrelation: string, now: string): ContinuityTaskRecord {
-    this.ensureTask(taskCorrelation, now);
-    this.database.prepare(`
-      UPDATE continuity_tasks
-      SET current_epoch = current_epoch + 1, root_id = NULL, suppressed = 0,
-          last_auto_injected_revision = NULL, pending_source = NULL,
-          pending_revision = NULL, pending_digest = NULL, pending_root_id = NULL,
-          pending_consumed = 0, updated_at = ?
-      WHERE task_correlation = ?
-    `).run(now, taskCorrelation);
-    return this.getTask(taskCorrelation)!;
+    return this.transaction("Cannot rotate the continuity epoch.", () => {
+      this.ensureTask(taskCorrelation, now);
+      this.database.prepare(`
+        UPDATE continuity_tasks
+        SET current_epoch = current_epoch + 1, root_id = NULL, suppressed = 0,
+            last_auto_injected_revision = NULL, pending_source = NULL,
+            pending_revision = NULL, pending_digest = NULL, pending_root_id = NULL,
+            pending_consumed = 0, updated_at = ?
+        WHERE task_correlation = ?
+      `).run(now, taskCorrelation);
+      this.database.prepare("DELETE FROM continuity_delta_state WHERE task_correlation = ?").run(taskCorrelation);
+      return this.getTask(taskCorrelation)!;
+    });
   }
 
   bindRoot(taskCorrelation: string, epoch: number, rootId: string, now: string): boolean {
@@ -197,6 +235,114 @@ export class SqliteContinuityStore {
       SELECT snapshot_json FROM continuity_snapshots WHERE task_correlation = ? AND epoch = ?
     `).get(taskCorrelation, epoch) as SnapshotRow | undefined;
     return row ? JSON.parse(row.snapshot_json) as ContinuitySnapshotV1 : null;
+  }
+
+  /** Receiver state lives beside, rather than overwrites, immutable continuity snapshots. */
+  getDeltaState(taskId: string, epoch: number): {
+    receiver: CheckpointDeltaReceiverV1; contextGeneration: number; sequence: number;
+    checkpoint: ContinuitySnapshotV1; ack: CheckpointDeltaStateAckV1 | null;
+  } | null {
+    const row = this.deltaRow(taskId, epoch);
+    return row ? {
+      receiver: { host: row.receiver_host, sessionId: row.receiver_session, instanceId: row.receiver_instance },
+      contextGeneration: row.context_generation, sequence: row.sequence,
+      checkpoint: JSON.parse(row.checkpoint_json) as ContinuitySnapshotV1,
+      ack: row.state_ack_json ? JSON.parse(row.state_ack_json) as CheckpointDeltaStateAckV1 : null,
+    } : null;
+  }
+
+  bindDeltaReceiver(scope: DeltaReceiverScope, validateCheckpoint: DeltaCommitFunctions["validateCheckpoint"]): boolean {
+    return this.transaction("Cannot bind the checkpoint delta receiver.", () => {
+      const task = this.getTask(scope.taskId);
+      const snapshot = task?.currentEpoch === scope.epoch ? this.getSnapshot(scope.taskId, scope.epoch) : null;
+      if (!snapshot || task?.rootId || !validSnapshotDigest(snapshot)) return false;
+      validateCheckpoint(snapshot);
+      const prior = this.deltaRow(scope.taskId, scope.epoch);
+      if (prior && prior.receiver_host === scope.receiver.host
+        && prior.receiver_session === scope.receiver.sessionId
+        && prior.receiver_instance === scope.receiver.instanceId
+        && prior.context_generation === scope.contextGeneration) return true;
+      this.database.prepare(`
+        INSERT INTO continuity_delta_state(task_correlation, epoch, receiver_host, receiver_session,
+          receiver_instance, context_generation, sequence, origin_digest, checkpoint_digest, checkpoint_json,
+          last_delta_digest, state_ack_json)
+        VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, NULL, NULL)
+        ON CONFLICT(task_correlation, epoch) DO UPDATE SET
+          receiver_host = excluded.receiver_host, receiver_session = excluded.receiver_session,
+          receiver_instance = excluded.receiver_instance, context_generation = excluded.context_generation,
+          sequence = 0, origin_digest = excluded.origin_digest, checkpoint_digest = excluded.checkpoint_digest,
+          checkpoint_json = excluded.checkpoint_json, last_delta_digest = NULL, state_ack_json = NULL
+      `).run(scope.taskId, scope.epoch, scope.receiver.host, scope.receiver.sessionId,
+        scope.receiver.instanceId, scope.contextGeneration, snapshot.snapshotDigest,
+        snapshot.snapshotDigest, JSON.stringify(snapshot));
+      return true;
+    });
+  }
+
+  commitDelta(scope: DeltaReceiverScope, delta: CheckpointDeltaV1, functions: DeltaCommitFunctions): DeltaCommitResult {
+    return this.transaction("Cannot commit the checkpoint delta.", () => {
+      const task = this.getTask(scope.taskId);
+      const row = task?.currentEpoch === scope.epoch ? this.deltaRow(scope.taskId, scope.epoch) : null;
+      if (!row) return { kind: "stale" };
+      const currentCheckpoint = JSON.parse(row.checkpoint_json) as ContinuitySnapshotV1;
+      functions.validateCheckpoint(currentCheckpoint);
+      if (!validSnapshotDigest(currentCheckpoint) || currentCheckpoint.snapshotDigest !== row.checkpoint_digest) {
+        throw new ContinuityStoreError("Stored receiver checkpoint digest is invalid.");
+      }
+      if (delta.taskId !== scope.taskId || row.receiver_host !== scope.receiver.host
+        || row.receiver_session !== scope.receiver.sessionId || row.receiver_instance !== scope.receiver.instanceId
+        || row.context_generation !== scope.contextGeneration
+        || delta.receiver.host !== row.receiver_host || delta.receiver.sessionId !== row.receiver_session
+        || delta.receiver.instanceId !== row.receiver_instance || delta.contextGeneration !== row.context_generation) {
+        return { kind: "receiver-mismatch" };
+      }
+      const commandDigest = convergenceDigest(delta);
+      if (row.last_delta_digest === commandDigest && row.sequence === delta.sequence
+        && row.checkpoint_digest === delta.targetCheckpointDigest && row.state_ack_json) {
+        const ack = functions.validateAck(JSON.parse(row.state_ack_json) as unknown);
+        if (ack.taskId !== scope.taskId || ack.revision !== delta.revision
+          || ack.sequence !== row.sequence || ack.contextGeneration !== row.context_generation
+          || ack.targetCheckpointDigest !== row.checkpoint_digest
+          || ack.receiver.host !== row.receiver_host || ack.receiver.sessionId !== row.receiver_session
+          || ack.receiver.instanceId !== row.receiver_instance) {
+          throw new ContinuityStoreError("Stored checkpoint state ACK differs from receiver state.");
+        }
+        return { kind: "replay", ack };
+      }
+      if (task?.rootId) return { kind: "stale" };
+      const origin = this.getSnapshot(scope.taskId, scope.epoch);
+      if (!origin || !validSnapshotDigest(origin) || origin.snapshotDigest !== row.origin_digest) {
+        return { kind: "stale" };
+      }
+      if (!Number.isSafeInteger(row.sequence) || delta.sequence !== row.sequence + 1) return { kind: "out-of-order" };
+      if (row.checkpoint_digest !== delta.baseCheckpointDigest) return { kind: "stale" };
+      const target = functions.apply(currentCheckpoint, delta, {
+        taskId: scope.taskId, revision: currentCheckpoint.revision, receiver: scope.receiver,
+        contextGeneration: row.context_generation, sequence: row.sequence + 1,
+      });
+      const ack: CheckpointDeltaStateAckV1 = {
+        schemaVersion: "1.0.0", kind: "checkpoint-delta-state", taskId: scope.taskId,
+        revision: delta.revision, receiver: { ...scope.receiver },
+        contextGeneration: scope.contextGeneration, sequence: delta.sequence,
+        targetCheckpointDigest: target.snapshotDigest,
+      };
+      const updated = this.database.prepare(`
+        UPDATE continuity_delta_state SET sequence = ?, checkpoint_digest = ?, checkpoint_json = ?,
+          last_delta_digest = ?, state_ack_json = ?
+        WHERE task_correlation = ? AND epoch = ? AND sequence = ? AND checkpoint_digest = ?
+          AND receiver_host = ? AND receiver_session = ? AND receiver_instance = ? AND context_generation = ?
+      `).run(delta.sequence, target.snapshotDigest, JSON.stringify(target), commandDigest, JSON.stringify(ack),
+        scope.taskId, scope.epoch, row.sequence, row.checkpoint_digest, row.receiver_host,
+        row.receiver_session, row.receiver_instance, row.context_generation);
+      if (updated.changes !== 1) throw new ContinuityStoreError("Checkpoint delta compare-and-swap failed.");
+      return { kind: "applied", ack };
+    });
+  }
+
+  private deltaRow(taskId: string, epoch: number): DeltaRow | null {
+    return this.database.prepare(`
+      SELECT * FROM continuity_delta_state WHERE task_correlation = ? AND epoch = ?
+    `).get(taskId, epoch) as DeltaRow | undefined ?? null;
   }
 
   getRequest(taskCorrelation: string, epoch: number, requestHash: string): StoredRequest | null {
@@ -268,6 +414,8 @@ export class SqliteContinuityStore {
       const actualRevision = current?.revision ?? 0;
       if (!current || actualRevision !== expectedRevision) return { kind: "stale", actualRevision };
       this.tombstone(taskCorrelation, epoch, expectedRevision, tombstoneDigest, now);
+      this.database.prepare("DELETE FROM continuity_delta_state WHERE task_correlation = ? AND epoch = ?")
+        .run(taskCorrelation, epoch);
       const scrubbedRequestJson = purgedRequestJson(epoch, expectedRevision, tombstoneDigest, now);
       const storedRequests = this.database.prepare(`
         SELECT request_hash, result_json FROM continuity_requests
@@ -353,6 +501,10 @@ export class SqliteContinuityStore {
     let protectedActiveTasks = 0;
     const snapshots = [];
     for (const row of snapshotRows) {
+      if (this.deltaRow(row.task_correlation, row.epoch)) {
+        protectedActiveTasks += 1;
+        continue;
+      }
       const snapshot = JSON.parse(row.snapshot_json) as ContinuitySnapshotV1;
       if (snapshot.status === "active") {
         protectedActiveTasks += 1;
@@ -396,6 +548,12 @@ export class SqliteContinuityStore {
     }>;
     const tasks = [];
     for (const row of taskRows) {
+      const receiverState = this.database.prepare("SELECT 1 FROM continuity_delta_state WHERE task_correlation = ?")
+        .get(row.task_correlation);
+      if (receiverState) {
+        protectedActiveTasks += 1;
+        continue;
+      }
       const active = this.database.prepare(`
         SELECT snapshot_json FROM continuity_snapshots WHERE task_correlation = ?
       `).all(row.task_correlation) as unknown as SnapshotRow[];
@@ -453,6 +611,7 @@ export class SqliteContinuityStore {
         } | undefined;
         const status = row ? (JSON.parse(row.snapshot_json) as ContinuitySnapshotV1).status : null;
         if (!row || status === "active" || row.updated_at > payloadCutoff
+          || this.deltaRow(snapshot.taskCorrelation, snapshot.epoch)
           || row.root_id !== snapshot.rootId || row.revision !== snapshot.revision
           || row.snapshot_digest !== snapshot.snapshotDigest || row.updated_at !== snapshot.updatedAt) {
           throw new ContinuityStoreError(`Continuity snapshot ${snapshot.taskCorrelation}/${snapshot.epoch} changed after preview.`);
@@ -469,16 +628,19 @@ export class SqliteContinuityStore {
               SELECT 1 FROM continuity_snapshots
               WHERE task_correlation = ? AND (updated_at > ? OR json_extract(snapshot_json, '$.status') = 'active')
             ) AS invalid_snapshot,
+            EXISTS(SELECT 1 FROM continuity_delta_state WHERE task_correlation = ?) AS receiver_state,
             EXISTS(SELECT 1 FROM continuity_requests WHERE task_correlation = ? AND created_at > ?) AS recent_request,
             EXISTS(SELECT 1 FROM continuity_tombstones WHERE task_correlation = ? AND purged_at > ?) AS recent_tombstone,
             EXISTS(SELECT 1 FROM continuity_observations WHERE task_correlation = ? AND observed_at > ?) AS recent_observation
         `).get(
           task.taskCorrelation, recordCutoff,
+          task.taskCorrelation,
           task.taskCorrelation, recordCutoff,
           task.taskCorrelation, recordCutoff,
           task.taskCorrelation, recordCutoff,
-        ) as { invalid_snapshot: number; recent_request: number; recent_tombstone: number; recent_observation: number };
-        if (childState.invalid_snapshot || childState.recent_request || childState.recent_tombstone || childState.recent_observation) {
+        ) as { invalid_snapshot: number; receiver_state: number; recent_request: number; recent_tombstone: number; recent_observation: number };
+        if (childState.invalid_snapshot || childState.receiver_state
+          || childState.recent_request || childState.recent_tombstone || childState.recent_observation) {
           throw new ContinuityStoreError(`Continuity task ${task.taskCorrelation} gained active or recent child state after preview.`);
         }
       }
@@ -489,6 +651,8 @@ export class SqliteContinuityStore {
       `);
       for (const snapshot of preview.snapshots) {
         this.tombstone(snapshot.taskCorrelation, snapshot.epoch, snapshot.revision, snapshot.snapshotDigest, now);
+        this.database.prepare("DELETE FROM continuity_delta_state WHERE task_correlation = ? AND epoch = ?")
+          .run(snapshot.taskCorrelation, snapshot.epoch);
         scrubbed.run(
           purgedRequestJson(snapshot.epoch, snapshot.revision, snapshot.snapshotDigest, now),
           snapshot.taskCorrelation,
@@ -500,6 +664,7 @@ export class SqliteContinuityStore {
 
       const deleteByTask = [
         "continuity_snapshots", "continuity_requests", "continuity_tombstones", "continuity_observations",
+        "continuity_delta_state",
       ].map((table) => this.database.prepare(`DELETE FROM ${table} WHERE task_correlation = ?`));
       for (const task of preview.tasks) {
         for (const statement of deleteByTask) statement.run(task.taskCorrelation);
@@ -594,6 +759,21 @@ export class SqliteContinuityStore {
         turn_hash TEXT,
         success INTEGER NOT NULL CHECK (success IN (0, 1)),
         observed_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS continuity_delta_state (
+        task_correlation TEXT NOT NULL,
+        epoch INTEGER NOT NULL,
+        receiver_host TEXT NOT NULL,
+        receiver_session TEXT NOT NULL,
+        receiver_instance TEXT NOT NULL,
+        context_generation INTEGER NOT NULL CHECK (context_generation >= 0),
+        sequence INTEGER NOT NULL CHECK (sequence >= 0),
+        origin_digest TEXT NOT NULL,
+        checkpoint_digest TEXT NOT NULL,
+        checkpoint_json TEXT NOT NULL,
+        last_delta_digest TEXT,
+        state_ack_json TEXT,
+        PRIMARY KEY(task_correlation, epoch)
       );
       CREATE INDEX IF NOT EXISTS continuity_snapshots_cleanup
         ON continuity_snapshots(updated_at, task_correlation, epoch);

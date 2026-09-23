@@ -208,7 +208,7 @@ describe("state cleanup", () => {
     `);
     legacyContinuity.close();
     const continuity = new SqliteContinuityStore(continuityPath);
-    expect(continuity.getSchemaVersion()).toBe(2);
+    expect(continuity.getSchemaVersion()).toBe(3);
     expect(continuity.getOrCreateSecret(() => "replacement")).toBe("preserved-secret");
     expect(continuity.getTask("preserved")).toMatchObject({ currentEpoch: 2, rootId: "root-preserved", suppressed: true });
     expect(continuity.getSnapshot("preserved", 1)?.status).toBe("paused");
