@@ -5,7 +5,6 @@ import v3DecisionSchema from '../../../contracts/model-routing-decision.v3.schem
 import { Ajv2020 } from '../../../runtime/schema-validation.mjs';
 import { assert, canonical, digest, keys, instant, validateCapabilities, validateBinding, validateTarget, verifySeal, recordV2 } from './model-routing-core.mjs';
 import { validateEvaluation } from './model-evaluation.mjs';
-import { replaySemanticDecisionV1, SEMANTIC_REDUCER_VERSION_V1 } from './semantic/replay.mjs';
 
 function transaction(db,fn){db.exec('BEGIN IMMEDIATE');try{const result=fn();db.exec('COMMIT');return result;}catch(error){db.exec('ROLLBACK');throw error;}}
 
@@ -107,51 +106,6 @@ export class ModelRoutingStore {
     assert(!old||old.payload===payload,'DECISION_CONFLICT');
     this.database.prepare('INSERT OR IGNORE INTO ags_model_decisions_v2 VALUES (?,?,?,?,?,?)').run(decision.decisionDigest,digest(decision.binding),canonical(request),canonical(environment),payload,now);
     return decision;
-  }
-  /** Recompute from the registered advice and frozen v2 inputs before committing both rows. */
-  saveRegisteredDecisionV3(input){
-    keys(input,['request','environment','prepared','advice','adoption','evaluationId','registrationId','baselineDecisionDigest','now']);
-    const {request,environment,prepared,advice,adoption,evaluationId,registrationId,baselineDecisionDigest,now}=input;
-    instant(now,'now');
-    const requestJson=canonical(request),environmentJson=canonical(environment);
-    const preparedJson=canonical(prepared),adviceJson=canonical(advice);
-    return transaction(this.database,()=>{
-      const baseline=this.database.prepare('SELECT * FROM ags_model_decisions_v2 WHERE decision_digest=?').get(baselineDecisionDigest);
-      assert(baseline&&baseline.request_json===requestJson&&baseline.environment_json===environmentJson
-        &&JSON.parse(baseline.payload).schemaVersion==='2.0.0','BASELINE_MISMATCH');
-      const registration=this.database.prepare(`SELECT a.*,q.request_json
-        FROM ags_semantic_advice_v1 a JOIN ags_semantic_requests_v1 q USING (evaluation_id)
-        JOIN ags_semantic_intents_v1 i USING (evaluation_id)
-        WHERE a.evaluation_id=? AND a.registration_id=? AND i.state='recorded'`).get(evaluationId,registrationId);
-      assert(registration&&registration.request_json===preparedJson&&registration.advice_json===adviceJson
-        &&registration.request_digest===prepared.requestDigest
-        &&registration.advice_digest===advice.adviceDigest,'ADVICE_REGISTRATION_MISMATCH');
-      const decision=replaySemanticDecisionV1({
-        routingRequest:request,environment:{...environment,now},prepared,advice,adoption,
-        decisionTime:now,reducerVersion:SEMANTIC_REDUCER_VERSION_V1,
-      });
-      assert(validateDecisionV3(decision),'INVALID_INPUT','v3 decision does not match its contract');
-      verifySeal(decision,'decisionDigest');validateBinding(decision.binding);
-      const decisionJson=canonical(decision);
-      assert(decision.semantic.adviceDigest===advice.adviceDigest
-        &&decision.semantic.semanticRequestDigest===prepared.requestDigest
-        &&decision.semantic.baselineDecisionDigest===baselineDecisionDigest
-        &&decision.requestDigest===JSON.parse(baseline.payload).requestDigest,'ADVICE_REGISTRATION_MISMATCH');
-      const reference={decision_digest:decision.decisionDigest,baseline_decision_digest:baselineDecisionDigest,
-        evaluation_id:evaluationId,registration_id:registrationId,advice_digest:advice.adviceDigest};
-      const existing=this.database.prepare('SELECT * FROM ags_model_decision_refs_v3 WHERE evaluation_id=? OR registration_id=? OR decision_digest=?')
-        .all(evaluationId,registrationId,decision.decisionDigest);
-      assert(existing.every(row=>canonical({...row})===canonical(reference)),'DECISION_CONFLICT');
-      const old=this.database.prepare('SELECT * FROM ags_model_decisions_v2 WHERE decision_digest=?').get(decision.decisionDigest);
-      assert(!old||old.request_json===requestJson&&old.environment_json===environmentJson
-        &&old.payload===decisionJson,'DECISION_CONFLICT');
-      if(old){assert(existing.length===1,'DECISION_REFERENCE_MISSING');return decision;}
-      this.database.prepare('INSERT INTO ags_model_decisions_v2 VALUES (?,?,?,?,?,?)')
-        .run(decision.decisionDigest,digest(decision.binding),requestJson,environmentJson,decisionJson,now);
-      this.database.prepare('INSERT INTO ags_model_decision_refs_v3 VALUES (?,?,?,?,?)')
-        .run(decision.decisionDigest,baselineDecisionDigest,evaluationId,registrationId,advice.adviceDigest);
-      return decision;
-    });
   }
   decision(id){const row=this.database.prepare('SELECT * FROM ags_model_decisions_v2 WHERE decision_digest=?').get(id);return row?{request:JSON.parse(row.request_json),environment:JSON.parse(row.environment_json),decision:readDecisionPayload(row.payload,id),resolvedAt:row.resolved_at}:null;}
   publishObservation(receipt,signer,now){

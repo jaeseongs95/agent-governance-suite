@@ -9,7 +9,7 @@ import { RegisteredDecisionWriter } from '../../../mcp-server/src/routing-v3/dec
 import { SemanticAdviceAdmissionStore } from '../../../mcp-server/src/semantic/advice-admission.ts';
 import { SemanticEvaluationIntentStore } from '../../../mcp-server/src/semantic/evaluation-intent.ts';
 import {
-  collectEligibleCandidatesV2, digest, getBaselineCandidateMetadataV2, resolveV2,
+  canonical, collectEligibleCandidatesV2, digest, getBaselineCandidateMetadataV2, resolveV2, seal,
 } from '../../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
 import { ModelRoutingStore } from '../../../skills/coordinate-subagents/scripts/model-routing-store.mjs';
 import { projectSemanticCandidatesV1 } from '../../../skills/coordinate-subagents/scripts/semantic/candidate-projection.mjs';
@@ -83,6 +83,7 @@ test('caller-made v3 fixture and missing or partial registration references are 
   const decision = f.writer.write(f.input);
   assert.throws(() => f.store.saveDecision(f.routingRequest, f.routingEnvironment, decision, LATER),
     { code: 'V3_WRITER_REQUIRED' });
+  assert.equal(f.store.saveRegisteredDecisionV3, undefined);
   assert.throws(() => f.writer.write({ ...f.input, decision }), /Only registered decision references/);
   assert.throws(() => f.writer.write({ ...f.input, adoption }), /Only registered decision references/);
   assert.throws(() => new RegisteredDecisionWriter(f.store).write(f.input), /service-admitted/);
@@ -92,6 +93,21 @@ test('caller-made v3 fixture and missing or partial registration references are 
   const unregistered = setup({ register: false });
   assert.throws(() => unregistered.writer.write(unregistered.input), /registered runner advice/);
   assert.deepEqual(counts(unregistered.database), { decisions: 1, references: 0 });
+});
+
+test('schema-valid tampering of a stored v2 baseline cannot produce v3 rows or references', () => {
+  const f = setup();
+  const changedSeal = { ...f.baseline, decisionDigest: digest('changed-seal') };
+  f.database.prepare('UPDATE ags_model_decisions_v2 SET payload=? WHERE decision_digest=?')
+    .run(canonical(changedSeal), f.baseline.decisionDigest);
+  assert.throws(() => f.writer.write(f.input), { code: 'DIGEST_MISMATCH' });
+  assert.deepEqual(counts(f.database), { decisions: 1, references: 0 });
+
+  const resealed = seal({ ...f.baseline, requestDigest: digest('changed-request') }, 'decisionDigest');
+  f.database.prepare('UPDATE ags_model_decisions_v2 SET payload=? WHERE decision_digest=?')
+    .run(canonical(resealed), f.baseline.decisionDigest);
+  assert.throws(() => f.writer.write(f.input), { code: 'BASELINE_MISMATCH' });
+  assert.deepEqual(counts(f.database), { decisions: 1, references: 0 });
 });
 
 test('identical retry is idempotent; conflicting stored bytes are rejected', () => {
