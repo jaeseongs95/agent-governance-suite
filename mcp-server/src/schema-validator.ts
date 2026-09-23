@@ -71,6 +71,7 @@ import {
   type ModelApplicationRecordV3,
   type ResourceStateSnapshotV1,
   type ResourcePolicyV1,
+  type RoleSlotV1,
   WorkflowContractError,
 } from "../../contracts/types.js";
 
@@ -164,6 +165,7 @@ export const contractSchemas = {
   modelApplicationRecordV3: loadSchema("model-application-record.v3.schema.json"),
   resourceStateSnapshotV1: loadSchema("resource-state-snapshot.v1.schema.json"),
   resourcePolicyV1: loadSchema("resource-policy.v1.schema.json"),
+  roleSlotV1: loadSchema("role-slot.v1.schema.json"),
 };
 
 // Providers declare artifact digests either bare or sha256:-prefixed. A SHA-256 digest that misses the
@@ -483,6 +485,30 @@ export class ContractValidator {
       throw new WorkflowContractError("INVALID_INPUT", "Resource policy windows, role priorities, and remaining floors must be consistent.");
     }
     return policy;
+  }
+
+  /** approvedSlots and expectedSlotId must come from the server-owned current approval reader. */
+  roleSlotV1(value: unknown, approvedSlots: readonly unknown[], expectedSlotId: string): RoleSlotV1 {
+    const slot = this.assert<RoleSlotV1>("roleSlotV1", value);
+    if (!Array.isArray(approvedSlots) || approvedSlots.length === 0 || approvedSlots.length > 64) {
+      throw new WorkflowContractError("INVALID_INPUT", "A current approved slot set is required.");
+    }
+    const approved = approvedSlots.map((item) => this.assert<RoleSlotV1>("roleSlotV1", item));
+    const scope = approved[0]!.authorization;
+    if (new Set(approved.map((item) => item.slotId)).size !== approved.length
+      || new Set(approved.map((item) => item.slotIndex)).size !== approved.length
+      || approved.some((item) => item.slotIndex >= approved.length || item.slotCount !== approved.length
+        || item.authorization.taskId !== scope.taskId || item.authorization.runId !== scope.runId
+        || item.authorization.planRevision !== scope.planRevision
+        || item.authorization.planDigest !== scope.planDigest
+        || item.authorization.authorizationDigest !== scope.authorizationDigest)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Approved slots must form one complete plan revision.");
+    }
+    const expected = approved.find((item) => item.slotId === expectedSlotId);
+    if (!expected || slot.slotId !== expectedSlotId || canonicalJson(slot) !== canonicalJson(expected)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Role slot differs from its current approved assignment.");
+    }
+    return slot;
   }
 
   /** New-contract validation only: legacy Ajv acceptance and v2 runtime methods are unchanged. */
