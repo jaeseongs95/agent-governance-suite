@@ -410,11 +410,11 @@ var require_codegen = __commonJS({
         const rhs = this.rhs === void 0 ? "" : ` = ${this.rhs}`;
         return `${varKind} ${this.name}${rhs};` + _n2;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         if (!names[this.name.str])
           return;
         if (this.rhs)
-          this.rhs = optimizeExpr(this.rhs, names, constants);
+          this.rhs = optimizeExpr(this.rhs, names, constants2);
         return this;
       }
       get names() {
@@ -431,10 +431,10 @@ var require_codegen = __commonJS({
       render({ _n: _n2 }) {
         return `${this.lhs} = ${this.rhs};` + _n2;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         if (this.lhs instanceof code_1.Name && !names[this.lhs.str] && !this.sideEffects)
           return;
-        this.rhs = optimizeExpr(this.rhs, names, constants);
+        this.rhs = optimizeExpr(this.rhs, names, constants2);
         return this;
       }
       get names() {
@@ -495,8 +495,8 @@ var require_codegen = __commonJS({
       optimizeNodes() {
         return `${this.code}` ? this : void 0;
       }
-      optimizeNames(names, constants) {
-        this.code = optimizeExpr(this.code, names, constants);
+      optimizeNames(names, constants2) {
+        this.code = optimizeExpr(this.code, names, constants2);
         return this;
       }
       get names() {
@@ -525,12 +525,12 @@ var require_codegen = __commonJS({
         }
         return nodes.length > 0 ? this : void 0;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         const { nodes } = this;
         let i = nodes.length;
         while (i--) {
           const n = nodes[i];
-          if (n.optimizeNames(names, constants))
+          if (n.optimizeNames(names, constants2))
             continue;
           subtractNames(names, n.names);
           nodes.splice(i, 1);
@@ -583,12 +583,12 @@ var require_codegen = __commonJS({
           return void 0;
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         var _a3;
-        this.else = (_a3 = this.else) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants);
-        if (!(super.optimizeNames(names, constants) || this.else))
+        this.else = (_a3 = this.else) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants2);
+        if (!(super.optimizeNames(names, constants2) || this.else))
           return;
-        this.condition = optimizeExpr(this.condition, names, constants);
+        this.condition = optimizeExpr(this.condition, names, constants2);
         return this;
       }
       get names() {
@@ -611,10 +611,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.iteration})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names, constants2) {
+        if (!super.optimizeNames(names, constants2))
           return;
-        this.iteration = optimizeExpr(this.iteration, names, constants);
+        this.iteration = optimizeExpr(this.iteration, names, constants2);
         return this;
       }
       get names() {
@@ -650,10 +650,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.varKind} ${this.name} ${this.loop} ${this.iterable})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names, constants2) {
+        if (!super.optimizeNames(names, constants2))
           return;
-        this.iterable = optimizeExpr(this.iterable, names, constants);
+        this.iterable = optimizeExpr(this.iterable, names, constants2);
         return this;
       }
       get names() {
@@ -695,11 +695,11 @@ var require_codegen = __commonJS({
         (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNodes();
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         var _a3, _b;
-        super.optimizeNames(names, constants);
-        (_a3 = this.catch) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants);
-        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants);
+        super.optimizeNames(names, constants2);
+        (_a3 = this.catch) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants2);
+        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants2);
         return this;
       }
       get names() {
@@ -1000,7 +1000,7 @@ var require_codegen = __commonJS({
     function addExprNames(names, from) {
       return from instanceof code_1._CodeOrName ? addNames(names, from.names) : names;
     }
-    function optimizeExpr(expr, names, constants) {
+    function optimizeExpr(expr, names, constants2) {
       if (expr instanceof code_1.Name)
         return replaceName(expr);
       if (!canOptimize(expr))
@@ -1015,14 +1015,14 @@ var require_codegen = __commonJS({
         return items;
       }, []));
       function replaceName(n) {
-        const c = constants[n.str];
+        const c = constants2[n.str];
         if (c === void 0 || names[n.str] !== 1)
           return n;
         delete names[n.str];
         return c;
       }
       function canOptimize(e) {
-        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names[c.str] === 1 && constants[c.str] !== void 0);
+        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names[c.str] === 1 && constants2[c.str] !== void 0);
       }
     }
     function subtractNames(names, from) {
@@ -44626,7 +44626,7 @@ var VmCurrentInvocation = class {
 // mcp-server/src/host-integration/vm-model-policy.ts
 import { createPublicKey as createPublicKey2, verify as verify2 } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { lstatSync as lstatSync2, readFileSync as readFileSync6, statSync as statSync2 } from "node:fs";
+import { closeSync as closeSync2, constants, fstatSync as fstatSync2, lstatSync as lstatSync2, openSync as openSync2, readFileSync as readFileSync6 } from "node:fs";
 import path15 from "node:path";
 var DIGEST4 = /^sha256:[0-9a-f]{64}$/u;
 var MODEL_CLASSES = ["lightweight", "general", "deep", "frontier"];
@@ -44707,42 +44707,70 @@ function inspectWindowsAcl(target) {
     fail("Windows ACL cannot be verified");
   }
 }
-function readProtectedVmPolicyFile(filePath) {
+function sameFile(before, after) {
+  return before.dev === after.dev && before.ino === after.ino && before.mode === after.mode && before.uid === after.uid && before.gid === after.gid && before.size === after.size && before.mtimeMs === after.mtimeMs && before.ctimeMs === after.ctimeMs && before.birthtimeMs === after.birthtimeMs;
+}
+function protectedByOperator(target, status) {
+  return process.platform === "win32" ? isProtectedWindowsAcl(inspectWindowsAcl(target)) : status.uid === 0 && (status.mode & 18) === 0;
+}
+function readPolicyFile(filePath, fixture) {
   if (!path15.isAbsolute(filePath)) fail("configuration path is not absolute");
-  const directory = path15.dirname(filePath);
-  let ancestor = path15.parse(filePath).root;
-  for (const part of path15.relative(ancestor, directory).split(path15.sep).filter(Boolean)) {
-    ancestor = path15.join(ancestor, part);
-    try {
-      if (lstatSync2(ancestor).isSymbolicLink()) fail("configuration path contains a symlink");
-    } catch {
-      fail("configuration path is unavailable");
-    }
+  if (path15.normalize(filePath) !== filePath) fail("configuration path is not canonical");
+  const root = path15.parse(filePath).root;
+  const targets = [root];
+  for (const part of path15.relative(root, filePath).split(path15.sep).filter(Boolean)) {
+    targets.push(path15.join(targets[targets.length - 1], part));
   }
-  for (const target of [directory, filePath]) {
+  const snapshots = targets.map((target, index) => {
     let status;
     try {
       status = lstatSync2(target);
     } catch {
-      fail("configuration is missing");
+      fail("configuration path is unavailable");
     }
-    if (status.isSymbolicLink() || (target === directory ? !status.isDirectory() : !status.isFile())) fail("configuration path is not regular");
-    if (process.platform === "win32") {
-      if (!isProtectedWindowsAcl(inspectWindowsAcl(target))) fail("configuration ACL is writable or owner is untrusted");
-    } else if (status.uid !== 0 || (status.mode & 18) !== 0) {
-      fail("configuration owner or permissions are unsafe");
+    if (status.isSymbolicLink() || (index === targets.length - 1 ? !status.isFile() : !status.isDirectory())) {
+      fail("configuration path is not regular");
     }
-  }
-  const before = statSync2(filePath);
-  let value;
+    if (!(fixture?.isProtected ?? protectedByOperator)(target, status)) fail("configuration owner or permissions are unsafe");
+    try {
+      if (!sameFile(status, lstatSync2(target))) fail("configuration changed during validation");
+    } catch {
+      fail("configuration changed during validation");
+    }
+    return status;
+  });
+  fixture?.afterValidation?.();
+  let fd;
   try {
-    value = JSON.parse(readFileSync6(filePath, "utf8"));
+    fd = openSync2(filePath, constants.O_RDONLY | (process.platform === "win32" ? 0 : constants.O_NOFOLLOW));
   } catch {
-    fail("configuration JSON is malformed");
+    fail("configuration changed before open");
   }
-  const after = statSync2(filePath);
-  if (before.dev !== after.dev || before.ino !== after.ino || before.mtimeMs !== after.mtimeMs || lstatSync2(filePath).isSymbolicLink() || lstatSync2(directory).isSymbolicLink()) fail("configuration changed during read");
-  return value;
+  try {
+    if (!sameFile(snapshots[snapshots.length - 1], fstatSync2(fd))) fail("configuration changed before open");
+    let value;
+    try {
+      value = JSON.parse(readFileSync6(fd, "utf8"));
+    } catch {
+      fail("configuration JSON is malformed");
+    }
+    if (!sameFile(snapshots[snapshots.length - 1], fstatSync2(fd))) fail("configuration changed during read");
+    for (const [index, target] of targets.entries()) {
+      let status;
+      try {
+        status = lstatSync2(target);
+      } catch {
+        fail("configuration changed during read");
+      }
+      if (!sameFile(snapshots[index], status)) fail("configuration changed during read");
+    }
+    return value;
+  } finally {
+    closeSync2(fd);
+  }
+}
+function readProtectedVmPolicyFile(filePath) {
+  return readPolicyFile(filePath);
 }
 function installedVmPolicyPath() {
   return process.platform === "win32" ? WINDOWS_POLICY_PATH : POSIX_POLICY_PATH;

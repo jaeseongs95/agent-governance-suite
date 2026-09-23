@@ -1,6 +1,6 @@
 import { createPublicKey, verify, type KeyObject } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { lstatSync, readFileSync, statSync } from "node:fs";
+import { closeSync, constants, fstatSync, lstatSync, openSync, readFileSync, type Stats } from "node:fs";
 import path from "node:path";
 
 import type { ModelClassV1 } from "../../../contracts/types.js";
@@ -108,33 +108,65 @@ function inspectWindowsAcl(target: string): WindowsAcl {
   } catch { fail("Windows ACL cannot be verified"); }
 }
 
-export function readProtectedVmPolicyFile(filePath: string): unknown {
+type PolicyFileFixture = { isProtected: (target: string, status: Stats) => boolean; afterValidation?: () => void };
+
+function sameFile(before: Stats, after: Stats): boolean {
+  return before.dev === after.dev && before.ino === after.ino && before.mode === after.mode
+    && before.uid === after.uid && before.gid === after.gid && before.size === after.size
+    && before.mtimeMs === after.mtimeMs && before.ctimeMs === after.ctimeMs
+    && before.birthtimeMs === after.birthtimeMs;
+}
+
+function protectedByOperator(target: string, status: Stats): boolean {
+  return process.platform === "win32"
+    ? isProtectedWindowsAcl(inspectWindowsAcl(target))
+    : status.uid === 0 && (status.mode & 0o022) === 0;
+}
+
+function readPolicyFile(filePath: string, fixture?: PolicyFileFixture): unknown {
   if (!path.isAbsolute(filePath)) fail("configuration path is not absolute");
-  const directory = path.dirname(filePath);
-  let ancestor = path.parse(filePath).root;
-  for (const part of path.relative(ancestor, directory).split(path.sep).filter(Boolean)) {
-    ancestor = path.join(ancestor, part);
-    try { if (lstatSync(ancestor).isSymbolicLink()) fail("configuration path contains a symlink"); }
-    catch { fail("configuration path is unavailable"); }
+  if (path.normalize(filePath) !== filePath) fail("configuration path is not canonical");
+  const root = path.parse(filePath).root;
+  const targets = [root];
+  for (const part of path.relative(root, filePath).split(path.sep).filter(Boolean)) {
+    targets.push(path.join(targets[targets.length - 1]!, part));
   }
-  for (const target of [directory, filePath]) {
-    let status;
-    try { status = lstatSync(target); } catch { fail("configuration is missing"); }
-    if (status.isSymbolicLink() || (target === directory ? !status.isDirectory() : !status.isFile())) fail("configuration path is not regular");
-    if (process.platform === "win32") {
-      if (!isProtectedWindowsAcl(inspectWindowsAcl(target))) fail("configuration ACL is writable or owner is untrusted");
-    } else if (status.uid !== 0 || (status.mode & 0o022) !== 0) {
-      fail("configuration owner or permissions are unsafe");
+  const snapshots = targets.map((target, index) => {
+    let status: Stats;
+    try { status = lstatSync(target); } catch { fail("configuration path is unavailable"); }
+    if (status.isSymbolicLink() || (index === targets.length - 1 ? !status.isFile() : !status.isDirectory())) {
+      fail("configuration path is not regular");
     }
-  }
-  // Recheck the file identity after reading to reject a replacement during the read.
-  const before = statSync(filePath);
-  let value: unknown;
-  try { value = JSON.parse(readFileSync(filePath, "utf8")); } catch { fail("configuration JSON is malformed"); }
-  const after = statSync(filePath);
-  if (before.dev !== after.dev || before.ino !== after.ino || before.mtimeMs !== after.mtimeMs
-      || lstatSync(filePath).isSymbolicLink() || lstatSync(directory).isSymbolicLink()) fail("configuration changed during read");
-  return value;
+    if (!(fixture?.isProtected ?? protectedByOperator)(target, status)) fail("configuration owner or permissions are unsafe");
+    try { if (!sameFile(status, lstatSync(target))) fail("configuration changed during validation"); }
+    catch { fail("configuration changed during validation"); }
+    return status;
+  });
+  fixture?.afterValidation?.();
+  let fd: number;
+  try { fd = openSync(filePath, constants.O_RDONLY | (process.platform === "win32" ? 0 : constants.O_NOFOLLOW)); }
+  catch { fail("configuration changed before open"); }
+  try {
+    if (!sameFile(snapshots[snapshots.length - 1]!, fstatSync(fd))) fail("configuration changed before open");
+    let value: unknown;
+    try { value = JSON.parse(readFileSync(fd, "utf8")); } catch { fail("configuration JSON is malformed"); }
+    if (!sameFile(snapshots[snapshots.length - 1]!, fstatSync(fd))) fail("configuration changed during read");
+    for (const [index, target] of targets.entries()) {
+      let status: Stats;
+      try { status = lstatSync(target); } catch { fail("configuration changed during read"); }
+      if (!sameFile(snapshots[index]!, status)) fail("configuration changed during read");
+    }
+    return value;
+  } finally { closeSync(fd); }
+}
+
+export function readProtectedVmPolicyFile(filePath: string): unknown {
+  return readPolicyFile(filePath);
+}
+
+/** Synthetic policy-file fixtures exercise path checks without requiring administrator privileges. */
+export function readProtectedVmPolicyFileFixture(filePath: string, fixture: PolicyFileFixture): unknown {
+  return readPolicyFile(filePath, fixture);
 }
 
 /** Product source is fixed; inherited VM environment, argv, and cwd cannot select it. */

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash, generateKeyPairSync, sign } from 'node:crypto';
-import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'vitest';
@@ -9,7 +9,7 @@ import { canonicalJson, convergenceDigest } from '../../../mcp-server/src/conver
 import { InMemoryWorkflowStore } from '../../../mcp-server/src/workflow-store.ts';
 import { VmCurrentInvocation } from '../../../mcp-server/src/host-integration/vm-current-invocation.ts';
 import { VmModelPolicy, installedVmPolicyPath, isProtectedWindowsAcl,
-  readProtectedVmPolicyFile } from '../../../mcp-server/src/host-integration/vm-model-policy.ts';
+  readProtectedVmPolicyFile, readProtectedVmPolicyFileFixture } from '../../../mcp-server/src/host-integration/vm-model-policy.ts';
 
 const clock = Date.parse('2026-09-23T00:00:01.000Z');
 const issuedAt = new Date(clock).toISOString();
@@ -185,9 +185,58 @@ test('installed path ignores inherited environment; unsafe ACL and symlink fail 
     const link = join(directory, 'linked.json');
     try {
       symlinkSync(file, link);
-      assert.throws(() => readProtectedVmPolicyFile(link), /not regular/);
+      assert.throws(() => readProtectedVmPolicyFileFixture(link, { isProtected: () => true }), /not regular/);
     } catch (error) {
       if (error?.code !== 'EPERM') throw error;
     }
   } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test('protected policy loader checks every ancestor and loads the same approved file', () => {
+  const base = mkdtempSync(join(tmpdir(), 'ags-v03-d-chain-'));
+  const ancestor = join(base, 'unsafe-ancestor');
+  const directory = join(ancestor, 'protected-parent');
+  mkdirSync(directory, { recursive: true });
+  const file = join(directory, 'policy.json');
+  const expected = fixture().config;
+  writeFileSync(file, JSON.stringify(expected));
+  try {
+    assert.throws(() => readProtectedVmPolicyFileFixture(file, {
+      isProtected: (target) => target !== ancestor,
+    }), /owner or permissions are unsafe/);
+    assert.deepEqual(readProtectedVmPolicyFileFixture(file, { isProtected: () => true }), expected);
+  } finally { rmSync(base, { recursive: true, force: true }); }
+});
+
+test('policy loader rejects directory and file swaps during or after protection checks', () => {
+  for (const changed of ['directory', 'file']) for (const moment of ['during', 'after']) {
+    const base = mkdtempSync(join(tmpdir(), `ags-v03-d-${changed}-`));
+    const directory = join(base, 'protected-parent');
+    mkdirSync(directory);
+    const file = join(directory, 'policy.json');
+    writeFileSync(file, JSON.stringify(fixture().config));
+    const replacement = join(base, 'replacement');
+    if (changed === 'directory') {
+      mkdirSync(replacement);
+      writeFileSync(join(replacement, 'policy.json'), JSON.stringify({ attacker: true }));
+    }
+    const swap = () => {
+      if (changed === 'directory') {
+        renameSync(directory, join(base, 'approved-backup'));
+        renameSync(replacement, directory);
+      } else {
+        renameSync(file, join(directory, 'approved-backup.json'));
+        writeFileSync(file, JSON.stringify({ attacker: true }));
+      }
+    };
+    try {
+      assert.throws(() => readProtectedVmPolicyFileFixture(file, {
+        isProtected: (target) => {
+          if (moment === 'during' && target === (changed === 'directory' ? directory : file)) swap();
+          return true;
+        },
+        afterValidation: moment === 'after' ? swap : undefined,
+      }), /configuration changed during validation|configuration changed before open|configuration changed during read/);
+    } finally { rmSync(base, { recursive: true, force: true }); }
+  }
 });
