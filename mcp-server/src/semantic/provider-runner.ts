@@ -1,5 +1,6 @@
 /** Internal invocation boundary. The owning server supplies authority, budget reservation and port. */
 import { randomUUID } from "node:crypto";
+import { performance } from "node:perf_hooks";
 import {
   WorkflowContractError, type SemanticDecisionPolicyV1, type SemanticDecisionRequestV1,
   type SemanticEgressConfigV1,
@@ -56,7 +57,7 @@ export class SemanticProviderRunner {
     private readonly intents: SemanticEvaluationIntentStore,
     private readonly provider: BoundedSemanticProviderPort,
     private readonly authorityFor: (request: SemanticDecisionRequestV1) => RunnerAuthority,
-    /** This server-owned callback must atomically reserve the approved request/cost budget. */
+    /** Server-owned reservation must be atomic and idempotent per evaluation ID across runner races. */
     private readonly reserveBudget: (request: SemanticDecisionRequestV1, authority: RunnerAuthority) => void,
     private readonly options: Readonly<RunnerOptions>,
   ) {
@@ -111,8 +112,10 @@ export class SemanticProviderRunner {
       };
       const cancel = () => controller.abort(input.signal?.reason);
       input.signal?.addEventListener("abort", cancel, { once: true });
-      const timer = setTimeout(() => controller.abort(new Error("Semantic provider deadline exceeded.")),
-        this.options.timeoutMs);
+      let deadlineAt = Number.POSITIVE_INFINITY;
+      const withinDeadline = () => performance.now() < deadlineAt;
+      const expire = () => controller.abort(new Error("Semantic provider deadline exceeded."));
+      let timer: ReturnType<typeof setTimeout> | null = null;
       let onAbort: (() => void) | null = null;
       const aborted = new Promise<{ kind: "aborted" }>((resolve) => {
         onAbort = () => resolve({ kind: "aborted" });
@@ -131,6 +134,8 @@ export class SemanticProviderRunner {
           const target = assertSemanticEgressAllowed(request, currentAuthority.policy, currentAuthority.config,
             currentAuthority.context);
           if (!controller.signal.aborted) {
+            deadlineAt = performance.now() + this.options.timeoutMs;
+            timer = setTimeout(expire, this.options.timeoutMs);
             attempt = Promise.resolve(this.provider.evaluate(request, {
               signal: controller.signal, onOutput, ...target,
             }));
@@ -140,6 +145,7 @@ export class SemanticProviderRunner {
               attempt.then(value => ({ kind: "result" as const, value }), () => ({ kind: "failed" as const })),
               aborted,
             ]);
+            if (!withinDeadline()) expire();
             if (outcome.kind === "result" && !controller.signal.aborted) {
               let result: SemanticProviderResultV1;
               try { result = parseSemanticProviderResultV1(outcome.value); }
@@ -153,6 +159,11 @@ export class SemanticProviderRunner {
                 this.intents.resume(request.evaluationId, request.requestDigest);
                 return { status: "uncertain" };
               }
+              if (!withinDeadline()) {
+                expire();
+                this.intents.resume(request.evaluationId, request.requestDigest);
+                return { status: "uncertain" };
+              }
               this.intents.recordResult(request.evaluationId, request.requestDigest, claimId, result);
               return { status: "recorded", result };
             }
@@ -161,7 +172,7 @@ export class SemanticProviderRunner {
         this.intents.resume(request.evaluationId, request.requestDigest);
         return { status: "uncertain" };
       } finally {
-        clearTimeout(timer);
+        if (timer !== null) clearTimeout(timer);
         input.signal?.removeEventListener("abort", cancel);
         if (onAbort) controller.signal.removeEventListener("abort", onAbort);
       }

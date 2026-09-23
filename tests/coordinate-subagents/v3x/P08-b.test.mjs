@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { performance } from 'node:perf_hooks';
 import { DatabaseSync } from 'node:sqlite';
 import { test } from 'vitest';
 import { convergenceDigest } from '../../../mcp-server/src/convergence-logic.ts';
@@ -12,7 +13,7 @@ import { digest } from '../../../skills/coordinate-subagents/scripts/model-routi
 import { contracts, resealRequest } from '../semantic-decision/fixtures/contracts.mjs';
 
 const success = { status: 'success', choice: { kind: 'Choice', selectedOptionIds: ['option-a'], confidence: null } };
-const options = { maxConcurrent: 1, maxOutputBytes: 4096, timeoutMs: 50 };
+const options = { maxConcurrent: 1, maxOutputBytes: 4096, timeoutMs: 5000 };
 
 function fixture() {
   const base = contracts('shadow'), assignment = base.assignment;
@@ -154,6 +155,25 @@ test('P08-b deadline returns uncertain, ignores late response, and retains slot 
     assert.equal(intents.get(f.prepared.evaluationId)?.evaluation.result, null);
     assert.deepEqual(await execute.run({ idempotencyKey: 'key', prepared: f.prepared }), { status: 'already-claimed' });
     assert.equal(calls, 1);
+  });
+});
+
+test('P08-b monotonic deadline rejects a success after synchronous provider blocking', async () => {
+  await withRunner(async intents => {
+    const f = fixture(); let calls = 0, observedSignal;
+    const port = { evaluate: (_request, control) => {
+      calls++; observedSignal = control.signal;
+      const until = performance.now() + 30;
+      while (performance.now() < until) { /* Simulate a blocking adapter before timer delivery. */ }
+      return Promise.resolve(success);
+    } };
+    const execute = runner(intents, f, port, { ...options, timeoutMs: 5 });
+    assert.deepEqual(await execute.run({ idempotencyKey: 'key', prepared: f.prepared }),
+      { status: 'uncertain' });
+    assert.equal(calls, 1);
+    assert.equal(observedSignal.aborted, true);
+    assert.equal(intents.get(f.prepared.evaluationId)?.state, 'uncertain');
+    assert.equal(intents.get(f.prepared.evaluationId)?.evaluation.result, null);
   });
 });
 
