@@ -114,6 +114,17 @@ const resolveConvergenceGateInputSchema = toolSchema(contractSchemas.resolveConv
 const recordStageResultInputSchema = toolSchema(contractSchemas.stageResult, {
   add: { responseMode: responseModeProperty },
 });
+const vmReceiptProperty = { type: "object", additionalProperties: false,
+  required: ["body", "signature", "keyId"],
+  properties: { body: { type: "string" }, signature: { type: "string" }, keyId: { type: "string" } } };
+function withVmReceipt(schema: Record<string, unknown>): Record<string, unknown> {
+  const copy = structuredClone(schema) as ObjectSchema & { oneOf?: ObjectSchema[] };
+  const add = (branch: ObjectSchema): ObjectSchema => ({
+    ...branch, properties: { ...(branch.properties ?? {}), _hostAttestation: vmReceiptProperty },
+  });
+  if (copy.oneOf) copy.oneOf = copy.oneOf.map(add);
+  return add(copy);
+}
 if (recordStageResultInputSchema.properties) {
   delete recordStageResultInputSchema.properties.executionContext;
 }
@@ -452,7 +463,8 @@ export function createMcpServer(
       {
         name: "plan_workflow",
         description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose.",
-        inputSchema: planWorkflowToolInputSchema(toolSchemaProfile),
+        inputSchema: vmInvocation ? withVmReceipt(planWorkflowToolInputSchema(toolSchemaProfile))
+          : planWorkflowToolInputSchema(toolSchemaProfile),
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
@@ -494,7 +506,7 @@ export function createMcpServer(
       {
         name: "record_stage_result",
         description: "Record one ordered stage result; use responseMode=compact to avoid echoing the accumulated receipt.",
-        inputSchema: recordStageResultInputSchema,
+        inputSchema: vmInvocation ? withVmReceipt(recordStageResultInputSchema) : recordStageResultInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
@@ -612,8 +624,16 @@ export function createMcpServer(
     const handle = async () => {
     const args = asRecord(request.params.arguments);
     // Only a host with an attestation adapter strips and verifies the hook token.
-    const attested = <T>(tool: string, call: (input: Record<string, unknown>) => T): T =>
-      hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
+    const attested = <T>(tool: string, call: (input: Record<string, unknown>) => T): T => {
+      if (vmInvocation && (vmInvocation.hasCurrentRequest() || Object.hasOwn(args, "_hostAttestation"))) {
+        if (!vmInvocation.hasCurrentRequest()) throw new Error("VM dispatch unavailable: current reserved request is unavailable");
+        vmInvocation.verifyCurrentReceipt();
+        const { _hostAttestation, ...unsigned } = args;
+        void _hostAttestation;
+        return call(unsigned);
+      }
+      return hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
+    };
     // Rejects an unknown mode before the call runs; compact mode projects successful results only.
     const withMode = <T, U>(field: "responseMode" | "detail", call: () => ApiResultV1<T>, project: (value: T) => U): ApiResultV1<T | U> => {
       const mode = responseMode(args, field);

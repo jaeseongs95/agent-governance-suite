@@ -51,7 +51,7 @@ async function main(): Promise<void> {
 
   const validator = new ContractValidator();
   const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
-  const vmInvocation = process.env.AGENT_GOVERNANCE_VM_PIN_PATH ? new VmCurrentInvocation() : null;
+  const vmInvocation = process.env.AGENT_GOVERNANCE_VM_PIN_PATH ? new VmCurrentInvocation(store) : null;
   // Neither bundled host currently exposes a cryptographically distinct direct-human approval event.
   const trust = new TrustService(trustStore);
   const service = new RoutingAwareWorkflowService(

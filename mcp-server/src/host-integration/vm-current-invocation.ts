@@ -2,7 +2,11 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash, randomBytes } from "node:crypto";
 
 import { convergenceDigest } from "../convergence-logic.js";
-import { readPinnedVmEnvelope, registerVmObservationReader, type HostObservationBindingV1, type HostObservationReader, type VmInvocationSource } from "./observation-challenge.js";
+import { ObservationChallengeAuthority, readPinnedVmEnvelope, registerVmObservationReader,
+  type HostObservationBindingV1, type HostObservationReader, type ObservationChallengeBodyV1,
+  type VmInvocationSource } from "./observation-challenge.js";
+import { ContractValidator } from "../schema-validator.js";
+import type { WorkflowStore } from "../workflow-store.js";
 
 type JsonObject = Record<string, unknown>;
 type Pending = { registration: JsonObject; digest: string; expiresAt: number; active: boolean };
@@ -27,12 +31,46 @@ function reject(reason: string): never { throw new Error(`VM dispatch unavailabl
 export class VmCurrentInvocation implements VmInvocationSource {
   readonly serverEpoch = randomBytes(32).toString("base64url");
   readonly observationReader: HostObservationReader;
+  private readonly challenge: ObservationChallengeAuthority;
   private readonly pending = new Map<string, Pending>();
   private readonly usedNonces = new Map<string, number>();
   private readonly current = new AsyncLocalStorage<Current>();
 
-  constructor(private readonly clock: () => number = Date.now) {
+  constructor(private readonly store: WorkflowStore, private readonly clock: () => number = Date.now) {
     this.observationReader = registerVmObservationReader(this);
+    this.challenge = new ObservationChallengeAuthority(store, this.observationReader, "host", () => new Date(this.clock()));
+  }
+
+  hasCurrentRequest(): boolean { return this.current.getStore() !== undefined; }
+
+  verifyCurrentReceipt(): ObservationChallengeBodyV1 {
+    const current = this.current.getStore();
+    if (!current) reject("current reserved request is unavailable");
+    const registration = current.pending.registration;
+    const binding = object(registration.binding)!;
+    const input = { ...current.arguments };
+    delete input._hostAttestation;
+    delete input.responseMode;
+    const validator = new ContractValidator();
+    if (current.tool === "plan_workflow") {
+      const parsed = validator.planWorkflowRequest(input);
+      const task = "taskEnvelope" in parsed ? parsed.taskEnvelope : parsed;
+      if (task.taskId !== binding.taskId || binding.runId !== null || binding.attemptId !== null) {
+        reject("bootstrap task binding mismatch");
+      }
+    } else if (current.tool === "record_stage_result") {
+      const result = validator.stageResult(input);
+      const run = this.store.getRun(result.runId);
+      const stage = run?.plan.stages.find((candidate) => candidate.stageId === result.stageId);
+      if (!run || run.state !== "running" || run.revision !== result.expectedRevision
+          || !stage || stage.state !== "ready" || result.runId !== binding.runId
+          || run.plan.taskId !== binding.taskId) {
+        reject("stored workflow stage binding mismatch");
+      }
+    } else {
+      reject("tool is not an observed VM workflow call");
+    }
+    return this.challenge.verifyAndConsume(this.challenge.issue());
   }
 
   reserve(registrationEnvelope: unknown): { callId: string; serverEpoch: string } {
@@ -89,7 +127,10 @@ export class VmCurrentInvocation implements VmInvocationSource {
   async runCurrentRequest<T>(requestId: string | number | undefined, tool: string, args: JsonObject, run: () => Promise<T>): Promise<T> {
     const callId = typeof requestId === "string" ? requestId : "";
     const pending = this.pending.get(callId);
-    if (!pending) return run();
+    if (!pending) {
+      if (Object.hasOwn(args, "_hostAttestation")) reject("current reserved request is unavailable");
+      return run();
+    }
     if (pending.active || this.clock() >= pending.expiresAt) reject("reservation expired or already active");
     pending.active = true;
     try { return await this.current.run({ callId, pending, tool, arguments: args }, run); }

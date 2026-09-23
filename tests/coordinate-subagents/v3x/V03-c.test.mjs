@@ -3,7 +3,6 @@ import { createHash, generateKeyPairSync, sign } from 'node:crypto';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { setTimeout as delay } from 'node:timers/promises';
 import { test } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
@@ -11,14 +10,19 @@ import { z } from 'zod';
 
 import { canonicalJson, convergenceDigest } from '../../../mcp-server/src/convergence-logic.ts';
 import { VmCurrentInvocation } from '../../../mcp-server/src/host-integration/vm-current-invocation.ts';
-import { ObservationChallengeAuthority, registerVmObservationReader } from '../../../mcp-server/src/host-integration/observation-challenge.ts';
 import { InMemoryWorkflowStore } from '../../../mcp-server/src/workflow-store.ts';
 import { createMcpServer } from '../../../mcp-server/src/server.ts';
 
 const now = Date.parse('2026-09-23T00:00:01.000Z');
 const issuedAt = new Date(now).toISOString();
 const expiresAt = new Date(now + 60_000).toISOString();
-const unsigned = { taskEnvelope: { taskId: 'task-1' } };
+const unsigned = { schemaVersion: '1.0.0', taskId: 'task-1',
+  objective: 'Review the approved local task.', scope: { included: ['artifact-a'], excluded: [] },
+  acceptanceCriteria: ['Report a supported decision.'], riskLevel: 'low', workUnits: [],
+  requiredCapabilities: [], constraints: [],
+  authorization: { allowedActions: ['read'], prohibitedActions: [], approvalRequired: [] },
+  decision: { complexity: 'simple', hasConflicts: false },
+  orchestration: { requested: false, mcpAvailable: true } };
 
 function fixture() {
   const directory = mkdtempSync(join(tmpdir(), 'ags-v03-c-'));
@@ -73,13 +77,11 @@ function fixture() {
 
 test('product control RPC binds current SDK request ID; B-first copy leaves A usable', async () => {
   const f = fixture();
-  const vm = new VmCurrentInvocation(() => now + 1);
-  const reader = registerVmObservationReader(vm);
-  const challenge = new ObservationChallengeAuthority(new InMemoryWorkflowStore(), reader, 'host', () => new Date(now + 1));
+  const vm = new VmCurrentInvocation(new InMemoryWorkflowStore(), () => now + 1);
   const outcomes = [];
-  const service = { planWorkflow() {
-    try { challenge.verifyAndConsume(challenge.issue()); outcomes.push('accepted'); }
-    catch (error) { outcomes.push(error.message); }
+  const service = { planWorkflow(input) {
+    assert.equal(Object.hasOwn(input, '_hostAttestation'), false);
+    outcomes.push('accepted');
     return { schemaVersion: '1.0.0', ok: true, data: {}, error: null };
   } };
   const updates = { check: async () => null, takeNotice: () => null };
@@ -99,17 +101,24 @@ test('product control RPC binds current SDK request ID; B-first copy leaves A us
     const ticketB = await client.request({ method: 'vm/reserve_dispatch', params: { registration: b.envelope } }, response);
     assert.notEqual(ticketA.callId, ticketB.callId);
     const receiptA = f.receipt(a.body, ticketA.callId);
-    const call = async (id, receipt) => {
-      await clientTransport.send({ jsonrpc: '2.0', id, method: 'tools/call',
-        params: { name: 'plan_workflow', arguments: { ...unsigned, _hostAttestation: receipt } } });
-      for (let i = 0; i < 100 && outcomes.length < (id === ticketB.callId ? 1 : 2); i++) {
-        await delay(1);
-      }
-    };
-    await call(ticketB.callId, receiptA);
-    assert.match(outcomes[0], /invocationId binding mismatch/);
-    await call(ticketA.callId, receiptA);
-    assert.deepEqual(outcomes, [outcomes[0], 'accepted']);
+    const call = (id, receipt) => new Promise((resolve, reject) => {
+      const original = clientTransport.onmessage;
+      clientTransport.onmessage = (message) => {
+        original?.(message);
+        if (message.id === id) { clientTransport.onmessage = original; resolve(message); }
+      };
+      clientTransport.send({ jsonrpc: '2.0', id, method: 'tools/call',
+        params: { name: 'plan_workflow', arguments: { ...unsigned, _hostAttestation: receipt } } }).catch(reject);
+    });
+    const copiedSideband = await call('unreserved-new-request', receiptA);
+    assert.match(copiedSideband.error?.message ?? '', /current reserved request is unavailable/);
+    assert.deepEqual(outcomes, []);
+    const rejected = await call(ticketB.callId, receiptA);
+    assert.match(rejected.error?.message ?? '', /invocationId binding mismatch/);
+    assert.deepEqual(outcomes, []);
+    const accepted = await call(ticketA.callId, receiptA);
+    assert.equal(accepted.error, undefined);
+    assert.deepEqual(outcomes, ['accepted']);
     await assert.rejects(client.request({ method: 'vm/reserve_dispatch', params: { registration: a.envelope } }, response), /nonce already reserved/);
   } finally {
     await client.close();
@@ -121,15 +130,14 @@ test('product control RPC binds current SDK request ID; B-first copy leaves A us
 test('bad registration, copied sideband, concurrent contexts and restart fail closed', async () => {
   const f = fixture();
   try {
-    const vm = new VmCurrentInvocation(() => now + 1);
-    const reader = registerVmObservationReader(vm);
-    const challenge = new ObservationChallengeAuthority(new InMemoryWorkflowStore(), reader, 'host', () => new Date(now + 1));
+    const vm = new VmCurrentInvocation(new InMemoryWorkflowStore(), () => now + 1);
+    const reader = vm.observationReader;
     const a = f.registration(vm.serverEpoch, 'registration-A');
     const tampered = { ...a.envelope, signature: `${a.envelope.signature[0] === 'A' ? 'B' : 'A'}${a.envelope.signature.slice(1)}` };
     assert.throws(() => vm.reserve(tampered), /signature mismatch/);
     const ticketA = vm.reserve(a.envelope);
     assert.throws(() => vm.reserve(a.envelope), /nonce already reserved/);
-    const restart = new VmCurrentInvocation(() => now + 1);
+    const restart = new VmCurrentInvocation(new InMemoryWorkflowStore(), () => now + 1);
     assert.notEqual(restart.serverEpoch, vm.serverEpoch);
     assert.throws(() => restart.reserve(a.envelope), /registration binding is invalid/);
     const b = f.registration(vm.serverEpoch, 'registration-B', (body) => {
@@ -141,7 +149,7 @@ test('bad registration, copied sideband, concurrent contexts and restart fail cl
     const run = (ticket, receipt) => vm.runCurrentRequest(ticket.callId, 'plan_workflow',
       { ...unsigned, _hostAttestation: receipt }, async () => {
         await Promise.resolve();
-        challenge.verifyAndConsume(challenge.issue());
+        vm.verifyCurrentReceipt();
         return true;
       });
     await assert.rejects(run(ticketB, receiptA), /invocationId binding mismatch/);

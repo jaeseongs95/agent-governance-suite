@@ -39303,6 +39303,21 @@ var resolveConvergenceGateInputSchema = toolSchema(contractSchemas.resolveConver
 var recordStageResultInputSchema = toolSchema(contractSchemas.stageResult, {
   add: { responseMode: responseModeProperty }
 });
+var vmReceiptProperty = {
+  type: "object",
+  additionalProperties: false,
+  required: ["body", "signature", "keyId"],
+  properties: { body: { type: "string" }, signature: { type: "string" }, keyId: { type: "string" } }
+};
+function withVmReceipt(schema) {
+  const copy = structuredClone(schema);
+  const add = (branch) => ({
+    ...branch,
+    properties: { ...branch.properties ?? {}, _hostAttestation: vmReceiptProperty }
+  });
+  if (copy.oneOf) copy.oneOf = copy.oneOf.map(add);
+  return add(copy);
+}
 if (recordStageResultInputSchema.properties) {
   delete recordStageResultInputSchema.properties.executionContext;
 }
@@ -39558,7 +39573,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       {
         name: "plan_workflow",
         description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose.",
-        inputSchema: planWorkflowToolInputSchema(toolSchemaProfile),
+        inputSchema: vmInvocation ? withVmReceipt(planWorkflowToolInputSchema(toolSchemaProfile)) : planWorkflowToolInputSchema(toolSchemaProfile),
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
@@ -39600,7 +39615,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       {
         name: "record_stage_result",
         description: "Record one ordered stage result; use responseMode=compact to avoid echoing the accumulated receipt.",
-        inputSchema: recordStageResultInputSchema,
+        inputSchema: vmInvocation ? withVmReceipt(recordStageResultInputSchema) : recordStageResultInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
@@ -39716,7 +39731,16 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const handle = async () => {
       const args = asRecord2(request.params.arguments);
-      const attested = (tool, call) => hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
+      const attested = (tool, call) => {
+        if (vmInvocation && (vmInvocation.hasCurrentRequest() || Object.hasOwn(args, "_hostAttestation"))) {
+          if (!vmInvocation.hasCurrentRequest()) throw new Error("VM dispatch unavailable: current reserved request is unavailable");
+          vmInvocation.verifyCurrentReceipt();
+          const { _hostAttestation, ...unsigned } = args;
+          void _hostAttestation;
+          return call(unsigned);
+        }
+        return hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
+      };
       const withMode = (field, call, project) => {
         const mode = responseMode(args, field);
         return mode === null ? invalidInput(`${field} must be compact or full.`) : projectResult(call(), mode, project);
@@ -44162,11 +44186,14 @@ import { createHash as createHash11, randomBytes as randomBytes7 } from "node:cr
 import { createHash as createHash10, createHmac as createHmac6, createPublicKey, randomBytes as randomBytes6, timingSafeEqual as timingSafeEqual6, verify } from "node:crypto";
 import { lstatSync, readFileSync as readFileSync5 } from "node:fs";
 import path14 from "node:path";
+var CHALLENGE_PREFIX = "agoc1";
 var CHALLENGE_TTL_MS = 6e4;
 var OBSERVATION_MAX_AGE_MS = 5 * 6e4;
+var CLOCK_SKEW_MS = 5e3;
 var VM_PIN_PATH_ENV = "AGENT_GOVERNANCE_VM_PIN_PATH";
 var VM_DOMAIN = "vm-provider-terminal-to-governance";
 var VM_HOST = "flowmarshal-engine";
+var testReaders = /* @__PURE__ */ new WeakSet();
 var hostReaders = /* @__PURE__ */ new WeakMap();
 function exactKeys(value, keys2) {
   return Object.keys(value).length === keys2.length && keys2.every((key) => Object.hasOwn(value, key));
@@ -44354,6 +44381,89 @@ function observation(value) {
     reasoningEffort: object7.reasoningEffort
   };
 }
+function sameObservation(left, right) {
+  return left.observationId === right.observationId && left.observedAt === right.observedAt && left.model === right.model && left.reasoningEffort === right.reasoningEffort && Object.keys(left.binding).every((key) => left.binding[key] === right.binding[key]);
+}
+var ObservationChallengeAuthority = class {
+  constructor(store, reader, domain2, clock = () => /* @__PURE__ */ new Date()) {
+    this.store = store;
+    this.reader = reader;
+    this.domain = domain2;
+    this.clock = clock;
+    if (domain2 !== "host" && domain2 !== "test") throw invalid2("challenge domain is unsupported");
+    if (!reader || !(domain2 === "host" ? hostReaders.has(reader) : testReaders.has(reader))) {
+      throw invalid2("registered reader domain mismatch or trusted host observation unavailable");
+    }
+    this.key = Buffer.from(store.getOrCreateSecret(`${domain2}_observation_challenge_v1`, () => randomBytes6(32).toString("base64url")), "base64url");
+    if (this.key.length !== 32) throw invalid2("stored challenge key is invalid");
+  }
+  store;
+  reader;
+  domain;
+  clock;
+  key;
+  mac(encoded) {
+    return createHmac6("sha256", this.key).update(`${CHALLENGE_PREFIX}.${encoded}`, "utf8").digest();
+  }
+  issue() {
+    const verified = this.domain === "host" ? hostReaders.get(this.reader)() : null;
+    const observed = verified?.observation ?? observation(this.reader.readCurrentInvocation());
+    const now = this.clock();
+    const issuedAt = now.getTime();
+    if (!Number.isFinite(issuedAt) || timestamp2(observed.observedAt) > issuedAt + CLOCK_SKEW_MS || issuedAt - timestamp2(observed.observedAt) > OBSERVATION_MAX_AGE_MS) {
+      throw invalid2("host observation is stale or from the future");
+    }
+    if (verified && (issuedAt < timestamp2(verified.expiresAt) - CHALLENGE_TTL_MS - CLOCK_SKEW_MS || issuedAt >= timestamp2(verified.expiresAt) || !this.store.claimExecutionObservation(verified.nonceClaimId, verified.expiresAt, now.toISOString()))) {
+      throw invalid2("VM receipt expired or already consumed");
+    }
+    const body = {
+      ...observed,
+      version: 1,
+      domain: this.domain,
+      challengeId: randomBytes6(24).toString("base64url"),
+      issuedAt: now.toISOString(),
+      expiresAt: new Date(issuedAt + CHALLENGE_TTL_MS).toISOString()
+    };
+    const encoded = Buffer.from(JSON.stringify(body), "utf8").toString("base64url");
+    return `${CHALLENGE_PREFIX}.${encoded}.${this.mac(encoded).toString("base64url")}`;
+  }
+  verifyAndConsume(token) {
+    if (typeof token !== "string" || token.length > 8192) throw invalid2("token is malformed");
+    const [prefix, encoded, signature, extra] = token.split(".");
+    if (prefix !== CHALLENGE_PREFIX || !encoded || !signature || extra !== void 0) throw invalid2("token is malformed");
+    if (!/^[A-Za-z0-9_-]+$/u.test(encoded) || !/^[A-Za-z0-9_-]+$/u.test(signature) || Buffer.from(encoded, "base64url").toString("base64url") !== encoded) throw invalid2("token is malformed");
+    const actual = Buffer.from(signature, "base64url");
+    if (actual.toString("base64url") !== signature) throw invalid2("token is malformed");
+    const expected = this.mac(encoded);
+    if (actual.length !== expected.length || !timingSafeEqual6(actual, expected)) throw invalid2("signature mismatch");
+    let parsed;
+    try {
+      parsed = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
+    } catch {
+      throw invalid2("body is malformed");
+    }
+    const raw = record3(parsed);
+    const observed = observation(raw);
+    if (!raw || raw.version !== 1 || raw.domain !== this.domain || !nonempty2(raw.challengeId) || !Number.isFinite(timestamp2(raw.issuedAt)) || !Number.isFinite(timestamp2(raw.expiresAt))) {
+      throw invalid2("body is malformed");
+    }
+    const issuedAt = timestamp2(raw.issuedAt);
+    const expiresAt = timestamp2(raw.expiresAt);
+    const now = this.clock();
+    const checkedAt = now.getTime();
+    if (!Number.isFinite(checkedAt) || checkedAt < issuedAt - CLOCK_SKEW_MS || checkedAt >= expiresAt || expiresAt - issuedAt !== CHALLENGE_TTL_MS || timestamp2(observed.observedAt) > issuedAt + CLOCK_SKEW_MS || issuedAt - timestamp2(observed.observedAt) > OBSERVATION_MAX_AGE_MS) {
+      throw invalid2("challenge expired or has invalid lifetime");
+    }
+    const verified = this.domain === "host" ? hostReaders.get(this.reader)() : null;
+    if (verified && (checkedAt < timestamp2(verified.expiresAt) - CHALLENGE_TTL_MS - CLOCK_SKEW_MS || checkedAt >= timestamp2(verified.expiresAt))) throw invalid2("VM receipt expired");
+    const current = verified?.observation ?? observation(this.reader.readCurrentInvocation());
+    if (!sameObservation(observed, current)) throw invalid2("different host invocation observation");
+    if (!this.store.claimExecutionObservation(`${this.domain}-challenge-v1:${raw.challengeId}`, raw.expiresAt, now.toISOString())) {
+      throw invalid2("challenge was already consumed");
+    }
+    return raw;
+  }
+};
 
 // mcp-server/src/host-integration/vm-current-invocation.ts
 function object6(value) {
@@ -44377,16 +44487,50 @@ function reject(reason) {
   throw new Error(`VM dispatch unavailable: ${reason}`);
 }
 var VmCurrentInvocation = class {
-  constructor(clock = Date.now) {
+  constructor(store, clock = Date.now) {
+    this.store = store;
     this.clock = clock;
     this.observationReader = registerVmObservationReader(this);
+    this.challenge = new ObservationChallengeAuthority(store, this.observationReader, "host", () => new Date(this.clock()));
   }
+  store;
   clock;
   serverEpoch = randomBytes7(32).toString("base64url");
   observationReader;
+  challenge;
   pending = /* @__PURE__ */ new Map();
   usedNonces = /* @__PURE__ */ new Map();
   current = new AsyncLocalStorage();
+  hasCurrentRequest() {
+    return this.current.getStore() !== void 0;
+  }
+  verifyCurrentReceipt() {
+    const current = this.current.getStore();
+    if (!current) reject("current reserved request is unavailable");
+    const registration = current.pending.registration;
+    const binding2 = object6(registration.binding);
+    const input2 = { ...current.arguments };
+    delete input2._hostAttestation;
+    delete input2.responseMode;
+    const validator = new ContractValidator();
+    if (current.tool === "plan_workflow") {
+      const parsed = validator.planWorkflowRequest(input2);
+      const task = "taskEnvelope" in parsed ? parsed.taskEnvelope : parsed;
+      if (task.taskId !== binding2.taskId || binding2.runId !== null || binding2.attemptId !== null) {
+        reject("bootstrap task binding mismatch");
+      }
+    } else if (current.tool === "record_stage_result") {
+      const result = validator.stageResult(input2);
+      const run = this.store.getRun(result.runId);
+      const stage = run?.plan.stages.find((candidate) => candidate.stageId === result.stageId);
+      if (!run || run.state !== "running" || run.revision !== result.expectedRevision || !stage || stage.state !== "ready" || result.runId !== binding2.runId || run.plan.taskId !== binding2.taskId) {
+        reject("stored workflow stage binding mismatch");
+      }
+    } else {
+      reject("tool is not an observed VM workflow call");
+    }
+    return this.challenge.verifyAndConsume(this.challenge.issue());
+  }
   reserve(registrationEnvelope) {
     const { body, bytes } = readPinnedVmEnvelope(registrationEnvelope);
     const producer = object6(body.producer), binding2 = object6(body.binding);
@@ -44414,7 +44558,10 @@ var VmCurrentInvocation = class {
   async runCurrentRequest(requestId, tool, args, run) {
     const callId = typeof requestId === "string" ? requestId : "";
     const pending = this.pending.get(callId);
-    if (!pending) return run();
+    if (!pending) {
+      if (Object.hasOwn(args, "_hostAttestation")) reject("current reserved request is unavailable");
+      return run();
+    }
     if (pending.active || this.clock() >= pending.expiresAt) reject("reservation expired or already active");
     pending.active = true;
     try {
@@ -44469,7 +44616,7 @@ async function main() {
   });
   const validator = new ContractValidator();
   const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
-  const vmInvocation = process.env.AGENT_GOVERNANCE_VM_PIN_PATH ? new VmCurrentInvocation() : null;
+  const vmInvocation = process.env.AGENT_GOVERNANCE_VM_PIN_PATH ? new VmCurrentInvocation(store) : null;
   const trust = new TrustService(trustStore);
   const service = new RoutingAwareWorkflowService(
     modelRouting.bridge,
