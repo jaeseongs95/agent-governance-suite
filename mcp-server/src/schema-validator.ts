@@ -65,6 +65,7 @@ import {
   type SemanticDecisionRequestV1,
   type SemanticDecisionAdviceV1,
   type SemanticDecisionPolicyV1,
+  type SemanticEgressConfigV1,
   type SemanticModelAssignmentRequestV1,
   type ModelRoutingDecisionV3,
   type ModelApplicationRequestV3,
@@ -159,6 +160,7 @@ export const contractSchemas = {
   semanticDecisionRequestV1: loadSchema("semantic-decision-request.v1.schema.json"),
   semanticDecisionAdviceV1: loadSchema("semantic-decision-advice.v1.schema.json"),
   semanticDecisionPolicyV1: loadSchema("semantic-decision-policy.v1.schema.json"),
+  semanticEgressConfigV1: loadSchema("semantic-egress-config.v1.schema.json"),
   semanticModelAssignmentRequestV1: loadSchema("semantic-model-assignment-request.v1.schema.json"),
   modelRoutingDecisionV3: loadSchema("model-routing-decision.v3.schema.json"),
   modelApplicationRequestV3: loadSchema("model-application-request.v3.schema.json"),
@@ -538,6 +540,10 @@ export class ContractValidator {
     const result = this.assertSemantic<SemanticDecisionPolicyV1>("semanticDecisionPolicyV1", value);
     assertSemanticPolicyConsistency(result);
     return result;
+  }
+
+  semanticEgressConfigV1(value: unknown): SemanticEgressConfigV1 {
+    return this.assertSemantic<SemanticEgressConfigV1>("semanticEgressConfigV1", value);
   }
 
   semanticModelAssignmentRequestV1(value: unknown): SemanticModelAssignmentRequestV1 {
