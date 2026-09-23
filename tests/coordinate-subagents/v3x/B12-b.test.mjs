@@ -4,6 +4,7 @@ import { mkdtempSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { Worker } from 'node:worker_threads';
 import { test } from 'vitest';
 
 import { canonicalJson } from '../../../mcp-server/src/convergence-logic.ts';
@@ -56,7 +57,8 @@ function seedCorrectedEvent(db) {
 
 function observation(db, revision = 1, coverage = 'complete', remaining = 10) {
   const w = window(revision, coverage, remaining);
-  const response = { schemaVersion: '1.0.0', collectorId: 'collector-1', sequence: revision,
+  const response = { schemaVersion: '1.0.0', collectorId: 'collector-1',
+    source: 'provider-reported', accountScope, resourcePoolId: 'pool-1', sequence: revision,
     kind: 'full', snapshot: { schemaVersion: '1.0.0', accountScope,
       resourcePoolId: 'pool-1', accessPath: 'subscription', windows: [w] } };
   const payload = canonicalJson(response);
@@ -98,6 +100,144 @@ async function isolated(run) {
     } });
   } finally { db.close(); rmSync(root, { recursive: true, force: true }); }
 }
+
+function waitFor(worker, type) {
+  return new Promise((resolve, reject) => {
+    const onMessage = message => {
+      if (message.type !== type) return;
+      cleanup(); resolve(message);
+    };
+    const onError = error => { cleanup(); reject(error); };
+    const onExit = code => { cleanup(); reject(new Error(`B12-b worker exited before ${type}: ${code}`)); };
+    const cleanup = () => {
+      worker.off('message', onMessage);
+      worker.off('error', onError);
+      worker.off('exit', onExit);
+    };
+    worker.on('message', onMessage);
+    worker.once('error', onError);
+    worker.once('exit', onExit);
+  });
+}
+
+async function race(config, first, second) {
+  const barrier = new SharedArrayBuffer(4);
+  const workers = [first, second].map((data, index) => new Worker(
+    new URL('./fixtures/b12b-race-worker.mjs', import.meta.url),
+    { execArgv: ['--import', 'tsx'], workerData: { config, barrier,
+      hold: index === 0, ...data } },
+  ));
+  try {
+    await Promise.all(workers.map(worker => waitFor(worker, 'ready')));
+    const firstHolding = waitFor(workers[0], 'holding');
+    const firstResult = waitFor(workers[0], 'result');
+    workers[0].postMessage('go');
+    await firstHolding;
+    const busyResult = waitFor(workers[1], 'result');
+    workers[1].postMessage('go');
+    const busy = await busyResult;
+    assert.match(busy.error?.message ?? '', /locked/u);
+    assert.equal(busy.transactionOpen, false);
+    Atomics.store(new Int32Array(barrier), 0, 1);
+    Atomics.notify(new Int32Array(barrier), 0);
+    const committed = await firstResult;
+    const retryResult = waitFor(workers[1], 'result');
+    workers[1].postMessage('retry');
+    return [committed, await retryResult];
+  } finally {
+    Atomics.store(new Int32Array(barrier), 0, 1);
+    Atomics.notify(new Int32Array(barrier), 0);
+    await Promise.all(workers.map(worker => worker.terminate()));
+  }
+}
+
+function seedDispatch(db) {
+  const requestJson = canonicalJson({ requestKey: 'request-race', taskId: 'task-race',
+    runId: 'run-race', slotId: 'slot-race', attemptId: 'attempt-race',
+    planRevision: 1, leaseEpoch: 1, accountScope, resourcePoolId: 'pool-1',
+    expiresAt: '2026-09-23T01:00:00.000Z',
+    windows: [{ windowId: 'weekly', amount: 4, unit: 'request' }],
+    policyDigest: digest('policy-race') });
+  const requestDigest = digest(requestJson);
+  db.prepare(`INSERT INTO resource_reservations VALUES
+    ('reservation-race','request-race',?,'task-race','run-race','slot-race',
+     'attempt-race',1,1,'committed','2026-09-23T00:00:00.000Z',
+     '2026-09-23T01:00:00.000Z')`).run(requestDigest);
+  db.prepare(`INSERT INTO resource_reservation_holds VALUES
+    ('reservation-race',?,?,'weekly',1,4,'request')`).run(accountScope, 'pool-1');
+  db.prepare(`INSERT INTO resource_admission_requests
+    (request_key,request_digest,plan_revision,request_json,state,reservation_id)
+    VALUES ('request-race',?,1,?,'admitted','reservation-race')`).run(requestDigest, requestJson);
+  db.prepare(`INSERT INTO resource_intents VALUES
+    ('intent-race','reservation-race',?,'committed','2026-09-23T00:00:00.000Z',
+     '2026-09-23T00:00:00.000Z')`).run(requestDigest);
+}
+
+const raceUsage = () => ({ kind: 'usage', eventId: 'race-event-1',
+  reservationId: 'reservation-race', intentId: 'intent-race', jobBindingDigest,
+  accountScope, poolId: 'pool-1', windowId: 'weekly', amount: 2, unit: 'request',
+  basis: 'delta', coverage: 'partial', sequence: 1, sourceDigest: digest('race-usage'),
+  occurredAt: '2026-09-23T00:02:00.000Z' });
+
+test('B12-b snapshot writer lock makes an old concurrent apply stale', async () => {
+  await isolated(async ({ db, store, config }) => {
+    const expected = store.capture(accountScope, 'pool-1', 'weekly');
+    const proof = { observationId: expected.observationId, revision: expected.revision,
+      input: input() };
+    const response = { schemaVersion: '1.0.0', collectorId: 'collector-1',
+      source: 'provider-reported', accountScope, resourcePoolId: 'pool-1',
+      sequence: 2, kind: 'full', snapshot: { schemaVersion: '1.0.0', accountScope,
+        resourcePoolId: 'pool-1', accessPath: 'subscription',
+        windows: [window(2, 'complete', 8)] } };
+    const [writer, applied] = await race(config,
+      { action: 'snapshot', response }, { action: 'reconcile', expected, proof });
+    assert.equal(writer.error, undefined);
+    assert.equal(writer.result.kind, 'applied');
+    assert.equal(applied.result.kind, 'stale');
+    assert.equal(writer.transactionOpen, false);
+    assert.equal(applied.transactionOpen, false);
+    assert.equal(store.readCurrent(accountScope, 'pool-1', 'weekly'), null);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM resource_usage_reconciliation').get().n, 0);
+  });
+});
+
+test('B12-b B11 writer lock makes an old concurrent apply stale', async () => {
+  await isolated(async ({ db, store, config }) => {
+    seedDispatch(db);
+    const expected = store.capture(accountScope, 'pool-1', 'weekly');
+    const proof = { observationId: expected.observationId, revision: expected.revision,
+      input: input() };
+    const [writer, applied] = await race(config,
+      { action: 'settle', usage: raceUsage() },
+      { action: 'reconcile', expected, proof });
+    assert.equal(writer.error, undefined);
+    assert.equal(writer.result.kind, 'recorded');
+    assert.equal(applied.result.kind, 'stale');
+    assert.equal(writer.transactionOpen, false);
+    assert.equal(applied.transactionOpen, false);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM resource_usage_events').get().n, 1);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM resource_usage_reconciliation').get().n, 0);
+  });
+});
+
+test('B12-b two concurrent reconcile writers apply one generation once', async () => {
+  await isolated(async ({ db, store, config }) => {
+    const expected = store.capture(accountScope, 'pool-1', 'weekly');
+    const envelope = value => ({ observationId: expected.observationId,
+      revision: expected.revision, input: value });
+    const [first, second] = await race(config,
+      { action: 'reconcile', expected, proof: envelope(input()) },
+      { action: 'reconcile', expected,
+        proof: envelope({ ...input(), internalSlotBudget: {
+          unit: 'slot', reservedAmount: 3, observedUse: 1 } }) });
+    assert.equal(first.result.kind, 'applied');
+    assert.equal(second.result.kind, 'stale');
+    assert.equal(first.transactionOpen, false);
+    assert.equal(second.transactionOpen, false);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM resource_usage_reconciliation').get().n, 1);
+    assert.equal(db.prepare('SELECT generation FROM resource_usage_reconciliation').get().generation, 1);
+  });
+});
 
 test('B12-b applies once, replays duplicate correction, and survives restart', async () => {
   await isolated(({ db, store, token, restart }) => {
