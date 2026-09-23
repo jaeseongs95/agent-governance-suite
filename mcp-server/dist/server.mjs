@@ -20738,9 +20738,9 @@ function generateChecks(doc, ctx, schema, accessor) {
         break;
       }
       case "length_equals": {
-        const exact4 = numericOperand(def.length, "length_equals");
-        const len = codePointLengthVar(doc, ctx, currentAccessor, `${currentAccessor}.length >= ${exact4} && ${currentAccessor}.length <= ${def.length * 2}`);
-        doc.write(`if (${len} !== ${exact4}) return INVALID;`);
+        const exact5 = numericOperand(def.length, "length_equals");
+        const len = codePointLengthVar(doc, ctx, currentAccessor, `${currentAccessor}.length >= ${exact5} && ${currentAccessor}.length <= ${def.length * 2}`);
+        doc.write(`if (${len} !== ${exact5}) return INVALID;`);
         break;
       }
       case "min_size":
@@ -24077,8 +24077,8 @@ function rewriteKeyNames(ctx) {
       bySchema.set(entry.schema, entry);
   }
   const rewrites = /* @__PURE__ */ new Map();
-  for (const record5 of pendingRecords.get(ctx) ?? []) {
-    const seen = ctx.seen.get(record5);
+  for (const record6 of pendingRecords.get(ctx) ?? []) {
+    const seen = ctx.seen.get(record6);
     const names = (seen?.def ?? seen?.schema)?.propertyNames;
     if (!names || names === true || rewrites.has(names))
       continue;
@@ -28922,8 +28922,8 @@ function canonicalJson(value, subject = "Convergence input") {
   }
   if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
   if (value && typeof value === "object") {
-    const record5 = value;
-    return `{${Object.keys(record5).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record5[key], subject)}`).join(",")}}`;
+    const record6 = value;
+    return `{${Object.keys(record6).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record6[key], subject)}`).join(",")}}`;
   }
   throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
 }
@@ -28969,10 +28969,10 @@ function surfaceBacked(surface, observedOutsideCheckouts) {
   return existsSync((unchanged ? path3.posix.dirname(surface.physical) : surface.physical) || "/");
 }
 function activeRootIdentity(root, stored) {
-  const digest5 = surfaceDigest(root);
-  const observed = stored && stored.surfaceDigest === digest5 ? stored.identity : null;
+  const digest6 = surfaceDigest(root);
+  const observed = stored && stored.surfaceDigest === digest6 ? stored.identity : null;
   const wasInferred = (index) => observed !== null && stored.inferred[index] === true;
-  const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest5 };
+  const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest6 };
   if (observed && observed.surfaces.every((surface, index) => surface.git !== null && !wasInferred(index))) {
     return { ...known, identity: observed, resolved: true, fresh: false, inferred: stored.inferred };
   }
@@ -29469,20 +29469,20 @@ var SqliteContinuityStore = class {
       return { kind: "purged" };
     });
   }
-  setPendingMarker(taskCorrelation, epoch, source, revision, digest5, rootId, now) {
+  setPendingMarker(taskCorrelation, epoch, source, revision, digest6, rootId, now) {
     const result = this.database.prepare(`
       UPDATE continuity_tasks SET pending_source = ?, pending_revision = ?, pending_digest = ?,
         pending_root_id = ?, pending_consumed = 0, updated_at = ?
       WHERE task_correlation = ? AND current_epoch = ?
-    `).run(source, revision, digest5, rootId, now, taskCorrelation, epoch);
+    `).run(source, revision, digest6, rootId, now, taskCorrelation, epoch);
     return result.changes === 1;
   }
-  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest5, now) {
+  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest6, now) {
     const result = this.database.prepare(`
       UPDATE continuity_tasks SET pending_consumed = 1, last_auto_injected_revision = ?, updated_at = ?
       WHERE task_correlation = ? AND current_epoch = ? AND pending_source = 'workflow'
         AND pending_revision = ? AND pending_digest = ? AND pending_consumed = 0
-    `).run(revision, now, taskCorrelation, epoch, revision, digest5);
+    `).run(revision, now, taskCorrelation, epoch, revision, digest6);
     return result.changes === 1;
   }
   recordObservation(taskCorrelation, epoch, event, turnHash, success2, now) {
@@ -30944,20 +30944,20 @@ function assertSemanticApplicationBinding(application, decision) {
     same(application.observation.decisionDigest, application.decisionDigest, "observation.decisionDigest");
   }
 }
-function assertSemanticRecordIntegrity(record5) {
-  seal2(record5, "recordDigest");
-  time3(record5.dispatchedAt);
-  if (record5.observed) {
-    requireContract(time3(record5.observed.observedAt) >= time3(record5.dispatchedAt), "Observation cannot precede dispatch.");
-    same(record5.observed.binding, record5.binding, "record.observed.binding");
-    same(record5.observed.target, record5.target, "record.observed.target");
-    same(record5.observed.decisionDigest, record5.decisionDigest, "record.observed.decisionDigest");
+function assertSemanticRecordIntegrity(record6) {
+  seal2(record6, "recordDigest");
+  time3(record6.dispatchedAt);
+  if (record6.observed) {
+    requireContract(time3(record6.observed.observedAt) >= time3(record6.dispatchedAt), "Observation cannot precede dispatch.");
+    same(record6.observed.binding, record6.binding, "record.observed.binding");
+    same(record6.observed.target, record6.target, "record.observed.target");
+    same(record6.observed.decisionDigest, record6.decisionDigest, "record.observed.decisionDigest");
   }
 }
-function assertSemanticRecordBinding(record5, decision) {
+function assertSemanticRecordBinding(record6, decision) {
   const fields = ["binding", "target", "decisionDigest", "requestDigest", "catalogDigest", "policyDigest", "capabilitySnapshotDigest", "requested", "selected", "semantic"];
-  for (const field of fields) same(record5[field], decision[field], `record.${field}`);
-  same(record5.dispatched, decision.selected, "record.dispatched");
+  for (const field of fields) same(record6[field], decision[field], `record.${field}`);
+  same(record6.dispatched, decision.selected, "record.dispatched");
 }
 
 // mcp-server/src/schema-validator.ts
@@ -31366,18 +31366,18 @@ var ContractValidator = class {
   }
   modelApplicationRecordForDecisionV3(value, decisionValue) {
     const decision = this.modelRoutingDecisionV3(decisionValue);
-    const record5 = this.modelApplicationRecordV3(value);
-    assertSemanticRecordBinding(record5, decision);
-    return record5;
+    const record6 = this.modelApplicationRecordV3(value);
+    assertSemanticRecordBinding(record6, decision);
+    return record6;
   }
   providerResult(rootDirectory, resultSchema, outputSchema, value) {
     const declared = this.readBoundSchema(rootDirectory, resultSchema, "provider result");
     const declaresVersion = Boolean(declared.properties && Object.prototype.hasOwnProperty.call(declared.properties, "schemaVersion"));
     let providerView = value;
     if (value && typeof value === "object" && !Array.isArray(value)) {
-      const record5 = declaresVersion ? { ...value } : Object.fromEntries(Object.entries(value).filter(([key]) => key !== "schemaVersion"));
-      if (Array.isArray(record5.artifacts)) record5.artifacts = record5.artifacts.map(artifactDigestView(declared));
-      providerView = record5;
+      const record6 = declaresVersion ? { ...value } : Object.fromEntries(Object.entries(value).filter(([key]) => key !== "schemaVersion"));
+      if (Array.isArray(record6.artifacts)) record6.artifacts = record6.artifacts.map(artifactDigestView(declared));
+      providerView = record6;
     }
     this.assertSchemaFile(rootDirectory, resultSchema, providerView, "provider result");
     const result = value;
@@ -31398,19 +31398,19 @@ var ContractValidator = class {
         value.forEach(visit2);
         return;
       }
-      const record5 = value;
-      if ((record5.type === "object" || record5.properties) && record5.additionalProperties !== false) {
+      const record6 = value;
+      if ((record6.type === "object" || record6.properties) && record6.additionalProperties !== false) {
         throw new WorkflowContractError(
           "INVALID_INPUT",
           "A reference-only provider output schema must close every declared object.",
           { schemaPath: reference.path }
         );
       }
-      if (typeof record5.const === "string") tokens.add(record5.const);
-      if (Array.isArray(record5.enum)) {
-        for (const item of record5.enum) if (typeof item === "string") tokens.add(item);
+      if (typeof record6.const === "string") tokens.add(record6.const);
+      if (Array.isArray(record6.enum)) {
+        for (const item of record6.enum) if (typeof item === "string") tokens.add(item);
       }
-      Object.values(record5).forEach(visit2);
+      Object.values(record6).forEach(visit2);
     };
     visit2(schema);
     return tokens;
@@ -31448,12 +31448,12 @@ var ContractValidator = class {
       });
     }
     const raw = readFileSync2(schemaPath);
-    const digest5 = `sha256:${createHash4("sha256").update(raw).digest("hex")}`;
-    if (digest5 !== reference.digest) {
+    const digest6 = `sha256:${createHash4("sha256").update(raw).digest("hex")}`;
+    if (digest6 !== reference.digest) {
       throw new WorkflowContractError("STALE_REVISION", `${label} schema changed after planning.`, {
         schemaPath: reference.path,
         expectedDigest: reference.digest,
-        actualDigest: digest5
+        actualDigest: digest6
       });
     }
     return JSON.parse(raw.toString("utf8"));
@@ -33876,8 +33876,8 @@ function failure2(code, message) {
 }
 function binding(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const record5 = value;
-  return typeof record5.host === "string" && record5.host && typeof record5.sessionId === "string" && record5.sessionId ? { host: record5.host, sessionId: record5.sessionId } : null;
+  const record6 = value;
+  return typeof record6.host === "string" && record6.host && typeof record6.sessionId === "string" && record6.sessionId ? { host: record6.host, sessionId: record6.sessionId } : null;
 }
 var SessionMessageService = class {
   stateDirectory;
@@ -34033,9 +34033,9 @@ var ModelRoutingServiceCore = class {
   application(recordDigest) {
     assert2(this.store, "ROUTING_STORE_UNAVAILABLE");
     if (this.readRecord) return this.readRecord(recordDigest);
-    const record5 = this.store.application(recordDigest);
-    assert2(record5?.schemaVersion !== "3.0.0", "V3_RECORD_READER_UNAVAILABLE");
-    return record5;
+    const record6 = this.store.application(recordDigest);
+    assert2(record6?.schemaVersion !== "3.0.0", "V3_RECORD_READER_UNAVAILABLE");
+    return record6;
   }
   query(input2) {
     return queryCatalog(input2, this.catalogDirectory);
@@ -34098,18 +34098,18 @@ var ModelRoutingServiceCore = class {
     }
   }
 };
-function checkApplicationArtifactBinding(record5, { binding: binding2, target, requiredFields = [], store = null }) {
-  verifySeal(record5, "recordDigest");
-  if (requiredFields.length) assert2(store && canonical(store.application(record5.recordDigest)) === canonical(record5) && record5.observationAdmitted, "PERSISTED_HOST_OBSERVATION_REQUIRED");
-  assert2(canonical(record5.binding) === canonical(binding2) && canonical(record5.target) === canonical(target), "STAGE_ARTIFACT_BINDING_MISMATCH");
-  const map2 = { model: record5.modelVerification, reasoning: record5.reasoningVerification, runtimeMode: record5.runtimeModeVerification };
+function checkApplicationArtifactBinding(record6, { binding: binding2, target, requiredFields = [], store = null }) {
+  verifySeal(record6, "recordDigest");
+  if (requiredFields.length) assert2(store && canonical(store.application(record6.recordDigest)) === canonical(record6) && record6.observationAdmitted, "PERSISTED_HOST_OBSERVATION_REQUIRED");
+  assert2(canonical(record6.binding) === canonical(binding2) && canonical(record6.target) === canonical(target), "STAGE_ARTIFACT_BINDING_MISMATCH");
+  const map2 = { model: record6.modelVerification, reasoning: record6.reasoningVerification, runtimeMode: record6.runtimeModeVerification };
   assert2(requiredFields.every((k) => Object.hasOwn(map2, k) && map2[k] === "matched"), "REQUIRED_OBSERVATION_UNVERIFIED");
-  return { diagnosticArtifactAccepted: true, trustedExecutionGateSatisfied: false, uri: `ags-model-record:${record5.recordDigest.slice(7)}`, digest: record5.recordDigest };
+  return { diagnosticArtifactAccepted: true, trustedExecutionGateSatisfied: false, uri: `ags-model-record:${record6.recordDigest.slice(7)}`, digest: record6.recordDigest };
 }
 
 // mcp-server/src/routing-v3/decision-codec.ts
-function readDecision(store, digest5, validator2) {
-  const entry = store.decision(digest5);
+function readDecision(store, digest6, validator2) {
+  const entry = store.decision(digest6);
   if (!entry) return null;
   switch (entry.decision.schemaVersion) {
     case "2.0.0":
@@ -34389,38 +34389,38 @@ var ModelRoutingWorkflowBridge = class {
         (artifact.digest.startsWith("sha256:") ? artifact.digest : `sha256:${artifact.digest}`) === recordDigest,
         "Routing artifact URI and digest disagree."
       );
-      const record5 = this.validator.modelApplicationRecordV2(this.routing.application(recordDigest));
-      const row = this.routing.database.prepare("SELECT request_json,payload FROM ags_model_decisions_v2 WHERE decision_digest=?").get(record5.decisionDigest);
+      const record6 = this.validator.modelApplicationRecordV2(this.routing.application(recordDigest));
+      const row = this.routing.database.prepare("SELECT request_json,payload FROM ags_model_decisions_v2 WHERE decision_digest=?").get(record6.decisionDigest);
       requireCondition(row, "Routing application has no stored decision.");
       const decision = this.validator.modelRoutingDecisionV2(JSON.parse(row.payload));
       const request = this.validator.modelSelectionRequestV2(JSON.parse(row.request_json));
       const { decisionDigest, ...unsigned } = decision;
       requireCondition(
-        convergenceDigest(unsigned) === decisionDigest && convergenceDigest(request) === decision.requestDigest && record5.requestDigest === decision.requestDigest && canonicalJson(request.binding) === canonicalJson(decision.binding) && record5.catalogDigest === decision.catalogDigest && record5.policyDigest === decision.policyDigest && record5.capabilitySnapshotDigest === decision.capabilitySnapshotDigest && canonicalJson(record5.selected) === canonicalJson(decision.selected),
+        convergenceDigest(unsigned) === decisionDigest && convergenceDigest(request) === decision.requestDigest && record6.requestDigest === decision.requestDigest && canonicalJson(request.binding) === canonicalJson(decision.binding) && record6.catalogDigest === decision.catalogDigest && record6.policyDigest === decision.policyDigest && record6.capabilitySnapshotDigest === decision.capabilitySnapshotDigest && canonicalJson(record6.selected) === canonicalJson(decision.selected),
         "Routing application decision/request binding is corrupt."
       );
       requireCondition(
-        record5.recordDigest === recordDigest && record5.binding.runId === result.runId && record5.binding.stageId === result.stageId && record5.binding.revision === result.expectedRevision,
+        record6.recordDigest === recordDigest && record6.binding.runId === result.runId && record6.binding.stageId === result.stageId && record6.binding.revision === result.expectedRevision,
         "Routing application belongs to a different run, stage or revision."
       );
-      const { guarded } = this.current(record5.binding);
+      const { guarded } = this.current(record6.binding);
       requireCondition(
         !["high", "critical"].includes(guarded.proposal.taskEnvelope.riskLevel) || request.highRisk,
         "A routing artifact cannot downgrade the task risk."
       );
-      requireCondition(artifact.targetDigest === record5.binding.candidateDigest, "Routing artifact candidate digest does not match its application.");
+      requireCondition(artifact.targetDigest === record6.binding.candidateDigest, "Routing artifact candidate digest does not match its application.");
       const requiredFields = result.state === "passed" ? [.../* @__PURE__ */ new Set([...request.requirements.requireObservable, ...request.highRisk ? ["model", "reasoning", "runtimeMode"] : []])] : [];
-      checkApplicationArtifactBinding(record5, { binding: decision.binding, target: decision.target, requiredFields, store: this.routing });
+      checkApplicationArtifactBinding(record6, { binding: decision.binding, target: decision.target, requiredFields, store: this.routing });
       if (result.state === "passed" && request.highRisk) {
         requireCondition(
-          record5.observationAdmitted && record5.originVerified && record5.terminalOutcome === "succeeded",
+          record6.observationAdmitted && record6.originVerified && record6.terminalOutcome === "succeeded",
           "Passing high-risk routing evidence requires an admitted successful host outcome."
         );
       }
       if (result.state === "passed" && request.role === "independent-audit") {
-        const history = this.history(record5.binding, record5.decisionDigest);
+        const history = this.history(record6.binding, record6.decisionDigest);
         requireCondition(
-          !history.actors.includes(record5.target.actorId) && !history.sessions.includes(`${record5.target.host}/${record5.target.sessionId}`) && !request.requirements.excludedActors.includes(record5.target.actorId) && !request.requirements.excludedSessions.includes(`${record5.target.host}/${record5.target.sessionId}`),
+          !history.actors.includes(record6.target.actorId) && !history.sessions.includes(`${record6.target.host}/${record6.target.sessionId}`) && !request.requirements.excludedActors.includes(record6.target.actorId) && !request.requirements.excludedSessions.includes(`${record6.target.host}/${record6.target.sessionId}`),
           "Routing audit actor participated before final adoption."
         );
       }
@@ -39282,14 +39282,14 @@ var ModelRoutingStore = class {
           );
         }
       }
-      const record5 = makeRecord(observation2);
-      verifySeal(record5, "recordDigest");
-      assert2(record5.schemaVersion === input2.schemaVersion, "RECORD_VERSION_MISMATCH");
-      const old = this.database.prepare("SELECT payload FROM ags_model_applications_v2 WHERE record_digest=?").get(record5.recordDigest);
-      assert2(!old || old.payload === canonical(record5), "RECORD_CONFLICT");
-      this.database.prepare("INSERT OR IGNORE INTO ags_model_applications_v2 VALUES (?,?,?,?,?)").run(record5.recordDigest, record5.decisionDigest, digest(record5.binding), canonical(record5), now);
+      const record6 = makeRecord(observation2);
+      verifySeal(record6, "recordDigest");
+      assert2(record6.schemaVersion === input2.schemaVersion, "RECORD_VERSION_MISMATCH");
+      const old = this.database.prepare("SELECT payload FROM ags_model_applications_v2 WHERE record_digest=?").get(record6.recordDigest);
+      assert2(!old || old.payload === canonical(record6), "RECORD_CONFLICT");
+      this.database.prepare("INSERT OR IGNORE INTO ags_model_applications_v2 VALUES (?,?,?,?,?)").run(record6.recordDigest, record6.decisionDigest, digest(record6.binding), canonical(record6), now);
       if (observationToken !== null) this.database.prepare("UPDATE ags_model_receipts_v1 SET consumed_at=? WHERE nonce=?").run(now, observationToken);
-      return { record: record5, artifact: { kind: `model-application.v${input2.schemaVersion[0]}`, uri: `ags-model-record:${record5.recordDigest.slice(7)}`, digest: record5.recordDigest } };
+      return { record: record6, artifact: { kind: `model-application.v${input2.schemaVersion[0]}`, uri: `ags-model-record:${record6.recordDigest.slice(7)}`, digest: record6.recordDigest } };
     });
   }
   application(recordDigest) {
@@ -39358,10 +39358,10 @@ var ModelRoutingStore = class {
       return { dispatchKey: key, state: "running", revision: expectedRevision + 1, dispatchedAt: now, startClaimAcquired: true };
     });
   }
-  saveEvaluation(record5) {
-    validateEvaluation(record5);
-    this.database.prepare("INSERT OR IGNORE INTO ags_model_evaluations_v1 VALUES (?,?)").run(record5.recordDigest, canonical(record5));
-    return record5.recordDigest;
+  saveEvaluation(record6) {
+    validateEvaluation(record6);
+    this.database.prepare("INSERT OR IGNORE INTO ags_model_evaluations_v1 VALUES (?,?)").run(record6.recordDigest, canonical(record6));
+    return record6.recordDigest;
   }
   evaluations() {
     return this.database.prepare("SELECT payload FROM ags_model_evaluations_v1 ORDER BY record_digest").all().map((r) => JSON.parse(r.payload));
@@ -39497,7 +39497,7 @@ function recordSemanticApplicationWithAdmission(store, value, observationToken, 
   const token = store.nativeHookObservationToken(input2) ?? observationToken;
   if (token !== null) assert2(/^[a-f0-9]{48}$/u.test(token), "INVALID_OBSERVATION_TOKEN");
   return store.recordApplication(input2, token, (admittedObservation) => {
-    const record5 = recordSemanticApplicationV3(input2, {
+    const record6 = recordSemanticApplicationV3(input2, {
       request: entry.request,
       decision,
       catalog: entry.environment.catalog,
@@ -39505,7 +39505,7 @@ function recordSemanticApplicationWithAdmission(store, value, observationToken, 
       now: input2.dispatchedAt,
       admittedObservation
     });
-    return validator2.modelApplicationRecordForDecisionV3(record5, decision);
+    return validator2.modelApplicationRecordForDecisionV3(record6, decision);
   }, now);
 }
 
@@ -39541,17 +39541,17 @@ function readStoredModelApplication(store, recordDigest) {
   const raw = store.application(recordDigest);
   if (raw === null) return null;
   const validator2 = new ContractValidator();
-  const record5 = raw.schemaVersion === "3.0.0" ? validator2.modelApplicationRecordV3(raw) : validator2.modelApplicationRecordV2(raw);
-  verifySeal(record5, "recordDigest");
-  assert2(record5.recordDigest === recordDigest, "RECORD_DIGEST_MISMATCH");
-  const entry = readDecision(store, record5.decisionDigest, validator2);
-  assert2(entry && entry.decision.schemaVersion === record5.schemaVersion && digest(entry.request) === record5.requestDigest && canonical(entry.request.binding) === canonical(record5.binding), "RECORD_DECISION_MISMATCH");
-  if (record5.schemaVersion === "3.0.0") {
+  const record6 = raw.schemaVersion === "3.0.0" ? validator2.modelApplicationRecordV3(raw) : validator2.modelApplicationRecordV2(raw);
+  verifySeal(record6, "recordDigest");
+  assert2(record6.recordDigest === recordDigest, "RECORD_DIGEST_MISMATCH");
+  const entry = readDecision(store, record6.decisionDigest, validator2);
+  assert2(entry && entry.decision.schemaVersion === record6.schemaVersion && digest(entry.request) === record6.requestDigest && canonical(entry.request.binding) === canonical(record6.binding), "RECORD_DECISION_MISMATCH");
+  if (record6.schemaVersion === "3.0.0") {
     assert2(entry.decision.schemaVersion === "3.0.0", "RECORD_DECISION_MISMATCH");
-    const dispatch = store.dispatch(digest({ binding: record5.binding }));
-    assert2(dispatch?.decision_digest === record5.decisionDigest && dispatch.dispatched_at === record5.dispatchedAt, "RECORD_DISPATCH_MISMATCH");
-    assertHistoricalSelection({ ...entry, decision: entry.decision }, record5.dispatchedAt);
-    return validator2.modelApplicationRecordForDecisionV3(record5, entry.decision);
+    const dispatch = store.dispatch(digest({ binding: record6.binding }));
+    assert2(dispatch?.decision_digest === record6.decisionDigest && dispatch.dispatched_at === record6.dispatchedAt, "RECORD_DISPATCH_MISMATCH");
+    assertHistoricalSelection({ ...entry, decision: entry.decision }, record6.dispatchedAt);
+    return validator2.modelApplicationRecordForDecisionV3(record6, entry.decision);
   }
   for (const field of [
     "binding",
@@ -39564,10 +39564,10 @@ function readStoredModelApplication(store, recordDigest) {
     "policyDigest",
     "capabilitySnapshotDigest"
   ]) {
-    assert2(canonical(record5[field]) === canonical(entry.decision[field]), "RECORD_DECISION_MISMATCH");
+    assert2(canonical(record6[field]) === canonical(entry.decision[field]), "RECORD_DECISION_MISMATCH");
   }
-  assert2(canonical(record5.dispatched) === canonical(entry.decision.selected), "RECORD_DECISION_MISMATCH");
-  return record5;
+  assert2(canonical(record6.dispatched) === canonical(entry.decision.selected), "RECORD_DECISION_MISMATCH");
+  return record6;
 }
 
 // mcp-server/src/model-routing-service.ts
@@ -39610,6 +39610,146 @@ function openModelRoutingService(databasePath, workflow, readCapabilities = read
     } };
   }
 }
+
+// mcp-server/src/host-integration/vm-approved-slot-source.ts
+import { createHash as createHash7 } from "node:crypto";
+var DOMAIN = "ags-vm-approved-slot-source-v1";
+var DIGEST3 = /^sha256:[0-9a-f]{64}$/u;
+function record2(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
+}
+function exact2(value, keys3) {
+  return !!value && Object.keys(value).length === keys3.length && keys3.every((key) => Object.hasOwn(value, key));
+}
+function nonempty(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+function digest2(value) {
+  return typeof value === "string" && DIGEST3.test(value);
+}
+function timestamp(value) {
+  if (typeof value !== "string") return NaN;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) && new Date(parsed).toISOString() === value ? parsed : NaN;
+}
+function deny(reason) {
+  throw new Error(`VM approved slot source unavailable: ${reason}`);
+}
+function pythonCanonical(value) {
+  if (value === null || typeof value === "string" || typeof value === "boolean") return JSON.stringify(value);
+  if (typeof value === "number" && Number.isSafeInteger(value)) return String(value);
+  if (Array.isArray(value)) return `[${value.map(pythonCanonical).join(",")}]`;
+  const object9 = record2(value);
+  if (!object9) deny("snapshot JSON is invalid");
+  const compare = (left, right) => {
+    const a = Array.from(left, (char) => char.codePointAt(0));
+    const b2 = Array.from(right, (char) => char.codePointAt(0));
+    for (let index = 0; index < Math.min(a.length, b2.length); index += 1) {
+      if (a[index] !== b2[index]) return a[index] - b2[index];
+    }
+    return a.length - b2.length;
+  };
+  return `{${Object.keys(object9).sort(compare).map((key) => `${JSON.stringify(key)}:${pythonCanonical(object9[key])}`).join(",")}}`;
+}
+var VmApprovedSlotSource = class {
+  constructor(vm, clock = Date.now) {
+    this.vm = vm;
+    this.clock = clock;
+  }
+  vm;
+  clock;
+  pending = /* @__PURE__ */ new Map();
+  usedNonces = /* @__PURE__ */ new Map();
+  usedInvocations = /* @__PURE__ */ new Map();
+  latest = /* @__PURE__ */ new Map();
+  verify(requestId, envelope) {
+    const signed = record2(envelope);
+    if (!exact2(signed, ["body", "signature", "keyId"]) || typeof signed.body !== "string" || signed.body.length > 14e5) deny("signed envelope is invalid");
+    const { body } = this.vm.verifySignedEnvelope(envelope);
+    const producer = record2(body.producer), binding2 = record2(body.binding), source = record2(body.source);
+    const participation = record2(source?.participation);
+    const now = this.clock(), issued = timestamp(body.issuedAt), expiresAt = timestamp(body.expiresAt);
+    if (!exact2(body, ["version", "domain", "producer", "binding", "nonce", "issuedAt", "expiresAt", "source"]) || body.version !== 1 || body.domain !== DOMAIN || !exact2(producer, ["installationId", "keyId", "hostId", "instanceId", "sessionId"]) || !nonempty(producer.instanceId) || !nonempty(producer.sessionId) || !exact2(binding2, ["invocationId", "serverEpoch", "projectId", "taskId", "snapshotDigest"]) || binding2.invocationId !== requestId || binding2.serverEpoch !== this.vm.serverEpoch || !nonempty(binding2.projectId) || !nonempty(binding2.taskId) || !digest2(binding2.snapshotDigest) || !nonempty(body.nonce) || body.nonce.length < 24 || body.nonce.length > 256 || !Number.isFinite(now) || !Number.isFinite(issued) || !Number.isFinite(expiresAt) || issued > now + 5e3 || now >= expiresAt || expiresAt - issued !== 6e4 || !exact2(source, [
+      "owner",
+      "project_id",
+      "task_id",
+      "run_id",
+      "plan_revision_id",
+      "plan_id",
+      "revision_no",
+      "definition_digest",
+      "activation_digest",
+      "activation_id",
+      "activation_authorization_id",
+      "authorization_id",
+      "authorization_revision_no",
+      "authorization_digest",
+      "revoked",
+      "stages",
+      "participation",
+      "source_revision",
+      "snapshot_digest"
+    ]) || source.owner !== "flowmarshal-engine" || source.project_id !== binding2.projectId || source.task_id !== binding2.taskId || source.revoked !== false || !nonempty(source.run_id) || !nonempty(source.plan_revision_id) || !nonempty(source.plan_id) || !nonempty(source.activation_id) || !nonempty(source.activation_authorization_id) || !nonempty(source.authorization_id) || !Number.isSafeInteger(source.revision_no) || Number(source.revision_no) < 1 || !Number.isSafeInteger(source.authorization_revision_no) || Number(source.authorization_revision_no) < 1 || !digest2(source.definition_digest) || !digest2(source.activation_digest) || !digest2(source.authorization_digest) || !digest2(source.snapshot_digest) || source.snapshot_digest !== binding2.snapshotDigest || !Array.isArray(source.stages) || source.stages.length < 1 || source.stages.length > 64 || !exact2(participation, ["entries", "complete", "watermark"]) || participation.complete !== true || !Array.isArray(participation.entries) || participation.entries.length > 256 || !Number.isSafeInteger(participation.watermark) || Number(participation.watermark) < 0 || source.source_revision !== participation.watermark) deny("source binding is invalid");
+    const { snapshot_digest: snapshotDigest, ...unsignedSource } = source;
+    const computed = `sha256:${createHash7("sha256").update(pythonCanonical(unsignedSource)).digest("hex")}`;
+    if (computed !== snapshotDigest) deny("source digest is invalid");
+    return { source: structuredClone(source), body, expiresAt };
+  }
+  register(requestId, envelope) {
+    if (typeof requestId !== "string" || !/^vm-approved-slot-[A-Za-z0-9_-]{24,128}$/u.test(requestId)) {
+      deny("invocation ID is invalid");
+    }
+    const { source, body, expiresAt } = this.verify(requestId, envelope);
+    const now = this.clock();
+    for (const [key, expiry] of this.usedNonces) if (expiry <= now) this.usedNonces.delete(key);
+    for (const [key, expiry] of this.usedInvocations) if (expiry <= now) this.usedInvocations.delete(key);
+    for (const [key, pending] of this.pending) if (pending.expiresAt <= now) this.pending.delete(key);
+    for (const [key, value] of this.latest) if (value.expiresAt <= now) this.latest.delete(key);
+    const producer = record2(body.producer);
+    const nonceKey = `${producer.installationId}:${producer.keyId}:${body.nonce}`;
+    const scope = `${source.project_id}\0${source.task_id}`;
+    const revision = source.source_revision;
+    const previous = this.latest.get(scope);
+    if (previous && (revision < previous.revision || revision === previous.revision && source.snapshot_digest !== previous.digest)) {
+      deny("source revision is stale or conflicting");
+    }
+    if (this.usedInvocations.has(requestId) || this.usedNonces.has(nonceKey)) deny("source replay is unavailable");
+    if (this.pending.size >= 4096 || this.usedNonces.size >= 8192 || this.usedInvocations.size >= 8192 || !previous && this.latest.size >= 4096) {
+      deny("source registry is full");
+    }
+    this.usedNonces.set(nonceKey, expiresAt);
+    this.usedInvocations.set(requestId, expiresAt);
+    if (!previous || revision > previous.revision) {
+      for (const [key, pending] of this.pending) if (pending.scope === scope) this.pending.delete(key);
+    }
+    this.latest.set(scope, { revision, digest: source.snapshot_digest, expiresAt });
+    this.pending.set(requestId, {
+      envelope: structuredClone(envelope),
+      expiresAt,
+      scope,
+      revision,
+      digest: source.snapshot_digest
+    });
+    return {
+      accepted: true,
+      invocationId: requestId,
+      serverEpoch: this.vm.serverEpoch,
+      snapshotDigest: source.snapshot_digest
+    };
+  }
+  consume(expected) {
+    const pending = this.pending.get(expected.invocationId);
+    if (!pending) deny("pending source is unavailable");
+    this.pending.delete(expected.invocationId);
+    const { source } = this.verify(expected.invocationId, pending.envelope);
+    const latest = this.latest.get(pending.scope);
+    if (!latest || latest.revision !== pending.revision || latest.digest !== pending.digest) {
+      deny("pending source is stale");
+    }
+    if (source.project_id !== expected.projectId || source.task_id !== expected.taskId || source.snapshot_digest !== expected.snapshotDigest) deny("pending source binding changed");
+    return source;
+  }
+};
 
 // mcp-server/src/server.ts
 var responseModeProperty = { enum: ["compact", "full"], default: "full" };
@@ -39907,7 +40047,7 @@ function serverInstructions(profile = "default") {
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator2 = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, modelRouting = unavailableModelRouting(), vmInvocation = null, semantic = { enabled: false, gateway: null }) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator2 = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, modelRouting = unavailableModelRouting(), vmInvocation = null, semantic = { enabled: false, gateway: null }, approvedSlotSource = vmInvocation ? new VmApprovedSlotSource(vmInvocation) : null) {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -39925,6 +40065,15 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       }),
       async (request) => vmInvocation.reserve(request.params.registration)
     );
+    if (approvedSlotSource) {
+      server.setRequestHandler(
+        external_exports.object({
+          method: external_exports.literal("vm/register_approved_slot"),
+          params: external_exports.object({ signedSource: external_exports.unknown() })
+        }),
+        async (request, extra) => approvedSlotSource.register(extra.requestId, request.params.signedSource)
+      );
+    }
   }
   const contractDocuments = Object.values(contractSchemas);
   const advertise = (tools) => toolSchemaProfile === "anthropic" ? tools.map((tool) => {
@@ -40789,7 +40938,7 @@ function createPlanSigningKey() {
 }
 
 // mcp-server/src/plugin-update-store.ts
-function timestamp(value) {
+function timestamp2(value) {
   if (value === null) return -1;
   const parsed = Date.parse(value);
   return Number.isFinite(parsed) ? parsed : -1;
@@ -40801,11 +40950,11 @@ function comparison2(currentVersion, latestVersion) {
 }
 function mergePluginUpdateState(existing, incoming) {
   if (!existing) return clone2(incoming);
-  const incomingSuccessTime = timestamp(incoming.lastSuccessfulCheckAt);
-  const existingSuccessTime = timestamp(existing.lastSuccessfulCheckAt);
+  const incomingSuccessTime = timestamp2(incoming.lastSuccessfulCheckAt);
+  const existingSuccessTime = timestamp2(existing.lastSuccessfulCheckAt);
   const sameTimeVersionIsNotOlder = incoming.latestVersion !== null && (existing.latestVersion === null || compareStableVersionNumbers(incoming.latestVersion, existing.latestVersion) >= 0);
   const incomingSuccessIsNewer = incoming.lastSuccessfulCheckAt !== null && (incomingSuccessTime > existingSuccessTime || incomingSuccessTime === existingSuccessTime && sameTimeVersionIsNotOlder);
-  const incomingAttemptIsNewer = timestamp(incoming.lastAttemptAt) >= timestamp(existing.lastAttemptAt);
+  const incomingAttemptIsNewer = timestamp2(incoming.lastAttemptAt) >= timestamp2(existing.lastAttemptAt);
   const latestVersion = incomingSuccessIsNewer ? incoming.latestVersion : existing.latestVersion;
   return {
     targetId: incoming.targetId,
@@ -41623,7 +41772,7 @@ function array2(value) {
 function stringArray(value) {
   return array2(value).filter((item) => typeof item === "string");
 }
-function nonempty(value) {
+function nonempty2(value) {
   return typeof value === "string" && value.trim().length > 0;
 }
 function sameValues(left, right) {
@@ -41632,13 +41781,13 @@ function sameValues(left, right) {
 function duplicateFree(values) {
   return values.length === new Set(values).size;
 }
-function validateDecisionRecordSemantics(record5) {
+function validateDecisionRecordSemantics(record6) {
   const errors = [];
-  const preflight = object5(record5.preflight);
+  const preflight = object5(record6.preflight);
   const requiredCapabilities = stringArray(preflight.required_capabilities);
   const observedCapabilities = stringArray(preflight.observed_capabilities);
   const missingCapabilities = stringArray(preflight.missing_capabilities);
-  if (!duplicateFree(requiredCapabilities) || !duplicateFree(observedCapabilities) || !duplicateFree(missingCapabilities) || requiredCapabilities.some((value) => !nonempty(value)) || observedCapabilities.some((value) => !nonempty(value)) || missingCapabilities.some((value) => !nonempty(value))) {
+  if (!duplicateFree(requiredCapabilities) || !duplicateFree(observedCapabilities) || !duplicateFree(missingCapabilities) || requiredCapabilities.some((value) => !nonempty2(value)) || observedCapabilities.some((value) => !nonempty2(value)) || missingCapabilities.some((value) => !nonempty2(value))) {
     errors.push("preflight capabilities must be unique nonempty strings");
   }
   const requiredSet = new Set(requiredCapabilities);
@@ -41648,11 +41797,11 @@ function validateDecisionRecordSemantics(record5) {
   if (!sameValues(expectedMissing, missingSet)) {
     errors.push("preflight missing capabilities must exactly equal required minus observed");
   }
-  const caseBrief = object5(record5.case_brief);
-  if (!isDeepStrictEqual(caseBrief.constraints, record5.constraints)) {
+  const caseBrief = object5(record6.case_brief);
+  if (!isDeepStrictEqual(caseBrief.constraints, record6.constraints)) {
     errors.push("case_brief constraints must match record constraints");
   }
-  const run = object5(record5.run);
+  const run = object5(record6.run);
   const stage = run.stage;
   const assurance = run.assurance;
   const cap = run.worker_cap;
@@ -41664,13 +41813,13 @@ function validateDecisionRecordSemantics(record5) {
   const workerById = /* @__PURE__ */ new Map();
   for (const worker of workers) {
     const id = worker.id;
-    if (!nonempty(id) || workerById.has(id)) {
+    if (!nonempty2(id) || workerById.has(id)) {
       errors.push("worker ids must be unique nonempty strings");
     } else {
       workerById.set(id, worker);
     }
   }
-  const manifest = array2(record5.panel_manifest);
+  const manifest = array2(record6.panel_manifest);
   if (!isDeepStrictEqual(manifest, array2(run.workers))) {
     errors.push("panel_manifest must exactly equal run.workers");
   }
@@ -41688,7 +41837,7 @@ function validateDecisionRecordSemantics(record5) {
   const failures = array2(run.failures).map(object5);
   const failureIds = failures.map((failure3) => failure3.worker_id).filter((id) => typeof id === "string");
   const declaredFailed = new Set([...workerById].filter(([, worker]) => worker.status === "failed").map(([id]) => id));
-  if (!duplicateFree(failureIds) || !sameValues(new Set(failureIds), declaredFailed) || failures.some((failure3) => !nonempty(failure3.reason))) {
+  if (!duplicateFree(failureIds) || !sameValues(new Set(failureIds), declaredFailed) || failures.some((failure3) => !nonempty2(failure3.reason))) {
     errors.push("run.failures must exactly identify failed workers with reasons");
   }
   const completedIds = stringArray(run.completed_worker_ids);
@@ -41715,7 +41864,7 @@ function validateDecisionRecordSemantics(record5) {
   const fallback = run.judge_fallback;
   const reviewerIds = new Set([...workerById].filter(([, worker]) => eligibleReviewer(worker)).map(([id]) => id));
   if ((stage === "HIGH" || stage === "CRITICAL") && !strictShortfall) {
-    if (fallback === null && (!nonempty(judgeId) || !completed.has(judgeId) || !eligibleJudge(workerById.get(judgeId)))) {
+    if (fallback === null && (!nonempty2(judgeId) || !completed.has(judgeId) || !eligibleJudge(workerById.get(judgeId)))) {
       errors.push("HIGH/CRITICAL requires a completed fresh Judge");
     }
     if (typeof judgeId === "string" && (reviewerIds.has(judgeId) || reused.has(judgeId))) {
@@ -41736,12 +41885,12 @@ function validateDecisionRecordSemantics(record5) {
     }
   } else if (stage === "LOW" && judgeId !== null) {
     errors.push("LOW must not claim a fresh Judge");
-  } else if (stage === "MEDIUM" && judgeId !== null && (!nonempty(judgeId) || !completed.has(judgeId) || reused.has(judgeId) || !eligibleJudge(workerById.get(judgeId)))) {
+  } else if (stage === "MEDIUM" && judgeId !== null && (!nonempty2(judgeId) || !completed.has(judgeId) || reused.has(judgeId) || !eligibleJudge(workerById.get(judgeId)))) {
     errors.push("MEDIUM fresh Judge must be completed, isolated, and unreused");
   }
   if (fallback !== null) {
     const fallbackObject = object5(fallback);
-    if (fallbackObject.provisional !== true || !nonempty(fallbackObject.reason) || judgeId !== null) {
+    if (fallbackObject.provisional !== true || !nonempty2(fallbackObject.reason) || judgeId !== null) {
       errors.push("Judge fallback must be provisional, explained, and exclusive of a fresh Judge");
     }
     if ((stage === "HIGH" || stage === "CRITICAL") && assurance !== "provisional") {
@@ -41750,10 +41899,10 @@ function validateDecisionRecordSemantics(record5) {
     if (run.strict === true) errors.push("strict execution cannot use a Judge fallback");
   }
   if (strictShortfall) {
-    const cross2 = object5(record5.cross_examination);
+    const cross2 = object5(record6.cross_examination);
     const emptyRunFields = ["workers", "completed_worker_ids", "reused_worker_ids", "failures", "specialist_additions", "redeliberations"];
     const emptyRootFields = ["panel_manifest", "material_claims", "issue_ledger", "axis_decisions"];
-    if (assurance !== "provisional" || record5.consensus_proposal !== null || judgeId !== null || fallback !== null || instantiated.size > 0 || missingSet.size === 0 || emptyRunFields.some((field) => array2(run[field]).length > 0) || emptyRootFields.some((field) => array2(record5[field]).length > 0) || cross2.decision !== "skip" || !nonempty(cross2.reason) || ["trigger_items", "selected_item_ids", "coverage", "followups"].some((field) => array2(cross2[field]).length > 0)) {
+    if (assurance !== "provisional" || record6.consensus_proposal !== null || judgeId !== null || fallback !== null || instantiated.size > 0 || missingSet.size === 0 || emptyRunFields.some((field) => array2(run[field]).length > 0) || emptyRootFields.some((field) => array2(record6[field]).length > 0) || cross2.decision !== "skip" || !nonempty2(cross2.reason) || ["trigger_items", "selected_item_ids", "coverage", "followups"].some((field) => array2(cross2[field]).length > 0)) {
       errors.push("strict capability shortfall contract is inconsistent");
     }
     return errors;
@@ -41771,7 +41920,7 @@ function validateDecisionRecordSemantics(record5) {
     if (typeof workerId === "string") specialistIds.push(workerId);
     const worker = typeof workerId === "string" ? workerById.get(workerId) : void 0;
     const admission = object5(specialist.admission);
-    if (!nonempty(specialist.admission_reason) || !nonempty(specialist.reason) || specialist.classification !== "adaptive_specialist" || worker?.classification !== "adaptive_specialist" || worker.status !== "completed" || worker.instantiated !== true || worker.is_judge === true || worker.blind_round1 !== false || worker.context_isolated !== true || !participated(worker).includes("adaptive_specialist") || admission.material_gap !== true || admission.distinct_capability !== true || admission.verdict_change_possible !== true || admission.cap_available !== true) {
+    if (!nonempty2(specialist.admission_reason) || !nonempty2(specialist.reason) || specialist.classification !== "adaptive_specialist" || worker?.classification !== "adaptive_specialist" || worker.status !== "completed" || worker.instantiated !== true || worker.is_judge === true || worker.blind_round1 !== false || worker.context_isolated !== true || !participated(worker).includes("adaptive_specialist") || admission.material_gap !== true || admission.distinct_capability !== true || admission.verdict_change_possible !== true || admission.cap_available !== true) {
       errors.push("specialist admission contract is invalid");
     }
   }
@@ -41795,8 +41944,8 @@ function validateDecisionRecordSemantics(record5) {
     }
   }
   const claimStatuses = /* @__PURE__ */ new Map();
-  for (const claim2 of array2(record5.material_claims).map(object5)) {
-    if (!nonempty(claim2.id) || claimStatuses.has(claim2.id)) {
+  for (const claim2 of array2(record6.material_claims).map(object5)) {
+    if (!nonempty2(claim2.id) || claimStatuses.has(claim2.id)) {
       errors.push("material claim ids must be unique nonempty strings");
       continue;
     }
@@ -41809,7 +41958,7 @@ function validateDecisionRecordSemantics(record5) {
       } else {
         statuses.add(String(source.verification_status));
       }
-      if (source.verification_status === "verified" && (!nonempty(source.locator) || !nonempty(source.verification_note))) {
+      if (source.verification_status === "verified" && (!nonempty2(source.locator) || !nonempty2(source.verification_note))) {
         errors.push("verified provenance requires a locator and verification note");
       }
     }
@@ -41825,32 +41974,32 @@ function validateDecisionRecordSemantics(record5) {
       }
     }
   };
-  scanForbidden(record5);
-  const constraints = new Set(stringArray(record5.constraints));
-  const requiredConstraints = new Set(stringArray(record5.required_constraints));
+  scanForbidden(record6);
+  const constraints = new Set(stringArray(record6.constraints));
+  const requiredConstraints = new Set(stringArray(record6.required_constraints));
   if ([...requiredConstraints].some((constraint) => !constraints.has(constraint))) {
     errors.push("required constraints must be declared constraints");
   }
-  const issues = array2(record5.issue_ledger).map(object5);
+  const issues = array2(record6.issue_ledger).map(object5);
   for (const issue2 of issues) {
     if (!ISSUE_STATUSES.has(String(issue2.status))) errors.push("issue ledger has invalid status");
   }
-  const observability = object5(record5.observability);
+  const observability = object5(record6.observability);
   for (const value of Object.values(observability)) {
     if (typeof value === "string" && value !== "NOT_OBSERVABLE") errors.push("observability strings must be NOT_OBSERVABLE");
   }
   if (typeof observability.worker_count === "number" && observability.worker_count !== instantiated.size) {
     errors.push("observability worker_count must match instantiated workers");
   }
-  const cross = object5(record5.cross_examination);
+  const cross = object5(record6.cross_examination);
   const triggers = array2(cross.trigger_items).map(object5);
   const selected = stringArray(cross.selected_item_ids);
   const coverage = array2(cross.coverage).map(object5);
   const followups = array2(cross.followups).map(object5);
-  if (!nonempty(cross.reason)) errors.push("cross-examination requires a reason");
+  if (!nonempty2(cross.reason)) errors.push("cross-examination requires a reason");
   const triggerOrigins = /* @__PURE__ */ new Map();
   for (const trigger of triggers) {
-    if (!nonempty(trigger.id) || triggerOrigins.has(trigger.id) || !nonempty(trigger.origin_reviewer) || !eligibleReviewer(workerById.get(trigger.origin_reviewer))) {
+    if (!nonempty2(trigger.id) || triggerOrigins.has(trigger.id) || !nonempty2(trigger.origin_reviewer) || !eligibleReviewer(workerById.get(trigger.origin_reviewer))) {
       errors.push("cross trigger ids and origins are invalid");
     } else {
       triggerOrigins.set(trigger.id, trigger.origin_reviewer);
@@ -41888,10 +42037,10 @@ function validateDecisionRecordSemantics(record5) {
     }
   }
   if ([...followupCounts.values()].some((count) => count > 1)) errors.push("reviewers may receive at most one cross follow-up");
-  const axes = array2(record5.axis_decisions).map(object5);
+  const axes = array2(record6.axis_decisions).map(object5);
   const axisNames = /* @__PURE__ */ new Set();
   for (const axis of axes) {
-    if (!nonempty(axis.axis) || axisNames.has(axis.axis)) {
+    if (!nonempty2(axis.axis) || axisNames.has(axis.axis)) {
       errors.push("axis decisions must have unique nonempty names");
     } else {
       axisNames.add(axis.axis);
@@ -41913,7 +42062,7 @@ function validateDecisionRecordSemantics(record5) {
   if (assurance === "independent" && (missingSet.size || failures.length || reused.size)) {
     errors.push("independent assurance requires no missing capability, failures, or reuse");
   }
-  const proposal = object5(record5.consensus_proposal);
+  const proposal = object5(record6.consensus_proposal);
   const status = proposal.status;
   const supported = stringArray(proposal.supported_by_verified_claims);
   if ((status === "consensus" || status === "conditional_consensus") && (!supported.length || !axes.length)) {
@@ -41935,15 +42084,15 @@ function validateDecisionRecordSemantics(record5) {
   }
   const materialDissent = array2(proposal.unresolved_dissent).map(object5).some((item) => item.material === true);
   if (status === "consensus") {
-    if (!nonempty(proposal.action) || array2(proposal.conditions).length || materialDissent) errors.push("unconditional consensus shape is invalid");
+    if (!nonempty2(proposal.action) || array2(proposal.conditions).length || materialDissent) errors.push("unconditional consensus shape is invalid");
     if (issues.some((issue2) => issue2.status === "UNRESOLVED" || issue2.status === "NOT_OBSERVABLE")) errors.push("unresolved issues prevent consensus");
     if (!sameValues(new Set(satisfied), requiredConstraints)) errors.push("consensus must satisfy every required constraint");
   } else if (status === "conditional_consensus") {
-    if (!nonempty(proposal.action) || !array2(proposal.conditions).length || !sameValues(new Set(satisfied), requiredConstraints)) {
+    if (!nonempty2(proposal.action) || !array2(proposal.conditions).length || !sameValues(new Set(satisfied), requiredConstraints)) {
       errors.push("conditional consensus shape is invalid");
     }
   } else if (status === "no_consensus") {
-    if (proposal.action !== null || !nonempty(proposal.no_consensus_reason) || !array2(proposal.remaining_options).length || !nonempty(proposal.decision_owner)) {
+    if (proposal.action !== null || !nonempty2(proposal.no_consensus_reason) || !array2(proposal.remaining_options).length || !nonempty2(proposal.decision_owner)) {
       errors.push("no_consensus shape is invalid");
     }
   }
@@ -41954,22 +42103,22 @@ function validateDecisionRecordSemantics(record5) {
 }
 
 // skills/software-security-auditor/scripts/core.mjs
-import { createHash as createHash7 } from "node:crypto";
+import { createHash as createHash8 } from "node:crypto";
 function canonical2(value) {
   if (Array.isArray(value)) return `[${value.map(canonical2).join(",")}]`;
   if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical2(value[key])}`).join(",")}}`;
   return JSON.stringify(value);
 }
-var digestBytes = (value) => `sha256:${createHash7("sha256").update(value).digest("hex")}`;
-var digest2 = (value) => digestBytes(canonical2(value));
-var targetDigest = (request) => digest2(request.target);
+var digestBytes = (value) => `sha256:${createHash8("sha256").update(value).digest("hex")}`;
+var digest3 = (value) => digestBytes(canonical2(value));
+var targetDigest = (request) => digest3(request.target);
 function safeRelative(value) {
   return typeof value === "string" && value.length > 0 && !/[\\:\x00-\x1f]/u.test(value) && !value.startsWith("/") && value.split("/").every((part) => part && part !== "." && part !== "..");
 }
 function validateSemantics(report) {
   const errors = [];
   const request = report.request;
-  if (report.requestDigest !== digest2(request)) errors.push("REQUEST_DIGEST_MISMATCH");
+  if (report.requestDigest !== digest3(request)) errors.push("REQUEST_DIGEST_MISMATCH");
   if (report.targetDigest !== targetDigest(request)) errors.push("TARGET_DIGEST_MISMATCH");
   const unique = (items, key, label) => {
     const values = items.map((item) => item[key]);
@@ -42015,7 +42164,7 @@ function validateSemantics(report) {
 }
 
 // mcp-server/src/receipt-policy.ts
-var DIGEST3 = /^(?:sha256:)?[a-f0-9]{64}$/;
+var DIGEST4 = /^(?:sha256:)?[a-f0-9]{64}$/;
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 var RFC3339_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 var REFERENCE = /^(?:artifact|digest|schema|urn|run|stage|commit|test|file|document|tool):(?:\/\/)?[A-Za-z0-9][A-Za-z0-9._~:/?#@!$&'()*+,;=%-]{7,}$/;
@@ -42066,7 +42215,7 @@ function jsonPointer(value, pointer2) {
   }, value);
 }
 function isOpaqueReference(value) {
-  return DIGEST3.test(value) || UUID.test(value) || REFERENCE.test(value);
+  return DIGEST4.test(value) || UUID.test(value) || REFERENCE.test(value);
 }
 function isSafeScalar(value) {
   return isOpaqueReference(value) || RFC3339_TIMESTAMP.test(value);
@@ -42131,7 +42280,7 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
     }
     assertSafeString(artifact.schemaId, fixedTokens, `/output/artifacts/${index}/schemaId`);
     assertSafeString(artifact.locator, fixedTokens, `/output/artifacts/${index}/locator`);
-    if (!DIGEST3.test(artifact.digest) || !DIGEST3.test(artifact.targetDigest)) {
+    if (!DIGEST4.test(artifact.digest) || !DIGEST4.test(artifact.targetDigest)) {
       throw new WorkflowContractError("INVALID_INPUT", "Reference-only artifact digests must be opaque SHA-256 references.", {
         stageId: stage.stageId,
         artifactId: artifact.artifactId
@@ -42207,7 +42356,7 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
 }
 
 // mcp-server/src/stage-output-file.ts
-import { createHash as createHash8 } from "node:crypto";
+import { createHash as createHash9 } from "node:crypto";
 import { closeSync, fstatSync, openSync, readSync } from "node:fs";
 import path11 from "node:path";
 var MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
@@ -42245,8 +42394,8 @@ function readLocalStageOutputFile(locator) {
 function loadStageOutputFile(reference, read = readLocalStageOutputFile) {
   const bytes = read(reference.locator);
   if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(reference.locator);
-  const digest5 = `sha256:${createHash8("sha256").update(bytes).digest("hex")}`;
-  if (digest5 !== reference.digest) {
+  const digest6 = `sha256:${createHash9("sha256").update(bytes).digest("hex")}`;
+  if (digest6 !== reference.digest) {
     throw new WorkflowContractError("INTEGRITY_FAILED", "outputFile content does not match its digest.", {
       locator: reference.locator,
       expected: reference.digest
@@ -43211,9 +43360,9 @@ var WorkflowService = class {
         stageId: stage.stageId
       });
     }
-    let record5;
+    let record6;
     try {
-      record5 = this.validator.declaredSchema(
+      record6 = this.validator.declaredSchema(
         this.registry.rootDirectory,
         stage.gate.validatorSchema,
         result.output.output?.decisionRecord,
@@ -43225,15 +43374,15 @@ var WorkflowService = class {
         cause: error61 instanceof Error ? error61.message : String(error61)
       });
     }
-    const semanticErrors = validateDecisionRecordSemantics(record5);
+    const semanticErrors = validateDecisionRecordSemantics(record6);
     if (semanticErrors.length > 0) {
       throw new WorkflowContractError("GATE_FAILED", "DecisionRecord.v1 failed canonical semantic validation.", {
         stageId: stage.stageId,
         semanticErrors
       });
     }
-    const run = record5.run;
-    const proposal = record5.consensus_proposal;
+    const run = record6.run;
+    const proposal = record6.consensus_proposal;
     if (run.assurance === "provisional" || run.capability_shortfall !== false || proposal === null || proposal.status === "no_consensus") {
       throw new WorkflowContractError("GATE_FAILED", "Deliberation result is not eligible to advance the workflow.", {
         stageId: stage.stageId,
@@ -43829,7 +43978,7 @@ var CLAUDE_MODEL_CLASSES = {
   fable: "frontier"
 };
 var CLAUDE_MODEL_ID = /^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\.)?(?:anthropic\.)?claude-(?:\d+(?:-\d+)?-)?(haiku|sonnet|opus|fable)(?:[-@:.]|$)/u;
-function record2(value) {
+function record3(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
 function modelClassForClaudeModel(model) {
@@ -43874,7 +44023,7 @@ function verifyToken(store, token) {
   } catch {
     throw invalid("Host attestation token payload is malformed.");
   }
-  const value = record2(payload);
+  const value = record3(payload);
   if (!value || value.v !== 1 || value.host !== "claude-code" || typeof value.model !== "string" || modelClassForClaudeModel(value.model) !== value.modelClass || !isReasoningEffort(value.reasoningEffort)) {
     throw invalid("Host attestation token payload is not a supported Claude Code observation.");
   }
@@ -43925,7 +44074,7 @@ var HostAttestationProvider = class {
 };
 
 // mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash9, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHash as createHash10, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
 import path12 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
@@ -43935,8 +44084,8 @@ var POLICY = {
   continuityPayloadRetentionDays: 30,
   continuityRecordRetentionDays: 180
 };
-function digest3(value) {
-  return `sha256:${createHash9("sha256").update(JSON.stringify(value)).digest("hex")}`;
+function digest4(value) {
+  return `sha256:${createHash10("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function protection() {
   return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
@@ -43975,7 +44124,7 @@ var StateCleanupService = class {
         continuityRecord: new Date(created.getTime() - POLICY.continuityRecordRetentionDays * DAY_MS).toISOString()
       };
       const { workflow, continuity, protectedContinuityTasks, candidates } = this.currentCandidates(cutoffs);
-      const candidateDigest = digest3(candidates);
+      const candidateDigest = digest4(candidates);
       const payload = {
         schemaVersion: "1.0.0",
         planId: randomUUID3(),
@@ -44024,7 +44173,7 @@ var StateCleanupService = class {
       this.assertDatabaseIdentity(payload);
       const current = this.currentCandidates(payload.cutoffs);
       const candidates = current.candidates;
-      const currentDigest = digest3(candidates);
+      const currentDigest = digest4(candidates);
       if (currentDigest !== payload.candidateDigest || JSON.stringify(candidates) !== JSON.stringify(payload.candidates)) {
         throw new WorkflowContractError("STALE_REVISION", "State cleanup candidates changed after preview.", {
           planId: payload.planId,
@@ -44582,10 +44731,10 @@ var TrustService = class {
 
 // mcp-server/src/host-integration/vm-current-invocation.ts
 import { AsyncLocalStorage } from "node:async_hooks";
-import { createHash as createHash11, randomBytes as randomBytes7 } from "node:crypto";
+import { createHash as createHash12, randomBytes as randomBytes7 } from "node:crypto";
 
 // mcp-server/src/host-integration/observation-challenge.ts
-import { createHash as createHash10, createHmac as createHmac6, createPublicKey, randomBytes as randomBytes6, timingSafeEqual as timingSafeEqual6, verify } from "node:crypto";
+import { createHash as createHash11, createHmac as createHmac6, createPublicKey, randomBytes as randomBytes6, timingSafeEqual as timingSafeEqual6, verify } from "node:crypto";
 import { lstatSync, readFileSync as readFileSync5 } from "node:fs";
 import path14 from "node:path";
 var CHALLENGE_PREFIX = "agoc1";
@@ -44618,12 +44767,12 @@ function safeJson(value) {
   if (value === null || typeof value === "string" || typeof value === "boolean") return true;
   if (typeof value === "number") return Number.isSafeInteger(value);
   if (Array.isArray(value)) return value.every(safeJson);
-  const object9 = record3(value);
+  const object9 = record4(value);
   return !!object9 && Object.values(object9).every(safeJson);
 }
 function readPinnedVmEnvelope(envelopeValue) {
-  const envelope = record3(envelopeValue);
-  if (!envelope || !exactKeys(envelope, ["body", "signature", "keyId"]) || !nonempty2(envelope.keyId)) throw invalid2("VM signed envelope is malformed");
+  const envelope = record4(envelopeValue);
+  if (!envelope || !exactKeys(envelope, ["body", "signature", "keyId"]) || !nonempty3(envelope.keyId)) throw invalid2("VM signed envelope is malformed");
   const pinPath = process.env[VM_PIN_PATH_ENV];
   if (!pinPath || !path14.isAbsolute(pinPath)) throw invalid2("operator VM pin file is unavailable");
   const readPins = () => {
@@ -44639,12 +44788,12 @@ function readPinnedVmEnvelope(envelopeValue) {
     } catch {
       throw invalid2("operator VM pin file is malformed");
     }
-    const config2 = record3(configuration);
+    const config2 = record4(configuration);
     if (!config2 || !exactKeys(config2, ["version", "pins"]) || config2.version !== 1 || !Array.isArray(config2.pins)) throw invalid2("operator VM pins are malformed");
     const pins = /* @__PURE__ */ new Map();
     for (const entry of config2.pins) {
-      const pin2 = record3(entry);
-      if (!pin2 || !exactKeys(pin2, ["keyId", "installationId", "hostId", "publicKeySpki"]) || !nonempty2(pin2.keyId) || !nonempty2(pin2.installationId) || pin2.hostId !== VM_HOST || typeof pin2.publicKeySpki !== "string" || pins.has(pin2.keyId)) throw invalid2("operator VM pin is malformed");
+      const pin2 = record4(entry);
+      if (!pin2 || !exactKeys(pin2, ["keyId", "installationId", "hostId", "publicKeySpki"]) || !nonempty3(pin2.keyId) || !nonempty3(pin2.installationId) || pin2.hostId !== VM_HOST || typeof pin2.publicKeySpki !== "string" || pins.has(pin2.keyId)) throw invalid2("operator VM pin is malformed");
       let key;
       try {
         const bytes2 = Buffer.from(pin2.publicKeySpki, "base64");
@@ -44669,9 +44818,9 @@ function readPinnedVmEnvelope(envelopeValue) {
   } catch {
     throw invalid2("VM receipt body is malformed");
   }
-  const body = record3(decoded);
+  const body = record4(decoded);
   if (!body || !safeJson(body) || Buffer.from(canonicalJson(body), "utf8").compare(bytes) !== 0) throw invalid2("VM receipt body is not canonical");
-  const producer = record3(body.producer);
+  const producer = record4(body.producer);
   if (!producer || producer.keyId !== envelope.keyId || producer.installationId !== pin.installationId || producer.hostId !== pin.hostId) throw invalid2("VM receipt source or binding is invalid");
   return { body, bytes, pin };
 }
@@ -44688,30 +44837,30 @@ function registerVmObservationReader(source) {
   }
   const readVerified = () => {
     const current = source.readCurrentInvocation();
-    const envelope = record3(current?.receipt);
-    const argumentsValue = record3(current?.arguments);
-    const expected = record3(current?.binding);
-    if (!envelope || !exactKeys(envelope, ["body", "signature", "keyId"]) || !nonempty2(envelope.keyId) || !argumentsValue || !expected || !exactKeys(expected, ["invocationId", "turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) || !nonempty2(current.tool)) throw invalid2("VM invocation context is malformed");
+    const envelope = record4(current?.receipt);
+    const argumentsValue = record4(current?.arguments);
+    const expected = record4(current?.binding);
+    if (!envelope || !exactKeys(envelope, ["body", "signature", "keyId"]) || !nonempty3(envelope.keyId) || !argumentsValue || !expected || !exactKeys(expected, ["invocationId", "turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) || !nonempty3(current.tool)) throw invalid2("VM invocation context is malformed");
     const { body, bytes, pin } = source.verifySignedEnvelope ? source.verifySignedEnvelope(envelope) : readPinnedVmEnvelope(envelope);
     const v2 = body.version === 2;
     if (current.registration && !v2) throw invalid2("VM authenticated dispatch requires receipt version 2");
     if (!exactKeys(body, ["version", "domain", "producer", "binding", "terminal", "core", "invocation", "nonce", "issuedAt", "expiresAt", ...v2 ? ["transport"] : []])) throw invalid2("VM receipt body is not canonical");
-    const producer = record3(body.producer), binding2 = record3(body.binding);
-    const terminal = record3(body.terminal), core = record3(body.core), invocation = record3(body.invocation);
-    if (body.version !== 1 && body.version !== 2 || body.domain !== VM_DOMAIN || !producer || !binding2 || !terminal || !core || !invocation || !exactKeys(producer, ["installationId", "keyId", "hostId", "instanceId"]) || !exactKeys(binding2, ["invocationId", "turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) || !exactKeys(terminal, ["eventId", "callId", "threadId", "turnId", "status", "observedAt", "model", "effort", "provenance", "digest"]) || !exactKeys(core, ["goalRevision", "taskRevision", "attemptOrdinal", "gateOperationKey", "stage"]) || !exactKeys(invocation, ["tool", "inputDigest", "observedAt"]) || producer.keyId !== envelope.keyId || producer.installationId !== pin.installationId || producer.hostId !== pin.hostId || binding2.hostId !== VM_HOST || binding2.instanceId !== producer.instanceId || !nonempty2(producer.instanceId) || !nonempty2(body.nonce) || !nonempty2(binding2.invocationId) || !nonempty2(binding2.turnId) || !nonempty2(binding2.taskId) || !optionalId(binding2.runId) || !optionalId(binding2.attemptId) || !nonempty2(binding2.sessionId) || !nonempty2(binding2.instanceId) || !nonempty2(terminal.eventId) || !nonempty2(terminal.callId) || !nonempty2(terminal.threadId) || terminal.turnId !== binding2.turnId || typeof terminal.digest !== "string" || !/^sha256:[0-9a-f]{64}$/u.test(terminal.digest) || !Number.isSafeInteger(core.goalRevision) || Number(core.goalRevision) < 1 || !Number.isSafeInteger(core.taskRevision) || Number(core.taskRevision) < 1 || !(core.attemptOrdinal === null || Number.isSafeInteger(core.attemptOrdinal) && Number(core.attemptOrdinal) > 0) || !nonempty2(core.gateOperationKey) || !nonempty2(core.stage) || !nonempty2(terminal.model) || !isReasoningEffort2(terminal.effort) || typeof terminal.status !== "string" || !["completed", "succeeded"].includes(terminal.status) || typeof terminal.provenance !== "string" || !["provider_raw_response", "claude_session_transcript"].includes(terminal.provenance)) {
+    const producer = record4(body.producer), binding2 = record4(body.binding);
+    const terminal = record4(body.terminal), core = record4(body.core), invocation = record4(body.invocation);
+    if (body.version !== 1 && body.version !== 2 || body.domain !== VM_DOMAIN || !producer || !binding2 || !terminal || !core || !invocation || !exactKeys(producer, ["installationId", "keyId", "hostId", "instanceId"]) || !exactKeys(binding2, ["invocationId", "turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) || !exactKeys(terminal, ["eventId", "callId", "threadId", "turnId", "status", "observedAt", "model", "effort", "provenance", "digest"]) || !exactKeys(core, ["goalRevision", "taskRevision", "attemptOrdinal", "gateOperationKey", "stage"]) || !exactKeys(invocation, ["tool", "inputDigest", "observedAt"]) || producer.keyId !== envelope.keyId || producer.installationId !== pin.installationId || producer.hostId !== pin.hostId || binding2.hostId !== VM_HOST || binding2.instanceId !== producer.instanceId || !nonempty3(producer.instanceId) || !nonempty3(body.nonce) || !nonempty3(binding2.invocationId) || !nonempty3(binding2.turnId) || !nonempty3(binding2.taskId) || !optionalId(binding2.runId) || !optionalId(binding2.attemptId) || !nonempty3(binding2.sessionId) || !nonempty3(binding2.instanceId) || !nonempty3(terminal.eventId) || !nonempty3(terminal.callId) || !nonempty3(terminal.threadId) || terminal.turnId !== binding2.turnId || typeof terminal.digest !== "string" || !/^sha256:[0-9a-f]{64}$/u.test(terminal.digest) || !Number.isSafeInteger(core.goalRevision) || Number(core.goalRevision) < 1 || !Number.isSafeInteger(core.taskRevision) || Number(core.taskRevision) < 1 || !(core.attemptOrdinal === null || Number.isSafeInteger(core.attemptOrdinal) && Number(core.attemptOrdinal) > 0) || !nonempty3(core.gateOperationKey) || !nonempty3(core.stage) || !nonempty3(terminal.model) || !isReasoningEffort2(terminal.effort) || typeof terminal.status !== "string" || !["completed", "succeeded"].includes(terminal.status) || typeof terminal.provenance !== "string" || !["provider_raw_response", "claude_session_transcript"].includes(terminal.provenance)) {
       throw invalid2("VM receipt source or binding is invalid");
     }
     for (const field of ["invocationId", "turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) {
       if (binding2[field] !== expected[field]) throw invalid2(`VM ${field} binding mismatch`);
     }
     if (v2) {
-      const registration = record3(current.registration);
-      const transport = record3(body.transport);
+      const registration = record4(current.registration);
+      const transport = record4(body.transport);
       if (!registration || !transport || !exactKeys(transport, ["serverEpoch", "registrationDigest"]) || transport.serverEpoch !== current.serverEpoch || transport.registrationDigest !== current.registrationDigest || registration.serverEpoch !== current.serverEpoch) throw invalid2("VM transport binding mismatch");
       for (const field of ["producer", "terminal", "core", "invocation"]) {
         if (canonicalJson(body[field]) !== canonicalJson(registration[field])) throw invalid2(`VM ${field} registration mismatch`);
       }
-      const registeredBinding = record3(registration.binding);
+      const registeredBinding = record4(registration.binding);
       if (!registeredBinding || Object.keys(registeredBinding).some((field) => registeredBinding[field] !== binding2[field]) || Object.keys(binding2).some((field) => field !== "invocationId" && !Object.hasOwn(registeredBinding, field))) {
         throw invalid2("VM registration binding mismatch");
       }
@@ -44720,12 +44869,12 @@ function registerVmObservationReader(source) {
     if (_hostAttestation === void 0 || canonicalJson(_hostAttestation) !== canonicalJson(envelope) || invocation.tool !== current.tool || invocation.inputDigest !== convergenceDigest(unsignedArguments)) {
       throw invalid2("VM tool or input mismatch");
     }
-    const issued = timestamp2(body.issuedAt), expires = timestamp2(body.expiresAt);
+    const issued = timestamp3(body.issuedAt), expires = timestamp3(body.expiresAt);
     const observedAt = terminalMicros(terminal.observedAt);
     if (!Number.isFinite(issued) || !Number.isFinite(expires) || observedAt === null || observedAt >= BigInt(issued) * 1000n + 1000n || invocation.observedAt !== body.issuedAt || expires - issued !== CHALLENGE_TTL_MS) {
       throw invalid2("VM receipt causal time is invalid");
     }
-    const hash2 = createHash10("sha256").update(bytes).digest("hex");
+    const hash2 = createHash11("sha256").update(bytes).digest("hex");
     return {
       observation: observation({
         binding: binding2,
@@ -44745,27 +44894,27 @@ function registerVmObservationReader(source) {
 function invalid2(message) {
   return new Error(`Invalid observation challenge: ${message}`);
 }
-function record3(value) {
+function record4(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
-function nonempty2(value) {
+function nonempty3(value) {
   return typeof value === "string" && value.trim().length > 0;
 }
 function optionalId(value) {
-  return value === null || nonempty2(value);
+  return value === null || nonempty3(value);
 }
 function isReasoningEffort2(value) {
   return typeof value === "string" && REASONING_EFFORT.includes(value);
 }
-function timestamp2(value) {
+function timestamp3(value) {
   if (typeof value !== "string") return NaN;
   const milliseconds = Date.parse(value);
   return Number.isFinite(milliseconds) && new Date(milliseconds).toISOString() === value ? milliseconds : NaN;
 }
 function observation(value) {
-  const object9 = record3(value);
-  const binding2 = record3(object9?.binding);
-  if (!object9 || !binding2 || !nonempty2(binding2.invocationId) || !nonempty2(binding2.turnId) || !nonempty2(binding2.taskId) || !optionalId(binding2.runId) || !optionalId(binding2.attemptId) || !nonempty2(binding2.hostId) || !nonempty2(binding2.sessionId) || !nonempty2(binding2.instanceId) || !nonempty2(object9.observationId) || !nonempty2(object9.model) || !isReasoningEffort2(object9.reasoningEffort) || !Number.isFinite(timestamp2(object9.observedAt))) {
+  const object9 = record4(value);
+  const binding2 = record4(object9?.binding);
+  if (!object9 || !binding2 || !nonempty3(binding2.invocationId) || !nonempty3(binding2.turnId) || !nonempty3(binding2.taskId) || !optionalId(binding2.runId) || !optionalId(binding2.attemptId) || !nonempty3(binding2.hostId) || !nonempty3(binding2.sessionId) || !nonempty3(binding2.instanceId) || !nonempty3(object9.observationId) || !nonempty3(object9.model) || !isReasoningEffort2(object9.reasoningEffort) || !Number.isFinite(timestamp3(object9.observedAt))) {
     throw invalid2("trusted host invocation observation is missing or malformed");
   }
   return {
@@ -44816,11 +44965,11 @@ var ObservationChallengeAuthority = class {
     const observed = verified?.observation ?? observation(this.reader.readCurrentInvocation());
     const now = this.clock();
     const issuedAt = now.getTime();
-    if (!Number.isFinite(issuedAt) || timestamp2(observed.observedAt) > issuedAt + CLOCK_SKEW_MS || issuedAt - timestamp2(observed.observedAt) > OBSERVATION_MAX_AGE_MS) {
+    if (!Number.isFinite(issuedAt) || timestamp3(observed.observedAt) > issuedAt + CLOCK_SKEW_MS || issuedAt - timestamp3(observed.observedAt) > OBSERVATION_MAX_AGE_MS) {
       throw invalid2("host observation is stale or from the future");
     }
     if (verified) {
-      if (issuedAt < timestamp2(verified.expiresAt) - CHALLENGE_TTL_MS - CLOCK_SKEW_MS || issuedAt >= timestamp2(verified.expiresAt) || !this.store.claimExecutionObservation(verified.nonceClaimId, verified.expiresAt, now.toISOString())) {
+      if (issuedAt < timestamp3(verified.expiresAt) - CHALLENGE_TTL_MS - CLOCK_SKEW_MS || issuedAt >= timestamp3(verified.expiresAt) || !this.store.claimExecutionObservation(verified.nonceClaimId, verified.expiresAt, now.toISOString())) {
         throw invalid2("VM receipt expired or already consumed");
       }
       this.onObservationClaim?.();
@@ -44851,20 +45000,20 @@ var ObservationChallengeAuthority = class {
     } catch {
       throw invalid2("body is malformed");
     }
-    const raw = record3(parsed);
+    const raw = record4(parsed);
     const observed = observation(raw);
-    if (!raw || raw.version !== 1 || raw.domain !== this.domain || !nonempty2(raw.challengeId) || !Number.isFinite(timestamp2(raw.issuedAt)) || !Number.isFinite(timestamp2(raw.expiresAt))) {
+    if (!raw || raw.version !== 1 || raw.domain !== this.domain || !nonempty3(raw.challengeId) || !Number.isFinite(timestamp3(raw.issuedAt)) || !Number.isFinite(timestamp3(raw.expiresAt))) {
       throw invalid2("body is malformed");
     }
-    const issuedAt = timestamp2(raw.issuedAt);
-    const expiresAt = timestamp2(raw.expiresAt);
+    const issuedAt = timestamp3(raw.issuedAt);
+    const expiresAt = timestamp3(raw.expiresAt);
     const now = this.clock();
     const checkedAt = now.getTime();
-    if (!Number.isFinite(checkedAt) || checkedAt < issuedAt - CLOCK_SKEW_MS || checkedAt >= expiresAt || expiresAt - issuedAt !== CHALLENGE_TTL_MS || timestamp2(observed.observedAt) > issuedAt + CLOCK_SKEW_MS || issuedAt - timestamp2(observed.observedAt) > OBSERVATION_MAX_AGE_MS) {
+    if (!Number.isFinite(checkedAt) || checkedAt < issuedAt - CLOCK_SKEW_MS || checkedAt >= expiresAt || expiresAt - issuedAt !== CHALLENGE_TTL_MS || timestamp3(observed.observedAt) > issuedAt + CLOCK_SKEW_MS || issuedAt - timestamp3(observed.observedAt) > OBSERVATION_MAX_AGE_MS) {
       throw invalid2("challenge expired or has invalid lifetime");
     }
     const verified = this.domain === "host" ? hostReaders.get(this.reader)() : null;
-    if (verified && (checkedAt < timestamp2(verified.expiresAt) - CHALLENGE_TTL_MS - CLOCK_SKEW_MS || checkedAt >= timestamp2(verified.expiresAt))) throw invalid2("VM receipt expired");
+    if (verified && (checkedAt < timestamp3(verified.expiresAt) - CHALLENGE_TTL_MS - CLOCK_SKEW_MS || checkedAt >= timestamp3(verified.expiresAt))) throw invalid2("VM receipt expired");
     const current = verified?.observation ?? observation(this.reader.readCurrentInvocation());
     if (!sameObservation(observed, current)) throw invalid2("different host invocation observation");
     if (!this.store.claimExecutionObservation(`${this.domain}-challenge-v1:${raw.challengeId}`, raw.expiresAt, now.toISOString())) {
@@ -44878,7 +45027,7 @@ var ObservationChallengeAuthority = class {
 function object6(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
-function exact2(value, keys3) {
+function exact3(value, keys3) {
   return !!value && Object.keys(value).length === keys3.length && keys3.every((key) => Object.hasOwn(value, key));
 }
 function required2(value) {
@@ -44958,7 +45107,7 @@ var VmCurrentInvocation = class {
     const terminal = object6(body.terminal), core = object6(body.core), invocation = object6(body.invocation);
     const now = this.clock(), issued = date5(body.issuedAt), expires = date5(body.expiresAt);
     const terminalTime = typeof terminal?.observedAt === "string" ? Date.parse(terminal.observedAt) : NaN;
-    if (!exact2(body, ["version", "domain", "serverEpoch", "nonce", "issuedAt", "expiresAt", "producer", "binding", "terminal", "core", "invocation"]) || body.version !== 1 || body.domain !== "ags-vm-dispatch-registration-v1" || body.serverEpoch !== this.serverEpoch || !required2(body.nonce) || !Number.isFinite(now) || !Number.isFinite(issued) || !Number.isFinite(expires) || issued > now + 5e3 || now >= expires || expires - issued !== 6e4 || !exact2(producer, ["installationId", "keyId", "hostId", "instanceId"]) || !exact2(binding2, ["turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) || !exact2(terminal, ["eventId", "callId", "threadId", "turnId", "status", "observedAt", "model", "effort", "provenance", "digest"]) || !exact2(core, ["goalRevision", "taskRevision", "attemptOrdinal", "gateOperationKey", "stage"]) || !exact2(invocation, ["tool", "inputDigest", "observedAt"]) || !required2(binding2.turnId) || !required2(binding2.taskId) || !optional2(binding2.runId) || !optional2(binding2.attemptId) || binding2.hostId !== "flowmarshal-engine" || !required2(binding2.sessionId) || !required2(binding2.instanceId) || binding2.instanceId !== producer.instanceId || terminal.turnId !== binding2.turnId || !required2(terminal.eventId) || !required2(terminal.callId) || !required2(terminal.model) || !required2(terminal.effort) || !Number.isFinite(terminalTime) || terminalTime > issued || !Number.isSafeInteger(core.goalRevision) || Number(core.goalRevision) < 1 || !Number.isSafeInteger(core.taskRevision) || Number(core.taskRevision) < 1 || !(core.attemptOrdinal === null || Number.isSafeInteger(core.attemptOrdinal) && Number(core.attemptOrdinal) > 0) || !required2(core.gateOperationKey) || !required2(core.stage) || !["bootstrap", "baseline", "implementation", "scope", "acceptance"].includes(core.stage) || core.stage === "bootstrap" && (invocation.tool !== "plan_workflow" || binding2.runId !== null || binding2.attemptId !== null) || core.stage !== "bootstrap" && (invocation.tool !== "record_stage_result" || !required2(binding2.runId)) || ["bootstrap", "baseline"].includes(core.stage) && binding2.attemptId !== null || ["implementation", "scope", "acceptance"].includes(core.stage) && !required2(binding2.attemptId) || !required2(invocation.tool) || !/^sha256:[0-9a-f]{64}$/u.test(String(invocation.inputDigest)) || invocation.observedAt !== body.issuedAt) {
+    if (!exact3(body, ["version", "domain", "serverEpoch", "nonce", "issuedAt", "expiresAt", "producer", "binding", "terminal", "core", "invocation"]) || body.version !== 1 || body.domain !== "ags-vm-dispatch-registration-v1" || body.serverEpoch !== this.serverEpoch || !required2(body.nonce) || !Number.isFinite(now) || !Number.isFinite(issued) || !Number.isFinite(expires) || issued > now + 5e3 || now >= expires || expires - issued !== 6e4 || !exact3(producer, ["installationId", "keyId", "hostId", "instanceId"]) || !exact3(binding2, ["turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) || !exact3(terminal, ["eventId", "callId", "threadId", "turnId", "status", "observedAt", "model", "effort", "provenance", "digest"]) || !exact3(core, ["goalRevision", "taskRevision", "attemptOrdinal", "gateOperationKey", "stage"]) || !exact3(invocation, ["tool", "inputDigest", "observedAt"]) || !required2(binding2.turnId) || !required2(binding2.taskId) || !optional2(binding2.runId) || !optional2(binding2.attemptId) || binding2.hostId !== "flowmarshal-engine" || !required2(binding2.sessionId) || !required2(binding2.instanceId) || binding2.instanceId !== producer.instanceId || terminal.turnId !== binding2.turnId || !required2(terminal.eventId) || !required2(terminal.callId) || !required2(terminal.model) || !required2(terminal.effort) || !Number.isFinite(terminalTime) || terminalTime > issued || !Number.isSafeInteger(core.goalRevision) || Number(core.goalRevision) < 1 || !Number.isSafeInteger(core.taskRevision) || Number(core.taskRevision) < 1 || !(core.attemptOrdinal === null || Number.isSafeInteger(core.attemptOrdinal) && Number(core.attemptOrdinal) > 0) || !required2(core.gateOperationKey) || !required2(core.stage) || !["bootstrap", "baseline", "implementation", "scope", "acceptance"].includes(core.stage) || core.stage === "bootstrap" && (invocation.tool !== "plan_workflow" || binding2.runId !== null || binding2.attemptId !== null) || core.stage !== "bootstrap" && (invocation.tool !== "record_stage_result" || !required2(binding2.runId)) || ["bootstrap", "baseline"].includes(core.stage) && binding2.attemptId !== null || ["implementation", "scope", "acceptance"].includes(core.stage) && !required2(binding2.attemptId) || !required2(invocation.tool) || !/^sha256:[0-9a-f]{64}$/u.test(String(invocation.inputDigest)) || invocation.observedAt !== body.issuedAt) {
       reject("registration binding is invalid");
     }
     const nonceKey = `${producer.keyId}:${body.nonce}`;
@@ -44970,7 +45119,7 @@ var VmCurrentInvocation = class {
     this.usedNonces.set(nonceKey, expires);
     this.pending.set(callId, {
       registration: structuredClone(body),
-      digest: `sha256:${createHash11("sha256").update(bytes).digest("hex")}`,
+      digest: `sha256:${createHash12("sha256").update(bytes).digest("hex")}`,
       expiresAt: expires,
       active: false,
       claimed: false
@@ -45161,7 +45310,7 @@ var SemanticEvaluationStore = class {
 };
 
 // mcp-server/src/semantic/evaluation-intent.ts
-function deny(message) {
+function deny2(message) {
   throw new WorkflowContractError("GATE_FAILED", message);
 }
 function rawJson(value) {
@@ -45207,7 +45356,7 @@ var SemanticEvaluationIntentStore = class {
     const evaluation = this.journal.get(row.evaluation_id);
     const hasClaim = !!row.claim_id && !!row.runner_id;
     if (!evaluation || evaluation.request.requestDigest !== row.request_digest || row.state === "recorded" !== (evaluation.state === "recorded") || (row.state === "pending" ? row.claim_id !== null || row.runner_id !== null : !hasClaim)) {
-      deny("Semantic intent and immutable evaluation journal diverged.");
+      deny2("Semantic intent and immutable evaluation journal diverged.");
     }
     return { evaluation, state: row.state, claimId: row.claim_id, runnerId: row.runner_id };
   }
@@ -45221,7 +45370,7 @@ var SemanticEvaluationIntentStore = class {
     return this.transaction(() => {
       const prior = this.row(stored.evaluationId);
       if (prior) return this.read(prior);
-      if (stored.state !== "prepared") deny("An unclaimed evaluation already has a result.");
+      if (stored.state !== "prepared") deny2("An unclaimed evaluation already has a result.");
       this.database.prepare("INSERT INTO ags_semantic_intents_v1 VALUES (?,?,'pending',NULL,NULL)").run(stored.evaluationId, stored.request.requestDigest);
       return this.read(this.row(stored.evaluationId));
     });
@@ -45231,12 +45380,12 @@ var SemanticEvaluationIntentStore = class {
     if (!runnerId.trim()) throw new WorkflowContractError("INVALID_INPUT", "Runner ID is required.");
     return this.transaction(() => {
       const row = this.row(evaluationId);
-      if (!row || row.request_digest !== requestDigest) deny("Runner claim is not bound to the prepared request.");
+      if (!row || row.request_digest !== requestDigest) deny2("Runner claim is not bound to the prepared request.");
       const current = this.read(row);
-      if (current.state !== "pending") deny("Evaluation already has a claim or result; no new provider call is allowed.");
+      if (current.state !== "pending") deny2("Evaluation already has a claim or result; no new provider call is allowed.");
       const claimId = randomUUID5();
       const changed = this.database.prepare("UPDATE ags_semantic_intents_v1 SET state='running',claim_id=?,runner_id=? WHERE evaluation_id=? AND request_digest=? AND state='pending'").run(claimId, runnerId, evaluationId, requestDigest).changes;
-      if (changed !== 1) deny("Concurrent evaluation claim lost.");
+      if (changed !== 1) deny2("Concurrent evaluation claim lost.");
       return this.read(this.row(evaluationId));
     });
   }
@@ -45244,7 +45393,7 @@ var SemanticEvaluationIntentStore = class {
   resume(evaluationId, requestDigest) {
     return this.transaction(() => {
       const row = this.row(evaluationId);
-      if (!row || row.request_digest !== requestDigest) deny("Resume is not bound to the prepared request.");
+      if (!row || row.request_digest !== requestDigest) deny2("Resume is not bound to the prepared request.");
       this.read(row);
       if (row.state === "running") {
         this.database.prepare("UPDATE ags_semantic_intents_v1 SET state='uncertain' WHERE evaluation_id=? AND state='running'").run(evaluationId);
@@ -45259,14 +45408,14 @@ var SemanticEvaluationIntentStore = class {
     return this.transaction(() => {
       const row = this.row(evaluationId);
       if (!row || row.request_digest !== requestDigest || !claimId || row.claim_id !== claimId) {
-        deny("Result is not bound to the recorded runner claim and request.");
+        deny2("Result is not bound to the recorded runner claim and request.");
       }
       const current = this.read(row);
       if (current.state === "recorded") {
-        if (rawJson(current.evaluation.result) !== resultJson) deny("Conflicting result for recorded runner claim.");
+        if (rawJson(current.evaluation.result) !== resultJson) deny2("Conflicting result for recorded runner claim.");
         return current;
       }
-      if (current.state !== "running" && current.state !== "uncertain") deny("Result has no active runner claim.");
+      if (current.state !== "running" && current.state !== "uncertain") deny2("Result has no active runner claim.");
       this.database.prepare("INSERT INTO ags_semantic_results_v1 VALUES (?,?,?,?)").run(evaluationId, requestDigest, resultDigest, resultJson);
       this.database.prepare("UPDATE ags_semantic_intents_v1 SET state='recorded' WHERE evaluation_id=?").run(evaluationId);
       return this.read(this.row(evaluationId));
@@ -45394,7 +45543,7 @@ var JevHttpClient = class {
 };
 
 // mcp-server/src/semantic/providers/jev/provider.ts
-import { createHash as createHash13 } from "node:crypto";
+import { createHash as createHash14 } from "node:crypto";
 
 // mcp-server/src/semantic/state-projection.ts
 var SEMANTIC_STATE_PROJECTION_VERSION = "1.0.0";
@@ -45467,12 +45616,12 @@ function projectSemanticState(input2) {
 }
 
 // mcp-server/src/semantic/providers/jev/request-mapper.ts
-import { createHash as createHash12 } from "node:crypto";
+import { createHash as createHash13 } from "node:crypto";
 var JEV_REQUEST_PROJECTION_VERSION = "1.0.0";
 var JEV_MODEL_CHOICE_QUESTION_ID = "model_choice";
 var JEV_MODEL_ID = "jev-1.13.0";
 var MAX_CHOICE_OPTIONS = 255;
-var textHash = (text2) => `sha256:${createHash12("sha256").update(text2, "utf8").digest("hex")}`;
+var textHash = (text2) => `sha256:${createHash13("sha256").update(text2, "utf8").digest("hex")}`;
 async function projectJevRequest(input2) {
   const prepared = new ContractValidator().semanticDecisionRequestV1(input2.prepared);
   verifySeal(prepared, "requestDigest");
@@ -45598,7 +45747,7 @@ var JEV_IMPLEMENTATION_IDENTITY = {
   stateProjectionVersion: SEMANTIC_STATE_PROJECTION_VERSION
 };
 function jevProviderIdentity(parts = JEV_IMPLEMENTATION_IDENTITY) {
-  const hash2 = createHash13("sha256").update(JSON.stringify([
+  const hash2 = createHash14("sha256").update(JSON.stringify([
     parts.endpoint,
     parts.model,
     parts.adapterRevision,
@@ -45911,10 +46060,10 @@ import { randomUUID as randomUUID6 } from "node:crypto";
 
 // mcp-server/src/semantic/provider-port.ts
 function parseSemanticProviderResultV1(value) {
-  if (!record4(value) || typeof value.status !== "string") throw new TypeError("Invalid semantic provider result.");
+  if (!record5(value) || typeof value.status !== "string") throw new TypeError("Invalid semantic provider result.");
   if (value.status === "success") {
     const choice = value.choice;
-    if (!keys2(value, "status", "choice") || !record4(choice) || !keys2(choice, "kind", "selectedOptionIds", "confidence") || choice.kind !== "Choice" || !Array.isArray(choice.selectedOptionIds) || choice.selectedOptionIds.length < 1 || choice.selectedOptionIds.length > 256 || !choice.selectedOptionIds.every((id) => typeof id === "string" && /^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$/u.test(id)) || new Set(choice.selectedOptionIds).size !== choice.selectedOptionIds.length || choice.confidence !== null && (typeof choice.confidence !== "number" || !Number.isFinite(choice.confidence) || choice.confidence < 0 || choice.confidence > 1)) {
+    if (!keys2(value, "status", "choice") || !record5(choice) || !keys2(choice, "kind", "selectedOptionIds", "confidence") || choice.kind !== "Choice" || !Array.isArray(choice.selectedOptionIds) || choice.selectedOptionIds.length < 1 || choice.selectedOptionIds.length > 256 || !choice.selectedOptionIds.every((id) => typeof id === "string" && /^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$/u.test(id)) || new Set(choice.selectedOptionIds).size !== choice.selectedOptionIds.length || choice.confidence !== null && (typeof choice.confidence !== "number" || !Number.isFinite(choice.confidence) || choice.confidence < 0 || choice.confidence > 1)) {
       throw new TypeError("Invalid semantic provider choice.");
     }
     return { status: "success", choice };
@@ -45924,7 +46073,7 @@ function parseSemanticProviderResultV1(value) {
   }
   throw new TypeError("Invalid semantic provider result.");
 }
-function record4(value) {
+function record5(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 function keys2(value, ...expected) {
@@ -45976,7 +46125,7 @@ function normalizeSemanticProviderResult(input2) {
 }
 
 // mcp-server/src/semantic/advice-admission.ts
-function deny2(message) {
+function deny3(message) {
   throw new WorkflowContractError("GATE_FAILED", message);
 }
 var SemanticAdviceAdmissionStore = class {
@@ -46015,14 +46164,14 @@ var SemanticAdviceAdmissionStore = class {
   recorded(evaluationId) {
     const intent = this.intents.get(evaluationId);
     if (!intent || intent.state !== "recorded" || !intent.claimId || !intent.runnerId || intent.evaluation.state !== "recorded" || intent.evaluation.result === null) {
-      deny2("Advice requires a runner-recorded evaluation and result.");
+      deny3("Advice requires a runner-recorded evaluation and result.");
     }
     return intent;
   }
   read(row, intent) {
     const { request, result } = intent.evaluation;
     if (row.request_digest !== request.requestDigest || row.result_digest !== digest(result)) {
-      deny2("Advice registration does not match the runner journal.");
+      deny3("Advice registration does not match the runner journal.");
     }
     const advice = validateSemanticAdviceForRequest({
       prepared: request,
@@ -46031,7 +46180,7 @@ var SemanticAdviceAdmissionStore = class {
     });
     const expected = normalizeSemanticProviderResult({ prepared: request, rawResult: result, now: row.registered_at });
     if (row.advice_json !== canonical(advice) || row.advice_digest !== advice.adviceDigest || canonical(advice) !== canonical(expected) || advice.evaluatedAt !== row.registered_at || advice.evaluationId !== row.evaluation_id) {
-      deny2("Stored advice registration is inconsistent.");
+      deny3("Stored advice registration is inconsistent.");
     }
     return {
       registrationId: row.registration_id,
@@ -46288,7 +46437,7 @@ function prepareSemanticRequest(input2) {
 }
 
 // mcp-server/src/routing-v3/decision-writer.ts
-function deny3(message) {
+function deny4(message) {
   throw new WorkflowContractError("GATE_FAILED", message);
 }
 var RegisteredDecisionWriter = class {
@@ -46305,12 +46454,12 @@ var RegisteredDecisionWriter = class {
   validator = new ContractValidator();
   write(input2) {
     if (!input2 || typeof input2 !== "object" || Array.isArray(input2) || Object.keys(input2).sort().join(",") !== "baselineDecisionDigest,decisionTime,evaluationId,registrationId") {
-      deny3("Only registered decision references may be supplied.");
+      deny4("Only registered decision references may be supplied.");
     }
     const registered = this.admission.get(input2.evaluationId);
     const intent = this.intents.get(input2.evaluationId);
     if (!registered || registered.registrationId !== input2.registrationId || intent?.state !== "recorded" || registered.requestDigest !== intent.evaluation.request.requestDigest) {
-      deny3("Decision requires the exact registered runner advice.");
+      deny4("Decision requires the exact registered runner advice.");
     }
     const adoption = this.adoptionReader?.read(
       input2.evaluationId,
@@ -46318,11 +46467,11 @@ var RegisteredDecisionWriter = class {
       registered.advice.adviceDigest
     );
     if (!adoption || adoption.status !== "eligible" || Object.keys(adoption).sort().join(",") !== "evidenceDigest,status") {
-      deny3("Decision requires service-admitted adoption evidence.");
+      deny4("Decision requires service-admitted adoption evidence.");
     }
     const baseline = readDecision(this.store, input2.baselineDecisionDigest, this.validator);
     if (!baseline || baseline.decision.schemaVersion !== "2.0.0") {
-      deny3("Decision requires an immutable stored v2 baseline.");
+      deny4("Decision requires an immutable stored v2 baseline.");
     }
     instant(input2.decisionTime, "decisionTime");
     const { request, environment } = baseline;
@@ -46579,7 +46728,7 @@ import { createPublicKey as createPublicKey2, verify as verify2 } from "node:cry
 import { execFileSync } from "node:child_process";
 import { closeSync as closeSync2, constants, fstatSync as fstatSync2, lstatSync as lstatSync2, openSync as openSync2, readFileSync as readFileSync6 } from "node:fs";
 import path15 from "node:path";
-var DIGEST4 = /^sha256:[0-9a-f]{64}$/u;
+var DIGEST5 = /^sha256:[0-9a-f]{64}$/u;
 var MODEL_CLASSES = ["lightweight", "general", "deep", "frontier"];
 var SYSTEM_SIDS = /* @__PURE__ */ new Set(["S-1-5-18", "S-1-5-32-544"]);
 var WINDOWS_READ_RIGHTS = 1179817;
@@ -46589,14 +46738,14 @@ var POSIX_POLICY_PATH = "/etc/agent-governance-suite/vm-operator-policy.json";
 function object8(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
-function exact3(value, keys3) {
+function exact4(value, keys3) {
   return !!value && Object.keys(value).length === keys3.length && keys3.every((key) => Object.hasOwn(value, key));
 }
-function nonempty3(value) {
+function nonempty4(value) {
   return typeof value === "string" && value.trim().length > 0;
 }
-function digest4(value) {
-  return typeof value === "string" && DIGEST4.test(value);
+function digest5(value) {
+  return typeof value === "string" && DIGEST5.test(value);
 }
 function listed(value, options) {
   return typeof value === "string" && options.includes(value);
@@ -46606,13 +46755,13 @@ function fail2(message) {
 }
 function parsePolicy(value) {
   const raw = object8(value);
-  if (!exact3(raw, ["version", "modelPolicyVersion", "pins", "hostBuilds", "models"]) || raw.version !== 1 || !nonempty3(raw.modelPolicyVersion) || !Array.isArray(raw.pins) || !Array.isArray(raw.hostBuilds) || !Array.isArray(raw.models)) {
+  if (!exact4(raw, ["version", "modelPolicyVersion", "pins", "hostBuilds", "models"]) || raw.version !== 1 || !nonempty4(raw.modelPolicyVersion) || !Array.isArray(raw.pins) || !Array.isArray(raw.hostBuilds) || !Array.isArray(raw.models)) {
     fail2("configuration is malformed");
   }
   const keys3 = /* @__PURE__ */ new Set(), installations = /* @__PURE__ */ new Map(), builds = /* @__PURE__ */ new Set(), models = /* @__PURE__ */ new Set();
   for (const entry of raw.pins) {
     const pin = object8(entry);
-    if (!exact3(pin, ["keyId", "installationId", "hostId", "publicKeySpki", "hostBuildDigest", "modelPolicyVersion", "status"]) || !nonempty3(pin.keyId) || !nonempty3(pin.installationId) || pin.hostId !== "flowmarshal-engine" || typeof pin.publicKeySpki !== "string" || !digest4(pin.hostBuildDigest) || !nonempty3(pin.modelPolicyVersion) || !listed(pin.status, ["active", "revoked"]) || keys3.has(pin.keyId) || installations.has(pin.installationId) && installations.get(pin.installationId) !== pin.hostBuildDigest) {
+    if (!exact4(pin, ["keyId", "installationId", "hostId", "publicKeySpki", "hostBuildDigest", "modelPolicyVersion", "status"]) || !nonempty4(pin.keyId) || !nonempty4(pin.installationId) || pin.hostId !== "flowmarshal-engine" || typeof pin.publicKeySpki !== "string" || !digest5(pin.hostBuildDigest) || !nonempty4(pin.modelPolicyVersion) || !listed(pin.status, ["active", "revoked"]) || keys3.has(pin.keyId) || installations.has(pin.installationId) && installations.get(pin.installationId) !== pin.hostBuildDigest) {
       fail2("pin registry is malformed");
     }
     keys3.add(pin.keyId);
@@ -46628,12 +46777,12 @@ function parsePolicy(value) {
   }
   for (const entry of raw.hostBuilds) {
     const host = object8(entry);
-    if (!exact3(host, ["hostId", "hostBuildDigest", "status"]) || host.hostId !== "flowmarshal-engine" || !digest4(host.hostBuildDigest) || !listed(host.status, ["verified", "unverified"]) || builds.has(host.hostBuildDigest)) fail2("host build registry is malformed");
+    if (!exact4(host, ["hostId", "hostBuildDigest", "status"]) || host.hostId !== "flowmarshal-engine" || !digest5(host.hostBuildDigest) || !listed(host.status, ["verified", "unverified"]) || builds.has(host.hostBuildDigest)) fail2("host build registry is malformed");
     builds.add(host.hostBuildDigest);
   }
   for (const entry of raw.models) {
     const model = object8(entry);
-    if (!exact3(model, ["hostId", "hostBuildDigest", "observedModelId", "modelClass", "status"]) || model.hostId !== "flowmarshal-engine" || !digest4(model.hostBuildDigest) || !nonempty3(model.observedModelId) || !listed(model.modelClass, MODEL_CLASSES) || !listed(model.status, ["verified", "unverified", "retired"])) fail2("model registry is malformed");
+    if (!exact4(model, ["hostId", "hostBuildDigest", "observedModelId", "modelClass", "status"]) || model.hostId !== "flowmarshal-engine" || !digest5(model.hostBuildDigest) || !nonempty4(model.observedModelId) || !listed(model.modelClass, MODEL_CLASSES) || !listed(model.status, ["verified", "unverified", "retired"])) fail2("model registry is malformed");
     const identity = `${model.hostId}\0${model.hostBuildDigest}\0${model.observedModelId}`;
     if (models.has(identity)) fail2("duplicate model mapping");
     models.add(identity);
@@ -46765,7 +46914,7 @@ var VmModelPolicy = class _VmModelPolicy {
   }
   verifyEnvelope(envelopeValue) {
     const envelope = object8(envelopeValue);
-    if (!exact3(envelope, ["body", "signature", "keyId"]) || !nonempty3(envelope.keyId) || typeof envelope.body !== "string" || typeof envelope.signature !== "string") fail2("signed envelope is malformed");
+    if (!exact4(envelope, ["body", "signature", "keyId"]) || !nonempty4(envelope.keyId) || typeof envelope.body !== "string" || typeof envelope.signature !== "string") fail2("signed envelope is malformed");
     const pin = this.pin(envelope.keyId);
     const bytes = Buffer.from(envelope.body, "base64url");
     const signature = Buffer.from(envelope.signature, "base64url");
@@ -46782,7 +46931,7 @@ var VmModelPolicy = class _VmModelPolicy {
   }
   resolveProfile(registration) {
     const producer = object8(registration.producer), terminal = object8(registration.terminal);
-    if (!producer || !terminal || !nonempty3(producer.keyId) || !nonempty3(terminal.model)) fail2("observed model is unavailable");
+    if (!producer || !terminal || !nonempty4(producer.keyId) || !nonempty4(terminal.model)) fail2("observed model is unavailable");
     const policy = this.readPolicy();
     const pin = this.pin(producer.keyId, policy);
     if (producer.installationId !== pin.installationId || producer.hostId !== pin.hostId) fail2("producer installation is not pinned");
