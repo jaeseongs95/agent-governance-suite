@@ -51,8 +51,8 @@ export function estimateClaudeApiTokenCost({ modelId, pricingDate, scope, usage,
   }
   if (pricingDate !== AS_OF_DATE || !scope || Object.keys(scope).length !== Object.keys(SCOPE).length
     || Object.entries(SCOPE).some(([key, value]) => scope[key] !== value)) return unknown('UNSUPPORTED_PRICE_SCOPE');
+  if (typeof modelId !== 'string' || !Object.hasOwn(RATES, modelId)) return unknown('UNKNOWN_MODEL_RATE');
   const rates = RATES[modelId];
-  if (!rates) return unknown('UNKNOWN_MODEL_RATE');
   if (!usage || typeof usage !== 'object') return unknown('USAGE_MISSING');
   if (usage.input_tokens == null || usage.output_tokens == null || usage.cache_read_input_tokens == null)
     return unknown('USAGE_MISSING');

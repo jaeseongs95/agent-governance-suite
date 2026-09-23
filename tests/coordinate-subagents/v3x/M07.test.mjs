@@ -67,6 +67,12 @@ test('M07 cannot invent a standard API price for another scope, date, or model',
     cost: { basis: 'unknown', amount: null, currency: null, unit: null, sourceReference: null },
   });
   assert.equal(estimate('claude-sonnet-5').reason, 'UNKNOWN_MODEL_RATE');
+  for (const modelId of ['constructor', '__proto__']) {
+    assert.deepEqual(estimate(modelId), {
+      status: 'unknown', reason: 'UNKNOWN_MODEL_RATE',
+      cost: { basis: 'unknown', amount: null, currency: null, unit: null, sourceReference: null },
+    });
+  }
 });
 
 test('M07 rejects bad quantities and preserves actual billing or subscription observations', () => {
