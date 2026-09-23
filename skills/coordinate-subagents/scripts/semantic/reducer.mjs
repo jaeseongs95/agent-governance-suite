@@ -15,10 +15,64 @@ const selectionFields = [
 const targetFields = ['actorId', 'host', 'sessionId', 'instanceId'];
 const pick = (value, fields) => Object.fromEntries(fields.map(key => [key, structuredClone(value[key])]));
 
+/** Preserve the v2 artifact for policy bypasses; classify only allowed assist non-adoption. */
+export function reduceSemanticDecisionOutcomeV1({
+  policy, routingRequest, baselineDecision, prepared = null, advice = null,
+  adoption = null, candidates = [], nonAdoption = null,
+}) {
+  verifySeal(baselineDecision, 'decisionDigest');
+  assert(baselineDecision.schemaVersion === '2.0.0'
+    && baselineDecision.requestDigest === digest(routingRequest)
+    && canonical(baselineDecision.binding) === canonical(routingRequest.binding)
+    && canonical(baselineDecision.requested) === canonical(routingRequest.user ?? null)
+    && baselineDecision.executionAuthorized === false
+    && baselineDecision.trustedGateSatisfied === false, 'BASELINE_MISMATCH');
+  assert(['off', 'shadow', 'assist'].includes(policy?.mode), 'INVALID_INPUT');
+  if (prepared !== null) {
+    verifySeal(prepared, 'requestDigest');
+    assert(canonical(prepared.binding) === canonical(routingRequest.binding)
+      && prepared.effectiveRoutingRequestDigest === baselineDecision.requestDigest
+      && prepared.catalogDigest === baselineDecision.catalogDigest
+      && prepared.routingPolicyDigest === baselineDecision.policyDigest
+      && prepared.capabilitySetDigest === baselineDecision.capabilitySetDigest
+      && prepared.semanticPolicyDigest === digest(policy), 'REQUEST_BINDING_MISMATCH');
+  }
+  if (advice !== null) {
+    verifySeal(advice, 'adviceDigest');
+    assert(prepared !== null
+      && bindingFields.every(key => canonical(prepared[key]) === canonical(advice[key]))
+      && advice.semanticRequestDigest === prepared.requestDigest, 'ADVICE_BINDING_MISMATCH');
+  }
+  if (policy.mode !== 'assist') return baselineDecision;
+  if (adoption?.status === 'baseline') {
+    const allowed = [
+      'HIGH_RISK_EXCLUDED', 'INDEPENDENT_AUDIT_EXCLUDED', 'SCOPE_NOT_PRESERVED',
+      'ADOPTION_UNVALIDATED', 'PROVIDER_NOT_ALLOWED', 'CONFIDENCE_UNKNOWN',
+      'CONFIDENCE_BELOW_MINIMUM',
+    ];
+    assert(allowed.includes(adoption.reasonCode), 'NON_ADOPTION_NOT_FALLBACK');
+  }
+  if (nonAdoption !== null) {
+    assert(adoption === null && advice === null
+      && ['ABSTAINED', 'PROVIDER_TIMEOUT', 'PROVIDER_UNAVAILABLE'].includes(nonAdoption),
+      'NON_ADOPTION_NOT_FALLBACK');
+  }
+  if (baselineDecision.status === 'blocked' || baselineDecision.fallbackReason !== null) return baselineDecision;
+  if (adoption?.status === 'baseline') {
+    return { status: 'non-adoption', reasonCode: adoption.reasonCode, baselineDecision };
+  }
+  if (nonAdoption !== null) {
+    return { status: 'non-adoption', reasonCode: nonAdoption, baselineDecision };
+  }
+  assert(adoption?.status === 'eligible' && prepared !== null && advice !== null, 'ADOPTION_NOT_ELIGIBLE');
+  return reduceSemanticDecisionV1({ prepared, advice, adoption, baselineDecision, candidates });
+}
+
 export function reduceSemanticDecisionV1({ prepared, advice, adoption, baselineDecision, candidates }) {
   assert(adoption?.status === 'eligible', 'ADOPTION_NOT_ELIGIBLE');
   assert(prepared?.mode === 'assist' && baselineDecision?.schemaVersion === '2.0.0'
-    && baselineDecision.status === 'selected', 'INVALID_INPUT', 'Assist and selected v2 baseline required');
+    && baselineDecision.status === 'selected' && baselineDecision.fallbackReason === null,
+  'INVALID_INPUT', 'Assist and selected v2 baseline without fallback required');
   verifySeal(prepared, 'requestDigest');
   verifySeal(advice, 'adviceDigest');
   verifySeal(baselineDecision, 'decisionDigest');
