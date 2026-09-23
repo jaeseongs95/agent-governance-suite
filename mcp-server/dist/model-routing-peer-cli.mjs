@@ -10667,7 +10667,8 @@ var contractSchemas = {
   semanticModelAssignmentRequestV1: loadSchema("semantic-model-assignment-request.v1.schema.json"),
   modelRoutingDecisionV3: loadSchema("model-routing-decision.v3.schema.json"),
   modelApplicationRequestV3: loadSchema("model-application-request.v3.schema.json"),
-  modelApplicationRecordV3: loadSchema("model-application-record.v3.schema.json")
+  modelApplicationRecordV3: loadSchema("model-application-record.v3.schema.json"),
+  resourceStateSnapshotV1: loadSchema("resource-state-snapshot.v1.schema.json")
 };
 function artifactDigestView(declared) {
   let items = declared.properties?.artifacts?.items;
@@ -10894,6 +10895,13 @@ var ContractValidator = class {
   }
   modelEvaluationRecordV1(value) {
     return this.assert("modelEvaluationRecordV1", value);
+  }
+  resourceStateSnapshotV1(value) {
+    const snapshot = this.assert("resourceStateSnapshotV1", value);
+    if (new Set(snapshot.windows.map((window) => window.windowId)).size !== snapshot.windows.length || snapshot.windows.some((window) => Date.parse(window.expiresAt) <= Date.parse(window.observedAt))) {
+      throw new WorkflowContractError("INVALID_INPUT", "Resource windows must have unique IDs and expire after observation.");
+    }
+    return snapshot;
   }
   /** New-contract validation only: legacy Ajv acceptance and v2 runtime methods are unchanged. */
   assertSemantic(name, value) {
