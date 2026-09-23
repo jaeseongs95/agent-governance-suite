@@ -5,9 +5,8 @@ import { ModelRoutingPeerSession } from '../../mcp-server/src/model-routing-peer
 import { ModelRoutingWorkflowBridge } from '../../mcp-server/src/model-routing-workflow.js';
 import { ModelPeerPacketSigner } from '../../mcp-server/src/model-peer-packet.js';
 import { seal } from '../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
-import { RECEIVER, TOKEN } from './peer-handoff-fixtures.mjs';
+import { RECEIVER, TOKEN, PEER_NOW as NOW } from './peer-handoff-fixtures.mjs';
 import { fixture, accepted, retained, lastAwait } from './peer-execution-fixtures.mjs';
-import { NOW } from '../coordinate-subagents/model-routing-v2/fixtures.mjs';
 
 afterEach(() => vi.restoreAllMocks());
 

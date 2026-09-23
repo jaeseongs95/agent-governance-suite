@@ -11180,7 +11180,7 @@ var ModelRoutingWorkflowBridge = class {
     requireCondition(guarded.outcome === null, "The workflow attempt already has an outcome.");
     const authorization = guarded.proposal.taskEnvelope.authorization;
     requireCondition(
-      guarded.proposal.taskEnvelope.riskLevel !== "high" || request.highRisk,
+      !["high", "critical"].includes(guarded.proposal.taskEnvelope.riskLevel) || request.highRisk,
       "A peer handoff cannot downgrade the task risk."
     );
     const required = /* @__PURE__ */ new Set([
@@ -11306,7 +11306,11 @@ var ModelRoutingWorkflowBridge = class {
         record2.recordDigest === recordDigest && record2.binding.runId === result.runId && record2.binding.stageId === result.stageId && record2.binding.revision === result.expectedRevision,
         "Routing application belongs to a different run, stage or revision."
       );
-      this.current(record2.binding);
+      const { guarded } = this.current(record2.binding);
+      requireCondition(
+        !["high", "critical"].includes(guarded.proposal.taskEnvelope.riskLevel) || request.highRisk,
+        "A routing artifact cannot downgrade the task risk."
+      );
       requireCondition(artifact.targetDigest === record2.binding.candidateDigest, "Routing artifact candidate digest does not match its application.");
       const requiredFields = result.state === "passed" ? [.../* @__PURE__ */ new Set([...request.requirements.requireObservable, ...request.highRisk ? ["model", "reasoning", "runtimeMode"] : []])] : [];
       checkApplicationArtifactBinding(record2, { binding: decision.binding, target: decision.target, requiredFields, store: this.routing });

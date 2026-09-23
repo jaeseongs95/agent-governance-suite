@@ -6,8 +6,7 @@ import { expect, onTestFinished, vi } from 'vitest';
 import { SessionMessageStore } from '../../mcp-server/src/session-message-store.js';
 import { SessionModelCapabilityStore, capabilitySigner, MODEL_CAPABILITY_FEATURE } from '../../mcp-server/src/session-model-capabilities.js';
 import { digest } from '../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
-import { createPeerWorkflow, SENDER, RECEIVER, TOKEN } from './peer-handoff-fixtures.mjs';
-import { NOW } from '../coordinate-subagents/model-routing-v2/fixtures.mjs';
+import { createPeerWorkflow, SENDER, RECEIVER, TOKEN, PEER_NOW as NOW } from './peer-handoff-fixtures.mjs';
 
 export function fixture() {
   const cleanups = [];

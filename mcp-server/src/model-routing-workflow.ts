@@ -60,7 +60,7 @@ export class ModelRoutingWorkflowBridge {
     const { guarded } = this.current(request.binding);
     requireCondition(guarded.outcome === null, "The workflow attempt already has an outcome.");
     const authorization = guarded.proposal.taskEnvelope.authorization;
-    requireCondition(guarded.proposal.taskEnvelope.riskLevel !== "high" || request.highRisk,
+    requireCondition(!["high", "critical"].includes(guarded.proposal.taskEnvelope.riskLevel) || request.highRisk,
       "A peer handoff cannot downgrade the task risk.");
     const required = new Set([...request.requirements.tools,
       ...(request.requirements.filesystem === "none" ? [] : ["read"]),
@@ -171,7 +171,9 @@ export class ModelRoutingWorkflowBridge {
       requireCondition(record.recordDigest === recordDigest && record.binding.runId === result.runId
         && record.binding.stageId === result.stageId && record.binding.revision === result.expectedRevision,
       "Routing application belongs to a different run, stage or revision.");
-      this.current(record.binding);
+      const { guarded } = this.current(record.binding);
+      requireCondition(!["high", "critical"].includes(guarded.proposal.taskEnvelope.riskLevel) || request.highRisk,
+        "A routing artifact cannot downgrade the task risk.");
       requireCondition(artifact.targetDigest === record.binding.candidateDigest, "Routing artifact candidate digest does not match its application.");
       const requiredFields = result.state === "passed"
         ? [...new Set([...request.requirements.requireObservable, ...(request.highRisk ? ["model", "reasoning", "runtimeMode"] : [])])]
