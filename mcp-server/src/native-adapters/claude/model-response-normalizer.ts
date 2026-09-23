@@ -77,6 +77,32 @@ function exposedModel(response: RecordValue | null, events: RecordValue[], termi
     source: nonempty(value(started?.message)?.model) ? "stream.message_start.model" : "unknown" };
 }
 
+function continuationContent(blocks: unknown[]): unknown[] {
+  let finalFallback = -1;
+  for (let i = 0; i < blocks.length; i++) {
+    if (value(blocks[i])?.type === "fallback") finalFallback = i;
+  }
+  if (finalFallback < 0) return structuredClone(blocks);
+  const resultPositions = new Map<string, number>();
+  for (let i = 0; i < finalFallback; i++) {
+    const block = value(blocks[i]);
+    const type = nonempty(block?.type);
+    const toolUseId = nonempty(block?.tool_use_id);
+    if (type?.endsWith("_tool_result") && toolUseId) resultPositions.set(toolUseId, i);
+  }
+  return structuredClone(blocks.filter((raw, position) => {
+    if (position >= finalFallback) return true;
+    const block = value(raw);
+    if (block?.type === "thinking" || block?.type === "redacted_thinking"
+      || block?.type === "connector_text" || block?.type === "tool_use") return false;
+    if (block?.type === "server_tool_use") {
+      const toolId = nonempty(block.id);
+      return toolId !== null && (resultPositions.get(toolId) ?? -1) > position;
+    }
+    return true;
+  }));
+}
+
 /** The caller must bind response/events to the same trusted provider invocation. */
 export function normalizeClaudeModelResponse(input: {
   requestedModel: string;
@@ -144,7 +170,7 @@ export function normalizeClaudeModelResponse(input: {
           : terminal && STOP_REASONS.has(stopReason) ? "terminal" : "unknown",
       category, categoryRecognized: category === null ? null : REFUSAL_CATEGORIES.has(category) },
     display: { text: refusal ? "" : rawText, provisional: !terminal },
-    continuationBlocks: terminal && !refusal && blocks ? structuredClone(blocks) : null,
+    continuationBlocks: terminal && !refusal && blocks ? continuationContent(blocks) : null,
     model: { requested: input.requestedModel, exposed: model.id, source: model.source,
       mismatch: model.id === null ? null : model.id !== input.requestedModel,
       hiddenBackend: "unknown", admitted: false },

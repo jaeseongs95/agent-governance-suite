@@ -141,3 +141,60 @@ test('M06 merges streaming usage and retains an earlier stop reason', () => {
   assert.deepEqual(result.usage.value, { input_tokens: 7, output_tokens: 5 });
   assert.equal(result.usage.source, 'stream.merged.usage');
 });
+
+test('M06 prepares mid-output fallback content for the next turn without changing raw output', () => {
+  const firstBoundary = { type: 'fallback', from: { model: requestedModel },
+    to: { model: 'claude-opus-5' } };
+  const finalBoundary = { type: 'fallback', from: { model: 'claude-opus-5' },
+    to: { model: 'claude-opus-4-8' } };
+  const pairedUse = { type: 'server_tool_use', id: 'server-1', name: 'web_search',
+    input: { query: 'test' } };
+  const pairedResult = { type: 'web_search_tool_result', tool_use_id: 'server-1',
+    content: [{ type: 'web_search_result', encrypted_content: 'opaque' }] };
+  const response = { model: 'claude-opus-4-8', stop_reason: 'end_turn', content: [
+    { type: 'text', text: 'before' },
+    { type: 'thinking', thinking: 'private', signature: 'signed' },
+    { type: 'redacted_thinking', data: 'opaque' },
+    { type: 'connector_text', text: 'narration' },
+    { type: 'tool_use', id: 'client-1', name: 'client_tool', input: {} },
+    pairedUse, pairedResult,
+    { type: 'server_tool_use', id: 'server-2', name: 'web_fetch', input: {} },
+    firstBoundary,
+    { type: 'text', text: 'between' },
+    { type: 'server_tool_use', id: 'server-3', name: 'web_search', input: {} },
+    finalBoundary,
+    { type: 'thinking', thinking: 'fallback thinking', signature: 'signed-2' },
+    { type: 'tool_use', id: 'client-2', name: 'client_tool', input: {} },
+    { type: 'text', text: 'after' },
+  ] };
+  const original = structuredClone(response);
+  const result = normalize(response, [
+    { type: 'message_start', message: { model: requestedModel } },
+    { type: 'content_block_start', index: 8, content_block: firstBoundary },
+    { type: 'content_block_start', index: 11, content_block: finalBoundary },
+    { type: 'message_delta', delta: { stop_reason: 'end_turn' } },
+    { type: 'message_stop' },
+  ]);
+  assert.deepEqual(result.continuationBlocks, [
+    response.content[0], pairedUse, pairedResult, firstBoundary,
+    response.content[9], finalBoundary, ...response.content.slice(12),
+  ]);
+  assert.equal(result.display.text, 'beforebetweenafter');
+  assert.deepEqual(result.rawResponse, original);
+  assert.deepEqual(response, original);
+  assert.equal(result.fallback.providerObserved, true);
+});
+
+test('M06 preserves fallback-first and non-fallback continuation blocks', () => {
+  const fallbackFirst = { model: 'claude-opus-5', stop_reason: 'end_turn', content: [
+    { type: 'fallback', to: { model: 'claude-opus-5' } },
+    { type: 'thinking', thinking: 'after boundary', signature: 'signed' },
+    { type: 'text', text: 'answer' },
+  ] };
+  assert.deepEqual(normalize(fallbackFirst).continuationBlocks, fallbackFirst.content);
+  const noFallback = { model: requestedModel, stop_reason: 'end_turn', content: [
+    { type: 'thinking', thinking: 'original', signature: 'signed' },
+    { type: 'tool_use', id: 'tool-1', name: 'client_tool', input: {} },
+  ] };
+  assert.deepEqual(normalize(noFallback).continuationBlocks, noFallback.content);
+});
