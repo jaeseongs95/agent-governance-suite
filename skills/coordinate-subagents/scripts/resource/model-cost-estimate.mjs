@@ -66,6 +66,9 @@ export function estimateClaudeApiTokenCost({ modelId, pricingDate, scope, usage,
   if (creation == null && total == null) return unknown('CACHE_TTL_UNKNOWN');
   if (total != null) count(total);
   if (creation == null && total !== 0) return unknown('CACHE_TTL_UNKNOWN');
+  if (creation != null && Object.keys(creation).some(key =>
+    key !== 'ephemeral_5m_input_tokens' && key !== 'ephemeral_1h_input_tokens'))
+    return unknown('CACHE_TTL_UNKNOWN');
   const write5m = creation == null ? 0n : count(creation.ephemeral_5m_input_tokens);
   const write1h = creation == null ? 0n : count(creation.ephemeral_1h_input_tokens);
   if (total != null && BigInt(total) !== write5m + write1h) return unknown('CACHE_TOTAL_MISMATCH');
