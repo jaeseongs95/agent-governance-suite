@@ -13131,6 +13131,125 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href &
   }
 }
 
+// skills/coordinate-subagents/scripts/semantic/application-record.mjs
+var same = (left, right, code) => assert(canonical(left) === canonical(right), code);
+var verification = (expected, actual, admitted) => !admitted || actual === null || actual === void 0 ? "unverified" : canonical(expected) === canonical(actual) ? "matched" : "mismatch";
+function recordSemanticApplicationV3(input, {
+  request,
+  decision,
+  catalog,
+  policy,
+  now,
+  admittedObservation = null
+} = {}) {
+  keys(
+    input,
+    [
+      "schemaVersion",
+      "binding",
+      "decisionDigest",
+      "target",
+      "dispatched",
+      "dispatchedAt",
+      "observation",
+      "semanticAdviceDigest"
+    ],
+    [
+      "schemaVersion",
+      "binding",
+      "decisionDigest",
+      "target",
+      "dispatched",
+      "dispatchedAt",
+      "semanticAdviceDigest"
+    ]
+  );
+  assert(input.schemaVersion === "3.0.0", "INVALID_INPUT");
+  validateBinding(input.binding);
+  validateTarget(input.target);
+  validateSelection(input.dispatched);
+  instant(input.dispatchedAt, "dispatchedAt");
+  assert(input.dispatchedAt === now, "DISPATCH_TIME_MISMATCH");
+  validateRequest(request);
+  validateCatalog(catalog);
+  validatePolicy(policy);
+  assert(decision?.schemaVersion === "3.0.0", "STORED_V3_REQUIRED");
+  verifySeal(decision, "decisionDigest");
+  assert(decision.status === "selected" && decision.executionAuthorized === false && decision.trustedGateSatisfied === false, "ASSIGNMENT_BLOCKED");
+  same(input.binding, decision.binding, "BINDING_MISMATCH");
+  same(input.target, decision.target, "BINDING_MISMATCH");
+  assert(input.decisionDigest === decision.decisionDigest && input.semanticAdviceDigest === decision.semantic?.adviceDigest && digest(request) === decision.requestDigest && catalog.catalogDigest === decision.catalogDigest && digest(policy) === decision.policyDigest, "BINDING_MISMATCH");
+  same(input.dispatched, decision.selected, "DISPATCH_MISMATCH");
+  const observation = admittedObservation ?? input.observation ?? null;
+  if (observation !== null) {
+    keys(observation, [
+      "binding",
+      "target",
+      "decisionDigest",
+      "source",
+      "reference",
+      "observedAt",
+      "models",
+      "nativeReasoning",
+      "runtimeMode",
+      "terminalOutcome"
+    ]);
+    validateBinding(observation.binding);
+    validateTarget(observation.target);
+    same(observation.binding, input.binding, "OBSERVATION_BINDING_MISMATCH");
+    same(observation.target, input.target, "OBSERVATION_BINDING_MISMATCH");
+    assert(observation.decisionDigest === input.decisionDigest, "OBSERVATION_BINDING_MISMATCH");
+    assert(["host-event", "tool-result", "agent-self-report"].includes(observation.source), "INVALID_INPUT");
+    text(observation.reference, "observation reference");
+    assert(instant(observation.observedAt, "observedAt") >= instant(now, "now"), "OBSERVATION_PREDATES_DISPATCH");
+    assert(Array.isArray(observation.models) && observation.models.length <= 32, "INVALID_INPUT");
+    for (const model of observation.models) {
+      keys(model, ["resolvedModel", "modelOrigin"]);
+      identifier(model.resolvedModel, "observed model");
+      identifier(model.modelOrigin, "observed origin");
+    }
+    if (observation.nativeReasoning !== null) validateReasoning(observation.nativeReasoning);
+    if (observation.runtimeMode !== null) identifier(observation.runtimeMode, "runtimeMode");
+    assert(["succeeded", "failed", "cancelled", "unknown"].includes(observation.terminalOutcome), "INVALID_INPUT");
+  }
+  const admitted = admittedObservation !== null && observation.source !== "agent-self-report";
+  const observedModels = observation?.models ?? [];
+  const expectedModels = [{
+    resolvedModel: decision.selected.resolvedModel,
+    modelOrigin: decision.selected.modelOrigin
+  }];
+  const modelVerification = verification(expectedModels, observedModels.length ? observedModels : null, admitted);
+  const reasoningVerification = verification(decision.selected.nativeReasoning, observation?.nativeReasoning, admitted);
+  const runtimeModeVerification = verification(decision.selected.runtimeMode, observation?.runtimeMode, admitted);
+  const mismatch = [modelVerification, reasoningVerification, runtimeModeVerification].includes("mismatch");
+  const originVerified = admitted && observedModels.length > 0 && observedModels.every((model) => policy.allowedOrigins.includes(model.modelOrigin) && catalog.models.some((candidate) => candidate.id === model.resolvedModel && candidate.modelOrigin === model.modelOrigin));
+  return seal({
+    schemaVersion: "3.0.0",
+    binding: structuredClone(input.binding),
+    target: structuredClone(input.target),
+    decisionDigest: decision.decisionDigest,
+    requestDigest: decision.requestDigest,
+    catalogDigest: decision.catalogDigest,
+    policyDigest: decision.policyDigest,
+    capabilitySnapshotDigest: decision.capabilitySnapshotDigest,
+    requested: structuredClone(decision.requested),
+    selected: structuredClone(decision.selected),
+    dispatched: structuredClone(input.dispatched),
+    dispatchedAt: input.dispatchedAt,
+    observed: structuredClone(observation),
+    modelVerification,
+    reasoningVerification,
+    runtimeModeVerification,
+    originVerified,
+    status: mismatch ? "mismatch" : originVerified && [modelVerification, reasoningVerification, runtimeModeVerification].every((value) => value === "matched") ? "matched" : "unverified",
+    terminalOutcome: admitted ? observation.terminalOutcome : "unknown",
+    observationAdmitted: admitted,
+    trustedGateSatisfied: false,
+    artifactOnly: true,
+    semantic: structuredClone(decision.semantic)
+  }, "recordDigest");
+}
+
 // skills/coordinate-subagents/scripts/model-routing-store.mjs
 function transaction(db, fn) {
   db.exec("BEGIN IMMEDIATE");
@@ -13278,7 +13397,9 @@ var ModelRoutingStore = class {
       const dispatch = this.dispatch(digest({ binding: application.binding }));
       assert(dispatch && dispatch.decision_digest === application.decisionDigest && dispatch.dispatched_at === application.dispatchedAt, "DISPATCH_TIME_MISMATCH");
       assert(instant(application.dispatchedAt, "dispatchedAt") <= instant(now, "now"), "DISPATCH_TIME_IN_FUTURE");
-      recordV2(application, { ...entry.environment, now: application.dispatchedAt, request: entry.request, decision: entry.decision, admittedObservation: observed });
+      const context = { ...entry.environment, now: application.dispatchedAt, request: entry.request, decision: entry.decision, admittedObservation: observed };
+      if (application.schemaVersion === "3.0.0") recordSemanticApplicationV3(application, context);
+      else recordV2(application, context);
       const nonce = this.publishObservation(receipt, signer, now);
       this.database.prepare(`INSERT INTO ags_model_native_hook_receipts_v1 VALUES (?,?)
         ON CONFLICT(application_digest) DO UPDATE SET receipt_nonce=excluded.receipt_nonce`).run(digest(application), nonce);
@@ -13292,20 +13413,32 @@ var ModelRoutingStore = class {
   recordApplication(input, observationToken, makeRecord, now) {
     instant(now, "now");
     return transaction(this.database, () => {
+      if (input.schemaVersion === "3.0.0") {
+        const dispatch = this.dispatch(digest({ binding: input.binding }));
+        assert(dispatch && dispatch.decision_digest === input.decisionDigest && dispatch.dispatched_at === input.dispatchedAt && ["running", "unknown", "succeeded", "failed", "cancelled"].includes(dispatch.state), "DISPATCH_TIME_MISMATCH");
+      }
       let observation = null;
       if (observationToken !== null) {
         const row = this.database.prepare("SELECT * FROM ags_model_receipts_v1 WHERE nonce=? AND kind=?").get(observationToken, "observation");
         assert(row && !row.consumed_at && row.expires_at > now, "OBSERVATION_TOKEN_UNAVAILABLE");
         assert(row.binding_digest === digest(input.binding), "OBSERVATION_BINDING_MISMATCH");
         observation = JSON.parse(row.payload);
+        if (input.schemaVersion === "3.0.0") {
+          assert(observation.decisionDigest === input.decisionDigest && canonical(observation.target) === canonical(input.target) && observation.source !== "agent-self-report", "OBSERVATION_BINDING_MISMATCH");
+          assert(
+            instant(observation.observedAt, "observedAt") >= instant(input.dispatchedAt, "dispatchedAt"),
+            "OBSERVATION_PREDATES_DISPATCH"
+          );
+        }
       }
       const record2 = makeRecord(observation);
       verifySeal(record2, "recordDigest");
+      assert(record2.schemaVersion === input.schemaVersion, "RECORD_VERSION_MISMATCH");
       const old = this.database.prepare("SELECT payload FROM ags_model_applications_v2 WHERE record_digest=?").get(record2.recordDigest);
       assert(!old || old.payload === canonical(record2), "RECORD_CONFLICT");
       this.database.prepare("INSERT OR IGNORE INTO ags_model_applications_v2 VALUES (?,?,?,?,?)").run(record2.recordDigest, record2.decisionDigest, digest(record2.binding), canonical(record2), now);
       if (observationToken !== null) this.database.prepare("UPDATE ags_model_receipts_v1 SET consumed_at=? WHERE nonce=?").run(now, observationToken);
-      return { record: record2, artifact: { kind: "model-application.v2", uri: `ags-model-record:${record2.recordDigest.slice(7)}`, digest: record2.recordDigest } };
+      return { record: record2, artifact: { kind: `model-application.v${input.schemaVersion[0]}`, uri: `ags-model-record:${record2.recordDigest.slice(7)}`, digest: record2.recordDigest } };
     });
   }
   application(recordDigest) {
@@ -14991,7 +15124,7 @@ function assertSemanticJson(value) {
     throw new WorkflowContractError("INVALID_INPUT", "Semantic contracts require finite, plain JSON values.");
   }
 }
-function same(a, b2, name) {
+function same2(a, b2, name) {
   requireContract(canonical(a) === canonical(b2), `Semantic contract binding mismatch: ${name}.`);
 }
 function seal2(value, field) {
@@ -15010,12 +15143,12 @@ function time(value) {
 }
 function assertSemanticRequestIntegrity(request) {
   seal2(request, "requestDigest");
-  same(request.stateDigest, digest(request.state), "stateDigest");
-  same(request.questionDigest, digest(request.question), "questionDigest");
-  same(request.eligibleSetDigest, digest(request.eligibleSet), "eligibleSetDigest");
-  same(request.optionMappingDigest, digest(request.options), "optionMappingDigest");
+  same2(request.stateDigest, digest(request.state), "stateDigest");
+  same2(request.questionDigest, digest(request.question), "questionDigest");
+  same2(request.eligibleSetDigest, digest(request.eligibleSet), "eligibleSetDigest");
+  same2(request.optionMappingDigest, digest(request.options), "optionMappingDigest");
   if (request.state.summaryDigest !== null) {
-    same(request.state.summaryDigest, digest(request.state.text), "summaryDigest");
+    same2(request.state.summaryDigest, digest(request.state.text), "summaryDigest");
   }
   requireContract(request.state.sources.some((source) => source.kind === "task" && source.id === request.binding.taskId), "Task source must match the routing binding.");
   requireContract(time(request.expiresAt) > time(request.requestedAt), "Semantic request expiry must follow requestedAt.");
@@ -15045,8 +15178,8 @@ function assertSemanticAdviceIntegrity(advice) {
 }
 function assertSemanticAdviceBinding(advice, request) {
   const fields = ["evaluationId", "binding", "effectiveRoutingRequestDigest", "stateDigest", "questionDigest", "catalogDigest", "routingPolicyDigest", "semanticPolicyDigest", "capabilitySetDigest", "eligibleSetDigest", "optionMappingDigest", "provider", "reducerVersion", "expiresAt"];
-  for (const field of fields) same(advice[field], request[field], field);
-  same(advice.semanticRequestDigest, request.requestDigest, "semanticRequestDigest");
+  for (const field of fields) same2(advice[field], request[field], field);
+  same2(advice.semanticRequestDigest, request.requestDigest, "semanticRequestDigest");
   requireContract(time(advice.evaluatedAt) >= time(request.requestedAt), "Advice cannot precede its evaluation request.");
   const optionIds = new Set(request.options.map((option) => option.optionId));
   requireContract(advice.choice.selectedOptionIds.every((id) => optionIds.has(id)), "Advice selected an option outside the prepared request.");
@@ -15057,35 +15190,35 @@ function assertSemanticPolicyConsistency(policy) {
   }
 }
 function assertSemanticAssignmentBinding(request) {
-  same(request.taskRef.taskId, request.routingRequest.binding.taskId, "taskRef.taskId");
+  same2(request.taskRef.taskId, request.routingRequest.binding.taskId, "taskRef.taskId");
 }
 function assertSemanticDecisionIntegrity(decision) {
   seal2(decision, "decisionDigest");
 }
 function assertSemanticDecisionBinding(decision, advice, request) {
   requireContract(request.mode === "assist", "Only an adopted assist evaluation can produce a v3 decision.");
-  same(decision.binding, advice.binding, "decision.binding");
-  same(decision.requestDigest, advice.effectiveRoutingRequestDigest, "decision.requestDigest");
-  same(decision.catalogDigest, advice.catalogDigest, "decision.catalogDigest");
-  same(decision.policyDigest, advice.routingPolicyDigest, "decision.policyDigest");
-  same(decision.capabilitySetDigest, advice.capabilitySetDigest, "decision.capabilitySetDigest");
+  same2(decision.binding, advice.binding, "decision.binding");
+  same2(decision.requestDigest, advice.effectiveRoutingRequestDigest, "decision.requestDigest");
+  same2(decision.catalogDigest, advice.catalogDigest, "decision.catalogDigest");
+  same2(decision.policyDigest, advice.routingPolicyDigest, "decision.policyDigest");
+  same2(decision.capabilitySetDigest, advice.capabilitySetDigest, "decision.capabilitySetDigest");
   const fields = ["adviceDigest", "semanticRequestDigest", "semanticPolicyDigest", "eligibleSetDigest", "optionMappingDigest", "reducerVersion"];
-  for (const field of fields) same(decision.semantic[field], advice[field], `decision.semantic.${field}`);
+  for (const field of fields) same2(decision.semantic[field], advice[field], `decision.semantic.${field}`);
   const option = request.options.find((item) => item.optionId === decision.semantic.selectedOptionId);
   requireContract(option && advice.choice.selectedOptionIds.includes(option.optionId) && option.model === decision.selected.model, "Selected model must match an advised prepared option.");
 }
 function assertSemanticApplicationBinding(application, decision) {
-  same(application.binding, decision.binding, "application.binding");
-  same(application.target, decision.target, "application.target");
-  same(application.decisionDigest, decision.decisionDigest, "application.decisionDigest");
-  same(application.semanticAdviceDigest, decision.semantic.adviceDigest, "application.semanticAdviceDigest");
-  same(application.dispatched, decision.selected, "application.dispatched");
+  same2(application.binding, decision.binding, "application.binding");
+  same2(application.target, decision.target, "application.target");
+  same2(application.decisionDigest, decision.decisionDigest, "application.decisionDigest");
+  same2(application.semanticAdviceDigest, decision.semantic.adviceDigest, "application.semanticAdviceDigest");
+  same2(application.dispatched, decision.selected, "application.dispatched");
   time(application.dispatchedAt);
   if (application.observation) {
     requireContract(time(application.observation.observedAt) >= time(application.dispatchedAt), "Observation cannot precede dispatch.");
-    same(application.observation.binding, application.binding, "observation.binding");
-    same(application.observation.target, application.target, "observation.target");
-    same(application.observation.decisionDigest, application.decisionDigest, "observation.decisionDigest");
+    same2(application.observation.binding, application.binding, "observation.binding");
+    same2(application.observation.target, application.target, "observation.target");
+    same2(application.observation.decisionDigest, application.decisionDigest, "observation.decisionDigest");
   }
 }
 function assertSemanticRecordIntegrity(record2) {
@@ -15093,15 +15226,15 @@ function assertSemanticRecordIntegrity(record2) {
   time(record2.dispatchedAt);
   if (record2.observed) {
     requireContract(time(record2.observed.observedAt) >= time(record2.dispatchedAt), "Observation cannot precede dispatch.");
-    same(record2.observed.binding, record2.binding, "record.observed.binding");
-    same(record2.observed.target, record2.target, "record.observed.target");
-    same(record2.observed.decisionDigest, record2.decisionDigest, "record.observed.decisionDigest");
+    same2(record2.observed.binding, record2.binding, "record.observed.binding");
+    same2(record2.observed.target, record2.target, "record.observed.target");
+    same2(record2.observed.decisionDigest, record2.decisionDigest, "record.observed.decisionDigest");
   }
 }
 function assertSemanticRecordBinding(record2, decision) {
   const fields = ["binding", "target", "decisionDigest", "requestDigest", "catalogDigest", "policyDigest", "capabilitySnapshotDigest", "requested", "selected", "semantic"];
-  for (const field of fields) same(record2[field], decision[field], `record.${field}`);
-  same(record2.dispatched, decision.selected, "record.dispatched");
+  for (const field of fields) same2(record2[field], decision[field], `record.${field}`);
+  same2(record2.dispatched, decision.selected, "record.dispatched");
 }
 
 // mcp-server/src/schema-validator.ts

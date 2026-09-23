@@ -5,6 +5,7 @@ import v3DecisionSchema from '../../../contracts/model-routing-decision.v3.schem
 import { Ajv2020 } from '../../../runtime/schema-validation.mjs';
 import { assert, canonical, digest, keys, instant, validateCapabilities, validateBinding, validateTarget, verifySeal, recordV2 } from './model-routing-core.mjs';
 import { validateEvaluation } from './model-evaluation.mjs';
+import { recordSemanticApplicationV3 } from './semantic/application-record.mjs';
 
 function transaction(db,fn){db.exec('BEGIN IMMEDIATE');try{const result=fn();db.exec('COMMIT');return result;}catch(error){db.exec('ROLLBACK');throw error;}}
 
@@ -128,7 +129,9 @@ export class ModelRoutingStore {
       assert(dispatch&&dispatch.decision_digest===application.decisionDigest&&dispatch.dispatched_at===application.dispatchedAt,'DISPATCH_TIME_MISMATCH');
       assert(instant(application.dispatchedAt,'dispatchedAt')<=instant(now,'now'),'DISPATCH_TIME_IN_FUTURE');
       // Validate with the same pure recorder before persisting any native receipt association.
-      recordV2(application,{...entry.environment,now:application.dispatchedAt,request:entry.request,decision:entry.decision,admittedObservation:observed});
+      const context={...entry.environment,now:application.dispatchedAt,request:entry.request,decision:entry.decision,admittedObservation:observed};
+      if(application.schemaVersion==='3.0.0')recordSemanticApplicationV3(application,context);
+      else recordV2(application,context);
       const nonce=this.publishObservation(receipt,signer,now);
       this.database.prepare(`INSERT INTO ags_model_native_hook_receipts_v1 VALUES (?,?)
         ON CONFLICT(application_digest) DO UPDATE SET receipt_nonce=excluded.receipt_nonce`).run(digest(application),nonce);
@@ -143,18 +146,31 @@ export class ModelRoutingStore {
   /** The callback must validate the entire record before token consumption commits. */
   recordApplication(input,observationToken,makeRecord,now){
     instant(now,'now');return transaction(this.database,()=>{
+      if(input.schemaVersion==='3.0.0'){
+        const dispatch=this.dispatch(digest({binding:input.binding}));
+        assert(dispatch&&dispatch.decision_digest===input.decisionDigest&&dispatch.dispatched_at===input.dispatchedAt
+          &&['running','unknown','succeeded','failed','cancelled'].includes(dispatch.state),'DISPATCH_TIME_MISMATCH');
+      }
       let observation=null;
       if(observationToken!==null){
         const row=this.database.prepare('SELECT * FROM ags_model_receipts_v1 WHERE nonce=? AND kind=?').get(observationToken,'observation');
         assert(row&&!row.consumed_at&&row.expires_at>now,'OBSERVATION_TOKEN_UNAVAILABLE');
         assert(row.binding_digest===digest(input.binding),'OBSERVATION_BINDING_MISMATCH');observation=JSON.parse(row.payload);
+        if(input.schemaVersion==='3.0.0'){
+          assert(observation.decisionDigest===input.decisionDigest
+            &&canonical(observation.target)===canonical(input.target)
+            &&observation.source!=='agent-self-report','OBSERVATION_BINDING_MISMATCH');
+          assert(instant(observation.observedAt,'observedAt')>=instant(input.dispatchedAt,'dispatchedAt'),
+            'OBSERVATION_PREDATES_DISPATCH');
+        }
       }
       const record=makeRecord(observation);verifySeal(record,'recordDigest');
+      assert(record.schemaVersion===input.schemaVersion,'RECORD_VERSION_MISMATCH');
       const old=this.database.prepare('SELECT payload FROM ags_model_applications_v2 WHERE record_digest=?').get(record.recordDigest);
       assert(!old||old.payload===canonical(record),'RECORD_CONFLICT');
       this.database.prepare('INSERT OR IGNORE INTO ags_model_applications_v2 VALUES (?,?,?,?,?)').run(record.recordDigest,record.decisionDigest,digest(record.binding),canonical(record),now);
       if(observationToken!==null)this.database.prepare('UPDATE ags_model_receipts_v1 SET consumed_at=? WHERE nonce=?').run(now,observationToken);
-      return {record,artifact:{kind:'model-application.v2',uri:`ags-model-record:${record.recordDigest.slice(7)}`,digest:record.recordDigest}};
+      return {record,artifact:{kind:`model-application.v${input.schemaVersion[0]}`,uri:`ags-model-record:${record.recordDigest.slice(7)}`,digest:record.recordDigest}};
     });
   }
   application(recordDigest){const row=this.database.prepare('SELECT payload FROM ags_model_applications_v2 WHERE record_digest=?').get(recordDigest);return row?JSON.parse(row.payload):null;}

@@ -38993,6 +38993,125 @@ if (process.argv[1] && import.meta.url === pathToFileURL2(process.argv[1]).href 
   }
 }
 
+// skills/coordinate-subagents/scripts/semantic/application-record.mjs
+var same2 = (left, right, code) => assert2(canonical(left) === canonical(right), code);
+var verification = (expected, actual, admitted) => !admitted || actual === null || actual === void 0 ? "unverified" : canonical(expected) === canonical(actual) ? "matched" : "mismatch";
+function recordSemanticApplicationV3(input2, {
+  request,
+  decision,
+  catalog,
+  policy,
+  now,
+  admittedObservation = null
+} = {}) {
+  keys(
+    input2,
+    [
+      "schemaVersion",
+      "binding",
+      "decisionDigest",
+      "target",
+      "dispatched",
+      "dispatchedAt",
+      "observation",
+      "semanticAdviceDigest"
+    ],
+    [
+      "schemaVersion",
+      "binding",
+      "decisionDigest",
+      "target",
+      "dispatched",
+      "dispatchedAt",
+      "semanticAdviceDigest"
+    ]
+  );
+  assert2(input2.schemaVersion === "3.0.0", "INVALID_INPUT");
+  validateBinding(input2.binding);
+  validateTarget(input2.target);
+  validateSelection(input2.dispatched);
+  instant(input2.dispatchedAt, "dispatchedAt");
+  assert2(input2.dispatchedAt === now, "DISPATCH_TIME_MISMATCH");
+  validateRequest(request);
+  validateCatalog(catalog);
+  validatePolicy(policy);
+  assert2(decision?.schemaVersion === "3.0.0", "STORED_V3_REQUIRED");
+  verifySeal(decision, "decisionDigest");
+  assert2(decision.status === "selected" && decision.executionAuthorized === false && decision.trustedGateSatisfied === false, "ASSIGNMENT_BLOCKED");
+  same2(input2.binding, decision.binding, "BINDING_MISMATCH");
+  same2(input2.target, decision.target, "BINDING_MISMATCH");
+  assert2(input2.decisionDigest === decision.decisionDigest && input2.semanticAdviceDigest === decision.semantic?.adviceDigest && digest(request) === decision.requestDigest && catalog.catalogDigest === decision.catalogDigest && digest(policy) === decision.policyDigest, "BINDING_MISMATCH");
+  same2(input2.dispatched, decision.selected, "DISPATCH_MISMATCH");
+  const observation2 = admittedObservation ?? input2.observation ?? null;
+  if (observation2 !== null) {
+    keys(observation2, [
+      "binding",
+      "target",
+      "decisionDigest",
+      "source",
+      "reference",
+      "observedAt",
+      "models",
+      "nativeReasoning",
+      "runtimeMode",
+      "terminalOutcome"
+    ]);
+    validateBinding(observation2.binding);
+    validateTarget(observation2.target);
+    same2(observation2.binding, input2.binding, "OBSERVATION_BINDING_MISMATCH");
+    same2(observation2.target, input2.target, "OBSERVATION_BINDING_MISMATCH");
+    assert2(observation2.decisionDigest === input2.decisionDigest, "OBSERVATION_BINDING_MISMATCH");
+    assert2(["host-event", "tool-result", "agent-self-report"].includes(observation2.source), "INVALID_INPUT");
+    text(observation2.reference, "observation reference");
+    assert2(instant(observation2.observedAt, "observedAt") >= instant(now, "now"), "OBSERVATION_PREDATES_DISPATCH");
+    assert2(Array.isArray(observation2.models) && observation2.models.length <= 32, "INVALID_INPUT");
+    for (const model of observation2.models) {
+      keys(model, ["resolvedModel", "modelOrigin"]);
+      identifier(model.resolvedModel, "observed model");
+      identifier(model.modelOrigin, "observed origin");
+    }
+    if (observation2.nativeReasoning !== null) validateReasoning(observation2.nativeReasoning);
+    if (observation2.runtimeMode !== null) identifier(observation2.runtimeMode, "runtimeMode");
+    assert2(["succeeded", "failed", "cancelled", "unknown"].includes(observation2.terminalOutcome), "INVALID_INPUT");
+  }
+  const admitted = admittedObservation !== null && observation2.source !== "agent-self-report";
+  const observedModels = observation2?.models ?? [];
+  const expectedModels = [{
+    resolvedModel: decision.selected.resolvedModel,
+    modelOrigin: decision.selected.modelOrigin
+  }];
+  const modelVerification = verification(expectedModels, observedModels.length ? observedModels : null, admitted);
+  const reasoningVerification = verification(decision.selected.nativeReasoning, observation2?.nativeReasoning, admitted);
+  const runtimeModeVerification = verification(decision.selected.runtimeMode, observation2?.runtimeMode, admitted);
+  const mismatch = [modelVerification, reasoningVerification, runtimeModeVerification].includes("mismatch");
+  const originVerified = admitted && observedModels.length > 0 && observedModels.every((model) => policy.allowedOrigins.includes(model.modelOrigin) && catalog.models.some((candidate) => candidate.id === model.resolvedModel && candidate.modelOrigin === model.modelOrigin));
+  return seal({
+    schemaVersion: "3.0.0",
+    binding: structuredClone(input2.binding),
+    target: structuredClone(input2.target),
+    decisionDigest: decision.decisionDigest,
+    requestDigest: decision.requestDigest,
+    catalogDigest: decision.catalogDigest,
+    policyDigest: decision.policyDigest,
+    capabilitySnapshotDigest: decision.capabilitySnapshotDigest,
+    requested: structuredClone(decision.requested),
+    selected: structuredClone(decision.selected),
+    dispatched: structuredClone(input2.dispatched),
+    dispatchedAt: input2.dispatchedAt,
+    observed: structuredClone(observation2),
+    modelVerification,
+    reasoningVerification,
+    runtimeModeVerification,
+    originVerified,
+    status: mismatch ? "mismatch" : originVerified && [modelVerification, reasoningVerification, runtimeModeVerification].every((value) => value === "matched") ? "matched" : "unverified",
+    terminalOutcome: admitted ? observation2.terminalOutcome : "unknown",
+    observationAdmitted: admitted,
+    trustedGateSatisfied: false,
+    artifactOnly: true,
+    semantic: structuredClone(decision.semantic)
+  }, "recordDigest");
+}
+
 // skills/coordinate-subagents/scripts/model-routing-store.mjs
 function transaction(db, fn) {
   db.exec("BEGIN IMMEDIATE");
@@ -39116,7 +39235,9 @@ var ModelRoutingStore = class {
       const dispatch = this.dispatch(digest({ binding: application.binding }));
       assert2(dispatch && dispatch.decision_digest === application.decisionDigest && dispatch.dispatched_at === application.dispatchedAt, "DISPATCH_TIME_MISMATCH");
       assert2(instant(application.dispatchedAt, "dispatchedAt") <= instant(now, "now"), "DISPATCH_TIME_IN_FUTURE");
-      recordV2(application, { ...entry.environment, now: application.dispatchedAt, request: entry.request, decision: entry.decision, admittedObservation: observed });
+      const context = { ...entry.environment, now: application.dispatchedAt, request: entry.request, decision: entry.decision, admittedObservation: observed };
+      if (application.schemaVersion === "3.0.0") recordSemanticApplicationV3(application, context);
+      else recordV2(application, context);
       const nonce = this.publishObservation(receipt, signer, now);
       this.database.prepare(`INSERT INTO ags_model_native_hook_receipts_v1 VALUES (?,?)
         ON CONFLICT(application_digest) DO UPDATE SET receipt_nonce=excluded.receipt_nonce`).run(digest(application), nonce);
@@ -39130,20 +39251,32 @@ var ModelRoutingStore = class {
   recordApplication(input2, observationToken, makeRecord, now) {
     instant(now, "now");
     return transaction(this.database, () => {
+      if (input2.schemaVersion === "3.0.0") {
+        const dispatch = this.dispatch(digest({ binding: input2.binding }));
+        assert2(dispatch && dispatch.decision_digest === input2.decisionDigest && dispatch.dispatched_at === input2.dispatchedAt && ["running", "unknown", "succeeded", "failed", "cancelled"].includes(dispatch.state), "DISPATCH_TIME_MISMATCH");
+      }
       let observation2 = null;
       if (observationToken !== null) {
         const row = this.database.prepare("SELECT * FROM ags_model_receipts_v1 WHERE nonce=? AND kind=?").get(observationToken, "observation");
         assert2(row && !row.consumed_at && row.expires_at > now, "OBSERVATION_TOKEN_UNAVAILABLE");
         assert2(row.binding_digest === digest(input2.binding), "OBSERVATION_BINDING_MISMATCH");
         observation2 = JSON.parse(row.payload);
+        if (input2.schemaVersion === "3.0.0") {
+          assert2(observation2.decisionDigest === input2.decisionDigest && canonical(observation2.target) === canonical(input2.target) && observation2.source !== "agent-self-report", "OBSERVATION_BINDING_MISMATCH");
+          assert2(
+            instant(observation2.observedAt, "observedAt") >= instant(input2.dispatchedAt, "dispatchedAt"),
+            "OBSERVATION_PREDATES_DISPATCH"
+          );
+        }
       }
       const record5 = makeRecord(observation2);
       verifySeal(record5, "recordDigest");
+      assert2(record5.schemaVersion === input2.schemaVersion, "RECORD_VERSION_MISMATCH");
       const old = this.database.prepare("SELECT payload FROM ags_model_applications_v2 WHERE record_digest=?").get(record5.recordDigest);
       assert2(!old || old.payload === canonical(record5), "RECORD_CONFLICT");
       this.database.prepare("INSERT OR IGNORE INTO ags_model_applications_v2 VALUES (?,?,?,?,?)").run(record5.recordDigest, record5.decisionDigest, digest(record5.binding), canonical(record5), now);
       if (observationToken !== null) this.database.prepare("UPDATE ags_model_receipts_v1 SET consumed_at=? WHERE nonce=?").run(now, observationToken);
-      return { record: record5, artifact: { kind: "model-application.v2", uri: `ags-model-record:${record5.recordDigest.slice(7)}`, digest: record5.recordDigest } };
+      return { record: record5, artifact: { kind: `model-application.v${input2.schemaVersion[0]}`, uri: `ags-model-record:${record5.recordDigest.slice(7)}`, digest: record5.recordDigest } };
     });
   }
   application(recordDigest) {
