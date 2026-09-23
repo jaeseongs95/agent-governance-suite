@@ -7,6 +7,7 @@ import { ObservationChallengeAuthority, readPinnedVmEnvelope, registerVmObservat
   type VmInvocationSource } from "./observation-challenge.js";
 import { ContractValidator } from "../schema-validator.js";
 import type { WorkflowStore } from "../workflow-store.js";
+import { VmModelPolicy, type VmVerifiedProfile } from "./vm-model-policy.js";
 
 type JsonObject = Record<string, unknown>;
 type Pending = { registration: JsonObject; digest: string; expiresAt: number; active: boolean; claimed: boolean };
@@ -36,7 +37,8 @@ export class VmCurrentInvocation implements VmInvocationSource {
   private readonly usedNonces = new Map<string, number>();
   private readonly current = new AsyncLocalStorage<Current>();
 
-  constructor(private readonly store: WorkflowStore, private readonly clock: () => number = Date.now) {
+  constructor(private readonly store: WorkflowStore, private readonly clock: () => number = Date.now,
+    private readonly modelPolicy: VmModelPolicy | null = null) {
     this.observationReader = registerVmObservationReader(this);
     this.challenge = new ObservationChallengeAuthority(store, this.observationReader, "host", () => new Date(this.clock()), () => {
       const current = this.current.getStore();
@@ -47,7 +49,11 @@ export class VmCurrentInvocation implements VmInvocationSource {
 
   hasCurrentRequest(): boolean { return this.current.getStore() !== undefined; }
 
-  verifyCurrentReceipt(): ObservationChallengeBodyV1 {
+  verifySignedEnvelope(envelope: unknown) {
+    return this.modelPolicy ? this.modelPolicy.verifyEnvelope(envelope) : readPinnedVmEnvelope(envelope);
+  }
+
+  verifyCurrentReceipt(): ObservationChallengeBodyV1 & { vmProfile?: VmVerifiedProfile } {
     const current = this.current.getStore();
     if (!current) reject("current reserved request is unavailable");
     const registration = current.pending.registration;
@@ -74,11 +80,14 @@ export class VmCurrentInvocation implements VmInvocationSource {
     } else {
       reject("tool is not an observed VM workflow call");
     }
-    return this.challenge.verifyAndConsume(this.challenge.issue());
+    const vmProfile = this.modelPolicy?.resolveProfile(registration);
+    const verified = this.challenge.verifyAndConsume(this.challenge.issue());
+    if (vmProfile && verified.model !== vmProfile.observedModelId) reject("observed model policy mismatch");
+    return vmProfile ? { ...verified, vmProfile } : verified;
   }
 
   reserve(registrationEnvelope: unknown): { callId: string; serverEpoch: string } {
-    const { body, bytes } = readPinnedVmEnvelope(registrationEnvelope);
+    const { body, bytes } = this.verifySignedEnvelope(registrationEnvelope);
     const producer = object(body.producer), binding = object(body.binding);
     const terminal = object(body.terminal), core = object(body.core), invocation = object(body.invocation);
     const now = this.clock(), issued = date(body.issuedAt), expires = date(body.expiresAt);

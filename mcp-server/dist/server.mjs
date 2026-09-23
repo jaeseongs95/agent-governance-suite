@@ -410,11 +410,11 @@ var require_codegen = __commonJS({
         const rhs = this.rhs === void 0 ? "" : ` = ${this.rhs}`;
         return `${varKind} ${this.name}${rhs};` + _n2;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         if (!names[this.name.str])
           return;
         if (this.rhs)
-          this.rhs = optimizeExpr(this.rhs, names, constants);
+          this.rhs = optimizeExpr(this.rhs, names, constants2);
         return this;
       }
       get names() {
@@ -431,10 +431,10 @@ var require_codegen = __commonJS({
       render({ _n: _n2 }) {
         return `${this.lhs} = ${this.rhs};` + _n2;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         if (this.lhs instanceof code_1.Name && !names[this.lhs.str] && !this.sideEffects)
           return;
-        this.rhs = optimizeExpr(this.rhs, names, constants);
+        this.rhs = optimizeExpr(this.rhs, names, constants2);
         return this;
       }
       get names() {
@@ -495,8 +495,8 @@ var require_codegen = __commonJS({
       optimizeNodes() {
         return `${this.code}` ? this : void 0;
       }
-      optimizeNames(names, constants) {
-        this.code = optimizeExpr(this.code, names, constants);
+      optimizeNames(names, constants2) {
+        this.code = optimizeExpr(this.code, names, constants2);
         return this;
       }
       get names() {
@@ -525,12 +525,12 @@ var require_codegen = __commonJS({
         }
         return nodes.length > 0 ? this : void 0;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         const { nodes } = this;
         let i = nodes.length;
         while (i--) {
           const n = nodes[i];
-          if (n.optimizeNames(names, constants))
+          if (n.optimizeNames(names, constants2))
             continue;
           subtractNames(names, n.names);
           nodes.splice(i, 1);
@@ -583,12 +583,12 @@ var require_codegen = __commonJS({
           return void 0;
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         var _a3;
-        this.else = (_a3 = this.else) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants);
-        if (!(super.optimizeNames(names, constants) || this.else))
+        this.else = (_a3 = this.else) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants2);
+        if (!(super.optimizeNames(names, constants2) || this.else))
           return;
-        this.condition = optimizeExpr(this.condition, names, constants);
+        this.condition = optimizeExpr(this.condition, names, constants2);
         return this;
       }
       get names() {
@@ -611,10 +611,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.iteration})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names, constants2) {
+        if (!super.optimizeNames(names, constants2))
           return;
-        this.iteration = optimizeExpr(this.iteration, names, constants);
+        this.iteration = optimizeExpr(this.iteration, names, constants2);
         return this;
       }
       get names() {
@@ -650,10 +650,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.varKind} ${this.name} ${this.loop} ${this.iterable})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names, constants2) {
+        if (!super.optimizeNames(names, constants2))
           return;
-        this.iterable = optimizeExpr(this.iterable, names, constants);
+        this.iterable = optimizeExpr(this.iterable, names, constants2);
         return this;
       }
       get names() {
@@ -695,11 +695,11 @@ var require_codegen = __commonJS({
         (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNodes();
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         var _a3, _b;
-        super.optimizeNames(names, constants);
-        (_a3 = this.catch) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants);
-        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants);
+        super.optimizeNames(names, constants2);
+        (_a3 = this.catch) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants2);
+        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants2);
         return this;
       }
       get names() {
@@ -1000,7 +1000,7 @@ var require_codegen = __commonJS({
     function addExprNames(names, from) {
       return from instanceof code_1._CodeOrName ? addNames(names, from.names) : names;
     }
-    function optimizeExpr(expr, names, constants) {
+    function optimizeExpr(expr, names, constants2) {
       if (expr instanceof code_1.Name)
         return replaceName(expr);
       if (!canOptimize(expr))
@@ -1015,14 +1015,14 @@ var require_codegen = __commonJS({
         return items;
       }, []));
       function replaceName(n) {
-        const c = constants[n.str];
+        const c = constants2[n.str];
         if (c === void 0 || names[n.str] !== 1)
           return n;
         delete names[n.str];
         return c;
       }
       function canOptimize(e) {
-        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names[c.str] === 1 && constants[c.str] !== void 0);
+        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names[c.str] === 1 && constants2[c.str] !== void 0);
       }
     }
     function subtractNames(names, from) {
@@ -3262,8 +3262,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path15) {
-      let input2 = path15;
+    function removeDotSegments(path16) {
+      let input2 = path16;
       const output2 = [];
       let nextSlash = -1;
       let len = 0;
@@ -3672,8 +3672,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path15 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path15 && path15 !== "/" ? path15 : void 0;
+        const path16 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path16 && path16 !== "/" ? path16 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -8725,9 +8725,9 @@ function floatSafeRemainder(val, step) {
   return ratio - roundedRatio;
 }
 var EVALUATING = /* @__PURE__ */ Symbol("evaluating");
-function defineLazy(object7, key, getter) {
+function defineLazy(object8, key, getter) {
   let value = void 0;
-  Object.defineProperty(object7, key, {
+  Object.defineProperty(object8, key, {
     get() {
       if (value === EVALUATING) {
         return void 0;
@@ -8739,7 +8739,7 @@ function defineLazy(object7, key, getter) {
       return value;
     },
     set(v) {
-      Object.defineProperty(object7, key, {
+      Object.defineProperty(object8, key, {
         value: v
         // configurable: true,
       });
@@ -8769,10 +8769,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path15) {
-  if (!path15)
+function getElementAtPath(obj, path16) {
+  if (!path16)
     return obj;
-  return path15.reduce((acc, key) => acc?.[key], obj);
+  return path16.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys3 = Object.keys(promisesObj);
@@ -9184,11 +9184,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path15, issues) {
+function prefixIssues(path16, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path15);
+    iss.path.unshift(path16);
     return iss;
   });
 }
@@ -9621,16 +9621,16 @@ function flattenError(error61, mapper = (issue2) => issue2.message) {
 }
 function formatError(error61, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error62, path15 = []) => {
+  const processError = (error62, path16 = []) => {
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path15, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path16, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path15, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path16, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path15, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path16, ...issue2.path]);
       } else {
-        const fullpath = [...path15, ...issue2.path];
+        const fullpath = [...path16, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -9669,17 +9669,17 @@ function formatError(error61, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error61, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error62, path15 = []) => {
+  const processError = (error62, path16 = []) => {
     var _a3;
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path15, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path16, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path15, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path16, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path15, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path16, ...issue2.path]);
       } else {
-        const fullpath = [...path15, ...issue2.path];
+        const fullpath = [...path16, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -9718,8 +9718,8 @@ function treeifyError(error61, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path15 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path15) {
+  const path16 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path16) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -20738,9 +20738,9 @@ function generateChecks(doc, ctx, schema, accessor) {
         break;
       }
       case "length_equals": {
-        const exact3 = numericOperand(def.length, "length_equals");
-        const len = codePointLengthVar(doc, ctx, currentAccessor, `${currentAccessor}.length >= ${exact3} && ${currentAccessor}.length <= ${def.length * 2}`);
-        doc.write(`if (${len} !== ${exact3}) return INVALID;`);
+        const exact4 = numericOperand(def.length, "length_equals");
+        const len = codePointLengthVar(doc, ctx, currentAccessor, `${currentAccessor}.length >= ${exact4} && ${currentAccessor}.length <= ${def.length * 2}`);
+        doc.write(`if (${len} !== ${exact4}) return INVALID;`);
         break;
       }
       case "min_size":
@@ -23367,8 +23367,8 @@ function foldObjects(members2) {
   }
   const properties = {};
   const required3 = /* @__PURE__ */ new Set();
-  for (const object7 of objects) {
-    for (const key in object7.properties) {
+  for (const object8 of objects) {
+    for (const key in object8.properties) {
       if (Object.prototype.hasOwnProperty.call(properties, key))
         continue;
       const parts = [];
@@ -23382,18 +23382,18 @@ function foldObjects(members2) {
       const merged = parts.length === 1 ? parts[0] : foldObjects(parts) ?? { allOf: parts };
       assignProp(properties, key, merged);
     }
-    for (const key of object7.required ?? [])
+    for (const key of object8.required ?? [])
       required3.add(key);
   }
   const folded = { type: "object", properties };
   if (required3.size)
     folded.required = [...required3];
-  if (objects.every((object7) => object7.additionalProperties === false)) {
+  if (objects.every((object8) => object8.additionalProperties === false)) {
     folded.additionalProperties = false;
   } else {
     const constraints = [];
-    for (const object7 of objects) {
-      const constraint = undeclaredConstraint(object7);
+    for (const object8 of objects) {
+      const constraint = undeclaredConstraint(object8);
       if (constraint && !constraints.some((seen) => JSON.stringify(seen) === JSON.stringify(constraint)))
         constraints.push(constraint);
     }
@@ -26229,13 +26229,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path15 = ref.slice(1).split("/").filter(Boolean);
-  if (path15.length === 0) {
+  const path16 = ref.slice(1).split("/").filter(Boolean);
+  if (path16.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path15[0] === defsKey) {
-    const key = path15[1] === void 0 ? void 0 : decodeJSONPointerSegment(path15[1]);
+  if (path16[0] === defsKey) {
+    const key = path16[1] === void 0 ? void 0 : decodeJSONPointerSegment(path16[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -28969,10 +28969,10 @@ function surfaceBacked(surface, observedOutsideCheckouts) {
   return existsSync((unchanged ? path3.posix.dirname(surface.physical) : surface.physical) || "/");
 }
 function activeRootIdentity(root, stored) {
-  const digest4 = surfaceDigest(root);
-  const observed = stored && stored.surfaceDigest === digest4 ? stored.identity : null;
+  const digest5 = surfaceDigest(root);
+  const observed = stored && stored.surfaceDigest === digest5 ? stored.identity : null;
   const wasInferred = (index) => observed !== null && stored.inferred[index] === true;
-  const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest4 };
+  const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest5 };
   if (observed && observed.surfaces.every((surface, index) => surface.git !== null && !wasInferred(index))) {
     return { ...known, identity: observed, resolved: true, fresh: false, inferred: stored.inferred };
   }
@@ -29469,20 +29469,20 @@ var SqliteContinuityStore = class {
       return { kind: "purged" };
     });
   }
-  setPendingMarker(taskCorrelation, epoch, source, revision, digest4, rootId, now) {
+  setPendingMarker(taskCorrelation, epoch, source, revision, digest5, rootId, now) {
     const result = this.database.prepare(`
       UPDATE continuity_tasks SET pending_source = ?, pending_revision = ?, pending_digest = ?,
         pending_root_id = ?, pending_consumed = 0, updated_at = ?
       WHERE task_correlation = ? AND current_epoch = ?
-    `).run(source, revision, digest4, rootId, now, taskCorrelation, epoch);
+    `).run(source, revision, digest5, rootId, now, taskCorrelation, epoch);
     return result.changes === 1;
   }
-  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest4, now) {
+  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest5, now) {
     const result = this.database.prepare(`
       UPDATE continuity_tasks SET pending_consumed = 1, last_auto_injected_revision = ?, updated_at = ?
       WHERE task_correlation = ? AND current_epoch = ? AND pending_source = 'workflow'
         AND pending_revision = ? AND pending_digest = ? AND pending_consumed = 0
-    `).run(revision, now, taskCorrelation, epoch, revision, digest4);
+    `).run(revision, now, taskCorrelation, epoch, revision, digest5);
     return result.changes === 1;
   }
   recordObservation(taskCorrelation, epoch, event, turnHash, success2, now) {
@@ -30963,8 +30963,8 @@ function assertSemanticRecordBinding(record5, decision) {
 // mcp-server/src/schema-validator.ts
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path15 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path15, "utf8"));
+  const path16 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path16, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -31448,12 +31448,12 @@ var ContractValidator = class {
       });
     }
     const raw = readFileSync2(schemaPath);
-    const digest4 = `sha256:${createHash4("sha256").update(raw).digest("hex")}`;
-    if (digest4 !== reference.digest) {
+    const digest5 = `sha256:${createHash4("sha256").update(raw).digest("hex")}`;
+    if (digest5 !== reference.digest) {
       throw new WorkflowContractError("STALE_REVISION", `${label} schema changed after planning.`, {
         schemaPath: reference.path,
         expectedDigest: reference.digest,
-        actualDigest: digest4
+        actualDigest: digest5
       });
     }
     return JSON.parse(raw.toString("utf8"));
@@ -39999,8 +39999,8 @@ function isRecord(value) {
 }
 function remoteReference(value) {
   if (!isRecord(value) || typeof value.ref !== "string" || !isRecord(value.object)) return null;
-  const object7 = value.object;
-  return typeof object7.sha === "string" && typeof object7.type === "string" && typeof object7.url === "string" ? { ref: value.ref, object: { sha: object7.sha, type: object7.type, url: object7.url } } : null;
+  const object8 = value.object;
+  return typeof object8.sha === "string" && typeof object8.type === "string" && typeof object8.url === "string" ? { ref: value.ref, object: { sha: object8.sha, type: object8.type, url: object8.url } } : null;
 }
 var PluginUpdateService = class {
   constructor(store, options = {}) {
@@ -40203,11 +40203,11 @@ var PluginUpdateService = class {
       if (!isRecord(value) || !isRecord(value.object)) {
         throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object response was invalid.");
       }
-      const object7 = value.object;
-      if (typeof object7.sha !== "string" || typeof object7.type !== "string" || typeof object7.url !== "string") {
+      const object8 = value.object;
+      if (typeof object8.sha !== "string" || typeof object8.type !== "string" || typeof object8.url !== "string") {
         throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object target was invalid.");
       }
-      current = { sha: object7.sha, type: object7.type, url: object7.url };
+      current = { sha: object8.sha, type: object8.type, url: object8.url };
     }
     throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag indirection exceeded the supported depth.");
   }
@@ -41865,8 +41865,8 @@ function readLocalStageOutputFile(locator) {
 function loadStageOutputFile(reference, read = readLocalStageOutputFile) {
   const bytes = read(reference.locator);
   if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(reference.locator);
-  const digest4 = `sha256:${createHash8("sha256").update(bytes).digest("hex")}`;
-  if (digest4 !== reference.digest) {
+  const digest5 = `sha256:${createHash8("sha256").update(bytes).digest("hex")}`;
+  if (digest5 !== reference.digest) {
     throw new WorkflowContractError("INTEGRITY_FAILED", "outputFile content does not match its digest.", {
       locator: reference.locator,
       expected: reference.digest
@@ -44238,8 +44238,8 @@ function safeJson(value) {
   if (value === null || typeof value === "string" || typeof value === "boolean") return true;
   if (typeof value === "number") return Number.isSafeInteger(value);
   if (Array.isArray(value)) return value.every(safeJson);
-  const object7 = record3(value);
-  return !!object7 && Object.values(object7).every(safeJson);
+  const object8 = record3(value);
+  return !!object8 && Object.values(object8).every(safeJson);
 }
 function readPinnedVmEnvelope(envelopeValue) {
   const envelope = record3(envelopeValue);
@@ -44297,12 +44297,14 @@ function readPinnedVmEnvelope(envelopeValue) {
 }
 function registerVmObservationReader(source) {
   if (!source || typeof source.readCurrentInvocation !== "function") throw invalid2("VM invocation source is unavailable");
-  const pinPath = process.env[VM_PIN_PATH_ENV];
-  if (!pinPath || !path14.isAbsolute(pinPath)) throw invalid2("operator VM pin file is unavailable");
-  try {
-    JSON.parse(readFileSync5(pinPath, "utf8"));
-  } catch {
-    throw invalid2("operator VM pin file is unavailable");
+  if (!source.verifySignedEnvelope) {
+    const pinPath = process.env[VM_PIN_PATH_ENV];
+    if (!pinPath || !path14.isAbsolute(pinPath)) throw invalid2("operator VM pin file is unavailable");
+    try {
+      JSON.parse(readFileSync5(pinPath, "utf8"));
+    } catch {
+      throw invalid2("operator VM pin file is unavailable");
+    }
   }
   const readVerified = () => {
     const current = source.readCurrentInvocation();
@@ -44310,7 +44312,7 @@ function registerVmObservationReader(source) {
     const argumentsValue = record3(current?.arguments);
     const expected = record3(current?.binding);
     if (!envelope || !exactKeys(envelope, ["body", "signature", "keyId"]) || !nonempty2(envelope.keyId) || !argumentsValue || !expected || !exactKeys(expected, ["invocationId", "turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) || !nonempty2(current.tool)) throw invalid2("VM invocation context is malformed");
-    const { body, bytes, pin } = readPinnedVmEnvelope(envelope);
+    const { body, bytes, pin } = source.verifySignedEnvelope ? source.verifySignedEnvelope(envelope) : readPinnedVmEnvelope(envelope);
     const v2 = body.version === 2;
     if (current.registration && !v2) throw invalid2("VM authenticated dispatch requires receipt version 2");
     if (!exactKeys(body, ["version", "domain", "producer", "binding", "terminal", "core", "invocation", "nonce", "issuedAt", "expiresAt", ...v2 ? ["transport"] : []])) throw invalid2("VM receipt body is not canonical");
@@ -44381,9 +44383,9 @@ function timestamp2(value) {
   return Number.isFinite(milliseconds) && new Date(milliseconds).toISOString() === value ? milliseconds : NaN;
 }
 function observation(value) {
-  const object7 = record3(value);
-  const binding2 = record3(object7?.binding);
-  if (!object7 || !binding2 || !nonempty2(binding2.invocationId) || !nonempty2(binding2.turnId) || !nonempty2(binding2.taskId) || !optionalId(binding2.runId) || !optionalId(binding2.attemptId) || !nonempty2(binding2.hostId) || !nonempty2(binding2.sessionId) || !nonempty2(binding2.instanceId) || !nonempty2(object7.observationId) || !nonempty2(object7.model) || !isReasoningEffort2(object7.reasoningEffort) || !Number.isFinite(timestamp2(object7.observedAt))) {
+  const object8 = record3(value);
+  const binding2 = record3(object8?.binding);
+  if (!object8 || !binding2 || !nonempty2(binding2.invocationId) || !nonempty2(binding2.turnId) || !nonempty2(binding2.taskId) || !optionalId(binding2.runId) || !optionalId(binding2.attemptId) || !nonempty2(binding2.hostId) || !nonempty2(binding2.sessionId) || !nonempty2(binding2.instanceId) || !nonempty2(object8.observationId) || !nonempty2(object8.model) || !isReasoningEffort2(object8.reasoningEffort) || !Number.isFinite(timestamp2(object8.observedAt))) {
     throw invalid2("trusted host invocation observation is missing or malformed");
   }
   return {
@@ -44397,10 +44399,10 @@ function observation(value) {
       sessionId: binding2.sessionId,
       instanceId: binding2.instanceId
     },
-    observationId: object7.observationId,
-    observedAt: object7.observedAt,
-    model: object7.model,
-    reasoningEffort: object7.reasoningEffort
+    observationId: object8.observationId,
+    observedAt: object8.observedAt,
+    model: object8.model,
+    reasoningEffort: object8.reasoningEffort
   };
 }
 function sameObservation(left, right) {
@@ -44514,9 +44516,10 @@ function reject(reason) {
   throw new Error(`VM dispatch unavailable: ${reason}`);
 }
 var VmCurrentInvocation = class {
-  constructor(store, clock = Date.now) {
+  constructor(store, clock = Date.now, modelPolicy = null) {
     this.store = store;
     this.clock = clock;
+    this.modelPolicy = modelPolicy;
     this.observationReader = registerVmObservationReader(this);
     this.challenge = new ObservationChallengeAuthority(store, this.observationReader, "host", () => new Date(this.clock()), () => {
       const current = this.current.getStore();
@@ -44526,6 +44529,7 @@ var VmCurrentInvocation = class {
   }
   store;
   clock;
+  modelPolicy;
   serverEpoch = randomBytes7(32).toString("base64url");
   observationReader;
   challenge;
@@ -44534,6 +44538,9 @@ var VmCurrentInvocation = class {
   current = new AsyncLocalStorage();
   hasCurrentRequest() {
     return this.current.getStore() !== void 0;
+  }
+  verifySignedEnvelope(envelope) {
+    return this.modelPolicy ? this.modelPolicy.verifyEnvelope(envelope) : readPinnedVmEnvelope(envelope);
   }
   verifyCurrentReceipt() {
     const current = this.current.getStore();
@@ -44560,10 +44567,13 @@ var VmCurrentInvocation = class {
     } else {
       reject("tool is not an observed VM workflow call");
     }
-    return this.challenge.verifyAndConsume(this.challenge.issue());
+    const vmProfile = this.modelPolicy?.resolveProfile(registration);
+    const verified = this.challenge.verifyAndConsume(this.challenge.issue());
+    if (vmProfile && verified.model !== vmProfile.observedModelId) reject("observed model policy mismatch");
+    return vmProfile ? { ...verified, vmProfile } : verified;
   }
   reserve(registrationEnvelope) {
-    const { body, bytes } = readPinnedVmEnvelope(registrationEnvelope);
+    const { body, bytes } = this.verifySignedEnvelope(registrationEnvelope);
     const producer = object6(body.producer), binding2 = object6(body.binding);
     const terminal = object6(body.terminal), core = object6(body.core), invocation = object6(body.invocation);
     const now = this.clock(), issued = date5(body.issuedAt), expires = date5(body.expiresAt);
@@ -45548,8 +45558,8 @@ function prepareSemanticRequest(input2) {
 }
 
 // mcp-server/src/routing-v3/decision-codec.ts
-function readDecision(store, digest4, validator2) {
-  const entry = store.decision(digest4);
+function readDecision(store, digest5, validator2) {
+  const entry = store.decision(digest5);
   if (!entry) return null;
   switch (entry.decision.schemaVersion) {
     case "2.0.0":
@@ -45810,6 +45820,232 @@ function openSemanticService(databasePath, workflow) {
   }
 }
 
+// mcp-server/src/host-integration/vm-model-policy.ts
+import { createPublicKey as createPublicKey2, verify as verify2 } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { closeSync as closeSync2, constants, fstatSync as fstatSync2, lstatSync as lstatSync2, openSync as openSync2, readFileSync as readFileSync6 } from "node:fs";
+import path15 from "node:path";
+var DIGEST4 = /^sha256:[0-9a-f]{64}$/u;
+var MODEL_CLASSES = ["lightweight", "general", "deep", "frontier"];
+var SYSTEM_SIDS = /* @__PURE__ */ new Set(["S-1-5-18", "S-1-5-32-544"]);
+var WINDOWS_READ_RIGHTS = 1179817;
+var WINDOWS_POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
+var WINDOWS_POLICY_PATH = "C:\\ProgramData\\agent-governance-suite\\vm-operator-policy.json";
+var POSIX_POLICY_PATH = "/etc/agent-governance-suite/vm-operator-policy.json";
+function object7(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
+}
+function exact3(value, keys3) {
+  return !!value && Object.keys(value).length === keys3.length && keys3.every((key) => Object.hasOwn(value, key));
+}
+function nonempty3(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+function digest4(value) {
+  return typeof value === "string" && DIGEST4.test(value);
+}
+function listed(value, options) {
+  return typeof value === "string" && options.includes(value);
+}
+function fail2(message) {
+  throw new Error(`VM operator policy unavailable: ${message}`);
+}
+function parsePolicy(value) {
+  const raw = object7(value);
+  if (!exact3(raw, ["version", "modelPolicyVersion", "pins", "hostBuilds", "models"]) || raw.version !== 1 || !nonempty3(raw.modelPolicyVersion) || !Array.isArray(raw.pins) || !Array.isArray(raw.hostBuilds) || !Array.isArray(raw.models)) {
+    fail2("configuration is malformed");
+  }
+  const keys3 = /* @__PURE__ */ new Set(), installations = /* @__PURE__ */ new Map(), builds = /* @__PURE__ */ new Set(), models = /* @__PURE__ */ new Set();
+  for (const entry of raw.pins) {
+    const pin = object7(entry);
+    if (!exact3(pin, ["keyId", "installationId", "hostId", "publicKeySpki", "hostBuildDigest", "modelPolicyVersion", "status"]) || !nonempty3(pin.keyId) || !nonempty3(pin.installationId) || pin.hostId !== "flowmarshal-engine" || typeof pin.publicKeySpki !== "string" || !digest4(pin.hostBuildDigest) || !nonempty3(pin.modelPolicyVersion) || !listed(pin.status, ["active", "revoked"]) || keys3.has(pin.keyId) || installations.has(pin.installationId) && installations.get(pin.installationId) !== pin.hostBuildDigest) {
+      fail2("pin registry is malformed");
+    }
+    keys3.add(pin.keyId);
+    installations.set(pin.installationId, pin.hostBuildDigest);
+    const bytes = Buffer.from(pin.publicKeySpki, "base64");
+    if (bytes.toString("base64") !== pin.publicKeySpki) fail2("pin public key is malformed");
+    try {
+      const key = createPublicKey2({ key: bytes, format: "der", type: "spki" });
+      if (key.asymmetricKeyType !== "ed25519") fail2("pin public key is malformed");
+    } catch {
+      fail2("pin public key is malformed");
+    }
+  }
+  for (const entry of raw.hostBuilds) {
+    const host = object7(entry);
+    if (!exact3(host, ["hostId", "hostBuildDigest", "status"]) || host.hostId !== "flowmarshal-engine" || !digest4(host.hostBuildDigest) || !listed(host.status, ["verified", "unverified"]) || builds.has(host.hostBuildDigest)) fail2("host build registry is malformed");
+    builds.add(host.hostBuildDigest);
+  }
+  for (const entry of raw.models) {
+    const model = object7(entry);
+    if (!exact3(model, ["hostId", "hostBuildDigest", "observedModelId", "modelClass", "status"]) || model.hostId !== "flowmarshal-engine" || !digest4(model.hostBuildDigest) || !nonempty3(model.observedModelId) || !listed(model.modelClass, MODEL_CLASSES) || !listed(model.status, ["verified", "unverified", "retired"])) fail2("model registry is malformed");
+    const identity = `${model.hostId}\0${model.hostBuildDigest}\0${model.observedModelId}`;
+    if (models.has(identity)) fail2("duplicate model mapping");
+    models.add(identity);
+  }
+  return raw;
+}
+function isProtectedWindowsAcl(value) {
+  const acl = object7(value);
+  if (!acl || typeof acl.owner !== "string" || !SYSTEM_SIDS.has(acl.owner) || !Array.isArray(acl.rules)) return false;
+  return acl.rules.every((entry) => {
+    const rule = object7(entry);
+    if (!rule || typeof rule.sid !== "string" || !Number.isInteger(rule.rights) || typeof rule.type !== "string") return false;
+    return rule.type !== "Allow" || SYSTEM_SIDS.has(rule.sid) || (rule.rights & ~WINDOWS_READ_RIGHTS) === 0;
+  });
+}
+function inspectWindowsAcl(target) {
+  const script = `$ErrorActionPreference='Stop'; $p=[Console]::In.ReadToEnd(); $a=if ([IO.Directory]::Exists($p)) { [IO.Directory]::GetAccessControl($p) } else { [IO.File]::GetAccessControl($p) }; $owner=$a.GetOwner([Security.Principal.SecurityIdentifier]).Value; $rules=@($a.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier]) | ForEach-Object { @{ sid=$_.IdentityReference.Value; rights=[int]$_.FileSystemRights; type=$_.AccessControlType.ToString() } }); @{ owner=$owner; rules=$rules } | ConvertTo-Json -Compress -Depth 4`;
+  try {
+    const output2 = execFileSync(WINDOWS_POWERSHELL, ["-NoProfile", "-NonInteractive", "-Command", script], {
+      input: target,
+      encoding: "utf8",
+      timeout: 5e3,
+      maxBuffer: 64 * 1024,
+      windowsHide: true
+    });
+    return JSON.parse(output2);
+  } catch {
+    fail2("Windows ACL cannot be verified");
+  }
+}
+function sameFile(before, after) {
+  return before.dev === after.dev && before.ino === after.ino && before.mode === after.mode && before.uid === after.uid && before.gid === after.gid && before.size === after.size && before.mtimeMs === after.mtimeMs && before.ctimeMs === after.ctimeMs && before.birthtimeMs === after.birthtimeMs;
+}
+function protectedByOperator(target, status) {
+  return process.platform === "win32" ? isProtectedWindowsAcl(inspectWindowsAcl(target)) : status.uid === 0 && (status.mode & 18) === 0;
+}
+function readPolicyFile(filePath, fixture) {
+  if (!path15.isAbsolute(filePath)) fail2("configuration path is not absolute");
+  if (path15.normalize(filePath) !== filePath) fail2("configuration path is not canonical");
+  const root = path15.parse(filePath).root;
+  const targets = [root];
+  for (const part of path15.relative(root, filePath).split(path15.sep).filter(Boolean)) {
+    targets.push(path15.join(targets[targets.length - 1], part));
+  }
+  const snapshots = targets.map((target, index) => {
+    let status;
+    try {
+      status = lstatSync2(target);
+    } catch {
+      fail2("configuration path is unavailable");
+    }
+    if (status.isSymbolicLink() || (index === targets.length - 1 ? !status.isFile() : !status.isDirectory())) {
+      fail2("configuration path is not regular");
+    }
+    if (!(fixture?.isProtected ?? protectedByOperator)(target, status)) fail2("configuration owner or permissions are unsafe");
+    try {
+      if (!sameFile(status, lstatSync2(target))) fail2("configuration changed during validation");
+    } catch {
+      fail2("configuration changed during validation");
+    }
+    return status;
+  });
+  fixture?.afterValidation?.();
+  let fd;
+  try {
+    fd = openSync2(filePath, constants.O_RDONLY | (process.platform === "win32" ? 0 : constants.O_NOFOLLOW));
+  } catch {
+    fail2("configuration changed before open");
+  }
+  try {
+    if (!sameFile(snapshots[snapshots.length - 1], fstatSync2(fd))) fail2("configuration changed before open");
+    let value;
+    try {
+      value = JSON.parse(readFileSync6(fd, "utf8"));
+    } catch {
+      fail2("configuration JSON is malformed");
+    }
+    if (!sameFile(snapshots[snapshots.length - 1], fstatSync2(fd))) fail2("configuration changed during read");
+    for (const [index, target] of targets.entries()) {
+      let status;
+      try {
+        status = lstatSync2(target);
+      } catch {
+        fail2("configuration changed during read");
+      }
+      if (!sameFile(snapshots[index], status)) fail2("configuration changed during read");
+    }
+    return value;
+  } finally {
+    closeSync2(fd);
+  }
+}
+function readProtectedVmPolicyFile(filePath) {
+  return readPolicyFile(filePath);
+}
+function installedVmPolicyPath() {
+  return process.platform === "win32" ? WINDOWS_POLICY_PATH : POSIX_POLICY_PATH;
+}
+var VmModelPolicy = class _VmModelPolicy {
+  constructor(readPolicy) {
+    this.readPolicy = readPolicy;
+  }
+  readPolicy;
+  static installed() {
+    const filePath = installedVmPolicyPath();
+    try {
+      lstatSync2(filePath);
+    } catch {
+      return null;
+    }
+    try {
+      const policy = new _VmModelPolicy(() => parsePolicy(readProtectedVmPolicyFile(filePath)));
+      policy.readPolicy();
+      return policy;
+    } catch {
+      return null;
+    }
+  }
+  /** Only synthetic tests may inject an already trusted operator registry. */
+  static fixture(value) {
+    const policy = parsePolicy(value);
+    return new _VmModelPolicy(() => policy);
+  }
+  pin(keyId, policy = this.readPolicy()) {
+    const pin = policy.pins.find((entry) => entry.keyId === keyId);
+    if (!pin || pin.status !== "active" || pin.modelPolicyVersion !== policy.modelPolicyVersion) fail2("producer pin is revoked or policy version mismatches");
+    const bytes = Buffer.from(pin.publicKeySpki, "base64");
+    return { ...pin, key: createPublicKey2({ key: bytes, format: "der", type: "spki" }) };
+  }
+  verifyEnvelope(envelopeValue) {
+    const envelope = object7(envelopeValue);
+    if (!exact3(envelope, ["body", "signature", "keyId"]) || !nonempty3(envelope.keyId) || typeof envelope.body !== "string" || typeof envelope.signature !== "string") fail2("signed envelope is malformed");
+    const pin = this.pin(envelope.keyId);
+    const bytes = Buffer.from(envelope.body, "base64url");
+    const signature = Buffer.from(envelope.signature, "base64url");
+    if (bytes.toString("base64url") !== envelope.body || signature.toString("base64url") !== envelope.signature || signature.length !== 64 || !verify2(null, bytes, pin.key, signature)) fail2("producer signature is invalid");
+    let body = null;
+    try {
+      body = object7(JSON.parse(bytes.toString("utf8")));
+    } catch {
+    }
+    if (!body || Buffer.from(canonicalJson(body), "utf8").compare(bytes) !== 0) fail2("signed body is not canonical");
+    const producer = object7(body.producer);
+    if (!producer || producer.keyId !== envelope.keyId || producer.installationId !== pin.installationId || producer.hostId !== pin.hostId) fail2("producer installation is not pinned");
+    return { body, bytes, pin };
+  }
+  resolveProfile(registration) {
+    const producer = object7(registration.producer), terminal = object7(registration.terminal);
+    if (!producer || !terminal || !nonempty3(producer.keyId) || !nonempty3(terminal.model)) fail2("observed model is unavailable");
+    const policy = this.readPolicy();
+    const pin = this.pin(producer.keyId, policy);
+    if (producer.installationId !== pin.installationId || producer.hostId !== pin.hostId) fail2("producer installation is not pinned");
+    const build = policy.hostBuilds.find((entry) => entry.hostId === pin.hostId && entry.hostBuildDigest === pin.hostBuildDigest);
+    const model = policy.models.find((entry) => entry.hostId === pin.hostId && entry.hostBuildDigest === pin.hostBuildDigest && entry.observedModelId === terminal.model);
+    if (!build || build.status !== "verified" || !model || model.status !== "verified") fail2("exact observed host model is unsupported");
+    return {
+      modelClass: model.modelClass,
+      actorId: `vm-producer:${pin.installationId}`,
+      observedModelId: model.observedModelId,
+      installationId: pin.installationId,
+      hostBuildDigest: pin.hostBuildDigest,
+      modelPolicyVersion: policy.modelPolicyVersion
+    };
+  }
+};
+
 // mcp-server/src/index.ts
 async function main() {
   const registryPath = resolveRegistryPath();
@@ -45835,7 +46071,8 @@ async function main() {
   });
   const validator2 = new ContractValidator();
   const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
-  const vmInvocation = process.env.AGENT_GOVERNANCE_VM_PIN_PATH ? new VmCurrentInvocation(store) : null;
+  const vmPolicy = VmModelPolicy.installed();
+  const vmInvocation = vmPolicy ? new VmCurrentInvocation(store, Date.now, vmPolicy) : null;
   const trust = new TrustService(trustStore);
   const service = new RoutingAwareWorkflowService(
     modelRouting.bridge,

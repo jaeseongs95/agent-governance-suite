@@ -54,6 +54,8 @@ const hostReaders = new WeakMap<HostObservationReader, () => VerifiedVmObservati
 
 /** This source is supplied by the server invocation boundary, not decoded from MCP arguments. */
 export interface VmInvocationSource {
+  verifySignedEnvelope?(envelope: unknown): { body: Record<string, unknown>; bytes: Buffer;
+    pin: { installationId: string; hostId: string } };
   readCurrentInvocation(): {
     receipt: unknown;
     tool: string;
@@ -142,10 +144,12 @@ export function readPinnedVmEnvelope(envelopeValue: unknown): { body: Record<str
 
 export function registerVmObservationReader(source: VmInvocationSource): HostObservationReader {
   if (!source || typeof source.readCurrentInvocation !== "function") throw invalid("VM invocation source is unavailable");
-  // Fail at registration when the operator has not supplied a usable pin file.
-  const pinPath = process.env[VM_PIN_PATH_ENV];
-  if (!pinPath || !path.isAbsolute(pinPath)) throw invalid("operator VM pin file is unavailable");
-  try { JSON.parse(readFileSync(pinPath, "utf8")); } catch { throw invalid("operator VM pin file is unavailable"); }
+  if (!source.verifySignedEnvelope) {
+    // Legacy verifier fixtures retain their isolated pin-file contract.
+    const pinPath = process.env[VM_PIN_PATH_ENV];
+    if (!pinPath || !path.isAbsolute(pinPath)) throw invalid("operator VM pin file is unavailable");
+    try { JSON.parse(readFileSync(pinPath, "utf8")); } catch { throw invalid("operator VM pin file is unavailable"); }
+  }
   const readVerified = (): VerifiedVmObservation => {
     const current = source.readCurrentInvocation();
     const envelope = record(current?.receipt);
@@ -155,7 +159,8 @@ export function registerVmObservationReader(source: VmInvocationSource): HostObs
         || !nonempty(envelope.keyId) || !argumentsValue || !expected
         || !exactKeys(expected, ["invocationId", "turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"])
         || !nonempty(current.tool)) throw invalid("VM invocation context is malformed");
-    const { body, bytes, pin } = readPinnedVmEnvelope(envelope);
+    const { body, bytes, pin } = source.verifySignedEnvelope
+      ? source.verifySignedEnvelope(envelope) : readPinnedVmEnvelope(envelope);
     const v2 = body.version === 2;
     if (current.registration && !v2) throw invalid("VM authenticated dispatch requires receipt version 2");
     if (!exactKeys(body, ["version", "domain", "producer", "binding", "terminal", "core", "invocation", "nonce", "issuedAt", "expiresAt", ...(v2 ? ["transport"] : [])])) throw invalid("VM receipt body is not canonical");
