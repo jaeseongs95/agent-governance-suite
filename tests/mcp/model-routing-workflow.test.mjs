@@ -9,10 +9,12 @@ import { SqliteWorkflowStore } from '../../mcp-server/src/sqlite-workflow-store.
 import { openModelRoutingService } from '../../mcp-server/src/model-routing-service.js';
 import { RoutingAwareWorkflowService } from '../../mcp-server/src/routing-aware-workflow-service.js';
 import { MODEL_APPLICATION_SCHEMA, hasModelRoutingArtifacts } from '../../mcp-server/src/model-routing-workflow.js';
+import { MODEL_DECISION_V3_SCHEMA } from '../../mcp-server/src/routing-v3/workflow-binding.js';
 import { ModelRoutingStore, RoutingObservationSigner } from '../../skills/coordinate-subagents/scripts/model-routing-store.mjs';
 import { ModelRoutingServiceCore } from '../../skills/coordinate-subagents/scripts/model-routing-service-core.mjs';
 import { digest, seal, resolveV2 } from '../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
 import { request, environment, capability, presence, application, observation, NOW, LATER, END } from '../coordinate-subagents/model-routing-v2/fixtures.mjs';
+import { contracts } from '../coordinate-subagents/semantic-decision/fixtures/contracts.mjs';
 
 const disposers = [];
 afterEach(() => { vi.restoreAllMocks(); while(disposers.length) disposers.pop()(); });
@@ -162,6 +164,33 @@ describe('workflow-owned model routing bridge',()=>{
     const h=harness(),result=h.service.recordStageResult(h.result,true);
     expect(result.ok).toBe(false);expect(result.error.code).toBe('BINDING_REQUIRED');
     expect(h.workflow.getRun(h.run.runId).stageResults).toHaveLength(0);
+  });
+  it('does not let a v3 diagnostic reference satisfy passed evidence or required artifact gates',()=>{
+    const h=harness(),semantic={...contracts().decision.semantic,baselineDecisionDigest:h.decision.decisionDigest};
+    const decision=seal({...h.decision,schemaVersion:'3.0.0',semantic},'decisionDigest');
+    h.routing.database.prepare('INSERT INTO ags_model_decisions_v2 VALUES (?,?,?,?,?,?)').run(
+      decision.decisionDigest,digest(decision.binding),JSON.stringify(h.req),JSON.stringify(h.env),JSON.stringify(decision),NOW);
+    h.routing.database.prepare('INSERT INTO ags_model_decision_refs_v3 VALUES (?,?,?,?,?)').run(
+      decision.decisionDigest,h.decision.decisionDigest,'t06-workflow-evaluation','t06-workflow-registration',semantic.adviceDigest);
+    const result=structuredClone(h.result),artifact=result.output.artifacts[0];
+    artifact.schemaId=MODEL_DECISION_V3_SCHEMA;
+    artifact.locator=`ags-model-decision:${decision.decisionDigest.slice(7)}`;
+    artifact.digest=decision.decisionDigest;
+    artifact.verified=false;
+    result.evidence[0].locator=artifact.locator;
+    result.evidence[0].verified=false;
+    expect(h.service.recordStageResult(result).error.code).toBe('MISSING_EVIDENCE');
+    expect(h.workflow.getRun(h.run.runId).stageResults).toHaveLength(0);
+    artifact.verified=true;result.evidence[0].verified=true;
+    expect(h.service.recordStageResult(result).error.code).toBe('BINDING_INVALID');
+    expect(h.workflow.getRun(h.run.runId).stageResults).toHaveLength(0);
+  });
+  it('retains v3 dispatch participants in independent-audit history',()=>{
+    const h=harness(),semantic={...contracts().decision.semantic,baselineDecisionDigest:h.decision.decisionDigest};
+    const decision=seal({...h.decision,schemaVersion:'3.0.0',semantic,
+      binding:{...h.decision.binding,assignmentId:'v3-audit-history'}},'decisionDigest');
+    h.routing.reserveDispatch(decision);
+    expect(h.opened.bridge.history(h.req.binding).actors).toContain(decision.target.actorId);
   });
   it('does not inspect or reject ordinary legacy stage outputs',()=>{
     const h=harness(),result={...h.result,output:{...h.result.output,artifacts:[]},evidence:[{artifactId:'legacy-test',kind:'test',locator:'fixture:legacy',verified:true,note:'Existing legacy evidence.'}]};

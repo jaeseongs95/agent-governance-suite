@@ -5,17 +5,19 @@ import { onTestFinished, test } from 'vitest';
 import { ModelRoutingWorkflowBridge, hasModelRoutingArtifacts } from '../../../mcp-server/src/model-routing-workflow.ts';
 import { convergenceDigest } from '../../../mcp-server/src/convergence-logic.ts';
 import { MODEL_DECISION_V3_SCHEMA, validateStoredSemanticWorkflowBinding } from '../../../mcp-server/src/routing-v3/workflow-binding.ts';
-import { canonical, digest } from '../../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
+import { canonical, digest, seal } from '../../../skills/coordinate-subagents/scripts/model-routing-core.mjs';
 import { ModelRoutingStore } from '../../../skills/coordinate-subagents/scripts/model-routing-store.mjs';
 import { contracts } from '../semantic-decision/fixtures/contracts.mjs';
 import { NOW } from '../model-routing-v2/fixtures.mjs';
 
-function fixture() {
+function fixture(role = null) {
   const db = new DatabaseSync(':memory:');
   onTestFinished(() => db.close());
   const routing = new ModelRoutingStore(db);
-  const { legacy, decision } = contracts();
-  const request = legacy.req, binding = decision.binding;
+  const { legacy, decision: sample } = contracts();
+  const request = role ? { ...legacy.req, role, highRisk: true } : legacy.req;
+  const decision = role ? seal({ ...sample, requestDigest: digest(request) }, 'decisionDigest') : sample;
+  const binding = decision.binding;
   db.prepare('INSERT INTO ags_model_decisions_v2 VALUES (?,?,?,?,?,?)').run(
     decision.decisionDigest, digest(binding), canonical(request), canonical(legacy.env), canonical(decision), NOW);
   db.prepare('INSERT INTO ags_model_decision_refs_v3 VALUES (?,?,?,?,?)').run(
@@ -40,11 +42,11 @@ function fixture() {
   const bridge = new ModelRoutingWorkflowBridge(workflow, routing);
   const locator = `ags-model-decision:${decision.decisionDigest.slice(7)}`;
   const artifact = { artifactId: 'semantic-diagnostic', schemaId: MODEL_DECISION_V3_SCHEMA,
-    locator, digest: decision.decisionDigest, targetDigest: binding.candidateDigest, verified: true };
+    locator, digest: decision.decisionDigest, targetDigest: binding.candidateDigest, verified: false };
   const result = { runId: binding.runId, stageId: binding.stageId,
     expectedRevision: binding.revision, state: 'passed',
     output: { artifacts: [artifact] },
-    evidence: [{ artifactId: artifact.artifactId, locator }] };
+    evidence: [{ artifactId: artifact.artifactId, locator, verified: false }] };
   return { db, routing, request, decision, binding, guarded, receipt, bridge, artifact, result };
 }
 
@@ -62,7 +64,7 @@ test('stored v3 diagnostic reference is recognized and binds to the current work
   assert.doesNotThrow(() => f.bridge.validateStageArtifacts(f.result));
   assert.deepEqual(validateStoredSemanticWorkflowBinding(
     { getGuardedRunSnapshot: () => ({ receipt: f.receipt, guarded: f.guarded }) },
-    f.routing, f.decision.decisionDigest), f.decision);
+    f.routing, f.decision.decisionDigest), { decision: f.decision, request: f.request });
   assert.equal(f.decision.executionAuthorized, false);
   assert.equal(f.decision.trustedGateSatisfied, false);
 });
@@ -126,4 +128,23 @@ test('v3 diagnostic cannot downgrade task risk, exceed authorization or stand in
   f.guarded.proposal.taskEnvelope.authorization.approvalRequired.push('native-approval');
   refreshTask(f);
   assert.throws(() => f.bridge.validateStageArtifacts(f.result), /approval adapter/u);
+});
+
+test('v3 diagnostic cannot mark its artifact or evidence verified', () => {
+  const f = fixture();
+  f.result.output.artifacts[0].verified = true;
+  assert.throws(() => f.bridge.validateStageArtifacts(f.result), /diagnostic/u);
+  f.result.output.artifacts[0].verified = false;
+  f.result.evidence[0].verified = true;
+  assert.throws(() => f.bridge.validateStageArtifacts(f.result), /diagnostic evidence/u);
+  f.result.evidence[0].locator = 'fixture:unrelated';
+  assert.throws(() => f.bridge.validateStageArtifacts(f.result), /diagnostic evidence/u);
+});
+
+test('v3 audit reference rechecks participant and excluded session at adoption', () => {
+  const f = fixture('independent-audit');
+  f.bridge.history = () => ({ actors: [f.decision.target.actorId], sessions: [] });
+  assert.throws(() => f.bridge.validateStageArtifacts(f.result), /participated/u);
+  f.bridge.history = () => ({ actors: [], sessions: [`${f.decision.target.host}/${f.decision.target.sessionId}`] });
+  assert.throws(() => f.bridge.validateStageArtifacts(f.result), /participated/u);
 });

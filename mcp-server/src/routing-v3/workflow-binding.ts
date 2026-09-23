@@ -28,17 +28,20 @@ export function validateSemanticDecisionArtifact(
   routing: ModelRoutingStore,
   artifact: StageResultV1["output"]["artifacts"][number],
   result: StageResultV1,
-): void {
+): { decision: ModelRoutingDecisionV3; request: ModelSelectionRequestV2 } {
+  requireBinding(artifact.verified === false,
+    "A semantic decision reference is diagnostic, not verified execution evidence.");
   requireBinding(artifact.schemaId === MODEL_DECISION_V3_SCHEMA
     && /^ags-model-decision:[a-f0-9]{64}$/u.test(artifact.locator),
   "Semantic artifact requires the v3 schema and exact stored-decision URI.");
   const decisionDigest = `sha256:${artifact.locator.slice(MODEL_DECISION_V3_PREFIX.length)}`;
   requireBinding((artifact.digest.startsWith("sha256:") ? artifact.digest : `sha256:${artifact.digest}`) === decisionDigest,
     "Semantic artifact URI and digest disagree.");
-  const decision = validateStoredSemanticWorkflowBinding(workflow, routing, decisionDigest);
+  const { decision, request } = validateStoredSemanticWorkflowBinding(workflow, routing, decisionDigest);
   requireBinding(decision.binding.runId === result.runId && decision.binding.stageId === result.stageId
     && decision.binding.revision === result.expectedRevision && artifact.targetDigest === decision.binding.candidateDigest,
   "Semantic artifact belongs to a different run, stage, revision or candidate.");
+  return { decision, request };
 }
 
 /** Current workflow admission for a stored v3 selection; returns the decision, never a permit. */
@@ -46,7 +49,7 @@ export function validateStoredSemanticWorkflowBinding(
   workflow: WorkflowStore,
   routing: ModelRoutingStore,
   decisionDigest: string,
-): ModelRoutingDecisionV3 {
+): { decision: ModelRoutingDecisionV3; request: ModelSelectionRequestV2 } {
   const entry = readDecision(routing, decisionDigest, new ContractValidator());
   requireBinding(entry?.decision.schemaVersion === "3.0.0", "Semantic artifact has no stored v3 decision.");
   const { decision } = entry;
@@ -65,7 +68,7 @@ export function validateStoredSemanticWorkflowBinding(
     && decision.executionAuthorized === false && decision.trustedGateSatisfied === false,
   "Semantic decision and request binding disagree.");
   validateCurrentBinding(workflow, request, decision);
-  return decision;
+  return { decision, request };
 }
 
 function validateCurrentBinding(
