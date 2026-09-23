@@ -10607,6 +10607,7 @@ function loadSchema(fileName) {
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
+  hostIntegration: loadSchema("host-integration.v1.schema.json"),
   pluginUpdateStatus: loadSchema("plugin-update-status.v1.schema.json"),
   pluginUpdateNotice: loadSchema("plugin-update-notice.v1.schema.json"),
   executionContext: loadSchema("execution-context.v1.schema.json"),

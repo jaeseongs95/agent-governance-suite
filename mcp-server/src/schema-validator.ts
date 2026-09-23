@@ -99,6 +99,7 @@ function loadSchema(fileName: string): JsonSchema {
 /** The wire schemas are loaded from contracts/ so MCP and direct callers share one definition. */
 export const contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
+  hostIntegration: loadSchema("host-integration.v1.schema.json"),
   pluginUpdateStatus: loadSchema("plugin-update-status.v1.schema.json"),
   pluginUpdateNotice: loadSchema("plugin-update-notice.v1.schema.json"),
   executionContext: loadSchema("execution-context.v1.schema.json"),
