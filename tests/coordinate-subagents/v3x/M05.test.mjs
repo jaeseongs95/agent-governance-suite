@@ -48,7 +48,8 @@ test('M05 keeps unobserved enforcement unknown and limits independent review to 
   assert.equal(classifyClaudeThinkingTransformation({ type: 'future', reason: 'model_binding_mismatch' }), 'unknown');
   assert.equal(classifyClaudeThinkingTransformation({ type: 'thinking_mismatch_allowed', reason: 'prefix_binding_mismatch' }), 'prefix-binding-allowed');
   assert.deepEqual(claudeIndependentReviewEvidence([
-    { id: 'test-log', kind: 'test-result' }, { id: 'raw-thinking', kind: 'provider-transcript' },
+    { id: 'test-log', kind: 'test-result', history: original.messages, thinking },
+    { id: 'raw-thinking', kind: 'provider-transcript' },
     { id: 'summary', kind: 'checkpoint-summary' },
   ], new Set(['test-log', 'raw-thinking'])), [{ id: 'test-log', kind: 'test-result' }]);
 });

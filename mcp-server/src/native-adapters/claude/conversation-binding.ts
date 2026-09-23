@@ -62,5 +62,6 @@ export function claudeIndependentReviewEvidence(
   allowed: ReadonlySet<string>,
 ): { id: string; kind: "test-result" | "artifact-diff" | "checkpoint-summary" }[] {
   return requested.filter((item): item is { id: string; kind: "test-result" | "artifact-diff" | "checkpoint-summary" } =>
-    ["test-result", "artifact-diff", "checkpoint-summary"].includes(item.kind) && allowed.has(item.id));
+    ["test-result", "artifact-diff", "checkpoint-summary"].includes(item.kind) && allowed.has(item.id))
+    .map(({ id, kind }) => ({ id, kind }));
 }
