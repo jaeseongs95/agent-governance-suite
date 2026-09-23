@@ -70,6 +70,7 @@ import {
   type ModelApplicationRequestV3,
   type ModelApplicationRecordV3,
   type ResourceStateSnapshotV1,
+  type ResourcePolicyV1,
   WorkflowContractError,
 } from "../../contracts/types.js";
 
@@ -162,6 +163,7 @@ export const contractSchemas = {
   modelApplicationRequestV3: loadSchema("model-application-request.v3.schema.json"),
   modelApplicationRecordV3: loadSchema("model-application-record.v3.schema.json"),
   resourceStateSnapshotV1: loadSchema("resource-state-snapshot.v1.schema.json"),
+  resourcePolicyV1: loadSchema("resource-policy.v1.schema.json"),
 };
 
 // Providers declare artifact digests either bare or sha256:-prefixed. A SHA-256 digest that misses the
@@ -464,6 +466,23 @@ export class ContractValidator {
       throw new WorkflowContractError("INVALID_INPUT", "Resource windows must have unique IDs and expire after observation.");
     }
     return snapshot;
+  }
+
+  resourcePolicyV1(value: unknown): ResourcePolicyV1 {
+    const policy = this.assert<ResourcePolicyV1>("resourcePolicyV1", value);
+    const windows = policy.windows;
+    if (new Set(windows.map((window) => window.windowId)).size !== windows.length
+      || new Set(policy.rolePriorities?.map((role) => role.roleId)).size !== (policy.rolePriorities?.length ?? 0)
+      || windows.some((window) => {
+        const hardLimit = window.hardLimit?.minimumRemaining ?? 0;
+        const hardReserve = window.reservePolicy?.hardReserve?.minimumRemaining;
+        const softConservation = window.reservePolicy?.softConservation?.enterBelowRemaining;
+        return (hardReserve !== undefined && hardReserve < hardLimit)
+          || (softConservation !== undefined && softConservation < (hardReserve ?? hardLimit));
+      })) {
+      throw new WorkflowContractError("INVALID_INPUT", "Resource policy windows, role priorities, and remaining floors must be consistent.");
+    }
+    return policy;
   }
 
   /** New-contract validation only: legacy Ajv acceptance and v2 runtime methods are unchanged. */
