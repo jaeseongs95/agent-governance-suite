@@ -17,6 +17,7 @@ const store = new ResourceObservationStore(db, config, [collector]);
 const exec = db.exec.bind(db);
 db.exec = sql => {
   if (!hold && sql === 'BEGIN IMMEDIATE;') parentPort.postMessage({ type: 'write-attempt' });
+  if (hold && fail && sql === 'COMMIT;') throw new Error('b03 rollback');
   return exec(sql);
 };
 
@@ -31,7 +32,7 @@ parentPort.on('message', async command => {
     if (command === 'arm') {
       db.exec(`CREATE TRIGGER b03_hold AFTER INSERT ON resource_window_observations
         WHEN NEW.revision = ${response.snapshot.windows[0].revision}
-        BEGIN SELECT b03_hold_observation(); ${fail ? "SELECT RAISE(ABORT, 'b03 rollback');" : ''} END;`);
+        BEGIN SELECT b03_hold_observation(); END;`);
       parentPort.postMessage({ type: 'armed' });
     } else if (command === 'admit') {
       const result = await store.admit(collector);
