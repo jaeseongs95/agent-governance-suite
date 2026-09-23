@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "M01",
+  "sourceRef": "dddde8cff6391e467e961a4ae70d573b48678236",
+  "planningSource": {
+    "path": "거버넌스설계/3.x 구현방향/model/MODEL_UPDATE.json",
+    "revision": "r3",
+    "sha256": "7cdcfe526c15f5ed53e5791e60059284090f9e80098ecaeab5e2b15295031a67"
+  },
+  "identity": {
+    "exactApiModelId": "claude-opus-5-5",
+    "host": "anthropic-claude-code",
+    "hostBinding": null,
+    "aliasIsExactId": false
+  },
+  "evidenceStates": {
+    "documentSupported": true,
+    "hostSupported": "unknown",
+    "configured": false,
+    "observed": false
+  },
+  "installedInspection": {
+    "claudeCodeVersion": "2.1.280",
+    "documentedMinimumVersion": "2.1.280",
+    "cliModelFlag": true,
+    "cliEffortFlag": true,
+    "accountModelAvailability": "unknown",
+    "effectiveModelAndEffort": "unknown",
+    "repositoryAnthropicSdkPresent": false,
+    "liveCallPerformed": false
+  },
+  "surfaces": {
+    "claudeCodeManaged": {
+      "historyOwner": "claude-code",
+      "modelDelivery": ["--model", "subagent model frontmatter"],
+      "effortDelivery": ["--effort", "subagent effort frontmatter"],
+      "effectiveObservation": ["exact tool-use transcript message.model", "transcript effort or hook effort"],
+      "accountAndOrganizationLimits": "unknown",
+      "thinkingAndToolRequestRewriteOwner": "claude-code"
+    },
+    "messagesApiDirect": {
+      "historyOwner": "calling-application",
+      "modelField": "model",
+      "effortField": "output_config.effort",
+      "thinkingDisabledAllowed": false,
+      "manualThinkingBudgetAllowed": false,
+      "forcedToolChoiceAnyOrToolAllowed": false,
+      "toolChoiceReplacement": "auto with strict tool use or structured outputs",
+      "responseContentRule": "select content blocks by type; preserve and replay thinking blocks unchanged with tool results",
+      "modelSwitchRule": "thinking-block compatibility is directional; validate the target model and append-only history",
+      "computerUseClaudeApiAndGoogleCloud": "computer_toolset_20260801 replaces computer_20251124",
+      "computerUseBedrock": "computer_20251124 remains supported",
+      "implementedInRepository": false
+    },
+    "priceEstimate": {
+      "basis": "apiPriceEstimate",
+      "currency": "USD",
+      "unit": "per_1000000_tokens",
+      "provider": "anthropic_first_party",
+      "accessPath": "api",
+      "speed": "standard",
+      "geography": "global",
+      "batch": false,
+      "uncachedInput": "4",
+      "output": "20",
+      "cacheRead": "0.20",
+      "cacheWrite5m": "5",
+      "cacheWrite1h": "8",
+      "toolFeesIncluded": false,
+      "subscriptionConversion": null,
+      "implementedCalculatorInRepository": false
+    }
+  },
+  "pins": [
+    { "id": "index", "path": "skills/coordinate-subagents/references/model-catalog/index.json", "symbol": "provider/hosts/sources digests", "sha256": "86927729943013b85e1e96a7d949138a3b125e3b39e140f3889e3bf9d034454a" },
+    { "id": "anthropic", "path": "skills/coordinate-subagents/references/model-catalog/models/anthropic.json", "symbol": "Anthropic model records", "sha256": "437fa44617a9016ab55e2faf8e5a6d755f26bcc33b3390947823e6896d916f3f" },
+    { "id": "hosts", "path": "skills/coordinate-subagents/references/model-catalog/hosts.json", "symbol": "host descriptors", "sha256": "f7672087d49d75a36aa43d2a2539c30cc6a1bad402067edbf6ba2db6abf09f6d" },
+    { "id": "sources", "path": "skills/coordinate-subagents/references/model-catalog/sources.json", "symbol": "catalog provenance", "sha256": "bca0d3c5c92a16eae00ba186b97a4552f9c9d182f6a3165fdc2f42d38e46f47b" },
+    { "id": "policy", "path": "skills/coordinate-subagents/references/model-catalog/policy.json", "symbol": "profileOrder/traitOrder/highRiskNativeFloor", "sha256": "4d7a24a1bf36e1e618df6e33b8f74e3fb4915332ef77f83b99d86450bc755e9a" },
+    { "id": "preset", "path": "skills/coordinate-subagents/references/model-routing-presets.json", "symbol": "anthropic-claude-code profiles/application", "sha256": "3f53fa46a6868e76bf790794a8b2b7abf30714cc22a42b280991711df770bca9" },
+    { "id": "catalogLoader", "path": "skills/coordinate-subagents/scripts/model-catalog.mjs", "symbol": "loadCatalog/queryCatalog", "sha256": "610ba3ac1d5c2999545a807f86b3d83bb5ae14ee0a38eada0a424ba9f69a0425" },
+    { "id": "routingV1", "path": "skills/coordinate-subagents/scripts/model-routing.mjs", "symbol": "resolveModelSelection/recordModelApplication", "sha256": "cce007d872b4c94eab4f178f6c54fe59a31f6295604edb4747433421ec768a98" },
+    { "id": "routingV2", "path": "skills/coordinate-subagents/scripts/model-routing-core.mjs", "symbol": "resolveV2/recordV2", "sha256": "ea4630eebccb1e77a1cc65517ab5e68d722d3c5c8392a66a6308694b73cfc6f6" },
+    { "id": "callAdapter", "path": "skills/coordinate-subagents/scripts/adapters/native-subagents.mjs", "symbol": "claudeSubagentArguments/assertDispatchedNativeArguments", "sha256": "6bf5af6295b2e8bd5e2e76311ca62d7ac7425290458ffa349d7259dadf40b4c9" },
+    { "id": "service", "path": "mcp-server/src/model-routing-service.ts", "symbol": "MODEL_CATALOG_DIRECTORY", "sha256": "0634501b806d582bb759733785b839fd90f6cc7a5db7079e7904e286d00db0e4" },
+    { "id": "observationHook", "path": "mcp-server/src/model-routing-host-hook.ts", "symbol": "nativeRoutingSettings", "sha256": "1cc97bf60d69468c5360aa1a42eeb86572396e6be651ea04a5a81e4b0a42ba53" },
+    { "id": "observationParser", "path": "mcp-server/src/native-tool-observation.ts", "symbol": "findToolUseObservation", "sha256": "e3a335cf3105d8450f8527a9a0372006a8769df0bb4035a67496f111af0df63a" },
+    { "id": "attestationHook", "path": "mcp-server/src/host-attestation-hook.ts", "symbol": "handleHostAttestationHook", "sha256": "b2ac2d87b811f67a4e635582a8924521bc79d34d6ebf10dab81fde2c2236caac" },
+    { "id": "evaluation", "path": "skills/coordinate-subagents/scripts/model-evaluation.mjs", "symbol": "validateEvaluation/aggregateEvaluations", "sha256": "afa0cc70fa0f7e4faff9c82a2c27eff60efcaf3ec0f413d5ebb71da955b3fc32" },
+    { "id": "evaluationStore", "path": "skills/coordinate-subagents/scripts/model-routing-store.mjs", "symbol": "saveEvaluation", "sha256": "ee49e158720a51a6dbc758e1c49da55843d4926d7793ba4fb5f6bd72494c6fa2" },
+    { "id": "evaluationSchema", "path": "contracts/model-evaluation-record.v1.schema.json", "symbol": "cost.basis/usage", "sha256": "f334dff3ee2010561f7a8a69a85cfdf1f0323d972a6433c1c8d9de6a01cd77f6" }
+  ]
+}
