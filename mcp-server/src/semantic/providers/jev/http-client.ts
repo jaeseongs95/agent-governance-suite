@@ -55,14 +55,22 @@ export class JevHttpClient {
         headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
         body: requestText,
       });
-      if (pastDeadline()) return { status: "timeout", providerAccepted: "unknown" };
-      if (control.signal.aborted) return { status: "uncertain", providerAccepted: "unknown" };
-      if (response.redirected || (response.url && response.url !== JEV_ENDPOINT)
-        || (response.status >= 300 && response.status < 400)) {
-        return { status: "redirect-rejected", providerAccepted: "unknown" };
+      if (pastDeadline() || control.signal.aborted) {
+        await response.body?.cancel();
+        return { status: pastDeadline() ? "timeout" : "uncertain", providerAccepted: "unknown" };
       }
-      if (response.status === 429) return { status: "rate-limited", providerAccepted: "no" };
-      if (response.status !== 200 || !response.body) return { status: "uncertain", providerAccepted: "unknown" };
+      const redirected = response.redirected || (response.url && response.url !== JEV_ENDPOINT)
+        || (response.status >= 300 && response.status < 400);
+      if (redirected || response.status !== 200) {
+        await response.body?.cancel();
+        if (pastDeadline() || control.signal.aborted) {
+          return { status: pastDeadline() ? "timeout" : "uncertain", providerAccepted: "unknown" };
+        }
+        if (redirected) return { status: "redirect-rejected", providerAccepted: "unknown" };
+        if (response.status === 429) return { status: "rate-limited", providerAccepted: "no" };
+        return { status: "uncertain", providerAccepted: "unknown" };
+      }
+      if (!response.body) return { status: "uncertain", providerAccepted: "unknown" };
 
       const reader = response.body.getReader();
       const chunks: Uint8Array[] = [];
@@ -79,7 +87,7 @@ export class JevHttpClient {
           chunks.push(part.value);
         }
       } finally {
-        if (!complete) void reader.cancel().catch(() => {});
+        if (!complete) await reader.cancel();
       }
       if (control.signal.aborted || pastDeadline()) {
         return { status: pastDeadline() ? "timeout" : "uncertain", providerAccepted: "unknown" };

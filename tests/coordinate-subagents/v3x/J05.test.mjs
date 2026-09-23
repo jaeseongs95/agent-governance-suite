@@ -122,3 +122,36 @@ test('J05 keeps timeout classification when a delayed JSON parse fails', async (
     globalThis.JSON.parse = originalParse;
   }
 });
+
+test('J05 cancels open 302, 429 and 500 response bodies before returning', async () => {
+  let calls = 0;
+  for (const [code, expected] of [
+    [302, { status: 'redirect-rejected', providerAccepted: 'unknown' }],
+    [429, { status: 'rate-limited', providerAccepted: 'no' }],
+    [500, { status: 'uncertain', providerAccepted: 'unknown' }],
+  ]) {
+    let cancelled = false;
+    const stream = new globalThis.ReadableStream({ cancel() { cancelled = true; } });
+    const transport = client(async () => { calls++; return new globalThis.Response(stream, { status: code }); });
+    assert.deepEqual(await transport.post(task, control()), expected);
+    assert.equal(cancelled, true);
+  }
+  assert.equal(calls, 3);
+});
+
+test('J05 waits for response body cancellation before releasing an error result', async () => {
+  let started, finish;
+  const cancelStarted = new Promise(resolve => { started = resolve; });
+  const stream = new globalThis.ReadableStream({ cancel() {
+    started();
+    return new Promise(resolve => { finish = resolve; });
+  } });
+  const transport = client(async () => new globalThis.Response(stream, { status: 429 }));
+  const pending = transport.post(task, control());
+  let settled = false;
+  void pending.then(() => { settled = true; });
+  await cancelStarted;
+  assert.equal(settled, false);
+  finish();
+  assert.deepEqual(await pending, { status: 'rate-limited', providerAccepted: 'no' });
+});
