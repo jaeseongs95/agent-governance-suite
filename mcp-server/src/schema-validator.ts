@@ -14,6 +14,9 @@ import {
   type ConvergenceStatusSummaryV1,
   type ConvergenceStatusV1,
   type CheckpointContextRequestV1,
+  type ArtifactRefV1,
+  type ArtifactHashDomainV1,
+  type ContinuityEvidenceRefV1,
   type GuardedWorkflowStartRequestV1,
   type OpenConvergenceRootRequestV1,
   type PlanWorkflowRequestV1,
@@ -76,6 +79,7 @@ import {
   assertSemanticRecordIntegrity,
   assertSemanticRecordBinding,
 } from "./semantic-contract-invariants.js";
+import { canonicalJson } from "./convergence-logic.js";
 
 type JsonSchema = Record<string, unknown>;
 const addFormats = addFormatsModule as unknown as FormatsPlugin;
@@ -116,6 +120,7 @@ export const contractSchemas = {
   convergenceStatusSummary: loadSchema("convergence-status-summary.v1.schema.json"),
   responseMode: loadSchema("response-mode.v1.schema.json"),
   checkpointContextRequest: loadSchema("checkpoint-context-request.v1.schema.json"),
+  artifactRef: loadSchema("artifact-ref.v1.schema.json"),
   inspectContextRequest: loadSchema("inspect-context-request.v1.schema.json"),
   loadContextRequest: loadSchema("load-context-request.v1.schema.json"),
   suppressContextRestoreRequest: loadSchema("suppress-context-restore-request.v1.schema.json"),
@@ -191,6 +196,9 @@ export class ContractValidator {
     this.validators = Object.fromEntries(
       Object.entries(contractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id as string)!]),
     );
+    this.validators.checkpointEvidenceRef = ajv.getSchema(
+      `${contractSchemas.checkpointContextRequest.$id as string}#/$defs/evidenceRef`,
+    )!;
   }
 
   private assert<T>(name: keyof ContractValidator["validators"], value: unknown): T {
@@ -284,6 +292,14 @@ export class ContractValidator {
 
   checkpointContextRequest(value: unknown): CheckpointContextRequestV1 {
     return this.assert<CheckpointContextRequestV1>("checkpointContextRequest", value);
+  }
+
+  artifactRef(value: unknown): ArtifactRefV1 {
+    return this.assert<ArtifactRefV1>("artifactRef", value);
+  }
+
+  checkpointEvidenceRef(value: unknown): ContinuityEvidenceRefV1 {
+    return this.assert<ContinuityEvidenceRefV1>("checkpointEvidenceRef", value);
   }
 
   inspectContextRequest(value: unknown): InspectContextRequestV1 {
@@ -604,4 +620,64 @@ export class ContractValidator {
     }
     return files;
   }
+}
+
+/** Hash exactly the declared representation; a JSON value is never accepted as raw bytes. */
+export function verifyArtifactRefContent(
+  validator: ContractValidator,
+  value: unknown,
+  content: unknown,
+): ArtifactRefV1 {
+  const ref = validator.artifactRef(value);
+  const bytes = ref.hashDomain === "raw-bytes"
+    ? content instanceof Uint8Array ? content : null
+    : content instanceof Uint8Array ? null : Buffer.from(canonicalJson(content), "utf8");
+  if (!bytes) throw new WorkflowContractError("INVALID_INPUT", "Artifact content does not match its hash domain.");
+  const actualDigest = `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+  if (bytes.byteLength !== ref.size || actualDigest !== ref.digest) {
+    throw new WorkflowContractError("INTEGRITY_FAILED", "Artifact content does not match its declared size and digest.");
+  }
+  return ref;
+}
+
+/** Legacy locators and verified flags are intentionally not copied into the internal reference. */
+export function checkpointEvidenceToArtifactRef(
+  validator: ContractValidator,
+  value: unknown,
+  content: unknown,
+  hashDomain: ArtifactHashDomainV1,
+  mediaType: string,
+): ArtifactRefV1 {
+  const evidence = validator.checkpointEvidenceRef(value);
+  const bytes = hashDomain === "raw-bytes"
+    ? content instanceof Uint8Array ? content : null
+    : hashDomain === "canonical-json" && !(content instanceof Uint8Array)
+      ? Buffer.from(canonicalJson(content), "utf8") : null;
+  if (!bytes) throw new WorkflowContractError("INVALID_INPUT", "Checkpoint evidence requires content in the declared hash domain.");
+  const ref: ArtifactRefV1 = {
+    schemaVersion: "1.0.0", namespace: "checkpoint-evidence", id: evidence.artifactId,
+    digest: evidence.digest, hashDomain, size: bytes.byteLength, mediaType,
+  };
+  return verifyArtifactRefContent(validator, ref, content);
+}
+
+/** The legacy transport fields must be supplied explicitly and do not authorize access. */
+export function artifactRefToCheckpointEvidence(
+  validator: ContractValidator,
+  value: unknown,
+  transport: Pick<ContinuityEvidenceRefV1, "locator" | "verified">,
+): ContinuityEvidenceRefV1 {
+  const ref = validator.artifactRef(value);
+  if (ref.namespace !== "checkpoint-evidence") {
+    throw new WorkflowContractError("INVALID_INPUT", "Only checkpoint evidence can be converted to a checkpoint reference.");
+  }
+  return validator.checkpointEvidenceRef({
+    artifactId: ref.id, locator: transport.locator, digest: ref.digest, verified: transport.verified,
+  });
+}
+
+/** Digest equality alone cannot merge identities across namespaces. */
+export function sameArtifactRefIdentity(left: ArtifactRefV1, right: ArtifactRefV1): boolean {
+  return left.namespace === right.namespace && left.id === right.id && left.digest === right.digest
+    && left.hashDomain === right.hashDomain;
 }

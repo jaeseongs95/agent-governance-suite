@@ -163,6 +163,20 @@ export interface ContinuityEvidenceRefV1 {
   verified: boolean;
 }
 
+/** Internal identity/integrity metadata. Authorization requires a separate namespace ACL check. */
+export const ARTIFACT_NAMESPACE = ["checkpoint-evidence", "task", "workspace"] as const;
+export type ArtifactNamespaceV1 = (typeof ARTIFACT_NAMESPACE)[number];
+export type ArtifactHashDomainV1 = "raw-bytes" | "canonical-json";
+export interface ArtifactRefV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  namespace: ArtifactNamespaceV1;
+  id: string;
+  digest: Sha256Digest;
+  hashDomain: ArtifactHashDomainV1;
+  size: number;
+  mediaType: string;
+}
+
 export interface CheckpointContextRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   requestId: string;

@@ -9089,6 +9089,7 @@ var contractSchemas = {
   convergenceStatusSummary: loadSchema("convergence-status-summary.v1.schema.json"),
   responseMode: loadSchema("response-mode.v1.schema.json"),
   checkpointContextRequest: loadSchema("checkpoint-context-request.v1.schema.json"),
+  artifactRef: loadSchema("artifact-ref.v1.schema.json"),
   inspectContextRequest: loadSchema("inspect-context-request.v1.schema.json"),
   loadContextRequest: loadSchema("load-context-request.v1.schema.json"),
   suppressContextRestoreRequest: loadSchema("suppress-context-restore-request.v1.schema.json"),
@@ -9154,6 +9155,9 @@ var ContractValidator = class {
     }
     this.validators = Object.fromEntries(
       Object.entries(contractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id)])
+    );
+    this.validators.checkpointEvidenceRef = ajv.getSchema(
+      `${contractSchemas.checkpointContextRequest.$id}#/$defs/evidenceRef`
     );
   }
   assert(name, value) {
@@ -9227,6 +9231,12 @@ var ContractValidator = class {
   }
   checkpointContextRequest(value) {
     return this.assert("checkpointContextRequest", value);
+  }
+  artifactRef(value) {
+    return this.assert("artifactRef", value);
+  }
+  checkpointEvidenceRef(value) {
+    return this.assert("checkpointEvidenceRef", value);
   }
   inspectContextRequest(value) {
     return this.assert("inspectContextRequest", value);

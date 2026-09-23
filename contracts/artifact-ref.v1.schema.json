@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/artifact-ref.v1.schema.json",
+  "title": "ArtifactRef.v1",
+  "description": "Identity and integrity metadata only. A reference never grants access.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "namespace", "id", "digest", "hashDomain", "size", "mediaType"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "namespace": { "enum": ["checkpoint-evidence", "task", "workspace"] },
+    "id": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "hashDomain": { "enum": ["raw-bytes", "canonical-json"] },
+    "size": { "type": "integer", "minimum": 0 },
+    "mediaType": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+$" }
+  }
+}
