@@ -39522,7 +39522,7 @@ function serverInstructions(profile = "default") {
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, modelRouting = unavailableModelRouting(), vmInvocation = null) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, modelRouting = unavailableModelRouting(), vmInvocation = null, semantic = { enabled: false, gateway: null }) {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -39726,6 +39726,12 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         inputSchema: resolveModelAssignmentInputSchema(toolSchemaProfile),
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
+      ...semantic.enabled === true && semantic.gateway ? [{
+        name: "resolve_semantic_model_assignment",
+        description: "Resolve an authorized model assignment with optional semantic advice. The server supplies policy, provider and adoption evidence; this tool does not dispatch a model.",
+        inputSchema: contractSchemas.semanticModelAssignmentRequestV1,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: true }
+      }] : [],
       {
         name: "record_model_application",
         description: "Store bound model, native reasoning and runtime mode diagnostics. Raw observations stay unverified, host observation tokens are single-use, and the record never satisfies the workflow trusted execution gate.",
@@ -39882,6 +39888,9 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             } catch (error61) {
               result = invalidInput(error61 instanceof Error ? error61.message : "Model selection request is invalid.");
             }
+            break;
+          case "resolve_semantic_model_assignment":
+            result = semantic.enabled === true && semantic.gateway ? await semantic.gateway.resolve(args) : invalidInput("Unknown workflow tool.");
             break;
           case "record_model_application":
             try {

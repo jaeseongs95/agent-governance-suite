@@ -32,6 +32,7 @@ import type { SessionPresence } from "./session-message-store.js";
 import { type TrustService } from "./trust-service.js";
 import { type ModelRoutingGateway, unavailableModelRouting } from "./model-routing-service.js";
 import type { VmCurrentInvocation } from "./host-integration/vm-current-invocation.js";
+import type { SemanticMcpGateway } from "./routing-v3/semantic-gateway.js";
 
 type ObjectSchema = Record<string, unknown> & {
   properties?: Record<string, unknown>;
@@ -404,6 +405,7 @@ export function createMcpServer(
   trust: TrustService | null = null,
   modelRouting: ModelRoutingGateway = unavailableModelRouting(),
   vmInvocation: VmCurrentInvocation | null = null,
+  semantic: { enabled: boolean; gateway: SemanticMcpGateway | null } = { enabled: false, gateway: null },
 ): Server {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
@@ -611,6 +613,12 @@ export function createMcpServer(
         inputSchema: resolveModelAssignmentInputSchema(toolSchemaProfile),
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
+      ...(semantic.enabled === true && semantic.gateway ? [{
+        name: "resolve_semantic_model_assignment",
+        description: "Resolve an authorized model assignment with optional semantic advice. The server supplies policy, provider and adoption evidence; this tool does not dispatch a model.",
+        inputSchema: contractSchemas.semanticModelAssignmentRequestV1,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: true },
+      }] : []),
       {
         name: "record_model_application",
         description: "Store bound model, native reasoning and runtime mode diagnostics. Raw observations stay unverified, host observation tokens are single-use, and the record never satisfies the workflow trusted execution gate.",
@@ -778,6 +786,11 @@ export function createMcpServer(
           } catch (error) {
             result = invalidInput(error instanceof Error ? error.message : "Model selection request is invalid.");
           }
+          break;
+        case "resolve_semantic_model_assignment":
+          result = semantic.enabled === true && semantic.gateway
+            ? await semantic.gateway.resolve(args)
+            : invalidInput("Unknown workflow tool.");
           break;
         case "record_model_application":
           try {
