@@ -9,7 +9,7 @@ import { ContractValidator } from "../schema-validator.js";
 import type { WorkflowStore } from "../workflow-store.js";
 
 type JsonObject = Record<string, unknown>;
-type Pending = { registration: JsonObject; digest: string; expiresAt: number; active: boolean };
+type Pending = { registration: JsonObject; digest: string; expiresAt: number; active: boolean; claimed: boolean };
 type Current = { callId: string; pending: Pending; tool: string; arguments: JsonObject };
 
 function object(value: unknown): JsonObject | null {
@@ -38,7 +38,11 @@ export class VmCurrentInvocation implements VmInvocationSource {
 
   constructor(private readonly store: WorkflowStore, private readonly clock: () => number = Date.now) {
     this.observationReader = registerVmObservationReader(this);
-    this.challenge = new ObservationChallengeAuthority(store, this.observationReader, "host", () => new Date(this.clock()));
+    this.challenge = new ObservationChallengeAuthority(store, this.observationReader, "host", () => new Date(this.clock()), () => {
+      const current = this.current.getStore();
+      if (!current || this.pending.get(current.callId) !== current.pending) reject("current reserved request is unavailable");
+      current.pending.claimed = true;
+    });
   }
 
   hasCurrentRequest(): boolean { return this.current.getStore() !== undefined; }
@@ -119,7 +123,7 @@ export class VmCurrentInvocation implements VmInvocationSource {
     this.pending.set(callId, {
       registration: structuredClone(body),
       digest: `sha256:${createHash("sha256").update(bytes).digest("hex")}`,
-      expiresAt: expires, active: false,
+      expiresAt: expires, active: false, claimed: false,
     });
     return { callId, serverEpoch: this.serverEpoch };
   }
@@ -133,8 +137,15 @@ export class VmCurrentInvocation implements VmInvocationSource {
     }
     if (pending.active || this.clock() >= pending.expiresAt) reject("reservation expired or already active");
     pending.active = true;
-    try { return await this.current.run({ callId, pending, tool, arguments: args }, run); }
-    finally { this.pending.delete(callId); }
+    try {
+      return await this.current.run({ callId, pending, tool, arguments: args }, async () => {
+        this.readCurrentInvocation();
+        return run();
+      });
+    } finally {
+      pending.active = false;
+      if (pending.claimed) this.pending.delete(callId);
+    }
   }
 
   readCurrentInvocation() {

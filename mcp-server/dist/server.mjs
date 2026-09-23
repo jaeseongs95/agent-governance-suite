@@ -44385,11 +44385,12 @@ function sameObservation(left, right) {
   return left.observationId === right.observationId && left.observedAt === right.observedAt && left.model === right.model && left.reasoningEffort === right.reasoningEffort && Object.keys(left.binding).every((key) => left.binding[key] === right.binding[key]);
 }
 var ObservationChallengeAuthority = class {
-  constructor(store, reader, domain2, clock = () => /* @__PURE__ */ new Date()) {
+  constructor(store, reader, domain2, clock = () => /* @__PURE__ */ new Date(), onObservationClaim) {
     this.store = store;
     this.reader = reader;
     this.domain = domain2;
     this.clock = clock;
+    this.onObservationClaim = onObservationClaim;
     if (domain2 !== "host" && domain2 !== "test") throw invalid2("challenge domain is unsupported");
     if (!reader || !(domain2 === "host" ? hostReaders.has(reader) : testReaders.has(reader))) {
       throw invalid2("registered reader domain mismatch or trusted host observation unavailable");
@@ -44401,6 +44402,7 @@ var ObservationChallengeAuthority = class {
   reader;
   domain;
   clock;
+  onObservationClaim;
   key;
   mac(encoded) {
     return createHmac6("sha256", this.key).update(`${CHALLENGE_PREFIX}.${encoded}`, "utf8").digest();
@@ -44413,8 +44415,11 @@ var ObservationChallengeAuthority = class {
     if (!Number.isFinite(issuedAt) || timestamp2(observed.observedAt) > issuedAt + CLOCK_SKEW_MS || issuedAt - timestamp2(observed.observedAt) > OBSERVATION_MAX_AGE_MS) {
       throw invalid2("host observation is stale or from the future");
     }
-    if (verified && (issuedAt < timestamp2(verified.expiresAt) - CHALLENGE_TTL_MS - CLOCK_SKEW_MS || issuedAt >= timestamp2(verified.expiresAt) || !this.store.claimExecutionObservation(verified.nonceClaimId, verified.expiresAt, now.toISOString()))) {
-      throw invalid2("VM receipt expired or already consumed");
+    if (verified) {
+      if (issuedAt < timestamp2(verified.expiresAt) - CHALLENGE_TTL_MS - CLOCK_SKEW_MS || issuedAt >= timestamp2(verified.expiresAt) || !this.store.claimExecutionObservation(verified.nonceClaimId, verified.expiresAt, now.toISOString())) {
+        throw invalid2("VM receipt expired or already consumed");
+      }
+      this.onObservationClaim?.();
     }
     const body = {
       ...observed,
@@ -44491,7 +44496,11 @@ var VmCurrentInvocation = class {
     this.store = store;
     this.clock = clock;
     this.observationReader = registerVmObservationReader(this);
-    this.challenge = new ObservationChallengeAuthority(store, this.observationReader, "host", () => new Date(this.clock()));
+    this.challenge = new ObservationChallengeAuthority(store, this.observationReader, "host", () => new Date(this.clock()), () => {
+      const current = this.current.getStore();
+      if (!current || this.pending.get(current.callId) !== current.pending) reject("current reserved request is unavailable");
+      current.pending.claimed = true;
+    });
   }
   store;
   clock;
@@ -44551,7 +44560,8 @@ var VmCurrentInvocation = class {
       registration: structuredClone(body),
       digest: `sha256:${createHash11("sha256").update(bytes).digest("hex")}`,
       expiresAt: expires,
-      active: false
+      active: false,
+      claimed: false
     });
     return { callId, serverEpoch: this.serverEpoch };
   }
@@ -44565,9 +44575,13 @@ var VmCurrentInvocation = class {
     if (pending.active || this.clock() >= pending.expiresAt) reject("reservation expired or already active");
     pending.active = true;
     try {
-      return await this.current.run({ callId, pending, tool, arguments: args }, run);
+      return await this.current.run({ callId, pending, tool, arguments: args }, async () => {
+        this.readCurrentInvocation();
+        return run();
+      });
     } finally {
-      this.pending.delete(callId);
+      pending.active = false;
+      if (pending.claimed) this.pending.delete(callId);
     }
   }
   readCurrentInvocation() {

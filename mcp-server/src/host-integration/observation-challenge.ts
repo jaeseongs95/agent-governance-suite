@@ -306,6 +306,7 @@ export class ObservationChallengeAuthority {
     private readonly reader: HostObservationReader,
     private readonly domain: "host" | "test",
     private readonly clock: () => Date = () => new Date(),
+    private readonly onObservationClaim?: () => void,
   ) {
     if (domain !== "host" && domain !== "test") throw invalid("challenge domain is unsupported");
     if (!reader || !(domain === "host" ? hostReaders.has(reader) : testReaders.has(reader))) {
@@ -328,10 +329,13 @@ export class ObservationChallengeAuthority {
       || issuedAt - timestamp(observed.observedAt) > OBSERVATION_MAX_AGE_MS) {
       throw invalid("host observation is stale or from the future");
     }
-    if (verified && (issuedAt < timestamp(verified.expiresAt) - CHALLENGE_TTL_MS - CLOCK_SKEW_MS
-        || issuedAt >= timestamp(verified.expiresAt)
-        || !this.store.claimExecutionObservation(verified.nonceClaimId, verified.expiresAt, now.toISOString()))) {
-      throw invalid("VM receipt expired or already consumed");
+    if (verified) {
+      if (issuedAt < timestamp(verified.expiresAt) - CHALLENGE_TTL_MS - CLOCK_SKEW_MS
+          || issuedAt >= timestamp(verified.expiresAt)
+          || !this.store.claimExecutionObservation(verified.nonceClaimId, verified.expiresAt, now.toISOString())) {
+        throw invalid("VM receipt expired or already consumed");
+      }
+      this.onObservationClaim?.();
     }
     const body: ObservationChallengeBodyV1 = {
       ...observed, version: 1, domain: this.domain,
