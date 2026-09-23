@@ -33,6 +33,7 @@ import { type TrustService } from "./trust-service.js";
 import { type ModelRoutingGateway, unavailableModelRouting } from "./model-routing-service.js";
 import type { VmCurrentInvocation } from "./host-integration/vm-current-invocation.js";
 import { VmApprovedSlotSource } from "./host-integration/vm-approved-slot-source.js";
+import { ApprovedSlotReader } from "./orchestration/approved-slot-reader.js";
 import type { SemanticMcpGateway } from "./routing-v3/semantic-gateway.js";
 
 type ObjectSchema = Record<string, unknown> & {
@@ -421,6 +422,7 @@ export function createMcpServer(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} }, ...(instructions === undefined ? {} : { instructions }) },
   );
+  const approvedSlotReader = approvedSlotSource ? new ApprovedSlotReader(approvedSlotSource, validator) : null;
 
   if (vmInvocation) {
     server.setRequestHandler(z.object({ method: z.literal("vm/hello"), params: z.object({}) }),
@@ -428,10 +430,13 @@ export function createMcpServer(
     server.setRequestHandler(z.object({ method: z.literal("vm/reserve_dispatch"),
       params: z.object({ registration: z.unknown() }) }),
     async (request) => vmInvocation.reserve(request.params.registration));
-    if (approvedSlotSource) {
+    if (approvedSlotSource && approvedSlotReader) {
       server.setRequestHandler(z.object({ method: z.literal("vm/register_approved_slot"),
         params: z.object({ signedSource: z.unknown() }) }),
-      async (request, extra) => approvedSlotSource.register(extra.requestId, request.params.signedSource));
+      async (request, extra) => {
+        const registered = approvedSlotSource.register(extra.requestId, request.params.signedSource);
+        return { ...registered, ...approvedSlotReader.read(registered) };
+      });
     }
   }
 

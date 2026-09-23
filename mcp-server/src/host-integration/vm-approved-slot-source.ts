@@ -132,7 +132,8 @@ export class VmApprovedSlotSource {
     this.pending.set(requestId, { envelope: structuredClone(envelope) as SignedSource, expiresAt,
       scope, revision, digest: source.snapshot_digest });
     return { accepted: true, invocationId: requestId, serverEpoch: this.vm.serverEpoch,
-      snapshotDigest: source.snapshot_digest };
+      snapshotDigest: source.snapshot_digest, projectId: source.project_id as string,
+      taskId: source.task_id as string };
   }
 
   consume(expected: ApprovedSlotExpectation): ApprovedSlotSource {

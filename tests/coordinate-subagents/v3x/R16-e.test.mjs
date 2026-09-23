@@ -14,6 +14,8 @@ import { createMcpServer } from '../../../mcp-server/src/server.ts';
 
 const now = Date.parse('2026-09-23T00:00:01.000Z');
 const id = `vm-approved-slot-${'a'.repeat(32)}`;
+const vmVector = JSON.parse(readFileSync(new URL('./fixtures/R16-e-vm-producer-source.json', import.meta.url), 'utf8'));
+const vmStage = JSON.parse(Buffer.from(vmVector.signedSource.body, 'base64url')).source.stages[0];
 
 test('the actual VM R16-c synthetic producer source registers and consumes once', () => {
   const vector = JSON.parse(readFileSync(new URL('./fixtures/R16-e-vm-producer-source.json', import.meta.url), 'utf8'));
@@ -55,7 +57,8 @@ function fixture() {
       activation_id: 'activation-1', activation_authorization_id: 'authorization-1',
       authorization_id: 'authorization-1', authorization_revision_no: 1,
       authorization_digest: `sha256:${'e'.repeat(64)}`, revoked: false,
-      stages: [{ stageId: 'stage-1' }], participation: { entries: [], complete: true, watermark: 4 },
+      stages: [{ ...structuredClone(vmStage), taskId: 'task-1' }],
+      participation: { entries: [], complete: true, watermark: 4 },
       source_revision: 4 };
     source.snapshot_digest = `sha256:${createHash('sha256').update(canonicalJson(source)).digest('hex')}`;
     const body = { version: 1, domain: 'ags-vm-approved-slot-source-v1',
@@ -77,7 +80,8 @@ test('signed VM source registers only once and is consumed only once', () => {
   const f = fixture();
   const envelope = f.make();
   assert.deepEqual(f.registry.register(id, envelope), { accepted: true, invocationId: id,
-    serverEpoch: f.vm.serverEpoch, snapshotDigest: f.expected.snapshotDigest });
+    serverEpoch: f.vm.serverEpoch, snapshotDigest: f.expected.snapshotDigest,
+    projectId: 'project-1', taskId: 'task-1' });
   assert.throws(() => f.registry.register(id, envelope), /replay/);
   assert.equal(f.registry.consume(f.expected).snapshot_digest, f.expected.snapshotDigest);
   assert.throws(() => f.registry.consume(f.expected), /pending source is unavailable/);
@@ -166,7 +170,9 @@ test('control RPC accepts the VM request ID and general tools/call cannot regist
     const envelope = f.make();
     const accepted = await call(id, 'vm/register_approved_slot', { signedSource: envelope });
     assert.equal(accepted.result.accepted, true);
-    assert.equal(f.registry.consume(f.expected).snapshot_digest, f.expected.snapshotDigest);
+    assert.equal(accepted.result.slots.length, 1);
+    assert.equal(accepted.result.slots[0].executionAuthorized, false);
+    assert.throws(() => f.registry.consume(f.expected), /pending source is unavailable/);
     const replay = await call(id, 'vm/register_approved_slot', { signedSource: envelope });
     assert.match(replay.error?.message ?? '', /replay/);
     const injected = await call('injected', 'tools/call', {
