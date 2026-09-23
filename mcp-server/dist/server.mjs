@@ -2048,7 +2048,7 @@ var require_fast_deep_equal = __commonJS({
       if (a === b2) return true;
       if (a && b2 && typeof a == "object" && typeof b2 == "object") {
         if (a.constructor !== b2.constructor) return false;
-        var length, i, keys2;
+        var length, i, keys3;
         if (Array.isArray(a)) {
           length = a.length;
           if (length != b2.length) return false;
@@ -2059,13 +2059,13 @@ var require_fast_deep_equal = __commonJS({
         if (a.constructor === RegExp) return a.source === b2.source && a.flags === b2.flags;
         if (a.valueOf !== Object.prototype.valueOf) return a.valueOf() === b2.valueOf();
         if (a.toString !== Object.prototype.toString) return a.toString() === b2.toString();
-        keys2 = Object.keys(a);
-        length = keys2.length;
+        keys3 = Object.keys(a);
+        length = keys3.length;
         if (length !== Object.keys(b2).length) return false;
         for (i = length; i-- !== 0; )
-          if (!Object.prototype.hasOwnProperty.call(b2, keys2[i])) return false;
+          if (!Object.prototype.hasOwnProperty.call(b2, keys3[i])) return false;
         for (i = length; i-- !== 0; ) {
-          var key = keys2[i];
+          var key = keys3[i];
           if (!equal(a[key], b2[key])) return false;
         }
         return true;
@@ -8775,12 +8775,12 @@ function getElementAtPath(obj, path16) {
   return path16.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
-  const keys2 = Object.keys(promisesObj);
-  const promises = keys2.map((key) => promisesObj[key]);
+  const keys3 = Object.keys(promisesObj);
+  const promises = keys3.map((key) => promisesObj[key]);
   return Promise.all(promises).then((results) => {
     const resolvedObj = {};
-    for (let i = 0; i < keys2.length; i++) {
-      resolvedObj[keys2[i]] = results[i];
+    for (let i = 0; i < keys3.length; i++) {
+      resolvedObj[keys3[i]] = results[i];
     }
     return resolvedObj;
   });
@@ -9808,8 +9808,8 @@ var safeParseAsync = /* @__PURE__ */ _safeParseAsync($ZodRealError);
 var COMPILE_INVALID = /* @__PURE__ */ Symbol.for("zod.compile.invalid");
 var COMPILE_FALLBACK = /* @__PURE__ */ Symbol.for("zod.compile.fallback");
 var validate = ((schema, value, _ctx) => {
-  const validator = schema._zod.bag.validator;
-  if (validator !== void 0 && validator(value) !== COMPILE_INVALID)
+  const validator2 = schema._zod.bag.validator;
+  if (validator2 !== void 0 && validator2(value) !== COMPILE_INVALID)
     return true;
   return validateFallback(schema, value, _ctx);
 });
@@ -11418,10 +11418,10 @@ function handlePropertyResult(result, final, key, input2, optin, optout) {
 }
 var NO_SYMBOL_KEYS = [];
 function normalizeDef(def) {
-  const keys2 = Object.keys(def.shape);
+  const keys3 = Object.keys(def.shape);
   const ownSymbols = Object.getOwnPropertySymbols(def.shape);
   const symbolKeys = ownSymbols.length ? ownSymbols : NO_SYMBOL_KEYS;
-  const allKeys = symbolKeys.length ? [...keys2, ...symbolKeys] : keys2;
+  const allKeys = symbolKeys.length ? [...keys3, ...symbolKeys] : keys3;
   for (const k of allKeys) {
     if (!def.shape?.[k]?._zod?.traits?.has("$ZodType")) {
       throw new Error(`Invalid element at key "${String(k)}": expected a Zod schema`);
@@ -11433,8 +11433,8 @@ function normalizeDef(def) {
     allKeys,
     symbolKeys,
     // string-only: handleCatchall matches it against `for...in`, which never yields a symbol
-    keySet: new Set(keys2),
-    numKeys: keys2.length,
+    keySet: new Set(keys3),
+    numKeys: keys3.length,
     optionalKeys: new Set(okeys)
   };
 }
@@ -11952,19 +11952,19 @@ function handleIntersectionResults(result, left, right) {
   let unrecIssue;
   const keyIssues = /* @__PURE__ */ new Map();
   const collect = (iss, side) => {
-    let keys2;
+    let keys3;
     if (iss.code === "unrecognized_keys" && !iss.path?.length) {
       unrecIssue ?? (unrecIssue = iss);
-      keys2 = iss.keys;
+      keys3 = iss.keys;
     } else if (iss.code === "invalid_key" && iss.origin === "record" && iss.path?.length === 1) {
       const k = String(iss.path[0]);
       if (!keyIssues.has(k))
         keyIssues.set(k, iss);
-      keys2 = [k];
+      keys3 = [k];
     } else {
       return false;
     }
-    for (const k of keys2) {
+    for (const k of keys3) {
       if (!unrecKeys.has(k))
         unrecKeys.set(k, {});
       unrecKeys.get(k)[side] = true;
@@ -20959,34 +20959,34 @@ var PATTERN_IS_COMPLETE = /* @__PURE__ */ new Set([
 function generateStringFormatCheck(doc, ctx, def, accessor) {
   const fmt = def.format;
   if (fmt === "base64") {
-    const validator = addConstant(ctx, isValidBase64);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    const validator2 = addConstant(ctx, isValidBase64);
+    doc.write(`if (!${validator2}(${accessor})) return INVALID;`);
     return accessor;
   }
   if (fmt === "base64url") {
-    const validator = addConstant(ctx, isValidBase64URL);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    const validator2 = addConstant(ctx, isValidBase64URL);
+    doc.write(`if (!${validator2}(${accessor})) return INVALID;`);
     return accessor;
   }
   if (fmt === "jwt") {
-    const validator = addConstant(ctx, isValidJWT);
+    const validator2 = addConstant(ctx, isValidJWT);
     const alg = addConstant(ctx, def.alg ?? null);
-    doc.write(`if (!${validator}(${accessor}, ${alg})) return INVALID;`);
+    doc.write(`if (!${validator2}(${accessor}, ${alg})) return INVALID;`);
     return accessor;
   }
   if (fmt === "ipv6") {
-    const validator = addConstant(ctx, isValidIPv6);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    const validator2 = addConstant(ctx, isValidIPv6);
+    doc.write(`if (!${validator2}(${accessor})) return INVALID;`);
     return accessor;
   }
   if (fmt === "cidrv6") {
-    const validator = addConstant(ctx, isValidCIDRv6);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    const validator2 = addConstant(ctx, isValidCIDRv6);
+    doc.write(`if (!${validator2}(${accessor})) return INVALID;`);
     return accessor;
   }
   if (fmt === "credit_card") {
-    const validator = addConstant(ctx, isValidCreditCard);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    const validator2 = addConstant(ctx, isValidCreditCard);
+    doc.write(`if (!${validator2}(${accessor})) return INVALID;`);
     return accessor;
   }
   const formatDef = def;
@@ -21248,13 +21248,13 @@ function generateObjectCheck(doc, ctx, schema, accessor, buildsValue = true) {
   const def = schema._zod.def;
   doc.write(`if (typeof ${accessor} !== "object" || ${accessor} === null || Array.isArray(${accessor})) return INVALID;`);
   const shape = def.shape;
-  const keys2 = Object.keys(shape);
+  const keys3 = Object.keys(shape);
   const symbolKeys = Object.getOwnPropertySymbols(shape);
-  const allKeys = symbolKeys.length ? [...keys2, ...symbolKeys] : keys2;
+  const allKeys = symbolKeys.length ? [...keys3, ...symbolKeys] : keys3;
   const keyExpr = (k) => typeof k === "symbol" ? addConstant(ctx, k) : esc(k);
   const propKey = (k) => typeof k === "symbol" ? `[${keyExpr(k)}]` : esc(k);
   const propShape = shape;
-  if (keys2.includes("__proto__")) {
+  if (keys3.includes("__proto__")) {
     throw new ZodCompileUnsupportedError('object shape key "__proto__"');
   }
   const propOutputs = /* @__PURE__ */ new Map();
@@ -21296,7 +21296,7 @@ function generateObjectCheck(doc, ctx, schema, accessor, buildsValue = true) {
   if (catchall) {
     const catchallType = catchall._zod.def.type;
     if (catchallType === "never") {
-      const condition = keys2.map((k) => `k !== ${esc(k)}`).join(" && ") || "true";
+      const condition = keys3.map((k) => `k !== ${esc(k)}`).join(" && ") || "true";
       doc.write(`for (const k in ${accessor}) {`);
       doc.indented((d) => {
         d.write(`if (${condition}) return INVALID;`);
@@ -21312,7 +21312,7 @@ function generateObjectCheck(doc, ctx, schema, accessor, buildsValue = true) {
   const hasConditionalKeys = allKeys.some((k) => mayOutputUndefined(propShape[k]) || dropsWhenAbsent(propShape[k]));
   if (!buildsValue) {
     if (unknownKeysMode === "schema") {
-      const knownSet = keys2.length > 0 ? addConstant(ctx, new Set(keys2)) : null;
+      const knownSet = keys3.length > 0 ? addConstant(ctx, new Set(keys3)) : null;
       doc.write(`for (const k in ${accessor}) {`);
       doc.indented((d) => {
         d.write(`if (k === "__proto__") continue;`);
@@ -21344,7 +21344,7 @@ function generateObjectCheck(doc, ctx, schema, accessor, buildsValue = true) {
     }
   }
   if (unknownKeysMode !== "none") {
-    const knownSet = keys2.length > 0 ? addConstant(ctx, new Set(keys2)) : null;
+    const knownSet = keys3.length > 0 ? addConstant(ctx, new Set(keys3)) : null;
     doc.write(`for (const k in ${accessor}) {`);
     doc.indented((d) => {
       d.write(`if (k === "__proto__") continue;`);
@@ -23161,13 +23161,13 @@ function initializeContext(params) {
     external: params?.external ?? void 0
   };
 }
-function handleUnrepresentable(schema, ctx, json2, params, message) {
+function handleUnrepresentable(schema, ctx, json3, params, message) {
   const result = typeof ctx.unrepresentable === "function" ? ctx.unrepresentable({ zodSchema: schema, path: params.path, message }) : ctx.unrepresentable;
   if (result === "any")
     return false;
   if (result === void 0 || result === "throw")
     throw new Error(message);
-  Object.assign(json2, result);
+  Object.assign(json3, result);
   return true;
 }
 function process2(schema, ctx, _params = { path: [], schemaPath: [] }) {
@@ -23332,8 +23332,8 @@ function compactTypeUnion(schema) {
     if (!option || typeof option !== "object")
       return;
     compactTypeUnion(option);
-    const keys2 = Object.keys(option);
-    if (keys2.length !== 1 || keys2[0] !== "type")
+    const keys3 = Object.keys(option);
+    if (keys3.length !== 1 || keys3[0] !== "type")
       return;
     const type = option.type;
     for (const member of Array.isArray(type) ? type : [type]) {
@@ -23404,12 +23404,12 @@ function foldObjects(members2) {
   }
   return folded;
 }
-function foldIntersection(json2) {
-  const allOf = json2.allOf;
+function foldIntersection(json3) {
+  const allOf = json3.allOf;
   if (!Array.isArray(allOf) || allOf.length < 2)
     return;
   for (const key of FOLDABLE_KEYS)
-    if (key in json2)
+    if (key in json3)
       return;
   const unions = allOf.filter((m) => UNION_KEYS.some((k) => Array.isArray(m[k])));
   let folded = null;
@@ -23428,8 +23428,8 @@ function foldIntersection(json2) {
   }
   if (!folded)
     return;
-  delete json2.allOf;
-  assignProps(json2, folded);
+  delete json3.allOf;
+  assignProps(json3, folded);
 }
 function finalize(ctx, schema) {
   const root = ctx.seen.get(schema);
@@ -23511,20 +23511,20 @@ function finalize(ctx, schema) {
     if (ctx.intersections.length) {
       const carriers = /* @__PURE__ */ new Map();
       for (const seen of ctx.seen.values()) {
-        for (const json2 of [seen.schema, seen.def]) {
-          const allOf = json2?.allOf;
+        for (const json3 of [seen.schema, seen.def]) {
+          const allOf = json3?.allOf;
           if (!Array.isArray(allOf))
             continue;
           const existing = carriers.get(allOf);
           if (existing)
-            existing.push(json2);
+            existing.push(json3);
           else
-            carriers.set(allOf, [json2]);
+            carriers.set(allOf, [json3]);
         }
       }
       for (const allOf of ctx.intersections) {
-        for (const json2 of carriers.get(allOf) ?? [])
-          foldIntersection(json2);
+        for (const json3 of carriers.get(allOf) ?? [])
+          foldIntersection(json3);
       }
     }
   }
@@ -23666,29 +23666,29 @@ var formatMap = {
   // do not set
 };
 var stringProcessor = (schema, ctx, _json, _params) => {
-  const json2 = _json;
-  json2.type = "string";
+  const json3 = _json;
+  json3.type = "string";
   const { minimum, maximum, format, patterns, contentEncoding, laxFormat } = schema._zod.bag;
   if (typeof minimum === "number")
-    json2.minLength = minimum;
+    json3.minLength = minimum;
   if (typeof maximum === "number")
-    json2.maxLength = maximum;
+    json3.maxLength = maximum;
   if (format) {
-    json2.format = formatMap[format] ?? format;
-    if (json2.format === "")
-      delete json2.format;
+    json3.format = formatMap[format] ?? format;
+    if (json3.format === "")
+      delete json3.format;
     if (format === "time" || laxFormat) {
-      delete json2.format;
+      delete json3.format;
     }
   }
   if (contentEncoding)
-    json2.contentEncoding = contentEncoding;
+    json3.contentEncoding = contentEncoding;
   if (patterns && patterns.size > 0) {
     const patternList = [...patterns];
     if (patternList.length === 1)
-      json2.pattern = patternList[0].source;
+      json3.pattern = patternList[0].source;
     else if (patternList.length > 1) {
-      json2.allOf = [
+      json3.allOf = [
         ...patternList.map((regex) => ({
           ...ctx.target === "draft-07" || ctx.target === "draft-04" || ctx.target === "openapi-3.0" ? { type: "string" } : {},
           pattern: regex.source
@@ -23698,102 +23698,102 @@ var stringProcessor = (schema, ctx, _json, _params) => {
   }
 };
 var numberProcessor = (schema, ctx, _json, params) => {
-  const json2 = _json;
+  const json3 = _json;
   const { minimum, maximum, format, multipleOf, exclusiveMaximum, exclusiveMinimum } = schema._zod.bag;
   if (typeof format === "string" && format.includes("int"))
-    json2.type = "integer";
+    json3.type = "integer";
   else
-    json2.type = "number";
+    json3.type = "number";
   const exMin = typeof exclusiveMinimum === "number" && exclusiveMinimum >= (minimum ?? Number.NEGATIVE_INFINITY);
   const exMax = typeof exclusiveMaximum === "number" && exclusiveMaximum <= (maximum ?? Number.POSITIVE_INFINITY);
   const legacy = ctx.target === "draft-04" || ctx.target === "openapi-3.0";
   if (exMin) {
     if (legacy) {
-      json2.minimum = exclusiveMinimum;
-      json2.exclusiveMinimum = true;
+      json3.minimum = exclusiveMinimum;
+      json3.exclusiveMinimum = true;
     } else {
-      json2.exclusiveMinimum = exclusiveMinimum;
+      json3.exclusiveMinimum = exclusiveMinimum;
     }
   } else if (typeof minimum === "number") {
-    json2.minimum = minimum;
+    json3.minimum = minimum;
   }
   if (exMax) {
     if (legacy) {
-      json2.maximum = exclusiveMaximum;
-      json2.exclusiveMaximum = true;
+      json3.maximum = exclusiveMaximum;
+      json3.exclusiveMaximum = true;
     } else {
-      json2.exclusiveMaximum = exclusiveMaximum;
+      json3.exclusiveMaximum = exclusiveMaximum;
     }
   } else if (typeof maximum === "number") {
-    json2.maximum = maximum;
+    json3.maximum = maximum;
   }
   if (typeof multipleOf === "number") {
     if (Number.isFinite(multipleOf) && multipleOf !== 0)
-      json2.multipleOf = Math.abs(multipleOf);
+      json3.multipleOf = Math.abs(multipleOf);
     else
-      handleUnrepresentable(schema, ctx, json2, params, `A multipleOf divisor of ${multipleOf} cannot be represented in JSON Schema`);
+      handleUnrepresentable(schema, ctx, json3, params, `A multipleOf divisor of ${multipleOf} cannot be represented in JSON Schema`);
   }
 };
-var booleanProcessor = (_schema, _ctx, json2, _params) => {
-  json2.type = "boolean";
+var booleanProcessor = (_schema, _ctx, json3, _params) => {
+  json3.type = "boolean";
 };
-var bigintProcessor = (schema, ctx, json2, params) => {
-  handleUnrepresentable(schema, ctx, json2, params, "BigInt cannot be represented in JSON Schema");
+var bigintProcessor = (schema, ctx, json3, params) => {
+  handleUnrepresentable(schema, ctx, json3, params, "BigInt cannot be represented in JSON Schema");
 };
-var symbolProcessor = (schema, ctx, json2, params) => {
-  handleUnrepresentable(schema, ctx, json2, params, "Symbols cannot be represented in JSON Schema");
+var symbolProcessor = (schema, ctx, json3, params) => {
+  handleUnrepresentable(schema, ctx, json3, params, "Symbols cannot be represented in JSON Schema");
 };
-var nullProcessor = (_schema, ctx, json2, _params) => {
+var nullProcessor = (_schema, ctx, json3, _params) => {
   if (ctx.target === "openapi-3.0") {
-    json2.type = "string";
-    json2.nullable = true;
-    json2.enum = [null];
+    json3.type = "string";
+    json3.nullable = true;
+    json3.enum = [null];
   } else {
-    json2.type = "null";
+    json3.type = "null";
   }
 };
-var undefinedProcessor = (schema, ctx, json2, params) => {
-  handleUnrepresentable(schema, ctx, json2, params, "Undefined cannot be represented in JSON Schema");
+var undefinedProcessor = (schema, ctx, json3, params) => {
+  handleUnrepresentable(schema, ctx, json3, params, "Undefined cannot be represented in JSON Schema");
 };
-var voidProcessor = (schema, ctx, json2, params) => {
-  handleUnrepresentable(schema, ctx, json2, params, "Void cannot be represented in JSON Schema");
+var voidProcessor = (schema, ctx, json3, params) => {
+  handleUnrepresentable(schema, ctx, json3, params, "Void cannot be represented in JSON Schema");
 };
-var neverProcessor = (_schema, _ctx, json2, _params) => {
-  json2.not = {};
+var neverProcessor = (_schema, _ctx, json3, _params) => {
+  json3.not = {};
 };
 var anyProcessor = (_schema, _ctx, _json, _params) => {
 };
 var unknownProcessor = (_schema, _ctx, _json, _params) => {
 };
-var dateProcessor = (schema, ctx, json2, params) => {
-  handleUnrepresentable(schema, ctx, json2, params, "Date cannot be represented in JSON Schema");
+var dateProcessor = (schema, ctx, json3, params) => {
+  handleUnrepresentable(schema, ctx, json3, params, "Date cannot be represented in JSON Schema");
 };
-var enumProcessor = (schema, _ctx, json2, _params) => {
+var enumProcessor = (schema, _ctx, json3, _params) => {
   const def = schema._zod.def;
   const values = getEnumValues(def.entries);
   if (values.length === 0) {
-    json2.not = {};
+    json3.not = {};
     return;
   }
   if (values.every((v) => typeof v === "number"))
-    json2.type = "number";
+    json3.type = "number";
   if (values.every((v) => typeof v === "string"))
-    json2.type = "string";
-  json2.enum = values;
+    json3.type = "string";
+  json3.enum = values;
 };
-var literalProcessor = (schema, ctx, json2, params) => {
+var literalProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
   if (def.values.length === 0) {
-    json2.not = {};
+    json3.not = {};
     return;
   }
   const vals = [];
   for (const val of def.values) {
     if (val === void 0) {
-      if (handleUnrepresentable(schema, ctx, json2, params, "Literal `undefined` cannot be represented in JSON Schema"))
+      if (handleUnrepresentable(schema, ctx, json3, params, "Literal `undefined` cannot be represented in JSON Schema"))
         return;
     } else if (typeof val === "bigint") {
-      if (handleUnrepresentable(schema, ctx, json2, params, "BigInt literals cannot be represented in JSON Schema"))
+      if (handleUnrepresentable(schema, ctx, json3, params, "BigInt literals cannot be represented in JSON Schema"))
         return;
       vals.push(Number(val));
     } else {
@@ -23803,37 +23803,37 @@ var literalProcessor = (schema, ctx, json2, params) => {
   if (vals.length === 0) {
   } else if (vals.length === 1) {
     const val = vals[0];
-    json2.type = val === null ? "null" : typeof val;
+    json3.type = val === null ? "null" : typeof val;
     if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") {
-      json2.enum = [val];
+      json3.enum = [val];
     } else {
-      json2.const = val;
+      json3.const = val;
     }
   } else {
     if (vals.every((v) => typeof v === "number"))
-      json2.type = "number";
+      json3.type = "number";
     if (vals.every((v) => typeof v === "string"))
-      json2.type = "string";
+      json3.type = "string";
     if (vals.every((v) => typeof v === "boolean"))
-      json2.type = "boolean";
+      json3.type = "boolean";
     if (vals.every((v) => v === null))
-      json2.type = "null";
-    json2.enum = vals;
+      json3.type = "null";
+    json3.enum = vals;
   }
 };
-var nanProcessor = (schema, ctx, json2, params) => {
-  handleUnrepresentable(schema, ctx, json2, params, "NaN cannot be represented in JSON Schema");
+var nanProcessor = (schema, ctx, json3, params) => {
+  handleUnrepresentable(schema, ctx, json3, params, "NaN cannot be represented in JSON Schema");
 };
-var templateLiteralProcessor = (schema, _ctx, json2, _params) => {
-  const _json = json2;
+var templateLiteralProcessor = (schema, _ctx, json3, _params) => {
+  const _json = json3;
   const pattern = schema._zod.pattern;
   if (!pattern)
     throw new Error("Pattern not found in template literal");
   _json.type = "string";
   _json.pattern = pattern.source;
 };
-var fileProcessor = (schema, _ctx, json2, _params) => {
-  const _json = json2;
+var fileProcessor = (schema, _ctx, json3, _params) => {
+  const _json = json3;
   const file2 = {
     type: "string",
     format: "binary",
@@ -23856,34 +23856,34 @@ var fileProcessor = (schema, _ctx, json2, _params) => {
     Object.assign(_json, file2);
   }
 };
-var successProcessor = (_schema, _ctx, json2, _params) => {
-  json2.type = "boolean";
+var successProcessor = (_schema, _ctx, json3, _params) => {
+  json3.type = "boolean";
 };
-var customProcessor = (schema, ctx, json2, params) => {
-  handleUnrepresentable(schema, ctx, json2, params, "Custom types cannot be represented in JSON Schema");
+var customProcessor = (schema, ctx, json3, params) => {
+  handleUnrepresentable(schema, ctx, json3, params, "Custom types cannot be represented in JSON Schema");
 };
-var functionProcessor = (schema, ctx, json2, params) => {
-  handleUnrepresentable(schema, ctx, json2, params, "Function types cannot be represented in JSON Schema");
+var functionProcessor = (schema, ctx, json3, params) => {
+  handleUnrepresentable(schema, ctx, json3, params, "Function types cannot be represented in JSON Schema");
 };
-var transformProcessor = (schema, ctx, json2, params) => {
-  handleUnrepresentable(schema, ctx, json2, params, "Transforms cannot be represented in JSON Schema");
+var transformProcessor = (schema, ctx, json3, params) => {
+  handleUnrepresentable(schema, ctx, json3, params, "Transforms cannot be represented in JSON Schema");
 };
-var mapProcessor = (schema, ctx, json2, params) => {
-  handleUnrepresentable(schema, ctx, json2, params, "Map cannot be represented in JSON Schema");
+var mapProcessor = (schema, ctx, json3, params) => {
+  handleUnrepresentable(schema, ctx, json3, params, "Map cannot be represented in JSON Schema");
 };
-var setProcessor = (schema, ctx, json2, params) => {
-  handleUnrepresentable(schema, ctx, json2, params, "Set cannot be represented in JSON Schema");
+var setProcessor = (schema, ctx, json3, params) => {
+  handleUnrepresentable(schema, ctx, json3, params, "Set cannot be represented in JSON Schema");
 };
 var arrayProcessor = (schema, ctx, _json, params) => {
-  const json2 = _json;
+  const json3 = _json;
   const def = schema._zod.def;
   const { minimum, maximum } = schema._zod.bag;
   if (typeof minimum === "number")
-    json2.minItems = minimum;
+    json3.minItems = minimum;
   if (typeof maximum === "number")
-    json2.maxItems = maximum;
-  json2.type = "array";
-  json2.items = process2(def.element, ctx, {
+    json3.maxItems = maximum;
+  json3.type = "array";
+  json3.items = process2(def.element, ctx, {
     ...params,
     path: [...params.path, "items"]
   });
@@ -23899,17 +23899,17 @@ function inputOptin(schema) {
   return schema._zod.optin;
 }
 var objectProcessor = (schema, ctx, _json, params) => {
-  const json2 = _json;
+  const json3 = _json;
   const def = schema._zod.def;
   const shape = def.shape;
   const symbolKeys = Object.getOwnPropertySymbols(shape);
-  if (symbolKeys.length && handleUnrepresentable(schema, ctx, json2, params, "Symbol keys cannot be represented in JSON Schema")) {
+  if (symbolKeys.length && handleUnrepresentable(schema, ctx, json3, params, "Symbol keys cannot be represented in JSON Schema")) {
     return;
   }
-  json2.type = "object";
-  json2.properties = {};
+  json3.type = "object";
+  json3.properties = {};
   for (const key in shape) {
-    assignProp(json2.properties, key, process2(shape[key], ctx, {
+    assignProp(json3.properties, key, process2(shape[key], ctx, {
       ...params,
       path: [...params.path, "properties", key]
     }));
@@ -23924,21 +23924,21 @@ var objectProcessor = (schema, ctx, _json, params) => {
     }
   }));
   if (requiredKeys.size > 0) {
-    json2.required = Array.from(requiredKeys);
+    json3.required = Array.from(requiredKeys);
   }
   if (def.catchall?._zod.def.type === "never") {
-    json2.additionalProperties = false;
+    json3.additionalProperties = false;
   } else if (!def.catchall) {
     if (ctx.io === "output")
-      json2.additionalProperties = false;
+      json3.additionalProperties = false;
   } else if (def.catchall) {
-    json2.additionalProperties = process2(def.catchall, ctx, {
+    json3.additionalProperties = process2(def.catchall, ctx, {
       ...params,
       path: [...params.path, "additionalProperties"]
     });
   }
 };
-var unionProcessor = (schema, ctx, json2, params) => {
+var unionProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
   const isExclusive = def.inclusive === false;
   const options = def.options.map((x, i) => process2(x, ctx, {
@@ -23946,12 +23946,12 @@ var unionProcessor = (schema, ctx, json2, params) => {
     path: [...params.path, isExclusive ? "oneOf" : "anyOf", i]
   }));
   if (isExclusive) {
-    json2.oneOf = options;
+    json3.oneOf = options;
   } else {
-    json2.anyOf = options;
+    json3.anyOf = options;
   }
 };
-var intersectionProcessor = (schema, ctx, json2, params) => {
+var intersectionProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
   const a = process2(def.left, ctx, {
     ...params,
@@ -23966,13 +23966,13 @@ var intersectionProcessor = (schema, ctx, json2, params) => {
     ...isSimpleIntersection(a) ? a.allOf : [a],
     ...isSimpleIntersection(b2) ? b2.allOf : [b2]
   ];
-  json2.allOf = allOf;
+  json3.allOf = allOf;
   ctx.intersections.push(allOf);
 };
 var tupleProcessor = (schema, ctx, _json, params) => {
-  const json2 = _json;
+  const json3 = _json;
   const def = schema._zod.def;
-  json2.type = "array";
+  json3.type = "array";
   const prefixPath = ctx.target === "draft-2020-12" ? "prefixItems" : "items";
   const restPath = ctx.target === "draft-2020-12" ? "items" : ctx.target === "openapi-3.0" ? "items" : "additionalItems";
   const prefixItems = def.items.map((x, i) => process2(x, ctx, {
@@ -23994,70 +23994,70 @@ var tupleProcessor = (schema, ctx, _json, params) => {
   const maxItems = def.items.length;
   const isClosed = !def.rest;
   if (ctx.target === "draft-2020-12") {
-    json2.prefixItems = prefixItems;
+    json3.prefixItems = prefixItems;
     if (isClosed) {
-      json2.items = false;
+      json3.items = false;
     } else if (rest) {
-      json2.items = rest;
+      json3.items = rest;
     }
     if (minItems > 0)
-      json2.minItems = minItems;
+      json3.minItems = minItems;
     if (isClosed)
-      json2.maxItems = maxItems;
+      json3.maxItems = maxItems;
   } else if (ctx.target === "openapi-3.0") {
-    json2.items = {
+    json3.items = {
       anyOf: prefixItems
     };
     if (rest) {
-      json2.items.anyOf.push(rest);
+      json3.items.anyOf.push(rest);
     }
     if (minItems > 0)
-      json2.minItems = minItems;
+      json3.minItems = minItems;
     if (isClosed)
-      json2.maxItems = maxItems;
+      json3.maxItems = maxItems;
   } else {
-    json2.items = prefixItems;
+    json3.items = prefixItems;
     if (isClosed) {
-      json2.additionalItems = false;
+      json3.additionalItems = false;
     } else if (rest) {
-      json2.additionalItems = rest;
+      json3.additionalItems = rest;
     }
     if (minItems > 0)
-      json2.minItems = minItems;
+      json3.minItems = minItems;
     if (isClosed)
-      json2.maxItems = maxItems;
+      json3.maxItems = maxItems;
   }
   const { minimum, maximum } = schema._zod.bag;
   if (typeof minimum === "number")
-    json2.minItems = minimum;
+    json3.minItems = minimum;
   if (typeof maximum === "number")
-    json2.maxItems = maximum;
+    json3.maxItems = maximum;
 };
-function stringifyKeyNames(bySchema, json2, visited) {
-  if (json2.$ref) {
-    if (visited.has(json2))
-      return json2;
-    visited.add(json2);
-    const def = bySchema.get(json2)?.def;
+function stringifyKeyNames(bySchema, json3, visited) {
+  if (json3.$ref) {
+    if (visited.has(json3))
+      return json3;
+    visited.add(json3);
+    const def = bySchema.get(json3)?.def;
     if (!def)
-      return json2;
+      return json3;
     const inlined = stringifyKeyNames(bySchema, def, visited);
-    return inlined === def ? json2 : inlined;
+    return inlined === def ? json3 : inlined;
   }
   for (const keyword of ["anyOf", "oneOf"]) {
-    const branches = json2[keyword];
+    const branches = json3[keyword];
     if (!Array.isArray(branches))
       continue;
     const mapped = branches.map((branch) => stringifyKeyNames(bySchema, branch, visited));
     if (mapped.some((branch, i) => branch !== branches[i]))
-      json2 = { ...json2, [keyword]: mapped };
+      json3 = { ...json3, [keyword]: mapped };
   }
-  const types = Array.isArray(json2.type) ? json2.type : [json2.type];
+  const types = Array.isArray(json3.type) ? json3.type : [json3.type];
   const numericType = !types.includes("string") && types.some((t) => t === "number" || t === "integer");
-  const values = json2.enum ?? (json2.const !== void 0 ? [json2.const] : void 0);
+  const values = json3.enum ?? (json3.const !== void 0 ? [json3.const] : void 0);
   if (!numericType && !values?.some((v) => typeof v === "number"))
-    return json2;
-  const { minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, format, id, ...rest } = json2;
+    return json3;
+  const { minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf, format, id, ...rest } = json3;
   if (rest.enum)
     rest.enum = rest.enum.map((v) => typeof v === "number" ? String(v) : v);
   else if (typeof rest.const === "number")
@@ -24077,8 +24077,8 @@ function rewriteKeyNames(ctx) {
       bySchema.set(entry.schema, entry);
   }
   const rewrites = /* @__PURE__ */ new Map();
-  for (const record4 of pendingRecords.get(ctx) ?? []) {
-    const seen = ctx.seen.get(record4);
+  for (const record5 of pendingRecords.get(ctx) ?? []) {
+    const seen = ctx.seen.get(record5);
     const names = (seen?.def ?? seen?.schema)?.propertyNames;
     if (!names || names === true || rewrites.has(names))
       continue;
@@ -24097,9 +24097,9 @@ function rewriteKeyNames(ctx) {
   }
 }
 var recordProcessor = (schema, ctx, _json, params) => {
-  const json2 = _json;
+  const json3 = _json;
   const def = schema._zod.def;
-  json2.type = "object";
+  json3.type = "object";
   const keyType = def.keyType;
   const keyBag = keyType._zod.bag;
   const patterns = keyBag?.patterns;
@@ -24108,13 +24108,13 @@ var recordProcessor = (schema, ctx, _json, params) => {
       ...params,
       path: [...params.path, "patternProperties", "*"]
     });
-    json2.patternProperties = {};
+    json3.patternProperties = {};
     for (const pattern of patterns) {
-      assignProp(json2.patternProperties, pattern.source, valueSchema);
+      assignProp(json3.patternProperties, pattern.source, valueSchema);
     }
   } else {
     if (ctx.target === "draft-07" || ctx.target === "draft-2020-12") {
-      json2.propertyNames = process2(def.keyType, ctx, {
+      json3.propertyNames = process2(def.keyType, ctx, {
         ...params,
         path: [...params.path, "propertyNames"]
       });
@@ -24126,7 +24126,7 @@ var recordProcessor = (schema, ctx, _json, params) => {
       }
       pending.push(schema);
     }
-    json2.additionalProperties = process2(def.valueType, ctx, {
+    json3.additionalProperties = process2(def.valueType, ctx, {
       ...params,
       path: [...params.path, "additionalProperties"]
     });
@@ -24136,19 +24136,19 @@ var recordProcessor = (schema, ctx, _json, params) => {
   if (keyValues && !def.partial && !omittableOnInput) {
     const validKeyValues = [...keyValues].filter((v) => typeof v === "string" || typeof v === "number");
     if (validKeyValues.length > 0) {
-      json2.required = validKeyValues.map(String);
+      json3.required = validKeyValues.map(String);
     }
   }
 };
-var nullableProcessor = (schema, ctx, json2, params) => {
+var nullableProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
   const inner = process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   if (ctx.target === "openapi-3.0") {
     seen.ref = def.innerType;
-    json2.nullable = true;
+    json3.nullable = true;
   } else {
-    json2.anyOf = [inner, { type: "null" }];
+    json3.anyOf = [inner, { type: "null" }];
   }
 };
 var nonoptionalProcessor = (schema, ctx, _json, params) => {
@@ -24158,7 +24158,7 @@ var nonoptionalProcessor = (schema, ctx, _json, params) => {
   seen.ref = def.innerType;
 };
 var UNREPRESENTABLE_DEFAULT = /* @__PURE__ */ Symbol();
-function serializeDefaultValue(value, schema, ctx, json2, params) {
+function serializeDefaultValue(value, schema, ctx, json3, params) {
   let unrepresentable = false;
   const serialized = JSON.stringify(value, (_, val) => {
     if (typeof val !== "bigint")
@@ -24168,30 +24168,30 @@ function serializeDefaultValue(value, schema, ctx, json2, params) {
   });
   if (!unrepresentable)
     return JSON.parse(serialized);
-  handleUnrepresentable(schema, ctx, json2, params, "BigInt defaults cannot be represented in JSON Schema");
+  handleUnrepresentable(schema, ctx, json3, params, "BigInt defaults cannot be represented in JSON Schema");
   return UNREPRESENTABLE_DEFAULT;
 }
-var defaultProcessor = (schema, ctx, json2, params) => {
+var defaultProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
   process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
-  const value = serializeDefaultValue(def.defaultValue, schema, ctx, json2, params);
+  const value = serializeDefaultValue(def.defaultValue, schema, ctx, json3, params);
   if (value !== UNREPRESENTABLE_DEFAULT)
-    json2.default = value;
+    json3.default = value;
 };
-var prefaultProcessor = (schema, ctx, json2, params) => {
+var prefaultProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
   process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
   if (ctx.io !== "input")
     return;
-  const value = serializeDefaultValue(def.defaultValue, schema, ctx, json2, params);
+  const value = serializeDefaultValue(def.defaultValue, schema, ctx, json3, params);
   if (value !== UNREPRESENTABLE_DEFAULT)
-    json2._prefault = value;
+    json3._prefault = value;
 };
-var catchProcessor = (schema, ctx, json2, params) => {
+var catchProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
   process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
@@ -24200,10 +24200,10 @@ var catchProcessor = (schema, ctx, json2, params) => {
   try {
     catchValue = def.catchValue(void 0);
   } catch {
-    handleUnrepresentable(schema, ctx, json2, params, "Dynamic catch values are not supported in JSON Schema");
+    handleUnrepresentable(schema, ctx, json3, params, "Dynamic catch values are not supported in JSON Schema");
     return;
   }
-  json2.default = catchValue;
+  json3.default = catchValue;
 };
 var pipeProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
@@ -24213,12 +24213,12 @@ var pipeProcessor = (schema, ctx, _json, params) => {
   const seen = ctx.seen.get(schema);
   seen.ref = innerType;
 };
-var readonlyProcessor = (schema, ctx, json2, params) => {
+var readonlyProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
   process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
-  json2.readOnly = true;
+  json3.readOnly = true;
 };
 var promiseProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
@@ -24848,7 +24848,7 @@ var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
 var _ZodString = /* @__PURE__ */ $constructor("_ZodString", (inst, def) => {
   $ZodString.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => stringProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => stringProcessor(inst, ctx, json3, params);
   const bag = inst._zod.bag;
   inst.format = bag.format ?? null;
   inst.minLength = bag.minimum ?? null;
@@ -25193,7 +25193,7 @@ function hash(alg, params) {
 var ZodNumber = /* @__PURE__ */ $constructor("ZodNumber", (inst, def) => {
   $ZodNumber.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => numberProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => numberProcessor(inst, ctx, json3, params);
   const bag = inst._zod.bag;
   inst.minValue = Math.max(bag.minimum ?? Number.NEGATIVE_INFINITY, bag.exclusiveMinimum ?? Number.NEGATIVE_INFINITY) ?? null;
   inst.maxValue = Math.min(bag.maximum ?? Number.POSITIVE_INFINITY, bag.exclusiveMaximum ?? Number.POSITIVE_INFINITY) ?? null;
@@ -25272,7 +25272,7 @@ function uint32(params) {
 var ZodBoolean = /* @__PURE__ */ $constructor("ZodBoolean", (inst, def) => {
   $ZodBoolean.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => booleanProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => booleanProcessor(inst, ctx, json3, params);
 });
 function boolean2(params) {
   return _boolean(ZodBoolean, params);
@@ -25280,7 +25280,7 @@ function boolean2(params) {
 var ZodBigInt = /* @__PURE__ */ $constructor("ZodBigInt", (inst, def) => {
   $ZodBigInt.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => bigintProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => bigintProcessor(inst, ctx, json3, params);
   const bag = inst._zod.bag;
   inst.minValue = bag.minimum ?? null;
   inst.maxValue = bag.maximum ?? null;
@@ -25336,7 +25336,7 @@ function uint64(params) {
 var ZodSymbol = /* @__PURE__ */ $constructor("ZodSymbol", (inst, def) => {
   $ZodSymbol.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => symbolProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => symbolProcessor(inst, ctx, json3, params);
 });
 function symbol(params) {
   return _symbol(ZodSymbol, params);
@@ -25344,7 +25344,7 @@ function symbol(params) {
 var ZodUndefined = /* @__PURE__ */ $constructor("ZodUndefined", (inst, def) => {
   $ZodUndefined.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => undefinedProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => undefinedProcessor(inst, ctx, json3, params);
 });
 function _undefined3(params) {
   return _undefined2(ZodUndefined, params);
@@ -25352,7 +25352,7 @@ function _undefined3(params) {
 var ZodNull = /* @__PURE__ */ $constructor("ZodNull", (inst, def) => {
   $ZodNull.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => nullProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => nullProcessor(inst, ctx, json3, params);
 });
 function _null3(params) {
   return _null2(ZodNull, params);
@@ -25360,7 +25360,7 @@ function _null3(params) {
 var ZodAny = /* @__PURE__ */ $constructor("ZodAny", (inst, def) => {
   $ZodAny.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => anyProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => anyProcessor(inst, ctx, json3, params);
 });
 function any() {
   return _any(ZodAny);
@@ -25368,7 +25368,7 @@ function any() {
 var ZodUnknown = /* @__PURE__ */ $constructor("ZodUnknown", (inst, def) => {
   $ZodUnknown.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => unknownProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => unknownProcessor(inst, ctx, json3, params);
 });
 function unknown() {
   return _unknown(ZodUnknown);
@@ -25376,7 +25376,7 @@ function unknown() {
 var ZodNever = /* @__PURE__ */ $constructor("ZodNever", (inst, def) => {
   $ZodNever.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => neverProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => neverProcessor(inst, ctx, json3, params);
 });
 function never(params) {
   return _never(ZodNever, params);
@@ -25384,7 +25384,7 @@ function never(params) {
 var ZodVoid = /* @__PURE__ */ $constructor("ZodVoid", (inst, def) => {
   $ZodVoid.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => voidProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => voidProcessor(inst, ctx, json3, params);
 });
 function _void2(params) {
   return _void(ZodVoid, params);
@@ -25392,7 +25392,7 @@ function _void2(params) {
 var ZodDate = /* @__PURE__ */ $constructor("ZodDate", (inst, def) => {
   $ZodDate.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => dateProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => dateProcessor(inst, ctx, json3, params);
   inst.min = (value, params) => inst.check(_gte(value, params));
   inst.max = (value, params) => inst.check(_lte(value, params));
   const c = inst._zod.bag;
@@ -25406,7 +25406,7 @@ var ZodArray = /* @__PURE__ */ $constructor("ZodArray", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodArray.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => arrayProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => arrayProcessor(inst, ctx, json3, params);
   inst.element = def.element;
 }, {
   min(n, params) {
@@ -25436,7 +25436,7 @@ var ZodObject = /* @__PURE__ */ $constructor("ZodObject", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodObjectJIT.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => objectProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => objectProcessor(inst, ctx, json3, params);
   util_exports.installLazyProp(inst, "shape", (self) => self._zod.def.shape, false);
 }, {
   keyof() {
@@ -25509,7 +25509,7 @@ function looseObject(shape, params) {
 var ZodUnion = /* @__PURE__ */ $constructor("ZodUnion", (inst, def) => {
   $ZodUnion.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => unionProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => unionProcessor(inst, ctx, json3, params);
   inst.options = def.options;
 });
 function union(options, params) {
@@ -25522,7 +25522,7 @@ function union(options, params) {
 var ZodXor = /* @__PURE__ */ $constructor("ZodXor", (inst, def) => {
   ZodUnion.init(inst, def);
   $ZodXor.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => unionProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => unionProcessor(inst, ctx, json3, params);
   inst.options = def.options;
 });
 function xor(options, params) {
@@ -25548,7 +25548,7 @@ function discriminatedUnion(discriminator, options, params) {
 var ZodIntersection = /* @__PURE__ */ $constructor("ZodIntersection", (inst, def) => {
   $ZodIntersection.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => intersectionProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => intersectionProcessor(inst, ctx, json3, params);
 });
 function intersection(left, right) {
   return new ZodIntersection({
@@ -25561,7 +25561,7 @@ var ZodTuple = /* @__PURE__ */ $constructor("ZodTuple", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodTuple.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => tupleProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => tupleProcessor(inst, ctx, json3, params);
 }, {
   rest(rest) {
     return this.clone({
@@ -25594,7 +25594,7 @@ var ZodRecord = /* @__PURE__ */ $constructor("ZodRecord", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodRecord.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => recordProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => recordProcessor(inst, ctx, json3, params);
   inst.keyType = def.keyType;
   inst.valueType = def.valueType;
 });
@@ -25636,7 +25636,7 @@ var ZodMap = /* @__PURE__ */ $constructor("ZodMap", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodMap.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => mapProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => mapProcessor(inst, ctx, json3, params);
   inst.keyType = def.keyType;
   inst.valueType = def.valueType;
   inst.min = (...args) => inst.check(_minSize(...args));
@@ -25656,7 +25656,7 @@ var ZodSet = /* @__PURE__ */ $constructor("ZodSet", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodSet.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => setProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => setProcessor(inst, ctx, json3, params);
   inst.min = (...args) => inst.check(_minSize(...args));
   inst.nonempty = (params) => inst.check(_minSize(1, params));
   inst.max = (...args) => inst.check(_maxSize(...args));
@@ -25672,14 +25672,14 @@ function set(valueType, params) {
 var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
   $ZodEnum.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => enumProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => enumProcessor(inst, ctx, json3, params);
   inst.enum = def.entries;
   inst.options = Object.values(def.entries);
-  const keys2 = new Set(Object.keys(def.entries));
+  const keys3 = new Set(Object.keys(def.entries));
   inst.extract = (values, params) => {
     const newEntries = {};
     for (const value of values) {
-      if (keys2.has(value)) {
+      if (keys3.has(value)) {
         newEntries[value] = def.entries[value];
       } else
         throw new Error(`Key ${value} not found in enum`);
@@ -25694,7 +25694,7 @@ var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
   inst.exclude = (values, params) => {
     const newEntries = { ...def.entries };
     for (const value of values) {
-      if (keys2.has(value)) {
+      if (keys3.has(value)) {
         delete newEntries[value];
       } else
         throw new Error(`Key ${value} not found in enum`);
@@ -25725,7 +25725,7 @@ function nativeEnum(entries, params) {
 var ZodLiteral = /* @__PURE__ */ $constructor("ZodLiteral", (inst, def) => {
   $ZodLiteral.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => literalProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => literalProcessor(inst, ctx, json3, params);
   inst.values = new Set(def.values);
   Object.defineProperty(inst, "value", {
     get() {
@@ -25746,7 +25746,7 @@ function literal(value, params) {
 var ZodFile = /* @__PURE__ */ $constructor("ZodFile", (inst, def) => {
   $ZodFile.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => fileProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => fileProcessor(inst, ctx, json3, params);
   inst.min = (size, params) => inst.check(_minSize(size, params));
   inst.max = (size, params) => inst.check(_maxSize(size, params));
   inst.mime = (types, params) => inst.check(_mime(Array.isArray(types) ? types : [types], params));
@@ -25758,7 +25758,7 @@ var ZodTransform = /* @__PURE__ */ $constructor("ZodTransform", (inst, def) => {
   _ensureDefaultMemoizer();
   $ZodTransform.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => transformProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => transformProcessor(inst, ctx, json3, params);
   inst._zod.parse = (payload, _ctx) => {
     if (_ctx.direction === "backward") {
       throw new $ZodEncodeError(inst.constructor.name);
@@ -25797,7 +25797,7 @@ function transform(fn) {
 var ZodOptional = /* @__PURE__ */ $constructor("ZodOptional", (inst, def) => {
   $ZodOptional.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => optionalProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => optionalProcessor(inst, ctx, json3, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function optional(innerType) {
@@ -25809,7 +25809,7 @@ function optional(innerType) {
 var ZodExactOptional = /* @__PURE__ */ $constructor("ZodExactOptional", (inst, def) => {
   $ZodExactOptional.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => optionalProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => optionalProcessor(inst, ctx, json3, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function exactOptional(innerType) {
@@ -25821,7 +25821,7 @@ function exactOptional(innerType) {
 var ZodNullable = /* @__PURE__ */ $constructor("ZodNullable", (inst, def) => {
   $ZodNullable.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => nullableProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => nullableProcessor(inst, ctx, json3, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function nullable(innerType) {
@@ -25836,7 +25836,7 @@ function nullish2(innerType) {
 var ZodDefault = /* @__PURE__ */ $constructor("ZodDefault", (inst, def) => {
   $ZodDefault.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => defaultProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => defaultProcessor(inst, ctx, json3, params);
   inst.unwrap = () => inst._zod.def.innerType;
   inst.removeDefault = inst.unwrap;
 });
@@ -25852,7 +25852,7 @@ function _default2(innerType, defaultValue) {
 var ZodPrefault = /* @__PURE__ */ $constructor("ZodPrefault", (inst, def) => {
   $ZodPrefault.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => prefaultProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => prefaultProcessor(inst, ctx, json3, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function prefault(innerType, defaultValue) {
@@ -25867,7 +25867,7 @@ function prefault(innerType, defaultValue) {
 var ZodNonOptional = /* @__PURE__ */ $constructor("ZodNonOptional", (inst, def) => {
   $ZodNonOptional.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => nonoptionalProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => nonoptionalProcessor(inst, ctx, json3, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function nonoptional(innerType, params) {
@@ -25880,7 +25880,7 @@ function nonoptional(innerType, params) {
 var ZodSuccess = /* @__PURE__ */ $constructor("ZodSuccess", (inst, def) => {
   $ZodSuccess.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => successProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => successProcessor(inst, ctx, json3, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function success(innerType) {
@@ -25892,7 +25892,7 @@ function success(innerType) {
 var ZodCatch = /* @__PURE__ */ $constructor("ZodCatch", (inst, def) => {
   $ZodCatch.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => catchProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => catchProcessor(inst, ctx, json3, params);
   inst.unwrap = () => inst._zod.def.innerType;
   inst.removeCatch = inst.unwrap;
 });
@@ -25906,7 +25906,7 @@ function _catch2(innerType, catchValue) {
 var ZodNaN = /* @__PURE__ */ $constructor("ZodNaN", (inst, def) => {
   $ZodNaN.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => nanProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => nanProcessor(inst, ctx, json3, params);
 });
 function nan(params) {
   return _nan(ZodNaN, params);
@@ -25914,7 +25914,7 @@ function nan(params) {
 var ZodPipe = /* @__PURE__ */ $constructor("ZodPipe", (inst, def) => {
   $ZodPipe.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => pipeProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => pipeProcessor(inst, ctx, json3, params);
   inst.in = def.in;
   inst.out = def.out;
 });
@@ -25956,7 +25956,7 @@ var ZodPreprocess = /* @__PURE__ */ $constructor("ZodPreprocess", (inst, def) =>
 var ZodReadonly = /* @__PURE__ */ $constructor("ZodReadonly", (inst, def) => {
   $ZodReadonly.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => readonlyProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => readonlyProcessor(inst, ctx, json3, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function readonly(innerType) {
@@ -25968,7 +25968,7 @@ function readonly(innerType) {
 var ZodTemplateLiteral = /* @__PURE__ */ $constructor("ZodTemplateLiteral", (inst, def) => {
   $ZodTemplateLiteral.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => templateLiteralProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => templateLiteralProcessor(inst, ctx, json3, params);
 });
 function templateLiteral(parts, params) {
   return new ZodTemplateLiteral({
@@ -25980,7 +25980,7 @@ function templateLiteral(parts, params) {
 var ZodLazy = /* @__PURE__ */ $constructor("ZodLazy", (inst, def) => {
   $ZodLazy.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => lazyProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => lazyProcessor(inst, ctx, json3, params);
   inst.unwrap = () => inst._zod.def.getter();
 });
 function lazy(getter) {
@@ -25992,7 +25992,7 @@ function lazy(getter) {
 var ZodPromise = /* @__PURE__ */ $constructor("ZodPromise", (inst, def) => {
   $ZodPromise.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => promiseProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => promiseProcessor(inst, ctx, json3, params);
   inst.unwrap = () => inst._zod.def.innerType;
 });
 function promise(innerType) {
@@ -26004,7 +26004,7 @@ function promise(innerType) {
 var ZodFunction = /* @__PURE__ */ $constructor("ZodFunction", (inst, def) => {
   $ZodFunction.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => functionProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => functionProcessor(inst, ctx, json3, params);
 });
 function _function(params) {
   return new ZodFunction({
@@ -26016,7 +26016,7 @@ function _function(params) {
 var ZodCustom = /* @__PURE__ */ $constructor("ZodCustom", (inst, def) => {
   $ZodCustom.init(inst, def);
   ZodType.init(inst, def);
-  inst._zod.processJSONSchema = (ctx, json2, params) => customProcessor(inst, ctx, json2, params);
+  inst._zod.processJSONSchema = (ctx, json3, params) => customProcessor(inst, ctx, json3, params);
 });
 function check(fn) {
   const ch = new $ZodCheck({
@@ -26699,10 +26699,10 @@ function visit(schema, fnOrHandlers) {
     switch (kind) {
       case "object": {
         const oldShape = def.shape;
-        const keys2 = Object.keys(oldShape);
+        const keys3 = Object.keys(oldShape);
         let changed = false;
         const newShape = {};
-        for (const k of keys2) {
+        for (const k of keys3) {
           const mapped = run(oldShape[k]);
           if (mapped !== oldShape[k])
             changed = true;
@@ -28504,8 +28504,8 @@ var StdioServerTransport = class {
   }
   send(message) {
     return new Promise((resolve) => {
-      const json2 = serializeMessage(message);
-      if (this._stdout.write(json2)) {
+      const json3 = serializeMessage(message);
+      if (this._stdout.write(json3)) {
         resolve();
       } else {
         this._stdout.once("drain", resolve);
@@ -28577,9 +28577,9 @@ var WorkflowContractError = class extends Error {
 
 // mcp-server/src/registry.ts
 var FileSkillRegistry = class {
-  constructor(registryPath, validator) {
+  constructor(registryPath, validator2) {
     this.registryPath = registryPath;
-    this.validator = validator;
+    this.validator = validator2;
     this.rootDirectory = path.dirname(path.dirname(path.resolve(registryPath)));
   }
   registryPath;
@@ -28676,8 +28676,8 @@ var FileSkillRegistry = class {
     }
   }
   routeGateValidator(gate) {
-    const validator = gate.validator;
-    return validator?.endsWith(".schema.json") ? { ...gate, validatorSchema: { path: validator, digest: this.schemaDigest(validator) } } : { ...gate, validatorSchema: null };
+    const validator2 = gate.validator;
+    return validator2?.endsWith(".schema.json") ? { ...gate, validatorSchema: { path: validator2, digest: this.schemaDigest(validator2) } } : { ...gate, validatorSchema: null };
   }
   assertProviderConflicts(providers) {
     const owners = /* @__PURE__ */ new Map();
@@ -28922,8 +28922,8 @@ function canonicalJson(value, subject = "Convergence input") {
   }
   if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
   if (value && typeof value === "object") {
-    const record4 = value;
-    return `{${Object.keys(record4).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record4[key], subject)}`).join(",")}}`;
+    const record5 = value;
+    return `{${Object.keys(record5).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record5[key], subject)}`).join(",")}}`;
   }
   throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
 }
@@ -29117,17 +29117,17 @@ function planRootInsertion(root, actives) {
     conflict: findRootConflict({ root, identity }, parent?.identity ?? null, actives)
   };
 }
-function conflictDetails(conflict) {
+function conflictDetails(conflict2) {
   return {
-    rootId: conflict.root.rootId,
-    workspaceId: conflict.root.frame.workspace.workspaceId,
-    scope: conflict.root.taskEnvelope.scope.included,
-    blockerState: conflict.root.state,
-    conflictKind: conflict.kind,
-    ...conflict.kind === "lineage-unresolved" ? { reason: "WORKSPACE_IDENTITY_UNRESOLVED" } : {},
-    requestedEntry: conflict.requested.entry,
-    existingEntry: conflict.existing.entry,
-    conservativeExpansion: [conflict.requested.conservative, conflict.existing.conservative].filter((reason) => reason !== null)
+    rootId: conflict2.root.rootId,
+    workspaceId: conflict2.root.frame.workspace.workspaceId,
+    scope: conflict2.root.taskEnvelope.scope.included,
+    blockerState: conflict2.root.state,
+    conflictKind: conflict2.kind,
+    ...conflict2.kind === "lineage-unresolved" ? { reason: "WORKSPACE_IDENTITY_UNRESOLVED" } : {},
+    requestedEntry: conflict2.requested.entry,
+    existingEntry: conflict2.existing.entry,
+    conservativeExpansion: [conflict2.requested.conservative, conflict2.existing.conservative].filter((reason) => reason !== null)
   };
 }
 function normalizeWorkspaceLocator(locator) {
@@ -29141,9 +29141,9 @@ import path4 from "node:path";
 import { DatabaseSync } from "node:sqlite";
 var SCHEMA_VERSION = 3;
 var SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
-function hasExactKeys(value, keys2) {
+function hasExactKeys(value, keys3) {
   const actual = Object.keys(value).sort();
-  const expected = [...keys2].sort();
+  const expected = [...keys3].sort();
   return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
 }
 function isBodyFreeRequestReceipt(value) {
@@ -29410,7 +29410,7 @@ var SqliteContinuityStore = class {
       const current = this.getSnapshot(taskCorrelation, epoch);
       const actualRevision = current?.revision ?? this.getTombstone(taskCorrelation, epoch)?.revision ?? 0;
       if (actualRevision !== expectedRevision) return { kind: "stale", actualRevision };
-      const json2 = JSON.stringify(snapshot);
+      const json3 = JSON.stringify(snapshot);
       const resultJson = JSON.stringify({
         schemaVersion: "1.0.0",
         kind: "checkpoint",
@@ -29424,7 +29424,7 @@ var SqliteContinuityStore = class {
         ON CONFLICT(task_correlation, epoch) DO UPDATE SET
           revision = excluded.revision, snapshot_digest = excluded.snapshot_digest,
           snapshot_json = excluded.snapshot_json, updated_at = excluded.updated_at
-      `).run(taskCorrelation, epoch, snapshot.revision, snapshot.snapshotDigest, json2, snapshot.updatedAt);
+      `).run(taskCorrelation, epoch, snapshot.revision, snapshot.snapshotDigest, json3, snapshot.updatedAt);
       this.database.prepare(`
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -29823,9 +29823,9 @@ function parseJsonToken(value) {
   }
 }
 var ContinuityService = class {
-  constructor(store, validator, workflowStore = null, now = () => /* @__PURE__ */ new Date()) {
+  constructor(store, validator2, workflowStore = null, now = () => /* @__PURE__ */ new Date()) {
     this.store = store;
-    this.validator = validator;
+    this.validator = validator2;
     this.workflowStore = workflowStore;
     this.now = now;
     this.secret = store.getOrCreateSecret(() => randomBytes(32).toString("base64url"));
@@ -30728,6 +30728,13 @@ function rankedBaselineEntriesV2(candidates, request, { catalog, policy }) {
     return lexical(x[4], y2[4]);
   });
 }
+function getBaselineCandidateMetadataV2(candidates, request, environment) {
+  return rankedBaselineEntriesV2(candidates, request, environment).map(({ candidate, order }, baselineRank) => ({
+    candidateKey: candidate.key,
+    preferenceGroup: order[0],
+    baselineRank
+  }));
+}
 function rankBaselineCandidatesV2(candidates, request, environment) {
   return rankedBaselineEntriesV2(candidates, request, environment).map(({ candidate }) => candidate);
 }
@@ -30937,20 +30944,20 @@ function assertSemanticApplicationBinding(application, decision) {
     same(application.observation.decisionDigest, application.decisionDigest, "observation.decisionDigest");
   }
 }
-function assertSemanticRecordIntegrity(record4) {
-  seal2(record4, "recordDigest");
-  time3(record4.dispatchedAt);
-  if (record4.observed) {
-    requireContract(time3(record4.observed.observedAt) >= time3(record4.dispatchedAt), "Observation cannot precede dispatch.");
-    same(record4.observed.binding, record4.binding, "record.observed.binding");
-    same(record4.observed.target, record4.target, "record.observed.target");
-    same(record4.observed.decisionDigest, record4.decisionDigest, "record.observed.decisionDigest");
+function assertSemanticRecordIntegrity(record5) {
+  seal2(record5, "recordDigest");
+  time3(record5.dispatchedAt);
+  if (record5.observed) {
+    requireContract(time3(record5.observed.observedAt) >= time3(record5.dispatchedAt), "Observation cannot precede dispatch.");
+    same(record5.observed.binding, record5.binding, "record.observed.binding");
+    same(record5.observed.target, record5.target, "record.observed.target");
+    same(record5.observed.decisionDigest, record5.decisionDigest, "record.observed.decisionDigest");
   }
 }
-function assertSemanticRecordBinding(record4, decision) {
+function assertSemanticRecordBinding(record5, decision) {
   const fields = ["binding", "target", "decisionDigest", "requestDigest", "catalogDigest", "policyDigest", "capabilitySnapshotDigest", "requested", "selected", "semantic"];
-  for (const field of fields) same(record4[field], decision[field], `record.${field}`);
-  same(record4.dispatched, decision.selected, "record.dispatched");
+  for (const field of fields) same(record5[field], decision[field], `record.${field}`);
+  same(record5.dispatched, decision.selected, "record.dispatched");
 }
 
 // mcp-server/src/schema-validator.ts
@@ -31359,18 +31366,18 @@ var ContractValidator = class {
   }
   modelApplicationRecordForDecisionV3(value, decisionValue) {
     const decision = this.modelRoutingDecisionV3(decisionValue);
-    const record4 = this.modelApplicationRecordV3(value);
-    assertSemanticRecordBinding(record4, decision);
-    return record4;
+    const record5 = this.modelApplicationRecordV3(value);
+    assertSemanticRecordBinding(record5, decision);
+    return record5;
   }
   providerResult(rootDirectory, resultSchema, outputSchema, value) {
     const declared = this.readBoundSchema(rootDirectory, resultSchema, "provider result");
     const declaresVersion = Boolean(declared.properties && Object.prototype.hasOwnProperty.call(declared.properties, "schemaVersion"));
     let providerView = value;
     if (value && typeof value === "object" && !Array.isArray(value)) {
-      const record4 = declaresVersion ? { ...value } : Object.fromEntries(Object.entries(value).filter(([key]) => key !== "schemaVersion"));
-      if (Array.isArray(record4.artifacts)) record4.artifacts = record4.artifacts.map(artifactDigestView(declared));
-      providerView = record4;
+      const record5 = declaresVersion ? { ...value } : Object.fromEntries(Object.entries(value).filter(([key]) => key !== "schemaVersion"));
+      if (Array.isArray(record5.artifacts)) record5.artifacts = record5.artifacts.map(artifactDigestView(declared));
+      providerView = record5;
     }
     this.assertSchemaFile(rootDirectory, resultSchema, providerView, "provider result");
     const result = value;
@@ -31391,19 +31398,19 @@ var ContractValidator = class {
         value.forEach(visit2);
         return;
       }
-      const record4 = value;
-      if ((record4.type === "object" || record4.properties) && record4.additionalProperties !== false) {
+      const record5 = value;
+      if ((record5.type === "object" || record5.properties) && record5.additionalProperties !== false) {
         throw new WorkflowContractError(
           "INVALID_INPUT",
           "A reference-only provider output schema must close every declared object.",
           { schemaPath: reference.path }
         );
       }
-      if (typeof record4.const === "string") tokens.add(record4.const);
-      if (Array.isArray(record4.enum)) {
-        for (const item of record4.enum) if (typeof item === "string") tokens.add(item);
+      if (typeof record5.const === "string") tokens.add(record5.const);
+      if (Array.isArray(record5.enum)) {
+        for (const item of record5.enum) if (typeof item === "string") tokens.add(item);
       }
-      Object.values(record4).forEach(visit2);
+      Object.values(record5).forEach(visit2);
     };
     visit2(schema);
     return tokens;
@@ -33131,8 +33138,8 @@ var Server = class extends Protocol {
         const result = await this.request({ method: "elicitation/create", params: formParams }, ElicitResultSchema, options);
         if (result.action === "accept" && result.content && formParams.requestedSchema) {
           try {
-            const validator = this._jsonSchemaValidator.getValidator(formParams.requestedSchema);
-            const validationResult = validator(result.content);
+            const validator2 = this._jsonSchemaValidator.getValidator(formParams.requestedSchema);
+            const validationResult = validator2(result.content);
             if (!validationResult.valid) {
               throw new McpError(ErrorCode.InvalidParams, `Elicitation response content does not match requested schema: ${validationResult.errorMessage}`);
             }
@@ -33527,8 +33534,8 @@ function loadGlossary(databasePath) {
 function validateSeedEntry(value, line) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`Glossary seed line ${line} must be an object.`);
   const item = value;
-  const keys2 = Object.keys(item).sort().join(",");
-  if (keys2 !== ["active", "canonicalForm", "entryId", "forms", "policy", "priority", "sourceRef"].sort().join(",")) throw new Error(`Glossary seed line ${line} has unexpected or missing fields.`);
+  const keys3 = Object.keys(item).sort().join(",");
+  if (keys3 !== ["active", "canonicalForm", "entryId", "forms", "policy", "priority", "sourceRef"].sort().join(",")) throw new Error(`Glossary seed line ${line} has unexpected or missing fields.`);
   if (typeof item.entryId !== "string" || !ENTRY_ID.test(item.entryId)) throw new Error(`Glossary seed line ${line} has an invalid entryId.`);
   if (typeof item.canonicalForm !== "string" || item.canonicalForm.length === 0 || item.canonicalForm !== item.canonicalForm.normalize("NFC")) throw new Error(`Glossary seed line ${line} has a non-NFC or empty canonicalForm.`);
   if (typeof item.policy !== "string" || !POLICIES.has(item.policy)) throw new Error(`Glossary seed line ${line} has an invalid policy.`);
@@ -33869,8 +33876,8 @@ function failure2(code, message) {
 }
 function binding(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const record4 = value;
-  return typeof record4.host === "string" && record4.host && typeof record4.sessionId === "string" && record4.sessionId ? { host: record4.host, sessionId: record4.sessionId } : null;
+  const record5 = value;
+  return typeof record5.host === "string" && record5.host && typeof record5.sessionId === "string" && record5.sessionId ? { host: record5.host, sessionId: record5.sessionId } : null;
 }
 var SessionMessageService = class {
   stateDirectory;
@@ -34078,13 +34085,13 @@ var ModelRoutingServiceCore = class {
     }
   }
 };
-function checkApplicationArtifactBinding(record4, { binding: binding2, target, requiredFields = [], store = null }) {
-  verifySeal(record4, "recordDigest");
-  if (requiredFields.length) assert2(store && canonical(store.application(record4.recordDigest)) === canonical(record4) && record4.observationAdmitted, "PERSISTED_HOST_OBSERVATION_REQUIRED");
-  assert2(canonical(record4.binding) === canonical(binding2) && canonical(record4.target) === canonical(target), "STAGE_ARTIFACT_BINDING_MISMATCH");
-  const map2 = { model: record4.modelVerification, reasoning: record4.reasoningVerification, runtimeMode: record4.runtimeModeVerification };
+function checkApplicationArtifactBinding(record5, { binding: binding2, target, requiredFields = [], store = null }) {
+  verifySeal(record5, "recordDigest");
+  if (requiredFields.length) assert2(store && canonical(store.application(record5.recordDigest)) === canonical(record5) && record5.observationAdmitted, "PERSISTED_HOST_OBSERVATION_REQUIRED");
+  assert2(canonical(record5.binding) === canonical(binding2) && canonical(record5.target) === canonical(target), "STAGE_ARTIFACT_BINDING_MISMATCH");
+  const map2 = { model: record5.modelVerification, reasoning: record5.reasoningVerification, runtimeMode: record5.runtimeModeVerification };
   assert2(requiredFields.every((k) => Object.hasOwn(map2, k) && map2[k] === "matched"), "REQUIRED_OBSERVATION_UNVERIFIED");
-  return { diagnosticArtifactAccepted: true, trustedExecutionGateSatisfied: false, uri: `ags-model-record:${record4.recordDigest.slice(7)}`, digest: record4.recordDigest };
+  return { diagnosticArtifactAccepted: true, trustedExecutionGateSatisfied: false, uri: `ags-model-record:${record5.recordDigest.slice(7)}`, digest: record5.recordDigest };
 }
 
 // mcp-server/src/model-routing-workflow.ts
@@ -34107,10 +34114,10 @@ function hasModelRoutingArtifacts(value) {
   return Array.isArray(artifacts) && artifacts.some(routingReference) || Array.isArray(result.evidence) && result.evidence.some(routingReference);
 }
 var ModelRoutingWorkflowBridge = class {
-  constructor(workflow, routing, validator = new ContractValidator()) {
+  constructor(workflow, routing, validator2 = new ContractValidator()) {
     this.workflow = workflow;
     this.routing = routing;
-    this.validator = validator;
+    this.validator = validator2;
   }
   workflow;
   routing;
@@ -34246,38 +34253,38 @@ var ModelRoutingWorkflowBridge = class {
         (artifact.digest.startsWith("sha256:") ? artifact.digest : `sha256:${artifact.digest}`) === recordDigest,
         "Routing artifact URI and digest disagree."
       );
-      const record4 = this.validator.modelApplicationRecordV2(this.routing.application(recordDigest));
-      const row = this.routing.database.prepare("SELECT request_json,payload FROM ags_model_decisions_v2 WHERE decision_digest=?").get(record4.decisionDigest);
+      const record5 = this.validator.modelApplicationRecordV2(this.routing.application(recordDigest));
+      const row = this.routing.database.prepare("SELECT request_json,payload FROM ags_model_decisions_v2 WHERE decision_digest=?").get(record5.decisionDigest);
       requireCondition(row, "Routing application has no stored decision.");
       const decision = this.validator.modelRoutingDecisionV2(JSON.parse(row.payload));
       const request = this.validator.modelSelectionRequestV2(JSON.parse(row.request_json));
       const { decisionDigest, ...unsigned } = decision;
       requireCondition(
-        convergenceDigest(unsigned) === decisionDigest && convergenceDigest(request) === decision.requestDigest && record4.requestDigest === decision.requestDigest && canonicalJson(request.binding) === canonicalJson(decision.binding) && record4.catalogDigest === decision.catalogDigest && record4.policyDigest === decision.policyDigest && record4.capabilitySnapshotDigest === decision.capabilitySnapshotDigest && canonicalJson(record4.selected) === canonicalJson(decision.selected),
+        convergenceDigest(unsigned) === decisionDigest && convergenceDigest(request) === decision.requestDigest && record5.requestDigest === decision.requestDigest && canonicalJson(request.binding) === canonicalJson(decision.binding) && record5.catalogDigest === decision.catalogDigest && record5.policyDigest === decision.policyDigest && record5.capabilitySnapshotDigest === decision.capabilitySnapshotDigest && canonicalJson(record5.selected) === canonicalJson(decision.selected),
         "Routing application decision/request binding is corrupt."
       );
       requireCondition(
-        record4.recordDigest === recordDigest && record4.binding.runId === result.runId && record4.binding.stageId === result.stageId && record4.binding.revision === result.expectedRevision,
+        record5.recordDigest === recordDigest && record5.binding.runId === result.runId && record5.binding.stageId === result.stageId && record5.binding.revision === result.expectedRevision,
         "Routing application belongs to a different run, stage or revision."
       );
-      const { guarded } = this.current(record4.binding);
+      const { guarded } = this.current(record5.binding);
       requireCondition(
         !["high", "critical"].includes(guarded.proposal.taskEnvelope.riskLevel) || request.highRisk,
         "A routing artifact cannot downgrade the task risk."
       );
-      requireCondition(artifact.targetDigest === record4.binding.candidateDigest, "Routing artifact candidate digest does not match its application.");
+      requireCondition(artifact.targetDigest === record5.binding.candidateDigest, "Routing artifact candidate digest does not match its application.");
       const requiredFields = result.state === "passed" ? [.../* @__PURE__ */ new Set([...request.requirements.requireObservable, ...request.highRisk ? ["model", "reasoning", "runtimeMode"] : []])] : [];
-      checkApplicationArtifactBinding(record4, { binding: decision.binding, target: decision.target, requiredFields, store: this.routing });
+      checkApplicationArtifactBinding(record5, { binding: decision.binding, target: decision.target, requiredFields, store: this.routing });
       if (result.state === "passed" && request.highRisk) {
         requireCondition(
-          record4.observationAdmitted && record4.originVerified && record4.terminalOutcome === "succeeded",
+          record5.observationAdmitted && record5.originVerified && record5.terminalOutcome === "succeeded",
           "Passing high-risk routing evidence requires an admitted successful host outcome."
         );
       }
       if (result.state === "passed" && request.role === "independent-audit") {
-        const history = this.history(record4.binding, record4.decisionDigest);
+        const history = this.history(record5.binding, record5.decisionDigest);
         requireCondition(
-          !history.actors.includes(record4.target.actorId) && !history.sessions.includes(`${record4.target.host}/${record4.target.sessionId}`) && !request.requirements.excludedActors.includes(record4.target.actorId) && !request.requirements.excludedSessions.includes(`${record4.target.host}/${record4.target.sessionId}`),
+          !history.actors.includes(record5.target.actorId) && !history.sessions.includes(`${record5.target.host}/${record5.target.sessionId}`) && !request.requirements.excludedActors.includes(record5.target.actorId) && !request.requirements.excludedSessions.includes(`${record5.target.host}/${record5.target.sessionId}`),
           "Routing audit actor participated before final adoption."
         );
       }
@@ -39002,13 +39009,13 @@ var ModelRoutingStore = class {
         assert2(row.binding_digest === digest(input2.binding), "OBSERVATION_BINDING_MISMATCH");
         observation2 = JSON.parse(row.payload);
       }
-      const record4 = makeRecord(observation2);
-      verifySeal(record4, "recordDigest");
-      const old = this.database.prepare("SELECT payload FROM ags_model_applications_v2 WHERE record_digest=?").get(record4.recordDigest);
-      assert2(!old || old.payload === canonical(record4), "RECORD_CONFLICT");
-      this.database.prepare("INSERT OR IGNORE INTO ags_model_applications_v2 VALUES (?,?,?,?,?)").run(record4.recordDigest, record4.decisionDigest, digest(record4.binding), canonical(record4), now);
+      const record5 = makeRecord(observation2);
+      verifySeal(record5, "recordDigest");
+      const old = this.database.prepare("SELECT payload FROM ags_model_applications_v2 WHERE record_digest=?").get(record5.recordDigest);
+      assert2(!old || old.payload === canonical(record5), "RECORD_CONFLICT");
+      this.database.prepare("INSERT OR IGNORE INTO ags_model_applications_v2 VALUES (?,?,?,?,?)").run(record5.recordDigest, record5.decisionDigest, digest(record5.binding), canonical(record5), now);
       if (observationToken !== null) this.database.prepare("UPDATE ags_model_receipts_v1 SET consumed_at=? WHERE nonce=?").run(now, observationToken);
-      return { record: record4, artifact: { kind: "model-application.v2", uri: `ags-model-record:${record4.recordDigest.slice(7)}`, digest: record4.recordDigest } };
+      return { record: record5, artifact: { kind: "model-application.v2", uri: `ags-model-record:${record5.recordDigest.slice(7)}`, digest: record5.recordDigest } };
     });
   }
   application(recordDigest) {
@@ -39077,10 +39084,10 @@ var ModelRoutingStore = class {
       return { dispatchKey: key, state: "running", revision: expectedRevision + 1, dispatchedAt: now, startClaimAcquired: true };
     });
   }
-  saveEvaluation(record4) {
-    validateEvaluation(record4);
-    this.database.prepare("INSERT OR IGNORE INTO ags_model_evaluations_v1 VALUES (?,?)").run(record4.recordDigest, canonical(record4));
-    return record4.recordDigest;
+  saveEvaluation(record5) {
+    validateEvaluation(record5);
+    this.database.prepare("INSERT OR IGNORE INTO ags_model_evaluations_v1 VALUES (?,?)").run(record5.recordDigest, canonical(record5));
+    return record5.recordDigest;
   }
   evaluations() {
     return this.database.prepare("SELECT payload FROM ags_model_evaluations_v1 ORDER BY record_digest").all().map((r) => JSON.parse(r.payload));
@@ -39107,7 +39114,7 @@ function exact(value, fields) {
 function capabilitySlot(identity) {
   return convergenceDigest(identity).slice(7);
 }
-function validateCapabilityPublication(raw, validator, nowMs) {
+function validateCapabilityPublication(raw, validator2, nowMs) {
   const value = object4(raw);
   exact(value, ["schemaVersion", "identity", "snapshot"]);
   check2(value.schemaVersion === "1.0.0", "Unsupported capability exchange version.");
@@ -39118,7 +39125,7 @@ function validateCapabilityPublication(raw, validator, nowMs) {
     check2(typeof identity[field] === "string" && identity[field].length <= maximum && /^[A-Za-z0-9][A-Za-z0-9._:-]*$/u.test(identity[field]), "Invalid capability transport identity.");
   }
   check2(Buffer.byteLength(canonicalJson(value), "utf8") <= MODEL_CAPABILITY_MAX_BYTES, "Capability publication exceeds the size limit.");
-  const snapshot = validator.hostModelCapabilitiesV1(value.snapshot);
+  const snapshot = validator2.hostModelCapabilitiesV1(value.snapshot);
   check2(snapshot.sessionId === identity.sessionId && snapshot.instanceId === identity.instanceId, "Capability session/instance mismatch.");
   const { snapshotDigest, ...unsigned } = snapshot;
   check2(convergenceDigest(unsigned) === snapshotDigest, "Capability digest mismatch.");
@@ -39126,12 +39133,12 @@ function validateCapabilityPublication(raw, validator, nowMs) {
   check2(Number.isFinite(nowMs) && start <= nowMs && end > nowMs && end - start <= 3e5, "Capability is expired, future-dated or exceeds the five-minute sharing lifetime.");
   return { schemaVersion: "1.0.0", identity: { host: String(identity.host), sessionId: String(identity.sessionId), instanceId: String(identity.instanceId) }, snapshot };
 }
-function validateCapabilityEntry(raw, validator, nowMs) {
+function validateCapabilityEntry(raw, validator2, nowMs) {
   const entry = object4(raw);
   exact(entry, ["schemaVersion", "identity", "snapshot", "presenceLeaseUntil"]);
   const { presenceLeaseUntil, ...publication } = entry;
   check2(typeof presenceLeaseUntil === "string" && Date.parse(presenceLeaseUntil) > nowMs, "Shared capability presence lease expired.");
-  return { ...validateCapabilityPublication(publication, validator, nowMs), presenceLeaseUntil };
+  return { ...validateCapabilityPublication(publication, validator2, nowMs), presenceLeaseUntil };
 }
 
 // mcp-server/src/model-capability-client.ts
@@ -39155,7 +39162,7 @@ async function readSharedModelCapabilities(directory = resolveSessionMessageStat
   try {
     const call = requester(directory, options), clock = options.clock ?? Date.now;
     if (!await negotiate(call)) return { status: "unsupported", entries: [] };
-    const validator = new ContractValidator(), entries = [], seen = /* @__PURE__ */ new Set();
+    const validator2 = new ContractValidator(), entries = [], seen = /* @__PURE__ */ new Set();
     let cursor = null, revision = null, presenceDigest = null;
     for (let pageCount = 0; pageCount < MODEL_CAPABILITY_MAX_SLOTS; pageCount += 1) {
       const page = await call("list-model-capabilities", { cursor });
@@ -39167,7 +39174,7 @@ async function readSharedModelCapabilities(directory = resolveSessionMessageStat
       presenceDigest = page.presenceDigest;
       let last = cursor?.after ?? "";
       for (const raw of page.entries) {
-        const entry = validateCapabilityEntry(raw, validator, clock()), slot = capabilitySlot(entry.identity);
+        const entry = validateCapabilityEntry(raw, validator2, clock()), slot = capabilitySlot(entry.identity);
         check3(slot > last && !seen.has(slot), "Capability pages repeat or regress.");
         seen.add(slot);
         entries.push(entry);
@@ -39175,7 +39182,7 @@ async function readSharedModelCapabilities(directory = resolveSessionMessageStat
         check3(entries.length <= MODEL_CAPABILITY_MAX_SLOTS, "Capability set exceeds resolver limit.");
       }
       if (page.nextCursor === null) {
-        for (const entry of entries) validateCapabilityEntry(entry, validator, clock());
+        for (const entry of entries) validateCapabilityEntry(entry, validator2, clock());
         return { status: "available", entries };
       }
       check3(page.entries.length > 0 && Object.keys(page.nextCursor).sort().join(",") === "after,presenceDigest,revision" && page.nextCursor.revision === revision && page.nextCursor.presenceDigest === presenceDigest && typeof page.nextCursor.after === "string" && /^[a-f0-9]{64}$/u.test(page.nextCursor.after) && page.nextCursor.after >= last && page.nextCursor.after > (cursor?.after ?? ""), "Capability cursor did not advance.");
@@ -39461,16 +39468,16 @@ function withPresence(sessions, presence) {
     presence: bySession.get(`${session.host}\0${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId)
   }));
 }
-async function sessionBoardResult(tool, args, databasePath, validator, sessionMessages) {
+async function sessionBoardResult(tool, args, databasePath, validator2, sessionMessages) {
   let summary = null;
   let binding2;
   try {
     if (tool === "update_session_status") {
-      const request = validator.updateSessionStatusRequest(args);
+      const request = validator2.updateSessionStatusRequest(args);
       summary = normalizeSummary(request.summary);
       binding2 = request._sessionBinding ?? null;
     } else {
-      binding2 = validator.listSessionStatusRequest(args)._sessionBinding ?? null;
+      binding2 = validator2.listSessionStatusRequest(args)._sessionBinding ?? null;
     }
   } catch (error61) {
     return invalidInput(error61 instanceof Error ? error61.message : "Session board input is invalid.");
@@ -39522,7 +39529,7 @@ function serverInstructions(profile = "default") {
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, modelRouting = unavailableModelRouting(), vmInvocation = null, semantic = { enabled: false, gateway: null }) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator2 = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, modelRouting = unavailableModelRouting(), vmInvocation = null, semantic = { enabled: false, gateway: null }) {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -39761,8 +39768,8 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       let result;
       if (request.params.name === "lookup_korean_prose_terms") {
         try {
-          const input2 = validator.koreanProseGlossaryLookupRequest(args);
-          const output2 = validator.koreanProseGlossaryLookupResult(glossary.lookup(input2));
+          const input2 = validator2.koreanProseGlossaryLookupRequest(args);
+          const output2 = validator2.koreanProseGlossaryLookupResult(glossary.lookup(input2));
           result = apiOk(output2);
         } catch (error61) {
           result = invalidInput(error61 instanceof Error ? error61.message : "Glossary lookup input is invalid.");
@@ -39786,7 +39793,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
               break;
             }
             try {
-              result = trust.validateCollaborationDecision(validator.validateCollaborationDecisionRequest(args));
+              result = trust.validateCollaborationDecision(validator2.validateCollaborationDecisionRequest(args));
             } catch (error61) {
               result = invalidInput(error61 instanceof Error ? error61.message : "Collaboration decision validation input is invalid.");
             }
@@ -39852,11 +39859,11 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             break;
           case "update_session_status":
           case "list_session_status":
-            result = await sessionBoardResult(request.params.name, args, sessionBoardPath, validator, sessionMessages);
+            result = await sessionBoardResult(request.params.name, args, sessionBoardPath, validator2, sessionMessages);
             break;
           case "send_session_message":
             try {
-              validator.sendSessionMessageRequest(args);
+              validator2.sendSessionMessageRequest(args);
               result = await sessionMessages.send(args);
             } catch (error61) {
               result = invalidInput(error61 instanceof Error ? error61.message : "Session message input is invalid.");
@@ -39864,7 +39871,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             break;
           case "acknowledge_session_messages":
             try {
-              validator.acknowledgeSessionMessagesRequest(args);
+              validator2.acknowledgeSessionMessagesRequest(args);
               result = await sessionMessages.acknowledge(args);
             } catch (error61) {
               result = invalidInput(error61 instanceof Error ? error61.message : "Session message acknowledgement is invalid.");
@@ -39872,7 +39879,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             break;
           case "get_session_message_status":
             try {
-              validator.getSessionMessageStatusRequest(args);
+              validator2.getSessionMessageStatusRequest(args);
               result = await sessionMessages.status(args);
             } catch (error61) {
               result = invalidInput(error61 instanceof Error ? error61.message : "Session message status input is invalid.");
@@ -39883,7 +39890,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             break;
           case "resolve_model_assignment":
             try {
-              validator.modelSelectionRequestV2(args);
+              validator2.modelSelectionRequestV2(args);
               result = modelRouting.resolveFromBroker ? await modelRouting.resolveFromBroker(args) : modelRouting.call(request.params.name, args);
             } catch (error61) {
               result = invalidInput(error61 instanceof Error ? error61.message : "Model selection request is invalid.");
@@ -39894,7 +39901,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             break;
           case "record_model_application":
             try {
-              validator.modelApplicationRequestV2(args.application);
+              validator2.modelApplicationRequestV2(args.application);
               result = modelRouting.call(request.params.name, args);
             } catch (error61) {
               result = invalidInput(error61 instanceof Error ? error61.message : "Model application record is invalid.");
@@ -41245,9 +41252,9 @@ function sameValues(left, right) {
 function duplicateFree(values) {
   return values.length === new Set(values).size;
 }
-function validateDecisionRecordSemantics(record4) {
+function validateDecisionRecordSemantics(record5) {
   const errors = [];
-  const preflight = object5(record4.preflight);
+  const preflight = object5(record5.preflight);
   const requiredCapabilities = stringArray(preflight.required_capabilities);
   const observedCapabilities = stringArray(preflight.observed_capabilities);
   const missingCapabilities = stringArray(preflight.missing_capabilities);
@@ -41261,11 +41268,11 @@ function validateDecisionRecordSemantics(record4) {
   if (!sameValues(expectedMissing, missingSet)) {
     errors.push("preflight missing capabilities must exactly equal required minus observed");
   }
-  const caseBrief = object5(record4.case_brief);
-  if (!isDeepStrictEqual(caseBrief.constraints, record4.constraints)) {
+  const caseBrief = object5(record5.case_brief);
+  if (!isDeepStrictEqual(caseBrief.constraints, record5.constraints)) {
     errors.push("case_brief constraints must match record constraints");
   }
-  const run = object5(record4.run);
+  const run = object5(record5.run);
   const stage = run.stage;
   const assurance = run.assurance;
   const cap = run.worker_cap;
@@ -41283,7 +41290,7 @@ function validateDecisionRecordSemantics(record4) {
       workerById.set(id, worker);
     }
   }
-  const manifest = array2(record4.panel_manifest);
+  const manifest = array2(record5.panel_manifest);
   if (!isDeepStrictEqual(manifest, array2(run.workers))) {
     errors.push("panel_manifest must exactly equal run.workers");
   }
@@ -41363,10 +41370,10 @@ function validateDecisionRecordSemantics(record4) {
     if (run.strict === true) errors.push("strict execution cannot use a Judge fallback");
   }
   if (strictShortfall) {
-    const cross2 = object5(record4.cross_examination);
+    const cross2 = object5(record5.cross_examination);
     const emptyRunFields = ["workers", "completed_worker_ids", "reused_worker_ids", "failures", "specialist_additions", "redeliberations"];
     const emptyRootFields = ["panel_manifest", "material_claims", "issue_ledger", "axis_decisions"];
-    if (assurance !== "provisional" || record4.consensus_proposal !== null || judgeId !== null || fallback !== null || instantiated.size > 0 || missingSet.size === 0 || emptyRunFields.some((field) => array2(run[field]).length > 0) || emptyRootFields.some((field) => array2(record4[field]).length > 0) || cross2.decision !== "skip" || !nonempty(cross2.reason) || ["trigger_items", "selected_item_ids", "coverage", "followups"].some((field) => array2(cross2[field]).length > 0)) {
+    if (assurance !== "provisional" || record5.consensus_proposal !== null || judgeId !== null || fallback !== null || instantiated.size > 0 || missingSet.size === 0 || emptyRunFields.some((field) => array2(run[field]).length > 0) || emptyRootFields.some((field) => array2(record5[field]).length > 0) || cross2.decision !== "skip" || !nonempty(cross2.reason) || ["trigger_items", "selected_item_ids", "coverage", "followups"].some((field) => array2(cross2[field]).length > 0)) {
       errors.push("strict capability shortfall contract is inconsistent");
     }
     return errors;
@@ -41408,7 +41415,7 @@ function validateDecisionRecordSemantics(record4) {
     }
   }
   const claimStatuses = /* @__PURE__ */ new Map();
-  for (const claim2 of array2(record4.material_claims).map(object5)) {
+  for (const claim2 of array2(record5.material_claims).map(object5)) {
     if (!nonempty(claim2.id) || claimStatuses.has(claim2.id)) {
       errors.push("material claim ids must be unique nonempty strings");
       continue;
@@ -41438,24 +41445,24 @@ function validateDecisionRecordSemantics(record4) {
       }
     }
   };
-  scanForbidden(record4);
-  const constraints = new Set(stringArray(record4.constraints));
-  const requiredConstraints = new Set(stringArray(record4.required_constraints));
+  scanForbidden(record5);
+  const constraints = new Set(stringArray(record5.constraints));
+  const requiredConstraints = new Set(stringArray(record5.required_constraints));
   if ([...requiredConstraints].some((constraint) => !constraints.has(constraint))) {
     errors.push("required constraints must be declared constraints");
   }
-  const issues = array2(record4.issue_ledger).map(object5);
+  const issues = array2(record5.issue_ledger).map(object5);
   for (const issue2 of issues) {
     if (!ISSUE_STATUSES.has(String(issue2.status))) errors.push("issue ledger has invalid status");
   }
-  const observability = object5(record4.observability);
+  const observability = object5(record5.observability);
   for (const value of Object.values(observability)) {
     if (typeof value === "string" && value !== "NOT_OBSERVABLE") errors.push("observability strings must be NOT_OBSERVABLE");
   }
   if (typeof observability.worker_count === "number" && observability.worker_count !== instantiated.size) {
     errors.push("observability worker_count must match instantiated workers");
   }
-  const cross = object5(record4.cross_examination);
+  const cross = object5(record5.cross_examination);
   const triggers = array2(cross.trigger_items).map(object5);
   const selected = stringArray(cross.selected_item_ids);
   const coverage = array2(cross.coverage).map(object5);
@@ -41501,7 +41508,7 @@ function validateDecisionRecordSemantics(record4) {
     }
   }
   if ([...followupCounts.values()].some((count) => count > 1)) errors.push("reviewers may receive at most one cross follow-up");
-  const axes = array2(record4.axis_decisions).map(object5);
+  const axes = array2(record5.axis_decisions).map(object5);
   const axisNames = /* @__PURE__ */ new Set();
   for (const axis of axes) {
     if (!nonempty(axis.axis) || axisNames.has(axis.axis)) {
@@ -41526,7 +41533,7 @@ function validateDecisionRecordSemantics(record4) {
   if (assurance === "independent" && (missingSet.size || failures.length || reused.size)) {
     errors.push("independent assurance requires no missing capability, failures, or reuse");
   }
-  const proposal = object5(record4.consensus_proposal);
+  const proposal = object5(record5.consensus_proposal);
   const status = proposal.status;
   const supported = stringArray(proposal.supported_by_verified_claims);
   if ((status === "consensus" || status === "conditional_consensus") && (!supported.length || !axes.length)) {
@@ -41930,9 +41937,9 @@ function consumedLeases(snapshot, epoch) {
   return snapshot.leases.filter((lease) => lease.epoch === epoch && lease.state === "consumed");
 }
 var WorkflowService = class {
-  constructor(registry2, validator = new ContractValidator(), store = new InMemoryWorkflowStore(), defaultExecutionContext = null, trustedExecutionContextProvider = null) {
+  constructor(registry2, validator2 = new ContractValidator(), store = new InMemoryWorkflowStore(), defaultExecutionContext = null, trustedExecutionContextProvider = null) {
     this.registry = registry2;
-    this.validator = validator;
+    this.validator = validator2;
     this.store = store;
     this.defaultExecutionContext = defaultExecutionContext;
     this.trustedExecutionContextProvider = trustedExecutionContextProvider;
@@ -42026,9 +42033,9 @@ var WorkflowService = class {
         updatedAt: now
       };
       this.validator.convergenceRoot(root);
-      const conflict = this.store.insertConvergenceRoot(root);
-      if (conflict) {
-        throw new WorkflowContractError("ROOT_CONFLICT", "An active convergence root already covers this workspace scope.", conflictDetails(conflict));
+      const conflict2 = this.store.insertConvergenceRoot(root);
+      if (conflict2) {
+        throw new WorkflowContractError("ROOT_CONFLICT", "An active convergence root already covers this workspace scope.", conflictDetails(conflict2));
       }
       return clone2(root);
     });
@@ -42824,9 +42831,9 @@ var WorkflowService = class {
         stageId: stage.stageId
       });
     }
-    let record4;
+    let record5;
     try {
-      record4 = this.validator.declaredSchema(
+      record5 = this.validator.declaredSchema(
         this.registry.rootDirectory,
         stage.gate.validatorSchema,
         result.output.output?.decisionRecord,
@@ -42838,15 +42845,15 @@ var WorkflowService = class {
         cause: error61 instanceof Error ? error61.message : String(error61)
       });
     }
-    const semanticErrors = validateDecisionRecordSemantics(record4);
+    const semanticErrors = validateDecisionRecordSemantics(record5);
     if (semanticErrors.length > 0) {
       throw new WorkflowContractError("GATE_FAILED", "DecisionRecord.v1 failed canonical semantic validation.", {
         stageId: stage.stageId,
         semanticErrors
       });
     }
-    const run = record4.run;
-    const proposal = record4.consensus_proposal;
+    const run = record5.run;
+    const proposal = record5.consensus_proposal;
     if (run.assurance === "provisional" || run.capability_shortfall !== false || proposal === null || proposal.status === "no_consensus") {
       throw new WorkflowContractError("GATE_FAILED", "Deliberation result is not eligible to advance the workflow.", {
         stageId: stage.stageId,
@@ -43562,10 +43569,10 @@ function apiError3(error61) {
   return { schemaVersion: "1.0.0", ok: false, data: null, error: normalized.toBody() };
 }
 var StateCleanupService = class {
-  constructor(workflowStore, continuityStore, validator, clock = () => /* @__PURE__ */ new Date()) {
+  constructor(workflowStore, continuityStore, validator2, clock = () => /* @__PURE__ */ new Date()) {
     this.workflowStore = workflowStore;
     this.continuityStore = continuityStore;
-    this.validator = validator;
+    this.validator = validator2;
     this.clock = clock;
     this.secret = Buffer.from(workflowStore.getOrCreateSecret(
       "state-cleanup-signing-key",
@@ -44210,8 +44217,8 @@ var VM_DOMAIN = "vm-provider-terminal-to-governance";
 var VM_HOST = "flowmarshal-engine";
 var testReaders = /* @__PURE__ */ new WeakSet();
 var hostReaders = /* @__PURE__ */ new WeakMap();
-function exactKeys(value, keys2) {
-  return Object.keys(value).length === keys2.length && keys2.every((key) => Object.hasOwn(value, key));
+function exactKeys(value, keys3) {
+  return Object.keys(value).length === keys3.length && keys3.every((key) => Object.hasOwn(value, key));
 }
 function terminalMicros(value) {
   if (typeof value !== "string") return null;
@@ -44491,8 +44498,8 @@ var ObservationChallengeAuthority = class {
 function object6(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
-function exact2(value, keys2) {
-  return !!value && Object.keys(value).length === keys2.length && keys2.every((key) => Object.hasOwn(value, key));
+function exact2(value, keys3) {
+  return !!value && Object.keys(value).length === keys3.length && keys3.every((key) => Object.hasOwn(value, key));
 }
 function required2(value) {
   return typeof value === "string" && value.trim().length > 0;
@@ -44543,15 +44550,15 @@ var VmCurrentInvocation = class {
     const input2 = { ...current.arguments };
     delete input2._hostAttestation;
     delete input2.responseMode;
-    const validator = new ContractValidator();
+    const validator2 = new ContractValidator();
     if (current.tool === "plan_workflow") {
-      const parsed = validator.planWorkflowRequest(input2);
+      const parsed = validator2.planWorkflowRequest(input2);
       const task = "taskEnvelope" in parsed ? parsed.taskEnvelope : parsed;
       if (task.taskId !== binding2.taskId || binding2.runId !== null || binding2.attemptId !== null) {
         reject("bootstrap task binding mismatch");
       }
     } else if (current.tool === "record_stage_result") {
-      const result = validator.stageResult(input2);
+      const result = validator2.stageResult(input2);
       const run = this.store.getRun(result.runId);
       const stage = run?.plan.stages.find((candidate) => candidate.stageId === result.stageId);
       if (!run || run.state !== "running" || run.revision !== result.expectedRevision || !stage || stage.state !== "ready" || result.runId !== binding2.runId || run.plan.taskId !== binding2.taskId) {
@@ -44632,6 +44639,1187 @@ var VmCurrentInvocation = class {
   }
 };
 
+// mcp-server/src/routing-v3/open-semantic-service.ts
+import { DatabaseSync as DatabaseSync7 } from "node:sqlite";
+
+// skills/coordinate-subagents/references/semantic-decision/decision-policy.v1.json
+var decision_policy_v1_default = {
+  schemaVersion: "1.0.0",
+  id: "semantic-model-ranking",
+  version: "1.0.0",
+  mode: "off",
+  purpose: "model-ranking",
+  assistScope: {
+    highRisk: false,
+    independentAudit: false,
+    preserveRequired: true,
+    preservePreferred: true,
+    selectionUnit: "model",
+    tieBreak: "baseline-order"
+  },
+  adoption: {
+    status: "unvalidated",
+    minimumConfidence: null,
+    evidenceDigest: null
+  },
+  egress: {
+    enabled: false,
+    allowedProviders: []
+  }
+};
+
+// mcp-server/src/semantic/evaluation-intent.ts
+import { randomUUID as randomUUID5 } from "node:crypto";
+
+// mcp-server/src/semantic/evaluation-store.ts
+function conflict(message) {
+  throw new WorkflowContractError("GATE_FAILED", message);
+}
+function json2(value) {
+  try {
+    return canonical(value);
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", "Evaluation journal requires finite, plain JSON.");
+  }
+}
+var SemanticEvaluationStore = class {
+  /** The caller owns and closes this connection to the existing workflow database. */
+  constructor(database) {
+    this.database = database;
+    database.exec("PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON;");
+    this.transaction(() => {
+      database.exec(`CREATE TABLE IF NOT EXISTS ags_semantic_evaluations_v1 (
+        evaluation_id TEXT PRIMARY KEY, idempotency_key TEXT NOT NULL UNIQUE,
+        request_digest TEXT NOT NULL
+      ) STRICT;
+      CREATE TABLE IF NOT EXISTS ags_semantic_requests_v1 (
+        evaluation_id TEXT PRIMARY KEY REFERENCES ags_semantic_evaluations_v1(evaluation_id),
+        request_json TEXT NOT NULL
+      ) STRICT;
+      CREATE TABLE IF NOT EXISTS ags_semantic_results_v1 (
+        evaluation_id TEXT PRIMARY KEY REFERENCES ags_semantic_evaluations_v1(evaluation_id),
+        request_digest TEXT NOT NULL, result_digest TEXT NOT NULL, result_json TEXT NOT NULL
+      ) STRICT;`);
+    });
+  }
+  database;
+  validator = new ContractValidator();
+  transaction(operation) {
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const result = operation();
+      this.database.exec("COMMIT");
+      return result;
+    } catch (error61) {
+      this.database.exec("ROLLBACK");
+      throw error61;
+    }
+  }
+  row(where, value) {
+    return this.database.prepare(`SELECT e.evaluation_id, e.idempotency_key, e.request_digest,
+      q.request_json, r.request_digest AS result_request_digest, r.result_digest, r.result_json
+      FROM ags_semantic_evaluations_v1 e
+      JOIN ags_semantic_requests_v1 q ON q.evaluation_id = e.evaluation_id
+      LEFT JOIN ags_semantic_results_v1 r ON r.evaluation_id = e.evaluation_id
+      WHERE e.${where} = ?`).get(value) ?? null;
+  }
+  read(row) {
+    const request = this.validator.semanticDecisionRequestV1(JSON.parse(row.request_json));
+    if (request.evaluationId !== row.evaluation_id || request.requestDigest !== row.request_digest || json2(request) !== row.request_json) conflict("Stored semantic request binding is corrupt.");
+    const result = row.result_json === null ? null : JSON.parse(row.result_json);
+    if (row.result_json !== null && (row.result_request_digest !== row.request_digest || row.result_digest !== digest(result) || row.result_json !== json2(result))) {
+      conflict("Stored semantic result digest is corrupt.");
+    }
+    return {
+      evaluationId: row.evaluation_id,
+      idempotencyKey: row.idempotency_key,
+      state: row.result_json === null ? "prepared" : "recorded",
+      request,
+      result
+    };
+  }
+  get(evaluationId) {
+    const row = this.row("evaluation_id", evaluationId);
+    return row === null ? null : this.read(row);
+  }
+  getByIdempotencyKey(key) {
+    const row = this.row("idempotency_key", key);
+    return row === null ? null : this.read(row);
+  }
+  putRequest(key, value) {
+    if (!key.trim()) throw new WorkflowContractError("INVALID_INPUT", "Idempotency key is required.");
+    const request = this.validator.semanticDecisionRequestV1(value);
+    const requestJson = json2(request);
+    return this.transaction(() => {
+      const byId = this.row("evaluation_id", request.evaluationId);
+      const byKey = this.row("idempotency_key", key);
+      if (byId || byKey) {
+        if (!byId || !byKey || byId.evaluation_id !== byKey.evaluation_id || byId.idempotency_key !== key || byId.request_digest !== request.requestDigest || byId.request_json !== requestJson) conflict("Semantic evaluation ID or idempotency key conflicts with its immutable request.");
+        return this.read(byId);
+      }
+      this.database.prepare("INSERT INTO ags_semantic_evaluations_v1 VALUES (?,?,?)").run(request.evaluationId, key, request.requestDigest);
+      this.database.prepare("INSERT INTO ags_semantic_requests_v1 VALUES (?,?)").run(request.evaluationId, requestJson);
+      return this.read(this.row("evaluation_id", request.evaluationId));
+    });
+  }
+  putResult(evaluationId, requestDigest, value) {
+    const resultJson = json2(value);
+    const resultDigest = digest(value);
+    return this.transaction(() => {
+      const prior = this.row("evaluation_id", evaluationId);
+      if (!prior || prior.request_digest !== requestDigest) conflict("Semantic result is not bound to a stored request.");
+      if (prior.result_json !== null) {
+        if (prior.result_digest !== resultDigest || prior.result_json !== resultJson) {
+          conflict("Semantic result conflicts with the immutable recorded result.");
+        }
+        return this.read(prior);
+      }
+      this.database.prepare("INSERT INTO ags_semantic_results_v1 VALUES (?,?,?,?)").run(evaluationId, requestDigest, resultDigest, resultJson);
+      return this.read(this.row("evaluation_id", evaluationId));
+    });
+  }
+};
+
+// mcp-server/src/semantic/evaluation-intent.ts
+function deny(message) {
+  throw new WorkflowContractError("GATE_FAILED", message);
+}
+function rawJson(value) {
+  try {
+    return canonical(value);
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", "Evaluation result requires finite, plain JSON.");
+  }
+}
+var SemanticEvaluationIntentStore = class {
+  /** Pass a connection to the existing workflow DB. The caller retains ownership. */
+  constructor(database) {
+    this.database = database;
+    this.journal = new SemanticEvaluationStore(database);
+    this.transaction(() => {
+      database.exec(`CREATE TABLE IF NOT EXISTS ags_semantic_intents_v1 (
+        evaluation_id TEXT PRIMARY KEY REFERENCES ags_semantic_evaluations_v1(evaluation_id),
+        request_digest TEXT NOT NULL,
+        state TEXT NOT NULL CHECK (state IN ('pending','running','uncertain','recorded')),
+        claim_id TEXT UNIQUE, runner_id TEXT,
+        CHECK ((state='pending' AND claim_id IS NULL AND runner_id IS NULL)
+          OR (state<>'pending' AND claim_id IS NOT NULL AND runner_id IS NOT NULL))
+      ) STRICT;`);
+    });
+  }
+  database;
+  journal;
+  transaction(work) {
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const result = work();
+      this.database.exec("COMMIT");
+      return result;
+    } catch (error61) {
+      this.database.exec("ROLLBACK");
+      throw error61;
+    }
+  }
+  row(evaluationId) {
+    return this.database.prepare("SELECT evaluation_id,request_digest,state,claim_id,runner_id FROM ags_semantic_intents_v1 WHERE evaluation_id=?").get(evaluationId) ?? null;
+  }
+  read(row) {
+    const evaluation = this.journal.get(row.evaluation_id);
+    const hasClaim = !!row.claim_id && !!row.runner_id;
+    if (!evaluation || evaluation.request.requestDigest !== row.request_digest || row.state === "recorded" !== (evaluation.state === "recorded") || (row.state === "pending" ? row.claim_id !== null || row.runner_id !== null : !hasClaim)) {
+      deny("Semantic intent and immutable evaluation journal diverged.");
+    }
+    return { evaluation, state: row.state, claimId: row.claim_id, runnerId: row.runner_id };
+  }
+  get(evaluationId) {
+    const row = this.row(evaluationId);
+    return row === null ? null : this.read(row);
+  }
+  /** Crash after request persistence is safe: the same key/request recreates only the missing intent. */
+  begin(idempotencyKey, preparedRequest) {
+    const stored = this.journal.putRequest(idempotencyKey, preparedRequest);
+    return this.transaction(() => {
+      const prior = this.row(stored.evaluationId);
+      if (prior) return this.read(prior);
+      if (stored.state !== "prepared") deny("An unclaimed evaluation already has a result.");
+      this.database.prepare("INSERT INTO ags_semantic_intents_v1 VALUES (?,?,'pending',NULL,NULL)").run(stored.evaluationId, stored.request.requestDigest);
+      return this.read(this.row(stored.evaluationId));
+    });
+  }
+  /** Exactly one local runner receives a durable claim. Repeated calls never reissue it. */
+  claim(evaluationId, requestDigest, runnerId) {
+    if (!runnerId.trim()) throw new WorkflowContractError("INVALID_INPUT", "Runner ID is required.");
+    return this.transaction(() => {
+      const row = this.row(evaluationId);
+      if (!row || row.request_digest !== requestDigest) deny("Runner claim is not bound to the prepared request.");
+      const current = this.read(row);
+      if (current.state !== "pending") deny("Evaluation already has a claim or result; no new provider call is allowed.");
+      const claimId = randomUUID5();
+      const changed = this.database.prepare("UPDATE ags_semantic_intents_v1 SET state='running',claim_id=?,runner_id=? WHERE evaluation_id=? AND request_digest=? AND state='pending'").run(claimId, runnerId, evaluationId, requestDigest).changes;
+      if (changed !== 1) deny("Concurrent evaluation claim lost.");
+      return this.read(this.row(evaluationId));
+    });
+  }
+  /** At restart, a running claim may have reached the provider; absence of result proves nothing. */
+  resume(evaluationId, requestDigest) {
+    return this.transaction(() => {
+      const row = this.row(evaluationId);
+      if (!row || row.request_digest !== requestDigest) deny("Resume is not bound to the prepared request.");
+      this.read(row);
+      if (row.state === "running") {
+        this.database.prepare("UPDATE ags_semantic_intents_v1 SET state='uncertain' WHERE evaluation_id=? AND state='running'").run(evaluationId);
+      }
+      return this.read(this.row(evaluationId));
+    });
+  }
+  /** Records only an existing runner claim's raw result. An uncertain claim may settle late. */
+  recordResult(evaluationId, requestDigest, claimId, result) {
+    const resultJson = rawJson(result);
+    const resultDigest = digest(result);
+    return this.transaction(() => {
+      const row = this.row(evaluationId);
+      if (!row || row.request_digest !== requestDigest || !claimId || row.claim_id !== claimId) {
+        deny("Result is not bound to the recorded runner claim and request.");
+      }
+      const current = this.read(row);
+      if (current.state === "recorded") {
+        if (rawJson(current.evaluation.result) !== resultJson) deny("Conflicting result for recorded runner claim.");
+        return current;
+      }
+      if (current.state !== "running" && current.state !== "uncertain") deny("Result has no active runner claim.");
+      this.database.prepare("INSERT INTO ags_semantic_results_v1 VALUES (?,?,?,?)").run(evaluationId, requestDigest, resultDigest, resultJson);
+      this.database.prepare("UPDATE ags_semantic_intents_v1 SET state='recorded' WHERE evaluation_id=?").run(evaluationId);
+      return this.read(this.row(evaluationId));
+    });
+  }
+};
+
+// mcp-server/src/semantic/providers/jev/request-limits.ts
+var JEV_MAX_REQUEST_BYTES = 256 * 1024;
+
+// mcp-server/src/semantic/state-projection.ts
+var SEMANTIC_STATE_PROJECTION_VERSION = "1.0.0";
+function projectSemanticState(input2) {
+  const { routingRequest, catalog, eligibleModelIds } = input2;
+  const projectionVersion = input2.projectionVersion ?? SEMANTIC_STATE_PROJECTION_VERSION;
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$/u.test(projectionVersion) || eligibleModelIds.length === 0 || new Set(eligibleModelIds).size !== eligibleModelIds.length) {
+    throw new TypeError("Invalid semantic state projection input.");
+  }
+  const models = eligibleModelIds.map((id) => {
+    const model = catalog.models.find((entry) => entry.id === id);
+    if (!model) throw new TypeError(`Unknown eligible model: ${id}`);
+    const sources = model.sourceIds.map((sourceId) => {
+      const source = catalog.sources.find((entry) => entry.id === sourceId);
+      if (!source) throw new TypeError(`Missing catalog source: ${sourceId}`);
+      return { id: source.id, url: source.url, evidenceKind: source.evidenceKind, checkedAt: source.checkedAt, note: source.note };
+    });
+    return {
+      id: model.id,
+      officialPositioning: model.officialPositioning,
+      policyClass: model.modelClass,
+      policyStatus: model.status,
+      recommendationBasis: model.recommendationBasis,
+      roleFit: model.roles.includes(routingRequest.role),
+      listedRoles: model.roles,
+      matchingTaskTraits: (routingRequest.taskTraits ?? []).filter((trait) => model.taskTraits.includes(trait)),
+      missingTaskTraits: (routingRequest.taskTraits ?? []).filter((trait) => !model.taskTraits.includes(trait)),
+      missingInputModalities: routingRequest.requirements.inputModalities.filter((modality) => !model.inputModalities.includes(modality)),
+      documentedInputModalities: model.inputModalities,
+      documentedReasoningKinds: model.nativeKinds,
+      contextTokens: model.contextTokens,
+      catalogVerification: model.verification,
+      hostCapability: "requires-current-capability-snapshot",
+      measuredAbilityScore: model.abilityScore,
+      catalogCheckedAt: model.checkedAt,
+      sources
+    };
+  });
+  const text2 = JSON.stringify({
+    projectionVersion,
+    task: {
+      role: routingRequest.role,
+      highRisk: routingRequest.highRisk,
+      taskTraits: routingRequest.taskTraits ?? [],
+      requirements: {
+        inputModalities: routingRequest.requirements.inputModalities,
+        tools: routingRequest.requirements.tools,
+        filesystem: routingRequest.requirements.filesystem,
+        allowedSurfaces: routingRequest.requirements.allowedSurfaces,
+        allowedRuntimeModes: routingRequest.requirements.allowedRuntimeModes,
+        allowNestedDelegation: routingRequest.requirements.allowNestedDelegation,
+        requireObservable: routingRequest.requirements.requireObservable,
+        contextMode: routingRequest.requirements.contextMode
+      }
+    },
+    catalogSnapshotDate: catalog.snapshotDate,
+    models
+  });
+  if (text2.length > 32768) throw new RangeError("Semantic state projection exceeds the request contract.");
+  const state = {
+    text: text2,
+    sources: [
+      { kind: "task", id: routingRequest.binding.taskId, digest: routingRequest.binding.inputDigest },
+      { kind: "artifact", id: "model-catalog", digest: catalog.catalogDigest }
+    ],
+    summaryDigest: null
+  };
+  const question = structuredClone(input2.question);
+  return { projectionVersion, state, stateDigest: digest(state), question, questionDigest: digest(question) };
+}
+
+// mcp-server/src/semantic/provider-registry.ts
+var SemanticProviderRegistry = class {
+  constructor(providers = /* @__PURE__ */ new Map()) {
+    this.providers = providers;
+  }
+  providers;
+  get(id) {
+    return this.providers.get(id) ?? null;
+  }
+  ids() {
+    return [...this.providers.keys()];
+  }
+};
+
+// mcp-server/src/routing-v3/semantic-gateway.ts
+function createSemanticGateway(service) {
+  const validator2 = new ContractValidator();
+  return { async resolve(input2) {
+    try {
+      const assignment = validator2.semanticModelAssignmentRequestV1(input2);
+      const data = await service.resolve(assignment);
+      return { schemaVersion: "1.0.0", ok: true, data, error: null };
+    } catch (error61) {
+      const body = error61 instanceof WorkflowContractError ? error61.toBody() : { code: "MCP_UNAVAILABLE", message: "Semantic routing service is unavailable.", details: null };
+      return { schemaVersion: "1.0.0", ok: false, data: null, error: body };
+    }
+  } };
+}
+
+// skills/coordinate-subagents/scripts/semantic/adoption-guard.mjs
+function assessSemanticAdoptionV1(policy, routingRequest, prepared, advice, evidenceAdmission = null) {
+  const baseline = (reasonCode) => ({ status: "baseline", reasonCode });
+  if (policy.mode === "off") return baseline("POLICY_OFF");
+  if (policy.mode === "shadow") return baseline("SHADOW_ONLY");
+  if (policy.mode !== "assist" || prepared.mode !== "assist") return baseline("MODE_MISMATCH");
+  if (routingRequest.highRisk) return baseline("HIGH_RISK_EXCLUDED");
+  if (routingRequest.role === "independent-audit") return baseline("INDEPENDENT_AUDIT_EXCLUDED");
+  const scope = policy.assistScope;
+  if (scope?.highRisk !== false || scope.independentAudit !== false || scope.selectionUnit !== "model" || scope.tieBreak !== "baseline-order" || routingRequest.user?.strength === "required" && scope.preserveRequired !== true || routingRequest.user?.strength === "preferred" && scope.preservePreferred !== true) return baseline("SCOPE_NOT_PRESERVED");
+  const adoption = policy.adoption;
+  if (adoption?.status !== "validated" || !/^sha256:[a-f0-9]{64}$/u.test(adoption.evidenceDigest) || typeof adoption.minimumConfidence !== "number" || !Number.isFinite(adoption.minimumConfidence) || adoption.minimumConfidence < 0 || adoption.minimumConfidence > 1) return baseline("ADOPTION_UNVALIDATED");
+  if (!policy.egress?.enabled || !policy.egress.allowedProviders?.includes(prepared.provider?.id)) return baseline("PROVIDER_NOT_ALLOWED");
+  if (canonical(adoption.provider) !== canonical(prepared.provider) || canonical(prepared.provider) !== canonical(advice.provider)) return baseline("PROVIDER_MISMATCH");
+  if (adoption.questionDigest !== prepared.questionDigest || prepared.questionDigest !== advice.questionDigest) return baseline("QUESTION_MISMATCH");
+  if (adoption.reducerVersion !== prepared.reducerVersion || prepared.reducerVersion !== advice.reducerVersion) return baseline("REDUCER_MISMATCH");
+  if (prepared.semanticPolicyDigest !== digest(policy) || advice.semanticPolicyDigest !== prepared.semanticPolicyDigest || advice.semanticRequestDigest !== prepared.requestDigest) return baseline("REQUEST_BINDING_MISMATCH");
+  if (evidenceAdmission?.status !== "admitted" || evidenceAdmission.evidenceDigest !== adoption.evidenceDigest) return baseline("EVIDENCE_NOT_ADMITTED");
+  const confidence = advice.choice?.confidence;
+  if (confidence === null) return baseline("CONFIDENCE_UNKNOWN");
+  if (typeof confidence !== "number" || !Number.isFinite(confidence) || confidence < 0 || confidence > 1) return baseline("CONFIDENCE_INVALID");
+  if (confidence < adoption.minimumConfidence) return baseline("CONFIDENCE_BELOW_MINIMUM");
+  return { status: "eligible", evidenceDigest: adoption.evidenceDigest };
+}
+
+// skills/coordinate-subagents/scripts/semantic/reducer.mjs
+var bindingFields = [
+  "evaluationId",
+  "binding",
+  "effectiveRoutingRequestDigest",
+  "stateDigest",
+  "questionDigest",
+  "catalogDigest",
+  "routingPolicyDigest",
+  "semanticPolicyDigest",
+  "capabilitySetDigest",
+  "eligibleSetDigest",
+  "optionMappingDigest",
+  "provider",
+  "reducerVersion"
+];
+var selectionFields = [
+  "model",
+  "resolvedModel",
+  "modelOrigin",
+  "servingProvider",
+  "accessPath",
+  "nativeReasoning",
+  "runtimeMode"
+];
+var targetFields = ["actorId", "host", "sessionId", "instanceId"];
+var pick2 = (value, fields) => Object.fromEntries(fields.map((key) => [key, structuredClone(value[key])]));
+function reduceSemanticDecisionOutcomeV1({
+  policy,
+  routingRequest,
+  baselineDecision,
+  prepared = null,
+  advice = null,
+  adoption = null,
+  candidates = [],
+  nonAdoption = null
+}) {
+  verifySeal(baselineDecision, "decisionDigest");
+  assert2(baselineDecision.schemaVersion === "2.0.0" && baselineDecision.requestDigest === digest(routingRequest) && canonical(baselineDecision.binding) === canonical(routingRequest.binding) && canonical(baselineDecision.requested) === canonical(routingRequest.user ?? null) && baselineDecision.executionAuthorized === false && baselineDecision.trustedGateSatisfied === false, "BASELINE_MISMATCH");
+  assert2(["off", "shadow", "assist"].includes(policy?.mode), "INVALID_INPUT");
+  if (prepared !== null) {
+    verifySeal(prepared, "requestDigest");
+    assert2(canonical(prepared.binding) === canonical(routingRequest.binding) && prepared.effectiveRoutingRequestDigest === baselineDecision.requestDigest && prepared.catalogDigest === baselineDecision.catalogDigest && prepared.routingPolicyDigest === baselineDecision.policyDigest && prepared.capabilitySetDigest === baselineDecision.capabilitySetDigest && prepared.semanticPolicyDigest === digest(policy), "REQUEST_BINDING_MISMATCH");
+  }
+  if (advice !== null) {
+    verifySeal(advice, "adviceDigest");
+    assert2(prepared !== null && bindingFields.every((key) => canonical(prepared[key]) === canonical(advice[key])) && advice.semanticRequestDigest === prepared.requestDigest, "ADVICE_BINDING_MISMATCH");
+  }
+  if (policy.mode !== "assist") return baselineDecision;
+  if (adoption?.status === "baseline") {
+    const allowed = [
+      "HIGH_RISK_EXCLUDED",
+      "INDEPENDENT_AUDIT_EXCLUDED",
+      "SCOPE_NOT_PRESERVED",
+      "ADOPTION_UNVALIDATED",
+      "PROVIDER_NOT_ALLOWED",
+      "CONFIDENCE_UNKNOWN",
+      "CONFIDENCE_BELOW_MINIMUM"
+    ];
+    assert2(allowed.includes(adoption.reasonCode), "NON_ADOPTION_NOT_FALLBACK");
+  }
+  if (nonAdoption !== null) {
+    assert2(
+      adoption === null && advice === null && ["ABSTAINED", "PROVIDER_TIMEOUT", "PROVIDER_UNAVAILABLE"].includes(nonAdoption),
+      "NON_ADOPTION_NOT_FALLBACK"
+    );
+  }
+  if (baselineDecision.status === "blocked" || baselineDecision.fallbackReason !== null) return baselineDecision;
+  if (adoption?.status === "baseline") {
+    return { status: "non-adoption", reasonCode: adoption.reasonCode, baselineDecision };
+  }
+  if (nonAdoption !== null) {
+    return { status: "non-adoption", reasonCode: nonAdoption, baselineDecision };
+  }
+  assert2(adoption?.status === "eligible" && prepared !== null && advice !== null, "ADOPTION_NOT_ELIGIBLE");
+  return reduceSemanticDecisionV1({ prepared, advice, adoption, baselineDecision, candidates });
+}
+function reduceSemanticDecisionV1({ prepared, advice, adoption, baselineDecision, candidates }) {
+  assert2(adoption?.status === "eligible", "ADOPTION_NOT_ELIGIBLE");
+  assert2(
+    prepared?.mode === "assist" && baselineDecision?.schemaVersion === "2.0.0" && baselineDecision.status === "selected" && baselineDecision.fallbackReason === null,
+    "INVALID_INPUT",
+    "Assist and selected v2 baseline without fallback required"
+  );
+  verifySeal(prepared, "requestDigest");
+  verifySeal(advice, "adviceDigest");
+  verifySeal(baselineDecision, "decisionDigest");
+  assert2(bindingFields.every((key) => canonical(prepared[key]) === canonical(advice[key])) && advice.semanticRequestDigest === prepared.requestDigest, "ADVICE_BINDING_MISMATCH");
+  assert2(canonical(prepared.binding) === canonical(baselineDecision.binding) && prepared.effectiveRoutingRequestDigest === baselineDecision.requestDigest && prepared.catalogDigest === baselineDecision.catalogDigest && prepared.routingPolicyDigest === baselineDecision.policyDigest && prepared.capabilitySetDigest === baselineDecision.capabilitySetDigest && baselineDecision.executionAuthorized === false && baselineDecision.trustedGateSatisfied === false, "BASELINE_MISMATCH");
+  assert2(prepared.eligibleSetDigest === digest(prepared.eligibleSet) && prepared.optionMappingDigest === digest(prepared.options), "DIGEST_MISMATCH");
+  assert2(Array.isArray(prepared.eligibleSet) && prepared.eligibleSet.length > 0 && Array.isArray(prepared.options) && prepared.options.length > 0 && Array.isArray(candidates) && candidates.length === prepared.eligibleSet.length, "INVALID_INPUT");
+  const byKey = /* @__PURE__ */ new Map();
+  for (const candidate of candidates) {
+    validateCapabilities(candidate.snapshot);
+    assert2(candidate.key === digest({ snapshotDigest: candidate.snapshot.snapshotDigest, binding: candidate.binding }) && candidate.model?.id === candidate.binding?.resolvedModel && candidate.snapshot.supportedBindings.some((binding2) => canonical(binding2) === canonical(candidate.binding)) && !byKey.has(candidate.key), "CANDIDATE_MISMATCH");
+    byKey.set(candidate.key, candidate);
+  }
+  const eligible = prepared.eligibleSet;
+  const eligibleByKey = /* @__PURE__ */ new Map();
+  for (const [rank, item] of eligible.entries()) {
+    assert2(item.baselineRank === rank && Number.isSafeInteger(item.preferenceGroup) && item.preferenceGroup >= 0 && (rank === 0 || item.preferenceGroup >= eligible[rank - 1].preferenceGroup) && !eligibleByKey.has(item.candidateKey) && byKey.get(item.candidateKey)?.model.id === item.model, "ELIGIBLE_SET_MISMATCH");
+    eligibleByKey.set(item.candidateKey, item);
+  }
+  const first = byKey.get(eligible[0].candidateKey);
+  assert2(canonical(baselineDecision.selected) === canonical(pick2(first.binding, selectionFields)) && canonical(baselineDecision.target) === canonical(pick2(first.snapshot, targetFields)) && baselineDecision.invocationSurface === first.binding.invocationSurface && baselineDecision.capabilitySnapshotDigest === first.snapshot.snapshotDigest, "BASELINE_MISMATCH");
+  const optionById = /* @__PURE__ */ new Map(), mapped = /* @__PURE__ */ new Set();
+  for (const option of prepared.options) {
+    assert2(!optionById.has(option.optionId) && Array.isArray(option.candidateKeys) && option.candidateKeys.length > 0, "OPTION_MAPPING_MISMATCH");
+    optionById.set(option.optionId, option);
+    for (const key of option.candidateKeys) {
+      assert2(eligibleByKey.has(key) && !mapped.has(key) && eligibleByKey.get(key).model === option.model, "OPTION_MAPPING_MISMATCH");
+      mapped.add(key);
+    }
+  }
+  assert2(mapped.size === eligibleByKey.size && Array.isArray(advice.choice?.selectedOptionIds) && advice.choice.selectedOptionIds.length > 0 && new Set(advice.choice.selectedOptionIds).size === advice.choice.selectedOptionIds.length, "OPTION_MAPPING_MISMATCH");
+  const selected = /* @__PURE__ */ new Set();
+  for (const id of advice.choice.selectedOptionIds) {
+    const option = optionById.get(id);
+    assert2(option, "UNKNOWN_OPTION");
+    for (const key of option.candidateKeys) selected.add(key);
+  }
+  const winner = eligible.find((item) => item.preferenceGroup === eligible[0].preferenceGroup && selected.has(item.candidateKey));
+  assert2(winner, "PREFERENCE_GROUP_VIOLATION");
+  const concrete = byKey.get(winner.candidateKey);
+  const selectedOptionId = advice.choice.selectedOptionIds.find((id) => optionById.get(id).candidateKeys.includes(winner.candidateKey));
+  const semantic = {
+    mode: "assist",
+    adviceDigest: advice.adviceDigest,
+    semanticRequestDigest: prepared.requestDigest,
+    semanticPolicyDigest: prepared.semanticPolicyDigest,
+    eligibleSetDigest: prepared.eligibleSetDigest,
+    optionMappingDigest: prepared.optionMappingDigest,
+    reducerVersion: prepared.reducerVersion,
+    selectedOptionId,
+    baselineDecisionDigest: baselineDecision.decisionDigest
+  };
+  return seal({
+    ...structuredClone(baselineDecision),
+    schemaVersion: "3.0.0",
+    capabilitySnapshotDigest: concrete.snapshot.snapshotDigest,
+    selected: pick2(concrete.binding, selectionFields),
+    target: pick2(concrete.snapshot, targetFields),
+    invocationSurface: concrete.binding.invocationSurface,
+    status: "selected",
+    executionAuthorized: false,
+    trustedGateSatisfied: false,
+    selectionReasonCodes: [.../* @__PURE__ */ new Set([
+      ...baselineDecision.selectionReasonCodes.filter((code) => code === "PREFERRED_CHOICE_UNAVAILABLE"),
+      "SEMANTIC_ADVICE_ADOPTED"
+    ])],
+    fallbackReason: null,
+    semantic
+  }, "decisionDigest");
+}
+
+// mcp-server/src/semantic/advice-admission.ts
+import { randomUUID as randomUUID6 } from "node:crypto";
+
+// mcp-server/src/semantic/provider-port.ts
+function parseSemanticProviderResultV1(value) {
+  if (!record4(value) || typeof value.status !== "string") throw new TypeError("Invalid semantic provider result.");
+  if (value.status === "success") {
+    const choice = value.choice;
+    if (!keys2(value, "status", "choice") || !record4(choice) || !keys2(choice, "kind", "selectedOptionIds", "confidence") || choice.kind !== "Choice" || !Array.isArray(choice.selectedOptionIds) || choice.selectedOptionIds.length < 1 || choice.selectedOptionIds.length > 256 || !choice.selectedOptionIds.every((id) => typeof id === "string" && /^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$/u.test(id)) || new Set(choice.selectedOptionIds).size !== choice.selectedOptionIds.length || choice.confidence !== null && (typeof choice.confidence !== "number" || !Number.isFinite(choice.confidence) || choice.confidence < 0 || choice.confidence > 1)) {
+      throw new TypeError("Invalid semantic provider choice.");
+    }
+    return { status: "success", choice };
+  }
+  if (keys2(value, "status") && (value.status === "abstained" || value.status === "timeout" || value.status === "unavailable" || value.status === "invalid" || value.status === "uncertain")) {
+    return { status: value.status };
+  }
+  throw new TypeError("Invalid semantic provider result.");
+}
+function record4(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+function keys2(value, ...expected) {
+  return Object.keys(value).length === expected.length && expected.every((key) => Object.hasOwn(value, key));
+}
+
+// mcp-server/src/semantic/advice-validator.ts
+var validator = new ContractValidator();
+function validateSemanticAdviceForRequest(input2) {
+  const advice = validator.semanticDecisionAdviceForRequestV1(input2.advice, input2.prepared);
+  let now;
+  try {
+    now = instant(input2.now, "semantic advice observation time");
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", "Canonical UTC semantic advice observation time required.");
+  }
+  if (instant(advice.evaluatedAt, "advice evaluatedAt") > now || now >= instant(advice.expiresAt, "advice expiresAt")) {
+    throw new WorkflowContractError("INVALID_INPUT", "Semantic advice is future-dated or expired.");
+  }
+  return advice;
+}
+function normalizeSemanticProviderResult(input2) {
+  const request = validator.semanticDecisionRequestV1(input2.prepared);
+  const result = parseSemanticProviderResultV1(input2.rawResult);
+  if (result.status !== "success") {
+    throw new WorkflowContractError("INVALID_INPUT", "Provider result contains no semantic Choice.");
+  }
+  const advice = seal({
+    schemaVersion: request.schemaVersion,
+    evaluationId: request.evaluationId,
+    binding: structuredClone(request.binding),
+    effectiveRoutingRequestDigest: request.effectiveRoutingRequestDigest,
+    stateDigest: request.stateDigest,
+    questionDigest: request.questionDigest,
+    catalogDigest: request.catalogDigest,
+    routingPolicyDigest: request.routingPolicyDigest,
+    semanticPolicyDigest: request.semanticPolicyDigest,
+    capabilitySetDigest: request.capabilitySetDigest,
+    eligibleSetDigest: request.eligibleSetDigest,
+    optionMappingDigest: request.optionMappingDigest,
+    provider: structuredClone(request.provider),
+    reducerVersion: request.reducerVersion,
+    semanticRequestDigest: request.requestDigest,
+    choice: structuredClone(result.choice),
+    evaluatedAt: input2.now,
+    expiresAt: request.expiresAt
+  }, "adviceDigest");
+  return validateSemanticAdviceForRequest({ prepared: request, advice, now: input2.now });
+}
+
+// mcp-server/src/semantic/advice-admission.ts
+function deny2(message) {
+  throw new WorkflowContractError("GATE_FAILED", message);
+}
+var SemanticAdviceAdmissionStore = class {
+  /** The owning server supplies the workflow connection and clock; no MCP advice-registration input exists. */
+  constructor(database, now = () => (/* @__PURE__ */ new Date()).toISOString()) {
+    this.database = database;
+    this.now = now;
+    this.intents = new SemanticEvaluationIntentStore(database);
+    this.transaction(() => {
+      database.exec(`CREATE TABLE IF NOT EXISTS ags_semantic_advice_v1 (
+        evaluation_id TEXT PRIMARY KEY REFERENCES ags_semantic_evaluations_v1(evaluation_id),
+        registration_id TEXT NOT NULL UNIQUE,
+        request_digest TEXT NOT NULL, result_digest TEXT NOT NULL,
+        advice_digest TEXT NOT NULL UNIQUE, registered_at TEXT NOT NULL,
+        advice_json TEXT NOT NULL
+      ) STRICT;`);
+    });
+  }
+  database;
+  now;
+  intents;
+  transaction(work) {
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const result = work();
+      this.database.exec("COMMIT");
+      return result;
+    } catch (error61) {
+      this.database.exec("ROLLBACK");
+      throw error61;
+    }
+  }
+  row(evaluationId) {
+    return this.database.prepare("SELECT * FROM ags_semantic_advice_v1 WHERE evaluation_id=?").get(evaluationId) ?? null;
+  }
+  recorded(evaluationId) {
+    const intent = this.intents.get(evaluationId);
+    if (!intent || intent.state !== "recorded" || !intent.claimId || !intent.runnerId || intent.evaluation.state !== "recorded" || intent.evaluation.result === null) {
+      deny2("Advice requires a runner-recorded evaluation and result.");
+    }
+    return intent;
+  }
+  read(row, intent) {
+    const { request, result } = intent.evaluation;
+    if (row.request_digest !== request.requestDigest || row.result_digest !== digest(result)) {
+      deny2("Advice registration does not match the runner journal.");
+    }
+    const advice = validateSemanticAdviceForRequest({
+      prepared: request,
+      advice: JSON.parse(row.advice_json),
+      now: row.registered_at
+    });
+    const expected = normalizeSemanticProviderResult({ prepared: request, rawResult: result, now: row.registered_at });
+    if (row.advice_json !== canonical(advice) || row.advice_digest !== advice.adviceDigest || canonical(advice) !== canonical(expected) || advice.evaluatedAt !== row.registered_at || advice.evaluationId !== row.evaluation_id) {
+      deny2("Stored advice registration is inconsistent.");
+    }
+    return {
+      registrationId: row.registration_id,
+      evaluationId: row.evaluation_id,
+      requestDigest: row.request_digest,
+      resultDigest: row.result_digest,
+      advice
+    };
+  }
+  /** Historical readback is not a current-expiry or admission decision. */
+  get(evaluationId) {
+    const row = this.row(evaluationId);
+    return row === null ? null : this.read(row, this.recorded(evaluationId));
+  }
+  /** Replays the same immutable registration; never accepts a caller-provided advice or flag. */
+  register(evaluationId) {
+    if (typeof evaluationId !== "string" || !evaluationId.trim()) {
+      throw new WorkflowContractError("INVALID_INPUT", "Evaluation ID is required.");
+    }
+    return this.transaction(() => {
+      const intent = this.recorded(evaluationId);
+      const previous = this.row(evaluationId);
+      const { request, result } = intent.evaluation;
+      const registeredAt = this.now();
+      if (previous) {
+        const stored = this.read(previous, intent);
+        validateSemanticAdviceForRequest({ prepared: request, advice: stored.advice, now: registeredAt });
+        return stored;
+      }
+      const advice = normalizeSemanticProviderResult({ prepared: request, rawResult: result, now: registeredAt });
+      const registrationId = randomUUID6();
+      this.database.prepare("INSERT INTO ags_semantic_advice_v1 VALUES (?,?,?,?,?,?,?)").run(
+        evaluationId,
+        registrationId,
+        request.requestDigest,
+        digest(result),
+        advice.adviceDigest,
+        registeredAt,
+        canonical(advice)
+      );
+      return this.read(this.row(evaluationId), intent);
+    });
+  }
+};
+
+// skills/coordinate-subagents/scripts/semantic/candidate-projection.mjs
+function projectSemanticCandidatesV1(candidates, metadata) {
+  assert2(Array.isArray(candidates) && candidates.length <= 65536, "INVALID_INPUT", "Invalid candidate list");
+  assert2(Array.isArray(metadata) && metadata.length === candidates.length, "INVALID_INPUT", "Incomplete baseline metadata");
+  if (candidates.length === 0) return null;
+  const byKey = /* @__PURE__ */ new Map();
+  for (const candidate of candidates) {
+    keys(candidate, ["key", "model", "snapshot", "binding"]);
+    digestValue(candidate.key, "candidate key");
+    validateCapabilities(candidate.snapshot);
+    identifier(candidate.model?.id, "candidate model");
+    assert2(candidate.model.id === candidate.binding?.resolvedModel, "INVALID_INPUT", "Candidate model differs from binding");
+    assert2(candidate.snapshot.supportedBindings.some((binding2) => canonical(binding2) === canonical(candidate.binding)), "INVALID_INPUT", "Binding absent from snapshot");
+    assert2(candidate.key === digest({ snapshotDigest: candidate.snapshot.snapshotDigest, binding: candidate.binding }), "DIGEST_MISMATCH", "Candidate key differs from binding");
+    assert2(!byKey.has(candidate.key), "INVALID_INPUT", "Duplicate candidate key");
+    byKey.set(candidate.key, candidate);
+  }
+  const seen = /* @__PURE__ */ new Set();
+  for (const item of metadata) keys(item, ["candidateKey", "preferenceGroup", "baselineRank"]);
+  const eligibleSet = [...metadata].sort((a, b2) => a.baselineRank - b2.baselineRank).map((item, baselineRank) => {
+    const candidate = byKey.get(item.candidateKey);
+    assert2(candidate && !seen.has(item.candidateKey), "INVALID_INPUT", "Missing or duplicate baseline candidate");
+    assert2(item.baselineRank === baselineRank && Number.isSafeInteger(item.preferenceGroup) && item.preferenceGroup >= 0, "INVALID_INPUT", "Invalid baseline order");
+    seen.add(item.candidateKey);
+    return { candidateKey: item.candidateKey, model: candidate.model.id, preferenceGroup: item.preferenceGroup, baselineRank };
+  });
+  assert2(eligibleSet.every((item, index) => index === 0 || item.preferenceGroup >= eligibleSet[index - 1].preferenceGroup), "INVALID_INPUT", "Preference groups out of order");
+  const byModel = /* @__PURE__ */ new Map();
+  for (const item of eligibleSet) {
+    if (!byModel.has(item.model)) byModel.set(item.model, []);
+    byModel.get(item.model).push(item.candidateKey);
+  }
+  assert2(byModel.size <= 256, "INVALID_INPUT", "Too many model options");
+  const options = [...byModel].sort(([a], [b2]) => a < b2 ? -1 : a > b2 ? 1 : 0).map(([model, candidateKeys]) => ({ optionId: model, model, candidateKeys: candidateKeys.sort() }));
+  return { eligibleSet, options };
+}
+
+// skills/coordinate-subagents/scripts/semantic/prepared-input-check.mjs
+function assertPreparedSemanticInputV1(prepared, routingRequest, environment, evaluationTime) {
+  const at = instant(evaluationTime, "evaluationTime");
+  assert2(environment.now === evaluationTime, "EVALUATION_TIME_MISMATCH", "Routing inputs must use the supplied evaluation time");
+  assert2(prepared.schemaVersion === "1.0.0", "INVALID_INPUT", "SemanticDecisionRequest.v1 required");
+  verifySeal(prepared, "requestDigest");
+  assert2(instant(prepared.requestedAt, "requestedAt") <= at && at < instant(prepared.expiresAt, "expiresAt"), "EVALUATION_TIME_MISMATCH", "Prepared request is not current at evaluation time");
+  assert2(canonical(prepared.binding) === canonical(routingRequest.binding), "BINDING_MISMATCH", "Routing binding changed");
+  assert2(prepared.effectiveRoutingRequestDigest === digest(routingRequest), "BINDING_MISMATCH", "Routing request changed");
+  assert2(prepared.stateDigest === digest(prepared.state) && prepared.questionDigest === digest(prepared.question), "DIGEST_MISMATCH", "Prepared state or question changed");
+  assert2(prepared.state.summaryDigest === null || prepared.state.summaryDigest === digest(prepared.state.text), "DIGEST_MISMATCH", "Prepared summary changed");
+  const pool = collectEligibleCandidatesV2(routingRequest, environment);
+  const metadata = getBaselineCandidateMetadataV2(pool.candidates, routingRequest, environment);
+  const projection = projectSemanticCandidatesV1(pool.candidates, metadata);
+  assert2(projection !== null, "NO_ELIGIBLE_CANDIDATE", "Use the existing v2 blocked decision");
+  assert2(prepared.catalogDigest === environment.catalog.catalogDigest && prepared.routingPolicyDigest === digest(environment.policy) && prepared.capabilitySetDigest === pool.capabilitySetDigest, "BINDING_MISMATCH", "Routing inputs changed");
+  assert2(prepared.eligibleSetDigest === digest(prepared.eligibleSet) && prepared.optionMappingDigest === digest(prepared.options), "DIGEST_MISMATCH", "Prepared mapping digest differs from contents");
+  assert2(canonical(prepared.eligibleSet) === canonical(projection.eligibleSet) && canonical(prepared.options) === canonical(projection.options), "PREPARED_INPUT_MISMATCH", "Prepared candidates or options differ from recomputation");
+  return true;
+}
+
+// skills/coordinate-subagents/scripts/semantic/replay.mjs
+var SEMANTIC_REDUCER_VERSION_V1 = "semantic-reducer-v1";
+function replaySemanticDecisionV1({
+  routingRequest,
+  environment,
+  prepared,
+  advice,
+  adoption,
+  decisionTime,
+  reducerVersion
+} = {}) {
+  assert2(
+    routingRequest && environment && prepared && advice && adoption && decisionTime && reducerVersion,
+    "REPLAY_INPUT_MISSING"
+  );
+  assert2(reducerVersion === SEMANTIC_REDUCER_VERSION_V1 && prepared.reducerVersion === reducerVersion && advice.reducerVersion === reducerVersion, "UNSUPPORTED_REDUCER");
+  assert2(adoption.status === "eligible", "ADOPTION_NOT_ELIGIBLE");
+  digestValue(adoption.evidenceDigest, "adoption evidenceDigest");
+  assert2(environment.now === decisionTime, "REPLAY_TIME_MISMATCH");
+  const at = instant(decisionTime, "decisionTime");
+  verifySeal(advice, "adviceDigest");
+  assert2(advice.schemaVersion === "1.0.0" && advice.expiresAt === prepared.expiresAt && instant(prepared.requestedAt, "requestedAt") <= instant(advice.evaluatedAt, "evaluatedAt") && instant(advice.evaluatedAt, "evaluatedAt") <= at && at < instant(advice.expiresAt, "advice expiresAt"), "REPLAY_TIME_MISMATCH");
+  assertPreparedSemanticInputV1(prepared, routingRequest, environment, decisionTime);
+  const { candidates } = collectEligibleCandidatesV2(routingRequest, environment);
+  const baselineDecision = resolveV2(routingRequest, environment);
+  return reduceSemanticDecisionV1({ prepared, advice, adoption, baselineDecision, candidates });
+}
+
+// mcp-server/src/semantic/task-ref-resolver.ts
+function resolveTaskReference(value, store, principal) {
+  const request = new ContractValidator().semanticModelAssignmentRequestV1(value);
+  const binding2 = request.routingRequest.binding;
+  requireAccess(
+    canonicalJson(binding2) === canonicalJson(principal.routingBinding) && binding2.taskId === principal.taskId && binding2.runId === principal.runId,
+    "Routing binding is outside the caller's verified scope."
+  );
+  const snapshot = store.getGuardedRunSnapshot(principal.runId);
+  requireAccess(snapshot, "No authorized local workflow binding exists.");
+  const { receipt, guarded } = snapshot;
+  const { root, proposal, lease, outcome } = guarded;
+  requireAccess(
+    root.rootId === principal.rootId && root.revision === principal.rootRevision && root.frame.workspace.workspaceId === principal.workspaceId && root.taskEnvelope.taskId === principal.taskId && proposal.rootId === root.rootId && lease.rootId === root.rootId && proposal.actorId === principal.actorId && lease.actorId === principal.actorId && lease.leaseId === binding2.attemptId && lease.state === "consumed" && outcome === null,
+    "Task reference is outside the active caller/workflow scope."
+  );
+  requireAccess(
+    receipt.runId === binding2.runId && receipt.revision === binding2.revision && receipt.state === "running" && receipt.plan.currentStageId === binding2.stageId && receipt.plan.stages.some((stage) => stage.stageId === binding2.stageId) && receipt.plan.taskId === principal.taskId && receipt.plan.taskDigest === root.taskDigest && receipt.plan.integrityToken === lease.planIntegrityToken,
+    "Workflow revision or stage is no longer current."
+  );
+  requireAccess(
+    root.state === "open" && root.taskDigest === convergenceDigest(root.taskEnvelope) && root.frameDigest === convergenceDigest(root.frame) && lease.taskDigest === root.taskDigest && lease.frameDigest === root.frameDigest && convergenceDigest(proposal.taskEnvelope) === root.taskDigest && convergenceDigest(proposal.frame) === root.frameDigest,
+    "Stored task or frame provenance is stale."
+  );
+  const frame = request.taskRef.frameId === void 0 ? null : (() => {
+    requireAccess(request.taskRef.frameId === root.rootId, "Frame reference is not in the current workflow.");
+    return { rootId: root.rootId, digest: root.frameDigest, workspaceId: root.frame.workspace.workspaceId };
+  })();
+  const available = [...root.frame.controlArtifacts, ...root.frame.targetArtifacts];
+  const artifacts = (request.taskRef.artifactIds ?? []).map((artifactId) => {
+    const artifact = available.find((item) => item.artifactId === artifactId);
+    requireAccess(artifact, "Artifact reference is not in the current workflow frame.");
+    return { artifactId: artifact.artifactId, role: artifact.role, digest: artifact.digest };
+  });
+  return {
+    task: structuredClone(root.taskEnvelope),
+    frame,
+    artifacts,
+    sources: [
+      { kind: "task", id: root.taskEnvelope.taskId, digest: root.taskDigest },
+      ...frame ? [{ kind: "frame", id: root.rootId, digest: root.frameDigest }] : [],
+      ...artifacts.map((artifact) => ({ kind: "artifact", id: artifact.artifactId, digest: artifact.digest }))
+    ],
+    provenance: {
+      runId: receipt.runId,
+      runRevision: receipt.revision,
+      rootId: root.rootId,
+      rootRevision: root.revision,
+      actorId: principal.actorId
+    }
+  };
+}
+function requireAccess(condition, message) {
+  if (!condition) throw new WorkflowContractError("GATE_FAILED", message);
+}
+
+// mcp-server/src/semantic/prepare-request.ts
+function prepareSemanticRequest(input2) {
+  const validator2 = new ContractValidator();
+  const assignment = validator2.semanticModelAssignmentRequestV1(input2.assignment);
+  const resolved = resolveTaskReference(assignment, input2.store, input2.principal);
+  const policy = validator2.semanticDecisionPolicyV1(input2.semanticPolicy);
+  if (policy.mode === "off") throw new TypeError("Semantic evaluation is disabled.");
+  const routingRequest = assignment.routingRequest;
+  const task = resolved.task;
+  if ((task.riskLevel === "high" || task.riskLevel === "critical") && !routingRequest.highRisk) {
+    throw new WorkflowContractError("GATE_FAILED", "Routing request downgrades the authorized task risk.");
+  }
+  const requiredActions = /* @__PURE__ */ new Set([
+    ...routingRequest.requirements.tools,
+    ...routingRequest.requirements.filesystem === "none" ? [] : ["read"],
+    ...routingRequest.requirements.filesystem === "write" ? ["write"] : []
+  ]);
+  if ([...requiredActions].some((action) => !task.authorization.allowedActions.includes(action) || task.authorization.prohibitedActions.includes(action) || task.authorization.approvalRequired.includes(action))) {
+    throw new WorkflowContractError("GATE_FAILED", "Routing tools or filesystem exceed approved task actions.");
+  }
+  const pool = collectEligibleCandidatesV2(routingRequest, input2.environment);
+  const metadata = getBaselineCandidateMetadataV2(pool.candidates, routingRequest, input2.environment);
+  const mapping = projectSemanticCandidatesV1(pool.candidates, metadata);
+  if (!mapping) throw new TypeError("No eligible candidates for semantic evaluation.");
+  const projected = projectSemanticState({
+    routingRequest,
+    catalog: input2.environment.catalog,
+    eligibleModelIds: mapping.options.map((option) => option.model),
+    question: input2.question
+  });
+  const state = {
+    ...projected.state,
+    sources: [...resolved.sources, ...projected.state.sources.filter((source) => source.kind !== "task")]
+  };
+  const request = seal({
+    schemaVersion: "1.0.0",
+    evaluationId: input2.evaluationId,
+    binding: structuredClone(routingRequest.binding),
+    effectiveRoutingRequestDigest: digest(routingRequest),
+    stateDigest: digest(state),
+    questionDigest: projected.questionDigest,
+    catalogDigest: input2.environment.catalog.catalogDigest,
+    routingPolicyDigest: digest(input2.environment.policy),
+    semanticPolicyDigest: digest(policy),
+    capabilitySetDigest: pool.capabilitySetDigest,
+    eligibleSetDigest: digest(mapping.eligibleSet),
+    optionMappingDigest: digest(mapping.options),
+    provider: {
+      id: input2.provider.id,
+      model: input2.provider.model,
+      adapterVersion: input2.provider.adapterVersion,
+      providerVersion: input2.provider.providerVersion ?? null,
+      modelVersion: input2.provider.modelVersion ?? null
+    },
+    reducerVersion: SEMANTIC_REDUCER_VERSION_V1,
+    mode: policy.mode,
+    state,
+    question: projected.question,
+    eligibleSet: mapping.eligibleSet,
+    options: mapping.options,
+    requestedAt: input2.environment.now,
+    expiresAt: input2.expiresAt
+  }, "requestDigest");
+  const prepared = validator2.semanticDecisionRequestV1(request);
+  assertPreparedSemanticInputV1(prepared, routingRequest, input2.environment, input2.environment.now);
+  return prepared;
+}
+
+// mcp-server/src/routing-v3/decision-codec.ts
+function readDecision(store, digest5, validator2) {
+  const entry = store.decision(digest5);
+  if (!entry) return null;
+  switch (entry.decision.schemaVersion) {
+    case "2.0.0":
+      return { ...entry, decision: validator2.modelRoutingDecisionV2(entry.decision) };
+    case "3.0.0":
+      return { ...entry, decision: validator2.modelRoutingDecisionV3(entry.decision) };
+  }
+  throw new WorkflowContractError("INVALID_INPUT", "Unsupported model routing decision version.");
+}
+
+// mcp-server/src/routing-v3/decision-writer.ts
+function deny3(message) {
+  throw new WorkflowContractError("GATE_FAILED", message);
+}
+var RegisteredDecisionWriter = class {
+  constructor(store, adoptionReader = null) {
+    this.store = store;
+    this.adoptionReader = adoptionReader;
+    this.admission = new SemanticAdviceAdmissionStore(store.database);
+    this.intents = new SemanticEvaluationIntentStore(store.database);
+  }
+  store;
+  adoptionReader;
+  admission;
+  intents;
+  validator = new ContractValidator();
+  write(input2) {
+    if (!input2 || typeof input2 !== "object" || Array.isArray(input2) || Object.keys(input2).sort().join(",") !== "baselineDecisionDigest,decisionTime,evaluationId,registrationId") {
+      deny3("Only registered decision references may be supplied.");
+    }
+    const registered = this.admission.get(input2.evaluationId);
+    const intent = this.intents.get(input2.evaluationId);
+    if (!registered || registered.registrationId !== input2.registrationId || intent?.state !== "recorded" || registered.requestDigest !== intent.evaluation.request.requestDigest) {
+      deny3("Decision requires the exact registered runner advice.");
+    }
+    const adoption = this.adoptionReader?.read(
+      input2.evaluationId,
+      input2.registrationId,
+      registered.advice.adviceDigest
+    );
+    if (!adoption || adoption.status !== "eligible" || Object.keys(adoption).sort().join(",") !== "evidenceDigest,status") {
+      deny3("Decision requires service-admitted adoption evidence.");
+    }
+    const baseline = readDecision(this.store, input2.baselineDecisionDigest, this.validator);
+    if (!baseline || baseline.decision.schemaVersion !== "2.0.0") {
+      deny3("Decision requires an immutable stored v2 baseline.");
+    }
+    instant(input2.decisionTime, "decisionTime");
+    const { request, environment } = baseline;
+    const prepared = intent.evaluation.request;
+    const advice = registered.advice;
+    const requestJson = canonical(request), environmentJson = canonical(environment);
+    const preparedJson = canonical(prepared), adviceJson = canonical(advice);
+    const db = this.store.database;
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      const stored = db.prepare("SELECT * FROM ags_model_decisions_v2 WHERE decision_digest=?").get(input2.baselineDecisionDigest);
+      assert2(
+        stored?.request_json === requestJson && stored?.environment_json === environmentJson,
+        "BASELINE_MISMATCH"
+      );
+      const baselineDecision = this.validator.modelRoutingDecisionV2(JSON.parse(stored.payload));
+      verifySeal(baselineDecision, "decisionDigest");
+      assert2(baselineDecision.decisionDigest === input2.baselineDecisionDigest, "BASELINE_MISMATCH");
+      const registration = db.prepare(`SELECT a.*,q.request_json
+        FROM ags_semantic_advice_v1 a JOIN ags_semantic_requests_v1 q USING (evaluation_id)
+        JOIN ags_semantic_intents_v1 i USING (evaluation_id)
+        WHERE a.evaluation_id=? AND a.registration_id=? AND i.state='recorded'`).get(input2.evaluationId, input2.registrationId);
+      const current = this.admission.get(input2.evaluationId);
+      assert2(current && canonical(current) === canonical(registered) && registration?.request_json === preparedJson && registration?.advice_json === adviceJson && registration?.request_digest === prepared.requestDigest && registration?.advice_digest === advice.adviceDigest, "ADVICE_REGISTRATION_MISMATCH");
+      const decision = this.validator.modelRoutingDecisionV3(replaySemanticDecisionV1({
+        routingRequest: request,
+        environment: { ...environment, now: input2.decisionTime },
+        prepared,
+        advice,
+        adoption,
+        decisionTime: input2.decisionTime,
+        reducerVersion: SEMANTIC_REDUCER_VERSION_V1
+      }));
+      verifySeal(decision, "decisionDigest");
+      validateBinding(decision.binding);
+      assert2(decision.semantic.adviceDigest === advice.adviceDigest && decision.semantic.semanticRequestDigest === prepared.requestDigest && decision.semantic.baselineDecisionDigest === input2.baselineDecisionDigest && decision.requestDigest === baselineDecision.requestDigest, "ADVICE_REGISTRATION_MISMATCH");
+      const decisionJson = canonical(decision);
+      const reference = {
+        decision_digest: decision.decisionDigest,
+        baseline_decision_digest: input2.baselineDecisionDigest,
+        evaluation_id: input2.evaluationId,
+        registration_id: input2.registrationId,
+        advice_digest: advice.adviceDigest
+      };
+      const existing = db.prepare(`SELECT * FROM ags_model_decision_refs_v3
+        WHERE evaluation_id=? OR registration_id=? OR decision_digest=?`).all(input2.evaluationId, input2.registrationId, decision.decisionDigest);
+      assert2(existing.every((row) => canonical({ ...row }) === canonical(reference)), "DECISION_CONFLICT");
+      const old = db.prepare("SELECT * FROM ags_model_decisions_v2 WHERE decision_digest=?").get(decision.decisionDigest);
+      assert2(!old || old.request_json === requestJson && old.environment_json === environmentJson && old.payload === decisionJson, "DECISION_CONFLICT");
+      if (old) {
+        assert2(existing.length === 1, "DECISION_REFERENCE_MISSING");
+      } else {
+        db.prepare("INSERT INTO ags_model_decisions_v2 VALUES (?,?,?,?,?,?)").run(
+          decision.decisionDigest,
+          digest(decision.binding),
+          requestJson,
+          environmentJson,
+          decisionJson,
+          input2.decisionTime
+        );
+        db.prepare("INSERT INTO ags_model_decision_refs_v3 VALUES (?,?,?,?,?)").run(
+          decision.decisionDigest,
+          input2.baselineDecisionDigest,
+          input2.evaluationId,
+          input2.registrationId,
+          advice.adviceDigest
+        );
+      }
+      db.exec("COMMIT");
+      return decision;
+    } catch (error61) {
+      db.exec("ROLLBACK");
+      throw error61;
+    }
+  }
+};
+
+// mcp-server/src/routing-v3/semantic-service.ts
+function fail(message, code = "GATE_FAILED") {
+  throw new WorkflowContractError(code, message);
+}
+var SemanticRoutingService = class {
+  constructor(routing, workflow, runner, contextFor, evidenceReader = null, now = () => (/* @__PURE__ */ new Date()).toISOString()) {
+    this.routing = routing;
+    this.workflow = workflow;
+    this.runner = runner;
+    this.contextFor = contextFor;
+    this.evidenceReader = evidenceReader;
+    this.now = now;
+  }
+  routing;
+  workflow;
+  runner;
+  contextFor;
+  evidenceReader;
+  now;
+  validator = new ContractValidator();
+  async resolve(assignmentValue) {
+    const assignment = this.validator.semanticModelAssignmentRequestV1(assignmentValue);
+    const context = await this.contextFor(assignment);
+    const inactiveAssist = context.policy.mode === "assist" && context.policy.adoption.status === "unvalidated";
+    const policy = this.validator.semanticDecisionPolicyV1(inactiveAssist ? { ...context.policy, mode: "off" } : context.policy);
+    const routingRequest = assignment.routingRequest;
+    const baseline = resolveV2(routingRequest, context.environment);
+    this.routing.saveDecision(routingRequest, context.environment, baseline, context.environment.now);
+    const reduce = (extra = {}) => reduceSemanticDecisionOutcomeV1({
+      policy,
+      routingRequest,
+      baselineDecision: baseline,
+      ...extra
+    });
+    if (policy.mode !== "assist") return reduce();
+    if (baseline.status === "blocked" || baseline.fallbackReason !== null) return baseline;
+    if (routingRequest.highRisk) return reduce({ adoption: { status: "baseline", reasonCode: "HIGH_RISK_EXCLUDED" } });
+    if (routingRequest.role === "independent-audit") {
+      return reduce({ adoption: { status: "baseline", reasonCode: "INDEPENDENT_AUDIT_EXCLUDED" } });
+    }
+    if (!this.evidenceReader || !this.runner || !policy.egress.enabled) return baseline;
+    if (!context.principal || !context.question || !context.provider || !context.evaluationId || !context.idempotencyKey || !context.expiresAt) {
+      fail("Trusted semantic context is unavailable.", "MISSING_EVIDENCE");
+    }
+    const prepared = prepareSemanticRequest({
+      assignment,
+      store: this.workflow,
+      principal: context.principal,
+      environment: context.environment,
+      semanticPolicy: policy,
+      question: context.question,
+      provider: context.provider,
+      evaluationId: context.evaluationId,
+      expiresAt: context.expiresAt
+    });
+    const evidence = this.evidenceReader.read(policy, prepared);
+    if (!evidence || evidence.sufficient !== true || typeof evidence.registrationId !== "string" || !evidence.registrationId.trim()) return baseline;
+    if (evidence.status !== "admitted" || evidence.evidenceDigest !== policy.adoption.evidenceDigest) {
+      fail("Registered adoption evidence does not match policy.", "INTEGRITY_FAILED");
+    }
+    const runnerOutcome = await this.runner.run({
+      idempotencyKey: context.idempotencyKey,
+      prepared
+    });
+    if (runnerOutcome.status === "uncertain") fail("Semantic runner result is uncertain.", "MISSING_EVIDENCE");
+    if (runnerOutcome.status !== "recorded") fail(`Semantic runner did not record a result: ${runnerOutcome.status}.`);
+    const raw = runnerOutcome.result;
+    if (raw.status === "abstained" || raw.status === "timeout" || raw.status === "unavailable") {
+      const nonAdoption = raw.status === "abstained" ? "ABSTAINED" : raw.status === "timeout" ? "PROVIDER_TIMEOUT" : "PROVIDER_UNAVAILABLE";
+      return reduce({ nonAdoption });
+    }
+    if (raw.status !== "success") fail("Runner recorded an invalid provider outcome.", "INTEGRITY_FAILED");
+    const registered = new SemanticAdviceAdmissionStore(this.routing.database, this.now).register(prepared.evaluationId);
+    const advice = validateSemanticAdviceForRequest({
+      prepared,
+      advice: registered.advice,
+      now: this.now()
+    });
+    const assessment = assessSemanticAdoptionV1(policy, routingRequest, prepared, advice, evidence);
+    const reduced = reduce({
+      prepared,
+      advice,
+      adoption: assessment,
+      candidates: collectEligibleCandidatesV2(routingRequest, context.environment).candidates
+    });
+    if (assessment.status !== "eligible") return reduced;
+    if (!("schemaVersion" in reduced) || reduced.schemaVersion !== "3.0.0") {
+      fail("Eligible advice did not produce a v3 decision.", "INTEGRITY_FAILED");
+    }
+    const reader = this.evidenceReader;
+    const writer = new RegisteredDecisionWriter(this.routing, { read: (evaluationId, registrationId, adviceDigest) => {
+      if (evaluationId !== prepared.evaluationId || registrationId !== registered.registrationId || adviceDigest !== advice.adviceDigest) return null;
+      const current = reader.read(policy, prepared);
+      if (!current || current.sufficient !== true || current.registrationId !== evidence.registrationId || current.status !== "admitted" || current.evidenceDigest !== evidence.evidenceDigest) return null;
+      const currentAssessment = assessSemanticAdoptionV1(policy, routingRequest, prepared, advice, current);
+      return currentAssessment.status === "eligible" ? currentAssessment : null;
+    } });
+    return writer.write({
+      evaluationId: prepared.evaluationId,
+      registrationId: registered.registrationId,
+      baselineDecisionDigest: baseline.decisionDigest,
+      decisionTime: this.now()
+    });
+  }
+};
+
+// mcp-server/src/routing-v3/open-semantic-service.ts
+function openSemanticService(databasePath, workflow) {
+  let database = null;
+  try {
+    const validator2 = new ContractValidator();
+    const policy = validator2.semanticDecisionPolicyV1(decision_policy_v1_default);
+    loadCatalog({ directory: MODEL_CATALOG_DIRECTORY });
+    loadPolicy(MODEL_CATALOG_DIRECTORY);
+    database = new DatabaseSync7(databasePath);
+    database.exec("PRAGMA busy_timeout = 5000; PRAGMA synchronous = FULL;");
+    const routing = new ModelRoutingStore(database);
+    const journal = new SemanticEvaluationIntentStore(database);
+    const registry2 = new SemanticProviderRegistry();
+    const adoptionReader = { read: () => null };
+    const service = new SemanticRoutingService(routing, workflow, null, async () => {
+      const shared = await readSharedModelCapabilities();
+      return { policy, environment: {
+        catalog: loadCatalog({ directory: MODEL_CATALOG_DIRECTORY }),
+        policy: loadPolicy(MODEL_CATALOG_DIRECTORY),
+        capabilities: mergeRoutingCapabilities(routing.capabilities(), shared),
+        now: (/* @__PURE__ */ new Date()).toISOString()
+      } };
+    }, adoptionReader);
+    const opened = database;
+    return { gateway: createSemanticGateway(service), journal, registry: registry2, close: () => opened.close() };
+  } catch {
+    database?.close();
+    return null;
+  }
+}
+
 // mcp-server/src/host-integration/vm-model-policy.ts
 import { createPublicKey as createPublicKey2, verify as verify2 } from "node:crypto";
 import { execFileSync } from "node:child_process";
@@ -44647,8 +45835,8 @@ var POSIX_POLICY_PATH = "/etc/agent-governance-suite/vm-operator-policy.json";
 function object7(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
-function exact3(value, keys2) {
-  return !!value && Object.keys(value).length === keys2.length && keys2.every((key) => Object.hasOwn(value, key));
+function exact3(value, keys3) {
+  return !!value && Object.keys(value).length === keys3.length && keys3.every((key) => Object.hasOwn(value, key));
 }
 function nonempty3(value) {
   return typeof value === "string" && value.trim().length > 0;
@@ -44659,41 +45847,41 @@ function digest4(value) {
 function listed(value, options) {
   return typeof value === "string" && options.includes(value);
 }
-function fail(message) {
+function fail2(message) {
   throw new Error(`VM operator policy unavailable: ${message}`);
 }
 function parsePolicy(value) {
   const raw = object7(value);
   if (!exact3(raw, ["version", "modelPolicyVersion", "pins", "hostBuilds", "models"]) || raw.version !== 1 || !nonempty3(raw.modelPolicyVersion) || !Array.isArray(raw.pins) || !Array.isArray(raw.hostBuilds) || !Array.isArray(raw.models)) {
-    fail("configuration is malformed");
+    fail2("configuration is malformed");
   }
-  const keys2 = /* @__PURE__ */ new Set(), installations = /* @__PURE__ */ new Map(), builds = /* @__PURE__ */ new Set(), models = /* @__PURE__ */ new Set();
+  const keys3 = /* @__PURE__ */ new Set(), installations = /* @__PURE__ */ new Map(), builds = /* @__PURE__ */ new Set(), models = /* @__PURE__ */ new Set();
   for (const entry of raw.pins) {
     const pin = object7(entry);
-    if (!exact3(pin, ["keyId", "installationId", "hostId", "publicKeySpki", "hostBuildDigest", "modelPolicyVersion", "status"]) || !nonempty3(pin.keyId) || !nonempty3(pin.installationId) || pin.hostId !== "flowmarshal-engine" || typeof pin.publicKeySpki !== "string" || !digest4(pin.hostBuildDigest) || !nonempty3(pin.modelPolicyVersion) || !listed(pin.status, ["active", "revoked"]) || keys2.has(pin.keyId) || installations.has(pin.installationId) && installations.get(pin.installationId) !== pin.hostBuildDigest) {
-      fail("pin registry is malformed");
+    if (!exact3(pin, ["keyId", "installationId", "hostId", "publicKeySpki", "hostBuildDigest", "modelPolicyVersion", "status"]) || !nonempty3(pin.keyId) || !nonempty3(pin.installationId) || pin.hostId !== "flowmarshal-engine" || typeof pin.publicKeySpki !== "string" || !digest4(pin.hostBuildDigest) || !nonempty3(pin.modelPolicyVersion) || !listed(pin.status, ["active", "revoked"]) || keys3.has(pin.keyId) || installations.has(pin.installationId) && installations.get(pin.installationId) !== pin.hostBuildDigest) {
+      fail2("pin registry is malformed");
     }
-    keys2.add(pin.keyId);
+    keys3.add(pin.keyId);
     installations.set(pin.installationId, pin.hostBuildDigest);
     const bytes = Buffer.from(pin.publicKeySpki, "base64");
-    if (bytes.toString("base64") !== pin.publicKeySpki) fail("pin public key is malformed");
+    if (bytes.toString("base64") !== pin.publicKeySpki) fail2("pin public key is malformed");
     try {
       const key = createPublicKey2({ key: bytes, format: "der", type: "spki" });
-      if (key.asymmetricKeyType !== "ed25519") fail("pin public key is malformed");
+      if (key.asymmetricKeyType !== "ed25519") fail2("pin public key is malformed");
     } catch {
-      fail("pin public key is malformed");
+      fail2("pin public key is malformed");
     }
   }
   for (const entry of raw.hostBuilds) {
     const host = object7(entry);
-    if (!exact3(host, ["hostId", "hostBuildDigest", "status"]) || host.hostId !== "flowmarshal-engine" || !digest4(host.hostBuildDigest) || !listed(host.status, ["verified", "unverified"]) || builds.has(host.hostBuildDigest)) fail("host build registry is malformed");
+    if (!exact3(host, ["hostId", "hostBuildDigest", "status"]) || host.hostId !== "flowmarshal-engine" || !digest4(host.hostBuildDigest) || !listed(host.status, ["verified", "unverified"]) || builds.has(host.hostBuildDigest)) fail2("host build registry is malformed");
     builds.add(host.hostBuildDigest);
   }
   for (const entry of raw.models) {
     const model = object7(entry);
-    if (!exact3(model, ["hostId", "hostBuildDigest", "observedModelId", "modelClass", "status"]) || model.hostId !== "flowmarshal-engine" || !digest4(model.hostBuildDigest) || !nonempty3(model.observedModelId) || !listed(model.modelClass, MODEL_CLASSES) || !listed(model.status, ["verified", "unverified", "retired"])) fail("model registry is malformed");
+    if (!exact3(model, ["hostId", "hostBuildDigest", "observedModelId", "modelClass", "status"]) || model.hostId !== "flowmarshal-engine" || !digest4(model.hostBuildDigest) || !nonempty3(model.observedModelId) || !listed(model.modelClass, MODEL_CLASSES) || !listed(model.status, ["verified", "unverified", "retired"])) fail2("model registry is malformed");
     const identity = `${model.hostId}\0${model.hostBuildDigest}\0${model.observedModelId}`;
-    if (models.has(identity)) fail("duplicate model mapping");
+    if (models.has(identity)) fail2("duplicate model mapping");
     models.add(identity);
   }
   return raw;
@@ -44719,7 +45907,7 @@ function inspectWindowsAcl(target) {
     });
     return JSON.parse(output2);
   } catch {
-    fail("Windows ACL cannot be verified");
+    fail2("Windows ACL cannot be verified");
   }
 }
 function sameFile(before, after) {
@@ -44729,8 +45917,8 @@ function protectedByOperator(target, status) {
   return process.platform === "win32" ? isProtectedWindowsAcl(inspectWindowsAcl(target)) : status.uid === 0 && (status.mode & 18) === 0;
 }
 function readPolicyFile(filePath, fixture) {
-  if (!path15.isAbsolute(filePath)) fail("configuration path is not absolute");
-  if (path15.normalize(filePath) !== filePath) fail("configuration path is not canonical");
+  if (!path15.isAbsolute(filePath)) fail2("configuration path is not absolute");
+  if (path15.normalize(filePath) !== filePath) fail2("configuration path is not canonical");
   const root = path15.parse(filePath).root;
   const targets = [root];
   for (const part of path15.relative(root, filePath).split(path15.sep).filter(Boolean)) {
@@ -44741,16 +45929,16 @@ function readPolicyFile(filePath, fixture) {
     try {
       status = lstatSync2(target);
     } catch {
-      fail("configuration path is unavailable");
+      fail2("configuration path is unavailable");
     }
     if (status.isSymbolicLink() || (index === targets.length - 1 ? !status.isFile() : !status.isDirectory())) {
-      fail("configuration path is not regular");
+      fail2("configuration path is not regular");
     }
-    if (!(fixture?.isProtected ?? protectedByOperator)(target, status)) fail("configuration owner or permissions are unsafe");
+    if (!(fixture?.isProtected ?? protectedByOperator)(target, status)) fail2("configuration owner or permissions are unsafe");
     try {
-      if (!sameFile(status, lstatSync2(target))) fail("configuration changed during validation");
+      if (!sameFile(status, lstatSync2(target))) fail2("configuration changed during validation");
     } catch {
-      fail("configuration changed during validation");
+      fail2("configuration changed during validation");
     }
     return status;
   });
@@ -44759,25 +45947,25 @@ function readPolicyFile(filePath, fixture) {
   try {
     fd = openSync2(filePath, constants.O_RDONLY | (process.platform === "win32" ? 0 : constants.O_NOFOLLOW));
   } catch {
-    fail("configuration changed before open");
+    fail2("configuration changed before open");
   }
   try {
-    if (!sameFile(snapshots[snapshots.length - 1], fstatSync2(fd))) fail("configuration changed before open");
+    if (!sameFile(snapshots[snapshots.length - 1], fstatSync2(fd))) fail2("configuration changed before open");
     let value;
     try {
       value = JSON.parse(readFileSync6(fd, "utf8"));
     } catch {
-      fail("configuration JSON is malformed");
+      fail2("configuration JSON is malformed");
     }
-    if (!sameFile(snapshots[snapshots.length - 1], fstatSync2(fd))) fail("configuration changed during read");
+    if (!sameFile(snapshots[snapshots.length - 1], fstatSync2(fd))) fail2("configuration changed during read");
     for (const [index, target] of targets.entries()) {
       let status;
       try {
         status = lstatSync2(target);
       } catch {
-        fail("configuration changed during read");
+        fail2("configuration changed during read");
       }
-      if (!sameFile(snapshots[index], status)) fail("configuration changed during read");
+      if (!sameFile(snapshots[index], status)) fail2("configuration changed during read");
     }
     return value;
   } finally {
@@ -44817,36 +46005,36 @@ var VmModelPolicy = class _VmModelPolicy {
   }
   pin(keyId, policy = this.readPolicy()) {
     const pin = policy.pins.find((entry) => entry.keyId === keyId);
-    if (!pin || pin.status !== "active" || pin.modelPolicyVersion !== policy.modelPolicyVersion) fail("producer pin is revoked or policy version mismatches");
+    if (!pin || pin.status !== "active" || pin.modelPolicyVersion !== policy.modelPolicyVersion) fail2("producer pin is revoked or policy version mismatches");
     const bytes = Buffer.from(pin.publicKeySpki, "base64");
     return { ...pin, key: createPublicKey2({ key: bytes, format: "der", type: "spki" }) };
   }
   verifyEnvelope(envelopeValue) {
     const envelope = object7(envelopeValue);
-    if (!exact3(envelope, ["body", "signature", "keyId"]) || !nonempty3(envelope.keyId) || typeof envelope.body !== "string" || typeof envelope.signature !== "string") fail("signed envelope is malformed");
+    if (!exact3(envelope, ["body", "signature", "keyId"]) || !nonempty3(envelope.keyId) || typeof envelope.body !== "string" || typeof envelope.signature !== "string") fail2("signed envelope is malformed");
     const pin = this.pin(envelope.keyId);
     const bytes = Buffer.from(envelope.body, "base64url");
     const signature = Buffer.from(envelope.signature, "base64url");
-    if (bytes.toString("base64url") !== envelope.body || signature.toString("base64url") !== envelope.signature || signature.length !== 64 || !verify2(null, bytes, pin.key, signature)) fail("producer signature is invalid");
+    if (bytes.toString("base64url") !== envelope.body || signature.toString("base64url") !== envelope.signature || signature.length !== 64 || !verify2(null, bytes, pin.key, signature)) fail2("producer signature is invalid");
     let body = null;
     try {
       body = object7(JSON.parse(bytes.toString("utf8")));
     } catch {
     }
-    if (!body || Buffer.from(canonicalJson(body), "utf8").compare(bytes) !== 0) fail("signed body is not canonical");
+    if (!body || Buffer.from(canonicalJson(body), "utf8").compare(bytes) !== 0) fail2("signed body is not canonical");
     const producer = object7(body.producer);
-    if (!producer || producer.keyId !== envelope.keyId || producer.installationId !== pin.installationId || producer.hostId !== pin.hostId) fail("producer installation is not pinned");
+    if (!producer || producer.keyId !== envelope.keyId || producer.installationId !== pin.installationId || producer.hostId !== pin.hostId) fail2("producer installation is not pinned");
     return { body, bytes, pin };
   }
   resolveProfile(registration) {
     const producer = object7(registration.producer), terminal = object7(registration.terminal);
-    if (!producer || !terminal || !nonempty3(producer.keyId) || !nonempty3(terminal.model)) fail("observed model is unavailable");
+    if (!producer || !terminal || !nonempty3(producer.keyId) || !nonempty3(terminal.model)) fail2("observed model is unavailable");
     const policy = this.readPolicy();
     const pin = this.pin(producer.keyId, policy);
-    if (producer.installationId !== pin.installationId || producer.hostId !== pin.hostId) fail("producer installation is not pinned");
+    if (producer.installationId !== pin.installationId || producer.hostId !== pin.hostId) fail2("producer installation is not pinned");
     const build = policy.hostBuilds.find((entry) => entry.hostId === pin.hostId && entry.hostBuildDigest === pin.hostBuildDigest);
     const model = policy.models.find((entry) => entry.hostId === pin.hostId && entry.hostBuildDigest === pin.hostBuildDigest && entry.observedModelId === terminal.model);
-    if (!build || build.status !== "verified" || !model || model.status !== "verified") fail("exact observed host model is unsupported");
+    if (!build || build.status !== "verified" || !model || model.status !== "verified") fail2("exact observed host model is unsupported");
     return {
       modelClass: model.modelClass,
       actorId: `vm-producer:${pin.installationId}`,
@@ -44873,21 +46061,23 @@ async function main() {
   const trustStore = new TrustStore(resolveTrustDatabasePath());
   const modelRouting = openModelRoutingService(workflowDatabasePath, store);
   let continuityStore = null;
+  let semantic = null;
   process.once("exit", () => {
+    semantic?.close();
     continuityStore?.close();
     modelRouting.close();
     trustStore.close();
     store.close();
   });
-  const validator = new ContractValidator();
+  const validator2 = new ContractValidator();
   const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
   const vmPolicy = VmModelPolicy.installed();
   const vmInvocation = vmPolicy ? new VmCurrentInvocation(store, Date.now, vmPolicy) : null;
   const trust = new TrustService(trustStore);
   const service = new RoutingAwareWorkflowService(
     modelRouting.bridge,
-    new FileSkillRegistry(registryPath, validator),
-    validator,
+    new FileSkillRegistry(registryPath, validator2),
+    validator2,
     store,
     null,
     hostAttestation
@@ -44897,13 +46087,31 @@ async function main() {
   if (continuityPathAvailable) {
     try {
       continuityStore = new SqliteContinuityStore(continuityDatabasePath);
-      continuity = new ContinuityService(continuityStore, validator, store);
+      continuity = new ContinuityService(continuityStore, validator2, store);
     } catch {
     }
   }
-  const cleanup = new StateCleanupService(store, continuityStore, validator);
+  const cleanup = new StateCleanupService(store, continuityStore, validator2);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), void 0, trust, modelRouting.service, vmInvocation);
+  if (process.env.AGENT_GOVERNANCE_SEMANTIC_ROUTING_ENABLED === "true") {
+    semantic = openSemanticService(workflowDatabasePath, store);
+  }
+  const server = createMcpServer(
+    service,
+    updates,
+    continuity,
+    cleanup,
+    glossary,
+    validator2,
+    resolveToolSchemaProfile(),
+    hostAttestation,
+    resolveSessionBoardDatabasePath(),
+    void 0,
+    trust,
+    modelRouting.service,
+    vmInvocation,
+    { enabled: semantic !== null, gateway: semantic?.gateway ?? null }
+  );
   await server.connect(new StdioServerTransport());
 }
 void main().catch((error61) => {

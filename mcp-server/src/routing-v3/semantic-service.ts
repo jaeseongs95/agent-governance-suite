@@ -25,15 +25,15 @@ import type { TaskReferencePrincipal } from "../semantic/task-ref-resolver.js";
 import { RegisteredDecisionWriter } from "./decision-writer.js";
 
 export interface SemanticServiceContext {
-  principal: Readonly<TaskReferencePrincipal>;
   environment: RoutingEnvironmentV2;
   policy: SemanticDecisionPolicyV1;
-  question: SemanticDecisionQuestionV1;
-  provider: Omit<SemanticDecisionProviderV1, "providerVersion" | "modelVersion"> &
+  principal?: Readonly<TaskReferencePrincipal>;
+  question?: SemanticDecisionQuestionV1;
+  provider?: Omit<SemanticDecisionProviderV1, "providerVersion" | "modelVersion"> &
     Partial<Pick<SemanticDecisionProviderV1, "providerVersion" | "modelVersion">>;
-  evaluationId: string;
-  idempotencyKey: string;
-  expiresAt: string;
+  evaluationId?: string;
+  idempotencyKey?: string;
+  expiresAt?: string;
 }
 
 /** T18 supplies this from the server registry; a policy JSON value is never an admission. */
@@ -55,14 +55,14 @@ export class SemanticRoutingService {
     private readonly routing: ModelRoutingStore,
     private readonly workflow: Pick<WorkflowStore, "getGuardedRunSnapshot">,
     private readonly runner: Pick<SemanticProviderRunner, "run"> | null,
-    private readonly contextFor: (assignment: SemanticModelAssignmentRequestV1) => SemanticServiceContext,
+    private readonly contextFor: (assignment: SemanticModelAssignmentRequestV1) => SemanticServiceContext | Promise<SemanticServiceContext>,
     private readonly evidenceReader: ServerSemanticEvidenceReader | null = null,
     private readonly now: () => string = () => new Date().toISOString(),
   ) {}
 
   async resolve(assignmentValue: unknown): Promise<SemanticServiceOutcome> {
     const assignment = this.validator.semanticModelAssignmentRequestV1(assignmentValue);
-    const context = this.contextFor(assignment);
+    const context = await this.contextFor(assignment);
     // The policy schema forbids assist without validated adoption. Treat that exact
     // inactive configuration as off while still validating the rest of the policy.
     const inactiveAssist = context.policy.mode === "assist" && context.policy.adoption.status === "unvalidated";
@@ -82,6 +82,10 @@ export class SemanticRoutingService {
     }
     // No operating reader means no assist attempt, even if policy JSON says validated.
     if (!this.evidenceReader || !this.runner || !policy.egress.enabled) return baseline;
+    if (!context.principal || !context.question || !context.provider || !context.evaluationId
+      || !context.idempotencyKey || !context.expiresAt) {
+      fail("Trusted semantic context is unavailable.", "MISSING_EVIDENCE");
+    }
     const prepared = prepareSemanticRequest({
       assignment, store: this.workflow, principal: context.principal,
       environment: context.environment, semanticPolicy: policy,

@@ -26,6 +26,7 @@ import { TrustStore } from "./trust-store.js";
 import { TrustService } from "./trust-service.js";
 import { openModelRoutingService } from "./model-routing-service.js";
 import { VmCurrentInvocation } from "./host-integration/vm-current-invocation.js";
+import { openSemanticService, type OpenSemanticService } from "./routing-v3/open-semantic-service.js";
 import { VmModelPolicy } from "./host-integration/vm-model-policy.js";
 
 async function main(): Promise<void> {
@@ -43,7 +44,9 @@ async function main(): Promise<void> {
   // Additive routing tables share the workflow database, which the workflow store has already created.
   const modelRouting = openModelRoutingService(workflowDatabasePath, store);
   let continuityStore: SqliteContinuityStore | null = null;
+  let semantic: OpenSemanticService | null = null;
   process.once("exit", () => {
+    semantic?.close();
     continuityStore?.close();
     modelRouting.close();
     trustStore.close();
@@ -76,7 +79,11 @@ async function main(): Promise<void> {
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, modelRouting.service, vmInvocation);
+  if (process.env.AGENT_GOVERNANCE_SEMANTIC_ROUTING_ENABLED === "true") {
+    semantic = openSemanticService(workflowDatabasePath, store);
+  }
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, modelRouting.service, vmInvocation,
+    { enabled: semantic !== null, gateway: semantic?.gateway ?? null });
   await server.connect(new StdioServerTransport());
 }
 
