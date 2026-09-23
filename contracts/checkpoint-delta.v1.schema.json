@@ -68,6 +68,24 @@
         "value": { "type": "array", "maxItems": 128, "items": { "$ref": "checkpoint-context-request.v1.schema.json#/$defs/evidenceRef" } }
       }
     },
+    "snapshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "source", "taskCorrelation", "epoch", "revision", "status", "core", "evidenceRefs", "snapshotDigest", "createdAt", "updatedAt"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "source": { "const": "direct" },
+        "taskCorrelation": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "epoch": { "$ref": "#/$defs/nonnegativeSafeInteger" },
+        "revision": { "$ref": "#/$defs/nonnegativeSafeInteger" },
+        "status": { "enum": ["active", "paused", "completed"] },
+        "core": { "$ref": "checkpoint-context-request.v1.schema.json#/$defs/core" },
+        "evidenceRefs": { "type": "array", "maxItems": 128, "items": { "$ref": "checkpoint-context-request.v1.schema.json#/$defs/evidenceRef" } },
+        "snapshotDigest": { "$ref": "#/$defs/digest" },
+        "createdAt": { "$ref": "#/$defs/utcInstant" },
+        "updatedAt": { "$ref": "#/$defs/utcInstant" }
+      }
+    },
+    "utcInstant": { "type": "string", "format": "date-time", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$" },
     "stateAck": {
       "type": "object", "additionalProperties": false,
       "required": ["schemaVersion", "kind", "taskId", "revision", "receiver", "contextGeneration", "sequence", "targetCheckpointDigest"],

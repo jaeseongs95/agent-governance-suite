@@ -18,6 +18,7 @@ import {
   type CheckpointDeltaReceiverV1,
   type CheckpointDeltaStateAckV1,
   type CheckpointDeltaTransportAckV1,
+  type ContinuitySnapshotV1,
   CHECKPOINT_DELTA_MAX_BYTES,
   type ArtifactRefV1,
   type ArtifactHashDomainV1,
@@ -211,6 +212,9 @@ export class ContractValidator {
     this.validators.checkpointDeltaTransportAck = ajv.getSchema(
       `${contractSchemas.checkpointDelta.$id as string}#/$defs/transportAck`,
     )!;
+    this.validators.continuitySnapshot = ajv.getSchema(
+      `${contractSchemas.checkpointDelta.$id as string}#/$defs/snapshot`,
+    )!;
   }
 
   private assert<T>(name: keyof ContractValidator["validators"], value: unknown): T {
@@ -336,6 +340,10 @@ export class ContractValidator {
 
   checkpointDeltaTransportAck(value: unknown): CheckpointDeltaTransportAckV1 {
     return this.assert<CheckpointDeltaTransportAckV1>("checkpointDeltaTransportAck", value);
+  }
+
+  continuitySnapshot(value: unknown): ContinuitySnapshotV1 {
+    return this.assert<ContinuitySnapshotV1>("continuitySnapshot", value);
   }
 
   artifactRef(value: unknown): ArtifactRefV1 {

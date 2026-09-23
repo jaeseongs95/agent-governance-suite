@@ -18227,6 +18227,9 @@ var ContractValidator = class {
     this.validators.checkpointDeltaTransportAck = ajv.getSchema(
       `${contractSchemas.checkpointDelta.$id}#/$defs/transportAck`
     );
+    this.validators.continuitySnapshot = ajv.getSchema(
+      `${contractSchemas.checkpointDelta.$id}#/$defs/snapshot`
+    );
   }
   assert(name, value) {
     const validate2 = this.validators[name];
@@ -18322,6 +18325,9 @@ var ContractValidator = class {
   }
   checkpointDeltaTransportAck(value) {
     return this.assert("checkpointDeltaTransportAck", value);
+  }
+  continuitySnapshot(value) {
+    return this.assert("continuitySnapshot", value);
   }
   artifactRef(value) {
     return this.assert("artifactRef", value);
