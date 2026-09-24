@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "W06-a-codex-r2",
+  "kind": "read-only release-source verification",
+  "scope": "Installed Codex CLI v0.155.1 command hooks for SessionStart, UserPromptSubmit, and Stop; no product code or hook configuration was changed",
+  "startState": {
+    "branch": "codex/v3x-w-session-contact",
+    "commit": "8a589f49e0c2982ba0c64f371580c1c7a2613d2d",
+    "tree": "5d0a167dd68b17087ddc1817a0a1d2fe55041172",
+    "workingTree": "clean",
+    "priorCandidateDisposition": "Unmerged and unpushed; W06-a-codex-r1 remains BLOCKED"
+  },
+  "releaseIdentity": {
+    "installedWindowsBinary": "C:/Users/sjs95/AppData/Local/Programs/OpenAI/Codex/bin/codex.exe",
+    "reportedVersion": "codex-cli 0.155.1",
+    "installedBinarySha256": "eba0f32c976667cb9298efafd98513e823eeda7b576a03ec658bb8be8d336316",
+    "releaseAsset": "codex-x86_64-pc-windows-msvc.exe",
+    "releaseAssetSha256": "eba0f32c976667cb9298efafd98513e823eeda7b576a03ec658bb8be8d336316",
+    "releaseUrl": "https://github.com/openai/codex/releases/tag/rust-v0.155.1",
+    "sourceTag": "rust-v0.155.1",
+    "annotatedTagObject": "4e21628f9ec9ee656650cd2b62ef92225725b5ac",
+    "sourceCommit": "be2951ea34f0d295ed0becf97079f92fa5f6950e",
+    "binding": "The installed Windows binary SHA-256 exactly matches the official v0.155.1 release asset digest. The release tag dereferences to the inspected source commit. This is a release-source correspondence, not a local rebuild or proof of every runtime deployment setting.",
+    "priorLinuxObservation": {
+      "package": "@openai/codex@0.155.1 with @openai/codex-linux-x64@0.155.1-linux-x64",
+      "binarySha256": "0753dfe1d8b87a52436deb13eb1c549661ef4c84fee2c5aa688385eebeccb761",
+      "npmProvenanceStatement": "The fetched npm attestation payload names refs/tags/rust-v0.155.1 and source commit be2951ea34f0d295ed0becf97079f92fa5f6950e for @openai/codex@0.155.1-linux-x64. Its signature was not independently verified in this task, and this package is supporting version context rather than the primary source pin."
+    }
+  },
+  "sourceFiles": [
+    {
+      "path": "codex-rs/hooks/src/schema.rs",
+      "blob": "bb50807af5fc242f4fb65a20357920a9fc315a63",
+      "url": "https://github.com/openai/codex/blob/be2951ea34f0d295ed0becf97079f92fa5f6950e/codex-rs/hooks/src/schema.rs#L499-L601"
+    },
+    {
+      "path": "codex-rs/hooks/src/events/session_start.rs",
+      "blob": "3aff0fe946eb64a0fc042522c5f60e465fef0d7c",
+      "url": "https://github.com/openai/codex/blob/be2951ea34f0d295ed0becf97079f92fa5f6950e/codex-rs/hooks/src/events/session_start.rs#L130-L192"
+    },
+    {
+      "path": "codex-rs/hooks/src/events/user_prompt_submit.rs",
+      "blob": "9124431bc194284ef4a009c76008851a984ff319",
+      "url": "https://github.com/openai/codex/blob/be2951ea34f0d295ed0becf97079f92fa5f6950e/codex-rs/hooks/src/events/user_prompt_submit.rs#L83-L113"
+    },
+    {
+      "path": "codex-rs/hooks/src/events/stop.rs",
+      "blob": "be2be9100e356427b298f24872113852eab3862a",
+      "url": "https://github.com/openai/codex/blob/be2951ea34f0d295ed0becf97079f92fa5f6950e/codex-rs/hooks/src/events/stop.rs#L150-L222"
+    },
+    {
+      "path": "codex-rs/hooks/src/engine/dispatcher.rs",
+      "blob": "c5ee0d2ce1da03ec07b08f9ba692088142673e99",
+      "url": "https://github.com/openai/codex/blob/be2951ea34f0d295ed0becf97079f92fa5f6950e/codex-rs/hooks/src/engine/dispatcher.rs#L131-L218"
+    },
+    {
+      "path": "codex-rs/hooks/src/engine/command_runner.rs",
+      "blob": "36914c62873f582674317c66de5e83e8225d8576",
+      "url": "https://github.com/openai/codex/blob/be2951ea34f0d295ed0becf97079f92fa5f6950e/codex-rs/hooks/src/engine/command_runner.rs#L108-L440"
+    },
+    {
+      "path": "codex-rs/hooks/src/engine/mcp_runner.rs",
+      "blob": "7a8da53e4d2b49ef66f2d14afb0e9fd45c8eeb4a",
+      "url": "https://github.com/openai/codex/blob/be2951ea34f0d295ed0becf97079f92fa5f6950e/codex-rs/hooks/src/engine/mcp_runner.rs#L41-L73"
+    },
+    {
+      "path": "codex-rs/core/src/hook_mcp_executor.rs",
+      "blob": "7fa0b78d42e00367c3e3db8e163ef5bd1af4b97e",
+      "url": "https://github.com/openai/codex/blob/be2951ea34f0d295ed0becf97079f92fa5f6950e/codex-rs/core/src/hook_mcp_executor.rs#L12-L37"
+    }
+  ],
+  "commandHookTrace": [
+    {
+      "step": 1,
+      "finding": "SessionStart serializes session_id, transcript_path, cwd, event name, model, permission_mode, and source; it has no turn_id. UserPromptSubmit and Stop serialize a turn_id alongside ordinary event fields. None of these schema types contains an attestation, host process identity, signature, or independent provenance handle.",
+      "source": "schema.rs:499-510,567-601; session_start.rs:130-151; user_prompt_submit.rs:83-103; stop.rs:150-177"
+    },
+    {
+      "step": 2,
+      "finding": "The event handlers pass serialized input_json into the dispatcher. Synchronous local handlers invoke execute_handler with metadata None; its Command arm passes command, configured env, input_json, and cwd into run_command. Asynchronous command handlers instead use schedule_async_hook, which calls run_command with those same inputs; its turn_id is used by result parsing after the child run. Executor-scoped metadata and the McpTool arm are separate paths.",
+      "source": "session_start.rs:185-192; user_prompt_submit.rs:105-113; stop.rs:214-222; dispatcher.rs:131-149,166-175,190-218; command_runner.rs:108-129"
+    },
+    {
+      "step": 3,
+      "finding": "run_command creates a configured shell child with piped stdin/stdout/stderr, spawns it, and writes input_json bytes to child stdin. build_command supplies the configured command line and replays the session environment snapshot plus hook-configured env. The inspected command-child path passes no separate authenticated process-and-turn channel.",
+      "source": "command_runner.rs:206-248,273-279,397-440"
+    }
+  ],
+  "documentedVersusAuthenticated": {
+    "officialDocumentation": "https://learn.chatgpt.com/docs/hooks",
+    "documented": "Command hook event JSON arrives on stdin; turn_id is an exposed field for some events.",
+    "authenticated": "Neither the documentation nor the inspected v0.155.1 command hook source defines a verifier or independent attestation for a child hook to bind the host executable identity and turn to that JSON. A child can read the fields, but the fields alone do not prove origin to a separately invoked verifier.",
+    "notAttestation": [
+      "stdin event JSON or its turn_id and a hash of that value",
+      "argv or environment values copied into the child",
+      "PID, parent or ancestor relationship, process basename codex, or a matching path string",
+      "successful execution under the official CLI during a benign observation"
+    ]
+  },
+  "adjacentPathBoundary": {
+    "finding": "McpTool hooks are dispatched on a different arm, and CoreHookMcpExecutor adds a threadId to MCP request metadata. That metadata is not supplied to the command child; threadId is not the required process-and-turn attestation. This task did not establish an alternative MCP tool hook protocol satisfying the W06-a-codex command hook contract.",
+    "source": "dispatcher.rs:209-218; mcp_runner.rs:41-73; hook_mcp_executor.rs:12-37"
+  },
+  "determination": {
+    "commandHookChannel": "ABSENT_IN_PINNED_SOURCE",
+    "generalAlternativeHookMechanisms": "NOT_ESTABLISHED",
+    "productDisposition": "W06-a-codex remains BLOCKED; do not start implementation or promote the existing candidate",
+    "reason": "The pinned v0.155.1 command hook receives ordinary serialized JSON and configured process inputs, with no separate verifiable host-origin process-and-turn channel exposed by the inspected dispatch and child execution path.",
+    "falsifier": "A pinned v0.155.1 source location or reproducible installed-release observation showing a separate authenticated host process plus turn claim delivered to and verifiable by the command hook child would overturn this scoped conclusion. A turn_id field, matching PID, or codex executable name alone would not."
+  },
+  "verification": {
+    "sourceInspection": "PASS",
+    "versionAndDigestPin": "PASS",
+    "liveHookRerun": "NOT_RUN",
+    "fakeBinaryExecution": "NOT_RUN",
+    "productTests": "NOT_RUN",
+    "productCodeChanges": "NONE"
+  }
+}
