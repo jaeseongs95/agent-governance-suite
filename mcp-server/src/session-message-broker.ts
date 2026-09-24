@@ -12,6 +12,7 @@ import type { InputObservationKind } from "./input-observation.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
 import { SessionModelCapabilityStore, capabilitySigner, MODEL_CAPABILITY_FEATURE } from "./session-model-capabilities.js";
 import type { RoutingObserverReceipt } from "../../skills/coordinate-subagents/scripts/model-routing-store.mjs";
+import type { SessionTaskRequestV1 } from "../../contracts/types.js";
 
 const IDLE_EXIT_MS = 60_000;
 export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities"] as const;
@@ -173,6 +174,16 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         sender: identity(payload.sender),
         target: identity(payload.target),
         body: string(payload.body, "body"),
+        ...(ttlSeconds === undefined ? {} : { ttlSeconds }),
+      });
+    }
+    case "register-task-request": {
+      const messageId = optionalString(payload, "messageId");
+      const ttlSeconds = optionalInteger(payload, "ttlSeconds");
+      return store.registerTaskRequest({
+        request: payload.request as SessionTaskRequestV1,
+        body: string(payload.body, "body"),
+        ...(messageId === undefined ? {} : { messageId }),
         ...(ttlSeconds === undefined ? {} : { ttlSeconds }),
       });
     }

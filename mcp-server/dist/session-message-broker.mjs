@@ -8062,6 +8062,27 @@ function boundedIdentity(value) {
     throw new Error("host and sessionId must use bounded identifier characters.");
   }
 }
+function taskTimestamp(value) {
+  if (typeof value !== "string") throw new Error("Task request timestamp is invalid.");
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-](\d{2}):(\d{2}))$/u.exec(value);
+  if (!match) throw new Error("Task request timestamp is invalid.");
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6]);
+  const offsetHour = match[7] === void 0 ? 0 : Number(match[7]);
+  const offsetMinute = match[8] === void 0 ? 0 : Number(match[8]);
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (month < 1 || month > 12 || day < 1 || day > (days[month - 1] ?? 0) || hour > 23 || minute > 59 || second > 59 || offsetHour > 23 || offsetMinute > 59) {
+    throw new Error("Task request timestamp is invalid.");
+  }
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) throw new Error("Task request timestamp is invalid.");
+  return parsed;
+}
 function claimedMessage(row, deliveryAttempt = Number(row.delivery_attempts), firstDeliveredAt = row.first_delivered_at === null ? null : String(row.first_delivered_at)) {
   return {
     messageId: String(row.message_id),
@@ -8140,7 +8161,25 @@ var SessionMessageStore = class {
       PRIMARY KEY (host, session_id, instance_id)
     ) STRICT;
     CREATE INDEX IF NOT EXISTS session_presence_latest
-      ON session_presence (host, session_id, started_at DESC);`);
+      ON session_presence (host, session_id, started_at DESC);
+    CREATE TABLE IF NOT EXISTS task_requests (
+      request_id TEXT PRIMARY KEY,
+      task_id TEXT NOT NULL,
+      sender_host TEXT NOT NULL,
+      sender_session_id TEXT NOT NULL,
+      sender_instance_id TEXT NOT NULL,
+      recipient_host TEXT NOT NULL,
+      recipient_session_id TEXT NOT NULL,
+      callback_host TEXT NOT NULL,
+      callback_session_id TEXT NOT NULL,
+      revision INTEGER NOT NULL CHECK (revision = 1),
+      requested_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      message_id TEXT NOT NULL UNIQUE,
+      body_digest TEXT NOT NULL,
+      ttl_seconds INTEGER NOT NULL,
+      registered_at TEXT NOT NULL
+    ) STRICT;`);
     this.database.exec("BEGIN IMMEDIATE");
     try {
       const messageColumns = this.database.prepare("PRAGMA table_info(messages)").all();
@@ -8193,6 +8232,9 @@ var SessionMessageStore = class {
     }
     const messageId = input.messageId ?? randomUUID();
     if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new Error("messageId must be 8-128 safe identifier characters.");
+    if (this.database.prepare("SELECT 1 FROM task_requests WHERE message_id = ?").get(messageId)) {
+      throw new Error("messageId is reserved by a task request.");
+    }
     this.prune(nowMs);
     const existing = this.database.prepare("SELECT * FROM messages WHERE message_id = ?").get(messageId);
     if (existing) {
@@ -8219,6 +8261,122 @@ var SessionMessageStore = class {
       expiresAt
     );
     return { messageId, createdAt, expiresAt, duplicate: false };
+  }
+  /** Request metadata is a claim, not a task authorization or an outcome. */
+  registerTaskRequest(input, nowMs = Date.now()) {
+    const request = input.request;
+    if (!request || typeof request !== "object" || Array.isArray(request) || Object.keys(request).sort().join() !== "authorityEffect,callbackTarget,expiresAt,kind,recipient,requestId,requestedAt,revision,schemaVersion,sender,taskId") {
+      throw new Error("Task request shape is invalid.");
+    }
+    if (request.schemaVersion !== "1.0.0" || request.kind !== "request" || request.revision !== 1 || request.authorityEffect !== "none") {
+      throw new Error("Task request contract is invalid.");
+    }
+    if (typeof request.requestId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(request.requestId) || typeof request.taskId !== "string" || request.taskId.length < 1 || request.taskId.length > 128) {
+      throw new Error("Task request identifiers are invalid.");
+    }
+    if (!request.sender || typeof request.sender !== "object" || Array.isArray(request.sender) || !request.recipient || typeof request.recipient !== "object" || Array.isArray(request.recipient) || !request.callbackTarget || typeof request.callbackTarget !== "object" || Array.isArray(request.callbackTarget) || typeof request.sender.host !== "string" || typeof request.sender.sessionId !== "string" || typeof request.recipient.host !== "string" || typeof request.recipient.sessionId !== "string" || typeof request.callbackTarget.host !== "string" || typeof request.callbackTarget.sessionId !== "string") {
+      throw new Error("Task request identities are required.");
+    }
+    boundedIdentity(request.sender);
+    boundedIdentity(request.recipient);
+    boundedIdentity(request.callbackTarget);
+    if (Object.keys(request.sender).sort().join() !== "host,instanceId,sessionId" || Object.keys(request.recipient).sort().join() !== "host,sessionId" || Object.keys(request.callbackTarget).sort().join() !== "host,sessionId" || typeof request.sender.instanceId !== "string" || request.sender.instanceId.length < 1 || request.sender.instanceId.length > 200) throw new Error("Task request identity shape is invalid.");
+    if (request.callbackTarget.host !== request.sender.host || request.callbackTarget.sessionId !== request.sender.sessionId) {
+      throw new Error("Task callback target must match the sender session.");
+    }
+    const requestedAt = taskTimestamp(request.requestedAt);
+    const requestExpiresAt = taskTimestamp(request.expiresAt);
+    if (requestedAt >= requestExpiresAt) throw new Error("Task request deadline is invalid.");
+    if (typeof input.body !== "string") throw new Error("Task request body must be a string.");
+    const ttlSeconds = input.ttlSeconds ?? MESSAGE_TTL_DEFAULT_SECONDS;
+    if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) {
+      throw new Error(`ttlSeconds must be an integer from 30 to ${MESSAGE_TTL_MAX_SECONDS}.`);
+    }
+    const bodyDigest = createHash("sha256").update(input.body, "utf8").digest("hex");
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const existing = this.database.prepare("SELECT * FROM task_requests WHERE request_id = ?").get(request.requestId);
+      if (existing) {
+        const same2 = existing.task_id === request.taskId && existing.sender_host === request.sender.host && existing.sender_session_id === request.sender.sessionId && existing.sender_instance_id === request.sender.instanceId && existing.recipient_host === request.recipient.host && existing.recipient_session_id === request.recipient.sessionId && existing.callback_host === request.callbackTarget.host && existing.callback_session_id === request.callbackTarget.sessionId && existing.revision === request.revision && existing.requested_at === request.requestedAt && existing.expires_at === request.expiresAt && existing.body_digest === bodyDigest && existing.ttl_seconds === ttlSeconds && (input.messageId === void 0 || existing.message_id === input.messageId);
+        if (!same2) throw new Error("requestId already belongs to a different task request.");
+        this.database.exec("COMMIT");
+        return {
+          requestId: request.requestId,
+          messageId: String(existing.message_id),
+          messageCreatedAt: String(existing.registered_at),
+          messageExpiresAt: iso(Date.parse(String(existing.registered_at)) + Number(existing.ttl_seconds) * 1e3),
+          requestExpiresAt: String(existing.expires_at),
+          duplicate: true
+        };
+      }
+      if (requestExpiresAt < nowMs + ttlSeconds * 1e3) {
+        throw new Error("Task request deadline must cover message TTL.");
+      }
+      const sent = this.send({
+        ...input.messageId === void 0 ? {} : { messageId: input.messageId },
+        sender: request.sender,
+        target: request.recipient,
+        body: input.body,
+        ttlSeconds
+      }, nowMs);
+      if (sent.duplicate) throw new Error("messageId already belongs to a different message.");
+      this.database.prepare(`INSERT INTO task_requests (
+        request_id, task_id, sender_host, sender_session_id, sender_instance_id,
+        recipient_host, recipient_session_id, callback_host, callback_session_id,
+        revision, requested_at, expires_at, message_id, body_digest, ttl_seconds, registered_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        request.requestId,
+        request.taskId,
+        request.sender.host,
+        request.sender.sessionId,
+        request.sender.instanceId,
+        request.recipient.host,
+        request.recipient.sessionId,
+        request.callbackTarget.host,
+        request.callbackTarget.sessionId,
+        request.revision,
+        request.requestedAt,
+        request.expiresAt,
+        sent.messageId,
+        bodyDigest,
+        ttlSeconds,
+        sent.createdAt
+      );
+      this.database.exec("COMMIT");
+      return {
+        requestId: request.requestId,
+        messageId: sent.messageId,
+        messageCreatedAt: sent.createdAt,
+        messageExpiresAt: sent.expiresAt,
+        requestExpiresAt: request.expiresAt,
+        duplicate: false
+      };
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  taskRequest(requestId) {
+    const row = this.database.prepare("SELECT * FROM task_requests WHERE request_id = ?").get(requestId);
+    if (!row) return null;
+    return {
+      request: {
+        schemaVersion: "1.0.0",
+        kind: "request",
+        requestId: String(row.request_id),
+        taskId: String(row.task_id),
+        sender: { host: String(row.sender_host), sessionId: String(row.sender_session_id), instanceId: String(row.sender_instance_id) },
+        recipient: { host: String(row.recipient_host), sessionId: String(row.recipient_session_id) },
+        callbackTarget: { host: String(row.callback_host), sessionId: String(row.callback_session_id) },
+        revision: 1,
+        requestedAt: String(row.requested_at),
+        expiresAt: String(row.expires_at),
+        authorityEffect: "none"
+      },
+      messageId: String(row.message_id),
+      ttlSeconds: Number(row.ttl_seconds),
+      registeredAt: String(row.registered_at)
+    };
   }
   claimLocked(target, nowMs, limits) {
     const maxMessages = limits.maxMessages ?? CLAIM_MAX_MESSAGES;
@@ -14344,6 +14502,16 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, modelC
         sender: identity(payload.sender),
         target: identity(payload.target),
         body: string(payload.body, "body"),
+        ...ttlSeconds === void 0 ? {} : { ttlSeconds }
+      });
+    }
+    case "register-task-request": {
+      const messageId = optionalString(payload, "messageId");
+      const ttlSeconds = optionalInteger(payload, "ttlSeconds");
+      return store.registerTaskRequest({
+        request: payload.request,
+        body: string(payload.body, "body"),
+        ...messageId === void 0 ? {} : { messageId },
         ...ttlSeconds === void 0 ? {} : { ttlSeconds }
       });
     }
