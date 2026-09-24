@@ -1,6 +1,6 @@
 # F01 — FlowMarshal A2 same-user 신뢰 프로필
 
-상태: **계약 동결**. `host-integration.v1.schema.json`의 `$defs`와 `F01.test.mjs`는 F02/F03 구현의 입력이다. 이 변경은 A2 verifier, 서버 선택, 운영 pin, 제품 수용이나 live 관측을 활성화하지 않는다. 기존 `host-integration.json`은 패키지 진입점과 파일 해시만 광고하며 프로필 가용성 증거가 아니다.
+상태: **계약 동결**. `host-integration.v1.schema.json`의 `$defs`와 `F01.test.mjs`는 F02/F03/F04 구현의 입력이다. 이 변경은 A2 verifier, 서버 선택, 운영 pin, 제품 수용이나 live 관측을 활성화하지 않는다. 기존 `host-integration.json`은 패키지 진입점과 파일 해시만 광고하며 프로필 가용성 증거가 아니다.
 
 ## 두 프로필의 권위
 
@@ -25,8 +25,8 @@ AGS 서버는 시작할 때 서버 로컬 설정의 `serverProfileSelection` **�
 
 ## 서명, 현재 호출, 반환값 결속
 
-F02 verifier의 입력인 FM typed producer receipt와 dispatch registration은 각자의 A2 domain에 `profileId=flowmarshal-same-user-v1`과 `freezeIdentity`를 **서명 대상 body 안**에 넣는다. 서버는 선택한 pair, A2 namespace에서 조회한 pin/key, 실제 예약된 호출 ID·tool·unsigned input digest, task/run/stage revision과 재생 방지 상태를 서로 비교한 후에만 관측을 제공한다. VM domain의 서명이 유효해도 A2 verifier는 거부하며 그 반대도 같다. 요청 필드의 profile 값은 기대값을 만드는 입력이 아니다. 서로 다른 profile의 receipt, key, pin, nonce, reservation, state, workflow receipt를 섞은 경우에는 nonce나 효과를 소비하기 전에 거부한다.
+F03 verifier의 입력인 FM typed producer receipt와 dispatch registration은 각자의 A2 domain에 `profileId=flowmarshal-same-user-v1`과 `freezeIdentity`를 **서명 대상 body 안**에 넣는다. 서버는 선택한 pair, A2 namespace에서 조회한 pin/key, 실제 예약된 호출 ID·tool·unsigned input digest, task/run/stage revision과 재생 방지 상태를 서로 비교한 후에만 관측을 제공한다. VM domain의 서명이 유효해도 A2 verifier는 거부하며 그 반대도 같다. 요청 필드의 profile 값은 기대값을 만드는 입력이 아니다. 서로 다른 profile의 receipt, key, pin, nonce, reservation, state, workflow receipt를 섞은 경우에는 nonce나 효과를 소비하기 전에 거부한다.
 
-검증된 profile pair는 AGS가 투영하는 `executionContext` 및 해당 plan/stage의 workflow receipt에 그대로 결속한다. 모델·effort는 FM typed terminal 주장, `modelClass`와 `actorId`는 위 표의 FM 서명 주장 출처로 표시한다. strict service가 요구하는 이 필드를 요청 JSON이나 legacy CLI의 self-report로 채우지 않는다. `executionContext`·workflow receipt의 profile pair가 현재 서버 선택이나 해당 run의 저장 pair와 다르거나 빠지면 거부한다. 기존 범용 `ExecutionContextV1`과 `WorkflowReceiptV1`에 이 필드를 강제로 추가해 기존 경로를 바꾸는 것은 F01 범위가 아니다. F02가 A2 제품 투영·영속 경계를 구현할 때 profile 결속을 실제 schema와 store에 연결한다.
+검증된 profile pair는 AGS가 투영하는 `executionContext` 및 해당 plan/stage의 workflow receipt에 그대로 결속한다. 모델·effort는 FM typed terminal 주장, `modelClass`와 `actorId`는 위 표의 FM 서명 주장 출처로 표시한다. strict service가 요구하는 이 필드를 요청 JSON이나 legacy CLI의 self-report로 채우지 않는다. `executionContext`·workflow receipt의 profile pair가 현재 서버 선택이나 해당 run의 저장 pair와 다르거나 빠지면 거부한다. 기존 범용 `ExecutionContextV1`과 `WorkflowReceiptV1`에 이 필드를 강제로 추가해 기존 경로를 바꾸는 것은 F01 범위가 아니다. F02는 profile·key·state loader를, F03은 receipt·현재 호출의 profile 결속과 단회 검증을 구현한다. F04는 F03의 검증된 문맥만 strict `WorkflowService`에 연결하고 `executionContext`·workflow receipt의 profile 결속을 제품 경로에서 완성한다.
 
 `F01.test.mjs`는 JSON Schema의 고정 profile·선택·binding 정의와 교차 domain/key/pin/state/receipt 예시의 거부를 검사한다. 이는 계약 fixture PASS이며 제품 verifier, 운영 설치, live host, FM 원장 진실성 또는 보호 VM strong의 PASS가 아니다.
