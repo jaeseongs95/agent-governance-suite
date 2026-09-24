@@ -32,6 +32,7 @@ import type { SessionPresence } from "./session-message-store.js";
 import { type TrustService } from "./trust-service.js";
 import { type ModelRoutingGateway, unavailableModelRouting } from "./model-routing-service.js";
 import type { VmCurrentInvocation } from "./host-integration/vm-current-invocation.js";
+import type { FlowmarshalCurrentInvocation } from "./host-integration/flowmarshal-current-invocation.js";
 import { VmApprovedSlotSource } from "./host-integration/vm-approved-slot-source.js";
 import { ApprovedSlotReader } from "./orchestration/approved-slot-reader.js";
 import type { SemanticMcpGateway } from "./routing-v3/semantic-gateway.js";
@@ -416,6 +417,7 @@ export function createMcpServer(
   vmInvocation: VmCurrentInvocation | null = null,
   semantic: { enabled: boolean; gateway: SemanticMcpGateway | null } = { enabled: false, gateway: null },
   approvedSlotSource: VmApprovedSlotSource | null = vmInvocation ? new VmApprovedSlotSource(vmInvocation) : null,
+  flowmarshalInvocation: FlowmarshalCurrentInvocation | null = null,
 ): Server {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
@@ -438,6 +440,14 @@ export function createMcpServer(
         return { ...registered, ...approvedSlotReader.read(registered) };
       });
     }
+  }
+
+  if (flowmarshalInvocation) {
+    server.setRequestHandler(z.object({ method: z.literal("fm/hello"), params: z.object({}) }),
+      async () => ({ serverEpoch: flowmarshalInvocation.serverEpoch }));
+    server.setRequestHandler(z.object({ method: z.literal("fm/reserve_dispatch"),
+      params: z.object({ registration: z.unknown() }) }),
+    async (request) => flowmarshalInvocation.reserve(request.params.registration));
   }
 
   const contractDocuments = Object.values(contractSchemas) as Array<Record<string, unknown>>;
@@ -845,9 +855,13 @@ export function createMcpServer(
     if (notice) response.content.push({ type: "text", text: JSON.stringify(notice) });
     return response;
     };
-    return vmInvocation
-      ? vmInvocation.runCurrentRequest(extra.requestId, request.params.name, asRecord(request.params.arguments), handle)
-      : handle();
+    if (vmInvocation) return vmInvocation.runCurrentRequest(extra.requestId, request.params.name, asRecord(request.params.arguments), handle);
+    if (flowmarshalInvocation) return flowmarshalInvocation.runCurrentRequest(
+      extra.requestId, request.params.name, asRecord(request.params.arguments), async () => {
+        if (flowmarshalInvocation.hasCurrentRequest()) throw new Error("FlowMarshal A2 receipt verification is not installed");
+        return handle();
+      });
+    return handle();
   });
 
   return server;

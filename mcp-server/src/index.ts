@@ -29,6 +29,7 @@ import { VmCurrentInvocation } from "./host-integration/vm-current-invocation.js
 import { openSemanticService, type OpenSemanticService } from "./routing-v3/open-semantic-service.js";
 import { VmModelPolicy } from "./host-integration/vm-model-policy.js";
 import { initializeFlowmarshalProfile } from "./host-integration/flowmarshal-profile.js";
+import { FlowmarshalCurrentInvocation } from "./host-integration/flowmarshal-current-invocation.js";
 
 async function main(): Promise<void> {
   const registryPath = resolveRegistryPath();
@@ -46,7 +47,9 @@ async function main(): Promise<void> {
   const modelRouting = openModelRoutingService(workflowDatabasePath, store);
   let continuityStore: SqliteContinuityStore | null = null;
   let semantic: OpenSemanticService | null = null;
+  let flowmarshalInvocation: FlowmarshalCurrentInvocation | null = null;
   process.once("exit", () => {
+    flowmarshalInvocation?.close();
     semantic?.close();
     continuityStore?.close();
     modelRouting.close();
@@ -59,6 +62,7 @@ async function main(): Promise<void> {
   // F02 validates the fixed same-user configuration; F03/F04 will consume it for admission.
   const flowmarshalProfile = initializeFlowmarshalProfile();
   if (flowmarshalProfile && hostAttestation) throw new Error("FlowMarshal A2 and Claude host profiles cannot share one server");
+  flowmarshalInvocation = flowmarshalProfile ? new FlowmarshalCurrentInvocation(flowmarshalProfile, store) : null;
   const vmPolicy = flowmarshalProfile ? null : VmModelPolicy.installed();
   const vmInvocation = vmPolicy ? new VmCurrentInvocation(store, Date.now, vmPolicy) : null;
   // Neither bundled host currently exposes a cryptographically distinct direct-human approval event.
@@ -88,7 +92,7 @@ async function main(): Promise<void> {
     if (semantic) process.stderr.write(`Semantic Jev registry: ${semantic.jev.status}; adoption: ${semantic.jev.adoption}\n`);
   }
   const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, modelRouting.service, vmInvocation,
-    { enabled: semantic !== null, gateway: semantic?.gateway ?? null });
+    { enabled: semantic !== null, gateway: semantic?.gateway ?? null }, undefined, flowmarshalInvocation);
   await server.connect(new StdioServerTransport());
 }
 

@@ -410,11 +410,11 @@ var require_codegen = __commonJS({
         const rhs = this.rhs === void 0 ? "" : ` = ${this.rhs}`;
         return `${varKind} ${this.name}${rhs};` + _n2;
       }
-      optimizeNames(names, constants3) {
+      optimizeNames(names, constants4) {
         if (!names[this.name.str])
           return;
         if (this.rhs)
-          this.rhs = optimizeExpr(this.rhs, names, constants3);
+          this.rhs = optimizeExpr(this.rhs, names, constants4);
         return this;
       }
       get names() {
@@ -431,10 +431,10 @@ var require_codegen = __commonJS({
       render({ _n: _n2 }) {
         return `${this.lhs} = ${this.rhs};` + _n2;
       }
-      optimizeNames(names, constants3) {
+      optimizeNames(names, constants4) {
         if (this.lhs instanceof code_1.Name && !names[this.lhs.str] && !this.sideEffects)
           return;
-        this.rhs = optimizeExpr(this.rhs, names, constants3);
+        this.rhs = optimizeExpr(this.rhs, names, constants4);
         return this;
       }
       get names() {
@@ -495,8 +495,8 @@ var require_codegen = __commonJS({
       optimizeNodes() {
         return `${this.code}` ? this : void 0;
       }
-      optimizeNames(names, constants3) {
-        this.code = optimizeExpr(this.code, names, constants3);
+      optimizeNames(names, constants4) {
+        this.code = optimizeExpr(this.code, names, constants4);
         return this;
       }
       get names() {
@@ -525,12 +525,12 @@ var require_codegen = __commonJS({
         }
         return nodes.length > 0 ? this : void 0;
       }
-      optimizeNames(names, constants3) {
+      optimizeNames(names, constants4) {
         const { nodes } = this;
         let i = nodes.length;
         while (i--) {
           const n = nodes[i];
-          if (n.optimizeNames(names, constants3))
+          if (n.optimizeNames(names, constants4))
             continue;
           subtractNames(names, n.names);
           nodes.splice(i, 1);
@@ -583,12 +583,12 @@ var require_codegen = __commonJS({
           return void 0;
         return this;
       }
-      optimizeNames(names, constants3) {
+      optimizeNames(names, constants4) {
         var _a3;
-        this.else = (_a3 = this.else) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants3);
-        if (!(super.optimizeNames(names, constants3) || this.else))
+        this.else = (_a3 = this.else) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants4);
+        if (!(super.optimizeNames(names, constants4) || this.else))
           return;
-        this.condition = optimizeExpr(this.condition, names, constants3);
+        this.condition = optimizeExpr(this.condition, names, constants4);
         return this;
       }
       get names() {
@@ -611,10 +611,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.iteration})` + super.render(opts);
       }
-      optimizeNames(names, constants3) {
-        if (!super.optimizeNames(names, constants3))
+      optimizeNames(names, constants4) {
+        if (!super.optimizeNames(names, constants4))
           return;
-        this.iteration = optimizeExpr(this.iteration, names, constants3);
+        this.iteration = optimizeExpr(this.iteration, names, constants4);
         return this;
       }
       get names() {
@@ -650,10 +650,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.varKind} ${this.name} ${this.loop} ${this.iterable})` + super.render(opts);
       }
-      optimizeNames(names, constants3) {
-        if (!super.optimizeNames(names, constants3))
+      optimizeNames(names, constants4) {
+        if (!super.optimizeNames(names, constants4))
           return;
-        this.iterable = optimizeExpr(this.iterable, names, constants3);
+        this.iterable = optimizeExpr(this.iterable, names, constants4);
         return this;
       }
       get names() {
@@ -695,11 +695,11 @@ var require_codegen = __commonJS({
         (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNodes();
         return this;
       }
-      optimizeNames(names, constants3) {
+      optimizeNames(names, constants4) {
         var _a3, _b;
-        super.optimizeNames(names, constants3);
-        (_a3 = this.catch) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants3);
-        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants3);
+        super.optimizeNames(names, constants4);
+        (_a3 = this.catch) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants4);
+        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants4);
         return this;
       }
       get names() {
@@ -1000,7 +1000,7 @@ var require_codegen = __commonJS({
     function addExprNames(names, from) {
       return from instanceof code_1._CodeOrName ? addNames(names, from.names) : names;
     }
-    function optimizeExpr(expr, names, constants3) {
+    function optimizeExpr(expr, names, constants4) {
       if (expr instanceof code_1.Name)
         return replaceName(expr);
       if (!canOptimize(expr))
@@ -1015,14 +1015,14 @@ var require_codegen = __commonJS({
         return items;
       }, []));
       function replaceName(n) {
-        const c = constants3[n.str];
+        const c = constants4[n.str];
         if (c === void 0 || names[n.str] !== 1)
           return n;
         delete names[n.str];
         return c;
       }
       function canOptimize(e) {
-        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names[c.str] === 1 && constants3[c.str] !== void 0);
+        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names[c.str] === 1 && constants4[c.str] !== void 0);
       }
     }
     function subtractNames(names, from) {
@@ -6952,8 +6952,8 @@ var require_discriminator = __commonJS({
           if (!tagRequired)
             throw new Error(`discriminator: "${tagName}" must be required`);
           return oneOfMapping;
-          function hasRequired({ required: required3 }) {
-            return Array.isArray(required3) && required3.includes(tagName);
+          function hasRequired({ required: required4 }) {
+            return Array.isArray(required4) && required4.includes(tagName);
           }
           function addMappings(sch, i) {
             if (sch.const) {
@@ -8725,9 +8725,9 @@ function floatSafeRemainder(val, step) {
   return ratio - roundedRatio;
 }
 var EVALUATING = /* @__PURE__ */ Symbol("evaluating");
-function defineLazy(object10, key, getter) {
+function defineLazy(object11, key, getter) {
   let value = void 0;
-  Object.defineProperty(object10, key, {
+  Object.defineProperty(object11, key, {
     get() {
       if (value === EVALUATING) {
         return void 0;
@@ -8739,7 +8739,7 @@ function defineLazy(object10, key, getter) {
       return value;
     },
     set(v) {
-      Object.defineProperty(object10, key, {
+      Object.defineProperty(object11, key, {
         value: v
         // configurable: true,
       });
@@ -20738,9 +20738,9 @@ function generateChecks(doc, ctx, schema2, accessor) {
         break;
       }
       case "length_equals": {
-        const exact6 = numericOperand(def.length, "length_equals");
-        const len = codePointLengthVar(doc, ctx, currentAccessor, `${currentAccessor}.length >= ${exact6} && ${currentAccessor}.length <= ${def.length * 2}`);
-        doc.write(`if (${len} !== ${exact6}) return INVALID;`);
+        const exact7 = numericOperand(def.length, "length_equals");
+        const len = codePointLengthVar(doc, ctx, currentAccessor, `${currentAccessor}.length >= ${exact7} && ${currentAccessor}.length <= ${def.length * 2}`);
+        doc.write(`if (${len} !== ${exact7}) return INVALID;`);
         break;
       }
       case "min_size":
@@ -23366,9 +23366,9 @@ function foldObjects(members2) {
     objects.push(member);
   }
   const properties = {};
-  const required3 = /* @__PURE__ */ new Set();
-  for (const object10 of objects) {
-    for (const key in object10.properties) {
+  const required4 = /* @__PURE__ */ new Set();
+  for (const object11 of objects) {
+    for (const key in object11.properties) {
       if (Object.prototype.hasOwnProperty.call(properties, key))
         continue;
       const parts = [];
@@ -23382,18 +23382,18 @@ function foldObjects(members2) {
       const merged = parts.length === 1 ? parts[0] : foldObjects(parts) ?? { allOf: parts };
       assignProp(properties, key, merged);
     }
-    for (const key of object10.required ?? [])
-      required3.add(key);
+    for (const key of object11.required ?? [])
+      required4.add(key);
   }
   const folded = { type: "object", properties };
-  if (required3.size)
-    folded.required = [...required3];
-  if (objects.every((object10) => object10.additionalProperties === false)) {
+  if (required4.size)
+    folded.required = [...required4];
+  if (objects.every((object11) => object11.additionalProperties === false)) {
     folded.additionalProperties = false;
   } else {
     const constraints = [];
-    for (const object10 of objects) {
-      const constraint = undeclaredConstraint(object10);
+    for (const object11 of objects) {
+      const constraint = undeclaredConstraint(object11);
       if (constraint && !constraints.some((seen) => JSON.stringify(seen) === JSON.stringify(constraint)))
         constraints.push(constraint);
     }
@@ -23986,8 +23986,8 @@ var tupleProcessor = (schema2, ctx, _json, params) => {
   let minItems = def.items.length;
   while (minItems > 0) {
     const item = def.items[minItems - 1];
-    const optional3 = ctx.io === "input" ? inputOptin(item) !== void 0 : item._zod.optout === "optional";
-    if (!optional3)
+    const optional4 = ctx.io === "input" ? inputOptin(item) !== void 0 : item._zod.optout === "optional";
+    if (!optional4)
       break;
     minItems--;
   }
@@ -30334,10 +30334,10 @@ function object2(value, name) {
   assert2(value && typeof value === "object" && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype, "INVALID_INPUT", `${name} must be a plain JSON object`);
   return value;
 }
-function keys(value, allowed, required3 = allowed, name = "object") {
+function keys(value, allowed, required4 = allowed, name = "object") {
   object2(value, name);
   assert2(Object.keys(value).every((k) => allowed.includes(k)), "INVALID_INPUT", `${name}: unexpected field`);
-  assert2(required3.every((k) => Object.hasOwn(value, k)), "INVALID_INPUT", `${name}: required field missing`);
+  assert2(required4.every((k) => Object.hasOwn(value, k)), "INVALID_INPUT", `${name}: required field missing`);
 }
 function text(value, name, maximum = 512) {
   assert2(typeof value === "string" && value.trim().length > 0 && Buffer.byteLength(value, "utf8") <= maximum && !value.includes("\0"), "INVALID_INPUT", `${name}: non-empty bounded string required`);
@@ -30657,12 +30657,12 @@ function collectEligibleCandidatesV2(request, { catalog, policy, capabilities, n
   const nowMs = instant(now, "now");
   assert2(Array.isArray(capabilities) && capabilities.length <= 256, "INVALID_INPUT", "Capability list too large");
   const rejectedCandidates = [], candidates = [], validSnapshotDigests = [], seenSnapshots = /* @__PURE__ */ new Set();
-  const reject2 = (candidateKey, reasonCodes) => rejectedCandidates.push({ candidateKey, reasonCodes: [...new Set(reasonCodes)].sort() });
+  const reject3 = (candidateKey, reasonCodes) => rejectedCandidates.push({ candidateKey, reasonCodes: [...new Set(reasonCodes)].sort() });
   for (const snapshot of capabilities) {
     try {
       validateCapabilities(snapshot);
     } catch (error61) {
-      reject2(`invalid:${digest(snapshot)}`, [error61.code ?? "INVALID_CAPABILITY"]);
+      reject3(`invalid:${digest(snapshot)}`, [error61.code ?? "INVALID_CAPABILITY"]);
       continue;
     }
     assert2(!seenSnapshots.has(snapshot.snapshotDigest), "INVALID_INPUT", "Duplicate capability snapshot");
@@ -30704,7 +30704,7 @@ function collectEligibleCandidatesV2(request, { catalog, policy, capabilities, n
       if (req.contextMode === "full-history" && policy.fullHistoryInheritanceHosts.includes(snapshot.host)) reason.push("FULL_HISTORY_REQUIRES_LEGACY_INHERITANCE");
       const candidate = { key, model: m, snapshot, binding: b2 };
       if (request.user?.strength === "required" && !matchesPreference(candidate, request.user, catalog)) reason.push("REQUIRED_CHOICE_UNAVAILABLE");
-      if (reason.length) reject2(key, reason);
+      if (reason.length) reject3(key, reason);
       else candidates.push(candidate);
     }
   }
@@ -32093,9 +32093,9 @@ var Protocol = class {
    */
   request(request, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve, reject2) => {
+    return new Promise((resolve, reject3) => {
       const earlyReject = (error61) => {
-        reject2(error61);
+        reject3(error61);
       };
       if (!this._transport) {
         earlyReject(new Error("Not connected"));
@@ -32157,24 +32157,24 @@ var Protocol = class {
           }
         }, { relatedRequestId, resumptionToken, onresumptiontoken }).catch((error62) => this._onerror(new Error(`Failed to send cancellation: ${error62}`)));
         const error61 = reason instanceof McpError ? reason : new McpError(ErrorCode.RequestTimeout, String(reason));
-        reject2(error61);
+        reject3(error61);
       };
       this._responseHandlers.set(messageId, (response) => {
         if (options?.signal?.aborted) {
           return;
         }
         if (response instanceof Error) {
-          return reject2(response);
+          return reject3(response);
         }
         try {
           const parseResult = safeParse3(resultSchema, response.result);
           if (!parseResult.success) {
-            reject2(parseResult.error);
+            reject3(parseResult.error);
           } else {
             resolve(parseResult.data);
           }
         } catch (error61) {
-          reject2(error61);
+          reject3(error61);
         }
       });
       options?.signal?.addEventListener("abort", () => {
@@ -32200,12 +32200,12 @@ var Protocol = class {
           timestamp: Date.now()
         }).catch((error61) => {
           this._cleanupTimeout(messageId);
-          reject2(error61);
+          reject3(error61);
         });
       } else {
         this._transport.send(jsonrpcRequest, { relatedRequestId, resumptionToken, onresumptiontoken }).catch((error61) => {
           this._cleanupTimeout(messageId);
-          reject2(error61);
+          reject3(error61);
         });
       }
     });
@@ -32432,15 +32432,15 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve, reject2) => {
+    return new Promise((resolve, reject3) => {
       if (signal.aborted) {
-        reject2(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
+        reject3(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
       const timeoutId = setTimeout(resolve, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
-        reject2(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
+        reject3(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
       }, { once: true });
     });
   }
@@ -33672,8 +33672,8 @@ async function withDeadline(timeoutMs, parentSignal, message, work) {
   };
   try {
     throwIfAborted(controller.signal);
-    const aborted2 = new Promise((_resolve, reject2) => {
-      const onAbort = () => reject2(signalError(controller.signal));
+    const aborted2 = new Promise((_resolve, reject3) => {
+      const onAbort = () => reject3(signalError(controller.signal));
       controller.signal.addEventListener("abort", onAbort, { once: true });
       removeAbortListener = () => controller.signal.removeEventListener("abort", onAbort);
     });
@@ -33707,7 +33707,7 @@ async function readEndpoint(stateDirectory, signal) {
 async function requestSessionMessageOnce(operation, payload, stateDirectory, timeoutMs = BROKER_REQUEST_TIMEOUT_MS, parentSignal) {
   return withDeadline(Math.min(BROKER_REQUEST_TIMEOUT_MS, timeoutMs), parentSignal, "The session message broker timed out.", async (signal) => {
     const { endpoint, token, certificate } = await readEndpoint(stateDirectory, signal);
-    return new Promise((resolve, reject2) => {
+    return new Promise((resolve, reject3) => {
       let settled = false;
       let buffer = "";
       const socket = tls.connect({
@@ -33725,7 +33725,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
         settled = true;
         signal.removeEventListener("abort", onAbort);
         socket.destroy();
-        if (error61) reject2(error61);
+        if (error61) reject3(error61);
         else resolve(value);
       };
       const onAbort = () => finish(signalError(signal));
@@ -33759,13 +33759,13 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
 }
 async function delay(milliseconds, signal) {
   throwIfAborted(signal);
-  await new Promise((resolve, reject2) => {
+  await new Promise((resolve, reject3) => {
     const timer = setTimeout(finish, milliseconds);
     const onAbort = () => finish(signalError(signal));
     function finish(error61) {
       clearTimeout(timer);
       signal.removeEventListener("abort", onAbort);
-      if (error61) reject2(error61);
+      if (error61) reject3(error61);
       else resolve();
     }
     signal.addEventListener("abort", onAbort, { once: true });
@@ -34207,13 +34207,13 @@ function validateCurrentBinding(workflow, request, decision) {
     !["high", "critical"].includes(task.riskLevel) || request.highRisk,
     "A semantic decision cannot downgrade the task risk."
   );
-  const required3 = /* @__PURE__ */ new Set([
+  const required4 = /* @__PURE__ */ new Set([
     ...request.requirements.tools,
     ...request.requirements.filesystem === "none" ? [] : ["read"],
     ...request.requirements.filesystem === "write" ? ["write"] : []
   ]);
   requireBinding(
-    [...required3].every((action) => task.authorization.allowedActions.includes(action) && !task.authorization.prohibitedActions.includes(action)),
+    [...required4].every((action) => task.authorization.allowedActions.includes(action) && !task.authorization.prohibitedActions.includes(action)),
     "Semantic decision exceeds local task authorization."
   );
   requireBinding(
@@ -34272,12 +34272,12 @@ var ModelRoutingWorkflowBridge = class {
       !["high", "critical"].includes(guarded.proposal.taskEnvelope.riskLevel) || request.highRisk,
       "A peer handoff cannot downgrade the task risk."
     );
-    const required3 = /* @__PURE__ */ new Set([
+    const required4 = /* @__PURE__ */ new Set([
       ...request.requirements.tools,
       ...request.requirements.filesystem === "none" ? [] : ["read"],
       ...request.requirements.filesystem === "write" ? ["write"] : []
     ]);
-    requireCondition([...required3].every((action) => authorization.allowedActions.includes(action) && !authorization.prohibitedActions.includes(action)), "Peer tools or filesystem exceed the local task authorization.");
+    requireCondition([...required4].every((action) => authorization.allowedActions.includes(action) && !authorization.prohibitedActions.includes(action)), "Peer tools or filesystem exceed the local task authorization.");
     if (receiverActor !== null) {
       requireCondition(guarded.lease.actorId === receiverActor, "The receiver is not the existing local lease owner.");
       requireCondition(!request.requirements.excludedActors.includes(receiverActor), "The peer actor is excluded.");
@@ -39647,8 +39647,8 @@ function pythonCanonical(value) {
   if (value === null || typeof value === "string" || typeof value === "boolean") return JSON.stringify(value);
   if (typeof value === "number" && Number.isSafeInteger(value)) return String(value);
   if (Array.isArray(value)) return `[${value.map(pythonCanonical).join(",")}]`;
-  const object10 = record2(value);
-  if (!object10) deny("snapshot JSON is invalid");
+  const object11 = record2(value);
+  if (!object11) deny("snapshot JSON is invalid");
   const compare = (left, right) => {
     const a = Array.from(left, (char) => char.codePointAt(0));
     const b2 = Array.from(right, (char) => char.codePointAt(0));
@@ -39657,7 +39657,7 @@ function pythonCanonical(value) {
     }
     return a.length - b2.length;
   };
-  return `{${Object.keys(object10).sort(compare).map((key) => `${JSON.stringify(key)}:${pythonCanonical(object10[key])}`).join(",")}}`;
+  return `{${Object.keys(object11).sort(compare).map((key) => `${JSON.stringify(key)}:${pythonCanonical(object11[key])}`).join(",")}}`;
 }
 var VmApprovedSlotSource = class {
   constructor(vm, clock = Date.now) {
@@ -40324,7 +40324,7 @@ function serverInstructions(profile = "default") {
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator2 = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, modelRouting = unavailableModelRouting(), vmInvocation = null, semantic = { enabled: false, gateway: null }, approvedSlotSource = vmInvocation ? new VmApprovedSlotSource(vmInvocation) : null) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator2 = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, modelRouting = unavailableModelRouting(), vmInvocation = null, semantic = { enabled: false, gateway: null }, approvedSlotSource = vmInvocation ? new VmApprovedSlotSource(vmInvocation) : null, flowmarshalInvocation = null) {
   const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -40355,6 +40355,19 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         }
       );
     }
+  }
+  if (flowmarshalInvocation) {
+    server.setRequestHandler(
+      external_exports.object({ method: external_exports.literal("fm/hello"), params: external_exports.object({}) }),
+      async () => ({ serverEpoch: flowmarshalInvocation.serverEpoch })
+    );
+    server.setRequestHandler(
+      external_exports.object({
+        method: external_exports.literal("fm/reserve_dispatch"),
+        params: external_exports.object({ registration: external_exports.unknown() })
+      }),
+      async (request) => flowmarshalInvocation.reserve(request.params.registration)
+    );
   }
   const contractDocuments = Object.values(contractSchemas);
   const advertise = (tools) => toolSchemaProfile === "anthropic" ? tools.map((tool) => {
@@ -40738,7 +40751,17 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       if (notice) response.content.push({ type: "text", text: JSON.stringify(notice) });
       return response;
     };
-    return vmInvocation ? vmInvocation.runCurrentRequest(extra.requestId, request.params.name, asRecord2(request.params.arguments), handle) : handle();
+    if (vmInvocation) return vmInvocation.runCurrentRequest(extra.requestId, request.params.name, asRecord2(request.params.arguments), handle);
+    if (flowmarshalInvocation) return flowmarshalInvocation.runCurrentRequest(
+      extra.requestId,
+      request.params.name,
+      asRecord2(request.params.arguments),
+      async () => {
+        if (flowmarshalInvocation.hasCurrentRequest()) throw new Error("FlowMarshal A2 receipt verification is not installed");
+        return handle();
+      }
+    );
+    return handle();
   });
   return server;
 }
@@ -40809,8 +40832,8 @@ function isRecord(value) {
 }
 function remoteReference(value) {
   if (!isRecord(value) || typeof value.ref !== "string" || !isRecord(value.object)) return null;
-  const object10 = value.object;
-  return typeof object10.sha === "string" && typeof object10.type === "string" && typeof object10.url === "string" ? { ref: value.ref, object: { sha: object10.sha, type: object10.type, url: object10.url } } : null;
+  const object11 = value.object;
+  return typeof object11.sha === "string" && typeof object11.type === "string" && typeof object11.url === "string" ? { ref: value.ref, object: { sha: object11.sha, type: object11.type, url: object11.url } } : null;
 }
 var PluginUpdateService = class {
   constructor(store, options = {}) {
@@ -41013,11 +41036,11 @@ var PluginUpdateService = class {
       if (!isRecord(value) || !isRecord(value.object)) {
         throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object response was invalid.");
       }
-      const object10 = value.object;
-      if (typeof object10.sha !== "string" || typeof object10.type !== "string" || typeof object10.url !== "string") {
+      const object11 = value.object;
+      if (typeof object11.sha !== "string" || typeof object11.type !== "string" || typeof object11.url !== "string") {
         throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object target was invalid.");
       }
-      current = { sha: object10.sha, type: object10.type, url: object10.url };
+      current = { sha: object11.sha, type: object11.type, url: object11.url };
     }
     throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag indirection exceeded the supported depth.");
   }
@@ -44570,14 +44593,14 @@ var StateCleanupService = class {
     };
   }
   sign(payload) {
-    const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-    const signature = createHmac4("sha256", this.secret).update(encoded).digest("base64url");
-    return `${encoded}.${signature}`;
+    const encoded2 = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+    const signature = createHmac4("sha256", this.secret).update(encoded2).digest("base64url");
+    return `${encoded2}.${signature}`;
   }
   verify(token) {
-    const [encoded, signature, extra] = token.split(".");
-    if (!encoded || !signature || extra) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
-    const expected = createHmac4("sha256", this.secret).update(encoded).digest();
+    const [encoded2, signature, extra] = token.split(".");
+    if (!encoded2 || !signature || extra) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
+    const expected = createHmac4("sha256", this.secret).update(encoded2).digest();
     let actual;
     try {
       actual = Buffer.from(signature, "base64url");
@@ -44588,8 +44611,8 @@ var StateCleanupService = class {
       throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token signature is invalid.");
     }
     try {
-      const payloadBytes = Buffer.from(encoded, "base64url");
-      if (payloadBytes.toString("base64url") !== encoded) throw new Error("non-canonical token payload");
+      const payloadBytes = Buffer.from(encoded2, "base64url");
+      if (payloadBytes.toString("base64url") !== encoded2) throw new Error("non-canonical token payload");
       return JSON.parse(payloadBytes.toString("utf8"));
     } catch {
       throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token payload is invalid.");
@@ -45048,8 +45071,8 @@ function safeJson(value) {
   if (value === null || typeof value === "string" || typeof value === "boolean") return true;
   if (typeof value === "number") return Number.isSafeInteger(value);
   if (Array.isArray(value)) return value.every(safeJson);
-  const object10 = record4(value);
-  return !!object10 && Object.values(object10).every(safeJson);
+  const object11 = record4(value);
+  return !!object11 && Object.values(object11).every(safeJson);
 }
 function readPinnedVmEnvelope(envelopeValue) {
   const envelope = record4(envelopeValue);
@@ -45193,9 +45216,9 @@ function timestamp3(value) {
   return Number.isFinite(milliseconds) && new Date(milliseconds).toISOString() === value ? milliseconds : NaN;
 }
 function observation(value) {
-  const object10 = record4(value);
-  const binding2 = record4(object10?.binding);
-  if (!object10 || !binding2 || !nonempty3(binding2.invocationId) || !nonempty3(binding2.turnId) || !nonempty3(binding2.taskId) || !optionalId(binding2.runId) || !optionalId(binding2.attemptId) || !nonempty3(binding2.hostId) || !nonempty3(binding2.sessionId) || !nonempty3(binding2.instanceId) || !nonempty3(object10.observationId) || !nonempty3(object10.model) || !isReasoningEffort2(object10.reasoningEffort) || !Number.isFinite(timestamp3(object10.observedAt))) {
+  const object11 = record4(value);
+  const binding2 = record4(object11?.binding);
+  if (!object11 || !binding2 || !nonempty3(binding2.invocationId) || !nonempty3(binding2.turnId) || !nonempty3(binding2.taskId) || !optionalId(binding2.runId) || !optionalId(binding2.attemptId) || !nonempty3(binding2.hostId) || !nonempty3(binding2.sessionId) || !nonempty3(binding2.instanceId) || !nonempty3(object11.observationId) || !nonempty3(object11.model) || !isReasoningEffort2(object11.reasoningEffort) || !Number.isFinite(timestamp3(object11.observedAt))) {
     throw invalid2("trusted host invocation observation is missing or malformed");
   }
   return {
@@ -45209,10 +45232,10 @@ function observation(value) {
       sessionId: binding2.sessionId,
       instanceId: binding2.instanceId
     },
-    observationId: object10.observationId,
-    observedAt: object10.observedAt,
-    model: object10.model,
-    reasoningEffort: object10.reasoningEffort
+    observationId: object11.observationId,
+    observedAt: object11.observedAt,
+    model: object11.model,
+    reasoningEffort: object11.reasoningEffort
   };
 }
 function sameObservation(left, right) {
@@ -45238,8 +45261,8 @@ var ObservationChallengeAuthority = class {
   clock;
   onObservationClaim;
   key;
-  mac(encoded) {
-    return createHmac6("sha256", this.key).update(`${CHALLENGE_PREFIX}.${encoded}`, "utf8").digest();
+  mac(encoded2) {
+    return createHmac6("sha256", this.key).update(`${CHALLENGE_PREFIX}.${encoded2}`, "utf8").digest();
   }
   issue() {
     const verified = this.domain === "host" ? hostReaders.get(this.reader)() : null;
@@ -45263,21 +45286,21 @@ var ObservationChallengeAuthority = class {
       issuedAt: now.toISOString(),
       expiresAt: new Date(issuedAt + CHALLENGE_TTL_MS).toISOString()
     };
-    const encoded = Buffer.from(JSON.stringify(body), "utf8").toString("base64url");
-    return `${CHALLENGE_PREFIX}.${encoded}.${this.mac(encoded).toString("base64url")}`;
+    const encoded2 = Buffer.from(JSON.stringify(body), "utf8").toString("base64url");
+    return `${CHALLENGE_PREFIX}.${encoded2}.${this.mac(encoded2).toString("base64url")}`;
   }
   verifyAndConsume(token) {
     if (typeof token !== "string" || token.length > 8192) throw invalid2("token is malformed");
-    const [prefix, encoded, signature, extra] = token.split(".");
-    if (prefix !== CHALLENGE_PREFIX || !encoded || !signature || extra !== void 0) throw invalid2("token is malformed");
-    if (!/^[A-Za-z0-9_-]+$/u.test(encoded) || !/^[A-Za-z0-9_-]+$/u.test(signature) || Buffer.from(encoded, "base64url").toString("base64url") !== encoded) throw invalid2("token is malformed");
+    const [prefix, encoded2, signature, extra] = token.split(".");
+    if (prefix !== CHALLENGE_PREFIX || !encoded2 || !signature || extra !== void 0) throw invalid2("token is malformed");
+    if (!/^[A-Za-z0-9_-]+$/u.test(encoded2) || !/^[A-Za-z0-9_-]+$/u.test(signature) || Buffer.from(encoded2, "base64url").toString("base64url") !== encoded2) throw invalid2("token is malformed");
     const actual = Buffer.from(signature, "base64url");
     if (actual.toString("base64url") !== signature) throw invalid2("token is malformed");
-    const expected = this.mac(encoded);
+    const expected = this.mac(encoded2);
     if (actual.length !== expected.length || !timingSafeEqual6(actual, expected)) throw invalid2("signature mismatch");
     let parsed;
     try {
-      parsed = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
+      parsed = JSON.parse(Buffer.from(encoded2, "base64url").toString("utf8"));
     } catch {
       throw invalid2("body is malformed");
     }
@@ -46054,9 +46077,9 @@ var JevSemanticProvider = class {
   artifactInputsFor;
   async evaluate(request, control) {
     if (canonical(request.provider) !== canonical(this.identity) || checkJevChoiceCardinality(request.options)) return { status: "invalid" };
-    const required3 = request.state.sources.filter((source) => source.kind === "artifact" && source.id !== "model-catalog");
+    const required4 = request.state.sources.filter((source) => source.kind === "artifact" && source.id !== "model-catalog");
     const artifacts = this.artifactInputsFor?.(request);
-    if (required3.length !== (artifacts?.refs.length ?? 0) || required3.some((source) => !artifacts?.refs.some((ref) => ref.id === source.id && ref.digest === source.digest))) {
+    if (required4.length !== (artifacts?.refs.length ?? 0) || required4.some((source) => !artifacts?.refs.some((ref) => ref.id === source.id && ref.digest === source.digest))) {
       return { status: "invalid" };
     }
     let requestText;
@@ -47338,12 +47361,12 @@ function sameUserWindowsAcl(file2) {
     return false;
   }
 }
-function inspectFile(file2, required3) {
+function inspectFile(file2, required4) {
   let status;
   try {
     status = lstatSync3(file2);
   } catch (error61) {
-    if (!required3 && error61.code === "ENOENT") return null;
+    if (!required4 && error61.code === "ENOENT") return null;
     return fail3(`missing or unreadable file: ${path16.basename(file2)}`);
   }
   if (!status.isFile() || status.isSymbolicLink() || status.nlink !== 1) fail3(`unsafe file: ${path16.basename(file2)}`);
@@ -47453,6 +47476,215 @@ function initializeFlowmarshalProfile() {
   return installedProfile;
 }
 
+// mcp-server/src/host-integration/flowmarshal-current-invocation.ts
+import { AsyncLocalStorage as AsyncLocalStorage2 } from "node:async_hooks";
+import { createHash as createHash15, createPublicKey as createPublicKey4, randomBytes as randomBytes8, verify as verify3 } from "node:crypto";
+import { closeSync as closeSync4, constants as constants3, lstatSync as lstatSync4, openSync as openSync4 } from "node:fs";
+import { DatabaseSync as DatabaseSync8 } from "node:sqlite";
+var DISPATCH_DOMAIN = "ags-fm-same-user-dispatch-registration-v1";
+var PROFILE_ID2 = "flowmarshal-same-user-v1";
+function reject2(reason) {
+  throw new Error(`FlowMarshal A2 dispatch unavailable: ${reason}`);
+}
+var object10 = (value) => value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
+var exact6 = (value, keys3) => !!value && Object.keys(value).length === keys3.length && keys3.every((key) => Object.hasOwn(value, key));
+var required3 = (value) => typeof value === "string" && value.trim().length > 0;
+var optional3 = (value) => value === null || required3(value);
+var timestamp4 = (value) => {
+  if (typeof value !== "string") return NaN;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) && new Date(parsed).toISOString() === value ? parsed : NaN;
+};
+var encoded = (value) => {
+  if (typeof value !== "string" || value.length > 128 * 1024 || !/^[A-Za-z0-9_-]+$/u.test(value)) reject2("signed envelope encoding is malformed");
+  const bytes = Buffer.from(value, "base64url");
+  if (bytes.toString("base64url") !== value) reject2("signed envelope encoding is not canonical");
+  return bytes;
+};
+var safeJson2 = (value) => {
+  if (value === null || typeof value === "string" || typeof value === "boolean") return true;
+  if (typeof value === "number") return Number.isSafeInteger(value);
+  if (Array.isArray(value)) return value.every(safeJson2);
+  const record6 = object10(value);
+  return !!record6 && Object.values(record6).every(safeJson2);
+};
+var FlowmarshalCurrentInvocation = class {
+  constructor(profile, store, clock = Date.now) {
+    this.profile = profile;
+    this.store = store;
+    this.clock = clock;
+    if (profile.profileId !== PROFILE_ID2 || profile.assuranceTier !== "same-user" || !/^sha256:[0-9a-f]{64}$/u.test(profile.freezeIdentity) || profile.resources.state.namespace !== PROFILE_ID2) reject2("A2 profile is unavailable");
+    const state = profile.resources.state.location;
+    let created = false;
+    try {
+      const fd = openSync4(state, constants3.O_CREAT | constants3.O_EXCL | constants3.O_WRONLY, 384);
+      closeSync4(fd);
+      created = true;
+    } catch (error61) {
+      if (error61.code !== "EEXIST") reject2("A2 state file cannot be created");
+    }
+    const status = lstatSync4(state);
+    if (!status.isFile() || status.isSymbolicLink() || status.nlink !== 1 || process.platform !== "win32" && (status.uid !== process.getuid?.() || (status.mode & 63) !== 0)) {
+      reject2("A2 state file is unsafe");
+    }
+    this.database = new DatabaseSync8(state);
+    if (created) {
+      this.database.exec("CREATE TABLE a2_profile_identity (profile_id TEXT PRIMARY KEY CHECK (profile_id = 'flowmarshal-same-user-v1'), freeze_identity TEXT NOT NULL) STRICT");
+      this.database.prepare("INSERT INTO a2_profile_identity VALUES (?, ?)").run(PROFILE_ID2, profile.freezeIdentity);
+    } else {
+      let identity;
+      try {
+        identity = this.database.prepare("SELECT profile_id, freeze_identity FROM a2_profile_identity").get();
+      } catch {
+        this.database.close();
+        reject2("A2 state namespace is unrecognized");
+      }
+      if (identity?.profile_id !== PROFILE_ID2 || identity.freeze_identity !== profile.freezeIdentity) {
+        this.database.close();
+        reject2("A2 state profile identity mismatch");
+      }
+    }
+    this.database.exec(`CREATE TABLE IF NOT EXISTS a2_dispatch_reservations (
+      call_id TEXT PRIMARY KEY, nonce_key TEXT NOT NULL UNIQUE, server_epoch TEXT NOT NULL,
+      registration_digest TEXT NOT NULL, body_json TEXT NOT NULL, signed_envelope_json TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      used INTEGER NOT NULL DEFAULT 0 CHECK (used IN (0, 1))
+    ) STRICT`);
+  }
+  profile;
+  store;
+  clock;
+  serverEpoch = randomBytes8(32).toString("base64url");
+  database;
+  current = new AsyncLocalStorage2();
+  active = /* @__PURE__ */ new Set();
+  close() {
+    this.database.close();
+  }
+  hasCurrentRequest() {
+    return this.current.getStore() !== void 0;
+  }
+  verifySignedRegistration(value) {
+    const envelope = object10(value);
+    if (!exact6(envelope, ["body", "signature", "keyId"]) || !required3(envelope.keyId)) reject2("signed registration is malformed");
+    const pin = this.profile.pins.find((item) => item.keyId === envelope.keyId && item.status === "active");
+    if (!pin) reject2("A2 producer key is not pinned");
+    const bytes = encoded(envelope.body), signature = encoded(envelope.signature);
+    const key = createPublicKey4({ key: Buffer.from(pin.publicKeySpki, "base64"), format: "der", type: "spki" });
+    if (signature.length !== 64 || !verify3(null, bytes, key, signature)) reject2("registration signature mismatch");
+    let decoded;
+    try {
+      decoded = JSON.parse(bytes.toString("utf8"));
+    } catch {
+      reject2("registration body is malformed");
+    }
+    const body = object10(decoded);
+    if (!body || !safeJson2(body) || !bytes.equals(Buffer.from(canonicalJson(body), "utf8"))) reject2("registration body is not canonical");
+    return { body, bytes, signature, keyId: envelope.keyId };
+  }
+  reserve(signedRegistration) {
+    const { body, bytes, signature, keyId } = this.verifySignedRegistration(signedRegistration);
+    const producer = object10(body.producer), binding2 = object10(body.binding);
+    const terminal = object10(body.terminal), core = object10(body.core), invocation = object10(body.invocation);
+    const now = this.clock(), issued = timestamp4(body.issuedAt), expires = timestamp4(body.expiresAt);
+    const observed = timestamp4(terminal?.observedAt);
+    if (!exact6(body, ["version", "domain", "profileId", "freezeIdentity", "serverEpoch", "nonce", "issuedAt", "expiresAt", "producer", "binding", "terminal", "core", "invocation"]) || body.version !== 1 || body.domain !== DISPATCH_DOMAIN || body.profileId !== PROFILE_ID2 || body.freezeIdentity !== this.profile.freezeIdentity || body.serverEpoch !== this.serverEpoch || !required3(body.nonce) || !Number.isFinite(now) || !Number.isFinite(issued) || !Number.isFinite(expires) || issued > now + 5e3 || now >= expires || expires - issued !== 6e4 || !exact6(producer, ["installationId", "keyId", "hostId", "instanceId"]) || producer.keyId !== keyId || producer.hostId !== "flowmarshal" || !required3(producer.installationId) || !required3(producer.instanceId) || !exact6(binding2, ["turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) || !required3(binding2.turnId) || !required3(binding2.taskId) || !optional3(binding2.runId) || !optional3(binding2.attemptId) || binding2.hostId !== "flowmarshal" || !required3(binding2.sessionId) || binding2.instanceId !== producer.instanceId || !exact6(terminal, ["eventId", "callId", "threadId", "turnId", "status", "observedAt", "model", "effort", "provenance", "digest"]) || terminal.turnId !== binding2.turnId || !required3(terminal.eventId) || !required3(terminal.callId) || !required3(terminal.threadId) || !required3(terminal.model) || !REASONING_EFFORT.includes(String(terminal.effort)) || !["succeeded", "completed"].includes(String(terminal.status)) || !["provider_raw_response", "claude_session_transcript"].includes(String(terminal.provenance)) || !/^sha256:[0-9a-f]{64}$/u.test(String(terminal.digest)) || !Number.isFinite(observed) || observed > issued || !exact6(core, ["goalRevision", "taskRevision", "attemptOrdinal", "gateOperationKey", "stage"]) || !Number.isSafeInteger(core.goalRevision) || Number(core.goalRevision) < 1 || !Number.isSafeInteger(core.taskRevision) || Number(core.taskRevision) < 1 || !(core.attemptOrdinal === null || Number.isSafeInteger(core.attemptOrdinal) && Number(core.attemptOrdinal) > 0) || !required3(core.gateOperationKey) || !required3(core.stage) || !["bootstrap", "baseline", "implementation", "scope", "acceptance"].includes(core.stage) || !exact6(invocation, ["tool", "inputDigest", "observedAt"]) || !["plan_workflow", "record_stage_result"].includes(String(invocation.tool)) || !/^sha256:[0-9a-f]{64}$/u.test(String(invocation.inputDigest)) || invocation.observedAt !== body.issuedAt || core.stage === "bootstrap" && (invocation.tool !== "plan_workflow" || binding2.runId !== null || binding2.attemptId !== null) || core.stage !== "bootstrap" && (invocation.tool !== "record_stage_result" || !required3(binding2.runId)) || ["bootstrap", "baseline"].includes(String(core.stage)) && binding2.attemptId !== null || ["implementation", "scope", "acceptance"].includes(String(core.stage)) && !required3(binding2.attemptId)) {
+      reject2("registration binding is invalid");
+    }
+    const callId = `fmr-${randomBytes8(24).toString("base64url")}`;
+    const digest6 = `sha256:${createHash15("sha256").update(bytes).digest("hex")}`;
+    try {
+      this.database.prepare("INSERT INTO a2_dispatch_reservations (call_id, nonce_key, server_epoch, registration_digest, body_json, signed_envelope_json, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
+        callId,
+        `${PROFILE_ID2}:${keyId}:${body.nonce}`,
+        this.serverEpoch,
+        digest6,
+        JSON.stringify(body),
+        JSON.stringify({ body: bytes.toString("base64url"), signature: signature.toString("base64url"), keyId }),
+        expires
+      );
+    } catch {
+      reject2("registration nonce already reserved or A2 state unavailable");
+    }
+    return { callId, serverEpoch: this.serverEpoch };
+  }
+  reservation(callId) {
+    const row = this.database.prepare("SELECT nonce_key, body_json, signed_envelope_json, registration_digest, expires_at, used FROM a2_dispatch_reservations WHERE call_id=? AND server_epoch=?").get(callId, this.serverEpoch);
+    if (!row) return null;
+    const envelope = JSON.parse(row.signed_envelope_json);
+    const verified = this.verifySignedRegistration(envelope);
+    if (JSON.stringify(verified.body) !== row.body_json || `sha256:${createHash15("sha256").update(verified.bytes).digest("hex")}` !== row.registration_digest || verified.body.profileId !== PROFILE_ID2 || verified.body.freezeIdentity !== this.profile.freezeIdentity || verified.body.serverEpoch !== this.serverEpoch || row.nonce_key !== `${PROFILE_ID2}:${verified.keyId}:${verified.body.nonce}` || row.expires_at !== timestamp4(verified.body.expiresAt)) reject2("stored registration evidence mismatch");
+    return {
+      body: verified.body,
+      envelope,
+      digest: row.registration_digest,
+      expiresAt: row.expires_at,
+      used: row.used === 1
+    };
+  }
+  async runCurrentRequest(requestId, tool, args, run) {
+    const callId = typeof requestId === "string" ? requestId : "";
+    const reservation = this.reservation(callId);
+    if (!reservation) {
+      if (Object.hasOwn(args, "_hostAttestation")) reject2("current reserved request is unavailable");
+      return run();
+    }
+    if (reservation.used || this.active.has(callId) || this.clock() >= reservation.expiresAt) reject2("reservation expired or already used");
+    this.active.add(callId);
+    try {
+      return await this.current.run({ callId, reservation, tool, arguments: args, validated: false }, async () => {
+        this.readCurrentInvocation();
+        return run();
+      });
+    } finally {
+      this.active.delete(callId);
+    }
+  }
+  readCurrentInvocation() {
+    const current = this.current.getStore();
+    if (!current || !this.active.has(current.callId) || this.clock() >= current.reservation.expiresAt || this.reservation(current.callId)?.digest !== current.reservation.digest || this.reservation(current.callId)?.used) reject2("current reserved request is unavailable");
+    const body = current.reservation.body, binding2 = object10(body.binding);
+    const core = object10(body.core), invocation = object10(body.invocation);
+    const unsigned = { ...current.arguments };
+    delete unsigned._hostAttestation;
+    if (invocation.tool !== current.tool || invocation.inputDigest !== convergenceDigest(unsigned)) {
+      reject2("current tool or input differs from registration");
+    }
+    const validator2 = new ContractValidator();
+    if (current.tool === "plan_workflow") {
+      const parsed = validator2.planWorkflowRequest(unsigned);
+      const task = "taskEnvelope" in parsed ? parsed.taskEnvelope : parsed;
+      if (task.taskId !== binding2.taskId || binding2.runId !== null || binding2.attemptId !== null || core.stage !== "bootstrap") reject2("bootstrap task binding mismatch");
+    } else if (current.tool === "record_stage_result") {
+      const input2 = { ...unsigned };
+      delete input2.responseMode;
+      const result = validator2.stageResult(input2);
+      const run = this.store.getRun(result.runId);
+      const stage = run?.plan.stages.find((item) => item.stageId === result.stageId);
+      if (!run || run.state !== "running" || run.revision !== result.expectedRevision || run.plan.taskId !== binding2.taskId || result.runId !== binding2.runId || !stage || stage.state !== "ready") reject2("stored workflow stage binding mismatch");
+    } else reject2("tool is not an A2 workflow call");
+    current.validated = true;
+    return {
+      callId: current.callId,
+      registration: body,
+      signedRegistration: current.reservation.envelope,
+      registrationDigest: current.reservation.digest,
+      serverEpoch: this.serverEpoch,
+      tool: current.tool,
+      arguments: current.arguments
+    };
+  }
+  /** F03-b calls this only after receipt validation; invalid receipt must not burn a reservation. */
+  claimCurrentReservation() {
+    const current = this.current.getStore();
+    if (!current || !current.validated || !this.active.has(current.callId) || this.clock() >= current.reservation.expiresAt) {
+      reject2("current reserved request is unavailable");
+    }
+    const claimed = this.database.prepare("UPDATE a2_dispatch_reservations SET used=1 WHERE call_id=? AND server_epoch=? AND used=0").run(current.callId, this.serverEpoch);
+    if (claimed.changes !== 1) reject2("reservation already used");
+  }
+};
+
 // mcp-server/src/index.ts
 async function main() {
   const registryPath = resolveRegistryPath();
@@ -47469,7 +47701,9 @@ async function main() {
   const modelRouting = openModelRoutingService(workflowDatabasePath, store);
   let continuityStore = null;
   let semantic = null;
+  let flowmarshalInvocation = null;
   process.once("exit", () => {
+    flowmarshalInvocation?.close();
     semantic?.close();
     continuityStore?.close();
     modelRouting.close();
@@ -47480,6 +47714,7 @@ async function main() {
   const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
   const flowmarshalProfile = initializeFlowmarshalProfile();
   if (flowmarshalProfile && hostAttestation) throw new Error("FlowMarshal A2 and Claude host profiles cannot share one server");
+  flowmarshalInvocation = flowmarshalProfile ? new FlowmarshalCurrentInvocation(flowmarshalProfile, store) : null;
   const vmPolicy = flowmarshalProfile ? null : VmModelPolicy.installed();
   const vmInvocation = vmPolicy ? new VmCurrentInvocation(store, Date.now, vmPolicy) : null;
   const trust = new TrustService(trustStore);
@@ -47521,7 +47756,9 @@ async function main() {
     trust,
     modelRouting.service,
     vmInvocation,
-    { enabled: semantic !== null, gateway: semantic?.gateway ?? null }
+    { enabled: semantic !== null, gateway: semantic?.gateway ?? null },
+    void 0,
+    flowmarshalInvocation
   );
   await server.connect(new StdioServerTransport());
 }
