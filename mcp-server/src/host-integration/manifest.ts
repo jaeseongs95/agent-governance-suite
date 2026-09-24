@@ -1,5 +1,6 @@
 import { Ajv2020 } from "ajv/dist/2020.js";
-import { realpathSync, statSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 import { contractSchemas } from "../schema-validator.js";
 
@@ -17,6 +18,8 @@ export interface HostIntegrationEntryPoint {
 export interface HostIntegrationManifest {
   format: typeof HOST_INTEGRATION_FORMAT;
   plugin?: { id: string; version: string };
+  /** Package content consistency only; this is not an external trust anchor. */
+  artifacts?: { path: string; sha256: string }[];
   entryPoints: HostIntegrationEntryPoint[];
 }
 
@@ -53,12 +56,29 @@ export function parseHostIntegrationManifest(input: unknown, rootDirectory: stri
   const manifest = input as HostIntegrationManifest;
   const root = realpathSync(rootDirectory);
   const ids = new Set<string>();
+  const closure = new Set<string>();
   for (const entry of manifest.entryPoints) {
     if (ids.has(entry.id)) throw new Error(`Duplicate entry point: ${entry.id}`);
     ids.add(entry.id);
     resolvePackageFile(root, entry.path);
     if (!entry.executionClosure.includes(entry.path)) throw new Error(`Execution closure omits entry point: ${entry.id}`);
-    for (const file of entry.executionClosure) resolvePackageFile(root, file);
+    for (const file of entry.executionClosure) {
+      resolvePackageFile(root, file);
+      closure.add(file);
+    }
+  }
+  if (manifest.artifacts) {
+    const seen = new Set<string>();
+    for (const artifact of manifest.artifacts) {
+      const file = resolvePackageFile(root, artifact.path);
+      if (!closure.has(artifact.path) || seen.has(artifact.path)) {
+        throw new Error(`Artifact path is not unique in the execution closure: ${artifact.path}`);
+      }
+      seen.add(artifact.path);
+      const actual = `sha256:${createHash("sha256").update(readFileSync(file)).digest("hex")}`;
+      if (actual !== artifact.sha256) throw new Error(`Artifact hash mismatch: ${artifact.path}`);
+    }
+    if (seen.size !== closure.size) throw new Error("Artifact hashes do not cover the execution closure");
   }
   return manifest;
 }
@@ -85,7 +105,104 @@ export function buildHostIntegrationDescriptor(rootDirectory: string, candidates
       disabledEntryPoints.push(candidate.id);
     }
   }
-  const manifest: HostIntegrationManifest = { format: HOST_INTEGRATION_FORMAT, entryPoints };
+  const artifacts = [...new Set(entryPoints.flatMap((entry) => entry.executionClosure))]
+    .sort()
+    .map((file) => ({
+      path: file,
+      sha256: `sha256:${createHash("sha256").update(readFileSync(resolvePackageFile(root, file))).digest("hex")}`,
+    }));
+  const manifest: HostIntegrationManifest = { format: HOST_INTEGRATION_FORMAT, artifacts, entryPoints };
   parseHostIntegrationManifest(manifest, root);
   return { manifest, disabledEntryPoints };
+}
+
+function filesIn(root: string, directory: string): string[] {
+  return readdirSync(path.join(root, directory), { withFileTypes: true })
+    .flatMap((entry) => {
+      const relative = `${directory}/${entry.name}`;
+      return entry.isDirectory() ? filesIn(root, relative) : entry.isFile() ? [relative] : [];
+    });
+}
+
+function assertSchemaReferences(root: string, schemaPaths: string[], providerPaths: string[]): void {
+  const byId = new Map<string, unknown>();
+  const byPath = new Map<string, unknown>();
+  for (const file of schemaPaths) {
+    const schema = JSON.parse(readFileSync(resolvePackageFile(root, file), "utf8")) as { $id?: string };
+    byPath.set(file, schema);
+    byId.set(`file:///${file}`, schema);
+    if (schema.$id && !byId.has(schema.$id)) byId.set(schema.$id, schema);
+  }
+  const visited = new Set<string>();
+  const visit = (value: unknown, base: string): void => {
+    if (!value || typeof value !== "object") return;
+    if (Array.isArray(value)) {
+      for (const item of value) visit(item, base);
+      return;
+    }
+    const record = value as Record<string, unknown>;
+    const currentBase = typeof record.$id === "string" ? new URL(record.$id, base).href : base;
+    if (typeof record.$ref === "string") {
+      const target = new URL(record.$ref, currentBase);
+      target.hash = "";
+      if (!visited.has(target.href)) {
+        const referenced = byId.get(target.href);
+        if (!referenced) throw new Error(`Missing schema reference: ${target.href}`);
+        visited.add(target.href);
+        visit(referenced, target.href);
+      }
+    }
+    for (const item of Object.values(record)) visit(item, currentBase);
+  };
+  for (const file of providerPaths) {
+    const schema = byPath.get(file);
+    if (!schema) throw new Error(`Missing provider schema: ${file}`);
+    visit(schema, (schema as { $id?: string }).$id ?? `file:///${file}`);
+  }
+}
+
+/** Emit only the packaged direct MCP surface. Other VM entry points are separate tasks. */
+export function buildCurrentHostIntegrationManifest(rootDirectory: string): HostIntegrationManifest {
+  const root = realpathSync(rootDirectory);
+  const mcp = JSON.parse(readFileSync(path.join(root, ".mcp.json"), "utf8")) as {
+    mcpServers?: Record<string, { command?: string; args?: string[]; cwd?: string }>;
+  };
+  const server = mcp.mcpServers?.["agent-governance-suite"];
+  if (server?.command !== "node" || server.args?.length !== 1
+    || server.args[0] !== "mcp-server/dist/server.mjs" || server.cwd !== ".") {
+    throw new Error("Packaged MCP configuration does not match the direct server entry point");
+  }
+  const plugin = JSON.parse(readFileSync(path.join(root, ".codex-plugin/plugin.json"), "utf8")) as {
+    id: string; version: string;
+  };
+  const registry = JSON.parse(readFileSync(path.join(root, "skills/registry.json"), "utf8")) as {
+    skills: { providers: { outputSchema: string; resultSchema: string; gate?: { validator?: string } }[] }[];
+  };
+  const providerSchemas = registry.skills.flatMap((skill) => skill.providers.flatMap((provider) =>
+    [provider.outputSchema, provider.resultSchema, provider.gate?.validator]
+      .filter((file): file is string => typeof file === "string" && file.endsWith(".schema.json"))));
+  // ContractValidator scans every schema under a provider's skill root, including $ref targets.
+  // Hash the full runtime skill schema set so a copied closure can resolve those references.
+  const skillSchemas = filesIn(root, "skills").filter((file) => file.endsWith(".schema.json"));
+  const contractSchemas = filesIn(root, "contracts").filter((file) => file.endsWith(".json"));
+  assertSchemaReferences(root, [...contractSchemas, ...skillSchemas], providerSchemas);
+  const executionClosure = [...new Set([
+    ".mcp.json",
+    ".codex-plugin/plugin.json",
+    "mcp-server/dist/server.mjs",
+    "mcp-server/dist/session-message-broker.mjs",
+    "runtime/schema-validation.mjs",
+    "skills/registry.json",
+    "skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3",
+    ...contractSchemas,
+    ...filesIn(root, "skills/coordinate-subagents/references/model-catalog"),
+    ...providerSchemas,
+    ...skillSchemas,
+  ])].sort();
+  for (const file of executionClosure) resolvePackageFile(root, file);
+  const descriptor = buildHostIntegrationDescriptor(root, [{
+    id: "mcp-server", path: "mcp-server/dist/server.mjs", executionClosure, enabled: true,
+  }]);
+  const manifest = { ...descriptor.manifest, plugin: { id: plugin.id, version: plugin.version } };
+  return parseHostIntegrationManifest(manifest, root);
 }
