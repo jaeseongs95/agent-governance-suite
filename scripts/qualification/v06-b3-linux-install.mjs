@@ -60,6 +60,68 @@ export function protectedPaths(baseDir, releaseSha256) {
   return { baseDir: posix.resolve(baseDir), suiteDir, runtimeDir, releaseDir, nodeFile: posix.join(releaseDir, 'node') };
 }
 
+// Mount boundary (contract step 2). The protected subtree is <base>/agent-governance-suite and everything below
+// it (suite, protected-runtime, root, bin, package and their children). Its ancestors (/, /usr, /usr/lib for the
+// live target) are OS-managed: a whole-filesystem mount there (mountinfo root "/") is accepted, but a bind mount of a
+// sub-tree onto an ancestor, any mount at or inside the protected subtree, a read or parse failure of mountinfo, a
+// device that differs from the covering mount, or a change between verification and use is refused. Same-device
+// binds are caught by the mount table, not by st_dev.
+const MOUNTINFO = '/proc/self/mountinfo';
+const unescapeMount = (value) => value.replace(/\\([0-7]{3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)));
+const isWithin = (child, parent) => child === parent || child.startsWith(parent === '/' ? '/' : `${parent}/`);
+const devOf = (majorMinor) => {
+  const [major, minor] = majorMinor.split(':').map(Number);
+  return (BigInt(minor & 0xff) | (BigInt(major & 0xfff) << 8n) | (BigInt(minor & ~0xff) << 12n) | (BigInt(major & ~0xfff) << 32n));
+};
+
+export function parseMountinfo(text) {
+  const entries = [];
+  for (const line of text.split('\n')) {
+    if (!line) continue;
+    const fields = line.split(' ');
+    const sep = fields.indexOf('-');
+    if (fields.length < 10 || sep < 6 || fields.length < sep + 3 || !/^\d+$/.test(fields[0]) || !/^\d+$/.test(fields[1])
+      || !/^\d+:\d+$/.test(fields[2]) || !fields[3].startsWith('/') || !fields[4].startsWith('/')) {
+      fail(`mountinfo parse failure: ${line.slice(0, 80)}`);
+    }
+    entries.push({ id: fields[0], parent: fields[1], majorMinor: fields[2], root: unescapeMount(fields[3]),
+      mountPoint: unescapeMount(fields[4]), fstype: fields[sep + 1] });
+  }
+  if (!entries.length) fail('mountinfo parse failure: empty mount table');
+  return entries;
+}
+
+function readMountinfo(mountinfoFile = MOUNTINFO) {
+  let text;
+  try { text = readFileSync(mountinfoFile, 'utf8'); } catch (error) { fail(`mountinfo unavailable: ${error.code ?? error.message}`); }
+  return parseMountinfo(text);
+}
+
+// Returns the boundary snapshot recorded at verification time and compared again right before use.
+export function inspectMountBoundary(suiteDir, { mountinfoFile } = {}) {
+  const entries = readMountinfo(mountinfoFile);
+  const relevant = [];
+  for (const entry of entries) {
+    if (isWithin(entry.mountPoint, suiteDir)) fail(`mount inside the protected subtree: ${entry.mountPoint}`);
+    if (isWithin(suiteDir, entry.mountPoint)) {
+      if (entry.root !== '/') fail(`bind mount on a protected path ancestor: ${entry.mountPoint} (root ${entry.root})`);
+      relevant.push(entry);
+    }
+  }
+  const covering = relevant.filter((entry) => entry.mountPoint.length === Math.max(...relevant.map((item) => item.mountPoint.length))).at(-1);
+  if (!covering) fail(`no mount covers the protected subtree: ${suiteDir}`);
+  return { dev: devOf(covering.majorMinor).toString(), mounts: relevant.map(({ id, parent, majorMinor, root, mountPoint }) =>
+    ({ id, parent, majorMinor, root, mountPoint })) };
+}
+
+function assertDevice(boundary, file, stat) {
+  if (stat.dev.toString() !== boundary.dev) fail(`device of ${file} (${stat.dev}) differs from the protected mount (${boundary.dev})`);
+}
+
+function sameBoundary(now, recorded) {
+  if (JSON.stringify(now) !== JSON.stringify(recorded)) fail('mount boundary changed after verification');
+}
+
 function mountPoints() {
   const points = new Set();
   for (const line of readFileSync('/proc/self/mountinfo', 'utf8').split('\n')) {
@@ -153,7 +215,7 @@ function ensureDir(dir, created, manifestFile, trustedUids) {
 }
 
 export function installProtectedNode({ baseDir, releaseSha256, nodeBytes, expectedNodeSha256, manifestFile,
-  trustedUids = TRUSTED_UIDS, env = process.env, platform = process.platform }) {
+  trustedUids = TRUSTED_UIDS, env = process.env, platform = process.platform, mountinfoFile }) {
   const paths = protectedPaths(baseDir, releaseSha256);
   // Order is part of the contract: /usr gate, then platform, then bytes, and only then host access.
   if ((paths.baseDir === '/usr' || paths.baseDir.startsWith('/usr/')) && env[GATE_ENV] !== '1') {
@@ -162,6 +224,7 @@ export function installProtectedNode({ baseDir, releaseSha256, nodeBytes, expect
   assertLinux(platform);
   if (sha256(nodeBytes) !== expectedNodeSha256) fail('node bytes do not match the expected archive-extracted sha256');
   inspectAncestors(paths.baseDir, { trustedUids, platform });
+  inspectMountBoundary(paths.suiteDir, { mountinfoFile });
   if (lstatOrNull(paths.releaseDir)) fail(`install target already exists: ${paths.releaseDir}`);
   const created = [];
   try {
@@ -181,7 +244,8 @@ export function installProtectedNode({ baseDir, releaseSha256, nodeBytes, expect
     } finally { closeSync(fd); }
     const dirFd = openSync(paths.releaseDir, constants.O_RDONLY | constants.O_DIRECTORY);
     try { fsyncSync(dirFd); } finally { closeSync(dirFd); }
-    return { paths, created, record: verifyInstalledNode({ baseDir, releaseSha256, expectedNodeSha256, trustedUids, platform }) };
+    return { paths, created, record: verifyInstalledNode({ baseDir, releaseSha256, expectedNodeSha256, trustedUids, platform,
+      mountinfoFile }) };
   } catch (error) {
     const rollback = rollbackCreated(created);
     error.message = `${error.message} (rollback ${rollback.removed ? 'removed created paths' : `refused: ${rollback.mismatch} changed`})`;
@@ -191,23 +255,27 @@ export function installProtectedNode({ baseDir, releaseSha256, nodeBytes, expect
 
 // Verification-time record: full ancestor chain, node identity, and sha256 of the installed bytes.
 export function verifyInstalledNode({ baseDir, releaseSha256, expectedNodeSha256, trustedUids = TRUSTED_UIDS,
-  platform = process.platform }) {
+  platform = process.platform, mountinfoFile }) {
   const paths = protectedPaths(baseDir, releaseSha256);
   const ancestors = inspectAncestors(paths.releaseDir, { trustedUids, platform });
+  const boundary = inspectMountBoundary(paths.suiteDir, { mountinfoFile });
+  for (const dir of [paths.suiteDir, paths.runtimeDir, paths.releaseDir]) assertDevice(boundary, dir, lstatSync(dir, { bigint: true }));
   const fd = openSync(paths.nodeFile, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
     const stat = fstatSync(fd, { bigint: true });
     assessNodeStat(paths.nodeFile, stat, trustedUids);
+    assertDevice(boundary, paths.nodeFile, stat);
     const digest = sha256(readFd(fd, Number(stat.size)));
     if (digest !== expectedNodeSha256) fail('installed node sha256 does not match the archive-extracted bytes');
-    return { paths, ancestors, identity: identityOf(stat), sha256: digest };
+    return { paths, ancestors, boundary, identity: identityOf(stat), sha256: digest };
   } finally { closeSync(fd); }
 }
 
 // Use-time check: reopen, compare identity with the verification record, rehash the same fd,
 // and execute that exact open file through its /proc fd link so no path swap can intervene.
-export function runVerifiedNode(record, args, { trustedUids = TRUSTED_UIDS, platform = process.platform } = {}) {
+export function runVerifiedNode(record, args, { trustedUids = TRUSTED_UIDS, platform = process.platform, mountinfoFile } = {}) {
   inspectAncestors(record.paths.releaseDir, { trustedUids, platform });
+  sameBoundary(inspectMountBoundary(record.paths.suiteDir, { mountinfoFile }), record.boundary);
   const fd = openSync(record.paths.nodeFile, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
     const stat = fstatSync(fd, { bigint: true });
@@ -387,7 +455,7 @@ function writeProtectedFile(file, bytes, mode, created, manifestFile) {
 export function installProtectedRuntime({ baseDir, nodeVersion, archiveSha256, nodeBytes, expectedNodeSha256, packageSource,
   manifestFile, parentManifestFile, parentManifestEntries, trustedHostIntegrationSha256s = TRUST_PINS.hostIntegrationSha256s,
   trustedParentManifestSha256s = TRUST_PINS.parentManifestSha256s, trustedUids = TRUSTED_UIDS, env = process.env,
-  platform = process.platform, arch = process.arch }) {
+  platform = process.platform, arch = process.arch, mountinfoFile }) {
   // Order is part of the contract: /usr gate, then platform, then pure input checks, and only then host access.
   if (typeof baseDir !== 'string' || !posix.isAbsolute(baseDir)) fail('base dir must be absolute');
   const base = posix.resolve(baseDir);
@@ -404,6 +472,8 @@ export function installProtectedRuntime({ baseDir, nodeVersion, archiveSha256, n
   const releaseSha256 = releaseIdV2({ nodeVersion, archiveSha256, hostIntegrationSha256: source.hostIntegrationSha256 });
   const paths = runtimePaths(base, releaseSha256);
   inspectAncestors(paths.baseDir, { trustedUids, platform });
+  const boundary = inspectMountBoundary(paths.suiteDir, { mountinfoFile });
+  assertDevice(boundary, paths.baseDir, lstatSync(paths.baseDir, { bigint: true }));
   if (lstatOrNull(paths.installRoot)) fail(`install target already exists: ${paths.installRoot}`);
   const created = [];
   try {
@@ -426,7 +496,7 @@ export function installProtectedRuntime({ baseDir, nodeVersion, archiveSha256, n
     const dirFd = openSync(paths.installRoot, constants.O_RDONLY | constants.O_DIRECTORY);
     try { fsyncSync(dirFd); } finally { closeSync(dirFd); }
     return { paths, created, record: verifyProtectedRuntime({ baseDir: base, nodeVersion, archiveSha256, expectedNodeSha256,
-      releaseSha256, trustedHostIntegrationSha256s, trustedUids, platform, arch }), source: { hostIntegrationSha256: source.hostIntegrationSha256,
+      releaseSha256, trustedHostIntegrationSha256s, trustedUids, platform, arch, mountinfoFile }), source: { hostIntegrationSha256: source.hostIntegrationSha256,
       contracts: source.contracts } };
   } catch (error) {
     const rollback = rollbackCreated(created);
@@ -468,13 +538,19 @@ function walkPackage(root, trustedUids) {
 // Verification-time record: recomputed root id, ancestors, bin/node identity and bytes, and the exact package set.
 export function verifyProtectedRuntime({ baseDir, nodeVersion, archiveSha256, expectedNodeSha256, releaseSha256,
   trustedHostIntegrationSha256s = TRUST_PINS.hostIntegrationSha256s, trustedUids = TRUSTED_UIDS, platform = process.platform,
-  arch = process.arch }) {
+  arch = process.arch, mountinfoFile }) {
   assertLinux(platform);
   assertX64(arch);
   const paths = runtimePaths(baseDir, releaseSha256);
   const ancestors = inspectAncestors(paths.installRoot, { trustedUids, platform });
+  const boundary = inspectMountBoundary(paths.suiteDir, { mountinfoFile });
+  for (const dir of [paths.suiteDir, paths.runtimeDir, paths.installRoot]) assertDevice(boundary, dir, lstatSync(dir, { bigint: true }));
   assertEntries(paths.installRoot, ['bin', 'package']);
-  for (const dir of [paths.binDir, paths.packageRoot]) assessComponent(dir, lstatSync(dir, { bigint: true }), trustedUids);
+  for (const dir of [paths.binDir, paths.packageRoot]) {
+    const stat = lstatSync(dir, { bigint: true });
+    assessComponent(dir, stat, trustedUids);
+    assertDevice(boundary, dir, stat);
+  }
   assertEntries(paths.binDir, ['node']);
   const host = readRegularNoFollow(posix.join(paths.packageRoot, 'host-integration.json'));
   const hostIntegrationSha256 = sha256(host.bytes);
@@ -483,9 +559,11 @@ export function verifyProtectedRuntime({ baseDir, nodeVersion, archiveSha256, ex
     fail('install root name does not match the combined release id');
   }
   const { manifest } = inspectPackage(paths.packageRoot, hostIntegrationSha256, true);
-  const { files } = walkPackage(paths.packageRoot, trustedUids);
+  const { dirs, files } = walkPackage(paths.packageRoot, trustedUids);
+  for (const rel of dirs) assertDevice(boundary, rel, lstatSync(posix.join(paths.packageRoot, rel), { bigint: true }));
   const packageFiles = files.map((rel) => {
     const { stat, bytes } = readRegularNoFollow(posix.join(paths.packageRoot, rel));
+    assertDevice(boundary, rel, stat);
     assessPackageFile(rel, stat, trustedUids);
     const digest = sha256(bytes);
     const expected = rel === 'host-integration.json' ? hostIntegrationSha256
@@ -498,11 +576,12 @@ export function verifyProtectedRuntime({ baseDir, nodeVersion, archiveSha256, ex
   try {
     const stat = fstatSync(fd, { bigint: true });
     assessNodeStat(paths.nodePath, stat, trustedUids);
+    assertDevice(boundary, paths.nodePath, stat);
     const digest = sha256(readFd(fd, Number(stat.size)));
     if (digest !== expectedNodeSha256) fail('installed node sha256 does not match the archive-extracted bytes');
     return { paths, releaseSha256, releaseIdInputs: { contractId: CLOSURE_CONTRACT_ID, targetId: TARGET_ID, nodeVersion,
       archiveSha256Hex: archiveSha256, hostIntegrationSha256Hex: hostIntegrationSha256 }, hostIntegrationSha256, ancestors,
-    node: { identity: identityOf(stat), sha256: digest }, package: { files: packageFiles } };
+    boundary, node: { identity: identityOf(stat), sha256: digest }, package: { files: packageFiles } };
   } finally { closeSync(fd); }
 }
 
@@ -513,10 +592,12 @@ function sameIdentity(now, recorded, label) {
 // Use-time check: re-verify ancestors, every package file and bin/node against the record by identity and hash,
 // then execute the verified node fd with the contract flags and an empty environment.
 export function runVerifiedRuntime(record, args, { trustedUids = TRUSTED_UIDS, platform = process.platform,
-  arch = process.arch } = {}) {
+  arch = process.arch, mountinfoFile } = {}) {
   assertLinux(platform);
   assertX64(arch);
   inspectAncestors(record.paths.installRoot, { trustedUids, platform });
+  const recheckBoundary = () => sameBoundary(inspectMountBoundary(record.paths.suiteDir, { mountinfoFile }), record.boundary);
+  recheckBoundary();
   for (const file of record.package.files) {
     const { stat, bytes } = readRegularNoFollow(posix.join(record.paths.packageRoot, file.path));
     assessPackageFile(file.path, stat, trustedUids);
@@ -530,6 +611,7 @@ export function runVerifiedRuntime(record, args, { trustedUids = TRUSTED_UIDS, p
     sameIdentity(identityOf(stat), record.node.identity, 'installed node');
     const fdSha256 = sha256(readFd(fd, Number(stat.size)));
     if (fdSha256 !== record.node.sha256) fail('installed node bytes changed after verification');
+    recheckBoundary();
     const result = spawnSync(`/proc/${process.pid}/fd/${fd}`, ['--no-addons', '--no-global-search-paths', ...args],
       { encoding: 'utf8', env: {}, maxBuffer: 1024 * 1024 });
     if (result.status !== 0) fail(`verified node execution failed: ${result.stderr ?? result.error?.message ?? ''}`);

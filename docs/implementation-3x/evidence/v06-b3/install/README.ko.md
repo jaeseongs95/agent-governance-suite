@@ -1,5 +1,41 @@
 # V06-b3b Linux 보호 runtime root와 byte identity 증거
 
+## V06-b3b-r4: mount 교체 경계 복구 (2026-09-24)
+
+r2(`56750d19`)는 BLOCKED였다. `inspectAncestors`가 mountinfo의 mount point와 dev를 기록만 하고, install·verify·use 어디에서도 거절 판단에 쓰지 않았기 때문이다(계약 v2 '측정·검증 순서' 2번).
+
+- 경계 정의(`inspectMountBoundary`):
+  - 보호 subtree는 `<base>/agent-governance-suite`와 그 아래 전부다(suite, protected-runtime, root, bin, package와 자식).
+  - OS-managed 조상은 보호 subtree 위의 경로다(live 대상은 `/`, `/usr`, `/usr/lib`). 파일시스템 전체 mount(mountinfo root가 `/`)는 허용한다.
+- fail-closed로 거절하는 경우:
+  - `/proc/self/mountinfo` 읽기 실패나 파싱 실패
+  - 보호 subtree 안이나 그 경로에 걸친 mount entry(device와 무관)
+  - OS-managed 조상에 하위 트리를 bind한 경우(root가 `/`가 아닌 mount)
+  - covering mount의 major:minor와 보호 객체의 `st_dev`가 다른 경우(보호 디렉터리, package 파일, node 모두 대조)
+  - 검증과 사용 사이의 mount 경계 변화(use 직전과 exec 직전 두 번 재확인)
+- 같은 device의 bind는 `st_dev`가 아니라 mount table로 거절한다.
+- 적용 범위: v2 install·verify·use, 그리고 이전 배치의 verify·use. mountinfo 경로 주입은 테스트용 라이브러리 옵션뿐이고 CLI에는 없다.
+
+### 재현 (private mount namespace, `unshare --mount --propagation private`, fixture `/root/b3bf/r4/fx`)
+
+- 권한 실측: `/root/b3bf/r4/probe`에서 같은 device bind(dev 65024, mountinfo root `/root/b3bf/r4/probe/a`)와 tmpfs(dev 41)를 붙였다. namespace 밖 host mountinfo sha256은 `ca88d4a2…`로 전후가 같았다.
+- 수정 전 코드(`56750d19`): 같은 device self-bind(`mount --bind package package`)가 `ACCEPTED`였다. r4 테스트는 2건 실패했다.
+- 수정 후 실제 mount 결과:
+  - 같은 device self-bind → `mount inside the protected subtree`
+  - tmpfs를 `bin`에 mount → `mount inside the protected subtree`. mount 전 mountinfo 사본을 주입해도 `device … (41) differs from the protected mount (65024)`로 거절한다.
+  - base(`usr/lib`) 조상 self-bind → `bind mount on a protected path ancestor`
+  - verify 후 install root를 self-bind → use 거절
+  - umount로 원상 복구 → use `ACCEPTED`
+  - mountinfo 파일 없음 → `mountinfo unavailable`, 형식 오류 → `mountinfo parse failure`
+- 모든 mount는 namespace 안에서만 했다. host mountinfo는 테스트 전후 같다.
+
+### 기존 root 읽기 전용 재검증 (새 설치 아님, boot_id `a0f4d9d3-1b8d-419c-8695-f833bae38450`)
+
+- host mount 경계: `/` 하나(id 28, `254:0`, root `/`), dev 65024
+- `fd8e59d5…/node`: ino 516804, 555, nlink 1, sha `7fde7b8a…`
+- `32a825d9…/bin/node`: ino 516919, 555, nlink 1, package 179개, fd 경유 `--version` v24.21.0
+- 재검증 전후 ino·ctime이 같고, manifest `857bad43…`·`d75268ce…`도 그대로다.
+
 ## V06-b3b-r2: 입력 신뢰 경계 복구 (2026-09-24)
 
 총괄 감사가 r1(`c584e0a4`)을 FAIL로 판정했다. 두 결함은 이렇다. (F1) `readPackageSource`가 source의 조상만 검사하고 자식 파일·디렉터리의 owner·mode는 보지 않았다. 그래서 root 소유 0755 source 아래에 사용자 쓰기 가능한 manifest나 artifact가 있어도, 서로 맞는 digest로 통과했다. (F2) 부모 재사용이 caller가 준 JSON 항목과만 대조돼, 위조 manifest로도 성립했다.
