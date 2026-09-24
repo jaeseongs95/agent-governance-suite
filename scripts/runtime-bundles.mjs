@@ -13,6 +13,12 @@ export const RUNTIME_BUNDLES = Object.freeze([
     executable: true,
   }),
   Object.freeze({
+    id: "flowmarshal-profile-probe",
+    entry: "mcp-server/src/host-integration/flowmarshal-profile-probe.ts",
+    output: "mcp-server/dist/flowmarshal-profile-probe.mjs",
+    executable: true,
+  }),
+  Object.freeze({
     id: "skill-schema-runtime",
     entry: "scripts/schema-runtime-entry.mjs",
     output: "runtime/schema-validation.mjs",

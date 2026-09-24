@@ -326,6 +326,10 @@
       "sha256": "sha256:0e88f2023ed6f5377cbeadba4f6b98cef4667873eefedd1537b42bafb1b2d79b"
     },
     {
+      "path": "mcp-server/dist/flowmarshal-profile-probe.mjs",
+      "sha256": "sha256:18acf6b0af4e4d87e2c22549db04f689dcae4b0cb1d81300c31ee920be42b9f5"
+    },
+    {
       "path": "mcp-server/dist/server.mjs",
       "sha256": "sha256:0efc10c42c34341db4a683323ab609797d355c42a559572a8e74eed7708164d5"
     },
@@ -792,6 +796,7 @@
         "contracts/workflow-plan.v1.schema.json",
         "contracts/workflow-receipt.v1.schema.json",
         "contracts/workflow-status-summary.v1.schema.json",
+        "mcp-server/dist/flowmarshal-profile-probe.mjs",
         "mcp-server/dist/server.mjs",
         "mcp-server/dist/session-message-broker.mjs",
         "runtime/schema-validation.mjs",

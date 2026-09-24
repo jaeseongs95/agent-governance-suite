@@ -219,6 +219,7 @@ export function buildCurrentHostIntegrationManifest(rootDirectory: string): Host
     ".mcp.json",
     ".codex-plugin/plugin.json",
     "mcp-server/dist/server.mjs",
+    "mcp-server/dist/flowmarshal-profile-probe.mjs",
     "mcp-server/dist/session-message-broker.mjs",
     "runtime/schema-validation.mjs",
     "skills/registry.json",
