@@ -1,6 +1,6 @@
 import { mkdirSync } from "node:fs";
 import path from "node:path";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 
 import { SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
@@ -116,6 +116,17 @@ function iso(milliseconds: number): string {
 
 function nonceDigest(nonce: string): string {
   return createHash("sha256").update(nonce).digest("hex");
+}
+
+function taskPreparationDigest(request: SessionTaskRequestV1, body: string, ttlSeconds: number): string {
+  return nonceDigest(JSON.stringify([
+    request.schemaVersion, request.kind, request.requestId, request.taskId,
+    request.sender.host, request.sender.sessionId, request.sender.instanceId,
+    request.recipient.host, request.recipient.sessionId,
+    request.callbackTarget.host, request.callbackTarget.sessionId,
+    request.revision, request.requestedAt, request.expiresAt, request.authorityEffect,
+    body, ttlSeconds,
+  ]));
 }
 
 function boundedIdentity(value: SessionIdentity): void {
@@ -255,6 +266,12 @@ export class SessionMessageStore {
       registered_at TEXT NOT NULL,
       reconcile_token_digest TEXT
     ) STRICT;
+    CREATE TABLE IF NOT EXISTS task_preparations (
+      request_id TEXT PRIMARY KEY,
+      request_digest TEXT NOT NULL,
+      token_digest TEXT NOT NULL,
+      expires_at TEXT NOT NULL
+    ) STRICT;
     CREATE TABLE IF NOT EXISTS task_outcomes (
       outcome_key TEXT PRIMARY KEY,
       outcome_json TEXT NOT NULL,
@@ -328,6 +345,7 @@ export class SessionMessageStore {
     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
     this.database.prepare("DELETE FROM wake_nonces WHERE expires_at <= ?").run(now);
     this.database.prepare("DELETE FROM contact_messages WHERE message_id NOT IN (SELECT message_id FROM messages)").run();
+    this.database.prepare("DELETE FROM task_preparations WHERE expires_at <= ?").run(now);
   }
 
   send(input: {
@@ -447,15 +465,58 @@ export class SessionMessageStore {
   }
 
   /** Request metadata is a claim, not a task authorization or an outcome. */
+  prepareTaskRequest(input: { request: SessionTaskRequestV1; body: string; ttlSeconds?: number },
+    nowMs = Date.now()): { reconcileToken: string; expiresAt: string } {
+    const { request } = input;
+    if (!request || typeof request.requestId !== "string"
+      || !/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(request.requestId)
+      || !request.sender || !request.recipient || !request.callbackTarget
+      || typeof input.body !== "string" || !input.body.trim() || input.body.includes("\0")
+      || Buffer.byteLength(input.body, "utf8") > MESSAGE_BODY_MAX_BYTES) {
+      throw new Error("Task preparation input is invalid.");
+    }
+    boundedIdentity(request.sender);
+    boundedIdentity(request.recipient);
+    boundedIdentity(request.callbackTarget);
+    const ttlSeconds = input.ttlSeconds ?? MESSAGE_TTL_DEFAULT_SECONDS;
+    if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) {
+      throw new Error("Task preparation TTL is invalid.");
+    }
+    const deadline = taskTimestamp(request.expiresAt);
+    if (deadline < nowMs + ttlSeconds * 1000) throw new Error("Task request deadline must cover message TTL.");
+    const requestDigest = taskPreparationDigest(request, input.body, ttlSeconds);
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      if (this.database.prepare("SELECT 1 FROM task_requests WHERE request_id = ?").get(request.requestId)) {
+        throw new Error("Registered request cannot issue another reconciliation token.");
+      }
+      const previous = this.database.prepare("SELECT request_digest FROM task_preparations WHERE request_id = ?")
+        .get(request.requestId) as { request_digest: string } | undefined;
+      if (previous && previous.request_digest !== requestDigest) throw new Error("requestId already belongs to a different task preparation.");
+      const reconcileToken = randomBytes(32).toString("base64url");
+      const expiresAt = iso(Math.min(deadline, nowMs + 10 * 60_000));
+      this.database.prepare(`INSERT INTO task_preparations (request_id, request_digest, token_digest, expires_at)
+        VALUES (?, ?, ?, ?) ON CONFLICT (request_id) DO UPDATE SET
+        token_digest = excluded.token_digest, expires_at = excluded.expires_at`).run(
+        request.requestId, requestDigest, nonceDigest(reconcileToken), expiresAt);
+      this.database.exec("COMMIT");
+      return { reconcileToken, expiresAt };
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
   registerTaskRequest(input: {
     request: SessionTaskRequestV1;
     body: string;
     ttlSeconds?: number;
   }, nowMs = Date.now(), contact?: { expectedActor: SessionTaskActorV1;
-    expectedTurnId: string; expectedRevision: number; trustedActivity: boolean; reconcileToken: string }):
+    expectedTurnId: string; expectedRevision: number; trustedActivity: boolean; reconcileToken: string },
+  receiptToken?: string):
     { requestId: string; messageId: string; messageCreatedAt: string;
-      messageExpiresAt: string; requestExpiresAt: string; duplicate: boolean; state?: "queued" }
-    | { state: "held"; reason: string; messageId: null } {
+      messageExpiresAt: string; requestExpiresAt: string; duplicate: boolean; state?: "queued" | "duplicate" }
+    | { state: "held" | "not-registered"; reason?: string; messageId: null } {
     if (Object.hasOwn(input, "messageId")) throw new Error("Task request messageId is broker-assigned.");
     const request = input.request;
     if (!request || typeof request !== "object" || Array.isArray(request)
@@ -497,10 +558,11 @@ export class SessionMessageStore {
       throw new Error(`ttlSeconds must be an integer from 30 to ${MESSAGE_TTL_MAX_SECONDS}.`);
     }
     const bodyDigest = createHash("sha256").update(input.body, "utf8").digest("hex");
-    if (contact && !/^[A-Za-z0-9_-]{43}$/u.test(contact.reconcileToken)) {
+    const token = contact?.reconcileToken ?? receiptToken;
+    if (token !== undefined && !/^[A-Za-z0-9_-]{43}$/u.test(token)) {
       throw new Error("A strong reconciliation token is required.");
     }
-    const reconcileDigest = contact ? createHash("sha256").update(contact.reconcileToken).digest("hex") : null;
+    const reconcileDigest = token === undefined ? null : nonceDigest(token);
     this.database.exec("BEGIN IMMEDIATE");
     try {
       const existing = this.database.prepare("SELECT * FROM task_requests WHERE request_id = ?")
@@ -515,7 +577,10 @@ export class SessionMessageStore {
           && existing.expires_at === request.expiresAt && existing.body_digest === bodyDigest
           && existing.ttl_seconds === ttlSeconds;
         if (!same) throw new Error("requestId already belongs to a different task request.");
-        if (contact && existing.reconcile_token_digest !== reconcileDigest) {
+        if (existing.reconcile_token_digest !== null && token === undefined) {
+          throw new Error("Task reconciliation token is required.");
+        }
+        if (token !== undefined && existing.reconcile_token_digest !== reconcileDigest) {
           throw new Error("Task reconciliation token does not match.");
         }
         this.database.exec("COMMIT");
@@ -524,13 +589,29 @@ export class SessionMessageStore {
           messageCreatedAt: String(existing.registered_at),
           messageExpiresAt: iso(Date.parse(String(existing.registered_at)) + Number(existing.ttl_seconds) * 1000),
           requestExpiresAt: String(existing.expires_at), duplicate: true,
-          ...(contact ? { state: "queued" as const } : {}),
+          ...(token === undefined ? {} : { state: "duplicate" as const }),
         };
+      }
+      if (receiptToken !== undefined) {
+        const preparation = this.database.prepare("SELECT request_digest, token_digest, expires_at FROM task_preparations WHERE request_id = ?")
+          .get(request.requestId) as { request_digest: string; token_digest: string; expires_at: string } | undefined;
+        if (!preparation || preparation.request_digest !== taskPreparationDigest(request, input.body, ttlSeconds)
+          || preparation.token_digest !== reconcileDigest || Date.parse(preparation.expires_at) <= nowMs) {
+          throw new Error("A current broker-issued reconciliation token is required.");
+        }
+        this.database.exec("COMMIT");
+        return { state: "not-registered", messageId: null };
       }
       if (requestExpiresAt < nowMs + ttlSeconds * 1000) {
         throw new Error("Task request deadline must cover message TTL.");
       }
       if (contact) {
+        const preparation = this.database.prepare("SELECT request_digest, token_digest, expires_at FROM task_preparations WHERE request_id = ?")
+          .get(request.requestId) as { request_digest: string; token_digest: string; expires_at: string } | undefined;
+        if (!preparation || preparation.request_digest !== taskPreparationDigest(request, input.body, ttlSeconds)
+          || preparation.token_digest !== reconcileDigest || Date.parse(preparation.expires_at) <= nowMs) {
+          throw new Error("A current broker-issued reconciliation token is required.");
+        }
         const decision = this.contactDecision(request.recipient, contact.expectedActor,
           contact.expectedTurnId, contact.expectedRevision, contact.trustedActivity, nowMs);
         if (decision !== "busy" && decision !== "idle") {
@@ -555,6 +636,7 @@ export class SessionMessageStore {
         request.revision, request.requestedAt, request.expiresAt, sent.messageId, bodyDigest, ttlSeconds, sent.createdAt,
         reconcileDigest,
       );
+      if (contact) this.database.prepare("DELETE FROM task_preparations WHERE request_id = ?").run(request.requestId);
       this.database.exec("COMMIT");
       return { requestId: request.requestId, messageId: sent.messageId,
         messageCreatedAt: sent.createdAt, messageExpiresAt: sent.expiresAt,

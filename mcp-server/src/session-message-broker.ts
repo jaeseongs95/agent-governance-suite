@@ -203,6 +203,16 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         ...(ttlSeconds === undefined ? {} : { ttlSeconds }),
       });
     }
+    case "prepare-task-request": return store.prepareTaskRequest({
+      request: payload.request as SessionTaskRequestV1,
+      body: string(payload.body, "body"),
+      ...(Object.hasOwn(payload, "ttlSeconds") ? { ttlSeconds: integer(payload.ttlSeconds, "ttlSeconds") } : {}),
+    });
+    case "receipt-task-request": return store.registerTaskRequest({
+      request: payload.request as SessionTaskRequestV1,
+      body: string(payload.body, "body"),
+      ...(Object.hasOwn(payload, "ttlSeconds") ? { ttlSeconds: integer(payload.ttlSeconds, "ttlSeconds") } : {}),
+    }, Date.now(), undefined, string(payload.reconcileToken, "reconcileToken"));
     case "register-contact-task-request": {
       if (Object.hasOwn(payload, "messageId")) throw new Error("Task request messageId is broker-assigned.");
       const expectedActor = payload.expectedActor as Record<string, unknown> | undefined;

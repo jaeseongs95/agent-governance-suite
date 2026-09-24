@@ -234,12 +234,16 @@ const contactInputSchema = { type: "object", additionalProperties: false,
     messageId: { type: "string", pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" },
     ttlSeconds: { type: "integer", minimum: 30, maximum: 86400 } } };
 const registerTaskInputSchema = { type: "object", additionalProperties: false,
-  required: ["schemaVersion", "request", "body"], $defs: taskContract.$defs,
+  required: ["schemaVersion", "request", "body", "reconcileToken"], $defs: taskContract.$defs,
   properties: { schemaVersion: { const: "1.0.0" }, ...sessionBindingProperty,
     request: { $ref: "#/$defs/request" },
     body: { type: "string", minLength: 1, maxLength: 4096 },
     reconcileToken: { type: "string", pattern: "^[A-Za-z0-9_-]{43}$" },
     ttlSeconds: { type: "integer", minimum: 30, maximum: 86400 } } };
+const prepareTaskInputSchema = { ...registerTaskInputSchema,
+  required: ["schemaVersion", "request", "body"],
+  properties: { ...registerTaskInputSchema.properties } };
+delete (prepareTaskInputSchema.properties as Record<string, unknown>).reconcileToken;
 const recordOutcomeInputSchema = { type: "object", additionalProperties: false,
   required: ["schemaVersion", "outcome", "reporterProof"], $defs: taskContract.$defs,
   properties: { schemaVersion: { const: "1.0.0" }, ...sessionBindingProperty,
@@ -676,8 +680,14 @@ export function createMcpServer(
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
+        name: "prepare_session_task_request",
+        description: "Issue a short-lived broker-generated reconciliation token before task registration. Repreparing rotates only unregistered requests and queues no message.",
+        inputSchema: prepareTaskInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
+      },
+      {
         name: "register_session_task_request",
-        description: "Register a task request and callback address with its queued message. Registration does not grant task authority.",
+        description: "Register a task request using a prior prepare_session_task_request token. Retry with the same token and request to recover the original receipt. Registration does not grant task authority.",
         inputSchema: registerTaskInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
@@ -877,6 +887,9 @@ export function createMcpServer(
           break;
         case "contact_session":
           result = await sessionMessages.contact(args);
+          break;
+        case "prepare_session_task_request":
+          result = await sessionMessages.prepareTaskRequest(args);
           break;
         case "register_session_task_request":
           result = await sessionMessages.registerTaskRequest(args);

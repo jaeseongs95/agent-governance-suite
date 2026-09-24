@@ -17655,6 +17655,7 @@ var SESSION_BOUND_TOOLS = /* @__PURE__ */ new Set([
   "get_session_message_status",
   "get_session_contact_state",
   "contact_session",
+  "prepare_session_task_request",
   "register_session_task_request",
   "record_session_task_outcome",
   "reconcile_session_task_request",
@@ -17666,6 +17667,7 @@ var SUBAGENT_DENIED_TOOLS = /* @__PURE__ */ new Set([
   "get_session_message_status",
   "get_session_contact_state",
   "contact_session",
+  "prepare_session_task_request",
   "register_session_task_request",
   "record_session_task_outcome",
   "reconcile_session_task_request"

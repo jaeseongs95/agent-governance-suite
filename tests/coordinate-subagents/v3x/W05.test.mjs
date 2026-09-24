@@ -104,8 +104,10 @@ test('W05 task request registration holds without trusted state and commits cont
     sender: { ...sender, instanceId: 'sender-instance' }, recipient: target, callbackTarget: sender,
     revision: 1, requestedAt: new Date(now).toISOString(),
     expiresAt: new Date(now + 3_600_000).toISOString(), authorityEffect: 'none' };
+  const prepared = dispatchSessionMessageBrokerOperation(store, 'prepare-task-request',
+    { request, body: 'Delegated task', ttlSeconds: 600 });
   const payload = { request, body: 'Delegated task', ttlSeconds: 600,
-    reconcileToken: 'a'.repeat(43),
+    reconcileToken: prepared.reconcileToken,
     expectedActor: actor, expectedTurnId: 'turn-1', expectedRevision: 1 };
   assert.equal(dispatchSessionMessageBrokerOperation(store, 'register-contact-task-request', payload).state, 'held');
   assert.equal(store.taskRequest(request.requestId), null);
@@ -164,7 +166,6 @@ test('W05 existing spool survives contact table migration and SQLite lock conten
 
 test('W05 deadline reconciliation cannot replace callback or expose another request outcome', () => {
   const { store } = fixture();
-  const token = 'b'.repeat(43);
   start(store);
   observe(store, 'busy', 1, base + 1);
   const recipient = { host: target.host, sessionId: target.sessionId };
@@ -172,6 +173,7 @@ test('W05 deadline reconciliation cannot replace callback or expose another requ
     sender: { ...sender, instanceId: 'sender-instance' }, recipient, callbackTarget: sender,
     revision: 1, requestedAt: new Date(base).toISOString(),
     expiresAt: new Date(base + 90_000).toISOString(), authorityEffect: 'none' };
+  const token = store.prepareTaskRequest({ request, body: 'Task', ttlSeconds: 60 }, base + 2).reconcileToken;
   store.registerTaskRequest({ request, body: 'Task', ttlSeconds: 60 }, base + 2,
     { expectedActor: actor, expectedTurnId: 'turn-1', expectedRevision: 1,
       trustedActivity: true, reconcileToken: token });
