@@ -275,7 +275,7 @@
     },
     {
       "path": "contracts/session-task.v1.schema.json",
-      "sha256": "sha256:37754e747b5c466955a40ae1afe5931efced18927a95741d7f1adbc4a84b96f8"
+      "sha256": "sha256:65f12519a58538d1bf24321f30b4cab796312cb0ef18de9b9eecaf9df69db458"
     },
     {
       "path": "contracts/skill-descriptor.v1.schema.json",

@@ -426,7 +426,7 @@ export interface SessionTaskRequestV1 {
   taskId: string;
   sender: SessionTaskActorV1;
   recipient: SessionTaskAddressV1;
-  callbackTarget: SessionTaskActorV1;
+  callbackTarget: SessionTaskAddressV1;
   revision: 1;
   requestedAt: string;
   expiresAt: string;
@@ -447,7 +447,7 @@ export interface SessionTaskTerminalOutcomeBaseV1 {
 }
 
 export type SessionTaskTerminalOutcomeV1 = SessionTaskTerminalOutcomeBaseV1 & (
-  | { requestId: string; callbackTarget: SessionTaskActorV1 }
+  | { requestId: string; callbackTarget: SessionTaskAddressV1 }
   | { requestId?: never; callbackTarget?: never }
 );
 
@@ -471,8 +471,11 @@ export type SessionTaskEventV1 =
 export interface SessionTaskTransitionContextV1 {
   authenticatedActor: SessionTaskActorV1;
   currentInstanceId: string;
+  /** Task revisions are per task/request; activity revisions are per session instance. */
+  revisionStream: "task" | "activity";
   currentRevision: number;
-  currentTaskId?: string;
+  /** Issued or verified by the owning runtime, never copied from the event. */
+  boundTaskId?: string;
   observedSource?: SessionTaskActivityObservationV1["source"];
   request?: SessionTaskRequestV1;
   terminalOutcome?: SessionTaskTerminalOutcomeV1;
@@ -482,12 +485,25 @@ function sameSessionTaskActor(a: SessionTaskActorV1, b: SessionTaskActorV1): boo
   return a.host === b.host && a.sessionId === b.sessionId && a.instanceId === b.instanceId;
 }
 
+function sameSessionTaskAddress(a: SessionTaskAddressV1, b: SessionTaskAddressV1): boolean {
+  return a.host === b.host && a.sessionId === b.sessionId;
+}
+
+function sameSessionTaskRequest(a: SessionTaskRequestV1, b: SessionTaskRequestV1): boolean {
+  return a.requestId === b.requestId && a.taskId === b.taskId
+    && sameSessionTaskActor(a.sender, b.sender)
+    && sameSessionTaskAddress(a.recipient, b.recipient)
+    && sameSessionTaskAddress(a.callbackTarget, b.callbackTarget)
+    && a.revision === b.revision && a.requestedAt === b.requestedAt
+    && a.expiresAt === b.expiresAt;
+}
+
 function sameSessionTaskOutcome(a: SessionTaskTerminalOutcomeV1, b: SessionTaskTerminalOutcomeV1): boolean {
   return a.requestId === b.requestId && a.taskId === b.taskId
     && sameSessionTaskActor(a.actor, b.actor)
     && (a.callbackTarget === undefined && b.callbackTarget === undefined
       || a.callbackTarget !== undefined && b.callbackTarget !== undefined
-      && sameSessionTaskActor(a.callbackTarget, b.callbackTarget))
+      && sameSessionTaskAddress(a.callbackTarget, b.callbackTarget))
     && a.revision === b.revision && a.result === b.result
     && a.reportedAt === b.reportedAt && a.evidenceRefs.length === b.evidenceRefs.length
     && a.evidenceRefs.every((ref, index) => ref === b.evidenceRefs[index]);
@@ -503,14 +519,21 @@ export function assertSessionTaskTransitionV1(
     || actor.instanceId !== context.currentInstanceId) {
     throw new Error("SESSION_TASK_ACTOR_STALE_OR_UNAUTHENTICATED");
   }
+  if (context.revisionStream !== (event.kind === "activity-observation" ? "activity" : "task")) {
+    throw new Error("SESSION_TASK_REVISION_STREAM_MISMATCH");
+  }
   if (event.kind === "request") {
-    if (!sameSessionTaskActor(event.callbackTarget, context.authenticatedActor)) {
+    if (event.taskId !== context.boundTaskId) {
+      throw new Error("SESSION_TASK_BINDING_MISMATCH");
+    }
+    if (!sameSessionTaskAddress(event.callbackTarget, context.authenticatedActor)) {
       throw new Error("SESSION_TASK_CALLBACK_TARGET_MISMATCH");
     }
     if (Date.parse(event.requestedAt) >= Date.parse(event.expiresAt)) {
       throw new Error("SESSION_TASK_INVALID_DEADLINE");
     }
     if (context.request !== undefined) {
+      if (sameSessionTaskRequest(event, context.request)) return "duplicate";
       throw new Error("SESSION_TASK_REQUEST_CONFLICT");
     }
     if (context.currentRevision !== 0) {
@@ -520,14 +543,14 @@ export function assertSessionTaskTransitionV1(
   }
   if (event.kind === "terminal-outcome") {
     const request = context.request;
-    if (event.taskId !== context.currentTaskId
+    if (event.taskId !== context.boundTaskId
       || (request === undefined
         ? event.requestId !== undefined || event.callbackTarget !== undefined
         : event.requestId !== request.requestId || event.taskId !== request.taskId
           || event.actor.host !== request.recipient.host
           || event.actor.sessionId !== request.recipient.sessionId
           || event.callbackTarget === undefined
-          || !sameSessionTaskActor(event.callbackTarget, request.callbackTarget))) {
+          || !sameSessionTaskAddress(event.callbackTarget, request.callbackTarget))) {
       throw new Error("SESSION_TASK_REQUEST_BINDING_MISMATCH");
     }
     if (context.terminalOutcome !== undefined) {
