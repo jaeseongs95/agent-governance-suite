@@ -20,7 +20,7 @@ const withPatch = (value, patch) => {
   return clone;
 };
 const fixtureVerdict = (profile, baseline, os) => {
-  if (profile.principals.worker.observed == null || profile.coreBinding.oneShotRequest == null) return 'UNKNOWN';
+  if (profile.principals.worker.observed !== true || profile.coreBinding.oneShotRequest == null) return 'UNKNOWN';
   if (profile.principals.worker.id === profile.principals.core.id) return 'REJECT';
   if (Object.values(profile.accessProbes).some((value) => value !== 'DENIED')) return 'REJECT';
   if (!profile.coreBinding.currentPreparedOperation || !profile.coreBinding.oneShotRequest || profile.coreBinding.callerOverride) return 'REJECT';
@@ -123,7 +123,8 @@ test('synthetic matrix rejects replacement, same-principal access, inherited IPC
     'same-effective-worker-principal', 'child-reads-key', 'child-reads-core-ledger',
     'child-reaches-signer-pipe', 'inherited-handle-or-fd',
     'caller-selects-protected-path', 'core-invocation-unbound', 'unmeasured-launcher',
-    'child-token-not-observed', 'child-uid-not-observed', 'broker-peer-unproven',
+    'child-token-not-observed', 'child-token-observation-false',
+    'child-uid-not-observed', 'child-uid-observation-false', 'broker-peer-unproven',
   ];
   assert.deepEqual(cases.cases.filter((item) => item.expected !== 'CONTRACT_CANDIDATE_FIXTURE')
     .map((item) => item.id).sort(), required.sort());
@@ -132,7 +133,8 @@ test('synthetic matrix rejects replacement, same-principal access, inherited IPC
     const entries = Object.entries(item.override);
     assert.ok(entries.every(([key]) => Object.hasOwn(cases.baselineAssertions, key)));
     assert.ok(item.reason.length > 20);
-    assert.equal(item.expected, entries.some(([, value]) => value === null)
+    assert.equal(item.expected, entries.some(([key, value]) => value === null
+      || (key === 'childPrincipalActuallyObserved' && value === false))
       ? 'UNKNOWN' : entries.some(([, value]) => value === false)
         ? 'REJECT' : 'CONTRACT_CANDIDATE_FIXTURE');
     if (item.expected !== 'CONTRACT_CANDIDATE_FIXTURE') {

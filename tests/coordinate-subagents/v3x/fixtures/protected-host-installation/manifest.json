@@ -10,7 +10,7 @@
   "fixtures": [
     {
       "path": "tests/coordinate-subagents/v3x/fixtures/protected-host-installation/cases.json",
-      "sha256": "sha256:fb9b893d5e886c30bc3a24a620881b6f82daa862312248cf0f58aa022813ec2d"
+      "sha256": "sha256:64604374a4bec2ead8fc29c0cba34862db8c9f2745db7ffca05e86a3b99b4797"
     },
     {
       "path": "tests/coordinate-subagents/v3x/fixtures/protected-host-installation/profiles.json",

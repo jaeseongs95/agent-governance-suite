@@ -284,6 +284,19 @@
       "reason": "configured SID is not an observed child primary token"
     },
     {
+      "id": "child-token-observation-false",
+      "os": "windows",
+      "override": {
+        "childPrincipalActuallyObserved": false
+      },
+      "observationPatch": {
+        "path": "/principals/worker/observed",
+        "value": false
+      },
+      "expected": "UNKNOWN",
+      "reason": "explicitly false Windows child token observation cannot qualify a candidate"
+    },
+    {
       "id": "child-uid-not-observed",
       "os": "linux",
       "override": {
@@ -295,6 +308,19 @@
       },
       "expected": "UNKNOWN",
       "reason": "configured uid is not an observed child effective uid and groups"
+    },
+    {
+      "id": "child-uid-observation-false",
+      "os": "linux",
+      "override": {
+        "childPrincipalActuallyObserved": false
+      },
+      "observationPatch": {
+        "path": "/principals/worker/observed",
+        "value": false
+      },
+      "expected": "UNKNOWN",
+      "reason": "explicitly false Linux child uid observation cannot qualify a candidate"
     },
     {
       "id": "broker-peer-unproven",
