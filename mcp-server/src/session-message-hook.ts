@@ -16,8 +16,16 @@ import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "./session-message-protoc
 
 import { observeNativePeerHandoff } from "./model-routing-peer-native.js";
 
-const SESSION_BOUND_TOOLS = new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
-const SUBAGENT_DENIED_TOOLS = new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
+const SESSION_BOUND_TOOLS = new Set([
+  "send_session_message", "acknowledge_session_messages", "get_session_message_status",
+  "get_session_contact_state", "contact_session", "prepare_session_task_request", "register_session_task_request",
+  "record_session_task_outcome", "reconcile_session_task_request", "validate_collaboration_decision",
+]);
+const SUBAGENT_DENIED_TOOLS = new Set([
+  "send_session_message", "acknowledge_session_messages", "get_session_message_status",
+  "get_session_contact_state", "contact_session", "prepare_session_task_request", "register_session_task_request",
+  "record_session_task_outcome", "reconcile_session_task_request",
+]);
 const HOST_CLAIM_MAX_MESSAGES = 1;
 const HOST_CLAIM_MAX_BODY_CHARS = 4096;
 const HOST_MESSAGE_REQUEST_TIMEOUT_MS = 8_000;

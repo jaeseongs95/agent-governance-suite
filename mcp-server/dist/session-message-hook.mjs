@@ -15798,6 +15798,7 @@ var contractSchemas = {
   updateSessionStatusRequest: loadSchema("update-session-status-request.v1.schema.json"),
   listSessionStatusRequest: loadSchema("list-session-status-request.v1.schema.json"),
   sendSessionMessageRequest: loadSchema("send-session-message-request.v1.schema.json"),
+  sessionTask: loadSchema("session-task.v1.schema.json"),
   acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
   getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
@@ -17648,8 +17649,29 @@ async function observeNativePeerHandoff(host, input, message) {
 }
 
 // mcp-server/src/session-message-hook.ts
-var SESSION_BOUND_TOOLS = /* @__PURE__ */ new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
-var SUBAGENT_DENIED_TOOLS = /* @__PURE__ */ new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
+var SESSION_BOUND_TOOLS = /* @__PURE__ */ new Set([
+  "send_session_message",
+  "acknowledge_session_messages",
+  "get_session_message_status",
+  "get_session_contact_state",
+  "contact_session",
+  "prepare_session_task_request",
+  "register_session_task_request",
+  "record_session_task_outcome",
+  "reconcile_session_task_request",
+  "validate_collaboration_decision"
+]);
+var SUBAGENT_DENIED_TOOLS = /* @__PURE__ */ new Set([
+  "send_session_message",
+  "acknowledge_session_messages",
+  "get_session_message_status",
+  "get_session_contact_state",
+  "contact_session",
+  "prepare_session_task_request",
+  "register_session_task_request",
+  "record_session_task_outcome",
+  "reconcile_session_task_request"
+]);
 var HOST_CLAIM_MAX_MESSAGES = 1;
 var HOST_CLAIM_MAX_BODY_CHARS = 4096;
 var HOST_MESSAGE_REQUEST_TIMEOUT_MS = 8e3;

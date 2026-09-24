@@ -16,7 +16,7 @@ import type { RoutingObserverReceipt } from "../../skills/coordinate-subagents/s
 import type { SessionTaskActivityObservationV1, SessionTaskRequestV1, SessionTaskTerminalOutcomeV1 } from "../../contracts/types.js";
 
 const IDLE_EXIT_MS = 60_000;
-export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities"] as const;
+export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "session-contact-v1"] as const;
 
 interface BrokerRequest {
   protocolVersion: string;
@@ -179,14 +179,44 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         ...(ttlSeconds === undefined ? {} : { ttlSeconds }),
       });
     }
-    case "register-task-request": {
+    case "contact-session": {
+      const expectedActor = payload.expectedActor as Record<string, unknown> | undefined;
+      if (!expectedActor || typeof expectedActor.instanceId !== "string") throw new Error("Expected actor is required.");
+      const actor = identity(expectedActor);
+      const target = identity(payload.target);
+      if (actor.host !== target.host || actor.sessionId !== target.sessionId) throw new Error("Expected actor and target differ.");
+      return store.contact({
+        messageId: string(payload.messageId, "messageId"), sender: identity(payload.sender), target,
+        body: string(payload.body, "body"),
+        ...(Object.hasOwn(payload, "ttlSeconds") ? { ttlSeconds: integer(payload.ttlSeconds, "ttlSeconds") } : {}),
+        expectedActor: { ...actor, instanceId: expectedActor.instanceId },
+        expectedTurnId: string(payload.expectedTurnId, "expectedTurnId"),
+        expectedRevision: integer(payload.expectedRevision, "expectedRevision"),
+      }, Boolean(activityReporterReader));
+    }
+    case "prepare-task-request": return store.prepareTaskRequest({
+      request: payload.request as SessionTaskRequestV1,
+      body: string(payload.body, "body"),
+      ...(Object.hasOwn(payload, "ttlSeconds") ? { ttlSeconds: integer(payload.ttlSeconds, "ttlSeconds") } : {}),
+    });
+    case "receipt-task-request": return store.registerTaskRequest({
+      request: payload.request as SessionTaskRequestV1,
+      body: string(payload.body, "body"),
+      ...(Object.hasOwn(payload, "ttlSeconds") ? { ttlSeconds: integer(payload.ttlSeconds, "ttlSeconds") } : {}),
+    }, Date.now(), undefined, string(payload.reconcileToken, "reconcileToken"));
+    case "register-contact-task-request": {
       if (Object.hasOwn(payload, "messageId")) throw new Error("Task request messageId is broker-assigned.");
-      const ttlSeconds = optionalInteger(payload, "ttlSeconds");
+      const expectedActor = payload.expectedActor as Record<string, unknown> | undefined;
+      if (!expectedActor || typeof expectedActor.instanceId !== "string") throw new Error("Expected actor is required.");
       return store.registerTaskRequest({
         request: payload.request as SessionTaskRequestV1,
         body: string(payload.body, "body"),
-        ...(ttlSeconds === undefined ? {} : { ttlSeconds }),
-      });
+        ...(Object.hasOwn(payload, "ttlSeconds") ? { ttlSeconds: integer(payload.ttlSeconds, "ttlSeconds") } : {}),
+      }, Date.now(), { expectedActor: { ...identity(expectedActor), instanceId: expectedActor.instanceId },
+        expectedTurnId: string(payload.expectedTurnId, "expectedTurnId"),
+        expectedRevision: integer(payload.expectedRevision, "expectedRevision"),
+        trustedActivity: Boolean(activityReporterReader),
+        reconcileToken: string(payload.reconcileToken, "reconcileToken") });
     }
     case "record-task-outcome": {
       if (!taskBindingReader) throw new Error("Current task binding is unavailable.");
@@ -194,6 +224,9 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       return store.recordTaskOutcome(payload.outcome as SessionTaskTerminalOutcomeV1,
         string(payload.reporterProof, "reporterProof"), taskBindingReader);
     }
+    case "reconcile-task-request": return store.reconcileTaskRequest(
+      identity(payload.sender), string(payload.requestId, "requestId"),
+      string(payload.reconcileToken, "reconcileToken"));
     case "record-session-activity": {
       if (!activityReporterReader) throw new Error("Current activity reporter is unavailable.");
       if (Object.keys(payload).sort().join() !== "event,reporterProof,turnId") {
@@ -296,7 +329,8 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
     ) };
     case "presence": return { presence: store.presence(identity(payload.target)) };
     case "list-presence": return { sessions: store.listPresence() };
-    case "reserve-wake": return { dispatch: store.reserveWake(identity(payload.target), string(payload.nonce, "nonce")) };
+    case "reserve-wake": return { dispatch: store.reserveWake(identity(payload.target), string(payload.nonce, "nonce"),
+      Date.now(), Boolean(activityReporterReader)) };
     case "release-wake": return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "consume-wake": return { consumed: store.consumeWake(identity(payload.target), string(payload.nonce, "nonce")) };
     default: throw new Error("Unknown broker operation.");

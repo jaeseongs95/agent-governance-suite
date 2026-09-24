@@ -102,7 +102,7 @@
         ]
       },
       {
-        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(send_session_message|acknowledge_session_messages|get_session_message_status|validate_collaboration_decision)$",
+        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(send_session_message|acknowledge_session_messages|get_session_message_status|get_session_contact_state|contact_session|prepare_session_task_request|register_session_task_request|record_session_task_outcome|reconcile_session_task_request|validate_collaboration_decision)$",
         "hooks": [
           {
             "type": "command",

@@ -46,8 +46,22 @@ function binding(overrides = {}) {
     trustedDelegation: { requestId: request.requestId, callbackTarget }, ...overrides,
   }) : null };
 }
-function register(store) {
-  store.registerTaskRequest({ request, body: 'Task request', ttlSeconds: 600 }, now);
+function register(store, requested = request, body = 'Task request') {
+  const input = { request: requested, body, ttlSeconds: 600 };
+  const reconcileToken = store.prepareTaskRequest(input, now).reconcileToken;
+  const currentActor = { ...requested.recipient, instanceId: requested.requestId };
+  store.startPresence({ ...currentActor, transport: 'portable', wakeVisibility: 'silent',
+    canWakeSilently: true, deliveryCapabilities: { supportedInjection: ['tool-boundary'], idleWake: 'silent' } }, now);
+  const event = { schemaVersion: '1.0.0', kind: 'activity-observation', actor: currentActor,
+    revision: 1, activity: 'busy', source: 'host-observed', observedAt: new Date(now).toISOString(),
+    authorityEffect: 'none' };
+  store.recordActivity(event, 'turn-1', proof, { verifyActivityReporter: () => ({
+    authenticatedActor: currentActor, currentInstanceId: currentActor.instanceId,
+    verifiedTurnId: 'turn-1', observedSource: 'host-observed', verifiedRevision: 1,
+    verifiedActivity: 'busy', verifiedObservedAt: event.observedAt,
+  }) }, now);
+  return store.registerTaskRequest(input, now + 1, { expectedActor: currentActor,
+    expectedTurnId: 'turn-1', expectedRevision: 1, trustedActivity: true, reconcileToken });
 }
 
 test('W03 delegated outcome and callback commit together; ACK remains separate from acceptance', () => {
@@ -85,7 +99,7 @@ test('W03 different request IDs cannot create two terminal outcomes for one owne
   const { store } = fixture();
   register(store);
   const secondRequest = { ...request, requestId: 'request-0002' };
-  store.registerTaskRequest({ request: secondRequest, body: 'Same task claimed again', ttlSeconds: 600 }, now);
+  register(store, secondRequest, 'Same task claimed again');
   const first = store.recordTaskOutcome(outcome, proof, binding(), now + 100);
   assert.throws(() => store.recordTaskOutcome({ ...outcome, requestId: secondRequest.requestId,
     result: 'BLOCKED' }, proof, binding({ trustedDelegation: {
@@ -101,14 +115,14 @@ test('W03 untrusted first request cannot choose the callback target or delegatio
   const forgedSender = { host: 'untrusted', sessionId: 'other-1', instanceId: 'other-instance' };
   const forgedTarget = { host: forgedSender.host, sessionId: forgedSender.sessionId };
   const forgedRequest = { ...request, sender: forgedSender, callbackTarget: forgedTarget };
-  store.registerTaskRequest({ request: forgedRequest, body: 'Claimed task', ttlSeconds: 600 }, now);
+  register(store, forgedRequest, 'Claimed task');
   assert.throws(() => store.recordTaskOutcome({ ...outcome, callbackTarget: forgedTarget }, proof,
     binding(), now + 100), /TRUSTED_DELEGATION_MISMATCH/);
   assert.equal(store.taskOutcome(outcomeKey), null);
   assert.equal(store.database.prepare("SELECT count(*) AS n FROM messages WHERE body LIKE '%task-outcome-callback%'").get().n, 0);
 
   const anotherRequest = { ...request, requestId: 'request-0002' };
-  store.registerTaskRequest({ request: anotherRequest, body: 'Another claim', ttlSeconds: 600 }, now);
+  register(store, anotherRequest, 'Another claim');
   assert.throws(() => store.recordTaskOutcome({ ...outcome, requestId: anotherRequest.requestId }, proof,
     binding(), now + 100), /TRUSTED_DELEGATION_MISMATCH/);
   assert.equal(store.taskOutcome(outcomeKey), null);

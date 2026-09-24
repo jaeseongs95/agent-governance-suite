@@ -331,15 +331,15 @@
     },
     {
       "path": "mcp-server/dist/flowmarshal-profile-probe.mjs",
-      "sha256": "sha256:18acf6b0af4e4d87e2c22549db04f689dcae4b0cb1d81300c31ee920be42b9f5"
+      "sha256": "sha256:fc74b2a8bddddabab471a6576e958df2b582e7c20f9ea9dd14679ff2286f82fc"
     },
     {
       "path": "mcp-server/dist/server.mjs",
-      "sha256": "sha256:0efc10c42c34341db4a683323ab609797d355c42a559572a8e74eed7708164d5"
+      "sha256": "sha256:4a73280eaf9857c91eac7f0e6ce8fc98030d507b7d0043e2be5eef6fb6ee5977"
     },
     {
       "path": "mcp-server/dist/session-message-broker.mjs",
-      "sha256": "sha256:d20e9df2537844fa40ca2e30ef10b24eaea19361c69fbfb89b50b7a0ec87a032"
+      "sha256": "sha256:301f7e5022b97566f0ff06a182c8e58109f999c2bddaf3d72e733f0a4326b698"
     },
     {
       "path": "runtime/schema-validation.mjs",
