@@ -42,7 +42,8 @@ function fixture(store = new InMemoryWorkflowStore()) {
   };
   const registration = (nonce, input = task, change = () => {}) => {
     const body = { version: 1, domain: 'ags-fm-same-user-dispatch-registration-v1',
-      profileId: profile.profileId, freezeIdentity: profile.freezeIdentity,
+      profileBinding: { profileId: profile.profileId, freezeIdentity: profile.freezeIdentity },
+      assertions: { modelClass: 'deep', actorId: 'flowmarshal-engine:steward:bootstrap:thread-1' },
       serverEpoch: invocation.serverEpoch, nonce,
       issuedAt: new Date(now).toISOString(), expiresAt: new Date(now + 60_000).toISOString(),
       producer: { installationId: 'fm-1', keyId: 'key-1', hostId: 'flowmarshal', instanceId: 'instance-1' },
@@ -78,8 +79,8 @@ test('A2 signed registration, durable nonce and one-use current call bind to the
         return observed;
       });
     assert.equal(result.callId, callId);
-    assert.equal(result.registration.profileId, f.profile.profileId);
-    assert.equal(result.registration.freezeIdentity, f.profile.freezeIdentity);
+    assert.equal(result.registration.profileBinding.profileId, f.profile.profileId);
+    assert.equal(result.registration.profileBinding.freezeIdentity, f.profile.freezeIdentity);
     await assert.rejects(f.invocation.runCurrentRequest(callId, 'plan_workflow', task, async () => true),
       /already used/);
     const restarted = new FlowmarshalCurrentInvocation(f.profile, f.store, () => now + 1);
@@ -105,8 +106,8 @@ test('A2 rejects forged signature, wrong pin/profile/domain, epoch, expiry and n
       f.signed(base.body, other.privateKey),
       f.signed(base.body, undefined, 'vm-key'),
       ...[
-        (body) => { body.profileId = 'vm-protected-v1'; },
-        (body) => { body.freezeIdentity = `sha256:${'c'.repeat(64)}`; },
+        (body) => { body.profileBinding.profileId = 'vm-protected-v1'; },
+        (body) => { body.profileBinding.freezeIdentity = `sha256:${'c'.repeat(64)}`; },
         (body) => { body.domain = 'ags-vm-dispatch-registration-v1'; },
         (body) => { body.serverEpoch = 'old-epoch'; },
         (body) => { body.expiresAt = new Date(now).toISOString(); },
@@ -127,7 +128,7 @@ test('durable registration evidence is reverified before a current call', async 
       const row = database.prepare('SELECT signed_envelope_json, body_json, registration_digest FROM a2_dispatch_reservations WHERE call_id=?')
         .get(ticket.callId);
       assert.equal(JSON.parse(row.signed_envelope_json).keyId, 'key-1');
-      assert.equal(JSON.parse(row.body_json).profileId, f.profile.profileId);
+      assert.equal(JSON.parse(row.body_json).profileBinding.profileId, f.profile.profileId);
       assert.match(row.registration_digest, /^sha256:/);
       const changed = { ...JSON.parse(row.signed_envelope_json), signature: 'AA' };
       database.prepare('UPDATE a2_dispatch_reservations SET signed_envelope_json=? WHERE call_id=?')

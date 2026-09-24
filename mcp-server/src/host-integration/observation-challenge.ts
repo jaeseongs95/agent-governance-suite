@@ -402,6 +402,8 @@ export interface FlowmarshalVerifiedReceipt {
   expiresAt: string;
   model: string;
   reasoningEffort: string;
+  modelClass: string;
+  actorId: string;
   producer: Record<string, unknown>;
   binding: Record<string, unknown>;
   terminal: Record<string, unknown>;
@@ -432,14 +434,20 @@ export function verifyFlowmarshalReceipt(input: {
   }
   const { body, bytes, keyId } = input.verifyEnvelope(envelope);
   const registration = input.registration;
+  const profileBinding = record(body.profileBinding), assertions = record(body.assertions);
   const producer = record(body.producer), registeredProducer = record(registration.producer);
   const binding = record(body.binding), registeredBinding = record(registration.binding);
   const terminal = record(body.terminal), core = record(body.core), invocation = record(body.invocation);
   const transport = record(body.transport);
-  if (!exactKeys(body, ["version", "domain", "profileId", "freezeIdentity", "producer", "binding",
+  if (!exactKeys(body, ["version", "domain", "profileBinding", "assertions", "producer", "binding",
     "terminal", "core", "invocation", "nonce", "issuedAt", "expiresAt", "transport"])
       || body.version !== 2 || body.domain !== "fm-same-user-provider-terminal-to-governance-v1"
-      || body.profileId !== input.profile.profileId || body.freezeIdentity !== input.profile.freezeIdentity
+      || !profileBinding || !assertions
+      || !exactKeys(profileBinding, ["profileId", "freezeIdentity"])
+      || profileBinding.profileId !== input.profile.profileId
+      || profileBinding.freezeIdentity !== input.profile.freezeIdentity
+      || !exactKeys(assertions, ["modelClass", "actorId"])
+      || !nonempty(assertions.modelClass) || !nonempty(assertions.actorId)
       || !producer || !registeredProducer || !binding || !registeredBinding || !terminal || !core || !invocation
       || !transport || !exactKeys(transport, ["serverEpoch", "registrationDigest"])
       || transport.serverEpoch !== input.serverEpoch || transport.registrationDigest !== input.registrationDigest
@@ -459,7 +467,7 @@ export function verifyFlowmarshalReceipt(input: {
   for (const [field, value] of Object.entries(registeredBinding)) {
     if (binding[field] !== value) throw invalid(`A2 ${field} registration mismatch`);
   }
-  for (const field of ["producer", "terminal", "core", "invocation"]) {
+  for (const field of ["profileBinding", "assertions", "producer", "terminal", "core", "invocation"]) {
     if (canonicalJson(body[field]) !== canonicalJson(registration[field])) {
       throw invalid(`A2 ${field} registration mismatch`);
     }
@@ -484,6 +492,7 @@ export function verifyFlowmarshalReceipt(input: {
     nonceKey: `flowmarshal-same-user-v1:${keyId}:${body.nonce}`,
     expiresAt: body.expiresAt as string,
     model: terminal.model as string, reasoningEffort: terminal.effort as string,
+    modelClass: assertions.modelClass as string, actorId: assertions.actorId as string,
     producer, binding, terminal, core,
   };
 }

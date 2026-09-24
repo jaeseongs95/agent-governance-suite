@@ -41,7 +41,9 @@ function fixture(store = new InMemoryWorkflowStore()) {
   };
   const registration = (nonce, input = task, mutate = () => {}) => {
     const body = { version: 1, domain: 'ags-fm-same-user-dispatch-registration-v1',
-      profileId: profile.profileId, freezeIdentity: profile.freezeIdentity, serverEpoch: invocation.serverEpoch,
+      profileBinding: { profileId: profile.profileId, freezeIdentity: profile.freezeIdentity },
+      assertions: { modelClass: 'deep', actorId: 'flowmarshal-engine:steward:bootstrap:thread-1' },
+      serverEpoch: invocation.serverEpoch,
       nonce, issuedAt, expiresAt,
       producer: { installationId: 'fm-1', keyId: 'key-1', hostId: 'flowmarshal', instanceId: 'instance-1' },
       binding: { turnId: 'turn-1', taskId: 'task-1', runId: null, attemptId: null,
@@ -57,7 +59,8 @@ function fixture(store = new InMemoryWorkflowStore()) {
   const receipt = (registrationBody, callId, nonce, mutate = () => {}) => {
     const registrationBytes = Buffer.from(canonicalJson(registrationBody));
     const body = { version: 2, domain: 'fm-same-user-provider-terminal-to-governance-v1',
-      profileId: profile.profileId, freezeIdentity: profile.freezeIdentity,
+      profileBinding: structuredClone(registrationBody.profileBinding),
+      assertions: structuredClone(registrationBody.assertions),
       producer: structuredClone(registrationBody.producer),
       binding: { invocationId: callId, ...registrationBody.binding },
       terminal: structuredClone(registrationBody.terminal), core: structuredClone(registrationBody.core),
@@ -91,6 +94,8 @@ test('A2 signed receipt is bound to the current call and atomically consumed onc
     assert.equal(verified.profileId, f.profile.profileId);
     assert.equal(verified.freezeIdentity, f.profile.freezeIdentity);
     assert.equal(verified.model, 'fm-asserted-model');
+    assert.equal(verified.modelClass, 'deep');
+    assert.equal(verified.actorId, 'flowmarshal-engine:steward:bootstrap:thread-1');
     assert.equal(verified.binding.invocationId, ticket.callId);
     assert.equal(f.claimRows().length, 1);
     await assert.rejects(f.current(ticket, receipt.envelope), /already used/);
@@ -104,8 +109,10 @@ test('cross profile, key, domain, transport, terminal and Core fail before claim
     const foreign = generateKeyPairSync('ed25519');
     const cases = [
       ['domain', (body) => { body.domain = 'vm-provider-terminal-to-governance'; }],
-      ['profile', (body) => { body.profileId = 'vm-protected-v1'; }],
-      ['freeze', (body) => { body.freezeIdentity = `sha256:${'c'.repeat(64)}`; }],
+      ['profile', (body) => { body.profileBinding.profileId = 'vm-protected-v1'; }],
+      ['freeze', (body) => { body.profileBinding.freezeIdentity = `sha256:${'c'.repeat(64)}`; }],
+      ['model-class', (body) => { body.assertions.modelClass = 'other'; }],
+      ['actor', (body) => { body.assertions.actorId = 'other'; }],
       ['key', (body) => { body.producer.keyId = 'vm-key'; }],
       ['task', (body) => { body.binding.taskId = 'other-task'; }],
       ['run', (body) => { body.binding.runId = 'other-run'; }],

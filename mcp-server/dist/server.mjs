@@ -45336,6 +45336,7 @@ function verifyFlowmarshalReceipt(input2) {
   }
   const { body, bytes, keyId } = input2.verifyEnvelope(envelope);
   const registration = input2.registration;
+  const profileBinding = record4(body.profileBinding), assertions = record4(body.assertions);
   const producer = record4(body.producer), registeredProducer = record4(registration.producer);
   const binding2 = record4(body.binding), registeredBinding = record4(registration.binding);
   const terminal = record4(body.terminal), core = record4(body.core), invocation = record4(body.invocation);
@@ -45343,8 +45344,8 @@ function verifyFlowmarshalReceipt(input2) {
   if (!exactKeys(body, [
     "version",
     "domain",
-    "profileId",
-    "freezeIdentity",
+    "profileBinding",
+    "assertions",
     "producer",
     "binding",
     "terminal",
@@ -45354,13 +45355,13 @@ function verifyFlowmarshalReceipt(input2) {
     "issuedAt",
     "expiresAt",
     "transport"
-  ]) || body.version !== 2 || body.domain !== "fm-same-user-provider-terminal-to-governance-v1" || body.profileId !== input2.profile.profileId || body.freezeIdentity !== input2.profile.freezeIdentity || !producer || !registeredProducer || !binding2 || !registeredBinding || !terminal || !core || !invocation || !transport || !exactKeys(transport, ["serverEpoch", "registrationDigest"]) || transport.serverEpoch !== input2.serverEpoch || transport.registrationDigest !== input2.registrationDigest || registration.serverEpoch !== input2.serverEpoch || !exactKeys(binding2, ["invocationId", "turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) || binding2.invocationId !== input2.callId || producer.keyId !== keyId || producer.hostId !== "flowmarshal" || binding2.hostId !== "flowmarshal" || !nonempty3(body.nonce) || !nonempty3(terminal.model) || !isReasoningEffort2(terminal.effort) || !nonempty3(terminal.eventId) || !nonempty3(terminal.callId) || typeof terminal.status !== "string" || !["succeeded", "completed"].includes(terminal.status) || typeof terminal.provenance !== "string" || !["provider_raw_response", "claude_session_transcript"].includes(terminal.provenance) || typeof terminal.digest !== "string" || !/^sha256:[0-9a-f]{64}$/u.test(terminal.digest) || invocation.tool !== input2.tool) {
+  ]) || body.version !== 2 || body.domain !== "fm-same-user-provider-terminal-to-governance-v1" || !profileBinding || !assertions || !exactKeys(profileBinding, ["profileId", "freezeIdentity"]) || profileBinding.profileId !== input2.profile.profileId || profileBinding.freezeIdentity !== input2.profile.freezeIdentity || !exactKeys(assertions, ["modelClass", "actorId"]) || !nonempty3(assertions.modelClass) || !nonempty3(assertions.actorId) || !producer || !registeredProducer || !binding2 || !registeredBinding || !terminal || !core || !invocation || !transport || !exactKeys(transport, ["serverEpoch", "registrationDigest"]) || transport.serverEpoch !== input2.serverEpoch || transport.registrationDigest !== input2.registrationDigest || registration.serverEpoch !== input2.serverEpoch || !exactKeys(binding2, ["invocationId", "turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) || binding2.invocationId !== input2.callId || producer.keyId !== keyId || producer.hostId !== "flowmarshal" || binding2.hostId !== "flowmarshal" || !nonempty3(body.nonce) || !nonempty3(terminal.model) || !isReasoningEffort2(terminal.effort) || !nonempty3(terminal.eventId) || !nonempty3(terminal.callId) || typeof terminal.status !== "string" || !["succeeded", "completed"].includes(terminal.status) || typeof terminal.provenance !== "string" || !["provider_raw_response", "claude_session_transcript"].includes(terminal.provenance) || typeof terminal.digest !== "string" || !/^sha256:[0-9a-f]{64}$/u.test(terminal.digest) || invocation.tool !== input2.tool) {
     throw invalid2("A2 receipt source or binding is invalid");
   }
   for (const [field, value] of Object.entries(registeredBinding)) {
     if (binding2[field] !== value) throw invalid2(`A2 ${field} registration mismatch`);
   }
-  for (const field of ["producer", "terminal", "core", "invocation"]) {
+  for (const field of ["profileBinding", "assertions", "producer", "terminal", "core", "invocation"]) {
     if (canonicalJson(body[field]) !== canonicalJson(registration[field])) {
       throw invalid2(`A2 ${field} registration mismatch`);
     }
@@ -45383,6 +45384,8 @@ function verifyFlowmarshalReceipt(input2) {
     expiresAt: body.expiresAt,
     model: terminal.model,
     reasoningEffort: terminal.effort,
+    modelClass: assertions.modelClass,
+    actorId: assertions.actorId,
     producer,
     binding: binding2,
     terminal,
@@ -47651,11 +47654,12 @@ var FlowmarshalCurrentInvocation = class {
   }
   reserve(signedRegistration) {
     const { body, bytes, signature, keyId } = this.verifySignedEnvelope(signedRegistration);
+    const profileBinding = object10(body.profileBinding), assertions = object10(body.assertions);
     const producer = object10(body.producer), binding2 = object10(body.binding);
     const terminal = object10(body.terminal), core = object10(body.core), invocation = object10(body.invocation);
     const now = this.clock(), issued = timestamp4(body.issuedAt), expires = timestamp4(body.expiresAt);
     const observed = timestamp4(terminal?.observedAt);
-    if (!exact6(body, ["version", "domain", "profileId", "freezeIdentity", "serverEpoch", "nonce", "issuedAt", "expiresAt", "producer", "binding", "terminal", "core", "invocation"]) || body.version !== 1 || body.domain !== DISPATCH_DOMAIN || body.profileId !== PROFILE_ID2 || body.freezeIdentity !== this.profile.freezeIdentity || body.serverEpoch !== this.serverEpoch || !required3(body.nonce) || !Number.isFinite(now) || !Number.isFinite(issued) || !Number.isFinite(expires) || issued > now + 5e3 || now >= expires || expires - issued !== 6e4 || !exact6(producer, ["installationId", "keyId", "hostId", "instanceId"]) || producer.keyId !== keyId || producer.hostId !== "flowmarshal" || !required3(producer.installationId) || !required3(producer.instanceId) || !exact6(binding2, ["turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) || !required3(binding2.turnId) || !required3(binding2.taskId) || !optional3(binding2.runId) || !optional3(binding2.attemptId) || binding2.hostId !== "flowmarshal" || !required3(binding2.sessionId) || binding2.instanceId !== producer.instanceId || !exact6(terminal, ["eventId", "callId", "threadId", "turnId", "status", "observedAt", "model", "effort", "provenance", "digest"]) || terminal.turnId !== binding2.turnId || !required3(terminal.eventId) || !required3(terminal.callId) || !required3(terminal.threadId) || !required3(terminal.model) || !REASONING_EFFORT.includes(String(terminal.effort)) || !["succeeded", "completed"].includes(String(terminal.status)) || !["provider_raw_response", "claude_session_transcript"].includes(String(terminal.provenance)) || !/^sha256:[0-9a-f]{64}$/u.test(String(terminal.digest)) || !Number.isFinite(observed) || observed > issued || !exact6(core, ["goalRevision", "taskRevision", "attemptOrdinal", "gateOperationKey", "stage"]) || !Number.isSafeInteger(core.goalRevision) || Number(core.goalRevision) < 1 || !Number.isSafeInteger(core.taskRevision) || Number(core.taskRevision) < 1 || !(core.attemptOrdinal === null || Number.isSafeInteger(core.attemptOrdinal) && Number(core.attemptOrdinal) > 0) || !required3(core.gateOperationKey) || !required3(core.stage) || !["bootstrap", "baseline", "implementation", "scope", "acceptance"].includes(core.stage) || !exact6(invocation, ["tool", "inputDigest", "observedAt"]) || !["plan_workflow", "record_stage_result"].includes(String(invocation.tool)) || !/^sha256:[0-9a-f]{64}$/u.test(String(invocation.inputDigest)) || invocation.observedAt !== body.issuedAt || core.stage === "bootstrap" && (invocation.tool !== "plan_workflow" || binding2.runId !== null || binding2.attemptId !== null) || core.stage !== "bootstrap" && (invocation.tool !== "record_stage_result" || !required3(binding2.runId)) || ["bootstrap", "baseline"].includes(String(core.stage)) && binding2.attemptId !== null || ["implementation", "scope", "acceptance"].includes(String(core.stage)) && !required3(binding2.attemptId)) {
+    if (!exact6(body, ["version", "domain", "profileBinding", "assertions", "serverEpoch", "nonce", "issuedAt", "expiresAt", "producer", "binding", "terminal", "core", "invocation"]) || body.version !== 1 || body.domain !== DISPATCH_DOMAIN || !exact6(profileBinding, ["profileId", "freezeIdentity"]) || profileBinding.profileId !== PROFILE_ID2 || profileBinding.freezeIdentity !== this.profile.freezeIdentity || !exact6(assertions, ["modelClass", "actorId"]) || !required3(assertions.modelClass) || !required3(assertions.actorId) || body.serverEpoch !== this.serverEpoch || !required3(body.nonce) || !Number.isFinite(now) || !Number.isFinite(issued) || !Number.isFinite(expires) || issued > now + 5e3 || now >= expires || expires - issued !== 6e4 || !exact6(producer, ["installationId", "keyId", "hostId", "instanceId"]) || producer.keyId !== keyId || producer.hostId !== "flowmarshal" || !required3(producer.installationId) || !required3(producer.instanceId) || !exact6(binding2, ["turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) || !required3(binding2.turnId) || !required3(binding2.taskId) || !optional3(binding2.runId) || !optional3(binding2.attemptId) || binding2.hostId !== "flowmarshal" || !required3(binding2.sessionId) || binding2.instanceId !== producer.instanceId || !exact6(terminal, ["eventId", "callId", "threadId", "turnId", "status", "observedAt", "model", "effort", "provenance", "digest"]) || terminal.turnId !== binding2.turnId || !required3(terminal.eventId) || !required3(terminal.callId) || !required3(terminal.threadId) || !required3(terminal.model) || !REASONING_EFFORT.includes(String(terminal.effort)) || !["succeeded", "completed"].includes(String(terminal.status)) || !["provider_raw_response", "claude_session_transcript"].includes(String(terminal.provenance)) || !/^sha256:[0-9a-f]{64}$/u.test(String(terminal.digest)) || !Number.isFinite(observed) || observed > issued || !exact6(core, ["goalRevision", "taskRevision", "attemptOrdinal", "gateOperationKey", "stage"]) || !Number.isSafeInteger(core.goalRevision) || Number(core.goalRevision) < 1 || !Number.isSafeInteger(core.taskRevision) || Number(core.taskRevision) < 1 || !(core.attemptOrdinal === null || Number.isSafeInteger(core.attemptOrdinal) && Number(core.attemptOrdinal) > 0) || !required3(core.gateOperationKey) || !required3(core.stage) || !["bootstrap", "baseline", "implementation", "scope", "acceptance"].includes(core.stage) || !exact6(invocation, ["tool", "inputDigest", "observedAt"]) || !["plan_workflow", "record_stage_result"].includes(String(invocation.tool)) || !/^sha256:[0-9a-f]{64}$/u.test(String(invocation.inputDigest)) || invocation.observedAt !== body.issuedAt || core.stage === "bootstrap" && (invocation.tool !== "plan_workflow" || binding2.runId !== null || binding2.attemptId !== null) || core.stage !== "bootstrap" && (invocation.tool !== "record_stage_result" || !required3(binding2.runId)) || ["bootstrap", "baseline"].includes(String(core.stage)) && binding2.attemptId !== null || ["implementation", "scope", "acceptance"].includes(String(core.stage)) && !required3(binding2.attemptId)) {
       reject2("registration binding is invalid");
     }
     const callId = `fmr-${randomBytes8(24).toString("base64url")}`;
@@ -47680,7 +47684,7 @@ var FlowmarshalCurrentInvocation = class {
     if (!row) return null;
     const envelope = JSON.parse(row.signed_envelope_json);
     const verified = this.verifySignedEnvelope(envelope);
-    if (JSON.stringify(verified.body) !== row.body_json || `sha256:${createHash15("sha256").update(verified.bytes).digest("hex")}` !== row.registration_digest || verified.body.profileId !== PROFILE_ID2 || verified.body.freezeIdentity !== this.profile.freezeIdentity || verified.body.serverEpoch !== this.serverEpoch || row.nonce_key !== `${PROFILE_ID2}:${verified.keyId}:${verified.body.nonce}` || row.expires_at !== timestamp4(verified.body.expiresAt)) reject2("stored registration evidence mismatch");
+    if (JSON.stringify(verified.body) !== row.body_json || `sha256:${createHash15("sha256").update(verified.bytes).digest("hex")}` !== row.registration_digest || object10(verified.body.profileBinding)?.profileId !== PROFILE_ID2 || object10(verified.body.profileBinding)?.freezeIdentity !== this.profile.freezeIdentity || verified.body.serverEpoch !== this.serverEpoch || row.nonce_key !== `${PROFILE_ID2}:${verified.keyId}:${verified.body.nonce}` || row.expires_at !== timestamp4(verified.body.expiresAt)) reject2("stored registration evidence mismatch");
     return {
       body: verified.body,
       envelope,

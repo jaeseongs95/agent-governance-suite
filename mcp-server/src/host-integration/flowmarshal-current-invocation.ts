@@ -115,13 +115,18 @@ export class FlowmarshalCurrentInvocation {
 
   reserve(signedRegistration: unknown): { callId: string; serverEpoch: string } {
     const { body, bytes, signature, keyId } = this.verifySignedEnvelope(signedRegistration);
+    const profileBinding = object(body.profileBinding), assertions = object(body.assertions);
     const producer = object(body.producer), binding = object(body.binding);
     const terminal = object(body.terminal), core = object(body.core), invocation = object(body.invocation);
     const now = this.clock(), issued = timestamp(body.issuedAt), expires = timestamp(body.expiresAt);
     const observed = timestamp(terminal?.observedAt);
-    if (!exact(body, ["version", "domain", "profileId", "freezeIdentity", "serverEpoch", "nonce", "issuedAt", "expiresAt", "producer", "binding", "terminal", "core", "invocation"])
-        || body.version !== 1 || body.domain !== DISPATCH_DOMAIN || body.profileId !== PROFILE_ID
-        || body.freezeIdentity !== this.profile.freezeIdentity || body.serverEpoch !== this.serverEpoch
+    if (!exact(body, ["version", "domain", "profileBinding", "assertions", "serverEpoch", "nonce", "issuedAt", "expiresAt", "producer", "binding", "terminal", "core", "invocation"])
+        || body.version !== 1 || body.domain !== DISPATCH_DOMAIN
+        || !exact(profileBinding, ["profileId", "freezeIdentity"])
+        || profileBinding!.profileId !== PROFILE_ID || profileBinding!.freezeIdentity !== this.profile.freezeIdentity
+        || !exact(assertions, ["modelClass", "actorId"])
+        || !required(assertions!.modelClass) || !required(assertions!.actorId)
+        || body.serverEpoch !== this.serverEpoch
         || !required(body.nonce) || !Number.isFinite(now) || !Number.isFinite(issued) || !Number.isFinite(expires)
         || issued > now + 5_000 || now >= expires || expires - issued !== 60_000
         || !exact(producer, ["installationId", "keyId", "hostId", "instanceId"])
@@ -174,7 +179,8 @@ export class FlowmarshalCurrentInvocation {
     const verified = this.verifySignedEnvelope(envelope);
     if (JSON.stringify(verified.body) !== row.body_json
         || `sha256:${createHash("sha256").update(verified.bytes).digest("hex")}` !== row.registration_digest
-        || verified.body.profileId !== PROFILE_ID || verified.body.freezeIdentity !== this.profile.freezeIdentity
+        || object(verified.body.profileBinding)?.profileId !== PROFILE_ID
+        || object(verified.body.profileBinding)?.freezeIdentity !== this.profile.freezeIdentity
         || verified.body.serverEpoch !== this.serverEpoch
         || row.nonce_key !== `${PROFILE_ID}:${verified.keyId}:${verified.body.nonce}`
         || row.expires_at !== timestamp(verified.body.expiresAt)) reject("stored registration evidence mismatch");
