@@ -22,14 +22,21 @@ const TRUSTED_UIDS = Object.freeze([0]);
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const fail = (reason) => { throw new Error(reason); };
 const HEX64 = /^[a-f0-9]{64}$/;
+// The protected root is a Linux path whatever OS evaluates it, so path math is POSIX only.
+const posix = path.posix;
+
+// Linux-only leaf: refuse other platforms before /proc, the ancestor walk or any install write.
+function assertLinux(platform) {
+  if (platform !== 'linux') fail(`protected runtime install is linux-only (platform=${platform})`);
+}
 
 export function protectedPaths(baseDir, releaseSha256) {
-  if (!path.isAbsolute(baseDir)) fail('base dir must be absolute');
+  if (!posix.isAbsolute(baseDir)) fail('base dir must be absolute');
   if (!HEX64.test(releaseSha256)) fail('release sha256 must be 64 lowercase hex');
-  const suiteDir = path.join(path.resolve(baseDir), 'agent-governance-suite');
-  const runtimeDir = path.join(suiteDir, 'protected-runtime');
-  const releaseDir = path.join(runtimeDir, releaseSha256);
-  return { baseDir: path.resolve(baseDir), suiteDir, runtimeDir, releaseDir, nodeFile: path.join(releaseDir, 'node') };
+  const suiteDir = posix.join(posix.resolve(baseDir), 'agent-governance-suite');
+  const runtimeDir = posix.join(suiteDir, 'protected-runtime');
+  const releaseDir = posix.join(runtimeDir, releaseSha256);
+  return { baseDir: posix.resolve(baseDir), suiteDir, runtimeDir, releaseDir, nodeFile: posix.join(releaseDir, 'node') };
 }
 
 function mountPoints() {
@@ -50,13 +57,14 @@ export function assessComponent(file, stat, trustedUids = TRUSTED_UIDS) {
   if (Number(stat.mode) & 0o022) fail(`ancestor is group/other writable: ${file}`);
 }
 
-export function inspectAncestors(dir, { trustedUids = TRUSTED_UIDS } = {}) {
-  const resolved = path.resolve(dir);
+export function inspectAncestors(dir, { trustedUids = TRUSTED_UIDS, platform = process.platform } = {}) {
+  assertLinux(platform);
+  const resolved = posix.resolve(dir);
   const mounts = mountPoints();
   const chain = [];
   let current = '/';
   for (const part of ['', ...resolved.split('/').filter(Boolean)]) {
-    current = part ? path.join(current, part) : '/';
+    current = part ? posix.join(current, part) : '/';
     const stat = lstatSync(current, { bigint: true });
     assessComponent(current, stat, trustedUids);
     chain.push({ path: current, uid: Number(stat.uid), gid: Number(stat.gid), mode: (Number(stat.mode) & 0o7777).toString(8),
@@ -124,19 +132,21 @@ function ensureDir(dir, created, manifestFile, trustedUids) {
 }
 
 export function installProtectedNode({ baseDir, releaseSha256, nodeBytes, expectedNodeSha256, manifestFile,
-  trustedUids = TRUSTED_UIDS, env = process.env }) {
+  trustedUids = TRUSTED_UIDS, env = process.env, platform = process.platform }) {
   const paths = protectedPaths(baseDir, releaseSha256);
+  // Order is part of the contract: /usr gate, then platform, then bytes, and only then host access.
   if ((paths.baseDir === '/usr' || paths.baseDir.startsWith('/usr/')) && env[GATE_ENV] !== '1') {
     fail(`protected system install requires ${GATE_ENV}=1`);
   }
+  assertLinux(platform);
   if (sha256(nodeBytes) !== expectedNodeSha256) fail('node bytes do not match the expected archive-extracted sha256');
-  inspectAncestors(paths.baseDir, { trustedUids });
+  inspectAncestors(paths.baseDir, { trustedUids, platform });
   if (lstatOrNull(paths.releaseDir)) fail(`install target already exists: ${paths.releaseDir}`);
   const created = [];
   try {
     ensureDir(paths.suiteDir, created, manifestFile, trustedUids);
     ensureDir(paths.runtimeDir, created, manifestFile, trustedUids);
-    inspectAncestors(paths.runtimeDir, { trustedUids });
+    inspectAncestors(paths.runtimeDir, { trustedUids, platform });
     mkdirSync(paths.releaseDir, { mode: 0o700 });
     chmodSync(paths.releaseDir, DIR_MODE);
     recordCreated(manifestFile, created, paths.releaseDir);
@@ -150,7 +160,7 @@ export function installProtectedNode({ baseDir, releaseSha256, nodeBytes, expect
     } finally { closeSync(fd); }
     const dirFd = openSync(paths.releaseDir, constants.O_RDONLY | constants.O_DIRECTORY);
     try { fsyncSync(dirFd); } finally { closeSync(dirFd); }
-    return { paths, created, record: verifyInstalledNode({ baseDir, releaseSha256, expectedNodeSha256, trustedUids }) };
+    return { paths, created, record: verifyInstalledNode({ baseDir, releaseSha256, expectedNodeSha256, trustedUids, platform }) };
   } catch (error) {
     const rollback = rollbackCreated(created);
     error.message = `${error.message} (rollback ${rollback.removed ? 'removed created paths' : `refused: ${rollback.mismatch} changed`})`;
@@ -159,9 +169,10 @@ export function installProtectedNode({ baseDir, releaseSha256, nodeBytes, expect
 }
 
 // Verification-time record: full ancestor chain, node identity, and sha256 of the installed bytes.
-export function verifyInstalledNode({ baseDir, releaseSha256, expectedNodeSha256, trustedUids = TRUSTED_UIDS }) {
+export function verifyInstalledNode({ baseDir, releaseSha256, expectedNodeSha256, trustedUids = TRUSTED_UIDS,
+  platform = process.platform }) {
   const paths = protectedPaths(baseDir, releaseSha256);
-  const ancestors = inspectAncestors(paths.releaseDir, { trustedUids });
+  const ancestors = inspectAncestors(paths.releaseDir, { trustedUids, platform });
   const fd = openSync(paths.nodeFile, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
     const stat = fstatSync(fd, { bigint: true });
@@ -174,8 +185,8 @@ export function verifyInstalledNode({ baseDir, releaseSha256, expectedNodeSha256
 
 // Use-time check: reopen, compare identity with the verification record, rehash the same fd,
 // and execute that exact open file through its /proc fd link so no path swap can intervene.
-export function runVerifiedNode(record, args, { trustedUids = TRUSTED_UIDS } = {}) {
-  inspectAncestors(record.paths.releaseDir, { trustedUids });
+export function runVerifiedNode(record, args, { trustedUids = TRUSTED_UIDS, platform = process.platform } = {}) {
+  inspectAncestors(record.paths.releaseDir, { trustedUids, platform });
   const fd = openSync(record.paths.nodeFile, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
     const stat = fstatSync(fd, { bigint: true });
