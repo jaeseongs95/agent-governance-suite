@@ -13,6 +13,14 @@ const fixture = new URL("./fixtures/broker-endpoint-failure.mjs", import.meta.ur
 const children: ChildProcess[] = [];
 const directories: string[] = [];
 
+function isolatedEnvironment(directory: string): NodeJS.ProcessEnv {
+  const home = path.join(directory, "home");
+  return { ...process.env, HOME: home, USERPROFILE: home,
+    LOCALAPPDATA: path.join(directory, "local"), XDG_STATE_HOME: path.join(directory, "xdg"),
+    AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(directory, "shared"),
+    AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory };
+}
+
 afterEach(async () => {
   for (const child of children.splice(0)) {
     if (child.exitCode === null && child.signalCode === null) {
@@ -33,7 +41,7 @@ async function launch(mode: string) {
   const child = spawn(process.execPath, ["--import", fixture, broker, "--state-directory", directory], {
     windowsHide: true,
     stdio: ["ignore", "ignore", "pipe"],
-    env: { ...process.env, BROKER_TEST_RENAME_FAILURE: mode },
+    env: { ...isolatedEnvironment(directory), BROKER_TEST_RENAME_FAILURE: mode },
   });
   children.push(child);
   let stderr = "";
@@ -62,7 +70,9 @@ it.each(["permanent", "ENOSPC", "credentials", "database"])("releases startup re
   expect((await readdir(directory)).filter((name) => name.endsWith(".tmp"))).toEqual([]);
   if (mode === "database") await rm(path.join(directory, "session-messages.sqlite3"), { recursive: true });
   if (mode === "credentials") await rm(path.join(directory, "broker.token"), { recursive: true });
-  const recovered = spawn(process.execPath, [broker, "--state-directory", directory], { windowsHide: true, stdio: "ignore" });
+  const recovered = spawn(process.execPath, [broker, "--state-directory", directory], {
+    windowsHide: true, stdio: "ignore", env: isolatedEnvironment(directory),
+  });
   children.push(recovered);
   await waitForSessionMessageBrokerReady(directory, recovered, 3000);
   await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
@@ -80,7 +90,7 @@ it("delivers and acknowledges a message using only the packaged CLI and broker",
   const request = (operation: string, payload: Record<string, unknown>) => {
     const result = spawnSync(process.execPath, [path.join(pluginRoot, "mcp-server/dist/session-message-cli.mjs")], {
       input: JSON.stringify({ operation, payload }), encoding: "utf8", timeout: 5000, windowsHide: true,
-      env: { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory },
+      env: isolatedEnvironment(directory),
     });
     expect(result.status, result.stderr).toBe(0);
     const response = JSON.parse(result.stdout);

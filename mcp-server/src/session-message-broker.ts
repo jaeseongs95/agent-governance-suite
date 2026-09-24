@@ -155,6 +155,7 @@ async function credentials(stateDirectory: string): Promise<{ key: string; certi
 export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>, modelCapabilities?: SessionModelCapabilityStore): unknown {
   switch (operation) {
     case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: [...SESSION_MESSAGE_BROKER_CAPABILITIES, ...(modelCapabilities ? [MODEL_CAPABILITY_FEATURE] : [])] };
+    case "resource-admission": throw new Error("Resource admission is unavailable.");
     case "publish-model-capability": {
       if (!modelCapabilities) throw new Error("Model capability exchange is unavailable.");
       if (Object.keys(payload).length !== 1 || !Object.hasOwn(payload, "receipt")) throw new Error("A signed capability receipt is required.");

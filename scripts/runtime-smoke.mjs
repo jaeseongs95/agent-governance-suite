@@ -33,6 +33,11 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     delete environment.NODE_OPTIONS;
     delete environment.NODE_PATH;
     environment.AGENT_GOVERNANCE_PEER_ROUTING = "0";
+    environment.HOME = path.join(cleanRoot, "home");
+    environment.USERPROFILE = environment.HOME;
+    environment.LOCALAPPDATA = path.join(cleanRoot, "local");
+    environment.XDG_STATE_HOME = path.join(cleanRoot, "xdg");
+    environment.AGENT_GOVERNANCE_SHARED_STATE_DIR = path.join(cleanRoot, "shared");
     environment.AGENT_GOVERNANCE_DB_PATH = path.join(cleanRoot, "state", "workflows.sqlite3");
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = path.join(cleanRoot, "state", "continuity.sqlite3");
     environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = path.join(cleanRoot, "state", "session-board.sqlite3");

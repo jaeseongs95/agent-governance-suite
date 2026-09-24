@@ -13,8 +13,13 @@ const previousBroker = process.env.AGS_PREVIOUS_BROKER_PATH;
 it.skipIf(!previousBroker)("preserves queued messages when new hooks meet the previous released broker", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-"));
   const previousState = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
+  const home = path.join(directory, "home");
   const child = spawn(process.execPath, [previousBroker!, "--state-directory", directory], {
     windowsHide: true, stdio: "ignore",
+    env: { ...process.env, HOME: home, USERPROFILE: home,
+      LOCALAPPDATA: path.join(directory, "local"), XDG_STATE_HOME: path.join(directory, "xdg"),
+      AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(directory, "shared"),
+      AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory },
   });
   try {
     await waitForSessionMessageBrokerReady(directory, child, 5000);

@@ -30,7 +30,10 @@ async function withBroker(run,{legacy=false}={}){
   const directory=mkdtempSync(join(tmpdir(),'AGS 공유 capability ')),state=join(directory,'messaging');
   let file=join(root,'mcp-server/dist/session-message-broker.mjs');
   if(legacy){file=join(directory,'legacy-broker.mjs');writeFileSync(file,execFileSync('git',['show',`${BASE}:mcp-server/dist/session-message-broker.mjs`],{cwd:root,maxBuffer:10*1024*1024}));}
-  const env={...process.env,NODE_OPTIONS:'',NODE_PATH:'',AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR:state};
+  const home=join(directory,'home');
+  const env={...process.env,NODE_OPTIONS:'',NODE_PATH:'',HOME:home,USERPROFILE:home,
+    LOCALAPPDATA:join(directory,'local'),XDG_STATE_HOME:join(directory,'xdg'),
+    AGENT_GOVERNANCE_SHARED_STATE_DIR:join(directory,'shared'),AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR:state};
   const child=spawn(process.execPath,[file,'--state-directory',state],{env,stdio:['ignore','ignore','pipe'],windowsHide:true});
   let error='';child.stderr.on('data',chunk=>{error+=chunk;});
   try{await waitForSessionMessageBrokerReady(state,child,6000);return await run({directory,state,env,child});}

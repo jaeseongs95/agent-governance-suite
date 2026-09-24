@@ -39,7 +39,10 @@ describe('installed native routing observer',()=>{
       for(const folder of ['contracts','skills','runtime','mcp-server/dist'])cpSync(join(source,folder),join(install,folder),{recursive:true});
       if(host==='claude-code')cpSync(join(source,'hooks'),join(install,'hooks'),{recursive:true});
       expect(existsSync(join(install,'node_modules'))).toBe(false);
-      const env={...process.env,NODE_OPTIONS:'',NODE_PATH:'',AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR:state,AGENT_GOVERNANCE_DB_PATH:join(data,'workflows.sqlite3'),CLAUDE_PLUGIN_DATA:data};
+      const home=join(dir,'home');
+      const env={...process.env,NODE_OPTIONS:'',NODE_PATH:'',HOME:home,USERPROFILE:home,
+        LOCALAPPDATA:join(dir,'local'),XDG_STATE_HOME:join(dir,'xdg'),AGENT_GOVERNANCE_SHARED_STATE_DIR:join(dir,'shared'),
+        AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR:state,AGENT_GOVERNANCE_DB_PATH:join(data,'workflows.sqlite3'),CLAUDE_PLUGIN_DATA:data};
       broker=spawn(process.execPath,[join(install,'mcp-server/dist/session-message-broker.mjs'),'--state-directory',state],{env,stdio:['ignore','ignore','pipe'],windowsHide:true});
       broker.stderr.on('data',chunk=>{brokerError+=chunk;});
       await waitForSessionMessageBrokerReady(state,broker,6000);

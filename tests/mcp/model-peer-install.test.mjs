@@ -36,7 +36,10 @@ async function withInstall(work){
     mkdirSync(install,{recursive:true});
     for(const folder of ['contracts','skills','runtime','mcp-server/dist','hooks'])cpSync(join(root,'claude-plugin',folder),join(install,folder),{recursive:true});
     expect(existsSync(join(install,'node_modules'))).toBe(false);
-    const env={...process.env,NODE_PATH:'',NODE_OPTIONS:'',CLAUDE_PLUGIN_DATA:data,AGENT_GOVERNANCE_PEER_ROUTING:'1',
+    const home=join(dir,'home');
+    const env={...process.env,NODE_PATH:'',NODE_OPTIONS:'',HOME:home,USERPROFILE:home,
+      LOCALAPPDATA:join(dir,'local'),XDG_STATE_HOME:join(dir,'xdg'),AGENT_GOVERNANCE_SHARED_STATE_DIR:join(dir,'shared'),
+      CLAUDE_PLUGIN_DATA:data,AGENT_GOVERNANCE_PEER_ROUTING:'1',
       AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR:state,AGENT_GOVERNANCE_DB_PATH:join(dir,'must-not-open-foreign.sqlite3'),
       AGENT_GOVERNANCE_TRUST_DB_PATH:join(dir,'trust.sqlite3')};
     broker=spawn(process.execPath,[join(install,'mcp-server/dist/session-message-broker.mjs'),'--state-directory',state],{env,stdio:['ignore','ignore','pipe'],windowsHide:true});

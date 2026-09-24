@@ -12,7 +12,7 @@ import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   type BrokerEndpoint,
@@ -49,6 +49,22 @@ const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.
 const bundledSessionMessageHook = fileURLToPath(new URL("../../mcp-server/dist/session-message-hook.mjs", import.meta.url));
 const bundledSessionMessageRelay = fileURLToPath(new URL("../../mcp-server/dist/session-message-relay.mjs", import.meta.url));
 const sourceSessionMessageBroker = fileURLToPath(new URL("../../mcp-server/src/session-message-broker.ts", import.meta.url));
+const isolatedEnvironmentKeys = ["HOME", "USERPROFILE", "LOCALAPPDATA", "XDG_STATE_HOME",
+  "AGENT_GOVERNANCE_SHARED_STATE_DIR", "AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR"] as const;
+let previousEnvironment: Partial<Record<(typeof isolatedEnvironmentKeys)[number], string>>;
+
+beforeEach(() => {
+  const root = mkdtempSync(path.join(tmpdir(), "session-messaging-home-"));
+  directories.push(path.join(root, "messaging"));
+  directories.push(root);
+  previousEnvironment = Object.fromEntries(isolatedEnvironmentKeys.map((key) => [key, process.env[key]]));
+  process.env.HOME = path.join(root, "home");
+  process.env.USERPROFILE = process.env.HOME;
+  process.env.LOCALAPPDATA = path.join(root, "local");
+  process.env.XDG_STATE_HOME = path.join(root, "xdg");
+  process.env.AGENT_GOVERNANCE_SHARED_STATE_DIR = path.join(root, "shared");
+  process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = path.join(root, "messaging");
+});
 
 async function waitUntil(predicate: () => Promise<boolean>, timeoutMs = 5000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
@@ -93,17 +109,30 @@ async function terminateBroker(stateDirectory: string): Promise<void> {
 }
 
 async function startSourceBroker(stateDirectory: string): Promise<void> {
+  const home = path.join(stateDirectory, "home");
   const child = spawn(process.execPath, ["--import", "tsx", sourceSessionMessageBroker, "--state-directory", stateDirectory], {
     windowsHide: true,
     stdio: "ignore",
+    env: { ...process.env, HOME: home, USERPROFILE: home,
+      LOCALAPPDATA: path.join(stateDirectory, "local"), XDG_STATE_HOME: path.join(stateDirectory, "xdg"),
+      AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(stateDirectory, "shared"),
+      AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: stateDirectory },
   });
   await waitForSessionMessageBrokerReady(stateDirectory, child, 5000);
 }
 
 afterEach(async () => {
-  for (const directory of directories.splice(0)) {
-    await terminateBroker(directory);
-    await rm(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+  try {
+    for (const directory of directories.splice(0)) {
+      await terminateBroker(directory);
+      await rm(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+    }
+  } finally {
+    for (const key of isolatedEnvironmentKeys) {
+      const previous = previousEnvironment[key];
+      if (previous === undefined) delete process.env[key];
+      else process.env[key] = previous;
+    }
   }
 });
 
