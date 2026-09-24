@@ -9,7 +9,7 @@ import { canonicalJson, convergenceDigest } from '../../../mcp-server/src/conver
 import { InMemoryWorkflowStore } from '../../../mcp-server/src/workflow-store.ts';
 import { VmCurrentInvocation } from '../../../mcp-server/src/host-integration/vm-current-invocation.ts';
 import { VmModelPolicy, installedVmPolicyPath, isProtectedWindowsAcl,
-  readProtectedVmPolicyFile, readProtectedVmPolicyFileFixture } from '../../../mcp-server/src/host-integration/vm-model-policy.ts';
+  readProtectedVmPolicyFileFixture } from '../../../mcp-server/src/host-integration/vm-model-policy.ts';
 
 const clock = Date.parse('2026-09-23T00:00:01.000Z');
 const issuedAt = new Date(clock).toISOString();
@@ -197,7 +197,8 @@ test('installed path ignores inherited environment; unsafe ACL and symlink fail 
   const file = join(directory, 'policy.json');
   writeFileSync(file, JSON.stringify(fixture().config));
   try {
-    assert.throws(() => readProtectedVmPolicyFile(file), /owner or permissions are unsafe|ACL is writable or owner is untrusted/);
+    assert.throws(() => readProtectedVmPolicyFileFixture(file, { isProtected: (target) => target !== file }),
+      { message: 'VM operator policy unavailable: configuration owner or permissions are unsafe' });
     const link = join(directory, 'linked.json');
     try {
       symlinkSync(file, link);
