@@ -1,0 +1,404 @@
+{
+  "contractId": "ags-vm-protected-host-installation/v1",
+  "revision": "1",
+  "provenance": "synthetic-fixture",
+  "operationalQualification": false,
+  "paths": {
+    "windows": {
+      "systemParent": "C:\\ProgramData",
+      "vmSubtree": "C:\\ProgramData\\flowmarshal",
+      "agsSubtree": "C:\\ProgramData\\agent-governance-suite"
+    },
+    "linux": {
+      "systemParent": "/etc",
+      "vmSubtree": "/etc/flowmarshal",
+      "agsSubtree": "/etc/agent-governance-suite"
+    }
+  },
+  "baselineAssertions": {
+    "systemParentUnchanged": true,
+    "installerOwnsSubtree": true,
+    "parentDeleteChildDenied": true,
+    "subtreeReplacementDenied": true,
+    "aclOrModeChangeDenied": true,
+    "noReparseOrSymlink": true,
+    "stablePathAndHandleIdentity": true,
+    "keyAndPinRestricted": true,
+    "workerDistinctEffectivePrincipal": true,
+    "workerKeyReadDenied": true,
+    "workerCoreDbDenied": true,
+    "workerIpcAccessDenied": true,
+    "inheritedHandleOrFdDenied": true,
+    "childPrincipalActuallyObserved": true,
+    "callerOverrideDenied": true,
+    "coreInvocationBound": true,
+    "launcherClosureMeasured": true
+  },
+  "cases": [
+    {
+      "id": "windows-protected-subtree",
+      "os": "windows",
+      "override": {},
+      "expected": "CONTRACT_CANDIDATE_FIXTURE",
+      "reason": "system parent ACL remains unchanged while existing vendor subtree cannot be replaced"
+    },
+    {
+      "id": "linux-protected-subtree",
+      "os": "linux",
+      "override": {},
+      "expected": "CONTRACT_CANDIDATE_FIXTURE",
+      "reason": "root-owned /etc subtrees and distinct worker uid satisfy the synthetic boundary"
+    },
+    {
+      "id": "system-root-acl-mutated",
+      "os": "both",
+      "override": {
+        "systemParentUnchanged": false
+      },
+      "observationPatch": {
+        "path": "/objects/systemRoot/aclChanged",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "qualification must not change the operating system root ACL or mode"
+    },
+    {
+      "id": "windows-parent-delete-child",
+      "os": "windows",
+      "override": {
+        "parentDeleteChildDenied": false
+      },
+      "observationPatch": {
+        "path": "/objects/systemParent/workerEffective/deleteChild",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "effective parent FILE_DELETE_CHILD permits subtree replacement"
+    },
+    {
+      "id": "windows-subtree-delete",
+      "os": "windows",
+      "override": {
+        "subtreeReplacementDenied": false
+      },
+      "observationPatch": {
+        "path": "/objects/subtree/workerEffective/delete",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "protected subtree DELETE or rename permits replacement"
+    },
+    {
+      "id": "linux-parent-writable",
+      "os": "linux",
+      "override": {
+        "parentDeleteChildDenied": false
+      },
+      "observationPatch": {
+        "path": "/objects/systemParent/workerEffective/createChild",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "worker or untrusted principal can replace a protected child from its parent"
+    },
+    {
+      "id": "windows-subtree-acl-relaxed",
+      "os": "windows",
+      "override": {
+        "aclOrModeChangeDenied": false
+      },
+      "observationPatch": {
+        "path": "/objects/subtree/workerEffective/writeDac",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "Windows untrusted principal can modify the protected subtree security descriptor"
+    },
+    {
+      "id": "precreated-untrusted-vendor-subtree",
+      "os": "both",
+      "override": {
+        "installerOwnsSubtree": false
+      },
+      "observationPatch": {
+        "path": "/objects/subtree/owner",
+        "value": "untrusted-principal"
+      },
+      "expected": "REJECT",
+      "reason": "installation must not adopt a directory precreated by an untrusted principal"
+    },
+    {
+      "id": "junction-or-symlink",
+      "os": "both",
+      "override": {
+        "noReparseOrSymlink": false
+      },
+      "observationPatch": {
+        "path": "/objects/subtree/reparseOrSymlink",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "path resolves through an untrusted junction, reparse point, or symlink"
+    },
+    {
+      "id": "parent-replaced-during-read",
+      "os": "both",
+      "override": {
+        "stablePathAndHandleIdentity": false
+      },
+      "observationPatch": {
+        "path": "/objects/systemParent/identity",
+        "value": "fixture-replaced"
+      },
+      "expected": "REJECT",
+      "reason": "checked ancestry no longer names the opened protected file"
+    },
+    {
+      "id": "key-or-pin-permission-relaxed",
+      "os": "both",
+      "override": {
+        "keyAndPinRestricted": false
+      },
+      "observationPatch": {
+        "path": "/objects/key/workerEffective/read",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "worker or untrusted principal can read key or modify policy pin"
+    },
+    {
+      "id": "same-effective-worker-principal",
+      "os": "both",
+      "override": {
+        "workerDistinctEffectivePrincipal": false
+      },
+      "observationPatch": {
+        "path": "/principals/worker/id",
+        "valueRef": "/principals/core/id"
+      },
+      "expected": "REJECT",
+      "reason": "same SID or uid cannot be isolated by a same-principal ACL claim"
+    },
+    {
+      "id": "child-reads-key",
+      "os": "both",
+      "override": {
+        "workerKeyReadDenied": false
+      },
+      "observationPatch": {
+        "path": "/accessProbes/workerKeyRead",
+        "value": "ALLOWED"
+      },
+      "expected": "REJECT",
+      "reason": "actual child reads producer key despite nominal principal separation"
+    },
+    {
+      "id": "child-reads-core-ledger",
+      "os": "both",
+      "override": {
+        "workerCoreDbDenied": false
+      },
+      "observationPatch": {
+        "path": "/accessProbes/workerCoreDbWrite",
+        "value": "ALLOWED"
+      },
+      "expected": "REJECT",
+      "reason": "child can forge or inspect current Core operation evidence"
+    },
+    {
+      "id": "child-reaches-signer-pipe",
+      "os": "both",
+      "override": {
+        "workerIpcAccessDenied": false
+      },
+      "observationPatch": {
+        "path": "/accessProbes/workerAgsPipeConnect",
+        "value": "ALLOWED"
+      },
+      "expected": "REJECT",
+      "reason": "child can connect to or duplicate AGS/control IPC"
+    },
+    {
+      "id": "inherited-handle-or-fd",
+      "os": "both",
+      "override": {
+        "inheritedHandleOrFdDenied": false
+      },
+      "observationPatch": {
+        "path": "/accessProbes/workerHandleInheritance",
+        "value": "ALLOWED"
+      },
+      "expected": "REJECT",
+      "reason": "child inherits a privileged file or IPC handle"
+    },
+    {
+      "id": "caller-selects-protected-path",
+      "os": "both",
+      "override": {
+        "callerOverrideDenied": false
+      },
+      "observationPatch": {
+        "path": "/coreBinding/callerOverride",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "environment, argv, or JSON can select signer/key/pin or Core binding"
+    },
+    {
+      "id": "core-invocation-unbound",
+      "os": "both",
+      "override": {
+        "coreInvocationBound": false
+      },
+      "observationPatch": {
+        "path": "/coreBinding/currentPreparedOperation",
+        "value": false
+      },
+      "expected": "REJECT",
+      "reason": "signed receipt is not tied to current prepared operation and reserved call"
+    },
+    {
+      "id": "unmeasured-launcher",
+      "os": "both",
+      "override": {
+        "launcherClosureMeasured": false
+      },
+      "observationPatch": {
+        "path": "/objects/launcher/measuredClosure",
+        "value": false
+      },
+      "expected": "REJECT",
+      "reason": "interpreter or launcher dependency is outside the protected closure"
+    },
+    {
+      "id": "child-token-not-observed",
+      "os": "windows",
+      "override": {
+        "childPrincipalActuallyObserved": null
+      },
+      "observationPatch": {
+        "path": "/principals/worker/observed",
+        "value": null
+      },
+      "expected": "UNKNOWN",
+      "reason": "configured SID is not an observed child primary token"
+    },
+    {
+      "id": "child-uid-not-observed",
+      "os": "linux",
+      "override": {
+        "childPrincipalActuallyObserved": null
+      },
+      "observationPatch": {
+        "path": "/principals/worker/observed",
+        "value": null
+      },
+      "expected": "UNKNOWN",
+      "reason": "configured uid is not an observed child effective uid and groups"
+    },
+    {
+      "id": "broker-peer-unproven",
+      "os": "both",
+      "override": {
+        "workerIpcAccessDenied": null
+      },
+      "observationPatch": {
+        "path": "/coreBinding/oneShotRequest",
+        "value": null
+      },
+      "expected": "UNKNOWN",
+      "reason": "a required privileged broker has no verified peer and one-shot Core binding"
+    },
+    {
+      "id": "linux-subtree-mode-relaxed",
+      "os": "linux",
+      "override": {
+        "aclOrModeChangeDenied": false
+      },
+      "observationPatch": {
+        "path": "/objects/subtree/mode",
+        "value": "0777"
+      },
+      "expected": "REJECT",
+      "reason": "Linux untrusted principal can change protected subtree contents or mode through write access"
+    },
+    {
+      "id": "ags-pin-parent-replace",
+      "os": "both",
+      "override": {
+        "parentDeleteChildDenied": false
+      },
+      "observationPatch": {
+        "path": "/objects/agsSubtree/workerEffective/deleteChild",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "AGS pin parent can be modified to replace or delete the protected policy pin"
+    },
+    {
+      "id": "core-state-parent-replace",
+      "os": "linux",
+      "override": {
+        "parentDeleteChildDenied": false
+      },
+      "observationPatch": {
+        "path": "/objects/varLibFlowmarshal/workerEffective/deleteChild",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "Linux Core state parent permits worker replacement of the protected Core ledger"
+    },
+    {
+      "id": "launcher-parent-replace",
+      "os": "both",
+      "override": {
+        "parentDeleteChildDenied": false
+      },
+      "observationPatch": {
+        "path": "/objects/agsInstall/workerEffective/deleteChild",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "Measured launcher parent permits replacement of the protected interpreter"
+    },
+    {
+      "id": "installation-record-replace",
+      "os": "both",
+      "override": {
+        "subtreeReplacementDenied": false
+      },
+      "observationPatch": {
+        "path": "/objects/installationRecord/workerEffective/replace",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "Installer record can be replaced by the worker despite nominal subtree protection"
+    },
+    {
+      "id": "linux-var-parent-writable",
+      "os": "linux",
+      "override": {
+        "parentDeleteChildDenied": false
+      },
+      "observationPatch": {
+        "path": "/objects/varLib/workerEffective/createChild",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "Linux /var/lib ancestor permits untrusted replacement of the protected flowmarshal subtree"
+    },
+    {
+      "id": "windows-core-state-parent-replace",
+      "os": "windows",
+      "override": {
+        "parentDeleteChildDenied": false
+      },
+      "observationPatch": {
+        "path": "/objects/subtree/workerEffective/deleteChild",
+        "value": true
+      },
+      "expected": "REJECT",
+      "reason": "Windows Core state parent permits worker replacement of the protected Core ledger"
+    }
+  ]
+}

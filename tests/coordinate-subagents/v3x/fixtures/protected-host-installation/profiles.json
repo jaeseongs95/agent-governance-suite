@@ -1,0 +1,585 @@
+{
+  "contractId": "ags-vm-protected-host-installation/v1",
+  "revision": "1",
+  "provenance": "synthetic-fixture",
+  "windows": {
+    "installationRecord": {
+      "path": "C:\\ProgramData\\flowmarshal\\protected-installation.json",
+      "owner": "S-1-5-18",
+      "contractRevision": "1",
+      "workerCanReplace": false
+    },
+    "principals": {
+      "installer": {
+        "id": "S-1-5-18",
+        "role": "administrator"
+      },
+      "core": {
+        "id": "S-1-5-18",
+        "role": "protected-service"
+      },
+      "ags": {
+        "id": "S-1-5-18",
+        "role": "trusted-stdio-child"
+      },
+      "worker": {
+        "id": "S-1-5-21-100-200-300-1001",
+        "role": "unprivileged-service",
+        "groups": [
+          "S-1-5-32-545"
+        ],
+        "enabledPrivileges": [],
+        "integrity": "low",
+        "observed": true
+      }
+    },
+    "objects": {
+      "systemRoot": {
+        "path": "C:\\",
+        "identity": "fixture-volume:1",
+        "owner": "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464",
+        "reparse": false,
+        "aclChanged": false,
+        "workerEffective": {
+          "createChild": true,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false,
+          "replace": false,
+          "read": false,
+          "write": false,
+          "delete": false
+        }
+      },
+      "systemParent": {
+        "path": "C:\\ProgramData",
+        "identity": "fixture-volume:100",
+        "owner": "S-1-5-18",
+        "reparse": false,
+        "aclChanged": false,
+        "workerEffective": {
+          "createChild": true,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false,
+          "replace": false,
+          "read": false,
+          "write": false,
+          "delete": false
+        }
+      },
+      "subtree": {
+        "path": "C:\\ProgramData\\flowmarshal",
+        "identity": "fixture-volume:110",
+        "owner": "S-1-5-18",
+        "reparse": false,
+        "reparseOrSymlink": false,
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "writeDac": false,
+          "writeOwner": false,
+          "createChild": false,
+          "deleteChild": false
+        }
+      },
+      "key": {
+        "path": "C:\\ProgramData\\flowmarshal\\ags-producer-key.json",
+        "identity": "fixture-volume:111",
+        "owner": "S-1-5-18",
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false,
+          "replace": false
+        },
+        "reparse": false
+      },
+      "pin": {
+        "path": "C:\\ProgramData\\agent-governance-suite\\vm-operator-policy.json",
+        "identity": "fixture-volume:120",
+        "owner": "S-1-5-18",
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false,
+          "replace": false
+        },
+        "reparse": false
+      },
+      "coreState": {
+        "path": "C:\\ProgramData\\flowmarshal\\core-state",
+        "identity": "fixture-volume:130",
+        "owner": "S-1-5-18",
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false
+        },
+        "reparse": false
+      },
+      "launcher": {
+        "path": "C:\\Program Files\\AgentGovernanceSuite\\node.exe",
+        "identity": "fixture-volume:200",
+        "owner": "S-1-5-18",
+        "measuredClosure": true,
+        "workerEffective": {
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false,
+          "read": false
+        },
+        "reparse": false
+      },
+      "agsSubtree": {
+        "path": "C:\\ProgramData\\agent-governance-suite",
+        "identity": "fixture-volume:140",
+        "owner": "S-1-5-18",
+        "reparse": false,
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false
+        }
+      },
+      "programFiles": {
+        "path": "C:\\Program Files",
+        "identity": "fixture-volume:180",
+        "owner": "S-1-5-18",
+        "reparse": false,
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false
+        }
+      },
+      "agsInstall": {
+        "path": "C:\\Program Files\\AgentGovernanceSuite",
+        "identity": "fixture-volume:190",
+        "owner": "S-1-5-18",
+        "reparse": false,
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false
+        }
+      },
+      "installationRecord": {
+        "path": "C:\\ProgramData\\flowmarshal\\protected-installation.json",
+        "identity": "fixture-volume:150",
+        "owner": "S-1-5-18",
+        "reparse": false,
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false
+        }
+      }
+    },
+    "accessProbes": {
+      "workerKeyRead": "DENIED",
+      "workerPinRead": "DENIED",
+      "workerCoreDbRead": "DENIED",
+      "workerCoreDbWrite": "DENIED",
+      "workerAgsPipeConnect": "DENIED",
+      "workerHandleInheritance": "DENIED"
+    },
+    "coreBinding": {
+      "currentPreparedOperation": true,
+      "oneShotRequest": true,
+      "callerOverride": false
+    },
+    "protectedChains": {
+      "key": [
+        "systemRoot",
+        "systemParent",
+        "subtree",
+        "key"
+      ],
+      "pin": [
+        "systemRoot",
+        "systemParent",
+        "agsSubtree",
+        "pin"
+      ],
+      "coreState": [
+        "systemRoot",
+        "systemParent",
+        "subtree",
+        "coreState"
+      ],
+      "launcher": [
+        "systemRoot",
+        "programFiles",
+        "agsInstall",
+        "launcher"
+      ],
+      "installationRecord": [
+        "systemRoot",
+        "systemParent",
+        "subtree",
+        "installationRecord"
+      ]
+    }
+  },
+  "linux": {
+    "installationRecord": {
+      "path": "/etc/flowmarshal/protected-installation.json",
+      "owner": "uid:0",
+      "contractRevision": "1",
+      "workerCanReplace": false
+    },
+    "principals": {
+      "installer": {
+        "id": "uid:0",
+        "role": "administrator"
+      },
+      "core": {
+        "id": "uid:0",
+        "role": "protected-service"
+      },
+      "ags": {
+        "id": "uid:0",
+        "role": "trusted-stdio-child"
+      },
+      "worker": {
+        "id": "uid:9001",
+        "role": "unprivileged-service",
+        "gid": 9001,
+        "supplementaryGroups": [],
+        "capabilities": [],
+        "noNewPrivs": true,
+        "observed": true
+      }
+    },
+    "objects": {
+      "systemRoot": {
+        "path": "/",
+        "identity": "fixture-dev:1",
+        "owner": "uid:0",
+        "mode": "0755",
+        "symlink": false,
+        "aclChanged": false,
+        "workerEffective": {
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false,
+          "replace": false,
+          "read": false,
+          "write": false,
+          "delete": false
+        }
+      },
+      "systemParent": {
+        "path": "/etc",
+        "identity": "fixture-dev:100",
+        "owner": "uid:0",
+        "mode": "0755",
+        "symlink": false,
+        "aclChanged": false,
+        "workerEffective": {
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false,
+          "replace": false,
+          "read": false,
+          "write": false,
+          "delete": false
+        }
+      },
+      "subtree": {
+        "path": "/etc/flowmarshal",
+        "identity": "fixture-dev:110",
+        "owner": "uid:0",
+        "mode": "0700",
+        "symlink": false,
+        "reparseOrSymlink": false,
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "writeDac": false,
+          "writeOwner": false,
+          "createChild": false,
+          "deleteChild": false
+        }
+      },
+      "key": {
+        "path": "/etc/flowmarshal/ags-producer-key.json",
+        "identity": "fixture-dev:111",
+        "owner": "uid:0",
+        "mode": "0600",
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false,
+          "replace": false
+        },
+        "symlink": false
+      },
+      "pin": {
+        "path": "/etc/agent-governance-suite/vm-operator-policy.json",
+        "identity": "fixture-dev:120",
+        "owner": "uid:0",
+        "mode": "0600",
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false,
+          "replace": false
+        },
+        "symlink": false
+      },
+      "coreState": {
+        "path": "/var/lib/flowmarshal/core-state",
+        "identity": "fixture-dev:130",
+        "owner": "uid:0",
+        "mode": "0700",
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false
+        },
+        "symlink": false
+      },
+      "launcher": {
+        "path": "/opt/agent-governance-suite/node",
+        "identity": "fixture-dev:200",
+        "owner": "uid:0",
+        "mode": "0755",
+        "measuredClosure": true,
+        "workerEffective": {
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false,
+          "read": false
+        },
+        "symlink": false
+      },
+      "agsSubtree": {
+        "path": "/etc/agent-governance-suite",
+        "identity": "fixture-dev:140",
+        "owner": "uid:0",
+        "mode": "0700",
+        "symlink": false,
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false
+        }
+      },
+      "var": {
+        "path": "/var",
+        "identity": "fixture-dev:160",
+        "owner": "uid:0",
+        "mode": "0755",
+        "symlink": false,
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false
+        }
+      },
+      "varLib": {
+        "path": "/var/lib",
+        "identity": "fixture-dev:170",
+        "owner": "uid:0",
+        "mode": "0755",
+        "symlink": false,
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false
+        }
+      },
+      "varLibFlowmarshal": {
+        "path": "/var/lib/flowmarshal",
+        "identity": "fixture-dev:180",
+        "owner": "uid:0",
+        "mode": "0700",
+        "symlink": false,
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false
+        }
+      },
+      "opt": {
+        "path": "/opt",
+        "identity": "fixture-dev:190",
+        "owner": "uid:0",
+        "mode": "0755",
+        "symlink": false,
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false
+        }
+      },
+      "agsInstall": {
+        "path": "/opt/agent-governance-suite",
+        "identity": "fixture-dev:195",
+        "owner": "uid:0",
+        "mode": "0755",
+        "symlink": false,
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false
+        }
+      },
+      "installationRecord": {
+        "path": "/etc/flowmarshal/protected-installation.json",
+        "identity": "fixture-dev:150",
+        "owner": "uid:0",
+        "mode": "0600",
+        "symlink": false,
+        "workerEffective": {
+          "read": false,
+          "write": false,
+          "delete": false,
+          "replace": false,
+          "createChild": false,
+          "deleteChild": false,
+          "writeDac": false,
+          "writeOwner": false
+        }
+      }
+    },
+    "accessProbes": {
+      "workerKeyRead": "DENIED",
+      "workerPinRead": "DENIED",
+      "workerCoreDbRead": "DENIED",
+      "workerCoreDbWrite": "DENIED",
+      "workerAgsPipeConnect": "DENIED",
+      "workerHandleInheritance": "DENIED"
+    },
+    "coreBinding": {
+      "currentPreparedOperation": true,
+      "oneShotRequest": true,
+      "callerOverride": false
+    },
+    "protectedChains": {
+      "key": [
+        "systemRoot",
+        "systemParent",
+        "subtree",
+        "key"
+      ],
+      "pin": [
+        "systemRoot",
+        "systemParent",
+        "agsSubtree",
+        "pin"
+      ],
+      "coreState": [
+        "systemRoot",
+        "var",
+        "varLib",
+        "varLibFlowmarshal",
+        "coreState"
+      ],
+      "launcher": [
+        "systemRoot",
+        "opt",
+        "agsInstall",
+        "launcher"
+      ],
+      "installationRecord": [
+        "systemRoot",
+        "systemParent",
+        "subtree",
+        "installationRecord"
+      ]
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "contractId": "ags-vm-protected-host-installation/v1",
+  "revision": "1",
+  "provisioningRevision": "protected-host-provisioning/v1",
+  "status": "CONTRACT_ONLY",
+  "authority": {
+    "path": "docs/implementation-3x/protected-host-installation.ko.md",
+    "sha256": "sha256:17b38aaafcae4d310a4a09e153ef0e1567a9c0570c4d045ab14e2513883da181"
+  },
+  "fixtures": [
+    {
+      "path": "tests/coordinate-subagents/v3x/fixtures/protected-host-installation/cases.json",
+      "sha256": "sha256:fb9b893d5e886c30bc3a24a620881b6f82daa862312248cf0f58aa022813ec2d"
+    },
+    {
+      "path": "tests/coordinate-subagents/v3x/fixtures/protected-host-installation/profiles.json",
+      "sha256": "sha256:fdd8677983d4aaf3d4d2ae8809a009a48643f5f047a4787b7940c5f4701d4b82"
+    }
+  ],
+  "requiredConsumers": [
+    "AGS V03-j",
+    "VM V03-k"
+  ],
+  "provisioningReferences": [
+    "B14-k issuer",
+    "B14-m storage"
+  ]
+}
