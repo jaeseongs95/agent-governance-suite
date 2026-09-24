@@ -7,7 +7,7 @@
 
 ## 변경 파일
 
-- `scripts/qualification/v06-b3-linux-install.mjs`: `parseMountinfo`, `inspectMountBoundary`, device 대조, 검증 record의 `boundary`, use 시점 경계 재확인을 넣었다. 경계 검사는 이전 배치의 install·verify·use에도 적용했다. 재확인 횟수는 경로마다 다르다. v2 `runVerifiedRuntime`은 두 번(use 시작 때와 spawn 직전), 이전 배치의 `runVerifiedNode`는 fd를 열기 전에 한 번이다. 그 뒤에는 열린 fd의 identity·hash 대조와 `/proc/self/fd` 경유 실행으로 실행 bytes를 고정한다.
+- `scripts/qualification/v06-b3-linux-install.mjs`: `parseMountinfo`, `inspectMountBoundary`, device 대조, 검증 record의 `boundary`, use 시점 경계 재확인을 넣었다. 경계 검사는 이전 배치의 install·verify·use에도 적용했다. 재확인 횟수는 경로마다 다르다. v2 `runVerifiedRuntime`은 두 번(use 시작 때와 spawn 직전), 이전 배치의 `runVerifiedNode`는 fd를 열기 전에 한 번이다. 그 뒤에는 열린 fd의 identity·hash 대조와 현재 프로세스의 `/proc/<pid>/fd/<fd>` 경유 실행으로 실행 bytes를 고정한다.
 - `tests/coordinate-subagents/v3x/V06-b3b-r4.test.mjs` (신규): mount table 주입 사례, 실제 mount 재현(namespace 자식 프로세스), live 읽기 전용 검증
 - `README.ko.md`, 이 handoff
 
