@@ -93,8 +93,10 @@ test('A2 and protected VM have disjoint exact profile identities and authority s
   for (const key of ['profileId', 'assuranceTier', 'hostId', 'receiptDomain', 'dispatchDomain',
     'modelClassSource', 'actorSource', 'keyNamespace', 'pinNamespace', 'stateNamespace']) {
     assert.notEqual(fm[key], vm[key], key);
-    const mixed = { ...fm, [key]: vm[key] };
-    assert.equal(profileValid(mixed), false, key);
+    for (const [profile, opposite] of [[fm, vm], [vm, fm]]) {
+      const mixed = { ...profile, [key]: opposite[key] };
+      assert.equal(profileValid(mixed), false, `${profile.profileId} ${key}`);
+    }
   }
   assert.equal(profileValid({ ...fm, installed: true }), false);
 });
@@ -118,39 +120,41 @@ test('only explicit server selection has a stable identity; caller and install h
 });
 
 test('cross-domain, key, pin, state, receipt and context fixtures are rejected', () => {
-  const chosen = selection(fm);
-  const good = fixture(chosen);
-  assert.equal(matchesFrozenFixture(chosen, ...good), true);
-  assert.equal(matchesFrozenFixture(selection(vm), ...fixture(selection(vm))), true);
-  const changes = [
-    [0, 'domain', vm.receiptDomain], [0, 'dispatchDomain', vm.dispatchDomain],
-    [0, 'keyNamespace', vm.keyNamespace], [1, 'namespace', vm.pinNamespace],
-    [1, 'keyNamespace', vm.keyNamespace], [2, 'namespace', vm.stateNamespace],
-    [3, 'modelClassSource', vm.modelClassSource], [3, 'actorSource', vm.actorSource],
-  ];
-  for (const [index, key, value] of changes) {
-    const mixed = clone(good);
-    mixed[index][key] = value;
-    assert.equal(matchesFrozenFixture(chosen, ...mixed), false, `${index}.${key}`);
-  }
-  for (const index of [0, 3, 4]) {
-    for (const binding of [
-      { profileId: vm.profileId, freezeIdentity: chosen.freezeIdentity },
-      { profileId: fm.profileId, freezeIdentity: selection(vm).freezeIdentity },
-      { freezeIdentity: chosen.freezeIdentity },
-    ]) {
+  for (const [profile, opposite] of [[fm, vm], [vm, fm]]) {
+    const chosen = selection(profile);
+    const good = fixture(chosen);
+    const foreign = fixture(selection(opposite));
+    assert.equal(matchesFrozenFixture(chosen, ...good), true);
+    const changes = [
+      [0, 'domain', opposite.receiptDomain], [0, 'dispatchDomain', opposite.dispatchDomain],
+      [0, 'keyNamespace', opposite.keyNamespace], [1, 'namespace', opposite.pinNamespace],
+      [1, 'keyNamespace', opposite.keyNamespace], [2, 'namespace', opposite.stateNamespace],
+      [3, 'modelClassSource', opposite.modelClassSource], [3, 'actorSource', opposite.actorSource],
+    ];
+    for (const [index, key, value] of changes) {
       const mixed = clone(good);
-      mixed[index].binding = binding;
-      assert.equal(matchesFrozenFixture(chosen, ...mixed), false, `${index} binding`);
+      mixed[index][key] = value;
+      assert.equal(matchesFrozenFixture(chosen, ...mixed), false, `${profile.profileId} ${index}.${key}`);
     }
-  }
-  const otherKey = clone(good);
-  otherKey[1].keyId = 'key-2';
-  assert.equal(matchesFrozenFixture(chosen, ...otherKey), false);
-  for (const location of ['keyLocation', 'pinLocation', 'stateLocation']) {
-    const crossed = clone(good);
-    crossed[5][location] = fixture(selection(vm))[5][location];
-    assert.equal(matchesFrozenFixture(chosen, ...crossed), false, location);
+    for (const index of [0, 3, 4]) {
+      for (const binding of [
+        { profileId: opposite.profileId, freezeIdentity: chosen.freezeIdentity },
+        { profileId: profile.profileId, freezeIdentity: selection(opposite).freezeIdentity },
+        { freezeIdentity: chosen.freezeIdentity },
+      ]) {
+        const mixed = clone(good);
+        mixed[index].binding = binding;
+        assert.equal(matchesFrozenFixture(chosen, ...mixed), false, `${profile.profileId} ${index} binding`);
+      }
+    }
+    const otherKey = clone(good);
+    otherKey[1].keyId = 'key-2';
+    assert.equal(matchesFrozenFixture(chosen, ...otherKey), false);
+    for (const location of ['keyLocation', 'pinLocation', 'stateLocation']) {
+      const crossed = clone(good);
+      crossed[5][location] = foreign[5][location];
+      assert.equal(matchesFrozenFixture(chosen, ...crossed), false, `${profile.profileId} ${location}`);
+    }
   }
   assert.notEqual(`${fm.pinNamespace}:key-1`, `${vm.pinNamespace}:key-1`);
 });
