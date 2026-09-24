@@ -20,6 +20,11 @@ export function resolveKoreanProseGlossaryPath(moduleUrl: string = import.meta.u
   return fileURLToPath(new URL("../../skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3", moduleUrl));
 }
 
+/** Fixed per AGS package copy; FM's server can opt in without changing other AGS installations. */
+export function resolveFlowmarshalProfilePath(moduleUrl: string = import.meta.url): string {
+  return fileURLToPath(new URL("../../flowmarshal-same-user-v1/server-profile.json", moduleUrl));
+}
+
 /** Resolves durable workflow state outside the plugin installation by default. */
 export function resolveWorkflowDatabasePath(
   environment: NodeJS.ProcessEnv = process.env,

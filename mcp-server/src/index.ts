@@ -28,6 +28,7 @@ import { openModelRoutingService } from "./model-routing-service.js";
 import { VmCurrentInvocation } from "./host-integration/vm-current-invocation.js";
 import { openSemanticService, type OpenSemanticService } from "./routing-v3/open-semantic-service.js";
 import { VmModelPolicy } from "./host-integration/vm-model-policy.js";
+import { initializeFlowmarshalProfile } from "./host-integration/flowmarshal-profile.js";
 
 async function main(): Promise<void> {
   const registryPath = resolveRegistryPath();
@@ -55,7 +56,10 @@ async function main(): Promise<void> {
 
   const validator = new ContractValidator();
   const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
-  const vmPolicy = VmModelPolicy.installed();
+  // F02 validates the fixed same-user configuration; F03/F04 will consume it for admission.
+  const flowmarshalProfile = initializeFlowmarshalProfile();
+  if (flowmarshalProfile && hostAttestation) throw new Error("FlowMarshal A2 and Claude host profiles cannot share one server");
+  const vmPolicy = flowmarshalProfile ? null : VmModelPolicy.installed();
   const vmInvocation = vmPolicy ? new VmCurrentInvocation(store, Date.now, vmPolicy) : null;
   // Neither bundled host currently exposes a cryptographically distinct direct-human approval event.
   const trust = new TrustService(trustStore);
