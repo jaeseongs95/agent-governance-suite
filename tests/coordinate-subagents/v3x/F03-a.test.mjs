@@ -234,7 +234,7 @@ test('product A2 control RPC reserves a signed call but keeps WorkflowService ad
     await clientTransport.send({ jsonrpc: '2.0', id: ticket.callId,
       method: 'tools/call', params: { name: 'plan_workflow', arguments: task } });
     const result = await response;
-    assert.match(result.error?.message ?? '', /receipt verification is not installed/);
+    assert.match(result.error?.message ?? '', /current receipt is missing/);
     assert.equal(called, false);
   } finally { await client.close(); await server.close(); f.close(); }
 });

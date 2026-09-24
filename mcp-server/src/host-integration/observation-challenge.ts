@@ -5,6 +5,7 @@ import path from "node:path";
 import { REASONING_EFFORT } from "../../../contracts/types.js";
 import { canonicalJson, convergenceDigest } from "../convergence-logic.js";
 import type { WorkflowStore } from "../workflow-store.js";
+import type { FlowmarshalProfile } from "./flowmarshal-profile.js";
 
 const CHALLENGE_PREFIX = "agoc1";
 const CHALLENGE_TTL_MS = 60_000;
@@ -390,4 +391,99 @@ export class ObservationChallengeAuthority {
     }
     return raw as unknown as ObservationChallengeBodyV1;
   }
+}
+
+export interface FlowmarshalVerifiedReceipt {
+  profileId: "flowmarshal-same-user-v1";
+  freezeIdentity: string;
+  observationId: string;
+  receiptDigest: string;
+  nonceKey: string;
+  expiresAt: string;
+  model: string;
+  reasoningEffort: string;
+  producer: Record<string, unknown>;
+  binding: Record<string, unknown>;
+  terminal: Record<string, unknown>;
+  core: Record<string, unknown>;
+}
+
+/**
+ * Checks one FM same-user receipt against an already authenticated A2 dispatch.
+ * It has no VM pin lookup and does not claim state; the caller commits both claims atomically.
+ */
+export function verifyFlowmarshalReceipt(input: {
+  envelope: unknown;
+  profile: FlowmarshalProfile;
+  registration: Record<string, unknown>;
+  registrationDigest: string;
+  callId: string;
+  serverEpoch: string;
+  tool: string;
+  arguments: Record<string, unknown>;
+  now: number;
+  verifyEnvelope: (value: unknown) => { body: Record<string, unknown>; bytes: Buffer; keyId: string };
+}): FlowmarshalVerifiedReceipt {
+  const envelope = record(input.envelope);
+  if (!envelope || !Object.hasOwn(input.arguments, "_hostAttestation")
+      || !exactKeys(envelope, ["body", "signature", "keyId"])
+      || canonicalJson(input.arguments._hostAttestation) !== canonicalJson(envelope)) {
+    throw invalid("A2 current receipt is missing or differs from the MCP call");
+  }
+  const { body, bytes, keyId } = input.verifyEnvelope(envelope);
+  const registration = input.registration;
+  const producer = record(body.producer), registeredProducer = record(registration.producer);
+  const binding = record(body.binding), registeredBinding = record(registration.binding);
+  const terminal = record(body.terminal), core = record(body.core), invocation = record(body.invocation);
+  const transport = record(body.transport);
+  if (!exactKeys(body, ["version", "domain", "profileId", "freezeIdentity", "producer", "binding",
+    "terminal", "core", "invocation", "nonce", "issuedAt", "expiresAt", "transport"])
+      || body.version !== 2 || body.domain !== "fm-same-user-provider-terminal-to-governance-v1"
+      || body.profileId !== input.profile.profileId || body.freezeIdentity !== input.profile.freezeIdentity
+      || !producer || !registeredProducer || !binding || !registeredBinding || !terminal || !core || !invocation
+      || !transport || !exactKeys(transport, ["serverEpoch", "registrationDigest"])
+      || transport.serverEpoch !== input.serverEpoch || transport.registrationDigest !== input.registrationDigest
+      || registration.serverEpoch !== input.serverEpoch
+      || !exactKeys(binding, ["invocationId", "turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"])
+      || binding.invocationId !== input.callId || producer.keyId !== keyId || producer.hostId !== "flowmarshal"
+      || binding.hostId !== "flowmarshal" || !nonempty(body.nonce)
+      || !nonempty(terminal.model) || !isReasoningEffort(terminal.effort)
+      || !nonempty(terminal.eventId) || !nonempty(terminal.callId)
+      || typeof terminal.status !== "string" || !["succeeded", "completed"].includes(terminal.status)
+      || typeof terminal.provenance !== "string"
+      || !["provider_raw_response", "claude_session_transcript"].includes(terminal.provenance)
+      || typeof terminal.digest !== "string" || !/^sha256:[0-9a-f]{64}$/u.test(terminal.digest)
+      || invocation.tool !== input.tool) {
+    throw invalid("A2 receipt source or binding is invalid");
+  }
+  for (const [field, value] of Object.entries(registeredBinding)) {
+    if (binding[field] !== value) throw invalid(`A2 ${field} registration mismatch`);
+  }
+  for (const field of ["producer", "terminal", "core", "invocation"]) {
+    if (canonicalJson(body[field]) !== canonicalJson(registration[field])) {
+      throw invalid(`A2 ${field} registration mismatch`);
+    }
+  }
+  const unsigned = { ...input.arguments };
+  delete unsigned._hostAttestation;
+  if (invocation.inputDigest !== convergenceDigest(unsigned)) throw invalid("A2 tool input mismatch");
+  const issued = timestamp(body.issuedAt), expires = timestamp(body.expiresAt);
+  const terminalTime = terminalMicros(terminal.observedAt);
+  if (!Number.isFinite(input.now) || !Number.isFinite(issued) || !Number.isFinite(expires)
+      || input.now < issued - CLOCK_SKEW_MS || input.now >= expires
+      || expires - issued !== CHALLENGE_TTL_MS || terminalTime === null
+      || terminalTime >= BigInt(issued) * 1000n + 1000n
+      || BigInt(issued) * 1000n - terminalTime > BigInt(OBSERVATION_MAX_AGE_MS) * 1000n
+      || invocation.observedAt !== body.issuedAt) {
+    throw invalid("A2 receipt causal time or expiry is invalid");
+  }
+  const receiptDigest = `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+  return {
+    profileId: "flowmarshal-same-user-v1", freezeIdentity: input.profile.freezeIdentity,
+    observationId: `fm-same-user-v1:${receiptDigest}`, receiptDigest,
+    nonceKey: `flowmarshal-same-user-v1:${keyId}:${body.nonce}`,
+    expiresAt: body.expiresAt as string,
+    model: terminal.model as string, reasoningEffort: terminal.effort as string,
+    producer, binding, terminal, core,
+  };
 }

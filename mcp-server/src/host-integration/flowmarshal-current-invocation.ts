@@ -8,6 +8,7 @@ import { canonicalJson, convergenceDigest } from "../convergence-logic.js";
 import { ContractValidator } from "../schema-validator.js";
 import type { WorkflowStore } from "../workflow-store.js";
 import type { FlowmarshalProfile } from "./flowmarshal-profile.js";
+import { verifyFlowmarshalReceipt, type FlowmarshalVerifiedReceipt } from "./observation-challenge.js";
 
 type JsonObject = Record<string, unknown>;
 type Reservation = { body: JsonObject; envelope: JsonObject; digest: string; expiresAt: number; used: boolean };
@@ -88,12 +89,16 @@ export class FlowmarshalCurrentInvocation {
       expires_at INTEGER NOT NULL,
       used INTEGER NOT NULL DEFAULT 0 CHECK (used IN (0, 1))
     ) STRICT`);
+    this.database.exec(`CREATE TABLE IF NOT EXISTS a2_receipt_claims (
+      nonce_key TEXT PRIMARY KEY, receipt_digest TEXT NOT NULL, call_id TEXT NOT NULL UNIQUE,
+      expires_at INTEGER NOT NULL, claimed_at INTEGER NOT NULL
+    ) STRICT`);
   }
 
   close(): void { this.database.close(); }
   hasCurrentRequest(): boolean { return this.current.getStore() !== undefined; }
 
-  private verifySignedRegistration(value: unknown): { body: JsonObject; bytes: Buffer; signature: Buffer; keyId: string } {
+  verifySignedEnvelope(value: unknown): { body: JsonObject; bytes: Buffer; signature: Buffer; keyId: string } {
     const envelope = object(value);
     if (!exact(envelope, ["body", "signature", "keyId"]) || !required(envelope!.keyId)) reject("signed registration is malformed");
     const pin = this.profile.pins.find((item) => item.keyId === envelope!.keyId && item.status === "active");
@@ -109,7 +114,7 @@ export class FlowmarshalCurrentInvocation {
   }
 
   reserve(signedRegistration: unknown): { callId: string; serverEpoch: string } {
-    const { body, bytes, signature, keyId } = this.verifySignedRegistration(signedRegistration);
+    const { body, bytes, signature, keyId } = this.verifySignedEnvelope(signedRegistration);
     const producer = object(body.producer), binding = object(body.binding);
     const terminal = object(body.terminal), core = object(body.core), invocation = object(body.invocation);
     const now = this.clock(), issued = timestamp(body.issuedAt), expires = timestamp(body.expiresAt);
@@ -166,7 +171,7 @@ export class FlowmarshalCurrentInvocation {
         registration_digest: string; expires_at: number; used: number } | undefined;
     if (!row) return null;
     const envelope = JSON.parse(row.signed_envelope_json) as JsonObject;
-    const verified = this.verifySignedRegistration(envelope);
+    const verified = this.verifySignedEnvelope(envelope);
     if (JSON.stringify(verified.body) !== row.body_json
         || `sha256:${createHash("sha256").update(verified.bytes).digest("hex")}` !== row.registration_digest
         || verified.body.profileId !== PROFILE_ID || verified.body.freezeIdentity !== this.profile.freezeIdentity
@@ -239,5 +244,37 @@ export class FlowmarshalCurrentInvocation {
     const claimed = this.database.prepare("UPDATE a2_dispatch_reservations SET used=1 WHERE call_id=? AND server_epoch=? AND used=0")
       .run(current.callId, this.serverEpoch);
     if (claimed.changes !== 1) reject("reservation already used");
+  }
+
+  verifyCurrentReceipt(): FlowmarshalVerifiedReceipt {
+    const current = this.current.getStore();
+    if (!current || !current.validated || !this.active.has(current.callId)) {
+      reject("current reserved request is unavailable");
+    }
+    const observed = this.readCurrentInvocation();
+    const verified = verifyFlowmarshalReceipt({
+      envelope: current.arguments._hostAttestation, profile: this.profile,
+      registration: observed.registration, registrationDigest: observed.registrationDigest,
+      callId: observed.callId, serverEpoch: observed.serverEpoch, tool: observed.tool,
+      arguments: observed.arguments, now: this.clock(),
+      verifyEnvelope: (envelope) => this.verifySignedEnvelope(envelope),
+    });
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const now = this.clock();
+      if (now >= current.reservation.expiresAt || now >= Date.parse(verified.expiresAt)) {
+        reject("A2 receipt expired");
+      }
+      this.database.prepare("INSERT INTO a2_receipt_claims VALUES (?, ?, ?, ?, ?)")
+        .run(verified.nonceKey, verified.receiptDigest, current.callId, Date.parse(verified.expiresAt), now);
+      const claimed = this.database.prepare("UPDATE a2_dispatch_reservations SET used=1 WHERE call_id=? AND server_epoch=? AND used=0")
+        .run(current.callId, this.serverEpoch);
+      if (claimed.changes !== 1) reject("reservation already used");
+      this.database.exec("COMMIT");
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+    return verified;
   }
 }
