@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { chmodSync, existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync,
+import { chmodSync, copyFileSync, existsSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync,
   symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'vitest';
@@ -105,6 +105,11 @@ function packageFixture(top) {
   const hostBytes = Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`);
   writeFileSync(path.join(src, 'host-integration.json'), hostBytes);
   writeFileSync(path.join(src, 'not-in-manifest.txt'), 'ignored\n');
+  // The installer checks the V03-i v1 and v2 contract pins inside the trusted source (V06-b3b-r2).
+  for (const name of [install.TRUST_PINS.v03i.manifestPath, install.TRUST_PINS.v2.docPath]) {
+    mkdirSync(path.join(src, path.dirname(name)), { recursive: true, mode: 0o755 });
+    copyFileSync(path.join(import.meta.dirname, '../../..', name), path.join(src, name));
+  }
   return { src, hostSha256: sha(hostBytes), count: Object.keys(artifacts).length + 1 };
 }
 
@@ -117,9 +122,18 @@ function fixture() {
   return { top, baseDir, nodeBytes, nodeSha256: sha(nodeBytes), pkg: packageFixture(top) };
 }
 const installFx = (fx, extra = {}) => install.installProtectedRuntime({ baseDir: fx.baseDir, nodeVersion: NODE_VERSION,
-  archiveSha256: ARCHIVE, nodeBytes: fx.nodeBytes, expectedNodeSha256: fx.nodeSha256, packageSource: fx.pkg.src, ...extra });
+  archiveSha256: ARCHIVE, nodeBytes: fx.nodeBytes, expectedNodeSha256: fx.nodeSha256, packageSource: fx.pkg.src,
+  trustedHostIntegrationSha256s: [fx.pkg.hostSha256], ...extra });
 const verifyFx = (fx, releaseSha256, extra = {}) => install.verifyProtectedRuntime({ baseDir: fx.baseDir, nodeVersion: NODE_VERSION,
-  archiveSha256: ARCHIVE, expectedNodeSha256: fx.nodeSha256, releaseSha256, ...extra });
+  archiveSha256: ARCHIVE, expectedNodeSha256: fx.nodeSha256, releaseSha256, trustedHostIntegrationSha256s: [fx.pkg.hostSha256], ...extra });
+// Parent reuse needs a root-only manifest file whose sha256 the caller pins through the library option.
+function pinnedManifest(fx, text) {
+  const dir = mkdtempSync(path.join(fx.top, 'pm-'));
+  chmodSync(dir, 0o700);
+  const file = path.join(dir, 'manifest.txt');
+  writeFileSync(file, text, { mode: 0o600 });
+  return { parentManifestFile: file, trustedParentManifestSha256s: [sha(readFileSync(file))] };
+}
 
 test.skipIf(!fixtureReady)('fixture v2 install: combined-id root, bin/node bytes, exact package, use-time recheck', () => {
   const fx = fixture();
@@ -143,15 +157,16 @@ test.skipIf(!fixtureReady)('contract violations are refused: archive-sha root id
   try {
     const legacy = install.installProtectedNode({ baseDir: fx.baseDir, releaseSha256: ARCHIVE, nodeBytes: fx.nodeBytes,
       expectedNodeSha256: fx.nodeSha256 });
+    const legacyManifest = legacy.created.map((entry) => JSON.stringify(entry)).join('\n');
     assert.throws(() => verifyFx(fx, ARCHIVE), /entries|combined release id|bin/);
     assert.deepEqual(contractViolations(legacy.paths.releaseDir, { nodeVersion: NODE_VERSION, archiveSha256: ARCHIVE, nodeSha256: fx.nodeSha256 }),
       ['root-id', 'node-path', 'package', 'root-entries']);
-    const { record } = installFx(fx, { parentManifestEntries: legacy.created.slice(0, 2) });
+    const { record } = installFx(fx, pinnedManifest(fx, `${legacyManifest}\n`));
     const id = record.releaseSha256;
     const pkg = record.paths.packageRoot;
-    const expectFail = (mutate, undo, pattern) => {
+    const expectFail = (mutate, undo, pattern, extra = {}) => {
       mutate();
-      try { assert.throws(() => verifyFx(fx, id), pattern); } finally { undo(); }
+      try { assert.throws(() => verifyFx(fx, id, extra), pattern); } finally { undo(); }
       verifyFx(fx, id);
     };
     const rootNode = path.join(record.paths.installRoot, 'node');
@@ -173,7 +188,8 @@ test.skipIf(!fixtureReady)('contract violations are refused: archive-sha root id
     const hostFile = path.join(pkg, 'host-integration.json');
     const hostBytes = readFileSync(hostFile);
     expectFail(() => { chmodSync(hostFile, 0o644); writeFileSync(hostFile, Buffer.concat([hostBytes, Buffer.from('\n')])); chmodSync(hostFile, 0o444); },
-      () => { chmodSync(hostFile, 0o644); writeFileSync(hostFile, hostBytes); chmodSync(hostFile, 0o444); }, /combined release id/);
+      () => { chmodSync(hostFile, 0o644); writeFileSync(hostFile, hostBytes); chmodSync(hostFile, 0o444); }, /combined release id/,
+      { trustedHostIntegrationSha256s: [fx.pkg.hostSha256, sha(Buffer.concat([hostBytes, Buffer.from('\n')]))] });
   } finally { rmSync(fx.top, { recursive: true, force: true }); }
 });
 
@@ -185,9 +201,10 @@ test.skipIf(!fixtureReady)('existing protected parents are reused only when they
     assert.throws(() => installFx(fx), /existing protected parent does not match/);
     const entries = [suite, path.join(suite, 'protected-runtime')].map((dir) => ({ path: dir, ino: lstatSync(dir, { bigint: true }).ino.toString(),
       type: 'dir', uid: 0, mode: '755' }));
-    assert.throws(() => installFx(fx, { parentManifestEntries: [{ ...entries[0], ino: '1' }, entries[1]] }), /existing protected parent does not match/);
+    const text = (list) => `${list.map((entry) => JSON.stringify(entry)).join('\n')}\n`;
+    assert.throws(() => installFx(fx, pinnedManifest(fx, text([{ ...entries[0], ino: '1' }, entries[1]]))), /existing protected parent does not match/);
     assert.deepEqual(readdirSync(path.join(suite, 'protected-runtime')), []);
-    const { record, created } = installFx(fx, { parentManifestEntries: entries });
+    const { record, created } = installFx(fx, pinnedManifest(fx, text(entries)));
     assert.equal(created.some((entry) => entry.path === suite), false);
     assert.equal(existsSync(record.paths.nodePath), true);
   } finally { rmSync(fx.top, { recursive: true, force: true }); }
@@ -221,9 +238,8 @@ test.skipIf(!liveReady)('live: v2 root under /usr/lib with combined id, bin/node
     ['root-id', 'node-path', 'package', 'root-entries']);
   const inputs = { baseDir: '/usr/lib', nodeVersion: PINNED.version, archiveSha256: release.archiveHash };
   if (!existsSync(install.runtimePaths('/usr/lib', id).installRoot)) {
-    const parents = readFileSync(process.env.AGS_V06_B3B_R1_PARENT_MANIFEST, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
     install.installProtectedRuntime({ ...inputs, nodeBytes, expectedNodeSha256: nodeSha256, packageSource: PACKAGE_SOURCE,
-      manifestFile: process.env.AGS_V06_B3B_R1_MANIFEST, parentManifestEntries: parents });
+      manifestFile: process.env.AGS_V06_B3B_R1_MANIFEST, parentManifestFile: process.env.AGS_V06_B3B_R1_PARENT_MANIFEST });
   }
   const record = install.verifyProtectedRuntime({ ...inputs, expectedNodeSha256: nodeSha256, releaseSha256: id });
   assert.equal(record.releaseSha256, id);

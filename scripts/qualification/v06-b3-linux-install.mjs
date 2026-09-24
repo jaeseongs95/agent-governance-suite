@@ -12,6 +12,18 @@ const CONTRACT_ID = 'ags-protected-node-install/v1';
 const CLOSURE_CONTRACT_ID = 'ags-protected-node-closure/v2';
 const TARGET_ID = 'linux-x64';
 const PACKAGE_FILE_MODE = 0o444;
+// Trust anchors live in code, never in caller input. hostIntegrationSha256s: host-integration.json of AGS release
+// commit 0724bb2bc452626aba546a57d1db5c407d32feb0. parentManifestSha256s: the V06-b3b install manifest that created
+// /usr/lib/agent-governance-suite and protected-runtime. v03i/v2: the frozen contract bytes and ids the v2 layout extends.
+export const TRUST_PINS = Object.freeze({
+  hostIntegrationSha256s: Object.freeze(['648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c']),
+  parentManifestSha256s: Object.freeze(['857bad43df354eb2022fcc3355257cd37adaa0a4acca506f2a2a9add0721ce9f']),
+  v03i: Object.freeze({ contractId: 'ags-vm-protected-host-installation/v1', revision: '1',
+    manifestPath: 'tests/coordinate-subagents/v3x/fixtures/protected-host-installation/manifest.json',
+    manifestSha256: '0c5bfc700c37cd22b7c15c06f00c916948f1b170a7a0f8cd9da7768eb39ccb19' }),
+  v2: Object.freeze({ contractId: 'ags-protected-node-closure/v2', revision: '2', docPath: 'docs/implementation-3x/protected-node-closure-v2.ko.md' }),
+});
+const RELEASE_ID_INPUTS = Object.freeze(['contractId', 'targetId', 'nodeVersion', 'archiveSha256Hex', 'hostIntegrationSha256Hex']);
 export const PINNED = Object.freeze({
   version: '24.21.0',
   releaseSha256: 'fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6',
@@ -210,10 +222,14 @@ export function runVerifiedNode(record, args, { trustedUids = TRUSTED_UIDS, plat
 // ags-protected-node-closure/v2 layout: <installRoot>/bin/node and <installRoot>/package, where the root name is
 // SHA-256 over the releaseIdInputs joined by LF with a trailing LF. The functions above keep the V06-b3b layout
 // (archive-sha root, <root>/node) only so its evidence root stays verifiable; it is not a v2 candidate.
-export function releaseIdV2({ nodeVersion, archiveSha256, hostIntegrationSha256 }) {
+function assertNodeVersion(nodeVersion) {
   if (typeof nodeVersion !== 'string' || !/^\d+\.\d+\.\d+$/.test(nodeVersion) || Number(nodeVersion.split('.')[0]) < 24) {
     fail('exact Node semver >=24 without a leading v required');
   }
+}
+
+export function releaseIdV2({ nodeVersion, archiveSha256, hostIntegrationSha256 }) {
+  assertNodeVersion(nodeVersion);
   if (!HEX64.test(archiveSha256) || !HEX64.test(hostIntegrationSha256)) fail('release id inputs must be 64 lowercase hex');
   const preimage = `${[CLOSURE_CONTRACT_ID, TARGET_ID, nodeVersion, archiveSha256, hostIntegrationSha256].join('\n')}\n`;
   return sha256(Buffer.from(preimage, 'utf8'));
@@ -235,24 +251,104 @@ function readRegularNoFollow(file) {
   } finally { closeSync(fd); }
 }
 
-// Trusted source: a root-only directory holding the exact AGS release package bytes. The host-integration digest
-// is computed here from those bytes; no caller-supplied digest is accepted.
-export function readPackageSource(sourceRoot, { trustedUids = TRUSTED_UIDS, platform = process.platform } = {}) {
-  if (!posix.isAbsolute(sourceRoot)) fail('package source must be absolute');
-  inspectAncestors(sourceRoot, { trustedUids, platform });
-  const hostBytes = readRegularNoFollow(posix.join(sourceRoot, 'host-integration.json')).bytes;
-  const hostIntegrationSha256 = sha256(hostBytes);
-  const { manifest } = inspectPackage(sourceRoot, hostIntegrationSha256, false);
-  const files = new Map([['host-integration.json', hostBytes]]);
-  for (const item of manifest.artifacts) {
-    const { bytes } = readRegularNoFollow(posix.join(sourceRoot, item.path));
-    if (sha256(bytes) !== item.sha256.slice(7)) fail(`artifact digest mismatch: ${item.path}`);
-    files.set(item.path, bytes);
+// Source inputs must be unchangeable by anyone but a trusted uid: every directory from the source root to the file
+// and the file itself are lstat-checked (no symlink, trusted owner, no group/other write; files regular, nlink 1),
+// then read through an O_NOFOLLOW fd whose dev/ino must match the lstat.
+function readTrustedSourceFile(sourceRoot, rel, trustedUids) {
+  const parts = rel.split('/');
+  if (!parts.length || parts.some((part) => !part || part === '.' || part === '..')) fail(`untrusted source input path: ${rel}`);
+  let current = sourceRoot;
+  for (const part of parts.slice(0, -1)) {
+    current = posix.join(current, part);
+    try { assessComponent(current, lstatSync(current, { bigint: true }), trustedUids); } catch (error) { fail(`untrusted source input: ${error.message}`); }
   }
-  if (sha256(readRegularNoFollow(posix.join(sourceRoot, 'host-integration.json')).bytes) !== hostIntegrationSha256) {
+  const file = posix.join(sourceRoot, rel);
+  const stat = lstatSync(file, { bigint: true });
+  if (!stat.isFile() || !trustedUids.includes(Number(stat.uid)) || (Number(stat.mode) & 0o022) || Number(stat.nlink) !== 1) {
+    fail(`untrusted source input: ${rel} must be a regular trusted-owner file without group/other write and nlink 1`);
+  }
+  const read = readRegularNoFollow(file);
+  if (read.stat.dev !== stat.dev || read.stat.ino !== stat.ino) fail(`untrusted source input changed while reading: ${rel}`);
+  return read.bytes;
+}
+
+function contractBlock(markdown) {
+  const match = /<!-- protected-node-closure-contract -->\s*```json\n([\s\S]*?)\n```/.exec(markdown);
+  if (!match) fail('v2 contract block missing');
+  return JSON.parse(match[1]);
+}
+
+// Contract step 1: the V03-i v1 pin and the v2 id/revision/layout are read from the trusted source and compared
+// with the code pins before any package byte is trusted.
+function verifyContractPins(sourceRoot, trustedUids) {
+  const v03iBytes = readTrustedSourceFile(sourceRoot, TRUST_PINS.v03i.manifestPath, trustedUids);
+  if (sha256(v03iBytes) !== TRUST_PINS.v03i.manifestSha256) fail('V03-i v1 manifest digest does not match its pin');
+  const v03i = JSON.parse(v03iBytes.toString('utf8'));
+  if (v03i.contractId !== TRUST_PINS.v03i.contractId || v03i.revision !== TRUST_PINS.v03i.revision) fail('V03-i v1 id or revision mismatch');
+  const v2 = contractBlock(readTrustedSourceFile(sourceRoot, TRUST_PINS.v2.docPath, trustedUids).toString('utf8'));
+  const target = v2.targets?.[TARGET_ID];
+  if (v2.contractId !== TRUST_PINS.v2.contractId || v2.revision !== TRUST_PINS.v2.revision
+    || v2.extends?.contractId !== TRUST_PINS.v03i.contractId || v2.extends?.revision !== TRUST_PINS.v03i.revision
+    || JSON.stringify(v2.releaseIdInputs) !== JSON.stringify(RELEASE_ID_INPUTS) || v2.nodeEngine !== '>=24'
+    || target?.os !== 'linux' || target?.arch !== 'x64' || target?.node !== 'bin/node' || target?.package !== 'package'
+    || target?.installRoot !== '/usr/lib/agent-governance-suite/protected-runtime/<releaseSha256>') {
+    fail('v2 contract id, revision, release id inputs or linux-x64 layout differ from the pinned contract');
+  }
+  return { v03i: { contractId: v03i.contractId, revision: v03i.revision, manifestSha256: TRUST_PINS.v03i.manifestSha256 },
+    v2: { contractId: v2.contractId, revision: v2.revision } };
+}
+
+function assertTrustedHostIntegration(hostIntegrationSha256, trusted) {
+  if (!Array.isArray(trusted) || !trusted.includes(hostIntegrationSha256)) {
+    fail(`host-integration.json sha256 ${hostIntegrationSha256} is not a trusted AGS release pin`);
+  }
+}
+
+// Trusted source: a root-only tree holding the exact AGS release bytes. The host-integration digest is computed from
+// those bytes and must equal a code pin; no caller-supplied digest is accepted.
+export function readPackageSource(sourceRoot, { trustedUids = TRUSTED_UIDS, platform = process.platform,
+  trustedHostIntegrationSha256s = TRUST_PINS.hostIntegrationSha256s } = {}) {
+  if (typeof sourceRoot !== 'string' || !posix.isAbsolute(sourceRoot)) fail('package source must be absolute');
+  inspectAncestors(sourceRoot, { trustedUids, platform });
+  const contracts = verifyContractPins(sourceRoot, trustedUids);
+  const hostBytes = readTrustedSourceFile(sourceRoot, 'host-integration.json', trustedUids);
+  const hostIntegrationSha256 = sha256(hostBytes);
+  assertTrustedHostIntegration(hostIntegrationSha256, trustedHostIntegrationSha256s);
+  const listed = JSON.parse(hostBytes.toString('utf8')).artifacts;
+  if (!Array.isArray(listed)) fail('invalid AGS manifest');
+  const files = new Map([['host-integration.json', hostBytes]]);
+  for (const item of listed) files.set(item.path, readTrustedSourceFile(sourceRoot, String(item.path), trustedUids));
+  // Every input is now known to be root-only; the shared package check then validates paths, entry points and digests.
+  const { manifest } = inspectPackage(sourceRoot, hostIntegrationSha256, false);
+  for (const item of manifest.artifacts) {
+    if (sha256(files.get(item.path)) !== item.sha256.slice(7)) fail(`artifact digest mismatch: ${item.path}`);
+  }
+  if (sha256(readTrustedSourceFile(sourceRoot, 'host-integration.json', trustedUids)) !== hostIntegrationSha256) {
     fail('host-integration.json changed while reading the package source');
   }
-  return { hostIntegrationSha256, manifest, files };
+  return { hostIntegrationSha256, manifest, files, contracts };
+}
+
+// Parent reuse evidence: a root-only install manifest file (trusted owner, no group/other write, nlink 1, under a
+// trusted ancestor chain containing a directory closed to group/other) whose sha256 is a code pin.
+export function readTrustedParentManifest(file, { trustedUids = TRUSTED_UIDS, platform = process.platform,
+  trustedParentManifestSha256s = TRUST_PINS.parentManifestSha256s } = {}) {
+  if (typeof file !== 'string' || !posix.isAbsolute(file)) fail('untrusted parent manifest: path must be absolute');
+  let chain;
+  try { chain = inspectAncestors(posix.dirname(file), { trustedUids, platform }); } catch (error) {
+    fail(`untrusted parent manifest: ${error.message}`);
+  }
+  if (!chain.some((entry) => (parseInt(entry.mode, 8) & 0o077) === 0)) fail('untrusted parent manifest: no root-only (0700) ancestor');
+  const stat = lstatSync(file, { bigint: true });
+  if (!stat.isFile() || !trustedUids.includes(Number(stat.uid)) || (Number(stat.mode) & 0o022) || Number(stat.nlink) !== 1) {
+    fail('untrusted parent manifest: must be a regular trusted-owner file without group/other write and nlink 1');
+  }
+  const { stat: opened, bytes } = readRegularNoFollow(file);
+  if (opened.ino !== stat.ino || opened.dev !== stat.dev) fail('untrusted parent manifest: changed while reading');
+  if (!Array.isArray(trustedParentManifestSha256s) || !trustedParentManifestSha256s.includes(sha256(bytes))) {
+    fail('parent manifest is not a trusted install pin');
+  }
+  return bytes.toString('utf8').trim().split('\n').filter(Boolean).map((line) => JSON.parse(line));
 }
 
 function ensureParent(dir, created, manifestFile, trustedUids, parentEntries) {
@@ -284,23 +380,29 @@ function writeProtectedFile(file, bytes, mode, created, manifestFile) {
 }
 
 export function installProtectedRuntime({ baseDir, nodeVersion, archiveSha256, nodeBytes, expectedNodeSha256, packageSource,
-  manifestFile, parentManifestEntries = [], trustedUids = TRUSTED_UIDS, env = process.env, platform = process.platform }) {
+  manifestFile, parentManifestFile, parentManifestEntries, trustedHostIntegrationSha256s = TRUST_PINS.hostIntegrationSha256s,
+  trustedParentManifestSha256s = TRUST_PINS.parentManifestSha256s, trustedUids = TRUSTED_UIDS, env = process.env,
+  platform = process.platform }) {
   // Order is part of the contract: /usr gate, then platform, then pure input checks, and only then host access.
   if (typeof baseDir !== 'string' || !posix.isAbsolute(baseDir)) fail('base dir must be absolute');
   const base = posix.resolve(baseDir);
   if ((base === '/usr' || base.startsWith('/usr/')) && env[GATE_ENV] !== '1') fail(`protected system install requires ${GATE_ENV}=1`);
   assertLinux(platform);
+  if (parentManifestEntries !== undefined) fail('caller-supplied parent entries are not accepted; pass a pinned parentManifestFile');
+  assertNodeVersion(nodeVersion);
   if (!HEX64.test(archiveSha256)) fail('archive sha256 must be 64 lowercase hex');
   if (sha256(nodeBytes) !== expectedNodeSha256) fail('node bytes do not match the expected archive-extracted sha256');
-  const source = readPackageSource(packageSource, { trustedUids, platform });
+  const source = readPackageSource(packageSource, { trustedUids, platform, trustedHostIntegrationSha256s });
+  const parents = parentManifestFile === undefined ? []
+    : readTrustedParentManifest(parentManifestFile, { trustedUids, platform, trustedParentManifestSha256s });
   const releaseSha256 = releaseIdV2({ nodeVersion, archiveSha256, hostIntegrationSha256: source.hostIntegrationSha256 });
   const paths = runtimePaths(base, releaseSha256);
   inspectAncestors(paths.baseDir, { trustedUids, platform });
   if (lstatOrNull(paths.installRoot)) fail(`install target already exists: ${paths.installRoot}`);
   const created = [];
   try {
-    ensureParent(paths.suiteDir, created, manifestFile, trustedUids, parentManifestEntries);
-    ensureParent(paths.runtimeDir, created, manifestFile, trustedUids, parentManifestEntries);
+    ensureParent(paths.suiteDir, created, manifestFile, trustedUids, parents);
+    ensureParent(paths.runtimeDir, created, manifestFile, trustedUids, parents);
     inspectAncestors(paths.runtimeDir, { trustedUids, platform });
     makeDir(paths.installRoot, created, manifestFile);
     makeDir(paths.binDir, created, manifestFile);
@@ -318,7 +420,8 @@ export function installProtectedRuntime({ baseDir, nodeVersion, archiveSha256, n
     const dirFd = openSync(paths.installRoot, constants.O_RDONLY | constants.O_DIRECTORY);
     try { fsyncSync(dirFd); } finally { closeSync(dirFd); }
     return { paths, created, record: verifyProtectedRuntime({ baseDir: base, nodeVersion, archiveSha256, expectedNodeSha256,
-      releaseSha256, trustedUids, platform }) };
+      releaseSha256, trustedHostIntegrationSha256s, trustedUids, platform }), source: { hostIntegrationSha256: source.hostIntegrationSha256,
+      contracts: source.contracts } };
   } catch (error) {
     const rollback = rollbackCreated(created);
     error.message = `${error.message} (rollback ${rollback.removed ? 'removed created paths' : `refused: ${rollback.mismatch} changed`})`;
@@ -358,7 +461,7 @@ function walkPackage(root, trustedUids) {
 
 // Verification-time record: recomputed root id, ancestors, bin/node identity and bytes, and the exact package set.
 export function verifyProtectedRuntime({ baseDir, nodeVersion, archiveSha256, expectedNodeSha256, releaseSha256,
-  trustedUids = TRUSTED_UIDS, platform = process.platform }) {
+  trustedHostIntegrationSha256s = TRUST_PINS.hostIntegrationSha256s, trustedUids = TRUSTED_UIDS, platform = process.platform }) {
   const paths = runtimePaths(baseDir, releaseSha256);
   const ancestors = inspectAncestors(paths.installRoot, { trustedUids, platform });
   assertEntries(paths.installRoot, ['bin', 'package']);
@@ -366,6 +469,7 @@ export function verifyProtectedRuntime({ baseDir, nodeVersion, archiveSha256, ex
   assertEntries(paths.binDir, ['node']);
   const host = readRegularNoFollow(posix.join(paths.packageRoot, 'host-integration.json'));
   const hostIntegrationSha256 = sha256(host.bytes);
+  assertTrustedHostIntegration(hostIntegrationSha256, trustedHostIntegrationSha256s);
   if (releaseIdV2({ nodeVersion, archiveSha256, hostIntegrationSha256 }) !== releaseSha256) {
     fail('install root name does not match the combined release id');
   }
@@ -435,10 +539,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     if (release.archiveHash !== PINNED.releaseSha256) fail('archive sha256 differs from the pinned release');
     const { nodeBytes, nodeSha256 } = extractNodeBinary(path.join(inputDir, release.archiveName), tar, PINNED.version);
     if (nodeSha256 !== PINNED.nodeSha256) fail('extracted node sha256 differs from the pinned value');
-    const parentManifestEntries = readRegularNoFollow(options['parent-manifest']).bytes.toString('utf8').trim().split('\n')
-      .filter(Boolean).map((line) => JSON.parse(line));
     const { record } = installProtectedRuntime({ baseDir, nodeVersion: PINNED.version, archiveSha256: release.archiveHash,
-      nodeBytes, expectedNodeSha256: nodeSha256, packageSource, manifestFile: manifest, parentManifestEntries });
+      nodeBytes, expectedNodeSha256: nodeSha256, packageSource, manifestFile: manifest, parentManifestFile: options['parent-manifest'] });
     const used = runVerifiedRuntime(record, ['--version']);
     process.stdout.write(`${JSON.stringify({ contractId: CLOSURE_CONTRACT_ID, installContractId: CONTRACT_ID,
       status: 'CANDIDATE_HOST_INSTALLED', releaseSha256: record.releaseSha256, releaseIdInputs: record.releaseIdInputs,

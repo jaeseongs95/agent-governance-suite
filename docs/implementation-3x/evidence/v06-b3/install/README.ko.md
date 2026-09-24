@@ -1,5 +1,30 @@
 # V06-b3b Linux 보호 runtime root와 byte identity 증거
 
+## V06-b3b-r2: 입력 신뢰 경계 복구 (2026-09-24)
+
+총괄 감사가 r1(`c584e0a4`)을 FAIL로 판정했다. 두 결함은 이렇다. (F1) `readPackageSource`가 source의 조상만 검사하고 자식 파일·디렉터리의 owner·mode는 보지 않았다. 그래서 root 소유 0755 source 아래에 사용자 쓰기 가능한 manifest나 artifact가 있어도, 서로 맞는 digest로 통과했다. (F2) 부모 재사용이 caller가 준 JSON 항목과만 대조돼, 위조 manifest로도 성립했다.
+
+- 원 결함 재현(`c584e0a4` 코드): r2 테스트에서 0666 manifest가 `Missing expected exception`로 받아들여졌다. pin 없는 host-integration digest와 caller JSON 부모 재사용도 받아들여져 4건이 실패했다. 진단 fixture(`/root/b3bf/r1/diag`)에서도 0666 manifest·0666 artifact·0777 하위 디렉터리·nobody 소유 artifact가 `readPackageSource`와 설치에서 `ACCEPTED`됐고, 위조 부모 manifest로 부모 재사용이 `ACCEPTED`됐다.
+- 보완(`scripts/qualification/v06-b3-linux-install.mjs`):
+  - 코드 상수 `TRUST_PINS`: `0724bb2b`의 host-integration.json `648dddda…ce70c`, V06-b3b 부모 manifest `857bad43…ce9f`, V03-i v1 manifest(`ags-vm-protected-host-installation/v1`, revision 1, `0c5bfc70…cb19`), v2 계약 ID·revision(`ags-protected-node-closure/v2`, 2). 테스트용 pin은 라이브러리 옵션으로만 받고 CLI에는 두지 않는다.
+  - source 입력(host-integration.json, artifacts 전부, V03-i manifest, v2 문서)은 source root부터 그 파일까지 경로의 모든 디렉터리와 파일을 lstat한다. symlink, 비root owner, group/other 쓰기가 있으면 거절한다. 파일은 정규 파일이고 `nlink == 1`이어야 한다. 이어 `O_NOFOLLOW` fd로 읽고 dev/ino가 lstat과 같은지 확인한다. 모든 입력을 이렇게 읽은 뒤에 `inspectPackage`를 적용한다.
+  - 계약 1번: source의 V03-i v1 manifest digest·ID·revision, v2 계약 블록의 ID·revision·`extends`·`releaseIdInputs` 순서·`nodeEngine`·linux-x64 배치(installRoot, `bin/node`, `package`)를 pin과 대조한다. host-integration digest는 source에서 계산하지만 pin에 없으면 거절한다. 설치 후 검증(`verifyProtectedRuntime`)도 같은 pin을 요구한다.
+  - 부모 재사용: `parentManifestFile`만 받는다. 조건은 root 소유 정규 파일, group/other 쓰기 없음, `nlink == 1`, 신뢰 조상 체인에 group/other가 닫힌(0700) 디렉터리가 하나 이상 있을 것, sha256이 pin과 같을 것이다. caller JSON(`parentManifestEntries`)은 명시적으로 거절한다. pin이 없으면 기존 부모를 재사용하지 않는다.
+  - 순서: `/usr` gate → linux-only → nodeVersion·archive hex·node bytes 검사 → source·부모 manifest 읽기 → 설치 쓰기. nodeVersion 검사를 host 접근 앞으로 옮겼다(r1 감사 비차단 1).
+
+### provenance와 기존 root 재검증 (새 설치 아님)
+
+- r1 설치 당시 source `/root/b3bf/r1/src`: `git archive 0724bb2b`(기본 umask 002). 조상 `/root`, `/root/b3bf`, `/root/b3bf/r1`, `src`가 모두 root 700이었다. 내부 디렉터리 371개와 파일 1620개에 group 쓰기 비트가 있어, 보완된 source 검사라면 거절된다. 다만 700 체인 때문에 비root 주체는 접근할 수 없었다.
+- r2 source `/root/b3bf/r2/src`: `git -c tar.umask=022 archive 0724bb2b`. 조상은 모두 700이고 내부 group/other 쓰기 0, 비root owner 0, symlink 0이다. `diff -rq` 결과 r1 source와 bytes가 같다.
+- r1 설치에 쓴 부모 manifest `/root/b3bf/manifest.txt`: root 600, sha256 `857bad43…`(pin과 같음).
+- live 읽기 전용 재검증(boot_id `18e156cd-7585-4c5f-a57c-c7a254354141`):
+  - 보완 코드의 `readPackageSource(/root/b3bf/r2/src)`가 V03-i·v2 pin과 host `648dddda…`를 통과했고 입력은 179개였다. 결합 ID는 기존 root 이름 `32a825d9…8edd`와 같았다.
+  - `readTrustedParentManifest(/root/b3bf/manifest.txt)`를 통과했고, suite·runtime ino(516801, 516802)가 manifest와 같았다.
+  - `verifyProtectedRuntime`: package 179개가 정확 집합이다. `bin/node`는 root 555, ino 516919, nlink 1, sha256 `7fde7b8a…`이고, fd 경유 `--version`은 v24.21.0이다.
+  - nobody 18건 모두 거절: create 6·쓰기 open 3·rename 5·교체 2는 `EACCES`, hardlink 2는 `EPERM`.
+  - 재검증 전후로 `bin/node`의 ino·ctime(516919, 1790268678)이 같고, 두 manifest sha도 그대로다. 최종 코드가 기존 root를 새로 설치했다고 주장하지 않는다.
+- 기존 `fd8e59d5…` root는 바꾸지 않았다.
+
 ## V06-b3b-r1: v2 release ID·배치 복구 (2026-09-24)
 
 V06-b3b 최초 설치는 `ags-protected-node-closure/v2`와 세 가지가 달라 BLOCKED였다. (1) root 이름에 archive sha256(`fd8e59d5…`)을 그대로 썼고, (2) node를 `<root>/node`에 두었으며, (3) `<root>/package`가 없었다. 이 절이 v2 배치를 기준으로 하며, 아래 V06-b3b 절의 `fd8e59d5…` root는 이전 증거로만 보존한다(v2 후보 아님).
