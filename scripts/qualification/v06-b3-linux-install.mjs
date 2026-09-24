@@ -46,6 +46,11 @@ function assertLinux(platform) {
   if (platform !== 'linux') fail(`protected runtime install is linux-only (platform=${platform})`);
 }
 
+// linux-x64 target only (contract step 1 "exact OS/arch"): checked right after linux-only, before any host access.
+function assertX64(arch) {
+  if (arch !== 'x64') fail(`protected runtime target is linux-x64 only (arch=${arch})`);
+}
+
 export function protectedPaths(baseDir, releaseSha256) {
   if (!posix.isAbsolute(baseDir)) fail('base dir must be absolute');
   if (!HEX64.test(releaseSha256)) fail('release sha256 must be 64 lowercase hex');
@@ -382,12 +387,13 @@ function writeProtectedFile(file, bytes, mode, created, manifestFile) {
 export function installProtectedRuntime({ baseDir, nodeVersion, archiveSha256, nodeBytes, expectedNodeSha256, packageSource,
   manifestFile, parentManifestFile, parentManifestEntries, trustedHostIntegrationSha256s = TRUST_PINS.hostIntegrationSha256s,
   trustedParentManifestSha256s = TRUST_PINS.parentManifestSha256s, trustedUids = TRUSTED_UIDS, env = process.env,
-  platform = process.platform }) {
+  platform = process.platform, arch = process.arch }) {
   // Order is part of the contract: /usr gate, then platform, then pure input checks, and only then host access.
   if (typeof baseDir !== 'string' || !posix.isAbsolute(baseDir)) fail('base dir must be absolute');
   const base = posix.resolve(baseDir);
   if ((base === '/usr' || base.startsWith('/usr/')) && env[GATE_ENV] !== '1') fail(`protected system install requires ${GATE_ENV}=1`);
   assertLinux(platform);
+  assertX64(arch);
   if (parentManifestEntries !== undefined) fail('caller-supplied parent entries are not accepted; pass a pinned parentManifestFile');
   assertNodeVersion(nodeVersion);
   if (!HEX64.test(archiveSha256)) fail('archive sha256 must be 64 lowercase hex');
@@ -420,7 +426,7 @@ export function installProtectedRuntime({ baseDir, nodeVersion, archiveSha256, n
     const dirFd = openSync(paths.installRoot, constants.O_RDONLY | constants.O_DIRECTORY);
     try { fsyncSync(dirFd); } finally { closeSync(dirFd); }
     return { paths, created, record: verifyProtectedRuntime({ baseDir: base, nodeVersion, archiveSha256, expectedNodeSha256,
-      releaseSha256, trustedHostIntegrationSha256s, trustedUids, platform }), source: { hostIntegrationSha256: source.hostIntegrationSha256,
+      releaseSha256, trustedHostIntegrationSha256s, trustedUids, platform, arch }), source: { hostIntegrationSha256: source.hostIntegrationSha256,
       contracts: source.contracts } };
   } catch (error) {
     const rollback = rollbackCreated(created);
@@ -461,7 +467,10 @@ function walkPackage(root, trustedUids) {
 
 // Verification-time record: recomputed root id, ancestors, bin/node identity and bytes, and the exact package set.
 export function verifyProtectedRuntime({ baseDir, nodeVersion, archiveSha256, expectedNodeSha256, releaseSha256,
-  trustedHostIntegrationSha256s = TRUST_PINS.hostIntegrationSha256s, trustedUids = TRUSTED_UIDS, platform = process.platform }) {
+  trustedHostIntegrationSha256s = TRUST_PINS.hostIntegrationSha256s, trustedUids = TRUSTED_UIDS, platform = process.platform,
+  arch = process.arch }) {
+  assertLinux(platform);
+  assertX64(arch);
   const paths = runtimePaths(baseDir, releaseSha256);
   const ancestors = inspectAncestors(paths.installRoot, { trustedUids, platform });
   assertEntries(paths.installRoot, ['bin', 'package']);
@@ -503,7 +512,10 @@ function sameIdentity(now, recorded, label) {
 
 // Use-time check: re-verify ancestors, every package file and bin/node against the record by identity and hash,
 // then execute the verified node fd with the contract flags and an empty environment.
-export function runVerifiedRuntime(record, args, { trustedUids = TRUSTED_UIDS, platform = process.platform } = {}) {
+export function runVerifiedRuntime(record, args, { trustedUids = TRUSTED_UIDS, platform = process.platform,
+  arch = process.arch } = {}) {
+  assertLinux(platform);
+  assertX64(arch);
   inspectAncestors(record.paths.installRoot, { trustedUids, platform });
   for (const file of record.package.files) {
     const { stat, bytes } = readRegularNoFollow(posix.join(record.paths.packageRoot, file.path));

@@ -134,6 +134,20 @@ test.skipIf(!fixtureReady)('existing parents are reused only through a pinned, r
   } finally { rmSync(fx.top, { recursive: true, force: true }); }
 });
 
+test('a non-x64 arch is refused after the /usr gate and linux-only checks, before any host access', () => {
+  const base = { baseDir: '/usr/lib', nodeVersion: '24.21.0', archiveSha256: ARCHIVE, nodeBytes: Buffer.from('x'),
+    expectedNodeSha256: sha('x'), packageSource: '/nonexistent-ags-r2-source' };
+  assert.throws(() => install.installProtectedRuntime({ ...base, env: {}, platform: 'linux', arch: 'arm64' }), new RegExp(`requires ${GATE_ENV}=1`));
+  assert.throws(() => install.installProtectedRuntime({ ...base, env: { [GATE_ENV]: '1' }, platform: 'win32', arch: 'arm64' }), /linux-only/);
+  assert.throws(() => install.installProtectedRuntime({ ...base, env: { [GATE_ENV]: '1' }, platform: 'linux', arch: 'arm64' }),
+    /linux-x64 only \(arch=arm64\)/);
+  const verify = { baseDir: '/nonexistent-ags-r2-base', nodeVersion: '24.21.0', archiveSha256: ARCHIVE, expectedNodeSha256: sha('x'),
+    releaseSha256: 'c'.repeat(64) };
+  assert.throws(() => install.verifyProtectedRuntime({ ...verify, platform: 'linux', arch: 'arm64' }), /linux-x64 only \(arch=arm64\)/);
+  assert.throws(() => install.runVerifiedRuntime({ paths: { installRoot: '/nonexistent-ags-r2-base' } }, ['--version'],
+    { platform: 'linux', arch: 'ia32' }), /linux-x64 only \(arch=ia32\)/);
+});
+
 test('the CLI accepts no pin overrides', () => {
   const source = readFileSync(path.join(REPO, 'scripts/qualification/v06-b3-linux-install.mjs'), 'utf8');
   const cli = source.slice(source.indexOf('if (process.argv[1] && import.meta.url'));

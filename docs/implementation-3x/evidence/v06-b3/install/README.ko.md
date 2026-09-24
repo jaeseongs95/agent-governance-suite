@@ -11,6 +11,8 @@
   - 계약 1번: source의 V03-i v1 manifest digest·ID·revision, v2 계약 블록의 ID·revision·`extends`·`releaseIdInputs` 순서·`nodeEngine`·linux-x64 배치(installRoot, `bin/node`, `package`)를 pin과 대조한다. host-integration digest는 source에서 계산하지만 pin에 없으면 거절한다. 설치 후 검증(`verifyProtectedRuntime`)도 같은 pin을 요구한다.
   - 부모 재사용: `parentManifestFile`만 받는다. 조건은 root 소유 정규 파일, group/other 쓰기 없음, `nlink == 1`, 신뢰 조상 체인에 group/other가 닫힌(0700) 디렉터리가 하나 이상 있을 것, sha256이 pin과 같을 것이다. caller JSON(`parentManifestEntries`)은 명시적으로 거절한다. pin이 없으면 기존 부모를 재사용하지 않는다.
   - 순서: `/usr` gate → linux-only → nodeVersion·archive hex·node bytes 검사 → source·부모 manifest 읽기 → 설치 쓰기. nodeVersion 검사를 host 접근 앞으로 옮겼다(r1 감사 비차단 1).
+  - r2 보정: 계약 1번의 "정확한 OS/arch"에 맞춰 `arch`(기본 `process.arch`)를 주입받고, `x64`가 아니면 linux-only 직후, host 접근과 source 읽기 전에 거절한다. 설치·검증·사용 직전 경로 모두에 적용했다. r1 fixture는 계약 파일을 복사한 뒤 0644로 고정해 checkout 모드(예: 664)에 의존하지 않는다.
+  - 계약 2번 대조: 조상 owner·mode·symlink, `nlink == 1`, 사용 직전 identity·hash 재확인, 기존 root 덮어쓰기 금지, manifest 일치 시에만 rollback은 거절 조건이다. mount 경계는 `/proc/self/mountinfo`로 각 조상의 mount point 여부를 **기록만** 하고 거절 조건으로 쓰지 않는다.
 
 ### provenance와 기존 root 재검증 (새 설치 아님)
 

@@ -27,6 +27,13 @@
 - eslint(대상 js 3개), `node scripts/validate-repository.mjs`, `node scripts/check-source-lock.mjs`, `node scripts/check-bundle.mjs`, `git diff --check`: 통과
 - Windows 실행: 이 VM에서 불가, NOT_RUN
 
+## 보정 (7da3139c 감사 이후)
+
+- arch 검사 추가: `x64`가 아니면 `/usr` gate → linux-only 다음, host 접근 전에 거절한다(설치·검증·사용 직전). 7da3139c 코드에서는 새 arch 회귀가 실패했고, 검사를 빼는 변이도 실패했다.
+- r1 fixture의 계약 파일 복사본을 0644로 고정했다. 파일 전부를 664로 바꾼 checkout 복사본에서 r1+r2 fixture가 12 passed, 2 skipped다.
+- 보정 후: env 없음 9 passed, 13 skipped. fixture 19 passed, 3 skipped. live 읽기 전용 22 passed(재설치 없음, `bin/node` ino·ctime 불변).
+- mount 경계는 기록만 하며 거절 조건이 아니다.
+
 ## 남은 문제
 
 - V03-i·v2 pin 검사는 source 트리에 그 계약 파일이 있어야 한다(현재 source는 `git archive 0724bb2b` 전체).

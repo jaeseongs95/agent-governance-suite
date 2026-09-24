@@ -109,6 +109,7 @@ function packageFixture(top) {
   for (const name of [install.TRUST_PINS.v03i.manifestPath, install.TRUST_PINS.v2.docPath]) {
     mkdirSync(path.join(src, path.dirname(name)), { recursive: true, mode: 0o755 });
     copyFileSync(path.join(import.meta.dirname, '../../..', name), path.join(src, name));
+    chmodSync(path.join(src, name), 0o644);
   }
   return { src, hostSha256: sha(hostBytes), count: Object.keys(artifacts).length + 1 };
 }
