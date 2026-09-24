@@ -214,7 +214,8 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       }, Date.now(), { expectedActor: { ...identity(expectedActor), instanceId: expectedActor.instanceId },
         expectedTurnId: string(payload.expectedTurnId, "expectedTurnId"),
         expectedRevision: integer(payload.expectedRevision, "expectedRevision"),
-        trustedActivity: Boolean(activityReporterReader) });
+        trustedActivity: Boolean(activityReporterReader),
+        reconcileToken: string(payload.reconcileToken, "reconcileToken") });
     }
     case "record-task-outcome": {
       if (!taskBindingReader) throw new Error("Current task binding is unavailable.");
@@ -223,7 +224,8 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         string(payload.reporterProof, "reporterProof"), taskBindingReader);
     }
     case "reconcile-task-request": return store.reconcileTaskRequest(
-      identity(payload.sender), string(payload.requestId, "requestId"));
+      identity(payload.sender), string(payload.requestId, "requestId"),
+      string(payload.reconcileToken, "reconcileToken"));
     case "record-session-activity": {
       if (!activityReporterReader) throw new Error("Current activity reporter is unavailable.");
       if (Object.keys(payload).sort().join() !== "event,reporterProof,turnId") {

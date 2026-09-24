@@ -33600,7 +33600,7 @@ function compareText(left, right) {
 }
 
 // mcp-server/src/session-message-service.ts
-import { randomUUID } from "node:crypto";
+import { randomBytes as randomBytes2, randomUUID } from "node:crypto";
 
 // mcp-server/src/session-message-client.ts
 import { existsSync as existsSync2 } from "node:fs";
@@ -33966,6 +33966,10 @@ var SessionMessageService = class {
     }
     const target = binding(request.recipient);
     if (!target) return failure2("INVALID_INPUT", "Task recipient is required.");
+    const reconcileToken = args.reconcileToken ?? randomBytes2(32).toString("base64url");
+    if (typeof reconcileToken !== "string" || !/^[A-Za-z0-9_-]{43}$/u.test(reconcileToken)) {
+      return failure2("INVALID_INPUT", "A 256-bit reconciliation token is required.");
+    }
     try {
       const { activity } = await sessionMessageRequest(
         "session-activity",
@@ -33975,14 +33979,16 @@ var SessionMessageService = class {
       if (!activity.actor || activity.activity === "unknown" || !activity.turnId) {
         return ok2({ state: "held", reason: "activity-unknown", messageId: null });
       }
-      return ok2(await sessionMessageRequest("register-contact-task-request", {
+      const data = await sessionMessageRequest("register-contact-task-request", {
         request,
         body: args.body,
         ...args.ttlSeconds === void 0 ? {} : { ttlSeconds: args.ttlSeconds },
         expectedActor: activity.actor,
         expectedTurnId: activity.turnId,
-        expectedRevision: activity.revision
-      }, this.stateDirectory));
+        expectedRevision: activity.revision,
+        reconcileToken
+      }, this.stateDirectory);
+      return ok2({ ...data, ...data.state === "queued" ? { reconcileToken } : {} });
     } catch (error61) {
       return failure2("MCP_UNAVAILABLE", error61 instanceof Error ? error61.message : "Task request registration is unavailable.");
     }
@@ -34006,9 +34012,15 @@ var SessionMessageService = class {
   async reconcileTaskRequest(args) {
     const sender = binding(args._sessionBinding);
     if (!sender) return failure2("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
-    if (typeof args.requestId !== "string") return failure2("INVALID_INPUT", "requestId is required.");
+    if (typeof args.requestId !== "string" || typeof args.reconcileToken !== "string") {
+      return failure2("INVALID_INPUT", "requestId and reconciliation token are required.");
+    }
     try {
-      return ok2(await sessionMessageRequest("reconcile-task-request", { sender, requestId: args.requestId }, this.stateDirectory));
+      return ok2(await sessionMessageRequest("reconcile-task-request", {
+        sender,
+        requestId: args.requestId,
+        reconcileToken: args.reconcileToken
+      }, this.stateDirectory));
     } catch (error61) {
       return failure2("MCP_UNAVAILABLE", error61 instanceof Error ? error61.message : "Task request reconciliation is unavailable.");
     }
@@ -40333,6 +40345,7 @@ var registerTaskInputSchema = {
     ...sessionBindingProperty,
     request: { $ref: "#/$defs/request" },
     body: { type: "string", minLength: 1, maxLength: 4096 },
+    reconcileToken: { type: "string", pattern: "^[A-Za-z0-9_-]{43}$" },
     ttlSeconds: { type: "integer", minimum: 30, maximum: 86400 }
   }
 };
@@ -40351,11 +40364,12 @@ var recordOutcomeInputSchema = {
 var reconcileTaskInputSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["schemaVersion", "requestId"],
+  required: ["schemaVersion", "requestId", "reconcileToken"],
   properties: {
     schemaVersion: { const: "1.0.0" },
     ...sessionBindingProperty,
-    requestId: { type: "string", pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" }
+    requestId: { type: "string", pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" },
+    reconcileToken: { type: "string", pattern: "^[A-Za-z0-9_-]{43}$" }
   }
 };
 function asRecord2(value) {
@@ -41289,7 +41303,7 @@ import path10 from "node:path";
 import { DatabaseSync as DatabaseSync5 } from "node:sqlite";
 
 // mcp-server/src/workflow-store.ts
-import { randomBytes as randomBytes2 } from "node:crypto";
+import { randomBytes as randomBytes3 } from "node:crypto";
 var PLAN_SIGNING_KEY = "plan-signing-key";
 function clone2(value) {
   return JSON.parse(JSON.stringify(value));
@@ -41452,7 +41466,7 @@ var InMemoryWorkflowStore = class {
   }
 };
 function createPlanSigningKey() {
-  return randomBytes2(32).toString("base64url");
+  return randomBytes3(32).toString("base64url");
 }
 
 // mcp-server/src/plugin-update-store.ts
@@ -44504,7 +44518,7 @@ var RoutingAwareWorkflowService = class extends WorkflowService {
 };
 
 // mcp-server/src/host-attestation.ts
-import { createHmac as createHmac3, randomBytes as randomBytes3, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+import { createHmac as createHmac3, randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
 var HOST_ATTESTATION_FIELD = "_hostAttestation";
 var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
 var TOKEN_PREFIX = "aghs1";
@@ -44533,7 +44547,7 @@ function withoutHostAttestation(input2) {
 }
 function signingKey(store) {
   const key = Buffer.from(
-    store.getOrCreateSecret(HOST_ATTESTATION_KEY, () => randomBytes3(32).toString("base64url")),
+    store.getOrCreateSecret(HOST_ATTESTATION_KEY, () => randomBytes4(32).toString("base64url")),
     "base64url"
   );
   if (key.length !== 32) throw new WorkflowContractError("INVALID_INPUT", "Stored host attestation key is invalid.");
@@ -44612,7 +44626,7 @@ var HostAttestationProvider = class {
 };
 
 // mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash10, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHash as createHash10, createHmac as createHmac4, randomBytes as randomBytes5, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
 import path12 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
@@ -44643,7 +44657,7 @@ var StateCleanupService = class {
     this.clock = clock;
     this.secret = Buffer.from(workflowStore.getOrCreateSecret(
       "state-cleanup-signing-key",
-      () => randomBytes4(32).toString("base64url")
+      () => randomBytes5(32).toString("base64url")
     ), "base64url");
   }
   workflowStore;
@@ -44874,7 +44888,7 @@ var StateCleanupService = class {
 };
 
 // mcp-server/src/trust-store.ts
-import { createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID4, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
+import { createHmac as createHmac5, randomBytes as randomBytes6, randomUUID as randomUUID4, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
 import { chmodSync as chmodSync4, mkdirSync as mkdirSync5 } from "node:fs";
 import path13 from "node:path";
 import { DatabaseSync as DatabaseSync6 } from "node:sqlite";
@@ -45064,7 +45078,7 @@ var TrustStore = class {
     return this.transaction(() => {
       const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name);
       if (existing) return existing.value;
-      const value = randomBytes5(32).toString("base64url");
+      const value = randomBytes6(32).toString("base64url");
       this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
       return value;
     });
@@ -45269,10 +45283,10 @@ var TrustService = class {
 
 // mcp-server/src/host-integration/vm-current-invocation.ts
 import { AsyncLocalStorage } from "node:async_hooks";
-import { createHash as createHash12, randomBytes as randomBytes7 } from "node:crypto";
+import { createHash as createHash12, randomBytes as randomBytes8 } from "node:crypto";
 
 // mcp-server/src/host-integration/observation-challenge.ts
-import { createHash as createHash11, createHmac as createHmac6, createPublicKey, randomBytes as randomBytes6, timingSafeEqual as timingSafeEqual6, verify } from "node:crypto";
+import { createHash as createHash11, createHmac as createHmac6, createPublicKey, randomBytes as randomBytes7, timingSafeEqual as timingSafeEqual6, verify } from "node:crypto";
 import { lstatSync, readFileSync as readFileSync5 } from "node:fs";
 import path14 from "node:path";
 var CHALLENGE_PREFIX = "agoc1";
@@ -45486,7 +45500,7 @@ var ObservationChallengeAuthority = class {
     if (!reader || !(domain2 === "host" ? hostReaders.has(reader) : testReaders.has(reader))) {
       throw invalid2("registered reader domain mismatch or trusted host observation unavailable");
     }
-    this.key = Buffer.from(store.getOrCreateSecret(`${domain2}_observation_challenge_v1`, () => randomBytes6(32).toString("base64url")), "base64url");
+    this.key = Buffer.from(store.getOrCreateSecret(`${domain2}_observation_challenge_v1`, () => randomBytes7(32).toString("base64url")), "base64url");
     if (this.key.length !== 32) throw invalid2("stored challenge key is invalid");
   }
   store;
@@ -45516,7 +45530,7 @@ var ObservationChallengeAuthority = class {
       ...observed,
       version: 1,
       domain: this.domain,
-      challengeId: randomBytes6(24).toString("base64url"),
+      challengeId: randomBytes7(24).toString("base64url"),
       issuedAt: now.toISOString(),
       expiresAt: new Date(issuedAt + CHALLENGE_TTL_MS).toISOString()
     };
@@ -45660,7 +45674,7 @@ var VmCurrentInvocation = class {
   store;
   clock;
   modelPolicy;
-  serverEpoch = randomBytes7(32).toString("base64url");
+  serverEpoch = randomBytes8(32).toString("base64url");
   observationReader;
   challenge;
   pending = /* @__PURE__ */ new Map();
@@ -45716,7 +45730,7 @@ var VmCurrentInvocation = class {
     for (const [key, value] of this.pending) if (value.expiresAt <= now && !value.active) this.pending.delete(key);
     if (this.usedNonces.has(nonceKey)) reject("registration nonce already reserved");
     if (this.pending.size >= 4096 || this.usedNonces.size >= 8192) reject("registration ledger is full");
-    const callId = `vmr-${randomBytes7(24).toString("base64url")}`;
+    const callId = `vmr-${randomBytes8(24).toString("base64url")}`;
     this.usedNonces.set(nonceKey, expires);
     this.pending.set(callId, {
       registration: structuredClone(body),
@@ -47775,7 +47789,7 @@ function initializeFlowmarshalProfile() {
 
 // mcp-server/src/host-integration/flowmarshal-current-invocation.ts
 import { AsyncLocalStorage as AsyncLocalStorage2 } from "node:async_hooks";
-import { createHash as createHash15, createPublicKey as createPublicKey4, randomBytes as randomBytes8, verify as verify3 } from "node:crypto";
+import { createHash as createHash15, createPublicKey as createPublicKey4, randomBytes as randomBytes9, verify as verify3 } from "node:crypto";
 import { closeSync as closeSync4, constants as constants3, lstatSync as lstatSync4, openSync as openSync4 } from "node:fs";
 import { DatabaseSync as DatabaseSync8 } from "node:sqlite";
 var DISPATCH_DOMAIN = "ags-fm-same-user-dispatch-registration-v1";
@@ -47856,7 +47870,7 @@ var FlowmarshalCurrentInvocation = class {
   profile;
   store;
   clock;
-  serverEpoch = randomBytes8(32).toString("base64url");
+  serverEpoch = randomBytes9(32).toString("base64url");
   profileBinding;
   database;
   current = new AsyncLocalStorage2();
@@ -47927,7 +47941,7 @@ var FlowmarshalCurrentInvocation = class {
     if (!exact6(body, ["version", "domain", "profileBinding", "assertions", "serverEpoch", "nonce", "issuedAt", "expiresAt", "producer", "binding", "terminal", "core", "invocation"]) || body.version !== 1 || body.domain !== DISPATCH_DOMAIN || !exact6(profileBinding, ["profileId", "freezeIdentity"]) || profileBinding.profileId !== PROFILE_ID2 || profileBinding.freezeIdentity !== this.profile.freezeIdentity || !exact6(assertions, ["modelClass", "actorId"]) || !required3(assertions.modelClass) || !required3(assertions.actorId) || body.serverEpoch !== this.serverEpoch || !required3(body.nonce) || !Number.isFinite(now) || !Number.isFinite(issued) || !Number.isFinite(expires) || issued > now + 5e3 || now >= expires || expires - issued !== 6e4 || !exact6(producer, ["installationId", "keyId", "hostId", "instanceId"]) || producer.keyId !== keyId || producer.hostId !== "flowmarshal" || !required3(producer.installationId) || !required3(producer.instanceId) || !exact6(binding2, ["turnId", "taskId", "runId", "attemptId", "hostId", "sessionId", "instanceId"]) || !required3(binding2.turnId) || !required3(binding2.taskId) || !optional3(binding2.runId) || !optional3(binding2.attemptId) || binding2.hostId !== "flowmarshal" || !required3(binding2.sessionId) || binding2.instanceId !== producer.instanceId || !exact6(terminal, ["eventId", "callId", "threadId", "turnId", "status", "observedAt", "model", "effort", "provenance", "digest"]) || terminal.turnId !== binding2.turnId || !required3(terminal.eventId) || !required3(terminal.callId) || !required3(terminal.threadId) || !required3(terminal.model) || !REASONING_EFFORT.includes(String(terminal.effort)) || !["succeeded", "completed"].includes(String(terminal.status)) || !["provider_raw_response", "claude_session_transcript"].includes(String(terminal.provenance)) || !/^sha256:[0-9a-f]{64}$/u.test(String(terminal.digest)) || !Number.isFinite(observed) || observed > issued || !exact6(core, ["goalRevision", "taskRevision", "attemptOrdinal", "gateOperationKey", "stage"]) || !Number.isSafeInteger(core.goalRevision) || Number(core.goalRevision) < 1 || !Number.isSafeInteger(core.taskRevision) || Number(core.taskRevision) < 1 || !(core.attemptOrdinal === null || Number.isSafeInteger(core.attemptOrdinal) && Number(core.attemptOrdinal) > 0) || !required3(core.gateOperationKey) || !required3(core.stage) || !["bootstrap", "baseline", "implementation", "scope", "acceptance"].includes(core.stage) || !exact6(invocation, ["tool", "inputDigest", "observedAt"]) || !["plan_workflow", "record_stage_result"].includes(String(invocation.tool)) || !/^sha256:[0-9a-f]{64}$/u.test(String(invocation.inputDigest)) || invocation.observedAt !== body.issuedAt || core.stage === "bootstrap" && (invocation.tool !== "plan_workflow" || binding2.runId !== null || binding2.attemptId !== null) || core.stage !== "bootstrap" && (invocation.tool !== "record_stage_result" || !required3(binding2.runId)) || ["bootstrap", "baseline"].includes(String(core.stage)) && binding2.attemptId !== null || ["implementation", "scope", "acceptance"].includes(String(core.stage)) && !required3(binding2.attemptId)) {
       reject2("registration binding is invalid");
     }
-    const callId = `fmr-${randomBytes8(24).toString("base64url")}`;
+    const callId = `fmr-${randomBytes9(24).toString("base64url")}`;
     const digest6 = `sha256:${createHash15("sha256").update(bytes).digest("hex")}`;
     try {
       this.database.prepare("INSERT INTO a2_dispatch_reservations (call_id, nonce_key, server_epoch, registration_digest, body_json, signed_envelope_json, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)").run(

@@ -335,11 +335,11 @@
     },
     {
       "path": "mcp-server/dist/server.mjs",
-      "sha256": "sha256:0363d169033a564d358cca4f04993efe10370b3c1713e289dbc0c126908fe2f8"
+      "sha256": "sha256:a87430d363f0cd598ea931cbddc71d32fcf36c8a8443605df1104966b9e7ef68"
     },
     {
       "path": "mcp-server/dist/session-message-broker.mjs",
-      "sha256": "sha256:a0666f2d1b0d1dc8cdee960e8b157bace16e3083fd60604fba7c681e680b1300"
+      "sha256": "sha256:39b3b89e677f832d40f2cf9e0954b4805c16305ecb54550be1ed52e9ac4e290c"
     },
     {
       "path": "runtime/schema-validation.mjs",

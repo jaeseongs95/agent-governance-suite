@@ -1,6 +1,6 @@
 import type { ApiResultV1, ErrorCode, SessionBindingV1, SessionTaskRequestV1,
   SessionTaskTerminalOutcomeV1 } from "../../contracts/types.js";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { sessionMessageRequest } from "./session-message-client.js";
 import type { SessionActivityState, SessionPresence } from "./session-message-store.js";
 import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
@@ -101,16 +101,22 @@ export class SessionMessageService {
     }
     const target = binding(request.recipient);
     if (!target) return failure("INVALID_INPUT", "Task recipient is required.");
+    const reconcileToken = args.reconcileToken ?? randomBytes(32).toString("base64url");
+    if (typeof reconcileToken !== "string" || !/^[A-Za-z0-9_-]{43}$/u.test(reconcileToken)) {
+      return failure("INVALID_INPUT", "A 256-bit reconciliation token is required.");
+    }
     try {
       const { activity } = await sessionMessageRequest<{ activity: SessionActivityState }>(
         "session-activity", { target }, this.stateDirectory);
       if (!activity.actor || activity.activity === "unknown" || !activity.turnId) {
         return ok({ state: "held", reason: "activity-unknown", messageId: null });
       }
-      return ok(await sessionMessageRequest("register-contact-task-request", {
+      const data = await sessionMessageRequest<Record<string, unknown>>("register-contact-task-request", {
         request, body: args.body, ...(args.ttlSeconds === undefined ? {} : { ttlSeconds: args.ttlSeconds }),
         expectedActor: activity.actor, expectedTurnId: activity.turnId, expectedRevision: activity.revision,
-      }, this.stateDirectory));
+        reconcileToken,
+      }, this.stateDirectory);
+      return ok({ ...data, ...(data.state === "queued" ? { reconcileToken } : {}) });
     } catch (error) {
       return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "Task request registration is unavailable.");
     }
@@ -135,9 +141,13 @@ export class SessionMessageService {
   async reconcileTaskRequest(args: Record<string, unknown>): Promise<ApiResultV1<unknown>> {
     const sender = binding(args._sessionBinding);
     if (!sender) return failure("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
-    if (typeof args.requestId !== "string") return failure("INVALID_INPUT", "requestId is required.");
+    if (typeof args.requestId !== "string" || typeof args.reconcileToken !== "string") {
+      return failure("INVALID_INPUT", "requestId and reconciliation token are required.");
+    }
     try {
-      return ok(await sessionMessageRequest("reconcile-task-request", { sender, requestId: args.requestId }, this.stateDirectory));
+      return ok(await sessionMessageRequest("reconcile-task-request", {
+        sender, requestId: args.requestId, reconcileToken: args.reconcileToken,
+      }, this.stateDirectory));
     } catch (error) {
       return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "Task request reconciliation is unavailable.");
     }

@@ -238,6 +238,7 @@ const registerTaskInputSchema = { type: "object", additionalProperties: false,
   properties: { schemaVersion: { const: "1.0.0" }, ...sessionBindingProperty,
     request: { $ref: "#/$defs/request" },
     body: { type: "string", minLength: 1, maxLength: 4096 },
+    reconcileToken: { type: "string", pattern: "^[A-Za-z0-9_-]{43}$" },
     ttlSeconds: { type: "integer", minimum: 30, maximum: 86400 } } };
 const recordOutcomeInputSchema = { type: "object", additionalProperties: false,
   required: ["schemaVersion", "outcome", "reporterProof"], $defs: taskContract.$defs,
@@ -245,9 +246,10 @@ const recordOutcomeInputSchema = { type: "object", additionalProperties: false,
     outcome: { $ref: "#/$defs/terminalOutcome" },
     reporterProof: { type: "string", minLength: 1, maxLength: 4096 } } };
 const reconcileTaskInputSchema = { type: "object", additionalProperties: false,
-  required: ["schemaVersion", "requestId"], properties: { schemaVersion: { const: "1.0.0" },
+  required: ["schemaVersion", "requestId", "reconcileToken"], properties: { schemaVersion: { const: "1.0.0" },
     ...sessionBindingProperty,
-    requestId: { type: "string", pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" } } };
+    requestId: { type: "string", pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" },
+    reconcileToken: { type: "string", pattern: "^[A-Za-z0-9_-]{43}$" } } };
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)

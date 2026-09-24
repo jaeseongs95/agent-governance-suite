@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, test } from 'vitest';
@@ -8,6 +8,7 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { SessionMessageStore } from '../../../mcp-server/src/session-message-store.ts';
 import { dispatchSessionMessageBrokerOperation } from '../../../mcp-server/src/session-message-broker.ts';
 import { createMcpServer } from '../../../mcp-server/src/server.ts';
+import { handleSessionMessageHook } from '../../../mcp-server/src/session-message-hook.ts';
 
 const stores = [];
 const directories = [];
@@ -104,6 +105,7 @@ test('W05 task request registration holds without trusted state and commits cont
     revision: 1, requestedAt: new Date(now).toISOString(),
     expiresAt: new Date(now + 3_600_000).toISOString(), authorityEffect: 'none' };
   const payload = { request, body: 'Delegated task', ttlSeconds: 600,
+    reconcileToken: 'a'.repeat(43),
     expectedActor: actor, expectedTurnId: 'turn-1', expectedRevision: 1 };
   assert.equal(dispatchSessionMessageBrokerOperation(store, 'register-contact-task-request', payload).state, 'held');
   assert.equal(store.taskRequest(request.requestId), null);
@@ -113,6 +115,8 @@ test('W05 task request registration holds without trusted state and commits cont
     payload, undefined, undefined, reader);
   assert.equal(recorded.state, 'queued');
   assert.equal(store.taskRequest(request.requestId).messageId, recorded.messageId);
+  assert.throws(() => dispatchSessionMessageBrokerOperation(store, 'register-contact-task-request',
+    { ...payload, reconcileToken: 'z'.repeat(43) }, undefined, undefined, reader), /token does not match/);
   assert.equal(store.database.prepare('SELECT count(*) AS n FROM contact_messages').get().n, 1);
   assert.equal(store.reserveWake(target, 'nonce-ffffffffffffffff', now + 2, true), false);
 });
@@ -138,11 +142,14 @@ test('W05 existing spool survives contact table migration and SQLite lock conten
   const { store, database } = fixture();
   const legacy = store.send({ sender, target, body: 'Earlier message', messageId: 'legacy-0001' }, base);
   store.database.exec('DROP TABLE contact_messages');
+  store.database.exec('ALTER TABLE task_requests DROP COLUMN reconcile_token_digest');
   store.close();
   stores.splice(stores.indexOf(store), 1);
   const migrated = new SessionMessageStore(database);
   stores.push(migrated);
   assert.equal(migrated.status(sender, legacy.messageId, base + 1).state, 'queued');
+  assert.ok(migrated.database.prepare('PRAGMA table_info(task_requests)').all()
+    .some((column) => column.name === 'reconcile_token_digest'));
   start(migrated);
   observe(migrated, 'busy', 1, base + 1);
   const peer = new SessionMessageStore(database);
@@ -157,15 +164,21 @@ test('W05 existing spool survives contact table migration and SQLite lock conten
 
 test('W05 deadline reconciliation cannot replace callback or expose another request outcome', () => {
   const { store } = fixture();
+  const token = 'b'.repeat(43);
+  start(store);
+  observe(store, 'busy', 1, base + 1);
   const recipient = { host: target.host, sessionId: target.sessionId };
   const request = { schemaVersion: '1.0.0', kind: 'request', requestId: 'request-0001', taskId: 'task-1',
     sender: { ...sender, instanceId: 'sender-instance' }, recipient, callbackTarget: sender,
     revision: 1, requestedAt: new Date(base).toISOString(),
     expiresAt: new Date(base + 90_000).toISOString(), authorityEffect: 'none' };
-  store.registerTaskRequest({ request, body: 'Task', ttlSeconds: 60 }, base);
-  assert.equal(store.reconcileTaskRequest(sender, request.requestId, base + 1).state, 'deadline-pending');
-  assert.equal(store.reconcileTaskRequest(sender, request.requestId, base + 90_000).state, 'outcome-missing');
-  assert.throws(() => store.reconcileTaskRequest({ host: 'other', sessionId: 'stranger' }, request.requestId, base + 90_000));
+  store.registerTaskRequest({ request, body: 'Task', ttlSeconds: 60 }, base + 2,
+    { expectedActor: actor, expectedTurnId: 'turn-1', expectedRevision: 1,
+      trustedActivity: true, reconcileToken: token });
+  assert.equal(store.reconcileTaskRequest(sender, request.requestId, token, base + 3).state, 'deadline-pending');
+  assert.equal(store.reconcileTaskRequest(sender, request.requestId, token, base + 90_000).state, 'outcome-missing');
+  assert.throws(() => store.reconcileTaskRequest({ host: 'other', sessionId: 'stranger' }, request.requestId, token, base + 90_000));
+  assert.throws(() => store.reconcileTaskRequest(sender, request.requestId, 'c'.repeat(43), base + 90_000));
   const outcome = { schemaVersion: '1.0.0', kind: 'terminal-outcome', requestId: request.requestId,
     taskId: request.taskId, actor, callbackTarget: sender, revision: 1, result: 'COMPLETED',
     evidenceRefs: [], reportedAt: new Date(base + 100).toISOString(), authorityEffect: 'none' };
@@ -173,11 +186,11 @@ test('W05 deadline reconciliation cannot replace callback or expose another requ
     currentInstanceId: actor.instanceId, revisionStream: 'task', currentRevision: 0,
     boundTaskId: request.taskId, trustedDelegation: { requestId: request.requestId, callbackTarget: sender } }) };
   const recorded = store.recordTaskOutcome(outcome, proof, binding, base + 100);
-  assert.equal(store.reconcileTaskRequest(sender, request.requestId, base + 90_000).state, 'outcome-recorded');
-  assert.equal(store.reconcileTaskRequest(sender, request.requestId, base + 90_000).outcome.acceptance, 'unverified');
+  assert.equal(store.reconcileTaskRequest(sender, request.requestId, token, base + 90_000).state, 'outcome-recorded');
+  assert.equal(store.reconcileTaskRequest(sender, request.requestId, token, base + 90_000).outcome.acceptance, 'unverified');
   assert.equal(store.claim(sender, base + 101).length, 1);
   store.acknowledge(sender, [recorded.callbackMessageId], base + 102);
-  assert.equal(store.reconcileTaskRequest(sender, request.requestId, base + 90_000).outcome.acceptance, 'unverified');
+  assert.equal(store.reconcileTaskRequest(sender, request.requestId, token, base + 90_000).outcome.acceptance, 'unverified');
 });
 
 test('W05 MCP exposes bound portable contact and callback tools', async () => {
@@ -197,5 +210,33 @@ test('W05 MCP exposes bound portable contact and callback tools', async () => {
   } finally {
     await client.close();
     await server.close();
+  }
+});
+
+test('W05 host hook matchers bind every new tool and deny observed subagents', async () => {
+  const names = ['get_session_contact_state', 'contact_session', 'register_session_task_request',
+    'record_session_task_outcome', 'reconcile_session_task_request'];
+  const hosts = [
+    ['codex', 'hooks/hooks.json', 'mcp__agent-governance-suite__'],
+    ['claude-code', 'claude-overlay/hooks/hooks.json', 'mcp__plugin_agent-governance-suite_agent-governance-suite__'],
+  ];
+  for (const [host, filename, prefix] of hosts) {
+    const hooks = JSON.parse(readFileSync(new URL(`../../../${filename}`, import.meta.url), 'utf8'));
+    const matcher = hooks.hooks.PreToolUse.flatMap((entry) => entry.matcher ? [entry.matcher] : [])
+      .find((pattern) => pattern.includes('send_session_message'));
+    assert.ok(matcher, `${host} PreToolUse matcher exists`);
+    for (const name of names) {
+      const toolName = `${prefix}${name}`;
+      assert.match(toolName, new RegExp(matcher));
+      const output = await handleSessionMessageHook({ hook_event_name: 'PreToolUse',
+        session_id: 'parent-session', tool_name: toolName,
+        tool_input: { _sessionBinding: { host: 'forged', sessionId: 'forged' } } }, host);
+      assert.deepEqual(output.hookSpecificOutput.updatedInput._sessionBinding,
+        { host, sessionId: 'parent-session' });
+      const denied = await handleSessionMessageHook({ hook_event_name: 'PreToolUse',
+        session_id: 'parent-session', agent_id: 'subagent-1', tool_name: toolName,
+        tool_input: {} }, host);
+      assert.equal(denied.hookSpecificOutput.permissionDecision, 'deny');
+    }
   }
 });

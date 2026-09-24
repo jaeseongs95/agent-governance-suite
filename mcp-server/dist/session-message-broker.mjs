@@ -8253,7 +8253,8 @@ var SessionMessageStore = class {
       message_id TEXT NOT NULL UNIQUE,
       body_digest TEXT NOT NULL,
       ttl_seconds INTEGER NOT NULL,
-      registered_at TEXT NOT NULL
+      registered_at TEXT NOT NULL,
+      reconcile_token_digest TEXT
     ) STRICT;
     CREATE TABLE IF NOT EXISTS task_outcomes (
       outcome_key TEXT PRIMARY KEY,
@@ -8290,6 +8291,10 @@ var SessionMessageStore = class {
       }
       if (!messageColumns.some((column) => column.name === "first_delivered_at")) {
         this.database.exec("ALTER TABLE messages ADD COLUMN first_delivered_at TEXT;");
+      }
+      const requestColumns = this.database.prepare("PRAGMA table_info(task_requests)").all();
+      if (!requestColumns.some((column) => column.name === "reconcile_token_digest")) {
+        this.database.exec("ALTER TABLE task_requests ADD COLUMN reconcile_token_digest TEXT;");
       }
       const presenceColumns = this.database.prepare("PRAGMA table_info(session_presence)").all();
       if (!presenceColumns.some((column) => column.name === "supported_injection")) {
@@ -8406,11 +8411,17 @@ var SessionMessageStore = class {
     }
   }
   /** Missing callbacks are reconciled only after the request deadline. */
-  reconcileTaskRequest(sender, requestId, nowMs = Date.now()) {
+  reconcileTaskRequest(sender, requestId, reconcileToken, nowMs = Date.now()) {
     boundedIdentity(sender);
     const request = this.taskRequest(requestId);
     if (!request || request.request.sender.host !== sender.host || request.request.sender.sessionId !== sender.sessionId) {
       throw new Error("Task request is unavailable to this sender.");
+    }
+    if (!/^[A-Za-z0-9_-]{43}$/u.test(reconcileToken)) throw new Error("Task reconciliation token is invalid.");
+    const digest2 = createHash("sha256").update(reconcileToken).digest("hex");
+    const saved = this.database.prepare("SELECT reconcile_token_digest FROM task_requests WHERE request_id = ?").get(requestId);
+    if (!saved?.reconcile_token_digest || saved.reconcile_token_digest !== digest2) {
+      throw new Error("Task reconciliation token does not match.");
     }
     if (Date.parse(request.request.expiresAt) > nowMs) return { state: "deadline-pending", outcome: null };
     const key = `task:${JSON.stringify([request.request.recipient.host, request.request.recipient.sessionId, request.request.taskId])}`;
@@ -8450,12 +8461,19 @@ var SessionMessageStore = class {
       throw new Error(`ttlSeconds must be an integer from 30 to ${MESSAGE_TTL_MAX_SECONDS}.`);
     }
     const bodyDigest = createHash("sha256").update(input.body, "utf8").digest("hex");
+    if (contact && !/^[A-Za-z0-9_-]{43}$/u.test(contact.reconcileToken)) {
+      throw new Error("A strong reconciliation token is required.");
+    }
+    const reconcileDigest = contact ? createHash("sha256").update(contact.reconcileToken).digest("hex") : null;
     this.database.exec("BEGIN IMMEDIATE");
     try {
       const existing = this.database.prepare("SELECT * FROM task_requests WHERE request_id = ?").get(request.requestId);
       if (existing) {
         const same2 = existing.task_id === request.taskId && existing.sender_host === request.sender.host && existing.sender_session_id === request.sender.sessionId && existing.sender_instance_id === request.sender.instanceId && existing.recipient_host === request.recipient.host && existing.recipient_session_id === request.recipient.sessionId && existing.callback_host === request.callbackTarget.host && existing.callback_session_id === request.callbackTarget.sessionId && existing.revision === request.revision && existing.requested_at === request.requestedAt && existing.expires_at === request.expiresAt && existing.body_digest === bodyDigest && existing.ttl_seconds === ttlSeconds;
         if (!same2) throw new Error("requestId already belongs to a different task request.");
+        if (contact && existing.reconcile_token_digest !== reconcileDigest) {
+          throw new Error("Task reconciliation token does not match.");
+        }
         this.database.exec("COMMIT");
         return {
           requestId: request.requestId,
@@ -8495,8 +8513,9 @@ var SessionMessageStore = class {
       this.database.prepare(`INSERT INTO task_requests (
         request_id, task_id, sender_host, sender_session_id, sender_instance_id,
         recipient_host, recipient_session_id, callback_host, callback_session_id,
-        revision, requested_at, expires_at, message_id, body_digest, ttl_seconds, registered_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        revision, requested_at, expires_at, message_id, body_digest, ttl_seconds, registered_at,
+        reconcile_token_digest
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
         request.requestId,
         request.taskId,
         request.sender.host,
@@ -8512,7 +8531,8 @@ var SessionMessageStore = class {
         sent.messageId,
         bodyDigest,
         ttlSeconds,
-        sent.createdAt
+        sent.createdAt,
+        reconcileDigest
       );
       this.database.exec("COMMIT");
       return {
@@ -14911,7 +14931,8 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, modelC
         expectedActor: { ...identity(expectedActor), instanceId: expectedActor.instanceId },
         expectedTurnId: string(payload.expectedTurnId, "expectedTurnId"),
         expectedRevision: integer3(payload.expectedRevision, "expectedRevision"),
-        trustedActivity: Boolean(activityReporterReader)
+        trustedActivity: Boolean(activityReporterReader),
+        reconcileToken: string(payload.reconcileToken, "reconcileToken")
       });
     }
     case "record-task-outcome": {
@@ -14926,7 +14947,8 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, modelC
     case "reconcile-task-request":
       return store.reconcileTaskRequest(
         identity(payload.sender),
-        string(payload.requestId, "requestId")
+        string(payload.requestId, "requestId"),
+        string(payload.reconcileToken, "reconcileToken")
       );
     case "record-session-activity": {
       if (!activityReporterReader) throw new Error("Current activity reporter is unavailable.");
