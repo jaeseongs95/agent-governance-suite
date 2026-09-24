@@ -1,6 +1,6 @@
-import { createPrivateKey, createPublicKey } from 'node:crypto';
+import { createHash, createPrivateKey, createPublicKey } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { accessSync, closeSync, constants, fstatSync, lstatSync, openSync, readSync } from 'node:fs';
+import { accessSync, closeSync, constants, fstatSync, lstatSync, openSync, readFileSync, readSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TextDecoder } from 'node:util';
@@ -8,16 +8,25 @@ import { TextDecoder } from 'node:util';
 const WINDOWS = {
   key: 'C:\\ProgramData\\flowmarshal\\ags-producer-key.json',
   pin: 'C:\\ProgramData\\agent-governance-suite\\vm-operator-policy.json',
+  installation: 'C:\\ProgramData\\flowmarshal\\protected-installation.json',
 };
 const LINUX = {
   key: '/etc/flowmarshal/ags-producer-key.json',
   pin: '/etc/agent-governance-suite/vm-operator-policy.json',
+  installation: '/etc/flowmarshal/protected-installation.json',
 };
 const SYSTEM_SIDS = new Set(['S-1-5-18', 'S-1-5-32-544']);
 const TRUSTED_INSTALLER_SID = 'S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464';
 const WINDOWS_READ_RIGHTS = 0x1200a9;
+const WINDOWS_CREATE_CHILD_RIGHTS = 0x6;
 const DIGEST = /^sha256:[0-9a-f]{64}$/u;
 const POWERSHELL = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+export const PROTECTED_HOST_CONTRACT = Object.freeze({
+  id: 'ags-vm-protected-host-installation/v1',
+  revision: '1',
+  manifestSha256: 'sha256:a35fb1a9c7cd67b7b84fe5e178aa3dfb705d206ebd4993e532aa71694ed3e00c',
+  profilesSha256: 'sha256:fdd8677983d4aaf3d4d2ae8809a009a48643f5f047a4787b7940c5f4701d4b82',
+});
 
 function windowsAcl(target) {
   const script = `$ErrorActionPreference='Stop'; $p=[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String([Console]::In.ReadToEnd())); `
@@ -35,14 +44,15 @@ function windowsAcl(target) {
   }));
 }
 
-export function protectedWindowsAcl(acl, secretFile, candidate = false) {
-  return !!acl && (SYSTEM_SIDS.has(acl.owner) || (candidate && acl.owner === TRUSTED_INSTALLER_SID))
+export function protectedWindowsAcl(acl, secretFile, candidate = false, systemParent = false) {
+  return !!acl && (SYSTEM_SIDS.has(acl.owner) || ((candidate || systemParent) && acl.owner === TRUSTED_INSTALLER_SID))
     && acl.reparse === false && Array.isArray(acl.rules)
     && acl.rules.every((rule) => rule && typeof rule.sid === 'string'
       && Number.isInteger(rule.rights) && ['Allow', 'Deny'].includes(rule.type)
       && (rule.type !== 'Allow' || SYSTEM_SIDS.has(rule.sid)
-        || (candidate && rule.sid === TRUSTED_INSTALLER_SID)
-        || (rule.rights & ~(secretFile ? 0 : WINDOWS_READ_RIGHTS)) === 0));
+        || ((candidate || systemParent) && rule.sid === TRUSTED_INSTALLER_SID)
+        || (rule.rights & ~(secretFile ? 0 : WINDOWS_READ_RIGHTS
+          | (systemParent ? WINDOWS_CREATE_CHILD_RIGHTS : 0))) === 0));
 }
 
 function sameFile(a, b, contents = false) {
@@ -84,10 +94,13 @@ export function inspectFile(filePath, {
     if (protectedFile) {
       let allowed;
       try {
+        const systemParent = process.platform === 'win32'
+          ? target === 'C:\\' || target === 'C:\\ProgramData' || target === 'C:\\Program Files'
+          : target === '/' || target === '/etc';
         allowed = protection ? protection(target, status, secret && isFile, candidate)
           : process.platform === 'win32'
-            ? protectedWindowsAcl(acl, secret && isFile, candidate)
-            : status.uid === 0 && (status.mode & (secret && isFile ? 0o077 : 0o022)) === 0;
+            ? protectedWindowsAcl(acl, secret && isFile, candidate, systemParent)
+            : status.uid === 0 && (status.mode & (candidate || systemParent ? 0o022 : 0o077)) === 0;
       } catch { return { ok: false, code: 'PROTECTION_UNVERIFIABLE', at: target }; }
       if (!allowed) return { ok: false, code: 'OWNER_OR_ACL_UNSAFE', at: target };
     }
@@ -169,7 +182,7 @@ function parseUniqueJson(raw) {
   return JSON.parse(raw);
 }
 
-function readCheckedJson(filePath, inspection) {
+function readCheckedJson(filePath, inspection, options) {
   let fd;
   try {
     fd = openSync(filePath, constants.O_RDONLY | (process.platform === 'win32' ? 0 : constants.O_NOFOLLOW));
@@ -184,6 +197,9 @@ function readCheckedJson(filePath, inspection) {
     if (length > 1_048_576 || !sameFile(inspection.snapshots.at(-1), fstatSync(fd), true)) return null;
     if (inspection.targets.some((target, index) => !sameFile(inspection.snapshots[index],
       lstatSync(target), index === inspection.targets.length - 1))) return null;
+    const repeated = inspectFile(filePath, options);
+    if (!repeated.ok || repeated.snapshots.some((status, index) => !sameFile(
+      inspection.snapshots[index], status, index === repeated.snapshots.length - 1))) return null;
     return parseUniqueJson(new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(0, length)));
   } catch { return null; }
   finally { if (fd !== undefined) closeSync(fd); }
@@ -274,25 +290,130 @@ export function checkInstallation(key, policy, observedModel) {
     modelPolicyVersion: key.modelPolicyVersion, exactModelId: observedModel };
 }
 
+const fixtureProfilesPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)),
+  '../../tests/coordinate-subagents/v3x/fixtures/protected-host-installation/profiles.json');
+
+export function evaluateProtectedHostFixture(observation, os) {
+  let baseline;
+  try {
+    const bytes = readFileSync(fixtureProfilesPath);
+    if (`sha256:${createHash('sha256').update(bytes).digest('hex')}` !== PROTECTED_HOST_CONTRACT.profilesSha256) {
+      return { status: 'UNKNOWN', code: 'FIXTURE_DIGEST_MISMATCH' };
+    }
+    const profiles = JSON.parse(bytes.toString('utf8'));
+    if (profiles.contractId !== PROTECTED_HOST_CONTRACT.id || profiles.revision !== PROTECTED_HOST_CONTRACT.revision) {
+      return { status: 'UNKNOWN', code: 'FIXTURE_REVISION_MISMATCH' };
+    }
+    baseline = profiles[os];
+  } catch { return { status: 'UNKNOWN', code: 'FIXTURE_UNAVAILABLE' }; }
+  try {
+    if (!baseline || !observation || observation.principals.worker.observed !== true
+      || observation.coreBinding.oneShotRequest == null) {
+      return { status: 'UNKNOWN', code: 'CHILD_OR_IPC_UNOBSERVED' };
+    }
+    const requiredProbes = Object.keys(baseline.accessProbes);
+    if (!observation.accessProbes || requiredProbes.some((name) => !Object.hasOwn(observation.accessProbes, name))) {
+      return { status: 'UNKNOWN', code: 'ACCESS_PROBES_MISSING' };
+    }
+    if (observation.principals.worker.id === observation.principals.core.id
+      || Object.keys(observation.accessProbes).length !== requiredProbes.length
+      || requiredProbes.some((name) => observation.accessProbes[name] !== 'DENIED')
+      || !observation.coreBinding.currentPreparedOperation
+      || !observation.coreBinding.oneShotRequest || observation.coreBinding.callerOverride
+      || !observation.objects.launcher.measuredClosure) {
+      return { status: 'REJECT', code: 'PRINCIPAL_OR_BINDING_UNSAFE' };
+    }
+    const worker = observation.principals.worker;
+    if (os === 'windows'
+      ? worker.integrity !== 'low' || !Array.isArray(worker.groups)
+        || JSON.stringify(worker.groups) !== JSON.stringify(baseline.principals.worker.groups)
+        || !Array.isArray(worker.enabledPrivileges)
+        || worker.enabledPrivileges.length !== 0
+      : worker.noNewPrivs !== true || !Array.isArray(worker.capabilities)
+        || worker.capabilities.length !== 0 || !Array.isArray(worker.supplementaryGroups)
+        || worker.supplementaryGroups.length !== 0) {
+      return { status: 'REJECT', code: 'WORKER_PRIVILEGE_UNSAFE' };
+    }
+    const chains = baseline.protectedChains;
+    if (JSON.stringify(observation.protectedChains) !== JSON.stringify(chains)) {
+      return { status: 'REJECT', code: 'PROTECTED_CHAIN_CHANGED' };
+    }
+    for (const chain of Object.values(chains)) for (const name of chain) {
+      const item = observation.objects[name], prior = baseline.objects[name];
+      if (!item || item.path !== prior.path || item.identity !== prior.identity || item.owner !== prior.owner
+        || item.aclChanged || item.reparseOrSymlink || item.reparse || item.symlink
+        || (os === 'linux' && ((Number.parseInt(item.mode, 8) & 0o022) !== 0 || item.mode !== prior.mode))) {
+        return { status: 'REJECT', code: 'PROTECTED_CHAIN_UNSAFE' };
+      }
+      const rights = item.workerEffective;
+      if (!rights || ['write', 'delete', 'replace', 'deleteChild', 'writeDac', 'writeOwner']
+        .some((right) => rights[right] !== false)
+        || (os === 'linux' && rights.createChild !== false)
+        || (os === 'windows' && !['systemRoot', 'systemParent', 'programFiles'].includes(name)
+          && rights.createChild !== false)
+        || (['key', 'pin', 'coreState'].includes(name) && rights.read !== false)) {
+        return { status: 'REJECT', code: 'PROTECTED_RIGHTS_UNSAFE' };
+      }
+    }
+    if (observation.installationRecord.contractRevision !== PROTECTED_HOST_CONTRACT.revision
+      || observation.installationRecord.workerCanReplace !== false) {
+      return { status: 'REJECT', code: 'INSTALLATION_RECORD_UNSAFE' };
+    }
+    return { status: 'CONTRACT_CANDIDATE_FIXTURE', code: 'SYNTHETIC_ONLY' };
+  } catch { return { status: 'UNKNOWN', code: 'OBSERVATION_INCOMPLETE' }; }
+}
+
+export function checkProtectedInstallationRecord(value, os, principalId) {
+  const fixed = os === 'windows' ? WINDOWS : LINUX;
+  const coreState = os === 'windows' ? 'C:\\ProgramData\\flowmarshal\\core-state' : '/var/lib/flowmarshal/core-state';
+  const record = value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+  const paths = record?.paths, principals = record?.principals;
+  const ids = ['installer', 'core', 'ags', 'worker'].map((role) => principals?.[role]?.id);
+  const worker = principals?.worker;
+  const pathApi = os === 'windows' ? path.win32 : path.posix;
+  return !!record && record.contractId === PROTECTED_HOST_CONTRACT.id
+    && record.revision === PROTECTED_HOST_CONTRACT.revision
+    && record.fixtureSha256 === PROTECTED_HOST_CONTRACT.manifestSha256
+    && record.os === os && paths?.key === fixed.key && paths?.pin === fixed.pin
+    && paths?.coreState === coreState && ids.every((id) => typeof id === 'string' && id.length > 0)
+    && ids[2] === principalId && ids[3] !== ids[1] && ids[3] !== ids[2]
+    && (os === 'windows'
+      ? worker.integrity === 'low' && Array.isArray(worker.groups)
+        && worker.groups.every((group) => group === 'S-1-5-32-545')
+        && Array.isArray(worker.enabledPrivileges) && worker.enabledPrivileges.length === 0
+      : worker.id !== 'uid:0' && worker.noNewPrivs === true
+        && Array.isArray(worker.capabilities) && worker.capabilities.length === 0
+        && Array.isArray(worker.supplementaryGroups) && worker.supplementaryGroups.length === 0)
+    && ['agsState', 'vmEntry', 'agsEntry'].every((name) => typeof paths[name] === 'string'
+      && pathApi.isAbsolute(paths[name]) && pathApi.normalize(paths[name]) === paths[name])
+    && paths.agsState.startsWith(`${coreState}${pathApi.sep}`)
+    && typeof paths.workerEndpoint === 'string' && paths.workerEndpoint.length > 0
+    && ['core', 'worker'].every((name) => typeof record.services?.[name] === 'string' && record.services[name])
+    && ['vm', 'ags'].every((name) => DIGEST.test(record.buildDigests?.[name]))
+    && DIGEST.test(record.launcherClosureDigest);
+}
+
 function runtimePrincipal() {
-  if (process.platform !== 'win32') return { uid: process.getuid(), euid: process.geteuid() };
+  if (process.platform !== 'win32') return { id: process.getuid() === process.geteuid()
+    ? `uid:${process.geteuid()}` : null, uid: process.getuid(), euid: process.geteuid() };
   try {
     const sid = execFileSync(POWERSHELL, ['-NoProfile', '-NonInteractive', '-Command',
       '[Security.Principal.WindowsIdentity]::GetCurrent().User.Value'], {
       encoding: 'utf8', timeout: 5000, windowsHide: true,
     }).trim();
-    return { sid };
-  } catch { return { sid: null }; }
+    return { id: sid, sid };
+  } catch { return { id: null, sid: null }; }
 }
 
-export function preflight({ paths, vmEntry, agsEntry, observedModel, protection, execution } = {}) {
+export function preflight({ paths, vmEntry, agsEntry, observedModel, protection, execution, fixtureObservation } = {}) {
   const selectedPaths = paths ?? (process.platform === 'win32' ? WINDOWS : LINUX);
-  const fixture = !!(paths || protection || execution);
+  const fixture = !!(paths || protection || execution || fixtureObservation);
   const os = process.platform === 'win32' ? 'windows' : process.platform === 'linux' ? 'linux' : 'unsupported';
+  const principal = runtimePrincipal();
   const checks = {};
   const missingInputs = [];
   for (const [name, filePath] of Object.entries({ key: selectedPaths.key, pin: selectedPaths.pin })) {
-    const inspection = inspectFile(filePath, { secret: name === 'key', protectedFile: true, protection });
+    const inspection = inspectFile(filePath, { secret: true, protectedFile: true, protection });
     checks[name] = inspection.ok ? { ok: true } : inspection;
     if (!inspection.ok) missingInputs.push(`${name}:${inspection.code}`);
   }
@@ -305,26 +426,47 @@ export function preflight({ paths, vmEntry, agsEntry, observedModel, protection,
   if (!observedModel) missingInputs.push('observedModel');
   let policy = { ok: false, code: 'PROTECTED_INPUTS_UNAVAILABLE' };
   if (checks.key.ok && checks.pin.ok) {
-    const key = readCheckedJson(selectedPaths.key, inspectFile(selectedPaths.key, {
-      secret: true, protectedFile: true, protection,
-    }));
-    const pin = readCheckedJson(selectedPaths.pin, inspectFile(selectedPaths.pin, {
-      protectedFile: true, protection,
-    }));
+    const keyOptions = { secret: true, protectedFile: true, protection };
+    const pinOptions = { secret: true, protectedFile: true, protection };
+    const keyInspection = inspectFile(selectedPaths.key, keyOptions);
+    const pinInspection = inspectFile(selectedPaths.pin, pinOptions);
+    const key = keyInspection.ok ? readCheckedJson(selectedPaths.key, keyInspection, keyOptions) : null;
+    const pin = pinInspection.ok ? readCheckedJson(selectedPaths.pin, pinInspection, pinOptions) : null;
     policy = key && pin ? checkInstallation(key, pin, observedModel) : { ok: false, code: 'PROTECTED_JSON_UNREADABLE' };
     if (!policy.ok) missingInputs.push(`policy:${policy.code}`);
+  }
+  let hostBoundary = { status: 'UNKNOWN', code: 'CHILD_PRINCIPAL_NOT_OBSERVED' };
+  if (fixtureObservation) {
+    hostBoundary = evaluateProtectedHostFixture(fixtureObservation.profile, fixtureObservation.os);
+    if (hostBoundary.status !== 'CONTRACT_CANDIDATE_FIXTURE') missingInputs.push(`hostBoundary:${hostBoundary.code}`);
+  }
+  if (!fixture) {
+    const inspection = inspectFile(selectedPaths.installation, { secret: true, protectedFile: true });
+    checks.installation = inspection.ok ? { ok: true } : inspection;
+    if (!inspection.ok) missingInputs.push(`installation:${inspection.code}`);
+    else {
+      const record = readCheckedJson(selectedPaths.installation, inspection,
+        { secret: true, protectedFile: true });
+      checks.installation = record && checkProtectedInstallationRecord(record, os, principal.id)
+        && record.paths.vmEntry === vmEntry && record.paths.agsEntry === agsEntry
+        ? { ok: true, contractOnly: true }
+        : { ok: false, code: 'INSTALLATION_RECORD_UNVERIFIED' };
+      if (!checks.installation.ok) missingInputs.push('installation:INSTALLATION_RECORD_UNVERIFIED');
+    }
+    missingInputs.push('childPrincipal:ACTUAL_WORKER_OBSERVATION_REQUIRED');
   }
   return {
     status: missingInputs.length || os === 'unsupported' ? 'BLOCKED_CONTRACT'
       : fixture ? 'FIXTURE_ONLY' : 'READY_FOR_QUALIFICATION',
     evidenceOrigin: fixture ? 'synthetic-fixture' : 'installed-preflight',
-    currentOs: os, runtimePrincipal: runtimePrincipal(),
+    protectedHostContract: PROTECTED_HOST_CONTRACT, hostBoundary,
+    currentOs: os, runtimePrincipal: principal,
     osExecution: { windows: os === 'windows' ? 'PREFLIGHT_EXECUTED' : 'SEPARATE_HOST_REQUIRED',
       linux: os === 'linux' ? 'PREFLIGHT_EXECUTED' : 'SEPARATE_HOST_REQUIRED' },
     checks, policy, missingInputs,
-    qualification: { hostSupported: 'unknown',
-      configured: policy.ok && !fixture ? 'preflight-only' : 'unconfirmed', observed: false },
+    qualification: { hostSupported: 'unknown', configured: 'unconfirmed', observed: false },
     remainingQualification: ['operator-measured installed VM build and AGS build',
+      'actual worker service and child token/uid, protected-file and IPC denial probes',
       'actual CoreOperations → vm/hello → vm/reserve_dispatch → tools/call run',
       'separate Windows and Linux runs with independent evidence'],
   };

@@ -47004,10 +47004,19 @@ import path15 from "node:path";
 var DIGEST5 = /^sha256:[0-9a-f]{64}$/u;
 var MODEL_CLASSES = ["lightweight", "general", "deep", "frontier"];
 var SYSTEM_SIDS = /* @__PURE__ */ new Set(["S-1-5-18", "S-1-5-32-544"]);
+var TRUSTED_INSTALLER_SID = "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464";
 var WINDOWS_READ_RIGHTS = 1179817;
+var WINDOWS_CREATE_CHILD_RIGHTS = 6;
 var WINDOWS_POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
 var WINDOWS_POLICY_PATH = "C:\\ProgramData\\agent-governance-suite\\vm-operator-policy.json";
 var POSIX_POLICY_PATH = "/etc/agent-governance-suite/vm-operator-policy.json";
+var WINDOWS_INSTALLATION_PATH = "C:\\ProgramData\\flowmarshal\\protected-installation.json";
+var POSIX_INSTALLATION_PATH = "/etc/flowmarshal/protected-installation.json";
+var PROTECTED_HOST_CONTRACT = {
+  id: "ags-vm-protected-host-installation/v1",
+  revision: "1",
+  manifestSha256: "sha256:a35fb1a9c7cd67b7b84fe5e178aa3dfb705d206ebd4993e532aa71694ed3e00c"
+};
 function object9(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
@@ -47062,17 +47071,17 @@ function parsePolicy(value) {
   }
   return raw;
 }
-function isProtectedWindowsAcl(value) {
+function isProtectedWindowsAcl(value, systemParent = false, protectedFile = false) {
   const acl = object9(value);
-  if (!acl || typeof acl.owner !== "string" || !SYSTEM_SIDS.has(acl.owner) || !Array.isArray(acl.rules)) return false;
+  if (!acl || typeof acl.owner !== "string" || !(SYSTEM_SIDS.has(acl.owner) || systemParent && acl.owner === TRUSTED_INSTALLER_SID) || acl.reparse !== false || !Array.isArray(acl.rules)) return false;
   return acl.rules.every((entry) => {
     const rule = object9(entry);
-    if (!rule || typeof rule.sid !== "string" || !Number.isInteger(rule.rights) || typeof rule.type !== "string") return false;
-    return rule.type !== "Allow" || SYSTEM_SIDS.has(rule.sid) || (rule.rights & ~WINDOWS_READ_RIGHTS) === 0;
+    if (!rule || typeof rule.sid !== "string" || !Number.isInteger(rule.rights) || !listed(rule.type, ["Allow", "Deny"])) return false;
+    return rule.type !== "Allow" || SYSTEM_SIDS.has(rule.sid) || rule.sid === TRUSTED_INSTALLER_SID || (rule.rights & ~(protectedFile ? 0 : WINDOWS_READ_RIGHTS | (systemParent ? WINDOWS_CREATE_CHILD_RIGHTS : 0))) === 0;
   });
 }
 function inspectWindowsAcl(target) {
-  const script = `$ErrorActionPreference='Stop'; $p=[Console]::In.ReadToEnd(); $a=if ([IO.Directory]::Exists($p)) { [IO.Directory]::GetAccessControl($p) } else { [IO.File]::GetAccessControl($p) }; $owner=$a.GetOwner([Security.Principal.SecurityIdentifier]).Value; $rules=@($a.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier]) | ForEach-Object { @{ sid=$_.IdentityReference.Value; rights=[int]$_.FileSystemRights; type=$_.AccessControlType.ToString() } }); @{ owner=$owner; rules=$rules } | ConvertTo-Json -Compress -Depth 4`;
+  const script = `$ErrorActionPreference='Stop'; $p=[Console]::In.ReadToEnd(); $a=if ([IO.Directory]::Exists($p)) { [IO.Directory]::GetAccessControl($p) } else { [IO.File]::GetAccessControl($p) }; $owner=$a.GetOwner([Security.Principal.SecurityIdentifier]).Value; $rules=@($a.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier]) | ForEach-Object { @{ sid=$_.IdentityReference.Value; rights=[int]$_.FileSystemRights; type=$_.AccessControlType.ToString() } }); @{ owner=$owner; rules=$rules; reparse=([bool]([IO.File]::GetAttributes($p) -band [IO.FileAttributes]::ReparsePoint)) } | ConvertTo-Json -Compress -Depth 4`;
   try {
     const output2 = execFileSync(WINDOWS_POWERSHELL, ["-NoProfile", "-NonInteractive", "-Command", script], {
       input: target,
@@ -47090,7 +47099,9 @@ function sameFile(before, after) {
   return before.dev === after.dev && before.ino === after.ino && before.mode === after.mode && before.uid === after.uid && before.gid === after.gid && before.size === after.size && before.mtimeMs === after.mtimeMs && before.ctimeMs === after.ctimeMs && before.birthtimeMs === after.birthtimeMs;
 }
 function protectedByOperator(target, status) {
-  return process.platform === "win32" ? isProtectedWindowsAcl(inspectWindowsAcl(target)) : status.uid === 0 && (status.mode & 18) === 0;
+  const systemParent = process.platform === "win32" ? target === "C:\\" || target === "C:\\ProgramData" : target === "/" || target === "/etc";
+  const protectedFile = target === WINDOWS_POLICY_PATH || target === WINDOWS_INSTALLATION_PATH || target === POSIX_POLICY_PATH || target === POSIX_INSTALLATION_PATH;
+  return process.platform === "win32" ? isProtectedWindowsAcl(inspectWindowsAcl(target), systemParent, protectedFile) : status.uid === 0 && (status.mode & (systemParent ? 18 : 63)) === 0;
 }
 function readPolicyFile(filePath, fixture) {
   if (!path15.isAbsolute(filePath)) fail2("configuration path is not absolute");
@@ -47141,7 +47152,9 @@ function readPolicyFile(filePath, fixture) {
       } catch {
         fail2("configuration changed during read");
       }
-      if (!sameFile(snapshots[index], status)) fail2("configuration changed during read");
+      if (!sameFile(snapshots[index], status) || !(fixture?.isProtected ?? protectedByOperator)(target, status)) {
+        fail2("configuration changed during read");
+      }
     }
     return value;
   } finally {
@@ -47154,6 +47167,56 @@ function readProtectedVmPolicyFile(filePath) {
 function installedVmPolicyPath() {
   return process.platform === "win32" ? WINDOWS_POLICY_PATH : POSIX_POLICY_PATH;
 }
+function installedVmInstallationPath() {
+  return process.platform === "win32" ? WINDOWS_INSTALLATION_PATH : POSIX_INSTALLATION_PATH;
+}
+function isProtectedInstallationRecord(value, os, runtimeId2) {
+  const record6 = object9(value);
+  const paths = object9(record6?.paths), principals = object9(record6?.principals);
+  const services = object9(record6?.services), builds = object9(record6?.buildDigests);
+  const expected = os === "windows" ? {
+    key: "C:\\ProgramData\\flowmarshal\\ags-producer-key.json",
+    pin: WINDOWS_POLICY_PATH,
+    coreState: "C:\\ProgramData\\flowmarshal\\core-state"
+  } : {
+    key: "/etc/flowmarshal/ags-producer-key.json",
+    pin: POSIX_POLICY_PATH,
+    coreState: "/var/lib/flowmarshal/core-state"
+  };
+  if (!record6 || record6.contractId !== PROTECTED_HOST_CONTRACT.id || record6.revision !== PROTECTED_HOST_CONTRACT.revision || record6.fixtureSha256 !== PROTECTED_HOST_CONTRACT.manifestSha256 || record6.os !== os || !paths || !principals || !services || !builds || Object.entries(expected).some(([name, fixed]) => paths[name] !== fixed)) return false;
+  const ids = ["installer", "core", "ags", "worker"].map((role) => object9(principals[role])?.id);
+  if (!ids.every(nonempty4) || ids[2] !== runtimeId2 || ids[3] === ids[1] || ids[3] === ids[2]) return false;
+  const worker = object9(principals.worker);
+  if (!worker) return false;
+  if (os === "windows") {
+    if (worker.integrity !== "low" || !Array.isArray(worker.groups) || !worker.groups.every((group) => group === "S-1-5-32-545") || !Array.isArray(worker.enabledPrivileges) || worker.enabledPrivileges.length !== 0) return false;
+  } else if (worker.id === "uid:0" || worker.noNewPrivs !== true || !Array.isArray(worker.capabilities) || worker.capabilities.length !== 0 || !Array.isArray(worker.supplementaryGroups) || worker.supplementaryGroups.length !== 0) return false;
+  const pathApi = os === "windows" ? path15.win32 : path15.posix;
+  if (!["agsState", "vmEntry", "agsEntry"].every((name) => nonempty4(paths[name]) && pathApi.isAbsolute(paths[name]) && pathApi.normalize(paths[name]) === paths[name])) return false;
+  if (!paths.agsState.startsWith(`${expected.coreState}${pathApi.sep}`)) return false;
+  return nonempty4(paths.workerEndpoint) && ["core", "worker"].every((name) => nonempty4(services[name])) && ["vm", "ags"].every((name) => digest5(builds[name])) && digest5(record6.launcherClosureDigest);
+}
+function runtimeId() {
+  if (process.platform !== "win32") {
+    const uid = process.getuid?.(), euid = process.geteuid?.();
+    return uid !== void 0 && uid === euid ? `uid:${euid}` : null;
+  }
+  try {
+    return execFileSync(WINDOWS_POWERSHELL, [
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      "[Security.Principal.WindowsIdentity]::GetCurrent().User.Value"
+    ], {
+      encoding: "utf8",
+      timeout: 5e3,
+      maxBuffer: 64 * 1024,
+      windowsHide: true
+    }).trim();
+  } catch {
+    return null;
+  }
+}
 var VmModelPolicy = class _VmModelPolicy {
   constructor(readPolicy) {
     this.readPolicy = readPolicy;
@@ -47161,15 +47224,20 @@ var VmModelPolicy = class _VmModelPolicy {
   readPolicy;
   static installed() {
     const filePath = installedVmPolicyPath();
+    const installationPath = installedVmInstallationPath();
     try {
       lstatSync2(filePath);
+      lstatSync2(installationPath);
     } catch {
       return null;
     }
     try {
+      const os = process.platform === "win32" ? "windows" : process.platform === "linux" ? "linux" : null;
+      const principal = runtimeId();
+      if (!os || !principal || !isProtectedInstallationRecord(readPolicyFile(installationPath), os, principal)) return null;
       const policy = new _VmModelPolicy(() => parsePolicy(readProtectedVmPolicyFile(filePath)));
       policy.readPolicy();
-      return policy;
+      return null;
     } catch {
       return null;
     }
