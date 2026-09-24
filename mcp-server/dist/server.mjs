@@ -40407,7 +40407,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       {
         name: "plan_workflow",
         description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose.",
-        inputSchema: vmInvocation ? withVmReceipt(planWorkflowToolInputSchema(toolSchemaProfile)) : planWorkflowToolInputSchema(toolSchemaProfile),
+        inputSchema: vmInvocation || flowmarshalInvocation ? withVmReceipt(planWorkflowToolInputSchema(toolSchemaProfile)) : planWorkflowToolInputSchema(toolSchemaProfile),
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
@@ -40449,7 +40449,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       {
         name: "record_stage_result",
         description: "Record one ordered stage result; use responseMode=compact to avoid echoing the accumulated receipt.",
-        inputSchema: vmInvocation ? withVmReceipt(recordStageResultInputSchema) : recordStageResultInputSchema,
+        inputSchema: vmInvocation || flowmarshalInvocation ? withVmReceipt(recordStageResultInputSchema) : recordStageResultInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
@@ -40575,6 +40575,11 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         if (vmInvocation && (vmInvocation.hasCurrentRequest() || Object.hasOwn(args, "_hostAttestation"))) {
           if (!vmInvocation.hasCurrentRequest()) throw new Error("VM dispatch unavailable: current reserved request is unavailable");
           vmInvocation.verifyCurrentReceipt();
+          const { _hostAttestation, ...unsigned } = args;
+          void _hostAttestation;
+          return call(unsigned);
+        }
+        if (flowmarshalInvocation?.hasCurrentRequest()) {
           const { _hostAttestation, ...unsigned } = args;
           void _hostAttestation;
           return call(unsigned);
@@ -40759,7 +40764,6 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       async () => {
         if (flowmarshalInvocation.hasCurrentRequest()) {
           flowmarshalInvocation.verifyCurrentReceipt();
-          throw new Error("FlowMarshal A2 strict workflow provider is not installed");
         }
         return handle();
       }
@@ -42814,6 +42818,7 @@ var WorkflowService = class {
           revision: null
         };
         trustedBootstrapContext = this.observeTrustedExecutionContext(binding2, "bootstrap orchestration");
+        this.assertTrustedExecutionProfile(trustedBootstrapContext, null, "bootstrap orchestration");
         this.assertTrustedExecutionContext(
           this.bootstrapExecutionRequirement(task),
           trustedBootstrapContext,
@@ -43211,6 +43216,7 @@ var WorkflowService = class {
         throw new WorkflowContractError("INVALID_INPUT", "output.output must be null when outputFile carries the provider output.");
       }
       return this.change(result.runId, result.expectedRevision, (receipt) => {
+        if (requireTrustedExecutionContext) this.assertStoredExecutionProfile(receipt);
         if (receipt.state !== "running") {
           throw new WorkflowContractError("INVALID_TRANSITION", "Stage results require a running workflow.", {
             state: receipt.state
@@ -43263,6 +43269,7 @@ var WorkflowService = class {
           const enforced = result.state === "passed";
           trustedStageContext = enforced ? this.observeTrustedExecutionContext(binding2, subject) : this.observeExecutionContext(binding2);
           if (trustedStageContext) {
+            this.assertTrustedExecutionProfile(trustedStageContext, receipt.profileBinding ?? null, subject);
             this.assertTrustedExecutionContext(
               target.executionRequirement,
               trustedStageContext,
@@ -43815,6 +43822,21 @@ var WorkflowService = class {
     }
     return context;
   }
+  assertTrustedExecutionProfile(context, stored, subject) {
+    const selected = this.trustedExecutionContextProvider?.profileBinding;
+    const actual = context.profileBinding;
+    if (actual && !selected || selected && (!actual || actual.profileId !== selected.profileId || actual.freezeIdentity !== selected.freezeIdentity) || stored && (!actual || actual.profileId !== stored.profileId || actual.freezeIdentity !== stored.freezeIdentity)) {
+      throw new WorkflowContractError("BINDING_INVALID", `${subject} trusted execution profile differs from the selected or stored profile.`);
+    }
+  }
+  assertStoredExecutionProfile(receipt) {
+    const selected = this.trustedExecutionContextProvider?.profileBinding;
+    const stored = receipt.profileBinding;
+    const planned = receipt.plan.bootstrapExecution?.context.profileBinding;
+    if ((selected || stored || planned) && (!selected || !stored || !planned || selected.profileId !== stored.profileId || selected.freezeIdentity !== stored.freezeIdentity || planned.profileId !== stored.profileId || planned.freezeIdentity !== stored.freezeIdentity)) {
+      throw new WorkflowContractError("BINDING_INVALID", "Stored workflow receipt has a missing or different trusted execution profile.");
+    }
+  }
   assertTrustedExecutionContext(requirement, context, subject, binding2, enforceMinimum = true) {
     this.assertExecutionContext(requirement, context, subject, enforceMinimum);
     this.assertTrustedExecutionBinding(context, subject, binding2);
@@ -43869,6 +43891,7 @@ var WorkflowService = class {
         `${subject} requires a plan with trusted bootstrap execution assurance.`
       );
     }
+    this.assertTrustedExecutionProfile(bootstrap.context, null, subject);
     const binding2 = {
       phase: "bootstrap",
       taskId: plan.taskId,
@@ -44048,6 +44071,7 @@ var WorkflowService = class {
       revision: 0,
       state: "running",
       plan,
+      ...plan.bootstrapExecution?.context.profileBinding ? { profileBinding: clone2(plan.bootstrapExecution.context.profileBinding) } : {},
       stageResults: [],
       blockers: [],
       unresolved: [],
@@ -47580,6 +47604,7 @@ var FlowmarshalCurrentInvocation = class {
     this.store = store;
     this.clock = clock;
     if (profile.profileId !== PROFILE_ID2 || profile.assuranceTier !== "same-user" || !/^sha256:[0-9a-f]{64}$/u.test(profile.freezeIdentity) || profile.resources.state.namespace !== PROFILE_ID2) reject2("A2 profile is unavailable");
+    this.profileBinding = { profileId: PROFILE_ID2, freezeIdentity: profile.freezeIdentity };
     const state = profile.resources.state.location;
     let created = false;
     try {
@@ -47625,6 +47650,7 @@ var FlowmarshalCurrentInvocation = class {
   store;
   clock;
   serverEpoch = randomBytes8(32).toString("base64url");
+  profileBinding;
   database;
   current = new AsyncLocalStorage2();
   active = /* @__PURE__ */ new Set();
@@ -47633,6 +47659,38 @@ var FlowmarshalCurrentInvocation = class {
   }
   hasCurrentRequest() {
     return this.current.getStore() !== void 0;
+  }
+  observe(binding2) {
+    const current = this.current.getStore();
+    const verified = current?.verified;
+    if (!current || !verified || !this.active.has(current.callId)) return null;
+    const signedBinding = object10(current.reservation.body.binding);
+    if (!signedBinding || signedBinding.taskId !== binding2.taskId || signedBinding.runId !== binding2.runId) {
+      reject2("trusted observation task or run differs from registration");
+    }
+    if (binding2.phase === "bootstrap") {
+      if (current.tool !== "plan_workflow" || binding2.stageId !== null || binding2.revision !== null) {
+        reject2("trusted bootstrap observation binding is invalid");
+      }
+    } else if (current.tool !== "record_stage_result" || current.arguments.stageId !== binding2.stageId || current.arguments.expectedRevision !== binding2.revision) {
+      reject2("trusted stage observation binding is invalid");
+    }
+    return {
+      schemaVersion: "1.0.0",
+      profileBinding: { ...this.profileBinding },
+      model: verified.model,
+      modelClass: verified.modelClass,
+      reasoningEffort: verified.reasoningEffort,
+      source: "runtime",
+      observedAt: verified.terminal.observedAt,
+      observationId: verified.observationId,
+      taskId: binding2.taskId,
+      runId: binding2.runId,
+      stageId: binding2.stageId,
+      revision: binding2.revision,
+      actorId: verified.actorId,
+      expiresAt: verified.expiresAt
+    };
   }
   verifySignedEnvelope(value) {
     const envelope = object10(value);
@@ -47786,6 +47844,7 @@ var FlowmarshalCurrentInvocation = class {
       this.database.exec("ROLLBACK");
       throw error61;
     }
+    current.verified = verified;
     return verified;
   }
 };
@@ -47829,7 +47888,7 @@ async function main() {
     validator2,
     store,
     null,
-    hostAttestation
+    flowmarshalInvocation ?? hostAttestation
   );
   const updates = new PluginUpdateService(store);
   let continuity = new UnavailableContinuityService();

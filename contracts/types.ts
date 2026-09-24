@@ -72,6 +72,7 @@ export interface ExecutionContextV1 {
   reasoningEffort: ReasoningEffortV1;
   source: "runtime" | "spawn-result";
   observedAt: string;
+  profileBinding?: { profileId: "vm-protected-v1" | "flowmarshal-same-user-v1"; freezeIdentity: string };
   /**
    * Trusted-host binding fields are optional for v1 receipt compatibility.
    * Strict MCP assurance requires all of them and rejects caller-supplied contexts.
@@ -1023,6 +1024,7 @@ export interface WorkflowReceiptV1 {
   revision: number;
   state: WorkflowState;
   plan: WorkflowPlanV1;
+  profileBinding?: { profileId: "vm-protected-v1" | "flowmarshal-same-user-v1"; freezeIdentity: string };
   stageResults: StageResultV1[];
   blockers: string[];
   unresolved: string[];

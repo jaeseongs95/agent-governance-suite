@@ -116,6 +116,7 @@ export interface ExecutionObservationBindingV1 {
 }
 
 export interface TrustedExecutionContextProvider {
+  readonly profileBinding?: ExecutionContextV1["profileBinding"];
   observe(binding: ExecutionObservationBindingV1): ExecutionContextV1 | null;
 }
 
@@ -175,6 +176,7 @@ export class WorkflowService {
           revision: null,
         };
         trustedBootstrapContext = this.observeTrustedExecutionContext(binding, "bootstrap orchestration");
+        this.assertTrustedExecutionProfile(trustedBootstrapContext, null, "bootstrap orchestration");
         this.assertTrustedExecutionContext(
           this.bootstrapExecutionRequirement(task),
           trustedBootstrapContext,
@@ -605,6 +607,7 @@ export class WorkflowService {
         throw new WorkflowContractError("INVALID_INPUT", "output.output must be null when outputFile carries the provider output.");
       }
       return this.change(result.runId, result.expectedRevision, (receipt) => {
+        if (requireTrustedExecutionContext) this.assertStoredExecutionProfile(receipt);
         if (receipt.state !== "running") {
           throw new WorkflowContractError("INVALID_TRANSITION", "Stage results require a running workflow.", {
             state: receipt.state,
@@ -672,6 +675,7 @@ export class WorkflowService {
             ? this.observeTrustedExecutionContext(binding, subject)
             : this.observeExecutionContext(binding);
           if (trustedStageContext) {
+            this.assertTrustedExecutionProfile(trustedStageContext, receipt.profileBinding ?? null, subject);
             this.assertTrustedExecutionContext(
               target.executionRequirement,
               trustedStageContext,
@@ -1340,6 +1344,33 @@ export class WorkflowService {
     return context;
   }
 
+  private assertTrustedExecutionProfile(
+    context: ExecutionContextV1,
+    stored: ExecutionContextV1["profileBinding"] | null,
+    subject: string,
+  ): void {
+    const selected = this.trustedExecutionContextProvider?.profileBinding;
+    const actual = context.profileBinding;
+    if ((actual && !selected)
+        || (selected && (!actual || actual.profileId !== selected.profileId
+          || actual.freezeIdentity !== selected.freezeIdentity))
+        || (stored && (!actual || actual.profileId !== stored.profileId
+          || actual.freezeIdentity !== stored.freezeIdentity))) {
+      throw new WorkflowContractError("BINDING_INVALID", `${subject} trusted execution profile differs from the selected or stored profile.`);
+    }
+  }
+
+  private assertStoredExecutionProfile(receipt: WorkflowReceiptV1): void {
+    const selected = this.trustedExecutionContextProvider?.profileBinding;
+    const stored = receipt.profileBinding;
+    const planned = receipt.plan.bootstrapExecution?.context.profileBinding;
+    if ((selected || stored || planned) && (!selected || !stored || !planned
+        || selected.profileId !== stored.profileId || selected.freezeIdentity !== stored.freezeIdentity
+        || planned.profileId !== stored.profileId || planned.freezeIdentity !== stored.freezeIdentity)) {
+      throw new WorkflowContractError("BINDING_INVALID", "Stored workflow receipt has a missing or different trusted execution profile.");
+    }
+  }
+
   private assertTrustedExecutionContext(
     requirement: ExecutionRequirementV1,
     context: ExecutionContextV1,
@@ -1426,6 +1457,7 @@ export class WorkflowService {
         `${subject} requires a plan with trusted bootstrap execution assurance.`,
       );
     }
+    this.assertTrustedExecutionProfile(bootstrap.context, null, subject);
     const binding: ExecutionObservationBindingV1 = {
       phase: "bootstrap",
       taskId: plan.taskId,
@@ -1646,6 +1678,9 @@ export class WorkflowService {
       revision: 0,
       state: "running",
       plan,
+      ...(plan.bootstrapExecution?.context.profileBinding
+        ? { profileBinding: clone(plan.bootstrapExecution.context.profileBinding) }
+        : {}),
       stageResults: [],
       blockers: [],
       unresolved: [],

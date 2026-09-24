@@ -71,7 +71,7 @@
     },
     {
       "path": "contracts/execution-context.v1.schema.json",
-      "sha256": "sha256:6fcfe5022ea6f253ac479ae63baf6e2377733c90e0ffaaf7f4484aebe0132bff"
+      "sha256": "sha256:92ecf50d3e97e85f32c5b58fa0e4b43dea761a7cc25fc521789a60a3e1690002"
     },
     {
       "path": "contracts/execution-requirement.v1.schema.json",
@@ -287,7 +287,7 @@
     },
     {
       "path": "contracts/stage-result.v1.schema.json",
-      "sha256": "sha256:74a3d18c7e593ed6bc91580e3d6661f211018a0dff7a2f3adfa5ae6960c54808"
+      "sha256": "sha256:68718c4119f1a0b59595e3f1c1155e6e1ad4e549a18c5159b551e3427ddb15f0"
     },
     {
       "path": "contracts/state-cleanup-plan.v1.schema.json",
@@ -315,11 +315,11 @@
     },
     {
       "path": "contracts/workflow-plan.v1.schema.json",
-      "sha256": "sha256:a624cdf11ef915b523a80ac1c8e9dfd87010ccd13b139d6d45d566993f575ec8"
+      "sha256": "sha256:66ab13d22cc26fc4140a3d36a568fb317391f04cd69860737cfc21b932763aae"
     },
     {
       "path": "contracts/workflow-receipt.v1.schema.json",
-      "sha256": "sha256:49bf37757278f7a79673cb313346c73cb61b9052ce56775132b3c51e2d7c7652"
+      "sha256": "sha256:d505d98b3b7307318bc05025cfcf36c189fc2a06db65c7ac61c89ce646027c85"
     },
     {
       "path": "contracts/workflow-status-summary.v1.schema.json",
@@ -327,7 +327,7 @@
     },
     {
       "path": "mcp-server/dist/server.mjs",
-      "sha256": "sha256:3a9a9b7ef091c2ae92b1695a13247a85f23754e57c21fc122d9cb83971d51ec5"
+      "sha256": "sha256:0efc10c42c34341db4a683323ab609797d355c42a559572a8e74eed7708164d5"
     },
     {
       "path": "mcp-server/dist/session-message-broker.mjs",

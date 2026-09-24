@@ -3,16 +3,18 @@ import { createHash, createPublicKey, randomBytes, verify } from "node:crypto";
 import { closeSync, constants, lstatSync, openSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 
-import { REASONING_EFFORT } from "../../../contracts/types.js";
+import { REASONING_EFFORT, type ExecutionContextV1 } from "../../../contracts/types.js";
 import { canonicalJson, convergenceDigest } from "../convergence-logic.js";
 import { ContractValidator } from "../schema-validator.js";
 import type { WorkflowStore } from "../workflow-store.js";
 import type { FlowmarshalProfile } from "./flowmarshal-profile.js";
+import type { ExecutionObservationBindingV1, TrustedExecutionContextProvider } from "../workflow-service.js";
 import { verifyFlowmarshalReceipt, type FlowmarshalVerifiedReceipt } from "./observation-challenge.js";
 
 type JsonObject = Record<string, unknown>;
 type Reservation = { body: JsonObject; envelope: JsonObject; digest: string; expiresAt: number; used: boolean };
-type Current = { callId: string; reservation: Reservation; tool: string; arguments: JsonObject; validated: boolean };
+type Current = { callId: string; reservation: Reservation; tool: string; arguments: JsonObject;
+  validated: boolean; verified?: FlowmarshalVerifiedReceipt };
 const DISPATCH_DOMAIN = "ags-fm-same-user-dispatch-registration-v1";
 const PROFILE_ID = "flowmarshal-same-user-v1";
 function reject(reason: string): never { throw new Error(`FlowMarshal A2 dispatch unavailable: ${reason}`); }
@@ -40,8 +42,9 @@ const safeJson = (value: unknown): boolean => {
 };
 
 /** A2 registration ledger. It has its own file, pins and domain; no VM verifier or env pin path is used. */
-export class FlowmarshalCurrentInvocation {
+export class FlowmarshalCurrentInvocation implements TrustedExecutionContextProvider {
   readonly serverEpoch = randomBytes(32).toString("base64url");
+  readonly profileBinding: NonNullable<ExecutionContextV1["profileBinding"]>;
   private readonly database: DatabaseSync;
   private readonly current = new AsyncLocalStorage<Current>();
   private readonly active = new Set<string>();
@@ -51,6 +54,7 @@ export class FlowmarshalCurrentInvocation {
     if (profile.profileId !== PROFILE_ID || profile.assuranceTier !== "same-user"
         || !/^sha256:[0-9a-f]{64}$/u.test(profile.freezeIdentity)
         || profile.resources.state.namespace !== PROFILE_ID) reject("A2 profile is unavailable");
+    this.profileBinding = { profileId: PROFILE_ID, freezeIdentity: profile.freezeIdentity };
     const state = profile.resources.state.location;
     let created = false;
     try {
@@ -97,6 +101,34 @@ export class FlowmarshalCurrentInvocation {
 
   close(): void { this.database.close(); }
   hasCurrentRequest(): boolean { return this.current.getStore() !== undefined; }
+
+  observe(binding: ExecutionObservationBindingV1): ExecutionContextV1 | null {
+    const current = this.current.getStore();
+    const verified = current?.verified;
+    if (!current || !verified || !this.active.has(current.callId)) return null;
+    const signedBinding = object(current.reservation.body.binding);
+    if (!signedBinding || signedBinding.taskId !== binding.taskId || signedBinding.runId !== binding.runId) {
+      reject("trusted observation task or run differs from registration");
+    }
+    if (binding.phase === "bootstrap") {
+      if (current.tool !== "plan_workflow" || binding.stageId !== null || binding.revision !== null) {
+        reject("trusted bootstrap observation binding is invalid");
+      }
+    } else if (current.tool !== "record_stage_result"
+        || current.arguments.stageId !== binding.stageId
+        || current.arguments.expectedRevision !== binding.revision) {
+      reject("trusted stage observation binding is invalid");
+    }
+    return {
+      schemaVersion: "1.0.0", profileBinding: { ...this.profileBinding },
+      model: verified.model, modelClass: verified.modelClass as ExecutionContextV1["modelClass"],
+      reasoningEffort: verified.reasoningEffort as ExecutionContextV1["reasoningEffort"],
+      source: "runtime", observedAt: verified.terminal.observedAt as string,
+      observationId: verified.observationId, taskId: binding.taskId, runId: binding.runId,
+      stageId: binding.stageId, revision: binding.revision, actorId: verified.actorId,
+      expiresAt: verified.expiresAt,
+    };
+  }
 
   verifySignedEnvelope(value: unknown): { body: JsonObject; bytes: Buffer; signature: Buffer; keyId: string } {
     const envelope = object(value);
@@ -281,6 +313,7 @@ export class FlowmarshalCurrentInvocation {
       this.database.exec("ROLLBACK");
       throw error;
     }
+    current.verified = verified;
     return verified;
   }
 }
