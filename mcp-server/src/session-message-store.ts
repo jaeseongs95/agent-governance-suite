@@ -1021,14 +1021,10 @@ export class SessionMessageStore {
   heartbeatPresence(target: SessionIdentity, instanceId: string, nowMs = Date.now()): boolean {
     boundedIdentity(target);
     if (!instanceId) throw new Error("presence instanceId is required.");
-    const row = this.database.prepare(`SELECT instance_id FROM session_presence
-      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`).get(target.host, target.sessionId, instanceId);
-    const selected = row as { instance_id: string } | undefined;
-    if (!selected) return false;
     const now = iso(nowMs);
     return this.database.prepare(`UPDATE session_presence SET heartbeat_at = ?, lease_until = ?
-      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`)
-      .run(now, iso(nowMs + PRESENCE_LEASE_MS), target.host, target.sessionId, selected.instance_id).changes === 1;
+      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL AND lease_until > ?`)
+      .run(now, iso(nowMs + PRESENCE_LEASE_MS), target.host, target.sessionId, instanceId, now).changes === 1;
   }
 
   endPresence(target: SessionIdentity, reason: string, instanceId: string, nowMs = Date.now()): boolean {

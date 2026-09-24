@@ -339,7 +339,7 @@
     },
     {
       "path": "mcp-server/dist/session-message-broker.mjs",
-      "sha256": "sha256:27a352270c85730798bcc7f6fdd3fa2ce9105203893d6a39204c9ae004098dc7"
+      "sha256": "sha256:7f6cfa3fd34b80a037b3d07f645fa0cb7689dc4f339692eb07285b832e300c55"
     },
     {
       "path": "runtime/schema-validation.mjs",

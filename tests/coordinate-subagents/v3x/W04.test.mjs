@@ -169,3 +169,17 @@ test('W04 future observation is unknown until its verified timestamp', () => {
   assert.equal(store.activityStatus(session, 1_001).activity, 'unknown');
   assert.equal(store.activityStatus(session, 1_004).activity, 'busy');
 });
+
+test('W04 expired heartbeat cannot resurrect prior idle across a lease gap', () => {
+  const { store } = fixture();
+  start(store);
+  store.recordActivity(observed('busy', 1, 19_999), 'turn-1', proof, reader(), 19_999);
+  store.recordActivity(observed('idle', 2, 20_000), 'turn-1', proof, reader(), 20_000);
+  assert.equal(store.activityStatus(session, 20_001).activity, 'idle');
+  assert.equal(store.heartbeatPresence(session, actor.instanceId, 22_000), false);
+  assert.equal(store.activityStatus(session, 22_001).activity, 'unknown');
+  start(store, actor.instanceId, 22_002);
+  assert.equal(store.activityStatus(session, 22_003).activity, 'unknown');
+  assert.equal(store.recordActivity(observed('busy', 1, 22_004), 'turn-2', proof,
+    reader(actor, 'turn-2'), 22_004).activity, 'busy');
+});
