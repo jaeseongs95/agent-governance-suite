@@ -124,6 +124,43 @@ function filesIn(root: string, directory: string): string[] {
     });
 }
 
+function assertSchemaReferences(root: string, schemaPaths: string[], providerPaths: string[]): void {
+  const byId = new Map<string, unknown>();
+  const byPath = new Map<string, unknown>();
+  for (const file of schemaPaths) {
+    const schema = JSON.parse(readFileSync(resolvePackageFile(root, file), "utf8")) as { $id?: string };
+    byPath.set(file, schema);
+    byId.set(`file:///${file}`, schema);
+    if (schema.$id && !byId.has(schema.$id)) byId.set(schema.$id, schema);
+  }
+  const visited = new Set<string>();
+  const visit = (value: unknown, base: string): void => {
+    if (!value || typeof value !== "object") return;
+    if (Array.isArray(value)) {
+      for (const item of value) visit(item, base);
+      return;
+    }
+    const record = value as Record<string, unknown>;
+    const currentBase = typeof record.$id === "string" ? new URL(record.$id, base).href : base;
+    if (typeof record.$ref === "string") {
+      const target = new URL(record.$ref, currentBase);
+      target.hash = "";
+      if (!visited.has(target.href)) {
+        const referenced = byId.get(target.href);
+        if (!referenced) throw new Error(`Missing schema reference: ${target.href}`);
+        visited.add(target.href);
+        visit(referenced, target.href);
+      }
+    }
+    for (const item of Object.values(record)) visit(item, currentBase);
+  };
+  for (const file of providerPaths) {
+    const schema = byPath.get(file);
+    if (!schema) throw new Error(`Missing provider schema: ${file}`);
+    visit(schema, (schema as { $id?: string }).$id ?? `file:///${file}`);
+  }
+}
+
 /** Emit only the packaged direct MCP surface. Other VM entry points are separate tasks. */
 export function buildCurrentHostIntegrationManifest(rootDirectory: string): HostIntegrationManifest {
   const root = realpathSync(rootDirectory);
@@ -144,6 +181,11 @@ export function buildCurrentHostIntegrationManifest(rootDirectory: string): Host
   const providerSchemas = registry.skills.flatMap((skill) => skill.providers.flatMap((provider) =>
     [provider.outputSchema, provider.resultSchema, provider.gate?.validator]
       .filter((file): file is string => typeof file === "string" && file.endsWith(".schema.json"))));
+  // ContractValidator scans every schema under a provider's skill root, including $ref targets.
+  // Hash the full runtime skill schema set so a copied closure can resolve those references.
+  const skillSchemas = filesIn(root, "skills").filter((file) => file.endsWith(".schema.json"));
+  const contractSchemas = filesIn(root, "contracts").filter((file) => file.endsWith(".json"));
+  assertSchemaReferences(root, [...contractSchemas, ...skillSchemas], providerSchemas);
   const executionClosure = [...new Set([
     ".mcp.json",
     ".codex-plugin/plugin.json",
@@ -152,9 +194,10 @@ export function buildCurrentHostIntegrationManifest(rootDirectory: string): Host
     "runtime/schema-validation.mjs",
     "skills/registry.json",
     "skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3",
-    ...filesIn(root, "contracts").filter((file) => file.endsWith(".json")),
+    ...contractSchemas,
     ...filesIn(root, "skills/coordinate-subagents/references/model-catalog"),
     ...providerSchemas,
+    ...skillSchemas,
   ])].sort();
   for (const file of executionClosure) resolvePackageFile(root, file);
   const descriptor = buildHostIntegrationDescriptor(root, [{

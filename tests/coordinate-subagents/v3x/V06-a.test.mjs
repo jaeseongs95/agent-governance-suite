@@ -9,6 +9,8 @@ import { test } from 'vitest';
 import {
   buildCurrentHostIntegrationManifest, parseHostIntegrationManifest,
 } from '../../../mcp-server/src/host-integration/manifest.ts';
+import { ContractValidator } from '../../../mcp-server/src/schema-validator.ts';
+import { FileSkillRegistry } from '../../../mcp-server/src/registry.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const manifestPath = path.join(root, 'host-integration.json');
@@ -47,6 +49,27 @@ test('fixed candidate rejects tampering, missing artifacts, and relative path es
     }
     assert.deepEqual(parseHostIntegrationManifest(manifest, candidate), manifest);
     assert.deepEqual(buildCurrentHostIntegrationManifest(candidate), manifest);
+    const referenceSchema = 'skills/task-contract/contracts/acceptance-evidence-plan.v1.schema.json';
+    assert.ok(manifest.artifacts.some((artifact) => artifact.path === referenceSchema));
+    const validator = new ContractValidator();
+    const provider = new FileSkillRegistry(path.join(candidate, 'skills/registry.json'), validator)
+      .read().find((item) => item.skillId === 'task-contract');
+    assert.ok(provider);
+    const fixture = JSON.parse(readFileSync(path.join(root, 'tests/task-contract/fixtures/normal/simple-read.json'), 'utf8'));
+    const providerResult = { schemaVersion: '1.0.0', kind: 'output', output: fixture.report, artifacts: [], error: null };
+    assert.deepEqual(validator.providerResult(candidate,
+      { path: provider.resultSchema, digest: provider.resultSchemaDigest },
+      { path: provider.outputSchema, digest: provider.outputSchemaDigest },
+      providerResult), providerResult);
+
+    const referencedFile = path.join(candidate, referenceSchema);
+    writeFileSync(referencedFile, Buffer.concat([readFileSync(referencedFile), Buffer.from('\n')]));
+    assert.throws(() => parseHostIntegrationManifest(manifest, candidate), /Artifact hash mismatch/);
+    copyFileSync(path.join(root, referenceSchema), referencedFile);
+    rmSync(referencedFile);
+    assert.throws(() => parseHostIntegrationManifest(manifest, candidate), /Missing package file/);
+    assert.throws(() => buildCurrentHostIntegrationManifest(candidate), /Missing schema reference/);
+    copyFileSync(path.join(root, referenceSchema), referencedFile);
 
     const server = path.join(candidate, manifest.entryPoints[0].path);
     writeFileSync(server, Buffer.concat([readFileSync(server), Buffer.from('\n// modified')]));
@@ -56,7 +79,7 @@ test('fixed candidate rejects tampering, missing artifacts, and relative path es
     const missing = path.join(candidate, manifest.artifacts.at(-1).path);
     rmSync(missing);
     assert.throws(() => parseHostIntegrationManifest(manifest, candidate), /Missing package file/);
-    assert.throws(() => buildCurrentHostIntegrationManifest(candidate), /Missing package file/);
+    assert.throws(() => buildCurrentHostIntegrationManifest(candidate), /Missing provider schema/);
     copyFileSync(path.join(root, manifest.artifacts.at(-1).path), missing);
 
     const escaping = clone(manifest);

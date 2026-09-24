@@ -338,8 +338,20 @@
       "sha256": "sha256:03996e2281db3e79a86d467e492ca4aaeaf38f89e802313102ffddf738f81e5c"
     },
     {
+      "path": "skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json",
+      "sha256": "sha256:d41effd0fd54209b295f75d233d19fb6fab5864a052de70b1272f6dd203e092c"
+    },
+    {
       "path": "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
       "sha256": "sha256:cf22e268b09e823e25b74f2ee3da74de103f3a00b8a672409b2bec6580fe6507"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/contracts/acceptance-report-validation.v1.schema.json",
+      "sha256": "sha256:3062feb742fc20f846dccf7002a2edae74e2bd9b10dba4f2d8937d0775880f32"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/contracts/upstream/task-envelope.v1.schema.json",
+      "sha256": "sha256:b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21"
     },
     {
       "path": "skills/acceptance-evidence-validator/integration/provider-result.v1.schema.json",
@@ -350,6 +362,10 @@
       "sha256": "sha256:ce04ec2821fb07ebc66373b3783165c461758ac30437d401171fc43c0a07fba0"
     },
     {
+      "path": "skills/blocker-diagnostician/contracts/failure-episode-set.v1.schema.json",
+      "sha256": "sha256:646601a2450a99b3748f56e152a81257c3fcd9d928f0c4cc6f27482c503a0fd4"
+    },
+    {
       "path": "skills/blocker-diagnostician/integration/provider-result.v1.schema.json",
       "sha256": "sha256:00d317e9b1a0ede9f27927d49663c7179189722e6545e76d4e43b828fdacb181"
     },
@@ -358,12 +374,24 @@
       "sha256": "sha256:5495ea406196ea120bd6a237fa5db22c152c26beac84d276cf09080404a6039c"
     },
     {
+      "path": "skills/change-scope-guardian/contracts/change-scope-request.v1.schema.json",
+      "sha256": "sha256:42e658217660fa7e21e102d8fca570461edc3ab5bf83a8588f871f5c3c9d4571"
+    },
+    {
+      "path": "skills/change-scope-guardian/contracts/upstream/task-envelope.v1.schema.json",
+      "sha256": "sha256:b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21"
+    },
+    {
       "path": "skills/change-scope-guardian/contracts/workspace-baseline.v1.schema.json",
       "sha256": "sha256:e45fa635212cc86c49f62818181f90f06f014c3533d7e74f2929f66608b36452"
     },
     {
       "path": "skills/change-scope-guardian/integration/provider-result.v1.schema.json",
       "sha256": "sha256:7142aa17f93e7b50d2149dc002bb8c6a1ce9dd66a40ea181763f5158b1f9c6d1"
+    },
+    {
+      "path": "skills/codex-token-usage-analyzer/contracts/token-usage-report-request.v1.schema.json",
+      "sha256": "sha256:e9d418c702b8f764e515a925f5511d6203c37d13d23c130e3b9df86472a838b4"
     },
     {
       "path": "skills/codex-token-usage-analyzer/contracts/token-usage-report.v1.schema.json",
@@ -430,8 +458,28 @@
       "sha256": "sha256:688978a175889003c7e8e1fc4bb6efc775172d0e670a2c51a8c39e3eee8b57e1"
     },
     {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-aggregate-claim.v1.schema.json",
+      "sha256": "sha256:996dfacc6fcfab1c850120e33c2977403338f24c494fd83860ae6d6f01d627d0"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-case-record.v1.schema.json",
+      "sha256": "sha256:166e0c016b953dc1df0ea930afea3781d27cd03c23eb90cbafc0b9c5251fbb86"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-result-record.v1.schema.json",
+      "sha256": "sha256:71228eda30ffb78e6fc9a9583a1934e3cdf5bee531dfedf455fc30c60a57f581"
+    },
+    {
       "path": "skills/evaluation-validity-auditor/contracts/evaluation-validity-report.v1.schema.json",
       "sha256": "sha256:fc67b9e7fccbe99c4d0c0f2895a654ab5669122043336debc4837b807ba10f0a"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-validity-request.v1.schema.json",
+      "sha256": "sha256:e6976558c876e8b6a299036ea8411bb6b5c9bd7d2c58198fdb312e0babacb767"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-validity-validation.v1.schema.json",
+      "sha256": "sha256:eeb42567f3602158c15aff5b19e8793fac37e482f974a2cd015ad676f80386e0"
     },
     {
       "path": "skills/evaluation-validity-auditor/integration/provider-result.v1.schema.json",
@@ -442,12 +490,24 @@
       "sha256": "sha256:af181dcd574356dff20136b08af527eb9e1f0a0d47a371a087791f87179735a3"
     },
     {
+      "path": "skills/instruction-scope-resolver/contracts/instruction-scope-request.v1.schema.json",
+      "sha256": "sha256:e53189bb093e631abe8a162ac8c61a807b6b962d9d2f5cd3c4b1d9d83703b1b8"
+    },
+    {
       "path": "skills/instruction-scope-resolver/contracts/instruction-scope-resolution.v1.schema.json",
       "sha256": "sha256:fa7e89a1aa9b4874d0d6d98d51fd3366e3871a2d8daf66c958bd36073815dee2"
     },
     {
       "path": "skills/instruction-scope-resolver/integration/provider-result.v1.schema.json",
       "sha256": "sha256:17517fb4a61fa6eda8322d566b48b3d2cd1d6be8c7cc1a27ac2024e9c6b93771"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/contracts/iteration-frame-audit-request.v1.schema.json",
+      "sha256": "sha256:5a13e78ed8c170a5e25d42564df1aa4bb40464c5851c8c8edd0b8206dd88d08f"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/contracts/iteration-frame-comparison.v1.schema.json",
+      "sha256": "sha256:9c114f04bed89dbeab7245e4e13661b903df0f273f3e153bda3494a6809e71d2"
     },
     {
       "path": "skills/korean-prose-editor/contracts/edit-candidate.v1.schema.json",
@@ -462,12 +522,60 @@
       "sha256": "sha256:3cee16cadb97f532d1a6416c623510b5d338465fbc0c742c8fe2e3992dc7ef95"
     },
     {
+      "path": "skills/korean-prose-editor/contracts/editing-draft.v1.schema.json",
+      "sha256": "sha256:5819c6be58cde00623b18f82bf4b2389d9340369ecf70510e937fedcbac7acd8"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/editing-work-product.v1.schema.json",
+      "sha256": "sha256:fd2cd013431c46e54324c43e5012635ac12731dc9d8b3716d2f43f125f9ad2e3"
+    },
+    {
       "path": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
       "sha256": "sha256:19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9"
     },
     {
+      "path": "skills/korean-prose-editor/contracts/finalization-request.schema.json",
+      "sha256": "sha256:79f4dc6d10d037288a698814400514a710692e432905a6d2ca56cea707c03f79"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/glossary-binding.v1.schema.json",
+      "sha256": "sha256:ac67afeff4d6844a64514bab3c17a5dffdba3172d1d4db79f726f1422e4a5ec3"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/glossary-match-set.v1.schema.json",
+      "sha256": "sha256:44fb2ad4b377cc48594daa9d89d82a8dc677b7ef04f8dd28335454b1d10da04e"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/protected-manifest.schema.json",
+      "sha256": "sha256:cad9ae7bb477bfa2fc4bfc71adef5749f9d7be9eb89aaa1c147d388374fef395"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/provider-plan.schema.json",
+      "sha256": "sha256:b52bd05b1682add3736122b079af6be0e29db1686a0715d6decb72febe589269"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/receipt.schema.json",
+      "sha256": "sha256:3b6605f74e6bf88e2930f0e8eb99f2e5678f66b03ff459d083b178bbcbe8f6bd"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/selection-work-product.v1.schema.json",
+      "sha256": "sha256:a3c48d8e260170034b86b5abe7719a00989bedada184112626e5eee6a162f970"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/source-unit-manifest.v1.schema.json",
+      "sha256": "sha256:a51b3dfd6cf54bcac1f31f2848aecfd5dfc1816156efb7bf65a5441817243241"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/verification-work-product.v1.schema.json",
+      "sha256": "sha256:3e771ac4ce0e9da64303afea9665b977b3069daf66adebbfc533488ddf930073"
+    },
+    {
       "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
       "sha256": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+    },
+    {
+      "path": "skills/korean-prose-editor/integration/skill-descriptor.v2.schema.json",
+      "sha256": "sha256:ff6c893da551709fead4ce14ad16c37b86c27443d1b7d98ed01359ca3fff36a4"
     },
     {
       "path": "skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3",
@@ -478,16 +586,36 @@
       "sha256": "sha256:7150d4f934f9a9422c31fc9f94b7bd7d6b1ac1e6bd029233293c40c658c693fe"
     },
     {
+      "path": "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json",
+      "sha256": "sha256:b66cf7e41d10d5808dafecea3f8df147e029952d5a0b46a2013841ca1a45452c"
+    },
+    {
       "path": "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json",
       "sha256": "sha256:4e6f86d0baf672ef0bd83a4a9c592bd8ec5dcab1f342071372908f52e5217fde"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/contracts/upstream/task-envelope.v1.schema.json",
+      "sha256": "sha256:b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21"
     },
     {
       "path": "skills/mutation-risk-preflight/integration/provider-result.v1.schema.json",
       "sha256": "sha256:0fa638d22b6a37ac9e585597b1ddd985de4562756e1a14b9076875dee154e311"
     },
     {
+      "path": "skills/orchestrator/contracts/collaboration-decision.v1.schema.json",
+      "sha256": "sha256:f27d20be8d5269b99534bcde02846d13a586137c362840fdc5ad1856b502cd5f"
+    },
+    {
       "path": "skills/recovery-strategy-selector/contracts/recovery-handoff.v1.schema.json",
       "sha256": "sha256:c8a063c6e34c303c343c067d3f453b72739952fe34eb2e6f8e5eb125630e318e"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/contracts/recovery-strategy-selection-request.v1.schema.json",
+      "sha256": "sha256:062e5210736afa8c96f99e9015879f38860ef29a7f2e739a62a59d0a750a4a4d"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/contracts/recovery-task-binding-report.v1.schema.json",
+      "sha256": "sha256:77425da5b6e8d7ea78e99a4c8081797d52c1f01969d63f8ab8bc4c079e881829"
     },
     {
       "path": "skills/recovery-strategy-selector/integration/provider-result.v1.schema.json",
@@ -502,12 +630,32 @@
       "sha256": "sha256:12ed15bc510ceae9411db7e0101722b862965aa495c6233a5a29390e29e500fb"
     },
     {
+      "path": "skills/software-security-auditor/contracts/security-audit-request.v1.schema.json",
+      "sha256": "sha256:a78412985ff35634acba9242be09673ac08f61753d9b1c7b55264ec66995e103"
+    },
+    {
       "path": "skills/software-security-auditor/integration/provider-result.v1.schema.json",
       "sha256": "sha256:9067e06f1b36f22a3f10c99777f3a35d1dc10cd128537053982826e2248105a5"
     },
     {
+      "path": "skills/task-contract/contracts/acceptance-evidence-plan.v1.schema.json",
+      "sha256": "sha256:77fe7a7280904046d2b372a75db5ac38a76e148f878dd8f853f69e49bcb1d8b4"
+    },
+    {
       "path": "skills/task-contract/contracts/task-contract-report.v1.schema.json",
       "sha256": "sha256:ce5263ec3d1edc13f0461b4ac012989623808cc0bd6dd759456d107a34104dbd"
+    },
+    {
+      "path": "skills/task-contract/contracts/task-contract-request.v1.schema.json",
+      "sha256": "sha256:e6393d9b242730f9bc1dec0fd1a8ab16028f894f342e84e0799462d0bdc279e6"
+    },
+    {
+      "path": "skills/task-contract/contracts/task-contract-validation.v1.schema.json",
+      "sha256": "sha256:54b7b67a4439b5a8c6f8079d44d1ecc91efea89fa0e5b4b80596d846852a38b3"
+    },
+    {
+      "path": "skills/task-contract/contracts/upstream/task-envelope.v1.schema.json",
+      "sha256": "sha256:b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21"
     },
     {
       "path": "skills/task-contract/integration/provider-result.v1.schema.json",
@@ -516,6 +664,10 @@
     {
       "path": "skills/workspace-convention-profiler/contracts/workspace-convention-profile.v1.schema.json",
       "sha256": "sha256:abffbd137671292de90000a62e4d3425eece203a6914a87defada2cf71a9e7bf"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/contracts/workspace-profile-request.v1.schema.json",
+      "sha256": "sha256:775c90d3367a75d7ac96a7884486e3fe657a6c1a18b129f81d284f008467464d"
     },
     {
       "path": "skills/workspace-convention-profiler/integration/provider-result.v1.schema.json",
@@ -611,13 +763,20 @@
         "mcp-server/dist/server.mjs",
         "mcp-server/dist/session-message-broker.mjs",
         "runtime/schema-validation.mjs",
+        "skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json",
         "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
+        "skills/acceptance-evidence-validator/contracts/acceptance-report-validation.v1.schema.json",
+        "skills/acceptance-evidence-validator/contracts/upstream/task-envelope.v1.schema.json",
         "skills/acceptance-evidence-validator/integration/provider-result.v1.schema.json",
         "skills/blocker-diagnostician/contracts/diagnosis-report.v1.schema.json",
+        "skills/blocker-diagnostician/contracts/failure-episode-set.v1.schema.json",
         "skills/blocker-diagnostician/integration/provider-result.v1.schema.json",
         "skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json",
+        "skills/change-scope-guardian/contracts/change-scope-request.v1.schema.json",
+        "skills/change-scope-guardian/contracts/upstream/task-envelope.v1.schema.json",
         "skills/change-scope-guardian/contracts/workspace-baseline.v1.schema.json",
         "skills/change-scope-guardian/integration/provider-result.v1.schema.json",
+        "skills/codex-token-usage-analyzer/contracts/token-usage-report-request.v1.schema.json",
         "skills/codex-token-usage-analyzer/contracts/token-usage-report.v1.schema.json",
         "skills/codex-token-usage-analyzer/integration/provider-result.v1.schema.json",
         "skills/coordinate-subagents/references/model-catalog/hosts.json",
@@ -634,28 +793,59 @@
         "skills/coordinate-subagents/references/model-catalog/pricing/anthropic-2026-09-23.json",
         "skills/coordinate-subagents/references/model-catalog/role-presets/opus55-balanced.v1.json",
         "skills/coordinate-subagents/references/model-catalog/sources.json",
+        "skills/evaluation-validity-auditor/contracts/evaluation-aggregate-claim.v1.schema.json",
+        "skills/evaluation-validity-auditor/contracts/evaluation-case-record.v1.schema.json",
+        "skills/evaluation-validity-auditor/contracts/evaluation-result-record.v1.schema.json",
         "skills/evaluation-validity-auditor/contracts/evaluation-validity-report.v1.schema.json",
+        "skills/evaluation-validity-auditor/contracts/evaluation-validity-request.v1.schema.json",
+        "skills/evaluation-validity-auditor/contracts/evaluation-validity-validation.v1.schema.json",
         "skills/evaluation-validity-auditor/integration/provider-result.v1.schema.json",
         "skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json",
+        "skills/instruction-scope-resolver/contracts/instruction-scope-request.v1.schema.json",
         "skills/instruction-scope-resolver/contracts/instruction-scope-resolution.v1.schema.json",
         "skills/instruction-scope-resolver/integration/provider-result.v1.schema.json",
+        "skills/iteration-frame-auditor/contracts/iteration-frame-audit-request.v1.schema.json",
+        "skills/iteration-frame-auditor/contracts/iteration-frame-comparison.v1.schema.json",
         "skills/korean-prose-editor/contracts/edit-candidate.v1.schema.json",
         "skills/korean-prose-editor/contracts/edit-decision-set.v1.schema.json",
         "skills/korean-prose-editor/contracts/edit-verification-report.v1.schema.json",
+        "skills/korean-prose-editor/contracts/editing-draft.v1.schema.json",
+        "skills/korean-prose-editor/contracts/editing-work-product.v1.schema.json",
         "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+        "skills/korean-prose-editor/contracts/finalization-request.schema.json",
+        "skills/korean-prose-editor/contracts/glossary-binding.v1.schema.json",
+        "skills/korean-prose-editor/contracts/glossary-match-set.v1.schema.json",
+        "skills/korean-prose-editor/contracts/protected-manifest.schema.json",
+        "skills/korean-prose-editor/contracts/provider-plan.schema.json",
+        "skills/korean-prose-editor/contracts/receipt.schema.json",
+        "skills/korean-prose-editor/contracts/selection-work-product.v1.schema.json",
+        "skills/korean-prose-editor/contracts/source-unit-manifest.v1.schema.json",
+        "skills/korean-prose-editor/contracts/verification-work-product.v1.schema.json",
         "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+        "skills/korean-prose-editor/integration/skill-descriptor.v2.schema.json",
         "skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3",
         "skills/model-effort-advisor/contracts/model-effort-advice.v1.schema.json",
+        "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json",
         "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json",
+        "skills/mutation-risk-preflight/contracts/upstream/task-envelope.v1.schema.json",
         "skills/mutation-risk-preflight/integration/provider-result.v1.schema.json",
+        "skills/orchestrator/contracts/collaboration-decision.v1.schema.json",
         "skills/recovery-strategy-selector/contracts/recovery-handoff.v1.schema.json",
+        "skills/recovery-strategy-selector/contracts/recovery-strategy-selection-request.v1.schema.json",
+        "skills/recovery-strategy-selector/contracts/recovery-task-binding-report.v1.schema.json",
         "skills/recovery-strategy-selector/integration/provider-result.v1.schema.json",
         "skills/registry.json",
         "skills/software-security-auditor/contracts/security-audit-report.v1.schema.json",
+        "skills/software-security-auditor/contracts/security-audit-request.v1.schema.json",
         "skills/software-security-auditor/integration/provider-result.v1.schema.json",
+        "skills/task-contract/contracts/acceptance-evidence-plan.v1.schema.json",
         "skills/task-contract/contracts/task-contract-report.v1.schema.json",
+        "skills/task-contract/contracts/task-contract-request.v1.schema.json",
+        "skills/task-contract/contracts/task-contract-validation.v1.schema.json",
+        "skills/task-contract/contracts/upstream/task-envelope.v1.schema.json",
         "skills/task-contract/integration/provider-result.v1.schema.json",
         "skills/workspace-convention-profiler/contracts/workspace-convention-profile.v1.schema.json",
+        "skills/workspace-convention-profiler/contracts/workspace-profile-request.v1.schema.json",
         "skills/workspace-convention-profiler/integration/provider-result.v1.schema.json"
       ]
     }
