@@ -1,0 +1,81 @@
+## r1-live drafts (untracked, not committed) sha256
+1f10e1bc73df82b1a433e31e3ebe38359a3715e00ad77ef6029be733c7dc4fd8  r1-live/checksums.txt
+c769bee042cd201dbd82f50e054c82ee0d59fd79a53b967ed3d3a67d1d94f4d1  r1-live/install-manifest.txt
+bab5ae6f30ab015f9e76c76c8c11ff50bb4a663fd55f907d2a8159e7df4f4779  r1-live/inventory.tsv
+e822e6de26a28d30b7dd1ff485e20469689b187dc9d51d184197ae328cf289f6  r1-live/live-test.txt
+a9f739eecbfd3d5a7438de139358da29fdcac9ff6d703d8d463f9c16b8277fe9  r1-live/nobody-probe.txt
+0a4ce5b2e82df9730e8ce8aaa48881cd490c822470256adaa5ed59658dab6162  r1-live/package-set.txt
+bb7c818ca830111a7aee46bead8e427ad154211f03a7f2565db2a9d93aea976e  r1-live/provenance.txt
+9995b23a0305bdecef4fb5b8983aaccc309a443f6f5895110c992677dd55cb91  r1-live/release-id.txt
+
+## r1-live/checksums.txt vs r3-live/checksums.txt: 16 differing lines
+< ## sha256sum release inputs, extracted node, installed files
+> $ sha256sum /root/b3bf/in/node-v24.21.0-linux-x64.tar.xz /root/b3bf/in/SHASUMS256.txt /root/b3bf/in/SHASUMS256.txt.sig /root/b3bf/in/nodejs-release-keyring.kb
+< ## git cat-file blob 0724bb2b:host-integration.json | sha256sum
+> exit=0
+>
+> $ git cat-file blob 0724bb2bc452626aba546a57d1db5c407d32feb0:host-integration.json | sha256sum
+< ## gpgv --status-fd 1 --keyring ./nodejs-release-keyring.kbx ./SHASUMS256.txt.sig ./SHASUMS256.txt (GOODSIG/VALIDSIG lines)
+> exit=0
+
+## r1-live/inventory.tsv vs r3-live/inventory.tsv: 0 differing lines
+
+## r1-live/nobody-probe.txt vs r3-live/nobody-probe.txt: 36 differing lines
+< ## setpriv --reuid=65534 --regid=65534 --clear-groups /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113
+> $ setpriv --reuid=65534 --regid=65534 --clear-groups id
+> uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
+> exit=0
+>
+> $ setpriv --reuid=65534 --regid=65534 --clear-groups /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c
+< link /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node -> /tmp/ags-b3b-r1-ev-401	EPE
+< probe exit=0
+
+## r1-live/package-set.txt vs r3-live/package-set.txt: 19 differing lines
+< ## diff <(host-integration.json + artifacts[].path | sort) <(find R/package -type f | sort)
+< diff exit=0
+< ## expected entries / actual files
+> $ diff <( (echo host-integration.json; node -e 'for (const a of JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).artifacts) console.log(a.path)'
+> exit=0
+>
+> $ cd /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package && find . -type f | wc -l
+< 179
+
+## r1-live/provenance.txt vs r3-live/provenance.txt: 86 differing lines
+< ## date -u
+< Thu Sep 24 17:24:10 UTC 2026
+< ## boot_id
+< 4b534739-e650-4cf6-aa39-87e35064e962
+< ## uname -srm
+> $ date -u
+> Thu Sep 24 20:54:20 UTC 2026
+> exit=0
+
+## r1-live/release-id.txt vs r3-live/release-id.txt: 12 differing lines
+< ## preimage (printf 'ags-protected-node-closure/v2\nlinux-x64\n24.21.0\n<archiveSha256>\n<hostIntegrationSha256>\n') | od -c
+> $ printf 'ags-protected-node-closure/v2\nlinux-x64\n24.21.0\nfd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6\n648dddda453db17832a776a6d381a74
+< ## preimage | sha256sum
+> exit=0
+>
+> $ printf 'ags-protected-node-closure/v2\nlinux-x64\n24.21.0\nfd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6\n648dddda453db17832a776a6d381a74
+< ## ls /usr/lib/agent-governance-suite/protected-runtime
+> exit=0
+
+## r1-live/live-test.txt vs r3-live/live-test.txt: 27 differing lines
+< ## copy of /root/b3bf/r1/live-run.txt (16:50 UTC live run that installed the root)
+> $ AGS_V06_B3B_R4_LIVE=1 AGS_V06_B3B_FIXTURE_PARENT=/root/b3bf/r3/fx AGS_V06_B3B_PROTECTED_INSTALL=1 AGS_V06_B3A_INPUT_DIR=/root/b3bf/in AGS_V06_B3A_GPGV=/usr/
+> V06-b3b-r4 mount probe {"baseline":"ACCEPTED","sameDeviceMountinfo":["76 50 254:0 /root/b3bf/r3/fx/r4-MGdIA8/usr/lib/agent-governance-suite/protected-runtime/
+> V06-b3b-r4 live {"legacy":{"dev":"65024","ino":"516804","size":"126595440","mode":"555","uid":0,"gid":0,"nlink":1,"mtimeNs":"1790262265969720838","ctimeNs":"1
+> V06-b3b-r2 live {"id":"32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd","hostIntegrationSha256":"648dddda453db17832a776a6d381a747d7af851c2594
+<  Test Files  2 passed (2)
+<       Tests  15 passed (15)
+<    Start at  16:51:01
+
+## r1-live/install-manifest.txt (sha line + copy) vs r3-live/install-manifest-r1.txt
+checksums.txt hex-value-set r1=982fe9fc5174 r3=982fe9fc5174 SAME
+release-id.txt hex-value-set r1=7a19acb307e6 r3=7a19acb307e6 SAME
+package-set.txt hex-value-set r1=e3b0c44298fc r3=a2135de55dad DIFF
+manifest body: `tail -n +4 r1-live/install-manifest.txt | cmp - r3-live/install-manifest-r1.txt` -> identical (r1-live prefixes a sha256 line and two headers)
+package-set.txt hex DIFF: r1-live had no 64-hex value; r3-live prints the command text, which contains the root path 32a825d9... (not a value difference). diff 0 lines and 0 digest mismatches in both.
+classification: inventory.tsv identical; checksums.txt and release-id.txt carry the same hash set; nobody errnos identical (13 EACCES + 1 EPERM for the same 14 attempts; r3 adds the CLI EACCES line and non-root mount attempts);
+remaining line differences are expected: r3 wraps each command as "$ cmd" + "exit=N", times, boot_id, vitest durations, fixture names, /tmp link pid, and r3 adds r2/r4 tests to live-test (25 tests vs r1-live's 15).
+no substantive difference found. r1-live drafts stay untracked and are not evidence of record.

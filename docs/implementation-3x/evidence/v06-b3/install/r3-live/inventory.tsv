@@ -1,0 +1,253 @@
+path	type	uid	gid	mode	ino	nlink	size	sha256
+/	directory	0	0	755	2	21	4096	-
+/usr	directory	0	0	755	193	12	4096	-
+/usr/lib	directory	0	0	755	308	53	4096	-
+/usr/lib/agent-governance-suite	directory	0	0	755	516801	3	4096	-
+/usr/lib/agent-governance-suite/protected-runtime	directory	0	0	755	516802	4	4096	-
+.	directory	0	0	755	516848	4	4096	-
+./bin	directory	0	0	755	516918	2	4096	-
+./bin/node	regular file	0	0	555	516919	1	126595440	7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c
+./package	directory	0	0	755	516920	7	4096	-
+./package/.codex-plugin	directory	0	0	755	516921	2	4096	-
+./package/.codex-plugin/plugin.json	regular file	0	0	444	516922	1	1605	4ea1b39183abbc1c8f55e0cc752bd9eb5c1484b3df2cbf096082d9f80e75caf8
+./package/.mcp.json	regular file	0	0	444	516923	1	168	47773149e144e64ec56e4d16ed8c5afd188c3d951b44da997e475b9bcc405862
+./package/contracts	directory	0	0	755	516924	2	4096	-
+./package/contracts/acknowledge-session-messages-request.v1.schema.json	regular file	0	0	444	516925	1	881	7da63d13eccfc731e6ba75ea717c806b3ab542a486d3357795bac0aa20f0fcfd
+./package/contracts/api-result.v1.schema.json	regular file	0	0	444	516926	1	1219	18aadedaaa4c465771316a1889c0affea108344ce96ccbc615d35830869585c4
+./package/contracts/artifact-ref.v1.schema.json	regular file	0	0	444	516927	1	976	4ce69d3eee792fc5575f715c177794a38b20f8176b8951b532938c578578228b
+./package/contracts/attempt-lease.v1.schema.json	regular file	0	0	444	516928	1	1827	d3f9c2ab46cdaf028c38933ab8ef1d894fefadb22b9d9f1a57ff40b59dd5792c
+./package/contracts/attempt-outcome.v1.schema.json	regular file	0	0	444	516929	1	1410	ea7ed1ba82d56885dd0395cac21d5db9645b2ac92587596e126b510236120d7e
+./package/contracts/attempt-proposal.v1.schema.json	regular file	0	0	444	516930	1	1750	8b0390cc58e2a302db18542b30764f4fc6d69db86649c9ab25f79fef01878b97
+./package/contracts/checkpoint-context-request.v1.schema.json	regular file	0	0	444	516931	1	2114	67ed949d981463c3ade41aaa9e1865af3c14251e201072549032d1ccda07c12f
+./package/contracts/checkpoint-delta.v1.schema.json	regular file	0	0	444	516932	1	5802	8f47718fd5df307a660f105dc88686f8fead42a6c459ad9b309d8ceb49ae911c
+./package/contracts/convergence-frame.v1.schema.json	regular file	0	0	444	516933	1	2441	5e08011cb89fed1776a7b7d78af904ec5ddeb05c93aa3f1d4ea3c03ecfbfb7f4
+./package/contracts/convergence-review.v1.schema.json	regular file	0	0	444	516934	1	2291	6eb3657e24798f315c64a8cc974c7d9a4637eed1bfe122f3011cb76f1e59099f
+./package/contracts/convergence-root-handle.v1.schema.json	regular file	0	0	444	516935	1	1152	2e66ad7bac64f470c1c880cb059d7c71aad470cc9f70fb0aa2975182f779970a
+./package/contracts/convergence-root.v1.schema.json	regular file	0	0	444	516936	1	2500	bb570350115827a10cdef4f6962a071712d4befe45633c29e2a6e703e1f6ee50
+./package/contracts/convergence-status-summary.v1.schema.json	regular file	0	0	444	516937	1	2229	1059d88b4738ed4190465b707572c77ffb3d5fe253b9698e3b060268a0794382
+./package/contracts/convergence-status.v1.schema.json	regular file	0	0	444	516938	1	2465	9915044c6b07fc2dcac0e494c2e2b6a9b7a5275aced35c11294c175e1852aa61
+./package/contracts/execute-state-cleanup-request.v1.schema.json	regular file	0	0	444	516939	1	377	0d283e4601ac4703ef5d47b6cdb4e1dd2152c6ceb4bb4738c889302da010f3ac
+./package/contracts/execution-context.v1.schema.json	regular file	0	0	444	516940	1	1886	92ecf50d3e97e85f32c5b58fa0e4b43dea761a7cc25fc521789a60a3e1690002
+./package/contracts/execution-requirement.v1.schema.json	regular file	0	0	444	516941	1	2161	ddcf28709bbfccb5c16e38130053729c7c3b0c03f5c2e2070e1bb7f0acde14c8
+./package/contracts/freeform-output.v1.schema.json	regular file	0	0	444	516942	1	235	623de96ffedcfd5fd0084b524832e7d5072645f82264be3e706e0977201f1386
+./package/contracts/get-session-message-status-request.v1.schema.json	regular file	0	0	444	516943	1	758	852320fdd556ac8cd00f8b496fd7d6d0835f7a613eaf457d4cb710aa6d56a8c7
+./package/contracts/guarded-workflow-start-request.v1.schema.json	regular file	0	0	444	516944	1	607	e589a4136a096f2cf2aa02d5a8f210ad1d38c97e5de05af8e33480cdad262a1b
+./package/contracts/host-integration.v1.schema.json	regular file	0	0	444	516945	1	4806	f3685ca745a79e749aac29eab647095ac411d4185b008cf0e3207f82aca407de
+./package/contracts/host-model-capabilities.v1.schema.json	regular file	0	0	444	516946	1	8829	acd9b60ca6d2149768b3efaeadc9d015beb046607649d9e29b2b3c225d0282a4
+./package/contracts/input-source-receipt.v1.schema.json	regular file	0	0	444	516947	1	2022	d19a6c7ad885300930929b4593a2ea785fc9e74812785f240fed99835567ecdd
+./package/contracts/inspect-context-request.v1.schema.json	regular file	0	0	444	516948	1	428	145117225e0ee8af7ddfe00f37abbacc9daac0c1cf4dbecbf50e328552153d09
+./package/contracts/korean-prose-evaluation-final.v1.schema.json	regular file	0	0	444	516949	1	644	7948f04b977ce5d7ea92290ccdee082cfcd811663245179d9396741156969922
+./package/contracts/korean-prose-evaluation-frame.v1.schema.json	regular file	0	0	444	516950	1	5142	906a6d03c30efd7582817f76857a0e94fe4d51cdaad46861293b2fa780715ddb
+./package/contracts/korean-prose-evaluation-input.v1.schema.json	regular file	0	0	444	516951	1	551	710aec9da229d77e7160b9d6dffee77d00b9352c91b0f009f87da779020f3097
+./package/contracts/korean-prose-evaluation-validity-report.v1.schema.json	regular file	0	0	444	516952	1	2628	6a101da370b3a33547d169fdc18e41d2fa18aa89c7c83f34145d74ff4809f0a3
+./package/contracts/korean-prose-glossary-lookup-request.v1.schema.json	regular file	0	0	444	516953	1	507	643237e077c348962b4d27aa669745b419d1334014a20b3b3c6f407ffe2a81f2
+./package/contracts/korean-prose-glossary-lookup-result.v1.schema.json	regular file	0	0	444	516954	1	2132	527652124eb450bb67376d5daf0f4934f362f1f55f304aaa2cdf0eaf16711b31
+./package/contracts/korean-prose-quality-adjudication-input.v1.schema.json	regular file	0	0	444	516955	1	626	5381ae88a5afd7b654bb667d536e443d420e8b12009c835d3d22500ff54cfd2f
+./package/contracts/korean-prose-quality-adjudication-meta.v1.schema.json	regular file	0	0	444	516956	1	1968	059a7cf7d3536b31fed73e3fc196222b4727effbdcb0338efff53bd9a643e5fc
+./package/contracts/korean-prose-quality-adjudication.v1.schema.json	regular file	0	0	444	516957	1	1528	2040210a4b5c2a52d522cd6cb749ccfb9967a5a94be415f8709a40b694eb68a2
+./package/contracts/korean-prose-quality-report.v1.schema.json	regular file	0	0	444	516958	1	2302	94395f9e6dc0040fc6b74569fc112687b00489199e6e92503e38cd0fcee8e8c3
+./package/contracts/korean-prose-receipt-binding.v1.schema.json	regular file	0	0	444	516959	1	1150	1825d1e6a2a446e37aa6e656c8cc4ae26f6a48b6121d9ab705c7c252bae59401
+./package/contracts/list-session-status-request.v1.schema.json	regular file	0	0	444	516960	1	624	b06939c80a8d92d5f2a5a858d5a02b5c47d04530b825beebea6fa6a2e20c5164
+./package/contracts/load-context-request.v1.schema.json	regular file	0	0	444	516961	1	707	f2662bd1036517483b676d03fa4bb360debe866f045960a347181a0c1848a23b
+./package/contracts/model-application-record.v2.schema.json	regular file	0	0	444	516962	1	10861	17c1c2a499aa1bbe8211e8296719bc9dbad1ed1bfb9aba7c75c209d58d9d1014
+./package/contracts/model-application-record.v3.schema.json	regular file	0	0	444	516963	1	4260	e19aa03d35604fca49cbc754694968029b67a28459f4515359d5f469e43df5de
+./package/contracts/model-application-request.v2.schema.json	regular file	0	0	444	516964	1	8205	5040a147c1eb165b657be56dfd687effe5b363df1af912019d35af0a414b05d0
+./package/contracts/model-application-request.v3.schema.json	regular file	0	0	444	516965	1	1442	648a741ca90d654ae914aeb6b8dc50e27b14d66674fb3a0b14d3f1859c7e9d52
+./package/contracts/model-catalog.v1.schema.json	regular file	0	0	444	516966	1	7697	d5455153e0890851da0fdb76b8a17627788c53bf4c36b83e891fce0423a8b3a4
+./package/contracts/model-evaluation-record.v1.schema.json	regular file	0	0	444	516967	1	9560	f334dff3ee2010561f7a8a69a85cfdf1f0323d972a6433c1c8d9de6a01cd77f6
+./package/contracts/model-routing-decision.v2.schema.json	regular file	0	0	444	516968	1	9097	e4d808b7c8a49f4a6981ac2fb3dde322ed633f2ebe8d08d97fa194e99f0dba49
+./package/contracts/model-routing-decision.v3.schema.json	regular file	0	0	444	516969	1	4407	6737c7e3cabd86c331dd81e4593b1f84b8b83331d4c9d4d27fcb6ef39437b88b
+./package/contracts/model-routing-policy.v1.schema.json	regular file	0	0	444	516970	1	13428	c3bd8d83551297b89e10340135fc2959c357ea4ee7510c895a90440f5dcf9021
+./package/contracts/model-selection-request.v2.schema.json	regular file	0	0	444	516971	1	7849	de3619aa8702d3ee736abf00380cd057e09caef28725f457a1cb66c7887f08b1
+./package/contracts/open-convergence-root-request.v1.schema.json	regular file	0	0	444	516972	1	791	16ddc5ca695028c27c5d811ea89f46efd360e2c6c253929b6502c8cd6a5a8253
+./package/contracts/plan-workflow-request.v1.schema.json	regular file	0	0	444	516973	1	1637	eab50be7cc2995cdb1d9227f479349fc62fd95250253e713ed68736ea592827c
+./package/contracts/plugin-update-notice.v1.schema.json	regular file	0	0	444	516974	1	1249	273bc4b5c5a8a8f4cf51975ce5001a037996acb281408dce074d36eafcd80b8b
+./package/contracts/plugin-update-status.v1.schema.json	regular file	0	0	444	516975	1	1835	98c2dfd30510e5bcc0468c7ef1a75263f50488e2e8d7a18a5f6587de95927ddf
+./package/contracts/prepare-state-cleanup-request.v1.schema.json	regular file	0	0	444	516976	1	302	170cc0dc8314a30afb7e33844c836b077f514df16a5d03ac3d108e5f0aa50d38
+./package/contracts/provider-result.v1.schema.json	regular file	0	0	444	516977	1	1976	e3f643676d09d81b13436e4cac7cfdcbe9517a78b77b2f3bd96c4fa14335b010
+./package/contracts/purge-direct-context-request.v1.schema.json	regular file	0	0	444	516978	1	679	dd16e934f7d05e6bb2d4000a6698d8524639cd242f7d91d74907cf00f66a6cc6
+./package/contracts/resolve-convergence-gate-request.v1.schema.json	regular file	0	0	444	516979	1	610	85ecd73a04932dd62b4b0deb14798fc2ba6308505b3f04803f8833115f125abf
+./package/contracts/resource-policy.v1.schema.json	regular file	0	0	444	516980	1	4279	a197f2f0fcbaae4e840371ad9da0d2802a1555d63589620f1a60075c616f4bf6
+./package/contracts/resource-state-snapshot.v1.schema.json	regular file	0	0	444	516981	1	3855	49053faa84ac4c944110b4cb9e6455cc8039a9d8532b31d105926d3ba82b928b
+./package/contracts/response-mode.v1.schema.json	regular file	0	0	444	516982	1	202	69e52c1587adc8094aaf0bc7f611ab95de6446d2a28216d9eb9c53bbeae468ff
+./package/contracts/role-slot.v1.schema.json	regular file	0	0	444	516983	1	3000	d7a1b03566fb47530f48d33f0bae7cf1be788bfdfbcaf65ba7e4943e49448ee4
+./package/contracts/semantic-decision-advice.v1.schema.json	regular file	0	0	444	516984	1	4804	58bb4b4cc9aac6ccc782aaef3765c972bb2c3a416cca67607ffdedbd0528ddeb
+./package/contracts/semantic-decision-policy.v1.schema.json	regular file	0	0	444	516985	1	8374	e9e765d0103706efffda76695bb68beba435454f88bea15c1c249042803b7601
+./package/contracts/semantic-decision-question.v1.schema.json	regular file	0	0	444	516986	1	980	7b84d516c53d16e4d330e55ea64255148a2dfc18e5f42c17122ead5de10ebb68
+./package/contracts/semantic-decision-request.v1.schema.json	regular file	0	0	444	516987	1	8369	3dfbf014b47f3910efa1f55c90a3ce45811a2464c87de850f8d17394c5b95b87
+./package/contracts/semantic-egress-config.v1.schema.json	regular file	0	0	444	516988	1	3186	ab154503d2fb128876718a3863c5fe59e45edc01ca5372531d42adc37c889b25
+./package/contracts/semantic-model-assignment-request.v1.schema.json	regular file	0	0	444	516989	1	1461	4ea77a320875716531d7160f341734d0f9ab3c970a365a8405edca0975b1d175
+./package/contracts/send-session-message-request.v1.schema.json	regular file	0	0	444	516990	1	1103	908efccc22347f8eed1b8f7460072880ff335368aa5a2d06e8cc0edca6702e68
+./package/contracts/session-task.v1.schema.json	regular file	0	0	444	516991	1	4294	65f12519a58538d1bf24321f30b4cab796312cb0ef18de9b9eecaf9df69db458
+./package/contracts/skill-descriptor.v1.schema.json	regular file	0	0	444	516992	1	1423	e47753988cce5125329a23bfc100c42ab2d0e3762178f4739acef4cead7f7be1
+./package/contracts/skill-descriptor.v2.schema.json	regular file	0	0	444	516993	1	6023	8051e264327b7b22bf07f1a7d2223c426c729d806d8c544209d7c42d075e0872
+./package/contracts/source-lock.v3.schema.json	regular file	0	0	444	516994	1	2902	293b52dc89f12f1ab86bba32bfb75bf9aa9e3354fda8f565b08814c6663f27a0
+./package/contracts/stage-result.v1.schema.json	regular file	0	0	444	516995	1	7820	68718c4119f1a0b59595e3f1c1155e6e1ad4e549a18c5159b551e3427ddb15f0
+./package/contracts/state-cleanup-plan.v1.schema.json	regular file	0	0	444	516996	1	4707	d181fe179da60f543bb7a4b86b2c5675414eb005c744f168448768682c802be7
+./package/contracts/state-cleanup-receipt.v1.schema.json	regular file	0	0	444	516997	1	2036	f26bf486752ccfad99d26fee67519c9a431ca297fe40be87d040a2e53d6d7fc1
+./package/contracts/suppress-context-restore-request.v1.schema.json	regular file	0	0	444	516998	1	520	5207f0699b49801b78f655919fdd46cc6c3f1c63239cb4da368f4a13429299f6
+./package/contracts/task-envelope.v1.schema.json	regular file	0	0	444	516999	1	3037	b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21
+./package/contracts/update-session-status-request.v1.schema.json	regular file	0	0	444	517000	1	737	7ed17df0d22963ab2817d5e88164d37eec1ff448638d9fba8a5d7c28bfd0ac13
+./package/contracts/validate-collaboration-decision-request.v1.schema.json	regular file	0	0	444	517001	1	894	ff8eb9fa40b32746a7e284bf2e5593f3999c9dfa5a541efccea408e742e4f510
+./package/contracts/workflow-plan.v1.schema.json	regular file	0	0	444	517002	1	16414	66ab13d22cc26fc4140a3d36a568fb317391f04cd69860737cfc21b932763aae
+./package/contracts/workflow-receipt.v1.schema.json	regular file	0	0	444	517003	1	2252	d505d98b3b7307318bc05025cfcf36c189fc2a06db65c7ac61c89ce646027c85
+./package/contracts/workflow-status-summary.v1.schema.json	regular file	0	0	444	517004	1	1758	0e88f2023ed6f5377cbeadba4f6b98cef4667873eefedd1537b42bafb1b2d79b
+./package/host-integration.json	regular file	0	0	444	517005	1	47444	648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c
+./package/mcp-server	directory	0	0	755	517006	3	4096	-
+./package/mcp-server/dist	directory	0	0	755	517007	2	4096	-
+./package/mcp-server/dist/flowmarshal-profile-probe.mjs	regular file	0	0	444	517008	1	420583	fc74b2a8bddddabab471a6576e958df2b582e7c20f9ea9dd14679ff2286f82fc
+./package/mcp-server/dist/server.mjs	regular file	0	0	444	517009	1	2055433	4a73280eaf9857c91eac7f0e6ce8fc98030d507b7d0043e2be5eef6fb6ee5977
+./package/mcp-server/dist/session-message-broker.mjs	regular file	0	0	444	517010	1	665176	301f7e5022b97566f0ff06a182c8e58109f999c2bddaf3d72e733f0a4326b698
+./package/runtime	directory	0	0	755	517011	2	4096	-
+./package/runtime/schema-validation.mjs	regular file	0	0	444	517012	1	148397	03996e2281db3e79a86d467e492ca4aaeaf38f89e802313102ffddf738f81e5c
+./package/skills	directory	0	0	755	517013	19	4096	-
+./package/skills/acceptance-evidence-validator	directory	0	0	755	517014	5	4096	-
+./package/skills/acceptance-evidence-validator/contracts	directory	0	0	755	517015	3	4096	-
+./package/skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json	regular file	0	0	444	517016	1	3357	d41effd0fd54209b295f75d233d19fb6fab5864a052de70b1272f6dd203e092c
+./package/skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json	regular file	0	0	444	517017	1	2837	cf22e268b09e823e25b74f2ee3da74de103f3a00b8a672409b2bec6580fe6507
+./package/skills/acceptance-evidence-validator/contracts/acceptance-report-validation.v1.schema.json	regular file	0	0	444	517018	1	1112	3062feb742fc20f846dccf7002a2edae74e2bd9b10dba4f2d8937d0775880f32
+./package/skills/acceptance-evidence-validator/contracts/upstream	directory	0	0	755	517019	2	4096	-
+./package/skills/acceptance-evidence-validator/contracts/upstream/task-envelope.v1.schema.json	regular file	0	0	444	517020	1	3037	b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21
+./package/skills/acceptance-evidence-validator/integration	directory	0	0	755	517021	2	4096	-
+./package/skills/acceptance-evidence-validator/integration/provider-result.v1.schema.json	regular file	0	0	444	517022	1	2031	708c3cf8b44b05bc1a81ea3290982bd81053a442f8a07eeb1eee2f656b860800
+./package/skills/acceptance-evidence-validator/scripts	directory	0	0	755	517023	2	4096	-
+./package/skills/acceptance-evidence-validator/scripts/cli.mjs	regular file	0	0	444	517024	1	557	296b2a8d0eb3690f69538e2cc1693e0129af3b2a95d6c9792d88ae2821fa6e9c
+./package/skills/acceptance-evidence-validator/scripts/core.mjs	regular file	0	0	444	517025	1	22291	0a340ef81cafbc1d08edfdd042480d14ede06fbce407417be6d4def4ca7a4216
+./package/skills/acceptance-evidence-validator/scripts/io.mjs	regular file	0	0	444	517026	1	631	f04aacb1603b18aa3b431cbcc96eb7f815ee7af9ece586d3e7c1221149f78dc0
+./package/skills/acceptance-evidence-validator/scripts/schema-validation.mjs	regular file	0	0	444	517027	1	1651	f6870594c5c16bac20adaa2c6e9dcbdf2e4804c5922fd591c6ef030ee6495c44
+./package/skills/blocker-diagnostician	directory	0	0	755	517028	4	4096	-
+./package/skills/blocker-diagnostician/contracts	directory	0	0	755	517029	2	4096	-
+./package/skills/blocker-diagnostician/contracts/diagnosis-report.v1.schema.json	regular file	0	0	444	517030	1	3527	ce04ec2821fb07ebc66373b3783165c461758ac30437d401171fc43c0a07fba0
+./package/skills/blocker-diagnostician/contracts/failure-episode-set.v1.schema.json	regular file	0	0	444	517031	1	8098	646601a2450a99b3748f56e152a81257c3fcd9d928f0c4cc6f27482c503a0fd4
+./package/skills/blocker-diagnostician/integration	directory	0	0	755	517032	2	4096	-
+./package/skills/blocker-diagnostician/integration/provider-result.v1.schema.json	regular file	0	0	444	517033	1	2023	00d317e9b1a0ede9f27927d49663c7179189722e6545e76d4e43b828fdacb181
+./package/skills/change-scope-guardian	directory	0	0	755	517034	5	4096	-
+./package/skills/change-scope-guardian/contracts	directory	0	0	755	517035	3	4096	-
+./package/skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json	regular file	0	0	444	517036	1	2566	5495ea406196ea120bd6a237fa5db22c152c26beac84d276cf09080404a6039c
+./package/skills/change-scope-guardian/contracts/change-scope-request.v1.schema.json	regular file	0	0	444	517037	1	1295	42e658217660fa7e21e102d8fca570461edc3ab5bf83a8588f871f5c3c9d4571
+./package/skills/change-scope-guardian/contracts/upstream	directory	0	0	755	517038	2	4096	-
+./package/skills/change-scope-guardian/contracts/upstream/task-envelope.v1.schema.json	regular file	0	0	444	517039	1	3037	b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21
+./package/skills/change-scope-guardian/contracts/workspace-baseline.v1.schema.json	regular file	0	0	444	517040	1	1757	e45fa635212cc86c49f62818181f90f06f014c3533d7e74f2929f66608b36452
+./package/skills/change-scope-guardian/integration	directory	0	0	755	517041	2	4096	-
+./package/skills/change-scope-guardian/integration/provider-result.v1.schema.json	regular file	0	0	444	517042	1	1852	7142aa17f93e7b50d2149dc002bb8c6a1ce9dd66a40ea181763f5158b1f9c6d1
+./package/skills/change-scope-guardian/scripts	directory	0	0	755	517043	2	4096	-
+./package/skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs	regular file	0	0	444	517044	1	339	c7f6b887fa94697434568ed987b66d81525841949bf64ebfdadcc6f5dcecfe69
+./package/skills/change-scope-guardian/scripts/compare-change-scope.mjs	regular file	0	0	444	517045	1	332	017e03abb617f5fa9d582e1b812b78f1dfa570e411970ae9aa6afb4a67b9e1ba
+./package/skills/change-scope-guardian/scripts/lib.mjs	regular file	0	0	444	517046	1	21823	0fa25746036db845760c61a41a53dcbb012c40ec310640a1ef5a3a993c500562
+./package/skills/change-scope-guardian/scripts/schema-validator.mjs	regular file	0	0	444	517047	1	1289	53165cecfb1dc4e1d78317d88e04f0c9e938ded84bd4ba96bda57178923e6238
+./package/skills/codex-token-usage-analyzer	directory	0	0	755	517048	4	4096	-
+./package/skills/codex-token-usage-analyzer/contracts	directory	0	0	755	517049	2	4096	-
+./package/skills/codex-token-usage-analyzer/contracts/token-usage-report-request.v1.schema.json	regular file	0	0	444	517050	1	630	e9d418c702b8f764e515a925f5511d6203c37d13d23c130e3b9df86472a838b4
+./package/skills/codex-token-usage-analyzer/contracts/token-usage-report.v1.schema.json	regular file	0	0	444	517051	1	4627	0a3306633ed0c192e6bfc3b269df0b35b4e2a72492c5fc1cd7dad7f5f0d37612
+./package/skills/codex-token-usage-analyzer/integration	directory	0	0	755	524289	2	4096	-
+./package/skills/codex-token-usage-analyzer/integration/provider-result.v1.schema.json	regular file	0	0	444	524290	1	1990	0e8cc867092b27a8336acab857c32afada525ee06c4aa2f13ba0f1c981015d9f
+./package/skills/coordinate-subagents	directory	0	0	755	524291	3	4096	-
+./package/skills/coordinate-subagents/references	directory	0	0	755	524292	3	4096	-
+./package/skills/coordinate-subagents/references/model-catalog	directory	0	0	755	524293	5	4096	-
+./package/skills/coordinate-subagents/references/model-catalog/hosts.json	regular file	0	0	444	524294	1	2096	f7672087d49d75a36aa43d2a2539c30cc6a1bad402067edbf6ba2db6abf09f6d
+./package/skills/coordinate-subagents/references/model-catalog/index.json	regular file	0	0	444	524295	1	2714	7da89c508cc89c9244c7fac5ddd64310f4b9e87f3f1a9a06a1ca65ed12a2381d
+./package/skills/coordinate-subagents/references/model-catalog/models	directory	0	0	755	524296	2	4096	-
+./package/skills/coordinate-subagents/references/model-catalog/models/amazon.json	regular file	0	0	444	524297	1	1028	0ab4fde00c7b519e1c23a538adaab3e664d756277bd878ae3635d402e949a01b
+./package/skills/coordinate-subagents/references/model-catalog/models/anthropic.json	regular file	0	0	444	524298	1	6318	1349d71277f6a3261f51794dab7b87b215e1d2030a27c0870926d43c2959edd6
+./package/skills/coordinate-subagents/references/model-catalog/models/cohere.json	regular file	0	0	444	524299	1	1089	2f13f7a11cbc1db8f565367607989fa4a08160d99cf2ecff5d472505e6aae02c
+./package/skills/coordinate-subagents/references/model-catalog/models/google.json	regular file	0	0	444	524300	1	2947	dc676ed6bb75c6515b9415d417d8618717b1a6f0b9e9b2d151fcc10940d8854c
+./package/skills/coordinate-subagents/references/model-catalog/models/meta.json	regular file	0	0	444	524301	1	1960	e5cf34c46293264cc65ca96a36378011a707662e678d22dfb7400c572fa2d25e
+./package/skills/coordinate-subagents/references/model-catalog/models/mistral.json	regular file	0	0	444	524302	1	2033	11d060a1a8e298a80e98322bc0c99844ace8d5579d1145bcb37d6013c250108b
+./package/skills/coordinate-subagents/references/model-catalog/models/openai.json	regular file	0	0	444	524303	1	4046	0321e043f644221deeda41a06a28afa0b87bf844415c08052dcf0fc47f55fa46
+./package/skills/coordinate-subagents/references/model-catalog/models/xai.json	regular file	0	0	444	524304	1	1024	338ec89740b1b146d2a6c30d809596b0bd13ccb32b52343b2994a3885051f3f2
+./package/skills/coordinate-subagents/references/model-catalog/policy.json	regular file	0	0	444	524305	1	16673	4d7a24a1bf36e1e618df6e33b8f74e3fb4915332ef77f83b99d86450bc755e9a
+./package/skills/coordinate-subagents/references/model-catalog/pricing	directory	0	0	755	524306	2	4096	-
+./package/skills/coordinate-subagents/references/model-catalog/pricing/anthropic-2026-09-23.json	regular file	0	0	444	524307	1	964	1b510b1c5f3166fa48eb6c0aecc0419cf91a3901dedfb5d6a54a8b5584e145ea
+./package/skills/coordinate-subagents/references/model-catalog/role-presets	directory	0	0	755	524308	2	4096	-
+./package/skills/coordinate-subagents/references/model-catalog/role-presets/opus55-balanced.v1.json	regular file	0	0	444	524309	1	599	8d17ff31847452ffce4fb389d766491b99c4ecec425cdeef7362b65996ca4b1e
+./package/skills/coordinate-subagents/references/model-catalog/sources.json	regular file	0	0	444	524310	1	4117	688978a175889003c7e8e1fc4bb6efc775172d0e670a2c51a8c39e3eee8b57e1
+./package/skills/evaluation-validity-auditor	directory	0	0	755	524311	4	4096	-
+./package/skills/evaluation-validity-auditor/contracts	directory	0	0	755	524312	2	4096	-
+./package/skills/evaluation-validity-auditor/contracts/evaluation-aggregate-claim.v1.schema.json	regular file	0	0	444	524313	1	1340	996dfacc6fcfab1c850120e33c2977403338f24c494fd83860ae6d6f01d627d0
+./package/skills/evaluation-validity-auditor/contracts/evaluation-case-record.v1.schema.json	regular file	0	0	444	524314	1	556	166e0c016b953dc1df0ea930afea3781d27cd03c23eb90cbafc0b9c5251fbb86
+./package/skills/evaluation-validity-auditor/contracts/evaluation-result-record.v1.schema.json	regular file	0	0	444	524315	1	1096	71228eda30ffb78e6fc9a9583a1934e3cdf5bee531dfedf455fc30c60a57f581
+./package/skills/evaluation-validity-auditor/contracts/evaluation-validity-report.v1.schema.json	regular file	0	0	444	524316	1	5524	fc67b9e7fccbe99c4d0c0f2895a654ab5669122043336debc4837b807ba10f0a
+./package/skills/evaluation-validity-auditor/contracts/evaluation-validity-request.v1.schema.json	regular file	0	0	444	524317	1	7703	e6976558c876e8b6a299036ea8411bb6b5c9bd7d2c58198fdb312e0babacb767
+./package/skills/evaluation-validity-auditor/contracts/evaluation-validity-validation.v1.schema.json	regular file	0	0	444	524318	1	935	eeb42567f3602158c15aff5b19e8793fac37e482f974a2cd015ad676f80386e0
+./package/skills/evaluation-validity-auditor/integration	directory	0	0	755	524319	2	4096	-
+./package/skills/evaluation-validity-auditor/integration/provider-result.v1.schema.json	regular file	0	0	444	524320	1	1754	e4b97706a426aba4aa594e04d74c4bad2f2fd46e3f91f83738d06e7756402ea0
+./package/skills/independent-deliberation-panel	directory	0	0	755	524321	3	4096	-
+./package/skills/independent-deliberation-panel/contracts	directory	0	0	755	524322	2	4096	-
+./package/skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json	regular file	0	0	444	524323	1	22836	af181dcd574356dff20136b08af527eb9e1f0a0d47a371a087791f87179735a3
+./package/skills/instruction-scope-resolver	directory	0	0	755	524324	4	4096	-
+./package/skills/instruction-scope-resolver/contracts	directory	0	0	755	524325	2	4096	-
+./package/skills/instruction-scope-resolver/contracts/instruction-scope-request.v1.schema.json	regular file	0	0	444	524326	1	1664	e53189bb093e631abe8a162ac8c61a807b6b962d9d2f5cd3c4b1d9d83703b1b8
+./package/skills/instruction-scope-resolver/contracts/instruction-scope-resolution.v1.schema.json	regular file	0	0	444	524327	1	3527	fa7e89a1aa9b4874d0d6d98d51fd3366e3871a2d8daf66c958bd36073815dee2
+./package/skills/instruction-scope-resolver/integration	directory	0	0	755	524328	2	4096	-
+./package/skills/instruction-scope-resolver/integration/provider-result.v1.schema.json	regular file	0	0	444	524329	1	2532	17517fb4a61fa6eda8322d566b48b3d2cd1d6be8c7cc1a27ac2024e9c6b93771
+./package/skills/iteration-frame-auditor	directory	0	0	755	524330	3	4096	-
+./package/skills/iteration-frame-auditor/contracts	directory	0	0	755	524331	2	4096	-
+./package/skills/iteration-frame-auditor/contracts/iteration-frame-audit-request.v1.schema.json	regular file	0	0	444	524332	1	5699	5a13e78ed8c170a5e25d42564df1aa4bb40464c5851c8c8edd0b8206dd88d08f
+./package/skills/iteration-frame-auditor/contracts/iteration-frame-comparison.v1.schema.json	regular file	0	0	444	524333	1	3281	9c114f04bed89dbeab7245e4e13661b903df0f273f3e153bda3494a6809e71d2
+./package/skills/korean-prose-editor	directory	0	0	755	524334	5	4096	-
+./package/skills/korean-prose-editor/contracts	directory	0	0	755	524335	2	4096	-
+./package/skills/korean-prose-editor/contracts/edit-candidate.v1.schema.json	regular file	0	0	444	524336	1	2502	8026fae9d2597f3cc127e80f9d04b7fade42d1c66d03a23ca8656a4c27708db0
+./package/skills/korean-prose-editor/contracts/edit-decision-set.v1.schema.json	regular file	0	0	444	524337	1	2582	db9a283e623df89093c2dcc93f74461e309ef8d952956a5baacd88ff141147ee
+./package/skills/korean-prose-editor/contracts/edit-verification-report.v1.schema.json	regular file	0	0	444	524338	1	2771	3cee16cadb97f532d1a6416c623510b5d338465fbc0c742c8fe2e3992dc7ef95
+./package/skills/korean-prose-editor/contracts/editing-draft.v1.schema.json	regular file	0	0	444	524339	1	1337	5819c6be58cde00623b18f82bf4b2389d9340369ecf70510e937fedcbac7acd8
+./package/skills/korean-prose-editor/contracts/editing-work-product.v1.schema.json	regular file	0	0	444	524340	1	1578	fd2cd013431c46e54324c43e5012635ac12731dc9d8b3716d2f43f125f9ad2e3
+./package/skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json	regular file	0	0	444	524341	1	3801	19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9
+./package/skills/korean-prose-editor/contracts/finalization-request.schema.json	regular file	0	0	444	524342	1	1204	79f4dc6d10d037288a698814400514a710692e432905a6d2ca56cea707c03f79
+./package/skills/korean-prose-editor/contracts/glossary-binding.v1.schema.json	regular file	0	0	444	524343	1	1651	ac67afeff4d6844a64514bab3c17a5dffdba3172d1d4db79f726f1422e4a5ec3
+./package/skills/korean-prose-editor/contracts/glossary-match-set.v1.schema.json	regular file	0	0	444	524344	1	1930	44fb2ad4b377cc48594daa9d89d82a8dc677b7ef04f8dd28335454b1d10da04e
+./package/skills/korean-prose-editor/contracts/protected-manifest.schema.json	regular file	0	0	444	524345	1	1267	cad9ae7bb477bfa2fc4bfc71adef5749f9d7be9eb89aaa1c147d388374fef395
+./package/skills/korean-prose-editor/contracts/provider-plan.schema.json	regular file	0	0	444	524346	1	1606	b52bd05b1682add3736122b079af6be0e29db1686a0715d6decb72febe589269
+./package/skills/korean-prose-editor/contracts/receipt.schema.json	regular file	0	0	444	524347	1	2776	3b6605f74e6bf88e2930f0e8eb99f2e5678f66b03ff459d083b178bbcbe8f6bd
+./package/skills/korean-prose-editor/contracts/selection-work-product.v1.schema.json	regular file	0	0	444	524348	1	2665	a3c48d8e260170034b86b5abe7719a00989bedada184112626e5eee6a162f970
+./package/skills/korean-prose-editor/contracts/source-unit-manifest.v1.schema.json	regular file	0	0	444	524349	1	1271	a51b3dfd6cf54bcac1f31f2848aecfd5dfc1816156efb7bf65a5441817243241
+./package/skills/korean-prose-editor/contracts/verification-work-product.v1.schema.json	regular file	0	0	444	524350	1	3235	3e771ac4ce0e9da64303afea9665b977b3069daf66adebbfc533488ddf930073
+./package/skills/korean-prose-editor/integration	directory	0	0	755	524351	2	4096	-
+./package/skills/korean-prose-editor/integration/provider-result.v1.schema.json	regular file	0	0	444	524352	1	1697	788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08
+./package/skills/korean-prose-editor/integration/skill-descriptor.v2.schema.json	regular file	0	0	444	524353	1	8125	ff6c893da551709fead4ce14ad16c37b86c27443d1b7d98ed01359ca3fff36a4
+./package/skills/korean-prose-editor/resources	directory	0	0	755	524354	2	4096	-
+./package/skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3	regular file	0	0	444	524355	1	114688	6aee8db6e08136cf8d4399c90232484e13a9e287d843f1638b65ffb2ef8d283d
+./package/skills/model-effort-advisor	directory	0	0	755	524356	3	4096	-
+./package/skills/model-effort-advisor/contracts	directory	0	0	755	524357	2	4096	-
+./package/skills/model-effort-advisor/contracts/model-effort-advice.v1.schema.json	regular file	0	0	444	524358	1	9106	7150d4f934f9a9422c31fc9f94b7bd7d6b1ac1e6bd029233293c40c658c693fe
+./package/skills/mutation-risk-preflight	directory	0	0	755	524359	4	4096	-
+./package/skills/mutation-risk-preflight/contracts	directory	0	0	755	524360	3	4096	-
+./package/skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json	regular file	0	0	444	524361	1	4557	b66cf7e41d10d5808dafecea3f8df147e029952d5a0b46a2013841ca1a45452c
+./package/skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json	regular file	0	0	444	524362	1	3504	4e6f86d0baf672ef0bd83a4a9c592bd8ec5dcab1f342071372908f52e5217fde
+./package/skills/mutation-risk-preflight/contracts/upstream	directory	0	0	755	524363	2	4096	-
+./package/skills/mutation-risk-preflight/contracts/upstream/task-envelope.v1.schema.json	regular file	0	0	444	524364	1	3037	b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21
+./package/skills/mutation-risk-preflight/integration	directory	0	0	755	524365	2	4096	-
+./package/skills/mutation-risk-preflight/integration/provider-result.v1.schema.json	regular file	0	0	444	524366	1	1528	0fa638d22b6a37ac9e585597b1ddd985de4562756e1a14b9076875dee154e311
+./package/skills/orchestrator	directory	0	0	755	524367	3	4096	-
+./package/skills/orchestrator/contracts	directory	0	0	755	524368	2	4096	-
+./package/skills/orchestrator/contracts/collaboration-decision.v1.schema.json	regular file	0	0	444	524369	1	3655	f27d20be8d5269b99534bcde02846d13a586137c362840fdc5ad1856b502cd5f
+./package/skills/recovery-strategy-selector	directory	0	0	755	524370	4	4096	-
+./package/skills/recovery-strategy-selector/contracts	directory	0	0	755	524371	2	4096	-
+./package/skills/recovery-strategy-selector/contracts/recovery-handoff.v1.schema.json	regular file	0	0	444	524372	1	9851	c8a063c6e34c303c343c067d3f453b72739952fe34eb2e6f8e5eb125630e318e
+./package/skills/recovery-strategy-selector/contracts/recovery-strategy-selection-request.v1.schema.json	regular file	0	0	444	524373	1	5640	062e5210736afa8c96f99e9015879f38860ef29a7f2e739a62a59d0a750a4a4d
+./package/skills/recovery-strategy-selector/contracts/recovery-task-binding-report.v1.schema.json	regular file	0	0	444	524374	1	738	77425da5b6e8d7ea78e99a4c8081797d52c1f01969d63f8ab8bc4c079e881829
+./package/skills/recovery-strategy-selector/integration	directory	0	0	755	524375	2	4096	-
+./package/skills/recovery-strategy-selector/integration/provider-result.v1.schema.json	regular file	0	0	444	524376	1	1579	88a0e4bef0087af655f548408fdc92917e91d2d79185c9daf5325e578a41cac9
+./package/skills/registry.json	regular file	0	0	444	517052	1	68265	891aca9dc176ff96e2c59db2fe16e86ad8933635e6fd4017955bf32df851c016
+./package/skills/software-security-auditor	directory	0	0	755	524377	4	4096	-
+./package/skills/software-security-auditor/contracts	directory	0	0	755	524378	2	4096	-
+./package/skills/software-security-auditor/contracts/security-audit-report.v1.schema.json	regular file	0	0	444	524379	1	7487	12ed15bc510ceae9411db7e0101722b862965aa495c6233a5a29390e29e500fb
+./package/skills/software-security-auditor/contracts/security-audit-request.v1.schema.json	regular file	0	0	444	524380	1	3375	a78412985ff35634acba9242be09673ac08f61753d9b1c7b55264ec66995e103
+./package/skills/software-security-auditor/integration	directory	0	0	755	524381	2	4096	-
+./package/skills/software-security-auditor/integration/provider-result.v1.schema.json	regular file	0	0	444	524382	1	2937	9067e06f1b36f22a3f10c99777f3a35d1dc10cd128537053982826e2248105a5
+./package/skills/task-contract	directory	0	0	755	524383	4	4096	-
+./package/skills/task-contract/contracts	directory	0	0	755	524384	3	4096	-
+./package/skills/task-contract/contracts/acceptance-evidence-plan.v1.schema.json	regular file	0	0	444	524385	1	1182	77fe7a7280904046d2b372a75db5ac38a76e148f878dd8f853f69e49bcb1d8b4
+./package/skills/task-contract/contracts/task-contract-report.v1.schema.json	regular file	0	0	444	524386	1	3501	ce5263ec3d1edc13f0461b4ac012989623808cc0bd6dd759456d107a34104dbd
+./package/skills/task-contract/contracts/task-contract-request.v1.schema.json	regular file	0	0	444	524387	1	1944	e6393d9b242730f9bc1dec0fd1a8ab16028f894f342e84e0799462d0bdc279e6
+./package/skills/task-contract/contracts/task-contract-validation.v1.schema.json	regular file	0	0	444	524388	1	646	54b7b67a4439b5a8c6f8079d44d1ecc91efea89fa0e5b4b80596d846852a38b3
+./package/skills/task-contract/contracts/upstream	directory	0	0	755	524389	2	4096	-
+./package/skills/task-contract/contracts/upstream/task-envelope.v1.schema.json	regular file	0	0	444	524390	1	3037	b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21
+./package/skills/task-contract/integration	directory	0	0	755	524391	2	4096	-
+./package/skills/task-contract/integration/provider-result.v1.schema.json	regular file	0	0	444	524392	1	2498	619451cd870832d1a223958dc31bc1dd5bacee2039b61fd4ca1ff63932829958
+./package/skills/workspace-convention-profiler	directory	0	0	755	524393	4	4096	-
+./package/skills/workspace-convention-profiler/contracts	directory	0	0	755	524394	2	4096	-
+./package/skills/workspace-convention-profiler/contracts/workspace-convention-profile.v1.schema.json	regular file	0	0	444	524395	1	4958	abffbd137671292de90000a62e4d3425eece203a6914a87defada2cf71a9e7bf
+./package/skills/workspace-convention-profiler/contracts/workspace-profile-request.v1.schema.json	regular file	0	0	444	524396	1	1425	775c90d3367a75d7ac96a7884486e3fe657a6c1a18b129f81d284f008467464d
+./package/skills/workspace-convention-profiler/integration	directory	0	0	755	524397	2	4096	-
+./package/skills/workspace-convention-profiler/integration/provider-result.v1.schema.json	regular file	0	0	444	524398	1	1534	515e04e309f2c8f17ee249cd5ce2b3489b78c5edeb811d77596df6138e9adaf1
+TOTAL	directories=66	files=180	symlinks=0

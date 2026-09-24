@@ -1,0 +1,51 @@
+## host before: mountinfo ca88d4a2794be240a5ef609358d3cd3ab46bab7b209205c2f256820867575a15; roots 516804:1790262265 516919:1790268678
+## A. fixture (/root/b3bf/r3/fx) in private mount namespace
+$ cd /root/b3bf/r3 && unshare --mount --propagation private node mountA.mjs
+propagation(/)=private
+fixture installRoot=/root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508
+A0 baseline verify	ACCEPTED
+$ mount --bind /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/package /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/package	exit=0
+76 50 254:0 /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/package /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/package rw,relatime - ext4 /dev/vda rw,resv_strict,resuid=65534,resgid=65534
+A1 same-device bind (package self-bind) verify	REJECTED	mount inside the protected subtree: /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/package
+$ umount /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/package	exit=0
+$ mount -t tmpfs -o mode=0755 none /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/bin	exit=0
+stat -c %d bin => 41
+A2 tmpfs (other device) on bin verify	REJECTED	mount inside the protected subtree: /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/bin
+A2b tmpfs on bin verify with pre-mount mountinfo snapshot	REJECTED	device of /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/bin (41) differs from the protected mount (65024)
+$ umount /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/bin	exit=0
+$ mount --bind /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508 /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508	exit=0
+A3 boundary changed between verify and use (runVerifiedRuntime)	REJECTED	mount inside the protected subtree: /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508
+$ umount /root/b3bf/r3/fx/fx-mwdw9H/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508	exit=0
+A3b use after umount (boundary restored)	ACCEPTED	{"fdSha256":"7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c","stdout":"v24.21.0"}
+A4 mountinfo missing	REJECTED	mountinfo unavailable: ENOENT
+A4b mountinfo parse failure	REJECTED	mountinfo parse failure: not a mountinfo line
+exit=0
+
+## B. real 32a825d9 path: decoy bin (/root/b3bf/r3/decoy, node replaced by /bin/true bytes b860051e15938770) bind-mounted on $R/bin inside a private namespace only
+$ cd /root/b3bf/r3 && unshare --mount --propagation private node mountB.mjs
+propagation(/)=private
+pre-mount verify ACCEPTED node.ino=516919 boundary={"dev":"65024","mounts":[{"id":"50","parent":"49","majorMinor":"254:0","root":"/","mountPoint":"/"}]}
+$ mount --bind /root/b3bf/r3/decoy /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin	exit=0
+76 50 254:0 /root/b3bf/r3/decoy /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin rw,relatime - ext4 /dev/vda rw,resv_strict,resuid=65534,resgid=65534
+sha256 /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node (decoy view) => b860051e15938770f4164177f2fc2d4e1af26b226c9b0c3ea75a36d1be33a3cf
+B1 verifyProtectedRuntime with decoy bin bind	REJECTED	mount inside the protected subtree: /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin
+B2 runVerifiedRuntime(pre-mount record) with decoy bin bind	REJECTED	mount inside the protected subtree: /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin
+$ umount /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin	exit=0
+exit=0
+
+## C. V06-b3b-r4 test (fixture + live, real mounts in private namespace)
+$ AGS_V06_B3B_R4_LIVE=1 AGS_V06_B3B_FIXTURE_PARENT=/root/b3bf/r3/fx node node_modules/vitest/vitest.mjs run tests/coordinate-subagents/v3x/V06-b3b-r4.test.mjs
+
+ RUN  v5.0.0 /home/user/agent-governance-suite
+
+V06-b3b-r4 mount probe {"baseline":"ACCEPTED","sameDeviceMountinfo":["76 50 254:0 /root/b3bf/r3/fx/r4-EIUJIV/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/package /root/b3bf/r3/fx/r4-EIUJIV/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/package rw,relatime - ext4 /dev/vda rw,resv_strict,resuid=65534,resgid=65534"],"sameDeviceBind":"REJECTED: mount inside the protected subtree: /root/b3bf/r3/fx/r4-EIUJIV/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/package","tmpfsDev":"41","tmpfs":"REJECTED: mount inside the protected subtree: /root/b3bf/r3/fx/r4-EIUJIV/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/bin","tmpfsWithStaleMountinfo":"REJECTED: device of /root/b3bf/r3/fx/r4-EIUJIV/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508/bin (41) differs from the protected mount (65024)","ancestorBind":"REJECTED: bind mount on a protected path ancestor: /root/b3bf/r3/fx/r4-EIUJIV/usr/lib (root /root/b3bf/r3/fx/r4-EIUJIV/usr/lib)","changedBetweenVerifyAndUse":"REJECTED: mount inside the protected subtree: /root/b3bf/r3/fx/r4-EIUJIV/usr/lib/agent-governance-suite/protected-runtime/2aa51b1d50a818fefa3856e8af3c74ab58be814a88f40ea1f98ffce3611d6508","useAfterRestore":"ACCEPTED"}
+V06-b3b-r4 live {"legacy":{"dev":"65024","ino":"516804","size":"126595440","mode":"555","uid":0,"gid":0,"nlink":1,"mtimeNs":"1790262265969720838","ctimeNs":"1790262265969720838"},"v2":{"dev":"65024","ino":"516919","size":"126595440","mode":"555","uid":0,"gid":0,"nlink":1,"mtimeNs":"1790268678584777048","ctimeNs":"1790268678584777048"},"boundary":{"dev":"65024","mounts":[{"id":"28","parent":"1","majorMinor":"254:0","root":"/","mountPoint":"/"}]},"used":{"fdSha256":"7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c","stdout":"v24.21.0"}}
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  20:54:31
+   Duration  4.67s (tests 98%, transform 1%, import 1%)
+
+exit=0
+
+## host after: mountinfo ca88d4a2794be240a5ef609358d3cd3ab46bab7b209205c2f256820867575a15; roots 516804:1790262265 516919:1790268678

@@ -1,0 +1,4 @@
+{"path":"/usr/lib/agent-governance-suite","ino":"516801","type":"dir","uid":0,"mode":"755"}
+{"path":"/usr/lib/agent-governance-suite/protected-runtime","ino":"516802","type":"dir","uid":0,"mode":"755"}
+{"path":"/usr/lib/agent-governance-suite/protected-runtime/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6","ino":"516803","type":"dir","uid":0,"mode":"755"}
+{"path":"/usr/lib/agent-governance-suite/protected-runtime/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6/node","ino":"516804","type":"file","uid":0,"mode":"555"}

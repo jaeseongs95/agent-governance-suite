@@ -1,0 +1,22 @@
+$ sha256sum /root/b3bf/in/node-v24.21.0-linux-x64.tar.xz /root/b3bf/in/SHASUMS256.txt /root/b3bf/in/SHASUMS256.txt.sig /root/b3bf/in/nodejs-release-keyring.kbx /root/b3bf/node/bin/node /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/host-integration.json
+fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6  /root/b3bf/in/node-v24.21.0-linux-x64.tar.xz
+f410428039e2c922a14058df067a4482691c9304a5c01a75847f9f3f2d3307f6  /root/b3bf/in/SHASUMS256.txt
+865f22b026e4080554e10d247553fd770573893dac8fc7affc7d58b72de35a89  /root/b3bf/in/SHASUMS256.txt.sig
+140f2ad5260fd62773b6243ce8e1d3009645d558f121b8262c55e383dc285932  /root/b3bf/in/nodejs-release-keyring.kbx
+7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c  /root/b3bf/node/bin/node
+7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c  /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node
+648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c  /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/host-integration.json
+exit=0
+
+$ git cat-file blob 0724bb2bc452626aba546a57d1db5c407d32feb0:host-integration.json | sha256sum
+648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c  -
+exit=0
+
+$ cd /root/b3bf/in && gpgv --status-fd 1 --keyring ./nodejs-release-keyring.kbx ./SHASUMS256.txt.sig ./SHASUMS256.txt 2>/dev/null | grep -E 'GOODSIG|VALIDSIG'
+[GNUPG:] GOODSIG 20B1A390B168D356 Antoine du Hamel <antoine.duhamel@platformatic.dev>
+[GNUPG:] VALIDSIG 5BE8A3F6C8A5C01D106C0AD820B1A390B168D356 2026-09-08 1788904155 0 4 0 22 8 00 5BE8A3F6C8A5C01D106C0AD820B1A390B168D356
+exit=0
+
+$ grep ' node-v24.21.0-linux-x64.tar.xz$' /root/b3bf/in/SHASUMS256.txt
+fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6  node-v24.21.0-linux-x64.tar.xz
+exit=0

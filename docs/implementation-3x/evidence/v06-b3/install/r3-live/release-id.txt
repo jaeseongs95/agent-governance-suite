@@ -1,0 +1,24 @@
+$ printf 'ags-protected-node-closure/v2\nlinux-x64\n24.21.0\nfd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6\n648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c\n' | od -c
+0000000   a   g   s   -   p   r   o   t   e   c   t   e   d   -   n   o
+0000020   d   e   -   c   l   o   s   u   r   e   /   v   2  \n   l   i
+0000040   n   u   x   -   x   6   4  \n   2   4   .   2   1   .   0  \n
+0000060   f   d   8   e   5   9   d   5   a   5   1   1   5   1   0   f
+0000100   6   a   2   9   8   a   f   b   5   4   8   f   1   8   c   7
+0000120   d   2   b   1   b   e   4   0   4   d   8   b   4   a   2   7
+0000140   d   9   4   f   b   e   4   9   f   5   6   c   b   2   d   6
+0000160  \n   6   4   8   d   d   d   d   a   4   5   3   d   b   1   7
+0000200   8   3   2   a   7   7   6   a   6   d   3   8   1   a   7   4
+0000220   7   d   7   a   f   8   5   1   c   2   5   9   4   7   6   2
+0000240   b   d   2   f   2   a   4   9   4   6   2   8   c   e   7   0
+0000260   c  \n
+0000262
+exit=0
+
+$ printf 'ags-protected-node-closure/v2\nlinux-x64\n24.21.0\nfd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6\n648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c\n' | sha256sum
+32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd  -
+exit=0
+
+$ ls /usr/lib/agent-governance-suite/protected-runtime
+32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd
+fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6
+exit=0

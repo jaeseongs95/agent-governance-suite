@@ -1,0 +1,156 @@
+# V06-b3b-r3 preflight record (values as recorded; no PASS claim)
+
+## 1. /root/b3bf/r3/baseline.txt
+$ sha256sum /root/b3bf/r3/baseline.txt
+efdbe7b804234765ca2d7c4e1e52ea0fc859f2fd443724ba2ae4c8884c753077  /root/b3bf/r3/baseline.txt
+
+### command that produced it (as run at 20:52:38Z; tool call completed, exit 0, no stderr)
+install -d -m 700 /root/b3bf/r3 && cd /home/user/agent-governance-suite && { date -u; cat /proc/sys/kernel/random/boot_id; git branch --show-current; git rev-parse HEAD; git ls-remote origin refs/heads/claude/v3x-v06-b3b-r1 refs/heads/codex/v260-semantic-decision-layer; git status --short; P=/usr/lib/agent-governance-suite/protected-runtime; for n in $P/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6/node $P/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node; do echo "$(stat -c '%i %a %h %Z' $n) $(sha256sum $n | cut -c1-64) $n"; done; sha256sum /root/b3bf/manifest.txt /root/b3bf/r1/manifest.txt docs/implementation-3x/evidence/v06-b3/install/r1-live/*; echo "mountinfo $(sha256sum /proc/self/mountinfo | cut -c1-64)"; } | tee /root/b3bf/r3/baseline.txt | sed 's|docs/implementation-3x/evidence/v06-b3/install/||; s|/usr/lib/agent-governance-suite/protected-runtime/||' | cut -c1-120
+
+### baseline.txt content
+Thu Sep 24 20:52:38 UTC 2026
+2c428abc-c358-4e63-b650-c7bb78cadfbe
+claude/v3x-v06-b3b-r1
+8bb6e6891bf25a5ddf9593def7468779616d3866
+8bb6e6891bf25a5ddf9593def7468779616d3866	refs/heads/claude/v3x-v06-b3b-r1
+4866e45501227624d1e625470453ef8ce018bb9b	refs/heads/codex/v260-semantic-decision-layer
+?? docs/implementation-3x/evidence/v06-b3/install/r1-live/
+516804 555 1 1790262265 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c /usr/lib/agent-governance-suite/protected-runtime/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6/node
+516919 555 1 1790268678 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node
+857bad43df354eb2022fcc3355257cd37adaa0a4acca506f2a2a9add0721ce9f  /root/b3bf/manifest.txt
+d75268cecb0c8f2210c7d0f8683a4b0bd8a4e6b685e3eec5144f42aca4be0e05  /root/b3bf/r1/manifest.txt
+1f10e1bc73df82b1a433e31e3ebe38359a3715e00ad77ef6029be733c7dc4fd8  docs/implementation-3x/evidence/v06-b3/install/r1-live/checksums.txt
+c769bee042cd201dbd82f50e054c82ee0d59fd79a53b967ed3d3a67d1d94f4d1  docs/implementation-3x/evidence/v06-b3/install/r1-live/install-manifest.txt
+bab5ae6f30ab015f9e76c76c8c11ff50bb4a663fd55f907d2a8159e7df4f4779  docs/implementation-3x/evidence/v06-b3/install/r1-live/inventory.tsv
+e822e6de26a28d30b7dd1ff485e20469689b187dc9d51d184197ae328cf289f6  docs/implementation-3x/evidence/v06-b3/install/r1-live/live-test.txt
+a9f739eecbfd3d5a7438de139358da29fdcac9ff6d703d8d463f9c16b8277fe9  docs/implementation-3x/evidence/v06-b3/install/r1-live/nobody-probe.txt
+0a4ce5b2e82df9730e8ce8aaa48881cd490c822470256adaa5ed59658dab6162  docs/implementation-3x/evidence/v06-b3/install/r1-live/package-set.txt
+bb7c818ca830111a7aee46bead8e427ad154211f03a7f2565db2a9d93aea976e  docs/implementation-3x/evidence/v06-b3/install/r1-live/provenance.txt
+9995b23a0305bdecef4fb5b8983aaccc309a443f6f5895110c992677dd55cb91  docs/implementation-3x/evidence/v06-b3/install/r1-live/release-id.txt
+mountinfo ca88d4a2794be240a5ef609358d3cd3ab46bab7b209205c2f256820867575a15
+
+## 2. get_session (Claude_Code_Remote, session_id omitted) — selected fields only
+included: session_context.model, session_context.effort_level, external_metadata.effort_level, external_metadata.last_served_model (plus the record's updated_at as the call time)
+omitted field names: ccr.id, title, session_status, created_at, environment_id, session_context.sources, session_context.outcomes, session_context.permission_mode, origin, permission_mode, connection_status, tags, task_summary, external_metadata.container_cc_version, external_metadata.context_usage, external_metadata.cross_session_inbound, external_metadata.current_branches, external_metadata.permission_mode, external_metadata.permission_mode_seq, external_metadata.rate_limit_info, external_metadata.task_summary, external_metadata.turn_handoff, external_metadata.usage, unread, environment_kind, status_bucket, configured_model
+- updated_at 2026-09-24T20:52:40.245902Z (pre-flight): session_context.model="claude-opus-5-5" session_context.effort_level="high" external_metadata.effort_level="high" external_metadata.last_served_model="claude-opus-5-5"
+- updated_at 2026-09-24T20:56:09.306934Z (pause re-query): session_context.model="claude-opus-5-5" session_context.effort_level="high" external_metadata.effort_level="high" external_metadata.last_served_model="claude-opus-5-5"
+- updated_at 2026-09-24T20:59:33.433432Z (resume): session_context.model="claude-opus-5-5" session_context.effort_level="high" external_metadata.effort_level="high" external_metadata.last_served_model="claude-opus-5-5"
+
+## 3. 20:56:15Z pause re-query
+### command (identical text saved later as /root/b3bf/r3/requery.sh)
+cd /home/user/agent-governance-suite && echo "=== 20:52 baseline (raw file /root/b3bf/r3/baseline.txt) ==="; cat /root/b3bf/r3/baseline.txt; echo "=== now ==="; date -u; cat /proc/sys/kernel/random/boot_id; P=/usr/lib/agent-governance-suite/protected-runtime; for n in $P/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6/node $P/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node; do echo "$(stat -c '%i %a %h %Z' $n) $(sha256sum $n | cut -c1-64) $n"; done; sha256sum /root/b3bf/manifest.txt /root/b3bf/r1/manifest.txt docs/implementation-3x/evidence/v06-b3/install/r1-live/*; echo "mountinfo $(sha256sum /proc/self/mountinfo | cut -c1-64)"; git rev-parse HEAD; git status --short; git ls-remote origin refs/heads/claude/v3x-v06-b3b-r1 refs/heads/codex/v260-semantic-decision-layer; ls -la docs/implementation-3x/evidence/v06-b3/install/r3-live/ /root/b3bf/r3/
+### exit: 0 (tool call completed; stderr empty). stdout below, transcribed from the tool output
+=== 20:52 baseline (raw file /root/b3bf/r3/baseline.txt) ===
+[identical to baseline.txt content in section 1]
+=== now ===
+Thu Sep 24 20:56:15 UTC 2026
+2c428abc-c358-4e63-b650-c7bb78cadfbe
+516804 555 1 1790262265 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c /usr/lib/agent-governance-suite/protected-runtime/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6/node
+516919 555 1 1790268678 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node
+857bad43df354eb2022fcc3355257cd37adaa0a4acca506f2a2a9add0721ce9f  /root/b3bf/manifest.txt
+d75268cecb0c8f2210c7d0f8683a4b0bd8a4e6b685e3eec5144f42aca4be0e05  /root/b3bf/r1/manifest.txt
+1f10e1bc73df82b1a433e31e3ebe38359a3715e00ad77ef6029be733c7dc4fd8  docs/implementation-3x/evidence/v06-b3/install/r1-live/checksums.txt
+c769bee042cd201dbd82f50e054c82ee0d59fd79a53b967ed3d3a67d1d94f4d1  docs/implementation-3x/evidence/v06-b3/install/r1-live/install-manifest.txt
+bab5ae6f30ab015f9e76c76c8c11ff50bb4a663fd55f907d2a8159e7df4f4779  docs/implementation-3x/evidence/v06-b3/install/r1-live/inventory.tsv
+e822e6de26a28d30b7dd1ff485e20469689b187dc9d51d184197ae328cf289f6  docs/implementation-3x/evidence/v06-b3/install/r1-live/live-test.txt
+a9f739eecbfd3d5a7438de139358da29fdcac9ff6d703d8d463f9c16b8277fe9  docs/implementation-3x/evidence/v06-b3/install/r1-live/nobody-probe.txt
+0a4ce5b2e82df9730e8ce8aaa48881cd490c822470256adaa5ed59658dab6162  docs/implementation-3x/evidence/v06-b3/install/r1-live/package-set.txt
+bb7c818ca830111a7aee46bead8e427ad154211f03a7f2565db2a9d93aea976e  docs/implementation-3x/evidence/v06-b3/install/r1-live/provenance.txt
+9995b23a0305bdecef4fb5b8983aaccc309a443f6f5895110c992677dd55cb91  docs/implementation-3x/evidence/v06-b3/install/r1-live/release-id.txt
+mountinfo ca88d4a2794be240a5ef609358d3cd3ab46bab7b209205c2f256820867575a15
+8bb6e6891bf25a5ddf9593def7468779616d3866
+?? docs/implementation-3x/evidence/v06-b3/install/r1-live/
+?? docs/implementation-3x/evidence/v06-b3/install/r3-live/
+8bb6e6891bf25a5ddf9593def7468779616d3866	refs/heads/claude/v3x-v06-b3b-r1
+4866e45501227624d1e625470453ef8ce018bb9b	refs/heads/codex/v260-semantic-decision-layer
+[ls -la listing of r3-live/ and /root/b3bf/r3/ at 20:56:15Z omitted here; sizes are in README "pause" section]
+
+## 4. resume re-query (same command, 20:59:34Z), raw stdout/stderr and exit
+$ bash /root/b3bf/r3/requery.sh
+=== 20:52 baseline (raw file /root/b3bf/r3/baseline.txt) ===
+Thu Sep 24 20:52:38 UTC 2026
+2c428abc-c358-4e63-b650-c7bb78cadfbe
+claude/v3x-v06-b3b-r1
+8bb6e6891bf25a5ddf9593def7468779616d3866
+8bb6e6891bf25a5ddf9593def7468779616d3866	refs/heads/claude/v3x-v06-b3b-r1
+4866e45501227624d1e625470453ef8ce018bb9b	refs/heads/codex/v260-semantic-decision-layer
+?? docs/implementation-3x/evidence/v06-b3/install/r1-live/
+516804 555 1 1790262265 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c /usr/lib/agent-governance-suite/protected-runtime/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6/node
+516919 555 1 1790268678 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node
+857bad43df354eb2022fcc3355257cd37adaa0a4acca506f2a2a9add0721ce9f  /root/b3bf/manifest.txt
+d75268cecb0c8f2210c7d0f8683a4b0bd8a4e6b685e3eec5144f42aca4be0e05  /root/b3bf/r1/manifest.txt
+1f10e1bc73df82b1a433e31e3ebe38359a3715e00ad77ef6029be733c7dc4fd8  docs/implementation-3x/evidence/v06-b3/install/r1-live/checksums.txt
+c769bee042cd201dbd82f50e054c82ee0d59fd79a53b967ed3d3a67d1d94f4d1  docs/implementation-3x/evidence/v06-b3/install/r1-live/install-manifest.txt
+bab5ae6f30ab015f9e76c76c8c11ff50bb4a663fd55f907d2a8159e7df4f4779  docs/implementation-3x/evidence/v06-b3/install/r1-live/inventory.tsv
+e822e6de26a28d30b7dd1ff485e20469689b187dc9d51d184197ae328cf289f6  docs/implementation-3x/evidence/v06-b3/install/r1-live/live-test.txt
+a9f739eecbfd3d5a7438de139358da29fdcac9ff6d703d8d463f9c16b8277fe9  docs/implementation-3x/evidence/v06-b3/install/r1-live/nobody-probe.txt
+0a4ce5b2e82df9730e8ce8aaa48881cd490c822470256adaa5ed59658dab6162  docs/implementation-3x/evidence/v06-b3/install/r1-live/package-set.txt
+bb7c818ca830111a7aee46bead8e427ad154211f03a7f2565db2a9d93aea976e  docs/implementation-3x/evidence/v06-b3/install/r1-live/provenance.txt
+9995b23a0305bdecef4fb5b8983aaccc309a443f6f5895110c992677dd55cb91  docs/implementation-3x/evidence/v06-b3/install/r1-live/release-id.txt
+mountinfo ca88d4a2794be240a5ef609358d3cd3ab46bab7b209205c2f256820867575a15
+=== now ===
+Thu Sep 24 20:59:34 UTC 2026
+2c428abc-c358-4e63-b650-c7bb78cadfbe
+516804 555 1 1790262265 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c /usr/lib/agent-governance-suite/protected-runtime/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6/node
+516919 555 1 1790268678 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node
+857bad43df354eb2022fcc3355257cd37adaa0a4acca506f2a2a9add0721ce9f  /root/b3bf/manifest.txt
+d75268cecb0c8f2210c7d0f8683a4b0bd8a4e6b685e3eec5144f42aca4be0e05  /root/b3bf/r1/manifest.txt
+1f10e1bc73df82b1a433e31e3ebe38359a3715e00ad77ef6029be733c7dc4fd8  docs/implementation-3x/evidence/v06-b3/install/r1-live/checksums.txt
+c769bee042cd201dbd82f50e054c82ee0d59fd79a53b967ed3d3a67d1d94f4d1  docs/implementation-3x/evidence/v06-b3/install/r1-live/install-manifest.txt
+bab5ae6f30ab015f9e76c76c8c11ff50bb4a663fd55f907d2a8159e7df4f4779  docs/implementation-3x/evidence/v06-b3/install/r1-live/inventory.tsv
+e822e6de26a28d30b7dd1ff485e20469689b187dc9d51d184197ae328cf289f6  docs/implementation-3x/evidence/v06-b3/install/r1-live/live-test.txt
+a9f739eecbfd3d5a7438de139358da29fdcac9ff6d703d8d463f9c16b8277fe9  docs/implementation-3x/evidence/v06-b3/install/r1-live/nobody-probe.txt
+0a4ce5b2e82df9730e8ce8aaa48881cd490c822470256adaa5ed59658dab6162  docs/implementation-3x/evidence/v06-b3/install/r1-live/package-set.txt
+bb7c818ca830111a7aee46bead8e427ad154211f03a7f2565db2a9d93aea976e  docs/implementation-3x/evidence/v06-b3/install/r1-live/provenance.txt
+9995b23a0305bdecef4fb5b8983aaccc309a443f6f5895110c992677dd55cb91  docs/implementation-3x/evidence/v06-b3/install/r1-live/release-id.txt
+mountinfo ca88d4a2794be240a5ef609358d3cd3ab46bab7b209205c2f256820867575a15
+8bb6e6891bf25a5ddf9593def7468779616d3866
+?? docs/implementation-3x/evidence/v06-b3/install/r1-live/
+?? docs/implementation-3x/evidence/v06-b3/install/r3-live/
+8bb6e6891bf25a5ddf9593def7468779616d3866	refs/heads/claude/v3x-v06-b3b-r1
+4866e45501227624d1e625470453ef8ce018bb9b	refs/heads/codex/v260-semantic-decision-layer
+/root/b3bf/r3/:
+total 100
+drwx------  5 root root  4096 Sep 24 20:59 .
+drwx------ 10 root root  4096 Sep 24 20:52 ..
+-rw-r--r--  1 root root  2123 Sep 24 20:52 baseline.txt
+-rw-r--r--  1 root root  2678 Sep 24 20:53 common.mjs
+drwx------  2 root root  4096 Sep 24 20:54 decoy
+-rw-r--r--  1 root root  8699 Sep 24 20:54 ev.sh
+drwxr-xr-x  2 root root  4096 Sep 24 20:54 fx
+-rw-r--r--  1 root root   198 Sep 24 20:55 hexcmp.txt
+-rw-r--r--  1 root root  2892 Sep 24 20:55 inv.txt
+-rw-r--r--  1 root root   769 Sep 24 20:53 lineage-check.mjs
+-rw-r--r--  1 root root  2381 Sep 24 20:53 mountA.mjs
+-rw-r--r--  1 root root  1193 Sep 24 20:53 mountB.mjs
+-rw-r--r--  1 root root  4356 Sep 24 20:59 requery-resume.out
+-rw-r--r--  1 root root   900 Sep 24 20:59 requery.sh
+-rw-r--r--  1 root root  1358 Sep 24 20:55 secret-class.txt
+-rw-r--r--  1 root root 15891 Sep 24 20:55 secret-grep.txt
+drwx------ 17 root root  4096 Sep 24 20:54 src0724
+-rw-r--r--  1 root root  1115 Sep 24 20:53 verify-final.mjs
+-rw-r--r--  1 root root  1452 Sep 24 20:55 ws.txt
+
+docs/implementation-3x/evidence/v06-b3/install/r3-live/:
+total 172
+drwxr-xr-x 2 root root  4096 Sep 24 20:55 .
+drwxr-xr-x 4 root root  4096 Sep 24 20:54 ..
+-rw-r--r-- 1 root root  2101 Sep 24 20:55 checksums.txt
+-rw------- 1 root root 58461 Sep 24 20:54 install-manifest-r1.txt
+-rw-r--r-- 1 root root  2928 Sep 24 20:55 invariance.txt
+-rw-r--r-- 1 root root 36306 Sep 24 20:54 inventory.tsv
+-rw-r--r-- 1 root root  4083 Sep 24 20:54 lineage.txt
+-rw-r--r-- 1 root root 11011 Sep 24 20:55 live-test.txt
+-rw-r--r-- 1 root root  7675 Sep 24 20:55 mount-boundary.txt
+-rw-r--r-- 1 root root  4308 Sep 24 20:55 nobody-probe.txt
+-rw-r--r-- 1 root root  1308 Sep 24 20:55 package-set.txt
+-rw------- 1 root root   558 Sep 24 20:54 parent-manifest-b3b.txt
+-rw-r--r-- 1 root root  2062 Sep 24 20:55 provenance.txt
+-rw-r--r-- 1 root root  5630 Sep 24 20:55 r1-live-recheck.txt
+-rw-r--r-- 1 root root  1502 Sep 24 20:55 release-id.txt
+-rw-r--r-- 1 root root  2625 Sep 24 20:55 verify-final.txt
+exit=0
+
+## 5. 25/30-minute gate sentences (verbatim)
+- 20:52:38Z pre-flight: "The gate is tight but this is mostly scripted, so I'm proceeding."
+- 20:56:15Z pause report: "남은 작업은 README, SHA256SUMS, 검사, 커밋, 감사(5~8분), push입니다. 곧 재개하면 21:17:38Z 안에 닫을 수 있습니다. 재개가 21:05Z보다 늦으면 25분은 넘기고 30분 안에만 들어올 가능성이 큽니다."

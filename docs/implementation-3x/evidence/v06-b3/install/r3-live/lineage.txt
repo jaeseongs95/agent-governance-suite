@@ -1,0 +1,58 @@
+$ sha256sum /root/b3bf/r1/manifest.txt /root/b3bf/manifest.txt; wc -lc /root/b3bf/r1/manifest.txt /root/b3bf/manifest.txt
+d75268cecb0c8f2210c7d0f8683a4b0bd8a4e6b685e3eec5144f42aca4be0e05  /root/b3bf/r1/manifest.txt
+857bad43df354eb2022fcc3355257cd37adaa0a4acca506f2a2a9add0721ce9f  /root/b3bf/manifest.txt
+  246 58461 /root/b3bf/r1/manifest.txt
+    4   558 /root/b3bf/manifest.txt
+  250 59019 total
+exit=0
+
+$ head -3 /root/b3bf/r1/manifest.txt; echo ...; cat /root/b3bf/manifest.txt
+{"path":"/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd","ino":"516848","type":"dir","uid":0,"mode":"755"}
+{"path":"/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin","ino":"516918","type":"dir","uid":0,"mode":"755"}
+{"path":"/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node","ino":"516919","type":"file","uid":0,"mode":"555"}
+...
+{"path":"/usr/lib/agent-governance-suite","ino":"516801","type":"dir","uid":0,"mode":"755"}
+{"path":"/usr/lib/agent-governance-suite/protected-runtime","ino":"516802","type":"dir","uid":0,"mode":"755"}
+{"path":"/usr/lib/agent-governance-suite/protected-runtime/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6","ino":"516803","type":"dir","uid":0,"mode":"755"}
+{"path":"/usr/lib/agent-governance-suite/protected-runtime/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6/node","ino":"516804","type":"file","uid":0,"mode":"555"}
+exit=0
+
+note: both manifests record only path, ino, type, uid, mode per created entry; they carry no installer, source or parent fields.
+
+$ git log -1 --format='%H %T %s' c584e0a46493d3cf937323b12bd3dbdc9737a046
+c584e0a46493d3cf937323b12bd3dbdc9737a046 35ba92fe9c36b1e40ffff233c70f581a40cf1937 fix: install the v06-b3b linux runtime in the v2 closure layout
+exit=0
+
+$ git rev-parse '0724bb2bc452626aba546a57d1db5c407d32feb0^{tree}'
+eb59f43dd9a30c69d5980f3e79c4aa40c562a129
+exit=0
+
+$ diff -rq /root/b3bf/r1/src /root/b3bf/r3/src0724
+exit=0
+
+$ stat -c '%n %U:%G %a' /root /root/b3bf /root/b3bf/r1 /root/b3bf/r1/src
+/root root:root 700
+/root/b3bf root:root 700
+/root/b3bf/r1 root:root 700
+/root/b3bf/r1/src root:root 700
+exit=0
+
+$ find /root/b3bf/r1/src -perm /022 | wc -l; find /root/b3bf/r1/src ! -user root | wc -l; find /root/b3bf/r1/src -type l | wc -l
+1991
+0
+0
+exit=0
+
+$ stat -c '%n %U:%G %a' /root/b3bf/r3 /root/b3bf/r3/src0724; find /root/b3bf/r3/src0724 -perm /022 | wc -l
+/root/b3bf/r3 root:root 700
+/root/b3bf/r3/src0724 root:root 700
+0
+exit=0
+
+$ cd /root/b3bf/r3 && node lineage-check.mjs
+readPackageSource(/root/b3bf/r1/src) [r1 install-time source]	REJECTED	untrusted source input: ancestor is group/other writable: /root/b3bf/r1/src/tests
+readPackageSource(/root/b3bf/r3/src0724) [fresh git -c tar.umask=022 archive 0724bb2b]	ACCEPTED	{"host":"648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c","files":179,"contracts":{"v03i":{"contractId":"ags-vm-protected-host-installation/v1","revision":"1","manifestSha256":"0c5bfc700c37cd22b7c15c06f00c916948f1b170a7a0f8cd9da7768eb39ccb19"},"v2":{"contractId":"ags-protected-node-closure/v2","revision":"2"}},"releaseId":"32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd"}
+readTrustedParentManifest(/root/b3bf/manifest.txt)	ACCEPTED	[{"path":"/usr/lib/agent-governance-suite","ino":"516801","type":"dir","uid":0,"mode":"755"},{"path":"/usr/lib/agent-governance-suite/protected-runtime","ino":"516802","type":"dir","uid":0,"mode":"755"},{"path":"/usr/lib/agent-governance-suite/protected-runtime/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6","ino":"516803","type":"dir","uid":0,"mode":"755"},{"path":"/usr/lib/agent-governance-suite/protected-runtime/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6/node","ino":"516804","type":"file","uid":0,"mode":"555"}]
+exit=0
+
+fact: root 32a825d9 was installed by c584e0a4 code (V06-b3b-r1) at 16:51Z; it was not reinstalled by 8bb6e689 code.

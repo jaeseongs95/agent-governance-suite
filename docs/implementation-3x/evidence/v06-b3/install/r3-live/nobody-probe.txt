@@ -1,0 +1,45 @@
+$ setpriv --reuid=65534 --regid=65534 --clear-groups id
+uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
+exit=0
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node -e <probe> ...
+create /usr/lib/agent-governance-suite/ags-ev-intruder	EACCES	open
+create /usr/lib/agent-governance-suite/protected-runtime/ags-ev-intruder	EACCES	open
+create /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/ags-ev-intruder	EACCES	open
+create /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/ags-ev-intruder	EACCES	open
+create /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/ags-ev-intruder	EACCES	open
+create /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/contracts/ags-ev-intruder	EACCES	open
+open-r+ /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node	EACCES	open
+open-r+ /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/host-integration.json	EACCES	open
+open-r+ /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/mcp-server/dist/server.mjs	EACCES	open
+rename /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd -> /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd.moved	EACCES	rename
+rename /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin -> /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin.moved	EACCES	rename
+rename /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node -> /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node.moved	EACCES	rename
+rename /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package -> /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package.moved	EACCES	rename
+link /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node -> /tmp/ags-b3b-r3-ev-438	EPERM	link
+exit=0
+
+$ test -e /tmp/ags-b3b-r3-ev-438 && { echo LINK CREATED FAIL; unlink /tmp/ags-b3b-r3-ev-438; } || echo absent: /tmp/ags-b3b-r3-ev-438
+absent: /tmp/ags-b3b-r3-ev-438
+exit=0
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups unshare --mount true
+unshare: unshare failed: Operation not permitted
+exit=1
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups mount --bind /tmp /tmp
+mount: /tmp: must be superuser to use mount.
+       dmesg(1) may have more information after failed mount system call.
+exit=32
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs --base-dir /usr/lib --input-dir /root/b3bf/in --gpgv /usr/bin/gpgv --tar /usr/bin/tar --manifest /tmp/ags-b3b-r3-nobody-manifest --package-source /root/b3bf/r3/src0724 --parent-manifest /root/b3bf/manifest.txt
+EACCES: permission denied, lstat '/root/b3bf/in/nodejs-release-keyring.kbx'
+exit=1
+
+$ test -e /tmp/ags-b3b-r3-nobody-manifest && echo created || echo absent
+absent
+exit=0
+
+$ stat -c '%n %U:%G %a ino=%i nlink=%h' /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node
+/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node root:root 555 ino=516919 nlink=1
+exit=0

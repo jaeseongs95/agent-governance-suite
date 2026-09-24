@@ -1,0 +1,13 @@
+$ diff <( (echo host-integration.json; node -e 'for (const a of JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).artifacts) console.log(a.path)' /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/host-integration.json) | sort) <(cd /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package && find . -type f | sed 's|^\./||' | sort)
+exit=0
+
+$ cd /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package && find . -type f | wc -l
+179
+exit=0
+
+$ cd /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package && node -e 'for (const a of JSON.parse(require("fs").readFileSync("host-integration.json","utf8")).artifacts) console.log(a.sha256.slice(7)+"  "+a.path)' | sha256sum -c --quiet
+exit=0
+
+$ cd /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package && node -e 'for (const a of JSON.parse(require("fs").readFileSync("host-integration.json","utf8")).artifacts) console.log(a.sha256.slice(7)+"  "+a.path)' | sha256sum -c 2>/dev/null | grep -vc ': OK$'
+0
+exit=1

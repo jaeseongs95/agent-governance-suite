@@ -1,0 +1,74 @@
+$ date -u
+Thu Sep 24 20:54:20 UTC 2026
+exit=0
+
+$ cat /proc/sys/kernel/random/boot_id
+2c428abc-c358-4e63-b650-c7bb78cadfbe
+exit=0
+
+$ uname -srm
+Linux 6.18.44-fc-v37 x86_64
+exit=0
+
+$ grep -E '^(ID|VERSION_ID)=' /etc/os-release
+VERSION_ID="24.04"
+ID=ubuntu
+exit=0
+
+$ id
+uid=0(root) gid=0(root) groups=0(root)
+exit=0
+
+$ grep CapEff /proc/self/status
+CapEff:	000001fffeffffff
+exit=0
+
+$ findmnt -no TARGET,SOURCE,FSTYPE,PROPAGATION -T /
+/      /dev/vda ext4   private
+exit=0
+
+$ cat /proc/sys/fs/protected_hardlinks
+1
+exit=0
+
+$ command -v node; node --version
+/root/b3bf/node/bin/node
+v24.21.0
+exit=0
+
+$ git rev-parse HEAD 'HEAD^{tree}'
+8bb6e6891bf25a5ddf9593def7468779616d3866
+e6db3967f9bb07150138ef293df09a74608385a9
+exit=0
+
+$ git ls-remote origin refs/heads/claude/v3x-v06-b3b-r1 refs/heads/codex/v260-semantic-decision-layer
+8bb6e6891bf25a5ddf9593def7468779616d3866	refs/heads/claude/v3x-v06-b3b-r1
+4866e45501227624d1e625470453ef8ce018bb9b	refs/heads/codex/v260-semantic-decision-layer
+exit=0
+
+$ git fetch -q origin codex/v260-semantic-decision-layer && git rev-parse FETCH_HEAD
+4866e45501227624d1e625470453ef8ce018bb9b
+exit=0
+
+$ git merge-base --is-ancestor 8bb6e6891bf25a5ddf9593def7468779616d3866 FETCH_HEAD
+exit=0
+
+$ git rev-parse 8bb6e6891bf25a5ddf9593def7468779616d3866:scripts/qualification/v06-b3-linux-install.mjs FETCH_HEAD:scripts/qualification/v06-b3-linux-install.mjs
+c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1
+c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1
+exit=0
+
+$ sha256sum scripts/qualification/v06-b3-linux-install.mjs
+d8038918488d9f4c1d2056f5ef04ce1546b7e68142d57319dd96bb864ae0fb8a  scripts/qualification/v06-b3-linux-install.mjs
+exit=0
+
+$ git diff --stat 83eaf09c 8bb6e689
+ docs/implementation-3x/evidence/v06-b3/install/README.ko.md             | 2 +-
+ .../evidence/v06-b3/install/TASK_V06-b3b-r4_handoff.ko.md               | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+exit=0
+
+$ git diff --stat 8bb6e689 FETCH_HEAD
+ .../evidence/W06-a-codex-host-origin.json          | 119 +++++++++++++++++++++
+ 1 file changed, 119 insertions(+)
+exit=0
