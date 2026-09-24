@@ -24,13 +24,13 @@ test('official build regenerates the direct MCP manifest and hashes the fixed ca
 
   const manifest = JSON.parse(before.toString('utf8'));
   assert.deepEqual(manifest, buildCurrentHostIntegrationManifest(root));
-  assert.deepEqual(manifest.entryPoints.map((entry) => entry.id), ['mcp-server']);
+  assert.deepEqual(manifest.entryPoints.map((entry) => entry.id), ['mcp-server', 'scope-baseline', 'scope-compare', 'acceptance-cli']);
   assert.equal(manifest.entryPoints[0].path, 'mcp-server/dist/server.mjs');
   const plugin = JSON.parse(readFileSync(path.join(root, '.codex-plugin/plugin.json'), 'utf8'));
   assert.deepEqual(manifest.plugin, { id: plugin.id, version: plugin.version });
   assert.deepEqual(
     manifest.artifacts.map((artifact) => artifact.path),
-    [...manifest.entryPoints[0].executionClosure].sort(),
+    [...new Set(manifest.entryPoints.flatMap((entry) => entry.executionClosure))].sort(),
   );
   for (const artifact of manifest.artifacts) {
     const bytes = readFileSync(path.join(root, artifact.path));

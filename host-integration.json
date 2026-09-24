@@ -358,6 +358,22 @@
       "sha256": "sha256:708c3cf8b44b05bc1a81ea3290982bd81053a442f8a07eeb1eee2f656b860800"
     },
     {
+      "path": "skills/acceptance-evidence-validator/scripts/cli.mjs",
+      "sha256": "sha256:296b2a8d0eb3690f69538e2cc1693e0129af3b2a95d6c9792d88ae2821fa6e9c"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/core.mjs",
+      "sha256": "sha256:0a340ef81cafbc1d08edfdd042480d14ede06fbce407417be6d4def4ca7a4216"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/io.mjs",
+      "sha256": "sha256:f04aacb1603b18aa3b431cbcc96eb7f815ee7af9ece586d3e7c1221149f78dc0"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/schema-validation.mjs",
+      "sha256": "sha256:f6870594c5c16bac20adaa2c6e9dcbdf2e4804c5922fd591c6ef030ee6495c44"
+    },
+    {
       "path": "skills/blocker-diagnostician/contracts/diagnosis-report.v1.schema.json",
       "sha256": "sha256:ce04ec2821fb07ebc66373b3783165c461758ac30437d401171fc43c0a07fba0"
     },
@@ -388,6 +404,22 @@
     {
       "path": "skills/change-scope-guardian/integration/provider-result.v1.schema.json",
       "sha256": "sha256:7142aa17f93e7b50d2149dc002bb8c6a1ce9dd66a40ea181763f5158b1f9c6d1"
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs",
+      "sha256": "sha256:c7f6b887fa94697434568ed987b66d81525841949bf64ebfdadcc6f5dcecfe69"
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/compare-change-scope.mjs",
+      "sha256": "sha256:017e03abb617f5fa9d582e1b812b78f1dfa570e411970ae9aa6afb4a67b9e1ba"
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/lib.mjs",
+      "sha256": "sha256:0fa25746036db845760c61a41a53dcbb012c40ec310640a1ef5a3a993c500562"
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/schema-validator.mjs",
+      "sha256": "sha256:53165cecfb1dc4e1d78317d88e04f0c9e938ded84bd4ba96bda57178923e6238"
     },
     {
       "path": "skills/codex-token-usage-analyzer/contracts/token-usage-report-request.v1.schema.json",
@@ -847,6 +879,52 @@
         "skills/workspace-convention-profiler/contracts/workspace-convention-profile.v1.schema.json",
         "skills/workspace-convention-profiler/contracts/workspace-profile-request.v1.schema.json",
         "skills/workspace-convention-profiler/integration/provider-result.v1.schema.json"
+      ]
+    },
+    {
+      "id": "scope-baseline",
+      "path": "skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs",
+      "executionClosure": [
+        "runtime/schema-validation.mjs",
+        "skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json",
+        "skills/change-scope-guardian/contracts/change-scope-request.v1.schema.json",
+        "skills/change-scope-guardian/contracts/upstream/task-envelope.v1.schema.json",
+        "skills/change-scope-guardian/contracts/workspace-baseline.v1.schema.json",
+        "skills/change-scope-guardian/integration/provider-result.v1.schema.json",
+        "skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs",
+        "skills/change-scope-guardian/scripts/lib.mjs",
+        "skills/change-scope-guardian/scripts/schema-validator.mjs"
+      ]
+    },
+    {
+      "id": "scope-compare",
+      "path": "skills/change-scope-guardian/scripts/compare-change-scope.mjs",
+      "executionClosure": [
+        "runtime/schema-validation.mjs",
+        "skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json",
+        "skills/change-scope-guardian/contracts/change-scope-request.v1.schema.json",
+        "skills/change-scope-guardian/contracts/upstream/task-envelope.v1.schema.json",
+        "skills/change-scope-guardian/contracts/workspace-baseline.v1.schema.json",
+        "skills/change-scope-guardian/integration/provider-result.v1.schema.json",
+        "skills/change-scope-guardian/scripts/compare-change-scope.mjs",
+        "skills/change-scope-guardian/scripts/lib.mjs",
+        "skills/change-scope-guardian/scripts/schema-validator.mjs"
+      ]
+    },
+    {
+      "id": "acceptance-cli",
+      "path": "skills/acceptance-evidence-validator/scripts/cli.mjs",
+      "executionClosure": [
+        "runtime/schema-validation.mjs",
+        "skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json",
+        "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
+        "skills/acceptance-evidence-validator/contracts/acceptance-report-validation.v1.schema.json",
+        "skills/acceptance-evidence-validator/contracts/upstream/task-envelope.v1.schema.json",
+        "skills/acceptance-evidence-validator/integration/provider-result.v1.schema.json",
+        "skills/acceptance-evidence-validator/scripts/cli.mjs",
+        "skills/acceptance-evidence-validator/scripts/core.mjs",
+        "skills/acceptance-evidence-validator/scripts/io.mjs",
+        "skills/acceptance-evidence-validator/scripts/schema-validation.mjs"
       ]
     }
   ],

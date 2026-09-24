@@ -161,7 +161,36 @@ function assertSchemaReferences(root: string, schemaPaths: string[], providerPat
   }
 }
 
-/** Emit only the packaged direct MCP surface. Other VM entry points are separate tasks. */
+const IMPORT_SPECIFIER = /\bfrom\s*["']([^"']+)["']|\bimport\s*\(?\s*["']([^"']+)["']/g;
+
+/** Static ESM import closure of a packaged script; only node: builtins may resolve outside the package. */
+function importClosure(root: string, file: string, seen = new Set<string>()): Set<string> {
+  if (seen.has(file)) return seen;
+  seen.add(file);
+  const source = readFileSync(resolvePackageFile(root, file), "utf8");
+  if (/\bimport\s*\(\s*[^"'\s]/.test(source)) throw new Error(`Non-literal dynamic import in package script: ${file}`);
+  for (const match of source.matchAll(IMPORT_SPECIFIER)) {
+    const specifier = (match[1] ?? match[2]) as string;
+    if (specifier.startsWith("node:")) continue;
+    if (!specifier.startsWith("./") && !specifier.startsWith("../")) {
+      throw new Error(`Package script imports outside the package: ${file} -> ${specifier}`);
+    }
+    importClosure(root, path.posix.normalize(path.posix.join(path.posix.dirname(file), specifier)), seen);
+  }
+  return seen;
+}
+
+/** Existing skill CLIs the VM runs directly; their judgement logic stays in the skill scripts. */
+const SCRIPT_ENTRY_POINTS = [
+  ["scope-baseline", "skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs"],
+  ["scope-compare", "skills/change-scope-guardian/scripts/compare-change-scope.mjs"],
+  ["acceptance-cli", "skills/acceptance-evidence-validator/scripts/cli.mjs"],
+] as const;
+
+/**
+ * Emit the packaged direct MCP surface and the three skill CLIs. The legacy host-attestation CLI is not advertised.
+ * Advertised closures prove package contents only, not protected launch or operational install eligibility.
+ */
 export function buildCurrentHostIntegrationManifest(rootDirectory: string): HostIntegrationManifest {
   const root = realpathSync(rootDirectory);
   const mcp = JSON.parse(readFileSync(path.join(root, ".mcp.json"), "utf8")) as {
@@ -200,9 +229,15 @@ export function buildCurrentHostIntegrationManifest(rootDirectory: string): Host
     ...skillSchemas,
   ])].sort();
   for (const file of executionClosure) resolvePackageFile(root, file);
+  // Skill scripts load every schema they validate with from their own skill root at runtime.
+  const scripts = SCRIPT_ENTRY_POINTS.map(([id, entry]): HostIntegrationCandidate => {
+    const skillRoot = entry.split("/").slice(0, 2).join("/");
+    const schemas = filesIn(root, skillRoot).filter((file) => file.endsWith(".schema.json"));
+    return { id, path: entry, executionClosure: [...new Set([...importClosure(root, entry), ...schemas])].sort(), enabled: true };
+  });
   const descriptor = buildHostIntegrationDescriptor(root, [{
     id: "mcp-server", path: "mcp-server/dist/server.mjs", executionClosure, enabled: true,
-  }]);
+  }, ...scripts]);
   const manifest = { ...descriptor.manifest, plugin: { id: plugin.id, version: plugin.version } };
   return parseHostIntegrationManifest(manifest, root);
 }
