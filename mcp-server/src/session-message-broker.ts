@@ -178,12 +178,11 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       });
     }
     case "register-task-request": {
-      const messageId = optionalString(payload, "messageId");
+      if (Object.hasOwn(payload, "messageId")) throw new Error("Task request messageId is broker-assigned.");
       const ttlSeconds = optionalInteger(payload, "ttlSeconds");
       return store.registerTaskRequest({
         request: payload.request as SessionTaskRequestV1,
         body: string(payload.body, "body"),
-        ...(messageId === undefined ? {} : { messageId }),
         ...(ttlSeconds === undefined ? {} : { ttlSeconds }),
       });
     }

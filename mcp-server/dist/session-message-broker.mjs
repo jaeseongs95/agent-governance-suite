@@ -8264,6 +8264,7 @@ var SessionMessageStore = class {
   }
   /** Request metadata is a claim, not a task authorization or an outcome. */
   registerTaskRequest(input, nowMs = Date.now()) {
+    if (Object.hasOwn(input, "messageId")) throw new Error("Task request messageId is broker-assigned.");
     const request = input.request;
     if (!request || typeof request !== "object" || Array.isArray(request) || Object.keys(request).sort().join() !== "authorityEffect,callbackTarget,expiresAt,kind,recipient,requestId,requestedAt,revision,schemaVersion,sender,taskId") {
       throw new Error("Task request shape is invalid.");
@@ -8297,7 +8298,7 @@ var SessionMessageStore = class {
     try {
       const existing = this.database.prepare("SELECT * FROM task_requests WHERE request_id = ?").get(request.requestId);
       if (existing) {
-        const same2 = existing.task_id === request.taskId && existing.sender_host === request.sender.host && existing.sender_session_id === request.sender.sessionId && existing.sender_instance_id === request.sender.instanceId && existing.recipient_host === request.recipient.host && existing.recipient_session_id === request.recipient.sessionId && existing.callback_host === request.callbackTarget.host && existing.callback_session_id === request.callbackTarget.sessionId && existing.revision === request.revision && existing.requested_at === request.requestedAt && existing.expires_at === request.expiresAt && existing.body_digest === bodyDigest && existing.ttl_seconds === ttlSeconds && (input.messageId === void 0 || existing.message_id === input.messageId);
+        const same2 = existing.task_id === request.taskId && existing.sender_host === request.sender.host && existing.sender_session_id === request.sender.sessionId && existing.sender_instance_id === request.sender.instanceId && existing.recipient_host === request.recipient.host && existing.recipient_session_id === request.recipient.sessionId && existing.callback_host === request.callbackTarget.host && existing.callback_session_id === request.callbackTarget.sessionId && existing.revision === request.revision && existing.requested_at === request.requestedAt && existing.expires_at === request.expiresAt && existing.body_digest === bodyDigest && existing.ttl_seconds === ttlSeconds;
         if (!same2) throw new Error("requestId already belongs to a different task request.");
         this.database.exec("COMMIT");
         return {
@@ -8313,7 +8314,6 @@ var SessionMessageStore = class {
         throw new Error("Task request deadline must cover message TTL.");
       }
       const sent = this.send({
-        ...input.messageId === void 0 ? {} : { messageId: input.messageId },
         sender: request.sender,
         target: request.recipient,
         body: input.body,
@@ -14506,12 +14506,11 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, modelC
       });
     }
     case "register-task-request": {
-      const messageId = optionalString(payload, "messageId");
+      if (Object.hasOwn(payload, "messageId")) throw new Error("Task request messageId is broker-assigned.");
       const ttlSeconds = optionalInteger(payload, "ttlSeconds");
       return store.registerTaskRequest({
         request: payload.request,
         body: string(payload.body, "body"),
-        ...messageId === void 0 ? {} : { messageId },
         ...ttlSeconds === void 0 ? {} : { ttlSeconds }
       });
     }

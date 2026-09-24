@@ -303,10 +303,10 @@ export class SessionMessageStore {
   registerTaskRequest(input: {
     request: SessionTaskRequestV1;
     body: string;
-    messageId?: string;
     ttlSeconds?: number;
   }, nowMs = Date.now()): { requestId: string; messageId: string; messageCreatedAt: string;
     messageExpiresAt: string; requestExpiresAt: string; duplicate: boolean } {
+    if (Object.hasOwn(input, "messageId")) throw new Error("Task request messageId is broker-assigned.");
     const request = input.request;
     if (!request || typeof request !== "object" || Array.isArray(request)
       || Object.keys(request).sort().join() !== "authorityEffect,callbackTarget,expiresAt,kind,recipient,requestId,requestedAt,revision,schemaVersion,sender,taskId") {
@@ -359,8 +359,7 @@ export class SessionMessageStore {
           && existing.callback_host === request.callbackTarget.host && existing.callback_session_id === request.callbackTarget.sessionId
           && existing.revision === request.revision && existing.requested_at === request.requestedAt
           && existing.expires_at === request.expiresAt && existing.body_digest === bodyDigest
-          && existing.ttl_seconds === ttlSeconds
-          && (input.messageId === undefined || existing.message_id === input.messageId);
+          && existing.ttl_seconds === ttlSeconds;
         if (!same) throw new Error("requestId already belongs to a different task request.");
         this.database.exec("COMMIT");
         return {
@@ -374,7 +373,6 @@ export class SessionMessageStore {
         throw new Error("Task request deadline must cover message TTL.");
       }
       const sent = this.send({
-        ...(input.messageId === undefined ? {} : { messageId: input.messageId }),
         sender: request.sender, target: request.recipient, body: input.body, ttlSeconds,
       }, nowMs);
       if (sent.duplicate) throw new Error("messageId already belongs to a different message.");
