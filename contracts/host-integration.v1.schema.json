@@ -43,5 +43,68 @@
         }
       }
     }
+  },
+  "$defs": {
+    "trustProfile": {
+      "description": "Contract identities for server-selected host trust; definitions alone do not advertise or activate a profile.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["profileId", "assuranceTier", "hostId", "receiptDomain", "dispatchDomain", "modelClassSource", "actorSource", "keyNamespace", "pinNamespace", "stateNamespace"],
+          "properties": {
+            "profileId": { "const": "vm-protected-v1" },
+            "assuranceTier": { "const": "strong" },
+            "hostId": { "const": "flowmarshal-engine" },
+            "receiptDomain": { "const": "vm-provider-terminal-to-governance" },
+            "dispatchDomain": { "const": "ags-vm-dispatch-registration-v1" },
+            "modelClassSource": { "const": "operator-exact-observed-model" },
+            "actorSource": { "const": "operator-pinned-installation" },
+            "keyNamespace": { "const": "vm-protected-v1" },
+            "pinNamespace": { "const": "vm-protected-v1" },
+            "stateNamespace": { "const": "vm-protected-v1" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["profileId", "assuranceTier", "hostId", "receiptDomain", "dispatchDomain", "modelClassSource", "actorSource", "keyNamespace", "pinNamespace", "stateNamespace"],
+          "properties": {
+            "profileId": { "const": "flowmarshal-same-user-v1" },
+            "assuranceTier": { "const": "same-user" },
+            "hostId": { "const": "flowmarshal" },
+            "receiptDomain": { "const": "fm-same-user-provider-terminal-to-governance-v1" },
+            "dispatchDomain": { "const": "ags-fm-same-user-dispatch-registration-v1" },
+            "modelClassSource": { "const": "flowmarshal-signed-assertion" },
+            "actorSource": { "const": "flowmarshal-signed-assertion" },
+            "keyNamespace": { "const": "flowmarshal-same-user-v1" },
+            "pinNamespace": { "const": "flowmarshal-same-user-v1" },
+            "stateNamespace": { "const": "flowmarshal-same-user-v1" }
+          }
+        }
+      ]
+    },
+    "serverProfileSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "profile", "pinSetDigest", "resourceBindingDigest", "freezeIdentity"],
+      "properties": {
+        "source": { "const": "server-local-operator-config" },
+        "profile": { "$ref": "#/$defs/trustProfile" },
+        "pinSetDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "resourceBindingDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "freezeIdentity": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "profileBinding": {
+      "description": "The same pair is required in signed receipt/dispatch and trusted executionContext projection.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileId", "freezeIdentity"],
+      "properties": {
+        "profileId": { "enum": ["vm-protected-v1", "flowmarshal-same-user-v1"] },
+        "freezeIdentity": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    }
   }
 }

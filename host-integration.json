@@ -91,7 +91,7 @@
     },
     {
       "path": "contracts/host-integration.v1.schema.json",
-      "sha256": "sha256:862e59b0b6ac0aba7bddb4bc0c168897ebb60935dc5f76647b247c1901cf5be3"
+      "sha256": "sha256:f3685ca745a79e749aac29eab647095ac411d4185b008cf0e3207f82aca407de"
     },
     {
       "path": "contracts/host-model-capabilities.v1.schema.json",
