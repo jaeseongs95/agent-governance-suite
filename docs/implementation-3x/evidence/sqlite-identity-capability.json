@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "B14-p",
+  "kind": "capability-probe",
+  "scope": "Temporary SQLite files only; no product writer or user database",
+  "observedEnvironment": {
+    "platform": "win32/x64",
+    "os": "Microsoft Windows NT 10.0.26200.0",
+    "node": "v24.19.0",
+    "windowsPowerShell": "5.1.26100.9444",
+    "winsqlite3": "3.51.1"
+  },
+  "mechanism": {
+    "connectionOwner": "Windows PowerShell 5.1 process using P/Invoke into winsqlite3.dll, with the loaded DLL path checked against the Windows system directory",
+    "open": "sqlite3_open_v2(SQLITE_OPEN_READWRITE) opens an existing temporary main DB without CREATE",
+    "openedFileIdentity": "sqlite3_file_control(db, main, SQLITE_FCNTL_WIN32_GET_HANDLE) obtains the handle from the same SQLite connection's main xOpen file; GetFileInformationByHandleEx(FileIdInfo) returns volume serial plus 128-bit file ID",
+    "comparison": "A temporary expected ID retained by the test is mandatory for schema write and compared before sqlite3_exec; missing expectation rejects before SQLite open, and mismatch closes the connection without schema SQL",
+    "firstWritePosition": "Only a matched identity reaches sqlite3_exec(CREATE TABLE probe_marker); the mismatch fixture retains its original bytes and has no resource.sqlite3 sidecar",
+    "notIdentityEvidence": "The File.Exists check limits probe input to an existing OS-temp file; it is not the comparison evidence. No separate guard FD or DatabaseSync(path) is used."
+  },
+  "installedShapeObserved": {
+    "files": [
+      "tests/coordinate-subagents/v3x/probes/sqlite-identity/run.mjs",
+      "tests/coordinate-subagents/v3x/probes/sqlite-identity/probe.ps1"
+    ],
+    "nodeModules": false,
+    "nativeRuntime": "OS winsqlite3.dll and Windows PowerShell 5.1; no probe-owned native binary. The loaded DLL path is checked against the Windows system directory before SQLite open, after DLL load.",
+    "powershellExecutableObserved": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe resolved on this host; the runner invokes powershell.exe by name",
+    "probeScriptLocation": "Copied into an unprotected test temp directory; no signed or protected installation was tested",
+    "invocation": "Node.js run.mjs starts powershell.exe, which owns the SQLite connection and returns identity/status as JSON"
+  },
+  "check": {
+    "command": "pnpm exec vitest run tests/coordinate-subagents/v3x/B14-p.test.mjs",
+    "result": "PASS",
+    "observed": "1 test: installed two-file copy without node_modules; empty expected ID blocks schema write; actual main-handle identity stable across reopen; matched identity permits schema write; path replacement changes identity and rejects before schema write; replacement bytes and sidecar list unchanged"
+  },
+  "unobservedMatrix": [
+    "Windows x64 with Node 22.13",
+    "Other Windows builds, architectures, PowerShell policy modes and winsqlite3 versions",
+    "Linux with Node 22 or 24; the Windows-only probe test skips there"
+  ],
+  "notEstablished": [
+    "Protected operational expected-ID provenance or writer/worker OS-principal separation",
+    "Protected or signed PowerShell executable, probe script and DLL provenance in an operational install; the DLL path check after load is not a defense against worker-controlled replacement or native code execution",
+    "Sidecar, alias, restart, crash and adversarial race controls required for a product writer",
+    "B14-h/i completion or B14-c schema/admission activation"
+  ],
+  "sources": [
+    "https://www.sqlite.org/c3ref/file_control.html",
+    "https://www.sqlite.org/c3ref/c_fcntl_begin_atomic_write.html",
+    "https://learn.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-file_id_info",
+    "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/add-type"
+  ]
+}
