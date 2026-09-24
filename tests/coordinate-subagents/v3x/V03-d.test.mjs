@@ -184,14 +184,14 @@ test('installed path ignores inherited environment; unsafe ACL and symlink fail 
   assert.equal(installedVmPolicyPath(), original);
   if (prior === undefined) delete process.env.AGENT_GOVERNANCE_VM_PIN_PATH;
   else process.env.AGENT_GOVERNANCE_VM_PIN_PATH = prior;
-  assert.equal(isProtectedWindowsAcl({ owner: 'S-1-5-18', rules: [
+  assert.equal(isProtectedWindowsAcl({ owner: 'S-1-5-18', reparse: false, rules: [
     { sid: 'S-1-5-32-544', rights: 2032127, type: 'Allow' },
     { sid: 'S-1-5-32-545', rights: 1179817, type: 'Allow' },
   ] }), true);
-  assert.equal(isProtectedWindowsAcl({ owner: 'S-1-5-18', rules: [
+  assert.equal(isProtectedWindowsAcl({ owner: 'S-1-5-18', reparse: false, rules: [
     { sid: 'S-1-5-32-545', rights: 197055, type: 'Allow' },
   ] }), false);
-  assert.equal(isProtectedWindowsAcl({ owner: 'S-1-5-21-1', rules: [] }), false);
+  assert.equal(isProtectedWindowsAcl({ owner: 'S-1-5-21-1', reparse: false, rules: [] }), false);
 
   const directory = mkdtempSync(join(tmpdir(), 'ags-v03-d-'));
   const file = join(directory, 'policy.json');
