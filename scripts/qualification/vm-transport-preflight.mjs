@@ -24,7 +24,7 @@ const POWERSHELL = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.e
 export const PROTECTED_HOST_CONTRACT = Object.freeze({
   id: 'ags-vm-protected-host-installation/v1',
   revision: '1',
-  manifestSha256: 'sha256:a35fb1a9c7cd67b7b84fe5e178aa3dfb705d206ebd4993e532aa71694ed3e00c',
+  manifestSha256: 'sha256:0c5bfc700c37cd22b7c15c06f00c916948f1b170a7a0f8cd9da7768eb39ccb19',
   profilesSha256: 'sha256:fdd8677983d4aaf3d4d2ae8809a009a48643f5f047a4787b7940c5f4701d4b82',
 });
 

@@ -4,7 +4,7 @@
 
 ## 빠른 시작
 
-Node.js 22.13 이상과 `pnpm@11.19.0`을 사용합니다.
+Node.js 24 이상과 `pnpm@11.19.0`을 사용합니다.
 
 ```bash
 pnpm install --frozen-lockfile

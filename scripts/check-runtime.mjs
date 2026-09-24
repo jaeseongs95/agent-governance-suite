@@ -3,9 +3,9 @@ import path from "node:path";
 import { ROOT } from "./lib.mjs";
 import { runRuntimeSmokeCheck } from "./runtime-smoke.mjs";
 
-const [major = 0, minor = 0] = process.versions.node.split(".").map((part) => Number.parseInt(part, 10));
-if (major < 22 || (major === 22 && minor < 13)) {
-  throw new Error(`Node.js 22.13 or newer is required; found ${process.versions.node}.`);
+const major = Number.parseInt(process.versions.node.split(".")[0], 10);
+if (!(major >= 24)) {
+  throw new Error(`Node.js 24 or newer is required; found ${process.versions.node}.`);
 }
 
 const requiredFiles = [

@@ -21,14 +21,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        node: ['22', '24']
+        node: ['24']
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false
       - name: Archive exact candidate source
-        if: matrix.os == 'ubuntu-latest' && matrix.node == '22'
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '24'
         shell: bash
         run: |
           mkdir -p evidence
@@ -36,7 +36,7 @@ jobs:
           git archive --format=tar HEAD > evidence/source.tar
           git bundle create evidence/history.bundle --all
       - name: Retain source independently of validation result
-        if: matrix.os == 'ubuntu-latest' && matrix.node == '22'
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '24'
         uses: actions/upload-artifact@v4
         with:
           name: model-routing-source-${{ github.sha }}
@@ -54,13 +54,13 @@ jobs:
           corepack enable
           pnpm install --frozen-lockfile
       - name: Archive locked Linux dependencies
-        if: matrix.os == 'ubuntu-latest' && matrix.node == '22'
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '24'
         shell: bash
         run: |
           tar -czf evidence/dependencies.tgz node_modules
           cp pnpm-lock.yaml evidence/pnpm-lock.yaml
       - name: Retain offline reproduction dependencies
-        if: matrix.os == 'ubuntu-latest' && matrix.node == '22'
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '24'
         uses: actions/upload-artifact@v4
         with:
           name: model-routing-dependencies-${{ github.sha }}

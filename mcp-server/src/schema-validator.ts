@@ -170,6 +170,42 @@ export const contractSchemas = {
   roleSlotV1: loadSchema("role-slot.v1.schema.json"),
 };
 
+// Private copy taken at load, so later edits to the exported objects cannot reach the shared validators.
+const compiledContractSchemas = structuredClone(contractSchemas);
+let contractValidatorTable: Readonly<Record<string, ValidateFunction>> | undefined;
+
+/**
+ * Compiling every contract costs hundreds of milliseconds, so one immutable table serves every
+ * ContractValidator in the process. Ajv validators are synchronous and only keep the last call's
+ * `errors`, which assert() reads before returning, so callers cannot see each other's diagnostics.
+ */
+function contractValidators(): Readonly<Record<string, ValidateFunction>> {
+  if (contractValidatorTable) return contractValidatorTable;
+  const ajv = new Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv);
+  for (const schema of Object.values(compiledContractSchemas)) {
+    ajv.addSchema(schema);
+  }
+  // Every contract schema's $id is https://skill-suite.local/contracts/<file name>.
+  const validators: Record<string, ValidateFunction> = Object.fromEntries(
+    Object.entries(compiledContractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id as string)!]),
+  );
+  validators.checkpointEvidenceRef = ajv.getSchema(
+    `${compiledContractSchemas.checkpointContextRequest.$id as string}#/$defs/evidenceRef`,
+  )!;
+  validators.checkpointDeltaStateAck = ajv.getSchema(
+    `${compiledContractSchemas.checkpointDelta.$id as string}#/$defs/stateAck`,
+  )!;
+  validators.checkpointDeltaTransportAck = ajv.getSchema(
+    `${compiledContractSchemas.checkpointDelta.$id as string}#/$defs/transportAck`,
+  )!;
+  validators.continuitySnapshot = ajv.getSchema(
+    `${compiledContractSchemas.checkpointDelta.$id as string}#/$defs/snapshot`,
+  )!;
+  contractValidatorTable = Object.freeze(validators);
+  return contractValidatorTable;
+}
+
 // Providers declare artifact digests either bare or sha256:-prefixed. A SHA-256 digest that misses the
 // declared pattern only by that prefix is validated in the declared form; the caller's value is stored.
 function artifactDigestView(declared: JsonSchema): (artifact: unknown) => unknown {
@@ -200,31 +236,7 @@ function errorText(errors: ErrorObject[] | null | undefined): string {
 }
 
 export class ContractValidator {
-  private readonly validators: Record<string, ValidateFunction>;
-
-  constructor() {
-    const ajv = new Ajv2020({ allErrors: true, strict: false });
-    addFormats(ajv);
-    for (const schema of Object.values(contractSchemas)) {
-      ajv.addSchema(schema);
-    }
-    // Every contract schema's $id is https://skill-suite.local/contracts/<file name>.
-    this.validators = Object.fromEntries(
-      Object.entries(contractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id as string)!]),
-    );
-    this.validators.checkpointEvidenceRef = ajv.getSchema(
-      `${contractSchemas.checkpointContextRequest.$id as string}#/$defs/evidenceRef`,
-    )!;
-    this.validators.checkpointDeltaStateAck = ajv.getSchema(
-      `${contractSchemas.checkpointDelta.$id as string}#/$defs/stateAck`,
-    )!;
-    this.validators.checkpointDeltaTransportAck = ajv.getSchema(
-      `${contractSchemas.checkpointDelta.$id as string}#/$defs/transportAck`,
-    )!;
-    this.validators.continuitySnapshot = ajv.getSchema(
-      `${contractSchemas.checkpointDelta.$id as string}#/$defs/snapshot`,
-    )!;
-  }
+  private readonly validators = contractValidators();
 
   private assert<T>(name: keyof ContractValidator["validators"], value: unknown): T {
     const validate = this.validators[name];

@@ -60,7 +60,7 @@ flowchart LR
 
 ## 설치하고 사용하기
 
-Node.js 22.13.0 이상이 필요합니다.
+Node.js 24 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
@@ -165,7 +165,7 @@ Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다
 
 ## 개발과 검증
 
-Node.js 22.13.0 이상과 Corepack이 필요합니다.
+Node.js 24 이상과 Corepack이 필요합니다.
 
 ```bash
 corepack enable

@@ -6,7 +6,7 @@
 
 ## 요구 사항
 
-- Node.js 22 이상
+- Node.js 24 이상
 - pnpm 10
 
 Agent Governance Suite와 MCP는 직접 실행에 필요하지 않습니다. suite의 TaskEnvelope.v1은 contracts/upstream/에 고정 snapshot으로 들어 있으며 checksum을 확인한 뒤 사용합니다.

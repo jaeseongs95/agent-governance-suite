@@ -60,7 +60,7 @@ Checking does not stop at the edge of one session. What other sessions on the sa
 
 ## Install and try it
 
-Node.js 22.13.0 or later is required.
+Node.js 24 or later is required.
 
 <!-- release-install:start -->
 ```bash
@@ -165,7 +165,7 @@ Every specialist can run on its own. Use `$orchestrator` when a request needs mo
 
 ## Development and validation
 
-Development requires Node.js 22.13.0 or later and Corepack.
+Development requires Node.js 24 or later and Corepack.
 
 ```bash
 corepack enable

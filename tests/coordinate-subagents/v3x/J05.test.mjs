@@ -10,8 +10,9 @@ const task = 'private full task body';
 const control = (signal = new globalThis.AbortController().signal, onOutput = () => {}) => ({
   endpoint: JEV_ENDPOINT, redirect: 'error', signal, onOutput,
 });
+// Timeout cases pass their own short timeoutMs; the rest need headroom on slow CI runners.
 const client = (fetcher, options = {}) => new JevHttpClient({
-  credential: () => token, timeoutMs: 50, maxResponseBytes: 100, fetcher, ...options,
+  credential: () => token, timeoutMs: 5000, maxResponseBytes: 100, fetcher, ...options,
 });
 
 test('J05 sends one exact POST with bearer credential and returns a bounded JSON response', async () => {

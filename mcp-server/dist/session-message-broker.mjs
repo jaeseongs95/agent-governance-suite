@@ -13593,6 +13593,33 @@ var contractSchemas = {
   resourcePolicyV1: loadSchema("resource-policy.v1.schema.json"),
   roleSlotV1: loadSchema("role-slot.v1.schema.json")
 };
+var compiledContractSchemas = structuredClone(contractSchemas);
+var contractValidatorTable;
+function contractValidators() {
+  if (contractValidatorTable) return contractValidatorTable;
+  const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv);
+  for (const schema of Object.values(compiledContractSchemas)) {
+    ajv.addSchema(schema);
+  }
+  const validators = Object.fromEntries(
+    Object.entries(compiledContractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id)])
+  );
+  validators.checkpointEvidenceRef = ajv.getSchema(
+    `${compiledContractSchemas.checkpointContextRequest.$id}#/$defs/evidenceRef`
+  );
+  validators.checkpointDeltaStateAck = ajv.getSchema(
+    `${compiledContractSchemas.checkpointDelta.$id}#/$defs/stateAck`
+  );
+  validators.checkpointDeltaTransportAck = ajv.getSchema(
+    `${compiledContractSchemas.checkpointDelta.$id}#/$defs/transportAck`
+  );
+  validators.continuitySnapshot = ajv.getSchema(
+    `${compiledContractSchemas.checkpointDelta.$id}#/$defs/snapshot`
+  );
+  contractValidatorTable = Object.freeze(validators);
+  return contractValidatorTable;
+}
 function artifactDigestView(declared) {
   let items = declared.properties?.artifacts?.items;
   if (typeof items?.$ref === "string" && items.$ref.startsWith("#/")) {
@@ -13617,29 +13644,7 @@ function errorText(errors) {
   return (errors ?? []).map((error) => `${error.instancePath || "/"} ${error.message ?? "is invalid"}`).join("; ");
 }
 var ContractValidator = class {
-  validators;
-  constructor() {
-    const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
-    addFormats(ajv);
-    for (const schema of Object.values(contractSchemas)) {
-      ajv.addSchema(schema);
-    }
-    this.validators = Object.fromEntries(
-      Object.entries(contractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id)])
-    );
-    this.validators.checkpointEvidenceRef = ajv.getSchema(
-      `${contractSchemas.checkpointContextRequest.$id}#/$defs/evidenceRef`
-    );
-    this.validators.checkpointDeltaStateAck = ajv.getSchema(
-      `${contractSchemas.checkpointDelta.$id}#/$defs/stateAck`
-    );
-    this.validators.checkpointDeltaTransportAck = ajv.getSchema(
-      `${contractSchemas.checkpointDelta.$id}#/$defs/transportAck`
-    );
-    this.validators.continuitySnapshot = ajv.getSchema(
-      `${contractSchemas.checkpointDelta.$id}#/$defs/snapshot`
-    );
-  }
+  validators = contractValidators();
   assert(name, value) {
     const validate = this.validators[name];
     if (!validate) {

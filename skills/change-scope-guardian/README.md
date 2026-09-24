@@ -4,7 +4,7 @@
 
 ## 요구 사항
 
-- Node.js 22 이상
+- Node.js 24 이상
 - Git
 - pnpm 11 이상과 `pnpm install`로 설치한 런타임 의존성
 

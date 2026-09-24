@@ -6,7 +6,7 @@
 
 ## 요구 사항
 
-- Node.js 22 이상
+- Node.js 24 이상
 - pnpm 10
 
 Agent Governance Suite나 MCP는 직접 실행에 필요하지 않습니다.

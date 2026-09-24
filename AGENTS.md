@@ -31,7 +31,7 @@ tests/                           # 계약·회귀·런타임 테스트
 
 ## 개발과 검증
 
-Node.js 22.13 이상과 `pnpm@11.19.0`을 사용한다. 주요 명령은 다음과 같다.
+Node.js 24 이상과 `pnpm@11.19.0`을 사용한다. Node.js 24 미만은 지원하지 않으며 `pnpm runtime:check`가 거부한다. 주요 명령은 다음과 같다.
 
 - `pnpm dev`: 개발용 MCP 서버
 - `pnpm lint`: ESLint와 저장소 계약 검사
@@ -42,7 +42,7 @@ Node.js 22.13 이상과 `pnpm@11.19.0`을 사용한다. 주요 명령은 다음�
 - `pnpm validate:all`: 저장소·스킬 전체 검증
 - `pnpm validate:official`: Codex 공식 validator 검사
 
-전체 검증은 `pnpm install --frozen-lockfile` 후 `pnpm bundle:check`를 빌드보다 먼저 실행한다. 이어 `pnpm claude:drift`, `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm runtime:check`, `pnpm validate:all`, `pnpm validate:official`, `git diff --check`를 실행한다. 빌드가 stale 번들을 덮어쓸 수 있으므로 순서를 바꾸지 않는다. CI는 Ubuntu와 Windows의 Node.js 22·24 조합을 기준으로 한다.
+전체 검증은 `pnpm install --frozen-lockfile` 후 `pnpm bundle:check`를 빌드보다 먼저 실행한다. 이어 `pnpm claude:drift`, `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm runtime:check`, `pnpm validate:all`, `pnpm validate:official`, `git diff --check`를 실행한다. 빌드가 stale 번들을 덮어쓸 수 있으므로 순서를 바꾸지 않는다. CI는 Ubuntu와 Windows의 Node.js 24를 기준으로 한다.
 
 ## 배포물 계약
 

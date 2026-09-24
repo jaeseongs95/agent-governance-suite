@@ -23,7 +23,7 @@ let rootBundleDirectory;
 beforeAll(async () => {
   rootBundleDirectory = await mkdtemp(join(tmpdir(), 'ags-j13-built-root-'));
   const result = await build({ entryPoints: [join(root, 'mcp-server/src/routing-v3/open-semantic-service.ts')],
-    bundle: true, platform: 'node', format: 'esm', target: 'node22', write: false,
+    bundle: true, platform: 'node', format: 'esm', target: 'node24', write: false,
     // Production bundle sits at mcp-server/dist; preserve that location for bundled resource paths.
     define: { 'import.meta.url': JSON.stringify(pathToFileURL(bundle).href) } });
   const builtPath = join(rootBundleDirectory, 'root.mjs');

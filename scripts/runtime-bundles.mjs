@@ -157,7 +157,7 @@ export async function buildRuntimeBundle(target, outputRoot = ROOT) {
     bundle: true,
     platform: "node",
     format: "esm",
-    target: "node22",
+    target: "node24",
     sourcemap: false,
     legalComments: "external",
     metafile: true,

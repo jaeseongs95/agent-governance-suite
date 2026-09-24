@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
       - name: Verify pinned external refs and checksums
         run: node scripts/check-source-lock.mjs --remote
       - name: Discover exact stable semantic-version tags
@@ -46,7 +46,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
       - name: Skip an existing pull request
         id: existing
         env:

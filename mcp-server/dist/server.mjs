@@ -31035,6 +31035,33 @@ var contractSchemas = {
   resourcePolicyV1: loadSchema("resource-policy.v1.schema.json"),
   roleSlotV1: loadSchema("role-slot.v1.schema.json")
 };
+var compiledContractSchemas = structuredClone(contractSchemas);
+var contractValidatorTable;
+function contractValidators() {
+  if (contractValidatorTable) return contractValidatorTable;
+  const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv);
+  for (const schema of Object.values(compiledContractSchemas)) {
+    ajv.addSchema(schema);
+  }
+  const validators = Object.fromEntries(
+    Object.entries(compiledContractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id)])
+  );
+  validators.checkpointEvidenceRef = ajv.getSchema(
+    `${compiledContractSchemas.checkpointContextRequest.$id}#/$defs/evidenceRef`
+  );
+  validators.checkpointDeltaStateAck = ajv.getSchema(
+    `${compiledContractSchemas.checkpointDelta.$id}#/$defs/stateAck`
+  );
+  validators.checkpointDeltaTransportAck = ajv.getSchema(
+    `${compiledContractSchemas.checkpointDelta.$id}#/$defs/transportAck`
+  );
+  validators.continuitySnapshot = ajv.getSchema(
+    `${compiledContractSchemas.checkpointDelta.$id}#/$defs/snapshot`
+  );
+  contractValidatorTable = Object.freeze(validators);
+  return contractValidatorTable;
+}
 function artifactDigestView(declared) {
   let items = declared.properties?.artifacts?.items;
   if (typeof items?.$ref === "string" && items.$ref.startsWith("#/")) {
@@ -31059,29 +31086,7 @@ function errorText(errors) {
   return (errors ?? []).map((error61) => `${error61.instancePath || "/"} ${error61.message ?? "is invalid"}`).join("; ");
 }
 var ContractValidator = class {
-  validators;
-  constructor() {
-    const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
-    addFormats(ajv);
-    for (const schema of Object.values(contractSchemas)) {
-      ajv.addSchema(schema);
-    }
-    this.validators = Object.fromEntries(
-      Object.entries(contractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id)])
-    );
-    this.validators.checkpointEvidenceRef = ajv.getSchema(
-      `${contractSchemas.checkpointContextRequest.$id}#/$defs/evidenceRef`
-    );
-    this.validators.checkpointDeltaStateAck = ajv.getSchema(
-      `${contractSchemas.checkpointDelta.$id}#/$defs/stateAck`
-    );
-    this.validators.checkpointDeltaTransportAck = ajv.getSchema(
-      `${contractSchemas.checkpointDelta.$id}#/$defs/transportAck`
-    );
-    this.validators.continuitySnapshot = ajv.getSchema(
-      `${contractSchemas.checkpointDelta.$id}#/$defs/snapshot`
-    );
-  }
+  validators = contractValidators();
   assert(name, value) {
     const validate2 = this.validators[name];
     if (!validate2) {
@@ -47015,7 +47020,7 @@ var POSIX_INSTALLATION_PATH = "/etc/flowmarshal/protected-installation.json";
 var PROTECTED_HOST_CONTRACT = {
   id: "ags-vm-protected-host-installation/v1",
   revision: "1",
-  manifestSha256: "sha256:a35fb1a9c7cd67b7b84fe5e178aa3dfb705d206ebd4993e532aa71694ed3e00c"
+  manifestSha256: "sha256:0c5bfc700c37cd22b7c15c06f00c916948f1b170a7a0f8cd9da7768eb39ccb19"
 };
 function object9(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;

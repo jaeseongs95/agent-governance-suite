@@ -32,7 +32,7 @@ const POSIX_INSTALLATION_PATH = "/etc/flowmarshal/protected-installation.json";
 export const PROTECTED_HOST_CONTRACT = {
   id: "ags-vm-protected-host-installation/v1",
   revision: "1",
-  manifestSha256: "sha256:a35fb1a9c7cd67b7b84fe5e178aa3dfb705d206ebd4993e532aa71694ed3e00c",
+  manifestSha256: "sha256:0c5bfc700c37cd22b7c15c06f00c916948f1b170a7a0f8cd9da7768eb39ccb19",
 } as const;
 
 function object(value: unknown): JsonObject | null {

@@ -5,7 +5,7 @@
   "status": "CONTRACT_ONLY",
   "authority": {
     "path": "docs/implementation-3x/protected-host-installation.ko.md",
-    "sha256": "sha256:17b38aaafcae4d310a4a09e153ef0e1567a9c0570c4d045ab14e2513883da181"
+    "sha256": "sha256:256f388cc79bce643166f397398b2e8f013591ffac04a27327f4f1abc6fbc99c"
   },
   "fixtures": [
     {
