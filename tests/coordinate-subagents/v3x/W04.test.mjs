@@ -132,6 +132,18 @@ test('W04 proof, source, turn and lease are verified; product broker has no acti
   assert.equal(store.activityStatus(session, 21_001).activity, 'unknown');
 });
 
+test('W04 broker without a host provider does not expose persisted idle as current', () => {
+  const { store } = fixture();
+  const liveNow = Date.now();
+  start(store, actor.instanceId, liveNow - 100);
+  store.recordActivity(observed('busy', 1, liveNow - 50), 'turn-1', proof, reader(), liveNow - 50);
+  store.recordActivity(observed('idle', 2, liveNow - 40), 'turn-1', proof, reader(), liveNow - 40);
+  assert.equal(store.activityStatus(session, liveNow).activity, 'idle');
+  assert.equal(dispatchSessionMessageBrokerOperation(store, 'session-activity', { target: session }).activity.activity, 'unknown');
+  assert.equal(dispatchSessionMessageBrokerOperation(store, 'session-activity', { target: session },
+    undefined, undefined, reader()).activity.activity, 'idle');
+});
+
 test('W04 SQLite lock race leaves activity unchanged', () => {
   const { store, database } = fixture();
   start(store);

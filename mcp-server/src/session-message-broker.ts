@@ -202,7 +202,12 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       return store.recordActivity(payload.event as SessionTaskActivityObservationV1,
         string(payload.turnId, "turnId"), string(payload.reporterProof, "reporterProof"), activityReporterReader);
     }
-    case "session-activity": return { activity: store.activityStatus(identity(payload.target)) };
+    case "session-activity": {
+      const target = identity(payload.target);
+      return { activity: activityReporterReader ? store.activityStatus(target) : {
+        actor: null, activity: "unknown", turnId: null, revision: 0, observedAt: null, source: null,
+      } };
+    }
     case "claim": {
       const maxMessages = optionalInteger(payload, "maxMessages");
       const maxBodyChars = optionalInteger(payload, "maxBodyChars");
