@@ -46,8 +46,13 @@ export interface RegisteredSessionTaskRequest {
 
 /** Implemented by the owning runtime. Broker payloads and presence are not bindings. */
 export interface CurrentTaskBindingReader {
-  /** Verify the reporter proof and current ownership from runtime state, not from outcome fields. */
-  verifyTerminalReporter(outcome: SessionTaskTerminalOutcomeV1, reporterProof: string): SessionTaskTransitionContextV1 | null;
+  /** Verify reporter, current ownership and delegation from runtime state, never from W02 metadata. */
+  verifyTerminalReporter(outcome: SessionTaskTerminalOutcomeV1, reporterProof: string): VerifiedTerminalReporterBinding | null;
+}
+
+export interface VerifiedTerminalReporterBinding extends SessionTaskTransitionContextV1 {
+  /** Null for an independently owned task; otherwise issued or verified by the owning runtime. */
+  trustedDelegation: { requestId: string; callbackTarget: SessionIdentity } | null;
 }
 
 export interface RecordedTaskOutcome {
@@ -467,14 +472,25 @@ export class SessionMessageStore {
       || (outcome.callbackTarget && Object.keys(outcome.callbackTarget).sort().join() !== "host,sessionId")) {
       throw new Error("Terminal outcome shape is invalid.");
     }
-    const key = delegated ? `request:${outcome.requestId}`
-      : `standalone:${JSON.stringify([outcome.actor.host, outcome.actor.sessionId, outcome.taskId])}`;
+    // A task can be named by multiple untrusted requests. The terminal slot belongs
+    // to the owning session's task, not to a caller-selected request identifier.
+    const key = `task:${JSON.stringify([outcome.actor.host, outcome.actor.sessionId, outcome.taskId])}`;
     this.database.exec("BEGIN IMMEDIATE");
     try {
       const context = bindingReader.verifyTerminalReporter(outcome, reporterProof);
       if (!context) throw new Error("Current task binding is unavailable.");
       const request = delegated ? this.taskRequest(outcome.requestId!)?.request : undefined;
       if (delegated && !request) throw new Error("Registered task request is required.");
+      if (request) {
+        const trusted = context.trustedDelegation;
+        if (!trusted || trusted.requestId !== request.requestId
+          || trusted.callbackTarget.host !== request.callbackTarget.host
+          || trusted.callbackTarget.sessionId !== request.callbackTarget.sessionId) {
+          throw new Error("SESSION_TASK_TRUSTED_DELEGATION_MISMATCH");
+        }
+      } else if (context.trustedDelegation !== null) {
+        throw new Error("SESSION_TASK_TRUSTED_DELEGATION_MISMATCH");
+      }
       const existing = this.taskOutcome(key);
       const verdict = assertSessionTaskTransitionV1(outcome, {
         authenticatedActor: context.authenticatedActor, currentInstanceId: context.currentInstanceId,

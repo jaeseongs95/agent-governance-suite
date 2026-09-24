@@ -8479,13 +8479,21 @@ var SessionMessageStore = class {
     if (Object.keys(outcome).sort().join() !== expectedKeys || Object.keys(outcome.actor).sort().join() !== "host,instanceId,sessionId" || outcome.callbackTarget && Object.keys(outcome.callbackTarget).sort().join() !== "host,sessionId") {
       throw new Error("Terminal outcome shape is invalid.");
     }
-    const key = delegated ? `request:${outcome.requestId}` : `standalone:${JSON.stringify([outcome.actor.host, outcome.actor.sessionId, outcome.taskId])}`;
+    const key = `task:${JSON.stringify([outcome.actor.host, outcome.actor.sessionId, outcome.taskId])}`;
     this.database.exec("BEGIN IMMEDIATE");
     try {
       const context = bindingReader.verifyTerminalReporter(outcome, reporterProof);
       if (!context) throw new Error("Current task binding is unavailable.");
       const request = delegated ? this.taskRequest(outcome.requestId)?.request : void 0;
       if (delegated && !request) throw new Error("Registered task request is required.");
+      if (request) {
+        const trusted = context.trustedDelegation;
+        if (!trusted || trusted.requestId !== request.requestId || trusted.callbackTarget.host !== request.callbackTarget.host || trusted.callbackTarget.sessionId !== request.callbackTarget.sessionId) {
+          throw new Error("SESSION_TASK_TRUSTED_DELEGATION_MISMATCH");
+        }
+      } else if (context.trustedDelegation !== null) {
+        throw new Error("SESSION_TASK_TRUSTED_DELEGATION_MISMATCH");
+      }
       const existing = this.taskOutcome(key);
       const verdict = assertSessionTaskTransitionV1(outcome, {
         authenticatedActor: context.authenticatedActor,
