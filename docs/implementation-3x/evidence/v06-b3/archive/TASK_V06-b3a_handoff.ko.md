@@ -4,8 +4,8 @@
 - **결과**: COMPLETED
 - **브랜치**: `claude/v3x-v06-b3a-signed-release`
 - **start SHA**: `43ce232d9085047bd87e6974fdfeb0f26f71e626` (tree `718fbc49c6c5c35a9a0116196dc7dfff3f6ad166`) — 지시된 `origin/codex/v260-semantic-decision-layer` FETCH_HEAD와 일치 확인 후 그 SHA에서 브랜치를 만들었다.
-- **final SHA / commit SHA**: 이 handoff 파일은 최종 커밋의 일부로 함께 커밋되므로 자신의 커밋 SHA를 미리 알 수 없다. **handoff 커밋의 부모 SHA는 `43ce232d9085047bd87e6974fdfeb0f26f71e626`**(= start SHA, 이 브랜치의 유일한 선행 커밋)이다. 실제 최종 커밋 SHA는 세션의 마지막 보고 메시지에 기록한다.
-- **push 여부**: 완료 후 `git push origin claude/v3x-v06-b3a-signed-release` 실행, `git ls-remote`로 readback 확인 예정(최종 보고에 readback SHA 기록).
+- **lineage (정정)**: 이 브랜치의 커밋 순서는 `43ce232`(start) → `f0a6d9f`(구현, 부모 `43ce232`) → `5b8bcc6`(1차 감사 기록, 부모 `f0a6d9f`) → 보수(retry) 커밋(부모 `5b8bcc6f5520eb6c68883506fb9b687c282a8fee`)이다. 이전 판의 "handoff 커밋의 부모 = start `43ce232`", "유일한 선행 커밋"이라는 서술은 사실과 달랐다. 이 handoff 파일은 `f0a6d9f`에서 처음 커밋됐고 `5b8bcc6`과 보수 커밋에서 다시 고쳐졌다. 파일이 자기 커밋 SHA를 담을 수 없으므로 여기에는 **이 handoff를 포함한 보수 커밋의 부모 = `5b8bcc6f5520eb6c68883506fb9b687c282a8fee`** 만 적고, 보수 커밋 SHA는 세션 최종 보고에 기록한다.
+- **push 여부 (정정)**: `f0a6d9f`와 `5b8bcc6`은 이미 `origin/claude/v3x-v06-b3a-signed-release`에 push돼 있었다(보수 작업 시작 시 `git fetch`의 FETCH_HEAD가 `5b8bcc6f5520eb6c68883506fb9b687c282a8fee`, tree `ee4b4176756b5b3f3a0860febf2415ada2adb6cd`). 보수 커밋은 fast-forward push 후 `git ls-remote`로 readback하며, 그 SHA는 세션 최종 보고에 기록한다(자기 커밋 안에는 쓸 수 없음).
 - **CI**: NOT_RUN (지시에 따라 PR 생성·CI 실행 금지).
 
 ## 수행 작업
@@ -36,6 +36,21 @@
 | gpgv 실제 서명 검증 + archive SHA-256 대조 (`node-v24.21.0-linux-x64.tar.xz`) | PASS — 상세 근거는 README.ko.md |
 
 CI: NOT_RUN (지시에 따름).
+
+## 보수(retry): 키·입력 부재 거절 집중 검사
+
+1차 감사(`f0a6d9f` 대상 PASS) 뒤 fresh 감사가 카드 수용 기준 "키 부재 거절" 집중 검사가 없다는 이유로 FAIL을 냈다. 기존 테스트는 keyring 해시 불일치와 1바이트 변조만 다뤘다. 보수 커밋에서 다음을 바꿨다.
+
+- `scripts/qualification/v06-b3-linux-release.mjs`: 입력 파일(`nodejs-release-keyring.kbx`, `SHASUMS256.txt`, `SHASUMS256.txt.sig`, archive)이 없으면 원시 `ENOENT` 대신 `required release input missing: <파일명>`으로 거절한다. ENOENT 외 오류는 그대로 던지고, 정규 파일·심볼릭 링크 검사와 검증 순서는 바꾸지 않았다(fail-closed 유지).
+- `tests/coordinate-subagents/v3x/V06-b3a.test.mjs`에 추가한 거절 테스트:
+  - (게이트 없음) keyring·`SHASUMS256.txt`·`SHASUMS256.txt.sig`가 차례로 없을 때 gpgv를 실행하기 전에 각 파일명을 담은 오류로 거절한다(존재하지 않는 gpgv 경로를 넘겨 gpgv 미실행도 함께 확인).
+  - (게이트) 실서명 입력에서 keyring, `SHASUMS256.txt`, `SHASUMS256.txt.sig`, archive를 하나씩 지우면 각각 `required release input missing: <파일명>`으로 거절한다.
+  - (게이트) 서명 키 부재: 임시 GNUPGHOME에서 새로 만든 무관한 ed25519 키만 담은 keyring과 빈 keyring 각각에 대해, 직접 실행한 `gpgv` 상태 출력이 `NO_PUBKEY 20B1A390B168D356`이고 `VALIDSIG`가 없음을 확인한 뒤, 그 keyring 해시를 pin으로 넘겨도 `signature invalid or signer untrusted`로, 원래 pin으로는 `untrusted release keyring`으로 거절함을 확인한다. 네트워크 없이 재현된다.
+  - 기존 게이트 테스트의 잘못된 버전(`24.20.0`) 사례는 `ENOENT` 대신 `required release input missing: node-v24.20.0-linux-x64.tar.xz`를 기대하도록 바꿨다.
+- 변이 확인: 스크립트를 `5b8bcc6` 판으로 되돌리면 새·변경 테스트 3개가 실패하고, 보수 판에서는 7개 모두 통과한다.
+- 검증 환경: `nodejs.org`에서 받은 `node-v24.21.0-linux-x64.tar.xz`를 release-keys commit `481637f813e912c4aa3622d7964ab426c97b8e8d`의 `gpg-only-active-keys/pubring.kbx`(sha256 `140f2ad5…5932`)로 `gpgv` 검증(`Good signature`, signer `5BE8A3F6C8A5C01D106C0AD820B1A390B168D356`)하고 archive sha256 `fd8e59d5…2d6` 일치를 확인한 뒤, 그 `bin`을 PATH 맨 앞에 두고(`node --version` = `v24.21.0`) 게이트 env 다섯 개를 모두 설정해 실행했다. `pnpm exec vitest run tests/coordinate-subagents/v3x/V06-b3a.test.mjs`: 7 passed, skip 0.
+- 보수 커밋의 독립 감사 판정은 감사 대상과 최종 SHA를 같게 두기 위해 이 파일에 다시 커밋하지 않고 세션 최종 보고에만 기록한다. 아래 "독립 감사" 절은 1차 감사(`f0a6d9f` 대상) 기록이다.
+- 보수 작업 모델: 요청 `claude-opus-5-5`, effort 지정 없음. 관측값은 세션 최종 보고에 기록한다.
 
 ## 독립 감사
 

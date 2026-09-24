@@ -44,8 +44,9 @@ CLI는 URL 검증과 서명·digest 검증을 통과하면 `CANDIDATE_VERIFIED_L
 - 서명된 checksum 항목의 누락·중복을 거부.
 - archive bytes가 서명된 digest와 다르면 거부.
 - keyring bytes가 pin과 다르면 거부.
+- keyring, `SHASUMS256.txt`, `SHASUMS256.txt.sig`가 없으면 gpgv 실행 전에 `required release input missing: <파일명>`으로 거부.
 
-`AGS_V06_B3A_INPUT_DIR`, `AGS_V06_B3A_GPGV`, `AGS_V06_B3A_VERSION`, `AGS_V06_B3A_KEYRING_SHA256`(및 `bin/node` 관측용 `AGS_V06_B3A_TAR`) 환경변수가 설정되면, 같은 파일 집합에 대해 위 "재현" 절의 실제 서명된 입력을 사용해 각 파일(서명, checksum, archive, keyring)을 한 byte씩 변조하거나 잘못된 버전을 지정했을 때 모두 거부하는지, 그리고 검증된 archive에서 추출한 `bin/node`가 정확히 pinned version을 보고하는지 추가로 확인한다. 이번 실행에서는 이 네 환경변수를 모두 설정해 실제 서명된 배포본으로 이 테스트를 실행했고 통과했다(아래 검증 로그 참고).
+`AGS_V06_B3A_INPUT_DIR`, `AGS_V06_B3A_GPGV`, `AGS_V06_B3A_VERSION`, `AGS_V06_B3A_KEYRING_SHA256`(및 `bin/node` 관측용 `AGS_V06_B3A_TAR`) 환경변수가 설정되면, 같은 파일 집합에 대해 위 "재현" 절의 실제 서명된 입력을 사용해 각 파일(서명, checksum, archive, keyring)을 한 byte씩 변조하거나 잘못된 버전을 지정했을 때 모두 거부하는지, 그리고 검증된 archive에서 추출한 `bin/node`가 정확히 pinned version을 보고하는지 추가로 확인한다. 같은 게이트에서 네 입력 파일을 하나씩 지우면 각각 부재로 거부하는지, 그리고 서명 키가 없는 keyring(임시 GNUPGHOME에서 새로 만든 무관한 키만 담은 keyring, 빈 keyring)에서 `gpgv`가 `NO_PUBKEY 20B1A390B168D356`을 내고 스크립트가 `signature invalid or signer untrusted`로 거부하는지도 확인한다. 이번 실행에서는 이 네 환경변수를 모두 설정해 실제 서명된 배포본으로 이 테스트를 실행했고 통과했다(아래 검증 로그 참고).
 
 ## NOT_OBSERVED / 범위 밖
 

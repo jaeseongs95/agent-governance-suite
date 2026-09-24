@@ -58,7 +58,13 @@ export function verifyArchiveBytes(checksums, version, bytes) {
 }
 
 function regularFile(file) {
-  const stat = lstatSync(file);
+  let stat;
+  try {
+    stat = lstatSync(file);
+  } catch (error) {
+    if (error.code === 'ENOENT') fail(`required release input missing: ${path.basename(file)}`);
+    throw error;
+  }
   if (!stat.isFile() || stat.isSymbolicLink()) fail(`not a regular file: ${file}`);
   return readFileSync(file);
 }
