@@ -275,6 +275,11 @@ export class SessionMessageStore {
       event_observed_at TEXT NOT NULL,
       conflicted INTEGER NOT NULL DEFAULT 0 CHECK (conflicted IN (0, 1)),
       PRIMARY KEY (host, session_id, instance_id)
+    ) STRICT;
+    CREATE TABLE IF NOT EXISTS contact_messages (
+      message_id TEXT PRIMARY KEY,
+      target_host TEXT NOT NULL,
+      target_session_id TEXT NOT NULL
     ) STRICT;`);
     this.database.exec("BEGIN IMMEDIATE");
     try {
@@ -317,6 +322,7 @@ export class SessionMessageStore {
     this.database.prepare("DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)").run(now, acknowledgedBefore);
     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
     this.database.prepare("DELETE FROM wake_nonces WHERE expires_at <= ?").run(now);
+    this.database.prepare("DELETE FROM contact_messages WHERE message_id NOT IN (SELECT message_id FROM messages)").run();
   }
 
   send(input: {
@@ -366,13 +372,78 @@ export class SessionMessageStore {
     return { messageId, createdAt, expiresAt, duplicate: false };
   }
 
+  private contactDecision(target: SessionIdentity, expectedActor: SessionTaskActorV1,
+    expectedTurnId: string, expectedRevision: number, trustedActivity: boolean, nowMs: number): string {
+    if (!trustedActivity) return "activity-unavailable";
+    if (expectedActor.host !== target.host || expectedActor.sessionId !== target.sessionId) return "observation-changed";
+    const presence = this.presence(target, nowMs);
+    const activity = this.activityStatus(target, nowMs);
+    const same = presence.state === "online" && presence.instanceId === expectedActor.instanceId
+      && activity.actor?.host === target.host && activity.actor.sessionId === target.sessionId
+      && activity.actor.instanceId === expectedActor.instanceId
+      && activity.turnId === expectedTurnId && activity.revision === expectedRevision;
+    if (!same || activity.activity === "unknown") return same ? "activity-unknown" : "observation-changed";
+    if (activity.activity === "busy" && !presence.deliveryCapabilities.supportedInjection.includes("tool-boundary")) {
+      return "injection-unsupported";
+    }
+    if (activity.activity === "idle" && presence.deliveryCapabilities.idleWake === "none") return "wake-unsupported";
+    return activity.activity;
+  }
+
+  /** The caller's snapshot is checked again under the same write lock as enqueue. */
+  contact(input: { messageId: string; sender: SessionIdentity; target: SessionIdentity; body: string;
+    ttlSeconds?: number; expectedActor: SessionTaskActorV1; expectedTurnId: string; expectedRevision: number },
+  trustedActivity: boolean, nowMs = Date.now()): { state: "queued" | "held"; reason: string;
+    messageId: string | null; duplicate: boolean } {
+    boundedIdentity(input.sender);
+    boundedIdentity(input.target);
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const decision = this.contactDecision(input.target, input.expectedActor,
+        input.expectedTurnId, input.expectedRevision, trustedActivity, nowMs);
+      if (decision !== "busy" && decision !== "idle") {
+        this.database.exec("COMMIT");
+        return { state: "held", reason: decision, messageId: null, duplicate: false };
+      }
+      const sent = this.send(input, nowMs);
+      this.database.prepare("INSERT OR IGNORE INTO contact_messages (message_id, target_host, target_session_id) VALUES (?, ?, ?)")
+        .run(sent.messageId, input.target.host, input.target.sessionId);
+      this.database.exec("COMMIT");
+      return { state: "queued", reason: decision, messageId: sent.messageId, duplicate: sent.duplicate };
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  /** Missing callbacks are reconciled only after the request deadline. */
+  reconcileTaskRequest(sender: SessionIdentity, requestId: string, nowMs = Date.now()): {
+    state: "deadline-pending" | "outcome-recorded" | "outcome-missing";
+    outcome: RecordedTaskOutcome | null } {
+    boundedIdentity(sender);
+    const request = this.taskRequest(requestId);
+    if (!request || request.request.sender.host !== sender.host || request.request.sender.sessionId !== sender.sessionId) {
+      throw new Error("Task request is unavailable to this sender.");
+    }
+    if (Date.parse(request.request.expiresAt) > nowMs) return { state: "deadline-pending", outcome: null };
+    const key = `task:${JSON.stringify([request.request.recipient.host, request.request.recipient.sessionId, request.request.taskId])}`;
+    const recorded = this.taskOutcome(key);
+    const outcome = recorded?.outcome.requestId === requestId
+      && recorded.outcome.callbackTarget?.host === sender.host
+      && recorded.outcome.callbackTarget.sessionId === sender.sessionId ? recorded : null;
+    return { state: outcome ? "outcome-recorded" : "outcome-missing", outcome };
+  }
+
   /** Request metadata is a claim, not a task authorization or an outcome. */
   registerTaskRequest(input: {
     request: SessionTaskRequestV1;
     body: string;
     ttlSeconds?: number;
-  }, nowMs = Date.now()): { requestId: string; messageId: string; messageCreatedAt: string;
-    messageExpiresAt: string; requestExpiresAt: string; duplicate: boolean } {
+  }, nowMs = Date.now(), contact?: { expectedActor: SessionTaskActorV1;
+    expectedTurnId: string; expectedRevision: number; trustedActivity: boolean }):
+    { requestId: string; messageId: string; messageCreatedAt: string;
+      messageExpiresAt: string; requestExpiresAt: string; duplicate: boolean; state?: "queued" }
+    | { state: "held"; reason: string; messageId: null } {
     if (Object.hasOwn(input, "messageId")) throw new Error("Task request messageId is broker-assigned.");
     const request = input.request;
     if (!request || typeof request !== "object" || Array.isArray(request)
@@ -434,15 +505,26 @@ export class SessionMessageStore {
           messageCreatedAt: String(existing.registered_at),
           messageExpiresAt: iso(Date.parse(String(existing.registered_at)) + Number(existing.ttl_seconds) * 1000),
           requestExpiresAt: String(existing.expires_at), duplicate: true,
+          ...(contact ? { state: "queued" as const } : {}),
         };
       }
       if (requestExpiresAt < nowMs + ttlSeconds * 1000) {
         throw new Error("Task request deadline must cover message TTL.");
       }
+      if (contact) {
+        const decision = this.contactDecision(request.recipient, contact.expectedActor,
+          contact.expectedTurnId, contact.expectedRevision, contact.trustedActivity, nowMs);
+        if (decision !== "busy" && decision !== "idle") {
+          this.database.exec("COMMIT");
+          return { state: "held", reason: decision, messageId: null };
+        }
+      }
       const sent = this.send({
         sender: request.sender, target: request.recipient, body: input.body, ttlSeconds,
       }, nowMs);
       if (sent.duplicate) throw new Error("messageId already belongs to a different message.");
+      if (contact) this.database.prepare("INSERT INTO contact_messages (message_id, target_host, target_session_id) VALUES (?, ?, ?)")
+        .run(sent.messageId, request.recipient.host, request.recipient.sessionId);
       this.database.prepare(`INSERT INTO task_requests (
         request_id, task_id, sender_host, sender_session_id, sender_instance_id,
         recipient_host, recipient_session_id, callback_host, callback_session_id,
@@ -455,7 +537,7 @@ export class SessionMessageStore {
       this.database.exec("COMMIT");
       return { requestId: request.requestId, messageId: sent.messageId,
         messageCreatedAt: sent.createdAt, messageExpiresAt: sent.expiresAt,
-        requestExpiresAt: request.expiresAt, duplicate: false };
+        requestExpiresAt: request.expiresAt, duplicate: false, ...(contact ? { state: "queued" as const } : {}) };
     } catch (error) {
       this.database.exec("ROLLBACK");
       throw error;
@@ -915,13 +997,28 @@ export class SessionMessageStore {
     return result.changes === 1;
   }
 
-  reserveWake(target: SessionIdentity, nonce: string, nowMs = Date.now()): boolean {
+  reserveWake(target: SessionIdentity, nonce: string, nowMs = Date.now(), trustedActivity = false): boolean {
     boundedIdentity(target);
     if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
     this.prune(nowMs);
     const now = iso(nowMs);
     this.database.exec("BEGIN IMMEDIATE");
     try {
+      const ordinary = this.database.prepare(`SELECT 1 FROM messages m
+        LEFT JOIN contact_messages c ON c.message_id = m.message_id
+        WHERE m.target_host = ? AND m.target_session_id = ? AND m.acknowledged_at IS NULL
+          AND m.expires_at > ? AND c.message_id IS NULL LIMIT 1`)
+        .get(target.host, target.sessionId, now);
+      if (!ordinary) {
+        const activity = trustedActivity ? this.activityStatus(target, nowMs) : null;
+        const presence = this.presence(target, nowMs);
+        if (activity?.activity !== "idle" || presence.state !== "online"
+          || presence.instanceId !== activity.actor?.instanceId
+          || presence.deliveryCapabilities.idleWake === "none") {
+          this.database.exec("COMMIT");
+          return false;
+        }
+      }
       const outstanding = this.database.prepare(`SELECT 1 FROM wake_nonces
         WHERE host = ? AND session_id = ? AND consumed_at IS NULL AND expires_at > ? LIMIT 1`)
         .get(target.host, target.sessionId, now);

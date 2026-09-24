@@ -217,6 +217,37 @@ function resolveModelAssignmentInputSchema(profile: ToolSchemaProfile): Record<s
 const sendSessionMessageInputSchema = structuredClone(contractSchemas.sendSessionMessageRequest) as ObjectSchema;
 const sendBodySchema = sendSessionMessageInputSchema.properties?.body as Record<string, unknown> | undefined;
 if (sendBodySchema) sendBodySchema.description = "A non-empty message body limited to 4096 UTF-8 bytes by the service.";
+const sessionBindingProperty = { _sessionBinding: sendSessionMessageInputSchema.properties?._sessionBinding };
+const taskContract = embeddedSchema(contractSchemas.sessionTask) as ObjectSchema & { $defs: Record<string, unknown> };
+const contactTargetProperties = {
+  schemaVersion: { const: "1.0.0" },
+  targetHost: { type: "string", minLength: 1, maxLength: 64 },
+  targetSessionId: { type: "string", minLength: 1, maxLength: 200 },
+};
+const contactStateInputSchema = { type: "object", additionalProperties: false,
+  required: ["schemaVersion", "targetHost", "targetSessionId"],
+  properties: { ...contactTargetProperties, ...sessionBindingProperty } };
+const contactInputSchema = { type: "object", additionalProperties: false,
+  required: ["schemaVersion", "targetHost", "targetSessionId", "body"],
+  properties: { ...contactTargetProperties, ...sessionBindingProperty,
+    body: { type: "string", minLength: 1, maxLength: 4096 },
+    messageId: { type: "string", pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" },
+    ttlSeconds: { type: "integer", minimum: 30, maximum: 86400 } } };
+const registerTaskInputSchema = { type: "object", additionalProperties: false,
+  required: ["schemaVersion", "request", "body"], $defs: taskContract.$defs,
+  properties: { schemaVersion: { const: "1.0.0" }, ...sessionBindingProperty,
+    request: { $ref: "#/$defs/request" },
+    body: { type: "string", minLength: 1, maxLength: 4096 },
+    ttlSeconds: { type: "integer", minimum: 30, maximum: 86400 } } };
+const recordOutcomeInputSchema = { type: "object", additionalProperties: false,
+  required: ["schemaVersion", "outcome", "reporterProof"], $defs: taskContract.$defs,
+  properties: { schemaVersion: { const: "1.0.0" }, ...sessionBindingProperty,
+    outcome: { $ref: "#/$defs/terminalOutcome" },
+    reporterProof: { type: "string", minLength: 1, maxLength: 4096 } } };
+const reconcileTaskInputSchema = { type: "object", additionalProperties: false,
+  required: ["schemaVersion", "requestId"], properties: { schemaVersion: { const: "1.0.0" },
+    ...sessionBindingProperty,
+    requestId: { type: "string", pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" } } };
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -631,6 +662,36 @@ export function createMcpServer(
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
+        name: "get_session_contact_state",
+        description: "Read the target's current trusted activity and presence. Unknown activity never means idle.",
+        inputSchema: contactStateInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "contact_session",
+        description: "Queue a peer contact after atomic current instance and turn recheck. Held means no message was queued.",
+        inputSchema: contactInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "register_session_task_request",
+        description: "Register a task request and callback address with its queued message. Registration does not grant task authority.",
+        inputSchema: registerTaskInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "record_session_task_outcome",
+        description: "Record a terminal task outcome and queue its callback only with a trusted host reporter binding. This is not acceptance.",
+        inputSchema: recordOutcomeInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "reconcile_session_task_request",
+        description: "After the request deadline, compare callback state with the persisted outcome; normal completion arrives through the callback queue.",
+        inputSchema: reconcileTaskInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+      },
+      {
         name: "query_model_catalog",
         description: "Query a reviewed offline model catalog subset. Catalog presence is not host access or live execution verification.",
         inputSchema: queryModelCatalogInputSchema,
@@ -808,6 +869,21 @@ export function createMcpServer(
           } catch (error) {
             result = invalidInput(error instanceof Error ? error.message : "Session message status input is invalid.");
           }
+          break;
+        case "get_session_contact_state":
+          result = await sessionMessages.contactState(args);
+          break;
+        case "contact_session":
+          result = await sessionMessages.contact(args);
+          break;
+        case "register_session_task_request":
+          result = await sessionMessages.registerTaskRequest(args);
+          break;
+        case "record_session_task_outcome":
+          result = await sessionMessages.recordTaskOutcome(args);
+          break;
+        case "reconcile_session_task_request":
+          result = await sessionMessages.reconcileTaskRequest(args);
           break;
         case "query_model_catalog":
           result = modelRouting.call(request.params.name, args) as ApiResultV1<unknown>;

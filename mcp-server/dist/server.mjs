@@ -31009,6 +31009,7 @@ var contractSchemas = {
   updateSessionStatusRequest: loadSchema("update-session-status-request.v1.schema.json"),
   listSessionStatusRequest: loadSchema("list-session-status-request.v1.schema.json"),
   sendSessionMessageRequest: loadSchema("send-session-message-request.v1.schema.json"),
+  sessionTask: loadSchema("session-task.v1.schema.json"),
   acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
   getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
@@ -33909,6 +33910,107 @@ var SessionMessageService = class {
       return ok2(data);
     } catch (error61) {
       return failure2("MCP_UNAVAILABLE", error61 instanceof Error ? error61.message : "The session message broker is unavailable.");
+    }
+  }
+  async contactState(args) {
+    if (!binding(args._sessionBinding)) return failure2("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
+    const target = binding({ host: args.targetHost, sessionId: args.targetSessionId });
+    if (!target) return failure2("INVALID_INPUT", "A target host and session are required.");
+    try {
+      const [presence, activity] = await Promise.all([
+        sessionMessageRequest("presence", { target }, this.stateDirectory),
+        sessionMessageRequest("session-activity", { target }, this.stateDirectory)
+      ]);
+      return ok2({ presence: presence.presence, activity: activity.activity });
+    } catch (error61) {
+      return failure2("MCP_UNAVAILABLE", error61 instanceof Error ? error61.message : "Session contact state is unavailable.");
+    }
+  }
+  async contact(args) {
+    const sender = binding(args._sessionBinding);
+    const target = binding({ host: args.targetHost, sessionId: args.targetSessionId });
+    if (!sender) return failure2("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
+    if (!target || typeof args.body !== "string" || !args.body.trim() || args.body.includes("\0") || Buffer.byteLength(args.body, "utf8") > SESSION_MESSAGE_BODY_MAX_BYTES) {
+      return failure2("INVALID_INPUT", "Target and bounded nonempty body are required.");
+    }
+    try {
+      const { activity } = await sessionMessageRequest(
+        "session-activity",
+        { target },
+        this.stateDirectory
+      );
+      if (!activity.actor || activity.activity === "unknown" || !activity.turnId) {
+        return ok2({ state: "held", reason: "activity-unknown", messageId: null });
+      }
+      const data = await sessionMessageRequest("contact-session", {
+        sender,
+        target,
+        body: args.body,
+        messageId: args.messageId ?? randomUUID(),
+        ...args.ttlSeconds === void 0 ? {} : { ttlSeconds: args.ttlSeconds },
+        expectedActor: activity.actor,
+        expectedTurnId: activity.turnId,
+        expectedRevision: activity.revision
+      }, this.stateDirectory);
+      return ok2(data);
+    } catch (error61) {
+      return failure2("MCP_UNAVAILABLE", error61 instanceof Error ? error61.message : "Session contact is unavailable.");
+    }
+  }
+  async registerTaskRequest(args) {
+    const sender = binding(args._sessionBinding);
+    if (!sender) return failure2("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
+    const request = args.request;
+    if (!request || request.sender?.host !== sender.host || request.sender.sessionId !== sender.sessionId) {
+      return failure2("INVALID_INPUT", "Task request sender must be the bound session.");
+    }
+    const target = binding(request.recipient);
+    if (!target) return failure2("INVALID_INPUT", "Task recipient is required.");
+    try {
+      const { activity } = await sessionMessageRequest(
+        "session-activity",
+        { target },
+        this.stateDirectory
+      );
+      if (!activity.actor || activity.activity === "unknown" || !activity.turnId) {
+        return ok2({ state: "held", reason: "activity-unknown", messageId: null });
+      }
+      return ok2(await sessionMessageRequest("register-contact-task-request", {
+        request,
+        body: args.body,
+        ...args.ttlSeconds === void 0 ? {} : { ttlSeconds: args.ttlSeconds },
+        expectedActor: activity.actor,
+        expectedTurnId: activity.turnId,
+        expectedRevision: activity.revision
+      }, this.stateDirectory));
+    } catch (error61) {
+      return failure2("MCP_UNAVAILABLE", error61 instanceof Error ? error61.message : "Task request registration is unavailable.");
+    }
+  }
+  async recordTaskOutcome(args) {
+    const actor = binding(args._sessionBinding);
+    if (!actor) return failure2("BINDING_REQUIRED", "The session message hook did not bind the reporting session.");
+    const outcome = args.outcome;
+    if (!outcome || outcome.actor?.host !== actor.host || outcome.actor.sessionId !== actor.sessionId) {
+      return failure2("INVALID_INPUT", "Task outcome actor must be the bound session.");
+    }
+    try {
+      return ok2(await sessionMessageRequest("record-task-outcome", {
+        outcome,
+        reporterProof: args.reporterProof
+      }, this.stateDirectory));
+    } catch (error61) {
+      return failure2("MCP_UNAVAILABLE", error61 instanceof Error ? error61.message : "Trusted task outcome recording is unavailable.");
+    }
+  }
+  async reconcileTaskRequest(args) {
+    const sender = binding(args._sessionBinding);
+    if (!sender) return failure2("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
+    if (typeof args.requestId !== "string") return failure2("INVALID_INPUT", "requestId is required.");
+    try {
+      return ok2(await sessionMessageRequest("reconcile-task-request", { sender, requestId: args.requestId }, this.stateDirectory));
+    } catch (error61) {
+      return failure2("MCP_UNAVAILABLE", error61 instanceof Error ? error61.message : "Task request reconciliation is unavailable.");
     }
   }
   async acknowledge(args) {
@@ -40196,6 +40298,66 @@ function resolveModelAssignmentInputSchema(profile) {
 var sendSessionMessageInputSchema = structuredClone(contractSchemas.sendSessionMessageRequest);
 var sendBodySchema = sendSessionMessageInputSchema.properties?.body;
 if (sendBodySchema) sendBodySchema.description = "A non-empty message body limited to 4096 UTF-8 bytes by the service.";
+var sessionBindingProperty = { _sessionBinding: sendSessionMessageInputSchema.properties?._sessionBinding };
+var taskContract = embeddedSchema(contractSchemas.sessionTask);
+var contactTargetProperties = {
+  schemaVersion: { const: "1.0.0" },
+  targetHost: { type: "string", minLength: 1, maxLength: 64 },
+  targetSessionId: { type: "string", minLength: 1, maxLength: 200 }
+};
+var contactStateInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "targetHost", "targetSessionId"],
+  properties: { ...contactTargetProperties, ...sessionBindingProperty }
+};
+var contactInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "targetHost", "targetSessionId", "body"],
+  properties: {
+    ...contactTargetProperties,
+    ...sessionBindingProperty,
+    body: { type: "string", minLength: 1, maxLength: 4096 },
+    messageId: { type: "string", pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" },
+    ttlSeconds: { type: "integer", minimum: 30, maximum: 86400 }
+  }
+};
+var registerTaskInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "request", "body"],
+  $defs: taskContract.$defs,
+  properties: {
+    schemaVersion: { const: "1.0.0" },
+    ...sessionBindingProperty,
+    request: { $ref: "#/$defs/request" },
+    body: { type: "string", minLength: 1, maxLength: 4096 },
+    ttlSeconds: { type: "integer", minimum: 30, maximum: 86400 }
+  }
+};
+var recordOutcomeInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "outcome", "reporterProof"],
+  $defs: taskContract.$defs,
+  properties: {
+    schemaVersion: { const: "1.0.0" },
+    ...sessionBindingProperty,
+    outcome: { $ref: "#/$defs/terminalOutcome" },
+    reporterProof: { type: "string", minLength: 1, maxLength: 4096 }
+  }
+};
+var reconcileTaskInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "requestId"],
+  properties: {
+    schemaVersion: { const: "1.0.0" },
+    ...sessionBindingProperty,
+    requestId: { type: "string", pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" }
+  }
+};
 function asRecord2(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
@@ -40543,6 +40705,36 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
       {
+        name: "get_session_contact_state",
+        description: "Read the target's current trusted activity and presence. Unknown activity never means idle.",
+        inputSchema: contactStateInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "contact_session",
+        description: "Queue a peer contact after atomic current instance and turn recheck. Held means no message was queued.",
+        inputSchema: contactInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "register_session_task_request",
+        description: "Register a task request and callback address with its queued message. Registration does not grant task authority.",
+        inputSchema: registerTaskInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "record_session_task_outcome",
+        description: "Record a terminal task outcome and queue its callback only with a trusted host reporter binding. This is not acceptance.",
+        inputSchema: recordOutcomeInputSchema,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "reconcile_session_task_request",
+        description: "After the request deadline, compare callback state with the persisted outcome; normal completion arrives through the callback queue.",
+        inputSchema: reconcileTaskInputSchema,
+        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+      },
+      {
         name: "query_model_catalog",
         description: "Query a reviewed offline model catalog subset. Catalog presence is not host access or live execution verification.",
         inputSchema: queryModelCatalogInputSchema,
@@ -40710,6 +40902,21 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             } catch (error61) {
               result = invalidInput(error61 instanceof Error ? error61.message : "Session message status input is invalid.");
             }
+            break;
+          case "get_session_contact_state":
+            result = await sessionMessages.contactState(args);
+            break;
+          case "contact_session":
+            result = await sessionMessages.contact(args);
+            break;
+          case "register_session_task_request":
+            result = await sessionMessages.registerTaskRequest(args);
+            break;
+          case "record_session_task_outcome":
+            result = await sessionMessages.recordTaskOutcome(args);
+            break;
+          case "reconcile_session_task_request":
+            result = await sessionMessages.reconcileTaskRequest(args);
             break;
           case "query_model_catalog":
             result = modelRouting.call(request.params.name, args);
