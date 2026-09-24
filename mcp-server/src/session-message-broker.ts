@@ -7,12 +7,12 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
-import { SessionMessageStore, type SessionIdentity } from "./session-message-store.js";
+import { SessionMessageStore, type CurrentTaskBindingReader, type SessionIdentity } from "./session-message-store.js";
 import type { InputObservationKind } from "./input-observation.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
 import { SessionModelCapabilityStore, capabilitySigner, MODEL_CAPABILITY_FEATURE } from "./session-model-capabilities.js";
 import type { RoutingObserverReceipt } from "../../skills/coordinate-subagents/scripts/model-routing-store.mjs";
-import type { SessionTaskRequestV1 } from "../../contracts/types.js";
+import type { SessionTaskRequestV1, SessionTaskTerminalOutcomeV1 } from "../../contracts/types.js";
 
 const IDLE_EXIT_MS = 60_000;
 export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities"] as const;
@@ -153,7 +153,8 @@ async function credentials(stateDirectory: string): Promise<{ key: string; certi
   return { key, certificate, token, fingerprint256: new X509Certificate(certificate).fingerprint256 };
 }
 
-export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>, modelCapabilities?: SessionModelCapabilityStore): unknown {
+export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>, modelCapabilities?: SessionModelCapabilityStore,
+  taskBindingReader?: CurrentTaskBindingReader): unknown {
   switch (operation) {
     case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: [...SESSION_MESSAGE_BROKER_CAPABILITIES, ...(modelCapabilities ? [MODEL_CAPABILITY_FEATURE] : [])] };
     case "resource-admission": throw new Error("Resource admission is unavailable.");
@@ -185,6 +186,12 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         body: string(payload.body, "body"),
         ...(ttlSeconds === undefined ? {} : { ttlSeconds }),
       });
+    }
+    case "record-task-outcome": {
+      if (!taskBindingReader) throw new Error("Current task binding is unavailable.");
+      if (Object.keys(payload).sort().join() !== "outcome,reporterProof") throw new Error("A terminal outcome and reporter proof are required.");
+      return store.recordTaskOutcome(payload.outcome as SessionTaskTerminalOutcomeV1,
+        string(payload.reporterProof, "reporterProof"), taskBindingReader);
     }
     case "claim": {
       const maxMessages = optionalInteger(payload, "maxMessages");

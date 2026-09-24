@@ -8038,6 +8038,81 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
+
+// contracts/types.ts
+var CHECKPOINT_DELTA_MAX_BYTES = 4096;
+function sameSessionTaskActor(a, b2) {
+  return a.host === b2.host && a.sessionId === b2.sessionId && a.instanceId === b2.instanceId;
+}
+function sameSessionTaskAddress(a, b2) {
+  return a.host === b2.host && a.sessionId === b2.sessionId;
+}
+function sameSessionTaskRequest(a, b2) {
+  return a.requestId === b2.requestId && a.taskId === b2.taskId && sameSessionTaskActor(a.sender, b2.sender) && sameSessionTaskAddress(a.recipient, b2.recipient) && sameSessionTaskAddress(a.callbackTarget, b2.callbackTarget) && a.revision === b2.revision && a.requestedAt === b2.requestedAt && a.expiresAt === b2.expiresAt;
+}
+function sameSessionTaskOutcome(a, b2) {
+  return a.requestId === b2.requestId && a.taskId === b2.taskId && sameSessionTaskActor(a.actor, b2.actor) && (a.callbackTarget === void 0 && b2.callbackTarget === void 0 || a.callbackTarget !== void 0 && b2.callbackTarget !== void 0 && sameSessionTaskAddress(a.callbackTarget, b2.callbackTarget)) && a.revision === b2.revision && a.result === b2.result && a.reportedAt === b2.reportedAt && a.evidenceRefs.length === b2.evidenceRefs.length && a.evidenceRefs.every((ref, index) => ref === b2.evidenceRefs[index]);
+}
+function assertSessionTaskTransitionV1(event, context) {
+  const actor = event.kind === "request" ? event.sender : event.actor;
+  if (!sameSessionTaskActor(actor, context.authenticatedActor) || actor.instanceId !== context.currentInstanceId) {
+    throw new Error("SESSION_TASK_ACTOR_STALE_OR_UNAUTHENTICATED");
+  }
+  if (context.revisionStream !== (event.kind === "activity-observation" ? "activity" : "task")) {
+    throw new Error("SESSION_TASK_REVISION_STREAM_MISMATCH");
+  }
+  if (event.kind === "request") {
+    if (event.taskId !== context.boundTaskId) {
+      throw new Error("SESSION_TASK_BINDING_MISMATCH");
+    }
+    if (!sameSessionTaskAddress(event.callbackTarget, context.authenticatedActor)) {
+      throw new Error("SESSION_TASK_CALLBACK_TARGET_MISMATCH");
+    }
+    if (Date.parse(event.requestedAt) >= Date.parse(event.expiresAt)) {
+      throw new Error("SESSION_TASK_INVALID_DEADLINE");
+    }
+    if (context.request !== void 0) {
+      if (sameSessionTaskRequest(event, context.request)) return "duplicate";
+      throw new Error("SESSION_TASK_REQUEST_CONFLICT");
+    }
+    if (context.currentRevision !== 0) {
+      throw new Error("SESSION_TASK_REVISION_STALE");
+    }
+    return "new";
+  }
+  if (event.kind === "terminal-outcome") {
+    const request = context.request;
+    if (event.taskId !== context.boundTaskId || (request === void 0 ? event.requestId !== void 0 || event.callbackTarget !== void 0 : event.requestId !== request.requestId || event.taskId !== request.taskId || event.actor.host !== request.recipient.host || event.actor.sessionId !== request.recipient.sessionId || event.callbackTarget === void 0 || !sameSessionTaskAddress(event.callbackTarget, request.callbackTarget))) {
+      throw new Error("SESSION_TASK_REQUEST_BINDING_MISMATCH");
+    }
+    if (context.terminalOutcome !== void 0) {
+      if (sameSessionTaskOutcome(event, context.terminalOutcome)) return "duplicate";
+      throw new Error("SESSION_TASK_TERMINAL_CONFLICT");
+    }
+  }
+  if (event.kind === "activity-observation" && event.source !== context.observedSource) {
+    throw new Error("SESSION_TASK_ACTIVITY_SOURCE_UNVERIFIED");
+  }
+  if (!Number.isSafeInteger(event.revision) || event.revision <= context.currentRevision) {
+    throw new Error("SESSION_TASK_REVISION_STALE");
+  }
+  return "new";
+}
+var WorkflowContractError = class extends Error {
+  constructor(code, message, details = null) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    this.name = "WorkflowContractError";
+  }
+  code;
+  details;
+  toBody() {
+    return { code: this.code, message: this.message, details: this.details };
+  }
+};
+
+// mcp-server/src/session-message-store.ts
 var MESSAGE_BODY_MAX_BYTES = SESSION_MESSAGE_BODY_MAX_BYTES;
 var MESSAGE_TTL_DEFAULT_SECONDS = 3600;
 var MESSAGE_TTL_MAX_SECONDS = 86400;
@@ -8179,6 +8254,13 @@ var SessionMessageStore = class {
       body_digest TEXT NOT NULL,
       ttl_seconds INTEGER NOT NULL,
       registered_at TEXT NOT NULL
+    ) STRICT;
+    CREATE TABLE IF NOT EXISTS task_outcomes (
+      outcome_key TEXT PRIMARY KEY,
+      outcome_json TEXT NOT NULL,
+      callback_message_id TEXT UNIQUE,
+      callback_acknowledged_at TEXT,
+      recorded_at TEXT NOT NULL
     ) STRICT;`);
     this.database.exec("BEGIN IMMEDIATE");
     try {
@@ -8378,6 +8460,87 @@ var SessionMessageStore = class {
       registeredAt: String(row.registered_at)
     };
   }
+  /** The trusted reader is invoked under the write lock so its current binding cannot be copied from the event. */
+  recordTaskOutcome(outcome, reporterProof, bindingReader, nowMs = Date.now()) {
+    if (!bindingReader) throw new Error("Current task binding is unavailable.");
+    if (typeof reporterProof !== "string" || !reporterProof || reporterProof.length > 4096) {
+      throw new Error("Reporter proof is required.");
+    }
+    if (!outcome || typeof outcome !== "object" || Array.isArray(outcome) || outcome.schemaVersion !== "1.0.0" || outcome.kind !== "terminal-outcome" || outcome.authorityEffect !== "none" || typeof outcome.taskId !== "string" || !outcome.taskId || outcome.taskId.length > 128 || !outcome.actor || typeof outcome.actor.instanceId !== "string" || !outcome.actor.instanceId || outcome.actor.instanceId.length > 200 || !Number.isSafeInteger(outcome.revision) || outcome.revision < 1 || !["COMPLETED", "BLOCKED", "FAILED", "CANCELLED"].includes(outcome.result) || !Array.isArray(outcome.evidenceRefs) || outcome.evidenceRefs.length > 32 || outcome.evidenceRefs.some((ref) => typeof ref !== "string" || !ref || ref.length > 1024) || new Set(outcome.evidenceRefs).size !== outcome.evidenceRefs.length || typeof outcome.reportedAt !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/u.test(outcome.reportedAt) || !Number.isFinite(Date.parse(outcome.reportedAt))) {
+      throw new Error("Terminal outcome shape is invalid.");
+    }
+    taskTimestamp(outcome.reportedAt);
+    boundedIdentity(outcome.actor);
+    const delegated = outcome.requestId !== void 0;
+    if (delegated && (typeof outcome.requestId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(outcome.requestId) || !outcome.callbackTarget)) throw new Error("Delegated outcome binding is invalid.");
+    if (!delegated && outcome.callbackTarget !== void 0) throw new Error("Standalone outcome cannot specify a callback.");
+    if (outcome.callbackTarget) boundedIdentity(outcome.callbackTarget);
+    const expectedKeys = delegated ? "actor,authorityEffect,callbackTarget,evidenceRefs,kind,reportedAt,requestId,result,revision,schemaVersion,taskId" : "actor,authorityEffect,evidenceRefs,kind,reportedAt,result,revision,schemaVersion,taskId";
+    if (Object.keys(outcome).sort().join() !== expectedKeys || Object.keys(outcome.actor).sort().join() !== "host,instanceId,sessionId" || outcome.callbackTarget && Object.keys(outcome.callbackTarget).sort().join() !== "host,sessionId") {
+      throw new Error("Terminal outcome shape is invalid.");
+    }
+    const key = delegated ? `request:${outcome.requestId}` : `standalone:${JSON.stringify([outcome.actor.host, outcome.actor.sessionId, outcome.taskId])}`;
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const context = bindingReader.verifyTerminalReporter(outcome, reporterProof);
+      if (!context) throw new Error("Current task binding is unavailable.");
+      const request = delegated ? this.taskRequest(outcome.requestId)?.request : void 0;
+      if (delegated && !request) throw new Error("Registered task request is required.");
+      const existing = this.taskOutcome(key);
+      const verdict = assertSessionTaskTransitionV1(outcome, {
+        authenticatedActor: context.authenticatedActor,
+        currentInstanceId: context.currentInstanceId,
+        revisionStream: context.revisionStream,
+        currentRevision: context.currentRevision,
+        ...context.boundTaskId === void 0 ? {} : { boundTaskId: context.boundTaskId },
+        ...request ? { request } : {},
+        ...existing ? { terminalOutcome: existing.outcome } : {}
+      });
+      if (verdict === "duplicate") {
+        this.database.exec("COMMIT");
+        return { duplicate: true, callbackMessageId: existing.callbackMessageId };
+      }
+      let callbackMessageId = null;
+      if (request) {
+        const callback = {
+          schemaVersion: "1.0.0",
+          kind: "task-outcome-callback",
+          requestId: request.requestId,
+          taskId: outcome.taskId,
+          result: outcome.result,
+          outcomeKey: key
+        };
+        const sent = this.send({
+          sender: outcome.actor,
+          target: request.callbackTarget,
+          body: JSON.stringify(callback)
+        }, nowMs);
+        callbackMessageId = sent.messageId;
+      }
+      this.database.prepare(`INSERT INTO task_outcomes
+        (outcome_key, outcome_json, callback_message_id, recorded_at) VALUES (?, ?, ?, ?)`).run(
+        key,
+        JSON.stringify(outcome),
+        callbackMessageId,
+        iso(nowMs)
+      );
+      this.database.exec("COMMIT");
+      return { duplicate: false, callbackMessageId };
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  taskOutcome(key) {
+    const row = this.database.prepare("SELECT * FROM task_outcomes WHERE outcome_key = ?").get(key);
+    if (!row) return null;
+    return {
+      outcome: JSON.parse(String(row.outcome_json)),
+      callbackMessageId: row.callback_message_id === null ? null : String(row.callback_message_id),
+      callbackAcknowledgedAt: row.callback_acknowledged_at === null ? null : String(row.callback_acknowledged_at),
+      acceptance: "unverified"
+    };
+  }
   claimLocked(target, nowMs, limits) {
     const maxMessages = limits.maxMessages ?? CLAIM_MAX_MESSAGES;
     const maxBodyChars = limits.maxBodyChars ?? SESSION_MESSAGE_MAX_RESPONSE_BYTES;
@@ -8514,7 +8677,12 @@ var SessionMessageStore = class {
     let count = 0;
     this.database.exec("BEGIN IMMEDIATE");
     try {
-      for (const messageId of new Set(messageIds)) count += Number(statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes);
+      for (const messageId of new Set(messageIds)) {
+        const changed = Number(statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes);
+        count += changed;
+        if (changed) this.database.prepare(`UPDATE task_outcomes SET callback_acknowledged_at = ?
+          WHERE callback_message_id = ?`).run(iso(nowMs), messageId);
+      }
       this.database.exec("COMMIT");
       return count;
     } catch (error) {
@@ -13506,22 +13674,6 @@ var RoutingObservationSigner = class {
 // mcp-server/src/convergence-logic.ts
 import { createHash as createHash3 } from "node:crypto";
 
-// contracts/types.ts
-var CHECKPOINT_DELTA_MAX_BYTES = 4096;
-var WorkflowContractError = class extends Error {
-  constructor(code, message, details = null) {
-    super(message);
-    this.code = code;
-    this.details = details;
-    this.name = "WorkflowContractError";
-  }
-  code;
-  details;
-  toBody() {
-    return { code: this.code, message: this.message, details: this.details };
-  }
-};
-
 // mcp-server/src/workspace-identity.ts
 var SEGMENT_SEPARATOR = process.platform === "win32" ? /[\\/]/u : /\//u;
 
@@ -14479,7 +14631,7 @@ async function credentials(stateDirectory) {
   }
   return { key, certificate, token, fingerprint256: new X509Certificate2(certificate).fingerprint256 };
 }
-function dispatchSessionMessageBrokerOperation(store, operation, payload, modelCapabilities) {
+function dispatchSessionMessageBrokerOperation(store, operation, payload, modelCapabilities, taskBindingReader) {
   switch (operation) {
     case "ping":
       return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: [...SESSION_MESSAGE_BROKER_CAPABILITIES, ...modelCapabilities ? [MODEL_CAPABILITY_FEATURE] : []] };
@@ -14513,6 +14665,15 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, modelC
         body: string(payload.body, "body"),
         ...ttlSeconds === void 0 ? {} : { ttlSeconds }
       });
+    }
+    case "record-task-outcome": {
+      if (!taskBindingReader) throw new Error("Current task binding is unavailable.");
+      if (Object.keys(payload).sort().join() !== "outcome,reporterProof") throw new Error("A terminal outcome and reporter proof are required.");
+      return store.recordTaskOutcome(
+        payload.outcome,
+        string(payload.reporterProof, "reporterProof"),
+        taskBindingReader
+      );
     }
     case "claim": {
       const maxMessages = optionalInteger(payload, "maxMessages");

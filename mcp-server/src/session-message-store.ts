@@ -5,7 +5,8 @@ import { DatabaseSync } from "node:sqlite";
 
 import { SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
 import type { DeliveryCapabilities, InputObservationKind } from "./input-observation.js";
-import type { SessionTaskRequestV1 } from "../../contracts/types.js";
+import { assertSessionTaskTransitionV1 } from "../../contracts/types.js";
+import type { SessionTaskRequestV1, SessionTaskTerminalOutcomeV1, SessionTaskTransitionContextV1 } from "../../contracts/types.js";
 
 export const MESSAGE_BODY_MAX_BYTES = SESSION_MESSAGE_BODY_MAX_BYTES;
 export const MESSAGE_TTL_DEFAULT_SECONDS = 3600;
@@ -41,6 +42,19 @@ export interface RegisteredSessionTaskRequest {
   messageId: string;
   ttlSeconds: number;
   registeredAt: string;
+}
+
+/** Implemented by the owning runtime. Broker payloads and presence are not bindings. */
+export interface CurrentTaskBindingReader {
+  /** Verify the reporter proof and current ownership from runtime state, not from outcome fields. */
+  verifyTerminalReporter(outcome: SessionTaskTerminalOutcomeV1, reporterProof: string): SessionTaskTransitionContextV1 | null;
+}
+
+export interface RecordedTaskOutcome {
+  outcome: SessionTaskTerminalOutcomeV1;
+  callbackMessageId: string | null;
+  callbackAcknowledgedAt: string | null;
+  acceptance: "unverified";
 }
 
 export type WakeVisibility = "silent" | "user-message" | "none";
@@ -208,6 +222,13 @@ export class SessionMessageStore {
       body_digest TEXT NOT NULL,
       ttl_seconds INTEGER NOT NULL,
       registered_at TEXT NOT NULL
+    ) STRICT;
+    CREATE TABLE IF NOT EXISTS task_outcomes (
+      outcome_key TEXT PRIMARY KEY,
+      outcome_json TEXT NOT NULL,
+      callback_message_id TEXT UNIQUE,
+      callback_acknowledged_at TEXT,
+      recorded_at TEXT NOT NULL
     ) STRICT;`);
     this.database.exec("BEGIN IMMEDIATE");
     try {
@@ -411,6 +432,94 @@ export class SessionMessageStore {
     };
   }
 
+  /** The trusted reader is invoked under the write lock so its current binding cannot be copied from the event. */
+  recordTaskOutcome(outcome: SessionTaskTerminalOutcomeV1, reporterProof: string, bindingReader: CurrentTaskBindingReader | null,
+    nowMs = Date.now()): { duplicate: boolean; callbackMessageId: string | null } {
+    if (!bindingReader) throw new Error("Current task binding is unavailable.");
+    if (typeof reporterProof !== "string" || !reporterProof || reporterProof.length > 4096) {
+      throw new Error("Reporter proof is required.");
+    }
+    if (!outcome || typeof outcome !== "object" || Array.isArray(outcome)
+      || outcome.schemaVersion !== "1.0.0" || outcome.kind !== "terminal-outcome"
+      || outcome.authorityEffect !== "none" || typeof outcome.taskId !== "string"
+      || !outcome.taskId || outcome.taskId.length > 128 || !outcome.actor
+      || typeof outcome.actor.instanceId !== "string" || !outcome.actor.instanceId || outcome.actor.instanceId.length > 200
+      || !Number.isSafeInteger(outcome.revision) || outcome.revision < 1
+      || !["COMPLETED", "BLOCKED", "FAILED", "CANCELLED"].includes(outcome.result)
+      || !Array.isArray(outcome.evidenceRefs) || outcome.evidenceRefs.length > 32
+      || outcome.evidenceRefs.some((ref) => typeof ref !== "string" || !ref || ref.length > 1024)
+      || new Set(outcome.evidenceRefs).size !== outcome.evidenceRefs.length
+      || typeof outcome.reportedAt !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/u.test(outcome.reportedAt)
+      || !Number.isFinite(Date.parse(outcome.reportedAt))) {
+      throw new Error("Terminal outcome shape is invalid.");
+    }
+    taskTimestamp(outcome.reportedAt);
+    boundedIdentity(outcome.actor);
+    const delegated = outcome.requestId !== undefined;
+    if (delegated && (typeof outcome.requestId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(outcome.requestId)
+      || !outcome.callbackTarget)) throw new Error("Delegated outcome binding is invalid.");
+    if (!delegated && outcome.callbackTarget !== undefined) throw new Error("Standalone outcome cannot specify a callback.");
+    if (outcome.callbackTarget) boundedIdentity(outcome.callbackTarget);
+    const expectedKeys = delegated
+      ? "actor,authorityEffect,callbackTarget,evidenceRefs,kind,reportedAt,requestId,result,revision,schemaVersion,taskId"
+      : "actor,authorityEffect,evidenceRefs,kind,reportedAt,result,revision,schemaVersion,taskId";
+    if (Object.keys(outcome).sort().join() !== expectedKeys || Object.keys(outcome.actor).sort().join() !== "host,instanceId,sessionId"
+      || (outcome.callbackTarget && Object.keys(outcome.callbackTarget).sort().join() !== "host,sessionId")) {
+      throw new Error("Terminal outcome shape is invalid.");
+    }
+    const key = delegated ? `request:${outcome.requestId}`
+      : `standalone:${JSON.stringify([outcome.actor.host, outcome.actor.sessionId, outcome.taskId])}`;
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const context = bindingReader.verifyTerminalReporter(outcome, reporterProof);
+      if (!context) throw new Error("Current task binding is unavailable.");
+      const request = delegated ? this.taskRequest(outcome.requestId!)?.request : undefined;
+      if (delegated && !request) throw new Error("Registered task request is required.");
+      const existing = this.taskOutcome(key);
+      const verdict = assertSessionTaskTransitionV1(outcome, {
+        authenticatedActor: context.authenticatedActor, currentInstanceId: context.currentInstanceId,
+        revisionStream: context.revisionStream, currentRevision: context.currentRevision,
+        ...(context.boundTaskId === undefined ? {} : { boundTaskId: context.boundTaskId }),
+        ...(request ? { request } : {}), ...(existing ? { terminalOutcome: existing.outcome } : {}),
+      });
+      if (verdict === "duplicate") {
+        this.database.exec("COMMIT");
+        return { duplicate: true, callbackMessageId: existing!.callbackMessageId };
+      }
+      let callbackMessageId: string | null = null;
+      if (request) {
+        const callback = { schemaVersion: "1.0.0", kind: "task-outcome-callback", requestId: request.requestId,
+          taskId: outcome.taskId, result: outcome.result, outcomeKey: key };
+        const sent = this.send({
+          sender: outcome.actor, target: request.callbackTarget,
+          body: JSON.stringify(callback),
+        }, nowMs);
+        callbackMessageId = sent.messageId;
+      }
+      this.database.prepare(`INSERT INTO task_outcomes
+        (outcome_key, outcome_json, callback_message_id, recorded_at) VALUES (?, ?, ?, ?)`).run(
+        key, JSON.stringify(outcome), callbackMessageId, iso(nowMs),
+      );
+      this.database.exec("COMMIT");
+      return { duplicate: false, callbackMessageId };
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  taskOutcome(key: string): RecordedTaskOutcome | null {
+    const row = this.database.prepare("SELECT * FROM task_outcomes WHERE outcome_key = ?")
+      .get(key) as Record<string, unknown> | undefined;
+    if (!row) return null;
+    return {
+      outcome: JSON.parse(String(row.outcome_json)) as SessionTaskTerminalOutcomeV1,
+      callbackMessageId: row.callback_message_id === null ? null : String(row.callback_message_id),
+      callbackAcknowledgedAt: row.callback_acknowledged_at === null ? null : String(row.callback_acknowledged_at),
+      acceptance: "unverified",
+    };
+  }
+
   private claimLocked(target: SessionIdentity, nowMs: number, limits: ClaimLimits): SessionMessage[] {
     const maxMessages = limits.maxMessages ?? CLAIM_MAX_MESSAGES;
     const maxBodyChars = limits.maxBodyChars ?? SESSION_MESSAGE_MAX_RESPONSE_BYTES;
@@ -560,7 +669,12 @@ export class SessionMessageStore {
     let count = 0;
     this.database.exec("BEGIN IMMEDIATE");
     try {
-      for (const messageId of new Set(messageIds)) count += Number(statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes);
+      for (const messageId of new Set(messageIds)) {
+        const changed = Number(statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes);
+        count += changed;
+        if (changed) this.database.prepare(`UPDATE task_outcomes SET callback_acknowledged_at = ?
+          WHERE callback_message_id = ?`).run(iso(nowMs), messageId);
+      }
       this.database.exec("COMMIT");
       return count;
     } catch (error) {
