@@ -8117,6 +8117,7 @@ var MESSAGE_BODY_MAX_BYTES = SESSION_MESSAGE_BODY_MAX_BYTES;
 var MESSAGE_TTL_DEFAULT_SECONDS = 3600;
 var MESSAGE_TTL_MAX_SECONDS = 86400;
 var MESSAGE_LIMIT = 1e3;
+var TASK_PREPARATION_LIMIT = 1e3;
 var MESSAGE_BYTES_LIMIT = 4 * 1024 * 1024;
 var CLAIM_LEASE_BASE_MS = 12e4;
 var CLAIM_LEASE_MAX_MS = 30 * 6e4;
@@ -8475,11 +8476,15 @@ var SessionMessageStore = class {
     const requestDigest = taskPreparationDigest(request, input.body, ttlSeconds);
     this.database.exec("BEGIN IMMEDIATE");
     try {
+      this.database.prepare("DELETE FROM task_preparations WHERE expires_at <= ?").run(iso(nowMs));
       if (this.database.prepare("SELECT 1 FROM task_requests WHERE request_id = ?").get(request.requestId)) {
         throw new Error("Registered request cannot issue another reconciliation token.");
       }
       const previous = this.database.prepare("SELECT request_digest FROM task_preparations WHERE request_id = ?").get(request.requestId);
       if (previous && previous.request_digest !== requestDigest) throw new Error("requestId already belongs to a different task preparation.");
+      if (!previous && this.database.prepare("SELECT count(*) AS n FROM task_preparations").get().n >= TASK_PREPARATION_LIMIT) {
+        throw new Error("The bounded task preparation spool is full.");
+      }
       const reconcileToken = randomBytes(32).toString("base64url");
       const expiresAt = iso(Math.min(deadline, nowMs + 10 * 6e4));
       this.database.prepare(`INSERT INTO task_preparations (request_id, request_digest, token_digest, expires_at)
@@ -14993,15 +14998,6 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, modelC
         expectedTurnId: string(payload.expectedTurnId, "expectedTurnId"),
         expectedRevision: integer3(payload.expectedRevision, "expectedRevision")
       }, Boolean(activityReporterReader));
-    }
-    case "register-task-request": {
-      if (Object.hasOwn(payload, "messageId")) throw new Error("Task request messageId is broker-assigned.");
-      const ttlSeconds = optionalInteger(payload, "ttlSeconds");
-      return store.registerTaskRequest({
-        request: payload.request,
-        body: string(payload.body, "body"),
-        ...ttlSeconds === void 0 ? {} : { ttlSeconds }
-      });
     }
     case "prepare-task-request":
       return store.prepareTaskRequest({

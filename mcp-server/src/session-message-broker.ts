@@ -194,15 +194,6 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         expectedRevision: integer(payload.expectedRevision, "expectedRevision"),
       }, Boolean(activityReporterReader));
     }
-    case "register-task-request": {
-      if (Object.hasOwn(payload, "messageId")) throw new Error("Task request messageId is broker-assigned.");
-      const ttlSeconds = optionalInteger(payload, "ttlSeconds");
-      return store.registerTaskRequest({
-        request: payload.request as SessionTaskRequestV1,
-        body: string(payload.body, "body"),
-        ...(ttlSeconds === undefined ? {} : { ttlSeconds }),
-      });
-    }
     case "prepare-task-request": return store.prepareTaskRequest({
       request: payload.request as SessionTaskRequestV1,
       body: string(payload.body, "body"),

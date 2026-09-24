@@ -13,6 +13,7 @@ export const MESSAGE_BODY_MAX_BYTES = SESSION_MESSAGE_BODY_MAX_BYTES;
 export const MESSAGE_TTL_DEFAULT_SECONDS = 3600;
 export const MESSAGE_TTL_MAX_SECONDS = 86400;
 const MESSAGE_LIMIT = 1000;
+const TASK_PREPARATION_LIMIT = 1000;
 const MESSAGE_BYTES_LIMIT = 4 * 1024 * 1024;
 const CLAIM_LEASE_BASE_MS = 120_000;
 const CLAIM_LEASE_MAX_MS = 30 * 60_000;
@@ -487,12 +488,16 @@ export class SessionMessageStore {
     const requestDigest = taskPreparationDigest(request, input.body, ttlSeconds);
     this.database.exec("BEGIN IMMEDIATE");
     try {
+      this.database.prepare("DELETE FROM task_preparations WHERE expires_at <= ?").run(iso(nowMs));
       if (this.database.prepare("SELECT 1 FROM task_requests WHERE request_id = ?").get(request.requestId)) {
         throw new Error("Registered request cannot issue another reconciliation token.");
       }
       const previous = this.database.prepare("SELECT request_digest FROM task_preparations WHERE request_id = ?")
         .get(request.requestId) as { request_digest: string } | undefined;
       if (previous && previous.request_digest !== requestDigest) throw new Error("requestId already belongs to a different task preparation.");
+      if (!previous && (this.database.prepare("SELECT count(*) AS n FROM task_preparations").get() as { n: number }).n >= TASK_PREPARATION_LIMIT) {
+        throw new Error("The bounded task preparation spool is full.");
+      }
       const reconcileToken = randomBytes(32).toString("base64url");
       const expiresAt = iso(Math.min(deadline, nowMs + 10 * 60_000));
       this.database.prepare(`INSERT INTO task_preparations (request_id, request_digest, token_digest, expires_at)

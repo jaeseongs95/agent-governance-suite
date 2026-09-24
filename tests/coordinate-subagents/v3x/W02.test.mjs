@@ -128,26 +128,16 @@ test('W02 rejects malformed contract claims before writing either table', () => 
   assert.equal(store.database.prepare('SELECT count(*) AS n FROM messages').get().n, 0);
 });
 
-test('W02 broker operation rejects forged callback and does not grant execution authority', () => {
+test('W02 broker does not expose legacy registration without current contact checks', () => {
   const { store } = fixture();
   const brokerNow = Date.now();
   const brokerRequest = { ...request, requestedAt: new Date(brokerNow).toISOString(),
     expiresAt: new Date(brokerNow + 86_400_000).toISOString() };
   assert.equal(dispatchSessionMessageBrokerOperation(store, 'ping', {}).capabilities.includes('task-request-register-v1'), false);
-  assert.throws(() => dispatchSessionMessageBrokerOperation(store, 'register-task-request', {
-    ...input, request: { ...brokerRequest, callbackTarget: recipient },
-  }), /callback target/);
+  assert.throws(() => dispatchSessionMessageBrokerOperation(store, 'register-task-request',
+    { ...input, request: brokerRequest }), /Unknown broker operation/);
   assert.equal(store.taskRequest(request.requestId), null);
-  const registered = dispatchSessionMessageBrokerOperation(store, 'register-task-request', { ...input, request: brokerRequest });
-  assert.equal(registered.requestId, request.requestId);
-  assert.match(registered.messageId, /^[0-9a-f-]{36}$/);
-  assert.equal(registered.requestExpiresAt, brokerRequest.expiresAt);
-  assert.equal(registered.duplicate, false);
-  assert.equal(store.taskRequest(request.requestId)?.messageId, registered.messageId);
-  assert.throws(() => dispatchSessionMessageBrokerOperation(store, 'register-task-request', {
-    ...input, request: brokerRequest, messageId: 'caller-choice-0001',
-  }), /broker-assigned/);
-  assert.equal(store.taskRequest(request.requestId)?.request.authorityEffect, 'none');
+  assert.equal(store.database.prepare('SELECT count(*) AS n FROM messages').get().n, 0);
   assert.throws(() => dispatchSessionMessageBrokerOperation(store, 'start-task', { requestId: request.requestId }), /Unknown broker operation/);
   const ordinary = store.send({ sender, target: recipient, messageId: 'ordinary-message-1', body: 'ordinary' }, now + 1);
   assert.equal(ordinary.duplicate, false);

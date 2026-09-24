@@ -156,6 +156,25 @@ test('W05-r1 expired preparation cannot authorize registration and can be reissu
   assert.equal(count(store, 'task_requests'), 0);
 });
 
+test('W05-r1 preparation prunes expiry and bounds active rows', () => {
+  const { store } = fixture();
+  const now = Date.now();
+  const first = { request: request(now, 'request-0001'), body: 'Task body', ttlSeconds: 60 };
+  store.prepareTaskRequest(first, now);
+  store.database.prepare('UPDATE task_preparations SET expires_at = ? WHERE request_id = ?')
+    .run(new Date(now - 1).toISOString(), first.request.requestId);
+  store.prepareTaskRequest({ ...first, request: request(now, 'request-0002') }, now);
+  assert.equal(count(store, 'task_preparations'), 1);
+  const insert = store.database.prepare(`INSERT INTO task_preparations
+    (request_id, request_digest, token_digest, expires_at) VALUES (?, ?, ?, ?)`);
+  for (let i = 2; i < 1001; i++) {
+    insert.run(`filler-${i}`, 'digest', 'digest', new Date(now + 600_000).toISOString());
+  }
+  assert.equal(count(store, 'task_preparations'), 1000);
+  assert.throws(() => store.prepareTaskRequest({ ...first, request: request(now, 'request-0003') }, now), /spool is full/);
+  assert.equal(count(store, 'task_preparations'), 1000);
+});
+
 test('W05-r1 SQLite lock and rollback preserve preparation and single enqueue', () => {
   const { store, database } = fixture();
   const now = Date.now();
