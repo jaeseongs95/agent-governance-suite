@@ -858,7 +858,10 @@ export function createMcpServer(
     if (vmInvocation) return vmInvocation.runCurrentRequest(extra.requestId, request.params.name, asRecord(request.params.arguments), handle);
     if (flowmarshalInvocation) return flowmarshalInvocation.runCurrentRequest(
       extra.requestId, request.params.name, asRecord(request.params.arguments), async () => {
-        if (flowmarshalInvocation.hasCurrentRequest()) throw new Error("FlowMarshal A2 receipt verification is not installed");
+        if (flowmarshalInvocation.hasCurrentRequest()) {
+          flowmarshalInvocation.verifyCurrentReceipt();
+          throw new Error("FlowMarshal A2 strict workflow provider is not installed");
+        }
         return handle();
       });
     return handle();
