@@ -204,7 +204,7 @@ test('stage receipt waits for the stored run revision and stage without consumin
   } finally { f.close(); }
 });
 
-test('product current call consumes a valid receipt while strict WorkflowService admission stays closed', async () => {
+test('product current call consumes a valid receipt before invoking its configured service', async () => {
   const f = fixture();
   let serviceCalls = 0;
   const service = { planWorkflow() { serviceCalls++; throw Error('service must stay closed'); } };
@@ -239,11 +239,11 @@ test('product current call consumes a valid receipt while strict WorkflowService
     z.object({ callId: z.string(), serverEpoch: z.string() }));
     const receipt = f.receipt(registration.body, ticket.callId, 'product-receipt');
     const first = await rawCall(ticket.callId, { ...task, _hostAttestation: receipt.envelope });
-    assert.match(first.error?.message ?? '', /strict workflow provider is not installed/);
+    assert.match(first.error?.message ?? '', /service must stay closed/);
     assert.equal(f.claimRows().length, 1);
-    assert.equal(serviceCalls, 0);
+    assert.equal(serviceCalls, 1);
     const replay = await rawCall(ticket.callId, { ...task, _hostAttestation: receipt.envelope });
     assert.match(replay.error?.message ?? '', /already used/);
-    assert.equal(serviceCalls, 0);
+    assert.equal(serviceCalls, 1);
   } finally { await client.close(); await server.close(); f.close(); }
 });

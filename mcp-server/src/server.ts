@@ -494,7 +494,7 @@ export function createMcpServer(
       {
         name: "plan_workflow",
         description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose.",
-        inputSchema: vmInvocation ? withVmReceipt(planWorkflowToolInputSchema(toolSchemaProfile))
+        inputSchema: vmInvocation || flowmarshalInvocation ? withVmReceipt(planWorkflowToolInputSchema(toolSchemaProfile))
           : planWorkflowToolInputSchema(toolSchemaProfile),
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
@@ -537,7 +537,7 @@ export function createMcpServer(
       {
         name: "record_stage_result",
         description: "Record one ordered stage result; use responseMode=compact to avoid echoing the accumulated receipt.",
-        inputSchema: vmInvocation ? withVmReceipt(recordStageResultInputSchema) : recordStageResultInputSchema,
+        inputSchema: vmInvocation || flowmarshalInvocation ? withVmReceipt(recordStageResultInputSchema) : recordStageResultInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
@@ -665,6 +665,11 @@ export function createMcpServer(
       if (vmInvocation && (vmInvocation.hasCurrentRequest() || Object.hasOwn(args, "_hostAttestation"))) {
         if (!vmInvocation.hasCurrentRequest()) throw new Error("VM dispatch unavailable: current reserved request is unavailable");
         vmInvocation.verifyCurrentReceipt();
+        const { _hostAttestation, ...unsigned } = args;
+        void _hostAttestation;
+        return call(unsigned);
+      }
+      if (flowmarshalInvocation?.hasCurrentRequest()) {
         const { _hostAttestation, ...unsigned } = args;
         void _hostAttestation;
         return call(unsigned);
@@ -860,7 +865,6 @@ export function createMcpServer(
       extra.requestId, request.params.name, asRecord(request.params.arguments), async () => {
         if (flowmarshalInvocation.hasCurrentRequest()) {
           flowmarshalInvocation.verifyCurrentReceipt();
-          throw new Error("FlowMarshal A2 strict workflow provider is not installed");
         }
         return handle();
       });

@@ -59,7 +59,7 @@ async function main(): Promise<void> {
 
   const validator = new ContractValidator();
   const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
-  // F02 validates the fixed same-user configuration; F03/F04 will consume it for admission.
+  // The fixed same-user profile is selected at startup; only its verified current call supplies A2 context.
   const flowmarshalProfile = initializeFlowmarshalProfile();
   if (flowmarshalProfile && hostAttestation) throw new Error("FlowMarshal A2 and Claude host profiles cannot share one server");
   flowmarshalInvocation = flowmarshalProfile ? new FlowmarshalCurrentInvocation(flowmarshalProfile, store) : null;
@@ -73,7 +73,7 @@ async function main(): Promise<void> {
     validator,
     store,
     null,
-    hostAttestation,
+    flowmarshalInvocation ?? hostAttestation,
   );
   const updates = new PluginUpdateService(store);
   let continuity: ContinuityGateway = new UnavailableContinuityService();
