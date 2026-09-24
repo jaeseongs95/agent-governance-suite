@@ -12,7 +12,7 @@ r2(`56750d19`)는 BLOCKED였다. `inspectAncestors`가 mountinfo의 mount point�
   - 보호 subtree 안이나 그 경로에 걸친 mount entry(device와 무관)
   - OS-managed 조상에 하위 트리를 bind한 경우(root가 `/`가 아닌 mount)
   - covering mount의 major:minor와 보호 객체의 `st_dev`가 다른 경우(보호 디렉터리, package 파일, node 모두 대조)
-  - 검증과 사용 사이의 mount 경계 변화(use 직전과 exec 직전 두 번 재확인)
+  - 검증과 사용 사이의 mount 경계 변화. v2 `runVerifiedRuntime`은 경계를 두 번 재확인한다(use 시작 때 한 번, spawn 직전에 한 번). 이전 배치의 `runVerifiedNode`는 fd를 열기 전에 한 번만 재확인하고, 그 뒤에는 열린 fd의 identity·hash 대조와 `/proc/self/fd` 경유 실행으로 실행 bytes를 고정한다.
 - 같은 device의 bind는 `st_dev`가 아니라 mount table로 거절한다.
 - 적용 범위: v2 install·verify·use, 그리고 이전 배치의 verify·use. mountinfo 경로 주입은 테스트용 라이브러리 옵션뿐이고 CLI에는 없다.
 
