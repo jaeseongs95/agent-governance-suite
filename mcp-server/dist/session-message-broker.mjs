@@ -8261,6 +8261,21 @@ var SessionMessageStore = class {
       callback_message_id TEXT UNIQUE,
       callback_acknowledged_at TEXT,
       recorded_at TEXT NOT NULL
+    ) STRICT;
+    CREATE TABLE IF NOT EXISTS session_activity (
+      host TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      instance_id TEXT NOT NULL,
+      presence_started_at TEXT NOT NULL,
+      turn_id TEXT NOT NULL,
+      revision INTEGER NOT NULL CHECK (revision >= 1),
+      activity TEXT NOT NULL CHECK (activity IN ('busy', 'idle', 'unknown')),
+      event_activity TEXT NOT NULL CHECK (event_activity IN ('busy', 'idle', 'unknown')),
+      source TEXT NOT NULL CHECK (source IN ('host-observed', 'self-reported')),
+      observed_at TEXT NOT NULL,
+      event_observed_at TEXT NOT NULL,
+      conflicted INTEGER NOT NULL DEFAULT 0 CHECK (conflicted IN (0, 1)),
+      PRIMARY KEY (host, session_id, instance_id)
     ) STRICT;`);
     this.database.exec("BEGIN IMMEDIATE");
     try {
@@ -8549,6 +8564,112 @@ var SessionMessageStore = class {
       acceptance: "unverified"
     };
   }
+  recordActivity(event, turnId, reporterProof, reader, nowMs = Date.now()) {
+    if (!reader) throw new Error("Current activity reporter is unavailable.");
+    if (!event || typeof event !== "object" || Array.isArray(event) || Object.keys(event).sort().join() !== "activity,actor,authorityEffect,kind,observedAt,revision,schemaVersion,source" || event.schemaVersion !== "1.0.0" || event.kind !== "activity-observation" || event.authorityEffect !== "none" || !event.actor || typeof event.actor !== "object" || Array.isArray(event.actor) || Object.keys(event.actor).sort().join() !== "host,instanceId,sessionId" || typeof event.actor.instanceId !== "string" || !event.actor.instanceId || event.actor.instanceId.length > 128 || !Number.isSafeInteger(event.revision) || event.revision < 1 || !["busy", "idle", "unknown"].includes(event.activity) || !["host-observed", "self-reported"].includes(event.source) || typeof event.observedAt !== "string" || typeof turnId !== "string" || !turnId || turnId.length > 200 || turnId.includes("\0") || typeof reporterProof !== "string" || !reporterProof || reporterProof.length > 4096) {
+      throw new Error("Activity observation shape is invalid.");
+    }
+    boundedIdentity(event.actor);
+    const observedMs = taskTimestamp(event.observedAt);
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const verified = reader.verifyActivityReporter(event, turnId, reporterProof);
+      if (!verified || verified.authenticatedActor.host !== event.actor.host || verified.authenticatedActor.sessionId !== event.actor.sessionId || verified.authenticatedActor.instanceId !== event.actor.instanceId || verified.currentInstanceId !== event.actor.instanceId || verified.verifiedTurnId !== turnId || verified.observedSource !== event.source || verified.verifiedRevision !== event.revision || verified.verifiedActivity !== event.activity || verified.verifiedObservedAt !== event.observedAt) {
+        throw new Error("SESSION_ACTIVITY_REPORTER_UNVERIFIED");
+      }
+      const presence = this.presence(event.actor, nowMs);
+      if (presence.state !== "online" || presence.instanceId !== event.actor.instanceId || presence.startedAt === null || observedMs < Date.parse(presence.startedAt) || observedMs > nowMs + 5e3) throw new Error("SESSION_ACTIVITY_INSTANCE_OR_LEASE_STALE");
+      const prior = this.database.prepare(`SELECT * FROM session_activity
+        WHERE host = ? AND session_id = ? AND instance_id = ?`).get(
+        event.actor.host,
+        event.actor.sessionId,
+        event.actor.instanceId
+      );
+      const existing = prior?.presence_started_at === presence.startedAt ? prior : void 0;
+      const revision = existing ? Number(existing.revision) : 0;
+      if (event.revision < revision) {
+        throw new Error("SESSION_TASK_REVISION_STALE");
+      }
+      if (event.revision === revision) {
+        const duplicate = existing && Number(existing.conflicted) === 0 && existing.turn_id === turnId && existing.event_activity === event.activity && existing.source === event.source && existing.event_observed_at === event.observedAt;
+        if (duplicate) {
+          this.database.exec("COMMIT");
+          return { duplicate: true, activity: existing.activity };
+        }
+        this.database.prepare(`UPDATE session_activity SET conflicted = 1
+          WHERE host = ? AND session_id = ? AND instance_id = ?`).run(
+          event.actor.host,
+          event.actor.sessionId,
+          event.actor.instanceId
+        );
+        this.database.exec("COMMIT");
+        return { duplicate: false, activity: "unknown" };
+      }
+      assertSessionTaskTransitionV1(event, {
+        authenticatedActor: verified.authenticatedActor,
+        currentInstanceId: verified.currentInstanceId,
+        revisionStream: "activity",
+        currentRevision: revision,
+        observedSource: verified.observedSource
+      });
+      const priorActivity = existing && Number(existing.conflicted) === 0 ? String(existing.activity) : "unknown";
+      const timeRegressed = existing !== void 0 && observedMs < Date.parse(String(existing.observed_at));
+      const activity = timeRegressed ? "unknown" : event.activity === "idle" ? event.source === "host-observed" && existing?.source === "host-observed" && priorActivity === "busy" && existing?.turn_id === turnId ? "idle" : "unknown" : event.activity === "busy" && priorActivity === "idle" && existing?.turn_id === turnId ? "unknown" : event.activity;
+      this.database.prepare(`INSERT INTO session_activity
+        (host, session_id, instance_id, presence_started_at, turn_id, revision, activity,
+          event_activity, source, observed_at, event_observed_at, conflicted)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+        ON CONFLICT (host, session_id, instance_id) DO UPDATE SET
+          presence_started_at = excluded.presence_started_at, turn_id = excluded.turn_id,
+          revision = excluded.revision, activity = excluded.activity, event_activity = excluded.event_activity,
+          source = excluded.source, observed_at = excluded.observed_at,
+          event_observed_at = excluded.event_observed_at, conflicted = 0`).run(
+        event.actor.host,
+        event.actor.sessionId,
+        event.actor.instanceId,
+        presence.startedAt,
+        turnId,
+        event.revision,
+        activity,
+        event.activity,
+        event.source,
+        timeRegressed ? String(existing.observed_at) : event.observedAt,
+        event.observedAt
+      );
+      this.database.exec("COMMIT");
+      return { duplicate: false, activity };
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  activityStatus(target, nowMs = Date.now()) {
+    boundedIdentity(target);
+    const row = this.database.prepare(`SELECT p.instance_id, p.started_at, p.lease_until, p.ended_at,
+        a.presence_started_at, a.turn_id, a.revision, a.activity, a.source, a.observed_at, a.conflicted
+      FROM session_presence p LEFT JOIN session_activity a
+        ON a.host = p.host AND a.session_id = p.session_id AND a.instance_id = p.instance_id
+      WHERE p.host = ? AND p.session_id = ?
+      ORDER BY p.started_at DESC, p.rowid DESC LIMIT 1`).get(
+      target.host,
+      target.sessionId
+    );
+    if (!row || row.ended_at !== null || Date.parse(String(row.lease_until)) <= nowMs) {
+      return { actor: null, activity: "unknown", turnId: null, revision: 0, observedAt: null, source: null };
+    }
+    const actor = { ...target, instanceId: String(row.instance_id) };
+    if (row.turn_id === null || row.presence_started_at !== row.started_at) {
+      return { actor, activity: "unknown", turnId: null, revision: 0, observedAt: null, source: null };
+    }
+    return {
+      actor,
+      activity: Number(row.conflicted) === 1 || Date.parse(String(row.observed_at)) > nowMs || nowMs - Date.parse(String(row.observed_at)) > PRESENCE_LEASE_MS ? "unknown" : row.activity,
+      turnId: String(row.turn_id),
+      revision: Number(row.revision),
+      observedAt: String(row.observed_at),
+      source: row.source
+    };
+  }
   claimLocked(target, nowMs, limits) {
     const maxMessages = limits.maxMessages ?? CLAIM_MAX_MESSAGES;
     const maxBodyChars = limits.maxBodyChars ?? SESSION_MESSAGE_MAX_RESPONSE_BYTES;
@@ -8815,6 +8936,8 @@ var SessionMessageStore = class {
       collaboration_id, workspace_id, role, started_at, heartbeat_at, lease_until
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT (host, session_id, instance_id) DO UPDATE SET
+      started_at = CASE WHEN session_presence.ended_at IS NOT NULL
+        OR session_presence.lease_until <= excluded.started_at THEN excluded.started_at ELSE session_presence.started_at END,
       transport = excluded.transport, wake_visibility = excluded.wake_visibility,
       can_wake_silently = excluded.can_wake_silently, supported_injection = excluded.supported_injection,
       idle_wake = excluded.idle_wake, collaboration_id = excluded.collaboration_id,
@@ -8841,13 +8964,9 @@ var SessionMessageStore = class {
   heartbeatPresence(target, instanceId, nowMs = Date.now()) {
     boundedIdentity(target);
     if (!instanceId) throw new Error("presence instanceId is required.");
-    const row = this.database.prepare(`SELECT instance_id FROM session_presence
-      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`).get(target.host, target.sessionId, instanceId);
-    const selected = row;
-    if (!selected) return false;
     const now = iso(nowMs);
     return this.database.prepare(`UPDATE session_presence SET heartbeat_at = ?, lease_until = ?
-      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`).run(now, iso(nowMs + PRESENCE_LEASE_MS), target.host, target.sessionId, selected.instance_id).changes === 1;
+      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL AND lease_until > ?`).run(now, iso(nowMs + PRESENCE_LEASE_MS), target.host, target.sessionId, instanceId, now).changes === 1;
   }
   endPresence(target, reason, instanceId, nowMs = Date.now()) {
     boundedIdentity(target);
@@ -14639,7 +14758,7 @@ async function credentials(stateDirectory) {
   }
   return { key, certificate, token, fingerprint256: new X509Certificate2(certificate).fingerprint256 };
 }
-function dispatchSessionMessageBrokerOperation(store, operation, payload, modelCapabilities, taskBindingReader) {
+function dispatchSessionMessageBrokerOperation(store, operation, payload, modelCapabilities, taskBindingReader, activityReporterReader) {
   switch (operation) {
     case "ping":
       return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: [...SESSION_MESSAGE_BROKER_CAPABILITIES, ...modelCapabilities ? [MODEL_CAPABILITY_FEATURE] : []] };
@@ -14682,6 +14801,29 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, modelC
         string(payload.reporterProof, "reporterProof"),
         taskBindingReader
       );
+    }
+    case "record-session-activity": {
+      if (!activityReporterReader) throw new Error("Current activity reporter is unavailable.");
+      if (Object.keys(payload).sort().join() !== "event,reporterProof,turnId") {
+        throw new Error("An activity event, turnId and reporter proof are required.");
+      }
+      return store.recordActivity(
+        payload.event,
+        string(payload.turnId, "turnId"),
+        string(payload.reporterProof, "reporterProof"),
+        activityReporterReader
+      );
+    }
+    case "session-activity": {
+      const target = identity(payload.target);
+      return { activity: activityReporterReader ? store.activityStatus(target) : {
+        actor: null,
+        activity: "unknown",
+        turnId: null,
+        revision: 0,
+        observedAt: null,
+        source: null
+      } };
     }
     case "claim": {
       const maxMessages = optionalInteger(payload, "maxMessages");
