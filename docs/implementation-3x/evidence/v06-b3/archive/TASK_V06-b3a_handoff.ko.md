@@ -39,9 +39,15 @@ CI: NOT_RUN (지시에 따름).
 
 ## 독립 감사
 
-- **판정**: (커밋 후 fresh 서브에이전트로 실행한 실제 감사 결과를 이 자리에 채운 뒤 최종 커밋한다 — 아래 값은 플레이스홀더가 아니라 실제 감사 실행 후의 최종 기록이어야 한다.)
-- **감사 대상 SHA**: 이 handoff를 포함하는 커밋(위 "final SHA / commit SHA" 참고)에서 감사를 실행한다. 감사 대상 SHA와 최종 SHA가 다르면(감사 후 재수정) 그 차이를 여기 명시한다.
-- 세부: 최종 SHA/tree, 변경 파일 SHA-256, 수용 기준 각 항목(정확한 versioned URL만 허용·latest 별칭 및 버전/아키텍처 혼동 거부, gpgv 서명·archive SHA-256 실제 검증, 거절 사례 테스트, Node24 실행 근거)을 fresh 서브에이전트(쓰기 금지)가 원자료로 직접 확인한다.
+- **판정**: PASS. 코드·테스트·증거 수정이 필요한 결함 없음.
+- **감사 대상 SHA**: `f0a6d9ffcb5d2824cbb8eb9da2e44dfd9a837092`(tree `94b0b6cecd6e344551da048f668126047b327a16`). 이 handoff의 "독립 감사" 절을 채우기 위한 후속 커밋이 이 감사 이후에 추가되므로 **최종 SHA는 이 감사 대상 SHA와 다르다**. 차이는 이 문서(handoff)의 감사 결과 기록뿐이며, `scripts/qualification/v06-b3-linux-release.mjs`·`tests/coordinate-subagents/v3x/V06-b3a.test.mjs`·`README.ko.md`는 감사 대상 SHA 이후 변경되지 않았다.
+- fresh 서브에이전트(쓰기 금지 지시)가 원자료를 직접 확인한 결과:
+  - **커밋/lineage**: `git show --stat`·`git rev-parse`로 위 SHA/tree를 확인했고, 변경 파일이 정확히 이 handoff가 주장하는 4개 파일뿐임(348 insertions, 0 deletions)을 확인했다. 부모가 `43ce232d9085047bd87e6974fdfeb0f26f71e626`이며, `git fetch origin codex/v260-semantic-decision-layer`의 현재 tip과 동일함을 재확인했다.
+  - **실제 실행**: `pnpm exec vitest run tests/coordinate-subagents/v3x/V06-b3a.test.mjs`(환경변수 없이 3개 통과, 실서명 게이트 테스트 2개는 정상적으로 스킵), `pnpm exec eslint ...`(0 문제), `node scripts/validate-repository.mjs`(valid), `git diff --check`(무출력) 모두 PASS.
+  - **계약 준수**: `assertVersionedArchiveUrl`이 anchored regex로 `latest`/`latest-v24.x` 별칭, 버전 불일치, arm64/win-x64/darwin, `http://`, 다른 host, 확장자 조작을 모두 실제로 거부함을 코드 독해와 테스트 실행으로 확인. `verifyNodeRelease`가 실제로 `gpgv`를 실행해 `VALIDSIG` fingerprint를 pinned 상수와 대조하고, `verifyPinnedKeyring`이 caller가 넘긴 기대 해시 없이는 통과시키지 않음을 확인.
+  - **범위 준수**: 스크립트·테스트·README·handoff 어디에도 보호 설치·ELF closure·운영 자격 주장이 없고, 최대 상태가 항상 `CANDIDATE_VERIFIED_LIVE_PENDING`임을 확인. NOT_OBSERVED 항목(Docker/ARM/musl/Windows/patchelf)이 정직하게 명시됨을 확인.
+  - **내부 일관성**: README와 handoff에 반복 인용된 모든 SHA-256이 64자리, signer fingerprint가 40자리, release-keys commit `481637f813e912c4aa3622d7964ab426c97b8e8d`과 버전 `24.21.0`이 모든 인용처에서 서로 일치함을 확인.
+  - **사소 지적(수정 불필요, 비exploitable)**: `archiveDigestFromSignedChecksums`의 1차 `endsWith` 필터가 최종 anchored regex보다 느슨하지만, checksum 파일 bytes 자체가 이미 gpgv로 서명 검증된 뒤이므로 익스플로잇 가능성이 없는 스타일 지적일 뿐이라고 판단했다. 코드 수정하지 않았다.
 
 ## NOT_OBSERVED / 주장하지 않는 것
 
