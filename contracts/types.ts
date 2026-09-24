@@ -409,6 +409,141 @@ export interface GetSessionMessageStatusRequestV1 {
   _sessionBinding?: SessionBindingV1;
 }
 
+/** Host names are opaque here. Host-specific lifecycle states belong in adapters. */
+export interface SessionTaskAddressV1 {
+  host: string;
+  sessionId: string;
+}
+
+export interface SessionTaskActorV1 extends SessionTaskAddressV1 {
+  instanceId: string;
+}
+
+export interface SessionTaskRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "request";
+  requestId: string;
+  taskId: string;
+  sender: SessionTaskActorV1;
+  recipient: SessionTaskAddressV1;
+  callbackTarget: SessionTaskActorV1;
+  revision: 1;
+  requestedAt: string;
+  expiresAt: string;
+  authorityEffect: "none";
+}
+
+/** A self-report only. Acceptance requires the existing independent evidence gate. */
+export interface SessionTaskTerminalOutcomeBaseV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "terminal-outcome";
+  taskId: string;
+  actor: SessionTaskActorV1;
+  revision: number;
+  result: "COMPLETED" | "BLOCKED" | "FAILED" | "CANCELLED";
+  evidenceRefs: string[];
+  reportedAt: string;
+  authorityEffect: "none";
+}
+
+export type SessionTaskTerminalOutcomeV1 = SessionTaskTerminalOutcomeBaseV1 & (
+  | { requestId: string; callbackTarget: SessionTaskActorV1 }
+  | { requestId?: never; callbackTarget?: never }
+);
+
+export interface SessionTaskActivityObservationV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "activity-observation";
+  actor: SessionTaskActorV1;
+  revision: number;
+  activity: "busy" | "idle" | "unknown";
+  source: "host-observed" | "self-reported";
+  observedAt: string;
+  authorityEffect: "none";
+}
+
+export type SessionTaskEventV1 =
+  | SessionTaskRequestV1
+  | SessionTaskTerminalOutcomeV1
+  | SessionTaskActivityObservationV1;
+
+/** All context fields must come from authenticated server state, never from the event body. */
+export interface SessionTaskTransitionContextV1 {
+  authenticatedActor: SessionTaskActorV1;
+  currentInstanceId: string;
+  currentRevision: number;
+  currentTaskId?: string;
+  observedSource?: SessionTaskActivityObservationV1["source"];
+  request?: SessionTaskRequestV1;
+  terminalOutcome?: SessionTaskTerminalOutcomeV1;
+}
+
+function sameSessionTaskActor(a: SessionTaskActorV1, b: SessionTaskActorV1): boolean {
+  return a.host === b.host && a.sessionId === b.sessionId && a.instanceId === b.instanceId;
+}
+
+function sameSessionTaskOutcome(a: SessionTaskTerminalOutcomeV1, b: SessionTaskTerminalOutcomeV1): boolean {
+  return a.requestId === b.requestId && a.taskId === b.taskId
+    && sameSessionTaskActor(a.actor, b.actor)
+    && (a.callbackTarget === undefined && b.callbackTarget === undefined
+      || a.callbackTarget !== undefined && b.callbackTarget !== undefined
+      && sameSessionTaskActor(a.callbackTarget, b.callbackTarget))
+    && a.revision === b.revision && a.result === b.result
+    && a.reportedAt === b.reportedAt && a.evidenceRefs.length === b.evidenceRefs.length
+    && a.evidenceRefs.every((ref, index) => ref === b.evidenceRefs[index]);
+}
+
+/** Run after JSON-schema validation, inside the transaction that reads current state. */
+export function assertSessionTaskTransitionV1(
+  event: SessionTaskEventV1,
+  context: SessionTaskTransitionContextV1,
+): "new" | "duplicate" {
+  const actor = event.kind === "request" ? event.sender : event.actor;
+  if (!sameSessionTaskActor(actor, context.authenticatedActor)
+    || actor.instanceId !== context.currentInstanceId) {
+    throw new Error("SESSION_TASK_ACTOR_STALE_OR_UNAUTHENTICATED");
+  }
+  if (event.kind === "request") {
+    if (!sameSessionTaskActor(event.callbackTarget, context.authenticatedActor)) {
+      throw new Error("SESSION_TASK_CALLBACK_TARGET_MISMATCH");
+    }
+    if (Date.parse(event.requestedAt) >= Date.parse(event.expiresAt)) {
+      throw new Error("SESSION_TASK_INVALID_DEADLINE");
+    }
+    if (context.request !== undefined) {
+      throw new Error("SESSION_TASK_REQUEST_CONFLICT");
+    }
+    if (context.currentRevision !== 0) {
+      throw new Error("SESSION_TASK_REVISION_STALE");
+    }
+    return "new";
+  }
+  if (event.kind === "terminal-outcome") {
+    const request = context.request;
+    if (event.taskId !== context.currentTaskId
+      || (request === undefined
+        ? event.requestId !== undefined || event.callbackTarget !== undefined
+        : event.requestId !== request.requestId || event.taskId !== request.taskId
+          || event.actor.host !== request.recipient.host
+          || event.actor.sessionId !== request.recipient.sessionId
+          || event.callbackTarget === undefined
+          || !sameSessionTaskActor(event.callbackTarget, request.callbackTarget))) {
+      throw new Error("SESSION_TASK_REQUEST_BINDING_MISMATCH");
+    }
+    if (context.terminalOutcome !== undefined) {
+      if (sameSessionTaskOutcome(event, context.terminalOutcome)) return "duplicate";
+      throw new Error("SESSION_TASK_TERMINAL_CONFLICT");
+    }
+  }
+  if (event.kind === "activity-observation" && event.source !== context.observedSource) {
+    throw new Error("SESSION_TASK_ACTIVITY_SOURCE_UNVERIFIED");
+  }
+  if (!Number.isSafeInteger(event.revision) || event.revision <= context.currentRevision) {
+    throw new Error("SESSION_TASK_REVISION_STALE");
+  }
+  return "new";
+}
+
 export interface StateCleanupPolicyV1 {
   workflowRetentionDays: 180;
   continuityPayloadRetentionDays: 30;

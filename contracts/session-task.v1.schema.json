@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/session-task.v1.schema.json",
+  "title": "SessionTask.v1",
+  "description": "A task outcome is an untrusted terminal report, not an acceptance verdict. The server must apply the transition guard against authenticated actor and persisted state before recording it.",
+  "oneOf": [
+    { "$ref": "#/$defs/request" },
+    { "$ref": "#/$defs/terminalOutcome" },
+    { "$ref": "#/$defs/activityObservation" }
+  ],
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" },
+    "taskId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "address": {
+      "type": "object", "additionalProperties": false,
+      "required": ["host", "sessionId"],
+      "properties": {
+        "host": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "sessionId": { "type": "string", "minLength": 1, "maxLength": 200 }
+      }
+    },
+    "actor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["host", "sessionId", "instanceId"],
+      "properties": {
+        "host": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "sessionId": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "instanceId": { "type": "string", "minLength": 1, "maxLength": 200 }
+      }
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "request": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "requestId", "taskId", "sender", "recipient", "callbackTarget", "revision", "requestedAt", "expiresAt", "authorityEffect"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "kind": { "const": "request" },
+        "requestId": { "$ref": "#/$defs/identifier" },
+        "taskId": { "$ref": "#/$defs/taskId" },
+        "sender": { "$ref": "#/$defs/actor" },
+        "recipient": { "$ref": "#/$defs/address" },
+        "callbackTarget": { "$ref": "#/$defs/actor" },
+        "revision": { "const": 1 },
+        "requestedAt": { "$ref": "#/$defs/timestamp" },
+        "expiresAt": { "$ref": "#/$defs/timestamp" },
+        "authorityEffect": { "const": "none" }
+      }
+    },
+    "terminalOutcome": {
+      "type": "object", "additionalProperties": false,
+      "description": "Delegated outcomes carry both requestId and callbackTarget. Standalone outcomes carry neither and require a server-side task binding. Neither form is an acceptance verdict.",
+      "required": ["schemaVersion", "kind", "taskId", "actor", "revision", "result", "evidenceRefs", "reportedAt", "authorityEffect"],
+      "oneOf": [
+        { "required": ["requestId", "callbackTarget"] },
+        { "not": { "anyOf": [{ "required": ["requestId"] }, { "required": ["callbackTarget"] }] } }
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "kind": { "const": "terminal-outcome" },
+        "requestId": { "$ref": "#/$defs/identifier" },
+        "taskId": { "$ref": "#/$defs/taskId" },
+        "actor": { "$ref": "#/$defs/actor" },
+        "callbackTarget": { "$ref": "#/$defs/actor" },
+        "revision": { "$ref": "#/$defs/revision" },
+        "result": { "enum": ["COMPLETED", "BLOCKED", "FAILED", "CANCELLED"] },
+        "evidenceRefs": { "type": "array", "maxItems": 32, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 1024 } },
+        "reportedAt": { "$ref": "#/$defs/timestamp" },
+        "authorityEffect": { "const": "none" }
+      }
+    },
+    "activityObservation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "actor", "revision", "activity", "source", "observedAt", "authorityEffect"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "kind": { "const": "activity-observation" },
+        "actor": { "$ref": "#/$defs/actor" },
+        "revision": { "$ref": "#/$defs/revision" },
+        "activity": { "enum": ["busy", "idle", "unknown"] },
+        "source": { "enum": ["host-observed", "self-reported"] },
+        "observedAt": { "$ref": "#/$defs/timestamp" },
+        "authorityEffect": { "const": "none" }
+      }
+    }
+  }
+}

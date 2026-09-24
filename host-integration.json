@@ -274,6 +274,10 @@
       "sha256": "sha256:908efccc22347f8eed1b8f7460072880ff335368aa5a2d06e8cc0edca6702e68"
     },
     {
+      "path": "contracts/session-task.v1.schema.json",
+      "sha256": "sha256:37754e747b5c466955a40ae1afe5931efced18927a95741d7f1adbc4a84b96f8"
+    },
+    {
       "path": "contracts/skill-descriptor.v1.schema.json",
       "sha256": "sha256:e47753988cce5125329a23bfc100c42ab2d0e3762178f4739acef4cead7f7be1"
     },
@@ -783,6 +787,7 @@
         "contracts/semantic-egress-config.v1.schema.json",
         "contracts/semantic-model-assignment-request.v1.schema.json",
         "contracts/send-session-message-request.v1.schema.json",
+        "contracts/session-task.v1.schema.json",
         "contracts/skill-descriptor.v1.schema.json",
         "contracts/skill-descriptor.v2.schema.json",
         "contracts/source-lock.v3.schema.json",
