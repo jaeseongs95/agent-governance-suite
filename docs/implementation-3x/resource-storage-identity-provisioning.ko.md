@@ -6,12 +6,14 @@
 
 | 참조 | 고정 값 | 사용 범위 |
 | --- | --- | --- |
-| V03-i 보호 설치 계약 | `docs/implementation-3x/protected-host-installation.ko.md` sha256 `17b38aaafcae4d310a4a09e153ef0e1567a9c0570c4d045ab14e2513883da181`, 공통 절 `protected-host-provisioning/v1` (base `d007f8a`) | installer(관리자·root) 신뢰 경계, installer 보호 subtree 경로, 절차 1·4(선점 거부, fail-closed 복구)만 권위로 소비한다(아래 미해결 참조). VM key/pin/worker fixture digest, VM 서비스 SID/uid는 강제하지 않는다. |
+| V03-i 보호 설치 계약 | `docs/implementation-3x/protected-host-installation.ko.md` sha256 `256f388cc79bce643166f397398b2e8f013591ffac04a27327f4f1abc6fbc99c`, 공통 절 `protected-host-provisioning/v1` (commit `6006844`; 이전 base `d007f8a`는 sha256 `17b38aaafcae4d310a4a09e153ef0e1567a9c0570c4d045ab14e2513883da181`) | installer(관리자·root) 신뢰 경계, installer 보호 subtree 경로, 절차 1·4(선점 거부, fail-closed 복구)만 권위로 소비한다(아래 미해결 참조). VM key/pin/worker fixture digest, VM 서비스 SID/uid는 강제하지 않는다. |
 | B14-h storage trust 계약 | commit `476e6ce`, blob `08654d6290a7dfd50b329a9a702b50fb5acab989` (sha256 `a740fcb67b513377dfbaa7d9e8e4fddc0aaaca487f563787a63a25cfcd796f99`), `BLOCKED_CONTRACT` | 보호 대상과 공격자 모델, writer 채택 조건 2·3을 입력으로 쓴다. 이 문서는 조건 2의 "보호된 사전 등록 기록"만 정의한다. |
 | B14-p probe 증거 | `docs/implementation-3x/evidence/sqlite-identity-capability.json` (commit `b772006`) | Windows에서 같은 연결의 handle로 `FileIdInfo`를 읽는 mechanism 관측. 기대 ID 출처 증거가 아니며, 그 실행물 출처도 증거에서 `notEstablished`다. |
 | B14-k issuer | 별도 소유자, 미동결 | resource caller credential의 audience·발급·전달은 B14-k가 정한다. 이 문서는 그 결과를 소비 조건으로만 적는다. |
 
 **미해결 참조:** V03-i가 전제한 VM Core의 Windows SYSTEM·Linux root 보호 서비스와 VM worker service 선택 경로는 FM 1.0과의 충돌 여부를 메인이 독립 감사하고 있다(2026-09-24 기준 미해결). B14-m은 그 VM Core 서비스 주체나 전역 daemon을 전제하지 않는다. V03-i에서 소비하는 것은 installer(관리자·root) 신뢰 경계, installer 보호 subtree 경로 `C:\ProgramData\agent-governance-suite`·`/etc/agent-governance-suite`, 절차 1·4의 선점 거부와 fail-closed 복구뿐이다. 감사 결과 V03-i 공통 provisioning 절이나 이 경로가 바뀌면 이 계약의 경로·역할 절을 다시 동결하기 전까지 `BLOCKED_CONTRACT`로 본다.
+
+**V03-i digest 재검토(2026-09-24):** `17b38aaa…`에서 `256f388c…`로 바뀐 내용은 V03-i `설치·회전·복구 절차의 불변 조건` 3번의 빌드 도구 Node 하한 문구(`Node 22.13+` → `Node 24+`) 한 곳뿐이다. 이 계약이 소비하는 `고정 경로와 신뢰 경계` 절, `공통 provisioning 사용 범위` 절, 절차 1·4와 보호 subtree 경로는 bytes가 같다. 따라서 이 계약의 경로·역할 절은 바뀌지 않으며 `BLOCKED_CONTRACT` 조건에 해당하지 않는다.
 
 위 revision이나 digest가 바뀌면 이 계약의 해당 절을 다시 검토한다. caller가 revision·digest를 제공하는 방식은 허용하지 않는다. 이 문서는 참조 digest를 테스트로 강제하지 않는다. 강제 검사를 둘지는 메인이 정한다.
 
