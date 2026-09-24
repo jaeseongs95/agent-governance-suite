@@ -12,7 +12,9 @@
 - Windows 통합 검증(FAIL_RELEVANT): `a /usr install is refused without the explicit gate env`가 `requires AGS_V06_B3B_PROTECTED_INSTALL=1` 대신 `ENOENT <drive>:\proc\self\mountinfo`로 실패했다.
 - 원인: `protectedPaths`가 호스트 `path.resolve`를 써서 Windows에서 `/usr/lib`가 `D:\usr\lib`가 됐고, `/usr` gate를 건너뛴 채 `/proc`을 읽었다.
 - 수정: POSIX 경로 계산, gate → 플랫폼 → bytes → host 접근 순서, `platform` 주입과 non-linux 거절.
-- Linux 재현: 새 회귀 검사를 수정 전 코드(`af65a82e`)에서 돌리면 경로가 `\usr\lib…`로 나오고 gate 없음·gate 있음·darwin 세 경우 모두 `/proc/self/mountinfo` 접근으로 실패했다.
+- Linux 재현(최종 테스트 기준): 새 회귀 검사를 수정 전 코드(`af65a82e`)에서 돌리면 경로가 `\usr\lib…`로 나오고, gate 없음·gate 있음(win32)은 `/proc/self/mountinfo` 접근(2건)으로, darwin(기대 sha 불일치)은 플랫폼 검사 없이 `node bytes do not match`로 실패했다.
+- 처음 테스트 버전(15:03:40 실행)은 darwin에 맞는 sha를 주어 세 경우 모두 mountinfo 접근(3건)으로 실패했다. 보정 커밋에서 이 구분을 바로잡았다.
+- 보정: 회귀 probe는 대체된 `node:path`가 win32 의미로 계산한 표지(`\usr\lib`)를 단언한다. 대체가 빠지면 실패한다. 예외로 바꾸는 fs 함수는 7개다.
 
 ## 변경 파일
 
@@ -29,7 +31,7 @@
 - `V06-b3a.test.mjs` 회귀: 4 passed
 - 대상 파일 eslint: 오류 없음
 - 변이: `nlink` 거절을 끄거나 사용 직전 identity 대조를 끄면 각각 1건 실패
-- 보수 변이: 호스트 `path`로 되돌림, gate를 host 접근 뒤로 이동, install의 플랫폼 검사 제거, 플랫폼 검사 무력화 각각 새 회귀 검사 1건 실패
+- 보수 변이: 호스트 `path`로 되돌림, gate를 host 접근 뒤로 이동, install의 플랫폼 검사 제거, 플랫폼 검사 무력화, `node:path` 대체 제거 각각 새 회귀 검사 1건 실패
 - Windows 실행: 이 VM에서 실행할 수 없어 NOT_RUN
 - `node scripts/validate-repository.mjs`: `repository: valid`
 - `git diff --check`: 출력 없음

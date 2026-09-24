@@ -47,12 +47,14 @@ test('a /usr install is refused without the explicit gate env', () => {
 });
 
 // Replays Windows host path semantics on any OS: the install module alone gets path.win32 as its
-// `node:path` (whose `.posix` stays POSIX, as on Windows), and every host fs entry point throws, so a
-// regression fails here without touching /proc or /usr.
+// `node:path` (whose `.posix` stays POSIX, as on Windows), and seven fs functions throw (the module's
+// first host access always goes through one of them), so a regression fails here without touching
+// /proc or /usr. The shim reports a path it computed with win32 semantics, so a shim that silently
+// stops applying also fails.
 const HOST_PROBE = `import fs from 'node:fs';import { register } from 'node:module';
 const target = process.env.AGS_V06_B3B_PROBE_URL;
 register('data:text/javascript,' + encodeURIComponent(\`export async function resolve(s, c, next) {
-  if (s === 'node:path' && c.parentURL === \${JSON.stringify(target)}) return { url: 'data:text/javascript,import p from "node:path";export default p.win32;', shortCircuit: true };
+  if (s === 'node:path' && c.parentURL === \${JSON.stringify(target)}) return { url: 'data:text/javascript,import p from "node:path";globalThis.agsWin32PathShim=p.win32.join(\\"/usr\\",\\"lib\\");export default p.win32;', shortCircuit: true };
   return next(s, c); }\`));
 const m = await import(target);
 const hostAccess = [];
@@ -66,7 +68,7 @@ const attempt = (platform, env, expectedNodeSha256 = X_SHA256) => { try { m.inst
   return 'INSTALLED'; } catch (error) { return error.message; } };
 process.stdout.write(JSON.stringify({ paths: m.protectedPaths('/usr/lib', 'a'.repeat(64)),
   gateOff: attempt('win32', {}), gateOn: attempt('win32', { ${GATE_ENV}: '1' }), darwin: attempt('darwin', { ${GATE_ENV}: '1' }, 'b'.repeat(64)),
-  hostAccess }));`;
+  shimMarker: globalThis.agsWin32PathShim ?? null, hostAccess }));`;
 
 test('host path semantics and platform are fixed: gate first, then non-linux refusal, before any host access', () => {
   const target = new URL('../../../scripts/qualification/v06-b3-linux-install.mjs', import.meta.url).href;
@@ -74,6 +76,7 @@ test('host path semantics and platform are fixed: gate first, then non-linux ref
     env: { ...process.env, AGS_V06_B3B_PROBE_URL: target, [GATE_ENV]: '' } });
   assert.equal(probe.status, 0, probe.stderr);
   const out = JSON.parse(probe.stdout);
+  assert.equal(out.shimMarker, '\\usr\\lib');
   const releaseDir = `/usr/lib/agent-governance-suite/protected-runtime/${RELEASE}`;
   assert.deepEqual(out.paths, { baseDir: '/usr/lib', suiteDir: '/usr/lib/agent-governance-suite',
     runtimeDir: '/usr/lib/agent-governance-suite/protected-runtime', releaseDir, nodeFile: `${releaseDir}/node` });

@@ -6,7 +6,9 @@
 
 - 최초 커밋의 `protectedPaths`는 호스트 `path.resolve`를 썼다. Windows 통합 검증에서 `/usr/lib`가 `D:\usr\lib`로 바뀌어 `/usr` gate를 건너뛰었고, 테스트 `a /usr install is refused without the explicit gate env`가 기대한 `requires AGS_V06_B3B_PROTECTED_INSTALL=1` 대신 `ENOENT <drive>:\proc\self\mountinfo`로 실패했다(FAIL_RELEVANT).
 - 보수: 보호 경로 계산은 호스트 OS와 무관하게 `path.posix`만 쓴다. `installProtectedNode`는 `/usr` gate → 플랫폼 → bytes 순으로 판정한 뒤에만 host에 접근한다. `platform`(기본 `process.platform`)을 주입할 수 있고, `linux`가 아니면 gate를 통과해도 `/proc`·조상 검사·설치 전에 `linux-only` 오류로 거절한다. `inspectAncestors`, `verifyInstalledNode`, `runVerifiedNode`도 같은 플랫폼 검사를 먼저 한다.
-- 회귀 테스트는 설치 모듈에만 `path.win32`를 `node:path`로 주고(Windows처럼 `.posix`는 POSIX 그대로) host fs 진입점을 모두 예외로 바꾼 자식 프로세스에서 판정한다. 수정 전 코드는 Linux에서도 경로가 `\usr\lib…`가 되고 세 경우 모두 `/proc/self/mountinfo`를 읽으려 해 실패했다. 수정 후에는 POSIX 경로, gate 오류, `platform=win32`·`platform=darwin` 거절, host 접근 0건이다.
+- 회귀 테스트는 설치 모듈에만 `path.win32`를 `node:path`로 주고(Windows처럼 `.posix`는 POSIX 그대로) fs 함수 7개(`readFileSync`, `lstatSync`, `statSync`, `openSync`, `mkdirSync`, `chmodSync`, `appendFileSync`)를 예외로 바꾼 자식 프로세스에서 판정한다. 설치 모듈의 첫 host 접근은 이 중 하나로 시작한다. 대체 모듈은 자신이 win32 의미로 계산한 `path.win32.join('/usr', 'lib')` 값(`\usr\lib`)을 표지로 남기고, 테스트가 이를 단언하므로 대체가 빠지면 실패한다.
+- 수정 전 코드(`af65a82e`) 재현, 최종 테스트 기준: 경로가 `\usr\lib…`, gate 없음(win32)과 gate 있음(win32)은 `HOST_ACCESS readFileSync /proc/self/mountinfo`, darwin(기대 sha를 `b`×64로 준 경우)은 플랫폼 검사 없이 `node bytes do not match the expected archive-extracted sha256`, host 접근 2건이다.
+- 처음 테스트 버전(15:03:40 실행)은 darwin 경우에 맞는 sha를 주었기 때문에 세 경우 모두 `/proc/self/mountinfo` 접근(3건)으로 실패했다. 이후 플랫폼 검사가 bytes 검사보다 먼저인지 고정하려고 darwin 경우의 기대 sha를 불일치로 바꿨다. 수정 후에는 POSIX 경로, gate 오류, `platform=win32`·`platform=darwin` 거절, host 접근 0건이다.
 
 ## 실행 환경 (2026-09-24, 보수 후 새 후보 host)
 
