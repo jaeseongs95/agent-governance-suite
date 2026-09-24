@@ -1,0 +1,26 @@
+{
+  "contractId": "ags-protected-node-closure/v2",
+  "revision": "2",
+  "status": "PREPARED",
+  "os": "win32",
+  "arch": "x64",
+  "nodeVersion": "24.19.0",
+  "archiveName": "node-v24.19.0-win-x64.zip",
+  "archiveSha256": "57f71ab3652e797d84acddc79c81cc9ff1c6ddb2a1974cdb83f00fee9bff4c73",
+  "nodeSha256": "3602f2bb1a10f2cbab4c36886218a33c1ab3db87290e73b033c46c77147d0237",
+  "signerFingerprint": "5BE8A3F6C8A5C01D106C0AD820B1A390B168D356",
+  "keyringSha256": "610b8d249da3d5733f5a128def2dd0294dbbf5b5713e6ca2529db8db419dee00",
+  "keyringSourceCommit": "481637f813e912c4aa3622d7964ab426c97b8e8d",
+  "gpgvSha256": "f4d13204d77fdf63c02b0e6742230f83a833128c28f7b715709c2c63a96c427b",
+  "tarSha256": "4e598a8cec84af779e3377442fce2b94b976f614ed4c6e5a665e19308fd1e379",
+  "hostIntegrationSha256": "c512498add740c23be75e643334b4a55429be873e06b54721e73954332e4457a",
+  "artifactCount": 176,
+  "releaseSha256": "d742360af64993481e1908fe7d17caa4949ba4cfac9f937fbb791bd866a3a2cc",
+  "intendedInstallRoot": "C:\\ProgramData\\agent-governance-suite\\protected-runtime\\d742360af64993481e1908fe7d17caa4949ba4cfac9f937fbb791bd866a3a2cc",
+  "limitations": [
+    "user-writable staging",
+    "no protected installation",
+    "no DLL closure",
+    "no live host qualification"
+  ]
+}
