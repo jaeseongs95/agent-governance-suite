@@ -1,0 +1,667 @@
+{
+  "format": "agent-governance-suite.host-integration.v1",
+  "artifacts": [
+    {
+      "path": ".codex-plugin/plugin.json",
+      "sha256": "sha256:4ea1b39183abbc1c8f55e0cc752bd9eb5c1484b3df2cbf096082d9f80e75caf8"
+    },
+    {
+      "path": ".mcp.json",
+      "sha256": "sha256:47773149e144e64ec56e4d16ed8c5afd188c3d951b44da997e475b9bcc405862"
+    },
+    {
+      "path": "contracts/acknowledge-session-messages-request.v1.schema.json",
+      "sha256": "sha256:7da63d13eccfc731e6ba75ea717c806b3ab542a486d3357795bac0aa20f0fcfd"
+    },
+    {
+      "path": "contracts/api-result.v1.schema.json",
+      "sha256": "sha256:18aadedaaa4c465771316a1889c0affea108344ce96ccbc615d35830869585c4"
+    },
+    {
+      "path": "contracts/artifact-ref.v1.schema.json",
+      "sha256": "sha256:4ce69d3eee792fc5575f715c177794a38b20f8176b8951b532938c578578228b"
+    },
+    {
+      "path": "contracts/attempt-lease.v1.schema.json",
+      "sha256": "sha256:d3f9c2ab46cdaf028c38933ab8ef1d894fefadb22b9d9f1a57ff40b59dd5792c"
+    },
+    {
+      "path": "contracts/attempt-outcome.v1.schema.json",
+      "sha256": "sha256:ea7ed1ba82d56885dd0395cac21d5db9645b2ac92587596e126b510236120d7e"
+    },
+    {
+      "path": "contracts/attempt-proposal.v1.schema.json",
+      "sha256": "sha256:8b0390cc58e2a302db18542b30764f4fc6d69db86649c9ab25f79fef01878b97"
+    },
+    {
+      "path": "contracts/checkpoint-context-request.v1.schema.json",
+      "sha256": "sha256:67ed949d981463c3ade41aaa9e1865af3c14251e201072549032d1ccda07c12f"
+    },
+    {
+      "path": "contracts/checkpoint-delta.v1.schema.json",
+      "sha256": "sha256:8f47718fd5df307a660f105dc88686f8fead42a6c459ad9b309d8ceb49ae911c"
+    },
+    {
+      "path": "contracts/convergence-frame.v1.schema.json",
+      "sha256": "sha256:5e08011cb89fed1776a7b7d78af904ec5ddeb05c93aa3f1d4ea3c03ecfbfb7f4"
+    },
+    {
+      "path": "contracts/convergence-review.v1.schema.json",
+      "sha256": "sha256:6eb3657e24798f315c64a8cc974c7d9a4637eed1bfe122f3011cb76f1e59099f"
+    },
+    {
+      "path": "contracts/convergence-root-handle.v1.schema.json",
+      "sha256": "sha256:2e66ad7bac64f470c1c880cb059d7c71aad470cc9f70fb0aa2975182f779970a"
+    },
+    {
+      "path": "contracts/convergence-root.v1.schema.json",
+      "sha256": "sha256:bb570350115827a10cdef4f6962a071712d4befe45633c29e2a6e703e1f6ee50"
+    },
+    {
+      "path": "contracts/convergence-status-summary.v1.schema.json",
+      "sha256": "sha256:1059d88b4738ed4190465b707572c77ffb3d5fe253b9698e3b060268a0794382"
+    },
+    {
+      "path": "contracts/convergence-status.v1.schema.json",
+      "sha256": "sha256:9915044c6b07fc2dcac0e494c2e2b6a9b7a5275aced35c11294c175e1852aa61"
+    },
+    {
+      "path": "contracts/execute-state-cleanup-request.v1.schema.json",
+      "sha256": "sha256:0d283e4601ac4703ef5d47b6cdb4e1dd2152c6ceb4bb4738c889302da010f3ac"
+    },
+    {
+      "path": "contracts/execution-context.v1.schema.json",
+      "sha256": "sha256:6fcfe5022ea6f253ac479ae63baf6e2377733c90e0ffaaf7f4484aebe0132bff"
+    },
+    {
+      "path": "contracts/execution-requirement.v1.schema.json",
+      "sha256": "sha256:ddcf28709bbfccb5c16e38130053729c7c3b0c03f5c2e2070e1bb7f0acde14c8"
+    },
+    {
+      "path": "contracts/freeform-output.v1.schema.json",
+      "sha256": "sha256:623de96ffedcfd5fd0084b524832e7d5072645f82264be3e706e0977201f1386"
+    },
+    {
+      "path": "contracts/get-session-message-status-request.v1.schema.json",
+      "sha256": "sha256:852320fdd556ac8cd00f8b496fd7d6d0835f7a613eaf457d4cb710aa6d56a8c7"
+    },
+    {
+      "path": "contracts/guarded-workflow-start-request.v1.schema.json",
+      "sha256": "sha256:e589a4136a096f2cf2aa02d5a8f210ad1d38c97e5de05af8e33480cdad262a1b"
+    },
+    {
+      "path": "contracts/host-integration.v1.schema.json",
+      "sha256": "sha256:862e59b0b6ac0aba7bddb4bc0c168897ebb60935dc5f76647b247c1901cf5be3"
+    },
+    {
+      "path": "contracts/host-model-capabilities.v1.schema.json",
+      "sha256": "sha256:acd9b60ca6d2149768b3efaeadc9d015beb046607649d9e29b2b3c225d0282a4"
+    },
+    {
+      "path": "contracts/input-source-receipt.v1.schema.json",
+      "sha256": "sha256:d19a6c7ad885300930929b4593a2ea785fc9e74812785f240fed99835567ecdd"
+    },
+    {
+      "path": "contracts/inspect-context-request.v1.schema.json",
+      "sha256": "sha256:145117225e0ee8af7ddfe00f37abbacc9daac0c1cf4dbecbf50e328552153d09"
+    },
+    {
+      "path": "contracts/korean-prose-evaluation-final.v1.schema.json",
+      "sha256": "sha256:7948f04b977ce5d7ea92290ccdee082cfcd811663245179d9396741156969922"
+    },
+    {
+      "path": "contracts/korean-prose-evaluation-frame.v1.schema.json",
+      "sha256": "sha256:906a6d03c30efd7582817f76857a0e94fe4d51cdaad46861293b2fa780715ddb"
+    },
+    {
+      "path": "contracts/korean-prose-evaluation-input.v1.schema.json",
+      "sha256": "sha256:710aec9da229d77e7160b9d6dffee77d00b9352c91b0f009f87da779020f3097"
+    },
+    {
+      "path": "contracts/korean-prose-evaluation-validity-report.v1.schema.json",
+      "sha256": "sha256:6a101da370b3a33547d169fdc18e41d2fa18aa89c7c83f34145d74ff4809f0a3"
+    },
+    {
+      "path": "contracts/korean-prose-glossary-lookup-request.v1.schema.json",
+      "sha256": "sha256:643237e077c348962b4d27aa669745b419d1334014a20b3b3c6f407ffe2a81f2"
+    },
+    {
+      "path": "contracts/korean-prose-glossary-lookup-result.v1.schema.json",
+      "sha256": "sha256:527652124eb450bb67376d5daf0f4934f362f1f55f304aaa2cdf0eaf16711b31"
+    },
+    {
+      "path": "contracts/korean-prose-quality-adjudication-input.v1.schema.json",
+      "sha256": "sha256:5381ae88a5afd7b654bb667d536e443d420e8b12009c835d3d22500ff54cfd2f"
+    },
+    {
+      "path": "contracts/korean-prose-quality-adjudication-meta.v1.schema.json",
+      "sha256": "sha256:059a7cf7d3536b31fed73e3fc196222b4727effbdcb0338efff53bd9a643e5fc"
+    },
+    {
+      "path": "contracts/korean-prose-quality-adjudication.v1.schema.json",
+      "sha256": "sha256:2040210a4b5c2a52d522cd6cb749ccfb9967a5a94be415f8709a40b694eb68a2"
+    },
+    {
+      "path": "contracts/korean-prose-quality-report.v1.schema.json",
+      "sha256": "sha256:94395f9e6dc0040fc6b74569fc112687b00489199e6e92503e38cd0fcee8e8c3"
+    },
+    {
+      "path": "contracts/korean-prose-receipt-binding.v1.schema.json",
+      "sha256": "sha256:1825d1e6a2a446e37aa6e656c8cc4ae26f6a48b6121d9ab705c7c252bae59401"
+    },
+    {
+      "path": "contracts/list-session-status-request.v1.schema.json",
+      "sha256": "sha256:b06939c80a8d92d5f2a5a858d5a02b5c47d04530b825beebea6fa6a2e20c5164"
+    },
+    {
+      "path": "contracts/load-context-request.v1.schema.json",
+      "sha256": "sha256:f2662bd1036517483b676d03fa4bb360debe866f045960a347181a0c1848a23b"
+    },
+    {
+      "path": "contracts/model-application-record.v2.schema.json",
+      "sha256": "sha256:17c1c2a499aa1bbe8211e8296719bc9dbad1ed1bfb9aba7c75c209d58d9d1014"
+    },
+    {
+      "path": "contracts/model-application-record.v3.schema.json",
+      "sha256": "sha256:e19aa03d35604fca49cbc754694968029b67a28459f4515359d5f469e43df5de"
+    },
+    {
+      "path": "contracts/model-application-request.v2.schema.json",
+      "sha256": "sha256:5040a147c1eb165b657be56dfd687effe5b363df1af912019d35af0a414b05d0"
+    },
+    {
+      "path": "contracts/model-application-request.v3.schema.json",
+      "sha256": "sha256:648a741ca90d654ae914aeb6b8dc50e27b14d66674fb3a0b14d3f1859c7e9d52"
+    },
+    {
+      "path": "contracts/model-catalog.v1.schema.json",
+      "sha256": "sha256:d5455153e0890851da0fdb76b8a17627788c53bf4c36b83e891fce0423a8b3a4"
+    },
+    {
+      "path": "contracts/model-evaluation-record.v1.schema.json",
+      "sha256": "sha256:f334dff3ee2010561f7a8a69a85cfdf1f0323d972a6433c1c8d9de6a01cd77f6"
+    },
+    {
+      "path": "contracts/model-routing-decision.v2.schema.json",
+      "sha256": "sha256:e4d808b7c8a49f4a6981ac2fb3dde322ed633f2ebe8d08d97fa194e99f0dba49"
+    },
+    {
+      "path": "contracts/model-routing-decision.v3.schema.json",
+      "sha256": "sha256:6737c7e3cabd86c331dd81e4593b1f84b8b83331d4c9d4d27fcb6ef39437b88b"
+    },
+    {
+      "path": "contracts/model-routing-policy.v1.schema.json",
+      "sha256": "sha256:c3bd8d83551297b89e10340135fc2959c357ea4ee7510c895a90440f5dcf9021"
+    },
+    {
+      "path": "contracts/model-selection-request.v2.schema.json",
+      "sha256": "sha256:de3619aa8702d3ee736abf00380cd057e09caef28725f457a1cb66c7887f08b1"
+    },
+    {
+      "path": "contracts/open-convergence-root-request.v1.schema.json",
+      "sha256": "sha256:16ddc5ca695028c27c5d811ea89f46efd360e2c6c253929b6502c8cd6a5a8253"
+    },
+    {
+      "path": "contracts/plan-workflow-request.v1.schema.json",
+      "sha256": "sha256:eab50be7cc2995cdb1d9227f479349fc62fd95250253e713ed68736ea592827c"
+    },
+    {
+      "path": "contracts/plugin-update-notice.v1.schema.json",
+      "sha256": "sha256:273bc4b5c5a8a8f4cf51975ce5001a037996acb281408dce074d36eafcd80b8b"
+    },
+    {
+      "path": "contracts/plugin-update-status.v1.schema.json",
+      "sha256": "sha256:98c2dfd30510e5bcc0468c7ef1a75263f50488e2e8d7a18a5f6587de95927ddf"
+    },
+    {
+      "path": "contracts/prepare-state-cleanup-request.v1.schema.json",
+      "sha256": "sha256:170cc0dc8314a30afb7e33844c836b077f514df16a5d03ac3d108e5f0aa50d38"
+    },
+    {
+      "path": "contracts/provider-result.v1.schema.json",
+      "sha256": "sha256:e3f643676d09d81b13436e4cac7cfdcbe9517a78b77b2f3bd96c4fa14335b010"
+    },
+    {
+      "path": "contracts/purge-direct-context-request.v1.schema.json",
+      "sha256": "sha256:dd16e934f7d05e6bb2d4000a6698d8524639cd242f7d91d74907cf00f66a6cc6"
+    },
+    {
+      "path": "contracts/resolve-convergence-gate-request.v1.schema.json",
+      "sha256": "sha256:85ecd73a04932dd62b4b0deb14798fc2ba6308505b3f04803f8833115f125abf"
+    },
+    {
+      "path": "contracts/resource-policy.v1.schema.json",
+      "sha256": "sha256:a197f2f0fcbaae4e840371ad9da0d2802a1555d63589620f1a60075c616f4bf6"
+    },
+    {
+      "path": "contracts/resource-state-snapshot.v1.schema.json",
+      "sha256": "sha256:49053faa84ac4c944110b4cb9e6455cc8039a9d8532b31d105926d3ba82b928b"
+    },
+    {
+      "path": "contracts/response-mode.v1.schema.json",
+      "sha256": "sha256:69e52c1587adc8094aaf0bc7f611ab95de6446d2a28216d9eb9c53bbeae468ff"
+    },
+    {
+      "path": "contracts/role-slot.v1.schema.json",
+      "sha256": "sha256:d7a1b03566fb47530f48d33f0bae7cf1be788bfdfbcaf65ba7e4943e49448ee4"
+    },
+    {
+      "path": "contracts/semantic-decision-advice.v1.schema.json",
+      "sha256": "sha256:58bb4b4cc9aac6ccc782aaef3765c972bb2c3a416cca67607ffdedbd0528ddeb"
+    },
+    {
+      "path": "contracts/semantic-decision-policy.v1.schema.json",
+      "sha256": "sha256:e9e765d0103706efffda76695bb68beba435454f88bea15c1c249042803b7601"
+    },
+    {
+      "path": "contracts/semantic-decision-question.v1.schema.json",
+      "sha256": "sha256:7b84d516c53d16e4d330e55ea64255148a2dfc18e5f42c17122ead5de10ebb68"
+    },
+    {
+      "path": "contracts/semantic-decision-request.v1.schema.json",
+      "sha256": "sha256:3dfbf014b47f3910efa1f55c90a3ce45811a2464c87de850f8d17394c5b95b87"
+    },
+    {
+      "path": "contracts/semantic-egress-config.v1.schema.json",
+      "sha256": "sha256:ab154503d2fb128876718a3863c5fe59e45edc01ca5372531d42adc37c889b25"
+    },
+    {
+      "path": "contracts/semantic-model-assignment-request.v1.schema.json",
+      "sha256": "sha256:4ea77a320875716531d7160f341734d0f9ab3c970a365a8405edca0975b1d175"
+    },
+    {
+      "path": "contracts/send-session-message-request.v1.schema.json",
+      "sha256": "sha256:908efccc22347f8eed1b8f7460072880ff335368aa5a2d06e8cc0edca6702e68"
+    },
+    {
+      "path": "contracts/skill-descriptor.v1.schema.json",
+      "sha256": "sha256:e47753988cce5125329a23bfc100c42ab2d0e3762178f4739acef4cead7f7be1"
+    },
+    {
+      "path": "contracts/skill-descriptor.v2.schema.json",
+      "sha256": "sha256:8051e264327b7b22bf07f1a7d2223c426c729d806d8c544209d7c42d075e0872"
+    },
+    {
+      "path": "contracts/source-lock.v3.schema.json",
+      "sha256": "sha256:293b52dc89f12f1ab86bba32bfb75bf9aa9e3354fda8f565b08814c6663f27a0"
+    },
+    {
+      "path": "contracts/stage-result.v1.schema.json",
+      "sha256": "sha256:74a3d18c7e593ed6bc91580e3d6661f211018a0dff7a2f3adfa5ae6960c54808"
+    },
+    {
+      "path": "contracts/state-cleanup-plan.v1.schema.json",
+      "sha256": "sha256:d181fe179da60f543bb7a4b86b2c5675414eb005c744f168448768682c802be7"
+    },
+    {
+      "path": "contracts/state-cleanup-receipt.v1.schema.json",
+      "sha256": "sha256:f26bf486752ccfad99d26fee67519c9a431ca297fe40be87d040a2e53d6d7fc1"
+    },
+    {
+      "path": "contracts/suppress-context-restore-request.v1.schema.json",
+      "sha256": "sha256:5207f0699b49801b78f655919fdd46cc6c3f1c63239cb4da368f4a13429299f6"
+    },
+    {
+      "path": "contracts/task-envelope.v1.schema.json",
+      "sha256": "sha256:b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21"
+    },
+    {
+      "path": "contracts/update-session-status-request.v1.schema.json",
+      "sha256": "sha256:7ed17df0d22963ab2817d5e88164d37eec1ff448638d9fba8a5d7c28bfd0ac13"
+    },
+    {
+      "path": "contracts/validate-collaboration-decision-request.v1.schema.json",
+      "sha256": "sha256:ff8eb9fa40b32746a7e284bf2e5593f3999c9dfa5a541efccea408e742e4f510"
+    },
+    {
+      "path": "contracts/workflow-plan.v1.schema.json",
+      "sha256": "sha256:a624cdf11ef915b523a80ac1c8e9dfd87010ccd13b139d6d45d566993f575ec8"
+    },
+    {
+      "path": "contracts/workflow-receipt.v1.schema.json",
+      "sha256": "sha256:49bf37757278f7a79673cb313346c73cb61b9052ce56775132b3c51e2d7c7652"
+    },
+    {
+      "path": "contracts/workflow-status-summary.v1.schema.json",
+      "sha256": "sha256:0e88f2023ed6f5377cbeadba4f6b98cef4667873eefedd1537b42bafb1b2d79b"
+    },
+    {
+      "path": "mcp-server/dist/server.mjs",
+      "sha256": "sha256:e3ecde42577ce60f00fb79742bface5fc57735bc2fee50973ffb4a0d74b599be"
+    },
+    {
+      "path": "mcp-server/dist/session-message-broker.mjs",
+      "sha256": "sha256:900330e755efafb1ab34dc3b699616070b8f3fcc072748b3165da1b23bc6dad0"
+    },
+    {
+      "path": "runtime/schema-validation.mjs",
+      "sha256": "sha256:03996e2281db3e79a86d467e492ca4aaeaf38f89e802313102ffddf738f81e5c"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
+      "sha256": "sha256:cf22e268b09e823e25b74f2ee3da74de103f3a00b8a672409b2bec6580fe6507"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/integration/provider-result.v1.schema.json",
+      "sha256": "sha256:708c3cf8b44b05bc1a81ea3290982bd81053a442f8a07eeb1eee2f656b860800"
+    },
+    {
+      "path": "skills/blocker-diagnostician/contracts/diagnosis-report.v1.schema.json",
+      "sha256": "sha256:ce04ec2821fb07ebc66373b3783165c461758ac30437d401171fc43c0a07fba0"
+    },
+    {
+      "path": "skills/blocker-diagnostician/integration/provider-result.v1.schema.json",
+      "sha256": "sha256:00d317e9b1a0ede9f27927d49663c7179189722e6545e76d4e43b828fdacb181"
+    },
+    {
+      "path": "skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json",
+      "sha256": "sha256:5495ea406196ea120bd6a237fa5db22c152c26beac84d276cf09080404a6039c"
+    },
+    {
+      "path": "skills/change-scope-guardian/contracts/workspace-baseline.v1.schema.json",
+      "sha256": "sha256:e45fa635212cc86c49f62818181f90f06f014c3533d7e74f2929f66608b36452"
+    },
+    {
+      "path": "skills/change-scope-guardian/integration/provider-result.v1.schema.json",
+      "sha256": "sha256:7142aa17f93e7b50d2149dc002bb8c6a1ce9dd66a40ea181763f5158b1f9c6d1"
+    },
+    {
+      "path": "skills/codex-token-usage-analyzer/contracts/token-usage-report.v1.schema.json",
+      "sha256": "sha256:0a3306633ed0c192e6bfc3b269df0b35b4e2a72492c5fc1cd7dad7f5f0d37612"
+    },
+    {
+      "path": "skills/codex-token-usage-analyzer/integration/provider-result.v1.schema.json",
+      "sha256": "sha256:0e8cc867092b27a8336acab857c32afada525ee06c4aa2f13ba0f1c981015d9f"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/hosts.json",
+      "sha256": "sha256:f7672087d49d75a36aa43d2a2539c30cc6a1bad402067edbf6ba2db6abf09f6d"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/index.json",
+      "sha256": "sha256:7da89c508cc89c9244c7fac5ddd64310f4b9e87f3f1a9a06a1ca65ed12a2381d"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/amazon.json",
+      "sha256": "sha256:0ab4fde00c7b519e1c23a538adaab3e664d756277bd878ae3635d402e949a01b"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/anthropic.json",
+      "sha256": "sha256:1349d71277f6a3261f51794dab7b87b215e1d2030a27c0870926d43c2959edd6"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/cohere.json",
+      "sha256": "sha256:2f13f7a11cbc1db8f565367607989fa4a08160d99cf2ecff5d472505e6aae02c"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/google.json",
+      "sha256": "sha256:dc676ed6bb75c6515b9415d417d8618717b1a6f0b9e9b2d151fcc10940d8854c"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/meta.json",
+      "sha256": "sha256:e5cf34c46293264cc65ca96a36378011a707662e678d22dfb7400c572fa2d25e"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/mistral.json",
+      "sha256": "sha256:11d060a1a8e298a80e98322bc0c99844ace8d5579d1145bcb37d6013c250108b"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/openai.json",
+      "sha256": "sha256:0321e043f644221deeda41a06a28afa0b87bf844415c08052dcf0fc47f55fa46"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/xai.json",
+      "sha256": "sha256:338ec89740b1b146d2a6c30d809596b0bd13ccb32b52343b2994a3885051f3f2"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/policy.json",
+      "sha256": "sha256:4d7a24a1bf36e1e618df6e33b8f74e3fb4915332ef77f83b99d86450bc755e9a"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/pricing/anthropic-2026-09-23.json",
+      "sha256": "sha256:1b510b1c5f3166fa48eb6c0aecc0419cf91a3901dedfb5d6a54a8b5584e145ea"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/role-presets/opus55-balanced.v1.json",
+      "sha256": "sha256:8d17ff31847452ffce4fb389d766491b99c4ecec425cdeef7362b65996ca4b1e"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/sources.json",
+      "sha256": "sha256:688978a175889003c7e8e1fc4bb6efc775172d0e670a2c51a8c39e3eee8b57e1"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-validity-report.v1.schema.json",
+      "sha256": "sha256:fc67b9e7fccbe99c4d0c0f2895a654ab5669122043336debc4837b807ba10f0a"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/integration/provider-result.v1.schema.json",
+      "sha256": "sha256:e4b97706a426aba4aa594e04d74c4bad2f2fd46e3f91f83738d06e7756402ea0"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json",
+      "sha256": "sha256:af181dcd574356dff20136b08af527eb9e1f0a0d47a371a087791f87179735a3"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/contracts/instruction-scope-resolution.v1.schema.json",
+      "sha256": "sha256:fa7e89a1aa9b4874d0d6d98d51fd3366e3871a2d8daf66c958bd36073815dee2"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/integration/provider-result.v1.schema.json",
+      "sha256": "sha256:17517fb4a61fa6eda8322d566b48b3d2cd1d6be8c7cc1a27ac2024e9c6b93771"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/edit-candidate.v1.schema.json",
+      "sha256": "sha256:8026fae9d2597f3cc127e80f9d04b7fade42d1c66d03a23ca8656a4c27708db0"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/edit-decision-set.v1.schema.json",
+      "sha256": "sha256:db9a283e623df89093c2dcc93f74461e309ef8d952956a5baacd88ff141147ee"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/edit-verification-report.v1.schema.json",
+      "sha256": "sha256:3cee16cadb97f532d1a6416c623510b5d338465fbc0c742c8fe2e3992dc7ef95"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+      "sha256": "sha256:19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9"
+    },
+    {
+      "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+      "sha256": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+    },
+    {
+      "path": "skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3",
+      "sha256": "sha256:6aee8db6e08136cf8d4399c90232484e13a9e287d843f1638b65ffb2ef8d283d"
+    },
+    {
+      "path": "skills/model-effort-advisor/contracts/model-effort-advice.v1.schema.json",
+      "sha256": "sha256:7150d4f934f9a9422c31fc9f94b7bd7d6b1ac1e6bd029233293c40c658c693fe"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json",
+      "sha256": "sha256:4e6f86d0baf672ef0bd83a4a9c592bd8ec5dcab1f342071372908f52e5217fde"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/integration/provider-result.v1.schema.json",
+      "sha256": "sha256:0fa638d22b6a37ac9e585597b1ddd985de4562756e1a14b9076875dee154e311"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/contracts/recovery-handoff.v1.schema.json",
+      "sha256": "sha256:c8a063c6e34c303c343c067d3f453b72739952fe34eb2e6f8e5eb125630e318e"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/integration/provider-result.v1.schema.json",
+      "sha256": "sha256:88a0e4bef0087af655f548408fdc92917e91d2d79185c9daf5325e578a41cac9"
+    },
+    {
+      "path": "skills/registry.json",
+      "sha256": "sha256:891aca9dc176ff96e2c59db2fe16e86ad8933635e6fd4017955bf32df851c016"
+    },
+    {
+      "path": "skills/software-security-auditor/contracts/security-audit-report.v1.schema.json",
+      "sha256": "sha256:12ed15bc510ceae9411db7e0101722b862965aa495c6233a5a29390e29e500fb"
+    },
+    {
+      "path": "skills/software-security-auditor/integration/provider-result.v1.schema.json",
+      "sha256": "sha256:9067e06f1b36f22a3f10c99777f3a35d1dc10cd128537053982826e2248105a5"
+    },
+    {
+      "path": "skills/task-contract/contracts/task-contract-report.v1.schema.json",
+      "sha256": "sha256:ce5263ec3d1edc13f0461b4ac012989623808cc0bd6dd759456d107a34104dbd"
+    },
+    {
+      "path": "skills/task-contract/integration/provider-result.v1.schema.json",
+      "sha256": "sha256:619451cd870832d1a223958dc31bc1dd5bacee2039b61fd4ca1ff63932829958"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/contracts/workspace-convention-profile.v1.schema.json",
+      "sha256": "sha256:abffbd137671292de90000a62e4d3425eece203a6914a87defada2cf71a9e7bf"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/integration/provider-result.v1.schema.json",
+      "sha256": "sha256:515e04e309f2c8f17ee249cd5ce2b3489b78c5edeb811d77596df6138e9adaf1"
+    }
+  ],
+  "entryPoints": [
+    {
+      "id": "mcp-server",
+      "path": "mcp-server/dist/server.mjs",
+      "executionClosure": [
+        ".codex-plugin/plugin.json",
+        ".mcp.json",
+        "contracts/acknowledge-session-messages-request.v1.schema.json",
+        "contracts/api-result.v1.schema.json",
+        "contracts/artifact-ref.v1.schema.json",
+        "contracts/attempt-lease.v1.schema.json",
+        "contracts/attempt-outcome.v1.schema.json",
+        "contracts/attempt-proposal.v1.schema.json",
+        "contracts/checkpoint-context-request.v1.schema.json",
+        "contracts/checkpoint-delta.v1.schema.json",
+        "contracts/convergence-frame.v1.schema.json",
+        "contracts/convergence-review.v1.schema.json",
+        "contracts/convergence-root-handle.v1.schema.json",
+        "contracts/convergence-root.v1.schema.json",
+        "contracts/convergence-status-summary.v1.schema.json",
+        "contracts/convergence-status.v1.schema.json",
+        "contracts/execute-state-cleanup-request.v1.schema.json",
+        "contracts/execution-context.v1.schema.json",
+        "contracts/execution-requirement.v1.schema.json",
+        "contracts/freeform-output.v1.schema.json",
+        "contracts/get-session-message-status-request.v1.schema.json",
+        "contracts/guarded-workflow-start-request.v1.schema.json",
+        "contracts/host-integration.v1.schema.json",
+        "contracts/host-model-capabilities.v1.schema.json",
+        "contracts/input-source-receipt.v1.schema.json",
+        "contracts/inspect-context-request.v1.schema.json",
+        "contracts/korean-prose-evaluation-final.v1.schema.json",
+        "contracts/korean-prose-evaluation-frame.v1.schema.json",
+        "contracts/korean-prose-evaluation-input.v1.schema.json",
+        "contracts/korean-prose-evaluation-validity-report.v1.schema.json",
+        "contracts/korean-prose-glossary-lookup-request.v1.schema.json",
+        "contracts/korean-prose-glossary-lookup-result.v1.schema.json",
+        "contracts/korean-prose-quality-adjudication-input.v1.schema.json",
+        "contracts/korean-prose-quality-adjudication-meta.v1.schema.json",
+        "contracts/korean-prose-quality-adjudication.v1.schema.json",
+        "contracts/korean-prose-quality-report.v1.schema.json",
+        "contracts/korean-prose-receipt-binding.v1.schema.json",
+        "contracts/list-session-status-request.v1.schema.json",
+        "contracts/load-context-request.v1.schema.json",
+        "contracts/model-application-record.v2.schema.json",
+        "contracts/model-application-record.v3.schema.json",
+        "contracts/model-application-request.v2.schema.json",
+        "contracts/model-application-request.v3.schema.json",
+        "contracts/model-catalog.v1.schema.json",
+        "contracts/model-evaluation-record.v1.schema.json",
+        "contracts/model-routing-decision.v2.schema.json",
+        "contracts/model-routing-decision.v3.schema.json",
+        "contracts/model-routing-policy.v1.schema.json",
+        "contracts/model-selection-request.v2.schema.json",
+        "contracts/open-convergence-root-request.v1.schema.json",
+        "contracts/plan-workflow-request.v1.schema.json",
+        "contracts/plugin-update-notice.v1.schema.json",
+        "contracts/plugin-update-status.v1.schema.json",
+        "contracts/prepare-state-cleanup-request.v1.schema.json",
+        "contracts/provider-result.v1.schema.json",
+        "contracts/purge-direct-context-request.v1.schema.json",
+        "contracts/resolve-convergence-gate-request.v1.schema.json",
+        "contracts/resource-policy.v1.schema.json",
+        "contracts/resource-state-snapshot.v1.schema.json",
+        "contracts/response-mode.v1.schema.json",
+        "contracts/role-slot.v1.schema.json",
+        "contracts/semantic-decision-advice.v1.schema.json",
+        "contracts/semantic-decision-policy.v1.schema.json",
+        "contracts/semantic-decision-question.v1.schema.json",
+        "contracts/semantic-decision-request.v1.schema.json",
+        "contracts/semantic-egress-config.v1.schema.json",
+        "contracts/semantic-model-assignment-request.v1.schema.json",
+        "contracts/send-session-message-request.v1.schema.json",
+        "contracts/skill-descriptor.v1.schema.json",
+        "contracts/skill-descriptor.v2.schema.json",
+        "contracts/source-lock.v3.schema.json",
+        "contracts/stage-result.v1.schema.json",
+        "contracts/state-cleanup-plan.v1.schema.json",
+        "contracts/state-cleanup-receipt.v1.schema.json",
+        "contracts/suppress-context-restore-request.v1.schema.json",
+        "contracts/task-envelope.v1.schema.json",
+        "contracts/update-session-status-request.v1.schema.json",
+        "contracts/validate-collaboration-decision-request.v1.schema.json",
+        "contracts/workflow-plan.v1.schema.json",
+        "contracts/workflow-receipt.v1.schema.json",
+        "contracts/workflow-status-summary.v1.schema.json",
+        "mcp-server/dist/server.mjs",
+        "mcp-server/dist/session-message-broker.mjs",
+        "runtime/schema-validation.mjs",
+        "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
+        "skills/acceptance-evidence-validator/integration/provider-result.v1.schema.json",
+        "skills/blocker-diagnostician/contracts/diagnosis-report.v1.schema.json",
+        "skills/blocker-diagnostician/integration/provider-result.v1.schema.json",
+        "skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json",
+        "skills/change-scope-guardian/contracts/workspace-baseline.v1.schema.json",
+        "skills/change-scope-guardian/integration/provider-result.v1.schema.json",
+        "skills/codex-token-usage-analyzer/contracts/token-usage-report.v1.schema.json",
+        "skills/codex-token-usage-analyzer/integration/provider-result.v1.schema.json",
+        "skills/coordinate-subagents/references/model-catalog/hosts.json",
+        "skills/coordinate-subagents/references/model-catalog/index.json",
+        "skills/coordinate-subagents/references/model-catalog/models/amazon.json",
+        "skills/coordinate-subagents/references/model-catalog/models/anthropic.json",
+        "skills/coordinate-subagents/references/model-catalog/models/cohere.json",
+        "skills/coordinate-subagents/references/model-catalog/models/google.json",
+        "skills/coordinate-subagents/references/model-catalog/models/meta.json",
+        "skills/coordinate-subagents/references/model-catalog/models/mistral.json",
+        "skills/coordinate-subagents/references/model-catalog/models/openai.json",
+        "skills/coordinate-subagents/references/model-catalog/models/xai.json",
+        "skills/coordinate-subagents/references/model-catalog/policy.json",
+        "skills/coordinate-subagents/references/model-catalog/pricing/anthropic-2026-09-23.json",
+        "skills/coordinate-subagents/references/model-catalog/role-presets/opus55-balanced.v1.json",
+        "skills/coordinate-subagents/references/model-catalog/sources.json",
+        "skills/evaluation-validity-auditor/contracts/evaluation-validity-report.v1.schema.json",
+        "skills/evaluation-validity-auditor/integration/provider-result.v1.schema.json",
+        "skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json",
+        "skills/instruction-scope-resolver/contracts/instruction-scope-resolution.v1.schema.json",
+        "skills/instruction-scope-resolver/integration/provider-result.v1.schema.json",
+        "skills/korean-prose-editor/contracts/edit-candidate.v1.schema.json",
+        "skills/korean-prose-editor/contracts/edit-decision-set.v1.schema.json",
+        "skills/korean-prose-editor/contracts/edit-verification-report.v1.schema.json",
+        "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+        "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+        "skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3",
+        "skills/model-effort-advisor/contracts/model-effort-advice.v1.schema.json",
+        "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json",
+        "skills/mutation-risk-preflight/integration/provider-result.v1.schema.json",
+        "skills/recovery-strategy-selector/contracts/recovery-handoff.v1.schema.json",
+        "skills/recovery-strategy-selector/integration/provider-result.v1.schema.json",
+        "skills/registry.json",
+        "skills/software-security-auditor/contracts/security-audit-report.v1.schema.json",
+        "skills/software-security-auditor/integration/provider-result.v1.schema.json",
+        "skills/task-contract/contracts/task-contract-report.v1.schema.json",
+        "skills/task-contract/integration/provider-result.v1.schema.json",
+        "skills/workspace-convention-profiler/contracts/workspace-convention-profile.v1.schema.json",
+        "skills/workspace-convention-profiler/integration/provider-result.v1.schema.json"
+      ]
+    }
+  ],
+  "plugin": {
+    "id": "agent-governance-suite",
+    "version": "2.4.0"
+  }
+}
