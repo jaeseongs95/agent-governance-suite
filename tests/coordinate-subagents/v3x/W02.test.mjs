@@ -8,7 +8,9 @@ import { dispatchSessionMessageBrokerOperation } from '../../../mcp-server/src/s
 
 const openStores = [];
 const directories = [];
+const tokens = new Map();
 afterEach(() => {
+  tokens.clear();
   for (const store of openStores.splice(0)) store.close();
   for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true });
 });
@@ -33,13 +35,34 @@ const request = {
 };
 const input = { request, body: 'Please do the delegated task and callback.', ttlSeconds: 600 };
 
+function register(store, value, at) {
+  let token = tokens.get(value.request.requestId);
+  if (!token) {
+    token = store.prepareTaskRequest(value, at).reconcileToken;
+    tokens.set(value.request.requestId, token);
+  }
+  const actor = { ...value.request.recipient, instanceId: `recipient-${at}` };
+  store.startPresence({ ...actor, transport: 'portable', wakeVisibility: 'silent',
+    canWakeSilently: true, deliveryCapabilities: { supportedInjection: ['tool-boundary'], idleWake: 'silent' } }, at - 1);
+  const event = { schemaVersion: '1.0.0', kind: 'activity-observation', actor,
+    revision: 1, activity: 'busy', source: 'host-observed',
+    observedAt: new Date(at - 1).toISOString(), authorityEffect: 'none' };
+  const reader = { verifyActivityReporter: () => ({ authenticatedActor: actor,
+    currentInstanceId: actor.instanceId, verifiedTurnId: 'turn-1',
+    observedSource: 'host-observed', verifiedRevision: 1, verifiedActivity: 'busy',
+    verifiedObservedAt: event.observedAt }) };
+  store.recordActivity(event, 'turn-1', 'proof', reader, at - 1);
+  return store.registerTaskRequest(value, at, { expectedActor: actor, expectedTurnId: 'turn-1',
+    expectedRevision: 1, trustedActivity: true, reconcileToken: token });
+}
+
 test('W02 request, callback address and original message ID commit atomically and survive ACK/TTL', () => {
   const { store, database } = fixture();
-  const first = store.registerTaskRequest(input, now);
+  const first = register(store, input, now);
   assert.match(first.messageId, /^[0-9a-f-]{36}$/);
   assert.deepEqual(first, { requestId: request.requestId, messageId: first.messageId,
     messageCreatedAt: new Date(now).toISOString(), messageExpiresAt: new Date(now + 600_000).toISOString(),
-    requestExpiresAt: request.expiresAt, duplicate: false });
+    requestExpiresAt: request.expiresAt, duplicate: false, state: 'queued' });
   assert.deepEqual(store.taskRequest(request.requestId), {
     request, messageId: first.messageId, ttlSeconds: 600, registeredAt: new Date(now).toISOString(),
   });
@@ -50,7 +73,7 @@ test('W02 request, callback address and original message ID commit atomically an
   const reopened = new SessionMessageStore(database);
   openStores.push(reopened);
   assert.deepEqual(reopened.taskRequest(request.requestId)?.request, request);
-  assert.deepEqual(reopened.registerTaskRequest(input, now + 86_400_001), { ...first, duplicate: true });
+  assert.deepEqual(register(reopened, input, now + 86_400_001), { ...first, duplicate: true, state: 'duplicate' });
   assert.throws(() => reopened.send({ sender, target: recipient, messageId: first.messageId, body: 'new ordinary body' }, now + 86_400_001), /reserved by a task request/);
   assert.equal(reopened.database.prepare('SELECT count(*) AS n FROM messages').get().n, 0);
 });
@@ -59,15 +82,15 @@ test('W02 same request ID is idempotent only for the same sender, target, body a
   const { store, database } = fixture();
   const peer = new SessionMessageStore(database);
   openStores.push(peer);
-  const first = store.registerTaskRequest(input, now);
-  assert.deepEqual(peer.registerTaskRequest(input, now + 1), { ...first, duplicate: true });
+  const first = register(store, input, now);
+  assert.deepEqual(register(peer, input, now + 1), { ...first, duplicate: true, state: 'duplicate' });
   for (const variant of [
     { ...input, body: 'different' },
     { ...input, request: { ...request, recipient: { ...recipient, sessionId: 'other' } } },
     { ...input, request: { ...request, sender: { ...sender, instanceId: 'instance-2' } } },
     { ...input, request: { ...request, revision: 2 } },
-  ]) assert.throws(() => peer.registerTaskRequest(variant, now + 2), /different task request|contract is invalid/);
-  assert.throws(() => peer.registerTaskRequest({ ...input, messageId: 'caller-choice-0001' }, now + 2), /broker-assigned/);
+  ]) assert.throws(() => register(peer, variant, now + 2), /different task request|contract is invalid/);
+  assert.throws(() => register(peer, { ...input, messageId: 'caller-choice-0001' }, now + 2), /broker-assigned/);
   assert.deepEqual(store.taskRequest(request.requestId)?.request, request);
   assert.equal(store.database.prepare('SELECT count(*) AS n FROM messages').get().n, 1);
 });
@@ -75,15 +98,15 @@ test('W02 same request ID is idempotent only for the same sender, target, body a
 test('W02 rolls back both records when message enqueue or request recording fails', () => {
   const { store } = fixture();
   store.database.exec("CREATE TRIGGER fail_message BEFORE INSERT ON messages BEGIN SELECT RAISE(ABORT, 'message failed'); END;");
-  assert.throws(() => store.registerTaskRequest(input, now), /message failed/);
+  assert.throws(() => register(store, input, now), /message failed/);
   assert.equal(store.taskRequest(request.requestId), null);
   store.database.exec('DROP TRIGGER fail_message');
   store.database.exec("CREATE TRIGGER fail_request BEFORE INSERT ON task_requests BEGIN SELECT RAISE(ABORT, 'request failed'); END;");
-  assert.throws(() => store.registerTaskRequest(input, now), /request failed/);
+  assert.throws(() => register(store, input, now), /request failed/);
   assert.equal(store.taskRequest(request.requestId), null);
   assert.equal(store.database.prepare('SELECT count(*) AS n FROM messages').get().n, 0);
   store.database.exec('DROP TRIGGER fail_request');
-  assert.equal(store.registerTaskRequest(input, now).duplicate, false);
+  assert.equal(register(store, input, now).duplicate, false);
 });
 
 test('W02 rejects caller-selected expired ordinary message ID without partial registration', () => {
@@ -94,10 +117,10 @@ test('W02 rejects caller-selected expired ordinary message ID without partial re
   store.send({ messageId: oldMessageId, sender, target: recipient, body: input.body, ttlSeconds: 600 }, now);
   store.prune(now + 600_001);
   assert.equal(store.database.prepare('SELECT count(*) AS n FROM messages').get().n, 0);
-  assert.throws(() => peer.registerTaskRequest({ ...input, messageId: oldMessageId }, now + 600_002), /broker-assigned/);
+  assert.throws(() => register(peer, { ...input, messageId: oldMessageId }, now + 600_002), /broker-assigned/);
   assert.equal(peer.taskRequest(request.requestId), null);
   assert.equal(peer.database.prepare('SELECT count(*) AS n FROM messages').get().n, 0);
-  const registered = peer.registerTaskRequest(input, now + 600_003);
+  const registered = register(peer, input, now + 600_003);
   assert.notEqual(registered.messageId, oldMessageId);
 });
 
@@ -107,10 +130,10 @@ test('W02 second-connection lock cannot leave either record behind', () => {
   openStores.push(peer);
   store.database.exec('BEGIN IMMEDIATE');
   peer.database.exec('PRAGMA busy_timeout = 1');
-  assert.throws(() => peer.registerTaskRequest(input, now + 2), /locked/);
+  assert.throws(() => register(peer, input, now + 2), /locked/);
   store.database.exec('ROLLBACK');
   assert.equal(peer.taskRequest(request.requestId), null);
-  assert.equal(peer.registerTaskRequest(input, now + 3).duplicate, false);
+  assert.equal(register(peer, input, now + 3).duplicate, false);
 });
 
 test('W02 rejects malformed contract claims before writing either table', () => {
@@ -123,7 +146,7 @@ test('W02 rejects malformed contract claims before writing either table', () => 
     { ...request, sender: { ...sender, instanceId: '' } },
     { ...request, recipient: { host: 2, sessionId: recipient.sessionId } },
     { ...request, unexpectedPermission: 'start-task' },
-  ]) assert.throws(() => store.registerTaskRequest({ ...input, request: invalid }, now));
+  ]) assert.throws(() => register(store, { ...input, request: invalid }, now));
   assert.equal(store.taskRequest(request.requestId), null);
   assert.equal(store.database.prepare('SELECT count(*) AS n FROM messages').get().n, 0);
 });

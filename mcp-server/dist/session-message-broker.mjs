@@ -8533,6 +8533,7 @@ var SessionMessageStore = class {
       throw new Error(`ttlSeconds must be an integer from 30 to ${MESSAGE_TTL_MAX_SECONDS}.`);
     }
     const bodyDigest = createHash("sha256").update(input.body, "utf8").digest("hex");
+    if (!contact && receiptToken === void 0) throw new Error("A broker-issued reconciliation token and current contact are required.");
     const token = contact?.reconcileToken ?? receiptToken;
     if (token !== void 0 && !/^[A-Za-z0-9_-]{43}$/u.test(token)) {
       throw new Error("A strong reconciliation token is required.");

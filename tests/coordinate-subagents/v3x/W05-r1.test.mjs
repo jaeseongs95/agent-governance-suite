@@ -91,6 +91,14 @@ test('W05-r1 service rejects omitted token and forged bound sender before persis
   assert.equal(count(store, 'messages'), 0);
 });
 
+test('W05-r1 store rejects tokenless direct registration before persisting either record', () => {
+  const { store } = fixture();
+  const input = { request: request(Date.now()), body: 'Task body', ttlSeconds: 60 };
+  assert.throws(() => store.registerTaskRequest(input), /broker-issued reconciliation token/);
+  assert.equal(count(store, 'task_requests'), 0);
+  assert.equal(count(store, 'messages'), 0);
+});
+
 test('W05-r1 lost registration response returns original receipt despite changed target activity', () => {
   const { store, database } = fixture();
   const now = Date.now();
@@ -133,7 +141,7 @@ test('W05-r1 mismatched token, content, sender and target never reveal a receipt
     registration(input, 'a'.repeat(43)), undefined, undefined, reader), /broker-issued/);
   const first = dispatchSessionMessageBrokerOperation(store, 'register-contact-task-request',
     registration(input, token), undefined, undefined, reader);
-  assert.throws(() => store.registerTaskRequest(input, now + 1), /token is required/);
+  assert.throws(() => store.registerTaskRequest(input, now + 1), /broker-issued reconciliation token/);
   for (const changed of [
     inputWithToken(input, 'a'.repeat(43)),
     inputWithToken({ ...input, body: 'changed' }, token),
