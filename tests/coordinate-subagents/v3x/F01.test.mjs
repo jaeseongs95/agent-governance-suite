@@ -37,27 +37,32 @@ const fm = {
   keyNamespace: 'flowmarshal-same-user-v1', pinNamespace: 'flowmarshal-same-user-v1',
   stateNamespace: 'flowmarshal-same-user-v1',
 };
+const resourcesFor = (profile) => ({
+  key: { namespace: profile.keyNamespace, location: `/fixture/${profile.profileId}/key` },
+  pin: { namespace: profile.pinNamespace, location: `/fixture/${profile.profileId}/pin` },
+  state: { namespace: profile.stateNamespace, location: `/fixture/${profile.profileId}/state` },
+});
+const pinsFor = (profile) => ({
+  namespace: profile.pinNamespace,
+  pins: [{ keyId: 'key-1', publicKeySpki: 'fixture-public-key', status: 'active' }],
+});
 function selection(profile) {
-  const namespace = profile.profileId;
-  const resources = {
-    keyLocation: `/fixture/${namespace}/key`,
-    pinLocation: `/fixture/${namespace}/pin`,
-    stateLocation: `/fixture/${namespace}/state`,
-  };
   const base = {
     source: 'server-local-operator-config', profile,
-    pinSetDigest: digest({ profileId: profile.profileId, pins: ['key-1'] }),
-    resourceBindingDigest: digest(resources),
+    pinSetDigest: digest(pinsFor(profile)), resourceBindingDigest: digest(resourcesFor(profile)),
   };
   return { ...base, freezeIdentity: digest(base) };
 }
 
 // This is a contract fixture, not a product verifier or proof that any profile is installed.
-function matchesFrozenFixture(selected, receipt, pin, state, context, workflowReceipt, resources) {
+function matchesFrozenFixture(selected, receipt, pin, state, context, workflowReceipt, resources, pinSet) {
   if (!selectionValid(selected) || selected.freezeIdentity !== selectionDigest(selected)) return false;
   const profile = selected.profile;
   const bound = { profileId: profile.profileId, freezeIdentity: selected.freezeIdentity };
-  if (selected.resourceBindingDigest !== digest(resources)) return false;
+  if (selected.resourceBindingDigest !== digest(resources) || selected.pinSetDigest !== digest(pinSet)) return false;
+  if (resources.key.namespace !== profile.keyNamespace || resources.pin.namespace !== profile.pinNamespace
+      || resources.state.namespace !== profile.stateNamespace || pinSet.namespace !== profile.pinNamespace
+      || !pinSet.pins.some((entry) => entry.keyId === receipt.keyId && entry.status === 'active')) return false;
   return bindingValid(receipt.binding) && bindingValid(context.binding)
     && bindingValid(workflowReceipt.binding)
     && [receipt.binding, context.binding, workflowReceipt.binding].every((item) =>
@@ -79,11 +84,7 @@ function fixture(selected) {
     { namespace: profile.stateNamespace },
     { binding, modelClassSource: profile.modelClassSource, actorSource: profile.actorSource },
     { binding },
-    {
-      keyLocation: `/fixture/${profile.profileId}/key`,
-      pinLocation: `/fixture/${profile.profileId}/pin`,
-      stateLocation: `/fixture/${profile.profileId}/state`,
-    },
+    resourcesFor(profile), pinsFor(profile),
   ];
 }
 
@@ -150,11 +151,26 @@ test('cross-domain, key, pin, state, receipt and context fixtures are rejected',
     const otherKey = clone(good);
     otherKey[1].keyId = 'key-2';
     assert.equal(matchesFrozenFixture(chosen, ...otherKey), false);
-    for (const location of ['keyLocation', 'pinLocation', 'stateLocation']) {
+    for (const kind of ['key', 'pin', 'state']) {
       const crossed = clone(good);
-      crossed[5][location] = foreign[5][location];
-      assert.equal(matchesFrozenFixture(chosen, ...crossed), false, `${profile.profileId} ${location}`);
+      crossed[5][kind] = foreign[5][kind];
+      assert.equal(matchesFrozenFixture(chosen, ...crossed), false, `${profile.profileId} ${kind}`);
+      const rebound = clone(chosen);
+      rebound.resourceBindingDigest = digest(crossed[5]);
+      rebound.freezeIdentity = selectionDigest(rebound);
+      const fullyRebound = fixture(rebound);
+      fullyRebound[5] = crossed[5];
+      assert.equal(matchesFrozenFixture(rebound, ...fullyRebound), false, `${profile.profileId} rebound ${kind}`);
     }
+    const crossedPins = clone(chosen);
+    crossedPins.pinSetDigest = digest(foreign[6]);
+    crossedPins.freezeIdentity = selectionDigest(crossedPins);
+    const withForeignPins = fixture(crossedPins);
+    withForeignPins[6] = foreign[6];
+    assert.equal(matchesFrozenFixture(crossedPins, ...withForeignPins), false, `${profile.profileId} pin set`);
+    const changedPins = clone(good);
+    changedPins[6].pins[0].publicKeySpki = 'different-fixture-key';
+    assert.equal(matchesFrozenFixture(chosen, ...changedPins), false, `${profile.profileId} pin digest`);
   }
   assert.notEqual(`${fm.pinNamespace}:key-1`, `${vm.pinNamespace}:key-1`);
 });
