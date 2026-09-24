@@ -9,7 +9,7 @@ import { canonicalJson, convergenceDigest } from '../../../mcp-server/src/conver
 import { InMemoryWorkflowStore } from '../../../mcp-server/src/workflow-store.ts';
 import { VmCurrentInvocation } from '../../../mcp-server/src/host-integration/vm-current-invocation.ts';
 import { VmModelPolicy, installedVmPolicyPath, isProtectedWindowsAcl,
-  readProtectedVmPolicyFileFixture } from '../../../mcp-server/src/host-integration/vm-model-policy.ts';
+  readProtectedVmPolicyFile, readProtectedVmPolicyFileFixture } from '../../../mcp-server/src/host-integration/vm-model-policy.ts';
 
 const clock = Date.parse('2026-09-23T00:00:01.000Z');
 const issuedAt = new Date(clock).toISOString();
@@ -197,8 +197,10 @@ test('installed path ignores inherited environment; unsafe ACL and symlink fail 
   const file = join(directory, 'policy.json');
   writeFileSync(file, JSON.stringify(fixture().config));
   try {
-    assert.throws(() => readProtectedVmPolicyFileFixture(file, { isProtected: (target) => target !== file }),
-      { message: 'VM operator policy unavailable: configuration owner or permissions are unsafe' });
+    const unsafe = { message: 'VM operator policy unavailable: configuration owner or permissions are unsafe' };
+    assert.throws(() => readProtectedVmPolicyFileFixture(file, { isProtected: (target) => target !== file }), unsafe);
+    // The live POSIX uid/mode check is deterministic; the live Windows ACL probe belongs to V03-h.
+    if (process.platform !== 'win32') assert.throws(() => readProtectedVmPolicyFile(file), unsafe);
     const link = join(directory, 'linked.json');
     try {
       symlinkSync(file, link);
