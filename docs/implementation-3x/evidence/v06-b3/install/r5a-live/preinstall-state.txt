@@ -85,3 +85,29 @@ exit=0
 비인가 교체 불가 근거: 조상 체인 / (root 755) -> /root (root 700) -> /root/r5a-out (root 700)이다. 모두 root 소유이고 group/other 쓰기가 없어, 비root 주체는 /root 아래를 열람하거나 rename·교체할 수 없다. uid 0 계정은 root 하나다.
 경로는 설치 subtree(/usr/lib/agent-governance-suite)와 작업 트리(/home/user/agent-governance-suite) 밖에 있다. 대상 파일은 없으며 이번 단계에서 만들지 않는다.
 한계: root 권한 프로세스(이 세션 포함)는 교체할 수 있다. 이 점은 root 전용 scratch의 전제다.
+
+## 보완 턴 N1 재확인 (pnpm install 이후 /usr·manifestFile 쓰기 여부, 읽기 전용)
+기준 파일: /root/r5a/pnpm-install.log (mtime 2026-09-25 10:06:43.953581968 +0000, pnpm install 10:06Z 실행 로그)
+$ date -u; cat /proc/sys/kernel/random/boot_id; grep btime /proc/stat; cat /proc/uptime
+Fri Sep 25 10:47:17 UTC 2026
+bce6e43b-e2c8-481b-987e-5f7c4aa53336
+btime 1790333215          (= Fri Sep 25 10:46:55 UTC 2026)
+21.83 75.66
+$ ls -ld /usr/lib/agent-governance-suite
+ls: cannot access '/usr/lib/agent-governance-suite': No such file or directory
+$ find /usr /root/r5a-out -xdev -newer /root/r5a/pnpm-install.log 2>/dev/null | head -20
+/usr/local/bin
+/usr/local/bin/environment-manager
+exit=0
+$ stat -c '%n %U:%G %a %F mtime=%y' <위 항목>; readlink
+/usr/local/bin root:root 755 directory mtime=2026-09-25 10:46:59.066328752 +0000
+/usr/local/bin/environment-manager root:root 777 symbolic link mtime=2026-09-25 10:46:59.066328752 +0000
+-> /opt/env-runner/environment-manager
+$ cd /root/r5a && sha256sum -c --quiet scratch-sha256.txt; echo exit=$?
+exit=0      (목록 sha256 8c0c1f60cd634c929e214871e3d51e41eb2a7c9ce122cfc1a02c5fd36d8c6b41)
+$ git status --short; git check-ignore -v node_modules
+(status 출력 없음)
+.gitignore:1:node_modules/	node_modules
+관측 사실: pnpm install 뒤 /usr와 /root/r5a-out에서 새로 바뀐 항목은 /usr/local/bin과 environment-manager symlink(→ /opt/env-runner, 플랫폼 env-runner 디스크) 두 개뿐이다. 둘 다 mtime이 이번 boot(10:46:55Z) 4초 뒤다. /usr/lib/agent-governance-suite는 없고 /root/r5a-out에는 새 항목이 없다.
+해석: 이 symlink는 boot마다 플랫폼이 다시 만드는 산출물로 보인다(2단계b 감사에서도 mtime이 그 턴의 boot 시각 09:58:44였다). pnpm install이나 설치 쓰기로 생긴 것은 아니다. 판정은 감사가 한다.
+pnpm install은 개발팀장이 허용해 실행했으나 명세 쓰기 범위 밖이었다(README 한계 절).

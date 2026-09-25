@@ -1,7 +1,7 @@
 # TASK_V06-b3b-r5a handoff (초안)
 
 - **TASK_ID**: V06-b3b-r5a (새 Linux 후보 host의 신뢰 입력 준비)
-- **결과**: 입력 준비와 설치 전 점검을 마쳤다. 2단계b에서 이양 원문을 추가하고, commit한 뒤 fresh 독립 감사를 받는다. 최종 판정은 세션 최종 보고에 적는다.
+- **결과**: 입력 준비와 설치 전 점검을 마쳤다. 830e4628은 자체 fresh 감사 PASS였으나 cloud 사전 감사(cse_01RCednP)에서 BLOCKED(B1 이양 원문)를 받았다. 보완 commit에서 012TH run log 원문, N1 재확인, 403 미확인 문구를 추가했다. 새 cloud 사전 감사는 개발팀장이 따로 돌린다.
 - **브랜치**: `claude/v3x-v06-b3b-r5a-trusted-input`, 시작 SHA `0f5306154dfb987f35c215322354f6e10cc8c4b3`(tree `a38ff77d19e4cd824b5b1916c8d8450430017dcb`)
 - **최종 SHA/tree**: 2단계b commit 뒤에 채운다. 이 handoff는 자기 커밋 SHA를 담을 수 없으므로 세션 최종 보고에 적는다.
 - **writer**: `session_01PRna2jKCs5EdTv8Rwv3j83`(claude-opus-5-5/high), AREA `f9f49211`. 구 writer `session_012THvfNVip1GR1zpH8MEUaV`는 2026-09-24T21:44:18Z부터 쓰기를 중지했다.
@@ -43,7 +43,9 @@
 
 ## 남은 문제
 
-- 012TH 이양 동의(09:58:58Z)와 신 writer 확인은 handover.txt에 넣었다.
+- 012TH 이양 동의(09:58:58Z)는 run log 원문으로 handover.txt에 넣었다. 012TH get_session은 여전히 BLOCKED/need_input이다. 신 writer 1단계 쓰기(09:50:34Z)가 이 동의보다 먼저였다. 이양이 충분한지는 총괄과 감사가 판정한다.
+- 원래 21:47Z 403의 원시 응답과 A2 본문은 없다. raw.githubusercontent 경로 통과가 의도된 정책인지는 미확인이다.
+- 2단계b의 root pnpm install은 명세 쓰기 범위 밖이었다(개발팀장 허용). 뒤이은 /usr 새 항목은 플랫폼 boot symlink뿐이다.
 - 세션 보존 기한은 불명확하다(persist 필드 없음). 운영 host 자격은 판정하지 않았다.
 - fresh 독립 감사를 받아야 한다.
 

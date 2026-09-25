@@ -36,7 +36,7 @@ binary, archive, src tree(`pubring.kbx`, `node-v24.21.0-linux-x64.tar.xz`, `SHAS
 
 ## 요약
 
-- 403 원인: Claude cloud proxy의 세션별 GitHub repo allowlist다. `github.com/<repo>/raw`와 `codeload.github.com`은 nodejs/release-keys에 403 JSON("GitHub access to this repository is not enabled for this session")을 돌려준다. 같은 commit·경로를 `raw.githubusercontent.com`으로 요청하면 200이다. URL 오류와 네트워크 가설은 배제됐다.
+- 403 원인: Claude cloud proxy의 세션별 GitHub repo allowlist다. `github.com/<repo>/raw`와 `codeload.github.com`은 nodejs/release-keys에 403 JSON("GitHub access to this repository is not enabled for this session")을 돌려준다. 같은 commit·경로를 `raw.githubusercontent.com`으로 요청하면 200이다. URL 오류와 네트워크 가설은 배제됐다. 미확인: 21:47Z 원래 URL(HEAD/gpg)의 원시 응답은 없고 이전 세션 보고로만 남아 있다. A2는 헤더만 받았다. raw.githubusercontent 경로 통과가 의도된 정책인지는 확인하지 않았다.
 - K1: 21011 bytes, sha256 `140f2ad5…5932`로 pin과 같다.
 - Node v24.21.0: gpgv GOODSIG, VALIDSIG `5BE8A3F6C8A5C01D106C0AD820B1A390B168D356`. archive `fd8e59d5…` == 서명된 SHASUMS 행 == 코드 pin이다. 추출 bin/node `7fde7b8a…`도 pin과 같다.
 - AGS source: `/root/r5a/src`, root 700 조상 체인, 파일 1620개·디렉터리 372개. g/o 쓰기·symlink·비root·nlink>1은 모두 0개다. host-integration `648dddda…`가 pin과 같고, artifact 178개 digest가 모두 일치한다.
@@ -63,6 +63,8 @@ binary, archive, src tree(`pubring.kbx`, `node-v24.21.0-linux-x64.tar.xz`, `SHAS
 - 보호 subtree 설치, 재설치, rollback을 하지 않았다. `/usr` 아래에 새 경로를 만들지 않았고 manifestFile도 만들지 않았다.
 - 운영 host 자격이 아니다. hostname(`vm`)과 machine-id는 구 VM과 같은 공통값이고, fs UUID는 관측되지 않았다. 신·구 host 구별은 보호 subtree 유무와 동시 관측(old-vm.txt)에 근거한다.
 - r5a PASS는 r5b 설치 적격이나 lineage ACCEPT를 뜻하지 않는다. r5b는 `r5b-inputs.txt`의 모든 값을 설치 직전에 다시 계산해야 한다.
-- 세션 지속성의 보존 기한은 불명확하다. get_session에 persist/retention/expires 필드가 없다.
+- 세션 지속성의 보존 기한은 불명확하다. get_session에 persist/retention/expires 필드가 없고, persist_session 값도 관측하지 못했다.
+- 2단계b의 `pnpm install --frozen-lockfile`(root 실행, esbuild postinstall 포함, 10:06Z)은 개발팀장 허용으로 실행했다. 명세 쓰기 범위 밖이다. 보완 턴에 `/usr`와 `/root/r5a-out`에서 pnpm-install.log보다 새 항목을 찾았다. `/usr/local/bin`과 그 안의 environment-manager symlink(→ /opt/env-runner/environment-manager)만 나왔고, mtime이 boot 시각과 같았다. 결과는 preinstall-state.txt와 persistence.txt에 있다.
+- 신 writer의 1단계 쓰기(09:50:34Z~)는 012TH의 cse_01PRna2j 대상 동의(09:58:58Z)보다 먼저였다. 012TH의 get_session은 여전히 BLOCKED/need_input이다. 이양이 충분한지는 총괄과 감사가 판정한다(handover.txt).
 - 구 VM 관측(old-vm.txt)과 이양 원문(handover.txt)은 개발팀장이 전달한 내용이다. 이 세션이 직접 관측한 값이 아니다. 012TH는 09:58:58Z에 cse_01PRna2jKCs5EdTv8Rwv3j83로의 이양에 동의했다.
 - K2(add_repo)는 조회만 했고 호출하지 않았다. K3는 실행하지 않았다.
