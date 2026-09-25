@@ -17,8 +17,8 @@ const rows = contract
   .map(([, id, quote, targets, status]) => ({ id, quote, targets: targets.trim(), status: status.trim() }));
 
 const expectedIds = [
-  ...Array.from({ length: 55 }, (_, i) => `T${String(i + 1).padStart(2, '0')}`),
-  ...Array.from({ length: 10 }, (_, i) => `V${String(i + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 58 }, (_, i) => `T${String(i + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 11 }, (_, i) => `V${String(i + 1).padStart(2, '0')}`),
 ];
 
 // Each carried condition must still read as the hard condition in its first target clause.
@@ -74,10 +74,13 @@ const keyText = {
   T49: '동시 확인과 재qualification으로만 한다',
   T50: '권위 state(DB와 sidecar·journal·로그, 보호 artifact 등)는 읽기·쓰기·삭제·교체를 모두 거부해야 한다',
   T51: '권위 state(DB와 sidecar·journal·로그, 보호 artifact 등)는 읽기·쓰기·삭제·교체를 모두 거부해야 한다',
-  T52: 'OS peer identity(Windows named-pipe client 실효 token, Linux `SO_PEERCRED` 등)와 보호 서비스 identity를 확인하고 단회 request ID에 묶는다',
+  T52: '단회 request ID와 요청 문맥(소비 계약이 정한 credential audience·realm·operation 등)에 묶는다',
   T53: '보조 group·capability·상속 FD·환경을 제거하고',
   T54: '설치 기록을 읽어 실제 관측과 대조하며, 기록만으로 통과시키지 않는다',
   T55: 'installer·보호 주체·caller·worker의 실제 principal ID',
+  T56: '보호 subtree가 없음을 확인한 뒤 보호된 owner/ACL 또는 mode로 생성한다',
+  T57: '함께 읽어 검증한다',
+  T58: 'installer만 비밀·registry·pin을 임시 보호 파일로 작성하고',
 };
 
 const clauseText = (clause) => {
@@ -99,13 +102,13 @@ const CLAUSE_DIGESTS = {
   P1: 'd1c175b6a94cebbdf5975017bb74152e99f592d281353720d599d231dd647954',
   P2: '40ac8b5e1612834e434bae35fef2a2707ed84d20233d16c506a3ffe062fc4958',
   P3: 'cd87f7e1705aebe8903f6a9688443959d7f1554e5102027433ccc8a1ef1adddb',
-  P4: 'b733eb182b3bdafe71978619847e38bdb4a3cd1b57b2320fa50e48dff4348ef7',
-  P5: '61c39dcf27bdea47213b0f20f8e11045a5166bbdd4f177a7b12397cf85735331',
+  P4: '45860ed317af82afbf8d0d182f59dd376920655f6080e0323592d10c8e5253b7',
+  P5: '57a17ff50315d8eaf0e1e6b939535783bcc94feef83a02150bd5862780935b26',
   P6: 'ef8fbec5341aeebe7a3fb19eeb83b23d81d5ff52a803cd27d20cd363999c3457',
   P7: '64856041c82e6207a71e4eac036e06191a43378e3fb32650560333fd4b265f32',
   P8: 'd983f3a8e081aacde4ccd174a165b3be2bc71fc67c238797c6a88fae5d17eebf',
   P9: '071deadc7209a076ad8eea83a90696f539b10950f19b663b41b4b0c9e08cec4f',
-  P10: 'a79956a121ed221c3887506d63c75e9b60de75d5b0659bf79d6ea7d644ce240e',
+  P10: 'e577178080732106c8a8f846e5472491e8e56fae23b9862c8d4a4652f7e224e7',
 };
 
 describe('B14-s AGS protected provisioning contract', () => {
@@ -142,6 +145,9 @@ describe('B14-s AGS protected provisioning contract', () => {
       expect(clauseText(first), `${row.id} → ${first}`).toContain(keyText[row.id]);
     }
     expect(clauseText('P3.2')).toMatch(/하나라도 없거나 조회하지 못하면 fail-closed다/);
+    expect(clauseText('P7.3')).toContain('이미 있는 파일을 현재 identity로 채택(adopt)하거나, 등록된 identity를 현재 파일에 맞춰 재등록하지 않는다');
+    expect(clauseText('P4.4')).toContain('보호 endpoint는 P5.1 인증을 통과한 caller 연결만 허용하고, 인증 없는 연결과 worker 자손의 상속·duplication·재연결은 거부해야 한다');
+    expect(contract.slice(0, contract.indexOf('## P0.'))).toContain('SQLite xOpen proof, 설치 후보 qualification 중 어느 것도 뜻하지 않는다');
     expect(clauseText('P4.4')).toContain('기본값으로 읽기도 거부해야 한다. 동결된 소비 계약이 비밀이 없다는 근거로 명시 면제한 기록만 읽기 거부를 요구하지 않는다(B14-m의 registry·journal·lock).');
   });
 

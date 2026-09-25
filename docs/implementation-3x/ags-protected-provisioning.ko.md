@@ -58,13 +58,13 @@
 
 - **P4.1** 역할은 특정 SID/uid/서비스 이름을 강제하는 식별자가 아니다. 보호 주체의 실행 형식(상주 서비스, 요청 단위 보호 helper 등)과 접근 행렬은 소비 Task가 정한다. 실제 값은 설치 대상에서 관측해 보호 기록에 남긴다. 보호 주체가 worker·caller와 같은 실효 SID/uid, 같은 group을 통한 쓰기 권한, 또는 서로의 프로세스 제어·읽기 권한을 가지면 실패다. 서로 다른 목적의 보호 주체를 분리할지는 소비 Task가 정하며(B14-m은 issuer principal과 storage principal의 분리를 요구), 같은 principal 공유를 분리 근거로 쓰지 않는다.
 - **P4.2** Windows 보호 주체는 installer-provisioned 별도 비특권 계정으로 실행한다. 상주 서비스 형식이면 SCM이 그 서비스 계정으로 시작한다. 어떤 실행 형식이든 caller·worker와 구분되는 **실효 접근 권한**의 primary token을 관측하며, SID 이름만 다른지 또는 restricted token 명칭만 있는지로 통과시키지 않는다. 보호 주체와 그 자식 token의 user/group·enabled privileges·integrity를 실제로 측정한다. 보호 주체가 자식을 만들면 명시적 환경 블록과 최소 handle 상속을 사용한다. 허용되는 실행 형식이 확정되지 않은 OS는 `UNSUPPORTED`다.
-- **P4.3** Linux 보호 주체는 installer-provisioned 별도 비특권 uid/gid로 실행한다. 상주 서비스 형식이면 systemd의 별도 `User`/`Group`으로 시작한다. 보조 group·capability·상속 FD·환경을 제거하고, 실행 뒤 uid/euid/gid/egid/groups/capability를 실제 프로세스에서 관측한다. `no_new_privs` 등 재상승 방어를 적용하되 그 설정 이름만으로 접근 거부를 대체하지 않는다. 일반 `Popen`으로 다른 uid로 바꾸는 경로는 권한 없이 성립하지 않는다.
-- **P4.4** worker·caller principal로 다음 **실제 접근 시도가 거부되는지** 관측하고, 시도한 프로세스의 실제 SID/uid·group도 기록한다. 비밀(key·credential)과 보호 endpoint, 보호 프로세스 메모리/handle(Windows `PROCESS_VM_*`/`PROCESS_DUP_HANDLE`, Linux ptrace·`/proc/<pid>/fd`)은 읽기·쓰기·복제를 포함한 모든 접근을 거부해야 한다. 보호 주체의 권위 state(DB와 sidecar·journal·로그, 보호 artifact 등)는 읽기·쓰기·삭제·교체를 모두 거부해야 한다. 비밀이 없는 보호 기록(registry·설치 기록·정책 등)은 쓰기·삭제·rename·link·ACL/owner 변경을 거부해야 하고, 기본값으로 읽기도 거부해야 한다. 동결된 소비 계약이 비밀이 없다는 근거로 명시 면제한 기록만 읽기 거부를 요구하지 않는다(B14-m의 registry·journal·lock). 서비스 계정·identity가 실제 설치 환경에서 마련되지 않으면 운영 판정은 `BLOCKED_CONTRACT`이고, 관측하지 못하면 `UNKNOWN`이다.
+- **P4.3** Linux 보호 주체는 installer-provisioned 별도 비특권 uid/gid로 실행한다. 상주 서비스 형식이면 systemd의 별도 `User`/`Group`으로 시작한다. 보조 group·capability·상속 FD·환경을 제거하고(소비 계약이 명시한 group만 남긴다. 예: B14-m의 storage group은 primary gid 또는 명시 group), 실행 뒤 uid/euid/gid/egid/groups/capability를 실제 프로세스에서 관측한다. `no_new_privs` 등 재상승 방어를 적용하되 그 설정 이름만으로 접근 거부를 대체하지 않는다. 일반 `Popen`으로 다른 uid로 바꾸는 경로는 권한 없이 성립하지 않는다.
+- **P4.4** worker·caller principal로 다음 **실제 접근 시도가 거부되는지** 관측하고, 시도한 프로세스의 실제 SID/uid·group도 기록한다. 보호 주체만 쓰는 비밀(key·보호 주체 자신의 credential. B14-k가 caller에게 발급하는 credential은 제외)과 보호 프로세스 메모리/handle(Windows `PROCESS_VM_*`/`PROCESS_DUP_HANDLE`, Linux ptrace·`/proc/<pid>/fd`)은 읽기·쓰기·복제를 포함한 모든 접근을 거부해야 한다. 보호 endpoint는 P5.1 인증을 통과한 caller 연결만 허용하고, 인증 없는 연결과 worker 자손의 상속·duplication·재연결은 거부해야 한다. 보호 주체의 권위 state(DB와 sidecar·journal·로그, 보호 artifact 등)는 읽기·쓰기·삭제·교체를 모두 거부해야 한다. 비밀이 없는 보호 기록(registry·설치 기록·정책 등)은 쓰기·삭제·rename·link·ACL/owner 변경을 거부해야 하고, 기본값으로 읽기도 거부해야 한다. 동결된 소비 계약이 비밀이 없다는 근거로 명시 면제한 기록만 읽기 거부를 요구하지 않는다(B14-m의 registry·journal·lock). 서비스 계정·identity가 실제 설치 환경에서 마련되지 않으면 운영 판정은 `BLOCKED_CONTRACT`이고, 관측하지 못하면 `UNKNOWN`이다.
 - **P4.5** 두 역할이 같은 실효 principal로 실행되는 동안에는 파일 ACL만으로 둘 사이의 OS 분리를 주장하지 않는다. 현재 제품의 broker·AGS MCP는 worker와 같은 사용자이므로 caller로 분류한다.
 
 ## P5. private IPC 결속과 전달
 
-- **P5.1** caller→보호 주체 IPC는 OS peer identity(Windows named-pipe client 실효 token, Linux `SO_PEERCRED` 등)와 보호 서비스 identity를 확인하고 단회 request ID에 묶는다. 같은 SID/uid의 공개 pipe ACL, caller가 고르는 IPC 주소나 token, 공용 broker token·localhost TLS는 인증 근거가 아니다.
+- **P5.1** caller→보호 주체 IPC는 OS peer identity(Windows named-pipe client 실효 token, Linux `SO_PEERCRED` 등)와 보호 서비스 identity를 확인하고 단회 request ID와 요청 문맥(소비 계약이 정한 credential audience·realm·operation 등)에 묶는다. 같은 SID/uid의 공개 pipe ACL, caller가 고르는 IPC 주소나 token, 공용 broker token·localhost TLS는 인증 근거가 아니다.
 - **P5.2** 보호 주체 밖에서 온 응답·작업 결과·staging 자료는 조작 가능한 불신 입력이며, 보호 주체가 자체 기록과 대조해 검증하기 전에는 근거가 아니다. worker 자손은 보호 endpoint·control handle을 상속·duplication·재연결할 수 없어야 한다.
 - **P5.3** 비밀 bytes, 보호 경로, 기대 identity, 주체 신원은 argv·환경 변수·stdin·caller JSON·로그·fixture·메시지로 전달하거나 고르게 하지 않는다. 보호 값은 보호 주체가 보호 파일을 직접 여는 경로로만 전달된다. caller가 그런 필드를 보내면 무시하지 않고 거부한다.
 - **P5.4** OS별 보호 주체 설치·endpoint·IPC 프로토콜·수명 구현은 생산자 leaf(B14-q-a/B14-q, B14-r)의 필수 책임이다. 이 계약은 요구 결과만 고정한다. 생산자가 없으면 해당 OS의 운영 판정은 `BLOCKED_CONTRACT`다.
@@ -132,7 +132,7 @@
 | T12 | 「역할은 동일 SID/uid/서비스 이름을 강제하는 식별자가 아니다」 | P4.1 | 보존 |
 | T13 | 「worker가 Core와 같은 실효 SID/uid 또는 같은 읽기·프로세스 제어 권한을 가지면 실패다」 | P4.1 | 일반화 |
 | T14 | 「SID 이름만 다른지 또는 restricted token 명칭만 있는지로 통과시키지 않는다」 | P4.2 | 보존 |
-| T15 | 「명시적 환경 블록과 최소 handle 상속을 사용한다」 | P4.2 | 보존 |
+| T15 | 「명시적 환경 블록과 최소 handle 상속을 사용한다」 | P4.2 | 일반화 |
 | T16 | 「실행 뒤 uid/euid/gid/egid/groups/capability를 실제 child에서 관측하고」 | P4.3 | 일반화 |
 | T17 | 「그 설정 이름만으로 접근 거부를 대체하지 않는다」 | P4.3 | 보존 |
 | T18 | 「일반 `Popen`으로 다른 uid로 바꾸는 경로는 권한 없이 성립하지 않는다」 | P4.3 | 보존 |
@@ -170,9 +170,12 @@
 | T50 | 「worker는 이 전체 루트의 읽기·쓰기·삭제·교체가 거부돼야 한다」 | P4.4 | 일반화 |
 | T51 | 「Core state도 접근하지 못한다」 | P4.4 | 일반화 |
 | T52 | 「OS peer identity와 service identity를 확인하고 현재 Core operation·task/attempt·단회 request ID에 묶는다」 | P5.1 | 일반화 |
-| T53 | 「보조 group, capability, 상속 FD와 환경을 제거한다」 | P4.3 | 보존 |
+| T53 | 「보조 group, capability, 상속 FD와 환경을 제거한다」 | P4.3 | 일반화 |
 | T54 | 「제품이 읽어 확인한다」 | P3.2 | 보존 |
 | T55 | 「installer/Core/AGS/worker의 실제 principal ID」 | P3.2 | 일반화 |
+| T56 | 「고정 vendor subtree와 Core state subtree가 없음을 확인한 뒤 보호된 owner/ACL 또는 mode로 생성한다」 | P6.1 | 일반화 |
+| T57 | 「공개키 대응을 함께 읽어 검증한다」 | P6.2 | 일반화 |
+| T58 | 「읽기·서명, 쓰기 금지」 | P6.2 | 일반화 |
 | V01 | 「VM Core의 일반 `Popen`으로 직접 worker를 만드는 경로는 운영 모드에서 금지한다」 | V03-i | VM 전용 유지 |
 | V02 | 「운영 Core의 권위 상태 루트는 Windows `C:\ProgramData\flowmarshal\core-state`, Linux `/var/lib/flowmarshal/core-state`로 고정한다」 | V03-i | VM 전용 유지 |
 | V03 | 「Python VM Core의 Windows `python.exe`/Linux `python3` interpreter·module closure는 AGS V06-b가 생산할 수 없으므로 별도 VM package leaf가 필요하다」 | V03-i | VM 전용 유지 |
@@ -183,6 +186,7 @@
 | V08 | 「Linux worker service는 systemd의 별도 비특권 `User`/`Group`으로 시작한다」 | V03-i | VM 전용 유지 |
 | V09 | 「Linux `/etc/flowmarshal/protected-installation.json`에 둔다」 | V03-i | VM 전용 유지 |
 | V10 | 「VM Core가 sign 전에 현재 DB transaction의 prepared operation」 | V03-i | VM 전용 유지 |
+| V11 | 「AGS workflow/continuity/trust DB와 그 sidecar·로그는 이 루트 또는 동등하게 보호된 자식 경로에 둔다」 | V03-i | VM 전용 유지 |
 
 `일반화` 행의 강도 비교:
 
@@ -191,7 +195,9 @@
 - T16·T47: V03-i는 별도 principal로 시작하는 worker child의 identity와 접근 거부를 관측한다. AGS에서는 별도 principal이 보호 주체이므로 보호 주체와 그 자식의 실제 identity(P4.2·P4.3)와, 거부 시도를 수행한 worker·caller 프로세스의 실제 SID/uid·group(P4.4)을 모두 관측한다.
 - T45·T55: 필수 필드 목록을 유지하면서 VM 전용 경로(key/pin/VM Core state/worker endpoint)를 보호 파일·state·endpoint·실행물로, AGS fixture sha256을 이 계약과 소비 계약·fixture sha256으로, installer/Core/AGS/worker principal ID를 installer·보호 주체·caller·worker principal ID로 바꿨다. 필드 누락은 fail-closed다(P3.2).
 - T50·T51: VM Core state 루트의 worker 읽기·쓰기·삭제·교체 거부를 모든 AGS 보호 주체의 권위 state로 넓혔다(P4.4).
-- T52: Core→worker 요청의 peer·service identity 확인과 단회 request ID 결속을 caller→보호 주체 요청으로 옮겼다(P5.1).
+- T52: Core→worker 요청의 peer·service identity 확인과 단회 request ID·요청 문맥(Core operation·task/attempt) 결속을 caller→보호 주체 요청으로 옮기고, 요청 문맥은 소비 계약의 credential audience·realm·operation으로 바꿨다(P5.1).
+- T15·T53: V03-i는 worker 작업 자손에 적용한다. AGS는 worker를 실행하지 않으므로 같은 조건을 별도 principal인 보호 주체와 그 자식에 적용한다. 소비 계약이 요구하는 group만 남기는 예외는 그 계약의 역할 배치(B14-m storage group)를 위한 것이며 worker와의 group 공유는 P4.1이 계속 금지한다.
+- T56: VM vendor·Core state subtree의 부재 확인 후 보호 생성을 AGS 보호 subtree 전체로 넓혔다. T57·T58: key/pin 대응 동시 검증과 signer의 key 쓰기 금지를 installer만 비밀을 쓰는 규칙과 함께 해석되는 값의 동시 검증으로 넓혔다(P6.2).
 - T49: "pin 동시 확인"을 함께 해석되는 모든 값의 동시 확인으로 넓혔다. pin 자체는 VM 전용이다(V06).
 
-`VM 전용 유지` 근거: V06의 pin은 AGS가 VM producer를 검증하는 `vm-operator-policy.json`(AGS↔VM 경로, V03-j/k)의 pin이며 V03-i에 그대로 남는다. AGS core 보호 기록에는 P4.4가 같은 읽기 거부를 기본값으로 요구하고, B14-m이 명시 면제한 registry·journal·lock만 예외다(P1.4). V07·V08의 VM worker 실행 형식은 V03-i 공통 절이 소비 Task에 맡긴 서비스 주체다(T46). AGS 보호 주체가 상주 서비스 형식이면 SCM/systemd 시작을 그대로 요구한다(P4.2·P4.3). V09·V10은 VM 설치 기록 경로와 VM Core의 sign 전 재조회로, AGS core 소비자의 실행 선행이 아니다(P0.1).
+`VM 전용 유지` 근거: V06의 pin은 V03-i 접근 행렬에서 AGS reader가 VM producer 검증에 읽는 운영 pin이며(AGS↔VM 경로, V03-j/k) V03-i에 그대로 남는다. AGS core 보호 기록에는 P4.4가 같은 읽기 거부를 기본값으로 요구하고, B14-m이 명시 면제한 registry·journal·lock만 예외다(P1.4). V07·V08의 VM worker 실행 형식은 V03-i 공통 절이 소비 Task에 맡긴 서비스 주체다(T46). AGS 보호 주체가 상주 서비스 형식이면 SCM/systemd 시작을 그대로 요구한다(P4.2·P4.3). V09·V10·V11은 VM 설치 기록 경로, VM Core의 sign 전 재조회, VM Core state 루트 아래 AGS DB 배치로, AGS core 소비자의 실행 선행이 아니다(P0.1).
