@@ -20,6 +20,9 @@ const REPO = path.resolve(import.meta.dirname, '../../..');
 const CONTRACT_FILES = ['tests/coordinate-subagents/v3x/fixtures/protected-host-installation/manifest.json',
   'docs/implementation-3x/protected-node-closure-v2.ko.md'];
 const ARCHIVE = 'b'.repeat(64);
+// The host-integration pin names the manifest of this release commit, not whatever the working tree holds now.
+const RELEASE_COMMIT = '0724bb2bc452626aba546a57d1db5c407d32feb0';
+const git = (...args) => spawnSync('git', args, { cwd: REPO });
 
 test('trust pins are code constants: 0724bb2b host-integration, V03-i v1 manifest, v2 contract, b3b parent manifest', () => {
   assert.deepEqual(install.TRUST_PINS.hostIntegrationSha256s, ['648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c']);
@@ -27,7 +30,12 @@ test('trust pins are code constants: 0724bb2b host-integration, V03-i v1 manifes
   assert.equal(install.TRUST_PINS.v03i.manifestSha256, sha(readFileSync(path.join(REPO, CONTRACT_FILES[0]))));
   assert.deepEqual([install.TRUST_PINS.v03i.contractId, install.TRUST_PINS.v03i.revision], ['ags-vm-protected-host-installation/v1', '1']);
   assert.deepEqual([install.TRUST_PINS.v2.contractId, install.TRUST_PINS.v2.revision], ['ags-protected-node-closure/v2', '2']);
-  assert.equal(sha(readFileSync(path.join(REPO, 'host-integration.json'))), install.TRUST_PINS.hostIntegrationSha256s[0]);
+  // Fail closed: an unreadable object, a missing git or a shallow clone without the release is a FAIL, never a skip.
+  const blob = git('cat-file', 'blob', `${RELEASE_COMMIT}:host-integration.json`);
+  assert.equal(blob.status, 0, `cannot read ${RELEASE_COMMIT}:host-integration.json: ${blob.error ?? blob.stderr}`);
+  assert.equal(sha(blob.stdout), install.TRUST_PINS.hostIntegrationSha256s[0]);
+  const ancestor = git('merge-base', '--is-ancestor', RELEASE_COMMIT, 'HEAD');
+  assert.equal(ancestor.status, 0, `${RELEASE_COMMIT} is not an ancestor of HEAD: ${ancestor.error ?? ancestor.stderr}`);
 });
 
 function fixture() {
