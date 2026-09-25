@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
-import { copyFile, link, mkdir, mkdtemp, readFile, rename, rm, statfs, symlink, unlink, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { chmod, copyFile, link, mkdir, mkdtemp, readFile, rename, rm, statfs, symlink, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -118,26 +119,84 @@ test.skipIf(!linux)('decision table blocks missing generation and unstable file 
   }
 });
 
-test.skipIf(!linux)('helper source and artifact are bound to the manifest', async () => {
+test.skipIf(!linux)('callers cannot choose the helper or manifest location', async () => {
   const { observeLinuxStorageIdentity: observe } = await load();
+  const root = await temporary();
+  const target = join(root, 'target.sqlite3');
+  await writeFile(target, 'x');
+  // A self-consistent fake helper whose manifest matches its own bytes.
+  const fake = await copyHelper(root, 'fake');
+  const forged = { schema: 'AgsLinuxStorageIdentity.v1', status: 'OBSERVED', qualification: 'FIXTURE_ONLY',
+    fileSystem: { magic: '0xef53', name: 'ext4' }, fsid: '0000000000000001', inode: '0000000000000002',
+    generation: '00000003', handleType: 1, handleBytes: 8, handle: '0200000003000000',
+    identity: '0000000000000001:0000000000000002:00000001:0200000003000000', linkCount: 1 };
+  const script = `#!/bin/sh\nprintf '%s\\n' '${JSON.stringify(forged)}'\n`;
+  await writeFile(join(fake, 'resource-storage-linux'), script);
+  await chmod(join(fake, 'resource-storage-linux'), 0o755);
+  const fakeManifest = JSON.parse(await readFile(join(fake, 'manifest.json'), 'utf8'));
+  fakeManifest.artifactSha256 = createHash('sha256').update(script).digest('hex');
+  await writeFile(join(fake, 'manifest.json'), JSON.stringify(fakeManifest));
+
+  const rejected = (run) => {
+    let result;
+    try { result = run(); } catch (error) { return expect(String(error)).toMatch(/CALLER_FIELD_REJECTED/); }
+    expect(result.status).not.toBe('OBSERVED');
+  };
+  rejected(() => observe(target, { helperDirectory: fake }));
+  rejected(() => observe(target, { manifest: join(fake, 'manifest.json') }));
+  rejected(() => observe(target, { helperDirectory: fake, manifest: join(fake, 'manifest.json') }));
+  // Even a copied consume.mjs next to the fake helper refuses it: digests are pinned in code.
+  const copied = (await import(join(fake, 'consume.mjs'))).observeLinuxStorageIdentity(target);
+  expect(copied).toMatchObject({ status: 'UNKNOWN', code: 'HELPER_DIGEST_MISMATCH' });
+});
+
+test.skipIf(!linux)('only two OBSERVED observations can share an identity', async () => {
+  const { observeLinuxStorageIdentity: observe, sameStorageIdentity } = await load();
+  const root = await temporary();
+  if ((await statfs(root)).type !== 0xef53) return;
+  const first = join(root, 'first.sqlite3');
+  await writeFile(first, 'one');
+  const alone = observe(first);
+  expect(alone.status).toBe('OBSERVED');
+  await link(first, join(root, 'alias.sqlite3'));
+  const aliasA = observe(first);
+  const aliasB = observe(join(root, 'alias.sqlite3'));
+  expect(aliasA.status).toBe('BLOCKED_ALIAS');
+  expect(aliasA.identity).toBe(aliasB.identity);
+  expect(sameStorageIdentity(aliasA, aliasB)).toBe(false);
+  expect(sameStorageIdentity(aliasA, alone)).toBe(false);
+  expect(sameStorageIdentity(alone, aliasB)).toBe(false);
+  expect(sameStorageIdentity(alone, { ...alone, status: 'BLOCKED_PATH_CHANGED' })).toBe(false);
+  expect(sameStorageIdentity(alone, { ...alone, linkCount: 2 })).toBe(false);
+  await unlink(join(root, 'alias.sqlite3'));
+  expect(sameStorageIdentity(alone, observe(first))).toBe(true);
+});
+
+test.skipIf(!linux)('helper source and artifact are bound to the manifest', async () => {
   const manifest = JSON.parse(await readFile(join(helperDirectory, 'manifest.json'), 'utf8'));
   const root = await temporary();
   const target = join(root, 'target.sqlite3');
   await writeFile(target, 'x');
 
+  const { PINNED_SOURCE_SHA256, PINNED_ARTIFACT_SHA256 } = await load();
+  expect(manifest.sourceSha256).toBe(PINNED_SOURCE_SHA256);
+  expect(manifest.artifactSha256).toBe(PINNED_ARTIFACT_SHA256);
+  // Each copy runs its own consume.mjs, which reads only files beside itself.
+  const copiedObserve = async (directory) => (await import(join(directory, 'consume.mjs'))).observeLinuxStorageIdentity(target);
+
   const damaged = await copyHelper(root, 'damaged');
   const bytes = await readFile(join(damaged, manifest.artifact));
   bytes[bytes.length - 1] ^= 0xff;
   await writeFile(join(damaged, manifest.artifact), bytes);
-  expect(observe(target, { helperDirectory: damaged })).toMatchObject({ status: 'UNKNOWN', code: 'HELPER_DIGEST_MISMATCH' });
+  expect(await copiedObserve(damaged)).toMatchObject({ status: 'UNKNOWN', code: 'HELPER_DIGEST_MISMATCH' });
 
   const changedSource = await copyHelper(root, 'changed-source');
   await writeFile(join(changedSource, manifest.source), 'different source');
-  expect(observe(target, { helperDirectory: changedSource })).toMatchObject({ status: 'UNKNOWN', code: 'HELPER_DIGEST_MISMATCH' });
+  expect(await copiedObserve(changedSource)).toMatchObject({ status: 'UNKNOWN', code: 'HELPER_DIGEST_MISMATCH' });
 
   const missingSource = await copyHelper(root, 'missing-source');
   await unlink(join(missingSource, manifest.source));
-  expect(observe(target, { helperDirectory: missingSource })).toMatchObject({ status: 'UNKNOWN', code: 'HELPER_DIGEST_MISMATCH' });
+  expect(await copiedObserve(missingSource)).toMatchObject({ status: 'UNKNOWN', code: 'HELPER_DIGEST_MISMATCH' });
 
   const { buildHelper, compilerVersion, COMPILE_FLAGS } = await import(join(helperDirectory, 'build.mjs'));
   expect(manifest.flags).toEqual([...COMPILE_FLAGS]);

@@ -3,6 +3,8 @@
 // The helper bytes and source are measured against manifest.json before every
 // run. Callers cannot supply an expected identity: identities only come from
 // helper observations of an open handle and are compared with each other.
+// The helper location is fixed to this module's directory and the expected
+// digests are pinned here as well as in manifest.json; callers cannot move it.
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -16,32 +18,37 @@ const FAILURE_STATUSES = new Set([
   'BLOCKED_NO_GENERATION', 'UNSUPPORTED_FILESYSTEM',
 ]);
 const EXIT_BY_STATUS = { OBSERVED: 0, BLOCKED_ALIAS: 2, UNKNOWN: 1 };
-const ALLOWED_OPTIONS = new Set(['helperDirectory']);
-const defaultDirectory = fileURLToPath(new URL('.', import.meta.url));
+export const PINNED_SOURCE_SHA256 = 'bf69234c256bd98764cddadfbe58a247f72dcab671d08330640a011bf53986e0';
+export const PINNED_ARTIFACT_SHA256 = 'a4ec62796354f92433a6f5f3dd793475d4027bb9878dbcc7adbc82c17663efe0';
+const HELPER_DIRECTORY = fileURLToPath(new URL('.', import.meta.url));
+const SOURCE = 'resource-storage-linux.c';
+const ARTIFACT = 'resource-storage-linux';
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const unknown = (code) => ({ status: 'UNKNOWN', qualification: 'FIXTURE_ONLY', code });
 
-function measuredHelper(directory) {
+function measuredHelper() {
   let manifest;
   try {
-    manifest = JSON.parse(readFileSync(join(directory, 'manifest.json'), 'utf8'));
+    manifest = JSON.parse(readFileSync(join(HELPER_DIRECTORY, 'manifest.json'), 'utf8'));
   } catch {
     return { error: 'HELPER_MANIFEST_INVALID' };
   }
-  if (manifest?.schema !== 'AgsLinuxStorageHelperManifest.v1' ||
-      !/^[0-9a-f]{64}$/.test(manifest.sourceSha256 ?? '') ||
-      !/^[0-9a-f]{64}$/.test(manifest.artifactSha256 ?? '')) {
+  if (manifest?.schema !== 'AgsLinuxStorageHelperManifest.v1' || manifest.source !== SOURCE ||
+      manifest.artifact !== ARTIFACT) {
     return { error: 'HELPER_MANIFEST_INVALID' };
   }
+  if (manifest.sourceSha256 !== PINNED_SOURCE_SHA256 || manifest.artifactSha256 !== PINNED_ARTIFACT_SHA256) {
+    return { error: 'HELPER_DIGEST_MISMATCH' };
+  }
   try {
-    if (sha256(readFileSync(join(directory, manifest.source))) !== manifest.sourceSha256 ||
-        sha256(readFileSync(join(directory, manifest.artifact))) !== manifest.artifactSha256) {
+    if (sha256(readFileSync(join(HELPER_DIRECTORY, SOURCE))) !== PINNED_SOURCE_SHA256 ||
+        sha256(readFileSync(join(HELPER_DIRECTORY, ARTIFACT))) !== PINNED_ARTIFACT_SHA256) {
       return { error: 'HELPER_DIGEST_MISMATCH' };
     }
   } catch {
     return { error: 'HELPER_DIGEST_MISMATCH' };
   }
-  return { artifact: join(directory, manifest.artifact), manifest };
+  return { artifact: join(HELPER_DIRECTORY, ARTIFACT) };
 }
 
 function validObservation(body) {
@@ -57,12 +64,13 @@ function validObservation(body) {
 }
 
 export function observeLinuxStorageIdentity(path, options = {}) {
-  for (const key of Object.keys(options)) {
-    if (!ALLOWED_OPTIONS.has(key)) throw new TypeError(`CALLER_FIELD_REJECTED: ${key}`);
+  // No caller option is accepted: not a helper location, manifest or expected identity.
+  if (options === null || typeof options !== 'object' || Reflect.ownKeys(options).length > 0) {
+    throw new TypeError(`CALLER_FIELD_REJECTED: ${String(Reflect.ownKeys(options ?? {})[0] ?? typeof options)}`);
   }
   if (process.platform !== 'linux') return unknown('UNSUPPORTED_PLATFORM');
   if (typeof path !== 'string' || !isAbsolute(path)) return unknown('INVALID_PATH');
-  const helper = measuredHelper(options.helperDirectory ?? defaultDirectory);
+  const helper = measuredHelper();
   if (helper.error) return unknown(helper.error);
   const child = spawnSync(helper.artifact, [path], { cwd: '/', encoding: 'utf8', env: {}, timeout: 10_000 });
   if (child.error || child.signal) return unknown('HELPER_EXECUTION_FAILED');
@@ -85,10 +93,11 @@ export function observeLinuxStorageIdentity(path, options = {}) {
   return unknown('HELPER_OUTPUT_INVALID');
 }
 
-// Both arguments must be helper observations; strings or caller JSON never match.
+// Both arguments must be OBSERVED helper observations (link count 1); aliases,
+// BLOCKED_* results, strings or caller JSON never match.
 export function sameStorageIdentity(left, right) {
-  return [left, right].every((body) => body?.schema === SCHEMA && validObservation(body)) &&
-    left.identity === right.identity;
+  return [left, right].every((body) => body?.schema === SCHEMA && body.status === 'OBSERVED' &&
+    body.linkCount === 1 && validObservation(body)) && left.identity === right.identity;
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
