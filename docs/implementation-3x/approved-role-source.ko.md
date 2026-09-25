@@ -71,7 +71,7 @@ A2 서명은 선택한 FM producer가 그 내용을 냈다는 same-user 주장�
 | `vm-r16g` (R16-g) | **UNQUALIFIED_PENDING** | — | NOT_STARTED | 미확정 | 미확정 | 미확정 | 미확정 |
 | `vm-r16f-leaves` (R16-f-contract, R16-f-a/b/c) | **UNQUALIFIED_PENDING** | — | NOT_STARTED | 미확정 | 미확정 | 미확정 | 미확정 |
 
-자격을 갖춘 VM 행들은 **조회와 단회 소비까지만** 보장한다. VM 경로의 reservation·효과 시점 CAS·unknown 보장은 모두 PENDING 행(R16-d/R16-f 계열)에 있으므로, 이 계약은 VM approved-slot 효과 시작을 **해제하지 않는다**. `UNQUALIFIED_PENDING` 행은 수용 source, dependency·evidence 충족, VM 실행 해제의 근거로 쓰지 않는다(`usableAs=[]`). 미통합 후보 브랜치(`codex/v3x-r16-approved-slots`, R_VM worktree)의 내용은 이 계약의 입력이 아니다. FM main `src/flowmarshal/engine/governance_gate.py:927-934`에 따르면 approved slot의 `vm-protected-v1` signer 검증은 아직 후속 과제이고 A2 producer는 거부된다. VM 응답을 이 공통 snapshot 모양으로 바꾸는 adapter의 소유 Task도 아직 정해지지 않았다. 둘 다 이 계약의 runtime 자격 밖이다.
+자격을 갖춘 VM 행들은 **조회와 단회 소비까지만** 보장한다. VM 경로의 reservation·효과 시점 CAS·unknown 보장은 모두 PENDING 행(R16-d/R16-f 계열)에 있으므로, 이 계약은 VM approved-slot 효과 시작을 **해제하지 않는다**. `UNQUALIFIED_PENDING` 행은 수용 source, dependency·evidence 충족, VM 실행 해제의 근거로 쓰지 않는다(`usableAs=[]`). 미통합 후보 브랜치(`codex/v3x-r16-approved-slots`, R_VM worktree)의 내용은 이 계약의 입력이 아니다. FM main `fed976f4b100a13920c5e8e1f5e533ac41116a77`의 `src/flowmarshal/engine/governance_gate.py:910-916`에 따르면 approved slot의 `vm-protected-v1` signer 검증은 아직 후속 과제이고 A2 producer는 거부된다. VM 응답을 이 공통 snapshot 모양으로 바꾸는 adapter의 소유 Task도 아직 정해지지 않았다. 둘 다 이 계약의 runtime 자격 밖이다.
 
 ## 재검증
 
