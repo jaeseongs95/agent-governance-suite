@@ -17,8 +17,8 @@ const rows = contract
   .map(([, id, quote, targets, status]) => ({ id, quote, targets: targets.trim(), status: status.trim() }));
 
 const expectedIds = [
-  ...Array.from({ length: 49 }, (_, i) => `T${String(i + 1).padStart(2, '0')}`),
-  ...Array.from({ length: 8 }, (_, i) => `V${String(i + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 55 }, (_, i) => `T${String(i + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 10 }, (_, i) => `V${String(i + 1).padStart(2, '0')}`),
 ];
 
 // Each carried condition must still read as the hard condition in its first target clause.
@@ -72,6 +72,12 @@ const keyText = {
   T47: 'user/group·enabled privileges·integrity를 실제로 측정한다',
   T48: '`no_new_privs` 등 재상승 방어를 적용하되',
   T49: '동시 확인과 재qualification으로만 한다',
+  T50: '권위 state(DB와 sidecar·journal·로그, 보호 artifact 등)는 읽기·쓰기·삭제·교체를 모두 거부해야 한다',
+  T51: '권위 state(DB와 sidecar·journal·로그, 보호 artifact 등)는 읽기·쓰기·삭제·교체를 모두 거부해야 한다',
+  T52: 'OS peer identity(Windows named-pipe client 실효 token, Linux `SO_PEERCRED` 등)와 보호 서비스 identity를 확인하고 단회 request ID에 묶는다',
+  T53: '보조 group·capability·상속 FD·환경을 제거하고',
+  T54: '설치 기록을 읽어 실제 관측과 대조하며, 기록만으로 통과시키지 않는다',
+  T55: 'installer·보호 주체·caller·worker의 실제 principal ID',
 };
 
 const clauseText = (clause) => {
@@ -85,6 +91,21 @@ const sectionOf = (quote) => {
   const at = v03i.indexOf(quote);
   const heading = v03i.slice(0, at).match(/^## .+$/gm);
   return heading?.at(-1);
+};
+
+const CLAUSE_DIGESTS = {
+  preamble: '7a1c8a7e9b9afde4987db88d762f0762f02a74dcc80e48680b01db15dff9e3d3',
+  P0: 'c0caefd4f4b2dd7cf5945b08f17543b843f91e07dfc27cbe8464cee3dbd86200',
+  P1: 'd1c175b6a94cebbdf5975017bb74152e99f592d281353720d599d231dd647954',
+  P2: '40ac8b5e1612834e434bae35fef2a2707ed84d20233d16c506a3ffe062fc4958',
+  P3: 'cd87f7e1705aebe8903f6a9688443959d7f1554e5102027433ccc8a1ef1adddb',
+  P4: 'b733eb182b3bdafe71978619847e38bdb4a3cd1b57b2320fa50e48dff4348ef7',
+  P5: '61c39dcf27bdea47213b0f20f8e11045a5166bbdd4f177a7b12397cf85735331',
+  P6: 'ef8fbec5341aeebe7a3fb19eeb83b23d81d5ff52a803cd27d20cd363999c3457',
+  P7: '64856041c82e6207a71e4eac036e06191a43378e3fb32650560333fd4b265f32',
+  P8: 'd983f3a8e081aacde4ccd174a165b3be2bc71fc67c238797c6a88fae5d17eebf',
+  P9: '071deadc7209a076ad8eea83a90696f539b10950f19b663b41b4b0c9e08cec4f',
+  P10: 'a79956a121ed221c3887506d63c75e9b60de75d5b0659bf79d6ea7d644ce240e',
 };
 
 describe('B14-s AGS protected provisioning contract', () => {
@@ -121,7 +142,18 @@ describe('B14-s AGS protected provisioning contract', () => {
       expect(clauseText(first), `${row.id} → ${first}`).toContain(keyText[row.id]);
     }
     expect(clauseText('P3.2')).toMatch(/하나라도 없거나 조회하지 못하면 fail-closed다/);
-    expect(clauseText('P4.4')).toMatch(/읽기 거부는 소비 계약이 요구할 때만 요구한다\(B14-m registry는 요구하지 않음\)/);
+    expect(clauseText('P4.4')).toContain('기본값으로 읽기도 거부해야 한다. 동결된 소비 계약이 비밀이 없다는 근거로 명시 면제한 기록만 읽기 거부를 요구하지 않는다(B14-m의 registry·journal·lock).');
+  });
+
+  test('freezes the normative clause bytes', () => {
+    // Any edit to a clause, including an added exception or a dropped sentence, must re-pin here after review.
+    const sections = [...contract.matchAll(/^## (P\d+)\. /gm)];
+    const sha = (text) => createHash('sha256').update(text).digest('hex');
+    const digests = Object.fromEntries([
+      ['preamble', sha(contract.slice(0, sections[0].index))],
+      ...sections.map((match, index, all) => [match[1], sha(contract.slice(match.index, all[index + 1]?.index ?? contract.length))]),
+    ]);
+    expect(digests).toEqual(CLAUSE_DIGESTS);
   });
 
   test('covers each normative V03-i section and records no deleted or relaxed hard condition', () => {
