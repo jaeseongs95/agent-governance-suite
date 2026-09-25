@@ -18,6 +18,10 @@
       "sha256": "sha256:18aadedaaa4c465771316a1889c0affea108344ce96ccbc615d35830869585c4"
     },
     {
+      "path": "contracts/approved-role-source.v1.schema.json",
+      "sha256": "sha256:36052c37f6000a3a1fe8db9cb011b1287b01d046736a0f3a62618f162d534822"
+    },
+    {
       "path": "contracts/artifact-ref.v1.schema.json",
       "sha256": "sha256:4ce69d3eee792fc5575f715c177794a38b20f8176b8951b532938c578578228b"
     },
@@ -723,6 +727,7 @@
         ".mcp.json",
         "contracts/acknowledge-session-messages-request.v1.schema.json",
         "contracts/api-result.v1.schema.json",
+        "contracts/approved-role-source.v1.schema.json",
         "contracts/artifact-ref.v1.schema.json",
         "contracts/attempt-lease.v1.schema.json",
         "contracts/attempt-outcome.v1.schema.json",

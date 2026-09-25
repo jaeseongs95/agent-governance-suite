@@ -1,0 +1,314 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/approved-role-source.v1.schema.json",
+  "title": "ApprovedRoleSourceSnapshot.v1",
+  "description": "Shape of a current approved role source read through the common port. Schema validity is not provenance: ports never accept a snapshot as input and obtain it only by their own server-side read. The snapshot grants neither execution nor effect start. Reservation and effect start use the separate $defs contracts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "producer", "scope", "approval", "currentness", "revocation", "slots", "inputProvenance", "grants"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "kind": { "const": "approved-role-source-snapshot" },
+    "producer": { "$ref": "#/$defs/producer" },
+    "scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["taskId", "runId"],
+      "properties": {
+        "projectId": { "$ref": "#/$defs/id" },
+        "taskId": { "$ref": "#/$defs/id" },
+        "runId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "approval": {
+      "type": "object", "additionalProperties": false,
+      "required": ["origin", "approvalId", "approvalRevision", "approvalDigest"],
+      "properties": {
+        "origin": { "enum": ["ags-workflow-approval-record", "vm-core-goal-authorization"] },
+        "approvalId": { "$ref": "#/$defs/id" },
+        "approvalRevision": { "$ref": "#/$defs/revision" },
+        "approvalDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "currentness": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "sourceRevision", "snapshotId", "snapshotDigest"],
+      "properties": {
+        "state": { "const": "current" },
+        "sourceRevision": { "$ref": "#/$defs/revision" },
+        "snapshotId": { "$ref": "#/$defs/id" },
+        "snapshotDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "revocation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state"],
+      "properties": { "state": { "const": "not-revoked" } }
+    },
+    "slots": {
+      "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["slotId", "stageId", "assignmentId"],
+        "properties": {
+          "slotId": { "$ref": "#/$defs/slotId" },
+          "stageId": { "$ref": "#/$defs/id" },
+          "assignmentId": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "inputProvenance": { "const": "server-owned-current-read" },
+    "grants": {
+      "type": "object", "additionalProperties": false,
+      "required": ["executionAuthorized", "effectAuthorized"],
+      "properties": {
+        "executionAuthorized": { "const": false },
+        "effectAuthorized": { "const": false }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "type": "object", "required": ["producer"],
+        "properties": { "producer": { "type": "object", "required": ["owner"], "properties": { "owner": { "const": "ags-workflow" } } } }
+      },
+      "then": { "type": "object", "properties": { "approval": { "type": "object", "properties": { "origin": { "const": "ags-workflow-approval-record" } } } } },
+      "else": { "type": "object", "properties": { "approval": { "type": "object", "properties": { "origin": { "const": "vm-core-goal-authorization" } } } } }
+    },
+    {
+      "if": {
+        "type": "object", "required": ["producer"],
+        "properties": { "producer": { "type": "object", "required": ["owner"], "properties": { "owner": { "const": "flowmarshal-engine" } } } }
+      },
+      "then": { "type": "object", "properties": { "scope": { "type": "object", "required": ["projectId"] } } }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "slotId": { "type": "string", "pattern": "^slot-sha256:[a-f0-9]{64}$" },
+    "revision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "sha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "producer": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["owner", "producerTask", "verification", "principal"],
+          "properties": {
+            "owner": { "const": "ags-workflow" },
+            "producerTask": { "const": "R18" },
+            "verification": { "const": "ags-server-store-same-transaction-read" },
+            "principal": {
+              "allOf": [
+                { "$ref": "#/$defs/principalClaim" },
+                { "type": "object", "properties": { "profileId": { "const": "ags-local-server" }, "protectedPrincipal": { "const": false } } }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["owner", "producerTask", "verification", "principal"],
+          "properties": {
+            "owner": { "const": "flowmarshal-engine" },
+            "producerTask": { "const": "R16-b" },
+            "verification": { "const": "vm-signed-control-one-use-registry" },
+            "principal": {
+              "allOf": [
+                { "$ref": "#/$defs/principalClaim" },
+                { "type": "object", "properties": { "profileId": { "const": "vm-protected-v1" } } }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "principalClaim": {
+      "description": "Who stands behind the approval. A2 same-user signatures stay same-user claims and never become protected principal evidence.",
+      "type": "object", "additionalProperties": false,
+      "required": ["profileId", "protectedPrincipal"],
+      "properties": {
+        "profileId": { "enum": ["ags-local-server", "vm-protected-v1", "flowmarshal-same-user-v1"] },
+        "protectedPrincipal": { "type": "boolean" }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "required": ["profileId"], "properties": { "profileId": { "enum": ["flowmarshal-same-user-v1", "ags-local-server"] } } },
+          "then": { "type": "object", "properties": { "protectedPrincipal": { "const": false } } }
+        }
+      ]
+    },
+    "reservation": {
+      "description": "Claim bound to one slot of one current snapshot before any effect. Pending claims carry no session identity; unknown is terminal until reconciliation and never becomes success or cancellation.",
+      "type": "object", "additionalProperties": false,
+      "required": ["reservationId", "slotId", "snapshotDigest", "sourceRevision", "state", "identity"],
+      "properties": {
+        "reservationId": { "$ref": "#/$defs/id" },
+        "slotId": { "$ref": "#/$defs/slotId" },
+        "snapshotDigest": { "$ref": "#/$defs/digest" },
+        "sourceRevision": { "$ref": "#/$defs/revision" },
+        "state": { "enum": ["pending", "bound", "admitted", "closed", "unknown"] },
+        "identity": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object", "additionalProperties": false,
+              "required": ["actorId", "host", "sessionId", "verifiedBy"],
+              "properties": {
+                "actorId": { "$ref": "#/$defs/id" },
+                "host": { "$ref": "#/$defs/id" },
+                "sessionId": { "$ref": "#/$defs/id" },
+                "verifiedBy": { "enum": ["ags-server-session-binding", "vm-trusted-create-thread-receipt"] }
+              }
+            }
+          ]
+        },
+        "closeReason": { "enum": ["effect-finished", "revoked-before-effect", "stale-before-effect", "reconciled-unknown"] }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "required": ["state"], "properties": { "state": { "const": "pending" } } },
+          "then": { "type": "object", "properties": { "identity": { "type": "null" } }, "not": { "required": ["closeReason"] } }
+        },
+        {
+          "if": { "type": "object", "required": ["state"], "properties": { "state": { "enum": ["bound", "admitted"] } } },
+          "then": { "type": "object", "properties": { "identity": { "type": "object" } }, "not": { "required": ["closeReason"] } }
+        },
+        {
+          "if": { "type": "object", "required": ["state"], "properties": { "state": { "const": "closed" } } },
+          "then": { "type": "object", "required": ["closeReason"] }
+        },
+        {
+          "if": { "type": "object", "required": ["state"], "properties": { "state": { "const": "unknown" } } },
+          "then": { "type": "object", "not": { "required": ["closeReason"] } }
+        }
+      ]
+    },
+    "reservationTransitions": {
+      "description": "The only allowed monotonic transitions. Anything else is rejected. The port (R19) additionally enforces that unknown closes only with closeReason reconciled-unknown, because a single reservation instance cannot show its previous state.",
+      "const": {
+        "pending": ["bound", "closed", "unknown"],
+        "bound": ["admitted", "closed", "unknown"],
+        "admitted": ["closed", "unknown"],
+        "unknown": ["closed"],
+        "closed": []
+      }
+    },
+    "effectStartDecision": {
+      "description": "Result of the effect-start port. start requires an admitted reservation whose snapshot and slot are still current and unrevoked when rechecked in the same write transaction as the effect intent. unknown does not assert whether the effect was invoked.",
+      "type": "object", "additionalProperties": false,
+      "required": ["decision", "reservationId", "slotId", "recheckedSourceRevision"],
+      "properties": {
+        "decision": { "enum": ["start", "deny", "unknown"] },
+        "reservationId": { "$ref": "#/$defs/id" },
+        "slotId": { "$ref": "#/$defs/slotId" },
+        "recheckedSourceRevision": { "$ref": "#/$defs/revision" },
+        "invokeCount": { "type": "integer", "minimum": 0, "maximum": 1 },
+        "denyReason": { "enum": ["caller-supplied-source", "unknown-slot", "stale-revision", "revoked", "reservation-not-admitted", "identity-unverified", "same-user-not-protected", "source-unqualified"] }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "required": ["decision"], "properties": { "decision": { "const": "deny" } } },
+          "then": { "type": "object", "required": ["denyReason", "invokeCount"], "properties": { "invokeCount": { "const": 0 } } },
+          "else": { "type": "object", "not": { "required": ["denyReason"] } }
+        },
+        {
+          "if": { "type": "object", "required": ["decision"], "properties": { "decision": { "const": "start" } } },
+          "then": { "type": "object", "required": ["invokeCount"], "properties": { "invokeCount": { "const": 1 } } }
+        },
+        {
+          "if": { "type": "object", "required": ["decision"], "properties": { "decision": { "const": "unknown" } } },
+          "then": { "type": "object", "not": { "required": ["invokeCount"] } }
+        }
+      ]
+    },
+    "pendingVmTask": {
+      "description": "VM tasks not integrated into FM main or the AGS integration branch at r39. Rows naming them can never qualify.",
+      "enum": ["R16-d", "R16-f", "R16-g", "R16-f-contract", "R16-f-a", "R16-f-b", "R16-f-c"]
+    },
+    "correspondenceRow": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rowId", "source", "tasks", "qualification", "implementationState", "statesProvided", "reservationGuarantee", "unknownGuarantee", "enforcementPoints", "usableAs", "runtimeQualification"],
+      "properties": {
+        "rowId": { "$ref": "#/$defs/id" },
+        "source": { "enum": ["ags", "vm"] },
+        "tasks": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "qualification": { "enum": ["QUALIFIED", "UNQUALIFIED_PENDING"] },
+        "integration": {
+          "type": "object", "additionalProperties": false,
+          "required": ["repository", "ref", "sha"],
+          "properties": {
+            "repository": { "enum": ["AGS", "FM"] },
+            "ref": { "enum": ["codex/v260-semantic-decision-layer", "main"] },
+            "sha": { "$ref": "#/$defs/sha" }
+          },
+          "oneOf": [
+            { "type": "object", "properties": { "repository": { "const": "AGS" }, "ref": { "const": "codex/v260-semantic-decision-layer" } } },
+            { "type": "object", "properties": { "repository": { "const": "FM" }, "ref": { "const": "main" } } }
+          ]
+        },
+        "implementationState": { "enum": ["NOT_IMPLEMENTED", "IMPLEMENTED_INTEGRATED", "BLOCKED", "NOT_STARTED"] },
+        "statesProvided": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "reservationGuarantee": { "type": "string", "minLength": 1 },
+        "unknownGuarantee": { "type": "string", "minLength": 1 },
+        "enforcementPoints": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "usableAs": { "type": "array", "uniqueItems": true, "items": { "const": "contract-freeze-input" } },
+        "runtimeQualification": { "const": "NOT_CLAIMED" }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "required": ["tasks"], "properties": { "tasks": { "type": "array", "contains": { "$ref": "#/$defs/pendingVmTask" } } } },
+          "then": { "type": "object", "properties": { "source": { "const": "vm" }, "qualification": { "const": "UNQUALIFIED_PENDING" } } }
+        },
+        {
+          "if": { "type": "object", "required": ["source"], "properties": { "source": { "const": "ags" } } },
+          "then": { "type": "object", "properties": { "tasks": { "type": "array", "items": { "enum": ["R18", "R19"] } } } }
+        },
+        {
+          "if": { "type": "object", "required": ["qualification"], "properties": { "qualification": { "const": "UNQUALIFIED_PENDING" } } },
+          "then": {
+            "type": "object",
+            "properties": { "usableAs": { "type": "array", "maxItems": 0 }, "implementationState": { "enum": ["BLOCKED", "NOT_STARTED"] } },
+            "not": { "required": ["integration"] }
+          }
+        },
+        {
+          "if": { "type": "object", "required": ["qualification", "source"], "properties": { "qualification": { "const": "QUALIFIED" }, "source": { "const": "vm" } } },
+          "then": {
+            "type": "object", "required": ["integration"],
+            "properties": { "implementationState": { "const": "IMPLEMENTED_INTEGRATED" }, "tasks": { "type": "array", "items": { "enum": ["R16-a", "R16-b", "R16-c", "R16-e", "R16"] } } }
+          }
+        },
+        {
+          "if": { "type": "object", "required": ["qualification", "source"], "properties": { "qualification": { "const": "QUALIFIED" }, "source": { "const": "ags" } } },
+          "then": { "type": "object", "properties": { "implementationState": { "const": "NOT_IMPLEMENTED" } }, "not": { "required": ["integration"] } }
+        }
+      ]
+    },
+    "contractFreeze": {
+      "description": "Row IDs must be unique; JSON Schema cannot express that, so consumers check it (R17.test.mjs does).",
+      "type": "object", "additionalProperties": false,
+      "required": ["task", "verdict", "progressRequest", "rows", "agsCoreIndependentOfVmRuntime"],
+      "properties": {
+        "task": { "const": "R17" },
+        "verdict": { "enum": ["APPROVED_ROLE_SOURCE_PORT_FROZEN", "CONTRACT_FAILED", "NOT_RUN"] },
+        "progressRequest": { "enum": ["COMPLETED", "BLOCKED", "NOT_RUN"] },
+        "rows": {
+          "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/correspondenceRow" },
+          "allOf": [
+            { "contains": { "type": "object", "properties": { "tasks": { "type": "array", "contains": { "const": "R16-d" } } }, "required": ["tasks"] } },
+            { "contains": { "type": "object", "properties": { "tasks": { "type": "array", "contains": { "const": "R16-f" } } }, "required": ["tasks"] } }
+          ]
+        },
+        "agsCoreIndependentOfVmRuntime": { "const": true }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "required": ["verdict"], "properties": { "verdict": { "const": "APPROVED_ROLE_SOURCE_PORT_FROZEN" } } },
+          "then": { "type": "object", "properties": { "progressRequest": { "const": "COMPLETED" } } },
+          "else": { "type": "object", "properties": { "progressRequest": { "enum": ["BLOCKED", "NOT_RUN"] } } }
+        }
+      ]
+    }
+  }
+}
