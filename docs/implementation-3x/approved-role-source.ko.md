@@ -27,16 +27,16 @@
 | `reserveApprovedRole(snapshotDigest, sourceRevision, slotId)` | 방금 읽은 snapshot 식별자 | `pending` reservation. 이 시점에는 session 신원이 없다(`identity=null`). |
 | `bindReservation(reservationId, verifiedIdentity)` | 서버가 검증한 actor/host/session | `pending→bound`. 신원의 출처는 `ags-server-session-binding` 또는 `vm-trusted-create-thread-receipt`만 인정한다. 같은 receipt는 멱등이고, 다른 신원으로 다시 결속할 수 없다. |
 | `admitReservation(reservationId)` | — | `bound→admitted`. 현재 source revision·철회 상태를 다시 비교해 일치할 때만 넘어간다. |
-| `beginEffect(reservationId)` | — | `EffectStartDecision`. 효과 intent와 **같은 write transaction**에서 현재 revision·철회·slot 소속을 다시 확인한다. `start`에는 `admitted` 상태와 현재 revision 일치가 둘 다 필요하다. `deny`이면 `invokeCount=0`이다. |
+| `beginEffect(reservationId)` | — | `EffectStartDecision`. 효과 intent와 **같은 write transaction**에서 현재 revision·철회·slot 소속을 다시 확인한다. `start`에는 `admitted` 상태와 현재 revision 일치가 둘 다 필요하다. `EffectStartDecision`과 reservation은 모두 `slotId`를 가진다. `start`이면 `invokeCount=1`, `deny`이면 `invokeCount=0`이다. `unknown`은 invoke 여부를 단정하지 않으므로 `invokeCount`를 적지 않는다. |
 | `revokeApprovedRole(scope, reason)` | source owner의 철회 사건 | 현재 조회를 즉시 닫는다. 효과 전의 reservation은 `closed(revoked-before-effect)`로 닫고 invoke를 하지 않는다. 효과가 시작됐을 수 있으면 취소 성공을 거짓으로 보고하지 않고 `unknown`으로 둔다. |
 
-상태는 한쪽 방향으로만 바뀐다(schema `$defs.reservationTransitions`): `pending→bound|closed|unknown`, `bound→admitted|closed|unknown`, `admitted→closed|unknown`, `unknown→closed`(대조를 마친 뒤 `reconciled-unknown`만 가능). `closed`에서는 더 이동하지 않는다. crash나 응답 유실로 효과가 시작됐는지 알 수 없으면 `unknown`을 유지한다. `unknown`은 성공으로도 취소로도 바꾸지 않고, 그 slot을 새로 발급하지 않는다.
+상태는 한쪽 방향으로만 바뀐다(schema `$defs.reservationTransitions`): `pending→bound|closed|unknown`, `bound→admitted|closed|unknown`, `admitted→closed|unknown`, `unknown→closed`(대조를 마친 뒤 `reconciled-unknown`만 가능). reservation 인스턴스 하나로는 이전 상태를 알 수 없으므로, 이 `closeReason` 제한과 전이 순서는 R19 Port가 강제한다. `closed`에서는 더 이동하지 않는다. crash나 응답 유실로 효과가 시작됐는지 알 수 없으면 `unknown`을 유지한다. `unknown`은 성공으로도 취소로도 바꾸지 않고, 그 slot을 새로 발급하지 않는다.
 
 ## 모든 source에서 권한이 되지 않는 입력
 
 | 입력 | 거부 지점 | `denyReason` |
 |---|---|---|
-| 승인 기록 없는 caller JSON, MCP 인자, workspace 파일, caller가 보낸 `approved=true`·slot 본문·digest | snapshot은 `inputProvenance=server-owned-current-read`만 허용한다. VM은 서명된 단회 registry(`vm-approved-slot-source.ts:102-126`)만 받는다. | `caller-supplied-source` |
+| 승인 기록 없는 caller JSON, MCP 인자, workspace 파일, caller가 보낸 `approved=true`·slot 본문·digest | 어떤 Port도 snapshot을 입력으로 받지 않고, 서버가 직접 읽은 것만 쓴다. `inputProvenance`는 스스로 선언하는 값이므로 schema 적합만으로 출처가 증명되지 않는다. R19는 올바른 const 값을 갖춘 caller 제공 snapshot도 거부하는 반증 테스트를 둔다. VM은 서명된 단회 registry(`vm-approved-slot-source.ts:102-126`)만 받는다. | `caller-supplied-source` |
 | 현재 snapshot에 없는 임의 slot | `beginEffect`가 slot 소속을 확인한다. VM reader는 `approved-slot-reader.ts:62-71`에서 막는다. | `unknown-slot` |
 | stale revision(재승인, Plan 교체, 참여 변경, 이전 snapshot) | `currentness.state=current`여야 하고, admit·효과 시점에 다시 비교한다. VM은 `vm-approved-slot-source.ts:119,146-149`에서 막는다. | `stale-revision` |
 | revoked revision | snapshot은 `not-revoked`만 허용하고, 효과 시점에 다시 확인한다. | `revoked` |
@@ -71,7 +71,7 @@ A2 서명은 선택한 FM producer가 그 내용을 냈다는 same-user 주장�
 | `vm-r16g` (R16-g) | **UNQUALIFIED_PENDING** | — | NOT_STARTED | 미확정 | 미확정 | 미확정 | 미확정 |
 | `vm-r16f-leaves` (R16-f-contract, R16-f-a/b/c) | **UNQUALIFIED_PENDING** | — | NOT_STARTED | 미확정 | 미확정 | 미확정 | 미확정 |
 
-자격을 갖춘 VM 행들은 **조회와 단회 소비까지만** 보장한다. VM 경로의 reservation·효과 시점 CAS·unknown 보장은 모두 PENDING 행(R16-d/R16-f 계열)에 있으므로, 이 계약은 VM approved-slot 효과 시작을 **해제하지 않는다**. `UNQUALIFIED_PENDING` 행은 수용 source, dependency·evidence 충족, VM 실행 해제의 근거로 쓰지 않는다(`usableAs=[]`). 미통합 후보 브랜치(`codex/v3x-r16-approved-slots`, R_VM worktree)의 내용은 이 계약의 입력이 아니다.
+자격을 갖춘 VM 행들은 **조회와 단회 소비까지만** 보장한다. VM 경로의 reservation·효과 시점 CAS·unknown 보장은 모두 PENDING 행(R16-d/R16-f 계열)에 있으므로, 이 계약은 VM approved-slot 효과 시작을 **해제하지 않는다**. `UNQUALIFIED_PENDING` 행은 수용 source, dependency·evidence 충족, VM 실행 해제의 근거로 쓰지 않는다(`usableAs=[]`). 미통합 후보 브랜치(`codex/v3x-r16-approved-slots`, R_VM worktree)의 내용은 이 계약의 입력이 아니다. FM main `src/flowmarshal/engine/governance_gate.py:927-934`에 따르면 approved slot의 `vm-protected-v1` signer 검증은 아직 후속 과제이고 A2 producer는 거부된다. VM 응답을 이 공통 snapshot 모양으로 바꾸는 adapter의 소유 Task도 아직 정해지지 않았다. 둘 다 이 계약의 runtime 자격 밖이다.
 
 ## 재검증
 
@@ -85,4 +85,4 @@ R16-d 또는 R16-f가 FM main에 통합되고 Progress가 COMPLETED가 되면, �
 | `CONTRACT_FAILED` | 위 조건 불충족 | BLOCKED로 보고 |
 | `NOT_RUN` | 검사 미실행 | 미실행으로 보고 |
 
-`R17.test.mjs`는 schema가 위 거부 조건과 상태 전이를 표현하는지, 대응표가 이 문서와 일치하는지를 검사한다. 이는 계약 fixture PASS이며 AGS/VM 원장, runtime, 운영 설치, live host의 PASS가 아니다.
+`R17.test.mjs`는 schema가 위 거부 조건과 상태 전이를 표현하는지, 대응표가 이 문서와 일치하는지, row ID가 겹치지 않는지를 검사한다. 이는 계약 fixture PASS이며 AGS/VM 원장, runtime, 운영 설치, live host의 PASS가 아니다.

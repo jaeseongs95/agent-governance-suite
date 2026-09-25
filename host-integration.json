@@ -19,7 +19,7 @@
     },
     {
       "path": "contracts/approved-role-source.v1.schema.json",
-      "sha256": "sha256:7dd8f224ff1ac4e7135e6bac1ffb0cec323a7b87082e5b614caa2eaea91a24aa"
+      "sha256": "sha256:36052c37f6000a3a1fe8db9cb011b1287b01d046736a0f3a62618f162d534822"
     },
     {
       "path": "contracts/artifact-ref.v1.schema.json",

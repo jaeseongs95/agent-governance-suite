@@ -5,7 +5,7 @@ import { Ajv2020 } from 'ajv/dist/2020.js';
 
 const schema = JSON.parse(readFileSync(new URL('../../../contracts/approved-role-source.v1.schema.json', import.meta.url), 'utf8'));
 const doc = readFileSync(new URL('../../../docs/implementation-3x/approved-role-source.ko.md', import.meta.url), 'utf8');
-const ajv = new Ajv2020({ allErrors: true }).addSchema(schema);
+const ajv = new Ajv2020({ allErrors: true, strict: true, strictRequired: false }).addSchema(schema);
 const snapshotValid = ajv.getSchema(schema.$id);
 const reservationValid = ajv.getSchema(`${schema.$id}#/$defs/reservation`);
 const effectValid = ajv.getSchema(`${schema.$id}#/$defs/effectStartDecision`);
@@ -69,6 +69,7 @@ test('R17 accepts only server-owned current unrevoked snapshots from either auth
     ['execution grant', (v) => { v.grants.executionAuthorized = true; }],
     ['effect grant', (v) => { v.grants.effectAuthorized = true; }],
     ['empty slot set', (v) => { v.slots = []; }],
+    ['duplicate slot', (v) => { v.slots.push({ ...v.slots[0] }); }],
   ]) {
     assert.equal(snapshotValid(mutate(agsSnapshot(), edit)), false, `AGS ${name}`);
     assert.equal(snapshotValid(mutate(vmSnapshot(), edit)), false, `VM ${name}`);
@@ -82,14 +83,20 @@ test('R17 keeps the two producers separate and never promotes A2 same-user signa
   assert.equal(snapshotValid(mutate(vmSnapshot(), (v) => {
     v.producer.principal = { profileId: 'flowmarshal-same-user-v1', protectedPrincipal: false }; })), false);
   assert.equal(snapshotValid(mutate(agsSnapshot(), (v) => { v.producer.principal.protectedPrincipal = true; })), false);
+  assert.equal(snapshotValid(mutate(agsSnapshot(), (v) => {
+    v.producer.principal = { profileId: 'vm-protected-v1', protectedPrincipal: true }; })), false, 'AGS claims VM principal');
+  assert.equal(snapshotValid(mutate(agsSnapshot(), (v) => {
+    v.producer.principal = { profileId: 'flowmarshal-same-user-v1', protectedPrincipal: false }; })), false, 'AGS claims A2');
   assert.equal(principalValid({ profileId: 'flowmarshal-same-user-v1', protectedPrincipal: true }), false);
   assert.equal(principalValid({ profileId: 'flowmarshal-same-user-v1', protectedPrincipal: false }), true);
 });
 
 test('R17 reservations move monotonically and unknown never becomes success or cancellation', () => {
-  const base = { reservationId: 'res-1', snapshotDigest: d('c'), sourceRevision: 7, state: 'pending', identity: null };
+  const base = { reservationId: 'res-1', slotId: slot.slotId, snapshotDigest: d('c'), sourceRevision: 7, state: 'pending', identity: null };
   const identity = { actorId: 'actor-1', host: 'claude-code', sessionId: 'session-1', verifiedBy: 'ags-server-session-binding' };
   assert.equal(reservationValid(base), true);
+  const unslotted = { ...base }; delete unslotted.slotId;
+  assert.equal(reservationValid(unslotted), false, 'reservation must name its slot');
   assert.equal(reservationValid({ ...base, identity }), false, 'pending carries no session');
   assert.equal(reservationValid({ ...base, state: 'bound', identity }), true);
   assert.equal(reservationValid({ ...base, state: 'admitted', identity: null }), false);
@@ -103,8 +110,13 @@ test('R17 reservations move monotonically and unknown never becomes success or c
 });
 
 test('R17 effect start denies without invoking and records every forbidden source', () => {
-  const start = { decision: 'start', reservationId: 'res-1', recheckedSourceRevision: 7, invokeCount: 1 };
+  const start = { decision: 'start', reservationId: 'res-1', slotId: slot.slotId, recheckedSourceRevision: 7, invokeCount: 1 };
   assert.equal(effectValid(start), true);
+  assert.equal(effectValid({ ...start, invokeCount: 0 }), false, 'start records one invoke');
+  const bare = { ...start }; delete bare.invokeCount; delete bare.slotId;
+  assert.equal(effectValid({ ...bare, slotId: slot.slotId, decision: 'unknown' }), true);
+  assert.equal(effectValid({ ...start, decision: 'unknown' }), false, 'unknown does not assert invokes');
+  assert.equal(effectValid({ ...bare, decision: 'unknown' }), false, 'decision must name its slot');
   for (const denyReason of ['caller-supplied-source', 'unknown-slot', 'stale-revision', 'revoked',
     'reservation-not-admitted', 'identity-unverified', 'same-user-not-protected', 'source-unqualified']) {
     assert.equal(effectValid({ ...start, decision: 'deny', invokeCount: 0, denyReason }), true, denyReason);
@@ -125,12 +137,22 @@ test('R17 freeze qualifies only integrated rows and keeps pending rows unusable'
     ['AGS row claimed integrated', (v) => { v.rows[0].integration = { repository: 'AGS', ref: 'main', sha: 'f'.repeat(40) }; }],
     ['failed verdict requests completion', (v) => { v.verdict = 'CONTRACT_FAILED'; }],
     ['AGS core tied to VM runtime', (v) => { v.agsCoreIndependentOfVmRuntime = false; }],
+    ['R16-d promoted with fake SHA', (v) => { Object.assign(v.rows[pending], { qualification: 'QUALIFIED',
+      implementationState: 'IMPLEMENTED_INTEGRATED', usableAs: ['contract-freeze-input'],
+      integration: { repository: 'FM', ref: 'main', sha: 'f'.repeat(40) } }); }],
+    ['pending row with integration SHA', (v) => { v.rows[pending].integration = { repository: 'FM', ref: 'main', sha: 'f'.repeat(40) }; }],
+    ['mismatched repository and ref', (v) => { v.rows[3].integration.ref = 'codex/v260-semantic-decision-layer'; }],
+    ['AGS row naming a VM task', (v) => { v.rows[0].tasks = ['R16-d']; }],
+    ['qualified VM row naming an unlisted task', (v) => { v.rows[3].tasks = ['R16-x']; }],
+    ['freeze without R16-d row', (v) => { v.rows.splice(pending, 1); }],
+    ['freeze without R16-f row', (v) => { v.rows = v.rows.filter((row) => !row.tasks.includes('R16-f')); }],
   ]) assert.equal(freezeValid(mutate(freeze, edit)), false, name);
   assert.equal(freezeValid({ ...freeze, verdict: 'CONTRACT_FAILED', progressRequest: 'BLOCKED' }), true);
   assert.equal(freezeValid({ ...freeze, verdict: 'NOT_RUN', progressRequest: 'NOT_RUN' }), true);
 });
 
 test('R17 document table matches the frozen rows', () => {
+  assert.equal(new Set(rows.map((row) => row.rowId)).size, rows.length, 'row IDs are unique');
   for (const row of rows) {
     const line = doc.split('\n').find((text) => text.startsWith(`| \`${row.rowId}\``));
     assert.ok(line, row.rowId);
