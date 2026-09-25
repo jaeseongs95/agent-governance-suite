@@ -1,0 +1,61 @@
+# pins: V03-i, v2, V06-c와 Node pin (source /root/r5a/src, 코드 0f5306154dfb987f35c215322354f6e10cc8c4b3)
+
+## 코드 상수 출처 (git show 0f5306154dfb987f35c215322354f6e10cc8c4b3:scripts/qualification/v06-b3-linux-install.mjs, 줄 번호 포함)
+ 11: const CONTRACT_ID = 'ags-protected-node-install/v1';
+ 12: const CLOSURE_CONTRACT_ID = 'ags-protected-node-closure/v2';
+ 13: const TARGET_ID = 'linux-x64';
+ 15: // Trust anchors live in code, never in caller input. hostIntegrationSha256s: host-integration.json of AGS release
+ 16: // commit 0724bb2bc452626aba546a57d1db5c407d32feb0. parentManifestSha256s: the V06-b3b install manifest that created
+ 17: // /usr/lib/agent-governance-suite and protected-runtime. v03i/v2: the frozen contract bytes and ids the v2 layout extends.
+ 18: export const TRUST_PINS = Object.freeze({
+ 19:   hostIntegrationSha256s: Object.freeze(['648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c']),
+ 20:   parentManifestSha256s: Object.freeze(['857bad43df354eb2022fcc3355257cd37adaa0a4acca506f2a2a9add0721ce9f']),
+ 21:   v03i: Object.freeze({ contractId: 'ags-vm-protected-host-installation/v1', revision: '1',
+ 22:     manifestPath: 'tests/coordinate-subagents/v3x/fixtures/protected-host-installation/manifest.json',
+ 23:     manifestSha256: '0c5bfc700c37cd22b7c15c06f00c916948f1b170a7a0f8cd9da7768eb39ccb19' }),
+ 24:   v2: Object.freeze({ contractId: 'ags-protected-node-closure/v2', revision: '2', docPath: 'docs/implementation-3x/protected-node-closure-v2.ko.md' }),
+ 25: });
+ 26: const RELEASE_ID_INPUTS = Object.freeze(['contractId', 'targetId', 'nodeVersion', 'archiveSha256Hex', 'hostIntegrationSha256Hex']);
+ 27: export const PINNED = Object.freeze({
+ 28:   version: '24.21.0',
+ 29:   releaseSha256: 'fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6',
+ 30:   keyringSha256: '140f2ad5260fd62773b6243ce8e1d3009645d558f121b8262c55e383dc285932',
+ 31:   nodeSha256: '7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c',
+ 32: });
+
+## source 파일 표 (경로 전체 구간 symlink 검사 포함)
+| pin | 경로 | sha256 | owner:group mode nlink | 경로 symlink | 기대값·대조 |
+|---|---|---|---|---|---|
+| V03-i v1 | tests/coordinate-subagents/v3x/fixtures/protected-host-installation/manifest.json | 0c5bfc700c37cd22b7c15c06f00c916948f1b170a7a0f8cd9da7768eb39ccb19 | root:root 644 nlink=1 | 0 | 0c5bfc700c37cd22b7c15c06f00c916948f1b170a7a0f8cd9da7768eb39ccb19 (줄 23) 일치 |
+| v2 | docs/implementation-3x/protected-node-closure-v2.ko.md | 90950010dfd44a3915252543e7ea75c4524072dd346b83534a58e3fe6f35a605 | root:root 644 nlink=1 | 0 | 코드에 bytes hash pin 없음. id·revision·계약 블록을 줄 24와 verifyContractPins로 대조(아래) |
+| V06-c (AGS release manifest) | host-integration.json | 648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c | root:root 644 nlink=1 | 0 | 648dddda…ce70c (줄 19) 일치 |
+
+## 계약 내용 대조 (verifyContractPins 조건과 같은 필드)
+$ cd /root/r5a/src && /root/r5a/node/bin/node -e 'const fs=require("fs");const v=JSON.parse(fs.readFileSync("tests/coordinate-subagents/v3x/fixtures/protected-host-installation/manifest.json"));console.log("v03i",v.contractId,v.revision);const t=fs.readFileSync("docs/implementation-3x/protected-node-closure-v2.ko.md","utf8");const b=JSON.parse(t.match(/```json\n([\s\S]*?)\n```/)[1]);console.log("v2",b.contractId,b.revision,"extends",JSON.stringify(b.extends),"inputs",JSON.stringify(b.releaseIdInputs),"engine",b.nodeEngine,"linux-x64",JSON.stringify(b.targets["linux-x64"]))'
+v03i ags-vm-protected-host-installation/v1 1
+v2 ags-protected-node-closure/v2 2 extends {"contractId":"ags-vm-protected-host-installation/v1","revision":"1"} inputs ["contractId","targetId","nodeVersion","archiveSha256Hex","hostIntegrationSha256Hex"] engine >=24 linux-x64 {"os":"linux","arch":"x64","archive":"node-v<version>-linux-x64.tar.xz","installRoot":"/usr/lib/agent-governance-suite/protected-runtime/<releaseSha256>","node":"bin/node","package":"package"}
+exit=0
+
+기대(코드): v03i ags-vm-protected-host-installation/v1 revision 1; v2 ags-protected-node-closure/v2 revision 2, extends v03i/1,
+  releaseIdInputs [contractId,targetId,nodeVersion,archiveSha256Hex,hostIntegrationSha256Hex], nodeEngine >=24,
+  linux-x64 os linux arch x64 node bin/node package package installRoot /usr/lib/agent-governance-suite/protected-runtime/<releaseSha256> -> 모두 일치
+
+## 조상 체인
+$ stat -c '%n %U:%G %a' / /root /root/r5a /root/r5a/src /root/r5a/src/tests /root/r5a/src/docs /root/r5a/src/docs/implementation-3x
+/ root:root 755
+/root root:root 700
+/root/r5a root:root 700
+/root/r5a/src root:root 700
+/root/r5a/src/tests root:root 755
+/root/r5a/src/docs root:root 755
+/root/r5a/src/docs/implementation-3x root:root 755
+exit=0
+
+## Node·keyring pin (세부는 k1-node.txt)
+| pin | 경로 | sha256 | owner mode | 대조 |
+|---|---|---|---|---|
+| 줄 30 | /root/r5a/pubring.kbx | 140f2ad5260fd62773b6243ce8e1d3009645d558f121b8262c55e383dc285932 | root:root 644 | 일치 |
+| 줄 29 | /root/r5a/node-v24.21.0-linux-x64.tar.xz | fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6 | root:root 644 | 일치 |
+| 줄 31 nodeSha256 | archive 안의 bin/node | 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c | (stdout 계산) | 7fde7b8a…df4c 일치 |
+
+parentManifestSha256s(줄 20) 857bad43…ce9f: 이 host에는 해당 파일(/root/b3bf/manifest.txt)이 없다(preinstall-state.txt). 첫 설치이므로 parent manifest를 쓰지 않는다.

@@ -1,0 +1,87 @@
+# preinstall-state: 첫 설치 전 상태 (이번 턴 재실행, 읽기 전용; /root/r5a-out은 1단계에 root 0700 빈 디렉터리로 만들었다)
+## 보호 subtree 부재
+$ ls -ld /usr/lib/agent-governance-suite
+ls: cannot access '/usr/lib/agent-governance-suite': No such file or directory
+exit=2
+
+$ ls /usr/lib | grep -i agent
+exit=1
+
+$ find / -xdev -maxdepth 4 -name b3bf 2>/dev/null | head
+exit=0
+
+## /usr 쓰기 범위와 mount 경계
+$ stat -c '%n %U:%G %a dev=%d ino=%i' / /usr /usr/lib /usr/local
+/ root:root 755 dev=65024 ino=2
+/usr root:root 755 dev=65024 ino=193
+/usr/lib root:root 755 dev=65024 ino=308
+/usr/local root:root 755 dev=65024 ino=194
+exit=0
+
+$ findmnt -no TARGET,SOURCE,FSTYPE,PROPAGATION -T /usr/lib
+/      /dev/vda ext4   private
+exit=0
+
+$ findmnt -R -no TARGET,SOURCE,FSTYPE / | grep -E '^(/usr|/root)'
+exit=1
+
+$ for d in /usr /usr/lib /usr/local; do test -w $d && echo "$d W" || echo "$d NOT_W"; done
+/usr W
+/usr/lib W
+/usr/local W
+exit=0
+
+$ id; grep CapEff /proc/self/status; cat /proc/sys/fs/protected_hardlinks /proc/sys/fs/protected_symlinks
+uid=0(root) gid=0(root) groups=0(root)
+CapEff:	000001fffeffffff
+1
+0
+exit=0
+
+해석: /usr 전체가 / (/dev/vda ext4)와 같은 fs다. 별도 mount 경계는 없고, root(CapEff 전체)가 /usr 전체에 쓸 수 있다. 설치 쓰기 대상은 /usr/lib/agent-governance-suite 하위로 한정해야 하며, 이 경계는 installer의 /usr gate가 강제한다.
+
+## parent manifest
+$ ls -l /root/b3bf/manifest.txt
+ls: cannot access '/root/b3bf/manifest.txt': No such file or directory
+exit=2
+
+첫 설치이므로 parent manifest를 쓰지 않는다. 쓸 경우에는 TRUST_PINS.parentManifestSha256s(857bad43…)와 일치해야 한다.
+
+## manifestFile 예정 경로 /root/r5a-out/manifest.txt 사전 점검
+$ stat -c '%n %U:%G %a %F nlink=%h' / /root /root/r5a-out
+/ root:root 755 directory nlink=21
+/root root:root 700 directory nlink=18
+/root/r5a-out root:root 700 directory nlink=2
+exit=0
+
+$ ls -la /root/r5a-out
+total 8
+drwx------  2 root root 4096 Sep 25 09:52 .
+drwx------ 18 root root 4096 Sep 25 09:58 ..
+exit=0
+
+$ test -e /root/r5a-out/manifest.txt && echo PRESENT || echo ABSENT
+ABSENT
+exit=0
+
+$ find /root/r5a-out -maxdepth 0 -type l | wc -l   # 0이면 symlink 아님
+0
+exit=0
+
+$ for p in / /root /root/r5a-out; do [ -L $p ] && echo "$p SYMLINK" || echo "$p not-symlink"; done
+/ not-symlink
+/root not-symlink
+/root/r5a-out not-symlink
+exit=0
+
+$ getent passwd | awk -F: '$3==0{print $1}'
+root
+exit=0
+
+$ cd /home/user/agent-governance-suite && git rev-parse --show-toplevel
+/home/user/agent-governance-suite
+exit=0
+
+비인가 교체 불가 근거: 조상 체인 / (root 755) -> /root (root 700) -> /root/r5a-out (root 700)이다. 모두 root 소유이고 group/other 쓰기가 없어, 비root 주체는 /root 아래를 열람하거나 rename·교체할 수 없다. uid 0 계정은 root 하나다.
+경로는 설치 subtree(/usr/lib/agent-governance-suite)와 작업 트리(/home/user/agent-governance-suite) 밖에 있다. 대상 파일은 없으며 이번 단계에서 만들지 않는다.
+한계: root 권한 프로세스(이 세션 포함)는 교체할 수 있다. 이 점은 root 전용 scratch의 전제다.

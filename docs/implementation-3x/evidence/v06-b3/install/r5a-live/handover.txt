@@ -1,0 +1,34 @@
+# handover: V 영역 writer 이양 근거 (개발팀장 93dd8eb2 전달 + 신 writer 관측)
+
+## 구 writer session_012THvfNVip1GR1zpH8MEUaV 원문
+- 2026-09-24T21:44:18Z: "쓰기를 멈췄습니다…"
+- 2026-09-24T21:55:47Z (boot 5184871e): V writer를 session_01L22qacVr8rJXj2xzaqnwG1로 넘기는 데 동의했다. claude/v3x-v06-b3b-r1·/usr·/root/b3bf에 쓰지 않고 보존한다.
+- 01L22는 이후 writer가 되지 못한 후보다(AREA previous_candidate_not_writer).
+
+## 공식 기록
+- AREA_SESSIONS f9f49211 V06_B3B_R5A_CLAUDE_CLOUD
+  - cloud_session_id: cse_01PRna2jKCs5EdTv8Rwv3j83
+  - previous_writer_session_id: session_012THvfNVip1GR1zpH8MEUaV
+  - write_permission: true
+  - SQLite 투영 DB 43d91a59
+- 총괄 GO: claude-main-go-v06b3b-r5a-to-devlead-20260925-01 (09:49Z). 명세는 r41(ba9aef5e)이다.
+
+## 신 writer session_01PRna2jKCs5EdTv8Rwv3j83
+- HOLD(09:20~09:43Z) 동안 쓰기는 설정용 git fetch뿐이었다.
+- 착수 ACK: 2026-09-25T09:50:24Z(date -u). 전달문 기준 수신 기록은 09:50:29Z다.
+- 1단계 쓰기: /root/r5a(scratch), /root/r5a-out(빈 0700 디렉터리), git fetch(origin/claude/v3x-v06-b3b-r1).
+- 2단계a 쓰기: /root/r5a/node(검사용 Node 추출), /root/r5a/chk-*.log, 로컬 branch claude/v3x-v06-b3b-r5a-trusted-input(base 0f530615), r5a-live/ 파일.
+
+## 구 writer의 09:50Z 관측 (old-vm.txt)
+- 쓰기 없음. HEAD ca0aae01, manifest 857bad43·d75268ce, node ino 516919·ctime 1790268678 불변.
+
+## 012TH 새 확인
+출처: session_012THvfNVip1GR1zpH8MEUaV run log. 총괄 c526de94가 승인한 읽기 전용 질의 1회이며, 개발팀장 93dd8eb2가 전달했다.
+```
+[2026-09-25T09:58:44Z 개발팀장 질의] V06-b3b writer를 cse_01PRna2jKCs5EdTv8Rwv3j83로 이양하는 데 동의하는지 한 줄로 답하라. 파일 쓰기·설치·push 금지.
+[2026-09-25T09:58:54Z tool_result] Fri Sep 25 09:58:54 UTC 2026 0b162ff3-d2f1-49dc-a54e-1db04974cc3f
+[2026-09-25T09:58:58Z 012TH 답] V06-b3b writer를 cse_01PRna2jKCs5EdTv8Rwv3j83로 넘기는 데 동의합니다. 이 세션은 앞으로 쓰기를 하지 않고, 두 root와 manifest, `r1-live/`, `/root/b3bf/r3`를 그대로 둡니다. (boot_id가 09:50:39Z e8411abb와 다르며 그사이 한 번 더 재부팅됐다고 덧붙임)
+```
+
+## 신 writer 확인
+cse_01PRna2j는 AREA f9f49211 기준 V06-b3b-r5a 단일 writer이며 012TH의 쓰기 중지를 확인했다. 2026-09-25T10:07:10Z

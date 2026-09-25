@@ -1,0 +1,86 @@
+# source: AGS release 0724bb2b root 전용 source (/root/r5a/src)
+# 생성(1단계, 09:51Z, root, 작업 디렉터리 /home/user/agent-governance-suite):
+$ umask 022
+$ install -d -m 0700 -o root -g root /root/r5a/src            exit=0
+$ git -c tar.umask=022 archive 0724bb2bc452626aba546a57d1db5c407d32feb0 | tar -x -C /root/r5a/src --no-same-owner
+archive exit=0 0   (PIPESTATUS)
+# 절차 출처: 0f530615:docs/implementation-3x/evidence/v06-b3/install/README.ko.md:56 (r2 source, tar.umask=022)
+# 아래 검사는 이번 턴(2단계a)에 다시 실행했다.
+
+$ umask
+0022
+exit=0
+
+$ git rev-parse 0724bb2bc452626aba546a57d1db5c407d32feb0^{commit} 0724bb2bc452626aba546a57d1db5c407d32feb0^{tree}
+0724bb2bc452626aba546a57d1db5c407d32feb0
+eb59f43dd9a30c69d5980f3e79c4aa40c562a129
+exit=0
+
+$ git merge-base --is-ancestor 0724bb2bc452626aba546a57d1db5c407d32feb0 0f5306154dfb987f35c215322354f6e10cc8c4b3
+exit=0
+
+$ stat -c '%n %U:%G %a %F' / /root /root/r5a /root/r5a/src
+/ root:root 755 directory
+/root root:root 700 directory
+/root/r5a root:root 700 directory
+/root/r5a/src root:root 700 directory
+exit=0
+
+$ find /root/r5a/src -type f | wc -l; find /root/r5a/src -type d | wc -l
+1620
+372
+exit=0
+
+$ find /root/r5a/src -perm /022 | wc -l    # group/other 쓰기
+0
+exit=0
+
+$ find /root/r5a/src -type l | wc -l       # symlink
+0
+exit=0
+
+$ find /root/r5a/src ! -uid 0 -o ! -gid 0 | wc -l   # 비root owner/group
+0
+exit=0
+
+$ find /root/r5a/src -type f -links +1 | wc -l      # nlink>1
+0
+exit=0
+
+$ sha256sum /root/r5a/src/host-integration.json
+648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c  /root/r5a/src/host-integration.json
+exit=0
+
+$ git cat-file blob 0724bb2bc452626aba546a57d1db5c407d32feb0:host-integration.json | sha256sum
+648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c  -
+exit=0
+
+pin (v06-b3-linux-install.mjs:19 TRUST_PINS.hostIntegrationSha256s[0]) = 648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c -> 일치
+
+$ cd /root/r5a/src && /root/r5a/node/bin/node -e 'const fs=require("fs"),c=require("crypto");const h=b=>c.createHash("sha256").update(b).digest("hex");const hi=JSON.parse(fs.readFileSync("host-integration.json"));let bad=0;for(const a of hi.artifacts){if(h(fs.readFileSync(a.path))!==a.sha256.slice(7))bad++}console.log("artifacts",hi.artifacts.length,"digest mismatch",bad,"entryPoints",Object.keys(hi.entryPoints||{}).length)'
+artifacts 178 digest mismatch 0 entryPoints 4
+exit=0
+
+$ diff <(git ls-tree -r --name-only 0724bb2bc452626aba546a57d1db5c407d32feb0 | sort) <(cd /root/r5a/src && find . -type f | sed 's|^\./||' | sort) && echo SAME_FILE_SET
+1d0
+< "tests/instruction-scope-resolver/fixtures/unicode/\355\225\234\352\270\200/AGENTS.md"
+1484a1484
+> tests/instruction-scope-resolver/fixtures/unicode/한글/AGENTS.md
+exit=1
+
+## releaseIdV2 (v06-b3-linux-install.mjs:304-309): preimage = [CLOSURE_CONTRACT_ID, TARGET_ID, nodeVersion, archiveSha256, hostIntegrationSha256].join('\n') + '\n'
+$ printf 'ags-protected-node-closure/v2\nlinux-x64\n24.21.0\nfd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6\n648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c\n' | sha256sum
+32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd  -
+exit=0
+
+결과 32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd는 구 VM의 protected-runtime root 이름과 같다(old-vm.txt).
+
+## 파일 집합 비교 보정
+위 diff의 exit=1은 git ls-tree의 core.quotePath가 한글 경로를 escape하고 sort locale이 달라서 생긴 표기 차이다. 아래처럼 quotePath를 끄고 LC_ALL=C로 다시 비교했다.
+$ diff <(git -c core.quotePath=false ls-tree -r --name-only 0724bb2bc452626aba546a57d1db5c407d32feb0 | LC_ALL=C sort) <(cd /root/r5a/src && find . -type f | sed 's|^\./||' | LC_ALL=C sort) && echo SAME_FILE_SET
+SAME_FILE_SET
+exit=0
+
+$ git ls-tree -r 0724bb2bc452626aba546a57d1db5c407d32feb0 | awk '{print $1}' | sort | uniq -c   # 모드 분포: symlink(120000)·실행(100755) 없음
+   1620 100644
+exit=0

@@ -1,0 +1,62 @@
+# persistence: 턴별 boot 변화와 디스크 유지 (session_01PRna2jKCs5EdTv8Rwv3j83)
+
+## 턴별 boot
+| 턴 | date -u | boot_id | btime | uptime(s) |
+|---|---|---|---|---|
+| HOLD 관측 | 09:20:28Z | 33345bc8-b8e8-486f-b8d9-7d841667f373 | 1790328016 | 11.33 |
+| HOLD 보충 | 09:25:27Z | 33345bc8-b8e8-486f-b8d9-7d841667f373 | 1790328016 | 310.44 |
+| 사실 확인 | 09:43:13Z | a6a1e00b-e825-4c22-b8b3-663179e37d39 | 1790329383 | (미수집) |
+| 1단계 GO | 09:50:24Z | 1dd8bb46-a0e0-44a2-b8d3-f2a5fdef8834 | 1790329812 | 11.40 |
+| 2단계a | 09:58:52Z | 25a57085-54da-4868-9f35-ce7a3465c416 | 1790330321 | 11.05 |
+
+관측: 09:25Z 이후 턴마다 boot가 바뀌었다(uptime 약 11초에서 시작). 디스크 상태는 모든 턴에서 유지됐다.
+- 09:43Z: 09:20Z 턴에 fetch한 FETCH_HEAD 0f530615가 남아 있었다.
+- 09:58Z: 1단계 scratch(/root/r5a, 1631개 파일)가 bytes 단위로 같았다(아래).
+PID 1은 process_api이고 systemd는 offline이다(09:43Z, session-host.txt).
+신·구 host를 구별하는 주 근거는 boot가 아니라 보호 subtree 유무다(old-vm.txt, preinstall-state.txt).
+이 관측을 운영 host 자격으로 해석하지 않는다. 충분한지는 감사가 판정한다.
+get_session에 persist/retention/expires 필드는 없다. 보존 기한은 불명확하다.
+
+## 2단계a 재확인 원시 출력 (09:58:52Z, 쓰기 전)
+$ date -u; cat /proc/sys/kernel/random/boot_id; grep btime /proc/stat; cat /proc/uptime
+Fri Sep 25 09:58:52 UTC 2026
+25a57085-54da-4868-9f35-ce7a3465c416
+btime 1790330321
+11.05 35.40
+$ cd /root/r5a && sha256sum -c --quiet scratch-sha256.txt; echo exit=$?
+exit=0
+$ sha256sum < scratch-sha256.txt
+8c0c1f60cd634c929e214871e3d51e41eb2a7c9ce122cfc1a02c5fd36d8c6b41  -      (1단계 값과 같음)
+$ ls -ld /root/r5a /root/r5a-out; ls -la /root/r5a-out; test -e /root/r5a-out/manifest.txt && echo PRESENT || echo ABSENT
+drwx------ 3 root root 4096 Sep 25 09:52 /root/r5a
+drwx------ 2 root root 4096 Sep 25 09:52 /root/r5a-out
+total 8
+drwx------  2 root root 4096 Sep 25 09:52 .
+drwx------ 18 root root 4096 Sep 25 09:58 ..
+ABSENT
+$ ls -ld /usr/lib/agent-governance-suite
+ls: cannot access '/usr/lib/agent-governance-suite': No such file or directory
+exit=2
+$ cd /home/user/agent-governance-suite && git rev-parse FETCH_HEAD; git status --short
+ca0aae0133c1c5807bb62766fc9216c24f939253      (1단계 마지막 fetch가 origin/claude/v3x-v06-b3b-r1이었으므로 이 값이 기대값이다)
+(status 출력 없음) exit=0
+
+판정: boot가 두 번 바뀐 뒤에도 root scratch 1631개 파일의 sha256이 모두 같다. 재할당 뒤 디스크 유지가 관측됐다.
+/usr 설치 쓰기는 0이고 manifestFile도 없다.
+
+## 2단계b 재확인 원시 출력 (commit 전)
+$ date -u; cat /proc/sys/kernel/random/boot_id; grep btime /proc/stat; cat /proc/uptime
+Fri Sep 25 10:06:30 UTC 2026
+25a57085-54da-4868-9f35-ce7a3465c416
+btime 1790330321
+469.50 1839.66
+$ cd /root/r5a && sha256sum -c --quiet scratch-sha256.txt; echo exit=$?
+exit=0
+$ sha256sum < scratch-sha256.txt
+8c0c1f60cd634c929e214871e3d51e41eb2a7c9ce122cfc1a02c5fd36d8c6b41  -
+$ ls -ld /usr/lib/agent-governance-suite; test -e /root/r5a-out/manifest.txt && echo PRESENT || echo ABSENT
+ls: cannot access '/usr/lib/agent-governance-suite': No such file or directory
+ABSENT
+
+2단계b 턴의 boot는 2단계a와 같다(25a57085, btime 1790330321). 이 턴에는 재할당이 없었다. scratch는 계속 같고, /usr 설치 쓰기는 0, manifestFile은 없다.
+2단계b에서 추가된 scratch 파일: /root/r5a/pnpm-install.log, /root/r5a/chk2-*.log. 목록에 없는 새 파일이라 sha256sum -c 결과에는 영향이 없다.

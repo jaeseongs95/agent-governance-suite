@@ -1,0 +1,75 @@
+# checks: 저장소 검사 (검증된 Node v24.21.0 /root/r5a/node/bin/node, sha256 7fde7b8a…df4c; 작업 트리 HEAD 0f530615 + r5a-live 미추적 파일)
+# node_modules가 없다. pnpm install은 작업 트리에 node_modules를 쓰므로 2단계a 쓰기 허용 범위(r5a-live/) 밖이다. 그래서 실행하지 않았다.
+
+$ /root/r5a/node/bin/node scripts/validate-repository.mjs
+node:internal/modules/package_json_reader:331
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'ajv' imported from /home/user/agent-governance-suite/scripts/validate-repository.mjs
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.21.0
+exit=1
+
+$ /root/r5a/node/bin/node scripts/check-source-lock.mjs
+source lock is consistent
+exit=0
+
+$ /root/r5a/node/bin/node scripts/check-bundle.mjs
+node:internal/modules/package_json_reader:331
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'esbuild' imported from /home/user/agent-governance-suite/scripts/runtime-bundles.mjs
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.21.0
+exit=1
+
+$ ls node_modules
+ls: cannot access 'node_modules': No such file or directory
+exit=2
+
+## 2단계b 재실행 (개발팀장이 의존성 설치 허용, 2026-09-25T10:06:56Z 기록)
+$ sha256sum pnpm-lock.yaml package.json   # 설치 전
+00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e  pnpm-lock.yaml
+ba17a051392df5c91f389afb4414936090306f8d5fab968c43b456355807ff8a  package.json
+$ PATH=/root/r5a/node/bin:$PATH pnpm install --frozen-lockfile   # node v24.21.0, pnpm 11.19.0
+.../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+dependencies:
++ @modelcontextprotocol/sdk 1.30.0
++ ajv 8.20.0
++ ajv-formats 3.0.1
++ zod 4.5.4
+devDependencies:
++ @eslint/js 10.0.1
++ @types/node 26.5.0
++ esbuild 0.28.2
++ eslint 10.10.0
++ tsx 4.23.13
++ typescript 6.0.2
++ typescript-eslint 8.70.0
++ vitest 5.0.0
+Done in 5.5s using pnpm v11.19.0
+exit=0
+$ sha256sum pnpm-lock.yaml package.json; git status --short   # 설치 후
+00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e  pnpm-lock.yaml
+ba17a051392df5c91f389afb4414936090306f8d5fab968c43b456355807ff8a  package.json
+?? docs/implementation-3x/evidence/v06-b3/install/r5a-live/
+(lockfile·추적 파일 변경 없음. node_modules는 .gitignore 대상이다.)
+
+$ /root/r5a/node/bin/node scripts/validate-repository.mjs
+repository: valid
+exit=0
+
+$ /root/r5a/node/bin/node scripts/check-source-lock.mjs
+source lock is consistent
+exit=0
+
+$ /root/r5a/node/bin/node scripts/check-bundle.mjs
+exit=0
+
+판정: validate-repository PASS, check-source-lock PASS, check-bundle PASS(출력 없음, exit 0)

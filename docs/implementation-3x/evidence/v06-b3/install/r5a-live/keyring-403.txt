@@ -1,0 +1,134 @@
+# keyring-403: 원래 403 요청과 비교 경로의 단일 관측 (2026-09-25, 모두 GET, 경로별 1회)
+# 명령 형식: curl -sS -L --max-redirs 5 -D <scratch>/<id>.hdr -o <body|/dev/null> -w 'FINAL %{url_effective} %{http_code} %{content_type} redirects=%{num_redirects}\n' '<URL>'
+# 원시 헤더는 /root/r5a/<id>.hdr 사본이다(Set-Cookie 등 값은 <redacted>). 시각은 요청 직전 date -u.
+# 참고: 2026-09-24 21:47Z의 원래 403 URL은 …/raw/HEAD/gpg/pubring.kbx였다(HEAD·gpg 경로 오류). 이 URL은 다시 보내지 않았다.
+
+## A1 09:50:34Z GET https://github.com/nodejs/release-keys/raw/481637f813e912c4aa3622d7964ab426c97b8e8d/gpg-only-active-keys/pubring.kbx
+FINAL https://github.com/nodejs/release-keys/raw/481637f813e912c4aa3622d7964ab426c97b8e8d/gpg-only-active-keys/pubring.kbx 403 application/json; charset=utf-8 redirects=0 (curl exit=0)
+HTTP/1.1 200 Connection Established
+
+HTTP/1.1 403 Forbidden
+Content-Type: application/json; charset=utf-8
+Content-Length: 378
+Connection: close
+
+--- body (378 bytes, sha256 b3e03aaaff81d68730d67392a135ac3fdfdf022880c66632ab188d2fe084cda3)
+{"message":"GitHub access to this repository is not enabled for this session. Use add_repo to request access. If add_repo answers that read access is already available and you need GitHub API or write access, call add_repo again with access:\"push\" to attach the repository with credentials.","documentation_url":"https://docs.anthropic.com/en/docs/claude-code/github-actions"}
+
+## A2 09:50:44Z GET https://codeload.github.com/nodejs/release-keys/tar.gz/481637f813e912c4aa3622d7964ab426c97b8e8d (-o /dev/null)
+FINAL https://codeload.github.com/nodejs/release-keys/tar.gz/481637f813e912c4aa3622d7964ab426c97b8e8d 403 application/json; charset=utf-8 redirects=0 (curl exit=0)
+HTTP/1.1 200 Connection Established
+
+HTTP/1.1 403 Forbidden
+Content-Type: application/json; charset=utf-8
+Content-Length: 378
+Connection: close
+
+--- body: 저장하지 않음(-o /dev/null). Content-Length 378은 A1과 같다.
+
+## A3 09:50:44Z GET https://github.com/jaeseongs95/agent-governance-suite/raw/0f5306154dfb987f35c215322354f6e10cc8c4b3/package.json
+FINAL https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/0f5306154dfb987f35c215322354f6e10cc8c4b3/package.json 200 text/plain; charset=utf-8 redirects=1 (curl exit=0)
+HTTP/1.1 200 Connection Established
+
+HTTP/1.1 302 Found
+Connection: close
+Transfer-Encoding: chunked
+Access-Control-Allow-Origin:
+Cache-Control: no-cache
+Content-Security-Policy: default-src 'none'; base-uri 'self'; child-src github.githubassets.com github.com/assets-cdn/worker/ github.com/assets/ gist.github.com/assets-cdn/worker/; connect-src 'self' uploads.github.com www.githubstatus.com collector.github.com raw.githubusercontent.com api.github.com github-cloud.s3.amazonaws.com github-production-repository-file-5c1aeb.s3.amazonaws.com github-production-upload-manifest-file-7fdce7.s3.amazonaws.com github-production-user-asset-6210df.s3.amazonaws.com *.rel.tunnels.api.visualstudio.com wss://*.rel.tunnels.api.visualstudio.com github.githubassets.com objects-origin.githubusercontent.com copilot-proxy.githubusercontent.com proxy.individual.githubcopilot.com proxy.business.githubcopilot.com proxy.enterprise.githubcopilot.com *.actions.githubusercontent.com wss://*.actions.githubusercontent.com productionresultssa0.blob.core.windows.net productionresultssa1.blob.core.windows.net productionresultssa2.blob.core.windows.net productionresultssa3.blob.core.windows.net productionresultssa4.blob.core.windows.net productionresultssa5.blob.core.windows.net productionresultssa6.blob.core.windows.net productionresultssa7.blob.core.windows.net productionresultssa8.blob.core.windows.net productionresultssa9.blob.core.windows.net productionresultssa10.blob.core.windows.net productionresultssa11.blob.core.windows.net productionresultssa12.blob.core.windows.net productionresultssa13.blob.core.windows.net productionresultssa14.blob.core.windows.net productionresultssa15.blob.core.windows.net productionresultssa16.blob.core.windows.net productionresultssa17.blob.core.windows.net productionresultssa18.blob.core.windows.net productionresultssa19.blob.core.windows.net github-production-repository-image-32fea6.s3.amazonaws.com github-production-release-asset-2e65be.s3.amazonaws.com insights.github.com wss://alive.github.com wss://alive-staging.github.com api.githubcopilot.com api.individual.githubcopilot.com api.business.githubcopilot.com api.enterprise.githubcopilot.com wss://production-copilot-host.webpubsub.azure.com api.github.com/cmc_internal/api/; font-src github.githubassets.com; form-action 'self' github.com gist.github.com copilot-workspace.githubnext.com objects-origin.githubusercontent.com; frame-ancestors 'none'; frame-src viewscreen.githubusercontent.com notebooks.githubusercontent.com; img-src 'self' data: blob: github.githubassets.com media.githubusercontent.com camo.githubusercontent.com identicons.github.com avatars.githubusercontent.com private-avatars.githubusercontent.com github-cloud.s3.amazonaws.com objects.githubusercontent.com release-assets.githubusercontent.com secured-user-images.githubusercontent.com user-images.githubusercontent.com private-user-images.githubusercontent.com opengraph.githubassets.com repository-images.githubusercontent.com marketplace-screenshots.githubusercontent.com copilotprodattachments.blob.core.windows.net/github-production-copilot-attachments/ github-production-user-asset-6210df.s3.amazonaws.com customer-stories-feed.github.com spotlights-feed.github.com explore-feed.github.com *.googleusercontent.com objects-origin.githubusercontent.com *.githubusercontent.com; manifest-src 'self'; media-src github.com user-images.githubusercontent.com secured-user-images.githubusercontent.com private-user-images.githubusercontent.com github-production-user-asset-6210df.s3.amazonaws.com gist.github.com github.githubassets.com; script-src github.githubassets.com; style-src 'unsafe-inline' github.githubassets.com; upgrade-insecure-requests; worker-src github.githubassets.com github.com/assets-cdn/worker/ github.com/assets/ gist.github.com/assets-cdn/worker/
+Content-Type: text/html; charset=utf-8
+Date: Fri, 25 Sep 2026 09:50:44 GMT
+Location: https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/0f5306154dfb987f35c215322354f6e10cc8c4b3/package.json
+Referrer-Policy: no-referrer-when-downgrade
+Server: github.com
+Set-Cookie: <redacted>
+Set-Cookie: <redacted>
+Set-Cookie: <redacted>
+Strict-Transport-Security: max-age=31536000; includeSubdomains; preload
+Vary: X-PJAX, X-PJAX-Container, Turbo-Visit, Turbo-Frame, X-Requested-With, X-GitHub-Client-Version, Sec-Fetch-Site,Accept-Encoding, Accept, X-Requested-With
+X-Content-Type-Options: nosniff
+X-Frame-Options: deny
+X-Github-Edge-Region: iad
+X-Github-Request-Id: C011:3CFF18:7CA7EA:A9EC60:6AB643F4
+X-Xss-Protection: 0
+
+HTTP/1.1 200 Connection Established
+
+HTTP/2 200
+cache-control: max-age=300
+content-security-policy: default-src 'none'; style-src 'unsafe-inline'; sandbox
+content-type: text/plain; charset=utf-8
+etag: "8a3cd0943206ecbc3f5e1e4555cfa552905cf4211bd2248a586340dbb3a54def"
+strict-transport-security: max-age=31536000
+x-content-type-options: nosniff
+x-frame-options: deny
+x-xss-protection: 1; mode=block
+x-github-request-id: 254A:2D7BC2:12FD85:1D2677:6AB643F3
+x-github-edge-region: iad
+accept-ranges: bytes
+date: Fri, 25 Sep 2026 09:50:45 GMT
+via: 1.1 varnish
+x-served-by: cache-iad-khef600044-IAD
+x-cache: MISS
+x-cache-hits: 0
+x-timer: S1790329845.158790,VS0,VE69
+vary: Authorization,Accept-Encoding
+access-control-allow-origin: *
+cross-origin-resource-policy: cross-origin
+x-fastly-request-id: af38e47cc5b6168c9ac6b4ebdd9357f6ab303437
+expires: Fri, 25 Sep 2026 09:55:45 GMT
+source-age: 0
+content-length: 2751
+
+--- body bytes=2751 sha256=ba17a051392df5c91f389afb4414936090306f8d5fab968c43b456355807ff8a
+$ git show 0f5306154dfb987f35c215322354f6e10cc8c4b3:package.json | sha256sum -> ba17a051392df5c91f389afb4414936090306f8d5fab968c43b456355807ff8a  -
+
+## A4 09:50:45Z GET https://codeload.github.com/jaeseongs95/agent-governance-suite/tar.gz/0f5306154dfb987f35c215322354f6e10cc8c4b3 (-o /dev/null)
+FINAL https://codeload.github.com/jaeseongs95/agent-governance-suite/tar.gz/0f5306154dfb987f35c215322354f6e10cc8c4b3 200 application/x-gzip redirects=0 (curl exit=0)
+HTTP/1.1 200 Connection Established
+
+HTTP/1.1 200 OK
+Connection: close
+Transfer-Encoding: chunked
+Access-Control-Allow-Origin: https://render.githubusercontent.com
+Content-Disposition: attachment; filename=agent-governance-suite-0f5306154dfb987f35c215322354f6e10cc8c4b3.tar.gz
+Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox
+Content-Type: application/x-gzip
+Cross-Origin-Resource-Policy: cross-origin
+Date: Fri, 25 Sep 2026 09:50:45 GMT
+Etag: "034a49b498a507d4d6ad38fe16b27054a023e87fb58d7672137e2a90ace93ca2"
+Strict-Transport-Security: max-age=31536000
+Vary: Authorization,Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Frame-Options: deny
+X-Github-Edge-Region: iad
+X-Github-Request-Id: C000:B47E9:100F3F:190937:6AB643F5
+X-Xss-Protection: 1; mode=block
+
+
+## 비교: K1 09:50:55Z GET https://raw.githubusercontent.com/nodejs/release-keys/481637f813e912c4aa3622d7964ab426c97b8e8d/gpg-only-active-keys/pubring.kbx
+FINAL (같은 URL) 200 application/octet-stream redirects=0 (curl exit=0), 21011 bytes — 세부는 k1-node.txt
+
+## A5 proxy 변수 (값 가림)
+$ env | grep -iE '^(https?_proxy|no_proxy)=' | sed -E 's#=.*#=<redacted>#'
+no_proxy=<redacted>
+https_proxy=<redacted>
+NO_PROXY=<redacted>
+HTTPS_PROXY=<redacted>
+exit=0
+(HOLD 턴 관측: https_proxy/HTTPS_PROXY는 로컬 loopback proxy이고 URL에 자격정보가 없었다. no_proxy에는 localhost, 사설 대역, anthropic, 패키지 저장소가 들어 있다.)
+모든 요청은 "HTTP/1.1 200 Connection Established"(proxy CONNECT 성공) 뒤에 upstream 응답을 받았다.
+
+## A6 add_repo 조회 (호출하지 않음)
+ToolSearch "add_repo" -> "No matching deferred tools found" (deferred 목록에는 없다)
+세션에 이미 로드된 도구 mcp__Claude_Code_Remote__add_repo의 설명 첫 줄:
+"Add a GitHub repository to the current session so you can read, clone, or operate on it alongside the repos already in the session."
+
+## 가설 판정
+| 가설 | 판정 | 근거 |
+|---|---|---|
+| URL 오류 | 배제됨 | 올바른 commit·경로의 A1도 403이다. 같은 commit·경로를 raw.githubusercontent.com으로 받은 K1은 200이고 sha가 pin과 같다. (21:47Z의 HEAD/gpg URL 자체는 틀렸지만, 403의 원인은 아니다.) |
+| 네트워크 | 배제됨 | CONNECT가 성공했고 같은 github.com·codeload host의 AGS 요청(A3·A4)은 200이다. |
+| Claude cloud repo allowlist (host별) | 지지됨 | 403 JSON 본문이 "GitHub access to this repository is not enabled for this session"이다. github.com과 codeload.github.com은 repo 단위로 막고, raw.githubusercontent.com은 nodejs repo도 통과한다. |
+| 세션 권한 | 지지됨 | 같은 원인이다. allowlist는 세션 범위(scoped repo: jaeseongs95/agent-governance-suite)이며 본문이 add_repo를 안내한다. |
+남은 미확인: 없음. K2(add_repo)는 사용자 승인 사항이라 조회만 했다.
