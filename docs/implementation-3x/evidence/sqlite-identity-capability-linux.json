@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "B14-p-l",
+  "kind": "capability-probe",
+  "scope": "Temporary SQLite files only on one observed cloud host; no product writer, user database or operational qualification",
+  "resultScope": "fixture-candidate-for-observed-host-only",
+  "observedEnvironment": {
+    "observedAt": "2026-09-25T10:21:45Z",
+    "bootId": "eafa6e7d-06ee-4225-85d8-a963d6d8628c",
+    "kernel": "Linux 6.18.44-fc-v37 x86_64",
+    "procVersion": "Linux version 6.18.44-fc-v37 (builder@sandboxing) (gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1 SMP PREEMPT_DYNAMIC @0",
+    "kernelKind": "real Linux kernel in a Firecracker/KVM microVM (dmesg: 'Hypervisor detected: KVM', kvm-clock, rdinit=/process_api --firecracker-init; root /dev/vda ext4; no gVisor markers)",
+    "containerMarkers": "systemd-detect-virt reported 'docker' but /.dockerenv is absent and every /proc/1/cgroup entry is '/'; treated as a sandbox host, not an operational Linux host",
+    "pid1": "process_api (not systemd)",
+    "uid": 0,
+    "node": "v22.22.2",
+    "python": "3.11.15",
+    "sqliteLibrary": "/usr/lib/x86_64-linux-gnu/libsqlite3.so.0.8.6",
+    "sqlite": "3.45.1"
+  },
+  "mechanism": {
+    "connectionOwner": "python3 -I process that loads the system libsqlite3.so.0 through ctypes and owns the sqlite3 connection",
+    "open": "sqlite3_open_v2(SQLITE_OPEN_READWRITE, vfs 'unix') opens an existing temporary main DB without CREATE",
+    "openedFileIdentity": "Before open, the default unix VFS (checked zName 'unix', iVersion >= 3) gets documented xSetSystemCall overrides for 'open' and 'close' that forward to the originals from xGetSystemCall. The fd returned inside SQLite's own xOpen for the main DB path is recorded, closes of that fd clear it, and exactly one live main open is required. identity = fstat(fd) st_dev:st_ino as 16+16 hex digits",
+    "comparison": "Expected ID is mandatory for schema write and checked before SQLite is loaded; a mismatch closes the connection without running any SQL (exit 2)",
+    "firstWritePosition": "Only a matched identity reaches sqlite3_exec(CREATE TABLE probe_marker); replacement and copy-restore fixtures keep their bytes and leave no resource.sqlite3 sidecar",
+    "raceAfterOpen": "A fixture-only hook (B14PL_SWAP_AFTER_OPEN) renames the path to another inode after SQLite opened it; the comparison still matches the opened inode and the schema lands in that inode, while the new file at the path stays empty. A path-based stat mutant fails this case",
+    "notIdentityEvidence": "The isfile check only limits probe input to an existing OS-temp file. No separate guard FD, path stat or DatabaseSync(path) is used as identity"
+  },
+  "installedShapeObserved": {
+    "files": [
+      "tests/coordinate-subagents/v3x/probes/sqlite-identity/linux/run.mjs",
+      "tests/coordinate-subagents/v3x/probes/sqlite-identity/linux/probe.py"
+    ],
+    "nodeModules": false,
+    "nativeRuntime": "System python3 (ctypes) and system libsqlite3.so.0; no probe-owned native binary and no compiler at run time. The loaded library path is reported from /proc/self/maps, not verified against a trusted location",
+    "probeScriptLocation": "Copied into an unprotected test temp directory; no signed or protected installation was tested",
+    "invocation": "Node.js run.mjs starts python3 -I probe.py, which owns the SQLite connection and returns identity/status as JSON",
+    "sidecarNaming": "Rollback-journal sidecars are named from the path SQLite was given, not from the opened inode; in the race fixture the journal is created and removed at resource.sqlite3-journal"
+  },
+  "check": {
+    "command": "pnpm exec vitest run tests/coordinate-subagents/v3x/probes/sqlite-identity/linux/",
+    "result": "PASS",
+    "observed": "1 test: installed two-file copy without node_modules; empty expected ID blocks schema write; SQLite xOpen fd identity equals the path inode before any change; matched identity permits schema write; rename replacement and byte-identical copy restore reject before schema write with bytes and sidecar list unchanged; moving the original inode back matches; post-open path swap keeps comparison and write on the opened inode",
+    "falsification": [
+      "Before probe files existed: FAIL",
+      "Mutant skipping the identity comparison: FAIL",
+      "Mutant using path stat instead of the SQLite fd: FAIL",
+      "Mutant not recording the xOpen fd: FAIL",
+      "Mutant dropping the expected-ID requirement: FAIL"
+    ],
+    "straceCrossCheck": "Manual strace -f of one race run: the only openat of the DB path was SQLite's O_RDWR|O_NOFOLLOW|O_CLOEXEC open returning fd 3 (the fd the probe reported); after the swap the journal was opened and unlinked at <path>-journal"
+  },
+  "unobservedMatrix": [
+    "Operational Linux hosts with systemd PID1, non-root principals or other kernels",
+    "Node 24 and GitHub Ubuntu CI runners",
+    "Other libsqlite3 builds, including builds without the unix VFS system-call interface or with a different default VFS",
+    "Node's bundled node:sqlite, which does not expose the VFS or its fd; this probe does not cover it",
+    "WAL mode, -shm/-wal sidecars and mmap"
+  ],
+  "notEstablished": [
+    "Operational expected-ID provenance or writer/worker OS-principal separation",
+    "Protected provenance of python3, probe.py and libsqlite3 in an operational install; a same-principal worker can replace them or preload code",
+    "Sidecar, alias, restart, crash and adversarial race controls required for a product writer",
+    "Any Linux support claim from the Windows B14-p probe; this evidence is independent of it",
+    "Qualification beyond this Firecracker/KVM sandbox host"
+  ],
+  "sources": [
+    "https://www.sqlite.org/c3ref/vfs.html",
+    "https://www.sqlite.org/c3ref/open.html",
+    "https://man7.org/linux/man-pages/man2/fstat.2.html",
+    "https://docs.python.org/3/library/ctypes.html"
+  ]
+}
