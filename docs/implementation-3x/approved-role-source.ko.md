@@ -8,8 +8,8 @@
 
 | 원본 | ref / SHA | 확인한 사실 |
 |---|---|---|
-| AGS 통합 브랜치 | `codex/v260-semantic-decision-layer` `0e88cb6039e143e79dd8c68c7aecc3e45da41d43` | R15 `3549ce7ab9f64d7a29c9672e5d6b97328f3a57c0`, T06 `918dc3521fa9b047f2f822c0f8c6a01e2851d980`, R16-a `9e0bfced0577edfdd65e9c59f16393b9825000b5`, R16-e `8532544cc44449fc54cd6f928811791be9c5c87f`, R16 `0f22be626a6d1a0f9e48af480c56dc37c3e1b3fc`가 모두 조상이다. |
-| FM `main` | `fed976f4b100a13920c5e8e1f5e533ac41116a77` | R16-b `9d697ea4eb7b359c586da3953ddd7f54617a720f`, R16-c `e7721cbb7e370b77d200b000a1a6c4c87d72b020`가 조상이다. R16-d `83675ad…`와 R16-f `381ce6d…`는 조상이 아니고, Progress에서 둘 다 BLOCKED다. |
+| AGS 통합 브랜치 | `codex/v260-semantic-decision-layer` `b6b87a8ca8fba3c8b26473128806df74b399376e` | R15 `3549ce7ab9f64d7a29c9672e5d6b97328f3a57c0`, T06 `918dc3521fa9b047f2f822c0f8c6a01e2851d980`, R16-a `9e0bfced0577edfdd65e9c59f16393b9825000b5`, R16-e `8532544cc44449fc54cd6f928811791be9c5c87f`, R16 `0f22be626a6d1a0f9e48af480c56dc37c3e1b3fc`가 모두 조상이다. 처음 확인한 base는 `0e88cb6039e143e79dd8c68c7aecc3e45da41d43`이었고 `b6b87a8`에서 다시 확인했다. |
+| FM `main` | `fed976f4b100a13920c5e8e1f5e533ac41116a77` (인용 기준), `3ce4293a4a755705e14028d1edf6140994a9ce57` (재확인) | 두 SHA 모두에서 R16-b `9d697ea4eb7b359c586da3953ddd7f54617a720f`, R16-c `e7721cbb7e370b77d200b000a1a6c4c87d72b020`가 조상이다. R16-d `83675ad…`와 R16-f `381ce6d…`는 조상이 아니고, Progress에서 둘 다 BLOCKED다. |
 
 **AGS에는 authoritative 승인 source가 아직 없다.** `mcp-server/src/model-routing-workflow.ts:83-89`와 `mcp-server/src/routing-v3/workflow-binding.ts:117-118`은 "native approval adapter"가 없으니 Task별 승인을 추정하지 말라고 막는다. `workflow-service.ts:205-232`의 `userApprovalRefs`는 convergence root 교체에 필요한 증거 참조일 뿐이다. `needs-approval` stage 상태(`sqlite-workflow-store.ts:706`)는 대기 표시이며 역할 승인 기록이 아니다. T06 current binding(`workflow-binding.ts:25`)도 승인이나 실행 권한을 주지 않는다. 따라서 AGS source는 아래 **최소 producer 계약**만 동결하고, 원장과 reader 구현은 R18, reservation과 효과 gate는 R19에 남긴다.
 
