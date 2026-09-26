@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'vitest';
@@ -11,6 +11,7 @@ import { IssuerEndpointUnavailable, WINDOWS_ISSUER_INSTALL_RECORD_PATH, WindowsI
 // B14-q-a2: the transport below is a same-process FIXTURE. It proves the client's framing and fail-closed
 // mapping only; no real pipe, SCM service, token or cross-principal denial is observed here (NOT_RUN).
 const issuerSid = 'S-1-5-80-1-2-3-4-5';
+const receiverSid = 'S-1-5-80-6-7-8-9-10';
 const pipeName = '\\\\.\\pipe\\ags-issuer-1';
 const root = 'C:\\ProgramData\\agent-governance-suite';
 const admins = 'S-1-5-32-544';
@@ -94,6 +95,13 @@ test('B14-q-a2 fails closed before any I/O on platform, transport, record and ca
     'DOS device segment': () => { const r = validRecord(); r.paths.registry = `${root}\\issuer\\state\\nul.json`; return r; },
     'DOS device binary': () => { const r = validRecord(); r.services.issuer.binaryPath = `${root}\\issuer\\bin\\CON.exe`; return r; },
     'binary under the state directory': () => { const r = validRecord(); r.services.issuer.binaryPath = `${root}\\issuer\\state\\ags-issuer.exe`; return r; },
+    'receiver shares caller SID': () => { const r = validRecord(); r.principals.caller.observedSid = receiverSid; return r; },
+    'receiver shares worker SID': () => { const r = validRecord(); r.principals.worker.observedSid = receiverSid; return r; },
+    'receiver shares installer SID': () => { const r = validRecord(); Object.assign(r.principals.installer, { accountKind: 'administrator', observedSid: receiverSid }); return r; },
+    'issuer shares installer SID': () => { const r = validRecord(); Object.assign(r.principals.installer, { accountKind: 'administrator', observedSid: issuerSid }); return r; },
+    'receiver account of another service': () => { const r = validRecord(); r.principals.receiver.accountName = 'NT SERVICE\\ags-other'; return r; },
+    ...Object.fromEntries(['con', 'PRN', 'aux.json', 'nul', 'COM1.json', 'lpt9'].map((device) => [`DOS device ${device}`,
+      () => { const r = validRecord(); r.paths.registry = `${root}\\issuer\\state\\${device}`; return r; }])),
   };
   for (const [label, read] of Object.entries(broken)) {
     assert.deepEqual(await client(transport, { readRecord: async () => read() }).refreshEpoch(),
@@ -112,21 +120,33 @@ test('B14-q-a2 fails closed before any I/O on platform, transport, record and ca
   assert.equal(calls.length, before, 'no forbidden or invalid caller request reaches the pipe');
 });
 
-test('B14-q-a2 environment variables cannot redirect the install record', async (context) => {
+test('B14-q-a2 environment, argv and cwd cannot redirect the install record or the pipe', async (context) => {
   if (existsSync(WINDOWS_ISSUER_INSTALL_RECORD_PATH)) context.skip('a real install record exists on this host');
   const { calls, transport } = fixture((request) => ok(request));
-  // A valid record at a caller-controlled location must never be picked up.
+  // A valid record at every caller-controlled location (env roots, argv, cwd) must never be picked up.
   const directory = await mkdtemp(join(tmpdir(), 'ags-b14qa2-'));
   const planted = join(directory, 'install-record.json');
-  await writeFile(planted, JSON.stringify(validRecord()));
+  const underRoot = join(directory, 'agent-governance-suite', 'issuer');
+  await mkdir(underRoot, { recursive: true });
+  for (const path of [planted, join(underRoot, 'install-record.json')]) await writeFile(path, JSON.stringify(validRecord()));
   const names = ['AGS_ISSUER_INSTALL_RECORD', 'AGS_ISSUER_PIPE', 'PROGRAMDATA', 'ALLUSERSPROFILE'];
   const saved = names.map((name) => [name, process.env[name]]);
+  const savedArgv = [...process.argv];
+  const savedCwd = process.cwd();
   try {
     for (const name of names) process.env[name] = name.startsWith('AGS_') ? planted : directory;
+    process.argv.push('--install-record', planted, planted);
+    process.chdir(directory);
     const issuer = new WindowsIssuerClient({ platform: 'win32', transport });
     assert.deepEqual(await issuer.refreshEpoch(), { verdict: 'UNAVAILABLE', code: 'install-record-invalid' });
     assert.equal(calls.length, 0);
+    // With a valid protected record, the pipe still comes from the record, not from AGS_ISSUER_PIPE.
+    process.env.AGS_ISSUER_PIPE = '\\\\.\\pipe\\ags-issuer-attacker';
+    assert.equal((await client(transport).refreshEpoch()).verdict, 'OK');
+    assert.deepEqual(calls.map((call) => call.pipe), [pipeName]);
   } finally {
+    process.chdir(savedCwd);
+    process.argv.splice(0, process.argv.length, ...savedArgv);
     for (const [name, value] of saved) { if (value === undefined) delete process.env[name]; else process.env[name] = value; }
     await rm(directory, { recursive: true, force: true });
   }
