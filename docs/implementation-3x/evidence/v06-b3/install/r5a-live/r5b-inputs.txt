@@ -1,0 +1,47 @@
+# r5b-inputs: r5b가 설치 직전에 다시 확인할 고정 입력·identity·명령과 중단 조건
+# r5a는 아래 값을 관측으로 고정했을 뿐이다. r5b는 이 파일을 신뢰 근거로 쓰지 않고, 모든 값을 설치 직전에 직접 다시 계산한다.
+
+## 1. writer·host identity (다시 확인)
+- writer: session_01PRna2jKCs5EdTv8Rwv3j83 (AREA f9f49211 V06_B3B_R5A_CLAUDE_CLOUD). r5b는 새 AREA 갱신과 GO를 받은 뒤에만 시작한다.
+- get_session: session_context.model=claude-opus-5-5, effort_level=high, last_served_model=claude-opus-5-5
+- boot는 턴마다 바뀐다. 신 host를 구별하는 기준은 보호 subtree 부재와 root scratch 해시 유지다.
+- 설치 전 `ls -ld /usr/lib/agent-governance-suite`가 "No such file or directory"여야 한다.
+- 설치 전 `cd /root/r5a && sha256sum -c --quiet scratch-sha256.txt` exit 0이어야 하고, 목록 sha256이 8c0c1f60cd634c929e214871e3d51e41eb2a7c9ce122cfc1a02c5fd36d8c6b41여야 한다.
+- 코드 기준: repo HEAD의 scripts/qualification/v06-b3-linux-install.mjs blob이 c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1이고, 파일 sha256이 d8038918488d9f4c1d2056f5ef04ce1546b7e68142d57319dd96bb864ae0fb8a여야 한다.
+
+## 2. 고정 입력 (경로 / sha256 / 조건)
+- keyring      /root/r5a/pubring.kbx                        140f2ad5260fd62773b6243ce8e1d3009645d558f121b8262c55e383dc285932  21011 bytes, root 644
+- SHASUMS      /root/r5a/SHASUMS256.txt                     f410428039e2c922a14058df067a4482691c9304a5c01a75847f9f3f2d3307f6
+- signature    /root/r5a/SHASUMS256.txt.sig                 865f22b026e4080554e10d247553fd770573893dac8fc7affc7d58b72de35a89
+- archive      /root/r5a/node-v24.21.0-linux-x64.tar.xz     fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6
+- bin/node(추출) 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c
+- signer VALIDSIG 5BE8A3F6C8A5C01D106C0AD820B1A390B168D356
+- AGS source   /root/r5a/src (git -c tar.umask=022 archive 0724bb2bc452626aba546a57d1db5c407d32feb0), 1620 files, 372 dirs, root-only, g/o 쓰기·symlink·nlink>1 0개
+  - host-integration.json 648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c
+  - V03-i manifest 0c5bfc700c37cd22b7c15c06f00c916948f1b170a7a0f8cd9da7768eb39ccb19
+  - v2 문서 90950010dfd44a3915252543e7ea75c4524072dd346b83534a58e3fe6f35a605(참고값; 코드는 계약 블록 필드로 대조)
+- releaseIdV2 = 32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd
+  - 설치 root는 /usr/lib/agent-governance-suite/protected-runtime/32a825d9…8edd가 된다.
+- manifestFile   /root/r5a-out/manifest.txt (설치 전 부재, 조상 / 755 -> /root 700 -> /root/r5a-out 700, 모두 root, symlink 아님)
+- parent manifest: 없음. 첫 설치이므로 --parent-manifest를 주지 않는다. 필요하면 pin 857bad43…와 일치하는 파일만 쓴다.
+
+## 3. b3a input-dir 준비 (r5b에서 실행, r5a에서는 하지 않음)
+- CLI는 입력 디렉터리에 정확한 네 파일 이름을 요구한다: node-v24.21.0-linux-x64.tar.xz, SHASUMS256.txt, SHASUMS256.txt.sig, nodejs-release-keyring.kbx
+  (0f530615:docs/implementation-3x/evidence/v06-b3/archive/README.ko.md:23).
+- 따라서 root 0700 input-dir을 만들고, pubring.kbx를 nodejs-release-keyring.kbx 이름으로 복사한다. 복사 뒤 sha256을 다시 대조한다.
+
+## 4. 명령 형식 (0f530615 install/README.ko.md:173-175)
+AGS_V06_B3B_PROTECTED_INSTALL=1 /root/r5a/node/bin/node scripts/qualification/v06-b3-linux-install.mjs \
+  --base-dir /usr/lib --input-dir <root-only b3a input-dir> --gpgv /usr/bin/gpgv --tar /usr/bin/tar \
+  --manifest /root/r5a-out/manifest.txt --package-source /root/r5a/src
+(/root/r5a/node/bin/node의 sha256이 7fde7b8a…와 같은지 실행 직전에 확인한다. /opt/node22는 쓰지 않는다.)
+
+## 5. 중단 조건 (하나라도 걸리면 설치하지 않고 BLOCKED로 보고)
+- /usr/lib/agent-governance-suite가 이미 있다.
+- /root/r5a-out/manifest.txt가 있거나, /root/r5a-out·조상이 root 700/755가 아니거나, symlink다.
+- scratch-sha256.txt 검사가 실패하거나 목록 sha256이 다르다.
+- 위 입력 sha256 중 하나라도 다르거나, gpgv가 GOODSIG·VALIDSIG 5BE8A3F6…를 내지 않는다.
+- installer blob이나 코드 pin(TRUST_PINS, PINNED)이 위 값과 다르다.
+- source에 g/o 쓰기·symlink·비root 소유·nlink>1 항목이 생겼거나, artifact digest가 하나라도 다르다.
+- AREA_SESSIONS의 V writer가 이 세션이 아니거나 GO가 없다.
+- /usr가 별도 mount가 되었거나, findmnt 경계가 preinstall-state.txt와 다르다.

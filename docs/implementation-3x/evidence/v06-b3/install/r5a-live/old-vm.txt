@@ -1,0 +1,30 @@
+# old-vm: 구 V writer VM 관측 원문 (개발팀장 93dd8eb2 전달)
+# 출처: session_012THvfNVip1GR1zpH8MEUaV run log(RemoteTrigger get_run_log), 2026-09-25T09:50:16Z 질의, 읽기 전용.
+# 이 세션이 직접 관측한 값이 아니다. 전달문을 그대로 옮겼다.
+
+```
+$ date -u; boot_id; btime; uptime; hostname; machine-id; uname -srm
+Fri Sep 25 09:50:39 UTC 2026 e8411abb-90b5-45ac-99a3-a1e00754e09d btime 1790329815 24.36 77.32 vm 0d0af05ee8fd4dc29275718f2ce4dff1 Linux 6.18.44-fc-v37 x86_64 exit=0
+$ findmnt -T /; lsblk; blkid -c /dev/null /dev/vda (tune2fs는 실행되지 않음)
+/ /dev/vda ext4 exit_findmnt=0 | vda 256G disk / ; vdb /opt/rclone ; vdc /opt/claude-code ; vdd /opt/env-runner ; vde /mnt/skills/public ; vdf /mnt/skills/examples ; zram0 | exit_blkid_or_tune2fs=0 (UUID 출력 없음)
+$ ls -ld /usr/lib/agent-governance-suite /usr/lib/agent-governance-suite/* /root/b3bf
+drwx------ 10 root root 4096 Sep 24 20:52 /root/b3bf
+drwxr-xr-x 3 root root 4096 Sep 24 15:04 /usr/lib/agent-governance-suite
+drwxr-xr-x 4 root root 4096 Sep 24 16:51 /usr/lib/agent-governance-suite/protected-runtime  exit=0
+$ stat …/protected-runtime/32a825d9…/bin/node
+/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node 516919 root:root 555 1790268678 exit=0
+$ sha256sum /root/b3bf/manifest.txt /root/b3bf/r1/manifest.txt; ls -ld /root/b3bf/r3
+857bad43df354eb2022fcc3355257cd37adaa0a4acca506f2a2a9add0721ce9f /root/b3bf/manifest.txt
+d75268cecb0c8f2210c7d0f8683a4b0bd8a4e6b685e3eec5144f42aca4be0e05 /root/b3bf/r1/manifest.txt exit_sha=0
+drwx------ 5 root root 4096 Sep 24 21:01 /root/b3bf/r3 exit_ls=0
+$ git branch --show-current; git rev-parse HEAD; git status --short
+claude/v3x-v06-b3b-r1 ca0aae0133c1c5807bb62766fc9216c24f939253 ?? docs/implementation-3x/evidence/v06-b3/install/r1-live/ exit=0
+```
+
+- 012TH 보고 요지: ino 516919와 ctime 1790268678은 이전 live 관측값과 같다. 2026-09-24 21:44:18Z 이후 쓰기가 없다. fd8e59d5 root는 직접 확인하지 않았다(protected-runtime 링크 수 4). blkid는 캐시에 쓰지 않도록 `-c /dev/null`로 실행했다.
+- 비교 기준: 이 host(신 writer)의 09:50:24Z boot는 1dd8bb46이다. 구 VM은 09:50:39Z에 boot e8411abb였다. 두 host가 같은 시각에 존재했고, hostname·machine-id는 같지만 보호 subtree 유무가 다르다.
+
+## 신 host 대조 (이 세션 직접 관측, preinstall-state.txt)
+- /usr/lib/agent-governance-suite: 없음 (구 VM에는 있음)
+- /root/b3bf: 없음 (구 VM에는 root 700으로 있음)
+- 구 VM의 32a825d9… root 이름은 이 host에서 계산한 releaseIdV2와 같다(source.txt).

@@ -1,0 +1,115 @@
+# session-host: 턴별 host 식별 원시 관측 (session_01PRna2jKCs5EdTv8Rwv3j83)
+# 09:20~09:50Z 값은 각 턴의 원시 출력에서 옮겼다. 마지막 절은 이번 턴(2단계a)에서 다시 실행한 결과다.
+
+## 턴 1 (HOLD 관측, 09:20Z)
+$ date -u                                  -> Fri Sep 25 09:20:28 UTC 2026 exit=0
+$ cat /proc/sys/kernel/random/boot_id      -> 33345bc8-b8e8-486f-b8d9-7d841667f373 exit=0
+$ grep btime /proc/stat                    -> btime 1790328016 exit=0
+$ cat /proc/uptime                         -> 11.33 36.46 exit=0
+$ hostname                                 -> vm exit=0
+$ cat /etc/machine-id                      -> 0d0af05ee8fd4dc29275718f2ce4dff1 exit=0
+$ uname -srm                               -> Linux 6.18.44-fc-v37 x86_64 exit=0
+$ grep -E '^(ID|VERSION_ID)=' /etc/os-release -> VERSION_ID="24.04" ID=ubuntu exit=0
+$ id                                       -> uid=0(root) gid=0(root) groups=0(root) exit=0
+$ grep CapEff /proc/self/status            -> CapEff: 000001fffeffffff exit=0
+$ findmnt -no TARGET,SOURCE,FSTYPE,PROPAGATION -T / -> /  /dev/vda ext4 private exit=0
+$ lsblk -o NAME,SIZE,TYPE,MOUNTPOINT | head
+NAME    SIZE TYPE MOUNTPOINT
+zram0     0B disk
+vda     256G disk /
+vdb     9.6M disk /opt/rclone
+vdc   255.1M disk /opt/claude-code
+vdd    47.2M disk /opt/env-runner
+vde     676K disk /mnt/skills/public
+vdf     5.7M disk /mnt/skills/examples
+exit=0
+$ blkid /dev/vda 2>&1 || tune2fs -l /dev/vda 2>&1 | grep -iE 'uuid|created'
+(출력 없음) exit=0   # blkid가 exit 0으로 끝나 tune2fs는 실행되지 않았다. fs UUID는 미관측이다.
+/effort high: "Set effort level to high (this session only)" 응답 있음
+
+## 턴 2 (HOLD 보충, 09:25Z)
+$ date -u -> Fri Sep 25 09:25:27 UTC 2026 exit=0
+$ boot_id -> 33345bc8-b8e8-486f-b8d9-7d841667f373 exit=0
+$ btime   -> btime 1790328016 exit=0
+$ uptime  -> 310.44 1226.53 exit=0
+
+## 턴 3 (사실 확인 질의, 09:43Z)
+$ date -u -> Fri Sep 25 09:43:13 UTC 2026 exit=0
+$ boot_id -> a6a1e00b-e825-4c22-b8b3-663179e37d39 exit=0
+$ btime   -> btime 1790329383 exit=0
+$ cat /proc/1/comm -> process_api exit=0
+$ ps -p 1 -o comm= -> process_api exit=0
+$ systemctl is-system-running -> offline exit=1
+$ id -u -> 0 exit=0
+$ ls -l /run/systemd/system -> No such file or directory exit=2
+$ git rev-parse FETCH_HEAD -> 0f5306154dfb987f35c215322354f6e10cc8c4b3 exit=0
+
+## 턴 4 (1단계 GO, 09:50Z)
+$ date -u -> 2026-09-25T09:50:24Z exit=0 (착수 ACK 시각)
+$ boot_id -> 1dd8bb46-a0e0-44a2-b8d3-f2a5fdef8834 exit=0
+$ btime   -> btime 1790329812 exit=0
+$ uptime  -> 11.40 36.99 exit=0
+
+## get_session (mcp Claude_Code_Remote, 선택 필드만; 토큰·URL 제외)
+턴 1 (09:20Z): id=session_01PRna2jKCs5EdTv8Rwv3j83 session_context.model=claude-opus-5-5 session_context.effort_level=high
+  external_metadata.effort_level=high external_metadata.last_served_model=claude-opus-5-5 session_status=SESSION_STATUS_RUNNING
+  connection_status=connected status_bucket=SESSION_STATUS_BUCKET_WORKING environment_kind=anthropic_cloud created_at=2026-09-25T09:19:32.671596Z
+  persist/retention/expires 필드: 없음(응답에 부재)
+턴 4 (09:50Z): 위 네 model/effort 필드 동일값
+
+## 턴 5 (2단계a, 이번 턴) — 재실행 원시 출력
+$ date -u
+Fri Sep 25 09:59:44 UTC 2026
+exit=0
+
+$ cat /proc/sys/kernel/random/boot_id
+25a57085-54da-4868-9f35-ce7a3465c416
+exit=0
+
+$ grep btime /proc/stat
+btime 1790330321
+exit=0
+
+$ cat /proc/uptime
+62.96 232.49
+exit=0
+
+$ hostname
+vm
+exit=0
+
+$ cat /etc/machine-id
+0d0af05ee8fd4dc29275718f2ce4dff1
+exit=0
+
+$ uname -srm
+Linux 6.18.44-fc-v37 x86_64
+exit=0
+
+$ id
+uid=0(root) gid=0(root) groups=0(root)
+exit=0
+
+$ grep CapEff /proc/self/status
+CapEff:	000001fffeffffff
+exit=0
+
+$ cat /proc/1/comm
+process_api
+exit=0
+
+$ findmnt -no TARGET,SOURCE,FSTYPE,PROPAGATION -T /
+/      /dev/vda ext4   private
+exit=0
+
+$ blkid -c /dev/null /dev/vda
+exit=0
+
+get_session (09:59Z): session_context.model=claude-opus-5-5 session_context.effort_level=high external_metadata.effort_level=high
+  external_metadata.last_served_model=claude-opus-5-5 session_status=SESSION_STATUS_RUNNING connection_status=connected
+  status_bucket=SESSION_STATUS_BUCKET_WORKING environment_kind=anthropic_cloud created_at=2026-09-25T09:19:32.671596Z
+  current_branches="claude/v3x-v06-b3b-r5a-trusted-input"; persist/retention/expires 필드 없음
+생략 필드(이름만): title, updated_at, environment_id, sources, autofix_on_pr_create, origin, tags, container_cc_version, context_usage,
+  cross_session_inbound, rate_limit_info, turn_handoff, usage, unread, configured_model
+
+해석 한계: hostname(vm)과 machine-id(0d0af05e…)는 구 VM과 같은 공통값이다. fs UUID는 관측되지 않았다. 이 값들을 운영 host 자격으로 해석하지 않는다.

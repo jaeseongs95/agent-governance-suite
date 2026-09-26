@@ -1,0 +1,28 @@
+# installer-blob: scripts/qualification/v06-b3-linux-install.mjs blob 동일성
+# 8bb6e689는 로컬 object에 이미 있었다. 4866e455는 구 provenance 기준의 통합 commit이다. ca0aae01은 1단계에서 origin/claude/v3x-v06-b3b-r1을 fetch해 얻었다.
+$ git cat-file -t 8bb6e6891bf25a5ddf9593def7468779616d3866; git cat-file -t 4866e45501227624d1e625470453ef8ce018bb9b; git cat-file -t 0f5306154dfb987f35c215322354f6e10cc8c4b3
+commit
+commit
+commit
+exit=0
+
+$ git rev-parse 8bb6e6891bf25a5ddf9593def7468779616d3866:scripts/qualification/v06-b3-linux-install.mjs 4866e45501227624d1e625470453ef8ce018bb9b:scripts/qualification/v06-b3-linux-install.mjs 0f5306154dfb987f35c215322354f6e10cc8c4b3:scripts/qualification/v06-b3-linux-install.mjs
+c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1
+c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1
+c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1
+exit=0
+
+$ git merge-base --is-ancestor 8bb6e6891bf25a5ddf9593def7468779616d3866 0f5306154dfb987f35c215322354f6e10cc8c4b3; echo anc_8bb6=$?; git merge-base --is-ancestor 4866e45501227624d1e625470453ef8ce018bb9b 0f5306154dfb987f35c215322354f6e10cc8c4b3; echo anc_4866=$?
+anc_8bb6=0
+anc_4866=0
+exit=0
+
+$ git show 0f5306154dfb987f35c215322354f6e10cc8c4b3:scripts/qualification/v06-b3-linux-install.mjs | sha256sum
+d8038918488d9f4c1d2056f5ef04ce1546b7e68142d57319dd96bb864ae0fb8a  -
+exit=0
+
+$ git ls-remote origin refs/heads/codex/v260-semantic-decision-layer refs/heads/claude/v3x-v06-b3b-r5a-trusted-input
+0f5306154dfb987f35c215322354f6e10cc8c4b3	refs/heads/codex/v260-semantic-decision-layer
+exit=0
+
+결과: 세 ref의 blob이 c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1로 같다. r3 provenance의 파일 sha256 d8038918…fb8a와도 같다(위 sha256sum 출력 d8038918…fb8a).

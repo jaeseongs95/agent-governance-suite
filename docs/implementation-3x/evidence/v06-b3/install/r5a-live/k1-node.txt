@@ -1,0 +1,104 @@
+# k1-node: K1 keyring과 Node v24.21.0 archive 서명 검증 (scratch /root/r5a, root 0700)
+# 다운로드는 1단계(09:50:55Z~09:51:29Z)에 각 1회 수행했다. 아래 검증 명령은 이번 턴에 같은 bytes로 다시 실행했다.
+
+## K1 다운로드 (1회)
+$ curl -sS -L --max-redirs 5 -D /root/r5a/K1.hdr -o /root/r5a/pubring.kbx -w 'FINAL …' 'https://raw.githubusercontent.com/nodejs/release-keys/481637f813e912c4aa3622d7964ab426c97b8e8d/gpg-only-active-keys/pubring.kbx'
+== K1 09:50:55Z
+FINAL https://raw.githubusercontent.com/nodejs/release-keys/481637f813e912c4aa3622d7964ab426c97b8e8d/gpg-only-active-keys/pubring.kbx 200 application/octet-stream redirects=0
+curl exit=0
+HTTP/1.1 200 Connection Established
+
+HTTP/2 200
+cache-control: max-age=300
+content-security-policy: default-src 'none'; style-src 'unsafe-inline'; sandbox
+content-type: application/octet-stream
+etag: "bd61ba99c54828c3e4f9f4c64d5132829b8bde41e21bd828f9ac4f76dbafa1c9"
+strict-transport-security: max-age=31536000
+x-content-type-options: nosniff
+x-frame-options: deny
+x-xss-protection: 1; mode=block
+x-github-request-id: E456:CA6A:1232FE:1C5B92:6AB643FE
+x-github-edge-region: iad
+accept-ranges: bytes
+date: Fri, 25 Sep 2026 09:50:55 GMT
+via: 1.1 varnish
+x-served-by: cache-iad-kiad7000053-IAD
+x-cache: MISS
+x-cache-hits: 0
+x-timer: S1790329855.393459,VS0,VE77
+vary: Authorization,Accept-Encoding
+access-control-allow-origin: *
+cross-origin-resource-policy: cross-origin
+x-fastly-request-id: 21c9109098bb6a21fe7dee99850c433021853f5c
+expires: Fri, 25 Sep 2026 09:55:55 GMT
+source-age: 0
+content-length: 21011
+
+
+$ stat -c '%n %U:%G %a %s bytes' /root/r5a/pubring.kbx
+/root/r5a/pubring.kbx root:root 644 21011 bytes
+exit=0
+
+$ sha256sum /root/r5a/pubring.kbx
+140f2ad5260fd62773b6243ce8e1d3009645d558f121b8262c55e383dc285932  /root/r5a/pubring.kbx
+exit=0
+
+pin (scripts/qualification/v06-b3-linux-install.mjs:30 PINNED.keyringSha256) = 140f2ad5260fd62773b6243ce8e1d3009645d558f121b8262c55e383dc285932 -> 일치
+
+$ file -b /root/r5a/pubring.kbx
+GPG keybox database version 1, created-at Tue Sep  1 14:05:21 2026, last-maintained Tue Sep  1 14:05:21 2026
+exit=0
+
+## nodejs.org 다운로드 (각 1회, curl -sS --fail -o <name> -w 'FINAL …')
+== 09:51:28Z GET https://nodejs.org/dist/v24.21.0/SHASUMS256.txt
+FINAL https://nodejs.org/dist/v24.21.0/SHASUMS256.txt 200 text/plain; charset=utf-8 redirects=0  exit=0
+== 09:51:29Z GET https://nodejs.org/dist/v24.21.0/SHASUMS256.txt.sig
+FINAL https://nodejs.org/dist/v24.21.0/SHASUMS256.txt.sig 200 application/pgp-signature redirects=0  exit=0
+== 09:51:29Z GET https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-x64.tar.xz
+FINAL https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-x64.tar.xz 200 application/x-xz redirects=0  exit=0
+
+$ stat -c '%n %U:%G %a %s' SHASUMS256.txt SHASUMS256.txt.sig node-v24.21.0-linux-x64.tar.xz
+SHASUMS256.txt root:root 644 3171
+SHASUMS256.txt.sig root:root 644 119
+node-v24.21.0-linux-x64.tar.xz root:root 644 31890184
+exit=0
+
+$ sha256sum SHASUMS256.txt SHASUMS256.txt.sig node-v24.21.0-linux-x64.tar.xz
+f410428039e2c922a14058df067a4482691c9304a5c01a75847f9f3f2d3307f6  SHASUMS256.txt
+865f22b026e4080554e10d247553fd770573893dac8fc7affc7d58b72de35a89  SHASUMS256.txt.sig
+fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6  node-v24.21.0-linux-x64.tar.xz
+exit=0
+
+$ gpgv --status-fd 1 --keyring /root/r5a/pubring.kbx SHASUMS256.txt.sig SHASUMS256.txt
+[GNUPG:] NEWSIG
+gpgv: Signature made Tue Sep  8 21:49:15 2026 UTC
+gpgv:                using EDDSA key 5BE8A3F6C8A5C01D106C0AD820B1A390B168D356
+[GNUPG:] KEY_CONSIDERED 5BE8A3F6C8A5C01D106C0AD820B1A390B168D356 0
+[GNUPG:] SIG_ID A1ouuslAqGvYF78cjZxMvjHRsoM 2026-09-08 1788904155
+[GNUPG:] GOODSIG 20B1A390B168D356 Antoine du Hamel <antoine.duhamel@platformatic.dev>
+gpgv: Good signature from "Antoine du Hamel <antoine.duhamel@platformatic.dev>"
+gpgv:                 aka "Antoine du Hamel <duhamelantoine1995@gmail.com>"
+[GNUPG:] VALIDSIG 5BE8A3F6C8A5C01D106C0AD820B1A390B168D356 2026-09-08 1788904155 0 4 0 22 8 00 5BE8A3F6C8A5C01D106C0AD820B1A390B168D356
+exit=0
+
+$ grep ' node-v24.21.0-linux-x64.tar.xz$' SHASUMS256.txt
+fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6  node-v24.21.0-linux-x64.tar.xz
+exit=0
+
+pin (v06-b3-linux-install.mjs:29 PINNED.releaseSha256) = fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6
+=> archive bytes sha256 == 서명된 SHASUMS 행 == 코드 pin. 서명자 fingerprint 5BE8A3F6C8A5C01D106C0AD820B1A390B168D356은 V06-b3a README와 같다.
+
+$ tar -xJOf node-v24.21.0-linux-x64.tar.xz node-v24.21.0-linux-x64/bin/node | sha256sum
+7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c  -
+exit=0
+
+pin (v06-b3-linux-install.mjs:31 PINNED.nodeSha256) = 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c -> 일치
+
+## 검사용 Node 추출 (2단계a, repo 검사용; /usr 아님)
+$ umask 022; install -d -m 0700 /root/r5a/node && tar -xJf /root/r5a/node-v24.21.0-linux-x64.tar.xz -C /root/r5a/node --strip-components=1 --no-same-owner
+exit=0
+
+$ sha256sum /root/r5a/node/bin/node; /root/r5a/node/bin/node --version
+7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c  /root/r5a/node/bin/node
+v24.21.0
+exit=0
