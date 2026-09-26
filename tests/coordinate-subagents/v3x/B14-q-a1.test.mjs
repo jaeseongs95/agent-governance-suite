@@ -64,6 +64,14 @@ test('B14-q-a1 install record accepts only the complete P3.2 shape', () => {
     rejects(record, mutate(validRecord(), (copy) => { const leaf = path.at(-1); delete path.slice(0, -1).reduce((node, key) => node[key], copy)[leaf]; }), path.join('.'));
   }
   rejects(record, { ...validRecord(), note: 'extra' }, 'unknown top-level field');
+  // Every closed object refuses an undefined key on its own; the P4.4 read exemption rests on this.
+  const objects = [[], ['contractDigests'], ['principals'], ['services'], ['paths'], ['endpoint'], ['build'],
+    ...['installer', 'issuer', 'receiver', 'caller', 'worker'].flatMap((role) =>
+      [['principals', role], ['principals', role, 'groupPolicy'], ['principals', role, 'privilegePolicy']]),
+    ...['issuer', 'receiver'].map((name) => ['services', name])];
+  for (const path of objects) {
+    rejects(record, mutate(validRecord(), (copy) => { path.reduce((node, key) => node[key], copy).secret = 'x'; }), `${['record', ...path].join('.')}.secret`);
+  }
 });
 
 test('B14-q-a1 install record rejects weakened principals, services, paths and endpoints', () => {
