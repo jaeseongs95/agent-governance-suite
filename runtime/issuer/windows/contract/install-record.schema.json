@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://skill-suite.local/runtime/issuer/windows/install-record.v1.schema.json",
   "title": "WindowsIssuerInstallRecord.v1",
-  "description": "B14-q-a candidate. The installer writes this record into the protected subtree (ags-protected-provisioning/v1 P3.2). Passing this schema never replaces observing the effective ACL, token or hashes.",
+  "description": "B14-q-a candidate. The installer writes this record into the protected subtree (ags-protected-provisioning/v1 P3.2). Passing this schema never replaces observing the effective ACL, token or hashes. The record holds no secret: every object is closed (additionalProperties false), so no secret, token or key field can be added. On that ground this frozen consumer contract exempts the record from read denial for the same-user caller and worker principals, who read it to find the issuer endpoint (P4.4 exemption, agent-governance-suite 4017ca95 docs/implementation-3x/ags-protected-provisioning.ko.md:62). Denial of write, delete, rename, link and ACL/owner changes to those principals still applies.",
   "type": "object",
   "additionalProperties": false,
   "required": ["contractId", "revision", "os", "installId", "contractDigests", "principals", "services", "paths", "endpoint", "build"],
@@ -27,16 +27,19 @@
       "required": ["installer", "issuer", "receiver", "caller", "worker"],
       "properties": {
         "installer": {
+          "type": "object",
           "allOf": [{ "$ref": "#/$defs/principal" }],
           "properties": { "accountKind": { "enum": ["local-system", "administrator"] } }
         },
         "issuer": { "$ref": "#/$defs/servicePrincipal" },
         "receiver": { "$ref": "#/$defs/servicePrincipal" },
         "caller": {
+          "type": "object",
           "allOf": [{ "$ref": "#/$defs/principal" }, { "$ref": "#/$defs/noAdministrators" }],
           "properties": { "accountKind": { "const": "interactive-user" } }
         },
         "worker": {
+          "type": "object",
           "allOf": [{ "$ref": "#/$defs/principal" }, { "$ref": "#/$defs/noAdministrators" }],
           "properties": { "accountKind": { "enum": ["interactive-user", "local-user"] } }
         }
@@ -116,18 +119,21 @@
       }
     },
     "noAdministrators": {
+      "type": "object",
       "properties": {
-        "groupPolicy": { "properties": { "forbiddenSids": { "contains": { "const": "S-1-5-32-544" } } } }
+        "groupPolicy": { "type": "object", "properties": { "forbiddenSids": { "type": "array", "contains": { "const": "S-1-5-32-544" } } } }
       }
     },
     "servicePrincipal": {
+      "type": "object",
       "allOf": [{ "$ref": "#/$defs/principal" }, { "$ref": "#/$defs/noAdministrators" }],
       "properties": {
         "accountKind": { "const": "virtual-service-account" },
         "accountName": { "type": "string", "pattern": "^NT SERVICE\\\\ags-[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$" },
         "observedSid": { "type": "string", "pattern": "^S-1-5-80(?:-[0-9]{1,10}){5}$" },
         "privilegePolicy": {
-          "properties": { "allowed": { "maxItems": 1, "items": { "const": "SeChangeNotifyPrivilege" } } }
+          "type": "object",
+          "properties": { "allowed": { "type": "array", "maxItems": 1, "items": { "const": "SeChangeNotifyPrivilege" } } }
         }
       }
     },

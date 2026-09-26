@@ -44,6 +44,7 @@ const validRecord = () => ({
   build: { buildDigest: digest('d'), closureDigest: digest('e') },
 });
 const mutate = (base, edit) => { const copy = structuredClone(base); edit(copy); return copy; };
+const omit = (value, key) => { const copy = { ...value }; delete copy[key]; return copy; };
 const rejects = (validate, value, label) => assert.equal(validate(value), false, `${label} must be invalid`);
 
 test('B14-q-a1 install record accepts only the complete P3.2 shape', () => {
@@ -76,6 +77,12 @@ test('B14-q-a1 install record rejects weakened principals, services, paths and e
     'receiver may hold Administrators': (r) => { r.principals.receiver.groupPolicy.forbiddenSids = []; },
     'worker may hold Administrators': (r) => { r.principals.worker.groupPolicy.forbiddenSids = []; },
     'caller may hold Administrators': (r) => { r.principals.caller.groupPolicy.forbiddenSids = ['S-1-1-0']; },
+    'caller running as LocalSystem': (r) => { r.principals.caller.accountKind = 'local-system'; },
+    'installer as an interactive user': (r) => { r.principals.installer.accountKind = 'interactive-user'; },
+    'installer SID not a SID': (r) => { r.principals.installer.observedSid = 'UNKNOWN'; },
+    'caller SID empty': (r) => { r.principals.caller.observedSid = ''; },
+    'worker SID malformed': (r) => { r.principals.worker.observedSid = 'S-1-5-21-x'; },
+    'forbidden group not a SID': (r) => { r.principals.worker.groupPolicy.forbiddenSids = [admins, 'Administrators']; },
     'service SID type unrestricted': (r) => { r.services.issuer.sidType = 'unrestricted'; },
     'binary outside protected subtree': (r) => { r.services.issuer.binaryPath = 'C:\\Users\\user\\ags-issuer.exe'; },
     'binary through parent segment': (r) => { r.services.issuer.binaryPath = `${root}\\issuer\\..\\..\\Temp\\ags-issuer.exe`; },
@@ -113,6 +120,11 @@ test('B14-q-a1 request frames carry no caller-chosen endpoint, path, secret or i
   rejects(request, { ...epochRequest, epoch: nonce('e') }, 'epoch request claiming an epoch');
   rejects(request, { ...epochRequest, audience: 'peer-receiver/v1' }, 'epoch request with audience');
   rejects(request, { ...issueRequest, requestId: 'request-1' }, 'non-random request id');
+  // Omission is not a default: every bound field must be present.
+  for (const key of ['schemaVersion', 'kind', 'requestId', 'epoch', 'operation', 'audience', 'receiverInstance']) {
+    rejects(request, omit(issueRequest, key), `issue request without ${key}`);
+  }
+  rejects(request, omit(epochRequest, 'epoch'), 'epoch request without epoch');
 });
 
 test('B14-q-a1 response frames have no unknown or implicit-success status', () => {
@@ -137,4 +149,10 @@ test('B14-q-a1 response frames have no unknown or implicit-success status', () =
   rejects(response, { ...ok, credential: { ...credential, audience: 'any' } }, 'credential audience outside the contract');
   rejects(response, { ...ok, credential: { ...credential, secret: 'short' } }, 'weak credential secret');
   rejects(response, { ...ok, epoch: null }, 'response without epoch');
+  // A reply missing its status, epoch or binding fields is never an implicit success.
+  for (const key of ['schemaVersion', 'kind', 'requestId', 'operation', 'epoch', 'status']) {
+    rejects(response, omit(ok, key), `ok response without ${key}`);
+  }
+  rejects(response, { ...ok, trusted: true }, 'ok response with an extra field');
+  rejects(response, { ...denied, retryAfter: 1 }, 'refusal with an extra field');
 });
