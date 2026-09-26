@@ -30,6 +30,10 @@ const TRUSTED_OWNERS = ["S-1-5-18", "S-1-5-32-544", serviceSidOf("TrustedInstall
 const ANCESTOR_RIGHTS = ["read", "execute", "write", "append"];
 const ROOT_RIGHTS = ["read", "execute"];
 const PROTECTED_DACL = { protected: true, allow: [{ sid: "*S-1-5-18", access: "full" }, { sid: "*S-1-5-32-544", access: "full" }] };
+// An owner holds WRITE_DAC whatever the DACL says, and a same-user (UAC) installer shares its SID with the
+// caller. Created directories and rollback ownership therefore go to Administrators; the record still keeps
+// the real installer SID.
+const PROTECTED_OWNER = "*S-1-5-32-544";
 
 export function validateWindowsServiceDefinition(definition) {
   const { serviceName, binPath, obj, sid, sidType, startType, requiredPrivileges } = definition;
@@ -95,12 +99,11 @@ export function planWindowsIssuerInstall(record, { observePath } = {}) {
   const rootSeen = observe(observePath, root);
   if (rootSeen.exists) requireSafe(rootSeen, root, ROOT_RIGHTS);
   if (observe(observePath, subtree).exists) throw new Error("The protected subtree already exists.");
-  const owner = `*${record.principals.installer.observedSid}`;
   return { mode: "plan", installId: record.installId, services, steps: [
     // The executor re-observes these under the same rules right before creating anything (B14-q-b).
     { action: "reverify-parents", paths: [...ancestors, root] },
-    ...(rootSeen.exists ? [] : [{ action: "create-protected-directory", path: root, owner, requireAbsent: true, dacl: PROTECTED_DACL }]),
-    { action: "create-protected-subtree", path: subtree, owner, requireAbsent: true, dacl: PROTECTED_DACL },
+    ...(rootSeen.exists ? [] : [{ action: "create-protected-directory", path: root, owner: PROTECTED_OWNER, requireAbsent: true, dacl: PROTECTED_DACL }]),
+    { action: "create-protected-subtree", path: subtree, owner: PROTECTED_OWNER, requireAbsent: true, dacl: PROTECTED_DACL },
     ...services.flatMap((d) => [
       { tool: "sc.exe", args: ["create", d.serviceName, "binPath=", d.binPath, "obj=", d.obj, "type=", "own", "start=", d.startType] },
       { tool: "sc.exe", args: ["sidtype", d.serviceName, d.sidType] },
@@ -114,13 +117,12 @@ export function planWindowsIssuerInstall(record, { observePath } = {}) {
 export function planWindowsIssuerRollback(record) {
   validateRecord(record);
   const subtree = subtreeOf(record);
-  const owner = `*${record.principals.installer.observedSid}`;
   const services = definitionsOf(record);
   return { mode: "plan", installId: record.installId, steps: [
     ...services.map((d) => ({ tool: "sc.exe", args: ["stop", d.serviceName] })),
     ...services.map((d) => ({ tool: "sc.exe", args: ["delete", d.serviceName] })),
     ...services.flatMap((d) => [
-      { action: "reassign-owner", path: subtree, fromSid: `*${d.sid}`, toSid: owner, recursive: true },
+      { action: "reassign-owner", path: subtree, fromSid: `*${d.sid}`, toSid: PROTECTED_OWNER, recursive: true },
       { action: "remove-ace", path: subtree, sid: `*${d.sid}`, recursive: true },
       { action: "verify-no-residual-sid", path: subtree, sid: `*${d.sid}` },
     ]),

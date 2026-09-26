@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'vitest';
-import { planWindowsIssuerInstall, planWindowsIssuerRollback, validateWindowsServiceDefinition } from '../../../runtime/issuer/windows/service/service-plan.mjs';
+import { planWindowsIssuerInstall, planWindowsIssuerRollback, serviceSidOf, validateWindowsServiceDefinition } from '../../../runtime/issuer/windows/service/service-plan.mjs';
 
 // B14-q-a4: plan-only FIXTURE. Nothing here registers a service, creates an account or changes an ACL.
 // The real SCM token, cross-user and worker-descendant denials stay NOT_RUN (B14-q-b, B14-q-c gates).
@@ -49,6 +49,8 @@ const observer = (overrides = {}, seen = []) => {
 };
 const edited = (edit) => { const r = validRecord(); edit(r); return r; };
 const definition = (role) => planWindowsIssuerInstall(validRecord(), observer()).services.find((d) => d.role === role);
+// Created directories and rollback ownership go to Administrators, never to the installing user's SID.
+const adminsOwner = '*S-1-5-32-544';
 const protectedDacl = { protected: true, allow: [{ sid: '*S-1-5-18', access: 'full' }, { sid: '*S-1-5-32-544', access: 'full' }] };
 
 test('B14-q-a4 plans virtual-account services with quoted protected binPaths and no execution', () => {
@@ -59,8 +61,8 @@ test('B14-q-a4 plans virtual-account services with quoted protected binPaths and
   assert.equal(plan.installId, 'install-1');
   // Execution must re-observe the parents under the same rules before creating anything (B14-q-b duty).
   assert.deepEqual(plan.steps[0], { action: 'reverify-parents', paths: ['C:\\', 'C:\\ProgramData', root] });
-  assert.deepEqual(plan.steps[1], { action: 'create-protected-directory', path: root, owner: '*S-1-5-18', requireAbsent: true, dacl: protectedDacl });
-  assert.deepEqual(plan.steps[2], { action: 'create-protected-subtree', path: subtree, owner: '*S-1-5-18', requireAbsent: true, dacl: protectedDacl });
+  assert.deepEqual(plan.steps[1], { action: 'create-protected-directory', path: root, owner: adminsOwner, requireAbsent: true, dacl: protectedDacl });
+  assert.deepEqual(plan.steps[2], { action: 'create-protected-subtree', path: subtree, owner: adminsOwner, requireAbsent: true, dacl: protectedDacl });
   for (const [role, name, sid] of [['issuer', 'ags-issuer', issuerSid], ['receiver', 'ags-receiver', receiverSid]]) {
     const exe = `${subtree}\\bin\\${name}.exe`;
     assert.deepEqual(definition(role), { role, serviceName: name, binPath: `"${exe}"`, obj: `NT SERVICE\\${name}`, sid,
@@ -82,7 +84,7 @@ test('B14-q-a4 an existing protectedRoot is kept only when it is already safe', 
   const safeRoot = { exists: true, owner: 'S-1-5-32-544', reparse: false, nonAdminRights: ['read', 'execute'] };
   const plan = planWindowsIssuerInstall(validRecord(), observer({ [root]: safeRoot }));
   assert.ok(!plan.steps.some((step) => step.action === 'create-protected-directory'));
-  assert.deepEqual(plan.steps[1], { action: 'create-protected-subtree', path: subtree, owner: '*S-1-5-18', requireAbsent: true, dacl: protectedDacl });
+  assert.deepEqual(plan.steps[1], { action: 'create-protected-subtree', path: subtree, owner: adminsOwner, requireAbsent: true, dacl: protectedDacl });
 });
 
 // Service definitions are checked on their own, for both services.
@@ -100,7 +102,8 @@ for (const role of ['issuer', 'receiver']) {
     'right name with the TrustedInstaller SID': (d) => { d.sid = trustedInstallerSid; },
     'its own SID zero-padded': (d) => { d.sid = d.sid.replace(/-(\d+)$/, '-0$1'); },
     'a sub-authority past 32 bits': (d) => { d.sid = d.sid.replace(/-(\d+)$/, '-4294967296'); },
-    'a name outside ags-': (d) => { d.serviceName = 'svc'; d.obj = 'NT SERVICE\\svc'; },
+    // Name, account and SID agree here, so only the ags- name rule can refuse it.
+    'a consistent name outside ags-': (d) => { d.serviceName = 'svc'; d.obj = 'NT SERVICE\\svc'; d.sid = serviceSidOf('svc'); },
     'a boot start type': (d) => { d.startType = 'boot'; },
     'unrestricted sidtype': (d) => { d.sidType = 'unrestricted'; },
     'extra privilege': (d) => { d.requiredPrivileges = ['SeChangeNotifyPrivilege', 'SeDebugPrivilege']; },
@@ -204,11 +207,41 @@ test('B14-q-a4 rollback deletes both services, then clears what their SIDs still
   const after = plan.steps.slice(lastDelete + 1);
   for (const sid of [issuerSid, receiverSid]) {
     // After deletion the virtual account name no longer resolves, so every later step names the raw SID.
-    assert.ok(after.some((step) => step.action === 'reassign-owner' && step.fromSid === `*${sid}` && step.toSid === '*S-1-5-18' && step.path === subtree && step.recursive));
+    assert.ok(after.some((step) => step.action === 'reassign-owner' && step.fromSid === `*${sid}` && step.toSid === adminsOwner && step.path === subtree && step.recursive));
     assert.ok(after.some((step) => step.action === 'remove-ace' && step.sid === `*${sid}` && step.path === subtree && step.recursive));
     assert.ok(after.some((step) => step.action === 'verify-no-residual-sid' && step.sid === `*${sid}` && step.path === subtree));
   }
   assert.ok(!JSON.stringify(after).includes('NT SERVICE'), 'post-delete steps must not resolve accounts by name');
   assert.ok(plan.steps.slice(0, lastDelete + 1).every((step) => step.tool === 'sc.exe'), 'no SID cleanup before the services are gone');
   assert.deepEqual(after.at(-1), { action: 'remove-protected-subtree', path: subtree });
+});
+
+test('B14-q-a4 a same-user administrator install still hands ownership to Administrators', () => {
+  // UAC same-user install: installer, caller and worker share one user SID; the record keeps that real SID.
+  const sameUser = edited((r) => { Object.assign(r.principals.installer, { accountKind: 'administrator', accountName: 'HOST\\user', observedSid: userSid }); });
+  const install = planWindowsIssuerInstall(sameUser, observer());
+  const created = install.steps.filter((step) => step.action?.startsWith('create-protected-'));
+  assert.deepEqual(created.map((step) => [step.action, step.owner]), [['create-protected-directory', adminsOwner], ['create-protected-subtree', adminsOwner]]);
+  const rollback = planWindowsIssuerRollback(sameUser);
+  const reassigned = rollback.steps.filter((step) => step.action === 'reassign-owner');
+  assert.deepEqual(reassigned.map((step) => [step.fromSid, step.toSid]), [[`*${issuerSid}`, adminsOwner], [`*${receiverSid}`, adminsOwner]]);
+  assert.ok(!JSON.stringify([install.steps, rollback.steps]).includes(userSid), 'the installing user never becomes an owner');
+});
+
+test('B14-q-a4 replanning after a rollback keeps an Administrators-owned root and refuses anything else', () => {
+  // Rollback removes the subtree and leaves the root it created; a new install accepts that root as is.
+  const kept = { exists: true, owner: 'S-1-5-32-544', reparse: false, nonAdminRights: ['read', 'execute'] };
+  const plan = planWindowsIssuerInstall(validRecord(), observer({ [root]: kept }));
+  assert.ok(!plan.steps.some((step) => step.action === 'create-protected-directory'));
+  assert.equal(plan.steps.find((step) => step.action === 'create-protected-subtree').owner, adminsOwner);
+  assert.throws(() => planWindowsIssuerInstall(validRecord(), observer({ [root]: { ...kept, owner: userSid } })));
+  assert.throws(() => planWindowsIssuerInstall(validRecord(), observer({ [root]: kept, [subtree]: kept })));
+});
+
+test('B14-q-a4 the 32-bit bound applies to the first sub-authority too', () => {
+  const withUser = (sid) => edited((r) => { r.principals.caller.observedSid = sid; r.principals.worker.observedSid = sid; });
+  assert.doesNotThrow(() => planWindowsIssuerInstall(withUser('S-1-5-4294967295-2-3-1001'), observer()));
+  assert.doesNotThrow(() => planWindowsIssuerRollback(withUser('S-1-5-4294967295-2-3-1001')));
+  assert.throws(() => planWindowsIssuerInstall(withUser('S-1-5-4294967296-2-3-1001'), observer()));
+  assert.throws(() => planWindowsIssuerRollback(withUser('S-1-5-4294967296-2-3-1001')));
 });
