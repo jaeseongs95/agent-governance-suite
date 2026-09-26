@@ -1,0 +1,58 @@
+# turn-check: r5 턴의 사후 관측 (설치 lineage 증거 아님)
+# 설치 boot는 701c96a7-937e-47dd-9a3d-cdfdb92380fc(btime 1790422227)이고, 당시 기록은 r5b-live에 있다. 아래는 r5 턴(다른 boot)에서 읽기만 한 결과다.
+$ date -u +%FT%T.%NZ; cat /proc/sys/kernel/random/boot_id; grep btime /proc/stat; hostname; cat /etc/machine-id; id
+2026-09-26T14:00:50.690985025Z
+9ed1c2a0-2b7f-4f70-b77a-b70ac5b55e2f
+btime 1790431156
+vm
+0d0af05ee8fd4dc29275718f2ce4dff1
+uid=0(root) gid=0(root) groups=0(root)
+exit=0
+
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d size=%s ctime=%Z' /root/r5a-out/manifest.txt /root/r5a-out; sha256sum /root/r5a-out/manifest.txt
+/root/r5a-out/manifest.txt regular file root:root 600 nlink=1 ino=1671184 dev=65024 size=58663 ctime=1790422436
+/root/r5a-out directory root:root 700 nlink=2 ino=1673190 dev=65024 size=4096 ctime=1790422435
+e78cb508ee8537d0a43f3e09d9fd3d5ad5a63c116af623375efc0a2b95982428  /root/r5a-out/manifest.txt
+exit=0
+
+$ cd /root/r5a/r5b-run && sha256sum *
+b6fbf490b8e2fd9348504be4c09c503f19c0ffb4f2375df66a9f24793880090c  dpkg-post.txt
+ec0ee1d227af9e55a6a6f784a694fede2fb09116dae139325191dae04c496f07  dpkg-pre-full.txt
+38905e191b0fd50574a18e1081cc569fc4a3d35364f07dc948a9747dcfcebff8  driver.mjs
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  install.stderr
+1b432df355b1e54713ecbe76b64334c25ea918143aea2a9d8d17644b7a94e937  install.stdout
+c79f71c522bd9951116a8553abec2d56f703bfc9e7ccbb89a649d183ac48cb3f  manifest-trace.txt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  pre-marker
+07597bba5d2930bfc1045c44286c27b2ec29bf8f59f0825237f5dffc52b67428  strace.txt
+f2a1e8aceb5a707051c3b3bc415657cdf6419839e1bd7457c9a445356d83c616  verify.mjs
+exit=0
+
+$ cd /root/r5a && sha256sum -c --quiet scratch-sha256.txt; echo list=$(sha256sum < scratch-sha256.txt | cut -c1-64)
+list=8c0c1f60cd634c929e214871e3d51e41eb2a7c9ce122cfc1a02c5fd36d8c6b41
+exit=0
+
+$ stat -c '%n ino=%i %U:%G %a nlink=%h ctime=%Z' /usr/lib/agent-governance-suite /usr/lib/agent-governance-suite/protected-runtime /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node; ls /usr/lib/agent-governance-suite/protected-runtime; ls -ld /root/b3bf
+/usr/lib/agent-governance-suite ino=524289 root:root 755 nlink=3 ctime=1790422435
+/usr/lib/agent-governance-suite/protected-runtime ino=524290 root:root 755 nlink=3 ctime=1790422435
+/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd ino=524291 root:root 755 nlink=4 ctime=1790422435
+/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node ino=524293 root:root 555 nlink=1 ctime=1790422435
+32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd
+ls: cannot access '/root/b3bf': No such file or directory
+exit=2
+
+$ cd /usr/lib/agent-governance-suite && sha256sum -c --quiet /home/user/agent-governance-suite/docs/implementation-3x/evidence/v06-b3/install/r5b-live/installed-sha256.txt; echo installed_check=$?
+installed_check=0
+exit=0
+
+$ diff <(find /usr/lib/agent-governance-suite -printf '%y\t%u:%g\t%m\t%n\t%i\t%s\t%p\n' | LC_ALL=C sort -k7) /home/user/agent-governance-suite/docs/implementation-3x/evidence/v06-b3/install/r5b-live/inventory.tsv && echo INVENTORY_SAME_AS_r5b
+INVENTORY_SAME_AS_r5b
+exit=0
+
+$ cmp /root/r5a-out/manifest.txt /home/user/agent-governance-suite/docs/implementation-3x/evidence/v06-b3/install/r5b-live/manifest.txt && echo MANIFEST_COPY_SAME; git -C /home/user/agent-governance-suite show eb5f2e5d:docs/implementation-3x/evidence/v06-b3/install/r5b-live/manifest.txt | sha256sum
+MANIFEST_COPY_SAME
+e78cb508ee8537d0a43f3e09d9fd3d5ad5a63c116af623375efc0a2b95982428  -
+exit=0
+
+$ git -C /home/user/agent-governance-suite show eb5f2e5d:docs/implementation-3x/evidence/v06-b3/install/r5b-live/b1-supplement/raw/strace.txt.gz | gzip -dc | sha256sum
+07597bba5d2930bfc1045c44286c27b2ec29bf8f59f0825237f5dffc52b67428  -
+exit=0

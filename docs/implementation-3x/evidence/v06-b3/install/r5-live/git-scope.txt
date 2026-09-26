@@ -1,0 +1,73 @@
+# git-scope: 선택 통합 범위와 r1-live·r3-live 불변 (git 읽기 전용)
+$ git rev-parse ca0aae0133c1c5807bb62766fc9216c24f939253:docs/implementation-3x/evidence/v06-b3/install/r3-live; git ls-tree ca0aae0133c1c5807bb62766fc9216c24f939253 docs/implementation-3x/evidence/v06-b3/install/r3-live/ | wc -l
+2869c1d60563b647897899858b5e004a58cbdc23
+17
+exit=0
+
+$ git merge-base --is-ancestor ca0aae0133c1c5807bb62766fc9216c24f939253 eb5f2e5d; echo ca0aae01_ancestor_of_eb5f2e5d=$?
+ca0aae01_ancestor_of_eb5f2e5d=1
+exit=0
+
+$ git ls-tree -r --name-only eb5f2e5d | grep -cE '/(r1-live|r3-live)/'
+0
+exit=1
+
+$ git diff --name-status 4017ca9545418c45044a40e6cf67d4a74074ccd4 eb5f2e5d | awk '{print $1}' | sort | uniq -c; git diff --name-status 4017ca9545418c45044a40e6cf67d4a74074ccd4 eb5f2e5d | grep -vc '/r5b-live/'
+     22 A
+0
+exit=1
+
+$ git diff --name-status d8f20ac4^1 d8f20ac4 | awk '{print $1}' | sort | uniq -c; git diff --name-status d8f20ac4^1 d8f20ac4 | grep -vc '/r5a-live/'; git rev-parse d8f20ac4^2
+     16 A
+0
+7a13c5189b47468adc86d8130cb14e61628db6e5
+exit=0
+
+$ git rev-parse 7a13c518:docs/implementation-3x/evidence/v06-b3/install/r5a-live eb5f2e5d:docs/implementation-3x/evidence/v06-b3/install/r5a-live eb5f2e5d:docs/implementation-3x/evidence/v06-b3/install/r5b-live
+f12bfb2febb920ed8ca48cbb87598761d5e345bb
+f12bfb2febb920ed8ca48cbb87598761d5e345bb
+1061d5ba90c4484f93edc56a399800f9fbcd42e0
+exit=0
+
+$ git log --format='%H %P %s' 4017ca9545418c45044a40e6cf67d4a74074ccd4..eb5f2e5d
+eb5f2e5dc3c71372ae2ec97f5775e79c6c411f87 b209874ce872f69e07fb716af0ed05b474987d11 docs(evidence): V06-b3b-r5b 설치 원본 strace 제출
+b209874ce872f69e07fb716af0ed05b474987d11 51295a250118431bb103552c9d8d4700a82d64e1 docs(evidence): V06-b3b-r5b B1 모듈 경로·적재 근거 보완
+51295a250118431bb103552c9d8d4700a82d64e1 4017ca9545418c45044a40e6cf67d4a74074ccd4 docs(evidence): V06-b3b-r5b 새 host 첫 보호 runtime 설치 근거
+exit=0
+
+$ for r in 8bb6e6891bf25a5ddf9593def7468779616d3866 4866e45501227624d1e625470453ef8ce018bb9b 4017ca9545418c45044a40e6cf67d4a74074ccd4 eb5f2e5d; do echo $r $(git rev-parse $r:scripts/qualification/v06-b3-linux-install.mjs); done
+8bb6e6891bf25a5ddf9593def7468779616d3866 c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1
+4866e45501227624d1e625470453ef8ce018bb9b c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1
+4017ca9545418c45044a40e6cf67d4a74074ccd4 c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1
+eb5f2e5d c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1
+exit=0
+
+$ git show ca0aae0133c1c5807bb62766fc9216c24f939253:docs/implementation-3x/evidence/v06-b3/install/r3-live/invariance.txt | sed -n '1,14p' | cut -c1-120
+## baseline (pre-flight, Thu Sep 24 20:52:38 UTC 2026)
+516804 555 1 1790262265 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c /usr/lib/agent-governance-suite
+516919 555 1 1790268678 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c /usr/lib/agent-governance-suite
+857bad43df354eb2022fcc3355257cd37adaa0a4acca506f2a2a9add0721ce9f  /root/b3bf/manifest.txt
+d75268cecb0c8f2210c7d0f8683a4b0bd8a4e6b685e3eec5144f42aca4be0e05  /root/b3bf/r1/manifest.txt
+1f10e1bc73df82b1a433e31e3ebe38359a3715e00ad77ef6029be733c7dc4fd8  r1-live/checksums.txt
+c769bee042cd201dbd82f50e054c82ee0d59fd79a53b967ed3d3a67d1d94f4d1  r1-live/install-manifest.txt
+bab5ae6f30ab015f9e76c76c8c11ff50bb4a663fd55f907d2a8159e7df4f4779  r1-live/inventory.tsv
+e822e6de26a28d30b7dd1ff485e20469689b187dc9d51d184197ae328cf289f6  r1-live/live-test.txt
+a9f739eecbfd3d5a7438de139358da29fdcac9ff6d703d8d463f9c16b8277fe9  r1-live/nobody-probe.txt
+0a4ce5b2e82df9730e8ce8aaa48881cd490c822470256adaa5ed59658dab6162  r1-live/package-set.txt
+bb7c818ca830111a7aee46bead8e427ad154211f03a7f2565db2a9d93aea976e  r1-live/provenance.txt
+9995b23a0305bdecef4fb5b8983aaccc309a443f6f5895110c992677dd55cb91  r1-live/release-id.txt
+mountinfo ca88d4a2794be240a5ef609358d3cd3ab46bab7b209205c2f256820867575a15
+exit=0
+
+$ git show ca0aae0133c1c5807bb62766fc9216c24f939253:docs/implementation-3x/evidence/v06-b3/install/r3-live/inventory.tsv | grep TOTAL; git show ca0aae0133c1c5807bb62766fc9216c24f939253:docs/implementation-3x/evidence/v06-b3/install/r3-live/inventory.tsv | grep -P '\t516848\t|\t516919\t' | cut -c1-120
+TOTAL	directories=66	files=180	symlinks=0
+.	directory	0	0	755	516848	4	4096	-
+./bin/node	regular file	0	0	555	516919	1	126595440	7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c
+exit=0
+
+$ git show ca0aae0133c1c5807bb62766fc9216c24f939253:docs/implementation-3x/evidence/v06-b3/install/r3-live/parent-manifest-b3b.txt | cut -c1-160
+{"path":"/usr/lib/agent-governance-suite","ino":"516801","type":"dir","uid":0,"mode":"755"}
+{"path":"/usr/lib/agent-governance-suite/protected-runtime","ino":"516802","type":"dir","uid":0,"mode":"755"}
+{"path":"/usr/lib/agent-governance-suite/protected-runtime/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6","ino":"516803","type":"dir","uid":0
+{"path":"/usr/lib/agent-governance-suite/protected-runtime/fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6/node","ino":"516804","type":"file","
+exit=0
