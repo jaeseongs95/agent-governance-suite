@@ -1,0 +1,59 @@
+# r6 1절 생존·identity 점검 (읽기만). 기준: 7e3e6fd8 r5b-live. S=<repo>/docs/implementation-3x/evidence/v06-b3/install/r5b-live, SC=세션 scratchpad
+$ date -u +%FT%T.%NZ; cat /proc/sys/kernel/random/boot_id; grep btime /proc/stat; hostname; cat /etc/machine-id
+2026-09-26T22:37:38.317313288Z
+3532114c-8a82-42f0-a1cc-c30217ed6d5b
+btime 1790462181
+vm
+0d0af05ee8fd4dc29275718f2ce4dff1
+exit=0
+
+$ findmnt -no SOURCE,FSTYPE,UUID,TARGET / ; findmnt -no SOURCE,FSTYPE,UUID,TARGET /usr/lib ; blkid 2>&1 | head -5; lsblk -o NAME,MAJ:MIN,FSTYPE,UUID 2>&1 | head -10; ls -l /dev/disk/by-uuid 2>&1; dumpe2fs -h /dev/vda 2>&1 | grep -iE 'UUID|created' ; cat /proc/self/mountinfo | awk '$5=="/"'
+/dev/vda ext4        /
+NAME  MAJ:MIN FSTYPE UUID
+zram0 253:0
+vda   254:0
+vdb   254:16
+vdc   254:32
+vdd   254:48
+vde   254:64
+vdf   254:80
+ls: cannot access '/dev/disk/by-uuid': No such file or directory
+28 1 254:0 / / rw,relatime - ext4 /dev/vda rw,resv_strict,resuid=65534,resgid=65534
+exit=0
+
+$ stat -c '%n|%F|dev=%d|ino=%i|%U:%G|%a|nlink=%h|size=%s|mtime=%Y|ctime=%Z' /usr/lib/agent-governance-suite /usr/lib/agent-governance-suite/protected-runtime /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node /root/r5a-out /root/r5a-out/manifest.txt
+/usr/lib/agent-governance-suite|directory|dev=65024|ino=524289|root:root|755|nlink=3|size=4096|mtime=1790422435|ctime=1790422435
+/usr/lib/agent-governance-suite/protected-runtime|directory|dev=65024|ino=524290|root:root|755|nlink=3|size=4096|mtime=1790422435|ctime=1790422435
+/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd|directory|dev=65024|ino=524291|root:root|755|nlink=4|size=4096|mtime=1790422435|ctime=1790422435
+/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin|directory|dev=65024|ino=524292|root:root|755|nlink=2|size=4096|mtime=1790422435|ctime=1790422435
+/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node|regular file|dev=65024|ino=524293|root:root|555|nlink=1|size=126595440|mtime=1790422435|ctime=1790422435
+/root/r5a-out|directory|dev=65024|ino=1673190|root:root|700|nlink=2|size=4096|mtime=1790422435|ctime=1790422435
+/root/r5a-out/manifest.txt|regular file|dev=65024|ino=1671184|root:root|600|nlink=1|size=58663|mtime=1790422436|ctime=1790422436
+exit=0
+
+$ sha256sum /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node /root/r5a-out/manifest.txt; wc -l < /root/r5a-out/manifest.txt; cmp /root/r5a-out/manifest.txt $S/manifest.txt && echo manifest_cmp_same
+7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c  /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node
+e78cb508ee8537d0a43f3e09d9fd3d5ad5a63c116af623375efc0a2b95982428  /root/r5a-out/manifest.txt
+248
+manifest_cmp_same
+exit=0
+
+$ find /usr/lib/agent-governance-suite -printf '%y\t%u:%g\t%m\t%n\t%i\t%s\t%p\n' | LC_ALL=C sort -t$'\t' -k7 > $SC/inv-r6.tsv; LC_ALL=C sort -t$'\t' -k7 $S/inventory.tsv > $SC/inv-r5b.tsv; diff $SC/inv-r5b.tsv $SC/inv-r6.tsv && echo inventory_diff_none; cut -f1 $SC/inv-r6.tsv | sort | uniq -c; sha256sum $SC/inv-r6.tsv $SC/inv-r5b.tsv $S/inventory.tsv | sed 's#  .*/#  #'
+inventory_diff_none
+     68 d
+    180 f
+a4ab95ea0ee0f317f72bc989de3537ab9a0057f4c746aff3fe1990d9c30b191d  inv-r6.tsv
+a4ab95ea0ee0f317f72bc989de3537ab9a0057f4c746aff3fe1990d9c30b191d  inv-r5b.tsv
+a4ab95ea0ee0f317f72bc989de3537ab9a0057f4c746aff3fe1990d9c30b191d  inventory.tsv
+exit=0
+
+$ cd /usr/lib/agent-governance-suite && sha256sum -c --quiet $S/installed-sha256.txt && echo installed_sha_ok; grep -c . $S/installed-sha256.txt
+installed_sha_ok
+180
+exit=0
+
+$ find /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd -newermt '2026-09-26 11:34:00' | wc -l; find /usr/lib/agent-governance-suite -printf '%C@\n' | sort -n | sed -n '1p;$p'
+0
+1790422435.1983683470
+1790422436.1354472970
+exit=0
