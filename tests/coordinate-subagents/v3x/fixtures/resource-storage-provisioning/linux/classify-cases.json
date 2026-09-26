@@ -1,0 +1,15 @@
+{
+  "schema": "AgsLinuxStorageClassifyFixture.v1",
+  "qualification": "FIXTURE_ONLY",
+  "cases": [
+    { "name": "ext4 handle with generation", "magic": "ef53", "handleType": "1", "handle": "0c0000002a000000", "inode": "12", "status": "OBSERVED", "code": null },
+    { "name": "ext4 handle with zero generation", "magic": "ef53", "handleType": "1", "handle": "0c00000000000000", "inode": "12", "status": "BLOCKED_NO_GENERATION", "code": "GENERATION_ZERO" },
+    { "name": "handle type without generation", "magic": "ef53", "handleType": "0x81", "handle": "0c0000002a000000", "inode": "12", "status": "BLOCKED_NO_GENERATION", "code": "HANDLE_TYPE_WITHOUT_GENERATION" },
+    { "name": "short handle", "magic": "ef53", "handleType": "1", "handle": "0c000000", "inode": "12", "status": "BLOCKED_NO_GENERATION", "code": "HANDLE_TYPE_WITHOUT_GENERATION" },
+    { "name": "handle inode differs from fstat inode", "magic": "ef53", "handleType": "1", "handle": "0d0000002a000000", "inode": "12", "status": "UNKNOWN", "code": "HANDLE_INODE_MISMATCH" },
+    { "name": "xfs fsid derives from device number", "magic": "58465342", "handleType": "0x81", "handle": "0c0000002a000000", "inode": "12", "status": "UNSUPPORTED_FILESYSTEM", "code": "FILESYSTEM_NOT_ALLOWED" },
+    { "name": "tmpfs is volatile", "magic": "01021994", "handleType": "1", "handle": "0c0000002a000000", "inode": "12", "status": "UNSUPPORTED_FILESYSTEM", "code": "FILESYSTEM_NOT_ALLOWED" },
+    { "name": "overlayfs is stacked", "magic": "794c7630", "handleType": "1", "handle": "0c0000002a000000", "inode": "12", "status": "UNSUPPORTED_FILESYSTEM", "code": "FILESYSTEM_NOT_ALLOWED" },
+    { "name": "btrfs not yet observed", "magic": "9123683e", "handleType": "0x4d", "handle": "0c0000002a000000", "inode": "12", "status": "UNSUPPORTED_FILESYSTEM", "code": "FILESYSTEM_NOT_ALLOWED" }
+  ]
+}

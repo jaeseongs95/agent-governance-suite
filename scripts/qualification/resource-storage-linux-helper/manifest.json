@@ -1,0 +1,30 @@
+{
+  "schema": "AgsLinuxStorageHelperManifest.v1",
+  "task": "B14-n-l",
+  "qualification": "FIXTURE_ONLY",
+  "source": "resource-storage-linux.c",
+  "sourceSha256": "bf69234c256bd98764cddadfbe58a247f72dcab671d08330640a011bf53986e0",
+  "artifact": "resource-storage-linux",
+  "artifactSha256": "a4ec62796354f92433a6f5f3dd793475d4027bb9878dbcc7adbc82c17663efe0",
+  "architecture": "x86_64",
+  "compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "flags": [
+    "-std=c11",
+    "-O2",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-fno-ident",
+    "-ffile-prefix-map=.=.",
+    "-Wl,--build-id=none",
+    "-Wl,-z,relro,-z,now"
+  ],
+  "supportedFileSystems": [
+    { "name": "ext4", "magic": "0xef53", "handleType": 1, "handleBytes": 8, "fsidSource": "superblock-uuid" }
+  ],
+  "buildHost": {
+    "kernel": "Linux 6.18.44-fc-v37 x86_64",
+    "virtualization": "Firecracker/KVM guest",
+    "note": "Build and fixture host only; not an operational qualification host."
+  }
+}
