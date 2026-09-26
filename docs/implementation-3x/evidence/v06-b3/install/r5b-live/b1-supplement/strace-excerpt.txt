@@ -1,0 +1,156 @@
+# strace-excerpt: 설치 당시 근거 (설치 boot 701c96a7-937e-47dd-9a3d-cdfdb92380fc)
+# 원본 /root/r5a/r5b-run/strace.txt sha256 07597bba5d2930bfc1045c44286c27b2ec29bf8f59f0825237f5dffc52b67428 (45331줄), 읽기만 했다.
+# 옵션: strace -f -y -s 256 -e trace=openat,mkdir,chmod,fchmod,unlink,unlinkat,rmdir,rename,renameat2,write (install.txt:20)
+# stat·read·access·execve 계열은 기록 대상이 아니다. 아래에서 '없음'은 '기록된 openat 중에 없음'을 뜻한다.
+
+## pid별 줄 수 (-f 사용)
+  27886 2228
+  15136 2227
+   2252 2219
+     29 2226
+     11 2229
+     10 2220
+      2 2223
+      2 2222
+      1 2225
+      1 2224
+      1 2221
+pid 역할(openat 근거 추정): 2219 설치 node(driver), 2220-2225 node 내부 thread, 2226 gpgv, 2227 tar, 2228 xz, 2229 runVerifiedRuntime이 실행한 설치 node --version
+
+## openat 집계
+openat 전체 1533건
+manifest(/root/r5a-out/manifest.txt) openat 248건: r5b-live/manifest-trace.txt에 전부 있다.
+/usr/lib/agent-governance-suite 아래 openat 851건: 줄은 생략한다. 모두 pid 2219
+/root/r5a/src 아래 source 읽기 openat 361건(O_RDONLY|O_NOFOLLOW): 목록은 생략하고 첫 줄과 끝 줄만 적는다.
+43093:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/root/r5a/src/tests/coordinate-subagents/v3x/fixtures/protected-host-installation/manifest.json", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 20</root/r5a/src/tests/coordinate-subagents/v3x/fixtures/protected-host-installation/manifest.json>
+43454:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/root/r5a/src/host-integration.json", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 20</root/r5a/src/host-integration.json>
+
+## manifest·설치 대상·source 이외의 openat 전부 (grep -n 줄 번호 포함)
+1:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3</etc/ld.so.cache>
+2:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libdl.so.2>
+3:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libstdc++.so.6", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33>
+4:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libm.so.6", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libm.so.6>
+5:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libgcc_s.so.1", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libgcc_s.so.1>
+6:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libpthread.so.0", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libpthread.so.0>
+7:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libc.so.6>
+8:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/etc/ssl/openssl.cnf", O_RDONLY) = 3</etc/ssl/openssl.cnf>
+9:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/version_signature", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/self/maps", O_RDONLY|O_CLOEXEC) = 20</proc/2219/maps>
+12:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/self/cgroup", O_RDONLY|O_CLOEXEC) = 20</proc/2219/cgroup>
+13:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/sys/fs/cgroup/memory/process_api/01a0dd7b-270b-716d-a7c5-ae2aa4722277/claude-code-bash/memory.soft_limit_in_bytes", O_RDONLY|O_CLOEXEC) = 20</sys/fs/cgroup/memory/process_api/01a0dd7b-270b-716d-a7c5-ae2aa4722277/claude-code-bash/memory.soft_limit_in_bytes>
+14:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/sys/fs/cgroup/memory/process_api/01a0dd7b-270b-716d-a7c5-ae2aa4722277/claude-code-bash/memory.limit_in_bytes", O_RDONLY|O_CLOEXEC) = 20</sys/fs/cgroup/memory/process_api/01a0dd7b-270b-716d-a7c5-ae2aa4722277/claude-code-bash/memory.limit_in_bytes>
+15:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/meminfo", O_RDONLY|O_CLOEXEC) = 20</proc/meminfo>
+16:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/self/maps", O_RDONLY) = 20</proc/2219/maps>
+17:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/root/r5a/node/bin/node", O_RDONLY) = 20</root/r5a/node/bin/node>
+18:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/root/r5a/r5b-run/driver.mjs", O_RDONLY|O_CLOEXEC) = 20</root/r5a/r5b-run/driver.mjs>
+19:2223  openat(AT_FDCWD</home/user/agent-governance-suite>, "/sys/devices/system/cpu/online", O_RDONLY|O_CLOEXEC) = 20</sys/devices/system/cpu/online>
+20:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs", O_RDONLY|O_CLOEXEC) = 20</home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs>
+22:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-release.mjs", O_RDONLY|O_CLOEXEC) = 20</home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-release.mjs>
+23:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/home/user/agent-governance-suite/scripts/qualification/v06-b2a-windows-stage.mjs", O_RDONLY|O_CLOEXEC) = 20</home/user/agent-governance-suite/scripts/qualification/v06-b2a-windows-stage.mjs>
+24:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/root/r5a/r5b-in/nodejs-release-keyring.kbx", O_RDONLY|O_CLOEXEC) = 20</root/r5a/r5b-in/nodejs-release-keyring.kbx>
+25:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/root/r5a/r5b-in/SHASUMS256.txt", O_RDONLY|O_CLOEXEC) = 20</root/r5a/r5b-in/SHASUMS256.txt>
+26:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/root/r5a/r5b-in/SHASUMS256.txt.sig", O_RDONLY|O_CLOEXEC) = 20</root/r5a/r5b-in/SHASUMS256.txt.sig>
+27:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/dev/null", O_RDONLY|O_CLOEXEC) = 25</dev/null>
+31:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3</etc/ld.so.cache>
+32:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "/lib/x86_64-linux-gnu/libz.so.1", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libz.so.1.3>
+33:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "/lib/x86_64-linux-gnu/libbz2.so.1.0", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libbz2.so.1.0.4>
+34:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "/lib/x86_64-linux-gnu/libgcrypt.so.20", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libgcrypt.so.20.4.3>
+35:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "/lib/x86_64-linux-gnu/libassuan.so.0", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libassuan.so.0.8.6>
+36:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "/lib/x86_64-linux-gnu/libnpth.so.0", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libnpth.so.0.1.2>
+37:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "/lib/x86_64-linux-gnu/libgpg-error.so.0", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libgpg-error.so.0.34.0>
+38:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libc.so.6>
+39:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "/proc/sys/crypto/fips_enabled", O_RDONLY) = -1 ENOENT (No such file or directory)
+40:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "/etc/gcrypt/hwf.deny", O_RDONLY) = -1 ENOENT (No such file or directory)
+41:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "./nodejs-release-keyring.kbx", O_RDONLY) = 3</root/r5a/r5b-in/nodejs-release-keyring.kbx>
+42:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "./SHASUMS256.txt.sig", O_RDONLY) = 3</root/r5a/r5b-in/SHASUMS256.txt.sig>
+44:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "/etc/localtime", O_RDONLY|O_CLOEXEC) = 4</usr/share/zoneinfo/Etc/UTC>
+49:2226  openat(AT_FDCWD</root/r5a/r5b-in>, "./nodejs-release-keyring.kbx", O_RDONLY) = 4</root/r5a/r5b-in/nodejs-release-keyring.kbx>
+63:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/root/r5a/r5b-in/node-v24.21.0-linux-x64.tar.xz", O_RDONLY|O_CLOEXEC) = 20</root/r5a/r5b-in/node-v24.21.0-linux-x64.tar.xz>
+64:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/dev/null", O_RDONLY|O_CLOEXEC) = 25</dev/null>
+67:2227  openat(AT_FDCWD</home/user/agent-governance-suite>, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3</etc/ld.so.cache>
+68:2227  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libacl.so.1", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libacl.so.1.1.2302>
+69:2227  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libselinux.so.1", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libselinux.so.1>
+70:2227  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libc.so.6>
+71:2227  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libpcre2-8.so.0", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libpcre2-8.so.0.11.2>
+72:2227  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3</proc/filesystems>
+73:2227  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/mounts", O_RDONLY|O_CLOEXEC) = 3</proc/2227/mounts>
+74:2228  openat(AT_FDCWD</home/user/agent-governance-suite>, "/root/r5a/r5b-in/node-v24.21.0-linux-x64.tar.xz", O_RDONLY) = 3</root/r5a/r5b-in/node-v24.21.0-linux-x64.tar.xz>
+75:2228  openat(AT_FDCWD</home/user/agent-governance-suite>, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3</etc/ld.so.cache>
+76:2228  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/liblzma.so.5", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/liblzma.so.5.4.5>
+77:2228  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libc.so.6>
+80:2227  openat(AT_FDCWD</home/user/agent-governance-suite>, "/etc/nsswitch.conf", O_RDONLY|O_CLOEXEC) = 4</etc/nsswitch.conf>
+82:2227  openat(AT_FDCWD</home/user/agent-governance-suite>, "/etc/passwd", O_RDONLY|O_CLOEXEC) = 4</etc/passwd>
+85:2227  openat(AT_FDCWD</home/user/agent-governance-suite>, "/etc/group", O_RDONLY|O_CLOEXEC) = 4</etc/group>
+43092:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 20</proc/2219/mountinfo>
+43204:2222  openat(AT_FDCWD</home/user/agent-governance-suite>, "/sys/devices/system/cpu/cpu0/tsc_freq_khz", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+43455:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 20</proc/2219/mountinfo>
+43456:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 20</proc/2219/mountinfo>
+43465:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 20</proc/2219/mountinfo>
+44631:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 20</proc/2219/mountinfo>
+44632:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 20</proc/2219/mountinfo>
+45123:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 20</proc/2219/mountinfo>
+45124:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 20</proc/2219/mountinfo>
+45305:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 21</proc/2219/mountinfo>
+45306:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/dev/null", O_RDONLY|O_CLOEXEC) = 26</dev/null>
+45309:2229  openat(AT_FDCWD</home/user/agent-governance-suite>, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3</etc/ld.so.cache>
+45310:2229  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libdl.so.2>
+45311:2229  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libstdc++.so.6", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33>
+45312:2229  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libm.so.6", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libm.so.6>
+45313:2229  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libgcc_s.so.1", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libgcc_s.so.1>
+45314:2229  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libpthread.so.0", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libpthread.so.0>
+45315:2229  openat(AT_FDCWD</home/user/agent-governance-suite>, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libc.so.6>
+
+## driver와 세 모듈의 openat (flag, 반환 fd, -y 경로)
+18:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/root/r5a/r5b-run/driver.mjs", O_RDONLY|O_CLOEXEC) = 20</root/r5a/r5b-run/driver.mjs>
+20:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs", O_RDONLY|O_CLOEXEC) = 20</home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs>
+22:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-release.mjs", O_RDONLY|O_CLOEXEC) = 20</home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-release.mjs>
+23:2219  openat(AT_FDCWD</home/user/agent-governance-suite>, "/home/user/agent-governance-suite/scripts/qualification/v06-b2a-windows-stage.mjs", O_RDONLY|O_CLOEXEC) = 20</home/user/agent-governance-suite/scripts/qualification/v06-b2a-windows-stage.mjs>
+
+## 확장자 .js/.mjs/.cjs/.json/.node/.so* openat 목록 (source·설치 대상 제외) — 정규식이 부분 일치해 ld.so.cache·cgroup 경로도 들어간 상위 집합이다
+1:2219  /etc/ld.so.cache
+2:2219  /lib/x86_64-linux-gnu/libdl.so.2
+3:2219  /lib/x86_64-linux-gnu/libstdc++.so.6
+4:2219  /lib/x86_64-linux-gnu/libm.so.6
+5:2219  /lib/x86_64-linux-gnu/libgcc_s.so.1
+6:2219  /lib/x86_64-linux-gnu/libpthread.so.0
+7:2219  /lib/x86_64-linux-gnu/libc.so.6
+13:2219  /sys/fs/cgroup/memory/process_api/01a0dd7b-270b-716d-a7c5-ae2aa4722277/claude-code-bash/memory.soft_limit_in_bytes
+18:2219  /root/r5a/r5b-run/driver.mjs
+20:2219  /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs
+22:2219  /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-release.mjs
+23:2219  /home/user/agent-governance-suite/scripts/qualification/v06-b2a-windows-stage.mjs
+31:2226  /etc/ld.so.cache
+32:2226  /lib/x86_64-linux-gnu/libz.so.1
+33:2226  /lib/x86_64-linux-gnu/libbz2.so.1.0
+34:2226  /lib/x86_64-linux-gnu/libgcrypt.so.20
+35:2226  /lib/x86_64-linux-gnu/libassuan.so.0
+36:2226  /lib/x86_64-linux-gnu/libnpth.so.0
+37:2226  /lib/x86_64-linux-gnu/libgpg-error.so.0
+38:2226  /lib/x86_64-linux-gnu/libc.so.6
+67:2227  /etc/ld.so.cache
+68:2227  /lib/x86_64-linux-gnu/libacl.so.1
+69:2227  /lib/x86_64-linux-gnu/libselinux.so.1
+70:2227  /lib/x86_64-linux-gnu/libc.so.6
+71:2227  /lib/x86_64-linux-gnu/libpcre2-8.so.0
+75:2228  /etc/ld.so.cache
+76:2228  /lib/x86_64-linux-gnu/liblzma.so.5
+77:2228  /lib/x86_64-linux-gnu/libc.so.6
+45309:2229  /etc/ld.so.cache
+45310:2229  /lib/x86_64-linux-gnu/libdl.so.2
+45311:2229  /lib/x86_64-linux-gnu/libstdc++.so.6
+45312:2229  /lib/x86_64-linux-gnu/libm.so.6
+45313:2229  /lib/x86_64-linux-gnu/libgcc_s.so.1
+45314:2229  /lib/x86_64-linux-gnu/libpthread.so.0
+45315:2229  /lib/x86_64-linux-gnu/libc.so.6
+
+## 주입 경로 점검
+/etc/ld.so.preload openat: 0건. glibc는 먼저 access로 확인하는데 access는 기록 대상이 아니다. 2219가 연 공유 라이브러리는 node DT_NEEDED 6개(libdl, libstdc++, libm, libgcc_s, libpthread, libc)와 정확히 같고 추가 .so는 없다. 사후 관측에서도 /etc/ld.so.preload는 없다.
+node_modules openat: 0건
+/home 아래 openat: 3건, 모두 scripts/qualification의 세 모듈이다.
+NODE_OPTIONS --require/--import 적재: 2219가 연 .js·.mjs·.cjs 파일은 driver와 세 모듈뿐이다. 추가로 적재된 스크립트 파일은 없다.
+execve: 기록 대상 아님(0건)
+
+## 판정
+pid 2219(설치 node)가 연 코드 파일: /root/r5a/r5b-run/driver.mjs, …/scripts/qualification/v06-b3-linux-install.mjs, v06-b3-linux-release.mjs, v06-b2a-windows-stage.mjs 네 개뿐이다(각 1회, O_RDONLY|O_CLOEXEC).
+공유 라이브러리는 node DT_NEEDED 목록과 같다. 자식은 gpgv·tar·xz·검증 node(--version)이고, 각자의 시스템 라이브러리만 열었다.
+결론: 기록된 openat 범위에서 주입 적재(preload 라이브러리, node_modules, NODE_OPTIONS 스크립트, 그 밖의 /home 파일)는 없다.

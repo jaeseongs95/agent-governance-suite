@@ -1,0 +1,319 @@
+# observed-post: 사후 관측(설치 boot 아님), 보조 근거
+# boot_id 46235632-74ef-405f-af23-c9c001a2fd9b (btime 1790424715), 관측 시작 2026-09-26T12:12:05.971854908Z, uid 0
+# 설치 boot는 701c96a7-937e-47dd-9a3d-cdfdb92380fc다. 이 파일의 값은 설치 뒤 다른 boot에서 읽은 것이다.
+# 선확인: sha256sum /root/r5a/r5b-run/strace.txt = 07597bba5d2930bfc1045c44286c27b2ec29bf8f59f0825237f5dffc52b67428 (install.txt 기대값과 일치)
+
+## 경로 사슬 6개
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d ctime=%z mtime=%y birth=%w' /
+/ directory root:root 755 nlink=21 ino=2 dev=65024 ctime=2026-09-26 12:11:58.082777508 +0000 mtime=2026-09-26 12:11:58.082777508 +0000 birth=1970-01-01 00:00:00.000000000 +0000
+exit=0
+
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d ctime=%z mtime=%y birth=%w' /home
+/home directory root:root 755 nlink=5 ino=12 dev=65024 ctime=2026-09-24 10:59:01.804071136 +0000 mtime=2026-09-24 10:59:01.804071136 +0000 birth=1970-01-01 00:00:00.000000000 +0000
+exit=0
+
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d ctime=%z mtime=%y birth=%w' /home/user
+/home/user directory root:root 755 nlink=3 ino=475150 dev=65024 ctime=2026-09-24 10:59:01.988071147 +0000 mtime=2026-09-24 10:59:01.988071147 +0000 birth=2026-09-24 10:59:01.804071136 +0000
+exit=0
+
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d ctime=%z mtime=%y birth=%w' /home/user/agent-governance-suite
+/home/user/agent-governance-suite directory root:root 755 nlink=19 ino=475157 dev=65024 ctime=2026-09-25 10:06:39.189581685 +0000 mtime=2026-09-25 10:06:39.189581685 +0000 birth=2026-09-24 10:59:01.988071147 +0000
+exit=0
+
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d ctime=%z mtime=%y birth=%w' /home/user/agent-governance-suite/scripts
+/home/user/agent-governance-suite/scripts directory root:root 755 nlink=3 ino=475936 dev=65024 ctime=2026-09-25 09:59:03.728883769 +0000 mtime=2026-09-25 09:59:03.728883769 +0000 birth=2026-09-24 10:59:03.650535215 +0000
+exit=0
+
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d ctime=%z mtime=%y birth=%w' /home/user/agent-governance-suite/scripts/qualification
+/home/user/agent-governance-suite/scripts/qualification directory root:root 755 nlink=3 ino=483403 dev=65024 ctime=2026-09-26 11:30:47.430357185 +0000 mtime=2026-09-26 11:30:47.430357185 +0000 birth=2026-09-25 09:59:03.725554611 +0000
+exit=0
+
+## 모듈 3개
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d ctime=%z mtime=%y birth=%w' /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs; sha256sum /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs; git -C /home/user/agent-governance-suite hash-object /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs
+/home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs regular file root:root 644 nlink=1 ino=483409 dev=65024 ctime=2026-09-25 09:59:03.728883769 +0000 mtime=2026-09-25 09:59:03.728883769 +0000 birth=2026-09-25 09:59:03.728883769 +0000
+d8038918488d9f4c1d2056f5ef04ce1546b7e68142d57319dd96bb864ae0fb8a  /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs
+c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1
+exit=0
+
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d ctime=%z mtime=%y birth=%w' /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-release.mjs; sha256sum /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-release.mjs; git -C /home/user/agent-governance-suite hash-object /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-release.mjs
+/home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-release.mjs regular file root:root 644 nlink=1 ino=483410 dev=65024 ctime=2026-09-25 09:59:03.728883769 +0000 mtime=2026-09-25 09:59:03.728883769 +0000 birth=2026-09-25 09:59:03.728883769 +0000
+b16a610056f454cde9326bc512527e5a90459c1d787bfb64b9c33e1c9c4ae8cc  /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-release.mjs
+5fc2427ee20a8531b87084441ff22e276c871d99
+exit=0
+
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d ctime=%z mtime=%y birth=%w' /home/user/agent-governance-suite/scripts/qualification/v06-b2a-windows-stage.mjs; sha256sum /home/user/agent-governance-suite/scripts/qualification/v06-b2a-windows-stage.mjs; git -C /home/user/agent-governance-suite hash-object /home/user/agent-governance-suite/scripts/qualification/v06-b2a-windows-stage.mjs
+/home/user/agent-governance-suite/scripts/qualification/v06-b2a-windows-stage.mjs regular file root:root 644 nlink=1 ino=483408 dev=65024 ctime=2026-09-25 09:59:03.728883769 +0000 mtime=2026-09-25 09:59:03.728883769 +0000 birth=2026-09-25 09:59:03.728883769 +0000
+2fa579df7e525163cb31156a424917201e3c5da23fb24689ce5e43dda5bb70bf  /home/user/agent-governance-suite/scripts/qualification/v06-b2a-windows-stage.mjs
+755c6f0b28ca496625953fdca54e0fd2b7597eee
+exit=0
+
+## 참고 대상
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d ctime=%z mtime=%y birth=%w' /root/r5a/r5b-run/driver.mjs
+/root/r5a/r5b-run/driver.mjs regular file root:root 644 nlink=1 ino=1681500 dev=65024 ctime=2026-09-26 11:33:32.154199178 +0000 mtime=2026-09-26 11:33:32.154199178 +0000 birth=2026-09-26 11:33:32.152397634 +0000
+exit=0
+
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d ctime=%z mtime=%y birth=%w' /root/r5a/r5b-run
+/root/r5a/r5b-run directory root:root 700 nlink=2 ino=1681493 dev=65024 ctime=2026-09-26 11:35:29.486373951 +0000 mtime=2026-09-26 11:35:29.486373951 +0000 birth=2026-09-26 11:32:15.150362400 +0000
+exit=0
+
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d ctime=%z mtime=%y birth=%w' /root/r5a
+/root/r5a directory root:root 700 nlink=6 ino=1671187 dev=65024 ctime=2026-09-26 11:33:32.038366970 +0000 mtime=2026-09-26 11:33:32.038366970 +0000 birth=2026-09-25 09:50:34.304158409 +0000
+exit=0
+
+$ stat -c '%n %F %U:%G %a nlink=%h ino=%i dev=%d ctime=%z mtime=%y birth=%w' /root/r5a-out/manifest.txt
+/root/r5a-out/manifest.txt regular file root:root 600 nlink=1 ino=1671184 dev=65024 ctime=2026-09-26 11:33:56.135056379 +0000 mtime=2026-09-26 11:33:56.135056379 +0000 birth=2026-09-26 11:33:55.194368346 +0000
+exit=0
+
+$ sha256sum /root/r5a/r5b-run/driver.mjs
+38905e191b0fd50574a18e1081cc569fc4a3d35364f07dc948a9747dcfcebff8  /root/r5a/r5b-run/driver.mjs
+exit=0
+
+## ACL
+$ command -v getfacl
+exit=1
+
+## getfacl
+getfacl 없음(command -v getfacl exit=1). getfattr도 없다(command not found).
+## ACL 대체 관측 (getfacl 없음)
+$ findmnt -no TARGET,SOURCE,FSTYPE,OPTIONS -T /home/user/agent-governance-suite
+/      /dev/vda ext4   rw,relatime,resv_strict,resuid=65534,resgid=65534
+exit=0
+
+$ findmnt -T /home/user/agent-governance-suite
+TARGET SOURCE   FSTYPE OPTIONS
+/      /dev/vda ext4   rw,relatime,resv_strict,resuid=65534,resgid=65534
+exit=0
+
+$ ls -ld / /home /home/user /home/user/agent-governance-suite /home/user/agent-governance-suite/scripts /home/user/agent-governance-suite/scripts/qualification /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-release.mjs /home/user/agent-governance-suite/scripts/qualification/v06-b2a-windows-stage.mjs /root/r5a /root/r5a/r5b-run /root/r5a/r5b-run/driver.mjs /root/r5a-out/manifest.txt
+drwxr-xr-x 21 root root  4096 Sep 26 12:11 /
+drwxr-xr-x  5 root root  4096 Sep 24 10:59 /home
+drwxr-xr-x  3 root root  4096 Sep 24 10:59 /home/user
+drwxr-xr-x 19 root root  4096 Sep 25 10:06 /home/user/agent-governance-suite
+drwxr-xr-x  3 root root  4096 Sep 25 09:59 /home/user/agent-governance-suite/scripts
+drwxr-xr-x  3 root root  4096 Sep 26 11:30 /home/user/agent-governance-suite/scripts/qualification
+-rw-r--r--  1 root root 10931 Sep 25 09:59 /home/user/agent-governance-suite/scripts/qualification/v06-b2a-windows-stage.mjs
+-rw-r--r--  1 root root 38624 Sep 25 09:59 /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs
+-rw-r--r--  1 root root  6253 Sep 25 09:59 /home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-release.mjs
+drwx------  6 root root  4096 Sep 26 11:33 /root/r5a
+-rw-------  1 root root 58663 Sep 26 11:33 /root/r5a-out/manifest.txt
+drwx------  2 root root  4096 Sep 26 11:35 /root/r5a/r5b-run
+-rw-r--r--  1 root root  2160 Sep 26 11:33 /root/r5a/r5b-run/driver.mjs
+exit=0
+
+exit=0
+
+python3 os.listxattr (읽기 전용) 결과:
+/ xattrs=[] posix_acl=none
+/home xattrs=[] posix_acl=none
+/home/user xattrs=[] posix_acl=none
+/home/user/agent-governance-suite xattrs=[] posix_acl=none
+/home/user/agent-governance-suite/scripts xattrs=[] posix_acl=none
+/home/user/agent-governance-suite/scripts/qualification xattrs=[] posix_acl=none
+/home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs xattrs=[] posix_acl=none
+/home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-release.mjs xattrs=[] posix_acl=none
+/home/user/agent-governance-suite/scripts/qualification/v06-b2a-windows-stage.mjs xattrs=[] posix_acl=none
+/root/r5a/r5b-run/driver.mjs xattrs=[] posix_acl=none
+/root/r5a/r5b-run xattrs=[] posix_acl=none
+/root/r5a xattrs=[] posix_acl=none
+/root/r5a-out/manifest.txt xattrs=[] posix_acl=none
+
+판정: ls -ld의 권한 문자열에 '+' 표시가 없다. listxattr 결과 system.posix_acl_* 속성도 없다. mount 옵션(ext4 rw,relatime,resv_strict…)은 ACL을 끄지 않았지만, 대상 경로에 ACL은 설정돼 있지 않다.
+
+## 경로 사슬 판정 (g/o 쓰기, sticky)
+/ root:root 755 g_write=no o_write=no sticky=no
+/home root:root 755 g_write=no o_write=no sticky=no
+/home/user root:root 755 g_write=no o_write=no sticky=no
+/home/user/agent-governance-suite root:root 755 g_write=no o_write=no sticky=no
+/home/user/agent-governance-suite/scripts root:root 755 g_write=no o_write=no sticky=no
+/home/user/agent-governance-suite/scripts/qualification root:root 755 g_write=no o_write=no sticky=no
+
+## 모듈 ctime과 대조 시각 11:32:15Z 비교
+v06-b3-linux-install.mjs ctime=2026-09-25 09:59:03.728883769 +0000 epoch=1790330343 대조=1790422335(2026-09-26T11:32:15Z) → 앞섬(PASS)
+v06-b3-linux-release.mjs ctime=2026-09-25 09:59:03.728883769 +0000 epoch=1790330343 대조=1790422335(2026-09-26T11:32:15Z) → 앞섬(PASS)
+v06-b2a-windows-stage.mjs ctime=2026-09-25 09:59:03.728883769 +0000 epoch=1790330343 대조=1790422335(2026-09-26T11:32:15Z) → 앞섬(PASS)
+경로 사슬 디렉터리 ctime도 모두 대조 시각보다 앞선다. 단 '/'는 예외로, ctime이 현재 boot 12:11:58이다. 설치 시점의 '/' 값은 pre-install.txt에 root 755 ino 2 ctime 1790422230으로 기록돼 있다. scripts/qualification의 ctime 11:30:47은 branch 전환 시각이다.
+
+## 계정·그룹 (전체)
+## 계정·그룹
+$ getent passwd
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+games:x:5:60:games:/usr/games:/usr/sbin/nologin
+man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+irc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin
+_apt:x:42:65534::/nonexistent:/usr/sbin/nologin
+nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+ubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash
+systemd-network:x:998:998:systemd Network Management:/:/usr/sbin/nologin
+messagebus:x:100:101::/nonexistent:/usr/sbin/nologin
+redis:x:101:103::/var/lib/redis:/usr/sbin/nologin
+postgres:x:102:104:PostgreSQL administrator,,,:/var/lib/postgresql:/bin/bash
+polkitd:x:997:997:User for polkitd:/:/usr/sbin/nologin
+claude:x:999:1001::/home/claude:/bin/bash
+exit=0
+
+$ getent group
+root:x:0:
+daemon:x:1:
+bin:x:2:
+sys:x:3:
+adm:x:4:ubuntu
+tty:x:5:
+disk:x:6:
+lp:x:7:
+mail:x:8:
+news:x:9:
+uucp:x:10:
+man:x:12:
+proxy:x:13:
+kmem:x:15:
+dialout:x:20:ubuntu
+fax:x:21:
+voice:x:22:
+cdrom:x:24:ubuntu
+floppy:x:25:ubuntu
+tape:x:26:
+sudo:x:27:ubuntu
+audio:x:29:ubuntu
+dip:x:30:ubuntu
+www-data:x:33:
+backup:x:34:
+operator:x:37:
+list:x:38:
+irc:x:39:
+src:x:40:
+shadow:x:42:
+utmp:x:43:
+video:x:44:ubuntu
+sasl:x:45:
+plugdev:x:46:ubuntu
+staff:x:50:
+games:x:60:
+users:x:100:
+nogroup:x:65534:
+ubuntu:x:1000:
+systemd-journal:x:999:
+systemd-network:x:998:
+messagebus:x:101:
+ssl-cert:x:102:postgres
+redis:x:103:
+postgres:x:104:
+polkitd:x:997:
+docker:x:996:
+claude:x:1001:
+exit=0
+
+요약: uid 0 계정은 root 하나다. root 그룹(gid 0) 구성원은 없다. 로그인 셸을 가진 비root 계정은 ubuntu(1000, sudo 그룹), claude(999), postgres(102)다. 나머지는 nologin이다.
+
+## 프로세스 (현재 boot, ps -eo user,uid,pid,ppid,lstart,args 전체)
+비밀 치환: ps args에서 token·key·secret·password·authorization·bearer 값을 찾지 못했다(치환 0건).
+USER       UID   PID  PPID                  STARTED COMMAND
+root         0     1     0 Sat Sep 26 12:11:55 2026 /process_api --firecracker-init --addr 0.0.0.0:2024 --max-ws-buffer-size 32768 --block-local-connections --listen-vsock-port 2024 --log-vsock-port 5002
+root         0     2     0 Sat Sep 26 12:11:55 2026 [kthreadd]
+root         0     3     2 Sat Sep 26 12:11:55 2026 [pool_workqueue_release]
+root         0     4     2 Sat Sep 26 12:11:55 2026 [kworker/R-rcu_gp]
+root         0     5     2 Sat Sep 26 12:11:55 2026 [kworker/R-sync_wq]
+root         0     6     2 Sat Sep 26 12:11:55 2026 [kworker/R-kvfree_rcu_reclaim]
+root         0     7     2 Sat Sep 26 12:11:55 2026 [kworker/R-slub_flushwq]
+root         0     8     2 Sat Sep 26 12:11:55 2026 [kworker/R-netns]
+root         0     9     2 Sat Sep 26 12:11:55 2026 [kworker/0:0-events]
+root         0    10     2 Sat Sep 26 12:11:55 2026 [kworker/0:0H-events_highpri]
+root         0    11     2 Sat Sep 26 12:11:55 2026 [kworker/0:1-events_power_efficient]
+root         0    12     2 Sat Sep 26 12:11:55 2026 [kworker/u16:0-ext4-rsv-conversion]
+root         0    13     2 Sat Sep 26 12:11:55 2026 [kworker/R-mm_percpu_wq]
+root         0    14     2 Sat Sep 26 12:11:55 2026 [ksoftirqd/0]
+root         0    15     2 Sat Sep 26 12:11:55 2026 [rcu_preempt]
+root         0    16     2 Sat Sep 26 12:11:55 2026 [rcu_exp_par_gp_kthread_worker/0]
+root         0    17     2 Sat Sep 26 12:11:55 2026 [rcu_exp_gp_kthread_worker]
+root         0    18     2 Sat Sep 26 12:11:55 2026 [migration/0]
+root         0    19     2 Sat Sep 26 12:11:55 2026 [cpuhp/0]
+root         0    20     2 Sat Sep 26 12:11:55 2026 [cpuhp/1]
+root         0    21     2 Sat Sep 26 12:11:55 2026 [migration/1]
+root         0    22     2 Sat Sep 26 12:11:55 2026 [ksoftirqd/1]
+root         0    23     2 Sat Sep 26 12:11:55 2026 [kworker/1:0-slub_flushwq]
+root         0    24     2 Sat Sep 26 12:11:55 2026 [kworker/1:0H-events_highpri]
+root         0    25     2 Sat Sep 26 12:11:55 2026 [cpuhp/2]
+root         0    26     2 Sat Sep 26 12:11:55 2026 [migration/2]
+root         0    27     2 Sat Sep 26 12:11:55 2026 [ksoftirqd/2]
+root         0    28     2 Sat Sep 26 12:11:55 2026 [kworker/2:0-slub_flushwq]
+root         0    29     2 Sat Sep 26 12:11:55 2026 [kworker/2:0H-events_highpri]
+root         0    30     2 Sat Sep 26 12:11:55 2026 [cpuhp/3]
+root         0    31     2 Sat Sep 26 12:11:55 2026 [migration/3]
+root         0    32     2 Sat Sep 26 12:11:55 2026 [ksoftirqd/3]
+root         0    33     2 Sat Sep 26 12:11:55 2026 [kworker/3:0-slub_flushwq]
+root         0    34     2 Sat Sep 26 12:11:55 2026 [kworker/3:0H-events_highpri]
+root         0    35     2 Sat Sep 26 12:11:55 2026 [kdevtmpfs]
+root         0    36     2 Sat Sep 26 12:11:55 2026 [kworker/R-inet_frag_wq]
+root         0    37     2 Sat Sep 26 12:11:55 2026 [rcu_tasks_kthread]
+root         0    38     2 Sat Sep 26 12:11:55 2026 [rcu_tasks_rude_kthread]
+root         0    39     2 Sat Sep 26 12:11:55 2026 [rcu_tasks_trace_kthread]
+root         0    40     2 Sat Sep 26 12:11:55 2026 [kauditd]
+root         0    41     2 Sat Sep 26 12:11:55 2026 [khungtaskd]
+root         0    42     2 Sat Sep 26 12:11:55 2026 [oom_reaper]
+root         0    43     2 Sat Sep 26 12:11:55 2026 [kworker/u16:1-kvfree_rcu_reclaim]
+root         0    44     2 Sat Sep 26 12:11:55 2026 [kworker/R-writeback]
+root         0    45     2 Sat Sep 26 12:11:55 2026 [kworker/u16:2]
+root         0    46     2 Sat Sep 26 12:11:55 2026 [kcompactd0]
+root         0    47     2 Sat Sep 26 12:11:55 2026 [ksmd]
+root         0    48     2 Sat Sep 26 12:11:55 2026 [khugepaged]
+root         0    49     2 Sat Sep 26 12:11:55 2026 [kworker/R-kblockd]
+root         0    50     2 Sat Sep 26 12:11:55 2026 [kworker/2:1-mm_percpu_wq]
+root         0    51     2 Sat Sep 26 12:11:55 2026 [kworker/3:1-virtio_vsock]
+root         0    52     2 Sat Sep 26 12:11:55 2026 [kworker/1:1-events]
+root         0    53     2 Sat Sep 26 12:11:55 2026 [watchdogd]
+root         0    54     2 Sat Sep 26 12:11:55 2026 [kworker/R-quota_events_unbound]
+root         0    55     2 Sat Sep 26 12:11:55 2026 [kworker/2:1H-kblockd]
+root         0    56     2 Sat Sep 26 12:11:55 2026 [kswapd0]
+root         0    57     2 Sat Sep 26 12:11:55 2026 [kworker/u17:0]
+root         0    58     2 Sat Sep 26 12:11:55 2026 [kworker/R-kthrotld]
+root         0    59     2 Sat Sep 26 12:11:55 2026 [irq/24-ACPI:Ged]
+root         0    60     2 Sat Sep 26 12:11:55 2026 [irq/25-ACPI:Ged]
+root         0    61     2 Sat Sep 26 12:11:55 2026 [hwrng]
+root         0    62     2 Sat Sep 26 12:11:55 2026 [kworker/3:1H-kblockd]
+root         0    63     2 Sat Sep 26 12:11:55 2026 [kworker/R-kstrp]
+root         0    64     2 Sat Sep 26 12:11:55 2026 [kworker/0:1H-kblockd]
+root         0    72     2 Sat Sep 26 12:11:56 2026 [kworker/1:1H-kblockd]
+root         0    74     2 Sat Sep 26 12:11:57 2026 [kworker/R-ext4-rsv-conversion]
+root         0    77     2 Sat Sep 26 12:11:57 2026 [kworker/R-ext4-rsv-conversion]
+root         0    78     2 Sat Sep 26 12:11:57 2026 [kworker/R-ext4-rsv-conversion]
+64321    64321    80     1 Sat Sep 26 12:11:57 2026 sbx-telemetry-collector
+root         0    81     1 Sat Sep 26 12:11:57 2026 /bin/sh -c if [ -d /opt/claude-code ]; then ln -sf /opt/claude-code/bin/claude /opt/node22/bin/claude; fi; if [ -d /opt/env-runner ]; then ln -sf /opt/env-runner/environment-manager /usr/local/bin/environment-manager; fi; if [ -f /opt/env-runner/vitals-emitter-guest ]; then ln -sf /opt/env-runner/vitals-emitter-guest /usr/local/bin/vitals-emitter-guest; fi ; mkdir -p /home/user ; cd /home/user && /usr/local/bin/environment-manager task-run --stdin --session cse_01PRna2jKCs5EdTv8Rwv3j83 --session-mode resume --upgrade-claude-code=False >>/tmp/environment-manager.out 2>&1
+root         0    85    81 Sat Sep 26 12:11:58 2026 /usr/local/bin/environment-manager task-run --stdin --session cse_01PRna2jKCs5EdTv8Rwv3j83 --session-mode resume --upgrade-claude-code=False
+root         0    86     2 Sat Sep 26 12:11:58 2026 [kworker/3:2-events]
+root         0   103    85 Sat Sep 26 12:11:58 2026 /opt/claude-code/bin/claude --output-format=stream-json --verbose --settings /root/.claude/launcher-settings.json --replay-user-messages --input-format=stream-json --debug-to-stderr --thinking-display omitted --model claude-opus-5-5 --fallback-model claude-opus-5[1m],claude-opus-4-8[1m] --tools preset:default,Task,Bash,Glob,Grep,Read,Edit,MultiEdit,Write,NotebookEdit,WebFetch,TodoWrite,WebSearch,BashOutput,KillBash,Skill,Tmux,Monitor,SendUserFile,REPL,ExitPlanMode,AskUserQuestion,ToolSearch --allowed-tools preset:default,Task,Bash,Glob,Grep,Read,Edit,MultiEdit,Write,NotebookEdit,WebFetch,TodoWrite,WebSearch,BashOutput,KillBash,Skill,Tmux,Monitor,SendUserFile,REPL,ToolSearch,preset:default,Task,Bash,Glob,Grep,Read,Edit,MultiEdit,Write,NotebookEdit,WebFetch,TodoWrite,WebSearch,BashOutput,KillBash,Skill,Tmux,Monitor,SendUserFile,REPL,mcp__Claude_Docs__*,mcp__Claude_Code_Remote__*,mcp__github__* --disallowed-tools ExitPlanMode,EnterPlanMode,AskUserQuestion --mcp-config /tmp/mcp-config-cse_01PRna2jKCs5EdTv8Rwv3j83.json --append-system-prompt-file /tmp/claude-append-system-prompt.txt --add-dir /home/user/agent-governance-suite --sdk-url https://api.anthropic.com/v1/code/sessions/cse_01PRna2jKCs5EdTv8Rwv3j83 --resume=https://api.anthropic.com/v1/code/sessions/cse_01PRna2jKCs5EdTv8Rwv3j83 --debug
+root         0   120   103 Sat Sep 26 12:12:00 2026 node mcp-server/dist/server.mjs
+root         0   383   103 Sat Sep 26 12:12:21 2026 /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-1790424725583-zoz0rx.sh 2>/dev/null || true && export BUN_OPTIONS="--smol${BUN_OPTIONS:+ $BUN_OPTIONS}" && shopt -u extglob 2>/dev/null || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'cd /tmp/r5b-b1; R=/home/user/agent-governance-suite; Q=$R/scripts/qualification run(){ echo "\$ $*"; bash -c "$*" 2>&1; echo "exit=$?"; echo; } { echo "## ACL ?????? ?????? (getfacl ??????)" run "findmnt -no TARGET,SOURCE,FSTYPE,OPTIONS -T $R" run "findmnt -T $R" run "ls -ld / /home /home/user $R $R/scripts $Q $Q/v06-b3-linux-install.mjs $Q/v06-b3-linux-release.mjs $Q/v06-b2a-windows-stage.mjs /root/r5a /root/r5a/r5b-run /root/r5a/r5b-run/driver.mjs /root/r5a-out/manifest.txt" run "getfattr --version 2>&1 | head -1; getfattr -d -m '"'"'system.posix_acl'"'"' $R $Q $Q/v06-b3-linux-install.mjs 2>&1 | head" echo "## ??????????????" run "getent passwd" run "getent group" echo "## ??????" run "ls -la /etc/ld.so.preload" run "cat /proc/sys/fs/protected_hardlinks /proc/sys/fs/protected_symlinks" } > obs2.txt 2>&1 ps -eo user,uid,pid,ppid,lstart,args > ps-raw.txt 2>&1 grep -vE '"'"'^$'"'"' obs2.txt | grep -vE '"'"'^(exit=0)$'"'"' | head -80 | cut -c1-200; wc -l ps-raw.txt; awk '"'"'NR>1 && $2!=0'"'"' ps-raw.txt' < /dev/null && pwd -P >| /tmp/claude-a43d-cwd
+root         0   397   383 Sat Sep 26 12:12:21 2026 ps -eo user,uid,pid,ppid,lstart,args
+
+요약: 비root 프로세스는 uid 64321 sbx-telemetry-collector 1개다(passwd에 없는 uid, 현재 boot 12:11:57 시작). 설치 boot의 root 프로세스 목록은 pre-install.txt에 있다. 그때의 비root 프로세스는 기록하지 않았다. 다만 경로 사슬이 root 755 소유라 비root 주체는 모듈을 바꿀 수 없다.
+
+## 기타
+$ ls -la /etc/ld.so.preload
+ls: cannot access '/etc/ld.so.preload': No such file or directory
+exit=2
+
+$ cat /proc/sys/fs/protected_hardlinks /proc/sys/fs/protected_symlinks
+1
+0
+exit=0
+
+$ readelf -d /root/r5a/node/bin/node | grep NEEDED   # 설치 node(sha 7fde7b8a…)의 DT_NEEDED
+ 0x0000000000000001 (NEEDED)             Shared library: [libdl.so.2]
+ 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libpthread.so.0]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-x86-64.so.2]
+exit=0
