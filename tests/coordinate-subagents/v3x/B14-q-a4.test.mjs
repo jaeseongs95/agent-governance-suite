@@ -4,10 +4,14 @@ import { planWindowsIssuerInstall, planWindowsIssuerRollback, validateWindowsSer
 
 // B14-q-a4: plan-only FIXTURE. Nothing here registers a service, creates an account or changes an ACL.
 // The real SCM token, cross-user and worker-descendant denials stay NOT_RUN (B14-q-b, B14-q-c gates).
+// Service SIDs below are the values Windows derives from the names (cross-checked read-only with
+// `sc.exe showsid`); a derived value is not an observation of the running service token.
 const root = 'C:\\ProgramData\\agent-governance-suite';
 const subtree = `${root}\\issuer`;
-const issuerSid = 'S-1-5-80-1-2-3-4-5';
-const receiverSid = 'S-1-5-80-6-7-8-9-10';
+const issuerSid = 'S-1-5-80-2374351460-1261223942-2447500557-4136121489-593351303';
+const receiverSid = 'S-1-5-80-3088520731-3733327115-806648351-2150893619-3077959104';
+const trustedInstallerSid = 'S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464';
+const userSid = 'S-1-5-21-1-2-3-1001';
 const digest = (c) => `sha256:${c.repeat(64)}`;
 const admins = 'S-1-5-32-544';
 const service = (name, sid) => ({ accountKind: 'virtual-service-account', accountName: `NT SERVICE\\${name}`,
@@ -20,9 +24,9 @@ const validRecord = () => ({
       groupPolicy: { forbiddenSids: [] }, privilegePolicy: { allowed: [] } },
     issuer: service('ags-issuer', issuerSid),
     receiver: service('ags-receiver', receiverSid),
-    caller: { accountKind: 'interactive-user', accountName: 'HOST\\user', observedSid: 'S-1-5-21-1-2-3-1001',
+    caller: { accountKind: 'interactive-user', accountName: 'HOST\\user', observedSid: userSid,
       groupPolicy: { forbiddenSids: [admins] }, privilegePolicy: { allowed: [] } },
-    worker: { accountKind: 'interactive-user', accountName: 'HOST\\user', observedSid: 'S-1-5-21-1-2-3-1001',
+    worker: { accountKind: 'interactive-user', accountName: 'HOST\\user', observedSid: userSid,
       groupPolicy: { forbiddenSids: [admins] }, privilegePolicy: { allowed: [] } },
   },
   services: {
@@ -34,15 +38,29 @@ const validRecord = () => ({
   endpoint: { pipeName: '\\\\.\\pipe\\ags-issuer-1' },
   build: { buildDigest: digest('d'), closureDigest: digest('e') },
 });
-const absent = { subtreeExists: () => false };
+// The installer's observation of each path from the volume root down to the subtree. Stock Windows lets
+// non-administrators add entries to C:\ and C:\ProgramData, but not delete, rename or re-ACL them.
+const safeAncestor = (owner) => ({ exists: true, owner, reparse: false, nonAdminRights: ['read', 'execute', 'write', 'append'] });
+const stock = () => ({ 'C:\\': safeAncestor(trustedInstallerSid), 'C:\\ProgramData': safeAncestor('S-1-5-18'),
+  [root]: { exists: false }, [subtree]: { exists: false } });
+const observer = (overrides = {}, seen = []) => {
+  const world = { ...stock(), ...overrides };
+  return { observePath: (path) => { seen.push(path); if (!(path in world)) throw new Error(`unexpected ${path}`); return structuredClone(world[path]); } };
+};
 const edited = (edit) => { const r = validRecord(); edit(r); return r; };
-const definition = (role) => planWindowsIssuerInstall(validRecord(), absent).services.find((d) => d.role === role);
+const definition = (role) => planWindowsIssuerInstall(validRecord(), observer()).services.find((d) => d.role === role);
+const protectedDacl = { protected: true, allow: [{ sid: '*S-1-5-18', access: 'full' }, { sid: '*S-1-5-32-544', access: 'full' }] };
 
 test('B14-q-a4 plans virtual-account services with quoted protected binPaths and no execution', () => {
-  const plan = planWindowsIssuerInstall(validRecord(), absent);
+  const seen = [];
+  const plan = planWindowsIssuerInstall(validRecord(), observer({}, seen));
+  assert.deepEqual(seen, ['C:\\', 'C:\\ProgramData', root, subtree]);
   assert.equal(plan.mode, 'plan');
   assert.equal(plan.installId, 'install-1');
-  assert.deepEqual(plan.steps[0], { action: 'create-protected-subtree', path: subtree, owner: '*S-1-5-18', requireAbsent: true });
+  // Execution must re-observe the parents under the same rules before creating anything (B14-q-b duty).
+  assert.deepEqual(plan.steps[0], { action: 'reverify-parents', paths: ['C:\\', 'C:\\ProgramData', root] });
+  assert.deepEqual(plan.steps[1], { action: 'create-protected-directory', path: root, owner: '*S-1-5-18', requireAbsent: true, dacl: protectedDacl });
+  assert.deepEqual(plan.steps[2], { action: 'create-protected-subtree', path: subtree, owner: '*S-1-5-18', requireAbsent: true, dacl: protectedDacl });
   for (const [role, name, sid] of [['issuer', 'ags-issuer', issuerSid], ['receiver', 'ags-receiver', receiverSid]]) {
     const exe = `${subtree}\\bin\\${name}.exe`;
     assert.deepEqual(definition(role), { role, serviceName: name, binPath: `"${exe}"`, obj: `NT SERVICE\\${name}`, sid,
@@ -60,6 +78,13 @@ test('B14-q-a4 plans virtual-account services with quoted protected binPaths and
   assert.ok(!JSON.stringify(plan).includes('password='), 'virtual accounts take no password');
 });
 
+test('B14-q-a4 an existing protectedRoot is kept only when it is already safe', () => {
+  const safeRoot = { exists: true, owner: 'S-1-5-32-544', reparse: false, nonAdminRights: ['read', 'execute'] };
+  const plan = planWindowsIssuerInstall(validRecord(), observer({ [root]: safeRoot }));
+  assert.ok(!plan.steps.some((step) => step.action === 'create-protected-directory'));
+  assert.deepEqual(plan.steps[1], { action: 'create-protected-subtree', path: subtree, owner: '*S-1-5-18', requireAbsent: true, dacl: protectedDacl });
+});
+
 // Service definitions are checked on their own, for both services.
 for (const role of ['issuer', 'receiver']) {
   const cases = {
@@ -69,7 +94,14 @@ for (const role of ['issuer', 'receiver']) {
     'local administrator account': (d) => { d.obj = '.\\Administrator'; },
     'account of the other service': (d) => { d.obj = role === 'issuer' ? 'NT SERVICE\\ags-receiver' : 'NT SERVICE\\ags-issuer'; },
     'right name with the SYSTEM SID': (d) => { d.sid = 'S-1-5-18'; },
-    'right name with a user SID': (d) => { d.sid = 'S-1-5-21-1-2-3-1001'; },
+    'right name with a user SID': (d) => { d.sid = userSid; },
+    'right name with an arbitrary service-shaped SID': (d) => { d.sid = 'S-1-5-80-1-2-3-4-5'; },
+    'right name with the other service SID': (d) => { d.sid = role === 'issuer' ? receiverSid : issuerSid; },
+    'right name with the TrustedInstaller SID': (d) => { d.sid = trustedInstallerSid; },
+    'its own SID zero-padded': (d) => { d.sid = d.sid.replace(/-(\d+)$/, '-0$1'); },
+    'a sub-authority past 32 bits': (d) => { d.sid = d.sid.replace(/-(\d+)$/, '-4294967296'); },
+    'a name outside ags-': (d) => { d.serviceName = 'svc'; d.obj = 'NT SERVICE\\svc'; },
+    'a boot start type': (d) => { d.startType = 'boot'; },
     'unrestricted sidtype': (d) => { d.sidType = 'unrestricted'; },
     'extra privilege': (d) => { d.requiredPrivileges = ['SeChangeNotifyPrivilege', 'SeDebugPrivilege']; },
     'unquoted binPath': (d) => { d.binPath = d.binPath.slice(1, -1); },
@@ -88,8 +120,9 @@ for (const role of ['issuer', 'receiver']) {
   }
 }
 
-// Install inputs are refused before any step is planned, for both services.
+// Install and rollback inputs are refused before any step is planned, for both services.
 for (const role of ['issuer', 'receiver']) {
+  const other = role === 'issuer' ? 'receiver' : 'issuer';
   const cases = {
     'a LocalSystem principal': (r) => { r.principals[role].accountKind = 'local-system'; },
     'a SYSTEM account name': (r) => { r.principals[role].accountName = 'NT AUTHORITY\\SYSTEM'; },
@@ -97,31 +130,67 @@ for (const role of ['issuer', 'receiver']) {
     'a principal holding Administrators': (r) => { r.principals[role].groupPolicy.forbiddenSids = []; },
     'no account kind': (r) => { delete r.principals[role].accountKind; },
     'no observed SID': (r) => { delete r.principals[role].observedSid; },
+    'an arbitrary service-shaped SID': (r) => { r.principals[role].observedSid = 'S-1-5-80-1-2-3-4-5'; },
+    'the TrustedInstaller SID': (r) => { r.principals[role].observedSid = trustedInstallerSid; },
     'an observed SID shared with the caller': (r) => { r.principals.caller.observedSid = r.principals[role].observedSid; },
+    'an observed SID shared with the worker': (r) => { r.principals.worker.observedSid = r.principals[role].observedSid; },
+    'an observed SID shared with an administrator installer': (r) => {
+      Object.assign(r.principals.installer, { accountKind: 'administrator', observedSid: r.principals[role].observedSid }); },
+    'a worker holding its SID zero-padded': (r) => { r.principals.worker.observedSid = r.principals[role].observedSid.replace(/-(\d+)$/, '-0$1'); },
     'an unprotected binary path': (r) => { r.services[role].binaryPath = 'C:\\Users\\user\\ags.exe'; },
     'a binary under mutable state': (r) => { r.services[role].binaryPath = `${subtree}\\state\\${r.services[role].serviceName}.exe`; },
+    'a binary under mutable state in other case': (r) => { r.services[role].binaryPath = `${subtree}\\STATE\\${r.services[role].serviceName}.exe`; },
+    'the other service binary': (r) => { r.services[role].binaryPath = r.services[other].binaryPath; },
+    'the other service binary in other case': (r) => { r.services[role].binaryPath = r.services[other].binaryPath.replace('\\bin\\', '\\BIN\\'); },
   };
   for (const [label, edit] of Object.entries(cases)) {
-    test(`B14-q-a4 install rejects ${role} with ${label}`, () => {
-      assert.throws(() => planWindowsIssuerInstall(edited(edit), absent));
+    test(`B14-q-a4 install and rollback reject ${role} with ${label}`, () => {
+      assert.throws(() => planWindowsIssuerInstall(edited(edit), observer()));
+      assert.throws(() => planWindowsIssuerRollback(edited(edit)));
     });
   }
 }
 
-test('B14-q-a4 install rejects issuer and receiver sharing a service name or account', () => {
-  const sameName = (r) => { r.services.receiver.serviceName = 'ags-issuer'; r.principals.receiver.accountName = 'NT SERVICE\\ags-issuer'; };
+test('B14-q-a4 install and rollback reject shared or non-canonical principal identities', () => {
+  const sameName = (r) => { r.services.receiver.serviceName = 'ags-issuer'; r.principals.receiver.accountName = 'NT SERVICE\\ags-issuer'; r.principals.receiver.observedSid = issuerSid; };
   const sameAccount = (r) => { r.principals.receiver.accountName = 'NT SERVICE\\ags-issuer'; };
   const sameSid = (r) => { r.principals.receiver.observedSid = issuerSid; };
-  for (const edit of [sameName, sameAccount, sameSid]) assert.throws(() => planWindowsIssuerInstall(edited(edit), absent));
+  const swapped = (r) => { r.principals.issuer.observedSid = receiverSid; r.principals.receiver.observedSid = issuerSid; };
+  // Separation compares SID strings, so every principal SID must be canonical and within 32-bit sub-authorities.
+  const paddedInstaller = (r) => { Object.assign(r.principals.installer, { accountKind: 'administrator', observedSid: 'S-1-5-21-01-2-3-500' }); };
+  const wideCaller = (r) => { r.principals.caller.observedSid = 'S-1-5-21-1-2-3-4294967296'; };
+  for (const edit of [sameName, sameAccount, sameSid, swapped, paddedInstaller, wideCaller]) {
+    assert.throws(() => planWindowsIssuerInstall(edited(edit), observer()));
+    assert.throws(() => planWindowsIssuerRollback(edited(edit)));
+  }
 });
 
-test('B14-q-a4 install refuses an existing or unobservable protected subtree', () => {
-  const seen = [];
-  assert.throws(() => planWindowsIssuerInstall(validRecord(), { subtreeExists: (path) => { seen.push(path); return true; } }));
-  assert.deepEqual(seen, [subtree]);
-  assert.throws(() => planWindowsIssuerInstall(validRecord(), { subtreeExists: (path) => path.toLowerCase() === subtree.toLowerCase() }));
-  assert.throws(() => planWindowsIssuerInstall(validRecord(), { subtreeExists: () => { throw new Error('EACCES'); } }));
-  assert.throws(() => planWindowsIssuerInstall(validRecord(), { subtreeExists: () => undefined }));
+test('B14-q-a4 install refuses a pre-existing, unsafe or unobservable path from the volume root down', () => {
+  const unsafe = (owner, extra = {}) => ({ exists: true, owner, reparse: false, nonAdminRights: ['read', 'execute'], ...extra });
+  const refused = {
+    'existing subtree': { [root]: unsafe('S-1-5-18'), [subtree]: unsafe('S-1-5-18') },
+    'subtree reported without its root': { [subtree]: unsafe('S-1-5-18') },
+    'user-owned protectedRoot': { [root]: unsafe(userSid) },
+    'protectedRoot as a junction': { [root]: unsafe('S-1-5-18', { reparse: true }) },
+    ...Object.fromEntries(['write', 'append', 'delete', 'delete-child', 'write-dac', 'write-owner'].map((right) =>
+      [`protectedRoot with non-admin ${right}`, { [root]: unsafe('S-1-5-18', { nonAdminRights: ['read', right] }) }])),
+    ...Object.fromEntries(['delete', 'delete-child', 'write-dac', 'write-owner'].map((right) =>
+      [`ProgramData with non-admin ${right}`, { 'C:\\ProgramData': { ...safeAncestor('S-1-5-18'), nonAdminRights: ['write', right] } }])),
+    'ProgramData as a junction': { 'C:\\ProgramData': { ...safeAncestor('S-1-5-18'), reparse: true } },
+    'user-owned ProgramData': { 'C:\\ProgramData': safeAncestor(userSid) },
+    'absent ProgramData': { 'C:\\ProgramData': { exists: false } },
+    'user-owned volume root': { 'C:\\': safeAncestor(userSid) },
+    'unknown non-admin right': { [root]: unsafe('S-1-5-18', { nonAdminRights: ['read', 'special'] }) },
+    'existing path without owner': { [root]: { exists: true, reparse: false, nonAdminRights: [] } },
+    'existing path without reparse answer': { [root]: { exists: true, owner: 'S-1-5-18', nonAdminRights: [] } },
+    'existing path without rights answer': { [root]: { exists: true, owner: 'S-1-5-18', reparse: false } },
+    'existence not a boolean': { [root]: { exists: 'no' } },
+    'observation not an object': { [subtree]: undefined },
+  };
+  for (const [label, overrides] of Object.entries(refused)) {
+    assert.throws(() => planWindowsIssuerInstall(validRecord(), observer(overrides)), undefined, label);
+  }
+  assert.throws(() => planWindowsIssuerInstall(validRecord(), { observePath: (path) => { if (path === root) throw new Error('EACCES'); return stock()[path]; } }));
   assert.throws(() => planWindowsIssuerInstall(validRecord(), {}));
   assert.throws(() => planWindowsIssuerInstall(validRecord()));
 });
@@ -142,6 +211,4 @@ test('B14-q-a4 rollback deletes both services, then clears what their SIDs still
   assert.ok(!JSON.stringify(after).includes('NT SERVICE'), 'post-delete steps must not resolve accounts by name');
   assert.ok(plan.steps.slice(0, lastDelete + 1).every((step) => step.tool === 'sc.exe'), 'no SID cleanup before the services are gone');
   assert.deepEqual(after.at(-1), { action: 'remove-protected-subtree', path: subtree });
-  assert.throws(() => planWindowsIssuerRollback(edited((r) => { delete r.principals.issuer.observedSid; })));
-  assert.throws(() => planWindowsIssuerRollback(edited((r) => { r.principals.receiver.observedSid = issuerSid; })));
 });
