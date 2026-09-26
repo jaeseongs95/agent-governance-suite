@@ -1,0 +1,25 @@
+// r5b first-install driver: the CLI block of scripts/qualification/v06-b3-linux-install.mjs (lines 631-645, blob c7b3414e)
+// with parentManifestFile left undefined (first install on an empty host; the CLI requires --parent-manifest).
+// All functions and pins come from the installer module itself; this file adds no install logic.
+import path from 'node:path';
+const R = '/home/user/agent-governance-suite/scripts/qualification/';
+const { installProtectedRuntime, runVerifiedRuntime, PINNED } = await import(R + 'v06-b3-linux-install.mjs');
+const { verifyNodeRelease, extractNodeBinary } = await import(R + 'v06-b3-linux-release.mjs');
+const [baseDir, inputDir, gpgv, tar, manifest, packageSource] = process.argv.slice(2);
+try {
+  const release = verifyNodeRelease(inputDir, PINNED.version, gpgv, PINNED.keyringSha256);
+  if (release.archiveHash !== PINNED.releaseSha256) throw new Error('archive sha256 differs from the pinned release');
+  const { nodeBytes, nodeSha256 } = extractNodeBinary(path.join(inputDir, release.archiveName), tar, PINNED.version);
+  if (nodeSha256 !== PINNED.nodeSha256) throw new Error('extracted node sha256 differs from the pinned value');
+  const { record, created } = installProtectedRuntime({ baseDir, nodeVersion: PINNED.version, archiveSha256: release.archiveHash,
+    nodeBytes, expectedNodeSha256: nodeSha256, packageSource, manifestFile: manifest, parentManifestFile: undefined });
+  const used = runVerifiedRuntime(record, ['--version']);
+  process.stdout.write(`${JSON.stringify({ status: 'CANDIDATE_HOST_INSTALLED', releaseSha256: record.releaseSha256,
+    releaseIdInputs: record.releaseIdInputs, installRoot: record.paths.installRoot, nodePath: record.paths.nodePath,
+    packageRoot: record.paths.packageRoot, nodeIdentity: record.node.identity, archiveNodeSha256: nodeSha256,
+    installedSha256: record.node.sha256, packageFileCount: record.package.files.length, fdSha256: used.fdSha256,
+    version: used.stdout, createdCount: created.length, boundary: record.boundary, signer: release.signerFingerprint ?? null })}\n`);
+} catch (error) {
+  process.stderr.write(`${error.message}\n`);
+  process.exitCode = 1;
+}

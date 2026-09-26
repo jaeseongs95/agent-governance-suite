@@ -1,0 +1,140 @@
+# pre-install: 설치 직전 재검증 (같은 boot, root, umask 022)
+$ date -u +%FT%T.%NZ; cat /proc/sys/kernel/random/boot_id; grep btime /proc/stat; cat /proc/uptime; hostname; uname -srm; id; umask
+2026-09-26T11:32:15.159757669Z
+701c96a7-937e-47dd-9a3d-cdfdb92380fc
+btime 1790422227
+107.31 415.54
+vm
+Linux 6.18.44-fc-v37 x86_64
+uid=0(root) gid=0(root) groups=0(root)
+0022
+exit=0
+
+## root 사용자 프로세스 (커널 thread 제외)
+$ ps -eo user,pid,ppid,etimes,args --no-headers | awk '$1=="root" && $3!=2 && $2!=2' | cut -c1-160
+root         1     0     107 /process_api --firecracker-init --addr 0.0.0.0:2024 --max-ws-buffer-size 32768 --block-local-connections --listen-vsock-port 2024 -
+root        81     1     104 /bin/sh -c if [ -d /opt/claude-code ]; then ln -sf /opt/claude-code/bin/claude /opt/node22/bin/claude; fi; if [ -d /opt/env-runner
+root        85    81     104 /usr/local/bin/environment-manager task-run --stdin --session cse_01PRna2jKCs5EdTv8Rwv3j83 --session-mode resume --upgrade-claude-c
+root       102    85     103 /opt/claude-code/bin/claude --output-format=stream-json --verbose --settings /root/.claude/launcher-settings.json --replay-user-mes
+root       119   102     102 node mcp-server/dist/server.mjs
+root       410   102       0 /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-1790422242162-bf8qwq.sh 2>/dev/null || true && export BUN_OPTIONS="
+root       423   410       0 bash -c ps -eo user,pid,ppid,etimes,args --no-headers | awk '$1=="root" && $3!=2 && $2!=2' | cut -c1-160
+root       424   423       0 ps -eo user,pid,ppid,etimes,args --no-headers
+root       425   423       0 awk $1=="root" && $3!=2 && $2!=2
+root       426   423       0 cut -c1-160
+exit=0
+
+## 입력 재계산
+$ sha256sum /root/r5a/pubring.kbx /root/r5a/SHASUMS256.txt /root/r5a/SHASUMS256.txt.sig /root/r5a/node-v24.21.0-linux-x64.tar.xz; stat -c '%n %U:%G %a %h %F' /root/r5a/pubring.kbx /root/r5a/SHASUMS256.txt /root/r5a/SHASUMS256.txt.sig /root/r5a/node-v24.21.0-linux-x64.tar.xz
+140f2ad5260fd62773b6243ce8e1d3009645d558f121b8262c55e383dc285932  /root/r5a/pubring.kbx
+f410428039e2c922a14058df067a4482691c9304a5c01a75847f9f3f2d3307f6  /root/r5a/SHASUMS256.txt
+865f22b026e4080554e10d247553fd770573893dac8fc7affc7d58b72de35a89  /root/r5a/SHASUMS256.txt.sig
+fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6  /root/r5a/node-v24.21.0-linux-x64.tar.xz
+/root/r5a/pubring.kbx root:root 644 1 regular file
+/root/r5a/SHASUMS256.txt root:root 644 1 regular file
+/root/r5a/SHASUMS256.txt.sig root:root 644 1 regular file
+/root/r5a/node-v24.21.0-linux-x64.tar.xz root:root 644 1 regular file
+exit=0
+
+$ cd /root/r5a && gpgv --status-fd 1 --keyring /root/r5a/pubring.kbx SHASUMS256.txt.sig SHASUMS256.txt
+[GNUPG:] NEWSIG
+gpgv: Signature made Tue Sep  8 21:49:15 2026 UTC
+gpgv:                using EDDSA key 5BE8A3F6C8A5C01D106C0AD820B1A390B168D356
+[GNUPG:] KEY_CONSIDERED 5BE8A3F6C8A5C01D106C0AD820B1A390B168D356 0
+[GNUPG:] SIG_ID A1ouuslAqGvYF78cjZxMvjHRsoM 2026-09-08 1788904155
+[GNUPG:] GOODSIG 20B1A390B168D356 Antoine du Hamel <antoine.duhamel@platformatic.dev>
+gpgv: Good signature from "Antoine du Hamel <antoine.duhamel@platformatic.dev>"
+gpgv:                 aka "Antoine du Hamel <duhamelantoine1995@gmail.com>"
+[GNUPG:] VALIDSIG 5BE8A3F6C8A5C01D106C0AD820B1A390B168D356 2026-09-08 1788904155 0 4 0 22 8 00 5BE8A3F6C8A5C01D106C0AD820B1A390B168D356
+exit=0
+
+$ grep ' node-v24.21.0-linux-x64.tar.xz$' /root/r5a/SHASUMS256.txt
+fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6  node-v24.21.0-linux-x64.tar.xz
+exit=0
+
+$ tar -xJOf /root/r5a/node-v24.21.0-linux-x64.tar.xz node-v24.21.0-linux-x64/bin/node | sha256sum
+7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c  -
+exit=0
+
+$ sha256sum /root/r5a/node/bin/node; stat -c '%n %U:%G %a %h' /root/r5a/node/bin/node; /root/r5a/node/bin/node --version   # 설치 driver 실행용 node
+7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c  /root/r5a/node/bin/node
+/root/r5a/node/bin/node root:root 755 1
+v24.21.0
+exit=0
+
+pin: keyring 140f2ad5260fd62773b6243ce8e1d3009645d558f121b8262c55e383dc285932 / archive fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6 / node 7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c / VALIDSIG 5BE8A3F6C8A5C01D106C0AD820B1A390B168D356
+
+## source /root/r5a/src (0724bb2b)
+$ stat -c '%n %U:%G %a %F' / /root /root/r5a /root/r5a/src
+/ root:root 755 directory
+/root root:root 700 directory
+/root/r5a root:root 700 directory
+/root/r5a/src root:root 700 directory
+exit=0
+
+$ echo files=$(find /root/r5a/src -type f | wc -l) dirs=$(find /root/r5a/src -type d | wc -l) go_w=$(find /root/r5a/src -perm /022 | wc -l) symlink=$(find /root/r5a/src -type l | wc -l) nonroot=$(find /root/r5a/src ! -uid 0 -o ! -gid 0 | wc -l) nlink_gt1=$(find /root/r5a/src -type f -links +1 | wc -l) special=$(find /root/r5a/src ! -type f ! -type d | wc -l)
+files=1620 dirs=372 go_w=0 symlink=0 nonroot=0 nlink_gt1=0 special=0
+exit=0
+
+$ sha256sum /root/r5a/src/host-integration.json   # pin 648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c
+648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c  /root/r5a/src/host-integration.json
+exit=0
+
+$ cd /root/r5a/src && diff <(find . -type f | sed 's|^\./||' | LC_ALL=C sort | while IFS= read -r f; do printf '%s %s\n' "$(git hash-object --no-filters -- "$f")" "$f"; done) <(git -C /home/user/agent-governance-suite -c core.quotePath=false ls-tree -r 0724bb2bc452626aba546a57d1db5c407d32feb0 | awk -F'\t' '{split($1,a," "); print a[3]" "$2}' | LC_ALL=C sort -k2) && echo SOURCE_EQUALS_0724bb2b
+SOURCE_EQUALS_0724bb2b
+exit=0
+
+$ cd /root/r5a && sha256sum -c --quiet scratch-sha256.txt; echo list=$(sha256sum < scratch-sha256.txt)
+list=8c0c1f60cd634c929e214871e3d51e41eb2a7c9ce122cfc1a02c5fd36d8c6b41 -
+exit=0
+
+## installer·의존 모듈 blob (작업 트리 = 8bb6e689 = 4866e455)
+$ cd /home/user/agent-governance-suite && for f in v06-b3-linux-install.mjs v06-b3-linux-release.mjs v06-b2a-windows-stage.mjs; do echo "$f wt=$(git hash-object scripts/qualification/$f) 8bb6=$(git rev-parse 8bb6e6891bf25a5ddf9593def7468779616d3866:scripts/qualification/$f) 4866=$(git rev-parse 4866e45501227624d1e625470453ef8ce018bb9b:scripts/qualification/$f) head=$(git rev-parse HEAD:scripts/qualification/$f)"; done; git status --short scripts/
+v06-b3-linux-install.mjs wt=c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1 8bb6=c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1 4866=c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1 head=c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1
+v06-b3-linux-release.mjs wt=5fc2427ee20a8531b87084441ff22e276c871d99 8bb6=5fc2427ee20a8531b87084441ff22e276c871d99 4866=5fc2427ee20a8531b87084441ff22e276c871d99 head=5fc2427ee20a8531b87084441ff22e276c871d99
+v06-b2a-windows-stage.mjs wt=755c6f0b28ca496625953fdca54e0fd2b7597eee 8bb6=755c6f0b28ca496625953fdca54e0fd2b7597eee 4866=755c6f0b28ca496625953fdca54e0fd2b7597eee head=755c6f0b28ca496625953fdca54e0fd2b7597eee
+exit=0
+
+## 신뢰 조상·mount
+$ stat -c '%n %U:%G %a ino=%i dev=%d ctime=%Z' / /usr /usr/lib /root /root/r5a-out
+/ root:root 755 ino=2 dev=65024 ctime=1790422230
+/usr root:root 755 ino=193 dev=65024 ctime=1771293773
+/usr/lib root:root 755 ino=308 dev=65024 ctime=1774963884
+/root root:root 700 ino=203 dev=65024 ctime=1790422233
+/root/r5a-out root:root 700 ino=1673190 dev=65024 ctime=1790329927
+exit=0
+
+$ findmnt -no TARGET,SOURCE,FSTYPE,PROPAGATION -T /usr/lib; awk '$5=="/"||$5 ~ /^\/usr/||$5 ~ /^\/root/' /proc/self/mountinfo
+/      /dev/vda ext4   private
+28 1 254:0 / / rw,relatime - ext4 /dev/vda rw,resv_strict,resuid=65534,resgid=65534
+exit=0
+
+$ sha256sum /proc/self/mountinfo | cut -c1-64; wc -l < /proc/self/mountinfo
+ca88d4a2794be240a5ef609358d3cd3ab46bab7b209205c2f256820867575a15
+26
+exit=0
+
+## 대상 subtree·manifestFile
+$ ls -ld /usr/lib/agent-governance-suite
+ls: cannot access '/usr/lib/agent-governance-suite': No such file or directory
+exit=2
+
+$ ls -la /root/r5a-out; test -e /root/r5a-out/manifest.txt && echo PRESENT || echo ABSENT; test -L /root/r5a-out/manifest.txt && echo SYMLINK || echo not-symlink; find /root/r5a-out -maxdepth 0 -type l | wc -l
+total 8
+drwx------  2 root root 4096 Sep 25 09:52 .
+drwx------ 18 root root 4096 Sep 26 11:30 ..
+ABSENT
+not-symlink
+0
+exit=0
+
+$ getent passwd | awk -F: '$3==0{print $1}'; cat /proc/sys/fs/protected_hardlinks /proc/sys/fs/protected_symlinks
+root
+1
+0
+exit=0
+
+## parent manifest: 사용하지 않음(첫 설치). /root/b3bf 존재 여부
+$ ls -ld /root/b3bf
+ls: cannot access '/root/b3bf': No such file or directory
+exit=2

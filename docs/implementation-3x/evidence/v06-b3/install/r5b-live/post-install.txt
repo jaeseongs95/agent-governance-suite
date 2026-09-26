@@ -1,0 +1,171 @@
+# post-install: 설치 직후 검증 (같은 boot)
+$ date -u +%FT%T.%NZ; cat /proc/sys/kernel/random/boot_id; grep btime /proc/stat
+2026-09-26T11:34:35.977357898Z
+701c96a7-937e-47dd-9a3d-cdfdb92380fc
+btime 1790422227
+exit=0
+
+## manifestFile identity와 bytes
+$ stat -c '%n %F %U:%G %a nlink=%h dev=%d ino=%i size=%s mtime=%y' /root/r5a-out/manifest.txt; sha256sum /root/r5a-out/manifest.txt; wc -l < /root/r5a-out/manifest.txt; stat -c '%n %U:%G %a' /root/r5a-out; ls -la /root/r5a-out
+/root/r5a-out/manifest.txt regular file root:root 600 nlink=1 dev=65024 ino=1671184 size=58663 mtime=2026-09-26 11:33:56.135056379 +0000
+e78cb508ee8537d0a43f3e09d9fd3d5ad5a63c116af623375efc0a2b95982428  /root/r5a-out/manifest.txt
+248
+/root/r5a-out root:root 700
+total 68
+drwx------  2 root root  4096 Sep 26 11:33 .
+drwx------ 18 root root  4096 Sep 26 11:30 ..
+-rw-------  1 root root 58663 Sep 26 11:33 manifest.txt
+exit=0
+
+$ wc -l < /root/r5a/r5b-run/manifest-trace.txt; grep -c 'openat' /root/r5a/r5b-run/manifest-trace.txt; grep 'openat' /root/r5a/r5b-run/manifest-trace.txt | sed -E 's/^[0-9]+ +//; s/ = [0-9]+<.*//' | sort | uniq -c; grep -c 'write(' /root/r5a/r5b-run/manifest-trace.txt; cut -d' ' -f1 /root/r5a/r5b-run/manifest-trace.txt | sort -u | tr '\n' ' '; echo
+496
+248
+    248 openat(AT_FDCWD</home/user/agent-governance-suite>, "/root/r5a-out/manifest.txt", O_WRONLY|O_CREAT|O_APPEND|O_CLOEXEC, 0600)
+248
+2219
+exit=0
+
+해석: 248건의 manifest 기록마다 같은 경로를 O_WRONLY|O_CREAT|O_APPEND, mode 0600으로 새로 열고(O_TRUNC 없음) 한 줄을 썼다. 쓴 주체는 설치 프로세스(pid 하나)뿐이다. 최종 파일은 regular, nlink 1, uid 0, 0600이다.
+
+## strace상 삭제·rename syscall
+$ grep -cE '^[0-9]+ +(unlink|unlinkat|rmdir|rename|renameat2)\(' /root/r5a/r5b-run/strace.txt
+0
+exit=1
+
+## 최종 코드(HEAD 4017ca95, installer blob c7b3414e)로 검증·사용 (새 프로세스)
+$ cd /home/user/agent-governance-suite && /root/r5a/node/bin/node /root/r5a/r5b-run/verify.mjs /root/r5a-out/manifest.txt
+{
+ "verify": "OK",
+ "releaseSha256": "32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd",
+ "hostIntegrationSha256": "648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c",
+ "nodeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+ "nodeIdentity": {
+  "dev": "65024",
+  "ino": "524293",
+  "size": "126595440",
+  "mode": "555",
+  "uid": 0,
+  "gid": 0,
+  "nlink": 1,
+  "mtimeNs": "1790422435204497960",
+  "ctimeNs": "1790422435204497960"
+ },
+ "packageFiles": 179,
+ "boundary": {
+  "dev": "65024",
+  "mounts": [
+   {
+    "id": "28",
+    "parent": "1",
+    "majorMinor": "254:0",
+    "root": "/",
+    "mountPoint": "/"
+   }
+  ]
+ },
+ "ancestors": [
+  "/ 0 755 ino=2 mp=true",
+  "/usr 0 755 ino=193 mp=false",
+  "/usr/lib 0 755 ino=308 mp=false",
+  "/usr/lib/agent-governance-suite 0 755 ino=524289 mp=false",
+  "/usr/lib/agent-governance-suite/protected-runtime 0 755 ino=524290 mp=false",
+  "/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd 0 755 ino=524291 mp=false"
+ ],
+ "run": "v24.21.0",
+ "fdSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+ "manifestEntries": 248,
+ "manifestTypes": {
+  "dir": 68,
+  "file": 180
+ },
+ "manifestMismatch": 0,
+ "packageFilesSha": "8d7c9de343ef6c078b404b448a1e43a9c0449cea7e80fbf2e8ab576897d0e092"
+}
+exit=0
+
+## 생성 경로 inventory
+$ find /usr/lib/agent-governance-suite -printf '%y %u:%g %m %n ino=%i\n' | awk '{print $1, $2, $3, $4}' | sort | uniq -c
+      1 d root:root 755 19
+     39 d root:root 755 2
+     13 d root:root 755 3
+     10 d root:root 755 4
+      4 d root:root 755 5
+      1 d root:root 755 7
+    179 f root:root 444 1
+      1 f root:root 555 1
+exit=0
+
+$ find /usr/lib/agent-governance-suite | wc -l; find /usr/lib/agent-governance-suite -type d | wc -l; find /usr/lib/agent-governance-suite -type f | wc -l; find /usr/lib/agent-governance-suite ! -type d ! -type f | wc -l
+248
+68
+180
+0
+exit=0
+
+$ diff <(find /usr/lib/agent-governance-suite | LC_ALL=C sort) <(python3 -c 'import json,sys; [print(json.loads(l)["path"]) for l in open("/root/r5a-out/manifest.txt")]' | LC_ALL=C sort) && echo INVENTORY_EQUALS_MANIFEST
+INVENTORY_EQUALS_MANIFEST
+exit=0
+
+$ ls -la /usr/lib/agent-governance-suite /usr/lib/agent-governance-suite/protected-runtime /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin
+/usr/lib/agent-governance-suite:
+total 12
+drwxr-xr-x  3 root root 4096 Sep 26 11:33 .
+drwxr-xr-x 53 root root 4096 Sep 26 11:33 ..
+drwxr-xr-x  3 root root 4096 Sep 26 11:33 protected-runtime
+
+/usr/lib/agent-governance-suite/protected-runtime:
+total 12
+drwxr-xr-x 3 root root 4096 Sep 26 11:33 .
+drwxr-xr-x 3 root root 4096 Sep 26 11:33 ..
+drwxr-xr-x 4 root root 4096 Sep 26 11:33 32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd
+
+/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd:
+total 16
+drwxr-xr-x 4 root root 4096 Sep 26 11:33 .
+drwxr-xr-x 3 root root 4096 Sep 26 11:33 ..
+drwxr-xr-x 2 root root 4096 Sep 26 11:33 bin
+drwxr-xr-x 7 root root 4096 Sep 26 11:33 package
+
+/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin:
+total 123640
+drwxr-xr-x 2 root root      4096 Sep 26 11:33 .
+drwxr-xr-x 4 root root      4096 Sep 26 11:33 ..
+-r-xr-xr-x 1 root root 126595440 Sep 26 11:33 node
+exit=0
+
+$ sha256sum /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/host-integration.json
+7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c  /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node
+648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c  /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/host-integration.json
+exit=0
+
+## 시스템 조상 불변 (설치 전 pre-install.txt의 stat과 비교)
+$ stat -c '%n %U:%G %a ino=%i dev=%d ctime=%Z' / /usr /usr/lib /root /root/r5a-out
+/ root:root 755 ino=2 dev=65024 ctime=1790422230
+/usr root:root 755 ino=193 dev=65024 ctime=1771293773
+/usr/lib root:root 755 ino=308 dev=65024 ctime=1790422435
+/root root:root 700 ino=203 dev=65024 ctime=1790422233
+/root/r5a-out root:root 700 ino=1673190 dev=65024 ctime=1790422435
+exit=0
+
+$ awk '$5=="/"||$5 ~ /^\/usr/||$5 ~ /^\/root/' /proc/self/mountinfo; sha256sum /proc/self/mountinfo | cut -c1-64
+28 1 254:0 / / rw,relatime - ext4 /dev/vda rw,resv_strict,resuid=65534,resgid=65534
+ca88d4a2794be240a5ef609358d3cd3ab46bab7b209205c2f256820867575a15
+exit=0
+
+## 설치 전 marker 이후 /usr와 /root/r5a-out에서 바뀐 항목 (보호 subtree 제외)
+$ find /usr /root/r5a-out -xdev -newer /root/r5a/r5b-run/pre-marker 2>/dev/null | grep -v '^/usr/lib/agent-governance-suite'
+/usr/lib
+/root/r5a-out
+/root/r5a-out/manifest.txt
+exit=0
+
+(/usr/lib 자체는 새 하위 디렉터리 때문에 mtime이 바뀌지만 owner·mode·ino는 위와 같다.)
+## scratch 원본 유지
+$ cd /root/r5a && sha256sum -c --quiet scratch-sha256.txt; echo list=$(sha256sum < scratch-sha256.txt | cut -c1-64)
+list=8c0c1f60cd634c929e214871e3d51e41eb2a7c9ce122cfc1a02c5fd36d8c6b41
+exit=0
+
+$ date -u +%FT%T.%NZ; cat /proc/sys/kernel/random/boot_id
+2026-09-26T11:34:38.084716088Z
+701c96a7-937e-47dd-9a3d-cdfdb92380fc
+exit=0

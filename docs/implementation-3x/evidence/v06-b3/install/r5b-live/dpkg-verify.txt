@@ -1,0 +1,17 @@
+# dpkg --verify (설치 전, 2026-09-26T11:32:31Z, boot 701c96a7-937e-47dd-9a3d-cdfdb92380fc)
+# dpkg --verify (설치 후, 2026-09-26T11:35:22Z, boot 701c96a7-937e-47dd-9a3d-cdfdb92380fc)
+$ dpkg --verify   (설치 전과 설치 후 출력 비교)
+설치 전 줄 수 6914, 설치 후 줄 수 6914, exit 0/0
+diff: 동일 (DPKG_SAME)
+분류(설치 전·후 같음):
+      1 ??5??????
+   6913 missing
+missing 항목 경로 분포:
+   3823 /usr/share/man
+   1836 /usr/share/doc
+   1253 /usr/share/locale
+      1 sunset.rst
+missing 이외 항목:
+??5?????? c /etc/sudoers
+해석: /usr/share의 man·doc·locale 누락(최소 이미지에서 제외된 문서)과 /etc/sudoers conffile 변경뿐이다. /usr/bin, /usr/lib 등 실행 파일의 dpkg md5 불일치는 0건이다. 설치 전후 출력이 같다.
+설치 전 전체 출력 sha256: ec0ee1d227af9e55a6a6f784a694fede2fb09116dae139325191dae04c496f07 (6917줄, scratch 보존: /root/r5a/r5b-run/dpkg-pre-full.txt)

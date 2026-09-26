@@ -1,0 +1,21 @@
+import { lstatSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+const m = await import('/home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs');
+const [manifestFile] = process.argv.slice(2);
+const rec = m.verifyProtectedRuntime({ baseDir: '/usr/lib', nodeVersion: '24.21.0',
+  archiveSha256: m.PINNED.releaseSha256, expectedNodeSha256: m.PINNED.nodeSha256,
+  releaseSha256: '32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd' });
+const used = m.runVerifiedRuntime(rec, ['--version']);
+const lines = readFileSync(manifestFile, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+let mismatch = 0;
+for (const e of lines) {
+  const s = lstatSync(e.path, { bigint: true });
+  const type = s.isDirectory() ? 'dir' : s.isFile() ? 'file' : 'other';
+  if (s.ino.toString() !== e.ino || type !== e.type || Number(s.uid) !== e.uid || (Number(s.mode) & 0o7777).toString(8) !== e.mode) { mismatch++; console.log('MISMATCH', e.path); }
+}
+const types = lines.reduce((a, e) => ((a[e.type] = (a[e.type] ?? 0) + 1), a), {});
+console.log(JSON.stringify({ verify: 'OK', releaseSha256: rec.releaseSha256, hostIntegrationSha256: rec.hostIntegrationSha256,
+  nodeSha256: rec.node.sha256, nodeIdentity: rec.node.identity, packageFiles: rec.package.files.length, boundary: rec.boundary,
+  ancestors: rec.ancestors.map((a) => `${a.path} ${a.uid} ${a.mode} ino=${a.ino} mp=${a.mountPoint}`),
+  run: used.stdout, fdSha256: used.fdSha256, manifestEntries: lines.length, manifestTypes: types, manifestMismatch: mismatch,
+  packageFilesSha: createHash('sha256').update(JSON.stringify(rec.package.files.map((f) => [f.path, f.sha256]))).digest('hex') }, null, 1));

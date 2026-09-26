@@ -1,0 +1,165 @@
+# reject-tests: 비인가 principal(nobody 65534) create/open/rename 거절과 mount 교체 거절 (같은 boot)
+$ date -u +%FT%T.%NZ; cat /proc/sys/kernel/random/boot_id
+2026-09-26T11:34:55.467277500Z
+701c96a7-937e-47dd-9a3d-cdfdb92380fc
+exit=0
+
+## nobody 시험: /usr/lib/agent-governance-suite 아래 쓰기 시도 (기대: Permission denied)
+$ setpriv --reuid=65534 --regid=65534 --clear-groups sh -c 'touch /usr/lib/agent-governance-suite/x'
+touch: cannot touch '/usr/lib/agent-governance-suite/x': Permission denied
+exit=1
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups sh -c 'mkdir /usr/lib/agent-governance-suite/protected-runtime/x'
+mkdir: cannot create directory '/usr/lib/agent-governance-suite/protected-runtime/x': Permission denied
+exit=1
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups sh -c 'touch /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/x'
+touch: cannot touch '/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/x': Permission denied
+exit=1
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups sh -c 'touch /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/x'
+touch: cannot touch '/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/x': Permission denied
+exit=1
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups sh -c ': >> /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node'
+sh: 1: cannot create /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node: Permission denied
+exit=2
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups sh -c ': >> /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/host-integration.json'
+sh: 1: cannot create /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/host-integration.json: Permission denied
+exit=2
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups mv /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package2
+mv: cannot move '/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package' to '/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package2': Permission denied
+exit=1
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups mv /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node2
+mv: cannot move '/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node' to '/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node2': Permission denied
+exit=1
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups mv /usr/lib/agent-governance-suite/protected-runtime /usr/lib/agent-governance-suite/pr2
+mv: cannot move '/usr/lib/agent-governance-suite/protected-runtime' to '/usr/lib/agent-governance-suite/pr2': Permission denied
+exit=1
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups chmod 777 /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node
+chmod: changing permissions of '/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node': Operation not permitted
+exit=1
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups rm -f /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/host-integration.json
+rm: cannot remove '/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package/host-integration.json': Permission denied
+exit=1
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups sh -c 'cat /root/r5a-out/manifest.txt'
+cat: /root/r5a-out/manifest.txt: Permission denied
+exit=1
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups sh -c 'touch /root/r5a-out/x'
+touch: cannot touch '/root/r5a-out/x': Permission denied
+exit=1
+
+$ setpriv --reuid=65534 --regid=65534 --clear-groups sh -c 'touch /usr/lib/x'
+touch: cannot touch '/usr/lib/x': Permission denied
+exit=1
+
+## 시험 뒤 상태
+$ ls -la /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin; ls /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package | head -3; ls -A /root/r5a-out; test -e /usr/lib/x && echo LEAK || echo no-leak
+/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd:
+total 16
+drwxr-xr-x 4 root root 4096 Sep 26 11:33 .
+drwxr-xr-x 3 root root 4096 Sep 26 11:33 ..
+drwxr-xr-x 2 root root 4096 Sep 26 11:33 bin
+drwxr-xr-x 7 root root 4096 Sep 26 11:33 package
+
+/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin:
+total 123640
+drwxr-xr-x 2 root root      4096 Sep 26 11:33 .
+drwxr-xr-x 4 root root      4096 Sep 26 11:33 ..
+-r-xr-xr-x 1 root root 126595440 Sep 26 11:33 node
+contracts
+host-integration.json
+mcp-server
+manifest.txt
+no-leak
+exit=0
+
+## mount 교체 거절 (private mount namespace 안, host mount table은 전후 비교)
+$ sha256sum /proc/self/mountinfo | cut -c1-64
+ca88d4a2794be240a5ef609358d3cd3ab46bab7b209205c2f256820867575a15
+exit=0
+
+$ unshare --mount --propagation private sh -c 'mount --bind /root/r5a/r5b-run/fakepkg /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package && cd /home/user/agent-governance-suite && /root/r5a/node/bin/node /root/r5a/r5b-run/verify.mjs /root/r5a-out/manifest.txt'
+file:///home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs:39
+const fail = (reason) => { throw new Error(reason); };
+                                 ^
+
+Error: mount inside the protected subtree: /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package
+    at fail (file:///home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs:39:34)
+    at inspectMountBoundary (file:///home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs:105:47)
+    at Module.verifyProtectedRuntime (file:///home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs:546:20)
+    at file:///root/r5a/r5b-run/verify.mjs:5:15
+
+Node.js v24.21.0
+exit=1
+
+$ unshare --mount --propagation private sh -c 'mount -t tmpfs none /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin && cd /home/user/agent-governance-suite && /root/r5a/node/bin/node /root/r5a/r5b-run/verify.mjs /root/r5a-out/manifest.txt'
+file:///home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs:39
+const fail = (reason) => { throw new Error(reason); };
+                                 ^
+
+Error: mount inside the protected subtree: /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin
+    at fail (file:///home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs:39:34)
+    at inspectMountBoundary (file:///home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs:105:47)
+    at Module.verifyProtectedRuntime (file:///home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs:546:20)
+    at file:///root/r5a/r5b-run/verify.mjs:5:15
+
+Node.js v24.21.0
+exit=1
+
+$ unshare --mount --propagation private sh -c 'mount --bind /usr/share /usr/lib && cd /home/user/agent-governance-suite && /root/r5a/node/bin/node /root/r5a/r5b-run/verify.mjs /root/r5a-out/manifest.txt'
+sh: 1: /root/r5a/node/bin/node: not found
+exit=127
+
+$ sha256sum /proc/self/mountinfo | cut -c1-64; findmnt -no TARGET,SOURCE -T /usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd
+ca88d4a2794be240a5ef609358d3cd3ab46bab7b209205c2f256820867575a15
+/      /dev/vda
+exit=0
+
+## 거절 시험 뒤 정상 검증 재확인
+$ cd /home/user/agent-governance-suite && /root/r5a/node/bin/node /root/r5a/r5b-run/verify.mjs /root/r5a-out/manifest.txt | grep -E '"(verify|run|manifestEntries|manifestMismatch|packageFiles)"'
+ "verify": "OK",
+ "packageFiles": 179,
+ "run": "v24.21.0",
+ "manifestEntries": 248,
+ "manifestMismatch": 0,
+exit=0
+
+$ date -u +%FT%T.%NZ; cat /proc/sys/kernel/random/boot_id
+2026-09-26T11:34:57.109393622Z
+701c96a7-937e-47dd-9a3d-cdfdb92380fc
+exit=0
+
+## 보충: 위 세 번째 시험(/usr/share를 /usr/lib에 bind)은 exit 127이었다. /usr/lib이 가려져 node의 공유 라이브러리를 찾지 못한 것으로, verifier 판정 전에 실패했다. 판정 불가로 기록한다.
+## 대체 시험: /usr/lib을 자기 자신에 bind (내용 동일, mountinfo root가 '/usr/lib'로 '/'가 아님)
+$ date -u +%FT%T.%NZ; cat /proc/sys/kernel/random/boot_id
+2026-09-26T11:35:07.537628706Z
+701c96a7-937e-47dd-9a3d-cdfdb92380fc
+exit=0
+
+$ unshare --mount --propagation private sh -c 'mount --bind /usr/lib /usr/lib && grep " /usr/lib " /proc/self/mountinfo && cd /home/user/agent-governance-suite && /root/r5a/node/bin/node /root/r5a/r5b-run/verify.mjs /root/r5a-out/manifest.txt'
+76 50 254:0 /usr/lib /usr/lib rw,relatime - ext4 /dev/vda rw,resv_strict,resuid=65534,resgid=65534
+file:///home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs:39
+const fail = (reason) => { throw new Error(reason); };
+                                 ^
+
+Error: bind mount on a protected path ancestor: /usr/lib (root /usr/lib)
+    at fail (file:///home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs:39:34)
+    at inspectMountBoundary (file:///home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs:107:31)
+    at Module.verifyProtectedRuntime (file:///home/user/agent-governance-suite/scripts/qualification/v06-b3-linux-install.mjs:546:20)
+    at file:///root/r5a/r5b-run/verify.mjs:5:15
+
+Node.js v24.21.0
+exit=1
+
+$ sha256sum /proc/self/mountinfo | cut -c1-64   # host 쪽 불변 확인 (설치 전 ca88d4a2…)
+ca88d4a2794be240a5ef609358d3cd3ab46bab7b209205c2f256820867575a15
+exit=0

@@ -1,0 +1,31 @@
+# install: 설치 명령·exit·출력 (같은 boot)
+## 1. CLI 형식 확인 (--parent-manifest 없이, 인수 검사 단계에서 host 접근 전 거절)
+$ date -u +%FT%T.%NZ; boot_id
+2026-09-26T11:33:49.428677271Z
+701c96a7-937e-47dd-9a3d-cdfdb92380fc
+$ AGS_V06_B3B_PROTECTED_INSTALL=1 /root/r5a/node/bin/node scripts/qualification/v06-b3-linux-install.mjs --base-dir /usr/lib --input-dir /root/r5a/r5b-in --gpgv /usr/bin/gpgv --tar /usr/bin/tar --manifest /root/r5a-out/manifest.txt --package-source /root/r5a/src
+expected --base-dir --input-dir --gpgv --tar --manifest --package-source --parent-manifest
+exit=1
+$ ls -ld /usr/lib/agent-governance-suite; test -e /root/r5a-out/manifest.txt && echo PRESENT || echo ABSENT
+ls: cannot access '/usr/lib/agent-governance-suite': No such file or directory
+ABSENT
+해석: CLI는 --parent-manifest를 필수로 요구한다. 첫 설치에는 신뢰 pin(857bad43)이 붙은 parent manifest가 없다. 그래서 installer 모듈의 CLI 블록(631-645행)을 parentManifestFile=undefined로 그대로 호출하는 driver.mjs로 설치했다. r5a r5b-inputs.txt 4절은 --parent-manifest를 생략한 명령을 적었는데, 이 CLI 형식으로는 실행되지 않는다(아래 보고 참조).
+
+## 2. 설치 (driver.mjs sha256 38905e191b0fd50574a18e1081cc569fc4a3d35364f07dc948a9747dcfcebff8)
+$ date -u +%FT%T.%NZ; boot_id; ls -ld target; manifest 부재
+2026-09-26T11:33:49.483237966Z
+701c96a7-937e-47dd-9a3d-cdfdb92380fc
+ls: cannot access '/usr/lib/agent-governance-suite': No such file or directory
+ABSENT
+$ cd /home/user/agent-governance-suite && AGS_V06_B3B_PROTECTED_INSTALL=1 strace -f -y -s 256 -e trace=openat,mkdir,chmod,fchmod,unlink,unlinkat,rmdir,rename,renameat2,write -o /root/r5a/r5b-run/strace.txt /root/r5a/node/bin/node /root/r5a/r5b-run/driver.mjs /usr/lib /root/r5a/r5b-in /usr/bin/gpgv /usr/bin/tar /root/r5a-out/manifest.txt /root/r5a/src
+exit=0
+--- stdout
+{"status":"CANDIDATE_HOST_INSTALLED","releaseSha256":"32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd","releaseIdInputs":{"contractId":"ags-protected-node-closure/v2","targetId":"linux-x64","nodeVersion":"24.21.0","archiveSha256Hex":"fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6","hostIntegrationSha256Hex":"648dddda453db17832a776a6d381a747d7af851c2594762bd2f2a494628ce70c"},"installRoot":"/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd","nodePath":"/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/bin/node","packageRoot":"/usr/lib/agent-governance-suite/protected-runtime/32a825d9da1c613e097e6246cf282b89777cc13d043fda3dd68113c1fc208edd/package","nodeIdentity":{"dev":"65024","ino":"524293","size":"126595440","mode":"555","uid":0,"gid":0,"nlink":1,"mtimeNs":"1790422435204497960","ctimeNs":"1790422435204497960"},"archiveNodeSha256":"7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c","installedSha256":"7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c","packageFileCount":179,"fdSha256":"7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c","version":"v24.21.0","createdCount":248,"boundary":{"dev":"65024","mounts":[{"id":"28","parent":"1","majorMinor":"254:0","root":"/","mountPoint":"/"}]},"signer":"5BE8A3F6C8A5C01D106C0AD820B1A390B168D356"}
+--- stderr
+---
+$ date -u +%FT%T.%NZ; boot_id
+2026-09-26T11:33:57.829094976Z
+701c96a7-937e-47dd-9a3d-cdfdb92380fc
+1b432df355b1e54713ecbe76b64334c25ea918143aea2a9d8d17644b7a94e937  /root/r5a/r5b-run/install.stdout
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /root/r5a/r5b-run/install.stderr
+07597bba5d2930bfc1045c44286c27b2ec29bf8f59f0825237f5dffc52b67428  /root/r5a/r5b-run/strace.txt
