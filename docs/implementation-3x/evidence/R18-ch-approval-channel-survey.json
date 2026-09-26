@@ -1,0 +1,204 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "R18-ch",
+  "specRevision": "r50",
+  "specSha256": "05cb6ab02ee4315c1b51f7277aaf879cee206d3c1de315f87ed0c21cc08b5fca",
+  "kind": "user approval channel survey",
+  "startState": {
+    "branch": "claude/v3x-r18-ch-approval-channel-contract",
+    "commit": "4017ca9545418c45044a40e6cf67d4a74074ccd4",
+    "integrationRemoteHeadAtStart": "eb5f2e5dc3c71372ae2ec97f5775e79c6c411f87",
+    "dependency": { "R17": "13f9f21c56531d7a4bd559d80830e73310d40b3c (ancestor of start commit)" },
+    "observedAt": "2026-09-26T13:23Z"
+  },
+  "threatModel": "Every local process of the same OS user (worker, caller, hook, model, peer) can read the user's files and keys and run as the user. An approval source qualifies only if none of them can create, alter or replay it.",
+  "r18aInput": {
+    "commit": "74811c89b7a792b53f3f17cc52fefacc2c3de0a6",
+    "use": "survey input only; every host observation below was re-taken for this task and the R18-a verdict is not reused"
+  },
+  "probes": [
+    {
+      "id": "probe-strings",
+      "location": "outside repository (session scratch)/r18ch/probe-strings.sh",
+      "sha256": "eef7fd2ce59fdcf46270aa80d14436ffd8d599932edcf225bf3e49c431c1d1e8",
+      "effect": "read-only: runs --version and counts fixed strings in the installed host binaries",
+      "outputSha256": "3b34d1616231efb9cf4e7332f6e2066588f184f13ef95a7f14c42e94241266b9",
+      "rawOutput": [
+        "claude_version=2.1.283 (Claude Code)",
+        "claude_sha256=9dbe16dafed59da5cdabbfe11ad0335738c753fad794989b47f9446accd6de3a",
+        "claude[elicitation/create]=14",
+        "claude[programmatically accept or decline an MCP elicitation]=2",
+        "claude[override the action or content before the response is sent]=2",
+        "codex_version=codex-cli 0.155.1",
+        "codex_sha256=eba0f32c976667cb9298efafd98513e823eeda7b576a03ec658bb8be8d336316",
+        "codex[elicitation/create]=8",
+        "codex[McpServerElicitationRequest]=13",
+        "codex[mcpServer/elicitation/request]=4",
+        "codex[failed to submit ResolveElicitation]=2",
+        "codex[guardian MCP elicitation review only supports empty form schemas]=1",
+        "codex[elicitation request router unavailable]=2",
+        "codex[mcp_elicitations]=36",
+        "codex[codex_strict_auto_review]=2",
+        "codex[openai/elicitationuserVerification]=2"
+      ],
+      "rawExcerptPrintable": [
+        "guardian MCP elicitation tool_params must be an object / guardian MCP elicitation metadata must include a non-empty tool_name / guardian MCP elicitation review only supports empty form schemas / guardian MCP elicitation metadata must declare mcp_tool_call approval kind / guardian MCP elicitation review only supports form elicitations",
+        "openai/elicitationuserVerification (adjacent: codex_app_server_daemon, validated clientInfo.name)"
+      ]
+    },
+    {
+      "id": "probe-hello",
+      "location": "outside repository (session scratch)/r18ch/probe-hello.ps1",
+      "sha256": "92058a5dacb9c163622dd433d51ee4bb1b373c9cfd4adbdc4c250b2152bee36e",
+      "effect": "read-only: UserConsentVerifier.CheckAvailabilityAsync and KeyCredentialManager.IsSupportedAsync; creates no key, credential or account and shows no prompt",
+      "outputSha256": "b7651f0e0e31360fa74d4283808873d610b308a4e35422bac7b8429190bbf697",
+      "rawOutput": [
+        "os=Microsoft Windows NT 10.0.26200.0",
+        "UserConsentVerifier.CheckAvailabilityAsync=Available",
+        "KeyCredentialManager.IsSupportedAsync=True"
+      ]
+    },
+    {
+      "id": "probe-strings-uv",
+      "location": "outside repository (session scratch)/r18ch/probe-strings-uv.sh",
+      "sha256": "7a4b38c7f33acbe04df4cf77565714b636f8d31b91ab642356f254b0e428e443",
+      "effect": "read-only: counts fixed Codex user verification strings; calls no app-server method and enrolls nothing (audit F4)",
+      "outputSha256": "05145e48d6c42bab3fdf167fcc2890d3147397b457828994693c6b0e11b86ee0",
+      "rawOutput": [
+        "codex_sha256=eba0f32c976667cb9298efafd98513e823eeda7b576a03ec658bb8be8d336316",
+        "codex[openai/userVerification]=8",
+        "codex[openai/elicitationuserVerification]=2",
+        "codex[userVerification/status]=3",
+        "codex[userVerification/enroll]=3",
+        "codex[userVerification/delete]=3",
+        "codex[userVerification/verify]=3",
+        "codex[userVerification/cancel]=3",
+        "      1 server/diagnosticsuserVerification/statususerVerification/enrolluserVerification/deleteuserVerification/verifyuserVerification/cancelthread/increment",
+        "      2 server/diagnosticsuserVerification/statususerVerification/enrolluserVerification/deleteuserVerification/verifyuserVerification/cancelthread/startthread"
+      ]
+    }
+  ],
+  "properties": {
+    "P1-serverVerifiableProof": "The AGS server verifies a cryptographic proof itself; it does not trust a result reported by the caller.",
+    "P2-keyOutsideSameUserReach": "The signing key cannot be read or used by a same-user process without a fresh human action for that approval.",
+    "P3-trustedDisplay": "The human sees the bound runId/taskId/stage/revision/digest on a surface that same-user processes cannot draw or alter.",
+    "P4-bindingComplete": "The signed statement binds runId, taskId, stageId, assignmentId, approvalRevision, approvalDigest and a server challenge.",
+    "P5-singleUse": "A server-issued challenge is consumed once in the same transaction that records the approval; reuse, replay and expiry are rejected.",
+    "P6-revocation": "Key revocation and approval revocation are recorded by the server and checked before any record or effect.",
+    "P7-verifierAndTrustAnchorProtected": "The verifier code and the enrolled approver key registry cannot be changed by same-user processes."
+  },
+  "candidates": [
+    {
+      "candidate": "out-of-band-signed-approver-app",
+      "presence": "ABSENT",
+      "determination": "ABSENT",
+      "evidence": [
+        "No approver app, enrolled approver key registry or approval adapter exists in AGS at the start commit: mcp-server/src/index.ts:68 states neither bundled host exposes a cryptographically distinct direct-human approval event.",
+        "The AGS server principal is profileId=ags-local-server, protectedPrincipal=false (docs/implementation-3x/approved-role-source.ko.md:52), so P7 is unmet even if an app were built."
+      ],
+      "propertiesIfBuilt": { "satisfiable": ["P1", "P2", "P3", "P4", "P5", "P6"], "unmet": ["P7"] }
+    },
+    {
+      "candidate": "os-user-verification",
+      "presence": "PRESENT",
+      "determination": "FAILS_PROPERTIES",
+      "evidence": [
+        "probe-hello: UserConsentVerifier Available; KeyCredentialManager supported.",
+        "CredUIPromptForWindowsCredentials returns the entered credential to the calling process, and UAC secure desktop consent is an elevation decision delivered to the elevated process; neither yields a proof the AGS server can verify (P1 fails). Documentation analysis only; no probe was run.",
+        "UserConsentVerifier.RequestVerificationAsync returns only a UserConsentVerificationResult enum to the calling process. There is no proof the AGS server can verify, and a same-user process can report any value (P1 fails).",
+        "KeyCredentialManager keys are non-exportable and RequestSignAsync signs caller-chosen bytes after a Windows Hello gesture. The prompt does not show the approval statement, so a same-user process can obtain a signature over its own statement when the user expects a prompt (P3 fails). Which same-user processes can open a named key for an unpackaged desktop caller was not established (P2 UNKNOWN).",
+        "P7 is unmet for the same reason as above."
+      ],
+      "failedProperties": ["P1 (UserConsentVerifier)", "P3", "P7"],
+      "unknownProperties": ["P2 (KeyCredentialManager key scoping for unpackaged callers)"],
+      "notRun": "Key creation and signing were not run: the task forbids key, credential and account creation."
+    },
+    {
+      "candidate": "local-user-signing-key",
+      "presence": "UNKNOWN",
+      "presenceReason": "Key stores and hardware tokens were not enumerated; no raw presence evidence was collected because presence would not change the determination.",
+      "determination": "FAILS_PROPERTIES",
+      "evidence": [
+        "A file-backed key (ssh, gpg, PEM) is readable and usable by any same-user process under the threat model (P2 fails). Key stores were not enumerated because presence would not change the result.",
+        "A hardware token with a touch policy prevents silent use but shows no approval statement (P3 fails)."
+      ],
+      "failedProperties": ["P2 (file key)", "P3", "P7"]
+    },
+    {
+      "candidate": "claude-code-elicitation",
+      "presence": "PRESENT",
+      "determination": "FAILS_PROPERTIES",
+      "evidence": [
+        "probe-strings: Claude Code 2.1.283 carries elicitation/create and Elicitation/ElicitationResult hook output schemas that 'programmatically accept or decline' a request and 'override the action or content before the response is sent to the MCP server'.",
+        "The response reaching the server carries no attestation, and a configured hook can produce or rewrite it (P1, P2 fail). The AGS server does not call elicitation (mcp-server/src/server.ts:462)."
+      ],
+      "failedProperties": ["P1", "P2", "P7"],
+      "liveObservation": {
+        "status": "NOT_RUN",
+        "reason": "NOT_RUN(비용 승인 대기): a live run needs one model turn. The development lead obtains user cost approval and issues a separate GO.",
+        "isolatedCommand": "cd <scratch>/empty-cwd && claude --bare -p \"call the probe tool once\" --setting-sources local --strict-mcp-config --mcp-config <scratch>/elicit-probe.mcp.json --max-turns 2 --output-format stream-json (scratch MCP server answers tools/call by sending elicitation/create and logging the raw response; no user config, hook, plugin or MCP registration is changed)",
+        "isolation": "--bare skips hooks from settings and installed plugins (including AGS hooks), auto-memory and CLAUDE.md auto-discovery while still honoring --mcp-config; --setting-sources local with an empty scratch cwd loads no user or project settings; --strict-mcp-config ignores other MCP servers. --settings alone is not isolation because it only adds settings. --safe-mode is not used because it also disables MCP servers, which may include the probe server. Per claude --help 2.1.283, --bare reads Anthropic auth only from ANTHROPIC_API_KEY or apiKeyHelper (OAuth and keychain are never read), so the run needs an API key the user approves for this cost.",
+        "responder": "In -p mode no person or terminal UI can answer, and --bare loads no Elicitation hook. Who answers (host auto-cancel or decline, or no response) is UNKNOWN and is what the probe server log must record. Observing a human answer needs an interactive run with the same flags minus -p, and the log must record the raw action and content the server received.",
+        "estimatedCost": "one short non-interactive turn, on the order of a few thousand tokens; not measured",
+        "wouldChangeDetermination": "No. Hook override is shown in the pinned binary schema; a live run would confirm delivery shape only."
+      }
+    },
+    {
+      "candidate": "codex-elicitation",
+      "presence": "PRESENT",
+      "determination": "FAILS_PROPERTIES",
+      "evidence": [
+        "probe-strings: codex-cli 0.155.1 carries elicitation/create, McpServerElicitationRequest, the app-server method mcpServer/elicitation/request, ResolveElicitation, an approval config key mcp_elicitations and a guardian path ('guardian MCP elicitation review ... codex_strict_auto_review').",
+        "The answer can come from any app-server client and carries no proof the AGS server can verify (P1, P2 fail). The guardian strings limit automated review to mcp_tool_call-kind form elicitations with an empty schema, so guardian review is a narrow additional path, not the main one. Codex command hooks were already ABSENT as an authenticated channel (docs/implementation-3x/evidence/W06-a-codex-host-origin.json)."
+      ],
+      "failedProperties": ["P1", "P2", "P7"],
+      "residualUnknown": "The string 'openai/elicitationuserVerification' exists next to app-server client validation. The same binary also carries openai/userVerification (8) and app-server methods userVerification/status, enroll, delete, verify and cancel (3 each, between server/diagnostics and thread/start in the method table; probe-strings-uv), which suggests a user verification enroll/verify feature. Its proof format, who holds the key and whether the AGS server could verify anything are UNKNOWN; no documentation or verifiable format was found, and no method was called. P7 stays unmet regardless.",
+      "r18aAuditI3": "Resolved from UNKNOWN to PRESENT/FAILS_PROPERTIES, with the residual unknown above recorded."
+    }
+  ],
+  "excludedAsSource": [
+    "PID, process name or ancestry, turn hash",
+    "ordinary hook input including UserPromptSubmit, PermissionRequest and Elicitation hooks",
+    "ACK and Stop signals",
+    "peer messages",
+    "user responses relayed or summarized by a model",
+    "caller JSON",
+    "needs-approval stage state",
+    "userApprovalRefs strings",
+    "workspace files"
+  ],
+  "contractFreeze": {
+    "task": "R18-ch",
+    "verdict": "BLOCKED_CONTRACT",
+    "reason": "No surveyed candidate satisfies every property; P7 is unmet for all of them while the AGS server runs as an unprotected same-user principal. Product choice is escalated to the user and the portfolio lead.",
+    "candidates": [
+      { "candidate": "out-of-band-signed-approver-app", "determination": "ABSENT" },
+      { "candidate": "os-user-verification", "determination": "FAILS_PROPERTIES" },
+      { "candidate": "local-user-signing-key", "determination": "FAILS_PROPERTIES" },
+      { "candidate": "claude-code-elicitation", "determination": "FAILS_PROPERTIES" },
+      { "candidate": "codex-elicitation", "determination": "FAILS_PROPERTIES" }
+    ],
+    "enforcedBy": {
+      "forgedSignature": { "task": "R18-a", "point": "intake verifies proof.signature over the JCS statement with the enrolled key" },
+      "crossRunReuse": { "task": "R18-a", "point": "intake compares every binding field and the challenge nonce, issuedAt and expiresAt with the server's own pending approval request" },
+      "replay": { "task": "R18-a", "point": "intake consumes the challenge nonce in the same transaction that writes the record" },
+      "useAfterRevocation": { "task": "R18-a, R18-b", "point": "R18-a intake and the R18-b current read check approval and key revocation" },
+      "expiredChallenge": { "task": "R18-a", "point": "intake rejects challenges past expiresAt by server clock" },
+      "unenrolledOrRevokedKey": { "task": "R18-a", "point": "intake resolves keyId only from the server-held approver registry, requires proof.keyId == statement.approver.keyId and requires enrollmentRevision to equal the registry revision" },
+      "hookModelPeerEvent": { "task": "R18-a", "point": "intake accepts only a proof envelope; no hook, tool argument or peer message path creates a record" },
+      "denyRecordedAsApproval": { "task": "R18-a", "point": "intake writes the R17 approval record only for decision=approve; decision=deny consumes the challenge and closes the pending request as denied without a record" },
+      "trustAnchorTamper": { "task": "UNASSIGNED", "point": "needs a protected verifier principal; not satisfiable inside R18-a" }
+    },
+    "schemaFixtureRejectionEvidenceFor": [],
+    "runtimeQualification": "NOT_CLAIMED"
+  },
+  "verification": {
+    "hostBinaryStringInspection": "PASS",
+    "codexUserVerificationStringInspection": "PASS (strings only; no method called)",
+    "windowsHelloAvailabilityProbe": "PASS",
+    "claudeCodeLiveElicitation": "NOT_RUN(비용 승인 대기)",
+    "windowsHelloSigning": "NOT_RUN (key creation forbidden)",
+    "productCodeChanges": "NONE",
+    "hostSettingChanges": "NONE"
+  }
+}
