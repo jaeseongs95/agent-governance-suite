@@ -24,7 +24,17 @@ const HELPER_DIRECTORY = fileURLToPath(new URL('.', import.meta.url));
 const SOURCE = 'resource-storage-linux.c';
 const ARTIFACT = 'resource-storage-linux';
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
-const unknown = (code) => ({ status: 'UNKNOWN', qualification: 'FIXTURE_ONLY', code });
+// Observations this module returned in this process. Membership cannot be forged
+// by callers: copies, JSON, structuredClone and Proxy objects are not members.
+const issuedObservations = new WeakSet();
+const deepFreeze = (value) => {
+  if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
+    for (const key of Reflect.ownKeys(value)) deepFreeze(value[key]);
+    Object.freeze(value);
+  }
+  return value;
+};
+const unknown = (code) => deepFreeze({ status: 'UNKNOWN', qualification: 'FIXTURE_ONLY', code });
 
 function measuredHelper() {
   let manifest;
@@ -87,16 +97,20 @@ export function observeLinuxStorageIdentity(path, options = {}) {
   }
   const exitOk = (EXIT_BY_STATUS[body.status] ?? 2) === child.status;
   if (OBSERVATION_STATUSES.has(body.status)) {
-    return exitOk && validObservation(body) ? body : unknown('HELPER_OUTPUT_INVALID');
+    if (!exitOk || !validObservation(body)) return unknown('HELPER_OUTPUT_INVALID');
+    issuedObservations.add(deepFreeze(body));
+    return body;
   }
-  if (FAILURE_STATUSES.has(body.status) && exitOk && typeof body.code === 'string') return body;
+  if (FAILURE_STATUSES.has(body.status) && exitOk && typeof body.code === 'string') return deepFreeze(body);
   return unknown('HELPER_OUTPUT_INVALID');
 }
 
-// Both arguments must be OBSERVED helper observations (link count 1); aliases,
-// BLOCKED_* results, strings or caller JSON never match.
+// Both arguments must be frozen OBSERVED observations (link count 1) issued by
+// observeLinuxStorageIdentity in this process; aliases, BLOCKED_* results,
+// strings, copies and caller JSON never match.
 export function sameStorageIdentity(left, right) {
-  return [left, right].every((body) => body?.schema === SCHEMA && body.status === 'OBSERVED' &&
+  return [left, right].every((body) => body !== null && typeof body === 'object' &&
+    issuedObservations.has(body) && Object.isFrozen(body) && body.status === 'OBSERVED' &&
     body.linkCount === 1 && validObservation(body)) && left.identity === right.identity;
 }
 

@@ -172,6 +172,40 @@ test.skipIf(!linux)('only two OBSERVED observations can share an identity', asyn
   expect(sameStorageIdentity(alone, observe(first))).toBe(true);
 });
 
+test.skipIf(!linux)('only observations returned by this module can be compared', async () => {
+  const { observeLinuxStorageIdentity: observe, sameStorageIdentity } = await load();
+  const root = await temporary();
+  if ((await statfs(root)).type !== 0xef53) return;
+  const target = join(root, 'target.sqlite3');
+  await writeFile(target, 'x');
+  const real = observe(target);
+  expect(real.status).toBe('OBSERVED');
+
+  // Caller JSON carrying the exact real values is not an observation.
+  const callerA = JSON.parse(JSON.stringify(real));
+  const callerB = JSON.parse(JSON.stringify(real));
+  expect(sameStorageIdentity(callerA, callerB)).toBe(false);
+  expect(sameStorageIdentity(real, callerA)).toBe(false);
+  expect(sameStorageIdentity(callerA, real)).toBe(false);
+  expect(sameStorageIdentity(real, structuredClone(real))).toBe(false);
+  expect(sameStorageIdentity(real, { ...real })).toBe(false);
+  expect(sameStorageIdentity(real, new Proxy(real, {}))).toBe(false);
+
+  // Returned observations are deeply frozen; mutation cannot rewrite an identity.
+  const other = join(root, 'other.sqlite3');
+  await writeFile(other, 'y');
+  const second = observe(other);
+  expect(Object.isFrozen(second) && Object.isFrozen(second.fileSystem) && Object.isFrozen(second.diagnostic)).toBe(true);
+  expect(() => { second.identity = real.identity; }).toThrow(TypeError);
+  expect(() => { second.fileSystem.name = 'forged'; }).toThrow(TypeError);
+  expect(() => { second.status = 'OBSERVED'; second.inode = real.inode; }).toThrow(TypeError);
+  expect(Reflect.set(second, 'identity', real.identity)).toBe(false);
+  expect(second.identity).not.toBe(real.identity);
+  expect(sameStorageIdentity(real, second)).toBe(false);
+  expect(Object.isFrozen(observe(join(root, 'missing.sqlite3')))).toBe(true);
+  expect(sameStorageIdentity(real, observe(target))).toBe(true);
+});
+
 test.skipIf(!linux)('helper source and artifact are bound to the manifest', async () => {
   const manifest = JSON.parse(await readFile(join(helperDirectory, 'manifest.json'), 'utf8'));
   const root = await temporary();
