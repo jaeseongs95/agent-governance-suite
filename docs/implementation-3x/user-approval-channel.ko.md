@@ -34,7 +34,7 @@
 
 스키마가 받는 출처 종류는 `out-of-band-signed-approver` 하나다. 별도 기기의 승인 앱이 결속 내용을 자기 화면에 보여 주고, 사람이 승인하면 그 기기 안의 키로 서명한다.
 
-- 서명 대상(`statement`): `kind=ags-user-approval-statement`, `originKind`, `decision`(approve|deny), `binding`(runId, taskId, stageId, assignmentId, approvalRevision≥1, approvalDigest `sha256:<64 hex>`), `challenge`(issuedBy=`ags-server`, 43자 base64url nonce, issuedAt, expiresAt), `approver`(keyId, enrollmentRevision), `displayedFields`(결속 필드와 decision 전부).
+- 서명 대상(`statement`): `kind=ags-user-approval-statement`, `originKind`, `decision`(approve|deny), `binding`(runId, taskId, stageId, assignmentId, approvalRevision≥0, approvalDigest `sha256:<64 hex>`), `challenge`(issuedBy=`ags-server`, 43자 base64url nonce, issuedAt, expiresAt), `approver`(keyId, enrollmentRevision), `displayedFields`(결속 필드와 decision 전부).
 - 증명(`proof`): `format=ed25519-jcs-v1`, `keyId`, `signature`(86자 base64url). 서명 입력은 `statement`의 RFC 8785 JCS 직렬화 bytes다.
 - 알 수 없는 필드는 받지 않는다(`additionalProperties: false`). `approved`, `userApprovalRefs`, hook 판정 같은 필드는 스키마에서 거부된다.
 
@@ -42,9 +42,9 @@
 
 1. 서버가 승인 요청을 만들 때 binding과 challenge를 자기 저장소에 먼저 기록한다. 증명은 이 기록과 대조할 때만 의미가 있다.
 2. 스키마 검증. 실패하면 거부한다.
-3. `proof.keyId`를 서버가 보관한 승인자 등록부에서만 찾는다. 없거나 철회된 키면 거부한다.
+3. `proof.keyId`를 서버가 보관한 승인자 등록부에서만 찾는다. 없거나 철회된 키면 거부한다. `proof.keyId`와 `statement.approver.keyId`가 같고, `statement.approver.enrollmentRevision`이 등록부의 현재 revision과 같아야 한다. 다르면 승인자를 잘못 귀속할 수 있으므로 거부한다.
 4. JCS bytes에 대해 Ed25519 서명을 검증한다.
-5. binding의 모든 필드가 1의 대기 요청과 같아야 한다.
+5. binding의 모든 필드와 challenge(nonce, issuedAt, expiresAt)가 1의 대기 요청에 저장된 값과 같아야 한다.
 6. challenge가 만료되지 않았고 아직 소비되지 않았어야 한다. 소비와 승인 기록 쓰기는 같은 transaction이다.
 7. 승인 철회 여부를 확인한 뒤 R17 `ags-workflow-approval-record`를 쓴다.
 
@@ -60,11 +60,11 @@
 | 조건 | 강제 Task | 강제 지점 |
 |---|---|---|
 | `forgedSignature` | R18-a | 등록된 키로 JCS statement 서명 검증 |
-| `crossRunReuse` | R18-a | binding 전 필드를 서버의 대기 요청과 대조 |
+| `crossRunReuse` | R18-a | binding 전 필드와 challenge 필드를 서버의 대기 요청과 대조 |
 | `replay` | R18-a | challenge nonce를 기록 쓰기와 같은 transaction에서 소비 |
 | `useAfterRevocation` | R18-a, R18-b | intake와 current read에서 승인·키 철회 확인 |
 | `expiredChallenge` | R18-a | 서버 시계로 expiresAt 확인 |
-| `unenrolledOrRevokedKey` | R18-a | keyId를 서버 등록부에서만 해석 |
+| `unenrolledOrRevokedKey` | R18-a | keyId를 서버 등록부에서만 해석하고, proof·statement keyId 일치와 enrollmentRevision 일치를 확인 |
 | `hookModelPeerEvent` | R18-a | 증명 envelope만 받고, hook·도구 인자·peer 메시지 경로로는 기록을 만들지 않음 |
 | `trustAnchorTamper` | 미배정 | 보호된 검증 principal이 필요. R18-a 안에서는 채울 수 없음 |
 
@@ -73,10 +73,10 @@
 | 후보 | 존재 | 판정 | 핵심 근거 |
 |---|---|---|---|
 | 별도 서명 승인 앱 | 부재 | ABSENT | AGS에 승인 앱·등록부·adapter가 없다(`mcp-server/src/index.ts:68`). 만들어도 P7이 남는다. |
-| OS 수준 확인(Windows Hello, credential UI) | 존재 | FAILS_PROPERTIES | UserConsentVerifier는 호출 프로세스에 enum만 돌려준다(P1 실패). KeyCredentialManager 서명은 prompt에 승인 내용을 보여 주지 않는다(P3 실패). 키 범위는 UNKNOWN(P2). |
-| 로컬 사용자 서명 키 | 조사 불필요 | FAILS_PROPERTIES | 파일 키는 같은 사용자가 읽는다(P2 실패). touch 토큰은 내용을 보여 주지 않는다(P3 실패). |
+| OS 수준 확인(Windows Hello, credential UI) | 존재 | FAILS_PROPERTIES | UserConsentVerifier는 호출 프로세스에 enum만 돌려준다(P1 실패). KeyCredentialManager 서명은 prompt에 승인 내용을 보여 주지 않는다(P3 실패). 키 범위는 UNKNOWN(P2). CredUI 자격 prompt는 입력한 자격을 호출 프로세스에 돌려주고, UAC secure desktop 동의는 권한 상승 결정일 뿐 AGS가 검증할 증명을 만들지 않는다(문서 분석, probe 없음). |
+| 로컬 사용자 서명 키 | UNKNOWN(열거하지 않음) | FAILS_PROPERTIES | 파일 키는 같은 사용자가 읽는다(P2 실패). touch 토큰은 내용을 보여 주지 않는다(P3 실패). |
 | Claude Code elicitation | 존재(2.1.283) | FAILS_PROPERTIES | Elicitation/ElicitationResult hook이 응답을 만들거나 바꾼다. 응답에 증명이 없다. live 관측은 NOT_RUN(비용 승인 대기). |
-| Codex elicitation | 존재(0.155.1) | FAILS_PROPERTIES | app-server client와 guardian 자동 검토(모델)가 응답할 수 있고 증명이 없다. `openai/elicitationuserVerification`의 의미는 UNKNOWN. |
+| Codex elicitation | 존재(0.155.1) | FAILS_PROPERTIES | app-server client가 응답할 수 있고 증명이 없다. guardian 자동 검토는 문자열상 mcp_tool_call 종류의 빈 폼 elicitation에만 해당한다. `openai/elicitationuserVerification`의 의미는 UNKNOWN. |
 
 원시 근거와 probe sha256은 survey evidence에 있다. R18-a evidence(`74811c89`)는 조사 입력으로만 읽었고, host 관측은 이번에 다시 했다.
 

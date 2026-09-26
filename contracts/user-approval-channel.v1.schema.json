@@ -23,7 +23,7 @@
   },
   "$defs": {
     "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-    "id": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$", "description": "Same as approved-role-source.v1 $defs/id." },
     "timestamp": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$" },
     "approvalStatement": {
       "type": "object",
@@ -46,7 +46,7 @@
             "taskId": { "$ref": "#/$defs/id" },
             "stageId": { "$ref": "#/$defs/id" },
             "assignmentId": { "$ref": "#/$defs/id" },
-            "approvalRevision": { "type": "integer", "minimum": 1 },
+            "approvalRevision": { "type": "integer", "minimum": 0, "description": "Same range as approved-role-source.v1 $defs/revision." },
             "approvalDigest": { "$ref": "#/$defs/digest" }
           }
         },

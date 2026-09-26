@@ -85,6 +85,7 @@
       "determination": "FAILS_PROPERTIES",
       "evidence": [
         "probe-hello: UserConsentVerifier Available; KeyCredentialManager supported.",
+        "CredUIPromptForWindowsCredentials returns the entered credential to the calling process, and UAC secure desktop consent is an elevation decision delivered to the elevated process; neither yields a proof the AGS server can verify (P1 fails). Documentation analysis only; no probe was run.",
         "UserConsentVerifier.RequestVerificationAsync returns only a UserConsentVerificationResult enum to the calling process. There is no proof the AGS server can verify, and a same-user process can report any value (P1 fails).",
         "KeyCredentialManager keys are non-exportable and RequestSignAsync signs caller-chosen bytes after a Windows Hello gesture. The prompt does not show the approval statement, so a same-user process can obtain a signature over its own statement when the user expects a prompt (P3 fails). Which same-user processes can open a named key for an unpackaged desktop caller was not established (P2 UNKNOWN).",
         "P7 is unmet for the same reason as above."
@@ -95,7 +96,8 @@
     },
     {
       "candidate": "local-user-signing-key",
-      "presence": "NOT_EXAMINED_ON_DISK",
+      "presence": "UNKNOWN",
+      "presenceReason": "Key stores and hardware tokens were not enumerated; no raw presence evidence was collected because presence would not change the determination.",
       "determination": "FAILS_PROPERTIES",
       "evidence": [
         "A file-backed key (ssh, gpg, PEM) is readable and usable by any same-user process under the threat model (P2 fails). Key stores were not enumerated because presence would not change the result.",
@@ -126,7 +128,7 @@
       "determination": "FAILS_PROPERTIES",
       "evidence": [
         "probe-strings: codex-cli 0.155.1 carries elicitation/create, McpServerElicitationRequest, the app-server method mcpServer/elicitation/request, ResolveElicitation, an approval config key mcp_elicitations and a guardian path ('guardian MCP elicitation review ... codex_strict_auto_review').",
-        "The answer can come from any app-server client or from automated guardian review by a model, and carries no proof the AGS server can verify (P1, P2 fail). Codex command hooks were already ABSENT as an authenticated channel (docs/implementation-3x/evidence/W06-a-codex-host-origin.json)."
+        "The answer can come from any app-server client and carries no proof the AGS server can verify (P1, P2 fail). The guardian strings limit automated review to mcp_tool_call-kind form elicitations with an empty schema, so guardian review is a narrow additional path, not the main one. Codex command hooks were already ABSENT as an authenticated channel (docs/implementation-3x/evidence/W06-a-codex-host-origin.json)."
       ],
       "failedProperties": ["P1", "P2", "P7"],
       "residualUnknown": "The string 'openai/elicitationuserVerification' exists next to app-server client validation. Its meaning and whether it carries anything server-verifiable are UNKNOWN; no documentation or verifiable format was found in this task.",
@@ -157,11 +159,11 @@
     ],
     "enforcedBy": {
       "forgedSignature": { "task": "R18-a", "point": "intake verifies proof.signature over the JCS statement with the enrolled key" },
-      "crossRunReuse": { "task": "R18-a", "point": "intake compares every binding field with the server's own pending approval request" },
+      "crossRunReuse": { "task": "R18-a", "point": "intake compares every binding field and the challenge nonce, issuedAt and expiresAt with the server's own pending approval request" },
       "replay": { "task": "R18-a", "point": "intake consumes the challenge nonce in the same transaction that writes the record" },
       "useAfterRevocation": { "task": "R18-a", "point": "intake and the R18-b current read check approval and key revocation" },
       "expiredChallenge": { "task": "R18-a", "point": "intake rejects challenges past expiresAt by server clock" },
-      "unenrolledOrRevokedKey": { "task": "R18-a", "point": "intake resolves keyId only from the server-held approver registry" },
+      "unenrolledOrRevokedKey": { "task": "R18-a", "point": "intake resolves keyId only from the server-held approver registry, requires proof.keyId == statement.approver.keyId and requires enrollmentRevision to equal the registry revision" },
       "hookModelPeerEvent": { "task": "R18-a", "point": "intake accepts only a proof envelope; no hook, tool argument or peer message path creates a record" },
       "trustAnchorTamper": { "task": "UNASSIGNED", "point": "needs a protected verifier principal; not satisfiable inside R18-a" }
     },
