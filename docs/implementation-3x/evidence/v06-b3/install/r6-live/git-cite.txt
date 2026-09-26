@@ -1,0 +1,80 @@
+# r6 git 인용 (읽기만). 원시 파일은 7e3e6fd8의 blob으로 인용한다.
+$ date -u +%FT%T.%NZ; cat /proc/sys/kernel/random/boot_id
+2026-09-26T22:38:20.366165109Z
+3532114c-8a82-42f0-a1cc-c30217ed6d5b
+exit=0
+
+$ git rev-parse 7e3e6fd8 7e3e6fd8^{tree}; git log --oneline -1 7e3e6fd8
+7e3e6fd8735fab3684743400dd4d548eb9552e0f
+d5b7fb9913503db1eabccaa3b1e7ffcdfd8ea41f
+7e3e6fd merge: V06-b3b-r5 lineage combine evidence (049f7b93)
+exit=0
+
+$ for c in 8bb6e689 4866e455 7e3e6fd8; do echo "$c install=$(git rev-parse $c:scripts/qualification/v06-b3-linux-install.mjs) release=$(git rev-parse $c:scripts/qualification/v06-b3-linux-release.mjs) stage=$(git rev-parse $c:scripts/qualification/v06-b2a-windows-stage.mjs)"; done
+8bb6e689 install=c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1 release=5fc2427ee20a8531b87084441ff22e276c871d99 stage=755c6f0b28ca496625953fdca54e0fd2b7597eee
+4866e455 install=c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1 release=5fc2427ee20a8531b87084441ff22e276c871d99 stage=755c6f0b28ca496625953fdca54e0fd2b7597eee
+7e3e6fd8 install=c7b3414e1e93e2c37af4097afd6bf1bb3d5253c1 release=5fc2427ee20a8531b87084441ff22e276c871d99 stage=755c6f0b28ca496625953fdca54e0fd2b7597eee
+exit=0
+
+$ git -c core.quotePath=false ls-tree -r 7e3e6fd8 docs/implementation-3x/evidence/v06-b3/install/r5a-live docs/implementation-3x/evidence/v06-b3/install/r5b-live docs/implementation-3x/evidence/v06-b3/install/r5-live
+100644 blob 1c346ebbbf9283634d0ca27362da9739489d4623	docs/implementation-3x/evidence/v06-b3/install/r5-live/HANDOFF-draft.ko.md
+100644 blob 0804758316e0cb13d9b407882e998b64648ca7d3	docs/implementation-3x/evidence/v06-b3/install/r5-live/README.ko.md
+100644 blob 2d9eb366a804ed486ac6407bd4dd5326a02fa9ed	docs/implementation-3x/evidence/v06-b3/install/r5-live/SHA256SUMS
+100644 blob 3f58f8029da3461c29182bb193a6083bd587d54b	docs/implementation-3x/evidence/v06-b3/install/r5-live/combine-table.md
+100644 blob 5e68d7abd932883298d30283a45c4675abf3c654	docs/implementation-3x/evidence/v06-b3/install/r5-live/git-scope.txt
+100644 blob 7fea34ac3b30d2161b2c65cfa2d1c664613a3f70	docs/implementation-3x/evidence/v06-b3/install/r5-live/old-vm-compare.md
+100644 blob b3e9c87257b77b3a05370cba02c2d20c7daab859	docs/implementation-3x/evidence/v06-b3/install/r5-live/turn-check.txt
+100644 blob c71dbfbfb4c56609e453b14c5a73418c1ad9837b	docs/implementation-3x/evidence/v06-b3/install/r5a-live/HANDOFF-draft.ko.md
+100644 blob 9f0b72bc9067349a653baf03bf6666c2e2e78c42	docs/implementation-3x/evidence/v06-b3/install/r5a-live/README.ko.md
+100644 blob 9403218e33e55ef5f7563ef5b6dd0a2ffbd50f3c	docs/implementation-3x/evidence/v06-b3/install/r5a-live/SHA256SUMS
+100644 blob e3b2f1852c5972d5f52f411020e09952578dae40	docs/implementation-3x/evidence/v06-b3/install/r5a-live/checks.txt
+100644 blob d7fb411e25b0e3974c351c615d61df9263ee50f9	docs/implementation-3x/evidence/v06-b3/install/r5a-live/handover.txt
+100644 blob 111e489be90edb5c379be61671cbc2bbb39c8f15	docs/implementation-3x/evidence/v06-b3/install/r5a-live/installer-blob.txt
+100644 blob 88433c48548b8eaf190dc06b345e5265826d3495	docs/implementation-3x/evidence/v06-b3/install/r5a-live/k1-node.txt
+100644 blob 58b3fe83bddbfe3e0e1c1dd6b4ed11454bab982d	docs/implementation-3x/evidence/v06-b3/install/r5a-live/keyring-403.txt
+100644 blob 9da1caec5988fed74569583b747075e2a9646a46	docs/implementation-3x/evidence/v06-b3/install/r5a-live/old-vm.txt
+100644 blob 325abbc7c14d201248ebc5590ab349c5a01b2195	docs/implementation-3x/evidence/v06-b3/install/r5a-live/persistence.txt
+100644 blob a756221c5e7a1415a818f45e74bd09cb61b79ebd	docs/implementation-3x/evidence/v06-b3/install/r5a-live/pins.txt
+100644 blob 2302eb855867898f9647aa49c65ddfc270e30100	docs/implementation-3x/evidence/v06-b3/install/r5a-live/preinstall-state.txt
+100644 blob ae0beee0c948bbb7a477669bb0d9cb380ec751b8	docs/implementation-3x/evidence/v06-b3/install/r5a-live/r5b-inputs.txt
+100644 blob dad11971b19c48309b0644dde74e6890cce813cf	docs/implementation-3x/evidence/v06-b3/install/r5a-live/scratch-sha256.txt
+100644 blob 174b24e1bbfb749b03cbfcc20a6a3f71ecf13caf	docs/implementation-3x/evidence/v06-b3/install/r5a-live/session-host.txt
+100644 blob 95624de5708ba76aa849e7e34a506d56a41e49ba	docs/implementation-3x/evidence/v06-b3/install/r5a-live/source.txt
+100644 blob b2527abe0b063b3fc63f7bf9aeac5994ec2dc29c	docs/implementation-3x/evidence/v06-b3/install/r5b-live/HANDOFF-draft.ko.md
+100644 blob e1d22f70ba7a6388b4a13340efc28f4d5cd04eb9	docs/implementation-3x/evidence/v06-b3/install/r5b-live/README.ko.md
+100644 blob 62d58fe9421b11926acec95c6ba192de179e4890	docs/implementation-3x/evidence/v06-b3/install/r5b-live/SHA256SUMS
+100644 blob 8c20ae13f30cc43a5ffece386e1b6269d6d903ce	docs/implementation-3x/evidence/v06-b3/install/r5b-live/b1-supplement/HANDOFF-supplement.ko.md
+100644 blob e8c9ce9afc842277f783bb8e48a3abfc81f9f29c	docs/implementation-3x/evidence/v06-b3/install/r5b-live/b1-supplement/SHA256SUMS
+100644 blob 943a1bcc73147d472952b2505587aa101aecda8f	docs/implementation-3x/evidence/v06-b3/install/r5b-live/b1-supplement/observed-post.txt
+100644 blob 38565bfe010c1bfb61e6a406ed236328cee6cdc5	docs/implementation-3x/evidence/v06-b3/install/r5b-live/b1-supplement/raw/RAW-NOTE.ko.md
+100644 blob 51efc0fcefcb1118a63d6660b528e7fffaf707ab	docs/implementation-3x/evidence/v06-b3/install/r5b-live/b1-supplement/raw/SHA256SUMS
+100644 blob fcbf857f017884555f929ae270ca6310f8676f2d	docs/implementation-3x/evidence/v06-b3/install/r5b-live/b1-supplement/raw/secret-scan.txt
+100644 blob 36bb4005e3e7704dac6a192dc0abc76508674851	docs/implementation-3x/evidence/v06-b3/install/r5b-live/b1-supplement/raw/strace.txt.gz
+100644 blob 7f530547c3f52203e575990abe86884327aa9ef6	docs/implementation-3x/evidence/v06-b3/install/r5b-live/b1-supplement/strace-excerpt.txt
+100644 blob cff1606eda9738fc9295498219d015e32f166b36	docs/implementation-3x/evidence/v06-b3/install/r5b-live/dpkg-verify.txt
+100644 blob 939d9c8f1da0fd1f92f956fd3530116e9812d127	docs/implementation-3x/evidence/v06-b3/install/r5b-live/driver.mjs.txt
+100644 blob 9b7b59e7e3a58b6e6374caa559223b4dbbf81a2f	docs/implementation-3x/evidence/v06-b3/install/r5b-live/install.txt
+100644 blob 9f2559f4aa4d5dcd9c1771239423c3c6bfaf74b8	docs/implementation-3x/evidence/v06-b3/install/r5b-live/installed-sha256.txt
+100644 blob d282c74e0c73831511ced59f1d3914c7fd3ee26f	docs/implementation-3x/evidence/v06-b3/install/r5b-live/inventory.tsv
+100644 blob 6a13b3e4de5d175256333da89aa1a0ccb28c8fe8	docs/implementation-3x/evidence/v06-b3/install/r5b-live/manifest-trace.txt
+100644 blob 6323c05785da9dd91819feff71a129eb05a3a603	docs/implementation-3x/evidence/v06-b3/install/r5b-live/manifest.txt
+100644 blob 4cb9fc7cdc106eebe8783df5f98f06b66c6629e1	docs/implementation-3x/evidence/v06-b3/install/r5b-live/post-install.txt
+100644 blob 99827655077c6ea604c4f1b18423151bf5a39d67	docs/implementation-3x/evidence/v06-b3/install/r5b-live/pre-install.txt
+100644 blob bc547eac2622f5eb06d703685e81a83ddf6a74e2	docs/implementation-3x/evidence/v06-b3/install/r5b-live/reject-tests.txt
+100644 blob 993a354c43de1d4383c0f5d7c5f56d070aa9edb3	docs/implementation-3x/evidence/v06-b3/install/r5b-live/verify.mjs.txt
+exit=0
+
+$ git rev-parse 7e3e6fd8:docs/implementation-3x/evidence/v06-b3/install/r5a-live 7e3e6fd8:docs/implementation-3x/evidence/v06-b3/install/r5b-live 7e3e6fd8:docs/implementation-3x/evidence/v06-b3/install/r5-live
+f12bfb2febb920ed8ca48cbb87598761d5e345bb
+1061d5ba90c4484f93edc56a399800f9fbcd42e0
+ffb263636f8fa3122f544c12e7e91df3abf72ea1
+exit=0
+
+$ git merge-base --is-ancestor ca0aae01 7e3e6fd8; echo ca0aae01_ancestor_exit=$?; git ls-tree -r --name-only 7e3e6fd8 | grep -cE "install/(r1|r3)-live/"
+ca0aae01_ancestor_exit=1
+0
+exit=1
+
+$ git merge-base --is-ancestor 049f7b9384951b789ab994124e96af44e617e15a 7e3e6fd8; echo r5_commit_ancestor_exit=$?
+r5_commit_ancestor_exit=0
+exit=0
