@@ -57,6 +57,25 @@
         "UserConsentVerifier.CheckAvailabilityAsync=Available",
         "KeyCredentialManager.IsSupportedAsync=True"
       ]
+    },
+    {
+      "id": "probe-strings-uv",
+      "location": "outside repository (session scratch)/r18ch/probe-strings-uv.sh",
+      "sha256": "7a4b38c7f33acbe04df4cf77565714b636f8d31b91ab642356f254b0e428e443",
+      "effect": "read-only: counts fixed Codex user verification strings; calls no app-server method and enrolls nothing (audit F4)",
+      "outputSha256": "05145e48d6c42bab3fdf167fcc2890d3147397b457828994693c6b0e11b86ee0",
+      "rawOutput": [
+        "codex_sha256=eba0f32c976667cb9298efafd98513e823eeda7b576a03ec658bb8be8d336316",
+        "codex[openai/userVerification]=8",
+        "codex[openai/elicitationuserVerification]=2",
+        "codex[userVerification/status]=3",
+        "codex[userVerification/enroll]=3",
+        "codex[userVerification/delete]=3",
+        "codex[userVerification/verify]=3",
+        "codex[userVerification/cancel]=3",
+        "      1 server/diagnosticsuserVerification/statususerVerification/enrolluserVerification/deleteuserVerification/verifyuserVerification/cancelthread/increment",
+        "      2 server/diagnosticsuserVerification/statususerVerification/enrolluserVerification/deleteuserVerification/verifyuserVerification/cancelthread/startthread"
+      ]
     }
   ],
   "properties": {
@@ -117,7 +136,9 @@
       "liveObservation": {
         "status": "NOT_RUN",
         "reason": "NOT_RUN(비용 승인 대기): a live run needs one model turn. The development lead obtains user cost approval and issues a separate GO.",
-        "isolatedCommand": "claude -p \"call the probe tool once\" --strict-mcp-config --mcp-config <scratch>/elicit-probe.mcp.json --settings <scratch>/empty-settings.json --max-turns 2 (scratch MCP server answers tools/call by sending elicitation/create and logging the raw response; no user config, hook or MCP registration is changed)",
+        "isolatedCommand": "cd <scratch>/empty-cwd && claude --bare -p \"call the probe tool once\" --setting-sources local --strict-mcp-config --mcp-config <scratch>/elicit-probe.mcp.json --max-turns 2 --output-format stream-json (scratch MCP server answers tools/call by sending elicitation/create and logging the raw response; no user config, hook, plugin or MCP registration is changed)",
+        "isolation": "--bare skips hooks from settings and installed plugins (including AGS hooks), auto-memory and CLAUDE.md auto-discovery while still honoring --mcp-config; --setting-sources local with an empty scratch cwd loads no user or project settings; --strict-mcp-config ignores other MCP servers. --settings alone is not isolation because it only adds settings. --safe-mode is not used because it also disables MCP servers, which may include the probe server. Per claude --help 2.1.283, --bare reads Anthropic auth only from ANTHROPIC_API_KEY or apiKeyHelper (OAuth and keychain are never read), so the run needs an API key the user approves for this cost.",
+        "responder": "In -p mode no person or terminal UI can answer, and --bare loads no Elicitation hook. Who answers (host auto-cancel or decline, or no response) is UNKNOWN and is what the probe server log must record. Observing a human answer needs an interactive run with the same flags minus -p, and the log must record the raw action and content the server received.",
         "estimatedCost": "one short non-interactive turn, on the order of a few thousand tokens; not measured",
         "wouldChangeDetermination": "No. Hook override is shown in the pinned binary schema; a live run would confirm delivery shape only."
       }
@@ -131,7 +152,7 @@
         "The answer can come from any app-server client and carries no proof the AGS server can verify (P1, P2 fail). The guardian strings limit automated review to mcp_tool_call-kind form elicitations with an empty schema, so guardian review is a narrow additional path, not the main one. Codex command hooks were already ABSENT as an authenticated channel (docs/implementation-3x/evidence/W06-a-codex-host-origin.json)."
       ],
       "failedProperties": ["P1", "P2", "P7"],
-      "residualUnknown": "The string 'openai/elicitationuserVerification' exists next to app-server client validation. Its meaning and whether it carries anything server-verifiable are UNKNOWN; no documentation or verifiable format was found in this task.",
+      "residualUnknown": "The string 'openai/elicitationuserVerification' exists next to app-server client validation. The same binary also carries openai/userVerification (8) and app-server methods userVerification/status, enroll, delete, verify and cancel (3 each, between server/diagnostics and thread/start in the method table; probe-strings-uv), which suggests a user verification enroll/verify feature. Its proof format, who holds the key and whether the AGS server could verify anything are UNKNOWN; no documentation or verifiable format was found, and no method was called. P7 stays unmet regardless.",
       "r18aAuditI3": "Resolved from UNKNOWN to PRESENT/FAILS_PROPERTIES, with the residual unknown above recorded."
     }
   ],
@@ -161,10 +182,11 @@
       "forgedSignature": { "task": "R18-a", "point": "intake verifies proof.signature over the JCS statement with the enrolled key" },
       "crossRunReuse": { "task": "R18-a", "point": "intake compares every binding field and the challenge nonce, issuedAt and expiresAt with the server's own pending approval request" },
       "replay": { "task": "R18-a", "point": "intake consumes the challenge nonce in the same transaction that writes the record" },
-      "useAfterRevocation": { "task": "R18-a", "point": "intake and the R18-b current read check approval and key revocation" },
+      "useAfterRevocation": { "task": "R18-a, R18-b", "point": "R18-a intake and the R18-b current read check approval and key revocation" },
       "expiredChallenge": { "task": "R18-a", "point": "intake rejects challenges past expiresAt by server clock" },
       "unenrolledOrRevokedKey": { "task": "R18-a", "point": "intake resolves keyId only from the server-held approver registry, requires proof.keyId == statement.approver.keyId and requires enrollmentRevision to equal the registry revision" },
       "hookModelPeerEvent": { "task": "R18-a", "point": "intake accepts only a proof envelope; no hook, tool argument or peer message path creates a record" },
+      "denyRecordedAsApproval": { "task": "R18-a", "point": "intake writes the R17 approval record only for decision=approve; decision=deny consumes the challenge and closes the pending request as denied without a record" },
       "trustAnchorTamper": { "task": "UNASSIGNED", "point": "needs a protected verifier principal; not satisfiable inside R18-a" }
     },
     "schemaFixtureRejectionEvidenceFor": [],
@@ -172,6 +194,7 @@
   },
   "verification": {
     "hostBinaryStringInspection": "PASS",
+    "codexUserVerificationStringInspection": "PASS (strings only; no method called)",
     "windowsHelloAvailabilityProbe": "PASS",
     "claudeCodeLiveElicitation": "NOT_RUN(비용 승인 대기)",
     "windowsHelloSigning": "NOT_RUN (key creation forbidden)",

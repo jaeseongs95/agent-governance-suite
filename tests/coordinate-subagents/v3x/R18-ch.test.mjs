@@ -58,6 +58,7 @@ test('R18-ch rejects proof format violations and caller-supplied authority field
     keyIdFormat: (v) => { v.proof.keyId = 'key-1'; },
     digestFormat: (v) => { v.statement.binding.approvalDigest = 'a'.repeat(64); },
     revision: (v) => { v.statement.binding.approvalRevision = -1; },
+    revisionMax: (v) => { v.statement.binding.approvalRevision = 9007199254740992; },
     idPattern: (v) => { v.statement.binding.runId = ' run 1'; },
     nonceMissing: (v) => { delete v.statement.challenge.nonce; },
     nonceFormat: (v) => { v.statement.challenge.nonce = 'short'; },
@@ -70,11 +71,67 @@ test('R18-ch rejects proof format violations and caller-supplied authority field
   for (const [name, edit] of Object.entries(cases)) assert.equal(proofValid(mutate(edit)), false, name);
 });
 
+test('R18-ch rejects missing required fields, unknown fields and wrong constants at every level', () => {
+  const levels = { top: (v) => v, statement: (v) => v.statement, binding: (v) => v.statement.binding,
+    challenge: (v) => v.statement.challenge, approver: (v) => v.statement.approver, proof: (v) => v.proof };
+  for (const [level, at] of Object.entries(levels)) {
+    for (const key of Object.keys(at(proof()))) {
+      assert.equal(proofValid(mutate((v) => { delete at(v)[key]; })), false, `${level}.${key} missing`);
+    }
+    assert.equal(proofValid(mutate((v) => { at(v).extra = true; })), false, `${level} extra field`);
+  }
+  const cases = {
+    topVersion: (v) => { v.schemaVersion = '2.0.0'; },
+    topKind: (v) => { v.kind = 'ags-user-approval'; },
+    statementVersion: (v) => { v.statement.schemaVersion = '2.0.0'; },
+    statementKind: (v) => { v.statement.kind = 'approval'; },
+    nonceLong: (v) => { v.statement.challenge.nonce = 'A'.repeat(44); },
+    approverKeyId: (v) => { v.statement.approver.keyId = 'key-1'; },
+    idTooLong: (v) => { v.statement.binding.taskId = 'a'.repeat(201); },
+    displayedDuplicates: (v) => { v.statement.displayedFields = Array(7).fill('runId'); },
+    displayedUnknown: (v) => { v.statement.displayedFields[6] = 'note'; },
+    revisionFraction: (v) => { v.statement.binding.approvalRevision = 1.5; },
+    digestUpper: (v) => { v.statement.binding.approvalDigest = `sha256:${'A'.repeat(64)}`; },
+    timestamp: (v) => { v.statement.challenge.issuedAt = 'yesterday'; },
+    enrollmentRevision: (v) => { v.statement.approver.enrollmentRevision = 0; },
+  };
+  for (const [name, edit] of Object.entries(cases)) assert.equal(proofValid(mutate(edit)), false, name);
+});
+
+test('R18-ch contract freeze is closed and FROZEN needs both guard conditions', () => {
+  const freeze = survey.contractFreeze;
+  const edit = (change) => { const value = structuredClone(freeze); change(value); return value; };
+  for (const key of Object.keys(freeze)) {
+    assert.equal(freezeValid(edit((f) => { delete f[key]; })), false, `${key} missing`);
+  }
+  for (const key of Object.keys(freeze.enforcedBy)) {
+    assert.equal(freezeValid(edit((f) => { delete f.enforcedBy[key]; })), false, `enforcedBy.${key} missing`);
+  }
+  const cases = {
+    extra: (f) => { f.extra = true; },
+    enforcedByExtra: (f) => { f.enforcedBy.extra = { task: 'R18-a', point: 'x' }; },
+    enforcementExtra: (f) => { f.enforcedBy.replay.extra = true; },
+    enforcementTaskEmpty: (f) => { f.enforcedBy.replay.task = ''; },
+    candidateExtra: (f) => { f.candidates[0].extra = true; },
+    candidateName: (f) => { f.candidates[0].candidate = 'other-app'; },
+    determination: (f) => { f.candidates[0].determination = 'PASS'; },
+    verdict: (f) => { f.verdict = 'PASS'; },
+    task: (f) => { f.task = 'R18-a'; },
+  };
+  for (const [name, change] of Object.entries(cases)) assert.equal(freezeValid(edit(change)), false, name);
+  const satisfies = (f) => { f.candidates[0].determination = 'SATISFIES_ALL_PROPERTIES'; };
+  const anchored = (f) => { f.enforcedBy.trustAnchorTamper.task = 'PROTECTED-VERIFIER'; };
+  const frozen = (f) => { f.verdict = 'USER_APPROVAL_CHANNEL_FROZEN'; };
+  assert.equal(freezeValid(edit((f) => { frozen(f); anchored(f); })), false, 'FROZEN without a satisfying candidate');
+  assert.equal(freezeValid(edit((f) => { frozen(f); satisfies(f); })), false, 'FROZEN with unassigned trust anchor');
+  assert.equal(freezeValid(edit((f) => { frozen(f); satisfies(f); anchored(f); })), true, JSON.stringify(freezeValid.errors));
+});
+
 test('R18-ch schema PASS is not rejection evidence for state or crypto conditions', () => {
   // A well-formed forged signature or a replayed/cross-run/revoked proof is schema-valid; R18-a intake must reject it.
   assert.equal(proofValid(mutate((v) => { v.proof.signature = 'F'.repeat(86); })), true);
   const conditions = ['forgedSignature', 'crossRunReuse', 'replay', 'useAfterRevocation', 'expiredChallenge',
-    'unenrolledOrRevokedKey', 'hookModelPeerEvent', 'trustAnchorTamper'];
+    'unenrolledOrRevokedKey', 'hookModelPeerEvent', 'denyRecordedAsApproval', 'trustAnchorTamper'];
   const freeze = survey.contractFreeze;
   assert.equal(freezeValid(freeze), true, JSON.stringify(freezeValid.errors));
   assert.deepEqual(Object.keys(freeze.enforcedBy).sort(), [...conditions].sort());

@@ -45,8 +45,8 @@
 3. `proof.keyId`를 서버가 보관한 승인자 등록부에서만 찾는다. 없거나 철회된 키면 거부한다. `proof.keyId`와 `statement.approver.keyId`가 같고, `statement.approver.enrollmentRevision`이 등록부의 현재 revision과 같아야 한다. 다르면 승인자를 잘못 귀속할 수 있으므로 거부한다.
 4. JCS bytes에 대해 Ed25519 서명을 검증한다.
 5. binding의 모든 필드와 challenge(nonce, issuedAt, expiresAt)가 1의 대기 요청에 저장된 값과 같아야 한다.
-6. challenge가 만료되지 않았고 아직 소비되지 않았어야 한다. 소비와 승인 기록 쓰기는 같은 transaction이다.
-7. 승인 철회 여부를 확인한 뒤 R17 `ags-workflow-approval-record`를 쓴다.
+6. challenge가 만료되지 않았고 아직 소비되지 않았어야 한다. challenge 소비와 7의 결과 기록은 같은 transaction이다.
+7. `decision=approve`이면 승인 철회 여부를 확인한 뒤 R17 `ags-workflow-approval-record`를 쓴다. `decision=deny`이면 challenge를 소비하고 대기 요청을 거부로 닫을 뿐 승인 기록은 쓰지 않는다. R17 기록에는 decision 개념이 없고 기록 자체가 승인이기 때문이다.
 
 ## 키·자격의 보관 주체
 
@@ -63,6 +63,7 @@
 | `crossRunReuse` | R18-a | binding 전 필드와 challenge 필드를 서버의 대기 요청과 대조 |
 | `replay` | R18-a | challenge nonce를 기록 쓰기와 같은 transaction에서 소비 |
 | `useAfterRevocation` | R18-a, R18-b | intake와 current read에서 승인·키 철회 확인 |
+| `denyRecordedAsApproval` | R18-a | `decision=deny`는 challenge 소비·요청 종료만 하고 승인 기록을 만들지 않음 |
 | `expiredChallenge` | R18-a | 서버 시계로 expiresAt 확인 |
 | `unenrolledOrRevokedKey` | R18-a | keyId를 서버 등록부에서만 해석하고, proof·statement keyId 일치와 enrollmentRevision 일치를 확인 |
 | `hookModelPeerEvent` | R18-a | 증명 envelope만 받고, hook·도구 인자·peer 메시지 경로로는 기록을 만들지 않음 |
@@ -76,7 +77,7 @@
 | OS 수준 확인(Windows Hello, credential UI) | 존재 | FAILS_PROPERTIES | UserConsentVerifier는 호출 프로세스에 enum만 돌려준다(P1 실패). KeyCredentialManager 서명은 prompt에 승인 내용을 보여 주지 않는다(P3 실패). 키 범위는 UNKNOWN(P2). CredUI 자격 prompt는 입력한 자격을 호출 프로세스에 돌려주고, UAC secure desktop 동의는 권한 상승 결정일 뿐 AGS가 검증할 증명을 만들지 않는다(문서 분석, probe 없음). |
 | 로컬 사용자 서명 키 | UNKNOWN(열거하지 않음) | FAILS_PROPERTIES | 파일 키는 같은 사용자가 읽는다(P2 실패). touch 토큰은 내용을 보여 주지 않는다(P3 실패). |
 | Claude Code elicitation | 존재(2.1.283) | FAILS_PROPERTIES | Elicitation/ElicitationResult hook이 응답을 만들거나 바꾼다. 응답에 증명이 없다. live 관측은 NOT_RUN(비용 승인 대기). |
-| Codex elicitation | 존재(0.155.1) | FAILS_PROPERTIES | app-server client가 응답할 수 있고 증명이 없다. guardian 자동 검토는 문자열상 mcp_tool_call 종류의 빈 폼 elicitation에만 해당한다. `openai/elicitationuserVerification`의 의미는 UNKNOWN. |
+| Codex elicitation | 존재(0.155.1) | FAILS_PROPERTIES | app-server client가 응답할 수 있고 증명이 없다. guardian 자동 검토는 문자열상 mcp_tool_call 종류의 빈 폼 elicitation에만 해당한다. `openai/elicitationuserVerification`의 의미는 UNKNOWN. 같은 바이너리에 `openai/userVerification`과 app-server method `userVerification/status·enroll·delete·verify·cancel`이 있어 사용자 검증 등록·검증 기능이 있어 보이나, 형식과 서버 검증 가능성은 UNKNOWN이고 P7은 그대로 미충족이다. |
 
 원시 근거와 probe sha256은 survey evidence에 있다. R18-a evidence(`74811c89`)는 조사 입력으로만 읽었고, host 관측은 이번에 다시 했다.
 

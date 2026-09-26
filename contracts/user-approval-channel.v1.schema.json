@@ -46,7 +46,7 @@
             "taskId": { "$ref": "#/$defs/id" },
             "stageId": { "$ref": "#/$defs/id" },
             "assignmentId": { "$ref": "#/$defs/id" },
-            "approvalRevision": { "type": "integer", "minimum": 0, "description": "Same range as approved-role-source.v1 $defs/revision." },
+            "approvalRevision": { "type": "integer", "minimum": 0, "maximum": 9007199254740991, "description": "Same range as approved-role-source.v1 $defs/revision." },
             "approvalDigest": { "$ref": "#/$defs/digest" }
           }
         },
@@ -109,7 +109,7 @@
         "enforcedBy": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["forgedSignature", "crossRunReuse", "replay", "useAfterRevocation", "expiredChallenge", "unenrolledOrRevokedKey", "hookModelPeerEvent", "trustAnchorTamper"],
+          "required": ["forgedSignature", "crossRunReuse", "replay", "useAfterRevocation", "expiredChallenge", "unenrolledOrRevokedKey", "hookModelPeerEvent", "denyRecordedAsApproval", "trustAnchorTamper"],
           "properties": {
             "forgedSignature": { "$ref": "#/$defs/enforcement" },
             "crossRunReuse": { "$ref": "#/$defs/enforcement" },
@@ -118,6 +118,7 @@
             "expiredChallenge": { "$ref": "#/$defs/enforcement" },
             "unenrolledOrRevokedKey": { "$ref": "#/$defs/enforcement" },
             "hookModelPeerEvent": { "$ref": "#/$defs/enforcement" },
+            "denyRecordedAsApproval": { "$ref": "#/$defs/enforcement" },
             "trustAnchorTamper": { "$ref": "#/$defs/enforcement" }
           }
         },
