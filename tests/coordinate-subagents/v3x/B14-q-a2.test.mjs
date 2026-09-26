@@ -175,6 +175,11 @@ test('B14-q-a2 never reports success for an unauthenticated, replayed, malformed
   // Otherwise valid reply padded past the cap: the size limit alone must reject it.
   assert.deepEqual(await run((request) => Buffer.from(JSON.stringify(ok(request)).padEnd(16 * 1024 + 1, ' '))), { verdict: 'UNKNOWN', code: 'response-malformed' });
   assert.deepEqual(await run((request) => ({ ...ok(request), status: 'unknown' })), { verdict: 'UNKNOWN', code: 'response-malformed' });
+  // An expiry that is not a date-time is malformed, never an issued credential.
+  for (const expiresAt of ['tomorrow', '2026-13-45T99:00:00Z']) {
+    assert.deepEqual(await run((request) => ({ ...ok(request), credential: { ...credential, expiresAt } })),
+      { verdict: 'UNKNOWN', code: 'response-malformed' }, `expiresAt ${expiresAt}`);
+  }
   // The issuer already acted on these: a mismatched credential is unknown, never a clean refusal.
   assert.deepEqual(await run((request) => ({ ...ok(request), credential: { ...credential, audience: 'resource-caller/v1' } })),
     { verdict: 'UNKNOWN', code: 'response-mismatch' });
