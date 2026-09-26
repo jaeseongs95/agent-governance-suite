@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/runtime/issuer/windows/install-record.v1.schema.json",
+  "title": "WindowsIssuerInstallRecord.v1",
+  "description": "B14-q-a candidate. The installer writes this record into the protected subtree (ags-protected-provisioning/v1 P3.2). Passing this schema never replaces observing the effective ACL, token or hashes. The record holds no secret: every object is closed (additionalProperties false), so no secret, token or key field can be added. On that ground this frozen consumer contract exempts the record from read denial for the same-user caller and worker principals, who read it to find the issuer endpoint (P4.4 exemption, agent-governance-suite 4017ca95 docs/implementation-3x/ags-protected-provisioning.ko.md:62). Denial of write, delete, rename, link and ACL/owner changes to those principals still applies.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractId", "revision", "os", "installId", "contractDigests", "principals", "services", "paths", "endpoint", "build"],
+  "properties": {
+    "contractId": { "const": "ags-windows-issuer-install/v1" },
+    "revision": { "const": 1 },
+    "os": { "const": "windows" },
+    "installId": { "$ref": "#/$defs/id" },
+    "contractDigests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provisioning", "nativePrincipalIssuer", "nativePrincipalIssuerFixture"],
+      "properties": {
+        "provisioning": { "$ref": "#/$defs/sha256" },
+        "nativePrincipalIssuer": { "$ref": "#/$defs/sha256" },
+        "nativePrincipalIssuerFixture": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "principals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["installer", "issuer", "receiver", "caller", "worker"],
+      "properties": {
+        "installer": {
+          "type": "object",
+          "allOf": [{ "$ref": "#/$defs/principal" }],
+          "properties": { "accountKind": { "enum": ["local-system", "administrator"] } }
+        },
+        "issuer": { "$ref": "#/$defs/servicePrincipal" },
+        "receiver": { "$ref": "#/$defs/servicePrincipal" },
+        "caller": {
+          "type": "object",
+          "allOf": [{ "$ref": "#/$defs/principal" }, { "$ref": "#/$defs/noAdministrators" }],
+          "properties": { "accountKind": { "const": "interactive-user" } }
+        },
+        "worker": {
+          "type": "object",
+          "allOf": [{ "$ref": "#/$defs/principal" }, { "$ref": "#/$defs/noAdministrators" }],
+          "properties": { "accountKind": { "enum": ["interactive-user", "local-user"] } }
+        }
+      }
+    },
+    "services": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["issuer", "receiver"],
+      "properties": {
+        "issuer": { "$ref": "#/$defs/service" },
+        "receiver": { "$ref": "#/$defs/service" }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protectedRoot", "installRecord", "registry", "stateDirectory"],
+      "properties": {
+        "protectedRoot": { "const": "C:\\ProgramData\\agent-governance-suite" },
+        "installRecord": { "const": "C:\\ProgramData\\agent-governance-suite\\issuer\\install-record.json" },
+        "registry": { "$ref": "#/$defs/protectedPath" },
+        "stateDirectory": { "$ref": "#/$defs/protectedPath" }
+      }
+    },
+    "endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pipeName"],
+      "properties": {
+        "pipeName": { "type": "string", "pattern": "^\\\\\\\\\\.\\\\pipe\\\\ags-issuer-[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$" }
+      }
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["buildDigest", "closureDigest"],
+      "properties": {
+        "buildDigest": { "$ref": "#/$defs/sha256" },
+        "closureDigest": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$" },
+    "sha256": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "sid": { "type": "string", "pattern": "^S-1-[0-9]{1,13}(?:-[0-9]{1,10}){1,15}$" },
+    "protectedPath": {
+      "type": "string",
+      "pattern": "^C:\\\\ProgramData\\\\agent-governance-suite\\\\issuer(?:\\\\[A-Za-z0-9_-](?:[A-Za-z0-9._-]*[A-Za-z0-9_-])?)+$",
+      "maxLength": 240
+    },
+    "principal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accountKind", "accountName", "observedSid", "groupPolicy", "privilegePolicy"],
+      "properties": {
+        "accountKind": { "type": "string" },
+        "accountName": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "observedSid": { "$ref": "#/$defs/sid" },
+        "groupPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["forbiddenSids"],
+          "properties": {
+            "forbiddenSids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/sid" } }
+          }
+        },
+        "privilegePolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["allowed"],
+          "properties": {
+            "allowed": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^Se[A-Za-z]{1,60}Privilege$" } }
+          }
+        }
+      }
+    },
+    "noAdministrators": {
+      "type": "object",
+      "properties": {
+        "groupPolicy": { "type": "object", "properties": { "forbiddenSids": { "type": "array", "contains": { "const": "S-1-5-32-544" } } } }
+      }
+    },
+    "servicePrincipal": {
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/principal" }, { "$ref": "#/$defs/noAdministrators" }],
+      "properties": {
+        "accountKind": { "const": "virtual-service-account" },
+        "accountName": { "type": "string", "pattern": "^NT SERVICE\\\\ags-[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$" },
+        "observedSid": { "type": "string", "pattern": "^S-1-5-80(?:-[0-9]{1,10}){5}$" },
+        "privilegePolicy": {
+          "type": "object",
+          "properties": { "allowed": { "type": "array", "maxItems": 1, "items": { "const": "SeChangeNotifyPrivilege" } } }
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["serviceName", "sidType", "startType", "binaryPath"],
+      "properties": {
+        "serviceName": { "type": "string", "pattern": "^ags-[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$" },
+        "sidType": { "const": "restricted" },
+        "startType": { "enum": ["demand", "auto"] },
+        "binaryPath": {
+          "allOf": [{ "$ref": "#/$defs/protectedPath" }, { "type": "string", "pattern": "\\.exe$" }]
+        }
+      }
+    }
+  }
+}
