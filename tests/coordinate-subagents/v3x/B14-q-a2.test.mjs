@@ -100,6 +100,10 @@ test('B14-q-a2 fails closed before any I/O on platform, transport, record and ca
     'receiver shares installer SID': () => { const r = validRecord(); Object.assign(r.principals.installer, { accountKind: 'administrator', observedSid: receiverSid }); return r; },
     'issuer shares installer SID': () => { const r = validRecord(); Object.assign(r.principals.installer, { accountKind: 'administrator', observedSid: issuerSid }); return r; },
     'receiver account of another service': () => { const r = validRecord(); r.principals.receiver.accountName = 'NT SERVICE\\ags-other'; return r; },
+    'receiver binary under the state directory': () => { const r = validRecord(); r.services.receiver.binaryPath = `${root}\\issuer\\state\\ags-receiver.exe`; return r; },
+    'DOS device receiver binary': () => { const r = validRecord(); r.services.receiver.binaryPath = `${root}\\issuer\\bin\\AUX.exe`; return r; },
+    'DOS device state directory': () => { const r = validRecord(); r.paths.stateDirectory = `${root}\\issuer\\PRN`; return r; },
+    'state directory is the registry (case-folded)': () => { const r = validRecord(); r.paths.stateDirectory = `${root}\\issuer\\State\\Registry.json`; return r; },
     ...Object.fromEntries(['con', 'PRN', 'aux.json', 'nul', 'COM1.json', 'lpt9'].map((device) => [`DOS device ${device}`,
       () => { const r = validRecord(); r.paths.registry = `${root}\\issuer\\state\\${device}`; return r; }])),
   };
