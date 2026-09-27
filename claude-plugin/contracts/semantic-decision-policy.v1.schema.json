@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/semantic-decision-policy.v1.schema.json",
+  "title": "semantic-decision-policy.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+    },
+    "mode": {
+      "enum": [
+        "off",
+        "shadow",
+        "assist"
+      ]
+    },
+    "purpose": {
+      "const": "model-ranking"
+    },
+    "assistScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "highRisk": {
+          "const": false
+        },
+        "independentAudit": {
+          "const": false
+        },
+        "preserveRequired": {
+          "const": true
+        },
+        "preservePreferred": {
+          "const": true
+        },
+        "selectionUnit": {
+          "const": "model"
+        },
+        "tieBreak": {
+          "const": "baseline-order"
+        }
+      },
+      "required": [
+        "highRisk",
+        "independentAudit",
+        "preserveRequired",
+        "preservePreferred",
+        "selectionUnit",
+        "tieBreak"
+      ]
+    },
+    "adoption": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "const": "unvalidated"
+            },
+            "minimumConfidence": {
+              "type": "null"
+            },
+            "evidenceDigest": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "status",
+            "minimumConfidence",
+            "evidenceDigest"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "const": "validated"
+            },
+            "minimumConfidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "evidenceDigest": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            },
+            "provider": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+                },
+                "model": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+                },
+                "adapterVersion": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+                },
+                "providerVersion": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "modelVersion": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "model",
+                "adapterVersion",
+                "providerVersion",
+                "modelVersion"
+              ]
+            },
+            "questionDigest": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            },
+            "reducerVersion": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+            }
+          },
+          "required": [
+            "status",
+            "minimumConfidence",
+            "evidenceDigest",
+            "provider",
+            "questionDigest",
+            "reducerVersion"
+          ]
+        }
+      ]
+    },
+    "egress": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "allowedProviders": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "minItems": 0,
+          "maxItems": 32,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "enabled",
+        "allowedProviders"
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "mode",
+    "purpose",
+    "assistScope",
+    "adoption",
+    "egress"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "assist"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "adoption": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "status": {
+                "const": "validated"
+              },
+              "minimumConfidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "evidenceDigest": {
+                "type": "string",
+                "pattern": "^sha256:[a-f0-9]{64}$"
+              },
+              "provider": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+                  },
+                  "model": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+                  },
+                  "adapterVersion": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+                  },
+                  "providerVersion": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "modelVersion": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "model",
+                  "adapterVersion",
+                  "providerVersion",
+                  "modelVersion"
+                ]
+              },
+              "questionDigest": {
+                "type": "string",
+                "pattern": "^sha256:[a-f0-9]{64}$"
+              },
+              "reducerVersion": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+              }
+            },
+            "required": [
+              "status",
+              "minimumConfidence",
+              "evidenceDigest",
+              "provider",
+              "questionDigest",
+              "reducerVersion"
+            ]
+          },
+          "egress": {
+            "properties": {
+              "enabled": {
+                "const": true
+              },
+              "allowedProviders": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$comment": "Operator-owned configuration. A validated evidence reference is necessary but not sufficient for adoption; the service must admit that evidence and the reducer must enforce scope/current routing policy. Unvalidated confidence thresholds cannot enable assist."
+}

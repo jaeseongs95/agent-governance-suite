@@ -1,5 +1,6 @@
 import type {DatabaseSync} from 'node:sqlite';
-import type {HostModelCapabilitiesV1,ModelRoutingDecisionV2,ModelSelectionRequestV2,ModelCatalogV1,ModelRoutingPolicyV1} from '../../../../contracts/types.js';
+import type {RoutingEnvironmentV2} from './model-routing-core.mjs';
+import type {HostModelCapabilitiesV1,ModelRoutingDecisionV2,ModelRoutingDecisionV3,ModelSelectionRequestV2,ModelCatalogV1,ModelRoutingPolicyV1,ModelApplicationRequestV3,ModelApplicationRecordV3} from '../../../../contracts/types.js';
 export interface RoutingObserverReceipt {version:'1.0.0';kind:'capability'|'observation';nonce:string;issuedAt:string;expiresAt:string;payload:unknown;mac:string;}
 export declare class RoutingObservationSigner {
   constructor(key:Buffer);
@@ -14,10 +15,12 @@ export declare class ModelRoutingStore {
   /** Internal synchronous final revalidation under the routing database writer lock; no worker launch. */
   claimExecutionStart(key:string,expectedRevision:number,decisionDigest:string,revalidate:()=>string):{dispatchKey:string;state:'running';revision:number;dispatchedAt:string;startClaimAcquired:true};
   capabilities():unknown[];
+  saveDecision(request:ModelSelectionRequestV2,environment:RoutingEnvironmentV2,decision:ModelRoutingDecisionV2,now:string):ModelRoutingDecisionV2;
   application(digest:string):unknown;
-  decision(digest:string):{request:ModelSelectionRequestV2;decision:ModelRoutingDecisionV2;environment:{catalog:ModelCatalogV1;policy:ModelRoutingPolicyV1;capabilities:HostModelCapabilitiesV1[];now:string};resolvedAt:string}|null;
+  decision(digest:string):{request:ModelSelectionRequestV2;decision:ModelRoutingDecisionV2|ModelRoutingDecisionV3;environment:{catalog:ModelCatalogV1;policy:ModelRoutingPolicyV1;capabilities:HostModelCapabilitiesV1[];now:string};resolvedAt:string}|null;
   dispatch(key:string):{decision_digest:string;dispatched_at:string|null;state:string;revision:number}|null;
   publishCapability(receipt:RoutingObserverReceipt,signer:RoutingObservationSigner,presence:unknown,now:string):{snapshotDigest:string};
   bindNativeHookObservation(application:unknown,receipt:RoutingObserverReceipt,signer:RoutingObservationSigner,now:string):{bound:true};
   nativeHookObservationToken(application:unknown):string|null;
+  recordApplication(input:ModelApplicationRequestV3,observationToken:string|null,makeRecord:(observation:NonNullable<ModelApplicationRequestV3['observation']>|null)=>ModelApplicationRecordV3,now:string):{record:ModelApplicationRecordV3;artifact:{kind:string;uri:string;digest:string}};
 }

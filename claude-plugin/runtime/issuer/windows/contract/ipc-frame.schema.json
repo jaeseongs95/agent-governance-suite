@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/runtime/issuer/windows/ipc-frame.v1.schema.json",
+  "title": "WindowsIssuerIpcFrame.v1",
+  "description": "B14-q-a candidate. One request and one response per named-pipe connection. Callers never choose the pipe, protected paths, secrets or expected identities; the endpoint comes from the protected install record and identities from the OS. Credential registration and lifecycle meaning stays with B14-l.",
+  "oneOf": [{ "$ref": "#/$defs/request" }, { "$ref": "#/$defs/response" }],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$" },
+    "nonce": { "type": "string", "pattern": "^[a-f0-9]{32}$" },
+    "audience": { "enum": ["peer-receiver/v1", "resource-caller/v1"] },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "requestId", "epoch", "operation"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "kind": { "const": "issuer-request" },
+        "requestId": { "$ref": "#/$defs/nonce" },
+        "epoch": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/nonce" }] },
+        "operation": { "enum": ["epoch", "issue"] },
+        "audience": { "$ref": "#/$defs/audience" },
+        "receiverInstance": { "$ref": "#/$defs/id" }
+      },
+      "if": { "properties": { "operation": { "const": "issue" } } },
+      "then": { "required": ["audience", "receiverInstance"], "properties": { "epoch": { "$ref": "#/$defs/nonce" } } },
+      "else": {
+        "properties": { "epoch": { "type": "null" } },
+        "not": { "anyOf": [{ "required": ["audience"] }, { "required": ["receiverInstance"] }] }
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "requestId", "operation", "epoch", "status"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "kind": { "const": "issuer-response" },
+        "requestId": { "$ref": "#/$defs/nonce" },
+        "operation": { "enum": ["epoch", "issue"] },
+        "epoch": { "$ref": "#/$defs/nonce" },
+        "status": { "enum": ["ok", "rejected", "unavailable"] },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code"],
+          "properties": {
+            "code": { "enum": ["peer-identity-rejected", "impersonation-failed", "replay", "epoch-mismatch",
+              "malformed-request", "audience-mismatch", "install-record-invalid", "service-unavailable"] }
+          }
+        },
+        "credential": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["credentialId", "audience", "receiverInstance", "expiresAt", "secret"],
+          "properties": {
+            "credentialId": { "$ref": "#/$defs/id" },
+            "audience": { "$ref": "#/$defs/audience" },
+            "receiverInstance": { "$ref": "#/$defs/id" },
+            "expiresAt": { "type": "string", "format": "date-time" },
+            "secret": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "ok" } } },
+          "then": { "not": { "required": ["error"] } },
+          "else": { "required": ["error"], "not": { "required": ["credential"] } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "ok" }, "operation": { "const": "issue" } } },
+          "then": { "required": ["credential"] }
+        },
+        {
+          "if": { "properties": { "operation": { "const": "epoch" } } },
+          "then": { "not": { "required": ["credential"] } }
+        }
+      ]
+    }
+  }
+}

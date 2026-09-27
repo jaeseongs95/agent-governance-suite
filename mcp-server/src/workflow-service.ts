@@ -118,6 +118,7 @@ export interface ExecutionObservationBindingV1 {
 export interface TrustedExecutionContextProvider {
   readonly profileBinding?: ExecutionContextV1["profileBinding"];
   observe(binding: ExecutionObservationBindingV1): ExecutionContextV1 | null;
+  diagnose?(): Record<string, unknown>;
 }
 
 /** Copy of a root at the next revision, stamped with updatedAt. */
@@ -1338,7 +1339,10 @@ export class WorkflowService {
       throw new WorkflowContractError(
         "BINDING_REQUIRED",
         `${subject} requires trusted host execution attestation.`,
-        { binding },
+        { binding, observation: this.trustedExecutionContextProvider?.diagnose?.() ?? {
+          status: "provider-not-configured",
+          connection: "Connect a host-owned TrustedExecutionContextProvider or enable a supported host attestation adapter. Caller executionContext is not a trusted observation.",
+        } },
       );
     }
     return context;

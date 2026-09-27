@@ -42,6 +42,20 @@
     "note": "Native per-model effort; unsupported levels and organization limits may be clamped. Ultracode is separate."
   },
   {
+    "id": "CLAUDE-OPUS-55",
+    "url": "https://platform.claude.com/docs/en/models/opus-5-5/overview",
+    "checkedAt": "2026-09-23T00:00:00.000Z",
+    "evidenceKind": "official-document",
+    "note": "Exact Claude API ID, 1M context and official positioning; not installed-host support or live observation."
+  },
+  {
+    "id": "CLAUDE-FABLE-51",
+    "url": "https://platform.claude.com/docs/en/models/fable-5-1/overview",
+    "checkedAt": "2026-09-23T00:00:00.000Z",
+    "evidenceKind": "official-document",
+    "note": "Exact Claude API ID, 1M context and official positioning; seed catalog status is an AGS policy state, not provider availability."
+  },
+  {
     "id": "GEMINI",
     "url": "https://ai.google.dev/gemini-api/docs/models",
     "checkedAt": "2026-09-21T00:00:00.000Z",

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/semantic-decision-question.v1.schema.json",
+  "title": "semantic-decision-question.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+    },
+    "kind": {
+      "const": "Choice"
+    },
+    "purpose": {
+      "const": "model-ranking"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    },
+    "selectionUnit": {
+      "const": "model"
+    },
+    "tieBreak": {
+      "const": "baseline-order"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "kind",
+    "purpose",
+    "text",
+    "selectionUnit",
+    "tieBreak"
+  ]
+}

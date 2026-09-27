@@ -73,8 +73,11 @@ test('B14-j custom message state never opens or writes the separate resource led
         schemaVersion: '1.0.0', feature: RESOURCE_ADMISSION_FEATURE, requestId: 'request-1',
         operation: 'read-observation', args: { observationId: 'sha256:' + 'a'.repeat(64) },
       }, h.state), /Resource admission is unavailable/u);
-      const sent = await requestSessionMessageOnce('send', {
+      const prepared = await requestSessionMessageOnce('prepare', {
         sender, target, body: `message-${restart}`,
+      }, h.state);
+      const sent = await requestSessionMessageOnce('send', {
+        sender, messageId: prepared.messageId,
       }, h.state);
       const claimed = await requestSessionMessageOnce('claim', { target }, h.state);
       assert.equal(claimed.messages[0].messageId, sent.messageId);

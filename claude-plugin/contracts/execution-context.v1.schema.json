@@ -48,6 +48,15 @@
       "type": "string",
       "format": "date-time"
     },
+    "profileBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileId", "freezeIdentity"],
+      "properties": {
+        "profileId": { "enum": ["vm-protected-v1", "flowmarshal-same-user-v1"] },
+        "freezeIdentity": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
     "observationId": {
       "type": "string",
       "minLength": 16

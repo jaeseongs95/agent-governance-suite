@@ -71,7 +71,8 @@ describe('installed native routing observer',()=>{
       expect(result.data.record.runtimeModeVerification).toBe('unverified');expect(result.data.record.terminalOutcome).toBe('unknown');
       expect(store.dispatch(key).state).toBe('running');
       // Existing messaging and ACK are unchanged by the observation path.
-      const sent=await requestSessionMessageOnce('send',{sender:{host,sessionId:'session-live-fixture'},target:{host,sessionId:'session-live-fixture'},body:'delta after observation'},state);
+      const prepared=await requestSessionMessageOnce('prepare',{sender:{host,sessionId:'session-live-fixture'},target:{host,sessionId:'session-live-fixture'},body:'delta after observation'},state);
+      const sent=await requestSessionMessageOnce('send',{sender:{host,sessionId:'session-live-fixture'},messageId:prepared.messageId},state);
       const claimed=await requestSessionMessageOnce('claim',{target:{host,sessionId:'session-live-fixture'}},state);expect(claimed.messages[0].messageId).toBe(sent.messageId);
       const ack=await requestSessionMessageOnce('acknowledge',{target:{host,sessionId:'session-live-fixture'},messageIds:[sent.messageId]},state);expect(ack.acknowledged).toBeGreaterThan(0);
     }catch(error){error.message+=`\nBroker: ${brokerError}, exit ${broker?.exitCode}`;throw error;}finally{db?.close();workflow?.close();if(broker)await stop(broker);rmSync(dir,{recursive:true,force:true,maxRetries:10,retryDelay:50});}

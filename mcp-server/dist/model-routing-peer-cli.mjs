@@ -15298,6 +15298,7 @@ var contractSchemas = {
   listSessionStatusRequest: loadSchema("list-session-status-request.v1.schema.json"),
   sendSessionMessageRequest: loadSchema("send-session-message-request.v1.schema.json"),
   sessionTask: loadSchema("session-task.v1.schema.json"),
+  prepareSessionMessageRequest: loadSchema("prepare-session-message-request.v1.schema.json"),
   acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
   getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
@@ -15546,6 +15547,9 @@ var ContractValidator = class {
   }
   sendSessionMessageRequest(value) {
     return this.assert("sendSessionMessageRequest", value);
+  }
+  prepareSessionMessageRequest(value) {
+    return this.assert("prepareSessionMessageRequest", value);
   }
   acknowledgeSessionMessagesRequest(value) {
     return this.assert("acknowledgeSessionMessagesRequest", value);
@@ -16718,7 +16722,7 @@ var ModelPeerPacketSigner = class {
   }
   verifyMessage(message, own, nowMs) {
     const packet = this.verify(message.body, nowMs);
-    peerCheck(message.messageId === peerMessageId(message.body) && peerInstant(message.expiresAt) > nowMs && message.sender.host === packet.sender.host && message.sender.sessionId === packet.sender.sessionId && message.recipient.host === packet.recipient.host && message.recipient.sessionId === packet.recipient.sessionId && canonicalJson(packet.recipient) === canonicalJson(own), "Peer packet does not match the claimed spool message or local instance.");
+    peerCheck(typeof message.messageId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(message.messageId) && peerInstant(message.expiresAt) > nowMs && message.sender.host === packet.sender.host && message.sender.sessionId === packet.sender.sessionId && message.recipient.host === packet.recipient.host && message.recipient.sessionId === packet.recipient.sessionId && canonicalJson(packet.recipient) === canonicalJson(own), "Peer packet does not match the claimed spool message or local instance.");
     return packet;
   }
 };
@@ -16740,7 +16744,10 @@ var ModelPeerJournal = class {
       ON ags_model_peer_transfers_v1(decision_digest) WHERE direction='outbound';
     CREATE UNIQUE INDEX IF NOT EXISTS ags_model_peer_active_write_v1
       ON ags_model_peer_transfers_v1(write_key) WHERE direction='outbound' AND write_key IS NOT NULL
-      AND state IN ('prepared','sent','unknown','accepted');`);
+      AND state IN ('prepared','sent','unknown','accepted');
+    CREATE TABLE IF NOT EXISTS ags_model_peer_message_bindings_v1 (
+      packet_id TEXT PRIMARY KEY, message_id TEXT NOT NULL UNIQUE
+    ) STRICT;`);
   }
   database;
   transaction(work) {
@@ -16762,6 +16769,25 @@ var ModelPeerJournal = class {
   outbound(decisionDigest) {
     const row = this.database.prepare("SELECT packet_id FROM ags_model_peer_transfers_v1 WHERE direction='outbound' AND decision_digest=?").get(decisionDigest);
     return row ? this.get(row.packet_id) : null;
+  }
+  messageId(body) {
+    const row = this.database.prepare("SELECT message_id FROM ags_model_peer_message_bindings_v1 WHERE packet_id=?").get(peerMessageId(body));
+    return row?.message_id ?? null;
+  }
+  /** Persist the issued ID before submit; concurrent preparations leave only unused drafts. */
+  bindMessageId(body, messageId) {
+    peerCheck(
+      typeof messageId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(messageId),
+      "The broker did not issue a valid message ID."
+    );
+    return this.transaction(() => {
+      const prior = this.messageId(body);
+      if (prior) return prior;
+      const count = this.database.prepare("SELECT count(*) AS n FROM ags_model_peer_message_bindings_v1").get();
+      peerCheck(count.n < 512, "Peer message bindings are full; resolve retained handoffs before new delivery.");
+      this.database.prepare("INSERT INTO ags_model_peer_message_bindings_v1 VALUES (?,?)").run(peerMessageId(body), messageId);
+      return messageId;
+    });
   }
   prepare(direction, decision, body, write, expiresAt) {
     const packetId = peerMessageId(body);
@@ -16867,14 +16893,20 @@ var ModelRoutingPeerSession = class {
     await this.alive(packet.sender, io2.call);
     await this.alive(packet.recipient, io2.call);
     const ttlSeconds = Math.max(30, Math.ceil((peerInstant(packet.expiresAt) - peerInstant(packet.issuedAt)) / 1e3));
-    const result = await io2.call("send", {
-      sender: { host: packet.sender.host, sessionId: packet.sender.sessionId },
-      target: { host: packet.recipient.host, sessionId: packet.recipient.sessionId },
-      body,
-      messageId: peerMessageId(body),
-      ttlSeconds
-    });
-    peerCheck(result?.messageId === peerMessageId(body), "The broker did not acknowledge the peer message.");
+    const sender = { host: packet.sender.host, sessionId: packet.sender.sessionId };
+    let messageId = this.journal.messageId(body);
+    if (!messageId) {
+      const prepared = await io2.call("prepare", {
+        sender,
+        target: { host: packet.recipient.host, sessionId: packet.recipient.sessionId },
+        body,
+        ttlSeconds
+      });
+      peerCheck(prepared?.messageId, "The broker did not issue a peer message ID.");
+      messageId = this.journal.bindMessageId(body, prepared.messageId);
+    }
+    const result = await io2.call("send", { sender, messageId });
+    peerCheck(result?.messageId === messageId, "The broker did not acknowledge the peer message.");
     return result.messageId;
   }
   async send(decisionDigest, details = {}) {
@@ -16916,13 +16948,17 @@ var ModelRoutingPeerSession = class {
     const stored = JSON.parse(transfer.body);
     const packet = this.options.signer.verify(transfer.body, peerInstant(stored.issuedAt));
     peerCheck(canonicalJson(packet.sender) === canonicalJson(this.options.identity), "This handoff belongs to a different sender instance.");
+    const messageId = this.journal.messageId(transfer.body);
     let delivery = null;
-    try {
-      delivery = await this.exchange().call("status", { sender: { host: packet.sender.host, sessionId: packet.sender.sessionId }, messageId: packetId });
-    } catch {
+    if (messageId) {
+      try {
+        delivery = await this.exchange().call("status", { sender: { host: packet.sender.host, sessionId: packet.sender.sessionId }, messageId });
+      } catch {
+      }
     }
     return {
       packetId,
+      messageId,
       handoffState: transfer.state,
       accepted: transfer.state === "accepted",
       delivery,

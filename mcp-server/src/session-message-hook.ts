@@ -10,19 +10,20 @@ import type { SessionMessageTransport } from "./session-message-relay.js";
 import type { SessionMessage } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
 import { processStartToken } from "./process-identity.js";
-import { adaptHostInput, hostDeliveryProfile, type SupportedHookHost } from "./host-input-adapter.js";
+import { adaptHostInput, hostDeliveryProfile, nativePeerWait, type SupportedHookHost } from "./host-input-adapter.js";
 import { isObservedSubagent, supportsInjection } from "./input-observation.js";
+import type { PeerWaitDecision } from "./peer-wait-policy.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "./session-message-protocol.js";
 
 import { observeNativePeerHandoff } from "./model-routing-peer-native.js";
 
 const SESSION_BOUND_TOOLS = new Set([
-  "send_session_message", "acknowledge_session_messages", "get_session_message_status",
+  "prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status",
   "get_session_contact_state", "contact_session", "prepare_session_task_request", "register_session_task_request",
   "record_session_task_outcome", "reconcile_session_task_request", "validate_collaboration_decision",
 ]);
 const SUBAGENT_DENIED_TOOLS = new Set([
-  "send_session_message", "acknowledge_session_messages", "get_session_message_status",
+  "prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status",
   "get_session_contact_state", "contact_session", "prepare_session_task_request", "register_session_task_request",
   "record_session_task_outcome", "reconcile_session_task_request",
 ]);
@@ -168,6 +169,17 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   // event from an older generation extend a newer one.
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
     const toolName = observation.toolName ?? "";
+    const wait = nativePeerWait(observation);
+    if (wait && observation.actor.kind === "main" && observation.actor.assurance === "observed") {
+      try {
+        const decision = await sessionMessageRequest<PeerWaitDecision>("peer-wait", { sender: target, ...wait }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
+        return { hookSpecificOutput: { hookEventName: adapted.outputEventName,
+          ...(decision.action === "deny" ? { permissionDecision: "deny", permissionDecisionReason: decision.guidance } : {}),
+          additionalContext: decision.guidance } };
+      } catch {
+        return additionalContext(adapted.outputEventName, "Peer wait policy is unavailable. Use a bounded query; async resume has not been confirmed.");
+      }
+    }
     const localTool = toolName.split("__").at(-1) ?? "";
     if (!SESSION_BOUND_TOOLS.has(localTool)) return {};
     if (subagent && SUBAGENT_DENIED_TOOLS.has(localTool)) {

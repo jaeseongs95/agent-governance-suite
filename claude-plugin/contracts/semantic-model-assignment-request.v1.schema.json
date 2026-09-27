@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/semantic-model-assignment-request.v1.schema.json",
+  "title": "semantic-model-assignment-request.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "routingRequest": {
+      "$ref": "https://skill-suite.local/contracts/model-selection-request.v2.schema.json"
+    },
+    "taskRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "taskId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "frameId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+        },
+        "artifactIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$"
+          },
+          "minItems": 0,
+          "maxItems": 128,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "taskId"
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "routingRequest",
+    "taskRef"
+  ],
+  "$comment": "Explicit MCP input. References must be resolved and authorized against local task/frame state by the service. No caller-supplied state, advice, policy, capability set, eligible set, provider settings or admission receipt."
+}

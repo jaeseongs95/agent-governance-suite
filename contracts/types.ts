@@ -443,13 +443,18 @@ export interface ListSessionStatusRequestV1 {
   _sessionBinding?: SessionBindingV1;
 }
 
-export interface SendSessionMessageRequestV1 {
+export interface PrepareSessionMessageRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   targetHost: string;
   targetSessionId: string;
   body: string;
   ttlSeconds?: number;
-  messageId?: string;
+  _sessionBinding?: SessionBindingV1;
+}
+
+export interface SendSessionMessageRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  messageId: string;
   _sessionBinding?: SessionBindingV1;
 }
 

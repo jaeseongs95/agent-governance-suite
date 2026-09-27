@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/model-application-request.v3.schema.json",
+  "title": "model-application-request.v3",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "binding": {
+      "$ref": "https://skill-suite.local/contracts/model-application-request.v2.schema.json#/properties/binding"
+    },
+    "decisionDigest": {
+      "$ref": "https://skill-suite.local/contracts/model-application-request.v2.schema.json#/properties/decisionDigest"
+    },
+    "target": {
+      "$ref": "https://skill-suite.local/contracts/model-application-request.v2.schema.json#/properties/target"
+    },
+    "dispatched": {
+      "$ref": "https://skill-suite.local/contracts/model-application-request.v2.schema.json#/properties/dispatched"
+    },
+    "dispatchedAt": {
+      "$ref": "https://skill-suite.local/contracts/model-application-request.v2.schema.json#/properties/dispatchedAt"
+    },
+    "observation": {
+      "$ref": "https://skill-suite.local/contracts/model-application-request.v2.schema.json#/properties/observation"
+    },
+    "schemaVersion": {
+      "const": "3.0.0"
+    },
+    "semanticAdviceDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "binding",
+    "decisionDigest",
+    "target",
+    "dispatched",
+    "dispatchedAt",
+    "schemaVersion",
+    "semanticAdviceDigest"
+  ]
+}

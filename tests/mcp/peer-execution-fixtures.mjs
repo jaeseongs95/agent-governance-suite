@@ -30,7 +30,8 @@ export function fixture() {
       case 'ping': return { protocolVersion: '1.0.0', capabilities: [MODEL_CAPABILITY_FEATURE] };
       case 'list-model-capabilities': return caps.list(payload, now);
       case 'presence': return { presence: sessions.presence(payload.target, now) };
-      case 'send': return sessions.send(payload, now);
+      case 'prepare': return sessions.prepare(payload, now);
+      case 'send': return sessions.submitPrepared(payload.sender, payload.messageId, now);
       case 'status': return { status: sessions.status(payload.sender, payload.messageId, now) };
       default: throw new Error(`Unexpected operation: ${operation}`);
     }

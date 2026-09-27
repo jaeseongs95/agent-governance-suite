@@ -24,7 +24,10 @@ export class ModelPeerJournal {
       ON ags_model_peer_transfers_v1(decision_digest) WHERE direction='outbound';
     CREATE UNIQUE INDEX IF NOT EXISTS ags_model_peer_active_write_v1
       ON ags_model_peer_transfers_v1(write_key) WHERE direction='outbound' AND write_key IS NOT NULL
-      AND state IN ('prepared','sent','unknown','accepted');`);
+      AND state IN ('prepared','sent','unknown','accepted');
+    CREATE TABLE IF NOT EXISTS ags_model_peer_message_bindings_v1 (
+      packet_id TEXT PRIMARY KEY, message_id TEXT NOT NULL UNIQUE
+    ) STRICT;`);
   }
   private transaction<T>(work: () => T): T {
     this.database.exec("BEGIN IMMEDIATE");
@@ -40,6 +43,24 @@ export class ModelPeerJournal {
     const row = this.database.prepare("SELECT packet_id FROM ags_model_peer_transfers_v1 WHERE direction='outbound' AND decision_digest=?")
       .get(decisionDigest) as { packet_id: string } | undefined;
     return row ? this.get(row.packet_id) : null;
+  }
+  messageId(body: string): string | null {
+    const row = this.database.prepare("SELECT message_id FROM ags_model_peer_message_bindings_v1 WHERE packet_id=?")
+      .get(peerMessageId(body)) as { message_id: string } | undefined;
+    return row?.message_id ?? null;
+  }
+  /** Persist the issued ID before submit; concurrent preparations leave only unused drafts. */
+  bindMessageId(body: string, messageId: string): string {
+    peerCheck(typeof messageId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(messageId),
+      "The broker did not issue a valid message ID.");
+    return this.transaction(() => {
+      const prior = this.messageId(body);
+      if (prior) return prior;
+      const count = this.database.prepare("SELECT count(*) AS n FROM ags_model_peer_message_bindings_v1").get() as { n: number };
+      peerCheck(count.n < 512, "Peer message bindings are full; resolve retained handoffs before new delivery.");
+      this.database.prepare("INSERT INTO ags_model_peer_message_bindings_v1 VALUES (?,?)").run(peerMessageId(body), messageId);
+      return messageId;
+    });
   }
   prepare(direction: PeerTransfer["direction"], decision: Pick<ModelRoutingDecisionV2, "decisionDigest" | "binding">, body: string, write: boolean, expiresAt: string): PeerTransfer {
     const packetId = peerMessageId(body);

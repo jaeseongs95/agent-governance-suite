@@ -4,13 +4,9 @@
   "title": "SendSessionMessageRequest.v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "targetHost", "targetSessionId", "body"],
+  "required": ["schemaVersion", "messageId"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
-    "targetHost": { "type": "string", "minLength": 1, "maxLength": 64 },
-    "targetSessionId": { "type": "string", "minLength": 1, "maxLength": 200 },
-    "body": { "type": "string", "minLength": 1, "maxLength": 4096 },
-    "ttlSeconds": { "type": "integer", "minimum": 30, "maximum": 86400, "default": 3600 },
     "messageId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" },
     "_sessionBinding": {
       "type": "object",

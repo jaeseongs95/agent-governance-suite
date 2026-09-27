@@ -40,6 +40,7 @@ import {
   type UpdateSessionStatusRequestV1,
   type ListSessionStatusRequestV1,
   type SendSessionMessageRequestV1,
+  type PrepareSessionMessageRequestV1,
   type AcknowledgeSessionMessagesRequestV1,
   type GetSessionMessageStatusRequestV1,
   type PrepareStateCleanupRequestV1,
@@ -145,6 +146,7 @@ export const contractSchemas = {
   listSessionStatusRequest: loadSchema("list-session-status-request.v1.schema.json"),
   sendSessionMessageRequest: loadSchema("send-session-message-request.v1.schema.json"),
   sessionTask: loadSchema("session-task.v1.schema.json"),
+  prepareSessionMessageRequest: loadSchema("prepare-session-message-request.v1.schema.json"),
   acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
   getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
@@ -452,6 +454,10 @@ export class ContractValidator {
 
   sendSessionMessageRequest(value: unknown): SendSessionMessageRequestV1 {
     return this.assert<SendSessionMessageRequestV1>("sendSessionMessageRequest", value);
+  }
+
+  prepareSessionMessageRequest(value: unknown): PrepareSessionMessageRequestV1 {
+    return this.assert<PrepareSessionMessageRequestV1>("prepareSessionMessageRequest", value);
   }
 
   acknowledgeSessionMessagesRequest(value: unknown): AcknowledgeSessionMessagesRequestV1 {

@@ -3,11 +3,11 @@
   "artifacts": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "sha256:4ea1b39183abbc1c8f55e0cc752bd9eb5c1484b3df2cbf096082d9f80e75caf8"
+      "sha256": "sha256:be0113f03d2d4ac8dfeacc3ee067ca3aa4b80147fad94a94aadce3b23bf0ee19"
     },
     {
       "path": ".mcp.json",
-      "sha256": "sha256:47773149e144e64ec56e4d16ed8c5afd188c3d951b44da997e475b9bcc405862"
+      "sha256": "sha256:ff4a7b62ae53faec9260e5aaee08aa125b18b77b893337ca388e389df9d8f703"
     },
     {
       "path": "contracts/acknowledge-session-messages-request.v1.schema.json",
@@ -222,6 +222,10 @@
       "sha256": "sha256:98c2dfd30510e5bcc0468c7ef1a75263f50488e2e8d7a18a5f6587de95927ddf"
     },
     {
+      "path": "contracts/prepare-session-message-request.v1.schema.json",
+      "sha256": "sha256:e720ebca68c55924ac46deb86f7f21a039f20e7a95dc88700bc50e7f6ee7e91d"
+    },
+    {
       "path": "contracts/prepare-state-cleanup-request.v1.schema.json",
       "sha256": "sha256:170cc0dc8314a30afb7e33844c836b077f514df16a5d03ac3d108e5f0aa50d38"
     },
@@ -279,7 +283,7 @@
     },
     {
       "path": "contracts/send-session-message-request.v1.schema.json",
-      "sha256": "sha256:908efccc22347f8eed1b8f7460072880ff335368aa5a2d06e8cc0edca6702e68"
+      "sha256": "sha256:f8c866e7185869a1361686a121bcd4c05ad7ae71cc99f655cacceafb22d5bcbd"
     },
     {
       "path": "contracts/session-task.v1.schema.json",
@@ -343,15 +347,15 @@
     },
     {
       "path": "mcp-server/dist/flowmarshal-profile-probe.mjs",
-      "sha256": "sha256:2aa24128480e4d3640a91dba04fd1b25a0595a721ef67683669a92d1d0cee170"
+      "sha256": "sha256:ff888e31d858bd5a5e3e3bb1220d517b6b0643a72bcc1fdd8178239034f34d9f"
     },
     {
       "path": "mcp-server/dist/server.mjs",
-      "sha256": "sha256:7fa9da938a9178c883e6b07f999161f8c514cdfef343caa04aab45e16cd526d0"
+      "sha256": "sha256:08b3f700f44d98caff7ef2294b52a8a6cc991146864ca9b9d7040cf21baf6a97"
     },
     {
       "path": "mcp-server/dist/session-message-broker.mjs",
-      "sha256": "sha256:c7dae8b57711f9b2ecc6dced370b0176e26574fcabdf4cf4b29a64814a947f91"
+      "sha256": "sha256:cbbc9e191180b14144c15d4bd9a2133503541ddb18b38ae8ee126344a0adcc93"
     },
     {
       "path": "runtime/schema-validation.mjs",
@@ -786,6 +790,7 @@
         "contracts/plan-workflow-request.v1.schema.json",
         "contracts/plugin-update-notice.v1.schema.json",
         "contracts/plugin-update-status.v1.schema.json",
+        "contracts/prepare-session-message-request.v1.schema.json",
         "contracts/prepare-state-cleanup-request.v1.schema.json",
         "contracts/provider-result.v1.schema.json",
         "contracts/purge-direct-context-request.v1.schema.json",
@@ -955,6 +960,6 @@
   ],
   "plugin": {
     "id": "agent-governance-suite",
-    "version": "2.4.0"
+    "version": "2.6.0"
   }
 }

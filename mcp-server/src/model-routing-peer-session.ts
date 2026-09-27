@@ -107,9 +107,16 @@ export class ModelRoutingPeerSession {
     await this.alive(packet.sender, io.call); await this.alive(packet.recipient, io.call);
     // Spool and signature expiries are separate: a short-lived signature never gets refreshed by a retry.
     const ttlSeconds = Math.max(30, Math.ceil((peerInstant(packet.expiresAt) - peerInstant(packet.issuedAt)) / 1000));
-    const result = await io.call("send", { sender: { host: packet.sender.host, sessionId: packet.sender.sessionId },
-      target: { host: packet.recipient.host, sessionId: packet.recipient.sessionId }, body, messageId: peerMessageId(body), ttlSeconds }) as { messageId?: string } | null;
-    peerCheck(result?.messageId === peerMessageId(body), "The broker did not acknowledge the peer message.");
+    const sender = { host: packet.sender.host, sessionId: packet.sender.sessionId };
+    let messageId = this.journal.messageId(body);
+    if (!messageId) {
+      const prepared = await io.call("prepare", { sender,
+        target: { host: packet.recipient.host, sessionId: packet.recipient.sessionId }, body, ttlSeconds }) as { messageId?: string } | null;
+      peerCheck(prepared?.messageId, "The broker did not issue a peer message ID.");
+      messageId = this.journal.bindMessageId(body, prepared.messageId);
+    }
+    const result = await io.call("send", { sender, messageId }) as { messageId?: string } | null;
+    peerCheck(result?.messageId === messageId, "The broker did not acknowledge the peer message.");
     return result.messageId;
   }
   async send(decisionDigest: string, details: { delta?: string; inputReferences?: Array<{ uri: string; digest: string }> } = {}) {
@@ -143,9 +150,12 @@ export class ModelRoutingPeerSession {
     const stored = JSON.parse(transfer.body) as PeerPacket;
     const packet = this.options.signer.verify(transfer.body, peerInstant(stored.issuedAt));
     peerCheck(canonicalJson(packet.sender) === canonicalJson(this.options.identity), "This handoff belongs to a different sender instance.");
+    const messageId = this.journal.messageId(transfer.body);
     let delivery: unknown = null;
-    try { delivery = await this.exchange().call("status", { sender: { host: packet.sender.host, sessionId: packet.sender.sessionId }, messageId: packetId }); } catch { /* Unknown delivery is not a rejection. */ }
-    return { packetId, handoffState: transfer.state, accepted: transfer.state === "accepted", delivery,
+    if (messageId) {
+      try { delivery = await this.exchange().call("status", { sender: { host: packet.sender.host, sessionId: packet.sender.sessionId }, messageId }); } catch { /* Unknown delivery is not a rejection. */ }
+    }
+    return { packetId, messageId, handoffState: transfer.state, accepted: transfer.state === "accepted", delivery,
       executionStarted: false, executionState: "not-observed", completed: false, executionAuthorized: false, trustedGateSatisfied: false };
   }
   /** Read-only diagnostic. A passing check is neither a start claim nor a reusable execution permit. */

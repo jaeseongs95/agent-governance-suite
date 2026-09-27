@@ -8,7 +8,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"
+            ],
             "timeout": 10,
             "statusMessage": "Checking peer messages"
           }
@@ -20,7 +22,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"
+            ],
             "timeout": 10,
             "statusMessage": "Checking local task continuity"
           }
@@ -31,7 +35,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs"
+            ],
             "timeout": 10
           }
         ]
@@ -43,7 +49,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -56,7 +64,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"
+            ],
             "timeout": 10
           }
         ]
@@ -69,7 +79,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"
+            ],
             "timeout": 10
           }
         ]
@@ -81,7 +93,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs"
+            ],
             "timeout": 10
           }
         ]
@@ -102,12 +116,14 @@
         ]
       },
       {
-        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(send_session_message|acknowledge_session_messages|get_session_message_status|validate_collaboration_decision)$",
+        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(prepare_session_message|send_session_message|acknowledge_session_messages|get_session_message_status|get_session_contact_state|contact_session|prepare_session_task_request|register_session_task_request|record_session_task_outcome|reconcile_session_task_request|validate_collaboration_decision)$",
         "hooks": [
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"
+            ],
             "timeout": 10
           }
         ]
@@ -118,7 +134,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"
+            ],
             "timeout": 10
           }
         ]
@@ -129,7 +147,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs"
+            ],
             "timeout": 10
           }
         ]
@@ -140,7 +160,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/skill-trigger-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/skill-trigger-hook.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -151,7 +173,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-board-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/session-board-hook.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -162,7 +186,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-board-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/session-board-hook.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -174,7 +200,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"
+            ],
             "timeout": 10
           }
         ]
@@ -184,7 +212,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/skill-trigger-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/skill-trigger-hook.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -194,7 +224,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-board-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/session-board-hook.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -219,7 +251,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"
+            ],
             "timeout": 10
           }
         ]
@@ -231,7 +265,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"],
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"
+            ],
             "timeout": 10
           }
         ]

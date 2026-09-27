@@ -95,6 +95,35 @@ test('W03 exact retry has one callback, conflicting outcome is rejected', () => 
   assert.equal(store.database.prepare('SELECT count(*) AS n FROM messages WHERE message_id = ?').get(first.callbackMessageId).n, 1);
 });
 
+test('W03 issued messages coexist with task callbacks and retain independent retry receipts after restart', () => {
+  const { store, database } = fixture();
+  const ordinarySender = { host: actor.host, sessionId: actor.sessionId };
+  const draft = store.prepare({ sender: ordinarySender, target: callbackTarget,
+    body: 'Ordinary peer delta', ttlSeconds: 600 }, now);
+  assert.equal(store.database.prepare('SELECT count(*) AS n FROM messages').get().n, 0);
+  register(store);
+  const ordinary = store.submitPrepared(ordinarySender, draft.messageId, now + 10);
+  const terminal = store.recordTaskOutcome(outcome, proof, binding(), now + 100);
+  assert.notEqual(ordinary.messageId, terminal.callbackMessageId);
+  const reopened = new SessionMessageStore(database);
+  stores.push(reopened);
+  assert.deepEqual(reopened.submitPrepared(ordinarySender, draft.messageId, now + 101),
+    { ...ordinary, duplicate: true });
+  assert.deepEqual(reopened.recordTaskOutcome(outcome, proof, binding(), now + 101),
+    { ...terminal, duplicate: true });
+  const messages = reopened.claim(callbackTarget, now + 102);
+  assert.equal(messages.length, 2);
+  assert.deepEqual(new Set(messages.map(message => message.messageId)),
+    new Set([ordinary.messageId, terminal.callbackMessageId]));
+  assert.equal(reopened.acknowledge(callbackTarget, [ordinary.messageId], now + 103), 1);
+  assert.equal(reopened.taskOutcome(outcomeKey).callbackAcknowledgedAt, null);
+  assert.equal(reopened.acknowledge(callbackTarget, [terminal.callbackMessageId], now + 104), 1);
+  assert.equal(reopened.taskOutcome(outcomeKey).callbackAcknowledgedAt, new Date(now + 104).toISOString());
+  assert.equal(reopened.taskOutcome(outcomeKey).acceptance, 'unverified');
+  assert.equal(reopened.database.prepare('SELECT count(*) AS n FROM task_requests').get().n, 1);
+  assert.equal(reopened.database.prepare('SELECT count(*) AS n FROM task_outcomes').get().n, 1);
+});
+
 test('W03 different request IDs cannot create two terminal outcomes for one owned task', () => {
   const { store } = fixture();
   register(store);

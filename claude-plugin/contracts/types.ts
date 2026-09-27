@@ -1,3 +1,5 @@
+import type { ModelSelectionRequestV2, ModelRoutingDecisionV2, ModelApplicationRequestV2, ModelApplicationRecordV2 } from "./model-routing-types.js";
+
 /** Public v1 values. Do not add ad-hoc states or error codes at call sites. */
 export const CONTRACT_VERSION = "1.0.0" as const;
 
@@ -70,6 +72,7 @@ export interface ExecutionContextV1 {
   reasoningEffort: ReasoningEffortV1;
   source: "runtime" | "spawn-result";
   observedAt: string;
+  profileBinding?: { profileId: "vm-protected-v1" | "flowmarshal-same-user-v1"; freezeIdentity: string };
   /**
    * Trusted-host binding fields are optional for v1 receipt compatibility.
    * Strict MCP assurance requires all of them and rejects caller-supplied contexts.
@@ -161,6 +164,20 @@ export interface ContinuityEvidenceRefV1 {
   verified: boolean;
 }
 
+/** Internal identity/integrity metadata. Authorization requires a separate namespace ACL check. */
+export const ARTIFACT_NAMESPACE = ["checkpoint-evidence", "task", "workspace"] as const;
+export type ArtifactNamespaceV1 = (typeof ARTIFACT_NAMESPACE)[number];
+export type ArtifactHashDomainV1 = "raw-bytes" | "canonical-json";
+export interface ArtifactRefV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  namespace: ArtifactNamespaceV1;
+  id: string;
+  digest: Sha256Digest;
+  hashDomain: ArtifactHashDomainV1;
+  size: number;
+  mediaType: string;
+}
+
 export interface CheckpointContextRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   requestId: string;
@@ -170,6 +187,108 @@ export interface CheckpointContextRequestV1 {
   evidenceRefs: ContinuityEvidenceRefV1[];
   _continuityBinding: string;
 }
+
+export const CHECKPOINT_DELTA_MAX_BYTES = 4096;
+export interface CheckpointDeltaReceiverV1 {
+  host: string;
+  sessionId: string;
+  instanceId: string;
+}
+export type CheckpointDeltaOperationV1 =
+  | { op: "set"; path: "/status"; value: CheckpointContextRequestV1["status"] }
+  | { op: "set"; path: "/core/objective"; value: string }
+  | { op: "set"; path: "/core/completionCriteria" | "/core/constraints" | "/core/decisions" | "/core/progress" | "/core/blockers" | "/core/nextActions"; value: string[] }
+  | { op: "set"; path: "/evidenceRefs"; value: ContinuityEvidenceRefV1[] };
+
+/** Syntax and identity only. A07 applies it to a verified base and checks target digest. */
+export interface CheckpointDeltaV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  taskId: string;
+  revision: number;
+  receiver: CheckpointDeltaReceiverV1;
+  contextGeneration: number;
+  sequence: number;
+  baseCheckpointDigest: Sha256Digest;
+  targetCheckpointDigest: Sha256Digest;
+  operations: CheckpointDeltaOperationV1[];
+  description?: string;
+}
+
+/** Only receiver state commit may produce this acknowledgement. */
+export interface CheckpointDeltaStateAckV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "checkpoint-delta-state";
+  taskId: string;
+  revision: number;
+  receiver: CheckpointDeltaReceiverV1;
+  contextGeneration: number;
+  sequence: number;
+  targetCheckpointDigest: Sha256Digest;
+}
+
+/** Delivery alone does not attest checkpoint application. */
+export interface CheckpointDeltaTransportAckV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "checkpoint-delta-transport";
+  deliveryId: string;
+  receiver: CheckpointDeltaReceiverV1;
+}
+
+export const CONTEXT_TRANSITION_ACTIONS = ["CONTINUE", "CHECKPOINT_AND_CONTINUE", "COMPACT_AND_CONTINUE",
+  "NEW_ISOLATED_REVIEW_SESSION", "CLOSE"] as const;
+export type ContextTransitionActionV1 = (typeof CONTEXT_TRANSITION_ACTIONS)[number];
+export const CONTEXT_TRANSITION_STATUSES = ["request", "started", "completed", "no-op", "failed", "uncertain"] as const;
+export type ContextTransitionStatusV1 = (typeof CONTEXT_TRANSITION_STATUSES)[number];
+
+export interface ContextTransitionBindingV1 {
+  transitionId: string;
+  taskId: string;
+  revision: number;
+  receiver: CheckpointDeltaReceiverV1;
+  contextGeneration: number;
+  checkpoint: ArtifactRefV1;
+}
+
+/** Declared intent only; it does not create a session, authority or execution permission. */
+export interface ContextTransitionIntentV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "context-transition-intent";
+  status: "request";
+  action: ContextTransitionActionV1;
+  binding: ContextTransitionBindingV1;
+}
+
+export interface ContextTransitionTargetV1 {
+  receiver: CheckpointDeltaReceiverV1;
+  contextGeneration: number;
+}
+export type SameContextTransitionTargetV1 = ContextTransitionTargetV1 & { origin: "same-context" };
+export type CompactedContextTransitionTargetV1 = ContextTransitionTargetV1 & { origin: "compacted" };
+/** This typed declaration is not proof of host isolation or audit independence. */
+export type FreshContextTransitionTargetV1 = ContextTransitionTargetV1 & {
+  origin: "fresh-context"; historyInherited: false;
+};
+
+type ContextTransitionResultBindingV1 = {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "context-transition-result";
+  action: ContextTransitionActionV1;
+  binding: ContextTransitionBindingV1;
+  intentDigest: Sha256Digest;
+};
+/** Completed destructive transitions still need a new verified base ACK; this is not that ACK. */
+export type ContextTransitionResultV1 = ContextTransitionResultBindingV1 & (
+  | { status: "started"; baseState: "invalid"; target: null }
+  | { status: "failed" | "uncertain"; baseState: "invalid"; target: null; reason: string }
+  | { status: "no-op"; baseState: "unchanged"; target: SameContextTransitionTargetV1 }
+  | { status: "completed" } & (
+    | { action: "CONTINUE" | "CHECKPOINT_AND_CONTINUE"; baseState: "unchanged"; target: SameContextTransitionTargetV1 }
+    | { action: "COMPACT_AND_CONTINUE"; baseState: "invalid"; target: CompactedContextTransitionTargetV1 }
+    | { action: "NEW_ISOLATED_REVIEW_SESSION"; baseState: "invalid"; target: FreshContextTransitionTargetV1 }
+    | { action: "CLOSE"; baseState: "invalid"; target: null }
+  )
+);
+export type ContextTransitionV1 = ContextTransitionIntentV1 | ContextTransitionResultV1;
 
 export interface ContinuitySnapshotV1 {
   schemaVersion: typeof CONTRACT_VERSION;
@@ -324,13 +443,18 @@ export interface ListSessionStatusRequestV1 {
   _sessionBinding?: SessionBindingV1;
 }
 
-export interface SendSessionMessageRequestV1 {
+export interface PrepareSessionMessageRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   targetHost: string;
   targetSessionId: string;
   body: string;
   ttlSeconds?: number;
-  messageId?: string;
+  _sessionBinding?: SessionBindingV1;
+}
+
+export interface SendSessionMessageRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  messageId: string;
   _sessionBinding?: SessionBindingV1;
 }
 
@@ -344,6 +468,164 @@ export interface GetSessionMessageStatusRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   messageId: string;
   _sessionBinding?: SessionBindingV1;
+}
+
+/** Host names are opaque here. Host-specific lifecycle states belong in adapters. */
+export interface SessionTaskAddressV1 {
+  host: string;
+  sessionId: string;
+}
+
+export interface SessionTaskActorV1 extends SessionTaskAddressV1 {
+  instanceId: string;
+}
+
+export interface SessionTaskRequestV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "request";
+  requestId: string;
+  taskId: string;
+  sender: SessionTaskActorV1;
+  recipient: SessionTaskAddressV1;
+  callbackTarget: SessionTaskAddressV1;
+  revision: 1;
+  requestedAt: string;
+  expiresAt: string;
+  authorityEffect: "none";
+}
+
+/** A self-report only. Acceptance requires the existing independent evidence gate. */
+export interface SessionTaskTerminalOutcomeBaseV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "terminal-outcome";
+  taskId: string;
+  actor: SessionTaskActorV1;
+  revision: number;
+  result: "COMPLETED" | "BLOCKED" | "FAILED" | "CANCELLED";
+  evidenceRefs: string[];
+  reportedAt: string;
+  authorityEffect: "none";
+}
+
+export type SessionTaskTerminalOutcomeV1 = SessionTaskTerminalOutcomeBaseV1 & (
+  | { requestId: string; callbackTarget: SessionTaskAddressV1 }
+  | { requestId?: never; callbackTarget?: never }
+);
+
+export interface SessionTaskActivityObservationV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "activity-observation";
+  actor: SessionTaskActorV1;
+  revision: number;
+  activity: "busy" | "idle" | "unknown";
+  source: "host-observed" | "self-reported";
+  observedAt: string;
+  authorityEffect: "none";
+}
+
+export type SessionTaskEventV1 =
+  | SessionTaskRequestV1
+  | SessionTaskTerminalOutcomeV1
+  | SessionTaskActivityObservationV1;
+
+/** All context fields must come from authenticated server state, never from the event body. */
+export interface SessionTaskTransitionContextV1 {
+  authenticatedActor: SessionTaskActorV1;
+  currentInstanceId: string;
+  /** Task revisions are per task/request; activity revisions are per session instance. */
+  revisionStream: "task" | "activity";
+  currentRevision: number;
+  /** Issued or verified by the owning runtime, never copied from the event. */
+  boundTaskId?: string;
+  observedSource?: SessionTaskActivityObservationV1["source"];
+  request?: SessionTaskRequestV1;
+  terminalOutcome?: SessionTaskTerminalOutcomeV1;
+}
+
+function sameSessionTaskActor(a: SessionTaskActorV1, b: SessionTaskActorV1): boolean {
+  return a.host === b.host && a.sessionId === b.sessionId && a.instanceId === b.instanceId;
+}
+
+function sameSessionTaskAddress(a: SessionTaskAddressV1, b: SessionTaskAddressV1): boolean {
+  return a.host === b.host && a.sessionId === b.sessionId;
+}
+
+function sameSessionTaskRequest(a: SessionTaskRequestV1, b: SessionTaskRequestV1): boolean {
+  return a.requestId === b.requestId && a.taskId === b.taskId
+    && sameSessionTaskActor(a.sender, b.sender)
+    && sameSessionTaskAddress(a.recipient, b.recipient)
+    && sameSessionTaskAddress(a.callbackTarget, b.callbackTarget)
+    && a.revision === b.revision && a.requestedAt === b.requestedAt
+    && a.expiresAt === b.expiresAt;
+}
+
+function sameSessionTaskOutcome(a: SessionTaskTerminalOutcomeV1, b: SessionTaskTerminalOutcomeV1): boolean {
+  return a.requestId === b.requestId && a.taskId === b.taskId
+    && sameSessionTaskActor(a.actor, b.actor)
+    && (a.callbackTarget === undefined && b.callbackTarget === undefined
+      || a.callbackTarget !== undefined && b.callbackTarget !== undefined
+      && sameSessionTaskAddress(a.callbackTarget, b.callbackTarget))
+    && a.revision === b.revision && a.result === b.result
+    && a.reportedAt === b.reportedAt && a.evidenceRefs.length === b.evidenceRefs.length
+    && a.evidenceRefs.every((ref, index) => ref === b.evidenceRefs[index]);
+}
+
+/** Run after JSON-schema validation, inside the transaction that reads current state. */
+export function assertSessionTaskTransitionV1(
+  event: SessionTaskEventV1,
+  context: SessionTaskTransitionContextV1,
+): "new" | "duplicate" {
+  const actor = event.kind === "request" ? event.sender : event.actor;
+  if (!sameSessionTaskActor(actor, context.authenticatedActor)
+    || actor.instanceId !== context.currentInstanceId) {
+    throw new Error("SESSION_TASK_ACTOR_STALE_OR_UNAUTHENTICATED");
+  }
+  if (context.revisionStream !== (event.kind === "activity-observation" ? "activity" : "task")) {
+    throw new Error("SESSION_TASK_REVISION_STREAM_MISMATCH");
+  }
+  if (event.kind === "request") {
+    if (event.taskId !== context.boundTaskId) {
+      throw new Error("SESSION_TASK_BINDING_MISMATCH");
+    }
+    if (!sameSessionTaskAddress(event.callbackTarget, context.authenticatedActor)) {
+      throw new Error("SESSION_TASK_CALLBACK_TARGET_MISMATCH");
+    }
+    if (Date.parse(event.requestedAt) >= Date.parse(event.expiresAt)) {
+      throw new Error("SESSION_TASK_INVALID_DEADLINE");
+    }
+    if (context.request !== undefined) {
+      if (sameSessionTaskRequest(event, context.request)) return "duplicate";
+      throw new Error("SESSION_TASK_REQUEST_CONFLICT");
+    }
+    if (context.currentRevision !== 0) {
+      throw new Error("SESSION_TASK_REVISION_STALE");
+    }
+    return "new";
+  }
+  if (event.kind === "terminal-outcome") {
+    const request = context.request;
+    if (event.taskId !== context.boundTaskId
+      || (request === undefined
+        ? event.requestId !== undefined || event.callbackTarget !== undefined
+        : event.requestId !== request.requestId || event.taskId !== request.taskId
+          || event.actor.host !== request.recipient.host
+          || event.actor.sessionId !== request.recipient.sessionId
+          || event.callbackTarget === undefined
+          || !sameSessionTaskAddress(event.callbackTarget, request.callbackTarget))) {
+      throw new Error("SESSION_TASK_REQUEST_BINDING_MISMATCH");
+    }
+    if (context.terminalOutcome !== undefined) {
+      if (sameSessionTaskOutcome(event, context.terminalOutcome)) return "duplicate";
+      throw new Error("SESSION_TASK_TERMINAL_CONFLICT");
+    }
+  }
+  if (event.kind === "activity-observation" && event.source !== context.observedSource) {
+    throw new Error("SESSION_TASK_ACTIVITY_SOURCE_UNVERIFIED");
+  }
+  if (!Number.isSafeInteger(event.revision) || event.revision <= context.currentRevision) {
+    throw new Error("SESSION_TASK_REVISION_STALE");
+  }
+  return "new";
 }
 
 export interface StateCleanupPolicyV1 {
@@ -961,6 +1243,7 @@ export interface WorkflowReceiptV1 {
   revision: number;
   state: WorkflowState;
   plan: WorkflowPlanV1;
+  profileBinding?: { profileId: "vm-protected-v1" | "flowmarshal-same-user-v1"; freezeIdentity: string };
   stageResults: StageResultV1[];
   blockers: string[];
   unresolved: string[];
@@ -1008,3 +1291,276 @@ export type {
   ModelRoutingPolicyV1,
   ModelSelectionRequestV2,
 } from "./model-routing-types.js";
+
+
+/** v2.6/S1a: declarative semantic contracts only; validation does not grant admission or execution. */
+export interface SemanticDecisionProviderV1 {
+  id: string;
+  model: string;
+  adapterVersion: string;
+  /** Null means not reported/pinnable; it is never invented by the adapter. */
+  providerVersion: string | null;
+  modelVersion: string | null;
+}
+
+export interface SemanticDecisionQuestionV1 {
+  schemaVersion: "1.0.0";
+  id: string;
+  version: string;
+  kind: "Choice";
+  purpose: "model-ranking";
+  text: string;
+  selectionUnit: "model";
+  tieBreak: "baseline-order";
+}
+
+export interface SemanticDecisionStateV1 {
+  text: string;
+  sources: Array<{ kind: "task" | "frame" | "artifact"; id: string; digest: string }>;
+  /** Digest of canonical JSON text when text is a summary; source references remain mandatory. */
+  summaryDigest: string | null;
+}
+
+export interface SemanticEligibleCandidateV1 {
+  candidateKey: string;
+  model: string;
+  preferenceGroup: number;
+  baselineRank: number;
+}
+
+export interface SemanticModelOptionV1 {
+  optionId: string;
+  model: string;
+  candidateKeys: string[];
+}
+
+export interface SemanticEvaluationBindingV1 {
+  evaluationId: string;
+  binding: ModelSelectionRequestV2["binding"];
+  effectiveRoutingRequestDigest: string;
+  stateDigest: string;
+  questionDigest: string;
+  catalogDigest: string;
+  routingPolicyDigest: string;
+  semanticPolicyDigest: string;
+  capabilitySetDigest: string;
+  eligibleSetDigest: string;
+  optionMappingDigest: string;
+  provider: SemanticDecisionProviderV1;
+  reducerVersion: string;
+}
+
+/** AGS-internal prepared evaluation. Never register this as an MCP tool input. */
+export interface SemanticDecisionRequestV1 extends SemanticEvaluationBindingV1 {
+  schemaVersion: "1.0.0";
+  mode: "shadow" | "assist";
+  state: SemanticDecisionStateV1;
+  question: SemanticDecisionQuestionV1;
+  eligibleSet: SemanticEligibleCandidateV1[];
+  options: SemanticModelOptionV1[];
+  requestedAt: string;
+  expiresAt: string;
+  requestDigest: string;
+}
+
+/** External Choice normalization, not a registered advice artifact or an authority receipt. */
+export interface SemanticChoiceV1 {
+  kind: "Choice";
+  /** Co-best model options. Order has no ranking/host-control meaning. */
+  selectedOptionIds: string[];
+  /** Uncalibrated provider confidence; null cannot satisfy a numeric adoption threshold. */
+  confidence: number | null;
+}
+
+/** AGS-registered immutable bytes; local admission metadata deliberately lives outside the wire contract. */
+export interface SemanticDecisionAdviceV1 extends SemanticEvaluationBindingV1 {
+  schemaVersion: "1.0.0";
+  semanticRequestDigest: string;
+  choice: SemanticChoiceV1;
+  evaluatedAt: string;
+  expiresAt: string;
+  adviceDigest: string;
+}
+
+export type SemanticAdoptionPolicyV1 =
+  | { status: "unvalidated"; minimumConfidence: null; evidenceDigest: null }
+  | {
+      status: "validated";
+      minimumConfidence: number;
+      evidenceDigest: string;
+      provider: SemanticDecisionProviderV1;
+      questionDigest: string;
+      reducerVersion: string;
+    };
+
+export interface SemanticDecisionPolicyV1 {
+  schemaVersion: "1.0.0";
+  id: string;
+  version: string;
+  mode: "off" | "shadow" | "assist";
+  purpose: "model-ranking";
+  assistScope: {
+    highRisk: false;
+    independentAudit: false;
+    preserveRequired: true;
+    preservePreferred: true;
+    selectionUnit: "model";
+    tieBreak: "baseline-order";
+  };
+  adoption: SemanticAdoptionPolicyV1;
+  egress: { enabled: boolean; allowedProviders: string[] };
+}
+
+export type SemanticEgressAccessPathV1 = "subscription" | "api" | "enterprise";
+export type SemanticEgressDataCategoryV1 = "routing" | "question" | "task" | "frame" | "artifact" | "catalog";
+
+/** Operator-owned configuration; never accepted through a model-callable request. */
+export type SemanticEgressConfigV1 =
+  | { schemaVersion: "1.0.0"; enabled: false }
+  | {
+      schemaVersion: "1.0.0";
+      enabled: true;
+      approval: { source: string; revision: number; decisionId: string };
+      routes: Array<{
+        providerId: string;
+        endpoint: string;
+        dataCategories: SemanticEgressDataCategoryV1[];
+        accessPaths: SemanticEgressAccessPathV1[];
+      }>;
+      budget: {
+        requests: { max: number; basis: "evaluation" };
+        cost: { maxMicros: number; currency: string; basis: "evaluation" };
+      };
+    };
+
+/** Caller may supply routing input and references, never prepared state/policy/capability/admission. */
+export interface SemanticModelAssignmentRequestV1 {
+  schemaVersion: "1.0.0";
+  routingRequest: ModelSelectionRequestV2;
+  taskRef: { taskId: string; frameId?: string; artifactIds?: string[] };
+}
+
+export interface SemanticDecisionUseV1 {
+  mode: "assist";
+  adviceDigest: string;
+  semanticRequestDigest: string;
+  semanticPolicyDigest: string;
+  eligibleSetDigest: string;
+  optionMappingDigest: string;
+  reducerVersion: string;
+  selectedOptionId: string;
+  baselineDecisionDigest: string;
+}
+
+/** Only advice-adopting assist uses v3; off/shadow/fallback remain v2. */
+export interface ModelRoutingDecisionV3 extends Omit<ModelRoutingDecisionV2,
+  "schemaVersion" | "selected" | "target" | "invocationSurface" | "status" | "fallbackReason" | "capabilitySnapshotDigest"> {
+  schemaVersion: "3.0.0";
+  selected: NonNullable<ModelRoutingDecisionV2["selected"]>;
+  target: NonNullable<ModelRoutingDecisionV2["target"]>;
+  invocationSurface: NonNullable<ModelRoutingDecisionV2["invocationSurface"]>;
+  status: "selected";
+  fallbackReason: null;
+  capabilitySnapshotDigest: string;
+  semantic: SemanticDecisionUseV1;
+}
+
+export interface ModelApplicationRequestV3 extends Omit<ModelApplicationRequestV2, "schemaVersion"> {
+  schemaVersion: "3.0.0";
+  semanticAdviceDigest: string;
+}
+
+export interface ModelApplicationRecordV3 extends Omit<ModelApplicationRecordV2, "schemaVersion"> {
+  schemaVersion: "3.0.0";
+  semantic: SemanticDecisionUseV1;
+}
+
+/** One shared pool can have several independent windows; model bindings live in a separate contract. */
+export interface ResourceStateSnapshotV1 {
+  schemaVersion: "1.0.0";
+  /** Keyed pseudonym, never a raw account identifier or credential. */
+  accountScope: string;
+  resourcePoolId: string;
+  accessPath: "subscription" | "api" | "enterprise";
+  windows: Array<{
+    windowId: string;
+    resetEpoch: number;
+    resetAt: string | null;
+    revision: number;
+    limitBucket: {
+      bucketId: string;
+      kind: "tokens" | "requests" | "subscription-percent" | "billing" | "credits" | "concurrency";
+      unit: string;
+      limit: number | null;
+      remaining: number | null;
+    };
+    coverage: "complete" | "partial" | "unknown";
+    source: {
+      kind: "host-observation" | "provider-observation" | "configured" | "user-declared";
+      evidenceDigest: string | null;
+    };
+    observedAt: string;
+    expiresAt: string;
+  }>;
+}
+
+/** Policy approval is a claim until an authority authenticates its evidence digest. */
+export interface ResourcePolicyV1 {
+  schemaVersion: "1.0.0";
+  policyId: string;
+  revision: number;
+  accountScope: string;
+  resourcePoolId: string;
+  approval: ResourcePolicyApprovalV1;
+  allowedAccessPaths: Array<"subscription" | "api" | "enterprise">;
+  paidAccessApproval?: ResourcePolicyApprovalV1;
+  onUnknown: "block" | "defer";
+  onStale: "block" | "defer";
+  rolePriorities?: Array<{ roleId: string; priority: number }>;
+  preferenceOverride?: {
+    mode: "preferred-over-required" | "preferred-through-hard-reserve";
+    reason: string;
+    approval: ResourcePolicyApprovalV1;
+  };
+  windows: Array<{
+    windowId: string;
+    bucketId: string;
+    unit: string;
+    hardLimit?: { minimumRemaining: number };
+    reservePolicy?: {
+      hardReserve?: { minimumRemaining: number; protectedRoleIds: string[] };
+      softConservation?: { enterBelowRemaining: number };
+    };
+  }>;
+}
+
+export interface ResourcePolicyApprovalV1 {
+  approvedBy: string;
+  approvedAt: string;
+  evidenceDigest: string;
+}
+
+/** Approved assignment projection; the server must compare it to its current approved slot set. */
+export interface RoleSlotV1 {
+  schemaVersion: "1.0.0";
+  kind: "role-slot-projection";
+  slotId: string;
+  authorization: {
+    taskId: string;
+    runId: string;
+    stageId: string;
+    assignmentId: string;
+    planRevision: number;
+    planDigest: string;
+    authorizationDigest: string;
+  };
+  slotIndex: number;
+  slotCount: number;
+  purpose: string;
+  routingRole: ModelSelectionRequestV2["role"];
+  riskLevel: RiskLevel;
+  highRisk: boolean;
+  independenceRequired: boolean;
+  requirements: ModelSelectionRequestV2["requirements"];
+  executionAuthorized: false;
+}

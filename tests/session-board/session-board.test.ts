@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
+import { once } from "node:events";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -28,6 +29,8 @@ import { createMcpServer } from "../../mcp-server/src/server.js";
 import { GATE_REASON, handleSessionBoardHook, runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SessionMessageService, type SessionPresenceList } from "../../mcp-server/src/session-message-service.js";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
+import { requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
+import { SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_PRESENCE_BATCH_LIMIT } from "../../mcp-server/src/session-message-protocol.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "../mcp/version-fixtures.js";
@@ -257,7 +260,7 @@ describe("session board hook", () => {
 
 describe("session board MCP tools", () => {
   function sessionMessages(
-    presence: ApiResultV1<SessionPresenceList> = { schemaVersion: "1.0.0", ok: false, data: null, error: { code: "MCP_UNAVAILABLE", message: "unavailable", details: null } },
+    presence: ApiResultV1<SessionPresenceList> = { schemaVersion: "1.0.0", ok: true, data: { sessions: [] }, error: null },
   ) {
     const service = new SessionMessageService();
     service.listPresence = async () => presence;
@@ -363,5 +366,105 @@ describe("session board MCP tools", () => {
       canWakeSilently: false, deliveryCapabilities: { supportedInjection: [], idleWake: "none" }, collaborationId: null, workspaceId: null, role: null,
       startedAt: null, heartbeatAt: null, leaseUntil: null, endedAt: null, endReason: null, state: "unknown",
     });
+  });
+
+  it("retains board work and exposes a presence lookup failure without inventing unknown presence", async () => {
+    const databasePath = boardPath();
+    const board = open(databasePath);
+    setSummary(board, session(new Date().toISOString(), "lookup-failed"), "작업 유지");
+    const client = await connect(databasePath, sessionMessages({ schemaVersion: "1.0.0",
+      ok: false, data: null, error: { code: "MCP_UNAVAILABLE", message: "broker unavailable", details: null } }));
+    const listed = payload(await client.callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } }));
+    expect(listed).toMatchObject({ ok: true, data: {
+      sessions: [{ sessionId: "lookup-failed", summary: "작업 유지", presence: null }],
+      presenceLookup: { ok: false, error: { code: "MCP_UNAVAILABLE", message: "broker unavailable" } },
+    } });
+  });
+
+  it("looks up only board identities through bounded real broker packets despite 248 historical presences", async () => {
+    const databasePath = boardPath();
+    const state = path.join(path.dirname(databasePath), "broker");
+    const store = new SessionMessageStore(path.join(state, "session-messages.sqlite3"));
+    const now = Date.now();
+    for (let index = 0; index < 248; index++) store.startPresence({
+      host: "history", sessionId: `old-${index}`, instanceId: `instance-${index}`,
+      transport: "fixture", wakeVisibility: "none", canWakeSilently: false,
+      workspaceId: "가".repeat(500), collaborationId: "나".repeat(200), role: "다".repeat(100),
+    }, now - 60_000);
+    store.startPresence({ host: "claude-code", sessionId: "expired", instanceId: "expired-generation",
+      transport: "fixture", wakeVisibility: "none", canWakeSilently: false }, now - 60_000);
+    store.close();
+    const observations = path.join(state, "observations.json");
+    const child = spawn(process.execPath, ["--import", new URL("../session-messaging/fixtures/presence-responses.mjs", import.meta.url).href,
+      fileURLToPath(new URL("../../mcp-server/dist/session-message-broker.mjs", import.meta.url)), "--state-directory", state], {
+      windowsHide: true, stdio: "ignore", env: { ...process.env, AGS_PRESENCE_OBSERVATIONS: observations, AGS_PRESENCE_RESPONSE_FAULT: "" },
+    });
+    let client: Client | undefined;
+    try {
+      await waitForSessionMessageBrokerReady(state, child, 5000);
+      await requestSessionMessageOnce("presence-start", { target: { host: "claude-code", sessionId: "fresh" },
+        instanceId: "fresh-generation", transport: "fixture", wakeVisibility: "none", canWakeSilently: false }, state);
+      const messages = new SessionMessageService(state);
+      const targets = ["fresh", "expired", "absent", "absent-2", "absent-3"]
+        .map(sessionId => ({ host: "claude-code", sessionId }));
+      const direct = await messages.listPresence(targets);
+      expect(direct).toMatchObject({ ok: true, data: { sessions: [
+        { state: "online" }, { state: "unreachable" }, { state: "unknown" }, { state: "unknown" }, { state: "unknown" },
+      ] } });
+      const board = open(databasePath);
+      for (const target of targets) setSummary(board, session(new Date().toISOString(), target.sessionId), "실제 조회");
+      client = await connect(databasePath, messages);
+      const listed = payload(await client.callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } }));
+      expect(listed).toMatchObject({ ok: true, data: { presenceLookup: { ok: true, error: null } } });
+      const rows = (listed.data as { sessions: Array<{ sessionId: string; presence: { state: string } }> }).sessions;
+      expect(rows.find(row => row.sessionId === "fresh")?.presence.state).toBe("online");
+      expect(rows.find(row => row.sessionId === "expired")?.presence.state).toBe("unreachable");
+      expect(rows.find(row => row.sessionId === "absent")?.presence.state).toBe("unknown");
+      const packets = JSON.parse(readFileSync(observations, "utf8")) as Array<{ targetCount: number; responseBytes: number }>;
+      expect(packets).toHaveLength(4);
+      expect(packets.every(packet => packet.targetCount <= SESSION_PRESENCE_BATCH_LIMIT
+        && packet.responseBytes <= SESSION_MESSAGE_MAX_RESPONSE_BYTES)).toBe(true);
+      expect(packets.reduce((sum, packet) => sum + packet.targetCount, 0)).toBe(10);
+      expect(await messages.listPresence(Array.from({ length: 257 }, () => targets[0]!)))
+        .toMatchObject({ ok: false, error: { code: "INVALID_INPUT" } });
+      const reopened = new SessionMessageStore(path.join(state, "session-messages.sqlite3"));
+      try { expect(reopened.database.prepare("SELECT count(*) AS n FROM session_presence").get()).toMatchObject({ n: 250 }); }
+      finally { reopened.close(); }
+    } finally {
+      await client?.close();
+      if (child.exitCode === null && child.signalCode === null) { const closed = once(child, "exit"); child.kill(); await closed; }
+    }
+  });
+
+  it.each(["invalid", "oversize", "stored-oversize"])("reports %s presence responses as lookup failures while preserving board work", async fault => {
+    const databasePath = boardPath();
+    const state = path.join(path.dirname(databasePath), "broker");
+    const store = new SessionMessageStore(path.join(state, "session-messages.sqlite3"));
+    store.startPresence({ host: "claude-code", sessionId: "fault-target", instanceId: "generation",
+      transport: "fixture", wakeVisibility: "none", canWakeSilently: false });
+    if (fault === "stored-oversize") store.database.prepare("UPDATE session_presence SET workspace_id = ?").run("x".repeat(32768));
+    store.close();
+    const observations = path.join(state, "observations.json");
+    const child = spawn(process.execPath, ["--import", new URL("../session-messaging/fixtures/presence-responses.mjs", import.meta.url).href,
+      fileURLToPath(new URL("../../mcp-server/dist/session-message-broker.mjs", import.meta.url)), "--state-directory", state], {
+      windowsHide: true, stdio: "ignore", env: { ...process.env, AGS_PRESENCE_OBSERVATIONS: observations, AGS_PRESENCE_RESPONSE_FAULT: fault },
+    });
+    let client: Client | undefined;
+    try {
+      await waitForSessionMessageBrokerReady(state, child, 5000);
+      const board = open(databasePath);
+      setSummary(board, session(new Date().toISOString(), "fault-target"), "장애 중 작업 유지");
+      client = await connect(databasePath, new SessionMessageService(state));
+      expect(payload(await client.callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } })))
+        .toMatchObject({ ok: true, data: { sessions: [{ summary: "장애 중 작업 유지", presence: null }],
+          presenceLookup: { ok: false, error: { code: "MCP_UNAVAILABLE", message: expect.stringMatching(/invalid presence|exceeded its limit/u) } } } });
+      if (fault === "stored-oversize") {
+        const packets = JSON.parse(readFileSync(observations, "utf8")) as Array<{ responseBytes: number }>;
+        expect(packets.every(packet => packet.responseBytes <= SESSION_MESSAGE_MAX_RESPONSE_BYTES)).toBe(true);
+      }
+    } finally {
+      await client?.close();
+      if (child.exitCode === null && child.signalCode === null) { const closed = once(child, "exit"); child.kill(); await closed; }
+    }
   });
 });

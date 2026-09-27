@@ -1,0 +1,1352 @@
+{
+  "package": "Microsoft.Net.Compilers.Toolset",
+  "version": "5.9.0",
+  "source": "https://api.nuget.org/v3-flatcontainer/microsoft.net.compilers.toolset/5.9.0/microsoft.net.compilers.toolset.5.9.0.nupkg",
+  "compiler": "package/tasks/net472/csc.exe",
+  "nupkg": {
+    "file": "microsoft.net.compilers.toolset.5.9.0.nupkg",
+    "sha512": "nueMs8iTpdfM4+tbhcqHbPI2DHQ7NMqVx3n1xAecnITF5iB3HtR5H40kfq0DLbI0/QgckG/dw30LeIdojmYa4Q==",
+    "publishedSha512": "nueMs8iTpdfM4+tbhcqHbPI2DHQ7NMqVx3n1xAecnITF5iB3HtR5H40kfq0DLbI0/QgckG/dw30LeIdojmYa4Q==",
+    "catalogEntry": "https://api.nuget.org/v3/catalog0/data/2026.08.17.17.01.16/microsoft.net.compilers.toolset.5.9.0.json"
+  },
+  "files": {
+    "package/.signature.p7s": {
+      "sha256": "727e16bc87f0e7ef6807902c29ea768486d714e7437a4773ad0ad350a1d2bd02"
+    },
+    "package/Icon.png": {
+      "sha256": "8fcf6f6cd575c0f8c643691765a7db2a4b3b104bfbff34646555f5ccffdb2895"
+    },
+    "package/Microsoft.Net.Compilers.Toolset.nuspec": {
+      "sha256": "fede39240ad734fed1c9958747f7ecf26bde196ad3391f30346dad6860525389"
+    },
+    "package/ThirdPartyNotices.rtf": {
+      "sha256": "ef4678850e7e3aaf9297f07e5c4060d477854e545ccf8e2ef8452d65a7b2efaf"
+    },
+    "package/[Content_Types].xml": {
+      "sha256": "6cbb3d171debcdf62ae43b9f50f596c101da4d9354c7c099d29bb72c949fb9e5"
+    },
+    "package/_rels/.rels": {
+      "sha256": "179ee3ab819916d80c918ba1e15e508f201ff93cfda65a8fdf009c2746b35a6a"
+    },
+    "package/build/Microsoft.Net.Compilers.Toolset.props": {
+      "sha256": "49eae3f409c1b768a4d36bfa98e7537193d2067dd82f6634d5ca283275816e0d"
+    },
+    "package/buildMultiTargeting/Microsoft.Net.Compilers.Toolset.props": {
+      "sha256": "d3518affcd2d87571a171b52592c0b7d364368756e9b06175e0947ca1641b53f"
+    },
+    "package/package/services/metadata/core-properties/72b47ae371644d4392a6c333d10c1303.psmdcp": {
+      "sha256": "d6acfad70c6be543a6a93527260b229197bd48f308f3500b50c499b8e57034e5"
+    },
+    "package/tasks/net472/Microsoft.Build.Tasks.CodeAnalysis.dll": {
+      "sha256": "55f7884ba3a80f2de6cd94968043f1d7b485ec84492e21142fe188ffb6e65a43",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/Microsoft.CSharp.Core.targets": {
+      "sha256": "a1c9c8bc54d3443e3a3a918e7384f2a8d4593534e096c5930d0cf96fb628b8f1"
+    },
+    "package/tasks/net472/Microsoft.CodeAnalysis.CSharp.Scripting.dll": {
+      "sha256": "7e402e1477f13bfb23a82ed43ce23051c21b95e3a0fcc1b4be9f9ced2faf5b0a",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/Microsoft.CodeAnalysis.CSharp.dll": {
+      "sha256": "d3738d2d0d6297f57c986ff985f67c46efdc02c6b7038355cfc620db707062a3",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/Microsoft.CodeAnalysis.ExternalAccess.RazorCompiler.dll": {
+      "sha256": "cd6022f334640c7c3a161824910cdf280fb8ad11e6ec0bbc9bac4d94ed2665ec",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/Microsoft.CodeAnalysis.Scripting.dll": {
+      "sha256": "79cc55e8eb945eb603e14514e083919f3b8f0f25008e47de59a3df629a56cd5f",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/Microsoft.CodeAnalysis.VisualBasic.dll": {
+      "sha256": "5f666429a33a2b8d1c503c1f1e02fd85918f78124aca97c6a3b3d84e206bb316",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/Microsoft.CodeAnalysis.dll": {
+      "sha256": "163529561bc8aa19b22067764a74fbf5432954ce1158d1988a6ef1b0f5a87a94",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/Microsoft.DiaSymReader.Native.amd64.dll": {
+      "sha256": "84068d5569a44913ddc38739b6c7e273634e32a64fa1f277657e2db4c7c3b73c",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/Microsoft.DiaSymReader.Native.arm64.dll": {
+      "sha256": "c416f3dad39f35a523f2990bddb4bf7b96306255dabda889dd4f91033986ad84",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/Microsoft.DiaSymReader.Native.x86.dll": {
+      "sha256": "4ed612eb56cf7de0768c649b20e12e6ee05086e4f2f32ea1c6528c9e60765adb",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/Microsoft.Managed.Core.CurrentVersions.targets": {
+      "sha256": "de7445cbeccfde19b4686da0121d2d8426319f92ea346e2d08e09e0e13ffc3c0"
+    },
+    "package/tasks/net472/Microsoft.Managed.Core.targets": {
+      "sha256": "f3b8ed3e4946037e0daa32f3901ae5bb8fc967e86c45372e7be0f0dda341cfca"
+    },
+    "package/tasks/net472/Microsoft.VisualBasic.Core.targets": {
+      "sha256": "42446bc1e92c5980a2a8c55035cb8549fcc8ef58acc3f69381de33631799ff2f"
+    },
+    "package/tasks/net472/System.Buffers.dll": {
+      "sha256": "2d78d770c9cb997199154ae8c018b9f1d1efbc86729f7264dde6dbad2a12cac3",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/System.Collections.Immutable.dll": {
+      "sha256": "5baa117252ee684e26903603596854b649bc25eddcb0cdef3b100658fc3c334c",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/System.Memory.dll": {
+      "sha256": "d5e8e4866f9cfa66f7765660f84b210198893e55335487afe5ebda342c0e913d",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/System.Numerics.Vectors.dll": {
+      "sha256": "20c2fa81b8c70d651099d762954f285fd4f942e63b2d7217c145dab8d4b2f4c9",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=Microsoft Windows, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/System.Reflection.Metadata.dll": {
+      "sha256": "a1a9aaabf7651b26177e99e982d9f7dbe57b9aece693f4f2770c28b27c2d26df",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/System.Runtime.CompilerServices.Unsafe.dll": {
+      "sha256": "08cbd7278b66f1e68425a82d4b97181a4130d93e3dd91831407aba7212ccdacf",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/System.Text.Encoding.CodePages.dll": {
+      "sha256": "b77ee852824a6e8098fbade000beb42ce9df32fa4189a00d5e7f472f6c6a5030",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/System.Threading.Tasks.Extensions.dll": {
+      "sha256": "af4e13ef418fd89b432de20cd1dfb7fa10a7179c8dd049c9856316e50c5949ca",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/VBCSCompiler.exe": {
+      "sha256": "eedd1b6be9b92328f648982be9878e0a55de34d969765ef41425d1100ac17847",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/VBCSCompiler.exe.config": {
+      "sha256": "9abb598e47904d51fe3c5733faf26913f15b46035e9d477050726e0435043b5d"
+    },
+    "package/tasks/net472/cs/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "e8bb732469148d659a5646e3456731bf95d311db39062c9dda9d0ad64987f19f",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/cs/Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll": {
+      "sha256": "15647b55b11814a9639f0d3e8c6dc590fa939537eaf8c9710643165a26ad53b2",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/cs/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "61cfda88f681db673e38ec3a237dd1c87211fb80909c84fe4d1a8aaeb0d5ea21",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/cs/Microsoft.CodeAnalysis.Scripting.resources.dll": {
+      "sha256": "83f9380ee255460565b4e05a37619b0e99ef857bef67d6f4dc5fd1fb449b2fd0",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/cs/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "23f39e2dcde6aa6d272b177af5e51fa7cad0494fd131ba609ba92a2b3217b11f",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/cs/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "f754751d70b97755a03eaa555ba04963aff70a67814d3522e40bb0500988ac46",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/csc.exe": {
+      "sha256": "3aafb7b9c54fa31a7092af35148971ee616965e7f9a0b80fb7fdc4bdd1d1a555",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/csc.exe.config": {
+      "sha256": "eeffd06bbb9730e2107fae15f42bad0ad4b3c0c61557eb94a18bc889774d5560"
+    },
+    "package/tasks/net472/csc.rsp": {
+      "sha256": "c9862ddf2732a7d06ec2b779061d2a3e4861bdcbdee61ca74cf9c04201cc90a3"
+    },
+    "package/tasks/net472/csi.exe": {
+      "sha256": "036980336cba30eb93fe394f3431d04423c46654446f03530ecd02c0be95ee41",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/csi.exe.config": {
+      "sha256": "dab922a235ccae08f398ab8c2d17a38a413fbd4e54bca52b9094adb98b754cfc"
+    },
+    "package/tasks/net472/csi.rsp": {
+      "sha256": "6c516de22e4ca634900859443094a371b37f155a3a1f41cb029a063e59293ebe"
+    },
+    "package/tasks/net472/de/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "4477a9f784edb63c416a62cc396071cea7f7249321a0b3e047d5bf6e449a12f3",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/de/Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll": {
+      "sha256": "0fb9f6177f830fd5102f1bcc95432dea740f07852115b8c3dda6ce09cfa0ea67",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/de/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "776598e039aba58b38c9bff18dc16df13242cb46272a5007109a0806841e3e40",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/de/Microsoft.CodeAnalysis.Scripting.resources.dll": {
+      "sha256": "65c39848e9892f1e30803c7af02f50343768cf4fc03fc2030921eaf250f021ad",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/de/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "ccf5ec7b991814ee796bf2dfe434b84e1c9d746e19ab6c63be1009245bc77f2a",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/de/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "378452b00a28ddac18eefb3ac51dafaeba2174d19cb5445699ac236117984cec",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/es/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "62ff4f75e6b3636b2bb7fc3325d9837af8dcbd794b8561685d916ba076e4ee02",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/es/Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll": {
+      "sha256": "56047e98fdfab8102e2c9a38b78b2e0b31965259947ae7c55d9e86999a2a4ae8",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/es/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "92c4280802f4b7fb3158eb4d2c5a9f325f513a41c86da94822e8451abfaf664d",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/es/Microsoft.CodeAnalysis.Scripting.resources.dll": {
+      "sha256": "2339e917249171ef8371a4ea6282d5e9980255cc6d74093989e01293832c5f72",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/es/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "dc00c8e0d45f4778d5d5a953346b2831807d87fee4fde3f7ceff184a0b98c5d0",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/es/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "3c65c35d7dd7de3ba078aacbb2724b93a4809f86d2a2099b6bbb6c5f85663cb3",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/fr/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "ba9fe4d83774ea91d3ecc34bc745407844d584873d1b11746da5cbb1d3a139b2",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/fr/Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll": {
+      "sha256": "f0938648c1a8849a4bd3025dcedf7e8724d313ddbe0b7a1d0d56c55094ed1c42",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/fr/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "5193ca9de786fe74dcd3f9aeee2630637f1694dda80191cc013f4217f0d3d5bd",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/fr/Microsoft.CodeAnalysis.Scripting.resources.dll": {
+      "sha256": "dbcd4ab40002417b4d401ed2d12b8d1cfac2085da94f87d81b144e7cea63e0e4",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/fr/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "5b9212baec4bdbcb2b8298d148dfd4cd8bd67a0d18d787bf513bde009e5226aa",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/fr/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "215d512ae881d985a28ad0b22cdec40a0f289a878c77a92daa6e035da0076a16",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/it/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "22fea9d5b2fbc243bc134fe9726f19e1541e1fce6b4b6b646a37d97051432227",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/it/Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll": {
+      "sha256": "45050768322063123af11b68e3eac7d41334e32adfc3e006805e9d9d2d23779a",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/it/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "f88adb6fb82bea550f5dba0a2ee76c7b2d2af49519f1844b93a63c2339862d51",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/it/Microsoft.CodeAnalysis.Scripting.resources.dll": {
+      "sha256": "ca77e2e5f88f3a1b6717fdc3eef2748cc68048289ab3ab5874a4faed9a694b50",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/it/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "edab6e94b8163feb27d6634904bb797d15eafa94ad12a6cfbbaccc7705f52dac",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/it/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "62d042dcd80d3205e3ba9d9b6d5e405785cb2e9bee635a46283fec639ece169c",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ja/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "ceecef28daa8da454873b8f680c59e5d66cfc1e28b51d33f331c7949a251de49",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ja/Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll": {
+      "sha256": "b6f35849118b80597f1d384e1fca389c43923662abf578c582e1f5137dfdc5b0",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ja/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "1c202e1e5a1b7c498bc24878679e4843812dd71249ceaf60e77c10bcce5ded17",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ja/Microsoft.CodeAnalysis.Scripting.resources.dll": {
+      "sha256": "4b62bd038436d3ba9421ba306952690800c3398e65483669f3fd1c766cd3b6f2",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ja/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "447fe19b114eb3edad7bed1d2e5911064ddc8cadb9f3b3d158636021434c16f7",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ja/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "6be717baf837d0a52cfaaf96b50ed8b5fc68a3e9d56d3eb14e61d6a3acb79671",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ko/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "d957270dcdc8a90c6fbb35142b0ca40b294e136df4063eef74bab9e9923317f9",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ko/Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll": {
+      "sha256": "b4a9c1592865b2f680571f99018c5eeb623532b09e380358d156b28faf53e914",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ko/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "9730e9a9b6f1e93b8c8237d3d7acafb5f01d0ed308bfcffe8b0f4aad67a53ad3",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ko/Microsoft.CodeAnalysis.Scripting.resources.dll": {
+      "sha256": "06f73c24ba99803ca994dd3b00f02662dbb053f17a7ff35e9d5b3164763f14f6",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ko/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "0bc170be00236d1aa5a02d2b307bb5652df5295e3d7b4a9a2ea38528e69feb1d",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ko/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "c75a123707fb4ec7adf2bd8b1ac9502a19b81e16573c6c93c67b1a321ed42d7c",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/pl/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "ef5fa5d92f997e97180ea200c1ea612c09d7404ad1a612d00ca6772fd54a6858",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/pl/Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll": {
+      "sha256": "79359d13fbfac892b2eef5a1af75407bf9440dc384021488e744fcc4c10a8fbe",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/pl/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "199b958c211ca9d2985ac4fa26827325d94a5746761b5d689abd0ff82eafc03e",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/pl/Microsoft.CodeAnalysis.Scripting.resources.dll": {
+      "sha256": "6bcb15f77049349f66151a0726642670d0e4ba5305073a0ba38469607eb6f316",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/pl/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "441af94918f88f85041581ac7e33249bf363c9a8a37a28e867191641158a68d7",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/pl/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "3e12fcf3673e16f823b42402b0d626ddb91fe2d7c043a7719a3715258565ea5c",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/pt-BR/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "c975f5b2acd9b19252de354a213c91ab54fce150250a7848ff96bb0626f99b9a",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/pt-BR/Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll": {
+      "sha256": "c6c5ef27d3b088d0ce572f1377f644972806b4458944f46dda6d68811e1ecc8a",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/pt-BR/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "11afd7eb333ec24e264f223c5e147053097026d46df2dae4fb06659ed0b45f43",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/pt-BR/Microsoft.CodeAnalysis.Scripting.resources.dll": {
+      "sha256": "4d6eeeb2a0ce34e4641de2ff271a6b895667a240b47f5e8148be2c1af1eea5ae",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/pt-BR/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "6652bf22a5197dc277afbf2274d9800d5e9ef472f351fb112caa2fb9182b9444",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/pt-BR/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "792e74f398b3ebd9d1edec025b42d3bad706271ba2c754e91421bc4a98ca421e",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ru/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "fab5751881edf651aa9036bf2be415527104d449753e262c34d896107fc4b103",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ru/Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll": {
+      "sha256": "e41263ce56225b762bb9ce9ade92559dd1307fb1e0136f9fda0c7b23fe992b2f",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ru/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "eeca820851e06d6a0d9e9c5e69afd4421537464f2a57cf8fd6eb311ceb3e79c9",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ru/Microsoft.CodeAnalysis.Scripting.resources.dll": {
+      "sha256": "7e1eb07e1cf3f20095c1023b64e89434bd4c36b9454f163e2c3456159c76e9fb",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ru/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "df252aefda4b6738e55b5769fa0c09c775e2d24b4c50ff29011c4b546b548487",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/ru/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "36596af5f9d55d27b3024b53c2d910b9893e884aa7d9adab80a2e1ebb3f5414c",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/tr/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "0e60b49ff8257803647b9e6227b9be25881c43163c10b64984c6edfce73392eb",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/tr/Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll": {
+      "sha256": "aa808b4a1a7aca9e21ea7b41720a43aa6287e1a104d25e49450fc1c6af2631e8",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/tr/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "105f74d109d83298918eef512bfbf566927339cccd7ad8eb15c410c85afcacc4",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/tr/Microsoft.CodeAnalysis.Scripting.resources.dll": {
+      "sha256": "bcf11e16c96441bf8aa8aa3d439b8873aeafac613d8d0b9bd05d3187ba6ecc39",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/tr/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "1706fa3e2f877a72ef734a4b18335f4dfb04b0539baea6631fb9d7ea932514ed",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/tr/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "42ce048c084433d135f4a40c2b6924140b8c3f1fad6e9e6863dbe04406f6d1c8",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/vbc.exe": {
+      "sha256": "f683f98623465daf885dddd1953f192669a1926c189bc8c583d5ac3429048888",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/vbc.exe.config": {
+      "sha256": "2d6b71c2baa90effc288c99e61dad0d488786aac3f1c4f3a67784f67df46613a"
+    },
+    "package/tasks/net472/vbc.rsp": {
+      "sha256": "2c3867a4590f43673d0796f3734119b36f7326a1221064760f1ec1f0c5a81a0a"
+    },
+    "package/tasks/net472/zh-Hans/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "8ebfe528725e720e288b6404dd040992b2b587eb460750447d1c6c9132ec81c0",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/zh-Hans/Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll": {
+      "sha256": "31d28f97db5663753676909a1fd35ca0726fe3bc78edacff8284d56f87486c17",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/zh-Hans/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "3ce9dbd0a4030f034198d21d49b5edc0053af85a98b548b90582d4915ee11836",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/zh-Hans/Microsoft.CodeAnalysis.Scripting.resources.dll": {
+      "sha256": "cfb0f759a6bda0147d7857b8141a47c04e224d52c005b07af12d4aa2a6fc96ad",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/zh-Hans/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "012f66990461907c724ad5e94860c4aa7eba80792094995dfeb2a41e32a64fde",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/zh-Hans/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "6747dc364430a9077eeab901e5858e2e47358ad1e17e6e9c5131b2890909a353",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/zh-Hant/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "bee716dfa733505026eb57fbcaa73fd99af0dd74095911a03249e39ac34dc21f",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/zh-Hant/Microsoft.CodeAnalysis.CSharp.Scripting.resources.dll": {
+      "sha256": "de07187800aad25f8f9bd890048ba57ec482f5bcc6d717fd4447f5f4a4f9047d",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/zh-Hant/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "0082f8c5d019c8711728cad541cb1ea37f16e1464fadb9d1c038f6e4441468b6",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/zh-Hant/Microsoft.CodeAnalysis.Scripting.resources.dll": {
+      "sha256": "2c5e4456801a0e1db9fd63ac398d0696e9a5ffd835c104adf3f09b8190f6df3f",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/zh-Hant/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "7bab35bed60912dff5c0a3c4a2b3ca0e6895e22de5a5216ade17c95674ea7429",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/net472/zh-Hant/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "9c601e3a27ed92c27ea5cd11d29303c023a32e7f5f277155e71b87d394b327b1",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/Microsoft.Build.Tasks.CodeAnalysis.deps.json": {
+      "sha256": "a96cfdda79c712d37700e809a838bf8ae26c29e48be9331e6c344a071a712c98"
+    },
+    "package/tasks/netcore/Microsoft.Build.Tasks.CodeAnalysis.dll": {
+      "sha256": "fe54fb3ce8cece818b5a49ae786643ddacef6f86ddb95deb69f0c7bbf3254902",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/Microsoft.CSharp.Core.targets": {
+      "sha256": "a1c9c8bc54d3443e3a3a918e7384f2a8d4593534e096c5930d0cf96fb628b8f1"
+    },
+    "package/tasks/netcore/Microsoft.Managed.Core.CurrentVersions.targets": {
+      "sha256": "de7445cbeccfde19b4686da0121d2d8426319f92ea346e2d08e09e0e13ffc3c0"
+    },
+    "package/tasks/netcore/Microsoft.Managed.Core.targets": {
+      "sha256": "f3b8ed3e4946037e0daa32f3901ae5bb8fc967e86c45372e7be0f0dda341cfca"
+    },
+    "package/tasks/netcore/Microsoft.VisualBasic.Core.targets": {
+      "sha256": "42446bc1e92c5980a2a8c55035cb8549fcc8ef58acc3f69381de33631799ff2f"
+    },
+    "package/tasks/netcore/bincore/Microsoft.CodeAnalysis.CSharp.dll": {
+      "sha256": "fc571a6647ac45b0b0dc1866b795529bb2eeb93adf9be97fcd5903cf482f700a",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/Microsoft.CodeAnalysis.VisualBasic.dll": {
+      "sha256": "609964eff21ee36eef5ee60ecfbce20125cece679ece1d7805c632416f1773fb",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/Microsoft.CodeAnalysis.dll": {
+      "sha256": "55618d457128eec582017545b8929ebf195669003b6ec737110f9519e1711d28",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/VBCSCompiler.deps.json": {
+      "sha256": "59c62ee8c9c3cb27a51b468b873378b2458dce6f7c230fe034cd49dbafb924e2"
+    },
+    "package/tasks/netcore/bincore/VBCSCompiler.dll": {
+      "sha256": "f2001e59d1a078126ef90c8a58d7a9c2a55a046e7bb33896681db468d1168103",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/VBCSCompiler.runtimeconfig.json": {
+      "sha256": "bf3872afb6b0c93fdfb99e021e5ba3418723d980bfbf7133dee608abf60c2079"
+    },
+    "package/tasks/netcore/bincore/cs/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "2b6a9d8d2374c8eaec5870a8c0d667fd368ecdfe79be515f362bceda18c01e61",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/cs/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "360f034224a10df02eb5532c678230fb225ca2e4cb1200cc0670a62f60680456",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/cs/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "fe911689358538e1e7699f09c9d6d7fbec3d9beb6d6cea1c0c95bf3fee357205",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/csc.deps.json": {
+      "sha256": "37f089f1e30aec407dcf432c99171f9fb90bba3a43a358a7e1efbad92daab3d6"
+    },
+    "package/tasks/netcore/bincore/csc.dll": {
+      "sha256": "5e98e43eadb2488679c8242121714741e6ece4cc7b852d341b222e65228d873c",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/csc.runtimeconfig.json": {
+      "sha256": "bf3872afb6b0c93fdfb99e021e5ba3418723d980bfbf7133dee608abf60c2079"
+    },
+    "package/tasks/netcore/bincore/de/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "15da511c4181eba5070de3f8a4ad08314a2bef72318752c8345d81a0e1622df1",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/de/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "6990b9a11d08a58175f745e54cb3c228defd2cddd87c88fadaebcaaa63aac95a",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/de/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "1fa68ed5fa632888b6cd38e47437d882a8cd08196a93e5b6b457dc2ee54a6bb2",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/es/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "c2d9064272c8ccef23a9b6ef6f5b07460bd13c261dfb002cfd32b1cd1f59ad97",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/es/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "1a147ba9af7b26c521e30a8695d6130a470a407643a1edc46493dd472a306757",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/es/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "109ad6666a834b1cdb2de9ee3eddc6e1b4cc817d8116d3f16a3cb41b64484011",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/fr/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "df600ed35161397628ee2509c38be48d2557e5d7df4ed7f1ff40b5468baf5c7f",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/fr/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "6480b12f0a38c6ac6fd69022f29b1accf53fd6618c033ed8a130d3488aa94e1d",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/fr/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "761ac4c13a78bc802bb766ba90c7ee505fcb4e1d3fdca13b93dcb59319a5cb57",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/it/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "a0c40b0c1cd7c222fe7e9c841622f4f52168b6a46bc1d495be3173086fefea8f",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/it/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "6d9109df1eddfcf93bece217959401addd893013a82afcd1549cc524a1e44660",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/it/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "be3842cb9e846c7afff2d621cc5a789f968d55bae4d9c9df223023830efb2602",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/ja/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "eb9081bf4adfa9934265506e524690b0cd15f2200e4375a9f6c5fbaff6ca779b",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/ja/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "65c792f24dbe7a45e2f781e86a1099b3a1264b837d77e04a96d9062dacf41532",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/ja/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "0072f5c6cdf9f6763046a0262b979d74238e9458a67e3587e5bce15581331e69",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/ko/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "2a499820100e833b75ac6c5dff31c78b2cccfaf29078d02013a9869970c1b2d4",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/ko/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "fe806801e7c9477891db7e09413f2c2d14ea20a5ea19376b2415506194aa97cd",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/ko/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "456c1483c7f7ee409638be382e21a0bbc0926036f9a7a5e2587d13627ed96e51",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/pl/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "e29e1a79c78f4532c89ac6e39fbab02328f99931938e7cf04896ce73bc2ffe79",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/pl/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "0a56d1460c2c522a7fde5643ef68c2eddec7fea8ad6c2285d80927b52b6275b3",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/pl/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "85474560ef444c138974d43af09516f33505d4af4bbb53c2002264011f120b6d",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/pt-BR/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "9d54abe93b9855913241105c083684ca8a70726e0650c30954717c199d87342f",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/pt-BR/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "2756d1937af920e48b96c7d25a6631b2573c6729f5570483a3d3aacd261b1773",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/pt-BR/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "0f7ca6291a6d7f5efaec60c47ee901e6f6389f95c3dccd396b1e724cf8345fac",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/ru/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "458150a2d277a61f51aa2c21db287f58ad94d92493d559837e383f8a7a7e8207",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/ru/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "a82676cc0f2b76f94bb4c514aaa4f3ad7f199eaa0fd655fa20fd5a4449386707",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/ru/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "268d9fed2818e00f6d9dac47c328b2a0b26fe9069d215bb5f04cff3f3804ee7c",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/tr/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "5697b626c4bf3a6691b2abb93c21f13471b29ab0e27eecda929dfa9a64c962de",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/tr/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "745278631692bb34fc817025c7a274466bf87236a1de29b3a7a5ca9906484eda",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/tr/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "8e495d4633316997235ab8988f4d760b34fbee3016ad9d1628b2a40082157b6f",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/vbc.deps.json": {
+      "sha256": "37a703dbf8039dca8cc8d82b17c016c8190fb85f3842141f8ab0332a107c7fbe"
+    },
+    "package/tasks/netcore/bincore/vbc.dll": {
+      "sha256": "6aedcec5f48624365b86ae13f4ae3c5db25baf7924574b05c73a6d4a11b6cf49",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/vbc.runtimeconfig.json": {
+      "sha256": "bf3872afb6b0c93fdfb99e021e5ba3418723d980bfbf7133dee608abf60c2079"
+    },
+    "package/tasks/netcore/bincore/zh-Hans/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "8a56f20086e26c9cc600749e47cb1ad6968cb6fbef84a3b3edd82d973c43b929",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/zh-Hans/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "868fbb13b9fbb966db81b26872e9c6318356f94ba55eeffe526ce15d788831dd",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/zh-Hans/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "1bd8ba7f33c2af85d421fab0e451b57d175d0596fa771bb7e8f2473483ecff87",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/zh-Hant/Microsoft.CodeAnalysis.CSharp.resources.dll": {
+      "sha256": "db3e642e4057a6f9fd8f10c18d3af158fee2fbdaa5e593db0c00f441f0e4bcd7",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/zh-Hant/Microsoft.CodeAnalysis.VisualBasic.resources.dll": {
+      "sha256": "f3e9b60af3b409525b40a255d89d8d038e01c93e41ea103a79f60c0ac13f2207",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/bincore/zh-Hant/Microsoft.CodeAnalysis.resources.dll": {
+      "sha256": "da5183e34fcb9f1051eb6113125c7d4b740e903e41f3de7653c54f3f8119511d",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/Microsoft.Build.Tasks.CodeAnalysis.Sdk.dll": {
+      "sha256": "c3cd21433a81df1ca1e95351cc544585081984a4d94baffef549c232f90cfe69",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/System.Buffers.dll": {
+      "sha256": "2d78d770c9cb997199154ae8c018b9f1d1efbc86729f7264dde6dbad2a12cac3",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/System.Memory.dll": {
+      "sha256": "d5e8e4866f9cfa66f7765660f84b210198893e55335487afe5ebda342c0e913d",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/System.Numerics.Vectors.dll": {
+      "sha256": "20c2fa81b8c70d651099d762954f285fd4f942e63b2d7217c145dab8d4b2f4c9",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=Microsoft Windows, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/System.Runtime.CompilerServices.Unsafe.dll": {
+      "sha256": "08cbd7278b66f1e68425a82d4b97181a4130d93e3dd91831407aba7212ccdacf",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/cs/Microsoft.Build.Tasks.CodeAnalysis.Sdk.resources.dll": {
+      "sha256": "7f6abcbb786110dfa62382a0f1c976efc85818fcef8006765fa0a4495d804567",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/csc.rsp": {
+      "sha256": "c9862ddf2732a7d06ec2b779061d2a3e4861bdcbdee61ca74cf9c04201cc90a3"
+    },
+    "package/tasks/netcore/binfx/de/Microsoft.Build.Tasks.CodeAnalysis.Sdk.resources.dll": {
+      "sha256": "77c5a755cd7bb1e689454e6dab68127460ea938387bc9904af46954cfc657418",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/es/Microsoft.Build.Tasks.CodeAnalysis.Sdk.resources.dll": {
+      "sha256": "18fe362c78406528cbac1f001f9b5fe0f136cc4eb0caa00c13e4fe5eb85fb755",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/fr/Microsoft.Build.Tasks.CodeAnalysis.Sdk.resources.dll": {
+      "sha256": "2c6f5be78b174fa015c74f9972051baf84a13021675ed6af181644ab00b2c942",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/it/Microsoft.Build.Tasks.CodeAnalysis.Sdk.resources.dll": {
+      "sha256": "c8eae098c84d1383262b078453d235b91d508250f3fe7d267267b14a5a508fd3",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/ja/Microsoft.Build.Tasks.CodeAnalysis.Sdk.resources.dll": {
+      "sha256": "a36b009d258ff0a26e8b3138a341022ee8641dd96bd8a87fb13c85f83ffeed44",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/ko/Microsoft.Build.Tasks.CodeAnalysis.Sdk.resources.dll": {
+      "sha256": "bfa55dea41736234ff655bb8bdf689c040a9153c4aac0aa1a5d98920d9fa9500",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/pl/Microsoft.Build.Tasks.CodeAnalysis.Sdk.resources.dll": {
+      "sha256": "29b15a5afcaccc13eae818ffd0078378e26a1373e18639913870693744b1f817",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/pt-BR/Microsoft.Build.Tasks.CodeAnalysis.Sdk.resources.dll": {
+      "sha256": "581dd447703c5e16545cbd8788c5fa9614aaa2b738c1dae9c64e219bcf209ac7",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/ru/Microsoft.Build.Tasks.CodeAnalysis.Sdk.resources.dll": {
+      "sha256": "8f02786eac203e5dc377743633633b15c1e7fb1680e94d2c1fdfa65f0ac9354c",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/tr/Microsoft.Build.Tasks.CodeAnalysis.Sdk.resources.dll": {
+      "sha256": "ad9fcc41a389fe079c408afd5239e9cb9551026ef84a7832bd853d971de45a9e",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/vbc.rsp": {
+      "sha256": "2c3867a4590f43673d0796f3734119b36f7326a1221064760f1ec1f0c5a81a0a"
+    },
+    "package/tasks/netcore/binfx/zh-Hans/Microsoft.Build.Tasks.CodeAnalysis.Sdk.resources.dll": {
+      "sha256": "896d7ac32232519d4b22cea260c011c1f8420371b5eb682940704d67c17fafdb",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/binfx/zh-Hant/Microsoft.Build.Tasks.CodeAnalysis.Sdk.resources.dll": {
+      "sha256": "d2cd13ac5a539f95ea720d53638495ed8c6931820213eed146ef533afb80f959",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/cs/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "e3192d0c4a574001f867f55d00053c300a8c7ec6a47b5eb8598bca216571d423",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/de/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "9d0472f3b82db2979f83aad8d19cac874e9d95eace89657f5b185b87a84afe9c",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/es/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "29752b354c16c6b0e3dd4900b9ceed1a4c54ea5144e7252346e9f778151f9108",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/fr/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "f726fd90e0b27285155579122835abac7aa6b03dc0eccbd9c466d710859e3763",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/it/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "fe51bdda13421dda3e3b762de0172f540c0a52115a8d1d8750b928129b0bf41a",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/ja/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "3359e5d635c23bf28f0bd7b42eefe4280a48704924424ebefb0a2ff8c954ec54",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/ko/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "f0b3888ed0bf77f37b3dbf672a97ceaa646d2596ad817d020eabbc62b5d21314",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/pl/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "896bdf15c88b349ae2033b0b9c68e1f6e39b9c7d60ce076f5f8f6a3e079eb325",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/pt-BR/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "3d6be385acafe05ddf16db57626ad4aa91016b46e6a7bf7412a4cec960db18b0",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/ru/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "3b7b80c21dc13404fc810074ccbfe6bf9ada143ebe645102e6110837d8d829f0",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/tr/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "237fc84528098512e632d421b3b451b11323c62cd53779d54eb34780eea266d7",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/zh-Hans/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "a18af040d6926fd55dc614e75c59876edfb371aa49dccdb708ed38fca594e684",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    },
+    "package/tasks/netcore/zh-Hant/Microsoft.Build.Tasks.CodeAnalysis.resources.dll": {
+      "sha256": "5bd37a24d830dda578f18675069032b80c4e7c1b5b4fadd39643b95dbddfeb03",
+      "authenticode": {
+        "status": "Valid",
+        "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+      }
+    }
+  }
+}

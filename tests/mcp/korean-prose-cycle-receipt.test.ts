@@ -6,6 +6,8 @@ import { isAbsolute, join } from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+import { performance } from "node:perf_hooks";
+import { failureDiagnostic, diagnosticError } from "../failure-diagnostics.js";
 
 import {
   digestCanonical as readinessDigest,
@@ -175,26 +177,32 @@ describe("range-aware Korean prose cycle receipts", { timeout: 15_000 }, () => {
   });
 
   it("verifies a receipt whose quality evidence passed only with the external quality digest", async () => {
+    const fixtureStarted = performance.now();
+    failureDiagnostic("receipt", "fixture-start", {});
     const evaluationRoot = await createCycleFixture();
+    failureDiagnostic("receipt", "fixture-end", { elapsedMs: performance.now() - fixtureStarted });
     const cycleDirectory = join(evaluationRoot, "evals", "cycles", "0.1.0-rc2");
-    const recorded = runScript(recorderPath, ["1", evaluationRoot, "--cycle-dir", cycleDirectory]);
+    const recorded = runScript(recorderPath, ["1", evaluationRoot, "--cycle-dir", cycleDirectory], "recorder");
     expect(recorded.status, recorded.stderr).toBe(0);
+    const qualityStarted = performance.now();
+    failureDiagnostic("receipt", "quality-fixture-start", {});
     await writeQualityReport(cycleDirectory);
+    failureDiagnostic("receipt", "quality-fixture-end", { elapsedMs: performance.now() - qualityStarted });
     const quality = JSON.parse(await readFile(join(cycleDirectory, "quality-report.json"), "utf8")) as { reportDigest: string };
 
-    const withoutQualityDigest = runScript(verifierPath, ["1", evaluationRoot, "--cycle-dir", cycleDirectory]);
+    const withoutQualityDigest = runScript(verifierPath, ["1", evaluationRoot, "--cycle-dir", cycleDirectory], "verifier-without-quality-digest");
     expect(withoutQualityDigest.status).not.toBe(0);
     expect(withoutQualityDigest.stderr).toContain("--expected-quality-report-digest is required once quality-report.json exists");
 
     const wrongQualityDigest = runScript(verifierPath, [
       "1", evaluationRoot, "--cycle-dir", cycleDirectory, "--expected-quality-report-digest", `sha256:${"f".repeat(64)}`,
-    ]);
+    ], "verifier-wrong-quality-digest");
     expect(wrongQualityDigest.status).not.toBe(0);
     expect(wrongQualityDigest.stderr).toContain("quality report does not match the externally expected digest");
 
     const verified = runScript(verifierPath, [
       "1", evaluationRoot, "--cycle-dir", cycleDirectory, "--expected-quality-report-digest", quality.reportDigest,
-    ]);
+    ], "verifier-valid-quality-digest");
     expect(verified.status, verified.stderr).toBe(0);
   });
 
@@ -620,7 +628,9 @@ function runMeta(
   };
 }
 
-function runScript(scriptPath: string, args: string[]): { status: number | null; stdout: string; stderr: string } {
+function runScript(scriptPath: string, args: string[], diagnosticPhase?: string): { status: number | null; stdout: string; stderr: string } {
+  const started = performance.now();
+  if (diagnosticPhase) failureDiagnostic("receipt", "script-start", { phase: diagnosticPhase });
   const effectiveArgs = [...args];
   if ((scriptPath === recorderPath || scriptPath === verifierPath) && !effectiveArgs.includes("--expected-frame-digest")) {
     const cycleFlag = effectiveArgs.indexOf("--cycle-dir");
@@ -640,10 +650,15 @@ function runScript(scriptPath: string, args: string[]): { status: number | null;
       }
     }
   }
+  const spawnStarted = performance.now();
+  if (diagnosticPhase) failureDiagnostic("receipt", "spawn-start", { phase: diagnosticPhase, preparationMs: spawnStarted - started });
   const result = spawnSync(process.execPath, ["--import", "tsx", scriptPath, ...effectiveArgs], {
     cwd: repositoryRoot,
     encoding: "utf8",
   });
+  if (diagnosticPhase) failureDiagnostic("receipt", "script-end", { phase: diagnosticPhase,
+    elapsedMs: performance.now() - started, spawnMs: performance.now() - spawnStarted,
+    exitCode: result.status, signal: result.signal, ...(result.error ? diagnosticError(result.error) : {}) });
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 

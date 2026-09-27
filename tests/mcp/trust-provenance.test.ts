@@ -158,10 +158,10 @@ describe("trust provenance", () => {
     process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = directory;
     process.env.AGENT_GOVERNANCE_TRUST_DB_PATH = trustPath;
     try {
-      await runSessionMessageCli(JSON.stringify({
-        operation: "send",
-        payload: { messageId: "receipt-message-1", sender: { host: "claude-code", sessionId: "sender" }, target, body, ttlSeconds: 600 },
-      }), directory);
+      const sender = { host: "claude-code", sessionId: "sender" };
+      const prepared = await runSessionMessageCli(JSON.stringify({ operation: "prepare", payload: { sender, target, body, ttlSeconds: 600 } }), directory);
+      const messageId = (prepared.data as { messageId: string }).messageId;
+      await runSessionMessageCli(JSON.stringify({ operation: "send", payload: { sender, messageId } }), directory);
       const output = await handleSessionMessageHook({ hook_event_name: "Stop", session_id: target.sessionId }, "claude-code");
       const context = (output.hookSpecificOutput as { additionalContext: string }).additionalContext;
       const envelope = JSON.parse(context.split("\n").find((line) => line.startsWith("{"))!) as {
@@ -180,7 +180,7 @@ describe("trust provenance", () => {
           originKind: "peer",
           host: target.host,
           sessionId: target.sessionId,
-          eventId: "receipt-message-1",
+          eventId: messageId,
           contentDigest: digest(body),
           expiresAt: expect.any(String),
           authorityEffect: "none",

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "presetId": "opus55-balanced",
+  "origin": "anthropic",
+  "profile": "balanced",
+  "defaultPreference": {
+    "strength": "preferred",
+    "model": "claude-opus-5-5"
+  },
+  "selectableAlternative": {
+    "model": "claude-fable-5-1",
+    "conditions": ["explicit-request", "demanding-reasoning", "long-horizon", "specialized-work"]
+  },
+  "effortCandidates": {
+    "general-implementation": "medium",
+    "complex-reasoning": "high",
+    "independent-audit": "high"
+  },
+  "defaults": {
+    "max": false,
+    "fast": false,
+    "automaticPaidApiFallback": false
+  }
+}

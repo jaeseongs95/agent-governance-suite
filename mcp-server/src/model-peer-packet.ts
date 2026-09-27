@@ -98,7 +98,9 @@ export class ModelPeerPacketSigner {
   }
   verifyMessage(message: SessionMessage, own: CapabilityIdentity, nowMs: number): PeerPacket {
     const packet = this.verify(message.body, nowMs);
-    peerCheck(message.messageId === peerMessageId(message.body) && peerInstant(message.expiresAt) > nowMs
+    // The signed packet digest identifies handoff content; the spool uses a separate issued UUID.
+    peerCheck(typeof message.messageId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(message.messageId)
+      && peerInstant(message.expiresAt) > nowMs
       && message.sender.host === packet.sender.host && message.sender.sessionId === packet.sender.sessionId
       && message.recipient.host === packet.recipient.host && message.recipient.sessionId === packet.recipient.sessionId
       && canonicalJson(packet.recipient) === canonicalJson(own), "Peer packet does not match the claimed spool message or local instance.");

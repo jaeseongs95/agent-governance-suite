@@ -18,13 +18,16 @@ import type {
 } from "../../contracts/types.js";
 import {
   HOST_ATTESTATION_FIELD,
+  hostActorId,
   HostAttestationProvider,
-  modelClassForClaudeModel,
+  type HostExecutionAdapter,
 } from "../../mcp-server/src/host-attestation.js";
+import { claudeCodeExecutionAdapter, codexExecutionAdapter, modelClassForClaudeModel } from "../../mcp-server/src/host-execution-adapters.js";
 import {
   claudeCodeActorId,
   findToolUseObservation,
   handleHostAttestationHook,
+  handleCodexHostAttestationHook,
   observedEffort,
   readSessionModel,
   type SessionModelRecord,
@@ -96,12 +99,26 @@ interface AttestOptions {
   effort?: string;
   hookEffort?: string;
   now?: Date;
+  adapter?: HostExecutionAdapter;
 }
 
 /** Runs the hook the way Claude Code would and returns the tool input it hands to the server. */
 function attest(store: WorkflowStore, tool: string, input: Record<string, unknown>, options: AttestOptions = {}): Record<string, unknown> {
   toolUseSequence += 1;
   const toolUseId = `toolu_${String(toolUseSequence).padStart(6, "0")}`;
+  if (options.adapter === codexExecutionAdapter) {
+    const model = options.model ?? "gpt-6-astra";
+    const output = handleCodexHostAttestationHook({
+      hook_event_name: "PreToolUse", session_id: SESSION, turn_id: "codex-turn", model,
+      transcript_path: TRANSCRIPT, tool_name: `${TOOL_PREFIX}${tool}`, tool_use_id: toolUseId, tool_input: input,
+    }, store, { ...(options.now ? { now: () => options.now! } : {}), readMetadata: () => ({
+      head: JSON.stringify({ type: "session_meta", payload: { id: SESSION, source: "cli" } }),
+      tail: JSON.stringify({ type: "turn_context", payload: { turn_id: "codex-turn", model, effort: options.effort ?? "high" } }),
+    }) });
+    const updated = (output.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput;
+    if (!updated[HOST_ATTESTATION_FIELD]) throw new Error("Codex hook did not attest the call");
+    return updated;
+  }
   const transcript = `${transcriptLine("toolu_other")}\n${transcriptLine(toolUseId, options)}\n`;
   const output = handleHostAttestationHook(
     {
@@ -140,10 +157,10 @@ afterEach(async () => {
   while (openServers.length > 0) await openServers.pop()!();
 });
 
-async function harness(withProvider: boolean): Promise<Harness> {
+async function harness(withProvider: boolean, adapter: HostExecutionAdapter = claudeCodeExecutionAdapter): Promise<Harness> {
   const validator = new ContractValidator();
   const store = new InMemoryWorkflowStore();
-  const provider = withProvider ? new HostAttestationProvider(store) : null;
+  const provider = withProvider ? new HostAttestationProvider(store, adapter) : null;
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
   const updateStore = new InMemoryPluginUpdateStore();
   updateStore.putPluginUpdateState({
@@ -191,18 +208,22 @@ function planArguments(taskId: string): Record<string, unknown> {
 }
 
 describe("Claude Code host attestation through the MCP boundary", () => {
-  it("completes an orchestrated workflow with harness-observed model and effort", async () => {
-    const { store, call } = await harness(true);
-    const planned = await call<WorkflowPlanV1>("plan_workflow", attest(store, "plan_workflow", planArguments("attest-complete")));
+  it.each([
+    { adapter: claudeCodeExecutionAdapter, model: "claude-opus-5", modelClass: "deep", stageModel: "claude-fable-5-1" },
+    { adapter: codexExecutionAdapter, model: "gpt-6-astra", modelClass: "frontier", stageModel: "gpt-6-astra" },
+    { adapter: codexExecutionAdapter, model: "gpt-6-sol", modelClass: "general", stageModel: "gpt-6-astra" },
+  ])("completes an orchestrated workflow with $adapter.host observations", async ({ adapter, model, modelClass, stageModel }) => {
+    const { store, call } = await harness(true, adapter);
+    const planned = await call<WorkflowPlanV1>("plan_workflow", attest(store, "plan_workflow", planArguments("attest-complete"), { adapter, model }));
     expect(planned.error).toBeNull();
     const plan = planned.data!;
     expect(plan.bootstrapExecution?.context).toMatchObject({
-      model: "claude-opus-5",
-      modelClass: "deep",
+      model,
+      modelClass,
       reasoningEffort: "high",
       source: "runtime",
       taskId: "attest-complete",
-      actorId: claudeCodeActorId(SESSION, null),
+      actorId: hostActorId(adapter.host, SESSION),
     });
     expect(JSON.stringify(plan)).not.toContain(SESSION);
 
@@ -218,7 +239,7 @@ describe("Claude Code host attestation through the MCP boundary", () => {
       taskEnvelope,
       frame: taskFrame,
       plan,
-      actorId: claudeCodeActorId(SESSION, null),
+      actorId: plan.bootstrapExecution!.context.actorId,
       outputTargets: ["fixture.md"],
       priorFailure: null,
     })).data!;
@@ -252,10 +273,10 @@ describe("Claude Code host attestation through the MCP boundary", () => {
       error: null,
     };
     const stageArguments = { ...(stageResult as unknown as Record<string, unknown>), responseMode: "full" };
-    const recorded = await call<WorkflowReceiptV1>("record_stage_result", attest(store, "record_stage_result", stageArguments, { model: "claude-fable-5-1", effort: "xhigh" }));
+    const recorded = await call<WorkflowReceiptV1>("record_stage_result", attest(store, "record_stage_result", stageArguments, { adapter, model: stageModel, effort: "xhigh" }));
     expect(recorded.error).toBeNull();
     expect(recorded.data!.stageResults[0]?.executionContext).toMatchObject({
-      model: "claude-fable-5-1",
+      model: stageModel,
       modelClass: "frontier",
       reasoningEffort: "xhigh",
       taskId: "attest-complete",
@@ -285,30 +306,30 @@ describe("Claude Code host attestation through the MCP boundary", () => {
     expect(planned.error?.code).toBe("BINDING_REQUIRED");
   });
 
-  it("rejects tokens for a different call, forged signatures, replays and expired observations", async () => {
-    const { store, call } = await harness(true);
+  it.each([claudeCodeExecutionAdapter, codexExecutionAdapter])("rejects different calls, signatures, replays and expiry for $host", async (adapter) => {
+    const { store, call } = await harness(true, adapter);
 
-    const attested = attest(store, "plan_workflow", planArguments("tampered"));
+    const attested = attest(store, "plan_workflow", planArguments("tampered"), { adapter });
     const tampered = {
       ...attested,
       taskEnvelope: { ...task("tampered"), objective: "Changed after attestation." },
     };
     expect((await call<WorkflowPlanV1>("plan_workflow", tampered)).error?.code).toBe("BINDING_INVALID");
 
-    const forgedInput = attest(store, "plan_workflow", planArguments("forged"));
+    const forgedInput = attest(store, "plan_workflow", planArguments("forged"), { adapter });
     const token = String(forgedInput[HOST_ATTESTATION_FIELD]);
     const forged = { ...forgedInput, [HOST_ATTESTATION_FIELD]: `${token.slice(0, -2)}${token.endsWith("AA") ? "BB" : "AA"}` };
     expect((await call<WorkflowPlanV1>("plan_workflow", forged)).error?.code).toBe("BINDING_INVALID");
 
     const foreignStore = new InMemoryWorkflowStore();
-    const foreign = attest(foreignStore, "plan_workflow", planArguments("foreign-key"));
+    const foreign = attest(foreignStore, "plan_workflow", planArguments("foreign-key"), { adapter });
     expect((await call<WorkflowPlanV1>("plan_workflow", foreign)).error?.code).toBe("BINDING_INVALID");
 
-    const once = attest(store, "plan_workflow", planArguments("replay"));
+    const once = attest(store, "plan_workflow", planArguments("replay"), { adapter });
     expect((await call<WorkflowPlanV1>("plan_workflow", once)).ok).toBe(true);
     expect((await call<WorkflowPlanV1>("plan_workflow", once)).error?.code).toBe("BINDING_INVALID");
 
-    const expired = attest(store, "plan_workflow", planArguments("expired"), { now: new Date(Date.now() - 10 * 60 * 1000) });
+    const expired = attest(store, "plan_workflow", planArguments("expired"), { adapter, now: new Date(Date.now() - 10 * 60 * 1000) });
     expect((await call<WorkflowPlanV1>("plan_workflow", expired)).error?.code).toBe("BINDING_INVALID");
   });
 
@@ -333,6 +354,16 @@ describe("Claude Code host attestation through the MCP boundary", () => {
     expect((await call<WorkflowPlanV1>("plan_workflow", lightweight)).error?.code).toBe("BINDING_INVALID");
     const lowEffort = attest(store, "plan_workflow", planArguments("low-effort"), { effort: "low" });
     expect((await call<WorkflowPlanV1>("plan_workflow", lowEffort)).error?.code).toBe("BINDING_INVALID");
+  });
+
+  it("keeps Sol general and Luna lightweight below a deep bootstrap floor", async () => {
+    const adapter = codexExecutionAdapter;
+    const { store, call } = await harness(true, adapter);
+    const deep = { schemaVersion: "1.0.0", taskEnvelope: { ...task("sol-deep-floor"), riskLevel: "high" } };
+    expect((await call<WorkflowPlanV1>("plan_workflow", attest(store, "plan_workflow", deep,
+      { adapter, model: "gpt-6-sol" }))).error?.code).toBe("BINDING_INVALID");
+    expect((await call<WorkflowPlanV1>("plan_workflow", attest(store, "plan_workflow", planArguments("luna-general-floor"),
+      { adapter, model: "gpt-6-luna" }))).error?.code).toBe("BINDING_INVALID");
   });
 });
 
@@ -541,9 +572,10 @@ describe("host attestation hook", () => {
 });
 
 describe("host attestation configuration", () => {
-  it("enables the provider only for the exact Claude Code value", () => {
+  it("enables only the supported host adapters", () => {
     expect(resolveHostAttestation({})).toBeNull();
-    expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "codex" })).toBeNull();
+    expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "codex" })).toBe("codex");
+    expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "unconfigured-host" })).toBeNull();
     expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "claude-code" })).toBe("claude-code");
   });
 

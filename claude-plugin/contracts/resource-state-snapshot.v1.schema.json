@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/resource-state-snapshot.v1.schema.json",
+  "title": "resource-state-snapshot.v1",
+  "description": "Observed windows of one shared resource pool. Model-to-pool bindings are separate configuration, not observations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "accountScope", "resourcePoolId", "accessPath", "windows"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "accountScope": {
+      "description": "Opaque keyed pseudonym of the account scope; never an account name, email, token, or unkeyed digest.",
+      "type": "string",
+      "pattern": "^acct-hmac-sha256:[a-f0-9]{64}$"
+    },
+    "resourcePoolId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$" },
+    "accessPath": { "enum": ["subscription", "api", "enterprise"] },
+    "windows": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/window" }
+    }
+  },
+  "$defs": {
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["windowId", "resetEpoch", "resetAt", "revision", "limitBucket", "coverage", "source", "observedAt", "expiresAt"],
+      "properties": {
+        "windowId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$" },
+        "resetEpoch": { "type": "integer", "minimum": 0 },
+        "resetAt": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] },
+        "revision": { "type": "integer", "minimum": 0 },
+        "limitBucket": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bucketId", "kind", "unit", "limit", "remaining"],
+          "properties": {
+            "bucketId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$" },
+            "kind": { "enum": ["tokens", "requests", "subscription-percent", "billing", "credits", "concurrency"] },
+            "unit": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9._:/@+\\-]{0,63}$" },
+            "limit": { "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }] },
+            "remaining": { "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }] }
+          },
+          "allOf": [
+            { "if": { "properties": { "kind": { "const": "tokens" } } }, "then": { "properties": { "unit": { "const": "token" } } } },
+            { "if": { "properties": { "kind": { "const": "requests" } } }, "then": { "properties": { "unit": { "const": "request" } } } },
+            { "if": { "properties": { "kind": { "const": "subscription-percent" } } }, "then": { "properties": { "unit": { "const": "percent" } } } },
+            { "if": { "properties": { "kind": { "const": "billing" } } }, "then": { "properties": { "unit": { "pattern": "^[A-Z]{3}$" } } } },
+            { "if": { "properties": { "kind": { "const": "credits" } } }, "then": { "properties": { "unit": { "const": "credit" } } } },
+            { "if": { "properties": { "kind": { "const": "concurrency" } } }, "then": { "properties": { "unit": { "const": "slot" } } } }
+          ]
+        },
+        "coverage": { "enum": ["complete", "partial", "unknown"] },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "evidenceDigest"],
+          "properties": {
+            "kind": { "enum": ["host-observation", "provider-observation", "configured", "user-declared"] },
+            "evidenceDigest": { "anyOf": [{ "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }, { "type": "null" }] }
+          }
+        },
+        "observedAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

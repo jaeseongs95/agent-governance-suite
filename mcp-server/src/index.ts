@@ -20,6 +20,7 @@ import { PluginUpdateService } from "./plugin-update-service.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { RoutingAwareWorkflowService } from "./routing-aware-workflow-service.js";
 import { HostAttestationProvider } from "./host-attestation.js";
+import { claudeCodeExecutionAdapter, codexExecutionAdapter } from "./host-execution-adapters.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { SqliteKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { TrustStore } from "./trust-store.js";
@@ -58,10 +59,13 @@ async function main(): Promise<void> {
   });
 
   const validator = new ContractValidator();
-  const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
+  const attestationHost = resolveHostAttestation();
+  const hostAttestation = attestationHost ? new HostAttestationProvider(
+    store, attestationHost === "codex" ? codexExecutionAdapter : claudeCodeExecutionAdapter,
+  ) : null;
   // The fixed same-user profile is selected at startup; only its verified current call supplies A2 context.
   const flowmarshalProfile = initializeFlowmarshalProfile();
-  if (flowmarshalProfile && hostAttestation) throw new Error("FlowMarshal A2 and Claude host profiles cannot share one server");
+  if (flowmarshalProfile && hostAttestation) throw new Error("FlowMarshal A2 and host attestation profiles cannot share one server");
   flowmarshalInvocation = flowmarshalProfile ? new FlowmarshalCurrentInvocation(flowmarshalProfile, store) : null;
   const vmPolicy = flowmarshalProfile ? null : VmModelPolicy.installed();
   const vmInvocation = vmPolicy ? new VmCurrentInvocation(store, Date.now, vmPolicy) : null;

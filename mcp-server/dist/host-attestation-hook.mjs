@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
 // mcp-server/src/host-attestation-hook.ts
-import { createHash as createHash2 } from "node:crypto";
 import { mkdirSync as mkdirSync2, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path5 from "node:path";
 import { fileURLToPath } from "node:url";
 
 // mcp-server/src/host-attestation.ts
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash as createHash2, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 // contracts/types.ts
+var MODEL_CLASS = ["lightweight", "general", "deep", "frontier"];
 var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
 var WorkflowContractError = class extends Error {
   constructor(code, message, details = null) {
@@ -242,8 +242,8 @@ function canonicalJson(value, subject = "Convergence input") {
   }
   if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
   if (value && typeof value === "object") {
-    const record3 = value;
-    return `{${Object.keys(record3).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record3[key], subject)}`).join(",")}}`;
+    const record4 = value;
+    return `{${Object.keys(record4).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record4[key], subject)}`).join(",")}}`;
   }
   throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
 }
@@ -439,22 +439,15 @@ var HOST_ATTESTATION_TOOLS = /* @__PURE__ */ new Set(["plan_workflow", "record_s
 var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
 var TOKEN_PREFIX = "aghs1";
 var TOKEN_TTL_MS = 5 * 60 * 1e3;
-var CLAUDE_MODEL_CLASSES = {
-  haiku: "lightweight",
-  sonnet: "general",
-  opus: "deep",
-  fable: "frontier"
-};
-var CLAUDE_MODEL_ID = /^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\.)?(?:anthropic\.)?claude-(?:\d+(?:-\d+)?-)?(haiku|sonnet|opus|fable)(?:[-@:.]|$)/u;
 function record(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
 function nonEmpty(value) {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
-function modelClassForClaudeModel(model) {
-  const family = CLAUDE_MODEL_ID.exec(model)?.[1];
-  return family ? CLAUDE_MODEL_CLASSES[family] ?? null : null;
+var hostIdentityDigest = (value) => createHash2("sha256").update(value, "utf8").digest("hex").slice(0, 24);
+function hostActorId(host, sessionId, agentId = null) {
+  return `${host}:session-${hostIdentityDigest(sessionId)}${agentId ? `:agent-${hostIdentityDigest(agentId)}` : ""}`;
 }
 function lowerReasoningEffort(left, right) {
   return REASONING_EFFORT.indexOf(left) <= REASONING_EFFORT.indexOf(right) ? left : right;
@@ -492,16 +485,23 @@ function signingKey(store) {
 function mac(key, body) {
   return createHmac("sha256", key).update(body, "utf8").digest("base64url");
 }
-function issueHostAttestation(store, observation) {
+function issueHostAttestation(store, adapter, observation) {
   if (!HOST_ATTESTATION_TOOLS.has(observation.tool)) return null;
   const input = withoutHostAttestation(observation.input);
   const binding = hostAttestationBinding(observation.tool, input);
-  const modelClass = modelClassForClaudeModel(observation.model);
-  if (!binding || !modelClass || !isReasoningEffort(observation.reasoningEffort) || !observation.actorId) return null;
+  const modelClass = adapter.modelClassForModel(observation.model);
+  if (!binding || !modelClass || !MODEL_CLASS.includes(modelClass) || !adapter.host || !isReasoningEffort(observation.reasoningEffort) || !observation.actorId || !observation.sessionId || !observation.toolUseId || observation.actorId !== hostActorId(adapter.host, observation.sessionId, observation.agentId ?? null)) return null;
   const now = observation.now ?? /* @__PURE__ */ new Date();
+  const scope = {
+    host: adapter.host,
+    session: hostIdentityDigest(observation.sessionId),
+    agent: observation.agentId ? hostIdentityDigest(observation.agentId) : null,
+    turn: observation.turnId ? hostIdentityDigest(observation.turnId) : null,
+    call: hostIdentityDigest(observation.toolUseId)
+  };
   const payload = {
     v: 1,
-    host: "claude-code",
+    ...scope,
     tool: observation.tool,
     inputDigest: convergenceDigest(input),
     ...binding,
@@ -509,12 +509,124 @@ function issueHostAttestation(store, observation) {
     modelClass,
     reasoningEffort: observation.reasoningEffort,
     actorId: observation.actorId,
-    observationId: randomBytes(24).toString("base64url"),
+    // Retrying the same host call cannot mint a second consumable observation.
+    observationId: createHash2("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
     observedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + TOKEN_TTL_MS).toISOString()
   };
   const body = `${TOKEN_PREFIX}.${Buffer.from(JSON.stringify(payload), "utf8").toString("base64url")}`;
   return `${body}.${mac(signingKey(store), body)}`;
+}
+
+// mcp-server/src/host-execution-adapters.ts
+var CLAUDE_CLASSES = {
+  haiku: "lightweight",
+  sonnet: "general",
+  opus: "deep",
+  fable: "frontier"
+};
+var CLAUDE_MODEL_ID = /^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\.)?(?:anthropic\.)?claude-(?:\d+(?:-\d+)?-)?(haiku|sonnet|opus|fable)(?:[-@:.]|$)/u;
+function modelClassForClaudeModel(model) {
+  const family = CLAUDE_MODEL_ID.exec(model)?.[1];
+  return family ? CLAUDE_CLASSES[family] ?? null : null;
+}
+var CODEX_CLASSES = {
+  "gpt-6-astra": "frontier",
+  // Conservative governance classes for the host's workhorse/easier-task roles, not measured quality claims.
+  "gpt-6-sol": "general",
+  "gpt-6-luna": "lightweight",
+  "gpt-5.6-sol": "deep",
+  "gpt-5.6-terra": "general",
+  "gpt-5.6-luna": "lightweight"
+};
+var claudeCodeExecutionAdapter = {
+  host: "claude-code",
+  modelClassForModel: modelClassForClaudeModel
+};
+var codexExecutionAdapter = {
+  host: "codex",
+  modelClassForModel: (model) => Object.hasOwn(CODEX_CLASSES, model) ? CODEX_CLASSES[model] : null
+};
+
+// mcp-server/src/codex-host-observation.ts
+import { closeSync, fstatSync, openSync, readSync } from "node:fs";
+var CODEX_METADATA_HEAD_BYTES = 256 * 1024;
+var CODEX_METADATA_TAIL_BYTES = 8 * 1024 * 1024;
+function record2(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+}
+var text = (value) => typeof value === "string" && value.length > 0 ? value : null;
+function readCodexMetadata(file) {
+  let descriptor = null;
+  try {
+    descriptor = openSync(file, "r");
+    const stats = fstatSync(descriptor);
+    if (!stats.isFile()) return null;
+    const read = (position2, bytes) => {
+      const buffer = Buffer.alloc(bytes);
+      return buffer.subarray(0, readSync(descriptor, buffer, 0, bytes, position2)).toString("utf8");
+    };
+    const head = read(0, Math.min(stats.size, CODEX_METADATA_HEAD_BYTES));
+    const position = Math.max(0, stats.size - CODEX_METADATA_TAIL_BYTES);
+    const tail = read(position, stats.size - position);
+    return { head, tail: position > 0 ? tail.slice(tail.indexOf("\n") + 1) : tail };
+  } catch {
+    return null;
+  } finally {
+    if (descriptor !== null) closeSync(descriptor);
+  }
+}
+function observeCodexHook(input, options = {}) {
+  const missing = (reason) => ({ observation: null, reason });
+  const sessionId = text(input.session_id);
+  const turnId = text(input.turn_id);
+  const toolUseId = text(input.tool_use_id);
+  const model = text(input.model);
+  const transcript = text(input.transcript_path);
+  if (!sessionId || !turnId || !toolUseId || !model || !transcript) return missing("missing-current-session-turn-call-model-or-transcript");
+  if (text(input.agent_id)) return missing("subagent-identity-not-supported");
+  const window = (options.readMetadata ?? readCodexMetadata)(transcript);
+  if (!window) return missing("host-metadata-unreadable");
+  let metadata = null;
+  try {
+    const first = record2(JSON.parse(window.head.split("\n", 1)[0] ?? ""));
+    if (first?.type === "session_meta") metadata = record2(first.payload);
+  } catch {
+  }
+  if (!metadata || metadata.id !== sessionId || metadata.session_id !== void 0 && metadata.session_id !== sessionId) {
+    return missing("host-session-mismatch-or-unsupported-metadata");
+  }
+  if (record2(metadata.source)?.subagent || record2(metadata.thread_source)?.subagent) return missing("subagent-identity-not-supported");
+  let context = null;
+  const lines = window.tail.split("\n");
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const line = lines[index];
+    if (!line?.slice(0, 200).includes('"type":"turn_context"')) continue;
+    try {
+      const entry = record2(JSON.parse(line));
+      if (entry?.type === "turn_context") {
+        context = record2(entry.payload);
+        break;
+      }
+    } catch {
+    }
+  }
+  if (!context) return missing("current-turn-metadata-outside-bounded-window-or-missing");
+  if (context.turn_id !== turnId) return missing("host-turn-mismatch");
+  if (context.model !== model) return missing("host-model-mismatch");
+  if (!isReasoningEffort(context.effort)) return missing("host-reasoning-effort-missing-or-unsupported");
+  if (!codexExecutionAdapter.modelClassForModel(model)) return missing("host-model-policy-unsupported");
+  return {
+    observation: {
+      model,
+      reasoningEffort: context.effort,
+      actorId: hostActorId(codexExecutionAdapter.host, sessionId),
+      sessionId,
+      turnId,
+      toolUseId
+    },
+    reason: null
+  };
 }
 
 // mcp-server/src/runtime-config.ts
@@ -1377,10 +1489,10 @@ var SqliteWorkflowStore = class {
 };
 
 // mcp-server/src/host-attestation-hook.ts
-function record2(value) {
+function record3(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
-function text(value) {
+function text2(value) {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 function readTextOrNull(file) {
@@ -1390,9 +1502,9 @@ function readTextOrNull(file) {
     return null;
   }
 }
-var digest = (value) => createHash2("sha256").update(value, "utf8").digest("hex").slice(0, 24);
+var digest = hostIdentityDigest;
 function claudeCodeActorId(sessionId, agentId) {
-  return agentId ? `claude-code:session-${digest(sessionId)}:agent-${digest(agentId)}` : `claude-code:session-${digest(sessionId)}`;
+  return hostActorId(claudeCodeExecutionAdapter.host, sessionId, agentId);
 }
 function sleepSync(milliseconds) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
@@ -1411,20 +1523,20 @@ function findToolUseObservation(transcript, toolUseId, sessionId, agentId) {
     if (!line?.includes(toolUseId)) continue;
     let entry;
     try {
-      entry = record2(JSON.parse(line));
+      entry = record3(JSON.parse(line));
     } catch {
       continue;
     }
     if (!entry || entry.type !== "assistant") continue;
-    const message = record2(entry.message);
+    const message = record3(entry.message);
     const content = Array.isArray(message?.content) ? message.content : [];
-    const issued = content.some((block) => record2(block)?.type === "tool_use" && record2(block)?.id === toolUseId);
+    const issued = content.some((block) => record3(block)?.type === "tool_use" && record3(block)?.id === toolUseId);
     if (!issued) continue;
     if (entry.sessionId !== void 0 && entry.sessionId !== sessionId) return null;
     if (agentId ? entry.agentId !== agentId : entry.isSidechain === true) return null;
-    const model = text(message?.model);
+    const model = text2(message?.model);
     if (!model) return null;
-    return { model, effort: text(entry.effort) };
+    return { model, effort: text2(entry.effort) };
   }
   return null;
 }
@@ -1435,16 +1547,16 @@ function findLatestAssistantObservation(transcript, sessionId, agentId, nowMs = 
     if (!line?.includes('"assistant"')) continue;
     let entry;
     try {
-      entry = record2(JSON.parse(line));
+      entry = record3(JSON.parse(line));
     } catch {
       continue;
     }
     if (!entry || entry.type !== "assistant") continue;
     if (entry.sessionId !== sessionId) continue;
     if (agentId ? entry.agentId !== agentId : entry.isSidechain === true) continue;
-    const at = Date.parse(text(entry.timestamp) ?? "");
+    const at = Date.parse(text2(entry.timestamp) ?? "");
     if (Number.isNaN(at) || at > nowMs) continue;
-    const model = text(record2(entry.message)?.model);
+    const model = text2(record3(entry.message)?.model);
     if (!model || !modelClassForClaudeModel(model)) continue;
     return { model, at };
   }
@@ -1454,19 +1566,19 @@ function hasIssuingMessage(transcript, toolUseId) {
   return transcript.split("\n").some((line) => {
     if (!line.includes(toolUseId)) return false;
     try {
-      const entry = record2(JSON.parse(line));
-      const content = record2(entry?.message)?.content;
-      return entry?.type === "assistant" && Array.isArray(content) && content.some((block) => record2(block)?.type === "tool_use" && record2(block)?.id === toolUseId);
+      const entry = record3(JSON.parse(line));
+      const content = record3(entry?.message)?.content;
+      return entry?.type === "assistant" && Array.isArray(content) && content.some((block) => record3(block)?.type === "tool_use" && record3(block)?.id === toolUseId);
     } catch {
       return false;
     }
   });
 }
 function sessionModelUpdate(input, now = /* @__PURE__ */ new Date()) {
-  const sessionId = text(input.session_id);
-  if (!sessionId || text(input.agent_id)) return null;
+  const sessionId = text2(input.session_id);
+  if (!sessionId || text2(input.agent_id)) return null;
   const source = input.hook_event_name === "SessionStart" ? "session-start" : input.hook_event_name === "PostModelSwitch" ? "model-switch" : null;
-  const model = source === "session-start" ? text(input.model) : source === "model-switch" ? text(input.to_model) : null;
+  const model = source === "session-start" ? text2(input.model) : source === "model-switch" ? text2(input.to_model) : null;
   return source && model ? { sessionId, record: { model, source, observedAt: now.toISOString() } } : null;
 }
 function sessionModelFile(directory, sessionId) {
@@ -1481,10 +1593,10 @@ function writeSessionModel(directory, sessionId, value) {
 }
 function readSessionModel(directory, sessionId) {
   try {
-    const value = record2(JSON.parse(readFileSync(sessionModelFile(directory, sessionId), "utf8")));
-    const model = text(value?.model);
+    const value = record3(JSON.parse(readFileSync(sessionModelFile(directory, sessionId), "utf8")));
+    const model = text2(value?.model);
     const source = value?.source === "session-start" || value?.source === "model-switch" ? value.source : null;
-    const observedAt = text(value?.observedAt);
+    const observedAt = text2(value?.observedAt);
     return model && source && observedAt && !Number.isNaN(Date.parse(observedAt)) ? { model, source, observedAt } : null;
   } catch {
     return null;
@@ -1492,10 +1604,10 @@ function readSessionModel(directory, sessionId) {
 }
 function attestedToolInput(input) {
   if (input.hook_event_name !== "PreToolUse") return null;
-  const canonicalName = text(input.tool_name) ?? "";
-  if (!canonicalName.startsWith("mcp__")) return null;
+  const canonicalName = text2(input.tool_name) ?? "";
+  if (!/^mcp__(?:plugin_agent-governance-suite_agent-governance-suite|agent[-_]governance[-_]suite)__/u.test(canonicalName)) return null;
   const tool = canonicalName.split("__").at(-1) ?? "";
-  const toolInput = record2(input.tool_input);
+  const toolInput = record3(input.tool_input);
   return HOST_ATTESTATION_TOOLS.has(tool) && toolInput ? { tool, toolInput } : null;
 }
 function withoutCallerAttestation(input) {
@@ -1519,11 +1631,11 @@ function handleHostAttestationHook(input, store, options = {}) {
   if (!target) return {};
   const { tool, toolInput } = target;
   const unattested = () => withoutCallerAttestation(input);
-  const sessionId = text(input.session_id);
-  const toolUseId = text(input.tool_use_id);
-  const transcriptPath = text(input.transcript_path);
+  const sessionId = text2(input.session_id);
+  const toolUseId = text2(input.tool_use_id);
+  const transcriptPath = text2(input.transcript_path);
   if (!sessionId || !toolUseId || !transcriptPath) return unattested();
-  const agentId = text(input.agent_id);
+  const agentId = text2(input.agent_id);
   const readText = options.readText ?? readTextOrNull;
   const sleep = options.sleep ?? sleepSync;
   const maxWaitMs = options.maxWaitMs ?? 300;
@@ -1553,14 +1665,18 @@ function handleHostAttestationHook(input, store, options = {}) {
     observation = model ? { model, effort: null } : null;
   }
   if (!observation) return unattested();
-  const effort = observedEffort(text(record2(input.effort)?.level), observation.effort);
+  const effort = observedEffort(text2(record3(input.effort)?.level), observation.effort);
   if (!effort) return unattested();
-  const token = issueHostAttestation(store, {
+  const token = issueHostAttestation(store, claudeCodeExecutionAdapter, {
     tool,
     input: toolInput,
     model: observation.model,
     reasoningEffort: effort,
     actorId: claudeCodeActorId(sessionId, agentId),
+    sessionId,
+    agentId,
+    turnId: text2(input.turn_id),
+    toolUseId,
     ...options.now ? { now: options.now() } : {}
   });
   if (!token) return unattested();
@@ -1571,23 +1687,48 @@ function handleHostAttestationHook(input, store, options = {}) {
     }
   };
 }
+function handleCodexHostAttestationHook(input, store, options = {}) {
+  const target = attestedToolInput(input);
+  if (!target) return {};
+  const observed = observeCodexHook(input, options);
+  const clean = withoutHostAttestation(target.toolInput);
+  const token = observed.observation ? issueHostAttestation(store, codexExecutionAdapter, {
+    ...observed.observation,
+    tool: target.tool,
+    input: clean,
+    ...options.now ? { now: options.now() } : {}
+  }) : null;
+  return {
+    ...!token ? { systemMessage: `AGS execution observation unavailable: ${observed.reason ?? "invalid-workflow-binding"}. Requires the current host session/turn/model/effort and tool call; caller settings cannot supply them.` } : {},
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "allow",
+      updatedInput: { ...clean, ...token ? { [HOST_ATTESTATION_FIELD]: token } : {} }
+    }
+  };
+}
 async function main() {
   let store = null;
   let input = {};
   let output;
+  const codex = process.argv.includes("--host=codex");
   try {
     input = JSON.parse(readFileSync(0, "utf8"));
     const databasePath = resolveWorkflowDatabasePath();
     const modelDirectory = path5.join(path5.dirname(databasePath), "host-models");
-    const update = sessionModelUpdate(input);
+    const update = codex ? null : sessionModelUpdate(input);
     if (update) {
       writeSessionModel(modelDirectory, update.sessionId, update.record);
       return;
     }
     store = new SqliteWorkflowStore(databasePath);
-    output = handleHostAttestationHook(input, store, { readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId) });
+    output = codex ? handleCodexHostAttestationHook(input, store) : handleHostAttestationHook(input, store, { readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId) });
   } catch {
     output = withoutCallerAttestation(input);
+    if (codex && attestedToolInput(input)) {
+      output.systemMessage = "AGS execution observation unavailable: adapter-read-or-storage-failed. No caller attestation is trusted.";
+      if (record3(output.hookSpecificOutput)) output.hookSpecificOutput.permissionDecision = "allow";
+    }
   } finally {
     try {
       store?.close();
@@ -1601,6 +1742,7 @@ export {
   claudeCodeActorId,
   findLatestAssistantObservation,
   findToolUseObservation,
+  handleCodexHostAttestationHook,
   handleHostAttestationHook,
   hasIssuingMessage,
   observedEffort,

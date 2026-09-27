@@ -8020,7 +8020,7 @@ var require_dist = __commonJS({
 
 // mcp-server/src/session-message-hook.ts
 import { spawn as spawn2 } from "node:child_process";
-import { createHash as createHash7, randomUUID as randomUUID2 } from "node:crypto";
+import { createHash as createHash8, randomUUID as randomUUID2 } from "node:crypto";
 import { readFileSync as readFileSync6 } from "node:fs";
 import path13 from "node:path";
 import { fileURLToPath as fileURLToPath5 } from "node:url";
@@ -9045,6 +9045,18 @@ function processStartToken(pid, platform = process.platform) {
   }
 }
 
+// mcp-server/src/host-input-adapter.ts
+import { createHash as createHash2 } from "node:crypto";
+
+// mcp-server/src/peer-wait-policy.ts
+function identityKey(identity) {
+  return JSON.stringify([identity.host, identity.sessionId]);
+}
+function normalizePeerWaitTargets(targets) {
+  const unique = new Map(targets.map((target) => [identityKey(target), { host: target.host, sessionId: target.sessionId }]));
+  return [...unique.keys()].sort().map((key) => unique.get(key));
+}
+
 // mcp-server/src/session-message-relay.ts
 var IDENTITY_RECHECK_MS = 10 * 6e4;
 var WAKE_BACKOFF_MAX_MS = 10 * 6e4;
@@ -9111,6 +9123,29 @@ function adaptHostInput(input, host) {
 function hostDeliveryProfile(host, environment = process.env) {
   const transport = host === "claude-code" ? "claude-inbox" : environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE === "1" ? "codex-queue" : "codex-deferred";
   return { transport, capabilities: transportDeliveryCapabilities(transport) };
+}
+function nativePeerWait(observation) {
+  if (observation.host !== "codex" || observation.toolName !== "mcp__codex_app__wait_threads") return null;
+  const input = observation.toolInput ?? {};
+  const timeoutMs = input.timeoutMs === void 0 ? 12e4 : input.timeoutMs;
+  if (typeof timeoutMs !== "number" || !Number.isInteger(timeoutMs) || timeoutMs < 0 || timeoutMs > 36e5) return null;
+  if (!Array.isArray(input.targets) || input.targets.length < 1 || input.targets.length > 8) return null;
+  const targets = [];
+  const cursors = /* @__PURE__ */ new Set();
+  for (const value of input.targets) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const target = value;
+    if (typeof target.threadId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(target.threadId)) return null;
+    if (target.hostId !== void 0 && target.hostId !== "local") return null;
+    if (target.afterCursor !== void 0 && typeof target.afterCursor !== "string") return null;
+    targets.push({ host: "codex", sessionId: target.threadId });
+    cursors.add(JSON.stringify([target.threadId, target.afterCursor ?? null]));
+  }
+  return {
+    targets: normalizePeerWaitTargets(targets),
+    timeoutMs,
+    queryRevision: createHash2("sha256").update(JSON.stringify([...cursors].sort())).digest("hex")
+  };
 }
 
 // mcp-server/src/input-observation.ts
@@ -13591,7 +13626,7 @@ var export_Ajv2020 = Wp.default;
 var export_addFormats = Zp.default;
 
 // skills/coordinate-subagents/scripts/model-routing-core.mjs
-import { createHash as createHash2 } from "node:crypto";
+import { createHash as createHash3 } from "node:crypto";
 var ROLES = Object.freeze(["discovery", "general-implementation", "complex-reasoning", "independent-audit"]);
 var ORIGINS = Object.freeze(["openai", "anthropic", "google", "xai", "mistral", "amazon", "cohere", "meta"]);
 var TRAITS = Object.freeze(["architecture-decision", "code-change", "diagnosis", "source-research", "google-app-operation", "context-repair", "multimodal-input"]);
@@ -13664,7 +13699,7 @@ function canonical(value) {
   return visit(value);
 }
 function digest(value) {
-  return `sha256:${createHash2("sha256").update(canonical(value)).digest("hex")}`;
+  return `sha256:${createHash3("sha256").update(canonical(value)).digest("hex")}`;
 }
 function seal(value, field) {
   const out = structuredClone(value);
@@ -15456,7 +15491,7 @@ var SqliteWorkflowStore = class {
 
 // skills/coordinate-subagents/scripts/model-catalog.mjs
 import { readFileSync as readFileSync3, realpathSync } from "node:fs";
-import { createHash as createHash3 } from "node:crypto";
+import { createHash as createHash4 } from "node:crypto";
 import path7 from "node:path";
 import { fileURLToPath as fileURLToPath2, pathToFileURL as pathToFileURL2 } from "node:url";
 var defaultCatalogDirectory = fileURLToPath2(new URL("../references/model-catalog/", import.meta.url));
@@ -15467,7 +15502,7 @@ function localFile(directory, relative, expectedDigest = null) {
   assert(rel && !rel.startsWith("..") && !path7.isAbsolute(rel), "INVALID_CATALOG_PATH");
   const bytes = readFileSync3(file);
   assert(bytes.length <= 2 * 1024 * 1024, "CATALOG_TOO_LARGE");
-  if (expectedDigest !== null) assert(createHash3("sha256").update(bytes).digest("hex") === expectedDigest, "CATALOG_FILE_DIGEST_MISMATCH");
+  if (expectedDigest !== null) assert(createHash4("sha256").update(bytes).digest("hex") === expectedDigest, "CATALOG_FILE_DIGEST_MISMATCH");
   return JSON.parse(bytes.toString("utf8"));
 }
 function catalogIndex(directory = defaultCatalogDirectory) {
@@ -15624,7 +15659,7 @@ function checkApplicationArtifactBinding(record3, { binding, target, requiredFie
 // mcp-server/src/schema-validator.ts
 var import__ = __toESM(require__(), 1);
 var import_ajv_formats = __toESM(require_dist(), 1);
-import { createHash as createHash4 } from "node:crypto";
+import { createHash as createHash5 } from "node:crypto";
 import { readFileSync as readFileSync4, readdirSync } from "node:fs";
 import path8 from "node:path";
 
@@ -15800,6 +15835,7 @@ var contractSchemas = {
   listSessionStatusRequest: loadSchema("list-session-status-request.v1.schema.json"),
   sendSessionMessageRequest: loadSchema("send-session-message-request.v1.schema.json"),
   sessionTask: loadSchema("session-task.v1.schema.json"),
+  prepareSessionMessageRequest: loadSchema("prepare-session-message-request.v1.schema.json"),
   acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
   getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
@@ -15996,7 +16032,7 @@ var ContractValidator = class {
       action: result.action,
       binding: result.binding
     };
-    const digest3 = `sha256:${createHash4("sha256").update(canonicalJson(intent)).digest("hex")}`;
+    const digest3 = `sha256:${createHash5("sha256").update(canonicalJson(intent)).digest("hex")}`;
     if (result.intentDigest !== digest3) {
       throw new WorkflowContractError("INTEGRITY_FAILED", "Context transition result diverged from its intent digest.");
     }
@@ -16048,6 +16084,9 @@ var ContractValidator = class {
   }
   sendSessionMessageRequest(value) {
     return this.assert("sendSessionMessageRequest", value);
+  }
+  prepareSessionMessageRequest(value) {
+    return this.assert("prepareSessionMessageRequest", value);
   }
   acknowledgeSessionMessagesRequest(value) {
     return this.assert("acknowledgeSessionMessagesRequest", value);
@@ -16290,7 +16329,7 @@ var ContractValidator = class {
       });
     }
     const raw = readFileSync4(schemaPath);
-    const digest3 = `sha256:${createHash4("sha256").update(raw).digest("hex")}`;
+    const digest3 = `sha256:${createHash5("sha256").update(raw).digest("hex")}`;
     if (digest3 !== reference.digest) {
       throw new WorkflowContractError("STALE_REVISION", `${label} schema changed after planning.`, {
         schemaPath: reference.path,
@@ -16650,7 +16689,7 @@ import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 
 // mcp-server/src/native-tool-observation.ts
-import { createHash as createHash5 } from "node:crypto";
+import { createHash as createHash6 } from "node:crypto";
 import path9 from "node:path";
 function record2(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
@@ -16658,7 +16697,7 @@ function record2(value) {
 function text3(value) {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
-var digest2 = (value) => createHash5("sha256").update(value, "utf8").digest("hex").slice(0, 24);
+var digest2 = (value) => createHash6("sha256").update(value, "utf8").digest("hex").slice(0, 24);
 function claudeCodeActorId(sessionId, agentId) {
   return agentId ? `claude-code:session-${digest2(sessionId)}:agent-${digest2(agentId)}` : `claude-code:session-${digest2(sessionId)}`;
 }
@@ -17153,7 +17192,7 @@ import { fileURLToPath as fileURLToPath4 } from "node:url";
 var MODEL_CATALOG_DIRECTORY = fileURLToPath4(new URL("../../skills/coordinate-subagents/references/model-catalog/", import.meta.url));
 
 // mcp-server/src/model-peer-packet.ts
-import { createHash as createHash6, createHmac as createHmac4, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+import { createHash as createHash7, createHmac as createHmac4, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
 var PEER_PACKET_FEATURE = "model-assignment-handoff.v1";
 function peerCheck(condition, message) {
   if (!condition) throw new Error(message);
@@ -17178,7 +17217,7 @@ function peerInstant(value) {
   return Date.parse(value);
 }
 function peerMessageId(body) {
-  return `ags-peer-${createHash6("sha256").update(body, "utf8").digest("hex")}`;
+  return `ags-peer-${createHash7("sha256").update(body, "utf8").digest("hex")}`;
 }
 function isModelPeerPacket(body) {
   if (Buffer.byteLength(body, "utf8") > SESSION_MESSAGE_BODY_MAX_BYTES) return false;
@@ -17228,7 +17267,7 @@ var ModelPeerPacketSigner = class {
   }
   verifyMessage(message, own, nowMs) {
     const packet = this.verify(message.body, nowMs);
-    peerCheck(message.messageId === peerMessageId(message.body) && peerInstant(message.expiresAt) > nowMs && message.sender.host === packet.sender.host && message.sender.sessionId === packet.sender.sessionId && message.recipient.host === packet.recipient.host && message.recipient.sessionId === packet.recipient.sessionId && canonicalJson(packet.recipient) === canonicalJson(own), "Peer packet does not match the claimed spool message or local instance.");
+    peerCheck(typeof message.messageId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(message.messageId) && peerInstant(message.expiresAt) > nowMs && message.sender.host === packet.sender.host && message.sender.sessionId === packet.sender.sessionId && message.recipient.host === packet.recipient.host && message.recipient.sessionId === packet.recipient.sessionId && canonicalJson(packet.recipient) === canonicalJson(own), "Peer packet does not match the claimed spool message or local instance.");
     return packet;
   }
 };
@@ -17250,7 +17289,10 @@ var ModelPeerJournal = class {
       ON ags_model_peer_transfers_v1(decision_digest) WHERE direction='outbound';
     CREATE UNIQUE INDEX IF NOT EXISTS ags_model_peer_active_write_v1
       ON ags_model_peer_transfers_v1(write_key) WHERE direction='outbound' AND write_key IS NOT NULL
-      AND state IN ('prepared','sent','unknown','accepted');`);
+      AND state IN ('prepared','sent','unknown','accepted');
+    CREATE TABLE IF NOT EXISTS ags_model_peer_message_bindings_v1 (
+      packet_id TEXT PRIMARY KEY, message_id TEXT NOT NULL UNIQUE
+    ) STRICT;`);
   }
   database;
   transaction(work) {
@@ -17272,6 +17314,25 @@ var ModelPeerJournal = class {
   outbound(decisionDigest) {
     const row = this.database.prepare("SELECT packet_id FROM ags_model_peer_transfers_v1 WHERE direction='outbound' AND decision_digest=?").get(decisionDigest);
     return row ? this.get(row.packet_id) : null;
+  }
+  messageId(body) {
+    const row = this.database.prepare("SELECT message_id FROM ags_model_peer_message_bindings_v1 WHERE packet_id=?").get(peerMessageId(body));
+    return row?.message_id ?? null;
+  }
+  /** Persist the issued ID before submit; concurrent preparations leave only unused drafts. */
+  bindMessageId(body, messageId) {
+    peerCheck(
+      typeof messageId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(messageId),
+      "The broker did not issue a valid message ID."
+    );
+    return this.transaction(() => {
+      const prior = this.messageId(body);
+      if (prior) return prior;
+      const count = this.database.prepare("SELECT count(*) AS n FROM ags_model_peer_message_bindings_v1").get();
+      peerCheck(count.n < 512, "Peer message bindings are full; resolve retained handoffs before new delivery.");
+      this.database.prepare("INSERT INTO ags_model_peer_message_bindings_v1 VALUES (?,?)").run(peerMessageId(body), messageId);
+      return messageId;
+    });
   }
   prepare(direction, decision, body, write, expiresAt) {
     const packetId = peerMessageId(body);
@@ -17377,14 +17438,20 @@ var ModelRoutingPeerSession = class {
     await this.alive(packet.sender, io2.call);
     await this.alive(packet.recipient, io2.call);
     const ttlSeconds = Math.max(30, Math.ceil((peerInstant(packet.expiresAt) - peerInstant(packet.issuedAt)) / 1e3));
-    const result = await io2.call("send", {
-      sender: { host: packet.sender.host, sessionId: packet.sender.sessionId },
-      target: { host: packet.recipient.host, sessionId: packet.recipient.sessionId },
-      body,
-      messageId: peerMessageId(body),
-      ttlSeconds
-    });
-    peerCheck(result?.messageId === peerMessageId(body), "The broker did not acknowledge the peer message.");
+    const sender = { host: packet.sender.host, sessionId: packet.sender.sessionId };
+    let messageId = this.journal.messageId(body);
+    if (!messageId) {
+      const prepared = await io2.call("prepare", {
+        sender,
+        target: { host: packet.recipient.host, sessionId: packet.recipient.sessionId },
+        body,
+        ttlSeconds
+      });
+      peerCheck(prepared?.messageId, "The broker did not issue a peer message ID.");
+      messageId = this.journal.bindMessageId(body, prepared.messageId);
+    }
+    const result = await io2.call("send", { sender, messageId });
+    peerCheck(result?.messageId === messageId, "The broker did not acknowledge the peer message.");
     return result.messageId;
   }
   async send(decisionDigest, details = {}) {
@@ -17426,13 +17493,17 @@ var ModelRoutingPeerSession = class {
     const stored = JSON.parse(transfer.body);
     const packet = this.options.signer.verify(transfer.body, peerInstant(stored.issuedAt));
     peerCheck(canonicalJson(packet.sender) === canonicalJson(this.options.identity), "This handoff belongs to a different sender instance.");
+    const messageId = this.journal.messageId(transfer.body);
     let delivery = null;
-    try {
-      delivery = await this.exchange().call("status", { sender: { host: packet.sender.host, sessionId: packet.sender.sessionId }, messageId: packetId });
-    } catch {
+    if (messageId) {
+      try {
+        delivery = await this.exchange().call("status", { sender: { host: packet.sender.host, sessionId: packet.sender.sessionId }, messageId });
+      } catch {
+      }
     }
     return {
       packetId,
+      messageId,
       handoffState: transfer.state,
       accepted: transfer.state === "accepted",
       delivery,
@@ -17694,6 +17765,7 @@ async function observeNativePeerHandoff(host, input, message) {
 
 // mcp-server/src/session-message-hook.ts
 var SESSION_BOUND_TOOLS = /* @__PURE__ */ new Set([
+  "prepare_session_message",
   "send_session_message",
   "acknowledge_session_messages",
   "get_session_message_status",
@@ -17706,6 +17778,7 @@ var SESSION_BOUND_TOOLS = /* @__PURE__ */ new Set([
   "validate_collaboration_decision"
 ]);
 var SUBAGENT_DENIED_TOOLS = /* @__PURE__ */ new Set([
+  "prepare_session_message",
   "send_session_message",
   "acknowledge_session_messages",
   "get_session_message_status",
@@ -17754,7 +17827,7 @@ function recordPeerMessages(host, sessionId, messages) {
   const store = new TrustStore(resolveTrustDatabasePath());
   try {
     return messages.map((message) => {
-      const contentDigest = `sha256:${createHash7("sha256").update(message.body).digest("hex")}`;
+      const contentDigest = `sha256:${createHash8("sha256").update(message.body).digest("hex")}`;
       const receipt = store.recordInputSource({
         originKind: "peer",
         host,
@@ -17855,6 +17928,19 @@ async function handleSessionMessageHook(input, host, explicitHostPid) {
   }
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
     const toolName = observation.toolName ?? "";
+    const wait = nativePeerWait(observation);
+    if (wait && observation.actor.kind === "main" && observation.actor.assurance === "observed") {
+      try {
+        const decision = await sessionMessageRequest("peer-wait", { sender: target, ...wait }, void 0, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
+        return { hookSpecificOutput: {
+          hookEventName: adapted.outputEventName,
+          ...decision.action === "deny" ? { permissionDecision: "deny", permissionDecisionReason: decision.guidance } : {},
+          additionalContext: decision.guidance
+        } };
+      } catch {
+        return additionalContext(adapted.outputEventName, "Peer wait policy is unavailable. Use a bounded query; async resume has not been confirmed.");
+      }
+    }
     const localTool = toolName.split("__").at(-1) ?? "";
     if (!SESSION_BOUND_TOOLS.has(localTool)) return {};
     if (subagent && SUBAGENT_DENIED_TOOLS.has(localTool)) {

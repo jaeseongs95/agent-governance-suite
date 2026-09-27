@@ -1,9 +1,26 @@
 /** Additive tables on a caller-owned SQLite connection. No existing rows or user_version rewritten. */
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import v2DecisionSchema from '../../../contracts/model-routing-decision.v2.schema.json' with { type: 'json' };
+import v3DecisionSchema from '../../../contracts/model-routing-decision.v3.schema.json' with { type: 'json' };
+import { Ajv2020 } from '../../../runtime/schema-validation.mjs';
 import { assert, canonical, digest, keys, instant, validateCapabilities, validateBinding, validateTarget, verifySeal, recordV2 } from './model-routing-core.mjs';
 import { validateEvaluation } from './model-evaluation.mjs';
+import { recordSemanticApplicationV3 } from './semantic/application-record.mjs';
 
 function transaction(db,fn){db.exec('BEGIN IMMEDIATE');try{const result=fn();db.exec('COMMIT');return result;}catch(error){db.exec('ROLLBACK');throw error;}}
+
+const decisionSchemas = new Ajv2020({ allErrors: true, strict: false });
+decisionSchemas.addSchema(v2DecisionSchema);
+const validateDecisionV3 = decisionSchemas.compile(v3DecisionSchema);
+function readDecisionPayload(payload,id){
+  const decision=JSON.parse(payload);
+  if(decision?.schemaVersion==='2.0.0')return decision;
+  assert(decision?.schemaVersion==='3.0.0','UNSUPPORTED_DECISION_VERSION');
+  assert(validateDecisionV3(decision),'INVALID_INPUT','Stored v3 decision does not match its contract');
+  verifySeal(decision,'decisionDigest');
+  assert(decision.decisionDigest===id,'DECISION_DIGEST_MISMATCH');
+  return decision;
+}
 
 /** Local integrity proof only: a same-OS-user process can read the key. NOT human authorization. */
 export class RoutingObservationSigner {
@@ -43,6 +60,11 @@ export class ModelRoutingStore {
         decision_digest TEXT PRIMARY KEY, binding_digest TEXT NOT NULL, request_json TEXT NOT NULL,
         environment_json TEXT NOT NULL, payload TEXT NOT NULL, resolved_at TEXT NOT NULL
       ) STRICT;
+      CREATE TABLE IF NOT EXISTS ags_model_decision_refs_v3 (
+        decision_digest TEXT PRIMARY KEY, baseline_decision_digest TEXT NOT NULL,
+        evaluation_id TEXT NOT NULL UNIQUE, registration_id TEXT NOT NULL UNIQUE,
+        advice_digest TEXT NOT NULL
+      ) STRICT;
       CREATE TABLE IF NOT EXISTS ags_model_applications_v2 (
         record_digest TEXT PRIMARY KEY, decision_digest TEXT NOT NULL, binding_digest TEXT NOT NULL,
         payload TEXT NOT NULL, recorded_at TEXT NOT NULL
@@ -79,13 +101,14 @@ export class ModelRoutingStore {
   }
   capabilities(){return this.database.prepare('SELECT payload FROM ags_model_capabilities_v1 ORDER BY host,session_id,instance_id').all().map(r=>JSON.parse(r.payload));}
   saveDecision(request,environment,decision,now){
+    assert(decision?.schemaVersion==='2.0.0','V3_WRITER_REQUIRED');
     verifySeal(decision,'decisionDigest');validateBinding(decision.binding);instant(now,'now');
     const payload=canonical(decision);const old=this.database.prepare('SELECT payload FROM ags_model_decisions_v2 WHERE decision_digest=?').get(decision.decisionDigest);
     assert(!old||old.payload===payload,'DECISION_CONFLICT');
     this.database.prepare('INSERT OR IGNORE INTO ags_model_decisions_v2 VALUES (?,?,?,?,?,?)').run(decision.decisionDigest,digest(decision.binding),canonical(request),canonical(environment),payload,now);
     return decision;
   }
-  decision(id){const row=this.database.prepare('SELECT * FROM ags_model_decisions_v2 WHERE decision_digest=?').get(id);return row?{request:JSON.parse(row.request_json),environment:JSON.parse(row.environment_json),decision:JSON.parse(row.payload),resolvedAt:row.resolved_at}:null;}
+  decision(id){const row=this.database.prepare('SELECT * FROM ags_model_decisions_v2 WHERE decision_digest=?').get(id);return row?{request:JSON.parse(row.request_json),environment:JSON.parse(row.environment_json),decision:readDecisionPayload(row.payload,id),resolvedAt:row.resolved_at}:null;}
   publishObservation(receipt,signer,now){
     const observation=signer.verify(receipt,'observation',now);validateBinding(observation.binding);validateTarget(observation.target);
     const entry=this.decision(observation.decisionDigest);assert(entry,'DECISION_UNKNOWN');
@@ -106,7 +129,9 @@ export class ModelRoutingStore {
       assert(dispatch&&dispatch.decision_digest===application.decisionDigest&&dispatch.dispatched_at===application.dispatchedAt,'DISPATCH_TIME_MISMATCH');
       assert(instant(application.dispatchedAt,'dispatchedAt')<=instant(now,'now'),'DISPATCH_TIME_IN_FUTURE');
       // Validate with the same pure recorder before persisting any native receipt association.
-      recordV2(application,{...entry.environment,now:application.dispatchedAt,request:entry.request,decision:entry.decision,admittedObservation:observed});
+      const context={...entry.environment,now:application.dispatchedAt,request:entry.request,decision:entry.decision,admittedObservation:observed};
+      if(application.schemaVersion==='3.0.0')recordSemanticApplicationV3(application,context);
+      else recordV2(application,context);
       const nonce=this.publishObservation(receipt,signer,now);
       this.database.prepare(`INSERT INTO ags_model_native_hook_receipts_v1 VALUES (?,?)
         ON CONFLICT(application_digest) DO UPDATE SET receipt_nonce=excluded.receipt_nonce`).run(digest(application),nonce);
@@ -121,18 +146,31 @@ export class ModelRoutingStore {
   /** The callback must validate the entire record before token consumption commits. */
   recordApplication(input,observationToken,makeRecord,now){
     instant(now,'now');return transaction(this.database,()=>{
+      if(input.schemaVersion==='3.0.0'){
+        const dispatch=this.dispatch(digest({binding:input.binding}));
+        assert(dispatch&&dispatch.decision_digest===input.decisionDigest&&dispatch.dispatched_at===input.dispatchedAt
+          &&['running','unknown','succeeded','failed','cancelled'].includes(dispatch.state),'DISPATCH_TIME_MISMATCH');
+      }
       let observation=null;
       if(observationToken!==null){
         const row=this.database.prepare('SELECT * FROM ags_model_receipts_v1 WHERE nonce=? AND kind=?').get(observationToken,'observation');
         assert(row&&!row.consumed_at&&row.expires_at>now,'OBSERVATION_TOKEN_UNAVAILABLE');
         assert(row.binding_digest===digest(input.binding),'OBSERVATION_BINDING_MISMATCH');observation=JSON.parse(row.payload);
+        if(input.schemaVersion==='3.0.0'){
+          assert(observation.decisionDigest===input.decisionDigest
+            &&canonical(observation.target)===canonical(input.target)
+            &&observation.source!=='agent-self-report','OBSERVATION_BINDING_MISMATCH');
+          assert(instant(observation.observedAt,'observedAt')>=instant(input.dispatchedAt,'dispatchedAt'),
+            'OBSERVATION_PREDATES_DISPATCH');
+        }
       }
       const record=makeRecord(observation);verifySeal(record,'recordDigest');
+      assert(record.schemaVersion===input.schemaVersion,'RECORD_VERSION_MISMATCH');
       const old=this.database.prepare('SELECT payload FROM ags_model_applications_v2 WHERE record_digest=?').get(record.recordDigest);
       assert(!old||old.payload===canonical(record),'RECORD_CONFLICT');
       this.database.prepare('INSERT OR IGNORE INTO ags_model_applications_v2 VALUES (?,?,?,?,?)').run(record.recordDigest,record.decisionDigest,digest(record.binding),canonical(record),now);
       if(observationToken!==null)this.database.prepare('UPDATE ags_model_receipts_v1 SET consumed_at=? WHERE nonce=?').run(now,observationToken);
-      return {record,artifact:{kind:'model-application.v2',uri:`ags-model-record:${record.recordDigest.slice(7)}`,digest:record.recordDigest}};
+      return {record,artifact:{kind:`model-application.v${input.schemaVersion[0]}`,uri:`ags-model-record:${record.recordDigest.slice(7)}`,digest:record.recordDigest}};
     });
   }
   application(recordDigest){const row=this.database.prepare('SELECT payload FROM ags_model_applications_v2 WHERE record_digest=?').get(recordDigest);return row?JSON.parse(row.payload):null;}

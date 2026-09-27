@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/resource-policy.v1.schema.json",
+  "title": "resource-policy.v1",
+  "description": "Approved policy for one resource pool. Approval fields are claims; the caller must authenticate them before enforcement.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "policyId", "revision", "accountScope", "resourcePoolId", "approval", "allowedAccessPaths", "onUnknown", "onStale", "windows"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "policyId": { "$ref": "#/$defs/id" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "accountScope": { "type": "string", "pattern": "^acct-hmac-sha256:[a-f0-9]{64}$" },
+    "resourcePoolId": { "$ref": "#/$defs/id" },
+    "approval": { "$ref": "#/$defs/approval" },
+    "allowedAccessPaths": { "type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true, "items": { "enum": ["subscription", "api", "enterprise"] } },
+    "paidAccessApproval": { "$ref": "#/$defs/approval" },
+    "onUnknown": { "enum": ["block", "defer"] },
+    "onStale": { "enum": ["block", "defer"] },
+    "rolePriorities": {
+      "type": "array", "maxItems": 64,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["roleId", "priority"],
+        "properties": { "roleId": { "$ref": "#/$defs/id" }, "priority": { "type": "integer", "minimum": 0 } }
+      }
+    },
+    "preferenceOverride": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "reason", "approval"],
+      "properties": {
+        "mode": { "enum": ["preferred-over-required", "preferred-through-hard-reserve"] },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "approval": { "$ref": "#/$defs/approval" }
+      }
+    },
+    "windows": {
+      "type": "array", "minItems": 1, "maxItems": 64,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["windowId", "bucketId", "unit"],
+        "anyOf": [{ "required": ["hardLimit"] }, { "required": ["reservePolicy"] }],
+        "properties": {
+          "windowId": { "$ref": "#/$defs/id" },
+          "bucketId": { "$ref": "#/$defs/id" },
+          "unit": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9._:/@+\\-]{0,63}$" },
+          "hardLimit": { "type": "object", "additionalProperties": false, "required": ["minimumRemaining"], "properties": { "minimumRemaining": { "$ref": "#/$defs/quantity" } } },
+          "reservePolicy": {
+            "type": "object", "additionalProperties": false,
+            "anyOf": [{ "required": ["hardReserve"] }, { "required": ["softConservation"] }],
+            "properties": {
+              "hardReserve": {
+                "type": "object", "additionalProperties": false,
+                "required": ["minimumRemaining", "protectedRoleIds"],
+                "properties": {
+                  "minimumRemaining": { "$ref": "#/$defs/quantity" },
+                  "protectedRoleIds": { "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }
+                }
+              },
+              "softConservation": {
+                "type": "object", "additionalProperties": false,
+                "required": ["enterBelowRemaining"],
+                "properties": { "enterBelowRemaining": { "$ref": "#/$defs/quantity" } }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "allowedAccessPaths": { "contains": { "enum": ["api", "enterprise"] } } }, "required": ["allowedAccessPaths"] },
+      "then": { "required": ["paidAccessApproval"] }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$" },
+    "quantity": { "type": "number", "minimum": 0 },
+    "approval": {
+      "type": "object", "additionalProperties": false,
+      "required": ["approvedBy", "approvedAt", "evidenceDigest"],
+      "properties": {
+        "approvedBy": { "$ref": "#/$defs/id" },
+        "approvedAt": { "type": "string", "format": "date-time" },
+        "evidenceDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+      }
+    }
+  }
+}

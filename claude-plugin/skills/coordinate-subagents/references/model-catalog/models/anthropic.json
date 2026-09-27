@@ -53,7 +53,8 @@
       "modelClass": "frontier",
       "status": "seed",
       "verification": [
-        "baseline-seed"
+        "baseline-seed",
+        "documented"
       ],
       "roles": [
         "discovery",
@@ -77,14 +78,15 @@
         "text",
         "image"
       ],
-      "contextTokens": null,
+      "contextTokens": 1000000,
       "abilityScore": null,
-      "officialPositioning": null,
-      "recommendationBasis": "Implementation plan §7: initial hypothesis, not a measured cross-vendor rank.",
+      "officialPositioning": "Demanding reasoning and long-horizon agentic work.",
+      "recommendationBasis": "Implementation plan §7 sets the policy class and roles; neither is a measured cross-vendor rank.",
       "sourceIds": [
-        "PLAN"
+        "PLAN",
+        "CLAUDE-FABLE-51"
       ],
-      "checkedAt": "2026-09-21T00:00:00.000Z"
+      "checkedAt": "2026-09-23T00:00:00.000Z"
     },
     {
       "id": "claude-opus-5",
@@ -129,6 +131,47 @@
         "PLAN"
       ],
       "checkedAt": "2026-09-21T00:00:00.000Z"
+    },
+    {
+      "id": "claude-opus-5-5",
+      "modelOrigin": "anthropic",
+      "aliases": [],
+      "modelClass": "deep",
+      "status": "stable",
+      "verification": [
+        "documented"
+      ],
+      "roles": [
+        "discovery",
+        "general-implementation",
+        "complex-reasoning",
+        "independent-audit"
+      ],
+      "taskTraits": [
+        "architecture-decision",
+        "code-change",
+        "diagnosis",
+        "source-research",
+        "context-repair",
+        "multimodal-input"
+      ],
+      "nativeKinds": [
+        "enum",
+        "not-exposed"
+      ],
+      "inputModalities": [
+        "text",
+        "image"
+      ],
+      "contextTokens": 1000000,
+      "abilityScore": null,
+      "officialPositioning": "Long-running agentic coding and knowledge work.",
+      "recommendationBasis": "Implementation plan §7 sets the policy class and roles; neither is a measured cross-vendor rank.",
+      "sourceIds": [
+        "PLAN",
+        "CLAUDE-OPUS-55"
+      ],
+      "checkedAt": "2026-09-23T00:00:00.000Z"
     },
     {
       "id": "claude-sonnet-5",

@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +9,10 @@ const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
 // The proof covers the v2.4 optimization, whose candidate is pinned here. Later releases change skills on purpose;
 // scripts/check-skill-loading-contract.mjs checks the current tree's loading invariants instead.
 const CANDIDATE = "b3c232f5113d956b6d3aeebdf26a19ed36ef49d1";
+// AC-010 adds peer instructions after the reviewed optimization. Preserve all
+// historical bytes and compare the exact, separately frozen addition as well.
+const SESSION_BOARD_ADDITION = "scripts/fixtures/session-board-peer-message-guidance.2.6.0.md";
+const SESSION_BOARD_ADDITION_SHA256 = "381be4018118086b3c4087be043c004d8d6de986d42a6c0c14f182c2d76ed76f";
 const TARGETS = [
   "acceptance-evidence-validator",
   "blocker-diagnostician",
@@ -76,6 +81,11 @@ export function checkSkillContextOptimization() {
     .filter(Boolean);
   if (!sameSet(detailOwners, TARGETS)) errors.push("target skill set does not match the 20 reviewed optimization targets");
 
+  const addition = readFileSync(join(ROOT, SESSION_BOARD_ADDITION));
+  if (createHash("sha256").update(addition).digest("hex") !== SESSION_BOARD_ADDITION_SHA256) errors.push("session-board: approved 2.6.0 guidance fixture changed");
+  const currentDetail = readFileSync(join(ROOT, "skills/session-board/references/entry-details.md"));
+  if (!currentDetail.equals(Buffer.concat([candidateFile("skills/session-board/references/entry-details.md"), addition]))) errors.push("session-board: current peer guidance differs from the frozen addition");
+
   let baselineBytes = 0;
   let candidateBytes = 0;
   const skills = [];
@@ -114,6 +124,7 @@ export function checkSkillContextOptimization() {
   return {
     baselineRevision: BASELINE,
     candidateRevision: CANDIDATE,
+    approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
     pass: errors.length === 0,
     errors,
     totals: {

@@ -28,7 +28,7 @@ describe.each(['preflight', 'start'])('%s rejects unsafe accepted work without c
   it('does not treat a delivered ACK or an outbound accepted receipt as receiver admission', async () => {
     const h = fixture(), sent = await h.sender.send(h.decision.decisionDigest);
     const message = h.claim(RECEIVER)[0];
-    h.sessions.acknowledge(RECEIVER, [sent.packetId], h.now());
+    h.sessions.acknowledge(RECEIVER, [sent.messageId], h.now());
     await expect(check(h.receiver, sent.packetId)).rejects.toThrow(/accepted inbound/u);
     expect(h.routing.dispatch(h.key)).toBeNull();
     await h.receiver.receive(message);

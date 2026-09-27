@@ -31,7 +31,8 @@ function fixture(){
       case 'ping':return{protocolVersion:'1.0.0',capabilities:[MODEL_CAPABILITY_FEATURE]};
       case 'list-model-capabilities':return caps.list(payload,now);
       case 'presence':return{presence:sessions.presence(payload.target,now)};
-      case 'send':return sessions.send(payload,now);
+      case 'prepare':return sessions.prepare(payload,now);
+      case 'send':return sessions.submitPrepared(payload.sender,payload.messageId,now);
       case 'status':return{status:sessions.status(payload.sender,payload.messageId,now)};
       default:throw new Error('Unexpected operation: '+operation);
     }
@@ -42,7 +43,7 @@ function fixture(){
   return{...h,sessions,caps,signer,transport,calls,sender,receiver,claim,advance,publish,now:()=>now};
 }
 async function sent(h){const result=await h.sender.send(h.decision.decisionDigest,{delta:'정정: 목표와 소유 파일은 바꾸지 않는다.'});expect(result.handoffState).toBe('sent');return h.claim(RECEIVER)[0];}
-function message(h,packet){const body=h.signer.sign(packet);return{messageId:peerMessageId(body),sender:packet.sender,recipient:packet.recipient,body,createdAt:packet.issuedAt,expiresAt:packet.expiresAt,deliveryAttempt:1,firstDeliveredAt:packet.issuedAt};}
+function message(h,packet){const body=h.signer.sign(packet);const prepared=h.sessions.prepare({sender:packet.sender,target:packet.recipient,body},h.now());return{messageId:prepared.messageId,sender:packet.sender,recipient:packet.recipient,body,createdAt:packet.issuedAt,expiresAt:packet.expiresAt,deliveryAttempt:1,firstDeliveredAt:packet.issuedAt};}
 
 describe('bounded signed handoff packets',()=>{
   it('roundtrips the exact proposal and rejects unsigned or edited body text',async()=>{
@@ -56,7 +57,7 @@ describe('bounded signed handoff packets',()=>{
     const h=fixture(),m=await sent(h);m[key]={...m[key],sessionId:'wrong'};
     expect(()=>h.signer.verifyMessage(m,RECEIVER,h.now())).toThrow();
   });
-  it('requires a deterministic message ID and the correct local instance',async()=>{
+  it('requires an issued message ID shape and the correct local instance while signed bytes identify the packet',async()=>{
     const h=fixture(),m=await sent(h);expect(()=>h.signer.verifyMessage({...m,messageId:'forged-message'},RECEIVER,h.now())).toThrow();
     expect(()=>h.signer.verifyMessage(m,{...RECEIVER,instanceId:'new-instance'},h.now())).toThrow();
   });
@@ -78,18 +79,20 @@ describe('existing spool delivery and independent handoff state',()=>{
   it('delivers delta only and keeps ACK, acceptance and execution separate',async()=>{
     const h=fixture(),m=await sent(h),packet=JSON.parse(m.body);
     expect(packet.contents).not.toHaveProperty('request');expect(packet.contents).not.toHaveProperty('environment');
-    h.sessions.acknowledge(RECEIVER,[m.messageId],h.now());const before=await h.sender.status(m.messageId);
+    h.sessions.acknowledge(RECEIVER,[m.messageId],h.now());const before=await h.sender.status(peerMessageId(m.body));
     expect(before.delivery.status.state).toBe('acknowledged');expect(before.accepted).toBe(false);expect(before.completed).toBe(false);
     const original=h.workflow.getRun(h.run.runId),accepted=await h.receiver.receive(m);
     expect(accepted.handoffState).toBe('accepted');expect(accepted.executionStarted).toBe(false);
     expect(h.workflow.getRun(h.run.runId)).toEqual(original);
     expect(h.routing.dispatch(digest({binding:h.req.binding}))).toMatchObject({state:'accepted',dispatched_at:null});
     const reply=h.claim(SENDER)[0];expect(reply).toBeDefined();await h.sender.receive(reply);
-    expect(await h.sender.status(m.messageId)).toMatchObject({accepted:true,completed:false,executionAuthorized:false,executionState:'not-observed'});
+    expect(await h.sender.status(peerMessageId(m.body))).toMatchObject({accepted:true,completed:false,executionAuthorized:false,executionState:'not-observed'});
   });
   it('retries the same signed bytes and message ID without extending the signature lifetime',async()=>{
     const h=fixture();const first=await h.sender.send(h.decision.decisionDigest);h.advance(1000);
     const second=await h.sender.send(h.decision.decisionDigest);expect(first.packetId).toBe(second.packetId);
+    expect(first.messageId).toBe(second.messageId);expect(first.messageId).not.toBe(first.packetId);
+    expect(h.calls.filter(x=>x.operation==='prepare')).toHaveLength(1);
     const sends=h.calls.filter(x=>x.operation==='send');expect(sends[0].payload).toEqual(sends[1].payload);
     expect(h.sessions.pendingCount(RECEIVER,h.now())).toBe(1);
     await expect(h.sender.send(h.decision.decisionDigest,{delta:'changed'})).rejects.toThrow(/identical/u);
@@ -98,7 +101,9 @@ describe('existing spool delivery and independent handoff state',()=>{
     const h=fixture();let lose=true;
     const sender=h.peer(SENDER,{clock:h.now,request:async(...args)=>{const result=await h.transport(...args);if(args[0]==='send'&&lose){lose=false;throw new Error('response lost');}return result;}});
     const first=await sender.send(h.decision.decisionDigest);expect(first.handoffState).toBe('unknown');expect(h.claim(RECEIVER)).toHaveLength(1);
-    const second=await sender.send(h.decision.decisionDigest);expect(second.packetId).toBe(first.packetId);expect(second.handoffState).toBe('sent');
+    const restarted=h.peer(SENDER,{clock:h.now,request:h.transport});
+    const second=await restarted.send(h.decision.decisionDigest);expect(second.packetId).toBe(first.packetId);expect(second.handoffState).toBe('sent');
+    expect(second.messageId).toBe(first.messageId);expect(h.calls.filter(x=>x.operation==='prepare')).toHaveLength(1);
   });
   it('refuses new writes in the same stage when the earlier handoff is unresolved',async()=>{
     const h=fixture();await sent(h);const req=structuredClone(h.req);req.binding.assignmentId='replacement';
@@ -138,7 +143,7 @@ describe('receiver admission, local authority and replay',()=>{
       const other=new ModelRoutingPeerSession({store,workflowBridge:new ModelRoutingWorkflowBridge(h.workflow,store),identity:RECEIVER,actorId:h.actorId,signer:h.signer,stateDirectory:h.directory,request:h.transport,clock:h.now,timeoutMs:10000});
       const results=await Promise.all([h.receiver.receive(m),other.receive(m)]);
       expect(results.filter(x=>x.handoffState==='accepted')).toHaveLength(1);expect(results.filter(x=>x.handoffState==='unknown')).toHaveLength(1);
-      expect(h.receiver.journal.get(m.messageId,'inbound').state).toBe('accepted');expect(h.claim(SENDER)).toHaveLength(1);
+      expect(h.receiver.journal.get(peerMessageId(m.body),'inbound').state).toBe('accepted');expect(h.claim(SENDER)).toHaveLength(1);
     }finally{db.close();}
   });
   it('retains the local admission when the reply response is lost',async()=>{
@@ -149,7 +154,7 @@ describe('receiver admission, local authority and replay',()=>{
     expect(h.routing.dispatch(digest({binding:h.req.binding})).state).toBe('accepted');
   });
   it('does not automatically recover a crashed admission as permission to run twice',async()=>{
-    const h=fixture(),m=await sent(h);h.receiver.journal.prepare('inbound',h.decision,m.body,false,JSON.parse(m.body).expiresAt);h.receiver.journal.claimInbound(m.messageId);
+    const h=fixture(),m=await sent(h);h.receiver.journal.prepare('inbound',h.decision,m.body,false,JSON.parse(m.body).expiresAt);h.receiver.journal.claimInbound(peerMessageId(m.body));
     const response=await h.receiver.receive(m);expect(response.handoffState).toBe('unknown');expect(h.claim(SENDER)).toEqual([]);
     expect(h.routing.dispatch(digest({binding:h.req.binding}))).toBeNull();
   });
@@ -159,7 +164,7 @@ describe('receiver admission, local authority and replay',()=>{
       const receiver=new ModelRoutingPeerSession({store,workflowBridge:new ModelRoutingWorkflowBridge(h.workflow,store),identity:RECEIVER,actorId:h.actorId,signer:h.signer,stateDirectory:h.directory,request:h.transport,clock:h.now,timeoutMs:10000});
       expect((await receiver.receive(m)).handoffState).toBe('rejected');expect(store.decision(h.decision.decisionDigest)).toBeNull();
       expect(store.dispatch(digest({binding:h.req.binding}))).toBeNull();await h.sender.receive(h.claim(SENDER)[0]);
-      expect((await h.sender.status(m.messageId)).handoffState).toBe('rejected');
+      expect((await h.sender.status(peerMessageId(m.body))).handoffState).toBe('rejected');
     }finally{db.close();}
   });
   it('requires the observed actor to own the already-consumed local lease',async()=>{
@@ -191,15 +196,16 @@ describe('receiver admission, local authority and replay',()=>{
     const h=fixture(),m=await sent(h);await h.receiver.receive(m);const reply=h.claim(SENDER)[0];await h.sender.receive(reply);
     const packet=JSON.parse(reply.body);delete packet.mac;packet.contents.disposition='rejected';
     await expect(h.sender.receive(message(h,packet))).rejects.toThrow(/Conflicting/u);
-    expect((await h.sender.status(m.messageId)).accepted).toBe(true);
+    expect((await h.sender.status(peerMessageId(m.body))).accepted).toBe(true);
   });
 });
 
 describe('bounded transfer journal and common helper failure boundaries',()=>{
   it('does not delete active write reservations on TTL expiration and preserves user_version',async()=>{
     const h=fixture(),version=h.database.prepare('PRAGMA user_version').get().user_version,m=await sent(h);
-    h.sender.journal.unknown(m.messageId);h.advance(60000);new ModelPeerJournal(h.database);
-    expect(h.sender.journal.get(m.messageId).state).toBe('unknown');expect(h.database.prepare('PRAGMA user_version').get().user_version).toBe(version);
+    h.sender.journal.unknown(peerMessageId(m.body));h.advance(60000);const reopened=new ModelPeerJournal(h.database);
+    expect(h.sender.journal.get(peerMessageId(m.body)).state).toBe('unknown');expect(h.database.prepare('PRAGMA user_version').get().user_version).toBe(version);
+    expect(reopened.messageId(m.body)).toBe(m.messageId);
   });
   it('bounds retained transfer records without pruning another workflow or ordinary messages',()=>{
     const h=fixture();

@@ -15,6 +15,7 @@ const requiredFiles = [
   "mcp-server/dist/host-attestation-hook.mjs",
   "mcp-server/dist/model-routing-host-hook.mjs",
   "mcp-server/dist/model-routing-peer-cli.mjs",
+  "mcp-server/dist/host-attestation-api.mjs",
   "mcp-server/dist/session-board-hook.mjs",
   "mcp-server/dist/session-message-broker.mjs",
   "mcp-server/dist/session-message-cli.mjs",
@@ -35,6 +36,7 @@ if (
   server?.command !== "node"
   || server?.args?.[0] !== "mcp-server/dist/server.mjs"
   || server?.cwd !== "."
+  || server?.env?.AGENT_GOVERNANCE_HOST_ATTESTATION !== "codex"
 ) {
   throw new Error(".mcp.json does not point to the packaged STDIO server.");
 }

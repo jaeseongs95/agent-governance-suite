@@ -73,10 +73,13 @@ describe('installed opt-in peer handoff over the original TLS spool',()=>{
       expect(JSON.parse(acknowledgement.stdout).hookSpecificOutput.additionalContext).toContain('"handoffState":"accepted"');
       const status=JSON.parse((await cli(source,'status',{packetId})).stdout);
       expect(status.data).toMatchObject({accepted:true,executionStarted:false,completed:false,executionAuthorized:false});
-      const delivery=await request('status',{sender:source,messageId:packetId});expect(delivery.status.state).toBe('delivered');
-      await request('acknowledge',{target,messageIds:[packetId]});
-      expect((await request('status',{sender:source,messageId:packetId})).status.state).toBe('acknowledged');
-      await request('send',{sender:source,target,body:'ordinary peer message after handoff'});
+      const messageId=result.data.messageId;
+      expect(messageId).toMatch(/^[0-9a-f-]{36}$/u);expect(messageId).not.toBe(packetId);
+      const delivery=await request('status',{sender:source,messageId});expect(delivery.status.state).toBe('delivered');
+      await request('acknowledge',{target,messageIds:[messageId]});
+      expect((await request('status',{sender:source,messageId})).status.state).toBe('acknowledged');
+      const ordinary=await request('prepare',{sender:source,target,body:'ordinary peer message after handoff'});
+      await request('send',{sender:source,messageId:ordinary.messageId});
       expect(JSON.parse((await hook(target)).stdout).hookSpecificOutput.additionalContext).toContain('ordinary peer message after handoff');
     });
   },30000);
@@ -119,7 +122,8 @@ describe('installed opt-in peer handoff over the original TLS spool',()=>{
       expect((await cli(target,'start',{packetId,expectedRevision:2})).code).toBe(1);
       expect(h.routing.dispatch(key)).toEqual(before);
       expect(h.database.prepare('SELECT COUNT(*) AS n FROM ags_model_applications_v2').get().n).toBe(0);
-      await request('send',{sender:source,target,body:'ordinary message after start claim'});
+      const ordinary=await request('prepare',{sender:source,target,body:'ordinary message after start claim'});
+      await request('send',{sender:source,messageId:ordinary.messageId});
       expect(JSON.parse((await hook(target)).stdout).hookSpecificOutput.additionalContext).toContain('ordinary message after start claim');
     });
   },30000);

@@ -13,7 +13,7 @@ import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { resolveToolSchemaProfile } from "../../mcp-server/src/runtime-config.js";
 import { ContractValidator, contractSchemas } from "../../mcp-server/src/schema-validator.js";
-import { ANTHROPIC_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
+import { ANTHROPIC_SERVER_INSTRUCTIONS, SESSION_MESSAGE_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "./version-fixtures.js";
@@ -191,9 +191,9 @@ describe("MCP tool schema profiles", () => {
   });
 
   it("advertises intake session instructions only for Anthropic hosts", async () => {
-    expect(serverInstructions()).toBeUndefined();
-    expect(serverInstructions("default")).toBeUndefined();
-    expect(serverInstructions("anthropic")).toBe(ANTHROPIC_SERVER_INSTRUCTIONS);
+    expect(serverInstructions()).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
+    expect(serverInstructions("default")).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
+    expect(serverInstructions("anthropic")).toBe(`${ANTHROPIC_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`);
     expect(ANTHROPIC_SERVER_INSTRUCTIONS).toMatch(/실패 영향/u);
     expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("/agent-governance-suite:orchestrator");
     expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("실패 영향이 낮으면 그 이유를 한 줄로 밝히고 진행하되");
@@ -203,9 +203,9 @@ describe("MCP tool schema profiles", () => {
     const codex = await connect("default");
     const claude = await connect("anthropic");
     try {
-      expect(implicit.getInstructions()).toBeUndefined();
-      expect(codex.getInstructions()).toBeUndefined();
-      expect(claude.getInstructions()).toBe(ANTHROPIC_SERVER_INSTRUCTIONS);
+      expect(implicit.getInstructions()).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
+      expect(codex.getInstructions()).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
+      expect(claude.getInstructions()).toBe(`${ANTHROPIC_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`);
     } finally {
       await implicit.close();
       await codex.close();
@@ -226,7 +226,7 @@ describe("MCP tool schema profiles", () => {
       const planning = (await client.listTools()).tools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
       expect(planning).toBeDefined();
       expect(planning).not.toHaveProperty("oneOf");
-      expect(client.getInstructions()).toBe(ANTHROPIC_SERVER_INSTRUCTIONS);
+      expect(client.getInstructions()).toBe(serverInstructions("anthropic"));
     } finally {
       try { await transport.close(); } finally { await rm(stateDirectory, { recursive: true, force: true }); }
     }

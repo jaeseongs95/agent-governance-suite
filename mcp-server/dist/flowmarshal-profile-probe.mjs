@@ -8855,6 +8855,7 @@ var contractSchemas = {
   listSessionStatusRequest: loadSchema("list-session-status-request.v1.schema.json"),
   sendSessionMessageRequest: loadSchema("send-session-message-request.v1.schema.json"),
   sessionTask: loadSchema("session-task.v1.schema.json"),
+  prepareSessionMessageRequest: loadSchema("prepare-session-message-request.v1.schema.json"),
   acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
   getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
@@ -9103,6 +9104,9 @@ var ContractValidator = class {
   }
   sendSessionMessageRequest(value) {
     return this.assert("sendSessionMessageRequest", value);
+  }
+  prepareSessionMessageRequest(value) {
+    return this.assert("prepareSessionMessageRequest", value);
   }
   acknowledgeSessionMessagesRequest(value) {
     return this.assert("acknowledgeSessionMessagesRequest", value);

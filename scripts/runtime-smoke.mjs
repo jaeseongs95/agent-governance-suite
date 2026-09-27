@@ -22,7 +22,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     await mkdir(path.join(cleanRoot, "mcp-server", "dist"), { recursive: true });
     await Promise.all([
       ...["contracts", "runtime", "skills"].map((directory) => cp(path.join(sourceRoot, directory), path.join(cleanRoot, directory), { recursive: true })),
-      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "model-routing-host-hook.mjs", "model-routing-peer-cli.mjs", "session-board-hook.mjs"].map((bundle) => (
+      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "host-attestation-api.mjs", "model-routing-host-hook.mjs", "model-routing-peer-cli.mjs", "session-board-hook.mjs"].map((bundle) => (
         cp(path.join(sourceRoot, "mcp-server", "dist", bundle), path.join(cleanRoot, "mcp-server", "dist", bundle))
       )),
     ]);
@@ -133,6 +133,38 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       || !String(interactiveOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs1.")
     ) {
       throw new Error(`host attestation hook failed its interactive-session smoke check.\n${sessionStart.stderr ?? ""}${interactive.stderr ?? ""}`);
+    }
+
+    const codexTranscriptPath = path.join(cleanRoot, "state", "codex-rollout.jsonl");
+    await writeFile(codexTranscriptPath, [
+      { type: "session_meta", payload: { id: "clean-room-codex", source: "cli" } },
+      { type: "turn_context", payload: { turn_id: "clean-room-turn", model: "gpt-6-astra", effort: "high" } },
+    ].map((entry) => JSON.stringify(entry)).join("\n") + "\n", "utf8");
+    const codexHook = runNode("mcp-server/dist/host-attestation-hook.mjs", JSON.stringify({
+      ...attestationInput, session_id: "clean-room-codex", turn_id: "clean-room-turn", model: "gpt-6-astra",
+      transcript_path: codexTranscriptPath,
+    }), ["--host=codex"]);
+    const codexOutput = codexHook.status === 0 && codexHook.stdout ? JSON.parse(codexHook.stdout) : null;
+    if (codexHook.error || codexOutput?.hookSpecificOutput?.permissionDecision !== "allow"
+      || !String(codexOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs1.")) {
+      throw new Error(`host attestation hook failed its Codex fixture smoke check.\n${codexHook.stderr ?? ""}`);
+    }
+
+    await writeFile(path.join(cleanRoot, "state", "host-wrapper.mjs"), `
+import { openHostAttestation, codexExecutionAdapter, hostActorId } from "../mcp-server/dist/host-attestation-api.mjs";
+const attestation = openHostAttestation(process.env.AGENT_GOVERNANCE_DB_PATH, codexExecutionAdapter);
+try {
+  const signed = attestation.runObserved("plan_workflow", { taskId: "wrapper-fixture" },
+    () => ({ model: "gpt-6-astra", reasoningEffort: "high", actorId: hostActorId("codex", "wrapper-session"),
+      sessionId: "wrapper-session", turnId: "wrapper-turn", toolUseId: "wrapper-call" }),
+    (input) => input);
+  if (!signed._hostAttestation?.startsWith("aghs1.")) throw new Error("Host wrapper observation missing");
+  process.stdout.write("host-wrapper-fixture: ready");
+} finally { attestation.close(); }
+`, "utf8");
+    const wrapper = runNode("state/host-wrapper.mjs", "");
+    if (wrapper.error || wrapper.status !== 0 || wrapper.stdout !== "host-wrapper-fixture: ready") {
+      throw new Error(`host-owned wrapper API failed its dependency-free fixture check.\n${wrapper.stderr ?? ""}`);
     }
 
     // The session board gate denies the first edit of a session without a summary once, then lets it through.

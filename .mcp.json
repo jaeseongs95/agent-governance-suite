@@ -5,7 +5,10 @@
       "args": [
         "mcp-server/dist/server.mjs"
       ],
-      "cwd": "."
+      "cwd": ".",
+      "env": {
+        "AGENT_GOVERNANCE_HOST_ATTESTATION": "codex"
+      }
     }
   }
 }

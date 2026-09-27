@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/semantic-egress-config.v1.schema.json",
+  "title": "SemanticEgressConfig.v1",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "enabled"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "enabled": { "const": false }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "enabled", "approval", "routes", "budget"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "enabled": { "const": true },
+        "approval": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "revision", "decisionId"],
+          "properties": {
+            "source": { "type": "string", "minLength": 1, "maxLength": 200 },
+            "revision": { "type": "integer", "minimum": 1 },
+            "decisionId": { "type": "string", "minLength": 1, "maxLength": 200 }
+          }
+        },
+        "routes": {
+          "type": "array", "minItems": 1, "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["providerId", "endpoint", "dataCategories", "accessPaths"],
+            "properties": {
+              "providerId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+\\-]{0,199}$" },
+              "endpoint": { "type": "string", "pattern": "^https://[^?#]+$", "maxLength": 2048 },
+              "dataCategories": {
+                "type": "array", "minItems": 1, "uniqueItems": true,
+                "items": { "enum": ["routing", "question", "task", "frame", "artifact", "catalog"] }
+              },
+              "accessPaths": {
+                "type": "array", "minItems": 1, "uniqueItems": true,
+                "items": { "enum": ["subscription", "api", "enterprise"] }
+              }
+            }
+          }
+        },
+        "budget": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["requests", "cost"],
+          "properties": {
+            "requests": {
+              "type": "object", "additionalProperties": false,
+              "required": ["max", "basis"],
+              "properties": {
+                "max": { "type": "integer", "minimum": 1 },
+                "basis": { "const": "evaluation" }
+              }
+            },
+            "cost": {
+              "type": "object", "additionalProperties": false,
+              "required": ["maxMicros", "currency", "basis"],
+              "properties": {
+                "maxMicros": { "type": "integer", "minimum": 0 },
+                "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+                "basis": { "const": "evaluation" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$comment": "Server-owned configuration only. Missing config is off. Matching schema or digest is not approval; the guard also checks a trusted approval revision and current accounting. No model-callable field can enable egress."
+}

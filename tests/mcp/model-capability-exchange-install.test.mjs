@@ -8,6 +8,8 @@ import { execFileSync } from 'node:child_process';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { describe, expect, it } from 'vitest';
+import { performance } from 'node:perf_hooks';
+import { failureDiagnostic, failureDiagnosticsEnabled, diagnosticError } from '../failure-diagnostics.ts';
 import { ModelRoutingStore } from '../../skills/coordinate-subagents/scripts/model-routing-store.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { requestSessionMessageOnce, waitForSessionMessageBrokerReady } from '../../mcp-server/src/session-message-client.js';
@@ -78,7 +80,25 @@ describe('P5 actual TLS capability exchange and MCP resolver',()=>{
       const executable=join(installed,host==='codex'?'mcp-server/dist/model-routing-host-hook.mjs':'hooks/model-routing-host-hook.mjs');
       expect(await execute(executable,host==='codex'?['--host','codex']:[],input,{...env,AGENT_GOVERNANCE_DB_PATH:join(data,'workflows.sqlite3'),CLAUDE_PLUGIN_DATA:data},installed)).toBe('');
     }
-    const shared=await readSharedModelCapabilities(state);expect(shared.status).toBe('available');expect(shared.entries).toHaveLength(2);
+    const exchangeStarted=performance.now();
+    const options=failureDiagnosticsEnabled()?{request:async(operation,payload,directory,remaining)=>{
+      const started=performance.now();
+      failureDiagnostic('P5','request-start',{operation,elapsedMs:started-exchangeStarted,remainingMs:remaining});
+      try{
+        const result=await requestSessionMessageOnce(operation,payload,directory,remaining);
+        failureDiagnostic('P5','request-end',{operation,elapsedMs:performance.now()-exchangeStarted,
+          durationMs:performance.now()-started,remainingMs:remaining,outcome:'returned'});
+        return result;
+      }catch(error){
+        failureDiagnostic('P5','request-end',{operation,elapsedMs:performance.now()-exchangeStarted,
+          durationMs:performance.now()-started,remainingMs:remaining,outcome:'threw',...diagnosticError(error)});
+        throw error;
+      }
+    }}:{};
+    failureDiagnostic('P5','exchange-start',{deadlineMs:1500});
+    const shared=await readSharedModelCapabilities(state,options);
+    failureDiagnostic('P5','exchange-end',{elapsedMs:performance.now()-exchangeStarted,status:shared.status,entryCount:shared.entries.length});
+    expect(shared.status).toBe('available');expect(shared.entries).toHaveLength(2);
     expect(shared.entries.every(e=>e.snapshot.source==='configuration')).toBe(true);
     const consumer=join(directory,'consumer.sqlite3'),workflow=new SqliteWorkflowStore(consumer),opened=openModelRoutingService(consumer,undefined,()=>readSharedModelCapabilities(state));
     const connected=await mcp(opened.service),db=new DatabaseSync(consumer),store=new ModelRoutingStore(db);
@@ -94,7 +114,8 @@ describe('P5 actual TLS capability exchange and MCP resolver',()=>{
       expect((await connected.call(request())).data.target.host).toBe('openai-codex');
       await start(state,{...identities[0],instanceId:'new-instance'});
       expect((await connected.call(request())).data.status).toBe('blocked');
-      const message=await requestSessionMessageOnce('send',{sender:identities[0],target:identities[1],body:'ordinary delta'},state);
+      const prepared=await requestSessionMessageOnce('prepare',{sender:identities[0],target:identities[1],body:'ordinary delta'},state);
+      const message=await requestSessionMessageOnce('send',{sender:identities[0],messageId:prepared.messageId},state);
       const claims=await requestSessionMessageOnce('claim',{target:identities[1]},state);expect(claims.messages[0].messageId).toBe(message.messageId);
       expect((await requestSessionMessageOnce('acknowledge',{target:identities[1],messageIds:[message.messageId]},state)).acknowledged).toBe(1);
     }finally{await connected.client.close();db.close();opened.close();workflow.close();}
@@ -115,7 +136,8 @@ describe('P5 actual TLS capability exchange and MCP resolver',()=>{
     const signer=capabilitySigner('Z'.repeat(43)),receipt=signer.issue('capability',{schemaVersion:'1.0.0',identity,snapshot},{issuedAt:now,expiresAt});
     await expect(requestSessionMessageOnce('publish-model-capability',{receipt},state)).rejects.toThrow();
     expect((await readSharedModelCapabilities(state)).entries).toEqual([]);
-    expect((await requestSessionMessageOnce('send',{sender:identity,target:identity,body:'unchanged'},state)).messageId).toBeTruthy();
+    const prepared=await requestSessionMessageOnce('prepare',{sender:identity,target:identity,body:'unchanged'},state);
+    expect((await requestSessionMessageOnce('send',{sender:identity,messageId:prepared.messageId},state)).messageId).toBeTruthy();
   }));
   it('serializes concurrent retries and a capability revocation uses current presence',()=>withBroker(async({state})=>{
     const identity={host:'native',sessionId:'parallel',instanceId:'i'};await start(state,identity);
