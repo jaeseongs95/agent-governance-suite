@@ -102,6 +102,8 @@ Codex 배포물은 현재 호출의 모델·세션·턴을 Hook에서, 같은 �
 
 ### 로컬 세션 메시지
 
+Codex의 보이는 queue wake는 기본적으로 꺼져 있습니다. 이 플러그인의 hook 환경이 제공하는 절대 `PLUGIN_DATA` 아래 `session-messaging.json`에 `{"schemaVersion":"1.0.0","codex":{"queueWake":true}}`를 두면 선택할 수 있습니다. 명시적인 `AGENT_GOVERNANCE_CODEX_QUEUE_WAKE=1` 또는 `0`이 파일보다 우선하며, 불량 설정은 진단 후 지연 전달을 유지합니다. 설정 변경 뒤 수신 세션의 새 `SessionStart`와 presence instance·transport를 확인해야 합니다. 파일만 쓰거나 MCP 서버만 재시작해도 기존 relay는 전환되지 않습니다. Claude Code와 공통 큐는 이 설정의 영향을 받지 않습니다. 읽기 한도·실패 처리·reload 범위는 [Codex queue wake 설정](docs/input-boundaries.md#codex-queue-wake-설정)을 따릅니다.
+
 peer 결과를 기다리는 방식은 전송, 호출 제한과 턴 종료 뒤 복귀 기능을 따로 확인합니다. 지원 hook은 실제 peer 관계와 같은 세션 generation의 최근 wake 처리·live relay가 모두 확인된 `mcp__codex_app__wait_threads`만 제한합니다. 즉시 조회는 한 번 허용하고 변화 없는 반복을 30초 동안 억제합니다. hook이 없는 호스트는 기존 CLI의 `wait` 작업으로 같은 판정을 소비하며, 복귀 미확인 상태에서는 최대 1초 대기와 한 번의 재조회 뒤 다음 사용자 턴으로 이어갑니다. 범용 sleep·프로세스·테스트 대기와 AGS 통제 밖 native 호출은 강제하지 않습니다. 세부 조건과 공개 CLI 예시는 [peer 대기 설계](docs/peer-wait-policy.md)를 참고하세요.
 
 2.6.0으로 업데이트할 때는 기존 AGS MCP·relay·broker 프로세스를 종료하고 플러그인을 업데이트한 뒤 재연결하여 새 프로세스를 시작합니다. 이전 브로커와 새 플러그인이 섞인 상태의 호환은 이번 릴리스에서 보장하지 않습니다.

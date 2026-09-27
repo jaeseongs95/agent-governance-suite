@@ -4,7 +4,7 @@
 import { spawn as spawn2 } from "node:child_process";
 import { createHash as createHash2, randomUUID as randomUUID2 } from "node:crypto";
 import { readFileSync as readFileSync2 } from "node:fs";
-import path4 from "node:path";
+import path5 from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // mcp-server/src/session-message-client.ts
@@ -622,6 +622,8 @@ function processStartToken(pid, platform = process.platform) {
 
 // mcp-server/src/host-input-adapter.ts
 import { createHash } from "node:crypto";
+import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
+import path4 from "node:path";
 
 // mcp-server/src/peer-wait-policy.ts
 function identityKey(identity) {
@@ -695,8 +697,56 @@ function adaptHostInput(input, host) {
     }
   };
 }
-function hostDeliveryProfile(host, environment = process.env) {
-  const transport = host === "claude-code" ? "claude-inbox" : environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE === "1" ? "codex-queue" : "codex-deferred";
+function codexQueueEnabled(environment, diagnose) {
+  const disabled = (reason) => {
+    diagnose(reason);
+    return false;
+  };
+  const explicit = environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE;
+  if (explicit !== void 0) {
+    if (explicit === "1") return true;
+    return explicit === "0" ? false : disabled("invalid-environment");
+  }
+  const directory = environment.PLUGIN_DATA;
+  if (directory === void 0) return false;
+  if (!path4.isAbsolute(directory) || process.platform === "win32" && ["\\", "/"].includes(path4.parse(directory).root)) {
+    return disabled("invalid-plugin-data");
+  }
+  try {
+    if (!statSync(directory).isDirectory()) return disabled("invalid-plugin-data");
+    const descriptor = openSync(path4.join(directory, "session-messaging.json"), constants.O_RDONLY | constants.O_NONBLOCK);
+    try {
+      const stat = fstatSync(descriptor);
+      if (!stat.isFile()) return disabled("invalid-file-type");
+      if (stat.size > 4096) return disabled("too-large");
+      const bytes = Buffer.alloc(4097);
+      let length = 0;
+      while (length < bytes.length) {
+        const count = readSync(descriptor, bytes, length, bytes.length - length, null);
+        if (count === 0) break;
+        length += count;
+      }
+      if (length > 4096) return disabled("too-large");
+      let settings;
+      try {
+        settings = record(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, length))));
+      } catch {
+        return disabled("invalid-settings");
+      }
+      const codex = record(settings.codex);
+      if (settings.schemaVersion !== "1.0.0" || typeof codex.queueWake !== "boolean") return disabled("invalid-settings");
+      return codex.queueWake;
+    } finally {
+      closeSync(descriptor);
+    }
+  } catch (error) {
+    return error.code === "ENOENT" ? false : disabled("read-failed");
+  }
+}
+function hostDeliveryProfile(host, environment = process.env, diagnose = (reason) => {
+  console.error(`[agent-governance-suite] Codex queue settings: ${reason}; using codex-deferred.`);
+}) {
+  const transport = host === "claude-code" ? "claude-inbox" : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
   return { transport, capabilities: transportDeliveryCapabilities(transport) };
 }
 function nativePeerWait(observation) {
@@ -938,7 +988,7 @@ async function runSessionMessageHook(host, raw, explicitHostPid) {
     return "";
   }
 }
-if (path4.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
+if (path5.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
   let raw = "";
   try {
     raw = readFileSync2(0, "utf8");
