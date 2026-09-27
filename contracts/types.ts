@@ -234,6 +234,62 @@ export interface CheckpointDeltaTransportAckV1 {
   receiver: CheckpointDeltaReceiverV1;
 }
 
+export const CONTEXT_TRANSITION_ACTIONS = ["CONTINUE", "CHECKPOINT_AND_CONTINUE", "COMPACT_AND_CONTINUE",
+  "NEW_ISOLATED_REVIEW_SESSION", "CLOSE"] as const;
+export type ContextTransitionActionV1 = (typeof CONTEXT_TRANSITION_ACTIONS)[number];
+export const CONTEXT_TRANSITION_STATUSES = ["request", "started", "completed", "no-op", "failed", "uncertain"] as const;
+export type ContextTransitionStatusV1 = (typeof CONTEXT_TRANSITION_STATUSES)[number];
+
+export interface ContextTransitionBindingV1 {
+  transitionId: string;
+  taskId: string;
+  revision: number;
+  receiver: CheckpointDeltaReceiverV1;
+  contextGeneration: number;
+  checkpoint: ArtifactRefV1;
+}
+
+/** Declared intent only; it does not create a session, authority or execution permission. */
+export interface ContextTransitionIntentV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "context-transition-intent";
+  status: "request";
+  action: ContextTransitionActionV1;
+  binding: ContextTransitionBindingV1;
+}
+
+export interface ContextTransitionTargetV1 {
+  receiver: CheckpointDeltaReceiverV1;
+  contextGeneration: number;
+}
+export type SameContextTransitionTargetV1 = ContextTransitionTargetV1 & { origin: "same-context" };
+export type CompactedContextTransitionTargetV1 = ContextTransitionTargetV1 & { origin: "compacted" };
+/** This typed declaration is not proof of host isolation or audit independence. */
+export type FreshContextTransitionTargetV1 = ContextTransitionTargetV1 & {
+  origin: "fresh-context"; historyInherited: false;
+};
+
+type ContextTransitionResultBindingV1 = {
+  schemaVersion: typeof CONTRACT_VERSION;
+  kind: "context-transition-result";
+  action: ContextTransitionActionV1;
+  binding: ContextTransitionBindingV1;
+  intentDigest: Sha256Digest;
+};
+/** Completed destructive transitions still need a new verified base ACK; this is not that ACK. */
+export type ContextTransitionResultV1 = ContextTransitionResultBindingV1 & (
+  | { status: "started"; baseState: "invalid"; target: null }
+  | { status: "failed" | "uncertain"; baseState: "invalid"; target: null; reason: string }
+  | { status: "no-op"; baseState: "unchanged"; target: SameContextTransitionTargetV1 }
+  | { status: "completed" } & (
+    | { action: "CONTINUE" | "CHECKPOINT_AND_CONTINUE"; baseState: "unchanged"; target: SameContextTransitionTargetV1 }
+    | { action: "COMPACT_AND_CONTINUE"; baseState: "invalid"; target: CompactedContextTransitionTargetV1 }
+    | { action: "NEW_ISOLATED_REVIEW_SESSION"; baseState: "invalid"; target: FreshContextTransitionTargetV1 }
+    | { action: "CLOSE"; baseState: "invalid"; target: null }
+  )
+);
+export type ContextTransitionV1 = ContextTransitionIntentV1 | ContextTransitionResultV1;
+
 export interface ContinuitySnapshotV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   source: "direct";

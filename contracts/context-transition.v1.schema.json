@@ -1,0 +1,380 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/context-transition.v1.schema.json",
+  "title": "ContextTransition.v1",
+  "description": "Typed intent/result declarations only. Host execution, observation authentication and delta-base ACK activation are separate. Cross-field identity/generation invariants are checked by ContractValidator.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/intent"
+    },
+    {
+      "$ref": "#/$defs/result"
+    }
+  ],
+  "$defs": {
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transitionId",
+        "taskId",
+        "revision",
+        "receiver",
+        "contextGeneration",
+        "checkpoint"
+      ],
+      "properties": {
+        "transitionId": {
+          "$ref": "checkpoint-delta.v1.schema.json#/$defs/id"
+        },
+        "taskId": {
+          "$ref": "checkpoint-delta.v1.schema.json#/$defs/taskId"
+        },
+        "revision": {
+          "$ref": "checkpoint-delta.v1.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "receiver": {
+          "$ref": "checkpoint-delta.v1.schema.json#/$defs/receiver"
+        },
+        "contextGeneration": {
+          "$ref": "checkpoint-delta.v1.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "checkpoint": {
+          "$ref": "artifact-ref.v1.schema.json"
+        }
+      }
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "action",
+        "binding",
+        "kind",
+        "status"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0.0"
+        },
+        "action": {
+          "enum": [
+            "CONTINUE",
+            "CHECKPOINT_AND_CONTINUE",
+            "COMPACT_AND_CONTINUE",
+            "NEW_ISOLATED_REVIEW_SESSION",
+            "CLOSE"
+          ]
+        },
+        "binding": {
+          "$ref": "#/$defs/binding"
+        },
+        "kind": {
+          "const": "context-transition-intent"
+        },
+        "status": {
+          "const": "request"
+        }
+      }
+    },
+    "sameTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receiver",
+        "contextGeneration",
+        "origin"
+      ],
+      "properties": {
+        "receiver": {
+          "$ref": "checkpoint-delta.v1.schema.json#/$defs/receiver"
+        },
+        "contextGeneration": {
+          "$ref": "checkpoint-delta.v1.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "origin": {
+          "const": "same-context"
+        }
+      }
+    },
+    "compactedTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receiver",
+        "contextGeneration",
+        "origin"
+      ],
+      "properties": {
+        "receiver": {
+          "$ref": "checkpoint-delta.v1.schema.json#/$defs/receiver"
+        },
+        "contextGeneration": {
+          "$ref": "checkpoint-delta.v1.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "origin": {
+          "const": "compacted"
+        }
+      }
+    },
+    "freshTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receiver",
+        "contextGeneration",
+        "origin",
+        "historyInherited"
+      ],
+      "properties": {
+        "receiver": {
+          "$ref": "checkpoint-delta.v1.schema.json#/$defs/receiver"
+        },
+        "contextGeneration": {
+          "$ref": "checkpoint-delta.v1.schema.json#/$defs/nonnegativeSafeInteger"
+        },
+        "origin": {
+          "const": "fresh-context"
+        },
+        "historyInherited": {
+          "const": false
+        }
+      },
+      "description": "Typed declaration only, never proof of real host isolation or independence."
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "kind",
+        "status",
+        "action",
+        "binding",
+        "intentDigest",
+        "baseState",
+        "target"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0.0"
+        },
+        "action": {
+          "enum": [
+            "CONTINUE",
+            "CHECKPOINT_AND_CONTINUE",
+            "COMPACT_AND_CONTINUE",
+            "NEW_ISOLATED_REVIEW_SESSION",
+            "CLOSE"
+          ]
+        },
+        "binding": {
+          "$ref": "#/$defs/binding"
+        },
+        "kind": {
+          "const": "context-transition-result"
+        },
+        "status": {
+          "enum": [
+            "started",
+            "completed",
+            "no-op",
+            "failed",
+            "uncertain"
+          ]
+        },
+        "intentDigest": {
+          "$ref": "checkpoint-delta.v1.schema.json#/$defs/digest"
+        },
+        "baseState": {
+          "enum": [
+            "invalid",
+            "unchanged"
+          ]
+        },
+        "target": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/sameTarget"
+            },
+            {
+              "$ref": "#/$defs/compactedTarget"
+            },
+            {
+              "$ref": "#/$defs/freshTarget"
+            }
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "started",
+                  "failed",
+                  "uncertain"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "baseState": {
+                "const": "invalid"
+              },
+              "target": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "failed",
+                  "uncertain"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reason"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "reason"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "no-op"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "baseState": {
+                "const": "unchanged"
+              },
+              "target": {
+                "$ref": "#/$defs/sameTarget"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "completed"
+              }
+            }
+          },
+          "then": {
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "action": {
+                      "enum": [
+                        "CONTINUE",
+                        "CHECKPOINT_AND_CONTINUE"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "baseState": {
+                      "const": "unchanged"
+                    },
+                    "target": {
+                      "$ref": "#/$defs/sameTarget"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "action": {
+                      "const": "COMPACT_AND_CONTINUE"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "baseState": {
+                      "const": "invalid"
+                    },
+                    "target": {
+                      "$ref": "#/$defs/compactedTarget"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "action": {
+                      "const": "NEW_ISOLATED_REVIEW_SESSION"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "baseState": {
+                      "const": "invalid"
+                    },
+                    "target": {
+                      "$ref": "#/$defs/freshTarget"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "action": {
+                      "const": "CLOSE"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "baseState": {
+                      "const": "invalid"
+                    },
+                    "target": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
