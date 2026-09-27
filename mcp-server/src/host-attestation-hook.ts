@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,10 +7,13 @@ import {
   HOST_ATTESTATION_TOOLS,
   isReasoningEffort,
   issueHostAttestation,
+  hostActorId,
+  hostIdentityDigest,
   lowerReasoningEffort,
-  modelClassForClaudeModel,
   withoutHostAttestation,
 } from "./host-attestation.js";
+import { claudeCodeExecutionAdapter, codexExecutionAdapter, modelClassForClaudeModel } from "./host-execution-adapters.js";
+import { observeCodexHook, type CodexObservationOptions } from "./codex-host-observation.js";
 import { resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import type { WorkflowStore } from "./workflow-store.js";
@@ -55,13 +57,11 @@ function readTextOrNull(file: string): string | null {
   }
 }
 
-const digest = (value: string) => createHash("sha256").update(value, "utf8").digest("hex").slice(0, 24);
+const digest = hostIdentityDigest;
 
 /** Actor IDs are persisted in plans and receipts, so raw session and agent IDs are stored only as digests. */
 export function claudeCodeActorId(sessionId: string, agentId: string | null): string {
-  return agentId
-    ? `claude-code:session-${digest(sessionId)}:agent-${digest(agentId)}`
-    : `claude-code:session-${digest(sessionId)}`;
+  return hostActorId(claudeCodeExecutionAdapter.host, sessionId, agentId);
 }
 
 function sleepSync(milliseconds: number): void {
@@ -200,7 +200,7 @@ export function readSessionModel(directory: string, sessionId: string): SessionM
 function attestedToolInput(input: HookInput): { tool: string; toolInput: Record<string, unknown> } | null {
   if (input.hook_event_name !== "PreToolUse") return null;
   const canonicalName = text(input.tool_name) ?? "";
-  if (!canonicalName.startsWith("mcp__")) return null;
+  if (!/^mcp__(?:plugin_agent-governance-suite_agent-governance-suite|agent[-_]governance[-_]suite)__/u.test(canonicalName)) return null;
   const tool = canonicalName.split("__").at(-1) ?? "";
   const toolInput = record(input.tool_input);
   return HOST_ATTESTATION_TOOLS.has(tool) && toolInput ? { tool, toolInput } : null;
@@ -282,12 +282,16 @@ export function handleHostAttestationHook(
   // current tool-use context. When both are present and differ, the lower one is attested.
   const effort = observedEffort(text(record(input.effort)?.level), observation.effort);
   if (!effort) return unattested();
-  const token = issueHostAttestation(store, {
+  const token = issueHostAttestation(store, claudeCodeExecutionAdapter, {
     tool,
     input: toolInput,
     model: observation.model,
     reasoningEffort: effort,
     actorId: claudeCodeActorId(sessionId, agentId),
+    sessionId,
+    agentId,
+    turnId: text(input.turn_id),
+    toolUseId,
     ...(options.now ? { now: options.now() } : {}),
   });
   if (!token) return unattested();
@@ -299,24 +303,53 @@ export function handleHostAttestationHook(
   };
 }
 
+export function handleCodexHostAttestationHook(
+  input: HookInput,
+  store: WorkflowStore,
+  options: CodexObservationOptions & { now?: () => Date } = {},
+): Record<string, unknown> {
+  const target = attestedToolInput(input);
+  if (!target) return {};
+  const observed = observeCodexHook(input, options);
+  const clean = withoutHostAttestation(target.toolInput);
+  const token = observed.observation ? issueHostAttestation(store, codexExecutionAdapter, {
+    ...observed.observation, tool: target.tool, input: clean,
+    ...(options.now ? { now: options.now() } : {}),
+  }) : null;
+  return {
+    ...(!token ? { systemMessage: `AGS execution observation unavailable: ${observed.reason ?? "invalid-workflow-binding"}. Requires the current host session/turn/model/effort and tool call; caller settings cannot supply them.` } : {}),
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "allow",
+      updatedInput: { ...clean, ...(token ? { [HOST_ATTESTATION_FIELD]: token } : {}) },
+    },
+  };
+}
+
 async function main(): Promise<void> {
   let store: SqliteWorkflowStore | null = null;
   let input: HookInput = {};
   let output: Record<string, unknown>;
+  const codex = process.argv.includes("--host=codex");
   try {
     input = JSON.parse(readFileSync(0, "utf8")) as HookInput;
     const databasePath = resolveWorkflowDatabasePath();
     const modelDirectory = path.join(path.dirname(databasePath), "host-models");
-    const update = sessionModelUpdate(input);
+    const update = codex ? null : sessionModelUpdate(input);
     if (update) {
       writeSessionModel(modelDirectory, update.sessionId, update.record);
       return;
     }
     store = new SqliteWorkflowStore(databasePath);
-    output = handleHostAttestationHook(input, store, { readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId) });
+    output = codex ? handleCodexHostAttestationHook(input, store)
+      : handleHostAttestationHook(input, store, { readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId) });
   } catch {
     // Without a token the server fails closed with BINDING_REQUIRED; never block the tool call here.
     output = withoutCallerAttestation(input);
+    if (codex && attestedToolInput(input)) {
+      output.systemMessage = "AGS execution observation unavailable: adapter-read-or-storage-failed. No caller attestation is trusted.";
+      if (record(output.hookSpecificOutput)) (output.hookSpecificOutput as Record<string, unknown>).permissionDecision = "allow";
+    }
   } finally {
     try { store?.close(); } catch { /* Fail open. */ }
   }

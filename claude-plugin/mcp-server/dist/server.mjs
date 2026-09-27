@@ -17456,7 +17456,8 @@ function resolveToolSchemaProfile(environment = process.env) {
   return environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE === "anthropic" ? "anthropic" : "default";
 }
 function resolveHostAttestation(environment = process.env) {
-  return environment.AGENT_GOVERNANCE_HOST_ATTESTATION === "claude-code" ? "claude-code" : null;
+  const host = environment.AGENT_GOVERNANCE_HOST_ATTESTATION;
+  return host === "claude-code" || host === "codex" ? host : null;
 }
 
 // mcp-server/src/schema-validator.ts
@@ -23823,7 +23824,10 @@ var WorkflowService = class {
       throw new WorkflowContractError(
         "BINDING_REQUIRED",
         `${subject} requires trusted host execution attestation.`,
-        { binding: binding2 }
+        { binding: binding2, observation: this.trustedExecutionContextProvider?.diagnose?.() ?? {
+          status: "provider-not-configured",
+          connection: "Connect a host-owned TrustedExecutionContextProvider or enable a supported host attestation adapter. Caller executionContext is not a trusted observation."
+        } }
       );
     }
     return context;
@@ -24265,24 +24269,21 @@ var WorkflowService = class {
 };
 
 // mcp-server/src/host-attestation.ts
-import { createHmac as createHmac3, randomBytes as randomBytes3, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+import { createHash as createHash7, createHmac as createHmac3, randomBytes as randomBytes3, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
 var HOST_ATTESTATION_FIELD = "_hostAttestation";
+var HOST_ATTESTATION_TOOLS = /* @__PURE__ */ new Set(["plan_workflow", "record_stage_result"]);
 var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
 var TOKEN_PREFIX = "aghs1";
 var TOKEN_TTL_MS = 5 * 60 * 1e3;
-var CLAUDE_MODEL_CLASSES = {
-  haiku: "lightweight",
-  sonnet: "general",
-  opus: "deep",
-  fable: "frontier"
-};
-var CLAUDE_MODEL_ID = /^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\.)?(?:anthropic\.)?claude-(?:\d+(?:-\d+)?-)?(haiku|sonnet|opus|fable)(?:[-@:.]|$)/u;
 function record2(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
-function modelClassForClaudeModel(model) {
-  const family = CLAUDE_MODEL_ID.exec(model)?.[1];
-  return family ? CLAUDE_MODEL_CLASSES[family] ?? null : null;
+function nonEmpty(value) {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+var hostIdentityDigest = (value) => createHash7("sha256").update(value, "utf8").digest("hex").slice(0, 24);
+function hostActorId(host, sessionId, agentId = null) {
+  return `${host}:session-${hostIdentityDigest(sessionId)}${agentId ? `:agent-${hostIdentityDigest(agentId)}` : ""}`;
 }
 function isReasoningEffort(value) {
   return typeof value === "string" && REASONING_EFFORT.includes(value);
@@ -24291,6 +24292,20 @@ function withoutHostAttestation(input) {
   const copy = { ...input };
   delete copy[HOST_ATTESTATION_FIELD];
   return copy;
+}
+function hostAttestationBinding(tool, input) {
+  if (tool === "plan_workflow") {
+    const taskId = nonEmpty(record2(input.taskEnvelope)?.taskId) ?? nonEmpty(input.taskId);
+    return taskId ? { phase: "bootstrap", taskId, runId: null, stageId: null, revision: null } : null;
+  }
+  if (tool === "record_stage_result") {
+    const runId = nonEmpty(input.runId);
+    const stageId2 = nonEmpty(input.stageId);
+    const revision = input.expectedRevision;
+    if (!runId || !stageId2 || !Number.isSafeInteger(revision)) return null;
+    return { phase: "stage", taskId: null, runId, stageId: stageId2, revision };
+  }
+  return null;
 }
 function signingKey(store) {
   const key = Buffer.from(
@@ -24303,10 +24318,48 @@ function signingKey(store) {
 function mac2(key, body) {
   return createHmac3("sha256", key).update(body, "utf8").digest("base64url");
 }
+function issueHostAttestation(store, adapter, observation) {
+  if (!HOST_ATTESTATION_TOOLS.has(observation.tool)) return null;
+  const input = withoutHostAttestation(observation.input);
+  const binding2 = hostAttestationBinding(observation.tool, input);
+  const modelClass = adapter.modelClassForModel(observation.model);
+  if (!binding2 || !modelClass || !MODEL_CLASS.includes(modelClass) || !adapter.host || !isReasoningEffort(observation.reasoningEffort) || !observation.actorId || !observation.sessionId || !observation.toolUseId || observation.actorId !== hostActorId(adapter.host, observation.sessionId, observation.agentId ?? null)) return null;
+  const now = observation.now ?? /* @__PURE__ */ new Date();
+  const scope = {
+    host: adapter.host,
+    session: hostIdentityDigest(observation.sessionId),
+    agent: observation.agentId ? hostIdentityDigest(observation.agentId) : null,
+    turn: observation.turnId ? hostIdentityDigest(observation.turnId) : null,
+    call: hostIdentityDigest(observation.toolUseId)
+  };
+  const payload = {
+    v: 1,
+    ...scope,
+    tool: observation.tool,
+    inputDigest: convergenceDigest(input),
+    ...binding2,
+    model: observation.model,
+    modelClass,
+    reasoningEffort: observation.reasoningEffort,
+    actorId: observation.actorId,
+    // Retrying the same host call cannot mint a second consumable observation.
+    observationId: createHash7("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
+    observedAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + TOKEN_TTL_MS).toISOString()
+  };
+  const body = `${TOKEN_PREFIX}.${Buffer.from(JSON.stringify(payload), "utf8").toString("base64url")}`;
+  return `${body}.${mac2(signingKey(store), body)}`;
+}
+function withHostObservation(store, adapter, tool, args, observe, dispatch) {
+  const input = withoutHostAttestation(args);
+  const observation = observe();
+  const token = observation ? issueHostAttestation(store, adapter, { ...observation, tool, input }) : null;
+  return dispatch({ ...input, ...token ? { [HOST_ATTESTATION_FIELD]: token } : {} });
+}
 function invalid(message) {
   return new WorkflowContractError("BINDING_INVALID", message);
 }
-function verifyToken(store, token) {
+function verifyToken(store, adapter, token) {
   const [prefix, encodedPayload, signature, ...rest] = token.split(".");
   if (prefix !== TOKEN_PREFIX || !encodedPayload || !signature || rest.length > 0) {
     throw invalid("Host attestation token is malformed.");
@@ -24323,31 +24376,46 @@ function verifyToken(store, token) {
     throw invalid("Host attestation token payload is malformed.");
   }
   const value = record2(payload);
-  if (!value || value.v !== 1 || value.host !== "claude-code" || typeof value.model !== "string" || modelClassForClaudeModel(value.model) !== value.modelClass || !isReasoningEffort(value.reasoningEffort)) {
-    throw invalid("Host attestation token payload is not a supported Claude Code observation.");
+  if (!value || value.v !== 1 || value.host !== adapter.host || typeof value.model !== "string" || !MODEL_CLASS.includes(value.modelClass) || adapter.modelClassForModel(value.model) !== value.modelClass || !isReasoningEffort(value.reasoningEffort) || typeof value.session !== "string" || !/^[a-f0-9]{24}$/u.test(value.session) || typeof value.call !== "string" || !/^[a-f0-9]{24}$/u.test(value.call) || value.agent !== null && (typeof value.agent !== "string" || !/^[a-f0-9]{24}$/u.test(value.agent)) || value.turn !== null && (typeof value.turn !== "string" || !/^[a-f0-9]{24}$/u.test(value.turn)) || value.actorId !== `${adapter.host}:session-${String(value.session)}${value.agent ? `:agent-${String(value.agent)}` : ""}`) {
+    throw invalid("Host attestation token payload is not a supported observation for the configured adapter.");
   }
   return value;
 }
 var HostAttestationProvider = class {
-  constructor(store) {
+  constructor(store, adapter) {
     this.store = store;
+    this.adapter = adapter;
   }
   store;
+  adapter;
   current = null;
+  /** Host-owned integrations without hooks supply their observation here, outside caller JSON. */
+  runObserved(tool, args, observe, call) {
+    return withHostObservation(this.store, this.adapter, tool, args, observe, (input) => this.run(tool, input, call));
+  }
+  diagnose() {
+    return {
+      host: this.adapter.host,
+      status: "missing-call-observation",
+      required: ["host-owned model", "reasoningEffort", "session", "current tool call", "signed input binding"],
+      connection: "Enable the host PreToolUse adapter, or supply host-owned observations through HostAttestationProvider.runObserved; caller executionContext is not trusted."
+    };
+  }
   run(tool, args, call) {
     const input = withoutHostAttestation(args);
     const token = typeof args[HOST_ATTESTATION_FIELD] === "string" ? args[HOST_ATTESTATION_FIELD] : null;
+    const previous = this.current;
     this.current = { tool, input, token };
     try {
       return call(input);
     } finally {
-      this.current = null;
+      this.current = previous;
     }
   }
   observe(binding2) {
     const current = this.current;
     if (!current?.token) return null;
-    const payload = verifyToken(this.store, current.token);
+    const payload = verifyToken(this.store, this.adapter, current.token);
     if (payload.tool !== current.tool || payload.inputDigest !== convergenceDigest(current.input)) {
       throw invalid("Host attestation token was issued for a different tool call.");
     }
@@ -24372,8 +24440,38 @@ var HostAttestationProvider = class {
   }
 };
 
+// mcp-server/src/host-execution-adapters.ts
+var CLAUDE_CLASSES = {
+  haiku: "lightweight",
+  sonnet: "general",
+  opus: "deep",
+  fable: "frontier"
+};
+var CLAUDE_MODEL_ID = /^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\.)?(?:anthropic\.)?claude-(?:\d+(?:-\d+)?-)?(haiku|sonnet|opus|fable)(?:[-@:.]|$)/u;
+function modelClassForClaudeModel(model) {
+  const family = CLAUDE_MODEL_ID.exec(model)?.[1];
+  return family ? CLAUDE_CLASSES[family] ?? null : null;
+}
+var CODEX_CLASSES = {
+  "gpt-6-astra": "frontier",
+  // Conservative governance classes for the host's workhorse/easier-task roles, not measured quality claims.
+  "gpt-6-sol": "general",
+  "gpt-6-luna": "lightweight",
+  "gpt-5.6-sol": "deep",
+  "gpt-5.6-terra": "general",
+  "gpt-5.6-luna": "lightweight"
+};
+var claudeCodeExecutionAdapter = {
+  host: "claude-code",
+  modelClassForModel: modelClassForClaudeModel
+};
+var codexExecutionAdapter = {
+  host: "codex",
+  modelClassForModel: (model) => Object.hasOwn(CODEX_CLASSES, model) ? CODEX_CLASSES[model] : null
+};
+
 // mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash7, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHash as createHash8, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
 import path11 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
@@ -24384,7 +24482,7 @@ var POLICY = {
   continuityRecordRetentionDays: 180
 };
 function digest2(value) {
-  return `sha256:${createHash7("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${createHash8("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function protection() {
   return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
@@ -28963,7 +29061,11 @@ async function main() {
     store.close();
   });
   const validator = new ContractValidator();
-  const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
+  const attestationHost = resolveHostAttestation();
+  const hostAttestation = attestationHost ? new HostAttestationProvider(
+    store,
+    attestationHost === "codex" ? codexExecutionAdapter : claudeCodeExecutionAdapter
+  ) : null;
   const trust = new TrustService(trustStore);
   const service = new WorkflowService(
     new FileSkillRegistry(registryPath, validator),
