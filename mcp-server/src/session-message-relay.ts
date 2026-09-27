@@ -88,7 +88,7 @@ async function ringCodex(sessionId: string, message: string): Promise<WakeDispat
   });
 }
 
-async function ringClaude(message: string): Promise<WakeDispatchOutcome> {
+export async function ringClaude(message: string): Promise<WakeDispatchOutcome> {
   const socketPath = process.env.CLAUDE_CODE_MESSAGING_SOCKET;
   const token = process.env.CLAUDE_CODE_MESSAGING_TOKEN;
   if (!socketPath || !token) return "definite-failure";
@@ -107,7 +107,8 @@ async function ringClaude(message: string): Promise<WakeDispatchOutcome> {
       connected = true;
       try {
         wrote = true;
-        socket.end(`${JSON.stringify({ type: "auth", token })}\n${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "now" })}\n`);
+        // Queue behind ongoing host work instead of interrupting the receiving tool.
+        socket.end(`${JSON.stringify({ type: "auth", token })}\n${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" })}\n`);
       } catch {
         finish("accepted-or-unknown");
       }

@@ -409,7 +409,7 @@ async function ringClaude(message) {
       try {
         wrote = true;
         socket.end(`${JSON.stringify({ type: "auth", token })}
-${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "now" })}
+${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" })}
 `);
       } catch {
         finish("accepted-or-unknown");

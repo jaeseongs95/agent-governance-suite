@@ -12,7 +12,7 @@ import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   type BrokerEndpoint,
@@ -29,7 +29,7 @@ import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.j
 import { handleSessionMessageHook, sessionMessageEnvelope, sessionMessageTransport } from "../../mcp-server/src/session-message-hook.js";
 import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
-import { claudeWakeOutcome, codexWakeOutcome, relayIdentityDecision, shouldReleaseWake, transportWakeCapabilities, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
+import { claudeWakeOutcome, codexWakeOutcome, relayIdentityDecision, ringClaude, shouldReleaseWake, transportWakeCapabilities, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
 import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
 import { processIdentityState } from "../../mcp-server/src/process-identity.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "../../mcp-server/src/session-message-protocol.js";
@@ -101,6 +101,7 @@ async function startSourceBroker(stateDirectory: string): Promise<void> {
 }
 
 afterEach(async () => {
+  vi.unstubAllEnvs();
   for (const directory of directories.splice(0)) {
     await terminateBroker(directory);
     await rm(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
@@ -807,6 +808,64 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(claudeWakeOutcome(true, true, false)).toBe("accepted-or-unknown");
     expect(claudeWakeOutcome(true, true, true)).toBe("accepted-or-unknown");
     expect(claudeWakeOutcome(false, true, true)).toBe("submitted");
+  });
+
+  it("serializes a Claude wake with next priority through an isolated inbox socket", async () => {
+    const directory = stateDirectory();
+    const socketPath = process.platform === "win32"
+      ? `\\\\.\\pipe\\${path.basename(directory)}`
+      : path.join(directory, "inbox.sock");
+    let received = "";
+    const server = net.createServer((socket) => {
+      socket.setEncoding("utf8");
+      socket.on("data", (chunk: string) => { received += chunk; });
+    });
+    server.listen(socketPath);
+    await once(server, "listening");
+    vi.stubEnv("CLAUDE_CODE_MESSAGING_SOCKET", socketPath);
+    vi.stubEnv("CLAUDE_CODE_MESSAGING_TOKEN", "isolated-fixture-token");
+    const bell = `[agent-governance-suite:wake:${"a".repeat(32)}]`;
+    try {
+      await expect(ringClaude(bell)).resolves.toBe("submitted");
+      // IPC submission is not host consumption, peer ACK, or proof of non-interruption.
+      expect(received.trim().split("\n").map((line) => JSON.parse(line))).toEqual([
+        { type: "auth", token: "isolated-fixture-token" },
+        { type: "user", message: { role: "user", content: bell }, priority: "next" },
+      ]);
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+
+  it.each(["socket", "token", "both"])("does not dispatch a Claude wake when %s is missing", async (missing) => {
+    vi.stubEnv("CLAUDE_CODE_MESSAGING_SOCKET", missing === "token" ? "unused-fixture-socket" : "");
+    vi.stubEnv("CLAUDE_CODE_MESSAGING_TOKEN", missing === "socket" ? "isolated-fixture-token" : "");
+    await expect(ringClaude("fixture-wake")).resolves.toBe("definite-failure");
+  });
+
+  it("consumes queued peers at safe boundaries after restart without waking again after ACK", () => {
+    const databasePath = path.join(stateDirectory(), "boundary-restart.sqlite3");
+    const target = { host: "claude-code", sessionId: "queued-boundary" };
+    const store = new SessionMessageStore(databasePath);
+    store.send({ messageId: "boundary-0001", sender: { host: "codex", sessionId: "sender" }, target, body: "first" }, 1000);
+    store.send({ messageId: "boundary-0002", sender: { host: "codex", sessionId: "sender" }, target, body: "second" }, 1001);
+    expect(store.reserveWake(target, "boundary-nonce-abcdefghijklmnop", 1002)).toBe(true);
+    store.close();
+    const reopened = new SessionMessageStore(databasePath);
+    try {
+      expect(reopened.reserveWake(target, "boundary-nonce-qrstuvwxyzabcdef", 1003)).toBe(false);
+      expect(reopened.claimDeferred(target, 1004, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["boundary-0001"]);
+      expect(reopened.claimWake(target, ["boundary-nonce-abcdefghijklmnop"], 1005)).toEqual({ recognized: false, messages: [] });
+      expect(reopened.reserveWake(target, "boundary-nonce-qrstuvwxyzabcdef", 1005)).toBe(false);
+      expect(reopened.acknowledge(target, ["boundary-0001"], 1006)).toBe(1);
+      expect(reopened.claimTurnEnd(target, 1007, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["boundary-0002"]);
+      expect(reopened.acknowledge(target, ["boundary-0002"], 1008)).toBe(1);
+      expect(reopened.pendingCount(target, 1009)).toBe(0);
+      expect(reopened.reserveWake(target, "boundary-nonce-qrstuvwxyzabcdef", 1009)).toBe(false);
+      expect(reopened.claimDeferred(target, 1009)).toEqual([]);
+    } finally {
+      reopened.close();
+    }
   });
 
   it("retries only a definitely failed wake whose reservation was released", () => {
