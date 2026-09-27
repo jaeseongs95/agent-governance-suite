@@ -140,6 +140,7 @@ export async function runSessionMessageRelay(options: RelayOptions): Promise<voi
           relayId,
           pid: process.pid,
           parentPid: options.parentPid,
+          instanceId: options.instanceId,
         });
         acquired = result.acquired;
         if (acquired) break;
@@ -172,14 +173,14 @@ export async function runSessionMessageRelay(options: RelayOptions): Promise<voi
       }
     }
     try {
-      const heartbeat = await sessionMessageRequest<{ alive: boolean }>("heartbeat-relay", { target, transport: options.transport, relayId });
-      if (!heartbeat.alive) return;
-      await sessionMessageRequest("presence-heartbeat", { target, instanceId: options.instanceId });
+      const pending = await sessionMessageRequest<{ alive: boolean; count: number }>("relay-tick", {
+        target, transport: options.transport, relayId, instanceId: options.instanceId, includePending: options.transport !== "codex-deferred",
+      });
+      if (!pending.alive) return;
       if (options.transport === "codex-deferred") {
         await delay(LOOP_MS);
         continue;
       }
-      const pending = await sessionMessageRequest<{ count: number }>("pending", { target });
       if (pending.count === 0) {
         retryNonce = null;
         ringAttempts = 0;

@@ -25,6 +25,12 @@ var MESSAGE_TTL_DEFAULT_SECONDS = 3600;
 var MESSAGE_TTL_MAX_SECONDS = 86400;
 var MESSAGE_LIMIT = 1e3;
 var MESSAGE_BYTES_LIMIT = 4 * 1024 * 1024;
+var MESSAGE_DRAFT_TTL_MS = 10 * 6e4;
+var MESSAGE_DRAFT_LIMIT = 1e3;
+var MESSAGE_SENDER_DRAFT_LIMIT = 100;
+var MESSAGE_RECEIPT_LIMIT = 1e3;
+var MESSAGE_ID_RECORD_BYTES_LIMIT = 4 * 1024 * 1024;
+var MESSAGE_RECEIPT_EXTRA_MS = 36e5;
 var CLAIM_LEASE_BASE_MS = 12e4;
 var CLAIM_LEASE_MAX_MS = 30 * 6e4;
 var RELAY_LEASE_MS = 15e3;
@@ -125,6 +131,21 @@ var SessionMessageStore = class {
       ON session_presence (host, session_id, started_at DESC);`);
     this.database.exec("BEGIN IMMEDIATE");
     try {
+      this.database.exec(`CREATE TABLE IF NOT EXISTS prepared_messages (
+        message_id TEXT PRIMARY KEY,
+        sender_host TEXT NOT NULL,
+        sender_session_id TEXT NOT NULL,
+        target_host TEXT NOT NULL,
+        target_session_id TEXT NOT NULL,
+        body TEXT,
+        ttl_seconds INTEGER NOT NULL,
+        prepared_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        receipt TEXT,
+        record_bytes INTEGER NOT NULL
+      ) STRICT;
+      CREATE INDEX IF NOT EXISTS prepared_messages_expiry ON prepared_messages (expires_at);
+      CREATE INDEX IF NOT EXISTS prepared_messages_owner ON prepared_messages (sender_host, sender_session_id, receipt);`);
       const messageColumns = this.database.prepare("PRAGMA table_info(messages)").all();
       if (!messageColumns.some((column) => column.name === "delivery_attempts")) {
         this.database.exec("ALTER TABLE messages ADD COLUMN delivery_attempts INTEGER NOT NULL DEFAULT 0;");
@@ -162,7 +183,64 @@ var SessionMessageStore = class {
     this.database.prepare("DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)").run(now, acknowledgedBefore);
     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
     this.database.prepare("DELETE FROM wake_nonces WHERE expires_at <= ?").run(now);
+    this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
   }
+  /** Preparation is durable but has no queue, peer-relation or wake effect. */
+  prepare(input, nowMs = Date.now()) {
+    boundedIdentity(input.sender);
+    boundedIdentity(input.target);
+    const ttlSeconds = input.ttlSeconds ?? MESSAGE_TTL_DEFAULT_SECONDS;
+    if (typeof input.body !== "string" || !input.body.trim() || Buffer.byteLength(input.body, "utf8") > MESSAGE_BODY_MAX_BYTES) throw new Error("body must contain 1-4096 UTF-8 bytes.");
+    if (input.body.includes("\0")) throw new Error("body must not contain NUL characters.");
+    if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) throw new Error("ttlSeconds must be an integer from 30 to 86400.");
+    const result = { messageId: randomUUID(), preparedAt: iso(nowMs), expiresAt: iso(nowMs + MESSAGE_DRAFT_TTL_MS) };
+    const recordBytes = Buffer.byteLength(JSON.stringify({ ...input, ttlSeconds, ...result }), "utf8");
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      this.prune(nowMs);
+      const drafts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL").get();
+      const owned = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL AND sender_host = ? AND sender_session_id = ?").get(input.sender.host, input.sender.sessionId);
+      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages").get();
+      if (drafts.count >= MESSAGE_DRAFT_LIMIT || owned.count >= MESSAGE_SENDER_DRAFT_LIMIT || bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message preparation store is full.");
+      this.database.prepare(`INSERT INTO prepared_messages (message_id, sender_host, sender_session_id, target_host, target_session_id, body, ttl_seconds, prepared_at, expires_at, record_bytes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(result.messageId, input.sender.host, input.sender.sessionId, input.target.host, input.target.sessionId, input.body, ttlSeconds, result.preparedAt, result.expiresAt, recordBytes);
+      this.database.exec("COMMIT");
+      return result;
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  /** ID ownership, capacity, queue insert and first receipt share one transaction. */
+  submitPrepared(sender, messageId, nowMs = Date.now()) {
+    boundedIdentity(sender);
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      this.prune(nowMs);
+      const row = this.database.prepare("SELECT * FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?").get(messageId, sender.host, sender.sessionId, iso(nowMs));
+      if (!row) throw new Error("Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent.");
+      if (row.receipt !== null) {
+        const receipt2 = JSON.parse(String(row.receipt));
+        this.database.exec("COMMIT");
+        return { ...receipt2, duplicate: true };
+      }
+      const receipts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NOT NULL").get();
+      if (receipts.count >= MESSAGE_RECEIPT_LIMIT) throw new Error("The bounded message receipt store is full.");
+      const receipt = this.send({ messageId, sender, target: { host: String(row.target_host), sessionId: String(row.target_session_id) }, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+      const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
+      const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);
+      const recordBytes = Buffer.byteLength(JSON.stringify({ messageId, sender, target: { host: row.target_host, sessionId: row.target_session_id }, preparedAt: row.prepared_at, ttlSeconds: row.ttl_seconds, receipt: receiptJson, expiresAt }), "utf8");
+      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages WHERE message_id <> ?").get(messageId);
+      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message receipt store is full.");
+      this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?").run(receiptJson, expiresAt, recordBytes, messageId);
+      this.database.exec("COMMIT");
+      return receipt;
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  /** Internal queue primitive, also retained for existing-data fixtures; public send uses submitPrepared. */
   send(input, nowMs = Date.now()) {
     boundedIdentity(input.sender);
     boundedIdentity(input.target);
@@ -351,7 +429,11 @@ var SessionMessageStore = class {
     this.prune(nowMs);
     const row = this.database.prepare(`SELECT message_id, target_host, target_session_id, created_at, expires_at,
       claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ?`).get(messageId, sender.host, sender.sessionId);
-    if (!row) return null;
+    if (!row) {
+      const prepared = this.database.prepare("SELECT prepared_at, expires_at, receipt FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?").get(messageId, sender.host, sender.sessionId, iso(nowMs));
+      if (!prepared) return null;
+      return prepared.receipt === null ? { messageId, state: "prepared", preparedAt: prepared.prepared_at, expiresAt: prepared.expires_at } : { ...JSON.parse(prepared.receipt), state: "submitted", deliveryState: "unknown", receiptExpiresAt: prepared.expires_at };
+    }
     return {
       messageId: row.message_id,
       target: { host: row.target_host, sessionId: row.target_session_id },
@@ -363,6 +445,22 @@ var SessionMessageStore = class {
       firstDeliveredAt: row.first_delivered_at ?? null,
       state: row.acknowledged_at ? "acknowledged" : row.claimed_at ? "delivered" : "queued"
     };
+  }
+  /** Metadata only; peer relation is not work completion or permission. */
+  peerWaitState(sender, target, nowMs = Date.now()) {
+    boundedIdentity(sender);
+    boundedIdentity(target);
+    const rows = this.database.prepare(`SELECT message_id, sender_host, sender_session_id, target_host, target_session_id,
+      created_at, claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages
+      WHERE expires_at > ? AND ((sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?)
+        OR (sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?))
+      ORDER BY created_at DESC, message_id DESC LIMIT 20`).all(iso(nowMs), sender.host, sender.sessionId, target.host, target.sessionId, target.host, target.sessionId, sender.host, sender.sessionId);
+    return { related: rows.length > 0, fingerprint: createHash("sha256").update(JSON.stringify(rows)).digest("hex") };
+  }
+  liveRelay(target, transport, nowMs = Date.now()) {
+    boundedIdentity(target);
+    const row = this.database.prepare("SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lease_until > ?").get(target.host, target.sessionId, transport, iso(nowMs));
+    return row ? { relayId: row.relay_id, pid: row.pid, parentPid: row.parent_pid } : null;
   }
   pendingCount(target, nowMs = Date.now()) {
     boundedIdentity(target);
@@ -394,6 +492,28 @@ var SessionMessageStore = class {
     const result = this.database.prepare(`UPDATE relay_leases SET lease_until = ?, updated_at = ?
       WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?`).run(iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId);
     return result.changes === 1;
+  }
+  /** One relay cycle; an old generation cannot renew either lease. */
+  relayTick(input, nowMs = Date.now()) {
+    boundedIdentity(input);
+    if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128 || !input.instanceId || input.instanceId.length > 128 || typeof input.includePending !== "boolean") throw new Error("Invalid relay tick identity or includePending.");
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const presence = this.presence(input, nowMs);
+      const relay = this.liveRelay(input, input.transport, nowMs);
+      if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport || relay?.relayId !== input.relayId) {
+        this.database.exec("ROLLBACK");
+        return { alive: false, count: 0 };
+      }
+      this.heartbeatRelay(input, nowMs);
+      this.heartbeatPresence(input, input.instanceId, nowMs);
+      const count = input.includePending ? this.pendingCount(input, nowMs) : 0;
+      this.database.exec("COMMIT");
+      return { alive: true, count };
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
   }
   reserveWake(target, nonce, nowMs = Date.now()) {
     boundedIdentity(target);
@@ -561,6 +681,45 @@ var SessionMessageStore = class {
   }
 };
 
+// mcp-server/src/peer-wait-policy.ts
+var RECORD_TTL_MS = 3e4;
+var RECORD_LIMIT = 1e3;
+function identityKey(identity2) {
+  return JSON.stringify([identity2.host, identity2.sessionId]);
+}
+function normalizePeerWaitTargets(targets) {
+  const unique = new Map(targets.map((target) => [identityKey(target), { host: target.host, sessionId: target.sessionId }]));
+  return [...unique.keys()].sort().map((key) => unique.get(key));
+}
+var PeerWaitPolicy = class {
+  snapshots = /* @__PURE__ */ new Map();
+  reset(sender) {
+    const owner = identityKey(sender);
+    for (const [key, record] of this.snapshots) if (record.owner === owner) this.snapshots.delete(key);
+  }
+  decide(input, nowMs = Date.now()) {
+    for (const [key2, record] of this.snapshots) if (record.expiresAt <= nowMs) this.snapshots.delete(key2);
+    const transmission = input.peersObserved ? "observed" : "unknown";
+    const resume = input.resumeObserved ? "observed" : "unknown";
+    const guidance = input.resumeObserved && input.peersObserved ? "Use one immediate snapshot (timeoutMs: 0), then continue independent work or return; peer delivery can resume this session. A receipt or ACK is not task completion or approval." : "Async resume is unconfirmed. Use a bounded query or bounded wait and continue on the next user turn; do not assume returning will wake this session.";
+    if (!input.peersObserved || !input.resumeObserved) return {
+      action: "bounded",
+      reason: input.peersObserved ? "resume-unconfirmed" : "peer-unconfirmed",
+      transmission,
+      resume,
+      guidance
+    };
+    if (input.timeoutMs > 0) return { action: "deny", reason: "async-resume", transmission, resume, guidance };
+    const owner = identityKey(input.sender);
+    const key = JSON.stringify([owner, normalizePeerWaitTargets(input.targets).map(identityKey)]);
+    const previous = this.snapshots.get(key);
+    if (previous?.fingerprint === input.fingerprint) return { action: "deny", reason: "unchanged-peer-state", transmission, resume, guidance };
+    if (this.snapshots.size >= RECORD_LIMIT) this.snapshots.delete(this.snapshots.keys().next().value);
+    this.snapshots.set(key, { owner, fingerprint: input.fingerprint, expiresAt: nowMs + RECORD_TTL_MS });
+    return { action: "snapshot", reason: "async-resume", transmission, resume, guidance };
+  }
+};
+
 // mcp-server/src/self-signed-certificate.ts
 import { generateKeyPairSync, randomBytes, sign, X509Certificate } from "node:crypto";
 function length(value) {
@@ -624,7 +783,7 @@ ${encoded}
 
 // mcp-server/src/session-message-broker.ts
 var IDLE_EXIT_MS = 6e4;
-var SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities"];
+var SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy"];
 function argument(name) {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] ?? null : null;
@@ -747,20 +906,52 @@ async function credentials(stateDirectory) {
   }
   return { key, certificate, token, fingerprint256: new X509Certificate2(certificate).fingerprint256 };
 }
+var peerWaitRuntimes = /* @__PURE__ */ new WeakMap();
+function peerWaitRuntime(store) {
+  let runtime = peerWaitRuntimes.get(store);
+  if (!runtime) {
+    runtime = { policy: new PeerWaitPolicy(), relays: /* @__PURE__ */ new Map(), wakes: /* @__PURE__ */ new Map() };
+    peerWaitRuntimes.set(store, runtime);
+  }
+  for (const [key, value] of runtime.relays) if (value.expiresAt <= Date.now()) runtime.relays.delete(key);
+  for (const [key, value] of runtime.wakes) if (value.expiresAt <= Date.now()) runtime.wakes.delete(key);
+  return runtime;
+}
+function observePeerRelay(store, payload, accepted) {
+  if (!accepted || typeof payload.instanceId !== "string") return;
+  const target = identity(payload.target);
+  const presence = store.presence(target);
+  const relay = store.liveRelay(target, string(payload.transport, "transport"));
+  if (presence.instanceId !== payload.instanceId || presence.transport !== payload.transport || presence.state !== "online" || relay === null || relay.relayId !== payload.relayId) return;
+  const runtime = peerWaitRuntime(store);
+  if (runtime.relays.size >= 1e3) runtime.relays.delete(runtime.relays.keys().next().value);
+  const key = JSON.stringify(target);
+  const previous = runtime.relays.get(key);
+  const wakeObservedAt = previous?.instanceId === payload.instanceId && previous.relayId === relay.relayId ? previous.wakeObservedAt : void 0;
+  runtime.relays.set(key, {
+    instanceId: payload.instanceId,
+    relayId: relay.relayId,
+    expiresAt: Date.now() + 15e3,
+    ...wakeObservedAt === void 0 ? {} : { wakeObservedAt }
+  });
+}
 function dispatchSessionMessageBrokerOperation(store, operation, payload) {
   switch (operation) {
     case "ping":
       return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: SESSION_MESSAGE_BROKER_CAPABILITIES };
-    case "send": {
-      const messageId = optionalString(payload, "messageId");
+    case "prepare": {
+      if (Object.keys(payload).some((key) => !["sender", "target", "body", "ttlSeconds"].includes(key))) throw new Error("prepare accepts sender, target, body and ttlSeconds; IDs are system-issued.");
       const ttlSeconds = optionalInteger(payload, "ttlSeconds");
-      return store.send({
-        ...messageId === void 0 ? {} : { messageId },
+      return store.prepare({
         sender: identity(payload.sender),
         target: identity(payload.target),
         body: string(payload.body, "body"),
         ...ttlSeconds === void 0 ? {} : { ttlSeconds }
       });
+    }
+    case "send": {
+      if (Object.keys(payload).some((key) => !["sender", "messageId"].includes(key))) throw new Error("send accepts only sender and the ID returned by prepare; message content is immutable. Retry the known ID or compare saved receipts/status if delivery is unknown.");
+      return store.submitPrepared(identity(payload.sender), string(payload.messageId, "messageId"));
     }
     case "claim": {
       const maxMessages = optionalInteger(payload, "maxMessages");
@@ -774,12 +965,26 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload) {
       const maxMessages = optionalInteger(payload, "maxMessages");
       const maxBodyChars = optionalInteger(payload, "maxBodyChars");
       const nonces = Array.isArray(payload.nonces) ? payload.nonces.map((value) => string(value, "nonce")) : [];
-      return store.claimWake(identity(payload.target), nonces, Date.now(), {
+      const target = identity(payload.target);
+      const result = store.claimWake(target, nonces, Date.now(), {
         ...maxMessages === void 0 ? {} : { maxMessages },
         ...maxBodyChars === void 0 ? {} : { maxBodyChars }
       });
+      const runtime = peerWaitRuntime(store);
+      const owner = JSON.stringify(target);
+      const binding = runtime.relays.get(owner);
+      const presence = store.presence(target);
+      const wakeKeys = nonces.map((nonce) => createHash2("sha256").update(nonce).digest("hex"));
+      const sameGeneration = wakeKeys.length > 0 && wakeKeys.every((key) => {
+        const wake = runtime.wakes.get(key);
+        return wake?.owner === owner && wake.instanceId === binding?.instanceId && wake.relayId === binding?.relayId;
+      });
+      if (result.recognized && sameGeneration && binding?.instanceId === presence.instanceId && presence.state === "online") binding.wakeObservedAt = Date.now();
+      for (const key of wakeKeys) runtime.wakes.delete(key);
+      return result;
     }
     case "observe-native-input": {
+      peerWaitRuntime(store).policy.reset(identity(payload.target));
       store.observeNativeInput(identity(payload.target));
       return { observed: true };
     }
@@ -805,23 +1010,64 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload) {
     }
     case "acknowledge":
       return { acknowledged: store.acknowledge(identity(payload.target), Array.isArray(payload.messageIds) ? payload.messageIds.map((value) => string(value, "messageId")) : []) };
-    case "status":
-      return { status: store.status(identity(payload.sender), string(payload.messageId, "messageId")) };
+    case "status": {
+      const status = store.status(identity(payload.sender), string(payload.messageId, "messageId"));
+      return { status, ...status === null ? { guidance: "Delivery is unknown; compare saved receipts. Prepare only a new intent, not an automatic resend." } : {} };
+    }
+    case "peer-wait": {
+      const sender = identity(payload.sender);
+      if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > 8) throw new Error("targets must contain 1..8 identities.");
+      const targets = normalizePeerWaitTargets(payload.targets.map(identity));
+      const timeoutMs = integer2(payload.timeoutMs, "timeoutMs");
+      if (timeoutMs < 0 || timeoutMs > 36e5) throw new Error("timeoutMs is out of range.");
+      const queryRevision = optionalString(payload, "queryRevision") ?? "";
+      if (queryRevision.length > 256) throw new Error("queryRevision is too long.");
+      const runtime = peerWaitRuntime(store);
+      const presence = store.presence(sender);
+      const binding = runtime.relays.get(JSON.stringify(sender));
+      const relay = presence.transport ? store.liveRelay(sender, presence.transport) : null;
+      const resumeObserved = presence.state === "online" && presence.instanceId !== null && binding?.instanceId === presence.instanceId && binding.wakeObservedAt !== void 0 && Date.now() - binding.wakeObservedAt < 3e4 && binding.relayId === relay?.relayId && relay !== null && alive(relay.pid) && alive(relay.parentPid) && presence.deliveryCapabilities.idleWake !== "none" && presence.wakeVisibility === presence.deliveryCapabilities.idleWake && presence.deliveryCapabilities.supportedInjection.includes("peer-wake");
+      const states = targets.map((target) => store.peerWaitState(sender, target));
+      const decision = runtime.policy.decide({
+        sender,
+        targets,
+        timeoutMs,
+        peersObserved: states.every((state) => state.related),
+        resumeObserved,
+        fingerprint: JSON.stringify([presence.instanceId, queryRevision, states.map((state) => state.fingerprint)])
+      });
+      return { ...decision, peers: targets.map((target, index) => ({ target, related: states[index].related, stateDigest: states[index].fingerprint })) };
+    }
     case "pending":
       return { count: store.pendingCount(identity(payload.target)) };
     case "acquire-relay": {
       const target = identity(payload.target);
-      return { acquired: store.acquireRelay({
+      const acquired = store.acquireRelay({
         ...target,
         transport: string(payload.transport, "transport"),
         relayId: string(payload.relayId, "relayId"),
         pid: integer2(payload.pid, "pid"),
         parentPid: integer2(payload.parentPid, "parentPid")
-      }) };
+      });
+      observePeerRelay(store, payload, acquired);
+      return { acquired };
     }
     case "heartbeat-relay": {
       const target = identity(payload.target);
-      return { alive: store.heartbeatRelay({ ...target, transport: string(payload.transport, "transport"), relayId: string(payload.relayId, "relayId") }) };
+      const isAlive = store.heartbeatRelay({ ...target, transport: string(payload.transport, "transport"), relayId: string(payload.relayId, "relayId") });
+      observePeerRelay(store, payload, isAlive);
+      return { alive: isAlive };
+    }
+    case "relay-tick": {
+      const result = store.relayTick({
+        ...identity(payload.target),
+        transport: string(payload.transport, "transport"),
+        relayId: string(payload.relayId, "relayId"),
+        instanceId: string(payload.instanceId, "instanceId"),
+        includePending: boolean(payload.includePending, "includePending")
+      });
+      observePeerRelay(store, payload, result.alive);
+      return result;
     }
     case "presence-start": {
       const target = identity(payload.target);
@@ -860,8 +1106,19 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload) {
       return { presence: store.presence(identity(payload.target)) };
     case "list-presence":
       return { sessions: store.listPresence() };
-    case "reserve-wake":
-      return { dispatch: store.reserveWake(identity(payload.target), string(payload.nonce, "nonce")) };
+    case "reserve-wake": {
+      const target = identity(payload.target);
+      const nonce = string(payload.nonce, "nonce");
+      const shouldDispatch = store.reserveWake(target, nonce);
+      const runtime = peerWaitRuntime(store);
+      const owner = JSON.stringify(target);
+      const binding = runtime.relays.get(owner);
+      if (shouldDispatch && binding && binding.instanceId === store.presence(target).instanceId) {
+        if (runtime.wakes.size >= 1e3) runtime.wakes.delete(runtime.wakes.keys().next().value);
+        runtime.wakes.set(createHash2("sha256").update(nonce).digest("hex"), { owner, instanceId: binding.instanceId, relayId: binding.relayId, expiresAt: Date.now() + 36e5 });
+      }
+      return { dispatch: shouldDispatch };
+    }
     case "release-wake":
       return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "consume-wake":

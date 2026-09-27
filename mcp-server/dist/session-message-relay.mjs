@@ -439,7 +439,8 @@ async function runSessionMessageRelay(options) {
           transport: options.transport,
           relayId,
           pid: process.pid,
-          parentPid: options.parentPid
+          parentPid: options.parentPid,
+          instanceId: options.instanceId
         });
         acquired = result.acquired;
         if (acquired) break;
@@ -472,14 +473,18 @@ async function runSessionMessageRelay(options) {
         }
       }
       try {
-        const heartbeat = await sessionMessageRequest("heartbeat-relay", { target, transport: options.transport, relayId });
-        if (!heartbeat.alive) return;
-        await sessionMessageRequest("presence-heartbeat", { target, instanceId: options.instanceId });
+        const pending = await sessionMessageRequest("relay-tick", {
+          target,
+          transport: options.transport,
+          relayId,
+          instanceId: options.instanceId,
+          includePending: options.transport !== "codex-deferred"
+        });
+        if (!pending.alive) return;
         if (options.transport === "codex-deferred") {
           await delay2(LOOP_MS);
           continue;
         }
-        const pending = await sessionMessageRequest("pending", { target });
         if (pending.count === 0) {
           retryNonce = null;
           ringAttempts = 0;

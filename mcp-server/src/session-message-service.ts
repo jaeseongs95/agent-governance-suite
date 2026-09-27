@@ -1,5 +1,4 @@
 import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
-import { randomUUID } from "node:crypto";
 import { sessionMessageRequest } from "./session-message-client.js";
 import type { SessionPresence } from "./session-message-store.js";
 import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
@@ -31,23 +30,34 @@ export class SessionMessageService {
     this.stateDirectory = stateDirectory;
   }
 
-  async send(args: Record<string, unknown>): Promise<ApiResultV1<unknown>> {
+  async prepare(args: Record<string, unknown>): Promise<ApiResultV1<unknown>> {
     const sender = binding(args._sessionBinding);
     if (!sender) return failure("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
+    if (Object.keys(args).some((key) => !["schemaVersion", "targetHost", "targetSessionId", "body", "ttlSeconds", "_sessionBinding"].includes(key))) return failure("INVALID_INPUT", "Preparation accepts immutable content only; message IDs are system-issued.");
     if (typeof args.body !== "string" || !args.body.trim() || args.body.includes("\0") || Buffer.byteLength(args.body, "utf8") > SESSION_MESSAGE_BODY_MAX_BYTES) {
       return failure("INVALID_INPUT", `body must contain 1-${SESSION_MESSAGE_BODY_MAX_BYTES} UTF-8 bytes and no NUL characters.`);
     }
     try {
-      const data = await sessionMessageRequest("send", {
+      const data = await sessionMessageRequest("prepare", {
         sender,
         target: { host: args.targetHost, sessionId: args.targetSessionId },
         body: args.body,
         ...(args.ttlSeconds === undefined ? {} : { ttlSeconds: args.ttlSeconds }),
-        messageId: args.messageId ?? randomUUID(),
       }, this.stateDirectory);
       return ok(data);
     } catch (error) {
       return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "The session message broker is unavailable.");
+    }
+  }
+
+  async send(args: Record<string, unknown>): Promise<ApiResultV1<unknown>> {
+    const sender = binding(args._sessionBinding);
+    if (!sender) return failure("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
+    if (typeof args.messageId !== "string" || Object.keys(args).some((key) => !["schemaVersion", "messageId", "_sessionBinding"].includes(key))) return failure("INVALID_INPUT", "Call prepare_session_message for a new intent, then send_session_message with only the returned messageId. Retry an uncertain send using that same ID or compare saved receipts/status.");
+    try {
+      return ok(await sessionMessageRequest("send", { sender, messageId: args.messageId }, this.stateDirectory));
+    } catch (error) {
+      return failure("MCP_UNAVAILABLE", `${error instanceof Error ? error.message : "The session message broker is unavailable."} Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.`);
     }
   }
 
