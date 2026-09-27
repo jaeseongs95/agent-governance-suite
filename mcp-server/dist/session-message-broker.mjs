@@ -14191,6 +14191,7 @@ var contractSchemas = {
   responseMode: loadSchema("response-mode.v1.schema.json"),
   checkpointContextRequest: loadSchema("checkpoint-context-request.v1.schema.json"),
   checkpointDelta: loadSchema("checkpoint-delta.v1.schema.json"),
+  contextTransition: loadSchema("context-transition.v1.schema.json"),
   artifactRef: loadSchema("artifact-ref.v1.schema.json"),
   inspectContextRequest: loadSchema("inspect-context-request.v1.schema.json"),
   loadContextRequest: loadSchema("load-context-request.v1.schema.json"),
@@ -14375,6 +14376,49 @@ var ContractValidator = class {
   }
   checkpointDeltaTransportAck(value) {
     return this.assert("checkpointDeltaTransportAck", value);
+  }
+  contextTransitionIntent(value) {
+    const transition = this.assert("contextTransition", value);
+    if (transition.kind !== "context-transition-intent") {
+      throw new WorkflowContractError("INVALID_INPUT", "A context transition intent cannot be a result.");
+    }
+    return transition;
+  }
+  /** Checks typed declarations and internal binding only; it never authenticates a host observation. */
+  contextTransitionResult(value) {
+    const result = this.assert("contextTransition", value);
+    if (result.kind !== "context-transition-result") {
+      throw new WorkflowContractError("INVALID_INPUT", "A context transition result cannot be an intent.");
+    }
+    const intent = {
+      schemaVersion: result.schemaVersion,
+      kind: "context-transition-intent",
+      status: "request",
+      action: result.action,
+      binding: result.binding
+    };
+    const digest2 = `sha256:${createHash4("sha256").update(canonicalJson(intent)).digest("hex")}`;
+    if (result.intentDigest !== digest2) {
+      throw new WorkflowContractError("INTEGRITY_FAILED", "Context transition result diverged from its intent digest.");
+    }
+    const target = result.target;
+    if (target) {
+      const source = result.binding;
+      const sameReceiver = target.receiver.host === source.receiver.host && target.receiver.sessionId === source.receiver.sessionId && target.receiver.instanceId === source.receiver.instanceId;
+      if (target.origin === "same-context" && (!sameReceiver || target.contextGeneration !== source.contextGeneration) || target.origin === "compacted" && (!sameReceiver || target.contextGeneration <= source.contextGeneration) || target.origin === "fresh-context" && target.receiver.host === source.receiver.host && target.receiver.sessionId === source.receiver.sessionId) {
+        throw new WorkflowContractError("INVALID_INPUT", "Context transition target contradicts its declared action.");
+      }
+    }
+    return result;
+  }
+  /** The owner must supply the expected intent; matching caller JSON does not establish authority. */
+  contextTransitionResultForIntent(value, expected) {
+    const intent = this.contextTransitionIntent(expected);
+    const result = this.contextTransitionResult(value);
+    if (result.action !== intent.action || canonicalJson(result.binding) !== canonicalJson(intent.binding)) {
+      throw new WorkflowContractError("GATE_FAILED", "Context transition result belongs to another intent or binding.");
+    }
+    return result;
   }
   continuitySnapshot(value) {
     return this.assert("continuitySnapshot", value);

@@ -46,6 +46,10 @@
       "sha256": "sha256:8f47718fd5df307a660f105dc88686f8fead42a6c459ad9b309d8ceb49ae911c"
     },
     {
+      "path": "contracts/context-transition.v1.schema.json",
+      "sha256": "sha256:6fa9884feff1967a1aade648adb845d3f4564a7152524a483df19decd42412fe"
+    },
+    {
       "path": "contracts/convergence-frame.v1.schema.json",
       "sha256": "sha256:5e08011cb89fed1776a7b7d78af904ec5ddeb05c93aa3f1d4ea3c03ecfbfb7f4"
     },
@@ -339,15 +343,15 @@
     },
     {
       "path": "mcp-server/dist/flowmarshal-profile-probe.mjs",
-      "sha256": "sha256:fc74b2a8bddddabab471a6576e958df2b582e7c20f9ea9dd14679ff2286f82fc"
+      "sha256": "sha256:2aa24128480e4d3640a91dba04fd1b25a0595a721ef67683669a92d1d0cee170"
     },
     {
       "path": "mcp-server/dist/server.mjs",
-      "sha256": "sha256:4a73280eaf9857c91eac7f0e6ce8fc98030d507b7d0043e2be5eef6fb6ee5977"
+      "sha256": "sha256:7fa9da938a9178c883e6b07f999161f8c514cdfef343caa04aab45e16cd526d0"
     },
     {
       "path": "mcp-server/dist/session-message-broker.mjs",
-      "sha256": "sha256:301f7e5022b97566f0ff06a182c8e58109f999c2bddaf3d72e733f0a4326b698"
+      "sha256": "sha256:c7dae8b57711f9b2ecc6dced370b0176e26574fcabdf4cf4b29a64814a947f91"
     },
     {
       "path": "runtime/schema-validation.mjs",
@@ -738,6 +742,7 @@
         "contracts/attempt-proposal.v1.schema.json",
         "contracts/checkpoint-context-request.v1.schema.json",
         "contracts/checkpoint-delta.v1.schema.json",
+        "contracts/context-transition.v1.schema.json",
         "contracts/convergence-frame.v1.schema.json",
         "contracts/convergence-review.v1.schema.json",
         "contracts/convergence-root-handle.v1.schema.json",
