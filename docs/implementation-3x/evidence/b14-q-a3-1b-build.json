@@ -1,0 +1,60 @@
+{
+  "task": "B14-q-a3-1b",
+  "specRevision": "r53",
+  "specSha256": "73ea531c0d519814f930e624eef020abe0276dc5743d9ad6156d442e79c75278",
+  "resultKind": "build tool + observed isolated compiler + FIXTURE tests and one SAME_USER_SMOKE; not a product feature PASS",
+  "observedAt": "2026-09-27T02:44:36Z",
+  "tool": "runtime/issuer/windows/build/csc-build.mjs",
+  "toolchain": {
+    "root": "D:/codex/거버전스 3.0/ags-toolchain/roslyn",
+    "lock": "runtime/issuer/windows/build/roslyn.lock.json (from B14-q-a3-1a, read only)",
+    "checkedBeforeEachBuild": ["lock source is the official nuget.org URL", "lock compiler is one of its signed files", "version is the locked one", "nupkg sha512", "every package file sha256, no extra or missing file", "every signed file's Authenticode status and full subject (in-box PowerShell Get-AuthenticodeSignature)"],
+    "compiler": "D:/codex/거버전스 3.0/ags-toolchain/roslyn/5.9.0/package/tasks/net472/csc.exe",
+    "compilerSha256": "3aafb7b9c54fa31a7092af35148971ee616965e7f9a0b80fb7fdc4bdd1d1a555",
+    "toolchainWrites": 0,
+    "toolchainFileCountAfter": 212
+  },
+  "deterministicDoubleBuild": {
+    "at": "2026-09-27T02:44:25Z",
+    "durationMs": 8175,
+    "workDir": "C:/Users/sjs95/AppData/Local/Temp/b14qa31b-evidence",
+    "input": {
+      "compiler": { "path": "D:/codex/거버전스 3.0/ags-toolchain/roslyn/5.9.0/package/tasks/net472/csc.exe", "sha256": "3aafb7b9c54fa31a7092af35148971ee616965e7f9a0b80fb7fdc4bdd1d1a555" },
+      "sources": [{ "path": "C:/Users/sjs95/AppData/Local/Temp/b14qa31b-evidence/P.cs", "sha256": "c5e8cf00c5c97dbe821209ed0d2d9b37a08d81279c7114b78ecded1e61ea4896" }],
+      "references": [{ "path": "C:/Windows/Microsoft.NET/Framework64/v4.0.30319/mscorlib.dll", "sha256": "5bffb20e1217bad314143d7e5c4c809bf9f522e8a0a063c8e7e9b25113de26eb", "note": "in-box framework reference assembly passed explicitly with /nostdlib+; not a compiler" }],
+      "cwd": "C:/Users/sjs95/AppData/Local/Temp/b14qa31b-evidence",
+      "out": "C:/Users/sjs95/AppData/Local/Temp/b14qa31b-evidence/out/P.exe",
+      "pathmap": "C:\\Users\\sjs95\\AppData\\Local\\Temp\\b14qa31b-evidence=/_/",
+      "langversion": "latest",
+      "options": ["/nologo", "/noconfig", "/nostdlib+", "/deterministic+", "/debug-", "/target:exe"]
+    },
+    "originals": [
+      { "run": 1, "path": "C:/Users/sjs95/AppData/Local/Temp/b14qa31b-evidence/keep/run-1/P.exe", "sha256": "a50f3f9b937867523d8030fe90bcb8f4122a5373f6e09dc52fa1c7f1cfe9f5f5" },
+      { "run": 2, "path": "C:/Users/sjs95/AppData/Local/Temp/b14qa31b-evidence/keep/run-2/P.exe", "sha256": "a50f3f9b937867523d8030fe90bcb8f4122a5373f6e09dc52fa1c7f1cfe9f5f5" }
+    ],
+    "identical": true,
+    "preservation": "Both builds write the same /out path; each output is moved to keep/run-N before the next build, so both original files are kept unchanged.",
+    "smokeRun": "keep/run-1/P.exe printed \"ags\" (SAME_USER_SMOKE, current user)",
+    "rawLog": "C:/Users/sjs95/AppData/Local/Temp/b14qa31b-evidence-build.json"
+  },
+  "refutations": {
+    "red": "permissive stub csc-build.mjs: Tests 4 failed (4) (raw log C:/Users/sjs95/AppData/Local/Temp/b14qa31b-red.out)",
+    "green": "Tests 4 passed (4), smoke not skipped on this host (raw log C:/Users/sjs95/AppData/Local/Temp/b14qa31b-green.out)",
+    "cases": {
+      "1b_oneByteDifferentCompiler": "refused by the lock check before building; nothing written",
+      "2_pathOrInBoxCompiler": "refused for csc.exe, csc, Framework64 and Framework in-box csc paths, and a lock whose compiler entry is not a signed lock file",
+      "4_notTheSameInput": "compareBuilds refuses a one-byte source change (same path), another source file, and another /out name",
+      "smoke_tamperedSubject": "a lock recording another subject for one signed file is refused before building (real Authenticode read)"
+    },
+    "tempDirs": "fs.mkdtempSync(os.tmpdir(), 'ags-b14qa31-') per test, removed in finally; 0 left under %TEMP% after the runs"
+  },
+  "hostChanges": {
+    "globalInstall": 0, "pathChanges": 0, "registryChanges": 0, "environmentVariableChanges": 0, "serviceChanges": 0, "accountChanges": 0, "aclChanges": 0, "inBoxCscUsed": 0, "pathCscUsed": 0,
+    "method": "SHA-256 of HKCU Environment Path, HKLM Session Manager\\Environment Path, the process PATH and the value-name lists of both Environment keys, plus the NDP v4 Full Release; csc.exe looked up on PATH with Get-Command. Values outside Path and other registry keys were not compared; csc-build.mjs has no code path that writes them (static check).",
+    "reference": { "at": "2026-09-27T02:01:51Z", "source": "B14-q-a3-1a after-snapshot" },
+    "before": { "at": "2026-09-27T02:43:54Z", "userPathSha256": "006d4a202781b4db054b1df8ec98c6502694711f82048d9e7dbbcf16743725b4", "machinePathSha256": "60198ce656998c2db5d520a91aa30693ee99728b086cae34f5d14225ed32464b", "processPathSha256": "04122f07407a5a48aa482fdb6f17a9960d0cd1301a18c1724d59c00fc29b2b8f", "hkcuEnvironmentValueNamesSha256": "c4999272aedace04ca1e2e8a77409fcaa714ceed4d50d5a63ed16d3a2cdf8d67", "hklmEnvironmentValueNamesSha256": "38f69677a56be931a27d80752f0a9fbb278ab5465426cb1af2a22319c2d444b7", "ndpRelease": 533509, "cscOnPath": null },
+    "after": { "at": "2026-09-27T02:44:36Z", "userPathSha256": "006d4a202781b4db054b1df8ec98c6502694711f82048d9e7dbbcf16743725b4", "machinePathSha256": "60198ce656998c2db5d520a91aa30693ee99728b086cae34f5d14225ed32464b", "processPathSha256": "04122f07407a5a48aa482fdb6f17a9960d0cd1301a18c1724d59c00fc29b2b8f", "hkcuEnvironmentValueNamesSha256": "c4999272aedace04ca1e2e8a77409fcaa714ceed4d50d5a63ed16d3a2cdf8d67", "hklmEnvironmentValueNamesSha256": "38f69677a56be931a27d80752f0a9fbb278ab5465426cb1af2a22319c2d444b7", "ndpRelease": 533509, "cscOnPath": null },
+    "note": "The fixture tests' smoke build ran at 02:43:39Z, before the 02:43:54Z snapshot; the 02:01:51Z a3-1a snapshot is identical, so no change is seen across the whole window."
+  },
+  "notClaimed": ["issuer server behaviour (B14-q-a3-2 onward)", "service registration, accounts or ACLs", "SCM token, cross-user or worker-descendant denial (B14-q-b, B14-q-c)", "NuGet package signature verification (NOT_RUN in B14-q-a3-1a)"]
+}
