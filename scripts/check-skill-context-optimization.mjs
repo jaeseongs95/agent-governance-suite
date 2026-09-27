@@ -1,10 +1,15 @@
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
+// AC-010 adds peer instructions after the reviewed optimization. Preserve all
+// historical bytes and compare the exact, separately frozen addition as well.
+const SESSION_BOARD_ADDITION = "scripts/fixtures/session-board-peer-message-guidance.2.6.0.md";
+const SESSION_BOARD_ADDITION_SHA256 = "381be4018118086b3c4087be043c004d8d6de986d42a6c0c14f182c2d76ed76f";
 const TARGETS = [
   "acceptance-evidence-validator",
   "blocker-diagnostician",
@@ -86,7 +91,13 @@ export function checkSkillContextOptimization() {
     const reconstructed = markerIndex < 0 ? Buffer.alloc(0) : reconstructOptimizedSkill(skillId);
 
     if (markerCount !== 1 || markerIndex < 0) errors.push(`${skillId}: navigation marker must occur exactly once`);
-    if (!reconstructed.equals(baseline)) errors.push(`${skillId}: SKILL.md plus entry-details.md does not reconstruct the baseline byte-for-byte`);
+    let expectedBaseline = baseline;
+    if (skillId === "session-board") {
+      const addition = readFileSync(join(ROOT, SESSION_BOARD_ADDITION));
+      if (createHash("sha256").update(addition).digest("hex") !== SESSION_BOARD_ADDITION_SHA256) errors.push("session-board: approved 2.6.0 guidance fixture changed");
+      expectedBaseline = Buffer.concat([baseline, addition]);
+    }
+    if (!reconstructed.equals(expectedBaseline)) errors.push(`${skillId}: SKILL.md plus entry-details.md does not reconstruct the baseline byte-for-byte`);
     if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push(`${skillId}: frontmatter changed`);
     if (candidate.length >= baseline.length) errors.push(`${skillId}: initial SKILL.md did not shrink`);
 
@@ -110,6 +121,7 @@ export function checkSkillContextOptimization() {
 
   return {
     baselineRevision: BASELINE,
+    approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
     pass: errors.length === 0,
     errors,
     totals: {
