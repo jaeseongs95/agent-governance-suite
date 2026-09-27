@@ -4,7 +4,7 @@
   "specRevision": "r42",
   "specSha256": "4215e122afea6df5c04b449e0446de592ff57a1b384cfd73db772e453cc2fb03",
   "kind": "read-only installed-release channel feasibility probe",
-  "scope": "Claude Code 2.1.283 installed on this Windows machine (native installer). Hook stdin schema, hook-visible turn identity, host-written session state and adjacent channels were inspected read-only. No hook configuration, ~/.claude settings, plugin, broker, store, host adapter or product code was changed; nothing was installed or downloaded.",
+  "scope": "Claude Code 2.1.283 installed on this Windows machine (native installer). Hook stdin schema, hook-visible turn identity, host-written session state and adjacent channels were inspected read-only. No hook configuration, ~/.claude settings, plugin, broker, store, host adapter or product code was changed. No files, packages or binaries were installed, downloaded to disk or stored; one official hooks documentation page was read via WebFetch (documentation.fetchedAt); the release manifest was not fetched (NOT_RUN).",
   "startState": {
     "worktree": "D:/codex/거버전스 3.0/agent-governance-suite-w06-claude-r1-claude",
     "branch": "claude/v3x-w06-a-claude-r1-origin-probe",
