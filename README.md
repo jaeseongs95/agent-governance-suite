@@ -23,7 +23,7 @@ v2.1.0은 같은 컴퓨터에서 일하는 AI 호스트 세션들이 서로에�
 
 지난 릴리스의 변경 내역은 [`docs/`](docs/)의 릴리스 노트에 있습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 
-현재 공개 릴리스는 `v2.5.0`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+현재 공개 릴리스는 `v2.6.0`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -64,7 +64,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.5.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.6.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -99,6 +99,10 @@ Hook은 처음 설치하거나 정의가 바뀐 뒤 Codex의 `/hooks`에서 내�
 세션 현황판은 세션마다 host, 세션 ID, 작업 디렉터리와 지금 하는 일 한 줄을 로컬 SQLite에 두고 `list_session_status`로 읽습니다. 사용자 요청마다 처음 파일을 고치거나 명령·서브에이전트를 실행하기 전에 `update_session_status`로 한 줄을 적어야 하며, 적지 않았으면 Hook이 그 호출을 한 번 거부하고 다음 시도는 허용합니다. 현황판은 다른 세션이 다음에 목록을 읽을 때 확인하는 방식이라, 그 자체로는 실행 중인 세션을 깨우거나 중단시키지 않습니다. 한 줄에 요청 원문이나 비밀, 개인정보를 적지 않습니다.
 
 ### 로컬 세션 메시지
+
+peer 결과를 기다리는 방식은 전송, 호출 제한과 턴 종료 뒤 복귀 기능을 따로 확인합니다. 지원 hook은 실제 peer 관계와 같은 세션 generation의 최근 wake 처리·live relay가 모두 확인된 `mcp__codex_app__wait_threads`만 제한합니다. 즉시 조회는 한 번 허용하고 변화 없는 반복을 30초 동안 억제합니다. hook이 없는 호스트는 기존 CLI의 `wait` 작업으로 같은 판정을 소비하며, 복귀 미확인 상태에서는 최대 1초 대기와 한 번의 재조회 뒤 다음 사용자 턴으로 이어갑니다. 범용 sleep·프로세스·테스트 대기와 AGS 통제 밖 native 호출은 강제하지 않습니다. 세부 조건과 공개 CLI 예시는 [peer 대기 설계](docs/peer-wait-policy.md)를 참고하세요.
+
+2.6.0으로 업데이트할 때는 기존 AGS MCP·relay·broker 프로세스를 종료하고 플러그인을 업데이트한 뒤 재연결하여 새 프로세스를 시작합니다. 이전 브로커와 새 플러그인이 섞인 상태의 호환은 이번 릴리스에서 보장하지 않습니다.
 
 현황판이 상태를 보여 준다면, 세션 메시지는 내용을 전합니다. `send_session_message`는 `targetHost`, `targetSessionId`와 최대 4096 UTF-8 byte의 본문을 받아 로컬 TLS 1.3 broker에 저장합니다. 수신 훅은 본문을 비신뢰 peer context로 claim하고, 처리한 모델이 `acknowledge_session_messages`를 호출해야 완료됩니다. ACK 전에는 claim lease가 끝난 뒤 지수 backoff로 다시 전달될 수 있으며, `get_session_message_status`는 `queued`, `delivered`, `acknowledged` 상태를 보여 줍니다. 기본 TTL은 1시간이고 30초부터 24시간까지 지정할 수 있으며, spool은 미ACK 메시지 1000개 또는 본문 합계 4 MiB로 제한됩니다. TLS spool과 ACK가 본문 전달의 내구성을 맡고, host를 깨우는 wake bell은 유실될 수 있는 알림입니다. broker는 target마다 소비되지 않은 bell을 하나만 예약해 같은 pending 구간에서 queue가 반복해서 쌓이지 않게 합니다. 검증된 wake claim 또는 지원 경계의 실제 claim이 pending bell을 소비하며, 전송 요청을 시작한 뒤 결과가 불명확하면 중복을 피하려고 다시 보내지 않습니다. wake가 유실돼도 다음 hook이나 turn이 같은 spool을 다시 확인합니다.
 

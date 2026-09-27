@@ -23,7 +23,7 @@ v2.1.0 lets AI host sessions working on the same computer send messages directly
 
 Release notes for earlier versions are in [`docs/`](docs/) (Korean). The candidate-v2 policy applied to `korean-prose-editor` in v1.16.0 was not part of the quality gate record (`0.3.0-gate-1`), so it remains unevaluated for quality.
 
-The current public release is `v2.5.0` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+The current public release is `v2.6.0` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
 
 ## Problems it handles
@@ -64,7 +64,7 @@ Node.js 22.13.0 or later is required.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.5.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.6.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -99,6 +99,10 @@ When one person runs several agent sessions on the same computer, the checks ins
 The session board keeps each session's host, session id, working directory, and a one-line current-work summary in local SQLite, read through `list_session_status`. For each user request a session must write that line with `update_session_status` before its first file change, command, or subagent run; without it the hook denies that call once and allows the next attempt. The board is pull-based: another session sees an update when it next reads the list, so the board by itself neither wakes nor interrupts a running session. Do not put request text, secrets, or personal data in the line.
 
 ### Local session messages
+
+Peer transmission, pre-call enforcement, and resume after returning are separate capabilities. The supported hook restricts the exact local `mcp__codex_app__wait_threads` surface only when all targets have broker-observed peer relations and the current generation has a recent consumed wake plus live presence and relay. One immediate snapshot is allowed; unchanged repeats are suppressed for 30 seconds. Hookless hosts can consume the same decision with the existing CLI `wait` operation. Unknown resume permits at most a one-second wait and one refresh, then continuation on the next user turn. Generic process/test waits and native calls outside AGS control remain outside enforcement. See the [peer wait design and CLI example](docs/peer-wait-policy.md).
+
+When upgrading to 2.6.0, stop the existing AGS MCP, relay, and broker processes, update the plugin, then reconnect to start the new processes. This release does not guarantee compatibility between an old broker and the new plugin.
 
 Where the board shows state, session messages carry content. `send_session_message` accepts `targetHost`, `targetSessionId`, and a body of at most 4096 UTF-8 bytes, then stores it in a local TLS 1.3 broker. A receiving hook claims the body as untrusted peer context, and the processing model must call `acknowledge_session_messages` to complete delivery. Before ACK, the message becomes eligible for redelivery with exponential backoff when its claim lease expires. `get_session_message_status` reports `queued`, `delivered`, or `acknowledged`. TTL defaults to one hour and may be 30 seconds to 24 hours; the spool is capped at 1000 unacknowledged messages or 4 MiB of body text. The TLS spool and ACK provide durable body delivery; the wake bell that nudges a host is a best-effort notification. The broker reserves at most one unconsumed bell per target so an unchanged pending interval cannot keep appending queue entries. A validated wake claim or an actual claim at a supported boundary consumes pending bells, and an ambiguous result after submission starts is not retried to avoid duplicates. If a wake is lost, the next hook or turn checks the same spool again.
 

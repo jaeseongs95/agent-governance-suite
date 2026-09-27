@@ -140,6 +140,7 @@ export async function runSessionMessageRelay(options: RelayOptions): Promise<voi
           relayId,
           pid: process.pid,
           parentPid: options.parentPid,
+          instanceId: options.instanceId,
         });
         acquired = result.acquired;
         if (acquired) break;
@@ -172,7 +173,7 @@ export async function runSessionMessageRelay(options: RelayOptions): Promise<voi
       }
     }
     try {
-      const heartbeat = await sessionMessageRequest<{ alive: boolean }>("heartbeat-relay", { target, transport: options.transport, relayId });
+      const heartbeat = await sessionMessageRequest<{ alive: boolean }>("heartbeat-relay", { target, transport: options.transport, relayId, instanceId: options.instanceId });
       if (!heartbeat.alive) return;
       await sessionMessageRequest("presence-heartbeat", { target, instanceId: options.instanceId });
       if (options.transport === "codex-deferred") {

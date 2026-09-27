@@ -65,3 +65,9 @@ glob은 첫 패턴 앞 디렉터리로 보수적으로 확장하며 접두 경�
 - 과거 경로나 변경된 범위의 계보를 확인할 수 없으면 다른 저장소의 새 작업도 막을 수 있습니다. 현재 입력의 작업공간 관측이 저장되어 있으면 같은 물리 작업공간의 명시적 교체를 사용합니다. frame 변경으로 그 관측까지 무효화된 경우에는 경로와 범위를 다시 확인할 수 있을 때까지 교체도 제한됩니다.
 - `[id].tsx` 같은 경로는 glob 보수 확장으로 더 넓게 충돌할 수 있습니다. 충돌 이유를 함께 확인해야 합니다.
 - 승인 발급, 보호된 승인 UI, root 교체의 승인 토큰, OS 권한 격리는 별도 후속 작업입니다.
+
+## Peer wait execution boundary
+
+The exact local Codex app `mcp__codex_app__wait_threads` hook surface is adapted separately from the host-neutral peer wait policy. All targets must correspond to unexpired broker peer metadata, and the hook must observe a main actor. A fresh current-generation presence, an instance-bound live relay, and a wake nonce reserved and consumed in that same generation are required for enforcement. Unknown, stale, mixed-target, remote, unsupported-tool and unknown-actor cases cannot create resume evidence. The hook can deny before the native call; the MCP server cannot intercept unrelated native calls or code nested in arbitrary execution tools.
+
+The portable CLI `wait` operation consumes the same broker decision before its own delay. It performs no delay or extra query when denied; unconfirmed resume uses at most one 1000ms delay and one refresh. A receipt, ACK, transport name or supplied JSON capability is not task completion, approval or proof of resume. Broker restart drops bounded in-memory evidence; new user input, changed metadata/cursor and 30-second expiry restore the first snapshot. Neither path creates a timer or poller while idle. See [peer wait policy](peer-wait-policy.md) for limits and validation boundaries.

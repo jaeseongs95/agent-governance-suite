@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import path3 from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
+import { setTimeout as delay2 } from "node:timers/promises";
 
 // mcp-server/src/session-message-client.ts
 import { existsSync } from "node:fs";
@@ -300,12 +301,24 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
 }
 
 // mcp-server/src/session-message-cli.ts
-var OPERATIONS = /* @__PURE__ */ new Set(["send", "claim", "acknowledge", "status", "pending"]);
+var OPERATIONS = /* @__PURE__ */ new Set(["send", "claim", "acknowledge", "status", "pending", "wait"]);
 async function runSessionMessageCli(raw, stateDirectory) {
   const request = JSON.parse(raw);
   if (typeof request.operation !== "string" || !OPERATIONS.has(request.operation)) throw new Error("Unsupported session message operation.");
   if (!request.payload || typeof request.payload !== "object" || Array.isArray(request.payload)) throw new Error("payload must be an object.");
   const payload = request.payload;
+  if (request.operation === "wait") {
+    const timeoutMs = payload.timeoutMs === void 0 ? 0 : payload.timeoutMs;
+    if (typeof timeoutMs !== "number" || !Number.isInteger(timeoutMs) || timeoutMs < 0 || timeoutMs > 36e5) throw new Error("timeoutMs is out of range.");
+    const decision = await sessionMessageRequest("peer-wait", { sender: payload.sender, targets: payload.targets, timeoutMs }, stateDirectory);
+    const waitedMs = decision.action === "bounded" ? Math.min(timeoutMs, 1e3) : 0;
+    let snapshot = decision;
+    if (waitedMs > 0) {
+      await delay2(waitedMs);
+      snapshot = await sessionMessageRequest("peer-wait", { sender: payload.sender, targets: payload.targets, timeoutMs: 0 }, stateDirectory);
+    }
+    return { protocolVersion: "1.0.0", ok: true, data: { decision, snapshot, waitedMs, next: decision.resume === "observed" ? "peer-resume" : "bounded-query-or-next-user-turn" } };
+  }
   const normalizedPayload = request.operation === "send" && payload.messageId === void 0 ? { ...payload, messageId: randomUUID() } : payload;
   const data = await sessionMessageRequest(request.operation, normalizedPayload, stateDirectory);
   return { protocolVersion: "1.0.0", ok: true, data };

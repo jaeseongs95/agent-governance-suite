@@ -428,6 +428,26 @@ export class SessionMessageStore {
     };
   }
 
+  /** Metadata only; peer relation is not work completion or permission. */
+  peerWaitState(sender: SessionIdentity, target: SessionIdentity, nowMs = Date.now()): { related: boolean; fingerprint: string } {
+    boundedIdentity(sender);
+    boundedIdentity(target);
+    const rows = this.database.prepare(`SELECT message_id, sender_host, sender_session_id, target_host, target_session_id,
+      created_at, claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages
+      WHERE expires_at > ? AND ((sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?)
+        OR (sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?))
+      ORDER BY created_at DESC, message_id DESC LIMIT 20`)
+      .all(iso(nowMs), sender.host, sender.sessionId, target.host, target.sessionId, target.host, target.sessionId, sender.host, sender.sessionId);
+    return { related: rows.length > 0, fingerprint: createHash("sha256").update(JSON.stringify(rows)).digest("hex") };
+  }
+
+  liveRelay(target: SessionIdentity, transport: string, nowMs = Date.now()): { relayId: string; pid: number; parentPid: number } | null {
+    boundedIdentity(target);
+    const row = this.database.prepare("SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lease_until > ?")
+      .get(target.host, target.sessionId, transport, iso(nowMs)) as { relay_id: string; pid: number; parent_pid: number } | undefined;
+    return row ? { relayId: row.relay_id, pid: row.pid, parentPid: row.parent_pid } : null;
+  }
+
   pendingCount(target: SessionIdentity, nowMs = Date.now()): number {
     boundedIdentity(target);
     this.prune(nowMs);
