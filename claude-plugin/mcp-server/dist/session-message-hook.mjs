@@ -732,8 +732,8 @@ function isObservedSubagent(observation) {
 }
 
 // mcp-server/src/session-message-hook.ts
-var SESSION_BOUND_TOOLS = /* @__PURE__ */ new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
-var SUBAGENT_DENIED_TOOLS = /* @__PURE__ */ new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
+var SESSION_BOUND_TOOLS = /* @__PURE__ */ new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
+var SUBAGENT_DENIED_TOOLS = /* @__PURE__ */ new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
 var HOST_CLAIM_MAX_MESSAGES = 1;
 var HOST_CLAIM_MAX_BODY_CHARS = 4096;
 var HOST_MESSAGE_REQUEST_TIMEOUT_MS = 8e3;

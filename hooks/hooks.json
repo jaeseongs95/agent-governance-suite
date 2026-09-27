@@ -102,7 +102,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "^(mcp__agent[-_]governance[-_]suite__(send_session_message|acknowledge_session_messages|get_session_message_status|validate_collaboration_decision)|mcp__codex_app__wait_threads)$",
+        "matcher": "^(mcp__agent[-_]governance[-_]suite__(prepare_session_message|send_session_message|acknowledge_session_messages|get_session_message_status|validate_collaboration_decision)|mcp__codex_app__wait_threads)$",
         "hooks": [
           {
             "type": "command",

@@ -25,6 +25,12 @@ var MESSAGE_TTL_DEFAULT_SECONDS = 3600;
 var MESSAGE_TTL_MAX_SECONDS = 86400;
 var MESSAGE_LIMIT = 1e3;
 var MESSAGE_BYTES_LIMIT = 4 * 1024 * 1024;
+var MESSAGE_DRAFT_TTL_MS = 10 * 6e4;
+var MESSAGE_DRAFT_LIMIT = 1e3;
+var MESSAGE_SENDER_DRAFT_LIMIT = 100;
+var MESSAGE_RECEIPT_LIMIT = 1e3;
+var MESSAGE_ID_RECORD_BYTES_LIMIT = 4 * 1024 * 1024;
+var MESSAGE_RECEIPT_EXTRA_MS = 36e5;
 var CLAIM_LEASE_BASE_MS = 12e4;
 var CLAIM_LEASE_MAX_MS = 30 * 6e4;
 var RELAY_LEASE_MS = 15e3;
@@ -125,6 +131,21 @@ var SessionMessageStore = class {
       ON session_presence (host, session_id, started_at DESC);`);
     this.database.exec("BEGIN IMMEDIATE");
     try {
+      this.database.exec(`CREATE TABLE IF NOT EXISTS prepared_messages (
+        message_id TEXT PRIMARY KEY,
+        sender_host TEXT NOT NULL,
+        sender_session_id TEXT NOT NULL,
+        target_host TEXT NOT NULL,
+        target_session_id TEXT NOT NULL,
+        body TEXT,
+        ttl_seconds INTEGER NOT NULL,
+        prepared_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        receipt TEXT,
+        record_bytes INTEGER NOT NULL
+      ) STRICT;
+      CREATE INDEX IF NOT EXISTS prepared_messages_expiry ON prepared_messages (expires_at);
+      CREATE INDEX IF NOT EXISTS prepared_messages_owner ON prepared_messages (sender_host, sender_session_id, receipt);`);
       const messageColumns = this.database.prepare("PRAGMA table_info(messages)").all();
       if (!messageColumns.some((column) => column.name === "delivery_attempts")) {
         this.database.exec("ALTER TABLE messages ADD COLUMN delivery_attempts INTEGER NOT NULL DEFAULT 0;");
@@ -162,7 +183,64 @@ var SessionMessageStore = class {
     this.database.prepare("DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)").run(now, acknowledgedBefore);
     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
     this.database.prepare("DELETE FROM wake_nonces WHERE expires_at <= ?").run(now);
+    this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
   }
+  /** Preparation is durable but has no queue, peer-relation or wake effect. */
+  prepare(input, nowMs = Date.now()) {
+    boundedIdentity(input.sender);
+    boundedIdentity(input.target);
+    const ttlSeconds = input.ttlSeconds ?? MESSAGE_TTL_DEFAULT_SECONDS;
+    if (typeof input.body !== "string" || !input.body.trim() || Buffer.byteLength(input.body, "utf8") > MESSAGE_BODY_MAX_BYTES) throw new Error("body must contain 1-4096 UTF-8 bytes.");
+    if (input.body.includes("\0")) throw new Error("body must not contain NUL characters.");
+    if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) throw new Error("ttlSeconds must be an integer from 30 to 86400.");
+    const result = { messageId: randomUUID(), preparedAt: iso(nowMs), expiresAt: iso(nowMs + MESSAGE_DRAFT_TTL_MS) };
+    const recordBytes = Buffer.byteLength(JSON.stringify({ ...input, ttlSeconds, ...result }), "utf8");
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      this.prune(nowMs);
+      const drafts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL").get();
+      const owned = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL AND sender_host = ? AND sender_session_id = ?").get(input.sender.host, input.sender.sessionId);
+      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages").get();
+      if (drafts.count >= MESSAGE_DRAFT_LIMIT || owned.count >= MESSAGE_SENDER_DRAFT_LIMIT || bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message preparation store is full.");
+      this.database.prepare(`INSERT INTO prepared_messages (message_id, sender_host, sender_session_id, target_host, target_session_id, body, ttl_seconds, prepared_at, expires_at, record_bytes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(result.messageId, input.sender.host, input.sender.sessionId, input.target.host, input.target.sessionId, input.body, ttlSeconds, result.preparedAt, result.expiresAt, recordBytes);
+      this.database.exec("COMMIT");
+      return result;
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  /** ID ownership, capacity, queue insert and first receipt share one transaction. */
+  submitPrepared(sender, messageId, nowMs = Date.now()) {
+    boundedIdentity(sender);
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      this.prune(nowMs);
+      const row = this.database.prepare("SELECT * FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?").get(messageId, sender.host, sender.sessionId, iso(nowMs));
+      if (!row) throw new Error("Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent.");
+      if (row.receipt !== null) {
+        const receipt2 = JSON.parse(String(row.receipt));
+        this.database.exec("COMMIT");
+        return { ...receipt2, duplicate: true };
+      }
+      const receipts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NOT NULL").get();
+      if (receipts.count >= MESSAGE_RECEIPT_LIMIT) throw new Error("The bounded message receipt store is full.");
+      const receipt = this.send({ messageId, sender, target: { host: String(row.target_host), sessionId: String(row.target_session_id) }, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+      const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
+      const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);
+      const recordBytes = Buffer.byteLength(JSON.stringify({ messageId, sender, target: { host: row.target_host, sessionId: row.target_session_id }, preparedAt: row.prepared_at, ttlSeconds: row.ttl_seconds, receipt: receiptJson, expiresAt }), "utf8");
+      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages WHERE message_id <> ?").get(messageId);
+      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message receipt store is full.");
+      this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?").run(receiptJson, expiresAt, recordBytes, messageId);
+      this.database.exec("COMMIT");
+      return receipt;
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  /** Internal queue primitive, also retained for existing-data fixtures; public send uses submitPrepared. */
   send(input, nowMs = Date.now()) {
     boundedIdentity(input.sender);
     boundedIdentity(input.target);
@@ -351,7 +429,11 @@ var SessionMessageStore = class {
     this.prune(nowMs);
     const row = this.database.prepare(`SELECT message_id, target_host, target_session_id, created_at, expires_at,
       claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ?`).get(messageId, sender.host, sender.sessionId);
-    if (!row) return null;
+    if (!row) {
+      const prepared = this.database.prepare("SELECT prepared_at, expires_at, receipt FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?").get(messageId, sender.host, sender.sessionId, iso(nowMs));
+      if (!prepared) return null;
+      return prepared.receipt === null ? { messageId, state: "prepared", preparedAt: prepared.prepared_at, expiresAt: prepared.expires_at } : { ...JSON.parse(prepared.receipt), state: "submitted", deliveryState: "unknown", receiptExpiresAt: prepared.expires_at };
+    }
     return {
       messageId: row.message_id,
       target: { host: row.target_host, sessionId: row.target_session_id },
@@ -835,16 +917,19 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload) {
   switch (operation) {
     case "ping":
       return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: SESSION_MESSAGE_BROKER_CAPABILITIES };
-    case "send": {
-      const messageId = optionalString(payload, "messageId");
+    case "prepare": {
+      if (Object.keys(payload).some((key) => !["sender", "target", "body", "ttlSeconds"].includes(key))) throw new Error("prepare accepts sender, target, body and ttlSeconds; IDs are system-issued.");
       const ttlSeconds = optionalInteger(payload, "ttlSeconds");
-      return store.send({
-        ...messageId === void 0 ? {} : { messageId },
+      return store.prepare({
         sender: identity(payload.sender),
         target: identity(payload.target),
         body: string(payload.body, "body"),
         ...ttlSeconds === void 0 ? {} : { ttlSeconds }
       });
+    }
+    case "send": {
+      if (Object.keys(payload).some((key) => !["sender", "messageId"].includes(key))) throw new Error("send accepts only sender and the ID returned by prepare; message content is immutable. Retry the known ID or compare saved receipts/status if delivery is unknown.");
+      return store.submitPrepared(identity(payload.sender), string(payload.messageId, "messageId"));
     }
     case "claim": {
       const maxMessages = optionalInteger(payload, "maxMessages");
@@ -903,8 +988,10 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload) {
     }
     case "acknowledge":
       return { acknowledged: store.acknowledge(identity(payload.target), Array.isArray(payload.messageIds) ? payload.messageIds.map((value) => string(value, "messageId")) : []) };
-    case "status":
-      return { status: store.status(identity(payload.sender), string(payload.messageId, "messageId")) };
+    case "status": {
+      const status = store.status(identity(payload.sender), string(payload.messageId, "messageId"));
+      return { status, ...status === null ? { guidance: "Delivery is unknown; compare saved receipts. Prepare only a new intent, not an automatic resend." } : {} };
+    }
     case "peer-wait": {
       const sender = identity(payload.sender);
       if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > 8) throw new Error("targets must contain 1..8 identities.");

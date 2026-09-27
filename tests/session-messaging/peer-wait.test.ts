@@ -219,12 +219,18 @@ function packaged(directory: string, entry: string, input: unknown) {
   return result.stdout ? JSON.parse(result.stdout) : {};
 }
 async function preparePackaged(directory: string) {
-  await requestSessionMessageOnce("send", { sender, target, messageId: "packaged-request", body: "Synthetic request" }, directory);
+  const requestId = await sendSynthetic(directory, { sender, target, body: "Synthetic request" });
   await requestSessionMessageOnce("presence-start", { target: sender, instanceId: "packaged-instance", transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false, supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" }, directory);
   await requestSessionMessageOnce("acquire-relay", { target: sender, instanceId: "packaged-instance", transport: "codex-queue", relayId: "packaged-relay", pid: process.pid, parentPid: process.pid }, directory);
-  await requestSessionMessageOnce("send", { sender: target, target: sender, messageId: "packaged-reply", body: "Synthetic reply" }, directory);
+  const replyId = await sendSynthetic(directory, { sender: target, target: sender, body: "Synthetic reply" });
   await requestSessionMessageOnce("reserve-wake", { target: sender, nonce: "nonce-packaged-peer-wait" }, directory);
   packaged(directory, "session-message-hook.mjs", { hook_event_name: "UserPromptSubmit", session_id: sender.sessionId, agent_id: "", prompt: "[agent-governance-suite:wake:nonce-packaged-peer-wait]" });
+  return { requestId, replyId };
+}
+async function sendSynthetic(directory: string, payload: Record<string, unknown>): Promise<string> {
+  const { messageId } = await requestSessionMessageOnce<{ messageId: string }>("prepare", payload, directory);
+  await requestSessionMessageOnce("send", { sender: payload.sender, messageId }, directory);
+  return messageId;
 }
 const hookInput = (timeoutMs: number, extra: Record<string, unknown> = {}) => ({ hook_event_name: "PreToolUse", session_id: sender.sessionId, agent_id: "", tool_name: "mcp__codex_app__wait_threads", tool_input: { targets: [{ threadId: target.sessionId }], timeoutMs }, ...extra });
 
@@ -253,7 +259,7 @@ it("the public CLI consumes the decision before delay and sends no repeated poll
 
 it("public native hook suppresses equivalent payloads but permits actual cursor change", async () => {
   const { directory } = await launch(); await preparePackaged(directory);
-  await requestSessionMessageOnce("send", { sender, target: secondTarget, body: "Second synthetic request" }, directory);
+  await sendSynthetic(directory, { sender, target: secondTarget, body: "Second synthetic request" });
   const rows = [{ threadId: target.sessionId, afterCursor: "a" }, { threadId: secondTarget.sessionId, afterCursor: "b" }];
   const input = (targets: unknown[]) => hookInput(0, { tool_input: { targets, timeoutMs: 0 } });
   expect(packaged(directory, "session-message-hook.mjs", input(rows)).hookSpecificOutput?.permissionDecision).toBeUndefined();
@@ -264,45 +270,46 @@ it("public native hook suppresses equivalent payloads but permits actual cursor 
 }, 15_000);
 
 it("public CLI equivalent retransmissions consume one decision each and state change restores a snapshot", async () => {
-  const { directory } = await launch(); await preparePackaged(directory);
-  await requestSessionMessageOnce("send", { sender, target: secondTarget, body: "Second synthetic request" }, directory);
+  const { directory } = await launch(); const { replyId } = await preparePackaged(directory);
+  await sendSynthetic(directory, { sender, target: secondTarget, body: "Second synthetic request" });
   const wait = (targets: unknown[]) => packaged(directory, "session-message-cli.mjs", { operation: "wait", payload: { sender, targets, timeoutMs: 0 } }).data;
   expect(wait([target, secondTarget])).toMatchObject({ decision: { action: "snapshot" }, waitedMs: 0 });
   const repeat = wait([secondTarget, { sessionId: target.sessionId, host: target.host }, secondTarget]);
   expect(repeat).toMatchObject({ decision: { action: "deny", reason: "unchanged-peer-state" }, waitedMs: 0 });
   expect(wait([target, secondTarget])).toEqual(repeat);
   expect(await readFile(path.join(directory, "peer-wait-count.txt"), "utf8")).toBe("3");
-  await requestSessionMessageOnce("acknowledge", { target: sender, messageIds: ["packaged-reply"] }, directory);
+  await requestSessionMessageOnce("acknowledge", { target: sender, messageIds: [replyId] }, directory);
   expect(wait([target, secondTarget])).toMatchObject({ decision: { action: "snapshot" }, waitedMs: 0 });
   expect(await readFile(path.join(directory, "peer-wait-count.txt"), "utf8")).toBe("4");
 }, 15_000);
 
 it("CLI unknown resume uses one bounded wait and does not force permanent stopping", async () => {
   const { directory } = await launch();
-  await requestSessionMessageOnce("send", { sender, target, body: "Synthetic request" }, directory);
+  await sendSynthetic(directory, { sender, target, body: "Synthetic request" });
   const output = packaged(directory, "session-message-cli.mjs", { operation: "wait", payload: { sender, targets: [target], timeoutMs: 60_000, resumeObserved: true } });
   expect(output.data).toMatchObject({ decision: { action: "bounded", resume: "unknown" }, waitedMs: 1000, next: "bounded-query-or-next-user-turn" });
   expect(await readFile(path.join(directory, "peer-wait-count.txt"), "utf8")).toBe("2");
 }, 15_000);
 
 it("broker restart preserves messages but drops resume and repeat-suppression evidence", async () => {
-  const { directory, child } = await launch(); await preparePackaged(directory);
+  const { directory, child } = await launch(); const { requestId, replyId } = await preparePackaged(directory);
   const exited = once(child, "exit"); child.kill(); await exited;
   const replacement = spawn(process.execPath, [path.join(root, "mcp-server/dist/session-message-broker.mjs"), "--state-directory", directory], { windowsHide: true, stdio: "ignore" }); children.push(replacement);
   await waitForSessionMessageBrokerReady(directory, replacement, 5000);
   expect(packaged(directory, "session-message-hook.mjs", hookInput(60_000)).hookSpecificOutput?.permissionDecision).not.toBe("deny");
-  expect(await requestSessionMessageOnce("status", { sender, messageId: "packaged-request" }, directory)).toMatchObject({ status: { state: "queued" } });
+  expect(await requestSessionMessageOnce("status", { sender, messageId: requestId }, directory)).toMatchObject({ status: { state: "queued" } });
   const wait = { sender, targets: [target], timeoutMs: 0 };
   const before = await requestSessionMessageOnce("peer-wait", wait, directory);
   expect(before).toMatchObject({ action: "bounded", resume: "unknown" });
-  expect(await requestSessionMessageOnce("send", { sender, target, messageId: "packaged-request", body: "Synthetic request" }, directory)).toMatchObject({ duplicate: true });
+  expect(await requestSessionMessageOnce("send", { sender, messageId: requestId }, directory)).toMatchObject({ duplicate: true });
   expect(await requestSessionMessageOnce("peer-wait", wait, directory)).toEqual(before);
   expect(await requestSessionMessageOnce("claim-wake", { target: sender, nonces: ["nonce-packaged-peer-wait"] }, directory)).toMatchObject({ recognized: false });
   expect(await requestSessionMessageOnce("peer-wait", wait, directory)).toEqual(before);
-  await preparePackaged(directory);
+  await requestSessionMessageOnce("acquire-relay", { target: sender, instanceId: "packaged-instance", transport: "codex-queue", relayId: "packaged-relay", pid: process.pid, parentPid: process.pid }, directory);
+  packaged(directory, "session-message-hook.mjs", { hook_event_name: "UserPromptSubmit", session_id: sender.sessionId, agent_id: "", prompt: "[agent-governance-suite:wake:nonce-packaged-peer-wait]" });
   expect(await requestSessionMessageOnce("peer-wait", wait, directory)).toMatchObject({ action: "bounded", resume: "unknown" });
-  await requestSessionMessageOnce("acknowledge", { target: sender, messageIds: ["packaged-reply"] }, directory);
-  await requestSessionMessageOnce("send", { sender: target, target: sender, messageId: "post-restart-reply", body: "Fresh reply" }, directory);
+  await requestSessionMessageOnce("acknowledge", { target: sender, messageIds: [replyId] }, directory);
+  await sendSynthetic(directory, { sender: target, target: sender, body: "Fresh reply" });
   expect(await requestSessionMessageOnce("reserve-wake", { target: sender, nonce: "nonce-post-restart-peer" }, directory)).toMatchObject({ dispatch: true });
   expect(await requestSessionMessageOnce("claim-wake", { target: sender, nonces: ["nonce-post-restart-peer"] }, directory)).toMatchObject({ recognized: true });
   expect(await requestSessionMessageOnce("peer-wait", wait, directory)).toMatchObject({ action: "snapshot", resume: "observed" });

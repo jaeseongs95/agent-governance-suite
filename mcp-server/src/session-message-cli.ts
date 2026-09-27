@@ -1,5 +1,4 @@
 import { readFileSync } from "node:fs";
-import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,7 +6,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import type { PeerWaitDecision } from "./peer-wait-policy.js";
 import { sessionMessageRequest } from "./session-message-client.js";
 
-const OPERATIONS = new Set(["send", "claim", "acknowledge", "status", "pending", "wait"]);
+const OPERATIONS = new Set(["prepare", "send", "claim", "acknowledge", "status", "pending", "wait"]);
 
 /** Vendor-neutral stdin/stdout adapter. Secrets and message bodies never appear in process arguments. */
 export async function runSessionMessageCli(raw: string, stateDirectory?: string): Promise<Record<string, unknown>> {
@@ -29,10 +28,7 @@ export async function runSessionMessageCli(raw: string, stateDirectory?: string)
     }
     return { protocolVersion: "1.0.0", ok: true, data: { decision, snapshot, waitedMs, next: decision.resume === "observed" ? "peer-resume" : "bounded-query-or-next-user-turn" } };
   }
-  const normalizedPayload = request.operation === "send" && payload.messageId === undefined
-    ? { ...payload, messageId: randomUUID() }
-    : payload;
-  const data = await sessionMessageRequest<unknown>(request.operation, normalizedPayload, stateDirectory);
+  const data = await sessionMessageRequest<unknown>(request.operation, payload, stateDirectory);
   return { protocolVersion: "1.0.0", ok: true, data };
 }
 

@@ -185,16 +185,19 @@ function observePeerRelay(store: SessionMessageStore, payload: Record<string, un
 export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>): unknown {
   switch (operation) {
     case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: SESSION_MESSAGE_BROKER_CAPABILITIES };
-    case "send": {
-      const messageId = optionalString(payload, "messageId");
+    case "prepare": {
+      if (Object.keys(payload).some((key) => !["sender", "target", "body", "ttlSeconds"].includes(key))) throw new Error("prepare accepts sender, target, body and ttlSeconds; IDs are system-issued.");
       const ttlSeconds = optionalInteger(payload, "ttlSeconds");
-      return store.send({
-        ...(messageId === undefined ? {} : { messageId }),
+      return store.prepare({
         sender: identity(payload.sender),
         target: identity(payload.target),
         body: string(payload.body, "body"),
         ...(ttlSeconds === undefined ? {} : { ttlSeconds }),
       });
+    }
+    case "send": {
+      if (Object.keys(payload).some((key) => !["sender", "messageId"].includes(key))) throw new Error("send accepts only sender and the ID returned by prepare; message content is immutable. Retry the known ID or compare saved receipts/status if delivery is unknown.");
+      return store.submitPrepared(identity(payload.sender), string(payload.messageId, "messageId"));
     }
     case "claim": {
       const maxMessages = optionalInteger(payload, "maxMessages");
@@ -252,7 +255,10 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       return { cleared: true };
     }
     case "acknowledge": return { acknowledged: store.acknowledge(identity(payload.target), Array.isArray(payload.messageIds) ? payload.messageIds.map((value) => string(value, "messageId")) : []) };
-    case "status": return { status: store.status(identity(payload.sender), string(payload.messageId, "messageId")) };
+    case "status": {
+      const status = store.status(identity(payload.sender), string(payload.messageId, "messageId"));
+      return { status, ...(status === null ? { guidance: "Delivery is unknown; compare saved receipts. Prepare only a new intent, not an automatic resend." } : {}) };
+    }
     case "peer-wait": {
       const sender = identity(payload.sender);
       if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > 8) throw new Error("targets must contain 1..8 identities.");

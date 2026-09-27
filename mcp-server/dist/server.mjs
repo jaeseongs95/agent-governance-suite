@@ -17507,6 +17507,7 @@ var contractSchemas = {
   updateSessionStatusRequest: loadSchema("update-session-status-request.v1.schema.json"),
   listSessionStatusRequest: loadSchema("list-session-status-request.v1.schema.json"),
   sendSessionMessageRequest: loadSchema("send-session-message-request.v1.schema.json"),
+  prepareSessionMessageRequest: loadSchema("prepare-session-message-request.v1.schema.json"),
   acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
   getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
@@ -17643,6 +17644,9 @@ var ContractValidator = class {
   }
   sendSessionMessageRequest(value) {
     return this.assert("sendSessionMessageRequest", value);
+  }
+  prepareSessionMessageRequest(value) {
+    return this.assert("prepareSessionMessageRequest", value);
   }
   acknowledgeSessionMessagesRequest(value) {
     return this.assert("acknowledgeSessionMessagesRequest", value);
@@ -19894,9 +19898,6 @@ function compareText(left, right) {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-// mcp-server/src/session-message-service.ts
-import { randomUUID } from "node:crypto";
-
 // mcp-server/src/session-message-client.ts
 import { existsSync as existsSync2 } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
@@ -20188,23 +20189,33 @@ var SessionMessageService = class {
   constructor(stateDirectory) {
     this.stateDirectory = stateDirectory;
   }
-  async send(args) {
+  async prepare(args) {
     const sender = binding(args._sessionBinding);
     if (!sender) return failure2("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
+    if (Object.keys(args).some((key) => !["schemaVersion", "targetHost", "targetSessionId", "body", "ttlSeconds", "_sessionBinding"].includes(key))) return failure2("INVALID_INPUT", "Preparation accepts immutable content only; message IDs are system-issued.");
     if (typeof args.body !== "string" || !args.body.trim() || args.body.includes("\0") || Buffer.byteLength(args.body, "utf8") > SESSION_MESSAGE_BODY_MAX_BYTES) {
       return failure2("INVALID_INPUT", `body must contain 1-${SESSION_MESSAGE_BODY_MAX_BYTES} UTF-8 bytes and no NUL characters.`);
     }
     try {
-      const data = await sessionMessageRequest("send", {
+      const data = await sessionMessageRequest("prepare", {
         sender,
         target: { host: args.targetHost, sessionId: args.targetSessionId },
         body: args.body,
-        ...args.ttlSeconds === void 0 ? {} : { ttlSeconds: args.ttlSeconds },
-        messageId: args.messageId ?? randomUUID()
+        ...args.ttlSeconds === void 0 ? {} : { ttlSeconds: args.ttlSeconds }
       }, this.stateDirectory);
       return ok2(data);
     } catch (error2) {
       return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "The session message broker is unavailable.");
+    }
+  }
+  async send(args) {
+    const sender = binding(args._sessionBinding);
+    if (!sender) return failure2("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
+    if (typeof args.messageId !== "string" || Object.keys(args).some((key) => !["schemaVersion", "messageId", "_sessionBinding"].includes(key))) return failure2("INVALID_INPUT", "Call prepare_session_message for a new intent, then send_session_message with only the returned messageId. Retry an uncertain send using that same ID or compare saved receipts/status.");
+    try {
+      return ok2(await sessionMessageRequest("send", { sender, messageId: args.messageId }, this.stateDirectory));
+    } catch (error2) {
+      return failure2("MCP_UNAVAILABLE", `${error2 instanceof Error ? error2.message : "The session message broker is unavailable."} Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.`);
     }
   }
   async acknowledge(args) {
@@ -20349,8 +20360,8 @@ var updateCheckInputSchema = {
     force: { type: "boolean", default: false }
   }
 };
-var sendSessionMessageInputSchema = structuredClone(contractSchemas.sendSessionMessageRequest);
-var sendBodySchema = sendSessionMessageInputSchema.properties?.body;
+var prepareSessionMessageInputSchema = structuredClone(contractSchemas.prepareSessionMessageRequest);
+var sendBodySchema = prepareSessionMessageInputSchema.properties?.body;
 if (sendBodySchema) sendBodySchema.description = "A non-empty message body limited to 4096 UTF-8 bytes by the service.";
 function asRecord(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
@@ -20475,8 +20486,10 @@ function planWorkflowToolInputSchema(profile = "default") {
 }
 var ANTHROPIC_SERVER_INSTRUCTIONS = "agent-governance-suite \uC811\uC218 \uADDC\uCE59: \uC0AC\uC6A9\uC790 \uC694\uCCAD\uC744 \uBC1B\uC744 \uB54C\uB9C8\uB2E4, \uD30C\uC77C\uC744 \uACE0\uCE58\uAC70\uB098 \uBA85\uB839\uC744 \uC2E4\uD589\uD558\uAE30 \uC804\uC5D0 \uC774 \uC694\uCCAD\uC774 \uC798\uBABB \uC218\uD589\uB410\uC744 \uB54C\uC758 \uC2E4\uD328 \uC601\uD5A5\uC744 \uD55C \uC904\uB85C \uBD84\uB958\uD55C\uB2E4(\uB0AE\uC74C \uB610\uB294 \uB192\uC74C). CI\xB7CD, \uB9B4\uB9AC\uC2A4\xB7\uBC30\uD3EC, \uAD8C\uD55C\xB7\uC2E0\uB8B0 \uACBD\uACC4, \uC804\uC5ED \uC124\uC815, \uB370\uC774\uD130\xB7\uC2A4\uD0A4\uB9C8, \uACF5\uAC1C \uC800\uC7A5\uC18C\uC758 \uAE30\uBCF8 \uBE0C\uB79C\uCE58\uCC98\uB7FC \uC2E4\uD328 \uC601\uD5A5\uC774 \uD070 \uC791\uC5C5\uC774\uBA74 \uAD6C\uD604\uC744 \uC2DC\uC791\uD558\uAE30 \uC804\uC5D0 Skill \uB3C4\uAD6C\uB85C /agent-governance-suite:orchestrator\uB97C \uD638\uCD9C\uD574 \uC774 \uC694\uCCAD\uC5D0 \uD544\uC694\uD55C \uC804\uBB38 \uC2A4\uD0AC \uB2E8\uACC4\uC640 \uC0DD\uB7B5\uD560 \uB2E8\uACC4\uB97C \uC774\uC720\uC640 \uD568\uAED8 \uC815\uD558\uACE0, \uC815\uD55C \uB2E8\uACC4\uB97C \uADF8 \uC2DC\uC810\uC5D0 \uC2E4\uC81C\uB85C \uD638\uCD9C\uD55C\uB2E4. \uC2E4\uD328 \uC601\uD5A5\uC774 \uD070 \uC791\uC5C5\uC5D0\uC11C orchestrator\uB97C \uAC74\uB108\uB6F0\uB294 \uACBD\uC6B0\uB294 \uC0AC\uC6A9\uC790\uAC00 \uD2B9\uC815 \uC2A4\uD0AC\uC744 \uC9C0\uC815\uD588\uC744 \uB54C\uBFD0\uC774\uBA70, \uADF8\uB54C\uB294 \uADF8 \uC2A4\uD0AC\uC744 \uBC14\uB85C \uD638\uCD9C\uD55C\uB2E4. \uC2E4\uD328 \uC601\uD5A5\uC774 \uB0AE\uC73C\uBA74 \uADF8 \uC774\uC720\uB97C \uD55C \uC904\uB85C \uBC1D\uD788\uACE0 \uC9C4\uD589\uD558\uB418, \uC694\uCCAD\uC774 \uCF54\uB4DC\uB97C \uC791\uC131\xB7\uC218\uC815\xB7\uB9AC\uD329\uD130\uB9C1\xB7\uC124\uACC4\uD558\uAC70\uB098 \uB77C\uC774\uBE0C\uB7EC\uB9AC\xB7\uC758\uC874\uC131\uC744 \uACE0\uB974\uB294 \uC791\uC5C5\uC774\uBA74 \uCF54\uB4DC\uB97C \uC4F0\uAC70\uB098 \uD30C\uC77C\uC744 \uACE0\uCE58\uAE30 \uC804\uC5D0 Skill \uB3C4\uAD6C\uB85C /agent-governance-suite:ponytail\uC744 \uD638\uCD9C\uD55C\uB2E4. \uC694\uCCAD\uC758 \uBC94\uC704\uB098 \uC644\uB8CC \uC870\uAC74\uC774 \uBD88\uBA85\uD655\uD558\uBA74 ponytail\uBCF4\uB2E4 \uBA3C\uC800 \uD655\uC815\uD55C\uB2E4. \uCF54\uB4DC \uAC80\uD1A0\xB7\uAC10\uC0AC\xB7\uAC80\uC99D\xB7\uC644\uB8CC \uD310\uC815, \uCF54\uB4DC \uC124\uBA85\xB7\uC870\uC0AC\uB9CC \uD558\uB294 \uC694\uCCAD, \uCF54\uB529\uC774 \uC544\uB2CC \uC694\uCCAD(\uC77C\uBC18 \uC9C0\uC2DD, \uBB38\uC11C, \uBC88\uC5ED, \uC694\uC57D), \uAC80\uD1A0\xB7\uAC10\uC0AC\uB97C \uB9E1\uC740 \uC11C\uBE0C\uC5D0\uC774\uC804\uD2B8\uC5D0\uC11C\uB294 ponytail\uC744 \uD638\uCD9C\uD558\uC9C0 \uC54A\uB294\uB2E4.";
 function serverInstructions(profile = "default") {
-  return profile === "anthropic" ? ANTHROPIC_SERVER_INSTRUCTIONS : void 0;
+  return profile === "anthropic" ? `${ANTHROPIC_SERVER_INSTRUCTIONS}
+${SESSION_MESSAGE_SERVER_INSTRUCTIONS}` : SESSION_MESSAGE_SERVER_INSTRUCTIONS;
 }
+var SESSION_MESSAGE_SERVER_INSTRUCTIONS = "\uC138\uC158 \uBA54\uC2DC\uC9C0\uB294 prepare_session_message\uB85C \uB300\uC0C1\xB7\uBCF8\uBB38\xB7TTL\uC744 \uACE0\uC815\uD558\uACE0 \uC2DC\uC2A4\uD15C\uC774 \uBC1C\uAE09\uD55C messageId\uB97C \uBC1B\uC740 \uB4A4 send_session_message(messageId)\uB85C \uC804\uC1A1\uD55C\uB2E4. ID\uB97C \uC9C1\uC811 \uB9CC\uB4E4\uAC70\uB098 send\uC5D0 \uB0B4\uC6A9\uC744 \uB2E4\uC2DC \uB123\uC9C0 \uC54A\uB294\uB2E4. \uC804\uC1A1 \uACB0\uACFC\uAC00 \uBD88\uBA85\uD655\uD558\uBA74 \uBC1B\uC740 \uAC19\uC740 ID\uB85C status\uB97C \uC870\uD68C\uD558\uAC70\uB098 send\uB97C \uC7AC\uC2DC\uB3C4\uD55C\uB2E4. unknown ID\uB294 \uC774\uC804 \uC804\uC1A1 \uC644\uB8CC\uB098 \uAE30\uB85D \uC815\uB9AC \uAC00\uB2A5\uC131\uC774 \uC788\uC73C\uBBC0\uB85C \uC800\uC7A5\uD55C \uC601\uC218\uC99D\uACFC \uB300\uC870\uD55C\uB2E4. \uC0C8 prepare\uB294 \uC0C8 \uC804\uC1A1 \uC758\uB3C4\uC5D0\uB9CC \uC0AC\uC6A9\uD558\uBA70 \uBD88\uBA85\uD655\uD55C \uAE30\uC874 \uC804\uC1A1\uC744 \uBB34\uC870\uAC74 \uB2E4\uC2DC \uC900\uBE44\uD558\uC9C0 \uC54A\uB294\uB2E4. ACK\uB294 \uBA54\uC2DC\uC9C0 \uCC98\uB9AC \uD655\uC778\uC774\uBA70 \uC5C5\uBB34 \uC644\uB8CC\uB098 \uC2B9\uC778 \uC99D\uAC70\uAC00 \uC544\uB2C8\uB2E4.";
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
@@ -20642,10 +20655,16 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
       {
-        name: "send_session_message",
-        description: "Send a bounded, expiring peer message to any local AI host/session through the loopback TLS 1.3 broker. The hook binds the sender identity.",
-        inputSchema: sendSessionMessageInputSchema,
+        name: "prepare_session_message",
+        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft.",
+        inputSchema: prepareSessionMessageInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+      },
+      {
+        name: "send_session_message",
+        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent.",
+        inputSchema: contractSchemas.sendSessionMessageRequest,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "acknowledge_session_messages",
@@ -20655,7 +20674,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "get_session_message_status",
-        description: "Read queued, delivered, or acknowledged status for a message sent by this bound session.",
+        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend.",
         inputSchema: contractSchemas.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       }
@@ -20765,12 +20784,20 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         case "list_session_status":
           result = await sessionBoardResult(request.params.name, args, sessionBoardPath, validator, sessionMessages);
           break;
+        case "prepare_session_message":
+          try {
+            validator.prepareSessionMessageRequest(args);
+            result = await sessionMessages.prepare(args);
+          } catch (error2) {
+            result = invalidInput(error2 instanceof Error ? error2.message : "Session message preparation is invalid.");
+          }
+          break;
         case "send_session_message":
           try {
             validator.sendSessionMessageRequest(args);
             result = await sessionMessages.send(args);
           } catch (error2) {
-            result = invalidInput(error2 instanceof Error ? error2.message : "Session message input is invalid.");
+            result = invalidInput(`${error2 instanceof Error ? error2.message : "Session message input is invalid."} Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status.`);
           }
           break;
         case "acknowledge_session_messages":
@@ -22069,7 +22096,7 @@ var SqliteWorkflowStore = class {
 };
 
 // mcp-server/src/workflow-service.ts
-import { createHmac as createHmac2, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
+import { createHmac as createHmac2, randomUUID, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
 
 // mcp-server/src/decision-record-validator.ts
 import { isDeepStrictEqual } from "node:util";
@@ -22869,7 +22896,7 @@ var WorkflowService = class {
       const digests = this.convergenceDigests(request.taskEnvelope, request.frame);
       const root = {
         schemaVersion: CONTRACT_VERSION,
-        rootId: `root-${randomUUID2()}`,
+        rootId: `root-${randomUUID()}`,
         parentRootId: request.parentRootId,
         revision: 0,
         state: "open",
@@ -23022,7 +23049,7 @@ var WorkflowService = class {
       const updatedRoot = bumpedRoot(root, now.toISOString());
       const lease = {
         schemaVersion: CONTRACT_VERSION,
-        leaseId: `lease-${randomUUID2()}`,
+        leaseId: `lease-${randomUUID()}`,
         rootId: root.rootId,
         rootRevision: updatedRoot.revision,
         epoch: root.currentEpoch,
@@ -24195,7 +24222,7 @@ var WorkflowService = class {
     ]))];
     const outcome = {
       schemaVersion: CONTRACT_VERSION,
-      outcomeId: `outcome-${randomUUID2()}`,
+      outcomeId: `outcome-${randomUUID()}`,
       rootId: root.rootId,
       rootRevision: root.revision,
       leaseId: binding2.lease.leaseId,
@@ -24373,7 +24400,7 @@ var HostAttestationProvider = class {
 };
 
 // mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash7, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHash as createHash7, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
 import path11 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
@@ -24426,7 +24453,7 @@ var StateCleanupService = class {
       const candidateDigest = digest2(candidates);
       const payload = {
         schemaVersion: "1.0.0",
-        planId: randomUUID3(),
+        planId: randomUUID2(),
         createdAt,
         expiresAt: new Date(created.getTime() + TOKEN_TTL_MS2).toISOString(),
         policy: POLICY,
@@ -24635,7 +24662,7 @@ var StateCleanupService = class {
 };
 
 // mcp-server/src/trust-store.ts
-import { createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID4, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
+import { createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
 import { chmodSync as chmodSync4, mkdirSync as mkdirSync5 } from "node:fs";
 import path12 from "node:path";
 import { DatabaseSync as DatabaseSync5 } from "node:sqlite";
@@ -24703,7 +24730,7 @@ var TrustStore = class {
     }
     const receipt = this.seal({
       schemaVersion: CONTRACT_VERSION,
-      receiptId: `source-${randomUUID4()}`,
+      receiptId: `source-${randomUUID3()}`,
       originKind: input.originKind,
       host: input.host,
       sessionId: input.sessionId,

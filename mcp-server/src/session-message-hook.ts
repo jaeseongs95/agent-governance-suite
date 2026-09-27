@@ -15,8 +15,8 @@ import { isObservedSubagent, supportsInjection } from "./input-observation.js";
 import type { PeerWaitDecision } from "./peer-wait-policy.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "./session-message-protocol.js";
 
-const SESSION_BOUND_TOOLS = new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
-const SUBAGENT_DENIED_TOOLS = new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
+const SESSION_BOUND_TOOLS = new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
+const SUBAGENT_DENIED_TOOLS = new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
 const HOST_CLAIM_MAX_MESSAGES = 1;
 const HOST_CLAIM_MAX_BODY_CHARS = 4096;
 const HOST_MESSAGE_REQUEST_TIMEOUT_MS = 8_000;

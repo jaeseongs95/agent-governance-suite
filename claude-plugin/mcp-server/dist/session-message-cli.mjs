@@ -2,7 +2,6 @@
 
 // mcp-server/src/session-message-cli.ts
 import { readFileSync } from "node:fs";
-import { randomUUID } from "node:crypto";
 import path3 from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 import { setTimeout as delay2 } from "node:timers/promises";
@@ -301,7 +300,7 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
 }
 
 // mcp-server/src/session-message-cli.ts
-var OPERATIONS = /* @__PURE__ */ new Set(["send", "claim", "acknowledge", "status", "pending", "wait"]);
+var OPERATIONS = /* @__PURE__ */ new Set(["prepare", "send", "claim", "acknowledge", "status", "pending", "wait"]);
 async function runSessionMessageCli(raw, stateDirectory) {
   const request = JSON.parse(raw);
   if (typeof request.operation !== "string" || !OPERATIONS.has(request.operation)) throw new Error("Unsupported session message operation.");
@@ -319,8 +318,7 @@ async function runSessionMessageCli(raw, stateDirectory) {
     }
     return { protocolVersion: "1.0.0", ok: true, data: { decision, snapshot, waitedMs, next: decision.resume === "observed" ? "peer-resume" : "bounded-query-or-next-user-turn" } };
   }
-  const normalizedPayload = request.operation === "send" && payload.messageId === void 0 ? { ...payload, messageId: randomUUID() } : payload;
-  const data = await sessionMessageRequest(request.operation, normalizedPayload, stateDirectory);
+  const data = await sessionMessageRequest(request.operation, payload, stateDirectory);
   return { protocolVersion: "1.0.0", ok: true, data };
 }
 if (path3.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
