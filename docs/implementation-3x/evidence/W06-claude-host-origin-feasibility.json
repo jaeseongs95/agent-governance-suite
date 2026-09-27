@@ -1,0 +1,203 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "W06-a-claude-r1",
+  "specRevision": "r42",
+  "specSha256": "4215e122afea6df5c04b449e0446de592ff57a1b384cfd73db772e453cc2fb03",
+  "kind": "read-only installed-release channel feasibility probe",
+  "scope": "Claude Code 2.1.283 installed on this Windows machine (native installer). Hook stdin schema, hook-visible turn identity, host-written session state and adjacent channels were inspected read-only. No hook configuration, ~/.claude settings, plugin, broker, store, host adapter or product code was changed; nothing was installed or downloaded.",
+  "startState": {
+    "worktree": "D:/codex/거버전스 3.0/agent-governance-suite-w06-claude-r1-claude",
+    "branch": "claude/v3x-w06-a-claude-r1-origin-probe",
+    "commit": "f53d6d564f41a7cc9d425beae4d48b098461517a",
+    "tree": "5a80ac9791df47f51830bb001a5d837f3f728181",
+    "workingTree": "clean",
+    "dependency": {
+      "W05": "f7387e3e7be5bbf55ac75181e6c3a8127cfec083"
+    },
+    "writerSession": "953d6a7d-4300-433a-8bb6-4a18ba901511",
+    "t0": "2026-09-27T00:12:35Z",
+    "hardStop": "2026-09-27T00:42:35Z"
+  },
+  "releaseIdentity": {
+    "installedLauncher": "C:/Users/sjs95/.local/bin/claude.exe",
+    "reportedVersion": "2.1.283 (Claude Code)",
+    "installedLauncherSha256": "9dbe16dafed59da5cdabbfe11ad0335738c753fad794989b47f9446accd6de3a",
+    "installedLauncherBytes": 244960928,
+    "versionStoreFile": "C:/Users/sjs95/.local/share/claude/versions/2.1.283",
+    "versionStoreFileBytes": 244960928,
+    "versionStoreFileSha256": "NOT_RUN: the hash command was denied by the Claude Code auto-mode permission classifier and was not retried by another route",
+    "otherVersionsPresent": [
+      "2.1.281",
+      "2.1.282"
+    ],
+    "officialReleaseDigestComparison": "NOT_RUN: fetching the release manifest or binary would be a download, which this task forbids",
+    "sourceAvailability": "Claude Code is distributed as a compiled single executable with an embedded minified JavaScript bundle; no public source tree was available to pin. The inspected 'source' is the bundle text inside the version-store file, located by byte offset.",
+    "binding": "Version-to-bundle correspondence is limited to: the launcher reports 2.1.283, the launcher and versions/2.1.283 have the same byte size, and the bundle offsets below were read from versions/2.1.283. Byte identity of the two files and correspondence with an official release digest were not established.",
+    "runningSessionVersion": "The host-written session registry records inspected (~/.claude/sessions/10852.json and this writer's own 13484.json) report version 2.1.283. These are unauthenticated same-user files and are version context only."
+  },
+  "sourceLocations": [
+    {
+      "file": "versions/2.1.283",
+      "byteOffset": 202407736,
+      "finding": "Embedded hook-input schema: session_id, transcript_path, cwd, prompt_id (optional; described as a UUID correlating a user prompt with subsequent events until the next prompt, absent until the first user input of the process lifetime, joinable to OpenTelemetry prompt.id), permission_mode, agent_id (subagent only), and further optional fields."
+    },
+    {
+      "file": "versions/2.1.283",
+      "byteOffset": 210046175,
+      "finding": "Base hook-input builder returns {session_id, transcript_path, cwd, scratchpad_dir, prompt_id, permission_mode, agent_id, agent_type, effort}. An alternative branch returns session_id as `served:<origin.callerSessionId or unknown>` with an empty transcript_path, so the session_id value can be derived from a caller-supplied origin field rather than a host-minted session."
+    },
+    {
+      "file": "versions/2.1.283",
+      "byteOffset": 210041333,
+      "finding": "SessionStart, UserPromptSubmit and Stop/SubagentStop inputs spread the base fields and add event fields (source/model/agent_type/session_title; prompt/session_title; stop_hook_active/last_assistant_message/background_tasks/session_crons, plus agent_id/agent_transcript_path for SubagentStop). None of these constructions adds turn_id, a signature, a nonce, or a host process identity."
+    },
+    {
+      "file": "versions/2.1.283",
+      "byteOffset": 210025599,
+      "finding": "Only the MessageDisplay hook input carries turn_id (with message_id, index, final, delta); the embedded schema at offset 202420546 describes it as 'UUID of the current turn'."
+    },
+    {
+      "file": "versions/2.1.283",
+      "byteOffset": 207796403,
+      "finding": "A separate turn_id reader accepts a string turn_id from an inbound object only for relayed human messages (ccrTurnId). This is an input-validation path, not an attestation delivered to hooks."
+    }
+  ],
+  "documentation": {
+    "url": "https://code.claude.com/docs/en/hooks",
+    "fetchedAt": "2026-09-27, between 00:12:35Z and 00:16:33Z (single WebFetch summary)",
+    "documentSupported": {
+      "commonStdinFields": [
+        "session_id",
+        "prompt_id",
+        "transcript_path",
+        "cwd",
+        "scratchpad_dir",
+        "permission_mode",
+        "effort",
+        "hook_event_name",
+        "agent_id",
+        "agent_type"
+      ],
+      "hookEnvironmentVariables": [
+        "CLAUDE_PROJECT_DIR",
+        "CLAUDE_PLUGIN_ROOT",
+        "CLAUDE_PLUGIN_DATA",
+        "CLAUDE_EFFORT",
+        "CLAUDE_CODE_REMOTE",
+        "CLAUDE_CODE_BRIDGE_SESSION_ID",
+        "CLAUDE_PLUGIN_OPTION_<KEY>"
+      ],
+      "turnId": "Not found in the fetched page summary; the installed bundle exposes turn_id only for MessageDisplay.",
+      "authentication": "The fetched page summary reports no signature, attestation, nonce or authentication of hook input."
+    },
+    "limitation": "The page was read through a summarizing fetch tool. It is document-supported context only, not observation of this host."
+  },
+  "channels": [
+    {
+      "id": "command-hook-stdin",
+      "description": "JSON written by the host to a command hook child's stdin",
+      "channelExists": "PRESENT (installed bundle and documentation)",
+      "authenticatedHostOrigin": "ABSENT_IN_INSPECTED_SCHEMA",
+      "providedVersusAuthenticated": "Provides session_id, prompt_id, transcript_path, cwd, permission_mode, effort, agent ids and event fields. No field or construction binds these values to the host executable, a process instance, or a turn in a way a separately invoked verifier could check; any same-user process can start the same hook command with identical-looking JSON.",
+      "falsifier": "A 2.1.283 bundle location or reproducible installed-release observation that delivers a host-signed or otherwise verifiable process-and-turn claim to the hook child would overturn this. Field presence, a matching PID or a claude.exe process name would not."
+    },
+    {
+      "id": "hook-child-environment",
+      "description": "Environment variables set for hook commands",
+      "channelExists": "PRESENT (documented variables listed above)",
+      "authenticatedHostOrigin": "UNKNOWN",
+      "providedVersusAuthenticated": "No documented variable is described as an origin credential. Enumerating undocumented variables from the installed bundle was denied by the auto-mode permission classifier (credential exploration) and was not pursued by any other route.",
+      "falsifier": "An approved inspection showing a per-hook host-issued secret with a verifier contract would move this to PRESENT; showing none would move it to ABSENT."
+    },
+    {
+      "id": "turn-identity-in-hooks",
+      "description": "turn_id availability for UserPromptSubmit, Stop and other hook events",
+      "channelExists": "ABSENT for UserPromptSubmit, Stop, SubagentStop and SessionStart; PRESENT only for MessageDisplay",
+      "authenticatedHostOrigin": "ABSENT_IN_INSPECTED_SCHEMA",
+      "providedVersusAuthenticated": "MessageDisplay turn_id and the prompt_id correlation UUID are plain fields. prompt_id is absent until the first user input and is a correlation key, not an exclusivity or authority token.",
+      "falsifier": "A bundle path adding turn_id or a verifiable turn claim to UserPromptSubmit/Stop inputs."
+    },
+    {
+      "id": "single-active-turn-without-turn-id",
+      "description": "Whether hook-visible data can prove exactly one active turn when turn_id is absent",
+      "channelExists": "NOT_APPLICABLE",
+      "authenticatedHostOrigin": "UNKNOWN",
+      "determination": "NOT_PROVABLE_FROM_PROVIDED_FIELDS",
+      "counterEvidence": [
+        "Stop input carries background_tasks and session_crons, so work can continue in a session outside the foreground prompt.",
+        "Subagent hook inputs carry agent_id/agent_type, so several agents can fire hooks under one session_id.",
+        "The session registry has kind values including 'bg' and status busy/idle; session state alone does not serialize turns.",
+        "prompt_id changes per user prompt but no field states that no other prompt or agent is concurrently active."
+      ],
+      "falsifier": "A documented or bundle-level guarantee, delivered with the hook input, that a session admits one active turn and identifies it verifiably."
+    },
+    {
+      "id": "session-registry-files",
+      "description": "~/.claude/sessions/<pid>.json and <pid>.<hex>.key written by the host",
+      "channelExists": "PRESENT (32 files observed, JSON records and .key files together; JSON fields pid, sessionId, cwd, startedAt, procStart, version, peerProtocol, peerFeatures, kind, entrypoint, pidDomain, messagingSocketPath, name, nameSource, nameSince, jobId, status, statusUpdatedAt, updatedAt, bridgeSessionId)",
+      "authenticatedHostOrigin": "ABSENT_AS_SEPARATE_PRINCIPAL",
+      "providedVersusAuthenticated": "These are same-user files keyed by PID and process start time. Same-user readability and writability cannot establish a separate principal, and PID/procStart are excluded as authority. The .key files were listed by name and size only; their contents were not read and their purpose is UNKNOWN.",
+      "falsifier": "Evidence that the registry or key material is protected from other same-user processes and paired with a verifier bound to the host executable and turn."
+    },
+    {
+      "id": "session-id-value",
+      "description": "Whether session_id itself is host-minted",
+      "channelExists": "PRESENT",
+      "authenticatedHostOrigin": "ABSENT",
+      "providedVersusAuthenticated": "The bundle has a branch that forms session_id from a caller-supplied origin.callerSessionId (`served:` prefix). session_id is therefore an identifier, not proof of which host or process produced the event.",
+      "falsifier": "Not applicable; an identifier cannot become an attestation by itself."
+    },
+    {
+      "id": "mcp-tool-and-transcript-files",
+      "description": "Host-to-MCP-server requests and transcript JSONL files",
+      "channelExists": "UNKNOWN (not inspected within this task)",
+      "authenticatedHostOrigin": "UNKNOWN",
+      "providedVersusAuthenticated": "Not inspected. Transcripts are same-user files and could not establish a separate principal even if they carried turn data.",
+      "falsifier": "A later scoped inspection of MCP request metadata or transcript records."
+    }
+  ],
+  "selfObservation": {
+    "rule": "The writer is itself a Claude Code 2.1.283 session on this machine. Its own hook input, turn payloads and AGS plugin hook injections are recorded here only as self-observation and are not used as host-origin evidence.",
+    "items": [
+      "AGS peer messages were injected into this session through UserPromptSubmit and PostToolUse additional context; one arrived mid-turn after a tool call.",
+      "update_session_status returned sessionId 953d6a7d-4300-433a-8bb6-4a18ba901511, bound by the AGS plugin hook.",
+      "This session's own registry record 13484.json reports kind 'bg', status 'busy' and version 2.1.283.",
+      "Model string claude-opus-5-5 appears in this session's host system prompt; effort was not observable inside the session."
+    ]
+  },
+  "notAuthorityEvidence": [
+    "PID, procStart, process name claude.exe, or parent/ancestor relationship",
+    "turn_id, prompt_id, session_id or any hash of them",
+    "ordinary hook execution, hook additional context, ACK or Stop events",
+    "same-user files under ~/.claude, including session registry and key files",
+    "documentation statements without observation on this host"
+  ],
+  "determination": {
+    "independentHostOriginChannel": "UNKNOWN",
+    "commandHookStdin": "ABSENT_IN_INSPECTED_SCHEMA",
+    "hookEnvironment": "UNKNOWN",
+    "turnIdForPromptAndStop": "ABSENT",
+    "singleActiveTurnProof": "NOT_PROVABLE_FROM_PROVIDED_FIELDS",
+    "sessionRegistry": "ABSENT_AS_SEPARATE_PRINCIPAL",
+    "wProductGate": "CLOSED",
+    "productDisposition": "No W06-a-claude product implementation and no combined two-host W06 completion is claimed. The W product gate stays closed.",
+    "reason": "The inspected 2.1.283 hook inputs are ordinary fields with no verifiable host-origin process-and-turn claim, turn_id is missing for prompt and stop events, and the remaining candidate channels are either same-user state or were not inspected.",
+    "remainingUnknowns": [
+      "Undocumented hook-child environment variables (inspection denied)",
+      "Byte identity of versions/2.1.283 with the launcher and with an official release digest",
+      "MCP request metadata and transcript records"
+    ]
+  },
+  "verification": {
+    "installedVersionQuery": "PASS",
+    "launcherDigest": "PASS",
+    "versionStoreDigest": "NOT_RUN",
+    "officialDigestComparison": "NOT_RUN",
+    "bundleSchemaInspection": "PASS",
+    "hookEnvironmentInspection": "NOT_RUN",
+    "documentationRead": "PASS",
+    "liveHookRerun": "NOT_RUN",
+    "productTests": "NOT_RUN",
+    "productCodeChanges": "NONE"
+  }
+}
