@@ -9,7 +9,7 @@ const CONTRACT_ID = 'ags-protected-node-closure/v2';
 const TARGET = 'windows-x64';
 const SIGNER = '5BE8A3F6C8A5C01D106C0AD820B1A390B168D356';
 const KEYRING_SHA256 = '610b8d249da3d5733f5a128def2dd0294dbbf5b5713e6ca2529db8db419dee00';
-const HOST_MANIFEST_SHA256 = 'c512498add740c23be75e643334b4a55429be873e06b54721e73954332e4457a';
+const HOST_MANIFEST_SHA256 = '9542e833bab74614eb5196b37702f082f567381bc16cf84df1171917d2405fed';
 const GPGV_SHA256 = 'f4d13204d77fdf63c02b0e6742230f83a833128c28f7b715709c2c63a96c427b';
 const TAR_SHA256 = '4e598a8cec84af779e3377442fce2b94b976f614ed4c6e5a665e19308fd1e379';
 const HASH = /^[a-f0-9]{64}$/;
@@ -26,6 +26,20 @@ export function releaseId(version, archiveHash, manifestHash) {
   assert.match(archiveHash, HASH);
   assert.match(manifestHash, HASH);
   return sha256(Buffer.from([CONTRACT_ID, TARGET, version, archiveHash, manifestHash, ''].join('\n')));
+}
+
+const installRoot = (id) => `C:\\ProgramData\\agent-governance-suite\\protected-runtime\\${id}`;
+
+export function verifyPreparedEvidence(prepared) {
+  if (prepared?.contractId !== CONTRACT_ID || prepared.revision !== '2' || prepared.status !== 'PREPARED'
+    || prepared.os !== 'win32' || prepared.arch !== 'x64') fail('not a Windows PREPARED staging record');
+  if (prepared.hostIntegrationSha256 !== HOST_MANIFEST_SHA256) fail('stale package epoch');
+  if (prepared.signerFingerprint !== SIGNER || prepared.keyringSha256 !== KEYRING_SHA256
+    || prepared.gpgvSha256 !== GPGV_SHA256 || prepared.tarSha256 !== TAR_SHA256) fail('untrusted release key or tool pin');
+  if (prepared.archiveName !== `node-v${prepared.nodeVersion}-win-x64.zip` || !HASH.test(prepared.nodeSha256 ?? '')) fail('archive or node record mismatch');
+  const id = releaseId(prepared.nodeVersion, prepared.archiveSha256, prepared.hostIntegrationSha256);
+  if (prepared.releaseSha256 !== id || prepared.intendedInstallRoot !== installRoot(id)) fail('release identity mismatch');
+  return id;
 }
 
 export function archiveDigestFromSignedChecksums(checksums, version) {
@@ -161,9 +175,10 @@ export function stageWindowsCandidate({ inputDir, packageRoot, outputDir, versio
     gpgvSha256: GPGV_SHA256, tarSha256: TAR_SHA256,
     hostIntegrationSha256: pkg.manifestHash, artifactCount: pkg.manifest.artifacts.length,
     releaseSha256: id,
-    intendedInstallRoot: `C:\\ProgramData\\agent-governance-suite\\protected-runtime\\${id}`,
+    intendedInstallRoot: installRoot(id),
     limitations: ['user-writable staging', 'no protected installation', 'no DLL closure', 'no live host qualification'],
   };
+  verifyPreparedEvidence(evidence);
   writeFileSync(path.join(outputDir, 'prepared.json'), `${JSON.stringify(evidence, null, 2)}\n`, { flag: 'wx' });
   return evidence;
 }
