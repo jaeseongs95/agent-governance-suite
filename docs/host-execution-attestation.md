@@ -12,6 +12,8 @@
 
 Codex 공식 [Hooks 문서](https://learn.chatgpt.com/docs/hooks)는 현재 `model`, `session_id`, `transcript_path`와 `PreToolUse`의 `turn_id`, `tool_use_id`, `tool_input`, `updatedInput`을 정의한다. effort는 같은 턴의 host-recorded `turn_context`에서 읽는다. 이 transcript 형식은 안정된 host API가 아니므로 모양이 바뀌거나 관측이 없으면 추정하지 않는다.
 
+같은 문서의 `PreToolUse` 계약은 `updatedInput`을 `permissionDecision: "allow"`와 함께 반환하도록 요구한다. Codex adapter는 정확한 AGS 두 도구에서 관측 token을 주입하거나 caller token을 제거할 때 이 입력 치환 형식을 사용한다. 승인 요청을 결정하는 `PermissionRequest`의 `decision.behavior: "allow"`는 별도 이벤트이며 이 adapter는 해당 이벤트에 등록하지 않는다. 이 구분만으로 모든 host 승인 정책의 실제 동작을 검증했다고 주장하지 않는다. 관측이 없거나 잘못되면 서버의 binding gate가 실행을 거절하는지 native 검사에서 별도로 확인한다.
+
 Codex adapter는 첫 256 KiB에서 `session_meta.id`를, 마지막 8 MiB에서 가장 최근 `turn_context`를 읽는다. 전체 history scan, polling과 daemon은 없다. 최근 turn이 Hook의 turn과 다르거나 그 metadata가 읽기 범위 밖이면 구체적인 진단과 함께 token을 제거한다. 새 native turn의 관측이나 host-owned wrapper 연결이 필요하다. 같은 OS 사용자 범위의 협력적 보증이며 로그와 키를 읽을 수 있는 악의적 사용자의 위조를 막는 OS 격리는 아니다.
 
 Codex subagent Hook의 session ID는 parent일 수 있다. `agent_id`, subagent metadata 또는 session/turn 불일치를 발견하면 parent의 모델·effort를 빌려 쓰지 않는다. 현재 adapter는 독립된 child 신원을 증명하지 못하는 subagent 경로를 지원 완료로 표시하지 않는다.
