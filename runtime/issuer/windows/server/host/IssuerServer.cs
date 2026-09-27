@@ -14,6 +14,8 @@ namespace Ags.Issuer.Windows.Host
     // fixed deadline from accept (reading, writing and waiting for the client to close; pieces never extend it): the frame
     // is read up to the LF within FrameAdapter.MaxFrameBytes, the peer SID comes from this connection's token
     // (RunAsClient), FrameAdapter answers, and the server then waits for the client to close before disconnecting.
+    // The deadline is checked before each new I/O, after each completed I/O and right before the core call, so once
+    // execution resumes the expiry is judged first; this is not a bound on wall-clock scheduling delays.
     // Overlapped I/O on one thread; a cancelled I/O is reused only after its completion is seen within CancelGraceMs.
     // If that is not seen, or impersonation cannot be reverted, the process ends at once without touching the buffers.
     // stderr carries one "outcome <kind> end <reason> core-calls <n> late-bytes <n>" line per connection.
@@ -126,12 +128,23 @@ namespace Ags.Issuer.Windows.Host
                 if (peer == null || !IssuerPipe.IsAllowedSid(peer)) kind = "fail-closed";
                 else
                 {
-                    FrameOutcome outcome = adapter.Handle(peer, frame, length);
-                    kind = outcome.Kind;
-                    if (outcome.Response != null)
+                    // Deadline gate at the core call: an expired connection gets no new core call and no response.
+                    FrameOutcome outcome = Expired(clock) ? null : adapter.Handle(peer, frame, length);
+                    if (outcome == null)
                     {
-                        Marshal.Copy(outcome.Response, 0, writeBuffer, outcome.Response.Length);
-                        end = Io(false, writeBuffer, outcome.Response.Length, clock) == -1 ? "deadline" : WaitForClose(clock);
+                        kind = "timeout";
+                        end = "deadline";
+                    }
+                    else
+                    {
+                        kind = outcome.Kind;
+                        if (outcome.Response != null)
+                        {
+                            Marshal.Copy(outcome.Response, 0, writeBuffer, outcome.Response.Length);
+                            // Io's gate does not start the write once expired; a write completing around the deadline is
+                            // reported as "deadline" and its delivery stays unknown.
+                            end = Io(false, writeBuffer, outcome.Response.Length, clock) == -1 ? "deadline" : WaitForClose(clock);
+                        }
                     }
                 }
             }
@@ -177,6 +190,8 @@ namespace Ags.Issuer.Windows.Host
         // closed, -1 at the deadline (the I/O is cancelled and its completion seen) and -2 on any other failure.
         static int Io(bool read, IntPtr buffer, int size, Stopwatch clock)
         {
+            // Deadline gate before any new I/O: when execution resumes after a pause, the expiry is judged first.
+            if (Expired(clock)) return -1;
             Prepare();
             bool done = read ? ReadFile(pipe, buffer, (uint)size, IntPtr.Zero, overlapped) : WriteFile(pipe, buffer, (uint)size, IntPtr.Zero, overlapped);
             if (!done)
@@ -195,9 +210,12 @@ namespace Ags.Issuer.Windows.Host
                 }
             }
             uint moved;
-            if (GetOverlappedResult(pipe, overlapped, out moved, false)) return (int)moved;
+            // The I/O is complete here (immediately or signalled); bytes moved once the deadline has passed are not used.
+            if (GetOverlappedResult(pipe, overlapped, out moved, false)) return Expired(clock) ? -1 : (int)moved;
             return Closed(Marshal.GetLastWin32Error()) ? 0 : -2;
         }
+
+        static bool Expired(Stopwatch clock) { return clock.ElapsedMilliseconds >= DeadlineMs; }
 
         static bool Closed(int error) { return error == ErrorBrokenPipe || error == ErrorNoData || error == ErrorPipeNotConnected; }
 

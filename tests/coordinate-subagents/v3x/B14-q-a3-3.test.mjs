@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import net from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { clearTimeout, setTimeout } from 'node:timers';
+import { clearTimeout, setImmediate, setTimeout } from 'node:timers';
 import { fileURLToPath } from 'node:url';
 import { afterAll, afterEach, beforeAll, describe, test } from 'vitest';
 import { Ajv2020 } from 'ajv/dist/2020.js';
@@ -395,7 +395,7 @@ describe('B14-q-a3-3b-2 issuer server over the pipe', () => {
   }
   // A Node client: writes the chunks (pause between them), reads until the first LF, then closes at once ('now'),
   // keeps the pipe open ('open'), or never reads (read: false). `after` is written once the response has arrived.
-  function talk(name, chunks, { pause = 0, read = true, close = 'now', after, wait = 6000 } = {}) {
+  function talk(name, chunks, { pause = 0, read = true, close = 'now', after, flood = false, wait = 6000 } = {}) {
     return new Promise((resolve) => {
       const begun = Date.now();
       const socket = net.connect(pipePath('.', name));
@@ -425,6 +425,9 @@ describe('B14-q-a3-3b-2 issuer server over the pipe', () => {
         if (lf >= 0 && response === undefined) {
           response = JSON.parse(bytes.subarray(0, lf).toString('utf8'));
           if (after) socket.write(after);
+          // flood: keep bytes queued on the pipe without pause until the server ends the connection.
+          const pour = () => { if (finished) return; if (socket.writableLength < 65536) socket.write(Buffer.alloc(1024, 0x20)); setImmediate(pour); };
+          if (flood) pour();
           if (close === 'now') finish('closed-by-client');
         }
       });
@@ -630,6 +633,35 @@ describe('B14-q-a3-3b-2 issuer server over the pipe', () => {
     }
     assert.deepEqual(exits.filter((code) => code !== null), [], JSON.stringify(exits));
   }, 60000);
+
+  // G1~G3 FIXTURE: a test-only build pauses the server thread (Thread.Sleep past the deadline) at one point; when it
+  // resumes it must judge the expiry first. This shows the deadline gates, not any bound on real scheduling delays.
+  for (const [label, from, to, calls] of [
+    ['G1 after accept, before a read of bytes already buffered', 'var clock = Stopwatch.StartNew();', 'var clock = Stopwatch.StartNew(); Thread.Sleep(2300);', 0],
+    ['G2 right before the core call', 'FrameOutcome outcome = ', 'Thread.Sleep(2300); FrameOutcome outcome = ', 0],
+    ['G3 right before the response is written', 'end = Io(false,', 'Thread.Sleep(2300); end = Io(false,', 1],
+  ]) {
+    fixture(`${label}: a pause past the deadline ends the connection with no response and core calls ${calls} (test-only build)`, async () => {
+      const paused = variant(`pause-${label.slice(0, 2)}`, { 'host/IssuerServer.cs': [[from, to]] });
+      const name = uniqueName(`b2-${label.slice(0, 2)}`);
+      const child = await started(name, me, otherCaller, paused.runs[0].path);
+      const result = await talk(name, [frame(epochRequest(n('a')))]);
+      assert.equal(result.response, undefined, JSON.stringify(result));
+      const [line] = await lines(child, 1);
+      assert.deepEqual([line.end, line.coreCalls], ['deadline', calls]);
+    }, 120000);
+  }
+
+  fixture('T9 a client that keeps sending after the response is still ended at the same deadline', async () => {
+    const name = uniqueName('b2-flood');
+    const child = await started(name);
+    const result = await talk(name, [frame(epochRequest(n('a')))], { close: 'open', flood: true, wait: 8000 });
+    assert.equal(result.response?.status, 'ok');
+    assert.ok(serverClosed(result) && result.elapsed >= DEADLINE - 500 && result.elapsed <= DEADLINE + 1500, JSON.stringify({ why: result.why, elapsed: result.elapsed }));
+    const [line] = await lines(child, 1);
+    assert.deepEqual([line.outcome, line.end, line.coreCalls], ['response', 'deadline', 1]);
+    assert.ok(line.lateBytes > 0);
+  });
 
   fixture('F1 FIXTURE: when a cancelled I/O is not seen to complete, the server stops without reusing anything (test-only build)', async () => {
     const stuck = variant('stuck', { 'host/IssuerServer.cs': [['bool cancelled = ev.WaitOne(CancelGraceMs);', 'bool cancelled = false;']] });
