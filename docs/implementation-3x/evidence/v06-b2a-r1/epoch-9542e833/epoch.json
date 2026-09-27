@@ -2,28 +2,35 @@
   "epoch": "epoch-9542e833",
   "task": "V06-b2a-r1",
   "status": "PREPARED",
-  "producedAt": "2026-09-27T04:01:11Z",
+  "producedAt": "2026-09-27T04:08:58Z",
   "sourceBase": {
     "ref": "codex/v260-semantic-decision-layer",
     "commit": "ffec7c91dfae2389e8b95f47616644e0b6729f96",
     "tree": "2a5de4fc5d0f1ca192f5b27bad5583acbb8ef396",
     "hostIntegrationSha256": "9542e833bab74614eb5196b37702f082f567381bc16cf84df1171917d2405fed",
-    "bundleCheck": "pnpm bundle:check exit 0 at 2026-09-27T04:01:09Z"
+    "bundleCheck": "pnpm bundle:check exit 0 at 2026-09-27T04:08:56Z (worktree 0349b709 plus uncommitted verifier fix; host-integration.json 9542e833 unchanged)"
   },
   "producer": {
     "script": "scripts/qualification/v06-b2a-windows-stage.mjs",
-    "scriptSha256": "1cf4d99c4e089d3f1dccdacf7b97a6037e54d1f723840e8b6bbf3b2358099cad",
-    "baseCommit": "ffec7c91dfae2389e8b95f47616644e0b6729f96",
-    "dirtyDiffSha256": "2166531d568ac8f203cdf7ed06ca685989a87580d9ee307ef2f3e2a667d9b141",
+    "scriptSha256": "185efd61573fe8a0ae0ffcb8533b3efd53f868084adc48b4c774fe838bed7b8b",
+    "baseCommit": "0349b7094419a8f31a29e4cbbbdad5133da45644",
+    "dirtyDiffSha256": "65f18a84b425c032893ba2c283cebeced20f8f6b2e9565a9dab0d4dfc2abf52b",
     "dirtyDiff": "git diff HEAD -- scripts/qualification/v06-b2a-windows-stage.mjs",
     "node": "v24.19.0",
     "finalCommit": "recorded in handoff (committed after this run)"
   },
-  "superseded": {
-    "epoch": "epoch-0a8b7b87",
-    "reason": "draft staged from stale host-integration.json 0a8b7b87 (missing contracts/user-approval-channel.v1.schema.json); not evidence",
-    "outputDir": "C:/Users/sjs95/AppData/Local/Temp/ags-v06-b2a-r1-stage-20260927T0355Z"
-  },
+  "superseded": [
+    {
+      "epoch": "epoch-0a8b7b87",
+      "reason": "draft staged from stale host-integration.json 0a8b7b87 (missing contracts/user-approval-channel.v1.schema.json); not evidence",
+      "outputDir": "C:/Users/sjs95/AppData/Local/Temp/ags-v06-b2a-r1-stage-20260927T0355Z"
+    },
+    {
+      "epoch": "epoch-9542e833 run 04:01:11Z",
+      "reason": "producer 0349b709 lacked fixed archive/node/limitations checks in verifyPreparedEvidence (independent audit finding 1-2); same prepared bytes, not final evidence",
+      "outputDir": "C:/Users/sjs95/AppData/Local/Temp/ags-v06-b2a-r1-stage-20260927T0401Z"
+    }
+  ],
   "nodeInputs": {
     "copiedFrom": "C:/Users/sjs95/AppData/Local/Temp/ags-v06-b2a-1790236500684-839753882",
     "inputDir": "C:/Users/sjs95/AppData/Local/Temp/ags-v06-b2a-r1-input-20260927T0354Z",
@@ -45,7 +52,7 @@
     }
   },
   "staging": {
-    "outputDir": "C:/Users/sjs95/AppData/Local/Temp/ags-v06-b2a-r1-stage-20260927T0401Z",
+    "outputDir": "C:/Users/sjs95/AppData/Local/Temp/ags-v06-b2a-r1-stage-20260927T0409Z",
     "preparedSha256": "874f42b07c975826ff67033077054e534d4ad4427995194b115784e7d1879a86",
     "nodeExeSha256": "3602f2bb1a10f2cbab4c36886218a33c1ab3db87290e73b033c46c77147d0237",
     "stagedInputs": {

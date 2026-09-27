@@ -12,6 +12,11 @@ const KEYRING_SHA256 = '610b8d249da3d5733f5a128def2dd0294dbbf5b5713e6ca2529db8db
 const HOST_MANIFEST_SHA256 = '9542e833bab74614eb5196b37702f082f567381bc16cf84df1171917d2405fed';
 const GPGV_SHA256 = 'f4d13204d77fdf63c02b0e6742230f83a833128c28f7b715709c2c63a96c427b';
 const TAR_SHA256 = '4e598a8cec84af779e3377442fce2b94b976f614ed4c6e5a665e19308fd1e379';
+const NODE_VERSION = '24.19.0';
+const ARCHIVE_SHA256 = '57f71ab3652e797d84acddc79c81cc9ff1c6ddb2a1974cdb83f00fee9bff4c73';
+const NODE_SHA256 = '3602f2bb1a10f2cbab4c36886218a33c1ab3db87290e73b033c46c77147d0237';
+const KEYRING_SOURCE_COMMIT = '481637f813e912c4aa3622d7964ab426c97b8e8d';
+const LIMITATIONS = ['user-writable staging', 'no protected installation', 'no DLL closure', 'no live host qualification'];
 const HASH = /^[a-f0-9]{64}$/;
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const fail = (reason) => { throw new Error(reason); };
@@ -35,8 +40,12 @@ export function verifyPreparedEvidence(prepared) {
     || prepared.os !== 'win32' || prepared.arch !== 'x64') fail('not a Windows PREPARED staging record');
   if (prepared.hostIntegrationSha256 !== HOST_MANIFEST_SHA256) fail('stale package epoch');
   if (prepared.signerFingerprint !== SIGNER || prepared.keyringSha256 !== KEYRING_SHA256
-    || prepared.gpgvSha256 !== GPGV_SHA256 || prepared.tarSha256 !== TAR_SHA256) fail('untrusted release key or tool pin');
-  if (prepared.archiveName !== `node-v${prepared.nodeVersion}-win-x64.zip` || !HASH.test(prepared.nodeSha256 ?? '')) fail('archive or node record mismatch');
+    || prepared.keyringSourceCommit !== KEYRING_SOURCE_COMMIT || prepared.gpgvSha256 !== GPGV_SHA256
+    || prepared.tarSha256 !== TAR_SHA256) fail('untrusted release key or tool pin');
+  if (prepared.nodeVersion !== NODE_VERSION || prepared.archiveName !== `node-v${NODE_VERSION}-win-x64.zip`
+    || prepared.archiveSha256 !== ARCHIVE_SHA256 || prepared.nodeSha256 !== NODE_SHA256) fail('archive or node record mismatch');
+  if (!Number.isInteger(prepared.artifactCount) || prepared.artifactCount < 1
+    || JSON.stringify(prepared.limitations) !== JSON.stringify(LIMITATIONS)) fail('package count or limitations mismatch');
   const id = releaseId(prepared.nodeVersion, prepared.archiveSha256, prepared.hostIntegrationSha256);
   if (prepared.releaseSha256 !== id || prepared.intendedInstallRoot !== installRoot(id)) fail('release identity mismatch');
   return id;
@@ -171,12 +180,12 @@ export function stageWindowsCandidate({ inputDir, packageRoot, outputDir, versio
     contractId: CONTRACT_ID, revision: '2', status: 'PREPARED', os: 'win32', arch: 'x64',
     nodeVersion: version, archiveName: release.archiveName, archiveSha256: release.archiveHash,
     nodeSha256: nodeHash, signerFingerprint: release.signerFingerprint,
-    keyringSha256: KEYRING_SHA256, keyringSourceCommit: '481637f813e912c4aa3622d7964ab426c97b8e8d',
+    keyringSha256: KEYRING_SHA256, keyringSourceCommit: KEYRING_SOURCE_COMMIT,
     gpgvSha256: GPGV_SHA256, tarSha256: TAR_SHA256,
     hostIntegrationSha256: pkg.manifestHash, artifactCount: pkg.manifest.artifacts.length,
     releaseSha256: id,
     intendedInstallRoot: installRoot(id),
-    limitations: ['user-writable staging', 'no protected installation', 'no DLL closure', 'no live host qualification'],
+    limitations: LIMITATIONS,
   };
   verifyPreparedEvidence(evidence);
   writeFileSync(path.join(outputDir, 'prepared.json'), `${JSON.stringify(evidence, null, 2)}\n`, { flag: 'wx' });
