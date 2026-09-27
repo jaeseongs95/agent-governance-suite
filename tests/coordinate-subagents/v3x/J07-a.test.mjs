@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { access, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { performance } from 'node:perf_hooks';
+import { clearTimeout, setTimeout } from 'node:timers';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { test } from 'vitest';
@@ -181,8 +183,20 @@ test('J07-a rejects inconsistent durable bounds and invalid clocks without dropp
   });
 });
 
-function claimant(path, id) {
-  const code = `import { DatabaseSync } from 'node:sqlite';
+function bounded(promise, milliseconds, label) {
+  let timer;
+  return Promise.race([promise, new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} deadline exceeded`)), milliseconds);
+  })]).finally(() => clearTimeout(timer));
+}
+
+function claimant(path, id, fault, deadlineMs) {
+  const faults = {
+    'exit-before-ready': 'process.exit(0);',
+    'silent-before-ready': 'setInterval(() => {}, 1000);',
+    'silent-response': 'process.send({ ready: true }); setInterval(() => {}, 1000);',
+  };
+  const code = faults[fault] ?? `import { DatabaseSync } from 'node:sqlite';
     import { SemanticShadowQueue } from './mcp-server/src/semantic/shadow-queue.ts';
     const db = new DatabaseSync(process.argv[1]);
     const queue = new SemanticShadowQueue(db, { capacity: 2, claimTimeoutMs: 100, now: () => ${NOW} });
@@ -191,43 +205,75 @@ function claimant(path, id) {
       finally { db.close(); process.disconnect(); }
     });
     process.send({ ready: true });`;
-  const child = spawn(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', code, path, id],
-    { cwd: root, stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
+  const child = spawn(process.execPath, [...(fault ? [] : ['--import', 'tsx']), '--input-type=module', '-e', code, path, id],
+    { cwd: root, windowsHide: true, stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
+  const closed = new Promise(resolve => child.once('close', resolve));
   let stderr = '';
   child.stderr.on('data', chunk => { stderr += chunk.toString(); });
-  const ready = new Promise((resolve, reject) => {
+  const ready = bounded(new Promise((resolve, reject) => {
     child.once('error', reject);
     child.on('message', message => { if (message.ready) resolve(); });
-    child.once('exit', code => { if (code !== 0) reject(new Error(stderr)); });
-  });
-  const result = new Promise((resolve, reject) => {
+    child.once('close', code => reject(new Error(stderr || `Exited before ready (code ${code})`)));
+  }), deadlineMs, `${id} ready`);
+  const result = bounded(new Promise((resolve, reject) => {
     let claim;
     child.once('error', reject);
     child.on('message', message => { if ('claim' in message) claim = message.claim; });
-    child.once('exit', code => {
+    child.once('close', code => {
       if (code !== 0 || claim === undefined) reject(new Error(stderr || 'No claim result'));
       else resolve(claim);
     });
-  });
-  return { child, ready, result };
+  }), deadlineMs, `${id} result`);
+  // Either phase can reject before the coordinator reaches its await.
+  ready.catch(() => {});
+  result.catch(() => {});
+  return { child, ready, result, closed };
+}
+
+async function compete(path, { faults = [null, null], deadlineMs = 10000, pids = [] } = {}) {
+  const contenders = faults.map((fault, index) => claimant(path, `process-${index}`, fault, deadlineMs));
+  pids.push(...contenders.map(worker => worker.child.pid).filter(pid => pid !== undefined));
+  const results = Promise.all(contenders.map(worker => worker.result));
+  results.catch(() => {});
+  try {
+    await Promise.all(contenders.map(worker => worker.ready));
+    for (const worker of contenders) worker.child.send('go');
+    return await results;
+  } finally {
+    for (const worker of contenders) {
+      if (worker.child.exitCode === null && worker.child.signalCode === null) worker.child.kill('SIGKILL');
+    }
+    await bounded(Promise.all(contenders.map(worker => worker.closed)), 5000, 'Child close/reap');
+    for (const pid of pids) assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' });
+  }
 }
 
 test('J07-a two independent processes racing for one queued item obtain exactly one claim', async () => {
   await withQueue(async ({ queue, path }) => {
     queue.enqueue('key-1', request());
-    const contenders = [claimant(path, 'process-a'), claimant(path, 'process-b')];
-    // Attach rejection handlers before either child can exit.
-    const results = Promise.all(contenders.map(worker => worker.result));
-    try {
-      await Promise.all(contenders.map(worker => worker.ready));
-      for (const worker of contenders) worker.child.send('go');
-      const claims = (await results).filter(Boolean);
-      assert.equal(claims.length, 1);
-      assert.equal(queue.diagnostics().claimed, 1);
-      assert.equal(queue.acknowledge(claims[0]), true);
-    } finally {
-      for (const worker of contenders) if (worker.child.exitCode === null) worker.child.kill();
-      await results.catch(() => {});
-    }
+    const claims = (await compete(path)).filter(Boolean);
+    assert.equal(claims.length, 1);
+    assert.equal(queue.diagnostics().claimed, 1);
+    assert.equal(queue.acknowledge(claims[0]), true);
   });
 });
+
+for (const [fault, error] of [
+  ['exit-before-ready', /Exited before ready \(code 0\)/u],
+  ['silent-before-ready', /ready deadline exceeded/u],
+  ['silent-response', /result deadline exceeded/u],
+]) {
+  test(`J07-a claimant ${fault} fails within its deadline and reaps both children before removing the temporary root`, async () => {
+    const pids = [];
+    let directory;
+    const started = performance.now();
+    await withQueue(async ({ path }) => {
+      directory = dirname(path);
+      await assert.rejects(compete(path, { faults: [fault, 'silent-response'], deadlineMs: 1000, pids }), error);
+    });
+    assert.ok(performance.now() - started < 8000);
+    assert.equal(pids.length, 2);
+    for (const pid of pids) assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' });
+    await assert.rejects(access(directory), { code: 'ENOENT' });
+  });
+}
