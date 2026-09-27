@@ -196,7 +196,8 @@ describe('P5 broker negotiation and resolver feed',()=>{
   it('bounds slot storage while expired publications free capacity',()=>{
     const h=harness();for(let i=0;i<256;i++){const p=h.setup('slot-'+i);h.store.publish(h.sign(p),start);}
     const overflow=h.setup('overflow');expect(()=>h.store.publish(h.sign(overflow),start)).toThrow(/slot limit/u);
-    const late=start+61000;h.sessions.heartbeatPresence(overflow.identity,'i-1',late);
+    for(const beat of [15000,30000,45000,60000])expect(h.sessions.heartbeatPresence(overflow.identity,'i-1',start+beat)).toBe(true);
+    const late=start+61000;expect(h.sessions.heartbeatPresence({...overflow.identity,sessionId:'slot-0'},'i-1',late)).toBe(false);
     overflow.snapshot=seal({...overflow.snapshot,observedAt:at(61000),expiresAt:at(121000)},'snapshotDigest');
     expect(h.store.publish(h.sign(overflow,at(61000)),late).duplicate).toBe(false);
     expect(h.store.list({},late).entries).toHaveLength(1);

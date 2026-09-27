@@ -84,7 +84,9 @@ const callerLocks = {
   '(c) an in-box csc copy in the NuGet layout with a matching lock': (dir) => ({ root: join(dir, 'attacker'), lock: inBoxCopyToolchain(join(dir, 'attacker')) }),
 };
 for (const [name, callerInput] of Object.entries(callerLocks)) {
-  test(`B14-q-a3-1b (F1) ${name} is refused with no compiler call`, () => inTemp((dir) => {
+  // (c) copies the real in-box csc, which exists only on Windows; (a) and (b) are refused before any file is read.
+  const run = name.startsWith('(c)') && process.platform !== 'win32' ? test.skip : test;
+  run(`B14-q-a3-1b (F1) ${name} is refused with no compiler call`, () => inTemp((dir) => {
     writeFileSync(join(dir, 'P.cs'), program);
     assert.throws(() => buildTwice({ ...callerInput(dir), ...request(dir) }), /callers cannot pass/);
     assert.equal(compilerCalls(), 0);
@@ -122,12 +124,15 @@ test('B14-q-a3-1b (4) a one-byte source change or another /out name is not the s
   const csc = join(dir, 'roslyn', '5.9.0', fixtureLock.compiler);
   writeFileSync(join(dir, 'P.cs'), program);
   writeFileSync(join(dir, 'Q.cs'), program.replace('ags', 'agt'));
-  const base = inputOf({ compiler: csc, ...request(dir) });
+  // Fixture reference bytes keep this input check independent of the Windows framework directory.
+  writeFileSync(join(dir, 'ref.dll'), 'fixture reference');
+  const req = (extra = {}) => request(dir, { references: [join(dir, 'ref.dll')], ...extra });
+  const base = inputOf({ compiler: csc, ...req() });
   const record = (input) => ({ input, sha256: 'a'.repeat(64) });
-  assert.doesNotThrow(() => compareBuilds(record(base), record(inputOf({ compiler: csc, ...request(dir) }))));
-  const oneByte = inputOf({ compiler: csc, ...request(dir, { sources: [join(dir, 'Q.cs')] }) });
-  const sameNameOneByte = (() => { writeFileSync(join(dir, 'P.cs'), program.replace('ags', 'agt')); return inputOf({ compiler: csc, ...request(dir) }); })();
-  const otherOut = inputOf({ compiler: csc, ...request(dir, { out: join(dir, 'out', 'Q.exe') }) });
+  assert.doesNotThrow(() => compareBuilds(record(base), record(inputOf({ compiler: csc, ...req() }))));
+  const oneByte = inputOf({ compiler: csc, ...req({ sources: [join(dir, 'Q.cs')] }) });
+  const sameNameOneByte = (() => { writeFileSync(join(dir, 'P.cs'), program.replace('ags', 'agt')); return inputOf({ compiler: csc, ...req() }); })();
+  const otherOut = inputOf({ compiler: csc, ...req({ out: join(dir, 'out', 'Q.exe') }) });
   for (const other of [oneByte, sameNameOneByte, otherOut]) {
     assert.throws(() => compareBuilds(record(base), record(other)), /not the same input/);
   }
