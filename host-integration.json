@@ -318,6 +318,10 @@
       "sha256": "sha256:7ed17df0d22963ab2817d5e88164d37eec1ff448638d9fba8a5d7c28bfd0ac13"
     },
     {
+      "path": "contracts/user-approval-channel.v1.schema.json",
+      "sha256": "sha256:39e1cd036ce9f2ada2877fbd849c37cfbc897e18816890fe629de9624557785d"
+    },
+    {
       "path": "contracts/validate-collaboration-decision-request.v1.schema.json",
       "sha256": "sha256:ff8eb9fa40b32746a7e284bf2e5593f3999c9dfa5a541efccea408e742e4f510"
     },
@@ -802,6 +806,7 @@
         "contracts/suppress-context-restore-request.v1.schema.json",
         "contracts/task-envelope.v1.schema.json",
         "contracts/update-session-status-request.v1.schema.json",
+        "contracts/user-approval-channel.v1.schema.json",
         "contracts/validate-collaboration-decision-request.v1.schema.json",
         "contracts/workflow-plan.v1.schema.json",
         "contracts/workflow-receipt.v1.schema.json",
