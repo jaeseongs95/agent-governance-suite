@@ -1,5 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { SKILL_RUNTIME_ENTRYPOINTS } from "../../scripts/runtime-entrypoints.mjs";
@@ -18,6 +20,22 @@ async function scriptFiles(directory) {
 }
 
 describe("installed skill runtime", () => {
+  it.each(["22.13.0", "23.11.0"])("rejects unsupported Node %s before runtime smoke execution", (version) => {
+    const result = spawnSync(process.execPath, [
+      "--import", pathToFileURL(path.join(root, "tests/runtime/fixtures/node-version.mjs")).href,
+      path.join(root, "scripts/check-runtime.mjs"),
+    ], {
+      env: { ...process.env, AGS_TEST_NODE_VERSION: version },
+      encoding: "utf8",
+      timeout: 10_000,
+      windowsHide: true,
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(`Node.js 24.0.0 or newer is required; found ${version}.`);
+    expect(result.stdout).not.toContain("runtime: ready");
+  });
+
   it("runs every documented Node CLI without node_modules", async () => {
     const results = await runRuntimeSmokeCheck(root);
     expect(results.map((result) => result.path)).toEqual(SKILL_RUNTIME_ENTRYPOINTS.map((entry) => entry.path));
