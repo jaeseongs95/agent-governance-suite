@@ -25,10 +25,23 @@ test('new epoch prepared record recomputes the V06-b1 release identity', () => {
 });
 
 test('changed manifest, archive, version, key, tool or identity fields are rejected', () => {
+  const consistent = (record) => {
+    const id = releaseId(record.nodeVersion, record.archiveSha256, record.hostIntegrationSha256);
+    return { ...record, releaseSha256: id, intendedInstallRoot: prepared.intendedInstallRoot.replace(prepared.releaseSha256, id) };
+  };
+  for (const record of [
+    consistent({ ...prepared, archiveSha256: 'f'.repeat(64) }),
+    consistent({ ...prepared, nodeVersion: '24.20.0', archiveName: 'node-v24.20.0-win-x64.zip' }),
+    { ...prepared, nodeSha256: 'f'.repeat(64) },
+  ]) assert.throws(() => verifyPreparedEvidence(record), /archive or node record mismatch/);
   for (const [field, value, message] of [
     ['hostIntegrationSha256', 'f'.repeat(64), /stale package epoch/],
-    ['archiveSha256', 'f'.repeat(64), /release identity mismatch/],
+    ['archiveSha256', 'f'.repeat(64), /archive or node record mismatch/],
     ['nodeVersion', '24.20.0', /archive or node record mismatch/],
+    ['tarSha256', 'f'.repeat(64), /tool pin/],
+    ['keyringSourceCommit', 'f'.repeat(40), /untrusted release key/],
+    ['limitations', [], /limitations mismatch/],
+    ['artifactCount', 0, /package count/],
     ['signerFingerprint', 'F'.repeat(40), /untrusted release key/],
     ['keyringSha256', 'f'.repeat(64), /untrusted release key/],
     ['gpgvSha256', 'f'.repeat(64), /tool pin/],

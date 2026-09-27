@@ -7,6 +7,8 @@
 - source base: `codex/v260-semantic-decision-layer` 통합 commit `ffec7c91dfae2389e8b95f47616644e0b6729f96`, tree `2a5de4fc5d0f1ca192f5b27bad5583acbb8ef396`, `pnpm bundle:check` exit 0.
 - AGS `host-integration.json` SHA-256 `9542e833bab74614eb5196b37702f082f567381bc16cf84df1171917d2405fed`, artifact 180개. staging package의 정확한 파일 181개(manifest 포함)와 각 SHA-256은 `epoch.json`의 `packageFiles`에 있다.
 - producer: staging 실행 시점의 script SHA-256과 `git diff HEAD` digest를 `epoch.json`의 `producer`에 기록했다. 최종 commit은 인계 문서에 기록한다.
+- `verifyPreparedEvidence`는 기록 검사다. 이 epoch의 manifest, Node version·archive·`node.exe` hash, key·도구 pin, keyring 출처 commit, limitations와 V06-b1 release ID 재계산이 모두 맞아야 통과한다. archive 서명·bytes 자체의 진위는 staging 중 `verifyNodeRelease`가 강제하며, 이 함수가 대신하지 않는다.
+- 독립 감사에서 첫 실행(04:01Z, producer `0349b709`)은 archive·version을 자기 일관적으로 바꾼 기록을 통과시키는 것이 발견됐다. 고정값 대조를 추가해 04:08Z에 다시 staging했다. `prepared.json` bytes와 package 파일 집합은 첫 실행과 같다.
 - release ID(V06-b1 규칙 재계산): `0812f2e76ecf8acbbef71415fead36363db3e39f26938e11cf2fa5f1365f8231`, `intendedInstallRoot` `C:\ProgramData\agent-governance-suite\protected-runtime\0812f2e7…8231`.
 
 ## Node 원자료 재검증
