@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
 import { SessionMessageStore, type SessionIdentity } from "./session-message-store.js";
 import type { InputObservationKind } from "./input-observation.js";
-import { PeerWaitPolicy } from "./peer-wait-policy.js";
+import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
 
 const IDLE_EXIT_MS = 60_000;
@@ -256,7 +256,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
     case "peer-wait": {
       const sender = identity(payload.sender);
       if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > 8) throw new Error("targets must contain 1..8 identities.");
-      const targets = payload.targets.map(identity);
+      const targets = normalizePeerWaitTargets(payload.targets.map(identity));
       const timeoutMs = integer(payload.timeoutMs, "timeoutMs");
       if (timeoutMs < 0 || timeoutMs > 3_600_000) throw new Error("timeoutMs is out of range.");
       const queryRevision = optionalString(payload, "queryRevision") ?? "";

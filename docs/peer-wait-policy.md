@@ -22,6 +22,8 @@
 
 복귀가 없거나 불명확한 상태에서는 대기를 일괄 금지하거나 세션 종료를 강제하지 않는다. 제한된 조회·대기를 사용하고 다음 사용자 턴에 이어가라는 안내를 반환한다. 최초 wake, nonce 예약 때의 generation을 확인할 수 없는 과거 wake, 관측 만료, 브로커 재시작 직후에는 복귀를 미확인으로 둔다. 따라서 이 변경은 모든 첫 대기를 차단하는 기능이 아니다.
 
+native 요청은 JSON 키 순서, `hostId` 생략과 `local`, target 배열 순서, 동일 target·cursor 중복을 같은 의미로 정규화한다. 공통 broker와 policy도 target identity를 정렬·중복 제거한 뒤 상태 fingerprint와 억제 key를 계산한다. 실제 target이나 cursor 변화는 보존하며, 같은 target에 서로 다른 cursor가 있으면 distinct cursor 전체를 정규화된 revision에 남긴다. `afterCursor`는 생략 또는 문자열만 지원하며 형식이 다르면 native 강제 제한 경로로 진입하지 않는다.
+
 ## 공개 CLI
 
 ```json

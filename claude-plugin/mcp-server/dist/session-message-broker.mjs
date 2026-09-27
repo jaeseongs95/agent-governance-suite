@@ -580,10 +580,17 @@ var SessionMessageStore = class {
 // mcp-server/src/peer-wait-policy.ts
 var RECORD_TTL_MS = 3e4;
 var RECORD_LIMIT = 1e3;
+function identityKey(identity2) {
+  return JSON.stringify([identity2.host, identity2.sessionId]);
+}
+function normalizePeerWaitTargets(targets) {
+  const unique = new Map(targets.map((target) => [identityKey(target), { host: target.host, sessionId: target.sessionId }]));
+  return [...unique.keys()].sort().map((key) => unique.get(key));
+}
 var PeerWaitPolicy = class {
   snapshots = /* @__PURE__ */ new Map();
   reset(sender) {
-    const owner = JSON.stringify(sender);
+    const owner = identityKey(sender);
     for (const [key, record] of this.snapshots) if (record.owner === owner) this.snapshots.delete(key);
   }
   decide(input, nowMs = Date.now()) {
@@ -599,8 +606,8 @@ var PeerWaitPolicy = class {
       guidance
     };
     if (input.timeoutMs > 0) return { action: "deny", reason: "async-resume", transmission, resume, guidance };
-    const owner = JSON.stringify(input.sender);
-    const key = JSON.stringify([owner, input.targets.map((target) => JSON.stringify(target)).sort()]);
+    const owner = identityKey(input.sender);
+    const key = JSON.stringify([owner, normalizePeerWaitTargets(input.targets).map(identityKey)]);
     const previous = this.snapshots.get(key);
     if (previous?.fingerprint === input.fingerprint) return { action: "deny", reason: "unchanged-peer-state", transmission, resume, guidance };
     if (this.snapshots.size >= RECORD_LIMIT) this.snapshots.delete(this.snapshots.keys().next().value);
@@ -901,7 +908,7 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload) {
     case "peer-wait": {
       const sender = identity(payload.sender);
       if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > 8) throw new Error("targets must contain 1..8 identities.");
-      const targets = payload.targets.map(identity);
+      const targets = normalizePeerWaitTargets(payload.targets.map(identity));
       const timeoutMs = integer2(payload.timeoutMs, "timeoutMs");
       if (timeoutMs < 0 || timeoutMs > 36e5) throw new Error("timeoutMs is out of range.");
       const queryRevision = optionalString(payload, "queryRevision") ?? "";

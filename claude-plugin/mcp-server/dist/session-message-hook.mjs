@@ -623,6 +623,15 @@ function processStartToken(pid, platform = process.platform) {
 // mcp-server/src/host-input-adapter.ts
 import { createHash } from "node:crypto";
 
+// mcp-server/src/peer-wait-policy.ts
+function identityKey(identity) {
+  return JSON.stringify([identity.host, identity.sessionId]);
+}
+function normalizePeerWaitTargets(targets) {
+  const unique = new Map(targets.map((target) => [identityKey(target), { host: target.host, sessionId: target.sessionId }]));
+  return [...unique.keys()].sort().map((key) => unique.get(key));
+}
+
 // mcp-server/src/session-message-relay.ts
 var IDENTITY_RECHECK_MS = 10 * 6e4;
 var WAKE_BACKOFF_MAX_MS = 10 * 6e4;
@@ -697,14 +706,21 @@ function nativePeerWait(observation) {
   if (typeof timeoutMs !== "number" || !Number.isInteger(timeoutMs) || timeoutMs < 0 || timeoutMs > 36e5) return null;
   if (!Array.isArray(input.targets) || input.targets.length < 1 || input.targets.length > 8) return null;
   const targets = [];
+  const cursors = /* @__PURE__ */ new Set();
   for (const value of input.targets) {
     if (!value || typeof value !== "object" || Array.isArray(value)) return null;
     const target = value;
     if (typeof target.threadId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(target.threadId)) return null;
     if (target.hostId !== void 0 && target.hostId !== "local") return null;
+    if (target.afterCursor !== void 0 && typeof target.afterCursor !== "string") return null;
     targets.push({ host: "codex", sessionId: target.threadId });
+    cursors.add(JSON.stringify([target.threadId, target.afterCursor ?? null]));
   }
-  return { targets, timeoutMs, queryRevision: createHash("sha256").update(JSON.stringify(input.targets)).digest("hex") };
+  return {
+    targets: normalizePeerWaitTargets(targets),
+    timeoutMs,
+    queryRevision: createHash("sha256").update(JSON.stringify([...cursors].sort())).digest("hex")
+  };
 }
 
 // mcp-server/src/input-observation.ts

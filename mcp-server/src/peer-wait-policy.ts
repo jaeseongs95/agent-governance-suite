@@ -11,12 +11,22 @@ export interface PeerWaitDecision {
 const RECORD_TTL_MS = 30_000;
 const RECORD_LIMIT = 1000;
 
+function identityKey(identity: SessionIdentity): string {
+  return JSON.stringify([identity.host, identity.sessionId]);
+}
+
+/** Peer queries concern an identity set, independent of order or repeated rows. */
+export function normalizePeerWaitTargets(targets: SessionIdentity[]): SessionIdentity[] {
+  const unique = new Map(targets.map((target) => [identityKey(target), { host: target.host, sessionId: target.sessionId }]));
+  return [...unique.keys()].sort().map((key) => unique.get(key)!);
+}
+
 /** Advisory state only: expiry, new input and broker restart restore a first query. */
 export class PeerWaitPolicy {
   private readonly snapshots = new Map<string, { owner: string; fingerprint: string; expiresAt: number }>();
 
   reset(sender: SessionIdentity): void {
-    const owner = JSON.stringify(sender);
+    const owner = identityKey(sender);
     for (const [key, record] of this.snapshots) if (record.owner === owner) this.snapshots.delete(key);
   }
 
@@ -34,8 +44,8 @@ export class PeerWaitPolicy {
       action: "bounded", reason: input.peersObserved ? "resume-unconfirmed" : "peer-unconfirmed", transmission, resume, guidance,
     };
     if (input.timeoutMs > 0) return { action: "deny", reason: "async-resume", transmission, resume, guidance };
-    const owner = JSON.stringify(input.sender);
-    const key = JSON.stringify([owner, input.targets.map((target) => JSON.stringify(target)).sort()]);
+    const owner = identityKey(input.sender);
+    const key = JSON.stringify([owner, normalizePeerWaitTargets(input.targets).map(identityKey)]);
     const previous = this.snapshots.get(key);
     if (previous?.fingerprint === input.fingerprint) return { action: "deny", reason: "unchanged-peer-state", transmission, resume, guidance };
     if (this.snapshots.size >= RECORD_LIMIT) this.snapshots.delete(this.snapshots.keys().next().value!);
