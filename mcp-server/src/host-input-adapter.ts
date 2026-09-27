@@ -84,7 +84,7 @@ function codexQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: st
   const directory = environment.PLUGIN_DATA;
   if (directory === undefined) return false;
   // Windows root-relative paths still depend on the current drive.
-  if (!path.isAbsolute(directory) || (process.platform === "win32" && path.parse(directory).root === "\\")) {
+  if (!path.isAbsolute(directory) || (process.platform === "win32" && ["\\", "/"].includes(path.parse(directory).root))) {
     return disabled("invalid-plugin-data");
   }
   try {

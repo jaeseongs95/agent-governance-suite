@@ -862,9 +862,10 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(hostDeliveryProfile("codex", { PLUGIN_DATA: `${directory}\u0000` }, diagnose).transport).toBe("codex-deferred");
     expect(diagnose).toHaveBeenLastCalledWith("read-failed");
     await writeFile(file, valid);
-    for (const relative of [path.relative(path.dirname(directory), directory), "", ...(process.platform === "win32" ? ["\\relative-root"] : [])]) {
+    for (const relative of [path.relative(path.dirname(directory), directory), "", ...(process.platform === "win32" ? ["\\relative-root", "/relative-root"] : [])]) {
+      diagnose.mockClear();
       expect(hostDeliveryProfile("codex", { PLUGIN_DATA: relative }, diagnose).transport).toBe("codex-deferred");
-      expect(diagnose).toHaveBeenLastCalledWith("invalid-plugin-data");
+      expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-plugin-data");
     }
   });
 

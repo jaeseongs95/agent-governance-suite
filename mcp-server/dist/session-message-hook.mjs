@@ -709,7 +709,7 @@ function codexQueueEnabled(environment, diagnose) {
   }
   const directory = environment.PLUGIN_DATA;
   if (directory === void 0) return false;
-  if (!path4.isAbsolute(directory) || process.platform === "win32" && path4.parse(directory).root === "\\") {
+  if (!path4.isAbsolute(directory) || process.platform === "win32" && ["\\", "/"].includes(path4.parse(directory).root)) {
     return disabled("invalid-plugin-data");
   }
   try {
