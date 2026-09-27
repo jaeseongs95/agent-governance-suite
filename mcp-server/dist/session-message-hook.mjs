@@ -2,7 +2,7 @@
 
 // mcp-server/src/session-message-hook.ts
 import { spawn as spawn2 } from "node:child_process";
-import { createHash, randomUUID as randomUUID2 } from "node:crypto";
+import { createHash as createHash2, randomUUID as randomUUID2 } from "node:crypto";
 import { readFileSync as readFileSync2 } from "node:fs";
 import path4 from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
@@ -620,6 +620,18 @@ function processStartToken(pid, platform = process.platform) {
   }
 }
 
+// mcp-server/src/host-input-adapter.ts
+import { createHash } from "node:crypto";
+
+// mcp-server/src/peer-wait-policy.ts
+function identityKey(identity) {
+  return JSON.stringify([identity.host, identity.sessionId]);
+}
+function normalizePeerWaitTargets(targets) {
+  const unique = new Map(targets.map((target) => [identityKey(target), { host: target.host, sessionId: target.sessionId }]));
+  return [...unique.keys()].sort().map((key) => unique.get(key));
+}
+
 // mcp-server/src/session-message-relay.ts
 var IDENTITY_RECHECK_MS = 10 * 6e4;
 var WAKE_BACKOFF_MAX_MS = 10 * 6e4;
@@ -687,6 +699,29 @@ function hostDeliveryProfile(host, environment = process.env) {
   const transport = host === "claude-code" ? "claude-inbox" : environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE === "1" ? "codex-queue" : "codex-deferred";
   return { transport, capabilities: transportDeliveryCapabilities(transport) };
 }
+function nativePeerWait(observation) {
+  if (observation.host !== "codex" || observation.toolName !== "mcp__codex_app__wait_threads") return null;
+  const input = observation.toolInput ?? {};
+  const timeoutMs = input.timeoutMs === void 0 ? 12e4 : input.timeoutMs;
+  if (typeof timeoutMs !== "number" || !Number.isInteger(timeoutMs) || timeoutMs < 0 || timeoutMs > 36e5) return null;
+  if (!Array.isArray(input.targets) || input.targets.length < 1 || input.targets.length > 8) return null;
+  const targets = [];
+  const cursors = /* @__PURE__ */ new Set();
+  for (const value of input.targets) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const target = value;
+    if (typeof target.threadId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(target.threadId)) return null;
+    if (target.hostId !== void 0 && target.hostId !== "local") return null;
+    if (target.afterCursor !== void 0 && typeof target.afterCursor !== "string") return null;
+    targets.push({ host: "codex", sessionId: target.threadId });
+    cursors.add(JSON.stringify([target.threadId, target.afterCursor ?? null]));
+  }
+  return {
+    targets: normalizePeerWaitTargets(targets),
+    timeoutMs,
+    queryRevision: createHash("sha256").update(JSON.stringify([...cursors].sort())).digest("hex")
+  };
+}
 
 // mcp-server/src/input-observation.ts
 function supportsInjection(capabilities, kind) {
@@ -697,8 +732,8 @@ function isObservedSubagent(observation) {
 }
 
 // mcp-server/src/session-message-hook.ts
-var SESSION_BOUND_TOOLS = /* @__PURE__ */ new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
-var SUBAGENT_DENIED_TOOLS = /* @__PURE__ */ new Set(["send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
+var SESSION_BOUND_TOOLS = /* @__PURE__ */ new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
+var SUBAGENT_DENIED_TOOLS = /* @__PURE__ */ new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
 var HOST_CLAIM_MAX_MESSAGES = 1;
 var HOST_CLAIM_MAX_BODY_CHARS = 4096;
 var HOST_MESSAGE_REQUEST_TIMEOUT_MS = 8e3;
@@ -737,7 +772,7 @@ function recordPeerMessages(host, sessionId, messages) {
   const store = new TrustStore(resolveTrustDatabasePath());
   try {
     return messages.map((message) => {
-      const contentDigest = `sha256:${createHash("sha256").update(message.body).digest("hex")}`;
+      const contentDigest = `sha256:${createHash2("sha256").update(message.body).digest("hex")}`;
       const receipt = store.recordInputSource({
         originKind: "peer",
         host,
@@ -838,6 +873,19 @@ async function handleSessionMessageHook(input, host, explicitHostPid) {
   }
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
     const toolName = observation.toolName ?? "";
+    const wait = nativePeerWait(observation);
+    if (wait && observation.actor.kind === "main" && observation.actor.assurance === "observed") {
+      try {
+        const decision = await sessionMessageRequest("peer-wait", { sender: target, ...wait }, void 0, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
+        return { hookSpecificOutput: {
+          hookEventName: adapted.outputEventName,
+          ...decision.action === "deny" ? { permissionDecision: "deny", permissionDecisionReason: decision.guidance } : {},
+          additionalContext: decision.guidance
+        } };
+      } catch {
+        return additionalContext(adapted.outputEventName, "Peer wait policy is unavailable. Use a bounded query; async resume has not been confirmed.");
+      }
+    }
     const localTool = toolName.split("__").at(-1) ?? "";
     if (!SESSION_BOUND_TOOLS.has(localTool)) return {};
     if (subagent && SUBAGENT_DENIED_TOOLS.has(localTool)) {

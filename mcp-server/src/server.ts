@@ -156,8 +156,8 @@ const updateCheckInputSchema = {
   },
 } as const;
 
-const sendSessionMessageInputSchema = structuredClone(contractSchemas.sendSessionMessageRequest) as ObjectSchema;
-const sendBodySchema = sendSessionMessageInputSchema.properties?.body as Record<string, unknown> | undefined;
+const prepareSessionMessageInputSchema = structuredClone(contractSchemas.prepareSessionMessageRequest) as ObjectSchema;
+const sendBodySchema = prepareSessionMessageInputSchema.properties?.body as Record<string, unknown> | undefined;
 if (sendBodySchema) sendBodySchema.description = "A non-empty message body limited to 4096 UTF-8 bytes by the service.";
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -334,8 +334,10 @@ export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "defaul
 export const ANTHROPIC_SERVER_INSTRUCTIONS = "agent-governance-suite 접수 규칙: 사용자 요청을 받을 때마다, 파일을 고치거나 명령을 실행하기 전에 이 요청이 잘못 수행됐을 때의 실패 영향을 한 줄로 분류한다(낮음 또는 높음). CI·CD, 릴리스·배포, 권한·신뢰 경계, 전역 설정, 데이터·스키마, 공개 저장소의 기본 브랜치처럼 실패 영향이 큰 작업이면 구현을 시작하기 전에 Skill 도구로 /agent-governance-suite:orchestrator를 호출해 이 요청에 필요한 전문 스킬 단계와 생략할 단계를 이유와 함께 정하고, 정한 단계를 그 시점에 실제로 호출한다. 실패 영향이 큰 작업에서 orchestrator를 건너뛰는 경우는 사용자가 특정 스킬을 지정했을 때뿐이며, 그때는 그 스킬을 바로 호출한다. 실패 영향이 낮으면 그 이유를 한 줄로 밝히고 진행하되, 요청이 코드를 작성·수정·리팩터링·설계하거나 라이브러리·의존성을 고르는 작업이면 코드를 쓰거나 파일을 고치기 전에 Skill 도구로 /agent-governance-suite:ponytail을 호출한다. 요청의 범위나 완료 조건이 불명확하면 ponytail보다 먼저 확정한다. 코드 검토·감사·검증·완료 판정, 코드 설명·조사만 하는 요청, 코딩이 아닌 요청(일반 지식, 문서, 번역, 요약), 검토·감사를 맡은 서브에이전트에서는 ponytail을 호출하지 않는다.";
 
 export function serverInstructions(profile: ToolSchemaProfile = "default"): string | undefined {
-  return profile === "anthropic" ? ANTHROPIC_SERVER_INSTRUCTIONS : undefined;
+  return profile === "anthropic" ? `${ANTHROPIC_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}` : SESSION_MESSAGE_SERVER_INSTRUCTIONS;
 }
+
+export const SESSION_MESSAGE_SERVER_INSTRUCTIONS = "세션 메시지는 prepare_session_message로 대상·본문·TTL을 고정하고 시스템이 발급한 messageId를 받은 뒤 send_session_message(messageId)로 전송한다. ID를 직접 만들거나 send에 내용을 다시 넣지 않는다. 전송 결과가 불명확하면 받은 같은 ID로 status를 조회하거나 send를 재시도한다. unknown ID는 이전 전송 완료나 기록 정리 가능성이 있으므로 저장한 영수증과 대조한다. 새 prepare는 새 전송 의도에만 사용하며 불명확한 기존 전송을 무조건 다시 준비하지 않는다. ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다.";
 
 function validUpdateArguments(args: Record<string, unknown>): boolean {
   return Object.keys(args).every((key) => key === "force")
@@ -524,10 +526,16 @@ export function createMcpServer(
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
-        name: "send_session_message",
-        description: "Send a bounded, expiring peer message to any local AI host/session through the loopback TLS 1.3 broker. The hook binds the sender identity.",
-        inputSchema: sendSessionMessageInputSchema,
+        name: "prepare_session_message",
+        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft.",
+        inputSchema: prepareSessionMessageInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
+      },
+      {
+        name: "send_session_message",
+        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent.",
+        inputSchema: contractSchemas.sendSessionMessageRequest,
+        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "acknowledge_session_messages",
@@ -537,7 +545,7 @@ export function createMcpServer(
       },
       {
         name: "get_session_message_status",
-        description: "Read queued, delivered, or acknowledged status for a message sent by this bound session.",
+        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend.",
         inputSchema: contractSchemas.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
@@ -658,12 +666,20 @@ export function createMcpServer(
         case "list_session_status":
           result = await sessionBoardResult(request.params.name, args, sessionBoardPath, validator, sessionMessages);
           break;
+        case "prepare_session_message":
+          try {
+            validator.prepareSessionMessageRequest(args);
+            result = await sessionMessages.prepare(args);
+          } catch (error) {
+            result = invalidInput(error instanceof Error ? error.message : "Session message preparation is invalid.");
+          }
+          break;
         case "send_session_message":
           try {
             validator.sendSessionMessageRequest(args);
             result = await sessionMessages.send(args);
           } catch (error) {
-            result = invalidInput(error instanceof Error ? error.message : "Session message input is invalid.");
+            result = invalidInput(`${error instanceof Error ? error.message : "Session message input is invalid."} Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status.`);
           }
           break;
         case "acknowledge_session_messages":

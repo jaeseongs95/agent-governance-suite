@@ -31,6 +31,12 @@ export const RUNTIME_BUNDLES = Object.freeze([
     executable: true,
   }),
   Object.freeze({
+    id: "host-attestation-api",
+    entry: "mcp-server/src/host-attestation-api.ts",
+    output: "mcp-server/dist/host-attestation-api.mjs",
+    executable: false,
+  }),
+  Object.freeze({
     id: "session-board-hook",
     entry: "mcp-server/src/session-board-hook.ts",
     output: "mcp-server/dist/session-board-hook.mjs",

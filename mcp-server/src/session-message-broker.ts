@@ -9,10 +9,11 @@ import { fileURLToPath } from "node:url";
 import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
 import { SessionMessageStore, type SessionIdentity } from "./session-message-store.js";
 import type { InputObservationKind } from "./input-observation.js";
+import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
 
 const IDLE_EXIT_MS = 60_000;
-export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities"] as const;
+export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy"] as const;
 
 interface BrokerRequest {
   protocolVersion: string;
@@ -150,19 +151,53 @@ async function credentials(stateDirectory: string): Promise<{ key: string; certi
   return { key, certificate, token, fingerprint256: new X509Certificate(certificate).fingerprint256 };
 }
 
+interface PeerWaitRuntime {
+  policy: PeerWaitPolicy;
+  wakes: Map<string, { owner: string; instanceId: string; relayId: string; expiresAt: number }>;
+  relays: Map<string, { instanceId: string; relayId: string; expiresAt: number; wakeObservedAt?: number }>;
+}
+const peerWaitRuntimes = new WeakMap<SessionMessageStore, PeerWaitRuntime>();
+function peerWaitRuntime(store: SessionMessageStore): PeerWaitRuntime {
+  let runtime = peerWaitRuntimes.get(store);
+  if (!runtime) {
+    runtime = { policy: new PeerWaitPolicy(), relays: new Map(), wakes: new Map() };
+    peerWaitRuntimes.set(store, runtime);
+  }
+  for (const [key, value] of runtime.relays) if (value.expiresAt <= Date.now()) runtime.relays.delete(key);
+  for (const [key, value] of runtime.wakes) if (value.expiresAt <= Date.now()) runtime.wakes.delete(key);
+  return runtime;
+}
+function observePeerRelay(store: SessionMessageStore, payload: Record<string, unknown>, accepted: boolean): void {
+  if (!accepted || typeof payload.instanceId !== "string") return;
+  const target = identity(payload.target);
+  const presence = store.presence(target);
+  const relay = store.liveRelay(target, string(payload.transport, "transport"));
+  if (presence.instanceId !== payload.instanceId || presence.transport !== payload.transport || presence.state !== "online" || relay === null || relay.relayId !== payload.relayId) return;
+  const runtime = peerWaitRuntime(store);
+  if (runtime.relays.size >= 1000) runtime.relays.delete(runtime.relays.keys().next().value!);
+  const key = JSON.stringify(target);
+  const previous = runtime.relays.get(key);
+  const wakeObservedAt = previous?.instanceId === payload.instanceId && previous.relayId === relay.relayId ? previous.wakeObservedAt : undefined;
+  runtime.relays.set(key, { instanceId: payload.instanceId, relayId: relay.relayId, expiresAt: Date.now() + 15_000,
+    ...(wakeObservedAt === undefined ? {} : { wakeObservedAt }) });
+}
+
 export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>): unknown {
   switch (operation) {
     case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: SESSION_MESSAGE_BROKER_CAPABILITIES };
-    case "send": {
-      const messageId = optionalString(payload, "messageId");
+    case "prepare": {
+      if (Object.keys(payload).some((key) => !["sender", "target", "body", "ttlSeconds"].includes(key))) throw new Error("prepare accepts sender, target, body and ttlSeconds; IDs are system-issued.");
       const ttlSeconds = optionalInteger(payload, "ttlSeconds");
-      return store.send({
-        ...(messageId === undefined ? {} : { messageId }),
+      return store.prepare({
         sender: identity(payload.sender),
         target: identity(payload.target),
         body: string(payload.body, "body"),
         ...(ttlSeconds === undefined ? {} : { ttlSeconds }),
       });
+    }
+    case "send": {
+      if (Object.keys(payload).some((key) => !["sender", "messageId"].includes(key))) throw new Error("send accepts only sender and the ID returned by prepare; message content is immutable. Retry the known ID or compare saved receipts/status if delivery is unknown.");
+      return store.submitPrepared(identity(payload.sender), string(payload.messageId, "messageId"));
     }
     case "claim": {
       const maxMessages = optionalInteger(payload, "maxMessages");
@@ -176,12 +211,26 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       const maxMessages = optionalInteger(payload, "maxMessages");
       const maxBodyChars = optionalInteger(payload, "maxBodyChars");
       const nonces = Array.isArray(payload.nonces) ? payload.nonces.map((value) => string(value, "nonce")) : [];
-      return store.claimWake(identity(payload.target), nonces, Date.now(), {
+      const target = identity(payload.target);
+      const result = store.claimWake(target, nonces, Date.now(), {
         ...(maxMessages === undefined ? {} : { maxMessages }),
         ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
       });
+      const runtime = peerWaitRuntime(store);
+      const owner = JSON.stringify(target);
+      const binding = runtime.relays.get(owner);
+      const presence = store.presence(target);
+      const wakeKeys = nonces.map((nonce) => createHash("sha256").update(nonce).digest("hex"));
+      const sameGeneration = wakeKeys.length > 0 && wakeKeys.every((key) => {
+        const wake = runtime.wakes.get(key);
+        return wake?.owner === owner && wake.instanceId === binding?.instanceId && wake.relayId === binding?.relayId;
+      });
+      if (result.recognized && sameGeneration && binding?.instanceId === presence.instanceId && presence.state === "online") binding.wakeObservedAt = Date.now();
+      for (const key of wakeKeys) runtime.wakes.delete(key);
+      return result;
     }
     case "observe-native-input": {
+      peerWaitRuntime(store).policy.reset(identity(payload.target));
       store.observeNativeInput(identity(payload.target));
       return { observed: true };
     }
@@ -206,21 +255,57 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       return { cleared: true };
     }
     case "acknowledge": return { acknowledged: store.acknowledge(identity(payload.target), Array.isArray(payload.messageIds) ? payload.messageIds.map((value) => string(value, "messageId")) : []) };
-    case "status": return { status: store.status(identity(payload.sender), string(payload.messageId, "messageId")) };
+    case "status": {
+      const status = store.status(identity(payload.sender), string(payload.messageId, "messageId"));
+      return { status, ...(status === null ? { guidance: "Delivery is unknown; compare saved receipts. Prepare only a new intent, not an automatic resend." } : {}) };
+    }
+    case "peer-wait": {
+      const sender = identity(payload.sender);
+      if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > 8) throw new Error("targets must contain 1..8 identities.");
+      const targets = normalizePeerWaitTargets(payload.targets.map(identity));
+      const timeoutMs = integer(payload.timeoutMs, "timeoutMs");
+      if (timeoutMs < 0 || timeoutMs > 3_600_000) throw new Error("timeoutMs is out of range.");
+      const queryRevision = optionalString(payload, "queryRevision") ?? "";
+      if (queryRevision.length > 256) throw new Error("queryRevision is too long.");
+      const runtime = peerWaitRuntime(store);
+      const presence = store.presence(sender);
+      const binding = runtime.relays.get(JSON.stringify(sender));
+      const relay = presence.transport ? store.liveRelay(sender, presence.transport) : null;
+      const resumeObserved = presence.state === "online" && presence.instanceId !== null && binding?.instanceId === presence.instanceId
+        && binding.wakeObservedAt !== undefined && Date.now() - binding.wakeObservedAt < 30_000
+        && binding.relayId === relay?.relayId && relay !== null && alive(relay.pid) && alive(relay.parentPid)
+        && presence.deliveryCapabilities.idleWake !== "none" && presence.wakeVisibility === presence.deliveryCapabilities.idleWake
+        && presence.deliveryCapabilities.supportedInjection.includes("peer-wake");
+      const states = targets.map((target) => store.peerWaitState(sender, target));
+      const decision = runtime.policy.decide({ sender, targets, timeoutMs, peersObserved: states.every((state) => state.related), resumeObserved,
+        fingerprint: JSON.stringify([presence.instanceId, queryRevision, states.map((state) => state.fingerprint)]) });
+      return { ...decision, peers: targets.map((target, index) => ({ target, related: states[index]!.related, stateDigest: states[index]!.fingerprint })) };
+    }
     case "pending": return { count: store.pendingCount(identity(payload.target)) };
     case "acquire-relay": {
       const target = identity(payload.target);
-      return { acquired: store.acquireRelay({
+      const acquired = store.acquireRelay({
         ...target,
         transport: string(payload.transport, "transport"),
         relayId: string(payload.relayId, "relayId"),
         pid: integer(payload.pid, "pid"),
         parentPid: integer(payload.parentPid, "parentPid"),
-      }) };
+      });
+      observePeerRelay(store, payload, acquired);
+      return { acquired };
     }
     case "heartbeat-relay": {
       const target = identity(payload.target);
-      return { alive: store.heartbeatRelay({ ...target, transport: string(payload.transport, "transport"), relayId: string(payload.relayId, "relayId") }) };
+      const isAlive = store.heartbeatRelay({ ...target, transport: string(payload.transport, "transport"), relayId: string(payload.relayId, "relayId") });
+      observePeerRelay(store, payload, isAlive);
+      return { alive: isAlive };
+    }
+    case "relay-tick": {
+      const result = store.relayTick({ ...identity(payload.target), transport: string(payload.transport, "transport"),
+        relayId: string(payload.relayId, "relayId"), instanceId: string(payload.instanceId, "instanceId"),
+        includePending: boolean(payload.includePending, "includePending") });
+      observePeerRelay(store, payload, result.alive);
+      return result;
     }
     case "presence-start": {
       const target = identity(payload.target);
@@ -252,7 +337,19 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
     ) };
     case "presence": return { presence: store.presence(identity(payload.target)) };
     case "list-presence": return { sessions: store.listPresence() };
-    case "reserve-wake": return { dispatch: store.reserveWake(identity(payload.target), string(payload.nonce, "nonce")) };
+    case "reserve-wake": {
+      const target = identity(payload.target);
+      const nonce = string(payload.nonce, "nonce");
+      const shouldDispatch = store.reserveWake(target, nonce);
+      const runtime = peerWaitRuntime(store);
+      const owner = JSON.stringify(target);
+      const binding = runtime.relays.get(owner);
+      if (shouldDispatch && binding && binding.instanceId === store.presence(target).instanceId) {
+        if (runtime.wakes.size >= 1000) runtime.wakes.delete(runtime.wakes.keys().next().value!);
+        runtime.wakes.set(createHash("sha256").update(nonce).digest("hex"), { owner, instanceId: binding.instanceId, relayId: binding.relayId, expiresAt: Date.now() + 3_600_000 });
+      }
+      return { dispatch: shouldDispatch };
+    }
     case "release-wake": return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "consume-wake": return { consumed: store.consumeWake(identity(payload.target), string(payload.nonce, "nonce")) };
     default: throw new Error("Unknown broker operation.");

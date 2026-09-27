@@ -20,6 +20,7 @@ import { PluginUpdateService } from "./plugin-update-service.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { WorkflowService } from "./workflow-service.js";
 import { HostAttestationProvider } from "./host-attestation.js";
+import { claudeCodeExecutionAdapter, codexExecutionAdapter } from "./host-execution-adapters.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { SqliteKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { TrustStore } from "./trust-store.js";
@@ -45,7 +46,10 @@ async function main(): Promise<void> {
   });
 
   const validator = new ContractValidator();
-  const hostAttestation = resolveHostAttestation() === "claude-code" ? new HostAttestationProvider(store) : null;
+  const attestationHost = resolveHostAttestation();
+  const hostAttestation = attestationHost ? new HostAttestationProvider(
+    store, attestationHost === "codex" ? codexExecutionAdapter : claudeCodeExecutionAdapter,
+  ) : null;
   // Neither bundled host currently exposes a cryptographically distinct direct-human approval event.
   const trust = new TrustService(trustStore);
   const service = new WorkflowService(

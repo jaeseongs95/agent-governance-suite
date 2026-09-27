@@ -1,7 +1,8 @@
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 import {
   CONTRACT_VERSION,
+  MODEL_CLASS,
   type ExecutionContextV1,
   type ModelClassV1,
   REASONING_EFFORT,
@@ -13,10 +14,8 @@ import type { ExecutionObservationBindingV1, TrustedExecutionContextProvider } f
 import type { WorkflowStore } from "./workflow-store.js";
 
 /**
- * Claude Code host attestation. A PreToolUse hook run by the Claude Code
- * harness reads the model and effort that issued the exact tool call and
- * injects a signed token into the tool input; the server verifies it and
- * supplies the observation through TrustedExecutionContextProvider.
+ * Shared host attestation. A host-owned hook or execution wrapper observes
+ * an exact call; all adapters use the same signing and verification path.
  *
  * The token proves harness observation, not OS-level isolation: the signing
  * key lives in the plugin's workflow database, readable by the same user.
@@ -29,16 +28,11 @@ const TOKEN_PREFIX = "aghs1";
 // The server accepts observations up to five minutes old; the token may wait on a permission prompt.
 const TOKEN_TTL_MS = 5 * 60 * 1000;
 
-const CLAUDE_MODEL_CLASSES: Readonly<Record<string, ModelClassV1>> = {
-  haiku: "lightweight",
-  sonnet: "general",
-  opus: "deep",
-  fable: "frontier",
-};
-
-// Anthropic IDs (claude-opus-5, claude-3-5-sonnet-20241022), Bedrock IDs with an
-// optional region prefix (us., global., us-gov.) and Vertex IDs (claude-opus-5@20260101).
-const CLAUDE_MODEL_ID = /^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\.)?(?:anthropic\.)?claude-(?:\d+(?:-\d+)?-)?(haiku|sonnet|opus|fable)(?:[-@:.]|$)/u;
+/** Adapter policy owns model mapping, never signing, binding, freshness or replay checks. */
+export interface HostExecutionAdapter {
+  host: string;
+  modelClassForModel(model: string): ModelClassV1 | null;
+}
 
 export interface HostAttestationBindingV1 {
   phase: "bootstrap" | "stage";
@@ -50,7 +44,11 @@ export interface HostAttestationBindingV1 {
 
 interface HostAttestationPayloadV1 extends HostAttestationBindingV1 {
   v: 1;
-  host: "claude-code";
+  host: string;
+  session: string;
+  agent: string | null;
+  turn: string | null;
+  call: string;
   tool: string;
   inputDigest: string;
   model: string;
@@ -70,10 +68,11 @@ function nonEmpty(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
-/** Maps a Claude model ID to the class used by the Claude routing presets; unknown models get none. */
-export function modelClassForClaudeModel(model: string): ModelClassV1 | null {
-  const family = CLAUDE_MODEL_ID.exec(model)?.[1];
-  return family ? CLAUDE_MODEL_CLASSES[family] ?? null : null;
+export const hostIdentityDigest = (value: string): string => createHash("sha256").update(value, "utf8").digest("hex").slice(0, 24);
+
+/** Raw host session IDs do not enter persisted workflow actors or signed payloads. */
+export function hostActorId(host: string, sessionId: string, agentId: string | null = null): string {
+  return `${host}:session-${hostIdentityDigest(sessionId)}${agentId ? `:agent-${hostIdentityDigest(agentId)}` : ""}`;
 }
 
 /** Orders reasoning efforts; used to report the lower of two observations. */
@@ -126,20 +125,34 @@ export interface HostObservation {
   model: string;
   reasoningEffort: string;
   actorId: string;
+  sessionId: string;
+  agentId?: string | null;
+  turnId: string | null;
+  toolUseId: string;
   now?: Date;
 }
 
 /** Signs one harness observation for one exact tool call. Returns null when the call cannot be attested. */
-export function issueHostAttestation(store: WorkflowStore, observation: HostObservation): string | null {
+export function issueHostAttestation(store: WorkflowStore, adapter: HostExecutionAdapter, observation: HostObservation): string | null {
   if (!HOST_ATTESTATION_TOOLS.has(observation.tool)) return null;
   const input = withoutHostAttestation(observation.input);
   const binding = hostAttestationBinding(observation.tool, input);
-  const modelClass = modelClassForClaudeModel(observation.model);
-  if (!binding || !modelClass || !isReasoningEffort(observation.reasoningEffort) || !observation.actorId) return null;
+  const modelClass = adapter.modelClassForModel(observation.model);
+  if (!binding || !modelClass || !MODEL_CLASS.includes(modelClass) || !adapter.host
+    || !isReasoningEffort(observation.reasoningEffort) || !observation.actorId
+    || !observation.sessionId || !observation.toolUseId
+    || observation.actorId !== hostActorId(adapter.host, observation.sessionId, observation.agentId ?? null)) return null;
   const now = observation.now ?? new Date();
+  const scope = {
+    host: adapter.host,
+    session: hostIdentityDigest(observation.sessionId),
+    agent: observation.agentId ? hostIdentityDigest(observation.agentId) : null,
+    turn: observation.turnId ? hostIdentityDigest(observation.turnId) : null,
+    call: hostIdentityDigest(observation.toolUseId),
+  };
   const payload: HostAttestationPayloadV1 = {
     v: 1,
-    host: "claude-code",
+    ...scope,
     tool: observation.tool,
     inputDigest: convergenceDigest(input),
     ...binding,
@@ -147,7 +160,8 @@ export function issueHostAttestation(store: WorkflowStore, observation: HostObse
     modelClass,
     reasoningEffort: observation.reasoningEffort,
     actorId: observation.actorId,
-    observationId: randomBytes(24).toString("base64url"),
+    // Retrying the same host call cannot mint a second consumable observation.
+    observationId: createHash("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
     observedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + TOKEN_TTL_MS).toISOString(),
   };
@@ -155,11 +169,26 @@ export function issueHostAttestation(store: WorkflowStore, observation: HostObse
   return `${body}.${mac(signingKey(store), body)}`;
 }
 
+/** A host-owned wrapper observes once and dispatches the same signed arguments to its MCP transport. */
+export function withHostObservation<T>(
+  store: WorkflowStore,
+  adapter: HostExecutionAdapter,
+  tool: string,
+  args: Record<string, unknown>,
+  observe: () => Omit<HostObservation, "tool" | "input"> | null,
+  dispatch: (input: Record<string, unknown>) => T,
+): T {
+  const input = withoutHostAttestation(args);
+  const observation = observe();
+  const token = observation ? issueHostAttestation(store, adapter, { ...observation, tool, input }) : null;
+  return dispatch({ ...input, ...(token ? { [HOST_ATTESTATION_FIELD]: token } : {}) });
+}
+
 function invalid(message: string): WorkflowContractError {
   return new WorkflowContractError("BINDING_INVALID", message);
 }
 
-function verifyToken(store: WorkflowStore, token: string): HostAttestationPayloadV1 {
+function verifyToken(store: WorkflowStore, adapter: HostExecutionAdapter, token: string): HostAttestationPayloadV1 {
   const [prefix, encodedPayload, signature, ...rest] = token.split(".");
   if (prefix !== TOKEN_PREFIX || !encodedPayload || !signature || rest.length > 0) {
     throw invalid("Host attestation token is malformed.");
@@ -179,12 +208,18 @@ function verifyToken(store: WorkflowStore, token: string): HostAttestationPayloa
   if (
     !value
     || value.v !== 1
-    || value.host !== "claude-code"
+    || value.host !== adapter.host
     || typeof value.model !== "string"
-    || modelClassForClaudeModel(value.model) !== value.modelClass
+    || !MODEL_CLASS.includes(value.modelClass as ModelClassV1)
+    || adapter.modelClassForModel(value.model) !== value.modelClass
     || !isReasoningEffort(value.reasoningEffort)
+    || typeof value.session !== "string" || !/^[a-f0-9]{24}$/u.test(value.session)
+    || typeof value.call !== "string" || !/^[a-f0-9]{24}$/u.test(value.call)
+    || (value.agent !== null && (typeof value.agent !== "string" || !/^[a-f0-9]{24}$/u.test(value.agent)))
+    || (value.turn !== null && (typeof value.turn !== "string" || !/^[a-f0-9]{24}$/u.test(value.turn)))
+    || value.actorId !== `${adapter.host}:session-${String(value.session)}${value.agent ? `:agent-${String(value.agent)}` : ""}`
   ) {
-    throw invalid("Host attestation token payload is not a supported Claude Code observation.");
+    throw invalid("Host attestation token payload is not a supported observation for the configured adapter.");
   }
   return value as unknown as HostAttestationPayloadV1;
 }
@@ -196,23 +231,43 @@ function verifyToken(store: WorkflowStore, token: string): HostAttestationPayloa
 export class HostAttestationProvider implements TrustedExecutionContextProvider {
   private current: { tool: string; input: Record<string, unknown>; token: string | null } | null = null;
 
-  constructor(private readonly store: WorkflowStore) {}
+  constructor(private readonly store: WorkflowStore, private readonly adapter: HostExecutionAdapter) {}
+
+  /** Host-owned integrations without hooks supply their observation here, outside caller JSON. */
+  runObserved<T>(
+    tool: string,
+    args: Record<string, unknown>,
+    observe: () => Omit<HostObservation, "tool" | "input"> | null,
+    call: (input: Record<string, unknown>) => T,
+  ): T {
+    return withHostObservation(this.store, this.adapter, tool, args, observe, (input) => this.run(tool, input, call));
+  }
+
+  diagnose(): Record<string, unknown> {
+    return {
+      host: this.adapter.host,
+      status: "missing-call-observation",
+      required: ["host-owned model", "reasoningEffort", "session", "current tool call", "signed input binding"],
+      connection: "Enable the host PreToolUse adapter, or supply host-owned observations through HostAttestationProvider.runObserved; caller executionContext is not trusted.",
+    };
+  }
 
   run<T>(tool: string, args: Record<string, unknown>, call: (args: Record<string, unknown>) => T): T {
     const input = withoutHostAttestation(args);
     const token = typeof args[HOST_ATTESTATION_FIELD] === "string" ? args[HOST_ATTESTATION_FIELD] as string : null;
+    const previous = this.current;
     this.current = { tool, input, token };
     try {
       return call(input);
     } finally {
-      this.current = null;
+      this.current = previous;
     }
   }
 
   observe(binding: ExecutionObservationBindingV1): ExecutionContextV1 | null {
     const current = this.current;
     if (!current?.token) return null;
-    const payload = verifyToken(this.store, current.token);
+    const payload = verifyToken(this.store, this.adapter, current.token);
     if (payload.tool !== current.tool || payload.inputDigest !== convergenceDigest(current.input)) {
       throw invalid("Host attestation token was issued for a different tool call.");
     }

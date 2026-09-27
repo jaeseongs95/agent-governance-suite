@@ -1,4 +1,6 @@
+import { createHash } from "node:crypto";
 import { parseWakeMessages } from "./session-message-client.js";
+import { normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import type { DeliveryCapabilities, InputObservation, InputObservationKind } from "./input-observation.js";
 import { transportDeliveryCapabilities, type SessionMessageTransport } from "./session-message-relay.js";
 
@@ -78,4 +80,27 @@ export function hostDeliveryProfile(host: SupportedHookHost, environment: NodeJS
     ? "claude-inbox"
     : environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE === "1" ? "codex-queue" : "codex-deferred";
   return { transport, capabilities: transportDeliveryCapabilities(transport) };
+}
+
+/** Only the observed, local Codex app wait surface is recognized here. */
+export function nativePeerWait(observation: InputObservation): { targets: Array<{ host: string; sessionId: string }>; timeoutMs: number; queryRevision: string } | null {
+  if (observation.host !== "codex" || observation.toolName !== "mcp__codex_app__wait_threads") return null;
+  const input = observation.toolInput ?? {};
+  const timeoutMs = input.timeoutMs === undefined ? 120_000 : input.timeoutMs;
+  if (typeof timeoutMs !== "number" || !Number.isInteger(timeoutMs) || timeoutMs < 0 || timeoutMs > 3_600_000) return null;
+  if (!Array.isArray(input.targets) || input.targets.length < 1 || input.targets.length > 8) return null;
+  const targets: Array<{ host: string; sessionId: string }> = [];
+  const cursors = new Set<string>();
+  for (const value of input.targets) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const target = value as Record<string, unknown>;
+    if (typeof target.threadId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(target.threadId)) return null;
+    if (target.hostId !== undefined && target.hostId !== "local") return null;
+    if (target.afterCursor !== undefined && typeof target.afterCursor !== "string") return null;
+    targets.push({ host: "codex", sessionId: target.threadId });
+    // Keep every distinct cursor for an identity; conflicting cursors are not collapsed.
+    cursors.add(JSON.stringify([target.threadId, target.afterCursor ?? null]));
+  }
+  return { targets: normalizePeerWaitTargets(targets), timeoutMs,
+    queryRevision: createHash("sha256").update(JSON.stringify([...cursors].sort())).digest("hex") };
 }

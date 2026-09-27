@@ -23,7 +23,7 @@ v2.1.0은 같은 컴퓨터에서 일하는 AI 호스트 세션들이 서로에�
 
 지난 릴리스의 변경 내역은 [`docs/`](docs/)의 릴리스 노트에 있습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 
-현재 공개 릴리스는 `v2.5.0`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+현재 공개 릴리스는 `v2.6.0`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -64,7 +64,7 @@ Node.js 22.13.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.5.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.6.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -90,7 +90,9 @@ node scripts/check-runtime.mjs
 
 MCP 서버가 시작되지 않아도 개별 전문 스킬은 직접 호출할 수 있습니다. 단계 순서를 강제하고 완료 결과를 만드는 통합 작업에는 MCP 서버가 필요합니다.
 
-Hook은 처음 설치하거나 정의가 바뀐 뒤 Codex의 `/hooks`에서 내용을 검토하고 신뢰해야 실행됩니다. task continuity lifecycle Hook과 세션 현황판 Hook 모두 같습니다. 신뢰하지 않아 Hook이 생략되어도 기존 전문 스킬과 workflow MCP는 계속 동작합니다. 현황판 Hook은 Codex에서 세션 시작, 사용자 프롬프트 제출과 도구 호출 전 이벤트에 걸려 있고 Claude Code와 같은 공용 현황판 파일을 씁니다.
+Hook은 처음 설치하거나 정의가 바뀐 뒤 Codex의 `/hooks`에서 내용을 검토하고 신뢰해야 실행됩니다. task continuity, 현황판과 실행 관측 Hook 모두 같습니다. 전문 스킬은 직접 사용할 수 있지만 실행 관측 Hook이 생략되면 strict 통합 workflow는 `BINDING_REQUIRED`를 반환합니다. 현황판 Hook은 Codex에서 세션 시작, 사용자 프롬프트 제출과 도구 호출 전 이벤트에 걸려 있고 Claude Code와 같은 공용 현황판 파일을 씁니다.
+
+Codex 배포물은 현재 호출의 모델·세션·턴을 Hook에서, 같은 턴의 effort를 호스트 기록에서 확인해 `plan_workflow`와 `record_stage_result`에 결속합니다. 미관측 값이나 미지원 모델은 추정하지 않습니다. 모델 정책, bounded metadata 읽기, subagent 제약과 Hook 없는 host wrapper 연결은 [실행 관측 계약](docs/host-execution-attestation.md)을 참고하세요. fixture와 실제 설치에서의 실행 결과는 별도로 검증해야 합니다.
 
 ## 세션 사이 협업
 
@@ -100,11 +102,15 @@ Hook은 처음 설치하거나 정의가 바뀐 뒤 Codex의 `/hooks`에서 내�
 
 ### 로컬 세션 메시지
 
-현황판이 상태를 보여 준다면, 세션 메시지는 내용을 전합니다. `send_session_message`는 `targetHost`, `targetSessionId`와 최대 4096 UTF-8 byte의 본문을 받아 로컬 TLS 1.3 broker에 저장합니다. 수신 훅은 본문을 비신뢰 peer context로 claim하고, 처리한 모델이 `acknowledge_session_messages`를 호출해야 완료됩니다. ACK 전에는 claim lease가 끝난 뒤 지수 backoff로 다시 전달될 수 있으며, `get_session_message_status`는 `queued`, `delivered`, `acknowledged` 상태를 보여 줍니다. 기본 TTL은 1시간이고 30초부터 24시간까지 지정할 수 있으며, spool은 미ACK 메시지 1000개 또는 본문 합계 4 MiB로 제한됩니다. TLS spool과 ACK가 본문 전달의 내구성을 맡고, host를 깨우는 wake bell은 유실될 수 있는 알림입니다. broker는 target마다 소비되지 않은 bell을 하나만 예약해 같은 pending 구간에서 queue가 반복해서 쌓이지 않게 합니다. 검증된 wake claim 또는 지원 경계의 실제 claim이 pending bell을 소비하며, 전송 요청을 시작한 뒤 결과가 불명확하면 중복을 피하려고 다시 보내지 않습니다. wake가 유실돼도 다음 hook이나 turn이 같은 spool을 다시 확인합니다.
+peer 결과를 기다리는 방식은 전송, 호출 제한과 턴 종료 뒤 복귀 기능을 따로 확인합니다. 지원 hook은 실제 peer 관계와 같은 세션 generation의 최근 wake 처리·live relay가 모두 확인된 `mcp__codex_app__wait_threads`만 제한합니다. 즉시 조회는 한 번 허용하고 변화 없는 반복을 30초 동안 억제합니다. hook이 없는 호스트는 기존 CLI의 `wait` 작업으로 같은 판정을 소비하며, 복귀 미확인 상태에서는 최대 1초 대기와 한 번의 재조회 뒤 다음 사용자 턴으로 이어갑니다. 범용 sleep·프로세스·테스트 대기와 AGS 통제 밖 native 호출은 강제하지 않습니다. 세부 조건과 공개 CLI 예시는 [peer 대기 설계](docs/peer-wait-policy.md)를 참고하세요.
+
+2.6.0으로 업데이트할 때는 기존 AGS MCP·relay·broker 프로세스를 종료하고 플러그인을 업데이트한 뒤 재연결하여 새 프로세스를 시작합니다. 이전 브로커와 새 플러그인이 섞인 상태의 호환은 이번 릴리스에서 보장하지 않습니다.
+
+현황판이 상태를 보여 준다면, 세션 메시지는 내용을 전합니다. `prepare_session_message`는 `targetHost`, `targetSessionId`와 최대 4096 UTF-8 byte의 본문·TTL을 고정하고 시스템이 발급한 `messageId`를 반환합니다. 준비에는 전달 효과가 없으며 `send_session_message`에 발급 ID만 전달할 때 원자적으로 큐와 최초 영수증을 저장합니다. 같은 ID의 재시도·재시작은 새 삽입이나 만료 연장을 만들지 않습니다. 결과가 불명확하면 받은 같은 ID로 status를 조회하거나 send를 재시도하고, unknown이면 저장한 영수증과 대조합니다. 새 prepare는 새 전송 의도에만 사용합니다. 준비·영수증 상한과 기존 데이터 보존은 [메시지 ID·재시도 계약](docs/session-message-lifecycle.md)에 설명합니다. 수신 훅은 본문을 비신뢰 peer context로 claim하고, 처리한 모델이 `acknowledge_session_messages`를 호출해야 완료됩니다. ACK 전에는 claim lease가 끝난 뒤 지수 backoff로 다시 전달될 수 있으며, `get_session_message_status`는 준비 상태와 기존 `queued`, `delivered`, `acknowledged`, 정리 뒤 제출 영수증의 `deliveryState: unknown`을 구별합니다. 기본 TTL은 1시간이고 30초부터 24시간까지 지정할 수 있으며, spool은 미ACK 메시지 1000개 또는 본문 합계 4 MiB로 제한됩니다. TLS spool과 ACK가 본문 전달의 내구성을 맡고, host를 깨우는 wake bell은 유실될 수 있는 알림입니다. broker는 target마다 소비되지 않은 bell을 하나만 예약해 같은 pending 구간에서 queue가 반복해서 쌓이지 않게 합니다. 검증된 wake claim 또는 지원 경계의 실제 claim이 pending bell을 소비하며, 전송 요청을 시작한 뒤 결과가 불명확하면 중복을 피하려고 다시 보내지 않습니다. wake가 유실돼도 다음 hook이나 turn이 같은 spool을 다시 확인합니다.
 
 broker는 모든 호스트가 함께 쓰는 `~/.agent-governance-suite/session-messaging/`에서 필요할 때 시작하고 `127.0.0.1`에만 임의 포트로 바인딩합니다. 공용 루트는 절대 경로인 `AGENT_GOVERNANCE_SHARED_STATE_DIR`로 바꿀 수 있습니다. Node 내장 암호 모듈로 만든 P-256 자체서명 인증서의 SHA-256 fingerprint를 pin하고, 별도 256-bit token도 TLS 안에서 확인합니다. 본문은 Codex 명령행이나 Claude inbox에 넣지 않으며, 두 adapter는 target에 묶인 무작위 nonce가 든 작은 wake bell만 보냅니다. 지연·중복된 같은 bell도 TTL 안에서는 내부 wake로 인식하지만 본문 전달이나 권한을 부여하지 않습니다. 개인 키·broker token·Claude inbox token과 socket 경로는 메시지 DB에 저장하지 않습니다.
 
-공통 프로토콜의 `host`는 임의 문자열입니다. Codex와 Claude Code에는 wake adapter를 제공하고, Grok·Spark 같은 다른 로컬 런타임은 `mcp-server/dist/session-message-cli.mjs`에 JSON을 stdin으로 넘겨 같은 `send`, `claim`, `acknowledge`, `status`, `pending` 작업을 사용할 수 있습니다. 새 adapter는 일반 사용자 입력에서는 본문을 주입하지 않고, 검증된 wake에 `claim-wake`, 지원 도구 경계에 `claim-deferred`, 지원 턴 종료에 `claim-turn-end`를 사용합니다. 입력 관측과 전달 기능은 분리하며 첫 도구 경계 유예와 원자적 wake 소비 규칙을 지킵니다. 자세한 계약은 [입력 출처와 작업 경계](docs/input-boundaries.md)를 따릅니다. `claim` 호출자는 host 주입 한도에 맞춰 `maxMessages`와 UTF-16 code unit 기준 `maxBodyChars`를 줄일 수 있고, broker는 이 예산과 별개로 실제 JSON 응답을 32 KiB 이하로 유지합니다. 번들 hook은 가장 보수적인 공통값으로 한 번에 한 메시지만 주입합니다. 메시지 본문과 비밀값을 프로세스 인수로 넘기지 않습니다. 예:
+공통 프로토콜의 `host`는 임의 문자열입니다. Codex와 Claude Code에는 wake adapter를 제공하고, Grok·Spark 같은 다른 로컬 런타임은 `mcp-server/dist/session-message-cli.mjs`에 JSON을 stdin으로 넘겨 같은 `prepare`, `send`, `claim`, `acknowledge`, `status`, `pending` 작업을 사용할 수 있습니다. 새 adapter는 일반 사용자 입력에서는 본문을 주입하지 않고, 검증된 wake에 `claim-wake`, 지원 도구 경계에 `claim-deferred`, 지원 턴 종료에 `claim-turn-end`를 사용합니다. 입력 관측과 전달 기능은 분리하며 첫 도구 경계 유예와 원자적 wake 소비 규칙을 지킵니다. 자세한 계약은 [입력 출처와 작업 경계](docs/input-boundaries.md)를 따릅니다. `claim` 호출자는 host 주입 한도에 맞춰 `maxMessages`와 UTF-16 code unit 기준 `maxBodyChars`를 줄일 수 있고, broker는 이 예산과 별개로 실제 JSON 응답을 32 KiB 이하로 유지합니다. 번들 hook은 가장 보수적인 공통값으로 한 번에 한 메시지만 주입합니다. 메시지 본문과 비밀값을 프로세스 인수로 넘기지 않습니다. 예:
 
 ```json
 {"operation":"claim","payload":{"target":{"host":"spark","sessionId":"session-1"}}}
@@ -130,7 +136,7 @@ Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다
 - `instruction-scope-resolver`는 `AGENTS.md` chain과 함께 `CLAUDE.md` 계층을 확인합니다.
 - Anthropic API는 최상위 `oneOf`가 있는 도구 스키마를 받지 않으므로, Claude 배포물은 `AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE=anthropic`으로 `plan_workflow`의 공개 스키마만 평평하게 바꿉니다. 서버의 입력 검증은 같은 계약을 그대로 사용하고, 이 값이 없으면 기존 스키마를 그대로 내보냅니다.
 - 같은 값으로 서버가 세션 `instructions`를 내보내고, Claude Code는 이를 세션 시작 때 시스템 프롬프트에 넣습니다. 내용은 "파일을 고치거나 명령을 실행하기 전에 요청의 실패 영향을 분류하고, 크면 orchestrator를 호출해 필요한 단계와 생략할 단계를 정한 뒤 정한 단계를 실제로 호출한다"는 접수 규칙입니다. 이 값이 없으면 `instructions`를 내보내지 않습니다.
-- 실행 보증이 필요한 orchestrated workflow는 Claude 전용 host attestation 훅이 관측한 모델과 추론 수준으로 시작합니다. `plan_workflow`와 `record_stage_result`를 호출하기 직전에 Claude Code가 이 훅을 실행하고, 훅은 그 호출을 만든 assistant 메시지의 모델을 transcript에서, 추론 수준을 훅 입력과 transcript 중 낮은 값으로 정해 서명한 토큰을 도구 입력에 넣습니다. 서버는 Claude 배포물이 넘기는 `AGENT_GOVERNANCE_HOST_ATTESTATION=claude-code`가 있을 때만 이 토큰을 검증하므로, Codex 배포 서버는 이전처럼 `BINDING_REQUIRED`를 반환합니다. 토큰은 하네스가 관측했다는 근거일 뿐이며, 서명 키가 같은 사용자 권한의 상태 DB에 있으므로 OS 수준의 위조 방지는 아닙니다.
+- 실행 보증이 필요한 orchestrated workflow는 host attestation 훅이 관측한 모델과 추론 수준으로 시작합니다. Claude adapter는 기존 transcript·session model·hook effort 관측을 유지하고, Codex adapter는 현재 Hook과 같은 턴의 metadata를 대조합니다. 두 배포물의 manifest가 해당 adapter를 선택하며 서명·입력 결속·신선도·재사용 방지·실행 하한은 공통 검증을 거칩니다. 토큰은 하네스 관측의 근거이며, 키가 같은 사용자 권한의 상태 DB에 있으므로 OS 수준의 위조 방지는 아닙니다.
 
 `claude-plugin/`은 `pnpm claude:build`로 생성하며 직접 수정하지 않습니다. 공용 원본(`skills/`, `runtime/`, `contracts/`, MCP 서버 번들)은 그대로 복사하고, Claude 전용 파일은 `claude-overlay/`에, 스킬별 Claude 문구는 `claude-overlay/adaptations/<스킬명>.json`에 둡니다. 공용 원본을 고칠 때 Claude 생성물을 함께 맞출 필요는 없습니다. CI는 둘의 차이를 경고로만 알리고, 릴리스를 준비하거나 Claude 쪽을 작업할 때 다시 생성합니다.
 

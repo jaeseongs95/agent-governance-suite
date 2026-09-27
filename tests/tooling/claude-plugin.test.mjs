@@ -80,7 +80,9 @@ describe("generated Claude plugin", () => {
     expect(codexManifest).not.toContain(OUTPUT_DIRECTORY);
     const codexMcp = await readFile(path.join(root, ".mcp.json"), "utf8");
     expect(codexMcp).not.toContain("AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE");
-    expect(codexMcp).not.toContain("AGENT_GOVERNANCE_HOST_ATTESTATION");
+    expect(JSON.parse(codexMcp).mcpServers["agent-governance-suite"].env.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("codex");
+    const claudeOverlay = await readJson(root, "claude-overlay", ".claude-plugin", "plugin.json");
+    expect(claudeOverlay.mcpServers["agent-governance-suite"].env.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("claude-code");
   });
 
   it("puts the Claude selection decision at the top of the generated orchestrator skill", async () => {

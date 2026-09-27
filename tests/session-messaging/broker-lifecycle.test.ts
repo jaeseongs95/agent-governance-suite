@@ -47,7 +47,7 @@ it("retries transient endpoint publication failures and serves the published end
   expect(JSON.parse(await readFile(path.join(directory, "endpoint.json"), "utf8")).pid).toBe(child.pid);
   await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
     protocolVersion: "1.0.0",
-    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities"],
+    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy"],
   });
   expect((await readdir(directory)).filter((name) => name.endsWith(".tmp"))).toEqual([]);
 });
@@ -67,7 +67,7 @@ it.each(["permanent", "ENOSPC", "credentials", "database"])("releases startup re
   await waitForSessionMessageBrokerReady(directory, recovered, 3000);
   await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
     protocolVersion: "1.0.0",
-    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities"],
+    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy"],
   });
 });
 
@@ -76,7 +76,6 @@ it("delivers and acknowledges a message using only the packaged CLI and broker",
   await waitForSessionMessageBrokerReady(directory, child, 3000);
   const sender = { host: "test-sender", sessionId: "sender" };
   const target = { host: "test-target", sessionId: "target" };
-  const messageId = "packaged-broker-lifecycle-message";
   const request = (operation: string, payload: Record<string, unknown>) => {
     const result = spawnSync(process.execPath, [path.join(pluginRoot, "mcp-server/dist/session-message-cli.mjs")], {
       input: JSON.stringify({ operation, payload }), encoding: "utf8", timeout: 5000, windowsHide: true,
@@ -87,7 +86,8 @@ it("delivers and acknowledges a message using only the packaged CLI and broker",
     expect(response.ok).toBe(true);
     return response.data;
   };
-  request("send", { sender, target, messageId, body: "Synthetic lifecycle check" });
+  const { messageId } = request("prepare", { sender, target, body: "Synthetic lifecycle check" });
+  request("send", { sender, messageId });
   expect(request("claim", { target }).messages).toHaveLength(1);
   expect(request("acknowledge", { target, messageIds: [messageId] }).acknowledged).toBe(1);
   expect(request("status", { sender, messageId }).status.state).toBe("acknowledged");
