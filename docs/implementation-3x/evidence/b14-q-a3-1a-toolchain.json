@@ -1,0 +1,90 @@
+{
+  "task": "B14-q-a3-1a",
+  "specRevision": "r53",
+  "specSha256": "138c9f98a61d672bc0176517e5394fe9399a055a7c476dfc7c00381d358b4a16",
+  "resultKind": "observed compiler acquisition + FIXTURE tests; not a product feature PASS",
+  "observedAt": "2026-09-27T02:01:51Z",
+  "package": {
+    "id": "Microsoft.Net.Compilers.Toolset",
+    "version": "5.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.net.compilers.toolset/5.9.0/microsoft.net.compilers.toolset.5.9.0.nupkg",
+    "downloads": 1,
+    "downloadedAt": "2026-09-27T02:00:23Z",
+    "toolchainDir": "D:/codex/거버전스 3.0/ags-toolchain/roslyn/5.9.0",
+    "nupkg": {
+      "file": "microsoft.net.compilers.toolset.5.9.0.nupkg",
+      "bytes": 21936368,
+      "sha512": "nueMs8iTpdfM4+tbhcqHbPI2DHQ7NMqVx3n1xAecnITF5iB3HtR5H40kfq0DLbI0/QgckG/dw30LeIdojmYa4Q==",
+      "sha256": "b0227910320c5af14d80ec32b5e1a759c1e3cc2ec12e7d9cc8862cf826bd9551",
+      "publishedSha512": "nueMs8iTpdfM4+tbhcqHbPI2DHQ7NMqVx3n1xAecnITF5iB3HtR5H40kfq0DLbI0/QgckG/dw30LeIdojmYa4Q==",
+      "publishedHashSource": "https://api.nuget.org/v3/catalog0/data/2026.08.17.17.01.16/microsoft.net.compilers.toolset.5.9.0.json (packageHash, packageHashAlgorithm SHA512)",
+      "sha512MatchesPublished": true
+    },
+    "archiveListing": { "tool": "C:/Windows/System32/tar.exe -tf", "entries": 210, "files": 210, "includesSignatureFile": ".signature.p7s", "perFileSha256": "runtime/issuer/windows/build/roslyn.lock.json files (210 entries)" }
+  },
+  "authenticode": {
+    "tool": "Windows PowerShell 5.1 Get-AuthenticodeSignature (in-box)",
+    "peFilesDetectedByMZHeader": 177,
+    "validAndMicrosoftCorporation": 177,
+    "signerSubjects": [
+      "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+      "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+      "CN=Microsoft Windows, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+    ],
+    "note": "Every PE file is Valid with organization O=Microsoft Corporation; the CN varies by signing certificate, including csc.exe (CN=.NET)."
+  },
+  "nugetPackageSignature": {
+    "result": "NOT_RUN",
+    "reason": "No NuGet signature verification tool on this host (no nuget.exe on PATH, dotnet has no SDK). The .signature.p7s file is present but unverified; nupkg sha512 and Authenticode are not claimed as a substitute."
+  },
+  "compiler": {
+    "path": "D:/codex/거버전스 3.0/ags-toolchain/roslyn/5.9.0/package/tasks/net472/csc.exe",
+    "sha256": "3aafb7b9c54fa31a7092af35148971ee616965e7f9a0b80fb7fdc4bdd1d1a555",
+    "authenticode": { "status": "Valid", "signer": "CN=.NET, O=Microsoft Corporation, L=Redmond, S=Washington, C=US" },
+    "versionCommand": "csc.exe -version",
+    "versionOutput": "5.9.0-1.26357.3 (35d9211b841e7613c1d2f8f5af6d628ace696c4c)",
+    "versionFile": { "path": "D:/codex/거버전스 3.0/ags-toolchain/roslyn/5.9.0/csc-version.txt", "sha256": "df63436dab3b040a8a0c9f5caaaa4cdbc6cbcaa89adfce8bdc1661ba562a07c6" },
+    "exitCode": 0,
+    "runtime": {
+      "imageRuntimeVersion": "v4.0.30319",
+      "inBoxNetFramework": { "registryKey": "HKLM\\SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full", "release": 533509, "version": "4.8.09221" },
+      "otherRuntimeInstalled": false
+    },
+    "sourceCommitMatchesNugetPage": "35d9211b841e7613c1d2f8f5af6d628ace696c4c"
+  },
+  "refutationsObservedOnRealCompiler": {
+    "tempCopy": { "path": "C:/Users/sjs95/AppData/Local/Temp/ags-b14qa31-SbgTbF", "created": "fs.mkdtempSync(os.tmpdir(), 'ags-b14qa31-')", "removedInFinally": true },
+    "oneByteChangedCompiler": "REFUSED: package/tasks/net472/csc.exe does not match the lock.",
+    "versionNotInLock": "REFUSED: Roslyn 5.8.0 is not the locked version 5.9.0.",
+    "untouchedCopy": "accepted"
+  },
+  "fixtureTests": {
+    "file": "tests/coordinate-subagents/v3x/B14-q-a3-1a.test.mjs",
+    "tempDirs": "fs.mkdtempSync(os.tmpdir(), 'ags-b14qa31-') per case, removed in finally; 0 left under %TEMP% after runs",
+    "red": "permissive stub fetch-roslyn.mjs and empty lock: 4 failed (4)",
+    "green": "4 passed (4)"
+  },
+  "hostChanges": {
+    "globalInstall": 0, "pathChanges": 0, "registryChanges": 0, "environmentVariableChanges": 0, "aclChanges": 0, "inBoxCscUsed": 0,
+    "method": "SHA-256 of HKCU\\Environment Path, HKLM Session Manager\\Environment Path, the process PATH, and the value-name lists of both Environment keys, plus the NDP v4 Full Release, read before the download and after all steps; csc.exe and nuget.exe looked up on PATH with Get-Command.",
+    "before": {
+      "at": "2026-09-27T01:58:21Z",
+      "userPathSha256": "006d4a202781b4db054b1df8ec98c6502694711f82048d9e7dbbcf16743725b4",
+      "machinePathSha256": "60198ce656998c2db5d520a91aa30693ee99728b086cae34f5d14225ed32464b",
+      "processPathSha256": "04122f07407a5a48aa482fdb6f17a9960d0cd1301a18c1724d59c00fc29b2b8f",
+      "hkcuEnvironmentValueNamesSha256": "c4999272aedace04ca1e2e8a77409fcaa714ceed4d50d5a63ed16d3a2cdf8d67",
+      "hklmEnvironmentValueNamesSha256": "38f69677a56be931a27d80752f0a9fbb278ab5465426cb1af2a22319c2d444b7",
+      "ndpRelease": 533509, "cscOnPath": null, "toolchainDirExisted": false
+    },
+    "after": {
+      "at": "2026-09-27T02:01:51Z",
+      "userPathSha256": "006d4a202781b4db054b1df8ec98c6502694711f82048d9e7dbbcf16743725b4",
+      "machinePathSha256": "60198ce656998c2db5d520a91aa30693ee99728b086cae34f5d14225ed32464b",
+      "processPathSha256": "04122f07407a5a48aa482fdb6f17a9960d0cd1301a18c1724d59c00fc29b2b8f",
+      "hkcuEnvironmentValueNamesSha256": "c4999272aedace04ca1e2e8a77409fcaa714ceed4d50d5a63ed16d3a2cdf8d67",
+      "hklmEnvironmentValueNamesSha256": "38f69677a56be931a27d80752f0a9fbb278ab5465426cb1af2a22319c2d444b7",
+      "ndpRelease": 533509, "cscOnPath": null, "nugetOnPath": null
+    }
+  },
+  "notClaimed": ["deterministic double build (B14-q-a3-1b)", "service registration, accounts or ACLs", "SCM token, cross-user or worker-descendant denial (B14-q-b, B14-q-c)"]
+}
