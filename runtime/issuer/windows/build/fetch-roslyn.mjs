@@ -3,6 +3,7 @@
 // version folder already exists; no retry, mirror or other package). `verifyRoslyn` checks a toolchain
 // folder against the lock before any use. Nothing here changes PATH, the registry, environment variables
 // or ACLs, and it never touches an in-box csc.
+/* global fetch */
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
