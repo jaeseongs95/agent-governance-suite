@@ -7,6 +7,8 @@ import { join } from 'node:path';
 import { clearTimeout, setTimeout } from 'node:timers';
 import { fileURLToPath } from 'node:url';
 import { afterAll, afterEach, beforeAll, describe, test } from 'vitest';
+import { Ajv2020 } from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
 import { buildTwice } from '../../../runtime/issuer/windows/build/csc-build.mjs';
 
 // B14-q-a3-3: the Windows issuer named-pipe host. SAME_USER_SMOKE with an independent server process on this PC.
@@ -167,5 +169,129 @@ describe('B14-q-a3-3a listener, DACL, single instance, remote refusal', () => {
     await stop(listener);
     assert.ok(listener.exitCode !== null || listener.signalCode !== null);
     assert.equal((await connect(pipePath('.', name))).code, 'ENOENT');
+  });
+});
+
+// B14-q-a3-3b-1 FIXTURE: the restricted issuer-request parser and the wire adapter through a harness, no pipe or token.
+// The LF-trailing check covers the bytes handed to the harness only; late bytes on a live pipe are B14-q-a3-3b-2.
+describe('B14-q-a3-3b-1 strict frame parser and wire adapter', () => {
+  const fixture = smoke; // needs the isolated Roslyn on Windows; the result is FIXTURE, not a pipe or token observation
+  const CAP = 4096; // the plan's contract: at most 4096 bytes including the LF (not read from the C# source)
+  const ajv = new Ajv2020({ allErrors: true });
+  addFormats(ajv);
+  const frameValid = ajv.compile(JSON.parse(readFileSync(new URL('../../../runtime/issuer/windows/contract/ipc-frame.schema.json', import.meta.url), 'utf8')));
+  const n = (c) => c.repeat(32);
+  const receiverSid = 'S-1-5-21-1000-2000-3000-1001';
+  const callerSid = 'S-1-5-21-1000-2000-3000-1002';
+  const record = { currentEpoch: n('e'), receiverSid, callerSid };
+  const issue = (extra = {}) => ({ schemaVersion: '1.0.0', kind: 'issuer-request', requestId: n('1'), epoch: n('e'), operation: 'issue',
+    audience: 'peer-receiver/v1', receiverInstance: 'receiver-1', ...extra });
+  const epochRequest = (requestId) => ({ schemaVersion: '1.0.0', kind: 'issuer-request', requestId, epoch: null, operation: 'epoch' });
+  const line = (value) => Buffer.from(`${JSON.stringify(value)}\n`, 'utf8');
+  let dir;
+  let harness;
+
+  beforeAll(() => {
+    if (!existsSync(compiler)) return;
+    dir = mkdtempSync(join(tmpdir(), 'ags-b14qa33b1-'));
+    harness = buildTwice({ sources: [join(serverDir, 'host', 'FrameHarness.cs'), join(serverDir, 'host', 'FrameAdapter.cs'), coreSource],
+      references: ['mscorlib.dll', 'System.dll', 'System.Web.Extensions.dll'].map((file) => join(framework, file)),
+      cwd: serverDir, out: join(dir, 'out', 'ags-issuer-frame-harness.exe'), keepDir: join(dir, 'keep') });
+  }, 120000);
+  afterAll(() => { if (dir) rmSync(dir, { recursive: true, force: true }); });
+
+  function run(frames, { peerSid = receiverSid, state = record } = {}) {
+    const result = spawnSync(harness.runs[0].path, [], { encoding: 'utf8',
+      input: JSON.stringify({ state, peerSid, frames: frames.map((frame) => Buffer.from(frame).toString('base64')) }) });
+    assert.equal(result.status, 0, result.stderr);
+    const lines = result.stderr.trim().split(/\r?\n/);
+    assert.equal(lines.length, frames.length, result.stderr);
+    return JSON.parse(result.stdout).map((outcome, i) => {
+      const diagnostic = /^outcome (response|close|fail-closed) core-calls (\d+)$/.exec(lines[i]);
+      assert.ok(diagnostic, `stderr carries only an enum and a counter: ${lines[i]}`);
+      assert.equal(diagnostic[1], outcome.outcome);
+      const raw = outcome.response === undefined ? undefined : Buffer.from(outcome.response, 'base64');
+      return { outcome: outcome.outcome, coreCalls: Number(diagnostic[2]), raw, frame: raw && JSON.parse(raw.toString('utf8')) };
+    });
+  }
+  const closedWithoutCore = (results, label) => results.forEach((result, i) => {
+    assert.equal(result.outcome, 'close', `${label} ${i}`);
+    assert.equal(result.coreCalls, 0, `${label} ${i}`);
+  });
+  function response(result, expected) {
+    assert.equal(result.outcome, 'response');
+    assert.ok(frameValid(result.frame), JSON.stringify(frameValid.errors));
+    assert.ok(result.raw.at(-1) === 0x0a && result.raw.indexOf(0x0a) === result.raw.length - 1, 'one frame and its LF');
+    assert.deepEqual(Object.keys(result.frame).filter((key) => !['schemaVersion', 'kind', 'requestId', 'operation', 'epoch', 'status', 'error'].includes(key)), []);
+    assert.equal(result.frame.epoch, n('e'));
+    for (const [key, value] of Object.entries(expected)) assert.deepEqual(result.frame[key], value, key);
+  }
+
+  fixture('b1-1 invalid UTF-8, an overlong form, a lone surrogate or a BOM is closed without calling the core', () => {
+    const body = JSON.stringify(issue());
+    const inject = (bytes) => Buffer.concat([Buffer.from(`${body.slice(0, -1)},"x":"`), Buffer.from(bytes), Buffer.from('"}\n')]);
+    closedWithoutCore(run([inject([0xc3, 0x28]), inject([0xc0, 0xaf]), inject([0xed, 0xa0, 0x80]), Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), line(issue())])]), 'utf8');
+  });
+
+  fixture('b1-2 exactly 4096 bytes with the LF is read; 4097 bytes or no LF is closed without calling the core', () => {
+    const body = JSON.stringify(issue());
+    const padded = (total) => Buffer.from(`${body}${' '.repeat(total - Buffer.byteLength(body) - 1)}\n`);
+    assert.equal(padded(CAP).length, 4096);
+    assert.equal(padded(CAP + 1).length, 4097);
+    const [atCap, overCap, noLf] = run([padded(CAP), padded(CAP + 1), Buffer.from(body)]);
+    response(atCap, { status: 'unavailable', error: { code: 'service-unavailable' } });
+    assert.equal(atCap.coreCalls, 1);
+    closedWithoutCore([overCap, noLf], 'size');
+  });
+
+  fixture('b1-3 a value that is not one object, or a request value outside string/null, is closed without calling the core', () => {
+    const body = JSON.stringify(issue());
+    closedWithoutCore(run(['[]\n', '"x"\n', '1\n', 'null\n', `${body.slice(0, -1)},"x":1}\n`, `${body.slice(0, -1)},"x":true}\n`, `${body.slice(0, -1)},"x":{"y":"z"}}\n`, `${body.slice(0, -1)},"x":["y"]}\n`]), 'shape');
+  });
+
+  fixture('b1-4 a second value, trailing text or bytes after the LF are closed without calling the core', () => {
+    const body = JSON.stringify(issue());
+    closedWithoutCore(run([`${body} ${body}\n`, `${body}x\n`, Buffer.concat([line(issue()), Buffer.from('more')])]), 'trailing');
+  });
+
+  fixture('b1-5 a duplicate key, also one spelled with an escape, is closed without calling the core', () => {
+    const body = JSON.stringify(issue());
+    closedWithoutCore(run([`{"requestId":"${n('2')}",${body.slice(1)}\n`, `${body.slice(0, -1)},"epoch":"${n('e')}"}\n`, `{"request\\u0049d":"${n('2')}",${body.slice(1)}\n`]), 'duplicate');
+  });
+
+  fixture('b1-6 epoch is ok with the server epoch, an allowed issue is unavailable, core refusals keep their code; all match ipc-frame.v1', () => {
+    response(run([line(epochRequest(n('a')))], { peerSid: callerSid })[0], { status: 'ok', requestId: n('a'), operation: 'epoch' });
+    const [allowed, replay, oldEpoch, audience] = run([line(issue({ requestId: n('b') })), line(issue({ requestId: n('b') })),
+      line(issue({ requestId: n('c'), epoch: n('f') })), line(issue({ requestId: n('d'), audience: 'resource-caller/v1' }))]);
+    response(allowed, { status: 'unavailable', requestId: n('b'), operation: 'issue', error: { code: 'service-unavailable' } });
+    response(replay, { status: 'rejected', error: { code: 'replay' } });
+    response(oldEpoch, { status: 'rejected', error: { code: 'epoch-mismatch' } });
+    response(audience, { status: 'rejected', error: { code: 'audience-mismatch' } });
+    response(run([line(issue({ requestId: n('7') }))], { peerSid: callerSid })[0], { status: 'rejected', error: { code: 'peer-identity-rejected' } });
+    assert.ok([allowed, replay, oldEpoch, audience].every((result) => !/credential|grant|receiverSid|S-1-/.test(result.raw.toString('utf8'))));
+  });
+
+  fixture('b1-7 an unknown or ambiguous requestId/operation is closed, a correlated malformed request is refused, an invalid record fails closed', () => {
+    const [upper, short, badOperation, extra] = run([line(issue({ requestId: 'A'.repeat(32) })), line(issue({ requestId: '1'.repeat(31) })),
+      line(issue({ requestId: n('8'), operation: 'revoke' })), line({ ...issue({ requestId: n('9') }), extra: 'x' })]);
+    for (const result of [upper, short, badOperation]) assert.equal(result.outcome, 'close');
+    response(extra, { status: 'rejected', requestId: n('9'), operation: 'issue', error: { code: 'malformed-request' } });
+    const [invalid] = run([line(issue())], { state: { ...record, receiverSid: callerSid } });
+    assert.equal(invalid.outcome, 'fail-closed');
+    assert.equal(invalid.raw, undefined);
+  });
+
+  fixture('b1-8 a requestId spent on an unavailable issue stays spent', () => {
+    const [first, again] = run([line(issue({ requestId: n('0') })), line(issue({ requestId: n('0') }))]);
+    response(first, { status: 'unavailable', error: { code: 'service-unavailable' } });
+    response(again, { status: 'rejected', error: { code: 'replay' } });
+  });
+
+  fixture('b1-9 stderr has one enum and counter line per frame and never a SID, requestId or input', () => {
+    const result = spawnSync(harness.runs[0].path, [], { encoding: 'utf8', input: JSON.stringify({ state: record, peerSid: receiverSid,
+      frames: [line(issue({ requestId: n('5') })), Buffer.from('{"x":\n'), line(epochRequest(n('6')))].map((frame) => frame.toString('base64')) }) });
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(result.stderr.trim().split(/\r?\n/), ['outcome response core-calls 1', 'outcome close core-calls 0', 'outcome response core-calls 1']);
+    assert.ok(!/S-1-|5{32}|6{32}|receiver-1/.test(result.stderr));
   });
 });
