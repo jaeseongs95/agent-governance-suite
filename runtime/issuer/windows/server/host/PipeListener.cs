@@ -22,6 +22,8 @@ namespace Ags.Issuer.Windows.Host
         const string DenyNetwork = "(D;;GA;;;NU)";
         const int ErrorPipeConnected = 535;
         static readonly Regex Name = new Regex(@"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}\z", RegexOptions.CultureInvariant);
+        // Canonical but never allowed: the DACL must not name Everyone or Anonymous, whatever the caller passes.
+        static readonly string[] ForbiddenSids = { "S-1-1-0", "S-1-5-7" };
 
         [StructLayout(LayoutKind.Sequential)]
         struct SecurityAttributes { public int Length; public IntPtr Descriptor; public int Inherit; }
@@ -45,7 +47,7 @@ namespace Ags.Issuer.Windows.Host
             var dacl = new StringBuilder("D:P" + DenyNetwork + "(A;;GA;;;SY)(A;;GA;;;" + WindowsIdentity.GetCurrent().User.Value + ")");
             for (int i = 1; i < args.Length; i++)
             {
-                if (!IssuerCore.IsCanonicalSid(args[i])) return Usage();
+                if (!IssuerCore.IsCanonicalSid(args[i]) || Array.IndexOf(ForbiddenSids, args[i]) >= 0) return Usage();
                 dacl.Append("(A;;GRGW;;;").Append(args[i]).Append(')');
             }
             IntPtr descriptor;

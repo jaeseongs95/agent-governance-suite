@@ -149,6 +149,15 @@ describe('B14-q-a3-3a listener, DACL, single instance, remote refusal', () => {
     assert.equal(results.rejectOff.local.ok, true);
   }, 120000);
 
+  smoke('(6) Everyone (S-1-1-0) or Anonymous (S-1-5-7) as an allowed SID, alone or mixed with a valid SID, is refused before any pipe exists', async () => {
+    for (const allowed of [['S-1-1-0'], ['S-1-5-7'], [currentSid, 'S-1-1-0'], [currentSid, 'S-1-5-7']]) {
+      const name = uniqueName('broad');
+      const refused = start(product.runs[0].path, name, allowed);
+      assert.equal(await refused.ready, 'exit 2', `${allowed.join(' ')}: ${refused.log.out}`);
+      assert.equal((await connect(pipePath('.', name))).code, 'ENOENT', allowed.join(' '));
+    }
+  });
+
   smoke('(5) a non-canonical allowed SID is refused before any pipe exists, and stopping ends the process and the pipe', async () => {
     const refused = start(product.runs[0].path, uniqueName('badsid'), ['S-1-5-21-1000-2000-3000-01']);
     assert.equal(await refused.ready, 'exit 2');
