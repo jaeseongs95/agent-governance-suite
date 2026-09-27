@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
+import path from "node:path";
 import { parseWakeMessages } from "./session-message-client.js";
 import { normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import type { DeliveryCapabilities, InputObservation, InputObservationKind } from "./input-observation.js";
@@ -72,13 +74,55 @@ export function adaptHostInput(input: Record<string, unknown>, host: string): Ad
   };
 }
 
-export function hostDeliveryProfile(host: SupportedHookHost, environment: NodeJS.ProcessEnv = process.env): {
+function codexQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: string) => void): boolean {
+  const disabled = (reason: string) => { diagnose(reason); return false; };
+  const explicit = environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE;
+  if (explicit !== undefined) {
+    if (explicit === "1") return true;
+    return explicit === "0" ? false : disabled("invalid-environment");
+  }
+  const directory = environment.PLUGIN_DATA;
+  if (directory === undefined) return false;
+  // Windows root-relative paths still depend on the current drive.
+  if (!path.isAbsolute(directory) || (process.platform === "win32" && path.parse(directory).root === "\\")) {
+    return disabled("invalid-plugin-data");
+  }
+  try {
+    if (!statSync(directory).isDirectory()) return disabled("invalid-plugin-data");
+    const descriptor = openSync(path.join(directory, "session-messaging.json"), constants.O_RDONLY | constants.O_NONBLOCK);
+    try {
+      const stat = fstatSync(descriptor);
+      if (!stat.isFile()) return disabled("invalid-file-type");
+      if (stat.size > 4096) return disabled("too-large");
+      // One extra byte detects growth after fstat; short reads cannot bypass the limit.
+      const bytes = Buffer.alloc(4097);
+      let length = 0;
+      while (length < bytes.length) {
+        const count = readSync(descriptor, bytes, length, bytes.length - length, null);
+        if (count === 0) break;
+        length += count;
+      }
+      if (length > 4096) return disabled("too-large");
+      let settings: Record<string, unknown>;
+      try { settings = record(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, length)))); }
+      catch { return disabled("invalid-settings"); }
+      const codex = record(settings.codex);
+      if (settings.schemaVersion !== "1.0.0" || typeof codex.queueWake !== "boolean") return disabled("invalid-settings");
+      return codex.queueWake;
+    } finally { closeSync(descriptor); }
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === "ENOENT" ? false : disabled("read-failed");
+  }
+}
+
+export function hostDeliveryProfile(host: SupportedHookHost, environment: NodeJS.ProcessEnv = process.env,
+  diagnose: (reason: string) => void = (reason) => { console.error(`[agent-governance-suite] Codex queue settings: ${reason}; using codex-deferred.`); }): {
   transport: SessionMessageTransport;
   capabilities: DeliveryCapabilities;
 } {
   const transport: SessionMessageTransport = host === "claude-code"
     ? "claude-inbox"
-    : environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE === "1" ? "codex-queue" : "codex-deferred";
+    : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
   return { transport, capabilities: transportDeliveryCapabilities(transport) };
 }
 
