@@ -1,10 +1,10 @@
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { SessionMessageStore, MESSAGE_DRAFT_TTL_MS } from "../../mcp-server/src/session-message-store.js";
 import { dispatchSessionMessageBrokerOperation as dispatch } from "../../mcp-server/src/session-message-broker.js";
 import { requestSessionMessageOnce, sessionMessageRequest, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
@@ -25,6 +25,51 @@ afterEach(async () => {
 const fixture = (database = ":memory:") => { const store = new SessionMessageStore(database); stores.push(store); return store; };
 const prepare = (store: SessionMessageStore, now = 1000) => store.prepare({ sender, target, body: "Immutable synthetic message", ttlSeconds: 30 }, now);
 const count = (store: SessionMessageStore, table = "messages") => Number((store.database.prepare(`SELECT count(*) AS count FROM ${table}`).get() as { count: number }).count);
+
+const tickIdentity = { ...target, transport: "test-transport", relayId: "test-relay", instanceId: "generation-1", includePending: true };
+function startTick(store: SessionMessageStore, nowMs = 1000) {
+  store.startPresence({ ...tickIdentity, wakeVisibility: "none", canWakeSilently: false }, nowMs);
+  expect(store.acquireRelay({ ...tickIdentity, pid: process.pid, parentPid: process.pid }, nowMs)).toBe(true);
+}
+const leases = (store: SessionMessageStore) => JSON.stringify([
+  store.database.prepare("SELECT * FROM relay_leases").all(), store.database.prepare("SELECT * FROM session_presence").all(),
+]);
+
+it("one tick renews both leases and optionally counts pending messages", () => {
+  const store = fixture(); startTick(store);
+  store.submitPrepared(sender, prepare(store).messageId, 1001);
+  expect(store.relayTick(tickIdentity, 2000)).toEqual({ alive: true, count: 1 });
+  expect(store.presence(target, 2000).heartbeatAt).toBe(new Date(2000).toISOString());
+  expect(store.liveRelay(target, tickIdentity.transport, 16_500)).not.toBeNull();
+  expect(store.relayTick({ ...tickIdentity, includePending: false }, 3000)).toEqual({ alive: true, count: 0 });
+  expect(store.pendingCount(target, 3000)).toBe(1);
+});
+
+it("stale generation, ended presence, transport, relay and expired leases have zero renewal effect", () => {
+  for (const failure of ["generation", "ended", "transport", "relay", "relay-expiry", "presence-expiry"]) {
+    const store = fixture(); startTick(store);
+    let nowMs = 2000;
+    const input = { ...tickIdentity };
+    if (failure === "generation") store.startPresence({ ...input, instanceId: "generation-2", wakeVisibility: "none", canWakeSilently: false }, 1500);
+    if (failure === "ended") store.endPresence(target, "test-ended", input.instanceId, 1500);
+    if (failure === "transport") input.transport = "wrong-transport";
+    if (failure === "relay") input.relayId = "wrong-relay";
+    if (failure === "relay-expiry") nowMs = 16_000;
+    if (failure === "presence-expiry") { store.heartbeatRelay(input, 15_000); nowMs = 21_000; }
+    const before = leases(store);
+    expect(store.relayTick(input, nowMs)).toEqual({ alive: false, count: 0 });
+    expect(leases(store)).toBe(before);
+  }
+});
+
+it("tick validation and a pending-query failure cannot partially update leases", () => {
+  const store = fixture(); startTick(store, Date.now()); const before = leases(store);
+  expect(() => dispatch(store, "relay-tick", { target, ...tickIdentity, includePending: "true" })).toThrow(/boolean/u);
+  expect(leases(store)).toBe(before);
+  const pending = vi.spyOn(store, "pendingCount").mockImplementation(() => { throw new Error("synthetic pending failure"); });
+  expect(() => store.relayTick(tickIdentity)).toThrow(/synthetic/u);
+  expect(leases(store)).toBe(before); pending.mockRestore();
+});
 
 it("issues opaque IDs without queue, peer relationship, claim or wake effect", () => {
   const store = fixture(); const draft = prepare(store);
@@ -115,6 +160,32 @@ async function launch(drop = "") {
   const child = spawn(process.execPath, ["--import", new URL("./fixtures/message-response-loss.mjs", import.meta.url).href, path.join(root, "mcp-server/dist/session-message-broker.mjs"), "--state-directory", state], { windowsHide: true, stdio: "ignore", env: { ...process.env, AGS_DROP_MESSAGE_OPERATION: drop, AGS_MESSAGE_COUNTS_PATH: path.join(state, "operation-counts.json") } }); children.push(child);
   await waitForSessionMessageBrokerReady(state, child, 5000); return { state, child };
 }
+it("packaged TLS cycles use one request instead of three or two without changing pending state", async () => {
+  const { state } = await launch();
+  const operationCounts = async () => JSON.parse(await readFile(path.join(state, "operation-counts.json"), "utf8")) as Record<string, number>;
+  const metrics = [];
+  for (const includePending of [true, false]) {
+    const transport = includePending ? "test-inbox" : "codex-deferred";
+    const identity = { target, transport, relayId: "count-relay", instanceId: transport };
+    await requestSessionMessageOnce("presence-start", { ...identity, wakeVisibility: "none", canWakeSilently: false }, state);
+    await requestSessionMessageOnce("acquire-relay", { ...identity, pid: process.pid, parentPid: process.pid }, state);
+    const before = await operationCounts();
+    for (let cycle = 0; cycle < 10; cycle++) {
+      expect(await requestSessionMessageOnce("heartbeat-relay", identity, state)).toEqual({ alive: true });
+      expect(await requestSessionMessageOnce("presence-heartbeat", identity, state)).toEqual({ alive: true });
+      if (includePending) expect(await requestSessionMessageOnce("pending", { target }, state)).toEqual({ count: 0 });
+    }
+    const middle = await operationCounts();
+    for (let cycle = 0; cycle < 10; cycle++) expect(await requestSessionMessageOnce("relay-tick", { ...identity, includePending }, state)).toEqual({ alive: true, count: 0 });
+    const after = await operationCounts();
+    const baselineRequests = ["heartbeat-relay", "presence-heartbeat", "pending"].reduce((sum, op) => sum + (middle[op] ?? 0) - (before[op] ?? 0), 0);
+    const tickRequests = (after["relay-tick"] ?? 0) - (middle["relay-tick"] ?? 0);
+    expect(baselineRequests).toBe(includePending ? 30 : 20); expect(tickRequests).toBe(10);
+    metrics.push({ transport, cycles: 10, baselineRequests, tickRequests });
+  }
+  console.info("relay tick measured TLS request counts", JSON.stringify(metrics));
+  if (process.env.AGS_RELAY_TICK_EVIDENCE_PATH) await writeFile(process.env.AGS_RELAY_TICK_EVIDENCE_PATH, JSON.stringify({ observedAt: new Date().toISOString(), scope: "disposable packaged TLS broker, ten sequential synthetic cycles per transport, no CPU or installed-runtime claim", metrics }, null, 2) + "\n", "utf8");
+}, 15_000);
 it("a real post-commit prepare reply loss leaves only orphan drafts", async () => {
   const { state } = await launch("prepare");
   await expect(requestSessionMessageOnce("prepare", { sender, target, body: "Lost preparation" }, state, 300)).rejects.toThrow();

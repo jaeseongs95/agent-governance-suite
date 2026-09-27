@@ -191,8 +191,7 @@ describe("peer wait policy boundaries", () => {
     expect(decision(store)).toMatchObject({ action: "deny", resume: "observed" });
     for (const offset of [10_000, 20_000, 30_000]) {
       clock.mockReturnValue(now + offset);
-      dispatch(store, "presence-heartbeat", { target: sender, instanceId: "generation-1" });
-      dispatch(store, "heartbeat-relay", { target: sender, instanceId: "generation-1", transport: "codex-queue", relayId: "live-relay" });
+      expect(dispatch(store, "relay-tick", { target: sender, instanceId: "generation-1", transport: "codex-queue", relayId: "live-relay", includePending: true })).toMatchObject({ alive: true });
       expect(dispatch(store, "claim-wake", { target: sender, nonces: ["nonce-peer-wait-fixture", "nonce-peer-wait-fixture"] })).toMatchObject({ recognized: false, messages: [] });
     }
     expect(decision(store)).toMatchObject({ action: "bounded", resume: "unknown" });

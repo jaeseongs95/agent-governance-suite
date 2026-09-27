@@ -300,6 +300,13 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       observePeerRelay(store, payload, isAlive);
       return { alive: isAlive };
     }
+    case "relay-tick": {
+      const result = store.relayTick({ ...identity(payload.target), transport: string(payload.transport, "transport"),
+        relayId: string(payload.relayId, "relayId"), instanceId: string(payload.instanceId, "instanceId"),
+        includePending: boolean(payload.includePending, "includePending") });
+      observePeerRelay(store, payload, result.alive);
+      return result;
+    }
     case "presence-start": {
       const target = identity(payload.target);
       const wakeVisibility = string(payload.wakeVisibility, "wakeVisibility");

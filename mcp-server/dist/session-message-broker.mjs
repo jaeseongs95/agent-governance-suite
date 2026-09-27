@@ -493,6 +493,28 @@ var SessionMessageStore = class {
       WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?`).run(iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId);
     return result.changes === 1;
   }
+  /** One relay cycle; an old generation cannot renew either lease. */
+  relayTick(input, nowMs = Date.now()) {
+    boundedIdentity(input);
+    if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128 || !input.instanceId || input.instanceId.length > 128 || typeof input.includePending !== "boolean") throw new Error("Invalid relay tick identity or includePending.");
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const presence = this.presence(input, nowMs);
+      const relay = this.liveRelay(input, input.transport, nowMs);
+      if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport || relay?.relayId !== input.relayId) {
+        this.database.exec("ROLLBACK");
+        return { alive: false, count: 0 };
+      }
+      this.heartbeatRelay(input, nowMs);
+      this.heartbeatPresence(input, input.instanceId, nowMs);
+      const count = input.includePending ? this.pendingCount(input, nowMs) : 0;
+      this.database.exec("COMMIT");
+      return { alive: true, count };
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
   reserveWake(target, nonce, nowMs = Date.now()) {
     boundedIdentity(target);
     if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
@@ -1035,6 +1057,17 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload) {
       const isAlive = store.heartbeatRelay({ ...target, transport: string(payload.transport, "transport"), relayId: string(payload.relayId, "relayId") });
       observePeerRelay(store, payload, isAlive);
       return { alive: isAlive };
+    }
+    case "relay-tick": {
+      const result = store.relayTick({
+        ...identity(payload.target),
+        transport: string(payload.transport, "transport"),
+        relayId: string(payload.relayId, "relayId"),
+        instanceId: string(payload.instanceId, "instanceId"),
+        includePending: boolean(payload.includePending, "includePending")
+      });
+      observePeerRelay(store, payload, result.alive);
+      return result;
     }
     case "presence-start": {
       const target = identity(payload.target);
