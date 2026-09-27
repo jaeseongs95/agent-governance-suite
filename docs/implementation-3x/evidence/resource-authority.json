@@ -1,0 +1,1557 @@
+{
+  "taskId": "B16-b",
+  "evidenceFormat": "fixture-verification-report-v1",
+  "generatedAt": "2026-09-27T08:36:44.477Z",
+  "conclusion": "PASS_PARTIAL_FIXTURE_SCOPE",
+  "officialTaskStatusAtRead": "NOT_STARTED",
+  "contract": {
+    "revision": "r56",
+    "specSha256": "a43902062524e08cf84d75c6731c0484dd8a4cf09a85b0bfebb22014c7841ec9",
+    "goMessageId": "claude-main-b16b-preimpl-go-to-01a0e1c6-20260927-01",
+    "extensionMessageId": "claude-main-b16b-harness-extension-go-to-01a0e1c6-20260927-01",
+    "t0": "2026-09-27T08:18:09Z",
+    "plannedEnd": "2026-09-27T09:18:00Z",
+    "hardEnd": "2026-09-27T09:23:00Z"
+  },
+  "sourceCandidate": {
+    "repository": "D:/codex/거버전스 3.0/agent-governance-suite-b16-a-codex",
+    "branch": "codex/v3x-b16-a-resource-harness",
+    "baseCommit": "d8569f203cc18dfde7b7a8faedb25500880eaf0c",
+    "testedWithDirtyFiles": [
+      "tests/coordinate-subagents/v3x/B16-b.test.mjs",
+      "tests/coordinate-subagents/v3x/fixtures/resource-authority-harness.mjs"
+    ],
+    "files": [
+      {
+        "file": "tests/coordinate-subagents/v3x/B16-b.test.mjs",
+        "digest": "sha256:5e5d456efc1e57beb39d99c8e242e308a11ed2bf47b169fe0425a86c023c423d"
+      },
+      {
+        "file": "tests/coordinate-subagents/v3x/fixtures/resource-authority-harness.mjs",
+        "digest": "sha256:5736c0a1deb6cd79e71ba9cbd01bc09bac169b30a10c31f549227875da2e3077"
+      },
+      {
+        "file": "tests/coordinate-subagents/v3x/B16-a.test.mjs",
+        "digest": "sha256:f7bed724b33f0802e973c43e09efdbf9c9b4741c984496b94dc57cecdf6d2417"
+      },
+      {
+        "file": "mcp-server/src/resource/admit-pools.ts",
+        "digest": "sha256:41d9ba7f1525927e9579a0ed176d1b58e764f0d523721549545972f94f901863"
+      },
+      {
+        "file": "mcp-server/src/resource/admit-pool.ts",
+        "digest": "sha256:f048bc9dca9e718ad21db26c9061c2ce719c1ef1fe08c035a3a90312707637c8"
+      },
+      {
+        "file": "mcp-server/src/resource/commit-reservation.ts",
+        "digest": "sha256:1ee61116c3f253d441218023977191644037d23ce43ae8eac659a96b21329461"
+      },
+      {
+        "file": "mcp-server/src/resource/uncertain-reservation.ts",
+        "digest": "sha256:658b6756523536b06b6c59e4b84af62401223bada2f0d14af0ffc6f6bf8b930b"
+      },
+      {
+        "file": "mcp-server/src/resource/release-reservation.ts",
+        "digest": "sha256:c0a03765d32eed3ad28b1d4243242d29a29563b35266d05ba298774e35db9a99"
+      },
+      {
+        "file": "mcp-server/src/resource/settle-reservation.ts",
+        "digest": "sha256:a55643338755d76bc4b99b49d0842fe8bd4c87b37400d86be35e02233663726e"
+      },
+      {
+        "file": "mcp-server/src/resource/store-schema.ts",
+        "digest": "sha256:6ea302a143daf6833d45117253c72e2bba1d75531689ef37d9b3b98365b4af4c"
+      }
+    ],
+    "commitIdentityLocation": "handoffs/TASK_B16-b_sol6_preimpl_handoff.ko.md"
+  },
+  "environment": {
+    "platform": "win32",
+    "node": "v24.19.0",
+    "packageManager": "pnpm@11.19.0",
+    "processTopology": "two real forked OS processes with independent DatabaseSync connections; third read-only observer connection",
+    "windowsOnlyObserved": true,
+    "workerLifetimeMs": 30000,
+    "operationTimeoutMs": 8000,
+    "barrierUpperBoundMs": 16000,
+    "vitestTestTimeoutMs": 30000,
+    "lifetimeTimerNote": "Child timer exits 74; synchronous SQLite lock waits are bounded by busy_timeout 5000; barriers also check the worker deadline."
+  },
+  "trustScope": {
+    "observationCollector": "test fixture only",
+    "approvedPolicies": "test fixture only",
+    "commit": "actual ResourceReservationCommitStore with fixture-owned lease, binding artifacts and retention",
+    "settlementVerifier": "test-only configured token Map with fixed fixture job-binding resolver; arbitrary caller JSON rejected",
+    "releaseVerifier": "always rejects no-start input; does not mint a trusted no-start receipt",
+    "actualAccountsOrOperationalDatabases": false,
+    "externalLaunches": "NOT_RUN",
+    "brokerIssuerAuthority": "NOT_RUN"
+  },
+  "existingEvidenceReused": [
+    {
+      "cases": "identical duplicate and same-identity conflicting requests across OS processes",
+      "suite": "B06",
+      "result": "fresh regression PASS; no duplicated B16-b test"
+    },
+    {
+      "cases": "admission crash at after-begin/before-commit/after-commit and timeout cleanup",
+      "suite": "B16-a",
+      "result": "fresh regression PASS on expanded fixture bytes"
+    }
+  ],
+  "b16aEvidenceImpact": {
+    "fixtureChanged": true,
+    "oldFixtureDigest": "sha256:51dde5177729951f584ab2e75d6145c124b7d72463b28d5f11d362b226a90846",
+    "oldCommit": "cd46681e7cca42d6be0d1a624b7944275def5984",
+    "originalEvidenceRetainedAt": "D:/codex/거버전스 3.0/ags-evidence/B16-a/20260927T080942Z-cd46681e-preimpl",
+    "frozenB16aTestUnchanged": true,
+    "replacementValidation": "final-focused-regression.log"
+  },
+  "shards": [
+    {
+      "id": "shared-reserve",
+      "status": "PASS",
+      "pids": [
+        6180,
+        9860
+      ],
+      "connections": [
+        {
+          "pid": 6180,
+          "databasePath": "C:\\Users\\sjs95\\AppData\\Local\\Temp\\ags-b16a-yCLx3U\\shared\\resource.sqlite3",
+          "workerLifetimeMs": 30000,
+          "realmId": "2836ef1d7aedb0c6eead73ef6cd60e99d0d4475e8043bbf0e915e11214e1044f",
+          "connectionToken": "da627822-2ca5-4c1c-b734-d3ca1b8ecde6",
+          "marker": null,
+          "reservations": 0,
+          "holds": 0,
+          "requests": 0
+        },
+        {
+          "pid": 9860,
+          "databasePath": "C:\\Users\\sjs95\\AppData\\Local\\Temp\\ags-b16a-yCLx3U\\shared\\resource.sqlite3",
+          "workerLifetimeMs": 30000,
+          "realmId": "2836ef1d7aedb0c6eead73ef6cd60e99d0d4475e8043bbf0e915e11214e1044f",
+          "connectionToken": "27a2e29a-4a0a-4aae-98ec-30ac902928bc",
+          "marker": null,
+          "reservations": 0,
+          "holds": 0,
+          "requests": 0
+        }
+      ],
+      "logicalSnapshotDomain": "sha256 over UTF-8 JSON.stringify of ordered rows from seven listed resource tables; not a copied live DB/WAL",
+      "stages": [
+        {
+          "label": "before",
+          "digest": "sha256:4892a4f7782bc64396f88a063b9fbe767c885b1c8b0406c288d55833cca4dc53",
+          "rowCounts": {
+            "resource_reservations": 0,
+            "resource_reservation_holds": 0,
+            "resource_admission_requests": 0,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "first-uncommitted-second-waiting",
+          "digest": "sha256:4892a4f7782bc64396f88a063b9fbe767c885b1c8b0406c288d55833cca4dc53",
+          "rowCounts": {
+            "resource_reservations": 0,
+            "resource_reservation_holds": 0,
+            "resource_admission_requests": 0,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "serialized",
+          "digest": "sha256:d5ef9991ad085ecc908618fa687ac3d6666b19e15195f87e4dd95d5c348b6ff5",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 2,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "after",
+          "digest": "sha256:d5ef9991ad085ecc908618fa687ac3d6666b19e15195f87e4dd95d5c348b6ff5",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 2,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        }
+      ],
+      "beforeLedger": {
+        "label": "before",
+        "rows": {
+          "resource_reservations": [],
+          "resource_reservation_holds": [],
+          "resource_admission_requests": [],
+          "resource_intents": [],
+          "resource_usage_events": [],
+          "resource_terminal_evidence": [],
+          "resource_usage_coverage": []
+        },
+        "digest": "sha256:4892a4f7782bc64396f88a063b9fbe767c885b1c8b0406c288d55833cca4dc53"
+      },
+      "afterLedger": {
+        "label": "after",
+        "rows": {
+          "resource_reservations": [
+            {
+              "reservation_id": "feed7395-e3af-4876-aaf0-0e0a56e2d1b9",
+              "request_key": "reservation-v1:sha256:b754f93691c29fdadfddf4c41a11a81388840b013f9877cf0dd34ee0c8d3ed5f",
+              "request_digest": "sha256:1b6486924b4e1544d3ead3d497c41c93f31a2b5d6d0a0fdfc2f0d0704df03a18",
+              "task_id": "task-1",
+              "run_id": "run-1",
+              "slot_id": "slot-1",
+              "attempt_id": "winner",
+              "plan_revision": 1,
+              "lease_epoch": 1,
+              "state": "held",
+              "created_at": "2026-09-23T00:03:00.000Z",
+              "expires_at": "2026-09-23T00:30:00.000Z"
+            }
+          ],
+          "resource_reservation_holds": [
+            {
+              "reservation_id": "feed7395-e3af-4876-aaf0-0e0a56e2d1b9",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "a-pool",
+              "window_id": "weekly",
+              "reset_epoch": 1,
+              "amount": 5,
+              "unit": "request"
+            },
+            {
+              "reservation_id": "feed7395-e3af-4876-aaf0-0e0a56e2d1b9",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "z-pool",
+              "window_id": "weekly",
+              "reset_epoch": 1,
+              "amount": 5,
+              "unit": "request"
+            }
+          ],
+          "resource_admission_requests": [
+            {
+              "request_key": "reservation-v1:sha256:b754f93691c29fdadfddf4c41a11a81388840b013f9877cf0dd34ee0c8d3ed5f",
+              "request_digest": "sha256:1b6486924b4e1544d3ead3d497c41c93f31a2b5d6d0a0fdfc2f0d0704df03a18",
+              "plan_revision": 1,
+              "request_json": "{\"attemptId\":\"winner\",\"expiresAt\":\"2026-09-23T00:30:00.000Z\",\"leaseEpoch\":1,\"planRevision\":1,\"policyDigests\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:5511f0caf84597450223b6eb9317346cb39b54548c430cab38cc1b60441770fc\",\"resourcePoolId\":\"a-pool\"},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:d4a0dc5d28036ea444e2da2b73fde134b33c065dd94c5e32490a7a20810d8c81\",\"resourcePoolId\":\"z-pool\"}],\"pools\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"a-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"z-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]}],\"requestKey\":\"reservation-v1:sha256:b754f93691c29fdadfddf4c41a11a81388840b013f9877cf0dd34ee0c8d3ed5f\",\"runId\":\"run-1\",\"slotId\":\"slot-1\",\"taskId\":\"task-1\"}",
+              "state": "admitted",
+              "result_json": "{\"kind\":\"admitted\",\"poolCount\":2,\"reservationId\":\"feed7395-e3af-4876-aaf0-0e0a56e2d1b9\"}",
+              "reservation_id": "feed7395-e3af-4876-aaf0-0e0a56e2d1b9"
+            },
+            {
+              "request_key": "reservation-v1:sha256:de484c2cce338bd3a694a915f25fba1ed3064f31b40b0c4a5207405c31af71bf",
+              "request_digest": "sha256:2bd0d79b2b8006eceae6c9a70495292e724e49a1289cab6f472212c64271b84b",
+              "plan_revision": 1,
+              "request_json": "{\"attemptId\":\"contender\",\"expiresAt\":\"2026-09-23T00:30:00.000Z\",\"leaseEpoch\":1,\"planRevision\":1,\"policyDigests\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:5511f0caf84597450223b6eb9317346cb39b54548c430cab38cc1b60441770fc\",\"resourcePoolId\":\"a-pool\"},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:d4a0dc5d28036ea444e2da2b73fde134b33c065dd94c5e32490a7a20810d8c81\",\"resourcePoolId\":\"z-pool\"}],\"pools\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"a-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"z-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]}],\"requestKey\":\"reservation-v1:sha256:de484c2cce338bd3a694a915f25fba1ed3064f31b40b0c4a5207405c31af71bf\",\"runId\":\"run-1\",\"slotId\":\"slot-1\",\"taskId\":\"task-1\"}",
+              "state": "rejected",
+              "result_json": "{\"failedPool\":{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"a-pool\"},\"kind\":\"rejected\",\"reason\":\"INSUFFICIENT_LOCAL_CAPACITY\"}",
+              "reservation_id": null
+            }
+          ],
+          "resource_intents": [],
+          "resource_usage_events": [],
+          "resource_terminal_evidence": [],
+          "resource_usage_coverage": []
+        },
+        "digest": "sha256:d5ef9991ad085ecc908618fa687ac3d6666b19e15195f87e4dd95d5c348b6ff5"
+      },
+      "results": [
+        {
+          "kind": "admitted",
+          "reservationId": "feed7395-e3af-4876-aaf0-0e0a56e2d1b9",
+          "poolCount": 2
+        },
+        {
+          "kind": "rejected",
+          "reason": "INSUFFICIENT_LOCAL_CAPACITY",
+          "failedPool": {
+            "accountScope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "resourcePoolId": "a-pool"
+          }
+        }
+      ],
+      "cleanup": {
+        "exits": [
+          {
+            "pid": 6180,
+            "code": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "pid": 9860,
+            "code": null,
+            "signal": "SIGKILL"
+          }
+        ],
+        "allExited": true,
+        "rootRemoved": true
+      },
+      "rawEvidence": {
+        "logPath": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/final-focused-regression.log",
+        "recordIndex": 0,
+        "prefix": "B16-b shard evidence "
+      }
+    },
+    {
+      "id": "multi-pool-rejection",
+      "status": "PASS",
+      "pids": [
+        24628,
+        4232
+      ],
+      "connections": [
+        {
+          "pid": 24628,
+          "databasePath": "C:\\Users\\sjs95\\AppData\\Local\\Temp\\ags-b16a-vrFhvh\\shared\\resource.sqlite3",
+          "workerLifetimeMs": 30000,
+          "realmId": "f9e7b5396f3bbeaa250848aba8cb0c32da9387363a2792ef3867312566e11635",
+          "connectionToken": "aefd902c-e9a2-48ea-b107-32c15faf2147",
+          "marker": null,
+          "reservations": 0,
+          "holds": 0,
+          "requests": 0
+        },
+        {
+          "pid": 4232,
+          "databasePath": "C:\\Users\\sjs95\\AppData\\Local\\Temp\\ags-b16a-vrFhvh\\shared\\resource.sqlite3",
+          "workerLifetimeMs": 30000,
+          "realmId": "f9e7b5396f3bbeaa250848aba8cb0c32da9387363a2792ef3867312566e11635",
+          "connectionToken": "7ecec6da-1a8a-4026-b143-f49663e97ba5",
+          "marker": null,
+          "reservations": 0,
+          "holds": 0,
+          "requests": 0
+        }
+      ],
+      "logicalSnapshotDomain": "sha256 over UTF-8 JSON.stringify of ordered rows from seven listed resource tables; not a copied live DB/WAL",
+      "stages": [
+        {
+          "label": "before",
+          "digest": "sha256:4892a4f7782bc64396f88a063b9fbe767c885b1c8b0406c288d55833cca4dc53",
+          "rowCounts": {
+            "resource_reservations": 0,
+            "resource_reservation_holds": 0,
+            "resource_admission_requests": 0,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "rejection-uncommitted-second-waiting",
+          "digest": "sha256:4892a4f7782bc64396f88a063b9fbe767c885b1c8b0406c288d55833cca4dc53",
+          "rowCounts": {
+            "resource_reservations": 0,
+            "resource_reservation_holds": 0,
+            "resource_admission_requests": 0,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "serialized",
+          "digest": "sha256:e85470a4a46a002eedad5bc65abea36493a952b1f67de4b8418343583bf12220",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 2,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "after",
+          "digest": "sha256:e85470a4a46a002eedad5bc65abea36493a952b1f67de4b8418343583bf12220",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 2,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        }
+      ],
+      "beforeLedger": {
+        "label": "before",
+        "rows": {
+          "resource_reservations": [],
+          "resource_reservation_holds": [],
+          "resource_admission_requests": [],
+          "resource_intents": [],
+          "resource_usage_events": [],
+          "resource_terminal_evidence": [],
+          "resource_usage_coverage": []
+        },
+        "digest": "sha256:4892a4f7782bc64396f88a063b9fbe767c885b1c8b0406c288d55833cca4dc53"
+      },
+      "afterLedger": {
+        "label": "after",
+        "rows": {
+          "resource_reservations": [
+            {
+              "reservation_id": "69a750b0-8dee-40f8-b8b1-d61b7fe58db5",
+              "request_key": "reservation-v1:sha256:b754f93691c29fdadfddf4c41a11a81388840b013f9877cf0dd34ee0c8d3ed5f",
+              "request_digest": "sha256:1b6486924b4e1544d3ead3d497c41c93f31a2b5d6d0a0fdfc2f0d0704df03a18",
+              "task_id": "task-1",
+              "run_id": "run-1",
+              "slot_id": "slot-1",
+              "attempt_id": "winner",
+              "plan_revision": 1,
+              "lease_epoch": 1,
+              "state": "held",
+              "created_at": "2026-09-23T00:03:00.000Z",
+              "expires_at": "2026-09-23T00:30:00.000Z"
+            }
+          ],
+          "resource_reservation_holds": [
+            {
+              "reservation_id": "69a750b0-8dee-40f8-b8b1-d61b7fe58db5",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "a-pool",
+              "window_id": "weekly",
+              "reset_epoch": 1,
+              "amount": 5,
+              "unit": "request"
+            },
+            {
+              "reservation_id": "69a750b0-8dee-40f8-b8b1-d61b7fe58db5",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "z-pool",
+              "window_id": "weekly",
+              "reset_epoch": 1,
+              "amount": 5,
+              "unit": "request"
+            }
+          ],
+          "resource_admission_requests": [
+            {
+              "request_key": "reservation-v1:sha256:d2b9c3ede31dcf8f33e6b9320dcd631491b7f896f1d878aab3c6485889ce55e7",
+              "request_digest": "sha256:4a3ab7c1badaf511861a89419b096d0b40196d0ab9b791bc9f491175c3b3c42b",
+              "plan_revision": 1,
+              "request_json": "{\"attemptId\":\"rejected\",\"expiresAt\":\"2026-09-23T00:30:00.000Z\",\"leaseEpoch\":1,\"planRevision\":1,\"policyDigests\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:5511f0caf84597450223b6eb9317346cb39b54548c430cab38cc1b60441770fc\",\"resourcePoolId\":\"a-pool\"},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:d4a0dc5d28036ea444e2da2b73fde134b33c065dd94c5e32490a7a20810d8c81\",\"resourcePoolId\":\"z-pool\"}],\"pools\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"a-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"z-pool\",\"windows\":[{\"amount\":8,\"unit\":\"request\",\"windowId\":\"weekly\"}]}],\"requestKey\":\"reservation-v1:sha256:d2b9c3ede31dcf8f33e6b9320dcd631491b7f896f1d878aab3c6485889ce55e7\",\"runId\":\"run-1\",\"slotId\":\"slot-1\",\"taskId\":\"task-1\"}",
+              "state": "rejected",
+              "result_json": "{\"failedPool\":{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"z-pool\"},\"kind\":\"rejected\",\"reason\":\"INSUFFICIENT_LOCAL_CAPACITY\"}",
+              "reservation_id": null
+            },
+            {
+              "request_key": "reservation-v1:sha256:b754f93691c29fdadfddf4c41a11a81388840b013f9877cf0dd34ee0c8d3ed5f",
+              "request_digest": "sha256:1b6486924b4e1544d3ead3d497c41c93f31a2b5d6d0a0fdfc2f0d0704df03a18",
+              "plan_revision": 1,
+              "request_json": "{\"attemptId\":\"winner\",\"expiresAt\":\"2026-09-23T00:30:00.000Z\",\"leaseEpoch\":1,\"planRevision\":1,\"policyDigests\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:5511f0caf84597450223b6eb9317346cb39b54548c430cab38cc1b60441770fc\",\"resourcePoolId\":\"a-pool\"},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:d4a0dc5d28036ea444e2da2b73fde134b33c065dd94c5e32490a7a20810d8c81\",\"resourcePoolId\":\"z-pool\"}],\"pools\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"a-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"z-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]}],\"requestKey\":\"reservation-v1:sha256:b754f93691c29fdadfddf4c41a11a81388840b013f9877cf0dd34ee0c8d3ed5f\",\"runId\":\"run-1\",\"slotId\":\"slot-1\",\"taskId\":\"task-1\"}",
+              "state": "admitted",
+              "result_json": "{\"kind\":\"admitted\",\"poolCount\":2,\"reservationId\":\"69a750b0-8dee-40f8-b8b1-d61b7fe58db5\"}",
+              "reservation_id": "69a750b0-8dee-40f8-b8b1-d61b7fe58db5"
+            }
+          ],
+          "resource_intents": [],
+          "resource_usage_events": [],
+          "resource_terminal_evidence": [],
+          "resource_usage_coverage": []
+        },
+        "digest": "sha256:e85470a4a46a002eedad5bc65abea36493a952b1f67de4b8418343583bf12220"
+      },
+      "results": [
+        {
+          "kind": "rejected",
+          "reason": "INSUFFICIENT_LOCAL_CAPACITY",
+          "failedPool": {
+            "accountScope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "resourcePoolId": "z-pool"
+          }
+        },
+        {
+          "kind": "admitted",
+          "reservationId": "69a750b0-8dee-40f8-b8b1-d61b7fe58db5",
+          "poolCount": 2
+        }
+      ],
+      "cleanup": {
+        "exits": [
+          {
+            "pid": 24628,
+            "code": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "pid": 4232,
+            "code": null,
+            "signal": "SIGKILL"
+          }
+        ],
+        "allExited": true,
+        "rootRemoved": true
+      },
+      "rawEvidence": {
+        "logPath": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/final-focused-regression.log",
+        "recordIndex": 1,
+        "prefix": "B16-b shard evidence "
+      }
+    },
+    {
+      "id": "multi-pool-exception",
+      "status": "PASS",
+      "pids": [
+        28276,
+        26280
+      ],
+      "connections": [
+        {
+          "pid": 28276,
+          "databasePath": "C:\\Users\\sjs95\\AppData\\Local\\Temp\\ags-b16a-WTwcXY\\shared\\resource.sqlite3",
+          "workerLifetimeMs": 30000,
+          "realmId": "4d97d0ed0eba1a1b6c72d9f83fd2d3c3c9881149c56c2204817510d7b17f6015",
+          "connectionToken": "d5654fb6-c8cf-4195-94e7-beb5e1c417ab",
+          "marker": null,
+          "reservations": 0,
+          "holds": 0,
+          "requests": 0
+        },
+        {
+          "pid": 26280,
+          "databasePath": "C:\\Users\\sjs95\\AppData\\Local\\Temp\\ags-b16a-WTwcXY\\shared\\resource.sqlite3",
+          "workerLifetimeMs": 30000,
+          "realmId": "4d97d0ed0eba1a1b6c72d9f83fd2d3c3c9881149c56c2204817510d7b17f6015",
+          "connectionToken": "0cf995da-5210-4005-8cd9-a19d512ce34d",
+          "marker": null,
+          "reservations": 0,
+          "holds": 0,
+          "requests": 0
+        }
+      ],
+      "logicalSnapshotDomain": "sha256 over UTF-8 JSON.stringify of ordered rows from seven listed resource tables; not a copied live DB/WAL",
+      "stages": [
+        {
+          "label": "before",
+          "digest": "sha256:4892a4f7782bc64396f88a063b9fbe767c885b1c8b0406c288d55833cca4dc53",
+          "rowCounts": {
+            "resource_reservations": 0,
+            "resource_reservation_holds": 0,
+            "resource_admission_requests": 0,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "faulting-writer-second-waiting",
+          "digest": "sha256:4892a4f7782bc64396f88a063b9fbe767c885b1c8b0406c288d55833cca4dc53",
+          "rowCounts": {
+            "resource_reservations": 0,
+            "resource_reservation_holds": 0,
+            "resource_admission_requests": 0,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "serialized",
+          "digest": "sha256:d8942d14bb974b0916fdcf91d75edc3fcb8f918b090788e0c5be694df3a7344e",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 1,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "after",
+          "digest": "sha256:d8942d14bb974b0916fdcf91d75edc3fcb8f918b090788e0c5be694df3a7344e",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 1,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        }
+      ],
+      "beforeLedger": {
+        "label": "before",
+        "rows": {
+          "resource_reservations": [],
+          "resource_reservation_holds": [],
+          "resource_admission_requests": [],
+          "resource_intents": [],
+          "resource_usage_events": [],
+          "resource_terminal_evidence": [],
+          "resource_usage_coverage": []
+        },
+        "digest": "sha256:4892a4f7782bc64396f88a063b9fbe767c885b1c8b0406c288d55833cca4dc53"
+      },
+      "afterLedger": {
+        "label": "after",
+        "rows": {
+          "resource_reservations": [
+            {
+              "reservation_id": "eaab17d1-2a75-4e58-8208-7273b99452ed",
+              "request_key": "reservation-v1:sha256:b754f93691c29fdadfddf4c41a11a81388840b013f9877cf0dd34ee0c8d3ed5f",
+              "request_digest": "sha256:1b6486924b4e1544d3ead3d497c41c93f31a2b5d6d0a0fdfc2f0d0704df03a18",
+              "task_id": "task-1",
+              "run_id": "run-1",
+              "slot_id": "slot-1",
+              "attempt_id": "winner",
+              "plan_revision": 1,
+              "lease_epoch": 1,
+              "state": "held",
+              "created_at": "2026-09-23T00:03:00.000Z",
+              "expires_at": "2026-09-23T00:30:00.000Z"
+            }
+          ],
+          "resource_reservation_holds": [
+            {
+              "reservation_id": "eaab17d1-2a75-4e58-8208-7273b99452ed",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "a-pool",
+              "window_id": "weekly",
+              "reset_epoch": 1,
+              "amount": 5,
+              "unit": "request"
+            },
+            {
+              "reservation_id": "eaab17d1-2a75-4e58-8208-7273b99452ed",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "z-pool",
+              "window_id": "weekly",
+              "reset_epoch": 1,
+              "amount": 5,
+              "unit": "request"
+            }
+          ],
+          "resource_admission_requests": [
+            {
+              "request_key": "reservation-v1:sha256:b754f93691c29fdadfddf4c41a11a81388840b013f9877cf0dd34ee0c8d3ed5f",
+              "request_digest": "sha256:1b6486924b4e1544d3ead3d497c41c93f31a2b5d6d0a0fdfc2f0d0704df03a18",
+              "plan_revision": 1,
+              "request_json": "{\"attemptId\":\"winner\",\"expiresAt\":\"2026-09-23T00:30:00.000Z\",\"leaseEpoch\":1,\"planRevision\":1,\"policyDigests\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:5511f0caf84597450223b6eb9317346cb39b54548c430cab38cc1b60441770fc\",\"resourcePoolId\":\"a-pool\"},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:d4a0dc5d28036ea444e2da2b73fde134b33c065dd94c5e32490a7a20810d8c81\",\"resourcePoolId\":\"z-pool\"}],\"pools\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"a-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"z-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]}],\"requestKey\":\"reservation-v1:sha256:b754f93691c29fdadfddf4c41a11a81388840b013f9877cf0dd34ee0c8d3ed5f\",\"runId\":\"run-1\",\"slotId\":\"slot-1\",\"taskId\":\"task-1\"}",
+              "state": "admitted",
+              "result_json": "{\"kind\":\"admitted\",\"poolCount\":2,\"reservationId\":\"eaab17d1-2a75-4e58-8208-7273b99452ed\"}",
+              "reservation_id": "eaab17d1-2a75-4e58-8208-7273b99452ed"
+            }
+          ],
+          "resource_intents": [],
+          "resource_usage_events": [],
+          "resource_terminal_evidence": [],
+          "resource_usage_coverage": []
+        },
+        "digest": "sha256:d8942d14bb974b0916fdcf91d75edc3fcb8f918b090788e0c5be694df3a7344e"
+      },
+      "results": [
+        {
+          "kind": "fixture-sql-fault",
+          "message": "B16-b last-pool fixture fault"
+        },
+        {
+          "kind": "admitted",
+          "reservationId": "eaab17d1-2a75-4e58-8208-7273b99452ed",
+          "poolCount": 2
+        }
+      ],
+      "cleanup": {
+        "exits": [
+          {
+            "pid": 28276,
+            "code": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "pid": 26280,
+            "code": null,
+            "signal": "SIGKILL"
+          }
+        ],
+        "allExited": true,
+        "rootRemoved": true
+      },
+      "rawEvidence": {
+        "logPath": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/final-focused-regression.log",
+        "recordIndex": 2,
+        "prefix": "B16-b shard evidence "
+      }
+    },
+    {
+      "id": "uncertain-no-refund",
+      "status": "PASS",
+      "pids": [
+        27800,
+        7004
+      ],
+      "connections": [
+        {
+          "pid": 27800,
+          "databasePath": "C:\\Users\\sjs95\\AppData\\Local\\Temp\\ags-b16a-IGd6u6\\shared\\resource.sqlite3",
+          "workerLifetimeMs": 30000,
+          "realmId": "1b6ed55943d0364131b29fd4cf073475e581f8c534ae256087fa1fac39f25a74",
+          "connectionToken": "424b7b76-dcf4-4d3a-ae31-895ab3df7ebf",
+          "marker": null,
+          "reservations": 0,
+          "holds": 0,
+          "requests": 0
+        },
+        {
+          "pid": 7004,
+          "databasePath": "C:\\Users\\sjs95\\AppData\\Local\\Temp\\ags-b16a-IGd6u6\\shared\\resource.sqlite3",
+          "workerLifetimeMs": 30000,
+          "realmId": "1b6ed55943d0364131b29fd4cf073475e581f8c534ae256087fa1fac39f25a74",
+          "connectionToken": "894db570-ecb2-4031-a3b6-3bef47641e23",
+          "marker": null,
+          "reservations": 0,
+          "holds": 0,
+          "requests": 0
+        }
+      ],
+      "logicalSnapshotDomain": "sha256 over UTF-8 JSON.stringify of ordered rows from seven listed resource tables; not a copied live DB/WAL",
+      "stages": [
+        {
+          "label": "before",
+          "digest": "sha256:4892a4f7782bc64396f88a063b9fbe767c885b1c8b0406c288d55833cca4dc53",
+          "rowCounts": {
+            "resource_reservations": 0,
+            "resource_reservation_holds": 0,
+            "resource_admission_requests": 0,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "committed-one-intent",
+          "digest": "sha256:a0a2b3fb6fa03eb88427c69942826e5153a3eb98f1c96aa5ec6daa4ca34d0c65",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 1,
+            "resource_intents": 1,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "uncertain-uncommitted-release-waiting",
+          "digest": "sha256:a0a2b3fb6fa03eb88427c69942826e5153a3eb98f1c96aa5ec6daa4ca34d0c65",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 1,
+            "resource_intents": 1,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "uncertain-after-expiry",
+          "digest": "sha256:c09eb2daf5231b8fa2353022bd57fd63e7882a78169ce634ad975361b032e030",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 2,
+            "resource_intents": 1,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "after",
+          "digest": "sha256:c09eb2daf5231b8fa2353022bd57fd63e7882a78169ce634ad975361b032e030",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 2,
+            "resource_intents": 1,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        }
+      ],
+      "beforeLedger": {
+        "label": "before",
+        "rows": {
+          "resource_reservations": [],
+          "resource_reservation_holds": [],
+          "resource_admission_requests": [],
+          "resource_intents": [],
+          "resource_usage_events": [],
+          "resource_terminal_evidence": [],
+          "resource_usage_coverage": []
+        },
+        "digest": "sha256:4892a4f7782bc64396f88a063b9fbe767c885b1c8b0406c288d55833cca4dc53"
+      },
+      "afterLedger": {
+        "label": "after",
+        "rows": {
+          "resource_reservations": [
+            {
+              "reservation_id": "c566affa-551c-4e19-8fb7-1d5bf2754db9",
+              "request_key": "reservation-v1:sha256:0a76f0ea45efba9b60cad63ceea874a47bf17f46713b0ac44d366131433907b3",
+              "request_digest": "sha256:5b16673a69cf23f00092d253f8e405a34b72345ca13def3f9909e51c1386ab04",
+              "task_id": "task-1",
+              "run_id": "run-1",
+              "slot_id": "slot-1",
+              "attempt_id": "dispatch",
+              "plan_revision": 1,
+              "lease_epoch": 1,
+              "state": "uncertain",
+              "created_at": "2026-09-23T00:03:00.000Z",
+              "expires_at": "2026-09-23T00:30:00.000Z"
+            }
+          ],
+          "resource_reservation_holds": [
+            {
+              "reservation_id": "c566affa-551c-4e19-8fb7-1d5bf2754db9",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "a-pool",
+              "window_id": "weekly",
+              "reset_epoch": 1,
+              "amount": 5,
+              "unit": "request"
+            },
+            {
+              "reservation_id": "c566affa-551c-4e19-8fb7-1d5bf2754db9",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "z-pool",
+              "window_id": "weekly",
+              "reset_epoch": 1,
+              "amount": 5,
+              "unit": "request"
+            }
+          ],
+          "resource_admission_requests": [
+            {
+              "request_key": "reservation-v1:sha256:0a76f0ea45efba9b60cad63ceea874a47bf17f46713b0ac44d366131433907b3",
+              "request_digest": "sha256:5b16673a69cf23f00092d253f8e405a34b72345ca13def3f9909e51c1386ab04",
+              "plan_revision": 1,
+              "request_json": "{\"attemptId\":\"dispatch\",\"expiresAt\":\"2026-09-23T00:30:00.000Z\",\"leaseEpoch\":1,\"planRevision\":1,\"policyDigests\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:5511f0caf84597450223b6eb9317346cb39b54548c430cab38cc1b60441770fc\",\"resourcePoolId\":\"a-pool\"},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:d4a0dc5d28036ea444e2da2b73fde134b33c065dd94c5e32490a7a20810d8c81\",\"resourcePoolId\":\"z-pool\"}],\"pools\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"a-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"z-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]}],\"requestKey\":\"reservation-v1:sha256:0a76f0ea45efba9b60cad63ceea874a47bf17f46713b0ac44d366131433907b3\",\"runId\":\"run-1\",\"slotId\":\"slot-1\",\"taskId\":\"task-1\"}",
+              "state": "admitted",
+              "result_json": "{\"kind\":\"admitted\",\"poolCount\":2,\"reservationId\":\"c566affa-551c-4e19-8fb7-1d5bf2754db9\"}",
+              "reservation_id": "c566affa-551c-4e19-8fb7-1d5bf2754db9"
+            },
+            {
+              "request_key": "reservation-v1:sha256:a020d9c6fca00fc90c7dcbe08fcfbcdf5d42411d3bad39e54254b9957244b409",
+              "request_digest": "sha256:2e855679a23018ea84c4aa5579b5882f9f41f04a02067152d01821dfa07dc669",
+              "plan_revision": 1,
+              "request_json": "{\"attemptId\":\"after-expiry\",\"expiresAt\":\"2026-09-23T00:50:00.000Z\",\"leaseEpoch\":1,\"planRevision\":1,\"policyDigests\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:5511f0caf84597450223b6eb9317346cb39b54548c430cab38cc1b60441770fc\",\"resourcePoolId\":\"a-pool\"},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:d4a0dc5d28036ea444e2da2b73fde134b33c065dd94c5e32490a7a20810d8c81\",\"resourcePoolId\":\"z-pool\"}],\"pools\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"a-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"z-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]}],\"requestKey\":\"reservation-v1:sha256:a020d9c6fca00fc90c7dcbe08fcfbcdf5d42411d3bad39e54254b9957244b409\",\"runId\":\"run-1\",\"slotId\":\"slot-1\",\"taskId\":\"task-1\"}",
+              "state": "rejected",
+              "result_json": "{\"failedPool\":{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"a-pool\"},\"kind\":\"rejected\",\"reason\":\"INSUFFICIENT_LOCAL_CAPACITY\"}",
+              "reservation_id": null
+            }
+          ],
+          "resource_intents": [
+            {
+              "intent_id": "intent-1",
+              "reservation_id": "c566affa-551c-4e19-8fb7-1d5bf2754db9",
+              "request_digest": "sha256:5b16673a69cf23f00092d253f8e405a34b72345ca13def3f9909e51c1386ab04",
+              "state": "committed",
+              "created_at": "2026-09-23T00:03:00.000Z",
+              "updated_at": "2026-09-23T00:03:00.000Z"
+            }
+          ],
+          "resource_usage_events": [],
+          "resource_terminal_evidence": [],
+          "resource_usage_coverage": []
+        },
+        "digest": "sha256:c09eb2daf5231b8fa2353022bd57fd63e7882a78169ce634ad975361b032e030"
+      },
+      "results": [
+        {
+          "kind": "observe-required",
+          "reservationId": "c566affa-551c-4e19-8fb7-1d5bf2754db9",
+          "intentId": "intent-1",
+          "replayed": false
+        },
+        {
+          "deniedRelease": "REQUEST_CONFLICT"
+        },
+        {
+          "kind": "observe-required",
+          "reservationId": "c566affa-551c-4e19-8fb7-1d5bf2754db9",
+          "intentId": "intent-1",
+          "replayed": true
+        },
+        {
+          "kind": "rejected",
+          "reason": "INSUFFICIENT_LOCAL_CAPACITY",
+          "failedPool": {
+            "accountScope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "resourcePoolId": "a-pool"
+          }
+        }
+      ],
+      "cleanup": {
+        "exits": [
+          {
+            "pid": 27800,
+            "code": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "pid": 7004,
+            "code": null,
+            "signal": "SIGKILL"
+          }
+        ],
+        "allExited": true,
+        "rootRemoved": true
+      },
+      "rawEvidence": {
+        "logPath": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/final-focused-regression.log",
+        "recordIndex": 3,
+        "prefix": "B16-b shard evidence "
+      }
+    },
+    {
+      "id": "restart-duplicate-settlement",
+      "status": "PASS",
+      "pids": [
+        12212,
+        27140,
+        20904
+      ],
+      "connections": [
+        {
+          "pid": 12212,
+          "databasePath": "C:\\Users\\sjs95\\AppData\\Local\\Temp\\ags-b16a-dYsmyT\\shared\\resource.sqlite3",
+          "workerLifetimeMs": 30000,
+          "realmId": "ef266ffb3bf7d1567035ab0a31fad69bba9df15ed62fdbfbfdcd4599c65f2990",
+          "connectionToken": "1cf563ca-614d-4c29-8e4f-354572364619",
+          "marker": null,
+          "reservations": 0,
+          "holds": 0,
+          "requests": 0
+        },
+        {
+          "pid": 27140,
+          "databasePath": "C:\\Users\\sjs95\\AppData\\Local\\Temp\\ags-b16a-dYsmyT\\shared\\resource.sqlite3",
+          "workerLifetimeMs": 30000,
+          "realmId": "ef266ffb3bf7d1567035ab0a31fad69bba9df15ed62fdbfbfdcd4599c65f2990",
+          "connectionToken": "15a42e22-1519-43cf-bcff-abd5544f2ac0",
+          "marker": null,
+          "reservations": 0,
+          "holds": 0,
+          "requests": 0
+        },
+        {
+          "pid": 20904,
+          "databasePath": "C:\\Users\\sjs95\\AppData\\Local\\Temp\\ags-b16a-dYsmyT\\shared\\resource.sqlite3",
+          "workerLifetimeMs": 30000,
+          "realmId": "ef266ffb3bf7d1567035ab0a31fad69bba9df15ed62fdbfbfdcd4599c65f2990",
+          "connectionToken": "406a8a26-08e4-4f67-a65e-2dcfc4896408",
+          "marker": null,
+          "reservations": 1,
+          "holds": 2,
+          "requests": 1
+        }
+      ],
+      "logicalSnapshotDomain": "sha256 over UTF-8 JSON.stringify of ordered rows from seven listed resource tables; not a copied live DB/WAL",
+      "stages": [
+        {
+          "label": "before",
+          "digest": "sha256:4892a4f7782bc64396f88a063b9fbe767c885b1c8b0406c288d55833cca4dc53",
+          "rowCounts": {
+            "resource_reservations": 0,
+            "resource_reservation_holds": 0,
+            "resource_admission_requests": 0,
+            "resource_intents": 0,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "committed-before-lost-usage",
+          "digest": "sha256:77dd5247c311af43b738a49ea45fa74f70bd44356b3ea08267b92c6214bbafa4",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 1,
+            "resource_intents": 1,
+            "resource_usage_events": 0,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 0
+          }
+        },
+        {
+          "label": "usage-committed-response-lost",
+          "digest": "sha256:6084cccc93da906e95844015ebb5fb32a0aa89cb73b4a7f13a5337a2702b47d6",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 1,
+            "resource_intents": 1,
+            "resource_usage_events": 1,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 1
+          }
+        },
+        {
+          "label": "duplicate-usage-waiting",
+          "digest": "sha256:6936c1ace19c63f301db3cf1ab91bd3253ec2ccb47ebc33666f60dd83e99231d",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 1,
+            "resource_intents": 1,
+            "resource_usage_events": 1,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 1
+          }
+        },
+        {
+          "label": "complete-usage-without-terminal",
+          "digest": "sha256:d4f55f8f4bad2dd76021dbbe826aeefc19045aa7df9a533f6f1b706abb9b0cf3",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 1,
+            "resource_intents": 1,
+            "resource_usage_events": 3,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 2
+          }
+        },
+        {
+          "label": "duplicate-terminal-waiting",
+          "digest": "sha256:d4f55f8f4bad2dd76021dbbe826aeefc19045aa7df9a533f6f1b706abb9b0cf3",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 1,
+            "resource_intents": 1,
+            "resource_usage_events": 3,
+            "resource_terminal_evidence": 0,
+            "resource_usage_coverage": 2
+          }
+        },
+        {
+          "label": "settled-once",
+          "digest": "sha256:487e06e4707db802ab72d34cd7435c467cb2156571f21fb857b3c2693c3c1ad1",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 1,
+            "resource_intents": 1,
+            "resource_usage_events": 3,
+            "resource_terminal_evidence": 1,
+            "resource_usage_coverage": 2
+          }
+        },
+        {
+          "label": "after",
+          "digest": "sha256:487e06e4707db802ab72d34cd7435c467cb2156571f21fb857b3c2693c3c1ad1",
+          "rowCounts": {
+            "resource_reservations": 1,
+            "resource_reservation_holds": 2,
+            "resource_admission_requests": 1,
+            "resource_intents": 1,
+            "resource_usage_events": 3,
+            "resource_terminal_evidence": 1,
+            "resource_usage_coverage": 2
+          }
+        }
+      ],
+      "beforeLedger": {
+        "label": "before",
+        "rows": {
+          "resource_reservations": [],
+          "resource_reservation_holds": [],
+          "resource_admission_requests": [],
+          "resource_intents": [],
+          "resource_usage_events": [],
+          "resource_terminal_evidence": [],
+          "resource_usage_coverage": []
+        },
+        "digest": "sha256:4892a4f7782bc64396f88a063b9fbe767c885b1c8b0406c288d55833cca4dc53"
+      },
+      "afterLedger": {
+        "label": "after",
+        "rows": {
+          "resource_reservations": [
+            {
+              "reservation_id": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+              "request_key": "reservation-v1:sha256:0a76f0ea45efba9b60cad63ceea874a47bf17f46713b0ac44d366131433907b3",
+              "request_digest": "sha256:5b16673a69cf23f00092d253f8e405a34b72345ca13def3f9909e51c1386ab04",
+              "task_id": "task-1",
+              "run_id": "run-1",
+              "slot_id": "slot-1",
+              "attempt_id": "dispatch",
+              "plan_revision": 1,
+              "lease_epoch": 1,
+              "state": "settled",
+              "created_at": "2026-09-23T00:03:00.000Z",
+              "expires_at": "2026-09-23T00:30:00.000Z"
+            }
+          ],
+          "resource_reservation_holds": [
+            {
+              "reservation_id": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "a-pool",
+              "window_id": "weekly",
+              "reset_epoch": 1,
+              "amount": 5,
+              "unit": "request"
+            },
+            {
+              "reservation_id": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "z-pool",
+              "window_id": "weekly",
+              "reset_epoch": 1,
+              "amount": 5,
+              "unit": "request"
+            }
+          ],
+          "resource_admission_requests": [
+            {
+              "request_key": "reservation-v1:sha256:0a76f0ea45efba9b60cad63ceea874a47bf17f46713b0ac44d366131433907b3",
+              "request_digest": "sha256:5b16673a69cf23f00092d253f8e405a34b72345ca13def3f9909e51c1386ab04",
+              "plan_revision": 1,
+              "request_json": "{\"attemptId\":\"dispatch\",\"expiresAt\":\"2026-09-23T00:30:00.000Z\",\"leaseEpoch\":1,\"planRevision\":1,\"policyDigests\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:5511f0caf84597450223b6eb9317346cb39b54548c430cab38cc1b60441770fc\",\"resourcePoolId\":\"a-pool\"},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"digest\":\"sha256:d4a0dc5d28036ea444e2da2b73fde134b33c065dd94c5e32490a7a20810d8c81\",\"resourcePoolId\":\"z-pool\"}],\"pools\":[{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"a-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]},{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"resourcePoolId\":\"z-pool\",\"windows\":[{\"amount\":5,\"unit\":\"request\",\"windowId\":\"weekly\"}]}],\"requestKey\":\"reservation-v1:sha256:0a76f0ea45efba9b60cad63ceea874a47bf17f46713b0ac44d366131433907b3\",\"runId\":\"run-1\",\"slotId\":\"slot-1\",\"taskId\":\"task-1\"}",
+              "state": "admitted",
+              "result_json": "{\"kind\":\"admitted\",\"poolCount\":2,\"reservationId\":\"d2fdbeb1-f546-4fee-97c7-1ae7659f29d8\"}",
+              "reservation_id": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8"
+            }
+          ],
+          "resource_intents": [
+            {
+              "intent_id": "intent-1",
+              "reservation_id": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+              "request_digest": "sha256:5b16673a69cf23f00092d253f8e405a34b72345ca13def3f9909e51c1386ab04",
+              "state": "committed",
+              "created_at": "2026-09-23T00:03:00.000Z",
+              "updated_at": "2026-09-23T00:03:00.000Z"
+            }
+          ],
+          "resource_usage_events": [
+            {
+              "event_id": "a-pool-1",
+              "reservation_id": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "a-pool",
+              "window_id": "weekly",
+              "amount": 2,
+              "unit": "request",
+              "basis": "delta",
+              "coverage": "partial",
+              "job_binding_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "source_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "payload_json": "{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"amount\":2,\"basis\":\"delta\",\"coverage\":\"partial\",\"eventId\":\"a-pool-1\",\"intentId\":\"intent-1\",\"jobBindingDigest\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"kind\":\"usage\",\"occurredAt\":\"2026-09-23T00:04:00.000Z\",\"poolId\":\"a-pool\",\"reservationId\":\"d2fdbeb1-f546-4fee-97c7-1ae7659f29d8\",\"sequence\":1,\"sourceDigest\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"unit\":\"request\",\"windowId\":\"weekly\"}",
+              "occurred_at": "2026-09-23T00:04:00.000Z"
+            },
+            {
+              "event_id": "a-pool-2",
+              "reservation_id": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "a-pool",
+              "window_id": "weekly",
+              "amount": 3,
+              "unit": "request",
+              "basis": "delta",
+              "coverage": "complete",
+              "job_binding_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "source_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "payload_json": "{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"amount\":3,\"basis\":\"delta\",\"coverage\":\"complete\",\"eventId\":\"a-pool-2\",\"intentId\":\"intent-1\",\"jobBindingDigest\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"kind\":\"usage\",\"occurredAt\":\"2026-09-23T00:04:00.000Z\",\"poolId\":\"a-pool\",\"reservationId\":\"d2fdbeb1-f546-4fee-97c7-1ae7659f29d8\",\"sequence\":2,\"sourceDigest\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"unit\":\"request\",\"windowId\":\"weekly\"}",
+              "occurred_at": "2026-09-23T00:04:00.000Z"
+            },
+            {
+              "event_id": "z-pool-1",
+              "reservation_id": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "z-pool",
+              "window_id": "weekly",
+              "amount": 5,
+              "unit": "request",
+              "basis": "delta",
+              "coverage": "complete",
+              "job_binding_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "source_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "payload_json": "{\"accountScope\":\"acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"amount\":5,\"basis\":\"delta\",\"coverage\":\"complete\",\"eventId\":\"z-pool-1\",\"intentId\":\"intent-1\",\"jobBindingDigest\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"kind\":\"usage\",\"occurredAt\":\"2026-09-23T00:04:00.000Z\",\"poolId\":\"z-pool\",\"reservationId\":\"d2fdbeb1-f546-4fee-97c7-1ae7659f29d8\",\"sequence\":1,\"sourceDigest\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"unit\":\"request\",\"windowId\":\"weekly\"}",
+              "occurred_at": "2026-09-23T00:04:00.000Z"
+            }
+          ],
+          "resource_terminal_evidence": [
+            {
+              "evidence_id": "terminal-1",
+              "reservation_id": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+              "job_binding_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "result": "completed",
+              "evidence_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "payload_json": "{\"evidenceDigest\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidenceId\":\"terminal-1\",\"intentId\":\"intent-1\",\"jobBindingDigest\":\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"kind\":\"terminal\",\"observedAt\":\"2026-09-23T00:05:00.000Z\",\"reservationId\":\"d2fdbeb1-f546-4fee-97c7-1ae7659f29d8\",\"result\":\"completed\"}",
+              "observed_at": "2026-09-23T00:05:00.000Z"
+            }
+          ],
+          "resource_usage_coverage": [
+            {
+              "reservation_id": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "a-pool",
+              "window_id": "weekly",
+              "coverage": "complete",
+              "observed_amount": 5,
+              "unit": "request",
+              "updated_at": "2026-09-27T08:34:30.836Z"
+            },
+            {
+              "reservation_id": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+              "account_scope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "pool_id": "z-pool",
+              "window_id": "weekly",
+              "coverage": "complete",
+              "observed_amount": 5,
+              "unit": "request",
+              "updated_at": "2026-09-27T08:34:30.836Z"
+            }
+          ]
+        },
+        "digest": "sha256:487e06e4707db802ab72d34cd7435c467cb2156571f21fb857b3c2693c3c1ad1"
+      },
+      "results": [
+        {
+          "kind": "recorded",
+          "reservationId": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+          "replayed": true,
+          "coverage": "unknown",
+          "observed": [
+            {
+              "accountScope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "poolId": "a-pool",
+              "windowId": "weekly",
+              "unit": "request",
+              "estimatedAmount": 5,
+              "observedAmount": 2,
+              "coverage": "partial"
+            },
+            {
+              "accountScope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "poolId": "z-pool",
+              "windowId": "weekly",
+              "unit": "request",
+              "estimatedAmount": 5,
+              "observedAmount": null,
+              "coverage": "unknown"
+            }
+          ]
+        },
+        {
+          "kind": "recorded",
+          "reservationId": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+          "replayed": false,
+          "coverage": "unknown",
+          "observed": [
+            {
+              "accountScope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "poolId": "a-pool",
+              "windowId": "weekly",
+              "unit": "request",
+              "estimatedAmount": 5,
+              "observedAmount": 5,
+              "coverage": "complete"
+            },
+            {
+              "accountScope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "poolId": "z-pool",
+              "windowId": "weekly",
+              "unit": "request",
+              "estimatedAmount": 5,
+              "observedAmount": null,
+              "coverage": "unknown"
+            }
+          ]
+        },
+        {
+          "kind": "recorded",
+          "reservationId": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+          "replayed": true,
+          "coverage": "unknown",
+          "observed": [
+            {
+              "accountScope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "poolId": "a-pool",
+              "windowId": "weekly",
+              "unit": "request",
+              "estimatedAmount": 5,
+              "observedAmount": 5,
+              "coverage": "complete"
+            },
+            {
+              "accountScope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "poolId": "z-pool",
+              "windowId": "weekly",
+              "unit": "request",
+              "estimatedAmount": 5,
+              "observedAmount": null,
+              "coverage": "unknown"
+            }
+          ]
+        },
+        {
+          "kind": "settled",
+          "reservationId": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+          "replayed": false,
+          "coverage": "complete",
+          "observed": [
+            {
+              "accountScope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "poolId": "a-pool",
+              "windowId": "weekly",
+              "unit": "request",
+              "estimatedAmount": 5,
+              "observedAmount": 5,
+              "coverage": "complete"
+            },
+            {
+              "accountScope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "poolId": "z-pool",
+              "windowId": "weekly",
+              "unit": "request",
+              "estimatedAmount": 5,
+              "observedAmount": 5,
+              "coverage": "complete"
+            }
+          ]
+        },
+        {
+          "kind": "settled",
+          "reservationId": "d2fdbeb1-f546-4fee-97c7-1ae7659f29d8",
+          "replayed": true,
+          "coverage": "complete",
+          "observed": [
+            {
+              "accountScope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "poolId": "a-pool",
+              "windowId": "weekly",
+              "unit": "request",
+              "estimatedAmount": 5,
+              "observedAmount": 5,
+              "coverage": "complete"
+            },
+            {
+              "accountScope": "acct-hmac-sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "poolId": "z-pool",
+              "windowId": "weekly",
+              "unit": "request",
+              "estimatedAmount": 5,
+              "observedAmount": 5,
+              "coverage": "complete"
+            }
+          ]
+        }
+      ],
+      "cleanup": {
+        "exits": [
+          {
+            "pid": 12212,
+            "code": 73,
+            "signal": null
+          },
+          {
+            "pid": 27140,
+            "code": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "pid": 20904,
+            "code": null,
+            "signal": "SIGKILL"
+          }
+        ],
+        "allExited": true,
+        "rootRemoved": true
+      },
+      "rawEvidence": {
+        "logPath": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/final-focused-regression.log",
+        "recordIndex": 4,
+        "prefix": "B16-b shard evidence "
+      }
+    }
+  ],
+  "verification": [
+    {
+      "command": "corepack pnpm exec vitest run --disableConsoleIntercept tests/coordinate-subagents/v3x/B16-a.test.mjs tests/coordinate-subagents/v3x/B16-b.test.mjs tests/coordinate-subagents/v3x/B02.test.mjs tests/coordinate-subagents/v3x/B06.test.mjs tests/coordinate-subagents/v3x/B10.test.mjs tests/coordinate-subagents/v3x/B11.test.mjs",
+      "cwd": "D:/codex/거버전스 3.0/agent-governance-suite-b16-a-codex",
+      "exitCode": 0,
+      "result": "PASS",
+      "files": 6,
+      "tests": 45,
+      "skipped": 0,
+      "log": "final-focused-regression.log"
+    },
+    {
+      "command": "corepack pnpm exec eslint tests/coordinate-subagents/v3x/B16-b.test.mjs tests/coordinate-subagents/v3x/fixtures/resource-authority-harness.mjs",
+      "exitCode": 0,
+      "result": "PASS",
+      "log": "final-eslint.log"
+    },
+    {
+      "command": "corepack pnpm exec tsc --noEmit",
+      "exitCode": 0,
+      "result": "PASS",
+      "log": "tsc.log"
+    },
+    {
+      "command": "corepack pnpm source:check",
+      "exitCode": 0,
+      "result": "PASS",
+      "log": "source-lock.log"
+    },
+    {
+      "command": "corepack pnpm bundle:check",
+      "exitCode": 0,
+      "result": "PASS",
+      "log": "baseline-bundle.log",
+      "order": "before changes/build; no build executed"
+    },
+    {
+      "command": "corepack pnpm bundle:check",
+      "exitCode": 0,
+      "result": "PASS",
+      "log": "final-bundle.log"
+    }
+  ],
+  "redToGreen": {
+    "initialLog": "initial-lifecycle-shards.log",
+    "initialResults": [
+      {
+        "id": "shared-reserve",
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "id": "multi-pool-rejection",
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "id": "multi-pool-exception",
+        "status": "PASS",
+        "error": null
+      },
+      {
+        "id": "uncertain-no-refund",
+        "status": "FAIL",
+        "error": {
+          "message": "Pool request does not match its approved policy.",
+          "code": "INVALID_INPUT"
+        }
+      },
+      {
+        "id": "restart-duplicate-settlement",
+        "status": "FAIL",
+        "error": {
+          "message": "unable to open database file",
+          "code": "ERR_SQLITE_ERROR"
+        }
+      }
+    ],
+    "cause": "Two test errors: a new contender retained an expired expiresAt; cleanup removed the DB before final snapshot. Neither is evidence of a product defect.",
+    "corrections": "Give only the new contender a fresh expiry; capture the final ledger before close and verify closed-harness restart rejection after cleanup.",
+    "changedProductCode": false,
+    "fixedLog": "green-lifecycle-shards.log",
+    "finalLog": "final-focused-regression.log"
+  },
+  "remaining": [
+    {
+      "claim": "B16-b official whole-task acceptance, B15 dependency, full B16-a/B16-b authority gates",
+      "status": "NOT_RUN_IN_THIS_PARTIAL_SCOPE",
+      "owner": "portfolio chief / AGS lead"
+    },
+    {
+      "claim": "actual broker/issuer admission and external execution exactly once",
+      "status": "NOT_RUN"
+    },
+    {
+      "claim": "Linux, CI, real quota/account, installation/qualification",
+      "status": "NOT_RUN"
+    },
+    {
+      "claim": "independent acceptance, integration, push and ledger update",
+      "status": "NOT_PERFORMED_BY_THIS_WRITER"
+    }
+  ],
+  "rawLogs": [
+    {
+      "path": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/baseline-bundle.log",
+      "digest": "sha256:f9f4263c2b6000b2fb6b298bb3d805fa2a914eac9227ebb14980775c41a4ba17"
+    },
+    {
+      "path": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/initial-admission-shards.log",
+      "digest": "sha256:27a9f0132ad247aa67e39712d3eee1d09bb63248c935ec9c99dfd0b59bbc5b9a"
+    },
+    {
+      "path": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/initial-lifecycle-shards.log",
+      "digest": "sha256:715c2374cbc07e33efa666d86b004cd6de7f6c25d06b6508339f74294cc87a43"
+    },
+    {
+      "path": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/green-lifecycle-shards.log",
+      "digest": "sha256:8a149f5f19b4dfc18ec285d971684b906fa0b4bb324849d81c5d071f03104748"
+    },
+    {
+      "path": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/focused-regression.log",
+      "digest": "sha256:57a4ebc007cb94bf34cbb6ea147d6e764ae98a6f95e9fc7f39fe77ee82e977e0"
+    },
+    {
+      "path": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/final-focused-regression.log",
+      "digest": "sha256:009bec2829344e4d580b7e18facf1b9bdf859f961d75f244a3c0e02b3ab354d5"
+    },
+    {
+      "path": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/eslint.log",
+      "digest": "sha256:8a20f593e5fb102c64457a648e8c0d9556dd54517379ad024f0f72038159dee2"
+    },
+    {
+      "path": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/final-eslint.log",
+      "digest": "sha256:e458a5fca143e0cf1ea51244ab0a0f3ca6fad7649214856a77453675791aa289"
+    },
+    {
+      "path": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/tsc.log",
+      "digest": "sha256:4e42c470da58d65a1cb9ed1a7f7e05b6e640649369e1802a4fbf6290fe0b9b0b"
+    },
+    {
+      "path": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/source-lock.log",
+      "digest": "sha256:7b7b90be7d1899231300dd734713d44a0fe2afcc79a5f1efa0c5d700c2bc2e94"
+    },
+    {
+      "path": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/final-bundle.log",
+      "digest": "sha256:706cc30aefa25241e75f7704cb604f7826aee6c704c2a3506c962f3d14370160"
+    },
+    {
+      "path": "D:/codex/거버전스 3.0/ags-evidence/B16-b/20260927T082600Z-d8569f20-preimpl/task-source-readback.json",
+      "digest": "sha256:ad0af6f3b88c4630ed302ad8c90b35ae77548451c06537a164cd8895caf7498c"
+    }
+  ]
+}
