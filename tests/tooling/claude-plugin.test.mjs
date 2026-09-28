@@ -107,7 +107,7 @@ describe("generated Claude plugin", () => {
     expect(replace.endsWith(find)).toBe(true);
     expect(generated).toBe(shared.replace(find, replace));
     // The Claude section adapts invocation and observation without restating common policy.
-    for (const hostOnly of ["Skill 도구", "/agent-governance-suite:<skill-name>", "agent-governance-suite:independent-auditor", "UserPromptSubmit", "transcript"]) {
+    for (const hostOnly of ["Skill 도구", "/agent-governance-suite:<skill-name>", "agent-governance-suite:independent-auditor", "SessionStart", "transcript"]) {
       expect(section).toContain(hostOnly);
     }
     for (const policy of ["실패 영향", "outputFile", "requiredArtifacts", "`direct`", "`orchestrated`", "BINDING_REQUIRED", "plan_workflow` 전에", "minimal-implementation", "ponytail"]) {
@@ -127,6 +127,40 @@ describe("generated Claude plugin", () => {
       expect(shared.split(sentence)).toHaveLength(2);
       expect(generated.split(sentence)).toHaveLength(2);
     }
+  });
+
+  it("projects the current common intake at session start without keyword selection", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "ags-intake-port-"));
+    if (path.dirname(path.resolve(directory)) !== path.resolve(tmpdir())) throw new Error("Unexpected disposable fixture path");
+    temporaryDirectories.push(directory);
+    await mkdir(path.join(directory, "hooks"));
+    await mkdir(path.join(directory, "skills", "orchestrator"), { recursive: true });
+    const launcher = await readFile(path.join(root, "claude-overlay", "hooks", "skill-trigger-hook.mjs"));
+    const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
+    // A changed source must change the emitted context, proving there is no adapter policy copy.
+    const current = shared.replace("<!-- skill-intake:end -->", "fixture-source-revision\n<!-- skill-intake:end -->");
+    const intake = current.split("<!-- skill-intake:start -->\n")[1].split("\n<!-- skill-intake:end -->")[0];
+    const hook = path.join(directory, "hooks", "skill-trigger-hook.mjs");
+    await writeFile(hook, launcher);
+    await writeFile(path.join(directory, "skills", "orchestrator", "SKILL.md"), current);
+    const invoke = (input) => spawnSync(process.execPath, [hook], { input: JSON.stringify(input), encoding: "utf8" });
+    const start = invoke({ hook_event_name: "SessionStart", source: "startup" });
+    expect(start.status).toBe(0);
+    expect(start.stderr).toBe("");
+    const context = JSON.parse(start.stdout).hookSpecificOutput;
+    expect(context.hookEventName).toBe("SessionStart");
+    expect(context.additionalContext).toBe(intake + "\n\nClaude Code 호출: 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.");
+    for (const prompt of ["git rebase랑 merge 차이가 뭐예요? 간단히 설명해 주세요.", "안녕하세요!", "change.diff 파일에 있는 변경 사항을 리뷰해 주세요."]) {
+      const result = invoke({ hook_event_name: "UserPromptSubmit", prompt });
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe("");
+    }
+    const bash = invoke({ hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: { command: "git merge feature" } });
+    expect(bash.status).toBe(0);
+    expect(bash.stdout).toBe("");
+    const invalid = spawnSync(process.execPath, [hook], { input: "not-json", encoding: "utf8" });
+    expect(invalid.status).toBe(0);
+    expect(invalid.stdout).toBe("");
   });
 
   it("omits Codex-only skills from files, registry, and source lock", async () => {
@@ -157,8 +191,8 @@ describe("generated Claude plugin", () => {
         expect(allowedScripts).toContain(hook.args[0]);
       }
     }
-    // Messaging runs before the trigger and board so a peer message can enter the same turn.
-    expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[4], allowedScripts[1], allowedScripts[3]]);
+    // Messaging runs before the board; the intake has no per-prompt selector.
+    expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[4], allowedScripts[3]]);
     // The relay-launching hook must stay in direct args form: process.ppid is then the Claude host, not a transient shell.
     const messageSessionStart = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[4]));
     expect(messageSessionStart).toHaveLength(1);
@@ -177,8 +211,9 @@ describe("generated Claude plugin", () => {
     for (const tool of ["Read", "Grep", "Glob", `${toolPrefix}plan_workflow`, `${toolPrefix}record_stage_result`, ...continuityTools.map((name) => `${toolPrefix}${name}`)]) {
       expect(boardMatchers.some((matcher) => matcher.test(tool))).toBe(false);
     }
-    const bashGroup = claudeHooks.hooks.PreToolUse.find((group) => group.matcher === "^Bash$");
-    expect(bashGroup.hooks.map((hook) => hook.args[0])).toEqual([allowedScripts[1]]);
+    expect(claudeHooks.hooks.PreToolUse.some((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[1]))).toBe(false);
+    const intakeGroups = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[1]));
+    expect(intakeGroups).toHaveLength(1);
     const continuityGroup = claudeHooks.hooks.PreToolUse.find((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[0]));
     const matcher = new RegExp(continuityGroup.matcher, "u");
     for (const tool of continuityTools) {

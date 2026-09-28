@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
@@ -325,8 +325,11 @@ export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "defaul
   return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
 }
 
-/** Host-neutral entry pointer; selection and recovery policy stay in the shared skill. */
-export const SKILL_INTAKE_SERVER_INSTRUCTIONS = "agent-governance-suite 접수 안내: 거버넌스 전문 스킬의 선택·연결이 필요한 경우 orchestrator 스킬 원본의 공통 접수·라우팅 기준을 따른다. 공통 원본은 skills/orchestrator/SKILL.md와 references/entry-details.md이며 MCP 실행·실패 처리는 references/mcp-execution.md를 따른다. 이 안내만으로 orchestrator 활성화, registry 조회나 workflow 생성을 요구하지 않는다. 필요한 전문 스킬은 호스트가 제공하는 설치된 스킬 호출 방식으로 실제 실행한다.";
+/** Both hosts receive the selection policy from the shared skill, not a second policy copy. */
+const intake = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8")
+  .match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1];
+if (!intake) throw new Error("Shared skill intake instructions are missing.");
+export const SKILL_INTAKE_SERVER_INSTRUCTIONS = `agent-governance-suite 접수 안내: 다음은 skills/orchestrator/SKILL.md의 공통 원본이다. 적용되는 전문 스킬을 호스트가 제공하는 설치된 스킬 호출 방식으로 실행한다.\n\n${intake}\n\n여러 전문 단계를 연결할 때 references/entry-details.md, MCP 실행·실패 처리는 references/mcp-execution.md를 따른다.`;
 
 export function serverInstructions(): string {
   return `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
