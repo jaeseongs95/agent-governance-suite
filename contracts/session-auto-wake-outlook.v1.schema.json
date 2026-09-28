@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/session-auto-wake-outlook.v1.schema.json",
+  "title": "SessionAutoWakeOutlook.v1",
+  "description": "Advisory broker snapshot of whether the recipient's idle auto-wake path is usable at checkedAt. It is not delivery, processing, completion, approval or permission evidence, and it never removes or re-sends a queued message.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["state", "reason", "basisAt", "checkedAt", "authorityEffect"],
+  "properties": {
+    "state": {
+      "enum": ["available", "latched", "no-live-relay", "unsupported"],
+      "description": "available: a live relay can reserve or already holds a current wake. latched: an earlier wake has passed its injection expiry without arrival or retirement evidence. no-live-relay: no online presence or relay lease can send a wake. unsupported: the recipient transport has no idle wake."
+    },
+    "reason": {
+      "enum": ["relay-live", "wake-in-flight", "retry-backoff", "wake-unobserved", "presence-unknown", "presence-not-online", "relay-lease-missing", "no-idle-wake"]
+    },
+    "basisAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Time of the stored fact behind reason: relay lease renewal, wake injection expiry, retry deadline, presence lease end or birth. Null when no presence was ever recorded."
+    },
+    "checkedAt": { "type": "string", "format": "date-time" },
+    "authorityEffect": { "const": "none" }
+  }
+}

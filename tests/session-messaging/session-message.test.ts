@@ -29,7 +29,7 @@ import { handleSessionMessageHook, sessionMessageEnvelope, sessionMessageTranspo
 import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import { claudeWakeOutcome, codexWakeOutcome, relayIdentityDecision, ringClaude, shouldReleaseWake, transportWakeCapabilities, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
-import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
+import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
 import { processIdentityState } from "../../mcp-server/src/process-identity.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "../../mcp-server/src/session-message-protocol.js";
 import { adaptHostInput, hostDeliveryProfile } from "../../mcp-server/src/host-input-adapter.js";
@@ -1213,6 +1213,53 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
           expect(verification.managedWakeStatus(target)).toMatchObject({ state: "submitted" });
         } else if (scenario === "legacy") expect(verification.managedWakeStatus(target)).toBeNull();
         else expect(verification.managedWakeStatus(target)).toMatchObject({ state: "observed" });
+      } finally { verification.close(); }
+    }
+  }, 30_000);
+
+  it("blocks a verified retired Codex wake marker without claiming the current body", async () => {
+    const directory = stateDirectory();
+    await startSourceBroker(directory);
+    vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", directory);
+    vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", path.join(directory, "trust.sqlite3"));
+    vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "1");
+    const capabilities: DeliveryCapabilities = { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" };
+    for (const host of ["codex", "claude-code"]) {
+      const target = { host, sessionId: `retired-hook-${host}` };
+      const nonce = `retired-hook-${host}-nonce-abcdefghijklmnop`;
+      const base = Date.now() - WAKE_TTL_MS - WAKE_RETIRE_GRACE_MS - 60_000;
+      const store = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
+      try {
+        const presence = (instanceId: string, at: number) => {
+          store.startPresence({ ...target, instanceId, transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false,
+            deliveryCapabilities: capabilities }, at);
+          store.acquireRelay({ ...target, transport: "codex-queue", relayId: `${instanceId}-relay`, pid: process.pid, parentPid: process.pid }, at);
+        };
+        presence("old-instance", base);
+        store.send({ sender: { host: "portable", sessionId: "retired-sender" }, target, messageId: `retired-body-${host}`, body: "current body", ttlSeconds: 86400 }, base);
+        const reserved = store.reserveManagedWake({ ...target, nonce, instanceId: "old-instance", transport: "codex-queue", relayId: "old-instance-relay" }, base);
+        const started = store.startManagedWake(reserved.attempt!, base + 1);
+        store.recordManagedWakeOutcome(started.attempt!, "submitted", base + 2);
+        presence("new-instance", Date.now());
+        expect(store.database.prepare("SELECT state FROM wake_nonces WHERE nonce = ?").get(nonce)).toEqual({ state: "expired-unobserved" });
+      } finally { store.close(); }
+      const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, agent_id: "", prompt: `[agent-governance-suite:wake:${nonce}]` };
+      let output: Record<string, unknown>;
+      if (host === "claude-code") output = await handleSessionMessageHook(input, "claude-code");
+      else {
+        const child = spawnSync(process.execPath, [bundledSessionMessageHook], { input: JSON.stringify(input), encoding: "utf8",
+          timeout: 10_000, windowsHide: true, env: { ...process.env } });
+        expect(child.status, child.stderr).toBe(0);
+        output = child.stdout ? JSON.parse(child.stdout) as Record<string, unknown> : {};
+      }
+      if (host === "codex") expect(output).toMatchObject({ decision: "block" });
+      else expect(output).toEqual({});
+      const verification = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
+      try {
+        expect(verification.pendingCount(target)).toBe(1);
+        const row = verification.database.prepare("SELECT state, late_observed_at, observed_at FROM wake_nonces WHERE nonce = ?").get(nonce) as Record<string, unknown>;
+        expect(row).toMatchObject({ state: "expired-unobserved", observed_at: null });
+        expect(row.late_observed_at).toEqual(expect.any(String));
       } finally { verification.close(); }
     }
   }, 30_000);

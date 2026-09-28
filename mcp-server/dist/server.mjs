@@ -17603,6 +17603,7 @@ var contractSchemas = {
   prepareSessionMessageRequest: loadSchema("prepare-session-message-request.v1.schema.json"),
   acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
   getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
+  sessionAutoWakeOutlook: loadSchema("session-auto-wake-outlook.v1.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
   executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
   stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
@@ -17746,6 +17747,9 @@ var ContractValidator = class {
   }
   getSessionMessageStatusRequest(value) {
     return this.assert("getSessionMessageStatusRequest", value);
+  }
+  sessionAutoWakeOutlook(value) {
+    return this.assert("sessionAutoWakeOutlook", value);
   }
   prepareStateCleanupRequest(value) {
     return this.assert("prepareStateCleanupRequest", value);
@@ -20336,7 +20340,8 @@ var SessionMessageService = class {
       const data = await sessionMessageRequest("list-presence", {}, this.stateDirectory);
       return ok2({ sessions: data.sessions.map((session) => ({
         ...session,
-        deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" }
+        deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
+        autoWake: session.autoWake ?? null
       })) });
     } catch (error2) {
       return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "Session presence is unavailable.");
@@ -20494,7 +20499,7 @@ function invalidInput(message) {
 function apiError(code, message) {
   return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
 }
-function unknownPresence(host, sessionId) {
+function unknownPresence(host, sessionId, brokerAnswered) {
   return {
     host,
     sessionId,
@@ -20511,7 +20516,15 @@ function unknownPresence(host, sessionId) {
     leaseUntil: null,
     endedAt: null,
     endReason: null,
-    state: "unknown"
+    state: "unknown",
+    // Advisory only; null when the broker could not be asked.
+    autoWake: brokerAnswered ? {
+      state: "no-live-relay",
+      reason: "presence-unknown",
+      basisAt: null,
+      checkedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      authorityEffect: "none"
+    } : null
   };
 }
 function withPresence(sessions, presence) {
@@ -20520,7 +20533,7 @@ function withPresence(sessions, presence) {
   );
   return sessions.map((session) => ({
     ...session,
-    presence: bySession.get(`${session.host}\0${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId)
+    presence: bySession.get(`${session.host}\0${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId, presence.ok)
   }));
 }
 async function sessionBoardResult(tool, args, databasePath, validator, sessionMessages) {
@@ -20755,7 +20768,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "send_session_message",
-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent.",
+        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence.",
         inputSchema: contractSchemas.sendSessionMessageRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
@@ -20767,7 +20780,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "get_session_message_status",
-        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend.",
+        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend. Unacknowledged queue rows include the advisory autoWake recipient wake outlook with its basis time; it is not delivery, completion or permission evidence.",
         inputSchema: contractSchemas.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       }

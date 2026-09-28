@@ -7,6 +7,7 @@ import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
+import { SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
 
 // A release check supplies the actual previous installation, not a simulated dispatcher.
 const previousBroker = process.env.AGS_PREVIOUS_BROKER_PATH;
@@ -90,6 +91,83 @@ it.skipIf(!previousBroker)("preserves queued messages when new hooks meet the pr
       child.kill();
       await exited;
     }
+    await rm(directory, { recursive: true, force: true, maxRetries: 10 });
+  }
+}, 20_000);
+
+it.skipIf(!previousBroker)("lets the previous released broker serve a schema 1 database with a retired wake", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-schema1-"));
+  const environment = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory,
+    AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
+    AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(directory, "shared-state") };
+  const databasePath = path.join(directory, "session-messages.sqlite3");
+  const target = { host: "codex", sessionId: "schema1-recipient" };
+  const capabilities = { supportedInjection: ["peer-wake" as const, "tool-boundary" as const], idleWake: "user-message" as const };
+  const nonce = "schema1-retired-nonce-abcdefghijklmnop";
+  const seed = new SessionMessageStore(databasePath);
+  try {
+    const base = Date.now() - WAKE_TTL_MS - WAKE_RETIRE_GRACE_MS - 60_000;
+    const presence = (instanceId: string, at: number) => {
+      seed.startPresence({ ...target, instanceId, transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false,
+        deliveryCapabilities: capabilities }, at);
+      seed.acquireRelay({ ...target, transport: "codex-queue", relayId: `${instanceId}-relay`, pid: process.pid, parentPid: process.pid }, at);
+    };
+    presence("old-instance", base);
+    seed.send({ sender: { host: "synthetic-host", sessionId: "sender" }, target, messageId: "schema1-old-body", body: "old", ttlSeconds: 86400 }, base);
+    const reserved = seed.reserveManagedWake({ ...target, nonce, instanceId: "old-instance", transport: "codex-queue", relayId: "old-instance-relay" }, base);
+    seed.recordManagedWakeOutcome(seed.startManagedWake(reserved.attempt!, base + 1).attempt!, "submitted", base + 2);
+    presence("new-instance", Date.now());
+  } finally { seed.close(); }
+  const retiredRow = () => {
+    const database = new DatabaseSync(databasePath, { readOnly: true });
+    try {
+      return { version: (database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version,
+        row: database.prepare("SELECT * FROM wake_nonces WHERE nonce = ?").get(nonce) };
+    } finally { database.close(); }
+  };
+  const before = retiredRow();
+  expect(before).toMatchObject({ version: 1, row: { state: "expired-unobserved" } });
+  const cli = (operation: string, payload: Record<string, unknown>) => {
+    const result = spawnSync(process.execPath, [path.join(pluginRoot, "mcp-server/dist/session-message-cli.mjs")], {
+      env: environment, input: JSON.stringify({ operation, payload }), encoding: "utf8", windowsHide: true, timeout: 5000,
+    });
+    expect(result.status, result.stderr).toBe(0);
+    return JSON.parse(result.stdout);
+  };
+  const child = spawn(process.execPath, [previousBroker!, "--state-directory", directory], { windowsHide: true, stdio: "ignore", env: environment });
+  let managedWakeAware: boolean | undefined;
+  try {
+    await waitForSessionMessageBrokerReady(directory, child, 5000);
+    const ping = await requestSessionMessageOnce<{ capabilities?: string[] }>("ping", {}, directory);
+    managedWakeAware = (ping.capabilities ?? []).includes("delivery-capabilities");
+    const sender = { host: "synthetic-host", sessionId: "sender" };
+    let messageId = "schema1-previous-message";
+    if ((ping.capabilities ?? []).includes("deferred-boundary")) {
+      messageId = cli("prepare", { sender, target, body: "after upgrade" }).data.messageId;
+      cli("send", { sender, messageId });
+    } else cli("send", { sender, target, messageId, body: "after upgrade" });
+    expect(cli("status", { sender, messageId }).data.status.state).toBe("queued");
+    const claimed = cli("claim", { target }).data.messages.map((message: { messageId: string }) => message.messageId);
+    expect(claimed).toEqual(["schema1-old-body", messageId]);
+    expect(cli("acknowledge", { target, messageIds: claimed }).data.acknowledged).toBe(2);
+    expect(cli("status", { sender, messageId }).data.status.state).toBe("acknowledged");
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = once(child, "exit");
+      child.kill();
+      await exited;
+    }
+  }
+  try {
+    const after = retiredRow();
+    expect(after.version).toBe(1);
+    // Managed-wake brokers leave the terminal row untouched. Older brokers prune every expired nonce row
+    // (their existing behavior for any v2.7 database) but never reopen or rewrite it.
+    if (managedWakeAware === true) expect(after.row).toEqual(before.row);
+    else expect([undefined, before.row]).toContainEqual(after.row);
+    const reopened = new SessionMessageStore(databasePath);
+    reopened.close();
+  } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 10 });
   }
 }, 20_000);
