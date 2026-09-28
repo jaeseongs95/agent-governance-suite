@@ -21,7 +21,26 @@ const store = new SessionMessageStore(database);
 process.send({ type: 'ready' });
 process.once('message', async (input) => {
   try {
-    if (mode === 'sender') {
+    if (mode === 'wake-transition') {
+      const current = { ...target, instanceId: input.instanceId ?? 'instance-2', transport: 'portable', relayId,
+        wakeVisibility: 'silent', canWakeSilently: true, deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } };
+      let result;
+      if (input.kind === 'outcome') result = store.recordManagedWakeOutcome(input.attempt, 'definite-failure', input.now);
+      else if (input.kind === 'start') result = store.startManagedWake(input.attempt, input.now);
+      else {
+        if (input.kind === 'generation') store.startPresence(current, input.now);
+        store.acquireRelay({ ...current, pid: process.pid, parentPid: Number(parentPid) }, input.now);
+        result = store.reserveManagedWake({ ...current, nonce: `fixture-${relayId}-nonce-abcdefghijklmnop`, resume: true }, input.now);
+        if (input.kind === 'effect' && result.dispatch) {
+          result = store.startManagedWake(result.attempt, input.now + 1);
+          if (result.dispatch) {
+            appendFileSync(effects, `${result.attempt.nonce}\n`, 'utf8');
+            store.recordManagedWakeOutcome(result.attempt, 'submitted', input.now + 2);
+          }
+        }
+      }
+      process.send({ type: 'result', result });
+    } else if (mode === 'sender') {
       store.send({ sender: { host: 'portable', sessionId: relayId }, target, messageId: relayId, body: relayId });
       process.send({ type: 'result', sent: true });
     } else if (mode === 'reconcile-wake') {
