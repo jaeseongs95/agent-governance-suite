@@ -85,15 +85,43 @@ describe("generated Claude plugin", () => {
     expect(claudeOverlay.mcpServers["agent-governance-suite"].env.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("claude-code");
   });
 
-  it("puts the Claude selection decision at the top of the generated orchestrator skill", async () => {
-    const generated = await readFile(path.join(pluginRoot, "skills", "orchestrator", "SKILL.md"), "utf8");
-    const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
-    expect(shared).not.toContain("## Claude Code에서의 선택 결정");
-    expect(generated.indexOf("## Claude Code에서의 선택 decision".replace("decision", "결정"))).toBeLessThan(generated.indexOf("## 시작 전 확인"));
-    for (const skill of ["task-contract", "change-scope-guardian", "acceptance-evidence-validator", "independent-audit-gate", "mutation-risk-preflight"]) {
-      expect(generated).toContain(`\`${skill}\`:`);
+  it("keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation", async () => {
+    const orchestrator = (base, ...segments) => readFile(path.join(base, "skills", "orchestrator", ...segments), "utf8");
+    const adaptation = await readJson(root, "claude-overlay", "adaptations", "orchestrator.json");
+    const shared = await orchestrator(root, "SKILL.md");
+    const generated = await orchestrator(pluginRoot, "SKILL.md");
+    // The shared source names no host invocation syntax or product.
+    for (const document of ["SKILL.md", "references/entry-details.md", "references/mcp-execution.md"]) {
+      const text = await orchestrator(root, document);
+      for (const hostSpecific of [/Skill 도구/u, /\/agent-governance-suite:/u, /(?<![\w$])\$[a-z][a-z0-9]*(?:-[a-z0-9]+)*\b/u, /Claude/u, /Codex/u, /UserPromptSubmit/u, /transcript/u]) {
+        expect(text, document).not.toMatch(hostSpecific);
+      }
+      // References carry the shared policy to Claude byte for byte.
+      if (document !== "SKILL.md") expect(await orchestrator(pluginRoot, document), document).toBe(text);
     }
-    expect(generated).toContain("agent-governance-suite:independent-auditor");
+    // Only the Claude section is inserted; the frontmatter description is the only other difference.
+    expect(adaptation.replacements).toHaveLength(1);
+    const [{ find, replace }] = adaptation.replacements;
+    const section = replace.slice(0, replace.length - find.length);
+    expect(replace.endsWith(find)).toBe(true);
+    expect(generated).toBe(replaceFrontmatterDescription(shared, adaptation.description).replace(find, replace));
+    // The Claude section adapts invocation and observation without restating common policy.
+    for (const hostOnly of ["Skill 도구", "/agent-governance-suite:<skill-name>", "agent-governance-suite:independent-auditor", "UserPromptSubmit", "transcript"]) {
+      expect(section).toContain(hostOnly);
+    }
+    for (const policy of ["실패 영향", "outputFile", "requiredArtifacts", "`direct`", "`orchestrated`", "BINDING_REQUIRED", "plan_workflow` 전에", "minimal-implementation", "ponytail"]) {
+      expect(section, policy).not.toContain(policy);
+    }
+    // Each common selection sentence reaches Claude exactly once.
+    for (const sentence of ["키워드, 파일 종류나 `complex` 표시만으로 스킬을 붙이지 않는다.", "필수 승인·검증·독립성 gate를 생략하는 권한으로 해석하지 않는다.", "이 문서와 참고 자료를 읽는 것은 전문 스킬 실행이 아니다."]) {
+      expect(shared.split(sentence)).toHaveLength(2);
+      expect(generated.split(sentence)).toHaveLength(2);
+    }
+    // The Claude description neither widens the shared exclusions nor adds a fallback route.
+    for (const exclusion of ["한 스킬로 충분하면 그 스킬을 직접 쓰고", "전문 스킬이 필요 없는 요청", "전문 판단·감사 자체"]) {
+      expect(adaptation.description).toContain(exclusion);
+    }
+    expect(adaptation.description).not.toMatch(/BINDING_|직접 순서대로 호출/u);
   });
 
   it("omits Codex-only skills from files, registry, and source lock", async () => {
