@@ -184,7 +184,7 @@ presence birth는 ms 해상도 ISO 문자열이다. 같은 instance가 이전 bi
 
 조회: 서버는 현황판에 보이는 identity만 3개씩 묶어 `list-presence`의 `targets`로 요청하고, broker는 그 identity만 돌려준다. 3개는 모든 문자열 필드가 최대 길이이고 JSON escape로 6바이트가 되는 문자만으로 채워져도 응답 한도 안에 든다. broker는 `targets`가 1~3개가 아니면 거절하고, 응답이 한도를 넘으면 보내지 않고 명시적으로 거절한다. `targets` 없는 요청(2.7.3 이하 service)에는 저장된 모든 identity를 돌려주며, 한도를 넘으면 같은 거절을 한다.
 
-서버는 broker가 받는 식별자 형식(`isBoundedIdentity`, broker와 같은 규칙)에 맞지 않는 identity는 요청하지 않는다. 그 identity와 실패한 묶음의 identity는 broker가 답하지 않은 것으로 보고 `unknown`, `autoWake: null`로 두며, 나머지 묶음은 그대로 표시한다. broker에 물었는데 행이 없는 identity는 `unknown`이고 `autoWake`는 `no-live-relay`/`presence-unknown`이다. 요청 수는 ceil(N/3)이고, 여러 묶음을 합친 전체 deadline은 없다.
+서버는 broker가 받는 식별자 형식(`isBoundedIdentity`, broker와 같은 규칙)에 맞지 않는 identity는 요청하지 않는다. 그 identity와 broker가 명시적으로 거절한 묶음의 identity는 broker가 답하지 않은 것으로 보고 `unknown`, `autoWake: null`로 두며, 나머지 묶음은 그대로 표시한다. 거절이 아닌 실패(연결 실패, client deadline 초과, 응답 한도 초과)가 한 번 나면 남은 묶음은 요청하지 않고, 그 묶음과 남은 묶음의 identity를 모두 같은 방식으로 둔다. 그래서 broker가 살아 있지만 응답하지 않아도 전체 시간은 묶음 하나의 client deadline을 넘지 않는다. broker에 물었는데 행이 없는 identity는 `unknown`이고 `autoWake`는 `no-live-relay`/`presence-unknown`이다. 요청 수는 ceil(N/3)이고, 여러 묶음을 합친 전체 deadline은 없다.
 
 | service | broker | 현황판 presence |
 | --- | --- | --- |
