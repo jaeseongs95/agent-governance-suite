@@ -17,6 +17,8 @@ export const MESSAGE_DRAFT_TTL_MS = 10 * 60_000;
 export const MESSAGE_DRAFT_LIMIT = 1000;
 export const MESSAGE_SENDER_DRAFT_LIMIT = 100;
 export const MESSAGE_RECEIPT_LIMIT = 1000;
+/** Fairness between cooperating sender sessions; the sender identity is the bound session, not an authenticated principal. */
+export const MESSAGE_SENDER_RECEIPT_LIMIT = 250;
 export const MESSAGE_ID_RECORD_BYTES_LIMIT = 4 * 1024 * 1024;
 const MESSAGE_RECEIPT_EXTRA_MS = 3600_000;
 const CLAIM_LEASE_BASE_MS = 120_000;
@@ -126,6 +128,22 @@ export interface WakeReservation {
   attempt: WakeAttempt | null;
 }
 export type ManagedWakeState = "reserved" | "started" | "submitted" | "unknown" | "observed" | "not-submitted" | "expired-unobserved";
+
+export interface MessageCapacityDetails {
+  scope: "sender" | "global";
+  earliestReleaseAt: string | null;
+}
+
+/** A capacity rejection rolls back its transaction: nothing was queued or drafted. */
+export class MessageCapacityError extends Error {
+  readonly details: MessageCapacityDetails;
+
+  constructor(message: string, details: MessageCapacityDetails) {
+    super(message);
+    this.name = "MessageCapacityError";
+    this.details = details;
+  }
+}
 
 export interface ClaimLimits {
   maxMessages?: number;
@@ -329,6 +347,18 @@ export class SessionMessageStore {
       .run(target.host, target.sessionId, iso(nowMs));
   }
 
+  /** Sender quota first, then the global pool; call inside the caller's transaction after prune. */
+  private assertReceiptCapacity(sender: SessionIdentity, suffix: string): void {
+    const owned = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?")
+      .get(sender.host, sender.sessionId) as { count: number; earliest: string | null };
+    if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+      throw new MessageCapacityError(`The bounded message receipt store is full for this sender${suffix}`, { scope: "sender", earliestReleaseAt: owned.earliest });
+    }
+    const all = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL")
+      .get() as { count: number; earliest: string | null };
+    if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityError(`The bounded message receipt store is full${suffix}`, { scope: "global", earliestReleaseAt: all.earliest });
+  }
+
   /** Preparation is durable but has no queue, peer-relation or wake effect. */
   prepare(input: { sender: SessionIdentity; target: SessionIdentity; body: string; ttlSeconds?: number }, nowMs = Date.now()): { messageId: string; preparedAt: string; expiresAt: string } {
     boundedIdentity(input.sender);
@@ -342,6 +372,8 @@ export class SessionMessageStore {
     this.database.exec("BEGIN IMMEDIATE");
     try {
       this.prune(nowMs);
+      // Admission only; submitPrepared repeats the authoritative check.
+      this.assertReceiptCapacity(input.sender, "; no draft was created.");
       const drafts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL").get() as { count: number };
       const owned = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL AND sender_host = ? AND sender_session_id = ?").get(input.sender.host, input.sender.sessionId) as { count: number };
       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages").get() as { bytes: number };
@@ -375,14 +407,13 @@ export class SessionMessageStore {
         this.database.exec("COMMIT");
         return { ...receipt, duplicate: true, autoWake };
       }
-      const receipts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NOT NULL").get() as { count: number };
-      if (receipts.count >= MESSAGE_RECEIPT_LIMIT) throw new Error("The bounded message receipt store is full.");
+      this.assertReceiptCapacity(sender, ".");
       const receipt = this.send({ messageId, sender, target, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
       const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
       const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);
       const recordBytes = Buffer.byteLength(JSON.stringify({ messageId, sender, target: { host: row.target_host, sessionId: row.target_session_id }, preparedAt: row.prepared_at, ttlSeconds: row.ttl_seconds, receipt: receiptJson, expiresAt }), "utf8");
-      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages WHERE message_id <> ?").get(messageId) as { bytes: number };
-      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message receipt store is full.");
+      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes, min(expires_at) AS earliest FROM prepared_messages WHERE message_id <> ?").get(messageId) as { bytes: number; earliest: string | null };
+      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new MessageCapacityError("The bounded message receipt store is full.", { scope: "global", earliestReleaseAt: bytes.earliest });
       this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?")
         .run(receiptJson, expiresAt, recordBytes, messageId);
       const autoWake = this.autoWakeOutlook(target, nowMs);
@@ -598,10 +629,16 @@ export class SessionMessageStore {
     }
     const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL
       WHERE message_id = ? AND target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL`);
+    // Only the first ACK shortens the receipt, and min() never extends it.
+    const receipt = this.database.prepare("UPDATE prepared_messages SET expires_at = min(expires_at, ?) WHERE message_id = ? AND receipt IS NOT NULL");
     let count = 0;
     this.database.exec("BEGIN IMMEDIATE");
     try {
-      for (const messageId of new Set(messageIds)) count += Number(statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes);
+      for (const messageId of new Set(messageIds)) {
+        if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
+        receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
+        count++;
+      }
       this.recordActivity(target, nowMs);
       this.database.exec("COMMIT");
       return count;

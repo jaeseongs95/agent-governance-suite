@@ -135,14 +135,27 @@ it("applies global draft, receipt and byte backpressure without evicting valid r
   expect(() => store.prepare({ sender, target, body: "x" }, 1000)).toThrow(/full/u);
   expect(count(store, "prepared_messages")).toBe(1000);
   store.prune(601_000);
-  for (let index = 0; index < 1000; index++) {
+  const fillReceipt = (index: number) => {
     const owner = { ...sender, sessionId: `receipt-owner-${index}` };
     const draft = store.prepare({ sender: owner, target, body: "x" }, 602_000);
     store.submitPrepared(owner, draft.messageId, 602_000);
     store.acknowledge(target, [draft.messageId], 602_000);
-  }
-  const blocked = prepare(store, 602_001);
-  expect(() => store.submitPrepared(sender, blocked.messageId, 602_001)).toThrow(/receipt store is full/u);
+  };
+  for (let index = 0; index < 999; index++) fillReceipt(index);
+  // Prepared while one global receipt slot remains; the slot is then taken before this draft is sent.
+  const blocked = prepare(store, 602_000);
+  fillReceipt(999);
+  const release = { scope: "global", earliestReleaseAt: new Date(602_000 + 3600_000).toISOString() };
+  const beforeDrafts = count(store, "prepared_messages");
+  let admission: unknown;
+  expect(() => { try { prepare(store, 602_001); } catch (error) { admission = error; throw error; } }).toThrow(/^The bounded message receipt store is full; no draft was created\.$/u);
+  expect(admission).toMatchObject({ details: release });
+  expect(count(store, "prepared_messages")).toBe(beforeDrafts);
+  const beforeMessages = count(store);
+  let submission: unknown;
+  expect(() => { try { store.submitPrepared(sender, blocked.messageId, 602_001); } catch (error) { submission = error; throw error; } }).toThrow(/^The bounded message receipt store is full\.$/u);
+  expect(submission).toMatchObject({ details: release });
+  expect(count(store)).toBe(beforeMessages);
   expect(store.status(sender, blocked.messageId, 602_001)).toMatchObject({ state: "prepared" });
   const bytes = fixture();
   let accepted = 0;

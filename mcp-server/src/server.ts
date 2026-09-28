@@ -527,13 +527,13 @@ export function createMcpServer(
       },
       {
         name: "prepare_session_message",
-        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft.",
+        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft. When this sender (250) or all senders (1000) already hold the maximum retained receipts, no draft is created and error.details gives scope and earliestReleaseAt.",
         inputSchema: prepareSessionMessageInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "send_session_message",
-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence.",
+        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
         inputSchema: contractSchemas.sendSessionMessageRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },

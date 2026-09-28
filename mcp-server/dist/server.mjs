@@ -20012,6 +20012,12 @@ var SESSION_MESSAGE_BODY_MAX_BYTES = 4096;
 
 // mcp-server/src/session-message-client.ts
 var BrokerRequestRejected = class extends Error {
+  details;
+  constructor(message, details = null) {
+    super(message);
+    const record3 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
+    this.details = record3 && (record3.scope === "sender" || record3.scope === "global") && (record3.earliestReleaseAt === null || typeof record3.earliestReleaseAt === "string") ? { scope: record3.scope, earliestReleaseAt: record3.earliestReleaseAt } : null;
+  }
 };
 var BROKER_STARTUP_TIMEOUT_MS = 15e3;
 var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
@@ -20141,7 +20147,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
         if (newline < 0) return;
         try {
           const response = JSON.parse(buffer.slice(0, newline));
-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
+          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
           else finish(void 0, response.data);
         } catch {
           finish(new Error("The broker returned invalid JSON."));
@@ -20273,8 +20279,14 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
 function ok2(data) {
   return { schemaVersion: "1.0.0", ok: true, data, error: null };
 }
-function failure2(code, message) {
-  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
+function failure2(code, message, details = null) {
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
+}
+function capacityDetails(error2) {
+  return error2 instanceof BrokerRequestRejected ? error2.details : null;
+}
+function capacityRelease(details) {
+  return details.earliestReleaseAt === null ? "A new prepare_session_message may succeed after retained records expire." : `The earliest retained record in this scope expires at ${details.earliestReleaseAt}; after that a new prepare_session_message may succeed.`;
 }
 function binding(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -20302,6 +20314,8 @@ var SessionMessageService = class {
       }, this.stateDirectory);
       return ok2(data);
     } catch (error2) {
+      const details = capacityDetails(error2);
+      if (details) return failure2("MCP_UNAVAILABLE", `${error2.message} ${capacityRelease(details)}`, { ...details });
       return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "The session message broker is unavailable.");
     }
   }
@@ -20312,6 +20326,8 @@ var SessionMessageService = class {
     try {
       return ok2(await sessionMessageRequest("send", { sender, messageId: args.messageId }, this.stateDirectory));
     } catch (error2) {
+      const details = capacityDetails(error2);
+      if (details) return failure2("MCP_UNAVAILABLE", `${error2.message} This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until its draft expires; after capacity is released, either retry that same messageId or prepare again, not both. ${capacityRelease(details)}`, { ...details });
       return failure2("MCP_UNAVAILABLE", `${error2 instanceof Error ? error2.message : "The session message broker is unavailable."} Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.`);
     }
   }
@@ -20767,13 +20783,13 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "prepare_session_message",
-        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft.",
+        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft. When this sender (250) or all senders (1000) already hold the maximum retained receipts, no draft is created and error.details gives scope and earliestReleaseAt.",
         inputSchema: prepareSessionMessageInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "send_session_message",
-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence.",
+        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
         inputSchema: contractSchemas.sendSessionMessageRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
