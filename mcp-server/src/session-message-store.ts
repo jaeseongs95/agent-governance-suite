@@ -4,7 +4,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 
 import { SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
-import { isWakeHookObservation, wakeBackoffDelay, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
+import { isWakeHookObservation, verifyHistoricalWakeObservation, wakeBackoffDelay, type HistoricalWakeEvidence, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
 import type { DeliveryCapabilities, InputObservation, InputObservationKind } from "./input-observation.js";
 
 export const MESSAGE_BODY_MAX_BYTES = SESSION_MESSAGE_BODY_MAX_BYTES;
@@ -257,9 +257,9 @@ export class SessionMessageStore {
     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
     this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
     this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted')
-      AND coalesce(observed_at, outcome_at) <= ?`).run(acknowledgedBefore);
+      AND coalesce(consumed_at, observed_at, outcome_at) <= ?`).run(acknowledgedBefore);
     this.database.prepare(`DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces
-      WHERE state IN ('observed', 'not-submitted') ORDER BY coalesce(observed_at, outcome_at) DESC LIMIT -1 OFFSET ?)`)
+      WHERE state IN ('observed', 'not-submitted') ORDER BY coalesce(consumed_at, observed_at, outcome_at) DESC LIMIT -1 OFFSET ?)`)
       .run(MESSAGE_LIMIT);
     this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
   }
@@ -810,6 +810,50 @@ export class SessionMessageStore {
       instanceId: row.instance_id, generation: row.birth_generation, attemptId: row.attempt_id,
       dispatchEpoch: row.dispatch_epoch, retryNotBefore: row.retry_not_before, expiresAt: row.expires_at,
       observedAt: row.observed_at, lateObservedAt: row.late_observed_at };
+  }
+
+  /** Terminal-only maintenance. Historical evidence cannot claim bodies or observe a current relay. */
+  reconcileHistoricalWake(target: SessionIdentity, attemptId: string, sourceReceiptId: string, nowMs = Date.now(),
+    verify = verifyHistoricalWakeObservation): {
+      reconciled: boolean;
+      evidence: (HistoricalWakeEvidence & { oldBinding: Omit<WakeAttempt, "nonce">; lateObservedAt: string; reconciledAt: string }) | null;
+    } {
+    boundedIdentity(target);
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(attemptId)
+      || !/^source-[A-Za-z0-9-]{1,128}$/u.test(sourceReceiptId)) throw new Error("Invalid historical wake identity.");
+    const rejected = { reconciled: false, evidence: null };
+    const isOldGeneration = (row: Record<string, unknown>) => {
+      const presence = this.presence(target, nowMs);
+      return presence.instanceId !== null && presence.startedAt !== null
+        && (row.instance_id !== presence.instanceId || row.birth_generation !== presence.startedAt);
+    };
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ?
+        AND state = 'unknown' AND late_observed_at IS NOT NULL AND consumed_at IS NULL AND observed_at IS NULL`)
+        .get(target.host, target.sessionId, attemptId) as Record<string, unknown> | undefined;
+      if (!row || ![row.nonce, row.instance_id, row.birth_generation, row.transport, row.relay_id, row.started_at].every((value) => typeof value === "string")
+        || row.nonce_digest !== nonceDigest(String(row.nonce)) || Number(row.dispatch_epoch) < 1 || !isOldGeneration(row)) {
+        this.database.exec("COMMIT"); return rejected;
+      }
+      const proof = verify(target, String(row.nonce), sourceReceiptId, String(row.started_at), String(row.late_observed_at), nowMs);
+      if (!proof || !isOldGeneration(row)) { this.database.exec("COMMIT"); return rejected; }
+      // Recheck every original binding and observation field after the separate read-only trust snapshot.
+      const changed = this.database.prepare(`UPDATE wake_nonces SET state = 'observed', observed_at = ?, consumed_at = ?
+        WHERE nonce_digest = ? AND nonce = ? AND host = ? AND session_id = ? AND attempt_id = ?
+        AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND dispatch_epoch = ?
+        AND state = 'unknown' AND started_at = ? AND late_observed_at = ? AND consumed_at IS NULL AND observed_at IS NULL`)
+        .run(proof.observedAt, iso(nowMs), String(row.nonce_digest), String(row.nonce), target.host, target.sessionId, attemptId,
+          String(row.instance_id), String(row.birth_generation), String(row.transport), String(row.relay_id), Number(row.dispatch_epoch),
+          String(row.started_at), String(row.late_observed_at)).changes;
+      this.database.exec("COMMIT");
+      if (changed !== 1) return rejected;
+      const attempt = this.wakeAttempt(row);
+      const oldBinding = { host: attempt.host, sessionId: attempt.sessionId, instanceId: attempt.instanceId,
+        generation: attempt.generation, transport: attempt.transport, relayId: attempt.relayId,
+        attemptId: attempt.attemptId, dispatchEpoch: attempt.dispatchEpoch };
+      return { reconciled: true, evidence: { ...proof, oldBinding, lateObservedAt: String(row.late_observed_at), reconciledAt: iso(nowMs) } };
+    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
   }
 
   /** Verified arrival retires its attempt; only current bindings may claim bodies in the same transaction. */

@@ -21,6 +21,15 @@ const INPUT_SOURCE_KEYS = new Set([
 ]);
 const ATTESTATION_KEYS = new Set(["kind", "adapter", "capabilityVersion"]);
 
+function verifyInputSource(receipt: InputSourceReceiptV1, signingKey: Buffer): boolean {
+  try {
+    const { integrityToken, ...unsigned } = receipt;
+    const actual = Buffer.from(integrityToken, "base64url");
+    const expected = createHmac("sha256", signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
+    return signingKey.length === 32 && actual.length === expected.length && timingSafeEqual(actual, expected);
+  } catch { return false; }
+}
+
 function rejectUnexpectedKeys(value: object, allowed: Set<string>, label: string): void {
   const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
   if (unexpected.length > 0) {
@@ -143,14 +152,22 @@ export class TrustStore {
   }
 
   verify(receipt: InputSourceReceiptV1): boolean {
+    return verifyInputSource(receipt, this.signingKey);
+  }
+
+  /** Existing key/receipt snapshot only: no schema, journal mode, key creation or receipt issuance. */
+  static readVerifiedInputSource(databasePath: string, receiptId: string): InputSourceReceiptV1 | null {
+    let database: DatabaseSync | undefined;
     try {
-      const { integrityToken, ...unsigned } = receipt;
-      const actual = Buffer.from(integrityToken, "base64url");
-      const expected = createHmac("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
-      return actual.length === expected.length && timingSafeEqual(actual, expected);
-    } catch {
-      return false;
-    }
+      database = new DatabaseSync(databasePath, { readOnly: true });
+      database.exec("PRAGMA query_only = ON; BEGIN;");
+      const key = database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(TRUST_SIGNING_KEY) as { value: string } | undefined;
+      const row = database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId) as ReceiptRow | undefined;
+      if (!key || !row) return null;
+      const receipt = JSON.parse(row.receipt_json) as InputSourceReceiptV1;
+      return receipt?.receiptId === receiptId && verifyInputSource(receipt, Buffer.from(key.value, "base64url")) ? receipt : null;
+    } catch { return null; }
+    finally { database?.close(); }
   }
 
   close(): void {

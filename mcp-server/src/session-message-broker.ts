@@ -402,6 +402,15 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       if (outcome !== "submitted" && outcome !== "definite-failure" && outcome !== "accepted-or-unknown") throw new Error("Invalid wake dispatch outcome.");
       return { recorded: store.recordManagedWakeOutcome(wakeAttempt(payload.attempt), outcome) };
     }
+    case "reconcile-wake-observation": {
+      if (Object.keys(payload).some((key) => !["target", "attemptId", "sourceReceiptId"].includes(key))
+        || !payload.target || typeof payload.target !== "object" || Array.isArray(payload.target)
+        || Object.keys(payload.target).some((key) => !["host", "sessionId"].includes(key))) {
+        throw new Error("Historical wake reconciliation contains unsupported fields.");
+      }
+      return store.reconcileHistoricalWake(identity(payload.target), string(payload.attemptId, "attemptId"),
+        string(payload.sourceReceiptId, "sourceReceiptId"), Date.now());
+    }
     case "wake-status": return { wake: store.managedWakeStatus(identity(payload.target)) };
     case "release-wake": return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "consume-wake": return { consumed: store.consumeWake(identity(payload.target), string(payload.nonce, "nonce")) };

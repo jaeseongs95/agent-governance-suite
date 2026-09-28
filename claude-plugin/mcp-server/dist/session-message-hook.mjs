@@ -69,6 +69,16 @@ var INPUT_SOURCE_KEYS = /* @__PURE__ */ new Set([
   "attestation"
 ]);
 var ATTESTATION_KEYS = /* @__PURE__ */ new Set(["kind", "adapter", "capabilityVersion"]);
+function verifyInputSource(receipt, signingKey) {
+  try {
+    const { integrityToken, ...unsigned } = receipt;
+    const actual = Buffer.from(integrityToken, "base64url");
+    const expected = createHmac("sha256", signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
+    return signingKey.length === 32 && actual.length === expected.length && timingSafeEqual(actual, expected);
+  } catch {
+    return false;
+  }
+}
 function rejectUnexpectedKeys(value, allowed, label) {
   const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
   if (unexpected.length > 0) {
@@ -185,13 +195,23 @@ var TrustStore = class {
     });
   }
   verify(receipt) {
+    return verifyInputSource(receipt, this.signingKey);
+  }
+  /** Existing key/receipt snapshot only: no schema, journal mode, key creation or receipt issuance. */
+  static readVerifiedInputSource(databasePath, receiptId) {
+    let database;
     try {
-      const { integrityToken, ...unsigned } = receipt;
-      const actual = Buffer.from(integrityToken, "base64url");
-      const expected = createHmac("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
-      return actual.length === expected.length && timingSafeEqual(actual, expected);
+      database = new DatabaseSync(databasePath, { readOnly: true });
+      database.exec("PRAGMA query_only = ON; BEGIN;");
+      const key = database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(TRUST_SIGNING_KEY);
+      const row = database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId);
+      if (!key || !row) return null;
+      const receipt = JSON.parse(row.receipt_json);
+      return receipt?.receiptId === receiptId && verifyInputSource(receipt, Buffer.from(key.value, "base64url")) ? receipt : null;
     } catch {
-      return false;
+      return null;
+    } finally {
+      database?.close();
     }
   }
   close() {
@@ -380,10 +400,12 @@ function transportDeliveryCapabilities(transport) {
   const capabilities = transportWakePort(transport).capabilities;
   return { supportedInjection: [...capabilities.supportedInjection], idleWake: capabilities.idleWake };
 }
+var WAKE_ACTOR_KINDS = ["main", "unknown"];
+var WAKE_ACTOR_ASSURANCES = ["observed", "unknown"];
 function isWakeHookObservation(value, target) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const event = value;
-  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && event.actor?.observedBy === `${target.host}:hook-payload` && ["main", "unknown"].includes(event.actor.kind) && ["observed", "unknown"].includes(event.actor.assurance) && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
+  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && event.actor?.observedBy === `${target.host}:hook-payload` && WAKE_ACTOR_KINDS.some((kind) => kind === event.actor.kind) && WAKE_ACTOR_ASSURANCES.some((assurance) => assurance === event.actor.assurance) && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
 }
 function observationDigest(event) {
   const normalized = [

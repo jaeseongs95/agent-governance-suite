@@ -82,6 +82,16 @@ var INPUT_SOURCE_KEYS = /* @__PURE__ */ new Set([
   "attestation"
 ]);
 var ATTESTATION_KEYS = /* @__PURE__ */ new Set(["kind", "adapter", "capabilityVersion"]);
+function verifyInputSource(receipt, signingKey) {
+  try {
+    const { integrityToken, ...unsigned } = receipt;
+    const actual = Buffer.from(integrityToken, "base64url");
+    const expected = createHmac("sha256", signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
+    return signingKey.length === 32 && actual.length === expected.length && timingSafeEqual(actual, expected);
+  } catch {
+    return false;
+  }
+}
 function rejectUnexpectedKeys(value, allowed, label) {
   const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
   if (unexpected.length > 0) {
@@ -198,13 +208,23 @@ var TrustStore = class {
     });
   }
   verify(receipt) {
+    return verifyInputSource(receipt, this.signingKey);
+  }
+  /** Existing key/receipt snapshot only: no schema, journal mode, key creation or receipt issuance. */
+  static readVerifiedInputSource(databasePath, receiptId) {
+    let database;
     try {
-      const { integrityToken, ...unsigned } = receipt;
-      const actual = Buffer.from(integrityToken, "base64url");
-      const expected = createHmac("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
-      return actual.length === expected.length && timingSafeEqual(actual, expected);
+      database = new DatabaseSync(databasePath, { readOnly: true });
+      database.exec("PRAGMA query_only = ON; BEGIN;");
+      const key = database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(TRUST_SIGNING_KEY);
+      const row = database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId);
+      if (!key || !row) return null;
+      const receipt = JSON.parse(row.receipt_json);
+      return receipt?.receiptId === receiptId && verifyInputSource(receipt, Buffer.from(key.value, "base64url")) ? receipt : null;
     } catch {
-      return false;
+      return null;
+    } finally {
+      database?.close();
     }
   }
   close() {
@@ -323,10 +343,12 @@ function resolveTrustDatabasePath(environment = process.env, platform = process.
 function wakeBackoffDelay(attempt) {
   return Math.min(10 * 6e4, 3e4 * 2 ** Math.max(0, attempt));
 }
+var WAKE_ACTOR_KINDS = ["main", "unknown"];
+var WAKE_ACTOR_ASSURANCES = ["observed", "unknown"];
 function isWakeHookObservation(value, target) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const event = value;
-  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && event.actor?.observedBy === `${target.host}:hook-payload` && ["main", "unknown"].includes(event.actor.kind) && ["observed", "unknown"].includes(event.actor.assurance) && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
+  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && event.actor?.observedBy === `${target.host}:hook-payload` && WAKE_ACTOR_KINDS.some((kind) => kind === event.actor.kind) && WAKE_ACTOR_ASSURANCES.some((assurance) => assurance === event.actor.assurance) && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
 }
 function observationDigest(event) {
   const normalized = [
@@ -340,6 +362,34 @@ function observationDigest(event) {
     [...new Set(event.wakeCandidates)].sort()
   ];
   return `sha256:${createHash("sha256").update(JSON.stringify(normalized)).digest("hex")}`;
+}
+function verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, databasePath = resolveTrustDatabasePath()) {
+  const receipt = TrustStore.readVerifiedInputSource(databasePath, sourceReceiptId);
+  if (!receipt || receipt.schemaVersion !== "1.0.0" || receipt.host !== target.host || receipt.sessionId !== target.sessionId || receipt.originKind !== "peer" || receipt.authorityEffect !== "none" || receipt.attestation?.kind !== "broker-peer-envelope" || receipt.attestation.adapter !== "session-message-wake-hook" || receipt.attestation.capabilityVersion !== "1.0.0") return null;
+  const [started, observed, late, expires] = [
+    Date.parse(startedAt),
+    Date.parse(receipt.observedAt),
+    Date.parse(lateObservedAt),
+    Date.parse(receipt.expiresAt)
+  ];
+  if (![started, observed, late, expires, nowMs].every(Number.isFinite) || !(started <= observed && observed <= late && late < expires && expires <= nowMs)) return null;
+  let matches = 0;
+  for (const kind of WAKE_ACTOR_KINDS) for (const assurance of WAKE_ACTOR_ASSURANCES) {
+    const observation = {
+      ...target,
+      kind: "user-input",
+      wakeOnly: true,
+      wakeCandidates: [nonce],
+      actor: { kind, assurance, observedBy: `${target.host}:hook-payload` }
+    };
+    if (isWakeHookObservation(observation, target) && observationDigest(observation) === receipt.contentDigest) matches++;
+  }
+  return matches === 1 ? {
+    sourceReceiptId,
+    contentDigest: receipt.contentDigest,
+    observedAt: receipt.observedAt,
+    receiptExpiresAt: receipt.expiresAt
+  } : null;
 }
 function createWakeHookObservationReader(databasePath = resolveTrustDatabasePath()) {
   return {
@@ -542,9 +592,9 @@ var SessionMessageStore = class {
     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
     this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
     this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted')
-      AND coalesce(observed_at, outcome_at) <= ?`).run(acknowledgedBefore);
+      AND coalesce(consumed_at, observed_at, outcome_at) <= ?`).run(acknowledgedBefore);
     this.database.prepare(`DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces
-      WHERE state IN ('observed', 'not-submitted') ORDER BY coalesce(observed_at, outcome_at) DESC LIMIT -1 OFFSET ?)`).run(MESSAGE_LIMIT);
+      WHERE state IN ('observed', 'not-submitted') ORDER BY coalesce(consumed_at, observed_at, outcome_at) DESC LIMIT -1 OFFSET ?)`).run(MESSAGE_LIMIT);
     this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
   }
   /** Preparation is durable but has no queue, peer-relation or wake effect. */
@@ -1085,6 +1135,66 @@ var SessionMessageStore = class {
       observedAt: row.observed_at,
       lateObservedAt: row.late_observed_at
     };
+  }
+  /** Terminal-only maintenance. Historical evidence cannot claim bodies or observe a current relay. */
+  reconcileHistoricalWake(target, attemptId, sourceReceiptId, nowMs = Date.now(), verify = verifyHistoricalWakeObservation) {
+    boundedIdentity(target);
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(attemptId) || !/^source-[A-Za-z0-9-]{1,128}$/u.test(sourceReceiptId)) throw new Error("Invalid historical wake identity.");
+    const rejected = { reconciled: false, evidence: null };
+    const isOldGeneration = (row) => {
+      const presence = this.presence(target, nowMs);
+      return presence.instanceId !== null && presence.startedAt !== null && (row.instance_id !== presence.instanceId || row.birth_generation !== presence.startedAt);
+    };
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ?
+        AND state = 'unknown' AND late_observed_at IS NOT NULL AND consumed_at IS NULL AND observed_at IS NULL`).get(target.host, target.sessionId, attemptId);
+      if (!row || ![row.nonce, row.instance_id, row.birth_generation, row.transport, row.relay_id, row.started_at].every((value) => typeof value === "string") || row.nonce_digest !== nonceDigest(String(row.nonce)) || Number(row.dispatch_epoch) < 1 || !isOldGeneration(row)) {
+        this.database.exec("COMMIT");
+        return rejected;
+      }
+      const proof = verify(target, String(row.nonce), sourceReceiptId, String(row.started_at), String(row.late_observed_at), nowMs);
+      if (!proof || !isOldGeneration(row)) {
+        this.database.exec("COMMIT");
+        return rejected;
+      }
+      const changed = this.database.prepare(`UPDATE wake_nonces SET state = 'observed', observed_at = ?, consumed_at = ?
+        WHERE nonce_digest = ? AND nonce = ? AND host = ? AND session_id = ? AND attempt_id = ?
+        AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND dispatch_epoch = ?
+        AND state = 'unknown' AND started_at = ? AND late_observed_at = ? AND consumed_at IS NULL AND observed_at IS NULL`).run(
+        proof.observedAt,
+        iso(nowMs),
+        String(row.nonce_digest),
+        String(row.nonce),
+        target.host,
+        target.sessionId,
+        attemptId,
+        String(row.instance_id),
+        String(row.birth_generation),
+        String(row.transport),
+        String(row.relay_id),
+        Number(row.dispatch_epoch),
+        String(row.started_at),
+        String(row.late_observed_at)
+      ).changes;
+      this.database.exec("COMMIT");
+      if (changed !== 1) return rejected;
+      const attempt = this.wakeAttempt(row);
+      const oldBinding = {
+        host: attempt.host,
+        sessionId: attempt.sessionId,
+        instanceId: attempt.instanceId,
+        generation: attempt.generation,
+        transport: attempt.transport,
+        relayId: attempt.relayId,
+        attemptId: attempt.attemptId,
+        dispatchEpoch: attempt.dispatchEpoch
+      };
+      return { reconciled: true, evidence: { ...proof, oldBinding, lateObservedAt: String(row.late_observed_at), reconciledAt: iso(nowMs) } };
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
   }
   /** Verified arrival retires its attempt; only current bindings may claim bodies in the same transaction. */
   claimHostWake(target, observation, receiptId, reader, nowMs = Date.now(), limits = {}) {
@@ -1748,6 +1858,17 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
       const outcome = string(payload.outcome, "outcome");
       if (outcome !== "submitted" && outcome !== "definite-failure" && outcome !== "accepted-or-unknown") throw new Error("Invalid wake dispatch outcome.");
       return { recorded: store.recordManagedWakeOutcome(wakeAttempt(payload.attempt), outcome) };
+    }
+    case "reconcile-wake-observation": {
+      if (Object.keys(payload).some((key) => !["target", "attemptId", "sourceReceiptId"].includes(key)) || !payload.target || typeof payload.target !== "object" || Array.isArray(payload.target) || Object.keys(payload.target).some((key) => !["host", "sessionId"].includes(key))) {
+        throw new Error("Historical wake reconciliation contains unsupported fields.");
+      }
+      return store.reconcileHistoricalWake(
+        identity(payload.target),
+        string(payload.attemptId, "attemptId"),
+        string(payload.sourceReceiptId, "sourceReceiptId"),
+        Date.now()
+      );
     }
     case "wake-status":
       return { wake: store.managedWakeStatus(identity(payload.target)) };

@@ -24,6 +24,8 @@ process.once('message', async (input) => {
     if (mode === 'sender') {
       store.send({ sender: { host: 'portable', sessionId: relayId }, target, messageId: relayId, body: relayId });
       process.send({ type: 'result', sent: true });
+    } else if (mode === 'reconcile-wake') {
+      process.send({ type: 'result', result: dispatch(store, 'reconcile-wake-observation', input) });
     } else if (mode === 'observe-wake') {
       const observation = adaptHostInput({ hook_event_name: 'UserPromptSubmit', session_id: target.sessionId,
         agent_id: '', prompt: `[agent-governance-suite:wake:${input.nonce}]` }, target.host).observation;
