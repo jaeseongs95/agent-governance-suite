@@ -33,3 +33,7 @@ previous-broker는 각 태그의 `git archive`에서 꺼낸 `mcp-server/dist/ses
 ## 가림
 
 로그에서 이메일, 계정 이름, 사용자 홈 경로, IP, 토큰 패턴을 찾았고 걸린 값이 없어 바꾼 것이 없다. 작업 경로는 meta.json에 적지 않았다.
+
+## SHA256SUMS 재생성 (최종 사전 감사 2차 W-1)
+
+처음 만든 `SHA256SUMS`는 커밋 전 로컬 파일로 계산했다. `00-env.txt`, `08-validate_all.log`, `09-validate_official.log`에는 Windows 도구 출력의 CRLF 줄이 섞여 있었다. 커밋할 때 Git 줄바꿈 정규화(autocrlf)가 이를 LF로 바꿔, 세 파일의 해시가 맞지 않았다. 내용 변경은 줄바꿈뿐이다. 이제 커밋된 blob(`git show HEAD:<path>`)으로 해시를 다시 계산했으므로, 브랜치를 그대로 풀어 `sha256sum -c windows/SHA256SUMS`로 확인할 수 있다.
