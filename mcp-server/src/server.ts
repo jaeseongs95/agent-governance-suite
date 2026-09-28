@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
@@ -27,7 +27,7 @@ import { StateCleanupService } from "./state-cleanup-service.js";
 import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { ContractValidator } from "./schema-validator.js";
 import { SessionMessageService, type SessionPresenceList } from "./session-message-service.js";
-import type { SessionPresence } from "./session-message-store.js";
+import type { SessionPresenceView } from "./session-message-store.js";
 import { type TrustService } from "./trust-service.js";
 
 type ObjectSchema = Record<string, unknown> & {
@@ -217,7 +217,7 @@ function apiError(code: ErrorCode, message: string): ApiResultV1<never> {
  * Session board tools are an interface over the skill's board store. The PreToolUse hook writes the line with the
  * host's session identity and binds it here; this side validates the call and reads the board back.
  */
-function unknownPresence(host: string, sessionId: string): SessionPresence {
+function unknownPresence(host: string, sessionId: string, brokerAnswered: boolean): SessionPresenceView {
   return {
     host,
     sessionId,
@@ -235,13 +235,16 @@ function unknownPresence(host: string, sessionId: string): SessionPresence {
     endedAt: null,
     endReason: null,
     state: "unknown",
+    // Advisory only; null when the broker could not be asked.
+    autoWake: brokerAnswered ? { state: "no-live-relay", reason: "presence-unknown", basisAt: null,
+      checkedAt: new Date().toISOString(), authorityEffect: "none" } : null,
   };
 }
 
 function withPresence<T extends { host: string; sessionId: string }>(
   sessions: T[],
   presence: ApiResultV1<SessionPresenceList>,
-): Array<T & { presence: SessionPresence }> {
+): Array<T & { presence: SessionPresenceView }> {
   const bySession = new Map(
     presence.ok && presence.data
       ? presence.data.sessions.map((item) => [`${item.host}\u0000${item.sessionId}`, item])
@@ -249,7 +252,7 @@ function withPresence<T extends { host: string; sessionId: string }>(
   );
   return sessions.map((session) => ({
     ...session,
-    presence: bySession.get(`${session.host}\u0000${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId),
+    presence: bySession.get(`${session.host}\u0000${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId, presence.ok),
   }));
 }
 
@@ -325,16 +328,14 @@ export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "defaul
   return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
 }
 
-/**
- * Session instructions for Claude Code, which places MCP server instructions in
- * its system prompt once per session. Claude Code sessions start implementing
- * as soon as a request arrives, so this asks for an intake-time failure-impact
- * classification before the first action. The default profile advertises none.
- */
-export const ANTHROPIC_SERVER_INSTRUCTIONS = "agent-governance-suite 접수 규칙: 사용자 요청을 받을 때마다, 파일을 고치거나 명령을 실행하기 전에 이 요청이 잘못 수행됐을 때의 실패 영향을 한 줄로 분류한다(낮음 또는 높음). CI·CD, 릴리스·배포, 권한·신뢰 경계, 전역 설정, 데이터·스키마, 공개 저장소의 기본 브랜치처럼 실패 영향이 큰 작업이면 구현을 시작하기 전에 Skill 도구로 /agent-governance-suite:orchestrator를 호출해 이 요청에 필요한 전문 스킬 단계와 생략할 단계를 이유와 함께 정하고, 정한 단계를 그 시점에 실제로 호출한다. 실패 영향이 큰 작업에서 orchestrator를 건너뛰는 경우는 사용자가 특정 스킬을 지정했을 때뿐이며, 그때는 그 스킬을 바로 호출한다. 실패 영향이 낮으면 그 이유를 한 줄로 밝히고 진행하되, 요청이 코드를 작성·수정·리팩터링·설계하거나 라이브러리·의존성을 고르는 작업이면 코드를 쓰거나 파일을 고치기 전에 Skill 도구로 /agent-governance-suite:ponytail을 호출한다. 요청의 범위나 완료 조건이 불명확하면 ponytail보다 먼저 확정한다. 코드 검토·감사·검증·완료 판정, 코드 설명·조사만 하는 요청, 코딩이 아닌 요청(일반 지식, 문서, 번역, 요약), 검토·감사를 맡은 서브에이전트에서는 ponytail을 호출하지 않는다.";
+/** Both hosts receive the selection policy from the shared skill, not a second policy copy. */
+const intake = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8")
+  .match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1];
+if (!intake) throw new Error("Shared skill intake instructions are missing.");
+export const SKILL_INTAKE_SERVER_INSTRUCTIONS = `agent-governance-suite 접수 안내: 다음은 skills/orchestrator/SKILL.md의 공통 원본이다. 적용되는 전문 스킬을 호스트가 제공하는 설치된 스킬 호출 방식으로 실행한다.\n\n${intake}\n\n여러 전문 단계를 연결할 때 references/entry-details.md, MCP 실행·실패 처리는 references/mcp-execution.md를 따른다.`;
 
-export function serverInstructions(profile: ToolSchemaProfile = "default"): string | undefined {
-  return profile === "anthropic" ? `${ANTHROPIC_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}` : SESSION_MESSAGE_SERVER_INSTRUCTIONS;
+export function serverInstructions(): string {
+  return `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
 }
 
 export const SESSION_MESSAGE_SERVER_INSTRUCTIONS = "세션 메시지는 prepare_session_message로 대상·본문·TTL을 고정하고 시스템이 발급한 messageId를 받은 뒤 send_session_message(messageId)로 전송한다. ID를 직접 만들거나 send에 내용을 다시 넣지 않는다. 전송 결과가 불명확하면 받은 같은 ID로 status를 조회하거나 send를 재시도한다. unknown ID는 이전 전송 완료나 기록 정리 가능성이 있으므로 저장한 영수증과 대조한다. 새 prepare는 새 전송 의도에만 사용하며 불명확한 기존 전송을 무조건 다시 준비하지 않는다. ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다.";
@@ -358,10 +359,9 @@ export function createMcpServer(
   sessionMessages: SessionMessageService = new SessionMessageService(),
   trust: TrustService | null = null,
 ): Server {
-  const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
-    { capabilities: { tools: {} }, ...(instructions === undefined ? {} : { instructions }) },
+    { capabilities: { tools: {} }, instructions: serverInstructions() },
   );
 
   const contractDocuments = Object.values(contractSchemas) as Array<Record<string, unknown>>;
@@ -521,19 +521,19 @@ export function createMcpServer(
       },
       {
         name: "list_session_status",
-        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs.",
+        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
         inputSchema: contractSchemas.listSessionStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "prepare_session_message",
-        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft.",
+        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft. When this sender (250) or all senders (1000) already hold the maximum retained receipts, no draft is created and error.details gives scope and earliestReleaseAt.",
         inputSchema: prepareSessionMessageInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "send_session_message",
-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent.",
+        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
         inputSchema: contractSchemas.sendSessionMessageRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
@@ -545,7 +545,7 @@ export function createMcpServer(
       },
       {
         name: "get_session_message_status",
-        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend.",
+        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend. Unacknowledged queue rows include the advisory autoWake recipient wake outlook with its basis time; it is not delivery, completion or permission evidence. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
         inputSchema: contractSchemas.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },

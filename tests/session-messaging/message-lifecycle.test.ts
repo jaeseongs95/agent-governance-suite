@@ -97,7 +97,8 @@ it("keeps the first immutable receipt and does not enqueue or wake after ACK/pru
   const store = fixture(); const draft = prepare(store);
   const first = store.submitPrepared(sender, draft.messageId, 2000);
   expect(first.expiresAt).toBe(new Date(32_000).toISOString());
-  expect(store.submitPrepared(sender, draft.messageId, 3000)).toEqual({ ...first, duplicate: true });
+  // The receipt is immutable; autoWake is a fresh advisory snapshot at each call.
+  expect(store.submitPrepared(sender, draft.messageId, 3000)).toEqual({ ...first, duplicate: true, autoWake: { ...first.autoWake, checkedAt: new Date(3000).toISOString() } });
   expect(count(store)).toBe(1);
   const firstClaim = store.claim(target, 3001)[0]!;
   expect(firstClaim).toMatchObject({ messageId: draft.messageId, body: "Immutable synthetic message" });
@@ -106,7 +107,7 @@ it("keeps the first immutable receipt and does not enqueue or wake after ACK/pru
   expect(store.status(sender, draft.messageId, 3003)?.acknowledgedAt).toBe(new Date(3002).toISOString());
   store.prune(32_000);
   expect(count(store)).toBe(0);
-  expect(store.submitPrepared(sender, draft.messageId, 33_000)).toEqual({ ...first, duplicate: true });
+  expect(store.submitPrepared(sender, draft.messageId, 33_000)).toEqual({ ...first, duplicate: true, autoWake: { ...first.autoWake, checkedAt: new Date(33_000).toISOString() } });
   expect(count(store)).toBe(0);
   expect(store.status(sender, draft.messageId, 33_000)).toMatchObject({ state: "submitted", deliveryState: "unknown" });
   store.prune(3_632_000);
@@ -134,14 +135,27 @@ it("applies global draft, receipt and byte backpressure without evicting valid r
   expect(() => store.prepare({ sender, target, body: "x" }, 1000)).toThrow(/full/u);
   expect(count(store, "prepared_messages")).toBe(1000);
   store.prune(601_000);
-  for (let index = 0; index < 1000; index++) {
+  const fillReceipt = (index: number) => {
     const owner = { ...sender, sessionId: `receipt-owner-${index}` };
     const draft = store.prepare({ sender: owner, target, body: "x" }, 602_000);
     store.submitPrepared(owner, draft.messageId, 602_000);
     store.acknowledge(target, [draft.messageId], 602_000);
-  }
-  const blocked = prepare(store, 602_001);
-  expect(() => store.submitPrepared(sender, blocked.messageId, 602_001)).toThrow(/receipt store is full/u);
+  };
+  for (let index = 0; index < 999; index++) fillReceipt(index);
+  // Prepared while one global receipt slot remains; the slot is then taken before this draft is sent.
+  const blocked = prepare(store, 602_000);
+  fillReceipt(999);
+  const release = { scope: "global", earliestReleaseAt: new Date(602_000 + 3600_000).toISOString() };
+  const beforeDrafts = count(store, "prepared_messages");
+  let admission: unknown;
+  expect(() => { try { prepare(store, 602_001); } catch (error) { admission = error; throw error; } }).toThrow(/^The bounded message receipt store is full; no draft was created\.$/u);
+  expect(admission).toMatchObject({ details: release });
+  expect(count(store, "prepared_messages")).toBe(beforeDrafts);
+  const beforeMessages = count(store);
+  let submission: unknown;
+  expect(() => { try { store.submitPrepared(sender, blocked.messageId, 602_001); } catch (error) { submission = error; throw error; } }).toThrow(/^The bounded message receipt store is full\.$/u);
+  expect(submission).toMatchObject({ details: release });
+  expect(count(store)).toBe(beforeMessages);
   expect(store.status(sender, blocked.messageId, 602_001)).toMatchObject({ state: "prepared" });
   const bytes = fixture();
   let accepted = 0;
@@ -206,7 +220,8 @@ it("a real send reply loss retries the known ID once and survives broker restart
   const exit = once(child, "exit"); child.kill(); await exit;
   const replacement = spawn(process.execPath, [path.join(root, "mcp-server/dist/session-message-broker.mjs"), "--state-directory", state], { windowsHide: true, stdio: "ignore" }); children.push(replacement);
   await waitForSessionMessageBrokerReady(state, replacement, 5000);
-  expect(await requestSessionMessageOnce("send", { sender, messageId: draft.messageId }, state)).toEqual(result);
+  const { autoWake, ...receipt } = result as typeof result & { autoWake: Record<string, unknown> };
+  expect(await requestSessionMessageOnce("send", { sender, messageId: draft.messageId }, state)).toEqual({ ...receipt, autoWake: { ...autoWake, checkedAt: expect.any(String) } });
   expect(count(store)).toBe(1);
 }, 15_000);
 
@@ -248,7 +263,7 @@ it("packaged CLI discovers prepare/send and rejects old or unknown send with zer
   const cli = (operation: string, payload: unknown) => spawnSync(process.execPath, [path.join(root, "mcp-server/dist/session-message-cli.mjs")], { input: JSON.stringify({ operation, payload }), encoding: "utf8", windowsHide: true, timeout: 5000, env: { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: state } });
   const draft = JSON.parse(cli("prepare", { sender, target, body: "CLI synthetic" }).stdout).data;
   const sent = JSON.parse(cli("send", { sender, messageId: draft.messageId }).stdout).data;
-  expect(JSON.parse(cli("send", { sender, messageId: draft.messageId }).stdout).data).toEqual({ ...sent, duplicate: true });
+  expect(JSON.parse(cli("send", { sender, messageId: draft.messageId }).stdout).data).toEqual({ ...sent, duplicate: true, autoWake: { ...sent.autoWake, checkedAt: expect.any(String) } });
   const legacy = cli("send", { sender, target, body: "old shape", messageId: "caller-legacy-id" });
   expect(legacy.status).toBe(1); expect(JSON.parse(legacy.stdout).error).toMatch(/prepare/u);
   const unknown = cli("send", { sender, messageId: "unknown-issued-id" });

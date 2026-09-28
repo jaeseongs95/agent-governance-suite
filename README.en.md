@@ -14,7 +14,7 @@ Use it to track change scope and verification while building a feature, or to co
 | Coordinating sessions | A way to see each session's work and contact it | A shared board and local PEER messages with processing acknowledgments |
 
 <!-- release-version:start -->
-The current public release is `v2.7.2` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+The current public release is `v2.7.3` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
 
 - [Installation](#installation)
@@ -44,7 +44,7 @@ Run in a terminal:
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.2
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.3
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -63,7 +63,7 @@ Polish this Korean README while preserving facts, numbers, links, and the meanin
 
 The agent uses the installed skills' descriptions and applicability rules to decide which skills to use. When several specialists need to work in sequence, the `orchestrator` connects their order and results; a single check can use the relevant specialist directly.
 
-Claude Code provides additional skill recommendations for some requests and commands. Implicit selection in Codex depends on the model's judgment. To name a skill explicitly, use a request such as `$orchestrator` in Codex or `/agent-governance-suite:orchestrator` in Claude Code.
+Both hosts receive the shared intake rules in [`skills/orchestrator/SKILL.md`](skills/orchestrator/SKILL.md) through the MCP server initialization instructions (`instructions`). Claude Code also receives the same source text at SessionStart. To name a skill explicitly, use a request such as `$orchestrator` in Codex or `/agent-governance-suite:orchestrator` in Claude Code.
 
 ```mermaid
 flowchart LR

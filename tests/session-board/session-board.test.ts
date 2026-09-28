@@ -362,6 +362,7 @@ describe("session board MCP tools", () => {
       host: "claude-code", sessionId: "missing", instanceId: null, transport: null, wakeVisibility: "none",
       canWakeSilently: false, deliveryCapabilities: { supportedInjection: [], idleWake: "none" }, collaborationId: null, workspaceId: null, role: null,
       startedAt: null, heartbeatAt: null, leaseUntil: null, endedAt: null, endReason: null, state: "unknown",
+      autoWake: { state: "no-live-relay", reason: "presence-unknown", basisAt: null, checkedAt: expect.any(String), authorityEffect: "none" },
     });
   });
 });

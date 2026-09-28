@@ -14,7 +14,7 @@ Agent Governance Suite(AGS)는 AI 에이전트의 작업에 전문 스킬과 검
 | 여러 세션의 협업 | 각 세션의 작업을 확인하고 연락할 경로 | 공용 현황판과 처리 여부를 확인할 수 있는 로컬 PEER 메시지 |
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v2.7.2`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+현재 공개 릴리스는 `v2.7.3`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
 <!-- release-version:end -->
 
 - [설치](#설치)
@@ -44,7 +44,7 @@ Claude Code 안에서 실행합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.2
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.3
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -63,7 +63,7 @@ codex plugin add agent-governance-suite@agent-governance
 
 에이전트는 설치된 스킬의 설명과 적용 조건을 보고 사용할 스킬을 판단합니다. 여러 전문 스킬을 이어 써야 할 때는 `orchestrator`가 순서와 결과를 연결하고, 한 가지 검사만 필요하면 해당 스킬을 직접 사용할 수 있습니다.
 
-Claude Code는 일부 요청과 명령에 추가 스킬을 추천하는 안내를 제공합니다. Codex의 암시 선택은 모델의 판단에 의존합니다. 스킬을 직접 지정하려면 Codex에서는 `$orchestrator`, Claude Code에서는 `/agent-governance-suite:orchestrator`처럼 요청할 수 있습니다.
+두 호스트 모두 MCP 서버 초기화 안내(`instructions`)로 [`skills/orchestrator/SKILL.md`](skills/orchestrator/SKILL.md)의 공통 접수 기준을 받습니다. Claude Code는 SessionStart에서 같은 원문을 함께 받습니다. 스킬을 직접 지정하려면 Codex에서는 `$orchestrator`, Claude Code에서는 `/agent-governance-suite:orchestrator`처럼 요청할 수 있습니다.
 
 ```mermaid
 flowchart LR

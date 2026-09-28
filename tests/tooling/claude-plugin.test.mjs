@@ -85,15 +85,99 @@ describe("generated Claude plugin", () => {
     expect(claudeOverlay.mcpServers["agent-governance-suite"].env.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("claude-code");
   });
 
-  it("puts the Claude selection decision at the top of the generated orchestrator skill", async () => {
-    const generated = await readFile(path.join(pluginRoot, "skills", "orchestrator", "SKILL.md"), "utf8");
-    const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
-    expect(shared).not.toContain("## Claude Code에서의 선택 결정");
-    expect(generated.indexOf("## Claude Code에서의 선택 decision".replace("decision", "결정"))).toBeLessThan(generated.indexOf("## 시작 전 확인"));
-    for (const skill of ["task-contract", "change-scope-guardian", "acceptance-evidence-validator", "independent-audit-gate", "mutation-risk-preflight"]) {
-      expect(generated).toContain(`\`${skill}\`:`);
+  it("keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation", async () => {
+    const orchestrator = (base, ...segments) => readFile(path.join(base, "skills", "orchestrator", ...segments), "utf8");
+    const adaptation = await readJson(root, "claude-overlay", "adaptations", "orchestrator.json");
+    const shared = await orchestrator(root, "SKILL.md");
+    const generated = await orchestrator(pluginRoot, "SKILL.md");
+    // The shared source names no host invocation syntax or product.
+    for (const document of ["SKILL.md", "references/entry-details.md", "references/mcp-execution.md"]) {
+      const text = await orchestrator(root, document);
+      for (const hostSpecific of [/Skill 도구/u, /\/agent-governance-suite:/u, /(?<![\w$])\$[a-z][a-z0-9]*(?:-[a-z0-9]+)*\b/u, /Claude/u, /Codex/u, /UserPromptSubmit/u, /transcript/u]) {
+        expect(text, document).not.toMatch(hostSpecific);
+      }
+      // References carry the shared policy to Claude byte for byte.
+      if (document !== "SKILL.md") expect(await orchestrator(pluginRoot, document), document).toBe(text);
     }
-    expect(generated).toContain("agent-governance-suite:independent-auditor");
+    // The shared description and selection policy stay unchanged; only native invocation/observation is inserted.
+    expect(adaptation).not.toHaveProperty("description");
+    expect(adaptation.replacements).toHaveLength(1);
+    const [{ find, replace }] = adaptation.replacements;
+    const section = replace.slice(0, replace.length - find.length);
+    expect(replace.endsWith(find)).toBe(true);
+    expect(generated).toBe(shared.replace(find, replace));
+    // The Claude section adapts invocation and observation without restating common policy.
+    for (const hostOnly of ["Skill 도구", "/agent-governance-suite:<skill-name>", "agent-governance-suite:independent-auditor", "SessionStart", "transcript"]) {
+      expect(section).toContain(hostOnly);
+    }
+    for (const policy of ["실패 영향", "outputFile", "requiredArtifacts", "`direct`", "`orchestrated`", "BINDING_REQUIRED", "plan_workflow` 전에", "minimal-implementation", "ponytail"]) {
+      expect(section, policy).not.toContain(policy);
+    }
+    // Native hooks may describe observations, but they cannot prescribe recovery after a common rejection.
+    expect(section).toContain("SessionStart·PostModelSwitch");
+    expect(section).toContain("references/mcp-execution.md");
+    expect(section).not.toMatch(/BINDING_INVALID[^\n]*(?:다시 실행|다시 한다|재시도|전환)/u);
+    expect(section).not.toMatch(/5분[^\n]*(?:같은 호출|재시도|다시)/u);
+    const recovery = await orchestrator(root, "references", "mcp-execution.md");
+    for (const guard of ["실행 하한 미달이 확인된", "만료가 확인된 경우", "결속, 신선도, 한 번 소비와 기존 수렴 가드", "코드나 승인 대기 시간만으로 원인을 만료로 단정"]) {
+      expect(recovery).toContain(guard);
+    }
+    // Each common selection sentence reaches Claude exactly once.
+    for (const sentence of ["키워드, 파일 종류나 `complex` 표시만으로 스킬을 붙이지 않는다.", "필수 승인·검증·독립성 gate를 생략하는 권한으로 해석하지 않는다.", "이 문서와 참고 자료를 읽는 것은 전문 스킬 실행이 아니다."]) {
+      expect(shared.split(sentence)).toHaveLength(2);
+      expect(generated.split(sentence)).toHaveLength(2);
+    }
+  });
+
+  it("keeps no copy of the common intake sentences in any tracked file outside the shared source", async () => {
+    const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
+    const intake = shared.split("<!-- skill-intake:start -->\n")[1].split("\n<!-- skill-intake:end -->")[0];
+    const sentences = intake.split("\n").filter((line) => !line.startsWith("#")).flatMap((line) => line.replace(/^- /u, "").split(/(?<=다\.) /u)).filter((sentence) => sentence.length > 20);
+    expect(sentences.length).toBeGreaterThan(10);
+    // The shared source, its generated Claude copy and this file's fixture are the only allowed holders.
+    const allowed = new Set(["skills/orchestrator/SKILL.md", "claude-plugin/skills/orchestrator/SKILL.md", "tests/tooling/claude-plugin.test.mjs"]);
+    const listed = spawnSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
+    expect(listed.status).toBe(0);
+    const files = listed.stdout.split("\0").filter((file) => file && !allowed.has(file));
+    expect(files.length).toBeGreaterThan(500);
+    for (const file of files) {
+      const text = await readFile(path.join(root, file), "utf8").catch(() => "");
+      for (const sentence of sentences) expect(text.includes(sentence), `${file}: ${sentence}`).toBe(false);
+    }
+  });
+
+  it("projects the current common intake at session start without keyword selection", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "ags-intake-port-"));
+    if (path.dirname(path.resolve(directory)) !== path.resolve(tmpdir())) throw new Error("Unexpected disposable fixture path");
+    temporaryDirectories.push(directory);
+    await mkdir(path.join(directory, "hooks"));
+    await mkdir(path.join(directory, "skills", "orchestrator"), { recursive: true });
+    const launcher = await readFile(path.join(root, "claude-overlay", "hooks", "skill-trigger-hook.mjs"));
+    const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
+    // A changed source must change the emitted context, proving there is no adapter policy copy.
+    const current = shared.replace("<!-- skill-intake:end -->", "fixture-source-revision\n<!-- skill-intake:end -->");
+    const intake = current.split("<!-- skill-intake:start -->\n")[1].split("\n<!-- skill-intake:end -->")[0];
+    const hook = path.join(directory, "hooks", "skill-trigger-hook.mjs");
+    await writeFile(hook, launcher);
+    await writeFile(path.join(directory, "skills", "orchestrator", "SKILL.md"), current);
+    const invoke = (input) => spawnSync(process.execPath, [hook], { input: JSON.stringify(input), encoding: "utf8" });
+    const start = invoke({ hook_event_name: "SessionStart", source: "startup" });
+    expect(start.status).toBe(0);
+    expect(start.stderr).toBe("");
+    const context = JSON.parse(start.stdout).hookSpecificOutput;
+    expect(context.hookEventName).toBe("SessionStart");
+    expect(context.additionalContext).toBe(intake + "\n\nClaude Code 호출: 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.");
+    for (const prompt of ["git rebase랑 merge 차이가 뭐예요? 간단히 설명해 주세요.", "안녕하세요!", "change.diff 파일에 있는 변경 사항을 리뷰해 주세요."]) {
+      const result = invoke({ hook_event_name: "UserPromptSubmit", prompt });
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe("");
+    }
+    const bash = invoke({ hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: { command: "git merge feature" } });
+    expect(bash.status).toBe(0);
+    expect(bash.stdout).toBe("");
+    const invalid = spawnSync(process.execPath, [hook], { input: "not-json", encoding: "utf8" });
+    expect(invalid.status).toBe(0);
+    expect(invalid.stdout).toBe("");
   });
 
   it("omits Codex-only skills from files, registry, and source lock", async () => {
@@ -124,8 +208,8 @@ describe("generated Claude plugin", () => {
         expect(allowedScripts).toContain(hook.args[0]);
       }
     }
-    // Messaging runs before the trigger and board so a peer message can enter the same turn.
-    expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[4], allowedScripts[1], allowedScripts[3]]);
+    // Messaging runs before the board; the intake has no per-prompt selector.
+    expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[4], allowedScripts[3]]);
     // The relay-launching hook must stay in direct args form: process.ppid is then the Claude host, not a transient shell.
     const messageSessionStart = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[4]));
     expect(messageSessionStart).toHaveLength(1);
@@ -144,8 +228,9 @@ describe("generated Claude plugin", () => {
     for (const tool of ["Read", "Grep", "Glob", `${toolPrefix}plan_workflow`, `${toolPrefix}record_stage_result`, ...continuityTools.map((name) => `${toolPrefix}${name}`)]) {
       expect(boardMatchers.some((matcher) => matcher.test(tool))).toBe(false);
     }
-    const bashGroup = claudeHooks.hooks.PreToolUse.find((group) => group.matcher === "^Bash$");
-    expect(bashGroup.hooks.map((hook) => hook.args[0])).toEqual([allowedScripts[1]]);
+    expect(claudeHooks.hooks.PreToolUse.some((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[1]))).toBe(false);
+    const intakeGroups = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[1]));
+    expect(intakeGroups).toHaveLength(1);
     const continuityGroup = claudeHooks.hooks.PreToolUse.find((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[0]));
     const matcher = new RegExp(continuityGroup.matcher, "u");
     for (const tool of continuityTools) {

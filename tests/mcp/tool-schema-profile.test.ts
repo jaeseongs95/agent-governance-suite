@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,7 +13,7 @@ import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { resolveToolSchemaProfile } from "../../mcp-server/src/runtime-config.js";
 import { ContractValidator, contractSchemas } from "../../mcp-server/src/schema-validator.js";
-import { ANTHROPIC_SERVER_INSTRUCTIONS, SESSION_MESSAGE_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
+import { SESSION_MESSAGE_SERVER_INSTRUCTIONS, SKILL_INTAKE_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "./version-fixtures.js";
@@ -190,22 +190,36 @@ describe("MCP tool schema profiles", () => {
     expect(resolveToolSchemaProfile({ AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE: "anthropic" })).toBe("anthropic");
   });
 
-  it("advertises intake session instructions only for Anthropic hosts", async () => {
-    expect(serverInstructions()).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
-    expect(serverInstructions("default")).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
-    expect(serverInstructions("anthropic")).toBe(`${ANTHROPIC_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`);
-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toMatch(/실패 영향/u);
-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("/agent-governance-suite:orchestrator");
-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("실패 영향이 낮으면 그 이유를 한 줄로 밝히고 진행하되");
-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("코드를 쓰거나 파일을 고치기 전에 Skill 도구로 /agent-governance-suite:ponytail을 호출한다.");
-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("검토·감사를 맡은 서브에이전트에서는 ponytail을 호출하지 않는다.");
+  it("advertises the same host-neutral intake instructions to every schema profile", async () => {
+    const expected = `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
+    expect(serverInstructions()).toBe(expected);
+    // Initialization projects the actual shared criteria, not merely their location.
+    const shared = await readFile(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8");
+    const intake = shared.split("<!-- skill-intake:start -->\n")[1]?.split("\n<!-- skill-intake:end -->")[0];
+    expect(intake).toBeTruthy();
+    expect(SKILL_INTAKE_SERVER_INSTRUCTIONS.split(intake!)).toHaveLength(2);
+    // Outside the projected block, no common sentence may be repeated or pre-stated.
+    const outside = expected.split(intake!).join("\n");
+    const sentences = intake!.split("\n").filter((line) => !line.startsWith("#")).flatMap((line) => line.replace(/^- /u, "").split(/(?<=다\.) /u)).filter((sentence) => sentence.length > 20);
+    expect(sentences.length).toBeGreaterThan(10);
+    for (const sentence of sentences) expect(outside.includes(sentence), sentence).toBe(false);
+    expect(SKILL_INTAKE_SERVER_INSTRUCTIONS).not.toMatch(/실패 영향이 낮으면|BINDING_/u);
+    // Skill IDs are common; native invocation syntax remains in adapters.
+    for (const hostSpecific of [/Skill 도구/u, /\/agent-governance-suite:/u, /(?<![\w$])\$[a-z][a-z0-9-]*/u, /Claude/u, /Codex/u, /Anthropic/iu, /UserPromptSubmit/u]) {
+      expect(expected).not.toMatch(hostSpecific);
+    }
     const implicit = await connect();
     const codex = await connect("default");
     const claude = await connect("anthropic");
     try {
-      expect(implicit.getInstructions()).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
-      expect(codex.getInstructions()).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
-      expect(claude.getInstructions()).toBe(`${ANTHROPIC_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`);
+      expect(implicit.getInstructions()).toBe(expected);
+      expect(codex.getInstructions()).toBe(expected);
+      expect(claude.getInstructions()).toBe(expected);
+      // Profiles differ only in the advertised schema conversion.
+      const [codexTools, claudeTools] = [(await codex.listTools()).tools, (await claude.listTools()).tools];
+      expect(claudeTools.map((tool) => tool.name)).toEqual(codexTools.map((tool) => tool.name));
+      const withoutSchema = (tools: typeof codexTools) => tools.map((tool) => ({ ...tool, inputSchema: null }));
+      expect(withoutSchema(claudeTools)).toEqual(withoutSchema(codexTools));
     } finally {
       await implicit.close();
       await codex.close();
@@ -226,7 +240,7 @@ describe("MCP tool schema profiles", () => {
       const planning = (await client.listTools()).tools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
       expect(planning).toBeDefined();
       expect(planning).not.toHaveProperty("oneOf");
-      expect(client.getInstructions()).toBe(serverInstructions("anthropic"));
+      expect(client.getInstructions()).toBe(serverInstructions());
     } finally {
       try { await transport.close(); } finally { await rm(stateDirectory, { recursive: true, force: true }); }
     }

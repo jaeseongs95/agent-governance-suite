@@ -460,6 +460,12 @@ var SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES = 8192;
 // mcp-server/src/session-message-client.ts
 var WAKE_PREFIX = "[agent-governance-suite:wake:";
 var BrokerRequestRejected = class extends Error {
+  details;
+  constructor(message, details = null) {
+    super(message);
+    const record2 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
+    this.details = record2 && (record2.scope === "sender" || record2.scope === "global") && (record2.earliestReleaseAt === null || typeof record2.earliestReleaseAt === "string") ? { scope: record2.scope, earliestReleaseAt: record2.earliestReleaseAt } : null;
+  }
 };
 var BROKER_STARTUP_TIMEOUT_MS = 15e3;
 var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
@@ -589,7 +595,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
         if (newline < 0) return;
         try {
           const response = JSON.parse(buffer.slice(0, newline));
-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
+          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
           else finish(void 0, response.data);
         } catch {
           finish(new Error("The broker returned invalid JSON."));
@@ -882,7 +888,7 @@ function hostDeliveryProfile(host, environment = process.env, diagnose = (reason
   console.error(`[agent-governance-suite] Codex queue settings: ${reason}; using codex-deferred.`);
 }) {
   const transport = host === "claude-code" ? "claude-inbox" : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
-  return { transport, capabilities: transportDeliveryCapabilities(transport) };
+  return { transport, capabilities: transportDeliveryCapabilities(transport), blocksEmptyWakePrompt: host === "codex" };
 }
 function nativePeerWait(observation) {
   if (observation.host !== "codex" || observation.toolName !== "mcp__codex_app__wait_threads") return null;
@@ -1100,8 +1106,11 @@ async function handleSessionMessageHook(input, host, explicitHostPid) {
         observation,
         sourceReceiptId: recordWakeHookObservation(observation)
       }, void 0, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
-      if (host === "codex" && result.recognized && result.managed === true && result.messages.length === 0) {
+      if (profile.blocksEmptyWakePrompt && result.recognized && result.managed === true && result.messages.length === 0) {
         return { decision: "block", reason: "No peer message is available for this verified wake notification." };
+      }
+      if (profile.blocksEmptyWakePrompt && !result.recognized && result.retired === true && result.messages.length === 0) {
+        return { decision: "block", reason: "This wake notification was already retired; no peer message is attached." };
       }
       if (result.recognized) messages = result.messages;
       else await sessionMessageRequest("observe-native-input", { target }, void 0, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });

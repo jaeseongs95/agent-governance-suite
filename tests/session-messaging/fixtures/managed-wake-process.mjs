@@ -17,11 +17,25 @@ if (mode === 'migration-failure') {
   try { new SessionMessageStore(database); process.exit(2); }
   catch (error) { process.send({ type: 'result', error: error.message }); process.exit(0); }
 }
+if (mode === 'rebuild-failure') {
+  const original = DatabaseSync.prototype.exec;
+  DatabaseSync.prototype.exec = function (sql) {
+    if (sql.includes('RENAME TO wake_nonces')) throw new Error('fixture rebuild failure');
+    return original.call(this, sql);
+  };
+  try { new SessionMessageStore(database); process.exit(2); }
+  catch (error) { process.send({ type: 'result', error: error.message }); process.exit(0); }
+}
 const store = new SessionMessageStore(database);
 process.send({ type: 'ready' });
 process.once('message', async (input) => {
   try {
-    if (mode === 'wake-transition') {
+    if (mode === 'open-only') {
+      process.send({ type: 'result', version: store.database.prepare('PRAGMA user_version').get().user_version });
+    } else if (mode === 'retire-then-exit') {
+      store.prune(input.now);
+      process.exit(21);
+    } else if (mode === 'wake-transition') {
       const current = { ...target, instanceId: input.instanceId ?? 'instance-2', transport: 'portable', relayId,
         wakeVisibility: 'silent', canWakeSilently: true, deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } };
       let result;

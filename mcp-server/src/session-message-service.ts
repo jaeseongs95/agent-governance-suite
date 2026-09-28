@@ -1,18 +1,29 @@
 import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
-import { sessionMessageRequest } from "./session-message-client.js";
-import type { SessionPresence } from "./session-message-store.js";
+import { BrokerRequestRejected, sessionMessageRequest } from "./session-message-client.js";
+import type { SessionPresenceView } from "./session-message-store.js";
 import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
 
 export interface SessionPresenceList {
-  sessions: SessionPresence[];
+  sessions: SessionPresenceView[];
 }
 
 function ok<T>(data: T): ApiResultV1<T> {
   return { schemaVersion: "1.0.0", ok: true, data, error: null };
 }
 
-function failure(code: ErrorCode, message: string): ApiResultV1<never> {
-  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
+function failure(code: ErrorCode, message: string, details: Record<string, unknown> | null = null): ApiResultV1<never> {
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
+}
+
+/** A broker capacity rejection is definite: its transaction rolled back, so nothing was queued or drafted. */
+function capacityDetails(error: unknown): { scope: "sender" | "global"; earliestReleaseAt: string | null } | null {
+  return error instanceof BrokerRequestRejected ? error.details : null;
+}
+
+function capacityRelease(details: { earliestReleaseAt: string | null }): string {
+  return details.earliestReleaseAt === null
+    ? "A new prepare_session_message may succeed after retained records expire."
+    : `The earliest retained record in this scope expires at ${details.earliestReleaseAt}; after that a new prepare_session_message may succeed.`;
 }
 
 function binding(value: unknown): SessionBindingV1 | null {
@@ -46,6 +57,8 @@ export class SessionMessageService {
       }, this.stateDirectory);
       return ok(data);
     } catch (error) {
+      const details = capacityDetails(error);
+      if (details) return failure("MCP_UNAVAILABLE", `${(error as Error).message} ${capacityRelease(details)}`, { ...details });
       return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "The session message broker is unavailable.");
     }
   }
@@ -57,6 +70,8 @@ export class SessionMessageService {
     try {
       return ok(await sessionMessageRequest("send", { sender, messageId: args.messageId }, this.stateDirectory));
     } catch (error) {
+      const details = capacityDetails(error);
+      if (details) return failure("MCP_UNAVAILABLE", `${(error as Error).message} This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until the expiresAt returned by prepare_session_message. If earliestReleaseAt is before that expiresAt, retry that same messageId after earliestReleaseAt; otherwise the draft expires first, so prepare again. Never do both. ${capacityRelease(details)}`, { ...details });
       return failure("MCP_UNAVAILABLE", `${error instanceof Error ? error.message : "The session message broker is unavailable."} Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.`);
     }
   }
@@ -89,6 +104,7 @@ export class SessionMessageService {
       return ok({ sessions: data.sessions.map((session) => ({
         ...session,
         deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
+        autoWake: session.autoWake ?? null,
       })) });
     } catch (error) {
       return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "Session presence is unavailable.");

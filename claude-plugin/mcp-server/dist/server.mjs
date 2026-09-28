@@ -17603,6 +17603,7 @@ var contractSchemas = {
   prepareSessionMessageRequest: loadSchema("prepare-session-message-request.v1.schema.json"),
   acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
   getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
+  sessionAutoWakeOutlook: loadSchema("session-auto-wake-outlook.v1.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
   executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
   stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
@@ -17747,6 +17748,9 @@ var ContractValidator = class {
   getSessionMessageStatusRequest(value) {
     return this.assert("getSessionMessageStatusRequest", value);
   }
+  sessionAutoWakeOutlook(value) {
+    return this.assert("sessionAutoWakeOutlook", value);
+  }
   prepareStateCleanupRequest(value) {
     return this.assert("prepareStateCleanupRequest", value);
   }
@@ -17875,7 +17879,7 @@ var ContractValidator = class {
 };
 
 // mcp-server/src/server.ts
-import { existsSync as existsSync3 } from "node:fs";
+import { existsSync as existsSync3, readFileSync as readFileSync3 } from "node:fs";
 
 // node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
 function isZ4Schema(s) {
@@ -19729,7 +19733,7 @@ function inlineSchemaReferences(schema, documents) {
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "2.7.2",
+  version: "2.7.3",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
@@ -20008,6 +20012,12 @@ var SESSION_MESSAGE_BODY_MAX_BYTES = 4096;
 
 // mcp-server/src/session-message-client.ts
 var BrokerRequestRejected = class extends Error {
+  details;
+  constructor(message, details = null) {
+    super(message);
+    const record3 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
+    this.details = record3 && (record3.scope === "sender" || record3.scope === "global") && (record3.earliestReleaseAt === null || typeof record3.earliestReleaseAt === "string") ? { scope: record3.scope, earliestReleaseAt: record3.earliestReleaseAt } : null;
+  }
 };
 var BROKER_STARTUP_TIMEOUT_MS = 15e3;
 var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
@@ -20137,7 +20147,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
         if (newline < 0) return;
         try {
           const response = JSON.parse(buffer.slice(0, newline));
-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
+          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
           else finish(void 0, response.data);
         } catch {
           finish(new Error("The broker returned invalid JSON."));
@@ -20269,8 +20279,14 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
 function ok2(data) {
   return { schemaVersion: "1.0.0", ok: true, data, error: null };
 }
-function failure2(code, message) {
-  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
+function failure2(code, message, details = null) {
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
+}
+function capacityDetails(error2) {
+  return error2 instanceof BrokerRequestRejected ? error2.details : null;
+}
+function capacityRelease(details) {
+  return details.earliestReleaseAt === null ? "A new prepare_session_message may succeed after retained records expire." : `The earliest retained record in this scope expires at ${details.earliestReleaseAt}; after that a new prepare_session_message may succeed.`;
 }
 function binding(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -20298,6 +20314,8 @@ var SessionMessageService = class {
       }, this.stateDirectory);
       return ok2(data);
     } catch (error2) {
+      const details = capacityDetails(error2);
+      if (details) return failure2("MCP_UNAVAILABLE", `${error2.message} ${capacityRelease(details)}`, { ...details });
       return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "The session message broker is unavailable.");
     }
   }
@@ -20308,6 +20326,8 @@ var SessionMessageService = class {
     try {
       return ok2(await sessionMessageRequest("send", { sender, messageId: args.messageId }, this.stateDirectory));
     } catch (error2) {
+      const details = capacityDetails(error2);
+      if (details) return failure2("MCP_UNAVAILABLE", `${error2.message} This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until the expiresAt returned by prepare_session_message. If earliestReleaseAt is before that expiresAt, retry that same messageId after earliestReleaseAt; otherwise the draft expires first, so prepare again. Never do both. ${capacityRelease(details)}`, { ...details });
       return failure2("MCP_UNAVAILABLE", `${error2 instanceof Error ? error2.message : "The session message broker is unavailable."} Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.`);
     }
   }
@@ -20336,7 +20356,8 @@ var SessionMessageService = class {
       const data = await sessionMessageRequest("list-presence", {}, this.stateDirectory);
       return ok2({ sessions: data.sessions.map((session) => ({
         ...session,
-        deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" }
+        deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
+        autoWake: session.autoWake ?? null
       })) });
     } catch (error2) {
       return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "Session presence is unavailable.");
@@ -20494,7 +20515,7 @@ function invalidInput(message) {
 function apiError(code, message) {
   return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
 }
-function unknownPresence(host, sessionId) {
+function unknownPresence(host, sessionId, brokerAnswered) {
   return {
     host,
     sessionId,
@@ -20511,7 +20532,15 @@ function unknownPresence(host, sessionId) {
     leaseUntil: null,
     endedAt: null,
     endReason: null,
-    state: "unknown"
+    state: "unknown",
+    // Advisory only; null when the broker could not be asked.
+    autoWake: brokerAnswered ? {
+      state: "no-live-relay",
+      reason: "presence-unknown",
+      basisAt: null,
+      checkedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      authorityEffect: "none"
+    } : null
   };
 }
 function withPresence(sessions, presence) {
@@ -20520,7 +20549,7 @@ function withPresence(sessions, presence) {
   );
   return sessions.map((session) => ({
     ...session,
-    presence: bySession.get(`${session.host}\0${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId)
+    presence: bySession.get(`${session.host}\0${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId, presence.ok)
   }));
 }
 async function sessionBoardResult(tool, args, databasePath, validator, sessionMessages) {
@@ -20577,20 +20606,25 @@ var planWorkflowAnthropicInputSchema = {
 function planWorkflowToolInputSchema(profile = "default") {
   return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
 }
-var ANTHROPIC_SERVER_INSTRUCTIONS = "agent-governance-suite \uC811\uC218 \uADDC\uCE59: \uC0AC\uC6A9\uC790 \uC694\uCCAD\uC744 \uBC1B\uC744 \uB54C\uB9C8\uB2E4, \uD30C\uC77C\uC744 \uACE0\uCE58\uAC70\uB098 \uBA85\uB839\uC744 \uC2E4\uD589\uD558\uAE30 \uC804\uC5D0 \uC774 \uC694\uCCAD\uC774 \uC798\uBABB \uC218\uD589\uB410\uC744 \uB54C\uC758 \uC2E4\uD328 \uC601\uD5A5\uC744 \uD55C \uC904\uB85C \uBD84\uB958\uD55C\uB2E4(\uB0AE\uC74C \uB610\uB294 \uB192\uC74C). CI\xB7CD, \uB9B4\uB9AC\uC2A4\xB7\uBC30\uD3EC, \uAD8C\uD55C\xB7\uC2E0\uB8B0 \uACBD\uACC4, \uC804\uC5ED \uC124\uC815, \uB370\uC774\uD130\xB7\uC2A4\uD0A4\uB9C8, \uACF5\uAC1C \uC800\uC7A5\uC18C\uC758 \uAE30\uBCF8 \uBE0C\uB79C\uCE58\uCC98\uB7FC \uC2E4\uD328 \uC601\uD5A5\uC774 \uD070 \uC791\uC5C5\uC774\uBA74 \uAD6C\uD604\uC744 \uC2DC\uC791\uD558\uAE30 \uC804\uC5D0 Skill \uB3C4\uAD6C\uB85C /agent-governance-suite:orchestrator\uB97C \uD638\uCD9C\uD574 \uC774 \uC694\uCCAD\uC5D0 \uD544\uC694\uD55C \uC804\uBB38 \uC2A4\uD0AC \uB2E8\uACC4\uC640 \uC0DD\uB7B5\uD560 \uB2E8\uACC4\uB97C \uC774\uC720\uC640 \uD568\uAED8 \uC815\uD558\uACE0, \uC815\uD55C \uB2E8\uACC4\uB97C \uADF8 \uC2DC\uC810\uC5D0 \uC2E4\uC81C\uB85C \uD638\uCD9C\uD55C\uB2E4. \uC2E4\uD328 \uC601\uD5A5\uC774 \uD070 \uC791\uC5C5\uC5D0\uC11C orchestrator\uB97C \uAC74\uB108\uB6F0\uB294 \uACBD\uC6B0\uB294 \uC0AC\uC6A9\uC790\uAC00 \uD2B9\uC815 \uC2A4\uD0AC\uC744 \uC9C0\uC815\uD588\uC744 \uB54C\uBFD0\uC774\uBA70, \uADF8\uB54C\uB294 \uADF8 \uC2A4\uD0AC\uC744 \uBC14\uB85C \uD638\uCD9C\uD55C\uB2E4. \uC2E4\uD328 \uC601\uD5A5\uC774 \uB0AE\uC73C\uBA74 \uADF8 \uC774\uC720\uB97C \uD55C \uC904\uB85C \uBC1D\uD788\uACE0 \uC9C4\uD589\uD558\uB418, \uC694\uCCAD\uC774 \uCF54\uB4DC\uB97C \uC791\uC131\xB7\uC218\uC815\xB7\uB9AC\uD329\uD130\uB9C1\xB7\uC124\uACC4\uD558\uAC70\uB098 \uB77C\uC774\uBE0C\uB7EC\uB9AC\xB7\uC758\uC874\uC131\uC744 \uACE0\uB974\uB294 \uC791\uC5C5\uC774\uBA74 \uCF54\uB4DC\uB97C \uC4F0\uAC70\uB098 \uD30C\uC77C\uC744 \uACE0\uCE58\uAE30 \uC804\uC5D0 Skill \uB3C4\uAD6C\uB85C /agent-governance-suite:ponytail\uC744 \uD638\uCD9C\uD55C\uB2E4. \uC694\uCCAD\uC758 \uBC94\uC704\uB098 \uC644\uB8CC \uC870\uAC74\uC774 \uBD88\uBA85\uD655\uD558\uBA74 ponytail\uBCF4\uB2E4 \uBA3C\uC800 \uD655\uC815\uD55C\uB2E4. \uCF54\uB4DC \uAC80\uD1A0\xB7\uAC10\uC0AC\xB7\uAC80\uC99D\xB7\uC644\uB8CC \uD310\uC815, \uCF54\uB4DC \uC124\uBA85\xB7\uC870\uC0AC\uB9CC \uD558\uB294 \uC694\uCCAD, \uCF54\uB529\uC774 \uC544\uB2CC \uC694\uCCAD(\uC77C\uBC18 \uC9C0\uC2DD, \uBB38\uC11C, \uBC88\uC5ED, \uC694\uC57D), \uAC80\uD1A0\xB7\uAC10\uC0AC\uB97C \uB9E1\uC740 \uC11C\uBE0C\uC5D0\uC774\uC804\uD2B8\uC5D0\uC11C\uB294 ponytail\uC744 \uD638\uCD9C\uD558\uC9C0 \uC54A\uB294\uB2E4.";
-function serverInstructions(profile = "default") {
-  return profile === "anthropic" ? `${ANTHROPIC_SERVER_INSTRUCTIONS}
-${SESSION_MESSAGE_SERVER_INSTRUCTIONS}` : SESSION_MESSAGE_SERVER_INSTRUCTIONS;
+var intake = readFileSync3(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8").match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1];
+if (!intake) throw new Error("Shared skill intake instructions are missing.");
+var SKILL_INTAKE_SERVER_INSTRUCTIONS = `agent-governance-suite \uC811\uC218 \uC548\uB0B4: \uB2E4\uC74C\uC740 skills/orchestrator/SKILL.md\uC758 \uACF5\uD1B5 \uC6D0\uBCF8\uC774\uB2E4. \uC801\uC6A9\uB418\uB294 \uC804\uBB38 \uC2A4\uD0AC\uC744 \uD638\uC2A4\uD2B8\uAC00 \uC81C\uACF5\uD558\uB294 \uC124\uCE58\uB41C \uC2A4\uD0AC \uD638\uCD9C \uBC29\uC2DD\uC73C\uB85C \uC2E4\uD589\uD55C\uB2E4.
+
+${intake}
+
+\uC5EC\uB7EC \uC804\uBB38 \uB2E8\uACC4\uB97C \uC5F0\uACB0\uD560 \uB54C references/entry-details.md, MCP \uC2E4\uD589\xB7\uC2E4\uD328 \uCC98\uB9AC\uB294 references/mcp-execution.md\uB97C \uB530\uB978\uB2E4.`;
+function serverInstructions() {
+  return `${SKILL_INTAKE_SERVER_INSTRUCTIONS}
+${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
 }
 var SESSION_MESSAGE_SERVER_INSTRUCTIONS = "\uC138\uC158 \uBA54\uC2DC\uC9C0\uB294 prepare_session_message\uB85C \uB300\uC0C1\xB7\uBCF8\uBB38\xB7TTL\uC744 \uACE0\uC815\uD558\uACE0 \uC2DC\uC2A4\uD15C\uC774 \uBC1C\uAE09\uD55C messageId\uB97C \uBC1B\uC740 \uB4A4 send_session_message(messageId)\uB85C \uC804\uC1A1\uD55C\uB2E4. ID\uB97C \uC9C1\uC811 \uB9CC\uB4E4\uAC70\uB098 send\uC5D0 \uB0B4\uC6A9\uC744 \uB2E4\uC2DC \uB123\uC9C0 \uC54A\uB294\uB2E4. \uC804\uC1A1 \uACB0\uACFC\uAC00 \uBD88\uBA85\uD655\uD558\uBA74 \uBC1B\uC740 \uAC19\uC740 ID\uB85C status\uB97C \uC870\uD68C\uD558\uAC70\uB098 send\uB97C \uC7AC\uC2DC\uB3C4\uD55C\uB2E4. unknown ID\uB294 \uC774\uC804 \uC804\uC1A1 \uC644\uB8CC\uB098 \uAE30\uB85D \uC815\uB9AC \uAC00\uB2A5\uC131\uC774 \uC788\uC73C\uBBC0\uB85C \uC800\uC7A5\uD55C \uC601\uC218\uC99D\uACFC \uB300\uC870\uD55C\uB2E4. \uC0C8 prepare\uB294 \uC0C8 \uC804\uC1A1 \uC758\uB3C4\uC5D0\uB9CC \uC0AC\uC6A9\uD558\uBA70 \uBD88\uBA85\uD655\uD55C \uAE30\uC874 \uC804\uC1A1\uC744 \uBB34\uC870\uAC74 \uB2E4\uC2DC \uC900\uBE44\uD558\uC9C0 \uC54A\uB294\uB2E4. ACK\uB294 \uBA54\uC2DC\uC9C0 \uCC98\uB9AC \uD655\uC778\uC774\uBA70 \uC5C5\uBB34 \uC644\uB8CC\uB098 \uC2B9\uC778 \uC99D\uAC70\uAC00 \uC544\uB2C8\uB2E4.";
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
 function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null) {
-  const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
-    { capabilities: { tools: {} }, ...instructions === void 0 ? {} : { instructions } }
+    { capabilities: { tools: {} }, instructions: serverInstructions() }
   );
   const contractDocuments = Object.values(contractSchemas);
   const advertise = (tools) => toolSchemaProfile === "anthropic" ? tools.map((tool) => {
@@ -20743,19 +20777,19 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "list_session_status",
-        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs.",
+        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
         inputSchema: contractSchemas.listSessionStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "prepare_session_message",
-        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft.",
+        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft. When this sender (250) or all senders (1000) already hold the maximum retained receipts, no draft is created and error.details gives scope and earliestReleaseAt.",
         inputSchema: prepareSessionMessageInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
       {
         name: "send_session_message",
-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent.",
+        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
         inputSchema: contractSchemas.sendSessionMessageRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
@@ -20767,7 +20801,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "get_session_message_status",
-        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend.",
+        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend. Unacknowledged queue rows include the advisory autoWake recipient wake outlook with its basis time; it is not delivery, completion or permission evidence. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
         inputSchema: contractSchemas.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       }

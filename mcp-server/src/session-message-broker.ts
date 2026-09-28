@@ -7,7 +7,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
-import { SessionMessageStore, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
+import { MessageCapacityError, SessionMessageStore, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
 import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type WakeHookObservationReader } from "./session-message-wake-port.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js";
@@ -269,7 +269,8 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         }) && presence.state === "online" && presence.instanceId === binding.instanceId) binding.wakeObservedAt = Date.now();
         for (const key of keys) runtime.wakes.delete(key);
       }
-      return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null };
+      // retired marks a verified arrival of an attempt the liveness rule already retired; it authorizes no claim.
+      return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null, ...(result.retired ? { retired: true } : {}) };
     }
     case "observe-native-input": {
       peerWaitRuntime(store).policy.reset(identity(payload.target));
@@ -503,7 +504,9 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
           const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader, historicalWakeVerifier);
           socket.end(`${JSON.stringify({ ok: true, data })}\n`);
         } catch (error) {
-          socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed." })}\n`);
+          // Older clients ignore the optional details field.
+          socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed.",
+            ...(error instanceof MessageCapacityError ? { details: error.details } : {}) })}\n`);
         }
       });
     });
