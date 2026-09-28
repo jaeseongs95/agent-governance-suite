@@ -23,7 +23,7 @@ v2.1.0 lets AI host sessions working on the same computer send messages directly
 
 Release notes for earlier versions are in [`docs/`](docs/) (Korean). The candidate-v2 policy applied to `korean-prose-editor` in v1.16.0 was not part of the quality gate record (`0.3.0-gate-1`), so it remains unevaluated for quality.
 
-The current public release is `v2.6.0` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+The current public release is `v2.7.0` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
 
 ## Problems it handles
@@ -60,11 +60,11 @@ Checking does not stop at the edge of one session. What other sessions on the sa
 
 ## Install and try it
 
-Node.js 24 or later is required.
+Node.js 24.0.0 or later is required.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.6.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -101,6 +101,8 @@ When one person runs several agent sessions on the same computer, the checks ins
 The session board keeps each session's host, session id, working directory, and a one-line current-work summary in local SQLite, read through `list_session_status`. For each user request a session must write that line with `update_session_status` before its first file change, command, or subagent run; without it the hook denies that call once and allows the next attempt. The board is pull-based: another session sees an update when it next reads the list, so the board by itself neither wakes nor interrupts a running session. Do not put request text, secrets, or personal data in the line.
 
 ### Local session messages
+
+Visible Codex queue wake is off by default. To opt in, place `{"schemaVersion":"1.0.0","codex":{"queueWake":true}}` in `session-messaging.json` under the absolute `PLUGIN_DATA` provided to this plugin's hooks. An explicit `AGENT_GOVERNANCE_CODEX_QUEUE_WAKE=1` or `0` takes precedence; invalid settings produce a bounded diagnostic and keep delivery deferred. After changing the setting, require a new receiving-session `SessionStart` and verify its presence instance and transport. Writing the file or restarting only the MCP server does not switch an existing relay. Claude Code and the common queue are unaffected. See [Codex queue wake settings](docs/input-boundaries.md#codex-queue-wake-설정) (Korean) for read limits, failures, and reload scope.
 
 Peer transmission, pre-call enforcement, and resume after returning are separate capabilities. The supported hook restricts the exact local `mcp__codex_app__wait_threads` surface only when all targets have broker-observed peer relations and the current generation has a recent consumed wake plus live presence and relay. One immediate snapshot is allowed; unchanged repeats are suppressed for 30 seconds. Hookless hosts can consume the same decision with the existing CLI `wait` operation. Unknown resume permits at most a one-second wait and one refresh, then continuation on the next user turn. Generic process/test waits and native calls outside AGS control remain outside enforcement. See the [peer wait design and CLI example](docs/peer-wait-policy.md).
 
@@ -171,7 +173,7 @@ Every specialist can run on its own. Use `$orchestrator` when a request needs mo
 
 ## Development and validation
 
-Development requires Node.js 24 or later and Corepack.
+Development requires Node.js 24.0.0 or later and Corepack.
 
 ```bash
 corepack enable

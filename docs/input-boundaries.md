@@ -8,6 +8,20 @@ AGS는 입력의 출처, 사용자가 허용한 작업, 메시지 전달과 실�
 
 입력의 의미와 주입 가능 여부도 별개입니다. 턴 종료를 관측할 수 있는 호스트가 턴 종료 때 추가 문맥을 주입할 수 있다고 가정하지 않습니다. 가상 호스트 fixture로 공통 동작을 검증하고, 실제 호스트 검증은 해당 adapter가 관측한 범위만 증명합니다.
 
+## Codex queue wake 설정
+
+Codex adapter는 기본적으로 `codex-deferred`를 사용합니다. 보이는 queue wake를 선택하려면 해당 플러그인의 hook 환경이 제공한 절대 `PLUGIN_DATA` 아래 `session-messaging.json`을 다음과 같이 설정합니다. 설치 캐시 안의 파일이나 공용 broker DB가 아니라 플러그인 데이터 파일입니다. 이 설정은 Claude Code의 `claude-inbox`나 공통 큐 계약을 바꾸지 않습니다.
+
+```json
+{"schemaVersion":"1.0.0","codex":{"queueWake":true}}
+```
+
+명시적인 `AGENT_GOVERNANCE_CODEX_QUEUE_WAKE`가 파일보다 우선합니다. 정확히 `1`이면 켜고 `0`이면 파일이 `true`여도 끕니다. 다른 값은 진단 후 끕니다. ENV가 없을 때만 파일을 읽으며 `codex.queueWake`는 boolean이어야 합니다. `false`, 파일 누락이나 `PLUGIN_DATA` 부재는 기본 지연을 유지합니다. 상대 경로, 불량 JSON·UTF-8·schema·타입, 일반 파일이 아닌 대상, 4096바이트 초과나 읽기 오류는 켜지 않고 제한된 진단만 stderr에 남깁니다. 경로·본문·비밀을 진단에 넣거나 cwd·다른 플러그인·전역 설정에서 대신 찾지 않습니다.
+
+설정을 바꾼 뒤에는 수신 세션의 새 `SessionStart`(시작·재개·clear·compact)가 필요합니다. 이때 선택한 동일 profile이 새 presence instance와 relay의 명시적 transport에 전달됩니다. 기존 relay는 시작할 때 받은 transport를 유지하므로 설정 파일만 쓰거나 MCP 서버만 재시작한 상태를 전환 완료로 보지 않습니다. 설정을 한 generation 동안 유지하고, 새 presence instance와 transport를 확인한 뒤 메시지를 보냅니다. 새 번들 설치에 필요한 host reload와 hook 신뢰 검토는 해당 호스트의 절차를 따릅니다.
+
+queue wake는 보이는 사용자 메시지이며 조용한 기상이 아닙니다. 설정·presence·fixture PASS는 실제 기상·본문 수신·ACK의 증거를 대신하지 않습니다. nonce의 대상·generation·freshness, 첫 도구 경계 유예, 비권한 peer 출처와 응답이 불명확한 제출을 재전송하지 않는 규칙은 그대로 유지합니다.
+
 ## 출처 주장과 영수증
 
 새 협업 결정은 `CollaborationDecision.v1`의 `schemaVersion: "1.2.0"`을 사용합니다. `sourceOriginKind`는 출처 주장입니다. `unknown`, `tool`, `delegated`를 표현할 수 있고 비사용자 입력도 영수증 없이 기록할 수 있습니다. 기존 1.0.0과 1.1.0 기록은 당시 규칙으로 검증합니다.

@@ -2,10 +2,18 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { checkSkillContextOptimization } from "../../scripts/check-skill-context-optimization.mjs";
+import { checkSkillContextOptimization, matchesNode24ReadmeUpdate } from "../../scripts/check-skill-context-optimization.mjs";
 import { checkSkillLoadingContract } from "../../scripts/check-skill-loading-contract.mjs";
 
 describe("skill context optimization", () => {
+  it("allows the runtime minimum update while rejecting other README changes", () => {
+    const baseline = "# skill\nNode.js 22 이상\nexisting contract\n";
+    const updated = "# skill\nNode.js 24.0.0 이상\nexisting contract\n";
+    expect(matchesNode24ReadmeUpdate("task-contract", baseline, updated)).toBe(true);
+    expect(matchesNode24ReadmeUpdate("task-contract", baseline, `${updated}extra change\n`)).toBe(false);
+    expect(matchesNode24ReadmeUpdate("task-contract", `${baseline}Node.js 22 이상\n`, updated)).toBe(false);
+  });
+
   it("preserves every optimized skill while reducing its initial load", () => {
     const report = checkSkillContextOptimization();
     expect(report).toMatchObject({

@@ -3,7 +3,7 @@
   "artifacts": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "sha256:be0113f03d2d4ac8dfeacc3ee067ca3aa4b80147fad94a94aadce3b23bf0ee19"
+      "sha256": "sha256:4080e3ca2bdc3a3a0503b6307fddda9ec626da4585a212465a2fab835bc6acf1"
     },
     {
       "path": ".mcp.json",
@@ -351,7 +351,7 @@
     },
     {
       "path": "mcp-server/dist/server.mjs",
-      "sha256": "sha256:08b3f700f44d98caff7ef2294b52a8a6cc991146864ca9b9d7040cf21baf6a97"
+      "sha256": "sha256:518c3b2eb26be3feb089a98a81f8e68fc8cff5fdc740d3006e136d1c290f33de"
     },
     {
       "path": "mcp-server/dist/session-message-broker.mjs",
@@ -960,6 +960,6 @@
   ],
   "plugin": {
     "id": "agent-governance-suite",
-    "version": "2.6.0"
+    "version": "2.7.0"
   }
 }

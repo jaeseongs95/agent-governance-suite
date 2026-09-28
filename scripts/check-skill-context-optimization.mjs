@@ -37,6 +37,16 @@ const TARGETS = [
 ];
 const NO_SEPARATOR_SUFFIX = new Set(["context-continuity", "session-board"]);
 const README_CHANGES = new Set(["independent-audit-gate", "independent-deliberation-panel"]);
+const NODE24_README_MINIMUMS = Object.freeze({
+  "acceptance-evidence-validator": "Node.js 22 이상",
+  "blocker-diagnostician": "Node.js 22 이상",
+  "change-scope-guardian": "Node.js 22 이상",
+  "evaluation-validity-auditor": "Node.js 22.13 이상",
+  "instruction-scope-resolver": "Node.js 22 이상",
+  "mutation-risk-preflight": "Node.js 22 이상",
+  "task-contract": "Node.js 22 이상",
+  "workspace-convention-profiler": "Node.js 22 이상",
+});
 const NAVIGATION = Buffer.from('<!-- optimization-navigation:start condition="the skill is activated for the request" reference="references/entry-details.md" do-not-load-otherwise="true" -->\n- If the skill is activated for the request, read [entry details](references/entry-details.md) before producing any result or taking any action; otherwise do not read it.\n<!-- optimization-navigation:end -->\n');
 
 function git(...args) {
@@ -58,6 +68,12 @@ function frontmatter(bytes) {
 
 function sameSet(left, right) {
   return left.length === right.length && [...left].sort().every((value, index) => value === [...right].sort()[index]);
+}
+
+export function matchesNode24ReadmeUpdate(skillId, baseline, candidate) {
+  const minimum = NODE24_README_MINIMUMS[skillId];
+  return Boolean(minimum) && baseline.split(minimum).length === 2
+    && candidate === baseline.replace(minimum, "Node.js 24.0.0 이상");
 }
 
 export function reconstructOptimizedSkill(skillId, root = ROOT) {
@@ -108,6 +124,13 @@ export function checkSkillContextOptimization() {
 
     const allowed = new Set([skillPath, detailPath]);
     if (README_CHANGES.has(skillId)) allowed.add(`skills/${skillId}/README.md`);
+    if (Object.hasOwn(NODE24_README_MINIMUMS, skillId)) {
+      const readmePath = `skills/${skillId}/README.md`;
+      const baselineReadme = baselineFile(readmePath).toString("utf8").replaceAll("\r\n", "\n");
+      const candidateReadme = readFileSync(join(ROOT, ...readmePath.split("/")), "utf8").replaceAll("\r\n", "\n");
+      if (!matchesNode24ReadmeUpdate(skillId, baselineReadme, candidateReadme)) errors.push(`${skillId}: README.md differs beyond the Node 24 minimum update`);
+      allowed.add(readmePath);
+    }
     const changed = git("diff", "--name-only", BASELINE, CANDIDATE, "--", `skills/${skillId}`).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
     const unexpected = changed.filter((path) => !allowed.has(path));
     if (unexpected.length) errors.push(`${skillId}: unexpected skill-owned changes: ${unexpected.join(", ")}`);
@@ -125,6 +148,7 @@ export function checkSkillContextOptimization() {
     baselineRevision: BASELINE,
     candidateRevision: CANDIDATE,
     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
+    runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
     pass: errors.length === 0,
     errors,
     totals: {

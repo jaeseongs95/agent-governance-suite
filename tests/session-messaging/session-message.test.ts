@@ -1,5 +1,5 @@
 import { mkdtempSync } from "node:fs";
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
 import { Worker } from "node:worker_threads";
@@ -33,7 +33,7 @@ import { claudeWakeOutcome, codexWakeOutcome, relayIdentityDecision, ringClaude,
 import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
 import { processIdentityState } from "../../mcp-server/src/process-identity.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "../../mcp-server/src/session-message-protocol.js";
-import { adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
+import { adaptHostInput, hostDeliveryProfile } from "../../mcp-server/src/host-input-adapter.js";
 import { supportsInjection, type DeliveryCapabilities } from "../../mcp-server/src/input-observation.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
@@ -833,6 +833,128 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(transportWakeCapabilities("codex-queue")).toEqual({ wakeVisibility: "user-message", canWakeSilently: false });
     expect(transportWakeCapabilities("claude-inbox")).toEqual({ wakeVisibility: "silent", canWakeSilently: true });
   });
+
+  it("resolves plugin queue settings only after explicit ENV and only for Codex", async () => {
+    const directory = stateDirectory();
+    const file = path.join(directory, "session-messaging.json");
+    const diagnose = vi.fn();
+    await writeFile(file, JSON.stringify({ schemaVersion: "1.0.0", codex: { queueWake: true } }));
+    const environment = { PLUGIN_DATA: directory };
+    expect(hostDeliveryProfile("codex", environment, diagnose)).toMatchObject({
+      transport: "codex-queue", capabilities: { idleWake: "user-message" },
+    });
+    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "0" }, diagnose).transport).toBe("codex-deferred");
+    await writeFile(file, "secret malformed configuration");
+    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }, diagnose).transport).toBe("codex-queue");
+    expect(hostDeliveryProfile("claude-code", environment, diagnose).transport).toBe("claude-inbox");
+    expect(diagnose).not.toHaveBeenCalled();
+    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "true" }, diagnose).transport).toBe("codex-deferred");
+    expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-environment");
+    expect(environment).toEqual({ PLUGIN_DATA: directory });
+  });
+
+  it.each([
+    "{", "[]", "null", '{}',
+    '{"schemaVersion":"2.0.0","codex":{"queueWake":true}}',
+    '{"schemaVersion":"1.0.0","codex":{"queueWake":"true"}}',
+    '{"schemaVersion":"1.0.0","codex":{"queueWake":1}}',
+    '{"schemaVersion":"1.0.0","codex":[]}',
+    Buffer.from([0xff]),
+  ])("disables malformed plugin queue settings %# with a bounded diagnostic", async (contents) => {
+    const directory = stateDirectory();
+    await writeFile(path.join(directory, "session-messaging.json"), contents);
+    const diagnose = vi.fn();
+    expect(hostDeliveryProfile("codex", { PLUGIN_DATA: directory }, diagnose).transport).toBe("codex-deferred");
+    expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-settings");
+  });
+
+  it("bounds plugin queue settings by bytes, permits false, and rejects read errors and relative paths", async () => {
+    const directory = stateDirectory();
+    const file = path.join(directory, "session-messaging.json");
+    const diagnose = vi.fn();
+    expect(hostDeliveryProfile("codex", { PLUGIN_DATA: directory }, diagnose).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile("codex", {}, diagnose).transport).toBe("codex-deferred");
+    expect(diagnose).not.toHaveBeenCalled();
+    const valid = '{"schemaVersion":"1.0.0","codex":{"queueWake":true}}';
+    await writeFile(file, valid.padEnd(4096));
+    expect(hostDeliveryProfile("codex", { PLUGIN_DATA: directory }, diagnose).transport).toBe("codex-queue");
+    await writeFile(file, `${valid.padEnd(4096)} `);
+    expect(hostDeliveryProfile("codex", { PLUGIN_DATA: directory }, diagnose).transport).toBe("codex-deferred");
+    expect(diagnose).toHaveBeenLastCalledWith("too-large");
+    await writeFile(file, JSON.stringify({ schemaVersion: "1.0.0", codex: { queueWake: true }, extra: "가".repeat(1400) }));
+    expect(hostDeliveryProfile("codex", { PLUGIN_DATA: directory }, diagnose).transport).toBe("codex-deferred");
+    expect(diagnose).toHaveBeenLastCalledWith("too-large");
+    await writeFile(file, JSON.stringify({ schemaVersion: "1.0.0", codex: { queueWake: false } }));
+    expect(hostDeliveryProfile("codex", { PLUGIN_DATA: directory }, diagnose).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile("codex", { PLUGIN_DATA: file }, diagnose).transport).toBe("codex-deferred");
+    expect(diagnose).toHaveBeenLastCalledWith("invalid-plugin-data");
+    expect(hostDeliveryProfile("codex", { PLUGIN_DATA: `${directory}\u0000` }, diagnose).transport).toBe("codex-deferred");
+    expect(diagnose).toHaveBeenLastCalledWith("read-failed");
+    await writeFile(file, valid);
+    for (const relative of [path.relative(path.dirname(directory), directory), "", ...(process.platform === "win32" ? ["\\relative-root", "/relative-root"] : [])]) {
+      diagnose.mockClear();
+      expect(hostDeliveryProfile("codex", { PLUGIN_DATA: relative }, diagnose).transport).toBe("codex-deferred");
+      expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-plugin-data");
+    }
+  });
+
+  it("uses one plugin queue profile for packaged presence and relay until the next SessionStart", async () => {
+    const directory = stateDirectory();
+    const installDirectory = path.join(directory, "installed");
+    await mkdir(installDirectory);
+    // The 3.x hook loads declared contracts relative to the installed bundle.
+    for (const folder of ["contracts", "skills", "runtime", "mcp-server/dist"]) {
+      await cp(fileURLToPath(new URL(`../../${folder}/`, import.meta.url)), path.join(installDirectory, folder), { recursive: true });
+    }
+    const installedHook = path.join(installDirectory, "mcp-server", "dist", "session-message-hook.mjs");
+    expect(await optionalFile(path.join(directory, "node_modules"))).toBeNull();
+    expect(await optionalFile(path.join(installDirectory, "node_modules"))).toBeNull();
+    await startSourceBroker(directory);
+    const file = path.join(directory, "session-messaging.json");
+    await writeFile(file, '{"schemaVersion":"1.0.0","codex":{"queueWake":true}}');
+    const environment: NodeJS.ProcessEnv = { ...process.env, PLUGIN_DATA: directory, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory };
+    delete environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE;
+    delete environment.NODE_PATH;
+    delete environment.NODE_OPTIONS;
+    const target = { host: "codex", sessionId: "plugin-profile-generation" };
+    const start = (hostPid: number) => spawnSync(process.execPath, [installedHook, "--host-pid", String(hostPid)], {
+      input: JSON.stringify({ hook_event_name: "SessionStart", session_id: target.sessionId }),
+      env: environment, cwd: directory, encoding: "utf8", timeout: 15_000, windowsHide: true,
+    });
+    const store = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
+    let relayPid: number | undefined;
+    try {
+      const first = start(process.pid);
+      expect(first.status, first.stderr).toBe(0);
+      expect(first.stdout).toBe("");
+      const presence = store.presence(target);
+      expect(presence).toMatchObject({ transport: "codex-queue", state: "online", wakeVisibility: "user-message", canWakeSilently: false });
+      await waitUntil(async () => {
+        relayPid = store.liveRelay(target, "codex-queue")?.pid;
+        return relayPid !== undefined;
+      }, 15_000);
+      await writeFile(file, '{"schemaVersion":"1.0.0","codex":{"queueWake":false}}');
+      expect(store.presence(target)).toMatchObject({ instanceId: presence.instanceId, transport: "codex-queue" });
+      expect(store.liveRelay(target, "codex-queue")?.pid).toBe(relayPid);
+      const resumed = start(0);
+      expect(resumed.status, resumed.stderr).toBe(0);
+      const next = store.presence(target);
+      expect(next).toMatchObject({ transport: "codex-deferred", state: "online", wakeVisibility: "none" });
+      expect(next.instanceId).not.toBe(presence.instanceId);
+      await waitUntil(async () => {
+        try { process.kill(relayPid!, 0); return false; }
+        catch (error) { if ((error as NodeJS.ErrnoException).code === "ESRCH") return true; throw error; }
+      }, 15_000);
+      expect(store.presence(target)).toMatchObject({ instanceId: next.instanceId, state: "online" });
+      // No pending message or real host wake is submitted by this installation fixture.
+    } finally {
+      store.close();
+      if (relayPid !== undefined) {
+        try { process.kill(relayPid, "SIGTERM"); }
+        catch (error) { expect((error as NodeJS.ErrnoException).code).toBe("ESRCH"); }
+      }
+    }
+  }, 45_000);
 
   it("releases Codex wake reservations only for definite submission failures", () => {
     expect(codexWakeOutcome(new Error("not started"), false)).toBe("definite-failure");

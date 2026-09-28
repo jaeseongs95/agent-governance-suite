@@ -31,7 +31,7 @@ tests/                           # 계약·회귀·런타임 테스트
 
 ## 개발과 검증
 
-Node.js 24 이상과 `pnpm@11.19.0`을 사용한다. Node.js 24 미만은 지원하지 않으며 `pnpm runtime:check`가 거부한다. 주요 명령은 다음과 같다.
+Node.js 24.0.0 이상과 `pnpm@11.19.0`을 사용한다. Node.js 24 미만은 지원하지 않으며 `pnpm runtime:check`가 거부한다. 주요 명령은 다음과 같다.
 
 - `pnpm dev`: 개발용 MCP 서버
 - `pnpm lint`: ESLint와 저장소 계약 검사

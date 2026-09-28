@@ -5,7 +5,7 @@ import { runRuntimeSmokeCheck } from "./runtime-smoke.mjs";
 
 const major = Number.parseInt(process.versions.node.split(".")[0], 10);
 if (!(major >= 24)) {
-  throw new Error(`Node.js 24 or newer is required; found ${process.versions.node}.`);
+  throw new Error(`Node.js 24.0.0 or newer is required; found ${process.versions.node}.`);
 }
 
 const requiredFiles = [

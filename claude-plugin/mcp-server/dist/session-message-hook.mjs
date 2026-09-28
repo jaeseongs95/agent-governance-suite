@@ -406,11 +406,11 @@ var require_codegen = __commonJS({
         const rhs = this.rhs === void 0 ? "" : ` = ${this.rhs}`;
         return `${varKind} ${this.name}${rhs};` + _n2;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         if (!names[this.name.str])
           return;
         if (this.rhs)
-          this.rhs = optimizeExpr(this.rhs, names, constants);
+          this.rhs = optimizeExpr(this.rhs, names, constants2);
         return this;
       }
       get names() {
@@ -427,10 +427,10 @@ var require_codegen = __commonJS({
       render({ _n: _n2 }) {
         return `${this.lhs} = ${this.rhs};` + _n2;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         if (this.lhs instanceof code_1.Name && !names[this.lhs.str] && !this.sideEffects)
           return;
-        this.rhs = optimizeExpr(this.rhs, names, constants);
+        this.rhs = optimizeExpr(this.rhs, names, constants2);
         return this;
       }
       get names() {
@@ -491,8 +491,8 @@ var require_codegen = __commonJS({
       optimizeNodes() {
         return `${this.code}` ? this : void 0;
       }
-      optimizeNames(names, constants) {
-        this.code = optimizeExpr(this.code, names, constants);
+      optimizeNames(names, constants2) {
+        this.code = optimizeExpr(this.code, names, constants2);
         return this;
       }
       get names() {
@@ -521,12 +521,12 @@ var require_codegen = __commonJS({
         }
         return nodes.length > 0 ? this : void 0;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         const { nodes } = this;
         let i = nodes.length;
         while (i--) {
           const n = nodes[i];
-          if (n.optimizeNames(names, constants))
+          if (n.optimizeNames(names, constants2))
             continue;
           subtractNames(names, n.names);
           nodes.splice(i, 1);
@@ -579,12 +579,12 @@ var require_codegen = __commonJS({
           return void 0;
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         var _a;
-        this.else = (_a = this.else) === null || _a === void 0 ? void 0 : _a.optimizeNames(names, constants);
-        if (!(super.optimizeNames(names, constants) || this.else))
+        this.else = (_a = this.else) === null || _a === void 0 ? void 0 : _a.optimizeNames(names, constants2);
+        if (!(super.optimizeNames(names, constants2) || this.else))
           return;
-        this.condition = optimizeExpr(this.condition, names, constants);
+        this.condition = optimizeExpr(this.condition, names, constants2);
         return this;
       }
       get names() {
@@ -607,10 +607,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.iteration})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names, constants2) {
+        if (!super.optimizeNames(names, constants2))
           return;
-        this.iteration = optimizeExpr(this.iteration, names, constants);
+        this.iteration = optimizeExpr(this.iteration, names, constants2);
         return this;
       }
       get names() {
@@ -646,10 +646,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.varKind} ${this.name} ${this.loop} ${this.iterable})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names, constants2) {
+        if (!super.optimizeNames(names, constants2))
           return;
-        this.iterable = optimizeExpr(this.iterable, names, constants);
+        this.iterable = optimizeExpr(this.iterable, names, constants2);
         return this;
       }
       get names() {
@@ -691,11 +691,11 @@ var require_codegen = __commonJS({
         (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNodes();
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         var _a, _b;
-        super.optimizeNames(names, constants);
-        (_a = this.catch) === null || _a === void 0 ? void 0 : _a.optimizeNames(names, constants);
-        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants);
+        super.optimizeNames(names, constants2);
+        (_a = this.catch) === null || _a === void 0 ? void 0 : _a.optimizeNames(names, constants2);
+        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants2);
         return this;
       }
       get names() {
@@ -996,7 +996,7 @@ var require_codegen = __commonJS({
     function addExprNames(names, from) {
       return from instanceof code_1._CodeOrName ? addNames(names, from.names) : names;
     }
-    function optimizeExpr(expr, names, constants) {
+    function optimizeExpr(expr, names, constants2) {
       if (expr instanceof code_1.Name)
         return replaceName(expr);
       if (!canOptimize(expr))
@@ -1011,14 +1011,14 @@ var require_codegen = __commonJS({
         return items;
       }, []));
       function replaceName(n) {
-        const c = constants[n.str];
+        const c = constants2[n.str];
         if (c === void 0 || names[n.str] !== 1)
           return n;
         delete names[n.str];
         return c;
       }
       function canOptimize(e) {
-        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names[c.str] === 1 && constants[c.str] !== void 0);
+        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names[c.str] === 1 && constants2[c.str] !== void 0);
       }
     }
     function subtractNames(names, from) {
@@ -3258,8 +3258,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path14) {
-      let input = path14;
+    function removeDotSegments(path15) {
+      let input = path15;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3668,8 +3668,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path14 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path14 && path14 !== "/" ? path14 : void 0;
+        const path15 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path15 && path15 !== "/" ? path15 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -8022,7 +8022,7 @@ var require_dist = __commonJS({
 import { spawn as spawn2 } from "node:child_process";
 import { createHash as createHash8, randomUUID as randomUUID2 } from "node:crypto";
 import { readFileSync as readFileSync6 } from "node:fs";
-import path13 from "node:path";
+import path14 from "node:path";
 import { fileURLToPath as fileURLToPath5 } from "node:url";
 
 // mcp-server/src/session-message-client.ts
@@ -9047,6 +9047,8 @@ function processStartToken(pid, platform = process.platform) {
 
 // mcp-server/src/host-input-adapter.ts
 import { createHash as createHash2 } from "node:crypto";
+import { closeSync, constants, fstatSync, openSync, readSync, statSync as statSync2 } from "node:fs";
+import path6 from "node:path";
 
 // mcp-server/src/peer-wait-policy.ts
 function identityKey(identity) {
@@ -9120,8 +9122,56 @@ function adaptHostInput(input, host) {
     }
   };
 }
-function hostDeliveryProfile(host, environment = process.env) {
-  const transport = host === "claude-code" ? "claude-inbox" : environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE === "1" ? "codex-queue" : "codex-deferred";
+function codexQueueEnabled(environment, diagnose) {
+  const disabled = (reason) => {
+    diagnose(reason);
+    return false;
+  };
+  const explicit = environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE;
+  if (explicit !== void 0) {
+    if (explicit === "1") return true;
+    return explicit === "0" ? false : disabled("invalid-environment");
+  }
+  const directory = environment.PLUGIN_DATA;
+  if (directory === void 0) return false;
+  if (!path6.isAbsolute(directory) || process.platform === "win32" && ["\\", "/"].includes(path6.parse(directory).root)) {
+    return disabled("invalid-plugin-data");
+  }
+  try {
+    if (!statSync2(directory).isDirectory()) return disabled("invalid-plugin-data");
+    const descriptor = openSync(path6.join(directory, "session-messaging.json"), constants.O_RDONLY | constants.O_NONBLOCK);
+    try {
+      const stat = fstatSync(descriptor);
+      if (!stat.isFile()) return disabled("invalid-file-type");
+      if (stat.size > 4096) return disabled("too-large");
+      const bytes = Buffer.alloc(4097);
+      let length = 0;
+      while (length < bytes.length) {
+        const count = readSync(descriptor, bytes, length, bytes.length - length, null);
+        if (count === 0) break;
+        length += count;
+      }
+      if (length > 4096) return disabled("too-large");
+      let settings;
+      try {
+        settings = record(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, length))));
+      } catch {
+        return disabled("invalid-settings");
+      }
+      const codex = record(settings.codex);
+      if (settings.schemaVersion !== "1.0.0" || typeof codex.queueWake !== "boolean") return disabled("invalid-settings");
+      return codex.queueWake;
+    } finally {
+      closeSync(descriptor);
+    }
+  } catch (error) {
+    return error.code === "ENOENT" ? false : disabled("read-failed");
+  }
+}
+function hostDeliveryProfile(host, environment = process.env, diagnose = (reason) => {
+  console.error(`[agent-governance-suite] Codex queue settings: ${reason}; using codex-deferred.`);
+}) {
+  const transport = host === "claude-code" ? "claude-inbox" : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
   return { transport, capabilities: transportDeliveryCapabilities(transport) };
 }
 function nativePeerWait(observation) {
@@ -9158,7 +9208,7 @@ function isObservedSubagent(observation) {
 
 // mcp-server/src/model-routing-peer-native.ts
 import { existsSync as existsSync4, readFileSync as readFileSync5 } from "node:fs";
-import path12 from "node:path";
+import path13 from "node:path";
 import { DatabaseSync as DatabaseSync5 } from "node:sqlite";
 
 // skills/coordinate-subagents/scripts/model-routing-store.mjs
@@ -14652,7 +14702,7 @@ var ModelRoutingStore = class {
 
 // mcp-server/src/sqlite-workflow-store.ts
 import { chmodSync as chmodSync2, mkdirSync as mkdirSync2 } from "node:fs";
-import path6 from "node:path";
+import path7 from "node:path";
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 
 // mcp-server/src/plugin-version.ts
@@ -14723,7 +14773,7 @@ var SqliteWorkflowStore = class {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
     }
     if (databasePath !== ":memory:") {
-      mkdirSync2(path6.dirname(path6.resolve(databasePath)), { recursive: true, mode: 448 });
+      mkdirSync2(path7.dirname(path7.resolve(databasePath)), { recursive: true, mode: 448 });
     }
     let openedDatabase = null;
     try {
@@ -14734,7 +14784,7 @@ var SqliteWorkflowStore = class {
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       if (databasePath !== ":memory:" && process.platform !== "win32") {
-        chmodSync2(path6.resolve(databasePath), 384);
+        chmodSync2(path7.resolve(databasePath), 384);
       }
     } catch (cause) {
       try {
@@ -15492,14 +15542,14 @@ var SqliteWorkflowStore = class {
 // skills/coordinate-subagents/scripts/model-catalog.mjs
 import { readFileSync as readFileSync3, realpathSync } from "node:fs";
 import { createHash as createHash4 } from "node:crypto";
-import path7 from "node:path";
+import path8 from "node:path";
 import { fileURLToPath as fileURLToPath2, pathToFileURL as pathToFileURL2 } from "node:url";
 var defaultCatalogDirectory = fileURLToPath2(new URL("../references/model-catalog/", import.meta.url));
 function localFile(directory, relative, expectedDigest = null) {
-  assert(typeof relative === "string" && !path7.isAbsolute(relative) && !relative.split(/[\\/]/u).includes(".."), "INVALID_CATALOG_PATH");
-  const root = realpathSync(directory), file = realpathSync(path7.join(root, relative));
-  const rel = path7.relative(root, file);
-  assert(rel && !rel.startsWith("..") && !path7.isAbsolute(rel), "INVALID_CATALOG_PATH");
+  assert(typeof relative === "string" && !path8.isAbsolute(relative) && !relative.split(/[\\/]/u).includes(".."), "INVALID_CATALOG_PATH");
+  const root = realpathSync(directory), file = realpathSync(path8.join(root, relative));
+  const rel = path8.relative(root, file);
+  assert(rel && !rel.startsWith("..") && !path8.isAbsolute(rel), "INVALID_CATALOG_PATH");
   const bytes = readFileSync3(file);
   assert(bytes.length <= 2 * 1024 * 1024, "CATALOG_TOO_LARGE");
   if (expectedDigest !== null) assert(createHash4("sha256").update(bytes).digest("hex") === expectedDigest, "CATALOG_FILE_DIGEST_MISMATCH");
@@ -15661,7 +15711,7 @@ var import__ = __toESM(require__(), 1);
 var import_ajv_formats = __toESM(require_dist(), 1);
 import { createHash as createHash5 } from "node:crypto";
 import { readFileSync as readFileSync4, readdirSync } from "node:fs";
-import path8 from "node:path";
+import path9 from "node:path";
 
 // mcp-server/src/semantic-contract-invariants.ts
 function requireContract(condition, message) {
@@ -15790,8 +15840,8 @@ function assertSemanticRecordBinding(record3, decision) {
 // mcp-server/src/schema-validator.ts
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path14 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync4(path14, "utf8"));
+  const path15 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync4(path15, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -16297,15 +16347,15 @@ var ContractValidator = class {
     return tokens;
   }
   assertSchemaFile(rootDirectory, reference, value, label) {
-    const root = path8.resolve(rootDirectory);
+    const root = path9.resolve(rootDirectory);
     const targetSchema = this.readBoundSchema(rootDirectory, reference, label);
     const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
     addFormats(ajv);
     const schemas = /* @__PURE__ */ new Map();
-    for (const directory of [path8.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
+    for (const directory of [path9.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
       for (const candidate of this.schemaFiles(directory)) {
         const schema = JSON.parse(readFileSync4(candidate, "utf8"));
-        const id = typeof schema.$id === "string" ? schema.$id : `file://${candidate.split(path8.sep).join("/")}`;
+        const id = typeof schema.$id === "string" ? schema.$id : `file://${candidate.split(path9.sep).join("/")}`;
         if (!schemas.has(id)) schemas.set(id, schema);
       }
     }
@@ -16321,9 +16371,9 @@ var ContractValidator = class {
     return value;
   }
   readBoundSchema(rootDirectory, reference, label) {
-    const root = path8.resolve(rootDirectory);
-    const schemaPath = path8.resolve(root, reference.path);
-    if (schemaPath !== root && !schemaPath.startsWith(`${root}${path8.sep}`)) {
+    const root = path9.resolve(rootDirectory);
+    const schemaPath = path9.resolve(root, reference.path);
+    if (schemaPath !== root && !schemaPath.startsWith(`${root}${path9.sep}`)) {
       throw new WorkflowContractError("INVALID_INPUT", `${label} schema escapes the plugin root.`, {
         schemaPath: reference.path
       });
@@ -16341,12 +16391,12 @@ var ContractValidator = class {
   }
   skillSchemaRoot(rootDirectory, schemaPath) {
     const segments = schemaPath.split("/");
-    return segments[0] === "skills" && segments[1] ? path8.join(rootDirectory, "skills", segments[1]) : path8.join(rootDirectory, "contracts");
+    return segments[0] === "skills" && segments[1] ? path9.join(rootDirectory, "skills", segments[1]) : path9.join(rootDirectory, "contracts");
   }
   schemaFiles(directory) {
     const files = [];
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      const candidate = path8.join(directory, entry.name);
+      const candidate = path9.join(directory, entry.name);
       if (entry.isDirectory()) files.push(...this.schemaFiles(candidate));
       else if (entry.isFile() && entry.name.endsWith(".schema.json")) files.push(candidate);
     }
@@ -16683,14 +16733,14 @@ var ModelRoutingWorkflowBridge = class {
 
 // mcp-server/src/model-routing-host-hook.ts
 import { randomBytes as randomBytes3 } from "node:crypto";
-import { closeSync, existsSync as existsSync3, openSync, readSync, statSync as statSync2 } from "node:fs";
-import path11 from "node:path";
+import { closeSync as closeSync2, existsSync as existsSync3, openSync as openSync2, readSync as readSync2, statSync as statSync3 } from "node:fs";
+import path12 from "node:path";
 import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 
 // mcp-server/src/native-tool-observation.ts
 import { createHash as createHash6 } from "node:crypto";
-import path9 from "node:path";
+import path10 from "node:path";
 function record2(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
@@ -16704,7 +16754,7 @@ function claudeCodeActorId(sessionId, agentId) {
 function transcriptCandidates(transcriptPath, sessionId, agentId) {
   const candidates = [transcriptPath];
   if (agentId) {
-    candidates.push(path9.join(path9.dirname(transcriptPath), sessionId, "subagents", `agent-${agentId}.jsonl`));
+    candidates.push(path10.join(path10.dirname(transcriptPath), sessionId, "subagents", `agent-${agentId}.jsonl`));
   }
   return [...new Set(candidates)];
 }
@@ -16744,7 +16794,7 @@ function isReasoningEffort(value) {
 
 // mcp-server/src/model-capability-client.ts
 import { readFile as readFile2 } from "node:fs/promises";
-import path10 from "node:path";
+import path11 from "node:path";
 import { performance as performance2 } from "node:perf_hooks";
 
 // mcp-server/src/session-model-capabilities.ts
@@ -16817,7 +16867,7 @@ async function publishSharedModelCapability(snapshot, identity, directory = reso
   try {
     const call = requester(directory, options);
     if (!await negotiate(call)) return "unsupported";
-    const token = (await readFile2(path10.join(directory, "broker.token"), "utf8")).trim();
+    const token = (await readFile2(path11.join(directory, "broker.token"), "utf8")).trim();
     const now = new Date((options.clock ?? Date.now)()).toISOString();
     const receipt = capabilitySigner(token).issue("capability", { schemaVersion: "1.0.0", identity, snapshot }, { issuedAt: now, expiresAt: snapshot.expiresAt });
     const result = await call("publish-model-capability", { receipt });
@@ -16905,18 +16955,18 @@ function nativeRoutingActor(host, sessionId, agentId) {
 function readNativeTranscript(file) {
   let fd = null;
   try {
-    const info = statSync2(file);
+    const info = statSync3(file);
     if (!info.isFile()) return null;
-    fd = openSync(file, "r");
+    fd = openSync2(file, "r");
     const start = Math.max(0, info.size - MAX_TRANSCRIPT);
     const buffer = Buffer.alloc(Math.min(info.size, MAX_TRANSCRIPT));
-    const bytes = readSync(fd, buffer, 0, buffer.length, start);
+    const bytes = readSync2(fd, buffer, 0, buffer.length, start);
     const value = buffer.subarray(0, bytes).toString("utf8");
     return start > 0 ? value.slice(value.indexOf("\n") + 1) : value;
   } catch {
     return null;
   } finally {
-    if (fd !== null) closeSync(fd);
+    if (fd !== null) closeSync2(fd);
   }
 }
 function nativeRoutingSettings(input, host, models, readTranscript = readNativeTranscript) {
@@ -17058,7 +17108,7 @@ function boundedStdin() {
   const chunks = [];
   let total = 0;
   while (true) {
-    const chunk = Buffer.alloc(16384), count = readSync(0, chunk, 0, chunk.length, null);
+    const chunk = Buffer.alloc(16384), count = readSync2(0, chunk, 0, chunk.length, null);
     if (!count) break;
     total += count;
     check3(total <= MAX_INPUT, "Native hook input exceeds the size limit.");
@@ -17075,7 +17125,7 @@ async function main() {
     const input = object3(JSON.parse(boundedStdin()));
     if (!ROOT_TOOLS.test(String(input.tool_name ?? "")) || !["PreToolUse", "PostToolUse"].includes(String(input.hook_event_name))) return;
     const stateDirectory = resolveSessionMessageStateDirectory();
-    if (!existsSync3(path11.join(stateDirectory, "endpoint.json"))) return;
+    if (!existsSync3(path12.join(stateDirectory, "endpoint.json"))) return;
     const observed = await requestSessionMessageOnce("presence", { target: { host, sessionId: input.session_id } }, stateDirectory, 1500);
     const databasePath = resolveWorkflowDatabasePath();
     workflow = new SqliteWorkflowStore(databasePath);
@@ -17084,7 +17134,7 @@ async function main() {
     database.exec("PRAGMA busy_timeout = 1500;");
     const store = new ModelRoutingStore(database);
     const query = object3(new ModelRoutingServiceCore({ catalogDirectory: CATALOG }).query({ provider: host === "codex" ? "openai" : "anthropic" }));
-    const contractPath = path11.join(path11.dirname(databasePath), "model-routing-native", `${HOST_IDS[host]}.json`);
+    const contractPath = path12.join(path12.dirname(databasePath), "model-routing-native", `${HOST_IDS[host]}.json`);
     const contract = existsSync3(contractPath) ? JSON.parse(readNativeTranscript(contractPath) ?? "null") : void 0;
     const output = handleNativeRoutingHook(input, host, {
       store,
@@ -17110,7 +17160,7 @@ async function main() {
     workflow?.close();
   }
 }
-if (process.argv[1] && path11.resolve(process.argv[1]) === fileURLToPath3(import.meta.url) && /\/model-routing-host-hook\.(?:ts|mjs)$/u.test(import.meta.url)) await main();
+if (process.argv[1] && path12.resolve(process.argv[1]) === fileURLToPath3(import.meta.url) && /\/model-routing-host-hook\.(?:ts|mjs)$/u.test(import.meta.url)) await main();
 
 // mcp-server/src/model-routing-peer-session.ts
 import { performance as performance3 } from "node:perf_hooks";
@@ -17711,7 +17761,7 @@ async function openNativePeerSession(host, input) {
   peerCheck(process.env.AGENT_GOVERNANCE_PEER_ROUTING === "1", "Peer handoff admission is opt-in.");
   peerCheck(typeof input.session_id === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(input.session_id) && !input.agent_id, "Peer handoffs require a native parent-session identity.");
   const directory = resolveSessionMessageStateDirectory();
-  peerCheck(existsSync4(path12.join(directory, "endpoint.json")), "No existing session broker endpoint.");
+  peerCheck(existsSync4(path13.join(directory, "endpoint.json")), "No existing session broker endpoint.");
   const response = await requestSessionMessageOnce("presence", { target: { host, sessionId: input.session_id } }, directory, 1500);
   const presence = response.presence;
   peerCheck(presence?.state === "online" && presence.instanceId && presence.leaseUntil && Date.parse(presence.leaseUntil) > Date.now(), "Native session is not current.");
@@ -17720,10 +17770,10 @@ async function openNativePeerSession(host, input) {
   let databasePath;
   if (host === "claude-code") {
     peerCheck(process.env.CLAUDE_PLUGIN_DATA?.trim(), "Claude plugin data is required.");
-    databasePath = path12.join(process.env.CLAUDE_PLUGIN_DATA, "workflows.sqlite3");
+    databasePath = path13.join(process.env.CLAUDE_PLUGIN_DATA, "workflows.sqlite3");
   } else databasePath = resolveWorkflowDatabasePath();
   peerCheck(existsSync4(databasePath), "The local workflow database has not been initialized.");
-  const token = readFileSync5(path12.join(directory, "broker.token"), "utf8").trim();
+  const token = readFileSync5(path13.join(directory, "broker.token"), "utf8").trim();
   let workflow = null, database = null;
   try {
     workflow = new SqliteWorkflowStore(databasePath);
@@ -18003,7 +18053,7 @@ async function runSessionMessageHook(host, raw, explicitHostPid) {
     return "";
   }
 }
-if (path13.resolve(process.argv[1] ?? "") === fileURLToPath5(import.meta.url)) {
+if (path14.resolve(process.argv[1] ?? "") === fileURLToPath5(import.meta.url)) {
   let raw = "";
   try {
     raw = readFileSync6(0, "utf8");

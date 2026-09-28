@@ -23,7 +23,7 @@ v2.1.0은 같은 컴퓨터에서 일하는 AI 호스트 세션들이 서로에�
 
 지난 릴리스의 변경 내역은 [`docs/`](docs/)의 릴리스 노트에 있습니다. v1.16.0에서 `korean-prose-editor`에 적용한 candidate-v2 정책은 품질 기준 통과 기록(`0.3.0-gate-1`)의 평가 대상이 아니었으므로 아직 품질 미평가 상태입니다.
 
-현재 공개 릴리스는 `v2.6.0`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+현재 공개 릴리스는 `v2.7.0`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
 <!-- release-version:end -->
 
 ## 이런 문제를 다룹니다
@@ -60,11 +60,11 @@ flowchart LR
 
 ## 설치하고 사용하기
 
-Node.js 24 이상이 필요합니다.
+Node.js 24.0.0 이상이 필요합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.6.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -101,6 +101,8 @@ Codex 배포물은 현재 호출의 모델·세션·턴을 Hook에서, 같은 �
 세션 현황판은 세션마다 host, 세션 ID, 작업 디렉터리와 지금 하는 일 한 줄을 로컬 SQLite에 두고 `list_session_status`로 읽습니다. 사용자 요청마다 처음 파일을 고치거나 명령·서브에이전트를 실행하기 전에 `update_session_status`로 한 줄을 적어야 하며, 적지 않았으면 Hook이 그 호출을 한 번 거부하고 다음 시도는 허용합니다. 현황판은 다른 세션이 다음에 목록을 읽을 때 확인하는 방식이라, 그 자체로는 실행 중인 세션을 깨우거나 중단시키지 않습니다. 한 줄에 요청 원문이나 비밀, 개인정보를 적지 않습니다.
 
 ### 로컬 세션 메시지
+
+Codex의 보이는 queue wake는 기본적으로 꺼져 있습니다. 이 플러그인의 hook 환경이 제공하는 절대 `PLUGIN_DATA` 아래 `session-messaging.json`에 `{"schemaVersion":"1.0.0","codex":{"queueWake":true}}`를 두면 선택할 수 있습니다. 명시적인 `AGENT_GOVERNANCE_CODEX_QUEUE_WAKE=1` 또는 `0`이 파일보다 우선하며, 불량 설정은 진단 후 지연 전달을 유지합니다. 설정 변경 뒤 수신 세션의 새 `SessionStart`와 presence instance·transport를 확인해야 합니다. 파일만 쓰거나 MCP 서버만 재시작해도 기존 relay는 전환되지 않습니다. Claude Code와 공통 큐는 이 설정의 영향을 받지 않습니다. 읽기 한도·실패 처리·reload 범위는 [Codex queue wake 설정](docs/input-boundaries.md#codex-queue-wake-설정)을 따릅니다.
 
 peer 결과를 기다리는 방식은 전송, 호출 제한과 턴 종료 뒤 복귀 기능을 따로 확인합니다. 지원 hook은 실제 peer 관계와 같은 세션 generation의 최근 wake 처리·live relay가 모두 확인된 `mcp__codex_app__wait_threads`만 제한합니다. 즉시 조회는 한 번 허용하고 변화 없는 반복을 30초 동안 억제합니다. hook이 없는 호스트는 기존 CLI의 `wait` 작업으로 같은 판정을 소비하며, 복귀 미확인 상태에서는 최대 1초 대기와 한 번의 재조회 뒤 다음 사용자 턴으로 이어갑니다. 범용 sleep·프로세스·테스트 대기와 AGS 통제 밖 native 호출은 강제하지 않습니다. 세부 조건과 공개 CLI 예시는 [peer 대기 설계](docs/peer-wait-policy.md)를 참고하세요.
 
@@ -171,7 +173,7 @@ Claude Code용 배포물은 저장소의 `claude-plugin/`에 따로 있습니다
 
 ## 개발과 검증
 
-Node.js 24 이상과 Corepack이 필요합니다.
+Node.js 24.0.0 이상과 Corepack이 필요합니다.
 
 ```bash
 corepack enable
