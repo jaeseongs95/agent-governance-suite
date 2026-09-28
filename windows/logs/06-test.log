@@ -1,0 +1,12 @@
+Already up to date
+Done in 90ms using pnpm v11.19.0
+$ node scripts/build.mjs && vitest run
+
+ RUN  v5.0.0 D:/codex/거버전스 3.0/agent-governance-suite-v273-integration
+
+
+ Test Files  61 passed | 1 skipped (62)
+      Tests  858 passed | 2 skipped (860)
+   Start at  02:36:33
+   Duration  32.30s (tests 95%, import 3%, transform 1%)
+

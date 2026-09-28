@@ -1,0 +1,10 @@
+{
+  "purpose": "AGS v2.7.3 Windows local full validation (chief ca8e3dc4)",
+  "candidate": "e3220a48ce0f1aaea30f90db4bbb597b8fd7ea92",
+  "candidateTree": "2934992daa71fa2b24af7f58bd95454ea59d46c2",
+  "os": "Windows 11 Pro 10.0.26200",
+  "node": "v24.19.0",
+  "pnpm": "11.19.0",
+  "workingPath": "Korean-named directory (path elided)",
+  "stampUtc": "20260928T173839Z"
+}

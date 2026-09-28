@@ -1,0 +1,17 @@
+1	pnpm install --frozen-lockfile	0
+2	pnpm bundle:check	0
+3	pnpm claude:drift	0
+4	pnpm lint	0
+5	pnpm build	0
+6	pnpm test	0
+7	pnpm runtime:check	0
+8	pnpm validate:all	0
+9	pnpm validate:official	0
+10	pnpm claude:build	0
+11	pnpm claude:check	0
+12	pnpm source:check	0
+13	git diff --check	0
+14	git status bytes	0
+prev-v2.7.2	0
+prev-v2.7.1	0
+prev-v2.2.6	0
