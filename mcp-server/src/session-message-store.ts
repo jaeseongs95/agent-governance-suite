@@ -803,15 +803,16 @@ export class SessionMessageStore {
       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
     if (!row) return null;
     const active = ["reserved", "started", "submitted", "unknown"].includes(String(row.state));
-    return { state: row.state, observation: row.late_observed_at !== null ? "unknown" : active && String(row.expires_at) <= iso(nowMs) ? "observation-overdue"
-      : row.state === "observed" ? "observed" : active ? "pending" : "not-submitted",
+    return { state: row.state, observation: row.state === "observed" ? "observed"
+      : row.late_observed_at !== null ? "unknown" : active && String(row.expires_at) <= iso(nowMs) ? "observation-overdue"
+      : active ? "pending" : "not-submitted",
       deliveryState: row.state === "started" || row.state === "unknown" ? "unknown" : row.state,
       instanceId: row.instance_id, generation: row.birth_generation, attemptId: row.attempt_id,
       dispatchEpoch: row.dispatch_epoch, retryNotBefore: row.retry_not_before, expiresAt: row.expires_at,
       observedAt: row.observed_at, lateObservedAt: row.late_observed_at };
   }
 
-  /** Hook observation and body claim are one transaction; generic claim/ACK cannot observe managed bells. */
+  /** Verified arrival retires its attempt; only current bindings may claim bodies in the same transaction. */
   claimHostWake(target: SessionIdentity, observation: InputObservation, receiptId: string, reader: WakeHookObservationReader | undefined, nowMs = Date.now(), limits: ClaimLimits = {}): {
     recognized: boolean; messages: SessionMessage[]; binding: WakeAttempt | null;
   } {
@@ -833,9 +834,11 @@ export class SessionMessageStore {
           && row!.transport === presence.transport && presence.state === "online"
           && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row!.expires_at) > iso(nowMs));
       if (!valid) {
+        // Arrival is proven, but it cannot authorize this generation's body claim or resume evidence.
         for (const row of rows) if (row!.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
-          SET late_observed_at = coalesce(late_observed_at, ?), state = 'unknown' WHERE nonce_digest = ?
-          AND state IN ('started', 'submitted', 'unknown')`).run(iso(nowMs), String(row!.nonce_digest));
+          SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?
+          WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`)
+          .run(iso(nowMs), iso(nowMs), iso(nowMs), String(row!.nonce_digest));
         this.database.exec("COMMIT"); return rejected;
       }
       const messages = this.claimLocked(target, nowMs, limits);

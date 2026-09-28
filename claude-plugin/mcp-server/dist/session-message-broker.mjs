@@ -1074,7 +1074,7 @@ var SessionMessageStore = class {
     const active = ["reserved", "started", "submitted", "unknown"].includes(String(row.state));
     return {
       state: row.state,
-      observation: row.late_observed_at !== null ? "unknown" : active && String(row.expires_at) <= iso(nowMs) ? "observation-overdue" : row.state === "observed" ? "observed" : active ? "pending" : "not-submitted",
+      observation: row.state === "observed" ? "observed" : row.late_observed_at !== null ? "unknown" : active && String(row.expires_at) <= iso(nowMs) ? "observation-overdue" : active ? "pending" : "not-submitted",
       deliveryState: row.state === "started" || row.state === "unknown" ? "unknown" : row.state,
       instanceId: row.instance_id,
       generation: row.birth_generation,
@@ -1086,7 +1086,7 @@ var SessionMessageStore = class {
       lateObservedAt: row.late_observed_at
     };
   }
-  /** Hook observation and body claim are one transaction; generic claim/ACK cannot observe managed bells. */
+  /** Verified arrival retires its attempt; only current bindings may claim bodies in the same transaction. */
   claimHostWake(target, observation, receiptId, reader, nowMs = Date.now(), limits = {}) {
     boundedIdentity(target);
     const rejected = { recognized: false, messages: [], binding: null };
@@ -1107,8 +1107,8 @@ var SessionMessageStore = class {
       const valid = rows.every((row) => row.state === "legacy" ? row.consumed_at === null && String(row.expires_at) > iso(nowMs) : row.instance_id === presence.instanceId && row.birth_generation === presence.startedAt && row.transport === presence.transport && presence.state === "online" && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row.expires_at) > iso(nowMs));
       if (!valid) {
         for (const row of rows) if (row.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
-          SET late_observed_at = coalesce(late_observed_at, ?), state = 'unknown' WHERE nonce_digest = ?
-          AND state IN ('started', 'submitted', 'unknown')`).run(iso(nowMs), String(row.nonce_digest));
+          SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?
+          WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`).run(iso(nowMs), iso(nowMs), iso(nowMs), String(row.nonce_digest));
         this.database.exec("COMMIT");
         return rejected;
       }

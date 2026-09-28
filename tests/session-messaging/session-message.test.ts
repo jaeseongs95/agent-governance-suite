@@ -1226,7 +1226,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       try {
         if (scenario === "late") {
           expect(verification.pendingCount(target)).toBe(1);
-          expect(verification.managedWakeStatus(target)).toMatchObject({ state: "unknown" });
+          expect(verification.managedWakeStatus(target)).toMatchObject({ state: "observed", observation: "observed" });
         } else if (["forged", "mixed"].includes(scenario)) {
           expect(verification.pendingCount(target)).toBe(1);
           expect(verification.managedWakeStatus(target)).toMatchObject({ state: "submitted" });

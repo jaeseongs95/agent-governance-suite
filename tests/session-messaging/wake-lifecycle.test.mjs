@@ -211,7 +211,7 @@ test('W05-r2 observation holds the SQLite generation lock and notices a generati
   } };
   assert.equal(f.store.claimHostWake(target, observed.observation, observed.sourceReceiptId, reader, f.now + 4).recognized, false);
   assert.equal(blocked, true); assert.equal(f.store.pendingCount(target, f.now + 4), 1);
-  assert.equal(f.store.managedWakeStatus(target, f.now + 4).state, 'unknown');
+  assert.equal(f.store.managedWakeStatus(target, f.now + 4).state, 'observed');
 });
 
 test('W05-r2 lost committed outcome response never dispatches again', async () => {
@@ -247,7 +247,7 @@ test('W05-r2 forged nonce, caller approved and normalized observation cannot obs
   assert.equal(hostClaim(f, observed, f.now + 5).recognized, false);
 });
 
-test('W05-r2 expired/old-generation hook records only late observation and preserves the current fence', () => {
+test('verified expired/old-generation arrival retires only its attempt before a separate current wake', () => {
   for (const variant of ['expired', 'new-instance', 'same-instance-new-birth']) {
     const f = fixture(); body(f.store, 'old-body', f.now);
     const attempt = begin(f.store, f.now);
@@ -258,15 +258,54 @@ test('W05-r2 expired/old-generation hook records only late observation and prese
     else f.store.endPresence(target, 'fixture', 'instance-1', at);
     f.store.startPresence({ ...target, instanceId: variant === 'new-instance' ? 'instance-2' : 'instance-1', transport: 'portable',
       wakeVisibility: 'silent', canWakeSilently: true, deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } }, at + 1);
+    f.store.acquireRelay({ ...target, transport: 'portable', relayId: 'relay-2', pid: process.pid, parentPid: process.pid }, at + 1);
     body(f.store, 'new-body', at + 2);
+    const current = { ...target, ...reservation('current-wake-nonce-abcdefghijklmnop'),
+      instanceId: variant === 'new-instance' ? 'instance-2' : 'instance-1', relayId: 'relay-2' };
+    assert.equal(f.store.reserveManagedWake(current, at + 2).dispatch, false);
     const observed = observe(f, attempt, at + 3);
-    assert.equal(hostClaim(f, observed, at + 4).recognized, false);
+    assert.deepEqual(hostClaim(f, observed, at + 4), { recognized: false, messages: [], binding: null });
     assert.equal(f.store.pendingCount(target, at + 4), 1);
     const state = f.store.managedWakeStatus(target, at + 4);
-    assert.equal(state.state, 'unknown'); assert.ok(state.lateObservedAt); assert.equal(state.observedAt, null);
+    assert.equal(state.state, 'observed'); assert.equal(state.observation, 'observed');
+    assert.ok(state.lateObservedAt); assert.equal(state.observedAt, state.lateObservedAt);
     assert.equal(f.store.recordManagedWakeOutcome(attempt, 'definite-failure', at + 5), false);
-    assert.equal(f.store.managedWakeStatus(target, at + 5).state, 'unknown');
+    const reserved = f.store.reserveManagedWake(current, at + 6);
+    assert.equal(reserved.dispatch, true);
+    const next = f.store.startManagedWake(reserved.attempt, at + 7).attempt;
+    assert.ok(next); assert.notEqual(next.attemptId, attempt.attemptId);
+    assert.equal(hostClaim(f, observed, at + 8).recognized, false);
+    assert.equal(f.store.managedWakeStatus(target, at + 8).attemptId, next.attemptId);
+    assert.equal(f.store.managedWakeStatus(target, at + 8).state, 'started');
+    assert.equal(f.store.reserveManagedWake({ ...current, nonce: 'duplicate-new-wake-abcdefghijklmnop' }, at + 9).dispatch, false);
+    const delivered = hostClaim(f, observe(f, next, at + 10), at + 11);
+    assert.equal(delivered.recognized, true);
+    assert.deepEqual(delivered.messages.map(message => message.messageId), ['new-body']);
+    assert.equal(delivered.binding.attemptId, next.attemptId);
   }
+});
+
+test('old-generation retirement still rejects wrong target, unknown or mixed nonces and stale provenance', () => {
+  const f = fixture(); body(f.store, 'old-body', f.now);
+  const attempt = begin(f.store, f.now);
+  f.store.recordManagedWakeOutcome(attempt, 'accepted-or-unknown', f.now + 2);
+  f.store.startPresence({ ...target, instanceId: 'instance-2', transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
+    deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } }, f.now + 3);
+  const observed = observe(f, attempt, f.now + 4);
+  const mixed = observe(f, attempt, f.now + 4, {
+    prompt: `[agent-governance-suite:wake:${attempt.nonce}]\n[agent-governance-suite:wake:unknown-nonce-abcdefghijklmnop]`,
+  });
+  assert.equal(hostClaim(f, mixed, f.now + 5).recognized, false);
+  const ordinary = adaptHostInput({ hook_event_name: 'UserPromptSubmit', session_id: target.sessionId,
+    agent_id: '', prompt: `[agent-governance-suite:wake:${attempt.nonce}]\nuser request` }, target.host).observation;
+  assert.equal(hostClaim(f, { ...observed, observation: ordinary }, f.now + 5).recognized, false);
+  assert.equal(f.store.claimHostWake({ ...target, sessionId: 'wrong-target' }, observed.observation,
+    observed.sourceReceiptId, wakeHookObservationReader, f.now + 5).recognized, false);
+  assert.equal(hostClaim(f, { ...observed, sourceReceiptId: 'unregistered-receipt' }, f.now + 5).recognized, false);
+  assert.equal(hostClaim(f, observed, f.now + 30_005).recognized, false);
+  assert.equal(f.store.managedWakeStatus(target, f.now + 30_005).state, 'unknown');
+  assert.equal(f.store.managedWakeStatus(target, f.now + 30_005).observedAt, null);
+  assert.equal(f.store.pendingCount(target, f.now + 30_005), 1);
 });
 
 test('W05-r2 batch/ACK-loss redelivery and hook rollback preserve exact nonce consumption', () => {
@@ -370,6 +409,30 @@ async function runProcess(f, mode, relayId) {
   const [code] = await p.exit; assert.equal(code, mode === 'crash-before-start' ? 17 : mode === 'crash-after-start' ? 18 : mode === 'crash-after-effect' ? 19 : 0, p.stderr());
   return p;
 }
+
+test('verified old arrival in another process releases only the old attempt and permits one new effect', async () => {
+  const f = fixture(); body(f.store, 'old-body', f.now);
+  const attempt = begin(f.store, f.now);
+  f.store.recordManagedWakeOutcome(attempt, 'submitted', f.now + 2);
+  f.store.claim(target, f.now + 3); f.store.acknowledge(target, ['old-body'], f.now + 4);
+  f.store.startPresence({ ...target, instanceId: 'instance-2', transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
+    deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } }, f.now + 5);
+  body(f.store, 'new-body', f.now + 6);
+  vi.stubEnv('AGENT_GOVERNANCE_TRUST_DB_PATH', join(f.directory, 'trust.sqlite3'));
+  const observed = await processFixture(f, 'observe-wake');
+  const received = once(observed.child, 'message'); observed.child.send({ nonce: attempt.nonce });
+  const [{ result }] = await received;
+  const [code] = await observed.exit; assert.equal(code, 0, observed.stderr());
+  assert.deepEqual(result, { recognized: false, messages: [], binding: null });
+  assert.equal(f.store.pendingCount(target), 1);
+  assert.equal(f.store.managedWakeStatus(target).state, 'observed');
+  const relays = await Promise.all(['current-relay', 'replacement-current-relay'].map(id => processFixture(f, 'relay', id)));
+  for (const relay of relays) relay.child.send({ instanceId: 'instance-2' });
+  for (const relay of relays) { const [relayCode] = await relay.exit; assert.equal(relayCode, 0, relay.stderr()); }
+  assert.equal(readFileSync(join(f.directory, 'effects.txt'), 'utf8').trim().split('\n').length, 1);
+  assert.notEqual(f.store.managedWakeStatus(target).attemptId, attempt.attemptId);
+  assert.equal(f.store.pendingCount(target), 1);
+});
 
 test('Codex running body claim in another process prevents the external queue call before start', async () => {
   const f = fixture(); body(f.store, 'running-body', f.now);
