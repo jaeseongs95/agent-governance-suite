@@ -343,11 +343,16 @@ test.each(['prestarted', 'client-ensure'])('packaged CLI binds history to explic
     assert.deepEqual(snapshot(f), before);
     assert.equal(run({ ...payload(f), approved: true }).code, 1); assert.deepEqual(snapshot(f), before);
     // Valid proof in the unrelated default DB must not replace the broker's selected DB.
-    copyFileSync(f.trustPath, decoyPath); rmSync(f.trustPath);
+    copyFileSync(f.trustPath, decoyPath); writeFileSync(f.trustPath, decoyBytes);
+    const unrelatedProof = run(payload(f)); assert.equal(unrelatedProof.code, 0);
+    assert.deepEqual(unrelatedProof.json.data, { reconciled: false, evidence: null });
+    assert.deepEqual(snapshot(f), before); assert.deepEqual(readFileSync(f.trustPath), decoyBytes);
+    assert.deepEqual(readFileSync(decoyPath), trustBytes); assert.deepEqual(readdirSync(unrelated), ['trust.sqlite3']);
+    rmSync(f.trustPath);
     const missing = run(payload(f)); assert.equal(missing.code, 0);
     assert.deepEqual(missing.json.data, { reconciled: false, evidence: null });
     assert.equal(existsSync(f.trustPath), false); assert.deepEqual(snapshot(f), before);
-    assert.deepEqual(readFileSync(decoyPath), trustBytes);
+    assert.deepEqual(readFileSync(decoyPath), trustBytes); assert.deepEqual(readdirSync(unrelated), ['trust.sqlite3']);
     writeFileSync(f.trustPath, trustBytes); writeFileSync(decoyPath, decoyBytes);
     const result = run(payload(f)); assert.equal(result.code, 0);
     assert.equal(result.json.data.reconciled, true, JSON.stringify(result.json));
