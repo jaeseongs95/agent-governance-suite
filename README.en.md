@@ -2,65 +2,45 @@
 
 [한국어](README.md) | English
 
-Agent Governance Suite is a set of local plugins that keeps scope, risky changes, verification evidence, and independent review in one workflow across AI hosts. Shared skills, contracts, and MCP tools are host-neutral; Codex, Claude Code, and other runtime differences stay in adapters and overlays.
+Agent Governance Suite (AGS) is a local plugin that adds specialist skills and verification procedures to an AI agent's work. It helps select the checks a request needs and review execution results alongside their evidence.
 
-When an agent says a task is finished, the suite checks whether the required conditions were actually met. A workflow cannot finish when test evidence is missing, the implementer audits their own work, or an old audit is reused after the target has changed. The premise of this plugin is that such a judgement must not rest on instructions alone. The local MCP server freezes the plan, then checks stage order, result shapes, evidence, and audit conditions itself, and refuses a stage that does not meet them.
+Use it to track change scope and verification while building a feature, or to coordinate Codex and Claude Code sessions on the same computer.
 
-The same standard reaches past a single session. When several agent sessions on one computer work on the same repository or installation without knowing about each other, each can pass its own checks and still produce results that do not fit together. So every host shares one session board, and sessions message each other directly over a local TLS channel.
+| Situation | What to arrange without AGS | What AGS provides |
+| --- | --- | --- |
+| Starting work | A way to define goals, scope, and completion criteria | Instructions for defining task conditions and connecting the required specialists |
+| Risky changes | Pre-execution checks and a separate audit process | Risk preflight, independent audits, and required-stage checks through MCP |
+| Checking completion | Criteria for comparing results with evidence | Evidence checks for each acceptance criterion and workflow completion checks |
+| Coordinating sessions | A way to see each session's work and contact it | A shared board and local PEER messages with processing acknowledgments |
 
 <!-- release-version:start -->
-v2.4.0 moves detailed procedures for twenty skills, including `orchestrator`, behind conditional references and reduces their combined initial `SKILL.md` size by 60.361863%. Activation contracts, frontmatter, descriptors, and relocated instructions remain intact and are checked by deterministic reconstruction and full distribution validation. The external `ponytail` fork is unchanged. See the [v2.4.0 release notes](docs/release-notes-v2.4.0.md) (Korean) for scope and limitations.
-
-v2.2.2 is a patch release that restores the hook bundle boundary. It separates the executable session-message relay entrypoint from the importable core so Codex hooks no longer fail through the relay argument parser, directly tests the packaged hook exit code, and uses Codex's documented default `SessionEnd` timeout without a clamping warning.
-
-v2.2.0 records a source receipt before a peer message body is injected and keeps that receipt separate from authority, approval, and delegation. The trust store retains a digest and bounded metadata rather than the raw body, and peer input cannot create authority. Session listings now include presence bound to an exact runtime instance, so a stale instance cannot end a newer one. Codex wake delivery is deferred to the next user turn by default; visible queue wake must be enabled explicitly. Collaboration decisions distinguish the current user turn from non-authorizing sources, and a diagnostician's confirmed root condition stays digest-bound through recovery strategies and the next task seed.
-
-v2.1.0 lets AI host sessions working on the same computer send messages directly to each other. A local TLS 1.3 broker holds the body and tracks delivery until the receiver acknowledges it, and the wake bell that nudges a host is reserved at most once per target, so notifications cannot pile up across an unchanged pending interval. The session board and broker state live under `~/.agent-governance-suite`, a root every host shares. Each new Codex user request is recorded through the `UserPromptSubmit` hook, so the request boundary requires a fresh board summary before the session's next mutation. v2.1.1 rejects a session message whose body contains a NUL character at send time, removing a case where `node:sqlite` behaved differently across platforms. It also reads the Windows process start token through a lighter call, so a relay no longer fails to confirm its own host on a slow machine. v2.1.2 moves the check that reads the real OS token out of the parallel test suite into a step of its own, so verification no longer depends on how busy the machine is, and it waits longer for the broker to become ready on a slow Windows machine, so a first message is less likely to fail while the broker is still starting.
-
-- v2.0.0 — the major release that made both hosts share one session board and expanded the trust boundary
-- v1.21.0 — added the session board (`session-board`) so sessions working on the same machine can see each other's work
-- v1.20.0 — connected the MIT skill `ponytail` to the implementation step
-
-Release notes for earlier versions are in [`docs/`](docs/) (Korean). The candidate-v2 policy applied to `korean-prose-editor` in v1.16.0 was not part of the quality gate record (`0.3.0-gate-1`), so it remains unevaluated for quality.
-
 The current public release is `v2.7.1` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
 
-## Problems it handles
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Main features](#main-features)
+- [Configuration](#configuration)
+- [Troubleshooting](#troubleshooting)
 
-| Common failure | What the suite does |
-| --- | --- |
-| Several `AGENTS.md` files make instruction scope unclear | Resolves which instruction files apply to the actual work target and in what order. |
-| An agent edits files outside the requested scope | Captures a baseline before the change and compares it with the final result. |
-| A destructive action, deployment, or permission change starts without preparation | Checks the target, authority, approval requirements, and recovery path before execution. |
-| An agent reports completion without running the required checks | Requires current evidence for each acceptance criterion. |
-| An implementer audits their own work or reuses an old audit | Checks actor separation, target identity, and audit freshness. |
-| The same failure is retried without new evidence | Groups failure episodes and identifies the next useful diagnostic check. |
-| Several agent sessions touch the same repository or installation at once | Each session writes a one-line summary to the shared board, and hard-to-reverse steps such as a merge or an install start by reading what the other sessions are doing. |
-| Someone copies information between sessions by hand | Sessions message each other over a local TLS channel, and delivery is tracked until the receiver acknowledges it. |
+## Installation
 
-The orchestrator does not run every specialist for every request. It selects the roles the task needs, and a simple request can call one specialist directly.
+Node.js **24.0.0 or later** is required. Using the plugin does not require cloning this repository or running `pnpm install`.
 
-## How it works
+### Claude Code
 
-```mermaid
-flowchart LR
-    A[User request] --> B[Resolve rules and scope]
-    B --> C[Select the required specialists]
-    C --> D[Check stage results and evidence]
-    D -->|Requirements met| E[Final receipt]
-    D -->|Missing or conflicting| F[Return the blocking reason]
+Run inside Claude Code:
+
+```text
+/plugin marketplace add jaeseongs95/agent-governance-suite
+/plugin install agent-governance-suite@agent-governance-claude
 ```
 
-The orchestrator selects only the checks required by the request and puts them in order. The local MCP server freezes that plan, then validates stage order, result shapes, evidence, and audit conditions. It issues a final receipt only after every required gate passes.
+Start a new session after installation.
 
-For orchestrated workflows, the plan now also binds the execution capability of semantic stages. Bootstrap and each semantic stage receive a minimum model class and reasoning-effort floor based on role and risk. If the actual runtime metadata is missing or below that floor, the MCP layer rejects a `passed` result. The policy therefore prevents a weaker session configuration from silently satisfying a higher-assurance stage without pinning the suite to one product model.
+### Codex
 
-Checking does not stop at the edge of one session. What other sessions on the same computer are doing is read from the shared board, and anything they need to know is sent over a local TLS channel. See [Working across sessions](#working-across-sessions).
-
-## Install and try it
-
-Node.js 24.0.0 or later is required.
+Run in a terminal:
 
 <!-- release-install:start -->
 ```bash
@@ -69,136 +49,121 @@ codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
 
-Start a new Codex session after installation so Codex can load the bundled skills and MCP tools. Then call the orchestrator:
+Start a new Codex session after installation. Review and trust the installed hooks in `/hooks` to enable context continuity, the session board, and execution observation. Review them again when their definitions change.
+
+## Quick start
+
+Describe the work and what you want checked in your usual language; you can start without memorizing skill names.
 
 ```text
-Use $orchestrator to define the scope and success criteria for this task, then manage the required checks and completion evidence: <your task>
+Implement and verify this feature. Also check that changes from other tasks are not mixed in.
+The same test keeps failing. Separate the possible causes and choose the next check.
+Polish this Korean README while preserving facts, numbers, links, and the meaning of code.
 ```
 
-You can also call one specialist directly:
+The agent uses the installed skills' descriptions and applicability rules to decide which skills to use. When several specialists need to work in sequence, the `orchestrator` connects their order and results; a single check can use the relevant specialist directly.
 
-```text
-Use $mutation-risk-preflight before making this destructive change.
-Use $acceptance-evidence-validator to verify that each acceptance criterion has current evidence.
+Claude Code provides additional skill recommendations for some requests and commands. Implicit selection in Codex depends on the model's judgment. To name a skill explicitly, use a request such as `$orchestrator` in Codex or `/agent-governance-suite:orchestrator` in Claude Code.
+
+```mermaid
+flowchart LR
+    R["User request"] --> S["Agent selects relevant skills"]
+    S --> E["Specialist skills execute"]
+    E --> V["Review results and evidence"]
+    S -. "Integrated workflow" .-> P["MCP plan"]
+    P --> E
+    V -. "Integrated workflow" .-> G["MCP completion checks"]
 ```
 
-Check the installed runtime from the plugin root:
+Specialists can be used directly. Integrated workflows that check plans, stage order, and completion conditions through MCP require the local MCP server.
 
-```bash
-node scripts/check-runtime.mjs
-```
+## Main features
 
-Each specialist remains available when the MCP server is unavailable. Orchestrated runs that enforce stage order and issue a final receipt require the MCP server.
+### Specialists for the task
 
-A hook runs only after you review and trust its current definition in Codex `/hooks` following installation or a hook change. This applies to continuity, board and execution-observation hooks. Specialists remain available directly, but a skipped execution-observation hook leaves strict orchestration on `BINDING_REQUIRED`. In Codex the board hook runs on session start, user prompt submission, and before tool calls, and uses the same shared board file as Claude Code.
+Find the situation that fits your task below. This is not a list of skills to run all at once.
 
-The Codex distribution binds the current hook's model, session and turn, and the same turn's host-recorded effort, to `plan_workflow` and `record_stage_result`. Missing observations and unsupported models are never guessed. See the [execution-observation contract](docs/host-execution-attestation.md) for model policy, bounded metadata reads, subagent limits and hookless host-owned wrapper integration. Fixture checks and actual installed-host runs require separate evidence.
-
-## Working across sessions
-
-When one person runs several agent sessions on the same computer, the checks inside each session are not enough on their own. A session needs to know whether another one is editing the same files or about to change the same installation. The board shows that state; session messages carry the content. Both live in state that every local host shares.
-
-The session board keeps each session's host, session id, working directory, and a one-line current-work summary in local SQLite, read through `list_session_status`. For each user request a session must write that line with `update_session_status` before its first file change, command, or subagent run; without it the hook denies that call once and allows the next attempt. The board is pull-based: another session sees an update when it next reads the list, so the board by itself neither wakes nor interrupts a running session. Do not put request text, secrets, or personal data in the line.
-
-### Local session messages
-
-Visible Codex queue wake is off by default. To opt in, place `{"schemaVersion":"1.0.0","codex":{"queueWake":true}}` in `session-messaging.json` under the absolute `PLUGIN_DATA` provided to this plugin's hooks. An explicit `AGENT_GOVERNANCE_CODEX_QUEUE_WAKE=1` or `0` takes precedence; invalid settings produce a bounded diagnostic and keep delivery deferred. After changing the setting, require a new receiving-session `SessionStart` and verify its presence instance and transport. Writing the file or restarting only the MCP server does not switch an existing relay. Claude Code and the common queue are unaffected. See [Codex queue wake settings](docs/input-boundaries.md#codex-queue-wake-설정) (Korean) for read limits, failures, and reload scope.
-
-Peer transmission, pre-call enforcement, and resume after returning are separate capabilities. The supported hook restricts the exact local `mcp__codex_app__wait_threads` surface only when all targets have broker-observed peer relations and the current generation has a recent consumed wake plus live presence and relay. One immediate snapshot is allowed; unchanged repeats are suppressed for 30 seconds. Hookless hosts can consume the same decision with the existing CLI `wait` operation. Unknown resume permits at most a one-second wait and one refresh, then continuation on the next user turn. Generic process/test waits and native calls outside AGS control remain outside enforcement. See the [peer wait design and CLI example](docs/peer-wait-policy.md).
-
-When upgrading to 2.6.0, stop the existing AGS MCP, relay, and broker processes, update the plugin, then reconnect to start the new processes. This release does not guarantee compatibility between an old broker and the new plugin.
-
-Where the board shows state, session messages carry content. `prepare_session_message` fixes the target, body (up to 4096 UTF-8 bytes), and TTL and returns a system-issued `messageId` without delivery. `send_session_message` accepts only that ID and atomically stores the queue entry and first receipt. Retrying the same ID, including after restart, does not insert again or extend expiry. After an uncertain reply, query status or retry the known ID; an unknown ID requires comparison with saved receipts. Prepare again only for a new intent. See the [message ID and retry contract](docs/session-message-lifecycle.md) for storage bounds and preservation of existing data. A receiving hook claims the body as untrusted peer context, and the processing model must call `acknowledge_session_messages` to complete delivery. Before ACK, the message becomes eligible for redelivery with exponential backoff when its claim lease expires. `get_session_message_status` distinguishes prepared state, the existing `queued`, `delivered`, and `acknowledged` states, and a retained submitted receipt with `deliveryState: unknown` after queue cleanup. TTL defaults to one hour and may be 30 seconds to 24 hours; the spool is capped at 1000 unacknowledged messages or 4 MiB of body text. The TLS spool and ACK provide durable body delivery; the wake bell that nudges a host is a best-effort notification. The broker reserves at most one unconsumed bell per target so an unchanged pending interval cannot keep appending queue entries. A validated wake claim or an actual claim at a supported boundary consumes pending bells, and an ambiguous result after submission starts is not retried to avoid duplicates. If a wake is lost, the next hook or turn checks the same spool again.
-
-The broker starts lazily under `~/.agent-governance-suite/session-messaging/`, a shared root used by every host, and binds only to an ephemeral `127.0.0.1` port. An absolute `AGENT_GOVERNANCE_SHARED_STATE_DIR` may override that root. It pins the SHA-256 fingerprint of a P-256 self-signed certificate generated with Node's built-in crypto module and also checks a separate 256-bit token inside TLS. Message bodies never go through Codex command arguments or the Claude inbox; those adapters carry only a small wake bell with a random nonce bound to its target. Delayed or duplicate copies of the same bell remain recognizable within the TTL but grant neither message delivery nor authority. The message database does not store the private key, broker token, Claude inbox token, or inbox socket path.
-
-The common protocol treats `host` as an arbitrary string. Codex and Claude Code have bundled wake adapters. Other local runtimes such as Grok or Spark can send JSON on stdin to `mcp-server/dist/session-message-cli.mjs` and use the same `prepare`, `send`, `claim`, `acknowledge`, `status`, and `pending` operations. New adapters must not inject peer bodies on ordinary user input. Use `claim-wake` for validated wakes, `claim-deferred` for supported tool boundaries, and `claim-turn-end` for supported turn endings. Separate input observations from delivery capabilities and preserve the first-boundary deferral and atomic wake consumption rules. See [input boundaries](docs/input-boundaries.md). A `claim` caller may set `maxMessages` and `maxBodyChars` (measured in UTF-16 code units) to fit its host injection limit; independently, the broker keeps the serialized JSON response within 32 KiB. Bundled hooks use the conservative common policy of injecting one message at a time. Bodies and secrets do not appear in process arguments. Example:
-
-```json
-{"operation":"claim","payload":{"target":{"host":"spark","sessionId":"session-1"}}}
-```
-
-TLS prevents plaintext exposure on loopback and rejects an incorrectly identified broker. It does not isolate a malicious process running as the same OS user, which can read or alter the user's key, token, or database files. Do not treat this channel as a user-to-user security boundary or as delegated approval.
-
-## Use with Claude Code
-
-The Claude Code distribution lives separately in `claude-plugin/`. It shares no files, hooks, or MCP configuration with the Codex plugin; among local state, only the session board and TLS session-message broker are shared across hosts.
-
-```text
-/plugin marketplace add jaeseongs95/agent-governance-suite
-/plugin install agent-governance-suite@agent-governance-claude
-```
-
-Start a new session after installation and call skills as `/agent-governance-suite:orchestrator` or `/agent-governance-suite:mutation-risk-preflight`. Differences from Codex:
-
-- Workflow and continuity state is stored in the per-plugin data directory Claude Code provides (`${CLAUDE_PLUGIN_DATA}`). The session board and TLS broker use the same `~/.agent-governance-suite` shared root on every OS and host, so Claude Code and Codex sessions see the same state. A sandboxed host must pass the same absolute `AGENT_GOVERNANCE_SHARED_STATE_DIR` to every adapter. Local processes running as the same OS user can read this state.
-- For each user request, the session board hook asks for a one-line `update_session_status` before the first file change, command or subagent run. Without it, that call is denied once and the next attempt is allowed. Calls to this plugin's MCP tools are not denied.
-- `codex-token-usage-analyzer` is omitted because it reads Codex session logs only.
-- Independent audits and deliberation use the `independent-auditor` and `deliberation-reviewer` subagents, which do not inherit the parent conversation.
-- `instruction-scope-resolver` checks the `CLAUDE.md` hierarchy in addition to the `AGENTS.md` chain.
-- The Anthropic API rejects tool schemas with a top-level `oneOf`, so the Claude distribution sets `AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE=anthropic` to flatten only the advertised `plan_workflow` schema. Server-side validation still uses the same contract, and without this value the server advertises the existing schemas unchanged.
-- With the same value the server also advertises session `instructions`, which Claude Code places in its system prompt at session start: an intake rule to classify the failure impact of a request before editing files or running commands and, when the impact is high, to call the orchestrator first to decide which specialist stages the request needs and which it does not, then to invoke the chosen stages at their point in the work. Without the value the server advertises no `instructions`.
-- Orchestrated workflows requiring execution assurance start with host-observed model and effort. The Claude adapter retains its transcript, session-model and hook-effort observations; the Codex adapter compares the current hook with the same turn's metadata. Each distribution's manifest selects its adapter. Both use shared signature, input-binding, freshness, replay and execution-floor checks. Tokens show harness observation; their keys remain in a state database readable by the same OS user, so this is not OS-level tamper protection.
-
-`claude-plugin/` is generated by `pnpm claude:build`; do not edit it directly. Shared sources (`skills/`, `runtime/`, `contracts/`, and the MCP server bundle) are copied unchanged. Claude-only files live in `claude-overlay/`, and per-skill Claude wording lives in `claude-overlay/adaptations/<skill>.json`. Changing a shared source does not require regenerating the Claude plugin in the same change: CI only warns about the difference, and the plugin is regenerated when preparing a release or doing Claude-side work.
-
-## Included skills
-
-Select a skill name to open its suite-local path. The `ponytail` exception links to the pinned external source shown in the table.
-
-`When` identifies the work situation in which a skill is reviewed or called. It is not a fixed order to run from top to bottom; select only the skills that match the risk and current state of the request. Each phase is defined in [Operations and reference](docs/operations.md) (Korean).
-
-| When | Skill | Version | Responsibility |
+| Situation | Skill | Version | Responsibility |
 | --- | --- | --- | --- |
-| On request | [`model-effort-advisor`](skills/model-effort-advisor/) | 0.1.0 | Compares an observed current model and reasoning effort with the request's difficulty and risk, then reports only material mismatches. |
-| On explicit request | [`codex-token-usage-analyzer`](skills/codex-token-usage-analyzer/) | 0.1.0 | Aggregates local Codex token observations for threads, descendants, or projects and returns JSON with optional Markdown. |
-| When editing Korean prose | [`korean-prose-editor`](skills/korean-prose-editor/) | 0.1.0 | Edits Korean READMEs, guides, reports, and other multi-paragraph prose naturally while preserving facts, numbers, quotations, links, code, and claim strength, then separately verifies and deterministically finalizes the result. |
-| Before work | [`instruction-scope-resolver`](skills/instruction-scope-resolver/) | 1.0.0 | Finds the instructions and precedence rules that apply to the work target. |
-| Before work | [`workspace-convention-profiler`](skills/workspace-convention-profiler/) | 1.0.0 | Records repository structure, commands, and test conventions with evidence. |
-| Before work | [`task-contract`](skills/task-contract/) | 1.1.0 | Defines the objective, scope, risk, and completion criteria while keeping provenance receipts separate from authority. |
-| During work | [`coordinate-subagents`](skills/coordinate-subagents/) | 1.1.0 | Coordinates parallel independent work, ownership, verification duties, and model application records. |
-| During work | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | 1.0.0 | Reviews evidence and counterarguments for complex decisions. |
-| Convergence review | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 1.0.0 | Independently compares iteration contracts and frame changes before a new epoch can open. |
-| Before and after changes | [`change-scope-guardian`](skills/change-scope-guardian/) | 1.0.0 | Captures a baseline and checks whether the final change stayed in scope. |
-| Before changes | [`mutation-risk-preflight`](skills/mutation-risk-preflight/) | 1.0.1 | Checks the target, authority, approval, and recovery conditions for risky mutations. |
-| Implementation | [`ponytail`](https://github.com/jaeseongs95/ponytail/tree/83b2cbc3bc50df3030c49d1dfe598ccefe850a85/skills/ponytail) | 4.10.0 | Instructs the agent to pick the simplest correct implementation when writing or changing code and at the governance implementation step, without unrequested features, abstractions or dependencies. |
-| Security analysis requested | [`software-security-auditor`](skills/software-security-auditor/) | 0.1.0 | Audits web/API and CLI/MCP attack paths, controls, vulnerabilities and coverage gaps; existing gates decide completion. |
-| Before completion | [`acceptance-evidence-validator`](skills/acceptance-evidence-validator/) | 1.0.0 | Verifies current evidence for every acceptance criterion. |
-| Before completion | [`independent-audit-gate`](skills/independent-audit-gate/) | 1.0.0 | Requires a reviewer who is independent from the implementer for high-risk results. |
-| After a failure | [`blocker-diagnostician`](skills/blocker-diagnostician/) | 1.1.0 | Separates observed failures from hypotheses and binds the symptom, mechanism, and root condition to evidence. |
-| When selecting recovery | [`recovery-strategy-selector`](skills/recovery-strategy-selector/) | 0.2.0 | Applies an Objective Gate to strategies bound to the confirmed cause and root condition, then creates a `RecoveryHandoff.v1` for a new task. |
-| Before and after evaluation | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | 1.0.0 | Independently audits a frozen evaluation's design, inputs, judgments, and aggregation; only a `post-execution PASS` qualifies as quality or release evidence. |
+| Preparing work | [`model-effort-advisor`](skills/model-effort-advisor/) | 0.1.0 | Checks material mismatches between observed model/effort and the request's difficulty and risk. |
+| Preparing work | [`instruction-scope-resolver`](skills/instruction-scope-resolver/) | 1.0.0 | Resolves applicable instructions and their precedence. |
+| Preparing work | [`workspace-convention-profiler`](skills/workspace-convention-profiler/) | 1.0.0 | Investigates repository structure, tools, conventions, and validation commands. |
+| Preparing work | [`task-contract`](skills/task-contract/) | 1.1.0 | Defines scope, acceptance criteria, risk, and authority while separating source receipts from authority. |
+| Implementation, changes, and decisions | [`coordinate-subagents`](skills/coordinate-subagents/) | 1.1.0 | Manages ownership and verification responsibilities for authorized, useful delegation. |
+| Implementation, changes, and decisions | [`ponytail`](skills/ponytail/) | 4.10.0 | Guides the agent toward the simplest implementation that satisfies the request. |
+| Implementation, changes, and decisions | [`change-scope-guardian`](skills/change-scope-guardian/) | 1.0.0 | Compares the baseline and current Git changes to find out-of-scope files. |
+| Implementation, changes, and decisions | [`mutation-risk-preflight`](skills/mutation-risk-preflight/) | 1.0.1 | Checks the target, approval, impact, and recovery conditions of risky changes. |
+| Implementation, changes, and decisions | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | 1.0.0 | Reviews evidence and counterarguments from independent perspectives. |
+| Implementation, changes, and decisions | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 1.0.0 | Independently compares iteration contracts and frame changes. |
+| Checking completion | [`acceptance-evidence-validator`](skills/acceptance-evidence-validator/) | 1.0.0 | Checks every acceptance criterion against evidence for the current result. |
+| Checking completion | [`independent-audit-gate`](skills/independent-audit-gate/) | 1.0.0 | Requires an auditor separate from the implementer for high-risk changes and their evidence. |
+| Diagnosing failures and selecting recovery | [`blocker-diagnostician`](skills/blocker-diagnostician/) | 1.1.0 | Separates observations from hypotheses and selects the next discriminating check. |
+| Diagnosing failures and selecting recovery | [`recovery-strategy-selector`](skills/recovery-strategy-selector/) | 0.2.0 | Compares strategies for a confirmed cause and creates a `RecoveryHandoff.v1` for a new task. |
+| Specialist analysis and editing | [`korean-prose-editor`](skills/korean-prose-editor/) | 0.1.0 | Preserves facts, numbers, quotations, links, code, and claim strength through editing, separate verification, and finalization. |
+| Specialist analysis and editing | [`codex-token-usage-analyzer`](skills/codex-token-usage-analyzer/) | 0.1.0 | Aggregates task and project token usage from local Codex logs. |
+| Specialist analysis and editing | [`software-security-auditor`](skills/software-security-auditor/) | 0.1.0 | Audits web/API and CLI/MCP attack paths, controls, and coverage gaps. |
+| Specialist analysis and editing | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | 1.0.0 | Independently audits a frozen evaluation's design, inputs, judgments, and aggregation. |
 
-Every specialist can run on its own. Use `$orchestrator` when a request needs more than one role. Suite-managed specialists are pinned by local version, integrated checksum, and the `internal` policy in `skills/source-lock.json`; independently published skills additionally pin their upstream path, tag or commit, upstream checksum, and update policy. The `orchestrator` is tracked by current Git history.
+Versions and provenance are recorded in the [registry](skills/registry.json) and [source lock](skills/source-lock.json). The [`orchestrator`](skills/orchestrator/) is tracked by current Git history. The `ponytail` link points to the skill bundled in AGS. Pinned external source information remains in the source lock as historical provenance. `codex-token-usage-analyzer` reads Codex logs only and is omitted from the Claude Code distribution.
 
-## Development and validation
+The Korean prose workflow is enabled. Its current editing policy has not yet been evaluated for quality, and the previous policy's quality pass does not apply to the current policy. See [evaluation status and plans](docs/roadmap.md) (Korean).
 
-Development requires Node.js 24.0.0 or later and Corepack.
+### MCP workflows that check evidence
 
-```bash
-corepack enable
-pnpm install --frozen-lockfile
-pnpm bundle:check
-pnpm claude:drift
-pnpm lint
-pnpm build
-pnpm test
-pnpm runtime:check
-pnpm validate:all
-pnpm validate:official
-git diff --check
+Use `plan_workflow` to plan the work selected by the agent and `record_stage_result` to record actual specialist results. MCP checks stage order, result shapes, required evidence, and audit conditions. `finalize_workflow` produces a completion receipt only after the planned requirements pass.
+
+Workflows requiring execution assurance also check the host-observed model, effort, and binding to the execution. See the [execution-observation contract](docs/host-execution-attestation.md) (Korean) for details.
+
+### See who is working and send content between sessions
+
+[`session-board`](skills/session-board/) shows who is working on which repository and task on the same computer. Each session records a one-line summary for others to read on the shared board.
+
+Local PEER messages let sessions send work requests, review results, and blockers directly within an authorized collaboration scope, without asking the user to copy each message between sessions. Send, body delivery, and processing acknowledgment (ACK) can be checked separately.
+
+```mermaid
+flowchart LR
+    C["Codex session"] --> B["Shared board"]
+    L["Claude Code session"] --> B
+    C -->|"PEER message"| L
+    L -->|"Processing ACK"| C
 ```
 
-`claude:drift` reports when `claude-plugin/` differs from a fresh render of the current sources, without failing. When preparing a release or doing Claude-side work, run `pnpm claude:build` and then `pnpm claude:check` to confirm the generated plugin is current. Keep this order because `bundle:check` must detect a stale committed bundle before a build can overwrite it. In a Codex development environment, `validate:official` runs the system `skill-creator` and `plugin-creator` validators. If Python 3 is not on the system path, set `PYTHON` to its absolute executable path. Start the local MCP server with `pnpm dev`.
+Delivery timing depends on the host's hooks and wake support. Codex may defer delivery until the next supported tool boundary by default. ACK confirms message processing, not task completion or execution approval.
+
+See [message lifecycle](docs/session-message-lifecycle.md) for call order and retries, and [input boundaries](docs/input-boundaries.md) and [peer waiting](docs/peer-wait-policy.md) (Korean) for host-specific delivery and wake behavior. Other local runtimes can use the same messaging protocol through the common CLI.
+
+### Preserve context across long tasks
+
+[`context-continuity`](skills/context-continuity/) stores the scope, decisions, open issues, and evidence references needed to resume a long direct task in a local checkpoint. Restoration first presents metadata and options; the body is returned only through an explicit `load_context` call. Orchestrated workflows resume from existing task contracts and execution records.
+
+### Shared sources and host-specific connections
+
+Shared skills, contracts, and MCP form the basis of the Codex and Claude Code distributions. Adapters and overlays connect host-specific installation, hooks, execution observation, and wake behavior. AGS's principle is to maintain common policy in one source and implement only actual host differences separately. See [architecture](docs/architecture.md) and [input boundaries](docs/input-boundaries.md) (Korean) for support details.
+
+## Configuration
+
+Most users can start with the defaults included in the distributions. Hosts coordinating on the same computer need access to the same shared-state location. If defaults differ, for example in sandboxes, set `AGENT_GOVERNANCE_SHARED_STATE_DIR` to the same absolute path for both hosts.
+
+See [operations](docs/operations.md#상태-저장과-마이그레이션) for state locations and environment variables, the [configuration contract](docs/input-boundaries.md#codex-queue-wake-설정) for optional Codex queue wake, and [cleanup procedures](docs/state-cleanup.md) (Korean) for data retention and cleanup.
+
+`check_for_updates` reports new public stable versions without installing them automatically. See [update checks](docs/operations.md#플러그인-업데이트-확인) (Korean).
+
+## Troubleshooting
+
+| Symptom | First checks |
+| --- | --- |
+| Skills or MCP are missing after installation | Start a new session after installation and check the host's plugin and MCP status. |
+| The MCP server does not start | Check that the host runs Node.js 24.0.0 or later, and review MCP startup logs. |
+| A message waits or has no acknowledgment | Query status with the same `messageId` and check the receiving session's hooks and delivery boundaries. See [delivery conditions](docs/input-boundaries.md) (Korean). |
+| An update leaves old behavior running | Stop existing AGS MCP, relay, and broker processes, update, then reconnect to start new processes. See [updates and recovery](docs/session-message-lifecycle.md#업데이트와-복구) (Korean). |
+
+See the [execution-observation contract](docs/host-execution-attestation.md) for observation errors and [operations](docs/operations.md) (Korean) for detailed operating conditions.
 
 ## Documentation and contributing
 
-- [Architecture](docs/architecture.md) (Korean)
-- [Operations and reference](docs/operations.md) (Korean)
-- [Development reference](docs/development.md) (Korean)
-- [Release checklist](docs/release.md) (Korean)
-- [Additional skill implementation plan](docs/additional-skills-implementation-plan.md) (Korean)
-- [Contributing](CONTRIBUTING.md)
+- [Architecture](docs/architecture.md), [Operations](docs/operations.md) (Korean)
+- [Development and checks](CONTRIBUTING.md), [Development reference](docs/development.md) (Korean)
+- [Release checklist](docs/release.md), [Release history and plans](docs/roadmap.md) (Korean)
 - [Security policy](SECURITY.md)
 
 ## License

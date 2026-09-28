@@ -62,7 +62,7 @@ Claude Code 배포물은 Codex 플러그인과 서로 영향을 주지 않아야
 
 스킬 디렉터리는 `kebab-case`로 짓고 `SKILL.md` frontmatter의 `name`과 일치시킨다. YAML은 2칸 들여쓰기를 사용한다. 지침에는 적용 조건, 제외 조건, 입력, 출력과 실패 처리를 명령형으로 적는다. 공통 규칙은 복사하지 말고 오케스트레이터 계약이나 공유 참고 자료로 관리한다.
 
-스킬을 추가·삭제하거나 이름, 버전, 역할을 바꾸면 같은 변경에서 `README.md`의 `포함된 스킬` 표와 `README.en.md`의 `Included skills` 표도 갱신한다. 두 표의 스킬 수, 이름, 버전, 원본 링크와 역할 설명은 `skills/registry.json`과 `skills/source-lock.json`에 맞춘다.
+스킬을 추가·삭제하거나 이름, 버전, 역할을 바꾸면 같은 변경에서 `README.md`의 `포함된 스킬` 표와 `README.en.md`의 `Included skills` 표도 갱신한다. 두 표의 스킬 수, 이름, 버전과 역할 설명은 `skills/registry.json`과 `skills/source-lock.json`에 맞추고, 스킬 링크는 저장소에 내장된 `skills/<name>/` 경로를 쓴다. `source-lock`의 원격 참조는 과거 provenance이며 사용자용 탐색 링크가 아니다.
 
 `economy`, `balanced`, `quality` 프리셋은 지원되는 모델과 추론 수준만 선택한다. 위임 여부, 에이전트 수, 배치, 권한과 감사 요구에는 영향을 주지 않는다. 사용자 지정값과 호스트의 실제 지원 범위를 우선하며, 고위험 작업은 `general`급 이상과 `high` 이상의 추론 하한을 유지한다.
 
