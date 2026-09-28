@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, it } from "vitest";
 import * as storeModule from "../../mcp-server/src/session-message-store.js";
-import { SessionMessageStore, MESSAGE_RECEIPT_LIMIT } from "../../mcp-server/src/session-message-store.js";
+import { SessionMessageStore, MESSAGE_ID_RECORD_BYTES_LIMIT, MESSAGE_RECEIPT_LIMIT } from "../../mcp-server/src/session-message-store.js";
 import { waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 
@@ -239,7 +239,8 @@ it("service reports capacity rejections as definite no-effect with scope and ear
   const service = new SessionMessageService(state);
   const call = { targetHost: target.host, targetSessionId: target.sessionId };
   const now = Date.now();
-  for (let index = 0; index < SENDER_LIMIT - 1; index++) sendNew(store, hot, now);
+  const firstSent = sendNew(store, hot, now);
+  for (let index = 1; index < SENDER_LIMIT - 1; index++) sendNew(store, hot, now);
   const prepared = await service.prepare({ ...call, body: "prepared before the limit", _sessionBinding: hot });
   expect(prepared.ok).toBe(true);
   sendNew(store, hot, now);
@@ -250,6 +251,9 @@ it("service reports capacity rejections as definite no-effect with scope and ear
   expect(sendRejected.error?.message).toContain("not queued");
   expect(sendRejected.error?.message).toContain(String(release));
   expect(sendRejected.error?.message).not.toMatch(/do not prepare again/u);
+  // The rejected draft remains usable until it expires: one of same-ID retry or new prepare, never both.
+  expect(sendRejected.error?.message).toContain("stays prepared until its draft expires");
+  expect(sendRejected.error?.message).toMatch(/either retry that same messageId or prepare again, not both/u);
   const prepareRejected = await service.prepare({ ...call, body: "no draft", _sessionBinding: hot });
   expect(prepareRejected).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { scope: "sender", earliestReleaseAt: release } } });
   expect(prepareRejected.error?.message).toContain("no draft was created");
@@ -261,4 +265,87 @@ it("service reports capacity rejections as definite no-effect with scope and ear
   for (let index = SENDER_LIMIT; index < MESSAGE_RECEIPT_LIMIT; index++) sendNew(store, { host: "test-host", sessionId: `retention-global-${index % 3}` }, now);
   const globalRejected = await service.prepare({ ...call, body: "global", _sessionBinding: other });
   expect(globalRejected).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { scope: "global", earliestReleaseAt: earliest(store) } } });
+  // A resend of an already queued ID stays an idempotent duplicate while both limits are full.
+  const rowsBefore = rows(store);
+  const resent = await service.send({ messageId: firstSent.messageId, _sessionBinding: hot });
+  expect(resent).toMatchObject({ ok: true, error: null, data: { ...firstSent, duplicate: true } });
+  expect(rows(store)).toBe(rowsBefore);
 }, 30_000);
+
+it("a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection", () => {
+  const store = fixture();
+  const sent = Array.from({ length: SENDER_LIMIT }, (_, index) => sendNew(store, hot, 1000 + index));
+  expect(receipts(store, hot)).toBe(SENDER_LIMIT);
+  expect(store.submitPrepared(hot, sent[0]!.messageId, 5000)).toEqual({ ...sent[0], duplicate: true });
+  expect(store.submitPrepared(hot, sent[SENDER_LIMIT - 1]!.messageId, 5000)).toEqual({ ...sent[SENDER_LIMIT - 1], duplicate: true });
+  expect(rows(store)).toBe(SENDER_LIMIT);
+  expect(receipts(store, hot)).toBe(SENDER_LIMIT);
+  for (let index = SENDER_LIMIT; index < MESSAGE_RECEIPT_LIMIT; index++) sendNew(store, { host: "test-host", sessionId: `retention-dup-${index % 3}` }, 6000);
+  expect(receipts(store)).toBe(MESSAGE_RECEIPT_LIMIT);
+  expect(store.submitPrepared(hot, sent[1]!.messageId, 7000)).toEqual({ ...sent[1], duplicate: true });
+  expect(rows(store)).toBe(MESSAGE_RECEIPT_LIMIT);
+});
+
+it("reports sender scope and the sender's own earliest expiry when sender and global limits are both full", () => {
+  const store = fixture();
+  // Other senders' receipts expire first, so the global earliest differs from the full sender's earliest.
+  for (let index = 0; index < MESSAGE_RECEIPT_LIMIT - SENDER_LIMIT; index++) sendNew(store, { host: "test-host", sessionId: `retention-both-${index % 3}` }, 1000);
+  const pending = store.prepare({ sender: hot, target, body: "prepared below both limits" }, 2000);
+  for (let index = 0; index < SENDER_LIMIT; index++) sendNew(store, hot, 3000 + index);
+  expect(receipts(store)).toBe(MESSAGE_RECEIPT_LIMIT);
+  expect(receipts(store, hot)).toBe(SENDER_LIMIT);
+  const senderRelease = { scope: "sender", earliestReleaseAt: iso(3000 + 2 * H) };
+  expect(earliest(store)).toBe(iso(1000 + 2 * H));
+  const prepareRejected = rejection(() => store.prepare({ sender: hot, target, body: "no draft" }, 4000));
+  expect(prepareRejected.message).toBe("The bounded message receipt store is full for this sender; no draft was created.");
+  expect(prepareRejected.details).toEqual(senderRelease);
+  const sendRejected = rejection(() => store.submitPrepared(hot, pending.messageId, 4000));
+  expect(sendRejected.message).toBe("The bounded message receipt store is full for this sender.");
+  expect(sendRejected.details).toEqual(senderRelease);
+  expect(rejection(() => store.prepare({ sender: other, target, body: "global" }, 4000)).details).toEqual({ scope: "global", earliestReleaseAt: iso(1000 + 2 * H) });
+});
+
+it("byte-limit send rejection carries global details and releases exactly at the earliest record expiry", () => {
+  const store = fixture();
+  const bigBody = "\u0001".repeat(4096);
+  let bigDrafts = 0;
+  for (;;) {
+    try { store.prepare({ sender: { host: "test-host", sessionId: `retention-bytes-${Math.floor(bigDrafts / 90)}` }, target, body: bigBody }, 1000); bigDrafts++; }
+    catch (error) { expect(String(error)).toMatch(/preparation store is full/u); break; }
+  }
+  const tiny = store.prepare({ sender: hot, target, body: "t" }, 5000);
+  const usedBytes = () => Number(scalar(store, "SELECT coalesce(sum(record_bytes), 0) AS value FROM prepared_messages"));
+  // Top up with later drafts until fewer bytes remain than the draft-to-receipt growth of `tiny`.
+  const overhead = Buffer.byteLength(JSON.stringify({ sender: other, target, body: "", ttlSeconds: 3600, messageId: "00000000-0000-0000-0000-000000000000", preparedAt: iso(6000), expiresAt: iso(6000 + 600_000) }), "utf8");
+  let filler = MESSAGE_ID_RECORD_BYTES_LIMIT - usedBytes() - overhead - 5;
+  while (filler > 4096) { store.prepare({ sender: other, target, body: "a".repeat(4096) }, 6000); filler -= 4096 + overhead; }
+  expect(filler).toBeGreaterThan(0);
+  store.prepare({ sender: other, target, body: "a".repeat(filler) }, 6000);
+  expect(MESSAGE_ID_RECORD_BYTES_LIMIT - usedBytes()).toBeLessThan(100);
+  expect(receipts(store)).toBe(0);
+  const releaseAt = 1000 + 600_000;
+  const rejected = rejection(() => store.submitPrepared(hot, tiny.messageId, 7000));
+  expect(rejected.message).toBe("The bounded message receipt store is full.");
+  expect(rejected.details).toEqual({ scope: "global", earliestReleaseAt: iso(releaseAt) });
+  expect(rows(store)).toBe(0);
+  const beforeRelease = rejection(() => store.submitPrepared(hot, tiny.messageId, releaseAt - 1));
+  expect(beforeRelease.details).toEqual({ scope: "global", earliestReleaseAt: iso(releaseAt) });
+  expect(store.submitPrepared(hot, tiny.messageId, releaseAt).duplicate).toBe(false);
+  expect(rows(store)).toBe(1);
+});
+
+it("rolls back the whole ACK when the receipt update fails inside the same transaction", () => {
+  const store = fixture();
+  const sent = sendNew(store, hot, 1000, 86400);
+  const before = receiptExpiry(store, sent.messageId);
+  // Fault injection through the test database only; product code has no test path.
+  store.database.exec(`CREATE TRIGGER retention_fail_receipt BEFORE UPDATE OF expires_at ON prepared_messages
+    BEGIN SELECT RAISE(ABORT, 'injected receipt update failure'); END;`);
+  expect(() => store.acknowledge(target, [sent.messageId], 2000)).toThrow(/injected receipt update failure/u);
+  expect(scalar(store, "SELECT acknowledged_at AS value FROM messages WHERE message_id = ?", sent.messageId)).toBeNull();
+  expect(receiptExpiry(store, sent.messageId)).toBe(before);
+  expect(store.status(hot, sent.messageId, 2001)).toMatchObject({ state: "queued", acknowledgedAt: null });
+  store.database.exec("DROP TRIGGER retention_fail_receipt");
+  expect(store.acknowledge(target, [sent.messageId], 3000)).toBe(1);
+  expect(receiptExpiry(store, sent.messageId)).toBe(iso(3000 + H));
+});
