@@ -7,8 +7,10 @@
 | 경로 | 관측과 선택 | 한계 |
 | --- | --- | --- |
 | Codex Hook | `.mcp.json`의 `AGENT_GOVERNANCE_HOST_ATTESTATION=codex`, `PreToolUse`의 `--host=codex` | 정확한 session/turn/model/call과 같은 턴의 effort가 필요 |
-| Claude Code Hook | 기존 Claude manifest와 launcher, transcript 및 session-model 관측 | 기존 main/subagent 모델·effort 경로 유지 |
+| Claude Code Hook | Claude manifest의 `AGENT_GOVERNANCE_HOST_ATTESTATION=claude-code`, launcher의 `PreToolUse`와 session model을 기록하는 `SessionStart`·`PostModelSwitch` | 기존 main/subagent 모델·effort 경로 유지 |
 | Hook 없는 host wrapper | 공개 `mcp-server/dist/host-attestation-api.mjs`의 `openHostAttestation` | host-owned 관측 callback과 같은 workflow DB를 연결해야 함 |
+
+`AGENT_GOVERNANCE_HOST_ATTESTATION`이 없거나 `claude-code`·`codex` 밖의 값이면 서버는 실행 관측 provider 없이 시작하며, strict orchestration은 `provider-not-configured` 진단과 함께 `BINDING_REQUIRED`로 거절된다.
 
 Codex 공식 [Hooks 문서](https://learn.chatgpt.com/docs/hooks)는 현재 `model`, `session_id`, `transcript_path`와 `PreToolUse`의 `turn_id`, `tool_use_id`, `tool_input`, `updatedInput`을 정의한다. effort는 같은 턴의 host-recorded `turn_context`에서 읽는다. 이 transcript 형식은 안정된 host API가 아니므로 모양이 바뀌거나 관측이 없으면 추정하지 않는다.
 
