@@ -203,12 +203,12 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
       // UserPromptSubmit blocks before a model request. An empty/unavailable
       // claim alone cannot discard input: require a verified current managed wake.
-      if (host === "codex" && result.recognized && result.managed === true && result.messages.length === 0) {
+      if (profile.blocksEmptyWakePrompt && result.recognized && result.managed === true && result.messages.length === 0) {
         return { decision: "block", reason: "No peer message is available for this verified wake notification." };
       }
       // A verified marker of an attempt already retired by the liveness rule is a stale duplicate: it claims no
       // body, and current bodies have their own wake. Stop the empty model turn; the host still shows the marker.
-      if (host === "codex" && !result.recognized && result.retired === true && result.messages.length === 0) {
+      if (profile.blocksEmptyWakePrompt && !result.recognized && result.retired === true && result.messages.length === 0) {
         return { decision: "block", reason: "This wake notification was already retired; no peer message is attached." };
       }
       if (result.recognized) messages = result.messages;

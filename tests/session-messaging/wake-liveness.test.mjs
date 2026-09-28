@@ -186,6 +186,30 @@ test('a verified late arrival of a retired nonce is recorded without claiming th
   assert.equal(delivered.recognized, true); assert.deepEqual(delivered.messages.map(message => message.messageId), ['pending-body']);
 });
 
+test('F1: a retired nonce mixed with the current nonce records late only and lets the current attempt claim its body', () => {
+  const f = fixture(); const old = latched(f);
+  live(f.store, 'instance-2', 'relay-2', f.retireAt);
+  const next = f.store.startManagedWake(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt).attempt, f.retireAt + 1).attempt;
+  assert.equal(f.store.recordManagedWakeOutcome(next, 'submitted', f.retireAt + 2), true);
+  const retired = attemptRow(f.store, old);
+  vi.stubEnv('AGENT_GOVERNANCE_TRUST_DB_PATH', join(f.directory, 'trust.sqlite3'));
+  const prompt = [old, next].map(attempt => `[agent-governance-suite:wake:${attempt.nonce}]`).join('\n');
+  const observation = adaptHostInput({ hook_event_name: 'UserPromptSubmit', session_id: target.sessionId, agent_id: '', prompt }, target.host).observation;
+  const mixed = { observation, sourceReceiptId: recordWakeHookObservation(observation, f.retireAt + 3) };
+  const result = hostClaim(f, mixed, f.retireAt + 4);
+  assert.equal(result.recognized, true); assert.equal(result.retired, undefined);
+  assert.deepEqual(result.messages.map(message => message.messageId), ['pending-body']);
+  assert.equal(result.binding.attemptId, next.attemptId);
+  const current = attemptRow(f.store, next);
+  assert.equal(current.state, 'observed'); assert.equal(current.observed_at, iso(f.retireAt + 4)); assert.equal(current.late_observed_at, null);
+  const late = attemptRow(f.store, old);
+  assert.equal(late.late_observed_at, iso(f.retireAt + 4));
+  assert.deepEqual(without(late, ['late_observed_at']), without(retired, ['late_observed_at']));
+  // Replaying the same prompt is no longer a fully retired marker, so it neither claims nor asks the host to block.
+  assert.deepEqual(hostClaim(f, { observation, sourceReceiptId: recordWakeHookObservation(observation, f.retireAt + 5) }, f.retireAt + 6),
+    { recognized: false, messages: [], binding: null });
+});
+
 test('a retired nonce cannot be laundered by forged provenance or a mixed unknown nonce', () => {
   const f = fixture(); const old = latched(f);
   live(f.store, 'instance-2', 'relay-2', f.retireAt); f.store.prune(f.retireAt);

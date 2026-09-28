@@ -1340,20 +1340,24 @@ var SessionMessageStore = class {
       }
       this.recordActivity(target, nowMs);
       const presence = this.presence(target, nowMs);
-      const retired = rows.some((row) => row.state === "expired-unobserved");
-      const valid = !retired && rows.every((row) => row.state === "legacy" ? row.consumed_at === null && String(row.expires_at) > iso(nowMs) : row.instance_id === presence.instanceId && row.birth_generation === presence.startedAt && row.transport === presence.transport && presence.state === "online" && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row.expires_at) > iso(nowMs));
+      this.database.prepare(`UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?)
+        WHERE host = ? AND session_id = ? AND state = 'expired-unobserved' AND nonce_digest IN (SELECT value FROM json_each(?))`).run(iso(nowMs), target.host, target.sessionId, JSON.stringify(digests));
+      const live = rows.filter((row) => row.state !== "expired-unobserved");
+      if (live.length === 0) {
+        this.database.exec("COMMIT");
+        return { ...rejected, retired: true };
+      }
+      const valid = live.every((row) => row.state === "legacy" ? row.consumed_at === null && String(row.expires_at) > iso(nowMs) : row.instance_id === presence.instanceId && row.birth_generation === presence.startedAt && row.transport === presence.transport && presence.state === "online" && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row.expires_at) > iso(nowMs));
       if (!valid) {
-        for (const row of rows) if (row.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
+        for (const row of live) if (row.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
           SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?
           WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`).run(iso(nowMs), iso(nowMs), iso(nowMs), String(row.nonce_digest));
-        this.database.prepare(`UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?)
-          WHERE host = ? AND session_id = ? AND state = 'expired-unobserved' AND nonce_digest IN (SELECT value FROM json_each(?))`).run(iso(nowMs), target.host, target.sessionId, JSON.stringify(digests));
         this.database.exec("COMMIT");
-        return retired ? { ...rejected, retired: true } : rejected;
+        return rejected;
       }
       const messages = this.claimLocked(target, nowMs, limits);
       let binding = null;
-      for (const row of rows) {
+      for (const row of live) {
         if (row.state === "legacy") this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ?").run(iso(nowMs), String(row.nonce_digest));
         else {
           this.database.prepare("UPDATE wake_nonces SET state = 'observed', consumed_at = ?, observed_at = ? WHERE nonce_digest = ?").run(iso(nowMs), iso(nowMs), String(row.nonce_digest));

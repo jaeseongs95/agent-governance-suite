@@ -799,6 +799,10 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     await writeFile(file, "secret malformed configuration");
     expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }, diagnose).transport).toBe("codex-queue");
     expect(hostDeliveryProfile("claude-code", environment, diagnose).transport).toBe("claude-inbox");
+    // The empty/retired wake prompt block is a host capability: Codex (queue and deferred) keeps it, Claude stays fail-open.
+    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }, diagnose).blocksEmptyWakePrompt).toBe(true);
+    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "0" }, diagnose).blocksEmptyWakePrompt).toBe(true);
+    expect(hostDeliveryProfile("claude-code", environment, diagnose).blocksEmptyWakePrompt).toBe(false);
     expect(diagnose).not.toHaveBeenCalled();
     expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "true" }, diagnose).transport).toBe("codex-deferred");
     expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-environment");
