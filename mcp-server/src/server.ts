@@ -293,7 +293,7 @@ async function sessionBoardResult(
       const sessions = listSessions(board, new Date().toISOString(), binding);
       board.close();
       board = null;
-      return apiOk({ sessions: withPresence(sessions, await sessionMessages.listPresence()) });
+      return apiOk({ sessions: withPresence(sessions, await sessionMessages.listPresence(sessions)) });
     }
     const row = readSession(board, binding!.host, binding!.sessionId);
     return row && row.summary === summary

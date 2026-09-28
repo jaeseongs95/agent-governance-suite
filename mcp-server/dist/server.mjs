@@ -20009,6 +20009,7 @@ var SESSION_MESSAGE_PROTOCOL = "1.0.0";
 var SESSION_MESSAGE_MAX_REQUEST_BYTES = 32 * 1024;
 var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
 var SESSION_MESSAGE_BODY_MAX_BYTES = 4096;
+var SESSION_PRESENCE_LIST_MAX_TARGETS = 3;
 
 // mcp-server/src/session-message-client.ts
 var BrokerRequestRejected = class extends Error {
@@ -20351,14 +20352,20 @@ var SessionMessageService = class {
       return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "The session message broker is unavailable.");
     }
   }
-  async listPresence() {
+  /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. */
+  async listPresence(targets) {
     try {
-      const data = await sessionMessageRequest("list-presence", {}, this.stateDirectory);
-      return ok2({ sessions: data.sessions.map((session) => ({
-        ...session,
-        deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
-        autoWake: session.autoWake ?? null
-      })) });
+      const sessions = [];
+      for (let index = 0; index < targets.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
+        const batch = targets.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS).map(({ host, sessionId }) => ({ host, sessionId }));
+        const data = await sessionMessageRequest("list-presence", { targets: batch }, this.stateDirectory);
+        sessions.push(...data.sessions.map((session) => ({
+          ...session,
+          deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
+          autoWake: session.autoWake ?? null
+        })));
+      }
+      return ok2({ sessions });
     } catch (error2) {
       return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "Session presence is unavailable.");
     }
@@ -20580,7 +20587,7 @@ async function sessionBoardResult(tool, args, databasePath, validator, sessionMe
       const sessions = listSessions(board, (/* @__PURE__ */ new Date()).toISOString(), binding2);
       board.close();
       board = null;
-      return apiOk({ sessions: withPresence(sessions, await sessionMessages.listPresence()) });
+      return apiOk({ sessions: withPresence(sessions, await sessionMessages.listPresence(sessions)) });
     }
     const row = readSession(board, binding2.host, binding2.sessionId);
     return row && row.summary === summary ? apiOk(row) : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");

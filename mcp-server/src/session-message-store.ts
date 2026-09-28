@@ -32,6 +32,8 @@ const ACTIVE_WAKE_STATES = "('reserved', 'started', 'submitted', 'unknown')";
 const WAKE_STATE_CHECK = "CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted', 'expired-unobserved'))";
 const WAKE_COPY_COLUMNS = "nonce_digest, host, session_id, expires_at, consumed_at, state, nonce, instance_id, birth_generation, transport, relay_id, attempt_id, dispatch_epoch, retry_not_before, retry_count, started_at, outcome_at, observed_at, late_observed_at";
 export const PRESENCE_LEASE_MS = 20_000;
+/** Ended or lapsed presence rows stay this long after their lease end; matches the session board's 24-hour window. */
+export const PRESENCE_RETENTION_MS = 24 * 3600_000;
 const CLAIM_MAX_MESSAGES = 10;
 
 export interface SessionIdentity {
@@ -322,6 +324,14 @@ export class SessionMessageStore {
       ORDER BY coalesce(consumed_at, observed_at, retired_at, outcome_at) DESC LIMIT -1 OFFSET ?)`)
       .run(now, MESSAGE_LIMIT);
     this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
+    // Only rows whose lease ended before the retention window go; a live row's lease is always in the future. The
+    // identity's latest row also stays while another row of it is live, so presence() and retirement read the same row.
+    this.database.prepare(`DELETE FROM session_presence WHERE lease_until <= ?
+      AND NOT (EXISTS (SELECT 1 FROM session_presence live WHERE live.host = session_presence.host
+          AND live.session_id = session_presence.session_id AND live.ended_at IS NULL AND live.lease_until > ?)
+        AND session_presence.rowid = (SELECT latest.rowid FROM session_presence latest WHERE latest.host = session_presence.host
+          AND latest.session_id = session_presence.session_id ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1))`)
+      .run(iso(nowMs - PRESENCE_RETENTION_MS), now);
   }
 
   /**
@@ -1186,13 +1196,12 @@ export class SessionMessageStore {
     };
   }
 
-  listPresence(nowMs = Date.now()): SessionPresenceView[] {
+  /** Without targets every stored identity is listed (the pre-2.7.4 request); callers bound the batch themselves. */
+  listPresence(nowMs = Date.now(), targets?: SessionIdentity[]): SessionPresenceView[] {
     this.prune(nowMs);
-    const identities = this.database.prepare(`SELECT host, session_id FROM session_presence
-      GROUP BY host, session_id ORDER BY host, session_id`).all() as Array<{ host: string; session_id: string }>;
-    return identities.map((row) => {
-      const target = { host: row.host, sessionId: row.session_id };
-      return { ...this.presence(target, nowMs), autoWake: this.autoWakeOutlook(target, nowMs) };
-    });
+    const identities = targets ?? (this.database.prepare(`SELECT host, session_id FROM session_presence
+      GROUP BY host, session_id ORDER BY host, session_id`).all() as Array<{ host: string; session_id: string }>)
+      .map((row) => ({ host: row.host, sessionId: row.session_id }));
+    return identities.map((target) => ({ ...this.presence(target, nowMs), autoWake: this.autoWakeOutlook(target, nowMs) }));
   }
 }

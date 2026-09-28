@@ -1,7 +1,7 @@
 import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
 import { BrokerRequestRejected, sessionMessageRequest } from "./session-message-client.js";
 import type { SessionPresenceView } from "./session-message-store.js";
-import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
+import { SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_PRESENCE_LIST_MAX_TARGETS } from "./session-message-protocol.js";
 
 export interface SessionPresenceList {
   sessions: SessionPresenceView[];
@@ -98,14 +98,20 @@ export class SessionMessageService {
     }
   }
 
-  async listPresence(): Promise<ApiResultV1<SessionPresenceList>> {
+  /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. */
+  async listPresence(targets: Array<{ host: string; sessionId: string }>): Promise<ApiResultV1<SessionPresenceList>> {
     try {
-      const data = await sessionMessageRequest<SessionPresenceList>("list-presence", {}, this.stateDirectory);
-      return ok({ sessions: data.sessions.map((session) => ({
-        ...session,
-        deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
-        autoWake: session.autoWake ?? null,
-      })) });
+      const sessions: SessionPresenceView[] = [];
+      for (let index = 0; index < targets.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
+        const batch = targets.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS).map(({ host, sessionId }) => ({ host, sessionId }));
+        const data = await sessionMessageRequest<SessionPresenceList>("list-presence", { targets: batch }, this.stateDirectory);
+        sessions.push(...data.sessions.map((session) => ({
+          ...session,
+          deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
+          autoWake: session.autoWake ?? null,
+        })));
+      }
+      return ok({ sessions });
     } catch (error) {
       return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "Session presence is unavailable.");
     }
