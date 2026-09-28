@@ -10,6 +10,17 @@ const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
 // historical bytes and compare the exact, separately frozen addition as well.
 const SESSION_BOARD_ADDITION = "scripts/fixtures/session-board-peer-message-guidance.2.6.0.md";
 const SESSION_BOARD_ADDITION_SHA256 = "381be4018118086b3c4087be043c004d8d6de986d42a6c0c14f182c2d76ed76f";
+// Intake changes policy after the original optimization. Pin only this revision;
+// all other skills keep their historical byte-for-byte checks.
+const ORCHESTRATOR_INTAKE = Object.freeze({
+  revision: "2.7.2-source-port",
+  initialMaxBytes: 4585,
+  hashes: Object.freeze({
+    reconstructed: "8e4f855fbd659db8cf5c930a9bdb6cda23c19e12b4ff7f6798091e3501a52f0c",
+    frontmatter: "9054478f3909908263ce9f26afaad3b51d2a0db8f1aceacb228b07c6e3dd7bae",
+    mcpExecution: "be972eaa9b6d2ceab78f48f37fcc0eb4e1d4ce52cd8cfb5de356f019da46c546",
+  }),
+});
 const TARGETS = [
   "acceptance-evidence-validator",
   "blocker-diagnostician",
@@ -69,6 +80,11 @@ export function matchesNode24ReadmeUpdate(skillId, baseline, candidate) {
     && candidate === baseline.replace(minimum, "Node.js 24.0.0 이상");
 }
 
+export function matchesOrchestratorIntakeUpdate(kind, bytes) {
+  return Object.hasOwn(ORCHESTRATOR_INTAKE.hashes, kind)
+    && createHash("sha256").update(bytes).digest("hex") === ORCHESTRATOR_INTAKE.hashes[kind];
+}
+
 export function reconstructOptimizedSkill(skillId, root = ROOT) {
   const candidate = readFileSync(join(root, "skills", skillId, "SKILL.md"));
   const detail = readFileSync(join(root, "skills", skillId, "references", "entry-details.md"));
@@ -113,14 +129,23 @@ export function checkSkillContextOptimization() {
       if (createHash("sha256").update(addition).digest("hex") !== SESSION_BOARD_ADDITION_SHA256) errors.push("session-board: approved 2.6.0 guidance fixture changed");
       expectedBaseline = Buffer.concat([baseline, addition]);
     }
-    if (!reconstructed.equals(expectedBaseline)) errors.push(`${skillId}: SKILL.md plus entry-details.md does not reconstruct the baseline byte-for-byte`);
-    if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push(`${skillId}: frontmatter changed`);
+    if (skillId === "orchestrator") {
+      if (!matchesOrchestratorIntakeUpdate("reconstructed", reconstructed)) errors.push("orchestrator: reconstructed intake policy differs from the pinned revision");
+      if (!matchesOrchestratorIntakeUpdate("frontmatter", frontmatter(candidate))) errors.push("orchestrator: intake frontmatter differs from the pinned revision");
+      if (candidate.length > ORCHESTRATOR_INTAKE.initialMaxBytes) errors.push("orchestrator: initial load exceeds the pre-intake limit");
+      const reference = readFileSync(join(ROOT, "skills/orchestrator/references/mcp-execution.md"));
+      if (!matchesOrchestratorIntakeUpdate("mcpExecution", reference)) errors.push("orchestrator: MCP execution policy differs from the pinned revision");
+    } else {
+      if (!reconstructed.equals(expectedBaseline)) errors.push(`${skillId}: SKILL.md plus entry-details.md does not reconstruct the baseline byte-for-byte`);
+      if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push(`${skillId}: frontmatter changed`);
+    }
     if (candidate.length >= baseline.length) errors.push(`${skillId}: initial SKILL.md did not shrink`);
 
     const descriptorPath = `skills/${skillId}/agents/openai.yaml`;
     if (!readFileSync(join(ROOT, ...descriptorPath.split("/"))).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
 
     const allowed = new Set([skillPath, detailPath]);
+    if (skillId === "orchestrator") allowed.add("skills/orchestrator/references/mcp-execution.md");
     if (README_CHANGES.has(skillId)) allowed.add(`skills/${skillId}/README.md`);
     if (Object.hasOwn(NODE24_README_MINIMUMS, skillId)) {
       const readmePath = `skills/${skillId}/README.md`;
@@ -145,6 +170,7 @@ export function checkSkillContextOptimization() {
   return {
     baselineRevision: BASELINE,
     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
+    policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],
     runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
     pass: errors.length === 0,
     errors,

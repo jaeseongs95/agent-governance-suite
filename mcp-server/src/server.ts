@@ -325,16 +325,11 @@ export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "defaul
   return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
 }
 
-/**
- * Session instructions for Claude Code, which places MCP server instructions in
- * its system prompt once per session. Claude Code sessions start implementing
- * as soon as a request arrives, so this asks for an intake-time failure-impact
- * classification before the first action. The default profile advertises none.
- */
-export const ANTHROPIC_SERVER_INSTRUCTIONS = "agent-governance-suite 접수 규칙: 사용자 요청을 받을 때마다, 파일을 고치거나 명령을 실행하기 전에 이 요청이 잘못 수행됐을 때의 실패 영향을 한 줄로 분류한다(낮음 또는 높음). CI·CD, 릴리스·배포, 권한·신뢰 경계, 전역 설정, 데이터·스키마, 공개 저장소의 기본 브랜치처럼 실패 영향이 큰 작업이면 구현을 시작하기 전에 Skill 도구로 /agent-governance-suite:orchestrator를 호출해 이 요청에 필요한 전문 스킬 단계와 생략할 단계를 이유와 함께 정하고, 정한 단계를 그 시점에 실제로 호출한다. 실패 영향이 큰 작업에서 orchestrator를 건너뛰는 경우는 사용자가 특정 스킬을 지정했을 때뿐이며, 그때는 그 스킬을 바로 호출한다. 실패 영향이 낮으면 그 이유를 한 줄로 밝히고 진행하되, 요청이 코드를 작성·수정·리팩터링·설계하거나 라이브러리·의존성을 고르는 작업이면 코드를 쓰거나 파일을 고치기 전에 Skill 도구로 /agent-governance-suite:ponytail을 호출한다. 요청의 범위나 완료 조건이 불명확하면 ponytail보다 먼저 확정한다. 코드 검토·감사·검증·완료 판정, 코드 설명·조사만 하는 요청, 코딩이 아닌 요청(일반 지식, 문서, 번역, 요약), 검토·감사를 맡은 서브에이전트에서는 ponytail을 호출하지 않는다.";
+/** Host-neutral entry pointer; selection and recovery policy stay in the shared skill. */
+export const SKILL_INTAKE_SERVER_INSTRUCTIONS = "agent-governance-suite 접수 안내: 거버넌스 전문 스킬의 선택·연결이 필요한 경우 orchestrator 스킬 원본의 공통 접수·라우팅 기준을 따른다. 공통 원본은 skills/orchestrator/SKILL.md와 references/entry-details.md이며 MCP 실행·실패 처리는 references/mcp-execution.md를 따른다. 이 안내만으로 orchestrator 활성화, registry 조회나 workflow 생성을 요구하지 않는다. 필요한 전문 스킬은 호스트가 제공하는 설치된 스킬 호출 방식으로 실제 실행한다.";
 
-export function serverInstructions(profile: ToolSchemaProfile = "default"): string | undefined {
-  return profile === "anthropic" ? `${ANTHROPIC_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}` : SESSION_MESSAGE_SERVER_INSTRUCTIONS;
+export function serverInstructions(): string {
+  return `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
 }
 
 export const SESSION_MESSAGE_SERVER_INSTRUCTIONS = "세션 메시지는 prepare_session_message로 대상·본문·TTL을 고정하고 시스템이 발급한 messageId를 받은 뒤 send_session_message(messageId)로 전송한다. ID를 직접 만들거나 send에 내용을 다시 넣지 않는다. 전송 결과가 불명확하면 받은 같은 ID로 status를 조회하거나 send를 재시도한다. unknown ID는 이전 전송 완료나 기록 정리 가능성이 있으므로 저장한 영수증과 대조한다. 새 prepare는 새 전송 의도에만 사용하며 불명확한 기존 전송을 무조건 다시 준비하지 않는다. ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다.";
@@ -358,10 +353,9 @@ export function createMcpServer(
   sessionMessages: SessionMessageService = new SessionMessageService(),
   trust: TrustService | null = null,
 ): Server {
-  const instructions = serverInstructions(toolSchemaProfile);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
-    { capabilities: { tools: {} }, ...(instructions === undefined ? {} : { instructions }) },
+    { capabilities: { tools: {} }, instructions: serverInstructions() },
   );
 
   const contractDocuments = Object.values(contractSchemas) as Array<Record<string, unknown>>;
