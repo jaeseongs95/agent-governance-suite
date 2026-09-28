@@ -400,9 +400,14 @@ function parseWakeMessages(value) {
   return { nonces: [...new Set(nonces)], wakeOnly };
 }
 
+// mcp-server/src/trust-store.ts
+import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
+
+// mcp-server/src/workspace-identity.ts
+var SEGMENT_SEPARATOR = process.platform === "win32" ? /[\\/]/u : /\//u;
+
 // mcp-server/src/session-message-relay.ts
 var IDENTITY_RECHECK_MS = 10 * 6e4;
-var WAKE_BACKOFF_MAX_MS = 10 * 6e4;
 
 // mcp-server/src/host-input-adapter.ts
 function text(value) {

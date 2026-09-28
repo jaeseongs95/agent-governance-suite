@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { recordWakeHookObservation } from "./session-message-wake-port.js";
 import { sessionMessageRequest } from "./session-message-client.js";
 import { resolveTrustDatabasePath } from "./runtime-config.js";
 import type { SessionMessageTransport } from "./session-message-relay.js";
@@ -205,9 +206,10 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   let messages: SessionMessage[] = [];
   if (observation.kind === "user-input") {
     if (observation.wakeOnly && observation.wakeCandidates?.length && supportsInjection(profile.capabilities, "peer-wake")) {
-      const result = await sessionMessageRequest<{ recognized: boolean; messages: SessionMessage[] }>("claim-wake", {
+      const result = await sessionMessageRequest<{ recognized: boolean; messages: SessionMessage[] }>("claim-host-wake", {
         ...limits,
-        nonces: observation.wakeCandidates,
+        observation,
+        sourceReceiptId: recordWakeHookObservation(observation),
       }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
       if (result.recognized) messages = result.messages;
       else await sessionMessageRequest("observe-native-input", { target }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
