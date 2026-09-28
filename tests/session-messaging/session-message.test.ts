@@ -1169,6 +1169,73 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(database.includes(Buffer.from("cc-msg-socket-probe"))).toBe(false);
   }, 30_000);
 
+  it("blocks only verified empty Codex wake prompts in the packaged hook", async () => {
+    const directory = stateDirectory();
+    await startSourceBroker(directory);
+    vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", directory);
+    vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", path.join(directory, "trust.sqlite3"));
+    vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "1");
+    for (const scenario of ["submitted", "unknown", "duplicate", "late", "idle", "forged", "mixed", "claude", "legacy"]) {
+      const target = { host: scenario === "claude" ? "claude-code" : "codex", sessionId: `empty-hook-${scenario}` };
+      const nonce = `empty-hook-${scenario}-nonce-abcdefghijklmnop`;
+      const store = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
+      const now = Date.now();
+      try {
+        store.startPresence({ ...target, instanceId: "empty-instance", transport: "codex-queue", wakeVisibility: "user-message",
+          canWakeSilently: false, deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" } }, now);
+        store.acquireRelay({ ...target, transport: "codex-queue", relayId: "empty-relay", pid: process.pid, parentPid: process.pid }, now);
+        store.send({ sender: { host: "portable", sessionId: "empty-sender" }, target, messageId: `body-${scenario}`, body: `body-${scenario}` }, now);
+        if (scenario === "legacy") {
+          expect(store.reserveWake(target, nonce, now)).toBe(true);
+          store.acknowledge(target, [`body-${scenario}`], now + 1);
+        } else {
+          const reserved = store.reserveManagedWake({ ...target, nonce, instanceId: "empty-instance", transport: "codex-queue", relayId: "empty-relay" }, now);
+          const started = store.startManagedWake(reserved.attempt!, now + 1);
+          expect(started.dispatch).toBe(true);
+          store.recordManagedWakeOutcome(started.attempt!, scenario === "unknown" ? "accepted-or-unknown" : "submitted", now + 2);
+          if (!["idle", "forged", "mixed", "late"].includes(scenario)) {
+            store.observeNativeInput(target, now + 3);
+            expect(store.claimDeferred(target, now + 4)).toEqual([]);
+            expect(store.claimDeferred(target, now + 5).map(message => message.messageId)).toEqual([`body-${scenario}`]);
+            store.acknowledge(target, [`body-${scenario}`], now + 6);
+          }
+          if (scenario === "late") store.startPresence({ ...target, instanceId: "new-instance", transport: "codex-queue",
+            wakeVisibility: "user-message", canWakeSilently: false,
+            deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" } }, now + 7);
+        }
+      } finally { store.close(); }
+      const prompt = scenario === "forged" ? "[agent-governance-suite:wake:unregistered-nonce-abcdefghijklmnop]"
+        : `[agent-governance-suite:wake:${nonce}]${scenario === "mixed" ? "\nactual user request" : ""}`;
+      const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, agent_id: "", prompt };
+      const invoke = () => {
+        if (scenario === "claude") return handleSessionMessageHook(input, "claude-code");
+        const child = spawnSync(process.execPath, [bundledSessionMessageHook], { input: JSON.stringify(input), encoding: "utf8",
+          timeout: 10_000, windowsHide: true, env: { ...process.env } });
+        expect(child.status, child.stderr).toBe(0);
+        return child.stdout ? JSON.parse(child.stdout) as Record<string, unknown> : {};
+      };
+      const output = await invoke();
+      if (["submitted", "unknown", "duplicate"].includes(scenario)) {
+        expect(output).toMatchObject({ decision: "block" });
+        if (scenario === "duplicate") expect(await invoke()).toEqual({});
+      } else if (scenario === "idle") {
+        expect(output).not.toHaveProperty("decision");
+        expect(JSON.stringify(output)).toContain("body-idle");
+      } else expect(output).toEqual({});
+      const verification = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
+      try {
+        if (scenario === "late") {
+          expect(verification.pendingCount(target)).toBe(1);
+          expect(verification.managedWakeStatus(target)).toMatchObject({ state: "unknown" });
+        } else if (["forged", "mixed"].includes(scenario)) {
+          expect(verification.pendingCount(target)).toBe(1);
+          expect(verification.managedWakeStatus(target)).toMatchObject({ state: "submitted" });
+        } else if (scenario === "legacy") expect(verification.managedWakeStatus(target)).toBeNull();
+        else expect(verification.managedWakeStatus(target)).toMatchObject({ state: "observed" });
+      } finally { verification.close(); }
+    }
+  }, 30_000);
+
   it("keeps a maximum-size peer message within the hook context limit", async () => {
     const directory = stateDirectory();
     await startSourceBroker(directory);

@@ -371,6 +371,34 @@ async function runProcess(f, mode, relayId) {
   return p;
 }
 
+test('Codex running body claim in another process prevents the external queue call before start', async () => {
+  const f = fixture(); body(f.store, 'running-body', f.now);
+  let calls = 0;
+  const called = await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, 'relay-1',
+    { capabilities: { supportedInjection: ['peer-wake'], idleWake: 'user-message' },
+      dispatch: async () => { calls++; return 'submitted'; } },
+    async (operation, payload) => {
+      if (operation === 'start-wake') await runProcess(f, 'claim-and-ack');
+      return dispatch(f.store, operation, payload);
+    });
+  assert.equal(called, false); assert.equal(calls, 0);
+  assert.equal(f.store.managedWakeStatus(target).state, 'not-submitted');
+});
+
+test('Codex post-start claim in another process leaves one marker and a verified empty discard', async () => {
+  const f = fixture(); body(f.store, 'racing-body', f.now);
+  let calls = 0;
+  await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, 'relay-1',
+    { capabilities: { supportedInjection: ['peer-wake'], idleWake: 'user-message' },
+      dispatch: async () => { await runProcess(f, 'claim-and-ack'); calls++; return 'submitted'; } },
+    async (operation, payload) => dispatch(f.store, operation, payload));
+  const row = f.store.database.prepare("SELECT nonce FROM wake_nonces WHERE state = 'submitted'").get();
+  assert.equal(calls, 1);
+  const result = hostClaim(f, observe(f, { nonce: row.nonce }, Date.now()), Date.now());
+  assert.equal(result.recognized, true); assert.ok(result.binding); assert.deepEqual(result.messages, []);
+  assert.equal(f.store.managedWakeStatus(target).state, 'observed');
+});
+
 test('W05-r2 independent senders and relay processes perform exactly one external call', async () => {
   const f = fixture();
   const senders = await Promise.all(['sender-one', 'sender-two'].map(id => processFixture(f, 'sender', id)));

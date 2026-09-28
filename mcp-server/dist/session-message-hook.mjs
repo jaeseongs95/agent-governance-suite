@@ -1076,6 +1076,9 @@ async function handleSessionMessageHook(input, host, explicitHostPid) {
         observation,
         sourceReceiptId: recordWakeHookObservation(observation)
       }, void 0, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
+      if (host === "codex" && result.recognized && result.managed === true && result.messages.length === 0) {
+        return { decision: "block", reason: "No peer message is available for this verified wake notification." };
+      }
       if (result.recognized) messages = result.messages;
       else await sessionMessageRequest("observe-native-input", { target }, void 0, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
     } else if (!observation.wakeOnly) {

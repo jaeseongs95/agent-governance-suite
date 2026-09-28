@@ -22,6 +22,12 @@ process.once('message', async () => {
     if (mode === 'sender') {
       store.send({ sender: { host: 'portable', sessionId: relayId }, target, messageId: relayId, body: relayId });
       process.send({ type: 'result', sent: true });
+    } else if (mode === 'claim-and-ack') {
+      store.observeNativeInput(target);
+      store.claimDeferred(target); // Preserve the first native-input boundary.
+      const messages = store.claimDeferred(target);
+      store.acknowledge(target, messages.map(message => message.messageId));
+      process.send({ type: 'result', claimed: messages.map(message => message.messageId) });
     } else {
       store.acquireRelay({ ...target, transport: 'portable', relayId, pid: process.pid, parentPid: Number(parentPid) });
       const request = async (operation, payload) => {

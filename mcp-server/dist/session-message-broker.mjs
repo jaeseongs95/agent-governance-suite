@@ -1594,7 +1594,7 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
         }) && presence.state === "online" && presence.instanceId === binding.instanceId) binding.wakeObservedAt = Date.now();
         for (const key of keys) runtime.wakes.delete(key);
       }
-      return { recognized: result.recognized, messages: result.messages };
+      return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null };
     }
     case "observe-native-input": {
       peerWaitRuntime(store).policy.reset(identity(payload.target));
