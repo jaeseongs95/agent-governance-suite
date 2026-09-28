@@ -100,8 +100,8 @@ export class SessionMessageService {
     }
   }
 
-  /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. A failed batch
-   * or an identity outside the broker's pattern is reported as unanswered; the other batches still count. */
+  /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. A refused
+   * batch or an identity outside the broker's pattern is reported as unanswered; the other batches still count. */
   async listPresence(targets: Array<{ host: string; sessionId: string }>): Promise<ApiResultV1<SessionPresenceList>> {
     const sessions: SessionPresenceView[] = [];
     const unanswered: Array<{ host: string; sessionId: string }> = [];
@@ -116,7 +116,10 @@ export class SessionMessageService {
           deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
           autoWake: session.autoWake ?? null,
         })));
-      } catch {
+      } catch (error) {
+        // A refusal answers this batch only. Any other failure means the broker is not answering: asking the rest would
+        // wait one client deadline per batch, so stop and leave this and every later batch unanswered.
+        if (!(error instanceof BrokerRequestRejected)) { unanswered.push(...asked.slice(index)); break; }
         unanswered.push(...batch);
       }
     }
