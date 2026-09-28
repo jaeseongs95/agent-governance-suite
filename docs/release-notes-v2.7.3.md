@@ -28,6 +28,6 @@ Claude Code 세션은 같은 공통 원문을 MCP 초기화 안내와 SessionSta
 
 미관측 알림 퇴역, `autoWake`, 영수증 한도는 Linux 환경의 테스트·감사로 확인했습니다. 실제 host의 wake 주입·관측과 설치 캐시 동작은 이 검사가 대신하지 않습니다.
 
-TODO(총괄): Windows 로컬 검증 결과
+Windows 11(Node.js 24.19.0, pnpm 11.19.0, 한글이 들어간 작업 경로)에서도 설치부터 `validate:official`, `claude:check`, `source:check`까지 전체 검증이 통과했고, previous-broker 회귀 시험도 v2.7.2, v2.7.1, v2.2.6 broker로 각각 통과했습니다. 이 결과는 저장소 검사이며 설치된 host의 동작 확인은 아닙니다.
 
 공식 [설치 안내](../README.md#설치)에 따라 업데이트한 뒤 새 세션으로 재연결합니다. 운영 DB·키·큐를 지우거나 덮어써 불확실한 상태를 없애지 않습니다. 버전 동기화와 로컬 검사는 실제 설치 bytes나 호스트의 자동 기상·관측을 대신하지 않으므로, 설치·재연결 뒤 해당 경로를 별도로 확인합니다.
