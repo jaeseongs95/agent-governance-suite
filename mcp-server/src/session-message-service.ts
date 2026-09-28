@@ -1,10 +1,12 @@
 import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
 import { BrokerRequestRejected, sessionMessageRequest } from "./session-message-client.js";
 import type { SessionPresenceView } from "./session-message-store.js";
-import { SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_PRESENCE_LIST_MAX_TARGETS } from "./session-message-protocol.js";
+import { isBoundedIdentity, SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_PRESENCE_LIST_MAX_TARGETS } from "./session-message-protocol.js";
 
 export interface SessionPresenceList {
   sessions: SessionPresenceView[];
+  /** Identities the broker was never asked about or did not answer: a failed batch or an identifier it would refuse. */
+  unanswered?: Array<{ host: string; sessionId: string }>;
 }
 
 function ok<T>(data: T): ApiResultV1<T> {
@@ -98,22 +100,26 @@ export class SessionMessageService {
     }
   }
 
-  /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. */
+  /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. A failed batch
+   * or an identity outside the broker's pattern is reported as unanswered; the other batches still count. */
   async listPresence(targets: Array<{ host: string; sessionId: string }>): Promise<ApiResultV1<SessionPresenceList>> {
-    try {
-      const sessions: SessionPresenceView[] = [];
-      for (let index = 0; index < targets.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
-        const batch = targets.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS).map(({ host, sessionId }) => ({ host, sessionId }));
+    const sessions: SessionPresenceView[] = [];
+    const unanswered: Array<{ host: string; sessionId: string }> = [];
+    const asked: Array<{ host: string; sessionId: string }> = [];
+    for (const { host, sessionId } of targets) (isBoundedIdentity({ host, sessionId }) ? asked : unanswered).push({ host, sessionId });
+    for (let index = 0; index < asked.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
+      const batch = asked.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS);
+      try {
         const data = await sessionMessageRequest<SessionPresenceList>("list-presence", { targets: batch }, this.stateDirectory);
         sessions.push(...data.sessions.map((session) => ({
           ...session,
           deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
           autoWake: session.autoWake ?? null,
         })));
+      } catch {
+        unanswered.push(...batch);
       }
-      return ok({ sessions });
-    } catch (error) {
-      return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "Session presence is unavailable.");
     }
+    return ok({ sessions, unanswered });
   }
 }

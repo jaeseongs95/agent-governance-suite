@@ -15,6 +15,9 @@ var SESSION_MESSAGE_MAX_REQUEST_BYTES = 32 * 1024;
 var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
 var SESSION_MESSAGE_BODY_MAX_BYTES = 4096;
 var SESSION_PRESENCE_LIST_MAX_TARGETS = 3;
+function isBoundedIdentity(value) {
+  return /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(value.host) && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(value.sessionId);
+}
 
 // mcp-server/src/session-message-store.ts
 import { mkdirSync as mkdirSync2 } from "node:fs";
@@ -441,11 +444,7 @@ function nonceDigest(nonce) {
   return createHash2("sha256").update(nonce).digest("hex");
 }
 function boundedIdentity(value) {
-  const hostPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/;
-  const sessionPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/;
-  if (!hostPattern.test(value.host) || !sessionPattern.test(value.sessionId)) {
-    throw new Error("host and sessionId must use bounded identifier characters.");
-  }
+  if (!isBoundedIdentity(value)) throw new Error("host and sessionId must use bounded identifier characters.");
 }
 function claimedMessage(row, deliveryAttempt = Number(row.delivery_attempts), firstDeliveredAt = row.first_delivered_at === null ? null : String(row.first_delivered_at)) {
   return {

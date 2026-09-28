@@ -245,14 +245,12 @@ function withPresence<T extends { host: string; sessionId: string }>(
   sessions: T[],
   presence: ApiResultV1<SessionPresenceList>,
 ): Array<T & { presence: SessionPresenceView }> {
-  const bySession = new Map(
-    presence.ok && presence.data
-      ? presence.data.sessions.map((item) => [`${item.host}\u0000${item.sessionId}`, item])
-      : [],
-  );
+  const key = (item: { host: string; sessionId: string }) => `${item.host}\u0000${item.sessionId}`;
+  const bySession = new Map(presence.ok && presence.data ? presence.data.sessions.map((item) => [key(item), item]) : []);
+  const unanswered = new Set((presence.data?.unanswered ?? []).map(key));
   return sessions.map((session) => ({
     ...session,
-    presence: bySession.get(`${session.host}\u0000${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId, presence.ok),
+    presence: bySession.get(key(session)) ?? unknownPresence(session.host, session.sessionId, presence.ok && !unanswered.has(key(session))),
   }));
 }
 

@@ -189,9 +189,10 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
     const service = new SessionMessageService(directory);
     // A previous broker ignores the targets and lists every identity: a small database still answers the board.
     const small = await service.listPresence([target]);
-    if (small.ok) expect(small.data!.sessions.find((item) => item.sessionId === target.sessionId)).toMatchObject({ state: "online" });
-    else expect(small.error!.message).toMatch(/Unknown broker operation|exceeded its limit/u);
-    // Past the response limit a previous broker cannot answer; the board falls back to unknown, never to wrong data.
+    expect(small.ok).toBe(true);
+    expect(small.data!.sessions.find((item) => item.sessionId === target.sessionId)).toMatchObject({ state: "online" });
+    expect(small.data!.unanswered).toEqual([]);
+    // Past the response limit a previous broker cannot answer; each batch is unanswered (unknown, autoWake null), never wrong data.
     const many = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
     try {
       for (let index = 0; index < 120; index += 1) {
@@ -200,8 +201,7 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
       }
     } finally { many.close(); }
     const large = await service.listPresence([target]);
-    expect(large.ok).toBe(false);
-    expect(large.error!.message).toMatch(/Unknown broker operation|exceeded its limit/u);
+    expect(large.data).toEqual({ sessions: [], unanswered: [target] });
   } finally {
     if (child.exitCode === null && child.signalCode === null) {
       const exited = once(child, "exit");

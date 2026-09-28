@@ -3,7 +3,7 @@ import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 
-import { SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
+import { isBoundedIdentity, SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
 import { isWakeHookObservation, verifyHistoricalWakeObservation, wakeBackoffDelay, type HistoricalWakeEvidence, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
 import type { DeliveryCapabilities, InputObservation, InputObservationKind } from "./input-observation.js";
 import type { SessionAutoWakeOutlookV1 } from "../../contracts/types.js";
@@ -86,11 +86,7 @@ function nonceDigest(nonce: string): string {
 }
 
 function boundedIdentity(value: SessionIdentity): void {
-  const hostPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/;
-  const sessionPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/;
-  if (!hostPattern.test(value.host) || !sessionPattern.test(value.sessionId)) {
-    throw new Error("host and sessionId must use bounded identifier characters.");
-  }
+  if (!isBoundedIdentity(value)) throw new Error("host and sessionId must use bounded identifier characters.");
 }
 
 function claimedMessage(

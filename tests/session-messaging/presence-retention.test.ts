@@ -103,6 +103,28 @@ it("serves board presence from a 342-identity, 1302-row database through a real 
   } finally { database.close(); }
 }, 60_000);
 
+it("B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve", async () => {
+  const state = directory();
+  const now = Date.now();
+  const store = new SessionMessageStore(path.join(state, "session-messages.sqlite3"));
+  try {
+    for (let index = 0; index < 6; index += 1) born(store, `valid-${index}`, `valid-${index}`, now - 1000);
+  } finally { store.close(); }
+  const child = spawn(process.execPath, ["--import", "tsx", sourceBroker, "--state-directory", state], { windowsHide: true, stdio: "ignore" });
+  cleanup.push(async () => {
+    if (child.exitCode === null && child.signalCode === null) { const exit = once(child, "exit"); child.kill(); await exit; }
+  });
+  await waitForSessionMessageBrokerReady(state, child, 5000);
+  const board = [...Array.from({ length: 6 }, (_, index) => ({ host: "portable", sessionId: `valid-${index}` })),
+    { host: "portable", sessionId: "has space" }];
+  const result = await new SessionMessageService(state).listPresence(board);
+  expect(result.ok).toBe(true);
+  for (let index = 0; index < 6; index += 1) {
+    expect(result.data!.sessions.find((session) => session.sessionId === `valid-${index}`)).toMatchObject({ state: "online" });
+  }
+  expect(result.data!.unanswered).toEqual([{ host: "portable", sessionId: "has space" }]);
+}, 30_000);
+
 it("keeps an ended or lapsed row until exactly the retention period after its lease end", () => {
   const store = open(":memory:");
   const now = Date.now();
