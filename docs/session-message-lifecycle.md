@@ -63,16 +63,22 @@ ACK 전 lease 재전달은 정상이며 같은 ID·본문을 유지한다. 중�
 stateDiagram-v2
     [*] --> reserved: 현재 presence·relay / target UNIQUE
     reserved --> started: 현재 세대·lease·claimable 재검사 / CAS commit
-    reserved --> not_submitted: start 전 본문 소진 또는 주입 만료 / 외부 효과 0
+    reserved --> not_submitted: start 전 본문 소진·주입 만료 / 옛 세대의 무효과 예약 종료
     started --> submitted: adapter 제출 응답
     started --> unknown: 응답 유실·timeout·crash·불명확 결과
-    started --> reserved: 확실한 무제출 / 영속 backoff
-    submitted --> observed: 유효한 실제 hook 관측과 원자 claim
-    unknown --> observed: 유효한 실제 hook 관측과 원자 claim
+    started --> reserved: 현재 세대의 확실한 무제출 / 영속 backoff
+    started --> not_submitted: 옛 세대의 exact 무제출 결과 / backoff 보존
+    unknown --> not_submitted: 옛 attempt·epoch의 exact 무제출 결과 / late 없음
+    submitted --> observed: 검증된 실제 hook 도착 / 현재 세대만 원자 claim
+    unknown --> observed: 검증된 실제 hook 도착 / 현재 세대만 원자 claim
     observed --> observed: 늦은 결과·재소비 거절
 ```
 
-`not_submitted`는 저장값 `not-submitted`다. 외부 효과가 시작되기 전에 본문이 소진되었음을 확인한 종료 기록이며 host 관측으로 계산하지 않는다. reserved에서만 현재 lease 소유자가 기존 nonce와 attempt를 회수할 수 있다. relay 교체 뒤 옛 소유자의 start는 거절한다. definite failure의 재시도는 같은 attempt와 영속 backoff를 사용하며 새 dispatch epoch가 늦은 결과를 차단한다. started를 먼저 commit한 뒤에만 adapter를 호출한다. 시작 응답이 유실되었어도 재호출은 새 발송 권한을 만들지 않는다.
+`not_submitted`는 저장값 `not-submitted`다. 시작 전 본문 소진·주입 만료 또는 확실한 무제출을 기록하는 종료 상태이며 host 관측으로 계산하지 않는다. reserved에서만 현재 lease 소유자가 기존 nonce와 attempt를 회수할 수 있다. 같은 세대의 relay 교체는 기존 resume과 backoff를 유지하고 옛 소유자의 start를 거절한다. 현재 세대의 definite failure 재시도는 같은 attempt와 영속 backoff를 사용하며 새 dispatch epoch가 늦은 결과를 차단한다. started를 먼저 commit한 뒤에만 adapter를 호출한다. 시작 응답이 유실되었어도 재호출은 새 발송 권한을 만들지 않는다.
+
+실제 presence의 instance·birth·transport가 교체되면, 시작하지 않은 epoch 0 예약 또는 같은 attempt·epoch의 definite failure로 무효과가 확인된 reserved 행만 종료할 수 있다. 현재 세대의 유효 presence·relay·pending을 확인하는 reserve transaction에서 옛 행을 `not-submitted`로 보존하고 새 nonce·attempt를 따로 만든다. 교체 뒤 들어온 exact definite failure도 옛 binding을 재개방하지 않고 `not-submitted`로 종료한다. 옛 nonce·binding·epoch·started·late·observed·consumed는 바꾸지 않는다. H1에는 retry를 만들지 않으며, H2·H3의 기존 `retry_not_before`는 새 reserve가 deadline 전까지 거절하도록 연결한다. terminal 보관 개수·시간에 따른 prune도 아직 유효한 backoff 행을 제거하지 않는다. deadline 뒤에는 기존 terminal 보관 규칙을 따른다.
+
+Codex의 definite failure는 process spawn 전 오류, Claude의 definite failure는 연결·쓰기 전 실패에 한정한다. spawn·연결·쓰기 뒤 오류나 timeout, adapter 예외는 무효과 근거가 아니다. 단순 lease 소실·TTL·ACK는 세대 교체나 무효과 증명을 대신하지 않으며, submitted·근거 없는 unknown·late·종료 행을 재개방하지 않는다.
 
 submitted는 host의 처리 ACK가 아니다. started 이후 불확실한 효과는 unknown으로 보존하고, relay나 broker 재시작, 본문 ACK, 메시지 만료, nonce 만료로 새 발송을 허용하지 않는다. nonce에는 대상, instance, presence의 birth generation, relay, attempt, dispatch epoch를 저장한다. 메모리 Map은 이 알림 수명의 원장이 아니다.
 
@@ -82,9 +88,9 @@ submitted는 host의 처리 ACK가 아니다. started 이후 불확실한 효과
 
 receipt는 `authorityEffect: none`이다. 이 검사는 협력하는 로컬 hook 경로의 liveness provenance를 결속한다. 같은 OS 사용자가 코드를 실행하거나 source key를 변조할 수 없다는 보장, 사용자 승인·신원·업무 완료·W06 권위 채널 자격을 만들지 않는다. host payload에 instanceId가 없다는 한계를 숨기지 않고 nonce의 영속 결속과 현재 presence를 대조한다.
 
-관측과 본문 claim은 하나의 transaction이며 batch/response budget 오류가 나면 둘 다 rollback한다. nonce는 한 번만 관측되고, 한 알림이 해당 시점의 claimable batch를 전달한다. batch 밖 본문과 ACK가 유실된 본문은 기존 claim lease 규칙에 따라 안전한 boundary에서 전달할 수 있다. 메시지 전달 자체를 exactly-once 업무 실행으로 확대하지 않는다.
+현재 세대의 관측과 본문 claim은 하나의 transaction이며 batch/response budget 오류가 나면 둘 다 rollback한다. nonce는 한 번만 관측되고, 현재 세대의 알림이 해당 시점의 claimable batch를 전달한다. Codex의 현재 세대 managed wake가 검증되어 `recognized: true`이고 원자 claim 결과가 비어 있으면, hook은 `UserPromptSubmit`의 `decision: block`으로 해당 marker prompt를 모델 요청 전에 중단한다. 내부 응답의 `managed` 값은 검증된 `WakeAttempt` binding의 존재만 나타내며 새 권한이나 host queue 제거 영수증이 아니다. 본문이 있으면 기존 peer envelope를 전달한다. legacy, 이미 관측한 중복, 옛 세대·만료 marker, 미등록 nonce, 잘못된 receipt, 일반 입력과 marker가 섞인 prompt, broker 오류는 이 차단 조건에 들어가지 않는다. 차단하지 않은 입력은 기존 fail-open 처리를 따르며, 검증된 옛 도착의 종료는 다음 문단의 별도 규칙을 적용한다. 지원 의미는 [공식 Codex Hooks 문서](https://learn.chatgpt.com/docs/hooks#userpromptsubmit)를 따른다. `Stop`의 같은 decision은 continuation을 뜻하므로 이 처리에 사용하지 않는다. batch 밖 본문과 ACK가 유실된 본문은 기존 claim lease 규칙에 따라 안전한 boundary에서 전달할 수 있다. 메시지 전달 자체를 exactly-once 업무 실행으로 확대하지 않는다.
 
-만료 또는 옛 generation marker는 해당 행의 `lateObservedAt`만 기록하며 새 본문 claim이나 현재 fence 해제를 허용하지 않는다. 불확실한 fence는 그대로 unknown이다. 관측 기한이 지난 상태는 `observation-overdue`로 표시한다. `wake-status`와 메시지 status의 `wake` diagnostic에 상태·generation·attempt·주입 만료·재시도 시각·관측 시각을 표시하며 본문이나 nonce는 포함하지 않는다.
+만료 또는 옛 generation marker도 서명·대상·관측 digest·receipt TTL과 전체 nonce 검증을 통과한 실제 hook 도착이면 해당 managed attempt를 `observed`로 종료한다. `observedAt`, `consumed_at`과 `lateObservedAt`을 저장하지만 `recognized: false`, 빈 messages와 binding을 반환하므로 새 본문 claim, 현재 세대의 resume 관측이나 Codex prompt 차단을 허용하지 않는다. 이후 새 pending의 wake는 현재 presence·relay·claimable 검사를 거쳐 별도로 reserve/start한다. 옛 marker의 재소비나 늦은 outcome은 새 attempt를 바꾸지 못한다. 미등록 nonce가 섞인 batch, 잘못된 receipt·대상, 일반 입력이 섞인 prompt는 종료 근거가 아니며, 실제 도착이 없는 unknown은 ACK·세대 교체·lease·TTL만으로 해제하지 않는다. 관측 기한이 지난 미확정 상태는 `observation-overdue`로 표시한다. `wake-status`와 메시지 status의 `wake` diagnostic에 상태·generation·attempt·주입 만료·재시도 시각·관측 시각을 표시하며 본문이나 nonce는 포함하지 않는다.
 
 ### capability와 이관
 
@@ -96,10 +102,20 @@ receipt는 `authorityEffect: none`이다. 이 검사는 협력하는 로컬 hook
 
 공통 relay는 outcome/capability/dispatch port만 사용한다. transport 등록과 vendor SDK·protocol은 adapter 모듈에 둔다. 다른 vendor도 같은 port를 주입할 수 있으며 공통 알림 상태에 vendor 분기를 추가하지 않는다. 이 경로는 host queue 목록·취소·삭제를 호출하지 않는다.
 
-이관은 기존 DB에 컬럼과 active target UNIQUE를 transaction으로 추가한다. 기존 nonce는 `legacy`이며 옛 consumed_at을 observed로 가져오지 않는다. 기존 queued marker는 자연 소진한다. legacy 종료에는 새 누적 억제 보장을 소급하지 않는다. 활성 managed target 한도는 기존 1000개 budget을 재사용하고 초과는 명시적으로 거절한다. 미확정 행은 TTL prune에서 제외하며 종료 기록은 최대 1000개, 종료 후 1시간까지 보관한다. 이관 실패는 추가 컬럼과 index를 rollback하며 기존 본문·nonce를 보존한다. 운영 DB 삭제·덮어쓰기나 구버전과 혼용한 자동 rollback은 제공하지 않는다.
+이관은 기존 DB에 컬럼과 active target UNIQUE를 transaction으로 추가한다. 기존 nonce는 `legacy`이며 옛 consumed_at을 observed로 가져오지 않는다. 기존 queued marker는 자연 소진한다. legacy 종료에는 새 누적 억제 보장을 소급하지 않는다. 활성 managed 행과 아직 backoff가 끝나지 않은 무제출 종료 행은 함께 기존 1000개 budget을 사용하며 초과는 명시적으로 거절한다. 미확정 행과 유효한 backoff 행은 TTL prune에서 제외한다. 나머지 종료 기록은 최대 1000개, 종료 후 1시간까지 보관한다. 관측 종료 기록의 보관 기산점은 `consumed_at`이며 과거 도착 시각과 복구 적용 시각을 혼동하지 않는다. 이관 실패는 추가 컬럼과 index를 rollback하며 기존 본문·nonce를 보존한다. 운영 DB 삭제·덮어쓰기나 구버전과 혼용한 자동 rollback은 제공하지 않는다.
+
+### 과거 late 관측의 수동 복구
+
+구버전이 실제 hook 도착을 `late_observed_at`에 기록하고도 `unknown`으로 남긴 이전 generation은 기존 CLI의 `reconcile-wake-observation`으로 종료할 수 있다. stdin payload는 `target: {host, sessionId}`, `attemptId`, 원본 `sourceReceiptId` 세 필드만 받는다. 시각·nonce·관측 객체·raw receipt·승인 boolean은 받지 않는다. CLI는 같은 인증된 broker에 요청만 전달하고, 공통 store와 provenance 검증이 판단한다. 자동 startup 복구, 벤더 분기와 MCP 복구 도구는 없다.
+
+서버가 저장한 원본 binding·nonce·epoch·`unknown` 상태·late 기록을 읽는다. 기존 trust DB를 `readOnly`와 `query_only`로 열어 한 read transaction의 기존 키·영수증을 같은 서명 검증으로 확인한다. DB·키·영수증이 없거나 검증되지 않으면 종료하지 않으며 schema·키·영수증을 생성하거나 재발급하지 않는다. 이 불변 조건은 권위 데이터에 적용한다. SQLite가 read-only WAL 연결에도 생성할 수 있는 WAL/SHM 조정 파일은 별도로 관측하며, 그것을 새 receipt·key·schema 쓰기로 계산하거나 모든 WAL 변화를 무시하지 않는다. checkpoint·journal mode 변경·live DB의 immutable 우회는 사용하지 않는다. 별도 trust snapshot과 메시지 DB transaction을 두 DB의 원자적 변경이라고 설명하지 않는다.
+
+`started ≤ 원본 observed ≤ 서버 late < receipt expiry ≤ 복구 적용 시각`과 exact target·adapter·authority `none`을 요구한다. 원본 nonce 하나로 기존 정규화를 재구성하고, 서명된 digest와 정확히 일치하는 actor 후보가 하나일 때만 인정한다. actor 기본값이나 nonce 부분집합을 추정하지 않으며 복원할 수 없는 다중 nonce 관측은 거절한다. 현재 hook의 receipt TTL 검사는 그대로 유지한다. 이 검사는 현재 키 snapshot으로 과거의 비권한 관측을 확인하며 승인·신원 증거를 만들지 않는다.
+
+메시지 DB transaction 안에서 대상이 여전히 이전 instance/birth generation인지와 원본 binding·epoch·상태·late 값을 다시 검사해 해당 행만 `observed`로 CAS한다. `observed_at`은 원본 관측 시각, `consumed_at`은 복구 적용 시각이며 기존 late·outcome은 보존한다. 결과의 `evidence`에는 원본 source ID·digest·old binding과 세 시각이 남고 nonce·서명 키는 없다. 중복 호출은 `reconciled: false`를 반환한다. 복구는 본문 claim·현재 binding 관측·peer-wait resume·enqueue를 수행하지 않는다. 다음 pending은 현재 presence·relay·claimable 검사를 통과하는 기존 reserve/start로만 처리하며, 옛 attempt의 늦은 outcome은 재개방 근거가 아니다.
 
 ### 보장과 남은 조건
 
-start 이후 본문 claim과 외부 enqueue 사이 경합에서는 잔여 알림 최대 1개가 남을 수 있다. host가 submitted 또는 unknown marker를 끝내 처리하지 않으면 queue 관측·멱등 지원 없이 추가 누적 억제와 idle 자동 재깨움을 동시에 보장할 수 없다. 이 기능은 누적 억제를 택한다. nonce TTL은 주입 유효기간이고 메시지 TTL은 본문 전송 제외 기준이며 어느 TTL도 host queued marker 제거 증거가 아니다. idle liveness는 현재 generation의 유효한 hook 도착에 조건부다. 옛/만료 관측 뒤에도 남은 unknown은 이 한계로 드러낸다.
+start 이후 본문 claim과 외부 enqueue 사이 경합에서는 host queue에 잔여 marker 최대 1개가 남을 수 있다. 현재 세대의 검증된 managed marker가 hook에 도착했을 때 전달할 본문이 없으면 앞의 prompt 차단으로 불필요한 모델 턴을 막는다. 이 처리는 제출된 queue 항목을 삭제·취소하지 않으며, receipt나 generation 검증이 거절된 입력까지 차단하지 않는다. 실행 중 여부를 추정하는 새 boolean·turn tracker·TTL은 추가하지 않는다. 제출 전에는 기존 reserve/start의 claimable 재검사로 본문이 이미 처리된 알림을 억제하고, idle의 미처리 본문은 기존 wake 경로를 유지한다. host가 submitted 또는 unknown marker를 끝내 처리하지 않으면 queue 관측·멱등 지원 없이 추가 누적 억제와 idle 자동 재깨움을 동시에 보장할 수 없다. 이 기능은 누적 억제를 택한다. nonce TTL은 주입 유효기간이고 메시지 TTL은 본문 전송 제외 기준이며 어느 TTL도 host queued marker 제거 증거가 아니다. 세대 교체 뒤 실제 옛 도착이 검증되면 이전 알림은 종료되지만 새 본문은 현재 세대의 별도 wake 관측에 조건부로 전달된다. 실제 도착 근거가 없는 unknown은 남은 한계로 드러낸다.
 
 독립 process fixture와 번들 검사는 실제 host 설치·wake 관측을 대신하지 않는다. 실제 설치·양 host 실측은 별도 W07/출하 검증이며 로컬 PASS로 승격하지 않는다.

@@ -77,12 +77,15 @@ export function transportDeliveryCapabilities(transport: string): DeliveryCapabi
 }
 
 /** Local hook liveness only; this cannot attest an actor, permission, or W06 authority. */
+const WAKE_ACTOR_KINDS = ["main", "unknown"] as const;
+const WAKE_ACTOR_ASSURANCES = ["observed", "unknown"] as const;
 export function isWakeHookObservation(value: unknown, target: SessionIdentity): value is InputObservation {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const event = value as InputObservation;
   return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input"
     && event.wakeOnly === true && event.actor?.observedBy === `${target.host}:hook-payload`
-    && ["main", "unknown"].includes(event.actor.kind) && ["observed", "unknown"].includes(event.actor.assurance)
+    && WAKE_ACTOR_KINDS.some((kind) => kind === event.actor.kind)
+    && WAKE_ACTOR_ASSURANCES.some((assurance) => assurance === event.actor.assurance)
     && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0
     && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string"
       && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
@@ -95,6 +98,38 @@ function observationDigest(event: InputObservation): `sha256:${string}` {
   const normalized = [event.host, event.sessionId, event.kind, event.wakeOnly,
     event.actor.kind, event.actor.observedBy, event.actor.assurance, [...new Set(event.wakeCandidates)].sort()];
   return `sha256:${createHash("sha256").update(JSON.stringify(normalized)).digest("hex")}`;
+}
+
+export interface HistoricalWakeEvidence {
+  sourceReceiptId: string;
+  contentDigest: string;
+  observedAt: string;
+  receiptExpiresAt: string;
+}
+
+/** Historical liveness proof, never a current hook claim or an approval source. */
+export function verifyHistoricalWakeObservation(target: SessionIdentity, nonce: string, sourceReceiptId: string,
+  startedAt: string, lateObservedAt: string, nowMs: number,
+  databasePath = resolveTrustDatabasePath()): HistoricalWakeEvidence | null {
+  const receipt = TrustStore.readVerifiedInputSource(databasePath, sourceReceiptId);
+  if (!receipt || receipt.schemaVersion !== "1.0.0" || receipt.host !== target.host || receipt.sessionId !== target.sessionId
+    || receipt.originKind !== "peer" || receipt.authorityEffect !== "none"
+    || receipt.attestation?.kind !== "broker-peer-envelope" || receipt.attestation.adapter !== "session-message-wake-hook"
+    || receipt.attestation.capabilityVersion !== "1.0.0") return null;
+  const [started, observed, late, expires] = [Date.parse(startedAt), Date.parse(receipt.observedAt),
+    Date.parse(lateObservedAt), Date.parse(receipt.expiresAt)] as const;
+  if (![started, observed, late, expires, nowMs].every(Number.isFinite)
+    || !(started <= observed && observed <= late && late < expires && expires <= nowMs)) return null;
+  // The stored digest selects exactly one supported normalization. No actor default,
+  // nonce subset search or approximation can stand in for the original signed digest.
+  let matches = 0;
+  for (const kind of WAKE_ACTOR_KINDS) for (const assurance of WAKE_ACTOR_ASSURANCES) {
+    const observation: InputObservation = { ...target, kind: "user-input", wakeOnly: true, wakeCandidates: [nonce],
+      actor: { kind, assurance, observedBy: `${target.host}:hook-payload` } };
+    if (isWakeHookObservation(observation, target) && observationDigest(observation) === receipt.contentDigest) matches++;
+  }
+  return matches === 1 ? { sourceReceiptId, contentDigest: receipt.contentDigest, observedAt: receipt.observedAt,
+    receiptExpiresAt: receipt.expiresAt } : null;
 }
 /** Uses existing, non-authorizing source provenance. No public tool issues this hook receipt. */
 export function recordWakeHookObservation(observation: InputObservation, nowMs = Date.now()): string {

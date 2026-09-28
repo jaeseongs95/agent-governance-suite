@@ -1,7 +1,7 @@
 # Agent Governance Suite 향후 로드맵
 
 <!-- release-version:start -->
-문서 기준일은 2026년 9월 21일이다. 현재 공개 릴리스는 `v2.7.1`이다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
+문서 기준일은 2026년 9월 21일이다. 현재 공개 릴리스는 `v2.7.2`이다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
 <!-- release-version:end -->
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
@@ -221,7 +221,7 @@ Hook은 transcript를 읽지 않고 설치별 HMAC으로 session·turn·request 
 ### 증거와 라우팅 강화
 
 - `verified` boolean만 신뢰하지 않고, 가능한 provider에는 검증 가능한 digest 또는 외부 attestation을 요구한다.
-- 실행 모델·추론 수준은 v1.17.0부터 Claude Code에서 하네스 관측(host attestation 훅)으로 결속한다. Codex 호스트용 adapter와 OS 수준 격리(별도 사용자·서명 서비스)는 아직 없다.
+- 실행 모델·추론 수준은 하네스 관측(host attestation 훅)으로 결속한다. Claude Code adapter는 v1.17.0부터, Codex adapter(`--host=codex`)는 현재 Codex 배포 설정(`.mcp.json`, `hooks/hooks.json`)에 연결돼 있다. Codex subagent의 독립 신원 관측과 OS 수준 격리(별도 사용자·서명 서비스)는 아직 없다.
 - 감사 보증 수준을 `cooperative-sealed`, `native-atomic`, `external-attested`처럼 명시한다. 지원하지 않는 보증을 성공으로 표시하지 않는다.
 - 자연어 `selectionCriteria`를 MCP가 임의로 해석하지 않는다. 자동 분기가 필요한 조건은 구체적인 capability, 구조화된 routing input 또는 결정적 policy로 옮긴다.
 - 신원 인증과 원본 증거 검증이 필요한 위협 모델은 별도 신원·증거 저장소와의 연동 범위로 분리한다.

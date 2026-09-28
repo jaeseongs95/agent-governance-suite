@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
 import { SessionMessageStore, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
-import { createWakeHookObservationReader, type WakeHookObservationReader } from "./session-message-wake-port.js";
+import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type WakeHookObservationReader } from "./session-message-wake-port.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
@@ -194,7 +194,8 @@ function observePeerRelay(store: SessionMessageStore, payload: Record<string, un
     ...(wakeObservedAt === undefined ? {} : { wakeObservedAt }) });
 }
 
-export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>, wakeObserver?: WakeHookObservationReader): unknown {
+export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>,
+  wakeObserver?: WakeHookObservationReader, historicalWakeVerifier = verifyHistoricalWakeObservation): unknown {
   switch (operation) {
     case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: SESSION_MESSAGE_BROKER_CAPABILITIES };
     case "prepare": {
@@ -268,7 +269,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         }) && presence.state === "online" && presence.instanceId === binding.instanceId) binding.wakeObservedAt = Date.now();
         for (const key of keys) runtime.wakes.delete(key);
       }
-      return { recognized: result.recognized, messages: result.messages };
+      return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null };
     }
     case "observe-native-input": {
       peerWaitRuntime(store).policy.reset(identity(payload.target));
@@ -402,6 +403,15 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       if (outcome !== "submitted" && outcome !== "definite-failure" && outcome !== "accepted-or-unknown") throw new Error("Invalid wake dispatch outcome.");
       return { recorded: store.recordManagedWakeOutcome(wakeAttempt(payload.attempt), outcome) };
     }
+    case "reconcile-wake-observation": {
+      if (Object.keys(payload).some((key) => !["target", "attemptId", "sourceReceiptId"].includes(key))
+        || !payload.target || typeof payload.target !== "object" || Array.isArray(payload.target)
+        || Object.keys(payload.target).some((key) => !["host", "sessionId"].includes(key))) {
+        throw new Error("Historical wake reconciliation contains unsupported fields.");
+      }
+      return store.reconcileHistoricalWake(identity(payload.target), string(payload.attemptId, "attemptId"),
+        string(payload.sourceReceiptId, "sourceReceiptId"), Date.now(), historicalWakeVerifier);
+    }
     case "wake-status": return { wake: store.managedWakeStatus(identity(payload.target)) };
     case "release-wake": return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "consume-wake": return { consumed: store.consumeWake(identity(payload.target), string(payload.nonce, "nonce")) };
@@ -464,12 +474,17 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
     const { key, certificate, token, fingerprint256 } = await credentials(stateDirectory);
     const activeStore = new SessionMessageStore(databasePath);
     store = activeStore;
-    const wakeHookObservationReader = createWakeHookObservationReader(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim()
-      ? path.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path.join(stateDirectory, "trust.sqlite3"));
+    const trustDatabasePath = process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim()
+      ? path.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path.join(stateDirectory, "trust.sqlite3");
+    const wakeHookObservationReader = createWakeHookObservationReader(trustDatabasePath);
+    const historicalWakeVerifier: typeof verifyHistoricalWakeObservation = (target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs) =>
+      verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, trustDatabasePath);
     let lastActivity = Date.now();
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
       lastActivity = Date.now();
       let buffer = "";
+      // A failed client must not terminate the broker or undo a committed request.
+      socket.on("error", () => socket.destroy());
       socket.setTimeout(5000, () => socket.destroy());
       socket.on("data", (chunk: Buffer) => {
         buffer += chunk.toString("utf8");
@@ -485,7 +500,7 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
           const request = JSON.parse(line) as BrokerRequest;
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
-          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader);
+          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader, historicalWakeVerifier);
           socket.end(`${JSON.stringify({ ok: true, data })}\n`);
         } catch (error) {
           socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed." })}\n`);

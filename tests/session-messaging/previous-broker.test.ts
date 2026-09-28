@@ -1,47 +1,90 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
-import { runSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 
 // A release check supplies the actual previous installation, not a simulated dispatcher.
 const previousBroker = process.env.AGS_PREVIOUS_BROKER_PATH;
+const pluginRoot = process.env.BROKER_TEST_PLUGIN_ROOT ?? fileURLToPath(new URL("../../", import.meta.url));
 it.skipIf(!previousBroker)("preserves queued messages when new hooks meet the previous released broker", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-"));
-  const previousState = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
+  const environment = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory,
+    AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
+    AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(directory, "shared-state") };
+  const cli = (operation: string, payload: Record<string, unknown>, expectedCode = 0) => {
+    const result = spawnSync(process.execPath, [path.join(pluginRoot, "mcp-server/dist/session-message-cli.mjs")], {
+      env: environment, input: JSON.stringify({ operation, payload }), encoding: "utf8", windowsHide: true, timeout: 5000,
+    });
+    expect(result.status, result.stderr).toBe(expectedCode);
+    const response = JSON.parse(result.stdout);
+    expect(response.ok).toBe(expectedCode === 0);
+    return response;
+  };
+  const hook = (event: string) => {
+    const result = spawnSync(process.execPath, [path.join(pluginRoot, "mcp-server/dist/session-message-hook.mjs")], {
+      env: environment, input: JSON.stringify({ hook_event_name: event, session_id: "recipient", prompt: "Synthetic native input" }),
+      encoding: "utf8", windowsHide: true, timeout: 5000,
+    });
+    expect(result.status, result.stderr).toBe(0);
+    return result.stdout;
+  };
   const child = spawn(process.execPath, [previousBroker!, "--state-directory", directory], {
-    windowsHide: true, stdio: "ignore",
+    windowsHide: true, stdio: "ignore", env: environment,
   });
   try {
     await waitForSessionMessageBrokerReady(directory, child, 5000);
-    process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = directory;
     const sender = { host: "synthetic-host", sessionId: "sender" };
     const target = { host: "codex", sessionId: "recipient" };
-    const messageId = "previous-broker-compatibility-message";
+    const body = "Synthetic compatibility check";
     const ping = await requestSessionMessageOnce<{ capabilities?: string[] }>("ping", {}, directory);
-    expect(ping.capabilities ?? []).not.toContain("deferred-boundary");
-    await requestSessionMessageOnce("send", { sender, target, messageId, body: "Synthetic compatibility check" }, directory);
-    for (const event of ["UserPromptSubmit", "PostToolUse", "PostToolUse"]) {
-      expect(await runSessionMessageHook("codex", JSON.stringify({
-        hook_event_name: event, session_id: target.sessionId, prompt: "Synthetic native input",
-      }))).toBe("");
+    const deferredBoundary = (ping.capabilities ?? []).includes("deferred-boundary");
+    let messageId: string;
+    if (deferredBoundary) {
+      messageId = cli("prepare", { sender, target, body }).data.messageId;
+      expect(messageId).toEqual(expect.any(String));
+      cli("send", { sender, messageId });
+      expect(cli("send", { sender, messageId }).data.duplicate).toBe(true);
+      expect(cli("send", { sender, target, messageId, body: "Changed body" }, 1).error).toMatch(/send accepts only sender/u);
+    } else {
+      expect(cli("prepare", { sender, target, body }, 1).error).toBe("Unknown broker operation.");
+      messageId = "previous-broker-compatibility-message";
+      cli("send", { sender, target, messageId, body });
     }
-    const status = await requestSessionMessageOnce<{ status: { state: string } }>("status", { sender, messageId }, directory);
-    expect(status.status.state).toBe("queued");
+    expect(cli("pending", { target }).data.count).toBe(1);
+    expect(cli("status", { sender, messageId }).data.status.state).toBe("queued");
+    expect(hook("UserPromptSubmit")).toBe("");
+    expect(hook("PostToolUse")).toBe("");
+    const delivered = hook("PostToolUse");
+    if (deferredBoundary) {
+      const context = JSON.parse(delivered).hookSpecificOutput.additionalContext as string;
+      const lines = context.split("\n");
+      expect(lines.filter(line => line === "[agent-governance-suite peer message BEGIN]")).toHaveLength(1);
+      const peer = JSON.parse(lines.find(line => line.startsWith("{"))!);
+      expect(peer).toMatchObject({ message: body, recipient: target, receipt: { messageId, deliveryAttempt: 1 } });
+    } else {
+      expect(delivered).toBe("");
+    }
+    expect(hook("PostToolUse")).toBe("");
+    expect(cli("status", { sender, messageId }).data.status.state).toBe(deferredBoundary ? "delivered" : "queued");
     const database = new DatabaseSync(path.join(directory, "session-messages.sqlite3"), { readOnly: true });
     try {
       expect(database.prepare("SELECT delivery_attempts FROM messages WHERE message_id = ?").get(messageId))
-        .toEqual({ delivery_attempts: 0 });
+        .toEqual({ delivery_attempts: deferredBoundary ? 1 : 0 });
+      expect(database.prepare("SELECT COUNT(*) AS count FROM messages").get()).toEqual({ count: 1 });
     } finally { database.close(); }
-    const claimed = await requestSessionMessageOnce<{ messages: Array<{ messageId: string; body: string }> }>("claim", { target }, directory);
-    expect(claimed.messages).toEqual([expect.objectContaining({ messageId, body: "Synthetic compatibility check" })]);
+    const claimed = cli("claim", { target }).data.messages;
+    expect(claimed).toEqual(deferredBoundary ? [] : [expect.objectContaining({ messageId, body })]);
+    expect(cli("acknowledge", { target, messageIds: [messageId] }).data.acknowledged).toBe(1);
+    expect(cli("status", { sender, messageId }).data.status.state).toBe("acknowledged");
+    expect(cli("claim", { target }).data.messages).toEqual([]);
+    expect(hook("PostToolUse")).toBe("");
+    expect(cli("unknown-operation", {}, 1).error).toBe("Unsupported session message operation.");
   } finally {
-    if (previousState === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
-    else process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = previousState;
     if (child.exitCode === null && child.signalCode === null) {
       const exited = once(child, "exit");
       child.kill();

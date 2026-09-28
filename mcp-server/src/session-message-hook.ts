@@ -196,11 +196,16 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   let messages: SessionMessage[] = [];
   if (observation.kind === "user-input") {
     if (observation.wakeOnly && observation.wakeCandidates?.length && supportsInjection(profile.capabilities, "peer-wake")) {
-      const result = await sessionMessageRequest<{ recognized: boolean; messages: SessionMessage[] }>("claim-host-wake", {
+      const result = await sessionMessageRequest<{ recognized: boolean; messages: SessionMessage[]; managed: boolean }>("claim-host-wake", {
         ...limits,
         observation,
         sourceReceiptId: recordWakeHookObservation(observation),
       }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
+      // UserPromptSubmit blocks before a model request. An empty/unavailable
+      // claim alone cannot discard input: require a verified current managed wake.
+      if (host === "codex" && result.recognized && result.managed === true && result.messages.length === 0) {
+        return { decision: "block", reason: "No peer message is available for this verified wake notification." };
+      }
       if (result.recognized) messages = result.messages;
       else await sessionMessageRequest("observe-native-input", { target }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
     } else if (!observation.wakeOnly) {

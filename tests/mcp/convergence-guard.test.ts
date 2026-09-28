@@ -26,6 +26,8 @@ import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 
+import { concurrentClaims } from "../helpers/concurrent-claim-process.js";
+
 const temporaryDirectories: string[] = [];
 const sqliteStores = new Set<SqliteWorkflowStore>();
 
@@ -906,38 +908,12 @@ describe("local MCP convergence guard", () => {
     const harness = await createHarness();
     const root = openRoot(harness.service);
     const firstProposal = proposal(harness.service, root);
-    const workers = [firstProposal, structuredClone(firstProposal)].map((workerProposal) => new Worker(
+    const workerResults = await concurrentClaims<{ ok: boolean; error: { code: string } | null }>(
       new URL("./fixtures/concurrent-claim-worker.ts", import.meta.url),
-      {
-        execArgv: ["--import", "tsx"],
-        workerData: {
-          databasePath: harness.databasePath,
-          registryPath: harness.registryPath,
-          proposal: workerProposal,
-        },
-      },
-    ));
-    const ready = workers.map((worker) => new Promise<void>((resolve, reject) => {
-      const onMessage = (message: { type?: string }) => {
-        if (message.type !== "ready") return;
-        worker.off("message", onMessage);
-        resolve();
-      };
-      worker.on("message", onMessage);
-      worker.once("error", reject);
-    }));
-    await Promise.all(ready);
-    const results = workers.map((worker) => new Promise<{ ok: boolean; error: { code: string } | null }>((resolve, reject) => {
-      worker.once("message", (message: { type?: string; result?: { ok: boolean; error: { code: string } | null } }) => {
-        if (message.type === "result" && message.result) resolve(message.result);
-        else reject(new Error("Concurrent claim worker returned an unexpected message."));
-      });
-      worker.once("error", reject);
-    }));
-    const exits = workers.map((worker) => new Promise<void>((resolve) => worker.once("exit", () => resolve())));
-    workers.forEach((worker) => worker.postMessage("claim"));
-    const workerResults = await Promise.all(results);
-    await Promise.all(exits);
+      [firstProposal, structuredClone(firstProposal)].map(workerProposal => ({
+        databasePath: harness.databasePath, registryPath: harness.registryPath, proposal: workerProposal,
+      })),
+    );
     expect(workerResults.filter((result) => result.ok)).toHaveLength(1);
     expect(workerResults.filter((result) => !result.ok)).toHaveLength(1);
     expect(workerResults.find((result) => !result.ok)?.error?.code).toBe("LEASE_CONFLICT");
@@ -949,33 +925,11 @@ describe("local MCP convergence guard", () => {
     const observationId = "concurrent-trusted-observation";
     const expiresAt = new Date(Date.now() + 60_000).toISOString();
     const consumedAt = new Date().toISOString();
-    const workers = [0, 1].map(() => new Worker(
+    const results = await concurrentClaims<boolean>(
       new URL("./fixtures/concurrent-observation-claim-worker.ts", import.meta.url),
-      {
-        execArgv: ["--import", "tsx"],
-        workerData: { databasePath: harness.databasePath, observationId, expiresAt, consumedAt },
-      },
-    ));
-    await Promise.all(workers.map((worker) => new Promise<void>((resolve, reject) => {
-      const onMessage = (message: { type?: string }) => {
-        if (message.type !== "ready") return;
-        worker.off("message", onMessage);
-        resolve();
-      };
-      worker.on("message", onMessage);
-      worker.once("error", reject);
-    })));
-    const results = workers.map((worker) => new Promise<boolean>((resolve, reject) => {
-      worker.once("message", (message: { type?: string; claimed?: boolean }) => {
-        if (message.type === "result" && typeof message.claimed === "boolean") resolve(message.claimed);
-        else reject(new Error("Observation claim worker returned an unexpected message."));
-      });
-      worker.once("error", reject);
-    }));
-    const exits = workers.map((worker) => new Promise<void>((resolve) => worker.once("exit", () => resolve())));
-    workers.forEach((worker) => worker.postMessage("claim"));
-    expect((await Promise.all(results)).sort()).toEqual([false, true]);
-    await Promise.all(exits);
+      [0, 1].map(() => ({ databasePath: harness.databasePath, observationId, expiresAt, consumedAt })),
+    );
+    expect(results.sort()).toEqual([false, true]);
   });
 
   it("keeps legacy plans compatible only outside strict MCP claim and start boundaries", async () => {
