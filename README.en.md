@@ -90,7 +90,7 @@ Find the situation that fits your task below. This is not a list of skills to ru
 | Preparing work | [`workspace-convention-profiler`](skills/workspace-convention-profiler/) | 1.0.0 | Investigates repository structure, tools, conventions, and validation commands. |
 | Preparing work | [`task-contract`](skills/task-contract/) | 1.1.0 | Defines scope, acceptance criteria, risk, and authority while separating source receipts from authority. |
 | Implementation, changes, and decisions | [`coordinate-subagents`](skills/coordinate-subagents/) | 1.1.0 | Manages ownership and verification responsibilities for authorized, useful delegation. |
-| Implementation, changes, and decisions | [`ponytail`](https://github.com/jaeseongs95/ponytail/tree/83b2cbc3bc50df3030c49d1dfe598ccefe850a85/skills/ponytail) | 4.10.0 | Guides the agent toward the simplest implementation that satisfies the request. |
+| Implementation, changes, and decisions | [`ponytail`](skills/ponytail/) | 4.10.0 | Guides the agent toward the simplest implementation that satisfies the request. |
 | Implementation, changes, and decisions | [`change-scope-guardian`](skills/change-scope-guardian/) | 1.0.0 | Compares the baseline and current Git changes to find out-of-scope files. |
 | Implementation, changes, and decisions | [`mutation-risk-preflight`](skills/mutation-risk-preflight/) | 1.0.1 | Checks the target, approval, impact, and recovery conditions of risky changes. |
 | Implementation, changes, and decisions | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | 1.0.0 | Reviews evidence and counterarguments from independent perspectives. |
@@ -104,7 +104,7 @@ Find the situation that fits your task below. This is not a list of skills to ru
 | Specialist analysis and editing | [`software-security-auditor`](skills/software-security-auditor/) | 0.1.0 | Audits web/API and CLI/MCP attack paths, controls, and coverage gaps. |
 | Specialist analysis and editing | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | 1.0.0 | Independently audits a frozen evaluation's design, inputs, judgments, and aggregation. |
 
-Versions and provenance are recorded in the [registry](skills/registry.json) and [source lock](skills/source-lock.json). The [`orchestrator`](skills/orchestrator/) is tracked by current Git history. The `ponytail` link points to its pinned external source; `codex-token-usage-analyzer` reads Codex logs only and is omitted from the Claude Code distribution.
+Versions and provenance are recorded in the [registry](skills/registry.json) and [source lock](skills/source-lock.json). The [`orchestrator`](skills/orchestrator/) is tracked by current Git history. The `ponytail` link points to the skill bundled in AGS. Pinned external source information remains in the source lock as historical provenance. `codex-token-usage-analyzer` reads Codex logs only and is omitted from the Claude Code distribution.
 
 The Korean prose workflow is enabled. Its current editing policy has not yet been evaluated for quality, and the previous policy's quality pass does not apply to the current policy. See [evaluation status and plans](docs/roadmap.md) (Korean).
 

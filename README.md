@@ -90,7 +90,7 @@ flowchart LR
 | 시작 조건 정리 | [`workspace-convention-profiler`](skills/workspace-convention-profiler/) | 1.0.0 | 저장소 구조, 도구, 관례와 검증 명령을 조사합니다. |
 | 시작 조건 정리 | [`task-contract`](skills/task-contract/) | 1.1.0 | 목표·범위·수용 기준·위험·권한을 정리하고 출처 영수증과 권한을 구분합니다. |
 | 구현·변경·의사결정 | [`coordinate-subagents`](skills/coordinate-subagents/) | 1.1.0 | 허용되고 필요한 위임의 담당 영역과 검증 책임을 관리합니다. |
-| 구현·변경·의사결정 | [`ponytail`](https://github.com/jaeseongs95/ponytail/tree/83b2cbc3bc50df3030c49d1dfe598ccefe850a85/skills/ponytail) | 4.10.0 | 요청을 만족하는 가장 단순한 구현을 고르도록 안내합니다. |
+| 구현·변경·의사결정 | [`ponytail`](skills/ponytail/) | 4.10.0 | 요청을 만족하는 가장 단순한 구현을 고르도록 안내합니다. |
 | 구현·변경·의사결정 | [`change-scope-guardian`](skills/change-scope-guardian/) | 1.0.0 | 변경 전 기준선과 현재 Git 변경을 대조해 범위 밖 파일을 찾습니다. |
 | 구현·변경·의사결정 | [`mutation-risk-preflight`](skills/mutation-risk-preflight/) | 1.0.1 | 위험한 변경의 대상·승인·영향·복구 조건을 점검합니다. |
 | 구현·변경·의사결정 | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | 1.0.0 | 복잡한 결정의 근거와 반론을 독립 관점에서 검토합니다. |
@@ -104,7 +104,7 @@ flowchart LR
 | 전문 분석·편집 | [`software-security-auditor`](skills/software-security-auditor/) | 0.1.0 | 웹·API와 CLI·MCP의 공격 경로, 방어 통제와 검사 공백을 감사합니다. |
 | 전문 분석·편집 | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | 1.0.0 | 동결 평가의 설계·입력·판정·집계를 독립 감사합니다. |
 
-버전과 출처는 [registry](skills/registry.json)와 [source lock](skills/source-lock.json)에 기록됩니다. [`orchestrator`](skills/orchestrator/)는 현재 Git 이력으로 추적합니다. `ponytail` 링크는 고정 외부 원본을 가리키며, `codex-token-usage-analyzer`는 Codex 로그 전용이라 Claude Code 배포물에는 포함되지 않습니다.
+버전과 출처는 [registry](skills/registry.json)와 [source lock](skills/source-lock.json)에 기록됩니다. [`orchestrator`](skills/orchestrator/)는 현재 Git 이력으로 추적합니다. `ponytail` 링크는 AGS 내장 스킬을 가리킵니다. 과거 외부 원본의 고정 정보는 source lock에 provenance로 보존됩니다. `codex-token-usage-analyzer`는 Codex 로그 전용이라 Claude Code 배포물에는 포함되지 않습니다.
 
 한국어 산문 워크플로는 활성화되어 있습니다. 현행 편집 정책의 품질은 아직 평가되지 않았으며, 이전 정책의 품질 통과 기록은 현재 정책에 적용되지 않습니다. [평가 상태와 계획](docs/roadmap.md)을 확인하세요.
 
