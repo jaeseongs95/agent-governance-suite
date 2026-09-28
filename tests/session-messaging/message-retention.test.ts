@@ -30,6 +30,10 @@ afterEach(async () => {
   for (const directory of directories.splice(0)) await rm(directory, { recursive: true, force: true, maxRetries: 10 });
 });
 const fixture = (database = ":memory:") => { const store = new SessionMessageStore(database); stores.push(store); return store; };
+// Bulk-filling file DBs from this test connection commits ~2 transactions per message. With WAL the default
+// synchronous=FULL fsyncs every commit (about 2,000 for the global fill), which exceeds the timeout on slow CI
+// disks. NORMAL is per connection, so the broker and worker connections under test keep their own setting.
+const fillFixture = (database: string) => { const store = fixture(database); store.database.exec("PRAGMA synchronous = NORMAL;"); return store; };
 async function directory() { const value = await mkdtemp(path.join(tmpdir(), "ags-retention-")); directories.push(value); return value; }
 const iso = (ms: number) => new Date(ms).toISOString();
 const scalar = (store: SessionMessageStore, sql: string, ...args: string[]) => (store.database.prepare(sql).get(...args) as { value: number | string | null }).value;
@@ -172,7 +176,7 @@ async function race(database: string, requests: Array<{ operation: "send" | "ack
 
 it("two processes sending for one sender at limit-1 never exceed the sender limit", async () => {
   const database = path.join(await directory(), "sender-race.sqlite3");
-  const store = fixture(database);
+  const store = fillFixture(database);
   for (let index = 0; index < SENDER_LIMIT - 1; index++) sendNew(store, hot, 1000);
   const [left, right] = [0, 1].map(() => store.prepare({ sender: hot, target, body: "concurrent" }, 1500).messageId);
   const output = await race(database, [
@@ -236,7 +240,7 @@ async function launchBroker() {
 
 it("service reports capacity rejections as definite no-effect with scope and earliest release details", async () => {
   const state = await launchBroker();
-  const store = fixture(path.join(state, "session-messages.sqlite3"));
+  const store = fillFixture(path.join(state, "session-messages.sqlite3"));
   const service = new SessionMessageService(state);
   const call = { targetHost: target.host, targetSessionId: target.sessionId };
   const now = Date.now();
@@ -352,7 +356,7 @@ it("rolls back the whole ACK when the receipt update fails inside the same trans
 
 it("when earliestReleaseAt is after the draft expiry, the guidance leads to a new prepare that succeeds", async () => {
   const state = await launchBroker();
-  const store = fixture(path.join(state, "session-messages.sqlite3"));
+  const store = fillFixture(path.join(state, "session-messages.sqlite3"));
   const service = new SessionMessageService(state);
   const now = Date.now();
   for (let index = 0; index < SENDER_LIMIT - 1; index++) sendNew(store, hot, now);
