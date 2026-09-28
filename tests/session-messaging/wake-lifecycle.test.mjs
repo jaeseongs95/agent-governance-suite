@@ -37,6 +37,17 @@ function fixture() {
   store.acquireRelay({ ...target, transport: 'portable', relayId: 'relay-1', pid: process.pid, parentPid: process.pid }, now);
   return { directory, database, store, now };
 }
+// Bulk rows go through a separate filling connection. Autocommit INSERTs fsync every commit under the default
+// synchronous=FULL (about 1,000 per test), which exceeds the timeout on slow CI disks. NORMAL is per connection,
+// so the store under test keeps its own setting; the filling connection is closed before the store reads the rows.
+function fillRows(f, sql, count, values) {
+  const filler = new DatabaseSync(f.database);
+  try {
+    filler.exec('PRAGMA busy_timeout = 5000; PRAGMA synchronous = NORMAL;');
+    const insert = filler.prepare(sql);
+    for (let i = 0; i < count; i++) insert.run(...values(i));
+  } finally { filler.close(); }
+}
 function reservation(nonce = 'managed-wake-nonce-abcdefghijklmnop') {
   return { target, nonce, instanceId: 'instance-1', transport: 'portable', relayId: 'relay-1' };
 }
@@ -270,8 +281,8 @@ test('terminal pruning cannot erase an outstanding old-generation backoff', () =
   const current = currentGeneration(f, 'instance', f.now + 2);
   assert.equal(f.store.recordManagedWakeOutcome(old, 'definite-failure', f.now + 3), true);
   const deadline = f.now + 30_003;
-  const insert = f.store.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, observed_at) VALUES (?, 'portable', ?, ?, 'observed', ?)");
-  for (let i = 0; i < 1005; i++) insert.run(`new-terminal-${i}`, `other-${i}`, new Date(deadline + 60_000).toISOString(), new Date(f.now + 4 + i).toISOString());
+  fillRows(f, "INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, observed_at) VALUES (?, 'portable', ?, ?, 'observed', ?)",
+    1005, i => [`new-terminal-${i}`, `other-${i}`, new Date(deadline + 60_000).toISOString(), new Date(f.now + 4 + i).toISOString()]);
   f.store.prune(f.now + 5);
   assert.equal(attemptRow(f.store, old).state, 'not-submitted');
   assert.equal(f.store.reserveManagedWake({ ...current, nonce: 'prune-retry-nonce-abcdefghijklmnop' }, f.now + 5).dispatch, false);
@@ -281,8 +292,8 @@ test('terminal pruning cannot erase an outstanding old-generation backoff', () =
 
 test('outstanding terminal backoffs share the active wake budget and release it at the deadline', () => {
   const f = fixture(); body(f.store, 'budget-pending', f.now); const deadline = f.now + 30_000;
-  const insert = f.store.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, outcome_at, retry_not_before) VALUES (?, 'portable', ?, ?, 'not-submitted', ?, ?)");
-  for (let i = 0; i < 1000; i++) insert.run(`cooldown-${i}`, `other-${i}`, new Date(deadline + 60_000).toISOString(), new Date(f.now).toISOString(), new Date(deadline).toISOString());
+  fillRows(f, "INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, outcome_at, retry_not_before) VALUES (?, 'portable', ?, ?, 'not-submitted', ?, ?)",
+    1000, i => [`cooldown-${i}`, `other-${i}`, new Date(deadline + 60_000).toISOString(), new Date(f.now).toISOString(), new Date(deadline).toISOString()]);
   assert.throws(() => f.store.reserveManagedWake({ ...target, ...reservation() }, f.now + 1), /active wake store is full/);
   assert.equal(f.store.database.prepare('SELECT count(*) AS n FROM wake_nonces').get().n, 1000);
   renewCurrent(f.store, { ...target, ...reservation(), wakeVisibility: 'silent', canWakeSilently: true,
@@ -506,16 +517,16 @@ test('W05-r2 additive legacy migration never imports old consumed_at as observed
 
 test('W05-r2 active budget overflow is an explicit rejection and does not remove unknowns', () => {
   const f = fixture(); body(f.store, 'body-0001', f.now);
-  const insert = f.store.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state) VALUES (?, 'portable', ?, ?, 'unknown')");
-  for (let i = 0; i < 1000; i++) insert.run(`digest-${i}`, `target-${i}`, new Date(f.now - 1).toISOString());
+  fillRows(f, "INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state) VALUES (?, 'portable', ?, ?, 'unknown')",
+    1000, i => [`digest-${i}`, `target-${i}`, new Date(f.now - 1).toISOString()]);
   assert.throws(() => f.store.reserveManagedWake({ ...target, ...reservation() }, f.now), /active wake store is full/);
   assert.equal(f.store.database.prepare("SELECT count(*) AS n FROM wake_nonces WHERE state = 'unknown'").get().n, 1000);
 });
 
 test('W05-r2 terminal observation retention is bounded while unresolved rows are retained', () => {
   const f = fixture();
-  const insert = f.store.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, observed_at) VALUES (?, 'portable', ?, ?, 'observed', ?)");
-  for (let i = 0; i < 1005; i++) insert.run(`terminal-${i}`, `target-${i}`, new Date(f.now + WAKE_TTL_MS).toISOString(), new Date(f.now + i).toISOString());
+  fillRows(f, "INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, observed_at) VALUES (?, 'portable', ?, ?, 'observed', ?)",
+    1005, i => [`terminal-${i}`, `target-${i}`, new Date(f.now + WAKE_TTL_MS).toISOString(), new Date(f.now + i).toISOString()]);
   f.store.prune(f.now + 1006);
   assert.equal(f.store.database.prepare('SELECT count(*) AS n FROM wake_nonces').get().n, 1000);
   f.store.prune(f.now + WAKE_TTL_MS + 1006);
