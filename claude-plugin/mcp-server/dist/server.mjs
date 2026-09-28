@@ -20756,7 +20756,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "list_session_status",
-        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs.",
+        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
         inputSchema: contractSchemas.listSessionStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
@@ -20780,7 +20780,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "get_session_message_status",
-        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend. Unacknowledged queue rows include the advisory autoWake recipient wake outlook with its basis time; it is not delivery, completion or permission evidence.",
+        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend. Unacknowledged queue rows include the advisory autoWake recipient wake outlook with its basis time; it is not delivery, completion or permission evidence. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
         inputSchema: contractSchemas.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       }

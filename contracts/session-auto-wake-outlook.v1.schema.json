@@ -9,7 +9,7 @@
   "properties": {
     "state": {
       "enum": ["available", "latched", "no-live-relay", "unsupported"],
-      "description": "available: a live relay can reserve or already holds a current wake. latched: an earlier wake has passed its injection expiry without arrival or retirement evidence. no-live-relay: no online presence or relay lease can send a wake. unsupported: the recipient transport has no idle wake."
+      "description": "available: a live relay can reserve or already holds a current wake. latched: an earlier wake that is not of the current generation, or has passed its injection expiry, is blocking a new wake. no-live-relay: no online presence or relay lease can send a wake. unsupported: the recipient transport has no idle wake."
     },
     "reason": {
       "enum": ["relay-live", "wake-in-flight", "retry-backoff", "wake-unobserved", "presence-unknown", "presence-not-online", "relay-lease-missing", "no-idle-wake"]
