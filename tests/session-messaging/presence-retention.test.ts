@@ -44,6 +44,16 @@ function born(store: Store, sessionId: string, instanceId: string, at: number, h
 function relay(store: Store, sessionId: string, at: number) {
   store.acquireRelay({ host: "portable", sessionId, transport: "portable", relayId: `relay-${sessionId}`, pid: process.pid, parentPid: process.pid }, at);
 }
+/** A real broker reads the wall clock, so rows meant to be live get a lease measured from now, after the slow seeding. */
+function keepLive(store: Store, sessionIds: string[]) {
+  const now = Date.now();
+  for (const sessionId of sessionIds) {
+    store.database.prepare("UPDATE session_presence SET heartbeat_at = ?, lease_until = ? WHERE session_id = ?")
+      .run(new Date(now).toISOString(), new Date(now + 10 * 60_000).toISOString(), sessionId);
+    store.database.prepare("UPDATE relay_leases SET updated_at = ?, lease_until = ? WHERE session_id = ?")
+      .run(new Date(now).toISOString(), new Date(now + 10 * 60_000).toISOString(), sessionId);
+  }
+}
 function rows(store: Store) {
   return store.database.prepare("SELECT rowid, * FROM session_presence ORDER BY rowid").all();
 }
@@ -72,6 +82,7 @@ function largeFixture(database: string, now: number) {
         VALUES ('portable', ?, 'portable', ?, ?, ?, ?, ?)`).run(sessionId, `relay-${sessionId}`, process.pid, process.pid,
         new Date(now + 60_000).toISOString(), new Date(now - 1000).toISOString());
     }
+    keepLive(store, ["live-0", "live-1"]);
     return (store.database.prepare("SELECT count(*) AS rows, count(DISTINCT session_id) AS identities FROM session_presence").get());
   } finally { store.close(); }
 }
@@ -109,6 +120,7 @@ it("B1: an identity outside the broker pattern stays unknown alone while the oth
   const store = new SessionMessageStore(path.join(state, "session-messages.sqlite3"));
   try {
     for (let index = 0; index < 6; index += 1) born(store, `valid-${index}`, `valid-${index}`, now - 1000);
+    keepLive(store, Array.from({ length: 6 }, (_, index) => `valid-${index}`));
   } finally { store.close(); }
   const child = spawn(process.execPath, ["--import", "tsx", sourceBroker, "--state-directory", state], { windowsHide: true, stdio: "ignore" });
   cleanup.push(async () => {

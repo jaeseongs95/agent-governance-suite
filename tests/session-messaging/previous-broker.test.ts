@@ -182,6 +182,9 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
   const seed = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
   try {
     seed.startPresence({ ...target, instanceId: "presence-instance", transport: "portable", wakeVisibility: "none", canWakeSilently: false }, Date.now());
+    // The broker reads the wall clock after a possibly slow start; keep the row live well past the 20-second lease.
+    seed.database.prepare("UPDATE session_presence SET lease_until = ? WHERE session_id = ?")
+      .run(new Date(Date.now() + 10 * 60_000).toISOString(), target.sessionId);
   } finally { seed.close(); }
   const child = spawn(process.execPath, [previousBroker!, "--state-directory", directory], { windowsHide: true, stdio: "ignore", env: environment });
   try {
