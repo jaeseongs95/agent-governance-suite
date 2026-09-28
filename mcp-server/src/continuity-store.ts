@@ -172,6 +172,11 @@ export class SqliteContinuityStore {
   }
 
   ensureTask(taskCorrelation: string, now: string): ContinuityTaskRecord {
+    // Existing metadata is enough to bind a tool request that will report an unsupported receiver task.
+    // Issuing that binding must not modify the task or expose its checkpoint body.
+    this.assertSupportedSchema();
+    const existing = this.readTask(taskCorrelation);
+    if (existing) return existing;
     return this.transaction("Cannot initialize the continuity task.", () => {
       this.database.prepare(`
         INSERT INTO continuity_tasks(task_correlation, current_epoch, updated_at)
@@ -184,6 +189,10 @@ export class SqliteContinuityStore {
 
   getTask(taskCorrelation: string): ContinuityTaskRecord | null {
     this.assertCompatibleTask(taskCorrelation);
+    return this.readTask(taskCorrelation);
+  }
+
+  private readTask(taskCorrelation: string): ContinuityTaskRecord | null {
     const row = this.database.prepare("SELECT * FROM continuity_tasks WHERE task_correlation = ?").get(taskCorrelation) as TaskRow | undefined;
     return row ? taskRecord(row) : null;
   }

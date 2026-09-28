@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ApiResultV1, CheckpointContextRequestV1 } from "../../contracts/types.js";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
+import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
@@ -141,6 +142,11 @@ describe("2.7.x continuity schema compatibility", () => {
     const purge = bound(service, "purge_direct_context", { schemaVersion: "1.0.0", requestId: "purge", expectedEpoch: 1, expectedRevision: 1 });
     attachReceiver(databasePath, snapshot.taskCorrelation);
     const before = state(databasePath);
+    const hook = handleContinuityHook({ hook_event_name: "PreToolUse", session_id: "compat-session",
+      tool_name: "mcp__agent-governance-suite__inspect_context", tool_input: { schemaVersion: "1.0.0" } }, service);
+    const hookInput = (hook.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput;
+    expect(hookInput._continuityBinding).toEqual(expect.any(String));
+    expect(service.inspectContext(hookInput).error?.details).toEqual({ reason: "RECEIVER_STATE_UNSUPPORTED" });
     for (const result of [service.inspectContext(inspect), service.checkpointContext(checkpoint),
       service.suppressContextRestore(suppress), service.purgeDirectContext(purge)]) {
       expect(result).toMatchObject({ ok: false, data: null, error: { code: "CONTINUITY_UNAVAILABLE", details: { reason: "RECEIVER_STATE_UNSUPPORTED" } } });
@@ -277,20 +283,29 @@ describe("2.7.x continuity schema compatibility", () => {
 });
 
 describe("source STDIO continuity startup diagnostics", () => {
-  it.each(["healthy", "future", "incompatible", "corrupt"])("keeps normal MCP usable when continuity is %s", async (kind) => {
+  it.each(["healthy", "receiver", "future", "incompatible", "corrupt"])("keeps normal MCP usable when continuity is %s", async (kind) => {
     const { directory, databasePath } = fixture(kind === "future" ? 4 : 3);
     if (kind === "corrupt") writeFileSync(databasePath, "private body: not a database", "utf8");
     if (kind === "incompatible") {
       const raw = new DatabaseSync(databasePath); raw.exec("DROP TABLE continuity_delta_state;"); raw.close();
     }
-    const issuer = kind === "healthy" ? new ContinuityService(open(databasePath).store, new ContractValidator()) : null;
+    const issuer = kind === "healthy" || kind === "receiver" ? new ContinuityService(open(databasePath).store, new ContractValidator()) : null;
     const saved = issuer?.checkpointContext(bound(issuer, "checkpoint_context", input())).data;
+    if (kind === "receiver") attachReceiver(databasePath, saved!.taskCorrelation);
+    const beforeReceiver = kind === "receiver" ? state(databasePath) : null;
     const environment = getDefaultEnvironment();
     environment.AGENT_GOVERNANCE_DB_PATH = path.join(directory, "workflow.sqlite3");
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = databasePath;
     environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = path.join(directory, "board.sqlite3");
     environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = path.join(directory, "messaging");
     environment.AGENT_GOVERNANCE_TRUST_DB_PATH = path.join(directory, "trust.sqlite3");
+    const hookArguments = (tool: string, value: Record<string, unknown>) => {
+      const hook = spawnSync(process.execPath, ["--import", "tsx", fileURLToPath(new URL("../../mcp-server/src/continuity-hook.ts", import.meta.url))],
+        { cwd: fileURLToPath(new URL("../../", import.meta.url)), env: environment, windowsHide: true, encoding: "utf8", timeout: 10_000,
+          input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "compat-session", tool_name: tool, tool_input: value }) });
+      expect(hook.status, hook.stderr).toBe(0);
+      return JSON.parse(hook.stdout).hookSpecificOutput.updatedInput as Record<string, unknown>;
+    };
     const workflow = new SqliteWorkflowStore(environment.AGENT_GOVERNANCE_DB_PATH);
     workflow.putPluginUpdateState({ targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION,
       latestVersion: CURRENT_VERSION, latestTag: `v${CURRENT_VERSION}`, latestCommit: "a".repeat(40),
@@ -310,14 +325,14 @@ describe("source STDIO continuity startup diagnostics", () => {
       const infoText = (info.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")!.text;
       expect(JSON.parse(infoText).ok).toBe(true);
       const result = await client.callTool({ name: "inspect_context", arguments: issuer
-        ? bound(issuer, "inspect_context", { schemaVersion: "1.0.0" }) : { schemaVersion: "1.0.0" } });
+        ? hookArguments("inspect_context", { schemaVersion: "1.0.0" }) : { schemaVersion: "1.0.0" } });
       const text = (result.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")!.text;
-      if (issuer) {
+      if (issuer && kind === "healthy") {
         const candidate = JSON.parse(text).data;
         expect(candidate.summary.revision).toBe(1);
         const load = { schemaVersion: "1.0.0", candidateToken: candidate.restoreToken, epoch: 1,
           revision: 1, digest: saved!.snapshotDigest };
-        const loaded = await client.callTool({ name: "load_context", arguments: bound(issuer, "load_context", load) });
+        const loaded = await client.callTool({ name: "load_context", arguments: hookArguments("load_context", load) });
         const loadedText = (loaded.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")!.text;
         expect(JSON.parse(loadedText).data).toEqual(saved);
         expect(issuer.store.getSchemaVersion()).toBe(3);
@@ -325,9 +340,10 @@ describe("source STDIO continuity startup diagnostics", () => {
       }
       const failure = JSON.parse(text) as ApiResultV1<unknown>;
       expect(failure).toMatchObject({ ok: false, data: null, error: { code: "CONTINUITY_UNAVAILABLE",
-        details: { reason: { future: "UNSUPPORTED_SCHEMA", incompatible: "INCOMPATIBLE_SCHEMA", corrupt: "CORRUPT_DATABASE" }[kind] } } });
+        details: { reason: { receiver: "RECEIVER_STATE_UNSUPPORTED", future: "UNSUPPORTED_SCHEMA", incompatible: "INCOMPATIBLE_SCHEMA", corrupt: "CORRUPT_DATABASE" }[kind] } } });
       expect(text + stderr).not.toContain("private body");
       expect(text + stderr).not.toContain("signing-secret");
+      if (beforeReceiver) expect(state(databasePath)).toEqual(beforeReceiver);
     } finally { await client.close(); }
   }, 15_000);
 });
