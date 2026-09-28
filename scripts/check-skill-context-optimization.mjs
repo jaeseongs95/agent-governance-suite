@@ -13,10 +13,10 @@ const SESSION_BOARD_ADDITION_SHA256 = "381be4018118086b3c4087be043c004d8d6de986d
 // Intake changes policy after the original optimization. Pin only this revision;
 // all other skills keep their historical byte-for-byte checks.
 const ORCHESTRATOR_INTAKE = Object.freeze({
-  revision: "2.7.2-source-port-intake-followup",
+  revision: "2.7.3-intake-selection-timing",
   initialMaxBytes: 4585,
   hashes: Object.freeze({
-    reconstructed: "7d2788a401daacd7107ef65e5589dd4adf5fd3052e79813d730f77213fc887df",
+    reconstructed: "12744ae24122ce513b09152f3e4884b63883c7d15e808fa7b2b6c19c27be3af9",
     frontmatter: "9054478f3909908263ce9f26afaad3b51d2a0db8f1aceacb228b07c6e3dd7bae",
     mcpExecution: "be972eaa9b6d2ceab78f48f37fcc0eb4e1d4ce52cd8cfb5de356f019da46c546",
   }),

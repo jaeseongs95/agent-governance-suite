@@ -35,9 +35,9 @@ describe("skill context optimization", () => {
       totals: {
         skillCount: 20,
         baselineBytes: 115679,
-        candidateBytes: 45598,
-        reducedBytes: 70081,
-        reductionPercent: 60.582301
+        candidateBytes: 45851,
+        reducedBytes: 69828,
+        reductionPercent: 60.363592
       }
     });
     expect(report.skills).toHaveLength(20);
