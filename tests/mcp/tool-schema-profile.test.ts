@@ -198,6 +198,11 @@ describe("MCP tool schema profiles", () => {
     const intake = shared.split("<!-- skill-intake:start -->\n")[1]?.split("\n<!-- skill-intake:end -->")[0];
     expect(intake).toBeTruthy();
     expect(SKILL_INTAKE_SERVER_INSTRUCTIONS.split(intake!)).toHaveLength(2);
+    // Outside the projected block, no common sentence may be repeated or pre-stated.
+    const outside = expected.split(intake!).join("\n");
+    const sentences = intake!.split("\n").filter((line) => !line.startsWith("#")).flatMap((line) => line.replace(/^- /u, "").split(/(?<=다\.) /u)).filter((sentence) => sentence.length > 20);
+    expect(sentences.length).toBeGreaterThan(10);
+    for (const sentence of sentences) expect(outside.includes(sentence), sentence).toBe(false);
     expect(SKILL_INTAKE_SERVER_INSTRUCTIONS).not.toMatch(/실패 영향이 낮으면|BINDING_/u);
     // Skill IDs are common; native invocation syntax remains in adapters.
     for (const hostSpecific of [/Skill 도구/u, /\/agent-governance-suite:/u, /(?<![\w$])\$[a-z][a-z0-9-]*/u, /Claude/u, /Codex/u, /Anthropic/iu, /UserPromptSubmit/u]) {

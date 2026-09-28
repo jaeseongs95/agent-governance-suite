@@ -63,7 +63,7 @@ Polish this Korean README while preserving facts, numbers, links, and the meanin
 
 The agent uses the installed skills' descriptions and applicability rules to decide which skills to use. When several specialists need to work in sequence, the `orchestrator` connects their order and results; a single check can use the relevant specialist directly.
 
-Claude Code provides additional skill recommendations for some requests and commands. Implicit selection in Codex depends on the model's judgment. To name a skill explicitly, use a request such as `$orchestrator` in Codex or `/agent-governance-suite:orchestrator` in Claude Code.
+Both hosts receive the shared intake rules in [`skills/orchestrator/SKILL.md`](skills/orchestrator/SKILL.md) through the MCP server initialization instructions (`instructions`). Claude Code also receives the same source text at SessionStart. To name a skill explicitly, use a request such as `$orchestrator` in Codex or `/agent-governance-suite:orchestrator` in Claude Code.
 
 ```mermaid
 flowchart LR

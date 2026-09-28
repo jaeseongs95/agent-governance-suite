@@ -129,17 +129,20 @@ describe("generated Claude plugin", () => {
     }
   });
 
-  it("keeps no copy of the common intake sentences in the Claude overlay or MCP source", async () => {
+  it("keeps no copy of the common intake sentences in any tracked file outside the shared source", async () => {
     const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
     const intake = shared.split("<!-- skill-intake:start -->\n")[1].split("\n<!-- skill-intake:end -->")[0];
     const sentences = intake.split("\n").filter((line) => !line.startsWith("#")).flatMap((line) => line.replace(/^- /u, "").split(/(?<=다\.) /u)).filter((sentence) => sentence.length > 20);
     expect(sentences.length).toBeGreaterThan(10);
-    const overlay = path.join(root, "claude-overlay");
-    const files = (await readdir(overlay, { recursive: true, withFileTypes: true })).filter((entry) => entry.isFile()).map((entry) => path.join(entry.parentPath, entry.name));
-    expect(files.length).toBeGreaterThan(10);
-    for (const file of [...files, path.join(root, "mcp-server", "src", "server.ts")]) {
-      const text = await readFile(file, "utf8");
-      for (const sentence of sentences) expect(text.includes(sentence), `${path.relative(root, file)}: ${sentence}`).toBe(false);
+    // The shared source, its generated Claude copy and this file's fixture are the only allowed holders.
+    const allowed = new Set(["skills/orchestrator/SKILL.md", "claude-plugin/skills/orchestrator/SKILL.md", "tests/tooling/claude-plugin.test.mjs"]);
+    const listed = spawnSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
+    expect(listed.status).toBe(0);
+    const files = listed.stdout.split("\0").filter((file) => file && !allowed.has(file));
+    expect(files.length).toBeGreaterThan(500);
+    for (const file of files) {
+      const text = await readFile(path.join(root, file), "utf8").catch(() => "");
+      for (const sentence of sentences) expect(text.includes(sentence), `${file}: ${sentence}`).toBe(false);
     }
   });
 
