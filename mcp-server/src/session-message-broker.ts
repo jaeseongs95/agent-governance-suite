@@ -7,8 +7,9 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
-import { SessionMessageStore, type SessionIdentity } from "./session-message-store.js";
-import type { InputObservationKind } from "./input-observation.js";
+import { SessionMessageStore, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
+import { createWakeHookObservationReader, type WakeHookObservationReader } from "./session-message-wake-port.js";
+import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
 
@@ -37,6 +38,17 @@ function identity(value: unknown): SessionIdentity {
 function string(value: unknown, name: string): string {
   if (typeof value !== "string") throw new Error(`${name} must be a string.`);
   return value;
+}
+
+function wakeAttempt(value: unknown): WakeAttempt {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Wake attempt is required.");
+  const attempt = value as Record<string, unknown>;
+  const result = { ...identity(attempt), nonce: string(attempt.nonce, "nonce"), instanceId: string(attempt.instanceId, "instanceId"),
+    transport: string(attempt.transport, "transport"), relayId: string(attempt.relayId, "relayId"), generation: string(attempt.generation, "generation"),
+    attemptId: string(attempt.attemptId, "attemptId"), dispatchEpoch: integer(attempt.dispatchEpoch, "dispatchEpoch") };
+  if (result.nonce.length > 128 || result.generation.length > 100 || result.attemptId.length > 128
+    || result.instanceId.length > 128 || result.transport.length > 64 || result.relayId.length > 128 || result.dispatchEpoch < 0) throw new Error("Invalid wake attempt.");
+  return result;
 }
 
 function integer(value: unknown, name: string): number {
@@ -182,7 +194,7 @@ function observePeerRelay(store: SessionMessageStore, payload: Record<string, un
     ...(wakeObservedAt === undefined ? {} : { wakeObservedAt }) });
 }
 
-export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>): unknown {
+export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>, wakeObserver?: WakeHookObservationReader): unknown {
   switch (operation) {
     case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: SESSION_MESSAGE_BROKER_CAPABILITIES };
     case "prepare": {
@@ -228,6 +240,35 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       if (result.recognized && sameGeneration && binding?.instanceId === presence.instanceId && presence.state === "online") binding.wakeObservedAt = Date.now();
       for (const key of wakeKeys) runtime.wakes.delete(key);
       return result;
+    }
+    case "claim-host-wake": {
+      if (Object.keys(payload).some((key) => !["target", "observation", "sourceReceiptId", "maxMessages", "maxBodyChars"].includes(key))) {
+        throw new Error("Host wake claim requires a non-authorizing hook source receipt.");
+      }
+      const target = identity(payload.target);
+      const maxMessages = optionalInteger(payload, "maxMessages");
+      const maxBodyChars = optionalInteger(payload, "maxBodyChars");
+      const result = store.claimHostWake(target, payload.observation as InputObservation,
+        typeof payload.sourceReceiptId === "string" ? payload.sourceReceiptId : "", wakeObserver, Date.now(), {
+          ...(maxMessages === undefined ? {} : { maxMessages }), ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
+        });
+      const runtime = peerWaitRuntime(store);
+      const binding = runtime.relays.get(JSON.stringify(target));
+      if (result.recognized && result.binding && binding?.instanceId === result.binding.instanceId
+        && binding.relayId === result.binding.relayId) binding.wakeObservedAt = Date.now();
+      // Legacy markers drain naturally, but only the actual hook supplies this receipt.
+      if (result.recognized && !result.binding && binding) {
+        const nonces = (payload.observation as InputObservation).wakeCandidates ?? [];
+        const owner = JSON.stringify(target);
+        const presence = store.presence(target);
+        const keys = nonces.map((nonce) => createHash("sha256").update(nonce).digest("hex"));
+        if (keys.length > 0 && keys.every((key) => {
+          const wake = runtime.wakes.get(key);
+          return wake?.owner === owner && wake.instanceId === binding.instanceId && wake.relayId === binding.relayId;
+        }) && presence.state === "online" && presence.instanceId === binding.instanceId) binding.wakeObservedAt = Date.now();
+        for (const key of keys) runtime.wakes.delete(key);
+      }
+      return { recognized: result.recognized, messages: result.messages };
     }
     case "observe-native-input": {
       peerWaitRuntime(store).policy.reset(identity(payload.target));
@@ -340,6 +381,11 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
     case "reserve-wake": {
       const target = identity(payload.target);
       const nonce = string(payload.nonce, "nonce");
+      if (["instanceId", "relayId", "transport", "resume"].some((key) => Object.hasOwn(payload, key))) {
+        return store.reserveManagedWake({ ...target, nonce, instanceId: string(payload.instanceId, "instanceId"),
+          relayId: string(payload.relayId, "relayId"), transport: string(payload.transport, "transport"),
+          ...(payload.resume === undefined ? {} : { resume: boolean(payload.resume, "resume") }) }, Date.now());
+      }
       const shouldDispatch = store.reserveWake(target, nonce);
       const runtime = peerWaitRuntime(store);
       const owner = JSON.stringify(target);
@@ -350,6 +396,13 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       }
       return { dispatch: shouldDispatch };
     }
+    case "start-wake": return store.startManagedWake(wakeAttempt(payload.attempt), Date.now());
+    case "record-wake-outcome": {
+      const outcome = string(payload.outcome, "outcome");
+      if (outcome !== "submitted" && outcome !== "definite-failure" && outcome !== "accepted-or-unknown") throw new Error("Invalid wake dispatch outcome.");
+      return { recorded: store.recordManagedWakeOutcome(wakeAttempt(payload.attempt), outcome) };
+    }
+    case "wake-status": return { wake: store.managedWakeStatus(identity(payload.target)) };
     case "release-wake": return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "consume-wake": return { consumed: store.consumeWake(identity(payload.target), string(payload.nonce, "nonce")) };
     default: throw new Error("Unknown broker operation.");
@@ -411,6 +464,8 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
     const { key, certificate, token, fingerprint256 } = await credentials(stateDirectory);
     const activeStore = new SessionMessageStore(databasePath);
     store = activeStore;
+    const wakeHookObservationReader = createWakeHookObservationReader(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim()
+      ? path.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path.join(stateDirectory, "trust.sqlite3"));
     let lastActivity = Date.now();
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
       lastActivity = Date.now();
@@ -430,7 +485,7 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
           const request = JSON.parse(line) as BrokerRequest;
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
-          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload);
+          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader);
           socket.end(`${JSON.stringify({ ok: true, data })}\n`);
         } catch (error) {
           socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed." })}\n`);

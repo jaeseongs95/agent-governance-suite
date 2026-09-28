@@ -56,7 +56,22 @@ export interface ContinuityCleanupPreview {
 }
 
 const SCHEMA_VERSION = 2;
+const MAX_COMPATIBLE_SCHEMA_VERSION = 3;
 const SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
+
+// Column/type/nullability/key/default signatures of the shared v2 tables and the additive v3 receiver table.
+const TABLE_SIGNATURES: Record<string, string> = {
+  continuity_metadata: "key:TEXT:0:1 value:TEXT:1:0",
+  continuity_tasks: "task_correlation:TEXT:0:1 current_epoch:INTEGER:1:0 root_id:TEXT:0:0 suppressed:INTEGER:1:0:0 last_auto_injected_revision:INTEGER:0:0 pending_source:TEXT:0:0 pending_revision:INTEGER:0:0 pending_digest:TEXT:0:0 pending_root_id:TEXT:0:0 pending_consumed:INTEGER:1:0:0 updated_at:TEXT:1:0",
+  continuity_snapshots: "task_correlation:TEXT:1:1 epoch:INTEGER:1:2 revision:INTEGER:1:0 snapshot_digest:TEXT:1:0 snapshot_json:TEXT:1:0 updated_at:TEXT:1:0",
+  continuity_requests: "task_correlation:TEXT:1:1 epoch:INTEGER:1:2 request_hash:TEXT:1:3 command_digest:TEXT:1:0 result_json:TEXT:1:0 created_at:TEXT:1:0",
+  continuity_tombstones: "task_correlation:TEXT:1:1 epoch:INTEGER:1:2 revision:INTEGER:1:0 payload_digest:TEXT:1:0 purged_at:TEXT:1:0",
+  continuity_observations: "observation_id:INTEGER:0:1 task_correlation:TEXT:1:0 epoch:INTEGER:1:0 event:TEXT:1:0 turn_hash:TEXT:0:0 success:INTEGER:1:0 observed_at:TEXT:1:0",
+  continuity_delta_state: "task_correlation:TEXT:1:1 epoch:INTEGER:1:2 receiver_host:TEXT:1:0 receiver_session:TEXT:1:0 receiver_instance:TEXT:1:0 context_generation:INTEGER:1:0 sequence:INTEGER:1:0 origin_digest:TEXT:1:0 checkpoint_digest:TEXT:1:0 checkpoint_json:TEXT:1:0 last_delta_digest:TEXT:0:0 state_ack_json:TEXT:0:0",
+};
+
+export type ContinuityUnavailableReason = "STORE_UNAVAILABLE" | "UNSUPPORTED_SCHEMA" | "INCOMPATIBLE_SCHEMA"
+  | "CORRUPT_DATABASE" | "RECEIVER_STATE_UNSUPPORTED" | "DATABASE_PATH_CONFLICT";
 
 function hasExactKeys(value: Record<string, unknown>, keys: string[]): boolean {
   const actual = Object.keys(value).sort();
@@ -85,10 +100,17 @@ export function isBodyFreeRequestReceipt(value: Record<string, unknown> | null):
 }
 
 export class ContinuityStoreError extends Error {
-  constructor(message: string, readonly causeValue?: unknown) {
+  constructor(message: string, readonly causeValue?: unknown, readonly reason: ContinuityUnavailableReason = "STORE_UNAVAILABLE") {
     super(message);
     this.name = "ContinuityStoreError";
   }
+}
+
+/** Only stable reason codes cross the optional-store boundary; never raw SQL, keys or checkpoint data. */
+export function continuityUnavailableReason(error: unknown): ContinuityUnavailableReason {
+  if (error instanceof ContinuityStoreError) return error.reason;
+  const code = error && typeof error === "object" && "errcode" in error ? error.errcode : null;
+  return code === 11 || code === 26 ? "CORRUPT_DATABASE" : "STORE_UNAVAILABLE";
 }
 
 function purgedRequestJson(epoch: number, revision: number, tombstoneDigest: string, purgedAt: string): string {
@@ -124,12 +146,12 @@ export class SqliteContinuityStore {
       this.database = opened;
       this.database.exec("PRAGMA busy_timeout = 5000;");
       this.database.exec("PRAGMA synchronous = FULL;");
-      if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
+      if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path.resolve(databasePath), 0o600);
     } catch (cause) {
       try { opened?.close(); } catch { /* Preserve the initialization failure. */ }
-      throw new ContinuityStoreError("Cannot initialize the continuity database.", cause);
+      throw new ContinuityStoreError("Cannot initialize the continuity database.", cause, continuityUnavailableReason(cause));
     }
   }
 
@@ -150,52 +172,72 @@ export class SqliteContinuityStore {
   }
 
   ensureTask(taskCorrelation: string, now: string): ContinuityTaskRecord {
-    this.database.prepare(`
-      INSERT INTO continuity_tasks(task_correlation, current_epoch, updated_at)
-      VALUES (?, 1, ?)
-      ON CONFLICT(task_correlation) DO NOTHING
-    `).run(taskCorrelation, now);
-    return this.getTask(taskCorrelation)!;
+    // Existing metadata is enough to bind a tool request that will report an unsupported receiver task.
+    // Issuing that binding must not modify the task or expose its checkpoint body.
+    this.assertSupportedSchema();
+    const existing = this.readTask(taskCorrelation);
+    if (existing) return existing;
+    return this.transaction("Cannot initialize the continuity task.", () => {
+      this.database.prepare(`
+        INSERT INTO continuity_tasks(task_correlation, current_epoch, updated_at)
+        VALUES (?, 1, ?)
+        ON CONFLICT(task_correlation) DO NOTHING
+      `).run(taskCorrelation, now);
+      return this.getTask(taskCorrelation)!;
+    }, taskCorrelation);
   }
 
   getTask(taskCorrelation: string): ContinuityTaskRecord | null {
+    this.assertCompatibleTask(taskCorrelation);
+    return this.readTask(taskCorrelation);
+  }
+
+  private readTask(taskCorrelation: string): ContinuityTaskRecord | null {
     const row = this.database.prepare("SELECT * FROM continuity_tasks WHERE task_correlation = ?").get(taskCorrelation) as TaskRow | undefined;
     return row ? taskRecord(row) : null;
   }
 
   rotateEpoch(taskCorrelation: string, now: string): ContinuityTaskRecord {
     this.ensureTask(taskCorrelation, now);
-    this.database.prepare(`
-      UPDATE continuity_tasks
-      SET current_epoch = current_epoch + 1, root_id = NULL, suppressed = 0,
-          last_auto_injected_revision = NULL, pending_source = NULL,
-          pending_revision = NULL, pending_digest = NULL, pending_root_id = NULL,
-          pending_consumed = 0, updated_at = ?
-      WHERE task_correlation = ?
-    `).run(now, taskCorrelation);
-    return this.getTask(taskCorrelation)!;
+    return this.transaction("Cannot rotate the continuity epoch.", () => {
+      this.database.prepare(`
+        UPDATE continuity_tasks
+        SET current_epoch = current_epoch + 1, root_id = NULL, suppressed = 0,
+            last_auto_injected_revision = NULL, pending_source = NULL,
+            pending_revision = NULL, pending_digest = NULL, pending_root_id = NULL,
+            pending_consumed = 0, updated_at = ?
+        WHERE task_correlation = ?
+      `).run(now, taskCorrelation);
+      return this.getTask(taskCorrelation)!;
+    }, taskCorrelation);
   }
 
   bindRoot(taskCorrelation: string, epoch: number, rootId: string, now: string): boolean {
-    const result = this.database.prepare(`
-      UPDATE continuity_tasks SET root_id = ?, suppressed = 0, updated_at = ?
-      WHERE task_correlation = ? AND current_epoch = ?
-    `).run(rootId, now, taskCorrelation, epoch);
-    return result.changes === 1;
+    return this.transaction("Cannot bind the continuity root.", () => {
+      const result = this.database.prepare(`
+        UPDATE continuity_tasks SET root_id = ?, suppressed = 0, updated_at = ?
+        WHERE task_correlation = ? AND current_epoch = ?
+      `).run(rootId, now, taskCorrelation, epoch);
+      return result.changes === 1;
+    }, taskCorrelation);
   }
 
   setSuppressed(taskCorrelation: string, epoch: number, now: string): boolean {
-    const result = this.database.prepare(`
-      UPDATE continuity_tasks SET suppressed = 1, updated_at = ?
-      WHERE task_correlation = ? AND current_epoch = ?
-    `).run(now, taskCorrelation, epoch);
-    return result.changes === 1;
+    return this.transaction("Cannot suppress continuity restore.", () => {
+      const result = this.database.prepare(`
+        UPDATE continuity_tasks SET suppressed = 1, updated_at = ?
+        WHERE task_correlation = ? AND current_epoch = ?
+      `).run(now, taskCorrelation, epoch);
+      return result.changes === 1;
+    }, taskCorrelation);
   }
 
   getSnapshot(taskCorrelation: string, epoch: number): ContinuitySnapshotV1 | null {
     const row = this.database.prepare(`
       SELECT snapshot_json FROM continuity_snapshots WHERE task_correlation = ? AND epoch = ?
     `).get(taskCorrelation, epoch) as SnapshotRow | undefined;
+    // Recheck after the read so a receiver published by another version cannot expose its stale origin.
+    this.assertCompatibleTask(taskCorrelation);
     return row ? JSON.parse(row.snapshot_json) as ContinuitySnapshotV1 : null;
   }
 
@@ -249,7 +291,7 @@ export class SqliteContinuityStore {
         VALUES (?, ?, ?, ?, ?, ?)
       `).run(taskCorrelation, epoch, requestHash, commandDigest, resultJson, snapshot.updatedAt);
       return { kind: "stored" };
-    });
+    }, taskCorrelation);
   }
 
   purge(
@@ -293,7 +335,7 @@ export class SqliteContinuityStore {
         VALUES (?, ?, ?, ?, ?, ?)
       `).run(taskCorrelation, epoch, requestHash, commandDigest, resultJson, now);
       return { kind: "purged" };
-    });
+    }, taskCorrelation);
   }
 
   setPendingMarker(
@@ -305,28 +347,34 @@ export class SqliteContinuityStore {
     rootId: string | null,
     now: string,
   ): boolean {
-    const result = this.database.prepare(`
-      UPDATE continuity_tasks SET pending_source = ?, pending_revision = ?, pending_digest = ?,
-        pending_root_id = ?, pending_consumed = 0, updated_at = ?
-      WHERE task_correlation = ? AND current_epoch = ?
-    `).run(source, revision, digest, rootId, now, taskCorrelation, epoch);
-    return result.changes === 1;
+    return this.transaction("Cannot mark pending continuity restore.", () => {
+      const result = this.database.prepare(`
+        UPDATE continuity_tasks SET pending_source = ?, pending_revision = ?, pending_digest = ?,
+          pending_root_id = ?, pending_consumed = 0, updated_at = ?
+        WHERE task_correlation = ? AND current_epoch = ?
+      `).run(source, revision, digest, rootId, now, taskCorrelation, epoch);
+      return result.changes === 1;
+    }, taskCorrelation);
   }
 
   consumeWorkflowMarker(taskCorrelation: string, epoch: number, revision: number, digest: string, now: string): boolean {
-    const result = this.database.prepare(`
-      UPDATE continuity_tasks SET pending_consumed = 1, last_auto_injected_revision = ?, updated_at = ?
-      WHERE task_correlation = ? AND current_epoch = ? AND pending_source = 'workflow'
-        AND pending_revision = ? AND pending_digest = ? AND pending_consumed = 0
-    `).run(revision, now, taskCorrelation, epoch, revision, digest);
-    return result.changes === 1;
+    return this.transaction("Cannot consume continuity restore.", () => {
+      const result = this.database.prepare(`
+        UPDATE continuity_tasks SET pending_consumed = 1, last_auto_injected_revision = ?, updated_at = ?
+        WHERE task_correlation = ? AND current_epoch = ? AND pending_source = 'workflow'
+          AND pending_revision = ? AND pending_digest = ? AND pending_consumed = 0
+      `).run(revision, now, taskCorrelation, epoch, revision, digest);
+      return result.changes === 1;
+    }, taskCorrelation);
   }
 
   recordObservation(taskCorrelation: string, epoch: number, event: string, turnHash: string | null, success: boolean, now: string): void {
-    this.database.prepare(`
-      INSERT INTO continuity_observations(task_correlation, epoch, event, turn_hash, success, observed_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(taskCorrelation, epoch, event, turnHash, success ? 1 : 0, now);
+    this.transaction("Cannot record the continuity observation.", () => {
+      this.database.prepare(`
+        INSERT INTO continuity_observations(task_correlation, epoch, event, turn_hash, success, observed_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(taskCorrelation, epoch, event, turnHash, success ? 1 : 0, now);
+    }, taskCorrelation);
   }
 
   getSchemaVersion(): number {
@@ -334,6 +382,7 @@ export class SqliteContinuityStore {
   }
 
   previewCleanup(payloadCutoff: string, recordCutoff: string): ContinuityCleanupPreview {
+    this.assertSupportedSchema();
     const snapshotRows = this.database.prepare(`
       SELECT snapshots.task_correlation, tasks.root_id, snapshots.epoch, snapshots.revision,
              snapshots.snapshot_digest, snapshots.snapshot_json, snapshots.updated_at
@@ -353,6 +402,10 @@ export class SqliteContinuityStore {
     let protectedActiveTasks = 0;
     const snapshots = [];
     for (const row of snapshotRows) {
+      if (this.hasReceiverState(row.task_correlation)) {
+        protectedActiveTasks += 1;
+        continue;
+      }
       const snapshot = JSON.parse(row.snapshot_json) as ContinuitySnapshotV1;
       if (snapshot.status === "active") {
         protectedActiveTasks += 1;
@@ -396,6 +449,10 @@ export class SqliteContinuityStore {
     }>;
     const tasks = [];
     for (const row of taskRows) {
+      if (this.hasReceiverState(row.task_correlation)) {
+        protectedActiveTasks += 1;
+        continue;
+      }
       const active = this.database.prepare(`
         SELECT snapshot_json FROM continuity_snapshots WHERE task_correlation = ?
       `).all(row.task_correlation) as unknown as SnapshotRow[];
@@ -437,6 +494,7 @@ export class SqliteContinuityStore {
     recordCutoff: string,
   ): { snapshots: number; tasks: number } {
     return this.transaction("Cannot execute continuity state cleanup.", () => {
+      this.assertSupportedSchema();
       const verifySnapshot = this.database.prepare(`
         SELECT snapshots.revision, snapshots.snapshot_digest, snapshots.snapshot_json,
                snapshots.updated_at, tasks.root_id
@@ -448,6 +506,7 @@ export class SqliteContinuityStore {
         SELECT current_epoch, root_id, updated_at FROM continuity_tasks WHERE task_correlation = ?
       `);
       for (const snapshot of preview.snapshots) {
+        this.assertCompatibleTask(snapshot.taskCorrelation);
         const row = verifySnapshot.get(snapshot.taskCorrelation, snapshot.epoch) as {
           revision: number; snapshot_digest: string; snapshot_json: string; updated_at: string; root_id: string | null;
         } | undefined;
@@ -459,6 +518,7 @@ export class SqliteContinuityStore {
         }
       }
       for (const task of preview.tasks) {
+        this.assertCompatibleTask(task.taskCorrelation);
         const row = verifyTask.get(task.taskCorrelation) as { current_epoch: number; root_id: string | null; updated_at: string } | undefined;
         if (!row || row.current_epoch !== task.currentEpoch || row.root_id !== task.rootId || row.updated_at !== task.updatedAt) {
           throw new ContinuityStoreError(`Continuity task ${task.taskCorrelation} changed after preview.`);
@@ -524,9 +584,10 @@ export class SqliteContinuityStore {
    * Runs a write transaction. Early returns commit without having written;
    * failures roll back and surface as ContinuityStoreError.
    */
-  private transaction<T>(message: string, operation: () => T): T {
+  private transaction<T>(message: string, operation: () => T, taskCorrelation?: string): T {
     this.database.exec("BEGIN IMMEDIATE;");
     try {
+      if (taskCorrelation !== undefined) this.assertCompatibleTask(taskCorrelation);
       const result = operation();
       this.database.exec("COMMIT;");
       return result;
@@ -537,10 +598,51 @@ export class SqliteContinuityStore {
     }
   }
 
+  private assertSupportedSchema(): number {
+    const version = this.getSchemaVersion();
+    if (version < 0 || version > MAX_COMPATIBLE_SCHEMA_VERSION) {
+      throw new ContinuityStoreError(`Unsupported continuity schema version ${version}.`, undefined, "UNSUPPORTED_SCHEMA");
+    }
+    return version;
+  }
+
+  private hasReceiverState(taskCorrelation: string): boolean {
+    // Detect a concurrent v2 -> v3 migration too; an open connection must not cache the absence of this table.
+    const table = this.database.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'continuity_delta_state'").get();
+    return Boolean(table && this.database.prepare("SELECT 1 FROM continuity_delta_state WHERE task_correlation = ? LIMIT 1").get(taskCorrelation));
+  }
+
+  private assertCompatibleTask(taskCorrelation: string): void {
+    this.assertSupportedSchema();
+    if (this.hasReceiverState(taskCorrelation)) {
+      throw new ContinuityStoreError("This task has checkpoint receiver state that requires a newer continuity client.",
+        undefined, "RECEIVER_STATE_UNSUPPORTED");
+    }
+  }
+
+  private validateExistingSchema(version: number): void {
+    for (const [table, expected] of Object.entries(TABLE_SIGNATURES)) {
+      if (table === "continuity_delta_state" && version < 3) continue;
+      const columns = this.database.prepare(`PRAGMA table_info(${table})`).all() as Array<{
+        name: string; type: string; notnull: number; pk: number; dflt_value: string | null;
+      }>;
+      const actual = columns.map((column) => `${column.name}:${column.type}:${column.notnull}:${column.pk}`
+        + (column.dflt_value === null ? "" : `:${column.dflt_value}`)).join(" ");
+      if (actual !== expected) {
+        throw new ContinuityStoreError("The continuity database schema is incompatible.", undefined, "INCOMPATIBLE_SCHEMA");
+      }
+    }
+    const integrity = this.database.prepare("PRAGMA quick_check").all() as Array<{ quick_check: string }>;
+    if (integrity.length !== 1 || integrity[0]?.quick_check !== "ok") {
+      throw new ContinuityStoreError("The continuity database integrity check failed.", undefined, "CORRUPT_DATABASE");
+    }
+  }
+
   private initializeSchema(): void {
-    const version = this.database.prepare("PRAGMA user_version").get() as { user_version: number };
-    if (version.user_version < 0 || version.user_version > SCHEMA_VERSION) {
-      throw new ContinuityStoreError(`Unsupported continuity schema version ${version.user_version}.`);
+    const version = this.assertSupportedSchema();
+    if (version >= SCHEMA_VERSION) {
+      this.validateExistingSchema(version);
+      return;
     }
     this.database.exec(`
       CREATE TABLE IF NOT EXISTS continuity_metadata (
@@ -606,6 +708,6 @@ export class SqliteContinuityStore {
       CREATE INDEX IF NOT EXISTS continuity_observations_cleanup
         ON continuity_observations(observed_at, task_correlation, epoch);
     `);
-    if (version.user_version < SCHEMA_VERSION) this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+    this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }
 }

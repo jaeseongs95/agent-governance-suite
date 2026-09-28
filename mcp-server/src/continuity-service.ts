@@ -13,6 +13,8 @@ import { canonicalJson, convergenceDigest } from "./convergence-logic.js";
 import type { ContractValidator } from "./schema-validator.js";
 import {
   ContinuityStoreError,
+  continuityUnavailableReason,
+  type ContinuityUnavailableReason,
   type ContinuityTaskRecord,
   isBodyFreeRequestReceipt,
   SqliteContinuityStore,
@@ -507,15 +509,17 @@ export class ContinuityService implements ContinuityGateway {
       return action();
     } catch (error) {
       if (error instanceof WorkflowContractError) return failure(error.code, error.message, error.details);
-      if (error instanceof ContinuityStoreError) return failure("CONTINUITY_UNAVAILABLE", error.message);
-      return failure("CONTINUITY_UNAVAILABLE", "Continuity operation failed.", { cause: error instanceof Error ? error.message : String(error) });
+      if (error instanceof ContinuityStoreError) return failure("CONTINUITY_UNAVAILABLE", error.message, { reason: error.reason });
+      return failure("CONTINUITY_UNAVAILABLE", "Continuity operation failed.", { reason: continuityUnavailableReason(error) });
     }
   }
 }
 
 export class UnavailableContinuityService implements ContinuityGateway {
+  constructor(private readonly reason: ContinuityUnavailableReason = "STORE_UNAVAILABLE") {}
+
   private unavailable<T>(): ApiResultV1<T> {
-    return failure("CONTINUITY_UNAVAILABLE", "The optional continuity store is unavailable.");
+    return failure("CONTINUITY_UNAVAILABLE", "The optional continuity store is unavailable.", { reason: this.reason });
   }
   checkpointContext(): ApiResultV1<ContinuitySnapshotV1> { return this.unavailable(); }
   inspectContext(): ApiResultV1<ContinuityCandidateV1> { return this.unavailable(); }
