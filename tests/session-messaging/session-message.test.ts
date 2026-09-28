@@ -2,7 +2,6 @@ import { mkdtempSync } from "node:fs";
 import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
-import { Worker } from "node:worker_threads";
 import { createHash } from "node:crypto";
 import net from "node:net";
 import { tmpdir } from "node:os";
@@ -43,6 +42,8 @@ import { createMcpServer } from "../../mcp-server/src/server.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "../mcp/version-fixtures.js";
+
+import { concurrentClaims } from "../helpers/concurrent-claim-process.js";
 
 const directories: string[] = [];
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
@@ -456,32 +457,12 @@ describe("session message spool", () => {
     expect(setup.reserveWake(target, nonce, 2000)).toBe(true);
     setup.close();
 
-    const workers = [0, 1].map(() => new Worker(new URL("./fixtures/wake-claim-worker.ts", import.meta.url), {
-      execArgv: ["--import", "tsx"],
-      workerData: { databasePath, ...target, nonce, nowMs: 2001 },
-    }));
-    await Promise.all(workers.map((worker) => new Promise<void>((resolve, reject) => {
-      const ready = (message: { type?: string }) => {
-        if (message.type !== "ready") return;
-        worker.off("message", ready);
-        resolve();
-      };
-      worker.on("message", ready);
-      worker.once("error", reject);
-    })));
-    const results = workers.map((worker) => new Promise<{ recognized: boolean; messages: unknown[] }>((resolve, reject) => {
-      worker.once("message", (message: { type?: string; result?: { recognized: boolean; messages: unknown[] } }) => {
-        if (message.type === "result" && message.result) resolve(message.result);
-        else reject(new Error("Wake claim worker returned an unexpected message."));
-      });
-      worker.once("error", reject);
-    }));
-    const exits = workers.map((worker) => new Promise<void>((resolve) => worker.once("exit", () => resolve())));
-    workers.forEach((worker) => worker.postMessage("claim"));
-    const claims = await Promise.all(results);
+    const claims = await concurrentClaims<{ recognized: boolean; messages: unknown[] }>(
+      new URL("./fixtures/wake-claim-worker.ts", import.meta.url),
+      [0, 1].map(() => ({ databasePath, ...target, nonce, nowMs: 2001 })),
+    );
     expect(claims.filter((claim) => claim.recognized)).toHaveLength(1);
     expect(claims.flatMap((claim) => claim.messages)).toHaveLength(1);
-    await Promise.all(exits);
   });
 
   it("defers one boundary, then keeps claiming new and redelivered messages until a new native input", () => {
