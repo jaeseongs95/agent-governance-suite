@@ -137,7 +137,7 @@ test('a signed multiple-nonce observation cannot be approximated by a single old
   const before = snapshot(f); assert.equal(reconcile(f).reconciled, false); assert.deepEqual(snapshot(f), before);
 });
 
-test.each(['missing-db', 'missing-key', 'bad-key', 'missing-table'])('readonly trust rejection %s creates no database/key/receipt', kind => {
+test.each(['missing-db', 'missing-key', 'bad-key', 'missing-table', 'wrong-column'])('readonly trust rejection %s creates no database/key/receipt', kind => {
   const f = fixture();
   let authorityBefore;
   if (kind === 'missing-db') rmSync(f.trustPath);
@@ -146,6 +146,7 @@ test.each(['missing-db', 'missing-key', 'bad-key', 'missing-table'])('readonly t
     if (kind === 'missing-key') db.prepare('DELETE FROM trust_metadata').run();
     if (kind === 'bad-key') db.prepare("UPDATE trust_metadata SET value = 'invalid'").run();
     if (kind === 'missing-table') db.exec('DROP TABLE input_source_receipts');
+    if (kind === 'wrong-column') db.exec('ALTER TABLE input_source_receipts RENAME COLUMN receipt_json TO unrelated_json');
     authorityBefore = { keys: db.prepare('SELECT * FROM trust_metadata').all(),
       schema: db.prepare('SELECT * FROM sqlite_schema ORDER BY name').all(),
       receipts: kind === 'missing-table' ? [] : db.prepare('SELECT * FROM input_source_receipts').all() };
@@ -171,6 +172,45 @@ test.each(['missing-db', 'missing-key', 'bad-key', 'missing-table'])('readonly t
       receipts: kind === 'missing-table' ? [] : db.prepare('SELECT * FROM input_source_receipts').all() }, authorityBefore);
     db.close();
   }
+});
+
+test.each([0, 1, 2, 99])('readonly trust respects initializer version compatibility without migrating version %i', version => {
+  const f = fixture();
+  const writer = new DatabaseSync(f.trustPath);
+  writer.exec(`PRAGMA user_version = ${version}`); writer.close();
+  const bytes = readFileSync(f.trustPath); const before = snapshot(f);
+  assert.equal(reconcile(f).reconciled, version <= 1);
+  if (version > 1) assert.deepEqual(snapshot(f), before);
+  assert.deepEqual(readFileSync(f.trustPath), bytes);
+  const reader = new DatabaseSync(f.trustPath, { readOnly: true });
+  assert.equal(reader.prepare('PRAGMA user_version').get().user_version, version); reader.close();
+});
+
+test('readonly version and receipt share a snapshot while an independent writer upgrades the version', () => {
+  const f = fixture();
+  const original = TrustStore.readVerifiedInputSource(f.trustPath, f.sourceReceiptId);
+  const writer = new DatabaseSync(f.trustPath);
+  const prepare = DatabaseSync.prototype.prepare; let writes = 0;
+  const spy = vi.spyOn(DatabaseSync.prototype, 'prepare').mockImplementation(function (sql) {
+    const statement = prepare.call(this, sql);
+    if (sql === 'PRAGMA user_version') {
+      const get = statement.get.bind(statement);
+      statement.get = (...args) => {
+        const version = get(...args);
+        const child = spawnSync(process.execPath, ['--input-type=module', '-e', `
+          import { DatabaseSync } from 'node:sqlite';
+          const db = new DatabaseSync(process.argv[1]); db.exec('PRAGMA user_version = 2'); db.close();
+        `, f.trustPath], { encoding: 'utf8', windowsHide: true, timeout: 10_000 });
+        assert.equal(child.status, 0, child.stderr); writes++; return version;
+      };
+    }
+    return statement;
+  });
+  let receipt;
+  try { receipt = TrustStore.readVerifiedInputSource(f.trustPath, f.sourceReceiptId); }
+  finally { spy.mockRestore(); writer.close(); }
+  assert.equal(writes, 1); assert.deepEqual(receipt, original);
+  assert.equal(TrustStore.readVerifiedInputSource(f.trustPath, f.sourceReceiptId), null);
 });
 
 test.each(['nowMs', 'receipt', 'approved', 'observation', 'nonce', 'instanceId'])('broker rejects caller supplied %s', field => {
@@ -382,3 +422,39 @@ test.each(['prestarted', 'client-ensure'])('packaged CLI binds history to explic
     }
   }
 }, 30_000);
+
+const schemaCliCases = ['root', 'claude'].flatMap(distribution => [0, 1, 2, 99, 'missing-table', 'wrong-column'].map(version => [distribution, version]));
+test.each(schemaCliCases)('packaged %s CLI rejects unsupported trust schema without mutation: %s', async (distribution, version) => {
+  const f = fixture();
+  const writer = new DatabaseSync(f.trustPath);
+  if (typeof version === 'number') writer.exec(`PRAGMA user_version = ${version}`);
+  else if (version === 'missing-table') writer.exec('DROP TABLE input_source_receipts');
+  else writer.exec('ALTER TABLE input_source_receipts RENAME COLUMN receipt_json TO unrelated_json');
+  writer.close();
+  const authorityBytes = readFileSync(f.trustPath); const before = snapshot(f);
+  const install = join(f.directory, 'schema-install'); mkdirSync(install);
+  const prefix = distribution === 'root' ? '../../' : '../../claude-plugin/';
+  for (const name of ['session-message-broker.mjs', 'session-message-cli.mjs']) {
+    copyFileSync(fileURLToPath(new URL(`${prefix}mcp-server/dist/${name}`, import.meta.url)), join(install, name));
+  }
+  assert.equal(existsSync(join(install, 'node_modules')), false);
+  const env = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: f.directory, AGENT_GOVERNANCE_TRUST_DB_PATH: f.trustPath };
+  const broker = spawn(process.execPath, [join(install, 'session-message-broker.mjs'), '--state-directory', f.directory],
+    { env, cwd: install, stdio: 'ignore', windowsHide: true });
+  const exited = once(broker, 'exit');
+  try {
+    await waitForSessionMessageBrokerReady(f.directory, broker, 5000);
+    const run = () => spawnSync(process.execPath, [join(install, 'session-message-cli.mjs')], {
+      env, cwd: install, input: JSON.stringify({ operation: 'reconcile-wake-observation', payload: payload(f) }),
+      encoding: 'utf8', windowsHide: true, timeout: 10_000 });
+    const output = run(); assert.equal(output.error, undefined); assert.equal(output.status, 0, output.stderr);
+    const accepted = typeof version === 'number' && version <= 1;
+    assert.equal(JSON.parse(output.stdout).data.reconciled, accepted);
+    if (!accepted) assert.deepEqual(snapshot(f), before);
+    assert.deepEqual(readFileSync(f.trustPath), authorityBytes);
+    const wal = `${f.trustPath}-wal`;
+    if (existsSync(wal)) assert.ok(readFileSync(wal).length <= 32, 'reader added WAL frames');
+    assert.deepEqual(JSON.parse(run().stdout).data, { reconciled: false, evidence: null });
+    assert.deepEqual(readFileSync(f.trustPath), authorityBytes);
+  } finally { broker.kill(); await exited; }
+}, 20_000);

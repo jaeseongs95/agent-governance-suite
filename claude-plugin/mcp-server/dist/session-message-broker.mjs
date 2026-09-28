@@ -216,6 +216,8 @@ var TrustStore = class {
     try {
       database = new DatabaseSync(databasePath, { readOnly: true });
       database.exec("PRAGMA query_only = ON; BEGIN;");
+      const version = database.prepare("PRAGMA user_version").get().user_version;
+      if (version > SCHEMA_VERSION) return null;
       const key = database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(TRUST_SIGNING_KEY);
       const row = database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId);
       if (!key || !row) return null;
