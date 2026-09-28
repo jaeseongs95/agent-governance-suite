@@ -418,6 +418,7 @@ var MESSAGE_DRAFT_TTL_MS = 10 * 6e4;
 var MESSAGE_DRAFT_LIMIT = 1e3;
 var MESSAGE_SENDER_DRAFT_LIMIT = 100;
 var MESSAGE_RECEIPT_LIMIT = 1e3;
+var MESSAGE_SENDER_RECEIPT_LIMIT = 250;
 var MESSAGE_ID_RECORD_BYTES_LIMIT = 4 * 1024 * 1024;
 var MESSAGE_RECEIPT_EXTRA_MS = 36e5;
 var CLAIM_LEASE_BASE_MS = 12e4;
@@ -454,6 +455,14 @@ function claimedMessage(row, deliveryAttempt = Number(row.delivery_attempts), fi
 function claimResponseBytes(messages) {
   return Buffer.byteLength(JSON.stringify({ ok: true, data: { messages } }), "utf8") + 1;
 }
+var MessageCapacityError = class extends Error {
+  details;
+  constructor(message, details) {
+    super(message);
+    this.name = "MessageCapacityError";
+    this.details = details;
+  }
+};
 var SessionMessageStore = class {
   database;
   constructor(databasePath) {
@@ -601,6 +610,15 @@ var SessionMessageStore = class {
       ORDER BY coalesce(consumed_at, observed_at, outcome_at) DESC LIMIT -1 OFFSET ?)`).run(now, MESSAGE_LIMIT);
     this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
   }
+  /** Sender quota first, then the global pool; call inside the caller's transaction after prune. */
+  assertReceiptCapacity(sender, suffix) {
+    const owned = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?").get(sender.host, sender.sessionId);
+    if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+      throw new MessageCapacityError(`The bounded message receipt store is full for this sender${suffix}`, { scope: "sender", earliestReleaseAt: owned.earliest });
+    }
+    const all = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL").get();
+    if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityError(`The bounded message receipt store is full${suffix}`, { scope: "global", earliestReleaseAt: all.earliest });
+  }
   /** Preparation is durable but has no queue, peer-relation or wake effect. */
   prepare(input, nowMs = Date.now()) {
     boundedIdentity(input.sender);
@@ -614,6 +632,7 @@ var SessionMessageStore = class {
     this.database.exec("BEGIN IMMEDIATE");
     try {
       this.prune(nowMs);
+      this.assertReceiptCapacity(input.sender, "; no draft was created.");
       const drafts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL").get();
       const owned = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL AND sender_host = ? AND sender_session_id = ?").get(input.sender.host, input.sender.sessionId);
       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages").get();
@@ -640,14 +659,13 @@ var SessionMessageStore = class {
         this.database.exec("COMMIT");
         return { ...receipt2, duplicate: true };
       }
-      const receipts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NOT NULL").get();
-      if (receipts.count >= MESSAGE_RECEIPT_LIMIT) throw new Error("The bounded message receipt store is full.");
+      this.assertReceiptCapacity(sender, ".");
       const receipt = this.send({ messageId, sender, target: { host: String(row.target_host), sessionId: String(row.target_session_id) }, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
       const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
       const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);
       const recordBytes = Buffer.byteLength(JSON.stringify({ messageId, sender, target: { host: row.target_host, sessionId: row.target_session_id }, preparedAt: row.prepared_at, ttlSeconds: row.ttl_seconds, receipt: receiptJson, expiresAt }), "utf8");
-      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages WHERE message_id <> ?").get(messageId);
-      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message receipt store is full.");
+      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes, min(expires_at) AS earliest FROM prepared_messages WHERE message_id <> ?").get(messageId);
+      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new MessageCapacityError("The bounded message receipt store is full.", { scope: "global", earliestReleaseAt: bytes.earliest });
       this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?").run(receiptJson, expiresAt, recordBytes, messageId);
       this.database.exec("COMMIT");
       return receipt;
@@ -829,10 +847,15 @@ var SessionMessageStore = class {
     }
     const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL
       WHERE message_id = ? AND target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL`);
+    const receipt = this.database.prepare("UPDATE prepared_messages SET expires_at = min(expires_at, ?) WHERE message_id = ? AND receipt IS NOT NULL");
     let count = 0;
     this.database.exec("BEGIN IMMEDIATE");
     try {
-      for (const messageId of new Set(messageIds)) count += Number(statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes);
+      for (const messageId of new Set(messageIds)) {
+        if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
+        receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
+        count++;
+      }
       this.database.exec("COMMIT");
       return count;
     } catch (error) {
@@ -2007,7 +2030,11 @@ async function startSessionMessageBroker(stateDirectory) {
           socket.end(`${JSON.stringify({ ok: true, data })}
 `);
         } catch (error) {
-          socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed." })}
+          socket.end(`${JSON.stringify({
+            ok: false,
+            error: error instanceof Error ? error.message : "Broker request failed.",
+            ...error instanceof MessageCapacityError ? { details: error.details } : {}
+          })}
 `);
         }
       });

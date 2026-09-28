@@ -124,6 +124,12 @@ var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
 // mcp-server/src/session-message-client.ts
 var WAKE_PREFIX = "[agent-governance-suite:wake:";
 var BrokerRequestRejected = class extends Error {
+  details;
+  constructor(message, details = null) {
+    super(message);
+    const record2 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
+    this.details = record2 && (record2.scope === "sender" || record2.scope === "global") && (record2.earliestReleaseAt === null || typeof record2.earliestReleaseAt === "string") ? { scope: record2.scope, earliestReleaseAt: record2.earliestReleaseAt } : null;
+  }
 };
 var BROKER_STARTUP_TIMEOUT_MS = 15e3;
 var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
@@ -253,7 +259,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
         if (newline < 0) return;
         try {
           const response = JSON.parse(buffer.slice(0, newline));
-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
+          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
           else finish(void 0, response.data);
         } catch {
           finish(new Error("The broker returned invalid JSON."));

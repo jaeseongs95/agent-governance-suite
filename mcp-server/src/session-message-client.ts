@@ -22,7 +22,19 @@ export interface BrokerEndpoint {
   certificateFingerprint256: string;
 }
 
-class BrokerRequestRejected extends Error {}
+/** A broker answer, not a transport failure; details is set only for a bounded-capacity rejection. */
+export class BrokerRequestRejected extends Error {
+  readonly details: { scope: "sender" | "global"; earliestReleaseAt: string | null } | null;
+
+  constructor(message: string, details: unknown = null) {
+    super(message);
+    const record = details && typeof details === "object" && !Array.isArray(details) ? details as Record<string, unknown> : null;
+    this.details = record && (record.scope === "sender" || record.scope === "global")
+      && (record.earliestReleaseAt === null || typeof record.earliestReleaseAt === "string")
+      ? { scope: record.scope, earliestReleaseAt: record.earliestReleaseAt }
+      : null;
+  }
+}
 
 const BROKER_STARTUP_TIMEOUT_MS = 15_000;
 const SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 20_000;
@@ -184,8 +196,8 @@ export async function requestSessionMessageOnce<T>(
         const newline = buffer.indexOf("\n");
         if (newline < 0) return;
         try {
-          const response = JSON.parse(buffer.slice(0, newline)) as { ok: boolean; data?: T; error?: string };
-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
+          const response = JSON.parse(buffer.slice(0, newline)) as { ok: boolean; data?: T; error?: string; details?: unknown };
+          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
           else finish(undefined, response.data);
         } catch {
           finish(new Error("The broker returned invalid JSON."));
