@@ -1986,6 +1986,7 @@ async function startSessionMessageBroker(stateDirectory) {
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
       lastActivity = Date.now();
       let buffer = "";
+      socket.on("error", () => socket.destroy());
       socket.setTimeout(5e3, () => socket.destroy());
       socket.on("data", (chunk) => {
         buffer += chunk.toString("utf8");
