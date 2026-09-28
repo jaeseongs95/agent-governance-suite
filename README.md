@@ -14,7 +14,7 @@ Agent Governance Suite(AGS)는 AI 에이전트의 작업에 전문 스킬과 검
 | 여러 세션의 협업 | 각 세션의 작업을 확인하고 연락할 경로 | 공용 현황판과 처리 여부를 확인할 수 있는 로컬 PEER 메시지 |
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v2.7.3`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+현재 공개 릴리스는 `v2.7.4`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
 <!-- release-version:end -->
 
 - [설치](#설치)
@@ -44,7 +44,7 @@ Claude Code 안에서 실행합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.3
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.4
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
