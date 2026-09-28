@@ -35,8 +35,8 @@
 4. `CollaborationDecision.v1.route`가 `delegate`인 경우에만 `subagent-coordination`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. `auditSeparationRequired`는 route와 독립된 의무다. `delegate`와 함께 참이면 구현 위임과 별도 감사자를 모두 계획한다. `audit-only`는 구현 위임 없이 감사 의무만 남은 경우다. 감사자는 구현에 참여하지 않고 최종 후보가 준비된 뒤 감사하며, 사용자 금지나 실행 불가가 있으면 감사 완료로 처리하지 않는다. 작업 단위가 둘 이상이거나 `orchestration.requested: true`라는 사실만으로 추가하지 않는다.
 5. 실제로 양립할 수 없는 대안이나 충돌하는 근거 중 하나를 선택해야 하고, 독립 관점과 교차 반박이 그 선택에 필요한 경우에만 `independent-deliberation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. `decision.complexity: complex`만으로 추가하지 않으며, 이 단계는 구현이나 완료 게이트를 대체하지 않는다.
 6. 정확한 최종 대상이 있는 고위험 변경의 실행·병합·릴리스·완료 가능 여부를 판정하는 요청에는 `independent-audit`을 추가한다. 감사 전의 구현·수정·자체 검증은 이 provider의 역할이 아니다.
-7. 코딩 설계·구현이나 라이브러리·의존성 선택 단계가 있는 요청에는 `minimal-implementation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. 이 단계는 변경 전 기준선 뒤, 위험한 상태 변경의 사전 점검과 범위·수용 근거 확인 전에 실행된다. 구현 단계에서는 Git이 추적하는 파일의 편집·삭제, 새 파일 생성, 확인용 테스트·빌드 실행만 한다. 추적되지 않는 기존 파일이나 저장소 밖 대상의 삭제·덮어쓰기, 마이그레이션·데이터 변경의 실제 실행, 배포·push·태그처럼 사전 점검 대상인 작업은 사전 점검 뒤에 실행하고, MCP 계획에 그 stage가 없으면 실행하지 않고 최종 결과에 남은 작업으로 적는다. provider는 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르고, 의도적으로 뺀 것을 결과에 남긴다. MCP 없이 직접 진행할 때도 구현 단계에서 이 capability의 provider를 호출한다. 동결된 `TaskEnvelope.v1`의 범위와 수용 기준은 명시적 요청으로 보고 줄이지 않으며, 줄일 후보는 최종 결과에 제안으로만 남긴다. 검사용 테스트를 포함한 새 파일은 `scope.included`·`workUnits[].writeTargets` 안에서 저장소의 기존 테스트 관례와 위치를 따라 만든다. 작업 계약이 없으면 사용자 요청이 정한 범위를 같은 기준으로 삼는다. 코드 리뷰·감사·검증·완료 판정, 코드 설명·조사만 하는 요청, 코딩이 아닌 요청과 검토·감사를 맡은 하위 실행에는 이 capability를 선택하지 않는다.
-8. 하나의 전문 스킬로 충분한 요청은 오케스트레이터 단계를 생략하고 그 스킬을 직접 호출한다. 이때 수렴 root, 계획이나 workflow run을 만들지 않는다. 전문 스킬이 필요 없는 요청은 스킬 호출과 workflow 없이 진행한다.
+7. [공통 접수·선택 기준](../SKILL.md#공통-접수선택-기준)에서 코딩 단계가 선택됐으면 `minimal-implementation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. 이 단계는 변경 전 기준선 뒤, 위험한 상태 변경의 사전 점검과 범위·수용 근거 확인 전에 실행된다. 구현 단계에서는 Git이 추적하는 파일의 편집·삭제, 새 파일 생성, 확인용 테스트·빌드 실행만 한다. 추적되지 않는 기존 파일이나 저장소 밖 대상의 삭제·덮어쓰기, 마이그레이션·데이터 변경의 실제 실행, 배포·push·태그처럼 사전 점검 대상인 작업은 사전 점검 뒤에 실행하고, MCP 계획에 그 stage가 없으면 실행하지 않고 최종 결과에 남은 작업으로 적는다. provider는 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르고, 의도적으로 뺀 것을 결과에 남긴다. MCP 없이 직접 진행할 때도 구현 단계에서 이 capability의 provider를 호출한다. 동결된 `TaskEnvelope.v1`의 범위와 수용 기준은 명시적 요청으로 보고 줄이지 않으며, 줄일 후보는 최종 결과에 제안으로만 남긴다. 검사용 테스트를 포함한 새 파일은 `scope.included`·`workUnits[].writeTargets` 안에서 저장소의 기존 테스트 관례와 위치를 따라 만든다. 작업 계약이 없으면 사용자 요청이 정한 범위를 같은 기준으로 삼는다. 코드 리뷰·감사·검증·완료 판정, 코드 설명·조사만 하는 요청, 코딩이 아닌 요청과 검토·감사를 맡은 하위 실행에는 이 capability를 선택하지 않는다.
+8. 단독 전문 작업과 스킬 생략은 [공통 접수·선택 기준](../SKILL.md#공통-접수선택-기준)을 따르고 수렴 root나 workflow run을 만들지 않는다.
 
 이 스킬을 사용했다는 사실은 MCP `executionMode`나 `CollaborationDecision.v1.route`를 정하지 않는다. 실행 방식은 선택한 capability와 `riskLevel`·`orchestration`을 담은 `TaskEnvelope.v1`로 기존 계획기가 정하고, 위임 여부는 위임 판단 규칙이 따로 정한다. `orchestration.requested: true`는 실패 영향이 크고 순서·gate 연결이 필요한 전문 단계가 둘 이상이며 MCP를 사용할 수 있을 때 적는다. 계획기는 이 값으로 `orchestrated`와 `direct`를 나누므로 `false`이면 direct 계획이 돌아온다.
 
@@ -58,6 +58,12 @@
 - 같은 명령, 입력·candidate digest, 실패 원인과 판별 가설이 모두 그대로라면 다시 실행하지 않는다. 다른 원인 가설을 가르는 검사가 없으면 해당 단계만 중단하고 실패 근거와 필요한 새 입력을 보고한다.
 
 `independent-deliberation` 또는 `independent-audit` provider를 호출하기 전에 [전문 단계 handoff 계약](specialist-handoffs.md)에서 해당 절을 읽고 입력, 결과 투영과 진행 조건을 적용한다.
+
+## 결과 통합
+
+보안 전문 분석을 요청했거나 수용 기준에서 요구하면 `software-security-audit`를 선택한다. 보안 관련 파일의 존재만으로 추가하지 않는다. phase 65의 `security-audit-request`에는 실제 파일 내용을 고정한 대상과 허용 범위를 전달한다. 보고서는 로컬 CLI로 대상·근거를 검증하고 원자료를 확인한 뒤 기록한다. 이 provider의 `passed`는 조사 산출물 생성 성공이며 안전 판정이 아니다. `partial`의 미검사 항목과 limitations를 생략하지 않는다.
+
+수용 근거 검증도 선택됐다면 `security-audit-report` artifact의 locator·digest·targetDigest와 원시 근거를 기존 `workflow:verification-evidence`에 추가하고 해당 보안 수용 기준에 연결한다. 기준 불충족과 검사 공백은 기존 수용 검증·독립 감사 게이트에서 판단한다. 취약점 심각도만으로 전역 차단 정책을 새로 만들지 않는다. 감사 후 대상 변경이 있으면 영향받은 분석과 근거 결속을 다시 확인한다.
 
 ## MCP 도구 사용 계약
 

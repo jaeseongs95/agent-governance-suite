@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -193,13 +193,14 @@ describe("MCP tool schema profiles", () => {
   it("advertises the same host-neutral intake instructions to every schema profile", async () => {
     const expected = `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
     expect(serverInstructions()).toBe(expected);
-    // The entry points at the policy source without maintaining a second selection policy.
-    for (const phrase of ["orchestrator 스킬 원본", "skills/orchestrator/SKILL.md", "references/entry-details.md", "references/mcp-execution.md", "활성화, registry 조회나 workflow 생성을 요구하지 않는다"]) {
-      expect(SKILL_INTAKE_SERVER_INSTRUCTIONS).toContain(phrase);
-    }
-    expect(SKILL_INTAKE_SERVER_INSTRUCTIONS).not.toMatch(/minimal-implementation|실패 영향이 낮으면|BINDING_/u);
-    // Host invocation syntax and product names stay in the host adapters.
-    for (const hostSpecific of [/Skill 도구/u, /\/agent-governance-suite:/u, /(?<![\w$])\$[a-z][a-z0-9-]*/u, /Claude/u, /Codex/u, /Anthropic/iu, /UserPromptSubmit/u, /ponytail/u]) {
+    // Initialization projects the actual shared criteria, not merely their location.
+    const shared = await readFile(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8");
+    const intake = shared.split("<!-- skill-intake:start -->\n")[1]?.split("\n<!-- skill-intake:end -->")[0];
+    expect(intake).toBeTruthy();
+    expect(SKILL_INTAKE_SERVER_INSTRUCTIONS.split(intake!)).toHaveLength(2);
+    expect(SKILL_INTAKE_SERVER_INSTRUCTIONS).not.toMatch(/실패 영향이 낮으면|BINDING_/u);
+    // Skill IDs are common; native invocation syntax remains in adapters.
+    for (const hostSpecific of [/Skill 도구/u, /\/agent-governance-suite:/u, /(?<![\w$])\$[a-z][a-z0-9-]*/u, /Claude/u, /Codex/u, /Anthropic/iu, /UserPromptSubmit/u]) {
       expect(expected).not.toMatch(hostSpecific);
     }
     const implicit = await connect();

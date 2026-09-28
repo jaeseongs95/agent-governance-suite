@@ -17875,7 +17875,7 @@ var ContractValidator = class {
 };
 
 // mcp-server/src/server.ts
-import { existsSync as existsSync3 } from "node:fs";
+import { existsSync as existsSync3, readFileSync as readFileSync3 } from "node:fs";
 
 // node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
 function isZ4Schema(s) {
@@ -20577,7 +20577,13 @@ var planWorkflowAnthropicInputSchema = {
 function planWorkflowToolInputSchema(profile = "default") {
   return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
 }
-var SKILL_INTAKE_SERVER_INSTRUCTIONS = "agent-governance-suite \uC811\uC218 \uC548\uB0B4: \uAC70\uBC84\uB10C\uC2A4 \uC804\uBB38 \uC2A4\uD0AC\uC758 \uC120\uD0DD\xB7\uC5F0\uACB0\uC774 \uD544\uC694\uD55C \uACBD\uC6B0 orchestrator \uC2A4\uD0AC \uC6D0\uBCF8\uC758 \uACF5\uD1B5 \uC811\uC218\xB7\uB77C\uC6B0\uD305 \uAE30\uC900\uC744 \uB530\uB978\uB2E4. \uACF5\uD1B5 \uC6D0\uBCF8\uC740 skills/orchestrator/SKILL.md\uC640 references/entry-details.md\uC774\uBA70 MCP \uC2E4\uD589\xB7\uC2E4\uD328 \uCC98\uB9AC\uB294 references/mcp-execution.md\uB97C \uB530\uB978\uB2E4. \uC774 \uC548\uB0B4\uB9CC\uC73C\uB85C orchestrator \uD65C\uC131\uD654, registry \uC870\uD68C\uB098 workflow \uC0DD\uC131\uC744 \uC694\uAD6C\uD558\uC9C0 \uC54A\uB294\uB2E4. \uD544\uC694\uD55C \uC804\uBB38 \uC2A4\uD0AC\uC740 \uD638\uC2A4\uD2B8\uAC00 \uC81C\uACF5\uD558\uB294 \uC124\uCE58\uB41C \uC2A4\uD0AC \uD638\uCD9C \uBC29\uC2DD\uC73C\uB85C \uC2E4\uC81C \uC2E4\uD589\uD55C\uB2E4.";
+var intake = readFileSync3(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8").match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1];
+if (!intake) throw new Error("Shared skill intake instructions are missing.");
+var SKILL_INTAKE_SERVER_INSTRUCTIONS = `agent-governance-suite \uC811\uC218 \uC548\uB0B4: \uB2E4\uC74C\uC740 skills/orchestrator/SKILL.md\uC758 \uACF5\uD1B5 \uC6D0\uBCF8\uC774\uB2E4. \uC801\uC6A9\uB418\uB294 \uC804\uBB38 \uC2A4\uD0AC\uC744 \uD638\uC2A4\uD2B8\uAC00 \uC81C\uACF5\uD558\uB294 \uC124\uCE58\uB41C \uC2A4\uD0AC \uD638\uCD9C \uBC29\uC2DD\uC73C\uB85C \uC2E4\uD589\uD55C\uB2E4.
+
+${intake}
+
+\uC5EC\uB7EC \uC804\uBB38 \uB2E8\uACC4\uB97C \uC5F0\uACB0\uD560 \uB54C references/entry-details.md, MCP \uC2E4\uD589\xB7\uC2E4\uD328 \uCC98\uB9AC\uB294 references/mcp-execution.md\uB97C \uB530\uB978\uB2E4.`;
 function serverInstructions() {
   return `${SKILL_INTAKE_SERVER_INSTRUCTIONS}
 ${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
