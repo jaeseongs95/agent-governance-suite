@@ -24,7 +24,9 @@ tls.createServer = function (options, listener) {
       dropped = true;
       counts.responseDrops = 1;
       writeFileSync(process.env.AGS_MESSAGE_COUNTS_PATH, JSON.stringify(counts), "utf8");
-      socket.destroy();
+      const error = process.env.AGS_FORCE_SOCKET_ERROR === "1"
+        ? Object.assign(new Error("Synthetic connection reset after dispatch."), { code: "ECONNRESET" }) : undefined;
+      socket.destroy(error);
       return true;
     };
     const write = socket.write;
