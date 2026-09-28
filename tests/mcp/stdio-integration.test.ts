@@ -24,6 +24,15 @@ const rootDirectory = fileURLToPath(new URL("../../", import.meta.url));
 const bundledServer = fileURLToPath(new URL("../../mcp-server/dist/server.mjs", import.meta.url));
 const bundledContinuityHook = fileURLToPath(new URL("../../mcp-server/dist/continuity-hook.mjs", import.meta.url));
 
+function isolatedEnvironment(stateDirectory: string): Record<string, string> {
+  const environment = getDefaultEnvironment();
+  const messagingDirectory = join(stateDirectory, "session-messaging");
+  environment.AGENT_GOVERNANCE_SHARED_STATE_DIR = join(stateDirectory, "shared-state");
+  environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = messagingDirectory;
+  environment.AGENT_GOVERNANCE_TRUST_DB_PATH = join(messagingDirectory, "trust.sqlite3");
+  return environment;
+}
+
 function assuredPlanArguments(task: TaskEnvelopeV1): Record<string, unknown> {
   return toolArguments({
     schemaVersion: "1.0.0",
@@ -101,7 +110,7 @@ describe("bundled STDIO MCP server", () => {
   it("starts from an isolated plugin tree without node_modules", async () => {
     const isolatedRoot = await mkdtemp(join(tmpdir(), "skill-suite-clean-room-"));
     const isolatedServer = join(isolatedRoot, "mcp-server", "dist", "server.mjs");
-    const environment = getDefaultEnvironment();
+    const environment = isolatedEnvironment(isolatedRoot);
     delete environment.SKILL_REGISTRY_PATH;
     environment.AGENT_GOVERNANCE_DB_PATH = join(isolatedRoot, "state", "workflow-state.sqlite3");
     const unavailableContinuityPath = join(isolatedRoot, "state", "continuity.sqlite3");
@@ -185,7 +194,7 @@ describe("bundled STDIO MCP server", () => {
 
   it("keeps workflow startup clean when both database settings resolve to one file", async () => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-shared-db-"));
-    const environment = getDefaultEnvironment();
+    const environment = isolatedEnvironment(stateDirectory);
     const sharedDatabasePath = join(stateDirectory, "shared.sqlite3");
     environment.AGENT_GOVERNANCE_DB_PATH = sharedDatabasePath;
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = sharedDatabasePath;
@@ -225,7 +234,7 @@ describe("bundled STDIO MCP server", () => {
 
   it("starts with the packaged registry and fails semantic planning closed without a trusted provider", async () => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-stdio-"));
-    const environment = getDefaultEnvironment();
+    const environment = isolatedEnvironment(stateDirectory);
     delete environment.SKILL_REGISTRY_PATH;
     const databasePath = join(stateDirectory, "workflow-state.sqlite3");
     environment.AGENT_GOVERNANCE_DB_PATH = databasePath;
@@ -367,7 +376,7 @@ describe("bundled STDIO MCP server", () => {
 
   it("shares signed continuity bindings between the packaged hook and MCP server", async () => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-continuity-stdio-"));
-    const environment = getDefaultEnvironment();
+    const environment = isolatedEnvironment(stateDirectory);
     const workflowPath = join(stateDirectory, "workflows.sqlite3");
     environment.AGENT_GOVERNANCE_DB_PATH = workflowPath;
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = join(stateDirectory, "continuity.sqlite3");

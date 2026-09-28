@@ -483,6 +483,8 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
       lastActivity = Date.now();
       let buffer = "";
+      // A failed client must not terminate the broker or undo a committed request.
+      socket.on("error", () => socket.destroy());
       socket.setTimeout(5000, () => socket.destroy());
       socket.on("data", (chunk: Buffer) => {
         buffer += chunk.toString("utf8");

@@ -2,6 +2,7 @@ import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, it } from "vitest";
@@ -10,6 +11,7 @@ import { requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../
 const pluginRoot = process.env.BROKER_TEST_PLUGIN_ROOT ?? fileURLToPath(new URL("../../", import.meta.url));
 const broker = path.join(pluginRoot, "mcp-server/dist/session-message-broker.mjs");
 const fixture = new URL("./fixtures/broker-endpoint-failure.mjs", import.meta.url).href;
+const responseLossFixture = new URL("./fixtures/message-response-loss.mjs", import.meta.url).href;
 const children: ChildProcess[] = [];
 const directories: string[] = [];
 
@@ -91,4 +93,40 @@ it("delivers and acknowledges a message using only the packaged CLI and broker",
   expect(request("claim", { target }).messages).toHaveLength(1);
   expect(request("acknowledge", { target, messageIds: [messageId] }).acknowledged).toBe(1);
   expect(request("status", { sender, messageId }).status.state).toBe("acknowledged");
+});
+
+it("isolates socket resets and a lost send response while preserving the broker and one committed message", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "broker-reset-"));
+  directories.push(directory);
+  const countsPath = path.join(directory, "operation-counts.json");
+  const child = spawn(process.execPath, ["--import", responseLossFixture, broker, "--state-directory", directory], {
+    windowsHide: true, stdio: ["ignore", "ignore", "pipe"],
+    env: { ...process.env, AGS_DROP_MESSAGE_OPERATION: "send", AGS_FORCE_SOCKET_ERROR: "1", AGS_MESSAGE_COUNTS_PATH: countsPath },
+  });
+  children.push(child);
+  let stderr = "";
+  child.stderr!.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
+  child.once("close", (code, signal) => { if (code !== 0) console.info("Disposable reset broker exited:", { code, signal, stderr }); });
+  await waitForSessionMessageBrokerReady(directory, child, 5000);
+  const endpoint = JSON.parse(await readFile(path.join(directory, "endpoint.json"), "utf8")) as { pid: number; port: number };
+  // An actual TCP reset before TLS and an injected TLS error after commit are separate cases.
+  await new Promise<void>((resolve, reject) => {
+    const socket = net.createConnection({ host: "127.0.0.1", port: endpoint.port });
+    socket.once("connect", () => socket.resetAndDestroy());
+    socket.once("close", () => resolve()); socket.once("error", reject);
+  });
+  const sender = { host: "fixture", sessionId: "reset-sender" };
+  const target = { host: "fixture", sessionId: "reset-target" };
+  const draft = await requestSessionMessageOnce<{ messageId: string }>("prepare", { sender, target, body: "One immutable message" }, directory);
+  await expect(requestSessionMessageOnce("send", { sender, messageId: draft.messageId }, directory, 500)).rejects.toThrow();
+  await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toHaveProperty("protocolVersion", "1.0.0");
+  expect(child.exitCode, stderr).toBeNull();
+  expect(JSON.parse(await readFile(path.join(directory, "endpoint.json"), "utf8")).pid).toBe(endpoint.pid);
+  await expect(requestSessionMessageOnce("unknown-operation", {}, directory)).rejects.toThrow(/Unknown broker operation/u);
+  await expect(requestSessionMessageOnce("status", { sender, messageId: draft.messageId }, directory)).resolves.toMatchObject({ status: { state: "queued", deliveryAttempts: 0 } });
+  await expect(requestSessionMessageOnce("send", { sender, messageId: draft.messageId }, directory)).resolves.toMatchObject({ messageId: draft.messageId, duplicate: true });
+  await expect(requestSessionMessageOnce("pending", { target }, directory)).resolves.toEqual({ count: 1 });
+  await expect(requestSessionMessageOnce("claim", { target }, directory)).resolves.toMatchObject({ messages: [{ messageId: draft.messageId, body: "One immutable message" }] });
+  await expect(requestSessionMessageOnce("acknowledge", { target, messageIds: [draft.messageId] }, directory)).resolves.toEqual({ acknowledged: 1 });
+  expect(JSON.parse(await readFile(countsPath, "utf8"))).toMatchObject({ send: 2, responseDrops: 1 });
 });
