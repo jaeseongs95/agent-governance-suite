@@ -129,6 +129,20 @@ describe("generated Claude plugin", () => {
     }
   });
 
+  it("keeps no copy of the common intake sentences in the Claude overlay or MCP source", async () => {
+    const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
+    const intake = shared.split("<!-- skill-intake:start -->\n")[1].split("\n<!-- skill-intake:end -->")[0];
+    const sentences = intake.split("\n").filter((line) => !line.startsWith("#")).flatMap((line) => line.replace(/^- /u, "").split(/(?<=다\.) /u)).filter((sentence) => sentence.length > 20);
+    expect(sentences.length).toBeGreaterThan(10);
+    const overlay = path.join(root, "claude-overlay");
+    const files = (await readdir(overlay, { recursive: true, withFileTypes: true })).filter((entry) => entry.isFile()).map((entry) => path.join(entry.parentPath, entry.name));
+    expect(files.length).toBeGreaterThan(10);
+    for (const file of [...files, path.join(root, "mcp-server", "src", "server.ts")]) {
+      const text = await readFile(file, "utf8");
+      for (const sentence of sentences) expect(text.includes(sentence), `${path.relative(root, file)}: ${sentence}`).toBe(false);
+    }
+  });
+
   it("projects the current common intake at session start without keyword selection", async () => {
     const directory = await mkdtemp(path.join(tmpdir(), "ags-intake-port-"));
     if (path.dirname(path.resolve(directory)) !== path.resolve(tmpdir())) throw new Error("Unexpected disposable fixture path");
