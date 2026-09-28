@@ -882,7 +882,7 @@ function hostDeliveryProfile(host, environment = process.env, diagnose = (reason
   console.error(`[agent-governance-suite] Codex queue settings: ${reason}; using codex-deferred.`);
 }) {
   const transport = host === "claude-code" ? "claude-inbox" : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
-  return { transport, capabilities: transportDeliveryCapabilities(transport) };
+  return { transport, capabilities: transportDeliveryCapabilities(transport), blocksEmptyWakePrompt: host === "codex" };
 }
 function nativePeerWait(observation) {
   if (observation.host !== "codex" || observation.toolName !== "mcp__codex_app__wait_threads") return null;
@@ -1100,8 +1100,11 @@ async function handleSessionMessageHook(input, host, explicitHostPid) {
         observation,
         sourceReceiptId: recordWakeHookObservation(observation)
       }, void 0, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
-      if (host === "codex" && result.recognized && result.managed === true && result.messages.length === 0) {
+      if (profile.blocksEmptyWakePrompt && result.recognized && result.managed === true && result.messages.length === 0) {
         return { decision: "block", reason: "No peer message is available for this verified wake notification." };
+      }
+      if (profile.blocksEmptyWakePrompt && !result.recognized && result.retired === true && result.messages.length === 0) {
+        return { decision: "block", reason: "This wake notification was already retired; no peer message is attached." };
       }
       if (result.recognized) messages = result.messages;
       else await sessionMessageRequest("observe-native-input", { target }, void 0, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });

@@ -1,10 +1,10 @@
 import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
 import { sessionMessageRequest } from "./session-message-client.js";
-import type { SessionPresence } from "./session-message-store.js";
+import type { SessionPresenceView } from "./session-message-store.js";
 import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
 
 export interface SessionPresenceList {
-  sessions: SessionPresence[];
+  sessions: SessionPresenceView[];
 }
 
 function ok<T>(data: T): ApiResultV1<T> {
@@ -89,6 +89,7 @@ export class SessionMessageService {
       return ok({ sessions: data.sessions.map((session) => ({
         ...session,
         deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
+        autoWake: session.autoWake ?? null,
       })) });
     } catch (error) {
       return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "Session presence is unavailable.");

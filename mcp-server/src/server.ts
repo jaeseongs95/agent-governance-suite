@@ -27,7 +27,7 @@ import { StateCleanupService } from "./state-cleanup-service.js";
 import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { ContractValidator } from "./schema-validator.js";
 import { SessionMessageService, type SessionPresenceList } from "./session-message-service.js";
-import type { SessionPresence } from "./session-message-store.js";
+import type { SessionPresenceView } from "./session-message-store.js";
 import { type TrustService } from "./trust-service.js";
 
 type ObjectSchema = Record<string, unknown> & {
@@ -217,7 +217,7 @@ function apiError(code: ErrorCode, message: string): ApiResultV1<never> {
  * Session board tools are an interface over the skill's board store. The PreToolUse hook writes the line with the
  * host's session identity and binds it here; this side validates the call and reads the board back.
  */
-function unknownPresence(host: string, sessionId: string): SessionPresence {
+function unknownPresence(host: string, sessionId: string, brokerAnswered: boolean): SessionPresenceView {
   return {
     host,
     sessionId,
@@ -235,13 +235,16 @@ function unknownPresence(host: string, sessionId: string): SessionPresence {
     endedAt: null,
     endReason: null,
     state: "unknown",
+    // Advisory only; null when the broker could not be asked.
+    autoWake: brokerAnswered ? { state: "no-live-relay", reason: "presence-unknown", basisAt: null,
+      checkedAt: new Date().toISOString(), authorityEffect: "none" } : null,
   };
 }
 
 function withPresence<T extends { host: string; sessionId: string }>(
   sessions: T[],
   presence: ApiResultV1<SessionPresenceList>,
-): Array<T & { presence: SessionPresence }> {
+): Array<T & { presence: SessionPresenceView }> {
   const bySession = new Map(
     presence.ok && presence.data
       ? presence.data.sessions.map((item) => [`${item.host}\u0000${item.sessionId}`, item])
@@ -249,7 +252,7 @@ function withPresence<T extends { host: string; sessionId: string }>(
   );
   return sessions.map((session) => ({
     ...session,
-    presence: bySession.get(`${session.host}\u0000${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId),
+    presence: bySession.get(`${session.host}\u0000${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId, presence.ok),
   }));
 }
 
@@ -521,7 +524,7 @@ export function createMcpServer(
       },
       {
         name: "list_session_status",
-        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs.",
+        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
         inputSchema: contractSchemas.listSessionStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
@@ -533,7 +536,7 @@ export function createMcpServer(
       },
       {
         name: "send_session_message",
-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent.",
+        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence.",
         inputSchema: contractSchemas.sendSessionMessageRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
@@ -545,7 +548,7 @@ export function createMcpServer(
       },
       {
         name: "get_session_message_status",
-        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend.",
+        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend. Unacknowledged queue rows include the advisory autoWake recipient wake outlook with its basis time; it is not delivery, completion or permission evidence. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
         inputSchema: contractSchemas.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },

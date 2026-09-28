@@ -269,7 +269,8 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         }) && presence.state === "online" && presence.instanceId === binding.instanceId) binding.wakeObservedAt = Date.now();
         for (const key of keys) runtime.wakes.delete(key);
       }
-      return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null };
+      // retired marks a verified arrival of an attempt the liveness rule already retired; it authorizes no claim.
+      return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null, ...(result.retired ? { retired: true } : {}) };
     }
     case "observe-native-input": {
       peerWaitRuntime(store).policy.reset(identity(payload.target));

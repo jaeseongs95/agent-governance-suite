@@ -351,6 +351,16 @@ export interface GetSessionMessageStatusRequestV1 {
   _sessionBinding?: SessionBindingV1;
 }
 
+/** Advisory recipient auto-wake snapshot; never delivery, completion or permission evidence. */
+export interface SessionAutoWakeOutlookV1 {
+  state: "available" | "latched" | "no-live-relay" | "unsupported";
+  reason: "relay-live" | "wake-in-flight" | "retry-backoff" | "wake-unobserved"
+    | "presence-unknown" | "presence-not-online" | "relay-lease-missing" | "no-idle-wake";
+  basisAt: string | null;
+  checkedAt: string;
+  authorityEffect: "none";
+}
+
 export interface StateCleanupPolicyV1 {
   workflowRetentionDays: 180;
   continuityPayloadRetentionDays: 30;

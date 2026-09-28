@@ -115,15 +115,19 @@ function codexQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: st
   }
 }
 
-export function hostDeliveryProfile(host: SupportedHookHost, environment: NodeJS.ProcessEnv = process.env,
-  diagnose: (reason: string) => void = (reason) => { console.error(`[agent-governance-suite] Codex queue settings: ${reason}; using codex-deferred.`); }): {
+export interface HostDeliveryProfile {
   transport: SessionMessageTransport;
   capabilities: DeliveryCapabilities;
-} {
+  /** The host's prompt hook can stop a wake-only prompt before a model request (a verified empty or retired wake). */
+  blocksEmptyWakePrompt: boolean;
+}
+
+export function hostDeliveryProfile(host: SupportedHookHost, environment: NodeJS.ProcessEnv = process.env,
+  diagnose: (reason: string) => void = (reason) => { console.error(`[agent-governance-suite] Codex queue settings: ${reason}; using codex-deferred.`); }): HostDeliveryProfile {
   const transport: SessionMessageTransport = host === "claude-code"
     ? "claude-inbox"
     : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
-  return { transport, capabilities: transportDeliveryCapabilities(transport) };
+  return { transport, capabilities: transportDeliveryCapabilities(transport), blocksEmptyWakePrompt: host === "codex" };
 }
 
 /** Only the observed, local Codex app wait surface is recognized here. */
