@@ -20323,7 +20323,7 @@ var SessionMessageService = class {
       return ok2(await sessionMessageRequest("send", { sender, messageId: args.messageId }, this.stateDirectory));
     } catch (error2) {
       const details = capacityDetails(error2);
-      if (details) return failure2("MCP_UNAVAILABLE", `${error2.message} This definite rejection had no effect: the message was not queued and no receipt was issued. ${capacityRelease(details)}`, { ...details });
+      if (details) return failure2("MCP_UNAVAILABLE", `${error2.message} This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until its draft expires; after capacity is released, either retry that same messageId or prepare again, not both. ${capacityRelease(details)}`, { ...details });
       return failure2("MCP_UNAVAILABLE", `${error2 instanceof Error ? error2.message : "The session message broker is unavailable."} Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.`);
     }
   }
@@ -20771,7 +20771,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "send_session_message",
-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued, and a new prepare may succeed after that time.",
+        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
         inputSchema: contractSchemas.sendSessionMessageRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },
