@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: 여러 거버넌스 스킬이 함께 필요한 요청을 분류하고, 사용 가능한 전문 스킬의 실행 순서·입출력·결과를 연결한다. 전문 판단이나 감사 자체를 수행할 때는 사용하지 않는다.
+description: 어떤 거버넌스 전문 스킬이 필요한지 정해야 하거나 여러 전문 결과의 실행 순서·입출력·gate를 연결해야 할 때 사용한다. 한 전문 스킬로 충분하면 그 스킬을 직접 쓰고, 전문 스킬이 필요 없는 요청이나 전문 판단·감사 자체에는 사용하지 않는다.
 license: MIT
 metadata:
   version: "1.2.0"
@@ -12,11 +12,9 @@ metadata:
 
 ## 시작 전 확인
 
-먼저 요청의 목표, 상태 변경 여부, 완료 조건과 명시적으로 호출된 스킬을 확인한다. 명시적으로 `$skill-name`을 지정한 요청에서는 그 스킬을 우선하며, 다른 스킬로 대체하지 않는다.
+요청의 목적, 상태 변경 여부, 실패 영향, 현재 단계, 수용 기준과 사용자가 이름으로 지정한 스킬을 함께 보고 필요한 capability를 정한다. 키워드, 파일 종류나 `complex` 표시만으로 스킬을 붙이지 않는다. 지정한 전문 스킬은 우선하고 다른 스킬로 대체하지 않지만, 필수 승인·검증·독립성 gate를 생략하는 권한으로 해석하지 않는다.
 
-라우팅 전에 설치 시 노출된 스킬 설명으로 후보 capability를 정하고 `node scripts/query-registry.mjs --capability <capability>`를 실행해 일치하는 활성 provider만 조회한다. 여러 capability는 `--capability`를 반복한다. 후보를 특정할 수 없을 때만 `--all`로 compact 전체 목록을 조회하며, `skills/registry.json` 원문 전체를 모델 컨텍스트로 읽지 않는다. 조회 결과의 `selectionCriteria`, precondition, priority를 선택 설명에 남긴다. 같은 capability의 후보 중 priority가 가장 큰 항목을 선택하되, 동률이나 descriptor 충돌은 임의로 고르지 말고 `needs-input`으로 돌린다. `selectionCriteria`는 사람이 검토하는 근거이며 런타임 필터가 아니다. 필요한 역할이 없으면 `missingCapabilities`, 가능한 직접 스킬 호출 경로와 부족한 capability를 분리해 설명한다.
-
-초기 정책 capability는 `subagent-coordination`, `independent-deliberation`, `independent-audit`다. 일반 변경 흐름에 필요한 모델·추론 수준 적합성, 지침 범위, 작업 계약, 저장소 관례, 변경 기준선·범위 확인, mutation 사전 점검, 수용 근거 확인과 실패 진단도 capability로 찾는다. 현재 provider 이름을 라우팅 조건으로 사용하지 않는다.
+한 전문 기능으로 충분하면 그 스킬을 직접 호출하고, 여러 전문 결과의 순서·입출력·gate 연결이 필요할 때만 이 흐름으로 연결한다. 전문 스킬이 필요 없는 요청은 그대로 진행하며, 적용 여부가 애매했을 때만 생략 이유를 한 줄로 밝힌다. 이 문서와 참고 자료를 읽는 것은 전문 스킬 실행이 아니다.
 
 한국어 산문을 작성·편집하거나 자연스러움을 검증하는 요청은 일부 단계만 선택하지 않는다. `korean-prose-selection`, `korean-prose-editing`, `korean-prose-verification`, `korean-prose-finalization` 네 capability를 모두 요청하고, descriptor의 artifact 의존성과 `phaseOrder`에 따라 순서대로 실행한다. 원문은 전문 스킬 내부에서만 다루고 MCP 영수증에는 reference-only policy가 허용하는 digest, artifact reference와 고정 토큰만 전달한다.
 
