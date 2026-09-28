@@ -2,7 +2,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 import { FileSkillRegistry } from "./registry.js";
 import { ContinuityService, type ContinuityGateway, UnavailableContinuityService } from "./continuity-service.js";
-import { SqliteContinuityStore } from "./continuity-store.js";
+import { continuityUnavailableReason, SqliteContinuityStore } from "./continuity-store.js";
 import {
   assertDistinctDatabasePaths,
   resolveContinuityDatabasePath,
@@ -60,13 +60,16 @@ async function main(): Promise<void> {
     hostAttestation,
   );
   const updates = new PluginUpdateService(store);
-  let continuity: ContinuityGateway = new UnavailableContinuityService();
+  let continuity: ContinuityGateway = new UnavailableContinuityService(continuityPathAvailable ? "STORE_UNAVAILABLE" : "DATABASE_PATH_CONFLICT");
   if (continuityPathAvailable) {
     try {
       continuityStore = new SqliteContinuityStore(continuityDatabasePath);
       continuity = new ContinuityService(continuityStore, validator, store);
-    } catch {
+    } catch (error) {
       // Optional continuity failures never prevent the workflow MCP server from starting.
+      try { continuityStore?.close(); } catch { /* Preserve the optional initialization failure. */ }
+      continuityStore = null;
+      continuity = new UnavailableContinuityService(continuityUnavailableReason(error));
     }
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
