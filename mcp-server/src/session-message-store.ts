@@ -4,7 +4,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 
 import { SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
-import { isWakeHookObservation, wakeBackoffDelay, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
+import { isWakeHookObservation, verifyHistoricalWakeObservation, wakeBackoffDelay, type HistoricalWakeEvidence, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
 import type { DeliveryCapabilities, InputObservation, InputObservationKind } from "./input-observation.js";
 
 export const MESSAGE_BODY_MAX_BYTES = SESSION_MESSAGE_BODY_MAX_BYTES;
@@ -257,10 +257,12 @@ export class SessionMessageStore {
     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
     this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
     this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted')
-      AND coalesce(observed_at, outcome_at) <= ?`).run(acknowledgedBefore);
+      AND coalesce(consumed_at, observed_at, outcome_at) <= ?
+      AND (retry_not_before IS NULL OR retry_not_before <= ?)`).run(acknowledgedBefore, now);
     this.database.prepare(`DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces
-      WHERE state IN ('observed', 'not-submitted') ORDER BY coalesce(observed_at, outcome_at) DESC LIMIT -1 OFFSET ?)`)
-      .run(MESSAGE_LIMIT);
+      WHERE state IN ('observed', 'not-submitted') AND (retry_not_before IS NULL OR retry_not_before <= ?)
+      ORDER BY coalesce(consumed_at, observed_at, outcome_at) DESC LIMIT -1 OFFSET ?)`)
+      .run(now, MESSAGE_LIMIT);
     this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
   }
 
@@ -693,6 +695,12 @@ export class SessionMessageStore {
       && presence.deliveryCapabilities.idleWake !== "none" && presence.deliveryCapabilities.supportedInjection.includes("peer-wake");
   }
 
+  private wakeGenerationReplaced(attempt: WakeAttempt, nowMs: number): boolean {
+    const presence = this.presence(attempt, nowMs);
+    return presence.instanceId !== null && presence.startedAt !== null
+      && (presence.instanceId !== attempt.instanceId || presence.startedAt !== attempt.generation || presence.transport !== attempt.transport);
+  }
+
   private wakeClaimable(target: SessionIdentity, nowMs: number): boolean {
     const now = iso(nowMs);
     const delivering = this.database.prepare(`SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ?
@@ -719,8 +727,19 @@ export class SessionMessageStore {
     try {
       this.prune(nowMs);
       let attempt: WakeAttempt | null = null;
-      const active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
+      let active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
         AND state IN ('reserved', 'started', 'submitted', 'unknown')`).get(input.host, input.sessionId) as Record<string, unknown> | undefined;
+      const currentPending = this.wakeBindingCurrent(input, null, nowMs) && this.wakeClaimable(input, nowMs);
+      if (active?.state === "reserved" && currentPending && active.late_observed_at === null
+        && active.observed_at === null && active.consumed_at === null
+        && ((active.dispatch_epoch === 0 && active.started_at === null)
+          || (Number(active.retry_count) > 0 && active.retry_not_before !== null && active.outcome_at !== null))
+        && this.wakeGenerationReplaced(this.wakeAttempt(active), nowMs)) {
+        // Pre-start or exact definite-failure rows prove no effect; retain the old binding and cooldown.
+        this.database.prepare(`UPDATE wake_nonces SET state = 'not-submitted', outcome_at = coalesce(outcome_at, ?)
+          WHERE nonce_digest = ? AND state = 'reserved'`).run(iso(nowMs), String(active.nonce_digest));
+        active = undefined;
+      }
       if (active) {
         // Lease replacement fences a crashed dispatcher; uncertain external effects remain latched.
         if (active.state === "started" && !this.wakeBindingCurrent(this.wakeAttempt(active), String(active.birth_generation), nowMs)) {
@@ -735,11 +754,15 @@ export class SessionMessageStore {
             .run(input.relayId, String(active.nonce_digest));
           attempt = { ...this.wakeAttempt(active), relayId: input.relayId };
         }
-      } else if (this.wakeBindingCurrent(input, null, nowMs) && this.wakeClaimable(input, nowMs)) {
+      } else if (currentPending) {
         const legacy = this.database.prepare(`SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ?
           AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?`).get(input.host, input.sessionId, iso(nowMs));
-        if (!legacy) {
-          const count = this.database.prepare("SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')").get() as { n: number };
+        const cooldown = this.database.prepare(`SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ?
+          AND state = 'not-submitted' AND retry_not_before > ? LIMIT 1`).get(input.host, input.sessionId, iso(nowMs));
+        if (!legacy && !cooldown) {
+          const count = this.database.prepare(`SELECT count(*) AS n FROM wake_nonces
+            WHERE state IN ('reserved', 'started', 'submitted', 'unknown')
+              OR (state = 'not-submitted' AND retry_not_before > ?)`).get(iso(nowMs)) as { n: number };
           if (count.n >= MESSAGE_LIMIT) throw new Error("The bounded active wake store is full.");
           const generation = this.presence(input, nowMs).startedAt!;
           const attemptId = randomUUID();
@@ -785,12 +808,15 @@ export class SessionMessageStore {
     try {
       const row = this.database.prepare(`SELECT retry_count FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
         AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?
-        AND late_observed_at IS NULL AND state IN ('started', 'unknown')`).get(nonceDigest(attempt.nonce), attempt.host, attempt.sessionId,
+        AND late_observed_at IS NULL AND observed_at IS NULL AND consumed_at IS NULL
+        AND state IN ('started', 'unknown')`).get(nonceDigest(attempt.nonce), attempt.host, attempt.sessionId,
           attempt.instanceId, attempt.generation, attempt.transport, attempt.relayId, attempt.attemptId, attempt.dispatchEpoch) as { retry_count: number } | undefined;
       if (!row) { this.database.exec("COMMIT"); return false; }
       const retry = outcome === "definite-failure";
+      const nextState = retry ? this.wakeGenerationReplaced(attempt, nowMs) ? "not-submitted" : "reserved"
+        : outcome === "submitted" ? "submitted" : "unknown";
       this.database.prepare(`UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ?
-        WHERE nonce_digest = ?`).run(retry ? "reserved" : outcome === "submitted" ? "submitted" : "unknown", iso(nowMs),
+        WHERE nonce_digest = ?`).run(nextState, iso(nowMs),
           retry ? iso(nowMs + wakeBackoffDelay(row.retry_count)) : null, row.retry_count + (retry ? 1 : 0), nonceDigest(attempt.nonce));
       this.database.exec("COMMIT"); return true;
     } catch (error) { this.database.exec("ROLLBACK"); throw error; }
@@ -803,15 +829,60 @@ export class SessionMessageStore {
       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
     if (!row) return null;
     const active = ["reserved", "started", "submitted", "unknown"].includes(String(row.state));
-    return { state: row.state, observation: row.late_observed_at !== null ? "unknown" : active && String(row.expires_at) <= iso(nowMs) ? "observation-overdue"
-      : row.state === "observed" ? "observed" : active ? "pending" : "not-submitted",
+    return { state: row.state, observation: row.state === "observed" ? "observed"
+      : row.late_observed_at !== null ? "unknown" : active && String(row.expires_at) <= iso(nowMs) ? "observation-overdue"
+      : active ? "pending" : "not-submitted",
       deliveryState: row.state === "started" || row.state === "unknown" ? "unknown" : row.state,
       instanceId: row.instance_id, generation: row.birth_generation, attemptId: row.attempt_id,
       dispatchEpoch: row.dispatch_epoch, retryNotBefore: row.retry_not_before, expiresAt: row.expires_at,
       observedAt: row.observed_at, lateObservedAt: row.late_observed_at };
   }
 
-  /** Hook observation and body claim are one transaction; generic claim/ACK cannot observe managed bells. */
+  /** Terminal-only maintenance. Historical evidence cannot claim bodies or observe a current relay. */
+  reconcileHistoricalWake(target: SessionIdentity, attemptId: string, sourceReceiptId: string, nowMs = Date.now(),
+    verify = verifyHistoricalWakeObservation): {
+      reconciled: boolean;
+      evidence: (HistoricalWakeEvidence & { oldBinding: Omit<WakeAttempt, "nonce">; lateObservedAt: string; reconciledAt: string }) | null;
+    } {
+    boundedIdentity(target);
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(attemptId)
+      || !/^source-[A-Za-z0-9-]{1,128}$/u.test(sourceReceiptId)) throw new Error("Invalid historical wake identity.");
+    const rejected = { reconciled: false, evidence: null };
+    const isOldGeneration = (row: Record<string, unknown>) => {
+      const presence = this.presence(target, nowMs);
+      return presence.instanceId !== null && presence.startedAt !== null
+        && (row.instance_id !== presence.instanceId || row.birth_generation !== presence.startedAt);
+    };
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ?
+        AND state = 'unknown' AND late_observed_at IS NOT NULL AND consumed_at IS NULL AND observed_at IS NULL`)
+        .get(target.host, target.sessionId, attemptId) as Record<string, unknown> | undefined;
+      if (!row || ![row.nonce, row.instance_id, row.birth_generation, row.transport, row.relay_id, row.started_at].every((value) => typeof value === "string")
+        || row.nonce_digest !== nonceDigest(String(row.nonce)) || Number(row.dispatch_epoch) < 1 || !isOldGeneration(row)) {
+        this.database.exec("COMMIT"); return rejected;
+      }
+      const proof = verify(target, String(row.nonce), sourceReceiptId, String(row.started_at), String(row.late_observed_at), nowMs);
+      if (!proof || !isOldGeneration(row)) { this.database.exec("COMMIT"); return rejected; }
+      // Recheck every original binding and observation field after the separate read-only trust snapshot.
+      const changed = this.database.prepare(`UPDATE wake_nonces SET state = 'observed', observed_at = ?, consumed_at = ?
+        WHERE nonce_digest = ? AND nonce = ? AND host = ? AND session_id = ? AND attempt_id = ?
+        AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND dispatch_epoch = ?
+        AND state = 'unknown' AND started_at = ? AND late_observed_at = ? AND consumed_at IS NULL AND observed_at IS NULL`)
+        .run(proof.observedAt, iso(nowMs), String(row.nonce_digest), String(row.nonce), target.host, target.sessionId, attemptId,
+          String(row.instance_id), String(row.birth_generation), String(row.transport), String(row.relay_id), Number(row.dispatch_epoch),
+          String(row.started_at), String(row.late_observed_at)).changes;
+      this.database.exec("COMMIT");
+      if (changed !== 1) return rejected;
+      const attempt = this.wakeAttempt(row);
+      const oldBinding = { host: attempt.host, sessionId: attempt.sessionId, instanceId: attempt.instanceId,
+        generation: attempt.generation, transport: attempt.transport, relayId: attempt.relayId,
+        attemptId: attempt.attemptId, dispatchEpoch: attempt.dispatchEpoch };
+      return { reconciled: true, evidence: { ...proof, oldBinding, lateObservedAt: String(row.late_observed_at), reconciledAt: iso(nowMs) } };
+    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+  }
+
+  /** Verified arrival retires its attempt; only current bindings may claim bodies in the same transaction. */
   claimHostWake(target: SessionIdentity, observation: InputObservation, receiptId: string, reader: WakeHookObservationReader | undefined, nowMs = Date.now(), limits: ClaimLimits = {}): {
     recognized: boolean; messages: SessionMessage[]; binding: WakeAttempt | null;
   } {
@@ -833,9 +904,11 @@ export class SessionMessageStore {
           && row!.transport === presence.transport && presence.state === "online"
           && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row!.expires_at) > iso(nowMs));
       if (!valid) {
+        // Arrival is proven, but it cannot authorize this generation's body claim or resume evidence.
         for (const row of rows) if (row!.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
-          SET late_observed_at = coalesce(late_observed_at, ?), state = 'unknown' WHERE nonce_digest = ?
-          AND state IN ('started', 'submitted', 'unknown')`).run(iso(nowMs), String(row!.nonce_digest));
+          SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?
+          WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`)
+          .run(iso(nowMs), iso(nowMs), iso(nowMs), String(row!.nonce_digest));
         this.database.exec("COMMIT"); return rejected;
       }
       const messages = this.claimLocked(target, nowMs, limits);

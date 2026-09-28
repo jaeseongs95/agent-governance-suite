@@ -6,7 +6,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import type { PeerWaitDecision } from "./peer-wait-policy.js";
 import { sessionMessageRequest } from "./session-message-client.js";
 
-const OPERATIONS = new Set(["prepare", "send", "claim", "acknowledge", "status", "pending", "wait"]);
+const OPERATIONS = new Set(["prepare", "send", "claim", "acknowledge", "status", "pending", "wait", "reconcile-wake-observation"]);
 
 /** Vendor-neutral stdin/stdout adapter. Secrets and message bodies never appear in process arguments. */
 export async function runSessionMessageCli(raw: string, stateDirectory?: string): Promise<Record<string, unknown>> {

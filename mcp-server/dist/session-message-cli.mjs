@@ -300,7 +300,7 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
 }
 
 // mcp-server/src/session-message-cli.ts
-var OPERATIONS = /* @__PURE__ */ new Set(["prepare", "send", "claim", "acknowledge", "status", "pending", "wait"]);
+var OPERATIONS = /* @__PURE__ */ new Set(["prepare", "send", "claim", "acknowledge", "status", "pending", "wait", "reconcile-wake-observation"]);
 async function runSessionMessageCli(raw, stateDirectory) {
   const request = JSON.parse(raw);
   if (typeof request.operation !== "string" || !OPERATIONS.has(request.operation)) throw new Error("Unsupported session message operation.");

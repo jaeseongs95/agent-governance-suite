@@ -24870,6 +24870,16 @@ var INPUT_SOURCE_KEYS = /* @__PURE__ */ new Set([
   "attestation"
 ]);
 var ATTESTATION_KEYS = /* @__PURE__ */ new Set(["kind", "adapter", "capabilityVersion"]);
+function verifyInputSource(receipt, signingKey2) {
+  try {
+    const { integrityToken, ...unsigned } = receipt;
+    const actual = Buffer.from(integrityToken, "base64url");
+    const expected = createHmac5("sha256", signingKey2).update(canonicalJson(unsigned, "Input source receipt")).digest();
+    return signingKey2.length === 32 && actual.length === expected.length && timingSafeEqual5(actual, expected);
+  } catch {
+    return false;
+  }
+}
 function rejectUnexpectedKeys(value, allowed, label) {
   const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
   if (unexpected.length > 0) {
@@ -24986,13 +24996,25 @@ var TrustStore = class {
     });
   }
   verify(receipt) {
+    return verifyInputSource(receipt, this.signingKey);
+  }
+  /** Existing key/receipt snapshot only: no schema, journal mode, key creation or receipt issuance. */
+  static readVerifiedInputSource(databasePath, receiptId) {
+    let database;
     try {
-      const { integrityToken, ...unsigned } = receipt;
-      const actual = Buffer.from(integrityToken, "base64url");
-      const expected = createHmac5("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
-      return actual.length === expected.length && timingSafeEqual5(actual, expected);
+      database = new DatabaseSync5(databasePath, { readOnly: true });
+      database.exec("PRAGMA query_only = ON; BEGIN;");
+      const version2 = database.prepare("PRAGMA user_version").get().user_version;
+      if (version2 > SCHEMA_VERSION3) return null;
+      const key = database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(TRUST_SIGNING_KEY);
+      const row = database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId);
+      if (!key || !row) return null;
+      const receipt = JSON.parse(row.receipt_json);
+      return receipt?.receiptId === receiptId && verifyInputSource(receipt, Buffer.from(key.value, "base64url")) ? receipt : null;
     } catch {
-      return false;
+      return null;
+    } finally {
+      database?.close();
     }
   }
   close() {
