@@ -22,8 +22,9 @@ const MAX_TARGETS = (protocol as Record<string, unknown>).SESSION_PRESENCE_LIST_
 const HOUR = 3600_000;
 const sourceBroker = fileURLToPath(new URL("../../mcp-server/src/session-message-broker.ts", import.meta.url));
 const capabilities = { supportedInjection: ["peer-wake", "tool-boundary"] as Array<"peer-wake" | "tool-boundary">, idleWake: "silent" as const };
-const cleanup: Array<() => void> = [];
-afterEach(() => { vi.unstubAllEnvs(); for (const task of cleanup.splice(0).reverse()) task(); });
+const cleanup: Array<() => void | Promise<void>> = [];
+// Reverse order: a broker exits and stores close before their directory goes (Windows cannot remove open files).
+afterEach(async () => { vi.unstubAllEnvs(); for (const task of cleanup.splice(0).reverse()) await task(); });
 
 function directory(): string {
   const created = mkdtempSync(path.join(tmpdir(), "ags-presence-retention-"));
@@ -80,7 +81,9 @@ it("serves board presence from a 342-identity, 1302-row database through a real 
   const now = Date.now();
   expect(largeFixture(path.join(state, "session-messages.sqlite3"), now)).toEqual({ rows: 1302, identities: 342 });
   const child = spawn(process.execPath, ["--import", "tsx", sourceBroker, "--state-directory", state], { windowsHide: true, stdio: "ignore" });
-  cleanup.push(() => { child.kill("SIGTERM"); });
+  cleanup.push(async () => {
+    if (child.exitCode === null && child.signalCode === null) { const exit = once(child, "exit"); child.kill(); await exit; }
+  });
   await waitForSessionMessageBrokerReady(state, child, 5000);
   // The board shows sessions updated in the last 24 hours: the recent and live ones, plus a few long-gone identities.
   const board = [...Array.from({ length: 40 }, (_, index) => `recent-${index}`), "live-0", "live-1", "old-0", "old-299"]
