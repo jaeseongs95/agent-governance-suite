@@ -14,8 +14,8 @@
 - 이 플러그인의 루트는 `claude-plugin/`이다. 저장소 루트의 Codex용 `hooks/hooks.json`, `.mcp.json`, `.codex-plugin/`은 읽지 않는다.
 - MCP 서버에 `AGENT_GOVERNANCE_HOST_ATTESTATION=claude-code`를 넘겨 host attestation 토큰 검증을 켠다(아래 "실행 보증" 절).
 - MCP 서버에 `AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE=anthropic`을 넘겨 `plan_workflow`의 공개 스키마에서 최상위 `oneOf`를 없앤다. Anthropic API가 이 형태를 받지 않기 때문이다. 입력 검증은 기존 계약 그대로다.
-- 같은 환경 변수로 MCP 서버가 세션 `instructions`(접수 규칙)를 내보낸다. Claude Code는 이것을 세션 시작 때 시스템 프롬프트에 넣는다. 규칙은 "파일을 고치거나 명령을 실행하기 전에 이 요청의 실패 영향을 한 줄로 분류하고, 크면 orchestrator를 호출해 필요한 단계와 생략할 단계를 이유와 함께 정한 뒤 정한 단계를 그 시점에 실제로 호출한다"이다. Claude Code 세션은 요청을 받으면 곧바로 첫 구현 단계로 들어가고 그 앞에 위험을 따지는 단계가 없어서, 스킬 설명문이나 orchestrator 지침을 통째로 넣어 주는 것만으로는 스킬을 스스로 고르지 않았다(측정 기록은 `docs/roadmap.md`). 환경 변수가 없는 Codex 서버는 `instructions`를 내보내지 않는다.
-- `adaptations/orchestrator.json`은 생성된 orchestrator `SKILL.md` 맨 앞에 "Claude Code에서의 선택 결정" 절을 넣는다. 정해진 체인을 강제하지 않고, 첫 행동 전에 실패 영향과 필요한·생략하는 단계를 이유와 함께 적고 고른 단계를 실제로 호출하라고만 한다. 후보 스킬마다 고르는 조건을 적어 두었다. 실행 방식도 함께 정한다. 실패 영향이 크고 고른 단계가 둘 이상이면 MCP orchestrated workflow로 계획·stage 기록·finalize를 진행해 순서와 감사 게이트를 MCP 원장이 강제하게 하고, MCP가 `BINDING_REQUIRED`·`BINDING_INVALID`를 반환하거나 도구를 쓸 수 없으면 이유를 밝히고 전문 스킬을 직접 호출한다. v1.17.0까지 이 절은 "Claude Code에서는 orchestrated 모드가 시작되지 않는다"고 안내해, host attestation을 추가한 뒤에도 세션이 MCP 경로를 쓰지 않았다. 접수 규칙이 orchestrator를 거치게 하는 이유는, "orchestrator 또는 전문 스킬"로 두면 세션이 이 절을 읽지 않고 전문 스킬 하나만 바로 부르기 때문이다.
+- MCP 서버는 schema profile과 관계없이 세션 `instructions`로 `skills/orchestrator/SKILL.md`의 공통 접수 기준(`skill-intake` marker 사이 원문)을 내보낸다. 환경 변수가 없는 Codex 서버도 같은 `instructions`를 내보낸다. 서버는 이 원문을 소스에 복사하지 않고 시작할 때 읽으며, 읽지 못하면 시작하지 않는다. 접수 기준의 내용은 이 문서에 옮겨 적지 않고 원문을 따른다.
+- `adaptations/orchestrator.json`은 생성된 orchestrator `SKILL.md`에서 공통 접수 block 뒤, navigation 앞에 "Claude Code에서의 호출과 관측" 절을 넣는다. 이 절은 Skill 도구와 `/agent-governance-suite:<skill-name>` 호출 방식, 독립 감사 서브에이전트 유형, SessionStart 훅의 역할과 실행 관측만 정하며 공통 선택 기준은 바꾸지 않는다.
 - workflow·continuity SQLite 상태는 `${CLAUDE_PLUGIN_DATA}`에 저장한다. 모든 호스트가 함께 쓰는 세션 현황판과 TLS 세션 메시지 broker만 사용자 상태 디렉터리에 둔다.
 - `codex-token-usage-analyzer`는 Codex 세션 로그 전용이라 포함하지 않는다.
 
@@ -70,5 +70,5 @@ Codex 배포물은 이 훅을 등록하지 않고 환경 변수도 넘기지 않
 - 배포하는 스킬을 Codex 방식으로 호출한 `$스킬명` 표기는 `/agent-governance-suite:스킬명`으로 자동 변환한다.
 - 이 변환을 거친 뒤에도 생성된 `SKILL.md`, `references/*.md`, `agents/*.md`에 Codex 전용 표현(`fork_turns`, 배포하지 않는 스킬의 `$스킬명` 호출 등)이 남으면 생성이 실패한다. 두 호스트를 함께 설명하는 `coordinate-subagents` 문서는 예외다.
 - `agents/independent-auditor.md`, `agents/deliberation-reviewer.md`: 부모 대화를 상속하지 않고, 파일 수정, 재위임과 스킬 호출을 막은 서브에이전트 정의다.
-- `hooks/skill-trigger-hook.mjs`: Claude Code 전용 유도 훅이다. `UserPromptSubmit`에서 요청 문장을, `PreToolUse`(`Bash`)에서 실행할 명령을 정규식으로 보고 커밋·병합, 삭제·배포·마이그레이션, 반복 실패, 미정 사항이 남은 구현 요청에 해당하면 적용 가능한 스킬 이름을 `additionalContext`로 한 번 안내한다. 차단·승인 요구·상태 기록은 하지 않고 실패 시 조용히 종료한다. 설명문만으로는 짧은 자연어 요청에서 스킬이 거의 호출되지 않았기 때문에 둔 장치이며(측정 기록은 `docs/roadmap.md`), Codex 배포물의 `hooks/hooks.json`에는 없다.
+- `hooks/skill-trigger-hook.mjs`: Claude Code 전용 SessionStart 훅이다. 설치된 `skills/orchestrator/SKILL.md`의 공통 접수 원문만 읽어 `additionalContext`로 투영하고, Claude Code 호출 방식 한 줄을 덧붙인다. 요청 문장이나 명령을 보고 스킬을 고르지 않으며 `UserPromptSubmit`·`PreToolUse`에는 등록하지 않는다. 차단·승인 요구·상태 기록은 하지 않고, 원문을 읽지 못하거나 실패하면 조용히 종료한다. Codex 배포물의 `hooks/hooks.json`에는 없다.
 - `instruction-scope-resolver`의 스크립트는 `AGENTS.md` chain만 계산한다. `CLAUDE.md` 계층은 `references/claude-code-instructions.md`에 따라 스킬이 따로 확인한다.

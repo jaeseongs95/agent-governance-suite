@@ -63,7 +63,7 @@ codex plugin add agent-governance-suite@agent-governance
 
 에이전트는 설치된 스킬의 설명과 적용 조건을 보고 사용할 스킬을 판단합니다. 여러 전문 스킬을 이어 써야 할 때는 `orchestrator`가 순서와 결과를 연결하고, 한 가지 검사만 필요하면 해당 스킬을 직접 사용할 수 있습니다.
 
-Claude Code는 일부 요청과 명령에 추가 스킬을 추천하는 안내를 제공합니다. Codex의 암시 선택은 모델의 판단에 의존합니다. 스킬을 직접 지정하려면 Codex에서는 `$orchestrator`, Claude Code에서는 `/agent-governance-suite:orchestrator`처럼 요청할 수 있습니다.
+두 호스트 모두 MCP 서버 초기화 안내(`instructions`)로 [`skills/orchestrator/SKILL.md`](skills/orchestrator/SKILL.md)의 공통 접수 기준을 받습니다. Claude Code는 SessionStart에서 같은 원문을 함께 받습니다. 스킬을 직접 지정하려면 Codex에서는 `$orchestrator`, Claude Code에서는 `/agent-governance-suite:orchestrator`처럼 요청할 수 있습니다.
 
 ```mermaid
 flowchart LR
