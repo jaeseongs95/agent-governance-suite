@@ -321,7 +321,8 @@ export class SessionMessageStore {
       .run(now, MESSAGE_LIMIT);
     this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
     // Only rows whose lease ended before the retention window go; a live row's lease is always in the future. The
-    // identity's latest row also stays while another row of it is live, so presence() and retirement read the same row.
+    // identity's latest row also stays while another row of it is live, so a live identity's presence and retirement read
+    // the same row. Without a live row, deleting the latest row can surface an earlier one or leave the identity unknown.
     this.database.prepare(`DELETE FROM session_presence WHERE lease_until <= ?
       AND NOT (EXISTS (SELECT 1 FROM session_presence live WHERE live.host = session_presence.host
           AND live.session_id = session_presence.session_id AND live.ended_at IS NULL AND live.lease_until > ?)

@@ -178,16 +178,18 @@ presence birth는 ms 해상도 ISO 문자열이다. 같은 instance가 이전 bi
 
 2.7.3까지는 `session_presence` 행을 지우는 코드가 없어 끝난 세션의 행이 계속 쌓였다(2.7.2부터 잠재). 현황판 조회는 broker의 `list-presence`가 저장된 모든 identity를 한 응답으로 돌려주었고, 응답이 한도(32 KiB)를 넘으면 client가 거절해 현황판의 모든 presence가 `unknown`, `autoWake`는 `null`이 되었다. store의 판정은 맞았고 전송 한도에서 막혔다.
 
-보존: `prune`은 lease 끝(`lease_until`, 종료한 행은 종료 시각과 같다)이 24시간보다 오래된 presence 행을 지운다. 24시간은 현황판이 세션을 보여 주는 창(board의 24시간 보존)과 같아서, 현황판에 보이는 동안 끝난 세션은 `ended`나 `unreachable`로 보인다. 살아 있는 행(`ended_at` 없음, lease 유효)은 lease 끝이 미래이므로 지워지지 않는다. 같은 identity에 살아 있는 행이 있는 동안에는 그 identity의 가장 최근 행(birth 기준)도 남긴다. presence 조회, 퇴역 규칙과 `autoWake`는 모두 이 가장 최근 행만 읽으므로 정리 전후 결과가 같다. 행이 모두 지워진 identity는 등록된 적 없는 identity처럼 `unknown`이고 `autoWake`는 `no-live-relay`/`presence-unknown`이다. 메시지, 영수증, wake 행과 relay lease 규칙은 바뀌지 않는다. 정리는 DELETE 한 문장이라 멱등이며, 보존 24시간은 주입 만료와 유예(70분)보다 길다.
+보존: `prune`은 lease 끝(`lease_until`, 종료한 행은 종료 시각과 같다)이 24시간보다 오래된 presence 행을 지운다. 24시간은 현황판이 세션을 보여 주는 창(board의 24시간 보존)과 같아서, 현황판에 보이는 동안 끝난 세션은 `ended`나 `unreachable`로 보인다. 살아 있는 행(`ended_at` 없음, lease 유효)은 lease 끝이 미래이므로 지워지지 않는다. 같은 identity에 살아 있는 행이 있는 동안에는 그 identity의 가장 최근 행(birth 기준)도 남긴다. presence 조회, 퇴역 규칙과 `autoWake`는 모두 이 가장 최근 행만 읽으므로, live identity의 presence, 퇴역 판정과 `autoWake` 상태는 정리 전후에 같다. live 행이 없는 identity는 다르다. 가장 최근 행이 지워지면 더 이른 행이 최신이 되어 표시되는 instance, 상태(`ended`/`unreachable`)와 기준 시각이 바뀔 수 있고, 행이 모두 지워지면 등록된 적 없는 identity처럼 `unknown`이며 `autoWake`는 `no-live-relay`/`presence-unknown`이다. 수동 `reconcile-wake-observation`의 옛 세대 판정도 가장 최근 presence 행을 쓰므로, live 행이 없는 identity에서는 정리 전후로 드물게 달라질 수 있다(행이 모두 지워지면 거절된다). 메시지, 영수증, wake 행과 relay lease 규칙은 바뀌지 않는다. 정리는 DELETE 한 문장이라 멱등이며, 보존 24시간은 주입 만료와 유예(70분)보다 길다.
 
 행이 지워진 instance가 다시 등록되면 새 행으로 들어가 birth가 등록 시각이 된다. 지워진 행은 lease 끝이 24시간 전보다 이르고 birth는 그보다 이르므로, 시계가 되돌아가지 않는 한 새 birth는 이전 wake의 birth generation보다 크다. 옛 세대 marker는 현재 세대로 받아들여지지 않는다.
 
 조회: 서버는 현황판에 보이는 identity만 3개씩 묶어 `list-presence`의 `targets`로 요청하고, broker는 그 identity만 돌려준다. 3개는 모든 문자열 필드가 최대 길이이고 JSON escape로 6바이트가 되는 문자만으로 채워져도 응답 한도 안에 든다. broker는 `targets`가 1~3개가 아니면 거절하고, 응답이 한도를 넘으면 보내지 않고 명시적으로 거절한다. `targets` 없는 요청(2.7.3 이하 service)에는 저장된 모든 identity를 돌려주며, 한도를 넘으면 같은 거절을 한다.
 
+서버는 broker가 받는 식별자 형식(`isBoundedIdentity`, broker와 같은 규칙)에 맞지 않는 identity는 요청하지 않는다. 그 identity와 실패한 묶음의 identity는 broker가 답하지 않은 것으로 보고 `unknown`, `autoWake: null`로 두며, 나머지 묶음은 그대로 표시한다. broker에 물었는데 행이 없는 identity는 `unknown`이고 `autoWake`는 `no-live-relay`/`presence-unknown`이다. 요청 수는 ceil(N/3)이고, 여러 묶음을 합친 전체 deadline은 없다.
+
 | service | broker | 현황판 presence |
 | --- | --- | --- |
 | 2.7.4 | 2.7.4 | 세션 수와 DB 크기에 관계없이 동작한다 |
-| 2.7.4 | 2.7.3, 2.7.2, 2.7.1, 2.2.6 | 이전 broker는 `targets`를 무시하고 모든 identity를 돌려준다. 응답이 한도 안이면 정상이고, 넘으면 2.7.3처럼 모든 presence가 `unknown`, `autoWake`가 `null`이다. 이전 broker는 presence 행을 지우지 않으므로 새 broker가 뜰 때까지 이어진다 |
+| 2.7.4 | 2.7.3, 2.7.2, 2.7.1, 2.2.6 | 이전 broker는 `targets`를 무시하고 모든 identity를 돌려준다. 응답이 한도 안이면 정상이고, 넘으면 모든 묶음이 실패해 2.7.3처럼 모든 presence가 `unknown`, `autoWake`가 `null`이다. 이전 broker는 presence 행을 지우지 않으므로 새 broker가 뜰 때까지 이어진다 |
 | 2.7.3 이하 | 2.7.4 | `targets` 없는 요청이라 모든 identity를 받는다. 보존 정리 뒤에는 24시간 안의 identity만 남지만, 그래도 한도를 넘으면 broker가 명시적으로 거절하고 이전 service는 모든 presence를 `unknown`으로 둔다 |
 
 broker는 relay가 주기적으로 요청하는 동안 종료되지 않으므로, 업데이트 뒤에도 이전 broker가 계속 돌 수 있다. 앞의 안내대로 기존 AGS MCP·relay·broker를 종료한 뒤 재연결한다.
