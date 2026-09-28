@@ -1624,7 +1624,7 @@ function observePeerRelay(store, payload, accepted) {
     ...wakeObservedAt === void 0 ? {} : { wakeObservedAt }
   });
 }
-function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeObserver) {
+function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeObserver, historicalWakeVerifier = verifyHistoricalWakeObservation) {
   switch (operation) {
     case "ping":
       return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: SESSION_MESSAGE_BROKER_CAPABILITIES };
@@ -1867,7 +1867,8 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
         identity(payload.target),
         string(payload.attemptId, "attemptId"),
         string(payload.sourceReceiptId, "sourceReceiptId"),
-        Date.now()
+        Date.now(),
+        historicalWakeVerifier
       );
     }
     case "wake-status":
@@ -1958,7 +1959,9 @@ async function startSessionMessageBroker(stateDirectory) {
     const { key, certificate, token, fingerprint256 } = await credentials(stateDirectory);
     const activeStore = new SessionMessageStore(databasePath);
     store = activeStore;
-    const wakeHookObservationReader = createWakeHookObservationReader(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim() ? path4.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path4.join(stateDirectory, "trust.sqlite3"));
+    const trustDatabasePath = process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim() ? path4.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path4.join(stateDirectory, "trust.sqlite3");
+    const wakeHookObservationReader = createWakeHookObservationReader(trustDatabasePath);
+    const historicalWakeVerifier = (target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs) => verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, trustDatabasePath);
     let lastActivity = Date.now();
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
       lastActivity = Date.now();
@@ -1979,7 +1982,7 @@ async function startSessionMessageBroker(stateDirectory) {
           const request = JSON.parse(line);
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
-          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader);
+          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader, historicalWakeVerifier);
           socket.end(`${JSON.stringify({ ok: true, data })}
 `);
         } catch (error) {
