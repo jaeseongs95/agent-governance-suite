@@ -2,48 +2,430 @@
 
 // mcp-server/src/session-message-hook.ts
 import { spawn as spawn2 } from "node:child_process";
-import { createHash as createHash2, randomUUID as randomUUID2 } from "node:crypto";
+import { createHash as createHash3, randomUUID as randomUUID3 } from "node:crypto";
 import { readFileSync as readFileSync2 } from "node:fs";
 import path5 from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
+
+// mcp-server/src/session-message-wake-port.ts
+import { execFile } from "node:child_process";
+import { createHash, randomUUID as randomUUID2 } from "node:crypto";
+import net from "node:net";
+
+// mcp-server/src/trust-store.ts
+import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { chmodSync, mkdirSync } from "node:fs";
+import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
+
+// contracts/types.ts
+var CONTRACT_VERSION = "1.0.0";
+var WorkflowContractError = class extends Error {
+  constructor(code, message, details = null) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    this.name = "WorkflowContractError";
+  }
+  code;
+  details;
+  toBody() {
+    return { code: this.code, message: this.message, details: this.details };
+  }
+};
+
+// mcp-server/src/workspace-identity.ts
+var SEGMENT_SEPARATOR = process.platform === "win32" ? /[\\/]/u : /\//u;
+
+// mcp-server/src/convergence-logic.ts
+function canonicalJson(value, subject = "Convergence input") {
+  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-finite number.`);
+    }
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
+  if (value && typeof value === "object") {
+    const record2 = value;
+    return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record2[key], subject)}`).join(",")}}`;
+  }
+  throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
+}
+
+// mcp-server/src/trust-store.ts
+var TRUST_SIGNING_KEY = "trust-signing-key";
+var SCHEMA_VERSION = 1;
+var INPUT_SOURCE_KEYS = /* @__PURE__ */ new Set([
+  "originKind",
+  "host",
+  "sessionId",
+  "eventId",
+  "contentDigest",
+  "observedAt",
+  "expiresAt",
+  "authorityEffect",
+  "attestation"
+]);
+var ATTESTATION_KEYS = /* @__PURE__ */ new Set(["kind", "adapter", "capabilityVersion"]);
+function rejectUnexpectedKeys(value, allowed, label) {
+  const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
+  if (unexpected.length > 0) {
+    throw new WorkflowContractError("INVALID_INPUT", `${label} contains unsupported fields.`, { unexpected });
+  }
+}
+var TrustStore = class {
+  constructor(databasePath) {
+    this.databasePath = databasePath;
+    if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
+    if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 448 });
+    this.database = new DatabaseSync(databasePath);
+    try {
+      this.database.exec("PRAGMA busy_timeout = 5000;");
+      this.database.exec("PRAGMA synchronous = FULL;");
+      if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
+      this.initializeSchema();
+      this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
+      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path.resolve(databasePath), 384);
+    } catch (cause) {
+      try {
+        this.database.close();
+      } catch {
+      }
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError("Cannot initialize the trust database.", cause);
+    }
+  }
+  databasePath;
+  database;
+  signingKey;
+  closed = false;
+  recordInputSource(input) {
+    rejectUnexpectedKeys(input, INPUT_SOURCE_KEYS, "Input source metadata");
+    if (!input.attestation || typeof input.attestation !== "object" || Array.isArray(input.attestation)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Input source attestation must be an object.");
+    }
+    rejectUnexpectedKeys(input.attestation, ATTESTATION_KEYS, "Input source attestation");
+    if (input.originKind === "user-turn" || input.attestation.kind === "host-direct-user-event") {
+      throw new WorkflowContractError("BINDING_INVALID", "This release cannot attest direct-user approval sources.");
+    }
+    if (input.originKind === "peer" && (input.authorityEffect !== "none" || input.attestation.kind !== "broker-peer-envelope")) {
+      throw new WorkflowContractError("BINDING_INVALID", "Peer input must be a non-authorizing broker envelope.");
+    }
+    if (input.originKind !== "peer" && input.attestation.kind === "broker-peer-envelope") {
+      throw new WorkflowContractError("BINDING_INVALID", "Broker peer attestations must be classified as peer input.");
+    }
+    const receipt = this.seal({
+      schemaVersion: CONTRACT_VERSION,
+      receiptId: `source-${randomUUID()}`,
+      originKind: input.originKind,
+      host: input.host,
+      sessionId: input.sessionId,
+      eventId: input.eventId,
+      contentDigest: input.contentDigest,
+      observedAt: input.observedAt,
+      expiresAt: input.expiresAt,
+      authorityEffect: input.authorityEffect,
+      attestation: {
+        kind: input.attestation.kind,
+        adapter: input.attestation.adapter,
+        capabilityVersion: input.attestation.capabilityVersion
+      }
+    });
+    return this.guard("Cannot record the input source receipt.", { receiptId: receipt.receiptId }, () => this.transaction(() => {
+      const existing = this.database.prepare(`
+        SELECT receipt_json FROM input_source_receipts
+        WHERE host = ? AND session_id = ? AND event_id = ?
+      `).get(receipt.host, receipt.sessionId, receipt.eventId);
+      if (existing) {
+        const prior = JSON.parse(existing.receipt_json);
+        const sameSecurityMetadata = prior.contentDigest === receipt.contentDigest && prior.originKind === receipt.originKind && prior.authorityEffect === receipt.authorityEffect && canonicalJson(prior.attestation, "Source attestation") === canonicalJson(receipt.attestation, "Source attestation");
+        if (sameSecurityMetadata) return structuredClone(prior);
+        throw new WorkflowContractError("REQUEST_CONFLICT", "The input event was already recorded with different content or provenance metadata.", {
+          host: receipt.host,
+          sessionId: receipt.sessionId,
+          eventId: receipt.eventId
+        });
+      }
+      this.database.prepare(`
+        INSERT INTO input_source_receipts (
+          receipt_id, host, session_id, event_id, origin_kind,
+          authority_effect, observed_at, expires_at, receipt_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        receipt.receiptId,
+        receipt.host,
+        receipt.sessionId,
+        receipt.eventId,
+        receipt.originKind,
+        receipt.authorityEffect,
+        receipt.observedAt,
+        receipt.expiresAt,
+        JSON.stringify(receipt)
+      );
+      return structuredClone(receipt);
+    }));
+  }
+  latestInputSource(binding) {
+    return this.guard("Cannot read the latest input source receipt.", { ...binding }, () => {
+      const row = this.database.prepare(`
+        SELECT receipt_json FROM input_source_receipts
+        WHERE host = ? AND session_id = ?
+        ORDER BY observed_at DESC, receipt_id DESC LIMIT 1
+      `).get(binding.host, binding.sessionId);
+      return row ? JSON.parse(row.receipt_json) : null;
+    });
+  }
+  getInputSource(receiptId) {
+    return this.guard("Cannot read the input source receipt.", { receiptId }, () => {
+      const row = this.database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId);
+      return row ? JSON.parse(row.receipt_json) : null;
+    });
+  }
+  verify(receipt) {
+    try {
+      const { integrityToken, ...unsigned } = receipt;
+      const actual = Buffer.from(integrityToken, "base64url");
+      const expected = createHmac("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
+      return actual.length === expected.length && timingSafeEqual(actual, expected);
+    } catch {
+      return false;
+    }
+  }
+  close() {
+    if (this.closed) return;
+    this.database.close();
+    this.closed = true;
+  }
+  seal(unsigned) {
+    return {
+      ...unsigned,
+      integrityToken: createHmac("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest("base64url")
+    };
+  }
+  initializeSchema() {
+    const version = this.database.prepare("PRAGMA user_version").get().user_version;
+    if (version > SCHEMA_VERSION) {
+      throw new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
+        databasePath: this.databasePath,
+        supportedVersion: SCHEMA_VERSION,
+        actualVersion: version
+      });
+    }
+    this.database.exec(`
+      BEGIN IMMEDIATE;
+      CREATE TABLE IF NOT EXISTS trust_metadata (
+        key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL
+      ) STRICT;
+      CREATE TABLE IF NOT EXISTS input_source_receipts (
+        receipt_id TEXT PRIMARY KEY,
+        host TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        event_id TEXT NOT NULL,
+        origin_kind TEXT NOT NULL,
+        authority_effect TEXT NOT NULL,
+        observed_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        receipt_json TEXT NOT NULL,
+        UNIQUE(host, session_id, event_id)
+      ) STRICT;
+      CREATE INDEX IF NOT EXISTS input_source_latest
+        ON input_source_receipts(host, session_id, observed_at DESC);
+      PRAGMA user_version = ${SCHEMA_VERSION};
+      COMMIT;
+    `);
+  }
+  getOrCreateSecret(name) {
+    return this.transaction(() => {
+      const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name);
+      if (existing) return existing.value;
+      const value = randomBytes(32).toString("base64url");
+      this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
+      return value;
+    });
+  }
+  transaction(operation) {
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      const result = operation();
+      this.database.exec("COMMIT;");
+      return result;
+    } catch (cause) {
+      try {
+        this.database.exec("ROLLBACK;");
+      } catch {
+      }
+      throw cause;
+    }
+  }
+  guard(message, details, operation) {
+    try {
+      return operation();
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError(message, cause, details);
+    }
+  }
+  storageError(message, cause, details = {}) {
+    return new WorkflowContractError("INVALID_INPUT", message, {
+      ...details,
+      databasePath: this.databasePath,
+      cause: cause instanceof Error ? cause.message : String(cause)
+    });
+  }
+};
+
+// mcp-server/src/runtime-config.ts
+import { homedir } from "node:os";
+import path2 from "node:path";
+function sharedUserStateDirectory(environment, homeDirectory) {
+  const configured = environment.AGENT_GOVERNANCE_SHARED_STATE_DIR?.trim();
+  if (configured) {
+    if (!path2.isAbsolute(configured)) {
+      throw new Error("AGENT_GOVERNANCE_SHARED_STATE_DIR must be an absolute path.");
+    }
+    return path2.normalize(configured);
+  }
+  return path2.resolve(homeDirectory, ".agent-governance-suite");
+}
+function resolveSessionMessageStateDirectory(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  void platform;
+  const configured = environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim();
+  if (configured) return path2.resolve(currentWorkingDirectory, configured);
+  return path2.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
+}
+function resolveTrustDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  void platform;
+  const configured = environment.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim();
+  if (configured) return path2.resolve(currentWorkingDirectory, configured);
+  return path2.join(
+    resolveSessionMessageStateDirectory(environment, platform, homeDirectory, currentWorkingDirectory),
+    "trust.sqlite3"
+  );
+}
+
+// mcp-server/src/session-message-wake-port.ts
+function codexWakeOutcome(error, spawned) {
+  return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
+}
+function claudeWakeOutcome(hadError, connected, wrote) {
+  return !hadError && wrote ? "submitted" : connected || wrote ? "accepted-or-unknown" : "definite-failure";
+}
+function ringCodex(sessionId, message) {
+  return new Promise((resolve) => {
+    let spawned = false;
+    const child = execFile(
+      "codex",
+      ["queue", "--thread", sessionId, "--message", message],
+      { windowsHide: true, timeout: 1e4 },
+      (error) => resolve(codexWakeOutcome(error, spawned))
+    );
+    child.once("spawn", () => {
+      spawned = true;
+    });
+  });
+}
+async function ringClaude(message) {
+  const socketPath = process.env.CLAUDE_CODE_MESSAGING_SOCKET;
+  const token = process.env.CLAUDE_CODE_MESSAGING_TOKEN;
+  if (!socketPath || !token) return "definite-failure";
+  return new Promise((resolve) => {
+    let settled = false;
+    let connected = false;
+    let wrote = false;
+    const finish = (outcome) => {
+      if (settled) return;
+      settled = true;
+      resolve(outcome);
+    };
+    const socket = net.createConnection(socketPath);
+    socket.setTimeout(5e3, () => socket.destroy(new Error("Claude inbox timed out.")));
+    socket.once("connect", () => {
+      connected = true;
+      try {
+        wrote = true;
+        socket.end(`${JSON.stringify({ type: "auth", token })}
+${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" })}
+`);
+      } catch {
+        finish("accepted-or-unknown");
+      }
+    });
+    socket.once("close", (hadError) => finish(claudeWakeOutcome(hadError, connected, wrote)));
+    socket.once("error", () => finish(claudeWakeOutcome(true, connected, wrote)));
+  });
+}
+var ports = /* @__PURE__ */ new Map([
+  ["claude-inbox", {
+    capabilities: { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "silent" },
+    dispatch: (_target, message) => ringClaude(message)
+  }],
+  ["codex-queue", {
+    capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
+    dispatch: (target, message) => ringCodex(target.sessionId, message)
+  }],
+  ["codex-deferred", {
+    capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
+    dispatch: async () => "definite-failure"
+  }]
+]);
+function transportWakePort(transport) {
+  const port = ports.get(transport);
+  if (!port) throw new Error("Wake transport adapter is unavailable.");
+  return port;
+}
+function transportDeliveryCapabilities(transport) {
+  const capabilities = transportWakePort(transport).capabilities;
+  return { supportedInjection: [...capabilities.supportedInjection], idleWake: capabilities.idleWake };
+}
+function isWakeHookObservation(value, target) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const event = value;
+  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && event.actor?.observedBy === `${target.host}:hook-payload` && ["main", "unknown"].includes(event.actor.kind) && ["observed", "unknown"].includes(event.actor.assurance) && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
+}
+function observationDigest(event) {
+  const normalized = [
+    event.host,
+    event.sessionId,
+    event.kind,
+    event.wakeOnly,
+    event.actor.kind,
+    event.actor.observedBy,
+    event.actor.assurance,
+    [...new Set(event.wakeCandidates)].sort()
+  ];
+  return `sha256:${createHash("sha256").update(JSON.stringify(normalized)).digest("hex")}`;
+}
+function recordWakeHookObservation(observation, nowMs = Date.now()) {
+  if (!isWakeHookObservation(observation, observation)) throw new Error("Invalid host wake observation.");
+  const trust = new TrustStore(resolveTrustDatabasePath());
+  try {
+    return trust.recordInputSource({
+      originKind: "peer",
+      host: observation.host,
+      sessionId: observation.sessionId,
+      eventId: `wake-hook-${randomUUID2()}`,
+      contentDigest: observationDigest(observation),
+      observedAt: new Date(nowMs).toISOString(),
+      expiresAt: new Date(nowMs + 3e4).toISOString(),
+      authorityEffect: "none",
+      attestation: { kind: "broker-peer-envelope", adapter: "session-message-wake-hook", capabilityVersion: "1.0.0" }
+    }).receiptId;
+  } finally {
+    trust.close();
+  }
+}
 
 // mcp-server/src/session-message-client.ts
 import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
-import path2 from "node:path";
+import path3 from "node:path";
 import { performance } from "node:perf_hooks";
 import tls from "node:tls";
 import { fileURLToPath } from "node:url";
-
-// mcp-server/src/runtime-config.ts
-import { homedir } from "node:os";
-import path from "node:path";
-function sharedUserStateDirectory(environment, homeDirectory) {
-  const configured = environment.AGENT_GOVERNANCE_SHARED_STATE_DIR?.trim();
-  if (configured) {
-    if (!path.isAbsolute(configured)) {
-      throw new Error("AGENT_GOVERNANCE_SHARED_STATE_DIR must be an absolute path.");
-    }
-    return path.normalize(configured);
-  }
-  return path.resolve(homeDirectory, ".agent-governance-suite");
-}
-function resolveSessionMessageStateDirectory(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
-  void platform;
-  const configured = environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim();
-  if (configured) return path.resolve(currentWorkingDirectory, configured);
-  return path.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
-}
-function resolveTrustDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
-  void platform;
-  const configured = environment.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim();
-  if (configured) return path.resolve(currentWorkingDirectory, configured);
-  return path.join(
-    resolveSessionMessageStateDirectory(environment, platform, homeDirectory, currentWorkingDirectory),
-    "trust.sqlite3"
-  );
-}
 
 // mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
@@ -64,9 +446,9 @@ var deadlineMetadata = /* @__PURE__ */ new WeakMap();
 function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
   return {
     stateDirectory,
-    endpoint: path2.join(stateDirectory, "endpoint.json"),
-    token: path2.join(stateDirectory, "broker.token"),
-    certificate: path2.join(stateDirectory, "broker-cert.pem")
+    endpoint: path3.join(stateDirectory, "endpoint.json"),
+    token: path3.join(stateDirectory, "broker.token"),
+    certificate: path3.join(stateDirectory, "broker-cert.pem")
   };
 }
 function deadlineError(message) {
@@ -330,271 +712,6 @@ function parseWakeMessages(value) {
   return { nonces: [...new Set(nonces)], wakeOnly };
 }
 
-// mcp-server/src/trust-store.ts
-import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
-import { chmodSync, mkdirSync } from "node:fs";
-import path3 from "node:path";
-import { DatabaseSync } from "node:sqlite";
-
-// contracts/types.ts
-var CONTRACT_VERSION = "1.0.0";
-var WorkflowContractError = class extends Error {
-  constructor(code, message, details = null) {
-    super(message);
-    this.code = code;
-    this.details = details;
-    this.name = "WorkflowContractError";
-  }
-  code;
-  details;
-  toBody() {
-    return { code: this.code, message: this.message, details: this.details };
-  }
-};
-
-// mcp-server/src/workspace-identity.ts
-var SEGMENT_SEPARATOR = process.platform === "win32" ? /[\\/]/u : /\//u;
-
-// mcp-server/src/convergence-logic.ts
-function canonicalJson(value, subject = "Convergence input") {
-  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-finite number.`);
-    }
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
-  if (value && typeof value === "object") {
-    const record2 = value;
-    return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record2[key], subject)}`).join(",")}}`;
-  }
-  throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
-}
-
-// mcp-server/src/trust-store.ts
-var TRUST_SIGNING_KEY = "trust-signing-key";
-var SCHEMA_VERSION = 1;
-var INPUT_SOURCE_KEYS = /* @__PURE__ */ new Set([
-  "originKind",
-  "host",
-  "sessionId",
-  "eventId",
-  "contentDigest",
-  "observedAt",
-  "expiresAt",
-  "authorityEffect",
-  "attestation"
-]);
-var ATTESTATION_KEYS = /* @__PURE__ */ new Set(["kind", "adapter", "capabilityVersion"]);
-function rejectUnexpectedKeys(value, allowed, label) {
-  const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
-  if (unexpected.length > 0) {
-    throw new WorkflowContractError("INVALID_INPUT", `${label} contains unsupported fields.`, { unexpected });
-  }
-}
-var TrustStore = class {
-  constructor(databasePath) {
-    this.databasePath = databasePath;
-    if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
-    if (databasePath !== ":memory:") mkdirSync(path3.dirname(path3.resolve(databasePath)), { recursive: true, mode: 448 });
-    this.database = new DatabaseSync(databasePath);
-    try {
-      this.database.exec("PRAGMA busy_timeout = 5000;");
-      this.database.exec("PRAGMA synchronous = FULL;");
-      if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
-      this.initializeSchema();
-      this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
-      if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
-      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path3.resolve(databasePath), 384);
-    } catch (cause) {
-      try {
-        this.database.close();
-      } catch {
-      }
-      if (cause instanceof WorkflowContractError) throw cause;
-      throw this.storageError("Cannot initialize the trust database.", cause);
-    }
-  }
-  databasePath;
-  database;
-  signingKey;
-  closed = false;
-  recordInputSource(input) {
-    rejectUnexpectedKeys(input, INPUT_SOURCE_KEYS, "Input source metadata");
-    if (!input.attestation || typeof input.attestation !== "object" || Array.isArray(input.attestation)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Input source attestation must be an object.");
-    }
-    rejectUnexpectedKeys(input.attestation, ATTESTATION_KEYS, "Input source attestation");
-    if (input.originKind === "user-turn" || input.attestation.kind === "host-direct-user-event") {
-      throw new WorkflowContractError("BINDING_INVALID", "This release cannot attest direct-user approval sources.");
-    }
-    if (input.originKind === "peer" && (input.authorityEffect !== "none" || input.attestation.kind !== "broker-peer-envelope")) {
-      throw new WorkflowContractError("BINDING_INVALID", "Peer input must be a non-authorizing broker envelope.");
-    }
-    if (input.originKind !== "peer" && input.attestation.kind === "broker-peer-envelope") {
-      throw new WorkflowContractError("BINDING_INVALID", "Broker peer attestations must be classified as peer input.");
-    }
-    const receipt = this.seal({
-      schemaVersion: CONTRACT_VERSION,
-      receiptId: `source-${randomUUID()}`,
-      originKind: input.originKind,
-      host: input.host,
-      sessionId: input.sessionId,
-      eventId: input.eventId,
-      contentDigest: input.contentDigest,
-      observedAt: input.observedAt,
-      expiresAt: input.expiresAt,
-      authorityEffect: input.authorityEffect,
-      attestation: {
-        kind: input.attestation.kind,
-        adapter: input.attestation.adapter,
-        capabilityVersion: input.attestation.capabilityVersion
-      }
-    });
-    return this.guard("Cannot record the input source receipt.", { receiptId: receipt.receiptId }, () => this.transaction(() => {
-      const existing = this.database.prepare(`
-        SELECT receipt_json FROM input_source_receipts
-        WHERE host = ? AND session_id = ? AND event_id = ?
-      `).get(receipt.host, receipt.sessionId, receipt.eventId);
-      if (existing) {
-        const prior = JSON.parse(existing.receipt_json);
-        const sameSecurityMetadata = prior.contentDigest === receipt.contentDigest && prior.originKind === receipt.originKind && prior.authorityEffect === receipt.authorityEffect && canonicalJson(prior.attestation, "Source attestation") === canonicalJson(receipt.attestation, "Source attestation");
-        if (sameSecurityMetadata) return structuredClone(prior);
-        throw new WorkflowContractError("REQUEST_CONFLICT", "The input event was already recorded with different content or provenance metadata.", {
-          host: receipt.host,
-          sessionId: receipt.sessionId,
-          eventId: receipt.eventId
-        });
-      }
-      this.database.prepare(`
-        INSERT INTO input_source_receipts (
-          receipt_id, host, session_id, event_id, origin_kind,
-          authority_effect, observed_at, expires_at, receipt_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        receipt.receiptId,
-        receipt.host,
-        receipt.sessionId,
-        receipt.eventId,
-        receipt.originKind,
-        receipt.authorityEffect,
-        receipt.observedAt,
-        receipt.expiresAt,
-        JSON.stringify(receipt)
-      );
-      return structuredClone(receipt);
-    }));
-  }
-  latestInputSource(binding) {
-    return this.guard("Cannot read the latest input source receipt.", { ...binding }, () => {
-      const row = this.database.prepare(`
-        SELECT receipt_json FROM input_source_receipts
-        WHERE host = ? AND session_id = ?
-        ORDER BY observed_at DESC, receipt_id DESC LIMIT 1
-      `).get(binding.host, binding.sessionId);
-      return row ? JSON.parse(row.receipt_json) : null;
-    });
-  }
-  getInputSource(receiptId) {
-    return this.guard("Cannot read the input source receipt.", { receiptId }, () => {
-      const row = this.database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId);
-      return row ? JSON.parse(row.receipt_json) : null;
-    });
-  }
-  verify(receipt) {
-    try {
-      const { integrityToken, ...unsigned } = receipt;
-      const actual = Buffer.from(integrityToken, "base64url");
-      const expected = createHmac("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
-      return actual.length === expected.length && timingSafeEqual(actual, expected);
-    } catch {
-      return false;
-    }
-  }
-  close() {
-    if (this.closed) return;
-    this.database.close();
-    this.closed = true;
-  }
-  seal(unsigned) {
-    return {
-      ...unsigned,
-      integrityToken: createHmac("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest("base64url")
-    };
-  }
-  initializeSchema() {
-    const version = this.database.prepare("PRAGMA user_version").get().user_version;
-    if (version > SCHEMA_VERSION) {
-      throw new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
-        databasePath: this.databasePath,
-        supportedVersion: SCHEMA_VERSION,
-        actualVersion: version
-      });
-    }
-    this.database.exec(`
-      BEGIN IMMEDIATE;
-      CREATE TABLE IF NOT EXISTS trust_metadata (
-        key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL
-      ) STRICT;
-      CREATE TABLE IF NOT EXISTS input_source_receipts (
-        receipt_id TEXT PRIMARY KEY,
-        host TEXT NOT NULL,
-        session_id TEXT NOT NULL,
-        event_id TEXT NOT NULL,
-        origin_kind TEXT NOT NULL,
-        authority_effect TEXT NOT NULL,
-        observed_at TEXT NOT NULL,
-        expires_at TEXT NOT NULL,
-        receipt_json TEXT NOT NULL,
-        UNIQUE(host, session_id, event_id)
-      ) STRICT;
-      CREATE INDEX IF NOT EXISTS input_source_latest
-        ON input_source_receipts(host, session_id, observed_at DESC);
-      PRAGMA user_version = ${SCHEMA_VERSION};
-      COMMIT;
-    `);
-  }
-  getOrCreateSecret(name) {
-    return this.transaction(() => {
-      const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name);
-      if (existing) return existing.value;
-      const value = randomBytes(32).toString("base64url");
-      this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
-      return value;
-    });
-  }
-  transaction(operation) {
-    this.database.exec("BEGIN IMMEDIATE;");
-    try {
-      const result = operation();
-      this.database.exec("COMMIT;");
-      return result;
-    } catch (cause) {
-      try {
-        this.database.exec("ROLLBACK;");
-      } catch {
-      }
-      throw cause;
-    }
-  }
-  guard(message, details, operation) {
-    try {
-      return operation();
-    } catch (cause) {
-      if (cause instanceof WorkflowContractError) throw cause;
-      throw this.storageError(message, cause, details);
-    }
-  }
-  storageError(message, cause, details = {}) {
-    return new WorkflowContractError("INVALID_INPUT", message, {
-      ...details,
-      databasePath: this.databasePath,
-      cause: cause instanceof Error ? cause.message : String(cause)
-    });
-  }
-};
-
 // mcp-server/src/process-identity.ts
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -621,7 +738,7 @@ function processStartToken(pid, platform = process.platform) {
 }
 
 // mcp-server/src/host-input-adapter.ts
-import { createHash } from "node:crypto";
+import { createHash as createHash2 } from "node:crypto";
 import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
 import path4 from "node:path";
 
@@ -636,12 +753,6 @@ function normalizePeerWaitTargets(targets) {
 
 // mcp-server/src/session-message-relay.ts
 var IDENTITY_RECHECK_MS = 10 * 6e4;
-var WAKE_BACKOFF_MAX_MS = 10 * 6e4;
-function transportDeliveryCapabilities(transport) {
-  if (transport === "claude-inbox") return { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "silent" };
-  if (transport === "codex-queue") return { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" };
-  return { supportedInjection: ["tool-boundary"], idleWake: "none" };
-}
 
 // mcp-server/src/host-input-adapter.ts
 function text(value) {
@@ -769,7 +880,7 @@ function nativePeerWait(observation) {
   return {
     targets: normalizePeerWaitTargets(targets),
     timeoutMs,
-    queryRevision: createHash("sha256").update(JSON.stringify([...cursors].sort())).digest("hex")
+    queryRevision: createHash2("sha256").update(JSON.stringify([...cursors].sort())).digest("hex")
   };
 }
 
@@ -822,7 +933,7 @@ function recordPeerMessages(host, sessionId, messages) {
   const store = new TrustStore(resolveTrustDatabasePath());
   try {
     return messages.map((message) => {
-      const contentDigest = `sha256:${createHash2("sha256").update(message.body).digest("hex")}`;
+      const contentDigest = `sha256:${createHash3("sha256").update(message.body).digest("hex")}`;
       const receipt = store.recordInputSource({
         originKind: "peer",
         host,
@@ -891,7 +1002,7 @@ async function handleSessionMessageHook(input, host, explicitHostPid) {
   const target = { host, sessionId };
   if (adapted.lifecycle === "start") {
     if (subagent) return {};
-    const instanceId = randomUUID2();
+    const instanceId = randomUUID3();
     const transport = profile.transport;
     const wakeVisibility = profile.capabilities.idleWake;
     try {
@@ -960,9 +1071,10 @@ async function handleSessionMessageHook(input, host, explicitHostPid) {
   let messages = [];
   if (observation.kind === "user-input") {
     if (observation.wakeOnly && observation.wakeCandidates?.length && supportsInjection(profile.capabilities, "peer-wake")) {
-      const result = await sessionMessageRequest("claim-wake", {
+      const result = await sessionMessageRequest("claim-host-wake", {
         ...limits,
-        nonces: observation.wakeCandidates
+        observation,
+        sourceReceiptId: recordWakeHookObservation(observation)
       }, void 0, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
       if (result.recognized) messages = result.messages;
       else await sessionMessageRequest("observe-native-input", { target }, void 0, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });

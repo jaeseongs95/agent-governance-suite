@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
 // mcp-server/src/session-message-relay.ts
-import { execFile } from "node:child_process";
-import net from "node:net";
 import { randomUUID } from "node:crypto";
 
 // mcp-server/src/session-message-client.ts
@@ -347,43 +345,32 @@ function processIdentityState(pid, expectedStartToken, readStartToken = processS
   return actual === expectedStartToken ? "match" : "mismatch";
 }
 
-// mcp-server/src/session-message-relay.ts
-var LOOP_MS = 5e3;
-var IDENTITY_RECHECK_MS = 10 * 6e4;
-var IDENTITY_RETRY_MS = 6e4;
-var IDENTITY_UNKNOWN_LIMIT = 3;
-var WAKE_BACKOFF_BASE_MS = 3e4;
-var WAKE_BACKOFF_MAX_MS = 10 * 6e4;
-function wakeBackoffDelay(attempt) {
-  return Math.min(WAKE_BACKOFF_MAX_MS, WAKE_BACKOFF_BASE_MS * 2 ** Math.max(0, attempt));
-}
-function relayIdentityDecision(identity, previousUnknowns) {
-  if (identity === "mismatch") return { proceed: false, stop: true, unknowns: 0 };
-  if (identity === "match") return { proceed: true, stop: false, unknowns: 0 };
-  const unknowns = previousUnknowns + 1;
-  return { proceed: false, stop: unknowns >= IDENTITY_UNKNOWN_LIMIT, unknowns };
-}
+// mcp-server/src/session-message-wake-port.ts
+import { execFile } from "node:child_process";
+import net from "node:net";
+
+// mcp-server/src/trust-store.ts
+import { DatabaseSync } from "node:sqlite";
+
+// mcp-server/src/workspace-identity.ts
+var SEGMENT_SEPARATOR = process.platform === "win32" ? /[\\/]/u : /\//u;
+
+// mcp-server/src/session-message-wake-port.ts
 function codexWakeOutcome(error, spawned) {
   return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
 }
 function claudeWakeOutcome(hadError, connected, wrote) {
   return !hadError && wrote ? "submitted" : connected || wrote ? "accepted-or-unknown" : "definite-failure";
 }
-function shouldReleaseWake(outcome) {
-  return outcome === "definite-failure";
-}
-function wakeRetryState(outcome, released, attempt, now) {
-  const retry = outcome === "definite-failure" && released;
-  return {
-    retry,
-    nextRingAt: retry ? now + wakeBackoffDelay(attempt) : 0,
-    ringAttempts: retry ? attempt + 1 : 0
-  };
-}
-async function ringCodex(sessionId2, message) {
+function ringCodex(sessionId2, message) {
   return new Promise((resolve) => {
     let spawned = false;
-    const child = execFile("codex", ["queue", "--thread", sessionId2, "--message", message], { windowsHide: true, timeout: 1e4 }, (error) => resolve(codexWakeOutcome(error, spawned)));
+    const child = execFile(
+      "codex",
+      ["queue", "--thread", sessionId2, "--message", message],
+      { windowsHide: true, timeout: 1e4 },
+      (error) => resolve(codexWakeOutcome(error, spawned))
+    );
     child.once("spawn", () => {
       spawned = true;
     });
@@ -419,10 +406,63 @@ ${JSON.stringify({ type: "user", message: { role: "user", content: message }, pr
     socket.once("error", () => finish(claudeWakeOutcome(true, connected, wrote)));
   });
 }
+var ports = /* @__PURE__ */ new Map([
+  ["claude-inbox", {
+    capabilities: { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "silent" },
+    dispatch: (_target, message) => ringClaude(message)
+  }],
+  ["codex-queue", {
+    capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
+    dispatch: (target, message) => ringCodex(target.sessionId, message)
+  }],
+  ["codex-deferred", {
+    capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
+    dispatch: async () => "definite-failure"
+  }]
+]);
+function transportWakePort(transport2) {
+  const port = ports.get(transport2);
+  if (!port) throw new Error("Wake transport adapter is unavailable.");
+  return port;
+}
+
+// mcp-server/src/session-message-relay.ts
+var LOOP_MS = 5e3;
+var IDENTITY_RECHECK_MS = 10 * 6e4;
+var IDENTITY_RETRY_MS = 6e4;
+var IDENTITY_UNKNOWN_LIMIT = 3;
+function relayIdentityDecision(identity, previousUnknowns) {
+  if (identity === "mismatch") return { proceed: false, stop: true, unknowns: 0 };
+  if (identity === "match") return { proceed: true, stop: false, unknowns: 0 };
+  const unknowns = previousUnknowns + 1;
+  return { proceed: false, stop: unknowns >= IDENTITY_UNKNOWN_LIMIT, unknowns };
+}
 async function delay2(milliseconds) {
   await new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
-async function runSessionMessageRelay(options) {
+async function dispatchManagedWake(options, relayId, port, request = sessionMessageRequest) {
+  if (port.capabilities.idleWake === "none" || !port.capabilities.supportedInjection.includes("peer-wake")) return false;
+  const target = { host: options.host, sessionId: options.sessionId };
+  const reserved = await request("reserve-wake", {
+    target,
+    nonce: newWakeNonce(),
+    instanceId: options.instanceId,
+    transport: options.transport,
+    relayId,
+    resume: true
+  });
+  if (!reserved.dispatch || !reserved.attempt) return false;
+  const started = await request("start-wake", { attempt: reserved.attempt });
+  if (!started.dispatch || !started.attempt) return false;
+  let outcome = "accepted-or-unknown";
+  try {
+    outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce));
+  } catch {
+  }
+  await request("record-wake-outcome", { attempt: started.attempt, outcome });
+  return true;
+}
+async function runSessionMessageRelay(options, port = transportWakePort(options.transport)) {
   const target = { host: options.host, sessionId: options.sessionId };
   const relayId = randomUUID();
   let acquired = false;
@@ -451,9 +491,6 @@ async function runSessionMessageRelay(options) {
   }
   if (!acquired) return;
   try {
-    let retryNonce = null;
-    let ringAttempts = 0;
-    let nextRingAt = 0;
     let identityUnknowns = 0;
     let nextIdentityCheck = Date.now() + IDENTITY_RECHECK_MS;
     while (true) {
@@ -478,49 +515,26 @@ async function runSessionMessageRelay(options) {
           transport: options.transport,
           relayId,
           instanceId: options.instanceId,
-          includePending: options.transport !== "codex-deferred"
+          includePending: port.capabilities.idleWake !== "none"
         });
         if (!pending.alive) return;
-        if (options.transport === "codex-deferred") {
+        if (port.capabilities.idleWake === "none") {
           await delay2(LOOP_MS);
           continue;
         }
-        if (pending.count === 0) {
-          retryNonce = null;
-          ringAttempts = 0;
-          nextRingAt = 0;
-        } else if (now >= nextRingAt) {
+        if (pending.count > 0) {
           const identity = checkedIdentity ?? processIdentityState(options.parentPid, options.parentStartToken);
           if (identity === "mismatch") return;
           if (identity === "unknown") {
             if (checkedIdentity === null) identityUnknowns += 1;
             if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) return;
             nextIdentityCheck = Math.min(nextIdentityCheck, now + IDENTITY_RETRY_MS);
-            nextRingAt = now + IDENTITY_RETRY_MS;
             await delay2(LOOP_MS);
             continue;
           }
           identityUnknowns = 0;
           nextIdentityCheck = now + IDENTITY_RECHECK_MS;
-          const nonce = retryNonce ?? newWakeNonce();
-          const reservation = await sessionMessageRequest("reserve-wake", { target, nonce });
-          if (!reservation.dispatch) {
-            retryNonce = null;
-            ringAttempts = 0;
-            nextRingAt = 0;
-          } else {
-            const bell = wakeMessage(nonce);
-            const outcome = options.transport === "codex-queue" ? await ringCodex(options.sessionId, bell) : await ringClaude(bell);
-            let released = false;
-            if (shouldReleaseWake(outcome)) {
-              const result = await sessionMessageRequest("release-wake", { target, nonce });
-              released = result.released;
-            }
-            const retry = wakeRetryState(outcome, released, ringAttempts, now);
-            retryNonce = retry.retry ? nonce : null;
-            nextRingAt = retry.nextRingAt;
-            ringAttempts = retry.ringAttempts;
-          }
+          await dispatchManagedWake(options, relayId, port);
         }
       } catch {
       }

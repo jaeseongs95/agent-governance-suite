@@ -23,7 +23,7 @@ v2.1.0 lets AI host sessions working on the same computer send messages directly
 
 Release notes for earlier versions are in [`docs/`](docs/) (Korean). The candidate-v2 policy applied to `korean-prose-editor` in v1.16.0 was not part of the quality gate record (`0.3.0-gate-1`), so it remains unevaluated for quality.
 
-The current public release is `v2.7.0` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+The current public release is `v2.7.1` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
 
 ## Problems it handles
@@ -64,7 +64,7 @@ Node.js 24.0.0 or later is required.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.1
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 // mcp-server/src/session-message-broker.ts
-import { createHash as createHash2, createPublicKey, randomBytes as randomBytes2, timingSafeEqual, X509Certificate as X509Certificate2 } from "node:crypto";
-import { closeSync, existsSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { createHash as createHash3, createPublicKey, randomBytes as randomBytes3, timingSafeEqual as timingSafeEqual2, X509Certificate as X509Certificate2 } from "node:crypto";
+import { closeSync, existsSync as existsSync2, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
-import path2 from "node:path";
+import path4 from "node:path";
 import tls from "node:tls";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
@@ -16,10 +16,347 @@ var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
 var SESSION_MESSAGE_BODY_MAX_BYTES = 4096;
 
 // mcp-server/src/session-message-store.ts
-import { mkdirSync } from "node:fs";
+import { mkdirSync as mkdirSync2 } from "node:fs";
+import path3 from "node:path";
+import { createHash as createHash2, randomUUID as randomUUID3 } from "node:crypto";
+import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
+
+// mcp-server/src/session-message-wake-port.ts
+import { createHash, randomUUID as randomUUID2 } from "node:crypto";
+import { existsSync } from "node:fs";
+
+// mcp-server/src/trust-store.ts
+import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { chmodSync, mkdirSync } from "node:fs";
 import path from "node:path";
-import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
+
+// contracts/types.ts
+var CONTRACT_VERSION = "1.0.0";
+var WorkflowContractError = class extends Error {
+  constructor(code, message, details = null) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    this.name = "WorkflowContractError";
+  }
+  code;
+  details;
+  toBody() {
+    return { code: this.code, message: this.message, details: this.details };
+  }
+};
+
+// mcp-server/src/workspace-identity.ts
+var SEGMENT_SEPARATOR = process.platform === "win32" ? /[\\/]/u : /\//u;
+
+// mcp-server/src/convergence-logic.ts
+function canonicalJson(value, subject = "Convergence input") {
+  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-finite number.`);
+    }
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
+  if (value && typeof value === "object") {
+    const record = value;
+    return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key], subject)}`).join(",")}}`;
+  }
+  throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
+}
+
+// mcp-server/src/trust-store.ts
+var TRUST_SIGNING_KEY = "trust-signing-key";
+var SCHEMA_VERSION = 1;
+var INPUT_SOURCE_KEYS = /* @__PURE__ */ new Set([
+  "originKind",
+  "host",
+  "sessionId",
+  "eventId",
+  "contentDigest",
+  "observedAt",
+  "expiresAt",
+  "authorityEffect",
+  "attestation"
+]);
+var ATTESTATION_KEYS = /* @__PURE__ */ new Set(["kind", "adapter", "capabilityVersion"]);
+function rejectUnexpectedKeys(value, allowed, label) {
+  const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
+  if (unexpected.length > 0) {
+    throw new WorkflowContractError("INVALID_INPUT", `${label} contains unsupported fields.`, { unexpected });
+  }
+}
+var TrustStore = class {
+  constructor(databasePath) {
+    this.databasePath = databasePath;
+    if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
+    if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 448 });
+    this.database = new DatabaseSync(databasePath);
+    try {
+      this.database.exec("PRAGMA busy_timeout = 5000;");
+      this.database.exec("PRAGMA synchronous = FULL;");
+      if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
+      this.initializeSchema();
+      this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
+      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path.resolve(databasePath), 384);
+    } catch (cause) {
+      try {
+        this.database.close();
+      } catch {
+      }
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError("Cannot initialize the trust database.", cause);
+    }
+  }
+  databasePath;
+  database;
+  signingKey;
+  closed = false;
+  recordInputSource(input) {
+    rejectUnexpectedKeys(input, INPUT_SOURCE_KEYS, "Input source metadata");
+    if (!input.attestation || typeof input.attestation !== "object" || Array.isArray(input.attestation)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Input source attestation must be an object.");
+    }
+    rejectUnexpectedKeys(input.attestation, ATTESTATION_KEYS, "Input source attestation");
+    if (input.originKind === "user-turn" || input.attestation.kind === "host-direct-user-event") {
+      throw new WorkflowContractError("BINDING_INVALID", "This release cannot attest direct-user approval sources.");
+    }
+    if (input.originKind === "peer" && (input.authorityEffect !== "none" || input.attestation.kind !== "broker-peer-envelope")) {
+      throw new WorkflowContractError("BINDING_INVALID", "Peer input must be a non-authorizing broker envelope.");
+    }
+    if (input.originKind !== "peer" && input.attestation.kind === "broker-peer-envelope") {
+      throw new WorkflowContractError("BINDING_INVALID", "Broker peer attestations must be classified as peer input.");
+    }
+    const receipt = this.seal({
+      schemaVersion: CONTRACT_VERSION,
+      receiptId: `source-${randomUUID()}`,
+      originKind: input.originKind,
+      host: input.host,
+      sessionId: input.sessionId,
+      eventId: input.eventId,
+      contentDigest: input.contentDigest,
+      observedAt: input.observedAt,
+      expiresAt: input.expiresAt,
+      authorityEffect: input.authorityEffect,
+      attestation: {
+        kind: input.attestation.kind,
+        adapter: input.attestation.adapter,
+        capabilityVersion: input.attestation.capabilityVersion
+      }
+    });
+    return this.guard("Cannot record the input source receipt.", { receiptId: receipt.receiptId }, () => this.transaction(() => {
+      const existing = this.database.prepare(`
+        SELECT receipt_json FROM input_source_receipts
+        WHERE host = ? AND session_id = ? AND event_id = ?
+      `).get(receipt.host, receipt.sessionId, receipt.eventId);
+      if (existing) {
+        const prior = JSON.parse(existing.receipt_json);
+        const sameSecurityMetadata = prior.contentDigest === receipt.contentDigest && prior.originKind === receipt.originKind && prior.authorityEffect === receipt.authorityEffect && canonicalJson(prior.attestation, "Source attestation") === canonicalJson(receipt.attestation, "Source attestation");
+        if (sameSecurityMetadata) return structuredClone(prior);
+        throw new WorkflowContractError("REQUEST_CONFLICT", "The input event was already recorded with different content or provenance metadata.", {
+          host: receipt.host,
+          sessionId: receipt.sessionId,
+          eventId: receipt.eventId
+        });
+      }
+      this.database.prepare(`
+        INSERT INTO input_source_receipts (
+          receipt_id, host, session_id, event_id, origin_kind,
+          authority_effect, observed_at, expires_at, receipt_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        receipt.receiptId,
+        receipt.host,
+        receipt.sessionId,
+        receipt.eventId,
+        receipt.originKind,
+        receipt.authorityEffect,
+        receipt.observedAt,
+        receipt.expiresAt,
+        JSON.stringify(receipt)
+      );
+      return structuredClone(receipt);
+    }));
+  }
+  latestInputSource(binding) {
+    return this.guard("Cannot read the latest input source receipt.", { ...binding }, () => {
+      const row = this.database.prepare(`
+        SELECT receipt_json FROM input_source_receipts
+        WHERE host = ? AND session_id = ?
+        ORDER BY observed_at DESC, receipt_id DESC LIMIT 1
+      `).get(binding.host, binding.sessionId);
+      return row ? JSON.parse(row.receipt_json) : null;
+    });
+  }
+  getInputSource(receiptId) {
+    return this.guard("Cannot read the input source receipt.", { receiptId }, () => {
+      const row = this.database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId);
+      return row ? JSON.parse(row.receipt_json) : null;
+    });
+  }
+  verify(receipt) {
+    try {
+      const { integrityToken, ...unsigned } = receipt;
+      const actual = Buffer.from(integrityToken, "base64url");
+      const expected = createHmac("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
+      return actual.length === expected.length && timingSafeEqual(actual, expected);
+    } catch {
+      return false;
+    }
+  }
+  close() {
+    if (this.closed) return;
+    this.database.close();
+    this.closed = true;
+  }
+  seal(unsigned) {
+    return {
+      ...unsigned,
+      integrityToken: createHmac("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest("base64url")
+    };
+  }
+  initializeSchema() {
+    const version = this.database.prepare("PRAGMA user_version").get().user_version;
+    if (version > SCHEMA_VERSION) {
+      throw new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
+        databasePath: this.databasePath,
+        supportedVersion: SCHEMA_VERSION,
+        actualVersion: version
+      });
+    }
+    this.database.exec(`
+      BEGIN IMMEDIATE;
+      CREATE TABLE IF NOT EXISTS trust_metadata (
+        key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL
+      ) STRICT;
+      CREATE TABLE IF NOT EXISTS input_source_receipts (
+        receipt_id TEXT PRIMARY KEY,
+        host TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        event_id TEXT NOT NULL,
+        origin_kind TEXT NOT NULL,
+        authority_effect TEXT NOT NULL,
+        observed_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        receipt_json TEXT NOT NULL,
+        UNIQUE(host, session_id, event_id)
+      ) STRICT;
+      CREATE INDEX IF NOT EXISTS input_source_latest
+        ON input_source_receipts(host, session_id, observed_at DESC);
+      PRAGMA user_version = ${SCHEMA_VERSION};
+      COMMIT;
+    `);
+  }
+  getOrCreateSecret(name) {
+    return this.transaction(() => {
+      const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name);
+      if (existing) return existing.value;
+      const value = randomBytes(32).toString("base64url");
+      this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
+      return value;
+    });
+  }
+  transaction(operation) {
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      const result = operation();
+      this.database.exec("COMMIT;");
+      return result;
+    } catch (cause) {
+      try {
+        this.database.exec("ROLLBACK;");
+      } catch {
+      }
+      throw cause;
+    }
+  }
+  guard(message, details, operation) {
+    try {
+      return operation();
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError(message, cause, details);
+    }
+  }
+  storageError(message, cause, details = {}) {
+    return new WorkflowContractError("INVALID_INPUT", message, {
+      ...details,
+      databasePath: this.databasePath,
+      cause: cause instanceof Error ? cause.message : String(cause)
+    });
+  }
+};
+
+// mcp-server/src/runtime-config.ts
+import { homedir } from "node:os";
+import path2 from "node:path";
+function sharedUserStateDirectory(environment, homeDirectory) {
+  const configured = environment.AGENT_GOVERNANCE_SHARED_STATE_DIR?.trim();
+  if (configured) {
+    if (!path2.isAbsolute(configured)) {
+      throw new Error("AGENT_GOVERNANCE_SHARED_STATE_DIR must be an absolute path.");
+    }
+    return path2.normalize(configured);
+  }
+  return path2.resolve(homeDirectory, ".agent-governance-suite");
+}
+function resolveSessionMessageStateDirectory(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  void platform;
+  const configured = environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim();
+  if (configured) return path2.resolve(currentWorkingDirectory, configured);
+  return path2.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
+}
+function resolveTrustDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  void platform;
+  const configured = environment.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim();
+  if (configured) return path2.resolve(currentWorkingDirectory, configured);
+  return path2.join(
+    resolveSessionMessageStateDirectory(environment, platform, homeDirectory, currentWorkingDirectory),
+    "trust.sqlite3"
+  );
+}
+
+// mcp-server/src/session-message-wake-port.ts
+function wakeBackoffDelay(attempt) {
+  return Math.min(10 * 6e4, 3e4 * 2 ** Math.max(0, attempt));
+}
+function isWakeHookObservation(value, target) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const event = value;
+  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && event.actor?.observedBy === `${target.host}:hook-payload` && ["main", "unknown"].includes(event.actor.kind) && ["observed", "unknown"].includes(event.actor.assurance) && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
+}
+function observationDigest(event) {
+  const normalized = [
+    event.host,
+    event.sessionId,
+    event.kind,
+    event.wakeOnly,
+    event.actor.kind,
+    event.actor.observedBy,
+    event.actor.assurance,
+    [...new Set(event.wakeCandidates)].sort()
+  ];
+  return `sha256:${createHash("sha256").update(JSON.stringify(normalized)).digest("hex")}`;
+}
+function createWakeHookObservationReader(databasePath = resolveTrustDatabasePath()) {
+  return {
+    verifyObservation(target, observation, receiptId, nowMs) {
+      if (!isWakeHookObservation(observation, target) || !receiptId || !existsSync(databasePath)) return false;
+      const trust = new TrustStore(databasePath);
+      try {
+        const receipt = trust.getInputSource(receiptId);
+        return receipt !== null && trust.verify(receipt) && receipt.host === target.host && receipt.sessionId === target.sessionId && receipt.originKind === "peer" && receipt.authorityEffect === "none" && receipt.attestation.kind === "broker-peer-envelope" && receipt.attestation.adapter === "session-message-wake-hook" && receipt.attestation.capabilityVersion === "1.0.0" && receipt.contentDigest === observationDigest(observation) && Date.parse(receipt.observedAt) <= nowMs && Date.parse(receipt.expiresAt) > nowMs;
+      } finally {
+        trust.close();
+      }
+    }
+  };
+}
+
+// mcp-server/src/session-message-store.ts
 var MESSAGE_BODY_MAX_BYTES = SESSION_MESSAGE_BODY_MAX_BYTES;
 var MESSAGE_TTL_DEFAULT_SECONDS = 3600;
 var MESSAGE_TTL_MAX_SECONDS = 86400;
@@ -41,7 +378,7 @@ function iso(milliseconds) {
   return new Date(milliseconds).toISOString();
 }
 function nonceDigest(nonce) {
-  return createHash("sha256").update(nonce).digest("hex");
+  return createHash2("sha256").update(nonce).digest("hex");
 }
 function boundedIdentity(value) {
   const hostPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/;
@@ -68,8 +405,8 @@ function claimResponseBytes(messages) {
 var SessionMessageStore = class {
   database;
   constructor(databasePath) {
-    if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 448 });
-    this.database = new DatabaseSync(databasePath);
+    if (databasePath !== ":memory:") mkdirSync2(path3.dirname(path3.resolve(databasePath)), { recursive: true, mode: 448 });
+    this.database = new DatabaseSync2(databasePath);
     this.database.exec("PRAGMA busy_timeout = 5000;");
     if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
     this.database.exec(`CREATE TABLE IF NOT EXISTS messages (
@@ -168,6 +505,27 @@ var SessionMessageStore = class {
         observed_at TEXT NOT NULL,
         PRIMARY KEY (host, session_id)
       ) STRICT;`);
+      const wakeColumns = this.database.prepare("PRAGMA table_info(wake_nonces)").all();
+      for (const [name, definition] of [
+        ["state", "TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted'))"],
+        ["nonce", "TEXT"],
+        ["instance_id", "TEXT"],
+        ["birth_generation", "TEXT"],
+        ["transport", "TEXT"],
+        ["relay_id", "TEXT"],
+        ["attempt_id", "TEXT"],
+        ["dispatch_epoch", "INTEGER NOT NULL DEFAULT 0"],
+        ["retry_not_before", "TEXT"],
+        ["retry_count", "INTEGER NOT NULL DEFAULT 0"],
+        ["started_at", "TEXT"],
+        ["outcome_at", "TEXT"],
+        ["observed_at", "TEXT"],
+        ["late_observed_at", "TEXT"]
+      ]) {
+        if (!wakeColumns.some((column) => column.name === name)) this.database.exec(`ALTER TABLE wake_nonces ADD COLUMN ${name} ${definition};`);
+      }
+      this.database.exec(`CREATE UNIQUE INDEX IF NOT EXISTS wake_active_target ON wake_nonces (host, session_id)
+        WHERE state IN ('reserved', 'started', 'submitted', 'unknown');`);
       this.database.exec("COMMIT");
     } catch (error) {
       this.database.exec("ROLLBACK");
@@ -182,7 +540,11 @@ var SessionMessageStore = class {
     const acknowledgedBefore = iso(nowMs - 36e5);
     this.database.prepare("DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)").run(now, acknowledgedBefore);
     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
-    this.database.prepare("DELETE FROM wake_nonces WHERE expires_at <= ?").run(now);
+    this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
+    this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted')
+      AND coalesce(observed_at, outcome_at) <= ?`).run(acknowledgedBefore);
+    this.database.prepare(`DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces
+      WHERE state IN ('observed', 'not-submitted') ORDER BY coalesce(observed_at, outcome_at) DESC LIMIT -1 OFFSET ?)`).run(MESSAGE_LIMIT);
     this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
   }
   /** Preparation is durable but has no queue, peer-relation or wake effect. */
@@ -193,7 +555,7 @@ var SessionMessageStore = class {
     if (typeof input.body !== "string" || !input.body.trim() || Buffer.byteLength(input.body, "utf8") > MESSAGE_BODY_MAX_BYTES) throw new Error("body must contain 1-4096 UTF-8 bytes.");
     if (input.body.includes("\0")) throw new Error("body must not contain NUL characters.");
     if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) throw new Error("ttlSeconds must be an integer from 30 to 86400.");
-    const result = { messageId: randomUUID(), preparedAt: iso(nowMs), expiresAt: iso(nowMs + MESSAGE_DRAFT_TTL_MS) };
+    const result = { messageId: randomUUID3(), preparedAt: iso(nowMs), expiresAt: iso(nowMs + MESSAGE_DRAFT_TTL_MS) };
     const recordBytes = Buffer.byteLength(JSON.stringify({ ...input, ttlSeconds, ...result }), "utf8");
     this.database.exec("BEGIN IMMEDIATE");
     try {
@@ -251,7 +613,7 @@ var SessionMessageStore = class {
     if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) {
       throw new Error(`ttlSeconds must be an integer from 30 to ${MESSAGE_TTL_MAX_SECONDS}.`);
     }
-    const messageId = input.messageId ?? randomUUID();
+    const messageId = input.messageId ?? randomUUID3();
     if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new Error("messageId must be 8-128 safe identifier characters.");
     this.prune(nowMs);
     const existing = this.database.prepare("SELECT * FROM messages WHERE message_id = ?").get(messageId);
@@ -324,7 +686,7 @@ var SessionMessageStore = class {
   consumePendingWakes(target, nowMs) {
     const now = iso(nowMs);
     this.database.prepare(`UPDATE wake_nonces SET consumed_at = ?
-      WHERE host = ? AND session_id = ? AND consumed_at IS NULL AND expires_at > ?`).run(now, target.host, target.sessionId, now);
+      WHERE host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?`).run(now, target.host, target.sessionId, now);
   }
   claim(target, nowMs = Date.now(), limits = {}) {
     boundedIdentity(target);
@@ -351,7 +713,7 @@ var SessionMessageStore = class {
     this.database.exec("BEGIN IMMEDIATE");
     try {
       const recognized = digests.every((digest) => Boolean(this.database.prepare(`SELECT 1 FROM wake_nonces
-        WHERE nonce_digest = ? AND host = ? AND session_id = ? AND consumed_at IS NULL AND expires_at > ?`).get(digest, target.host, target.sessionId, now)));
+        WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?`).get(digest, target.host, target.sessionId, now)));
       if (!recognized) {
         this.database.exec("COMMIT");
         return { recognized: false, messages: [] };
@@ -443,7 +805,8 @@ var SessionMessageStore = class {
       acknowledgedAt: row.acknowledged_at ?? null,
       deliveryAttempts: Number(row.delivery_attempts),
       firstDeliveredAt: row.first_delivered_at ?? null,
-      state: row.acknowledged_at ? "acknowledged" : row.claimed_at ? "delivered" : "queued"
+      state: row.acknowledged_at ? "acknowledged" : row.claimed_at ? "delivered" : "queued",
+      wake: this.managedWakeStatus({ host: String(row.target_host), sessionId: String(row.target_session_id) }, nowMs)
     };
   }
   /** Metadata only; peer relation is not work completion or permission. */
@@ -455,7 +818,7 @@ var SessionMessageStore = class {
       WHERE expires_at > ? AND ((sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?)
         OR (sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?))
       ORDER BY created_at DESC, message_id DESC LIMIT 20`).all(iso(nowMs), sender.host, sender.sessionId, target.host, target.sessionId, target.host, target.sessionId, sender.host, sender.sessionId);
-    return { related: rows.length > 0, fingerprint: createHash("sha256").update(JSON.stringify(rows)).digest("hex") };
+    return { related: rows.length > 0, fingerprint: createHash2("sha256").update(JSON.stringify(rows)).digest("hex") };
   }
   liveRelay(target, transport, nowMs = Date.now()) {
     boundedIdentity(target);
@@ -523,7 +886,8 @@ var SessionMessageStore = class {
     this.database.exec("BEGIN IMMEDIATE");
     try {
       const outstanding = this.database.prepare(`SELECT 1 FROM wake_nonces
-        WHERE host = ? AND session_id = ? AND consumed_at IS NULL AND expires_at > ? LIMIT 1`).get(target.host, target.sessionId, now);
+        WHERE host = ? AND session_id = ? AND (state IN ('reserved', 'started', 'submitted', 'unknown')
+          OR (state = 'legacy' AND consumed_at IS NULL AND expires_at > ?)) LIMIT 1`).get(target.host, target.sessionId, now);
       const delivering = this.database.prepare(`SELECT 1 FROM messages
         WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
           AND expires_at > ? AND claim_until > ? LIMIT 1`).get(target.host, target.sessionId, now, now);
@@ -546,26 +910,223 @@ var SessionMessageStore = class {
     boundedIdentity(target);
     if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
     return this.database.prepare(`DELETE FROM wake_nonces
-      WHERE nonce_digest = ? AND host = ? AND session_id = ? AND consumed_at IS NULL`).run(nonceDigest(nonce), target.host, target.sessionId).changes === 1;
+      WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL`).run(nonceDigest(nonce), target.host, target.sessionId).changes === 1;
   }
+  /** Board classification checks ownership; only the host hook can record observation. */
   consumeWake(target, nonce, nowMs = Date.now()) {
     boundedIdentity(target);
-    const digest = nonceDigest(nonce);
+    return Boolean(this.database.prepare(`SELECT 1 FROM wake_nonces
+      WHERE nonce_digest = ? AND host = ? AND session_id = ? AND expires_at > ?`).get(nonceDigest(nonce), target.host, target.sessionId, iso(nowMs)));
+  }
+  wakeBindingCurrent(input, generation, nowMs) {
+    boundedIdentity(input);
+    const presence = this.presence(input, nowMs);
+    const relay = this.liveRelay(input, input.transport, nowMs);
+    return presence.state === "online" && presence.instanceId === input.instanceId && presence.transport === input.transport && (generation === null || presence.startedAt === generation) && relay?.relayId === input.relayId && presence.deliveryCapabilities.idleWake !== "none" && presence.deliveryCapabilities.supportedInjection.includes("peer-wake");
+  }
+  wakeClaimable(target, nowMs) {
     const now = iso(nowMs);
-    const existing = this.database.prepare(`SELECT consumed_at FROM wake_nonces
-      WHERE nonce_digest = ? AND host = ? AND session_id = ? AND expires_at > ?`).get(digest, target.host, target.sessionId, now);
-    if (!existing) return false;
-    if (existing.consumed_at === null) {
-      const unacknowledged = this.database.prepare(`SELECT
-          count(*) AS count,
-          coalesce(sum(CASE WHEN claim_until > ? THEN 1 ELSE 0 END), 0) AS live_claims
-        FROM messages
-        WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires_at > ?`).get(now, target.host, target.sessionId, now);
-      if (unacknowledged.count === 0 || unacknowledged.live_claims > 0) {
-        this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ?").run(now, digest);
-      }
+    const delivering = this.database.prepare(`SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ?
+      AND acknowledged_at IS NULL AND expires_at > ? AND claim_until > ? LIMIT 1`).get(target.host, target.sessionId, now, now);
+    const claimable = this.database.prepare(`SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ?
+      AND acknowledged_at IS NULL AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?) LIMIT 1`).get(target.host, target.sessionId, now, now);
+    return !delivering && Boolean(claimable);
+  }
+  wakeAttempt(row) {
+    return {
+      host: String(row.host),
+      sessionId: String(row.session_id),
+      instanceId: String(row.instance_id),
+      transport: String(row.transport),
+      relayId: String(row.relay_id),
+      nonce: String(row.nonce),
+      generation: String(row.birth_generation),
+      attemptId: String(row.attempt_id),
+      dispatchEpoch: Number(row.dispatch_epoch)
+    };
+  }
+  reserveManagedWake(input, nowMs = Date.now()) {
+    boundedIdentity(input);
+    if (!/^[A-Za-z0-9_-]{22,128}$/u.test(input.nonce)) throw new Error("Invalid wake nonce.");
+    for (const value of [input.instanceId, input.relayId, input.transport]) {
+      if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(value)) throw new Error("Invalid wake relay binding.");
     }
-    return true;
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      this.prune(nowMs);
+      let attempt = null;
+      const active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
+        AND state IN ('reserved', 'started', 'submitted', 'unknown')`).get(input.host, input.sessionId);
+      if (active) {
+        if (active.state === "started" && !this.wakeBindingCurrent(this.wakeAttempt(active), String(active.birth_generation), nowMs)) {
+          this.database.prepare("UPDATE wake_nonces SET state = 'unknown' WHERE nonce_digest = ? AND state = 'started'").run(String(active.nonce_digest));
+        }
+        if (active.state === "reserved" && input.resume === true && input.instanceId === active.instance_id && input.transport === active.transport && this.wakeBindingCurrent(input, String(active.birth_generation), nowMs) && (active.retry_not_before === null || String(active.retry_not_before) <= iso(nowMs))) {
+          this.database.prepare("UPDATE wake_nonces SET relay_id = ? WHERE nonce_digest = ? AND state = 'reserved'").run(input.relayId, String(active.nonce_digest));
+          attempt = { ...this.wakeAttempt(active), relayId: input.relayId };
+        }
+      } else if (this.wakeBindingCurrent(input, null, nowMs) && this.wakeClaimable(input, nowMs)) {
+        const legacy = this.database.prepare(`SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ?
+          AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?`).get(input.host, input.sessionId, iso(nowMs));
+        if (!legacy) {
+          const count = this.database.prepare("SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')").get();
+          if (count.n >= MESSAGE_LIMIT) throw new Error("The bounded active wake store is full.");
+          const generation = this.presence(input, nowMs).startedAt;
+          const attemptId = randomUUID3();
+          this.database.prepare(`INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce,
+            instance_id, birth_generation, transport, relay_id, attempt_id) VALUES (?, ?, ?, ?, 'reserved', ?, ?, ?, ?, ?, ?)`).run(
+            nonceDigest(input.nonce),
+            input.host,
+            input.sessionId,
+            iso(nowMs + WAKE_TTL_MS),
+            input.nonce,
+            input.instanceId,
+            generation,
+            input.transport,
+            input.relayId,
+            attemptId
+          );
+          attempt = { ...input, generation, attemptId, dispatchEpoch: 0 };
+        }
+      }
+      this.database.exec("COMMIT");
+      return { dispatch: attempt !== null, attempt };
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  /** CAS succeeds once. The caller must not call a host adapter without this committed start. */
+  startManagedWake(attempt, nowMs = Date.now()) {
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
+        AND state = 'reserved' AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?`).get(
+        nonceDigest(attempt.nonce),
+        attempt.host,
+        attempt.sessionId,
+        attempt.instanceId,
+        attempt.generation,
+        attempt.transport,
+        attempt.relayId,
+        attempt.attemptId,
+        attempt.dispatchEpoch
+      );
+      if (!row || !this.wakeBindingCurrent(attempt, attempt.generation, nowMs) || row.retry_not_before !== null && String(row.retry_not_before) > iso(nowMs)) {
+        this.database.exec("COMMIT");
+        return { dispatch: false, attempt: null };
+      }
+      if (String(row.expires_at) <= iso(nowMs) || !this.wakeClaimable(attempt, nowMs)) {
+        this.database.prepare("UPDATE wake_nonces SET state = 'not-submitted', outcome_at = ? WHERE nonce_digest = ? AND state = 'reserved'").run(iso(nowMs), nonceDigest(attempt.nonce));
+        this.database.exec("COMMIT");
+        return { dispatch: false, attempt: null };
+      }
+      this.database.prepare("UPDATE wake_nonces SET state = 'started', started_at = ?, dispatch_epoch = dispatch_epoch + 1 WHERE nonce_digest = ?").run(iso(nowMs), nonceDigest(attempt.nonce));
+      this.database.exec("COMMIT");
+      return { dispatch: true, attempt: { ...attempt, dispatchEpoch: attempt.dispatchEpoch + 1 } };
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  recordManagedWakeOutcome(attempt, outcome, nowMs = Date.now()) {
+    if (!["submitted", "definite-failure", "accepted-or-unknown"].includes(outcome)) throw new Error("Invalid wake dispatch outcome.");
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const row = this.database.prepare(`SELECT retry_count FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
+        AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?
+        AND late_observed_at IS NULL AND state IN ('started', 'unknown')`).get(
+        nonceDigest(attempt.nonce),
+        attempt.host,
+        attempt.sessionId,
+        attempt.instanceId,
+        attempt.generation,
+        attempt.transport,
+        attempt.relayId,
+        attempt.attemptId,
+        attempt.dispatchEpoch
+      );
+      if (!row) {
+        this.database.exec("COMMIT");
+        return false;
+      }
+      const retry = outcome === "definite-failure";
+      this.database.prepare(`UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ?
+        WHERE nonce_digest = ?`).run(
+        retry ? "reserved" : outcome === "submitted" ? "submitted" : "unknown",
+        iso(nowMs),
+        retry ? iso(nowMs + wakeBackoffDelay(row.retry_count)) : null,
+        row.retry_count + (retry ? 1 : 0),
+        nonceDigest(attempt.nonce)
+      );
+      this.database.exec("COMMIT");
+      return true;
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  managedWakeStatus(target, nowMs = Date.now()) {
+    boundedIdentity(target);
+    const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state <> 'legacy'
+      ORDER BY CASE WHEN state IN ('reserved', 'started', 'submitted', 'unknown') THEN 0 ELSE 1 END, rowid DESC LIMIT 1`).get(target.host, target.sessionId);
+    if (!row) return null;
+    const active = ["reserved", "started", "submitted", "unknown"].includes(String(row.state));
+    return {
+      state: row.state,
+      observation: row.late_observed_at !== null ? "unknown" : active && String(row.expires_at) <= iso(nowMs) ? "observation-overdue" : row.state === "observed" ? "observed" : active ? "pending" : "not-submitted",
+      deliveryState: row.state === "started" || row.state === "unknown" ? "unknown" : row.state,
+      instanceId: row.instance_id,
+      generation: row.birth_generation,
+      attemptId: row.attempt_id,
+      dispatchEpoch: row.dispatch_epoch,
+      retryNotBefore: row.retry_not_before,
+      expiresAt: row.expires_at,
+      observedAt: row.observed_at,
+      lateObservedAt: row.late_observed_at
+    };
+  }
+  /** Hook observation and body claim are one transaction; generic claim/ACK cannot observe managed bells. */
+  claimHostWake(target, observation, receiptId, reader, nowMs = Date.now(), limits = {}) {
+    boundedIdentity(target);
+    const rejected = { recognized: false, messages: [], binding: null };
+    if (!isWakeHookObservation(observation, target) || !reader) return rejected;
+    const digests = [...new Set(observation.wakeCandidates.map(nonceDigest))];
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      if (!reader.verifyObservation(target, observation, receiptId, nowMs)) {
+        this.database.exec("COMMIT");
+        return rejected;
+      }
+      const rows = digests.map((digest) => this.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?").get(digest, target.host, target.sessionId));
+      if (rows.some((row) => !row || !["legacy", "started", "submitted", "unknown"].includes(String(row.state)))) {
+        this.database.exec("COMMIT");
+        return rejected;
+      }
+      const presence = this.presence(target, nowMs);
+      const valid = rows.every((row) => row.state === "legacy" ? row.consumed_at === null && String(row.expires_at) > iso(nowMs) : row.instance_id === presence.instanceId && row.birth_generation === presence.startedAt && row.transport === presence.transport && presence.state === "online" && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row.expires_at) > iso(nowMs));
+      if (!valid) {
+        for (const row of rows) if (row.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
+          SET late_observed_at = coalesce(late_observed_at, ?), state = 'unknown' WHERE nonce_digest = ?
+          AND state IN ('started', 'submitted', 'unknown')`).run(iso(nowMs), String(row.nonce_digest));
+        this.database.exec("COMMIT");
+        return rejected;
+      }
+      const messages = this.claimLocked(target, nowMs, limits);
+      let binding = null;
+      for (const row of rows) {
+        if (row.state === "legacy") this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ?").run(iso(nowMs), String(row.nonce_digest));
+        else {
+          this.database.prepare("UPDATE wake_nonces SET state = 'observed', consumed_at = ?, observed_at = ? WHERE nonce_digest = ?").run(iso(nowMs), iso(nowMs), String(row.nonce_digest));
+          binding = this.wakeAttempt(row);
+        }
+      }
+      this.database.exec("COMMIT");
+      return { recognized: true, messages, binding };
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
   }
   startPresence(input, nowMs = Date.now()) {
     boundedIdentity(input);
@@ -587,6 +1148,8 @@ var SessionMessageStore = class {
       can_wake_silently = excluded.can_wake_silently, supported_injection = excluded.supported_injection,
       idle_wake = excluded.idle_wake, collaboration_id = excluded.collaboration_id,
       workspace_id = excluded.workspace_id, role = excluded.role,
+      started_at = CASE WHEN session_presence.ended_at IS NOT NULL OR session_presence.lease_until <= excluded.heartbeat_at
+        THEN excluded.started_at ELSE session_presence.started_at END,
       heartbeat_at = excluded.heartbeat_at, lease_until = excluded.lease_until,
       ended_at = NULL, end_reason = NULL`).run(
       input.host,
@@ -610,12 +1173,12 @@ var SessionMessageStore = class {
     boundedIdentity(target);
     if (!instanceId) throw new Error("presence instanceId is required.");
     const row = this.database.prepare(`SELECT instance_id FROM session_presence
-      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`).get(target.host, target.sessionId, instanceId);
+      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL AND lease_until > ?`).get(target.host, target.sessionId, instanceId, iso(nowMs));
     const selected = row;
     if (!selected) return false;
     const now = iso(nowMs);
     return this.database.prepare(`UPDATE session_presence SET heartbeat_at = ?, lease_until = ?
-      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`).run(now, iso(nowMs + PRESENCE_LEASE_MS), target.host, target.sessionId, selected.instance_id).changes === 1;
+      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL AND lease_until > ?`).run(now, iso(nowMs + PRESENCE_LEASE_MS), target.host, target.sessionId, selected.instance_id, now).changes === 1;
   }
   endPresence(target, reason, instanceId, nowMs = Date.now()) {
     boundedIdentity(target);
@@ -721,7 +1284,7 @@ var PeerWaitPolicy = class {
 };
 
 // mcp-server/src/self-signed-certificate.ts
-import { generateKeyPairSync, randomBytes, sign, X509Certificate } from "node:crypto";
+import { generateKeyPairSync, randomBytes as randomBytes2, sign, X509Certificate } from "node:crypto";
 function length(value) {
   if (value < 128) return Buffer.from([value]);
   if (value < 256) return Buffer.from([129, value]);
@@ -747,7 +1310,7 @@ var ECDSA_WITH_SHA256 = sequence(objectIdentifier("2a8648ce3d040302"));
 var COMMON_NAME = sequence(tlv(49, sequence(objectIdentifier("550403"), utf8("agent-governance-suite local broker"))));
 function createSelfSignedCertificate(now = /* @__PURE__ */ new Date()) {
   const { publicKey, privateKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
-  const serialNumber = randomBytes(16);
+  const serialNumber = randomBytes2(16);
   if (serialNumber.every((byte) => byte === 0)) serialNumber[serialNumber.length - 1] = 1;
   const notBefore = new Date(now.getTime() - 6e4);
   const notAfter = new Date(now);
@@ -798,6 +1361,22 @@ function string(value, name) {
   if (typeof value !== "string") throw new Error(`${name} must be a string.`);
   return value;
 }
+function wakeAttempt(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Wake attempt is required.");
+  const attempt = value;
+  const result = {
+    ...identity(attempt),
+    nonce: string(attempt.nonce, "nonce"),
+    instanceId: string(attempt.instanceId, "instanceId"),
+    transport: string(attempt.transport, "transport"),
+    relayId: string(attempt.relayId, "relayId"),
+    generation: string(attempt.generation, "generation"),
+    attemptId: string(attempt.attemptId, "attemptId"),
+    dispatchEpoch: integer2(attempt.dispatchEpoch, "dispatchEpoch")
+  };
+  if (result.nonce.length > 128 || result.generation.length > 100 || result.attemptId.length > 128 || result.instanceId.length > 128 || result.transport.length > 64 || result.relayId.length > 128 || result.dispatchEpoch < 0) throw new Error("Invalid wake attempt.");
+  return result;
+}
 function integer2(value, name) {
   if (typeof value !== "number" || !Number.isInteger(value)) throw new Error(`${name} must be an integer.`);
   return value;
@@ -822,7 +1401,7 @@ function supportedInjection(value) {
 function tokenMatches(actual, expected) {
   const left = Buffer.from(actual);
   const right = Buffer.from(expected);
-  return left.length === right.length && timingSafeEqual(left, right);
+  return left.length === right.length && timingSafeEqual2(left, right);
 }
 function alive(pid) {
   try {
@@ -852,13 +1431,13 @@ function acquireProcessLock(lockPath) {
   return null;
 }
 async function credentials(stateDirectory) {
-  const keyPath = path2.join(stateDirectory, "broker-key.pem");
-  const certificatePath = path2.join(stateDirectory, "broker-cert.pem");
-  const tokenPath = path2.join(stateDirectory, "broker.token");
+  const keyPath = path4.join(stateDirectory, "broker-key.pem");
+  const certificatePath = path4.join(stateDirectory, "broker-cert.pem");
+  const tokenPath = path4.join(stateDirectory, "broker.token");
   let key = "";
   let certificate = "";
   let regenerate = true;
-  if (existsSync(keyPath) && existsSync(certificatePath)) {
+  if (existsSync2(keyPath) && existsSync2(certificatePath)) {
     try {
       [key, certificate] = await Promise.all([readFile(keyPath, "utf8"), readFile(certificatePath, "utf8")]);
       const parsed = new X509Certificate2(certificate);
@@ -873,7 +1452,7 @@ async function credentials(stateDirectory) {
     const generated = createSelfSignedCertificate();
     key = generated.privateKeyPem;
     certificate = generated.certificatePem;
-    if (existsSync(keyPath) || existsSync(certificatePath)) {
+    if (existsSync2(keyPath) || existsSync2(certificatePath)) {
       await Promise.all([
         writeFile(keyPath, key, { encoding: "utf8", mode: 384 }),
         writeFile(certificatePath, certificate, { encoding: "utf8", mode: 384 })
@@ -891,10 +1470,10 @@ async function credentials(stateDirectory) {
     }
   }
   let token;
-  if (existsSync(tokenPath)) token = (await readFile(tokenPath, "utf8")).trim();
+  if (existsSync2(tokenPath)) token = (await readFile(tokenPath, "utf8")).trim();
   else token = "";
   if (!/^[A-Za-z0-9_-]{43}$/u.test(token)) {
-    token = randomBytes2(32).toString("base64url");
+    token = randomBytes3(32).toString("base64url");
     await writeFile(tokenPath, `${token}
 `, { encoding: "utf8", mode: 384 });
   }
@@ -935,7 +1514,7 @@ function observePeerRelay(store, payload, accepted) {
     ...wakeObservedAt === void 0 ? {} : { wakeObservedAt }
   });
 }
-function dispatchSessionMessageBrokerOperation(store, operation, payload) {
+function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeObserver) {
   switch (operation) {
     case "ping":
       return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: SESSION_MESSAGE_BROKER_CAPABILITIES };
@@ -974,7 +1553,7 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload) {
       const owner = JSON.stringify(target);
       const binding = runtime.relays.get(owner);
       const presence = store.presence(target);
-      const wakeKeys = nonces.map((nonce) => createHash2("sha256").update(nonce).digest("hex"));
+      const wakeKeys = nonces.map((nonce) => createHash3("sha256").update(nonce).digest("hex"));
       const sameGeneration = wakeKeys.length > 0 && wakeKeys.every((key) => {
         const wake = runtime.wakes.get(key);
         return wake?.owner === owner && wake.instanceId === binding?.instanceId && wake.relayId === binding?.relayId;
@@ -982,6 +1561,40 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload) {
       if (result.recognized && sameGeneration && binding?.instanceId === presence.instanceId && presence.state === "online") binding.wakeObservedAt = Date.now();
       for (const key of wakeKeys) runtime.wakes.delete(key);
       return result;
+    }
+    case "claim-host-wake": {
+      if (Object.keys(payload).some((key) => !["target", "observation", "sourceReceiptId", "maxMessages", "maxBodyChars"].includes(key))) {
+        throw new Error("Host wake claim requires a non-authorizing hook source receipt.");
+      }
+      const target = identity(payload.target);
+      const maxMessages = optionalInteger(payload, "maxMessages");
+      const maxBodyChars = optionalInteger(payload, "maxBodyChars");
+      const result = store.claimHostWake(
+        target,
+        payload.observation,
+        typeof payload.sourceReceiptId === "string" ? payload.sourceReceiptId : "",
+        wakeObserver,
+        Date.now(),
+        {
+          ...maxMessages === void 0 ? {} : { maxMessages },
+          ...maxBodyChars === void 0 ? {} : { maxBodyChars }
+        }
+      );
+      const runtime = peerWaitRuntime(store);
+      const binding = runtime.relays.get(JSON.stringify(target));
+      if (result.recognized && result.binding && binding?.instanceId === result.binding.instanceId && binding.relayId === result.binding.relayId) binding.wakeObservedAt = Date.now();
+      if (result.recognized && !result.binding && binding) {
+        const nonces = payload.observation.wakeCandidates ?? [];
+        const owner = JSON.stringify(target);
+        const presence = store.presence(target);
+        const keys = nonces.map((nonce) => createHash3("sha256").update(nonce).digest("hex"));
+        if (keys.length > 0 && keys.every((key) => {
+          const wake = runtime.wakes.get(key);
+          return wake?.owner === owner && wake.instanceId === binding.instanceId && wake.relayId === binding.relayId;
+        }) && presence.state === "online" && presence.instanceId === binding.instanceId) binding.wakeObservedAt = Date.now();
+        for (const key of keys) runtime.wakes.delete(key);
+      }
+      return { recognized: result.recognized, messages: result.messages };
     }
     case "observe-native-input": {
       peerWaitRuntime(store).policy.reset(identity(payload.target));
@@ -1109,16 +1722,35 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload) {
     case "reserve-wake": {
       const target = identity(payload.target);
       const nonce = string(payload.nonce, "nonce");
+      if (["instanceId", "relayId", "transport", "resume"].some((key) => Object.hasOwn(payload, key))) {
+        return store.reserveManagedWake({
+          ...target,
+          nonce,
+          instanceId: string(payload.instanceId, "instanceId"),
+          relayId: string(payload.relayId, "relayId"),
+          transport: string(payload.transport, "transport"),
+          ...payload.resume === void 0 ? {} : { resume: boolean(payload.resume, "resume") }
+        }, Date.now());
+      }
       const shouldDispatch = store.reserveWake(target, nonce);
       const runtime = peerWaitRuntime(store);
       const owner = JSON.stringify(target);
       const binding = runtime.relays.get(owner);
       if (shouldDispatch && binding && binding.instanceId === store.presence(target).instanceId) {
         if (runtime.wakes.size >= 1e3) runtime.wakes.delete(runtime.wakes.keys().next().value);
-        runtime.wakes.set(createHash2("sha256").update(nonce).digest("hex"), { owner, instanceId: binding.instanceId, relayId: binding.relayId, expiresAt: Date.now() + 36e5 });
+        runtime.wakes.set(createHash3("sha256").update(nonce).digest("hex"), { owner, instanceId: binding.instanceId, relayId: binding.relayId, expiresAt: Date.now() + 36e5 });
       }
       return { dispatch: shouldDispatch };
     }
+    case "start-wake":
+      return store.startManagedWake(wakeAttempt(payload.attempt), Date.now());
+    case "record-wake-outcome": {
+      const outcome = string(payload.outcome, "outcome");
+      if (outcome !== "submitted" && outcome !== "definite-failure" && outcome !== "accepted-or-unknown") throw new Error("Invalid wake dispatch outcome.");
+      return { recorded: store.recordManagedWakeOutcome(wakeAttempt(payload.attempt), outcome) };
+    }
+    case "wake-status":
+      return { wake: store.managedWakeStatus(identity(payload.target)) };
     case "release-wake":
       return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "consume-wake":
@@ -1145,11 +1777,11 @@ async function startSessionMessageBroker(stateDirectory) {
     await chmod(stateDirectory, 448);
   } catch {
   }
-  const lockPath = path2.join(stateDirectory, "broker.lock");
+  const lockPath = path4.join(stateDirectory, "broker.lock");
   const lockDescriptor = acquireProcessLock(lockPath);
   if (lockDescriptor === null) return "already-running";
-  const endpointPath = path2.join(stateDirectory, "endpoint.json");
-  const databasePath = path2.join(stateDirectory, "session-messages.sqlite3");
+  const endpointPath = path4.join(stateDirectory, "endpoint.json");
+  const databasePath = path4.join(stateDirectory, "session-messages.sqlite3");
   let store;
   let server;
   let temporary;
@@ -1205,6 +1837,7 @@ async function startSessionMessageBroker(stateDirectory) {
     const { key, certificate, token, fingerprint256 } = await credentials(stateDirectory);
     const activeStore = new SessionMessageStore(databasePath);
     store = activeStore;
+    const wakeHookObservationReader = createWakeHookObservationReader(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim() ? path4.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path4.join(stateDirectory, "trust.sqlite3"));
     let lastActivity = Date.now();
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
       lastActivity = Date.now();
@@ -1225,7 +1858,7 @@ async function startSessionMessageBroker(stateDirectory) {
           const request = JSON.parse(line);
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
-          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload);
+          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader);
           socket.end(`${JSON.stringify({ ok: true, data })}
 `);
         } catch (error) {
@@ -1253,7 +1886,7 @@ async function startSessionMessageBroker(stateDirectory) {
       startedAt: (/* @__PURE__ */ new Date()).toISOString(),
       certificateFingerprint256: fingerprint256
     };
-    temporary = `${endpointPath}.${process.pid}.${createHash2("sha256").update(String(Date.now())).digest("hex").slice(0, 8)}.tmp`;
+    temporary = `${endpointPath}.${process.pid}.${createHash3("sha256").update(String(Date.now())).digest("hex").slice(0, 8)}.tmp`;
     writeFileSync(temporary, `${JSON.stringify(endpoint)}
 `, { encoding: "utf8", mode: 384 });
     await publishEndpoint(temporary, endpointPath);
@@ -1270,10 +1903,10 @@ async function startSessionMessageBroker(stateDirectory) {
     throw error;
   }
 }
-if (path2.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
+if (path4.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
   const stateDirectory = argument("--state-directory");
   if (!stateDirectory) process.exitCode = 2;
-  else void startSessionMessageBroker(path2.resolve(stateDirectory)).then((result) => {
+  else void startSessionMessageBroker(path4.resolve(stateDirectory)).then((result) => {
     if (result === "already-running") process.exit(0);
   }).catch((error) => {
     const code = error?.code;
