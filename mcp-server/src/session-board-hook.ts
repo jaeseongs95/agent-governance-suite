@@ -94,6 +94,7 @@ export async function runSessionBoardHook(
       if (sessionId) {
         for (const nonce of nonces) {
           try {
+            // Ownership check only: the message hook owns observation and atomic claim.
             const result = await request<{ consumed: boolean }>("consume-wake", { target: { host, sessionId }, nonce });
             allRecognized &&= result.consumed;
           } catch { allRecognized = false; }
