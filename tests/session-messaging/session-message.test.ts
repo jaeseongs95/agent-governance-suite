@@ -1,5 +1,5 @@
 import { mkdtempSync } from "node:fs";
-import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
 import { Worker } from "node:worker_threads";
@@ -1378,8 +1378,16 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(config.hooks.SessionEnd?.[0]?.hooks[0]?.timeout).toBeUndefined();
   });
 
-  it("keeps packaged hook and relay entrypoints isolated", () => {
+  it("keeps packaged hook and relay entrypoints isolated", async () => {
+    const directory = stateDirectory();
+    const fallback = stateDirectory();
+    const env = { ...process.env,
+      AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory,
+      AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
+      AGENT_GOVERNANCE_SHARED_STATE_DIR: fallback,
+    };
     const hook = spawnSync(process.execPath, [bundledSessionMessageHook], {
+      env,
       input: JSON.stringify({ hook_event_name: "SessionEnd", session_id: "packaged-session-end", reason: "other" }),
       encoding: "utf8",
       timeout: 3000,
@@ -1388,8 +1396,10 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(hook.status, hook.stderr).toBe(0);
     expect(hook.stdout).toBe("");
 
-    const relay = spawnSync(process.execPath, [bundledSessionMessageRelay], { encoding: "utf8", timeout: 3000, windowsHide: true });
+    const relay = spawnSync(process.execPath, [bundledSessionMessageRelay], { env, encoding: "utf8", timeout: 3000, windowsHide: true });
     expect(relay.status, relay.stderr).toBe(2);
+    expect(await readdir(directory)).toContain("broker.token");
+    expect(await readdir(fallback)).toEqual([]);
   });
 
   it("keeps Claude Code Stop context delivery enabled", async () => {
