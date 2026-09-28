@@ -533,7 +533,7 @@ export function createMcpServer(
       },
       {
         name: "send_session_message",
-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
         inputSchema: contractSchemas.sendSessionMessageRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
