@@ -1,0 +1,10 @@
+## CASE=session-lock-25s INST=/tmp/install/codex R=/tmp/pm/session-lock-25s/R
+runas=root perms: 700 root 600 root 
+LOCKED
+cli exit=1 ms=7684 out={"protocolVersion":"1.0.0","ok":false,"error":"The session message broker timed out."}
+trust files diff:
+  (none)
+wake: [{"state":"unknown","observed_at":null,"consumed_at":null}] messages: [{"message_id":"history-body","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}] obs: 0
+trust exists after: yes
+after POSTWAIT=30s:
+wake: [{"state":"unknown","observed_at":null,"consumed_at":null}]

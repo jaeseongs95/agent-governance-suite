@@ -1,0 +1,52 @@
+## CASE=control INST=/tmp/install/claude R=/tmp/pm/control/R
+runas=root perms: 700 root 600 root 
+cli exit=0 ms=85 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":true,"evidence":{"sourceReceiptId":"source-f735d5e7-948a-4bed-a083-751f571bc8d8","contentDigest":"sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92","observedAt":"2026-09-28T07:25:18.553Z","receiptExpiresAt":"2026-09-28T07:25:48.553Z","oldBinding":{"host":"portable","sessionId":"wake-target","instanceId":"instance-1","generation":"2026-09-28T07:25:18.543Z","transport":"portable","relayId":"relay-1","attemptId":"339b4a35-f483-4d32-afa0-78d023f60e4a","dispatchEpoch":1},"lateObservedAt":"2026-09-28T07:25:18.554Z","reconciledAt":"2026-09-28T07:26:18.891Z"}}}
+trust files diff:
+1a2,3
+> fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb  /tmp/pm/control/R/trust.sqlite3-shm
+> e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /tmp/pm/control/R/trust.sqlite3-wal
+  < -rw-r--r-- 8272 session-messages.sqlite3-wal
+  > -rw-r--r-- 16512 session-messages.sqlite3-wal
+  > -rw------- 32768 trust.sqlite3-shm
+  > -rw------- 0 trust.sqlite3-wal
+wake: [{"state":"observed","observed_at":"2026-09-28T07:25:18.553Z","consumed_at":"2026-09-28T07:26:18.891Z"}] messages: [{"message_id":"history-body","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}] obs: 0
+trust exists after: yes
+## CASE=mac-flip INST=/tmp/install/claude R=/tmp/pm/mac-flip/R
+runas=root perms: 700 root 600 root 
+cli exit=0 ms=76 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+trust files diff:
+1a2,3
+> fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb  /tmp/pm/mac-flip/R/trust.sqlite3-shm
+> e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /tmp/pm/mac-flip/R/trust.sqlite3-wal
+  > -rw------- 32768 trust.sqlite3-shm
+  > -rw------- 0 trust.sqlite3-wal
+wake: [{"state":"unknown","observed_at":null,"consumed_at":null}] messages: [{"message_id":"history-body","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}] obs: 0
+trust exists after: yes
+## CASE=trust-user_version-99 INST=/tmp/install/claude R=/tmp/pm/trust-user_version-99/R
+contrast: new TrustStore() on this file -> THROW INVALID_INPUT Trust database schema is newer than this server supports.
+runas=root perms: 700 root 600 root 
+cli exit=0 ms=67 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":true,"evidence":{"sourceReceiptId":"source-12b63971-ee64-4ec3-93bb-c6c6a78f4cfd","contentDigest":"sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92","observedAt":"2026-09-28T07:25:20.344Z","receiptExpiresAt":"2026-09-28T07:25:50.344Z","oldBinding":{"host":"portable","sessionId":"wake-target","instanceId":"instance-1","generation":"2026-09-28T07:25:20.334Z","transport":"portable","relayId":"relay-1","attemptId":"b53d0e69-858b-4388-ab00-b233d6485edf","dispatchEpoch":1},"lateObservedAt":"2026-09-28T07:25:20.345Z","reconciledAt":"2026-09-28T07:26:20.820Z"}}}
+trust files diff:
+1a2,3
+> fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb  /tmp/pm/trust-user_version-99/R/trust.sqlite3-shm
+> e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /tmp/pm/trust-user_version-99/R/trust.sqlite3-wal
+  < -rw-r--r-- 8272 session-messages.sqlite3-wal
+  > -rw-r--r-- 16512 session-messages.sqlite3-wal
+  > -rw------- 32768 trust.sqlite3-shm
+  > -rw------- 0 trust.sqlite3-wal
+wake: [{"state":"observed","observed_at":"2026-09-28T07:25:20.344Z","consumed_at":"2026-09-28T07:26:20.820Z"}] messages: [{"message_id":"history-body","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}] obs: 0
+trust exists after: yes
+## CASE=trust-missing INST=/tmp/install/claude R=/tmp/pm/trust-missing/R
+runas=root perms: 700 root 
+cli exit=0 ms=70 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+trust files diff:
+  (none)
+wake: [{"state":"unknown","observed_at":null,"consumed_at":null}] messages: [{"message_id":"history-body","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}] obs: 0
+trust exists after: no
+## CASE=trust-dir-0555-nobody INST=/tmp/install/claude R=/tmp/pm/trust-dir-0555-nobody/R
+runas=setpriv --reuid=65534 --regid=65534 --clear-groups perms: 555 nobody 600 nobody 
+cli exit=0 ms=74 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+trust files diff:
+  (none)
+wake: [{"state":"unknown","observed_at":null,"consumed_at":null}] messages: [{"message_id":"history-body","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}] obs: 0
+trust exists after: yes

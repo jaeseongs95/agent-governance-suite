@@ -1,0 +1,12 @@
+Already up to date
+Done in 496ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /tmp/e9
+
+
+ Test Files  1 passed (1)
+      Tests  45 passed (45)
+   Start at  07:26:54
+   Duration  2.42s (tests 73%, transform 24%, import 2%)
+
+EXIT=0

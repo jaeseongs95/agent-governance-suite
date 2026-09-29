@@ -1,0 +1,219 @@
+diff --git a/mcp-server/src/session-message-broker.ts b/mcp-server/src/session-message-broker.ts
+index 7c1cba7..3edd7c2 100644
+--- a/mcp-server/src/session-message-broker.ts
++++ b/mcp-server/src/session-message-broker.ts
+@@ -402,6 +402,15 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
+       if (outcome !== "submitted" && outcome !== "definite-failure" && outcome !== "accepted-or-unknown") throw new Error("Invalid wake dispatch outcome.");
+       return { recorded: store.recordManagedWakeOutcome(wakeAttempt(payload.attempt), outcome) };
+     }
++    case "reconcile-wake-observation": {
++      if (Object.keys(payload).some((key) => !["target", "attemptId", "sourceReceiptId"].includes(key))
++        || !payload.target || typeof payload.target !== "object" || Array.isArray(payload.target)
++        || Object.keys(payload.target).some((key) => !["host", "sessionId"].includes(key))) {
++        throw new Error("Historical wake reconciliation contains unsupported fields.");
++      }
++      return store.reconcileHistoricalWake(identity(payload.target), string(payload.attemptId, "attemptId"),
++        string(payload.sourceReceiptId, "sourceReceiptId"), Date.now());
++    }
+     case "wake-status": return { wake: store.managedWakeStatus(identity(payload.target)) };
+     case "release-wake": return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
+     case "consume-wake": return { consumed: store.consumeWake(identity(payload.target), string(payload.nonce, "nonce")) };
+diff --git a/mcp-server/src/session-message-cli.ts b/mcp-server/src/session-message-cli.ts
+index 45fc65f..1c84f6d 100644
+--- a/mcp-server/src/session-message-cli.ts
++++ b/mcp-server/src/session-message-cli.ts
+@@ -6,7 +6,7 @@ import { setTimeout as delay } from "node:timers/promises";
+ import type { PeerWaitDecision } from "./peer-wait-policy.js";
+ import { sessionMessageRequest } from "./session-message-client.js";
+ 
+-const OPERATIONS = new Set(["prepare", "send", "claim", "acknowledge", "status", "pending", "wait"]);
++const OPERATIONS = new Set(["prepare", "send", "claim", "acknowledge", "status", "pending", "wait", "reconcile-wake-observation"]);
+ 
+ /** Vendor-neutral stdin/stdout adapter. Secrets and message bodies never appear in process arguments. */
+ export async function runSessionMessageCli(raw: string, stateDirectory?: string): Promise<Record<string, unknown>> {
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index 243cbb0..ac4e0f9 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -4,7 +4,7 @@ import { createHash, randomUUID } from "node:crypto";
+ import { DatabaseSync } from "node:sqlite";
+ 
+ import { SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
+-import { isWakeHookObservation, wakeBackoffDelay, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
++import { isWakeHookObservation, verifyHistoricalWakeObservation, wakeBackoffDelay, type HistoricalWakeEvidence, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
+ import type { DeliveryCapabilities, InputObservation, InputObservationKind } from "./input-observation.js";
+ 
+ export const MESSAGE_BODY_MAX_BYTES = SESSION_MESSAGE_BODY_MAX_BYTES;
+@@ -257,9 +257,9 @@ export class SessionMessageStore {
+     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
+     this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
+     this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted')
+-      AND coalesce(observed_at, outcome_at) <= ?`).run(acknowledgedBefore);
++      AND coalesce(consumed_at, observed_at, outcome_at) <= ?`).run(acknowledgedBefore);
+     this.database.prepare(`DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces
+-      WHERE state IN ('observed', 'not-submitted') ORDER BY coalesce(observed_at, outcome_at) DESC LIMIT -1 OFFSET ?)`)
++      WHERE state IN ('observed', 'not-submitted') ORDER BY coalesce(consumed_at, observed_at, outcome_at) DESC LIMIT -1 OFFSET ?)`)
+       .run(MESSAGE_LIMIT);
+     this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
+   }
+@@ -812,6 +812,50 @@ export class SessionMessageStore {
+       observedAt: row.observed_at, lateObservedAt: row.late_observed_at };
+   }
+ 
++  /** Terminal-only maintenance. Historical evidence cannot claim bodies or observe a current relay. */
++  reconcileHistoricalWake(target: SessionIdentity, attemptId: string, sourceReceiptId: string, nowMs = Date.now(),
++    verify = verifyHistoricalWakeObservation): {
++      reconciled: boolean;
++      evidence: (HistoricalWakeEvidence & { oldBinding: Omit<WakeAttempt, "nonce">; lateObservedAt: string; reconciledAt: string }) | null;
++    } {
++    boundedIdentity(target);
++    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(attemptId)
++      || !/^source-[A-Za-z0-9-]{1,128}$/u.test(sourceReceiptId)) throw new Error("Invalid historical wake identity.");
++    const rejected = { reconciled: false, evidence: null };
++    const isOldGeneration = (row: Record<string, unknown>) => {
++      const presence = this.presence(target, nowMs);
++      return presence.instanceId !== null && presence.startedAt !== null
++        && (row.instance_id !== presence.instanceId || row.birth_generation !== presence.startedAt);
++    };
++    this.database.exec("BEGIN IMMEDIATE");
++    try {
++      const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ?
++        AND state = 'unknown' AND late_observed_at IS NOT NULL AND consumed_at IS NULL AND observed_at IS NULL`)
++        .get(target.host, target.sessionId, attemptId) as Record<string, unknown> | undefined;
++      if (!row || ![row.nonce, row.instance_id, row.birth_generation, row.transport, row.relay_id, row.started_at].every((value) => typeof value === "string")
++        || row.nonce_digest !== nonceDigest(String(row.nonce)) || Number(row.dispatch_epoch) < 1 || !isOldGeneration(row)) {
++        this.database.exec("COMMIT"); return rejected;
++      }
++      const proof = verify(target, String(row.nonce), sourceReceiptId, String(row.started_at), String(row.late_observed_at), nowMs);
++      if (!proof || !isOldGeneration(row)) { this.database.exec("COMMIT"); return rejected; }
++      // Recheck every original binding and observation field after the separate read-only trust snapshot.
++      const changed = this.database.prepare(`UPDATE wake_nonces SET state = 'observed', observed_at = ?, consumed_at = ?
++        WHERE nonce_digest = ? AND nonce = ? AND host = ? AND session_id = ? AND attempt_id = ?
++        AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND dispatch_epoch = ?
++        AND state = 'unknown' AND started_at = ? AND late_observed_at = ? AND consumed_at IS NULL AND observed_at IS NULL`)
++        .run(proof.observedAt, iso(nowMs), String(row.nonce_digest), String(row.nonce), target.host, target.sessionId, attemptId,
++          String(row.instance_id), String(row.birth_generation), String(row.transport), String(row.relay_id), Number(row.dispatch_epoch),
++          String(row.started_at), String(row.late_observed_at)).changes;
++      this.database.exec("COMMIT");
++      if (changed !== 1) return rejected;
++      const attempt = this.wakeAttempt(row);
++      const oldBinding = { host: attempt.host, sessionId: attempt.sessionId, instanceId: attempt.instanceId,
++        generation: attempt.generation, transport: attempt.transport, relayId: attempt.relayId,
++        attemptId: attempt.attemptId, dispatchEpoch: attempt.dispatchEpoch };
++      return { reconciled: true, evidence: { ...proof, oldBinding, lateObservedAt: String(row.late_observed_at), reconciledAt: iso(nowMs) } };
++    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
++  }
++
+   /** Verified arrival retires its attempt; only current bindings may claim bodies in the same transaction. */
+   claimHostWake(target: SessionIdentity, observation: InputObservation, receiptId: string, reader: WakeHookObservationReader | undefined, nowMs = Date.now(), limits: ClaimLimits = {}): {
+     recognized: boolean; messages: SessionMessage[]; binding: WakeAttempt | null;
+diff --git a/mcp-server/src/session-message-wake-port.ts b/mcp-server/src/session-message-wake-port.ts
+index f37b2e0..e48380e 100644
+--- a/mcp-server/src/session-message-wake-port.ts
++++ b/mcp-server/src/session-message-wake-port.ts
+@@ -77,12 +77,15 @@ export function transportDeliveryCapabilities(transport: string): DeliveryCapabi
+ }
+ 
+ /** Local hook liveness only; this cannot attest an actor, permission, or W06 authority. */
++const WAKE_ACTOR_KINDS = ["main", "unknown"] as const;
++const WAKE_ACTOR_ASSURANCES = ["observed", "unknown"] as const;
+ export function isWakeHookObservation(value: unknown, target: SessionIdentity): value is InputObservation {
+   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+   const event = value as InputObservation;
+   return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input"
+     && event.wakeOnly === true && event.actor?.observedBy === `${target.host}:hook-payload`
+-    && ["main", "unknown"].includes(event.actor.kind) && ["observed", "unknown"].includes(event.actor.assurance)
++    && WAKE_ACTOR_KINDS.some((kind) => kind === event.actor.kind)
++    && WAKE_ACTOR_ASSURANCES.some((assurance) => assurance === event.actor.assurance)
+     && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0
+     && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string"
+       && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
+@@ -96,6 +99,38 @@ function observationDigest(event: InputObservation): `sha256:${string}` {
+     event.actor.kind, event.actor.observedBy, event.actor.assurance, [...new Set(event.wakeCandidates)].sort()];
+   return `sha256:${createHash("sha256").update(JSON.stringify(normalized)).digest("hex")}`;
+ }
++
++export interface HistoricalWakeEvidence {
++  sourceReceiptId: string;
++  contentDigest: string;
++  observedAt: string;
++  receiptExpiresAt: string;
++}
++
++/** Historical liveness proof, never a current hook claim or an approval source. */
++export function verifyHistoricalWakeObservation(target: SessionIdentity, nonce: string, sourceReceiptId: string,
++  startedAt: string, lateObservedAt: string, nowMs: number,
++  databasePath = resolveTrustDatabasePath()): HistoricalWakeEvidence | null {
++  const receipt = TrustStore.readVerifiedInputSource(databasePath, sourceReceiptId);
++  if (!receipt || receipt.schemaVersion !== "1.0.0" || receipt.host !== target.host || receipt.sessionId !== target.sessionId
++    || receipt.originKind !== "peer" || receipt.authorityEffect !== "none"
++    || receipt.attestation?.kind !== "broker-peer-envelope" || receipt.attestation.adapter !== "session-message-wake-hook"
++    || receipt.attestation.capabilityVersion !== "1.0.0") return null;
++  const [started, observed, late, expires] = [Date.parse(startedAt), Date.parse(receipt.observedAt),
++    Date.parse(lateObservedAt), Date.parse(receipt.expiresAt)] as const;
++  if (![started, observed, late, expires, nowMs].every(Number.isFinite)
++    || !(started <= observed && observed <= late && late < expires && expires <= nowMs)) return null;
++  // The stored digest selects exactly one supported normalization. No actor default,
++  // nonce subset search or approximation can stand in for the original signed digest.
++  let matches = 0;
++  for (const kind of WAKE_ACTOR_KINDS) for (const assurance of WAKE_ACTOR_ASSURANCES) {
++    const observation: InputObservation = { ...target, kind: "user-input", wakeOnly: true, wakeCandidates: [nonce],
++      actor: { kind, assurance, observedBy: `${target.host}:hook-payload` } };
++    if (isWakeHookObservation(observation, target) && observationDigest(observation) === receipt.contentDigest) matches++;
++  }
++  return matches === 1 ? { sourceReceiptId, contentDigest: receipt.contentDigest, observedAt: receipt.observedAt,
++    receiptExpiresAt: receipt.expiresAt } : null;
++}
+ /** Uses existing, non-authorizing source provenance. No public tool issues this hook receipt. */
+ export function recordWakeHookObservation(observation: InputObservation, nowMs = Date.now()): string {
+   if (!isWakeHookObservation(observation, observation)) throw new Error("Invalid host wake observation.");
+diff --git a/mcp-server/src/trust-store.ts b/mcp-server/src/trust-store.ts
+index 029c2ce..290b759 100644
+--- a/mcp-server/src/trust-store.ts
++++ b/mcp-server/src/trust-store.ts
+@@ -21,6 +21,15 @@ const INPUT_SOURCE_KEYS = new Set([
+ ]);
+ const ATTESTATION_KEYS = new Set(["kind", "adapter", "capabilityVersion"]);
+ 
++function verifyInputSource(receipt: InputSourceReceiptV1, signingKey: Buffer): boolean {
++  try {
++    const { integrityToken, ...unsigned } = receipt;
++    const actual = Buffer.from(integrityToken, "base64url");
++    const expected = createHmac("sha256", signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
++    return signingKey.length === 32 && actual.length === expected.length && timingSafeEqual(actual, expected);
++  } catch { return false; }
++}
++
+ function rejectUnexpectedKeys(value: object, allowed: Set<string>, label: string): void {
+   const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
+   if (unexpected.length > 0) {
+@@ -143,14 +152,22 @@ export class TrustStore {
+   }
+ 
+   verify(receipt: InputSourceReceiptV1): boolean {
++    return verifyInputSource(receipt, this.signingKey);
++  }
++
++  /** Existing key/receipt snapshot only: no schema, journal mode, key creation or receipt issuance. */
++  static readVerifiedInputSource(databasePath: string, receiptId: string): InputSourceReceiptV1 | null {
++    let database: DatabaseSync | undefined;
+     try {
+-      const { integrityToken, ...unsigned } = receipt;
+-      const actual = Buffer.from(integrityToken, "base64url");
+-      const expected = createHmac("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
+-      return actual.length === expected.length && timingSafeEqual(actual, expected);
+-    } catch {
+-      return false;
+-    }
++      database = new DatabaseSync(databasePath, { readOnly: true });
++      database.exec("PRAGMA query_only = ON; BEGIN;");
++      const key = database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(TRUST_SIGNING_KEY) as { value: string } | undefined;
++      const row = database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId) as ReceiptRow | undefined;
++      if (!key || !row) return null;
++      const receipt = JSON.parse(row.receipt_json) as InputSourceReceiptV1;
++      return receipt?.receiptId === receiptId && verifyInputSource(receipt, Buffer.from(key.value, "base64url")) ? receipt : null;
++    } catch { return null; }
++    finally { database?.close(); }
+   }
+ 
+   close(): void {

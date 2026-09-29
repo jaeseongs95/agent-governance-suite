@@ -1,0 +1,2265 @@
+[
+ {
+  "case": "control-valid",
+  "expect": "accept",
+  "result": {
+   "reconciled": true,
+   "evidence": {
+    "sourceReceiptId": "source-761d88ae-80f1-4d83-94de-f4e0f29e80c0",
+    "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+    "observedAt": "2026-09-28T07:21:52.294Z",
+    "receiptExpiresAt": "2026-09-28T07:22:22.294Z",
+    "oldBinding": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "instance-1",
+     "generation": "2026-09-28T07:21:52.284Z",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "attemptId": "3bf36fad-bf75-453d-a759-37750ab27081",
+     "dispatchEpoch": 1
+    },
+    "lateObservedAt": "2026-09-28T07:21:52.295Z",
+    "reconciledAt": "2026-09-28T07:22:52.301Z"
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:21:52.294Z",
+    "consumed_at": "2026-09-28T07:22:52.301Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "control-replay-second-call",
+  "expect": "accept",
+  "result": {
+   "first": {
+    "reconciled": true,
+    "evidence": {
+     "sourceReceiptId": "source-8d7c8a28-a8ad-4919-8953-5ae1dd31e196",
+     "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+     "observedAt": "2026-09-28T07:21:52.325Z",
+     "receiptExpiresAt": "2026-09-28T07:22:22.325Z",
+     "oldBinding": {
+      "host": "portable",
+      "sessionId": "wake-target",
+      "instanceId": "instance-1",
+      "generation": "2026-09-28T07:21:52.315Z",
+      "transport": "portable",
+      "relayId": "relay-1",
+      "attemptId": "1a07df0a-3c45-4d78-8537-bad8afdb0ee6",
+      "dispatchEpoch": 1
+     },
+     "lateObservedAt": "2026-09-28T07:21:52.326Z",
+     "reconciledAt": "2026-09-28T07:22:52.332Z"
+    }
+   },
+   "second": {
+    "reconciled": false,
+    "evidence": null
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:21:52.325Z",
+    "consumed_at": "2026-09-28T07:22:52.332Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "mac-flip-one-char",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "mac-truncated",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "mac-missing",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "mac-empty",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "mac-field-changed-not-resigned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "target-payload-session",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "target-payload-host",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "target-receipt-session-resigned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "target-receipt-host-resigned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "target-payload-extra-field",
+  "expect": "reject",
+  "result": "THROW: Historical wake reconciliation contains unsupported fields.",
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "nonce-row-changed",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "nonce-row-and-digest-changed-consistently",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "nonce-row-null",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "nonce-receipt-for-other-nonce",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "nonce-receipt-multi-candidate",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "digest-altered-resigned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "digest-missing-resigned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "digest-uppercase-resigned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "digest-other-normalization-actor",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "observed-before-start-1ms",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "observed-equals-start",
+  "expect": "accept",
+  "result": {
+   "reconciled": true,
+   "evidence": {
+    "sourceReceiptId": "source-17114c08-8bba-4bb4-9ffc-a99043cccd05",
+    "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+    "observedAt": "2026-09-28T07:21:52.819Z",
+    "receiptExpiresAt": "2026-09-28T07:22:22.828Z",
+    "oldBinding": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "instance-1",
+     "generation": "2026-09-28T07:21:52.818Z",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "attemptId": "1bd6042f-d8f0-492b-9683-91f04b8e4d21",
+     "dispatchEpoch": 1
+    },
+    "lateObservedAt": "2026-09-28T07:21:52.829Z",
+    "reconciledAt": "2026-09-28T07:22:52.829Z"
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:21:52.819Z",
+    "consumed_at": "2026-09-28T07:22:52.829Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "observed-equals-late",
+  "expect": "accept",
+  "result": {
+   "reconciled": true,
+   "evidence": {
+    "sourceReceiptId": "source-544247bc-4cd4-47a5-bd35-3b37eb7a3c1f",
+    "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+    "observedAt": "2026-09-28T07:21:52.851Z",
+    "receiptExpiresAt": "2026-09-28T07:22:22.850Z",
+    "oldBinding": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "instance-1",
+     "generation": "2026-09-28T07:21:52.840Z",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "attemptId": "352d1948-83e1-4c20-adaa-30ce6ce4481e",
+     "dispatchEpoch": 1
+    },
+    "lateObservedAt": "2026-09-28T07:21:52.851Z",
+    "reconciledAt": "2026-09-28T07:22:52.853Z"
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:21:52.851Z",
+    "consumed_at": "2026-09-28T07:22:52.853Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "observed-late+1ms",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "observed-future",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "observed-missing",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "observed-nonISO-parseable",
+  "expect": "OBSERVE",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "OBSERVE"
+ },
+ {
+  "case": "observed-offset-format-+00:00",
+  "expect": "OBSERVE",
+  "result": {
+   "reconciled": true,
+   "evidence": {
+    "sourceReceiptId": "source-04d7b96e-c2ac-45eb-ab98-59b44916931d",
+    "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+    "observedAt": "2026-09-28T07:21:52.985+00:00",
+    "receiptExpiresAt": "2026-09-28T07:22:22.985Z",
+    "oldBinding": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "instance-1",
+     "generation": "2026-09-28T07:21:52.975Z",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "attemptId": "ea8f8611-c282-440d-91dc-bea22cf7dd06",
+     "dispatchEpoch": 1
+    },
+    "lateObservedAt": "2026-09-28T07:21:52.986Z",
+    "reconciledAt": "2026-09-28T07:22:52.987Z"
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:21:52.985+00:00",
+    "consumed_at": "2026-09-28T07:22:52.987Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "OBSERVE"
+ },
+ {
+  "case": "late-row-future",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "ttl-now=expires-1ms",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "ttl-now=expires",
+  "expect": "accept",
+  "result": {
+   "reconciled": true,
+   "evidence": {
+    "sourceReceiptId": "source-f4a12b1d-1bad-4a8e-a635-28e07934e010",
+    "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+    "observedAt": "2026-09-28T07:21:53.052Z",
+    "receiptExpiresAt": "2026-09-28T07:22:23.052Z",
+    "oldBinding": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "instance-1",
+     "generation": "2026-09-28T07:21:53.042Z",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "attemptId": "a7fd8ef7-5458-4356-85e2-37a322fc40ec",
+     "dispatchEpoch": 1
+    },
+    "lateObservedAt": "2026-09-28T07:21:53.053Z",
+    "reconciledAt": "2026-09-28T07:22:23.052Z"
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:21:53.052Z",
+    "consumed_at": "2026-09-28T07:22:23.052Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "ttl-now=expires+1ms",
+  "expect": "accept",
+  "result": {
+   "reconciled": true,
+   "evidence": {
+    "sourceReceiptId": "source-caf01b41-d799-4c00-bcbd-59fb723bc9f2",
+    "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+    "observedAt": "2026-09-28T07:21:53.085Z",
+    "receiptExpiresAt": "2026-09-28T07:22:23.085Z",
+    "oldBinding": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "instance-1",
+     "generation": "2026-09-28T07:21:53.075Z",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "attemptId": "a0e32c13-fa9e-4b7f-ac02-96cfc8d41df3",
+     "dispatchEpoch": 1
+    },
+    "lateObservedAt": "2026-09-28T07:21:53.086Z",
+    "reconciledAt": "2026-09-28T07:22:23.086Z"
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:21:53.085Z",
+    "consumed_at": "2026-09-28T07:22:23.086Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "ttl-expires=late-1ms",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "ttl-expires=late",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "ttl-expires=late+1ms",
+  "expect": "accept",
+  "result": {
+   "reconciled": true,
+   "evidence": {
+    "sourceReceiptId": "source-289020fd-69e6-45a7-a4f4-7f679438ea2b",
+    "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+    "observedAt": "2026-09-28T07:21:53.185Z",
+    "receiptExpiresAt": "2026-09-28T07:21:53.187Z",
+    "oldBinding": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "instance-1",
+     "generation": "2026-09-28T07:21:53.175Z",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "attemptId": "a5dc803f-48b8-4d53-98d7-856f35e5ae17",
+     "dispatchEpoch": 1
+    },
+    "lateObservedAt": "2026-09-28T07:21:53.186Z",
+    "reconciledAt": "2026-09-28T07:22:53.191Z"
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:21:53.185Z",
+    "consumed_at": "2026-09-28T07:22:53.191Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "ttl-not-expired-future",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "ttl-expires-missing",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "gen-row-is-current-instance",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-2"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "gen-no-current-presence",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "gen-current-deleted-old-remains",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "gen-row-birth-null",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "gen-epoch-zero",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "gen-row-state-submitted",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "submitted",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "gen-row-late-null",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "gen-row-already-consumed",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": "2026-09-28T07:21:53.459Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "gen-started-at-after-observed",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "key-missing-row",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "key-rotated-not-resigned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "key-other-key-signed-receipt",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "key-16byte-and-resigned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "key-renamed-id",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "key-invalid-b64",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "receipt-missing-id",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "receipt-json-receiptId-mismatch",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "receipt-schemaVersion-changed-resigned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "receipt-adapter-changed-resigned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "receipt-authority-changed-resigned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "receipt-origin-changed-resigned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "receipt-attestation-missing-resigned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "replay-other-session-receipt",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "replay-after-reconcile-other-attempt-id",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:21:53.872Z",
+    "consumed_at": "2026-09-28T07:22:53.872Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "replay-attempt-row-pruned",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [],
+  "verdict": "PASS"
+ },
+ {
+  "case": "db-trust-missing",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS",
+  "absentStillAbsent": true
+ },
+ {
+  "case": "db-trust-dir-missing",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS",
+  "absentStillAbsent": true
+ },
+ {
+  "case": "db-trust-file-readonly-0444",
+  "expect": "accept",
+  "result": {
+   "reconciled": true,
+   "evidence": {
+    "sourceReceiptId": "source-b0a8071d-8168-4001-be1c-3d586f51deb0",
+    "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+    "observedAt": "2026-09-28T07:21:53.967Z",
+    "receiptExpiresAt": "2026-09-28T07:22:23.967Z",
+    "oldBinding": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "instance-1",
+     "generation": "2026-09-28T07:21:53.957Z",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "attemptId": "6a7563bf-6e89-4743-8183-337e516c3dee",
+     "dispatchEpoch": 1
+    },
+    "lateObservedAt": "2026-09-28T07:21:53.968Z",
+    "reconciledAt": "2026-09-28T07:22:53.968Z"
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:21:53.967Z",
+    "consumed_at": "2026-09-28T07:22:53.968Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "db-trust-dir-readonly-0555-no-sidecars",
+  "expect": "OBSERVE",
+  "result": {
+   "reconciled": true,
+   "evidence": {
+    "sourceReceiptId": "source-26f02a53-3f42-4bc9-8e09-0f9925ca4dcc",
+    "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+    "observedAt": "2026-09-28T07:21:53.998Z",
+    "receiptExpiresAt": "2026-09-28T07:22:23.998Z",
+    "oldBinding": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "instance-1",
+     "generation": "2026-09-28T07:21:53.988Z",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "attemptId": "dab60ff4-f3a8-455c-a693-2cb67187108f",
+     "dispatchEpoch": 1
+    },
+    "lateObservedAt": "2026-09-28T07:21:53.999Z",
+    "reconciledAt": "2026-09-28T07:22:54.001Z"
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:21:53.998Z",
+    "consumed_at": "2026-09-28T07:22:54.001Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "OBSERVE"
+ },
+ {
+  "case": "db-trust-other-proc-BEGIN-EXCLUSIVE",
+  "expect": "accept",
+  "result": {
+   "reconciled": true,
+   "evidence": {
+    "sourceReceiptId": "source-f088f068-d5d0-434e-9a42-a4938d3d03cb",
+    "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+    "observedAt": "2026-09-28T07:21:54.022Z",
+    "receiptExpiresAt": "2026-09-28T07:22:24.022Z",
+    "oldBinding": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "instance-1",
+     "generation": "2026-09-28T07:21:54.012Z",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "attemptId": "7c9666cb-9bca-4904-b0f8-c071c148cf7a",
+     "dispatchEpoch": 1
+    },
+    "lateObservedAt": "2026-09-28T07:21:54.023Z",
+    "reconciledAt": "2026-09-28T07:22:54.067Z"
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {
+   "trust.sqlite3-shm": "REMOVED",
+   "trust.sqlite3-wal": "REMOVED"
+  },
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:21:54.022Z",
+    "consumed_at": "2026-09-28T07:22:54.067Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "db-trust-other-proc-locking_mode-EXCLUSIVE",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {
+   "trust.sqlite3-wal": "REMOVED"
+  },
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "db-session-other-proc-BEGIN-EXCLUSIVE-held-7s",
+  "expect": "reject",
+  "result": "THROW: database is locked",
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "db-trust-main-header-corrupt",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "db-trust-user_version-99",
+  "expect": "reject",
+  "result": {
+   "reconciled": true,
+   "evidence": {
+    "sourceReceiptId": "source-e0a29ef5-a0df-4025-b56c-d804c3d81d6c",
+    "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+    "observedAt": "2026-09-28T07:22:07.256Z",
+    "receiptExpiresAt": "2026-09-28T07:22:37.256Z",
+    "oldBinding": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "instance-1",
+     "generation": "2026-09-28T07:22:07.246Z",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "attemptId": "d907fa72-c66e-442e-bcef-1f6ac3ef836e",
+     "dispatchEpoch": 1
+    },
+    "lateObservedAt": "2026-09-28T07:22:07.257Z",
+    "reconciledAt": "2026-09-28T07:23:07.259Z"
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:22:07.256Z",
+    "consumed_at": "2026-09-28T07:23:07.259Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "FAIL"
+ },
+ {
+  "case": "db-trust-table-renamed",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "db-trust-column-renamed",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "db-trust-metadata-dropped",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "db-trust-receipt-json-garbage",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "wal-control-receipt-only-in-wal",
+  "expect": "accept",
+  "result": {
+   "reconciled": true,
+   "evidence": {
+    "sourceReceiptId": "source-d49176c2-2119-4acd-a882-1ebca57d1d76",
+    "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+    "observedAt": "2026-09-28T07:22:07.403Z",
+    "receiptExpiresAt": "2026-09-28T07:22:37.403Z",
+    "oldBinding": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "instance-1",
+     "generation": "2026-09-28T07:22:07.393Z",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "attemptId": "5b440ee4-c835-4373-b410-7c3a91a0d7af",
+     "dispatchEpoch": 1
+    },
+    "lateObservedAt": "2026-09-28T07:22:07.404Z",
+    "reconciledAt": "2026-09-28T07:23:07.419Z"
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:22:07.403Z",
+    "consumed_at": "2026-09-28T07:23:07.419Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "wal-corrupt-last-frame-byte",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "wal-corrupt-header",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "wal-truncated-mid-frame",
+  "expect": "reject",
+  "result": {
+   "reconciled": false,
+   "evidence": null
+  },
+  "reconciled": false,
+  "sessionUnchanged": true,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "unknown",
+    "observed_at": null,
+    "consumed_at": null,
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ },
+ {
+  "case": "wal-append-garbage",
+  "expect": "accept",
+  "result": {
+   "reconciled": true,
+   "evidence": {
+    "sourceReceiptId": "source-5ebe6073-dd3e-4b35-9bd4-257ea38f6f89",
+    "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
+    "observedAt": "2026-09-28T07:22:07.549Z",
+    "receiptExpiresAt": "2026-09-28T07:22:37.549Z",
+    "oldBinding": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "instance-1",
+     "generation": "2026-09-28T07:22:07.539Z",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "attemptId": "4a883459-f090-4b4e-bbce-7be0e5df69f4",
+     "dispatchEpoch": 1
+    },
+    "lateObservedAt": "2026-09-28T07:22:07.550Z",
+    "reconciledAt": "2026-09-28T07:23:07.560Z"
+   }
+  },
+  "reconciled": true,
+  "sessionUnchanged": false,
+  "msgsUntouched": true,
+  "noNewDispatch": true,
+  "trustLogicalUnchanged": true,
+  "fileDiff": {},
+  "walFramesAdded": false,
+  "mainChanged": false,
+  "wakeAfter": [
+   {
+    "state": "observed",
+    "observed_at": "2026-09-28T07:22:07.549Z",
+    "consumed_at": "2026-09-28T07:23:07.560Z",
+    "instance_id": "instance-1"
+   }
+  ],
+  "verdict": "PASS"
+ }
+]

@@ -1,0 +1,7 @@
+A initial [ 'trust.sqlite3' ]
+ holder running [ 'trust.sqlite3', 'trust.sqlite3-wal' ]
+ after holder exit [ 'trust.sqlite3' ]
+B initial [ 'trust.sqlite3' ]
+ holder running [ 'trust.sqlite3', 'trust.sqlite3-wal' ]
+ readVerified = null [ 'trust.sqlite3', 'trust.sqlite3-wal' ]
+ after holder exit [ 'trust.sqlite3' ]

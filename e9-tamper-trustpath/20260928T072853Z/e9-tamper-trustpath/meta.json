@@ -1,0 +1,14 @@
+{
+ "case": "e9-tamper-trustpath",
+ "targetSha": "e9b4c73b2ff4294c68c6490411fbc6118c69c8c8",
+ "targetTree": "4316195bbb2cdade6efa1a62150e33358ef60a7c",
+ "targetBranch": "codex/wake-history-reconcile",
+ "baseSha": "53eff30a2984d41fc749d38dd2062966017684fa",
+ "sessionRepoHead": "d5c5932cd5a0d87630f6ed94f8e3721181ab9864",
+ "node": "v24.21.0",
+ "pnpm": "11.19.0",
+ "uname": "Linux vm 6.18.44-fc-v37 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+ "startUtc": "2026-09-28T07:16:01Z",
+ "endUtc": "2026-09-28T07:28:46Z",
+ "runAs": "root (permission cases as uid 65534 via setpriv)"
+}

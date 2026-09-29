@@ -1,0 +1,3 @@
+{"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":true,"evidence":{"sourceReceiptId":"source-bf5a8e7f-7841-4dab-a1e0-9e611f2a3303","contentDigest":"sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92","observedAt":"2026-09-28T07:26:15.433Z","receiptExpiresAt":"2026-09-28T07:26:45.433Z","oldBinding":{"host":"portable","sessionId":"wake-target","instanceId":"instance-1","generation":"2026-09-28T07:26:15.423Z","transport":"portable","relayId":"relay-1","attemptId":"4bf40df7-2d6f-4e9f-89a6-8b217ec9b317","dispatchEpoch":1},"lateObservedAt":"2026-09-28T07:26:15.434Z","reconciledAt":"2026-09-28T07:27:15.675Z"}}}
+R/trust.sqlite3 exists: no  (broker wake reader is bound to this path)
+EXIT=0

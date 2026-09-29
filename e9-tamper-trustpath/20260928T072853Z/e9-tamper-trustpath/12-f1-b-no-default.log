@@ -1,0 +1,209 @@
+## CASE=b-no-default INST=/tmp/install/codex
+R=/tmp/f1/b-no-default/R
+DEFAULT_TRUST=/tmp/f1/b-no-default/home/.agent-governance-suite/session-messaging/trust.sqlite3
+seed: {"target":{"host":"portable","sessionId":"wake-target"},"attemptId":"800e1871-9919-4456-8c8b-18b17785d215","sourceReceiptId":"source-cd9051f0-52f8-4076-82b8-a6c8a04592a4","now":1790579863198,"nonceDigestOnly":true}
+--- before
+{
+ "wake_nonces": [
+  {
+   "nonce_digest": "83e638963967bf55a21261fb1c022775251c5cc9fedf228e9c6725df99a0a48c",
+   "host": "portable",
+   "session_id": "wake-target",
+   "expires_at": "2026-09-28T08:17:43.198Z",
+   "consumed_at": null,
+   "state": "unknown",
+   "nonce": "<30 chars>",
+   "instance_id": "instance-1",
+   "birth_generation": "2026-09-28T07:17:43.198Z",
+   "transport": "portable",
+   "relay_id": "relay-1",
+   "attempt_id": "800e1871-9919-4456-8c8b-18b17785d215",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T07:17:43.199Z",
+   "outcome_at": "2026-09-28T07:17:43.200Z",
+   "observed_at": null,
+   "late_observed_at": "2026-09-28T07:17:43.209Z"
+  }
+ ],
+ "messages": [
+  {
+   "message_id": "history-body",
+   "claimed_at": null,
+   "delivery_attempts": 0,
+   "acknowledged_at": null
+  }
+ ],
+ "input_observations": 0,
+ "session_presence": [
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-1",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T07:17:43.198Z",
+   "heartbeat_at": "2026-09-28T07:17:43.198Z",
+   "lease_until": "2026-09-28T07:18:03.198Z",
+   "ended_at": null,
+   "end_reason": null
+  },
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-2",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T07:17:43.203Z",
+   "heartbeat_at": "2026-09-28T07:17:43.203Z",
+   "lease_until": "2026-09-28T07:18:03.203Z",
+   "ended_at": null,
+   "end_reason": null
+  }
+ ],
+ "/tmp/f1/b-no-default/R/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-cd9051f0-52f8-4076-82b8-a6c8a04592a4"
+  ]
+ },
+ "/tmp/f1/b-no-default/home/.agent-governance-suite/session-messaging/trust.sqlite3": {
+  "exists": false,
+  "files": "NO_DIR"
+ }
+}
+cmd: env -i PATH HOME=/tmp/f1/b-no-default/home node /tmp/install/codex/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/f1/b-no-default/R  (cwd=/tmp/install/codex)
+endpoint present: yes
+broker env AGENT_GOVERNANCE_* keys: 0
+cmd: echo '{"operation":"reconcile-wake-observation","payload":{"target":{"host":"portable","sessionId":"wake-target"},"attemptId":"800e1871-9919-4456-8c8b-18b17785d215","sourceReceiptId":"source-cd9051f0-52f8-4076-82b8-a6c8a04592a4"}}' | env -i PATH HOME=/tmp/f1/b-no-default/home AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR=/tmp/f1/b-no-default/R node /tmp/install/codex/mcp-server/dist/session-message-cli.mjs
+run1 exit=0 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+run2 exit=0 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+--- after
+{
+ "wake_nonces": [
+  {
+   "nonce_digest": "83e638963967bf55a21261fb1c022775251c5cc9fedf228e9c6725df99a0a48c",
+   "host": "portable",
+   "session_id": "wake-target",
+   "expires_at": "2026-09-28T08:17:43.198Z",
+   "consumed_at": null,
+   "state": "unknown",
+   "nonce": "<30 chars>",
+   "instance_id": "instance-1",
+   "birth_generation": "2026-09-28T07:17:43.198Z",
+   "transport": "portable",
+   "relay_id": "relay-1",
+   "attempt_id": "800e1871-9919-4456-8c8b-18b17785d215",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T07:17:43.199Z",
+   "outcome_at": "2026-09-28T07:17:43.200Z",
+   "observed_at": null,
+   "late_observed_at": "2026-09-28T07:17:43.209Z"
+  }
+ ],
+ "messages": [
+  {
+   "message_id": "history-body",
+   "claimed_at": null,
+   "delivery_attempts": 0,
+   "acknowledged_at": null
+  }
+ ],
+ "input_observations": 0,
+ "session_presence": [
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-1",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T07:17:43.198Z",
+   "heartbeat_at": "2026-09-28T07:17:43.198Z",
+   "lease_until": "2026-09-28T07:18:03.198Z",
+   "ended_at": null,
+   "end_reason": null
+  },
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-2",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T07:17:43.203Z",
+   "heartbeat_at": "2026-09-28T07:17:43.203Z",
+   "lease_until": "2026-09-28T07:18:03.203Z",
+   "ended_at": null,
+   "end_reason": null
+  }
+ ],
+ "/tmp/f1/b-no-default/R/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   },
+   {
+    "n": "trust.sqlite3-shm",
+    "size": 32768
+   },
+   {
+    "n": "trust.sqlite3-wal",
+    "size": 0
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-cd9051f0-52f8-4076-82b8-a6c8a04592a4"
+  ]
+ },
+ "/tmp/f1/b-no-default/home/.agent-governance-suite/session-messaging/trust.sqlite3": {
+  "exists": false,
+  "files": "NO_DIR"
+ }
+}
+default dir exists after: no; files: 
