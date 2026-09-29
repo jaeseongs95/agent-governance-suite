@@ -1,0 +1,11 @@
+# files changed fd3f486a..00b16e84 outside docs/release-notes-v2.7.7.md:
+0
+# living-doc search at 00b16e84 (excluding release-notes-v2.7.[0-6] and older notes)
+00b16e84:claude-overlay/README.md:51:- 토큰을 만들지 못하면 훅은 호출자가 도구 인자에 넣은 `_hostAttestation`을 지우고 넘긴다. launcher도 훅이 실패하거나 시간을 넘기거나 `CLAUDE_PLUGIN_DATA`가 없을 때 같은 처�
+00b16e84:claude-plugin/README.md:51:- 토큰을 만들지 못하면 훅은 호출자가 도구 인자에 넣은 `_hostAttestation`을 지우고 넘긴다. launcher도 훅이 실패하거나 시간을 넘기거나 `CLAUDE_PLUGIN_DATA`가 없을 때 같은 처�
+00b16e84:docs/release-notes-v2.7.7.md:3:세션 메시지의 broker 응답과 요청을 받는 쪽이 여러 byte로 된 문자를 깨뜨리던 결함을 고칩니다. client의 응답 reader와 broker의 요청 reader는 TLS에서 받은 조각마다 UTF-8 문
+00b16e84:docs/release-notes-v2.7.7.md:5:피해는 hook 없는 CLI claim 경로에서 났습니다. 이 경로는 기본값(최대 10개, 응답 32 KiB)으로 받으므로 응답이 16384 byte를 넘을 수 있습니다. 한글 메시지 8개씩 12묶음을 cla
+00b16e84:docs/release-notes-v2.7.7.md:11:ASCII만 담긴 메시지나 16384 byte보다 짧은 응답에서는 결과가 전과 같습니다. 달라지는 경우는 여러 byte로 된 문자가 조각 경계에 걸릴 때뿐입니다. 이제 원문 그대로 �
+00b16e84:docs/release-notes-v2.7.7.md:13:응답은 broker가 만든 byte를 client가 읽으므로, 2.7.7 client는 이전 broker의 응답도 깨지지 않게 받습니다. 요청은 broker가 읽으므로 이전 broker의 reader가 그대로 적용됩니다.
+# older notes touching the same claim (published, unchanged)
+00b16e84:docs/release-notes-v2.7.7.md

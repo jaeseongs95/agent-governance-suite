@@ -1,0 +1,37 @@
+{
+ "quotes": {
+  "bodyBytes": 4096,
+  "worstHookClaimLine": 9113,
+  "worstPrepareLine": 8937
+ },
+ "backslashes": {
+  "bodyBytes": 4096,
+  "worstHookClaimLine": 9113,
+  "worstPrepareLine": 8937
+ },
+ "newlines": {
+  "bodyBytes": 4096,
+  "worstHookClaimLine": 9113,
+  "worstPrepareLine": 8937
+ },
+ "tabs": {
+  "bodyBytes": 4096,
+  "worstHookClaimLine": 9113,
+  "worstPrepareLine": 8937
+ },
+ "loneSurrogates": {
+  "bodyBytes": 4095,
+  "worstHookClaimLine": 9111,
+  "worstPrepareLine": 8935
+ },
+ "korean": {
+  "bodyBytes": 4095,
+  "worstHookClaimLine": 5016,
+  "worstPrepareLine": 4840
+ },
+ "control0x01_2401": {
+  "bodyBytes": 4096,
+  "worstHookClaimLine": 17022,
+  "worstPrepareLine": 16846
+ }
+}

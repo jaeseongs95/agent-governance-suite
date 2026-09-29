@@ -1,0 +1,48 @@
+{
+  "audit": "AGS 2.7.7 re-audit of the D-1 documentation fix",
+  "candidate": {
+    "branch": "claude/v277-utf8-framing",
+    "commit": "00b16e845ec02a94d9d6be7877f62987687e80c7",
+    "tree": "e36595c3b9caaaeed89f3bf30b94d4fa0573e36c",
+    "commits": [
+      "00b16e84 docs: correct the hook path exposure in the 2.7.7 notes"
+    ]
+  },
+  "previousAudit": {
+    "target": "fd3f486a4ad976756532d1de0705e8a819f92778",
+    "evidence": "v277-audit/20260929T055100Z",
+    "verdict": "PASS_WITH_FINDINGS"
+  },
+  "writerEvidenceReadForReferenceOnly": "v277-utf8-fix1/20260929T061611Z",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "6.18.44-fc-v37",
+  "startedAtUtc": "20260929T062913Z",
+  "finishedAtUtc": "2026-09-29T06:31:17.648Z",
+  "verdict": "PASS",
+  "releaseBlocking": false,
+  "findings": [],
+  "notes": [
+    "\\b \\t \\n \\f \\r escape to 2 bytes; the sentence names \\u0001 as the 6-byte example, so not an error"
+  ],
+  "notRun": [
+    "full test, runtime:check, validate:official (docs-only change; full run done at fd3f486a)",
+    "Windows, CI, real PC and install cache, source:verify",
+    "D-1 through the real claim-host-wake hook call"
+  ],
+  "redaction": {
+    "github-token": 0,
+    "anthropic-key": 0,
+    "aws-access-key": 0,
+    "private-key-line": 0,
+    "bearer-header": 0,
+    "email": 0,
+    "home-path": 1,
+    "root-home": 2,
+    "ipv4": 0,
+    "github-url-account": 0,
+    "account-name": 0,
+    "windows-user-path": 0
+  },
+  "redactionNote": "applied before the first commit"
+}

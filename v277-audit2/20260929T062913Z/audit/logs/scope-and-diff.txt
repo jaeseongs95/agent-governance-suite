@@ -1,0 +1,26 @@
+00b16e845ec02a94d9d6be7877f62987687e80c7
+e36595c3b9caaaeed89f3bf30b94d4fa0573e36c
+FF
+00b16e8 docs: correct the hook path exposure in the 2.7.7 notes
+ docs/release-notes-v2.7.7.md | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+diff --git a/docs/release-notes-v2.7.7.md b/docs/release-notes-v2.7.7.md
+index 6997af3..953ac38 100644
+--- a/docs/release-notes-v2.7.7.md
++++ b/docs/release-notes-v2.7.7.md
+@@ -2,7 +2,7 @@
+
+세션 메시지의 broker 응답과 요청을 받는 쪽이 여러 byte로 된 문자를 깨뜨리던 결함을 고칩니다. client의 응답 reader와 broker의 요청 reader는 TLS에서 받은 조각마다 UTF-8 문자열로 바꿔 이어 붙였습니다. Node TLS는 평문을 16384 byte 이하의 조각으로 넘기므로, 한글(3 byte)이나 이모지(4 byte)가 조각 경계에 걸리면 그 문자가 U+FFFD로 바뀌었습니다. 크기도 바꾼 문자열로 다시 셌으므로, 깨진 문자만큼 byte 수가 늘었습니다.
+
+피해는 hook 없는 CLI claim 경로에서 났습니다. 이 경로는 기본값(최대 10개, 응답 32 KiB)으로 받으므로 응답이 16384 byte를 넘을 수 있습니다. 한글 메시지 8개씩 12묶음을 claim하는 시험에서 11묶음이 깨졌습니다. 메시지 ID는 ASCII라서 ACK가 성공하므로, 깨진 본문은 그대로 소비됐습니다. 응답이 한도에 가까우면 다른 결과가 났습니다. broker가 한도 안으로 맞춘 응답을 client가 한도 초과로 거절하고 조용히 한 번 더 요청했습니다. 그 사이 첫 요청이 메시지에 lease를 걸었으므로 두 번째 요청은 0개를 받았습니다. 한글 메시지 9개로 32767 byte 응답을 만든 시험에서 CLI는 0개를 반환했고, 9행이 첫 lease(120초) 동안 묶였습니다. hook 전달 경로는 한 번에 한 메시지(본문 4096 byte 이하)만 [-받으므로-]{+받으므로, 일반 텍스트 본문이면+} 응답이 16384 byte에 닿지 [-않아 영향이 없었습니다.-]{+않습니다. 다만 제어 문자는 JSON에서 `\u0001`처럼 6 byte로 늘어나므로, 제어 문자가 많은 본문은 hook 경로에서도 응답이 16384 byte를 넘어 같은 결함을 겪을 수 있었습니다. 이번 수정은 이 경우도 고칩니다.+}
+
+이제 client와 broker가 같은 줄 reader 하나를 씁니다. reader는 받은 조각을 byte 그대로 모으고, 줄바꿈(0x0A)을 byte에서 찾습니다. 줄이 완성되면 그 줄만 한 번 UTF-8로 풉니다. 한도는 byte 수로 셉니다. 줄바꿈을 포함한 줄이 32768 byte 이하이면 받고, 그보다 크면 전과 같은 오류로 거절합니다. client의 오류는 "The broker response exceeded its limit.", broker의 오류는 "Request exceeds the broker limit."입니다. broker가 응답을 한도 안으로 맞출 때 세는 방식(줄바꿈을 포함한 UTF-8 byte)과 한 byte까지 같습니다. protocol `1.0.0`, 요청·응답 한도 32 KiB, 거절과 일반 오류의 구분, 현황판 presence 조회, 출력 계약과 schema는 바뀌지 않았습니다.
+
+@@ -10,7 +10,7 @@
+
+ASCII만 담긴 메시지나 16384 byte보다 짧은 응답에서는 결과가 전과 같습니다. 달라지는 경우는 여러 byte로 된 문자가 조각 경계에 걸릴 때뿐입니다. 이제 원문 그대로 받고, 크기가 한도 안이면 거절하지 않습니다.
+
+응답은 broker가 만든 byte를 client가 읽으므로, 2.7.7 client는 이전 broker의 응답도 깨지지 않게 받습니다. 요청은 broker가 읽으므로 이전 broker의 reader가 그대로 적용됩니다. 번들 client가 보내는 요청은 본문이 4096 byte 이하라 {+일반 텍스트 본문이면+} 16384 byte에 [-닿기 어렵습니다.-]{+닿지 않습니다. 제어 문자가 많아 JSON escape로 크게 늘어나는 본문은 요청도 16384 byte를 넘을 수 있고, 이때는 이전 broker의 reader가 그대로 적용됩니다.+} previous-broker 회귀 시험은 v2.7.6, v2.7.5, v2.7.3 broker로 통과했습니다. 이 시험에서 새 client는 이전 broker가 보낸 32768 byte 한글 응답을 온전히 받았고, 같은 크기의 한글 요청은 이전 broker가 전처럼 한도 초과로 거절했습니다. 이 검사로 혼합 버전의 모든 실행·복구를 보장하지 않습니다.
+
+## 알려진 한계
+
