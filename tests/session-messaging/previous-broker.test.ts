@@ -182,6 +182,8 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
   const seed = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
   try {
     seed.startPresence({ ...target, instanceId: "presence-instance", transport: "portable", wakeVisibility: "none", canWakeSilently: false }, Date.now());
+    seed.startPresence({ host: "synthetic-host", sessionId: "presence-other", instanceId: "presence-other", transport: "portable",
+      wakeVisibility: "none", canWakeSilently: false }, Date.now());
     // The broker reads the wall clock after a possibly slow start; keep the row live well past the 20-second lease.
     seed.database.prepare("UPDATE session_presence SET lease_until = ? WHERE session_id = ?")
       .run(new Date(Date.now() + 10 * 60_000).toISOString(), target.sessionId);
@@ -195,7 +197,9 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
     expect(small.ok).toBe(true);
     expect(small.data!.sessions.find((item) => item.sessionId === target.sessionId)).toMatchObject({ state: "online" });
     expect(small.data!.unanswered).toEqual([]);
-    // Past the response limit a previous broker cannot answer; each batch is unanswered (unknown, autoWake null), never wrong data.
+    // A 2.7.4 or later broker answers only the requested targets; an earlier one lists every identity.
+    const targeted = !small.data!.sessions.some((item) => item.sessionId === "presence-other");
+    // Past the response limit an earlier broker cannot answer; each batch is unanswered (unknown, autoWake null), never wrong data.
     const many = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
     try {
       for (let index = 0; index < 120; index += 1) {
@@ -204,13 +208,77 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
       }
     } finally { many.close(); }
     const large = await service.listPresence([target]);
-    expect(large.data).toEqual({ sessions: [], unanswered: [target] });
+    if (targeted) {
+      expect(large.data!.unanswered).toEqual([]);
+      expect(large.data!.sessions.map((item) => item.sessionId)).toEqual([target.sessionId]);
+      expect(large.data!.sessions[0]).toMatchObject({ state: "online" });
+    } else expect(large.data).toEqual({ sessions: [], unanswered: [target] });
   } finally {
     if (child.exitCode === null && child.signalCode === null) {
       const exited = once(child, "exit");
       child.kill();
       await exited;
     }
+    await rm(directory, { recursive: true, force: true, maxRetries: 10 });
+  }
+}, 20_000);
+
+it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth for the new broker to retire", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-ended-"));
+  const environment = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory,
+    AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
+    AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(directory, "shared-state") };
+  const databasePath = path.join(directory, "session-messages.sqlite3");
+  const target = { host: "codex", sessionId: "ended-recipient" };
+  const nonce = "ended-birth-nonce-abcdefghijklmnopqr";
+  const seed = new SessionMessageStore(databasePath);
+  try {
+    // The birth ended long ago and never came back, so no wall-clock lease is involved.
+    const base = Date.now() - WAKE_TTL_MS - WAKE_RETIRE_GRACE_MS - 60_000;
+    seed.startPresence({ ...target, instanceId: "ended-instance", transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false,
+      deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" } }, base);
+    seed.acquireRelay({ ...target, transport: "codex-queue", relayId: "ended-relay", pid: process.pid, parentPid: process.pid }, base);
+    seed.send({ sender: { host: "synthetic-host", sessionId: "sender" }, target, messageId: "ended-body", body: "b", ttlSeconds: 86400 }, base);
+    const reserved = seed.reserveManagedWake({ ...target, nonce, instanceId: "ended-instance", transport: "codex-queue", relayId: "ended-relay" }, base);
+    seed.recordManagedWakeOutcome(seed.startManagedWake(reserved.attempt!, base + 1).attempt!, "submitted", base + 2);
+    seed.endPresence(target, "session-end", "ended-instance", base + 3);
+  } finally { seed.close(); }
+  const wakeRow = () => {
+    const database = new DatabaseSync(databasePath, { readOnly: true });
+    try { return database.prepare("SELECT * FROM wake_nonces WHERE nonce = ?").get(nonce) as Record<string, unknown> | undefined; }
+    finally { database.close(); }
+  };
+  const before = wakeRow();
+  expect(before).toMatchObject({ state: "submitted" });
+  const child = spawn(process.execPath, [previousBroker!, "--state-directory", directory], { windowsHide: true, stdio: "ignore", env: environment });
+  let managedWakeAware: boolean | undefined;
+  try {
+    await waitForSessionMessageBrokerReady(directory, child, 5000);
+    const ping = await requestSessionMessageOnce<{ capabilities?: string[] }>("ping", {}, directory);
+    managedWakeAware = (ping.capabilities ?? []).includes("delivery-capabilities");
+    // Any request prunes; a previous broker does not know the ended-birth rule.
+    const pending = spawnSync(process.execPath, [path.join(pluginRoot, "mcp-server/dist/session-message-cli.mjs")], {
+      env: environment, input: JSON.stringify({ operation: "pending", payload: { target } }), encoding: "utf8", windowsHide: true, timeout: 5000,
+    });
+    expect(pending.status, pending.stderr).toBe(0);
+    expect(JSON.parse(pending.stdout).data.count).toBe(1);
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = once(child, "exit");
+      child.kill();
+      await exited;
+    }
+  }
+  try {
+    const kept = wakeRow();
+    if (managedWakeAware === true) expect(kept).toEqual(before);
+    else expect([undefined, before]).toContainEqual(kept);
+    const current = new SessionMessageStore(databasePath);
+    try {
+      current.prune();
+      if (kept) expect(wakeRow()).toMatchObject({ state: "expired-unobserved", observed_at: null, consumed_at: null });
+    } finally { current.close(); }
+  } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 10 });
   }
 }, 20_000);
