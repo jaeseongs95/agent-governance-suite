@@ -1,0 +1,4 @@
+## case e4-pin-maxbytes-lowered
+initialMaxBytes 4585->3000
+## git status
+ M scripts/check-skill-context-optimization.mjs

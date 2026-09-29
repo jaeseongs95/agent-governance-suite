@@ -1,0 +1,4 @@
+## case b5-other-openai-yaml
+skills/task-contract/agents/openai.yaml: byte 158 'p'->'P'
+## git status
+ M skills/task-contract/agents/openai.yaml

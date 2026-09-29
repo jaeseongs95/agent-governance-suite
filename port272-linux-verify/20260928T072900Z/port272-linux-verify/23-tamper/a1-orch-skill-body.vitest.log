@@ -1,0 +1,56 @@
+
+ RUN  v5.0.0 /tmp/ck/a1-orch-skill-body
+
+ ❯ tests/tooling/skill-context-optimization.test.mjs (3 tests | 2 failed) 345ms
+   ❯ skill context optimization (3)
+     × pins the intake revision and rejects a one-byte policy or reference change 8ms
+     × preserves the reviewed skill revisions while reducing their initial load 332ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > pins the intake revision and rejects a one-byte policy or reference change
+Error: orchestrator: navigation marker is missing
+ ❯ reconstructOptimizedSkill scripts/check-skill-context-optimization.mjs:93:30
+
+ ❯ tests/tooling/skill-context-optimization.test.mjs:17:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load
+AssertionError: expected { …(8) } to match object { pass: true, errors: [], …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,8 +1,11 @@
+  {
+-   "errors": [],
+-   "pass": true,
++   "errors": [
++     "orchestrator: navigation marker must occur exactly once",
++     "orchestrator: reconstructed intake policy differs from the pinned revision",
++   ],
++   "pass": false,
+    "totals": {
+      "baselineBytes": 115679,
+      "candidateBytes": 45203,
+      "reducedBytes": 70476,
+      "reductionPercent": 60.923763,
+
+ ❯ tests/tooling/skill-context-optimization.test.mjs:32:20
+     30|   it("preserves the reviewed skill revisions while reducing their init…
+     31|     const report = checkSkillContextOptimization();
+     32|     expect(report).toMatchObject({
+       |                    ^
+     33|       pass: true,
+     34|       errors: [],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  07:24:58
+   Duration  631ms (tests 76%, transform 17%, import 6%, worker 2%)
+

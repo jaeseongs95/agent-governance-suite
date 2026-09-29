@@ -1,0 +1,6 @@
+$ pnpm claude:check (cwd=/tmp/cand, start 2026-09-28T07:16:48Z)
+Already up to date
+Done in 557ms using pnpm v11.19.0
+$ node scripts/build-claude-plugin.mjs --check
+claude-plugin: fresh
+EXIT=0

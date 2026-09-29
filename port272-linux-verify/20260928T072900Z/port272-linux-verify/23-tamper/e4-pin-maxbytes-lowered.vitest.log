@@ -1,0 +1,46 @@
+
+ RUN  v5.0.0 /tmp/ck/e4-pin-maxbytes-lowered
+
+ ❯ tests/tooling/skill-context-optimization.test.mjs (3 tests | 1 failed) 411ms
+   ❯ skill context optimization (3)
+     × preserves the reviewed skill revisions while reducing their initial load 405ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load
+AssertionError: expected { …(8) } to match object { pass: true, errors: [], …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,8 +1,10 @@
+  {
+-   "errors": [],
+-   "pass": true,
++   "errors": [
++     "orchestrator: initial load exceeds the pre-intake limit",
++   ],
++   "pass": false,
+    "totals": {
+      "baselineBytes": 115679,
+      "candidateBytes": 45203,
+      "reducedBytes": 70476,
+      "reductionPercent": 60.923763,
+
+ ❯ tests/tooling/skill-context-optimization.test.mjs:32:20
+     30|   it("preserves the reviewed skill revisions while reducing their init…
+     31|     const report = checkSkillContextOptimization();
+     32|     expect(report).toMatchObject({
+       |                    ^
+     33|       pass: true,
+     34|       errors: [],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  07:25:34
+   Duration  675ms (tests 83%, transform 9%, import 6%, worker 2%, environment 1%)
+

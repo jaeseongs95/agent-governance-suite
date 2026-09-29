@@ -1,0 +1,197 @@
+{
+  "baselineRevision": "7bc7753012227938be2a46f68bf3e29d29d5ef34",
+  "approvedAdditions": [
+    {
+      "skillId": "session-board",
+      "path": "scripts/fixtures/session-board-peer-message-guidance.2.6.0.md",
+      "sha256": "381be4018118086b3c4087be043c004d8d6de986d42a6c0c14f182c2d76ed76f"
+    }
+  ],
+  "policyBaselineUpdates": [
+    {
+      "skillId": "orchestrator",
+      "revision": "2.7.2-source-port",
+      "initialMaxBytes": 4585,
+      "hashes": {
+        "reconstructed": "8e4f855fbd659db8cf5c930a9bdb6cda23c19e12b4ff7f6798091e3501a52f0c",
+        "frontmatter": "9054478f3909908263ce9f26afaad3b51d2a0db8f1aceacb228b07c6e3dd7bae",
+        "mcpExecution": "be972eaa9b6d2ceab78f48f37fcc0eb4e1d4ce52cd8cfb5de356f019da46c546"
+      }
+    }
+  ],
+  "runtimeBaselineUpdates": [
+    {
+      "skillId": "acceptance-evidence-validator",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "blocker-diagnostician",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "change-scope-guardian",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "evaluation-validity-auditor",
+      "before": "Node.js 22.13 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "instruction-scope-resolver",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "mutation-risk-preflight",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "task-contract",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "workspace-convention-profiler",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    }
+  ],
+  "pass": false,
+  "errors": [
+    "task-contract: unexpected skill-owned changes: skills/task-contract/references/extra.md"
+  ],
+  "totals": {
+    "skillCount": 20,
+    "baselineBytes": 115679,
+    "candidateBytes": 45203,
+    "reducedBytes": 70476,
+    "reductionPercent": 60.923763
+  },
+  "skills": [
+    {
+      "skillId": "acceptance-evidence-validator",
+      "baselineBytes": 3968,
+      "candidateBytes": 1795,
+      "reducedBytes": 2173
+    },
+    {
+      "skillId": "blocker-diagnostician",
+      "baselineBytes": 5091,
+      "candidateBytes": 1981,
+      "reducedBytes": 3110
+    },
+    {
+      "skillId": "change-scope-guardian",
+      "baselineBytes": 2563,
+      "candidateBytes": 2184,
+      "reducedBytes": 379
+    },
+    {
+      "skillId": "codex-token-usage-analyzer",
+      "baselineBytes": 1809,
+      "candidateBytes": 1405,
+      "reducedBytes": 404
+    },
+    {
+      "skillId": "context-continuity",
+      "baselineBytes": 3599,
+      "candidateBytes": 1944,
+      "reducedBytes": 1655
+    },
+    {
+      "skillId": "coordinate-subagents",
+      "baselineBytes": 10366,
+      "candidateBytes": 2191,
+      "reducedBytes": 8175
+    },
+    {
+      "skillId": "evaluation-validity-auditor",
+      "baselineBytes": 3182,
+      "candidateBytes": 1585,
+      "reducedBytes": 1597
+    },
+    {
+      "skillId": "independent-audit-gate",
+      "baselineBytes": 9677,
+      "candidateBytes": 3301,
+      "reducedBytes": 6376
+    },
+    {
+      "skillId": "independent-deliberation-panel",
+      "baselineBytes": 16111,
+      "candidateBytes": 5256,
+      "reducedBytes": 10855
+    },
+    {
+      "skillId": "instruction-scope-resolver",
+      "baselineBytes": 2671,
+      "candidateBytes": 2068,
+      "reducedBytes": 603
+    },
+    {
+      "skillId": "iteration-frame-auditor",
+      "baselineBytes": 4773,
+      "candidateBytes": 1947,
+      "reducedBytes": 2826
+    },
+    {
+      "skillId": "korean-prose-editor",
+      "baselineBytes": 5972,
+      "candidateBytes": 2053,
+      "reducedBytes": 3919
+    },
+    {
+      "skillId": "model-effort-advisor",
+      "baselineBytes": 5780,
+      "candidateBytes": 2024,
+      "reducedBytes": 3756
+    },
+    {
+      "skillId": "mutation-risk-preflight",
+      "baselineBytes": 3323,
+      "candidateBytes": 2140,
+      "reducedBytes": 1183
+    },
+    {
+      "skillId": "orchestrator",
+      "baselineBytes": 16881,
+      "candidateBytes": 3935,
+      "reducedBytes": 12946
+    },
+    {
+      "skillId": "recovery-strategy-selector",
+      "baselineBytes": 4013,
+      "candidateBytes": 1166,
+      "reducedBytes": 2847
+    },
+    {
+      "skillId": "session-board",
+      "baselineBytes": 4001,
+      "candidateBytes": 2918,
+      "reducedBytes": 1083
+    },
+    {
+      "skillId": "software-security-auditor",
+      "baselineBytes": 5485,
+      "candidateBytes": 1944,
+      "reducedBytes": 3541
+    },
+    {
+      "skillId": "task-contract",
+      "baselineBytes": 3492,
+      "candidateBytes": 1500,
+      "reducedBytes": 1992
+    },
+    {
+      "skillId": "workspace-convention-profiler",
+      "baselineBytes": 2922,
+      "candidateBytes": 1866,
+      "reducedBytes": 1056
+    }
+  ]
+}

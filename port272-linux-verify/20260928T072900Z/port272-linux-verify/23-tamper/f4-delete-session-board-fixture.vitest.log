@@ -1,0 +1,28 @@
+
+ RUN  v5.0.0 /tmp/ck/f4-delete-session-board-fixture
+
+ ❯ tests/tooling/skill-context-optimization.test.mjs (3 tests | 1 failed) 443ms
+   ❯ skill context optimization (3)
+     × preserves the reviewed skill revisions while reducing their initial load 431ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load
+Error: ENOENT: no such file or directory, open '/tmp/ck/f4-delete-session-board-fixture/scripts/fixtures/session-board-peer-message-guidance.2.6.0.md'
+ ❯ checkSkillContextOptimization scripts/check-skill-context-optimization.mjs:128:24
+    126|     let expectedBaseline = baseline;
+    127|     if (skillId === "session-board") {
+    128|       const addition = readFileSync(join(ROOT, SESSION_BOARD_ADDITION)…
+       |                        ^
+    129|       if (createHash("sha256").update(addition).digest("hex") !== SESS…
+    130|       expectedBaseline = Buffer.concat([baseline, addition]);
+ ❯ tests/tooling/skill-context-optimization.test.mjs:31:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  07:25:43
+   Duration  848ms (tests 73%, import 16%, transform 10%, worker 1%)
+

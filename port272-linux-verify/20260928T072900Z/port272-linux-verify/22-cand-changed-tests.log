@@ -1,0 +1,33 @@
+$ pnpm test --reporter=default --reporter=json --outputFile=/tmp/ev/22-cand-changed-tests.json tests/mcp/tool-schema-profile.test.ts tests/tooling/claude-plugin.test.mjs tests/tooling/skill-context-optimization.test.mjs (cwd=/tmp/cand, start 2026-09-28T07:23:53Z)
+Already up to date
+Done in 947ms using pnpm v11.19.0
+$ node scripts/build.mjs && vitest run --reporter=default --reporter=json --outputFile=/tmp/ev/22-cand-changed-tests.json tests/mcp/tool-schema-profile.test.ts tests/tooling/claude-plugin.test.mjs tests/tooling/skill-context-optimization.test.mjs
+
+ RUN  v5.0.0 /tmp/cand
+
+ ✓ tests/tooling/skill-context-optimization.test.mjs (3 tests) 469ms
+   ✓ skill context optimization (3)
+     ✓ preserves the reviewed skill revisions while reducing their initial load 453ms
+ ✓ tests/tooling/claude-plugin.test.mjs (18 tests) 1409ms
+   ✓ generated Claude plugin (10)
+     ✓ removes a caller-supplied token when it cannot attest 510ms
+ ✓ tests/mcp/tool-schema-profile.test.ts (7 tests) 4695ms
+   ✓ MCP tool schema profiles (7)
+     ✓ keeps the historical schemas when no profile is selected 850ms
+     ✓ removes top-level combinators from every advertised schema for Anthropic hosts 699ms
+     ✓ accepts and rejects the same inputs with inlined Anthropic schemas as with the referenced contracts 859ms
+     ✓ validates plan_workflow input identically in both profiles 579ms
+     ✓ advertises the same host-neutral intake instructions to every schema profile 751ms
+     ✓ applies the environment profile in the bundled server 953ms
+
+ Test Files  3 passed (3)
+      Tests  28 passed (28)
+   Start at  07:23:56
+   Duration  7.35s (tests 60%, transform 34%, import 6%)
+
+  Transform  transforming modules took 3.81s · 34% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+JSON report written to /tmp/ev/22-cand-changed-tests.json
+EXIT=0

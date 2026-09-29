@@ -1,0 +1,6 @@
+## case d2-orch-over-4585-repinned
+SKILL.md 3935 -> 4588 bytes
+repinned reconstructed -> c78355493cac557cfdd5bd3106a0a5748abf5593e03bd7cda63da1321d6768cc
+## git status
+ M scripts/check-skill-context-optimization.mjs
+ M skills/orchestrator/SKILL.md

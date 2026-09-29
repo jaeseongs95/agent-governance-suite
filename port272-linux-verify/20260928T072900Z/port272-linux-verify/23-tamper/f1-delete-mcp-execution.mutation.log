@@ -1,0 +1,4 @@
+## case f1-delete-mcp-execution
+deleted mcp-execution.md
+## git status
+ D skills/orchestrator/references/mcp-execution.md

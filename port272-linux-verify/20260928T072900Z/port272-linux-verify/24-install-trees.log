@@ -1,0 +1,173 @@
+codex archive EXIT=0
+claude archive EXIT=0
+codex node_modules present: 0
+claude node_modules present: 0
+== blob check (every archived file vs git blob id)
+fatal: could not open '/tmp/inst/codex/"tests/instruction-scope-resolver/fixtures/unicode/\355\225\234\352\270\200/AGENTS.md"' for reading: No such file or directory
+MISMATCH codex "tests/instruction-scope-resolver/fixtures/unicode/\355\225\234\352\270\200/AGENTS.md"
+codex: files=1189 skills_files=354 mismatches=1
+claude: files=404 skills_files=324 mismatches=0
+== dist identity root vs claude-plugin
+674af6f703efc61f15f4d6c923dab738c85ffb2b409f7a5f08446f30dedda496  /tmp/inst/codex/mcp-server/dist/server.mjs
+674af6f703efc61f15f4d6c923dab738c85ffb2b409f7a5f08446f30dedda496  /tmp/inst/claude/mcp-server/dist/server.mjs
+mcp-server/dist: IDENTICAL (9 files)
+== runtime identity
+runtime: IDENTICAL
+== contracts identity
+contracts: IDENTICAL
+== skills: files differing between root skills/ and claude-plugin/skills/
+Files /tmp/inst/codex/skills/acceptance-evidence-validator/SKILL.md and /tmp/inst/claude/skills/acceptance-evidence-validator/SKILL.md differ
+Only in /tmp/inst/codex/skills/acceptance-evidence-validator: agents
+Files /tmp/inst/codex/skills/blocker-diagnostician/SKILL.md and /tmp/inst/claude/skills/blocker-diagnostician/SKILL.md differ
+Only in /tmp/inst/codex/skills/blocker-diagnostician: agents
+Files /tmp/inst/codex/skills/change-scope-guardian/SKILL.md and /tmp/inst/claude/skills/change-scope-guardian/SKILL.md differ
+Only in /tmp/inst/codex/skills/change-scope-guardian: agents
+Only in /tmp/inst/codex/skills: codex-token-usage-analyzer
+Files /tmp/inst/codex/skills/context-continuity/SKILL.md and /tmp/inst/claude/skills/context-continuity/SKILL.md differ
+Only in /tmp/inst/codex/skills/context-continuity: agents
+Files /tmp/inst/codex/skills/context-continuity/references/entry-details.md and /tmp/inst/claude/skills/context-continuity/references/entry-details.md differ
+Files /tmp/inst/codex/skills/coordinate-subagents/SKILL.md and /tmp/inst/claude/skills/coordinate-subagents/SKILL.md differ
+Only in /tmp/inst/codex/skills/coordinate-subagents: agents
+Files /tmp/inst/codex/skills/evaluation-validity-auditor/SKILL.md and /tmp/inst/claude/skills/evaluation-validity-auditor/SKILL.md differ
+Only in /tmp/inst/codex/skills/evaluation-validity-auditor: agents
+Files /tmp/inst/codex/skills/independent-audit-gate/SKILL.md and /tmp/inst/claude/skills/independent-audit-gate/SKILL.md differ
+Only in /tmp/inst/codex/skills/independent-audit-gate: agents
+Files /tmp/inst/codex/skills/independent-audit-gate/references/entry-details.md and /tmp/inst/claude/skills/independent-audit-gate/references/entry-details.md differ
+Files /tmp/inst/codex/skills/independent-audit-gate/references/orchestrator-integration.md and /tmp/inst/claude/skills/independent-audit-gate/references/orchestrator-integration.md differ
+Files /tmp/inst/codex/skills/independent-audit-gate/scripts/validate_skill.py and /tmp/inst/claude/skills/independent-audit-gate/scripts/validate_skill.py differ
+Files /tmp/inst/codex/skills/independent-deliberation-panel/SKILL.md and /tmp/inst/claude/skills/independent-deliberation-panel/SKILL.md differ
+Only in /tmp/inst/codex/skills/independent-deliberation-panel: agents
+Files /tmp/inst/codex/skills/independent-deliberation-panel/references/entry-details.md and /tmp/inst/claude/skills/independent-deliberation-panel/references/entry-details.md differ
+Files /tmp/inst/codex/skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md and /tmp/inst/claude/skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md differ
+Files /tmp/inst/codex/skills/independent-deliberation-panel/references/integration-contract.md and /tmp/inst/claude/skills/independent-deliberation-panel/references/integration-contract.md differ
+Files /tmp/inst/codex/skills/independent-deliberation-panel/references/orchestration-policy.md and /tmp/inst/claude/skills/independent-deliberation-panel/references/orchestration-policy.md differ
+Files /tmp/inst/codex/skills/instruction-scope-resolver/SKILL.md and /tmp/inst/claude/skills/instruction-scope-resolver/SKILL.md differ
+Only in /tmp/inst/codex/skills/instruction-scope-resolver: agents
+Only in /tmp/inst/claude/skills/instruction-scope-resolver/references: claude-code-instructions.md
+Files /tmp/inst/codex/skills/iteration-frame-auditor/SKILL.md and /tmp/inst/claude/skills/iteration-frame-auditor/SKILL.md differ
+Only in /tmp/inst/codex/skills/iteration-frame-auditor: agents
+Files /tmp/inst/codex/skills/korean-prose-editor/SKILL.md and /tmp/inst/claude/skills/korean-prose-editor/SKILL.md differ
+Only in /tmp/inst/codex/skills/korean-prose-editor: agents
+Files /tmp/inst/codex/skills/model-effort-advisor/SKILL.md and /tmp/inst/claude/skills/model-effort-advisor/SKILL.md differ
+Only in /tmp/inst/codex/skills/model-effort-advisor: agents
+Files /tmp/inst/codex/skills/mutation-risk-preflight/SKILL.md and /tmp/inst/claude/skills/mutation-risk-preflight/SKILL.md differ
+Only in /tmp/inst/codex/skills/mutation-risk-preflight: agents
+Files /tmp/inst/codex/skills/orchestrator/SKILL.md and /tmp/inst/claude/skills/orchestrator/SKILL.md differ
+Only in /tmp/inst/codex/skills/orchestrator: agents
+Files /tmp/inst/codex/skills/ponytail/SKILL.md and /tmp/inst/claude/skills/ponytail/SKILL.md differ
+Only in /tmp/inst/codex/skills/ponytail: agents
+Files /tmp/inst/codex/skills/recovery-strategy-selector/SKILL.md and /tmp/inst/claude/skills/recovery-strategy-selector/SKILL.md differ
+Only in /tmp/inst/codex/skills/recovery-strategy-selector: agents
+Files /tmp/inst/codex/skills/registry.json and /tmp/inst/claude/skills/registry.json differ
+Files /tmp/inst/codex/skills/session-board/SKILL.md and /tmp/inst/claude/skills/session-board/SKILL.md differ
+Only in /tmp/inst/codex/skills/session-board: agents
+Files /tmp/inst/codex/skills/software-security-auditor/SKILL.md and /tmp/inst/claude/skills/software-security-auditor/SKILL.md differ
+Only in /tmp/inst/codex/skills/software-security-auditor: agents
+Files /tmp/inst/codex/skills/source-lock.json and /tmp/inst/claude/skills/source-lock.json differ
+Files /tmp/inst/codex/skills/task-contract/SKILL.md and /tmp/inst/claude/skills/task-contract/SKILL.md differ
+Only in /tmp/inst/codex/skills/task-contract: agents
+Files /tmp/inst/codex/skills/task-contract/references/field-guide.md and /tmp/inst/claude/skills/task-contract/references/field-guide.md differ
+Files /tmp/inst/codex/skills/workspace-convention-profiler/SKILL.md and /tmp/inst/claude/skills/workspace-convention-profiler/SKILL.md differ
+Only in /tmp/inst/codex/skills/workspace-convention-profiler: agents
+== orchestrator references identity
+SAME collaboration.md
+SAME convergence-guard.md
+SAME entry-details.md
+SAME input-origin.md
+SAME mcp-execution.md
+SAME specialist-handoffs.md
+== link targets in orchestrator SKILL.md resolve (both trees)
+codex OK references/entry-details.md
+claude OK references/entry-details.md
+claude OK references/mcp-execution.md
+== MCP probe codex tree
+{
+  "ok": true,
+  "serverInfo": {
+    "name": "agent-governance-suite",
+    "version": "2.7.1"
+  },
+  "protocolVersion": "2025-06-18",
+  "instructionsBytes": 1221,
+  "instructionsHead": "agent-governance-suite 접수 안내: 거버넌스 전문 스킬의 선택·연결이 필요한 경우 orchestrator 스킬 원본의 공통 접수·라우팅 기준을 따른다. 공통 원본은 skills/orchestrator/SKILL.md와 references/entry-details.md이",
+  "hasIntake": false,
+  "toolCount": 28,
+  "toolNames": [
+    "abort_workflow",
+    "acknowledge_session_messages",
+    "check_for_updates",
+    "checkpoint_context",
+    "claim_workflow_attempt",
+    "execute_state_cleanup",
+    "finalize_workflow",
+    "get_convergence_status",
+    "get_session_message_status",
+    "get_trust_capabilities",
+    "get_workflow_status",
+    "inspect_context",
+    "list_session_status",
+    "load_context",
+    "lookup_korean_prose_terms",
+    "open_convergence_root",
+    "plan_workflow",
+    "prepare_session_message",
+    "prepare_state_cleanup",
+    "purge_direct_context",
+    "record_stage_result",
+    "resolve_convergence_gate",
+    "send_session_message",
+    "start_guarded_workflow",
+    "start_workflow",
+    "suppress_context_restore",
+    "update_session_status",
+    "validate_collaboration_decision"
+  ],
+  "error": null
+}
+codex probe EXIT=0
+== MCP probe claude tree
+{
+  "ok": true,
+  "serverInfo": {
+    "name": "agent-governance-suite",
+    "version": "2.7.1"
+  },
+  "protocolVersion": "2025-06-18",
+  "instructionsBytes": 1221,
+  "instructionsHead": "agent-governance-suite 접수 안내: 거버넌스 전문 스킬의 선택·연결이 필요한 경우 orchestrator 스킬 원본의 공통 접수·라우팅 기준을 따른다. 공통 원본은 skills/orchestrator/SKILL.md와 references/entry-details.md이",
+  "hasIntake": false,
+  "toolCount": 28,
+  "toolNames": [
+    "abort_workflow",
+    "acknowledge_session_messages",
+    "check_for_updates",
+    "checkpoint_context",
+    "claim_workflow_attempt",
+    "execute_state_cleanup",
+    "finalize_workflow",
+    "get_convergence_status",
+    "get_session_message_status",
+    "get_trust_capabilities",
+    "get_workflow_status",
+    "inspect_context",
+    "list_session_status",
+    "load_context",
+    "lookup_korean_prose_terms",
+    "open_convergence_root",
+    "plan_workflow",
+    "prepare_session_message",
+    "prepare_state_cleanup",
+    "purge_direct_context",
+    "record_stage_result",
+    "resolve_convergence_gate",
+    "send_session_message",
+    "start_guarded_workflow",
+    "start_workflow",
+    "suppress_context_restore",
+    "update_session_status",
+    "validate_collaboration_decision"
+  ],
+  "error": null
+}
+claude probe EXIT=0
+EXIT=0

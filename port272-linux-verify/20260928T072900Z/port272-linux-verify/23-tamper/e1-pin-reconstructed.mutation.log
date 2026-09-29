@@ -1,0 +1,4 @@
+## case e1-pin-reconstructed
+repinned reconstructed -> 0000000000000000000000000000000000000000000000000000000000000000
+## git status
+ M scripts/check-skill-context-optimization.mjs

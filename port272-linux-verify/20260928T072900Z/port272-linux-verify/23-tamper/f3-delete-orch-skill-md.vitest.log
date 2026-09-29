@@ -1,0 +1,41 @@
+
+ RUN  v5.0.0 /tmp/ck/f3-delete-orch-skill-md
+
+ ❯ tests/tooling/skill-context-optimization.test.mjs (3 tests | 2 failed) 326ms
+   ❯ skill context optimization (3)
+     × pins the intake revision and rejects a one-byte policy or reference change 7ms
+     × preserves the reviewed skill revisions while reducing their initial load 314ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > pins the intake revision and rejects a one-byte policy or reference change
+Error: ENOENT: no such file or directory, open '/tmp/ck/f3-delete-orch-skill-md/skills/orchestrator/SKILL.md'
+ ❯ tests/tooling/skill-context-optimization.test.mjs:15:23
+     13|
+     14|   it("pins the intake revision and rejects a one-byte policy or refere…
+     15|     const candidate = readFileSync(new URL("../../skills/orchestrator/…
+       |                       ^
+     16|     const inputs = {
+     17|       reconstructed: reconstructOptimizedSkill("orchestrator"),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load
+Error: ENOENT: no such file or directory, open '/tmp/ck/f3-delete-orch-skill-md/skills/orchestrator/SKILL.md'
+ ❯ checkSkillContextOptimization scripts/check-skill-context-optimization.mjs:120:23
+    118|     const detailPath = `skills/${skillId}/references/entry-details.md`;
+    119|     const baseline = baselineFile(skillPath);
+    120|     const candidate = readFileSync(join(ROOT, ...skillPath.split("/"))…
+       |                       ^
+    121|     const markerIndex = candidate.indexOf(NAVIGATION);
+    122|     const markerCount = candidate.toString("utf8").split("<!-- optimiz…
+ ❯ tests/tooling/skill-context-optimization.test.mjs:31:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  07:25:40
+   Duration  635ms (tests 77%, transform 13%, import 8%, worker 2%)
+

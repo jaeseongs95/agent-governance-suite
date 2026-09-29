@@ -1,0 +1,4 @@
+## case c1-registry
+skills/registry.json: byte 34153 't'->'T'
+## git status
+ M skills/registry.json

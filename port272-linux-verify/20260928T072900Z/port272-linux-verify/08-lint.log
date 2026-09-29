@@ -1,0 +1,6 @@
+$ pnpm lint (cwd=/tmp/cand, start 2026-09-28T07:16:50Z)
+Already up to date
+Done in 618ms using pnpm v11.19.0
+$ eslint . && node scripts/validate-repository.mjs
+repository: valid
+EXIT=0

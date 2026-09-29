@@ -1,0 +1,5 @@
+$ git status (cand, after all steps)
+HEAD=2b53e325f549a9ebd32a143d1d11f7b4393355fa tree=851c82604427f8d0bb01ed15167909eee643f566
+$ original checkout status
+d5c5932cd5a0d87630f6ed94f8e3721181ab9864
+EXIT=0

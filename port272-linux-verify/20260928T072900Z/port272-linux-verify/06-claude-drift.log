@@ -1,0 +1,6 @@
+$ pnpm claude:drift (cwd=/tmp/cand, start 2026-09-28T07:16:47Z)
+Already up to date
+Done in 662ms using pnpm v11.19.0
+$ node scripts/build-claude-plugin.mjs --drift
+claude-plugin: fresh
+EXIT=0

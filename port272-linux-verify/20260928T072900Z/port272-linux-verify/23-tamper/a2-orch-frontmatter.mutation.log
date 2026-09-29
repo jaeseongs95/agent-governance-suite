@@ -1,0 +1,4 @@
+## case a2-orch-frontmatter
+skills/orchestrator/SKILL.md: byte 156 'g'->'G'
+## git status
+ M skills/orchestrator/SKILL.md

@@ -1,0 +1,5 @@
+$ pnpm build (cwd=/tmp/cand, start 2026-09-28T07:17:02Z)
+Already up to date
+Done in 665ms using pnpm v11.19.0
+$ tsc --noEmit && node scripts/build.mjs
+EXIT=0

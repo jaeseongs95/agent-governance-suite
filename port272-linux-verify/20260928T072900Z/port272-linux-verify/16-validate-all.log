@@ -1,0 +1,21 @@
+$ pnpm validate:all (cwd=/tmp/cand, start 2026-09-28T07:23:23Z)
+Already up to date
+Done in 677ms using pnpm v11.19.0
+$ node scripts/validate-repository.mjs && node scripts/run-python-validations.mjs && tsx scripts/korean-prose-glossary.ts --mode check
+repository: valid
+PASS validate_frontmatter
+PASS validate_openai_yaml
+PASS validate_markdown_links
+PASS validate_no_placeholders
+PASS validate_no_sensitive_data
+PASS validate_routing_presets
+PASS validate_behavior_cases
+All skill package validations passed.
+Skill validation passed: /tmp/cand/skills/independent-audit-gate
+PASS validate_skill_package
+PASS validate_decision_record_contracts
+PASS validate_behavior_cases
+All independent-deliberation-panel validations passed.
+model-effort-advisor: valid
+{"status":"ok","entries":243,"id":"korean-prose-core","version":"1.2.1","contentDigest":"1262b46c6c07d3ecf0551167308df2aa3ec1ad9fb02e3a33fc9619ce2ec683d4"}
+EXIT=0

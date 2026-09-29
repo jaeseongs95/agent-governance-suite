@@ -1,0 +1,3 @@
+ M tests/mcp/tool-schema-profile.test.ts
+ M tests/tooling/claude-plugin.test.mjs
+ M tests/tooling/skill-context-optimization.test.mjs

@@ -1,0 +1,4 @@
+## case f4-delete-session-board-fixture
+deleted session-board fixture
+## git status
+ D scripts/fixtures/session-board-peer-message-guidance.2.6.0.md

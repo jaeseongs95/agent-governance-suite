@@ -1,0 +1,6 @@
+## case d3-exactly-4585-repinned
+SKILL.md 3935 -> 4585 bytes (boundary, expect accept on size)
+repinned reconstructed -> 16b9e5364f58630018f8624337b33e766a66b368b4b08fd96b861baf90ce01d8
+## git status
+ M scripts/check-skill-context-optimization.mjs
+ M skills/orchestrator/SKILL.md

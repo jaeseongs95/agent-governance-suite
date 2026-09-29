@@ -1,0 +1,33 @@
+
+ RUN  v5.0.0 /tmp/ck/f2-delete-entry-details
+
+ ❯ tests/tooling/skill-context-optimization.test.mjs (3 tests | 2 failed) 311ms
+   ❯ skill context optimization (3)
+     × pins the intake revision and rejects a one-byte policy or reference change 10ms
+     × preserves the reviewed skill revisions while reducing their initial load 294ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > pins the intake revision and rejects a one-byte policy or reference change
+Error: ENOENT: no such file or directory, open '/tmp/ck/f2-delete-entry-details/skills/orchestrator/references/entry-details.md'
+ ❯ reconstructOptimizedSkill scripts/check-skill-context-optimization.mjs:90:18
+
+ ❯ tests/tooling/skill-context-optimization.test.mjs:17:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load
+Error: ENOENT: no such file or directory, open '/tmp/ck/f2-delete-entry-details/skills/orchestrator/references/entry-details.md'
+ ❯ reconstructOptimizedSkill scripts/check-skill-context-optimization.mjs:90:18
+
+ ❯ checkSkillContextOptimization scripts/check-skill-context-optimization.mjs:123:63
+ ❯ tests/tooling/skill-context-optimization.test.mjs:31:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  07:25:38
+   Duration  710ms (tests 64%, transform 25%, import 9%, worker 2%)
+

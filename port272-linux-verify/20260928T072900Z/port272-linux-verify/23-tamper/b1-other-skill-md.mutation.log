@@ -1,0 +1,4 @@
+## case b1-other-skill-md
+skills/task-contract/SKILL.md: byte 750 'e'->'E'
+## git status
+ M skills/task-contract/SKILL.md

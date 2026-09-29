@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 /tmp/ck/z0-control
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  07:24:56
+   Duration  648ms (tests 78%, transform 15%, import 5%, worker 1%)
+

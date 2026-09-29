@@ -1,0 +1,4 @@
+## case f2-delete-entry-details
+deleted orchestrator entry-details.md
+## git status
+ D skills/orchestrator/references/entry-details.md

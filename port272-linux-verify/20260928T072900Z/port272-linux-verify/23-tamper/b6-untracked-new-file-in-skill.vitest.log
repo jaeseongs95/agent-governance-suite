@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 /tmp/ck/b6-untracked-new-file-in-skill
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  07:25:18
+   Duration  646ms (tests 76%, transform 18%, import 6%, worker 1%)
+
