@@ -1,0 +1,48 @@
+== v53 post-dump states
+control-root "state":"observed" "claimed_at":"2026-09-28T07:27:03.050Z"
+control-nobody "state":"observed" "claimed_at":"2026-09-28T07:27:03.895Z"
+missing-db  
+missing-dir  
+ro-dir-nobody "state":"unknown" "claimed_at":null
+ro-file-nobody "state":"unknown" "claimed_at":null
+ro-trust-nobody "state":"unknown" "claimed_at":null
+lock-session-exclusive "state":"unknown" "claimed_at":null
+lock-trust-exclusive "state":"unknown" "claimed_at":null
+shm-garbage "state":"observed" "claimed_at":"2026-09-28T07:27:27.886Z"
+wal-garbage-after-close "state":"observed" "claimed_at":"2026-09-28T07:27:28.694Z"
+schema-drop-wake  "claimed_at":null
+schema-msgs-rebuilt-missing-claim_until "state":"unknown" "claimed_at":null
+schema-wake-update-abort "state":"unknown" "claimed_at":null
+schema-msgs-update-abort "state":"unknown" "claimed_at":null
+garbage-db  
+trust-missing "state":"unknown" "claimed_at":null
+crash-noop "state":"observed" "claimed_at":"2026-09-28T07:27:34.542Z"
+crash-delete-wal  
+crash-corrupt-wal-tail "state":"observed" "claimed_at":"2026-09-28T07:27:36.121Z"
+crash-corrupt-shm "state":"observed" "claimed_at":"2026-09-28T07:27:36.939Z"
+diskfull-session "state":"unknown" "claimed_at":null
+diskfull-both "state":"unknown" "claimed_at":null
+== v271 post-dump states
+control-root "state":"observed" "claimed_at":"2026-09-28T07:27:39.372Z"
+control-nobody "state":"observed" "claimed_at":"2026-09-28T07:27:40.217Z"
+missing-db  
+missing-dir  
+ro-dir-nobody "state":"unknown" "claimed_at":null
+ro-file-nobody "state":"unknown" "claimed_at":null
+ro-trust-nobody "state":"unknown" "claimed_at":null
+lock-session-exclusive "state":"unknown" "claimed_at":null
+lock-trust-exclusive "state":"unknown" "claimed_at":null
+shm-garbage "state":"observed" "claimed_at":"2026-09-28T07:28:04.456Z"
+wal-garbage-after-close "state":"observed" "claimed_at":"2026-09-28T07:28:05.358Z"
+schema-drop-wake  "claimed_at":null
+schema-msgs-rebuilt-missing-claim_until "state":"unknown" "claimed_at":null
+schema-wake-update-abort "state":"unknown" "claimed_at":null
+schema-msgs-update-abort "state":"unknown" "claimed_at":null
+garbage-db  
+trust-missing "state":"unknown" "claimed_at":null
+crash-noop "state":"observed" "claimed_at":"2026-09-28T07:28:11.522Z"
+crash-delete-wal  
+crash-corrupt-wal-tail "state":"observed" "claimed_at":"2026-09-28T07:28:13.175Z"
+crash-corrupt-shm "state":"observed" "claimed_at":"2026-09-28T07:28:13.998Z"
+diskfull-session "state":"unknown" "claimed_at":null
+diskfull-both "state":"unknown" "claimed_at":null

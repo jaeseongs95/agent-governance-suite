@@ -1,0 +1,12 @@
+== v53
+after-record {"size":28672,"changeCounter":2,"versionValidFor":2,"wal":null,"mode":"600"} [{"key":"trust-signing-key","v":"2T0vYt","updated_at":"2026-09-28T07:23:12.691Z"}]
+verify(wrong receiptId)= false {"size":28672,"changeCounter":3,"versionValidFor":3,"wal":null,"mode":"600"}
+verify(valid)= true {"size":28672,"changeCounter":4,"versionValidFor":4,"wal":null,"mode":"600"}
+key deleted []
+verify(valid, key deleted)= false {"size":28672,"changeCounter":5,"versionValidFor":5,"wal":null,"mode":"600"} keys-after: [{"key":"trust-signing-key","v":"MD_NBo","updated_at":"2026-09-28T07:23:12.707Z"}]
+== v271
+after-record {"size":28672,"changeCounter":2,"versionValidFor":2,"wal":null,"mode":"600"} [{"key":"trust-signing-key","v":"JmjFwm","updated_at":"2026-09-28T07:23:12.986Z"}]
+verify(wrong receiptId)= false {"size":28672,"changeCounter":3,"versionValidFor":3,"wal":null,"mode":"600"}
+verify(valid)= true {"size":28672,"changeCounter":4,"versionValidFor":4,"wal":null,"mode":"600"}
+key deleted []
+verify(valid, key deleted)= false {"size":28672,"changeCounter":5,"versionValidFor":5,"wal":null,"mode":"600"} keys-after: [{"key":"trust-signing-key","v":"3tjDcd","updated_at":"2026-09-28T07:23:13.000Z"}]

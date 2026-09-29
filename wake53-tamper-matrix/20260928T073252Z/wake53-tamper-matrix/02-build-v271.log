@@ -1,0 +1,9 @@
++ typescript 6.0.2
++ typescript-eslint 8.70.0
++ vitest 5.0.0
+
+Done in 7.2s using pnpm v11.19.0
+Already up to date
+Done in 469ms using pnpm v11.19.0
+$ tsc --noEmit && node scripts/build.mjs
+EXIT=0

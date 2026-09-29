@@ -1,0 +1,66 @@
+/tmp/v271/mcp-server/src/session-message-store.ts:345
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new Error("messageId must be 8-128 safe identifier characters.");
+                                                                       ^
+
+Error: messageId must be 8-128 safe identifier characters.
+    at SessionMessageStore.send (/tmp/v271/mcp-server/src/session-message-store.ts:345:72)
+    at mk (/tmp/ev/scripts/fuzz.mts:32:11)
+    at <anonymous> (/tmp/ev/scripts/fuzz.mts:38:13)
+
+Node.js v24.21.0
+v271 seed=11 EXIT=1
+/tmp/v271/mcp-server/src/session-message-store.ts:345
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new Error("messageId must be 8-128 safe identifier characters.");
+                                                                       ^
+
+Error: messageId must be 8-128 safe identifier characters.
+    at SessionMessageStore.send (/tmp/v271/mcp-server/src/session-message-store.ts:345:72)
+    at mk (/tmp/ev/scripts/fuzz.mts:32:11)
+    at <anonymous> (/tmp/ev/scripts/fuzz.mts:38:13)
+
+Node.js v24.21.0
+/tmp/v53/mcp-server/src/session-message-store.ts:345
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new Error("messageId must be 8-128 safe identifier characters.");
+                                                                       ^
+
+Error: messageId must be 8-128 safe identifier characters.
+    at SessionMessageStore.send (/tmp/v53/mcp-server/src/session-message-store.ts:345:72)
+    at mk (/tmp/ev/scripts/fuzz.mts:32:11)
+    at <anonymous> (/tmp/ev/scripts/fuzz.mts:38:13)
+
+Node.js v24.21.0
+/tmp/v53/mcp-server/src/session-message-store.ts:345
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new Error("messageId must be 8-128 safe identifier characters.");
+                                                                       ^
+
+Error: messageId must be 8-128 safe identifier characters.
+    at SessionMessageStore.send (/tmp/v53/mcp-server/src/session-message-store.ts:345:72)
+    at mk (/tmp/ev/scripts/fuzz.mts:32:11)
+    at <anonymous> (/tmp/ev/scripts/fuzz.mts:38:13)
+
+Node.js v24.21.0
+/tmp/v53/mcp-server/src/session-message-store.ts:345
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new Error("messageId must be 8-128 safe identifier characters.");
+                                                                       ^
+
+Error: messageId must be 8-128 safe identifier characters.
+    at SessionMessageStore.send (/tmp/v53/mcp-server/src/session-message-store.ts:345:72)
+    at mk (/tmp/ev/scripts/fuzz.mts:32:11)
+    at <anonymous> (/tmp/ev/scripts/fuzz.mts:38:13)
+
+Node.js v24.21.0
+v53 seed=11 EXIT=1
+v271 seed=13 EXIT=1
+v53 seed=12 EXIT=1
+v53 seed=13 EXIT=1
+/tmp/v271/mcp-server/src/session-message-store.ts:345
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new Error("messageId must be 8-128 safe identifier characters.");
+                                                                       ^
+
+Error: messageId must be 8-128 safe identifier characters.
+    at SessionMessageStore.send (/tmp/v271/mcp-server/src/session-message-store.ts:345:72)
+    at mk (/tmp/ev/scripts/fuzz.mts:32:11)
+    at <anonymous> (/tmp/ev/scripts/fuzz.mts:38:13)
+
+Node.js v24.21.0
+v271 seed=12 EXIT=1

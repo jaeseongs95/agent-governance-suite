@@ -1,0 +1,17 @@
+broker:sourceReceiptId number                              managed: v53=false v271=null
+broker:sourceReceiptId null                                managed: v53=false v271=null
+broker:sourceReceiptId object                              managed: v53=false v271=null
+broker:sourceReceiptId array                               managed: v53=false v271=null
+broker:sourceReceiptId missing                             managed: v53=false v271=null
+broker:control valid (real clock)                          managed: v53=true v271=null
+ttl:now=expiresAt-1ms (presence lease lapsed)              mainRowAfter: v53="observed" v271="unknown" | postReserveDispatch: v53=true v271=false
+rowttl:row expires_at exact                                mainRowAfter: v53="observed" v271="unknown" | postReserveDispatch: v53=true v271=false
+rowttl:row expires_at+1ms                                  mainRowAfter: v53="observed" v271="unknown" | postReserveDispatch: v53=true v271=false
+gen:new instance (new generation)                          mainRowAfter: v53="observed" v271="unknown" | postReserveDispatch: v53=true v271=false
+gen:same instance restarted (new birth_generation)         mainRowAfter: v53="observed" v271="unknown" | postReserveDispatch: v53=true v271=false
+gen:transport differs (codex-deferred)                     mainRowAfter: v53="observed" v271="unknown"
+gen:presence lease lapsed (unreachable, same gen)          mainRowAfter: v53="observed" v271="unknown" | postReserveDispatch: v53=true v271=false
+gen:presence ended (same gen)                              mainRowAfter: v53="observed" v271="unknown"
+gen:no presence row                                        mainRowAfter: v53="observed" v271="unknown"
+mixed:current + legacy already consumed                    mainRowAfter: v53="observed" v271="unknown" | postReserveDispatch: v53=true v271=false
+mixed:current + legacy expired                             mainRowAfter: v53="observed" v271="unknown" | postReserveDispatch: v53=true v271=false

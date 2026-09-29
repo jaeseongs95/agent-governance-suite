@@ -1,0 +1,3 @@
+const fs=require("fs"); const load=f=>Object.fromEntries(fs.readFileSync(f,"utf8").trim().split("\n").map(l=>JSON.parse(l)).map(r=>[r.id,r]));
+const a=load(process.argv[2]), b=load(process.argv[3]); const k=["verdict","recognized","managed","messagesReturned","newClaims","newWakeRows","mainRowAfter","lateObservedSet","postReserveDispatch","error"];
+for (const id of Object.keys(a)) { const x=a[id], y=b[id]; if(!y){console.log("MISSING in b:",id);continue;} const d=k.filter(f=>JSON.stringify(x[f])!==JSON.stringify(y[f])); if(d.length) console.log(id.padEnd(58), d.map(f=>`${f}: v53=${JSON.stringify(x[f])} v271=${JSON.stringify(y[f])}`).join(" | ")); }

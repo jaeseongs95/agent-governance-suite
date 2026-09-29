@@ -1,0 +1,143 @@
+## v271  2026-09-28T07:27:39Z
+CASE control-root
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:39.362Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:f9979a0891ea session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:28672:b6825921c01b trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","recognized":true,"messages":1,"managed":true}
+  files-after : session-messages.sqlite3:81920:f607ffd5bca2 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:98d2f7938b5b trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"observed","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:39.362Z","consumed_at":"2026-09-28T07:27:39.372Z","observed_at":"2026-09-28T07:27:39.372Z","late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":"2026-09-28T07:27:39.372Z","delivery_attempts":1,"acknowledged_at":null}]}
+CASE control-nobody
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:40.207Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:0277fc79f718 session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:28672:2ace7d903687 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","recognized":true,"messages":1,"managed":true}
+  files-after : session-messages.sqlite3:81920:e83e395df3bb session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:41944b8c21b3 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"observed","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:40.207Z","consumed_at":"2026-09-28T07:27:40.217Z","observed_at":"2026-09-28T07:27:40.217Z","late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":"2026-09-28T07:27:40.217Z","delivery_attempts":1,"acknowledged_at":null}]}
+CASE missing-db
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:41.261Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:- session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:b9afa67f2122 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","recognized":false,"messages":0,"managed":false}
+  files-after : session-messages.sqlite3:81920:0380ed679dc2 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:1071ca359a63 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[],"msgs":[]}
+/tmp/ev/scripts/storage-driver.sh: line 10: cd: /tmp/j1-storage-v271/missing-dir: No such file or directory
+CASE missing-dir
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:42.146Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: 
+  claim    : {"phase":"claim","recognized":false,"messages":0,"managed":false}
+  files-after : session-messages.sqlite3:81920:0380ed679dc2 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:- trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[],"msgs":[]}
+CASE ro-dir-nobody
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:43.049Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:22300c0718cf session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:28672:63402becdbcc trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","error":"INVALID_INPUT  Cannot initialize the trust database."}
+  files-after : session-messages.sqlite3:81920:22300c0718cf session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:28672:63402becdbcc trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:43.049Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+CASE ro-file-nobody
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:43.856Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:8a7cb6de1042 session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:28672:b83c7f3a26ef trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","error":"ERR_SQLITE_ERROR 8 attempt to write a readonly database"}
+  files-after : session-messages.sqlite3:81920:8a7cb6de1042 session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:28672:ce3fa7d44c6e trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:43.856Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+CASE ro-trust-nobody
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:44.696Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:01c763480c1e session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:28672:9c3f7182a619 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","error":"INVALID_INPUT  Cannot initialize the trust database."}
+  files-after : session-messages.sqlite3:81920:01c763480c1e session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:9c3f7182a619 trust.sqlite3-wal:0:e3b0c44298fc trust.sqlite3-shm:32768 
+  post-dump: {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:44.696Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+CASE lock-session-exclusive
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:45.519Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:88539b2458de session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:28672:e20cbab3e33b trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"open","error":"ERR_SQLITE_ERROR 5 database is locked"}
+  files-after : session-messages.sqlite3:81920:88539b2458de session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:28672:e20cbab3e33b trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:45.519Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+CASE lock-trust-exclusive
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:54.969Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:8c4f443780a9 session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:28672:dac2b8b06d7a trust.sqlite3-wal:0:e3b0c44298fc trust.sqlite3-shm:32768 
+  claim    : {"phase":"claim","error":"INVALID_INPUT  Cannot initialize the trust database."}
+  files-after : session-messages.sqlite3:81920:8c4f443780a9 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:dac2b8b06d7a trust.sqlite3-wal:0:e3b0c44298fc trust.sqlite3-shm:32768 
+  post-dump: {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:27:54.969Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+CASE shm-garbage
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:04.446Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:e3c99726b9a6 session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:28672:c1e2199a9382 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","recognized":true,"messages":1,"managed":true}
+  files-after : session-messages.sqlite3:81920:2f359e571eb8 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:77aec626f29b trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"observed","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:04.446Z","consumed_at":"2026-09-28T07:28:04.456Z","observed_at":"2026-09-28T07:28:04.456Z","late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":"2026-09-28T07:28:04.456Z","delivery_attempts":1,"acknowledged_at":null}]}
+CASE wal-garbage-after-close
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:05.348Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:723fae2422ba session-messages.sqlite3-wal:8192:a480b2936feb session-messages.sqlite3-shm:32768 trust.sqlite3:28672:59978bf761b6 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","recognized":true,"messages":1,"managed":true}
+  files-after : session-messages.sqlite3:81920:f24acafc0118 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:a5f1a0f1051c trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"observed","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:05.348Z","consumed_at":"2026-09-28T07:28:05.358Z","observed_at":"2026-09-28T07:28:05.358Z","late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":"2026-09-28T07:28:05.358Z","delivery_attempts":1,"acknowledged_at":null}]}
+CASE schema-drop-wake
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:06.170Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:a7611c30a6ed session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:c82829029d11 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","recognized":false,"messages":0,"managed":false}
+  files-after : session-messages.sqlite3:81920:364836bfc8a9 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:61c575a96061 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+CASE schema-msgs-rebuilt-missing-claim_until
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:07.060Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:e826211678f1 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:54e552f08cdd trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"open","error":"ERR_SQLITE_ERROR 1 no such column: claim_until"}
+  files-after : session-messages.sqlite3:81920:e826211678f1 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:54e552f08cdd trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:07.060Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+CASE schema-wake-update-abort
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:07.930Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:7dfcde098ec8 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:bbdd4dd33bfb trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","error":"ERR_SQLITE_ERROR 1811 j1 injected update failure"}
+  files-after : session-messages.sqlite3:81920:7dfcde098ec8 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:178dc04e7430 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:07.930Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+CASE schema-msgs-update-abort
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:08.788Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:4687af6e6cd2 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:e1e4ef2935cf trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","error":"ERR_SQLITE_ERROR 1811 j1 injected claim failure"}
+  files-after : session-messages.sqlite3:81920:4687af6e6cd2 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:1f432074eff8 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:08.788Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+CASE garbage-db
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:09.687Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:16384:a9fdd39e1ff9 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:ba91c10eefe5 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"open","error":"ERR_SQLITE_ERROR 26 file is not a database"}
+  files-after : session-messages.sqlite3:16384:a9fdd39e1ff9 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:ba91c10eefe5 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"dumpError":"file is not a database"}
+CASE trust-missing
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:10.550Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:12623fae04a4 session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:- trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","recognized":false,"messages":0,"managed":false}
+  files-after : session-messages.sqlite3:81920:12623fae04a4 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:- trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:10.550Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+    crash-wal-before: 168952
+CASE crash-noop
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:11.512Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:4096:97e8d54f8a72 session-messages.sqlite3-wal:168952:d556a0b906b0 session-messages.sqlite3-shm:32768 trust.sqlite3:28672:a0916db3aeb3 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","recognized":true,"messages":1,"managed":true}
+  files-after : session-messages.sqlite3:81920:8ffd8d81c034 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:cb19a9aacb9d trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"observed","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:11.512Z","consumed_at":"2026-09-28T07:28:11.522Z","observed_at":"2026-09-28T07:28:11.522Z","late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":"2026-09-28T07:28:11.522Z","delivery_attempts":1,"acknowledged_at":null}]}
+CASE crash-delete-wal
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:12.369Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:4096:97e8d54f8a72 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:1a0366694cdf trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","recognized":false,"messages":0,"managed":false}
+  files-after : session-messages.sqlite3:81920:0380ed679dc2 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:e5a4240943b6 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[],"msgs":[]}
+CASE crash-corrupt-wal-tail
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:13.165Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:4096:97e8d54f8a72 session-messages.sqlite3-wal:168952:85b03c537ca7 session-messages.sqlite3-shm:- trust.sqlite3:28672:4009ff0f02b0 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","recognized":true,"messages":1,"managed":true}
+  files-after : session-messages.sqlite3:81920:f25f766656ad session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:c4f7789b2535 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"observed","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:13.165Z","consumed_at":"2026-09-28T07:28:13.175Z","observed_at":"2026-09-28T07:28:13.175Z","late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":"2026-09-28T07:28:13.175Z","delivery_attempts":1,"acknowledged_at":null}]}
+CASE crash-corrupt-shm
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:13.988Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:4096:97e8d54f8a72 session-messages.sqlite3-wal:168952:8f9e9fb6e835 session-messages.sqlite3-shm:32768 trust.sqlite3:28672:b0c578dc2bfc trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","recognized":true,"messages":1,"managed":true}
+  files-after : session-messages.sqlite3:81920:88cffb07a422 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:094aa42ef098 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"observed","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:13.988Z","consumed_at":"2026-09-28T07:28:13.998Z","observed_at":"2026-09-28T07:28:13.998Z","late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":"2026-09-28T07:28:13.998Z","delivery_attempts":1,"acknowledged_at":null}]}
+    df: tmpfs                384   384         0 100% /tmp/j1-tmpfs-v271
+CASE diskfull-session
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:14.818Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:105a9a50277d session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:- trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","error":"ERR_SQLITE_ERROR 1 cannot rollback - no transaction is active"}
+  files-after : session-messages.sqlite3:81920:105a9a50277d session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:- trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  post-dump: {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:14.818Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+    df: tmpfs                384   384         0 100% /tmp/j1-tmpfs-v271
+CASE diskfull-both
+  pre-dump : {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:15.678Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}
+  files-before: session-messages.sqlite3:81920:69805ac1c017 session-messages.sqlite3-wal:0:e3b0c44298fc session-messages.sqlite3-shm:32768 trust.sqlite3:28672:682e6555a508 trust.sqlite3-wal:- trust.sqlite3-shm:- 
+  claim    : {"phase":"claim","error":"INVALID_INPUT  Cannot initialize the trust database."}
+  files-after : session-messages.sqlite3:81920:69805ac1c017 session-messages.sqlite3-wal:- session-messages.sqlite3-shm:- trust.sqlite3:28672:682e6555a508 trust.sqlite3-wal:0:e3b0c44298fc trust.sqlite3-shm:3 
+  post-dump: {"wake":[{"state":"unknown","instance_id":"inst-1","birth_generation":"2026-09-28T07:28:15.678Z","consumed_at":null,"observed_at":null,"late_observed_at":null}],"msgs":[{"message_id":"storage-body-1","claimed_at":null,"delivery_attempts":0,"acknowledged_at":null}]}

@@ -1,0 +1,6 @@
+16-fuzz-v53-seed11.jsonl n=300 recognized=19 claims>0=19 wakeChanged=51 wakeChanged&!rec=32 verifies=51 errors=0
+16-fuzz-v53-seed12.jsonl n=300 recognized=11 claims>0=11 wakeChanged=48 wakeChanged&!rec=37 verifies=49 errors=0
+16-fuzz-v53-seed13.jsonl n=300 recognized=13 claims>0=13 wakeChanged=43 wakeChanged&!rec=30 verifies=46 errors=0
+16-fuzz-v271-seed11.jsonl n=300 recognized=19 claims>0=19 wakeChanged=51 wakeChanged&!rec=32 verifies=51 errors=0
+16-fuzz-v271-seed12.jsonl n=300 recognized=11 claims>0=11 wakeChanged=48 wakeChanged&!rec=37 verifies=49 errors=0
+16-fuzz-v271-seed13.jsonl n=300 recognized=13 claims>0=13 wakeChanged=43 wakeChanged&!rec=30 verifies=46 errors=0

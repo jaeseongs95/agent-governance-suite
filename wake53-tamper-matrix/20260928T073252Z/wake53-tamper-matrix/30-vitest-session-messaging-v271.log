@@ -1,0 +1,10 @@
+
+ RUN  v5.0.0 /tmp/v271
+
+
+ Test Files  6 passed | 1 skipped (7)
+      Tests  143 passed | 1 skipped (144)
+   Start at  07:30:23
+   Duration  16.11s (tests 92%, transform 6%, import 2%)
+
+EXIT=0

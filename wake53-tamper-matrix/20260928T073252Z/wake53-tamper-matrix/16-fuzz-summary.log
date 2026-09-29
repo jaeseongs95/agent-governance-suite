@@ -1,0 +1,12 @@
+SEED=12 N=300 violations=0 ms=15933
+SEED=11 N=300 violations=0 ms=15979
+v271 seed=12 EXIT=0
+v53 seed=11 EXIT=0
+SEED=12 N=300 violations=0 ms=16081
+v53 seed=12 EXIT=0
+SEED=11 N=300 violations=0 ms=16000
+v271 seed=11 EXIT=0
+SEED=13 N=300 violations=0 ms=16154
+SEED=13 N=300 violations=0 ms=16115
+v271 seed=13 EXIT=0
+v53 seed=13 EXIT=0

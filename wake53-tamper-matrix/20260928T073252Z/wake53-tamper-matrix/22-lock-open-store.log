@@ -1,0 +1,4 @@
+v53 session: {"error":"ERR_SQLITE_ERROR 5 database is locked","elapsedMs":5027,"post":{"wake":[{"state":"unknown","late_observed_at":null}],"msgs":[{"claimed_at":null}]}}
+v53 trust: {"error":"INVALID_INPUT  Cannot initialize the trust database.","elapsedMs":5017,"post":{"wake":[{"state":"unknown","late_observed_at":null}],"msgs":[{"claimed_at":null}]}}
+v271 session: {"error":"ERR_SQLITE_ERROR 5 database is locked","elapsedMs":5013,"post":{"wake":[{"state":"unknown","late_observed_at":null}],"msgs":[{"claimed_at":null}]}}
+v271 trust: {"error":"INVALID_INPUT  Cannot initialize the trust database.","elapsedMs":5022,"post":{"wake":[{"state":"unknown","late_observed_at":null}],"msgs":[{"claimed_at":null}]}}

@@ -1,0 +1,108 @@
+diff --git a/docs/session-message-lifecycle.md b/docs/session-message-lifecycle.md
+index 8736fff..9fda112 100644
+--- a/docs/session-message-lifecycle.md
++++ b/docs/session-message-lifecycle.md
+@@ -67,8 +67,8 @@ stateDiagram-v2
+     started --> submitted: adapter 제출 응답
+     started --> unknown: 응답 유실·timeout·crash·불명확 결과
+     started --> reserved: 확실한 무제출 / 영속 backoff
+-    submitted --> observed: 유효한 실제 hook 관측과 원자 claim
+-    unknown --> observed: 유효한 실제 hook 관측과 원자 claim
++    submitted --> observed: 검증된 실제 hook 도착 / 현재 세대만 원자 claim
++    unknown --> observed: 검증된 실제 hook 도착 / 현재 세대만 원자 claim
+     observed --> observed: 늦은 결과·재소비 거절
+ ```
+ 
+@@ -82,9 +82,9 @@ submitted는 host의 처리 ACK가 아니다. started 이후 불확실한 효과
+ 
+ receipt는 `authorityEffect: none`이다. 이 검사는 협력하는 로컬 hook 경로의 liveness provenance를 결속한다. 같은 OS 사용자가 코드를 실행하거나 source key를 변조할 수 없다는 보장, 사용자 승인·신원·업무 완료·W06 권위 채널 자격을 만들지 않는다. host payload에 instanceId가 없다는 한계를 숨기지 않고 nonce의 영속 결속과 현재 presence를 대조한다.
+ 
+-관측과 본문 claim은 하나의 transaction이며 batch/response budget 오류가 나면 둘 다 rollback한다. nonce는 한 번만 관측되고, 한 알림이 해당 시점의 claimable batch를 전달한다. batch 밖 본문과 ACK가 유실된 본문은 기존 claim lease 규칙에 따라 안전한 boundary에서 전달할 수 있다. 메시지 전달 자체를 exactly-once 업무 실행으로 확대하지 않는다.
++현재 세대의 관측과 본문 claim은 하나의 transaction이며 batch/response budget 오류가 나면 둘 다 rollback한다. nonce는 한 번만 관측되고, 현재 세대의 알림이 해당 시점의 claimable batch를 전달한다. Codex의 현재 세대 managed wake가 검증되어 `recognized: true`이고 원자 claim 결과가 비어 있으면, hook은 `UserPromptSubmit`의 `decision: block`으로 해당 marker prompt를 모델 요청 전에 중단한다. 내부 응답의 `managed` 값은 검증된 `WakeAttempt` binding의 존재만 나타내며 새 권한이나 host queue 제거 영수증이 아니다. 본문이 있으면 기존 peer envelope를 전달한다. legacy, 이미 관측한 중복, 옛 세대·만료 marker, 미등록 nonce, 잘못된 receipt, 일반 입력과 marker가 섞인 prompt, broker 오류는 이 차단 조건에 들어가지 않는다. 차단하지 않은 입력은 기존 fail-open 처리를 따르며, 검증된 옛 도착의 종료는 다음 문단의 별도 규칙을 적용한다. 지원 의미는 [공식 Codex Hooks 문서](https://learn.chatgpt.com/docs/hooks#userpromptsubmit)를 따른다. `Stop`의 같은 decision은 continuation을 뜻하므로 이 처리에 사용하지 않는다. batch 밖 본문과 ACK가 유실된 본문은 기존 claim lease 규칙에 따라 안전한 boundary에서 전달할 수 있다. 메시지 전달 자체를 exactly-once 업무 실행으로 확대하지 않는다.
+ 
+-만료 또는 옛 generation marker는 해당 행의 `lateObservedAt`만 기록하며 새 본문 claim이나 현재 fence 해제를 허용하지 않는다. 불확실한 fence는 그대로 unknown이다. 관측 기한이 지난 상태는 `observation-overdue`로 표시한다. `wake-status`와 메시지 status의 `wake` diagnostic에 상태·generation·attempt·주입 만료·재시도 시각·관측 시각을 표시하며 본문이나 nonce는 포함하지 않는다.
++만료 또는 옛 generation marker도 서명·대상·관측 digest·receipt TTL과 전체 nonce 검증을 통과한 실제 hook 도착이면 해당 managed attempt를 `observed`로 종료한다. `observedAt`, `consumed_at`과 `lateObservedAt`을 저장하지만 `recognized: false`, 빈 messages와 binding을 반환하므로 새 본문 claim, 현재 세대의 resume 관측이나 Codex prompt 차단을 허용하지 않는다. 이후 새 pending의 wake는 현재 presence·relay·claimable 검사를 거쳐 별도로 reserve/start한다. 옛 marker의 재소비나 늦은 outcome은 새 attempt를 바꾸지 못한다. 미등록 nonce가 섞인 batch, 잘못된 receipt·대상, 일반 입력이 섞인 prompt는 종료 근거가 아니며, 실제 도착이 없는 unknown은 ACK·세대 교체·lease·TTL만으로 해제하지 않는다. 관측 기한이 지난 미확정 상태는 `observation-overdue`로 표시한다. `wake-status`와 메시지 status의 `wake` diagnostic에 상태·generation·attempt·주입 만료·재시도 시각·관측 시각을 표시하며 본문이나 nonce는 포함하지 않는다.
+ 
+ ### capability와 이관
+ 
+@@ -100,6 +100,6 @@ receipt는 `authorityEffect: none`이다. 이 검사는 협력하는 로컬 hook
+ 
+ ### 보장과 남은 조건
+ 
+-start 이후 본문 claim과 외부 enqueue 사이 경합에서는 잔여 알림 최대 1개가 남을 수 있다. host가 submitted 또는 unknown marker를 끝내 처리하지 않으면 queue 관측·멱등 지원 없이 추가 누적 억제와 idle 자동 재깨움을 동시에 보장할 수 없다. 이 기능은 누적 억제를 택한다. nonce TTL은 주입 유효기간이고 메시지 TTL은 본문 전송 제외 기준이며 어느 TTL도 host queued marker 제거 증거가 아니다. idle liveness는 현재 generation의 유효한 hook 도착에 조건부다. 옛/만료 관측 뒤에도 남은 unknown은 이 한계로 드러낸다.
++start 이후 본문 claim과 외부 enqueue 사이 경합에서는 host queue에 잔여 marker 최대 1개가 남을 수 있다. 현재 세대의 검증된 managed marker가 hook에 도착했을 때 전달할 본문이 없으면 앞의 prompt 차단으로 불필요한 모델 턴을 막는다. 이 처리는 제출된 queue 항목을 삭제·취소하지 않으며, receipt나 generation 검증이 거절된 입력까지 차단하지 않는다. 실행 중 여부를 추정하는 새 boolean·turn tracker·TTL은 추가하지 않는다. 제출 전에는 기존 reserve/start의 claimable 재검사로 본문이 이미 처리된 알림을 억제하고, idle의 미처리 본문은 기존 wake 경로를 유지한다. host가 submitted 또는 unknown marker를 끝내 처리하지 않으면 queue 관측·멱등 지원 없이 추가 누적 억제와 idle 자동 재깨움을 동시에 보장할 수 없다. 이 기능은 누적 억제를 택한다. nonce TTL은 주입 유효기간이고 메시지 TTL은 본문 전송 제외 기준이며 어느 TTL도 host queued marker 제거 증거가 아니다. 세대 교체 뒤 실제 옛 도착이 검증되면 이전 알림은 종료되지만 새 본문은 현재 세대의 별도 wake 관측에 조건부로 전달된다. 실제 도착 근거가 없는 unknown은 남은 한계로 드러낸다.
+ 
+ 독립 process fixture와 번들 검사는 실제 host 설치·wake 관측을 대신하지 않는다. 실제 설치·양 host 실측은 별도 W07/출하 검증이며 로컬 PASS로 승격하지 않는다.
+diff --git a/mcp-server/src/session-message-broker.ts b/mcp-server/src/session-message-broker.ts
+index 61735af..7c1cba7 100644
+--- a/mcp-server/src/session-message-broker.ts
++++ b/mcp-server/src/session-message-broker.ts
+@@ -268,7 +268,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
+         }) && presence.state === "online" && presence.instanceId === binding.instanceId) binding.wakeObservedAt = Date.now();
+         for (const key of keys) runtime.wakes.delete(key);
+       }
+-      return { recognized: result.recognized, messages: result.messages };
++      return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null };
+     }
+     case "observe-native-input": {
+       peerWaitRuntime(store).policy.reset(identity(payload.target));
+diff --git a/mcp-server/src/session-message-hook.ts b/mcp-server/src/session-message-hook.ts
+index 0344669..34e9d47 100644
+--- a/mcp-server/src/session-message-hook.ts
++++ b/mcp-server/src/session-message-hook.ts
+@@ -196,11 +196,16 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
+   let messages: SessionMessage[] = [];
+   if (observation.kind === "user-input") {
+     if (observation.wakeOnly && observation.wakeCandidates?.length && supportsInjection(profile.capabilities, "peer-wake")) {
+-      const result = await sessionMessageRequest<{ recognized: boolean; messages: SessionMessage[] }>("claim-host-wake", {
++      const result = await sessionMessageRequest<{ recognized: boolean; messages: SessionMessage[]; managed: boolean }>("claim-host-wake", {
+         ...limits,
+         observation,
+         sourceReceiptId: recordWakeHookObservation(observation),
+       }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
++      // UserPromptSubmit blocks before a model request. An empty/unavailable
++      // claim alone cannot discard input: require a verified current managed wake.
++      if (host === "codex" && result.recognized && result.managed === true && result.messages.length === 0) {
++        return { decision: "block", reason: "No peer message is available for this verified wake notification." };
++      }
+       if (result.recognized) messages = result.messages;
+       else await sessionMessageRequest("observe-native-input", { target }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
+     } else if (!observation.wakeOnly) {
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index 290a762..243cbb0 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -803,15 +803,16 @@ export class SessionMessageStore {
+       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
+     if (!row) return null;
+     const active = ["reserved", "started", "submitted", "unknown"].includes(String(row.state));
+-    return { state: row.state, observation: row.late_observed_at !== null ? "unknown" : active && String(row.expires_at) <= iso(nowMs) ? "observation-overdue"
+-      : row.state === "observed" ? "observed" : active ? "pending" : "not-submitted",
++    return { state: row.state, observation: row.state === "observed" ? "observed"
++      : row.late_observed_at !== null ? "unknown" : active && String(row.expires_at) <= iso(nowMs) ? "observation-overdue"
++      : active ? "pending" : "not-submitted",
+       deliveryState: row.state === "started" || row.state === "unknown" ? "unknown" : row.state,
+       instanceId: row.instance_id, generation: row.birth_generation, attemptId: row.attempt_id,
+       dispatchEpoch: row.dispatch_epoch, retryNotBefore: row.retry_not_before, expiresAt: row.expires_at,
+       observedAt: row.observed_at, lateObservedAt: row.late_observed_at };
+   }
+ 
+-  /** Hook observation and body claim are one transaction; generic claim/ACK cannot observe managed bells. */
++  /** Verified arrival retires its attempt; only current bindings may claim bodies in the same transaction. */
+   claimHostWake(target: SessionIdentity, observation: InputObservation, receiptId: string, reader: WakeHookObservationReader | undefined, nowMs = Date.now(), limits: ClaimLimits = {}): {
+     recognized: boolean; messages: SessionMessage[]; binding: WakeAttempt | null;
+   } {
+@@ -833,9 +834,11 @@ export class SessionMessageStore {
+           && row!.transport === presence.transport && presence.state === "online"
+           && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row!.expires_at) > iso(nowMs));
+       if (!valid) {
++        // Arrival is proven, but it cannot authorize this generation's body claim or resume evidence.
+         for (const row of rows) if (row!.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
+-          SET late_observed_at = coalesce(late_observed_at, ?), state = 'unknown' WHERE nonce_digest = ?
+-          AND state IN ('started', 'submitted', 'unknown')`).run(iso(nowMs), String(row!.nonce_digest));
++          SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?
++          WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`)
++          .run(iso(nowMs), iso(nowMs), iso(nowMs), String(row!.nonce_digest));
+         this.database.exec("COMMIT"); return rejected;
+       }
+       const messages = this.claimLocked(target, nowMs, limits);
