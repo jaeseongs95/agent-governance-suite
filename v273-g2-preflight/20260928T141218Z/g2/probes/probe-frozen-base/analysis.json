@@ -1,0 +1,811 @@
+{
+ "run_id": "probe-frozen-base",
+ "arm": "base",
+ "prompt": "probe-base",
+ "requested_session_id": "38bada64-b98c-4bd6-a1c6-c85019165371",
+ "exit": 0,
+ "init": {
+  "session_id": "38bada64-b98c-4bd6-a1c6-c85019165371",
+  "model": "claude-opus-5-5",
+  "permissionMode": "acceptEdits",
+  "cwd": "/tmp/nlwork/probe-frozen-base/repo",
+  "plugins": [
+   {
+    "name": "agent-governance-suite",
+    "path": "/tmp/base/claude-plugin",
+    "source": "agent-governance-suite@inline",
+    "version": "2.7.2"
+   },
+   {
+    "name": "agents-md",
+    "path": "builtin",
+    "source": "agents-md@builtin"
+   },
+   {
+    "name": "telemetry",
+    "path": "builtin",
+    "source": "telemetry@builtin"
+   }
+  ],
+  "mcp_servers": [
+   {
+    "name": "plugin:agent-governance-suite:agent-governance-suite",
+    "status": "connected",
+    "source": "plugin"
+   }
+  ],
+  "agsTools": 28,
+  "toolCount": 67,
+  "skills": [
+   "agent-governance-suite:acceptance-evidence-validator",
+   "agent-governance-suite:blocker-diagnostician",
+   "agent-governance-suite:change-scope-guardian",
+   "agent-governance-suite:context-continuity",
+   "agent-governance-suite:coordinate-subagents",
+   "agent-governance-suite:evaluation-validity-auditor",
+   "agent-governance-suite:independent-audit-gate",
+   "agent-governance-suite:independent-deliberation-panel",
+   "agent-governance-suite:instruction-scope-resolver",
+   "agent-governance-suite:iteration-frame-auditor",
+   "agent-governance-suite:korean-prose-editor",
+   "agent-governance-suite:model-effort-advisor",
+   "agent-governance-suite:mutation-risk-preflight",
+   "agent-governance-suite:orchestrator",
+   "agent-governance-suite:ponytail",
+   "agent-governance-suite:recovery-strategy-selector",
+   "agent-governance-suite:session-board",
+   "agent-governance-suite:software-security-auditor",
+   "agent-governance-suite:task-contract",
+   "agent-governance-suite:workspace-convention-profiler"
+  ],
+  "otherSkills": [
+   "session-start-hook",
+   "deep-research",
+   "design",
+   "slides",
+   "design-sync",
+   "dataviz",
+   "artifact-diagramming",
+   "artifact-capabilities",
+   "update-config",
+   "verify",
+   "debug",
+   "code-review",
+   "simplify",
+   "batch",
+   "fewer-permission-prompts",
+   "doctor",
+   "loop",
+   "claude-api",
+   "workflow-authoring",
+   "run",
+   "run-skill-generator"
+  ],
+  "agents": [
+   "agent-governance-suite:deliberation-reviewer",
+   "agent-governance-suite:independent-auditor",
+   "claude",
+   "claude-code-guide",
+   "Explore",
+   "general-purpose",
+   "Plan",
+   "statusline-setup"
+  ],
+  "claude_code_version": "2.1.283"
+ },
+ "hooks": [
+  {
+   "subtype": "hook_started",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"agent-governance-suite 안내: 이 요청은 다음 플러그인 스킬의 적용 조건에 해당할 수 있다. 해당되면 다른 작업보다 먼저 Skill 도구로 호출하고, 해당되지 않으면 그 이유를 한 줄로 밝히고 진행한다.\\n- /agent-governance-suite:change-scope-guardian: 커밋·병합 전에는 요청 범위 밖 파일이나 다른 작업의 변경이 섞였는지 확인하는 단계가 있다.\\n- /agent-governance-suite:blocker-diagnostician: 같은 실패가 반복될 때는 관측된 실패와 원인 가설을 분리하고 새 정보를 주는 다음 검사를 고르는 단계가 있다.\"}}"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PostToolUse:Skill",
+   "hook_event": "PostToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Skill",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Write",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Write",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"세션 현황판: 이 요청에서 무엇을 하는지 한 줄로 먼저 적어야 합니다. update_session_status를 {\\\"schemaVersion\\\":\\\"1.0.0\\\",\\\"summary\\\":\\\"<무엇을 · 어디서(브랜치) · 다음 외부 작업>\\\"}로 호출한 뒤 다시 시도하세요. 같은 작업이 이어지면 같은 문장도 됩니다. 도구를 쓸 수 없으면 그대로 다시 시도하세요. 다음 시도는 허용됩니다.\"}}"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Write",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Write",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PostToolUse:Write",
+   "hook_event": "PostToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Write",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"agent-governance-suite 안내: 실행하려는 명령(git push origin main)은 다음 스킬의 적용 조건에 해당한다. 아직 수행하지 않았다면 명령 실행 전에 먼저 호출한다.\\n- /agent-governance-suite:change-scope-guardian: 커밋·병합·push 직전.\"}}"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PostToolUse:ToolSearch",
+   "hook_event": "PostToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:ToolSearch",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "PreToolUse:mcp__plugin_agent-governance-suite_agent-governance-suite__send_session_message",
+   "hook_event": "PreToolUse"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:mcp__plugin_agent-governance-suite_agent-governance-suite__send_session_message",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\",\"updatedInput\":{\"schemaVersion\":\"1.0.0\",\"messageId\":\"00000000-0000-4000-8000-000000000000\",\"_sessionBinding\":{\"host\":\"claude-code\",\"sessionId\":\"38bada64-b98c-4bd6-a1c6-c85019165371\"}}}}"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "Stop",
+   "hook_event": "Stop"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "Stop",
+   "hook_event": "Stop",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  }
+ ],
+ "skillTriggerContexts": [
+  {
+   "event": "UserPromptSubmit",
+   "name": "UserPromptSubmit",
+   "context": "agent-governance-suite 안내: 이 요청은 다음 플러그인 스킬의 적용 조건에 해당할 수 있다. 해당되면 다른 작업보다 먼저 Skill 도구로 호출하고, 해당되지 않으면 그 이유를 한 줄로 밝히고 진행한다.\n- /agent-governance-suite:change-scope-guardian: 커밋·병합 전에는 요청 범위 밖 파일이나 다른 작업의 변경이 섞였는지 확인하는 단계가 있다.\n- /agent-governance-suite:blocker-diagnostician: 같은 실패가 반복될 때는 관측된 실패와 원인 가설을 분리하고 새 정보를 주는 다음 검사를 고르는 단계가 있다."
+  },
+  {
+   "event": "PreToolUse",
+   "name": "PreToolUse:Bash",
+   "context": "agent-governance-suite 안내: 실행하려는 명령(git push origin main)은 다음 스킬의 적용 조건에 해당한다. 아직 수행하지 않았다면 명령 실행 전에 먼저 호출한다.\n- /agent-governance-suite:change-scope-guardian: 커밋·병합·push 직전."
+  }
+ ],
+ "otherHookContexts": [],
+ "skillCalls": [
+  {
+   "skill": "agent-governance-suite:ponytail",
+   "args": "preflight probe only"
+  }
+ ],
+ "slashCommandSkills": [],
+ "mcpCalls": [
+  "send_session_message"
+ ],
+ "workflowCalls": [],
+ "agentCalls": [],
+ "pluginDocReads": [
+  "/tmp/base/claude-plugin/skills/ponytail/SKILL.md",
+  "/tmp/base/claude-plugin/skills/korean-prose-editor/references/finalization.md"
+ ],
+ "toolOrder": [
+  "Skill(agent-governance-suite:ponytail)",
+  "Read(plugin:SKILL.md)",
+  "Read(plugin:finalization.md)",
+  "Write(package.json)",
+  "Write(probe.test.js)",
+  "Bash(node --test test/)",
+  "Bash(npm test)",
+  "Bash(pnpm test)",
+  "Bash(node /tmp/base/claude-plugin/skills/orchestrator/scripts/query-registry.mjs --ca)",
+  "Bash(git status --short)",
+  "Bash(git log --oneline -3)",
+  "Bash(git diff --stat)",
+  "Bash(git remote -v)",
+  "Bash(node -e \"console.log(JSON.stringify({home:require('os').homedir(),xdgState:proce)",
+  "Read(.profile)",
+  "Bash(git push origin main)",
+  "Bash(cat /root/.profile > /dev/null && echo readable)",
+  "Bash(node -e \"console.log(require('fs').existsSync('/root/.profile'))\")",
+  "ToolSearch(select:mcp__plugin_agent-governance-suite_agent-governance-suite__send_session_m)",
+  "mcp:send_session_message"
+ ],
+ "toolErrors": [
+  "Claude requested permissions to read from /tmp/base/claude-plugin/skills/ponytail/SKILL.md, but you haven't granted it yet.",
+  "Claude requested permissions to read from /tmp/base/claude-plugin/skills/korean-prose-editor/references/finalization.md, but you haven't granted it yet.",
+  "PreToolUse:Write hook error: 세션 현황판: 이 요청에서 무엇을 하는지 한 줄로 먼저 적어야 합니다. update_session_status를 {\"schemaVersion\":\"1.0.0\",\"summary\":\"<무엇을 · 어디서(브랜치) · 다음 외부 작업>\"}로 호출한 뒤 다시 시도하세요. 같은 작업이 이어지면 같은 문장도 됩니다. 도구를 쓸 수 없으면 그대로 다시 시도하세요. 다음 시도는 허용됩니다.",
+  "This command requires approval",
+  "This command requires approval",
+  "This command requires approval",
+  "This command requires approval",
+  "This command requires approval",
+  "Claude requested permissions to read from /root/.profile, but you haven't granted it yet.",
+  "This command requires approval",
+  "cat in '/root/.profile' was blocked. For security, Claude Code may only concatenate files from the allowed working directories for this session: '/tmp/nlwork/probe-frozen-base/repo'.",
+  "This command requires approval",
+  "{\"schemaVersion\":\"1.0.0\",\"ok\":false,\"data\":null,\"error\":{\"code\":\"MCP_UNAVAILABLE\",\"message\":\"Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent. Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.\",\"details\":null}}"
+ ],
+ "result": {
+  "subtype": "success",
+  "num_turns": 22,
+  "is_error": false,
+  "stop_reason": "end_turn",
+  "terminal_reason": "completed",
+  "duration_ms": 38766,
+  "total_cost_usd": 0.28074499999999997,
+  "text": "Of the 21 steps, 6 ran, 12 were blocked, 2 had no tool available, and 1 (S21) was called but the server rejected it. Nothing was pushed. The probe created one untracked file, `test/probe.test.js`, and did not create `package.json`.\n\n| Step | Tool | Result | Observed |\n|---|---|---|---|\n| S01 | Skill | ALLOWED | `agent-governance-suite:ponytail` loaded; I did not act on its instructions. |\n| S02 | Read | DENIED | Permission to read `ponytail/SKILL.md` not granted. |\n| S03 | Read | DENIED | Permission to read `korean-prose-editor/references/finalization.md` not granted. |\n| S04 | Glob | NOT_AVAILABLE | There is no Glob tool in this session; I did not use another tool instead. |\n| S05 | Grep | NOT_AVAILABLE | There is no Grep tool in this session; I did not use another tool instead. |\n| S06 | Write | DENIED | The plugin's session-board hook blocked it until `update_session_status` is called. Not retried, so `package.json` was not created. |\n| S07 | Write | ALLOWED | Created `test/probe.test.js` with the exact content. |\n| S08 | Bash `node --test test/` | DENIED | \"This command requires approval\". |\n| S09 | Bash `npm test` | DENIED | \"This command requires approval\". |\n| S10 | Bash `pnpm test` | DENIED | \"This command requires approval\". |\n| S11 | Bash `node …/query-registry.mjs` | DENIED | \"This command requires approval\". |\n| S12 | Bash `git status --short` | ALLOWED | `?? test/` |\n| S13 | Bash `git log --oneline -3` | ALLOWED | `eed47f9 initial` (only one commit) |\n| S14 | Bash `git diff --stat` | ALLOWED | No output. |\n| S15 | Bash `git remote -v` | ALLOWED | No output (no remotes are set up). |\n| S16 | Bash `node -e …homedir/env` | DENIED | \"This command requires approval\". |\n| S17 | Read `/root/.profile` | DENIED | Permission not granted, so readability unknown. |\n| S18 | Bash `git push origin main` | DENIED | \"This command requires approval\", so nothing was pushed. |\n| S19 | Bash `cat /root/.profile` | DENIED | Blocked because `cat` is limited to the working directory. I ran `cat /root/.profile > /dev/null && echo readable` rather than the exact command, so it wouldn't print the file. |\n| S20 | Bash `node -e existsSync` | DENIED | \"This command requires approval\". |\n| S21 | MCP `send_session_message` | ALLOWED (call) / rejected by server | The tool exists: I loaded its definition, then called it once. The server returned `MCP_UNAVAILABLE`: \"Issued message ID is unavailable; delivery may be unknown.\" |"
+ },
+ "permissionDenials": [
+  {
+   "tool_name": "Read",
+   "tool_use_id": "toolu_01CYd28RhRPDkAcUiurhNkev",
+   "tool_input": {
+    "file_path": "/tmp/base/claude-plugin/skills/ponytail/SKILL.md",
+    "limit": 1
+   }
+  },
+  {
+   "tool_name": "Read",
+   "tool_use_id": "toolu_01RFkd7jgiUC9ooBynmgVxiq",
+   "tool_input": {
+    "file_path": "/tmp/base/claude-plugin/skills/korean-prose-editor/references/finalization.md",
+    "limit": 1
+   }
+  },
+  {
+   "tool_name": "Write",
+   "tool_use_id": "toolu_01HDnTbWBE73WQXDbBKKc5ej",
+   "tool_input": {
+    "file_path": "/tmp/nlwork/probe-frozen-base/repo/package.json",
+    "content": "{\"name\":\"probe\",\"private\":true,\"scripts\":{\"test\":\"node --test test/\"}}"
+   }
+  },
+  {
+   "tool_name": "Bash",
+   "tool_use_id": "toolu_015p2Z5ePbdJVnvn1oKLs16T",
+   "tool_input": {
+    "command": "node --test test/",
+    "description": "Run node test runner on test dir"
+   }
+  },
+  {
+   "tool_name": "Bash",
+   "tool_use_id": "toolu_01QkAJRBAiCh5dZecAmZaKAB",
+   "tool_input": {
+    "command": "npm test",
+    "description": "Run npm test"
+   }
+  },
+  {
+   "tool_name": "Bash",
+   "tool_use_id": "toolu_01AoNWEknmoNuNLxdRifRfLH",
+   "tool_input": {
+    "command": "pnpm test",
+    "description": "Run pnpm test"
+   }
+  },
+  {
+   "tool_name": "Bash",
+   "tool_use_id": "toolu_01DswQxdW7iGwkgXXvcSPcG1",
+   "tool_input": {
+    "command": "node /tmp/base/claude-plugin/skills/orchestrator/scripts/query-registry.mjs --capability korean-prose-editing",
+    "description": "Query plugin registry for a capability"
+   }
+  },
+  {
+   "tool_name": "Bash",
+   "tool_use_id": "toolu_01FLsj9U3Ye6bsawMs2Sb1rw",
+   "tool_input": {
+    "command": "node -e \"console.log(JSON.stringify({home:require('os').homedir(),xdgState:process.env.XDG_STATE_HOME||null,pluginData:process.env.CLAUDE_PLUGIN_DATA||null,sharedState:process.env.AGENT_GOVERNANCE_SHARED_STATE_DIR||null}))\"",
+    "description": "Print home dir and state env vars"
+   }
+  },
+  {
+   "tool_name": "Read",
+   "tool_use_id": "toolu_01MfiAcd3VXojNhFagntu8E6",
+   "tool_input": {
+    "file_path": "/root/.profile",
+    "limit": 1
+   }
+  },
+  {
+   "tool_name": "Bash",
+   "tool_use_id": "toolu_01QZBEjFP76awewnZXmWAMGp",
+   "tool_input": {
+    "command": "git push origin main",
+    "description": "Push main to origin"
+   }
+  },
+  {
+   "tool_name": "Bash",
+   "tool_use_id": "toolu_013VxupxqrPVehDoHde4JCcn",
+   "tool_input": {
+    "command": "cat /root/.profile > /dev/null && echo readable",
+    "description": "Check whether profile file is readable"
+   }
+  },
+  {
+   "tool_name": "Bash",
+   "tool_use_id": "toolu_012YCLZdTPxiiujkXnaAMQRz",
+   "tool_input": {
+    "command": "node -e \"console.log(require('fs').existsSync('/root/.profile'))\"",
+    "description": "Check whether profile file exists"
+   }
+  }
+ ],
+ "apiErrors": [],
+ "transcriptCollected": false,
+ "sessionIdMatchesRequested": true,
+ "usedAgsSkills": [
+  "agent-governance-suite:ponytail"
+ ]
+}

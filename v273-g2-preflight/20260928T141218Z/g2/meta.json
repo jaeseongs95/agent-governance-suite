@@ -1,0 +1,87 @@
+{
+  "stage": "G2 v2.7.3 preflight (stage 1 only; 0 of 66 measured runs started)",
+  "chief": "ca8e3dc4",
+  "startUtc": "2026-09-28T14:12:18Z",
+  "endUtc": "2026-09-28T14:23:50Z",
+  "input": {
+    "branch": "claude/v273-inputs",
+    "commit": "6b9b2dec480c8fe72ff2b7e0dac9475649c232eb",
+    "file": "G2-v273-input.json",
+    "sha256Expected": "65b84d51a287103d72bc001b669428a2daf6e905164b2fd38d0224dacd30f0a6",
+    "sha256Actual": "65b84d51a287103d72bc001b669428a2daf6e905164b2fd38d0224dacd30f0a6",
+    "bytes": 14345
+  },
+  "fixtureSource": {
+    "branch": "claude/evidence-port272-nl-ab-20260928T073317Z",
+    "commit": "7b7f49acb4e93bdd06ee77f7792140e839c4a9a9",
+    "prefix": "port272-nl-ab/",
+    "verified": "26/26 (11 prompts, 7 fixtures, 8 harness) sha256 and bytes match; prompt/fixture text also matches",
+    "stagedAt": "/tmp/ev/scripts",
+    "stagedTreeDigestBeforeAndAfterProbes": "6691d7d016c0ced32ded304776b7858b52fb357546f7d17e4e5fffac4437ece1 (sha256 of sorted 'sha256sum' list of all files; identical to fixtureSource)"
+  },
+  "arms": {
+    "base": {
+      "sha": "8763cef2b11f2635d6c9af7861b5bffd496e2a30",
+      "tree": "eed08f9675246c8519607f7b945dcd4055a14d92",
+      "treeMatchesInput": true,
+      "archive": "/tmp/base",
+      "plugin": "/tmp/base/claude-plugin",
+      "pluginManifestVersion": "2.7.2"
+    },
+    "candidate": {
+      "sha": "732ba286a68b35a7cbd99aefbea12d11b88f1b8c",
+      "tree": "06d58b258d467214db08943d30e13d3c3e4ef2fe",
+      "treeMatchesInput": true,
+      "archive": "/tmp/cand",
+      "plugin": "/tmp/cand/claude-plugin",
+      "pluginManifestVersion": "2.7.2",
+      "claudePluginDiffVsBase": [
+        "hooks/hooks.json",
+        "hooks/skill-trigger-hook.mjs",
+        "mcp-server/dist/server.mjs",
+        "skills/orchestrator/SKILL.md",
+        "skills/orchestrator/references/entry-details.md",
+        "skills/orchestrator/references/mcp-execution.md"
+      ]
+    }
+  },
+  "node": {
+    "designExpected": "v24.21.0",
+    "optNode24": "v24.21.0",
+    "harnessPath": "/tmp/node-v24.21.0-linux-x64",
+    "method": "symlink -> /opt/node24 (exact version match; no tarball download needed)",
+    "npm": "11.19.0",
+    "pnpm": "11.19.0"
+  },
+  "claude": {
+    "designExpected": "2.1.283 (Claude Code)",
+    "actual": "2.1.283 (Claude Code)",
+    "match": true,
+    "binary": "/opt/node22/bin/claude"
+  },
+  "model": "claude-opus-5-5",
+  "uname": "Linux vm 6.18.44-fc-v42 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "probes": {
+    "probe-frozen-base": "frozen nl-ab.sh, arm base, prompt probe-base (21 steps)",
+    "probe-frozen-cand": "frozen nl-ab.sh, arm cand, prompt probe-cand (21 steps)",
+    "probe-v2-base": "harness-v2 nl-ab-v2.sh, arm base, prompt probe2-base (same 21 steps + S22-S25)",
+    "probe-v2-cand": "harness-v2 nl-ab-v2.sh, arm cand, prompt probe2-cand (same 21 steps + S22-S25)"
+  },
+  "harnessV2Sha256": {
+    "nl-ab-v2.sh": "4c1191e8b4c9c4cf97d68d7c85f343053e00858ac8b06204046e38ecbc79bbfd",
+    "run-one-v2.sh": "82c33d323d59785844468559e45b1a1835e7588bc3f0ea99bc9efd9f5b1bf40f",
+    "driver-v2.sh": "e46bf84ba5f8707b7508426020647257120d72d561821f362235f581d848e61c",
+    "collect-v2.sh": "a0624c729234eef9469ca49added8f3d4c3f32899953a9a0438c9b5ae7812ace",
+    "nl-ab.diff": "d353647eefd7c5398f89c75ed307a41f756397318316c7a54181e32973307433",
+    "run-one.diff": "40939b04328a5081dbf6a9ad778887241f819c728bfaf622edd3e6c34362b6c7",
+    "driver.diff": "30ce592657c42d5b340056479889a1507252957df3781bb15098c4b58dec86f4",
+    "collect.diff": "d2807d62083029fc5050e6f57907372b35b0d2c3494d8a45bf18cdbb7c351660"
+  },
+  "originalHarnessSha256": {
+    "nl-ab.sh": "32e7487a20e89fd0f71e5666b800ae980d95c5888391a6bf9b97f88f6eee25c1",
+    "run-one.sh": "49a45d56d1c18ea300881d6771e03c005d9caa675d78f03eb05612378213867a",
+    "driver.sh (not in the 8 frozen harness entries)": "f0eba780119150408897f5304ba2f5d59bbc8b40846d7c539d891bdee26ff43a",
+    "collect.sh (not in the 8 frozen harness entries)": "8f3055afcbd717976ab4093e545bcb6e247d015c39e29775495e732850e8926c"
+  },
+  "measuredRunsStarted": 0
+}

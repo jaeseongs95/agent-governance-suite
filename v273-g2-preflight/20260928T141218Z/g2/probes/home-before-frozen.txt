@@ -1,0 +1,25 @@
+/root/.agent-governance-suite 4096 2026-09-28T14:12:14.0914835430
+/root/.agent-governance-suite/session-messaging 4096 2026-09-28T14:12:14.1039900290
+/root/.agent-governance-suite/session-messaging/trust.sqlite3 4096 2026-09-28T14:12:14.0994835430
+/root/.agent-governance-suite/session-messaging/trust.sqlite3-shm 32768 2026-09-28T14:12:14.1234835450
+/root/.agent-governance-suite/session-messaging/trust.sqlite3-wal 37112 2026-09-28T14:12:14.1274835450
+/root/.claude/plugins 4096 2026-09-28T14:12:13.7674835240
+/root/.claude/plugins/synced 4096 2026-09-28T14:12:13.8354835280
+/root/.claude/plugins/synced/.bucket-[REDACTED]_[REDACTED] 0 2026-09-28T14:12:13.8354835280
+/root/.claude/plugins/synced/[REDACTED]_[REDACTED] 4096 2026-09-28T14:12:13.7674835240
+/root/.claude/projects 4096 2026-09-28T14:12:13.8314835270
+/root/.claude/projects/-home-user-agent-governance-suite 4096 2026-09-28T14:12:14.8074835850
+/root/.claude/projects/-home-user-agent-governance-suite/[REDACTED] 4096 2026-09-28T14:15:26.9354950060
+/root/.claude/projects/-home-user-agent-governance-suite/[REDACTED].jsonl 619966 2026-09-28T14:15:32.5314953390
+/root/.claude/projects/-home-user-agent-governance-suite/[REDACTED]/ccr-tip.json 89 2026-09-28T14:15:26.9354950060
+/root/.claude/sessions 4096 2026-09-28T14:12:13.6714835180
+/root/.claude/sessions/210.05f1a9a7704e6cec5b40a20c8a3f1c613402026ad559e29b60cfbfc2ffbe0097.key 137 2026-09-28T14:12:13.4474835050
+/root/.claude/sessions/210.json 580 2026-09-28T14:12:14.0034835380
+/root/.local/state/agent-governance-suite 4096 2026-09-28T14:12:14.5822780550
+/root/.local/state/agent-governance-suite/continuity.sqlite3 73728 2026-09-28T14:12:14.5811937830
+/root/.local/state/agent-governance-suite/continuity.sqlite3-shm 32768 2026-09-28T14:12:14.5823014620
+/root/.local/state/agent-governance-suite/continuity.sqlite3-wal 8272 2026-09-28T14:12:14.5823014620
+/root/.local/state/agent-governance-suite/workflows.sqlite3 4096 2026-09-28T14:12:14.0838768470
+/root/.local/state/agent-governance-suite/workflows.sqlite3-shm 32768 2026-09-28T14:12:14.0914835430
+/root/.local/state/agent-governance-suite/workflows.sqlite3-wal 160712 2026-09-28T14:12:14.5823014620
+/root/.claude.json 46401 2026-09-28 14:12:14.978000962 +0000

@@ -1,0 +1,9 @@
+--- /tmp/ev/scripts/driver.sh	2026-09-28 07:33:17.000000000 +0000
++++ driver-v2.sh	2026-09-28 14:18:47.577602140 +0000
+@@ -1,5 +1,5 @@
+ #!/bin/bash
+ # runs order.txt with 4 concurrent workers, starting runs in seeded order
+ cd /tmp/ev/scripts
+-xargs -P 4 -L 1 /tmp/ev/scripts/run-one.sh < order.txt
++xargs -P 4 -L 1 /tmp/ev/scripts-v2/run-one-v2.sh < order.txt
+ echo "$(date -u +%FT%TZ) driver done" >> /tmp/ev/runs/driver-events.log

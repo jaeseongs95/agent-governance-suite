@@ -1,0 +1,14 @@
+--- /tmp/ev/scripts/run-one.sh	2026-09-28 07:33:17.000000000 +0000
++++ run-one-v2.sh	2026-09-28 14:18:47.575117261 +0000
+@@ -1,9 +1,9 @@
+ #!/bin/bash
+-# usage: run-one.sh <seq> <run_id> <arm> <prompt>; retries infra failures (API 429/5xx, no result) up to 3 times with backoff
++# usage: run-one-v2.sh <seq> <run_id> <arm> <prompt>; retries infra failures (API 429/5xx, no result) up to 3 times with backoff
+ SEQ=$1; RID=$2; ARM=$3; PID=$4
+ echo "$(date -u +%FT%TZ) start seq=$SEQ $RID" >> /tmp/ev/runs/driver-events.log
+ for att in 0 1 2 3; do
+-  /tmp/ev/scripts/nl-ab.sh "$RID" "$ARM" "$PID" >> /tmp/ev/runs/driver-events.log 2>&1
++  /tmp/ev/scripts-v2/nl-ab-v2.sh "$RID" "$ARM" "$PID" >> /tmp/ev/runs/driver-events.log 2>&1
+   D=/tmp/ev/runs/$RID
+   infra=$(node -e '
+     const fs=require("fs");const d=process.argv[1];let a={};try{a=JSON.parse(fs.readFileSync(d+"/analysis.json","utf8"))}catch{console.log("no-analysis");process.exit()}

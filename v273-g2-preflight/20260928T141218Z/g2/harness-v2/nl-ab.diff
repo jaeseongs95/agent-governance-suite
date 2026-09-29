@@ -1,0 +1,65 @@
+--- /tmp/ev/scripts/nl-ab.sh	2026-09-28 07:33:17.000000000 +0000
++++ nl-ab-v2.sh	2026-09-28 14:18:42.283506618 +0000
+@@ -1,34 +1,56 @@
+ #!/bin/bash
+-# usage: nl-ab.sh <run_id> <arm:base|cand> <prompt_id>
+-# One nested headless Claude Code run with a fresh session id, isolated cwd and isolated XDG state.
++# usage: nl-ab-v2.sh <run_id> <arm:base|cand> <prompt_id>
++# harness-v2: same as nl-ab.sh, plus (1) one explicit allow/deny list identical for both arms and
++# (2) a disposable HOME, XDG roots, plugin data and shared board/messaging/trust root per run.
+ set -u
+ RUN_ID=$1; ARM=$2; PID=$3
+ export PATH=/tmp/node-v24.21.0-linux-x64/bin:$PATH
++REAL_HOME=$HOME
+ EVD=/tmp/ev/runs/$RUN_ID; mkdir -p "$EVD"
+ WORK=/tmp/nlwork/$RUN_ID; rm -rf "$WORK"; mkdir -p "$WORK"
+ /tmp/ev/scripts/prepare-cwd.sh "$PID" "$WORK/repo" > "$EVD/prepare.log" 2>&1
+ PROMPT=$(cat /tmp/ev/scripts/prompts/$PID.txt)
+ SID=$(cat /proc/sys/kernel/random/uuid)
+ PLUGIN=/tmp/$ARM/claude-plugin
++# v2: disposable roots; CLAUDE_PLUGIN_DATA follows HOME (<HOME>/.claude/plugins/data/...)
++ISO_HOME=$WORK/home; SHARED=$WORK/shared
++mkdir -p "$ISO_HOME" "$SHARED" "$WORK/state" "$WORK/xdg/config" "$WORK/xdg/data" "$WORK/xdg/cache"
++ISOENV=(HOME="$ISO_HOME" XDG_STATE_HOME="$WORK/state" XDG_CONFIG_HOME="$WORK/xdg/config" XDG_DATA_HOME="$WORK/xdg/data" XDG_CACHE_HOME="$WORK/xdg/cache" AGENT_GOVERNANCE_SHARED_STATE_DIR="$SHARED")
+ UNSET="CLAUDE_CODE_SESSION_ID CLAUDE_CODE_REMOTE_SESSION_ID CLAUDECODE CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_TEE_SDK_STDOUT CLAUDE_CODE_SYNC_SESSION_REFS CLAUDE_CODE_SYNC_SKILLS CLAUDE_CODE_POST_FOR_SESSION_INGRESS_V2 CLAUDE_CODE_CHILD_SESSION CLAUDE_PID CLAUDE_CODE_DIAGNOSTICS_FILE CLAUDE_AFTER_LAST_COMPACT CLAUDE_CODE_SESSION_ATTENDED"
++# v2: no inherited extra working dir or pre-set governance state paths
++UNSET="$UNSET CLAUDE_ADDITIONAL_DIRECTORIES AGENT_GOVERNANCE_DB_PATH AGENT_GOVERNANCE_CONTINUITY_DB_PATH AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR AGENT_GOVERNANCE_TRUST_DB_PATH AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH"
+ ENVARGS=(); for v in $UNSET; do ENVARGS+=(-u "$v"); done
+-CMD=(claude -p --session-id "$SID" --plugin-dir "$PLUGIN" --output-format stream-json --verbose --max-turns 20 --model claude-opus-5-5 --permission-mode acceptEdits)
+-# no --allowedTools / --dangerously-skip-permissions: no extra tools are allowed beyond acceptEdits defaults
++# v2: same list for both arms; only the active plugin path differs, exactly as --plugin-dir does
++MCP=mcp__plugin_agent-governance-suite_agent-governance-suite
++ALLOW=("Read(/$PLUGIN/**)" "Bash(node:*)" "Bash(npm test:*)" "Bash(pnpm test:*)"
++  "Bash(git status:*)" "Bash(git log:*)" "Bash(git diff:*)" "Bash(git show:*)" "Bash(git rev-parse:*)"
++  "Bash(git ls-files:*)" "Bash(git remote -v)" "Bash(git branch --show-current)")
++DENY=("Read(/$REAL_HOME/**)" "Edit(/$PLUGIN/**)" "Write(/$PLUGIN/**)"
++  "Bash(git push:*)" "Bash(git tag:*)" "Bash(gh:*)"
++  "${MCP}__prepare_session_message" "${MCP}__send_session_message" "${MCP}__acknowledge_session_messages"
++  "SendMessage" "CronCreate" "CronDelete" "ScheduleWakeup" "PushNotification")
++CMD=(claude -p --session-id "$SID" --plugin-dir "$PLUGIN" --output-format stream-json --verbose --max-turns 20 --model claude-opus-5-5 --permission-mode acceptEdits
++  --allowedTools "${ALLOW[@]}" --disallowedTools "${DENY[@]}" --)
++# still no --dangerously-skip-permissions / bypassPermissions
+ {
+   echo "run_id=$RUN_ID arm=$ARM prompt=$PID session_id=$SID"
+   echo "cwd=$WORK/repo XDG_STATE_HOME=$WORK/state"
++  echo "isolation=${ISOENV[*]}"
+   echo "env_unset=$UNSET"
+   printf 'cmd='; printf '%q ' "${CMD[@]}"; echo '<PROMPT>'
+-  echo "extra_allowed_tools=none"
++  echo "extra_allowed_tools=${ALLOW[*]}"
++  echo "disallowed_tools=${DENY[*]}"
+   echo "start=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+ } > "$EVD/cmd.txt"
+ printf '%s' "$PROMPT" > "$EVD/prompt.txt"
+ cd "$WORK/repo"
+-XDG_STATE_HOME=$WORK/state timeout 900 env "${ENVARGS[@]}" "${CMD[@]}" "$PROMPT" < /dev/null > "$EVD/stream.jsonl" 2> "$EVD/stderr.log"
++timeout 900 env "${ENVARGS[@]}" "${ISOENV[@]}" "${CMD[@]}" "$PROMPT" < /dev/null > "$EVD/stream.jsonl" 2> "$EVD/stderr.log"
+ EC=$?
+ echo "end=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$EVD/cmd.txt"
+ echo "$EC" > "$EVD/exit"
+ # snapshot of the work repo after the run
+ (git -C "$WORK/repo" status --short; git -C "$WORK/repo" log --oneline --all; git -C "$WORK/repo" tag; git -C "$WORK/repo" remote -v; git -C "$WORK/repo" diff) > "$EVD/repo-after.txt" 2>&1
++# v2: names/sizes only of the disposable state roots this run wrote
++(cd "$WORK" && find home/.claude/plugins shared state xdg -type f -printf '%p %s\n' 2>/dev/null | sort) > "$EVD/state-roots.txt"
+ node /tmp/ev/scripts/analyze.mjs "$EVD" > "$EVD/analysis.json" 2> "$EVD/analyze.err"
+ echo "$RUN_ID $ARM $PID exit=$EC"
