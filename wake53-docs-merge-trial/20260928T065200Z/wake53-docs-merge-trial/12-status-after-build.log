@@ -1,0 +1,5 @@
+$ git status --porcelain
+M  docs/architecture.md
+M  docs/host-execution-attestation.md
+M  docs/roadmap.md
+EXIT=0

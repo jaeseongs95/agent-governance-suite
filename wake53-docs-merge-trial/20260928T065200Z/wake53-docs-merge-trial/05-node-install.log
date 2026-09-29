@@ -1,0 +1,4 @@
+file=node-v24.21.0-linux-x64.tar.xz
+node-v24.21.0-linux-x64.tar.xz: OK
+dir=/tmp/node-v24.21.0-linux-x64
+EXIT=0

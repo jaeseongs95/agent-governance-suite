@@ -1,0 +1,6 @@
+ docs/architecture.md               | 12 ++++++++++--
+ docs/host-execution-attestation.md |  4 +++-
+ docs/roadmap.md                    |  2 +-
+ 3 files changed, 14 insertions(+), 4 deletions(-)
+EXIT=0
+812cb623c7ec2860ff5cf7ef5e164bc89e4ad7d70005872d41491ff1da6af4f1  /tmp/ev/docs.patch

@@ -1,0 +1,6 @@
+From https://github.com/jaeseongs95/agent-governance-suite
+ * branch            codex/v2711-codex-empty-wake -> FETCH_HEAD
+ * branch            claude/docs-host-attestation-drift -> FETCH_HEAD
+ * [new branch]      codex/v2711-codex-empty-wake -> origin/codex/v2711-codex-empty-wake
+ * [new branch]      claude/docs-host-attestation-drift -> origin/claude/docs-host-attestation-drift
+EXIT=0

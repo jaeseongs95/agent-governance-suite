@@ -1,0 +1,16 @@
+install EXIT=0
+bundle-check EXIT=0
+claude-drift EXIT=0
+lint EXIT=0
+build EXIT=0
+status-after-build EXIT=0
+claude-build EXIT=0
+claude-check EXIT=0
+test EXIT=0
+runtime-check EXIT=0
+validate-all EXIT=0
+validate-official EXIT=1
+bundle-check-2 EXIT=0
+diff-check EXIT=0
+status-final EXIT=0
+DONE

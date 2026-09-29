@@ -1,0 +1,8 @@
+CHECK_EXIT=0
+APPLY_EXIT=0
+write-tree=d775b423751e85c212b64e5d718b7f3f28cfd8de
+reference=d775b423751e85c212b64e5d718b7f3f28cfd8de
+MATCH
+M  docs/architecture.md
+M  docs/host-execution-attestation.md
+M  docs/roadmap.md
