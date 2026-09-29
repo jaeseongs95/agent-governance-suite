@@ -1,0 +1,14 @@
+repeat-01	vitest presence-retention	0	Tests 8 passed (8)
+repeat-02	vitest presence-retention	0	Tests 8 passed (8)
+repeat-03	vitest presence-retention	0	Tests 8 passed (8)
+repeat-04	vitest presence-retention	0	Tests 8 passed (8)
+repeat-05	vitest presence-retention	0	Tests 8 passed (8)
+repeat-06	vitest presence-retention	0	Tests 8 passed (8)
+repeat-07	vitest presence-retention	0	Tests 8 passed (8)
+repeat-08	vitest presence-retention	0	Tests 8 passed (8)
+repeat-09	vitest presence-retention	0	Tests 8 passed (8)
+repeat-10	vitest presence-retention	0	Tests 8 passed (8)
+pnpm-test	pnpm test	0
+lint	pnpm lint	0
+diff-check	git diff --check	0
+previous-broker-v2.7.3	AGS_PREVIOUS_BROKER_PATH=<v2.7.3 dist broker> vitest previous-broker	0

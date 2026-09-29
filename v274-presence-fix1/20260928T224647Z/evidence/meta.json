@@ -1,0 +1,12 @@
+{
+  "task": "AGS 2.7.4 fix1: wait for presence broker exit before directory removal",
+  "previousHead": "7125d7fdffb7f4574f216a3a2867132a13f6e810",
+  "head": "0f0c192e3027525d2f12e17620c29e9e2cfd7c43",
+  "headTree": "e4748a110a75a7a87509a4db14c8ff855c52ad02",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux 6.18.44-fc-v37 x86_64",
+  "stampUtc": "20260928T224647Z",
+  "redaction": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 0, "email": 0, "home-path": 12, "root-home": 0, "ipv4": 0},
+  "redactionSecondPass": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 0, "email": 0, "home-path": 0, "root-home": 0, "ipv4": 0}
+}

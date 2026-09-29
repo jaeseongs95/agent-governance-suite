@@ -1,0 +1,1 @@
+ps -eo pid,etimes,args | grep '[s]ession-message-broker' after the 10 repeats, pnpm test and previous-broker: 0 processes (an earlier 'pgrep -fc' count of 3 matched the invoking shell's own command line)
