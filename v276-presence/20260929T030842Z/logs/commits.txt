@@ -1,0 +1,5 @@
+93a7e4bc69f556859bc929af1df871dfc74eae68 90ec390cc6dffdcf34e52960103f71e883833907 test: accept a previous broker that already retires ended-birth wakes
+10cfd37e66ca9c30000073a4e17b7b3e97355baa 551154377316eada684e1bc67ae211c7f35d3615 chore: release 2.7.6
+e33e47e8ddf6b6a9c8ac781bf1dce1c7aec8363f ee8a9e88519d37ec82c725c76352e186c1fdebfa docs: describe the board presence lookup deadline
+2e3066a060eeb2a2fc3e06a5a4f5dba058f49b7b baff2902fcf7f84dca5b48cbcda4110dd688a965 fix: bound the board presence lookup with one overall deadline
+bfdbeee15e8c4741a60208e17b46f6ccb2d07abc ac268c2e1bc5093b2d2ffcaf9155432bc38de734 test: seed the large presence fixture in one transaction

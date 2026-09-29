@@ -1,0 +1,5 @@
+lint=0
+bundle:check=0
+1
+diff-check=0
+      Tests  4 skipped (4)

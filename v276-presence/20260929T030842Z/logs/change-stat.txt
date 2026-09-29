@@ -1,0 +1,20 @@
+ .agents/plugins/marketplace.json                   |   2 +-
+ .codex-plugin/plugin.json                          |   2 +-
+ README.en.md                                       |   4 +-
+ README.md                                          |   4 +-
+ claude-plugin/.claude-plugin/plugin.json           |   2 +-
+ claude-plugin/mcp-server/dist/server.mjs           |  15 ++-
+ docs/release-notes-v2.7.6.md                       |  25 +++++
+ docs/roadmap.md                                    |   2 +-
+ docs/session-message-lifecycle.md                  |   4 +-
+ mcp-server/dist/server.mjs                         |  15 ++-
+ mcp-server/src/plugin-info.ts                      |   2 +-
+ mcp-server/src/session-message-client.ts           |   2 +-
+ mcp-server/src/session-message-service.ts          |  12 ++-
+ package.json                                       |   2 +-
+ release/version.json                               |   2 +-
+ .../fixtures/slow-list-presence.mjs                |  11 +++
+ tests/session-messaging/presence-deadline.test.ts  | 103 +++++++++++++++++++++
+ tests/session-messaging/presence-retention.test.ts |  26 +++++-
+ tests/session-messaging/previous-broker.test.ts    |   7 +-
+ 19 files changed, 217 insertions(+), 25 deletions(-)

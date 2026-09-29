@@ -1,0 +1,36 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ↓ tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+ × tests/session-messaging/presence-retention.test.ts > ends a board lookup against a slow real broker at one overall client deadline 30467ms
+   → expected 30210 to be less than 22000
+ ↓ tests/session-messaging/presence-retention.test.ts > B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve
+ ↓ tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end
+ ↓ tests/session-messaging/presence-retention.test.ts > never deletes a live row, however old its birth
+ ↓ tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row
+ ↓ tests/session-messaging/presence-retention.test.ts > gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing
+ ↓ tests/session-messaging/presence-retention.test.ts > prunes presence idempotently when two processes race on one database
+ ↓ tests/session-messaging/presence-retention.test.ts > bounds list-presence: batches fit the response limit and oversized or overlong requests are refused
+ ↓ tests/session-messaging/presence-retention.test.ts > still lists every identity for an untargeted request that fits
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > ends a board lookup against a slow real broker at one overall client deadline
+AssertionError: expected 30210 to be less than 22000
+ ❯ tests/session-messaging/presence-retention.test.ts:134:19
+    132|   const result = await new SessionMessageService(state).listPresence(b…
+    133|   const elapsed = Date.now() - started;
+    134|   expect(elapsed).toBeLessThan(22_000);
+       |                   ^
+    135|   const answered = result.data!.sessions.map((session) => session.sess…
+    136|   expect(answered.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  02:52:06
+   Duration  31.32s (tests 98%, transform 2%)
+
+exit=1

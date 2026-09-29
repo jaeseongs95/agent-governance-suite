@@ -1,0 +1,47 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/previous-broker.test.ts (4 tests | 1 failed) 3903ms
+   × leaves a previous broker's latch of an ended birth for the new broker to retire 408ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire
+AssertionError: expected { …(20) } to deeply equal { …(20) }
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "ended-birth-nonce-abcdefghijklmnopqr",
+    "nonce_digest": "0a18f745b9e73706ed9204a5ba02f518a3e39d8a57ea55b9a20d1c5fbede2eb0",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T01:53:11.873Z",
+    "relay_id": "ended-relay",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T03:04:12.202Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "ended-recipient",
+    "started_at": "2026-09-29T01:53:11.872Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "codex-queue",
+  }
+
+ ❯ tests/session-messaging/previous-broker.test.ts:274:49
+    272|   try {
+    273|     const kept = wakeRow();
+    274|     if (managedWakeAware === true) expect(kept).toEqual(before);
+       |                                                 ^
+    275|     else expect([undefined, before]).toContainEqual(kept);
+    276|     const current = new SessionMessageStore(databasePath);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  03:04:07
+   Duration  4.82s (tests 84%, transform 14%, import 1%)
+

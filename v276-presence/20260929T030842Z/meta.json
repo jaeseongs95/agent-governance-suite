@@ -1,0 +1,14 @@
+{
+  "task": "AGS 2.7.6: board presence lookup deadline (L2), presence fixture seeding (T-4)",
+  "base": "3706167d4646c53c8b47510eebda58931cbd1cfe",
+  "head": "93a7e4bc69f556859bc929af1df871dfc74eae68",
+  "headTree": "90ec390cc6dffdcf34e52960103f71e883833907",
+  "branch": "claude/v276-presence-deadline",
+  "ciRunInspected": "36509846601 attempt 1, job 109219332149 (windows-latest)",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux 6.18.44-fc-v37 x86_64",
+  "stampUtc": "20260929T030842Z",
+  "redaction": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 0, "email": 0, "home-path": 22, "root-home": 2, "ipv4": 0},
+  "redactionSecondPass": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 0, "email": 0, "home-path": 0, "root-home": 0, "ipv4": 0}
+}

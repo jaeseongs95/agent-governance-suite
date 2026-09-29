@@ -1,0 +1,37 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ✓ tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker 48625ms
+ ✓ tests/session-messaging/presence-retention.test.ts > B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve 1142ms
+ ✓ tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end 9ms
+ ✓ tests/session-messaging/presence-retention.test.ts > never deletes a live row, however old its birth 49ms
+ ✓ tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row 1574ms
+ ✓ tests/session-messaging/presence-retention.test.ts > gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing 1089ms
+ × tests/session-messaging/presence-retention.test.ts > prunes presence idempotently when two processes race on one database 47336ms
+   → Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ✓ tests/session-messaging/presence-retention.test.ts > bounds list-presence: batches fit the response limit and oversized or overlong requests are refused 59ms
+ ✓ tests/session-messaging/presence-retention.test.ts > still lists every identity for an untargeted request that fits 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > prunes presence idempotently when two processes race on one database
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/session-messaging/presence-retention.test.ts:255:1
+    253| });
+    254|
+    255| it("prunes presence idempotently when two processes race on one databa…
+       | ^
+    256|   const state = directory();
+    257|   const database = path.join(state, "session-messages.sqlite3");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  02:45:52
+   Duration  101.17s (tests 99%, transform 1%)
+
+exit=1

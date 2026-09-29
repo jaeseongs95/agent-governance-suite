@@ -1,0 +1,19 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ✓ tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker 1738ms
+ ✓ tests/session-messaging/presence-retention.test.ts > B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve 1138ms
+ ✓ tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end 9ms
+ ✓ tests/session-messaging/presence-retention.test.ts > never deletes a live row, however old its birth 46ms
+ ✓ tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row 1529ms
+ ✓ tests/session-messaging/presence-retention.test.ts > gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing 1083ms
+ ✓ tests/session-messaging/presence-retention.test.ts > prunes presence idempotently when two processes race on one database 2536ms
+ ✓ tests/session-messaging/presence-retention.test.ts > bounds list-presence: batches fit the response limit and oversized or overlong requests are refused 35ms
+ ✓ tests/session-messaging/presence-retention.test.ts > still lists every identity for an untargeted request that fits 7ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  02:47:49
+   Duration  9.51s (tests 88%, transform 10%, import 1%)
+
+exit=0
