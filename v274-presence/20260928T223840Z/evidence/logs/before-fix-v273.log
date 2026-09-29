@@ -1,0 +1,164 @@
+Already up to date
+Done in 467ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/presence-retention.test.ts (8 tests | 7 failed) 2015ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 1037ms
+   × keeps an ended or lapsed row until exactly the retention period after its lease end 9ms
+   × keeps retirement, presence and autoWake identical to a run that deletes no presence row 36ms
+   × gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing 15ms
+   × prunes presence idempotently when two processes race on one database 874ms
+   × bounds list-presence: batches fit the response limit and oversized or overlong requests are refused 6ms
+   × still lists every identity for an untargeted request that fits 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected { code: 'MCP_UNAVAILABLE', …(2) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "code": "MCP_UNAVAILABLE",
+  "details": null,
+  "message": "The broker response exceeded its limit.",
+}
+
+ ❯ tests/session-messaging/presence-retention.test.ts:89:24
+     87|     .map((sessionId) => ({ host: "portable", sessionId }));
+     88|   const result = await new SessionMessageService(state).listPresence(b…
+     89|   expect(result.error).toBeNull();
+       |                        ^
+     90|   const bySession = new Map(result.data!.sessions.map((session) => [se…
+     91|   for (let index = 0; index < 40; index += 1) expect(bySession.get(`re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end
+RangeError: Invalid time value
+ ❯ iso mcp-server/src/session-message-store.ts:79:33
+     77|
+     78| function iso(milliseconds: number): string {
+     79|   return new Date(milliseconds).toISOString();
+       |                                 ^
+     80| }
+     81|
+ ❯ SessionMessageStore.prune mcp-server/src/session-message-store.ts:311:17
+ ❯ tests/session-messaging/presence-retention.test.ts:109:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row
+AssertionError: expected { n: 6 } to not deeply equal { n: 6 }
+
+Compared values have no visual difference.
+
+ ❯ tests/session-messaging/presence-retention.test.ts:177:86
+    175|   }
+    176|   a.prune(now); b.prune(now);
+    177|   expect(a.database.prepare("SELECT count(*) AS n FROM session_presenc…
+       |                                                                                      ^
+    178|   expect(a.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid"…
+    179|   expect(a.database.prepare("SELECT * FROM messages ORDER BY rowid").a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing
+AssertionError: expected [ { rowid: 1, …(16) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "can_wake_silently": 1,
++     "collaboration_id": "collaboration-presence-retention",
++     "end_reason": "session-end",
++     "ended_at": "2026-09-26T22:33:52.420Z",
++     "heartbeat_at": "2026-09-26T22:33:52.420Z",
++     "host": "portable",
++     "idle_wake": "silent",
++     "instance_id": "same",
++     "lease_until": "2026-09-26T22:33:52.420Z",
++     "role": "implementation-writer",
++     "rowid": 1,
++     "session_id": "rebirth",
++     "started_at": "2026-09-26T22:33:52.417Z",
++     "supported_injection": "[\"peer-wake\",\"tool-boundary\"]",
++     "transport": "portable",
++     "wake_visibility": "silent",
++     "workspace_id": "/work/space/presence-retention/projects/agent-governance-suite-rebirth",
++   },
++ ]
+
+ ❯ tests/session-messaging/presence-retention.test.ts:205:23
+    203|   const now = Date.now();
+    204|   store.prune(now);
+    205|   expect(rows(store)).toEqual([]);
+       |                       ^
+    206|   const reborn = born(store, "rebirth", "same", now);
+    207|   store.send({ sender: { host: "portable", sessionId: "sender" }, targ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > prunes presence idempotently when two processes race on one database
+AssertionError: expected [ { rowid: 1, …(16) }, …(1301) ] to have a length of 42 but got 1302
+
+- Expected
++ Received
+
+- 42
++ 1302
+
+ ❯ tests/session-messaging/presence-retention.test.ts:234:18
+    232|   const store = open(database);
+    233|   const before = rows(store).filter((row) => !String((row as { session…
+    234|   expect(before).toHaveLength(42);
+       |                  ^
+    235|   store.prune(now + 30);
+    236|   expect(rows(store).filter((row) => !String((row as { session_id: str…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > bounds list-presence: batches fit the response limit and oversized or overlong requests are refused
+AssertionError: expected [] to have a length of undefined but got +0
+
+- Expected:
+undefined
+
++ Received:
+0
+
+ ❯ tests/session-messaging/presence-retention.test.ts:252:54
+    250|   }
+    251|   const data = dispatchSessionMessageBrokerOperation(store, "list-pres…
+    252|   expect((data as { sessions: unknown[] }).sessions).toHaveLength(MAX_…
+       |                                                      ^
+    253|   expect(Buffer.byteLength(`${JSON.stringify({ ok: true, data })}\n`))…
+    254|   expect(() => dispatchSessionMessageBrokerOperation(store, "list-pres…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > still lists every identity for an untargeted request that fits
+TypeError: expected value must be number or bigint, received "undefined"
+ ❯ tests/session-messaging/presence-retention.test.ts:267:46
+    265|   expect(dispatchSessionMessageBrokerOperation(store, "list-presence",…
+    266|   // A retained row outlives any wake injection plus grace that could …
+    267|   expect(WAKE_TTL_MS + WAKE_RETIRE_GRACE_MS).toBeLessThan(RETENTION);
+       |                                              ^
+    268| });
+    269|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  22:33:50
+   Duration  2.60s (tests 81%, transform 17%, import 2%)
+
+exit=1

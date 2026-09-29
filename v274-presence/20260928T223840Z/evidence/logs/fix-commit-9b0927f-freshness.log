@@ -1,0 +1,3 @@
+check-bundle exit=0
+claude-plugin: fresh
+claude-check exit=0

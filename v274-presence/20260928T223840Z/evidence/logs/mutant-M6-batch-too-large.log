@@ -1,0 +1,55 @@
+Already up to date
+Done in 480ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/presence-retention.test.ts (8 tests | 2 failed) 2017ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 997ms
+   × bounds list-presence: batches fit the response limit and oversized or overlong requests are refused 37ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  22:31:33
+   Duration  2.41s (tests 88%, transform 10%, import 2%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected { code: 'MCP_UNAVAILABLE', …(2) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "code": "MCP_UNAVAILABLE",
+  "details": null,
+  "message": "The presence list exceeds the broker response limit; request fewer targets.",
+}
+
+ ❯ tests/session-messaging/presence-retention.test.ts:89:24
+     87|     .map((sessionId) => ({ host: "portable", sessionId }));
+     88|   const result = await new SessionMessageService(state).listPresence(b…
+     89|   expect(result.error).toBeNull();
+       |                        ^
+     90|   const bySession = new Map(result.data!.sessions.map((session) => [se…
+     91|   for (let index = 0; index < 40; index += 1) expect(bySession.get(`re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > bounds list-presence: batches fit the response limit and oversized or overlong requests are refused
+Error: The presence list exceeds the broker response limit; request fewer targets.
+ ❯ dispatchSessionMessageBrokerOperation mcp-server/src/session-message-broker.ts:393:15
+    391|       // Refuse explicitly rather than send a reply the client would d…
+    392|       if (Buffer.byteLength(`${JSON.stringify({ ok: true, data: result…
+    393|         throw new Error("The presence list exceeds the broker response…
+       |               ^
+    394|       }
+    395|       return result;
+ ❯ tests/session-messaging/presence-retention.test.ts:251:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+exit=1

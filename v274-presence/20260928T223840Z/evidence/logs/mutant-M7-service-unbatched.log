@@ -1,0 +1,41 @@
+Already up to date
+Done in 401ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/presence-retention.test.ts (8 tests | 1 failed) 1901ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 881ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  22:31:37
+   Duration  2.25s (tests 89%, transform 9%, import 2%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected { code: 'MCP_UNAVAILABLE', …(2) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "code": "MCP_UNAVAILABLE",
+  "details": null,
+  "message": "targets must list 1 to 3 session identities.",
+}
+
+ ❯ tests/session-messaging/presence-retention.test.ts:89:24
+     87|     .map((sessionId) => ({ host: "portable", sessionId }));
+     88|   const result = await new SessionMessageService(state).listPresence(b…
+     89|   expect(result.error).toBeNull();
+       |                        ^
+     90|   const bySession = new Map(result.data!.sessions.map((session) => [se…
+     91|   for (let index = 0; index < 40; index += 1) expect(bySession.get(`re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1

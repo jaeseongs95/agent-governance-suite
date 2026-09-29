@@ -1,0 +1,145 @@
+Already up to date
+Done in 440ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/presence-retention.test.ts (8 tests | 4 failed) 1900ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 932ms
+   × keeps an ended or lapsed row until exactly the retention period after its lease end 7ms
+   × keeps retirement, presence and autoWake identical to a run that deletes no presence row 39ms
+   × prunes presence idempotently when two processes race on one database 849ms
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 passed (8)
+   Start at  22:31:22
+   Duration  2.36s (tests 84%, transform 13%, import 2%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected { host: 'portable', …(16) } to match object { state: 'ended', …(1) }
+(22 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "endReason": "session-end",
+-   "state": "ended",
++   "endReason": null,
++   "state": "unknown",
+  }
+
+ ❯ tests/session-messaging/presence-retention.test.ts:91:88
+     89|   expect(result.error).toBeNull();
+     90|   const bySession = new Map(result.data!.sessions.map((session) => [se…
+     91|   for (let index = 0; index < 40; index += 1) expect(bySession.get(`re…
+       |                                                                                        ^
+     92|   for (const sessionId of ["live-0", "live-1"]) {
+     93|     expect(bySession.get(sessionId)).toMatchObject({ state: "online", …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end
+AssertionError: expected 'unknown' to be 'ended' // Object.is equality
+
+Expected: "ended"
+Received: "unknown"
+
+ ❯ tests/session-messaging/presence-retention.test.ts:110:100
+    108|   const lapsedLease = Date.parse(store.presence({ host: "portable", se…
+    109|   store.prune(now + 10 + RETENTION - 1);
+    110|   expect(store.presence({ host: "portable", sessionId: "ended" }, now …
+       |                                                                                                    ^
+    111|   store.prune(now + 10 + RETENTION);
+    112|   expect(store.presence({ host: "portable", sessionId: "ended" }).stat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row
+AssertionError: expected { host: 'portable', …(16) } to deeply equal { host: 'portable', …(16) }
+
+- Expected
++ Received
+
+  {
+    "autoWake": {
+      "authorityEffect": "none",
+-     "basisAt": "2026-09-28T21:31:23.462Z",
++     "basisAt": null,
+      "checkedAt": null,
+-     "reason": "presence-not-online",
++     "reason": "presence-unknown",
+      "state": "no-live-relay",
+    },
+-   "canWakeSilently": true,
+-   "collaborationId": "collaboration-presence-retention",
++   "canWakeSilently": false,
++   "collaborationId": null,
+    "deliveryCapabilities": {
+-     "idleWake": "silent",
+-     "supportedInjection": [
+-       "peer-wake",
+-       "tool-boundary",
+-     ],
++     "idleWake": "none",
++     "supportedInjection": [],
+    },
+-   "endReason": "session-end",
+-   "endedAt": "2026-09-28T21:31:23.462Z",
+-   "heartbeatAt": "2026-09-28T21:31:23.462Z",
++   "endReason": null,
++   "endedAt": null,
++   "heartbeatAt": null,
+    "host": "portable",
+-   "instanceId": "recent",
+-   "leaseUntil": "2026-09-28T21:31:23.462Z",
+-   "role": "implementation-writer",
++   "instanceId": null,
++   "leaseUntil": null,
++   "role": null,
+    "sessionId": "recent",
+-   "startedAt": "2026-09-28T21:31:23.460Z",
+-   "state": "ended",
+-   "transport": "portable",
+-   "wakeVisibility": "silent",
+-   "workspaceId": "/work/space/presence-retention/projects/agent-governance-suite-recent",
++   "startedAt": null,
++   "state": "unknown",
++   "transport": null,
++   "wakeVisibility": "none",
++   "workspaceId": null,
+  }
+
+ ❯ tests/session-messaging/presence-retention.test.ts:182:76
+    180|   expect(a.database.prepare("SELECT state FROM wake_nonces WHERE sessi…
+    181|   for (const sessionId of ["reborn", "split", "recent", "live"]) {
+    182|     expect(withoutCheckedAt(a.listPresence(now, [target(sessionId)])[0…
+       |                                                                            ^
+    183|   }
+    184|   expect(b.presence(target("split"), now).state).toBe("ended");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > prunes presence idempotently when two processes race on one database
+AssertionError: expected [ { rowid: 1301, …(16) }, …(1) ] to have a length of 42 but got 2
+
+- Expected
++ Received
+
+- 42
++ 2
+
+ ❯ tests/session-messaging/presence-retention.test.ts:234:18
+    232|   const store = open(database);
+    233|   const before = rows(store).filter((row) => !String((row as { session…
+    234|   expect(before).toHaveLength(42);
+       |                  ^
+    235|   store.prune(now + 30);
+    236|   expect(rows(store).filter((row) => !String((row as { session_id: str…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+exit=1

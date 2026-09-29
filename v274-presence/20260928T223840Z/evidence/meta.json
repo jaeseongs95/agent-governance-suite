@@ -1,0 +1,17 @@
+{
+  "task": "AGS 2.7.4 hotfix: session board presence lookup",
+  "base": "65bdd257b749e894b3099a882996feb463ccb96d",
+  "baseTag": "v2.7.3",
+  "branch": "claude/v274-presence",
+  "head": "7125d7fdffb7f4574f216a3a2867132a13f6e810",
+  "headTree": "5ace3e6b1f68438321aa5519e05b0077939bef55",
+  "validatedTree": "5ace3e6b1f68438321aa5519e05b0077939bef55",
+  "commits": ["7125d7fdffb7f4574f216a3a2867132a13f6e810 docs: document presence retention, batched board lookup and v2.7.4 notes", "056d148b5e31cbb0a7adbd630007ba9b926db270 chore(release): prepare v2.7.4", "3e4e0596c47f287ed4f132eedd7d57ac67363367 test: cover presence retention, batched board presence and older brokers", "9b0927f14a9b307a5abffcc8eaf2879b0145f93c fix: bound presence retention and batch board presence requests"],
+  "previousBrokerTags": {"v2.7.3": "65bdd257b749e894b3099a882996feb463ccb96d", "v2.7.2": "8763cef2b11f2635d6c9af7861b5bffd496e2a30", "v2.7.1": "d5c5932cd5a0d87630f6ed94f8e3721181ab9864", "v2.2.6": "863ed7ac807a306e8c5cabcfb99c8ac0a5a5d1ea"},
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux 6.18.44-fc-v37 x86_64",
+  "stampUtc": "20260928T223840Z",
+  "redaction": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 0, "email": 0, "home-path": 18, "root-home": 3, "ipv4": 0},
+  "redactionSecondPass": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 0, "email": 0, "home-path": 0, "root-home": 0, "ipv4": 0}
+}

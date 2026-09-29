@@ -1,0 +1,22 @@
+ M .agents/plugins/marketplace.json
+ M .codex-plugin/plugin.json
+ M README.en.md
+ M README.md
+ M claude-plugin/.claude-plugin/plugin.json
+ M claude-plugin/mcp-server/dist/server.mjs
+ M claude-plugin/mcp-server/dist/session-message-broker.mjs
+ M docs/roadmap.md
+ M docs/session-message-lifecycle.md
+ M mcp-server/dist/server.mjs
+ M mcp-server/dist/session-message-broker.mjs
+ M mcp-server/src/plugin-info.ts
+ M mcp-server/src/server.ts
+ M mcp-server/src/session-message-broker.ts
+ M mcp-server/src/session-message-protocol.ts
+ M mcp-server/src/session-message-service.ts
+ M mcp-server/src/session-message-store.ts
+ M package.json
+ M release/version.json
+ M tests/session-messaging/previous-broker.test.ts
+?? docs/release-notes-v2.7.4.md
+?? tests/session-messaging/presence-retention.test.ts

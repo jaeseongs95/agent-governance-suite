@@ -1,0 +1,34 @@
+Already up to date
+Done in 454ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/presence-retention.test.ts (8 tests | 1 failed) 2059ms
+   × keeps an ended or lapsed row until exactly the retention period after its lease end 11ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  22:31:25
+   Duration  2.52s (tests 87%, transform 11%, import 2%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end
+AssertionError: expected 'ended' to be 'unknown' // Object.is equality
+
+Expected: "unknown"
+Received: "ended"
+
+ ❯ tests/session-messaging/presence-retention.test.ts:112:74
+    110|   expect(store.presence({ host: "portable", sessionId: "ended" }, now …
+    111|   store.prune(now + 10 + RETENTION);
+    112|   expect(store.presence({ host: "portable", sessionId: "ended" }).stat…
+       |                                                                          ^
+    113|   store.prune(lapsedLease + RETENTION - 1);
+    114|   expect(store.presence({ host: "portable", sessionId: "lapsed" }, lap…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1

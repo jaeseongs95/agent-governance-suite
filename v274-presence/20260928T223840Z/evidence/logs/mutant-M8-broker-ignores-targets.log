@@ -1,0 +1,43 @@
+Already up to date
+Done in 441ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/presence-retention.test.ts (8 tests | 1 failed) 1743ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 933ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  22:31:40
+   Duration  2.09s (tests 88%, transform 10%, import 2%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected undefined to match object { Object (state, autoWake) }
+
+- Expected:
+{
+  "autoWake": {
+    "reason": "presence-unknown",
+    "state": "no-live-relay",
+  },
+  "state": "unknown",
+}
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/presence-retention.test.ts:96:34
+     94|   }
+     95|   // Presence rows ended days ago were pruned; the identity reads as n…
+     96|   expect(bySession.get("old-0")).toMatchObject({ state: "unknown", aut…
+       |                                  ^
+     97|   const database = new DatabaseSync(path.join(state, "session-messages…
+     98|   try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1
