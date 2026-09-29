@@ -1,0 +1,14 @@
+ M claude-plugin/mcp-server/dist/server.mjs
+ M claude-plugin/mcp-server/dist/session-message-broker.mjs
+ M docs/release-notes-v2.7.4.md
+ M docs/session-message-lifecycle.md
+ M mcp-server/dist/server.mjs
+ M mcp-server/dist/session-message-broker.mjs
+ M mcp-server/src/server.ts
+ M mcp-server/src/session-message-protocol.ts
+ M mcp-server/src/session-message-service.ts
+ M mcp-server/src/session-message-store.ts
+ M tests/session-board/session-board.test.ts
+ M tests/session-messaging/presence-retention.test.ts
+ M tests/session-messaging/previous-broker.test.ts
+?? tests/session-messaging/presence-batches.test.ts

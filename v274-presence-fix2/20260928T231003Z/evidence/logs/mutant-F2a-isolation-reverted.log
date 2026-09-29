@@ -1,0 +1,37 @@
+Already up to date
+Done in 471ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/presence-batches.test.ts (2 tests | 1 failed) 12ms
+   × keeps successful batches when one batch fails and reports only the failed batch as unanswered 10ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 25 passed (26)
+   Start at  23:05:42
+   Duration  2.58s (tests 79%, transform 14%, import 7%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > keeps successful batches when one batch fails and reports only the failed batch as unanswered
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/session-messaging/presence-batches.test.ts:28:21
+     26|   const targets = ["a", "b", "c", "fail", "e", "f", "g"].map((sessionI…
+     27|   const result = await new SessionMessageService().listPresence(target…
+     28|   expect(result.ok).toBe(true);
+       |                     ^
+     29|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+     30|   expect(result.data!.unanswered).toEqual([target("fail"), target("e")…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1

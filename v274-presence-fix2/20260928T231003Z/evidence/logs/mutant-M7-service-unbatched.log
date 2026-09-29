@@ -1,0 +1,88 @@
+Already up to date
+Done in 451ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/presence-batches.test.ts (2 tests | 1 failed) 10ms
+   × keeps successful batches when one batch fails and reports only the failed batch as unanswered 8ms
+ ❯ tests/session-messaging/presence-retention.test.ts (9 tests | 2 failed) 2104ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 927ms
+   × B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve 234ms
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  3 failed | 23 passed (26)
+   Start at  23:06:09
+   Duration  2.53s (tests 78%, transform 15%, import 7%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > keeps successful batches when one batch fails and reports only the failed batch as unanswered
+AssertionError: expected [] to deeply equal [ 'a', 'b', 'c', 'g' ]
+
+- Expected
++ Received
+
+- [
+-   "a",
+-   "b",
+-   "c",
+-   "g",
+- ]
++ []
+
+ ❯ tests/session-messaging/presence-batches.test.ts:29:69
+     27|   const result = await new SessionMessageService().listPresence(target…
+     28|   expect(result.ok).toBe(true);
+     29|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+       |                                                                     ^
+     30|   expect(result.data!.unanswered).toEqual([target("fail"), target("e")…
+     31|   expect(request).toHaveBeenCalledTimes(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected undefined to match object { state: 'ended', …(1) }
+
+- Expected:
+{
+  "endReason": "session-end",
+  "state": "ended",
+}
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/presence-retention.test.ts:94:88
+     92|   expect(result.error).toBeNull();
+     93|   const bySession = new Map(result.data!.sessions.map((session) => [se…
+     94|   for (let index = 0; index < 40; index += 1) expect(bySession.get(`re…
+       |                                                                                        ^
+     95|   for (const sessionId of ["live-0", "live-1"]) {
+     96|     expect(bySession.get(sessionId)).toMatchObject({ state: "online", …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve
+AssertionError: expected undefined to match object { state: 'online' }
+
+- Expected:
+{
+  "state": "online",
+}
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/presence-retention.test.ts:123:93
+    121|   expect(result.ok).toBe(true);
+    122|   for (let index = 0; index < 6; index += 1) {
+    123|     expect(result.data!.sessions.find((session) => session.sessionId =…
+       |                                                                                             ^
+    124|   }
+    125|   expect(result.data!.unanswered).toEqual([{ host: "portable", session…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+exit=1

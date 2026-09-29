@@ -1,0 +1,102 @@
+Already up to date
+Done in 425ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/presence-retention.test.ts (9 tests | 2 failed) 2143ms
+   × never deletes a live row, however old its birth 38ms
+   × keeps retirement, presence and autoWake identical to a run that deletes no presence row 47ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 24 passed (26)
+   Start at  23:05:50
+   Duration  2.62s (tests 76%, transform 18%, import 6%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > never deletes a live row, however old its birth
+AssertionError: expected [ { instance_id: 'long' } ] to deeply equal [ { instance_id: 'long' }, …(1) ]
+
+- Expected
++ Received
+
+  [
+    {
+      "instance_id": "long",
+    },
+-   {
+-     "instance_id": "newer",
+-   },
+  ]
+
+ ❯ tests/session-messaging/presence-retention.test.ts:161:6
+    159|   store.prune(end + 2000);
+    160|   expect(store.database.prepare("SELECT instance_id FROM session_prese…
+    161|     .toEqual([{ instance_id: "long" }, { instance_id: "newer" }]);
+       |      ^
+    162| });
+    163|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row
+AssertionError: expected { host: 'portable', …(16) } to deeply equal { host: 'portable', …(16) }
+
+- Expected
++ Received
+
+  {
+    "autoWake": {
+      "authorityEffect": "none",
+-     "basisAt": "2026-09-25T23:05:53.974Z",
++     "basisAt": "2026-09-28T23:05:51.979Z",
+      "checkedAt": null,
+-     "reason": "presence-not-online",
+-     "state": "no-live-relay",
++     "reason": "relay-live",
++     "state": "available",
+    },
+    "canWakeSilently": true,
+    "collaborationId": "collaboration-presence-retention",
+    "deliveryCapabilities": {
+      "idleWake": "silent",
+      "supportedInjection": [
+        "peer-wake",
+        "tool-boundary",
+      ],
+    },
+-   "endReason": "session-end",
+-   "endedAt": "2026-09-25T23:05:53.974Z",
+-   "heartbeatAt": "2026-09-25T23:05:53.974Z",
++   "endReason": null,
++   "endedAt": null,
++   "heartbeatAt": "2026-09-25T23:05:51.974Z",
+    "host": "portable",
+-   "instanceId": "ended-new",
+-   "leaseUntil": "2026-09-25T23:05:53.974Z",
++   "instanceId": "live-old",
++   "leaseUntil": "2026-09-28T23:06:51.989Z",
+    "role": "implementation-writer",
+    "sessionId": "split",
+-   "startedAt": "2026-09-25T23:05:52.974Z",
+-   "state": "ended",
++   "startedAt": "2026-09-25T23:05:51.974Z",
++   "state": "online",
+    "transport": "portable",
+    "wakeVisibility": "silent",
+    "workspaceId": "/work/space/presence-retention/projects/agent-governance-suite-split",
+  }
+
+ ❯ tests/session-messaging/presence-retention.test.ts:207:76
+    205|   expect(a.database.prepare("SELECT state FROM wake_nonces WHERE sessi…
+    206|   for (const sessionId of ["reborn", "split", "recent", "live"]) {
+    207|     expect(withoutCheckedAt(a.listPresence(now, [target(sessionId)])[0…
+       |                                                                            ^
+    208|   }
+    209|   expect(b.presence(target("split"), now).state).toBe("ended");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+exit=1

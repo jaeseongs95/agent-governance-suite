@@ -1,0 +1,132 @@
+Already up to date
+Done in 690ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/presence-batches.test.ts (2 tests | 2 failed) 13ms
+   × keeps successful batches when one batch fails and reports only the failed batch as unanswered 8ms
+   × never asks the broker for identities outside its identifier pattern 4ms
+ ❯ tests/session-board/session-board.test.ts (15 tests | 1 failed) 1651ms
+   ❯ session board MCP tools (3)
+     × overlays matching broker presence and leaves missing sessions unknown 187ms
+ ❯ tests/session-messaging/presence-retention.test.ts (9 tests | 1 failed) 2586ms
+   × B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve 253ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-board/session-board.test.ts > session board MCP tools > overlays matching broker presence and leaves missing sessions unknown
+AssertionError: expected { host: 'claude-code', …(16) } to match object { state: 'unknown', …(2) }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "autoWake": null,
++   "autoWake": {
++     "authorityEffect": "none",
++     "basisAt": null,
++     "checkedAt": "2026-09-28T23:03:09.258Z",
++     "reason": "presence-unknown",
++     "state": "no-live-relay",
++   },
+    "instanceId": null,
+    "state": "unknown",
+  }
+
+ ❯ tests/session-board/session-board.test.ts:370:75
+    368|       autoWake: { state: "no-live-relay", reason: "presence-unknown", …
+    369|     });
+    370|     expect(sessions.find((row) => row.sessionId === "unasked")?.presen…
+       |                                                                           ^
+    371|   });
+    372| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > keeps successful batches when one batch fails and reports only the failed batch as unanswered
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/session-messaging/presence-batches.test.ts:28:21
+     26|   const targets = ["a", "b", "c", "fail", "e", "f", "g"].map((sessionI…
+     27|   const result = await new SessionMessageService().listPresence(target…
+     28|   expect(result.ok).toBe(true);
+       |                     ^
+     29|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+     30|   expect(result.data!.unanswered).toEqual([target("fail"), target("e")…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > never asks the broker for identities outside its identifier pattern
+AssertionError: expected [ { host: 'portable', …(1) }, …(5) ] to deeply equal [ { host: 'portable', …(1) }, …(2) ]
+
+- Expected
++ Received
+
+@@ -3,11 +3,23 @@
+      "host": "portable",
+      "sessionId": "a",
+    },
+    {
+      "host": "portable",
++     "sessionId": "has space",
++   },
++   {
++     "host": "portable",
+      "sessionId": "b",
++   },
++   {
++     "host": "bad host",
++     "sessionId": "c",
++   },
++   {
++     "host": "portable",
++     "sessionId": "xyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+    },
+    {
+      "host": "portable",
+      "sessionId": "d",
+    },
+
+ ❯ tests/session-messaging/presence-batches.test.ts:39:17
+     37|   expect(result.ok).toBe(true);
+     38|   const asked = request.mock.calls.flatMap(([, payload]) => (payload a…
+     39|   expect(asked).toEqual([target("a"), target("b"), target("d")]);
+       |                 ^
+     40|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+     41|   expect(result.data!.unanswered).toEqual([target("has space"), target…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/session-messaging/presence-retention.test.ts:121:21
+    119|     { host: "portable", sessionId: "has space" }];
+    120|   const result = await new SessionMessageService(state).listPresence(b…
+    121|   expect(result.ok).toBe(true);
+       |                     ^
+    122|   for (let index = 0; index < 6; index += 1) {
+    123|     expect(result.data!.sessions.find((session) => session.sessionId =…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  4 failed | 22 passed (26)
+   Start at  23:03:06
+   Duration  3.36s (tests 71%, transform 21%, import 8%)
+
+exit=1

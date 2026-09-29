@@ -1,0 +1,14 @@
+{
+  "task": "AGS 2.7.4 fix2: audit F1-F3",
+  "previousHead": "0f0c192e3027525d2f12e17620c29e9e2cfd7c43",
+  "head": "240e0ca5c22302f689a22c27d3ed34e1151a8ce4",
+  "headTree": "6e0cb45107e32b57338a215e232ac424b8302136",
+  "validatedTree": "6e0cb45107e32b57338a215e232ac424b8302136",
+  "audit": "f3ecf02d64b134c6f20f0f3bb9ce0e25539fdb75",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux 6.18.44-fc-v37 x86_64",
+  "stampUtc": "20260928T231003Z",
+  "redaction": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 0, "email": 0, "home-path": 27, "root-home": 3, "ipv4": 0},
+  "redactionSecondPass": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 0, "email": 0, "home-path": 0, "root-home": 0, "ipv4": 0}
+}
