@@ -1,0 +1,33 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/message-lifecycle.test.ts (14 tests | 1 failed) 6351ms
+   × rejects exact draft expiry and validates Unicode, TTL and sender draft capacity 33ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-lifecycle.test.ts > rejects exact draft expiry and validates Unicode, TTL and sender draft capacity
+AssertionError: expected 99 to be 100 // Object.is equality
+
+- Expected
++ Received
+
+- 100
++ 99
+
+ ❯ tests/session-messaging/message-lifecycle.test.ts:123:45
+    121|   for (const ttlSeconds of [29, 86401, 1.5]) expect(() => store.prepar…
+    122|   for (let index = 0; index < 99; index++) prepare(store);
+    123|   expect(count(store, "prepared_messages")).toBe(100);
+       |                                             ^
+    124|   expect(() => prepare(store)).toThrow(/full/u);
+    125|   expect(count(store)).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 8 passed | 1 skipped (10)
+      Tests  1 failed | 266 passed | 1 skipped (268)
+   Start at  16:22:36
+   Duration  17.21s (tests 97%, transform 2%, import 1%)
+

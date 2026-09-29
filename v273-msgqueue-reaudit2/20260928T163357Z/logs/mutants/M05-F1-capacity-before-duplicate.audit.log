@@ -1,0 +1,28 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 1 failed) 16329ms
+   × I2 at full capacity a resend of an already-sent ID is still a duplicate, not a capacity rejection 189ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I2 at full capacity a resend of an already-sent ID is still a duplicate, not a capacity rejection
+MessageCapacityError: The bounded message receipt store is full for this sender.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:292:13
+    290|       .get(sender.host, sender.sessionId) as { count: number; earliest…
+    291|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    292|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    293|     }
+    294|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.submitPrepared mcp-server/src/session-message-store.ts:338:12
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:89:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  16:22:18
+   Duration  16.63s (tests 99%, transform 1%)
+

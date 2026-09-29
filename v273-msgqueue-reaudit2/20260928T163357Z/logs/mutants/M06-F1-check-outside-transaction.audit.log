@@ -1,0 +1,30 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 1 failed) 15945ms
+   × R2 two senders race for the last global slot (5 rounds) 7310ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > R2 two senders race for the last global slot (5 rounds)
+AssertionError: expected 'The bounded message spool is full.' to be 'The bounded message receipt store is …' // Object.is equality
+
+Expected: "The bounded message receipt store is full."
+Received: "The bounded message spool is full."
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:314:45
+    312|     ]);
+    313|     expect(out.filter((v) => v.result)).toHaveLength(1);
+    314|     expect(out.find((v) => v.error)?.error).toBe("The bounded message …
+       |                                             ^
+    315|     expect(receipts(store)).toBe(MESSAGE_RECEIPT_LIMIT);
+    316|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  16:22:54
+   Duration  16.26s (tests 99%, transform 1%)
+

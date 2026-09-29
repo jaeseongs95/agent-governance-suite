@@ -1,0 +1,72 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/message-retention.test.ts (16 tests | 2 failed) 5131ms
+   × service reports capacity rejections as definite no-effect with scope and earliest release details 564ms
+   × when earliestReleaseAt is after the draft expiry, the guidance leads to a new prepare that succeeds 510ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > service reports capacity rejections as definite no-effect with scope and earliest release details
+AssertionError: expected { schemaVersion: '1.0.0', …(3) } to match object { ok: false, error: { …(2) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "error": {
+      "code": "MCP_UNAVAILABLE",
+-     "details": null,
++     "details": {
++       "earliestReleaseAt": null,
++       "scope": "global",
++     },
+    },
+    "ok": false,
+  }
+
+ ❯ tests/session-messaging/message-retention.test.ts:263:19
+    261|   // Uncertain outcomes keep the same-ID retry guidance and carry no c…
+    262|   const unknown = await service.send({ messageId: "unknown-retention-i…
+    263|   expect(unknown).toMatchObject({ ok: false, error: { code: "MCP_UNAVA…
+       |                   ^
+    264|   expect(unknown.error?.message).toMatch(/Retry only the known prepare…
+    265|   for (let index = SENDER_LIMIT; index < MESSAGE_RECEIPT_LIMIT; index+…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > when earliestReleaseAt is after the draft expiry, the guidance leads to a new prepare that succeeds
+AssertionError: expected { schemaVersion: '1.0.0', …(3) } to match object { ok: false, error: { details: null } }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "error": {
+-     "details": null,
++     "details": {
++       "earliestReleaseAt": null,
++       "scope": "global",
++     },
+    },
+    "ok": false,
+  }
+
+ ❯ tests/session-messaging/message-retention.test.ts:374:17
+    372|   // The expired same ID now reads as unknown; it was never queued bec…
+    373|   const stale = await service.send({ messageId, _sessionBinding: hot }…
+    374|   expect(stale).toMatchObject({ ok: false, error: { details: null } });
+       |                 ^
+    375|   expect(stale.error?.message).toMatch(/Issued message ID is unavailab…
+    376|   expect(Number(scalar(store, "SELECT count(*) AS value FROM messages …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 8 passed | 1 skipped (10)
+      Tests  2 failed | 265 passed | 1 skipped (268)
+   Start at  16:31:38
+   Duration  17.80s (tests 96%, transform 3%, import 1%)
+

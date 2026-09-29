@@ -1,0 +1,77 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 4 failed) 6972ms
+   × L1 sender boundary limit-1 / limit / limit+1 for prepare and send 185ms
+   × L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first) 152ms
+   × L4 send of a pre-made draft just before and at earliestReleaseAt (global scope) 152ms
+   × R2 two senders race for the last global slot (5 rounds) 358ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L1 sender boundary limit-1 / limit / limit+1 for prepare and send
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:292:13
+    290|       .get() as { count: number; earliest: string | null };
+    291|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    292|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    293|     }
+    294|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:313:12
+ ❯ sendNew tests/session-messaging/audit-msgqueue.test.ts:44:23
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:182:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first)
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:292:13
+    290|       .get() as { count: number; earliest: string | null };
+    291|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    292|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    293|     }
+    294|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:313:12
+ ❯ sendNew tests/session-messaging/audit-msgqueue.test.ts:44:23
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:188:62
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L4 send of a pre-made draft just before and at earliestReleaseAt (global scope)
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:292:13
+    290|       .get() as { count: number; earliest: string | null };
+    291|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    292|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    293|     }
+    294|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:313:12
+ ❯ sendNew tests/session-messaging/audit-msgqueue.test.ts:44:23
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:231:55
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > R2 two senders race for the last global slot (5 rounds)
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:292:13
+    290|       .get() as { count: number; earliest: string | null };
+    291|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    292|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    293|     }
+    294|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:313:12
+ ❯ sendNew tests/session-messaging/audit-msgqueue.test.ts:44:23
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:306:57
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 12 passed (16)
+   Start at  16:32:33
+   Duration  7.30s (tests 97%, transform 2%, import 1%)
+

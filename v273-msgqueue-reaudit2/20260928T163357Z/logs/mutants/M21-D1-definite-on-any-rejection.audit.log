@@ -1,0 +1,43 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 1 failed) 18074ms
+   × I6 late retry through the service after ACK+1h is uncertain guidance, never a definite no-effect claim 191ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I6 late retry through the service after ACK+1h is uncertain guidance, never a definite no-effect claim
+AssertionError: expected { schemaVersion: '1.0.0', …(3) } to match object { ok: false, error: { …(2) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "error": {
+      "code": "MCP_UNAVAILABLE",
+-     "details": null,
++     "details": {
++       "earliestReleaseAt": null,
++       "scope": "global",
++     },
+    },
+    "ok": false,
+  }
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:156:16
+    154|   expect(store.acknowledge(target, [messageId], Date.now() - 2 * H)).t…
+    155|   const late = await service.send({ messageId, _sessionBinding: hot });
+    156|   expect(late).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILA…
+       |                ^
+    157|   expect(late.error?.message).toMatch(/delivery may be unknown/u);
+    158|   expect(late.error?.message).toMatch(/do not prepare again for the sa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  16:31:56
+   Duration  18.40s (tests 99%, transform 1%)
+

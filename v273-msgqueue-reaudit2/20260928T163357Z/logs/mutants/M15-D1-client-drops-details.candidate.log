@@ -1,0 +1,56 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/message-retention.test.ts (16 tests | 2 failed) 4936ms
+   × service reports capacity rejections as definite no-effect with scope and earliest release details 562ms
+   × when earliestReleaseAt is after the draft expiry, the guidance leads to a new prepare that succeeds 501ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > service reports capacity rejections as definite no-effect with scope and earliest release details
+AssertionError: expected { schemaVersion: '1.0.0', …(3) } to match object { ok: false, error: { …(2) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "error": {
+      "code": "MCP_UNAVAILABLE",
+-     "details": {
+-       "earliestReleaseAt": "2026-09-28T18:28:00.702Z",
+-       "scope": "sender",
+-     },
++     "details": null,
+    },
+    "ok": false,
+  }
+
+ ❯ tests/session-messaging/message-retention.test.ts:250:24
+    248|   const release = earliest(store, hot);
+    249|   const sendRejected = await service.send({ messageId: (prepared.data …
+    250|   expect(sendRejected).toMatchObject({ ok: false, error: { code: "MCP_…
+       |                        ^
+    251|   expect(sendRejected.error?.message).toMatch(/receipt store is full f…
+    252|   expect(sendRejected.error?.message).toContain("not queued");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > when earliestReleaseAt is after the draft expiry, the guidance leads to a new prepare that succeeds
+TypeError: Cannot read properties of null (reading 'earliestReleaseAt')
+ ❯ tests/session-messaging/message-retention.test.ts:363:78
+    361|   sendNew(store, hot, now);
+    362|   const rejected = await service.send({ messageId, _sessionBinding: ho…
+    363|   const release = (rejected.error?.details as { earliestReleaseAt: str…
+       |                                                                              ^
+    364|   // Condition of the "otherwise" branch: capacity frees only after th…
+    365|   expect(Date.parse(release)).toBeGreaterThan(Date.parse(draftExpiresA…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 8 passed | 1 skipped (10)
+      Tests  2 failed | 265 passed | 1 skipped (268)
+   Start at  16:27:58
+   Duration  17.40s (tests 96%, transform 3%, import 1%)
+

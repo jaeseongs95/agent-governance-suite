@@ -1,0 +1,38 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+stdout | tests/session-messaging/audit-msgqueue.test.ts > L5 byte-limit send rejection: scope global, earliestReleaseAt is the real release instant
+L5 {"bigDrafts":168,"remaining":20575,"probe":274,"fillerLen":2816,"left":5}
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 1 failed) 17398ms
+   × L5 byte-limit send rejection: scope global, earliestReleaseAt is the real release instant 67ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L5 byte-limit send rejection: scope global, earliestReleaseAt is the real release instant
+AssertionError: expected { left: 5, …(2) } to match object { …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "details": {
+-     "earliestReleaseAt": "1970-01-01T00:10:01.000Z",
+-     "scope": "global",
+-   },
++   "details": undefined,
+    "message": "The bounded message receipt store is full.",
+  }
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:265:60
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  16:31:19
+   Duration  17.83s (tests 98%, transform 2%)
+

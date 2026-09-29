@@ -1,0 +1,29 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 1 failed) 16210ms
+   × L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first) 1030ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first)
+MessageCapacityError: The bounded message receipt store is full; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:296:51
+    294|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+    295|       .get() as { count: number; earliest: string | null };
+    296|     if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityE…
+       |                                                   ^
+    297|   }
+    298|
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:313:12
+ ❯ sendNew tests/session-messaging/audit-msgqueue.test.ts:44:23
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:189:62
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  16:20:10
+   Duration  16.50s (tests 99%, transform 1%)
+

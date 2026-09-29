@@ -1,0 +1,13 @@
+{
+  "task": "AGS 2.7.3 message receipt retention (Q) re-audit 2 of R1 fix d99d768e, 총괄 ca8e3dc4",
+  "verdict": "ACCEPT",
+  "candidate": { "branch": "claude/v273-msgqueue", "commit": "d99d768eab65878bab228ea73e5f5660ac98c616", "tree": "bfa89453d591e03a3e9c66fe6df14a503e798bbc" },
+  "previousTarget": { "commit": "74395bf698012a8b2e034e58e3b42d51f53b0b68", "evidence": "claude/evidence-v273-msgqueue-reaudit-20260928T160657Z" },
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v42 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startedAt": "2026-09-28T16:17:08Z",
+  "finishedAt": "2026-09-28T16:33:57Z",
+  "raceRounds": { "mutantRuns": 5 },
+  "redaction": { "patterns": ["ghp_", "gho_", "github_pat_", "sk-ant-", "AKIA", "BEGIN PRIVATE KEY", "Authorization: Bearer", "email", "IPv4", "account names"], "matches": 0, "replaced": [] }
+}

@@ -1,0 +1,41 @@
+
+ RUN  v5.0.0 /home/user/audit-lab
+
+ ✓ tests/session-messaging/reaudit-n5.test.ts > N5-a doing both branches after release delivers one intent twice (why 'not both' is required) 165ms
+stdout | tests/session-messaging/reaudit2-guidance.test.ts > G1 (N5-b) release after draft expiry: the guidance selects prepare again; the intent is delivered once
+G1 rejection message: The bounded message receipt store is full for this sender. This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until the expiresAt returned by prepare_session_message. If earliestReleaseAt is before that expiresAt, retry that same messageId after earliestReleaseAt; otherwise the draft expires first, so prepare again. Never do both. The earliest retained record in this scope expires at 2026-09-28T18:19:46.592Z; after that a new prepare_session_message may succeed.
+
+ ✓ tests/session-messaging/reaudit2-guidance.test.ts > G1 (N5-b) release after draft expiry: the guidance selects prepare again; the intent is delivered once 559ms
+ × tests/session-messaging/reaudit-n5.test.ts > N5-b same-ID branch: when earliestReleaseAt is after the draft expiry, the retry lands on uncertain guidance 571ms
+   → expected 'The bounded message receipt store is …' to match /either retry that same messageId or …/u
+ ✓ tests/session-messaging/reaudit2-guidance.test.ts > G2 (N5-a condition) release before draft expiry: same-ID retry enters the queue exactly once 194ms
+ ✓ tests/session-messaging/reaudit2-guidance.test.ts > G3 boundary: release == draft expiresAt is the 'otherwise' branch; release == expiresAt-1 still allows the same ID 351ms
+ ✓ tests/session-messaging/reaudit2-guidance.test.ts > G4 an unknown ID without a definite rejection keeps the uncertain guidance and no details 129ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/reaudit-n5.test.ts > N5-b same-ID branch: when earliestReleaseAt is after the draft expiry, the retry lands on uncertain guidance
+AssertionError: expected 'The bounded message receipt store is …' to match /either retry that same messageId or …/u
+
+- Expected:
+/either retry that same messageId or prepare again, not both/u
+
++ Received:
+"The bounded message receipt store is full for this sender. This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until the expiresAt returned by prepare_session_message. If earliestReleaseAt is before that expiresAt, retry that same messageId after earliestReleaseAt; otherwise the draft expires first, so prepare again. Never do both. The earliest retained record in this scope expires at 2026-09-28T18:19:46.762Z; after that a new prepare_session_message may succeed."
+
+ ❯ tests/session-messaging/reaudit-n5.test.ts:69:35
+     67|   expect(rejected.ok).toBe(false);
+     68|   const release = String((rejected.error!.details as { earliestRelease…
+     69|   expect(rejected.error!.message).toMatch(/either retry that same mess…
+       |                                   ^
+     70|   // Neither details nor the message give the draft expiry; the sender…
+     71|   expect(rejected.error!.message).not.toContain(draftExpiresAt);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 5 passed (6)
+   Start at  16:19:45
+   Duration  1.72s (tests 74%, transform 23%, import 3%)
+
