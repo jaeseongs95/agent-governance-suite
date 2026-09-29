@@ -1,0 +1,48 @@
+diff --cc claude-plugin/mcp-server/dist/server.mjs
+index 8041a640,2ed5e4f8..00000000
+--- a/claude-plugin/mcp-server/dist/server.mjs
++++ b/claude-plugin/mcp-server/dist/server.mjs
+@@@ -20789,7 -20771,7 +20789,11 @@@ function createMcpServer(service, updat
+        },
+        {
+          name: "send_session_message",
+++<<<<<<< HEAD
+ +        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+++=======
++         description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
+++>>>>>>> d99d768e
+          inputSchema: contractSchemas.sendSessionMessageRequest,
+          annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+        },
+diff --cc mcp-server/dist/server.mjs
+index 8041a640,2ed5e4f8..00000000
+--- a/mcp-server/dist/server.mjs
++++ b/mcp-server/dist/server.mjs
+@@@ -20789,7 -20771,7 +20789,11 @@@ function createMcpServer(service, updat
+        },
+        {
+          name: "send_session_message",
+++<<<<<<< HEAD
+ +        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+++=======
++         description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
+++>>>>>>> d99d768e
+          inputSchema: contractSchemas.sendSessionMessageRequest,
+          annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+        },
+diff --cc mcp-server/src/server.ts
+index a106c942,a6b84bbb..00000000
+--- a/mcp-server/src/server.ts
++++ b/mcp-server/src/server.ts
+@@@ -533,7 -533,7 +533,11 @@@ export function createMcpServer
+        },
+        {
+          name: "send_session_message",
+++<<<<<<< HEAD
+ +        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+++=======
++         description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
+++>>>>>>> d99d768e
+          inputSchema: contractSchemas.sendSessionMessageRequest,
+          annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+        },

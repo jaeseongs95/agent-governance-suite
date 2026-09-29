@@ -1,0 +1,9 @@
+mutant	apply	build	candidate_rc	candidate_summary
+BASELINE	0	0	0	Tests  295 passed | 2 skipped (297)
+M03-F1-global-checked-first	0	0	1	Tests  1 failed | 294 passed | 2 skipped (297)
+M05-F1-capacity-before-duplicate	0	0	1	Tests  2 failed | 293 passed | 2 skipped (297)
+M11-F2-update-after-commit	0	0	1	Tests  1 failed | 294 passed | 2 skipped (297)
+M16-D1-service-details-null	0	0	1	Tests  2 failed | 293 passed | 2 skipped (297)
+M19-D1-send-uses-uncertain-guidance	0	0	1	Tests  2 failed | 293 passed | 2 skipped (297)
+M20-D1-byte-rejection-no-details	0	0	1	Tests  1 failed | 294 passed | 2 skipped (297)
+M21-D1-definite-on-any-rejection	0	0	1	Tests  2 failed | 293 passed | 2 skipped (297)

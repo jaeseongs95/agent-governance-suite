@@ -1,0 +1,14 @@
+{
+  "task": "AGS 2.7.3 integration stage 4 (capacity retry guidance), 총괄 ca8e3dc4",
+  "base": "b6deb37120e82c75ea0e3ba90a07324adf885969",
+  "msgqueue": "d99d768eab65878bab228ea73e5f5660ac98c616",
+  "mergeCommit": "6b5af0842a1dfb83dce394d8fc8b52d2dfa2cb6e",
+  "head": "6852c722514a1abfdf8ed08733c2041b1b4d4ce3",
+  "headTree": "2e120ccd8b70e0da3e7283dbae60bcee77078315",
+  "instructionsSha256": "474cdcdb93a26a3bed0c58cc03313b3b47e7c19c654702476cb202efc43a0b75",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v42 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startUtc": "2026-09-28T16:17:09Z",
+  "endUtc": "2026-09-28T16:24:32Z"
+}

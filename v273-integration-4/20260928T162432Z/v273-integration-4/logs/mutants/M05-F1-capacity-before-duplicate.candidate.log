@@ -1,0 +1,72 @@
+
+ RUN  v5.0.0 [REDACTED-HOME]/agent-governance-suite
+
+ ❯ tests/session-messaging/message-retention.test.ts (16 tests | 2 failed) 7937ms
+   × service reports capacity rejections as definite no-effect with scope and earliest release details 2711ms
+   × a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection 277ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > service reports capacity rejections as definite no-effect with scope and earliest release details
+AssertionError: expected { schemaVersion: '1.0.0', …(3) } to match object { ok: true, error: null, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "data": {
+-     "autoWake": {
+-       "authorityEffect": "none",
+-       "basisAt": null,
+-       "checkedAt": Any<String>,
+-       "reason": "presence-unknown",
+-       "state": "no-live-relay",
++   "data": null,
++   "error": {
++     "code": "MCP_UNAVAILABLE",
++     "details": {
++       "earliestReleaseAt": "2026-09-28T18:21:20.215Z",
++       "scope": "sender",
+      },
+-     "createdAt": "2026-09-28T16:21:20.215Z",
+-     "duplicate": true,
+-     "expiresAt": "2026-09-28T17:21:20.215Z",
+-     "messageId": "f9cdceaa-3177-429b-8856-449dfedf9cb2",
++     "message": "The bounded message receipt store is full for this sender. This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until the expiresAt returned by prepare_session_message. If earliestReleaseAt is before that expiresAt, retry that same messageId after earliestReleaseAt; otherwise the draft expires first, so prepare again. Never do both. The earliest retained record in this scope expires at 2026-09-28T18:21:20.215Z; after that a new prepare_session_message may succeed.",
+    },
+-   "error": null,
+-   "ok": true,
++   "ok": false,
+  }
+
+ ❯ tests/session-messaging/message-retention.test.ts:271:18
+    269|   const rowsBefore = rows(store);
+    270|   const resent = await service.send({ messageId: firstSent.messageId, …
+    271|   expect(resent).toMatchObject({ ok: true, error: null, data: { ...fir…
+       |                  ^
+    272|   expect(rows(store)).toBe(rowsBefore);
+    273| }, 30_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection
+MessageCapacityError: The bounded message receipt store is full for this sender.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:355:13
+    353|       .get(sender.host, sender.sessionId) as { count: number; earliest…
+    354|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    355|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    356|     }
+    357|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.submitPrepared mcp-server/src/session-message-store.ts:404:12
+ ❯ tests/session-messaging/message-retention.test.ts:279:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 9 passed | 1 skipped (11)
+      Tests  2 failed | 293 passed | 2 skipped (297)
+   Start at  16:21:16
+   Duration  20.89s (tests 96%, transform 2%, import 2%)
+

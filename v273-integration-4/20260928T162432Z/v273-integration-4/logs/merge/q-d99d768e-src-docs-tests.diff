@@ -1,0 +1,98 @@
+diff --git a/docs/session-message-lifecycle.md b/docs/session-message-lifecycle.md
+index 363d247c..9f1370a1 100644
+--- a/docs/session-message-lifecycle.md
++++ b/docs/session-message-lifecycle.md
+@@ -32,7 +32,7 @@ prepare 응답이 유실되어 다시 준비하면 사용하지 않는 draft가
+ 
+ sender별 영수증 상한은 협력하는 세션 사이의 공정성 장치다. sender는 host hook이 결속한 세션 식별자일 뿐 인증된 principal이 아니므로, 같은 OS 사용자의 의도적 우회를 막는 할당량으로 보지 않는다. send는 같은 transaction에서 정리 뒤 sender 상한, 전역 상한 순으로 검사하는 권위 검사다. prepare도 같은 방식으로 영수증 용량을 먼저 확인해 이미 상한에 닿았으면 draft를 만들지 않고 `no draft was created`로 거절한다. 이 prepare 검사는 입장 확인일 뿐이며, prepare와 send 사이에 용량이 차면 send가 거절하고 해당 draft는 준비 만료까지 남는다.
+ 
+-영수증 용량 거절은 효과가 없었음이 확정된 거절이다. 메시지는 큐에 들어가지 않았고 영수증도 발급되지 않았다. 도구 응답의 `error.code`는 기존 `MCP_UNAVAILABLE`이고, `error.details`에 `scope`(`sender` 또는 `global`)와 해당 범위에서 가장 먼저 만료되는 기록의 시각 `earliestReleaseAt`을 담는다. 그 시각 뒤에는 새 prepare가 성공할 수 있지만 다른 sender가 먼저 용량을 쓸 수 있으므로 보장은 아니다. send에서 거절된 `messageId`는 준비 만료까지 `prepared`로 남는다. 용량이 풀린 뒤에는 같은 ID 재시도와 새 prepare 가운데 하나만 한다. 둘 다 하면 한 의도가 두 메시지로 전달될 수 있다. 응답을 받지 못한 불확실한 send는 이 경우가 아니며, 기존처럼 같은 ID로 status를 조회하거나 send를 재시도한다. 이전 broker에서 온 거절에는 `details`가 없으므로 기존 안내를 그대로 따른다.
++영수증 용량 거절은 효과가 없었음이 확정된 거절이다. 메시지는 큐에 들어가지 않았고 영수증도 발급되지 않았다. 도구 응답의 `error.code`는 기존 `MCP_UNAVAILABLE`이고, `error.details`에 `scope`(`sender` 또는 `global`)와 해당 범위에서 가장 먼저 만료되는 기록의 시각 `earliestReleaseAt`을 담는다. 그 시각 뒤에는 새 prepare가 성공할 수 있지만 다른 sender가 먼저 용량을 쓸 수 있으므로 보장은 아니다. send에서 거절된 `messageId`는 prepare 응답의 `expiresAt`(준비 만료)까지 `prepared`로 남는다. `earliestReleaseAt`이 그 `expiresAt`보다 이르면 그 시각 뒤 같은 `messageId`로 재시도할 수 있다. 그렇지 않으면 draft가 먼저 만료되므로 새로 prepare한다. 둘 다 하지 않는다. 둘 다 하면 한 의도가 두 메시지로 전달될 수 있다. 용량 거절을 받은 뒤 그 ID로 다시 send하지 않았는데 draft가 만료돼 같은 ID의 send가 unknown(`Issued message ID is unavailable`)으로 거절될 수 있다. 이 경우 그 ID는 앞선 확정 거절로 전달되지 않았음이 이미 확인됐으므로, 저장한 거절 응답과 대조한 뒤 새로 prepare해도 된다. 확정 거절 기록이 없는 unknown ID는 기존처럼 저장한 영수증과 대조하고 무조건 다시 준비하지 않는다. 응답을 받지 못한 불확실한 send는 이 경우가 아니며, 기존처럼 같은 ID로 status를 조회하거나 send를 재시도한다. 이전 broker에서 온 거절에는 `details`가 없으므로 기존 안내를 그대로 따른다.
+ 
+ ACK는 처음 성공한 ACK에서만 영수증 만료를 줄인다. 두 번째 ACK, 대상이 아닌 세션의 ACK, 모르는 ID의 ACK는 만료를 바꾸지 않으며, 줄인 만료는 다시 늘지 않는다. 따라서 ACK 후 1시간이 지난 ID는 status가 unknown(`null`)이고 같은 ID의 send도 발급 ID 없음으로 거절한다. 이 규칙은 새로 기록되는 ACK에만 적용하며, 이전 버전이 ACK한 기존 영수증의 만료를 소급해 바꾸지 않는다. 영구 tombstone이나 별도 DB·daemon은 없다. status는 준비 상태, 기존 queued/delivered/acknowledged 상태 또는 큐 행이 정리된 뒤 제출 영수증과 `deliveryState: "unknown"`을 구별한다.
+ 
+diff --git a/mcp-server/src/server.ts b/mcp-server/src/server.ts
+index c274945e..a6b84bbb 100644
+--- a/mcp-server/src/server.ts
++++ b/mcp-server/src/server.ts
+@@ -533,7 +533,7 @@ export function createMcpServer(
+       },
+       {
+         name: "send_session_message",
+-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
++        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
+         inputSchema: contractSchemas.sendSessionMessageRequest,
+         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+       },
+diff --git a/mcp-server/src/session-message-service.ts b/mcp-server/src/session-message-service.ts
+index c023f562..076b3f6b 100644
+--- a/mcp-server/src/session-message-service.ts
++++ b/mcp-server/src/session-message-service.ts
+@@ -71,7 +71,7 @@ export class SessionMessageService {
+       return ok(await sessionMessageRequest("send", { sender, messageId: args.messageId }, this.stateDirectory));
+     } catch (error) {
+       const details = capacityDetails(error);
+-      if (details) return failure("MCP_UNAVAILABLE", `${(error as Error).message} This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until its draft expires; after capacity is released, either retry that same messageId or prepare again, not both. ${capacityRelease(details)}`, { ...details });
++      if (details) return failure("MCP_UNAVAILABLE", `${(error as Error).message} This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until the expiresAt returned by prepare_session_message. If earliestReleaseAt is before that expiresAt, retry that same messageId after earliestReleaseAt; otherwise the draft expires first, so prepare again. Never do both. ${capacityRelease(details)}`, { ...details });
+       return failure("MCP_UNAVAILABLE", `${error instanceof Error ? error.message : "The session message broker is unavailable."} Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.`);
+     }
+   }
+diff --git a/tests/session-messaging/message-retention.test.ts b/tests/session-messaging/message-retention.test.ts
+index 6ef6fd2b..0a12bc91 100644
+--- a/tests/session-messaging/message-retention.test.ts
++++ b/tests/session-messaging/message-retention.test.ts
+@@ -13,6 +13,7 @@ import { SessionMessageService } from "../../mcp-server/src/session-message-serv
+ // Receipt retention limits: sender quota (F1), ACK-bounded receipt expiry (F2), prepare admission (F3)
+ // and capacity rejection details (D1). The sender quota is fairness between cooperating sessions, not authentication.
+ const SENDER_LIMIT = 250;
++const RETRY_GUIDANCE = "The rejected messageId stays prepared until the expiresAt returned by prepare_session_message. If earliestReleaseAt is before that expiresAt, retry that same messageId after earliestReleaseAt; otherwise the draft expires first, so prepare again. Never do both.";
+ const H = 3600_000;
+ const target = { host: "test-host", sessionId: "retention-target" };
+ const hot = { host: "test-host", sessionId: "retention-hot" };
+@@ -251,9 +252,8 @@ it("service reports capacity rejections as definite no-effect with scope and ear
+   expect(sendRejected.error?.message).toContain("not queued");
+   expect(sendRejected.error?.message).toContain(String(release));
+   expect(sendRejected.error?.message).not.toMatch(/do not prepare again/u);
+-  // The rejected draft remains usable until it expires: one of same-ID retry or new prepare, never both.
+-  expect(sendRejected.error?.message).toContain("stays prepared until its draft expires");
+-  expect(sendRejected.error?.message).toMatch(/either retry that same messageId or prepare again, not both/u);
++  // The rejected draft remains usable only until its prepare expiresAt: one of same-ID retry or new prepare, never both.
++  expect(sendRejected.error?.message).toContain(RETRY_GUIDANCE);
+   const prepareRejected = await service.prepare({ ...call, body: "no draft", _sessionBinding: hot });
+   expect(prepareRejected).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { scope: "sender", earliestReleaseAt: release } } });
+   expect(prepareRejected.error?.message).toContain("no draft was created");
+@@ -349,3 +349,34 @@ it("rolls back the whole ACK when the receipt update fails inside the same trans
+   expect(store.acknowledge(target, [sent.messageId], 3000)).toBe(1);
+   expect(receiptExpiry(store, sent.messageId)).toBe(iso(3000 + H));
+ });
++
++it("when earliestReleaseAt is after the draft expiry, the guidance leads to a new prepare that succeeds", async () => {
++  const state = await launchBroker();
++  const store = fixture(path.join(state, "session-messages.sqlite3"));
++  const service = new SessionMessageService(state);
++  const now = Date.now();
++  for (let index = 0; index < SENDER_LIMIT - 1; index++) sendNew(store, hot, now);
++  const prepared = await service.prepare({ targetHost: target.host, targetSessionId: target.sessionId, body: "the intent", _sessionBinding: hot });
++  const { messageId, expiresAt: draftExpiresAt } = prepared.data as { messageId: string; expiresAt: string };
++  sendNew(store, hot, now);
++  const rejected = await service.send({ messageId, _sessionBinding: hot });
++  const release = (rejected.error?.details as { earliestReleaseAt: string }).earliestReleaseAt;
++  // Condition of the "otherwise" branch: capacity frees only after the draft has expired.
++  expect(Date.parse(release)).toBeGreaterThan(Date.parse(draftExpiresAt));
++  expect(rejected.error?.message).toContain(RETRY_GUIDANCE);
++  expect(rejected.error?.message).toContain("otherwise the draft expires first, so prepare again");
++  // Pass time past both instants by expiring the draft and the earliest receipt in the test database.
++  const past = iso(now - 1000);
++  store.database.prepare("UPDATE prepared_messages SET expires_at = ? WHERE message_id = ?").run(past, messageId);
++  store.database.prepare("UPDATE prepared_messages SET expires_at = ? WHERE message_id = (SELECT message_id FROM prepared_messages WHERE receipt IS NOT NULL ORDER BY expires_at LIMIT 1)").run(past);
++  // The expired same ID now reads as unknown; it was never queued because the earlier rejection was definite.
++  const stale = await service.send({ messageId, _sessionBinding: hot });
++  expect(stale).toMatchObject({ ok: false, error: { details: null } });
++  expect(stale.error?.message).toMatch(/Issued message ID is unavailable/u);
++  expect(Number(scalar(store, "SELECT count(*) AS value FROM messages WHERE message_id = ?", messageId))).toBe(0);
++  // Following the "prepare again" branch delivers the intent exactly once.
++  const again = await service.prepare({ targetHost: target.host, targetSessionId: target.sessionId, body: "the intent", _sessionBinding: hot });
++  const sent = await service.send({ messageId: (again.data as { messageId: string }).messageId, _sessionBinding: hot });
++  expect(sent).toMatchObject({ ok: true, data: { duplicate: false } });
++  expect(Number(scalar(store, "SELECT count(*) AS value FROM messages WHERE body = 'the intent'"))).toBe(1);
++}, 30_000);

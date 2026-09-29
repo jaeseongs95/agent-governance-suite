@@ -1,0 +1,33 @@
+
+ RUN  v5.0.0 [REDACTED-HOME]/agent-governance-suite
+
+ ❯ tests/session-messaging/message-retention.test.ts (16 tests | 1 failed) 9045ms
+   × rolls back the whole ACK when the receipt update fails inside the same transaction 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > rolls back the whole ACK when the receipt update fails inside the same transaction
+AssertionError: expected [Function] to throw error matching /injected receipt update failure/u but got 'cannot rollback - no transaction is a…'
+
+- Expected:
+/injected receipt update failure/u
+
++ Received:
+"cannot rollback - no transaction is active"
+
+ ❯ tests/session-messaging/message-retention.test.ts:344:67
+    342|   store.database.exec(`CREATE TRIGGER retention_fail_receipt BEFORE UP…
+    343|     BEGIN SELECT RAISE(ABORT, 'injected receipt update failure'); END;…
+    344|   expect(() => store.acknowledge(target, [sent.messageId], 2000)).toTh…
+       |                                                                   ^
+    345|   expect(scalar(store, "SELECT acknowledged_at AS value FROM messages …
+    346|   expect(receiptExpiry(store, sent.messageId)).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 9 passed | 1 skipped (11)
+      Tests  1 failed | 294 passed | 2 skipped (297)
+   Start at  16:21:40
+   Duration  20.96s (tests 94%, transform 3%, import 2%)
+
