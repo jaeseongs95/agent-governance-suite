@@ -1,0 +1,14 @@
+[2026-09-28T14:25:42Z -> 2026-09-28T14:25:43Z] pnpm install --frozen-lockfile exit=0
+[2026-09-28T14:25:43Z -> 2026-09-28T14:25:44Z] pnpm bundle:check exit=0
+[2026-09-28T14:25:44Z -> 2026-09-28T14:25:46Z] pnpm claude:drift exit=0
+[2026-09-28T14:25:46Z -> 2026-09-28T14:25:55Z] pnpm lint exit=0
+[2026-09-28T14:25:55Z -> 2026-09-28T14:26:01Z] pnpm build exit=0
+[2026-09-28T14:26:01Z -> 2026-09-28T14:27:13Z] pnpm test exit=0
+[2026-09-28T14:27:13Z -> 2026-09-28T14:27:21Z] pnpm runtime:check exit=0
+[2026-09-28T14:27:21Z -> 2026-09-28T14:27:27Z] pnpm validate:all exit=0
+[2026-09-28T14:27:27Z -> 2026-09-28T14:27:28Z] pnpm validate:official exit=1
+[2026-09-28T14:27:28Z -> 2026-09-28T14:27:30Z] pnpm claude:check exit=0
+git diff --check exit=0
+v2.7.2 sha256=fbb808e0fd8d52df17db7e7a8eeac84ed675f83a3abca9039f79740f2536f682 exit=0
+v2.7.1 sha256=d4b667d417c6c8a8beaf749a2209ab1a8d1548a26d1f819dfcc6238a6711ab80 exit=0
+v2.2.6 sha256=14f9345d3b18611fe0d5799ae56d65e3e80708ee288bbd771aafa5611a1a1cc3 exit=0

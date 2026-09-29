@@ -1,0 +1,14 @@
+[2026-09-28T14:28:15Z -> 2026-09-28T14:28:16Z] pnpm install --frozen-lockfile exit=0
+[2026-09-28T14:28:16Z -> 2026-09-28T14:28:17Z] pnpm bundle:check exit=0
+[2026-09-28T14:28:17Z -> 2026-09-28T14:28:18Z] pnpm claude:drift exit=0
+[2026-09-28T14:28:18Z -> 2026-09-28T14:28:26Z] pnpm lint exit=0
+[2026-09-28T14:28:26Z -> 2026-09-28T14:28:33Z] pnpm build exit=0
+[2026-09-28T14:28:33Z -> 2026-09-28T14:29:44Z] pnpm test exit=0
+[2026-09-28T14:29:44Z -> 2026-09-28T14:29:53Z] pnpm runtime:check exit=0
+[2026-09-28T14:29:53Z -> 2026-09-28T14:29:59Z] pnpm validate:all exit=0
+[2026-09-28T14:29:59Z -> 2026-09-28T14:30:00Z] pnpm validate:official exit=1
+[2026-09-28T14:30:00Z -> 2026-09-28T14:30:01Z] pnpm claude:check exit=0
+git diff --check exit=0
+previous-broker v2.7.2 sha256=fbb808e0fd8d52df17db7e7a8eeac84ed675f83a3abca9039f79740f2536f682 exit=0
+previous-broker v2.7.1 sha256=d4b667d417c6c8a8beaf749a2209ab1a8d1548a26d1f819dfcc6238a6711ab80 exit=0
+previous-broker v2.2.6 sha256=14f9345d3b18611fe0d5799ae56d65e3e80708ee288bbd771aafa5611a1a1cc3 exit=0
