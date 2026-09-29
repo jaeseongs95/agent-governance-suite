@@ -1,0 +1,9 @@
+# CMD: pnpm claude:drift
+# CWD: /home/user/agent-governance-suite
+# START: 2026-09-28T06:49:50Z
+Already up to date
+Done in 541ms using pnpm v11.19.0
+$ node scripts/build-claude-plugin.mjs --drift
+claude-plugin: fresh
+# END: 2026-09-28T06:49:51Z
+EXIT=0

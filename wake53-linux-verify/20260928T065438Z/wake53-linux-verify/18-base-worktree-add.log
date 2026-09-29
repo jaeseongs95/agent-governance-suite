@@ -1,0 +1,7 @@
+# CMD: git worktree add --detach /tmp/base d5c5932cd5a0d87630f6ed94f8e3721181ab9864
+# CWD: /home/user/agent-governance-suite
+# START: 2026-09-28T06:53:14Z
+Preparing worktree (detached HEAD d5c5932)
+HEAD is now at d5c5932 v2.7.1: wake 알림 누적 억제와 continuity DB 호환 (#13)
+# END: 2026-09-28T06:53:15Z
+EXIT=0

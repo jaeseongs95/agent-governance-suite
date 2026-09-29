@@ -1,0 +1,210 @@
+# CMD: pnpm test tests/session-messaging/session-message.test.ts tests/session-messaging/wake-lifecycle.test.mjs --reporter=default --reporter=json --outputFile.json=/tmp/ev/22-base-targeted-test.json
+# CWD: /tmp/base
+# START: 2026-09-28T06:53:27Z
+Already up to date
+Done in 575ms using pnpm v11.19.0
+$ node scripts/build.mjs && vitest run tests/session-messaging/session-message.test.ts tests/session-messaging/wake-lifecycle.test.mjs --reporter=default --reporter=json --outputFile.json=/tmp/ev/22-base-targeted-test.json
+
+ RUN  v5.0.0 /tmp/base
+
+ ❯ tests/session-messaging/wake-lifecycle.test.mjs (29 tests | 3 failed) 3205ms
+   ✓ W05-r2 body claim and ACK cannot authorize another unobserved managed wake 28ms
+   ✓ W05-r2 board ownership check has no nonce state effect 13ms
+   ✓ W05-r2 claimDeferred and ACK leave the managed notification fenced 15ms
+   ✓ W05-r2 claimTurnEnd and ACK leave the managed notification fenced 14ms
+   ✓ W05-r2 start rechecks claim/ACK and persists no-effect retirement 15ms
+   ✓ W05-r2 claim after start keeps one fence until the actual hook, including an empty batch 28ms
+   ✓ W05-r2 reserved crash recovery keeps the nonce/attempt and rejects replaced lease CAS 17ms
+   ✓ W05-r2 transport remains part of the exact stored attempt binding 15ms
+   ✓ W05-r2 definite failure uses durable backoff and exact dispatch epoch for late results 19ms
+   ✓ W05-r2 unknown survives restart, both TTLs, ordinary claim, ACK and generation replacement 19ms
+   ✓ W05-r2 ordinary peer provenance, expired hook receipts and changed observation digests cannot release a fence 26ms
+   × W05-r2 observation holds the SQLite generation lock and notices a generation change during verification 50ms
+   ✓ W05-r2 lost committed outcome response never dispatches again 17ms
+   ✓ W05-r2 forged nonce, caller approved and normalized observation cannot observe without the hook receipt 29ms
+   × verified expired/old-generation arrival retires only its attempt before a separate current wake 25ms
+   ✓ old-generation retirement still rejects wrong target, unknown or mixed nonces and stale provenance 28ms
+   ✓ W05-r2 batch/ACK-loss redelivery and hook rollback preserve exact nonce consumption 36ms
+   ✓ W05-r2 hook-before-outcome, adapter exception and new vendor use the same core 28ms
+   ✓ W05-r2 both host capabilities preserve submission/observation distinction and deferred idle wake zero 1ms
+   ✓ W05-r2 additive legacy migration never imports old consumed_at as observed 11ms
+   ✓ W05-r2 active budget overflow is an explicit rejection and does not remove unknowns 353ms
+   ✓ W05-r2 terminal observation retention is bounded while unresolved rows are retained 320ms
+   × verified old arrival in another process releases only the old attempt and permits one new effect 320ms
+   ✓ Codex running body claim in another process prevents the external queue call before start 167ms
+   ✓ Codex post-start claim in another process leaves one marker and a verified empty discard 204ms
+   ✓ W05-r2 independent senders and relay processes perform exactly one external call 318ms
+   ✓ W05-r2 independent process crash before start recovers the same attempt; after effect never resends 905ms
+   ✓ W05-r2 independent migration failure rolls back every added nonce column and preserves legacy bytes 168ms
+   ✓ public wake binding requires a fresh presence birth after lease expiry 15ms
+ ❯ tests/session-messaging/session-message.test.ts (70 tests | 1 failed) 13681ms
+   ✓ session message spool (17)
+     ✓ keeps stable IDs until ACK, enforces limits, and recovers stale relay leases 35ms
+     ✓ applies caller claim budgets before leasing messages 6ms
+     ✓ rejects newline, control, and unsafe host or session identifiers 5ms
+     ✓ allows only one unconsumed wake and suppresses wakes during a live claim 21ms
+     ✓ expires an unconsumed wake after one hour independently of message TTL 4ms
+     ✓ tracks portable presence generations and derives lifecycle state from the lease 6ms
+     ✓ does not let an explicit stale presence end offline the current generation 4ms
+     ✓ exposes presence lifecycle through vendor-neutral broker operations 5ms
+     ✓ leaves queued messages intact when an older broker rejects a new operation 4ms
+     ✓ locks claim selection before a competing connection can reserve a wake 13ms
+     ✓ keeps a recognized wake latched until claim consumes it atomically 7ms
+     ✓ caps the unacknowledged spool and expires messages 344ms
+     ✓ keeps delivery receipt metadata stable across lease redelivery and stops after ACK 10ms
+     ✓ atomically verifies a session-bound wake before claiming and rejects reuse or mismatch 23ms
+     ✓ allows one wake claim across two concurrent SQLite connections 329ms
+     ✓ defers one boundary, then keeps claiming new and redelivered messages until a new native input 13ms
+     ✓ migrates legacy messages without inventing unknown first-delivery evidence 29ms
+   ❯ TLS 1.3 broker and vendor-neutral adapter (51)
+     ✓ fails fast on broker exit and leaves deadline cleanup to the state-directory owner 381ms
+     ✓ converges simultaneous startup requests on one broker 203ms
+     ✓ returns at the startup deadline while state preparation is still blocked and never spawns afterward 555ms
+     ✓ handles a state-preparation rejection that arrives after the startup deadline 153ms
+     ✓ preserves the top-level deadline reason when the event loop resumes after expiry 153ms
+     ✓ enforces an absolute request deadline while a TLS peer keeps sending partial data 328ms
+     ✓ rejects a reused PID when its process-start token changes 1ms
+     ✓ parses merged wake bells without hiding mixed user text 1ms
+     ✓ maps vendor input once and keeps mixed user text as a user-input observation 1ms
+     ✓ keeps injection and idle wake as separate arbitrary-host capabilities 0ms
+     ✓ denies observed subagents before session-bound message calls and binds collaboration validation observations 1ms
+     ✓ treats merged wake bells as internal only when every nonce is broker-recognized 219ms
+     ✓ backs off definite wake submission failures without exceeding ten minutes 0ms
+     ✓ keeps Codex wake deferred by default and makes visible queue wake explicit 1ms
+     ✓ resolves plugin queue settings only after explicit ENV and only for Codex 4ms
+     ✓ disables malformed plugin queue settings 0 with a bounded diagnostic 2ms
+     ✓ disables malformed plugin queue settings 1 with a bounded diagnostic 2ms
+     ✓ disables malformed plugin queue settings 2 with a bounded diagnostic 1ms
+     ✓ disables malformed plugin queue settings 3 with a bounded diagnostic 2ms
+     ✓ disables malformed plugin queue settings 4 with a bounded diagnostic 2ms
+     ✓ disables malformed plugin queue settings 5 with a bounded diagnostic 4ms
+     ✓ disables malformed plugin queue settings 6 with a bounded diagnostic 2ms
+     ✓ disables malformed plugin queue settings 7 with a bounded diagnostic 2ms
+     ✓ disables malformed plugin queue settings 8 with a bounded diagnostic 1ms
+     ✓ bounds plugin queue settings by bytes, permits false, and rejects read errors and relative paths 6ms
+     ✓ uses one plugin queue profile for packaged presence and relay until the next SessionStart 7006ms
+     ✓ releases Codex wake reservations only for definite submission failures 1ms
+     ✓ retains Claude wake reservations whenever the inbox may have accepted bytes 0ms
+     ✓ serializes a Claude wake with next priority through an isolated inbox socket 4ms
+     ✓ does not dispatch a Claude wake when socket is missing 0ms
+     ✓ does not dispatch a Claude wake when token is missing 0ms
+     ✓ does not dispatch a Claude wake when both is missing 0ms
+     ✓ consumes queued peers at safe boundaries after restart without waking again after ACK 25ms
+     ✓ retries only a definitely failed wake whose reservation was released 1ms
+     ✓ serializes wake reservation and release through the TLS broker 207ms
+     ✓ stops relay acquisition after three consecutive unknown identity checks 1ms
+     ✓ does not pass Claude inbox credentials into the broker process 0ms
+     ✓ pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts 538ms
+     × blocks only verified empty Codex wake prompts in the packaged hook 381ms
+     ✓ keeps a maximum-size peer message within the hook context limit 302ms
+     ✓ escapes peer bodies inside one bounded JSON block 302ms
+     ✓ losslessly bounds an escape-heavy controls envelope 1ms
+     ✓ losslessly bounds an escape-heavy quotes envelope 0ms
+     ✓ losslessly bounds an escape-heavy backslashes envelope 0ms
+     ✓ starts the relay without spending a second claim budget during SessionStart 331ms
+     ✓ leaves Codex Stop messages queued for a supported context event 311ms
+     ✓ does not register an unsupported Codex Stop context hook 1ms
+     ✓ keeps packaged hook and relay entrypoints isolated 273ms
+     ✓ keeps Claude Code Stop context delivery enabled 301ms
+     ✓ binds message tools to host hook identity 1ms
+     ✓ does not speak plaintext on the loopback port 178ms
+   ✓ session message MCP tools (2)
+     ✓ reports an overlong Unicode body as INVALID_INPUT before broker access 2ms
+     ✓ validates bound send, status, and acknowledgement calls 627ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > blocks only verified empty Codex wake prompts in the packaged hook
+AssertionError: expected {} to match object { decision: 'block' }
+
+- Expected
++ Received
+
+- {
+-   "decision": "block",
+- }
++ {}
+
+ ❯ tests/session-messaging/session-message.test.ts:1219:24
+    1217|       const output = await invoke();
+    1218|       if (["submitted", "unknown", "duplicate"].includes(scenario)) {
+    1219|         expect(output).toMatchObject({ decision: "block" });
+       |                        ^
+    1220|         if (scenario === "duplicate") expect(await invoke()).toEqual({…
+    1221|       } else if (scenario === "idle") {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 observation holds the SQLite generation lock and notices a generation change during verification
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'unknown'
+- 'observed'
+
+
+Expected: "observed"
+Received: "unknown"
+
+ ❯ tests/session-messaging/wake-lifecycle.test.mjs:214:10
+    212|   assert.equal(f.store.claimHostWake(target, observed.observation, obs…
+    213|   assert.equal(blocked, true); assert.equal(f.store.pendingCount(targe…
+    214|   assert.equal(f.store.managedWakeStatus(target, f.now + 4).state, 'ob…
+       |          ^
+    215| });
+    216|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/session-messaging/wake-lifecycle.test.mjs > verified expired/old-generation arrival retires only its attempt before a separate current wake
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'unknown'
+- 'observed'
+
+
+Expected: "observed"
+Received: "unknown"
+
+ ❯ tests/session-messaging/wake-lifecycle.test.mjs:270:12
+    268|     assert.equal(f.store.pendingCount(target, at + 4), 1);
+    269|     const state = f.store.managedWakeStatus(target, at + 4);
+    270|     assert.equal(state.state, 'observed'); assert.equal(state.observat…
+       |            ^
+    271|     assert.ok(state.lateObservedAt); assert.equal(state.observedAt, st…
+    272|     assert.equal(f.store.recordManagedWakeOutcome(attempt, 'definite-f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/session-messaging/wake-lifecycle.test.mjs > verified old arrival in another process releases only the old attempt and permits one new effect
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'unknown'
+- 'observed'
+
+
+Expected: "observed"
+Received: "unknown"
+
+ ❯ tests/session-messaging/wake-lifecycle.test.mjs:428:10
+    426|   assert.deepEqual(result, { recognized: false, messages: [], binding:…
+    427|   assert.equal(f.store.pendingCount(target), 1);
+    428|   assert.equal(f.store.managedWakeStatus(target).state, 'observed');
+       |          ^
+    429|   const relays = await Promise.all(['current-relay', 'replacement-curr…
+    430|   for (const relay of relays) relay.child.send({ instanceId: 'instance…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 95 passed (99)
+   Start at  06:53:29
+   Duration  14.91s (tests 91%, transform 7%, import 2%)
+
+JSON report written to /tmp/ev/22-base-targeted-test.json
+[ELIFECYCLE] Test failed. See above for more details.
+# END: 2026-09-28T06:53:44Z
+EXIT=1

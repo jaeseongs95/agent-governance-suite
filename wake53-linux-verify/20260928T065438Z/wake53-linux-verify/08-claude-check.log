@@ -1,0 +1,9 @@
+# CMD: pnpm claude:check
+# CWD: /home/user/agent-governance-suite
+# START: 2026-09-28T06:50:10Z
+Already up to date
+Done in 500ms using pnpm v11.19.0
+$ node scripts/build-claude-plugin.mjs --check
+claude-plugin: fresh
+# END: 2026-09-28T06:50:11Z
+EXIT=0

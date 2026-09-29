@@ -1,0 +1,14 @@
+{
+  "case": "wake53-linux-verify",
+  "target": {"sha": "53eff30a2984d41fc749d38dd2062966017684fa", "tree": "c030fa4e19411ef511c5d5c89cf588aa6f42c059", "head_at_run": "53eff30a2984d41fc749d38dd2062966017684fa"},
+  "baseline": {"sha": "d5c5932cd5a0d87630f6ed94f8e3721181ab9864", "label": "public v2.7.1"},
+  "node": "v24.21.0",
+  "node_source": "nodejs.org/dist/latest-v24.x linux-x64 tarball, SHASUMS256 verified (01-node24-setup.log)",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v37 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "start_utc": "2026-09-28T06:49:16Z",
+  "end_utc": "2026-09-28T06:54:32Z",
+  "not_run": {"validate:official": "Codex official validator /root/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py not present in cloud container (ENOENT, exit 1)"},
+  "skipped_tests": {"tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker": "it.skipIf(!process.env.AGS_PREVIOUS_BROKER_PATH); env not set"},
+  "note": "Linux cloud container experiment only; not evidence of user PC Codex/Claude installation or live behavior."
+}

@@ -1,0 +1,9 @@
+From https://github.com/jaeseongs95/agent-governance-suite
+ * branch            codex/v2711-codex-empty-wake -> FETCH_HEAD
+ * branch            main       -> FETCH_HEAD
+ * [new branch]      codex/v2711-codex-empty-wake -> origin/codex/v2711-codex-empty-wake
+   b3c232f..d5c5932  main       -> origin/main
+Previous HEAD position was d5c5932 v2.7.1: wake 알림 누적 억제와 continuity DB 호환 (#13)
+HEAD is now at 53eff30 fix: retire verified wake arrivals across generations
+53eff30a2984d41fc749d38dd2062966017684fa
+c030fa4e19411ef511c5d5c89cf588aa6f42c059

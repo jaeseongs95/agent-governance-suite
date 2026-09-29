@@ -1,0 +1,9 @@
+# CMD: pnpm runtime:check
+# CWD: /home/user/agent-governance-suite
+# START: 2026-09-28T06:52:47Z
+Already up to date
+Done in 517ms using pnpm v11.19.0
+$ node scripts/check-runtime.mjs
+runtime: ready (29 skill CLIs, Node.js 24.21.0)
+# END: 2026-09-28T06:52:56Z
+EXIT=0

@@ -1,0 +1,3 @@
+tests/session-messaging/fixtures/managed-wake-process.mjs
+tests/session-messaging/session-message.test.ts
+tests/session-messaging/wake-lifecycle.test.mjs

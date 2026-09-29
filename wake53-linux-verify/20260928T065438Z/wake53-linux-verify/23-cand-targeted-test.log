@@ -1,0 +1,38 @@
+# CMD: pnpm test tests/session-messaging/session-message.test.ts tests/session-messaging/wake-lifecycle.test.mjs --reporter=default --reporter=json --outputFile.json=/tmp/ev/23-cand-targeted-test.json
+# CWD: /home/user/agent-governance-suite
+# START: 2026-09-28T06:53:44Z
+Already up to date
+Done in 499ms using pnpm v11.19.0
+$ node scripts/build.mjs && vitest run tests/session-messaging/session-message.test.ts tests/session-messaging/wake-lifecycle.test.mjs --reporter=default --reporter=json --outputFile.json=/tmp/ev/23-cand-targeted-test.json
+
+ RUN  v5.0.0 /home/user/agent-governance-suite
+
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs (29 tests) 3398ms
+   ✓ W05-r2 active budget overflow is an explicit rejection and does not remove unknowns 316ms
+   ✓ W05-r2 terminal observation retention is bounded while unresolved rows are retained 465ms
+   ✓ verified old arrival in another process releases only the old attempt and permits one new effect 373ms
+   ✓ W05-r2 independent senders and relay processes perform exactly one external call 324ms
+   ✓ W05-r2 independent process crash before start recovers the same attempt; after effect never resends 920ms
+ ✓ tests/session-messaging/session-message.test.ts (70 tests) 14545ms
+   ✓ TLS 1.3 broker and vendor-neutral adapter (51)
+     ✓ fails fast on broker exit and leaves deadline cleanup to the state-directory owner 386ms
+     ✓ returns at the startup deadline while state preparation is still blocked and never spawns afterward 554ms
+     ✓ enforces an absolute request deadline while a TLS peer keeps sending partial data 336ms
+     ✓ uses one plugin queue profile for packaged presence and relay until the next SessionStart 7366ms
+     ✓ pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts 567ms
+     ✓ blocks only verified empty Codex wake prompts in the packaged hook 1270ms
+     ✓ keeps a maximum-size peer message within the hook context limit 303ms
+     ✓ escapes peer bodies inside one bounded JSON block 305ms
+     ✓ starts the relay without spending a second claim budget during SessionStart 309ms
+     ✓ leaves Codex Stop messages queued for a supported context event 310ms
+   ✓ session message MCP tools (2)
+     ✓ validates bound send, status, and acknowledgement calls 585ms
+
+ Test Files  2 passed (2)
+      Tests  99 passed (99)
+   Start at  06:53:46
+   Duration  15.68s (tests 92%, transform 6%, import 2%)
+
+JSON report written to /tmp/ev/23-cand-targeted-test.json
+# END: 2026-09-28T06:54:02Z
+EXIT=0

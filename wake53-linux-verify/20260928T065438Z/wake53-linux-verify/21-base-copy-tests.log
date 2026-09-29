@@ -1,0 +1,11 @@
+# CMD: bash /tmp/ev/scripts/copy-tests.sh
+# CWD: /home/user/agent-governance-suite
+# START: 2026-09-28T06:53:23Z
+copied tests/session-messaging/fixtures/managed-wake-process.mjs 32e9af66e3ea5586
+copied tests/session-messaging/session-message.test.ts bbb0188edf5aca7c
+copied tests/session-messaging/wake-lifecycle.test.mjs 3bbfa8173651cb20
+ M tests/session-messaging/fixtures/managed-wake-process.mjs
+ M tests/session-messaging/session-message.test.ts
+ M tests/session-messaging/wake-lifecycle.test.mjs
+# END: 2026-09-28T06:53:23Z
+EXIT=0

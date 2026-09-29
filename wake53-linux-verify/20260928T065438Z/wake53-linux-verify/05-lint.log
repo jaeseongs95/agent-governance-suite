@@ -1,0 +1,9 @@
+# CMD: pnpm lint
+# CWD: /home/user/agent-governance-suite
+# START: 2026-09-28T06:49:51Z
+Already up to date
+Done in 489ms using pnpm v11.19.0
+$ eslint . && node scripts/validate-repository.mjs
+repository: valid
+# END: 2026-09-28T06:50:02Z
+EXIT=0

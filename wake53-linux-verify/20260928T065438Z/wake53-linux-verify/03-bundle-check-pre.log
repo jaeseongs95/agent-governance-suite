@@ -1,0 +1,8 @@
+# CMD: pnpm bundle:check
+# CWD: /home/user/agent-governance-suite
+# START: 2026-09-28T06:49:48Z
+Already up to date
+Done in 546ms using pnpm v11.19.0
+$ node scripts/check-bundle.mjs
+# END: 2026-09-28T06:49:50Z
+EXIT=0

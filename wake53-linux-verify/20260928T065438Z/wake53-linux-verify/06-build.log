@@ -1,0 +1,8 @@
+# CMD: pnpm build
+# CWD: /home/user/agent-governance-suite
+# START: 2026-09-28T06:50:02Z
+Already up to date
+Done in 526ms using pnpm v11.19.0
+$ tsc --noEmit && node scripts/build.mjs
+# END: 2026-09-28T06:50:08Z
+EXIT=0
