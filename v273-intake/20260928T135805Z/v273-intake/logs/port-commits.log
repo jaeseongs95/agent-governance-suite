@@ -1,0 +1,4 @@
+732ba286a68b35a7cbd99aefbea12d11b88f1b8c 06d58b258d467214db08943d30e13d3c3e4ef2fe test(intake): reject common intake copies in the Claude overlay
+afafd4e63a76d45b21185e7c74e9b1b4f841e7ab 729652f34c8eda06e9ab45e24d8fdec86c030dd9 fix(intake): expose shared selection policy to both hosts
+c548c77fc01ef752012dfb3dd8a3e22f0eb39263 494cea95af8be275c12407ef69f612f368058421 refactor: port common skill intake to the 2.7.2 candidate
+8763cef2b11f2635d6c9af7861b5bffd496e2a30 eed08f9675246c8519607f7b945dcd4055a14d92 v2.7.2: wake 도착 처리와 broker 안정성 (#15)

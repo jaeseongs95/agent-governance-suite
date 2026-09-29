@@ -1,0 +1,30 @@
+[
+ {
+  "label": "codex-root",
+  "profile": "default",
+  "status": 0,
+  "containsIntakeOnce": true,
+  "instructionsSha256": "a410cfd160319ba933b994edfe34d1c490391aa77335a92ea24af5c2ada37c00"
+ },
+ {
+  "label": "codex-root",
+  "profile": "anthropic",
+  "status": 0,
+  "containsIntakeOnce": true,
+  "instructionsSha256": "a410cfd160319ba933b994edfe34d1c490391aa77335a92ea24af5c2ada37c00"
+ },
+ {
+  "label": "claude-plugin",
+  "profile": "default",
+  "status": 0,
+  "containsIntakeOnce": true,
+  "instructionsSha256": "a410cfd160319ba933b994edfe34d1c490391aa77335a92ea24af5c2ada37c00"
+ },
+ {
+  "label": "claude-plugin",
+  "profile": "anthropic",
+  "status": 0,
+  "containsIntakeOnce": true,
+  "instructionsSha256": "a410cfd160319ba933b994edfe34d1c490391aa77335a92ea24af5c2ada37c00"
+ }
+]

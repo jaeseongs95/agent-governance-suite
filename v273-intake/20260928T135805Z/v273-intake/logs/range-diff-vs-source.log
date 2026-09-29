@@ -1,0 +1,31 @@
+-:  ------- > 1:  38bd227 fix: skip verified empty Codex wake prompts
+-:  ------- > 2:  53eff30 fix: retire verified wake arrivals across generations
+1:  c548c77 ! 3:  2b53e32 refactor: port common skill intake to the 2.7.2 candidate
+    @@ Metadata
+      ## Commit message ##
+         refactor: port common skill intake to the 2.7.2 candidate
+     
+    -    Ported onto v2.7.2 main (8763cef2) without conflicts.
+    -    (cherry picked from commit 2b53e325f549a9ebd32a143d1d11f7b4393355fa)
+    -
+    -    Co-Authored-By: Claude Opus 5.5 <[REDACTED]>
+    -    Claude-Session: https://claude.ai/code/session_01YGNDopfDtbUEU9S4T5YdDs
+    -
+      ## claude-overlay/adaptations/orchestrator.json ##
+     @@
+      {
+2:  afafd4e ! 4:  cb59ad7 fix(intake): expose shared selection policy to both hosts
+    @@ Metadata
+      ## Commit message ##
+         fix(intake): expose shared selection policy to both hosts
+     
+    -    Ported onto v2.7.2 main (8763cef2) without conflicts.
+    -    (cherry picked from commit cb59ad7f0f74a32a910e0afc2d196d12ea460c67)
+    -
+    -    Co-Authored-By: Claude Opus 5.5 <[REDACTED]>
+    -    Claude-Session: https://claude.ai/code/session_01YGNDopfDtbUEU9S4T5YdDs
+    -
+      ## claude-overlay/adaptations/orchestrator.json ##
+     @@
+          {
+3:  732ba28 < -:  ------- test(intake): reject common intake copies in the Claude overlay

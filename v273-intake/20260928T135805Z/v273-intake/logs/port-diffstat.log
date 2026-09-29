@@ -1,0 +1,19 @@
+ claude-overlay/adaptations/orchestrator.json       |  10 +-
+ claude-overlay/hooks/hooks.json                    |  33 +++----
+ claude-overlay/hooks/skill-trigger-hook.mjs        |  95 +++----------------
+ claude-plugin/hooks/hooks.json                     |  33 +++----
+ claude-plugin/hooks/skill-trigger-hook.mjs         |  95 +++----------------
+ claude-plugin/mcp-server/dist/server.mjs           |  19 ++--
+ claude-plugin/skills/orchestrator/SKILL.md         |  61 ++++--------
+ .../orchestrator/references/entry-details.md       |  20 +++-
+ .../orchestrator/references/mcp-execution.md       |  17 +++-
+ mcp-server/dist/server.mjs                         |  19 ++--
+ mcp-server/src/server.ts                           |  21 ++---
+ scripts/check-skill-context-optimization.mjs       |  30 +++++-
+ skills/orchestrator/SKILL.md                       |  20 ++--
+ skills/orchestrator/references/entry-details.md    |  20 +++-
+ skills/orchestrator/references/mcp-execution.md    |  17 +++-
+ tests/mcp/tool-schema-profile.test.ts              |  39 +++++---
+ tests/tooling/claude-plugin.test.mjs               | 104 ++++++++++++++++++---
+ tests/tooling/skill-context-optimization.test.mjs  |  28 +++++-
+ 18 files changed, 343 insertions(+), 338 deletions(-)

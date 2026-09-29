@@ -1,0 +1,17 @@
+01-install rc=0 1s
+02-bundle-check rc=0 1s
+03-claude-drift rc=0 2s
+04-lint rc=0 8s
+05-build rc=0 7s
+06-test rc=0 70s
+07-runtime-check rc=0 8s
+08-validate-all rc=0 6s
+09-validate-official rc=1 1s
+10-claude-build rc=0 2s
+11-claude-check rc=0 1s
+12-git-diff-check rc=0
+13-git-diff-check-vs-base rc=0
+14-status-after lines=0
+15-source-check rc=0
+16-source-verify rc=1
+17-init-instructions-smoke rc=0
