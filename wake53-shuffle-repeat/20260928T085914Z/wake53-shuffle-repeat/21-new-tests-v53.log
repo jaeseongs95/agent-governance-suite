@@ -1,0 +1,30 @@
+tests/session-messaging/session-message.test.ts :: TLS 1.3 broker and vendor-neutral adapter blocks only verified empty Codex wake prompts in the packaged hook
+    cpu1 n=10 statuses {'passed'} dur max 1452ms
+    cpu1stress n=10 statuses {'passed'} dur max 6160ms
+    normal n=30 statuses {'passed'} dur max 1555ms
+    stress n=10 statuses {'passed'} dur max 2492ms
+tests/session-messaging/wake-lifecycle.test.mjs :: Codex post-start claim in another process leaves one marker and a verified empty discard
+    cpu1 n=10 statuses {'passed'} dur max 265ms
+    cpu1stress n=10 statuses {'passed'} dur max 1008ms
+    normal n=30 statuses {'passed'} dur max 244ms
+    stress n=10 statuses {'passed'} dur max 450ms
+tests/session-messaging/wake-lifecycle.test.mjs :: Codex running body claim in another process prevents the external queue call before start
+    cpu1 n=10 statuses {'passed'} dur max 257ms
+    cpu1stress n=10 statuses {'passed'} dur max 1036ms
+    normal n=30 statuses {'passed'} dur max 224ms
+    stress n=10 statuses {'passed'} dur max 456ms
+tests/session-messaging/wake-lifecycle.test.mjs :: old-generation retirement still rejects wrong target, unknown or mixed nonces and stale provenance
+    cpu1 n=10 statuses {'passed'} dur max 48ms
+    cpu1stress n=10 statuses {'passed'} dur max 169ms
+    normal n=30 statuses {'passed'} dur max 47ms
+    stress n=10 statuses {'passed'} dur max 78ms
+tests/session-messaging/wake-lifecycle.test.mjs :: verified expired/old-generation arrival retires only its attempt before a separate current wake
+    cpu1 n=10 statuses {'passed'} dur max 142ms
+    cpu1stress n=10 statuses {'passed'} dur max 627ms
+    normal n=30 statuses {'passed'} dur max 162ms
+    stress n=10 statuses {'passed'} dur max 244ms
+tests/session-messaging/wake-lifecycle.test.mjs :: verified old arrival in another process releases only the old attempt and permits one new effect
+    cpu1 n=10 statuses {'passed'} dur max 729ms
+    cpu1stress n=10 statuses {'passed'} dur max 2335ms
+    normal n=30 statuses {'passed'} dur max 793ms
+    stress n=10 statuses {'passed'} dur max 851ms

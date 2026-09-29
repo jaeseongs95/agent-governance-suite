@@ -1,0 +1,86 @@
+Already up to date
+Done in 2.8s using pnpm v11.19.0
+$ node scripts/build.mjs && vitest run --sequence.shuffle --sequence.seed=5009 --reporter=default --reporter=json --outputFile.json=/tmp/ev/runs/wake-v53-cpu1stress-s5009.json tests/session-messaging/ tests/session-board/ tests/mcp/trust-provenance
+
+ RUN  v5.0.0 /tmp/v53
+      Running tests with seed "5009"
+
+ ✓ tests/session-board/session-board.test.ts (15 tests) 13361ms
+   ✓ session board hook (6)
+     ✓ denies exactly once when several hook processes race on the same request 592ms
+   ✓ session board MCP tools (3)
+     ✓ shares one board between the Claude launcher and the Codex hook and lists both hosts 2100ms
+     ✓ reads back the hook-written line, lists the host board and refuses unbound updates 8639ms
+     ✓ overlays matching broker presence and leaves missing sessions unknown 1659ms
+ ✓ tests/session-messaging/self-signed-certificate.test.ts (1 test) 71ms
+stdout | tests/session-messaging/message-lifecycle.test.ts > packaged TLS cycles use one request instead of three or two without changing pending state
+relay tick measured TLS request counts [{"transport":"test-inbox","cycles":10,"baselineRequests":30,"tickRequests":10},{"transport":"codex-deferred","cycles":10,"baselineRequests":20,"tickRequests":10}]
+
+ ✓ tests/session-messaging/message-lifecycle.test.ts (14 tests) 17875ms
+   ✓ applies global draft, receipt and byte backpressure without evicting valid records 5280ms
+   ✓ packaged TLS cycles use one request instead of three or two without changing pending state 2367ms
+   ✓ a real post-commit prepare reply loss leaves only orphan drafts 852ms
+   ✓ a real send reply loss retries the known ID once and survives broker restart 3837ms
+   ✓ two independent processes submit one ID atomically and enforce sender preparation capacity 2005ms
+   ✓ packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect 3052ms
+ ↓ tests/session-messaging/previous-broker.test.ts (1 test | 1 skipped)
+ ✓ tests/session-messaging/session-message.test.ts (70 tests) 31170ms
+   ✓ session message spool (17)
+     ✓ caps the unacknowledged spool and expires messages 1404ms
+     ✓ allows one wake claim across two concurrent SQLite connections 1018ms
+   ✓ TLS 1.3 broker and vendor-neutral adapter (51)
+     ✓ fails fast on broker exit and leaves deadline cleanup to the state-directory owner 535ms
+     ✓ converges simultaneous startup requests on one broker 444ms
+     ✓ returns at the startup deadline while state preparation is still blocked and never spawns afterward 556ms
+     ✓ enforces an absolute request deadline while a TLS peer keeps sending partial data 540ms
+     ✓ treats merged wake bells as internal only when every nonce is broker-recognized 572ms
+     ✓ uses one plugin queue profile for packaged presence and relay until the next SessionStart 7639ms
+     ✓ serializes wake reservation and release through the TLS broker 471ms
+     ✓ pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts 1502ms
+     ✓ blocks only verified empty Codex wake prompts in the packaged hook 5476ms
+     ✓ keeps a maximum-size peer message within the hook context limit 1236ms
+     ✓ escapes peer bodies inside one bounded JSON block 1116ms
+     ✓ starts the relay without spending a second claim budget during SessionStart 1242ms
+     ✓ leaves Codex Stop messages queued for a supported context event 1190ms
+     ✓ keeps packaged hook and relay entrypoints isolated 1043ms
+     ✓ keeps Claude Code Stop context delivery enabled 1084ms
+     ✓ does not speak plaintext on the loopback port 332ms
+   ✓ session message MCP tools (2)
+     ✓ validates bound send, status, and acknowledgement calls 2472ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs (29 tests) 16346ms
+   ✓ verified expired/old-generation arrival retires only its attempt before a separate current wake 421ms
+   ✓ W05-r2 active budget overflow is an explicit rejection and does not remove unknowns 978ms
+   ✓ W05-r2 terminal observation retention is bounded while unresolved rows are retained 988ms
+   ✓ verified old arrival in another process releases only the old attempt and permits one new effect 2109ms
+   ✓ Codex running body claim in another process prevents the external queue call before start 922ms
+   ✓ Codex post-start claim in another process leaves one marker and a verified empty discard 892ms
+   ✓ W05-r2 independent senders and relay processes perform exactly one external call 2052ms
+   ✓ W05-r2 independent process crash before start recovers the same attempt; after effect never resends 5312ms
+   ✓ W05-r2 independent migration failure rolls back every added nonce column and preserves legacy bytes 832ms
+ ✓ tests/session-messaging/peer-wait.test.ts (28 tests) 17824ms
+   ✓ enforces native wait through the public packaged hook and preserves unrelated waits 4202ms
+   ✓ the public CLI consumes the decision before delay and sends no repeated poll when denied 1611ms
+   ✓ public native hook suppresses equivalent payloads but permits actual cursor change 3152ms
+   ✓ public CLI equivalent retransmissions consume one decision each and state change restores a snapshot 3113ms
+   ✓ CLI unknown resume uses one bounded wait and does not force permanent stopping 1963ms
+   ✓ broker restart preserves messages but drops resume and repeat-suppression evidence 3119ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts (6 tests) 8540ms
+   ✓ retries transient endpoint publication failures and serves the published endpoint 806ms
+   ✓ releases startup resources after permanent failure and allows recovery 1785ms
+   ✓ releases startup resources after ENOSPC failure and allows recovery 1071ms
+   ✓ releases startup resources after credentials failure and allows recovery 1155ms
+   ✓ releases startup resources after database failure and allows recovery 995ms
+   ✓ delivers and acknowledges a message using only the packaged CLI and broker 2725ms
+ ✓ tests/mcp/trust-provenance.test.ts (11 tests) 4167ms
+   ✓ trust provenance (11)
+     ✓ stores peer provenance by digest without persisting the raw body 2057ms
+     ✓ records and verifies a claimed peer message before injecting its receipt-bound body 462ms
+     ✓ exposes read-only MCP validation without trusting an arbitrary caller host name 1283ms
+
+ Test Files  8 passed | 1 skipped (9)
+      Tests  174 passed | 1 skipped (175)
+   Start at  08:10:37
+   Duration  127.12s (tests 91%, transform 5%, import 4%)
+
+JSON report written to /tmp/ev/runs/wake-v53-cpu1stress-s5009.json
+tree=v53 label=wake-v53-cpu1stress-s5009 seed=5009 cond=cpu1stress start=2026-09-28T08:10:25Z end=2026-09-28T08:12:44Z nproc=4 cmd='taskset -c 0 pnpm test --sequence.shuffle --sequence.seed=5009 tests/session-messaging/ tests/session-board/ tests/mcp/trust-provenance' EXIT=0

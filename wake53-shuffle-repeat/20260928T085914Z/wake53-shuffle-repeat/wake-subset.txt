@@ -1,0 +1,8 @@
+wake subset filters: tests/session-messaging/ tests/session-board/ tests/mcp/trust-provenance (files containing 'wake' under tests/)
+/tmp/v53/tests/session-board/session-board.test.ts
+/tmp/v53/tests/mcp/trust-provenance.test.ts
+/tmp/v53/tests/session-messaging/message-lifecycle.test.ts
+/tmp/v53/tests/session-messaging/wake-lifecycle.test.mjs
+/tmp/v53/tests/session-messaging/peer-wait.test.ts
+/tmp/v53/tests/session-messaging/broker-lifecycle.test.ts
+/tmp/v53/tests/session-messaging/session-message.test.ts

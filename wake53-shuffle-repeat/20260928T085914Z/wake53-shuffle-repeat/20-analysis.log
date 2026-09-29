@@ -1,0 +1,28 @@
+runs 130
+('full', '271', 'normal') n= 5 totals [(719, 718, 0, 1)] wall min/max 64.7 68.7
+('full', '53', 'normal') n= 5 totals [(724, 723, 0, 1)] wall min/max 62.8 67.9
+('wake', '271', 'cpu1') n= 10 totals [(170, 169, 0, 1)] wall min/max 38.0 40.3
+('wake', '271', 'cpu1stress') n= 10 totals [(170, 169, 0, 1)] wall min/max 115.0 123.2
+('wake', '271', 'normal') n= 30 totals [(170, 169, 0, 1)] wall min/max 13.9 21.0
+('wake', '271', 'stress') n= 10 totals [(170, 169, 0, 1)] wall min/max 19.9 29.5
+('wake', '53', 'cpu1') n= 10 totals [(175, 174, 0, 1)] wall min/max 40.1 41.9
+('wake', '53', 'cpu1stress') n= 10 totals [(175, 174, 0, 1)] wall min/max 123.5 137.6
+('wake', '53', 'normal') n= 30 totals [(175, 174, 0, 1)] wall min/max 15.2 22.9
+('wake', '53', 'stress') n= 10 totals [(175, 174, 0, 1)] wall min/max 21.5 31.2
+tests with >1 status: 0
+slowest tests (max duration, ms) top 15:
+      9865 v53 cond=normal kind=full seed=1004 | tests/runtime/runtime-smoke.test.mjs :: installed skill runtime runs every documented Node CLI without node_modules
+      9360 v271 cond=normal kind=full seed=1003 | tests/runtime/runtime-smoke.test.mjs :: installed skill runtime runs every documented Node CLI without node_modules
+      9213 v53 cond=cpu1stress kind=wake seed=5010 | tests/session-messaging/session-message.test.ts :: TLS 1.3 broker and vendor-neutral adapter uses one plugin queue profile for packaged presence and relay until the next SessionStart
+      8769 v271 cond=cpu1stress kind=wake seed=5001 | tests/session-messaging/session-message.test.ts :: TLS 1.3 broker and vendor-neutral adapter uses one plugin queue profile for packaged presence and relay until the next SessionStart
+      8639 v53 cond=cpu1stress kind=wake seed=5009 | tests/session-board/session-board.test.ts :: session board MCP tools reads back the hook-written line, lists the host board and refuses unbound updates
+      8328 v53 cond=cpu1stress kind=wake seed=5004 | tests/session-messaging/message-lifecycle.test.ts :: applies global draft, receipt and byte backpressure without evicting valid records
+      7044 v271 cond=cpu1stress kind=wake seed=5008 | tests/session-messaging/message-lifecycle.test.ts :: applies global draft, receipt and byte backpressure without evicting valid records
+      6465 v271 cond=normal kind=full seed=1003 | tests/mcp/workflow-service.test.ts :: WorkflowService rejects every canonical invalid DecisionRecord at the MCP gate
+      6160 v53 cond=cpu1stress kind=wake seed=5007 | tests/session-messaging/session-message.test.ts :: TLS 1.3 broker and vendor-neutral adapter blocks only verified empty Codex wake prompts in the packaged hook
+      6135 v53 cond=normal kind=full seed=1002 | tests/mcp/workflow-service.test.ts :: WorkflowService rejects every canonical invalid DecisionRecord at the MCP gate
+      5909 v53 cond=cpu1stress kind=wake seed=5004 | tests/session-messaging/peer-wait.test.ts :: enforces native wait through the public packaged hook and preserves unrelated waits
+      5886 v271 cond=cpu1stress kind=wake seed=5004 | tests/session-messaging/wake-lifecycle.test.mjs :: W05-r2 independent process crash before start recovers the same attempt; after effect never resends
+      5581 v271 cond=cpu1stress kind=wake seed=5009 | tests/session-board/session-board.test.ts :: session board MCP tools reads back the hook-written line, lists the host board and refuses unbound updates
+      5395 v53 cond=cpu1stress kind=wake seed=5007 | tests/session-messaging/wake-lifecycle.test.mjs :: W05-r2 independent process crash before start recovers the same attempt; after effect never resends
+      5150 v271 cond=cpu1stress kind=wake seed=5001 | tests/session-messaging/peer-wait.test.ts :: enforces native wait through the public packaged hook and preserves unrelated waits
