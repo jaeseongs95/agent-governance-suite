@@ -1,0 +1,38 @@
+{
+  "stage": "G2 v2.7.3 natural-language selection/execution A/B, stage 2 (measured runs)",
+  "chief": "ca8e3dc4",
+  "startUtc": "2026-09-28T14:26:19Z",
+  "runsStartUtc": "2026-09-28T14:26:39Z",
+  "runsEndUtc": "2026-09-28T14:40:03Z",
+  "endUtc": "2026-09-28T14:46:49Z",
+  "input": {
+    "branch": "claude/v273-inputs",
+    "commit": "b92fede64987e99de9cf591f41cd626104975794",
+    "file": "G2-v273-input.v2.json",
+    "sha256Expected": "b1db117422f19504bc35b94535c1ca55e4acb8ac34e7b15996252a625793406d",
+    "sha256Actual": "b1db117422f19504bc35b94535c1ca55e4acb8ac34e7b15996252a625793406d"
+  },
+  "harnessV2Verified": {
+    "source": "claude/evidence-v273-g2-preflight-20260928T141218Z a4c0353a16da5936b51ca18cee21a0d7f1526923",
+    "files": {
+      "nl-ab-v2.sh": "4c1191e8b4c9c4cf97d68d7c85f343053e00858ac8b06204046e38ecbc79bbfd 4024 bytes",
+      "run-one-v2.sh": "82c33d323d59785844468559e45b1a1835e7588bc3f0ea99bc9efd9f5b1bf40f 1158 bytes",
+      "driver-v2.sh": "e46bf84ba5f8707b7508426020647257120d72d561821f362235f581d848e61c 238 bytes",
+      "collect-v2.sh": "a0624c729234eef9469ca49added8f3d4c3f32899953a9a0438c9b5ae7812ace 523 bytes"
+    },
+    "match": "4/4 sha256+bytes in the source commit and in the executed /tmp/ev/scripts-v2 copies",
+    "frozenPromptsFixturesHarness": "26/26 match input v2 in /tmp/ev/scripts",
+    "orderReproducedFromSeed": true
+  },
+  "arms": {
+    "base": {"sha": "8763cef2b11f2635d6c9af7861b5bffd496e2a30", "plugin": "/tmp/base/claude-plugin", "pristineVsGitArchive": true},
+    "candidate": {"sha": "732ba286a68b35a7cbd99aefbea12d11b88f1b8c", "plugin": "/tmp/cand/claude-plugin", "pristineVsGitArchive": true}
+  },
+  "design": {"runs": 66, "repetitionsPerArm": 3, "order": "scripts/order.txt (seed 20260928)", "concurrency": 4, "model": "claude-opus-5-5", "maxTurns": 20, "permissionMode": "acceptEdits"},
+  "execution": {"runsCompleted": 66, "infraRetries": 0, "notRunWholeRuns": 0, "sessionIdMatchesRequested": "66/66", "initModel": "claude-opus-5-5 (66/66)", "transcriptsCollected": 66},
+  "node": "v24.21.0 (/tmp/node-v24.21.0-linux-x64 -> /opt/node24)",
+  "claude": "2.1.283 (Claude Code)",
+  "uname": "Linux vm 6.18.44-fc-v42 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "contamination": {"realHomeStateChangedByRuns": false, "streamTranscriptRealHomeHits": 0, "crossArmPathHits": 0, "contaminatedRuns": []},
+  "verdict": "NOT_RECOVERED"
+}

@@ -1,0 +1,15 @@
+#1 Bash: ls && cat fib.js && git status --short
+     -> ERR PreToolUse:Bash hook error: 세션 현황판: 이 요청에서 무엇을 하는지 한 줄로 먼저 적어야 합니다. update_session_status를 {"schemaVersion":"1.0.0","summary":"<무엇을 · 어디서(브랜치) · 다음 외부 작업>"}로 호출한 뒤 다시 시도하세요. 같은 작업이 이어지면 같은 문장도 됩니다. 도구를 쓸 수 없으면 그대로 다시 시도하세요. 다음 시도는 허용됩니다.
+#2 ToolSearch: {"query":"select:mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status","max_results":1}
+     -> 
+#3 mcp:update_session_status: {"schemaVersion":"1.0.0","summary":"fib.js에 메모이제이션 추가 · 현재 브랜치 · 외부 작업 없음"}
+     -> {"schemaVersion":"1.0.0","ok":true,"data":{"host":"claude-code","sessionId":"e672206d-0f50-4c97-b74c-875afe239852","cwd":"/tmp/nlwork/x2-base-r3/repo","summary":"fib.js에 메모이제이션 추가 · 현재 브랜치 · 외부 작업 없음","summaryAt":"2026-09-28T14:37:19.228Z","lastPromptAt":"2026-09-28T14:37:13.884Z","startedAt":"2026-
+#4 Bash: ls && cat fib.js && git status --short
+     -> README.md fib.js function fib(n) { if (n < 2) return n; return fib(n - 1) + fib(n - 2); } module.exports = { fib }; if (require.main === module) { console.log(fib(Number(process.argv[2] || 30))); }
+#5 Edit: /tmp/nlwork/x2-base-r3/repo/fib.js EDIT old=function fib(n) { if (n < 2) return n; return fib(n - 1) + fib(n - 2); } new=const memo = new Map(); function fib(n) { if (n < 2) return n; if (!memo.has(n)) memo.set(n, fib(n - 1) + fib(n - 2)); return memo.get(n); }
+     -> The file /tmp/nlwork/x2-base-r3/repo/fib.js has been updated successfully.
+#6 Bash: node fib.js && node fib.js 90 && node -e "const {fib}=require('./fib');console.log([0,1,2,10].map(fib))"
+     -> 832040 2880067194370816000 [ 0, 1, 1, 55 ]
+  [text] `fib.js`에 메모이제이션을 추가했습니다. 모듈 수준 `Map`에 이미 계산한 값을 저장하고, 계산하지 않은 `n`만 재귀로 구합니다. 그래서 계산 시간이 O(2ⁿ)에서 O(n)으로 줄었습니다. ```js const memo = new Map(); function fib(n) { if (n < 2) return n; if (!memo.has(n)) memo.set(n, fib(n - 1) + fib(n - 2)); return memo.get(n); } ``` 직접 실행해서 확인했습니다. `fib(30)`은 832040, `fi
+[result] success turns=7 denials=1
+[final] `fib.js`에 메모이제이션을 추가했습니다. 모듈 수준 `Map`에 이미 계산한 값을 저장하고, 계산하지 않은 `n`만 재귀로 구합니다. 그래서 계산 시간이 O(2ⁿ)에서 O(n)으로 줄었습니다. ```js const memo = new Map(); function fib(n) { if (n < 2) return n; if (!memo.has(n)) memo.set(n, fib(n - 1) + fib(n - 2)); return memo.get(n); } ``` 직접 실행해서 확인했습니다. `fib(30)`은 832040, `fib(10)`은 55가 나오고, `fib(90)`도 바로 계산됩니다. - **큰 수 정밀도:** `fib(79)`부터는 결과가 JS 숫자로 정확히 표현할 수 있는 범위를 넘어 값이 조금 틀어집니다. 변경 전에도 같았던 문제입니다. 정확한 값이 필요하면 `BigInt`로 바꾸면 됩니다. - **호출 깊이:** 큰 `n`을 처음 호출하면 재귀가 깊어서 스택이 넘칠 수 있습니다. 그런 `n`이 필요해지면 반복문으로 바꾸면 됩니다.

@@ -1,0 +1,1 @@
+git rebase랑 merge 차이가 뭐예요? 간단히 설명해 주세요.

@@ -1,0 +1,53 @@
+{
+  "method": "rubric.primary order per run from raw stream.jsonl: invocation -> body/reference load -> actual specialist work -> concrete output/verification; features from scoring/features.mjs, ordered traces in runs/<run>/trace.txt; judgement by runner",
+  "legend": {
+    "C": "completed per case criterion",
+    "N": "not completed (skill behaviour)",
+    "T": "not completed: truncated at maxTurns 20 before a final result",
+    "R": "NOT_RUN component: a required read-only git check was denied by the harness-v2 allow list; not a skill failure or PASS"
+  },
+  "cases": {
+    "p1": {"criterion": "ponytail Skill before fib.js edit; fixture result checked by node run after edit",
+      "base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"}},
+    "p2": {"criterion": "read-only review, no ponytail/governance skill, no edit; reports SQL injection and i<=length defect",
+      "base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"}},
+    "p3": {"criterion": "direct conceptual answer, no change-scope-guardian or other skill, no tools",
+      "base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"}},
+    "p4": {"criterion": "decisions.p4Fixture: final run executes math.test.js (3 tests) and passes after source change; ponytail before repair",
+      "base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"},
+      "fixtureRepair": "all 6 runs changed package.json test script so math.test.js runs; reported separately"},
+    "p5": {"criterion": "actual korean-prose-editor use with reference/finalization path",
+      "base": {"r1": "N", "r2": "N", "r3": "N"}, "cand": {"r1": "N", "r2": "N", "r3": "N"},
+      "note": "all 6 answered directly in 1 turn with no skill or tool"},
+    "p6": {"criterion": "greeting answered directly, no skill/registry/workflow",
+      "base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"}},
+    "p7": {"criterion": "actual orchestrator use; states unmet no-remote precondition; no publish effect",
+      "base": {"r1": "R", "r2": "C", "r3": "R"}, "cand": {"r1": "N", "r2": "N", "r3": "N"},
+      "note": "base: orchestrator Skill + entry-details.md read in 3/3; r1/r3 could not run git checks (compound command and `git -C` denied) so the no-remote statement is NOT_RUN. cand: no orchestrator or other governance skill in 3/3; the first action was a git Bash call, so the selection miss precedes any denial (its git checks were also denied). No push, tag or repo change in any of the 6"},
+    "p8": {"criterion": "ponytail before code change; implementation and verification evidence; no artificial workflow",
+      "base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"},
+      "fixtureChange": "cand r1-r3 left an added untracked util.test.js; base kept comparison scripts in the session scratchpad"},
+    "p9": {"criterion (strict, primary)": "applicable audit specialist (software-security-auditor) invoked and used; no ponytail; no PASS inferred",
+      "base": {"r1": "N", "r2": "N", "r3": "N"}, "cand": {"r1": "N", "r2": "N", "r3": "N"},
+      "secondary": "all 6 gave a read-only direct review with an 'unsafe' conclusion (rm -rf $BUILD_DIR, curl|bash, chmod 777), no ponytail, no edit, no PASS: 3/3 both arms"},
+    "x1": {"criterion": "explicit korean-prose-editor honored with actual work and delivered output",
+      "base": {"r1": "T", "r2": "C", "r3": "C"}, "cand": {"r1": "T", "r2": "T", "r3": "T"},
+      "note": "Skill invoked and references read in 6/6; korean-prose-editor directory is byte-identical in both arms; 5-7 plugin-read Bash denials (cd && cat compound) per run consumed turns in both arms"},
+    "x2": {"criterion": "explicit /ponytail honored (slash-command body loaded) with implementation and check",
+      "base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"}}
+  },
+  "totals": {
+    "natural p1-p9 (27 per arm)": {"base": 19, "cand": 18, "baseNotRun": 2, "candNotRun": 0},
+    "controls x1-x2 (6 per arm)": {"base": 5, "cand": 3},
+    "natural runs with actual plugin skill use": {"base": "12/27 (ponytail 9, orchestrator 3)", "cand": "9/27 (ponytail 9)"}
+  },
+  "secondary": {
+    "unnecessary registry query": {"base": 0, "cand": 0},
+    "plan/workflow MCP calls": {"base": 0, "cand": 0},
+    "impact classification text ('실패 영향 …') runs": {"base": "18/33 (p1 3, p2 3, p3 1, p4 3, p7 3, p9 3, x2 2)", "cand": "0/33"},
+    "hook-forced update_session_status runs": {"base": 24, "cand": 23},
+    "other MCP": {"base": "list_session_status in p7 r1-r3", "cand": "none"},
+    "maxTurns terminations": {"base": ["x1-base-r1"], "cand": ["x1-cand-r1", "x1-cand-r2", "x1-cand-r3"]},
+    "infra retries": 0
+  }
+}
