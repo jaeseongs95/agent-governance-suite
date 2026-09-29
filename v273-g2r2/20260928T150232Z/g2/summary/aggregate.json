@@ -1,0 +1,421 @@
+{
+ "p1/base": {
+  "n": 3,
+  "dist": {
+   "ponytail": 3
+  },
+  "skillRuns": 3,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   11,
+   9,
+   11
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p1/cand": {
+  "n": 3,
+  "dist": {
+   "ponytail": 3
+  },
+  "skillRuns": 3,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   11,
+   9,
+   11
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p2/base": {
+  "n": 3,
+  "dist": {
+   "(없음)": 3
+  },
+  "skillRuns": 0,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   6,
+   6,
+   6
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p2/cand": {
+  "n": 3,
+  "dist": {
+   "(없음)": 3
+  },
+  "skillRuns": 0,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   5,
+   5,
+   5
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p3/base": {
+  "n": 3,
+  "dist": {
+   "(없음)": 3
+  },
+  "skillRuns": 0,
+  "wfRuns": 0,
+  "trig": 3,
+  "turns": [
+   1,
+   1,
+   1
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p3/cand": {
+  "n": 3,
+  "dist": {
+   "(없음)": 3
+  },
+  "skillRuns": 0,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   1,
+   1,
+   1
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p4/base": {
+  "n": 3,
+  "dist": {
+   "ponytail": 3
+  },
+  "skillRuns": 3,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   13,
+   11,
+   13
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p4/cand": {
+  "n": 3,
+  "dist": {
+   "ponytail": 3
+  },
+  "skillRuns": 3,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   14,
+   11,
+   11
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p5/base": {
+  "n": 3,
+  "dist": {
+   "(없음)": 3
+  },
+  "skillRuns": 0,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   1,
+   1,
+   1
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p5/cand": {
+  "n": 3,
+  "dist": {
+   "(없음)": 3
+  },
+  "skillRuns": 0,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   1,
+   1,
+   1
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p6/base": {
+  "n": 3,
+  "dist": {
+   "(없음)": 3
+  },
+  "skillRuns": 0,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   1,
+   1,
+   1
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p6/cand": {
+  "n": 3,
+  "dist": {
+   "(없음)": 3
+  },
+  "skillRuns": 0,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   1,
+   1,
+   1
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p7/base": {
+  "n": 3,
+  "dist": {
+   "orchestrator": 3
+  },
+  "skillRuns": 3,
+  "wfRuns": 0,
+  "trig": 3,
+  "turns": [
+   10,
+   10,
+   10
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p7/cand": {
+  "n": 3,
+  "dist": {
+   "orchestrator+change-scope-guardian": 3
+  },
+  "skillRuns": 3,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   12,
+   12,
+   12
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p8/base": {
+  "n": 3,
+  "dist": {
+   "ponytail": 3
+  },
+  "skillRuns": 3,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   10,
+   12,
+   13
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p8/cand": {
+  "n": 3,
+  "dist": {
+   "ponytail": 3
+  },
+  "skillRuns": 3,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   11,
+   12,
+   10
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p9/base": {
+  "n": 3,
+  "dist": {
+   "(없음)": 3
+  },
+  "skillRuns": 0,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   7,
+   7,
+   7
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "p9/cand": {
+  "n": 3,
+  "dist": {
+   "software-security-auditor": 1,
+   "(없음)": 2
+  },
+  "skillRuns": 1,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   10,
+   7,
+   7
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "x1/base": {
+  "n": 3,
+  "dist": {
+   "korean-prose-editor": 3
+  },
+  "skillRuns": 3,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   30,
+   21,
+   21
+  ],
+  "ends": [
+   "completed",
+   "max_turns",
+   "max_turns"
+  ]
+ },
+ "x1/cand": {
+  "n": 3,
+  "dist": {
+   "korean-prose-editor": 3
+  },
+  "skillRuns": 3,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   32,
+   21,
+   28
+  ],
+  "ends": [
+   "completed",
+   "max_turns",
+   "completed"
+  ]
+ },
+ "x2/base": {
+  "n": 3,
+  "dist": {
+   "ponytail": 3
+  },
+  "skillRuns": 3,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   7,
+   7,
+   7
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ },
+ "x2/cand": {
+  "n": 3,
+  "dist": {
+   "ponytail": 3
+  },
+  "skillRuns": 3,
+  "wfRuns": 0,
+  "trig": 0,
+  "turns": [
+   7,
+   7,
+   7
+  ],
+  "ends": [
+   "completed",
+   "completed",
+   "completed"
+  ]
+ }
+}

@@ -1,0 +1,2 @@
+base 18 p1-base-r1 p1-base-r2 p1-base-r3 p2-base-r1 p2-base-r2 p2-base-r3 p3-base-r2 p4-base-r1 p4-base-r2 p4-base-r3 p7-base-r1 p7-base-r2 p7-base-r3 p9-base-r1 p9-base-r2 p9-base-r3 x2-base-r1 x2-base-r2
+cand 0 

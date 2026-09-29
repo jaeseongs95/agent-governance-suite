@@ -1,0 +1,8 @@
+# real-HOME / foreign-path reference scan over every stream.jsonl and transcript.jsonl
+pattern=/root/ files_hit=0
+pattern=/root" files_hit=0
+pattern=/home/user files_hit=0
+pattern=/mnt/user-data files_hit=0
+pattern=\.agent-governance-suite/(session|trust|board) files_hit=0
+cross-arm: base->/tmp/cand/=0 cand->/tmp/base/=0 (checked per run)
+files scanned=132

@@ -1,0 +1,19 @@
+ M fib.js
+56c43d7 initial
+diff --git a/fib.js b/fib.js
+index 92d29eb..355f6d8 100644
+--- a/fib.js
++++ b/fib.js
+@@ -1,6 +1,11 @@
++const memo = new Map();
++
+ function fib(n) {
+   if (n < 2) return n;
+-  return fib(n - 1) + fib(n - 2);
++  if (memo.has(n)) return memo.get(n);
++  const result = fib(n - 1) + fib(n - 2);
++  memo.set(n, result);
++  return result;
+ }
+ 
+ module.exports = { fib };

@@ -1,0 +1,26 @@
+ M math.js
+ M package.json
+5ecd7f9 initial
+diff --git a/math.js b/math.js
+index e28d386..6007ecd 100644
+--- a/math.js
++++ b/math.js
+@@ -1,6 +1,6 @@
+ function sum(values) {
+   let total = 0;
+-  for (let i = 1; i < values.length; i++) total += values[i];
++  for (let i = 0; i < values.length; i++) total += values[i];
+   return total;
+ }
+ 
+diff --git a/package.json b/package.json
+index 3eb4be8..798647d 100644
+--- a/package.json
++++ b/package.json
+@@ -2,5 +2,5 @@
+   "name": "tiny-proj",
+   "version": "1.0.0",
+   "private": true,
+-  "scripts": { "test": "node --test test/" }
++  "scripts": { "test": "node --test" }
+ }

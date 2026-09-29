@@ -1,0 +1,12 @@
+25,27c25,27
+< /root/.claude/projects/-home-user-agent-governance-suite/[REDACTED] 4096 2026-09-28T15:03:02.5225270930
+< /root/.claude/projects/-home-user-agent-governance-suite/[REDACTED].jsonl 1935882 2026-09-28T15:03:01.9785270600
+< /root/.claude/projects/-home-user-agent-governance-suite/[REDACTED]/ccr-tip.json 89 2026-09-28T15:03:02.2785270780
+---
+> /root/.claude/projects/-home-user-agent-governance-suite/[REDACTED] 4096 2026-09-28T15:17:47.0185796700
+> /root/.claude/projects/-home-user-agent-governance-suite/[REDACTED].jsonl 1982256 2026-09-28T15:17:55.0865801490
+> /root/.claude/projects/-home-user-agent-governance-suite/[REDACTED]/ccr-tip.json 89 2026-09-28T15:17:47.0185796700
+36c36
+< /root/.claude/sessions/104.json 579 2026-09-28T15:02:24.4185248280
+---
+> /root/.claude/sessions/104.json 579 2026-09-28T15:04:07.8505309760

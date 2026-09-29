@@ -1,0 +1,16 @@
+  [text] 위험도 낮음: 로컬 함수 하나만 고치는 작업입니다.
+#1 Bash: git status --short && ls && cat fib.js && grep -rn "fib" --include=*.js . | grep -v node_modules | head -20
+     -> ERR PreToolUse:Bash hook error: 세션 현황판: 이 요청에서 무엇을 하는지 한 줄로 먼저 적어야 합니다. update_session_status를 {"schemaVersion":"1.0.0","summary":"<무엇을 · 어디서(브랜치) · 다음 외부 작업>"}로 호출한 뒤 다시 시도하세요. 같은 작업이 이어지면 같은 문장도 됩니다. 도구를 쓸 수 없으면 그대로 다시 시도하세요. 다음 시도는 허용됩니다.
+#2 ToolSearch: {"query":"select:mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status","max_results":1}
+     -> 
+#3 mcp:update_session_status: {"schemaVersion":"1.0.0","summary":"fib.js에 메모이제이션 추가 · 현재 브랜치 · 외부 작업 없음"}
+     -> {"schemaVersion":"1.0.0","ok":true,"data":{"host":"claude-code","sessionId":"5ca585d3-49e9-4fe6-89ae-02a759c4958e","cwd":"/tmp/nlwork/x2-base-r1/repo","summary":"fib.js에 메모이제이션 추가 · 현재 브랜치 · 외부 작업 없음","summaryAt":"2026-09-28T15:04:07.085Z","lastPromptAt":"2026-09-28T15:04:00.681Z","startedAt":"2026-
+#4 Bash: git status --short && ls -a && cat fib.js && grep -rn "fib" --include=*.js --include=*.json . | grep -v node_modules | head -20
+     -> . .. .git README.md fib.js function fib(n) { if (n < 2) return n; return fib(n - 1) + fib(n - 2); } module.exports = { fib }; if (require.main === module) { console.log(fib(Number(process.argv[2] || 30))); } fib.js:1:function fib(n) { fib.js:3: return fib(n - 1) + fib(n - 2); fib.js:6:module.exports
+#5 Edit: /tmp/nlwork/x2-base-r1/repo/fib.js EDIT old=function fib(n) { if (n < 2) return n; return fib(n - 1) + fib(n - 2); } new=const memo = new Map(); function fib(n) { if (n < 2) return n; if (!memo.has(n)) memo.set(n, fib(n - 1) + fib(n - 2)); return memo.get(n); }
+     -> The file /tmp/nlwork/x2-base-r1/repo/fib.js has been updated successfully.
+#6 Bash: node fib.js 10 && node fib.js 90 && node -e 'const {fib}=require("./fib");console.log([0,1,2,3,4,5,6].map(fib).join())'
+     -> 55 2880067194370816000 0,1,1,2,3,5,8
+  [text] `fib.js`에 메모이제이션을 넣었습니다. 모듈 전역 `Map`에 한 번 계산한 값을 저장해 두고 다시 꺼내 씁니다. 그래서 `fib(90)`처럼 큰 값도 바로 계산됩니다. ```js const memo = new Map(); function fib(n) { if (n < 2) return n; if (!memo.has(n)) memo.set(n, fib(n - 1) + fib(n - 2)); return memo.get(n); } ``` 실행해서 확인했습니다. `fib(0..6)`은 `0,1,1,2,3,5,8`, `fib(10)
+[result] success turns=7 denials=1
+[final] `fib.js`에 메모이제이션을 넣었습니다. 모듈 전역 `Map`에 한 번 계산한 값을 저장해 두고 다시 꺼내 씁니다. 그래서 `fib(90)`처럼 큰 값도 바로 계산됩니다. ```js const memo = new Map(); function fib(n) { if (n < 2) return n; if (!memo.has(n)) memo.set(n, fib(n - 1) + fib(n - 2)); return memo.get(n); } ``` 실행해서 확인했습니다. `fib(0..6)`은 `0,1,1,2,3,5,8`, `fib(10)`은 `55`로 맞습니다. `fib(90)`도 즉시 끝나지만 결과가 정확하지 않습니다. 원래 코드에도 있던 한계로, 일반 숫자형은 `fib(78)`까지만 정확합니다. 그보다 큰 값이 필요하면 `BigInt`로 바꾸면 됩니다. - 저장 개수에 상한을 두지 않았습니다. 아주 큰 `n`으로 호출할 일이 생기면 그때 반복문 방식으로 바꾸면 됩니다. - 한 줄짜리 수정이라 별도 테스트 파일은 만들지 않았습니다.

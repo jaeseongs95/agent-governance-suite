@@ -1,0 +1,56 @@
+{
+  "method": "same as stage 2 (claude/evidence-v273-g2-20260928T142619Z): rubric.primary order per run from raw stream.jsonl; features from scoring/features.mjs, ordered traces in runs/<run>/trace.txt; judgement by runner",
+  "legend": {
+    "C": "completed per case criterion",
+    "N": "not completed (skill behaviour)",
+    "T": "not completed: truncated at maxTurns 20 before a final result",
+    "R": "NOT_RUN component: a required read-only git check was denied by the harness-v2 allow list (known limit, kept unchanged); not a skill failure or PASS"
+  },
+  "cases": {
+    "p1": {"base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"},
+      "note": "ponytail before fib.js edit in 6/6 (p1-base-r3 read fib.js first, then ponytail before editing); node check after edit in 6/6"},
+    "p2": {"base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"},
+      "note": "no skill, no edit; SQL injection and i<=length defect reported in 6/6"},
+    "p3": {"base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"},
+      "note": "no skill or tool in 6/6; base r2/r3 printed a failure-impact line"},
+    "p4": {"base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"},
+      "fixtureRepair": "all 6 changed package.json test script; final run tests 3 / pass 3 / fail 0 in 6/6; ponytail before math.js edit in 6/6"},
+    "p5": {"base": {"r1": "N", "r2": "N", "r3": "N"}, "cand": {"r1": "N", "r2": "N", "r3": "N"},
+      "note": "all 6 answered directly in 1 turn with no skill"},
+    "p6": {"base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"}},
+    "p7": {"base": {"r1": "R", "r2": "R", "r3": "R"}, "cand": {"r1": "R", "r2": "R", "r3": "R"},
+      "selection": {"base": "orchestrator as first tool call 3/3 + entry-details.md read", "cand": "orchestrator as first tool call 3/3 + entry-details.md read, then change-scope-guardian + its entry-details.md 3/3"},
+      "note": "no git check succeeded in any of the 6 runs (compound commands and `git -C` denied), so the no-remote precondition was never observed; no push, tag or repo change in 6/6"},
+    "p8": {"base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"},
+      "note": "ponytail before util.js edit and old-vs-new behaviour check in 6/6; no untracked files left in either arm"},
+    "p9": {"base": {"r1": "N", "r2": "N", "r3": "N"}, "cand": {"r1": "N", "r2": "C", "r3": "N"},
+      "note": "cand r2 invoked software-security-auditor first, read its entry-details.md and gave a line-anchored audit with an unsafe conclusion and no PASS; it did not run the skill's CLI checker. The other 5 runs gave a correct direct read-only review (unsafe, no ponytail, no PASS)"},
+    "x1": {"base": {"r1": "C", "r2": "T", "r3": "T"}, "cand": {"r1": "T", "r2": "C", "r3": "C"},
+      "note": "Skill invoked and references read in 6/6; completed runs ran finalize.mjs and delivered text; korean-prose-editor is byte-identical in both arms"},
+    "x2": {"base": {"r1": "C", "r2": "C", "r3": "C"}, "cand": {"r1": "C", "r2": "C", "r3": "C"}}
+  },
+  "totals": {
+    "natural p1-p9 (27 per arm)": {"base": 18, "cand": 19, "baseNotRun": 3, "candNotRun": 3},
+    "controls x1-x2 (6 per arm)": {"base": 4, "cand": 5},
+    "natural runs with actual plugin skill use": {"base": "12/27 (ponytail 9, orchestrator 3)", "cand": "13/27 (ponytail 9, orchestrator 3 [+change-scope-guardian 3], software-security-auditor 1)"}
+  },
+  "secondary": {
+    "unnecessary registry query": {"base": 0, "cand": 0},
+    "plan/workflow MCP calls": {"base": 0, "cand": 0},
+    "assistant-authored failure-impact text runs": {"base": "17/33", "cand": "0/33"},
+    "hook-forced update_session_status runs": {"base": 24, "cand": 24},
+    "other MCP": {"base": "list_session_status in p7 r1-r3", "cand": "none"},
+    "maxTurns terminations": {"base": ["x1-base-r2", "x1-base-r3"], "cand": ["x1-cand-r1"]},
+    "infra retries": 0
+  },
+  "vsStage2Candidate732ba286": {
+    "p7 orchestrator first": "0/3 -> 3/3",
+    "failure-impact text runs": "0/33 -> 0/33 (stage-2 recount with assistant-only matching: base 18, cand 0)",
+    "exclusion cases p2/p3/p6 skill calls": "0/9 -> 0/9",
+    "ponytail path p1/p4/p8": "9/9 -> 9/9; x2 3/3 -> 3/3",
+    "p9 audit specialist": "0/3 -> 1/3",
+    "x1 delivered": "0/3 -> 2/3 (skill bytes identical across arms; turn-budget variance)",
+    "p8 untracked test file": "3/3 -> 0/3",
+    "natural completed": "18/27 -> 19/27"
+  }
+}
