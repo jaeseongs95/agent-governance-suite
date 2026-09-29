@@ -1,0 +1,15 @@
+From https://github.com/jaeseongs95/agent-governance-suite
+ * branch            codex/v2711-codex-empty-wake -> FETCH_HEAD
+ * branch            codex/wake-history-reconcile -> FETCH_HEAD
+ * branch            codex/v272-skill-intake-port -> FETCH_HEAD
+ * branch            claude/evidence-wake53-docs-merge-trial-20260928T065200Z -> FETCH_HEAD
+ * branch            claude/evidence-wake-271-state-upgrade-20260928T065638Z -> FETCH_HEAD
+ * [new branch]      codex/v2711-codex-empty-wake -> origin/codex/v2711-codex-empty-wake
+ * [new branch]      codex/wake-history-reconcile -> origin/codex/wake-history-reconcile
+ * [new branch]      codex/v272-skill-intake-port -> origin/codex/v272-skill-intake-port
+ * [new branch]      claude/evidence-wake53-docs-merge-trial-20260928T065200Z -> origin/claude/evidence-wake53-docs-merge-trial-20260928T065200Z
+ * [new branch]      claude/evidence-wake-271-state-upgrade-20260928T065638Z -> origin/claude/evidence-wake-271-state-upgrade-20260928T065638Z
+EXIT=0
+origin/codex/v2711-codex-empty-wake 53eff30a2984d41fc749d38dd2062966017684fa
+origin/codex/wake-history-reconcile e9b4c73b2ff4294c68c6490411fbc6118c69c8c8
+origin/codex/v272-skill-intake-port 2b53e325f549a9ebd32a143d1d11f7b4393355fa

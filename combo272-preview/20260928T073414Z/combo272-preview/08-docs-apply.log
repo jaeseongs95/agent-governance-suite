@@ -1,0 +1,14 @@
+error: repository lacks the necessary blob to perform 3-way merge.
+Falling back to direct application...
+Applied patch to 'docs/host-execution-attestation.md' cleanly.
+error: repository lacks the necessary blob to perform 3-way merge.
+Falling back to direct application...
+apply-exit=0
+M  docs/architecture.md
+M  docs/host-execution-attestation.md
+M  docs/roadmap.md
+db35be0649d54c8065b5699adaa267c9bc779385
+4b730ef51dc0ec74f987c10ad899a5442c77244a
+architecture 53eff30a=c68f8ab combo=c68f8ab
+host-execution-attestation 53eff30a=a834945 combo=a834945
+roadmap 53eff30a=8f2a3b0 combo=8f2a3b0

@@ -1,0 +1,10 @@
+27-test-json-run1.json suites 136 tests 770 passed 768 failed 1 pending 1 todo 0 success false
+   skipped tests/session-messaging/previous-broker.test.ts :: preserves queued messages when new hooks meet the previous released broker
+   failed tests/tooling/commands.test.mjs :: skill maintenance commands forwards pnpm script arguments without a standalone separator
+27-test-json-run2.json suites 136 tests 770 passed 768 failed 1 pending 1 todo 0 success false
+   skipped tests/session-messaging/previous-broker.test.ts :: preserves queued messages when new hooks meet the previous released broker
+   failed tests/tooling/commands.test.mjs :: skill maintenance commands forwards pnpm script arguments without a standalone separator
+29-pnpm-test-json-run1.json suites 136 tests 770 passed 769 failed 0 pending 1 todo 0 success true
+   skipped tests/session-messaging/previous-broker.test.ts :: preserves queued messages when new hooks meet the previous released broker
+29-pnpm-test-json-run2.json suites 136 tests 770 passed 769 failed 0 pending 1 todo 0 success true
+   skipped tests/session-messaging/previous-broker.test.ts :: preserves queued messages when new hooks meet the previous released broker

@@ -1,0 +1,342 @@
+$ bash -c node scripts/build.mjs && pnpm exec vitest run --reporter=default --reporter=json --outputFile.json=/tmp/ev/27-test-json-run2.json
+START=2026-09-28T07:22:02Z
+Already up to date
+Done in 901ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /tmp/combo
+
+ ❯ tests/tooling/commands.test.mjs (12 tests | 1 failed) 4091ms
+   ❯ skill maintenance commands (12)
+     × forwards pnpm script arguments without a standalone separator 43ms
+     ✓ scaffolds a skill, behavior fixtures, and registry descriptor 107ms
+     ✓ rejects a duplicate capability before creating files 83ms
+     ✓ imports only files committed at the requested Git ref 428ms
+     ✓ refuses a replacement that does not contain the required ancestor commit 1131ms
+     ✓ keeps the registered routing when a replaced skill ships no integration descriptor 958ms
+     ✓ rejects a lock whose auto-pr source is pinned to a commit 488ms
+     ✓ keeps a suite-managed source fully offline, including remote verification 75ms
+     ✓ does not discover upstream updates for a suite-managed source 79ms
+     ✓ rejects a suite-managed source before attempting an upstream lookup 86ms
+     ✓ refuses to replace a suite-managed skill through the external importer 606ms
+     ✓ keeps suite-owned skill documentation free of retired standalone installation guidance 2ms
+ ✓ tests/mcp/korean-prose-cycle-receipt.test.ts (13 tests) 18885ms
+   ✓ range-aware Korean prose cycle receipts (13)
+     ✓ records canonical structured work products and binds selection through finalization 2475ms
+     ✓ rejects a cycle work product changed after the receipt was recorded 2211ms
+     ✓ rejects a cycle directory outside the evaluation root 584ms
+     ✓ rejects a structured cycle that omits formal readiness evidence 533ms
+     ✓ does not silently select the historical cycle when no cycle path is given 480ms
+     ✓ rejects structured run metadata without execution provenance 616ms
+     ✓ rejects structured run metadata with an unverified actual model 865ms
+     ✓ derives a passing quality decision from the bound final records 2088ms
+     ✓ verifies a receipt whose quality evidence passed only with the external quality digest 3033ms
+     ✓ rejects quality evidence when bound final records miss the improvement threshold 1552ms
+     ✓ rejects a label leaked into the independent adjudicator input 1328ms
+     ✓ does not count an unsafe independently adjudicated edit as an improvement 1467ms
+     ✓ rejects a start claim and role metadata replaced after the workflow receipt was finalized 1649ms
+ ✓ tests/mcp/convergence-guard.test.ts (66 tests) 21473ms
+   ✓ local MCP convergence guard (33)
+     ✓ opens an immutable root and rejects overlapping active scope even under a changed taskId 571ms
+     ✓ requires a lease for every valid orchestrated plan 369ms
+     ✓ rejects a signed plan produced from a different task envelope with the same taskId 353ms
+     ✓ reuses root and lease bindings when compact claim and guarded start omit duplicate values 601ms
+     ✓ preserves stale and expiry checks for planless guarded starts 345ms
+     ✓ records failed outcomes and allows target-only, evidence-bearing retries through ordinal 3 451ms
+     ✓ gates a changed control frame before workflow start 325ms
+     ✓ rejects a repeated target and repeated evidence as NEW_EVIDENCE_REQUIRED 332ms
+     ✓ records a rejected retry on the root without spending attempt budget 620ms
+     ✓ records a stale-fingerprint rejection without burning its evidence 512ms
+     ✓ reads a root stored before retry rejections existed 403ms
+     ✓ refuses evidence burnt by an earlier rejection even in the next epoch 368ms
+     ✓ persists roots, consumed budget, running attempts, and aborted outcomes across restart 332ms
+     ✓ allows only one competing lease claim across two SQLite connections 1152ms
+     ✓ allows only one trusted observation claim across two SQLite connections 497ms
+     ✓ opens epoch 2 exactly once after a fresh independent semantics-preserving review 388ms
+     ✓ does not open a new epoch when an otherwise preserving review has no target correction 355ms
+     ✓ genericized Korean attempt-6/7 regression gates changed evaluation meaning before attempt 7 starts 372ms
+     ✓ does not reset the attempt budget by reopening after a stop review 355ms
+   ✓ server-derived workspace identity (20)
+     ✓ blocks checkout containers across separate gitdir layouts (admin, nested=false) 348ms
+     ✓ blocks checkout containers across separate gitdir layouts (.git, nested=false) 301ms
+     ✓ keeps a gated root blocking its relative surface in every checkout of the repository 368ms
+     ✓ follows the write surface of a stored root after a review replaces its frame 311ms
+     ✓ lets two gated roots be replaced without blocking each other, but not widened or rescoped past a gate 335ms
+     ✓ backfills identities for stored roots without rewriting them and treats legacy URI scope as the whole workspace 347ms
+     ✓ admits only one of two connections that open the same target at once 625ms
+   ✓ gated roots stored before identities existed (13)
+     ✓ does not guess an identity for a legacy gated root on a target inside the nested worktree once that worktree is deleted 416ms
+     ✓ does not guess an identity for a legacy gated root on the nested worktree named from the oute… once that worktree is deleted 341ms
+     ✓ does not reuse an identity observed for a replaced frame, and grants no legacy exception for it 442ms
+ ✓ tests/mcp/workflow-service.test.ts (40 tests) 17532ms
+   ✓ SqliteWorkflowStore (4)
+     ✓ migrates an active v2 workflow to v5 and preserves receipt updates 1075ms
+   ✓ WorkflowService (36)
+     ✓ persists runs, signing keys, revisions, and run sequences in SQLite 652ms
+     ✓ rejects stale, replayed, and cross-stage trusted observations 625ms
+     ✓ observes a failing stage without holding it to the assurance floor 1353ms
+     ✓ still holds a passing stage to the assurance floor 509ms
+     ✓ persists trusted observation claims across service restart 354ms
+     ✓ rejects non-canonical plan integrity token spellings 332ms
+     ✓ starts from a plan and enforces revision, ordering, and evidence 311ms
+     ✓ does not finalize after a failed independent audit 326ms
+     ✓ blocks only orchestrated work when MCP is unavailable 312ms
+     ✓ requires a PASS verdict and an auditor independent from implementation actors 414ms
+     ✓ rejects deliberation without an eligible DecisionRecord 304ms
+     ✓ rejects every canonical invalid DecisionRecord at the MCP gate 6100ms
+ ✓ tests/runtime/runtime-smoke.test.mjs (6 tests) 9334ms
+   ✓ installed skill runtime (6)
+     ✓ runs every documented Node CLI without node_modules 9157ms
+ ✓ tests/context-continuity/schema-compat.test.ts (18 tests) 10477ms
+   ✓ 2.7.x continuity schema compatibility (13)
+     ✓ preserves schema 2 state across reopen, restore, CAS, purge and epoch rotation 891ms
+     ✓ preserves schema 3 state across reopen, restore, CAS, purge and epoch rotation 442ms
+     ✓ preserves receiver-owned tasks, refuses stale origins and keeps unrelated tasks usable 368ms
+     ✓ rejects a schema 3 database with valid column definitions and malformed pages 346ms
+   ✓ source STDIO continuity startup diagnostics (5)
+     ✓ keeps normal MCP usable when continuity is healthy 2041ms
+     ✓ keeps normal MCP usable when continuity is receiver 1918ms
+     ✓ keeps normal MCP usable when continuity is future 963ms
+     ✓ keeps normal MCP usable when continuity is incompatible 1149ms
+     ✓ keeps normal MCP usable when continuity is corrupt 1167ms
+ ✓ tests/session-messaging/session-message.test.ts (70 tests) 16176ms
+   ✓ session message spool (17)
+     ✓ caps the unacknowledged spool and expires messages 367ms
+   ✓ TLS 1.3 broker and vendor-neutral adapter (51)
+     ✓ fails fast on broker exit and leaves deadline cleanup to the state-directory owner 382ms
+     ✓ returns at the startup deadline while state preparation is still blocked and never spawns afterward 555ms
+     ✓ enforces an absolute request deadline while a TLS peer keeps sending partial data 463ms
+     ✓ uses one plugin queue profile for packaged presence and relay until the next SessionStart 7432ms
+     ✓ serializes wake reservation and release through the TLS broker 360ms
+     ✓ pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts 617ms
+     ✓ blocks only verified empty Codex wake prompts in the packaged hook 1564ms
+     ✓ keeps a maximum-size peer message within the hook context limit 315ms
+     ✓ escapes peer bodies inside one bounded JSON block 339ms
+     ✓ starts the relay without spending a second claim budget during SessionStart 358ms
+     ✓ leaves Codex Stop messages queued for a supported context event 338ms
+     ✓ keeps Claude Code Stop context delivery enabled 312ms
+   ✓ session message MCP tools (2)
+     ✓ validates bound send, status, and acknowledgement calls 790ms
+stdout | tests/session-messaging/message-lifecycle.test.ts > packaged TLS cycles use one request instead of three or two without changing pending state
+relay tick measured TLS request counts [{"transport":"test-inbox","cycles":10,"baselineRequests":30,"tickRequests":10},{"transport":"codex-deferred","cycles":10,"baselineRequests":20,"tickRequests":10}]
+
+ ✓ tests/mcp/receipt-policy.test.ts (33 tests) 9354ms
+   ✓ descriptor-declared reference-only receipts (33)
+     ✓ propagates all four policies, orders artifact dependencies, and binds policy to the plan HMAC 407ms
+     ✓ rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"/output/actorIds"} 581ms
+     ✓ rejects invalid actor-array policies in descriptors and plans: {"actorIdsMatch":"prior-policy-actors"} 391ms
+     ✓ rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"output/actorIds","actorIdsMatch":"prior-policy-actors"} 401ms
+     ✓ rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"/output/actorIds","actorIdsMatch":"any-actors"} 329ms
+     ✓ rejects missing final actor arrays without changing the receipt 415ms
+     ✓ rejects empty final actor arrays without changing the receipt 327ms
+     ✓ rejects unrelated final actor arrays without changing the receipt 400ms
+     ✓ rejects actor reuse after SQLite restart 410ms
+     ✓ binds arbitrary capability actor arrays in plan order after SQLite restart 550ms
+ ✓ tests/mcp/host-attestation-stdio.test.ts (4 tests) 9025ms
+   ✓ packaged execution observation fixtures (not native-host evidence) (4)
+     ✓ completes guarded STDIO and keeps restart replay rejection for claude-code/hook/claude-opus-5 2370ms
+     ✓ completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-astra 2515ms
+     ✓ completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-sol 2228ms
+     ✓ completes guarded STDIO and keeps restart replay rejection for codex/wrapper/gpt-6-astra 1909ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts (14 tests) 6909ms
+   ✓ applies global draft, receipt and byte backpressure without evicting valid records 1447ms
+   ✓ packaged TLS cycles use one request instead of three or two without changing pending state 698ms
+   ✓ a real post-commit prepare reply loss leaves only orphan drafts 545ms
+   ✓ a real send reply loss retries the known ID once and survives broker restart 2783ms
+   ✓ two independent processes submit one ID atomically and enforce sender preparation capacity 488ms
+   ✓ packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect 831ms
+ ✓ tests/change-scope-guardian/suite-integration.test.ts (1 test) 4416ms
+   ✓ change-scope-guardian Node tests pass in an isolated process 4415ms
+ ✓ tests/session-messaging/peer-wait.test.ts (28 tests) 5589ms
+   ✓ enforces native wait through the public packaged hook and preserves unrelated waits 1009ms
+   ✓ the public CLI consumes the decision before delay and sends no repeated poll when denied 541ms
+   ✓ public native hook suppresses equivalent payloads but permits actual cursor change 967ms
+   ✓ public CLI equivalent retransmissions consume one decision each and state change restores a snapshot 715ms
+   ✓ CLI unknown resume uses one bounded wait and does not force permanent stopping 1356ms
+   ✓ broker restart preserves messages but drops resume and repeat-suppression evidence 874ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs (29 tests) 4138ms
+   ✓ W05-r2 active budget overflow is an explicit rejection and does not remove unknowns 353ms
+   ✓ W05-r2 terminal observation retention is bounded while unresolved rows are retained 355ms
+   ✓ verified old arrival in another process releases only the old attempt and permits one new effect 382ms
+   ✓ W05-r2 independent senders and relay processes perform exactly one external call 444ms
+   ✓ W05-r2 independent process crash before start recovers the same attempt; after effect never resends 1327ms
+ ✓ tests/mcp/host-attestation.test.ts (30 tests) 2880ms
+   ✓ Claude Code host attestation through the MCP boundary (11)
+     ✓ completes an orchestrated workflow with claude-code observations 588ms
+     ✓ keeps the default server without a provider on BINDING_REQUIRED 353ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts (6 tests) 3211ms
+   ✓ retries transient endpoint publication failures and serves the published endpoint 396ms
+   ✓ releases startup resources after permanent failure and allows recovery 1076ms
+   ✓ releases startup resources after ENOSPC failure and allows recovery 349ms
+   ✓ releases startup resources after credentials failure and allows recovery 357ms
+   ✓ delivers and acknowledges a message using only the packaged CLI and broker 773ms
+ ✓ tests/mcp/stdio-integration.test.ts (4 tests) 4224ms
+   ✓ bundled STDIO MCP server (4)
+     ✓ starts from an isolated plugin tree without node_modules 1586ms
+     ✓ keeps workflow startup clean when both database settings resolve to one file 810ms
+     ✓ starts with the packaged registry and fails semantic planning closed without a trusted provider 804ms
+     ✓ shares signed continuity bindings between the packaged hook and MCP server 1019ms
+ ✓ tests/evaluation-validity-auditor/suite-integration.test.mjs (7 tests) 2835ms
+   ✓ evaluation-validity-auditor suite descriptor (7)
+     ✓ selects only its explicit capability at phase order 68 with the conditional gate 321ms
+     ✓ accepts a safe post-execution PASS receipt and still rejects free text 623ms
+     ✓ freezes the audit purpose in the signed plan and enforces pre versus post completion 643ms
+     ✓ requires an explicit structured purpose for evaluation validity planning 378ms
+     ✓ keeps one evaluation TaskEnvelope compatible with task-contract and acceptance validation 334ms
+     ✓ maps FAIL and BLOCKED reports to their fixed workflow error states 531ms
+ ✓ tests/context-continuity/continuity.test.ts (15 tests) 3248ms
+   ✓ direct task continuity (10)
+     ✓ stores replacement snapshots with CAS and request idempotency 451ms
+     ✓ returns body-free candidates and loads body only after exact revalidation 305ms
+     ✓ allows only one winner across two SQLite connections using the same CAS revision 399ms
+ ✓ tests/mcp/tool-schema-profile.test.ts (7 tests) 3388ms
+   ✓ MCP tool schema profiles (7)
+     ✓ keeps the historical schemas when no profile is selected 681ms
+     ✓ removes top-level combinators from every advertised schema for Anthropic hosts 458ms
+     ✓ accepts and rejects the same inputs with inlined Anthropic schemas as with the referenced contracts 532ms
+     ✓ validates plan_workflow input identically in both profiles 396ms
+     ✓ advertises the same host-neutral intake instructions to every schema profile 539ms
+     ✓ applies the environment profile in the bundled server 777ms
+ ✓ tests/mcp/state-cleanup.test.ts (8 tests) 2242ms
+   ✓ state cleanup (8)
+     ✓ backs up and deletes only preview-bound inactive terminal state 563ms
+     ✓ claims a no-op plan only once across two database connections 354ms
+     ✓ keeps continuity state when its workflow root becomes active after preview 310ms
+ ✓ tests/acceptance-evidence-validator/suite-integration.test.ts (1 test) 2715ms
+   ✓ acceptance-evidence-validator standalone regression (1)
+     ✓ runs every node:test case 2712ms
+ ✓ tests/mcp/provider-result-envelope.test.ts (9 tests) 2831ms
+   ✓ provider result envelope (4)
+     ✓ accepts the shared envelope version for acceptance-evidence-validation even though its provider schema omits it 419ms
+     ✓ accepts the shared envelope version for blocker-diagnosis even though its provider schema omits it 328ms
+     ✓ keeps validating schemaVersion where the provider schema declares it 313ms
+   ✓ artifact digest form (4)
+     ✓ still rejects digests that are not lowercase SHA-256 hex for mutation-risk-preflight 407ms
+   ✓ recorded artifact digests (1)
+     ✓ stores the caller's digest form and still reports missing artifacts and output-file mismatches 309ms
+ ✓ tests/software-security-auditor/integration.test.mjs (7 tests) 2143ms
+   ✓ security audit integration (7)
+     ✓ loads schema and maps complete report with findings in  734ms
+     ✓ loads schema and maps complete report with findings in claude-plugin/ 372ms
+     ✓ rejects semantic lies even with schema-valid fields and verified booleans 319ms
+ ✓ tests/session-messaging/historical-wake.test.mjs (45 tests) 2030ms
+   ✓ bundled public CLI forwards only IDs to the private broker and cannot repeat recovery 483ms
+ ✓ tests/session-board/session-board.test.ts (15 tests) 1744ms
+   ✓ session board MCP tools (3)
+     ✓ shares one board between the Claude launcher and the Codex hook and lists both hosts 509ms
+     ✓ reads back the hook-written line, lists the host board and refuses unbound updates 813ms
+ ✓ tests/mcp/stage-output-file.test.ts (7 tests) 1699ms
+   ✓ stage output by file reference (7)
+     ✓ validates a file-backed output like inline output and stores only the reference 534ms
+     ✓ keeps inline output unchanged 312ms
+     ✓ keeps receipt-policy stages inline so cross-stage actor checks still see their output 304ms
+ ✓ tests/task-contract/suite-integration.test.ts (1 test) 1295ms
+   ✓ task-contract Node tests pass in an isolated process 1293ms
+ ✓ tests/tooling/claude-plugin.test.mjs (18 tests) 1059ms
+   ✓ generated Claude plugin (10)
+     ✓ removes a caller-supplied token when it cannot attest 459ms
+ ✓ tests/codex-token-usage-analyzer/integration.test.mjs (6 tests) 1224ms
+   ✓ codex-token-usage-analyzer integration (6)
+     ✓ records and finalizes a no-Markdown PASS workflow 610ms
+     ✓ records and finalizes a no-Markdown PARTIAL workflow 439ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs (23 tests) 811ms
+   ✓ security audit evidence contract (23)
+     ✓ runs positive and negative CLI in node_modules-free . packaging 414ms
+     ✓ runs positive and negative CLI in node_modules-free claude-plugin packaging 360ms
+stderr | tests/recovery-strategy-selector/recovery-selector.test.mjs
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+
+ ✓ tests/instruction-scope-resolver/suite-integration.test.ts (1 test) 914ms
+   ✓ instruction-scope-resolver standalone regression (1)
+     ✓ runs every node:test case 911ms
+ ✓ tests/mcp/trust-provenance.test.ts (11 tests) 1188ms
+   ✓ trust provenance (11)
+     ✓ stores peer provenance by digest without persisting the raw body 635ms
+ ✓ tests/recovery-strategy-selector/recovery-selector.test.mjs (17 tests) 1123ms
+   ✓ recovery strategy selector (17)
+     ✓ contracts compile and the digest CLI accepts stdin JSON 674ms
+ ✓ tests/mcp/codex-host-observation.test.ts (18 tests) 820ms
+   ✓ host-owned hookless provider ingress (2)
+     ✓ shares the strict bootstrap, missing, policy and replay gates for claude-code 478ms
+ ✓ tests/ponytail/ponytail.test.ts (5 tests) 786ms
+   ✓ ponytail at the implementation step (5)
+     ✓ routes minimal-implementation to ponytail after the scope baseline and before the pre-mutation gate and scope verification 472ms
+     ✓ adds no ponytail stage when the plan does not ask for minimal-implementation 304ms
+ ✓ tests/mcp/response-projections.test.ts (2 tests) 847ms
+   ✓ compact MCP response projections (2)
+     ✓ keeps successful workflow progress fixed-size and reduces repeated payload bytes by at least 80% 486ms
+     ✓ projects convergence roots and status without task, frame, or append-only history 359ms
+ ✓ tests/mcp/registry-contract.test.ts (2 tests) 716ms
+   ✓ bundled skill registry (2)
+     ✓ conforms to SkillDescriptor.v2 and exposes all specialist capabilities 383ms
+     ✓ bundles and enables the Korean prose workflow for runtime selection 331ms
+ ✓ tests/mcp/plugin-update-service.test.ts (17 tests) 784ms
+   ✓ PluginUpdateService (17)
+     ✓ caches a successful check for 24 hours and force bypasses the cache 493ms
+ ✓ tests/mcp/trusted-mcp-integration.test.ts (1 test) 659ms
+   ✓ trusted MCP server boundary (1)
+     ✓ completes and aborts guarded workflows with server-side observations 656ms
+ ✓ tests/evaluation-validity-auditor/standalone-regression.test.mjs (1 test) 570ms
+   ✓ evaluation-validity-auditor imported core (1)
+     ✓ passes the suite's normal, boundary, failure, and security regression cases 567ms
+ ✓ tests/tooling/skill-context-optimization.test.mjs (3 tests) 344ms
+   ✓ skill context optimization (3)
+     ✓ preserves the reviewed skill revisions while reducing their initial load 338ms
+ ✓ tests/mcp/korean-prose-readiness.test.ts (7 tests) 770ms
+   ✓ Korean prose evaluation readiness (7)
+     ✓ reports readiness without confusing it with activation 307ms
+ ✓ tests/mcp/korean-prose-glossary.test.ts (18 tests) 166ms
+ ✓ tests/orchestrator/query-registry.test.mjs (2 tests) 182ms
+ ✓ tests/model-effort-advisor/suite-integration.test.ts (3 tests) 138ms
+ ✓ tests/coordinate-subagents/model-routing.test.mjs (15 tests) 115ms
+ ✓ tests/mcp/workspace-identity.test.ts (24 tests) 157ms
+ ✓ tests/korean-prose-editor/glossary-finalizer.test.mjs (5 tests) 128ms
+ ✓ tests/mcp/korean-prose-evaluation-preflight.test.ts (4 tests) 56ms
+ ✓ tests/mcp/evaluation-preflight.test.ts (8 tests) 32ms
+ ✓ tests/tooling/tooling.test.mjs (9 tests) 25ms
+ ✓ tests/mcp/runtime-config.test.ts (18 tests) 17ms
+ ✓ tests/release-state-backup.test.mjs (1 test) 32ms
+ ✓ tests/mcp/orchestrator-fixtures.test.ts (8 tests) 76ms
+ ✓ tests/mcp/tool-schema-inline.test.ts (5 tests) 11ms
+ ✓ tests/mcp/korean-prose-execution-provenance.test.ts (5 tests) 6ms
+ ✓ tests/session-messaging/self-signed-certificate.test.ts (1 test) 13ms
+ ✓ tests/orchestrator/collaboration-decision.test.mjs (14 tests) 12ms
+ ✓ tests/software-security-auditor/evaluation-evidence.test.mjs (1 test) 8ms
+ ↓ tests/session-messaging/previous-broker.test.ts (1 test | 1 skipped)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/tooling/commands.test.mjs > skill maintenance commands > forwards pnpm script arguments without a standalone separator
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/tooling/commands.test.mjs:37:28
+     35|   it("forwards pnpm script arguments without a standalone separator", …
+     36|     const pnpmEntrypoint = process.env.npm_execpath;
+     37|     expect(pnpmEntrypoint).toBeTruthy();
+       |                            ^
+     38|     const pnpmArguments = [
+     39| "validate:skill", "--name", "orchestrator"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 58 passed | 1 skipped (60)
+      Tests  1 failed | 768 passed | 1 skipped (770)
+   Start at  07:22:05
+   Duration  69.54s (tests 94%, import 4%, transform 2%)
+
+JSON report written to /tmp/ev/27-test-json-run2.json
+END=2026-09-28T07:23:14Z
+EXIT=1

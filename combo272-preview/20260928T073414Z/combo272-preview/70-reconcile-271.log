@@ -1,0 +1,72 @@
+== probe (separate copy) receipts
+[{"receiptId":"source-d396b981-96ef-418d-af76-593ba2f76642","sessionId":"exp-T3-late-unknown","host":"codex","observedAt":"2026-09-28T05:30:14.000Z","expiresAt":"2026-09-28T05:30:44.000Z","adapter":"session-message-wake-hook","authorityEffect":"none"},{"receiptId":"source-fd6601da-b7cc-438e-a74b-a0f2797dbb00","sessionId":"exp-T6-ttl-late","host":"codex","observedAt":"2026-09-28T05:30:14.000Z","expiresAt":"2026-09-28T05:30:44.000Z","adapter":"session-message-wake-hook","authorityEffect":"none"}]
+{"nonce_digest":"9c3e4874…(64)","host":"codex","session_id":"exp-T0-control","expires_at":"2026-09-28T06:30:22.301Z","consumed_at":null,"state":"submitted","nonce":"t0-CFhIW…(27)","instance_id":"inst-1","birth_generation":"2026-09-28T05:30:22.300Z","transport":"codex-queue","relay_id":"relay-1","attempt_id":"12a9a38d-d8d2-4187-bba9-d613c9f4dc9e","dispatch_epoch":1,"retry_not_before":null,"retry_count":0,"started_at":"2026-09-28T05:30:22.302Z","outcome_at":"2026-09-28T05:30:22.303Z","observed_at":null,"late_observed_at":null}
+{"nonce_digest":"ebc29835…(64)","host":"codex","session_id":"exp-T1-gen-unknown","expires_at":"2026-09-28T06:25:22.001Z","consumed_at":null,"state":"unknown","nonce":"t1-old-f…(31)","instance_id":"inst-1","birth_generation":"2026-09-28T05:25:22.000Z","transport":"codex-queue","relay_id":"relay-1","attempt_id":"04ed5af8-601e-48ea-835e-a1f7d683bf9b","dispatch_epoch":1,"retry_not_before":null,"retry_count":0,"started_at":"2026-09-28T05:25:22.002Z","outcome_at":"2026-09-28T05:25:22.003Z","observed_at":null,"late_observed_at":null}
+{"nonce_digest":"3ba14804…(64)","host":"codex","session_id":"exp-T2-gen-submitted","expires_at":"2026-09-28T06:25:22.001Z","consumed_at":null,"state":"submitted","nonce":"t2-old--…(31)","instance_id":"inst-1","birth_generation":"2026-09-28T05:25:22.000Z","transport":"codex-queue","relay_id":"relay-1","attempt_id":"3a2812e9-e4bd-4ae0-b03f-ceb815802d81","dispatch_epoch":1,"retry_not_before":null,"retry_count":0,"started_at":"2026-09-28T05:25:22.002Z","outcome_at":"2026-09-28T05:25:22.003Z","observed_at":null,"late_observed_at":null}
+{"nonce_digest":"4fb9a863…(64)","host":"codex","session_id":"exp-T3-late-unknown","expires_at":"2026-09-28T06:25:22.001Z","consumed_at":null,"state":"unknown","nonce":"t3-old-w…(31)","instance_id":"inst-1","birth_generation":"2026-09-28T05:25:22.000Z","transport":"codex-queue","relay_id":"relay-1","attempt_id":"bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8","dispatch_epoch":1,"retry_not_before":null,"retry_count":0,"started_at":"2026-09-28T05:25:22.002Z","outcome_at":"2026-09-28T05:25:22.003Z","observed_at":null,"late_observed_at":"2026-09-28T05:30:14.001Z"}
+{"nonce_digest":"e1e6af1d…(64)","host":"codex","session_id":"exp-T4-started-crash","expires_at":"2026-09-28T06:25:22.001Z","consumed_at":null,"state":"submitted","nonce":"t4-old-X…(31)","instance_id":"inst-1","birth_generation":"2026-09-28T05:25:22.000Z","transport":"codex-queue","relay_id":"relay-1","attempt_id":"1818d425-0780-4e6f-a0bb-73c9b05f14ba","dispatch_epoch":1,"retry_not_before":null,"retry_count":0,"started_at":"2026-09-28T05:25:22.002Z","outcome_at":"2026-09-28T05:30:22.200Z","observed_at":null,"late_observed_at":null}
+{"nonce_digest":"bd0650d8…(64)","host":"codex","session_id":"exp-T5-ttl-unknown","expires_at":"2026-09-28T05:29:22.001Z","consumed_at":null,"state":"unknown","nonce":"t5-old-u…(31)","instance_id":"inst-1","birth_generation":"2026-09-28T04:29:22.000Z","transport":"codex-queue","relay_id":"relay-1","attempt_id":"37da8229-7f11-4665-85b8-4506a6d4d7af","dispatch_epoch":1,"retry_not_before":null,"retry_count":0,"started_at":"2026-09-28T04:29:22.002Z","outcome_at":"2026-09-28T04:29:22.003Z","observed_at":null,"late_observed_at":null}
+{"nonce_digest":"317acecc…(64)","host":"codex","session_id":"exp-T6-ttl-late","expires_at":"2026-09-28T05:29:22.001Z","consumed_at":null,"state":"unknown","nonce":"t6-old-t…(31)","instance_id":"inst-1","birth_generation":"2026-09-28T04:29:22.000Z","transport":"codex-queue","relay_id":"relay-1","attempt_id":"ce8aa64b-363b-4411-a19a-d6e9395fff30","dispatch_epoch":1,"retry_not_before":null,"retry_count":0,"started_at":"2026-09-28T04:29:22.002Z","outcome_at":"2026-09-28T04:29:22.003Z","observed_at":null,"late_observed_at":"2026-09-28T05:30:14.001Z"}
+T3 attempt=bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8 receipt=source-d396b981-96ef-418d-af76-593ba2f76642
+T6 attempt=ce8aa64b-363b-4411-a19a-d6e9395fff30 receipt=source-fd6601da-b7cc-438e-a74b-a0f2797dbb00
+T1 attempt=04ed5af8-601e-48ea-835e-a1f7d683bf9b
+== A before
+757f3534feb42c4298a47a0b8c0554b7ef19b8b37e49c4c3c16193665172716c  /tmp/rc/A/trust.sqlite3
+== CALL A1-T6-same-generation
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T6-ttl-late"},"attemptId":"ce8aa64b-363b-4411-a19a-d6e9395fff30","sourceReceiptId":"source-fd6601da-b7cc-438e-a74b-a0f2797dbb00"}}
+{"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+CLI_EXIT=0
+== CALL A2-T1-no-late
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T1-gen-unknown"},"attemptId":"04ed5af8-601e-48ea-835e-a1f7d683bf9b","sourceReceiptId":"source-d396b981-96ef-418d-af76-593ba2f76642"}}
+{"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+CLI_EXIT=0
+== CALL A3-T3-wrong-receipt
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T3-late-unknown"},"attemptId":"bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8","sourceReceiptId":"source-fd6601da-b7cc-438e-a74b-a0f2797dbb00"}}
+{"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+CLI_EXIT=0
+== CALL A4-T3-extra-field
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T3-late-unknown"},"attemptId":"bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8","sourceReceiptId":"source-d396b981-96ef-418d-af76-593ba2f76642","nowMs":0}}
+{"protocolVersion":"1.0.0","ok":false,"error":"Historical wake reconciliation contains unsupported fields."}
+CLI_EXIT=1
+== CALL A5-T3-correct
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T3-late-unknown"},"attemptId":"bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8","sourceReceiptId":"source-d396b981-96ef-418d-af76-593ba2f76642"}}
+{"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":true,"evidence":{"sourceReceiptId":"source-d396b981-96ef-418d-af76-593ba2f76642","contentDigest":"sha256:f60d3eba1efc5ca20ebbeec64f46ce4c6df2b1f6dfcc84a0e2e4da6ca85c5fd0","observedAt":"2026-09-28T05:30:14.000Z","receiptExpiresAt":"2026-09-28T05:30:44.000Z","oldBinding":{"host":"codex","sessionId":"exp-T3-late-unknown","instanceId":"inst-1","generation":"2026-09-28T05:25:22.000Z","transport":"codex-queue","relayId":"relay-1","attemptId":"bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8","dispatchEpoch":1},"lateObservedAt":"2026-09-28T05:30:14.001Z","reconciledAt":"2026-09-28T07:31:44.872Z"}}}
+CLI_EXIT=0
+== CALL A6-T3-repeat
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T3-late-unknown"},"attemptId":"bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8","sourceReceiptId":"source-d396b981-96ef-418d-af76-593ba2f76642"}}
+{"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+CLI_EXIT=0
+== B: trust DB path pointed at a nonexistent file
+== CALL B1-T3-missing-trust
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T3-late-unknown"},"attemptId":"bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8","sourceReceiptId":"source-d396b981-96ef-418d-af76-593ba2f76642"}}
+{"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+CLI_EXIT=0
+B-missing exists after call: no
+== brokers running
+6001 /tmp/node24/bin/node /tmp/cr/codex/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/rc/A
+6091 /tmp/node24/bin/node /tmp/cr/codex/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/rc/B
+757f3534feb42c4298a47a0b8c0554b7ef19b8b37e49c4c3c16193665172716c  /tmp/rc/A/trust.sqlite3
+/tmp/rc/A:
+total 168
+drwx------ 2 root root  4096 Sep 28 07:31 .
+drwxr-xr-x 6 root root  4096 Sep 28 07:31 ..
+-rw------- 1 root root   570 Sep 28 07:31 broker-cert.pem
+-rw------- 1 root root   241 Sep 28 07:31 broker-key.pem
+-rw------- 1 root root    44 Sep 28 07:31 broker.token
+-rw-r--r-- 1 root root  4622 Sep 28 07:29 exp-state.json
+-rw-r--r-- 1 root root 81920 Sep 28 07:31 session-messages.sqlite3
+-rw------- 1 root root 28672 Sep 28 07:29 trust.sqlite3
+-rw------- 1 root root 32768 Sep 28 07:31 trust.sqlite3-shm
+-rw------- 1 root root     0 Sep 28 07:31 trust.sqlite3-wal
+
+/tmp/rc/B:
+total 136
+drwx------ 2 root root  4096 Sep 28 07:31 .
+drwxr-xr-x 6 root root  4096 Sep 28 07:31 ..
+-rw------- 1 root root   570 Sep 28 07:31 broker-cert.pem
+-rw------- 1 root root   241 Sep 28 07:31 broker-key.pem
+-rw------- 1 root root    44 Sep 28 07:31 broker.token
+-rw-r--r-- 1 root root  4622 Sep 28 07:29 exp-state.json
+-rw-r--r-- 1 root root 81920 Sep 28 07:29 session-messages.sqlite3
+-rw------- 1 root root 28672 Sep 28 07:29 trust.sqlite3
+EXIT=0

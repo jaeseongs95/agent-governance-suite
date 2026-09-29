@@ -1,0 +1,10 @@
+40-shuffle-seed11.json tests 248 passed 247 failed 0 pending 1
+   skipped tests/session-messaging/previous-broker.test.ts :: preserves queued messages when new hooks meet the previous released broker
+40-shuffle-seed272.json tests 248 passed 247 failed 0 pending 1
+   skipped tests/session-messaging/previous-broker.test.ts :: preserves queued messages when new hooks meet the previous released broker
+40-shuffle-seed4242.json tests 248 passed 247 failed 0 pending 1
+   skipped tests/session-messaging/previous-broker.test.ts :: preserves queued messages when new hooks meet the previous released broker
+40-shuffle-seed53053.json tests 248 passed 247 failed 0 pending 1
+   skipped tests/session-messaging/previous-broker.test.ts :: preserves queued messages when new hooks meet the previous released broker
+40-shuffle-seed99991.json tests 248 passed 247 failed 0 pending 1
+   skipped tests/session-messaging/previous-broker.test.ts :: preserves queued messages when new hooks meet the previous released broker

@@ -1,0 +1,16 @@
+$ pnpm test -- --reporter=default --reporter=json --outputFile.json=/tmp/ev/26-test-run2.json
+START=2026-09-28T07:19:31Z
+Already up to date
+Done in 587ms using pnpm v11.19.0
+$ node scripts/build.mjs && vitest run -- --reporter=default --reporter=json --outputFile.json=/tmp/ev/26-test-run2.json
+
+ RUN  v5.0.0 /tmp/combo
+
+
+ Test Files  59 passed | 1 skipped (60)
+      Tests  769 passed | 1 skipped (770)
+   Start at  07:19:33
+   Duration  66.09s (tests 94%, import 4%, transform 2%)
+
+END=2026-09-28T07:20:39Z
+EXIT=0

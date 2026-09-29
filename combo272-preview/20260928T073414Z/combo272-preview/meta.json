@@ -1,0 +1,55 @@
+{
+  "case": "combo272-preview",
+  "finalCandidate": false,
+  "note": "Preview only, not the final combined candidate. reconcile e9b4c73 is pending an F1 fix; docs contain a FlowMarshal statement (docs/architecture.md:25) that is absent from 2.7.x.",
+  "inputs": {
+    "base_wake": "53eff30a2984d41fc749d38dd2062966017684fa",
+    "reconcile": "e9b4c73b2ff4294c68c6490411fbc6118c69c8c8",
+    "intake": "2b53e325f549a9ebd32a143d1d11f7b4393355fa",
+    "docs_patch": {
+      "branch": "claude/evidence-wake53-docs-merge-trial-20260928T065200Z",
+      "path": "wake53-docs-merge-trial/docs.patch",
+      "sha256": "812cb623c7ec2860ff5cf7ef5e164bc89e4ad7d70005872d41491ff1da6af4f1"
+    },
+    "state_scripts": {
+      "branch": "claude/evidence-wake-271-state-upgrade-20260928T065638Z",
+      "path": "wake-271-state-upgrade/scripts"
+    },
+    "v271_base": "d5c5932cd5a0d87630f6ed94f8e3721181ab9864"
+  },
+  "merge": {
+    "merge1_reconcile": "9c7bab9",
+    "merge2_intake": {
+      "commit": "6c3fbe84b312f757d3c5df26dc5265dce066dab4",
+      "tree": "144bda8a46b4690079dd64b185101bd13e556f21"
+    },
+    "expected_merge_tree": "144bda8a46b4690079dd64b185101bd13e556f21",
+    "treeMatchesExpected": true,
+    "conflicts": 0
+  },
+  "combo": {
+    "commit": "db35be0649d54c8065b5699adaa267c9bc779385",
+    "tree": "4b730ef51dc0ec74f987c10ad899a5442c77244a",
+    "pushed": false,
+    "regeneratedDistIdenticalToAutoMerge": true
+  },
+  "distSha256": {
+    "mcp-server/dist/server.mjs": "9231cb1e2bc86820c2c3d3d5384eaecb434037b413f8f95e4b50c741550043d3",
+    "mcp-server/dist/session-message-broker.mjs": "80c00e7b96dd3e4ef32aeea10dc8683c7123c3334b04df002507207bee2ace65",
+    "mcp-server/dist/session-message-cli.mjs": "41977dabc6a50c36e3128b50ed7717fc6057f60760601356c2d67d4c842a98bb",
+    "mcp-server/dist/session-message-hook.mjs": "cb29a763646e4ce8113424f3dbceb0dff1c9bf7d5100e279c95103511122a092",
+    "full": "82-combo-dist-sha256.txt"
+  },
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v37 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startUtc": "2026-09-28T07:16:02Z",
+  "endUtc": "2026-09-28T07:33:05Z",
+  "shuffleSeeds": [
+    11,
+    272,
+    4242,
+    53053,
+    99991
+  ]
+}

@@ -1,0 +1,19 @@
+Auto-merging claude-plugin/mcp-server/dist/server.mjs
+Auto-merging mcp-server/dist/server.mjs
+Merge made by the 'ort' strategy.
+ claude-overlay/adaptations/orchestrator.json       | 10 +----
+ claude-plugin/mcp-server/dist/server.mjs           | 11 +++--
+ claude-plugin/skills/orchestrator/SKILL.md         | 51 ++++++----------------
+ .../orchestrator/references/entry-details.md       | 14 ++++--
+ .../orchestrator/references/mcp-execution.md       | 17 ++++++--
+ mcp-server/dist/server.mjs                         | 11 +++--
+ mcp-server/src/server.ts                           | 16 +++----
+ scripts/check-skill-context-optimization.mjs       | 30 ++++++++++++-
+ skills/orchestrator/SKILL.md                       |  8 ++--
+ skills/orchestrator/references/entry-details.md    | 14 ++++--
+ skills/orchestrator/references/mcp-execution.md    | 17 ++++++--
+ tests/mcp/tool-schema-profile.test.ts              | 36 +++++++++------
+ tests/tooling/claude-plugin.test.mjs               | 49 +++++++++++++++++----
+ tests/tooling/skill-context-optimization.test.mjs  | 28 +++++++++---
+ 14 files changed, 198 insertions(+), 114 deletions(-)
+EXIT=0

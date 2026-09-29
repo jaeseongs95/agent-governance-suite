@@ -1,0 +1,8 @@
+$ pnpm claude:build
+START=2026-09-28T07:17:38Z
+Already up to date
+Done in 517ms using pnpm v11.19.0
+$ node scripts/build-claude-plugin.mjs
+claude-plugin: wrote 404 files
+END=2026-09-28T07:17:40Z
+EXIT=0

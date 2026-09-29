@@ -1,0 +1,6 @@
+$ env AGENT_GOVERNANCE_TRUST_DB_PATH=/tmp/rc/A2/trust.sqlite3 node_modules/.bin/tsx /tmp/ev/scripts/rc-post-reserve.mjs /tmp/combo /tmp/rc/A2
+START=2026-09-28T07:32:06Z
+{"sessionId":"exp-T3-late-unknown","statusBefore":{"state":"observed","observation":"observed","deliveryState":"observed","instanceId":"inst-1","generation":"2026-09-28T05:25:22.000Z","attemptId":"bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8","dispatchEpoch":1,"retryNotBefore":null,"expiresAt":"2026-09-28T06:25:22.001Z","observedAt":"2026-09-28T05:30:14.000Z","lateObservedAt":"2026-09-28T05:30:14.001Z"},"relayAcquired":true,"pending":0,"reserveDispatch":false}
+{"sessionId":"exp-T1-gen-unknown","statusBefore":{"state":"unknown","observation":"observation-overdue","deliveryState":"unknown","instanceId":"inst-1","generation":"2026-09-28T05:25:22.000Z","attemptId":"04ed5af8-601e-48ea-835e-a1f7d683bf9b","dispatchEpoch":1,"retryNotBefore":null,"expiresAt":"2026-09-28T06:25:22.001Z","observedAt":null,"lateObservedAt":null},"relayAcquired":true,"pending":0,"reserveDispatch":false}
+END=2026-09-28T07:32:07Z
+EXIT=0

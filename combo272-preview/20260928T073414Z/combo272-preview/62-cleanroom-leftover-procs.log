@@ -1,0 +1,4 @@
+ 5266 /tmp/node24/bin/node /tmp/cr/codex/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/cr/scratch/home-codex/.agent-governance-suite/session-messaging
+ 5278 /tmp/node24/bin/node /tmp/cr/codex/mcp-server/dist/session-message-relay.mjs --host codex --session-id cr-codex-session --instance-id 3279d606-bba7-4303-83a1-8b86f60ad703 --transport codex-deferred --parent-pid 5238 --parent-start-token 87471
+ 5434 /tmp/node24/bin/node /tmp/cr/claude/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/cr/scratch/home-claude/.agent-governance-suite/session-messaging
+note: brokers/relay spawned by SessionStart hooks remained after hooks exited (detached, expected); terminated by pkill after capture

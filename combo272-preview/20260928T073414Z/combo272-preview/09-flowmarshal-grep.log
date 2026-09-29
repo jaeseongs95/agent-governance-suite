@@ -1,0 +1,1 @@
+./docs/architecture.md:25:Strict MCP assurance never trusts `executionContext` supplied in tool arguments. A `TrustedExecutionContextProvider` must supply a fresh observation bound to the exact task, 

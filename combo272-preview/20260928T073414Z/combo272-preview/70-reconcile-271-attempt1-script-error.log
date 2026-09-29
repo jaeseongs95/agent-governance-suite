@@ -1,0 +1,171 @@
+== probe (separate copy) receipts
+file:///tmp/ev/scripts/rc-inspect.mjs:12
+out.wake = msg.prepare(`SELECT session_id, attempt_id, instance_id, birth_generation, state, dispatch_epoch, started_at, late_observed_at, observed_at, consumed_at, outcome FROM wake_nonces ORDER BY session_id, rowid`).all()
+               ^
+
+Error: no such column: outcome
+    at file:///tmp/ev/scripts/rc-inspect.mjs:12:16
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  code: 'ERR_SQLITE_ERROR',
+  errcode: 1,
+  errstr: 'SQL logic error'
+}
+
+Node.js v24.21.0
+<anonymous_script>:1
+
+
+SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at [eval]:1:14
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:451:12
+    at [eval]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:449:60)
+    at evalFunction (node:internal/process/execution:283:30)
+    at evalTypeScript (node:internal/process/execution:295:3)
+    at node:internal/main/eval_string:71:3
+
+Node.js v24.21.0
+node:internal/modules/cjs/loader:2075
+    throw err;
+    ^
+
+SyntaxError: /tmp/ev/71-rc-probe.json: Unexpected end of JSON input
+    at parse (<anonymous>)
+    at Object..json (node:internal/modules/cjs/loader:2072:39)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.require (node:internal/modules/cjs/loader:1674:12)
+    at require (node:internal/modules/helpers:157:16)
+    at [eval]:1:9
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:451:12
+
+Node.js v24.21.0
+node:internal/modules/cjs/loader:2075
+    throw err;
+    ^
+
+SyntaxError: /tmp/ev/71-rc-probe.json: Unexpected end of JSON input
+    at parse (<anonymous>)
+    at Object..json (node:internal/modules/cjs/loader:2072:39)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.require (node:internal/modules/cjs/loader:1674:12)
+    at require (node:internal/modules/helpers:157:16)
+    at [eval]:1:9
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:451:12
+
+Node.js v24.21.0
+T3 attempt=bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8 receipt=
+T6 attempt=ce8aa64b-363b-4411-a19a-d6e9395fff30 receipt=
+T1 attempt=04ed5af8-601e-48ea-835e-a1f7d683bf9b
+== A before
+file:///tmp/ev/scripts/rc-inspect.mjs:12
+out.wake = msg.prepare(`SELECT session_id, attempt_id, instance_id, birth_generation, state, dispatch_epoch, started_at, late_observed_at, observed_at, consumed_at, outcome FROM wake_nonces ORDER BY session_id, rowid`).all()
+               ^
+
+Error: no such column: outcome
+    at file:///tmp/ev/scripts/rc-inspect.mjs:12:16
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  code: 'ERR_SQLITE_ERROR',
+  errcode: 1,
+  errstr: 'SQL logic error'
+}
+
+Node.js v24.21.0
+757f3534feb42c4298a47a0b8c0554b7ef19b8b37e49c4c3c16193665172716c  /tmp/rc/A/trust.sqlite3
+== CALL A1-T6-same-generation
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T6-ttl-late"},"attemptId":"ce8aa64b-363b-4411-a19a-d6e9395fff30","sourceReceiptId":""}}
+{"protocolVersion":"1.0.0","ok":false,"error":"Invalid historical wake identity."}
+CLI_EXIT=1
+== CALL A2-T1-no-late
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T1-gen-unknown"},"attemptId":"04ed5af8-601e-48ea-835e-a1f7d683bf9b","sourceReceiptId":""}}
+{"protocolVersion":"1.0.0","ok":false,"error":"Invalid historical wake identity."}
+CLI_EXIT=1
+== CALL A3-T3-wrong-receipt
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T3-late-unknown"},"attemptId":"bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8","sourceReceiptId":""}}
+{"protocolVersion":"1.0.0","ok":false,"error":"Invalid historical wake identity."}
+CLI_EXIT=1
+== CALL A4-T3-extra-field
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T3-late-unknown"},"attemptId":"bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8","sourceReceiptId":"","nowMs":0}}
+{"protocolVersion":"1.0.0","ok":false,"error":"Historical wake reconciliation contains unsupported fields."}
+CLI_EXIT=1
+== CALL A5-T3-correct
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T3-late-unknown"},"attemptId":"bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8","sourceReceiptId":""}}
+{"protocolVersion":"1.0.0","ok":false,"error":"Invalid historical wake identity."}
+CLI_EXIT=1
+== CALL A6-T3-repeat
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T3-late-unknown"},"attemptId":"bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8","sourceReceiptId":""}}
+{"protocolVersion":"1.0.0","ok":false,"error":"Invalid historical wake identity."}
+CLI_EXIT=1
+== B: trust DB path pointed at a nonexistent file
+== CALL B1-T3-missing-trust
+stdin: {"operation":"reconcile-wake-observation","payload":{"target":{"host":"codex","sessionId":"exp-T3-late-unknown"},"attemptId":"bd3698be-2851-47cb-bf0d-8bf0ccf4dbe8","sourceReceiptId":""}}
+{"protocolVersion":"1.0.0","ok":false,"error":"Invalid historical wake identity."}
+CLI_EXIT=1
+B-missing exists after call: no
+== brokers running
+ 5691 /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-1790579757272-zbtpki.sh 2>/dev/null || true && export BUN_OPTIONS="--smol${BUN_OPTIONS:+ $BUN_OPTIONS}" && shopt -u extglob 2>/dev/null || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'cat > /tmp/ev/scripts/rc-inspect.mjs <<'"'"'EOF'"'"' // Read-only inspection of a reconcile experiment state dir. usage: node rc-inspect.mjs <dir> [find-receipts] import { DatabaseSync } from '"'"'node:sqlite'"'"'; import { createHash } from '"'"'node:crypto'"'"'; import { readdirSync, readFileSync, statSync, existsSync } from '"'"'node:fs'"'"'; import { join } from '"'"'node:path'"'"'; const [dir, mode] = process.argv.slice(2); const files = Object.fromEntries(readdirSync(dir).sort().filter((f) => statSync(join(dir, f)).isFile())   .map((f) => [f, { bytes: statSync(join(dir, f)).size, sha256: createHash('"'"'sha256'"'"').update(readFileSync(join(dir, f))).digest('"'"'hex'"'"') }])); const out = { dir, filesBefore: files }; const mask = (v) => (typeof v === '"'"'string'"'"' ? `${v.slice(0, 8)}???(${v.length})` : v); const msg = new DatabaseSync(join(dir, '"'"'session-messages.sqlite3'"'"'), { readOnly: true }); out.wake = msg.prepare(`SELECT session_id, attempt_id, instance_id, birth_generation, state, dispatch_epoch, started_at, late_observed_at, observed_at, consumed_at, outcome FROM wake_nonces ORDER BY session_id, rowid`).all()   .map((r) => ({ ...r })); out.presence = msg.prepare('"'"'SELECT session_id, instance_id, started_at, lease_until, ended_at FROM session_presence ORDER BY session_id, started_at'"'"').all().map((r) => ({ ...r })); out.messagesCount = msg.prepare('"'"'SELECT COUNT(*) c FROM messages'"'"').get().c; msg.close(); if (existsSync(join(dir, '"'"'trust.sqlite3'"'"'))) {   const t = new DatabaseSync(join(dir, '"'"'trust.sqlite3'"'"'), { readOnly: true });   const rows = t.prepare('"'"'SELECT receipt_id, receipt_json FROM input_source_receipts ORDER BY rowid'"'"').all();   out.trustReceipts = rows.length;   if (mode === '"'"'find-receipts'"'"') out.receipts = rows.map((r) => { const j = JSON.parse(r.receipt_json);     return { receiptId: r.receipt_id, sessionId: j.sessionId, host: j.host, observedAt: j.observedAt, expiresAt: j.expiresAt, adapter: j.attestation?.adapter, authorityEffect: j.authorityEffect }; });   out.trustLogical = createHash('"'"'sha256'"'"').update(JSON.stringify(rows)).digest('"'"'hex'"'"');   out.trustKeyPresent = !!t.prepare("SELECT 1 FROM trust_metadata LIMIT 1").get();   t.close(); } console.log(JSON.stringify(out, null, 1)); EOF cat > /tmp/ev/scripts/rc-run.sh <<'"'"'EOF'"'"' #!/bin/bash # Reconcile a disposable 2.7.1 state with the clean-room combined CLI (auto-started broker). No user state. export PATH=/tmp/node24/bin:$PATH set -u CLI=/tmp/cr/codex/mcp-server/dist/session-message-cli.mjs rm -rf /tmp/rc; mkdir -p /tmp/rc/home /tmp/rc/probe cp -a /tmp/state-271/. /tmp/rc/A/ 2>/dev/null || { mkdir -p /tmp/rc/A && cp -a /tmp/state-271/. /tmp/rc/A/; } mkdir -p /tmp/rc/B && cp -a /tmp/state-271/. /tmp/rc/B/ cp -a /tmp/state-271/. /tmp/rc/probe/ echo "== probe (separate copy) receipts"; node /tmp/ev/scripts/rc-inspect.mjs /tmp/rc/probe find-receipts > /tmp/ev/71-rc-probe.json; cat /tmp/ev/71-rc-probe.json | node -e '"'"'const j=JSON.parse(require("fs").readFileSync(0));console.log(JSON.stringify(j.receipts));for(const w of j.wake)console.log(JSON.stringify(w))'"'"' ATT() { node -e '"'"'const s=require("/tmp/state-271/exp-state.json");console.log(s.targets[process.argv[1]].oldAttempt.attemptId)'"'"' "$1"; } REC() { node -e '"'"'const j=require("/tmp/ev/71-rc-probe.json");const r=j.receipts.filter(x=>x.sessionId===process.argv[1]);if(r.length!==1)throw new Error("receipts="+r.length);console.log(r[0].receiptId)'"'"' "$1"; } T3A=$(ATT exp-T3-late-unknown); T6A=$(ATT exp-T6-ttl-late); T1A=$(ATT exp-T1-gen-unknown); T3R=$(REC exp-T3-late-unknown); T6R=$(REC exp-T6-ttl-late) echo "T3 attempt=$T3A receipt=$T3R"; echo "T6 attempt=$T6A receipt=$T6R"; echo "T1 attempt=$T1A" tgt() { printf '"'"'{"host":"codex","sessionId":"%s"}'"'"' "$1"; } call() { # name dir extraEnv json   local name=$1 dir=$2 extra=$3 json=$4   echo "== CALL $name"; echo "stdin: $json"   env -i PATH=$PATH HOME=/tmp/rc/home AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR=$dir $extra node $CLI <<<"$json"; echo "CLI_EXIT=$?" } echo "== A before"; node /tmp/ev/scripts/rc-inspect.mjs /tmp/rc/A > /tmp/ev/72-rc-A-before.json sha256sum /tmp/rc/A/trust.sqlite3 call A1-T6-same-generation /tmp/rc/A "" "{\"operation\":\"reconcile-wake-observation\",\"payload\":{\"target\":$(tgt exp-T6-ttl-late),\"attemptId\":\"$T6A\",\"sourceReceiptId\":\"$T6R\"}}" call A2-T1-no-late /tmp/rc/A "" "{\"operation\":\"reconcile-wake-observation\",\"payload\":{\"target\":$(tgt exp-T1-gen-unknown),\"attemptId\":\"$T1A\",\"sourceReceiptId\":\"$T3R\"}}" call A3-T3-wrong-receipt /tmp/rc/A "" "{\"operation\":\"reconcile-wake-observation\",\"payload\":{\"target\":$(tgt exp-T3-late-unknown),\"attemptId\":\"$T3A\",\"sourceReceiptId\":\"$T6R\"}}" call A4-T3-extra-field /tmp/rc/A "" "{\"operation\":\"reconcile-wake-observation\",\"payload\":{\"target\":$(tgt exp-T3-late-unknown),\"attemptId\":\"$T3A\",\"sourceReceiptId\":\"$T3R\",\"nowMs\":0}}" call A5-T3-correct /tmp/rc/A "" "{\"operation\":\"reconcile-wake-observation\",\"payload\":{\"target\":$(tgt exp-T3-late-unknown),\"attemptId\":\"$T3A\",\"sourceReceiptId\":\"$T3R\"}}" call A6-T3-repeat /tmp/rc/A "" "{\"operation\":\"reconcile-wake-observation\",\"payload\":{\"target\":$(tgt exp-T3-late-unknown),\"attemptId\":\"$T3A\",\"sourceReceiptId\":\"$T3R\"}}" echo "== B: trust DB path pointed at a nonexistent file" call B1-T3-missing-trust /tmp/rc/B "AGENT_GOVERNANCE_TRUST_DB_PATH=/tmp/rc/B-missing/trust.sqlite3" "{\"operation\":\"reconcile-wake-observation\",\"payload\":{\"target\":$(tgt exp-T3-late-unknown),\"attemptId\":\"$T3A\",\"sourceReceiptId\":\"$T3R\"}}" echo "B-missing exists after call: $(test -e /tmp/rc/B-missing && echo yes || echo no)" echo "== brokers running"; ps -eo pid,args | grep "session-message-broker" | grep "/tmp/r[c]/"  for p in $(ps -eo pid,args | grep "session-message-broker" | grep "/tmp/r[c]/" | awk '"'"'{print $1}'"'"'); do kill $p; done; sleep 1 sha256sum /tmp/rc/A/trust.sqlite3; ls -la /tmp/rc/A /tmp/rc/B node /tmp/ev/scripts/rc-inspect.mjs /tmp/rc/A > /tmp/ev/73-rc-A-after.json node /tmp/ev/scripts/rc-inspect.mjs /tmp/rc/B > /tmp/ev/74-rc-B-after.json EOF chmod +x /tmp/ev/scripts/rc-run.sh; /tmp/ev/scripts/rc-run.sh > /tmp/ev/70-reconcile-271.log 2>&1; echo "EXIT=$?" >> /tmp/ev/70-reconcile-271.log; cat /tmp/ev/70-reconcile-271.log | cut -c1-400' && pwd -P >| /tmp/claude-d78a-cwd
+ 5774 /tmp/node24/bin/node /tmp/cr/codex/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/rc/A
+ 5864 /tmp/node24/bin/node /tmp/cr/codex/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/rc/B
+757f3534feb42c4298a47a0b8c0554b7ef19b8b37e49c4c3c16193665172716c  /tmp/rc/A/trust.sqlite3
+/tmp/rc/A:
+total 136
+drwx------ 2 root root  4096 Sep 28 07:31 .
+drwxr-xr-x 6 root root  4096 Sep 28 07:31 ..
+-rw------- 1 root root   570 Sep 28 07:31 broker-cert.pem
+-rw------- 1 root root   241 Sep 28 07:31 broker-key.pem
+-rw------- 1 root root    44 Sep 28 07:31 broker.token
+-rw-r--r-- 1 root root  4622 Sep 28 07:29 exp-state.json
+-rw-r--r-- 1 root root 81920 Sep 28 07:29 session-messages.sqlite3
+-rw------- 1 root root 28672 Sep 28 07:29 trust.sqlite3
+
+/tmp/rc/B:
+total 136
+drwx------ 2 root root  4096 Sep 28 07:31 .
+drwxr-xr-x 6 root root  4096 Sep 28 07:31 ..
+-rw------- 1 root root   570 Sep 28 07:31 broker-cert.pem
+-rw------- 1 root root   241 Sep 28 07:31 broker-key.pem
+-rw------- 1 root root    44 Sep 28 07:31 broker.token
+-rw-r--r-- 1 root root  4622 Sep 28 07:29 exp-state.json
+-rw-r--r-- 1 root root 81920 Sep 28 07:29 session-messages.sqlite3
+-rw------- 1 root root 28672 Sep 28 07:29 trust.sqlite3
+file:///tmp/ev/scripts/rc-inspect.mjs:12
+out.wake = msg.prepare(`SELECT session_id, attempt_id, instance_id, birth_generation, state, dispatch_epoch, started_at, late_observed_at, observed_at, consumed_at, outcome FROM wake_nonces ORDER BY session_id, rowid`).all()
+               ^
+
+Error: no such column: outcome
+    at file:///tmp/ev/scripts/rc-inspect.mjs:12:16
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  code: 'ERR_SQLITE_ERROR',
+  errcode: 1,
+  errstr: 'SQL logic error'
+}
+
+Node.js v24.21.0
+file:///tmp/ev/scripts/rc-inspect.mjs:12
+out.wake = msg.prepare(`SELECT session_id, attempt_id, instance_id, birth_generation, state, dispatch_epoch, started_at, late_observed_at, observed_at, consumed_at, outcome FROM wake_nonces ORDER BY session_id, rowid`).all()
+               ^
+
+Error: no such column: outcome
+    at file:///tmp/ev/scripts/rc-inspect.mjs:12:16
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  code: 'ERR_SQLITE_ERROR',
+  errcode: 1,
+  errstr: 'SQL logic error'
+}
+
+Node.js v24.21.0

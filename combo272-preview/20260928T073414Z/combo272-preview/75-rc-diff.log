@@ -1,0 +1,11 @@
+A rows before 7 after 7 messages 11 -> 11 trustLogical same true receipts 2 -> 2
+exp-T0-control unchanged
+exp-T1-gen-unknown unchanged
+exp-T2-gen-submitted unchanged
+exp-T3-late-unknown consumed_at:null=>2026-09-28T07:31:44.872Z, state:unknown=>observed, observed_at:null=>2026-09-28T05:30:14.000Z
+exp-T4-started-crash unchanged
+exp-T5-ttl-unknown unchanged
+exp-T6-ttl-late unchanged
+presence same true
+B all rows unchanged vs A-before true B messages 11
+A files after {"broker-cert.pem":{"bytes":570,"sha256":"f26b0783ef0d843e1672d535df96c4cebac01da9de6236e7b045c6859dad4a91"},"broker-key.pem":{"bytes":241,"sha256":"94d6ba7307bcbe0ac4fe4f669c2da136f3788ebd25e85a7491f4b2a0608e56dc"},"broker.token":{"bytes":44,"sha256":"b7b2805e906d7c977b397713767ea99ad40c09f2dac1d5b2683a7fc9c3aae9e3"},"exp-state.json":{"bytes":4622,"sha256":"9a3925465aa2e1897bf854970c00f067985f750c6dae7a10da94489daac88fde"},"session-messages.sqlite3":{"bytes":81920,"sha256":"dae0eb0676d6b57f92a0a3150cba9780dffb93ec13a22c591d8668252d719154"},"trust.sqlite3":{"bytes":28672,"sha256":"757f3534feb42c4298a47a0b8c0554b7ef19b8b37e49c4c3c16193665172716c"},"trust.sqlite3-shm":{"bytes":32768,"sha256":"fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"},"trust.sqlite3-wal":{"bytes":0,"sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}
