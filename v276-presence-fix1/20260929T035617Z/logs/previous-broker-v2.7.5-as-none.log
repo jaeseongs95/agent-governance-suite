@@ -1,0 +1,27 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/previous-broker.test.ts (4 tests | 1 failed) 3030ms
+   × leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired
+Error: Set AGS_PREVIOUS_BROKER_VERSION to the previous broker's release version (for example 2.7.5).
+ ❯ previousAtLeast tests/session-messaging/previous-broker.test.ts:19:21
+     17| function previousAtLeast(minimum: [number, number, number]): boolean {
+     18|   const parts = /^v?(\d+)\.(\d+)\.(\d+)$/u.exec(previousVersion ?? "");
+     19|   if (!parts) throw new Error("Set AGS_PREVIOUS_BROKER_VERSION to the …
+       |                     ^
+     20|   const version = parts.slice(1).map(Number);
+     21|   for (let index = 0; index < 3; index += 1) if (version[index] !== mi…
+ ❯ tests/session-messaging/previous-broker.test.ts:237:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  03:54:51
+   Duration  3.54s (tests 90%, transform 8%, import 2%)
+

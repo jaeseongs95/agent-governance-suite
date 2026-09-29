@@ -1,0 +1,33 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/presence-deadline.test.ts (5 tests | 1 failed) 43ms
+   × keeps the overall deadline when the wall clock steps back during a lookup 8ms
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 33 passed (34)
+   Start at  03:45:01
+   Duration  23.06s (tests 92%, transform 7%, import 2%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > keeps the overall deadline when the wall clock steps back during a lookup
+AssertionError: expected null to be 20000 // Object.is equality
+
+- Expected:
+20000
+
++ Received:
+null
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:118:23
+    116|   vi.setSystemTime(Date.now() - 60_000);
+    117|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS - 5000);
+    118|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+    119|   const result = await pending;
+    120|   expect(request).toHaveBeenCalledTimes(11);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

@@ -1,0 +1,14 @@
+{
+  "task": "AGS 2.7.6 fix1: monotonic board presence deadline (L2-1), previous broker version input (T-5), slow broker bound (I-6)",
+  "previousHead": "93a7e4bc69f556859bc929af1df871dfc74eae68",
+  "head": "906a023a565806756bb6accc37d71970c35b740b",
+  "headTree": "2bd8176e36d2dd45262d17ac35a19b38c0d31a83",
+  "branch": "claude/v276-presence-deadline",
+  "audit": "evidence:v276-audit/20260929T034034Z",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux 6.18.44-fc-v37 x86_64",
+  "stampUtc": "20260929T035617Z",
+  "redaction": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 1, "email": 0, "home-path": 15, "root-home": 1, "ipv4": 0, "account-name": 3, "windows-home": 1},
+  "redactionSecondPass": 
+}

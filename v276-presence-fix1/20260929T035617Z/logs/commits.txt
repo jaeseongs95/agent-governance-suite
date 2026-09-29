@@ -1,0 +1,3 @@
+906a023a565806756bb6accc37d71970c35b740b 2bd8176e36d2dd45262d17ac35a19b38c0d31a83 test: tie the slow broker bound to the client deadline
+772f3a492ed37eac026c176107565000fe7da1b9 4a8de3ed9a01a2049d30607a9baaebd0cd01e42e test: bind the retired-latch branch to the previous broker version
+61196426e0fbd4677a2a22da6ce5eaf594ad6a39 9b1d37008680661620b0d8313027fb5bf80e7c93 fix: measure the board presence deadline on the monotonic clock

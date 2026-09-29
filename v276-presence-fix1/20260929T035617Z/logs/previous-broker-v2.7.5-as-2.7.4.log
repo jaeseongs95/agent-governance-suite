@@ -1,0 +1,47 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/previous-broker.test.ts (4 tests | 1 failed) 3280ms
+   × leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired 267ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired
+AssertionError: expected { …(20) } to deeply equal { …(20) }
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "ended-birth-nonce-abcdefghijklmnopqr",
+    "nonce_digest": "0a18f745b9e73706ed9204a5ba02f518a3e39d8a57ea55b9a20d1c5fbede2eb0",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T02:43:50.511Z",
+    "relay_id": "ended-relay",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T03:54:50.727Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "ended-recipient",
+    "started_at": "2026-09-29T02:43:50.510Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "codex-queue",
+  }
+
+ ❯ tests/session-messaging/previous-broker.test.ts:289:54
+    287|     // by what is observed. 2.7.4 and 2.7.3 must keep the latch unchan…
+    288|     if (retiringBroker && kept?.state === "expired-unobserved") expect…
+    289|     else if (managedWakeAware === true) expect(kept).toEqual(before);
+       |                                                      ^
+    290|     else expect([undefined, before]).toContainEqual(kept);
+    291|     const current = new SessionMessageStore(databasePath);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  03:54:46
+   Duration  3.79s (tests 91%, transform 7%, import 2%)
+

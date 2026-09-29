@@ -1,0 +1,160 @@
+diff --git a/docs/release-notes-v2.7.6.md b/docs/release-notes-v2.7.6.md
+index 435fc24..ccc1985 100644
+--- a/docs/release-notes-v2.7.6.md
++++ b/docs/release-notes-v2.7.6.md
+@@ -2,7 +2,7 @@
+ 
+ 세션 현황판(`list_session_status`)의 presence 조회 전체에 대기 상한을 둡니다. 2.7.4부터 서버는 현황판 세션을 3개씩 묶어 broker에 순서대로 물었고, 묶음 하나에는 client deadline(20초)이 있었지만 조회 전체에는 상한이 없었습니다. broker가 아예 답하지 않으면 첫 묶음 뒤에 멈췄지만, 답은 하되 묶음마다 느리면 대기가 묶음 수만큼 늘었습니다. 요청 하나의 한도 안에서 묶음마다 1.9초가 걸리면 300개 세션(100개 묶음)에서 190초입니다. 시험으로 재현했습니다. 묶음마다 1초씩 답을 늦추는 실제 broker에서 90개 세션 조회가 약 30초 걸렸습니다.
+ 
+-이제 조회 전체가 client deadline 하나(20초)를 나눠 씁니다. 묶음마다 남은 시간만 client에 넘기고, 남은 시간이 없으면 더 묻지 않습니다. deadline에 걸린 묶음은 client가 연결을 끊습니다. 그 묶음과 남은 묶음의 세션은 broker가 답하지 않은 것으로 보고 `unknown`(`autoWake: null`)으로 두며, 앞서 받은 결과는 그대로 보여 줍니다. 끊은 요청의 응답이 뒤늦게 와도 결과는 바뀌지 않습니다. 같은 실제 broker에서 조회는 약 20초에 끝났습니다. 거절된 묶음만 `unknown`으로 두는 규칙, 거절이 아닌 실패에서 멈추는 규칙, broker가 받지 않는 형식의 세션을 묻지 않는 규칙, 묶음 크기 3과 응답 한도는 그대로입니다. 자세한 규칙은 [presence 보존과 현황판 조회](session-message-lifecycle.md#presence-보존과-현황판-조회)를 따릅니다.
++이제 조회 전체가 client deadline 하나(20초)를 나눠 씁니다. 시간은 client와 같은 단조 시계로 재므로 조회 중 시스템 시계가 바뀌어도 상한은 그대로입니다. 묶음마다 남은 시간만 client에 넘기고, 남은 시간이 없으면 더 묻지 않습니다. deadline에 걸린 묶음은 client가 연결을 끊습니다. 그 묶음과 남은 묶음의 세션은 broker가 답하지 않은 것으로 보고 `unknown`(`autoWake: null`)으로 두며, 앞서 받은 결과는 그대로 보여 줍니다. 끊은 요청의 응답이 뒤늦게 와도 결과는 바뀌지 않습니다. 같은 실제 broker에서 조회는 약 20초에 끝났습니다. 거절된 묶음만 `unknown`으로 두는 규칙, 거절이 아닌 실패에서 멈추는 규칙, broker가 받지 않는 형식의 세션을 묻지 않는 규칙, 묶음 크기 3과 응답 한도는 그대로입니다. 자세한 규칙은 [presence 보존과 현황판 조회](session-message-lifecycle.md#presence-보존과-현황판-조회)를 따릅니다.
+ 
+ 20초는 다른 broker 요청 하나의 client deadline과 같은 값입니다. broker가 떠 있지 않아 새로 띄우는 첫 조회(기동 대기 최대 15초)도 이 안에서 끝날 수 있고, 호스트의 MCP 도구 호출 제한(Codex 기본 60초)보다 짧습니다. 새 설정은 없습니다. 묶음을 동시에 보내는 방식은 택하지 않았습니다. broker는 요청을 한 process에서 차례로 처리하므로 동시에 보내도 broker 쪽 처리 시간은 줄지 않고, 순서·중복·실패 처리만 복잡해집니다. 정상 broker에서 300개 세션 조회는 약 0.5초입니다.
+ 
+@@ -20,6 +20,6 @@ broker가 20초 안에 다 답하지 못할 만큼 느리면, 현황판의 뒤
+ 
+ 대기 상한은 presence 조회에만 둡니다. 현황판 파일을 읽는 시간과 다른 broker 요청의 deadline은 그대로입니다. 공통 접수 원문이 두 번 주입되는 문제(L3)는 이번 범위가 아닙니다.
+ 
+-상한과 시험 시간은 Linux 환경의 시험(가짜 client와 느린 실제 broker)으로 확인했습니다. 실제 PC와 Windows runner의 동작은 이 검사가 대신하지 않습니다.
++상한과 시험 시간은 Linux 환경의 시험(가짜 client와 가짜 시계, 시스템 시계를 되돌리는 경우, 느린 실제 broker)으로 확인했습니다. 실제 PC와 Windows runner의 동작은 이 검사가 대신하지 않습니다.
+ 
+ 공식 [설치 안내](../README.md#설치)에 따라 업데이트한 뒤 새 세션으로 재연결합니다. 운영 DB·키·큐를 지우거나 덮어써 불확실한 상태를 없애지 않습니다. 버전 동기화와 로컬 검사는 실제 설치 bytes나 호스트 동작을 대신하지 않으므로, 설치·재연결 뒤 현황판 presence를 별도로 확인합니다.
+diff --git a/docs/session-message-lifecycle.md b/docs/session-message-lifecycle.md
+index 9d90ad7..3f0a17e 100644
+--- a/docs/session-message-lifecycle.md
++++ b/docs/session-message-lifecycle.md
+@@ -189,7 +189,7 @@ presence birth는 ms 해상도 ISO 문자열이다. 같은 instance가 이전 bi
+ 
+ 서버는 broker가 받는 식별자 형식(`isBoundedIdentity`, broker와 같은 규칙)에 맞지 않는 identity는 요청하지 않는다. 그 identity와 broker가 명시적으로 거절한 묶음의 identity는 broker가 답하지 않은 것으로 보고 `unknown`, `autoWake: null`로 두며, 나머지 묶음은 그대로 표시한다. 거절이 아닌 실패(연결 실패, client deadline 초과, 응답 한도 초과)가 한 번 나면 남은 묶음은 요청하지 않고, 그 묶음과 남은 묶음의 identity를 모두 같은 방식으로 둔다. broker에 물었는데 행이 없는 identity는 `unknown`이고 `autoWake`는 `no-live-relay`/`presence-unknown`이다. 요청 수는 ceil(N/3)이고 묶음은 순서대로 보낸다.
+ 
+-조회 전체는 client deadline 하나(20초, 다른 broker 요청 하나와 같은 값)를 나눠 쓴다. 묶음마다 남은 시간만 client에 넘기고, 남은 시간이 없으면 더 요청하지 않는다. deadline에 걸린 묶음은 client가 연결을 끊고 거절이 아닌 실패로 끝나므로, 위 규칙대로 그 묶음과 남은 묶음을 모두 `unknown`, `autoWake: null`로 두고 앞서 받은 결과는 유지한다. 끊은 요청의 응답이 뒤늦게 와도 결과는 바뀌지 않는다. 그래서 broker가 응답하지 않거나, 응답은 하지만 묶음마다 느려도 조회 전체는 20초를 넘지 않는다. 2.7.5까지는 전체 상한이 없어, 묶음마다 요청 하나의 한도 안에서 느리게 답하는 broker에서는 대기가 묶음 수만큼 늘었다. 20초는 broker가 없어 새로 띄우는 첫 조회(기동 대기 최대 15초)가 끝날 수 있는 시간이고, 호스트의 MCP 도구 호출 제한(Codex 기본 60초)보다 짧다. 묶음을 동시에 보내지는 않는다. broker는 요청을 한 process에서 차례로 처리하므로 동시에 보내도 broker 쪽 시간은 줄지 않고, 정상 broker에서 300개 세션 조회는 약 0.5초다.
++조회 전체는 client deadline 하나(20초, 다른 broker 요청 하나와 같은 값)를 나눠 쓴다. 시간은 client와 같은 단조 시계로 재므로, 조회 중 시스템 시계가 바뀌어도 상한은 늘거나 줄지 않는다. 묶음마다 남은 시간만 client에 넘기고, 남은 시간이 없으면 더 요청하지 않는다. deadline에 걸린 묶음은 client가 연결을 끊고 거절이 아닌 실패로 끝나므로, 위 규칙대로 그 묶음과 남은 묶음을 모두 `unknown`, `autoWake: null`로 두고 앞서 받은 결과는 유지한다. 끊은 요청의 응답이 뒤늦게 와도 결과는 바뀌지 않는다. 그래서 broker가 응답하지 않거나, 응답은 하지만 묶음마다 느려도 조회 전체는 20초를 넘지 않는다. 2.7.5까지는 전체 상한이 없어, 묶음마다 요청 하나의 한도 안에서 느리게 답하는 broker에서는 대기가 묶음 수만큼 늘었다. 20초는 broker가 없어 새로 띄우는 첫 조회(기동 대기 최대 15초)가 끝날 수 있는 시간이고, 호스트의 MCP 도구 호출 제한(Codex 기본 60초)보다 짧다. 묶음을 동시에 보내지는 않는다. broker는 요청을 한 process에서 차례로 처리하므로 동시에 보내도 broker 쪽 시간은 줄지 않고, 정상 broker에서 300개 세션 조회는 약 0.5초다.
+ 
+ | service | broker | 현황판 presence |
+ | --- | --- | --- |
+diff --git a/mcp-server/src/session-message-service.ts b/mcp-server/src/session-message-service.ts
+index eb0a149..ab32751 100644
+--- a/mcp-server/src/session-message-service.ts
++++ b/mcp-server/src/session-message-service.ts
+@@ -108,10 +108,11 @@ export class SessionMessageService {
+     const unanswered: Array<{ host: string; sessionId: string }> = [];
+     const asked: Array<{ host: string; sessionId: string }> = [];
+     for (const { host, sessionId } of targets) (isBoundedIdentity({ host, sessionId }) ? asked : unanswered).push({ host, sessionId });
+-    const deadline = Date.now() + SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
++    // Monotonic, like the client: a wall-clock step during the lookup must not stretch or cut its deadline.
++    const deadline = performance.now() + SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
+     for (let index = 0; index < asked.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
+       const batch = asked.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS);
+-      const remaining = deadline - Date.now();
++      const remaining = deadline - performance.now();
+       try {
+         // Each batch may use only what is left; past the deadline the client gives up like any unanswered request.
+         if (remaining <= 0) throw new Error("The board presence lookup reached its deadline.");
+diff --git a/tests/session-messaging/presence-deadline.test.ts b/tests/session-messaging/presence-deadline.test.ts
+index 2cdbe97..1eb96a4 100644
+--- a/tests/session-messaging/presence-deadline.test.ts
++++ b/tests/session-messaging/presence-deadline.test.ts
+@@ -34,12 +34,16 @@ function broker(answerAfter: (batch: Target[]) => number) {
+ 
+ async function lookup(board: Target[]) {
+   let settledAt: number | null = null;
+-  const started = Date.now();
+-  const pending = new SessionMessageService().listPresence(board).then((result) => { settledAt = Date.now() - started; return result; });
++  // Elapsed time on the monotonic clock, which a wall-clock step does not move.
++  const started = performance.now();
++  const pending = new SessionMessageService().listPresence(board).then((result) => { settledAt = performance.now() - started; return result; });
+   return { pending, settledAt: () => settledAt };
+ }
+ 
+-beforeEach(() => { vi.useFakeTimers(); request.mockReset(); arrivals = []; });
++beforeEach(() => {
++  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "setImmediate", "clearImmediate", "Date", "performance"] });
++  request.mockReset(); arrivals = [];
++});
+ afterEach(() => { vi.useRealTimers(); });
+ 
+ it("ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered", async () => {
+@@ -101,3 +105,19 @@ it("returns every identity exactly once, in order, from a normal broker", async
+   expect(result.data!.unanswered).toEqual([{ host: "portable", sessionId: "has space" }]);
+   expect(request).toHaveBeenCalledTimes(101);
+ });
++
++it("keeps the overall deadline when the wall clock steps back during a lookup", async () => {
++  // Five seconds into a slow lookup the wall clock is set back 60 s (a time sync or manual correction). The deadline is
++  // measured on the monotonic clock, so the lookup still ends 20 s after it began, with the same answers.
++  const board = targets(300);
++  broker(() => 1900);
++  const { pending, settledAt } = await lookup(board);
++  await vi.advanceTimersByTimeAsync(5000);
++  vi.setSystemTime(Date.now() - 60_000);
++  await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS - 5000);
++  expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
++  const result = await pending;
++  expect(request).toHaveBeenCalledTimes(11);
++  expect(result.data!.sessions.map((session) => session.sessionId)).toEqual(board.slice(0, 30).map((item) => item.sessionId));
++  expect(result.data!.unanswered).toEqual(board.slice(30));
++});
+diff --git a/tests/session-messaging/presence-retention.test.ts b/tests/session-messaging/presence-retention.test.ts
+index 0788cd8..458bca7 100644
+--- a/tests/session-messaging/presence-retention.test.ts
++++ b/tests/session-messaging/presence-retention.test.ts
+@@ -6,7 +6,7 @@ import path from "node:path";
+ import { DatabaseSync } from "node:sqlite";
+ import { fileURLToPath, pathToFileURL } from "node:url";
+ import { afterEach, expect, it, vi } from "vitest";
+-import { waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
++import { SESSION_MESSAGE_REQUEST_TIMEOUT_MS, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
+ import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
+ import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
+ import * as protocol from "../../mcp-server/src/session-message-protocol.js";
+@@ -131,7 +131,8 @@ it("ends a board lookup against a slow real broker at one overall client deadlin
+   const started = Date.now();
+   const result = await new SessionMessageService(state).listPresence(board);
+   const elapsed = Date.now() - started;
+-  expect(elapsed).toBeLessThan(22_000);
++  // The overall client deadline plus scheduling slack.
++  expect(elapsed).toBeLessThan(SESSION_MESSAGE_REQUEST_TIMEOUT_MS + 2_000);
+   const answered = result.data!.sessions.map((session) => session.sessionId);
+   expect(answered.length).toBeGreaterThan(0);
+   expect(answered).toEqual(board.slice(0, answered.length).map((item) => item.sessionId));
+diff --git a/tests/session-messaging/previous-broker.test.ts b/tests/session-messaging/previous-broker.test.ts
+index cd372d9..edb24b8 100644
+--- a/tests/session-messaging/previous-broker.test.ts
++++ b/tests/session-messaging/previous-broker.test.ts
+@@ -12,6 +12,15 @@ import { SessionMessageService } from "../../mcp-server/src/session-message-serv
+ 
+ // A release check supplies the actual previous installation, not a simulated dispatcher.
+ const previousBroker = process.env.AGS_PREVIOUS_BROKER_PATH;
++// The released version of that broker (for example 2.7.5 or v2.7.5), for checks whose expected result depends on it.
++const previousVersion = process.env.AGS_PREVIOUS_BROKER_VERSION;
++function previousAtLeast(minimum: [number, number, number]): boolean {
++  const parts = /^v?(\d+)\.(\d+)\.(\d+)$/u.exec(previousVersion ?? "");
++  if (!parts) throw new Error("Set AGS_PREVIOUS_BROKER_VERSION to the previous broker's release version (for example 2.7.5).");
++  const version = parts.slice(1).map(Number);
++  for (let index = 0; index < 3; index += 1) if (version[index] !== minimum[index]) return version[index]! > minimum[index]!;
++  return true;
++}
+ const pluginRoot = process.env.BROKER_TEST_PLUGIN_ROOT ?? fileURLToPath(new URL("../../", import.meta.url));
+ it.skipIf(!previousBroker)("preserves queued messages when new hooks meet the previous released broker", async () => {
+   const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-"));
+@@ -224,6 +233,8 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
+ }, 20_000);
+ 
+ it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired", async () => {
++  // Strict without a version: the test fails rather than guess which result the broker owes.
++  const retiringBroker = previousAtLeast([2, 7, 5]);
+   const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-ended-"));
+   const environment = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory,
+     AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
+@@ -272,8 +283,9 @@ it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth f
+   try {
+     const kept = wakeRow();
+     const binding = (row: Record<string, unknown>) => Object.fromEntries(Object.entries(row).filter(([key]) => !["state", "retired_at"].includes(key)));
+-    // A 2.7.5 or later broker already retires it (same binding, terminal state); 2.7.4 and 2.7.3 keep the latch.
+-    if (kept?.state === "expired-unobserved") expect(binding(kept)).toEqual(binding(before!));
++    // Only a 2.7.5 or later broker may already have retired it (same binding, terminal state); by the stated version, not
++    // by what is observed. 2.7.4 and 2.7.3 must keep the latch unchanged.
++    if (retiringBroker && kept?.state === "expired-unobserved") expect(binding(kept)).toEqual(binding(before!));
+     else if (managedWakeAware === true) expect(kept).toEqual(before);
+     else expect([undefined, before]).toContainEqual(kept);
+     const current = new SessionMessageStore(databasePath);

@@ -1,0 +1,7 @@
+mutant	verdict	exit	failed_tests	failures
+BASELINE	PASS	0	0	
+M1-wall-clock-deadline	KILLED	1	1	keeps the overall deadline when the wall clock steps back during a lookup
+D1-deadline-removed	KILLED	1	4	does not let an answer that arrives after the deadline change the result | ends a board lookup against a slow real broker at one overall client deadline | ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered | keeps the overall deadline when the wall clock steps back during a lookup
+D2-in-flight-answer-past-deadline-kept	KILLED	1	3	does not let an answer that arrives after the deadline change the result | ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered | keeps the overall deadline when the wall clock steps back during a lookup
+D3-deadline-per-batch	KILLED	1	4	does not let an answer that arrives after the deadline change the result | ends a board lookup against a slow real broker at one overall client deadline | ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered | keeps the overall deadline when the wall clock steps back during a lookup
+D4-continue-after-failure	KILLED	1	2	keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure | stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch
