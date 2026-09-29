@@ -1,0 +1,14 @@
+{
+  "task": "AGS 2.7.3 Q audit findings N1-N5",
+  "branch": "claude/v273-msgqueue",
+  "baseSha": "cc5b1e9dc439647fff18ed8aaa58170fc9389369",
+  "candidateSha": "74395bf698012a8b2e034e58e3b42d51f53b0b68",
+  "candidateTree": "a4315674f6a18e058a05699fc9fafb227733cc2d",
+  "commits": ["544cd6e fix: say a capacity-rejected message ID stays prepared", "74395bf test: pin receipt retention ordering, scope, byte and ACK atomicity"],
+  "auditEvidence": { "branch": "claude/evidence-v273-msgqueue-audit-20260928T152951Z", "sha": "5b53bba38e372182cf095584111c294a9860e6a6" },
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v37 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startedAtUtc": "2026-09-28T15:31:27Z",
+  "finishedAtUtc": "2026-09-28T15:44:29Z"
+}

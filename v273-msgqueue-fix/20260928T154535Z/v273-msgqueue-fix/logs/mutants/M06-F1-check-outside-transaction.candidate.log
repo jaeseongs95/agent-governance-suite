@@ -1,0 +1,54 @@
+
+ RUN  v5.0.0 /tmp/claude-0/-home-user-agent-governance-suite/d1cba899-756a-53a4-a2d0-22082ee2dda6/scratchpad/mutwt
+
+ ❯ tests/session-messaging/message-retention.test.ts (15 tests | 1 failed) 8952ms
+   × two processes sending for one sender at limit-1 never exceed the sender limit 789ms
+ ❯ tests/session-messaging/message-lifecycle.test.ts (14 tests | 1 failed) 6852ms
+   × rejects exact draft expiry and validates Unicode, TTL and sender draft capacity 39ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-lifecycle.test.ts > rejects exact draft expiry and validates Unicode, TTL and sender draft capacity
+AssertionError: expected 99 to be 100 // Object.is equality
+
+- Expected
++ Received
+
+- 100
++ 99
+
+ ❯ tests/session-messaging/message-lifecycle.test.ts:123:45
+    121|   for (const ttlSeconds of [29, 86401, 1.5]) expect(() => store.prepar…
+    122|   for (let index = 0; index < 99; index++) prepare(store);
+    123|   expect(count(store, "prepared_messages")).toBe(100);
+       |                                             ^
+    124|   expect(() => prepare(store)).toThrow(/full/u);
+    125|   expect(count(store)).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > two processes sending for one sender at limit-1 never exceed the sender limit
+AssertionError: expected [ { type: 'result', …(1) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ tests/session-messaging/message-retention.test.ts:181:50
+    179|     { operation: "send", sender: hot, messageId: right!, nowMs: 2000 },
+    180|   ]);
+    181|   expect(output.filter((value) => value.result)).toHaveLength(1);
+       |                                                  ^
+    182|   expect(output.filter((value) => value.error)).toHaveLength(1);
+    183|   expect(output.find((value) => value.error)?.error).toMatch(/receipt …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 7 passed | 1 skipped (10)
+      Tests  2 failed | 264 passed | 1 skipped (267)
+   Start at  15:36:06
+   Duration  20.71s (tests 95%, transform 3%, import 2%)
+

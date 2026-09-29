@@ -1,0 +1,43 @@
+
+ RUN  v5.0.0 /tmp/claude-0/-home-user-agent-governance-suite/d1cba899-756a-53a4-a2d0-22082ee2dda6/scratchpad/mutwt
+
+ ❯ tests/session-messaging/message-retention.test.ts (15 tests | 1 failed) 5694ms
+   × service reports capacity rejections as definite no-effect with scope and earliest release details 726ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > service reports capacity rejections as definite no-effect with scope and earliest release details
+AssertionError: expected { schemaVersion: '1.0.0', …(3) } to match object { ok: false, error: { …(2) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "error": {
+      "code": "MCP_UNAVAILABLE",
+-     "details": {
+-       "earliestReleaseAt": "2026-09-28T17:40:55.424Z",
+-       "scope": "sender",
+-     },
++     "details": null,
+    },
+    "ok": false,
+  }
+
+ ❯ tests/session-messaging/message-retention.test.ts:249:24
+    247|   const release = earliest(store, hot);
+    248|   const sendRejected = await service.send({ messageId: (prepared.data …
+    249|   expect(sendRejected).toMatchObject({ ok: false, error: { code: "MCP_…
+       |                        ^
+    250|   expect(sendRejected.error?.message).toMatch(/receipt store is full f…
+    251|   expect(sendRejected.error?.message).toContain("not queued");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 8 passed | 1 skipped (10)
+      Tests  1 failed | 265 passed | 1 skipped (267)
+   Start at  15:40:52
+   Duration  19.82s (tests 96%, transform 2%, import 2%)
+

@@ -1,0 +1,13 @@
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index efffd7d..81666e0 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -17,7 +17,7 @@ export const MESSAGE_DRAFT_LIMIT = 1000;
+ export const MESSAGE_SENDER_DRAFT_LIMIT = 100;
+ export const MESSAGE_RECEIPT_LIMIT = 1000;
+ /** Fairness between cooperating sender sessions; the sender identity is the bound session, not an authenticated principal. */
+-export const MESSAGE_SENDER_RECEIPT_LIMIT = 250;
++export const MESSAGE_SENDER_RECEIPT_LIMIT = 251;
+ export const MESSAGE_ID_RECORD_BYTES_LIMIT = 4 * 1024 * 1024;
+ const MESSAGE_RECEIPT_EXTRA_MS = 3600_000;
+ const CLAIM_LEASE_BASE_MS = 120_000;

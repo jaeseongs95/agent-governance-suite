@@ -1,0 +1,30 @@
+
+ RUN  v5.0.0 /tmp/claude-0/-home-user-agent-governance-suite/d1cba899-756a-53a4-a2d0-22082ee2dda6/scratchpad/mutwt
+
+ ❯ tests/session-messaging/message-retention.test.ts (15 tests | 1 failed) 7003ms
+   × reports sender scope and the sender's own earliest expiry when sender and global limits are both full 1000ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > reports sender scope and the sender's own earliest expiry when sender and global limits are both full
+AssertionError: expected 'The bounded message receipt store is …' to be 'The bounded message receipt store is …' // Object.is equality
+
+Expected: "The bounded message receipt store is full for this sender; no draft was created."
+Received: "The bounded message receipt store is full; no draft was created."
+
+ ❯ tests/session-messaging/message-retention.test.ts:300:35
+    298|   expect(earliest(store)).toBe(iso(1000 + 2 * H));
+    299|   const prepareRejected = rejection(() => store.prepare({ sender: hot,…
+    300|   expect(prepareRejected.message).toBe("The bounded message receipt st…
+       |                                   ^
+    301|   expect(prepareRejected.details).toEqual(senderRelease);
+    302|   const sendRejected = rejection(() => store.submitPrepared(hot, pendi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 8 passed | 1 skipped (10)
+      Tests  1 failed | 265 passed | 1 skipped (267)
+   Start at  15:35:04
+   Duration  19.11s (tests 96%, transform 2%, import 2%)
+

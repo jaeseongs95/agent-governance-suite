@@ -1,0 +1,136 @@
+
+ RUN  v5.0.0 /tmp/claude-0/-home-user-agent-governance-suite/d1cba899-756a-53a4-a2d0-22082ee2dda6/scratchpad/mutwt
+
+ ❯ tests/session-messaging/message-lifecycle.test.ts (14 tests | 2 failed) 6421ms
+   × keeps the first immutable receipt and does not enqueue or wake after ACK/prune 20ms
+   × applies global draft, receipt and byte backpressure without evicting valid records 1278ms
+ ❯ tests/session-messaging/message-retention.test.ts (15 tests | 5 failed) 8137ms
+   × bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted 21ms
+   × drained senders regain capacity at ACK+1h instead of message expiry+1h 312ms
+   × second ACK, another session's ACK and unknown-ID ACK leave receipt expiry unchanged 7ms
+   × opens a v2.7.2 receipt without migration and applies ACK+1h only to new ACKs 24ms
+   × rolls back the whole ACK when the receipt update fails inside the same transaction 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-lifecycle.test.ts > keeps the first immutable receipt and does not enqueue or wake after ACK/prune
+Error: Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent.
+ ❯ SessionMessageStore.submitPrepared mcp-server/src/session-message-store.ts:337:23
+    335|       const row = this.database.prepare("SELECT * FROM prepared_messag…
+    336|         .get(messageId, sender.host, sender.sessionId, iso(nowMs)) as …
+    337|       if (!row) throw new Error("Issued message ID is unavailable; del…
+       |                       ^
+    338|       if (row.receipt !== null) {
+    339|         const receipt = JSON.parse(String(row.receipt)) as { messageId…
+ ❯ tests/session-messaging/message-lifecycle.test.ts:109:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  tests/session-messaging/message-lifecycle.test.ts > applies global draft, receipt and byte backpressure without evicting valid records
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/message-lifecycle.test.ts:150:104
+    148|   const beforeDrafts = count(store, "prepared_messages");
+    149|   let admission: unknown;
+    150|   expect(() => { try { prepare(store, 602_001); } catch (error) { admi…
+       |                                                                                                        ^
+    151|   expect(admission).toMatchObject({ details: release });
+    152|   expect(count(store, "prepared_messages")).toBe(beforeDrafts);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted
+AssertionError: expected '1970-01-01T00:00:02.000Z' to be '1970-01-01T01:00:02.000Z' // Object.is equality
+
+Expected: "1970-01-01T01:00:02.000Z"
+Received: "1970-01-01T00:00:02.000Z"
+
+ ❯ tests/session-messaging/message-retention.test.ts:112:48
+    110|   const ackAt = 2000;
+    111|   expect(store.acknowledge(target, [sent.messageId], ackAt)).toBe(1);
+    112|   expect(receiptExpiry(store, sent.messageId)).toBe(iso(Math.min(messa…
+       |                                                ^
+    113|   expect(store.submitPrepared(hot, sent.messageId, ackAt + H - 1)).toE…
+    114|   expect(store.status(hot, sent.messageId, ackAt + H - 1)).toMatchObje…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > drained senders regain capacity at ACK+1h instead of message expiry+1h
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/message-retention.test.ts:129:90
+    127|   const ids = Array.from({ length: SENDER_LIMIT }, () => sendNew(store…
+    128|   for (let index = 0; index < ids.length; index += 50) expect(store.ac…
+    129|   expect(() => store.prepare({ sender: hot, target, body: "still held"…
+       |                                                                                          ^
+    130|   expect(sendNew(store, hot, 1000 + H, 86400).duplicate).toBe(false);
+    131| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > second ACK, another session's ACK and unknown-ID ACK leave receipt expiry unchanged
+AssertionError: expected '1970-01-01T00:00:03.000Z' to be '1970-01-01T01:00:03.000Z' // Object.is equality
+
+Expected: "1970-01-01T01:00:03.000Z"
+Received: "1970-01-01T00:00:03.000Z"
+
+ ❯ tests/session-messaging/message-retention.test.ts:143:49
+    141|   expect(snapshot()).toEqual(initial);
+    142|   expect(store.acknowledge(target, [first.messageId], 3000)).toBe(1);
+    143|   expect(receiptExpiry(store, first.messageId)).toBe(iso(3000 + H));
+       |                                                 ^
+    144|   const afterFirst = snapshot();
+    145|   expect(store.acknowledge(target, [first.messageId], 4000)).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > opens a v2.7.2 receipt without migration and applies ACK+1h only to new ACKs
+AssertionError: expected '1970-01-01T00:00:03.000Z' to be '1970-01-01T01:00:03.000Z' // Object.is equality
+
+Expected: "1970-01-01T01:00:03.000Z"
+Received: "1970-01-01T00:00:03.000Z"
+
+ ❯ tests/session-messaging/message-retention.test.ts:223:52
+    221|   expect(receiptExpiry(reopened, old.messageId)).toBe(legacyExpiry);
+    222|   expect(reopened.acknowledge(target, [fresh.messageId], 3000)).toBe(1…
+    223|   expect(receiptExpiry(reopened, fresh.messageId)).toBe(iso(3000 + H));
+       |                                                    ^
+    224|   expect(reopened.status(hot, old.messageId, 2000 + H)).toMatchObject(…
+    225|   expect(reopened.status(hot, fresh.messageId, 3000 + H)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > rolls back the whole ACK when the receipt update fails inside the same transaction
+AssertionError: expected '1970-01-01T00:00:03.000Z' to be '1970-01-01T01:00:03.000Z' // Object.is equality
+
+Expected: "1970-01-01T01:00:03.000Z"
+Received: "1970-01-01T00:00:03.000Z"
+
+ ❯ tests/session-messaging/message-retention.test.ts:350:48
+    348|   store.database.exec("DROP TRIGGER retention_fail_receipt");
+    349|   expect(store.acknowledge(target, [sent.messageId], 3000)).toBe(1);
+    350|   expect(receiptExpiry(store, sent.messageId)).toBe(iso(3000 + H));
+       |                                                ^
+    351| });
+    352|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  2 failed | 7 passed | 1 skipped (10)
+      Tests  7 failed | 259 passed | 1 skipped (267)
+   Start at  15:37:34
+   Duration  20.94s (tests 95%, transform 3%, import 2%)
+

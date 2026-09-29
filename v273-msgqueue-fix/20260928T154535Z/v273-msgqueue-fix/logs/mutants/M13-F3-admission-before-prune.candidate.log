@@ -1,0 +1,45 @@
+
+ RUN  v5.0.0 /tmp/claude-0/-home-user-agent-governance-suite/d1cba899-756a-53a4-a2d0-22082ee2dda6/scratchpad/mutwt
+
+ ❯ tests/session-messaging/message-retention.test.ts (15 tests | 2 failed) 8087ms
+   × caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders 318ms
+   × drained senders regain capacity at ACK+1h instead of message expiry+1h 205ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:292:13
+    290|       .get(sender.host, sender.sessionId) as { count: number; earliest…
+    291|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    292|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    293|     }
+    294|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:312:12
+ ❯ sendNew tests/session-messaging/message-retention.test.ts:45:23
+ ❯ tests/session-messaging/message-retention.test.ts:84:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > drained senders regain capacity at ACK+1h instead of message expiry+1h
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:292:13
+    290|       .get(sender.host, sender.sessionId) as { count: number; earliest…
+    291|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    292|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    293|     }
+    294|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:312:12
+ ❯ sendNew tests/session-messaging/message-retention.test.ts:45:23
+ ❯ tests/session-messaging/message-retention.test.ts:130:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 8 passed | 1 skipped (10)
+      Tests  2 failed | 264 passed | 1 skipped (267)
+   Start at  15:38:43
+   Duration  20.42s (tests 96%, transform 2%, import 2%)
+
