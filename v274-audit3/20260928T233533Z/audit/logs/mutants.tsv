@@ -1,0 +1,14 @@
+mutant	candidate_tests(presence-retention+presence-batches+session-board)	failed	audit_tests(v274-audit)	audit_failed
+BASELINE	SURVIVED	0	SURVIVED	0
+M1-live-by-birth	KILLED	3	KILLED	3
+M5-no-presence-prune	KILLED	5	KILLED	4
+M7-service-unbatched	KILLED	4	KILLED	1
+M9-no-broker-size-check	KILLED	1	KILLED	1
+A1-protects-oldest-not-latest	KILLED	2	KILLED	3
+A2-lapsed-counts-as-live	KILLED	3	SURVIVED	0
+A3-service-drops-last-partial-batch	KILLED	2	SURVIVED	0
+F2-isolation-reverted	KILLED	1	SURVIVED	0
+F2-pattern-filter-removed	KILLED	1	KILLED	1
+F4-continue-after-transport-failure	KILLED	2	SURVIVED	0
+F4-stop-on-refusal-too	KILLED	1	SURVIVED	0
+F2-server-ignores-unanswered	KILLED	1	SURVIVED	0

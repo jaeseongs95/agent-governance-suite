@@ -1,0 +1,112 @@
+Already up to date
+Done in 485ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/session-messaging/presence-batches.test.ts (4 tests | 1 failed) 821ms
+   × never asks the broker for identities outside its identifier pattern 13ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 27 passed (28)
+   Start at  23:34:17
+   Duration  3.34s (tests 78%, transform 17%, import 5%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > never asks the broker for identities outside its identifier pattern
+AssertionError: expected [ { host: 'portable', …(1) }, …(5) ] to deeply equal [ { host: 'portable', …(1) }, …(2) ]
+
+- Expected
++ Received
+
+@@ -3,11 +3,23 @@
+      "host": "portable",
+      "sessionId": "a",
+    },
+    {
+      "host": "portable",
++     "sessionId": "has space",
++   },
++   {
++     "host": "portable",
+      "sessionId": "b",
++   },
++   {
++     "host": "bad host",
++     "sessionId": "c",
++   },
++   {
++     "host": "portable",
++     "sessionId": "xyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+    },
+    {
+      "host": "portable",
+      "sessionId": "d",
+    },
+
+ ❯ tests/session-messaging/presence-batches.test.ts:45:17
+     43|   expect(result.ok).toBe(true);
+     44|   const asked = request.mock.calls.flatMap(([, payload]) => (payload a…
+     45|   expect(asked).toEqual([target("a"), target("b"), target("d")]);
+       |                 ^
+     46|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+     47|   expect(result.data!.unanswered).toEqual([target("has space"), target…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1
+--- audit ---
+Already up to date
+Done in 570ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+stdout | tests/audit/v274-audit2.test.ts > P2 duplicates and a bad identity inside one batch: good ones resolve, bad one unanswered, duplicates answered consistently
+AUDIT-P2 {"ok":true,"sessions":["b:online","c:online","b:online"],"unanswered":[{"host":"portable","sessionId":"a"},{"host":"portable","sessionId":"has space"},{"host":"portable","sessionId":"a"}]}
+
+ ❯ tests/audit/v274-audit2.test.ts (7 tests | 1 failed | 4 skipped) 532ms
+   × P2 duplicates and a bad identity inside one batch: good ones resolve, bad one unanswered, duplicates answered consistently 284ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 12 passed | 7 skipped (20)
+   Start at  23:34:22
+   Duration  1.19s (tests 73%, transform 22%, import 5%, worker 1%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/audit/v274-audit2.test.ts > P2 duplicates and a bad identity inside one batch: good ones resolve, bad one unanswered, duplicates answered consistently
+AssertionError: expected [ { host: 'portable', …(1) }, …(2) ] to deeply equal [ { host: 'portable', …(1) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "host": "portable",
++     "sessionId": "a",
++   },
++   {
++     "host": "portable",
+      "sessionId": "has space",
++   },
++   {
++     "host": "portable",
++     "sessionId": "a",
+    },
+  ]
+
+ ❯ tests/audit/v274-audit2.test.ts:43:59
+     41|   const res = await new SessionMessageService(d).listPresence([t("a"),…
+     42|   console.log("AUDIT-P2", JSON.stringify({ ok: res.ok, sessions: res.d…
+     43|   expect(res.ok).toBe(true); expect(res.data!.unanswered).toEqual([t("…
+       |                                                           ^
+     44|   expect(new Set(res.data!.sessions.map((x) => x.state))).toEqual(new …
+     45| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1

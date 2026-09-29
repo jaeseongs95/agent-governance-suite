@@ -1,0 +1,241 @@
+Already up to date
+Done in 436ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/session-messaging/presence-retention.test.ts (9 tests | 5 failed) 2571ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 1230ms
+   × keeps an ended or lapsed row until exactly the retention period after its lease end 9ms
+   × keeps retirement, presence and autoWake identical to a run that deletes no presence row 53ms
+   × gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing 17ms
+   × prunes presence idempotently when two processes race on one database 942ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  5 failed | 23 passed (28)
+   Start at  23:33:29
+   Duration  3.06s (tests 81%, transform 14%, import 5%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected { host: 'portable', …(16) } to match object { Object (state, autoWake) }
+(20 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "autoWake": {
+-     "reason": "presence-unknown",
++     "reason": "presence-not-online",
+      "state": "no-live-relay",
+    },
+-   "state": "unknown",
++   "state": "ended",
+  }
+
+ ❯ tests/session-messaging/presence-retention.test.ts:99:34
+     97|   }
+     98|   // Presence rows ended days ago were pruned; the identity reads as n…
+     99|   expect(bySession.get("old-0")).toMatchObject({ state: "unknown", aut…
+       |                                  ^
+    100|   const database = new DatabaseSync(path.join(state, "session-messages…
+    101|   try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end
+AssertionError: expected 'ended' to be 'unknown' // Object.is equality
+
+Expected: "unknown"
+Received: "ended"
+
+ ❯ tests/session-messaging/presence-retention.test.ts:137:74
+    135|   expect(store.presence({ host: "portable", sessionId: "ended" }, now …
+    136|   store.prune(now + 10 + RETENTION);
+    137|   expect(store.presence({ host: "portable", sessionId: "ended" }).stat…
+       |                                                                          ^
+    138|   store.prune(lapsedLease + RETENTION - 1);
+    139|   expect(store.presence({ host: "portable", sessionId: "lapsed" }, lap…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row
+AssertionError: expected { n: 6 } to not deeply equal { n: 6 }
+
+Compared values have no visual difference.
+
+ ❯ tests/session-messaging/presence-retention.test.ts:202:86
+    200|   }
+    201|   a.prune(now); b.prune(now);
+    202|   expect(a.database.prepare("SELECT count(*) AS n FROM session_presenc…
+       |                                                                                      ^
+    203|   expect(a.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid"…
+    204|   expect(a.database.prepare("SELECT * FROM messages ORDER BY rowid").a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing
+AssertionError: expected [ { rowid: 1, …(16) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "can_wake_silently": 1,
++     "collaboration_id": "collaboration-presence-retention",
++     "end_reason": "session-end",
++     "ended_at": "2026-09-26T23:33:31.527Z",
++     "heartbeat_at": "2026-09-26T23:33:31.527Z",
++     "host": "portable",
++     "idle_wake": "silent",
++     "instance_id": "same",
++     "lease_until": "2026-09-26T23:33:31.527Z",
++     "role": "implementation-writer",
++     "rowid": 1,
++     "session_id": "rebirth",
++     "started_at": "2026-09-26T23:33:31.524Z",
++     "supported_injection": "[\"peer-wake\",\"tool-boundary\"]",
++     "transport": "portable",
++     "wake_visibility": "silent",
++     "workspace_id": "/work/space/presence-retention/projects/agent-governance-suite-rebirth",
++   },
++ ]
+
+ ❯ tests/session-messaging/presence-retention.test.ts:230:23
+    228|   const now = Date.now();
+    229|   store.prune(now);
+    230|   expect(rows(store)).toEqual([]);
+       |                       ^
+    231|   const reborn = born(store, "rebirth", "same", now);
+    232|   store.send({ sender: { host: "portable", sessionId: "sender" }, targ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > prunes presence idempotently when two processes race on one database
+AssertionError: expected [ { rowid: 1, …(16) }, …(1301) ] to have a length of 42 but got 1302
+
+- Expected
++ Received
+
+- 42
++ 1302
+
+ ❯ tests/session-messaging/presence-retention.test.ts:259:18
+    257|   const store = open(database);
+    258|   const before = rows(store).filter((row) => !String((row as { session…
+    259|   expect(before).toHaveLength(42);
+       |                  ^
+    260|   store.prune(now + 30);
+    261|   expect(rows(store).filter((row) => !String((row as { session_id: str…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+exit=1
+--- audit ---
+Already up to date
+Done in 451ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/audit/v274-audit.test.ts (13 tests | 4 failed | 3 skipped) 752ms
+   × R2 boundary: lease_until == now-24h is deleted, 1 ms later is kept 13ms
+   × R3 same started_at for two instances: the live one and the latest-by-rowid are kept, identical presence() 6ms
+   × R4 latest row not live but another row live: latest kept so presence() and retirement read the same row 6ms
+   × R7 generation fence survives the purge: same instance re-registers later; the old marker neither claims nor observes as current 23ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  4 failed | 9 passed | 7 skipped (20)
+   Start at  23:33:33
+   Duration  1.13s (tests 72%, transform 24%, import 4%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/audit/v274-audit.test.ts > R2 boundary: lease_until == now-24h is deleted, 1 ms later is kept
+AssertionError: expected [ { instance_id: 'ia', …(3) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/audit/v274-audit.test.ts:45:32
+     43|   born(s, "b", "ib", now - 30 * H); s.endPresence(t("b"), "x", "ib", n…
+     44|   s.prune(now);
+     45|   expect(presenceRows(s, "a")).toHaveLength(0); expect(presenceRows(s,…
+       |                                ^
+     46| });
+     47|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/audit/v274-audit.test.ts > R3 same started_at for two instances: the live one and the latest-by-rowid are kept, identical presence()
+AssertionError: expected [ 'old', 'live' ] to deeply equal [ 'live' ]
+
+- Expected
++ Received
+
+  [
++   "old",
+    "live",
+  ]
+
+ ❯ tests/audit/v274-audit.test.ts:56:90
+     54|   s.prune(now);
+     55|   expect(strip(s.presence(t("same"), now) as never)).toEqual(strip(bef…
+     56|   expect(presenceRows(s, "same").map((r) => (r as { instance_id: strin…
+       |                                                                                          ^
+     57| });
+     58|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/audit/v274-audit.test.ts > R4 latest row not live but another row live: latest kept so presence() and retirement read the same row
+AssertionError: expected [ 'ended-later', 'ended-mid', …(1) ] to deeply equal [ 'ended-later', 'live-early' ]
+
+- Expected
++ Received
+
+  [
+    "ended-later",
++   "ended-mid",
+    "live-early",
+  ]
+
+ ❯ tests/audit/v274-audit.test.ts:68:96
+     66|   s.prune(now);
+     67|   expect(strip(s.presence(t("mix"), now) as never)).toEqual(strip(befo…
+     68|   expect(presenceRows(s, "mix").map((r) => (r as { instance_id: string…
+       |                                                                                                ^
+     69| });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/audit/v274-audit.test.ts > R7 generation fence survives the purge: same instance re-registers later; the old marker neither claims nor observes as current
+AssertionError: expected [ { …(4) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/audit/v274-audit.test.ts:136:36
+    134|   s.endPresence(target, "session-end", "same-instance", t0 + 10);
+    135|   s.prune(now);
+    136|   expect(presenceRows(s, "fence")).toHaveLength(0);
+       |                                    ^
+    137|   s.send({ sender: t("snd"), target, messageId: "fence-body-2", body: …
+    138|   const reborn = born(s, "fence", "same-instance", now);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+exit=1

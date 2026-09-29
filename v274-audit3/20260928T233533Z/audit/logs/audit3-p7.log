@@ -1,0 +1,19 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ↓ tests/audit/v274-audit2.test.ts > P1 isBoundedIdentity matches the old store regexes on a corpus including non-strings coerced by RegExp.test
+ ↓ tests/audit/v274-audit2.test.ts > P2 duplicates and a bad identity inside one batch: good ones resolve, bad one unanswered, duplicates answered consistently
+ ↓ tests/audit/v274-audit2.test.ts > P3 broker killed: every session unanswered (2.7.3-equivalent unknown/null), with total latency recorded
+ ↓ tests/audit/v274-audit2.test.ts > P4 broker hung (SIGSTOP): per-batch deadlines add up; latency recorded for 3 batches
+ ↓ tests/audit/v274-audit2.test.ts > P5 lock contention: another connection holds the write lock; latency and classification recorded (9 sessions, 3 batches)
+ ↓ tests/audit/v274-audit2.test.ts > P6 connection refused mid-list (endpoint points to a closed TCP port after the first batch): classified as transport, stops
+stdout | tests/audit/v274-audit2.test.ts > P7 lock contention scaling: 30 sessions (10 batches), error messages recorded
+AUDIT-P7 {"singleRequests":["Error:The session message broker timed out.:7619ms","Error:The session message broker timed out.:5022ms"],"sessions":0,"unanswered":30,"ms":5021,"batches":10,"probeMs":12640}
+
+ ✓ tests/audit/v274-audit2.test.ts > P7 lock contention scaling: 30 sessions (10 batches), error messages recorded 17929ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 6 skipped (7)
+   Start at  23:30:08
+   Duration  18.40s (tests 98%, transform 2%)
+

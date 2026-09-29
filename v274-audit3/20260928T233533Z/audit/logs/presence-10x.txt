@@ -1,0 +1,15 @@
+run 1 rc=0  Tests 13 passed (13)
+run 2 rc=0  Tests 13 passed (13)
+run 3 rc=0  Tests 13 passed (13)
+run 4 rc=0  Tests 13 passed (13)
+run 5 rc=0  Tests 13 passed (13)
+run 6 rc=0  Tests 13 passed (13)
+run 7 rc=0  Tests 13 passed (13)
+run 8 rc=0  Tests 13 passed (13)
+run 9 rc=0  Tests 13 passed (13)
+run 10 rc=0  Tests 13 passed (13)
+leftover dirs: 0
+v2.7.3 rc=0  Tests 3 passed (3)
+v2.7.2 rc=0  Tests 3 passed (3)
+broker procs after: 3
+note: the 'broker procs after: 3' value is the counting pipeline matching itself; ps -eo shows no session-message-broker process afterwards

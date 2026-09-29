@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-verify
+
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  23:32:21
+   Duration  2.84s (tests 82%, transform 15%, import 3%)
+

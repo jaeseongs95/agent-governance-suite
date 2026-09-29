@@ -1,0 +1,56 @@
+Already up to date
+Done in 450ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/session-messaging/presence-batches.test.ts (4 tests | 1 failed) 813ms
+   × keeps successful batches when the broker refuses one batch and reports only that batch as unanswered 8ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 27 passed (28)
+   Start at  23:34:10
+   Duration  3.08s (tests 81%, transform 13%, import 5%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > keeps successful batches when the broker refuses one batch and reports only that batch as unanswered
+AssertionError: expected [] to deeply equal [ 'a', 'b', 'c', 'g' ]
+
+- Expected
++ Received
+
+- [
+-   "a",
+-   "b",
+-   "c",
+-   "g",
+- ]
++ []
+
+ ❯ tests/session-messaging/presence-batches.test.ts:35:69
+     33|   const result = await new SessionMessageService().listPresence(target…
+     34|   expect(result.ok).toBe(true);
+     35|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+       |                                                                     ^
+     36|   expect(result.data!.unanswered).toEqual([target("fail"), target("e")…
+     37|   expect(request).toHaveBeenCalledTimes(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1
+--- audit ---
+Already up to date
+Done in 426ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+
+ Test Files  2 passed (2)
+      Tests  13 passed | 7 skipped (20)
+   Start at  23:34:14
+   Duration  1.41s (tests 59%, transform 36%, import 5%)
+
+
+exit=0

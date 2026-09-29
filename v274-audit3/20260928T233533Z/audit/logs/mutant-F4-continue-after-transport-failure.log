@@ -1,0 +1,57 @@
+Already up to date
+Done in 458ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/session-messaging/presence-batches.test.ts (4 tests | 2 failed) 1615ms
+   × stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch 1206ms
+   × keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure 404ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 26 passed (28)
+   Start at  23:34:24
+   Duration  2.95s (tests 83%, transform 11%, import 5%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch
+AssertionError: expected "vi.fn()" to be called 1 times, but got 3 times
+ ❯ tests/session-messaging/presence-batches.test.ts:60:19
+     58|   const result = await new SessionMessageService().listPresence(target…
+     59|   const elapsed = Date.now() - started;
+     60|   expect(request).toHaveBeenCalledTimes(1);
+       |                   ^
+     61|   expect(elapsed).toBeLessThan(2 * DEADLINE_MS);
+     62|   expect(result.ok).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure
+AssertionError: expected "vi.fn()" to be called 2 times, but got 3 times
+ ❯ tests/session-messaging/presence-batches.test.ts:72:19
+     70|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+     71|   expect(result.data!.unanswered).toEqual(["hang", "e", "f", "fail", "…
+     72|   expect(request).toHaveBeenCalledTimes(2);
+       |                   ^
+     73| });
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+exit=1
+--- audit ---
+Already up to date
+Done in 447ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+
+ Test Files  2 passed (2)
+      Tests  13 passed | 7 skipped (20)
+   Start at  23:34:29
+   Duration  1.14s (tests 70%, transform 24%, import 5%, worker 1%)
+
+
+exit=0

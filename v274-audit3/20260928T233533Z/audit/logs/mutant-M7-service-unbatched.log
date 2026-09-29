@@ -1,0 +1,177 @@
+Already up to date
+Done in 480ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/session-messaging/presence-batches.test.ts (4 tests | 2 failed) 420ms
+   × keeps successful batches when the broker refuses one batch and reports only that batch as unanswered 13ms
+   × keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure 2ms
+ ❯ tests/session-messaging/presence-retention.test.ts (9 tests | 2 failed) 2519ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 1167ms
+   × B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve 241ms
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  4 failed | 24 passed (28)
+   Start at  23:33:36
+   Duration  3.03s (tests 78%, transform 15%, import 6%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > keeps successful batches when the broker refuses one batch and reports only that batch as unanswered
+AssertionError: expected [] to deeply equal [ 'a', 'b', 'c', 'g' ]
+
+- Expected
++ Received
+
+- [
+-   "a",
+-   "b",
+-   "c",
+-   "g",
+- ]
++ []
+
+ ❯ tests/session-messaging/presence-batches.test.ts:35:69
+     33|   const result = await new SessionMessageService().listPresence(target…
+     34|   expect(result.ok).toBe(true);
+     35|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+       |                                                                     ^
+     36|   expect(result.data!.unanswered).toEqual([target("fail"), target("e")…
+     37|   expect(request).toHaveBeenCalledTimes(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure
+AssertionError: expected [] to deeply equal [ 'a', 'b', 'c' ]
+
+- Expected
++ Received
+
+- [
+-   "a",
+-   "b",
+-   "c",
+- ]
++ []
+
+ ❯ tests/session-messaging/presence-batches.test.ts:70:69
+     68|   const targets = ["a", "b", "c", "hang", "e", "f", "fail", "h", "i"].…
+     69|   const result = await new SessionMessageService().listPresence(target…
+     70|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+       |                                                                     ^
+     71|   expect(result.data!.unanswered).toEqual(["hang", "e", "f", "fail", "…
+     72|   expect(request).toHaveBeenCalledTimes(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected undefined to match object { state: 'ended', …(1) }
+
+- Expected:
+{
+  "endReason": "session-end",
+  "state": "ended",
+}
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/presence-retention.test.ts:94:88
+     92|   expect(result.error).toBeNull();
+     93|   const bySession = new Map(result.data!.sessions.map((session) => [se…
+     94|   for (let index = 0; index < 40; index += 1) expect(bySession.get(`re…
+       |                                                                                        ^
+     95|   for (const sessionId of ["live-0", "live-1"]) {
+     96|     expect(bySession.get(sessionId)).toMatchObject({ state: "online", …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve
+AssertionError: expected undefined to match object { state: 'online' }
+
+- Expected:
+{
+  "state": "online",
+}
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/presence-retention.test.ts:123:93
+    121|   expect(result.ok).toBe(true);
+    122|   for (let index = 0; index < 6; index += 1) {
+    123|     expect(result.data!.sessions.find((session) => session.sessionId =…
+       |                                                                                             ^
+    124|   }
+    125|   expect(result.data!.unanswered).toEqual([{ host: "portable", session…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+exit=1
+--- audit ---
+Already up to date
+Done in 365ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+stdout | tests/audit/v274-audit2.test.ts > P2 duplicates and a bad identity inside one batch: good ones resolve, bad one unanswered, duplicates answered consistently
+AUDIT-P2 {"ok":true,"sessions":[],"unanswered":[{"host":"portable","sessionId":"has space"},{"host":"portable","sessionId":"a"},{"host":"portable","sessionId":"a"},{"host":"portable","sessionId":"b"},{"host":"portable","sessionId":"c"},{"host":"portable","sessionId":"b"}]}
+
+ ❯ tests/audit/v274-audit2.test.ts (7 tests | 1 failed | 4 skipped) 515ms
+   × P2 duplicates and a bad identity inside one batch: good ones resolve, bad one unanswered, duplicates answered consistently 260ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 12 passed | 7 skipped (20)
+   Start at  23:33:40
+   Duration  1.23s (tests 74%, transform 21%, import 4%, worker 1%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/audit/v274-audit2.test.ts > P2 duplicates and a bad identity inside one batch: good ones resolve, bad one unanswered, duplicates answered consistently
+AssertionError: expected [ { host: 'portable', …(1) }, …(5) ] to deeply equal [ { host: 'portable', …(1) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "host": "portable",
+      "sessionId": "has space",
+    },
++   {
++     "host": "portable",
++     "sessionId": "a",
++   },
++   {
++     "host": "portable",
++     "sessionId": "a",
++   },
++   {
++     "host": "portable",
++     "sessionId": "b",
++   },
++   {
++     "host": "portable",
++     "sessionId": "c",
++   },
++   {
++     "host": "portable",
++     "sessionId": "b",
++   },
+  ]
+
+ ❯ tests/audit/v274-audit2.test.ts:43:59
+     41|   const res = await new SessionMessageService(d).listPresence([t("a"),…
+     42|   console.log("AUDIT-P2", JSON.stringify({ ok: res.ok, sessions: res.d…
+     43|   expect(res.ok).toBe(true); expect(res.data!.unanswered).toEqual([t("…
+       |                                                           ^
+     44|   expect(new Set(res.data!.sessions.map((x) => x.state))).toEqual(new …
+     45| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1
