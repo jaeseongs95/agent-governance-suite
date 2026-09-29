@@ -1,0 +1,2 @@
+{"exp":"E2","root":"/tmp/v53","seed":11,"rounds":20,"concurrentCases":140,"killCases":60,"killRowsBeforeRetry":{"0":27,"1":33},"childRepliedBeforeKill":32,"violations":0}
+{"exp":"E2","root":"/tmp/v53","seed":12,"rounds":20,"concurrentCases":140,"killCases":60,"killRowsBeforeRetry":{"0":26,"1":34},"childRepliedBeforeKill":32,"violations":0}

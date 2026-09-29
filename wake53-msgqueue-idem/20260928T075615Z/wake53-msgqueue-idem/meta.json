@@ -1,0 +1,17 @@
+{
+ "case": "wake53-msgqueue-idem",
+ "target": {
+  "sha": "53eff30a2984d41fc749d38dd2062966017684fa",
+  "tree": "c030fa4e19411ef511c5d5c89cf588aa6f42c059"
+ },
+ "baseline": {
+  "sha": "d5c5932cd5a0d87630f6ed94f8e3721181ab9864",
+  "tree": "241ae17597d3a051074ff6f0223cc3d20427c3f9"
+ },
+ "node": "v24.21.0",
+ "pnpm": "11.19.0",
+ "uname": "Linux vm 6.18.44-fc-v37 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+ "startUtc": "2026-09-28T07:26:41Z",
+ "endUtc": "2026-09-28T07:55:58Z",
+ "note": "Linux cloud one-off experiment; not the user PC operating state or live evidence."
+}

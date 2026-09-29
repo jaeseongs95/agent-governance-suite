@@ -1,0 +1,118 @@
+{
+ "summary": {
+  "exp": "E7",
+  "root": "/tmp/v271",
+  "cases": 11,
+  "violations": 0
+ },
+ "violations": [],
+ "log": [
+  {
+   "case": "prepare-key-order",
+   "id1": "b10331cf-3d8f-4b0f-8037-52b3248fb850",
+   "id2": "cffe124b-a090-4bd7-a6be-75f35c768dcb",
+   "sameId": false,
+   "send1": {
+    "messageId": "b10331cf-3d8f-4b0f-8037-52b3248fb850",
+    "createdAt": "2026-09-28T07:53:15.213Z",
+    "expiresAt": "2026-09-28T08:53:15.213Z",
+    "duplicate": false
+   },
+   "send2": {
+    "messageId": "cffe124b-a090-4bd7-a6be-75f35c768dcb",
+    "createdAt": "2026-09-28T07:53:15.220Z",
+    "expiresAt": "2026-09-28T08:53:15.220Z",
+    "duplicate": false
+   },
+   "storedRows": 2,
+   "identicalBodies": true
+  },
+  {
+   "case": "peer-wait-setup",
+   "setup": [
+    {
+     "ok": true,
+     "keys": [
+      "presence"
+     ]
+    },
+    {
+     "ok": true,
+     "keys": [
+      "acquired"
+     ],
+     "acquired": true
+    },
+    {
+     "ok": true,
+     "keys": [
+      "dispatch"
+     ],
+     "dispatch": true
+    },
+    {
+     "ok": true,
+     "keys": [
+      "recognized",
+      "messages"
+     ],
+     "recognized": true
+    }
+   ]
+  },
+  {
+   "case": "peer-wait",
+   "name": "q1 base [Y(c1), Z]",
+   "expect": "snapshot",
+   "got": "snapshot"
+  },
+  {
+   "case": "peer-wait",
+   "name": "q2 same set reordered + object keys reordered + hostId local",
+   "expect": "deny",
+   "got": "deny"
+  },
+  {
+   "case": "peer-wait",
+   "name": "q3 duplicate identical target",
+   "expect": "deny",
+   "got": "deny"
+  },
+  {
+   "case": "peer-wait",
+   "name": "q4 cursor changed c2",
+   "expect": "snapshot",
+   "got": "snapshot"
+  },
+  {
+   "case": "peer-wait",
+   "name": "q5 c2 reordered",
+   "expect": "deny",
+   "got": "deny"
+  },
+  {
+   "case": "peer-wait",
+   "name": "q6 timeoutMs omitted (default 120000)",
+   "expect": "deny",
+   "got": "deny"
+  },
+  {
+   "case": "peer-wait",
+   "name": "q7 afterCursor empty string vs absent",
+   "expect": "snapshot",
+   "got": "snapshot"
+  },
+  {
+   "case": "peer-wait",
+   "name": "q8 afterCursor null",
+   "expect": "none",
+   "got": "none"
+  },
+  {
+   "case": "broker-opaque-queryRevision",
+   "keyOrderA": "snapshot",
+   "keyOrderB": "snapshot",
+   "duplicateTargetSameRev": "deny"
+  }
+ ]
+}

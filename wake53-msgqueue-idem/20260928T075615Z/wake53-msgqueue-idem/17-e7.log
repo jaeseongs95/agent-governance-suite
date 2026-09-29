@@ -1,0 +1,12 @@
+{"exp":"E7","root":"/tmp/v53","cases":11,"violations":0}
+{"case":"prepare-key-order","id1":"8565d0c6-7aa5-4ae0-abb4-7ecac216a7dd","id2":"a43913af-a289-4845-8209-fa663415ce9a","sameId":false,"send1":{"messageId":"8565d0c6-7aa5-4ae0-abb4-7ecac216a7dd","createdAt":"2026-09-28T07:35:48.995Z","expiresAt":"2026-09-28T08:35:48.995Z","duplicate":false},"send2":{"messageId":"a43913af-a289-4845-8209-fa663415ce9a","createdAt":"2026-09-28T07:35:49.001Z","expiresAt":"2026-09-28T08:35:49.001Z","duplicate":false},"storedRows":2,"identicalBodies":true}
+{"case":"peer-wait-setup","setup":[{"ok":true,"keys":["presence"]},{"ok":true,"keys":["acquired"],"acquired":true},{"ok":true,"keys":["dispatch"],"dispatch":true},{"ok":true,"keys":["recognized","messages"],"recognized":true}]}
+{"case":"peer-wait","name":"q1 base [Y(c1), Z]","expect":"snapshot","got":"snapshot"}
+{"case":"peer-wait","name":"q2 same set reordered + object keys reordered + hostId local","expect":"deny","got":"deny"}
+{"case":"peer-wait","name":"q3 duplicate identical target","expect":"deny","got":"deny"}
+{"case":"peer-wait","name":"q4 cursor changed c2","expect":"snapshot","got":"snapshot"}
+{"case":"peer-wait","name":"q5 c2 reordered","expect":"deny","got":"deny"}
+{"case":"peer-wait","name":"q6 timeoutMs omitted (default 120000)","expect":"deny","got":"deny"}
+{"case":"peer-wait","name":"q7 afterCursor empty string vs absent","expect":"snapshot","got":"snapshot"}
+{"case":"peer-wait","name":"q8 afterCursor null","expect":"none","got":"none"}
+{"case":"broker-opaque-queryRevision","keyOrderA":"snapshot","keyOrderB":"snapshot","duplicateTargetSameRev":"deny"}

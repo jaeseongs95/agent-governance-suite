@@ -1,0 +1,1 @@
+harness fix: locker close listener attached at spawn (first run hung; killed at ~605s)

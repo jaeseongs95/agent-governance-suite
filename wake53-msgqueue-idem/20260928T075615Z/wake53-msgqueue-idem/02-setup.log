@@ -1,0 +1,18 @@
+v24.21.0
+! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-11.19.0.tgz
+11.19.0
+From https://github.com/jaeseongs95/agent-governance-suite
+ * branch            codex/v2711-codex-empty-wake -> FETCH_HEAD
+ * branch            main       -> FETCH_HEAD
+ * [new branch]      codex/v2711-codex-empty-wake -> origin/codex/v2711-codex-empty-wake
+   b3c232f..d5c5932  main       -> origin/main
+commit
+Preparing worktree (detached HEAD 53eff30)
+HEAD is now at 53eff30 fix: retire verified wake arrivals across generations
+c030fa4e19411ef511c5d5c89cf588aa6f42c059
+Preparing worktree (detached HEAD d5c5932)
+HEAD is now at d5c5932 v2.7.1: wake 알림 누적 억제와 continuity DB 호환 (#13)
+241ae17597d3a051074ff6f0223cc3d20427c3f9
+53eff30 fix: retire verified wake arrivals across generations
+38bd227 fix: skip verified empty Codex wake prompts
+EXIT=0

@@ -1,0 +1,18 @@
+import { Mcp, envFor, cli } from "./lib.mjs";
+import { mkdirSync, rmSync } from "node:fs";
+const base = "/tmp/exp/smoke"; rmSync(base, { recursive: true, force: true }); mkdirSync(base + "/home", { recursive: true });
+const env = envFor(base + "/state", base + "/home");
+const m = new Mcp(env); await m.init();
+const S = { host: "codex", sessionId: "sender-1" };
+const p = await m.call("prepare_session_message", { schemaVersion: "1.0.0", targetHost: "codex", targetSessionId: "recv-1", body: "안녕 smoke", _sessionBinding: S });
+console.log(JSON.stringify(p));
+const s = await m.call("send_session_message", { schemaVersion: "1.0.0", messageId: p.data.messageId, _sessionBinding: S });
+console.log(JSON.stringify(s));
+const s2 = await m.call("send_session_message", { schemaVersion: "1.0.0", messageId: p.data.messageId, _sessionBinding: S });
+console.log(JSON.stringify(s2));
+console.log(JSON.stringify(cli(env, "claim", { target: { host: "codex", sessionId: "recv-1" } })));
+const st = await m.call("get_session_message_status", { schemaVersion: "1.0.0", messageId: p.data.messageId, _sessionBinding: S });
+console.log(JSON.stringify(st));
+const a = await m.call("acknowledge_session_messages", { schemaVersion: "1.0.0", messageIds: [p.data.messageId], _sessionBinding: { host: "codex", sessionId: "recv-1" } });
+console.log(JSON.stringify(a));
+m.close();

@@ -1,0 +1,31 @@
+{"exp":"E5","root":"/tmp/v53","cases":30,"violations":0}
+{"case":"ttl-arg","ttl":29,"ok":false,"code":"INVALID_INPUT"}
+{"case":"ttl-arg","ttl":30,"ok":true}
+{"case":"ttl-arg","ttl":86400,"ok":true}
+{"case":"ttl-arg","ttl":86401,"ok":false,"code":"INVALID_INPUT"}
+{"case":"ttl-arg","ttl":30.5,"ok":false,"code":"INVALID_INPUT"}
+{"case":"ttl-arg","ttl":0,"ok":false,"code":"INVALID_INPUT"}
+{"case":"ttl-arg","ttl":-1,"ok":false,"code":"INVALID_INPUT"}
+{"case":"ttl-sent","createdAt":"2026-09-28T07:35:00.445Z","expiresAt":"2026-09-28T07:35:30.445Z","deltaMs":30000}
+{"case":"ttl-boundary","pendingAtEm1":2,"claimedAtEm1":1,"pendingAtE":0,"claimedAtE":0,"ackAtE_ofClaimed":{"acknowledged":0},"pendingAtEp1":0,"statusAfterExpiry":{"status":{"messageId":"803a0800-7ac9-40f5-ad15-1d5dc88452f8","createdAt":"2026-09-28T07:35:00.445Z","expiresAt":"2026-09-28T07:35:30.445Z","state":"submitted","deliveryState":"unknown","receiptExpiresAt":"2026-09-28T08:35:30.445Z"}},"retryAfterExpiry":{"messageId":"803a0800-7ac9-40f5-ad15-1d5dc88452f8","createdAt":"2026-09-28T07:35:00.445Z","expiresAt":"2026-09-28T07:35:30.445Z","duplicate":true},"retryChangedCounts":false}
+{"case":"receipt-expiry","atREm1":{"messageId":"803a0800-7ac9-40f5-ad15-1d5dc88452f8","createdAt":"2026-09-28T07:35:00.445Z","expiresAt":"2026-09-28T07:35:30.445Z","duplicate":true},"atRE":{"code":"MCP_UNAVAILABLE","message":"Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent. Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.","details":null},"rejectChangedCounts":false}
+{"case":"draft-expiry","draftTtlMs":600000,"atEm1":{"messageId":"782175f8-8768-4227-9c0c-6496ce8e1642","createdAt":"2026-09-28T08:45:30.444Z","expiresAt":"2026-09-28T09:45:30.444Z","duplicate":false},"atE":{"code":"MCP_UNAVAILABLE","message":"Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent. Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.","details":null},"rejectChangedCounts":false}
+{"case":"body","name":"ascii-4096","bytes":4096,"codeUnits":4096,"prepareOk":true,"code":null,"sendOk":true,"encoding":"plain-json","contextBytes":5088,"deliveredEqualsSent":true,"storedEqualsSent":true,"storedBodyBytes":4096,"digestMatchesSent":true}
+{"case":"body","name":"ascii-4097","bytes":4097,"codeUnits":4097,"prepareOk":false,"code":"INVALID_INPUT","rejectChangedCounts":false}
+{"case":"body","name":"ko-1365+a=4096B","bytes":4096,"codeUnits":1366,"prepareOk":true,"code":null,"sendOk":true,"encoding":"plain-json","contextBytes":5088,"deliveredEqualsSent":true,"storedEqualsSent":true,"storedBodyBytes":4096,"digestMatchesSent":true}
+{"case":"body","name":"ko-1365+ab=4097B","bytes":4097,"codeUnits":1367,"prepareOk":false,"code":"INVALID_INPUT","rejectChangedCounts":false}
+{"case":"body","name":"ko-1366=4098B","bytes":4098,"codeUnits":1366,"prepareOk":false,"code":"INVALID_INPUT","rejectChangedCounts":false}
+{"case":"body","name":"a4093+ko=4096B","bytes":4096,"codeUnits":4094,"prepareOk":true,"code":null,"sendOk":true,"encoding":"plain-json","contextBytes":5088,"deliveredEqualsSent":true,"storedEqualsSent":true,"storedBodyBytes":4096,"digestMatchesSent":true}
+{"case":"body","name":"a4094+ko=4097B(split)","bytes":4097,"codeUnits":4095,"prepareOk":false,"code":"INVALID_INPUT","rejectChangedCounts":false}
+{"case":"body","name":"emoji-1024=4096B","bytes":4096,"codeUnits":2048,"prepareOk":true,"code":null,"sendOk":true,"encoding":"plain-json","contextBytes":5088,"deliveredEqualsSent":true,"storedEqualsSent":true,"storedBodyBytes":4096,"digestMatchesSent":true}
+{"case":"body","name":"emoji-1024+a=4097B","bytes":4097,"codeUnits":2049,"prepareOk":false,"code":"INVALID_INPUT","rejectChangedCounts":false}
+{"case":"body","name":"a4093+emoji=4097B","bytes":4097,"codeUnits":4095,"prepareOk":false,"code":"INVALID_INPUT","rejectChangedCounts":false}
+{"case":"body","name":"a4092+emoji=4096B","bytes":4096,"codeUnits":4094,"prepareOk":true,"code":null,"sendOk":true,"encoding":"plain-json","contextBytes":5088,"deliveredEqualsSent":true,"storedEqualsSent":true,"storedBodyBytes":4096,"digestMatchesSent":true}
+{"case":"body","name":"ctrl-4096","bytes":4096,"codeUnits":4096,"prepareOk":true,"code":null,"sendOk":true,"encoding":"base64-utf8","contextBytes":6457,"deliveredEqualsSent":true,"storedEqualsSent":true,"storedBodyBytes":4096,"digestMatchesSent":true}
+{"case":"body","name":"quote-backslash-4096","bytes":4096,"codeUnits":4096,"prepareOk":true,"code":null,"sendOk":true,"encoding":"base64-utf8","contextBytes":6457,"deliveredEqualsSent":true,"storedEqualsSent":true,"storedBodyBytes":4096,"digestMatchesSent":true}
+{"case":"body","name":"whitespace-only","bytes":4,"codeUnits":4,"prepareOk":false,"code":"INVALID_INPUT","rejectChangedCounts":false}
+{"case":"body","name":"nul","bytes":3,"codeUnits":3,"prepareOk":false,"code":"INVALID_INPUT","rejectChangedCounts":false}
+{"note":"lone surrogate normalized to U+FFFD","name":"lone-surrogate"}
+{"case":"body","name":"lone-surrogate","bytes":5,"codeUnits":3,"prepareOk":true,"code":null,"sendOk":true,"encoding":"plain-json","contextBytes":997,"deliveredEqualsSent":false,"storedEqualsSent":false,"storedBodyBytes":5,"digestMatchesSent":true}
+{"case":"body","name":"ko-nfd-vs-nfc","bytes":6,"codeUnits":2,"prepareOk":true,"code":null,"sendOk":true,"encoding":"plain-json","contextBytes":998,"deliveredEqualsSent":true,"storedEqualsSent":true,"storedBodyBytes":6,"digestMatchesSent":true}
+{"case":"hook-fail-open-after-claim","firstHookOutput":"empty","rowAfterFailedHook":{"delivery_attempts":1,"claimed_at":"2026-09-28T08:45:31.445Z","claim_until":"2026-09-28T08:47:31.445Z"},"invisibleLeaseMs":120000,"redeliveredSameId":true,"deliveryAttemptOnRedelivery":2}

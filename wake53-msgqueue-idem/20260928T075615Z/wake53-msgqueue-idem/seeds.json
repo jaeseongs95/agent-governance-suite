@@ -1,0 +1,8 @@
+{"prng":"mulberry32 (scripts/lib.mjs rng)",
+ "E1":{"script":"e1-burst.mjs <seed> <variant>","processes":8,"perProcess":200,"runs":[[101,"distinct"],[202,"drain"],[303,"same"],[404,"distinct"],[505,"drain"]],"prngStreams":"sender p: seed*1000+p (body nonce, 0-2ms jitter); drainer rid: seed*7919+rid"},
+ "E2":{"script":"e2-same-id.mjs <seed> <rounds>","runs":[[11,20],[12,20]],"order":"per round k=2..8 concurrent sends, then 3*rounds kill cases (SIGKILL after 0-119ms)"},
+ "E3":{"script":"e3-claim-ack.mjs <seed>","runs":[31,32],"clock":"FAKE_CLOCK_FILE preload into broker"},
+ "E5":{"script":"e5-boundaries.mjs","deterministic":true},
+ "E7":{"script":"e7-normalization.mjs","deterministic":true},
+ "E8":{"script":"e8-lock-restart.mjs <seed> (env E8_N,E8_KILLS)","runs":[[81,"N=100 time-based kills (ineffective, see 19)"],[82,"time-based (ineffective)"],[83,"time-based (ineffective)"],[82,"N=200 progress kills"],[83,"N=200"],[84,"N=200"]],"lockHoldsMs":[1000,3000,7000],"processes":4},
+ "v271":{"TARGET_ROOT":"/tmp/v271","runs":["E1 101 distinct","E1 202 drain","E2 11 20","E3 31","E5","E7","E8 82 N=200"]}}
