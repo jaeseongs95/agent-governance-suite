@@ -1,0 +1,6 @@
+07-run-a hook_responses=7 skills=[] additionalContext_lines=0 EXIT=0 stderr_bytes=0
+08-run-b hook_responses=16 skills=[] additionalContext_lines=0 EXIT=1 stderr_bytes=0
+09-run-c hook_responses=12 skills=[agent-governance-suite:orchestrator,] additionalContext_lines=1 EXIT=1 stderr_bytes=0
+10-run-d hook_responses=7 skills=[] additionalContext_lines=0 EXIT=0 stderr_bytes=0
+11-run-e hook_responses=16 skills=[agent-governance-suite:korean-prose-editor,] additionalContext_lines=0 EXIT=1 stderr_bytes=0
+12-run-d2 hook_responses=18 skills=[agent-governance-suite:ponytail,] additionalContext_lines=0 EXIT=0 stderr_bytes=0

@@ -1,0 +1,258 @@
+{
+ "file": "/tmp/ev/07-run-a.log",
+ "init": {
+  "model": "claude-sonnet-5",
+  "permissionMode": "default",
+  "cwd": "/tmp/scratch",
+  "plugins": [
+   {
+    "name": "agent-governance-suite",
+    "path": "/home/user/agent-governance-suite/claude-plugin",
+    "source": "agent-governance-suite@inline",
+    "version": "2.7.1"
+   },
+   {
+    "name": "agents-md",
+    "path": "builtin",
+    "source": "agents-md@builtin"
+   },
+   {
+    "name": "telemetry",
+    "path": "builtin",
+    "source": "telemetry@builtin"
+   }
+  ],
+  "mcp_servers": [
+   {
+    "name": "plugin:agent-governance-suite:agent-governance-suite",
+    "status": "connected",
+    "source": "plugin"
+   }
+  ],
+  "tools": [
+   "ListSkills",
+   "SearchSkills",
+   "Skill",
+   "SuggestSkills",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__abort_workflow",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__acknowledge_session_messages",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__check_for_updates",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__checkpoint_context",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__claim_workflow_attempt",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__execute_state_cleanup",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__finalize_workflow",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__get_convergence_status",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__get_session_message_status",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__get_trust_capabilities",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__get_workflow_status",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__inspect_context",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__list_session_status",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__load_context",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__lookup_korean_prose_terms",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__open_convergence_root",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__plan_workflow",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__prepare_session_message",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__prepare_state_cleanup",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__purge_direct_context",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__record_stage_result",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__resolve_convergence_gate",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__send_session_message",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__start_guarded_workflow",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__start_workflow",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__suppress_context_restore",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status",
+   "mcp__plugin_agent-governance-suite_agent-governance-suite__validate_collaboration_decision"
+  ],
+  "toolCount": 67,
+  "skills": [
+   "session-start-hook",
+   "deep-research",
+   "agent-governance-suite:acceptance-evidence-validator",
+   "agent-governance-suite:blocker-diagnostician",
+   "agent-governance-suite:change-scope-guardian",
+   "agent-governance-suite:context-continuity",
+   "agent-governance-suite:coordinate-subagents",
+   "agent-governance-suite:evaluation-validity-auditor",
+   "agent-governance-suite:independent-audit-gate",
+   "agent-governance-suite:independent-deliberation-panel",
+   "agent-governance-suite:instruction-scope-resolver",
+   "agent-governance-suite:iteration-frame-auditor",
+   "agent-governance-suite:korean-prose-editor",
+   "agent-governance-suite:model-effort-advisor",
+   "agent-governance-suite:mutation-risk-preflight",
+   "agent-governance-suite:orchestrator",
+   "agent-governance-suite:ponytail",
+   "agent-governance-suite:recovery-strategy-selector",
+   "agent-governance-suite:session-board",
+   "agent-governance-suite:software-security-auditor",
+   "agent-governance-suite:task-contract",
+   "agent-governance-suite:workspace-convention-profiler",
+   "design",
+   "slides",
+   "design-sync",
+   "dataviz",
+   "artifact-diagramming",
+   "artifact-capabilities",
+   "update-config",
+   "verify",
+   "debug",
+   "code-review",
+   "simplify",
+   "batch",
+   "fewer-permission-prompts",
+   "doctor",
+   "loop",
+   "claude-api",
+   "workflow-authoring",
+   "run",
+   "run-skill-generator",
+   "anthropic-skills:built-in-browser",
+   "anthropic-skills:chrome-browser",
+   "anthropic-skills:computer-use",
+   "anthropic-skills:deep-research",
+   "anthropic-skills:docs",
+   "anthropic-skills:docx",
+   "anthropic-skills:import-memory",
+   "anthropic-skills:morning",
+   "anthropic-skills:pdf",
+   "anthropic-skills:pptx",
+   "anthropic-skills:skill-creator",
+   "anthropic-skills:xlsx"
+  ],
+  "slash_commands_count": 85,
+  "agents": [
+   "agent-governance-suite:deliberation-reviewer",
+   "agent-governance-suite:independent-auditor",
+   "claude",
+   "claude-code-guide",
+   "Explore",
+   "general-purpose",
+   "Plan",
+   "statusline-setup"
+  ]
+ },
+ "hooks": [
+  {
+   "subtype": "hook_started",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "Stop",
+   "hook_event": "Stop",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "Stop",
+   "hook_event": "Stop",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  }
+ ],
+ "toolUses": [],
+ "denials": [],
+ "result": {
+  "subtype": "success",
+  "num_turns": 1,
+  "is_error": false,
+  "terminal_reason": "completed",
+  "text": "안녕하세요! 반갑습니다. 도와드릴 일이 있으면 말씀해 주세요."
+ },
+ "errors": []
+}
