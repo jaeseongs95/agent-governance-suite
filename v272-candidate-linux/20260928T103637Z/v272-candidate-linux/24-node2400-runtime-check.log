@@ -1,0 +1,8 @@
+# CMD: pnpm runtime:check
+# START: 2026-09-28T10:24:28Z node=v24.0.0
+Already up to date
+Done in 594ms using pnpm v11.19.0
+$ node scripts/check-runtime.mjs
+runtime: ready (29 skill CLIs, Node.js 24.0.0)
+# END: 2026-09-28T10:24:37Z
+EXIT=0

@@ -1,0 +1,5 @@
+PID 183 cmd=node mcp-server/dist/server.mjs 
+--- processes mentioning agent-governance:
+  120 Mon Sep 28 10:13:11 2026 /opt/claude-code/bin/claude --output-format=stream-json --verbose --settings /root/.claude/launcher-settings.json --replay-user-messages --input-format=stream-json --debug-to-stderr --maint
+  183 Mon Sep 28 10:13:14 2026 node mcp-server/dist/server.mjs
+EXIT=0

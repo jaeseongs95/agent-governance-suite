@@ -1,0 +1,19 @@
+# /tmp/R files (name, size only; key/token contents not recorded)
+73728 /tmp/R/continuity.sqlite3
+12288 /tmp/R/session-board.sqlite3
+570 /tmp/R/session-messaging/broker-cert.pem
+241 /tmp/R/session-messaging/broker-key.pem
+5 /tmp/R/session-messaging/broker.lock
+44 /tmp/R/session-messaging/broker.token
+239 /tmp/R/session-messaging/endpoint.json
+4096 /tmp/R/session-messaging/session-messages.sqlite3
+32768 /tmp/R/session-messaging/session-messages.sqlite3-shm
+168952 /tmp/R/session-messaging/session-messages.sqlite3-wal
+28672 /tmp/R/trust.sqlite3
+32768 /tmp/R/trust.sqlite3-shm
+4152 /tmp/R/trust.sqlite3-wal
+143360 /tmp/R/workflow.sqlite3
+# broker pid 9704 alive after claude exit: yes
+# after SIGTERM alive: yes
+EXIT=0
+# broker pid 9704 exited within ~4s of SIGTERM (checked 2026-09-28T10:35:38Z)

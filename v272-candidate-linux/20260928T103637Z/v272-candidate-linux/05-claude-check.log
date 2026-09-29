@@ -1,0 +1,8 @@
+# CMD: pnpm claude:check
+# START: 2026-09-28T10:14:25Z node=v24.21.0
+Already up to date
+Done in 664ms using pnpm v11.19.0
+$ node scripts/build-claude-plugin.mjs --check
+claude-plugin: fresh
+# END: 2026-09-28T10:14:26Z
+EXIT=0

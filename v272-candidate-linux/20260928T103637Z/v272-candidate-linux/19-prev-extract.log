@@ -1,0 +1,13 @@
+v2.7.1 commit=d5c5932cd5a0d87630f6ed94f8e3721181ab9864 node_modules=absent
+-rw-rw-r-- 1 root root 96811 Sep 28 03:44 /tmp/prev271/mcp-server/dist/session-message-broker.mjs
+d4b667d417c6c8a8beaf749a2209ab1a8d1548a26d1f819dfcc6238a6711ab80  /tmp/prev271/mcp-server/dist/session-message-broker.mjs
+blob=d4b667d417c6c8a8beaf749a2209ab1a8d1548a26d1f819dfcc6238a6711ab80  -
+  "version": "2.7.1",
+v2.2.6 commit=863ed7ac807a306e8c5cabcfb99c8ac0a5a5d1ea node_modules=absent
+-rw-rw-r-- 1 root root 38741 Sep 20 12:36 /tmp/prev226/mcp-server/dist/session-message-broker.mjs
+14f9345d3b18611fe0d5799ae56d65e3e80708ee288bbd771aafa5611a1a1cc3  /tmp/prev226/mcp-server/dist/session-message-broker.mjs
+blob=14f9345d3b18611fe0d5799ae56d65e3e80708ee288bbd771aafa5611a1a1cc3  -
+  "version": "2.2.6",
+inst node_modules=absent
+  "version": "2.7.2",
+EXIT=0

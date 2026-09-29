@@ -1,0 +1,7 @@
+# CMD: pnpm bundle:check
+# START: 2026-09-28T10:14:16Z node=v24.21.0
+Already up to date
+Done in 490ms using pnpm v11.19.0
+$ node scripts/check-bundle.mjs
+# END: 2026-09-28T10:14:18Z
+EXIT=0

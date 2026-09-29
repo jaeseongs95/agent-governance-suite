@@ -1,0 +1,17 @@
+# CMD: pnpm exec vitest run tests/session-messaging/previous-broker.test.ts --maxWorkers=2 --reporter=verbose --reporter=json --outputFile.json=/tmp/ev/22-prev-broker-v271.json
+# START: 2026-09-28T10:22:31Z node=v24.21.0
+Already up to date
+Done in 464ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /tmp/c
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 1591ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  10:22:33
+   Duration  1.92s (tests 89%, transform 9%, import 1%)
+
+JSON report written to /tmp/ev/22-prev-broker-v271.json
+# END: 2026-09-28T10:22:34Z
+EXIT=0

@@ -1,0 +1,4 @@
+# CMD: git diff --check
+# START: 2026-09-28T10:15:19Z node=v24.21.0
+# END: 2026-09-28T10:15:19Z
+EXIT=0

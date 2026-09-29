@@ -1,0 +1,7 @@
+# CMD: pnpm build
+# START: 2026-09-28T10:14:38Z node=v24.21.0
+Already up to date
+Done in 610ms using pnpm v11.19.0
+$ tsc --noEmit && node scripts/build.mjs
+# END: 2026-09-28T10:14:46Z
+EXIT=0

@@ -1,0 +1,2 @@
+ 9704 Mon Sep 28 10:35:00 2026 /opt/node-v24.21.0-linux-x64/bin/node /tmp/inst/claude-plugin/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/R/session-messaging
+EXIT=0

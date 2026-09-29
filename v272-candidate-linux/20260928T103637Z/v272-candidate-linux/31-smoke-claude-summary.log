@@ -1,0 +1,29 @@
+SYSTEM hook_started {"hook_name":"SessionStart:startup","hook_event":"SessionStart","output":"","stderr":""}
+SYSTEM hook_started {"hook_name":"SessionStart:startup","hook_event":"SessionStart","output":"","stderr":""}
+SYSTEM hook_started {"hook_name":"SessionStart:startup","hook_event":"SessionStart","output":"","stderr":""}
+SYSTEM hook_response {"hook_name":"SessionStart:startup","hook_event":"SessionStart","exit_code":0,"outcome":"success","output":"","stderr":""}
+SYSTEM hook_response {"hook_name":"SessionStart:startup","hook_event":"SessionStart","exit_code":0,"outcome":"success","output":"","stderr":""}
+SYSTEM hook_response {"hook_name":"SessionStart:startup","hook_event":"SessionStart","exit_code":0,"outcome":"success","output":"","stderr":""}
+SYSTEM commands_changed {"output":"","stderr":""}
+SYSTEM hook_started {"hook_name":"UserPromptSubmit","hook_event":"UserPromptSubmit","output":"","stderr":""}
+SYSTEM hook_started {"hook_name":"UserPromptSubmit","hook_event":"UserPromptSubmit","output":"","stderr":""}
+SYSTEM hook_started {"hook_name":"UserPromptSubmit","hook_event":"UserPromptSubmit","output":"","stderr":""}
+SYSTEM hook_response {"hook_name":"UserPromptSubmit","hook_event":"UserPromptSubmit","exit_code":0,"outcome":"success","output":"","stderr":""}
+SYSTEM hook_response {"hook_name":"UserPromptSubmit","hook_event":"UserPromptSubmit","exit_code":0,"outcome":"success","output":"","stderr":""}
+SYSTEM hook_response {"hook_name":"UserPromptSubmit","hook_event":"UserPromptSubmit","exit_code":0,"outcome":"success","output":"","stderr":""}
+INIT model claude-opus-5-5 plugins [{"name":"agent-governance-suite","path":"/tmp/inst/claude-plugin","source":"agent-governance-suite@inline","version":"2.7.2"},{"name":"agents-md","path":"builtin","source":"agents-md@builtin"},{"name":"telemetry","path":"builtin","source":"telemetry@builtin"}] mcp [{"name":"plugin:agent-governance-suite:agent-governance-suite","status":"connected","source":"plugin"}] agsTools 28
+TOOL_USE ToolSearch {"query":"select:mcp__plugin_agent-governance-suite_agent-governance-suite__list_session_status","max_results":1}
+SYSTEM hook_started {"hook_name":"PostToolUse:ToolSearch","hook_event":"PostToolUse","output":"","stderr":""}
+SYSTEM hook_response {"hook_name":"PostToolUse:ToolSearch","hook_event":"PostToolUse","exit_code":0,"outcome":"success","output":"","stderr":""}
+TOOL_RESULT ok [{"type":"tool_reference","tool_name":"mcp__plugin_agent-governance-suite_agent-governance-suite__list_session_status"}]
+TOOL_USE mcp__plugin_agent-governance-suite_agent-governance-suite__list_session_status {"schemaVersion":"1.0.0"}
+SYSTEM hook_started {"hook_name":"PreToolUse:mcp__plugin_agent-governance-suite_agent-governance-suite__list_session_status","hook_event":"PreToolUse","output":"","stderr":""}
+SYSTEM hook_response {"hook_name":"PreToolUse:mcp__plugin_agent-governance-suite_agent-governance-suite__list_session_status","hook_event":"PreToolUse","exit_code":0,"outcome":"success","output":"{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\",\"updatedInput\":{\"schemaVersion\":\"1.0.0\",\"_sessionBinding\":{\"host\":\"claude-code\",\"sessionId\":\"fb5dedca-4b7f-5201-8647-7b4fc19b5c52\"}}}}","stderr":""}
+SYSTEM hook_started {"hook_name":"PostToolUse:mcp__plugin_agent-governance-suite_agent-governance-suite__list_session_status","hook_event":"PostToolUse","output":"","stderr":""}
+SYSTEM hook_response {"hook_name":"PostToolUse:mcp__plugin_agent-governance-suite_agent-governance-suite__list_session_status","hook_event":"PostToolUse","exit_code":0,"outcome":"success","output":"","stderr":""}
+TOOL_RESULT ok [{"type":"text","text":"{\"schemaVersion\":\"1.0.0\",\"ok\":true,\"data\":{\"sessions\":[{\"host\":\"claude-code\",\"sessionId\":\"fb5dedca-4b7f-5201-8647-7b4fc19b5c52\",\"cwd\":\"/tmp/R/work\",\"summary\":null,\"summaryAt\":null,\"lastPromptAt\":\"2026-09-28T10:35:01.530Z\",\"startedAt\":\"2026-09-28T10:35:01.530Z\",\"updatedAt\":\"2026-09-28T10:35:01.530Z\",\"stale\":true,\"current\":true,\"presence\":{\"host\":\"claude-code\",\"sessionId\":\"fb5dedca-4b7f-5201-8647-7b4fc19b5c52\",\"instanceId\":\"9f4169ff-3366-434d-b184-eec11e6962ee\",\"transport\":\"claude-inbox\",\"wakeVisibility\":\"silent\",\"canWakeSilently\":true,\"collaborationId\":null,\"deliveryCapabilities\":{\"supportedInjectio
+TEXT 세션 1개입니다.
+SYSTEM hook_started {"hook_name":"Stop","hook_event":"Stop","output":"","stderr":""}
+SYSTEM hook_response {"hook_name":"Stop","hook_event":"Stop","exit_code":0,"outcome":"success","output":"","stderr":""}
+RESULT success is_error false turns 3 result: 세션 1개입니다.
+EXIT=0

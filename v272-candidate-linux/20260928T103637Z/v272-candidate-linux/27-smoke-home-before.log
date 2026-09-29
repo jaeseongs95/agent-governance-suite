@@ -1,0 +1,7 @@
+HOME dir: /root/.agent-governance-suite
+d 4096 2026-09-28T10:13:15.0333136060 /root/.agent-governance-suite
+d 4096 2026-09-28T10:13:15.0396241700 /root/.agent-governance-suite/session-messaging
+f 4096 2026-09-28T10:13:15.0379283180 /root/.agent-governance-suite/session-messaging/trust.sqlite3
+f 32768 2026-09-28T10:24:07.8372538190 /root/.agent-governance-suite/session-messaging/trust.sqlite3-shm
+f 57712 2026-09-28T10:24:07.8332973160 /root/.agent-governance-suite/session-messaging/trust.sqlite3-wal
+EXIT=0

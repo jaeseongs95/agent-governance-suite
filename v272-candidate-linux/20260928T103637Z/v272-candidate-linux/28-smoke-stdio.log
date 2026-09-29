@@ -1,0 +1,6 @@
+# node=v24.21.0 cwd=/tmp/inst node_modules=absent
+INITIALIZE {"name":"agent-governance-suite","version":"2.7.2"} protocol 2025-06-18 
+TOOLS_COUNT 28
+TOOLS lookup_korean_prose_terms,check_for_updates,get_trust_capabilities,validate_collaboration_decision,plan_workflow,open_convergence_root,claim_workflow_attempt,start_guarded_workflow,get_convergence_status,resolve_convergence_gate,start_workflow,record_stage_result,get_workflow_status,finalize_workflow,abort_workflow,checkpoint_context,inspect_context,load_context,suppress_context_restore,purge_direct_context,prepare_state_cleanup,execute_state_cleanup,update_session_status,list_session_status,prepare_session_message,send_session_message,acknowledge_session_messages,get_session_message_status
+VERDICT PASS
+EXIT=0

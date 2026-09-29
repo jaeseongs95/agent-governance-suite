@@ -1,0 +1,83 @@
+# CMD: pnpm exec vitest run tests/session-messaging tests/mcp/stdio-integration.test.ts --maxWorkers=2 --sequence.shuffle --sequence.seed=7009 --reporter=default --reporter=json --outputFile.json=/tmp/ev/25-repeat-seed7009.json
+# START: 2026-09-28T10:28:46Z node=v24.21.0
+Already up to date
+Done in 530ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /tmp/c
+      Running tests with seed "7009"
+
+ ↓ tests/session-messaging/previous-broker.test.ts (1 test | 1 skipped)
+ ✓ tests/session-messaging/self-signed-certificate.test.ts (1 test) 9ms
+ ✓ tests/session-messaging/peer-wait.test.ts (28 tests) 4372ms
+   ✓ enforces native wait through the public packaged hook and preserves unrelated waits 837ms
+   ✓ the public CLI consumes the decision before delay and sends no repeated poll when denied 345ms
+   ✓ public native hook suppresses equivalent payloads but permits actual cursor change 649ms
+   ✓ public CLI equivalent retransmissions consume one decision each and state change restores a snapshot 591ms
+   ✓ CLI unknown resume uses one bounded wait and does not force permanent stopping 1217ms
+   ✓ broker restart preserves messages but drops resume and repeat-suppression evidence 622ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs (51 tests) 5023ms
+   ✓ outstanding terminal backoffs share the active wake budget and release it at the deadline 341ms
+   ✓ W05-r2 active budget overflow is an explicit rejection and does not remove unknowns 303ms
+   ✓ W05-r2 terminal observation retention is bounded while unresolved rows are retained 340ms
+   ✓ independent generation/outcome-first-race workers permit exactly one separate new effect 349ms
+   ✓ independent generation/start-first-race workers permit exactly one separate new effect 355ms
+   ✓ verified old arrival in another process releases only the old attempt and permits one new effect 365ms
+   ✓ W05-r2 independent senders and relay processes perform exactly one external call 323ms
+   ✓ W05-r2 independent process crash before start recovers the same attempt; after effect never resends 921ms
+ ✓ tests/mcp/stdio-integration.test.ts (4 tests) 3370ms
+   ✓ bundled STDIO MCP server (4)
+     ✓ starts from an isolated plugin tree without node_modules 1258ms
+     ✓ keeps workflow startup clean when both database settings resolve to one file 626ms
+     ✓ starts with the packaged registry and fails semantic planning closed without a trusted provider 652ms
+     ✓ shares signed continuity bindings between the packaged hook and MCP server 831ms
+stdout | tests/session-messaging/message-lifecycle.test.ts > packaged TLS cycles use one request instead of three or two without changing pending state
+relay tick measured TLS request counts [{"transport":"test-inbox","cycles":10,"baselineRequests":30,"tickRequests":10},{"transport":"codex-deferred","cycles":10,"baselineRequests":20,"tickRequests":10}]
+
+ ✓ tests/session-messaging/message-lifecycle.test.ts (14 tests) 6292ms
+   ✓ applies global draft, receipt and byte backpressure without evicting valid records 1283ms
+   ✓ packaged TLS cycles use one request instead of three or two without changing pending state 599ms
+   ✓ a real post-commit prepare reply loss leaves only orphan drafts 444ms
+   ✓ a real send reply loss retries the known ID once and survives broker restart 2777ms
+   ✓ two independent processes submit one ID atomically and enforce sender preparation capacity 425ms
+   ✓ packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect 663ms
+ ✓ tests/session-messaging/historical-wake.test.mjs (65 tests) 8088ms
+   ✓ bundled public CLI forwards only IDs to the private broker and cannot repeat recovery 365ms
+   ✓ packaged CLI binds history to explicit broker state directory: prestarted 617ms
+   ✓ packaged CLI binds history to explicit broker state directory: client-ensure 1804ms
+   ✓ packaged root CLI rejects unsupported trust schema without mutation: 2 304ms
+   ✓ packaged root CLI rejects unsupported trust schema without mutation: 99 333ms
+   ✓ packaged root CLI rejects unsupported trust schema without mutation: wrong-column 320ms
+   ✓ packaged claude CLI rejects unsupported trust schema without mutation: 0 309ms
+   ✓ packaged claude CLI rejects unsupported trust schema without mutation: 1 328ms
+   ✓ packaged claude CLI rejects unsupported trust schema without mutation: 2 315ms
+   ✓ packaged claude CLI rejects unsupported trust schema without mutation: 99 312ms
+   ✓ packaged claude CLI rejects unsupported trust schema without mutation: wrong-column 327ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts (7 tests) 3643ms
+   ✓ retries transient endpoint publication failures and serves the published endpoint 335ms
+   ✓ releases startup resources after permanent failure and allows recovery 1041ms
+   ✓ delivers and acknowledges a message using only the packaged CLI and broker 779ms
+   ✓ isolates socket resets and a lost send response while preserving the broker and one committed message 772ms
+ ✓ tests/session-messaging/session-message.test.ts (70 tests) 15561ms
+   ✓ TLS 1.3 broker and vendor-neutral adapter (51)
+     ✓ fails fast on broker exit and leaves deadline cleanup to the state-directory owner 374ms
+     ✓ returns at the startup deadline while state preparation is still blocked and never spawns afterward 554ms
+     ✓ enforces an absolute request deadline while a TLS peer keeps sending partial data 325ms
+     ✓ uses one plugin queue profile for packaged presence and relay until the next SessionStart 6847ms
+     ✓ pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts 511ms
+     ✓ blocks only verified empty Codex wake prompts in the packaged hook 1203ms
+     ✓ keeps a maximum-size peer message within the hook context limit 304ms
+     ✓ escapes peer bodies inside one bounded JSON block 315ms
+     ✓ starts the relay without spending a second claim budget during SessionStart 323ms
+     ✓ leaves Codex Stop messages queued for a supported context event 315ms
+     ✓ keeps packaged hook and relay entrypoints isolated 1900ms
+   ✓ session message MCP tools (2)
+     ✓ validates bound send, status, and acknowledgement calls 515ms
+
+ Test Files  8 passed | 1 skipped (9)
+      Tests  240 passed | 1 skipped (241)
+   Start at  10:28:47
+   Duration  25.87s (tests 96%, transform 2%, import 1%)
+
+JSON report written to /tmp/ev/25-repeat-seed7009.json
+# END: 2026-09-28T10:29:13Z
+EXIT=0
