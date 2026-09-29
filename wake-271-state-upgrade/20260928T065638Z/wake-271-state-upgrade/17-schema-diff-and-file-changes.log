@@ -1,0 +1,19 @@
+schema identical (objects+columns+user_version+journal_mode): True
+user_version 0 0 journal_mode wal wal
+objects: ['index:messages_target_pending', 'index:prepared_messages_expiry', 'index:prepared_messages_owner', 'index:session_presence_latest', 'index:wake_active_target', 'table:input_observations', 'table:messages', 'table:prepared_messages', 'table:relay_leases', 'table:session_presence', 'table:wake_nonces']
+4.files-before-open
+   exp-state.json 4622 ef0612cb2a3f1283eb2385165102d7430cf11f605f04c47840d95e55700f865b
+   session-messages.sqlite3 81920 041fc96a9427639f9b2fbc4bdcf9d7acda5c42590cdf3e209d2bd418bb556519
+   session-messages.sqlite3-shm 32768 a6536e549291867a718bca508b1b1d4da658799583c5d6e7b30eef02e105bf3c
+   session-messages.sqlite3-wal 4120032 76ca2bbe3ea401d3426cebf9de3912a6e7a8ddc3d07aa685ba08d311507e79fb
+   trust.sqlite3 28672 357c06f0afa9c3fd19cd0decd42d5e3d6ff823cea6ce9b8e254d2884aba35627
+4.files-after-constructor
+   exp-state.json 4622 ef0612cb2a3f1283eb2385165102d7430cf11f605f04c47840d95e55700f865b
+   session-messages.sqlite3 81920 041fc96a9427639f9b2fbc4bdcf9d7acda5c42590cdf3e209d2bd418bb556519
+   session-messages.sqlite3-shm 32768 c60aec2f217c65621805aed46764396e30ee40658b5148e5339b826e5e6817f5
+   session-messages.sqlite3-wal 4120032 76ca2bbe3ea401d3426cebf9de3912a6e7a8ddc3d07aa685ba08d311507e79fb
+   trust.sqlite3 28672 357c06f0afa9c3fd19cd0decd42d5e3d6ff823cea6ce9b8e254d2884aba35627
+4.files-after-close
+   exp-state.json 4622 ef0612cb2a3f1283eb2385165102d7430cf11f605f04c47840d95e55700f865b
+   session-messages.sqlite3 81920 2db0bd5c0b657c004fdbef27f6de3807669fc1e29e92c30b4223a90841954cd1
+   trust.sqlite3 36864 79e8e3d3e123d7fbf81cdc1ff86dba2a7f28a904b94b9159d8534f2e3bd1b2ad

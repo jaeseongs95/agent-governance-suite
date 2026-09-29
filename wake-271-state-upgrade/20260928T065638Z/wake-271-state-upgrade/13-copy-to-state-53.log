@@ -1,0 +1,30 @@
+# source: /tmp/state-271-live-snapshot (copied while 2.7.1 connection open inside BEGIN IMMEDIATE; WAL+SHM present)
+ef0612cb2a3f1283eb2385165102d7430cf11f605f04c47840d95e55700f865b  exp-state.json
+041fc96a9427639f9b2fbc4bdcf9d7acda5c42590cdf3e209d2bd418bb556519  session-messages.sqlite3
+a6536e549291867a718bca508b1b1d4da658799583c5d6e7b30eef02e105bf3c  session-messages.sqlite3-shm
+76ca2bbe3ea401d3426cebf9de3912a6e7a8ddc3d07aa685ba08d311507e79fb  session-messages.sqlite3-wal
+357c06f0afa9c3fd19cd0decd42d5e3d6ff823cea6ce9b8e254d2884aba35627  trust.sqlite3
+# copy: /tmp/state-53
+ef0612cb2a3f1283eb2385165102d7430cf11f605f04c47840d95e55700f865b  exp-state.json
+041fc96a9427639f9b2fbc4bdcf9d7acda5c42590cdf3e209d2bd418bb556519  session-messages.sqlite3
+a6536e549291867a718bca508b1b1d4da658799583c5d6e7b30eef02e105bf3c  session-messages.sqlite3-shm
+76ca2bbe3ea401d3426cebf9de3912a6e7a8ddc3d07aa685ba08d311507e79fb  session-messages.sqlite3-wal
+357c06f0afa9c3fd19cd0decd42d5e3d6ff823cea6ce9b8e254d2884aba35627  trust.sqlite3
+total 4180
+drwxr-xr-x  2 root root    4096 Sep 28 06:54 .
+drwxrwxrwt 15 root root    4096 Sep 28 06:54 ..
+-rw-r--r--  1 root root    4622 Sep 28 06:54 exp-state.json
+-rw-r--r--  1 root root   81920 Sep 28 06:54 session-messages.sqlite3
+-rw-r--r--  1 root root   32768 Sep 28 06:54 session-messages.sqlite3-shm
+-rw-r--r--  1 root root 4120032 Sep 28 06:54 session-messages.sqlite3-wal
+-rw-------  1 root root   28672 Sep 28 06:54 trust.sqlite3
+# /tmp/state-271 after 2.7.1 close
+ef0612cb2a3f1283eb2385165102d7430cf11f605f04c47840d95e55700f865b  exp-state.json
+16b7c0a2a60f08ecd210c9484990fec91f646efa51d5716b7f0c7369055c4b26  session-messages.sqlite3
+357c06f0afa9c3fd19cd0decd42d5e3d6ff823cea6ce9b8e254d2884aba35627  trust.sqlite3
+total 124
+drwxr-xr-x  2 root root  4096 Sep 28 06:54 .
+drwxrwxrwt 15 root root  4096 Sep 28 06:54 ..
+-rw-r--r--  1 root root  4622 Sep 28 06:54 exp-state.json
+-rw-r--r--  1 root root 81920 Sep 28 06:54 session-messages.sqlite3
+-rw-------  1 root root 28672 Sep 28 06:54 trust.sqlite3

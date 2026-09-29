@@ -1,0 +1,20 @@
+# source: /tmp/state-271-live-snapshot (copied while 2.7.1 connection open; WAL+SHM present)
+5ff7ae73c48c863ecf1e1b5c2116442180afef67e06c4dd9f43c0da03d14b6da  exp-state.json
+af32877da67d0e3ada1d0c5e4568dd93c740a0492664c0e735c5945bda12ad39  session-messages.sqlite3
+a771a3db7e9bb4c7f021c4d4dc4dd95f2f1d40562618a4d698a35a78e71f2100  session-messages.sqlite3-shm
+a9e625557b7d9609e044ce317cdc9210364ec829a29b77db9b2ad23cad0537bc  session-messages.sqlite3-wal
+207c11c987ae52336b6fa423fdfef1847d8463f38859ec7463b083990a12f0ec  trust.sqlite3
+# copy: /tmp/state-53
+5ff7ae73c48c863ecf1e1b5c2116442180afef67e06c4dd9f43c0da03d14b6da  exp-state.json
+af32877da67d0e3ada1d0c5e4568dd93c740a0492664c0e735c5945bda12ad39  session-messages.sqlite3
+a771a3db7e9bb4c7f021c4d4dc4dd95f2f1d40562618a4d698a35a78e71f2100  session-messages.sqlite3-shm
+a9e625557b7d9609e044ce317cdc9210364ec829a29b77db9b2ad23cad0537bc  session-messages.sqlite3-wal
+207c11c987ae52336b6fa423fdfef1847d8463f38859ec7463b083990a12f0ec  trust.sqlite3
+total 4180
+drwxr-xr-x  2 root root    4096 Sep 28 06:53 .
+drwxrwxrwt 15 root root    4096 Sep 28 06:54 ..
+-rw-r--r--  1 root root    4622 Sep 28 06:53 exp-state.json
+-rw-r--r--  1 root root   81920 Sep 28 06:53 session-messages.sqlite3
+-rw-r--r--  1 root root   32768 Sep 28 06:53 session-messages.sqlite3-shm
+-rw-r--r--  1 root root 4120032 Sep 28 06:53 session-messages.sqlite3-wal
+-rw-------  1 root root   28672 Sep 28 06:53 trust.sqlite3
