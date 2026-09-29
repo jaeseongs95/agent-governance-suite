@@ -1,0 +1,389 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-base
+
+(node:8533) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ × tests/session-messaging/wake-liveness.test.mjs > an expired submitted latch retires for a newer live generation and a new wake is reserved 223ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > an expired accepted-or-unknown latch retires for a newer live generation and a new wake is reserved 30ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > an expired started latch retires for a newer live generation and a new wake is reserved 35ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > an expired latch without activity or a newer live generation stays latched: same-generation 23ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > an expired latch without activity or a newer live generation stays latched: unreachable 50ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > an expired latch without activity or a newer live generation stays latched: ended-new-generation 37ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > an expired latch without activity or a newer live generation stays latched: older-live-instance 43ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > same-generation activity claim after expiry retires the latch after the grace 35ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > same-generation activity claimDeferred after expiry retires the latch after the grace 35ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > same-generation activity claimTurnEnd after expiry retires the latch after the grace 52ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > same-generation activity clearDeferred after expiry retires the latch after the grace 46ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > same-generation activity acknowledge after expiry retires the latch after the grace 29ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > same-generation activity observeNativeInput after expiry retires the latch after the grace 61ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > same-generation activity before-expiry after expiry retires the latch after the grace 52ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > retirement and re-reservation are idempotent across prunes and reopened connections 38ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > a verified late arrival of a retired nonce is recorded without claiming the current generation body 53ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > a retired nonce cannot be laundered by forged provenance or a mixed unknown nonce 68ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > K: an arrival whose hook receipt expired during a broker outage stays latched until retirement evidence, then a new wake delivers 74ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > C2: a same-millisecond rebirth gets a distinct generation, so the previous birth cannot claim 157ms
+   → The expression evaluated to a falsy value:
+
+  ok(reborn.startedAt > old.generation)
+
+ × tests/session-messaging/wake-liveness.test.mjs > autoWake is advisory and reports each delivery path state 34ms
+   → store.autoWakeOutlook is not a function
+ × tests/session-messaging/wake-liveness.test.mjs > G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule 267ms
+   → Expected values to be strictly equal:
+
+0 !== 1
+
+ × tests/session-messaging/wake-liveness.test.mjs > G: a newer message schema version is rejected without mutation 129ms
+   → Missing expected exception.
+ × tests/session-messaging/wake-liveness.test.mjs > G: two independent processes racing the v2.7.2 upgrade both open one migrated schema 1393ms
+   → Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
++   0,
++   0
+-   1,
+-   1
+  ]
+
+ × tests/session-messaging/wake-liveness.test.mjs > G: a failure inside the table rebuild rolls back columns, rows and schema version 824ms
+   → worker exited early: 2; (node:9156) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ × tests/session-messaging/wake-liveness.test.mjs > crash right after a committed retirement leaves a retired row and one later reservation 34ms
+   → Invalid time value
+ × tests/session-messaging/wake-liveness.test.mjs > two independent relay processes racing retirement create one active attempt 42ms
+   → Invalid time value
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 26 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired submitted latch retires for a newer live generation and a new wake is reserved
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired accepted-or-unknown latch retires for a newer live generation and a new wake is reserved
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired started latch retires for a newer live generation and a new wake is reserved
+RangeError: Invalid time value
+ ❯ iso mcp-server/src/session-message-store.ts:67:33
+     65|
+     66| function iso(milliseconds: number): string {
+     67|   return new Date(milliseconds).toISOString();
+       |                                 ^
+     68| }
+     69|
+ ❯ SessionMessageStore.startPresence mcp-server/src/session-message-store.ts:947:17
+ ❯ live tests/session-messaging/wake-liveness.test.mjs:41:9
+ ❯ tests/session-messaging/wake-liveness.test.mjs:82:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch without activity or a newer live generation stays latched: same-generation
+RangeError: Invalid time value
+ ❯ iso tests/session-messaging/wake-liveness.test.mjs:20:32
+     18| const sender = { host: 'portable', sessionId: 'liveness-sender' };
+     19| const capabilities = { supportedInjection: ['peer-wake', 'tool-boundar…
+     20| const iso = ms => new Date(ms).toISOString();
+       |                                ^
+     21| const validator = new ContractValidator();
+     22| const resources = [];
+ ❯ keepAlive tests/session-messaging/wake-liveness.test.mjs:47:99
+ ❯ tests/session-messaging/wake-liveness.test.mjs:118:71
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch without activity or a newer live generation stays latched: unreachable
+RangeError: Invalid time value
+ ❯ iso mcp-server/src/session-message-store.ts:67:33
+     65|
+     66| function iso(milliseconds: number): string {
+     67|   return new Date(milliseconds).toISOString();
+       |                                 ^
+     68| }
+     69|
+ ❯ SessionMessageStore.prune mcp-server/src/session-message-store.ts:254:17
+ ❯ tests/session-messaging/wake-liveness.test.mjs:119:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch without activity or a newer live generation stays latched: ended-new-generation
+RangeError: Invalid time value
+ ❯ iso mcp-server/src/session-message-store.ts:67:33
+     65|
+     66| function iso(milliseconds: number): string {
+     67|   return new Date(milliseconds).toISOString();
+       |                                 ^
+     68| }
+     69|
+ ❯ SessionMessageStore.startPresence mcp-server/src/session-message-store.ts:947:17
+ ❯ live tests/session-messaging/wake-liveness.test.mjs:41:9
+ ❯ tests/session-messaging/wake-liveness.test.mjs:108:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch without activity or a newer live generation stays latched: older-live-instance
+RangeError: Invalid time value
+ ❯ iso tests/session-messaging/wake-liveness.test.mjs:20:32
+     18| const sender = { host: 'portable', sessionId: 'liveness-sender' };
+     19| const capabilities = { supportedInjection: ['peer-wake', 'tool-boundar…
+     20| const iso = ms => new Date(ms).toISOString();
+       |                                ^
+     21| const validator = new ContractValidator();
+     22| const resources = [];
+ ❯ tests/session-messaging/wake-liveness.test.mjs:113:102
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity claim after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity claimDeferred after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity claimTurnEnd after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity clearDeferred after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity acknowledge after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity observeNativeInput after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity before-expiry after expiry retires the latch after the grace
+RangeError: Invalid time value
+ ❯ iso tests/session-messaging/wake-liveness.test.mjs:20:32
+     18| const sender = { host: 'portable', sessionId: 'liveness-sender' };
+     19| const capabilities = { supportedInjection: ['peer-wake', 'tool-boundar…
+     20| const iso = ms => new Date(ms).toISOString();
+       |                                ^
+     21| const validator = new ContractValidator();
+     22| const resources = [];
+ ❯ keepAlive tests/session-messaging/wake-liveness.test.mjs:47:99
+ ❯ tests/session-messaging/wake-liveness.test.mjs:144:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > retirement and re-reservation are idempotent across prunes and reopened connections
+RangeError: Invalid time value
+ ❯ iso mcp-server/src/session-message-store.ts:67:33
+     65|
+     66| function iso(milliseconds: number): string {
+     67|   return new Date(milliseconds).toISOString();
+       |                                 ^
+     68| }
+     69|
+ ❯ SessionMessageStore.startPresence mcp-server/src/session-message-store.ts:947:17
+ ❯ live tests/session-messaging/wake-liveness.test.mjs:41:9
+ ❯ tests/session-messaging/wake-liveness.test.mjs:154:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > a verified late arrival of a retired nonce is recorded without claiming the current generation body
+RangeError: Invalid time value
+ ❯ iso mcp-server/src/session-message-store.ts:67:33
+     65|
+     66| function iso(milliseconds: number): string {
+     67|   return new Date(milliseconds).toISOString();
+       |                                 ^
+     68| }
+     69|
+ ❯ SessionMessageStore.startPresence mcp-server/src/session-message-store.ts:947:17
+ ❯ live tests/session-messaging/wake-liveness.test.mjs:41:9
+ ❯ tests/session-messaging/wake-liveness.test.mjs:171:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > a retired nonce cannot be laundered by forged provenance or a mixed unknown nonce
+RangeError: Invalid time value
+ ❯ iso mcp-server/src/session-message-store.ts:67:33
+     65|
+     66| function iso(milliseconds: number): string {
+     67|   return new Date(milliseconds).toISOString();
+       |                                 ^
+     68| }
+     69|
+ ❯ SessionMessageStore.startPresence mcp-server/src/session-message-store.ts:947:17
+ ❯ live tests/session-messaging/wake-liveness.test.mjs:41:9
+ ❯ tests/session-messaging/wake-liveness.test.mjs:191:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > K: an arrival whose hook receipt expired during a broker outage stays latched until retirement evidence, then a new wake delivers
+RangeError: Invalid time value
+ ❯ iso tests/session-messaging/wake-liveness.test.mjs:20:32
+     18| const sender = { host: 'portable', sessionId: 'liveness-sender' };
+     19| const capabilities = { supportedInjection: ['peer-wake', 'tool-boundar…
+     20| const iso = ms => new Date(ms).toISOString();
+       |                                ^
+     21| const validator = new ContractValidator();
+     22| const resources = [];
+ ❯ keepAlive tests/session-messaging/wake-liveness.test.mjs:47:99
+ ❯ tests/session-messaging/wake-liveness.test.mjs:208:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > C2: a same-millisecond rebirth gets a distinct generation, so the previous birth cannot claim
+AssertionError: The expression evaluated to a falsy value:
+
+  ok(reborn.startedAt > old.generation)
+
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:229:10
+    227|   const reborn = f.store.startPresence({ ...target, instanceId: 'insta…
+    228|     canWakeSilently: true, deliveryCapabilities: capabilities }, f.now…
+    229|   assert.ok(reborn.startedAt > old.generation);
+       |          ^
+    230|   f.store.acquireRelay({ ...target, transport: 'portable', relayId: 'r…
+    231|   const result = hostClaim(f, observe(f, old, f.now + 4), f.now + 5);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > autoWake is advisory and reports each delivery path state
+TypeError: store.autoWakeOutlook is not a function
+ ❯ check tests/session-messaging/wake-liveness.test.mjs:242:27
+    240|   const f = fixture();
+    241|   const check = (store, at, state, reason, basisAt, who = target) => {
+    242|     const outlook = store.autoWakeOutlook(who, at);
+       |                           ^
+    243|     assert.deepEqual(outlook, { state, reason, basisAt, checkedAt: iso…
+    244|     assert.deepEqual(validator.sessionAutoWakeOutlook(outlook), outloo…
+ ❯ tests/session-messaging/wake-liveness.test.mjs:247:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule
+AssertionError: Expected values to be strictly equal:
+
+0 !== 1
+
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:335:10
+    333|   const store = new SessionMessageStore(m.database); m.entry.stores.pu…
+    334|   const after = snapshotV272(m.database);
+    335|   assert.equal(after.version, 1);
+       |          ^
+    336|   assert.deepEqual(after.rows, before.rows);
+    337|   assert.deepEqual(after.columns, [...V272_COLUMNS, 'retired_at']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > G: a newer message schema version is rejected without mutation
+AssertionError: Missing expected exception.
+
+simple
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:364:10
+    362|   const db = new DatabaseSync(m.database); db.exec('PRAGMA user_versio…
+    363|   const before = snapshotV272(m.database);
+    364|   assert.throws(() => new SessionMessageStore(m.database), /newer/);
+       |          ^
+    365|   assert.deepEqual(snapshotV272(m.database), before);
+    366| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > G: two independent processes racing the v2.7.2 upgrade both open one migrated schema
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
++   0,
++   0
+-   1,
+-   1
+  ]
+
+
+- Expected
++ Received
+
+  [
+-   1,
+-   1,
++   0,
++   0,
+  ]
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:389:10
+    387|   for (const p of opened) assert.equal(p.first.type, 'ready', p.stderr…
+    388|   const versions = await Promise.all(opened.map(p => result(p)));
+    389|   assert.deepEqual(versions.map(item => item.version), [1, 1]);
+       |          ^
+    390|   const after = snapshotV272(m.database);
+    391|   assert.deepEqual(after.rows, before.rows); assert.equal(after.versio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > G: a failure inside the table rebuild rolls back columns, rows and schema version
+Error: worker exited early: 2; (node:9156) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:374:96
+    372|   let stderr = ''; process_.stderr.on('data', chunk => { stderr += chu…
+    373|   const exit = once(process_, 'exit');
+    374|   const [first] = await Promise.race([once(process_, 'message'), exit.…
+       |                                                                                                ^
+    375|   return { process: process_, first, exit, stderr: () => stderr };
+    376| }
+ ❯ child tests/session-messaging/wake-liveness.test.mjs:374:19
+ ❯ tests/session-messaging/wake-liveness.test.mjs:396:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > crash right after a committed retirement leaves a retired row and one later reservation
+RangeError: Invalid time value
+ ❯ iso mcp-server/src/session-message-store.ts:67:33
+     65|
+     66| function iso(milliseconds: number): string {
+     67|   return new Date(milliseconds).toISOString();
+       |                                 ^
+     68| }
+     69|
+ ❯ SessionMessageStore.startPresence mcp-server/src/session-message-store.ts:947:17
+ ❯ live tests/session-messaging/wake-liveness.test.mjs:41:9
+ ❯ tests/session-messaging/wake-liveness.test.mjs:406:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/26]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > two independent relay processes racing retirement create one active attempt
+RangeError: Invalid time value
+ ❯ iso mcp-server/src/session-message-store.ts:67:33
+     65|
+     66| function iso(milliseconds: number): string {
+     67|   return new Date(milliseconds).toISOString();
+       |                                 ^
+     68| }
+     69|
+ ❯ SessionMessageStore.startPresence mcp-server/src/session-message-store.ts:947:17
+ ❯ live tests/session-messaging/wake-liveness.test.mjs:41:9
+ ❯ tests/session-messaging/wake-liveness.test.mjs:422:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/26]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  26 failed (26)
+   Start at  14:23:23
+   Duration  9.51s (tests 42%, transform 41%, import 17%)
+
+  Transform  transforming modules took 3.84s · 41% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

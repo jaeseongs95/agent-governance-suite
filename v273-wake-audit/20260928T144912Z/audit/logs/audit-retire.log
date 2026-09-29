@@ -1,0 +1,38 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-audit
+
+ ✓ tests/audit/audit-retire.test.mjs > 1a expiry only (same generation, relay live, no activity) never retires, up to 7 days 120ms
+ ✓ tests/audit/audit-retire.test.mjs > 1b generation replacement only (before expiry+grace) does not retire; boundary is exact 111ms
+ ✓ tests/audit/audit-retire.test.mjs > 1c ACK only (before expiry) does not retire even long after expiry 149ms
+ ✓ tests/audit/audit-retire.test.mjs > 1c2 ACK after expiry but checked before grace does not retire yet; after grace it retires once 89ms
+ ✓ tests/audit/audit-retire.test.mjs > 1d relay restart only (new relay id, lapsed old relay lease, same presence birth) does not retire and is not activity 108ms
+ ✓ tests/audit/audit-retire.test.mjs > 1e activity of another session or another host with the same session id is not evidence 65ms
+ ✓ tests/audit/audit-retire.test.mjs > 1f newer generation that is unreachable (lease lapsed, not ended) is not evidence 60ms
+ ✓ tests/audit/audit-retire.test.mjs > 1g both conditions: exactly one new attempt across repeated reserves, relays and connections 56ms
+ ✓ tests/audit/audit-retire.test.mjs > 1h activity that retired W1 does not carry over to retire the next attempt W2 61ms
+stdout | tests/audit/audit-retire.test.mjs > 2b mixed prompt: retired nonce + current live nonce (finding probe)
+AUDIT-2b {"res":{"recognized":false,"messages":[],"binding":null,"retired":true},"w2state":"observed","w2late":"2026-09-28T15:47:51.614Z","pending":1}
+AUDIT-2b-next {"w3dispatch":true}
+
+ ✓ tests/audit/audit-retire.test.mjs > 1i a retired row cannot become observed via any public transition 192ms
+ ✓ tests/audit/audit-retire.test.mjs > 2a late retired nonce with no current wake reserved claims no body and records late once 71ms
+stdout | tests/audit/audit-retire.test.mjs > LT a long busy turn with tool activity lets one extra marker per ~70 min be queued (probe)
+AUDIT-LT markers queued while one turn stayed busy: 4
+
+ ✓ tests/audit/audit-retire.test.mjs > 2b mixed prompt: retired nonce + current live nonce (finding probe) 168ms
+ ✓ tests/audit/audit-retire.test.mjs > 2c same prune/event replayed many times: no second retirement or second attempt 67ms
+ ✓ tests/audit/audit-retire.test.mjs > LT a long busy turn with tool activity lets one extra marker per ~70 min be queued (probe) 143ms
+ ✓ tests/audit/audit-retire.test.mjs > 5a every outlook produced is schema-valid and carries authorityEffect none; send/status never claim delivery 86ms
+ ✓ tests/audit/audit-retire.test.mjs > C2 fuzz: rebirth at equal or earlier time yields prev+1ms for 2000 random birth times 14700ms
+stdout | tests/audit/audit-retire.test.mjs > 5b probe: outlook for an old-generation wake that has NOT passed its injection expiry
+AUDIT-5b {"outlook":{"state":"latched","reason":"wake-unobserved","basisAt":"2026-09-28T15:38:06.891Z","checkedAt":"2026-09-28T14:38:12.891Z","authorityEffect":"none"},"expiresAt":"2026-09-28T15:38:06.891Z","beforeExpiry":true}
+
+ ✓ tests/audit/audit-retire.test.mjs > 2d ordering where the verified late arrival lands before any prune retired the row: observed (real arrival), then one new wake 113ms
+ ✓ tests/audit/audit-retire.test.mjs > 5b probe: outlook for an old-generation wake that has NOT passed its injection expiry 30ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  14:37:46
+   Duration  19.96s (tests 83%, transform 10%, import 7%)
+
+rc=0

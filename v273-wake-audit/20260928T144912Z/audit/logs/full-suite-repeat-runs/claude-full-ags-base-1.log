@@ -1,0 +1,36 @@
+Already up to date
+Done in 610ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-base
+
+ ❯ tests/tooling/commands.test.mjs (12 tests | 1 failed) 10032ms
+   ❯ skill maintenance commands (12)
+     × forwards pnpm script arguments without a standalone separator 34ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/tooling/commands.test.mjs > skill maintenance commands > forwards pnpm script arguments without a standalone separator
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/tooling/commands.test.mjs:37:28
+     35|   it("forwards pnpm script arguments without a standalone separator", …
+     36|     const pnpmEntrypoint = process.env.npm_execpath;
+     37|     expect(pnpmEntrypoint).toBeTruthy();
+       |                            ^
+     38|     const pnpmArguments = [
+     39| "validate:skill", "--name", "orchestrator"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 58 passed | 1 skipped (60)
+      Tests  1 failed | 810 passed | 1 skipped (812)
+   Start at  14:37:42
+   Duration  112.11s (tests 96%, import 3%, transform 2%)
+

@@ -1,0 +1,18 @@
+ags-base full run 1 rc=1  Tests 1 failed | 810 passed | 1 skipped (812) leak-test-failed=0
+     × forwards pnpm script arguments without a standalone separator 34ms
+ FAIL  tests/tooling/commands.test.mjs > skill maintenance commands > forwards pnpm script arguments without a standalone separator
+ags-base full run 2 rc=1  Tests 1 failed | 810 passed | 1 skipped (812) leak-test-failed=0
+     × forwards pnpm script arguments without a standalone separator 18ms
+ FAIL  tests/tooling/commands.test.mjs > skill maintenance commands > forwards pnpm script arguments without a standalone separator
+ags-base full run 3 rc=1  Tests 1 failed | 810 passed | 1 skipped (812) leak-test-failed=0
+     × forwards pnpm script arguments without a standalone separator 21ms
+ FAIL  tests/tooling/commands.test.mjs > skill maintenance commands > forwards pnpm script arguments without a standalone separator
+ags-audit full run 1 rc=1  Tests 1 failed | 837 passed | 2 skipped (840) leak-test-failed=0
+     × forwards pnpm script arguments without a standalone separator 16ms
+ FAIL  tests/tooling/commands.test.mjs > skill maintenance commands > forwards pnpm script arguments without a standalone separator
+ags-audit full run 2 rc=1  Tests 1 failed | 837 passed | 2 skipped (840) leak-test-failed=0
+     × forwards pnpm script arguments without a standalone separator 19ms
+ FAIL  tests/tooling/commands.test.mjs > skill maintenance commands > forwards pnpm script arguments without a standalone separator
+ags-audit full run 3 rc=1  Tests 1 failed | 837 passed | 2 skipped (840) leak-test-failed=0
+     × forwards pnpm script arguments without a standalone separator 20ms
+ FAIL  tests/tooling/commands.test.mjs > skill maintenance commands > forwards pnpm script arguments without a standalone separator
