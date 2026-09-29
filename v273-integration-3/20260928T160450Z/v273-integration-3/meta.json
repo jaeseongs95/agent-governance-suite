@@ -1,0 +1,13 @@
+{
+  "task": "AGS 2.7.3 integration stage 3 (version and release notes), 총괄 ca8e3dc4",
+  "base": "92b1a0d147d280e511eaf5c23cbbf9d00ac790bf",
+  "versionCommit": "41958504b1807ec93b7ff0693b25a6a772365467",
+  "head": "b6deb37120e82c75ea0e3ba90a07324adf885969",
+  "headTree": "93e2b98ec4473591a5df155b474853a263953aba",
+  "instructionsSha256": "474cdcdb93a26a3bed0c58cc03313b3b47e7c19c654702476cb202efc43a0b75",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v42 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startUtc": "2026-09-28T15:59:38Z",
+  "endUtc": "2026-09-28T16:04:50Z"
+}

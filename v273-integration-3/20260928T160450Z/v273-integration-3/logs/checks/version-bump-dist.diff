@@ -1,0 +1,10 @@
+--- a/claude-plugin/mcp-server/dist/server.mjs
++++ b/claude-plugin/mcp-server/dist/server.mjs
+@@ -19736 +19736 @@ var PLUGIN_INFO = Object.freeze({
+-  version: "2.7.2",
++  version: "2.7.3",
+--- a/mcp-server/dist/server.mjs
++++ b/mcp-server/dist/server.mjs
+@@ -19736 +19736 @@ var PLUGIN_INFO = Object.freeze({
+-  version: "2.7.2",
++  version: "2.7.3",

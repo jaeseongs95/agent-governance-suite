@@ -1,0 +1,14 @@
+.agents/plugins/marketplace.json:12:        "ref": "v2.7.3"
+.codex-plugin/plugin.json:4:  "version": "2.7.3",
+README.en.md:17:The current public release is `v2.7.3` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local 
+README.en.md:47:codex plugin marketplace add [REDACTED-ACCOUNT]/agent-governance-suite --ref v2.7.3
+README.md:17:현재 공개 릴리스는 `v2.7.3`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(tas
+README.md:47:codex plugin marketplace add [REDACTED-ACCOUNT]/agent-governance-suite --ref v2.7.3
+claude-plugin/.claude-plugin/plugin.json:3:  "version": "2.7.3",
+claude-plugin/mcp-server/dist/server.mjs:19736:  version: "2.7.3",
+docs/roadmap.md:4:문서 기준일은 2026년 9월 21일이다. 현재 공개 릴리스는 `v2.7.3`이다. v2.4.0은 20개 스킬의 상세 절차를 활성화 
+mcp-server/dist/server.mjs:19736:  version: "2.7.3",
+mcp-server/src/plugin-info.ts:3:  version: "2.7.3",
+package.json:3:  "version": "2.7.3",
+release/version.json:2:  "version": "2.7.3"
+scripts/check-skill-context-optimization.mjs:16:  revision: "2.7.3-intake-selection-timing",
