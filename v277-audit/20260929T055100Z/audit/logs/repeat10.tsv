@@ -1,0 +1,12 @@
+run1	rc=0	 Tests 12 passed (12)	 Duration 3.68s (tests 86%, transform 12%, import 2%)	home-writes=[./data,./data/vitest,./data/vitest/.vitest-secret-token,./state,./state/pnpm,]	tmp-left=0
+run2	rc=0	 Tests 12 passed (12)	 Duration 2.83s (tests 81%, transform 17%, import 2%)	home-writes=[./data,./data/vitest,./data/vitest/.vitest-secret-token,./state,./state/pnpm,]	tmp-left=0
+run3	rc=0	 Tests 12 passed (12)	 Duration 2.82s (tests 90%, transform 8%, import 2%)	home-writes=[./data,./data/vitest,./data/vitest/.vitest-secret-token,./state,./state/pnpm,]	tmp-left=1
+run4	rc=0	 Tests 12 passed (12)	 Duration 2.90s (tests 79%, transform 18%, import 3%)	home-writes=[./data,./data/vitest,./data/vitest/.vitest-secret-token,./state,./state/pnpm,]	tmp-left=-1
+run5	rc=0	 Tests 12 passed (12)	 Duration 3.52s (tests 80%, transform 18%, import 2%)	home-writes=[./data,./data/vitest,./data/vitest/.vitest-secret-token,./state,./state/pnpm,]	tmp-left=0
+run6	rc=0	 Tests 12 passed (12)	 Duration 4.23s (tests 78%, transform 19%, import 2%)	home-writes=[./data,./data/vitest,./data/vitest/.vitest-secret-token,./state,./state/pnpm,]	tmp-left=0
+run7	rc=0	 Tests 12 passed (12)	 Duration 3.85s (tests 81%, transform 17%, import 2%)	home-writes=[./data,./data/vitest,./data/vitest/.vitest-secret-token,./state,./state/pnpm,]	tmp-left=0
+run8	rc=0	 Tests 12 passed (12)	 Duration 4.38s (tests 78%, transform 20%, import 2%)	home-writes=[./data,./data/vitest,./data/vitest/.vitest-secret-token,./state,./state/pnpm,]	tmp-left=0
+run9	rc=0	 Tests 12 passed (12)	 Duration 3.60s (tests 87%, transform 11%, import 2%)	home-writes=[./data,./data/vitest,./data/vitest/.vitest-secret-token,./state,./state/pnpm,]	tmp-left=0
+run10	rc=0	 Tests 12 passed (12)	 Duration 3.97s (tests 81%, transform 17%, import 2%)	home-writes=[./data,./data/vitest,./data/vitest/.vitest-secret-token,./state,./state/pnpm,]	tmp-left=0
+leftover-broker-processes=1
+DONE

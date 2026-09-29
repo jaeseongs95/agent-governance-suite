@@ -1,0 +1,1 @@
+removed /tmp/ags-presence-retention-wSOirv (mtime 03:32Z, left by the earlier v2.7.6 audit base run)

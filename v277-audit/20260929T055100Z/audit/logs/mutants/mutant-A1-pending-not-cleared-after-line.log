@@ -1,0 +1,339 @@
+Already up to date
+Done in 521ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v277m
+
+ ✓ tests/session-messaging/utf8-framing.test.ts > decodes a 3-byte Korean character split 1|2 at byte 16384 as the original text 3ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > decodes a 3-byte Korean character split 2|1 at byte 16384 as the original text 0ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > decodes a 4-byte emoji split 1|3 at byte 16384 as the original text 0ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > decodes a 4-byte emoji split 2|2 at byte 16384 as the original text 1ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > decodes a 4-byte emoji split 3|1 at byte 16384 as the original text 1ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > counts the line with its newline in raw bytes: exactly the limit is accepted, one byte more is rejected 1ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > accepts a real claim answer of exactly the response limit with a Korean character split 1|rest at the TLS chunk, and rejects one byte more 452ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > keeps stable IDs until ACK, enforces limits, and recovers stale relay leases 60ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > applies caller claim budgets before leasing messages 10ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > rejects newline, control, and unsafe host or session identifiers 5ms
+ ✓ tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker 575ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > accepts a real claim answer of exactly the response limit with a Korean character split 2|rest at the TLS chunk, and rejects one byte more 306ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > allows only one unconsumed wake and suppresses wakes during a live claim 53ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > expires an unconsumed wake after one hour independently of message TTL 6ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > tracks portable presence generations and derives lifecycle state from the lease 8ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > does not let an explicit stale presence end offline the current generation 4ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > exposes presence lifecycle through vendor-neutral broker operations 6ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > leaves queued messages intact when an older broker rejects a new operation 7ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > locks claim selection before a competing connection can reserve a wake 15ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > keeps a recognized wake latched until claim consumes it atomically 5ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > accepts a request of exactly the request limit with a Korean character split 1|rest at the TLS chunk, and rejects one byte more 240ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > caps the unacknowledged spool and expires messages 380ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > keeps delivery receipt metadata stable across lease redelivery and stops after ACK 9ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > atomically verifies a session-bound wake before claiming and rejects reuse or mismatch 19ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > allows one wake claim across two concurrent SQLite connections 191ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > defers one boundary, then keeps claiming new and redelivered messages until a new native input 17ms
+ ✓ tests/session-messaging/session-message.test.ts > session message spool > migrates legacy messages without inventing unknown first-delivery evidence 22ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > accepts a request of exactly the request limit with a Korean character split 2|rest at the TLS chunk, and rejects one byte more 235ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > fails fast on broker exit and leaves deadline cleanup to the state-directory owner 378ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > converges simultaneous startup requests on one broker 196ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > delivers twelve batches of Korean messages through the CLI claim path byte for byte 669ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > hands a Korean claim answer one byte under the limit to the CLI instead of retrying into an empty 120 s lease 266ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > expired original evidence retires only the exact old attempt, preserving historical time and pending body 37ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects target without changing any message state 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects attempt without changing any message state 20ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > returns at the startup deadline while state preparation is still blocked and never spawns afterward 553ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects receipt without changing any message state 25ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects nonce without changing any message state 23ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects current without changing any message state 29ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects no-current without changing any message state 21ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects no-late without changing any message state 23ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects submitted without changing any message state 23ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects already-consumed without changing any message state 27ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects bad-signature without changing any message state 20ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects digest without changing any message state 37ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > handles a state-preparation rejection that arrives after the startup deadline 152ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > preserves the top-level deadline reason when the event loop resumes after expiry 154ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects adapter without changing any message state 26ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects authority without changing any message state 24ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation before-start 35ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation after-late 36ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation expiry-at-late 21ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation not-expired 18ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation invalid-observed 21ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation invalid-late 24ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation invalid-start 21ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > reconstructs only the exact signed actor digest main/observed 33ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > reconstructs only the exact signed actor digest main/unknown 26ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > reconstructs only the exact signed actor digest unknown/observed 32ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > reconstructs only the exact signed actor digest unknown/unknown 19ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > a signed multiple-nonce observation cannot be approximated by a single old nonce 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust rejection missing-db creates no database/key/receipt 18ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust rejection missing-key creates no database/key/receipt 28ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust rejection bad-key creates no database/key/receipt 25ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust rejection missing-table creates no database/key/receipt 25ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > enforces an absolute request deadline while a TLS peer keeps sending partial data 433ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > rejects a reused PID when its process-start token changes 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > parses merged wake bells without hiding mixed user text 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > maps vendor input once and keeps mixed user text as a user-input observation 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > keeps injection and idle wake as separate arbitrary-host capabilities 0ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > denies observed subagents before session-bound message calls and binds collaboration validation observations 1ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust rejection wrong-column creates no database/key/receipt 23ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust respects initializer version compatibility without migrating version 0 23ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust respects initializer version compatibility without migrating version 1 20ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust respects initializer version compatibility without migrating version 2 36ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust respects initializer version compatibility without migrating version 99 40ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly version and receipt share a snapshot while an independent writer upgrades the version 65ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied nowMs 28ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied receipt 28ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied approved 31ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied observation 29ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied nonce 20ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > treats merged wake bells as internal only when every nonce is broker-recognized 330ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > backs off definite wake submission failures without exceeding ten minutes 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > keeps Codex wake deferred by default and makes visible queue wake explicit 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > resolves plugin queue settings only after explicit ENV and only for Codex 3ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > disables malformed plugin queue settings 0 with a bounded diagnostic 2ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > disables malformed plugin queue settings 1 with a bounded diagnostic 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > disables malformed plugin queue settings 2 with a bounded diagnostic 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > disables malformed plugin queue settings 3 with a bounded diagnostic 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > disables malformed plugin queue settings 4 with a bounded diagnostic 2ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > disables malformed plugin queue settings 5 with a bounded diagnostic 2ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > disables malformed plugin queue settings 6 with a bounded diagnostic 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > disables malformed plugin queue settings 7 with a bounded diagnostic 2ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > disables malformed plugin queue settings 8 with a bounded diagnostic 2ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > bounds plugin queue settings by bytes, permits false, and rejects read errors and relative paths 11ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied instanceId 31ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > two independent recovery processes CAS once; pending uses separate normal reserve/start 250ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > CAS rechecks generation after historical verification 21ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > CAS rechecks epoch after historical verification 26ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > CAS rechecks late after historical verification 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > CAS rechecks state after historical verification 31ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > historical observation retention counts from recovery application, not the old arrival 40ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > a reused instance with a new birth generation still retires only the old attempt 31ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > read-only verification holds one key/receipt snapshot while an independent writer rotates both 129ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > bundled public CLI forwards only IDs to the private broker and cannot repeat recovery 388ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged CLI binds history to explicit broker state directory: prestarted 660ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged CLI binds history to explicit broker state directory: client-ensure 2484ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged root CLI rejects unsupported trust schema without mutation: 0 322ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged root CLI rejects unsupported trust schema without mutation: 1 292ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged root CLI rejects unsupported trust schema without mutation: 2 320ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged root CLI rejects unsupported trust schema without mutation: 99 302ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged root CLI rejects unsupported trust schema without mutation: missing-table 319ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged root CLI rejects unsupported trust schema without mutation: wrong-column 298ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged claude CLI rejects unsupported trust schema without mutation: 0 293ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged claude CLI rejects unsupported trust schema without mutation: 1 321ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged claude CLI rejects unsupported trust schema without mutation: 2 296ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged claude CLI rejects unsupported trust schema without mutation: 99 321ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > uses one plugin queue profile for packaged presence and relay until the next SessionStart 7184ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > releases Codex wake reservations only for definite submission failures 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > retains Claude wake reservations whenever the inbox may have accepted bytes 0ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > serializes a Claude wake with next priority through an isolated inbox socket 4ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > does not dispatch a Claude wake when socket is missing 0ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > does not dispatch a Claude wake when token is missing 0ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > does not dispatch a Claude wake when both is missing 0ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > consumes queued peers at safe boundaries after restart without waking again after ACK 22ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > retries only a definitely failed wake whose reservation was released 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > serializes wake reservation and release through the TLS broker 222ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > stops relay acquisition after three consecutive unknown identity checks 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > does not pass Claude inbox credentials into the broker process 0ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged claude CLI rejects unsupported trust schema without mutation: missing-table 312ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged claude CLI rejects unsupported trust schema without mutation: wrong-column 309ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts 571ms
+ ✓ tests/session-messaging/message-retention.test.ts > exports the sender receipt limit next to the unchanged global limit 2ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > blocks only verified empty Codex wake prompts in the packaged hook 1362ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > blocks a verified retired Codex wake marker without claiming the current body 490ms
+ ✓ tests/session-messaging/message-retention.test.ts > caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders 402ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > keeps a maximum-size peer message within the hook context limit 310ms
+ ✓ tests/session-messaging/message-retention.test.ts > rejects prepare and send with global scope when the global receipt pool is full 1757ms
+ ✓ tests/session-messaging/message-retention.test.ts > bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted 10ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > escapes peer bodies inside one bounded JSON block 338ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > losslessly bounds an escape-heavy controls envelope 2ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > losslessly bounds an escape-heavy quotes envelope 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > losslessly bounds an escape-heavy backslashes envelope 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > starts the relay without spending a second claim budget during SessionStart 390ms
+ ✓ tests/session-messaging/message-retention.test.ts > drained senders regain capacity at ACK+1h instead of message expiry+1h 380ms
+ ✓ tests/session-messaging/message-retention.test.ts > second ACK, another session's ACK and unknown-ID ACK leave receipt expiry unchanged 13ms
+ ✓ tests/session-messaging/message-retention.test.ts > unacknowledged receipts keep message expiry + 1h 8ms
+ ✓ tests/session-messaging/message-retention.test.ts > two processes sending for one sender at limit-1 never exceed the sender limit 698ms
+ ✓ tests/session-messaging/message-retention.test.ts > concurrent send and ACK keep one row and only shorten receipt expiry 201ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > leaves Codex Stop messages queued for a supported context event 447ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > does not register an unsupported Codex Stop context hook 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > keeps packaged hook and relay entrypoints isolated 1787ms
+ ✓ tests/session-messaging/message-retention.test.ts > opens a v2.7.2 receipt without migration and applies ACK+1h only to new ACKs 31ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > keeps Claude Code Stop context delivery enabled 302ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > binds message tools to host hook identity 1ms
+ ✓ tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > does not speak plaintext on the loopback port 177ms
+ ✓ tests/session-messaging/session-message.test.ts > session message MCP tools > reports an overlong Unicode body as INVALID_INPUT before broker access 3ms
+ ✓ tests/session-messaging/session-message.test.ts > session message MCP tools > validates bound send, status, and acknowledgement calls 584ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > one tick renews both leases and optionally counts pending messages 12ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > stale generation, ended presence, transport, relay and expired leases have zero renewal effect 27ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > tick validation and a pending-query failure cannot partially update leases 7ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > issues opaque IDs without queue, peer relationship, claim or wake effect 7ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > rejects unknown, another sender and mutated public payload without enqueue 6ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > keeps the first immutable receipt and does not enqueue or wake after ACK/prune 11ms
+ ✓ tests/session-messaging/message-retention.test.ts > service reports capacity rejections as definite no-effect with scope and earliest release details 2005ms
+ ✓ tests/session-messaging/message-retention.test.ts > a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection 1474ms
+ ✓ tests/session-messaging/message-retention.test.ts > reports sender scope and the sender's own earliest expiry when sender and global limits are both full 1466ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > rejects exact draft expiry and validates Unicode, TTL and sender draft capacity 40ms
+ ✓ tests/session-messaging/message-retention.test.ts > byte-limit send rejection carries global details and releases exactly at the earliest record expiry 82ms
+ ✓ tests/session-messaging/message-retention.test.ts > rolls back the whole ACK when the receipt update fails inside the same transaction 6ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > applies global draft, receipt and byte backpressure without evicting valid records 2080ms
+ ✓ tests/session-messaging/message-retention.test.ts > when earliestReleaseAt is after the draft expiry, the guidance leads to a new prepare that succeeds 553ms
+stdout | tests/session-messaging/message-lifecycle.test.ts > packaged TLS cycles use one request instead of three or two without changing pending state
+relay tick measured TLS request counts [{"transport":"test-inbox","cycles":10,"baselineRequests":30,"tickRequests":10},{"transport":"codex-deferred","cycles":10,"baselineRequests":20,"tickRequests":10}]
+
+ ✓ tests/session-messaging/message-lifecycle.test.ts > packaged TLS cycles use one request instead of three or two without changing pending state 514ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > normalizes native semantic equivalence: key-order 18ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > normalizes native semantic equivalence: local-default 14ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > normalizes native semantic equivalence: target-order 10ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > normalizes native semantic equivalence: duplicate 10ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > normalizes broker target order and duplicates before both state fingerprints and policy keys 13ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > preserves distinct cursors for the same target and leaves malformed cursors fail-open 1ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > recognizes exactly the local native wait surface and arguments 1ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > requires a consumed wake in addition to live exact-generation presence 7ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > allows one snapshot, suppresses unchanged repeats and resets on state change or new user input 9ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > does not restrict mixed or unrelated targets even with a working resume path 7ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > does not deny when presence-expired 6ms
+ ✓ tests/session-messaging/presence-retention.test.ts > ends a board lookup against a slow real broker at one overall client deadline 20355ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > a real post-commit prepare reply loss leaves only orphan drafts 451ms
+ ✓ tests/session-messaging/presence-retention.test.ts > B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve 263ms
+ ✓ tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end 8ms
+ ✓ tests/session-messaging/presence-retention.test.ts > never deletes a live row, however old its birth 33ms
+ ✓ tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row 54ms
+ ✓ tests/session-messaging/presence-retention.test.ts > gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing 28ms
+ ✓ tests/session-messaging/presence-retention.test.ts > prunes presence idempotently when two processes race on one database 380ms
+ ✓ tests/session-messaging/presence-retention.test.ts > bounds list-presence: batches fit the response limit and oversized or overlong requests are refused 22ms
+ ✓ tests/session-messaging/presence-retention.test.ts > still lists every identity for an untargeted request that fits 4ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > does not deny when relay-expired 6ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > does not deny when wake-expired 8ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > does not deny when new-generation 7ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > does not deny when instance-mismatch 6ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > does not deny when no-idle-wake 6ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > does not deny when dead-relay 6ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > does not promote supplied capability, ACK or old relay registration to resume 5ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > does not attach an old generation nonce to a replacement instance 6ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > requires valid nonces and does not infer resume from ordinary peer delivery 6ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > expires snapshot records without timers and leaves no restart state 0ms
+ ✓ tests/session-messaging/peer-wait.test.ts > peer wait policy boundaries > duplicate nonce claims and relay observations never extend consumed wake freshness 13ms
+ ✓ tests/session-messaging/peer-wait.test.ts > enforces native wait through the public packaged hook and preserves unrelated waits 869ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 body claim and ACK cannot authorize another unobserved managed wake 36ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 board ownership check has no nonce state effect 35ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 claimDeferred and ACK leave the managed notification fenced 33ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 claimTurnEnd and ACK leave the managed notification fenced 31ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 start rechecks claim/ACK and persists no-effect retirement 18ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 claim after start keeps one fence until the actual hook, including an empty batch 36ms
+ ✓ tests/session-messaging/peer-wait.test.ts > the public CLI consumes the decision before delay and sends no repeated poll when denied 379ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 reserved crash recovery keeps the nonce/attempt and rejects replaced lease CAS 24ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 transport remains part of the exact stored attempt binding 18ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 definite failure uses durable backoff and exact dispatch epoch for late results 18ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H1/instance retires and starts a separate attempt after durable backoff 27ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H1/rebirth retires and starts a separate attempt after durable backoff 29ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H1/transport retires and starts a separate attempt after durable backoff 26ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H2/instance retires and starts a separate attempt after durable backoff 33ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H2/rebirth retires and starts a separate attempt after durable backoff 35ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H2/transport retires and starts a separate attempt after durable backoff 36ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H3/instance retires and starts a separate attempt after durable backoff 31ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H3/rebirth retires and starts a separate attempt after durable backoff 36ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H3/transport retires and starts a separate attempt after durable backoff 63ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > generation replacement alone preserves the submitted effect fence 27ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > generation replacement alone preserves the accepted-or-unknown effect fence 19ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > generation replacement alone preserves the none effect fence 16ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > generation replacement alone preserves the late effect fence 18ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old-generation definite failure requires every original binding field and epoch 17ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > stale reserved late_observed_at cannot be normalized as a no-effect attempt 20ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > stale reserved observed_at cannot be normalized as a no-effect attempt 16ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > stale reserved consumed_at cannot be normalized as a no-effect attempt 18ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > stale reserved unproved-retry cannot be normalized as a no-effect attempt 17ms
+ ✓ tests/session-messaging/peer-wait.test.ts > public native hook suppresses equivalent payloads but permits actual cursor change 622ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > terminal pruning cannot erase an outstanding old-generation backoff 85ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > outstanding terminal backoffs share the active wake budget and release it at the deadline 66ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 unknown survives restart, both TTLs, ordinary claim, ACK and generation replacement 21ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 ordinary peer provenance, expired hook receipts and changed observation digests cannot release a fence 29ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 observation holds the SQLite generation lock and notices a generation change during verification 27ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 lost committed outcome response never dispatches again 16ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 forged nonce, caller approved and normalized observation cannot observe without the hook receipt 27ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > verified expired/old-generation arrival retires only its attempt before a separate current wake 131ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old-generation retirement still rejects wrong target, unknown or mixed nonces and stale provenance 31ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 batch/ACK-loss redelivery and hook rollback preserve exact nonce consumption 31ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 hook-before-outcome, adapter exception and new vendor use the same core 31ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 both host capabilities preserve submission/observation distinction and deferred idle wake zero 1ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 additive legacy migration never imports old consumed_at as observed 15ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 active budget overflow is an explicit rejection and does not remove unknowns 75ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 terminal observation retention is bounded while unresolved rows are retained 59ms
+ ✓ tests/session-messaging/peer-wait.test.ts > public CLI equivalent retransmissions consume one decision each and state change restores a snapshot 658ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > independent generation/outcome-first-race workers permit exactly one separate new effect 454ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > a real send reply loss retries the known ID once and survives broker restart 2793ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > independent generation/start-first-race workers permit exactly one separate new effect 418ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > two independent processes submit one ID atomically and enforce sender preparation capacity 467ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > preserves old messages across additive schema initialization but refuses old IDs as new sends 17ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > verified old arrival in another process releases only the old attempt and permits one new effect 369ms
+ ✓ tests/session-messaging/peer-wait.test.ts > CLI unknown resume uses one bounded wait and does not force permanent stopping 1241ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > Codex running body claim in another process prevents the external queue call before start 197ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect 651ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > Codex post-start claim in another process leaves one marker and a verified empty discard 183ms
+ ✓ tests/session-messaging/peer-wait.test.ts > broker restart preserves messages but drops resume and repeat-suppression evidence 676ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 independent senders and relay processes perform exactly one external call 371ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > retries transient endpoint publication failures and serves the published endpoint 375ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired submitted latch retires for a newer live generation and a new wake is reserved 34ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired accepted-or-unknown latch retires for a newer live generation and a new wake is reserved 21ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired started latch retires for a newer live generation and a new wake is reserved 20ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired latch of a live, quiet birth without activity stays latched: same-generation 20ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired latch of a live, quiet birth without activity stays latched: other-transport 20ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: unreachable 17ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: ended 17ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: ended-new-generation 20ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: purged 26ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: older-instance-live 21ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: generation-missing 15ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: live-birth-behind-ended 16ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: same-ms-other-instance 17ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: lease-ends-at-retirement 15ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > a wake of an ended birth retired without activity records a late arrival as evidence only, then a rebirth delivers 46ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > same-generation activity claim after expiry retires the latch after the grace 21ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > same-generation activity claimDeferred after expiry retires the latch after the grace 28ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > same-generation activity claimTurnEnd after expiry retires the latch after the grace 18ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > same-generation activity clearDeferred after expiry retires the latch after the grace 21ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 independent process crash before start recovers the same attempt; after effect never resends 964ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > same-generation activity acknowledge after expiry retires the latch after the grace 22ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > same-generation activity observeNativeInput after expiry retires the latch after the grace 20ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > same-generation activity before-expiry after expiry retires the latch after the grace 21ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > retirement and re-reservation are idempotent across prunes and reopened connections 24ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 independent migration failure rolls back every added nonce column and preserves legacy bytes 198ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > public wake binding requires a fresh presence birth after lease expiry 11ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > a verified late arrival of a retired nonce is recorded without claiming the current generation body 56ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > F1: a retired nonce mixed with the current nonce records late only and lets the current attempt claim its body 30ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > a retired nonce cannot be laundered by forged provenance or a mixed unknown nonce 28ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > K: an arrival whose hook receipt expired during a broker outage stays latched until retirement evidence, then a new wake delivers 36ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > releases startup resources after permanent failure and allows recovery 1036ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > C2: a same-millisecond rebirth gets a distinct generation, so the previous birth cannot claim 33ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > autoWake is advisory and reports each delivery path state 32ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule 47ms
+ ✓ tests/session-messaging/presence-batches.test.ts > keeps successful batches when the broker refuses one batch and reports only that batch as unanswered 4ms
+ ✓ tests/session-messaging/presence-batches.test.ts > never asks the broker for identities outside its identifier pattern 1ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > G: a newer message schema version is rejected without mutation 21ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > releases startup resources after ENOSPC failure and allows recovery 235ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > G: two independent processes racing the v2.7.2 upgrade both open one migrated schema 197ms
+ ✓ tests/session-messaging/presence-batches.test.ts > stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch 401ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > releases startup resources after credentials failure and allows recovery 235ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > G: a failure inside the table rebuild rolls back columns, rows and schema version 172ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > crash right after a committed retirement leaves a retired row and one later reservation 162ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > releases startup resources after database failure and allows recovery 238ms
+ ✓ tests/session-messaging/presence-batches.test.ts > keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure 402ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > two independent processes racing the retirement of an ended birth retire it once 181ms
+ ✓ tests/session-messaging/wake-liveness.test.mjs > two independent relay processes racing retirement create one active attempt 197ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered 24ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > does not let an answer that arrives after the deadline change the result 2ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > bounds an unresponsive broker by the same deadline and asks only once 3ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > returns every identity exactly once, in order, from a normal broker 7ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > keeps the overall deadline when the wall clock steps back during a lookup 5ms
+ ✓ tests/session-messaging/self-signed-certificate.test.ts > self-signed certificate > encodes random serial numbers as canonical positive DER integers 11ms
+ ↓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker
+ ↓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake
+ ↓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker
+ ↓ tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired
+ ↓ tests/session-messaging/previous-broker.test.ts > reads a previous broker's Korean claim answer at the response limit whole, and meets its own request reader
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > delivers and acknowledges a message using only the packaged CLI and broker 790ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > isolates socket resets and a lost send response while preserving the broker and one committed message 673ms
+
+ Test Files  13 passed | 1 skipped (14)
+      Tests  320 passed | 5 skipped (325)
+   Start at  05:59:59
+   Duration  29.31s (tests 97%, transform 2%, import 1%)
+

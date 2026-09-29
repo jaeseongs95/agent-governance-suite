@@ -1,0 +1,1 @@
+{"cases":20000,"invalidCases":7617,"newMismatchCanonical":0,"newWrongLimitDecision":0,"newStricterThanOld":0,"oldFalseOver":4760,"oldCorrupted":4285,"sameWhenValidAndCharAligned":1430,"differWhenValidAndCharAligned":0}

@@ -1,0 +1,44 @@
+{
+ "label": "fd3f486a",
+ "lease": {
+  "cliOk": true,
+  "cliError": null,
+  "cliReturned": 9,
+  "intact": true,
+  "replacementChars": 0,
+  "brokerConnectionsDuringCli": 1,
+  "responseChunkSizes": [
+   [
+    16384,
+    16383
+   ]
+  ],
+  "responseBytes": [
+   32767
+  ],
+  "unackedRows": 9,
+  "attempts": [
+   1
+  ],
+  "leaseMs": [
+   120000
+  ],
+  "immediateReclaim": 0
+ },
+ "requestAtLimit": "accepted",
+ "brokerRequestChunks": [
+  [
+   114
+  ],
+  [
+   167
+  ],
+  [
+   167
+  ],
+  [
+   16384,
+   16384
+  ]
+ ]
+}

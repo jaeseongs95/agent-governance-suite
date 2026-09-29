@@ -1,0 +1,58 @@
+{
+ "label": "9e76a07b",
+ "lease": {
+  "cliOk": true,
+  "cliError": null,
+  "cliReturned": 0,
+  "intact": false,
+  "replacementChars": 0,
+  "brokerConnectionsDuringCli": 3,
+  "responseChunkSizes": [
+   [
+    16384,
+    16383
+   ],
+   [
+    147
+   ],
+   [
+    35
+   ]
+  ],
+  "responseBytes": [
+   32767,
+   147,
+   35
+  ],
+  "unackedRows": 9,
+  "attempts": [
+   1
+  ],
+  "leaseMs": [
+   120000
+  ],
+  "immediateReclaim": 0
+ },
+ "requestAtLimit": "BrokerRequestRejected: Request exceeds the broker limit.",
+ "brokerRequestChunks": [
+  [
+   114
+  ],
+  [
+   167
+  ],
+  [
+   114
+  ],
+  [
+   167
+  ],
+  [
+   167
+  ],
+  [
+   16384,
+   16384
+  ]
+ ]
+}

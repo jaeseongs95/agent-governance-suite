@@ -1,0 +1,44 @@
+(node:7590) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 close listeners added to [TLSSocket]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7590) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [TLSSocket]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+{
+ "label": "fd3f486a",
+ "memBefore": {
+  "rssKb": 76852,
+  "hwmKb": 76852
+ },
+ "burst": {
+  "mode": "burst",
+  "attemptedBytes": 67108864,
+  "writtenBytes": 3604480,
+  "writeLoopMs": 9,
+  "serverEndMs": null,
+  "closeMs": 9,
+  "clientError": "read ECONNRESET",
+  "responses": [
+   "{\"ok\":false,\"error\":\"Request exceeds the broker limit.\"}"
+  ]
+ },
+ "memAfterBurst": {
+  "rssKb": 78412,
+  "hwmKb": 78412
+ },
+ "trickle": {
+  "mode": "trickle",
+  "attemptedBytes": 3145728,
+  "writtenBytes": 40960,
+  "writeLoopMs": 20,
+  "serverEndMs": 2,
+  "closeMs": 2,
+  "clientError": null,
+  "responses": [
+   "{\"ok\":false,\"error\":\"Request exceeds the broker limit.\"}"
+  ]
+ },
+ "memAfterTrickle": {
+  "rssKb": 79700,
+  "hwmKb": 80304
+ },
+ "pingAfter": "ok",
+ "brokerAlive": true
+}

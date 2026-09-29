@@ -1,0 +1,14 @@
+v2.7.6	commit=a7602868fdc4	bytes=117481	sha256=9f1efa9ef29a677d
+v2.7.5	commit=3706167d4646	bytes=117481	sha256=9f1efa9ef29a677d
+v2.7.3	commit=65bdd257b749	bytes=115666	sha256=b30977b574c7d17b
+P1-v2.7.6-as-2.7.6	v2.7.6	version=2.7.6	rc=0	 Tests 5 passed (5)	
+P2-v2.7.5-as-2.7.5	v2.7.5	version=2.7.5	rc=0	 Tests 5 passed (5)	
+P3-v2.7.3-as-2.7.3	v2.7.3	version=2.7.3	rc=0	 Tests 5 passed (5)	
+P4-v2.7.6-unset	v2.7.6	version=UNSET	rc=1	⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Tests 2 failed | 3 passed (5)	leaves a previous broker's latch of an ended birth for the new broker to retire, or finds |reads a previous broker's Korean claim answer at the response limit whole, and meets its o|
+P5-v2.7.6-as-2.7.7-lie	v2.7.6	version=2.7.7	rc=1	⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Tests 1 failed | 4 passed (5)	reads a previous broker's Korean claim answer at the response limit whole, and meets its o|
+P6-9e76a07b-client-v2.7.6-as-2.7.6	v2.7.6	version=2.7.6	rc=1	⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Tests 1 failed | 4 passed (5)	reads a previous broker's Korean claim answer at the response limit whole, and meets its o|
+leftover-broker-processes=3
+DONE

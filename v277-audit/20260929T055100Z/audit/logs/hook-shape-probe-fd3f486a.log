@@ -1,0 +1,1 @@
+{"label":"fd3f486a","cases":[{"shift":0,"bodyBytes":4088,"responseChunks":[16384,1054],"returned":1,"intact":true,"replacement":0},{"shift":1,"bodyBytes":4089,"responseChunks":[16384,1055],"returned":1,"intact":true,"replacement":0},{"shift":2,"bodyBytes":4090,"responseChunks":[16384,1056],"returned":1,"intact":true,"replacement":0}]}

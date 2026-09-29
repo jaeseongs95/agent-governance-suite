@@ -1,0 +1,38 @@
+=== P5-v2.7.6-as-2.7.7-lie: worktree /home/[REDACTED]/ags-v277c, broker v2.7.6, AGS_PREVIOUS_BROKER_VERSION=2.7.7
+Already up to date
+Done in 534ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v277c
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 1602ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 604ms
+ ✓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker 238ms
+ ✓ tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired 262ms
+ × tests/session-messaging/previous-broker.test.ts > reads a previous broker's Korean claim answer at the response limit whole, and meets its own request reader 308ms
+   → promise rejected "Error: Request exceeds the broker limit. { details: null }" instead of resolving
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > reads a previous broker's Korean claim answer at the response limit whole, and meets its own request reader
+AssertionError: promise rejected "Error: Request exceeds the broker limit. { details: null }" instead of resolving
+ ❯ tests/session-messaging/previous-broker.test.ts:328:58
+    326|     const token = (await readFile(path.join(directory, "broker.token")…
+    327|     const request = requestSessionMessageOnce("ping", straddlingPing(t…
+    328|     if (previousAtLeast([2, 7, 7])) await expect(request).resolves.toM…
+       |                                                          ^
+    329|     else {
+    330|       const error = await request.then(() => null, (reason: unknown) =…
+
+Caused by: Error: Request exceeds the broker limit.
+ ❯ TLSSocket.<anonymous> mcp-server/src/session-message-client.ts:199:36
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { details: null }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  05:58:08
+   Duration  3.56s (tests 89%, transform 9%, import 2%)
+

@@ -1,0 +1,23 @@
+# fixture strings in shipped trees at fd3f486a
+padded-claim: 0
+over-by-one: 0
+straddlingClaim: 0
+straddlingPing: 0
+utf8-layout: 0
+headBytes: 0
+tests/ paths inside claude-plugin: 0
+sessionMessageLineReader copies in dist bundles:
+fd3f486a:claude-plugin/mcp-server/dist/server.mjs:1
+fd3f486a:claude-plugin/mcp-server/dist/session-board-hook.mjs:1
+fd3f486a:claude-plugin/mcp-server/dist/session-message-broker.mjs:1
+fd3f486a:claude-plugin/mcp-server/dist/session-message-cli.mjs:1
+fd3f486a:claude-plugin/mcp-server/dist/session-message-hook.mjs:1
+fd3f486a:claude-plugin/mcp-server/dist/session-message-relay.mjs:1
+fd3f486a:mcp-server/dist/server.mjs:1
+fd3f486a:mcp-server/dist/session-board-hook.mjs:1
+fd3f486a:mcp-server/dist/session-message-broker.mjs:1
+fd3f486a:mcp-server/dist/session-message-cli.mjs:1
+fd3f486a:mcp-server/dist/session-message-hook.mjs:1
+fd3f486a:mcp-server/dist/session-message-relay.mjs:1
+reader definitions in src: fd3f486a:mcp-server/src/session-message-protocol.ts:1
+chunk.toString left in src: 

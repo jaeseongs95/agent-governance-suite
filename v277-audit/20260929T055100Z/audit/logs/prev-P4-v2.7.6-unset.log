@@ -1,0 +1,66 @@
+=== P4-v2.7.6-unset: worktree /home/[REDACTED]/ags-v277c, broker v2.7.6, version unset
+Already up to date
+Done in 536ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v277c
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 1925ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 686ms
+ ✓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker 248ms
+ × tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired 9ms
+   → Set AGS_PREVIOUS_BROKER_VERSION to the previous broker's release version (for example 2.7.5).
+ × tests/session-messaging/previous-broker.test.ts > reads a previous broker's Korean claim answer at the response limit whole, and meets its own request reader 276ms
+   → Set AGS_PREVIOUS_BROKER_VERSION to the previous broker's release version (for example 2.7.5).
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired
+Error: Set AGS_PREVIOUS_BROKER_VERSION to the previous broker's release version (for example 2.7.5).
+ ❯ previousAtLeast tests/session-messaging/previous-broker.test.ts:21:21
+     19| function previousAtLeast(minimum: [number, number, number]): boolean {
+     20|   const parts = /^v?(\d+)\.(\d+)\.(\d+)$/u.exec(previousVersion ?? "");
+     21|   if (!parts) throw new Error("Set AGS_PREVIOUS_BROKER_VERSION to the …
+       |                     ^
+     22|   const version = parts.slice(1).map(Number);
+     23|   for (let index = 0; index < 3; index += 1) if (version[index] !== mi…
+ ❯ tests/session-messaging/previous-broker.test.ts:239:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > reads a previous broker's Korean claim answer at the response limit whole, and meets its own request reader
+Error: Set AGS_PREVIOUS_BROKER_VERSION to the previous broker's release version (for example 2.7.5).
+ ❯ previousAtLeast tests/session-messaging/previous-broker.test.ts:21:21
+     19| function previousAtLeast(minimum: [number, number, number]): boolean {
+     20|   const parts = /^v?(\d+)\.(\d+)\.(\d+)$/u.exec(previousVersion ?? "");
+     21|   if (!parts) throw new Error("Set AGS_PREVIOUS_BROKER_VERSION to the …
+       |                     ^
+     22|   const version = parts.slice(1).map(Number);
+     23|   for (let index = 0; index < 3; index += 1) if (version[index] !== mi…
+ ❯ tests/session-messaging/previous-broker.test.ts:328:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+Error: connect ECONNREFUSED [REDACTED]:36919
+ ❯ TCPConnectWrap.afterConnect [as oncomplete] node:net:2021:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -111, code: 'ECONNREFUSED', syscall: 'connect', address: '[REDACTED]', port: 36919 }
+This error originated in "tests/session-messaging/previous-broker.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The last test to run before this error was "reads a previous broker's Korean claim answer at the response limit whole, and meets its own request reader". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+     Errors  1 error
+   Start at  05:58:02
+   Duration  3.88s (tests 84%, transform 13%, import 2%)
+
