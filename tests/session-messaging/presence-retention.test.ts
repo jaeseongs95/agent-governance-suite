@@ -4,9 +4,9 @@ import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterEach, expect, it, vi } from "vitest";
-import { waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
+import { SESSION_MESSAGE_REQUEST_TIMEOUT_MS, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
 import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import * as protocol from "../../mcp-server/src/session-message-protocol.js";
@@ -64,6 +64,8 @@ const withoutCheckedAt = (value: storeModule.SessionPresenceView) =>
 function largeFixture(database: string, now: number) {
   const store = new SessionMessageStore(database);
   try {
+    // One transaction: about 2000 separate commits each waited for a disk flush, which dominated slow Windows runners.
+    store.database.exec("BEGIN");
     for (let index = 0; index < 300; index += 1) {
       for (let instance = 0; instance < (index < 60 ? 5 : 4); instance += 1) {
         const at = now - 10 * 24 * HOUR + index * 60_000 + instance * 1000;
@@ -83,6 +85,7 @@ function largeFixture(database: string, now: number) {
         new Date(now + 60_000).toISOString(), new Date(now - 1000).toISOString());
     }
     keepLive(store, ["live-0", "live-1"]);
+    store.database.exec("COMMIT");
     return (store.database.prepare("SELECT count(*) AS rows, count(DISTINCT session_id) AS identities FROM session_presence").get());
   } finally { store.close(); }
 }
@@ -112,6 +115,28 @@ it("serves board presence from a 342-identity, 1302-row database through a real 
   try {
     expect(database.prepare("SELECT count(*) AS rows FROM session_presence").get()).toEqual({ rows: 42 });
   } finally { database.close(); }
+}, 60_000);
+
+it("ends a board lookup against a slow real broker at one overall client deadline", async () => {
+  const state = directory();
+  const slow = pathToFileURL(fileURLToPath(new URL("./fixtures/slow-list-presence.mjs", import.meta.url))).href;
+  const child = spawn(process.execPath, ["--import", "tsx", "--import", slow, sourceBroker, "--state-directory", state],
+    { windowsHide: true, stdio: "ignore", env: { ...process.env, AGS_TEST_LIST_PRESENCE_DELAY_MS: "1000" } });
+  cleanup.push(async () => {
+    if (child.exitCode === null && child.signalCode === null) { const exit = once(child, "exit"); child.kill(); await exit; }
+  });
+  await waitForSessionMessageBrokerReady(state, child, 5000);
+  // 90 board sessions are 30 batches; at 1 s each (inside the 2.5 s per-request limit) the lookup would take 30 s.
+  const board = Array.from({ length: 90 }, (_, index) => ({ host: "portable", sessionId: `slow-${index}` }));
+  const started = Date.now();
+  const result = await new SessionMessageService(state).listPresence(board);
+  const elapsed = Date.now() - started;
+  // The overall client deadline plus scheduling slack.
+  expect(elapsed).toBeLessThan(SESSION_MESSAGE_REQUEST_TIMEOUT_MS + 2_000);
+  const answered = result.data!.sessions.map((session) => session.sessionId);
+  expect(answered.length).toBeGreaterThan(0);
+  expect(answered).toEqual(board.slice(0, answered.length).map((item) => item.sessionId));
+  expect(result.data!.unanswered).toEqual(board.slice(answered.length));
 }, 60_000);
 
 it("B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve", async () => {

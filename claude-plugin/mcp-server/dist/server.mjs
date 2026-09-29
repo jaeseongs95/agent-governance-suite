@@ -19733,7 +19733,7 @@ function inlineSchemaReferences(schema, documents) {
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "2.7.5",
+  version: "2.7.6",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
@@ -20000,7 +20000,7 @@ import { existsSync as existsSync2 } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import path8 from "node:path";
-import { performance } from "node:perf_hooks";
+import { performance as performance2 } from "node:perf_hooks";
 import tls from "node:tls";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
@@ -20049,7 +20049,7 @@ function throwIfAborted(signal) {
 function remainingMilliseconds(deadline, signal, message = SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE) {
   throwIfAborted(signal);
   const inherited = signal ? deadlineMetadata.get(signal) : void 0;
-  const remaining = (inherited?.deadline ?? deadline) - performance.now();
+  const remaining = (inherited?.deadline ?? deadline) - performance2.now();
   if (remaining < 1) throw deadlineError(inherited?.message ?? message);
   return remaining;
 }
@@ -20059,7 +20059,7 @@ function assertWithinDeadline(deadline, signal, message) {
 async function withDeadline(timeoutMs, parentSignal, message, work) {
   const parentDeadline = parentSignal ? deadlineMetadata.get(parentSignal) : void 0;
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw deadlineError(parentDeadline?.message ?? message);
-  const now = performance.now();
+  const now = performance2.now();
   const requestedDeadline = now + timeoutMs;
   const inherited = parentDeadline && parentDeadline.deadline <= requestedDeadline ? parentDeadline : void 0;
   const deadline = inherited?.deadline ?? requestedDeadline;
@@ -20356,16 +20356,25 @@ var SessionMessageService = class {
     }
   }
   /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. A refused
-   * batch or an identity outside the broker's pattern is reported as unanswered; the other batches still count. */
+   * batch or an identity outside the broker's pattern is reported as unanswered; the other batches still count. The
+   * whole lookup shares one client deadline, so a slow broker ends it once, not once per batch. */
   async listPresence(targets) {
     const sessions = [];
     const unanswered = [];
     const asked = [];
     for (const { host, sessionId } of targets) (isBoundedIdentity({ host, sessionId }) ? asked : unanswered).push({ host, sessionId });
+    const deadline = performance.now() + SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
     for (let index = 0; index < asked.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
       const batch = asked.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS);
+      const remaining = deadline - performance.now();
       try {
-        const data = await sessionMessageRequest("list-presence", { targets: batch }, this.stateDirectory);
+        if (remaining <= 0) throw new Error("The board presence lookup reached its deadline.");
+        const data = await sessionMessageRequest(
+          "list-presence",
+          { targets: batch },
+          this.stateDirectory,
+          { totalTimeoutMs: remaining }
+        );
         sessions.push(...data.sessions.map((session) => ({
           ...session,
           deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
