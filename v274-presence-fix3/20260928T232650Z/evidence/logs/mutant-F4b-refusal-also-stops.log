@@ -1,0 +1,41 @@
+Already up to date
+Done in 453ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/presence-batches.test.ts (4 tests | 1 failed) 820ms
+   × keeps successful batches when the broker refuses one batch and reports only that batch as unanswered 13ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 27 passed (28)
+   Start at  23:22:37
+   Duration  2.80s (tests 75%, transform 20%, import 5%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > keeps successful batches when the broker refuses one batch and reports only that batch as unanswered
+AssertionError: expected [ 'a', 'b', 'c' ] to deeply equal [ 'a', 'b', 'c', 'g' ]
+
+- Expected
++ Received
+
+  [
+    "a",
+    "b",
+    "c",
+-   "g",
+  ]
+
+ ❯ tests/session-messaging/presence-batches.test.ts:35:69
+     33|   const result = await new SessionMessageService().listPresence(target…
+     34|   expect(result.ok).toBe(true);
+     35|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+       |                                                                     ^
+     36|   expect(result.data!.unanswered).toEqual([target("fail"), target("e")…
+     37|   expect(request).toHaveBeenCalledTimes(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1

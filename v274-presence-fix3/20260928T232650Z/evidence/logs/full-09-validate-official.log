@@ -1,0 +1,21 @@
+Already up to date
+Done in 398ms using pnpm v11.19.0
+$ node scripts/validate-official.mjs
+node:fs:244
+  binding.access(getValidatedPath(path), mode);
+          ^
+
+Error: ENOENT: no such file or directory, access '/[REDACTED-HOME]/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py'
+    at accessSync (node:fs:244:11)
+    at file:///home/[REDACTED]/agent-governance-suite/scripts/validate-official.mjs:10:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'access',
+  path: '/[REDACTED-HOME]/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py'
+}
+
+Node.js v24.21.0
+[ELIFECYCLE] Command failed with exit code 1.

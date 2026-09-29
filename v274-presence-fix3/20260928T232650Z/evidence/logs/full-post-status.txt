@@ -1,0 +1,6 @@
+ M claude-plugin/mcp-server/dist/server.mjs
+ M docs/release-notes-v2.7.4.md
+ M docs/session-message-lifecycle.md
+ M mcp-server/dist/server.mjs
+ M mcp-server/src/session-message-service.ts
+ M tests/session-messaging/presence-batches.test.ts

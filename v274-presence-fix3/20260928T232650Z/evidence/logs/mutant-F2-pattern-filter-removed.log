@@ -1,0 +1,59 @@
+Already up to date
+Done in 445ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/presence-batches.test.ts (4 tests | 1 failed) 819ms
+   × never asks the broker for identities outside its identifier pattern 7ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 27 passed (28)
+   Start at  23:23:14
+   Duration  2.71s (tests 77%, transform 17%, import 5%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > never asks the broker for identities outside its identifier pattern
+AssertionError: expected [ { host: 'portable', …(1) }, …(5) ] to deeply equal [ { host: 'portable', …(1) }, …(2) ]
+
+- Expected
++ Received
+
+@@ -3,11 +3,23 @@
+      "host": "portable",
+      "sessionId": "a",
+    },
+    {
+      "host": "portable",
++     "sessionId": "has space",
++   },
++   {
++     "host": "portable",
+      "sessionId": "b",
++   },
++   {
++     "host": "bad host",
++     "sessionId": "c",
++   },
++   {
++     "host": "portable",
++     "sessionId": "xyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+    },
+    {
+      "host": "portable",
+      "sessionId": "d",
+    },
+
+ ❯ tests/session-messaging/presence-batches.test.ts:45:17
+     43|   expect(result.ok).toBe(true);
+     44|   const asked = request.mock.calls.flatMap(([, payload]) => (payload a…
+     45|   expect(asked).toEqual([target("a"), target("b"), target("d")]);
+       |                 ^
+     46|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+     47|   expect(result.data!.unanswered).toEqual([target("has space"), target…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1

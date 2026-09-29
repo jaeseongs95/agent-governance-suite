@@ -1,0 +1,8 @@
+Already up to date
+Done in 391ms using pnpm v11.19.0
+$ node scripts/check-source-lock.mjs --remote
+- cannot verify remote source ponytail: Command failed: git clone --quiet --no-checkout https://github.com/jaeseongs95/ponytail.git /tmp/source-lock-verify-tEmjEp/repository
+fatal: could not read Username for 'https://github.com': terminal prompts disabled
+
+[ELIFECYCLE] Command failed with exit code 1.
+exit=1
