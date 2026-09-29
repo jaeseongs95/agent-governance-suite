@@ -147,6 +147,25 @@ const deaths = {
     f.store.database.prepare('UPDATE wake_nonces SET birth_generation = ? WHERE instance_id = ?').run(iso(f.now + 5), 'instance-1');
     return 'instance-1';
   },
+  // The wake's own birth stays live, but a later birth of another instance ended and is the latest row: its relay
+  // tick and claims are refused, so the instance row alone would keep this latch until the wake's birth ends.
+  'live-birth-behind-ended': f => {
+    live(f.store, 'instance-2', 'relay-2', f.now + 20);
+    assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-2', f.now + 30), true);
+    return 'instance-1';
+  },
+  // Another instance born in the same millisecond is the latest row (by rowid) and live: it is not the wake's binding.
+  'same-ms-other-instance': f => {
+    f.store.startPresence({ ...target, instanceId: 'instance-2', transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
+      deliveryCapabilities: capabilities }, f.now);
+    assert.equal(f.store.presence(target, f.now).instanceId, 'instance-2');
+    return 'instance-2';
+  },
+  // The lease ends exactly at the retirement time: a lease that is not after now is not live.
+  'lease-ends-at-retirement': f => {
+    f.store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ?').run(iso(f.retireAt), 'instance-1');
+    return null;
+  },
 };
 function death(f, kind) {
   const old = latched(f);
@@ -166,6 +185,12 @@ test.each(Object.keys(deaths))('an expired latch whose birth is no longer live r
   assert.equal(retired.observed_at, null); assert.equal(retired.consumed_at, null);
   assert.deepEqual(without(retired, ['state', 'retired_at']), without(before, ['state', 'retired_at']));
   assert.equal(f.store.database.prepare('SELECT count(*) AS n FROM session_activity WHERE session_id = ?').get(target.sessionId).n, 0);
+  if (kind === 'live-birth-behind-ended') {
+    // The wake's birth is live yet cannot receive a new wake while the ended later birth is the latest row.
+    assert.equal(f.store.presence(target, f.retireAt).state, 'ended');
+    assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt).dispatch, false);
+    assert.equal(f.store.autoWakeOutlook(target, f.retireAt).reason, 'presence-not-online');
+  }
   f.store.prune(f.retireAt + 5); assert.deepEqual(attemptRow(f.store, old), retired);
   // Retired terminal rows follow the existing one-hour cleanup.
   f.store.prune(f.retireAt + 3600_000 - 1); assert.deepEqual(attemptRow(f.store, old), retired);
