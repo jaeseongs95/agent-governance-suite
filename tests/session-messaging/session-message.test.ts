@@ -1188,6 +1188,11 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
             wakeVisibility: "user-message", canWakeSilently: false,
             deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" } }, now + 7);
         }
+        // The broker reads the wall clock when the hook runs; keep this scenario's births and relay live past the 20-second lease.
+        const until = new Date(Date.now() + 10 * 60_000).toISOString();
+        store.database.prepare("UPDATE session_presence SET lease_until = ? WHERE host = ? AND session_id = ? AND ended_at IS NULL")
+          .run(until, target.host, target.sessionId);
+        store.database.prepare("UPDATE relay_leases SET lease_until = ? WHERE host = ? AND session_id = ?").run(until, target.host, target.sessionId);
       } finally { store.close(); }
       const prompt = scenario === "forged" ? "[agent-governance-suite:wake:unregistered-nonce-abcdefghijklmnop]"
         : `[agent-governance-suite:wake:${nonce}]${scenario === "mixed" ? "\nactual user request" : ""}`;
