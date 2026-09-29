@@ -1,0 +1,14 @@
+{
+  "task": "AGS 2.7.3 Q re-audit finding R1 (conditional retry guidance)",
+  "branch": "claude/v273-msgqueue",
+  "baseSha": "74395bf698012a8b2e034e58e3b42d51f53b0b68",
+  "candidateSha": "d99d768eab65878bab228ea73e5f5660ac98c616",
+  "candidateTree": "bfa89453d591e03a3e9c66fe6df14a503e798bbc",
+  "reauditEvidence": { "branch": "claude/evidence-v273-msgqueue-reaudit-20260928T160657Z", "sha": "58b81d93a5165ee8a57815994888e89f03dee767" },
+  "mutantScript": "reaudit scripts/mutants.py, unmodified",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v37 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startedAtUtc": "2026-09-28T16:08:23Z",
+  "finishedAtUtc": "2026-09-28T16:14:48Z"
+}
