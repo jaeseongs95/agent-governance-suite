@@ -1,0 +1,22 @@
+windows/REPORT.md: OK
+windows/logs/00-env.txt: FAILED
+windows/logs/01-install_--frozen-lockfile.log: OK
+windows/logs/02-bundle_check.log: OK
+windows/logs/03-claude_drift.log: OK
+windows/logs/04-lint.log: OK
+windows/logs/05-build.log: OK
+windows/logs/06-test.log: OK
+windows/logs/07-runtime_check.log: OK
+windows/logs/08-validate_all.log: FAILED
+windows/logs/09-validate_official.log: FAILED
+windows/logs/10-claude_build.log: OK
+windows/logs/11-claude_check.log: OK
+windows/logs/12-source_check.log: OK
+windows/logs/13-diff-check.log: OK
+windows/logs/14-status.log: OK
+windows/logs/prev-v2.2.6.log: OK
+windows/logs/prev-v2.7.1.log: OK
+windows/logs/prev-v2.7.2.log: OK
+windows/logs/summary.tsv: OK
+windows/meta.json: OK
+sha256sum: WARNING: 3 computed checksums did NOT match

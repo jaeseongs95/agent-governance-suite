@@ -1,0 +1,60 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-fmut
+
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 body claim and ACK cannot authorize another unobserved managed wake 23ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 board ownership check has no nonce state effect 13ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 claimDeferred and ACK leave the managed notification fenced 15ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 claimTurnEnd and ACK leave the managed notification fenced 16ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 start rechecks claim/ACK and persists no-effect retirement 16ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 claim after start keeps one fence until the actual hook, including an empty batch 28ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 reserved crash recovery keeps the nonce/attempt and rejects replaced lease CAS 14ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 transport remains part of the exact stored attempt binding 14ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 definite failure uses durable backoff and exact dispatch epoch for late results 16ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H1/instance retires and starts a separate attempt after durable backoff 22ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H1/rebirth retires and starts a separate attempt after durable backoff 22ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H1/transport retires and starts a separate attempt after durable backoff 23ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H2/instance retires and starts a separate attempt after durable backoff 43ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H2/rebirth retires and starts a separate attempt after durable backoff 45ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H2/transport retires and starts a separate attempt after durable backoff 43ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H3/instance retires and starts a separate attempt after durable backoff 42ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H3/rebirth retires and starts a separate attempt after durable backoff 30ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old no-effect reserved H3/transport retires and starts a separate attempt after durable backoff 29ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > generation replacement alone preserves the submitted effect fence 16ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > generation replacement alone preserves the accepted-or-unknown effect fence 18ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > generation replacement alone preserves the none effect fence 17ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > generation replacement alone preserves the late effect fence 18ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old-generation definite failure requires every original binding field and epoch 18ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > stale reserved late_observed_at cannot be normalized as a no-effect attempt 15ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > stale reserved observed_at cannot be normalized as a no-effect attempt 14ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > stale reserved consumed_at cannot be normalized as a no-effect attempt 15ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > stale reserved unproved-retry cannot be normalized as a no-effect attempt 16ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > terminal pruning cannot erase an outstanding old-generation backoff 233ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > outstanding terminal backoffs share the active wake budget and release it at the deadline 204ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 unknown survives restart, both TTLs, ordinary claim, ACK and generation replacement 20ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 ordinary peer provenance, expired hook receipts and changed observation digests cannot release a fence 27ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 observation holds the SQLite generation lock and notices a generation change during verification 23ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 lost committed outcome response never dispatches again 16ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 forged nonce, caller approved and normalized observation cannot observe without the hook receipt 31ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > verified expired/old-generation arrival retires only its attempt before a separate current wake 111ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > old-generation retirement still rejects wrong target, unknown or mixed nonces and stale provenance 28ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 batch/ACK-loss redelivery and hook rollback preserve exact nonce consumption 27ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 hook-before-outcome, adapter exception and new vendor use the same core 23ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 both host capabilities preserve submission/observation distinction and deferred idle wake zero 0ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 additive legacy migration never imports old consumed_at as observed 12ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 active budget overflow is an explicit rejection and does not remove unknowns 208ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 terminal observation retention is bounded while unresolved rows are retained 218ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > independent generation/outcome-first-race workers permit exactly one separate new effect 429ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > independent generation/start-first-race workers permit exactly one separate new effect 317ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > verified old arrival in another process releases only the old attempt and permits one new effect 350ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > Codex running body claim in another process prevents the external queue call before start 149ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > Codex post-start claim in another process leaves one marker and a verified empty discard 163ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 independent senders and relay processes perform exactly one external call 312ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 independent process crash before start recovers the same attempt; after effect never resends 883ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 independent migration failure rolls back every added nonce column and preserves legacy bytes 129ms
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs > public wake binding requires a fresh presence birth after lease expiry 15ms
+
+ Test Files  1 passed (1)
+      Tests  51 passed (51)
+   Start at  17:45:20
+   Duration  5.00s (tests 93%, transform 6%, import 1%)
+

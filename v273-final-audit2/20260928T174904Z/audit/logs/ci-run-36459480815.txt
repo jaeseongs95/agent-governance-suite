@@ -1,0 +1,5 @@
+GitHub Actions run 36459480815 (read via GitHub MCP actions_list list_workflow_jobs, read-only)
+workflow: CI  head_sha: e3220a48ce0f1aaea30f90db4bbb597b8fd7ea92  run_attempt: 1
+Node 24 / ubuntu-latest   completed success  Test step 17:38:20Z-17:39:35Z
+Node 24 / windows-latest  completed success  Test step 17:38:57Z-17:41:36Z
+All steps success except whitespace-check variants for PR/push (skipped by event type); manual-dispatch whitespace check success.

@@ -1,0 +1,23 @@
+mutant	testfile	rc	summary	failed_in_bulk_tests
+none	old	0	 Tests 51 passed (51)	0
+none	new	0	 Tests 51 passed (51)	0
+B1-budget-check-removed	old	1	 Tests 2 failed | 49 passed (51)	2
+    × tests/session-messaging/wake-lifecycle.test.mjs > outstanding terminal backoffs share the active wake budget and release it at the deadline 244
+    × tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 active budget overflow is an explicit rejection and does not remove unknowns 226ms
+B1-budget-check-removed	new	1	 Tests 2 failed | 49 passed (51)	2
+    × tests/session-messaging/wake-lifecycle.test.mjs > outstanding terminal backoffs share the active wake budget and release it at the deadline 71m
+    × tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 active budget overflow is an explicit rejection and does not remove unknowns 60ms
+B2-budget-ignores-cooldown	old	1	 Tests 1 failed | 50 passed (51)	1
+    × tests/session-messaging/wake-lifecycle.test.mjs > outstanding terminal backoffs share the active wake budget and release it at the deadline 438
+B2-budget-ignores-cooldown	new	1	 Tests 1 failed | 50 passed (51)	1
+    × tests/session-messaging/wake-lifecycle.test.mjs > outstanding terminal backoffs share the active wake budget and release it at the deadline 69m
+P1-cap-drops-backoff-guard	old	1	 Tests 1 failed | 50 passed (51)	1
+    × tests/session-messaging/wake-lifecycle.test.mjs > terminal pruning cannot erase an outstanding old-generation backoff 280ms
+P1-cap-drops-backoff-guard	new	1	 Tests 1 failed | 50 passed (51)	1
+    × tests/session-messaging/wake-lifecycle.test.mjs > terminal pruning cannot erase an outstanding old-generation backoff 68ms
+P2-cap-offset-plus-10	old	1	 Tests 1 failed | 50 passed (51)	1
+    × tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 terminal observation retention is bounded while unresolved rows are retained 289ms
+P2-cap-offset-plus-10	new	1	 Tests 1 failed | 50 passed (51)	1
+    × tests/session-messaging/wake-lifecycle.test.mjs > W05-r2 terminal observation retention is bounded while unresolved rows are retained 75ms
+P3-cap-keeps-oldest	old	0	 Tests 51 passed (51)	0
+P3-cap-keeps-oldest	new	0	 Tests 51 passed (51)	0
