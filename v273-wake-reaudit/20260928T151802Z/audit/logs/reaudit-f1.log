@@ -1,0 +1,19 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-re
+
+ ✓ tests/audit/reaudit-f1-store.test.mjs > F1-a (2b with corrected expectation) mixed retired+current: current claims its body once; retired keeps state, gets late 88ms
+ ✓ tests/audit/reaudit-f1-hook.test.ts > codex: mixed retired+current prompt delivers the current body and is not blocked 1075ms
+ ✓ tests/audit/reaudit-f1-store.test.mjs > F1-b retired-only prompt still reports retired and claims nothing; late recorded once 89ms
+ ✓ tests/audit/reaudit-f1-store.test.mjs > F1-c retired + old-generation (non-retired) marker: no claim, no retired flag, old row observed(late) 65ms
+ ✓ tests/audit/reaudit-f1-store.test.mjs > F1-d retired + unregistered nonce: whole prompt rejected, nothing written 106ms
+ ✓ tests/audit/reaudit-f1-store.test.mjs > F1-e forged receipt on a mixed prompt writes nothing 36ms
+ ✓ tests/audit/reaudit-f1-store.test.mjs > F1-f mixed retired+current whose current is past its expiry: no claim, no retired flag 37ms
+ ✓ tests/audit/reaudit-f1-hook.test.ts > codex: retired-only prompt is blocked only on the blocking-capable host (unchanged from e739090) 361ms
+ ✓ tests/audit/reaudit-f1-hook.test.ts > claude-code: mixed retired+current prompt delivers the current body and is not blocked 325ms
+ ✓ tests/audit/reaudit-f1-hook.test.ts > claude-code: retired-only prompt is blocked only on the blocking-capable host (unchanged from e739090) 287ms
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  15:11:40
+   Duration  3.09s (tests 49%, transform 28%, import 22%)
+

@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-mut
+
+
+ Test Files  2 passed (2)
+      Tests  98 passed (98)
+   Start at  15:12:14
+   Duration  21.71s (tests 88%, transform 7%, import 5%)
+

@@ -1,0 +1,49 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-audit
+
+ × tests/audit/reaudit-f1-hook.test.ts > codex: mixed retired+current prompt delivers the current body and is not blocked 498ms
+   → expected { decision: 'block', …(1) } to not match object { decision: 'block' }
+ ✓ tests/audit/reaudit-f1-hook.test.ts > codex: retired-only prompt is blocked only on the blocking-capable host (unchanged from e739090) 370ms
+ × tests/audit/reaudit-f1-hook.test.ts > claude-code: mixed retired+current prompt delivers the current body and is not blocked 372ms
+   → expected '{}' to contain 'current body'
+ ✓ tests/audit/reaudit-f1-hook.test.ts > claude-code: retired-only prompt is blocked only on the blocking-capable host (unchanged from e739090) 386ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/audit/reaudit-f1-hook.test.ts > codex: mixed retired+current prompt delivers the current body and is not blocked
+AssertionError: expected { decision: 'block', …(1) } to not match object { decision: 'block' }
+
+Compared values have no visual difference.
+
+ ❯ tests/audit/reaudit-f1-hook.test.ts:63:21
+     61|     const d = await setup(); const s = seed(d, host, `mixed-${host}`, …
+     62|     const out = await handleSessionMessageHook(prompt(s.target.session…
+     63|     expect(out).not.toMatchObject({ decision: "block" });
+       |                     ^
+     64|     expect(JSON.stringify(out)).toContain("current body");
+     65|     const store = new SessionMessageStore(path.join(d, "session-messag…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/audit/reaudit-f1-hook.test.ts > claude-code: mixed retired+current prompt delivers the current body and is not blocked
+AssertionError: expected '{}' to contain 'current body'
+
+Expected: "current body"
+Received: "{}"
+
+ ❯ tests/audit/reaudit-f1-hook.test.ts:64:33
+     62|     const out = await handleSessionMessageHook(prompt(s.target.session…
+     63|     expect(out).not.toMatchObject({ decision: "block" });
+     64|     expect(JSON.stringify(out)).toContain("current body");
+       |                                 ^
+     65|     const store = new SessionMessageStore(path.join(d, "session-messag…
+     66|     try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  15:11:58
+   Duration  2.64s (tests 66%, transform 31%, import 3%)
+

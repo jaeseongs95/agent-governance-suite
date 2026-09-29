@@ -1,0 +1,15 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-re
+
+ ✓ tests/audit/audit-race.test.mjs > R1 6 relay processes racing reserve/start after both conditions: one effect, one attempt, repeated rounds 3702ms
+stdout | tests/audit/audit-race.test.mjs > R2 late arrival of the old nonce racing retirement+reserve: no body claim by old nonce, at most one new attempt
+AUDIT-R2 outcome distribution {"expired-unobserved/retiredFlag=true/relayReserved=true":10}
+
+ ✓ tests/audit/audit-race.test.mjs > R2 late arrival of the old nonce racing retirement+reserve: no body claim by old nonce, at most one new attempt 1869ms
+ ✓ tests/audit/audit-race.test.mjs > R3 activity and relays racing in the same-generation path: one effect 3917ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  15:15:49
+   Duration  10.06s (tests 96%, transform 4%)
+

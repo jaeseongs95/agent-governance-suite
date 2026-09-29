@@ -1,0 +1,11 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-re
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 1724ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 630ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  15:15:36
+   Duration  2.97s (tests 83%, transform 16%, import 1%)
+

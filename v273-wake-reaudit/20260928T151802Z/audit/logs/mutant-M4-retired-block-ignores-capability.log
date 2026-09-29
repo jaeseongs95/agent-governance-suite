@@ -1,0 +1,37 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-mut
+
+ ❯ tests/session-messaging/session-message.test.ts (71 tests | 1 failed) 17335ms
+   ❯ TLS 1.3 broker and vendor-neutral adapter (52)
+     × blocks a verified retired Codex wake marker without claiming the current body 435ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > blocks a verified retired Codex wake marker without claiming the current body
+AssertionError: expected { decision: 'block', …(1) } to deeply equal {}
+
+- Expected
++ Received
+
+- {}
++ {
++   "decision": "block",
++   "reason": "This wake notification was already retired; no peer message is attached.",
++ }
+
+ ❯ tests/session-messaging/session-message.test.ts:1260:27
+    1258|       }
+    1259|       if (host === "codex") expect(output).toMatchObject({ decision: "…
+    1260|       else expect(output).toEqual({});
+       |                           ^
+    1261|       const verification = new SessionMessageStore(path.join(directory…
+    1262|       try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 97 passed (98)
+   Start at  15:15:00
+   Duration  18.50s (tests 91%, transform 5%, import 4%)
+

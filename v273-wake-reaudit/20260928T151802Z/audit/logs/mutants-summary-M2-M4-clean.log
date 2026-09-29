@@ -1,0 +1,21 @@
+mutant=baseline-unmutated-rerun rc=0  Tests 98 passed (98)
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+mutant=M2-capability-always-true rc=1  Tests 3 failed | 95 passed (98)
+     × blocks a verified retired Codex wake marker without claiming the current body 439ms
+     × blocks only verified empty Codex wake prompts in the packaged hook 1391ms
+     × resolves plugin queue settings only after explicit ENV and only for Codex 25ms
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > blocks a verified retired Codex wake marker without claiming the current body
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > blocks only verified empty Codex wake prompts in the packaged hook
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > resolves plugin queue settings only after explicit ENV and only for Codex
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+mutant=M3-capability-always-false rc=1  Tests 3 failed | 95 passed (98)
+     × blocks a verified retired Codex wake marker without claiming the current body 393ms
+     × blocks only verified empty Codex wake prompts in the packaged hook 403ms
+     × resolves plugin queue settings only after explicit ENV and only for Codex 47ms
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > blocks a verified retired Codex wake marker without claiming the current body
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > blocks only verified empty Codex wake prompts in the packaged hook
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > resolves plugin queue settings only after explicit ENV and only for Codex
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+mutant=M4-retired-block-ignores-capability rc=1  Tests 1 failed | 97 passed (98)
+     × blocks a verified retired Codex wake marker without claiming the current body 435ms
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > blocks a verified retired Codex wake marker without claiming the current body

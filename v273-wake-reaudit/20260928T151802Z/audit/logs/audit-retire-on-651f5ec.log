@@ -1,0 +1,65 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-re
+
+ ✓ tests/audit/audit-retire.test.mjs > 1a expiry only (same generation, relay live, no activity) never retires, up to 7 days 44ms
+ ✓ tests/audit/audit-retire.test.mjs > 1b generation replacement only (before expiry+grace) does not retire; boundary is exact 50ms
+ ✓ tests/audit/audit-retire.test.mjs > 1c ACK only (before expiry) does not retire even long after expiry 25ms
+ ✓ tests/audit/audit-retire.test.mjs > 1c2 ACK after expiry but checked before grace does not retire yet; after grace it retires once 21ms
+ ✓ tests/audit/audit-retire.test.mjs > 1d relay restart only (new relay id, lapsed old relay lease, same presence birth) does not retire and is not activity 51ms
+ ✓ tests/audit/audit-retire.test.mjs > 1e activity of another session or another host with the same session id is not evidence 19ms
+ ✓ tests/audit/audit-retire.test.mjs > 1f newer generation that is unreachable (lease lapsed, not ended) is not evidence 20ms
+ ✓ tests/audit/audit-retire.test.mjs > 1g both conditions: exactly one new attempt across repeated reserves, relays and connections 28ms
+ ✓ tests/audit/audit-retire.test.mjs > 1h activity that retired W1 does not carry over to retire the next attempt W2 33ms
+stdout | tests/audit/audit-retire.test.mjs > 2b mixed prompt: retired nonce + current live nonce (finding probe)
+AUDIT-2b {"res":{"recognized":true,"messages":[{"messageId":"body-1790608312787","sender":{"host":"portable","sessionId":"audit-sender"},"recipient":{"host":"portable","sessionId":"audit-target"},"body":"b","createdAt":"2026-09-28T15:11:52.787Z","expiresAt":"2026-09-29T15:11:52.787Z","deliveryAttempt":1,"firstDeliveredAt":"2026-09-28T16:21:52.791Z"}],"binding":{"host":"portable","sessionId":"audit-target","instanceId":"inst-2","transport":"portable","relayId":"relay-2","nonce":"inst-2-w2-nonce-abcdefghijklmnopq","generation":"2026-09-28T15:11:57.787Z","attemptId":"7f5b3ebf-e430-45f1-8fbc-ca737dd605f2","dispatchEpoch":1}},"w2state":"observed","w2late":null,"pending":0}
+
+ ✓ tests/audit/audit-retire.test.mjs > 1i a retired row cannot become observed via any public transition 56ms
+ ✓ tests/audit/audit-retire.test.mjs > 2a late retired nonce with no current wake reserved claims no body and records late once 64ms
+stdout | tests/audit/audit-retire.test.mjs > LT a long busy turn with tool activity lets one extra marker per ~70 min be queued (probe)
+AUDIT-LT markers queued while one turn stayed busy: 4
+
+ × tests/audit/audit-retire.test.mjs > 2b mixed prompt: retired nonce + current live nonce (finding probe) 83ms
+   → Expected values to be strictly equal:
+
+1 !== 0
+
+ ✓ tests/audit/audit-retire.test.mjs > 2c same prune/event replayed many times: no second retirement or second attempt 33ms
+ ✓ tests/audit/audit-retire.test.mjs > LT a long busy turn with tool activity lets one extra marker per ~70 min be queued (probe) 54ms
+ ✓ tests/audit/audit-retire.test.mjs > 5a every outlook produced is schema-valid and carries authorityEffect none; send/status never claim delivery 35ms
+stdout | tests/audit/audit-retire.test.mjs > 5b probe: outlook for an old-generation wake that has NOT passed its injection expiry
+AUDIT-5b {"outlook":{"state":"latched","reason":"wake-unobserved","basisAt":"2026-09-28T16:11:57.001Z","checkedAt":"2026-09-28T15:12:03.001Z","authorityEffect":"none"},"expiresAt":"2026-09-28T16:11:57.001Z","beforeExpiry":true}
+
+ ✓ tests/audit/audit-retire.test.mjs > C2 fuzz: rebirth at equal or earlier time yields prev+1ms for 2000 random birth times 3987ms
+ ✓ tests/audit/audit-retire.test.mjs > 2d ordering where the verified late arrival lands before any prune retired the row: observed (real arrival), then one new wake 31ms
+ ✓ tests/audit/audit-retire.test.mjs > 5b probe: outlook for an old-generation wake that has NOT passed its injection expiry 22ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/audit/audit-retire.test.mjs > 2b mixed prompt: retired nonce + current live nonce (finding probe)
+AssertionError: Expected values to be strictly equal:
+
+1 !== 0
+
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/audit/audit-retire.test.mjs:199:10
+    197|   // Record the observed behavior for the report.
+    198|   console.log('AUDIT-2b', JSON.stringify({ res, w2state: w2row.state, …
+    199|   assert.equal(res.messages.length, 0);
+       |          ^
+    200|   // Body must remain deliverable: a fresh wake must be reservable for…
+    201|   alive(f.store, 'inst-2', 'relay-2', at + 6);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 passed (18)
+   Start at  15:11:50
+   Duration  6.21s (tests 77%, transform 13%, import 9%)
+
