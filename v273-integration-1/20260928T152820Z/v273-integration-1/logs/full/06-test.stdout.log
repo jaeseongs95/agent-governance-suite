@@ -1,0 +1,11 @@
+Already up to date
+Done in 487ms using pnpm v11.19.0
+
+ RUN  v5.0.0 [REDACTED-HOME]/agent-governance-suite
+
+
+ Test Files  60 passed | 1 skipped (61)
+      Tests  842 passed | 2 skipped (844)
+   Start at  15:24:39
+   Duration  67.47s (tests 95%, import 4%, transform 2%)
+

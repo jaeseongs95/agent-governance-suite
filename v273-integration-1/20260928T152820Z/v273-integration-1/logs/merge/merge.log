@@ -1,0 +1,26 @@
+*   e71b121a d9498d69 33dfdc02 merge: v2.7.3 shared skill intake
+|\  
+| * 33dfdc02 9c8c6f6a fix: select skills before the first tool call in the shared intake
+| * 9c8c6f6a 732ba286 docs: describe the shared intake delivery and widen the copy guard
+| * 732ba286 afafd4e6 test(intake): reject common intake copies in the Claude overlay
+| * afafd4e6 c548c77f fix(intake): expose shared selection policy to both hosts
+| * c548c77f 8763cef2 refactor: port common skill intake to the 2.7.2 candidate
+* |   d9498d69 8763cef2 651f5ec9 merge: v2.7.3 wake liveness
+|\ \  
+| |/  
+|/|   
+| * 651f5ec9 cc0d51c0 docs: align wake retirement limits, latched meaning and read-side pruning
+
+## merge 1 (d9498d69) vs parents
+ 26 files changed, 1277 insertions(+), 128 deletions(-)
+## merge 2 (e71b121a) vs first parent
+ 22 files changed, 359 insertions(+), 346 deletions(-)
+## merge-tree conflict probe
+e708032fadaadec2210a68ed262f89a611c5a57a
+exit=0
+## files touched by both wake and intake since main
+claude-plugin/mcp-server/dist/server.mjs
+mcp-server/dist/server.mjs
+mcp-server/src/server.ts
+## tree of integration equals regenerated
+e708032fadaadec2210a68ed262f89a611c5a57a

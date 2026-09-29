@@ -1,0 +1,39 @@
+
+ RUN  v5.0.0 [REDACTED-HOME]/agent-governance-suite
+
+stdout | tests/audit/audit-retire.test.mjs > 2b mixed prompt: retired nonce + current live nonce (finding probe)
+AUDIT-2b {"res":{"recognized":true,"messages":[{"messageId":"body-1790609218505","sender":{"host":"portable","sessionId":"audit-sender"},"recipient":{"host":"portable","sessionId":"audit-target"},"body":"b","createdAt":"2026-09-28T15:26:58.505Z","expiresAt":"2026-09-29T15:26:58.505Z","deliveryAttempt":1,"firstDeliveredAt":"2026-09-28T16:36:58.509Z"}],"binding":{"host":"portable","sessionId":"audit-target","instanceId":"inst-2","transport":"portable","relayId":"relay-2","nonce":"inst-2-w2-nonce-abcdefghijklmnopq","generation":"2026-09-28T15:27:03.505Z","attemptId":"6da28d8d-69a2-4f9a-9c5b-f0403101121d","dispatchEpoch":1}},"w2state":"observed","w2late":null,"pending":0}
+
+ ❯ tests/audit/audit-retire.test.mjs (18 tests | 1 failed) 2578ms
+   × 2b mixed prompt: retired nonce + current live nonce (finding probe) 38ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/audit/audit-retire.test.mjs > 2b mixed prompt: retired nonce + current live nonce (finding probe)
+AssertionError: Expected values to be strictly equal:
+
+1 !== 0
+
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/audit/audit-retire.test.mjs:199:10
+    197|   // Record the observed behavior for the report.
+    198|   console.log('AUDIT-2b', JSON.stringify({ res, w2state: w2row.state, …
+    199|   assert.equal(res.messages.length, 0);
+       |          ^
+    200|   // Body must remain deliverable: a fresh wake must be reservable for…
+    201|   alive(f.store, 'inst-2', 'relay-2', at + 6);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 passed (18)
+   Start at  15:26:57
+   Duration  3.32s (tests 81%, import 12%, transform 7%)
+
