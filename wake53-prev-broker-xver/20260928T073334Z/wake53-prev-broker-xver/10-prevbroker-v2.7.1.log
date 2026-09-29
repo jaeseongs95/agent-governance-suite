@@ -1,0 +1,34 @@
+AGS_PREVIOUS_BROKER_PATH=/tmp/prev-v2.7.1/mcp-server/dist/session-message-broker.mjs sha256=d4b667d417c6c8a8beaf749a2209ab1a8d1548a26d1f819dfcc6238a6711ab80
+
+ RUN  v5.0.0 /tmp/v53
+
+ × tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 149ms
+   → expected [ 'atomic-wake-claim', …(3) ] to not include 'deferred-boundary'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker
+AssertionError: expected [ 'atomic-wake-claim', …(3) ] to not include 'deferred-boundary'
+ ❯ tests/session-messaging/previous-broker.test.ts:26:41
+     24|     const messageId = "previous-broker-compatibility-message";
+     25|     const ping = await requestSessionMessageOnce<{ capabilities?: stri…
+     26|     expect(ping.capabilities ?? []).not.toContain("deferred-boundary");
+       |                                         ^
+     27|     await requestSessionMessageOnce("send", { sender, target, messageI…
+     28|     for (const event of ["UserPromptSubmit", "PostToolUse", "PostToolU…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  07:18:02
+   Duration  762ms (transform 66%, tests 25%, import 8%, worker 2%)
+
+JSON report written to /tmp/ev/10-prevbroker-v2.7.1.json
+npm notice
+npm notice New major version of npm available! 11.19.0 -> 12.1.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.1.0
+npm notice To update run: npm install -g npm@12.1.0
+npm notice
+EXIT=1

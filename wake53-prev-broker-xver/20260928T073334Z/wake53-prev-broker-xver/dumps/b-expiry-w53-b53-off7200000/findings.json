@@ -1,0 +1,27 @@
+{
+ "tag": "b-expiry-w53-b53-off7200000",
+ "writer": "53",
+ "afterBroker": "53",
+ "offsetMs": 7200000,
+ "newWakeDispatch": true,
+ "wakeStatus": {
+  "state": "submitted",
+  "observation": "pending",
+  "deliveryState": "submitted",
+  "instanceId": "inst-3",
+  "generation": "2026-09-28T09:27:21.231Z",
+  "attemptId": "a574f303-6176-439d-926d-86c1b4049bfd",
+  "dispatchEpoch": 1,
+  "retryNotBefore": null,
+  "expiresAt": "2026-09-28T10:27:21.421Z",
+  "observedAt": null,
+  "lateObservedAt": null
+ },
+ "active": [
+  [
+   "submitted",
+   null,
+   "2026-09-28T10:27:21.421Z"
+  ]
+ ]
+}

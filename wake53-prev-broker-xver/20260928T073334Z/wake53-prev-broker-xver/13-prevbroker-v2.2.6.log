@@ -1,0 +1,13 @@
+AGS_PREVIOUS_BROKER_PATH=/tmp/prev-v2.2.6/mcp-server/dist/session-message-broker.mjs sha256=14f9345d3b18611fe0d5799ae56d65e3e80708ee288bbd771aafa5611a1a1cc3
+
+ RUN  v5.0.0 /tmp/v53
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 187ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  07:18:06
+   Duration  703ms (transform 59%, tests 33%, import 7%, worker 1%)
+
+JSON report written to /tmp/ev/13-prevbroker-v2.2.6.json
+EXIT=0

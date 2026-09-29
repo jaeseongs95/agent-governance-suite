@@ -1,0 +1,16 @@
+[broker 2.7.1] started pid=8230 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+SessionStart via hook 2.7.1 {"status":0,"out":{},"stderr":""} d9f7e627-3a14-4dfe-b379-353606801fb0 codex-queue
+send by 2.7.1 96d7e45f-68af-429f-930c-4899a36be9cb true
+claim by 2.7.1 (no ACK) [["96d7e45f-68af-429f-930c-4899a36be9cb",1]]
+  [dump writer-2.7.1-state] wake=[] messages=[{"id":"96d7e45f-68af-429f-930c-4899a36be9cb","att":1,"claimed":"2026-09-28T07:23:40.972Z","acked":null}] integrity=ok
+[broker 2.7.1] stopped pid=8230 {"code":0,"sig":null}
+  [dump broker-stopped] wake=[] messages=[{"id":"96d7e45f-68af-429f-930c-4899a36be9cb","att":1,"claimed":"2026-09-28T07:23:40.972Z","acked":null}] integrity=ok
+[broker 53] started pid=8349 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+  [dump after-open-by-53] wake=[] messages=[{"id":"96d7e45f-68af-429f-930c-4899a36be9cb","att":1,"claimed":"2026-09-28T07:23:40.972Z","acked":null}] integrity=ok
+claim by 53 within lease []
+waiting 125s for 120s claim lease to expire (broker kept alive by pings)
+claim by 53 after lease [["96d7e45f-68af-429f-930c-4899a36be9cb",2]]
+  [dump final-live] wake=[] messages=[{"id":"96d7e45f-68af-429f-930c-4899a36be9cb","att":2,"claimed":"2026-09-28T07:25:46.463Z","acked":"2026-09-28T07:25:46.531Z"}] integrity=ok
+[broker 53] stopped pid=8349 {"code":0,"sig":null}
+FINDINGS {"tag":"b-lease-w2.7.1-b53-h53","variant":"lease","writer":"2.7.1","afterBroker":"53","afterHook":"53","obs":{"wakeStatusBefore":null,"claimWithinLease":0,"redelivered":[{"id":"96d7e45f-68af-429f-930c-4899a36be9cb","attempt":2}],"ack":{"acknowledged":1}},"integrity":["ok"],"user_version":0,"activeRows":[],"unackedMessages":[]}
+EXIT=0

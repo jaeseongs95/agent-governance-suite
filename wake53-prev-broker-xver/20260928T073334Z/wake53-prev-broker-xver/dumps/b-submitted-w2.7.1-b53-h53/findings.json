@@ -1,0 +1,75 @@
+{
+ "tag": "b-submitted-w2.7.1-b53-h53",
+ "variant": "submitted",
+ "writer": "2.7.1",
+ "afterBroker": "53",
+ "afterHook": "53",
+ "obs": {
+  "wakeStatusBefore": {
+   "state": "submitted",
+   "observation": "pending",
+   "deliveryState": "submitted",
+   "instanceId": "9b2dff5a-f9a4-4e59-a495-857f2ee6793d",
+   "generation": "2026-09-28T07:23:40.658Z",
+   "attemptId": "ea85b87c-b49c-49a8-9098-0fe0fffa75a5",
+   "dispatchEpoch": 1,
+   "retryNotBefore": null,
+   "expiresAt": "2026-09-28T08:23:40.886Z",
+   "observedAt": null,
+   "lateObservedAt": null
+  },
+  "arrival": {
+   "keys": [
+    "hookSpecificOutput"
+   ],
+   "decision": null,
+   "bodyDelivered": true
+  },
+  "duplicateArrival": {
+   "keys": [],
+   "decision": null,
+   "bodyDelivered": false
+  },
+  "ack": {
+   "acknowledged": 1
+  },
+  "wakeStatusAfter": {
+   "state": "observed",
+   "observation": "observed",
+   "deliveryState": "observed",
+   "instanceId": "9b2dff5a-f9a4-4e59-a495-857f2ee6793d",
+   "generation": "2026-09-28T07:23:40.658Z",
+   "attemptId": "ea85b87c-b49c-49a8-9098-0fe0fffa75a5",
+   "dispatchEpoch": 1,
+   "retryNotBefore": null,
+   "expiresAt": "2026-09-28T08:23:40.886Z",
+   "observedAt": "2026-09-28T07:23:41.166Z",
+   "lateObservedAt": null
+  },
+  "nextWake": {
+   "dispatch": true
+  },
+  "pendingEnd": {
+   "count": 1
+  }
+ },
+ "integrity": [
+  "ok"
+ ],
+ "user_version": 0,
+ "activeRows": [
+  {
+   "state": "submitted",
+   "inst": "9b2dff5a-f9a4-4e59-a495-857f2ee6793d",
+   "late": null,
+   "exp": "2026-09-28T08:23:41.590Z"
+  }
+ ],
+ "unackedMessages": [
+  {
+   "id": "a29b0069-828e-42c5-b195-697ac3430f51",
+   "att": 0,
+   "body": "body-submitted-2"
+  }
+ ]
+}

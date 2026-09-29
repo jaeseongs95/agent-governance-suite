@@ -1,0 +1,145 @@
+{
+ "tag": "c-down-2.7.1",
+ "down": "2.7.1",
+ "obs": {
+  "wake53": {
+   "late": {
+    "state": "observed",
+    "observation": "observed",
+    "deliveryState": "observed",
+    "instanceId": "2d3e1c7e-cf99-4251-a2b3-d6eb231289d1",
+    "generation": "2026-09-28T07:27:34.722Z",
+    "attemptId": "7325ec75-4b28-454f-af60-b8550c24a7cc",
+    "dispatchEpoch": 1,
+    "retryNotBefore": null,
+    "expiresAt": "2026-09-28T08:27:35.057Z",
+    "observedAt": "2026-09-28T07:27:35.283Z",
+    "lateObservedAt": "2026-09-28T07:27:35.283Z"
+   },
+   "sub": {
+    "state": "submitted",
+    "observation": "pending",
+    "deliveryState": "submitted",
+    "instanceId": "99bb2362-c375-4837-a9f0-867ea3581f48",
+    "generation": "2026-09-28T07:27:34.812Z",
+    "attemptId": "30b0ce8a-6c40-4c04-94d7-050cc9c034ef",
+    "dispatchEpoch": 1,
+    "retryNotBefore": null,
+    "expiresAt": "2026-09-28T08:27:35.528Z",
+    "observedAt": null,
+    "lateObservedAt": null
+   }
+  },
+  "downBrokerServing": true,
+  "schemaChangedByDowngradeOpen": false,
+  "pingCaps": [
+   "atomic-wake-claim",
+   "deferred-boundary",
+   "delivery-capabilities",
+   "peer-wait-policy"
+  ],
+  "wakeStatusDown": {
+   "late": {
+    "ok": true,
+    "data": {
+     "wake": {
+      "state": "observed",
+      "observation": "unknown",
+      "deliveryState": "observed",
+      "instanceId": "2d3e1c7e-cf99-4251-a2b3-d6eb231289d1",
+      "generation": "2026-09-28T07:27:34.722Z",
+      "attemptId": "7325ec75-4b28-454f-af60-b8550c24a7cc",
+      "dispatchEpoch": 1,
+      "retryNotBefore": null,
+      "expiresAt": "2026-09-28T08:27:35.057Z",
+      "observedAt": "2026-09-28T07:27:35.283Z",
+      "lateObservedAt": "2026-09-28T07:27:35.283Z"
+     }
+    }
+   },
+   "sub": {
+    "ok": true,
+    "data": {
+     "wake": {
+      "state": "submitted",
+      "observation": "pending",
+      "deliveryState": "submitted",
+      "instanceId": "99bb2362-c375-4837-a9f0-867ea3581f48",
+      "generation": "2026-09-28T07:27:34.812Z",
+      "attemptId": "30b0ce8a-6c40-4c04-94d7-050cc9c034ef",
+      "dispatchEpoch": 1,
+      "retryNotBefore": null,
+      "expiresAt": "2026-09-28T08:27:35.528Z",
+      "observedAt": null,
+      "lateObservedAt": null
+     }
+    }
+   }
+  },
+  "sendDraftByDown": {
+   "status": 0,
+   "protocolVersion": "1.0.0",
+   "ok": true,
+   "data": {
+    "messageId": "1370934c-6f09-4d5d-b635-6ab60a4fe402",
+    "createdAt": "2026-09-28T07:27:36.287Z",
+    "expiresAt": "2026-09-28T08:27:36.287Z",
+    "duplicate": false
+   }
+  },
+  "downArrival": {
+   "keys": [
+    "hookSpecificOutput"
+   ],
+   "decision": null,
+   "body": true
+  },
+  "downArrivalAck": {
+   "acknowledged": 1
+  },
+  "downNewWakeLate": {
+   "dispatch": true
+  },
+  "downNewWakeLateDelivered": true,
+  "downClaimPlain": [
+   [
+    "plain-queued",
+    1
+   ],
+   [
+    "draft-by-53",
+    1
+   ]
+  ],
+  "downAckPlain": {
+   "acknowledged": 2
+  },
+  "downStatusClaimedNoAck": "delivered",
+  "downNewMessage": {
+   "id": "4d135cf9-b1f9-4144-ba36-95e4ccb80d50",
+   "ok": true
+  },
+  "schemaAfterRoundTripEqual": true,
+  "backClaimPlain": [
+   [
+    "new-by-2.7.1",
+    1
+   ]
+  ],
+  "pendingEnd_late": 0,
+  "pendingEnd_sub": 0,
+  "pendingEnd_plain": 0
+ },
+ "integrity": [
+  "ok"
+ ],
+ "user_version": 0,
+ "activeRows": [],
+ "unacked": [
+  [
+   "plain",
+   "plain-claimed",
+   1
+  ]
+ ]
+}

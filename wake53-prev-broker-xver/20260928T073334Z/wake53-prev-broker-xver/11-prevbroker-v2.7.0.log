@@ -1,0 +1,29 @@
+AGS_PREVIOUS_BROKER_PATH=/tmp/prev-v2.7.0/mcp-server/dist/session-message-broker.mjs sha256=1ec47364fa66c5eaa716d68322710b9cacac9e786ac3deb1e19af812ebe656cd
+
+ RUN  v5.0.0 /tmp/v53
+
+ × tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 146ms
+   → expected [ 'atomic-wake-claim', …(3) ] to not include 'deferred-boundary'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker
+AssertionError: expected [ 'atomic-wake-claim', …(3) ] to not include 'deferred-boundary'
+ ❯ tests/session-messaging/previous-broker.test.ts:26:41
+     24|     const messageId = "previous-broker-compatibility-message";
+     25|     const ping = await requestSessionMessageOnce<{ capabilities?: stri…
+     26|     expect(ping.capabilities ?? []).not.toContain("deferred-boundary");
+       |                                         ^
+     27|     await requestSessionMessageOnce("send", { sender, target, messageI…
+     28|     for (const event of ["UserPromptSubmit", "PostToolUse", "PostToolU…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  07:18:04
+   Duration  581ms (transform 55%, tests 35%, import 9%, worker 1%)
+
+JSON report written to /tmp/ev/11-prevbroker-v2.7.0.json
+EXIT=1

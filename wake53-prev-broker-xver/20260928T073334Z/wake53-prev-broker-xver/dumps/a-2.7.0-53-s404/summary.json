@@ -1,0 +1,14 @@
+{
+ "tag": "a-2.7.0-53-s404",
+ "seed": 404,
+ "initialBroker": "53",
+ "old": "2.7.0",
+ "messages": 14,
+ "raceMessages": 12,
+ "violations": [],
+ "errors": [],
+ "integrity": [
+  "ok"
+ ],
+ "user_version": 0
+}

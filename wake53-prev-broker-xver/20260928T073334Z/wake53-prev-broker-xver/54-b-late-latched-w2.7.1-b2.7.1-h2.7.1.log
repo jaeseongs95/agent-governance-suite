@@ -1,0 +1,25 @@
+[broker 2.7.1] started pid=11435 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+SessionStart via hook 2.7.1 {"status":0,"out":{},"stderr":""} 6f038d25-0d28-453d-9401-e4125ada2c68 codex-queue
+send by 2.7.1 f763f9e1-e8be-46dd-92e9-f929481583e9 true
+acquire-relay relay-271-1 {"acquired":true} reserve-wake {"dispatch":true}
+start-wake {"dispatch":true}
+record-wake-outcome submitted {"recorded":true}
+SessionStart via hook 2.7.1 {"status":0,"out":{},"stderr":""} e461757c-3117-4972-a3bc-ba49516fc1cb codex-queue
+old-generation wake arrival via hook 2.7.1 {"status":0,"out":{},"stderr":""}
+  [dump writer-2.7.1-state] wake=[{"state":"unknown","inst":"6f038d25-0d28-453d-9401-e4125ada2c68","late":"2026-09-28T07:24:09.258Z","obs":null,"consumed":null,"exp":"2026-09-28T08:24:09.037Z"}] messages=[{"id":"f763f9e1-e8be-46dd-92e9-f929481583e9","att":0,"claimed":null,"acked":null}] integrity=ok
+[broker 2.7.1] stopped pid=11435 {"code":0,"sig":null}
+  [dump broker-stopped] wake=[{"state":"unknown","inst":"6f038d25-0d28-453d-9401-e4125ada2c68","late":"2026-09-28T07:24:09.258Z","obs":null,"consumed":null,"exp":"2026-09-28T08:24:09.037Z"}] messages=[{"id":"f763f9e1-e8be-46dd-92e9-f929481583e9","att":0,"claimed":null,"acked":null}] integrity=ok
+[broker 2.7.1] started pid=11507 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+  [dump after-open-by-2.7.1] wake=[{"state":"unknown","inst":"6f038d25-0d28-453d-9401-e4125ada2c68","late":"2026-09-28T07:24:09.258Z","obs":null,"consumed":null,"exp":"2026-09-28T08:24:09.037Z"}] messages=[{"id":"f763f9e1-e8be-46dd-92e9-f929481583e9","att":0,"claimed":null,"acked":null}] integrity=ok
+acquire-relay relay-271-2 {"acquired":true} reserve-wake {"dispatch":false}
+  [dump after-new-wake-attempt] wake=[{"state":"unknown","inst":"6f038d25-0d28-453d-9401-e4125ada2c68","late":"2026-09-28T07:24:09.258Z","obs":null,"consumed":null,"exp":"2026-09-28T08:24:09.037Z"}] messages=[{"id":"f763f9e1-e8be-46dd-92e9-f929481583e9","att":0,"claimed":null,"acked":null}] integrity=ok
+native input + 2x PostToolUse via hook 2.7.1 [[],[],["hookSpecificOutput"]] body delivered: true
+  [dump after-tool-boundary] wake=[{"state":"unknown","inst":"6f038d25-0d28-453d-9401-e4125ada2c68","late":"2026-09-28T07:24:09.258Z","obs":null,"consumed":null,"exp":"2026-09-28T08:24:09.037Z"}] messages=[{"id":"f763f9e1-e8be-46dd-92e9-f929481583e9","att":1,"claimed":"2026-09-28T07:24:09.757Z","acked":"2026-09-28T07:24:09.901Z"}] integrity=ok
+send by 2.7.1 2005aef1-492b-4c2e-ac4c-0b26ee502449 true
+acquire-relay relay-271-2 {"acquired":true} reserve-wake {"dispatch":false}
+replay old marker via hook 2.7.1 {"status":0,"out":{},"stderr":""}
+acquire-relay relay-271-2 {"acquired":true} reserve-wake {"dispatch":false}
+  [dump final-live] wake=[{"state":"unknown","inst":"6f038d25-0d28-453d-9401-e4125ada2c68","late":"2026-09-28T07:24:09.258Z","obs":null,"consumed":null,"exp":"2026-09-28T08:24:09.037Z"}] messages=[{"id":"f763f9e1-e8be-46dd-92e9-f929481583e9","att":1,"claimed":"2026-09-28T07:24:09.757Z","acked":"2026-09-28T07:24:09.901Z"},{"id":"2005aef1-492b-4c2e-ac4c-0b26ee502449","att":0,"claimed":null,"acked":null}] integrity=ok
+[broker 2.7.1] stopped pid=11507 {"code":0,"sig":null}
+FINDINGS {"tag":"b-late-latched-w2.7.1-b2.7.1-h2.7.1","variant":"late-latched","writer":"2.7.1","afterBroker":"2.7.1","afterHook":"2.7.1","obs":{"writerLateArrivalHook":{},"wakeStatusBefore":{"state":"unknown","observation":"unknown","deliveryState":"unknown","instanceId":"6f038d25-0d28-453d-9401-e4125ada2c68","generation":"2026-09-28T07:24:08.744Z","attemptId":"a52beee7-5368-4682-b98d-e52aea22d77d","dispatchEpoch":1,"retryNotBefore":null,"expiresAt":"2026-09-28T08:24:09.037Z","observedAt":null,"lateObservedAt":"2026-09-28T07:24:09.258Z"},"newWakeAfterUpgrade":{"dispatch":false,"reserve":{"dispatch":false,"attempt":null}},"bodyViaToolBoundary":true,"ack":{"acknowledged":1},"newWakeForFreshMessage":{"dispatch":false,"reserve":{"dispatch":false,"attempt":null}},"wakeStatusAfter":{"state":"unknown","observation":"unknown","deliveryState":"unknown","instanceId":"6f038d25-0d28-453d-9401-e4125ada2c68","generation":"2026-09-28T07:24:08.744Z","attemptId":"a52beee7-5368-4682-b98d-e52aea22d77d","dispatchEpoch":1,"retryNotBefore":null,"expiresAt":"2026-09-28T08:24:09.037Z","observedAt":null,"lateObservedAt":"2026-09-28T07:24:09.258Z"},"replayOldMarker":{},"newWakeAfterReplay":{"dispatch":false,"reserve":{"dispatch":false,"attempt":null}},"pendingEnd":{"count":1}},"integrity":["ok"],"user_version":0,"activeRows":[{"state":"unknown","inst":"6f038d25-0d28-453d-9401-e4125ada2c68","late":"2026-09-28T07:24:09.258Z","exp":"2026-09-28T08:24:09.037Z"}],"unackedMessages":[{"id":"2005aef1-492b-4c2e-ac4c-0b26ee502449","att":0,"body":"body-late-latched-2"}]}
+EXIT=0

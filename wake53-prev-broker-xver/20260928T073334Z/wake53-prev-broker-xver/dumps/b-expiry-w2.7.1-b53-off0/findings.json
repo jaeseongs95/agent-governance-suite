@@ -1,0 +1,27 @@
+{
+ "tag": "b-expiry-w2.7.1-b53-off0",
+ "writer": "2.7.1",
+ "afterBroker": "53",
+ "offsetMs": 0,
+ "newWakeDispatch": false,
+ "wakeStatus": {
+  "state": "unknown",
+  "observation": "unknown",
+  "deliveryState": "unknown",
+  "instanceId": "inst-1",
+  "generation": "2026-09-28T07:27:16.536Z",
+  "attemptId": "12ceda9f-ec47-4ec6-ab94-334f43eb9aab",
+  "dispatchEpoch": 1,
+  "retryNotBefore": null,
+  "expiresAt": "2026-09-28T08:27:16.708Z",
+  "observedAt": null,
+  "lateObservedAt": "2026-09-28T07:27:16.825Z"
+ },
+ "active": [
+  [
+   "unknown",
+   "2026-09-28T07:27:16.825Z",
+   "2026-09-28T08:27:16.708Z"
+  ]
+ ]
+}

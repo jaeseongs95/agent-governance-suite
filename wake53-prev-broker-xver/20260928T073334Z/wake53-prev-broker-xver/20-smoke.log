@@ -1,0 +1,8 @@
+[broker 53] started pid=2089 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+prepare {"status":0,"protocolVersion":"1.0.0","ok":true,"data":{"messageId":"54c55ddc-2049-40e1-8243-2c5f84870b24","preparedAt":"2026-09-28T07:20:56.936Z","expiresAt":"2026-09-28T07:30:56.936Z"}}
+send {"status":0,"protocolVersion":"1.0.0","ok":true,"data":{"messageId":"54c55ddc-2049-40e1-8243-2c5f84870b24","createdAt":"2026-09-28T07:20:57.000Z","expiresAt":"2026-09-28T08:20:57.000Z","duplicate":false}}
+claim {"status":0,"protocolVersion":"1.0.0","ok":true,"data":{"messages":[{"messageId":"54c55ddc-2049-40e1-8243-2c5f84870b24","sender":{"host":"codex","sessionId":"A"},"recipient":{"host":"codex","sessionId":"B"},"body":"hello","createdAt":"2026-09-28T07:20:57.000Z","expiresAt":"2026-09-28T08:20:57.000Z","deliveryAttempt":1,"firstDeliveredAt":"2026-09-28T07:20:57.077Z"}]}}
+ack {"status":0,"protocolVersion":"1.0.0","ok":true,"data":{"acknowledged":1}}
+status {"status":0,"protocolVersion":"1.0.0","ok":true,"data":{"status":{"messageId":"54c55ddc-2049-40e1-8243-2c5f84870b24","target":{"host":"codex","sessionId":"B"},"createdAt":"2026-09-28T07:20:57.000Z","expiresAt":"2026-09-28T08:20:57.000Z","claimedAt":"2026-09-28T07:20:57.077Z","acknowledgedAt":"2026-09-28T07:20:57.148Z","deliveryAttempts":1,"firstDeliveredAt":"2026-09-28T07:20:57.077Z","state":"acknowledged","wake":null}}}
+[broker 53] stopped pid=2089 {"code":0,"sig":null}
+EXIT=0

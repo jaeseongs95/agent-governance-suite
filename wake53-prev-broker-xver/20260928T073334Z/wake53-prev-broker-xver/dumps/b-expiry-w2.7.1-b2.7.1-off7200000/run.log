@@ -1,0 +1,12 @@
+[broker 2.7.1] started pid=13268 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+writer wake true
+old-generation arrival via hook 2.7.1 {}
+  [dump writer-latched] wake=[["unknown","late","2026-09-28T08:27:19.637Z"]] msgs=[["old-body","acked","2026-09-28T08:27:19.617Z"]]
+[broker 2.7.1] stopped pid=13268 {"code":0,"sig":null}
+[broker 2.7.1 offset 7200000ms] pid=13340 ping true
+  [dump opened-shifted] wake=[["unknown","late","2026-09-28T08:27:19.637Z"]] msgs=[["old-body","acked","2026-09-28T08:27:19.617Z"]]
+fresh send true 
+new wake after expiry false {"dispatch":false,"attempt":null}
+wake-status {"state":"unknown","observation":"unknown","deliveryState":"unknown","instanceId":"inst-1","generation":"2026-09-28T07:27:19.487Z","attemptId":"5e630171-7c9b-4668-bc2d-72c32b128179","dispatchEpoch":1,"retryNotBefore":null,"expiresAt":"2026-09-28T08:27:19.637Z","observedAt":null,"lateObservedAt":"2026-09-28T07:27:19.732Z"}
+  [dump final] wake=[["unknown","late","2026-09-28T08:27:19.637Z"]] msgs=[["fresh-body","open","2026-09-28T10:27:20.175Z"]]
+FINDINGS {"tag":"b-expiry-w2.7.1-b2.7.1-off7200000","writer":"2.7.1","afterBroker":"2.7.1","offsetMs":7200000,"newWakeDispatch":false,"wakeStatus":{"state":"unknown","observation":"unknown","deliveryState":"unknown","instanceId":"inst-1","generation":"2026-09-28T07:27:19.487Z","attemptId":"5e630171-7c9b-4668-bc2d-72c32b128179","dispatchEpoch":1,"retryNotBefore":null,"expiresAt":"2026-09-28T08:27:19.637Z","observedAt":null,"lateObservedAt":"2026-09-28T07:27:19.732Z"},"active":[["unknown","2026-09-28T07:27:19.732Z","2026-09-28T08:27:19.637Z"]]}

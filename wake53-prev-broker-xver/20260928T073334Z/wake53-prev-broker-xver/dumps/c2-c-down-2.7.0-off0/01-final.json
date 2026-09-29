@@ -1,0 +1,503 @@
+{
+ "user_version": 0,
+ "schema_version": 25,
+ "journal_mode": "wal",
+ "integrity": [
+  "ok"
+ ],
+ "schema": [
+  {
+   "type": "index",
+   "name": "messages_target_pending",
+   "tbl_name": "messages",
+   "sql": "CREATE INDEX messages_target_pending\n      ON messages (target_host, target_session_id, acknowledged_at, expires_at, claim_until)"
+  },
+  {
+   "type": "index",
+   "name": "prepared_messages_expiry",
+   "tbl_name": "prepared_messages",
+   "sql": "CREATE INDEX prepared_messages_expiry ON prepared_messages (expires_at)"
+  },
+  {
+   "type": "index",
+   "name": "prepared_messages_owner",
+   "tbl_name": "prepared_messages",
+   "sql": "CREATE INDEX prepared_messages_owner ON prepared_messages (sender_host, sender_session_id, receipt)"
+  },
+  {
+   "type": "index",
+   "name": "session_presence_latest",
+   "tbl_name": "session_presence",
+   "sql": "CREATE INDEX session_presence_latest\n      ON session_presence (host, session_id, started_at DESC)"
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_input_observations_1",
+   "tbl_name": "input_observations",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_messages_1",
+   "tbl_name": "messages",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_prepared_messages_1",
+   "tbl_name": "prepared_messages",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_relay_leases_1",
+   "tbl_name": "relay_leases",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_session_presence_1",
+   "tbl_name": "session_presence",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_wake_nonces_1",
+   "tbl_name": "wake_nonces",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "wake_active_target",
+   "tbl_name": "wake_nonces",
+   "sql": "CREATE UNIQUE INDEX wake_active_target ON wake_nonces (host, session_id)\n        WHERE state IN ('reserved', 'started', 'submitted', 'unknown')"
+  },
+  {
+   "type": "table",
+   "name": "input_observations",
+   "tbl_name": "input_observations",
+   "sql": "CREATE TABLE input_observations (\n        host TEXT NOT NULL,\n        session_id TEXT NOT NULL,\n        deferred_tool_claim INTEGER NOT NULL DEFAULT 0 CHECK (deferred_tool_claim IN (0, 1)),\n        observed_at TEXT NOT NULL,\n        PRIMARY KEY (host, session_id)\n      ) STRICT"
+  },
+  {
+   "type": "table",
+   "name": "messages",
+   "tbl_name": "messages",
+   "sql": "CREATE TABLE messages (\n      message_id TEXT PRIMARY KEY,\n      sender_host TEXT NOT NULL,\n      sender_session_id TEXT NOT NULL,\n      target_host TEXT NOT NULL,\n      target_session_id TEXT NOT NULL,\n      body TEXT NOT NULL,\n      body_bytes INTEGER NOT NULL,\n      created_at TEXT NOT NULL,\n      expires_at TEXT NOT NULL,\n      claimed_at TEXT,\n      claim_until TEXT,\n      delivery_attempts INTEGER NOT NULL DEFAULT 0,\n      first_delivered_at TEXT,\n      acknowledged_at TEXT\n    ) STRICT"
+  },
+  {
+   "type": "table",
+   "name": "prepared_messages",
+   "tbl_name": "prepared_messages",
+   "sql": "CREATE TABLE prepared_messages (\n        message_id TEXT PRIMARY KEY,\n        sender_host TEXT NOT NULL,\n        sender_session_id TEXT NOT NULL,\n        target_host TEXT NOT NULL,\n        target_session_id TEXT NOT NULL,\n        body TEXT,\n        ttl_seconds INTEGER NOT NULL,\n        prepared_at TEXT NOT NULL,\n        expires_at TEXT NOT NULL,\n        receipt TEXT,\n        record_bytes INTEGER NOT NULL\n      ) STRICT"
+  },
+  {
+   "type": "table",
+   "name": "relay_leases",
+   "tbl_name": "relay_leases",
+   "sql": "CREATE TABLE relay_leases (\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      transport TEXT NOT NULL,\n      relay_id TEXT NOT NULL,\n      pid INTEGER NOT NULL,\n      parent_pid INTEGER NOT NULL,\n      lease_until TEXT NOT NULL,\n      updated_at TEXT NOT NULL,\n      PRIMARY KEY (host, session_id, transport)\n    ) STRICT"
+  },
+  {
+   "type": "table",
+   "name": "session_presence",
+   "tbl_name": "session_presence",
+   "sql": "CREATE TABLE session_presence (\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      instance_id TEXT NOT NULL,\n      transport TEXT NOT NULL,\n      wake_visibility TEXT NOT NULL CHECK (wake_visibility IN ('silent', 'user-message', 'none')),\n      can_wake_silently INTEGER NOT NULL CHECK (can_wake_silently IN (0, 1)),\n      supported_injection TEXT NOT NULL DEFAULT '[]',\n      idle_wake TEXT NOT NULL DEFAULT 'none' CHECK (idle_wake IN ('silent', 'user-message', 'none')),\n      collaboration_id TEXT,\n      workspace_id TEXT,\n      role TEXT,\n      started_at TEXT NOT NULL,\n      heartbeat_at TEXT NOT NULL,\n      lease_until TEXT NOT NULL,\n      ended_at TEXT,\n      end_reason TEXT,\n      PRIMARY KEY (host, session_id, instance_id)\n    ) STRICT"
+  },
+  {
+   "type": "table",
+   "name": "wake_nonces",
+   "tbl_name": "wake_nonces",
+   "sql": "CREATE TABLE wake_nonces (\n      nonce_digest TEXT PRIMARY KEY,\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      expires_at TEXT NOT NULL,\n      consumed_at TEXT\n    , state TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted')), nonce TEXT, instance_id TEXT, birth_generation TEXT, transport TEXT, relay_id TEXT, attempt_id TEXT, dispatch_epoch INTEGER NOT NULL DEFAULT 0, retry_not_before TEXT, retry_count INTEGER NOT NULL DEFAULT 0, started_at TEXT, outcome_at TEXT, observed_at TEXT, late_observed_at TEXT) STRICT"
+  }
+ ],
+ "tables": {
+  "input_observations": [
+   {
+    "_rowid": 1,
+    "host": "codex",
+    "session_id": "late",
+    "deferred_tool_claim": 1,
+    "observed_at": "2026-09-28T07:28:15.167Z"
+   }
+  ],
+  "messages": [
+   {
+    "_rowid": 1,
+    "message_id": "b3b96423-9fa8-47f5-92cc-eb41166d0d75",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "late",
+    "body": "late-body-1",
+    "body_bytes": 11,
+    "created_at": "2026-09-28T07:28:14.964Z",
+    "expires_at": "2026-09-28T08:28:14.964Z",
+    "claimed_at": "2026-09-28T07:28:16.286Z",
+    "claim_until": null,
+    "delivery_attempts": 1,
+    "first_delivered_at": "2026-09-28T07:28:16.286Z",
+    "acknowledged_at": "2026-09-28T07:28:16.365Z"
+   },
+   {
+    "_rowid": 2,
+    "message_id": "7411b9bf-da36-4ba5-a434-0cf4aa3328c8",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "sub",
+    "body": "sub-body-1",
+    "body_bytes": 10,
+    "created_at": "2026-09-28T07:28:15.314Z",
+    "expires_at": "2026-09-28T08:28:15.314Z",
+    "claimed_at": "2026-09-28T07:28:16.100Z",
+    "claim_until": null,
+    "delivery_attempts": 1,
+    "first_delivered_at": "2026-09-28T07:28:16.100Z",
+    "acknowledged_at": "2026-09-28T07:28:16.185Z"
+   },
+   {
+    "_rowid": 3,
+    "message_id": "b9033b92-fcf6-4083-8f2b-860c7669f18c",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "plain",
+    "body": "plain-claimed",
+    "body_bytes": 13,
+    "created_at": "2026-09-28T07:28:15.496Z",
+    "expires_at": "2026-09-28T08:28:15.496Z",
+    "claimed_at": "2026-09-28T07:28:15.568Z",
+    "claim_until": "2026-09-28T07:30:15.568Z",
+    "delivery_attempts": 1,
+    "first_delivered_at": "2026-09-28T07:28:15.568Z",
+    "acknowledged_at": null
+   },
+   {
+    "_rowid": 4,
+    "message_id": "06ab00f2-a232-47d2-9a0d-dc90e9bc2ab0",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "plain",
+    "body": "plain-queued",
+    "body_bytes": 12,
+    "created_at": "2026-09-28T07:28:15.711Z",
+    "expires_at": "2026-09-28T08:28:15.711Z",
+    "claimed_at": "2026-09-28T07:28:16.427Z",
+    "claim_until": null,
+    "delivery_attempts": 1,
+    "first_delivered_at": "2026-09-28T07:28:16.427Z",
+    "acknowledged_at": "2026-09-28T07:28:16.499Z"
+   },
+   {
+    "_rowid": 5,
+    "message_id": "366f2b33-2799-499c-9fbd-80ffa509c34a",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "plain",
+    "body": "draft-by-53",
+    "body_bytes": 11,
+    "created_at": "2026-09-28T07:28:16.021Z",
+    "expires_at": "2026-09-28T08:28:16.021Z",
+    "claimed_at": "2026-09-28T07:28:16.427Z",
+    "claim_until": null,
+    "delivery_attempts": 1,
+    "first_delivered_at": "2026-09-28T07:28:16.427Z",
+    "acknowledged_at": "2026-09-28T07:28:16.499Z"
+   },
+   {
+    "_rowid": 6,
+    "message_id": "67a4e3f7-c2fd-4e70-ab1f-9ddd0dbf643a",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "plain",
+    "body": "new-by-2.7.0",
+    "body_bytes": 12,
+    "created_at": "2026-09-28T07:28:16.706Z",
+    "expires_at": "2026-09-28T08:28:16.706Z",
+    "claimed_at": "2026-09-28T07:28:16.924Z",
+    "claim_until": null,
+    "delivery_attempts": 1,
+    "first_delivered_at": "2026-09-28T07:28:16.924Z",
+    "acknowledged_at": "2026-09-28T07:28:17.008Z"
+   },
+   {
+    "_rowid": 7,
+    "message_id": "d1a7fdf9-257c-4ba3-a706-f97a4a79ddc2",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "sub",
+    "body": "fresh",
+    "body_bytes": 5,
+    "created_at": "2026-09-28T07:28:43.164Z",
+    "expires_at": "2026-09-28T08:28:43.164Z",
+    "claimed_at": null,
+    "claim_until": null,
+    "delivery_attempts": 0,
+    "first_delivered_at": null,
+    "acknowledged_at": null
+   }
+  ],
+  "prepared_messages": [
+   {
+    "_rowid": 1,
+    "message_id": "b3b96423-9fa8-47f5-92cc-eb41166d0d75",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "late",
+    "body": null,
+    "ttl_seconds": 3600,
+    "prepared_at": "2026-09-28T07:28:14.849Z",
+    "expires_at": "2026-09-28T09:28:14.964Z",
+    "receipt": "{\"messageId\":\"b3b96423-9fa8-47f5-92cc-eb41166d0d75\",\"createdAt\":\"2026-09-28T07:28:14.964Z\",\"expiresAt\":\"2026-09-28T08:28:14.964Z\"}",
+    "record_bytes": 402
+   },
+   {
+    "_rowid": 2,
+    "message_id": "7411b9bf-da36-4ba5-a434-0cf4aa3328c8",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "sub",
+    "body": null,
+    "ttl_seconds": 3600,
+    "prepared_at": "2026-09-28T07:28:15.237Z",
+    "expires_at": "2026-09-28T09:28:15.314Z",
+    "receipt": "{\"messageId\":\"7411b9bf-da36-4ba5-a434-0cf4aa3328c8\",\"createdAt\":\"2026-09-28T07:28:15.314Z\",\"expiresAt\":\"2026-09-28T08:28:15.314Z\"}",
+    "record_bytes": 401
+   },
+   {
+    "_rowid": 3,
+    "message_id": "b9033b92-fcf6-4083-8f2b-860c7669f18c",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "plain",
+    "body": null,
+    "ttl_seconds": 3600,
+    "prepared_at": "2026-09-28T07:28:15.415Z",
+    "expires_at": "2026-09-28T09:28:15.496Z",
+    "receipt": "{\"messageId\":\"b9033b92-fcf6-4083-8f2b-860c7669f18c\",\"createdAt\":\"2026-09-28T07:28:15.496Z\",\"expiresAt\":\"2026-09-28T08:28:15.496Z\"}",
+    "record_bytes": 403
+   },
+   {
+    "_rowid": 4,
+    "message_id": "06ab00f2-a232-47d2-9a0d-dc90e9bc2ab0",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "plain",
+    "body": null,
+    "ttl_seconds": 3600,
+    "prepared_at": "2026-09-28T07:28:15.636Z",
+    "expires_at": "2026-09-28T09:28:15.711Z",
+    "receipt": "{\"messageId\":\"06ab00f2-a232-47d2-9a0d-dc90e9bc2ab0\",\"createdAt\":\"2026-09-28T07:28:15.711Z\",\"expiresAt\":\"2026-09-28T08:28:15.711Z\"}",
+    "record_bytes": 403
+   },
+   {
+    "_rowid": 5,
+    "message_id": "366f2b33-2799-499c-9fbd-80ffa509c34a",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "plain",
+    "body": null,
+    "ttl_seconds": 3600,
+    "prepared_at": "2026-09-28T07:28:15.782Z",
+    "expires_at": "2026-09-28T09:28:16.021Z",
+    "receipt": "{\"messageId\":\"366f2b33-2799-499c-9fbd-80ffa509c34a\",\"createdAt\":\"2026-09-28T07:28:16.021Z\",\"expiresAt\":\"2026-09-28T08:28:16.021Z\"}",
+    "record_bytes": 403
+   },
+   {
+    "_rowid": 6,
+    "message_id": "67a4e3f7-c2fd-4e70-ab1f-9ddd0dbf643a",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "plain",
+    "body": null,
+    "ttl_seconds": 3600,
+    "prepared_at": "2026-09-28T07:28:16.638Z",
+    "expires_at": "2026-09-28T09:28:16.706Z",
+    "receipt": "{\"messageId\":\"67a4e3f7-c2fd-4e70-ab1f-9ddd0dbf643a\",\"createdAt\":\"2026-09-28T07:28:16.706Z\",\"expiresAt\":\"2026-09-28T08:28:16.706Z\"}",
+    "record_bytes": 403
+   },
+   {
+    "_rowid": 7,
+    "message_id": "d1a7fdf9-257c-4ba3-a706-f97a4a79ddc2",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "sub",
+    "body": null,
+    "ttl_seconds": 3600,
+    "prepared_at": "2026-09-28T07:28:43.083Z",
+    "expires_at": "2026-09-28T09:28:43.164Z",
+    "receipt": "{\"messageId\":\"d1a7fdf9-257c-4ba3-a706-f97a4a79ddc2\",\"createdAt\":\"2026-09-28T07:28:43.164Z\",\"expiresAt\":\"2026-09-28T08:28:43.164Z\"}",
+    "record_bytes": 401
+   }
+  ],
+  "relay_leases": [
+   {
+    "_rowid": 1,
+    "host": "codex",
+    "session_id": "sub",
+    "transport": "codex-queue",
+    "relay_id": "relay-new",
+    "pid": 15098,
+    "parent_pid": 15098,
+    "lease_until": "2026-09-28T07:28:58.178Z",
+    "updated_at": "2026-09-28T07:28:43.178Z"
+   }
+  ],
+  "session_presence": [
+   {
+    "_rowid": 1,
+    "host": "codex",
+    "session_id": "late",
+    "instance_id": "03f427ce-1b40-4ea8-af53-9b400e3f7a30",
+    "transport": "codex-queue",
+    "wake_visibility": "user-message",
+    "can_wake_silently": 0,
+    "supported_injection": "[\"peer-wake\",\"tool-boundary\"]",
+    "idle_wake": "user-message",
+    "collaboration_id": null,
+    "workspace_id": null,
+    "role": null,
+    "started_at": "2026-09-28T07:28:14.679Z",
+    "heartbeat_at": "2026-09-28T07:28:14.679Z",
+    "lease_until": "2026-09-28T07:28:34.679Z",
+    "ended_at": null,
+    "end_reason": null
+   },
+   {
+    "_rowid": 2,
+    "host": "codex",
+    "session_id": "sub",
+    "instance_id": "52b4a00f-37f7-4920-a1ad-a6c20b21cabd",
+    "transport": "codex-queue",
+    "wake_visibility": "user-message",
+    "can_wake_silently": 0,
+    "supported_injection": "[\"peer-wake\",\"tool-boundary\"]",
+    "idle_wake": "user-message",
+    "collaboration_id": null,
+    "workspace_id": null,
+    "role": null,
+    "started_at": "2026-09-28T07:28:14.762Z",
+    "heartbeat_at": "2026-09-28T07:28:16.037Z",
+    "lease_until": "2026-09-28T07:28:36.037Z",
+    "ended_at": null,
+    "end_reason": null
+   },
+   {
+    "_rowid": 3,
+    "host": "codex",
+    "session_id": "late",
+    "instance_id": "1ded3c4a-ef23-4b49-abae-b32126b82ae8",
+    "transport": "codex-queue",
+    "wake_visibility": "user-message",
+    "can_wake_silently": 0,
+    "supported_injection": "[\"peer-wake\",\"tool-boundary\"]",
+    "idle_wake": "user-message",
+    "collaboration_id": null,
+    "workspace_id": null,
+    "role": null,
+    "started_at": "2026-09-28T07:28:15.062Z",
+    "heartbeat_at": "2026-09-28T07:28:16.200Z",
+    "lease_until": "2026-09-28T07:28:36.200Z",
+    "ended_at": null,
+    "end_reason": null
+   },
+   {
+    "_rowid": 4,
+    "host": "codex",
+    "session_id": "sub",
+    "instance_id": "inst-new",
+    "transport": "codex-queue",
+    "wake_visibility": "user-message",
+    "can_wake_silently": 0,
+    "supported_injection": "[\"peer-wake\",\"tool-boundary\"]",
+    "idle_wake": "user-message",
+    "collaboration_id": null,
+    "workspace_id": null,
+    "role": null,
+    "started_at": "2026-09-28T07:28:43.014Z",
+    "heartbeat_at": "2026-09-28T07:28:43.014Z",
+    "lease_until": "2026-09-28T07:29:03.014Z",
+    "ended_at": null,
+    "end_reason": null
+   }
+  ],
+  "wake_nonces": [
+   {
+    "_rowid": 1,
+    "nonce_digest": "1ae18c7db83d3d4346dbcfcbcf5dda28d12b0c75f442c1b22376bf1d6d335826",
+    "host": "codex",
+    "session_id": "late",
+    "expires_at": "2026-09-28T08:28:14.985Z",
+    "consumed_at": "2026-09-28T07:28:15.154Z",
+    "state": "observed",
+    "nonce": "HjwEus1MXC1e9_EXy7LM74kJLeC01kel",
+    "instance_id": "03f427ce-1b40-4ea8-af53-9b400e3f7a30",
+    "birth_generation": "2026-09-28T07:28:14.679Z",
+    "transport": "codex-queue",
+    "relay_id": "r53-late-1",
+    "attempt_id": "536c2c29-6889-4ba0-aa37-8701f8bbd4fe",
+    "dispatch_epoch": 1,
+    "retry_not_before": null,
+    "retry_count": 0,
+    "started_at": "2026-09-28T07:28:14.991Z",
+    "outcome_at": "2026-09-28T07:28:14.997Z",
+    "observed_at": "2026-09-28T07:28:15.154Z",
+    "late_observed_at": "2026-09-28T07:28:15.154Z"
+   },
+   {
+    "_rowid": 2,
+    "nonce_digest": "d2aefae43c1076ac9a051ef656c19792b11c1caa030ca748186724503edfc9ec",
+    "host": "codex",
+    "session_id": "sub",
+    "expires_at": "2026-09-28T08:28:15.332Z",
+    "consumed_at": "2026-09-28T07:28:16.100Z",
+    "state": "submitted",
+    "nonce": "UTZKpP3yJ0EWJuTiwW6O40WC5RGAMO-S",
+    "instance_id": "52b4a00f-37f7-4920-a1ad-a6c20b21cabd",
+    "birth_generation": "2026-09-28T07:28:14.762Z",
+    "transport": "codex-queue",
+    "relay_id": "r53-sub-1",
+    "attempt_id": "17e342a0-18cd-4465-8f77-0ea6ab30fd02",
+    "dispatch_epoch": 1,
+    "retry_not_before": null,
+    "retry_count": 0,
+    "started_at": "2026-09-28T07:28:15.337Z",
+    "outcome_at": "2026-09-28T07:28:15.342Z",
+    "observed_at": null,
+    "late_observed_at": null
+   },
+   {
+    "_rowid": 3,
+    "nonce_digest": "1c2748cad7732c9151a61e04524fd3eb14a82d28e2b595768c8d4c08c98daa67",
+    "host": "codex",
+    "session_id": "late",
+    "expires_at": "2026-09-28T08:28:16.216Z",
+    "consumed_at": "2026-09-28T07:28:16.286Z",
+    "state": "legacy",
+    "nonce": null,
+    "instance_id": null,
+    "birth_generation": null,
+    "transport": null,
+    "relay_id": null,
+    "attempt_id": null,
+    "dispatch_epoch": 0,
+    "retry_not_before": null,
+    "retry_count": 0,
+    "started_at": null,
+    "outcome_at": null,
+    "observed_at": null,
+    "late_observed_at": null
+   }
+  ]
+ }
+}

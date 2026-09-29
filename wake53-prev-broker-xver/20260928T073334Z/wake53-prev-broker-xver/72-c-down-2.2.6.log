@@ -1,0 +1,17 @@
+[broker 53] started pid=14760 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+53 late arrival {}
+53 claim no ack ["69b7034f-9e7b-41be-bfe6-857d6c1ca807"]
+53 draft 11d76527-5c31-4dd1-ae92-e9770a0b802a
+  [dump built-by-53] wake=[["late","observed","late"],["sub","submitted","-"]] msgs=[["late",0,"open"],["sub",0,"open"],["plain",1,"open"],["plain",0,"open"]] drafts=5 integrity=ok uv=0
+[broker 53] stopped pid=14760 {"code":0,"sig":null}
+[broker 2.2.6] started pid=14940 caps=undefined
+  [dump opened-by-2.2.6] wake=[["late","observed","late"],["sub","submitted","-"]] msgs=[["late",0,"open"],["sub",0,"open"],["plain",1,"open"],["plain",0,"open"]] drafts=5 integrity=ok uv=0
+reserve-wake returned no managed attempt (legacy reservation) {"ok":true,"data":{"dispatch":true}}
+  [dump after-ops-2.2.6] wake=[["late","observed","late"],["sub","submitted","-"],["late","legacy","-"]] msgs=[["late",1,"open"],["sub",1,"open"],["plain",1,"open"],["plain",1,"acked"]] drafts=5 integrity=ok uv=0
+[broker 2.2.6] stopped pid=14940 {"code":0,"sig":null}
+[broker 53] started pid=15044 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+  [dump reopened-by-53] wake=[["late","observed","late"],["sub","submitted","-"],["late","legacy","-"]] msgs=[["late",1,"open"],["sub",1,"open"],["plain",1,"open"],["plain",1,"acked"]] drafts=5 integrity=ok uv=0
+  [dump final] wake=[["late","observed","late"],["sub","submitted","-"],["late","legacy","-"]] msgs=[["late",1,"open"],["sub",1,"open"],["plain",1,"open"],["plain",1,"acked"]] drafts=5 integrity=ok uv=0
+[broker 53] stopped pid=15044 {"code":0,"sig":null}
+FINDINGS {"tag":"c-down-2.2.6","down":"2.2.6","obs":{"wake53":{"late":{"state":"observed","observation":"observed","deliveryState":"observed","instanceId":"46e13b6c-6ada-4608-8aa1-cba41b6a7b85","generation":"2026-09-28T07:28:17.349Z","attemptId":"0a241b5e-6805-46e3-9d01-51cc9fc9ec85","dispatchEpoch":1,"retryNotBefore":null,"expiresAt":"2026-09-28T08:28:17.640Z","observedAt":"2026-09-28T07:28:17.808Z","lateObservedAt":"2026-09-28T07:28:17.808Z"},"sub":{"state":"submitted","observation":"pending","deliveryState":"submitted","instanceId":"45aa2ff8-fab9-41fb-9976-1c1900c3bdb0","generation":"2026-09-28T07:28:17.451Z","attemptId":"ea7cc390-0261-4fc2-a1f4-e10b197eb005","dispatchEpoch":1,"retryNotBefore":null,"expiresAt":"2026-09-28T08:28:17.981Z","observedAt":null,"lateObservedAt":null}},"downBrokerServing":true,"schemaChangedByDowngradeOpen":false,"wakeStatusDown":{"late":{"ok":false,"error":"Unknown broker operation."},"sub":{"ok":false,"error":"Unknown broker operation."}},"sendDraftByDown":{"status":1,"protocolVersion":"1.0.0","ok":false,"error":"Session identity is required."},"downArrival":{"keys":["hookSpecificOutput"],"decision":null,"body":true},"downNewWakeLate":{"dispatch":true,"legacy":true,"reserve":{"ok":true,"data":{"dispatch":true}},"start":null},"downNewWakeLateDelivered":true,"downClaimPlain":[["plain-queued",null]],"downAckPlain":{"acknowledged":1},"downStatusClaimedNoAck":"delivered","downNewMessage":{"ok":false,"err":"Session identity is required."},"schemaAfterRoundTripEqual":true,"backClaimPlain":[],"pendingEnd_late":0,"pendingEnd_sub":0,"pendingEnd_plain":0},"integrity":["ok"],"user_version":0,"activeRows":[["sub","submitted",null]],"unacked":[["late","late-body-1",1],["sub","sub-body-1",1],["plain","plain-claimed",1]]}
+EXIT=0

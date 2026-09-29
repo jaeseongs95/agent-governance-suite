@@ -1,0 +1,14 @@
+{
+ "tag": "a-2.7.1-2.7.1-s303",
+ "seed": 303,
+ "initialBroker": "2.7.1",
+ "old": "2.7.1",
+ "messages": 9,
+ "raceMessages": 12,
+ "violations": [],
+ "errors": [],
+ "integrity": [
+  "ok"
+ ],
+ "user_version": 0
+}

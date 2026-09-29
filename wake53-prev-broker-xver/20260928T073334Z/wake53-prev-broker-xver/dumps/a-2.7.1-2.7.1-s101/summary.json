@@ -1,0 +1,14 @@
+{
+ "tag": "a-2.7.1-2.7.1-s101",
+ "seed": 101,
+ "initialBroker": "2.7.1",
+ "old": "2.7.1",
+ "messages": 11,
+ "raceMessages": 12,
+ "violations": [],
+ "errors": [],
+ "integrity": [
+  "ok"
+ ],
+ "user_version": 0
+}

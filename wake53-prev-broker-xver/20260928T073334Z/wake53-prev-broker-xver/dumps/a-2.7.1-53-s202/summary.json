@@ -1,0 +1,14 @@
+{
+ "tag": "a-2.7.1-53-s202",
+ "seed": 202,
+ "initialBroker": "53",
+ "old": "2.7.1",
+ "messages": 12,
+ "raceMessages": 12,
+ "violations": [],
+ "errors": [],
+ "integrity": [
+  "ok"
+ ],
+ "user_version": 0
+}

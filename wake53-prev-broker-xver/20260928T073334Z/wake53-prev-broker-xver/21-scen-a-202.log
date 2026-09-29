@@ -1,0 +1,66 @@
+seed=202 initialBroker=53 old=2.7.1 steps=60 sessions=[{"id":{"host":"codex","sessionId":"A-old"},"v":"2.7.1"},{"id":{"host":"codex","sessionId":"B-new"},"v":"53"},{"id":{"host":"claude-code","sessionId":"C-old"},"v":"2.7.1"},{"id":{"host":"claude-code","sessionId":"D-new"},"v":"53"}]
+[broker 53] started pid=3652 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+step0 prepare by 53:D-new -> A-old dce0e184-b923-4054-8f01-46ab16d7911c
+step1 send by 53:D-new id=dce0e184-b923-4054-8f01-46ab16d7911c {"messageId":"dce0e184-b923-4054-8f01-46ab16d7911c","createdAt":"2026-09-28T07:21:54.137Z","expiresAt":"2026-09-28T08:21:54.137Z","duplicate":false}
+step2 claim by 53:B-new []
+step3 prepare by 2.7.1:A-old -> D-new 54a7e46f-e077-4bba-ad4b-f6837c8491d4
+step4 claim by 2.7.1:C-old []
+step5 prepare by 2.7.1:C-old -> A-old ce641b40-bace-4dfa-bb6b-bccb31652b92
+step7 prepare by 2.7.1:A-old -> D-new e102f45e-391b-4db8-b018-4e2a69784b79
+step8 prepare by 53:B-new -> C-old 1c3e4343-170d-424f-9f66-0885a0b031ba
+step9 claim by 2.7.1:A-old ["dce0e184-b923-4054-8f01-46ab16d7911c"]
+step10 claim by 2.7.1:C-old []
+step11 late-ack by 53 dce0e184-b923-4054-8f01-46ab16d7911c {"acknowledged":1}
+step12 prepare by 53:D-new -> A-old 9b0956fd-d274-4843-b7a5-d29cac4b18f4
+step13 prepare by 53:B-new -> D-new 1bb10bae-66aa-4030-8419-f0fdc1ce1d7c
+step14 claim by 2.7.1:C-old []
+step15 claim by 2.7.1:C-old []
+step16 prepare by 2.7.1:A-old -> D-new cd4648bc-9b6a-4bd3-8152-f25587d6a3a5
+step17 send by 2.7.1:A-old id=cd4648bc-9b6a-4bd3-8152-f25587d6a3a5 {"messageId":"cd4648bc-9b6a-4bd3-8152-f25587d6a3a5","createdAt":"2026-09-28T07:21:55.166Z","expiresAt":"2026-09-28T08:21:55.166Z","duplicate":false}
+step17 dup-send by 53 {"messageId":"cd4648bc-9b6a-4bd3-8152-f25587d6a3a5","createdAt":"2026-09-28T07:21:55.166Z","expiresAt":"2026-09-28T08:21:55.166Z","duplicate":true}
+step18 claim by 2.7.1:A-old []
+step20 send by 2.7.1:A-old id=e102f45e-391b-4db8-b018-4e2a69784b79 {"messageId":"e102f45e-391b-4db8-b018-4e2a69784b79","createdAt":"2026-09-28T07:21:55.386Z","expiresAt":"2026-09-28T08:21:55.386Z","duplicate":false}
+step22 claim by 2.7.1:C-old []
+step23 prepare by 53:B-new -> D-new 70638820-43a9-49ce-b755-60a7a8dfeca6
+step24 send by 53:B-new id=70638820-43a9-49ce-b755-60a7a8dfeca6 {"messageId":"70638820-43a9-49ce-b755-60a7a8dfeca6","createdAt":"2026-09-28T07:21:55.588Z","expiresAt":"2026-09-28T08:21:55.588Z","duplicate":false}
+step25 claim by 53:D-new ["cd4648bc-9b6a-4bd3-8152-f25587d6a3a5","e102f45e-391b-4db8-b018-4e2a69784b79","70638820-43a9-49ce-b755-60a7a8dfeca6"]
+step25  ack by 53 e102f45e-391b-4db8-b018-4e2a69784b79 {"acknowledged":1}
+step26 claim by 2.7.1:A-old []
+step27 send by 53:D-new id=9b0956fd-d274-4843-b7a5-d29cac4b18f4 {"messageId":"9b0956fd-d274-4843-b7a5-d29cac4b18f4","createdAt":"2026-09-28T07:21:55.886Z","expiresAt":"2026-09-28T08:21:55.886Z","duplicate":false}
+step28 late-ack by 53 cd4648bc-9b6a-4bd3-8152-f25587d6a3a5 {"acknowledged":1}
+step29 late-ack by 2.7.1 70638820-43a9-49ce-b755-60a7a8dfeca6 {"acknowledged":1}
+step30 claim by 2.7.1:A-old ["9b0956fd-d274-4843-b7a5-d29cac4b18f4"]
+step30  ack by 53 9b0956fd-d274-4843-b7a5-d29cac4b18f4 {"acknowledged":1}
+step31 prepare by 53:B-new -> C-old 5e591934-8ede-4310-b4b5-fc9a86e6ea17
+step33 prepare by 2.7.1:C-old -> B-new 2a12537f-ce07-440c-9bda-adaca2fb455e
+step34 send by 2.7.1:A-old id=54a7e46f-e077-4bba-ad4b-f6837c8491d4 {"messageId":"54a7e46f-e077-4bba-ad4b-f6837c8491d4","createdAt":"2026-09-28T07:21:56.397Z","expiresAt":"2026-09-28T08:21:56.397Z","duplicate":false}
+step35 claim by 53:B-new []
+step36 claim by 53:B-new []
+step37 send by 53:B-new id=1c3e4343-170d-424f-9f66-0885a0b031ba {"messageId":"1c3e4343-170d-424f-9f66-0885a0b031ba","createdAt":"2026-09-28T07:21:56.603Z","expiresAt":"2026-09-28T08:21:56.603Z","duplicate":false}
+step38 send by 53:B-new id=5e591934-8ede-4310-b4b5-fc9a86e6ea17 {"messageId":"5e591934-8ede-4310-b4b5-fc9a86e6ea17","createdAt":"2026-09-28T07:21:56.668Z","expiresAt":"2026-09-28T08:21:56.668Z","duplicate":false}
+step38 dup-send by 2.7.1 {"messageId":"5e591934-8ede-4310-b4b5-fc9a86e6ea17","createdAt":"2026-09-28T07:21:56.668Z","expiresAt":"2026-09-28T08:21:56.668Z","duplicate":true}
+step40 send by 2.7.1:C-old id=2a12537f-ce07-440c-9bda-adaca2fb455e {"messageId":"2a12537f-ce07-440c-9bda-adaca2fb455e","createdAt":"2026-09-28T07:21:56.815Z","expiresAt":"2026-09-28T08:21:56.815Z","duplicate":false}
+step40 dup-send by 53 {"messageId":"2a12537f-ce07-440c-9bda-adaca2fb455e","createdAt":"2026-09-28T07:21:56.815Z","expiresAt":"2026-09-28T08:21:56.815Z","duplicate":true}
+step41 prepare by 2.7.1:C-old -> A-old b8153f18-af7c-479f-a0b5-9751111e2e5e
+step42 prepare by 53:B-new -> A-old 9116dd26-203e-4f86-8709-e57609db387d
+step43 claim by 53:B-new ["2a12537f-ce07-440c-9bda-adaca2fb455e"]
+step43  ack by 2.7.1 2a12537f-ce07-440c-9bda-adaca2fb455e {"acknowledged":1}
+step45 send by 2.7.1:C-old id=b8153f18-af7c-479f-a0b5-9751111e2e5e {"messageId":"b8153f18-af7c-479f-a0b5-9751111e2e5e","createdAt":"2026-09-28T07:21:57.268Z","expiresAt":"2026-09-28T08:21:57.268Z","duplicate":false}
+step47 claim by 2.7.1:C-old ["1c3e4343-170d-424f-9f66-0885a0b031ba","5e591934-8ede-4310-b4b5-fc9a86e6ea17"]
+step47  ack by 2.7.1 1c3e4343-170d-424f-9f66-0885a0b031ba {"acknowledged":1}
+step47  ack by 2.7.1 5e591934-8ede-4310-b4b5-fc9a86e6ea17 {"acknowledged":1}
+step48 prepare by 2.7.1:C-old -> D-new 1d47eaf7-716d-4f04-bcd1-6418cc47b520
+step51 send by 53:B-new id=9116dd26-203e-4f86-8709-e57609db387d {"messageId":"9116dd26-203e-4f86-8709-e57609db387d","createdAt":"2026-09-28T07:21:57.637Z","expiresAt":"2026-09-28T08:21:57.637Z","duplicate":false}
+step51 dup-send by 2.7.1 {"messageId":"9116dd26-203e-4f86-8709-e57609db387d","createdAt":"2026-09-28T07:21:57.637Z","expiresAt":"2026-09-28T08:21:57.637Z","duplicate":true}
+step52 send by 2.7.1:C-old id=1d47eaf7-716d-4f04-bcd1-6418cc47b520 {"messageId":"1d47eaf7-716d-4f04-bcd1-6418cc47b520","createdAt":"2026-09-28T07:21:57.777Z","expiresAt":"2026-09-28T08:21:57.777Z","duplicate":false}
+[broker 53] stopped pid=3652 {"code":0,"sig":null}
+[broker 2.7.1] started pid=4300 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+step58 claim by 2.7.1:A-old ["b8153f18-af7c-479f-a0b5-9751111e2e5e","9116dd26-203e-4f86-8709-e57609db387d"]
+step58  ack by 53 b8153f18-af7c-479f-a0b5-9751111e2e5e {"acknowledged":1}
+step58  ack by 2.7.1 9116dd26-203e-4f86-8709-e57609db387d {"acknowledged":1}
+step59 prepare by 2.7.1:C-old -> A-old ca3fe5bc-312c-476a-a696-ef2d44e8e355
+race: 12 msgs, claimers=["53","53","53","2.7.1","2.7.1","2.7.1"]
+race results [["53",true,0,null],["53",true,0,null],["53",true,2,null],["2.7.1",true,10,null],["2.7.1",true,0,null],["2.7.1",true,0,null]]
+[broker 2.7.1] stopped pid=4300 {"code":0,"sig":null}
+SUMMARY {"tag":"a-2.7.1-53-s202","seed":202,"initialBroker":"53","old":"2.7.1","messages":12,"raceMessages":12,"violations":[],"errors":[],"integrity":["ok"],"user_version":0}
+EXIT=0

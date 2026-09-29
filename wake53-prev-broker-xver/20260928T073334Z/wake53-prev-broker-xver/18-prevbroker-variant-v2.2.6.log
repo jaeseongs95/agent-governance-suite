@@ -1,0 +1,15 @@
+
+ RUN  v5.0.0 /tmp/ev/scripts/pbv
+
+stdout | previous-broker-variant.test.ts > preserves queued messages when new hooks meet the previous released broker
+PREVIOUS_BROKER_CAPS []
+
+ ✓ previous-broker-variant.test.ts > preserves queued messages when new hooks meet the previous released broker 187ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  07:31:45
+   Duration  527ms (tests 45%, transform 44%, import 10%, worker 1%)
+
+JSON report written to /tmp/ev/18-prevbroker-variant-v2.2.6.json
+EXIT=0

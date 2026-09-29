@@ -1,0 +1,10 @@
+import { startBroker, stopBroker, cli, dump, Log } from "./lib.mjs";
+const dir = "/tmp/ev-state/smoke"; const log = new Log("/tmp/ev/20-smoke.log");
+const b = await startBroker("53", dir, log);
+const A = { host: "codex", sessionId: "A" }, B = { host: "codex", sessionId: "B" };
+const p = cli("2.7.1", dir, "prepare", { sender: A, target: B, body: "hello" }); log.w("prepare", p);
+const s = cli("2.7.1", dir, "send", { sender: A, messageId: p.data?.messageId }); log.w("send", s);
+const c = cli("53", dir, "claim", { target: B }); log.w("claim", c);
+const k = cli("53", dir, "acknowledge", { target: B, messageIds: [p.data?.messageId] }); log.w("ack", k);
+log.w("status", cli("2.7.1", dir, "status", { sender: A, messageId: p.data?.messageId }));
+await stopBroker(b, log); dump(dir, "/tmp/ev/20-smoke-dump.json");

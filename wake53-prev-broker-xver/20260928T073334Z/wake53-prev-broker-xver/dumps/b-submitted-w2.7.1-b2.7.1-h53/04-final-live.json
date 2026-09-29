@@ -1,0 +1,269 @@
+{
+ "user_version": 0,
+ "schema_version": 25,
+ "journal_mode": "wal",
+ "integrity": [
+  "ok"
+ ],
+ "schema": [
+  {
+   "type": "index",
+   "name": "messages_target_pending",
+   "tbl_name": "messages",
+   "sql": "CREATE INDEX messages_target_pending\n      ON messages (target_host, target_session_id, acknowledged_at, expires_at, claim_until)"
+  },
+  {
+   "type": "index",
+   "name": "prepared_messages_expiry",
+   "tbl_name": "prepared_messages",
+   "sql": "CREATE INDEX prepared_messages_expiry ON prepared_messages (expires_at)"
+  },
+  {
+   "type": "index",
+   "name": "prepared_messages_owner",
+   "tbl_name": "prepared_messages",
+   "sql": "CREATE INDEX prepared_messages_owner ON prepared_messages (sender_host, sender_session_id, receipt)"
+  },
+  {
+   "type": "index",
+   "name": "session_presence_latest",
+   "tbl_name": "session_presence",
+   "sql": "CREATE INDEX session_presence_latest\n      ON session_presence (host, session_id, started_at DESC)"
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_input_observations_1",
+   "tbl_name": "input_observations",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_messages_1",
+   "tbl_name": "messages",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_prepared_messages_1",
+   "tbl_name": "prepared_messages",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_relay_leases_1",
+   "tbl_name": "relay_leases",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_session_presence_1",
+   "tbl_name": "session_presence",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "sqlite_autoindex_wake_nonces_1",
+   "tbl_name": "wake_nonces",
+   "sql": null
+  },
+  {
+   "type": "index",
+   "name": "wake_active_target",
+   "tbl_name": "wake_nonces",
+   "sql": "CREATE UNIQUE INDEX wake_active_target ON wake_nonces (host, session_id)\n        WHERE state IN ('reserved', 'started', 'submitted', 'unknown')"
+  },
+  {
+   "type": "table",
+   "name": "input_observations",
+   "tbl_name": "input_observations",
+   "sql": "CREATE TABLE input_observations (\n        host TEXT NOT NULL,\n        session_id TEXT NOT NULL,\n        deferred_tool_claim INTEGER NOT NULL DEFAULT 0 CHECK (deferred_tool_claim IN (0, 1)),\n        observed_at TEXT NOT NULL,\n        PRIMARY KEY (host, session_id)\n      ) STRICT"
+  },
+  {
+   "type": "table",
+   "name": "messages",
+   "tbl_name": "messages",
+   "sql": "CREATE TABLE messages (\n      message_id TEXT PRIMARY KEY,\n      sender_host TEXT NOT NULL,\n      sender_session_id TEXT NOT NULL,\n      target_host TEXT NOT NULL,\n      target_session_id TEXT NOT NULL,\n      body TEXT NOT NULL,\n      body_bytes INTEGER NOT NULL,\n      created_at TEXT NOT NULL,\n      expires_at TEXT NOT NULL,\n      claimed_at TEXT,\n      claim_until TEXT,\n      delivery_attempts INTEGER NOT NULL DEFAULT 0,\n      first_delivered_at TEXT,\n      acknowledged_at TEXT\n    ) STRICT"
+  },
+  {
+   "type": "table",
+   "name": "prepared_messages",
+   "tbl_name": "prepared_messages",
+   "sql": "CREATE TABLE prepared_messages (\n        message_id TEXT PRIMARY KEY,\n        sender_host TEXT NOT NULL,\n        sender_session_id TEXT NOT NULL,\n        target_host TEXT NOT NULL,\n        target_session_id TEXT NOT NULL,\n        body TEXT,\n        ttl_seconds INTEGER NOT NULL,\n        prepared_at TEXT NOT NULL,\n        expires_at TEXT NOT NULL,\n        receipt TEXT,\n        record_bytes INTEGER NOT NULL\n      ) STRICT"
+  },
+  {
+   "type": "table",
+   "name": "relay_leases",
+   "tbl_name": "relay_leases",
+   "sql": "CREATE TABLE relay_leases (\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      transport TEXT NOT NULL,\n      relay_id TEXT NOT NULL,\n      pid INTEGER NOT NULL,\n      parent_pid INTEGER NOT NULL,\n      lease_until TEXT NOT NULL,\n      updated_at TEXT NOT NULL,\n      PRIMARY KEY (host, session_id, transport)\n    ) STRICT"
+  },
+  {
+   "type": "table",
+   "name": "session_presence",
+   "tbl_name": "session_presence",
+   "sql": "CREATE TABLE session_presence (\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      instance_id TEXT NOT NULL,\n      transport TEXT NOT NULL,\n      wake_visibility TEXT NOT NULL CHECK (wake_visibility IN ('silent', 'user-message', 'none')),\n      can_wake_silently INTEGER NOT NULL CHECK (can_wake_silently IN (0, 1)),\n      supported_injection TEXT NOT NULL DEFAULT '[]',\n      idle_wake TEXT NOT NULL DEFAULT 'none' CHECK (idle_wake IN ('silent', 'user-message', 'none')),\n      collaboration_id TEXT,\n      workspace_id TEXT,\n      role TEXT,\n      started_at TEXT NOT NULL,\n      heartbeat_at TEXT NOT NULL,\n      lease_until TEXT NOT NULL,\n      ended_at TEXT,\n      end_reason TEXT,\n      PRIMARY KEY (host, session_id, instance_id)\n    ) STRICT"
+  },
+  {
+   "type": "table",
+   "name": "wake_nonces",
+   "tbl_name": "wake_nonces",
+   "sql": "CREATE TABLE wake_nonces (\n      nonce_digest TEXT PRIMARY KEY,\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      expires_at TEXT NOT NULL,\n      consumed_at TEXT\n    , state TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted')), nonce TEXT, instance_id TEXT, birth_generation TEXT, transport TEXT, relay_id TEXT, attempt_id TEXT, dispatch_epoch INTEGER NOT NULL DEFAULT 0, retry_not_before TEXT, retry_count INTEGER NOT NULL DEFAULT 0, started_at TEXT, outcome_at TEXT, observed_at TEXT, late_observed_at TEXT) STRICT"
+  }
+ ],
+ "tables": {
+  "input_observations": [
+   {
+    "_rowid": 1,
+    "host": "codex",
+    "session_id": "tgt-submitted",
+    "deferred_tool_claim": 1,
+    "observed_at": "2026-09-28T07:23:56.227Z"
+   }
+  ],
+  "messages": [
+   {
+    "_rowid": 1,
+    "message_id": "50498123-1c9e-4c62-9c8b-ea672e531fe9",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "tgt-submitted",
+    "body": "body-submitted-1",
+    "body_bytes": 16,
+    "created_at": "2026-09-28T07:23:55.873Z",
+    "expires_at": "2026-09-28T08:23:55.873Z",
+    "claimed_at": "2026-09-28T07:23:56.118Z",
+    "claim_until": null,
+    "delivery_attempts": 1,
+    "first_delivered_at": "2026-09-28T07:23:56.118Z",
+    "acknowledged_at": "2026-09-28T07:23:56.303Z"
+   },
+   {
+    "_rowid": 2,
+    "message_id": "d93e1e33-438d-455d-bb80-a4eb8cdb9341",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "tgt-submitted",
+    "body": "body-submitted-2",
+    "body_bytes": 16,
+    "created_at": "2026-09-28T07:23:56.460Z",
+    "expires_at": "2026-09-28T08:23:56.460Z",
+    "claimed_at": null,
+    "claim_until": null,
+    "delivery_attempts": 0,
+    "first_delivered_at": null,
+    "acknowledged_at": null
+   }
+  ],
+  "prepared_messages": [
+   {
+    "_rowid": 1,
+    "message_id": "50498123-1c9e-4c62-9c8b-ea672e531fe9",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "tgt-submitted",
+    "body": null,
+    "ttl_seconds": 3600,
+    "prepared_at": "2026-09-28T07:23:55.792Z",
+    "expires_at": "2026-09-28T09:23:55.873Z",
+    "receipt": "{\"messageId\":\"50498123-1c9e-4c62-9c8b-ea672e531fe9\",\"createdAt\":\"2026-09-28T07:23:55.873Z\",\"expiresAt\":\"2026-09-28T08:23:55.873Z\"}",
+    "record_bytes": 411
+   },
+   {
+    "_rowid": 2,
+    "message_id": "d93e1e33-438d-455d-bb80-a4eb8cdb9341",
+    "sender_host": "claude-code",
+    "sender_session_id": "sender",
+    "target_host": "codex",
+    "target_session_id": "tgt-submitted",
+    "body": null,
+    "ttl_seconds": 3600,
+    "prepared_at": "2026-09-28T07:23:56.389Z",
+    "expires_at": "2026-09-28T09:23:56.460Z",
+    "receipt": "{\"messageId\":\"d93e1e33-438d-455d-bb80-a4eb8cdb9341\",\"createdAt\":\"2026-09-28T07:23:56.460Z\",\"expiresAt\":\"2026-09-28T08:23:56.460Z\"}",
+    "record_bytes": 411
+   }
+  ],
+  "relay_leases": [
+   {
+    "_rowid": 1,
+    "host": "codex",
+    "session_id": "tgt-submitted",
+    "transport": "codex-queue",
+    "relay_id": "relay-271-after",
+    "pid": 10036,
+    "parent_pid": 10036,
+    "lease_until": "2026-09-28T07:24:11.473Z",
+    "updated_at": "2026-09-28T07:23:56.473Z"
+   }
+  ],
+  "session_presence": [
+   {
+    "_rowid": 1,
+    "host": "codex",
+    "session_id": "tgt-submitted",
+    "instance_id": "0caa6a21-8e40-4f6d-9953-5e887654f9d3",
+    "transport": "codex-queue",
+    "wake_visibility": "user-message",
+    "can_wake_silently": 0,
+    "supported_injection": "[\"peer-wake\",\"tool-boundary\"]",
+    "idle_wake": "user-message",
+    "collaboration_id": null,
+    "workspace_id": null,
+    "role": null,
+    "started_at": "2026-09-28T07:23:55.704Z",
+    "heartbeat_at": "2026-09-28T07:23:56.321Z",
+    "lease_until": "2026-09-28T07:24:16.321Z",
+    "ended_at": null,
+    "end_reason": null
+   }
+  ],
+  "wake_nonces": [
+   {
+    "_rowid": 1,
+    "nonce_digest": "a2794e0813c4625ea12169c6050cbd08362b69345cb401422aaccedeefbc5235",
+    "host": "codex",
+    "session_id": "tgt-submitted",
+    "expires_at": "2026-09-28T08:23:55.895Z",
+    "consumed_at": "2026-09-28T07:23:56.118Z",
+    "state": "observed",
+    "nonce": "x4HyGYo8GL9Zn-QOfQPLBfHv-FUlOIaO",
+    "instance_id": "0caa6a21-8e40-4f6d-9953-5e887654f9d3",
+    "birth_generation": "2026-09-28T07:23:55.704Z",
+    "transport": "codex-queue",
+    "relay_id": "relay-271-1",
+    "attempt_id": "39f4a3bf-f279-471b-bc46-f5c0290e8585",
+    "dispatch_epoch": 1,
+    "retry_not_before": null,
+    "retry_count": 0,
+    "started_at": "2026-09-28T07:23:55.901Z",
+    "outcome_at": "2026-09-28T07:23:55.906Z",
+    "observed_at": "2026-09-28T07:23:56.118Z",
+    "late_observed_at": null
+   },
+   {
+    "_rowid": 2,
+    "nonce_digest": "4ea46646c2ac26d2b7fae027545078788da03376e32a1fcf26ed6aa4fb88772c",
+    "host": "codex",
+    "session_id": "tgt-submitted",
+    "expires_at": "2026-09-28T08:23:56.479Z",
+    "consumed_at": null,
+    "state": "submitted",
+    "nonce": "YI3RGv1XhuaxjFHq1sIWvXW755pBUnZL",
+    "instance_id": "0caa6a21-8e40-4f6d-9953-5e887654f9d3",
+    "birth_generation": "2026-09-28T07:23:55.704Z",
+    "transport": "codex-queue",
+    "relay_id": "relay-271-after",
+    "attempt_id": "490bd25a-ae6c-4c8b-950e-9d1dae13c1c2",
+    "dispatch_epoch": 1,
+    "retry_not_before": null,
+    "retry_count": 0,
+    "started_at": "2026-09-28T07:23:56.484Z",
+    "outcome_at": "2026-09-28T07:23:56.491Z",
+    "observed_at": null,
+    "late_observed_at": null
+   }
+  ]
+ }
+}

@@ -1,0 +1,74 @@
+{
+ "tag": "b-late-latched-w2.7.1-b53-h53",
+ "variant": "late-latched",
+ "writer": "2.7.1",
+ "afterBroker": "53",
+ "afterHook": "53",
+ "obs": {
+  "writerLateArrivalHook": {},
+  "wakeStatusBefore": {
+   "state": "unknown",
+   "observation": "unknown",
+   "deliveryState": "unknown",
+   "instanceId": "ede899ee-9cb1-49d6-90fc-a3f8a6310ea0",
+   "generation": "2026-09-28T07:23:45.377Z",
+   "attemptId": "3e6d5b6e-e148-42b0-b219-51fb9a46ebc6",
+   "dispatchEpoch": 1,
+   "retryNotBefore": null,
+   "expiresAt": "2026-09-28T08:23:45.581Z",
+   "observedAt": null,
+   "lateObservedAt": "2026-09-28T07:23:45.761Z"
+  },
+  "newWakeAfterUpgrade": {
+   "dispatch": false,
+   "reserve": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  "bodyViaToolBoundary": true,
+  "ack": {
+   "acknowledged": 1
+  },
+  "newWakeForFreshMessage": {
+   "dispatch": false,
+   "reserve": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  "wakeStatusAfter": {
+   "state": "unknown",
+   "observation": "unknown",
+   "deliveryState": "unknown",
+   "instanceId": "ede899ee-9cb1-49d6-90fc-a3f8a6310ea0",
+   "generation": "2026-09-28T07:23:45.377Z",
+   "attemptId": "3e6d5b6e-e148-42b0-b219-51fb9a46ebc6",
+   "dispatchEpoch": 1,
+   "retryNotBefore": null,
+   "expiresAt": "2026-09-28T08:23:45.581Z",
+   "observedAt": null,
+   "lateObservedAt": "2026-09-28T07:23:45.761Z"
+  },
+  "replayOldMarker": {},
+  "newWakeAfterReplay": {
+   "dispatch": true
+  },
+  "newWakeDelivery": "body-delivered",
+  "pendingEnd": {
+   "count": 0
+  }
+ },
+ "integrity": [
+  "ok"
+ ],
+ "user_version": 0,
+ "activeRows": [],
+ "unackedMessages": [
+  {
+   "id": "2c5d558e-440b-45d0-b877-953fa05ed5e3",
+   "att": 1,
+   "body": "body-late-latched-2"
+  }
+ ]
+}

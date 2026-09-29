@@ -1,0 +1,4 @@
+[broker 2.7.1] started pid=15615 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+wake1 true
+[broker 2.7.1] stopped pid=15615 {"code":0,"sig":null}
+FINDINGS {"tag":"ctl-undelivered-submitted-2.7.1-off90000000","newWakeDispatch":false,"wake":"submitted","observation":"observation-overdue","active":[["submitted","i1","2026-09-28T08:29:05.238Z"]]}

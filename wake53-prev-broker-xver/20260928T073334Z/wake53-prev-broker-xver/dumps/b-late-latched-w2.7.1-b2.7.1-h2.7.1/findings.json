@@ -1,0 +1,84 @@
+{
+ "tag": "b-late-latched-w2.7.1-b2.7.1-h2.7.1",
+ "variant": "late-latched",
+ "writer": "2.7.1",
+ "afterBroker": "2.7.1",
+ "afterHook": "2.7.1",
+ "obs": {
+  "writerLateArrivalHook": {},
+  "wakeStatusBefore": {
+   "state": "unknown",
+   "observation": "unknown",
+   "deliveryState": "unknown",
+   "instanceId": "6f038d25-0d28-453d-9401-e4125ada2c68",
+   "generation": "2026-09-28T07:24:08.744Z",
+   "attemptId": "a52beee7-5368-4682-b98d-e52aea22d77d",
+   "dispatchEpoch": 1,
+   "retryNotBefore": null,
+   "expiresAt": "2026-09-28T08:24:09.037Z",
+   "observedAt": null,
+   "lateObservedAt": "2026-09-28T07:24:09.258Z"
+  },
+  "newWakeAfterUpgrade": {
+   "dispatch": false,
+   "reserve": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  "bodyViaToolBoundary": true,
+  "ack": {
+   "acknowledged": 1
+  },
+  "newWakeForFreshMessage": {
+   "dispatch": false,
+   "reserve": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  "wakeStatusAfter": {
+   "state": "unknown",
+   "observation": "unknown",
+   "deliveryState": "unknown",
+   "instanceId": "6f038d25-0d28-453d-9401-e4125ada2c68",
+   "generation": "2026-09-28T07:24:08.744Z",
+   "attemptId": "a52beee7-5368-4682-b98d-e52aea22d77d",
+   "dispatchEpoch": 1,
+   "retryNotBefore": null,
+   "expiresAt": "2026-09-28T08:24:09.037Z",
+   "observedAt": null,
+   "lateObservedAt": "2026-09-28T07:24:09.258Z"
+  },
+  "replayOldMarker": {},
+  "newWakeAfterReplay": {
+   "dispatch": false,
+   "reserve": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  "pendingEnd": {
+   "count": 1
+  }
+ },
+ "integrity": [
+  "ok"
+ ],
+ "user_version": 0,
+ "activeRows": [
+  {
+   "state": "unknown",
+   "inst": "6f038d25-0d28-453d-9401-e4125ada2c68",
+   "late": "2026-09-28T07:24:09.258Z",
+   "exp": "2026-09-28T08:24:09.037Z"
+  }
+ ],
+ "unackedMessages": [
+  {
+   "id": "2005aef1-492b-4c2e-ac4c-0b26ee502449",
+   "att": 0,
+   "body": "body-late-latched-2"
+  }
+ ]
+}

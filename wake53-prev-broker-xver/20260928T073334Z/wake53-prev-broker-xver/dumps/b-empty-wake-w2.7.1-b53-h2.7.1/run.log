@@ -1,0 +1,22 @@
+[broker 2.7.1] started pid=9904 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+SessionStart via hook 2.7.1 {"status":0,"out":{},"stderr":""} cda716af-4316-487d-b9c2-676824c47856 codex-queue
+send by 2.7.1 fdefb5c1-f469-4f63-b373-effbc765c995 true
+acquire-relay relay-271-1 {"acquired":true} reserve-wake {"dispatch":true}
+start-wake {"dispatch":true}
+record-wake-outcome submitted {"recorded":true}
+body claimed+ACKed by 2.7.1 before wake arrival ["fdefb5c1-f469-4f63-b373-effbc765c995"]
+  [dump writer-2.7.1-state] wake=[{"state":"submitted","inst":"cda716af-4316-487d-b9c2-676824c47856","late":null,"obs":null,"consumed":null,"exp":"2026-09-28T08:23:54.646Z"}] messages=[{"id":"fdefb5c1-f469-4f63-b373-effbc765c995","att":1,"claimed":"2026-09-28T07:23:54.742Z","acked":"2026-09-28T07:23:54.842Z"}] integrity=ok
+[broker 2.7.1] stopped pid=9904 {"code":0,"sig":null}
+  [dump broker-stopped] wake=[{"state":"submitted","inst":"cda716af-4316-487d-b9c2-676824c47856","late":null,"obs":null,"consumed":null,"exp":"2026-09-28T08:23:54.646Z"}] messages=[{"id":"fdefb5c1-f469-4f63-b373-effbc765c995","att":1,"claimed":"2026-09-28T07:23:54.742Z","acked":"2026-09-28T07:23:54.842Z"}] integrity=ok
+[broker 53] started pid=9976 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+  [dump after-open-by-53] wake=[{"state":"submitted","inst":"cda716af-4316-487d-b9c2-676824c47856","late":null,"obs":null,"consumed":null,"exp":"2026-09-28T08:23:54.646Z"}] messages=[{"id":"fdefb5c1-f469-4f63-b373-effbc765c995","att":1,"claimed":"2026-09-28T07:23:54.742Z","acked":"2026-09-28T07:23:54.842Z"}] integrity=ok
+wake arrival via hook 2.7.1 {"status":0,"out":{},"stderr":""}
+duplicate arrival via hook 2.7.1 {"status":0,"out":{},"stderr":""}
+  [dump after-arrival] wake=[{"state":"observed","inst":"cda716af-4316-487d-b9c2-676824c47856","late":null,"obs":"2026-09-28T07:23:55.083Z","consumed":"2026-09-28T07:23:55.083Z","exp":"2026-09-28T08:23:54.646Z"}] messages=[{"id":"fdefb5c1-f469-4f63-b373-effbc765c995","att":1,"claimed":"2026-09-28T07:23:54.742Z","acked":"2026-09-28T07:23:54.842Z"}] integrity=ok
+send by 2.7.1 35850150-2a82-41d7-b658-af873b56463b true
+acquire-relay relay-53-after {"acquired":true} reserve-wake {"dispatch":true}
+start-wake {"dispatch":true}
+record-wake-outcome submitted {"recorded":true}
+  [dump final-live] wake=[{"state":"observed","inst":"cda716af-4316-487d-b9c2-676824c47856","late":null,"obs":"2026-09-28T07:23:55.083Z","consumed":"2026-09-28T07:23:55.083Z","exp":"2026-09-28T08:23:54.646Z"},{"state":"submitted","inst":"cda716af-4316-487d-b9c2-676824c47856","late":null,"obs":null,"consumed":null,"exp":"2026-09-28T08:23:55.407Z"}] messages=[{"id":"fdefb5c1-f469-4f63-b373-effbc765c995","att":1,"claimed":"2026-09-28T07:23:54.742Z","acked":"2026-09-28T07:23:54.842Z"},{"id":"35850150-2a82-41d7-b658-af873b56463b","att":0,"claimed":null,"acked":null}] integrity=ok
+[broker 53] stopped pid=9976 {"code":0,"sig":null}
+FINDINGS {"tag":"b-empty-wake-w2.7.1-b53-h2.7.1","variant":"empty-wake","writer":"2.7.1","afterBroker":"53","afterHook":"2.7.1","obs":{"wakeStatusBefore":{"state":"submitted","observation":"pending","deliveryState":"submitted","instanceId":"cda716af-4316-487d-b9c2-676824c47856","generation":"2026-09-28T07:23:54.471Z","attemptId":"b0ab5db7-8370-4cc5-bb7d-a4070e2d20f4","dispatchEpoch":1,"retryNotBefore":null,"expiresAt":"2026-09-28T08:23:54.646Z","observedAt":null,"lateObservedAt":null},"arrival":{"keys":[],"decision":null,"bodyDelivered":false},"duplicateArrival":{"keys":[],"decision":null,"bodyDelivered":false},"wakeStatusAfter":{"state":"observed","observation":"observed","deliveryState":"observed","instanceId":"cda716af-4316-487d-b9c2-676824c47856","generation":"2026-09-28T07:23:54.471Z","attemptId":"b0ab5db7-8370-4cc5-bb7d-a4070e2d20f4","dispatchEpoch":1,"retryNotBefore":null,"expiresAt":"2026-09-28T08:23:54.646Z","observedAt":"2026-09-28T07:23:55.083Z","lateObservedAt":null},"nextWake":{"dispatch":true},"pendingEnd":{"count":1}},"integrity":["ok"],"user_version":0,"activeRows":[{"state":"submitted","inst":"cda716af-4316-487d-b9c2-676824c47856","late":null,"exp":"2026-09-28T08:23:55.407Z"}],"unackedMessages":[{"id":"35850150-2a82-41d7-b658-af873b56463b","att":0,"body":"body-empty-wake-2"}]}

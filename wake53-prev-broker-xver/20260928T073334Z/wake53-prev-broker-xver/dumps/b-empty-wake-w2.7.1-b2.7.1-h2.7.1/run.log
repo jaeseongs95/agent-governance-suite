@@ -1,0 +1,22 @@
+[broker 2.7.1] started pid=11611 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+SessionStart via hook 2.7.1 {"status":0,"out":{},"stderr":""} 71ddc85c-0a27-4fc2-858f-101e14eeca3f codex-queue
+send by 2.7.1 34da65ee-f38d-42e9-bccc-07d6a7cfb024 true
+acquire-relay relay-271-1 {"acquired":true} reserve-wake {"dispatch":true}
+start-wake {"dispatch":true}
+record-wake-outcome submitted {"recorded":true}
+body claimed+ACKed by 2.7.1 before wake arrival ["34da65ee-f38d-42e9-bccc-07d6a7cfb024"]
+  [dump writer-2.7.1-state] wake=[{"state":"submitted","inst":"71ddc85c-0a27-4fc2-858f-101e14eeca3f","late":null,"obs":null,"consumed":null,"exp":"2026-09-28T08:24:10.913Z"}] messages=[{"id":"34da65ee-f38d-42e9-bccc-07d6a7cfb024","att":1,"claimed":"2026-09-28T07:24:11.014Z","acked":"2026-09-28T07:24:11.169Z"}] integrity=ok
+[broker 2.7.1] stopped pid=11611 {"code":0,"sig":null}
+  [dump broker-stopped] wake=[{"state":"submitted","inst":"71ddc85c-0a27-4fc2-858f-101e14eeca3f","late":null,"obs":null,"consumed":null,"exp":"2026-09-28T08:24:10.913Z"}] messages=[{"id":"34da65ee-f38d-42e9-bccc-07d6a7cfb024","att":1,"claimed":"2026-09-28T07:24:11.014Z","acked":"2026-09-28T07:24:11.169Z"}] integrity=ok
+[broker 2.7.1] started pid=11683 caps=["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+  [dump after-open-by-2.7.1] wake=[{"state":"submitted","inst":"71ddc85c-0a27-4fc2-858f-101e14eeca3f","late":null,"obs":null,"consumed":null,"exp":"2026-09-28T08:24:10.913Z"}] messages=[{"id":"34da65ee-f38d-42e9-bccc-07d6a7cfb024","att":1,"claimed":"2026-09-28T07:24:11.014Z","acked":"2026-09-28T07:24:11.169Z"}] integrity=ok
+wake arrival via hook 2.7.1 {"status":0,"out":{},"stderr":""}
+duplicate arrival via hook 2.7.1 {"status":0,"out":{},"stderr":""}
+  [dump after-arrival] wake=[{"state":"observed","inst":"71ddc85c-0a27-4fc2-858f-101e14eeca3f","late":null,"obs":"2026-09-28T07:24:11.519Z","consumed":"2026-09-28T07:24:11.519Z","exp":"2026-09-28T08:24:10.913Z"}] messages=[{"id":"34da65ee-f38d-42e9-bccc-07d6a7cfb024","att":1,"claimed":"2026-09-28T07:24:11.014Z","acked":"2026-09-28T07:24:11.169Z"}] integrity=ok
+send by 2.7.1 ab3cfe48-15e1-48ad-90ec-16aa79838f1c true
+acquire-relay relay-271-after {"acquired":true} reserve-wake {"dispatch":true}
+start-wake {"dispatch":true}
+record-wake-outcome submitted {"recorded":true}
+  [dump final-live] wake=[{"state":"observed","inst":"71ddc85c-0a27-4fc2-858f-101e14eeca3f","late":null,"obs":"2026-09-28T07:24:11.519Z","consumed":"2026-09-28T07:24:11.519Z","exp":"2026-09-28T08:24:10.913Z"},{"state":"submitted","inst":"71ddc85c-0a27-4fc2-858f-101e14eeca3f","late":null,"obs":null,"consumed":null,"exp":"2026-09-28T08:24:11.848Z"}] messages=[{"id":"34da65ee-f38d-42e9-bccc-07d6a7cfb024","att":1,"claimed":"2026-09-28T07:24:11.014Z","acked":"2026-09-28T07:24:11.169Z"},{"id":"ab3cfe48-15e1-48ad-90ec-16aa79838f1c","att":0,"claimed":null,"acked":null}] integrity=ok
+[broker 2.7.1] stopped pid=11683 {"code":0,"sig":null}
+FINDINGS {"tag":"b-empty-wake-w2.7.1-b2.7.1-h2.7.1","variant":"empty-wake","writer":"2.7.1","afterBroker":"2.7.1","afterHook":"2.7.1","obs":{"wakeStatusBefore":{"state":"submitted","observation":"pending","deliveryState":"submitted","instanceId":"71ddc85c-0a27-4fc2-858f-101e14eeca3f","generation":"2026-09-28T07:24:10.688Z","attemptId":"34422430-6b9a-42ff-b2fb-69cf2b590cd5","dispatchEpoch":1,"retryNotBefore":null,"expiresAt":"2026-09-28T08:24:10.913Z","observedAt":null,"lateObservedAt":null},"arrival":{"keys":[],"decision":null,"bodyDelivered":false},"duplicateArrival":{"keys":[],"decision":null,"bodyDelivered":false},"wakeStatusAfter":{"state":"observed","observation":"observed","deliveryState":"observed","instanceId":"71ddc85c-0a27-4fc2-858f-101e14eeca3f","generation":"2026-09-28T07:24:10.688Z","attemptId":"34422430-6b9a-42ff-b2fb-69cf2b590cd5","dispatchEpoch":1,"retryNotBefore":null,"expiresAt":"2026-09-28T08:24:10.913Z","observedAt":"2026-09-28T07:24:11.519Z","lateObservedAt":null},"nextWake":{"dispatch":true},"pendingEnd":{"count":1}},"integrity":["ok"],"user_version":0,"activeRows":[{"state":"submitted","inst":"71ddc85c-0a27-4fc2-858f-101e14eeca3f","late":null,"exp":"2026-09-28T08:24:11.848Z"}],"unackedMessages":[{"id":"ab3cfe48-15e1-48ad-90ec-16aa79838f1c","att":0,"body":"body-empty-wake-2"}]}

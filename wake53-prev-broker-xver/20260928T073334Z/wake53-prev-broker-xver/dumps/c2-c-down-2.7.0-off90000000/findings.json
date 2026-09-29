@@ -1,0 +1,25 @@
+{
+ "tag": "c2-c-down-2.7.0-off90000000",
+ "offsetMs": 90000000,
+ "newWakeDispatch": false,
+ "wake": {
+  "state": "submitted",
+  "observation": "observation-overdue",
+  "deliveryState": "submitted",
+  "instanceId": "52b4a00f-37f7-4920-a1ad-a6c20b21cabd",
+  "generation": "2026-09-28T07:28:14.762Z",
+  "attemptId": "17e342a0-18cd-4465-8f77-0ea6ab30fd02",
+  "dispatchEpoch": 1,
+  "retryNotBefore": null,
+  "expiresAt": "2026-09-28T08:28:15.332Z",
+  "observedAt": null,
+  "lateObservedAt": null
+ },
+ "active": [
+  [
+   "sub",
+   "submitted",
+   "2026-09-28T08:28:15.332Z"
+  ]
+ ]
+}

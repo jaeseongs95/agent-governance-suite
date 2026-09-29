@@ -1,0 +1,44 @@
+
+ RUN  v5.0.0 /tmp/ev/scripts/pbv
+
+stdout | previous-broker-variant.test.ts > preserves queued messages when new hooks meet the previous released broker
+PREVIOUS_BROKER_CAPS ["atomic-wake-claim","deferred-boundary","delivery-capabilities","peer-wait-policy"]
+
+ × previous-broker-variant.test.ts > preserves queued messages when new hooks meet the previous released broker 156ms
+   → expected [ 'atomic-wake-claim', …(3) ] to not include 'deferred-boundary'
+   → send accepts only sender and the ID returned by prepare; message content is immutable. Retry the known ID or compare saved receipts/status if delivery is unknown.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  previous-broker-variant.test.ts > preserves queued messages when new hooks meet the previous released broker
+AssertionError: expected [ 'atomic-wake-claim', …(3) ] to not include 'deferred-boundary'
+ ❯ previous-broker-variant.test.ts:27:46
+     25|     const ping = await requestSessionMessageOnce<{ capabilities?: stri…
+     26|     console.log("PREVIOUS_BROKER_CAPS", JSON.stringify(ping.capabiliti…
+     27|     expect.soft(ping.capabilities ?? []).not.toContain("deferred-bound…
+       |                                              ^
+     28|     await requestSessionMessageOnce("send", { sender, target, messageI…
+     29|     for (const event of ["UserPromptSubmit", "PostToolUse", "PostToolU…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  previous-broker-variant.test.ts > preserves queued messages when new hooks meet the previous released broker
+Error: send accepts only sender and the ID returned by prepare; message content is immutable. Retry the known ID or compare saved receipts/status if delivery is unknown.
+ ❯ TLSSocket.<anonymous> ../../../v53/mcp-server/src/session-message-client.ts:188:36
+    186|         try {
+    187|           const response = JSON.parse(buffer.slice(0, newline)) as { o…
+    188|           if (!response.ok) finish(new BrokerRequestRejected(response.…
+       |                                    ^
+    189|           else finish(undefined, response.data);
+    190|         } catch {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  07:31:42
+   Duration  709ms (transform 65%, tests 27%, import 7%, worker 1%)
+
+JSON report written to /tmp/ev/15-prevbroker-variant-v2.7.1.json
+EXIT=1

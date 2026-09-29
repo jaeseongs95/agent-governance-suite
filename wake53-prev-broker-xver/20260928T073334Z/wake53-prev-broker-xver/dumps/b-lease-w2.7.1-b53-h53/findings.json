@@ -1,0 +1,26 @@
+{
+ "tag": "b-lease-w2.7.1-b53-h53",
+ "variant": "lease",
+ "writer": "2.7.1",
+ "afterBroker": "53",
+ "afterHook": "53",
+ "obs": {
+  "wakeStatusBefore": null,
+  "claimWithinLease": 0,
+  "redelivered": [
+   {
+    "id": "96d7e45f-68af-429f-930c-4899a36be9cb",
+    "attempt": 2
+   }
+  ],
+  "ack": {
+   "acknowledged": 1
+  }
+ },
+ "integrity": [
+  "ok"
+ ],
+ "user_version": 0,
+ "activeRows": [],
+ "unackedMessages": []
+}
