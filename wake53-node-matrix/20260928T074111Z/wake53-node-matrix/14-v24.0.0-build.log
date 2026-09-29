@@ -1,0 +1,7 @@
+# cwd=/tmp/wt/n24.0.0 node=v24.0.0 cmd=pnpm build
+# start 2026-09-28T07:15:49Z
+Already up to date
+Done in 483ms using pnpm v11.19.0
+$ tsc --noEmit && node scripts/build.mjs
+# end 2026-09-28T07:15:54Z
+EXIT=0

@@ -1,0 +1,7 @@
+/usr/bin/localedef
+/usr/share/i18n/locales/ko_KR
+EXIT=0
+C
+C.utf8
+POSIX
+ko_KR.utf8

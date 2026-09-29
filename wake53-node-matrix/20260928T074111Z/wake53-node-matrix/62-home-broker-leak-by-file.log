@@ -1,0 +1,1 @@
+BROKER_IN_HOME rc=0 tests/session-messaging/session-message.test.ts

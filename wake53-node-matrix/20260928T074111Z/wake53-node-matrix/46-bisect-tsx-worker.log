@@ -1,0 +1,8 @@
+v24.0.0: WORKER_ERR ERR_MODULE_NOT_FOUND Cannot find module '/tmp/wt/n24.21.0/.repro1/a.js' imported from /tmp/wt/n24.21.0/.repro1/worker.ts WORKER_EXIT 1 
+v24.11.0: WORKER_ERR ERR_MODULE_NOT_FOUND Cannot find module '/tmp/wt/n24.21.0/.repro1/a.js' imported from /tmp/wt/n24.21.0/.repro1/worker.ts WORKER_EXIT 1 
+v24.12.0: WORKER_MSG ok 1 WORKER_EXIT 0 
+v24.13.0: WORKER_MSG ok 1 WORKER_EXIT 0 
+v24.15.0: WORKER_MSG ok 1 WORKER_EXIT 0 
+v24.21.0: WORKER_MSG ok 1 WORKER_EXIT 0 
+v26.10.0: WORKER_MSG ok 1 WORKER_EXIT 0 
+v24.11.1: WORKER_MSG ok 1 WORKER_EXIT 0 

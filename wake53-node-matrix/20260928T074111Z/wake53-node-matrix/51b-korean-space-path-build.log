@@ -1,0 +1,7 @@
+# label=korean-space-path node=v24.21.0 cwd=/tmp/거버전스 3.0/agent-governance-suite LANG=unset LC_ALL=unset TZ=unset HOME=/root date=Mon Sep 28 07:26:11 UTC 2026
+# node Intl: en-US UTC Thu Jan 01 1970 00:00:00 GMT+0000 (Coordinated Universal Time)
+Already up to date
+Done in 455ms using pnpm v11.19.0
+$ tsc --noEmit && node scripts/build.mjs
+EXIT=0
+PORCELAIN_LINES=0

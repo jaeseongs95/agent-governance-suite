@@ -1,0 +1,36 @@
+versions: v24.0.0 v24.0.1 v24.0.2 v24.1.0 v24.2.0 v24.3.0 v24.4.0 v24.4.1 v24.5.0 v24.6.0 v24.7.0 v24.8.0 v24.9.0 v24.10.0 v24.11.0 v24.11.1 v24.12.0 v24.13.0 v24.13.1 v24.14.0 v24.14.1 v24.15.0 v24.16.0 v24.17.0 v24.18.0 v24.18.1 v24.19.0 v24.20.0 v24.21.0
+v24.0.0 FAIL
+   [send] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:34583"} stderr=
+   [claim] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:35209"} stderr=
+   [acknowledge] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:41803"} stderr=
+v24.21.0 PASS
+v24.11.0 FAIL
+   [send] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:43611"} stderr=
+   [claim] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"read ECONNRESET"} stderr=
+   [acknowledge] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:40933"} stderr=
+v24.15.0 PASS
+v24.13.0 PASS
+v24.11.1 FAIL
+   [send] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:42141"} stderr=
+   [claim] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:41303"} stderr=
+   [acknowledge] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:41129"} stderr=
+v24.12.0 FAIL
+   [send] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:44781"} stderr=
+   [claim] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:37945"} stderr=
+   [acknowledge] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:40741"} stderr=
+LAST_FAIL=v24.12.0 FIRST_PASS=v24.13.0
+v24.12.0 FAIL
+   [send] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"read ECONNRESET"} stderr=
+   [claim] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:46039"} stderr=
+   [acknowledge] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:39323"} stderr=
+v24.13.0 PASS
+v24.12.0 FAIL
+   [send] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:46527"} stderr=
+   [claim] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:39405"} stderr=
+   [acknowledge] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:36027"} stderr=
+v24.13.0 PASS
+v24.12.0 FAIL
+   [send] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:42509"} stderr=
+   [claim] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:40259"} stderr=
+   [acknowledge] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:41999"} stderr=
+v24.13.0 PASS

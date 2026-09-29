@@ -1,0 +1,3 @@
+# node=v24.12.0 cwd=/tmp/wt/n24.21.0
+/bin/bash: line 3: pnpm: command not found
+EXIT=127

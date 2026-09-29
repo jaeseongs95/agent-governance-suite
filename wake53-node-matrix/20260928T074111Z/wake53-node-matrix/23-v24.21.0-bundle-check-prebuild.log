@@ -1,0 +1,7 @@
+# cwd=/tmp/wt/n24.21.0 node=v24.21.0 cmd=pnpm bundle:check
+# start 2026-09-28T07:17:38Z
+Already up to date
+Done in 449ms using pnpm v11.19.0
+$ node scripts/check-bundle.mjs
+# end 2026-09-28T07:17:39Z
+EXIT=0

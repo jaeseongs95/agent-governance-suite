@@ -1,0 +1,8 @@
+# cwd=/tmp/wt/n26.10.0 node=v26.10.0 cmd=pnpm runtime:check
+# start 2026-09-28T07:20:31Z
+Already up to date
+Done in 410ms using pnpm v11.19.0
+$ node scripts/check-runtime.mjs
+runtime: ready (29 skill CLIs, Node.js 26.10.0)
+# end 2026-09-28T07:20:39Z
+EXIT=0

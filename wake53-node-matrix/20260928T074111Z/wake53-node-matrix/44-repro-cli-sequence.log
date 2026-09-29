@@ -1,0 +1,32 @@
+== v24.0.0
+[prepare] status=0 stdout={"protocolVersion":"1.0.0","ok":true,"data":{"messageId":"f83cc606-fd49-486b-ad6e-502bc5843782","preparedAt":"2026-09-28T07:20:29.776Z","expiresAt":"2026-09-28T07:30:29.776Z"}} stderr=
+[send] status=0 stdout={"protocolVersion":"1.0.0","ok":true,"data":{"messageId":"f83cc606-fd49-486b-ad6e-502bc5843782","createdAt":"2026-09-28T07:20:30.135Z","expiresAt":"2026-09-28T08:20:30.135Z","duplicate":false}} stderr=
+[claim] status=0 stdout={"protocolVersion":"1.0.0","ok":true,"data":{"messages":[{"messageId":"f83cc606-fd49-486b-ad6e-502bc5843782","sender":{"host":"test-sender","sessionId":"sender"},"recipient":{"host":"test-target","sessionId":"target"},"body":"Synthetic lifecycle check","createdAt":"2026-09-28T07:20:30.135Z","expiresAt":"2026-09-28T08:20:30.135Z","deliveryAttempt":1,"firstDeliveredAt":"2026-09-28T07:20:30.325Z"}]}} stderr=
+[acknowledge] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:36521"} stderr=
+[status] status=1 stdout={"protocolVersion":"1.0.0","ok":false,"error":"connect ECONNREFUSED 127.0.0.1:41967"} stderr=
+BROKER_STDERR<<(node:16298) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:485
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: read ECONNRESET
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:216:20)
+Emitted 'error' event on TLSSocket instance at:
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errno: -104,
+  code: 'ECONNRESET',
+  syscall: 'read'
+}
+
+Node.js v24.0.0
+>>
+== v24.21.0
+[prepare] status=0 stdout={"protocolVersion":"1.0.0","ok":true,"data":{"messageId":"a9c63561-82c8-4396-93ff-9488094a4a9e","preparedAt":"2026-09-28T07:20:33.185Z","expiresAt":"2026-09-28T07:30:33.185Z"}} stderr=
+[send] status=0 stdout={"protocolVersion":"1.0.0","ok":true,"data":{"messageId":"a9c63561-82c8-4396-93ff-9488094a4a9e","createdAt":"2026-09-28T07:20:33.264Z","expiresAt":"2026-09-28T08:20:33.264Z","duplicate":false}} stderr=
+[claim] status=0 stdout={"protocolVersion":"1.0.0","ok":true,"data":{"messages":[{"messageId":"a9c63561-82c8-4396-93ff-9488094a4a9e","sender":{"host":"test-sender","sessionId":"sender"},"recipient":{"host":"test-target","sessionId":"target"},"body":"Synthetic lifecycle check","createdAt":"2026-09-28T07:20:33.264Z","expiresAt":"2026-09-28T08:20:33.264Z","deliveryAttempt":1,"firstDeliveredAt":"2026-09-28T07:20:33.356Z"}]}} stderr=
+[acknowledge] status=0 stdout={"protocolVersion":"1.0.0","ok":true,"data":{"acknowledged":1}} stderr=
+[status] status=0 stdout={"protocolVersion":"1.0.0","ok":true,"data":{"status":{"messageId":"a9c63561-82c8-4396-93ff-9488094a4a9e","target":{"host":"test-target","sessionId":"target"},"createdAt":"2026-09-28T07:20:33.264Z","expiresAt":"2026-09-28T08:20:33.264Z","claimedAt":"2026-09-28T07:20:33.356Z","acknowledgedAt":"2026-09-28T07:20:33.457Z","deliveryAttempts":1,"firstDeliveredAt":"2026-09-28T07:20:33.356Z","state":"acknowledged","wake":null}}} stderr=
+BROKER_STDERR<<>>

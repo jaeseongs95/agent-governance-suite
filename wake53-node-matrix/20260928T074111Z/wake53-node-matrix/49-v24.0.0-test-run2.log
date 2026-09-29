@@ -1,0 +1,621 @@
+# node=v24.0.0 run2
+✓ Lockfile passes supply-chain policies (verified 8m ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 1s using pnpm v11.19.0
+$ node scripts/build.mjs && vitest run --reporter=default --reporter=json --outputFile.json=/tmp/ev/49-v24.0.0-test-run2.json
+
+ RUN  v5.0.0 /tmp/wt/n24.0.0
+
+(node:28006) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28005) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28007) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/session-messaging/message-lifecycle.test.ts (14 tests | 2 failed) 4629ms
+   ✓ one tick renews both leases and optionally counts pending messages 15ms
+   ✓ stale generation, ended presence, transport, relay and expired leases have zero renewal effect 22ms
+   ✓ tick validation and a pending-query failure cannot partially update leases 7ms
+   ✓ issues opaque IDs without queue, peer relationship, claim or wake effect 11ms
+   ✓ rejects unknown, another sender and mutated public payload without enqueue 5ms
+   ✓ keeps the first immutable receipt and does not enqueue or wake after ACK/prune 6ms
+   ✓ rejects exact draft expiry and validates Unicode, TTL and sender draft capacity 13ms
+   ✓ applies global draft, receipt and byte backpressure without evicting valid records 1131ms
+   × packaged TLS cycles use one request instead of three or two without changing pending state 301ms
+   ✓ a real post-commit prepare reply loss leaves only orphan drafts 539ms
+   × a real send reply loss retries the known ID once and survives broker restart 477ms
+   ✓ two independent processes submit one ID atomically and enforce sender preparation capacity 793ms
+   ✓ preserves old messages across additive schema initialization but refuses old IDs as new sends 19ms
+   ✓ packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect 1286ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts (6 tests) 4511ms
+   ✓ retries transient endpoint publication failures and serves the published endpoint 459ms
+   ✓ releases startup resources after permanent failure and allows recovery 1295ms
+   ✓ releases startup resources after ENOSPC failure and allows recovery 460ms
+   ✓ releases startup resources after credentials failure and allows recovery 359ms
+   ✓ releases startup resources after database failure and allows recovery 446ms
+   ✓ delivers and acknowledges a message using only the packaged CLI and broker 1491ms
+(node:28738) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/session-messaging/peer-wait.test.ts (28 tests | 6 failed) 1775ms
+   ✓ peer wait policy boundaries (22)
+     ✓ normalizes native semantic equivalence: key-order 26ms
+     ✓ normalizes native semantic equivalence: local-default 9ms
+     ✓ normalizes native semantic equivalence: target-order 9ms
+     ✓ normalizes native semantic equivalence: duplicate 12ms
+     ✓ normalizes broker target order and duplicates before both state fingerprints and policy keys 24ms
+     ✓ preserves distinct cursors for the same target and leaves malformed cursors fail-open 1ms
+     ✓ recognizes exactly the local native wait surface and arguments 1ms
+     ✓ requires a consumed wake in addition to live exact-generation presence 5ms
+     ✓ allows one snapshot, suppresses unchanged repeats and resets on state change or new user input 6ms
+     ✓ does not restrict mixed or unrelated targets even with a working resume path 8ms
+     ✓ does not deny when presence-expired 6ms
+     ✓ does not deny when relay-expired 4ms
+     ✓ does not deny when wake-expired 8ms
+     ✓ does not deny when new-generation 4ms
+     ✓ does not deny when instance-mismatch 4ms
+     ✓ does not deny when no-idle-wake 3ms
+     ✓ does not deny when dead-relay 4ms
+     ✓ does not promote supplied capability, ACK or old relay registration to resume 4ms
+     ✓ does not attach an old generation nonce to a replacement instance 6ms
+     ✓ requires valid nonces and does not infer resume from ordinary peer delivery 6ms
+     ✓ expires snapshot records without timers and leaves no restart state 0ms
+     ✓ duplicate nonce claims and relay observations never extend consumed wake freshness 9ms
+   × enforces native wait through the public packaged hook and preserves unrelated waits 309ms
+   × the public CLI consumes the decision before delay and sends no repeated poll when denied 354ms
+   × public native hook suppresses equivalent payloads but permits actual cursor change 236ms
+   × public CLI equivalent retransmissions consume one decision each and state change restores a snapshot 250ms
+   × CLI unknown resume uses one bounded wait and does not force permanent stopping 225ms
+   × broker restart preserves messages but drops resume and repeat-suppression evidence 238ms
+(node:28887) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/session-messaging/session-message.test.ts (70 tests | 5 failed) 13935ms
+   ❯ session message spool (17)
+     ✓ keeps stable IDs until ACK, enforces limits, and recovers stale relay leases 30ms
+     ✓ applies caller claim budgets before leasing messages 4ms
+     ✓ rejects newline, control, and unsafe host or session identifiers 3ms
+     ✓ allows only one unconsumed wake and suppresses wakes during a live claim 24ms
+     ✓ expires an unconsumed wake after one hour independently of message TTL 5ms
+     ✓ tracks portable presence generations and derives lifecycle state from the lease 6ms
+     ✓ does not let an explicit stale presence end offline the current generation 3ms
+     ✓ exposes presence lifecycle through vendor-neutral broker operations 5ms
+     ✓ leaves queued messages intact when an older broker rejects a new operation 5ms
+     ✓ locks claim selection before a competing connection can reserve a wake 14ms
+     ✓ keeps a recognized wake latched until claim consumes it atomically 4ms
+     ✓ caps the unacknowledged spool and expires messages 233ms
+     ✓ keeps delivery receipt metadata stable across lease redelivery and stops after ACK 9ms
+     ✓ atomically verifies a session-bound wake before claiming and rejects reuse or mismatch 24ms
+     × allows one wake claim across two concurrent SQLite connections 289ms
+     ✓ defers one boundary, then keeps claiming new and redelivered messages until a new native input 10ms
+     ✓ migrates legacy messages without inventing unknown first-delivery evidence 17ms
+   ❯ TLS 1.3 broker and vendor-neutral adapter (51)
+     ✓ fails fast on broker exit and leaves deadline cleanup to the state-directory owner 382ms
+     × converges simultaneous startup requests on one broker 297ms
+     ✓ returns at the startup deadline while state preparation is still blocked and never spawns afterward 553ms
+     ✓ handles a state-preparation rejection that arrives after the startup deadline 153ms
+     ✓ preserves the top-level deadline reason when the event loop resumes after expiry 158ms
+     ✓ enforces an absolute request deadline while a TLS peer keeps sending partial data 444ms
+     ✓ rejects a reused PID when its process-start token changes 1ms
+     ✓ parses merged wake bells without hiding mixed user text 1ms
+     ✓ maps vendor input once and keeps mixed user text as a user-input observation 1ms
+     ✓ keeps injection and idle wake as separate arbitrary-host capabilities 0ms
+     ✓ denies observed subagents before session-bound message calls and binds collaboration validation observations 9ms
+     ✓ treats merged wake bells as internal only when every nonce is broker-recognized 996ms
+     ✓ backs off definite wake submission failures without exceeding ten minutes 1ms
+     ✓ keeps Codex wake deferred by default and makes visible queue wake explicit 1ms
+     ✓ resolves plugin queue settings only after explicit ENV and only for Codex 11ms
+     ✓ disables malformed plugin queue settings 0 with a bounded diagnostic 2ms
+     ✓ disables malformed plugin queue settings 1 with a bounded diagnostic 2ms
+     ✓ disables malformed plugin queue settings 2 with a bounded diagnostic 2ms
+     ✓ disables malformed plugin queue settings 3 with a bounded diagnostic 3ms
+     ✓ disables malformed plugin queue settings 4 with a bounded diagnostic 2ms
+     ✓ disables malformed plugin queue settings 5 with a bounded diagnostic 2ms
+     ✓ disables malformed plugin queue settings 6 with a bounded diagnostic 2ms
+     ✓ disables malformed plugin queue settings 7 with a bounded diagnostic 2ms
+     ✓ disables malformed plugin queue settings 8 with a bounded diagnostic 2ms
+     ✓ bounds plugin queue settings by bytes, permits false, and rejects read errors and relative paths 5ms
+     × uses one plugin queue profile for packaged presence and relay until the next SessionStart 825ms
+     ✓ releases Codex wake reservations only for definite submission failures 0ms
+     ✓ retains Claude wake reservations whenever the inbox may have accepted bytes 0ms
+     ✓ serializes a Claude wake with next priority through an isolated inbox socket 5ms
+     ✓ does not dispatch a Claude wake when socket is missing 0ms
+     ✓ does not dispatch a Claude wake when token is missing 0ms
+     ✓ does not dispatch a Claude wake when both is missing 0ms
+     ✓ consumes queued peers at safe boundaries after restart without waking again after ACK 20ms
+     ✓ retries only a definitely failed wake whose reservation was released 1ms
+     ✓ serializes wake reservation and release through the TLS broker 430ms
+     ✓ stops relay acquisition after three consecutive unknown identity checks 1ms
+     ✓ does not pass Claude inbox credentials into the broker process 0ms
+     × pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts 525ms
+     × blocks only verified empty Codex wake prompts in the packaged hook 999ms
+     ✓ keeps a maximum-size peer message within the hook context limit 857ms
+     ✓ escapes peer bodies inside one bounded JSON block 1158ms
+     ✓ losslessly bounds an escape-heavy controls envelope 1ms
+     ✓ losslessly bounds an escape-heavy quotes envelope 1ms
+     ✓ losslessly bounds an escape-heavy backslashes envelope 1ms
+     ✓ starts the relay without spending a second claim budget during SessionStart 1129ms
+     ✓ leaves Codex Stop messages queued for a supported context event 1588ms
+     ✓ does not register an unsupported Codex Stop context hook 1ms
+     ✓ keeps packaged hook and relay entrypoints isolated 496ms
+     ✓ keeps Claude Code Stop context delivery enabled 691ms
+     ✓ binds message tools to host hook identity 1ms
+     ✓ does not speak plaintext on the loopback port 281ms
+   ✓ session message MCP tools (2)
+     ✓ reports an overlong Unicode body as INVALID_INPUT before broker access 4ms
+     ✓ validates bound send, status, and acknowledgement calls 1202ms
+(node:28006) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28006) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29051) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ tests/mcp/convergence-guard.test.ts (66 tests | 2 failed) 18660ms
+   ❯ local MCP convergence guard (33)
+     ✓ opens an immutable root and rejects overlapping active scope even under a changed taskId 398ms
+     ✓ requires a lease for every valid orchestrated plan 251ms
+     ✓ rejects a signed plan produced from a different task envelope with the same taskId 262ms
+     ✓ reuses root and lease bindings when compact claim and guarded start omit duplicate values 362ms
+     ✓ preserves stale and expiry checks for planless guarded starts 197ms
+     ✓ atomically consumes the first lease and rejects reuse 149ms
+     ✓ does not issue another lease while the previous consumed attempt is still running 166ms
+     ✓ preserves a pending frame-review gate when an older running attempt terminates 161ms
+     ✓ records failed outcomes and allows target-only, evidence-bearing retries through ordinal 3 268ms
+     ✓ gates a changed task contract before workflow start 159ms
+     ✓ gates a changed control frame before workflow start 186ms
+     ✓ accepts an independent review when frame drift is detected before any attempt starts 169ms
+     ✓ rejects a repeated target and repeated evidence as NEW_EVIDENCE_REQUIRED 209ms
+     ✓ records a rejected retry on the root without spending attempt budget 416ms
+     ✓ records a stale-fingerprint rejection without burning its evidence 348ms
+     ✓ reads a root stored before retry rejections existed 375ms
+     ✓ refuses evidence burnt by an earlier rejection even in the next epoch 346ms
+     ✓ persists roots, consumed budget, running attempts, and aborted outcomes across restart 327ms
+     × allows only one competing lease claim across two SQLite connections 432ms
+     × allows only one trusted observation claim across two SQLite connections 457ms
+     ✓ keeps legacy plans compatible only outside strict MCP claim and start boundaries 198ms
+     ✓ opens epoch 2 exactly once after a fresh independent semantics-preserving review 294ms
+     ✓ does not open a new epoch when an otherwise preserving review has no target correction 250ms
+     ✓ routes semantics-changing reviews through needs-user 181ms
+     ✓ routes ambiguous reviews through panel 182ms
+     ✓ does not let an independent review reopen a needs-user root without a new user contract 204ms
+     ✓ genericized Korean attempt-6/7 regression gates changed evaluation meaning before attempt 7 starts 425ms
+     ✓ returns the root to the user and requires a new user contract after a needs-approval attempt 217ms
+     ✓ returns the root to the user and requires a new user contract after a needs-input attempt 232ms
+     ✓ returns the root to the user and requires a new user contract after a needs-redesign attempt 162ms
+     ✓ does not reset the attempt budget by reopening after a stop review 254ms
+     ✓ treats a sibling-path rescope of the same write surface as the same root 214ms
+     ✓ opens a second root for unrelated work that shares only the control frame 194ms
+   ✓ server-derived workspace identity (20)
+     ✓ checks nested checkout containers sharing a repository (.worktrees, reverse=false) 308ms
+     ✓ checks nested checkout containers sharing a repository (.worktrees/*/src/candidate.ts, reverse=false) 343ms
+     ✓ checks nested checkout containers sharing a repository (.worktrees, reverse=true) 228ms
+     ✓ checks nested checkout containers sharing a repository (.worktrees/*/src/candidate.ts, reverse=true) 248ms
+     ✓ blocks checkout containers across separate gitdir layouts (admin, nested=false) 336ms
+     ✓ blocks checkout containers across separate gitdir layouts (.git, nested=false) 316ms
+     ✓ blocks checkout containers across separate gitdir layouts (admin, nested=true) 278ms
+     ✓ blocks checkout containers across separate gitdir layouts (.git, nested=true) 232ms
+     ✓ rejects the same physical target under a changed workspace id and locator 139ms
+     ✓ rejects the same physical target reached through a junction or symlink 173ms
+     ✓ keeps open roots of different checkouts independent even on the same relative path 175ms
+     ✓ keeps a gated root blocking its relative surface in every checkout of the repository 411ms
+     ✓ blocks a non-Git folder or glob that holds a sibling checkout of a gated root's repository 255ms
+     ✓ follows the write surface of a stored root after a review replaces its frame 270ms
+     ✓ replaces the gated root of a deleted worktree from a sibling checkout 219ms
+     ✓ lets two gated roots be replaced without blocking each other, but not widened or rescoped past a gate 279ms
+     ✓ identifies a gitdir without commondir and rejects damaged Git evidence 164ms
+     ✓ widens globs conservatively and rejects scope entries that are not paths 186ms
+     ✓ backfills identities for stored roots without rewriting them and treats legacy URI scope as the whole workspace 461ms
+     ✓ admits only one of two connections that open the same target at once 819ms
+   ✓ gated roots stored before identities existed (13)
+     ✓ does not let a sibling worktree bypass a gated legacy root whose checkout is deleted 464ms
+     ✓ does not let a sibling worktree bypass a gated legacy root whose checkout is damaged 316ms
+     ✓ does not store a guessed identity for a legacy root under a non-Git parent locator whose checkout is gone 316ms
+     ✓ does not guess an identity for a legacy gated root on a target inside the nested worktree once that worktree is deleted 292ms
+     ✓ does not guess an identity for a legacy gated root on the nested worktree itself as '.' once that worktree is deleted 307ms
+     ✓ does not guess an identity for a legacy gated root on the nested worktree named from the oute… once that worktree is deleted 264ms
+     ✓ backfills a legacy root whose target exists and leaves one whose target file was never written unresolved 230ms
+     ✓ keeps a checkout observed for the current inputs after it is deleted, surface by surface 267ms
+     ✓ does not reuse an identity observed for a replaced frame, and grants no legacy exception for it 450ms
+     ✓ takes a checkout that appears above an observed non-Git surface only once the target itself exists 337ms
+     ✓ follows a checkout created after a root was registered for a workspace that does not exist yet, and keeps it once it is deleted 361ms
+     ✓ follows a checkout created after a root was registered for an absolute target below an existing ch…, and keeps it once it is deleted 310ms
+     ✓ still replaces a gated legacy root of a deleted checkout when the same workspace is named 258ms
+(node:29133) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/context-continuity/schema-compat.test.ts (18 tests) 13127ms
+   ✓ 2.7.x continuity schema compatibility (13)
+     ✓ preserves schema 2 state across reopen, restore, CAS, purge and epoch rotation 730ms
+     ✓ preserves schema 3 state across reopen, restore, CAS, purge and epoch rotation 571ms
+     ✓ creates new databases as schema 2 331ms
+     ✓ preserves receiver-owned tasks, refuses stale origins and keeps unrelated tasks usable 561ms
+     ✓ checks receiver state inside the checkpoint transaction after service preflight 326ms
+     ✓ protects receiver state added after task cleanup preview 305ms
+     ✓ rejects a schema 3 database with valid column definitions and malformed pages 378ms
+   ✓ source STDIO continuity startup diagnostics (5)
+     ✓ keeps normal MCP usable when continuity is healthy 2639ms
+     ✓ keeps normal MCP usable when continuity is receiver 2496ms
+     ✓ keeps normal MCP usable when continuity is future 1518ms
+     ✓ keeps normal MCP usable when continuity is incompatible 1307ms
+     ✓ keeps normal MCP usable when continuity is corrupt 1326ms
+(node:29397) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/mcp/workflow-service.test.ts (40 tests) 19423ms
+   ✓ SqliteWorkflowStore (4)
+     ✓ migrates an active v2 workflow to v5 and preserves receipt updates 976ms
+   ✓ WorkflowService (36)
+     ✓ persists runs, signing keys, revisions, and run sequences in SQLite 639ms
+     ✓ rejects stale, replayed, and cross-stage trusted observations 699ms
+     ✓ observes a failing stage without holding it to the assurance floor 1069ms
+     ✓ still holds a passing stage to the assurance floor 359ms
+     ✓ persists trusted observation claims across service restart 431ms
+     ✓ rejects non-canonical plan integrity token spellings 505ms
+     ✓ binds execution requirements and rejects missing or under-provisioned stage execution 381ms
+     ✓ starts from a plan and enforces revision, ordering, and evidence 324ms
+     ✓ rejects forged, modified, and foreign-process plans without creating a run 517ms
+     ✓ does not finalize when passed stages still report blockers 306ms
+     ✓ requires a PASS verdict and an auditor independent from implementation actors 557ms
+     ✓ rejects deliberation without an eligible DecisionRecord 378ms
+     ✓ validates a replacement deliberation provider without a hardcoded skill path 338ms
+     ✓ rejects incomplete or stale mandatory audit handoffs 376ms
+     ✓ rejects every canonical invalid DecisionRecord at the MCP gate 6834ms
+ ✓ tests/mcp/korean-prose-cycle-receipt.test.ts (13 tests) 24106ms
+   ✓ range-aware Korean prose cycle receipts (13)
+     ✓ records canonical structured work products and binds selection through finalization 2608ms
+     ✓ rejects a cycle work product changed after the receipt was recorded 2597ms
+     ✓ rejects a cycle directory outside the evaluation root 681ms
+     ✓ rejects a structured cycle that omits formal readiness evidence 640ms
+     ✓ does not silently select the historical cycle when no cycle path is given 689ms
+     ✓ rejects structured run metadata without execution provenance 918ms
+     ✓ rejects structured run metadata with an unverified actual model 1121ms
+     ✓ derives a passing quality decision from the bound final records 2305ms
+     ✓ verifies a receipt whose quality evidence passed only with the external quality digest 4305ms
+     ✓ rejects quality evidence when bound final records miss the improvement threshold 2310ms
+     ✓ rejects a label leaked into the independent adjudicator input 1608ms
+     ✓ does not count an unsafe independently adjudicated edit as an improvement 2210ms
+     ✓ rejects a start claim and role metadata replaced after the workflow receipt was finalized 2111ms
+(node:29530) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/mcp/host-attestation-stdio.test.ts (4 tests) 10652ms
+   ✓ packaged execution observation fixtures (not native-host evidence) (4)
+     ✓ completes guarded STDIO and keeps restart replay rejection for claude-code/hook/claude-opus-5 2876ms
+     ✓ completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-astra 3030ms
+     ✓ completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-sol 2771ms
+     ✓ completes guarded STDIO and keeps restart replay rejection for codex/wrapper/gpt-6-astra 1972ms
+(node:30041) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/runtime/runtime-smoke.test.mjs (6 tests) 9804ms
+   ✓ installed skill runtime (6)
+     ✓ runs every documented Node CLI without node_modules 9601ms
+ ✓ tests/mcp/receipt-policy.test.ts (33 tests) 10085ms
+   ✓ descriptor-declared reference-only receipts (33)
+     ✓ propagates all four policies, orders artifact dependencies, and binds policy to the plan HMAC 518ms
+     ✓ rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"/output/actorIds"} 493ms
+     ✓ rejects invalid actor-array policies in descriptors and plans: {"actorIdsMatch":"prior-policy-actors"} 531ms
+     ✓ rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"output/actorIds","actorIdsMatch":"prior-policy-actors"} 494ms
+     ✓ rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"/output/actorIds","actorIdsMatch":"any-actors"} 407ms
+     ✓ rejects missing final actor arrays without changing the receipt 421ms
+     ✓ rejects empty final actor arrays without changing the receipt 481ms
+     ✓ rejects incomplete final actor arrays without changing the receipt 341ms
+     ✓ rejects extra final actor arrays without changing the receipt 328ms
+     ✓ rejects reordered final actor arrays without changing the receipt 386ms
+     ✓ rejects duplicate final actor arrays without changing the receipt 325ms
+     ✓ rejects unrelated final actor arrays without changing the receipt 350ms
+     ✓ rejects actor reuse after SQLite restart 381ms
+     ✓ binds arbitrary capability actor arrays in plan order after SQLite restart 572ms
+     ✓ finalizes deterministically without requiring a fourth actor and keeps direct mode unverified 342ms
+ ✓ tests/change-scope-guardian/suite-integration.test.ts (1 test) 4674ms
+   ✓ change-scope-guardian Node tests pass in an isolated process 4672ms
+(node:31194) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/session-messaging/wake-lifecycle.test.mjs (29 tests) 6319ms
+   ✓ W05-r2 terminal observation retention is bounded while unresolved rows are retained 367ms
+   ✓ verified old arrival in another process releases only the old attempt and permits one new effect 900ms
+   ✓ Codex running body claim in another process prevents the external queue call before start 410ms
+   ✓ Codex post-start claim in another process leaves one marker and a verified empty discard 378ms
+   ✓ W05-r2 independent senders and relay processes perform exactly one external call 947ms
+   ✓ W05-r2 independent process crash before start recovers the same attempt; after effect never resends 2099ms
+   ✓ W05-r2 independent migration failure rolls back every added nonce column and preserves legacy bytes 372ms
+(node:31347) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/tooling/commands.test.mjs (12 tests) 4618ms
+   ✓ skill maintenance commands (12)
+     ✓ forwards pnpm script arguments without a standalone separator 832ms
+     ✓ imports only files committed at the requested Git ref 369ms
+     ✓ refuses a replacement that does not contain the required ancestor commit 929ms
+     ✓ keeps the registered routing when a replaced skill ships no integration descriptor 878ms
+     ✓ rejects a lock whose auto-pr source is pinned to a commit 468ms
+     ✓ refuses to replace a suite-managed skill through the external importer 686ms
+ ✓ tests/mcp/stdio-integration.test.ts (4 tests) 4233ms
+   ✓ bundled STDIO MCP server (4)
+     ✓ starts from an isolated plugin tree without node_modules 1781ms
+     ✓ keeps workflow startup clean when both database settings resolve to one file 780ms
+     ✓ starts with the packaged registry and fails semantic planning closed without a trusted provider 723ms
+     ✓ shares signed continuity bindings between the packaged hook and MCP server 945ms
+ ✓ tests/mcp/tool-schema-profile.test.ts (7 tests) 3119ms
+   ✓ MCP tool schema profiles (7)
+     ✓ keeps the historical schemas when no profile is selected 578ms
+     ✓ removes top-level combinators from every advertised schema for Anthropic hosts 480ms
+     ✓ accepts and rejects the same inputs with inlined Anthropic schemas as with the referenced contracts 469ms
+     ✓ validates plan_workflow input identically in both profiles 345ms
+     ✓ advertises intake session instructions only for Anthropic hosts 596ms
+     ✓ applies the environment profile in the bundled server 646ms
+(node:31589) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31590) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/evaluation-validity-auditor/suite-integration.test.mjs (7 tests) 2762ms
+   ✓ evaluation-validity-auditor suite descriptor (7)
+     ✓ accepts a safe post-execution PASS receipt and still rejects free text 589ms
+     ✓ freezes the audit purpose in the signed plan and enforces pre versus post completion 544ms
+     ✓ requires an explicit structured purpose for evaluation validity planning 324ms
+     ✓ keeps one evaluation TaskEnvelope compatible with task-contract and acceptance validation 371ms
+     ✓ maps FAIL and BLOCKED reports to their fixed workflow error states 628ms
+ ✓ tests/context-continuity/continuity.test.ts (15 tests) 3222ms
+   ✓ direct task continuity (10)
+     ✓ stores replacement snapshots with CAS and request idempotency 360ms
+     ✓ allows only one winner across two SQLite connections using the same CAS revision 382ms
+     ✓ rejects a payload whose stored JSON no longer matches its digest 307ms
+ ✓ tests/mcp/host-attestation.test.ts (30 tests) 3128ms
+   ✓ Claude Code host attestation through the MCP boundary (11)
+     ✓ completes an orchestrated workflow with claude-code observations 472ms
+     ✓ keeps the default server without a provider on BINDING_REQUIRED 409ms
+(node:31633) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/mcp/provider-result-envelope.test.ts (9 tests) 2382ms
+   ✓ provider result envelope (4)
+     ✓ accepts the shared envelope version for acceptance-evidence-validation even though its provider schema omits it 384ms
+     ✓ accepts the shared envelope version for blocker-diagnosis even though its provider schema omits it 313ms
+   ✓ recorded artifact digests (1)
+     ✓ stores the caller's digest form and still reports missing artifacts and output-file mismatches 328ms
+(node:31668) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/mcp/state-cleanup.test.ts (8 tests) 1987ms
+   ✓ state cleanup (8)
+     ✓ backs up and deletes only preview-bound inactive terminal state 406ms
+     ✓ claims a no-op plan only once across two database connections 403ms
+ ✓ tests/acceptance-evidence-validator/suite-integration.test.ts (1 test) 2269ms
+   ✓ acceptance-evidence-validator standalone regression (1)
+     ✓ runs every node:test case 2266ms
+ ✓ tests/session-board/session-board.test.ts (15 tests) 1834ms
+   ✓ session board MCP tools (3)
+     ✓ shares one board between the Claude launcher and the Codex hook and lists both hosts 629ms
+     ✓ reads back the hook-written line, lists the host board and refuses unbound updates 783ms
+ ✓ tests/mcp/stage-output-file.test.ts (7 tests) 1924ms
+   ✓ stage output by file reference (7)
+     ✓ validates a file-backed output like inline output and stores only the reference 599ms
+     ✓ keeps inline output unchanged 463ms
+ ✓ tests/task-contract/suite-integration.test.ts (1 test) 1621ms
+   ✓ task-contract Node tests pass in an isolated process 1619ms
+ ✓ tests/software-security-auditor/integration.test.mjs (7 tests) 2015ms
+   ✓ security audit integration (7)
+     ✓ loads schema and maps complete report with findings in  612ms
+     ✓ loads schema and maps complete report with findings in claude-plugin/ 368ms
+(node:31942) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/tooling/claude-plugin.test.mjs (18 tests) 1159ms
+   ✓ generated Claude plugin (10)
+     ✓ removes a caller-supplied token when it cannot attest 525ms
+ ✓ tests/codex-token-usage-analyzer/integration.test.mjs (6 tests) 1169ms
+   ✓ codex-token-usage-analyzer integration (6)
+     ✓ records and finalizes a no-Markdown PASS workflow 615ms
+     ✓ records and finalizes a no-Markdown PARTIAL workflow 380ms
+(node:32066) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/mcp/trust-provenance.test.ts (11 tests) 1044ms
+   ✓ trust provenance (11)
+     ✓ stores peer provenance by digest without persisting the raw body 343ms
+     ✓ records and verifies a claimed peer message before injecting its receipt-bound body 351ms
+stderr | tests/recovery-strategy-selector/recovery-selector.test.mjs
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+
+ ✓ tests/mcp/korean-prose-readiness.test.ts (7 tests) 548ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs (23 tests) 725ms
+   ✓ security audit evidence contract (23)
+     ✓ runs positive and negative CLI in node_modules-free . packaging 320ms
+     ✓ runs positive and negative CLI in node_modules-free claude-plugin packaging 375ms
+(node:32231) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/recovery-strategy-selector/recovery-selector.test.mjs (17 tests) 913ms
+   ✓ recovery strategy selector (17)
+     ✓ contracts compile and the digest CLI accepts stdin JSON 654ms
+ ✓ tests/instruction-scope-resolver/suite-integration.test.ts (1 test) 742ms
+   ✓ instruction-scope-resolver standalone regression (1)
+     ✓ runs every node:test case 740ms
+(node:32284) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/mcp/codex-host-observation.test.ts (18 tests) 733ms
+   ✓ host-owned hookless provider ingress (2)
+     ✓ shares the strict bootstrap, missing, policy and replay gates for claude-code 381ms
+ ✓ tests/ponytail/ponytail.test.ts (5 tests) 658ms
+   ✓ ponytail at the implementation step (5)
+     ✓ routes minimal-implementation to ponytail after the scope baseline and before the pre-mutation gate and scope verification 431ms
+ ✓ tests/mcp/plugin-update-service.test.ts (17 tests) 780ms
+   ✓ PluginUpdateService (17)
+     ✓ caches a successful check for 24 hours and force bypasses the cache 486ms
+ ✓ tests/mcp/response-projections.test.ts (2 tests) 622ms
+   ✓ compact MCP response projections (2)
+     ✓ keeps successful workflow progress fixed-size and reduces repeated payload bytes by at least 80% 381ms
+(node:32317) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/mcp/registry-contract.test.ts (2 tests) 590ms
+   ✓ bundled skill registry (2)
+     ✓ conforms to SkillDescriptor.v2 and exposes all specialist capabilities 368ms
+ ✓ tests/mcp/trusted-mcp-integration.test.ts (1 test) 516ms
+   ✓ trusted MCP server boundary (1)
+     ✓ completes and aborts guarded workflows with server-side observations 513ms
+ ✓ tests/tooling/skill-context-optimization.test.mjs (2 tests) 352ms
+   ✓ skill context optimization (2)
+     ✓ preserves every optimized skill while reducing its initial load 348ms
+ ✓ tests/evaluation-validity-auditor/standalone-regression.test.mjs (1 test) 529ms
+   ✓ evaluation-validity-auditor imported core (1)
+     ✓ passes the suite's normal, boundary, failure, and security regression cases 527ms
+(node:32490) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/orchestrator/query-registry.test.mjs (2 tests) 186ms
+ ✓ tests/mcp/korean-prose-glossary.test.ts (18 tests) 170ms
+ ✓ tests/model-effort-advisor/suite-integration.test.ts (3 tests) 137ms
+(node:32556) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/coordinate-subagents/model-routing.test.mjs (15 tests) 108ms
+ ✓ tests/korean-prose-editor/glossary-finalizer.test.mjs (5 tests) 91ms
+ ✓ tests/mcp/workspace-identity.test.ts (24 tests) 137ms
+(node:32600) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/mcp/korean-prose-evaluation-preflight.test.ts (4 tests) 61ms
+ ✓ tests/mcp/evaluation-preflight.test.ts (8 tests) 21ms
+ ✓ tests/tooling/tooling.test.mjs (9 tests) 23ms
+ ✓ tests/mcp/runtime-config.test.ts (18 tests) 15ms
+(node:32656) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/release-state-backup.test.mjs (1 test) 25ms
+ ✓ tests/mcp/orchestrator-fixtures.test.ts (8 tests) 54ms
+ ✓ tests/session-messaging/self-signed-certificate.test.ts (1 test) 11ms
+ ✓ tests/software-security-auditor/evaluation-evidence.test.mjs (1 test) 10ms
+ ✓ tests/mcp/tool-schema-inline.test.ts (5 tests) 10ms
+ ✓ tests/orchestrator/collaboration-decision.test.mjs (14 tests) 11ms
+(node:32717) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/mcp/korean-prose-execution-provenance.test.ts (5 tests) 5ms
+ ↓ tests/session-messaging/previous-broker.test.ts (1 test | 1 skipped)
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/mcp/convergence-guard.test.ts > local MCP convergence guard > allows only one competing lease claim across two SQLite connections
+Error: Cannot find module '/tmp/wt/n24.0.0/mcp-server/src/registry.js' imported from /tmp/wt/n24.0.0/tests/mcp/fixtures/concurrent-claim-worker.ts
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  tests/mcp/convergence-guard.test.ts > local MCP convergence guard > allows only one trusted observation claim across two SQLite connections
+Error: Cannot find module '/tmp/wt/n24.0.0/mcp-server/src/sqlite-workflow-store.js' imported from /tmp/wt/n24.0.0/tests/mcp/fixtures/concurrent-observation-claim-worker.ts
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  tests/session-messaging/message-lifecycle.test.ts > packaged TLS cycles use one request instead of three or two without changing pending state
+Error: connect ECONNREFUSED 127.0.0.1:42525
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  tests/session-messaging/message-lifecycle.test.ts > a real send reply loss retries the known ID once and survives broker restart
+AssertionError: expected { …(4) } to match object { …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "duplicate": true,
++   "duplicate": false,
+    "messageId": "5a8ae969-7a87-47ed-8edc-0d7d3386112d",
+  }
+
+ ❯ tests/session-messaging/message-lifecycle.test.ts:203:18
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  tests/session-messaging/peer-wait.test.ts > enforces native wait through the public packaged hook and preserves unrelated waits
+Error: connect ECONNREFUSED 127.0.0.1:38059
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  tests/session-messaging/peer-wait.test.ts > the public CLI consumes the decision before delay and sends no repeated poll when denied
+Error: connect ECONNREFUSED 127.0.0.1:32859
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  tests/session-messaging/peer-wait.test.ts > public native hook suppresses equivalent payloads but permits actual cursor change
+Error: connect ECONNREFUSED 127.0.0.1:33925
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  tests/session-messaging/peer-wait.test.ts > public CLI equivalent retransmissions consume one decision each and state change restores a snapshot
+Error: connect ECONNREFUSED 127.0.0.1:43253
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  tests/session-messaging/peer-wait.test.ts > CLI unknown resume uses one bounded wait and does not force permanent stopping
+Error: read ECONNRESET
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  tests/session-messaging/peer-wait.test.ts > broker restart preserves messages but drops resume and repeat-suppression evidence
+Error: connect ECONNREFUSED 127.0.0.1:36729
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > session message spool > allows one wake claim across two concurrent SQLite connections
+Error: Cannot find module '/tmp/wt/n24.0.0/mcp-server/src/session-message-store.js' imported from /tmp/wt/n24.0.0/tests/session-messaging/fixtures/wake-claim-worker.ts
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > converges simultaneous startup requests on one broker
+AssertionError: promise rejected "Error: connect ECONNREFUSED 127.0.0.1:346… { …(5) }" instead of resolving
+ ❯ tests/session-messaging/session-message.test.ts:570:67
+    568|       ensureSessionMessageBroker(directory),
+    569|     ]);
+    570|     await expect(requestSessionMessageOnce("ping", {}, directory)).res…
+       |                                                                   ^
+    571|       protocolVersion: SESSION_MESSAGE_PROTOCOL,
+    572|       capabilities: ["atomic-wake-claim", "deferred-boundary", "delive…
+
+Caused by: Error: connect ECONNREFUSED 127.0.0.1:34653
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -111, code: 'ECONNREFUSED', syscall: 'connect', address: '127.0.0.1', port: 34653 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > uses one plugin queue profile for packaged presence and relay until the next SessionStart
+AssertionError: expected { host: 'codex', …(15) } to match object { transport: 'codex-deferred', …(2) }
+(15 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "state": "online",
+-   "transport": "codex-deferred",
+-   "wakeVisibility": "none",
++   "transport": "codex-queue",
++   "wakeVisibility": "user-message",
+  }
+
+ ❯ tests/session-messaging/session-message.test.ts:910:20
+    908|       expect(resumed.status, resumed.stderr).toBe(0);
+    909|       const next = store.presence(target);
+    910|       expect(next).toMatchObject({ transport: "codex-deferred", state:…
+       |                    ^
+    911|       expect(next.instanceId).not.toBe(presence.instanceId);
+    912|       await waitUntil(async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts
+Error: connect ECONNREFUSED 127.0.0.1:41227
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > blocks only verified empty Codex wake prompts in the packaged hook
+AssertionError: expected {} to match object { decision: 'block' }
+
+- Expected
++ Received
+
+- {
+-   "decision": "block",
+- }
++ {}
+
+ ❯ tests/session-messaging/session-message.test.ts:1219:24
+    1217|       const output = await invoke();
+    1218|       if (["submitted", "unknown", "duplicate"].includes(scenario)) {
+    1219|         expect(output).toMatchObject({ decision: "block" });
+       |                        ^
+    1220|         if (scenario === "duplicate") expect(await invoke()).toEqual({…
+    1221|       } else if (scenario === "idle") {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  4 failed | 54 passed | 1 skipped (59)
+      Tests  15 failed | 708 passed | 1 skipped (724)
+   Start at  07:24:42
+   Duration  70.29s (tests 94%, import 4%, transform 2%)
+
+JSON report written to /tmp/ev/49-v24.0.0-test-run2.json
+[ELIFECYCLE] Test failed. See above for more details.
+EXIT=1

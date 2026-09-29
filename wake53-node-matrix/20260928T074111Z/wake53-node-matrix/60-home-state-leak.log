@@ -1,0 +1,16 @@
+/tmp/홈 디렉터리 3.0/user/.agent-governance-suite
+/tmp/홈 디렉터리 3.0/user/.agent-governance-suite/session-messaging
+/tmp/홈 디렉터리 3.0/user/.agent-governance-suite/session-messaging/broker-cert.pem
+/tmp/홈 디렉터리 3.0/user/.agent-governance-suite/session-messaging/endpoint.json
+/tmp/홈 디렉터리 3.0/user/.agent-governance-suite/session-messaging/session-messages.sqlite3-shm
+/tmp/홈 디렉터리 3.0/user/.agent-governance-suite/session-messaging/broker-key.pem
+/tmp/홈 디렉터리 3.0/user/.agent-governance-suite/session-messaging/broker.lock
+/tmp/홈 디렉터리 3.0/user/.agent-governance-suite/session-messaging/session-messages.sqlite3-wal
+/tmp/홈 디렉터리 3.0/user/.agent-governance-suite/session-messaging/session-messages.sqlite3
+/tmp/홈 디렉터리 3.0/user/.agent-governance-suite/session-messaging/broker.token
+/tmp/홈 디렉터리 3.0/user/.agent-governance-suite/session-messaging/trust.sqlite3
+
+total 12
+drwx------  3 root root 4096 2026-09-28 07:14:27.922012788 +0000 .
+drwx------ 16 root root 4096 2026-09-28 07:14:32.892210336 +0000 ..
+drwx------  2 root root 4096 2026-09-28 07:33:24.048277575 +0000 session-messaging

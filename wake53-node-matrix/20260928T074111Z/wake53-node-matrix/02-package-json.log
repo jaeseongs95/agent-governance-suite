@@ -1,0 +1,56 @@
+{
+  "name": "agent-governance-suite",
+  "version": "2.7.1",
+  "private": true,
+  "description": "Governance specialists with declarative local orchestration, a local convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "build": "tsc --noEmit && node scripts/build.mjs",
+    "test": "node scripts/build.mjs && vitest run",
+    "lint": "eslint . && node scripts/validate-repository.mjs",
+    "dev": "tsx mcp-server/src/index.ts",
+    "runtime:check": "node scripts/check-runtime.mjs",
+    "process-identity:check": "tsx scripts/check-process-identity.ts",
+    "bundle:check": "node scripts/check-bundle.mjs",
+    "claude:build": "node scripts/build-claude-plugin.mjs",
+    "claude:check": "node scripts/build-claude-plugin.mjs --check",
+    "claude:drift": "node scripts/build-claude-plugin.mjs --drift",
+    "validate:all": "node scripts/validate-repository.mjs && node scripts/run-python-validations.mjs && tsx scripts/korean-prose-glossary.ts --mode check",
+    "validate:official": "node scripts/validate-official.mjs",
+    "validate:skill": "node scripts/validate-skill.mjs",
+    "new:skill": "node scripts/new-skill.mjs",
+    "import:skill": "node scripts/import-skill.mjs",
+    "release:sync": "node scripts/sync-release-metadata.mjs",
+    "release:check": "node scripts/sync-release-metadata.mjs",
+    "source:check": "node scripts/check-source-lock.mjs",
+    "source:verify": "node scripts/check-source-lock.mjs --remote",
+    "source:updates": "node scripts/check-upstream-updates.mjs",
+    "skills:context-check": "node scripts/check-skill-context-optimization.mjs",
+    "eval:preflight": "tsx scripts/verify-korean-prose-evaluation-preflight.ts",
+    "eval:readiness": "tsx scripts/verify-korean-prose-readiness.ts",
+    "eval:receipt": "tsx scripts/record-korean-prose-run.ts",
+    "eval:receipt:verify": "tsx scripts/verify-korean-prose-receipt.ts",
+    "glossary:build": "tsx scripts/korean-prose-glossary.ts --mode build",
+    "glossary:check": "tsx scripts/korean-prose-glossary.ts --mode check"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "3.0.1",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.5.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.10.0",
+    "tsx": "^4.23.13",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.0"
+  }
+}

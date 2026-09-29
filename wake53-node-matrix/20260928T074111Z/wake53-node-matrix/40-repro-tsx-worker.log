@@ -1,0 +1,21 @@
+== v24.0.0 worker(--import tsx) with .js->.ts specifier
+WORKER_ERR ERR_MODULE_NOT_FOUND Cannot find module '/tmp/wt/n24.0.0/.repro1/a.js' imported from /tmp/wt/n24.0.0/.repro1/worker.ts
+WORKER_EXIT 1
+== v24.0.0 child process node --import tsx child.ts
+child ok 1
+== v24.0.0 tsx version
+4.23.13
+== v24.21.0 worker(--import tsx) with .js->.ts specifier
+WORKER_MSG ok 1
+WORKER_EXIT 0
+== v24.21.0 child process node --import tsx child.ts
+child ok 1
+== v24.21.0 tsx version
+4.23.13
+== v26.10.0 worker(--import tsx) with .js->.ts specifier
+WORKER_MSG ok 1
+WORKER_EXIT 0
+== v26.10.0 child process node --import tsx child.ts
+child ok 1
+== v26.10.0 tsx version
+4.23.13

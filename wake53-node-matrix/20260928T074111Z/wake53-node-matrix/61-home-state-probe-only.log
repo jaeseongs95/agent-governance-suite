@@ -1,0 +1,11 @@
+# fresh HOME=/tmp/홈2 oeR5, MCP probe only
+PROBE_RESULT PASS
+/tmp/홈2 oeR5
+/tmp/홈2 oeR5/.agent-governance-suite
+/tmp/홈2 oeR5/.agent-governance-suite/session-messaging
+/tmp/홈2 oeR5/.agent-governance-suite/session-messaging/trust.sqlite3
+/tmp/홈2 oeR5/.local
+/tmp/홈2 oeR5/.local/state
+/tmp/홈2 oeR5/.local/state/agent-governance-suite
+/tmp/홈2 oeR5/.local/state/agent-governance-suite/continuity.sqlite3
+/tmp/홈2 oeR5/.local/state/agent-governance-suite/workflows.sqlite3

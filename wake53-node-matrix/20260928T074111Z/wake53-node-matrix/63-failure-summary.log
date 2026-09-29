@@ -1,0 +1,102 @@
+/tmp/ev/18-v24.0.0-test.json: passed=708 failed=15 pending=1 total=724
+  FAIL n24.0.0/tests/mcp/convergence-guard.test.ts > local MCP convergence guard allows only one competing lease claim across two SQLite connections
+      Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/tmp/wt/n24.0.0/mcp-server/src/registry.js' imported from /tmp/wt/n24.0.0/tests/mcp/fixtures/concurrent-claim-worker.ts
+  FAIL n24.0.0/tests/mcp/convergence-guard.test.ts > local MCP convergence guard allows only one trusted observation claim across two SQLite connections
+      Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/tmp/wt/n24.0.0/mcp-server/src/sqlite-workflow-store.js' imported from /tmp/wt/n24.0.0/tests/mcp/fixtures/concurrent-observation-claim-worker.ts
+  FAIL n24.0.0/tests/session-messaging/broker-lifecycle.test.ts > retries transient endpoint publication failures and serves the published endpoint
+      Error: promise rejected "Error: connect ECONNREFUSED 127.0.0.1:453… { …(5) }" instead of resolving
+  FAIL n24.0.0/tests/session-messaging/broker-lifecycle.test.ts > delivers and acknowledges a message using only the packaged CLI and broker
+      AssertionError: expected 1 to be +0 // Object.is equality
+  FAIL n24.0.0/tests/session-messaging/message-lifecycle.test.ts > packaged TLS cycles use one request instead of three or two without changing pending state
+      Error: connect ECONNREFUSED 127.0.0.1:38873
+  FAIL n24.0.0/tests/session-messaging/message-lifecycle.test.ts > a real send reply loss retries the known ID once and survives broker restart
+      AssertionError: expected { …(4) } to match object { …(2) }
+  FAIL n24.0.0/tests/session-messaging/peer-wait.test.ts > enforces native wait through the public packaged hook and preserves unrelated waits
+      Error: connect ECONNREFUSED 127.0.0.1:33599
+  FAIL n24.0.0/tests/session-messaging/peer-wait.test.ts > the public CLI consumes the decision before delay and sends no repeated poll when denied
+      Error: connect ECONNREFUSED 127.0.0.1:46357
+  FAIL n24.0.0/tests/session-messaging/peer-wait.test.ts > public native hook suppresses equivalent payloads but permits actual cursor change
+      Error: connect ECONNREFUSED 127.0.0.1:43213
+  FAIL n24.0.0/tests/session-messaging/peer-wait.test.ts > public CLI equivalent retransmissions consume one decision each and state change restores a snapshot
+      Error: connect ECONNREFUSED 127.0.0.1:33807
+  FAIL n24.0.0/tests/session-messaging/peer-wait.test.ts > CLI unknown resume uses one bounded wait and does not force permanent stopping
+      Error: connect ECONNREFUSED 127.0.0.1:45439
+  FAIL n24.0.0/tests/session-messaging/peer-wait.test.ts > broker restart preserves messages but drops resume and repeat-suppression evidence
+      Error: connect ECONNREFUSED 127.0.0.1:39709
+  FAIL n24.0.0/tests/session-messaging/session-message.test.ts > session message spool allows one wake claim across two concurrent SQLite connections
+      Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/tmp/wt/n24.0.0/mcp-server/src/session-message-store.js' imported from /tmp/wt/n24.0.0/tests/session-messaging/fixtures/wake-claim-worker.ts
+  FAIL n24.0.0/tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter uses one plugin queue profile for packaged presence and relay until the next SessionStart
+      Error: Timed out waiting for test state.
+  FAIL n24.0.0/tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts
+      Error: connect ECONNREFUSED 127.0.0.1:39795
+/tmp/ev/28-v24.21.0-test.json: passed=723 failed=0 pending=1 total=724
+/tmp/ev/38-v26.10.0-test.json: passed=723 failed=0 pending=1 total=724
+/tmp/ev/47-v24.12.0-test.json: passed=709 failed=14 pending=1 total=724
+  FAIL n24.21.0/tests/mcp/trust-provenance.test.ts > trust provenance records and verifies a claimed peer message before injecting its receipt-bound body
+      Error: connect ECONNREFUSED 127.0.0.1:37061
+  FAIL n24.21.0/tests/session-messaging/broker-lifecycle.test.ts > retries transient endpoint publication failures and serves the published endpoint
+      Error: promise rejected "Error: connect ECONNREFUSED 127.0.0.1:454… { …(5) }" instead of resolving
+  FAIL n24.21.0/tests/session-messaging/message-lifecycle.test.ts > packaged TLS cycles use one request instead of three or two without changing pending state
+      Error: connect ECONNREFUSED 127.0.0.1:34631
+  FAIL n24.21.0/tests/session-messaging/message-lifecycle.test.ts > a real send reply loss retries the known ID once and survives broker restart
+      AssertionError: expected { …(4) } to match object { …(2) }
+  FAIL n24.21.0/tests/session-messaging/message-lifecycle.test.ts > packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect
+      AssertionError: expected undefined to deeply equal { duplicate: true }
+  FAIL n24.21.0/tests/session-messaging/peer-wait.test.ts > enforces native wait through the public packaged hook and preserves unrelated waits
+      Error: connect ECONNREFUSED 127.0.0.1:44753
+  FAIL n24.21.0/tests/session-messaging/peer-wait.test.ts > the public CLI consumes the decision before delay and sends no repeated poll when denied
+      Error: connect ECONNREFUSED 127.0.0.1:33839
+  FAIL n24.21.0/tests/session-messaging/peer-wait.test.ts > public native hook suppresses equivalent payloads but permits actual cursor change
+      Error: ENOENT: no such file or directory, open '/tmp/ags-peer-wait-joO2tF/endpoint.json'
+  FAIL n24.21.0/tests/session-messaging/peer-wait.test.ts > public CLI equivalent retransmissions consume one decision each and state change restores a snapshot
+      Error: connect ECONNREFUSED 127.0.0.1:39571
+  FAIL n24.21.0/tests/session-messaging/peer-wait.test.ts > broker restart preserves messages but drops resume and repeat-suppression evidence
+      Error: connect ECONNREFUSED 127.0.0.1:45259
+  FAIL n24.21.0/tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter converges simultaneous startup requests on one broker
+      Error: The session message broker exited before it was ready (code 1, signal null).
+  FAIL n24.21.0/tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter uses one plugin queue profile for packaged presence and relay until the next SessionStart
+      Error: Timed out waiting for test state.
+  FAIL n24.21.0/tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter serializes wake reservation and release through the TLS broker
+      Error: connect ECONNREFUSED 127.0.0.1:33367
+  FAIL n24.21.0/tests/session-messaging/session-message.test.ts > session message MCP tools validates bound send, status, and acknowledgement calls
+      AssertionError: expected { schemaVersion: '1.0.0', …(3) } to match object { ok: true, data: { acknowledged: 1 } }
+/tmp/ev/48-v24.13.0-test.json: passed=723 failed=0 pending=1 total=724
+/tmp/ev/49-v24.0.0-test-run2.json: passed=708 failed=15 pending=1 total=724
+  FAIL n24.0.0/tests/mcp/convergence-guard.test.ts > local MCP convergence guard allows only one competing lease claim across two SQLite connections
+      Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/tmp/wt/n24.0.0/mcp-server/src/registry.js' imported from /tmp/wt/n24.0.0/tests/mcp/fixtures/concurrent-claim-worker.ts
+  FAIL n24.0.0/tests/mcp/convergence-guard.test.ts > local MCP convergence guard allows only one trusted observation claim across two SQLite connections
+      Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/tmp/wt/n24.0.0/mcp-server/src/sqlite-workflow-store.js' imported from /tmp/wt/n24.0.0/tests/mcp/fixtures/concurrent-observation-claim-worker.ts
+  FAIL n24.0.0/tests/session-messaging/message-lifecycle.test.ts > packaged TLS cycles use one request instead of three or two without changing pending state
+      Error: connect ECONNREFUSED 127.0.0.1:42525
+  FAIL n24.0.0/tests/session-messaging/message-lifecycle.test.ts > a real send reply loss retries the known ID once and survives broker restart
+      AssertionError: expected { …(4) } to match object { …(2) }
+  FAIL n24.0.0/tests/session-messaging/peer-wait.test.ts > enforces native wait through the public packaged hook and preserves unrelated waits
+      Error: connect ECONNREFUSED 127.0.0.1:38059
+  FAIL n24.0.0/tests/session-messaging/peer-wait.test.ts > the public CLI consumes the decision before delay and sends no repeated poll when denied
+      Error: connect ECONNREFUSED 127.0.0.1:32859
+  FAIL n24.0.0/tests/session-messaging/peer-wait.test.ts > public native hook suppresses equivalent payloads but permits actual cursor change
+      Error: connect ECONNREFUSED 127.0.0.1:33925
+  FAIL n24.0.0/tests/session-messaging/peer-wait.test.ts > public CLI equivalent retransmissions consume one decision each and state change restores a snapshot
+      Error: connect ECONNREFUSED 127.0.0.1:43253
+  FAIL n24.0.0/tests/session-messaging/peer-wait.test.ts > CLI unknown resume uses one bounded wait and does not force permanent stopping
+      Error: read ECONNRESET
+  FAIL n24.0.0/tests/session-messaging/peer-wait.test.ts > broker restart preserves messages but drops resume and repeat-suppression evidence
+      Error: connect ECONNREFUSED 127.0.0.1:36729
+  FAIL n24.0.0/tests/session-messaging/session-message.test.ts > session message spool allows one wake claim across two concurrent SQLite connections
+      Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/tmp/wt/n24.0.0/mcp-server/src/session-message-store.js' imported from /tmp/wt/n24.0.0/tests/session-messaging/fixtures/wake-claim-worker.ts
+  FAIL n24.0.0/tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter converges simultaneous startup requests on one broker
+      Error: promise rejected "Error: connect ECONNREFUSED 127.0.0.1:346… { …(5) }" instead of resolving
+  FAIL n24.0.0/tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter uses one plugin queue profile for packaged presence and relay until the next SessionStart
+      AssertionError: expected { host: 'codex', …(15) } to match object { transport: 'codex-deferred', …(2) }
+  FAIL n24.0.0/tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts
+      Error: connect ECONNREFUSED 127.0.0.1:41227
+  FAIL n24.0.0/tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter blocks only verified empty Codex wake prompts in the packaged hook
+      AssertionError: expected {} to match object { decision: 'block' }
+/tmp/ev/51c-korean-space-path-test.json: passed=723 failed=0 pending=1 total=724
+/tmp/ev/53c-lang-ko_KR-test.json: passed=723 failed=0 pending=1 total=724
+/tmp/ev/54c-lang-C.UTF-8-test.json: passed=723 failed=0 pending=1 total=724
+/tmp/ev/55c-lang-C-test.json: passed=723 failed=0 pending=1 total=724
+/tmp/ev/56c-tz-Asia-Seoul-test.json: passed=723 failed=0 pending=1 total=724
+/tmp/ev/57c-tz-UTC-test.json: passed=723 failed=0 pending=1 total=724
+/tmp/ev/58c-home-korean-space-test.json: passed=723 failed=0 pending=1 total=724
+/tmp/ev/59c-combined-kopath-koLANG-seoul-kohome-test.json: passed=723 failed=0 pending=1 total=724

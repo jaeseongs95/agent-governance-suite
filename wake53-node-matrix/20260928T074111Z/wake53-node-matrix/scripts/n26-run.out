@@ -1,0 +1,8 @@
+install EXIT=0
+bundle-check-prebuild EXIT=0
+build EXIT=0
+bundle-check EXIT=0
+lint EXIT=0
+test EXIT=0
+runtime-check EXIT=0
+EXIT=0

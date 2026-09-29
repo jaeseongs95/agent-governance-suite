@@ -1,0 +1,8 @@
+== v24.0.0 broker dist
+files: broker-cert.pem broker-key.pem broker.lock broker.token endpoint.json session-messages.sqlite3 session-messages.sqlite3-shm session-messages.sqlite3-wal 
+(node:12314) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+BROKER_EXIT=124
+== v24.21.0 broker dist
+files: broker-cert.pem broker-key.pem broker.lock broker.token endpoint.json session-messages.sqlite3 session-messages.sqlite3-shm session-messages.sqlite3-wal 
+BROKER_EXIT=124

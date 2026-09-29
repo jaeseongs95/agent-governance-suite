@@ -1,0 +1,7 @@
+# label=combined-kopath-koLANG-seoul-kohome node=v24.21.0 cwd=/tmp/거버전스 3.0/agent-governance-suite LANG=ko_KR.UTF-8 LC_ALL=unset TZ=Asia/Seoul HOME=/tmp/홈 디렉터리 3.0/user date=2026. 09. 28. (월) 16:34:17 KST
+# node Intl: ko-KR Asia/Seoul Thu Jan 01 1970 09:00:00 GMT+0900 (한국 표준시)
+Already up to date
+Done in 439ms using pnpm v11.19.0
+$ tsc --noEmit && node scripts/build.mjs
+EXIT=0
+PORCELAIN_LINES=0
