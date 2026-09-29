@@ -1,0 +1,31 @@
+tables: ['input_observations', 'messages', 'prepared_messages', 'relay_leases', 'session_activity', 'session_presence', 'wake_nonces']
+input_observations: rows base=0 cand=0 identical=True
+messages: rows base=18 cand=18 identical=True
+prepared_messages: rows base=7 cand=7 identical=True
+relay_leases: rows base=0 cand=0 identical=True
+session_activity: rows base=1 cand=1 identical=True
+session_presence: rows base=12 cand=12 identical=True
+wake rows base/cand: 16 16
+changed wake rows: 13
+by previous state: {'submitted': 9, 'unknown': 3, 'reserved': 1}
+changed fields: ['retired_at', 'state']
+  ended-0 unknown -> expired-unobserved retired_at==now: 2026-09-29T01:14:19.454Z
+  ended-1 unknown -> expired-unobserved retired_at==now: 2026-09-29T01:14:19.454Z
+  ended-2 unknown -> expired-unobserved retired_at==now: 2026-09-29T01:14:19.454Z
+  lapsed-31h-0 submitted -> expired-unobserved retired_at==now: 2026-09-29T01:14:19.454Z
+  lapsed-31h-1 submitted -> expired-unobserved retired_at==now: 2026-09-29T01:14:19.454Z
+  lapsed-31h-2 submitted -> expired-unobserved retired_at==now: 2026-09-29T01:14:19.454Z
+  lapsed-31h-3 submitted -> expired-unobserved retired_at==now: 2026-09-29T01:14:19.454Z
+  lapsed-3h-0 submitted -> expired-unobserved retired_at==now: 2026-09-29T01:14:19.454Z
+  lapsed-3h-1 submitted -> expired-unobserved retired_at==now: 2026-09-29T01:14:19.454Z
+  lapsed-3h-2 submitted -> expired-unobserved retired_at==now: 2026-09-29T01:14:19.454Z
+  lapsed-3h-3 submitted -> expired-unobserved retired_at==now: 2026-09-29T01:14:19.454Z
+  lapsed-3h-4 submitted -> expired-unobserved retired_at==now: 2026-09-29T01:14:19.454Z
+  lapsed-reserved reserved -> expired-unobserved retired_at==now: 2026-09-29T01:14:19.454Z
+still active in candidate: [('live-other-transport', 'submitted'), ('live-quiet', 'submitted'), ('recent-lapsed', 'submitted')]
+presence rows for 31h sessions (base): []
+second prune (+5s): wake rows identical: True | all tables identical: True
+prune at retired+1h+1s: wake rows 3 states ['expired-unobserved']
+messages rows after +1h: 15 queued bodies for the 13 sessions still present: 9
+messages removed by the +1h prune (candidate): {'98e4f991-71fc-4a83-9610-fef8660d25a9': ('reviewer', '2026-09-30T00:24:19.455Z', '2026-09-29T00:54:19.454Z'), '27568d66-08e4-46e7-bdc0-e1a03156123c': ('reviewer', '2026-09-30T00:26:19.455Z', '2026-09-29T00:54:19.454Z'), '264ccb3d-f9f2-464a-8c8e-18139a6fe466': ('reviewer', '2026-09-30T00:28:19.455Z', '2026-09-29T00:54:19.454Z')}
+base +1h messages identical to candidate +1h: True | prepared identical: True

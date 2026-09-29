@@ -1,0 +1,208 @@
+Already up to date
+Done in 464ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v275c
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs (33 tests | 10 failed) 1672ms
+   × an expired submitted latch retires for a newer live generation and a new wake is reserved 44ms
+   × an expired accepted-or-unknown latch retires for a newer live generation and a new wake is reserved 36ms
+   × an expired started latch retires for a newer live generation and a new wake is reserved 23ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: older-instance-live 16ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: generation-missing 15ms
+   × retirement and re-reservation are idempotent across prunes and reopened connections 13ms
+   × a verified late arrival of a retired nonce is recorded without claiming the current generation body 17ms
+   × F1: a retired nonce mixed with the current nonce records late only and lets the current attempt claim its body 15ms
+   × crash right after a committed retirement leaves a retired row and one later reservation 177ms
+   × two independent relay processes racing retirement create one active attempt 198ms
+ ❯ tests/session-messaging/presence-retention.test.ts (9 tests | 1 failed) 3113ms
+   × keeps retirement, presence and autoWake identical to a run that deletes no presence row 65ms
+ ❯ tests/session-messaging/session-message.test.ts (71 tests | 1 failed) 16680ms
+   ❯ TLS 1.3 broker and vendor-neutral adapter (52)
+     × blocks a verified retired Codex wake marker without claiming the current body 302ms
+
+ Test Files  3 failed (3)
+      Tests  12 failed | 101 passed (113)
+   Start at  01:16:11
+   Duration  17.59s (tests 92%, transform 5%, import 3%)
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row
+AssertionError: expected { state: 'submitted' } to deeply equal { state: 'expired-unobserved' }
+
+- Expected
++ Received
+
+  {
+-   "state": "expired-unobserved",
++   "state": "submitted",
+  }
+
+ ❯ tests/session-messaging/presence-retention.test.ts:217:97
+    215|   expect(a.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid"…
+    216|   expect(a.database.prepare("SELECT * FROM messages ORDER BY rowid").a…
+    217|   expect(a.database.prepare("SELECT state FROM wake_nonces WHERE sessi…
+       |                                                                                                 ^
+    218|   for (const sessionId of ["reborn", "split", "recent", "live"]) {
+    219|     expect(withoutCheckedAt(a.listPresence(now, [target(sessionId)])[0…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > blocks a verified retired Codex wake marker without claiming the current body
+AssertionError: expected { state: 'submitted' } to deeply equal { state: 'expired-unobserved' }
+
+- Expected
++ Received
+
+  {
+-   "state": "expired-unobserved",
++   "state": "submitted",
+  }
+
+ ❯ tests/session-messaging/session-message.test.ts:1253:100
+    1251|         store.recordManagedWakeOutcome(started.attempt!, "submitted", …
+    1252|         presence("new-instance", Date.now());
+    1253|         expect(store.database.prepare("SELECT state FROM wake_nonces W…
+       |                                                                                                    ^
+    1254|       } finally { store.close(); }
+    1255|       const input = { hook_event_name: "UserPromptSubmit", session_id:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired submitted latch retires for a newer live generation and a new wake is reserved
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired accepted-or-unknown latch retires for a newer live generation and a new wake is reserved
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired started latch retires for a newer live generation and a new wake is reserved
+AssertionError: Expected values to be strictly equal:
+
+false !== true
+
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:88:10
+     86|   keepAlive(f.store, 'instance-2', 'relay-2', f.retireAt);
+     87|   const next = f.store.reserveManagedWake(request('instance-2', 'relay…
+     88|   assert.equal(next.dispatch, true);
+       |          ^
+     89|   assert.notEqual(next.attempt.nonce, old.nonce); assert.notEqual(next…
+     90|   const retired = attemptRow(f.store, old);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: older-instance-live
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: generation-missing
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'submitted'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "submitted"
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:165:10
+    163|   keep(f.retireAt); f.store.prune(f.retireAt);
+    164|   const retired = attemptRow(f.store, old);
+    165|   assert.equal(retired.state, 'expired-unobserved'); assert.equal(reti…
+       |          ^
+    166|   assert.equal(retired.observed_at, null); assert.equal(retired.consum…
+    167|   assert.deepEqual(without(retired, ['state', 'retired_at']), without(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > retirement and re-reservation are idempotent across prunes and reopened connections
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'submitted'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "submitted"
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:221:10
+    219|   f.store.prune(f.retireAt);
+    220|   const retired = attemptRow(f.store, old);
+    221|   assert.equal(retired.state, 'expired-unobserved');
+       |          ^
+    222|   const peer = new SessionMessageStore(f.database); resources.at(-1).s…
+    223|   peer.prune(f.retireAt + 5);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > a verified late arrival of a retired nonce is recorded without claiming the current generation body
+TypeError: Cannot read properties of null (reading 'nonce')
+ ❯ SessionMessageStore.startManagedWake mcp-server/src/session-message-store.ts:948:34
+    946|       const row = this.database.prepare(`SELECT * FROM wake_nonces WHE…
+    947|         AND state = 'reserved' AND instance_id = ? AND birth_generatio…
+    948|         .get(nonceDigest(attempt.nonce), attempt.host, attempt.session…
+       |                                  ^
+    949|           attempt.transport, attempt.relayId, attempt.attemptId, attem…
+    950|       if (!row || !this.wakeBindingCurrent(attempt, attempt.generation…
+ ❯ tests/session-messaging/wake-liveness.test.mjs:236:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > F1: a retired nonce mixed with the current nonce records late only and lets the current attempt claim its body
+TypeError: Cannot read properties of null (reading 'nonce')
+ ❯ SessionMessageStore.startManagedWake mcp-server/src/session-message-store.ts:948:34
+    946|       const row = this.database.prepare(`SELECT * FROM wake_nonces WHE…
+    947|         AND state = 'reserved' AND instance_id = ? AND birth_generatio…
+    948|         .get(nonceDigest(attempt.nonce), attempt.host, attempt.session…
+       |                                  ^
+    949|           attempt.transport, attempt.relayId, attempt.attemptId, attem…
+    950|       if (!row || !this.wakeBindingCurrent(attempt, attempt.generation…
+ ❯ tests/session-messaging/wake-liveness.test.mjs:256:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > crash right after a committed retirement leaves a retired row and one later reservation
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'submitted'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "submitted"
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:500:10
+    498|   const [code] = await p.exit; assert.equal(code, 21, p.stderr());
+    499|   const retired = attemptRow(f.store, old);
+    500|   assert.equal(retired.state, 'expired-unobserved'); assert.equal(reti…
+       |          ^
+    501|   assert.deepEqual(without(retired, ['state', 'retired_at']), without(…
+    502|   f.store.prune(f.retireAt + 1); assert.deepEqual(attemptRow(f.store, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > two independent relay processes racing retirement create one active attempt
+AssertionError: The expression evaluated to a falsy value:
+
+  ok(dispatched.length >= 1)
+
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:529:10
+    527|   const results = await Promise.all(raced.map(p => result(p, { kind: '…
+    528|   const dispatched = results.map(item => item.result).filter(item => i…
+    529|   assert.ok(dispatched.length >= 1);
+       |          ^
+    530|   assert.equal(new Set(dispatched.map(item => item.attempt.attemptId))…
+    531|   assert.equal(attemptRow(f.store, old).state, 'expired-unobserved');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+

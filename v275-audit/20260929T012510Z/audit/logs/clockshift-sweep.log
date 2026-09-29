@@ -1,0 +1,79 @@
+=== 0c8b52d9 T-1 hook test shift=25000
+Already up to date
+Done in 388ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v275base
+
+ ❯ tests/session-messaging/session-message.test.ts (71 tests | 1 failed | 70 skipped) 405ms
+   ❯ TLS 1.3 broker and vendor-neutral adapter (52)
+     × blocks only verified empty Codex wake prompts in the packaged hook 403ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > blocks only verified empty Codex wake prompts in the packaged hook
+AssertionError: expected {} to match object { decision: 'block' }
+
+- Expected
++ Received
+
+- {
+-   "decision": "block",
+- }
++ {}
+
+ ❯ tests/session-messaging/session-message.test.ts:1204:24
+    1202|       const output = await invoke();
+    1203|       if (["submitted", "unknown", "duplicate"].includes(scenario)) {
+    1204|         expect(output).toMatchObject({ decision: "block" });
+       |                        ^
+    1205|         if (scenario === "duplicate") expect(await invoke()).toEqual({…
+    1206|       } else if (scenario === "idle") {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 70 skipped (71)
+   Start at  01:21:10
+   Duration  1.58s (transform 59%, tests 28%, import 13%)
+
+rc=1
+=== 3501e7c5 suite shift=25000 (session-messaging + session-board)
+Already up to date
+Done in 362ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-verify
+
+
+ Test Files  12 passed | 1 skipped (13)
+      Tests  314 passed | 4 skipped (318)
+   Start at  01:21:13
+   Duration  21.04s (tests 96%, transform 2%, import 2%)
+
+rc=0
+=== 3501e7c5 previous-broker v2.7.4 shift=25000
+Already up to date
+Done in 425ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-verify
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  01:21:35
+   Duration  2.56s (tests 92%, transform 7%, import 1%)
+
+rc=0
+=== 3501e7c5 previous-broker v2.7.3 shift=25000
+Already up to date
+Done in 436ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-verify
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  01:21:39
+   Duration  2.69s (tests 87%, transform 11%, import 1%)
+
+rc=0

@@ -1,0 +1,85 @@
+=== previous-broker v2.7.4
+Already up to date
+Done in 403ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-verify
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 1261ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 566ms
+ ✓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker 225ms
+ ✓ tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire 229ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  01:19:41
+   Duration  2.87s (tests 83%, transform 16%, import 2%)
+
+rc=0
+=== previous-broker v2.7.3
+Already up to date
+Done in 523ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-verify
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 1359ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 545ms
+ ✓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker 260ms
+ ✓ tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire 244ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  01:19:45
+   Duration  2.76s (tests 91%, transform 7%, import 2%)
+
+rc=0
+=== previous-broker v2.7.2
+Already up to date
+Done in 444ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-verify
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 1378ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 609ms
+ ✓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker 258ms
+ ✓ tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire 207ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  01:19:49
+   Duration  2.77s (tests 92%, transform 6%, import 1%)
+
+rc=0
+=== previous-broker v2.7.1
+Already up to date
+Done in 487ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-verify
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 1300ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 538ms
+ ✓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker 258ms
+ ✓ tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire 218ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  01:19:54
+   Duration  2.63s (tests 91%, transform 7%, import 1%)
+
+rc=0
+=== previous-broker v2.2.6
+Already up to date
+Done in 439ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-verify
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 1300ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 455ms
+ ✓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker 234ms
+ ✓ tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire 213ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  01:19:58
+   Duration  2.53s (tests 91%, transform 7%, import 2%)
+
+rc=0

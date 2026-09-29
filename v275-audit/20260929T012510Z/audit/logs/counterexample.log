@@ -1,0 +1,3 @@
+candidate: {"latest":"B","latestState":"ended","relayTickA":{"alive":false,"count":0},"wakeAfterPrune":"expired-unobserved","newWakeForA":false,"autoWake":"presence-not-online"}
+A6-oldest-row mutant: {"latest":"B","latestState":"ended","relayTickA":{"alive":false,"count":0},"wakeAfterPrune":"submitted","newWakeForA":false,"autoWake":"presence-not-online"}
+base 0c8b52d9: {"latest":"B","latestState":"ended","relayTickA":{"alive":false,"count":0},"wakeAfterPrune":"submitted","newWakeForA":false,"autoWake":"presence-not-online"}

@@ -1,0 +1,22 @@
+// Audit-only: the writer's counterexample. Wake on A (older, kept live); B born later, then ended.
+import { SessionMessageStore, WAKE_TTL_MS, WAKE_RETIRE_GRACE_MS } from "../../mcp-server/src/session-message-store.js";
+const caps = { supportedInjection: ["peer-wake", "tool-boundary"] as Array<"peer-wake" | "tool-boundary">, idleWake: "user-message" as const };
+const store = new SessionMessageStore(":memory:");
+const target = { host: "codex", sessionId: "counter" };
+const T = Date.now() - 5 * 3600_000;
+store.startPresence({ ...target, instanceId: "A", transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false, deliveryCapabilities: caps }, T);
+store.acquireRelay({ ...target, transport: "codex-queue", relayId: "relay-A", pid: 1, parentPid: 1 }, T);
+store.send({ sender: { host: "portable", sessionId: "s" }, target, messageId: "body-counter-message", body: "b", ttlSeconds: 86400 }, T);
+const r = store.reserveManagedWake({ ...target, nonce: "counter-nonce-abcdefghijklmnopq", instanceId: "A", transport: "codex-queue", relayId: "relay-A" }, T);
+store.recordManagedWakeOutcome(store.startManagedWake(r.attempt!, T + 1).attempt!, "submitted", T + 2);
+store.startPresence({ ...target, instanceId: "B", transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false, deliveryCapabilities: caps }, T + 1000);
+store.endPresence(target, "session-end", "B", T + 2000);
+const now = T + WAKE_TTL_MS + WAKE_RETIRE_GRACE_MS + 60_000;
+store.database.prepare("UPDATE session_presence SET lease_until = ? WHERE instance_id = 'A'").run(new Date(now + 60_000).toISOString());
+store.database.prepare("UPDATE relay_leases SET lease_until = ?").run(new Date(now + 60_000).toISOString());
+const tick = store.relayTick({ ...target, transport: "codex-queue", relayId: "relay-A", instanceId: "A", includePending: true }, now);
+store.pendingCount({ host: "codex", sessionId: "other" }, now);
+const state = (store.database.prepare("SELECT state FROM wake_nonces").get() as { state: string }).state;
+const again = store.reserveManagedWake({ ...target, nonce: "counter-nonce2-abcdefghijklmnop", instanceId: "A", transport: "codex-queue", relayId: "relay-A" }, now);
+console.log(JSON.stringify({ latest: store.presence(target, now).instanceId, latestState: store.presence(target, now).state, relayTickA: tick, wakeAfterPrune: state, newWakeForA: again.dispatch, autoWake: store.autoWakeOutlook(target, now).reason }));
+store.close();

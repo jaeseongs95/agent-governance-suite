@@ -1,0 +1,2 @@
+ags-v275base: [{"session_id":"legacy","state":"legacy","instance_id":null,"retired":0},{"session_id":"null-live","state":"unknown","instance_id":null,"retired":0},{"session_id":"null-none","state":"submitted","instance_id":null,"retired":0}]
+ags-v275c: [{"session_id":"legacy","state":"legacy","instance_id":null,"retired":0},{"session_id":"null-live","state":"expired-unobserved","instance_id":null,"retired":1},{"session_id":"null-none","state":"expired-unobserved","instance_id":null,"retired":1}]

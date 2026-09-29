@@ -1,0 +1,59 @@
+Already up to date
+Done in 436ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v275c
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs (33 tests | 2 failed) 1597ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: purged 32ms
+   × G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule 32ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 111 passed (113)
+   Start at  01:17:06
+   Duration  17.72s (tests 93%, transform 4%, import 3%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: purged
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'submitted'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "submitted"
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:165:10
+    163|   keep(f.retireAt); f.store.prune(f.retireAt);
+    164|   const retired = attemptRow(f.store, old);
+    165|   assert.equal(retired.state, 'expired-unobserved'); assert.equal(reti…
+       |          ^
+    166|   assert.equal(retired.observed_at, null); assert.equal(retired.consum…
+    167|   assert.deepEqual(without(retired, ['state', 'retired_at']), without(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'unknown'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "unknown"
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:438:10
+    436|   // A migrated row whose birth has no live presence row retires on th…
+    437|   const late = store.database.prepare("SELECT * FROM wake_nonces WHERE…
+    438|   assert.equal(late.state, 'expired-unobserved'); assert.equal(late.re…
+       |          ^
+    439|   assert.deepEqual(without(late, ['state', 'retired_at']), without({ .…
+    440|   const reopened = new SessionMessageStore(m.database); m.entry.stores…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
