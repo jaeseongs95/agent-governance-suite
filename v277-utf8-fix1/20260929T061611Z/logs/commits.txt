@@ -1,0 +1,1 @@
+00b16e845ec02a94d9d6be7877f62987687e80c7 e36595c3b9caaaeed89f3bf30b94d4fa0573e36c docs: correct the hook path exposure in the 2.7.7 notes
