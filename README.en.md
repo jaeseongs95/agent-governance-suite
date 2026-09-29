@@ -14,7 +14,7 @@ Use it to track change scope and verification while building a feature, or to co
 | Coordinating sessions | A way to see each session's work and contact it | A shared board and local PEER messages with processing acknowledgments |
 
 <!-- release-version:start -->
-The current public release is `v2.7.5` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+The current public release is `v2.7.6` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
 
 - [Installation](#installation)
@@ -44,7 +44,7 @@ Run in a terminal:
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.5
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.6
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
