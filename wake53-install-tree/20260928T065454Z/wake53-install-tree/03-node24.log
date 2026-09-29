@@ -1,0 +1,12 @@
+++ curl -sSfO https://nodejs.org/dist/latest-v24.x/SHASUMS256.txt
++++ grep -o 'node-v24[^ ]*-linux-x64.tar.xz' SHASUMS256.txt
+++ F=node-v24.21.0-linux-x64.tar.xz
+++ curl -sSfO https://nodejs.org/dist/latest-v24.x/node-v24.21.0-linux-x64.tar.xz
+++ grep ' node-v24.21.0-linux-x64.tar.xz$' SHASUMS256.txt
+++ sha256sum -c -
+node-v24.21.0-linux-x64.tar.xz: OK
+++ tar xf node-v24.21.0-linux-x64.tar.xz
+++ ln -sfn /tmp/node-v24.21.0-linux-x64 /tmp/node24
+++ /tmp/node24/bin/node -v
+v24.21.0
+EXIT=0

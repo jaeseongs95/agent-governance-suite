@@ -1,0 +1,2 @@
+ls: cannot access '/tmp/install/claude/scripts': No such file or directory
+NOT_RUN: claude install tree has no scripts/check-runtime.mjs

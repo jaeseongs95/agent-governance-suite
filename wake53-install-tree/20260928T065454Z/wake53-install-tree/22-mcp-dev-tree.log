@@ -1,0 +1,10 @@
+{"cwd":"/home/user/agent-governance-suite","command":"node","args":["mcp-server/dist/server.mjs"],"entry":"/home/user/agent-governance-suite/mcp-server/dist/server.mjs","entrySha256":"95ccc7253a60bbcb6368dfe9484b19a7a4f962e3028df52c668d10ed3a835de3"}
+INITIALIZE {"protocolVersion":"2025-06-18","serverInfo":{"name":"agent-governance-suite","version":"2.7.1"},"capabilities":{"tools":{}},"hasInstructions":true,"instructionsLen":339}
+TOOLS_COUNT 28
+TOOLS ["abort_workflow","acknowledge_session_messages","check_for_updates","checkpoint_context","claim_workflow_attempt","execute_state_cleanup","finalize_workflow","get_convergence_status","get_session_message_status","get_trust_capabilities","get_workflow_status","inspect_context","list_session_status","load_context","lookup_korean_prose_terms","open_convergence_root","plan_workflow","prepare_session_message","prepare_state_cleanup","purge_direct_context","record_stage_result","resolve_convergence_gate","send_session_message","start_guarded_workflow","start_workflow","suppress_context_restore","update_session_status","validate_collaboration_decision"]
+PLAN_WORKFLOW_TOP_ONEOF true
+SERVER_EXIT {"code":0,"signal":null}
+SERVER_STDERR_BEGIN
+
+SERVER_STDERR_END
+PROBE_EXIT=0

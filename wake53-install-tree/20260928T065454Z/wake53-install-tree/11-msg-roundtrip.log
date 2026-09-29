@@ -1,0 +1,24 @@
+HOOK codex SessionStart  exit=0 stdout= stderr=
+HOOK claude SessionStart  exit=0 stdout= stderr=
+HOOK codex PreToolUse mcp__agent_governance_suite__prepare_session_message exit=0 stdout={"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":{"schemaVersion":"1.0.0","targetHost":"claude-code","targetSessionId":"claude-sess-B","body":"install-tree probe: hello from codex tree","_sessionBinding":{"host":"codex","sessionId":"codex-sess-A"}}}} stderr=
+CALL codex prepare_session_message args={"schemaVersion":"1.0.0","targetHost":"claude-code","targetSessionId":"claude-sess-B","body":"install-tree probe: hello from codex tree","_sessionBinding":{"host":"codex","sessionId":"codex-sess-A"}}
+  => {"schemaVersion":"1.0.0","ok":true,"data":{"messageId":"455d560e-e6fd-413e-aafc-1c2e66d9f24d","preparedAt":"2026-09-28T06:51:57.377Z","expiresAt":"2026-09-28T07:01:57.377Z"},"error":null}
+HOOK codex PreToolUse mcp__agent_governance_suite__send_session_message exit=0 stdout={"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":{"schemaVersion":"1.0.0","messageId":"455d560e-e6fd-413e-aafc-1c2e66d9f24d","_sessionBinding":{"host":"codex","sessionId":"codex-sess-A"}}}} stderr=
+CALL codex send_session_message args={"schemaVersion":"1.0.0","messageId":"455d560e-e6fd-413e-aafc-1c2e66d9f24d","_sessionBinding":{"host":"codex","sessionId":"codex-sess-A"}}
+  => {"schemaVersion":"1.0.0","ok":true,"data":{"messageId":"455d560e-e6fd-413e-aafc-1c2e66d9f24d","createdAt":"2026-09-28T06:51:57.500Z","expiresAt":"2026-09-28T07:51:57.500Z","duplicate":false},"error":null}
+HOOK codex PreToolUse mcp__agent_governance_suite__get_session_message_status exit=0 stdout={"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":{"schemaVersion":"1.0.0","messageId":"455d560e-e6fd-413e-aafc-1c2e66d9f24d","_sessionBinding":{"host":"codex","sessionId":"codex-sess-A"}}}} stderr=
+CALL codex get_session_message_status args={"schemaVersion":"1.0.0","messageId":"455d560e-e6fd-413e-aafc-1c2e66d9f24d","_sessionBinding":{"host":"codex","sessionId":"codex-sess-A"}}
+  => {"schemaVersion":"1.0.0","ok":true,"data":{"status":{"messageId":"455d560e-e6fd-413e-aafc-1c2e66d9f24d","target":{"host":"claude-code","sessionId":"claude-sess-B"},"createdAt":"2026-09-28T06:51:57.500Z","expiresAt":"2026-09-28T07:51:57.500Z","claimedAt":null,"acknowledgedAt":null,"deliveryAttempts":0,"firstDeliveredAt":null,"state":"queued","wake":null}},"error":null}
+HOOK claude UserPromptSubmit  exit=0 stdout= stderr=
+DELIVERED_VIA_USERPROMPTSUBMIT false
+HOOK claude PreToolUse mcp__plugin_agent-governance-suite_agent-governance-suite__acknowledge_session_messages exit=0 stdout={"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":{"schemaVersion":"1.0.0","messageIds":["455d560e-e6fd-413e-aafc-1c2e66d9f24d"],"_sessionBinding":{"host":"claude-code","sessionId":"claude-sess-B"}}}} stderr=
+CALL claude acknowledge_session_messages args={"schemaVersion":"1.0.0","messageIds":["455d560e-e6fd-413e-aafc-1c2e66d9f24d"],"_sessionBinding":{"host":"claude-code","sessionId":"claude-sess-B"}}
+  => {"schemaVersion":"1.0.0","ok":true,"data":{"acknowledged":1},"error":null}
+HOOK codex PreToolUse mcp__agent_governance_suite__get_session_message_status exit=0 stdout={"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":{"schemaVersion":"1.0.0","messageId":"455d560e-e6fd-413e-aafc-1c2e66d9f24d","_sessionBinding":{"host":"codex","sessionId":"codex-sess-A"}}}} stderr=
+CALL codex get_session_message_status args={"schemaVersion":"1.0.0","messageId":"455d560e-e6fd-413e-aafc-1c2e66d9f24d","_sessionBinding":{"host":"codex","sessionId":"codex-sess-A"}}
+  => {"schemaVersion":"1.0.0","ok":true,"data":{"status":{"messageId":"455d560e-e6fd-413e-aafc-1c2e66d9f24d","target":{"host":"claude-code","sessionId":"claude-sess-B"},"createdAt":"2026-09-28T06:51:57.500Z","expiresAt":"2026-09-28T07:51:57.500Z","claimedAt":null,"acknowledgedAt":"2026-09-28T06:51:57.841Z","deliveryAttempts":0,"firstDeliveredAt":null,"state":"acknowledged","wake":null}},"error":null}
+FINAL_STATE acknowledged
+SERVER_STDERR codex: 
+SERVER_STDERR claude: 
+ROUNDTRIP_VERDICT FAIL
+EXIT=1

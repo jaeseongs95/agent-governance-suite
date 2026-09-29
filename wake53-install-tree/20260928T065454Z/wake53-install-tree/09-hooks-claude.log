@@ -1,0 +1,146 @@
+--- SessionStart[0] matcher=^(startup|resume|clear|compact)$ sample=startup
+$ node /tmp/install/claude/hooks/session-message-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- SessionStart[1] matcher=^(startup|resume|clear|compact)$ sample=startup
+$ node /tmp/install/claude/hooks/continuity-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- SessionStart[2] matcher=null sample=startup
+$ node /tmp/install/claude/hooks/host-attestation-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- SessionEnd[0] matcher=null sample=null
+$ node /tmp/install/claude/hooks/session-message-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- PreCompact[0] matcher=^(manual|auto)$ sample=auto
+$ node /tmp/install/claude/hooks/continuity-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- PostCompact[0] matcher=^(manual|auto)$ sample=auto
+$ node /tmp/install/claude/hooks/continuity-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- PostModelSwitch[0] matcher=null sample=null
+$ node /tmp/install/claude/hooks/host-attestation-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- PreToolUse[0] matcher=^mcp__plugin_agent-governance-suite_agent-governance-suite__(prepare_session_message|send_session_message|acknowledge_session_messages|get_session_message_status|validate_collaboration_decision)$ sample=mcp__plugin_agent-governance-suite_agent-governance-suite__prepare_session_message
+$ node /tmp/install/claude/hooks/session-message-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":{"command":"echo hi","_sessionBinding":{"host":"claude-code","sessionId":"claude-probe-session-0001"}}}}
+STDERR:
+
+--- PreToolUse[1] matcher=^mcp__plugin_agent-governance-suite_agent-governance-suite__(open_convergence_root|checkpoint_context|inspect_context|load_context|suppress_context_restore|purge_direct_context)$ sample=mcp__plugin_agent-governance-suite_agent-governance-suite__open_convergence_root
+$ node /tmp/install/claude/hooks/continuity-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":{"command":"echo hi","_continuityBinding":"eyJjIjoiaG1hYy1zaGEyNTY6NTlmNjYzMzNkNzg2YTI4ZTc4ODA1MmNmZmZiYjQxZmQyODczZTk2ODA3MDEzOWQ4YmZhM2UxZDg3YzMxZWUxOCIsImQiOiJzaGEyNTY6MWVhYjFlZjE4YmIxMDlhZTk5ZjQ4YmZlN2VmYWJhOWRkZTA4ZTI3YmRiNDY0MzgyMTRiZDZjNjVlYjNmZjJmZiIsImUiOjEsInQiOiJvcGVuX2NvbnZlcmdlbmNlX3Jvb3QiLCJ2IjoxLCJ4IjoxNzkwNTc4NTczfQ.wcTI2bfn9Pbrx5hk9y3vKjiaVkpCWKCc7R93ULCD6Bw"}}}
+STDERR:
+
+--- PreToolUse[2] matcher=^mcp__plugin_agent-governance-suite_agent-governance-suite__(plan_workflow|record_stage_result)$ sample=mcp__plugin_agent-governance-suite_agent-governance-suite__plan_workflow
+$ node /tmp/install/claude/hooks/host-attestation-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- PreToolUse[3] matcher=^Bash$ sample=Bash
+$ node /tmp/install/claude/hooks/skill-trigger-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- PreToolUse[4] matcher=^mcp__plugin_agent-governance-suite_agent-governance-suite__(update_session_status|list_session_status)$ sample=mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status
+$ node /tmp/install/claude/hooks/session-board-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":{"schemaVersion":"1.0.0","summary":"probe","_sessionBinding":{"host":"claude-code","sessionId":"claude-probe-session-0001"}}}}
+STDERR:
+
+--- PreToolUse[5] matcher=^(Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell|Agent|Task)$ sample=Bash
+$ node /tmp/install/claude/hooks/session-board-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- UserPromptSubmit[0] matcher=null sample=null
+$ node /tmp/install/claude/hooks/session-message-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- UserPromptSubmit[1] matcher=null sample=null
+$ node /tmp/install/claude/hooks/skill-trigger-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- UserPromptSubmit[2] matcher=null sample=null
+$ node /tmp/install/claude/hooks/session-board-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- PostToolUse[0] matcher=null sample=mcp__plugin_agent-governance-suite_agent-governance-suite__list_session_status
+$ node /tmp/install/claude/hooks/session-message-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- Stop[0] matcher=null sample=null
+$ node /tmp/install/claude/hooks/session-message-hook.mjs
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+=== SUMMARY
+SessionStart[0] session-message-hook.mjs exit=0 stdout=0B stderr=0B
+SessionStart[1] continuity-hook.mjs exit=0 stdout=0B stderr=0B
+SessionStart[2] host-attestation-hook.mjs exit=0 stdout=0B stderr=0B
+SessionEnd[0] session-message-hook.mjs exit=0 stdout=0B stderr=0B
+PreCompact[0] continuity-hook.mjs exit=0 stdout=0B stderr=0B
+PostCompact[0] continuity-hook.mjs exit=0 stdout=0B stderr=0B
+PostModelSwitch[0] host-attestation-hook.mjs exit=0 stdout=0B stderr=0B
+PreToolUse[0] session-message-hook.mjs exit=0 stdout=200B stderr=0B
+PreToolUse[1] continuity-hook.mjs exit=0 stdout=477B stderr=0B
+PreToolUse[2] host-attestation-hook.mjs exit=0 stdout=0B stderr=0B
+PreToolUse[3] skill-trigger-hook.mjs exit=0 stdout=0B stderr=0B
+PreToolUse[4] session-board-hook.mjs exit=0 stdout=222B stderr=0B
+PreToolUse[5] session-board-hook.mjs exit=0 stdout=0B stderr=0B
+UserPromptSubmit[0] session-message-hook.mjs exit=0 stdout=0B stderr=0B
+UserPromptSubmit[1] skill-trigger-hook.mjs exit=0 stdout=0B stderr=0B
+UserPromptSubmit[2] session-board-hook.mjs exit=0 stdout=0B stderr=0B
+PostToolUse[0] session-message-hook.mjs exit=0 stdout=0B stderr=0B
+Stop[0] session-message-hook.mjs exit=0 stdout=0B stderr=0B
+EXIT=0

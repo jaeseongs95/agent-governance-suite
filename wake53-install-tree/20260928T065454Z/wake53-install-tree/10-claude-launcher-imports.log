@@ -1,0 +1,8 @@
+session-board-hook.mjs:8:  const { runSessionBoardHook } = await import("../mcp-server/dist/session-board-hook.mjs");
+session-message-hook.mjs:6:  const { runSessionMessageHook } = await import("../mcp-server/dist/session-message-hook.mjs");
+== session-board-hook.mjs -> ../mcp-server/dist/session-board-hook.mjs
+OK exports: GATE_REASON,handleSessionBoardHook,runSessionBoardHook
+EXIT=0
+== session-message-hook.mjs -> ../mcp-server/dist/session-message-hook.mjs
+OK exports: handleSessionMessageHook,runSessionMessageHook,sessionMessageEnvelope,sessionMessageTransport
+EXIT=0

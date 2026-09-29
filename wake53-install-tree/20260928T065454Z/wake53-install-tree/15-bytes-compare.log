@@ -1,0 +1,35 @@
+sha256sum: '/tmp/install/codex/"tests/instruction-scope-resolver/fixtures/unicode/\355\225\234\352\270\200/AGENTS.md"': No such file or directory
+fatal: path '"tests/instruction-scope-resolver/fixtures/unicode/\355\225\234\352\270\200/AGENTS.md"' does not exist in '53eff30a2984d41fc749d38dd2062966017684fa'
+MISMATCH "tests/instruction-scope-resolver/fixtures/unicode/\355\225\234\352\270\200/AGENTS.md"  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+TREE /tmp/install/codex prefix='' match=1188 mismatch=1
+TREE /tmp/install/claude prefix='claude-plugin/' match=404 mismatch=0
+== executed entry files (sha256 install tree vs git blob)
+codex  mcp-server/dist/server.mjs 95ccc7253a60bbcb6368dfe9484b19a7a4f962e3028df52c668d10ed3a835de3 git=95ccc7253a60bbcb6368dfe9484b19a7a4f962e3028df52c668d10ed3a835de3
+claude mcp-server/dist/server.mjs 95ccc7253a60bbcb6368dfe9484b19a7a4f962e3028df52c668d10ed3a835de3 git=95ccc7253a60bbcb6368dfe9484b19a7a4f962e3028df52c668d10ed3a835de3
+codex  mcp-server/dist/session-message-hook.mjs 11aa00b2af5b40f9766811d32e59794d753045148b01de07fc2b274bcde67307 git=11aa00b2af5b40f9766811d32e59794d753045148b01de07fc2b274bcde67307
+claude mcp-server/dist/session-message-hook.mjs 11aa00b2af5b40f9766811d32e59794d753045148b01de07fc2b274bcde67307 git=11aa00b2af5b40f9766811d32e59794d753045148b01de07fc2b274bcde67307
+codex  mcp-server/dist/continuity-hook.mjs 6b386c368acc2a54b832addb647494e517dec0d48e36b310f1ff0381eaa52f70 git=6b386c368acc2a54b832addb647494e517dec0d48e36b310f1ff0381eaa52f70
+claude mcp-server/dist/continuity-hook.mjs 6b386c368acc2a54b832addb647494e517dec0d48e36b310f1ff0381eaa52f70 git=6b386c368acc2a54b832addb647494e517dec0d48e36b310f1ff0381eaa52f70
+codex  mcp-server/dist/session-board-hook.mjs 597da92a6e9db853dcdf7cd0ef149561f6a36d5d6ed98be6c8f935204878b549 git=597da92a6e9db853dcdf7cd0ef149561f6a36d5d6ed98be6c8f935204878b549
+claude mcp-server/dist/session-board-hook.mjs 597da92a6e9db853dcdf7cd0ef149561f6a36d5d6ed98be6c8f935204878b549 git=597da92a6e9db853dcdf7cd0ef149561f6a36d5d6ed98be6c8f935204878b549
+codex  mcp-server/dist/host-attestation-hook.mjs fb9dcfbc87a9e1d1ed6b689a59d47343f773ffdf6815a7e4f4ed2ae4dfcfe9c4 git=fb9dcfbc87a9e1d1ed6b689a59d47343f773ffdf6815a7e4f4ed2ae4dfcfe9c4
+claude mcp-server/dist/host-attestation-hook.mjs fb9dcfbc87a9e1d1ed6b689a59d47343f773ffdf6815a7e4f4ed2ae4dfcfe9c4 git=fb9dcfbc87a9e1d1ed6b689a59d47343f773ffdf6815a7e4f4ed2ae4dfcfe9c4
+codex  mcp-server/dist/session-message-broker.mjs 9ec2e6145af337f390723a26e1e5f02ee8e454122bec0dff087c77004fc334e3 git=9ec2e6145af337f390723a26e1e5f02ee8e454122bec0dff087c77004fc334e3
+claude mcp-server/dist/session-message-broker.mjs 9ec2e6145af337f390723a26e1e5f02ee8e454122bec0dff087c77004fc334e3 git=9ec2e6145af337f390723a26e1e5f02ee8e454122bec0dff087c77004fc334e3
+codex  mcp-server/dist/session-message-relay.mjs c3c03c2772d4b6c02d693103816c16c3f456daed92039ebb2f62edf706c0afe0 git=c3c03c2772d4b6c02d693103816c16c3f456daed92039ebb2f62edf706c0afe0
+claude mcp-server/dist/session-message-relay.mjs c3c03c2772d4b6c02d693103816c16c3f456daed92039ebb2f62edf706c0afe0 git=c3c03c2772d4b6c02d693103816c16c3f456daed92039ebb2f62edf706c0afe0
+codex  mcp-server/dist/session-message-cli.mjs c6ca220572f3cac882f32f343d4b552c6b5279ada07f89966cce0e36dbd31905 git=c6ca220572f3cac882f32f343d4b552c6b5279ada07f89966cce0e36dbd31905
+claude mcp-server/dist/session-message-cli.mjs c6ca220572f3cac882f32f343d4b552c6b5279ada07f89966cce0e36dbd31905 git=c6ca220572f3cac882f32f343d4b552c6b5279ada07f89966cce0e36dbd31905
+claude hooks/session-message-hook.mjs 7c9fe1a241a1c9413d1ecc4de0c4a6be03bff33266559630857f41ce770b59b0 git=7c9fe1a241a1c9413d1ecc4de0c4a6be03bff33266559630857f41ce770b59b0
+claude hooks/continuity-hook.mjs 66cdba408b0555349589f7356a67f32833fa318e8565bc0fb576db96e1d2335b git=66cdba408b0555349589f7356a67f32833fa318e8565bc0fb576db96e1d2335b
+claude hooks/session-board-hook.mjs dc8516fb287dbd17436af8d53d9d4703809aaf64d9d6624ab0b3ed7193694697 git=dc8516fb287dbd17436af8d53d9d4703809aaf64d9d6624ab0b3ed7193694697
+claude hooks/host-attestation-hook.mjs a60ca41e0430c1568b928f18d8177cfd37e517826db6afb1d4bd29de3a6976ee git=a60ca41e0430c1568b928f18d8177cfd37e517826db6afb1d4bd29de3a6976ee
+claude hooks/skill-trigger-hook.mjs 5bad59e4809be0e3241a0a48767f8bda5f67e85a9dd23d19bfebedbb71f4f5ad git=5bad59e4809be0e3241a0a48767f8bda5f67e85a9dd23d19bfebedbb71f4f5ad
+== claude-plugin shared copies vs root originals (mcp-server/dist, runtime, contracts)
+IDENTICAL mcp-server/dist
+IDENTICAL runtime
+IDENTICAL contracts
+== running processes from install trees (entry path)
+ 1216 /tmp/node-v24.21.0-linux-x64/bin/node /tmp/install/codex/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/home-shared/.agent-governance-suite/session-messaging
+ 1387 /tmp/node-v24.21.0-linux-x64/bin/node /tmp/install/codex/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/home-shared2/.agent-governance-suite/session-messaging
+EXIT=0

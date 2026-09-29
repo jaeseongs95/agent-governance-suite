@@ -1,0 +1,61 @@
+++ rm -rf /tmp/install
+++ mkdir -p /tmp/install/codex /tmp/install/claude
+++ tar -x -C /tmp/install/codex
+++ git archive 53eff30a
+++ tar -x -C /tmp/install/claude --strip-components=1
+++ git archive 53eff30a claude-plugin
+++ set +x
+== codex
+0
+1189
+.
+..
+.agents
+.claude-plugin
+.codex-plugin
+.gitattributes
+.github
+.gitignore
+.mcp.json
+AGENTS.md
+CLAUDE.md
+CONTRIBUTING.md
+LICENSE
+README.en.md
+README.md
+SECURITY.md
+claude-overlay
+claude-plugin
+contracts
+docs
+eslint.config.js
+hooks
+mcp-server
+package.json
+pnpm-lock.yaml
+pnpm-workspace.yaml
+release
+runtime
+scripts
+skills
+tests
+tsconfig.json
+vitest.config.mjs
+== claude
+0
+404
+.
+..
+.claude-plugin
+LICENSE
+README.md
+agents
+contracts
+hooks
+mcp-server
+runtime
+skills
+ls: cannot access 'node_modules': No such file or directory
+1189
+404
+EXIT=0

@@ -1,0 +1,114 @@
+--- SessionStart[0] matcher=^(startup|resume|clear|compact)$ sample=startup
+$ node "$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs" --host-pid "$PPID"
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- SessionStart[1] matcher=^(startup|resume|clear|compact)$ sample=startup
+$ node "$PLUGIN_ROOT/mcp-server/dist/continuity-hook.mjs"
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- SessionStart[2] matcher=^(startup|resume|clear|compact)$ sample=startup
+$ node "$PLUGIN_ROOT/mcp-server/dist/session-board-hook.mjs"
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- SessionEnd[0] matcher=null sample=null
+$ node "$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs"
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- UserPromptSubmit[0] matcher=null sample=null
+$ node "$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs"
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- UserPromptSubmit[1] matcher=null sample=null
+$ node "$PLUGIN_ROOT/mcp-server/dist/session-board-hook.mjs"
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- PreCompact[0] matcher=^(manual|auto)$ sample=auto
+$ node "$PLUGIN_ROOT/mcp-server/dist/continuity-hook.mjs"
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- PostCompact[0] matcher=^(manual|auto)$ sample=auto
+$ node "$PLUGIN_ROOT/mcp-server/dist/continuity-hook.mjs"
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- PreToolUse[0] matcher=^mcp__agent[-_]governance[-_]suite__(plan_workflow|record_stage_result)$ sample=mcp__agent_governance_suite__plan_workflow
+$ node "$PLUGIN_ROOT/mcp-server/dist/host-attestation-hook.mjs" --host=codex
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+{"systemMessage":"AGS execution observation unavailable: host-session-mismatch-or-unsupported-metadata. Requires the current host session/turn/model/effort and tool call; caller settings cannot supply them.","hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":{"command":"echo hi"}}}
+STDERR:
+
+--- PreToolUse[1] matcher=^(mcp__agent[-_]governance[-_]suite__(prepare_session_message|send_session_message|acknowledge_session_messages|get_session_message_status|validate_collaboration_decision)|mcp__codex_app__wait_threads)$ sample=mcp__agent_governance_suite__prepare_session_message
+$ node "$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs"
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":{"command":"echo hi","_sessionBinding":{"host":"codex","sessionId":"codex-probe-session-0001"}}}}
+STDERR:
+
+--- PreToolUse[2] matcher=^mcp__agent[-_]governance[-_]suite__(open_convergence_root|checkpoint_context|inspect_context|load_context|suppress_context_restore|purge_direct_context)$ sample=mcp__agent_governance_suite__open_convergence_root
+$ node "$PLUGIN_ROOT/mcp-server/dist/continuity-hook.mjs"
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":{"command":"echo hi","_continuityBinding":"eyJjIjoiaG1hYy1zaGEyNTY6MDYwMGNiYzFjZmE3NzRlMGM1ODA4NmQ2MDYwOWUzZWUxOGYwYzk0NTY2NTAwODJhNWIzZjI3NTM2ZGRmNDUyYiIsImQiOiJzaGEyNTY6MWVhYjFlZjE4YmIxMDlhZTk5ZjQ4YmZlN2VmYWJhOWRkZTA4ZTI3YmRiNDY0MzgyMTRiZDZjNjVlYjNmZjJmZiIsImUiOjEsInQiOiJvcGVuX2NvbnZlcmdlbmNlX3Jvb3QiLCJ2IjoxLCJ4IjoxNzkwNTc4NTcyfQ.w2FtDYxAcJ4ThfSfhAy8V3QYxd0cEd2ejPLbzX7JUmU"}}}
+STDERR:
+
+--- PreToolUse[3] matcher=^mcp__agent[-_]governance[-_]suite__(update_session_status|list_session_status)$ sample=mcp__agent_governance_suite__update_session_status
+$ node "$PLUGIN_ROOT/mcp-server/dist/session-board-hook.mjs"
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":{"schemaVersion":"1.0.0","summary":"probe","_sessionBinding":{"host":"codex","sessionId":"codex-probe-session-0001"}}}}
+STDERR:
+
+--- PreToolUse[4] matcher=^(shell|local_shell|exec_command|apply_patch|Bash|Edit|Write)$ sample=Bash
+$ node "$PLUGIN_ROOT/mcp-server/dist/session-board-hook.mjs"
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+--- PostToolUse[0] matcher=null sample=mcp__agent_governance_suite__list_session_status
+$ node "$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs"
+EXIT=0 SIGNAL=null ERR=null
+STDOUT:
+
+STDERR:
+
+=== SUMMARY
+SessionStart[0] session-message-hook.mjs exit=0 stdout=0B stderr=0B
+SessionStart[1] continuity-hook.mjs exit=0 stdout=0B stderr=0B
+SessionStart[2] session-board-hook.mjs exit=0 stdout=0B stderr=0B
+SessionEnd[0] session-message-hook.mjs exit=0 stdout=0B stderr=0B
+UserPromptSubmit[0] session-message-hook.mjs exit=0 stdout=0B stderr=0B
+UserPromptSubmit[1] session-board-hook.mjs exit=0 stdout=0B stderr=0B
+PreCompact[0] continuity-hook.mjs exit=0 stdout=0B stderr=0B
+PostCompact[0] continuity-hook.mjs exit=0 stdout=0B stderr=0B
+PreToolUse[0] host-attestation-hook.mjs exit=0 stdout=326B stderr=0B
+PreToolUse[1] session-message-hook.mjs exit=0 stdout=193B stderr=0B
+PreToolUse[2] continuity-hook.mjs exit=0 stdout=477B stderr=0B
+PreToolUse[3] session-board-hook.mjs exit=0 stdout=215B stderr=0B
+PreToolUse[4] session-board-hook.mjs exit=0 stdout=0B stderr=0B
+PostToolUse[0] session-message-hook.mjs exit=0 stdout=0B stderr=0B
+EXIT=0
