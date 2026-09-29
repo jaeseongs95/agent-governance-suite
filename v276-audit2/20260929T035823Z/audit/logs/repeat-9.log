@@ -1,0 +1,30 @@
+Already up to date
+Done in 459ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276d
+
+ ✓ tests/session-messaging/presence-deadline.test.ts > ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered 10ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > does not let an answer that arrives after the deadline change the result 2ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > bounds an unresponsive broker by the same deadline and asks only once 1ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > returns every identity exactly once, in order, from a normal broker 5ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > keeps the overall deadline when the wall clock steps back during a lookup 2ms
+ ✓ tests/session-messaging/presence-batches.test.ts > keeps successful batches when the broker refuses one batch and reports only that batch as unanswered 3ms
+ ✓ tests/session-messaging/presence-batches.test.ts > never asks the broker for identities outside its identifier pattern 1ms
+ ✓ tests/session-messaging/presence-batches.test.ts > stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch 402ms
+ ✓ tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker 567ms
+ ✓ tests/session-messaging/presence-batches.test.ts > keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure 401ms
+ ✓ tests/session-messaging/presence-retention.test.ts > ends a board lookup against a slow real broker at one overall client deadline 20346ms
+ ✓ tests/session-messaging/presence-retention.test.ts > B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve 254ms
+ ✓ tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end 6ms
+ ✓ tests/session-messaging/presence-retention.test.ts > never deletes a live row, however old its birth 33ms
+ ✓ tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row 46ms
+ ✓ tests/session-messaging/presence-retention.test.ts > gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing 27ms
+ ✓ tests/session-messaging/presence-retention.test.ts > prunes presence idempotently when two processes race on one database 363ms
+ ✓ tests/session-messaging/presence-retention.test.ts > bounds list-presence: batches fit the response limit and oversized or overlong requests are refused 32ms
+ ✓ tests/session-messaging/presence-retention.test.ts > still lists every identity for an untargeted request that fits 6ms
+
+ Test Files  3 passed (3)
+      Tests  19 passed (19)
+   Start at  04:04:25
+   Duration  22.10s (tests 97%, transform 2%, import 1%)
+

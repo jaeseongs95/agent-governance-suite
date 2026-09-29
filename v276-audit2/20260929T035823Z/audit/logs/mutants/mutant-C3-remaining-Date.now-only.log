@@ -1,0 +1,572 @@
+Already up to date
+Done in 681ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276n
+
+ ❯ tests/session-messaging/presence-deadline.test.ts (5 tests | 5 failed) 90ms
+   × ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered 55ms
+   × does not let an answer that arrives after the deadline change the result 7ms
+   × bounds an unresponsive broker by the same deadline and asks only once 2ms
+   × returns every identity exactly once, in order, from a normal broker 15ms
+   × keeps the overall deadline when the wall clock steps back during a lookup 10ms
+ ❯ tests/session-messaging/presence-batches.test.ts (4 tests | 4 failed) 27ms
+   × keeps successful batches when the broker refuses one batch and reports only that batch as unanswered 16ms
+   × never asks the broker for identities outside its identifier pattern 4ms
+   × stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch 1ms
+   × keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure 3ms
+ ❯ tests/session-messaging/presence-retention.test.ts (10 tests | 3 failed) 3553ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 1169ms
+   × ends a board lookup against a slow real broker at one overall client deadline 377ms
+   × B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve 606ms
+
+ Test Files  3 failed | 1 passed (4)
+      Tests  12 failed | 22 passed (34)
+   Start at  04:00:22
+   Duration  4.94s (tests 65%, transform 24%, import 10%)
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > keeps successful batches when the broker refuses one batch and reports only that batch as unanswered
+AssertionError: expected [] to deeply equal [ 'a', 'b', 'c', 'g' ]
+
+- Expected
++ Received
+
+- [
+-   "a",
+-   "b",
+-   "c",
+-   "g",
+- ]
++ []
+
+ ❯ tests/session-messaging/presence-batches.test.ts:35:69
+     33|   const result = await new SessionMessageService().listPresence(target…
+     34|   expect(result.ok).toBe(true);
+     35|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+       |                                                                     ^
+     36|   expect(result.data!.unanswered).toEqual([target("fail"), target("e")…
+     37|   expect(request).toHaveBeenCalledTimes(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > never asks the broker for identities outside its identifier pattern
+AssertionError: expected [] to deeply equal [ { host: 'portable', …(1) }, …(2) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "host": "portable",
+-     "sessionId": "a",
+-   },
+-   {
+-     "host": "portable",
+-     "sessionId": "b",
+-   },
+-   {
+-     "host": "portable",
+-     "sessionId": "d",
+-   },
+- ]
++ []
+
+ ❯ tests/session-messaging/presence-batches.test.ts:45:17
+     43|   expect(result.ok).toBe(true);
+     44|   const asked = request.mock.calls.flatMap(([, payload]) => (payload a…
+     45|   expect(asked).toEqual([target("a"), target("b"), target("d")]);
+       |                 ^
+     46|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+     47|   expect(result.data!.unanswered).toEqual([target("has space"), target…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ tests/session-messaging/presence-batches.test.ts:60:19
+     58|   const result = await new SessionMessageService().listPresence(target…
+     59|   const elapsed = Date.now() - started;
+     60|   expect(request).toHaveBeenCalledTimes(1);
+       |                   ^
+     61|   expect(elapsed).toBeLessThan(2 * DEADLINE_MS);
+     62|   expect(result.ok).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure
+AssertionError: expected [] to deeply equal [ 'a', 'b', 'c' ]
+
+- Expected
++ Received
+
+- [
+-   "a",
+-   "b",
+-   "c",
+- ]
++ []
+
+ ❯ tests/session-messaging/presence-batches.test.ts:70:69
+     68|   const targets = ["a", "b", "c", "hang", "e", "f", "fail", "h", "i"].…
+     69|   const result = await new SessionMessageService().listPresence(target…
+     70|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+       |                                                                     ^
+     71|   expect(result.data!.unanswered).toEqual(["hang", "e", "f", "fail", "…
+     72|   expect(request).toHaveBeenCalledTimes(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered
+AssertionError: expected +0 to be 20000 // Object.is equality
+
+- Expected
++ Received
+
+- 20000
++ 0
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:56:23
+     54|   const { pending, settledAt } = await lookup(board);
+     55|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
+     56|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+     57|   const result = await pending;
+     58|   expect(result.ok).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > does not let an answer that arrives after the deadline change the result
+AssertionError: expected +0 to be 20000 // Object.is equality
+
+- Expected
++ Received
+
+- 20000
++ 0
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:75:23
+     73|   // Timers of the immediate answers each take the 1 ms minimum, so th…
+     74|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
+     75|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+     76|   const result = await pending;
+     77|   const snapshot = structuredClone(result);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > bounds an unresponsive broker by the same deadline and asks only once
+AssertionError: expected +0 to be 20000 // Object.is equality
+
+- Expected
++ Received
+
+- 20000
++ 0
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:90:23
+     88|   const { pending, settledAt } = await lookup(board);
+     89|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
+     90|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+     91|   const result = await pending;
+     92|   expect(request).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > returns every identity exactly once, in order, from a normal broker
+AssertionError: expected [] to deeply equal [ 'session-0', 'session-1', …(299) ]
+
+- Expected
++ Received
+
+- [
+-   "session-0",
+-   "session-1",
+-   "session-2",
+-   "session-3",
+-   "session-4",
+-   "session-5",
+-   "session-6",
+-   "session-7",
+-   "session-8",
+-   "session-9",
+-   "session-10",
+-   "session-11",
+-   "session-12",
+-   "session-13",
+-   "session-14",
+-   "session-15",
+-   "session-16",
+-   "session-17",
+-   "session-18",
+-   "session-19",
+-   "session-20",
+-   "session-21",
+-   "session-22",
+-   "session-23",
+-   "session-24",
+-   "session-25",
+-   "session-26",
+-   "session-27",
+-   "session-28",
+-   "session-29",
+-   "session-30",
+-   "session-31",
+-   "session-32",
+-   "session-33",
+-   "session-34",
+-   "session-35",
+-   "session-36",
+-   "session-37",
+-   "session-38",
+-   "session-39",
+-   "session-40",
+-   "session-41",
+-   "session-42",
+-   "session-43",
+-   "session-44",
+-   "session-45",
+-   "session-46",
+-   "session-47",
+-   "session-48",
+-   "session-49",
+-   "session-50",
+-   "session-51",
+-   "session-52",
+-   "session-53",
+-   "session-54",
+-   "session-55",
+-   "session-56",
+-   "session-57",
+-   "session-58",
+-   "session-59",
+-   "session-60",
+-   "session-61",
+-   "session-62",
+-   "session-63",
+-   "session-64",
+-   "session-65",
+-   "session-66",
+-   "session-67",
+-   "session-68",
+-   "session-69",
+-   "session-70",
+-   "session-71",
+-   "session-72",
+-   "session-73",
+-   "session-74",
+-   "session-75",
+-   "session-76",
+-   "session-77",
+-   "session-78",
+-   "session-79",
+-   "session-80",
+-   "session-81",
+-   "session-82",
+-   "session-83",
+-   "session-84",
+-   "session-85",
+-   "session-86",
+-   "session-87",
+-   "session-88",
+-   "session-89",
+-   "session-90",
+-   "session-91",
+-   "session-92",
+-   "session-93",
+-   "session-94",
+-   "session-95",
+-   "session-96",
+-   "session-97",
+-   "session-98",
+-   "session-99",
+-   "session-100",
+-   "session-101",
+-   "session-102",
+-   "session-103",
+-   "session-104",
+-   "session-105",
+-   "session-106",
+-   "session-107",
+-   "session-108",
+-   "session-109",
+-   "session-110",
+-   "session-111",
+-   "session-112",
+-   "session-113",
+-   "session-114",
+-   "session-115",
+-   "session-116",
+-   "session-117",
+-   "session-118",
+-   "session-119",
+-   "session-120",
+-   "session-121",
+-   "session-122",
+-   "session-123",
+-   "session-124",
+-   "session-125",
+-   "session-126",
+-   "session-127",
+-   "session-128",
+-   "session-129",
+-   "session-130",
+-   "session-131",
+-   "session-132",
+-   "session-133",
+-   "session-134",
+-   "session-135",
+-   "session-136",
+-   "session-137",
+-   "session-138",
+-   "session-139",
+-   "session-140",
+-   "session-141",
+-   "session-142",
+-   "session-143",
+-   "session-144",
+-   "session-145",
+-   "session-146",
+-   "session-147",
+-   "session-148",
+-   "session-149",
+-   "session-150",
+-   "session-151",
+-   "session-152",
+-   "session-153",
+-   "session-154",
+-   "session-155",
+-   "session-156",
+-   "session-157",
+-   "session-158",
+-   "session-159",
+-   "session-160",
+-   "session-161",
+-   "session-162",
+-   "session-163",
+-   "session-164",
+-   "session-165",
+-   "session-166",
+-   "session-167",
+-   "session-168",
+-   "session-169",
+-   "session-170",
+-   "session-171",
+-   "session-172",
+-   "session-173",
+-   "session-174",
+-   "session-175",
+-   "session-176",
+-   "session-177",
+-   "session-178",
+-   "session-179",
+-   "session-180",
+-   "session-181",
+-   "session-182",
+-   "session-183",
+-   "session-184",
+-   "session-185",
+-   "session-186",
+-   "session-187",
+-   "session-188",
+-   "session-189",
+-   "session-190",
+-   "session-191",
+-   "session-192",
+-   "session-193",
+-   "session-194",
+-   "session-195",
+-   "session-196",
+-   "session-197",
+-   "session-198",
+-   "session-199",
+-   "session-200",
+-   "session-201",
+-   "session-202",
+-   "session-203",
+-   "session-204",
+-   "session-205",
+-   "session-206",
+-   "session-207",
+-   "session-208",
+-   "session-209",
+-   "session-210",
+-   "session-211",
+-   "session-212",
+-   "session-213",
+-   "session-214",
+-   "session-215",
+-   "session-216",
+-   "session-217",
+-   "session-218",
+-   "session-219",
+-   "session-220",
+-   "session-221",
+-   "session-222",
+-   "session-223",
+-   "session-224",
+-   "session-225",
+-   "session-226",
+-   "session-227",
+-   "session-228",
+-   "session-229",
+-   "session-230",
+-   "session-231",
+-   "session-232",
+-   "session-233",
+-   "session-234",
+-   "session-235",
+-   "session-236",
+-   "session-237",
+-   "session-238",
+-   "session-239",
+-   "session-240",
+-   "session-241",
+-   "session-242",
+-   "session-243",
+-   "session-244",
+-   "session-245",
+-   "session-246",
+-   "session-247",
+-   "session-248",
+-   "session-249",
+-   "session-250",
+-   "session-251",
+-   "session-252",
+-   "session-253",
+-   "session-254",
+-   "session-255",
+-   "session-256",
+-   "session-257",
+-   "session-258",
+-   "session-259",
+-   "session-260",
+-   "session-261",
+-   "session-262",
+-   "session-263",
+-   "session-264",
+-   "session-265",
+-   "session-266",
+-   "session-267",
+-   "session-268",
+-   "session-269",
+-   "session-270",
+-   "session-271",
+-   "session-272",
+-   "session-273",
+-   "session-274",
+-   "session-275",
+-   "session-276",
+-   "session-277",
+-   "session-278",
+-   "session-279",
+-   "session-280",
+-   "session-281",
+-   "session-282",
+-   "session-283",
+-   "session-284",
+-   "session-285",
+-   "session-286",
+-   "session-287",
+-   "session-288",
+-   "session-289",
+-   "session-290",
+-   "session-291",
+-   "session-292",
+-   "session-293",
+-   "session-294",
+-   "session-295",
+-   "session-296",
+-   "session-297",
+-   "session-298",
+-   "session-299",
+-   "session-300",
+- ]
++ []
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:103:69
+    101|   expect(settledAt()).not.toBeNull();
+    102|   const result = await pending;
+    103|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+       |                                                                     ^
+    104|   // An identity outside the broker pattern is never asked and stays u…
+    105|   expect(result.data!.unanswered).toEqual([{ host: "portable", session…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > keeps the overall deadline when the wall clock steps back during a lookup
+AssertionError: expected +0 to be 20000 // Object.is equality
+
+- Expected
++ Received
+
+- 20000
++ 0
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:118:23
+    116|   vi.setSystemTime(Date.now() - 60_000);
+    117|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS - 5000);
+    118|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+    119|   const result = await pending;
+    120|   expect(request).toHaveBeenCalledTimes(11);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected undefined to match object { state: 'ended', …(1) }
+
+- Expected:
+{
+  "endReason": "session-end",
+  "state": "ended",
+}
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/presence-retention.test.ts:108:88
+    106|   expect(result.error).toBeNull();
+    107|   const bySession = new Map(result.data!.sessions.map((session) => [se…
+    108|   for (let index = 0; index < 40; index += 1) expect(bySession.get(`re…
+       |                                                                                        ^
+    109|   for (const sessionId of ["live-0", "live-1"]) {
+    110|     expect(bySession.get(sessionId)).toMatchObject({ state: "online", …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > ends a board lookup against a slow real broker at one overall client deadline
+AssertionError: expected 0 to be greater than 0
+ ❯ tests/session-messaging/presence-retention.test.ts:137:27
+    135|   expect(elapsed).toBeLessThan(SESSION_MESSAGE_REQUEST_TIMEOUT_MS + 2_…
+    136|   const answered = result.data!.sessions.map((session) => session.sess…
+    137|   expect(answered.length).toBeGreaterThan(0);
+       |                           ^
+    138|   expect(answered).toEqual(board.slice(0, answered.length).map((item) …
+    139|   expect(result.data!.unanswered).toEqual(board.slice(answered.length)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve
+AssertionError: expected undefined to match object { state: 'online' }
+
+- Expected:
+{
+  "state": "online",
+}
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/presence-retention.test.ts:160:93
+    158|   expect(result.ok).toBe(true);
+    159|   for (let index = 0; index < 6; index += 1) {
+    160|     expect(result.data!.sessions.find((session) => session.sessionId =…
+       |                                                                                             ^
+    161|   }
+    162|   expect(result.data!.unanswered).toEqual([{ host: "portable", session…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+

@@ -1,0 +1,16 @@
+undefined -> THROW
+"" -> THROW
+"2.7.5" -> true
+"v2.7.5" -> true
+"2.7.4" -> false
+"2.7.10" -> true
+"2.8.0" -> true
+"3.0.0" -> true
+"2.6.9" -> false
+"1.99.99" -> false
+"2.7.3" -> false
+"2.7" -> THROW
+"2.7.5-rc.1" -> THROW
+" 2.7.5" -> THROW
+"V2.7.5" -> THROW
+"02.07.05" -> true

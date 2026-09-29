@@ -1,0 +1,61 @@
+{
+  "audit": "AGS 2.7.6 independent re-audit of the L2-1, T-5 and I-6 follow-ups",
+  "candidate": {
+    "branch": "claude/v276-presence-deadline",
+    "commit": "906a023a565806756bb6accc37d71970c35b740b",
+    "tree": "2bd8176e36d2dd45262d17ac35a19b38c0d31a83",
+    "commits": [
+      "61196426 fix: measure the board presence deadline on the monotonic clock",
+      "772f3a49 test: bind the retired-latch branch to the previous broker version",
+      "906a023a test: tie the slow broker bound to the client deadline"
+    ]
+  },
+  "previousAuditTarget": "93a7e4bc69f556859bc929af1df871dfc74eae68 (fast-forward ancestor)",
+  "baseline": {
+    "ref": "tag v2.7.5",
+    "commit": "3706167d4646c53c8b47510eebda58931cbd1cfe"
+  },
+  "previousAudit": "evidence: v276-audit/20260929T034034Z (PASS_WITH_FINDINGS)",
+  "writerEvidenceReadForComparisonOnly": "evidence @ ddfbeacbc08650139499afa53040db64520b9d47 : v276-presence-fix1/20260929T035617Z (SHA256SUMS 38/38)",
+  "previousBrokers": {
+    "v2.7.5": "tag v2.7.5 dist",
+    "v2.7.4": "tag v2.7.4 dist",
+    "v2.7.3": "tag v2.7.3 dist"
+  },
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "6.18.44-fc-v37",
+  "startedAtUtc": "20260929T035823Z",
+  "finishedAtUtc": "2026-09-29T04:06:29Z",
+  "verdict": "PASS",
+  "releaseBlocking": false,
+  "findings": [],
+  "info": [
+    "I-8 fake-timer tests bind to the global performance object; a production-equivalent node:perf_hooks import fails 4 of 5",
+    "I-9 at >= 2.7.5 the retired-latch check accepts retired or unchanged; stated version is not cross-checked with broker bytes",
+    "I-10 AGS_PREVIOUS_BROKER_PATH/VERSION are documented only in the test file",
+    "I-11 writer evidence 4ce53cc meta.json was invalid JSON, fixed in ddfbeac"
+  ],
+  "notRun": [
+    "Windows runner and GitHub CI for 906a023a",
+    "real PC, install cache, MCP call flow, Claude Code MCP tool limit",
+    "previous-broker v2.7.2, v2.7.1, v2.2.6",
+    "source:verify",
+    "real OS clock step (fake-timer probe instead)"
+  ],
+  "redaction": {
+    "github-token": 0,
+    "anthropic-key": 0,
+    "aws-access-key": 0,
+    "private-key-line": 0,
+    "bearer-header": 0,
+    "email": 0,
+    "home-path": 44,
+    "root-home": 8,
+    "ipv4": 0,
+    "github-url-account": 0,
+    "account-name": 0,
+    "windows-user-path": 0
+  },
+  "redactionNote": "applied before the first commit; harness scripts carry redacted paths and are kept for reading, not rerunning as-is"
+}

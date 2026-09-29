@@ -1,0 +1,53 @@
+=== P6-v2.7.5-as-2.7.4-lie: broker v2.7.5, AGS_PREVIOUS_BROKER_VERSION=2.7.4
+Already up to date
+Done in 721ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276g
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 3170ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 1075ms
+ ✓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker 455ms
+ × tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired 289ms
+   → expected { …(20) } to deeply equal { …(20) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired
+AssertionError: expected { …(20) } to deeply equal { …(20) }
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "ended-birth-nonce-abcdefghijklmnopqr",
+    "nonce_digest": "0a18f745b9e73706ed9204a5ba02f518a3e39d8a57ea55b9a20d1c5fbede2eb0",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T02:49:30.247Z",
+    "relay_id": "ended-relay",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T04:00:30.460Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "ended-recipient",
+    "started_at": "2026-09-29T02:49:30.246Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "codex-queue",
+  }
+
+ ❯ tests/session-messaging/previous-broker.test.ts:289:54
+    287|     // by what is observed. 2.7.4 and 2.7.3 must keep the latch unchan…
+    288|     if (retiringBroker && kept?.state === "expired-unobserved") expect…
+    289|     else if (managedWakeAware === true) expect(kept).toEqual(before);
+       |                                                      ^
+    290|     else expect([undefined, before]).toContainEqual(kept);
+    291|     const current = new SessionMessageStore(databasePath);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  04:00:24
+   Duration  5.84s (tests 89%, transform 10%, import 1%)
+

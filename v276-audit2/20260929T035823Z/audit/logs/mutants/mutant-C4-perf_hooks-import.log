@@ -1,0 +1,95 @@
+Already up to date
+Done in 547ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276n
+
+ ❯ tests/session-messaging/presence-deadline.test.ts (5 tests | 4 failed) 38ms
+   × ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered 20ms
+   × does not let an answer that arrives after the deadline change the result 3ms
+   × bounds an unresponsive broker by the same deadline and asks only once 2ms
+   × keeps the overall deadline when the wall clock steps back during a lookup 3ms
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  4 failed | 30 passed (34)
+   Start at  04:00:29
+   Duration  23.15s (tests 91%, transform 6%, import 2%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered
+AssertionError: expected null to be 20000 // Object.is equality
+
+- Expected:
+20000
+
++ Received:
+null
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:56:23
+     54|   const { pending, settledAt } = await lookup(board);
+     55|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
+     56|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+     57|   const result = await pending;
+     58|   expect(result.ok).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > does not let an answer that arrives after the deadline change the result
+AssertionError: expected null to be 20000 // Object.is equality
+
+- Expected:
+20000
+
++ Received:
+null
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:75:23
+     73|   // Timers of the immediate answers each take the 1 ms minimum, so th…
+     74|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
+     75|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+     76|   const result = await pending;
+     77|   const snapshot = structuredClone(result);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > bounds an unresponsive broker by the same deadline and asks only once
+AssertionError: expected null to be 20000 // Object.is equality
+
+- Expected:
+20000
+
++ Received:
+null
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:90:23
+     88|   const { pending, settledAt } = await lookup(board);
+     89|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
+     90|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+     91|   const result = await pending;
+     92|   expect(request).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > keeps the overall deadline when the wall clock steps back during a lookup
+AssertionError: expected null to be 20000 // Object.is equality
+
+- Expected:
+20000
+
++ Received:
+null
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:118:23
+    116|   vi.setSystemTime(Date.now() - 60_000);
+    117|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS - 5000);
+    118|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+    119|   const result = await pending;
+    120|   expect(request).toHaveBeenCalledTimes(11);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+

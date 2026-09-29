@@ -1,0 +1,33 @@
+=== P4-v2.7.5-unset: broker v2.7.5, AGS_PREVIOUS_BROKER_VERSION unset
+Already up to date
+Done in 658ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276g
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 3167ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 1112ms
+ ✓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker 632ms
+ × tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired 6ms
+   → Set AGS_PREVIOUS_BROKER_VERSION to the previous broker's release version (for example 2.7.5).
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired
+Error: Set AGS_PREVIOUS_BROKER_VERSION to the previous broker's release version (for example 2.7.5).
+ ❯ previousAtLeast tests/session-messaging/previous-broker.test.ts:19:21
+     17| function previousAtLeast(minimum: [number, number, number]): boolean {
+     18|   const parts = /^v?(\d+)\.(\d+)\.(\d+)$/u.exec(previousVersion ?? "");
+     19|   if (!parts) throw new Error("Set AGS_PREVIOUS_BROKER_VERSION to the …
+       |                     ^
+     20|   const version = parts.slice(1).map(Number);
+     21|   for (let index = 0; index < 3; index += 1) if (version[index] !== mi…
+ ❯ tests/session-messaging/previous-broker.test.ts:237:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  04:00:08
+   Duration  5.71s (tests 89%, transform 10%, import 1%)
+

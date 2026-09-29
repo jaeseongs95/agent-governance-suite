@@ -1,0 +1,12 @@
+run1	rc=0	 Tests 19 passed (19)	slow-real-broker:20340ms
+run2	rc=0	 Tests 19 passed (19)	slow-real-broker:20344ms
+run3	rc=0	 Tests 19 passed (19)	slow-real-broker:20340ms
+run4	rc=0	 Tests 19 passed (19)	slow-real-broker:20351ms
+run5	rc=0	 Tests 19 passed (19)	slow-real-broker:20337ms
+run6	rc=0	 Tests 19 passed (19)	slow-real-broker:20336ms
+run7	rc=0	 Tests 19 passed (19)	slow-real-broker:20334ms
+run8	rc=0	 Tests 19 passed (19)	slow-real-broker:20337ms
+run9	rc=0	 Tests 19 passed (19)	slow-real-broker:20346ms
+run10	rc=0	 Tests 19 passed (19)	slow-real-broker:20324ms
+leftover-broker-processes=0
+DONE

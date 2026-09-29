@@ -1,0 +1,18 @@
+v2.7.5	broker-bytes=117481	sha256=9f1efa9ef29a677d
+v2.7.4	broker-bytes=117108	sha256=6fd90fd598c8cfa2
+v2.7.3	broker-bytes=115666	sha256=b30977b574c7d17b
+P1-v2.7.5-as-2.7.5	v2.7.5	version=2.7.5	rc=0	 Tests 4 passed (4)	
+P2-v2.7.4-as-2.7.4	v2.7.4	version=2.7.4	rc=0	 Tests 4 passed (4)	
+P3-v2.7.3-as-2.7.3	v2.7.3	version=2.7.3	rc=0	 Tests 4 passed (4)	
+P4-v2.7.5-unset	v2.7.5	version=UNSET	rc=1	⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Tests 1 failed | 3 passed (4)	leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired 6ms|
+P5-v2.7.4-as-2.7.5-lie	v2.7.4	version=2.7.5	rc=0	 Tests 4 passed (4)	
+P6-v2.7.5-as-2.7.4-lie	v2.7.5	version=2.7.4	rc=1	⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Tests 1 failed | 3 passed (4)	leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired 289ms|
+P7-v2.7.5-as-v2.7.5	v2.7.5	version=v2.7.5	rc=0	 Tests 4 passed (4)	
+P8-v2.7.5-as-2.7-malformed	v2.7.5	version=2.7	rc=1	⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Tests 1 failed | 3 passed (4)	leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired 8ms|
+P9-v2.7.3-as-2.7.5-lie	v2.7.3	version=2.7.5	rc=0	 Tests 4 passed (4)	
+leftover-broker-processes=1
+DONE
+post-check 2026-09-29T04:01:12Z broker-processes=0

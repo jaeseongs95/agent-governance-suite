@@ -1,0 +1,161 @@
+Already up to date
+Done in 547ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276n
+
+ ❯ tests/session-messaging/presence-deadline.test.ts (5 tests | 4 failed) 69ms
+   × ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered 34ms
+   × does not let an answer that arrives after the deadline change the result 6ms
+   × bounds an unresponsive broker by the same deadline and asks only once 8ms
+   × keeps the overall deadline when the wall clock steps back during a lookup 2ms
+ ❯ tests/session-messaging/presence-retention.test.ts (10 tests | 3 failed) 2966ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 664ms
+   × ends a board lookup against a slow real broker at one overall client deadline 428ms
+   × B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve 476ms
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  7 failed | 27 passed (34)
+   Start at  04:00:15
+   Duration  4.66s (tests 70%, transform 22%, import 7%, worker 1%)
+
+(node:7164) TimeoutOverflowWarning: 1790654435513.3923 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7164) TimeoutOverflowWarning: 1790654435513.1992 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(node:7164) TimeoutOverflowWarning: 1790654435513.0728 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered
+AssertionError: expected null to be 20000 // Object.is equality
+
+- Expected:
+20000
+
++ Received:
+null
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:56:23
+     54|   const { pending, settledAt } = await lookup(board);
+     55|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
+     56|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+     57|   const result = await pending;
+     58|   expect(result.ok).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > does not let an answer that arrives after the deadline change the result
+AssertionError: expected null to be 20000 // Object.is equality
+
+- Expected:
+20000
+
++ Received:
+null
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:75:23
+     73|   // Timers of the immediate answers each take the 1 ms minimum, so th…
+     74|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
+     75|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+     76|   const result = await pending;
+     77|   const snapshot = structuredClone(result);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > bounds an unresponsive broker by the same deadline and asks only once
+AssertionError: expected 1 to be 20000 // Object.is equality
+
+- Expected
++ Received
+
+- 20000
++ 1
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:90:23
+     88|   const { pending, settledAt } = await lookup(board);
+     89|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
+     90|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+     91|   const result = await pending;
+     92|   expect(request).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > keeps the overall deadline when the wall clock steps back during a lookup
+AssertionError: expected null to be 20000 // Object.is equality
+
+- Expected:
+20000
+
++ Received:
+null
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:118:23
+    116|   vi.setSystemTime(Date.now() - 60_000);
+    117|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS - 5000);
+    118|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+    119|   const result = await pending;
+    120|   expect(request).toHaveBeenCalledTimes(11);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected undefined to match object { state: 'ended', …(1) }
+
+- Expected:
+{
+  "endReason": "session-end",
+  "state": "ended",
+}
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/presence-retention.test.ts:108:88
+    106|   expect(result.error).toBeNull();
+    107|   const bySession = new Map(result.data!.sessions.map((session) => [se…
+    108|   for (let index = 0; index < 40; index += 1) expect(bySession.get(`re…
+       |                                                                                        ^
+    109|   for (const sessionId of ["live-0", "live-1"]) {
+    110|     expect(bySession.get(sessionId)).toMatchObject({ state: "online", …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > ends a board lookup against a slow real broker at one overall client deadline
+AssertionError: expected 0 to be greater than 0
+ ❯ tests/session-messaging/presence-retention.test.ts:137:27
+    135|   expect(elapsed).toBeLessThan(SESSION_MESSAGE_REQUEST_TIMEOUT_MS + 2_…
+    136|   const answered = result.data!.sessions.map((session) => session.sess…
+    137|   expect(answered.length).toBeGreaterThan(0);
+       |                           ^
+    138|   expect(answered).toEqual(board.slice(0, answered.length).map((item) …
+    139|   expect(result.data!.unanswered).toEqual(board.slice(answered.length)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve
+AssertionError: expected undefined to match object { state: 'online' }
+
+- Expected:
+{
+  "state": "online",
+}
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/presence-retention.test.ts:160:93
+    158|   expect(result.ok).toBe(true);
+    159|   for (let index = 0; index < 6; index += 1) {
+    160|     expect(result.data!.sessions.find((session) => session.sessionId =…
+       |                                                                                             ^
+    161|   }
+    162|   expect(result.data!.unanswered).toEqual([{ host: "portable", session…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+

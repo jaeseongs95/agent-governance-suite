@@ -1,0 +1,16 @@
+=== 906a023a source + 93a7e4bc presence-deadline.test.ts (default fake timers, Date.now helper)
+Already up to date
+Done in 837ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276n
+
+ ✓ tests/session-messaging/presence-deadline.old-93a7e4bc.test.ts > ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered 23ms
+ ✓ tests/session-messaging/presence-deadline.old-93a7e4bc.test.ts > does not let an answer that arrives after the deadline change the result 5ms
+ ✓ tests/session-messaging/presence-deadline.old-93a7e4bc.test.ts > bounds an unresponsive broker by the same deadline and asks only once 2ms
+ ✓ tests/session-messaging/presence-deadline.old-93a7e4bc.test.ts > returns every identity exactly once, in order, from a normal broker 15ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  03:59:06
+   Duration  563ms (transform 75%, tests 13%, import 11%, worker 2%)
+
