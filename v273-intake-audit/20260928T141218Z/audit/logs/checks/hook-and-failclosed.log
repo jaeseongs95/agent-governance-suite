@@ -1,0 +1,10 @@
+## Claude SessionStart hook output (isolated plugin copy)
+exit=0
+hook additionalContext contains intake: 1 time(s)
+suffix: Claude Code 호출: 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.
+=> In a Claude Code session the same block reaches the model via MCP instructions (1x) and SessionStart additionalContext (1x).
+
+## fail-closed probe: remove intake end marker in isolated copy, start server
+Error: Shared skill intake instructions are missing.
+exit=1
+hook exit=0 (silent, no context)

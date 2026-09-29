@@ -1,0 +1,70 @@
+## files changed by 2.7.2 line (d5c5932..8763cef)
+.agents/plugins/marketplace.json
+.codex-plugin/plugin.json
+AGENTS.md
+README.en.md
+README.md
+claude-plugin/.claude-plugin/plugin.json
+claude-plugin/mcp-server/dist/server.mjs
+claude-plugin/mcp-server/dist/session-message-broker.mjs
+claude-plugin/mcp-server/dist/session-message-cli.mjs
+claude-plugin/mcp-server/dist/session-message-hook.mjs
+docs/architecture.md
+docs/host-execution-attestation.md
+docs/release-notes-v2.7.2.md
+docs/roadmap.md
+docs/session-message-lifecycle.md
+mcp-server/dist/server.mjs
+mcp-server/dist/session-message-broker.mjs
+mcp-server/dist/session-message-cli.mjs
+mcp-server/dist/session-message-hook.mjs
+mcp-server/src/plugin-info.ts
+mcp-server/src/session-message-broker.ts
+mcp-server/src/session-message-cli.ts
+mcp-server/src/session-message-hook.ts
+mcp-server/src/session-message-store.ts
+mcp-server/src/session-message-wake-port.ts
+mcp-server/src/trust-store.ts
+package.json
+release/version.json
+tests/helpers/concurrent-claim-process.ts
+tests/mcp/convergence-guard.test.ts
+tests/mcp/fixtures/concurrent-claim-worker.ts
+tests/mcp/fixtures/concurrent-observation-claim-worker.ts
+tests/mcp/stdio-integration.test.ts
+tests/session-messaging/broker-lifecycle.test.ts
+tests/session-messaging/fixtures/managed-wake-process.mjs
+tests/session-messaging/fixtures/message-response-loss.mjs
+tests/session-messaging/fixtures/wake-claim-worker.ts
+tests/session-messaging/historical-wake.test.mjs
+tests/session-messaging/previous-broker.test.ts
+tests/session-messaging/session-message.test.ts
+tests/session-messaging/wake-lifecycle.test.mjs
+
+## files changed by candidate (8763cef..732ba286)
+claude-overlay/adaptations/orchestrator.json
+claude-overlay/hooks/hooks.json
+claude-overlay/hooks/skill-trigger-hook.mjs
+claude-plugin/hooks/hooks.json
+claude-plugin/hooks/skill-trigger-hook.mjs
+claude-plugin/mcp-server/dist/server.mjs
+claude-plugin/skills/orchestrator/SKILL.md
+claude-plugin/skills/orchestrator/references/entry-details.md
+claude-plugin/skills/orchestrator/references/mcp-execution.md
+mcp-server/dist/server.mjs
+mcp-server/src/server.ts
+scripts/check-skill-context-optimization.mjs
+skills/orchestrator/SKILL.md
+skills/orchestrator/references/entry-details.md
+skills/orchestrator/references/mcp-execution.md
+tests/mcp/tool-schema-profile.test.ts
+tests/tooling/claude-plugin.test.mjs
+tests/tooling/skill-context-optimization.test.mjs
+
+## overlap
+claude-plugin/mcp-server/dist/server.mjs
+mcp-server/dist/server.mjs
+
+## files changed in src line (53eff30..cb59ad7f)
+## candidate files not in src line
+## src files not in candidate

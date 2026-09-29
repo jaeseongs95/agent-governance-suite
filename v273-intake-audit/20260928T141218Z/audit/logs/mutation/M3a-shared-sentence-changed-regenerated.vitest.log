@@ -1,0 +1,66 @@
+
+ RUN  v5.0.0 [REDACTED-HOME]/ags-mut
+
+ ❯ tests/tooling/skill-context-optimization.test.mjs (3 tests | 2 failed) 327ms
+   ❯ skill context optimization (3)
+     × pins the intake revision and rejects a one-byte policy or reference change 8ms
+     × preserves the reviewed skill revisions while reducing their initial load 315ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > pins the intake revision and rejects a one-byte policy or reference change
+AssertionError: reconstructed: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/tooling/skill-context-optimization.test.mjs:22:66
+     20|     };
+     21|     for (const [kind, bytes] of Object.entries(inputs)) {
+     22|       expect(matchesOrchestratorIntakeUpdate(kind, bytes), kind).toBe(…
+       |                                                                  ^
+     23|       const altered = Buffer.from(bytes);
+     24|       altered[altered.length - 1] ^= 1;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load
+AssertionError: expected { …(8) } to match object { pass: true, errors: [], …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,8 +1,10 @@
+  {
+-   "errors": [],
+-   "pass": true,
++   "errors": [
++     "orchestrator: reconstructed intake policy differs from the pinned revision",
++   ],
++   "pass": false,
+    "totals": {
+      "baselineBytes": 115679,
+      "candidateBytes": 45598,
+      "reducedBytes": 70081,
+      "reductionPercent": 60.582301,
+
+ ❯ tests/tooling/skill-context-optimization.test.mjs:32:20
+     30|   it("preserves the reviewed skill revisions while reducing their init…
+     31|     const report = checkSkillContextOptimization();
+     32|     expect(report).toMatchObject({
+       |                    ^
+     33|       pass: true,
+     34|       errors: [],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 28 passed (30)
+   Start at  14:17:23
+   Duration  3.47s (tests 77%, transform 18%, import 5%)
+

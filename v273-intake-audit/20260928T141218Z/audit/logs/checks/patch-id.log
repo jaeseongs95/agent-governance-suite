@@ -1,0 +1,20 @@
+src 2b53e325: 812a2f223eafe1711d6d648cf19c8736725cefd2 2b53e325f549a9ebd32a143d1d11f7b4393355fa
+port c548c77: 812a2f223eafe1711d6d648cf19c8736725cefd2 c548c77fc01ef752012dfb3dd8a3e22f0eb39263
+src cb59ad7f: 202ac2768774ab932dbf8c352b7506d918c692da cb59ad7f0f74a32a910e0afc2d196d12ea460c67
+port afafd4e: 202ac2768774ab932dbf8c352b7506d918c692da afafd4e63a76d45b21185e7c74e9b1b4f841e7ab
+
+parents:
+732ba28 afafd4e test(intake): reject common intake copies in the Claude overlay
+afafd4e c548c77 fix(intake): expose shared selection policy to both hosts
+c548c77 8763cef refactor: port common skill intake to the 2.7.2 candidate
+
+src parent chain:
+cb59ad7 2b53e32 fix(intake): expose shared selection policy to both hosts
+2b53e32 53eff30 refactor: port common skill intake to the 2.7.2 candidate
+53eff30 38bd227 fix: retire verified wake arrivals across generations
+
+merge-base main src: d5c5932cd5a0d87630f6ed94f8e3721181ab9864
+## commutation check: (53eff30->8763cef) vs (cb59ad7f->732ba286 minus new test)
+main-delta: a54a35d253b4f0e768626439ab7ee6308802d8af 0000000000000000000000000000000000000000
+cand-delta: a54a35d253b4f0e768626439ab7ee6308802d8af 0000000000000000000000000000000000000000
+main-delta touches claude-plugin.test.mjs lines: 0

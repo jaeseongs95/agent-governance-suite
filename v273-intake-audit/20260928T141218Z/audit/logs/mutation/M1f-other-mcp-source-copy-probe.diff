@@ -1,0 +1,12 @@
+ mcp-server/src/plugin-info.ts | 2 ++
+ 1 file changed, 2 insertions(+)
+diff --git a/mcp-server/src/plugin-info.ts b/mcp-server/src/plugin-info.ts
+index 8dfb6c1..a6cd96f 100644
+--- a/mcp-server/src/plugin-info.ts
++++ b/mcp-server/src/plugin-info.ts
+@@ -4,3 +4,5 @@ export const PLUGIN_INFO = Object.freeze({
+   repository: "https://github.com/[REDACTED-ACCOUNT]/agent-governance-suite",
+   tagsApi: "https://api.github.com/repos/[REDACTED-ACCOUNT]/agent-governance-suite/git/matching-refs/tags/v",
+ });
++
++// 개념 설명이나 명령 이력 조회는 그 행동을 실행하는 요청이 아니다.

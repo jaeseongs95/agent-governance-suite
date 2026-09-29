@@ -1,0 +1,32 @@
+## fresh export claude:build
+Command failed: git ls-files -z
+fatal: not a git repository (or any of the parent directories): .git
+
+exit=1
+## diff -r (bytes) tracked vs rebuilt
+diff: claude-plugin: No such file or directory
+find: 'claude-plugin': No such file or directory
+files tracked=404 rebuilt=0
+## server.mjs
+6bbf349eeaa8dced9b257ab60d84ffc0d4dbc2a5700eb3e41e88e53921eb1d18  mcp-server/dist/server.mjs
+sha256sum: claude-plugin/mcp-server/dist/server.mjs: No such file or directory
+6bbf349eeaa8dced9b257ab60d84ffc0d4dbc2a5700eb3e41e88e53921eb1d18  claude-plugin.tracked/mcp-server/dist/server.mjs
+## all dist files root vs claude-plugin
+SAME continuity-hook.mjs
+SAME host-attestation-api.mjs
+SAME host-attestation-hook.mjs
+SAME server.mjs
+SAME session-board-hook.mjs
+SAME session-message-broker.mjs
+SAME session-message-cli.mjs
+SAME session-message-hook.mjs
+SAME session-message-relay.mjs
+## ignored files in candidate worktree claude-plugin
+## fresh git-archive export of 732ba286, claude-plugin moved aside, git index rebuilt from the same tree
+export tree=06d58b258d467214db08943d30e13d3c3e4ef2fe (candidate tree 06d58b258d467214db08943d30e13d3c3e4ef2fe)
+claude-plugin: wrote 404 files
+claude:build exit=0
+BYTE-IDENTICAL (diff -r)
+files tracked=404 rebuilt=404
+6bbf349eeaa8dced9b257ab60d84ffc0d4dbc2a5700eb3e41e88e53921eb1d18  mcp-server/dist/server.mjs
+6bbf349eeaa8dced9b257ab60d84ffc0d4dbc2a5700eb3e41e88e53921eb1d18  claude-plugin/mcp-server/dist/server.mjs

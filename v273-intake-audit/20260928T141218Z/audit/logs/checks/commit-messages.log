@@ -1,0 +1,159 @@
+=== c548c77
+refactor: port common skill intake to the 2.7.2 candidate
+
+Ported onto v2.7.2 main (8763cef2) without conflicts.
+(cherry picked from commit 2b53e325f549a9ebd32a143d1d11f7b4393355fa)
+
+Co-Authored-By: Claude Opus 5.5 <[REDACTED]>
+Claude-Session: https://claude.ai/code/session_01YGNDopfDtbUEU9S4T5YdDs
+
+
+ claude-overlay/adaptations/orchestrator.json       | 10 +----
+ claude-plugin/mcp-server/dist/server.mjs           | 11 +++--
+ claude-plugin/skills/orchestrator/SKILL.md         | 51 ++++++----------------
+ .../orchestrator/references/entry-details.md       | 14 ++++--
+ .../orchestrator/references/mcp-execution.md       | 17 ++++++--
+ mcp-server/dist/server.mjs                         | 11 +++--
+ mcp-server/src/server.ts                           | 16 +++----
+ scripts/check-skill-context-optimization.mjs       | 30 ++++++++++++-
+ skills/orchestrator/SKILL.md                       |  8 ++--
+ skills/orchestrator/references/entry-details.md    | 14 ++++--
+ skills/orchestrator/references/mcp-execution.md    | 17 ++++++--
+ tests/mcp/tool-schema-profile.test.ts              | 36 +++++++++------
+ tests/tooling/claude-plugin.test.mjs               | 49 +++++++++++++++++----
+ tests/tooling/skill-context-optimization.test.mjs  | 28 +++++++++---
+ 14 files changed, 198 insertions(+), 114 deletions(-)
+=== afafd4e
+fix(intake): expose shared selection policy to both hosts
+
+Ported onto v2.7.2 main (8763cef2) without conflicts.
+(cherry picked from commit cb59ad7f0f74a32a910e0afc2d196d12ea460c67)
+
+Co-Authored-By: Claude Opus 5.5 <[REDACTED]>
+Claude-Session: https://claude.ai/code/session_01YGNDopfDtbUEU9S4T5YdDs
+
+
+ claude-overlay/adaptations/orchestrator.json       |  2 +-
+ claude-overlay/hooks/hooks.json                    | 33 +++-----
+ claude-overlay/hooks/skill-trigger-hook.mjs        | 95 +++-------------------
+ claude-plugin/hooks/hooks.json                     | 33 +++-----
+ claude-plugin/hooks/skill-trigger-hook.mjs         | 95 +++-------------------
+ claude-plugin/mcp-server/dist/server.mjs           | 10 ++-
+ claude-plugin/skills/orchestrator/SKILL.md         | 18 ++--
+ .../orchestrator/references/entry-details.md       | 10 ++-
+ mcp-server/dist/server.mjs                         | 10 ++-
+ mcp-server/src/server.ts                           |  9 +-
+ scripts/check-skill-context-optimization.mjs       |  4 +-
+ skills/orchestrator/SKILL.md                       | 16 ++--
+ skills/orchestrator/references/entry-details.md    | 10 ++-
+ tests/mcp/tool-schema-profile.test.ts              | 17 ++--
+ tests/tooling/claude-plugin.test.mjs               | 45 ++++++++--
+ tests/tooling/skill-context-optimization.test.mjs  |  6 +-
+ 16 files changed, 160 insertions(+), 253 deletions(-)
+=== 732ba28
+test(intake): reject common intake copies in the Claude overlay
+
+Scan every claude-overlay file and the MCP server source for sentences
+from the shared skill-intake block so a second policy copy fails CI.
+
+Co-Authored-By: Claude Opus 5.5 <[REDACTED]>
+Claude-Session: https://claude.ai/code/session_01YGNDopfDtbUEU9S4T5YdDs
+
+
+ tests/tooling/claude-plugin.test.mjs | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+=== message diff src vs port
+2a3,8
+> Ported onto v2.7.2 main (8763cef2) without conflicts.
+> (cherry picked from commit 2b53e325f549a9ebd32a143d1d11f7b4393355fa)
+> 
+> Co-Authored-By: Claude Opus 5.5 <[REDACTED]>
+> Claude-Session: https://claude.ai/code/session_01YGNDopfDtbUEU9S4T5YdDs
+> 
+2a3,8
+> Ported onto v2.7.2 main (8763cef2) without conflicts.
+> (cherry picked from commit cb59ad7f0f74a32a910e0afc2d196d12ea460c67)
+> 
+> Co-Authored-By: Claude Opus 5.5 <[REDACTED]>
+> Claude-Session: https://claude.ai/code/session_01YGNDopfDtbUEU9S4T5YdDs
+> 
+=== tree equality: src cb59ad7f tree vs port afafd4e tree for changed paths
+ claude-plugin/mcp-server/dist/server.mjs | 34 ++++++++++++++++++++++++++------
+ mcp-server/dist/server.mjs               | 34 ++++++++++++++++++++++++++------
+ 2 files changed, 56 insertions(+), 12 deletions(-)
+## diff source-tip cb59ad7f vs candidate 732ba286
+ .agents/plugins/marketplace.json                   |   2 +-
+ .codex-plugin/plugin.json                          |   2 +-
+ AGENTS.md                                          |   2 +-
+ README.en.md                                       | 239 +++++------
+ README.md                                          | 239 +++++------
+ claude-plugin/.claude-plugin/plugin.json           |   2 +-
+ claude-plugin/mcp-server/dist/server.mjs           |  34 +-
+ .../mcp-server/dist/session-message-broker.mjs     | 179 +++++++-
+ .../mcp-server/dist/session-message-cli.mjs        |   2 +-
+ .../mcp-server/dist/session-message-hook.mjs       |  36 +-
+ docs/architecture.md                               |  12 +-
+ docs/host-execution-attestation.md                 |   4 +-
+ docs/release-notes-v2.7.2.md                       |  17 +
+ docs/roadmap.md                                    |   4 +-
+ docs/session-message-lifecycle.md                  |  24 +-
+ mcp-server/dist/server.mjs                         |  34 +-
+ mcp-server/dist/session-message-broker.mjs         | 179 +++++++-
+ mcp-server/dist/session-message-cli.mjs            |   2 +-
+ mcp-server/dist/session-message-hook.mjs           |  36 +-
+ mcp-server/src/plugin-info.ts                      |   2 +-
+ mcp-server/src/session-message-broker.ts           |  25 +-
+ mcp-server/src/session-message-cli.ts              |   2 +-
+ mcp-server/src/session-message-store.ts            |  90 +++-
+ mcp-server/src/session-message-wake-port.ts        |  37 +-
+ mcp-server/src/trust-store.ts                      |  33 +-
+ package.json                                       |   2 +-
+ release/version.json                               |   2 +-
+ tests/helpers/concurrent-claim-process.ts          |  40 ++
+ tests/mcp/convergence-guard.test.ts                |  68 +--
+ tests/mcp/fixtures/concurrent-claim-worker.ts      |  10 +-
+ .../concurrent-observation-claim-worker.ts         |  14 +-
+ tests/mcp/stdio-integration.test.ts                |  17 +-
+ tests/session-messaging/broker-lifecycle.test.ts   |  38 ++
+ .../fixtures/managed-wake-process.mjs              |  23 +-
+ .../fixtures/message-response-loss.mjs             |   4 +-
+ .../fixtures/wake-claim-worker.ts                  |  12 +-
+ tests/session-messaging/historical-wake.test.mjs   | 460 +++++++++++++++++++++
+ tests/session-messaging/previous-broker.test.ts    |  81 +++-
+ tests/session-messaging/session-message.test.ts    |  47 +--
+ tests/session-messaging/wake-lifecycle.test.mjs    | 153 +++++++
+ tests/tooling/claude-plugin.test.mjs               |  14 +
+ 41 files changed, 1718 insertions(+), 505 deletions(-)
+## diff 53eff30 (source base) vs 8763cef (main)
+ tests/session-messaging/session-message.test.ts    |  47 +--
+ tests/session-messaging/wake-lifecycle.test.mjs    | 153 +++++++
+ 40 files changed, 1704 insertions(+), 505 deletions(-)
+## range-diff
+1:  2b53e32 ! 1:  c548c77 refactor: port common skill intake to the 2.7.2 candidate
+    @@ Metadata
+      ## Commit message ##
+         refactor: port common skill intake to the 2.7.2 candidate
+     
+    +    Ported onto v2.7.2 main (8763cef2) without conflicts.
+    +    (cherry picked from commit 2b53e325f549a9ebd32a143d1d11f7b4393355fa)
+    +
+    +    Co-Authored-By: Claude Opus 5.5 <[REDACTED]>
+    +    Claude-Session: https://claude.ai/code/session_01YGNDopfDtbUEU9S4T5YdDs
+    +
+      ## claude-overlay/adaptations/orchestrator.json ##
+     @@
+      {
+2:  cb59ad7 ! 2:  afafd4e fix(intake): expose shared selection policy to both hosts
+    @@ Metadata
+      ## Commit message ##
+         fix(intake): expose shared selection policy to both hosts
+     
+    +    Ported onto v2.7.2 main (8763cef2) without conflicts.
+    +    (cherry picked from commit cb59ad7f0f74a32a910e0afc2d196d12ea460c67)
+    +
+    +    Co-Authored-By: Claude Opus 5.5 <[REDACTED]>
+    +    Claude-Session: https://claude.ai/code/session_01YGNDopfDtbUEU9S4T5YdDs
+    +
+      ## claude-overlay/adaptations/orchestrator.json ##
+     @@
+          {

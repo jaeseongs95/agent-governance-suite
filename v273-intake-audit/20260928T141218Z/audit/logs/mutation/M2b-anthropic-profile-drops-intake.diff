@@ -1,0 +1,26 @@
+ mcp-server/src/server.ts | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+diff --git a/mcp-server/src/server.ts b/mcp-server/src/server.ts
+index 7a9a110..6ef4365 100644
+--- a/mcp-server/src/server.ts
++++ b/mcp-server/src/server.ts
+@@ -331,8 +331,8 @@ const intake = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import
+ if (!intake) throw new Error("Shared skill intake instructions are missing.");
+ export const SKILL_INTAKE_SERVER_INSTRUCTIONS = `agent-governance-suite 접수 안내: 다음은 skills/orchestrator/SKILL.md의 공통 원본이다. 적용되는 전문 스킬을 호스트가 제공하는 설치된 스킬 호출 방식으로 실행한다.\n\n${intake}\n\n여러 전문 단계를 연결할 때 references/entry-details.md, MCP 실행·실패 처리는 references/mcp-execution.md를 따른다.`;
+ 
+-export function serverInstructions(): string {
+-  return `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
++export function serverInstructions(profile: ToolSchemaProfile = "default"): string {
++  return profile === "default" ? `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}` : SESSION_MESSAGE_SERVER_INSTRUCTIONS;
+ }
+ 
+ export const SESSION_MESSAGE_SERVER_INSTRUCTIONS = "세션 메시지는 prepare_session_message로 대상·본문·TTL을 고정하고 시스템이 발급한 messageId를 받은 뒤 send_session_message(messageId)로 전송한다. ID를 직접 만들거나 send에 내용을 다시 넣지 않는다. 전송 결과가 불명확하면 받은 같은 ID로 status를 조회하거나 send를 재시도한다. unknown ID는 이전 전송 완료나 기록 정리 가능성이 있으므로 저장한 영수증과 대조한다. 새 prepare는 새 전송 의도에만 사용하며 불명확한 기존 전송을 무조건 다시 준비하지 않는다. ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다.";
+@@ -358,7 +358,7 @@ export function createMcpServer(
+ ): Server {
+   const server = new Server(
+     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
+-    { capabilities: { tools: {} }, instructions: serverInstructions() },
++    { capabilities: { tools: {} }, instructions: serverInstructions(toolSchemaProfile) },
+   );
+ 
+   const contractDocuments = Object.values(contractSchemas) as Array<Record<string, unknown>>;

@@ -1,0 +1,29 @@
+{
+  "audit": "AGS 2.7.3 intake independent audit (orchestrator ca8e3dc4)",
+  "candidate": {
+    "branch": "claude/v273-intake",
+    "sha": "732ba286a68b35a7cbd99aefbea12d11b88f1b8c",
+    "tree": "06d58b258d467214db08943d30e13d3c3e4ef2fe"
+  },
+  "base": {
+    "branch": "main",
+    "sha": "8763cef2b11f2635d6c9af7861b5bffd496e2a30",
+    "version": "2.7.2"
+  },
+  "sources": [
+    "2b53e325f549a9ebd32a143d1d11f7b4393355fa",
+    "cb59ad7f0f74a32a910e0afc2d196d12ea460c67"
+  ],
+  "implementationEvidence": {
+    "branch": "claude/evidence-v273-intake-20260928T135805Z",
+    "sha": "24cb23bc39e91f22c84cef46e30008154a74ebff",
+    "report": "v273-intake/REPORT.md"
+  },
+  "node": "v24.21.0",
+  "nodePath": "/opt/node24/bin (present, v24; no download needed)",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v42 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startedUtc": "2026-09-28T14:12:18Z",
+  "finishedUtc": "2026-09-28T14:19:59Z",
+  "environment": "Linux cloud container, single run; Windows and real install NOT_RUN"
+}

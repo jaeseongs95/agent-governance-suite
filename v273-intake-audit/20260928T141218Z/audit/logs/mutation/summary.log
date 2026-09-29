@@ -1,0 +1,98 @@
+== M0-control
+build=0
+vitest=0
+claude:check=0
+lint=0
+== M1a-overlay-readme-copy
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × keeps no copy of the common intake sentences in the Claude overlay or MCP source 21ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in the Claude overlay or MCP source
+== M1b-overlay-adaptation-copy
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × keeps no copy of the common intake sentences in the Claude overlay or MCP source 37ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in the Claude overlay or MCP source
+== M1c-overlay-hook-copy
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × keeps no copy of the common intake sentences in the Claude overlay or MCP source 25ms
+     × projects the current common intake at session start without keyword selection 71ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in the Claude overlay or MCP source
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > projects the current common intake at session start without keyword selection
+== M1d-mcp-source-copy
+build=0
+vitest=1
+claude:check=1
+lint=0
+     × keeps no copy of the common intake sentences in the Claude overlay or MCP source 44ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in the Claude overlay or MCP source
+== M1e-codex-hooks-copy-probe
+build=0
+vitest=0
+claude:check=0
+lint=0
+== M1f-other-mcp-source-copy-probe
+build=0
+vitest=0
+claude:check=0
+lint=0
+== M2a-default-profile-drops-intake
+build=0
+vitest=1
+claude:check=1
+lint=0
+     × advertises the same host-neutral intake instructions to every schema profile 516ms
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > advertises the same host-neutral intake instructions to every schema profile
+== M2b-anthropic-profile-drops-intake
+build=0
+vitest=1
+claude:check=1
+lint=0
+     × advertises the same host-neutral intake instructions to every schema profile 482ms
+     × applies the environment profile in the bundled server 556ms
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > advertises the same host-neutral intake instructions to every schema profile
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > applies the environment profile in the bundled server
+== M2c-claude-hook-drops-intake
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × projects the current common intake at session start without keyword selection 91ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > projects the current common intake at session start without keyword selection
+== M3a-shared-sentence-changed-regenerated
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × pins the intake revision and rejects a one-byte policy or reference change 8ms
+     × preserves the reviewed skill revisions while reducing their initial load 315ms
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > pins the intake revision and rejects a one-byte policy or reference change
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load
+== M3b-generated-sentence-changed-only
+build=0
+vitest=1
+claude:check=1
+lint=0
+     × keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation 28ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation
+== M3c-overlay-adds-policy-sentence
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation 24ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation
+done

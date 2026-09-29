@@ -1,0 +1,4 @@
+build=0
+vitest=0
+claude:check=0
+lint=0

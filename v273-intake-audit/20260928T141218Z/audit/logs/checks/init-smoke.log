@@ -1,0 +1,87 @@
+{
+  "intakeSha256": "fbaa676ad3b5fb42d0f3fabd4a85fb441b1d60209c1645d079a2430292fc91cb",
+  "rows": [
+    {
+      "layout": "codex-root",
+      "profile": "default",
+      "intakeOccurrences": 1,
+      "instructionsSha256": "a410cfd160319ba933b994edfe34d1c490391aa77335a92ea24af5c2ada37c00",
+      "bytes": 3295,
+      "tools": 28,
+      "mentionsClaude": false
+    },
+    {
+      "layout": "codex-root",
+      "profile": "anthropic",
+      "intakeOccurrences": 1,
+      "instructionsSha256": "a410cfd160319ba933b994edfe34d1c490391aa77335a92ea24af5c2ada37c00",
+      "bytes": 3295,
+      "tools": 28,
+      "mentionsClaude": false
+    },
+    {
+      "layout": "codex-root",
+      "profile": "(unset)",
+      "intakeOccurrences": 1,
+      "instructionsSha256": "a410cfd160319ba933b994edfe34d1c490391aa77335a92ea24af5c2ada37c00",
+      "bytes": 3295,
+      "tools": 28,
+      "mentionsClaude": false
+    },
+    {
+      "layout": "claude-plugin(in-repo)",
+      "profile": "default",
+      "intakeOccurrences": 1,
+      "instructionsSha256": "a410cfd160319ba933b994edfe34d1c490391aa77335a92ea24af5c2ada37c00",
+      "bytes": 3295,
+      "tools": 28,
+      "mentionsClaude": false
+    },
+    {
+      "layout": "claude-plugin(in-repo)",
+      "profile": "anthropic",
+      "intakeOccurrences": 1,
+      "instructionsSha256": "a410cfd160319ba933b994edfe34d1c490391aa77335a92ea24af5c2ada37c00",
+      "bytes": 3295,
+      "tools": 28,
+      "mentionsClaude": false
+    },
+    {
+      "layout": "claude-plugin(in-repo)",
+      "profile": "(unset)",
+      "intakeOccurrences": 1,
+      "instructionsSha256": "a410cfd160319ba933b994edfe34d1c490391aa77335a92ea24af5c2ada37c00",
+      "bytes": 3295,
+      "tools": 28,
+      "mentionsClaude": false
+    },
+    {
+      "layout": "claude-plugin(isolated copy)",
+      "profile": "default",
+      "intakeOccurrences": 1,
+      "instructionsSha256": "a410cfd160319ba933b994edfe34d1c490391aa77335a92ea24af5c2ada37c00",
+      "bytes": 3295,
+      "tools": 28,
+      "mentionsClaude": false
+    },
+    {
+      "layout": "claude-plugin(isolated copy)",
+      "profile": "anthropic",
+      "intakeOccurrences": 1,
+      "instructionsSha256": "a410cfd160319ba933b994edfe34d1c490391aa77335a92ea24af5c2ada37c00",
+      "bytes": 3295,
+      "tools": 28,
+      "mentionsClaude": false
+    },
+    {
+      "layout": "claude-plugin(isolated copy)",
+      "profile": "(unset)",
+      "intakeOccurrences": 1,
+      "instructionsSha256": "a410cfd160319ba933b994edfe34d1c490391aa77335a92ea24af5c2ada37c00",
+      "bytes": 3295,
+      "tools": 28,
+      "mentionsClaude": false
+    }
+  ]
+}
+PASS

@@ -1,0 +1,7 @@
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × keeps no copy of the common intake sentences in the Claude overlay or MCP source 37ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in the Claude overlay or MCP source

@@ -1,0 +1,4 @@
+Already up to date
+Done in 455ms using pnpm v11.19.0
+$ node scripts/build-claude-plugin.mjs --check
+claude-plugin: fresh
