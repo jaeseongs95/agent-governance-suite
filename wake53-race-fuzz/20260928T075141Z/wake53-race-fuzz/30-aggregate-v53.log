@@ -1,0 +1,39 @@
+n=2 runs=200 ops=96018 opErrors=0 effects=914 sigkills=141 nonzeroExit=0
+   a: checks=4505 violations=0 seeds=[] (0 seeds)
+   b: checks=3718 violations=0 seeds=[] (0 seeds)
+   c: checks=16062 violations=0 seeds=[] (0 seeds)
+   d: checks=565 violations=0 seeds=[] (0 seeds)
+   e: checks=914 violations=0 seeds=[] (0 seeds)
+   f: checks=1915 violations=0 seeds=[] (0 seeds)
+   g: checks=387 violations=0 seeds=[] (0 seeds)
+   transition: checks=4505 violations=0 seeds=[] (0 seeds)
+   h_stuck_reserved: checks=288 violations=138 seeds=[100, 101, 102, 104, 106, 108, 109, 110, 112, 114, 116, 118, 12, 120, 122]... (96 seeds)
+   info {'oldGenRetire': 258, 'currentObserve': 461, 'unknownCreated': 425, 'unknownToObserved': 296, 'effectRowNotStarted': 73, 'outcomeOnTerminalOrLate': 0, 'hookRejectedWithRowChange': 258, 'unknownExposures': 3291, 'genSwitches': 2855, 'sameMsRestart': 0, 'lateRetireOfCurrentGen': 0, 'reservedStuckOldGenEnd': 138}
+   unknownToOther {'lateOutcome:reserved': 36, 'lateOutcome:submitted': 42, 'dispatch:submitted': 8, 'dispatch:reserved': 5}
+   errors {}
+n=4 runs=200 ops=183875 opErrors=0 effects=960 sigkills=329 nonzeroExit=0
+   a: checks=5084 violations=0 seeds=[] (0 seeds)
+   b: checks=4317 violations=0 seeds=[] (0 seeds)
+   c: checks=30363 violations=0 seeds=[] (0 seeds)
+   d: checks=601 violations=0 seeds=[] (0 seeds)
+   e: checks=960 violations=0 seeds=[] (0 seeds)
+   f: checks=2092 violations=0 seeds=[] (0 seeds)
+   g: checks=416 violations=0 seeds=[] (0 seeds)
+   transition: checks=5084 violations=0 seeds=[] (0 seeds)
+   h_stuck_reserved: checks=280 violations=166 seeds=[10, 102, 104, 106, 107, 108, 11, 110, 114, 116, 118, 12, 120, 126, 127]... (110 seeds)
+   info {'oldGenRetire': 358, 'currentObserve': 432, 'unknownCreated': 447, 'unknownToObserved': 290, 'effectRowNotStarted': 102, 'outcomeOnTerminalOrLate': 0, 'hookRejectedWithRowChange': 357, 'unknownExposures': 4494, 'genSwitches': 5689, 'sameMsRestart': 2, 'lateRetireOfCurrentGen': 0, 'reservedStuckOldGenEnd': 166}
+   unknownToOther {'lateOutcome:submitted': 54, 'dispatch:submitted': 18, 'lateOutcome:reserved': 48, 'dispatch:reserved': 4, 'relayCycle:reserved': 1, 'relayCycle:submitted': 1}
+   errors {}
+n=8 runs=200 ops=347847 opErrors=0 effects=956 sigkills=649 nonzeroExit=0
+   a: checks=5233 violations=0 seeds=[] (0 seeds)
+   b: checks=4354 violations=0 seeds=[] (0 seeds)
+   c: checks=58335 violations=0 seeds=[] (0 seeds)
+   d: checks=611 violations=0 seeds=[] (0 seeds)
+   e: checks=956 violations=0 seeds=[] (0 seeds)
+   f: checks=2112 violations=0 seeds=[] (0 seeds)
+   g: checks=453 violations=0 seeds=[] (0 seeds)
+   transition: checks=5233 violations=0 seeds=[] (0 seeds)
+   h_stuck_reserved: checks=290 violations=189 seeds=[1, 100, 101, 102, 104, 106, 108, 110, 112, 113, 114, 115, 116, 12, 120]... (124 seeds)
+   info {'oldGenRetire': 385, 'currentObserve': 417, 'unknownCreated': 470, 'unknownToObserved': 321, 'effectRowNotStarted': 111, 'outcomeOnTerminalOrLate': 0, 'hookRejectedWithRowChange': 385, 'unknownExposures': 5575, 'genSwitches': 10129, 'sameMsRestart': 3, 'lateRetireOfCurrentGen': 0, 'reservedStuckOldGenEnd': 189}
+   unknownToOther {'dispatch:reserved': 6, 'lateOutcome:reserved': 58, 'dispatch:submitted': 15, 'lateOutcome:submitted': 53}
+   errors {}

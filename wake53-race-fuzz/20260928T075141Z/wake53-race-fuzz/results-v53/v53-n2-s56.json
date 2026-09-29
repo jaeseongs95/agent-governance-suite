@@ -1,0 +1,152 @@
+{
+ "label": "v53-n2-s56",
+ "seed": 56,
+ "n": 2,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 1264,
+   "victim": 1
+  },
+  {
+   "delay": 1100,
+   "victim": 0
+  }
+ ],
+ "kills": [
+  {
+   "at": 1100,
+   "victim": 0
+  },
+  {
+   "at": 1264,
+   "victim": 1
+  }
+ ],
+ "exits": [
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 758,
+ "errorCount": 0,
+ "effectCount": 4,
+ "auditCount": 441,
+ "opMix": {
+  "tick": 20,
+  "reserve": 82,
+  "heartbeat": 104,
+  "hook": 113,
+  "send": 91,
+  "prune": 25,
+  "presenceSwitch": 23,
+  "hookReplay": 19,
+  "relayCycle": 91,
+  "claim": 26,
+  "start": 64,
+  "ack": 21,
+  "status": 10,
+  "acquire": 35,
+  "lateOutcome": 31,
+  "legacyReserve": 3
+ },
+ "invariants": {
+  "a": {
+   "checks": 16,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 14,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 134,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 9,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 16,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 2,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T00:00:05.256Z",
+     "rowInst": "inst-s56-w0-69",
+     "curGen": "2026-09-28T01:02:16.758Z",
+     "curInst": "inst-s56-w3-182"
+    },
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T00:00:05.107Z",
+     "rowInst": "inst-s56-w1-35",
+     "curGen": "2026-09-28T01:02:16.794Z",
+     "curInst": "inst-s56-w3-215"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 1,
+  "currentObserve": 1,
+  "unknownCreated": 1,
+  "unknownToObserved": 1,
+  "unknownToOther": {},
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 1,
+  "unknownExposures": 13,
+  "genSwitches": 27,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 2,
+  "activeEnd": {
+   "reserved": 2
+  },
+  "errors": {}
+ }
+}

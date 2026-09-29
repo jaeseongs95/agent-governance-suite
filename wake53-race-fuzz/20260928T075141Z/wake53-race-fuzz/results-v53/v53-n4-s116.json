@@ -1,0 +1,164 @@
+{
+ "label": "v53-n4-s116",
+ "seed": 116,
+ "n": 4,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 715,
+   "victim": 2
+  },
+  {
+   "delay": 1027,
+   "victim": 0
+  },
+  {
+   "delay": 1544,
+   "victim": 2
+  },
+  {
+   "delay": 955,
+   "victim": 2
+  }
+ ],
+ "kills": [
+  {
+   "at": 715,
+   "victim": 2
+  },
+  {
+   "at": 1027,
+   "victim": 0
+  }
+ ],
+ "exits": [
+  {
+   "index": 2,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 5,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 906,
+ "errorCount": 0,
+ "effectCount": 5,
+ "auditCount": 471,
+ "opMix": {
+  "reserve": 100,
+  "status": 16,
+  "relayCycle": 110,
+  "presenceSwitch": 23,
+  "send": 115,
+  "heartbeat": 95,
+  "start": 98,
+  "hook": 120,
+  "tick": 44,
+  "prune": 35,
+  "acquire": 41,
+  "lateOutcome": 12,
+  "legacyReserve": 10,
+  "claim": 34,
+  "hookReplay": 22,
+  "ack": 31
+ },
+ "invariants": {
+  "a": {
+   "checks": 23,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 21,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 146,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 5,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 12,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 23,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 1,
+   "samples": [
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T00:00:21.205Z",
+     "rowInst": "inst-s116-w1-3",
+     "curGen": "2026-09-28T05:11:06.142Z",
+     "curInst": "inst-s116-w5-232"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 1,
+  "currentObserve": 3,
+  "unknownCreated": 3,
+  "unknownToObserved": 2,
+  "unknownToOther": {},
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 1,
+  "unknownExposures": 32,
+  "genSwitches": 36,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 1,
+  "activeEnd": {
+   "reserved": 1,
+   "unknown": 1
+  },
+  "errors": {}
+ }
+}

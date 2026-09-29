@@ -1,0 +1,124 @@
+{
+ "label": "v53-n2-s102",
+ "seed": 102,
+ "n": 2,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 1378,
+   "victim": 1
+  }
+ ],
+ "kills": [],
+ "exits": [
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 403,
+ "errorCount": 0,
+ "effectCount": 5,
+ "auditCount": 193,
+ "opMix": {
+  "tick": 25,
+  "claim": 20,
+  "heartbeat": 42,
+  "relayCycle": 37,
+  "presenceSwitch": 11,
+  "reserve": 55,
+  "status": 8,
+  "acquire": 23,
+  "send": 40,
+  "prune": 21,
+  "lateOutcome": 13,
+  "start": 37,
+  "hook": 46,
+  "hookReplay": 13,
+  "ack": 7,
+  "legacyReserve": 4,
+  "dispatch": 1
+ },
+ "invariants": {
+  "a": {
+   "checks": 19,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 17,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 62,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 3,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 5,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 10,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 19,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 1,
+   "samples": [
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T00:00:05.481Z",
+     "rowInst": "inst-s102-w1-11",
+     "curGen": "2026-09-28T03:05:57.429Z",
+     "curInst": "inst-s102-w0-245"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 1,
+  "currentObserve": 2,
+  "unknownCreated": 2,
+  "unknownToObserved": 1,
+  "unknownToOther": {},
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 1,
+  "unknownExposures": 7,
+  "genSwitches": 19,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 1,
+  "activeEnd": {
+   "reserved": 1,
+   "unknown": 1
+  },
+  "errors": {}
+ }
+}

@@ -1,0 +1,1 @@
+sample from kept DBs (seeds with h_stuck_reserved), outcome calls by (op, recorded): {('relayCycle', True): 746, ('lateOutcome', False): 10779, ('lateOutcome', True): 438, ('dispatch', False): 80, ('dispatch', True): 169, ('relayCycle', False): 6}

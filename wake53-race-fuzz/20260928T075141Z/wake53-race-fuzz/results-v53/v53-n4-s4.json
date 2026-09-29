@@ -1,0 +1,152 @@
+{
+ "label": "v53-n4-s4",
+ "seed": 4,
+ "n": 4,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 1011,
+   "victim": 1
+  }
+ ],
+ "kills": [
+  {
+   "at": 1011,
+   "victim": 1
+  }
+ ],
+ "exits": [
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 877,
+ "errorCount": 0,
+ "effectCount": 6,
+ "auditCount": 510,
+ "opMix": {
+  "relayCycle": 123,
+  "heartbeat": 105,
+  "prune": 24,
+  "acquire": 32,
+  "send": 103,
+  "reserve": 111,
+  "start": 94,
+  "hook": 126,
+  "dispatch": 2,
+  "claim": 39,
+  "tick": 29,
+  "status": 13,
+  "presenceSwitch": 7,
+  "hookReplay": 23,
+  "ack": 22,
+  "lateOutcome": 20,
+  "legacyReserve": 4
+ },
+ "invariants": {
+  "a": {
+   "checks": 24,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 17,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 154,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 6,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 9,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 24,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 2,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T00:00:02.089Z",
+     "rowInst": "inst-s4-w0-39",
+     "curGen": "2026-09-28T00:03:06.379Z",
+     "curInst": "inst-s4-w4-207"
+    },
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T00:00:36.285Z",
+     "rowInst": "inst-s4-w4-60",
+     "curGen": "2026-09-28T00:03:06.593Z",
+     "curInst": "inst-s4-w2-232"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 5,
+  "unknownCreated": 4,
+  "unknownToObserved": 3,
+  "unknownToOther": {
+   "dispatch:reserved": 1
+  },
+  "effectRowNotStarted": 2,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 0,
+  "unknownExposures": 29,
+  "genSwitches": 12,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 2,
+  "activeEnd": {
+   "reserved": 2
+  },
+  "errors": {}
+ }
+}

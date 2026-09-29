@@ -1,0 +1,152 @@
+{
+ "label": "v271-n2-s104",
+ "seed": 104,
+ "n": 2,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 392,
+   "victim": 0
+  },
+  {
+   "delay": 1170,
+   "victim": 1
+  }
+ ],
+ "kills": [
+  {
+   "at": 392,
+   "victim": 0
+  },
+  {
+   "at": 1170,
+   "victim": 1
+  }
+ ],
+ "exits": [
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 619,
+ "errorCount": 0,
+ "effectCount": 1,
+ "auditCount": 363,
+ "opMix": {
+  "acquire": 21,
+  "reserve": 71,
+  "relayCycle": 61,
+  "heartbeat": 72,
+  "send": 95,
+  "tick": 36,
+  "hook": 77,
+  "claim": 26,
+  "presenceSwitch": 30,
+  "prune": 16,
+  "legacyReserve": 6,
+  "status": 7,
+  "start": 61,
+  "hookReplay": 17,
+  "ack": 17,
+  "lateOutcome": 6
+ },
+ "invariants": {
+  "a": {
+   "checks": 7,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 5,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 95,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 7,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 2,
+   "samples": [
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T00:00:00.000Z",
+     "rowInst": "inst-0",
+     "curGen": "2026-09-28T02:07:39.722Z",
+     "curInst": "inst-s104-w3-42"
+    },
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T00:01:33.406Z",
+     "rowInst": "inst-s104-w1-71",
+     "curGen": "2026-09-28T02:07:39.832Z",
+     "curInst": "inst-s104-w3-192"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 1,
+  "unknownCreated": 0,
+  "unknownToObserved": 0,
+  "unknownToOther": {},
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 0,
+  "unknownExposures": 0,
+  "genSwitches": 36,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 2,
+  "activeEnd": {
+   "reserved": 2
+  },
+  "errors": {}
+ }
+}

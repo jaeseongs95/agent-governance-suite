@@ -1,0 +1,270 @@
+{
+ "label": "v271-n8-s121",
+ "seed": 121,
+ "n": 8,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 298,
+   "victim": 7
+  },
+  {
+   "delay": 1628,
+   "victim": 4
+  },
+  {
+   "delay": 880,
+   "victim": 7
+  },
+  {
+   "delay": 210,
+   "victim": 0
+  },
+  {
+   "delay": 442,
+   "victim": 3
+  },
+  {
+   "delay": 487,
+   "victim": 1
+  }
+ ],
+ "kills": [
+  {
+   "at": 210,
+   "victim": 0
+  },
+  {
+   "at": 298,
+   "victim": 7
+  },
+  {
+   "at": 442,
+   "victim": 3
+  },
+  {
+   "at": 487,
+   "victim": 1
+  },
+  {
+   "at": 1628,
+   "victim": 4
+  }
+ ],
+ "exits": [
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 7,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 3,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 4,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 9,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 6,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 5,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 10,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 8,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 12,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 11,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 1624,
+ "errorCount": 0,
+ "effectCount": 4,
+ "auditCount": 872,
+ "opMix": {
+  "send": 192,
+  "tick": 78,
+  "prune": 55,
+  "claim": 63,
+  "heartbeat": 195,
+  "relayCycle": 221,
+  "reserve": 194,
+  "acquire": 82,
+  "legacyReserve": 19,
+  "hook": 227,
+  "hookReplay": 55,
+  "status": 31,
+  "ack": 28,
+  "presenceSwitch": 14,
+  "start": 135,
+  "lateOutcome": 32,
+  "dispatch": 3
+ },
+ "invariants": {
+  "a": {
+   "checks": 58,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 52,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 284,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 6,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 58,
+   "violations": 38,
+   "samples": [
+    {
+     "seq": 450,
+     "op": "hook",
+     "op_id": "w9-3918-120",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 461,
+     "op": "hook",
+     "op_id": "w11-3993-109",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 471,
+     "op": "hook",
+     "op_id": "w9-3918-134",
+     "from": "submitted",
+     "to": "unknown"
+    },
+    {
+     "seq": 479,
+     "op": "hook",
+     "op_id": "w12-4092-121",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 480,
+     "op": "hook",
+     "op_id": "w11-3993-127",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 495,
+     "op": "hook",
+     "op_id": "w5-3877-207",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 501,
+     "op": "hook",
+     "op_id": "w2-3857-137",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 502,
+     "op": "hook",
+     "op_id": "w9-3918-155",
+     "from": "unknown",
+     "to": "unknown"
+    }
+   ]
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 2,
+  "unknownCreated": 3,
+  "unknownToObserved": 0,
+  "unknownToOther": {
+   "lateOutcome:submitted": 1
+  },
+  "effectRowNotStarted": 3,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 38,
+  "unknownExposures": 314,
+  "genSwitches": 40,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 0,
+  "activeEnd": {
+   "unknown": 2
+  },
+  "errors": {}
+ }
+}

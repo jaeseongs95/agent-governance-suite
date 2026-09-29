@@ -1,0 +1,126 @@
+{
+ "label": "v271-n2-s184",
+ "seed": 184,
+ "n": 2,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 1608,
+   "victim": 0
+  }
+ ],
+ "kills": [],
+ "exits": [
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 420,
+ "errorCount": 0,
+ "effectCount": 4,
+ "auditCount": 276,
+ "opMix": {
+  "tick": 13,
+  "relayCycle": 55,
+  "reserve": 44,
+  "send": 62,
+  "start": 38,
+  "hook": 63,
+  "acquire": 15,
+  "claim": 14,
+  "lateOutcome": 18,
+  "heartbeat": 49,
+  "hookReplay": 8,
+  "prune": 11,
+  "presenceSwitch": 3,
+  "ack": 18,
+  "status": 4,
+  "legacyReserve": 4,
+  "dispatch": 1
+ },
+ "invariants": {
+  "a": {
+   "checks": 21,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 16,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 74,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 3,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 10,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 21,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 1,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T00:00:00.000Z",
+     "rowInst": "inst-0",
+     "curGen": "2026-09-28T00:01:13.770Z",
+     "curInst": "inst-s184-w0-154"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 3,
+  "unknownCreated": 2,
+  "unknownToObserved": 1,
+  "unknownToOther": {
+   "lateOutcome:reserved": 1
+  },
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 0,
+  "unknownExposures": 18,
+  "genSwitches": 5,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 1,
+  "activeEnd": {
+   "reserved": 1,
+   "submitted": 1
+  },
+  "errors": {}
+ }
+}

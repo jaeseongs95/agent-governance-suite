@@ -1,0 +1,120 @@
+{
+ "label": "v53-n2-s74",
+ "seed": 74,
+ "n": 2,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [],
+ "kills": [],
+ "exits": [
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 421,
+ "errorCount": 0,
+ "effectCount": 5,
+ "auditCount": 240,
+ "opMix": {
+  "tick": 24,
+  "claim": 23,
+  "send": 39,
+  "status": 8,
+  "relayCycle": 59,
+  "reserve": 52,
+  "prune": 11,
+  "presenceSwitch": 17,
+  "hook": 50,
+  "hookReplay": 11,
+  "heartbeat": 48,
+  "start": 34,
+  "acquire": 18,
+  "lateOutcome": 15,
+  "dispatch": 3,
+  "ack": 9
+ },
+ "invariants": {
+  "a": {
+   "checks": 26,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 24,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 65,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 3,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 5,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 11,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 3,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 26,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 1,
+   "violations": 1,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T05:07:33.406Z",
+     "rowInst": "inst-s74-w0-195",
+     "curGen": "2026-09-28T05:08:09.501Z",
+     "curInst": "inst-s74-w0-195"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 4,
+  "currentObserve": 0,
+  "unknownCreated": 3,
+  "unknownToObserved": 1,
+  "unknownToOther": {
+   "lateOutcome:submitted": 1,
+   "lateOutcome:reserved": 1
+  },
+  "effectRowNotStarted": 2,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 4,
+  "unknownExposures": 11,
+  "genSwitches": 20,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 1,
+  "activeEnd": {
+   "reserved": 1
+  },
+  "errors": {}
+ }
+}

@@ -1,0 +1,161 @@
+{
+ "label": "v53-n4-s183",
+ "seed": 183,
+ "n": 4,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 306,
+   "victim": 3
+  },
+  {
+   "delay": 1039,
+   "victim": 3
+  },
+  {
+   "delay": 1006,
+   "victim": 3
+  }
+ ],
+ "kills": [
+  {
+   "at": 306,
+   "victim": 3
+  }
+ ],
+ "exits": [
+  {
+   "index": 3,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 845,
+ "errorCount": 0,
+ "effectCount": 4,
+ "auditCount": 483,
+ "opMix": {
+  "heartbeat": 104,
+  "tick": 46,
+  "send": 115,
+  "relayCycle": 83,
+  "acquire": 35,
+  "hook": 90,
+  "start": 86,
+  "claim": 36,
+  "hookReplay": 38,
+  "reserve": 110,
+  "lateOutcome": 13,
+  "ack": 22,
+  "presenceSwitch": 27,
+  "status": 19,
+  "dispatch": 2,
+  "prune": 16,
+  "legacyReserve": 3
+ },
+ "invariants": {
+  "a": {
+   "checks": 22,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 18,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 131,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 10,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 22,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 2,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T01:00:55.022Z",
+     "rowInst": "inst-s183-w1-27",
+     "curGen": "2026-09-28T01:01:26.373Z",
+     "curInst": "inst-s183-w1-27"
+    },
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T01:01:36.623Z",
+     "rowInst": "inst-s183-w2-142",
+     "curGen": "2026-09-28T01:01:57.747Z",
+     "curInst": "inst-s183-w2-142"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 2,
+  "currentObserve": 1,
+  "unknownCreated": 2,
+  "unknownToObserved": 0,
+  "unknownToOther": {
+   "lateOutcome:reserved": 1,
+   "dispatch:reserved": 1
+  },
+  "effectRowNotStarted": 1,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 2,
+  "unknownExposures": 2,
+  "genSwitches": 8,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 2,
+  "activeEnd": {
+   "reserved": 2
+  },
+  "errors": {}
+ }
+}

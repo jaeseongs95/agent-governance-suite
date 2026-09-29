@@ -1,0 +1,263 @@
+{
+ "label": "v271-n8-s92",
+ "seed": 92,
+ "n": 8,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 1397,
+   "victim": 5
+  },
+  {
+   "delay": 898,
+   "victim": 7
+  },
+  {
+   "delay": 403,
+   "victim": 4
+  },
+  {
+   "delay": 193,
+   "victim": 7
+  },
+  {
+   "delay": 559,
+   "victim": 1
+  }
+ ],
+ "kills": [
+  {
+   "at": 193,
+   "victim": 7
+  },
+  {
+   "at": 403,
+   "victim": 4
+  },
+  {
+   "at": 559,
+   "victim": 1
+  },
+  {
+   "at": 1397,
+   "victim": 5
+  }
+ ],
+ "exits": [
+  {
+   "index": 7,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 4,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 5,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 6,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 9,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 11,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 10,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 8,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 1603,
+ "errorCount": 0,
+ "effectCount": 1,
+ "auditCount": 923,
+ "opMix": {
+  "send": 188,
+  "heartbeat": 185,
+  "presenceSwitch": 57,
+  "reserve": 198,
+  "prune": 59,
+  "relayCycle": 220,
+  "legacyReserve": 24,
+  "claim": 62,
+  "acquire": 69,
+  "tick": 85,
+  "hook": 195,
+  "ack": 38,
+  "start": 130,
+  "hookReplay": 42,
+  "status": 27,
+  "lateOutcome": 24
+ },
+ "invariants": {
+  "a": {
+   "checks": 107,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 105,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 237,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 107,
+   "violations": 99,
+   "samples": [
+    {
+     "seq": 267,
+     "op": "hook",
+     "op_id": "w9-1076-83",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 268,
+     "op": "hook",
+     "op_id": "w2-999-107",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 272,
+     "op": "hook",
+     "op_id": "w9-1076-94",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 293,
+     "op": "hook",
+     "op_id": "w0-997-155",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 300,
+     "op": "hook",
+     "op_id": "w0-997-164",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 301,
+     "op": "hook",
+     "op_id": "w0-997-169",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 303,
+     "op": "hook",
+     "op_id": "w0-997-175",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 304,
+     "op": "hook",
+     "op_id": "w6-1024-54",
+     "from": "unknown",
+     "to": "unknown"
+    }
+   ]
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 1,
+   "samples": [
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T00:00:16.492Z",
+     "rowInst": "inst-0",
+     "curGen": "2026-09-28T14:27:17.030Z",
+     "curInst": "inst-s92-w8-238"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 0,
+  "unknownCreated": 1,
+  "unknownToObserved": 0,
+  "unknownToOther": {},
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 99,
+  "unknownExposures": 215,
+  "genSwitches": 77,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 1,
+  "activeEnd": {
+   "reserved": 1,
+   "unknown": 1
+  },
+  "errors": {}
+ }
+}

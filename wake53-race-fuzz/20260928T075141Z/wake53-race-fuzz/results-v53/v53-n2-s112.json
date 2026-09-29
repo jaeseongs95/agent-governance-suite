@@ -1,0 +1,132 @@
+{
+ "label": "v53-n2-s112",
+ "seed": 112,
+ "n": 2,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 659,
+   "victim": 0
+  }
+ ],
+ "kills": [
+  {
+   "at": 659,
+   "victim": 0
+  }
+ ],
+ "exits": [
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 417,
+ "errorCount": 0,
+ "effectCount": 1,
+ "auditCount": 246,
+ "opMix": {
+  "claim": 17,
+  "reserve": 59,
+  "heartbeat": 67,
+  "acquire": 16,
+  "relayCycle": 63,
+  "send": 56,
+  "status": 8,
+  "prune": 14,
+  "legacyReserve": 8,
+  "presenceSwitch": 2,
+  "tick": 14,
+  "ack": 15,
+  "hook": 39,
+  "hookReplay": 9,
+  "start": 22,
+  "lateOutcome": 8
+ },
+ "invariants": {
+  "a": {
+   "checks": 11,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 6,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 48,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 11,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 1,
+   "violations": 1,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T00:01:02.025Z",
+     "rowInst": "inst-0",
+     "curGen": "2026-09-28T00:01:25.039Z",
+     "curInst": "inst-s112-w1-219"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 0,
+  "unknownCreated": 0,
+  "unknownToObserved": 0,
+  "unknownToOther": {},
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 0,
+  "unknownExposures": 0,
+  "genSwitches": 5,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 1,
+  "activeEnd": {
+   "reserved": 1
+  },
+  "errors": {}
+ }
+}

@@ -1,0 +1,277 @@
+{
+ "label": "v271-n8-s105",
+ "seed": 105,
+ "n": 8,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 1098,
+   "victim": 0
+  },
+  {
+   "delay": 934,
+   "victim": 5
+  },
+  {
+   "delay": 1424,
+   "victim": 1
+  },
+  {
+   "delay": 191,
+   "victim": 4
+  },
+  {
+   "delay": 1304,
+   "victim": 7
+  },
+  {
+   "delay": 391,
+   "victim": 2
+  }
+ ],
+ "kills": [
+  {
+   "at": 191,
+   "victim": 4
+  },
+  {
+   "at": 391,
+   "victim": 2
+  },
+  {
+   "at": 934,
+   "victim": 5
+  },
+  {
+   "at": 1098,
+   "victim": 0
+  },
+  {
+   "at": 1304,
+   "victim": 7
+  },
+  {
+   "at": 1424,
+   "victim": 1
+  }
+ ],
+ "exits": [
+  {
+   "index": 2,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 4,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 5,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 7,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 9,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 13,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 11,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 12,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 8,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 6,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 10,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 1757,
+ "errorCount": 0,
+ "effectCount": 3,
+ "auditCount": 757,
+ "opMix": {
+  "status": 41,
+  "presenceSwitch": 61,
+  "tick": 80,
+  "relayCycle": 182,
+  "reserve": 226,
+  "send": 207,
+  "heartbeat": 223,
+  "start": 172,
+  "hook": 230,
+  "claim": 71,
+  "acquire": 67,
+  "prune": 46,
+  "lateOutcome": 48,
+  "ack": 30,
+  "legacyReserve": 18,
+  "hookReplay": 55
+ },
+ "invariants": {
+  "a": {
+   "checks": 40,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 38,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 287,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 3,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 6,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 40,
+   "violations": 25,
+   "samples": [
+    {
+     "seq": 397,
+     "op": "hook",
+     "op_id": "w9-2248-191",
+     "from": "submitted",
+     "to": "unknown"
+    },
+    {
+     "seq": 431,
+     "op": "hook",
+     "op_id": "w3-2177-236",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 436,
+     "op": "hook",
+     "op_id": "w13-2339-89",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 439,
+     "op": "hook",
+     "op_id": "w9-2248-212",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 443,
+     "op": "hook",
+     "op_id": "w9-2248-216",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 446,
+     "op": "hook",
+     "op_id": "w13-2339-98",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 488,
+     "op": "hook",
+     "op_id": "w8-2240-154",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 590,
+     "op": "hook",
+     "op_id": "w11-2315-140",
+     "from": "unknown",
+     "to": "unknown"
+    }
+   ]
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 2,
+  "unknownCreated": 1,
+  "unknownToObserved": 0,
+  "unknownToOther": {},
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 25,
+  "unknownExposures": 184,
+  "genSwitches": 31,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 0,
+  "activeEnd": {
+   "reserved": 1,
+   "unknown": 1
+  },
+  "errors": {}
+ }
+}

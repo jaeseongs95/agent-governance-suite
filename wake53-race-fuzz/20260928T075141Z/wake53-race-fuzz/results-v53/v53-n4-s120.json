@@ -1,0 +1,149 @@
+{
+ "label": "v53-n4-s120",
+ "seed": 120,
+ "n": 4,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 1281,
+   "victim": 3
+  }
+ ],
+ "kills": [
+  {
+   "at": 1281,
+   "victim": 3
+  }
+ ],
+ "exits": [
+  {
+   "index": 3,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 924,
+ "errorCount": 0,
+ "effectCount": 5,
+ "auditCount": 494,
+ "opMix": {
+  "claim": 42,
+  "reserve": 93,
+  "acquire": 35,
+  "legacyReserve": 11,
+  "heartbeat": 112,
+  "relayCycle": 97,
+  "hook": 82,
+  "send": 126,
+  "status": 22,
+  "tick": 60,
+  "prune": 30,
+  "presenceSwitch": 33,
+  "ack": 18,
+  "hookReplay": 33,
+  "start": 92,
+  "lateOutcome": 38
+ },
+ "invariants": {
+  "a": {
+   "checks": 23,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 21,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 119,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 5,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 10,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 23,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 2,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T11:07:37.980Z",
+     "rowInst": "inst-s120-w2-190",
+     "curGen": "2026-09-28T15:11:46.123Z",
+     "curInst": "inst-s120-w4-193"
+    },
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T14:11:21.853Z",
+     "rowInst": "inst-s120-w1-209",
+     "curGen": "2026-09-28T16:11:48.050Z",
+     "curInst": "inst-s120-w4-218"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 1,
+  "currentObserve": 3,
+  "unknownCreated": 0,
+  "unknownToObserved": 0,
+  "unknownToOther": {},
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 1,
+  "unknownExposures": 0,
+  "genSwitches": 53,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 2,
+  "activeEnd": {
+   "reserved": 2
+  },
+  "errors": {}
+ }
+}

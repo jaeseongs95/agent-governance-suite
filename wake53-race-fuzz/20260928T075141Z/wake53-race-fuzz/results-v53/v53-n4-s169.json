@@ -1,0 +1,150 @@
+{
+ "label": "v53-n4-s169",
+ "seed": 169,
+ "n": 4,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 566,
+   "victim": 1
+  },
+  {
+   "delay": 849,
+   "victim": 0
+  },
+  {
+   "delay": 282,
+   "victim": 0
+  }
+ ],
+ "kills": [
+  {
+   "at": 282,
+   "victim": 0
+  },
+  {
+   "at": 566,
+   "victim": 1
+  }
+ ],
+ "exits": [
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 5,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 884,
+ "errorCount": 0,
+ "effectCount": 6,
+ "auditCount": 543,
+ "opMix": {
+  "relayCycle": 123,
+  "send": 106,
+  "reserve": 118,
+  "tick": 34,
+  "acquire": 30,
+  "heartbeat": 107,
+  "start": 88,
+  "hook": 118,
+  "dispatch": 5,
+  "lateOutcome": 25,
+  "claim": 28,
+  "ack": 18,
+  "hookReplay": 27,
+  "presenceSwitch": 5,
+  "prune": 25,
+  "status": 21,
+  "legacyReserve": 6
+ },
+ "invariants": {
+  "a": {
+   "checks": 29,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 22,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 149,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 6,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 8,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 29,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  }
+ },
+ "info": {
+  "oldGenRetire": 2,
+  "currentObserve": 2,
+  "unknownCreated": 2,
+  "unknownToObserved": 2,
+  "unknownToOther": {},
+  "effectRowNotStarted": 2,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 2,
+  "unknownExposures": 21,
+  "genSwitches": 8,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 0,
+  "activeEnd": {},
+  "errors": {}
+ }
+}

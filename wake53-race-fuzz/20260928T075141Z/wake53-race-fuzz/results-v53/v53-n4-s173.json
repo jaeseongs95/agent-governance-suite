@@ -1,0 +1,140 @@
+{
+ "label": "v53-n4-s173",
+ "seed": 173,
+ "n": 4,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 884,
+   "victim": 0
+  },
+  {
+   "delay": 211,
+   "victim": 0
+  }
+ ],
+ "kills": [
+  {
+   "at": 211,
+   "victim": 0
+  }
+ ],
+ "exits": [
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 864,
+ "errorCount": 0,
+ "effectCount": 10,
+ "auditCount": 479,
+ "opMix": {
+  "reserve": 87,
+  "heartbeat": 93,
+  "send": 111,
+  "relayCycle": 123,
+  "presenceSwitch": 36,
+  "hook": 102,
+  "tick": 43,
+  "start": 84,
+  "legacyReserve": 10,
+  "acquire": 25,
+  "claim": 30,
+  "prune": 28,
+  "status": 18,
+  "hookReplay": 18,
+  "ack": 22,
+  "lateOutcome": 34
+ },
+ "invariants": {
+  "a": {
+   "checks": 47,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 42,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 128,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 8,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 10,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 23,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 6,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 47,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  }
+ },
+ "info": {
+  "oldGenRetire": 4,
+  "currentObserve": 4,
+  "unknownCreated": 6,
+  "unknownToObserved": 5,
+  "unknownToOther": {
+   "lateOutcome:submitted": 1
+  },
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 4,
+  "unknownExposures": 27,
+  "genSwitches": 36,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 0,
+  "activeEnd": {
+   "submitted": 2
+  },
+  "errors": {}
+ }
+}

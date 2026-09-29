@@ -1,0 +1,262 @@
+{
+ "label": "v271-n8-s76",
+ "seed": 76,
+ "n": 8,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 185,
+   "victim": 4
+  },
+  {
+   "delay": 993,
+   "victim": 2
+  },
+  {
+   "delay": 194,
+   "victim": 3
+  },
+  {
+   "delay": 677,
+   "victim": 6
+  }
+ ],
+ "kills": [
+  {
+   "at": 185,
+   "victim": 4
+  },
+  {
+   "at": 194,
+   "victim": 3
+  },
+  {
+   "at": 677,
+   "victim": 6
+  },
+  {
+   "at": 993,
+   "victim": 2
+  }
+ ],
+ "exits": [
+  {
+   "index": 3,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 4,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 6,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 2,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 9,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 10,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 11,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 8,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 7,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 5,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 1719,
+ "errorCount": 0,
+ "effectCount": 6,
+ "auditCount": 1003,
+ "opMix": {
+  "heartbeat": 197,
+  "legacyReserve": 23,
+  "hook": 251,
+  "relayCycle": 249,
+  "send": 201,
+  "hookReplay": 44,
+  "reserve": 204,
+  "start": 171,
+  "tick": 63,
+  "status": 33,
+  "claim": 72,
+  "acquire": 54,
+  "dispatch": 2,
+  "ack": 37,
+  "lateOutcome": 57,
+  "prune": 40,
+  "presenceSwitch": 21
+ },
+ "invariants": {
+  "a": {
+   "checks": 62,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 53,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 300,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 6,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 13,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 62,
+   "violations": 31,
+   "samples": [
+    {
+     "seq": 209,
+     "op": "hook",
+     "op_id": "w10-32013-96",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 260,
+     "op": "hookReplay",
+     "op_id": "w1-31873-36",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 268,
+     "op": "hook",
+     "op_id": "w10-32013-133",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 285,
+     "op": "hook",
+     "op_id": "w11-32067-44",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 288,
+     "op": "hook",
+     "op_id": "w10-32013-144",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 303,
+     "op": "hook",
+     "op_id": "w11-32067-56",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 360,
+     "op": "hookReplay",
+     "op_id": "w1-31873-73",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 366,
+     "op": "hook",
+     "op_id": "w9-31938-96",
+     "from": "unknown",
+     "to": "unknown"
+    }
+   ]
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 1,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T00:06:32.039Z",
+     "rowInst": "inst-s76-w7-189",
+     "curGen": "2026-09-28T00:07:55.043Z",
+     "curInst": "inst-s76-w5-124"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 5,
+  "unknownCreated": 5,
+  "unknownToObserved": 3,
+  "unknownToOther": {
+   "lateOutcome:reserved": 1
+  },
+  "effectRowNotStarted": 1,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 31,
+  "unknownExposures": 327,
+  "genSwitches": 34,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 1,
+  "activeEnd": {
+   "unknown": 1,
+   "reserved": 1
+  },
+  "errors": {}
+ }
+}

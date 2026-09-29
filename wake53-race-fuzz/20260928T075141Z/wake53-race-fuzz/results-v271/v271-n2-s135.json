@@ -1,0 +1,134 @@
+{
+ "label": "v271-n2-s135",
+ "seed": 135,
+ "n": 2,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 485,
+   "victim": 0
+  }
+ ],
+ "kills": [
+  {
+   "at": 485,
+   "victim": 0
+  }
+ ],
+ "exits": [
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 431,
+ "errorCount": 0,
+ "effectCount": 2,
+ "auditCount": 215,
+ "opMix": {
+  "reserve": 61,
+  "legacyReserve": 6,
+  "prune": 13,
+  "heartbeat": 60,
+  "send": 53,
+  "start": 42,
+  "hook": 54,
+  "hookReplay": 10,
+  "lateOutcome": 11,
+  "acquire": 20,
+  "presenceSwitch": 12,
+  "dispatch": 2,
+  "tick": 22,
+  "relayCycle": 44,
+  "claim": 13,
+  "status": 6,
+  "ack": 2
+ },
+ "invariants": {
+  "a": {
+   "checks": 18,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 16,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 66,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 6,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 18,
+   "violations": 1,
+   "samples": [
+    {
+     "seq": 57,
+     "op": "hook",
+     "op_id": "w1-11612-109",
+     "from": "unknown",
+     "to": "unknown"
+    }
+   ]
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 2,
+  "unknownCreated": 2,
+  "unknownToObserved": 1,
+  "unknownToOther": {},
+  "effectRowNotStarted": 1,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 1,
+  "unknownExposures": 75,
+  "genSwitches": 23,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 0,
+  "activeEnd": {
+   "unknown": 1,
+   "started": 1
+  },
+  "errors": {}
+ }
+}

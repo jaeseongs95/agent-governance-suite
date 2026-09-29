@@ -1,0 +1,164 @@
+{
+ "label": "v53-n4-s15",
+ "seed": 15,
+ "n": 4,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 1047,
+   "victim": 0
+  },
+  {
+   "delay": 1430,
+   "victim": 0
+  },
+  {
+   "delay": 1194,
+   "victim": 1
+  }
+ ],
+ "kills": [
+  {
+   "at": 1047,
+   "victim": 0
+  },
+  {
+   "at": 1194,
+   "victim": 1
+  }
+ ],
+ "exits": [
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 5,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 912,
+ "errorCount": 0,
+ "effectCount": 9,
+ "auditCount": 506,
+ "opMix": {
+  "claim": 38,
+  "relayCycle": 98,
+  "hook": 114,
+  "heartbeat": 116,
+  "reserve": 108,
+  "presenceSwitch": 35,
+  "acquire": 38,
+  "legacyReserve": 13,
+  "send": 110,
+  "status": 20,
+  "start": 83,
+  "prune": 25,
+  "tick": 59,
+  "lateOutcome": 24,
+  "dispatch": 3,
+  "ack": 11,
+  "hookReplay": 17
+ },
+ "invariants": {
+  "a": {
+   "checks": 47,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 45,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 138,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 7,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 9,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 18,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 8,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 47,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 1,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T04:04:47.525Z",
+     "rowInst": "inst-s15-w4-155",
+     "curGen": "2026-09-28T05:05:47.798Z",
+     "curInst": "inst-s15-w4-155"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 4,
+  "currentObserve": 3,
+  "unknownCreated": 8,
+  "unknownToObserved": 4,
+  "unknownToOther": {
+   "lateOutcome:reserved": 2,
+   "lateOutcome:submitted": 2
+  },
+  "effectRowNotStarted": 2,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 4,
+  "unknownExposures": 81,
+  "genSwitches": 32,
+  "sameMsRestart": 1,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 1,
+  "activeEnd": {
+   "reserved": 1,
+   "started": 1
+  },
+  "errors": {}
+ }
+}

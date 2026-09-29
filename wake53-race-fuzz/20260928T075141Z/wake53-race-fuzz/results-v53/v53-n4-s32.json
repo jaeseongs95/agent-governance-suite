@@ -1,0 +1,163 @@
+{
+ "label": "v53-n4-s32",
+ "seed": 32,
+ "n": 4,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 1524,
+   "victim": 0
+  },
+  {
+   "delay": 1607,
+   "victim": 1
+  },
+  {
+   "delay": 543,
+   "victim": 0
+  }
+ ],
+ "kills": [
+  {
+   "at": 543,
+   "victim": 0
+  },
+  {
+   "at": 1607,
+   "victim": 1
+  }
+ ],
+ "exits": [
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 5,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 984,
+ "errorCount": 0,
+ "effectCount": 3,
+ "auditCount": 458,
+ "opMix": {
+  "heartbeat": 116,
+  "relayCycle": 119,
+  "status": 25,
+  "presenceSwitch": 43,
+  "hook": 122,
+  "send": 98,
+  "reserve": 107,
+  "hookReplay": 24,
+  "start": 95,
+  "prune": 29,
+  "tick": 54,
+  "dispatch": 1,
+  "lateOutcome": 45,
+  "claim": 30,
+  "acquire": 51,
+  "ack": 18,
+  "legacyReserve": 7
+ },
+ "invariants": {
+  "a": {
+   "checks": 22,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 20,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 148,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 3,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 7,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 22,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 1,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T00:00:00.150Z",
+     "rowInst": "inst-s32-w2-18",
+     "curGen": "2026-09-28T09:17:47.677Z",
+     "curInst": "inst-s32-w4-243"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 1,
+  "currentObserve": 1,
+  "unknownCreated": 2,
+  "unknownToObserved": 1,
+  "unknownToOther": {
+   "lateOutcome:submitted": 1
+  },
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 1,
+  "unknownExposures": 8,
+  "genSwitches": 62,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 1,
+  "activeEnd": {
+   "reserved": 1,
+   "started": 1
+  },
+  "errors": {}
+ }
+}

@@ -1,0 +1,139 @@
+{
+ "label": "v53-n2-s139",
+ "seed": 139,
+ "n": 2,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 256,
+   "victim": 0
+  },
+  {
+   "delay": 784,
+   "victim": 1
+  }
+ ],
+ "kills": [
+  {
+   "at": 256,
+   "victim": 0
+  },
+  {
+   "at": 784,
+   "victim": 1
+  }
+ ],
+ "exits": [
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 535,
+ "errorCount": 0,
+ "effectCount": 3,
+ "auditCount": 336,
+ "opMix": {
+  "prune": 16,
+  "send": 67,
+  "reserve": 53,
+  "heartbeat": 71,
+  "acquire": 17,
+  "claim": 23,
+  "relayCycle": 74,
+  "start": 45,
+  "lateOutcome": 20,
+  "hook": 77,
+  "ack": 16,
+  "tick": 22,
+  "legacyReserve": 3,
+  "hookReplay": 15,
+  "status": 13,
+  "presenceSwitch": 2,
+  "dispatch": 1
+ },
+ "invariants": {
+  "a": {
+   "checks": 21,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 15,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 96,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 3,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 8,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 21,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 4,
+  "unknownCreated": 1,
+  "unknownToObserved": 1,
+  "unknownToOther": {},
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 0,
+  "unknownExposures": 10,
+  "genSwitches": 2,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 0,
+  "activeEnd": {
+   "started": 1,
+   "reserved": 1
+  },
+  "errors": {}
+ }
+}

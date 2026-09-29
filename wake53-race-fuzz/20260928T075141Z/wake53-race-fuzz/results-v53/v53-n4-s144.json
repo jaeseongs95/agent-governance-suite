@@ -1,0 +1,150 @@
+{
+ "label": "v53-n4-s144",
+ "seed": 144,
+ "n": 4,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 833,
+   "victim": 3
+  }
+ ],
+ "kills": [
+  {
+   "at": 833,
+   "victim": 3
+  }
+ ],
+ "exits": [
+  {
+   "index": 3,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 898,
+ "errorCount": 0,
+ "effectCount": 2,
+ "auditCount": 494,
+ "opMix": {
+  "send": 130,
+  "heartbeat": 110,
+  "relayCycle": 91,
+  "start": 90,
+  "claim": 43,
+  "hook": 98,
+  "reserve": 105,
+  "lateOutcome": 13,
+  "status": 23,
+  "tick": 40,
+  "prune": 17,
+  "hookReplay": 35,
+  "acquire": 37,
+  "ack": 24,
+  "legacyReserve": 11,
+  "dispatch": 1,
+  "presenceSwitch": 30
+ },
+ "invariants": {
+  "a": {
+   "checks": 9,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 7,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 134,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 3,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 9,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 2,
+   "samples": [
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T00:00:00.000Z",
+     "rowInst": "inst-0",
+     "curGen": "2026-09-28T07:07:11.795Z",
+     "curInst": "inst-s144-w0-125"
+    },
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T04:02:56.381Z",
+     "rowInst": "inst-s144-w2-48",
+     "curGen": "2026-09-28T07:07:11.983Z",
+     "curInst": "inst-s144-w0-245"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 1,
+  "unknownCreated": 1,
+  "unknownToObserved": 1,
+  "unknownToOther": {},
+  "effectRowNotStarted": 1,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 0,
+  "unknownExposures": 0,
+  "genSwitches": 38,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 2,
+  "activeEnd": {
+   "reserved": 2
+  },
+  "errors": {}
+ }
+}

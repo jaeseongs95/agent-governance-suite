@@ -1,0 +1,154 @@
+{
+ "label": "v53-n2-s26",
+ "seed": 26,
+ "n": 2,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 1011,
+   "victim": 0
+  },
+  {
+   "delay": 273,
+   "victim": 1
+  }
+ ],
+ "kills": [
+  {
+   "at": 273,
+   "victim": 1
+  },
+  {
+   "at": 1011,
+   "victim": 0
+  }
+ ],
+ "exits": [
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 505,
+ "errorCount": 0,
+ "effectCount": 3,
+ "auditCount": 293,
+ "opMix": {
+  "reserve": 60,
+  "acquire": 30,
+  "relayCycle": 76,
+  "send": 70,
+  "prune": 15,
+  "heartbeat": 70,
+  "legacyReserve": 7,
+  "claim": 22,
+  "status": 9,
+  "tick": 18,
+  "presenceSwitch": 21,
+  "ack": 5,
+  "start": 34,
+  "hook": 53,
+  "hookReplay": 11,
+  "lateOutcome": 4
+ },
+ "invariants": {
+  "a": {
+   "checks": 17,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 15,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 66,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 3,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 7,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 17,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 2,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T00:00:36.092Z",
+     "rowInst": "inst-0",
+     "curGen": "2026-09-28T01:03:56.308Z",
+     "curInst": "inst-s26-w2-240"
+    },
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T01:03:57.391Z",
+     "rowInst": "inst-s26-w3-152",
+     "curGen": "2026-09-28T01:04:04.174Z",
+     "curInst": "inst-s26-w3-184"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 2,
+  "unknownCreated": 2,
+  "unknownToObserved": 1,
+  "unknownToOther": {
+   "lateOutcome:reserved": 1
+  },
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 0,
+  "unknownExposures": 11,
+  "genSwitches": 19,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 2,
+  "activeEnd": {
+   "reserved": 2
+  },
+  "errors": {}
+ }
+}

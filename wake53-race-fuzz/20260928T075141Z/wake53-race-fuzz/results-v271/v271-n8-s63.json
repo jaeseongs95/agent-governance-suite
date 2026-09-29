@@ -1,0 +1,183 @@
+{
+ "label": "v271-n8-s63",
+ "seed": 63,
+ "n": 8,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 1392,
+   "victim": 2
+  },
+  {
+   "delay": 610,
+   "victim": 1
+  }
+ ],
+ "kills": [
+  {
+   "at": 610,
+   "victim": 1
+  },
+  {
+   "at": 1392,
+   "victim": 2
+  }
+ ],
+ "exits": [
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 2,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 9,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 7,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 5,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 8,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 6,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 1730,
+ "errorCount": 0,
+ "effectCount": 1,
+ "auditCount": 573,
+ "opMix": {
+  "reserve": 196,
+  "relayCycle": 179,
+  "tick": 100,
+  "claim": 73,
+  "heartbeat": 218,
+  "status": 39,
+  "send": 201,
+  "acquire": 67,
+  "presenceSwitch": 49,
+  "start": 163,
+  "dispatch": 1,
+  "hook": 192,
+  "lateOutcome": 81,
+  "hookReplay": 63,
+  "legacyReserve": 23,
+  "prune": 53,
+  "ack": 32
+ },
+ "invariants": {
+  "a": {
+   "checks": 5,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 256,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 5,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 2,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T01:00:22.001Z",
+     "rowInst": "inst-0",
+     "curGen": "2026-09-28T01:00:22.247Z",
+     "curInst": "inst-s63-w7-2"
+    },
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T01:00:22.087Z",
+     "rowInst": "inst-s63-w5-2",
+     "curGen": "2026-09-28T01:00:27.005Z",
+     "curInst": "inst-s63-w4-1"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 1,
+  "unknownCreated": 0,
+  "unknownToObserved": 0,
+  "unknownToOther": {},
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 0,
+  "unknownExposures": 0,
+  "genSwitches": 5,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 2,
+  "activeEnd": {
+   "reserved": 2
+  },
+  "errors": {}
+ }
+}

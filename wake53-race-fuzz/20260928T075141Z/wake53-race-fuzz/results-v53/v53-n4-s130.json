@@ -1,0 +1,163 @@
+{
+ "label": "v53-n4-s130",
+ "seed": 130,
+ "n": 4,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 211,
+   "victim": 2
+  },
+  {
+   "delay": 1578,
+   "victim": 0
+  },
+  {
+   "delay": 431,
+   "victim": 0
+  }
+ ],
+ "kills": [
+  {
+   "at": 211,
+   "victim": 2
+  },
+  {
+   "at": 431,
+   "victim": 0
+  }
+ ],
+ "exits": [
+  {
+   "index": 2,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 0,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 5,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 850,
+ "errorCount": 0,
+ "effectCount": 6,
+ "auditCount": 459,
+ "opMix": {
+  "acquire": 34,
+  "claim": 21,
+  "reserve": 103,
+  "heartbeat": 109,
+  "prune": 29,
+  "send": 106,
+  "relayCycle": 101,
+  "start": 90,
+  "tick": 46,
+  "lateOutcome": 16,
+  "hook": 120,
+  "hookReplay": 23,
+  "legacyReserve": 10,
+  "status": 16,
+  "presenceSwitch": 7,
+  "dispatch": 2,
+  "ack": 17
+ },
+ "invariants": {
+  "a": {
+   "checks": 37,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 27,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 150,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 6,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 14,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 5,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 37,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 1,
+   "violations": 1,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T00:05:45.692Z",
+     "rowInst": "inst-s130-w3-197",
+     "curGen": "2026-09-28T00:06:40.805Z",
+     "curInst": "inst-s130-w4-226"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 5,
+  "currentObserve": 2,
+  "unknownCreated": 5,
+  "unknownToObserved": 3,
+  "unknownToOther": {
+   "lateOutcome:submitted": 1,
+   "dispatch:submitted": 1
+  },
+  "effectRowNotStarted": 1,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 5,
+  "unknownExposures": 29,
+  "genSwitches": 20,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 1,
+  "activeEnd": {
+   "reserved": 1
+  },
+  "errors": {}
+ }
+}

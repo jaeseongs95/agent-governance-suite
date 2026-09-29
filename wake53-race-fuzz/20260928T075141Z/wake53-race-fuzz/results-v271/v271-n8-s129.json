@@ -1,0 +1,263 @@
+{
+ "label": "v271-n8-s129",
+ "seed": 129,
+ "n": 8,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 708,
+   "victim": 2
+  },
+  {
+   "delay": 1191,
+   "victim": 3
+  },
+  {
+   "delay": 402,
+   "victim": 6
+  },
+  {
+   "delay": 977,
+   "victim": 4
+  }
+ ],
+ "kills": [
+  {
+   "at": 402,
+   "victim": 6
+  },
+  {
+   "at": 708,
+   "victim": 2
+  },
+  {
+   "at": 977,
+   "victim": 4
+  },
+  {
+   "at": 1191,
+   "victim": 3
+  }
+ ],
+ "exits": [
+  {
+   "index": 6,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 2,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 4,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 3,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 8,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 11,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 9,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 10,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 5,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 7,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 1741,
+ "errorCount": 0,
+ "effectCount": 3,
+ "auditCount": 856,
+ "opMix": {
+  "relayCycle": 158,
+  "send": 209,
+  "claim": 63,
+  "hook": 207,
+  "start": 178,
+  "heartbeat": 209,
+  "acquire": 75,
+  "reserve": 241,
+  "presenceSwitch": 39,
+  "lateOutcome": 84,
+  "legacyReserve": 14,
+  "tick": 79,
+  "status": 42,
+  "hookReplay": 48,
+  "prune": 58,
+  "ack": 36,
+  "dispatch": 1
+ },
+ "invariants": {
+  "a": {
+   "checks": 72,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 70,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 255,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 3,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 11,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 72,
+   "violations": 55,
+   "samples": [
+    {
+     "seq": 189,
+     "op": "hook",
+     "op_id": "w11-4674-32",
+     "from": "submitted",
+     "to": "unknown"
+    },
+    {
+     "seq": 225,
+     "op": "hook",
+     "op_id": "w5-4595-51",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 227,
+     "op": "hook",
+     "op_id": "w8-4635-92",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 228,
+     "op": "hook",
+     "op_id": "w5-4595-55",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 233,
+     "op": "hook",
+     "op_id": "w10-4666-16",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 234,
+     "op": "hook",
+     "op_id": "w5-4595-74",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 239,
+     "op": "hook",
+     "op_id": "w8-4635-106",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 272,
+     "op": "hook",
+     "op_id": "w8-4635-109",
+     "from": "unknown",
+     "to": "unknown"
+    }
+   ]
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 1,
+   "samples": [
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T01:01:36.303Z",
+     "rowInst": "inst-s129-w1-20",
+     "curGen": "2026-09-28T05:05:29.174Z",
+     "curInst": "inst-s129-w9-90"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 0,
+  "unknownCreated": 3,
+  "unknownToObserved": 0,
+  "unknownToOther": {
+   "lateOutcome:submitted": 1,
+   "dispatch:reserved": 1
+  },
+  "effectRowNotStarted": 1,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 55,
+  "unknownExposures": 380,
+  "genSwitches": 31,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 1,
+  "activeEnd": {
+   "unknown": 1,
+   "reserved": 1
+  },
+  "errors": {}
+ }
+}

@@ -1,0 +1,160 @@
+{
+ "label": "v53-n4-s48",
+ "seed": 48,
+ "n": 4,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 229,
+   "victim": 2
+  },
+  {
+   "delay": 1521,
+   "victim": 3
+  },
+  {
+   "delay": 1424,
+   "victim": 2
+  }
+ ],
+ "kills": [
+  {
+   "at": 229,
+   "victim": 2
+  },
+  {
+   "at": 1521,
+   "victim": 3
+  }
+ ],
+ "exits": [
+  {
+   "index": 2,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 3,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 5,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 1027,
+ "errorCount": 0,
+ "effectCount": 6,
+ "auditCount": 588,
+ "opMix": {
+  "relayCycle": 101,
+  "claim": 45,
+  "heartbeat": 113,
+  "reserve": 130,
+  "send": 146,
+  "presenceSwitch": 27,
+  "tick": 48,
+  "hook": 123,
+  "acquire": 58,
+  "status": 9,
+  "start": 94,
+  "prune": 25,
+  "lateOutcome": 48,
+  "ack": 27,
+  "hookReplay": 24,
+  "legacyReserve": 8,
+  "dispatch": 1
+ },
+ "invariants": {
+  "a": {
+   "checks": 29,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 28,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 154,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 6,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 12,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 29,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 1,
+   "violations": 1,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T01:05:18.673Z",
+     "rowInst": "inst-s48-w0-157",
+     "curGen": "2026-09-28T05:09:53.174Z",
+     "curInst": "inst-s48-w5-132"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 4,
+  "currentObserve": 3,
+  "unknownCreated": 0,
+  "unknownToObserved": 0,
+  "unknownToOther": {},
+  "effectRowNotStarted": 1,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 4,
+  "unknownExposures": 0,
+  "genSwitches": 50,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 1,
+  "activeEnd": {
+   "reserved": 1
+  },
+  "errors": {}
+ }
+}

@@ -1,0 +1,415 @@
+{
+ "H1-reserved-then-generation-switch": [
+  {
+   "step": "reserve(G1)",
+   "value": {
+    "dispatch": true,
+    "attempt": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "inst-1",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "nonce": "h1axxxxxxxxxxxxxxxxxxxxx00000000",
+     "resume": true,
+     "generation": "2026-09-28T00:00:00.000Z",
+     "attemptId": "14499c38-67d3-4bda-9773-322ed5666813",
+     "dispatchEpoch": 0
+    }
+   }
+  },
+  {
+   "step": "start(old attempt)",
+   "value": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  {
+   "step": "reserve(current inst-2) +16s",
+   "value": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  {
+   "step": "pending +16s",
+   "value": 2
+  },
+  {
+   "step": "reserve(current inst-2) +61min",
+   "value": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  {
+   "step": "pending +61min",
+   "value": 3
+  },
+  {
+   "step": "reserve(current inst-2) +25h",
+   "value": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  {
+   "step": "pending +25h",
+   "value": 2
+  },
+  {
+   "step": "status",
+   "value": {
+    "state": "reserved",
+    "observation": "observation-overdue",
+    "deliveryState": "reserved",
+    "instanceId": "inst-1",
+    "generation": "2026-09-28T00:00:00.000Z",
+    "attemptId": "14499c38-67d3-4bda-9773-322ed5666813",
+    "dispatchEpoch": 0,
+    "retryNotBefore": null,
+    "expiresAt": "2026-09-28T01:00:01.000Z",
+    "observedAt": null,
+    "lateObservedAt": null
+   }
+  },
+  {
+   "step": "rows",
+   "value": [
+    {
+     "nd": "a789f3a25ac9",
+     "state": "reserved",
+     "instance_id": "inst-1",
+     "birth_generation": "2026-09-28T00:00:00.000Z",
+     "relay_id": "relay-1",
+     "attempt_id": "14499c38",
+     "dispatch_epoch": 0,
+     "retry_not_before": null,
+     "expires_at": "2026-09-28T01:00:01.000Z",
+     "observed_at": null,
+     "late_observed_at": null
+    }
+   ]
+  }
+ ],
+ "H2-definite-failure-backoff-then-generation-switch": [
+  {
+   "step": "start",
+   "value": {
+    "dispatch": true,
+    "attempt": {
+     "host": "portable",
+     "sessionId": "wake-target",
+     "instanceId": "inst-1",
+     "transport": "portable",
+     "relayId": "relay-1",
+     "nonce": "h2axxxxxxxxxxxxxxxxxxxxx00000004",
+     "resume": true,
+     "generation": "2026-09-28T00:00:00.000Z",
+     "attemptId": "4a507340-3206-4a54-bc01-eef43bbf69bc",
+     "dispatchEpoch": 1
+    }
+   }
+  },
+  {
+   "step": "outcome(definite-failure)",
+   "value": true
+  },
+  {
+   "step": "presence",
+   "value": {
+    "instanceId": "inst-1",
+    "startedAt": "2026-09-28T00:00:26.000Z",
+    "state": "online"
+   }
+  },
+  {
+   "step": "reserve(resume same instance, after backoff)",
+   "value": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  {
+   "step": "start(original attempt)",
+   "value": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  {
+   "step": "rows",
+   "value": [
+    {
+     "nd": "42ea18232745",
+     "state": "reserved",
+     "instance_id": "inst-1",
+     "birth_generation": "2026-09-28T00:00:00.000Z",
+     "relay_id": "relay-1",
+     "attempt_id": "4a507340",
+     "dispatch_epoch": 1,
+     "retry_not_before": "2026-09-28T00:00:31.000Z",
+     "expires_at": "2026-09-28T01:00:01.000Z",
+     "observed_at": null,
+     "late_observed_at": null
+    }
+   ]
+  }
+ ],
+ "H3-fenced-unknown-then-late-definite-failure-after-switch": [
+  {
+   "step": "reserve by new relay (fences started->unknown)",
+   "value": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  {
+   "step": "rows after fence",
+   "value": [
+    {
+     "nd": "32aa6bb2d56c",
+     "state": "unknown",
+     "instance_id": "inst-1",
+     "birth_generation": "2026-09-28T00:00:00.000Z",
+     "relay_id": "relay-1",
+     "attempt_id": "ee36f79e",
+     "dispatch_epoch": 1,
+     "retry_not_before": null,
+     "expires_at": "2026-09-28T01:00:01.000Z",
+     "observed_at": null,
+     "late_observed_at": null
+    }
+   ]
+  },
+  {
+   "step": "late outcome(definite-failure) from old dispatcher",
+   "value": true
+  },
+  {
+   "step": "rows after late outcome",
+   "value": [
+    {
+     "nd": "32aa6bb2d56c",
+     "state": "reserved",
+     "instance_id": "inst-1",
+     "birth_generation": "2026-09-28T00:00:00.000Z",
+     "relay_id": "relay-1",
+     "attempt_id": "ee36f79e",
+     "dispatch_epoch": 1,
+     "retry_not_before": "2026-09-28T00:00:57.000Z",
+     "expires_at": "2026-09-28T01:00:01.000Z",
+     "observed_at": null,
+     "late_observed_at": null
+    }
+   ]
+  },
+  {
+   "step": "reserve by new relay after backoff",
+   "value": {
+    "dispatch": false,
+    "attempt": null
+   }
+  }
+ ],
+ "C1-old-arrival-on-started-then-outcome": [
+  {
+   "step": "hook(old nonce)",
+   "value": {
+    "recognized": false,
+    "messages": [],
+    "binding": null
+   }
+  },
+  {
+   "step": "rows after old arrival",
+   "value": [
+    {
+     "nd": "4e244e0c3e1e",
+     "state": "unknown",
+     "instance_id": "inst-1",
+     "birth_generation": "2026-09-28T00:00:00.000Z",
+     "relay_id": "relay-1",
+     "attempt_id": "0982f78e",
+     "dispatch_epoch": 1,
+     "retry_not_before": null,
+     "expires_at": "2026-09-28T01:00:01.000Z",
+     "observed_at": null,
+     "late_observed_at": "2026-09-28T00:00:26.000Z"
+    }
+   ]
+  },
+  {
+   "step": "late outcome(submitted)",
+   "value": false
+  },
+  {
+   "step": "reserve(current)",
+   "value": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  {
+   "step": "rows",
+   "value": [
+    {
+     "nd": "4e244e0c3e1e",
+     "state": "unknown",
+     "instance_id": "inst-1",
+     "birth_generation": "2026-09-28T00:00:00.000Z",
+     "relay_id": "relay-1",
+     "attempt_id": "0982f78e",
+     "dispatch_epoch": 1,
+     "retry_not_before": null,
+     "expires_at": "2026-09-28T01:00:01.000Z",
+     "observed_at": null,
+     "late_observed_at": "2026-09-28T00:00:26.000Z"
+    }
+   ]
+  }
+ ],
+ "C2-same-ms-restart-generation-collision": [
+  {
+   "step": "generation before/after",
+   "value": {
+    "before": "2026-09-28T00:00:00.000Z",
+    "after": "2026-09-28T00:00:06.000Z"
+   }
+  },
+  {
+   "step": "same-ms restart then 3ms restart",
+   "value": {
+    "after3ms": "2026-09-28T00:00:06.003Z"
+   }
+  },
+  {
+   "step": "hook(nonce from first birth)",
+   "value": {
+    "recognized": false,
+    "messages": [],
+    "binding": null
+   }
+  },
+  {
+   "step": "rows",
+   "value": [
+    {
+     "nd": "310f161f0cae",
+     "state": "unknown",
+     "instance_id": "inst-1",
+     "birth_generation": "2026-09-28T00:00:00.000Z",
+     "relay_id": "relay-1",
+     "attempt_id": "714436c2",
+     "dispatch_epoch": 1,
+     "retry_not_before": null,
+     "expires_at": "2026-09-28T01:00:01.000Z",
+     "observed_at": null,
+     "late_observed_at": "2026-09-28T00:00:06.004Z"
+    }
+   ]
+  },
+  {
+   "step": "collision: original birth vs restart birth",
+   "value": {
+    "original": "2026-09-28T00:00:00.000Z",
+    "restarted": "2026-09-28T00:00:00.000Z",
+    "equal": true
+   }
+  },
+  {
+   "step": "collision: hook(first-birth nonce) after restart",
+   "value": {
+    "recognized": true,
+    "messages": [
+     "msg-c2b-001"
+    ],
+    "binding": {
+     "inst": "inst-1",
+     "gen": "2026-09-28T00:00:00.000Z"
+    }
+   }
+  },
+  {
+   "step": "collision rows",
+   "value": [
+    {
+     "nd": "c83210bce838",
+     "state": "observed",
+     "instance_id": "inst-1",
+     "birth_generation": "2026-09-28T00:00:00.000Z",
+     "relay_id": "relay-1",
+     "attempt_id": "19b346fa",
+     "dispatch_epoch": 1,
+     "retry_not_before": null,
+     "expires_at": "2026-09-28T01:00:00.000Z",
+     "observed_at": "2026-09-28T00:00:01.001Z",
+     "late_observed_at": null
+    }
+   ]
+  }
+ ],
+ "G1-unknown-latched-until-arrival": [
+  {
+   "step": "reserve(current) while unknown",
+   "value": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  {
+   "step": "status",
+   "value": {
+    "state": "unknown",
+    "observation": "observation-overdue",
+    "deliveryState": "unknown",
+    "instanceId": "inst-1",
+    "generation": "2026-09-28T00:00:00.000Z",
+    "attemptId": "e1c5ff16-fb9e-46e0-a140-a949946a8830",
+    "dispatchEpoch": 1,
+    "retryNotBefore": null,
+    "expiresAt": "2026-09-28T01:00:01.000Z",
+    "observedAt": null,
+    "lateObservedAt": null
+   }
+  },
+  {
+   "step": "hook(old nonce, fresh receipt)",
+   "value": {
+    "recognized": false,
+    "messages": [],
+    "binding": null
+   }
+  },
+  {
+   "step": "late outcome(definite-failure)",
+   "value": false
+  },
+  {
+   "step": "reserve(current) after arrival",
+   "value": {
+    "dispatch": false,
+    "attempt": null
+   }
+  },
+  {
+   "step": "rows",
+   "value": [
+    {
+     "nd": "84639345469f",
+     "state": "unknown",
+     "instance_id": "inst-1",
+     "birth_generation": "2026-09-28T00:00:00.000Z",
+     "relay_id": "relay-1",
+     "attempt_id": "e1c5ff16",
+     "dispatch_epoch": 1,
+     "retry_not_before": null,
+     "expires_at": "2026-09-28T01:00:01.000Z",
+     "observed_at": null,
+     "late_observed_at": "2026-09-28T01:01:01.001Z"
+    }
+   ]
+  }
+ ]
+}

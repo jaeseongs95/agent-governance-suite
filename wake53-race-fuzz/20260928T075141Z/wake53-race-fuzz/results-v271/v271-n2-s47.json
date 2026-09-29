@@ -1,0 +1,128 @@
+{
+ "label": "v271-n2-s47",
+ "seed": 47,
+ "n": 2,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [],
+ "kills": [],
+ "exits": [
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 419,
+ "errorCount": 0,
+ "effectCount": 5,
+ "auditCount": 234,
+ "opMix": {
+  "acquire": 19,
+  "send": 48,
+  "relayCycle": 49,
+  "prune": 13,
+  "start": 39,
+  "heartbeat": 45,
+  "hook": 64,
+  "lateOutcome": 13,
+  "reserve": 48,
+  "status": 8,
+  "claim": 12,
+  "tick": 25,
+  "dispatch": 2,
+  "hookReplay": 10,
+  "presenceSwitch": 14,
+  "ack": 7,
+  "legacyReserve": 3
+ },
+ "invariants": {
+  "a": {
+   "checks": 30,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 28,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 76,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 3,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 5,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 15,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 30,
+   "violations": 2,
+   "samples": [
+    {
+     "seq": 162,
+     "op": "hook",
+     "op_id": "w0-8994-121",
+     "from": "submitted",
+     "to": "unknown"
+    },
+    {
+     "seq": 220,
+     "op": "hook",
+     "op_id": "w0-8994-194",
+     "from": "unknown",
+     "to": "unknown"
+    }
+   ]
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 2,
+  "unknownCreated": 3,
+  "unknownToObserved": 1,
+  "unknownToOther": {
+   "lateOutcome:submitted": 1
+  },
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 2,
+  "unknownExposures": 33,
+  "genSwitches": 8,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 0,
+  "activeEnd": {
+   "unknown": 1,
+   "reserved": 1
+  },
+  "errors": {}
+ }
+}

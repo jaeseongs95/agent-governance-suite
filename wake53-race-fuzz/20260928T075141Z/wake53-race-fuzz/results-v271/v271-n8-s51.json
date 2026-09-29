@@ -1,0 +1,261 @@
+{
+ "label": "v271-n8-s51",
+ "seed": 51,
+ "n": 8,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 1346,
+   "victim": 6
+  },
+  {
+   "delay": 230,
+   "victim": 4
+  },
+  {
+   "delay": 352,
+   "victim": 1
+  },
+  {
+   "delay": 194,
+   "victim": 2
+  }
+ ],
+ "kills": [
+  {
+   "at": 194,
+   "victim": 2
+  },
+  {
+   "at": 230,
+   "victim": 4
+  },
+  {
+   "at": 352,
+   "victim": 1
+  },
+  {
+   "at": 1346,
+   "victim": 6
+  }
+ ],
+ "exits": [
+  {
+   "index": 2,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 4,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 6,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 9,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 8,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 10,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 5,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 7,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 11,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 1748,
+ "errorCount": 0,
+ "effectCount": 2,
+ "auditCount": 827,
+ "opMix": {
+  "acquire": 74,
+  "reserve": 248,
+  "heartbeat": 202,
+  "relayCycle": 187,
+  "send": 214,
+  "claim": 69,
+  "presenceSwitch": 53,
+  "tick": 99,
+  "start": 175,
+  "ack": 36,
+  "lateOutcome": 36,
+  "status": 30,
+  "hook": 200,
+  "prune": 67,
+  "hookReplay": 48,
+  "legacyReserve": 10
+ },
+ "invariants": {
+  "a": {
+   "checks": 79,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 77,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 248,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 6,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 79,
+   "violations": 71,
+   "samples": [
+    {
+     "seq": 55,
+     "op": "hook",
+     "op_id": "w6-29350-68",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 57,
+     "op": "hook",
+     "op_id": "w6-29350-73",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 59,
+     "op": "hook",
+     "op_id": "w0-29319-7",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 71,
+     "op": "hook",
+     "op_id": "w3-29332-21",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 92,
+     "op": "hook",
+     "op_id": "w9-29388-31",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 100,
+     "op": "hook",
+     "op_id": "w3-29332-34",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 118,
+     "op": "hook",
+     "op_id": "w9-29388-46",
+     "from": "unknown",
+     "to": "unknown"
+    },
+    {
+     "seq": 124,
+     "op": "hook",
+     "op_id": "w3-29332-51",
+     "from": "unknown",
+     "to": "unknown"
+    }
+   ]
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 1,
+   "samples": [
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T00:00:00.000Z",
+     "rowInst": "inst-0",
+     "curGen": "2026-09-28T00:00:00.000Z",
+     "curInst": "inst-s51-w6-8"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 0,
+  "currentObserve": 0,
+  "unknownCreated": 2,
+  "unknownToObserved": 0,
+  "unknownToOther": {
+   "lateOutcome:reserved": 1
+  },
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 71,
+  "unknownExposures": 435,
+  "genSwitches": 27,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 1,
+  "activeEnd": {
+   "reserved": 1,
+   "unknown": 1
+  },
+  "errors": {}
+ }
+}

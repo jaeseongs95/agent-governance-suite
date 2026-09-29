@@ -1,0 +1,152 @@
+{
+ "label": "v53-n4-s54",
+ "seed": 54,
+ "n": 4,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 177,
+   "victim": 3
+  }
+ ],
+ "kills": [
+  {
+   "at": 177,
+   "victim": 3
+  }
+ ],
+ "exits": [
+  {
+   "index": 3,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 1,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 834,
+ "errorCount": 0,
+ "effectCount": 2,
+ "auditCount": 420,
+ "opMix": {
+  "prune": 27,
+  "claim": 28,
+  "tick": 55,
+  "heartbeat": 112,
+  "reserve": 102,
+  "acquire": 43,
+  "send": 113,
+  "relayCycle": 76,
+  "start": 85,
+  "hook": 86,
+  "presenceSwitch": 18,
+  "legacyReserve": 8,
+  "status": 23,
+  "hookReplay": 22,
+  "lateOutcome": 18,
+  "ack": 17,
+  "dispatch": 1
+ },
+ "invariants": {
+  "a": {
+   "checks": 13,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 11,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 109,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 0,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 7,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 13,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 2,
+   "samples": [
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T00:00:00.000Z",
+     "rowInst": "inst-0",
+     "curGen": "2026-09-28T09:07:33.770Z",
+     "curInst": "inst-s54-w2-219"
+    },
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T05:03:57.264Z",
+     "rowInst": "inst-s54-w1-33",
+     "curGen": "2026-09-28T10:07:50.673Z",
+     "curInst": "inst-s54-w1-196"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 1,
+  "currentObserve": 0,
+  "unknownCreated": 1,
+  "unknownToObserved": 0,
+  "unknownToOther": {
+   "lateOutcome:submitted": 1
+  },
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 1,
+  "unknownExposures": 15,
+  "genSwitches": 34,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 2,
+  "activeEnd": {
+   "reserved": 2
+  },
+  "errors": {}
+ }
+}

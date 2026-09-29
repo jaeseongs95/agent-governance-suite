@@ -1,0 +1,152 @@
+{
+ "label": "v53-n4-s72",
+ "seed": 72,
+ "n": 4,
+ "steps": 250,
+ "killRate": 0.5,
+ "killPlan": [
+  {
+   "delay": 1584,
+   "victim": 1
+  }
+ ],
+ "kills": [
+  {
+   "at": 1584,
+   "victim": 1
+  }
+ ],
+ "exits": [
+  {
+   "index": 1,
+   "code": null,
+   "signal": "SIGKILL"
+  },
+  {
+   "index": 0,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 2,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 3,
+   "code": 0,
+   "signal": null
+  },
+  {
+   "index": 4,
+   "code": 0,
+   "signal": null
+  }
+ ],
+ "opCount": 982,
+ "errorCount": 0,
+ "effectCount": 4,
+ "auditCount": 470,
+ "opMix": {
+  "presenceSwitch": 43,
+  "heartbeat": 110,
+  "send": 117,
+  "relayCycle": 100,
+  "tick": 43,
+  "acquire": 50,
+  "claim": 38,
+  "reserve": 111,
+  "start": 92,
+  "legacyReserve": 9,
+  "hook": 135,
+  "hookReplay": 25,
+  "lateOutcome": 44,
+  "status": 11,
+  "prune": 32,
+  "ack": 21,
+  "dispatch": 1
+ },
+ "invariants": {
+  "a": {
+   "checks": 14,
+   "violations": 0,
+   "samples": []
+  },
+  "b": {
+   "checks": 12,
+   "violations": 0,
+   "samples": []
+  },
+  "c": {
+   "checks": 162,
+   "violations": 0,
+   "samples": []
+  },
+  "d": {
+   "checks": 2,
+   "violations": 0,
+   "samples": []
+  },
+  "e": {
+   "checks": 4,
+   "violations": 0,
+   "samples": []
+  },
+  "f": {
+   "checks": 7,
+   "violations": 0,
+   "samples": []
+  },
+  "g": {
+   "checks": 1,
+   "violations": 0,
+   "samples": []
+  },
+  "transition": {
+   "checks": 14,
+   "violations": 0,
+   "samples": []
+  },
+  "h_stuck_reserved": {
+   "checks": 2,
+   "violations": 2,
+   "samples": [
+    {
+     "target": "portable|wake-t1",
+     "rowGen": "2026-09-28T00:01:23.254Z",
+     "rowInst": "inst-s72-w2-35",
+     "curGen": "2026-09-28T04:07:22.636Z",
+     "curInst": "inst-s72-w4-246"
+    },
+    {
+     "target": "portable|wake-t0",
+     "rowGen": "2026-09-28T01:01:29.113Z",
+     "rowInst": "inst-s72-w2-99",
+     "curGen": "2026-09-28T04:07:22.646Z",
+     "curInst": "inst-s72-w4-244"
+    }
+   ]
+  }
+ },
+ "info": {
+  "oldGenRetire": 1,
+  "currentObserve": 1,
+  "unknownCreated": 1,
+  "unknownToObserved": 0,
+  "unknownToOther": {
+   "lateOutcome:reserved": 1
+  },
+  "effectRowNotStarted": 0,
+  "outcomeOnTerminalOrLate": 0,
+  "hookRejectedWithRowChange": 1,
+  "unknownExposures": 1,
+  "genSwitches": 51,
+  "sameMsRestart": 0,
+  "lateRetireOfCurrentGen": 0,
+  "reservedStuckOldGenEnd": 2,
+  "activeEnd": {
+   "reserved": 2
+  },
+  "errors": {}
+ }
+}
