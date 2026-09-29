@@ -1,0 +1,208 @@
+{
+ "label": "08-after-broker-stop",
+ "messageLogical": {
+  "schema_sha256": "1c293f6f0718bcd87c51eb15b7ab63b9413be960ee9bdf32500d813c5a59526e",
+  "tables": {
+   "input_observations": {
+    "rows": 0,
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+   },
+   "messages": {
+    "rows": 6,
+    "sha256": "5f00cc5181bcc8a08eee683d7060f0e0517539cd632c483aa32983db748dc1a6"
+   },
+   "prepared_messages": {
+    "rows": 6,
+    "sha256": "508f85a5cb5f5432d711004f5ad9f4385d0255aa11c0cd8011594f3972a7fc47"
+   },
+   "relay_leases": {
+    "rows": 6,
+    "sha256": "53d022724503a9fb901786a0e413e2b382834c56ce80bbdb06f3ccf0e21e2e3a"
+   },
+   "session_presence": {
+    "rows": 16,
+    "sha256": "572ee013f69b1c6cd2fb4d9f633d9d8a87ee4eb16619e28ec7f5ce2265d52b11"
+   },
+   "wake_nonces": {
+    "rows": 9,
+    "sha256": "6a0ee3e9ae60b2ce04d3e37887efecc20eda23799ec1cc8aaa1c80d47b9b564a"
+   }
+  },
+  "all_sha256": "f2cbca7b96c12d95d32c64173cfb595e78f5e3e38745c4e8d63a0d218f85351b"
+ },
+ "trustLogical": {
+  "receipts": 4,
+  "keyDigest": "94252ec6a0a661f4",
+  "schema": "3a305bbe519e75febc552e22cd13c362bc4b74ad1177e0172e5fe6b11a2153cd",
+  "receiptIds": [
+   "source-2f3e0df7-85cb-4946-98e4-72404ce15fdb",
+   "source-6718b5b2-8fa6-47c7-8078-d472e82ee6d4",
+   "source-b25aac24-6659-40df-8a10-15a19d1aefd8",
+   "source-bdb10222-5e8d-427e-aad6-b508bc5c2f02"
+  ]
+ },
+ "stateDir": {
+  "broker-cert.pem": {
+   "bytes": 570,
+   "sha256": "5abf68cad4b7bc7ac99c997829f7abff9832f55116b8ad1a31c6e5882c6e545b"
+  },
+  "broker-key.pem": {
+   "bytes": 241,
+   "sha256": "(secret, not hashed)"
+  },
+  "broker.token": {
+   "bytes": 44,
+   "sha256": "(secret, not hashed)"
+  },
+  "exp-state.json": {
+   "bytes": 4622,
+   "sha256": "c86c3b86adaef594a90bddde3a18b1ac7723bcb931b3b936bac9f518dab2af1a"
+  },
+  "session-messages.sqlite3": {
+   "bytes": 81920,
+   "sha256": "5b908dc1e314f76b5f7991e209d52f659f410d06544feba9d47d8f25f31138ad"
+  },
+  "trust.sqlite3": {
+   "bytes": 28672,
+   "sha256": "de47d75208c6199053fba7c5d22f2a812ae00688e941a4f580115cc658b409ef"
+  }
+ },
+ "defaultTrustDir": null,
+ "wake": [
+  {
+   "session_id": "exp-T0-control",
+   "state": "submitted",
+   "attempt_id": "53aebf72-f722-4f7e-9c29-9d807d2a1058",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T05:20:00.300Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T05:20:00.302Z",
+   "outcome_at": "2026-09-28T05:20:00.303Z",
+   "observed_at": null,
+   "late_observed_at": null,
+   "consumed_at": null,
+   "expires_at": "2026-09-28T06:20:00.301Z"
+  },
+  {
+   "session_id": "exp-T1-gen-unknown",
+   "state": "unknown",
+   "attempt_id": "d0025acf-5494-4bec-9db6-7a521e1efda6",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T05:15:00.000Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T05:15:00.002Z",
+   "outcome_at": "2026-09-28T05:15:00.003Z",
+   "observed_at": null,
+   "late_observed_at": null,
+   "consumed_at": null,
+   "expires_at": "2026-09-28T06:15:00.001Z"
+  },
+  {
+   "session_id": "exp-T2-gen-submitted",
+   "state": "submitted",
+   "attempt_id": "8057ec0a-fe6f-404b-982b-20d070ec3e5d",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T05:15:00.000Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T05:15:00.002Z",
+   "outcome_at": "2026-09-28T05:15:00.003Z",
+   "observed_at": null,
+   "late_observed_at": null,
+   "consumed_at": null,
+   "expires_at": "2026-09-28T06:15:00.001Z"
+  },
+  {
+   "session_id": "exp-T3-late-unknown",
+   "state": "observed",
+   "attempt_id": "898c46ad-8001-4c36-ac49-bd4cd4052403",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T05:15:00.000Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T05:15:00.002Z",
+   "outcome_at": "2026-09-28T05:15:00.003Z",
+   "observed_at": "2026-09-28T05:19:52.000Z",
+   "late_observed_at": "2026-09-28T05:19:52.001Z",
+   "consumed_at": "2026-09-28T07:21:16.581Z",
+   "expires_at": "2026-09-28T06:15:00.001Z"
+  },
+  {
+   "session_id": "exp-T3-late-unknown",
+   "state": "observed",
+   "attempt_id": "e79e0afb-a851-41fe-94e8-7d585f244176",
+   "instance_id": "inst-3",
+   "birth_generation": "2026-09-28T07:21:17.385Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T07:21:18.759Z",
+   "outcome_at": "2026-09-28T07:21:18.765Z",
+   "observed_at": "2026-09-28T07:21:18.780Z",
+   "late_observed_at": null,
+   "consumed_at": "2026-09-28T07:21:18.780Z",
+   "expires_at": "2026-09-28T08:21:18.753Z"
+  },
+  {
+   "session_id": "exp-T4-started-crash",
+   "state": "submitted",
+   "attempt_id": "bc357012-c372-4218-9331-af3c46c36655",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T05:15:00.000Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T05:15:00.002Z",
+   "outcome_at": "2026-09-28T05:20:00.200Z",
+   "observed_at": null,
+   "late_observed_at": null,
+   "consumed_at": null,
+   "expires_at": "2026-09-28T06:15:00.001Z"
+  },
+  {
+   "session_id": "exp-T5-ttl-unknown",
+   "state": "unknown",
+   "attempt_id": "8c15ced3-dbc9-4b03-98d1-d7ebdfcb352f",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T04:19:00.000Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T04:19:00.002Z",
+   "outcome_at": "2026-09-28T04:19:00.003Z",
+   "observed_at": null,
+   "late_observed_at": null,
+   "consumed_at": null,
+   "expires_at": "2026-09-28T05:19:00.001Z"
+  },
+  {
+   "session_id": "exp-T6-ttl-late",
+   "state": "observed",
+   "attempt_id": "ac9c09bb-b6fb-49dd-9875-4fd8ab54c151",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T04:19:00.000Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T04:19:00.002Z",
+   "outcome_at": "2026-09-28T04:19:00.003Z",
+   "observed_at": "2026-09-28T05:19:52.000Z",
+   "late_observed_at": "2026-09-28T05:19:52.001Z",
+   "consumed_at": "2026-09-28T07:21:17.784Z",
+   "expires_at": "2026-09-28T05:19:00.001Z"
+  },
+  {
+   "session_id": "exp-T6-ttl-late",
+   "state": "observed",
+   "attempt_id": "ac3f60ee-0889-4cdd-83aa-927053ff11df",
+   "instance_id": "inst-3",
+   "birth_generation": "2026-09-28T07:21:17.413Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T07:21:19.299Z",
+   "outcome_at": "2026-09-28T07:21:19.303Z",
+   "observed_at": "2026-09-28T07:21:19.316Z",
+   "late_observed_at": null,
+   "consumed_at": "2026-09-28T07:21:19.316Z",
+   "expires_at": "2026-09-28T08:21:19.294Z"
+  }
+ ]
+}

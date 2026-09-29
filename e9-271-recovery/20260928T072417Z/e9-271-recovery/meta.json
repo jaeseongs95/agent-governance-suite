@@ -1,0 +1,20 @@
+{
+ "case": "e9-271-recovery",
+ "target": {
+  "sha": "e9b4c73b2ff4294c68c6490411fbc6118c69c8c8",
+  "tree": "4316195bbb2cdade6efa1a62150e33358ef60a7c",
+  "treeVerified": true,
+  "branch": "origin/codex/wake-history-reconcile"
+ },
+ "baseline_271": {
+  "sha": "d5c5932cd5a0d87630f6ed94f8e3721181ab9864",
+  "tree": "241ae17597d3a051074ff6f0223cc3d20427c3f9"
+ },
+ "previous_evidence": "origin/claude/evidence-wake-271-state-upgrade-20260928T065638Z (wake-271-state-upgrade/)",
+ "node": "v24.21.0",
+ "pnpm": "11.19.0 (repo packageManager, used for install/build; see 03-corepack.log, 05-*). Note: pnpm -v outside a repo reported 12.6.0 via corepack default when writing meta.",
+ "uname": "Linux vm 6.18.44-fc-v37 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+ "start_utc": "2026-09-28T07:15:57Z",
+ "end_utc": "2026-09-28T07:22:57Z",
+ "environment": "Linux cloud container, disposable /tmp state only; no user operational DB"
+}

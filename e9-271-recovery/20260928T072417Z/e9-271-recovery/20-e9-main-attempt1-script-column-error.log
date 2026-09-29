@@ -1,0 +1,15 @@
+{"step":"receipts","t":"2026-09-28T07:21:00.520Z","receipts":{"exp-T3-late-unknown":"source-bdb10222-5e8d-427e-aad6-b508bc5c2f02","exp-T6-ttl-late":"source-6718b5b2-8fa6-47c7-8078-d472e82ee6d4"},"NO_RECEIPT":"source-00000000-0000-4000-8000-000000000000"}
+/tmp/ev/scripts/run-e9.mjs:55
+    wake: m.prepare(`SELECT session_id, state, attempt_id, instance_id, birth_generation, dispatch_epoch, started_at, outcome, outcome_at,
+            ^
+
+Error: no such column: outcome
+    at snap (/tmp/ev/scripts/run-e9.mjs:55:13)
+    at <anonymous> (/tmp/ev/scripts/run-e9.mjs:92:1) {
+  code: 'ERR_SQLITE_ERROR',
+  errcode: 1,
+  errstr: 'SQL logic error'
+}
+
+Node.js v24.21.0
+EXIT=1

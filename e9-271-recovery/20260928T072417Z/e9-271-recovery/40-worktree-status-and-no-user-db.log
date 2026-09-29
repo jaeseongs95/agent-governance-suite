@@ -1,0 +1,17 @@
+e9 HEAD e9b4c73b2ff4294c68c6490411fbc6118c69c8c8 tree 4316195bbb2cdade6efa1a62150e33358ef60a7c
+real HOME=/root
+total 12
+drwx------  3 root root 4096 Sep 28 07:15 .
+drwx------ 16 root root 4096 Sep 28 07:15 ..
+drwx------  2 root root 4096 Sep 28 07:15 session-messaging
+ls: cannot access '/root/.codex': No such file or directory
+1874 /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-1790579757200-rnc6sg.sh 2>/dev/null || true && export BUN_OPTIONS="--smol${BUN_OPTIONS:+ $BUN_OPTIONS}" && shopt -u extglob 2>/dev/null || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'cd /tmp/ev && (git -C /tmp/e9 status --short; git -C /tmp/v271 status --short; echo "e9 HEAD $(git -C /tmp/e9 rev-parse HEAD) tree $(git -C /tmp/e9 rev-parse HEAD^{tree})"; echo "real HOME=$HOME"; ls -la $HOME/.agent-governance-suite 2>&1; ls -la $HOME/.codex 2>&1 | head -3; pgrep -af session-message-broker || echo "no broker running"; echo EXIT=0) > 40-worktree-status-and-no-user-db.log 2>&1; cat 40-worktree-status-and-no-user-db.log; grep -h '"'"'"operation":"reconcile-wake-observation"'"'"' 20-e9-main.log 33-e9-f1c.log | python3 -c " import sys,json for l in sys.stdin:   x=json.loads(l)   if '"'"'\"reconciled\":true'"'"' in x['"'"'stdout'"'"']: print(x['"'"'payload'"'"']['"'"'target'"'"']['"'"'sessionId'"'"'], x['"'"'t'"'"']); print(x['"'"'stdout'"'"'])" | tee 41-reconcile-true-outputs.txt' < /dev/null && pwd -P >| /tmp/claude-0bbb-cwd
+1876 /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-1790579757200-rnc6sg.sh 2>/dev/null || true && export BUN_OPTIONS="--smol${BUN_OPTIONS:+ $BUN_OPTIONS}" && shopt -u extglob 2>/dev/null || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'cd /tmp/ev && (git -C /tmp/e9 status --short; git -C /tmp/v271 status --short; echo "e9 HEAD $(git -C /tmp/e9 rev-parse HEAD) tree $(git -C /tmp/e9 rev-parse HEAD^{tree})"; echo "real HOME=$HOME"; ls -la $HOME/.agent-governance-suite 2>&1; ls -la $HOME/.codex 2>&1 | head -3; pgrep -af session-message-broker || echo "no broker running"; echo EXIT=0) > 40-worktree-status-and-no-user-db.log 2>&1; cat 40-worktree-status-and-no-user-db.log; grep -h '"'"'"operation":"reconcile-wake-observation"'"'"' 20-e9-main.log 33-e9-f1c.log | python3 -c " import sys,json for l in sys.stdin:   x=json.loads(l)   if '"'"'\"reconciled\":true'"'"' in x['"'"'stdout'"'"']: print(x['"'"'payload'"'"']['"'"'target'"'"']['"'"'sessionId'"'"'], x['"'"'t'"'"']); print(x['"'"'stdout'"'"'])" | tee 41-reconcile-true-outputs.txt' < /dev/null && pwd -P >| /tmp/claude-0bbb-cwd
+EXIT=0
+total 84
+drwx------ 2 root root  4096 2026-09-28 07:15:46.392458228 +0000 .
+drwx------ 3 root root  4096 2026-09-28 07:15:46.378252662 +0000 ..
+-rw------- 1 root root  4096 2026-09-28 07:15:46.385391505 +0000 trust.sqlite3
+-rw-r--r-- 1 root root 32768 2026-09-28 07:15:46.392487044 +0000 trust.sqlite3-shm
+-rw-r--r-- 1 root root 37112 2026-09-28 07:15:46.406252663 +0000 trust.sqlite3-wal
+EXIT=0

@@ -1,0 +1,205 @@
+{
+ "label": "f1-after-T3-second",
+ "messageLogical": {
+  "schema_sha256": "1c293f6f0718bcd87c51eb15b7ab63b9413be960ee9bdf32500d813c5a59526e",
+  "tables": {
+   "input_observations": {
+    "rows": 0,
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+   },
+   "messages": {
+    "rows": 11,
+    "sha256": "86583e225f0adcc4ffaf40919866b00985801a26baf8649883cf474811ff2d92"
+   },
+   "prepared_messages": {
+    "rows": 0,
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+   },
+   "relay_leases": {
+    "rows": 7,
+    "sha256": "13a16d578b72b65e349d4159cefea84a501a06adf39b469f9d0777e2c0408a29"
+   },
+   "session_presence": {
+    "rows": 10,
+    "sha256": "193e55e264500997428505afb36ef571d37790dff70460808225cf9aa8582c75"
+   },
+   "wake_nonces": {
+    "rows": 7,
+    "sha256": "ad0b2ce3a63e12e9dc178cd37e3b933b38e7bbec2c637ecbfe9517fe86348531"
+   }
+  },
+  "all_sha256": "4f94484b6d1dbaa53ce95b16700521183f9b32e322a8c1e9ccb2bf98c965e254"
+ },
+ "trustLogical": {
+  "receipts": 2,
+  "keyDigest": "94252ec6a0a661f4",
+  "schema": "3a305bbe519e75febc552e22cd13c362bc4b74ad1177e0172e5fe6b11a2153cd",
+  "receiptIds": [
+   "source-6718b5b2-8fa6-47c7-8078-d472e82ee6d4",
+   "source-bdb10222-5e8d-427e-aad6-b508bc5c2f02"
+  ]
+ },
+ "stateDir": {
+  "broker-cert.pem": {
+   "bytes": 570,
+   "sha256": "422d3fad92d44327ac1fe59bef5fa891cd20c4bd2e2f2b9452853417766c2604"
+  },
+  "broker-key.pem": {
+   "bytes": 241,
+   "sha256": "(secret, not hashed)"
+  },
+  "broker.lock": {
+   "bytes": 5,
+   "sha256": "5cf21a136ce6d6fd0f0cdc61f08069c8881fbff0d815449789a6e2512f582020"
+  },
+  "broker.token": {
+   "bytes": 44,
+   "sha256": "(secret, not hashed)"
+  },
+  "endpoint.json": {
+   "bytes": 239,
+   "sha256": "5c5de943dd3ac60787cd3e62de072586eb70cd255ee0d56d4a25ffa955c2c70d"
+  },
+  "exp-state.json": {
+   "bytes": 4622,
+   "sha256": "c86c3b86adaef594a90bddde3a18b1ac7723bcb931b3b936bac9f518dab2af1a"
+  },
+  "session-messages.sqlite3": {
+   "bytes": 81920,
+   "sha256": "251855cbf34c8e4b9f805f8bc7c24f524d3dfa35ae5f1c7910b221b3ab680f80"
+  },
+  "session-messages.sqlite3-shm": {
+   "bytes": 32768,
+   "sha256": "1f9b85b79a1ce47f8b444d3782f62fc311b408d97c738de387491c0e77ced1c8"
+  },
+  "session-messages.sqlite3-wal": {
+   "bytes": 4120032,
+   "sha256": "def09f1b95baaa1892be86e51e438cfef07592d74daf49c998edbc8c7205ef40"
+  },
+  "trust.sqlite3": {
+   "bytes": 28672,
+   "sha256": "881a3c338208e19e20498133490b74296fea1cfc8287c715be8ce298971ce655"
+  }
+ },
+ "defaultTrustDir": {
+  "trust.sqlite3": {
+   "bytes": 28672,
+   "sha256": "e82491075a01b004a53fa77c217272a2c7d29335d4bbabcff7e328c8eb288c7d"
+  },
+  "trust.sqlite3-shm": {
+   "bytes": 32768,
+   "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+  },
+  "trust.sqlite3-wal": {
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+ },
+ "wake": [
+  {
+   "session_id": "exp-T0-control",
+   "state": "submitted",
+   "attempt_id": "53aebf72-f722-4f7e-9c29-9d807d2a1058",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T05:20:00.300Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T05:20:00.302Z",
+   "outcome_at": "2026-09-28T05:20:00.303Z",
+   "observed_at": null,
+   "late_observed_at": null,
+   "consumed_at": null,
+   "expires_at": "2026-09-28T06:20:00.301Z"
+  },
+  {
+   "session_id": "exp-T1-gen-unknown",
+   "state": "unknown",
+   "attempt_id": "d0025acf-5494-4bec-9db6-7a521e1efda6",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T05:15:00.000Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T05:15:00.002Z",
+   "outcome_at": "2026-09-28T05:15:00.003Z",
+   "observed_at": null,
+   "late_observed_at": null,
+   "consumed_at": null,
+   "expires_at": "2026-09-28T06:15:00.001Z"
+  },
+  {
+   "session_id": "exp-T2-gen-submitted",
+   "state": "submitted",
+   "attempt_id": "8057ec0a-fe6f-404b-982b-20d070ec3e5d",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T05:15:00.000Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T05:15:00.002Z",
+   "outcome_at": "2026-09-28T05:15:00.003Z",
+   "observed_at": null,
+   "late_observed_at": null,
+   "consumed_at": null,
+   "expires_at": "2026-09-28T06:15:00.001Z"
+  },
+  {
+   "session_id": "exp-T3-late-unknown",
+   "state": "unknown",
+   "attempt_id": "898c46ad-8001-4c36-ac49-bd4cd4052403",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T05:15:00.000Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T05:15:00.002Z",
+   "outcome_at": "2026-09-28T05:15:00.003Z",
+   "observed_at": null,
+   "late_observed_at": "2026-09-28T05:19:52.001Z",
+   "consumed_at": null,
+   "expires_at": "2026-09-28T06:15:00.001Z"
+  },
+  {
+   "session_id": "exp-T4-started-crash",
+   "state": "submitted",
+   "attempt_id": "bc357012-c372-4218-9331-af3c46c36655",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T05:15:00.000Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T05:15:00.002Z",
+   "outcome_at": "2026-09-28T05:20:00.200Z",
+   "observed_at": null,
+   "late_observed_at": null,
+   "consumed_at": null,
+   "expires_at": "2026-09-28T06:15:00.001Z"
+  },
+  {
+   "session_id": "exp-T5-ttl-unknown",
+   "state": "unknown",
+   "attempt_id": "8c15ced3-dbc9-4b03-98d1-d7ebdfcb352f",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T04:19:00.000Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T04:19:00.002Z",
+   "outcome_at": "2026-09-28T04:19:00.003Z",
+   "observed_at": null,
+   "late_observed_at": null,
+   "consumed_at": null,
+   "expires_at": "2026-09-28T05:19:00.001Z"
+  },
+  {
+   "session_id": "exp-T6-ttl-late",
+   "state": "unknown",
+   "attempt_id": "ac9c09bb-b6fb-49dd-9875-4fd8ab54c151",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T04:19:00.000Z",
+   "dispatch_epoch": 1,
+   "retry_count": 0,
+   "started_at": "2026-09-28T04:19:00.002Z",
+   "outcome_at": "2026-09-28T04:19:00.003Z",
+   "observed_at": null,
+   "late_observed_at": "2026-09-28T05:19:52.001Z",
+   "consumed_at": null,
+   "expires_at": "2026-09-28T05:19:00.001Z"
+  }
+ ]
+}
