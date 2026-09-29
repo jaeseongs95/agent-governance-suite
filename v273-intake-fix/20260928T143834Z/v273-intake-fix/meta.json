@@ -1,0 +1,12 @@
+{
+  "task": "AGS 2.7.3 intake audit follow-up (F-1, F-2, F-3), 총괄 ca8e3dc4",
+  "baseCandidate": "732ba286a68b35a7cbd99aefbea12d11b88f1b8c",
+  "fixedCandidate": "9c8c6f6a62204bc99fc3ab49df1688ddb023e01d",
+  "fixedTree": "fdb4640f13a1cec6e9cae66ee8359d0c29714f24",
+  "auditEvidenceBranch": "claude/evidence-v273-intake-audit-20260928T141218Z",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v42 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startUtc": "2026-09-28T14:33:32Z",
+  "endUtc": "2026-09-28T14:37:54Z"
+}

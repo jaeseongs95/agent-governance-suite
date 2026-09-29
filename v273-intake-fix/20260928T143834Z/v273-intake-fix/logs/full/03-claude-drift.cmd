@@ -1,0 +1,1 @@
+pnpm claude:drift

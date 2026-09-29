@@ -1,0 +1,82 @@
+
+ RUN  v5.0.0 [REDACTED-HOME]/agent-governance-suite
+
+ ❯ tests/tooling/claude-plugin.test.mjs (20 tests | 1 failed) 1403ms
+   ❯ generated Claude plugin (12)
+     × keeps no copy of the common intake sentences in any tracked file outside the shared source 274ms
+ ❯ tests/mcp/tool-schema-profile.test.ts (7 tests | 2 failed) 2051ms
+   ❯ MCP tool schema profiles (7)
+     × advertises the same host-neutral intake instructions to every schema profile 15ms
+     × applies the environment profile in the bundled server 525ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > advertises the same host-neutral intake instructions to every schema profile
+AssertionError: 개념 설명이나 명령 이력 조회는 그 행동을 실행하는 요청이 아니다.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/mcp/tool-schema-profile.test.ts:205:84
+    203|     const sentences = intake!.split("\n").filter((line) => !line.start…
+    204|     expect(sentences.length).toBeGreaterThan(10);
+    205|     for (const sentence of sentences) expect(outside.includes(sentence…
+       |                                                                                    ^
+    206|     expect(SKILL_INTAKE_SERVER_INSTRUCTIONS).not.toMatch(/실패 영향이 낮으면|B…
+    207|     // Skill IDs are common; native invocation syntax remains in adapt…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > applies the environment profile in the bundled server
+AssertionError: expected 'agent-governance-suite 접수 안내: 다음은 ski…' to be 'agent-governance-suite 접수 안내: 다음은 ski…' // Object.is equality
+
+- Expected
++ Received
+
+@@ -1,6 +1,6 @@
+- agent-governance-suite 접수 안내: 다음은 skills/orchestrator/SKILL.md의 공통 원본이다. 적용되는 전문 스킬을 호스트가 제공하는 설치된 스킬 호출 방식으로 실행한다. 개념 설명이나 명령 이력 조회는 그 행동을 실행하는 요청이 아니다.
++ agent-governance-suite 접수 안내: 다음은 skills/orchestrator/SKILL.md의 공통 원본이다. 적용되는 전문 스킬을 호스트가 제공하는 설치된 스킬 호출 방식으로 실행한다.
+
+  ## 공통 접수·선택 기준
+
+  요청의 목적, 실제로 수행할 행동과 전문 스킬의 적용·제외 조건을 대조해 선택한다. 키워드, 파일 종류나 `complex` 표시만으로 스킬을 붙이지 않는다. 사용자가 이름으로 지정한 스킬은 우선하고 다른 스킬로 대체하지 않지만, 필수 승인·검증·독립성 gate를 생략하는 권한으로 해석하지 않는다.
+
+
+ ❯ tests/mcp/tool-schema-profile.test.ts:243:40
+    241|       expect(planning).toBeDefined();
+    242|       expect(planning).not.toHaveProperty("oneOf");
+    243|       expect(client.getInstructions()).toBe(serverInstructions());
+       |                                        ^
+    244|     } finally {
+    245|       try { await transport.close(); } finally { await rm(stateDirecto…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in any tracked file outside the shared source
+AssertionError: mcp-server/src/server.ts: 개념 설명이나 명령 이력 조회는 그 행동을 실행하는 요청이 아니다.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/tooling/claude-plugin.test.mjs:145:97
+    143|     for (const file of files) {
+    144|       const text = await readFile(path.join(root, file), "utf8").catch…
+    145|       for (const sentence of sentences) expect(text.includes(sentence)…
+       |                                                                                                 ^
+    146|     }
+    147|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  3 failed | 27 passed (30)
+   Start at  14:35:18
+   Duration  2.97s (tests 78%, transform 16%, import 6%)
+

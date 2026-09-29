@@ -1,0 +1,7 @@
+vitest=1
+     × keeps no copy of the common intake sentences in any tracked file outside the shared source 274ms
+     × advertises the same host-neutral intake instructions to every schema profile 15ms
+     × applies the environment profile in the bundled server 525ms
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > advertises the same host-neutral intake instructions to every schema profile
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > applies the environment profile in the bundled server
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in any tracked file outside the shared source
