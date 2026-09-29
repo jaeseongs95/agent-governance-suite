@@ -137,14 +137,14 @@ start 이후 본문 claim과 외부 enqueue 사이 경합에서는 알림 하나
 
 1. 알림의 주입 만료(`expires_at`, 예약 뒤 1시간)에 유예 10분을 더한 시각이 지났다. 유예는 hook 8초 timeout, broker 재시작, hook receipt 30초 TTL을 덮고, 가장 긴 재시도 backoff와 같다.
 2. 다음 근거 가운데 하나가 저장되어 있다.
-   - 같은 대상의 최신 presence가 살아 있고(`ended_at` 없음, lease 유효), 그 birth가 알림의 birth generation보다 나중이다.
+   - 같은 대상의 최신 presence 행(birth 기준)이 더 이상 알림을 받은 birth의 살아 있는 행이 아니다. 새 birth가 최신이거나, 알림의 birth가 끝났거나(`ended_at`) lease가 끊겼거나, 행이 모두 지워진 경우다. 판정은 instance와 birth generation으로 하고 transport는 보지 않는다. 살아 있는 birth는 같은 세대로 transport를 바꿨다가 되돌릴 수 있기 때문이다.
    - 만료 뒤 같은 세션의 활동이 있었다: 본문 claim, 도구 경계 claim, turn-end claim과 정리, SessionEnd 정리, hook 없는 CLI의 claim·ACK 호출, ACK, 일반 사용자 입력 관측, 검증된 wake hook 도착.
 
 활동 근거는 권위가 아니며 신뢰 수준은 같은 OS 사용자다. 같은 OS 사용자의 프로세스는 CLI로 다른 세션의 활동 근거도 만들 수 있다.
 
-만료만 되고 근거가 없는 행, 끝난 세대나 lease가 끊긴 세대만 있는 행, 알림보다 이른 birth만 살아 있는 행은 그대로 활성으로 남는다. 퇴역은 `prune`의 UPDATE 한 문장으로 원자 commit하며, reserve·send·status 같은 기존 prune 지점에서 일어난다. 조회 도구인 `list_session_status`와 `get_session_message_status`도 prune을 부르므로 만료 기록 삭제와 퇴역을 일으킬 수 있다. 이 정리는 멱등이며 조회 결과의 의미를 바꾸지 않는다.
+끝났거나 lease가 끊긴 birth는 다시 살아나지 않는다. heartbeat는 살아 있는 행만 갱신하고, 같은 instance의 재등록은 더 늦은 새 birth를 받는다. presence 조회, relay tick, 현재 세대 claim과 `autoWake`는 모두 최신 행을 읽으므로, 최신 행이 알림의 살아 있는 birth가 아니면 그 알림은 현재 세대로 claim될 수 없고 새 wake도 예약되지 않는다. 그래서 이 근거로 퇴역해도 누적 억제 범위는 줄지 않는다. 2.7.4까지는 이 경우 가운데 새 birth가 살아 있는 경우만 퇴역했으므로, 끝나거나 lease가 끊긴 뒤 활동도 재등록도 없는 세션의 알림이 영구히 활성으로 남았다. 활성으로 남는 것은 만료와 유예 전의 행, 그리고 알림의 birth가 최신 행으로 살아 있고 만료 뒤 활동이 없는 행(살아 있지만 조용한 세션)뿐이다. 퇴역은 `prune`의 UPDATE 한 문장으로 원자 commit하며, reserve·send·status 같은 기존 prune 지점에서 일어난다. 조회 도구인 `list_session_status`와 `get_session_message_status`도 prune을 부르므로 만료 기록 삭제와 퇴역을 일으킬 수 있다. 이 정리는 멱등이며 조회 결과의 의미를 바꾸지 않는다.
 
-누적 상한: 대상당 활성 알림은 하나이고 퇴역은 주입 만료와 유예 뒤에만 일어난다. 따라서 세션이 활동하는 동안 host queue에는 (주입 TTL + 유예), 곧 약 70분마다 marker가 최대 1개 쌓일 수 있다. 한 turn이 오래 바쁘고 그동안 도구 경계 claim이나 ACK가 이어지면 이 상한까지 쌓일 수 있다. 활동도 새 세대도 없는 세션에는 쌓이지 않는다.
+누적 상한: 대상당 활성 알림은 하나이고 퇴역은 주입 만료와 유예 뒤에만 일어난다. 따라서 세션이 활동하는 동안 host queue에는 (주입 TTL + 유예), 곧 약 70분마다 marker가 최대 1개 쌓일 수 있다. 한 turn이 오래 바쁘고 그동안 도구 경계 claim이나 ACK가 이어지면 이 상한까지 쌓일 수 있다. 살아 있지만 조용한 세션에는 쌓이지 않고, 끝난 세션에는 live relay가 없어 새 알림을 보내지 않는다.
 
 퇴역한 행은 새 terminal 상태 `expired-unobserved`가 된다. `observed`나 성공으로 바꾸지 않고, status의 `deliveryState`는 계속 `unknown`이다. nonce, instance, birth generation, transport, relay, attempt, dispatch epoch, started·outcome·late 시각은 그대로 두고 `retired_at`만 더한다. 옛 attempt의 늦은 outcome이나 start는 이 행을 다시 열지 못한다. terminal 보관 규칙(최대 1000개, 퇴역 후 1시간)을 따르며, 보관 기산점은 `retired_at`이다. 이미 `late_observed_at`이 있는 v2.7.1 모양의 unknown도 같은 규칙으로 퇴역하며, 그 뒤 `reconcile-wake-observation`은 `reconciled: false`를 돌려준다. late 기록은 행에 그대로 남는다.
 
@@ -152,10 +152,13 @@ start 이후 본문 claim과 외부 enqueue 사이 경합에서는 알림 하나
 
 거절한 대안은 다음과 같다.
 
-- 만료만으로 해제: 세션이 살아 있다는 근거 없이 주입 만료마다 새 알림을 쌓는다. 선택한 규칙도 활동하는 세션에는 (주입 TTL + 유예)마다 최대 1개를 쌓을 수 있지만, 활동도 새 세대도 없는 세션에는 쌓지 않는다.
+- 만료만으로 해제: 세션이 살아 있다는 근거 없이 주입 만료마다 새 알림을 쌓는다. 선택한 규칙도 활동하는 세션에는 (주입 TTL + 유예)마다 최대 1개를 쌓을 수 있지만, 살아 있지만 조용한 세션에는 쌓지 않는다.
 - `observed`나 `not-submitted`로 해제: 도착이나 무효과의 증거가 없는데 그렇게 기록하게 된다.
 - broker가 relay 없이 직접 깨우기: host 생존과 알림 발송을 묶은 설계를 깨므로 만들지 않는다.
 - 같은 세대에서 활동 없이 relay만 살아 있어도 해제: idle host의 queue에 marker가 남아 있을 가능성을 배제하지 못한다.
+- 알림을 받은 instance의 행만 보고 판정: 그 행이 살아 있어도 더 늦은 birth가 최신이면 relay tick과 claim이 모두 거절되므로, 그 birth가 끝날 때까지 풀리지 않는 활성 행이 남는다. 최신 행 하나로 판정하면 presence·claim과 같은 행을 보고, 따로 규칙을 둘 필요도 없다.
+
+퇴역은 broker가 하는 prune에서만 일어난다. 2.7.4 이하 broker는 끝나거나 lease가 끊긴 birth의 알림을 퇴역하지 않으므로, 같은 DB를 이전 broker가 쓰는 동안 그 알림은 활성으로 남고 새 broker의 첫 prune에서 퇴역한다. 새 broker가 퇴역한 행은 2.7.3 이상 broker에서 terminal로 보인다.
 
 `send_session_message`의 결과와 `get_session_message_status`의 미ACK 큐 행, 세션 현황판의 presence에는 조언용 `autoWake`가 붙는다. 계약은 `contracts/session-auto-wake-outlook.v1.schema.json`이며 `authorityEffect: "none"`이다. 발신 성공은 broker가 큐에 넣었다는 뜻이고, `autoWake`는 수신자가 지금 idle 상태에서 자동으로 깨워질 수 있는지에 대한 조언일 뿐이다. 전달, 처리, 완료, 승인이나 권한의 증거가 아니고, 큐의 메시지를 지우거나 다시 보내지 않는다.
 
@@ -188,9 +191,9 @@ presence birth는 ms 해상도 ISO 문자열이다. 같은 instance가 이전 bi
 
 | service | broker | 현황판 presence |
 | --- | --- | --- |
-| 2.7.4 | 2.7.4 | 세션 수와 DB 크기에 관계없이 동작한다 |
-| 2.7.4 | 2.7.3, 2.7.2, 2.7.1, 2.2.6 | 이전 broker는 `targets`를 무시하고 모든 identity를 돌려준다. 응답이 한도 안이면 정상이고, 넘으면 모든 묶음이 실패해 2.7.3처럼 모든 presence가 `unknown`, `autoWake`가 `null`이다. 이전 broker는 presence 행을 지우지 않으므로 새 broker가 뜰 때까지 이어진다 |
-| 2.7.3 이하 | 2.7.4 | `targets` 없는 요청이라 모든 identity를 받는다. 보존 정리 뒤에는 24시간 안의 identity만 남지만, 그래도 한도를 넘으면 broker가 명시적으로 거절하고 이전 service는 모든 presence를 `unknown`으로 둔다 |
+| 2.7.4 이상 | 2.7.4 이상 | 세션 수와 DB 크기에 관계없이 동작한다 |
+| 2.7.4 이상 | 2.7.3, 2.7.2, 2.7.1, 2.2.6 | 이전 broker는 `targets`를 무시하고 모든 identity를 돌려준다. 응답이 한도 안이면 정상이다. 넘으면 첫 묶음이 응답 한도 초과(전송 실패)로 끝나 남은 묶음은 요청하지 않고, 2.7.3처럼 모든 presence가 `unknown`, `autoWake`가 `null`이다. 이전 broker는 presence 행을 지우지 않으므로 새 broker가 뜰 때까지 이어진다 |
+| 2.7.3 이하 | 2.7.4 이상 | `targets` 없는 요청이라 모든 identity를 받는다. 보존 정리 뒤에는 24시간 안의 identity만 남지만, 그래도 한도를 넘으면 broker가 명시적으로 거절하고 이전 service는 모든 presence를 `unknown`으로 둔다 |
 
 broker는 relay가 주기적으로 요청하는 동안 종료되지 않으므로, 업데이트 뒤에도 이전 broker가 계속 돌 수 있다. 앞의 안내대로 기존 AGS MCP·relay·broker를 종료한 뒤 재연결한다.
 
