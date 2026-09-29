@@ -1,0 +1,15 @@
+{
+  "task": "AGS 2.7.3 message receipt retention (Q) independent audit, 총괄 ca8e3dc4",
+  "verdict": "ACCEPT_WITH_FINDINGS",
+  "candidate": { "branch": "claude/v273-msgqueue", "commit": "cc5b1e9dc439647fff18ed8aaa58170fc9389369", "tree": "14282b51539b70fe605c12c9a5b2baa9ac40030f" },
+  "base": { "branch": "main", "commit": "8763cef2b11f2635d6c9af7861b5bffd496e2a30", "version": "v2.7.2" },
+  "wakeBranch": { "branch": "claude/v273-wake-liveness", "commit": "e739090952710d418a67dae71d76b1f2ef169441" },
+  "previousReleases": ["v2.7.2", "v2.7.1", "v2.2.6"],
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v42 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startedAt": "2026-09-28T15:03:34Z",
+  "finishedAt": "2026-09-28T15:29:51Z",
+  "raceRounds": { "auditCandidate": 20, "mutantRuns": 5 },
+  "redaction": { "patterns": ["ghp_", "gho_", "github_pat_", "sk-ant-", "AKIA", "BEGIN PRIVATE KEY", "Authorization: Bearer", "email", "IPv4", "account names"], "matches": 0, "replaced": [] }
+}

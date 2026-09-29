@@ -1,0 +1,43 @@
+
+ RUN  v5.0.0 /home/user/audit-merge
+
+ ❯ tests/session-messaging/message-retention.test.ts (11 tests | 1 failed) 4862ms
+   × bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted
+AssertionError: expected { …(5) } to deeply equal { …(5) }
+
+- Expected
++ Received
+
+@@ -1,10 +1,10 @@
+  {
+    "autoWake": {
+      "authorityEffect": "none",
+      "basisAt": null,
+-     "checkedAt": "1970-01-01T00:00:01.000Z",
++     "checkedAt": "1970-01-01T01:00:01.999Z",
+      "reason": "presence-unknown",
+      "state": "no-live-relay",
+    },
+    "createdAt": "1970-01-01T00:00:01.000Z",
+    "duplicate": true,
+
+ ❯ tests/session-messaging/message-retention.test.ts:113:68
+    111|   expect(store.acknowledge(target, [sent.messageId], ackAt)).toBe(1);
+    112|   expect(receiptExpiry(store, sent.messageId)).toBe(iso(Math.min(messa…
+    113|   expect(store.submitPrepared(hot, sent.messageId, ackAt + H - 1)).toE…
+       |                                                                    ^
+    114|   expect(store.status(hot, sent.messageId, ackAt + H - 1)).toMatchObje…
+    115|   expect(() => store.submitPrepared(hot, sent.messageId, ackAt + H)).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 9 passed | 1 skipped (11)
+      Tests  1 failed | 288 passed | 2 skipped (291)
+   Start at  15:14:28
+   Duration  22.48s (tests 95%, transform 3%, import 2%)
+

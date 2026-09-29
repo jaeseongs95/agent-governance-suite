@@ -1,0 +1,102 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 4 failed) 18422ms
+   × L1 sender boundary limit-1 / limit / limit+1 for prepare and send 227ms
+   × L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first) 1135ms
+   × L3 earliestReleaseAt equals the actual release instant, and exactly one slot frees per expired receipt 180ms
+   × L4 send of a pre-made draft just before and at earliestReleaseAt (global scope) 988ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L1 sender boundary limit-1 / limit / limit+1 for prepare and send
+AssertionError: expected { scope: 'sender', …(1) } to deeply equal { scope: 'sender', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "earliestReleaseAt": "1970-01-01T02:00:01.000Z",
++   "earliestReleaseAt": "1970-01-01T02:00:02.001Z",
+    "scope": "sender",
+  }
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:179:21
+    177|   const e = rejection(() => store.prepare({ sender: hot, target, body:…
+    178|   expect(e.message).toBe("The bounded message receipt store is full fo…
+    179|   expect(e.details).toEqual({ scope: "sender", earliestReleaseAt: iso(…
+       |                     ^
+    180|   expect(receipts(store, hot)).toBe(MESSAGE_SENDER_RECEIPT_LIMIT);
+    181|   // other sender not blocked
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first)
+AssertionError: expected { scope: 'sender', …(1) } to deeply equal { scope: 'sender', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "earliestReleaseAt": "1970-01-01T02:00:05.000Z",
++   "earliestReleaseAt": "1970-01-01T02:00:06.003Z",
+    "scope": "sender",
+  }
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:200:24
+    198|   // both full: hot sees sender scope with its own earliest receipt
+    199|   const both = rejection(() => store.prepare({ sender: hot, target, bo…
+    200|   expect(both.details).toEqual({ scope: "sender", earliestReleaseAt: i…
+       |                        ^
+    201|   // other sender sees global scope with the pool's earliest receipt
+    202|   const globalSend = rejection(() => store.submitPrepared(other, other…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L3 earliestReleaseAt equals the actual release instant, and exactly one slot frees per expired receipt
+AssertionError: expected 7201249 to be 7201000 // Object.is equality
+
+- Expected
++ Received
+
+- 7201000
++ 7201249
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:216:19
+    214|   for (let i = 0; i < MESSAGE_SENDER_RECEIPT_LIMIT; i++) sendNew(store…
+    215|   let release = Date.parse(rejection(() => store.prepare({ sender: hot…
+    216|   expect(release).toBe(1000 + 2 * H);
+       |                   ^
+    217|   for (let slot = 0; slot < 3; slot++) {
+    218|     expect(rejection(() => store.prepare({ sender: hot, target, body: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L4 send of a pre-made draft just before and at earliestReleaseAt (global scope)
+AssertionError: expected { scope: 'global', …(1) } to deeply equal { scope: 'global', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "earliestReleaseAt": "1970-01-01T02:00:01.000Z",
++   "earliestReleaseAt": "1970-01-01T02:33:19.001Z",
+    "scope": "global",
+  }
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:235:21
+    233|   sendNew(store, { host: "audit-host", sessionId: "g-last" }, 2_000_00…
+    234|   const e = rejection(() => store.submitPrepared(other, draft.messageI…
+    235|   expect(e.details).toEqual({ scope: "global", earliestReleaseAt: iso(…
+       |                     ^
+    236|   // draft TTL is 10 minutes, the release is ~1.4h away: re-prepare fl…
+    237|   const t = 1000 + 2 * H;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 12 passed (16)
+   Start at  15:24:10
+   Duration  18.75s (tests 99%, transform 1%)
+

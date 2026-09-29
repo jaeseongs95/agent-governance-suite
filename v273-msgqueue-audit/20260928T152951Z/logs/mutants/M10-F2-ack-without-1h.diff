@@ -1,0 +1,13 @@
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index efffd7dc..16df2aed 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -555,7 +555,7 @@ export class SessionMessageStore {
+     try {
+       for (const messageId of new Set(messageIds)) {
+         if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
+-        receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
++        receipt.run(iso(nowMs), messageId);
+         count++;
+       }
+       this.database.exec("COMMIT");

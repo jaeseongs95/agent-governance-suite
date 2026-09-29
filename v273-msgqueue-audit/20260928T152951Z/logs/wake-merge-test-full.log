@@ -1,0 +1,73 @@
+
+ RUN  v5.0.0 /home/user/audit-merge
+
+ ❯ tests/session-messaging/message-retention.test.ts (11 tests | 1 failed) 5853ms
+   × bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted 13ms
+ ❯ tests/tooling/commands.test.mjs (12 tests | 1 failed) 4648ms
+   ❯ skill maintenance commands (12)
+     × forwards pnpm script arguments without a standalone separator 140ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted
+AssertionError: expected { …(5) } to deeply equal { …(5) }
+
+- Expected
++ Received
+
+@@ -1,10 +1,10 @@
+  {
+    "autoWake": {
+      "authorityEffect": "none",
+      "basisAt": null,
+-     "checkedAt": "1970-01-01T00:00:01.000Z",
++     "checkedAt": "1970-01-01T01:00:01.999Z",
+      "reason": "presence-unknown",
+      "state": "no-live-relay",
+    },
+    "createdAt": "1970-01-01T00:00:01.000Z",
+    "duplicate": true,
+
+ ❯ tests/session-messaging/message-retention.test.ts:113:68
+    111|   expect(store.acknowledge(target, [sent.messageId], ackAt)).toBe(1);
+    112|   expect(receiptExpiry(store, sent.messageId)).toBe(iso(Math.min(messa…
+    113|   expect(store.submitPrepared(hot, sent.messageId, ackAt + H - 1)).toE…
+       |                                                                    ^
+    114|   expect(store.status(hot, sent.messageId, ackAt + H - 1)).toMatchObje…
+    115|   expect(() => store.submitPrepared(hot, sent.messageId, ackAt + H)).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/tooling/commands.test.mjs > skill maintenance commands > forwards pnpm script arguments without a standalone separator
+AssertionError: Unknown command: "validate:skill"
+
+
+Did you mean one of these?
+  npm run validate:all # run the "validate:all" package script
+  npm run validate:skill # run the "validate:skill" package script
+To see a list of supported npm commands, run:
+  npm help
+: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/tooling/commands.test.mjs:51:59
+     49|     );
+     50|
+     51|     expect(result.status, result.stderr || result.stdout).toBe(0);
+       |                                                           ^
+     52|     expect(result.stdout).toContain("orchestrator");
+     53|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 59 passed | 1 skipped (62)
+      Tests  2 failed | 847 passed | 2 skipped (851)
+   Start at  15:15:53
+   Duration  71.87s (tests 95%, import 3%, transform 2%)
+

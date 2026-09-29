@@ -1,0 +1,12 @@
+Already up to date
+Done in 491ms using pnpm v11.19.0
+$ node scripts/build.mjs && vitest run tests/tooling/commands.test.mjs
+
+ RUN  v5.0.0 /home/user/audit-merge
+
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  15:17:29
+   Duration  4.17s (tests 98%, transform 2%, import 1%)
+

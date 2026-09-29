@@ -1,0 +1,66 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/message-retention.test.ts (11 tests | 2 failed) 2502ms
+   × caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders 198ms
+   × service reports capacity rejections as definite no-effect with scope and earliest release details 515ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders
+AssertionError: expected { scope: 'global', …(1) } to deeply equal { scope: 'sender', …(1) }
+
+- Expected
++ Received
+
+  {
+    "earliestReleaseAt": "1970-01-01T02:00:01.000Z",
+-   "scope": "sender",
++   "scope": "global",
+  }
+
+ ❯ tests/session-messaging/message-retention.test.ts:69:32
+     67|   const sendRejected = rejection(() => store.submitPrepared(hot, overL…
+     68|   expect(sendRejected.message).toMatch(/receipt store is full for this…
+     69|   expect(sendRejected.details).toEqual({ scope: "sender", earliestRele…
+       |                                ^
+     70|   expect(sendRejected.details).toEqual({ scope: "sender", earliestRele…
+     71|   expect(rows(store)).toBe(beforeRows);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > service reports capacity rejections as definite no-effect with scope and earliest release details
+AssertionError: expected { schemaVersion: '1.0.0', …(3) } to match object { ok: false, error: { …(2) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "error": {
+      "code": "MCP_UNAVAILABLE",
+      "details": {
+        "earliestReleaseAt": "2026-09-28T17:24:32.663Z",
+-       "scope": "sender",
++       "scope": "global",
+      },
+    },
+    "ok": false,
+  }
+
+ ❯ tests/session-messaging/message-retention.test.ts:248:24
+    246|   const release = earliest(store, hot);
+    247|   const sendRejected = await service.send({ messageId: (prepared.data …
+    248|   expect(sendRejected).toMatchObject({ ok: false, error: { code: "MCP_…
+       |                        ^
+    249|   expect(sendRejected.error?.message).toMatch(/receipt store is full f…
+    250|   expect(sendRejected.error?.message).toContain("not queued");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 8 passed | 1 skipped (10)
+      Tests  2 failed | 260 passed | 1 skipped (263)
+   Start at  15:24:30
+   Duration  16.53s (tests 96%, transform 3%, import 1%)
+

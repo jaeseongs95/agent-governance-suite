@@ -1,0 +1,82 @@
+
+ RUN  v5.0.0 /home/user/audit-lab
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 4 failed) 24556ms
+   × I1 resend of one ID never inserts twice: retained, right after ACK, ACK+1h, message expiry 15ms
+   × I4 normalization variants of an issued ID never reach a second insert 8ms
+   × L5 byte-limit send rejection: scope global, earliestReleaseAt is the real release instant 40ms
+   × R2 two senders race for the last global slot (20 rounds) 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I1 resend of one ID never inserts twice: retained, right after ACK, ACK+1h, message expiry
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:69:27
+     67|   expect(() => store.submitPrepared(hot, sent.messageId, 3000 + H)).to…
+     68|   expect(rowsFor(store, sent.messageId)).toBe(0);
+     69|   expect(receipts(store)).toBe(0);
+       |                           ^
+     70|   expect(store.status(hot, sent.messageId, 3000 + H)).toBeNull();
+     71|   // Message expiry without ACK: row pruned at expiry, receipt answers…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I4 normalization variants of an issued ID never reach a second insert
+AssertionError: expected [Function] to throw error matching /unavailable/u but got 'host and sessionId must use bounded i…'
+
+- Expected:
+/unavailable/u
+
++ Received:
+"host and sessionId must use bounded identifier characters."
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:122:70
+    120|   // sender identity variants are separate owners and cannot use the ID
+    121|   for (const sender of [{ ...hot, sessionId: hot.sessionId.toUpperCase…
+    122|     expect(() => store.submitPrepared(sender, sent.messageId, 2000)).t…
+       |                                                                      ^
+    123|   }
+    124|   expect(allRows(store)).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L5 byte-limit send rejection: scope global, earliestReleaseAt is the real release instant
+Error: expected a rejection
+ ❯ rejection tests/session-messaging/audit-msgqueue.test.ts:49:9
+     47| function rejection(action: () => unknown): Error & { details?: { scope…
+     48|   try { action(); } catch (error) { return error as Error & { details?…
+     49|   throw new Error("expected a rejection");
+       |         ^
+     50| }
+     51|
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:259:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > R2 two senders race for the last global slot (20 rounds)
+Error: cannot start a transaction within a transaction
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:309:19
+    307|     const result = { messageId: randomUUID(), preparedAt: iso(nowMs), …
+    308|     const recordBytes = Buffer.byteLength(JSON.stringify({ ...input, t…
+    309|     this.database.exec("BEGIN IMMEDIATE");
+       |                   ^
+    310|     try {
+    311|       this.prune(nowMs);
+ ❯ sendNew tests/session-messaging/audit-msgqueue.test.ts:44:23
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:304:57
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 12 passed (16)
+   Start at  15:07:45
+   Duration  25.00s (tests 99%, transform 1%)
+

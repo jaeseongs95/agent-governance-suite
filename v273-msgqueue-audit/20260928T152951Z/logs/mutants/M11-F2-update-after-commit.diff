@@ -1,0 +1,20 @@
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index efffd7dc..1d8f1aaa 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -553,12 +553,14 @@ export class SessionMessageStore {
+     let count = 0;
+     this.database.exec("BEGIN IMMEDIATE");
+     try {
++      const acked: string[] = [];
+       for (const messageId of new Set(messageIds)) {
+         if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
+-        receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
++        acked.push(messageId);
+         count++;
+       }
+       this.database.exec("COMMIT");
++      for (const messageId of acked) receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
+       return count;
+     } catch (error) {
+       this.database.exec("ROLLBACK");

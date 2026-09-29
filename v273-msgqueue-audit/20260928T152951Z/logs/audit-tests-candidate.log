@@ -1,0 +1,37 @@
+
+ RUN  v5.0.0 /home/user/audit-lab
+
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > I1 resend of one ID never inserts twice: retained, right after ACK, ACK+1h, message expiry 11ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > I2 at full capacity a resend of an already-sent ID is still a duplicate, not a capacity rejection 144ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > I3 repeated claim and ACK leave receipt expiry, capacity counts and status stable 7ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > I4 normalization variants of an issued ID never reach a second insert 5ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > I5 a capacity-rejected draft stays retryable by the same ID and delivers exactly once 151ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > I6 late retry through the service after ACK+1h is uncertain guidance, never a definite no-effect claim 164ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > L1 sender boundary limit-1 / limit / limit+1 for prepare and send 179ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first) 945ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > L3 earliestReleaseAt equals the actual release instant, and exactly one slot frees per expired receipt 141ms
+stdout | tests/session-messaging/audit-msgqueue.test.ts > L5 byte-limit send rejection: scope global, earliestReleaseAt is the real release instant
+L5 {"bigDrafts":168,"remaining":20575,"probe":274,"fillerLen":2816,"left":5}
+
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > L4 send of a pre-made draft just before and at earliestReleaseAt (global scope) 742ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > L5 byte-limit send rejection: scope global, earliestReleaseAt is the real release instant 66ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > R1 two processes send at sender limit-1 never exceed the limit (20 rounds) 9582ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > R2 two senders race for the last global slot (20 rounds) 34456ms
+stdout | tests/session-messaging/audit-msgqueue.test.ts > R3 concurrent send and ACK: one row, expiry only shrinks (20 rounds)
+R3 orders {"ackFirst":5,"sendFirst":15}
+
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > R3 concurrent send and ACK: one row, expiry only shrinks (20 rounds) 2902ms
+stdout | tests/session-messaging/audit-msgqueue.test.ts > R4 prepare admission racing the send that takes the last sender slot (20 rounds)
+R4 outcomes {"prepareWon":6,"sendWon":14}
+
+stdout | tests/session-messaging/audit-msgqueue.test.ts > C1 new client against the previous broker: capacity rejection falls back to the old guidance
+C1 skipped: AGS_PREVIOUS_BROKER_PATH unset
+
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > R4 prepare admission racing the send that takes the last sender slot (20 rounds) 10485ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > C1 new client against the previous broker: capacity rejection falls back to the old guidance 2ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  15:09:52
+   Duration  60.38s (tests 100%)
+

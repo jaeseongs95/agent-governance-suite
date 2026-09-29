@@ -1,0 +1,33 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 1 failed) 16782ms
+   × I3 repeated claim and ACK leave receipt expiry, capacity counts and status stable 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I3 repeated claim and ACK leave receipt expiry, capacity counts and status stable
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:107:76
+    105|   for (const t of [2_000_002, 2_100_000, 2_000_000 + H - 1]) {
+    106|     store.claim(target, t);
+    107|     expect(store.acknowledge(target, [sent.messageId, sent.messageId],…
+       |                                                                            ^
+    108|     expect(receiptExpiry(store, sent.messageId)).toBe(afterAck);
+    109|     expect(receipts(store, hot)).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  15:18:22
+   Duration  17.08s (tests 99%, transform 1%)
+

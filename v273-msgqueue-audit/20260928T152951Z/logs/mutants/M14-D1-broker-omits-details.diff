@@ -1,0 +1,13 @@
+diff --git a/mcp-server/src/session-message-broker.ts b/mcp-server/src/session-message-broker.ts
+index 1c73eae7..066d74db 100644
+--- a/mcp-server/src/session-message-broker.ts
++++ b/mcp-server/src/session-message-broker.ts
+@@ -505,7 +505,7 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
+         } catch (error) {
+           // Older clients ignore the optional details field.
+           socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed.",
+-            ...(error instanceof MessageCapacityError ? { details: error.details } : {}) })}\n`);
++            ...({}) })}\n`);
+         }
+       });
+     });

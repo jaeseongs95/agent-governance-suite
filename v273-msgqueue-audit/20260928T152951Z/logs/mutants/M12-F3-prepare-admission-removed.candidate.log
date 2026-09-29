@@ -1,0 +1,113 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/message-lifecycle.test.ts (14 tests | 1 failed) 5613ms
+   × applies global draft, receipt and byte backpressure without evicting valid records 1043ms
+ ❯ tests/session-messaging/message-retention.test.ts (11 tests | 4 failed) 2715ms
+   × caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders 267ms
+   × rejects prepare and send with global scope when the global receipt pool is full 974ms
+   × drained senders regain capacity at ACK+1h instead of message expiry+1h 175ms
+   × service reports capacity rejections as definite no-effect with scope and earliest release details 500ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-lifecycle.test.ts > applies global draft, receipt and byte backpressure without evicting valid records
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/message-lifecycle.test.ts:150:104
+    148|   const beforeDrafts = count(store, "prepared_messages");
+    149|   let admission: unknown;
+    150|   expect(() => { try { prepare(store, 602_001); } catch (error) { admi…
+       |                                                                                                        ^
+    151|   expect(admission).toMatchObject({ details: release });
+    152|   expect(count(store, "prepared_messages")).toBe(beforeDrafts);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders
+Error: expected a rejection
+ ❯ rejection tests/session-messaging/message-retention.test.ts:50:9
+     48| function rejection(action: () => unknown): Error & { details?: unknown…
+     49|   try { action(); } catch (error) { return error as Error & { details?…
+     50|   throw new Error("expected a rejection");
+       |         ^
+     51| }
+     52|
+ ❯ tests/session-messaging/message-retention.test.ts:75:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > rejects prepare and send with global scope when the global receipt pool is full
+Error: expected a rejection
+ ❯ rejection tests/session-messaging/message-retention.test.ts:50:9
+     48| function rejection(action: () => unknown): Error & { details?: unknown…
+     49|   try { action(); } catch (error) { return error as Error & { details?…
+     50|   throw new Error("expected a rejection");
+       |         ^
+     51| }
+     52|
+ ❯ tests/session-messaging/message-retention.test.ts:95:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > drained senders regain capacity at ACK+1h instead of message expiry+1h
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/message-retention.test.ts:129:90
+    127|   const ids = Array.from({ length: SENDER_LIMIT }, () => sendNew(store…
+    128|   for (let index = 0; index < ids.length; index += 50) expect(store.ac…
+    129|   expect(() => store.prepare({ sender: hot, target, body: "still held"…
+       |                                                                                          ^
+    130|   expect(sendNew(store, hot, 1000 + H, 86400).duplicate).toBe(false);
+    131| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > service reports capacity rejections as definite no-effect with scope and earliest release details
+AssertionError: expected { schemaVersion: '1.0.0', …(3) } to match object { ok: false, error: { …(2) } }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "error": {
+-     "code": "MCP_UNAVAILABLE",
+-     "details": {
+-       "earliestReleaseAt": "2026-09-28T17:21:13.451Z",
+-       "scope": "sender",
+-     },
+-   },
+-   "ok": false,
++   "error": null,
++   "ok": true,
+  }
+
+ ❯ tests/session-messaging/message-retention.test.ts:254:27
+    252|   expect(sendRejected.error?.message).not.toMatch(/do not prepare agai…
+    253|   const prepareRejected = await service.prepare({ ...call, body: "no d…
+    254|   expect(prepareRejected).toMatchObject({ ok: false, error: { code: "M…
+       |                           ^
+    255|   expect(prepareRejected.error?.message).toContain("no draft was creat…
+    256|   expect(prepareRejected.error?.message).toContain(String(release));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed | 7 passed | 1 skipped (10)
+      Tests  5 failed | 257 passed | 1 skipped (263)
+   Start at  15:21:00
+   Duration  15.95s (tests 96%, transform 3%, import 2%)
+

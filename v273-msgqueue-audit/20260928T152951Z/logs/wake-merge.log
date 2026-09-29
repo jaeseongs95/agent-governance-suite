@@ -1,0 +1,20 @@
+Auto-merging claude-plugin/mcp-server/dist/server.mjs
+CONFLICT (content): Merge conflict in claude-plugin/mcp-server/dist/server.mjs
+Auto-merging claude-plugin/mcp-server/dist/session-message-broker.mjs
+CONFLICT (content): Merge conflict in claude-plugin/mcp-server/dist/session-message-broker.mjs
+Auto-merging claude-plugin/mcp-server/dist/session-message-hook.mjs
+Auto-merging docs/session-message-lifecycle.md
+Auto-merging mcp-server/dist/server.mjs
+CONFLICT (content): Merge conflict in mcp-server/dist/server.mjs
+Auto-merging mcp-server/dist/session-message-broker.mjs
+CONFLICT (content): Merge conflict in mcp-server/dist/session-message-broker.mjs
+Auto-merging mcp-server/dist/session-message-hook.mjs
+Auto-merging mcp-server/src/server.ts
+CONFLICT (content): Merge conflict in mcp-server/src/server.ts
+Auto-merging mcp-server/src/session-message-broker.ts
+Auto-merging mcp-server/src/session-message-service.ts
+CONFLICT (content): Merge conflict in mcp-server/src/session-message-service.ts
+Auto-merging mcp-server/src/session-message-store.ts
+CONFLICT (content): Merge conflict in mcp-server/src/session-message-store.ts
+Auto-merging tests/session-messaging/message-lifecycle.test.ts
+Automatic merge failed; fix conflicts and then commit the result.

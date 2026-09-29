@@ -1,0 +1,59 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/message-retention.test.ts (11 tests | 2 failed) 4002ms
+   × caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders 220ms
+   × rejects prepare and send with global scope when the global receipt pool is full 997ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders
+AssertionError: expected { scope: 'sender', …(1) } to deeply equal { scope: 'sender', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "earliestReleaseAt": "1970-01-01T02:00:01.000Z",
++   "earliestReleaseAt": "1970-01-01T02:00:02.001Z",
+    "scope": "sender",
+  }
+
+ ❯ tests/session-messaging/message-retention.test.ts:69:32
+     67|   const sendRejected = rejection(() => store.submitPrepared(hot, overL…
+     68|   expect(sendRejected.message).toMatch(/receipt store is full for this…
+     69|   expect(sendRejected.details).toEqual({ scope: "sender", earliestRele…
+       |                                ^
+     70|   expect(sendRejected.details).toEqual({ scope: "sender", earliestRele…
+     71|   expect(rows(store)).toBe(beforeRows);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > rejects prepare and send with global scope when the global receipt pool is full
+AssertionError: expected { scope: 'global', …(1) } to deeply equal { scope: 'global', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "earliestReleaseAt": "1970-01-01T02:00:01.000Z",
++   "earliestReleaseAt": "1970-01-01T02:00:05.001Z",
+    "scope": "global",
+  }
+
+ ❯ tests/session-messaging/message-retention.test.ts:97:35
+     95|   const prepareRejected = rejection(() => store.prepare({ sender: late…
+     96|   expect(prepareRejected.message).toMatch(/^The bounded message receip…
+     97|   expect(prepareRejected.details).toEqual({ scope: "global", earliestR…
+       |                                   ^
+     98|   expect(drafts(store)).toBe(draftsBefore);
+     99|   const sendRejected = rejection(() => store.submitPrepared(late, pend…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 8 passed | 1 skipped (10)
+      Tests  2 failed | 260 passed | 1 skipped (263)
+   Start at  15:23:52
+   Duration  17.17s (tests 95%, transform 3%, import 2%)
+

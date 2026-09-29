@@ -1,0 +1,37 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 1 failed) 18913ms
+   × L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first) 863ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first)
+AssertionError: expected { scope: 'global', …(1) } to deeply equal { scope: 'sender', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "earliestReleaseAt": "1970-01-01T02:00:05.000Z",
+-   "scope": "sender",
++   "earliestReleaseAt": "1970-01-01T02:00:01.000Z",
++   "scope": "global",
+  }
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:200:24
+    198|   // both full: hot sees sender scope with its own earliest receipt
+    199|   const both = rejection(() => store.prepare({ sender: hot, target, bo…
+    200|   expect(both.details).toEqual({ scope: "sender", earliestReleaseAt: i…
+       |                        ^
+    201|   // other sender sees global scope with the pool's earliest receipt
+    202|   const globalSend = rejection(() => store.submitPrepared(other, other…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  15:15:51
+   Duration  19.21s (tests 99%, transform 1%)
+

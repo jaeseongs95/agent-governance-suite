@@ -1,0 +1,95 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 4 failed) 16958ms
+   × I1 resend of one ID never inserts twice: retained, right after ACK, ACK+1h, message expiry 15ms
+   × I3 repeated claim and ACK leave receipt expiry, capacity counts and status stable 8ms
+   × I6 late retry through the service after ACK+1h is uncertain guidance, never a definite no-effect claim 157ms
+   × R3 concurrent send and ACK: one row, expiry only shrinks (5 rounds) 138ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I1 resend of one ID never inserts twice: retained, right after ACK, ACK+1h, message expiry
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:67:69
+     65|   expect(receipts(store, hot)).toBe(1);
+     66|   // ACK+1h: row and receipt disappear together, resend is refused and…
+     67|   expect(() => store.submitPrepared(hot, sent.messageId, 3000 + H)).to…
+       |                                                                     ^
+     68|   // The rejected transaction also rolls back its own prune; a later p…
+     69|   store.prune(3000 + H);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I3 repeated claim and ACK leave receipt expiry, capacity counts and status stable
+AssertionError: expected '1970-01-02T01:00:01.000Z' to be '1970-01-01T01:33:20.000Z' // Object.is equality
+
+Expected: "1970-01-01T01:33:20.000Z"
+Received: "1970-01-02T01:00:01.000Z"
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:103:20
+    101|   expect(store.acknowledge(target, [sent.messageId], 2_000_000)).toBe(…
+    102|   const afterAck = receiptExpiry(store, sent.messageId);
+    103|   expect(afterAck).toBe(iso(2_000_000 + H));
+       |                    ^
+    104|   const statusAfter = store.status(hot, sent.messageId, 2_000_001);
+    105|   for (const t of [2_000_002, 2_100_000, 2_000_000 + H - 1]) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I6 late retry through the service after ACK+1h is uncertain guidance, never a definite no-effect claim
+AssertionError: expected { schemaVersion: '1.0.0', …(3) } to match object { ok: false, error: { …(2) } }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "error": {
+-     "code": "MCP_UNAVAILABLE",
+-     "details": null,
+-   },
+-   "ok": false,
++   "error": null,
++   "ok": true,
+  }
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:156:16
+    154|   expect(store.acknowledge(target, [messageId], Date.now() - 2 * H)).t…
+    155|   const late = await service.send({ messageId, _sessionBinding: hot });
+    156|   expect(late).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILA…
+       |                ^
+    157|   expect(late.error?.message).toMatch(/delivery may be unknown/u);
+    158|   expect(late.error?.message).toMatch(/do not prepare again for the sa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > R3 concurrent send and ACK: one row, expiry only shrinks (5 rounds)
+AssertionError: expected '1970-01-02T01:00:02.000Z' to be '1970-01-01T01:00:02.000Z' // Object.is equality
+
+Expected: "1970-01-01T01:00:02.000Z"
+Received: "1970-01-02T01:00:02.000Z"
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:334:51
+    332|     const acked = out[1]!.result as number;
+    333|     if (acked === 1) orders.sendFirst++; else orders.ackFirst++;
+    334|     expect(receiptExpiry(store, draft.messageId)).toBe(acked === 1 ? i…
+       |                                                   ^
+    335|   }
+    336|   expect(orders.ackFirst + orders.sendFirst).toBe(RACE_ROUNDS);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 12 passed (16)
+   Start at  15:19:32
+   Duration  17.24s (tests 99%, transform 1%)
+
