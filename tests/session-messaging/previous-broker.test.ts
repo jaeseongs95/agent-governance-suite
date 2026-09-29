@@ -12,6 +12,15 @@ import { SessionMessageService } from "../../mcp-server/src/session-message-serv
 
 // A release check supplies the actual previous installation, not a simulated dispatcher.
 const previousBroker = process.env.AGS_PREVIOUS_BROKER_PATH;
+// The released version of that broker (for example 2.7.5 or v2.7.5), for checks whose expected result depends on it.
+const previousVersion = process.env.AGS_PREVIOUS_BROKER_VERSION;
+function previousAtLeast(minimum: [number, number, number]): boolean {
+  const parts = /^v?(\d+)\.(\d+)\.(\d+)$/u.exec(previousVersion ?? "");
+  if (!parts) throw new Error("Set AGS_PREVIOUS_BROKER_VERSION to the previous broker's release version (for example 2.7.5).");
+  const version = parts.slice(1).map(Number);
+  for (let index = 0; index < 3; index += 1) if (version[index] !== minimum[index]) return version[index]! > minimum[index]!;
+  return true;
+}
 const pluginRoot = process.env.BROKER_TEST_PLUGIN_ROOT ?? fileURLToPath(new URL("../../", import.meta.url));
 it.skipIf(!previousBroker)("preserves queued messages when new hooks meet the previous released broker", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-"));
@@ -224,6 +233,8 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
 }, 20_000);
 
 it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired", async () => {
+  // Strict without a version: the test fails rather than guess which result the broker owes.
+  const retiringBroker = previousAtLeast([2, 7, 5]);
   const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-ended-"));
   const environment = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory,
     AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
@@ -272,8 +283,9 @@ it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth f
   try {
     const kept = wakeRow();
     const binding = (row: Record<string, unknown>) => Object.fromEntries(Object.entries(row).filter(([key]) => !["state", "retired_at"].includes(key)));
-    // A 2.7.5 or later broker already retires it (same binding, terminal state); 2.7.4 and 2.7.3 keep the latch.
-    if (kept?.state === "expired-unobserved") expect(binding(kept)).toEqual(binding(before!));
+    // Only a 2.7.5 or later broker may already have retired it (same binding, terminal state); by the stated version, not
+    // by what is observed. 2.7.4 and 2.7.3 must keep the latch unchanged.
+    if (retiringBroker && kept?.state === "expired-unobserved") expect(binding(kept)).toEqual(binding(before!));
     else if (managedWakeAware === true) expect(kept).toEqual(before);
     else expect([undefined, before]).toContainEqual(kept);
     const current = new SessionMessageStore(databasePath);
