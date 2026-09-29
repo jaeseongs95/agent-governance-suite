@@ -333,8 +333,11 @@ export class SessionMessageStore {
 
   /**
    * Retires an unobserved managed wake only after its injection expiry plus grace, and only with evidence that the
-   * host moved past it: a newer live presence birth, or session activity after the expiry. The row keeps its original
-   * binding, epoch and times; expired-unobserved is neither observation nor delivery. One UPDATE commits it atomically.
+   * host moved past it: session activity after the expiry, or the session's latest presence row is no longer the wake's
+   * own live birth (a newer birth, an ended or lapsed birth, or no row at all). A lapsed or ended birth never renews, and
+   * presence, relay ticks and claims all read that latest row, so such a wake can no longer be claimed; only a live,
+   * quiet birth keeps its latch. The row keeps its original binding, epoch and times; expired-unobserved is neither
+   * observation nor delivery. One UPDATE commits it atomically.
    */
   private retireUnobservedWakes(nowMs: number): void {
     const now = iso(nowMs);
@@ -342,9 +345,10 @@ export class SessionMessageStore {
       WHERE state IN ${ACTIVE_WAKE_STATES} AND expires_at <= ?
         AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
             AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)
-          OR coalesce((SELECT latest.ended_at IS NULL AND latest.lease_until > ? AND latest.started_at > wake_nonces.birth_generation
+          OR coalesce((SELECT NOT (latest.ended_at IS NULL AND latest.lease_until > ?
+              AND latest.instance_id = wake_nonces.instance_id AND latest.started_at = wake_nonces.birth_generation)
             FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id
-            ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 0))`)
+            ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 1))`)
       .run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), now);
   }
 

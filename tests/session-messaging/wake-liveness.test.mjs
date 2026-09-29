@@ -101,31 +101,120 @@ test.each(['submitted', 'accepted-or-unknown', 'started'])('an expired %s latch 
   assert.equal(status.attemptId, next.attempt.attemptId); assert.equal(status.state, 'started');
 });
 
-test.each(['same-generation', 'unreachable', 'ended-new-generation', 'older-live-instance'])('an expired latch without activity or a newer live generation stays latched: %s', kind => {
+test.each(['same-generation', 'other-transport'])('an expired latch of a live, quiet birth without activity stays latched: %s', kind => {
   const f = fixture(); const old = latched(f);
   const later = f.retireAt + 24 * 3600_000;
-  if (kind === 'ended-new-generation') {
-    live(f.store, 'instance-2', 'relay-2', later - 100);
-    assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-2', later - 50), true);
-  }
-  if (kind === 'older-live-instance') {
-    // A row born after the only live presence is not replaced by it.
-    f.store.database.prepare('UPDATE wake_nonces SET birth_generation = ? WHERE attempt_id = ?').run(iso(later), old.attemptId);
-    keepAlive(f.store, 'instance-1', 'relay-1', later);
-  }
+  // A live birth may switch transport and back without a new generation, so a transport change alone is no death.
+  if (kind === 'other-transport') f.store.startPresence({ ...target, instanceId: 'instance-1', transport: 'portable-other', wakeVisibility: 'silent',
+    canWakeSilently: true, deliveryCapabilities: capabilities }, f.now + 10);
   const before = attemptRow(f.store, old);
   for (const at of [f.retireAt, later]) {
-    if (kind === 'same-generation' || kind === 'older-live-instance') keepAlive(f.store, 'instance-1', 'relay-1', at);
+    keepAlive(f.store, 'instance-1', 'relay-1', at);
     f.store.prune(at);
     if (kind === 'same-generation') assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), at).dispatch, false);
     assert.deepEqual(attemptRow(f.store, old), before);
   }
-  const outlook = f.store.autoWakeOutlook(target, later);
-  if (kind === 'same-generation' || kind === 'older-live-instance') {
+  assert.equal(f.store.presence(target, later).startedAt, old.generation);
+  if (kind === 'same-generation') {
+    const outlook = f.store.autoWakeOutlook(target, later);
     assert.equal(outlook.state, 'latched'); assert.equal(outlook.reason, 'wake-unobserved');
     assert.equal(outlook.basisAt, before.expires_at);
-  } else assert.equal(outlook.state, 'no-live-relay');
-  assert.deepEqual(validator.sessionAutoWakeOutlook(outlook), outlook);
+    assert.deepEqual(validator.sessionAutoWakeOutlook(outlook), outlook);
+  }
+});
+
+/** Each case leaves the wake's own birth no longer the live latest presence row, with no activity and no newer live birth. */
+const deaths = {
+  // The lease lapsed (process exit, reboot); a lapsed birth never renews.
+  unreachable: () => null,
+  ended: f => { assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-1', f.now + 10), true); return null; },
+  'ended-new-generation': f => {
+    live(f.store, 'instance-2', 'relay-2', f.now + 20);
+    assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-2', f.now + 30), true);
+    return null;
+  },
+  // A 2.7.4 broker already deleted every presence row of the identity.
+  purged: f => { f.store.database.prepare('DELETE FROM session_presence WHERE session_id = ?').run(target.sessionId); return null; },
+  // An older instance of the same session stays live; only the wake's own birth counts.
+  'older-instance-live': f => {
+    f.store.startPresence({ ...target, instanceId: 'instance-0', transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
+      deliveryCapabilities: capabilities }, f.now - 1000);
+    assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-1', f.now + 10), true);
+    return 'instance-0';
+  },
+  // The same instance is live, but its birth is not the wake's (no row carries that generation any more).
+  'generation-missing': f => {
+    f.store.database.prepare('UPDATE wake_nonces SET birth_generation = ? WHERE instance_id = ?').run(iso(f.now + 5), 'instance-1');
+    return 'instance-1';
+  },
+  // The wake's own birth stays live, but a later birth of another instance ended and is the latest row: its relay
+  // tick and claims are refused, so the instance row alone would keep this latch until the wake's birth ends.
+  'live-birth-behind-ended': f => {
+    live(f.store, 'instance-2', 'relay-2', f.now + 20);
+    assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-2', f.now + 30), true);
+    return 'instance-1';
+  },
+  // Another instance born in the same millisecond is the latest row (by rowid) and live: it is not the wake's binding.
+  'same-ms-other-instance': f => {
+    f.store.startPresence({ ...target, instanceId: 'instance-2', transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
+      deliveryCapabilities: capabilities }, f.now);
+    assert.equal(f.store.presence(target, f.now).instanceId, 'instance-2');
+    return 'instance-2';
+  },
+  // The lease ends exactly at the retirement time: a lease that is not after now is not live.
+  'lease-ends-at-retirement': f => {
+    f.store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ?').run(iso(f.retireAt), 'instance-1');
+    return null;
+  },
+};
+function death(f, kind) {
+  const old = latched(f);
+  const alive = deaths[kind](f);
+  // Keep the surviving birth live without a new generation; it need not be the latest row.
+  return { old, keep: at => { if (alive) f.store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ?').run(iso(at + 60_000), alive); } };
+}
+
+test.each(Object.keys(deaths))('an expired latch whose birth is no longer live retires after the grace without activity: %s', kind => {
+  const f = fixture(); const { old, keep } = death(f, kind);
+  const before = attemptRow(f.store, old);
+  keep(f.retireAt - 1); f.store.prune(f.retireAt - 1);
+  assert.deepEqual(attemptRow(f.store, old), before, 'not before the expiry plus grace');
+  keep(f.retireAt); f.store.prune(f.retireAt);
+  const retired = attemptRow(f.store, old);
+  assert.equal(retired.state, 'expired-unobserved'); assert.equal(retired.retired_at, iso(f.retireAt));
+  assert.equal(retired.observed_at, null); assert.equal(retired.consumed_at, null);
+  assert.deepEqual(without(retired, ['state', 'retired_at']), without(before, ['state', 'retired_at']));
+  assert.equal(f.store.database.prepare('SELECT count(*) AS n FROM session_activity WHERE session_id = ?').get(target.sessionId).n, 0);
+  if (kind === 'live-birth-behind-ended') {
+    // The wake's birth is live yet cannot receive a new wake while the ended later birth is the latest row.
+    assert.equal(f.store.presence(target, f.retireAt).state, 'ended');
+    assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt).dispatch, false);
+    assert.equal(f.store.autoWakeOutlook(target, f.retireAt).reason, 'presence-not-online');
+  }
+  f.store.prune(f.retireAt + 5); assert.deepEqual(attemptRow(f.store, old), retired);
+  // Retired terminal rows follow the existing one-hour cleanup.
+  f.store.prune(f.retireAt + 3600_000 - 1); assert.deepEqual(attemptRow(f.store, old), retired);
+  f.store.prune(f.retireAt + 3600_000); assert.equal(attemptRow(f.store, old), undefined);
+});
+
+test('a wake of an ended birth retired without activity records a late arrival as evidence only, then a rebirth delivers', () => {
+  const f = fixture(); const { old } = death(f, 'ended');
+  f.store.prune(f.retireAt);
+  const retired = attemptRow(f.store, old);
+  assert.equal(retired.state, 'expired-unobserved');
+  const messages = f.store.database.prepare('SELECT * FROM messages').all();
+  assert.deepEqual(hostClaim(f, observe(f, old, f.retireAt + 1), f.retireAt + 2), { recognized: false, messages: [], binding: null, retired: true });
+  const late = attemptRow(f.store, old);
+  assert.equal(late.late_observed_at, iso(f.retireAt + 2));
+  assert.deepEqual(without(late, ['late_observed_at']), without(retired, ['late_observed_at']));
+  assert.deepEqual(f.store.database.prepare('SELECT * FROM messages').all(), messages);
+  live(f.store, 'instance-1', 'relay-1', f.retireAt + 3);
+  const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt + 3);
+  assert.equal(next.dispatch, true);
+  const started = f.store.startManagedWake(next.attempt, f.retireAt + 4).attempt;
+  f.store.recordManagedWakeOutcome(started, 'submitted', f.retireAt + 5);
+  const delivered = hostClaim(f, observe(f, started, f.retireAt + 6), f.retireAt + 7);
+  assert.equal(delivered.recognized, true); assert.deepEqual(delivered.messages.map(message => message.messageId), ['pending-body']);
 });
 
 const activities = {
@@ -369,11 +458,10 @@ test('G: v2.7.2 latch rows migrate once, keep evidence and retire under the new 
   const retired = store.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = 'digest-latched'").get();
   assert.equal(retired.state, 'expired-unobserved'); assert.equal(retired.retired_at, iso(m.now));
   assert.deepEqual(without(retired, ['state', 'retired_at']), without({ ...before.rows[0], retired_at: null }, ['rowid', 'state', 'retired_at']));
-  // Rows without retirement evidence (no activity, no newer live generation) keep their state.
-  assert.equal(store.database.prepare("SELECT state FROM wake_nonces WHERE nonce_digest = 'digest-late'").get().state, 'unknown');
-  store.observeNativeInput({ host: target.host, sessionId: 'late-target' }, m.now + 2);
-  store.prune(m.now + 3);
-  assert.equal(store.database.prepare("SELECT state FROM wake_nonces WHERE nonce_digest = 'digest-late'").get().state, 'expired-unobserved');
+  // A migrated row whose birth has no live presence row retires on the same prune, with its late evidence kept.
+  const late = store.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = 'digest-late'").get();
+  assert.equal(late.state, 'expired-unobserved'); assert.equal(late.retired_at, iso(m.now));
+  assert.deepEqual(without(late, ['state', 'retired_at']), without({ ...before.rows[1], retired_at: null }, ['rowid', 'state', 'retired_at']));
   const reopened = new SessionMessageStore(m.database); m.entry.stores.push(reopened);
   const stable = snapshotV272(m.database);
   assert.equal(stable.version, 1); assert.equal(stable.sql, after.sql);
@@ -439,6 +527,21 @@ test('crash right after a committed retirement leaves a retired row and one late
   f.store.prune(f.retireAt + 1); assert.deepEqual(attemptRow(f.store, old), retired);
   keepAlive(f.store, 'instance-2', 'relay-2', f.retireAt + 2);
   assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt + 2).dispatch, true);
+});
+
+test('two independent processes racing the retirement of an ended birth retire it once', async () => {
+  const f = fixture(); const { old } = death(f, 'ended');
+  const before = attemptRow(f.store, old);
+  const raced = await Promise.all(['retire-a', 'retire-b'].map(id => child(f.database, 'retire-then-exit', id, f.directory)));
+  for (const p of raced) assert.equal(p.first.type, 'ready', p.stderr());
+  raced.forEach((p, index) => p.process.send({ now: f.retireAt + index * 5 }));
+  for (const p of raced) { const [code] = await p.exit; assert.equal(code, 21, p.stderr()); }
+  const retired = attemptRow(f.store, old);
+  assert.equal(retired.state, 'expired-unobserved');
+  assert.ok([iso(f.retireAt), iso(f.retireAt + 5)].includes(retired.retired_at));
+  assert.deepEqual(without(retired, ['state', 'retired_at']), without(before, ['state', 'retired_at']));
+  f.store.prune(f.retireAt + 10); assert.deepEqual(attemptRow(f.store, old), retired);
+  assert.equal(f.store.database.prepare('SELECT count(*) AS n FROM wake_nonces').get().n, 1);
 });
 
 test('two independent relay processes racing retirement create one active attempt', async () => {
