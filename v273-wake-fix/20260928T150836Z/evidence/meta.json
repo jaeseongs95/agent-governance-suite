@@ -1,0 +1,37 @@
+{
+  "task": "AGS 2.7.3 wake-liveness audit follow-up F1-F6",
+  "baseCandidate": "e739090952710d418a67dae71d76b1f2ef169441",
+  "newCandidate": "651f5ec94e120703b2685c6fbbe68cfebd1afbfd",
+  "newCandidateTree": "a857f79deb3c250a072f15a9306f62b6f8e0ed6e",
+  "commits": [
+    "cc0d51c079f5284b1fc122f9315bf3a490d8b5b2",
+    "651f5ec94e120703b2685c6fbbe68cfebd1afbfd"
+  ],
+  "auditEvidence": "0b63801efac4055503c3949880c5794d0edf908e",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux 6.18.44-fc-v37 x86_64",
+  "stampUtc": "20260928T150836Z",
+  "redaction": {
+    "github-token": 0,
+    "anthropic-key": 0,
+    "aws-key": 0,
+    "private-key-line": 0,
+    "bearer": 0,
+    "email": 0,
+    "home-path": 21,
+    "root-home": 6,
+    "ipv4": 0
+  },
+  "redactionSecondPass": {
+    "github-token": 0,
+    "anthropic-key": 0,
+    "aws-key": 0,
+    "private-key-line": 0,
+    "bearer": 0,
+    "email": 0,
+    "home-path": 0,
+    "root-home": 0,
+    "ipv4": 0
+  }
+}

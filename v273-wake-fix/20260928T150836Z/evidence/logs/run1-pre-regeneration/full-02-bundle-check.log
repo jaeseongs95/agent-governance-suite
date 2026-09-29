@@ -1,0 +1,12 @@
+Already up to date
+Done in 471ms using pnpm v11.19.0
+$ node scripts/check-bundle.mjs
+file:///home/[REDACTED]/agent-governance-suite/scripts/check-bundle.mjs:18
+      throw new Error(`${output} is stale. Run pnpm build and commit the result.`);
+            ^
+
+Error: mcp-server/dist/server.mjs is stale. Run pnpm build and commit the result.
+    at file:///home/[REDACTED]/agent-governance-suite/scripts/check-bundle.mjs:18:13
+
+Node.js v24.21.0
+[ELIFECYCLE] Command failed with exit code 1.

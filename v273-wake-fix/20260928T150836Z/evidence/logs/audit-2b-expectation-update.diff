@@ -1,0 +1,13 @@
+199,204c199,203
+<   assert.equal(res.messages.length, 0);
+<   // Body must remain deliverable: a fresh wake must be reservable for the pending body.
+<   alive(f.store, 'inst-2', 'relay-2', at + 6);
+<   const w3 = f.store.reserveManagedWake(req('inst-2', 'relay-2', 'w3'), at + 6);
+<   console.log('AUDIT-2b-next', JSON.stringify({ w3dispatch: w3.dispatch }));
+<   assert.equal(w3.dispatch, true);
+---
+>   // F1 fix: the retired row records late only; the current attempt claims its body normally.
+>   assert.equal(res.recognized, true); assert.equal(res.retired, undefined);
+>   assert.equal(res.messages.length, 1); assert.equal(res.binding.attemptId, w2.attemptId);
+>   assert.equal(w2row.state, 'observed'); assert.equal(w2row.late_observed_at, null);
+>   assert.equal(row(f.store, a).state, 'expired-unobserved'); assert.equal(row(f.store, a).late_observed_at, iso(at + 4));

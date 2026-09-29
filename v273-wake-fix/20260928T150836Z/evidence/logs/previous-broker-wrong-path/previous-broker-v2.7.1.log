@@ -1,0 +1,46 @@
+Already up to date
+Done in 506ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/previous-broker.test.ts (2 tests | 2 failed) 249ms
+   × preserves queued messages when new hooks meet the previous released broker 116ms
+   × lets the previous released broker serve a schema 1 database with a retired wake 132ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker
+Error: The session message broker exited before it was ready (code 1, signal null).
+ ❯ mcp-server/src/session-message-client.ts:230:17
+    228|         if (spawnError) throw spawnError;
+    229|         if ((child.exitCode !== null && child.exitCode !== 0) || child…
+    230|           throw new Error(
+       |                 ^
+    231|             `The session message broker exited before it was ready (co…
+    232|           );
+ ❯ withDeadline mcp-server/src/session-message-client.ts:102:12
+ ❯ tests/session-messaging/previous-broker.test.ts:41:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake
+Error: The session message broker exited before it was ready (code 1, signal null).
+ ❯ mcp-server/src/session-message-client.ts:230:17
+    228|         if (spawnError) throw spawnError;
+    229|         if ((child.exitCode !== null && child.exitCode !== 0) || child…
+    230|           throw new Error(
+       |                 ^
+    231|             `The session message broker exited before it was ready (co…
+    232|           );
+ ❯ withDeadline mcp-server/src/session-message-client.ts:102:12
+ ❯ tests/session-messaging/previous-broker.test.ts:140:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  15:04:35
+   Duration  659ms (tests 47%, transform 46%, import 7%, worker 1%)
+
+v2.7.1 exit=1

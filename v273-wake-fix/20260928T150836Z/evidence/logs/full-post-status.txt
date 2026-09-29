@@ -1,0 +1,15 @@
+ M claude-plugin/contracts/session-auto-wake-outlook.v1.schema.json
+ M claude-plugin/mcp-server/dist/server.mjs
+ M claude-plugin/mcp-server/dist/session-message-broker.mjs
+ M claude-plugin/mcp-server/dist/session-message-hook.mjs
+ M contracts/session-auto-wake-outlook.v1.schema.json
+ M docs/session-message-lifecycle.md
+ M mcp-server/dist/server.mjs
+ M mcp-server/dist/session-message-broker.mjs
+ M mcp-server/dist/session-message-hook.mjs
+ M mcp-server/src/host-input-adapter.ts
+ M mcp-server/src/server.ts
+ M mcp-server/src/session-message-hook.ts
+ M mcp-server/src/session-message-store.ts
+ M tests/session-messaging/session-message.test.ts
+ M tests/session-messaging/wake-liveness.test.mjs
