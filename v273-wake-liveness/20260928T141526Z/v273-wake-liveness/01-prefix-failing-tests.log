@@ -1,0 +1,355 @@
+Already up to date
+Done in 451ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/prefix-probe.test.mjs (26 tests | 25 failed) 987ms
+   × an expired submitted latch retires for a newer live generation and a new wake is reserved 39ms
+   × an expired accepted-or-unknown latch retires for a newer live generation and a new wake is reserved 18ms
+   × an expired started latch retires for a newer live generation and a new wake is reserved 15ms
+   × an expired latch without activity or a newer live generation stays latched: same-generation 16ms
+   × an expired latch without activity or a newer live generation stays latched: unreachable 12ms
+   × an expired latch without activity or a newer live generation stays latched: ended-new-generation 15ms
+   × an expired latch without activity or a newer live generation stays latched: older-live-instance 13ms
+   × same-generation activity claim after expiry retires the latch after the grace 15ms
+   × same-generation activity claimDeferred after expiry retires the latch after the grace 13ms
+   × same-generation activity claimTurnEnd after expiry retires the latch after the grace 13ms
+   × same-generation activity clearDeferred after expiry retires the latch after the grace 13ms
+   × same-generation activity acknowledge after expiry retires the latch after the grace 14ms
+   × same-generation activity observeNativeInput after expiry retires the latch after the grace 15ms
+   × retirement and re-reservation are idempotent across prunes and reopened connections 13ms
+   × a verified late arrival of a retired nonce is recorded without claiming the current generation body 13ms
+   × a retired nonce cannot be laundered by forged provenance or a mixed unknown nonce 26ms
+   × K: an arrival whose hook receipt expired during a broker outage stays latched until retirement evidence, then a new wake delivers 19ms
+   × C2: a same-millisecond rebirth gets a distinct generation, so the previous birth cannot claim 17ms
+   × autoWake is advisory and reports each delivery path state 9ms
+   × G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule 22ms
+   × G: a newer message schema version is rejected without mutation 22ms
+   × G: two independent processes racing the v2.7.2 upgrade both open one migrated schema 167ms
+   × G: a failure inside the table rebuild rolls back columns, rows and schema version 143ms
+   × crash right after a committed retirement leaves a retired row and one later reservation 145ms
+   × two independent relay processes racing retirement create one active attempt 164ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 25 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > an expired submitted latch retires for a newer live generation and a new wake is reserved
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > an expired accepted-or-unknown latch retires for a newer live generation and a new wake is reserved
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > an expired started latch retires for a newer live generation and a new wake is reserved
+AssertionError: Expected values to be strictly equal:
+
+false !== true
+
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/session-messaging/prefix-probe.test.mjs:89:10
+     87|   keepAlive(f.store, 'instance-2', 'relay-2', f.retireAt);
+     88|   const next = f.store.reserveManagedWake(request('instance-2', 'relay…
+     89|   assert.equal(next.dispatch, true);
+       |          ^
+     90|   assert.notEqual(next.attempt.nonce, old.nonce); assert.notEqual(next…
+     91|   const retired = attemptRow(f.store, old);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > an expired latch without activity or a newer live generation stays latched: same-generation
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > an expired latch without activity or a newer live generation stays latched: unreachable
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > an expired latch without activity or a newer live generation stays latched: ended-new-generation
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > an expired latch without activity or a newer live generation stays latched: older-live-instance
+TypeError: f.store.autoWakeOutlook is not a function
+ ❯ tests/session-messaging/prefix-probe.test.mjs:124:27
+    122|     assert.deepEqual(attemptRow(f.store, old), before);
+    123|   }
+    124|   const outlook = f.store.autoWakeOutlook(target, later);
+       |                           ^
+    125|   if (kind === 'same-generation' || kind === 'older-live-instance') {
+    126|     assert.equal(outlook.state, 'latched'); assert.equal(outlook.reaso…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > same-generation activity claim after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > same-generation activity claimDeferred after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > same-generation activity claimTurnEnd after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > same-generation activity clearDeferred after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > same-generation activity acknowledge after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > same-generation activity observeNativeInput after expiry retires the latch after the grace
+AssertionError: Expected values to be strictly equal:
+
+false !== true
+
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/session-messaging/prefix-probe.test.mjs:149:10
+    147|   keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt);
+    148|   const next = f.store.reserveManagedWake(request('instance-1', 'relay…
+    149|   assert.equal(next.dispatch, kind !== 'before-expiry');
+       |          ^
+    150|   assert.equal(attemptRow(f.store, old).state, kind === 'before-expiry…
+    151| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > retirement and re-reservation are idempotent across prunes and reopened connections
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'submitted'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "submitted"
+
+ ❯ tests/session-messaging/prefix-probe.test.mjs:158:10
+    156|   f.store.prune(f.retireAt);
+    157|   const retired = attemptRow(f.store, old);
+    158|   assert.equal(retired.state, 'expired-unobserved');
+       |          ^
+    159|   const peer = new SessionMessageStore(f.database); resources.at(-1).s…
+    160|   peer.prune(f.retireAt + 5);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > a verified late arrival of a retired nonce is recorded without claiming the current generation body
+TypeError: Cannot read properties of null (reading 'nonce')
+ ❯ SessionMessageStore.startManagedWake mcp-server/src/session-message-store.ts:787:34
+    785|       const row = this.database.prepare(`SELECT * FROM wake_nonces WHE…
+    786|         AND state = 'reserved' AND instance_id = ? AND birth_generatio…
+    787|         .get(nonceDigest(attempt.nonce), attempt.host, attempt.session…
+       |                                  ^
+    788|           attempt.transport, attempt.relayId, attempt.attemptId, attem…
+    789|       if (!row || !this.wakeBindingCurrent(attempt, attempt.generation…
+ ❯ tests/session-messaging/prefix-probe.test.mjs:173:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > a retired nonce cannot be laundered by forged provenance or a mixed unknown nonce
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
+    binding: null,
+    messages: [],
+    recognized: false,
+-   retired: false
+  }
+
+
+- Expected
++ Received
+
+  {
+    "binding": null,
+    "messages": [],
+    "recognized": false,
+-   "retired": false,
+  }
+
+ ❯ tests/session-messaging/prefix-probe.test.mjs:199:10
+    197|     prompt: `[agent-governance-suite:wake:${old.nonce}]\n[agent-govern…
+    198|   const mixedResult = hostClaim(f, { observation: mixed, sourceReceipt…
+    199|   assert.deepEqual(mixedResult, { recognized: false, messages: [], bin…
+       |          ^
+    200|   assert.deepEqual(attemptRow(f.store, old), retired);
+    201| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > K: an arrival whose hook receipt expired during a broker outage stays latched until retirement evidence, then a new wake delivers
+AssertionError: Expected values to be strictly equal:
+
+false !== true
+
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/session-messaging/prefix-probe.test.mjs:216:10
+    214|   keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt + 2);
+    215|   const next = f.store.reserveManagedWake(request('instance-1', 'relay…
+    216|   assert.equal(next.dispatch, true);
+       |          ^
+    217|   assert.equal(attemptRow(f.store, old).state, 'expired-unobserved');
+    218|   const started = f.store.startManagedWake(next.attempt, f.retireAt + …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > C2: a same-millisecond rebirth gets a distinct generation, so the previous birth cannot claim
+AssertionError: The expression evaluated to a falsy value:
+
+  ok(reborn.startedAt > old.generation)
+
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/session-messaging/prefix-probe.test.mjs:230:10
+    228|   const reborn = f.store.startPresence({ ...target, instanceId: 'insta…
+    229|     canWakeSilently: true, deliveryCapabilities: capabilities }, f.now…
+    230|   assert.ok(reborn.startedAt > old.generation);
+       |          ^
+    231|   f.store.acquireRelay({ ...target, transport: 'portable', relayId: 'r…
+    232|   const result = hostClaim(f, observe(f, old, f.now + 4), f.now + 5);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > autoWake is advisory and reports each delivery path state
+TypeError: store.autoWakeOutlook is not a function
+ ❯ check tests/session-messaging/prefix-probe.test.mjs:243:27
+    241|   const f = fixture();
+    242|   const check = (store, at, state, reason, basisAt, who = target) => {
+    243|     const outlook = store.autoWakeOutlook(who, at);
+       |                           ^
+    244|     assert.deepEqual(outlook, { state, reason, basisAt, checkedAt: iso…
+    245|     assert.deepEqual(validator.sessionAutoWakeOutlook(outlook), outloo…
+ ❯ tests/session-messaging/prefix-probe.test.mjs:248:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule
+AssertionError: Expected values to be strictly equal:
+
+0 !== 1
+
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/session-messaging/prefix-probe.test.mjs:336:10
+    334|   const store = new SessionMessageStore(m.database); m.entry.stores.pu…
+    335|   const after = snapshotV272(m.database);
+    336|   assert.equal(after.version, 1);
+       |          ^
+    337|   assert.deepEqual(after.rows, before.rows);
+    338|   assert.deepEqual(after.columns, [...V272_COLUMNS, 'retired_at']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > G: a newer message schema version is rejected without mutation
+AssertionError: Missing expected exception.
+
+simple
+
+ ❯ tests/session-messaging/prefix-probe.test.mjs:364:10
+    362|   const db = new DatabaseSync(m.database); db.exec('PRAGMA user_versio…
+    363|   const before = snapshotV272(m.database);
+    364|   assert.throws(() => new SessionMessageStore(m.database), /newer/);
+       |          ^
+    365|   assert.deepEqual(snapshotV272(m.database), before);
+    366| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > G: two independent processes racing the v2.7.2 upgrade both open one migrated schema
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
++   0,
++   0
+-   1,
+-   1
+  ]
+
+
+- Expected
++ Received
+
+  [
+-   1,
+-   1,
++   0,
++   0,
+  ]
+
+ ❯ tests/session-messaging/prefix-probe.test.mjs:389:10
+    387|   for (const p of opened) assert.equal(p.first.type, 'ready', p.stderr…
+    388|   const versions = await Promise.all(opened.map(p => result(p)));
+    389|   assert.deepEqual(versions.map(item => item.version), [1, 1]);
+       |          ^
+    390|   const after = snapshotV272(m.database);
+    391|   assert.deepEqual(after.rows, before.rows); assert.equal(after.versio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > G: a failure inside the table rebuild rolls back columns, rows and schema version
+Error: worker exited early: 2; 
+ ❯ tests/session-messaging/prefix-probe.test.mjs:374:96
+    372|   let stderr = ''; process_.stderr.on('data', chunk => { stderr += chu…
+    373|   const exit = once(process_, 'exit');
+    374|   const [first] = await Promise.race([once(process_, 'message'), exit.…
+       |                                                                                                ^
+    375|   return { process: process_, first, exit, stderr: () => stderr };
+    376| }
+ ❯ child tests/session-messaging/prefix-probe.test.mjs:374:19
+ ❯ tests/session-messaging/prefix-probe.test.mjs:396:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > crash right after a committed retirement leaves a retired row and one later reservation
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'submitted'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "submitted"
+
+ ❯ tests/session-messaging/prefix-probe.test.mjs:413:10
+    411|   const [code] = await p.exit; assert.equal(code, 21, p.stderr());
+    412|   const retired = attemptRow(f.store, old);
+    413|   assert.equal(retired.state, 'expired-unobserved'); assert.equal(reti…
+       |          ^
+    414|   assert.deepEqual(without(retired, ['state', 'retired_at']), without(…
+    415|   f.store.prune(f.retireAt + 1); assert.deepEqual(attemptRow(f.store, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/25]⎯
+
+ FAIL  tests/session-messaging/prefix-probe.test.mjs > two independent relay processes racing retirement create one active attempt
+AssertionError: The expression evaluated to a falsy value:
+
+  ok(dispatched.length >= 1)
+
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/session-messaging/prefix-probe.test.mjs:427:10
+    425|   const results = await Promise.all(raced.map(p => result(p, { kind: '…
+    426|   const dispatched = results.map(item => item.result).filter(item => i…
+    427|   assert.ok(dispatched.length >= 1);
+       |          ^
+    428|   assert.equal(new Set(dispatched.map(item => item.attempt.attemptId))…
+    429|   assert.equal(attemptRow(f.store, old).state, 'expired-unobserved');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/25]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  25 failed | 1 passed (26)
+   Start at  14:00:50
+   Duration  1.84s (tests 57%, transform 23%, import 20%)
+

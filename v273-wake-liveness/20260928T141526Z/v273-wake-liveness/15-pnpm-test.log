@@ -1,0 +1,41 @@
+$ pnpm test
+start=2026-09-28T14:11:53Z head=a119a2a0229cb03c7c3ab345f18a4bca02b218a3
+Already up to date
+Done in 493ms using pnpm v11.19.0
+$ node scripts/build.mjs && vitest run
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/mcp/korean-prose-cycle-receipt.test.ts (13 tests | 1 failed) 14895ms
+   ❯ range-aware Korean prose cycle receipts (13)
+     × rejects a label leaked into the independent adjudicator input 558ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/mcp/korean-prose-cycle-receipt.test.ts > range-aware Korean prose cycle receipts > rejects a label leaked into the independent adjudicator input
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/mcp/korean-prose-cycle-receipt.test.ts:230:98
+    228|     const evaluationRoot = await createCycleFixture();
+    229|     const cycleDirectory = join(evaluationRoot, "evals", "cycles", "0.…
+    230|     expect(runScript(recorderPath, ["1", evaluationRoot, "--cycle-dir"…
+       |                                                                                                  ^
+    231|     await writeQualityReport(cycleDirectory, { leakAdjudicationLabel: …
+    232|     const frame = JSON.parse(await readFile(join(cycleDirectory, "eval…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 59 passed | 1 skipped (61)
+      Tests  1 failed | 837 passed | 2 skipped (840)
+   Start at  14:11:55
+   Duration  62.41s (tests 94%, import 4%, transform 2%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+exit=1 end=2026-09-28T14:12:57Z

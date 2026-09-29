@@ -1,0 +1,7 @@
+$ pnpm claude:check
+start=2026-09-28T14:13:11Z head=e739090952710d418a67dae71d76b1f2ef169441
+Already up to date
+Done in 469ms using pnpm v11.19.0
+$ node scripts/build-claude-plugin.mjs --check
+claude-plugin: fresh
+exit=0 end=2026-09-28T14:13:13Z

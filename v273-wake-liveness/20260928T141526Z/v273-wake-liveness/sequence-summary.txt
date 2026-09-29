@@ -1,0 +1,11 @@
+pnpm install --frozen-lockfile => 0
+pnpm bundle:check => 0
+pnpm claude:drift => 0
+pnpm lint => 0
+pnpm build => 0
+pnpm test => 1
+pnpm runtime:check => 0
+pnpm validate:all => 0
+pnpm validate:official => 1
+git diff --check => 0
+pnpm claude:check => 0

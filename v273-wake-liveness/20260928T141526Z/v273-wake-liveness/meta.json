@@ -1,0 +1,84 @@
+{
+  "case": "v273-wake-liveness",
+  "candidateBranch": "claude/v273-wake-liveness",
+  "candidateCommit": "e739090952710d418a67dae71d76b1f2ef169441",
+  "candidateTree": "f3bfdf1be77a6e857c595dacb9231402f86974a9",
+  "supersededLocalCommit": {
+    "commit": "a119a2a0229cb03c7c3ab345f18a4bca02b218a3",
+    "tree": "f3bfdf1be77a6e857c595dacb9231402f86974a9",
+    "pushed": false
+  },
+  "baseCommit": "8763cef2b11f2635d6c9af7861b5bffd496e2a30",
+  "environment": {
+    "os": "linux-x64 cloud container",
+    "node": "v24.21.0",
+    "pnpm": "11.19.0"
+  },
+  "previousBrokers": {
+    "v2.7.2": {
+      "source": "commit 8763cef mcp-server/dist/session-message-broker.mjs",
+      "sha256": "fbb808e0fd8d52df17db7e7a8eeac84ed675f83a3abca9039f79740f2536f682"
+    },
+    "v2.7.1": {
+      "source": "tag v2.7.1 mcp-server/dist/session-message-broker.mjs"
+    },
+    "v2.2.6": {
+      "source": "tag v2.2.6 mcp-server/dist/session-message-broker.mjs"
+    }
+  },
+  "results": {
+    "install": "PASS",
+    "bundleCheck": "PASS",
+    "claudeDrift": "PASS",
+    "lint": "PASS",
+    "build": "PASS",
+    "testFirstRun": {
+      "result": "FAIL",
+      "failed": 1,
+      "passed": 837,
+      "skipped": 2,
+      "failedTest": "tests/mcp/korean-prose-cycle-receipt.test.ts > rejects a label leaked into the independent adjudicator input",
+      "rootCause": "not established"
+    },
+    "testRerun": {
+      "result": "PASS",
+      "failed": 0,
+      "passed": 838,
+      "skipped": 2
+    },
+    "runtimeCheck": "PASS",
+    "validateAll": "PASS",
+    "validateOfficial": "NOT_RUN (official Codex validator not installed)",
+    "diffCheck": "PASS",
+    "claudeCheck": "PASS",
+    "previousBroker": {
+      "v2.7.2": "PASS 2/2",
+      "v2.7.1": "PASS 2/2",
+      "v2.2.6": "PASS 2/2"
+    },
+    "prefixProbe": {
+      "failed": 25,
+      "passed": 1
+    },
+    "windows": "NOT_RUN",
+    "installedPcHostWake": "NOT_RUN",
+    "sourceVerify": "NOT_RUN"
+  },
+  "redaction": {
+    "replacement": "[REDACTED]",
+    "hits": {
+      "account-name": 0,
+      "anthropic-key": 0,
+      "aws-key": 0,
+      "bearer": 0,
+      "email": 0,
+      "github-token": 0,
+      "home-path": 10,
+      "ipv4": 0,
+      "private-key": 0,
+      "root-home": 2
+    },
+    "envOrPrintenvOutput": "not included"
+  },
+  "scope": "Linux cloud single environment; not Windows or real PC installation evidence."
+}

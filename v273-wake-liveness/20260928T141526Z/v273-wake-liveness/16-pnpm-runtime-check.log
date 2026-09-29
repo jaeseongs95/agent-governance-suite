@@ -1,0 +1,7 @@
+$ pnpm runtime:check
+start=2026-09-28T14:12:57Z head=e739090952710d418a67dae71d76b1f2ef169441
+Already up to date
+Done in 446ms using pnpm v11.19.0
+$ node scripts/check-runtime.mjs
+runtime: ready (29 skill CLIs, Node.js 24.21.0)
+exit=0 end=2026-09-28T14:13:05Z
