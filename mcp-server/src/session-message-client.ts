@@ -37,7 +37,7 @@ export class BrokerRequestRejected extends Error {
 }
 
 const BROKER_STARTUP_TIMEOUT_MS = 15_000;
-const SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 20_000;
+export const SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 20_000;
 const BROKER_REQUEST_TIMEOUT_MS = 2_500;
 const BROKER_STARTUP_DEADLINE_MESSAGE = "The session message broker did not become ready before the startup deadline.";
 const SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE = "The session message request deadline expired.";

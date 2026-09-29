@@ -20356,16 +20356,25 @@ var SessionMessageService = class {
     }
   }
   /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. A refused
-   * batch or an identity outside the broker's pattern is reported as unanswered; the other batches still count. */
+   * batch or an identity outside the broker's pattern is reported as unanswered; the other batches still count. The
+   * whole lookup shares one client deadline, so a slow broker ends it once, not once per batch. */
   async listPresence(targets) {
     const sessions = [];
     const unanswered = [];
     const asked = [];
     for (const { host, sessionId } of targets) (isBoundedIdentity({ host, sessionId }) ? asked : unanswered).push({ host, sessionId });
+    const deadline = Date.now() + SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
     for (let index = 0; index < asked.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
       const batch = asked.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS);
+      const remaining = deadline - Date.now();
       try {
-        const data = await sessionMessageRequest("list-presence", { targets: batch }, this.stateDirectory);
+        if (remaining <= 0) throw new Error("The board presence lookup reached its deadline.");
+        const data = await sessionMessageRequest(
+          "list-presence",
+          { targets: batch },
+          this.stateDirectory,
+          { totalTimeoutMs: remaining }
+        );
         sessions.push(...data.sessions.map((session) => ({
           ...session,
           deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
