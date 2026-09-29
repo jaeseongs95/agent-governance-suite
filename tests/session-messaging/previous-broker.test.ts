@@ -223,7 +223,7 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
   }
 }, 20_000);
 
-it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth for the new broker to retire", async () => {
+it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-ended-"));
   const environment = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory,
     AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
@@ -271,7 +271,10 @@ it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth f
   }
   try {
     const kept = wakeRow();
-    if (managedWakeAware === true) expect(kept).toEqual(before);
+    const binding = (row: Record<string, unknown>) => Object.fromEntries(Object.entries(row).filter(([key]) => !["state", "retired_at"].includes(key)));
+    // A 2.7.5 or later broker already retires it (same binding, terminal state); 2.7.4 and 2.7.3 keep the latch.
+    if (kept?.state === "expired-unobserved") expect(binding(kept)).toEqual(binding(before!));
+    else if (managedWakeAware === true) expect(kept).toEqual(before);
     else expect([undefined, before]).toContainEqual(kept);
     const current = new SessionMessageStore(databasePath);
     try {
