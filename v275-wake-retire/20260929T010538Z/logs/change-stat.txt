@@ -1,0 +1,20 @@
+ .agents/plugins/marketplace.json                   |   2 +-
+ .codex-plugin/plugin.json                          |   2 +-
+ README.en.md                                       |   4 +-
+ README.md                                          |   4 +-
+ claude-plugin/.claude-plugin/plugin.json           |   2 +-
+ claude-plugin/mcp-server/dist/server.mjs           |   2 +-
+ .../mcp-server/dist/session-message-broker.mjs     |  12 ++-
+ docs/release-notes-v2.7.5.md                       |  27 +++++
+ docs/roadmap.md                                    |   2 +-
+ docs/session-message-lifecycle.md                  |  17 +--
+ mcp-server/dist/server.mjs                         |   2 +-
+ mcp-server/dist/session-message-broker.mjs         |  12 ++-
+ mcp-server/src/plugin-info.ts                      |   2 +-
+ mcp-server/src/session-message-store.ts            |  12 ++-
+ package.json                                       |   2 +-
+ release/version.json                               |   2 +-
+ tests/session-messaging/previous-broker.test.ts    |  72 ++++++++++++-
+ tests/session-messaging/session-message.test.ts    |   5 +
+ tests/session-messaging/wake-liveness.test.mjs     | 118 +++++++++++++++++----
+ 19 files changed, 247 insertions(+), 54 deletions(-)

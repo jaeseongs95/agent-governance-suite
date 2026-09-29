@@ -1,0 +1,500 @@
+diff --git a/.agents/plugins/marketplace.json b/.agents/plugins/marketplace.json
+index 76d79e4..374c1b5 100644
+--- a/.agents/plugins/marketplace.json
++++ b/.agents/plugins/marketplace.json
+@@ -9,7 +9,7 @@
+       "source": {
+         "source": "url",
+         "url": "https://github.com/jaeseongs95/agent-governance-suite.git",
+-        "ref": "v2.7.4"
++        "ref": "v2.7.5"
+       },
+       "policy": {
+         "installation": "AVAILABLE",
+diff --git a/.codex-plugin/plugin.json b/.codex-plugin/plugin.json
+index b03695c..8109c09 100644
+--- a/.codex-plugin/plugin.json
++++ b/.codex-plugin/plugin.json
+@@ -1,7 +1,7 @@
+ {
+   "id": "agent-governance-suite",
+   "name": "agent-governance-suite",
+-  "version": "2.7.4",
++  "version": "2.7.5",
+   "description": "Route governance specialists through declarative provider contracts, a local MCP convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
+   "author": {
+     "name": "jaeseongs95",
+diff --git a/README.en.md b/README.en.md
+index 6852649..976a575 100644
+--- a/README.en.md
++++ b/README.en.md
+@@ -14,7 +14,7 @@ Use it to track change scope and verification while building a feature, or to co
+ | Coordinating sessions | A way to see each session's work and contact it | A shared board and local PEER messages with processing acknowledgments |
+ 
+ <!-- release-version:start -->
+-The current public release is `v2.7.4` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
++The current public release is `v2.7.5` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+ <!-- release-version:end -->
+ 
+ - [Installation](#installation)
+@@ -44,7 +44,7 @@ Run in a terminal:
+ 
+ <!-- release-install:start -->
+ ```bash
+-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.4
++codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.5
+ codex plugin add agent-governance-suite@agent-governance
+ ```
+ <!-- release-install:end -->
+diff --git a/README.md b/README.md
+index 8c6b49f..e8afaa4 100644
+--- a/README.md
++++ b/README.md
+@@ -14,7 +14,7 @@ Agent Governance Suite(AGS)는 AI 에이전트의 작업에 전문 스킬과 검
+ | 여러 세션의 협업 | 각 세션의 작업을 확인하고 연락할 경로 | 공용 현황판과 처리 여부를 확인할 수 있는 로컬 PEER 메시지 |
+ 
+ <!-- release-version:start -->
+-현재 공개 릴리스는 `v2.7.4`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
++현재 공개 릴리스는 `v2.7.5`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+ <!-- release-version:end -->
+ 
+ - [설치](#설치)
+@@ -44,7 +44,7 @@ Claude Code 안에서 실행합니다.
+ 
+ <!-- release-install:start -->
+ ```bash
+-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.4
++codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.5
+ codex plugin add agent-governance-suite@agent-governance
+ ```
+ <!-- release-install:end -->
+diff --git a/docs/release-notes-v2.7.5.md b/docs/release-notes-v2.7.5.md
+new file mode 100644
+index 0000000..2da4c92
+--- /dev/null
++++ b/docs/release-notes-v2.7.5.md
+@@ -0,0 +1,27 @@
++# v2.7.5: 끝난 세션의 미관측 wake 퇴역
++
++끝난 세션 앞으로 남은 활성 wake 행이 영구히 퇴역하지 않던 한계를 없앱니다. 2.7.3부터 미관측 알림은 주입 만료(예약 뒤 1시간)와 유예 10분이 지난 뒤 퇴역 근거가 있을 때만 `expired-unobserved`로 바뀌었습니다. 근거는 만료 뒤 같은 세션의 활동, 또는 알림보다 늦게 태어나 살아 있는 presence였습니다. 그래서 알림을 받은 세션이 끝났거나(프로세스 종료) lease가 끊긴 뒤(재부팅) 활동도 재등록도 없으면, 그 행은 계속 `reserved`, `started`, `submitted`, `unknown` 가운데 하나로 남았습니다. 실제 PC에서는 재부팅 뒤 다시 열지 않은 Codex 세션을 중심으로 이런 행이 13개 쌓여 있었습니다. v2.7.4 notes의 알려진 한계 첫 문단이 이 내용입니다.
++
++두 번째 퇴역 근거를 넓힙니다. 같은 세션의 최신 presence 행(birth 기준)이 알림을 받은 birth의 살아 있는 행이 아니면 퇴역합니다. 새 birth가 최신이거나, 알림의 birth가 끝났거나 lease가 끊겼거나, presence 행이 모두 지워진 경우입니다. 주입 만료와 유예 조건, 활동 근거, 새 상태 없이 `expired-unobserved`로 끝내는 방식, schema는 그대로입니다. 판정은 instance와 birth generation으로 하고 transport는 보지 않습니다.
++
++이 근거로 퇴역해도 wake 누적 억제의 범위는 줄지 않습니다. 끝났거나 lease가 끊긴 birth는 다시 살아나지 않습니다. heartbeat는 살아 있는 행만 갱신하고, 같은 instance가 다시 등록되면 더 늦은 새 birth를 받습니다. presence 조회, relay tick, 현재 세대 claim과 `autoWake`는 모두 최신 행을 읽습니다. 따라서 최신 행이 알림의 살아 있는 birth가 아니면 그 알림은 현재 세대로 claim될 수 없고, live relay가 없으므로 새 wake도 보내지 않습니다. 세션이 다시 열리면 새 birth가 최신이 되므로 2.7.4에서도 그때 퇴역했습니다. 새 규칙은 세션이 끝난 뒤 다시 열리기 전까지의 구간에서만 결과가 다릅니다. 살아 있지만 조용한 세션(relay heartbeat로 lease가 유지되고 활동은 없음)의 알림은 지금처럼 latch로 남고, `autoWake`는 `latched`/`wake-unobserved`입니다. 퇴역한 알림이 늦게 도착하면 기존대로 `late_observed_at`만 기록하고 본문 claim에는 참여하지 않습니다. Codex hook은 이 marker-only 입력을 모델 요청 전에 막습니다. 자세한 규칙은 [미관측 알림 퇴역과 자동 깨우기 신호](session-message-lifecycle.md#미관측-알림-퇴역과-자동-깨우기-신호)를 따릅니다.
++
++## 동작 변화(호환성)
++
++설치 뒤 새 broker의 첫 prune에서, 주입 만료와 유예가 지났고 받은 birth가 더 이상 최신의 살아 있는 행이 아닌 활성 wake 행이 `expired-unobserved`로 바뀝니다. 이 PC 같은 기존 DB에서는 끝난 세션 앞으로 남은 활성 행(예: 13개)이 이때 한 번에 퇴역합니다. 퇴역한 행은 기존 terminal 보관 규칙대로 퇴역 1시간 뒤 prune에서 지워집니다. 메시지 본문은 그대로 큐에 남고, 세션이 다시 열려 live relay가 뜨면 새 wake 하나를 예약할 수 있습니다. 퇴역은 되돌리지 않으며 `observed`나 성공으로 기록하지 않습니다. status의 `deliveryState`는 계속 `unknown`입니다.
++
++퇴역은 broker의 prune에서만 일어납니다. 2.7.4 이하 broker가 같은 DB를 쓰는 동안에는 이런 알림이 활성으로 남고, 새 broker의 첫 prune에서 퇴역합니다. 새 broker가 퇴역한 행은 2.7.3 이상 broker에서 terminal로 보입니다. broker는 relay가 주기적으로 요청하는 동안 종료되지 않으므로, 기존 AGS MCP·relay·broker를 종료한 뒤 재연결합니다. previous-broker 회귀 시험은 v2.7.4, v2.7.3, v2.7.2, v2.7.1, v2.2.6 broker로 각각 통과했으며, 이 검사로 혼합 버전의 모든 실행·복구를 보장하지 않습니다.
++
++현황판 혼합 버전 문서의 "모든 묶음이 실패해" 문구를 실제 동작에 맞췄습니다. 이전 broker의 응답이 한도를 넘으면 첫 묶음이 전송 실패로 끝나고, 남은 묶음은 요청하지 않습니다. 결과(모든 presence `unknown`, `autoWake` `null`)는 전과 같습니다.
++
++## 알려진 한계
++
++퇴역한 행이 보관 기간(퇴역 뒤 1시간) 뒤 지워진 다음에 같은 marker가 host에 도착하면, 미등록 nonce로 거절되어 hook이 막지 않습니다. 이 한계는 2.7.3부터 있던 것입니다. 새 규칙은 끝난 세션의 알림을 더 일찍 퇴역시키므로, 끝난 세션이 1시간보다 오래 지나 다시 열리고 host가 옛 marker를 다시 제출하는 경우에 해당할 수 있습니다. 이때 보이는 비용은 빈 모델 턴 한 번입니다.
++
++살아 있지만 조용한 세션의 알림은 계속 latch로 남습니다. host가 marker를 끝내 처리하지 않으면, 그 세션이 활동하거나 끝나거나 새로 태어날 때까지 새 wake를 보내지 않습니다. 이것은 설계된 보호입니다.
++
++퇴역 판정은 broker 한 process가 요청마다 읽는 벽시계를 씁니다. 시계가 되돌아가는 환경은 검증하지 않았습니다. 공통 접수 원문이 두 번 주입되는 문제(L3)는 이번 범위가 아닙니다.
++
++퇴역 규칙은 Linux 환경의 시험(두 process 경합 포함)으로 확인했습니다. 실제 PC의 운영 DB와 설치 캐시 동작은 이 검사가 대신하지 않습니다.
++
++공식 [설치 안내](../README.md#설치)에 따라 업데이트한 뒤 새 세션으로 재연결합니다. 운영 DB·키·큐를 지우거나 덮어써 불확실한 상태를 없애지 않습니다. 버전 동기화와 로컬 검사는 실제 설치 bytes나 호스트 동작을 대신하지 않으므로, 설치·재연결 뒤 `get_session_message_status`의 wake 상태를 별도로 확인합니다.
+diff --git a/docs/roadmap.md b/docs/roadmap.md
+index 4249a2f..cf368d9 100644
+--- a/docs/roadmap.md
++++ b/docs/roadmap.md
+@@ -1,7 +1,7 @@
+ # Agent Governance Suite 향후 로드맵
+ 
+ <!-- release-version:start -->
+-문서 기준일은 2026년 9월 21일이다. 현재 공개 릴리스는 `v2.7.4`이다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
++문서 기준일은 2026년 9월 21일이다. 현재 공개 릴리스는 `v2.7.5`이다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
+ <!-- release-version:end -->
+ 
+ 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
+diff --git a/docs/session-message-lifecycle.md b/docs/session-message-lifecycle.md
+index 22729e5..7b30230 100644
+--- a/docs/session-message-lifecycle.md
++++ b/docs/session-message-lifecycle.md
+@@ -137,14 +137,14 @@ start 이후 본문 claim과 외부 enqueue 사이 경합에서는 알림 하나
+ 
+ 1. 알림의 주입 만료(`expires_at`, 예약 뒤 1시간)에 유예 10분을 더한 시각이 지났다. 유예는 hook 8초 timeout, broker 재시작, hook receipt 30초 TTL을 덮고, 가장 긴 재시도 backoff와 같다.
+ 2. 다음 근거 가운데 하나가 저장되어 있다.
+-   - 같은 대상의 최신 presence가 살아 있고(`ended_at` 없음, lease 유효), 그 birth가 알림의 birth generation보다 나중이다.
++   - 같은 대상의 최신 presence 행(birth 기준)이 더 이상 알림을 받은 birth의 살아 있는 행이 아니다. 새 birth가 최신이거나, 알림의 birth가 끝났거나(`ended_at`) lease가 끊겼거나, 행이 모두 지워진 경우다. 판정은 instance와 birth generation으로 하고 transport는 보지 않는다. 살아 있는 birth는 같은 세대로 transport를 바꿨다가 되돌릴 수 있기 때문이다.
+    - 만료 뒤 같은 세션의 활동이 있었다: 본문 claim, 도구 경계 claim, turn-end claim과 정리, SessionEnd 정리, hook 없는 CLI의 claim·ACK 호출, ACK, 일반 사용자 입력 관측, 검증된 wake hook 도착.
+ 
+ 활동 근거는 권위가 아니며 신뢰 수준은 같은 OS 사용자다. 같은 OS 사용자의 프로세스는 CLI로 다른 세션의 활동 근거도 만들 수 있다.
+ 
+-만료만 되고 근거가 없는 행, 끝난 세대나 lease가 끊긴 세대만 있는 행, 알림보다 이른 birth만 살아 있는 행은 그대로 활성으로 남는다. 퇴역은 `prune`의 UPDATE 한 문장으로 원자 commit하며, reserve·send·status 같은 기존 prune 지점에서 일어난다. 조회 도구인 `list_session_status`와 `get_session_message_status`도 prune을 부르므로 만료 기록 삭제와 퇴역을 일으킬 수 있다. 이 정리는 멱등이며 조회 결과의 의미를 바꾸지 않는다.
++끝났거나 lease가 끊긴 birth는 다시 살아나지 않는다. heartbeat는 살아 있는 행만 갱신하고, 같은 instance의 재등록은 더 늦은 새 birth를 받는다. presence 조회, relay tick, 현재 세대 claim과 `autoWake`는 모두 최신 행을 읽으므로, 최신 행이 알림의 살아 있는 birth가 아니면 그 알림은 현재 세대로 claim될 수 없고 새 wake도 예약되지 않는다. 그래서 이 근거로 퇴역해도 누적 억제 범위는 줄지 않는다. 2.7.4까지는 이 경우 가운데 새 birth가 살아 있는 경우만 퇴역했으므로, 끝나거나 lease가 끊긴 뒤 활동도 재등록도 없는 세션의 알림이 영구히 활성으로 남았다. 활성으로 남는 것은 만료와 유예 전의 행, 그리고 알림의 birth가 최신 행으로 살아 있고 만료 뒤 활동이 없는 행(살아 있지만 조용한 세션)뿐이다. 퇴역은 `prune`의 UPDATE 한 문장으로 원자 commit하며, reserve·send·status 같은 기존 prune 지점에서 일어난다. 조회 도구인 `list_session_status`와 `get_session_message_status`도 prune을 부르므로 만료 기록 삭제와 퇴역을 일으킬 수 있다. 이 정리는 멱등이며 조회 결과의 의미를 바꾸지 않는다.
+ 
+-누적 상한: 대상당 활성 알림은 하나이고 퇴역은 주입 만료와 유예 뒤에만 일어난다. 따라서 세션이 활동하는 동안 host queue에는 (주입 TTL + 유예), 곧 약 70분마다 marker가 최대 1개 쌓일 수 있다. 한 turn이 오래 바쁘고 그동안 도구 경계 claim이나 ACK가 이어지면 이 상한까지 쌓일 수 있다. 활동도 새 세대도 없는 세션에는 쌓이지 않는다.
++누적 상한: 대상당 활성 알림은 하나이고 퇴역은 주입 만료와 유예 뒤에만 일어난다. 따라서 세션이 활동하는 동안 host queue에는 (주입 TTL + 유예), 곧 약 70분마다 marker가 최대 1개 쌓일 수 있다. 한 turn이 오래 바쁘고 그동안 도구 경계 claim이나 ACK가 이어지면 이 상한까지 쌓일 수 있다. 살아 있지만 조용한 세션에는 쌓이지 않고, 끝난 세션에는 live relay가 없어 새 알림을 보내지 않는다.
+ 
+ 퇴역한 행은 새 terminal 상태 `expired-unobserved`가 된다. `observed`나 성공으로 바꾸지 않고, status의 `deliveryState`는 계속 `unknown`이다. nonce, instance, birth generation, transport, relay, attempt, dispatch epoch, started·outcome·late 시각은 그대로 두고 `retired_at`만 더한다. 옛 attempt의 늦은 outcome이나 start는 이 행을 다시 열지 못한다. terminal 보관 규칙(최대 1000개, 퇴역 후 1시간)을 따르며, 보관 기산점은 `retired_at`이다. 이미 `late_observed_at`이 있는 v2.7.1 모양의 unknown도 같은 규칙으로 퇴역하며, 그 뒤 `reconcile-wake-observation`은 `reconciled: false`를 돌려준다. late 기록은 행에 그대로 남는다.
+ 
+@@ -152,10 +152,13 @@ start 이후 본문 claim과 외부 enqueue 사이 경합에서는 알림 하나
+ 
+ 거절한 대안은 다음과 같다.
+ 
+-- 만료만으로 해제: 세션이 살아 있다는 근거 없이 주입 만료마다 새 알림을 쌓는다. 선택한 규칙도 활동하는 세션에는 (주입 TTL + 유예)마다 최대 1개를 쌓을 수 있지만, 활동도 새 세대도 없는 세션에는 쌓지 않는다.
++- 만료만으로 해제: 세션이 살아 있다는 근거 없이 주입 만료마다 새 알림을 쌓는다. 선택한 규칙도 활동하는 세션에는 (주입 TTL + 유예)마다 최대 1개를 쌓을 수 있지만, 살아 있지만 조용한 세션에는 쌓지 않는다.
+ - `observed`나 `not-submitted`로 해제: 도착이나 무효과의 증거가 없는데 그렇게 기록하게 된다.
+ - broker가 relay 없이 직접 깨우기: host 생존과 알림 발송을 묶은 설계를 깨므로 만들지 않는다.
+ - 같은 세대에서 활동 없이 relay만 살아 있어도 해제: idle host의 queue에 marker가 남아 있을 가능성을 배제하지 못한다.
++- 알림을 받은 instance의 행만 보고 판정: 그 행이 살아 있어도 더 늦은 birth가 최신이면 relay tick과 claim이 모두 거절되므로, 그 birth가 끝날 때까지 풀리지 않는 활성 행이 남는다. 최신 행 하나로 판정하면 presence·claim과 같은 행을 보고, 따로 규칙을 둘 필요도 없다.
++
++퇴역은 broker가 하는 prune에서만 일어난다. 2.7.4 이하 broker는 끝나거나 lease가 끊긴 birth의 알림을 퇴역하지 않으므로, 같은 DB를 이전 broker가 쓰는 동안 그 알림은 활성으로 남고 새 broker의 첫 prune에서 퇴역한다. 새 broker가 퇴역한 행은 2.7.3 이상 broker에서 terminal로 보인다.
+ 
+ `send_session_message`의 결과와 `get_session_message_status`의 미ACK 큐 행, 세션 현황판의 presence에는 조언용 `autoWake`가 붙는다. 계약은 `contracts/session-auto-wake-outlook.v1.schema.json`이며 `authorityEffect: "none"`이다. 발신 성공은 broker가 큐에 넣었다는 뜻이고, `autoWake`는 수신자가 지금 idle 상태에서 자동으로 깨워질 수 있는지에 대한 조언일 뿐이다. 전달, 처리, 완료, 승인이나 권한의 증거가 아니고, 큐의 메시지를 지우거나 다시 보내지 않는다.
+ 
+@@ -188,9 +191,9 @@ presence birth는 ms 해상도 ISO 문자열이다. 같은 instance가 이전 bi
+ 
+ | service | broker | 현황판 presence |
+ | --- | --- | --- |
+-| 2.7.4 | 2.7.4 | 세션 수와 DB 크기에 관계없이 동작한다 |
+-| 2.7.4 | 2.7.3, 2.7.2, 2.7.1, 2.2.6 | 이전 broker는 `targets`를 무시하고 모든 identity를 돌려준다. 응답이 한도 안이면 정상이고, 넘으면 모든 묶음이 실패해 2.7.3처럼 모든 presence가 `unknown`, `autoWake`가 `null`이다. 이전 broker는 presence 행을 지우지 않으므로 새 broker가 뜰 때까지 이어진다 |
+-| 2.7.3 이하 | 2.7.4 | `targets` 없는 요청이라 모든 identity를 받는다. 보존 정리 뒤에는 24시간 안의 identity만 남지만, 그래도 한도를 넘으면 broker가 명시적으로 거절하고 이전 service는 모든 presence를 `unknown`으로 둔다 |
++| 2.7.4 이상 | 2.7.4 이상 | 세션 수와 DB 크기에 관계없이 동작한다 |
++| 2.7.4 이상 | 2.7.3, 2.7.2, 2.7.1, 2.2.6 | 이전 broker는 `targets`를 무시하고 모든 identity를 돌려준다. 응답이 한도 안이면 정상이다. 넘으면 첫 묶음이 응답 한도 초과(전송 실패)로 끝나 남은 묶음은 요청하지 않고, 2.7.3처럼 모든 presence가 `unknown`, `autoWake`가 `null`이다. 이전 broker는 presence 행을 지우지 않으므로 새 broker가 뜰 때까지 이어진다 |
++| 2.7.3 이하 | 2.7.4 이상 | `targets` 없는 요청이라 모든 identity를 받는다. 보존 정리 뒤에는 24시간 안의 identity만 남지만, 그래도 한도를 넘으면 broker가 명시적으로 거절하고 이전 service는 모든 presence를 `unknown`으로 둔다 |
+ 
+ broker는 relay가 주기적으로 요청하는 동안 종료되지 않으므로, 업데이트 뒤에도 이전 broker가 계속 돌 수 있다. 앞의 안내대로 기존 AGS MCP·relay·broker를 종료한 뒤 재연결한다.
+ 
+diff --git a/mcp-server/src/plugin-info.ts b/mcp-server/src/plugin-info.ts
+index ebda66a..2888b5a 100644
+--- a/mcp-server/src/plugin-info.ts
++++ b/mcp-server/src/plugin-info.ts
+@@ -1,6 +1,6 @@
+ export const PLUGIN_INFO = Object.freeze({
+   id: "agent-governance-suite",
+-  version: "2.7.4",
++  version: "2.7.5",
+   repository: "https://github.com/jaeseongs95/agent-governance-suite",
+   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v",
+ });
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index c8706de..1134841 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -333,8 +333,11 @@ export class SessionMessageStore {
+ 
+   /**
+    * Retires an unobserved managed wake only after its injection expiry plus grace, and only with evidence that the
+-   * host moved past it: a newer live presence birth, or session activity after the expiry. The row keeps its original
+-   * binding, epoch and times; expired-unobserved is neither observation nor delivery. One UPDATE commits it atomically.
++   * host moved past it: session activity after the expiry, or the session's latest presence row is no longer the wake's
++   * own live birth (a newer birth, an ended or lapsed birth, or no row at all). A lapsed or ended birth never renews, and
++   * presence, relay ticks and claims all read that latest row, so such a wake can no longer be claimed; only a live,
++   * quiet birth keeps its latch. The row keeps its original binding, epoch and times; expired-unobserved is neither
++   * observation nor delivery. One UPDATE commits it atomically.
+    */
+   private retireUnobservedWakes(nowMs: number): void {
+     const now = iso(nowMs);
+@@ -342,9 +345,10 @@ export class SessionMessageStore {
+       WHERE state IN ${ACTIVE_WAKE_STATES} AND expires_at <= ?
+         AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
+             AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)
+-          OR coalesce((SELECT latest.ended_at IS NULL AND latest.lease_until > ? AND latest.started_at > wake_nonces.birth_generation
++          OR coalesce((SELECT NOT (latest.ended_at IS NULL AND latest.lease_until > ?
++              AND latest.instance_id = wake_nonces.instance_id AND latest.started_at = wake_nonces.birth_generation)
+             FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id
+-            ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 0))`)
++            ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 1))`)
+       .run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), now);
+   }
+ 
+diff --git a/package.json b/package.json
+index 20a7a69..7ea77f0 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "agent-governance-suite",
+-  "version": "2.7.4",
++  "version": "2.7.5",
+   "private": true,
+   "description": "Governance specialists with declarative local orchestration, a local convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
+   "type": "module",
+diff --git a/release/version.json b/release/version.json
+index 645af74..5a85129 100644
+--- a/release/version.json
++++ b/release/version.json
+@@ -1,3 +1,3 @@
+ {
+-  "version": "2.7.4"
++  "version": "2.7.5"
+ }
+diff --git a/tests/session-messaging/previous-broker.test.ts b/tests/session-messaging/previous-broker.test.ts
+index e23b3a7..fce9efa 100644
+--- a/tests/session-messaging/previous-broker.test.ts
++++ b/tests/session-messaging/previous-broker.test.ts
+@@ -182,6 +182,8 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
+   const seed = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
+   try {
+     seed.startPresence({ ...target, instanceId: "presence-instance", transport: "portable", wakeVisibility: "none", canWakeSilently: false }, Date.now());
++    seed.startPresence({ host: "synthetic-host", sessionId: "presence-other", instanceId: "presence-other", transport: "portable",
++      wakeVisibility: "none", canWakeSilently: false }, Date.now());
+     // The broker reads the wall clock after a possibly slow start; keep the row live well past the 20-second lease.
+     seed.database.prepare("UPDATE session_presence SET lease_until = ? WHERE session_id = ?")
+       .run(new Date(Date.now() + 10 * 60_000).toISOString(), target.sessionId);
+@@ -195,7 +197,9 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
+     expect(small.ok).toBe(true);
+     expect(small.data!.sessions.find((item) => item.sessionId === target.sessionId)).toMatchObject({ state: "online" });
+     expect(small.data!.unanswered).toEqual([]);
+-    // Past the response limit a previous broker cannot answer; each batch is unanswered (unknown, autoWake null), never wrong data.
++    // A 2.7.4 or later broker answers only the requested targets; an earlier one lists every identity.
++    const targeted = !small.data!.sessions.some((item) => item.sessionId === "presence-other");
++    // Past the response limit an earlier broker cannot answer; each batch is unanswered (unknown, autoWake null), never wrong data.
+     const many = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
+     try {
+       for (let index = 0; index < 120; index += 1) {
+@@ -204,7 +208,11 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
+       }
+     } finally { many.close(); }
+     const large = await service.listPresence([target]);
+-    expect(large.data).toEqual({ sessions: [], unanswered: [target] });
++    if (targeted) {
++      expect(large.data!.unanswered).toEqual([]);
++      expect(large.data!.sessions.map((item) => item.sessionId)).toEqual([target.sessionId]);
++      expect(large.data!.sessions[0]).toMatchObject({ state: "online" });
++    } else expect(large.data).toEqual({ sessions: [], unanswered: [target] });
+   } finally {
+     if (child.exitCode === null && child.signalCode === null) {
+       const exited = once(child, "exit");
+@@ -214,3 +222,63 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
+     await rm(directory, { recursive: true, force: true, maxRetries: 10 });
+   }
+ }, 20_000);
++
++it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth for the new broker to retire", async () => {
++  const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-ended-"));
++  const environment = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory,
++    AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
++    AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(directory, "shared-state") };
++  const databasePath = path.join(directory, "session-messages.sqlite3");
++  const target = { host: "codex", sessionId: "ended-recipient" };
++  const nonce = "ended-birth-nonce-abcdefghijklmnopqr";
++  const seed = new SessionMessageStore(databasePath);
++  try {
++    // The birth ended long ago and never came back, so no wall-clock lease is involved.
++    const base = Date.now() - WAKE_TTL_MS - WAKE_RETIRE_GRACE_MS - 60_000;
++    seed.startPresence({ ...target, instanceId: "ended-instance", transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false,
++      deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" } }, base);
++    seed.acquireRelay({ ...target, transport: "codex-queue", relayId: "ended-relay", pid: process.pid, parentPid: process.pid }, base);
++    seed.send({ sender: { host: "synthetic-host", sessionId: "sender" }, target, messageId: "ended-body", body: "b", ttlSeconds: 86400 }, base);
++    const reserved = seed.reserveManagedWake({ ...target, nonce, instanceId: "ended-instance", transport: "codex-queue", relayId: "ended-relay" }, base);
++    seed.recordManagedWakeOutcome(seed.startManagedWake(reserved.attempt!, base + 1).attempt!, "submitted", base + 2);
++    seed.endPresence(target, "session-end", "ended-instance", base + 3);
++  } finally { seed.close(); }
++  const wakeRow = () => {
++    const database = new DatabaseSync(databasePath, { readOnly: true });
++    try { return database.prepare("SELECT * FROM wake_nonces WHERE nonce = ?").get(nonce) as Record<string, unknown> | undefined; }
++    finally { database.close(); }
++  };
++  const before = wakeRow();
++  expect(before).toMatchObject({ state: "submitted" });
++  const child = spawn(process.execPath, [previousBroker!, "--state-directory", directory], { windowsHide: true, stdio: "ignore", env: environment });
++  let managedWakeAware: boolean | undefined;
++  try {
++    await waitForSessionMessageBrokerReady(directory, child, 5000);
++    const ping = await requestSessionMessageOnce<{ capabilities?: string[] }>("ping", {}, directory);
++    managedWakeAware = (ping.capabilities ?? []).includes("delivery-capabilities");
++    // Any request prunes; a previous broker does not know the ended-birth rule.
++    const pending = spawnSync(process.execPath, [path.join(pluginRoot, "mcp-server/dist/session-message-cli.mjs")], {
++      env: environment, input: JSON.stringify({ operation: "pending", payload: { target } }), encoding: "utf8", windowsHide: true, timeout: 5000,
++    });
++    expect(pending.status, pending.stderr).toBe(0);
++    expect(JSON.parse(pending.stdout).data.count).toBe(1);
++  } finally {
++    if (child.exitCode === null && child.signalCode === null) {
++      const exited = once(child, "exit");
++      child.kill();
++      await exited;
++    }
++  }
++  try {
++    const kept = wakeRow();
++    if (managedWakeAware === true) expect(kept).toEqual(before);
++    else expect([undefined, before]).toContainEqual(kept);
++    const current = new SessionMessageStore(databasePath);
++    try {
++      current.prune();
++      if (kept) expect(wakeRow()).toMatchObject({ state: "expired-unobserved", observed_at: null, consumed_at: null });
++    } finally { current.close(); }
++  } finally {
++    await rm(directory, { recursive: true, force: true, maxRetries: 10 });
++  }
++}, 20_000);
+diff --git a/tests/session-messaging/session-message.test.ts b/tests/session-messaging/session-message.test.ts
+index 2d3d87a..d5cf7b9 100644
+--- a/tests/session-messaging/session-message.test.ts
++++ b/tests/session-messaging/session-message.test.ts
+@@ -1188,6 +1188,11 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
+             wakeVisibility: "user-message", canWakeSilently: false,
+             deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" } }, now + 7);
+         }
++        // The broker reads the wall clock when the hook runs; keep this scenario's births and relay live past the 20-second lease.
++        const until = new Date(Date.now() + 10 * 60_000).toISOString();
++        store.database.prepare("UPDATE session_presence SET lease_until = ? WHERE host = ? AND session_id = ? AND ended_at IS NULL")
++          .run(until, target.host, target.sessionId);
++        store.database.prepare("UPDATE relay_leases SET lease_until = ? WHERE host = ? AND session_id = ?").run(until, target.host, target.sessionId);
+       } finally { store.close(); }
+       const prompt = scenario === "forged" ? "[agent-governance-suite:wake:unregistered-nonce-abcdefghijklmnop]"
+         : `[agent-governance-suite:wake:${nonce}]${scenario === "mixed" ? "\nactual user request" : ""}`;
+diff --git a/tests/session-messaging/wake-liveness.test.mjs b/tests/session-messaging/wake-liveness.test.mjs
+index 8ff4603..324dade 100644
+--- a/tests/session-messaging/wake-liveness.test.mjs
++++ b/tests/session-messaging/wake-liveness.test.mjs
+@@ -101,31 +101,95 @@ test.each(['submitted', 'accepted-or-unknown', 'started'])('an expired %s latch
+   assert.equal(status.attemptId, next.attempt.attemptId); assert.equal(status.state, 'started');
+ });
+ 
+-test.each(['same-generation', 'unreachable', 'ended-new-generation', 'older-live-instance'])('an expired latch without activity or a newer live generation stays latched: %s', kind => {
++test.each(['same-generation', 'other-transport'])('an expired latch of a live, quiet birth without activity stays latched: %s', kind => {
+   const f = fixture(); const old = latched(f);
+   const later = f.retireAt + 24 * 3600_000;
+-  if (kind === 'ended-new-generation') {
+-    live(f.store, 'instance-2', 'relay-2', later - 100);
+-    assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-2', later - 50), true);
+-  }
+-  if (kind === 'older-live-instance') {
+-    // A row born after the only live presence is not replaced by it.
+-    f.store.database.prepare('UPDATE wake_nonces SET birth_generation = ? WHERE attempt_id = ?').run(iso(later), old.attemptId);
+-    keepAlive(f.store, 'instance-1', 'relay-1', later);
+-  }
++  // A live birth may switch transport and back without a new generation, so a transport change alone is no death.
++  if (kind === 'other-transport') f.store.startPresence({ ...target, instanceId: 'instance-1', transport: 'portable-other', wakeVisibility: 'silent',
++    canWakeSilently: true, deliveryCapabilities: capabilities }, f.now + 10);
+   const before = attemptRow(f.store, old);
+   for (const at of [f.retireAt, later]) {
+-    if (kind === 'same-generation' || kind === 'older-live-instance') keepAlive(f.store, 'instance-1', 'relay-1', at);
++    keepAlive(f.store, 'instance-1', 'relay-1', at);
+     f.store.prune(at);
+     if (kind === 'same-generation') assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), at).dispatch, false);
+     assert.deepEqual(attemptRow(f.store, old), before);
+   }
+-  const outlook = f.store.autoWakeOutlook(target, later);
+-  if (kind === 'same-generation' || kind === 'older-live-instance') {
++  assert.equal(f.store.presence(target, later).startedAt, old.generation);
++  if (kind === 'same-generation') {
++    const outlook = f.store.autoWakeOutlook(target, later);
+     assert.equal(outlook.state, 'latched'); assert.equal(outlook.reason, 'wake-unobserved');
+     assert.equal(outlook.basisAt, before.expires_at);
+-  } else assert.equal(outlook.state, 'no-live-relay');
+-  assert.deepEqual(validator.sessionAutoWakeOutlook(outlook), outlook);
++    assert.deepEqual(validator.sessionAutoWakeOutlook(outlook), outlook);
++  }
++});
++
++/** Each case leaves the wake's own birth no longer the live latest presence row, with no activity and no newer live birth. */
++const deaths = {
++  // The lease lapsed (process exit, reboot); a lapsed birth never renews.
++  unreachable: () => null,
++  ended: f => { assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-1', f.now + 10), true); return null; },
++  'ended-new-generation': f => {
++    live(f.store, 'instance-2', 'relay-2', f.now + 20);
++    assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-2', f.now + 30), true);
++    return null;
++  },
++  // A 2.7.4 broker already deleted every presence row of the identity.
++  purged: f => { f.store.database.prepare('DELETE FROM session_presence WHERE session_id = ?').run(target.sessionId); return null; },
++  // An older instance of the same session stays live; only the wake's own birth counts.
++  'older-instance-live': f => {
++    f.store.startPresence({ ...target, instanceId: 'instance-0', transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
++      deliveryCapabilities: capabilities }, f.now - 1000);
++    assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-1', f.now + 10), true);
++    return 'instance-0';
++  },
++  // The same instance is live, but its birth is not the wake's (no row carries that generation any more).
++  'generation-missing': f => {
++    f.store.database.prepare('UPDATE wake_nonces SET birth_generation = ? WHERE instance_id = ?').run(iso(f.now + 5), 'instance-1');
++    return 'instance-1';
++  },
++};
++function death(f, kind) {
++  const old = latched(f);
++  const alive = deaths[kind](f);
++  // Keep the surviving birth live without a new generation; it need not be the latest row.
++  return { old, keep: at => { if (alive) f.store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ?').run(iso(at + 60_000), alive); } };
++}
++
++test.each(Object.keys(deaths))('an expired latch whose birth is no longer live retires after the grace without activity: %s', kind => {
++  const f = fixture(); const { old, keep } = death(f, kind);
++  const before = attemptRow(f.store, old);
++  keep(f.retireAt - 1); f.store.prune(f.retireAt - 1);
++  assert.deepEqual(attemptRow(f.store, old), before, 'not before the expiry plus grace');
++  keep(f.retireAt); f.store.prune(f.retireAt);
++  const retired = attemptRow(f.store, old);
++  assert.equal(retired.state, 'expired-unobserved'); assert.equal(retired.retired_at, iso(f.retireAt));
++  assert.equal(retired.observed_at, null); assert.equal(retired.consumed_at, null);
++  assert.deepEqual(without(retired, ['state', 'retired_at']), without(before, ['state', 'retired_at']));
++  assert.equal(f.store.database.prepare('SELECT count(*) AS n FROM session_activity WHERE session_id = ?').get(target.sessionId).n, 0);
++  f.store.prune(f.retireAt + 5); assert.deepEqual(attemptRow(f.store, old), retired);
++  // Retired terminal rows follow the existing one-hour cleanup.
++  f.store.prune(f.retireAt + 3600_000 - 1); assert.deepEqual(attemptRow(f.store, old), retired);
++  f.store.prune(f.retireAt + 3600_000); assert.equal(attemptRow(f.store, old), undefined);
++});
++
++test('a wake of an ended birth retired without activity records a late arrival as evidence only, then a rebirth delivers', () => {
++  const f = fixture(); const { old } = death(f, 'ended');
++  f.store.prune(f.retireAt);
++  const retired = attemptRow(f.store, old);
++  assert.equal(retired.state, 'expired-unobserved');
++  const messages = f.store.database.prepare('SELECT * FROM messages').all();
++  assert.deepEqual(hostClaim(f, observe(f, old, f.retireAt + 1), f.retireAt + 2), { recognized: false, messages: [], binding: null, retired: true });
++  const late = attemptRow(f.store, old);
++  assert.equal(late.late_observed_at, iso(f.retireAt + 2));
++  assert.deepEqual(without(late, ['late_observed_at']), without(retired, ['late_observed_at']));
++  assert.deepEqual(f.store.database.prepare('SELECT * FROM messages').all(), messages);
++  live(f.store, 'instance-1', 'relay-1', f.retireAt + 3);
++  const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt + 3);
++  assert.equal(next.dispatch, true);
++  const started = f.store.startManagedWake(next.attempt, f.retireAt + 4).attempt;
++  f.store.recordManagedWakeOutcome(started, 'submitted', f.retireAt + 5);
++  const delivered = hostClaim(f, observe(f, started, f.retireAt + 6), f.retireAt + 7);
++  assert.equal(delivered.recognized, true); assert.deepEqual(delivered.messages.map(message => message.messageId), ['pending-body']);
+ });
+ 
+ const activities = {
+@@ -369,11 +433,10 @@ test('G: v2.7.2 latch rows migrate once, keep evidence and retire under the new
+   const retired = store.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = 'digest-latched'").get();
+   assert.equal(retired.state, 'expired-unobserved'); assert.equal(retired.retired_at, iso(m.now));
+   assert.deepEqual(without(retired, ['state', 'retired_at']), without({ ...before.rows[0], retired_at: null }, ['rowid', 'state', 'retired_at']));
+-  // Rows without retirement evidence (no activity, no newer live generation) keep their state.
+-  assert.equal(store.database.prepare("SELECT state FROM wake_nonces WHERE nonce_digest = 'digest-late'").get().state, 'unknown');
+-  store.observeNativeInput({ host: target.host, sessionId: 'late-target' }, m.now + 2);
+-  store.prune(m.now + 3);
+-  assert.equal(store.database.prepare("SELECT state FROM wake_nonces WHERE nonce_digest = 'digest-late'").get().state, 'expired-unobserved');
++  // A migrated row whose birth has no live presence row retires on the same prune, with its late evidence kept.
++  const late = store.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = 'digest-late'").get();
++  assert.equal(late.state, 'expired-unobserved'); assert.equal(late.retired_at, iso(m.now));
++  assert.deepEqual(without(late, ['state', 'retired_at']), without({ ...before.rows[1], retired_at: null }, ['rowid', 'state', 'retired_at']));
+   const reopened = new SessionMessageStore(m.database); m.entry.stores.push(reopened);
+   const stable = snapshotV272(m.database);
+   assert.equal(stable.version, 1); assert.equal(stable.sql, after.sql);
+@@ -441,6 +504,21 @@ test('crash right after a committed retirement leaves a retired row and one late
+   assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt + 2).dispatch, true);
+ });
+ 
++test('two independent processes racing the retirement of an ended birth retire it once', async () => {
++  const f = fixture(); const { old } = death(f, 'ended');
++  const before = attemptRow(f.store, old);
++  const raced = await Promise.all(['retire-a', 'retire-b'].map(id => child(f.database, 'retire-then-exit', id, f.directory)));
++  for (const p of raced) assert.equal(p.first.type, 'ready', p.stderr());
++  raced.forEach((p, index) => p.process.send({ now: f.retireAt + index * 5 }));
++  for (const p of raced) { const [code] = await p.exit; assert.equal(code, 21, p.stderr()); }
++  const retired = attemptRow(f.store, old);
++  assert.equal(retired.state, 'expired-unobserved');
++  assert.ok([iso(f.retireAt), iso(f.retireAt + 5)].includes(retired.retired_at));
++  assert.deepEqual(without(retired, ['state', 'retired_at']), without(before, ['state', 'retired_at']));
++  f.store.prune(f.retireAt + 10); assert.deepEqual(attemptRow(f.store, old), retired);
++  assert.equal(f.store.database.prepare('SELECT count(*) AS n FROM wake_nonces').get().n, 1);
++});
++
+ test('two independent relay processes racing retirement create one active attempt', async () => {
+   const f = fixture(); const old = latched(f);
+   live(f.store, 'instance-2', 'relay-a', f.retireAt);

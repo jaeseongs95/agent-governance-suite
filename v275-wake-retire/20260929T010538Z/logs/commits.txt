@@ -1,0 +1,4 @@
+3501e7c5fe998a554e8fa3e3ab795b469dccf2e8 b8526aebedd80364f684c6113276fb46d43fc96d chore: release 2.7.5
+a30b8fd0c96abc9620d3e534af53b7c14da34d10 c98007566fd86c2c732b38574a3c57454af6e3d2 docs: describe the ended-birth wake retirement rule
+d6c0a64e8da7568dd2677a068ca2ea68d59f3436 42119a46f5bfcd9591ad3fa5645ef40d3021852f fix: retire unobserved wakes of ended session instances
+a1068f3d68bd167579987865451b90cb60fa06e4 2e5686622bd2f5532640feb1eb907d167c17156f test: keep packaged hook presence live on slow runners

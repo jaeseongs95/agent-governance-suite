@@ -1,0 +1,20 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs (33 tests | 9 failed) 2066ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: unreachable 24ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: ended 15ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: ended-new-generation 14ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: purged 13ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: older-instance-live 14ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: generation-missing 16ms
+   × a wake of an ended birth retired without activity records a late arrival as evidence only, then a rebirth delivers 15ms
+   × G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule 36ms
+   × two independent processes racing the retirement of an ended birth retire it once 317ms
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 24 passed (33)
+   Start at  00:53:28
+   Duration  2.81s (tests 78%, import 13%, transform 10%)
+
+exit 1
