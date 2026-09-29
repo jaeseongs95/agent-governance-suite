@@ -108,10 +108,11 @@ export class SessionMessageService {
     const unanswered: Array<{ host: string; sessionId: string }> = [];
     const asked: Array<{ host: string; sessionId: string }> = [];
     for (const { host, sessionId } of targets) (isBoundedIdentity({ host, sessionId }) ? asked : unanswered).push({ host, sessionId });
-    const deadline = Date.now() + SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
+    // Monotonic, like the client: a wall-clock step during the lookup must not stretch or cut its deadline.
+    const deadline = performance.now() + SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
     for (let index = 0; index < asked.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
       const batch = asked.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS);
-      const remaining = deadline - Date.now();
+      const remaining = deadline - performance.now();
       try {
         // Each batch may use only what is left; past the deadline the client gives up like any unanswered request.
         if (remaining <= 0) throw new Error("The board presence lookup reached its deadline.");

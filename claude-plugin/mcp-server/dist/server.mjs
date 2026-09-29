@@ -20000,7 +20000,7 @@ import { existsSync as existsSync2 } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import path8 from "node:path";
-import { performance } from "node:perf_hooks";
+import { performance as performance2 } from "node:perf_hooks";
 import tls from "node:tls";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
@@ -20049,7 +20049,7 @@ function throwIfAborted(signal) {
 function remainingMilliseconds(deadline, signal, message = SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE) {
   throwIfAborted(signal);
   const inherited = signal ? deadlineMetadata.get(signal) : void 0;
-  const remaining = (inherited?.deadline ?? deadline) - performance.now();
+  const remaining = (inherited?.deadline ?? deadline) - performance2.now();
   if (remaining < 1) throw deadlineError(inherited?.message ?? message);
   return remaining;
 }
@@ -20059,7 +20059,7 @@ function assertWithinDeadline(deadline, signal, message) {
 async function withDeadline(timeoutMs, parentSignal, message, work) {
   const parentDeadline = parentSignal ? deadlineMetadata.get(parentSignal) : void 0;
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw deadlineError(parentDeadline?.message ?? message);
-  const now = performance.now();
+  const now = performance2.now();
   const requestedDeadline = now + timeoutMs;
   const inherited = parentDeadline && parentDeadline.deadline <= requestedDeadline ? parentDeadline : void 0;
   const deadline = inherited?.deadline ?? requestedDeadline;
@@ -20363,10 +20363,10 @@ var SessionMessageService = class {
     const unanswered = [];
     const asked = [];
     for (const { host, sessionId } of targets) (isBoundedIdentity({ host, sessionId }) ? asked : unanswered).push({ host, sessionId });
-    const deadline = Date.now() + SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
+    const deadline = performance.now() + SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
     for (let index = 0; index < asked.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
       const batch = asked.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS);
-      const remaining = deadline - Date.now();
+      const remaining = deadline - performance.now();
       try {
         if (remaining <= 0) throw new Error("The board presence lookup reached its deadline.");
         const data = await sessionMessageRequest(

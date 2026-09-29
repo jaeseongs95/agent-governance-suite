@@ -34,12 +34,16 @@ function broker(answerAfter: (batch: Target[]) => number) {
 
 async function lookup(board: Target[]) {
   let settledAt: number | null = null;
-  const started = Date.now();
-  const pending = new SessionMessageService().listPresence(board).then((result) => { settledAt = Date.now() - started; return result; });
+  // Elapsed time on the monotonic clock, which a wall-clock step does not move.
+  const started = performance.now();
+  const pending = new SessionMessageService().listPresence(board).then((result) => { settledAt = performance.now() - started; return result; });
   return { pending, settledAt: () => settledAt };
 }
 
-beforeEach(() => { vi.useFakeTimers(); request.mockReset(); arrivals = []; });
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "setImmediate", "clearImmediate", "Date", "performance"] });
+  request.mockReset(); arrivals = [];
+});
 afterEach(() => { vi.useRealTimers(); });
 
 it("ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered", async () => {
@@ -100,4 +104,20 @@ it("returns every identity exactly once, in order, from a normal broker", async 
   // An identity outside the broker pattern is never asked and stays unanswered on its own.
   expect(result.data!.unanswered).toEqual([{ host: "portable", sessionId: "has space" }]);
   expect(request).toHaveBeenCalledTimes(101);
+});
+
+it("keeps the overall deadline when the wall clock steps back during a lookup", async () => {
+  // Five seconds into a slow lookup the wall clock is set back 60 s (a time sync or manual correction). The deadline is
+  // measured on the monotonic clock, so the lookup still ends 20 s after it began, with the same answers.
+  const board = targets(300);
+  broker(() => 1900);
+  const { pending, settledAt } = await lookup(board);
+  await vi.advanceTimersByTimeAsync(5000);
+  vi.setSystemTime(Date.now() - 60_000);
+  await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS - 5000);
+  expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+  const result = await pending;
+  expect(request).toHaveBeenCalledTimes(11);
+  expect(result.data!.sessions.map((session) => session.sessionId)).toEqual(board.slice(0, 30).map((item) => item.sessionId));
+  expect(result.data!.unanswered).toEqual(board.slice(30));
 });
