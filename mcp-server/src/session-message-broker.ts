@@ -6,7 +6,7 @@ import tls from "node:tls";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
-import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
+import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, SESSION_PRESENCE_LIST_MAX_TARGETS } from "./session-message-protocol.js";
 import { MessageCapacityError, SessionMessageStore, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
 import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type WakeHookObservationReader } from "./session-message-wake-port.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
@@ -379,7 +379,21 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       identity(payload.target), string(payload.reason, "reason"), string(payload.instanceId, "instanceId"),
     ) };
     case "presence": return { presence: store.presence(identity(payload.target)) };
-    case "list-presence": return { sessions: store.listPresence() };
+    case "list-presence": {
+      let targets: SessionIdentity[] | undefined;
+      if (payload.targets !== undefined) {
+        if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > SESSION_PRESENCE_LIST_MAX_TARGETS) {
+          throw new Error(`targets must list 1 to ${SESSION_PRESENCE_LIST_MAX_TARGETS} session identities.`);
+        }
+        targets = payload.targets.map(identity);
+      }
+      const result = { sessions: store.listPresence(Date.now(), targets) };
+      // Refuse explicitly rather than send a reply the client would drop; the untargeted request can grow with the DB.
+      if (Buffer.byteLength(`${JSON.stringify({ ok: true, data: result })}\n`, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
+        throw new Error("The presence list exceeds the broker response limit; request fewer targets.");
+      }
+      return result;
+    }
     case "reserve-wake": {
       const target = identity(payload.target);
       const nonce = string(payload.nonce, "nonce");

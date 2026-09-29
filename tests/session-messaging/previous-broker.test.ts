@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
 import { SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
+import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 
 // A release check supplies the actual previous installation, not a simulated dispatcher.
 const previousBroker = process.env.AGS_PREVIOUS_BROKER_PATH;
@@ -168,6 +169,48 @@ it.skipIf(!previousBroker)("lets the previous released broker serve a schema 1 d
     const reopened = new SessionMessageStore(databasePath);
     reopened.close();
   } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 10 });
+  }
+}, 20_000);
+
+it.skipIf(!previousBroker)("gives the new batched presence request a defined result from a previous broker", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-presence-"));
+  const environment = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory,
+    AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
+    AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(directory, "shared-state") };
+  const target = { host: "synthetic-host", sessionId: "presence-recipient" };
+  const seed = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
+  try {
+    seed.startPresence({ ...target, instanceId: "presence-instance", transport: "portable", wakeVisibility: "none", canWakeSilently: false }, Date.now());
+    // The broker reads the wall clock after a possibly slow start; keep the row live well past the 20-second lease.
+    seed.database.prepare("UPDATE session_presence SET lease_until = ? WHERE session_id = ?")
+      .run(new Date(Date.now() + 10 * 60_000).toISOString(), target.sessionId);
+  } finally { seed.close(); }
+  const child = spawn(process.execPath, [previousBroker!, "--state-directory", directory], { windowsHide: true, stdio: "ignore", env: environment });
+  try {
+    await waitForSessionMessageBrokerReady(directory, child, 5000);
+    const service = new SessionMessageService(directory);
+    // A previous broker ignores the targets and lists every identity: a small database still answers the board.
+    const small = await service.listPresence([target]);
+    expect(small.ok).toBe(true);
+    expect(small.data!.sessions.find((item) => item.sessionId === target.sessionId)).toMatchObject({ state: "online" });
+    expect(small.data!.unanswered).toEqual([]);
+    // Past the response limit a previous broker cannot answer; each batch is unanswered (unknown, autoWake null), never wrong data.
+    const many = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
+    try {
+      for (let index = 0; index < 120; index += 1) {
+        many.startPresence({ host: "synthetic-host", sessionId: `many-${index}`, instanceId: `many-${index}`, transport: "portable",
+          wakeVisibility: "none", canWakeSilently: false, workspaceId: `/work/${"w".repeat(400)}` }, Date.now());
+      }
+    } finally { many.close(); }
+    const large = await service.listPresence([target]);
+    expect(large.data).toEqual({ sessions: [], unanswered: [target] });
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = once(child, "exit");
+      child.kill();
+      await exited;
+    }
     await rm(directory, { recursive: true, force: true, maxRetries: 10 });
   }
 }, 20_000);

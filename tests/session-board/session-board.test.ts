@@ -336,6 +336,7 @@ describe("session board MCP tools", () => {
     const now = new Date().toISOString();
     setSummary(board, session(now, "online"), "온라인 작업");
     setSummary(board, session(now, "missing"), "누락 작업");
+    setSummary(board, session(now, "unasked"), "묻지 못한 작업");
     const client = await connect(databasePath, sessionMessages({
       schemaVersion: "1.0.0",
       ok: true,
@@ -346,6 +347,8 @@ describe("session board MCP tools", () => {
           collaborationId: "collaboration-1", workspaceId: "workspace-1", role: "worker",
           startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",
         }],
+        // A failed batch or an identity the broker would refuse: never asked, so its autoWake stays null.
+        unanswered: [{ host: "claude-code", sessionId: "unasked" }],
       },
       error: null,
     }));
@@ -364,5 +367,6 @@ describe("session board MCP tools", () => {
       startedAt: null, heartbeatAt: null, leaseUntil: null, endedAt: null, endReason: null, state: "unknown",
       autoWake: { state: "no-live-relay", reason: "presence-unknown", basisAt: null, checkedAt: expect.any(String), authorityEffect: "none" },
     });
+    expect(sessions.find((row) => row.sessionId === "unasked")?.presence).toMatchObject({ state: "unknown", instanceId: null, autoWake: null });
   });
 });

@@ -14,6 +14,10 @@ var SESSION_MESSAGE_PROTOCOL = "1.0.0";
 var SESSION_MESSAGE_MAX_REQUEST_BYTES = 32 * 1024;
 var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
 var SESSION_MESSAGE_BODY_MAX_BYTES = 4096;
+var SESSION_PRESENCE_LIST_MAX_TARGETS = 3;
+function isBoundedIdentity(value) {
+  return /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(value.host) && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(value.sessionId);
+}
 
 // mcp-server/src/session-message-store.ts
 import { mkdirSync as mkdirSync2 } from "node:fs";
@@ -431,6 +435,7 @@ var ACTIVE_WAKE_STATES = "('reserved', 'started', 'submitted', 'unknown')";
 var WAKE_STATE_CHECK = "CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted', 'expired-unobserved'))";
 var WAKE_COPY_COLUMNS = "nonce_digest, host, session_id, expires_at, consumed_at, state, nonce, instance_id, birth_generation, transport, relay_id, attempt_id, dispatch_epoch, retry_not_before, retry_count, started_at, outcome_at, observed_at, late_observed_at";
 var PRESENCE_LEASE_MS = 2e4;
+var PRESENCE_RETENTION_MS = 24 * 36e5;
 var CLAIM_MAX_MESSAGES = 10;
 function iso(milliseconds) {
   return new Date(milliseconds).toISOString();
@@ -439,11 +444,7 @@ function nonceDigest(nonce) {
   return createHash2("sha256").update(nonce).digest("hex");
 }
 function boundedIdentity(value) {
-  const hostPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/;
-  const sessionPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/;
-  if (!hostPattern.test(value.host) || !sessionPattern.test(value.sessionId)) {
-    throw new Error("host and sessionId must use bounded identifier characters.");
-  }
+  if (!isBoundedIdentity(value)) throw new Error("host and sessionId must use bounded identifier characters.");
 }
 function claimedMessage(row, deliveryAttempt = Number(row.delivery_attempts), firstDeliveredAt = row.first_delivered_at === null ? null : String(row.first_delivered_at)) {
   return {
@@ -641,6 +642,11 @@ var SessionMessageStore = class {
       WHERE state IN ('observed', 'not-submitted', 'expired-unobserved') AND (retry_not_before IS NULL OR retry_not_before <= ?)
       ORDER BY coalesce(consumed_at, observed_at, retired_at, outcome_at) DESC LIMIT -1 OFFSET ?)`).run(now, MESSAGE_LIMIT);
     this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
+    this.database.prepare(`DELETE FROM session_presence WHERE lease_until <= ?
+      AND NOT (EXISTS (SELECT 1 FROM session_presence live WHERE live.host = session_presence.host
+          AND live.session_id = session_presence.session_id AND live.ended_at IS NULL AND live.lease_until > ?)
+        AND session_presence.rowid = (SELECT latest.rowid FROM session_presence latest WHERE latest.host = session_presence.host
+          AND latest.session_id = session_presence.session_id ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1))`).run(iso(nowMs - PRESENCE_RETENTION_MS), now);
   }
   /**
    * Retires an unobserved managed wake only after its injection expiry plus grace, and only with evidence that the
@@ -1506,14 +1512,12 @@ var SessionMessageStore = class {
       state: endedAt ? "ended" : Date.parse(leaseUntil) > nowMs ? "online" : "unreachable"
     };
   }
-  listPresence(nowMs = Date.now()) {
+  /** Without targets every stored identity is listed (the pre-2.7.4 request); callers bound the batch themselves. */
+  listPresence(nowMs = Date.now(), targets) {
     this.prune(nowMs);
-    const identities = this.database.prepare(`SELECT host, session_id FROM session_presence
-      GROUP BY host, session_id ORDER BY host, session_id`).all();
-    return identities.map((row) => {
-      const target = { host: row.host, sessionId: row.session_id };
-      return { ...this.presence(target, nowMs), autoWake: this.autoWakeOutlook(target, nowMs) };
-    });
+    const identities = targets ?? this.database.prepare(`SELECT host, session_id FROM session_presence
+      GROUP BY host, session_id ORDER BY host, session_id`).all().map((row) => ({ host: row.host, sessionId: row.session_id }));
+    return identities.map((target) => ({ ...this.presence(target, nowMs), autoWake: this.autoWakeOutlook(target, nowMs) }));
   }
 };
 
@@ -1990,8 +1994,21 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
       ) };
     case "presence":
       return { presence: store.presence(identity(payload.target)) };
-    case "list-presence":
-      return { sessions: store.listPresence() };
+    case "list-presence": {
+      let targets;
+      if (payload.targets !== void 0) {
+        if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > SESSION_PRESENCE_LIST_MAX_TARGETS) {
+          throw new Error(`targets must list 1 to ${SESSION_PRESENCE_LIST_MAX_TARGETS} session identities.`);
+        }
+        targets = payload.targets.map(identity);
+      }
+      const result = { sessions: store.listPresence(Date.now(), targets) };
+      if (Buffer.byteLength(`${JSON.stringify({ ok: true, data: result })}
+`, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
+        throw new Error("The presence list exceeds the broker response limit; request fewer targets.");
+      }
+      return result;
+    }
     case "reserve-wake": {
       const target = identity(payload.target);
       const nonce = string(payload.nonce, "nonce");

@@ -19733,7 +19733,7 @@ function inlineSchemaReferences(schema, documents) {
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "2.7.3",
+  version: "2.7.4",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
@@ -20009,6 +20009,10 @@ var SESSION_MESSAGE_PROTOCOL = "1.0.0";
 var SESSION_MESSAGE_MAX_REQUEST_BYTES = 32 * 1024;
 var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
 var SESSION_MESSAGE_BODY_MAX_BYTES = 4096;
+var SESSION_PRESENCE_LIST_MAX_TARGETS = 3;
+function isBoundedIdentity(value) {
+  return /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(value.host) && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(value.sessionId);
+}
 
 // mcp-server/src/session-message-client.ts
 var BrokerRequestRejected = class extends Error {
@@ -20351,17 +20355,31 @@ var SessionMessageService = class {
       return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "The session message broker is unavailable.");
     }
   }
-  async listPresence() {
-    try {
-      const data = await sessionMessageRequest("list-presence", {}, this.stateDirectory);
-      return ok2({ sessions: data.sessions.map((session) => ({
-        ...session,
-        deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
-        autoWake: session.autoWake ?? null
-      })) });
-    } catch (error2) {
-      return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "Session presence is unavailable.");
+  /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. A refused
+   * batch or an identity outside the broker's pattern is reported as unanswered; the other batches still count. */
+  async listPresence(targets) {
+    const sessions = [];
+    const unanswered = [];
+    const asked = [];
+    for (const { host, sessionId } of targets) (isBoundedIdentity({ host, sessionId }) ? asked : unanswered).push({ host, sessionId });
+    for (let index = 0; index < asked.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
+      const batch = asked.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS);
+      try {
+        const data = await sessionMessageRequest("list-presence", { targets: batch }, this.stateDirectory);
+        sessions.push(...data.sessions.map((session) => ({
+          ...session,
+          deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
+          autoWake: session.autoWake ?? null
+        })));
+      } catch (error2) {
+        if (!(error2 instanceof BrokerRequestRejected)) {
+          unanswered.push(...asked.slice(index));
+          break;
+        }
+        unanswered.push(...batch);
+      }
     }
+    return ok2({ sessions, unanswered });
   }
 };
 
@@ -20544,12 +20562,12 @@ function unknownPresence(host, sessionId, brokerAnswered) {
   };
 }
 function withPresence(sessions, presence) {
-  const bySession = new Map(
-    presence.ok && presence.data ? presence.data.sessions.map((item) => [`${item.host}\0${item.sessionId}`, item]) : []
-  );
+  const key = (item) => `${item.host}\0${item.sessionId}`;
+  const bySession = new Map(presence.ok && presence.data ? presence.data.sessions.map((item) => [key(item), item]) : []);
+  const unanswered = new Set((presence.data?.unanswered ?? []).map(key));
   return sessions.map((session) => ({
     ...session,
-    presence: bySession.get(`${session.host}\0${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId, presence.ok)
+    presence: bySession.get(key(session)) ?? unknownPresence(session.host, session.sessionId, presence.ok && !unanswered.has(key(session)))
   }));
 }
 async function sessionBoardResult(tool, args, databasePath, validator, sessionMessages) {
@@ -20580,7 +20598,7 @@ async function sessionBoardResult(tool, args, databasePath, validator, sessionMe
       const sessions = listSessions(board, (/* @__PURE__ */ new Date()).toISOString(), binding2);
       board.close();
       board = null;
-      return apiOk({ sessions: withPresence(sessions, await sessionMessages.listPresence()) });
+      return apiOk({ sessions: withPresence(sessions, await sessionMessages.listPresence(sessions)) });
     }
     const row = readSession(board, binding2.host, binding2.sessionId);
     return row && row.summary === summary ? apiOk(row) : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
