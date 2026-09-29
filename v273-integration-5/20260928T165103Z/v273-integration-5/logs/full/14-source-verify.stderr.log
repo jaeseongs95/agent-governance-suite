@@ -1,0 +1,4 @@
+$ node scripts/check-source-lock.mjs --remote
+- cannot verify remote source ponytail: Command failed: git clone --quiet --no-checkout https://github.com/[REDACTED-ACCOUNT]/ponytail.git /tmp/source-lock-verify-Xo9qVX/repository
+fatal: could not read Username for 'https://github.com': terminal prompts disabled
+
