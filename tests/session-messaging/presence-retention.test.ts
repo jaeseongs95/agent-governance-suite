@@ -6,7 +6,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterEach, expect, it, vi } from "vitest";
-import { waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
+import { SESSION_MESSAGE_REQUEST_TIMEOUT_MS, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
 import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import * as protocol from "../../mcp-server/src/session-message-protocol.js";
@@ -131,7 +131,8 @@ it("ends a board lookup against a slow real broker at one overall client deadlin
   const started = Date.now();
   const result = await new SessionMessageService(state).listPresence(board);
   const elapsed = Date.now() - started;
-  expect(elapsed).toBeLessThan(22_000);
+  // The overall client deadline plus scheduling slack.
+  expect(elapsed).toBeLessThan(SESSION_MESSAGE_REQUEST_TIMEOUT_MS + 2_000);
   const answered = result.data!.sessions.map((session) => session.sessionId);
   expect(answered.length).toBeGreaterThan(0);
   expect(answered).toEqual(board.slice(0, answered.length).map((item) => item.sessionId));
