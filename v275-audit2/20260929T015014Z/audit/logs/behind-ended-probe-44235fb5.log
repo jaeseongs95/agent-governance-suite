@@ -1,0 +1,54 @@
+{
+ "as-test": {
+  "oldWake": "expired-unobserved",
+  "presence": {
+   "state": "ended",
+   "instanceId": "instance-2"
+  },
+  "relayAcquired": null,
+  "relays": [],
+  "reserveDispatch": false,
+  "outlook": {
+   "state": "no-live-relay",
+   "reason": "presence-not-online"
+  }
+ },
+ "relay-1-refreshed": {
+  "oldWake": "expired-unobserved",
+  "presence": {
+   "state": "ended",
+   "instanceId": "instance-2"
+  },
+  "relayAcquired": true,
+  "relays": [
+   {
+    "relay_id": "relay-1",
+    "live": 1
+   }
+  ],
+  "reserveDispatch": false,
+  "outlook": {
+   "state": "no-live-relay",
+   "reason": "presence-not-online"
+  }
+ },
+ "control-no-B": {
+  "oldWake": "submitted",
+  "presence": {
+   "state": "online",
+   "instanceId": "instance-1"
+  },
+  "relayAcquired": true,
+  "relays": [
+   {
+    "relay_id": "relay-1",
+    "live": 1
+   }
+  ],
+  "reserveDispatch": false,
+  "outlook": {
+   "state": "latched",
+   "reason": "wake-unobserved"
+  }
+ }
+}

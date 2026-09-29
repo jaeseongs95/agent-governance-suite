@@ -1,0 +1,119 @@
+Already up to date
+Done in 530ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v275m
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs (36 tests | 12 failed) 2683ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: unreachable 47ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: ended 26ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: ended-new-generation 40ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: purged 28ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: older-instance-live 46ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: generation-missing 37ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: live-birth-behind-ended 22ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: same-ms-other-instance 14ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: lease-ends-at-retirement 27ms
+   × a wake of an ended birth retired without activity records a late arrival as evidence only, then a rebirth delivers 32ms
+   × G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule 101ms
+   × two independent processes racing the retirement of an ended birth retire it once 279ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  12 failed | 104 passed (116)
+   Start at  01:43:21
+   Duration  18.32s (tests 90%, transform 6%, import 4%)
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: unreachable
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: ended
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: ended-new-generation
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: purged
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: older-instance-live
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: generation-missing
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: live-birth-behind-ended
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: same-ms-other-instance
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: lease-ends-at-retirement
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'submitted'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "submitted"
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:184:10
+    182|   keep(f.retireAt); f.store.prune(f.retireAt);
+    183|   const retired = attemptRow(f.store, old);
+    184|   assert.equal(retired.state, 'expired-unobserved'); assert.equal(reti…
+       |          ^
+    185|   assert.equal(retired.observed_at, null); assert.equal(retired.consum…
+    186|   assert.deepEqual(without(retired, ['state', 'retired_at']), without(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > a wake of an ended birth retired without activity records a late arrival as evidence only, then a rebirth delivers
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'submitted'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "submitted"
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:204:10
+    202|   f.store.prune(f.retireAt);
+    203|   const retired = attemptRow(f.store, old);
+    204|   assert.equal(retired.state, 'expired-unobserved');
+       |          ^
+    205|   const messages = f.store.database.prepare('SELECT * FROM messages').…
+    206|   assert.deepEqual(hostClaim(f, observe(f, old, f.retireAt + 1), f.ret…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'unknown'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "unknown"
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:463:10
+    461|   // A migrated row whose birth has no live presence row retires on th…
+    462|   const late = store.database.prepare("SELECT * FROM wake_nonces WHERE…
+    463|   assert.equal(late.state, 'expired-unobserved'); assert.equal(late.re…
+       |          ^
+    464|   assert.deepEqual(without(late, ['state', 'retired_at']), without({ .…
+    465|   const reopened = new SessionMessageStore(m.database); m.entry.stores…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > two independent processes racing the retirement of an ended birth retire it once
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'submitted'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "submitted"
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:540:10
+    538|   for (const p of raced) { const [code] = await p.exit; assert.equal(c…
+    539|   const retired = attemptRow(f.store, old);
+    540|   assert.equal(retired.state, 'expired-unobserved');
+       |          ^
+    541|   assert.ok([iso(f.retireAt), iso(f.retireAt + 5)].includes(retired.re…
+    542|   assert.deepEqual(without(retired, ['state', 'retired_at']), without(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+

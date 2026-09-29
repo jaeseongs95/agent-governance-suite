@@ -1,0 +1,12 @@
+run1	rc=0	 Tests 49 passed (49)	left-tmp=0
+run2	rc=0	 Tests 49 passed (49)	left-tmp=0
+run3	rc=0	 Tests 49 passed (49)	left-tmp=0
+run4	rc=0	 Tests 49 passed (49)	left-tmp=0
+run5	rc=0	 Tests 49 passed (49)	left-tmp=0
+run6	rc=0	 Tests 49 passed (49)	left-tmp=0
+run7	rc=0	 Tests 49 passed (49)	left-tmp=0
+run8	rc=0	 Tests 49 passed (49)	left-tmp=0
+run9	rc=0	 Tests 49 passed (49)	left-tmp=0
+run10	rc=0	 Tests 49 passed (49)	left-tmp=0
+broker-processes=2
+note: broker-processes=2 above counted pgrep's own shell command lines; ps -eo args after the loop shows 0 session-message-broker processes

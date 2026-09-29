@@ -1,0 +1,60 @@
+Already up to date
+Done in 374ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v275m
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs (36 tests | 1 failed) 1656ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: generation-missing 25ms
+ ❯ tests/session-messaging/presence-retention.test.ts (9 tests | 1 failed) 2876ms
+   × keeps retirement, presence and autoWake identical to a run that deletes no presence row 53ms
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  2 failed | 114 passed (116)
+   Start at  01:45:56
+   Duration  16.88s (tests 92%, transform 4%, import 3%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row
+AssertionError: expected { state: 'submitted' } to deeply equal { state: 'expired-unobserved' }
+
+- Expected
++ Received
+
+  {
+-   "state": "expired-unobserved",
++   "state": "submitted",
+  }
+
+ ❯ tests/session-messaging/presence-retention.test.ts:217:97
+    215|   expect(a.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid"…
+    216|   expect(a.database.prepare("SELECT * FROM messages ORDER BY rowid").a…
+    217|   expect(a.database.prepare("SELECT state FROM wake_nonces WHERE sessi…
+       |                                                                                                 ^
+    218|   for (const sessionId of ["reborn", "split", "recent", "live"]) {
+    219|     expect(withoutCheckedAt(a.listPresence(now, [target(sessionId)])[0…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: generation-missing
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'submitted'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "submitted"
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:184:10
+    182|   keep(f.retireAt); f.store.prune(f.retireAt);
+    183|   const retired = attemptRow(f.store, old);
+    184|   assert.equal(retired.state, 'expired-unobserved'); assert.equal(reti…
+       |          ^
+    185|   assert.equal(retired.observed_at, null); assert.equal(retired.consum…
+    186|   assert.deepEqual(without(retired, ['state', 'retired_at']), without(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+

@@ -1,0 +1,50 @@
+{
+  "audit": "AGS 2.7.5 re-audit (audit2) of the T-2 and I-2 follow-up commits",
+  "candidate": {
+    "branch": "claude/v275-wake-retire",
+    "commit": "44235fb5c0fc7efab69c989df4d8eff3975af26f",
+    "tree": "790a117efbf2fb41317c1b23e4abcbad58d95373",
+    "previousAuditTarget": "3501e7c5fe998a554e8fa3e3ab795b469dccf2e8",
+    "previousAuditEvidence": "claude/evidence-v275-audit-20260929T012510Z @ 2e262f0897eaf2eb3b77daa634ba0ab9223e635c"
+  },
+  "baseline": {
+    "ref": "main / tag v2.7.4",
+    "commit": "0c8b52d97d1ccdda1768c18422d073d674e2c785"
+  },
+  "writerEvidenceReadForComparisonOnly": "claude/evidence-v275-wake-retire-fix1-20260929T013606Z @ 7e49707b2bab9f759972ab5b601a2a14a95fd0d9",
+  "previousBrokers": {
+    "v2.7.4": "tag v2.7.4 dist"
+  },
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "6.18.44-fc-v37",
+  "startedAtUtc": "2026-09-29T01:42:45Z",
+  "finishedAtUtc": "2026-09-29T01:50:19Z",
+  "verdict": "PASS_WITH_FINDINGS",
+  "releaseBlocking": false,
+  "findings": [
+    "T-3 minor: the reserveManagedWake dispatch:false assertion in live-birth-behind-ended holds without any live relay, so it does not isolate the presence cause"
+  ],
+  "info": [
+    "I-3 release-notes wording: 2.7.4 latch on a same-ms tie is permanent only without later activity or a later live birth"
+  ],
+  "resolved": [
+    "T-2 (A6, A2, A4 now killed)",
+    "I-1 wording added",
+    "I-2 wording added"
+  ],
+  "redaction": {
+    "github-token": 0,
+    "anthropic-key": 0,
+    "aws-access-key": 0,
+    "private-key-line": 0,
+    "bearer-header": 0,
+    "email": 0,
+    "home-path": 31,
+    "root-home": 6,
+    "ipv4": 0,
+    "github-url-account": 0,
+    "account-name": 0,
+    "windows-user-path": 0
+  }
+}

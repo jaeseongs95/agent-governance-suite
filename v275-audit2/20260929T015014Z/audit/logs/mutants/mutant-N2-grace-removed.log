@@ -1,0 +1,515 @@
+Already up to date
+Done in 539ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v275m
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs (36 tests | 17 failed) 3717ms
+   × an expired submitted latch retires for a newer live generation and a new wake is reserved 53ms
+   × an expired accepted-or-unknown latch retires for a newer live generation and a new wake is reserved 33ms
+   × an expired started latch retires for a newer live generation and a new wake is reserved 45ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: unreachable 39ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: ended 36ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: ended-new-generation 47ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: purged 25ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: older-instance-live 54ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: generation-missing 33ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: live-birth-behind-ended 33ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: same-ms-other-instance 23ms
+   × same-generation activity claim after expiry retires the latch after the grace 64ms
+   × same-generation activity claimDeferred after expiry retires the latch after the grace 46ms
+   × same-generation activity claimTurnEnd after expiry retires the latch after the grace 34ms
+   × same-generation activity clearDeferred after expiry retires the latch after the grace 38ms
+   × same-generation activity acknowledge after expiry retires the latch after the grace 51ms
+   × same-generation activity observeNativeInput after expiry retires the latch after the grace 67ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  17 failed | 99 passed (116)
+   Start at  01:43:41
+   Duration  19.45s (tests 91%, transform 6%, import 3%)
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired submitted latch retires for a newer live generation and a new wake is reserved
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired accepted-or-unknown latch retires for a newer live generation and a new wake is reserved
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired started latch retires for a newer live generation and a new wake is reserved
+AssertionError: Expected values to be strictly equal:
+
+true !== false
+
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:83:10
+     81|   const f = fixture(); const old = latched(f, outcome);
+     82|   live(f.store, 'instance-2', 'relay-2', f.retireAt - 1);
+     83|   assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay…
+       |          ^
+     84|   const before = attemptRow(f.store, old);
+     85|   assert.ok(['started', 'submitted', 'unknown'].includes(before.state)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: unreachable
+AssertionError: not before the expiry plus grace
++ actual - expected
+... Skipped lines
+
+  [Object: null prototype] {
+    attempt_id: 'ec8c8830-eca9-482b-9918-6d40cbe702b4',
+    birth_generation: '2026-09-29T01:43:42.861Z',
+    consumed_at: null,
+    dispatch_epoch: 1,
+...
+    relay_id: 'relay-1',
++   retired_at: '2026-09-29T02:53:42.860Z',
+-   retired_at: null,
+    retry_count: 0,
+    retry_not_before: null,
+    session_id: 'wake-target',
+    started_at: '2026-09-29T01:43:42.862Z',
++   state: 'expired-unobserved',
+-   state: 'submitted',
+    transport: 'portable'
+  }
+
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "liveness-first-nonce-abcdefghijklmnop",
+    "nonce_digest": "6344260619382d10adc358ee3bb818bb815dad34a4c8ff0f007d19e4a966db3f",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T01:43:42.863Z",
+    "relay_id": "relay-1",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T02:53:42.860Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "wake-target",
+    "started_at": "2026-09-29T01:43:42.862Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "portable",
+  }
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:181:10
+    179|   const before = attemptRow(f.store, old);
+    180|   keep(f.retireAt - 1); f.store.prune(f.retireAt - 1);
+    181|   assert.deepEqual(attemptRow(f.store, old), before, 'not before the e…
+       |          ^
+    182|   keep(f.retireAt); f.store.prune(f.retireAt);
+    183|   const retired = attemptRow(f.store, old);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: ended
+AssertionError: not before the expiry plus grace
++ actual - expected
+... Skipped lines
+
+  [Object: null prototype] {
+    attempt_id: '3fe56a2a-423a-49ef-91e3-3458ee99fd5c',
+    birth_generation: '2026-09-29T01:43:42.893Z',
+    consumed_at: null,
+    dispatch_epoch: 1,
+...
+    relay_id: 'relay-1',
++   retired_at: '2026-09-29T02:53:42.892Z',
+-   retired_at: null,
+    retry_count: 0,
+    retry_not_before: null,
+    session_id: 'wake-target',
+    started_at: '2026-09-29T01:43:42.894Z',
++   state: 'expired-unobserved',
+-   state: 'submitted',
+    transport: 'portable'
+  }
+
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "liveness-first-nonce-abcdefghijklmnop",
+    "nonce_digest": "6344260619382d10adc358ee3bb818bb815dad34a4c8ff0f007d19e4a966db3f",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T01:43:42.895Z",
+    "relay_id": "relay-1",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T02:53:42.892Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "wake-target",
+    "started_at": "2026-09-29T01:43:42.894Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "portable",
+  }
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:181:10
+    179|   const before = attemptRow(f.store, old);
+    180|   keep(f.retireAt - 1); f.store.prune(f.retireAt - 1);
+    181|   assert.deepEqual(attemptRow(f.store, old), before, 'not before the e…
+       |          ^
+    182|   keep(f.retireAt); f.store.prune(f.retireAt);
+    183|   const retired = attemptRow(f.store, old);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: ended-new-generation
+AssertionError: not before the expiry plus grace
++ actual - expected
+... Skipped lines
+
+  [Object: null prototype] {
+    attempt_id: 'a715f0ac-b3fb-45e0-b83e-005a42944399',
+    birth_generation: '2026-09-29T01:43:42.927Z',
+    consumed_at: null,
+    dispatch_epoch: 1,
+...
+    relay_id: 'relay-1',
++   retired_at: '2026-09-29T02:53:42.926Z',
+-   retired_at: null,
+    retry_count: 0,
+    retry_not_before: null,
+    session_id: 'wake-target',
+    started_at: '2026-09-29T01:43:42.928Z',
++   state: 'expired-unobserved',
+-   state: 'submitted',
+    transport: 'portable'
+  }
+
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "liveness-first-nonce-abcdefghijklmnop",
+    "nonce_digest": "6344260619382d10adc358ee3bb818bb815dad34a4c8ff0f007d19e4a966db3f",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T01:43:42.929Z",
+    "relay_id": "relay-1",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T02:53:42.926Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "wake-target",
+    "started_at": "2026-09-29T01:43:42.928Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "portable",
+  }
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:181:10
+    179|   const before = attemptRow(f.store, old);
+    180|   keep(f.retireAt - 1); f.store.prune(f.retireAt - 1);
+    181|   assert.deepEqual(attemptRow(f.store, old), before, 'not before the e…
+       |          ^
+    182|   keep(f.retireAt); f.store.prune(f.retireAt);
+    183|   const retired = attemptRow(f.store, old);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: purged
+AssertionError: not before the expiry plus grace
++ actual - expected
+... Skipped lines
+
+  [Object: null prototype] {
+    attempt_id: '893dacb1-ed8a-4814-bd75-3b2b1fa47ce9',
+    birth_generation: '2026-09-29T01:43:42.973Z',
+    consumed_at: null,
+    dispatch_epoch: 1,
+...
+    relay_id: 'relay-1',
++   retired_at: '2026-09-29T02:53:42.972Z',
+-   retired_at: null,
+    retry_count: 0,
+    retry_not_before: null,
+    session_id: 'wake-target',
+    started_at: '2026-09-29T01:43:42.974Z',
++   state: 'expired-unobserved',
+-   state: 'submitted',
+    transport: 'portable'
+  }
+
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "liveness-first-nonce-abcdefghijklmnop",
+    "nonce_digest": "6344260619382d10adc358ee3bb818bb815dad34a4c8ff0f007d19e4a966db3f",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T01:43:42.975Z",
+    "relay_id": "relay-1",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T02:53:42.972Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "wake-target",
+    "started_at": "2026-09-29T01:43:42.974Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "portable",
+  }
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:181:10
+    179|   const before = attemptRow(f.store, old);
+    180|   keep(f.retireAt - 1); f.store.prune(f.retireAt - 1);
+    181|   assert.deepEqual(attemptRow(f.store, old), before, 'not before the e…
+       |          ^
+    182|   keep(f.retireAt); f.store.prune(f.retireAt);
+    183|   const retired = attemptRow(f.store, old);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: older-instance-live
+AssertionError: not before the expiry plus grace
++ actual - expected
+... Skipped lines
+
+  [Object: null prototype] {
+    attempt_id: 'fb8fb41b-2408-406e-b033-1c305388fb70',
+    birth_generation: '2026-09-29T01:43:43.008Z',
+    consumed_at: null,
+    dispatch_epoch: 1,
+...
+    relay_id: 'relay-1',
++   retired_at: '2026-09-29T02:53:43.007Z',
+-   retired_at: null,
+    retry_count: 0,
+    retry_not_before: null,
+    session_id: 'wake-target',
+    started_at: '2026-09-29T01:43:43.009Z',
++   state: 'expired-unobserved',
+-   state: 'submitted',
+    transport: 'portable'
+  }
+
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "liveness-first-nonce-abcdefghijklmnop",
+    "nonce_digest": "6344260619382d10adc358ee3bb818bb815dad34a4c8ff0f007d19e4a966db3f",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T01:43:43.010Z",
+    "relay_id": "relay-1",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T02:53:43.007Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "wake-target",
+    "started_at": "2026-09-29T01:43:43.009Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "portable",
+  }
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:181:10
+    179|   const before = attemptRow(f.store, old);
+    180|   keep(f.retireAt - 1); f.store.prune(f.retireAt - 1);
+    181|   assert.deepEqual(attemptRow(f.store, old), before, 'not before the e…
+       |          ^
+    182|   keep(f.retireAt); f.store.prune(f.retireAt);
+    183|   const retired = attemptRow(f.store, old);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: generation-missing
+AssertionError: not before the expiry plus grace
++ actual - expected
+... Skipped lines
+
+  [Object: null prototype] {
+    attempt_id: 'ee2c718a-1049-4986-a056-ab54bbb5c3d1',
+    birth_generation: '2026-09-29T01:43:43.069Z',
+    consumed_at: null,
+    dispatch_epoch: 1,
+...
+    relay_id: 'relay-1',
++   retired_at: '2026-09-29T02:53:43.063Z',
+-   retired_at: null,
+    retry_count: 0,
+    retry_not_before: null,
+    session_id: 'wake-target',
+    started_at: '2026-09-29T01:43:43.065Z',
++   state: 'expired-unobserved',
+-   state: 'submitted',
+    transport: 'portable'
+  }
+
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "liveness-first-nonce-abcdefghijklmnop",
+    "nonce_digest": "6344260619382d10adc358ee3bb818bb815dad34a4c8ff0f007d19e4a966db3f",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T01:43:43.066Z",
+    "relay_id": "relay-1",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T02:53:43.063Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "wake-target",
+    "started_at": "2026-09-29T01:43:43.065Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "portable",
+  }
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:181:10
+    179|   const before = attemptRow(f.store, old);
+    180|   keep(f.retireAt - 1); f.store.prune(f.retireAt - 1);
+    181|   assert.deepEqual(attemptRow(f.store, old), before, 'not before the e…
+       |          ^
+    182|   keep(f.retireAt); f.store.prune(f.retireAt);
+    183|   const retired = attemptRow(f.store, old);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: live-birth-behind-ended
+AssertionError: not before the expiry plus grace
++ actual - expected
+... Skipped lines
+
+  [Object: null prototype] {
+    attempt_id: '69da08a7-2f73-4816-9f9b-57116277b37c',
+    birth_generation: '2026-09-29T01:43:43.087Z',
+    consumed_at: null,
+    dispatch_epoch: 1,
+...
+    relay_id: 'relay-1',
++   retired_at: '2026-09-29T02:53:43.086Z',
+-   retired_at: null,
+    retry_count: 0,
+    retry_not_before: null,
+    session_id: 'wake-target',
+    started_at: '2026-09-29T01:43:43.088Z',
++   state: 'expired-unobserved',
+-   state: 'submitted',
+    transport: 'portable'
+  }
+
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "liveness-first-nonce-abcdefghijklmnop",
+    "nonce_digest": "6344260619382d10adc358ee3bb818bb815dad34a4c8ff0f007d19e4a966db3f",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T01:43:43.089Z",
+    "relay_id": "relay-1",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T02:53:43.086Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "wake-target",
+    "started_at": "2026-09-29T01:43:43.088Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "portable",
+  }
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:181:10
+    179|   const before = attemptRow(f.store, old);
+    180|   keep(f.retireAt - 1); f.store.prune(f.retireAt - 1);
+    181|   assert.deepEqual(attemptRow(f.store, old), before, 'not before the e…
+       |          ^
+    182|   keep(f.retireAt); f.store.prune(f.retireAt);
+    183|   const retired = attemptRow(f.store, old);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: same-ms-other-instance
+AssertionError: not before the expiry plus grace
++ actual - expected
+... Skipped lines
+
+  [Object: null prototype] {
+    attempt_id: '313edc7c-c2d4-42e1-ab80-757172d9967a',
+    birth_generation: '2026-09-29T01:43:43.124Z',
+    consumed_at: null,
+    dispatch_epoch: 1,
+...
+    relay_id: 'relay-1',
++   retired_at: '2026-09-29T02:53:43.123Z',
+-   retired_at: null,
+    retry_count: 0,
+    retry_not_before: null,
+    session_id: 'wake-target',
+    started_at: '2026-09-29T01:43:43.125Z',
++   state: 'expired-unobserved',
+-   state: 'submitted',
+    transport: 'portable'
+  }
+
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "liveness-first-nonce-abcdefghijklmnop",
+    "nonce_digest": "6344260619382d10adc358ee3bb818bb815dad34a4c8ff0f007d19e4a966db3f",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T01:43:43.126Z",
+    "relay_id": "relay-1",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T02:53:43.123Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "wake-target",
+    "started_at": "2026-09-29T01:43:43.125Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "portable",
+  }
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:181:10
+    179|   const before = attemptRow(f.store, old);
+    180|   keep(f.retireAt - 1); f.store.prune(f.retireAt - 1);
+    181|   assert.deepEqual(attemptRow(f.store, old), before, 'not before the e…
+       |          ^
+    182|   keep(f.retireAt); f.store.prune(f.retireAt);
+    183|   const retired = attemptRow(f.store, old);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity claim after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity claimDeferred after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity claimTurnEnd after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity clearDeferred after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity acknowledge after expiry retires the latch after the grace
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity observeNativeInput after expiry retires the latch after the grace
+AssertionError: Expected values to be strictly equal:
+
+true !== false
+
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:234:10
+    232|   else activities[kind](f.store, expiry + 1);
+    233|   keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt - 1);
+    234|   assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay…
+       |          ^
+    235|   keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt);
+    236|   const next = f.store.reserveManagedWake(request('instance-1', 'relay…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+

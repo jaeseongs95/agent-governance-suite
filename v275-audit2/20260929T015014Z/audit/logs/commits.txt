@@ -1,0 +1,7 @@
+44235fb5c0fc7efab69c989df4d8eff3975af26f ba07468a6f87203b18beb8fffe1bb1c386406924
+  docs: note the resumed-host marker change in 2.7.5 notes
+ba07468a6f87203b18beb8fffe1bb1c386406924 3501e7c5fe998a554e8fa3e3ab795b469dccf2e8
+  test: pin the latest-birth retirement counterexample
+ docs/release-notes-v2.7.5.md                   |  4 ++--
+ tests/session-messaging/wake-liveness.test.mjs | 25 +++++++++++++++++++++++++
+ 2 files changed, 27 insertions(+), 2 deletions(-)

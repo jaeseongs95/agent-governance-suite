@@ -1,0 +1,37 @@
+Already up to date
+Done in 579ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v275m
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs (36 tests | 1 failed) 1772ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: live-birth-behind-ended 30ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 115 passed (116)
+   Start at  01:46:51
+   Duration  17.36s (tests 91%, transform 5%, import 4%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: live-birth-behind-ended
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'submitted'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "submitted"
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:184:10
+    182|   keep(f.retireAt); f.store.prune(f.retireAt);
+    183|   const retired = attemptRow(f.store, old);
+    184|   assert.equal(retired.state, 'expired-unobserved'); assert.equal(reti…
+       |          ^
+    185|   assert.equal(retired.observed_at, null); assert.equal(retired.consum…
+    186|   assert.deepEqual(without(retired, ['state', 'retired_at']), without(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

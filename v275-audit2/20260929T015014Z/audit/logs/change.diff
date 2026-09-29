@@ -1,0 +1,61 @@
+diff --git a/docs/release-notes-v2.7.5.md b/docs/release-notes-v2.7.5.md
+index 2da4c92..32084cb 100644
+--- a/docs/release-notes-v2.7.5.md
++++ b/docs/release-notes-v2.7.5.md
+@@ -4,11 +4,11 @@
+ 
+ 두 번째 퇴역 근거를 넓힙니다. 같은 세션의 최신 presence 행(birth 기준)이 알림을 받은 birth의 살아 있는 행이 아니면 퇴역합니다. 새 birth가 최신이거나, 알림의 birth가 끝났거나 lease가 끊겼거나, presence 행이 모두 지워진 경우입니다. 주입 만료와 유예 조건, 활동 근거, 새 상태 없이 `expired-unobserved`로 끝내는 방식, schema는 그대로입니다. 판정은 instance와 birth generation으로 하고 transport는 보지 않습니다.
+ 
+-이 근거로 퇴역해도 wake 누적 억제의 범위는 줄지 않습니다. 끝났거나 lease가 끊긴 birth는 다시 살아나지 않습니다. heartbeat는 살아 있는 행만 갱신하고, 같은 instance가 다시 등록되면 더 늦은 새 birth를 받습니다. presence 조회, relay tick, 현재 세대 claim과 `autoWake`는 모두 최신 행을 읽습니다. 따라서 최신 행이 알림의 살아 있는 birth가 아니면 그 알림은 현재 세대로 claim될 수 없고, live relay가 없으므로 새 wake도 보내지 않습니다. 세션이 다시 열리면 새 birth가 최신이 되므로 2.7.4에서도 그때 퇴역했습니다. 새 규칙은 세션이 끝난 뒤 다시 열리기 전까지의 구간에서만 결과가 다릅니다. 살아 있지만 조용한 세션(relay heartbeat로 lease가 유지되고 활동은 없음)의 알림은 지금처럼 latch로 남고, `autoWake`는 `latched`/`wake-unobserved`입니다. 퇴역한 알림이 늦게 도착하면 기존대로 `late_observed_at`만 기록하고 본문 claim에는 참여하지 않습니다. Codex hook은 이 marker-only 입력을 모델 요청 전에 막습니다. 자세한 규칙은 [미관측 알림 퇴역과 자동 깨우기 신호](session-message-lifecycle.md#미관측-알림-퇴역과-자동-깨우기-신호)를 따릅니다.
++이 근거로 퇴역해도 wake 누적 억제의 범위는 줄지 않습니다. 끝났거나 lease가 끊긴 birth는 다시 살아나지 않습니다. heartbeat는 살아 있는 행만 갱신하고, 같은 instance가 다시 등록되면 더 늦은 새 birth를 받습니다. presence 조회, relay tick, 현재 세대 claim과 `autoWake`는 모두 최신 행을 읽습니다. 따라서 최신 행이 알림의 살아 있는 birth가 아니면 그 알림은 현재 세대로 claim될 수 없고, live relay가 없으므로 새 wake도 보내지 않습니다. 세션이 다시 열리면 새 birth가 최신이 되므로 2.7.4에서도 그때 퇴역했습니다. 새 규칙은 세션이 끝난 뒤 다시 열리기 전까지의 구간에서만 결과가 다릅니다. 예외로, 알림의 birth와 같은 ms에 태어난 다른 instance가 최신 행으로 살아 있으면 2.7.4는 영구히 latch로 두었지만 2.7.5는 더 늦은 birth처럼 퇴역시키고 그 instance에 새 wake를 보낼 수 있습니다. 살아 있지만 조용한 세션(relay heartbeat로 lease가 유지되고 활동은 없음)의 알림은 지금처럼 latch로 남고, `autoWake`는 `latched`/`wake-unobserved`입니다. 퇴역한 알림이 늦게 도착하면 기존대로 `late_observed_at`만 기록하고 본문 claim에는 참여하지 않습니다. Codex hook은 이 marker-only 입력을 모델 요청 전에 막습니다. 자세한 규칙은 [미관측 알림 퇴역과 자동 깨우기 신호](session-message-lifecycle.md#미관측-알림-퇴역과-자동-깨우기-신호)를 따릅니다.
+ 
+ ## 동작 변화(호환성)
+ 
+-설치 뒤 새 broker의 첫 prune에서, 주입 만료와 유예가 지났고 받은 birth가 더 이상 최신의 살아 있는 행이 아닌 활성 wake 행이 `expired-unobserved`로 바뀝니다. 이 PC 같은 기존 DB에서는 끝난 세션 앞으로 남은 활성 행(예: 13개)이 이때 한 번에 퇴역합니다. 퇴역한 행은 기존 terminal 보관 규칙대로 퇴역 1시간 뒤 prune에서 지워집니다. 메시지 본문은 그대로 큐에 남고, 세션이 다시 열려 live relay가 뜨면 새 wake 하나를 예약할 수 있습니다. 퇴역은 되돌리지 않으며 `observed`나 성공으로 기록하지 않습니다. status의 `deliveryState`는 계속 `unknown`입니다.
++설치 뒤 새 broker의 첫 prune에서, 주입 만료와 유예가 지났고 받은 birth가 더 이상 최신의 살아 있는 행이 아닌 활성 wake 행이 `expired-unobserved`로 바뀝니다. 이 PC 같은 기존 DB에서는 끝난 세션 앞으로 남은 활성 행(예: 13개)이 이때 한 번에 퇴역합니다. 퇴역한 행은 기존 terminal 보관 규칙대로 퇴역 1시간 뒤 prune에서 지워집니다. 메시지 본문은 그대로 큐에 남고, 세션이 다시 열려 live relay가 뜨면 새 wake 하나를 예약할 수 있습니다. 잠자기나 재부팅 뒤 복귀한 세션에 옛 marker가 먼저 도착해도 사용자에게 보이는 결과가 바뀝니다. 그 사이 다른 세션의 요청이 prune을 불러 알림이 이미 퇴역했다면, 2.7.4에서는 이 marker가 빈 모델 턴을 만들었지만 2.7.5에서는 Codex hook이 모델 요청 전에 막습니다. 본문은 복귀한 세션의 새 wake로 전달됩니다. 퇴역은 되돌리지 않으며 `observed`나 성공으로 기록하지 않습니다. status의 `deliveryState`는 계속 `unknown`입니다.
+ 
+ 퇴역은 broker의 prune에서만 일어납니다. 2.7.4 이하 broker가 같은 DB를 쓰는 동안에는 이런 알림이 활성으로 남고, 새 broker의 첫 prune에서 퇴역합니다. 새 broker가 퇴역한 행은 2.7.3 이상 broker에서 terminal로 보입니다. broker는 relay가 주기적으로 요청하는 동안 종료되지 않으므로, 기존 AGS MCP·relay·broker를 종료한 뒤 재연결합니다. previous-broker 회귀 시험은 v2.7.4, v2.7.3, v2.7.2, v2.7.1, v2.2.6 broker로 각각 통과했으며, 이 검사로 혼합 버전의 모든 실행·복구를 보장하지 않습니다.
+ 
+diff --git a/tests/session-messaging/wake-liveness.test.mjs b/tests/session-messaging/wake-liveness.test.mjs
+index 324dade..c460296 100644
+--- a/tests/session-messaging/wake-liveness.test.mjs
++++ b/tests/session-messaging/wake-liveness.test.mjs
+@@ -147,6 +147,25 @@ const deaths = {
+     f.store.database.prepare('UPDATE wake_nonces SET birth_generation = ? WHERE instance_id = ?').run(iso(f.now + 5), 'instance-1');
+     return 'instance-1';
+   },
++  // The wake's own birth stays live, but a later birth of another instance ended and is the latest row: its relay
++  // tick and claims are refused, so the instance row alone would keep this latch until the wake's birth ends.
++  'live-birth-behind-ended': f => {
++    live(f.store, 'instance-2', 'relay-2', f.now + 20);
++    assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-2', f.now + 30), true);
++    return 'instance-1';
++  },
++  // Another instance born in the same millisecond is the latest row (by rowid) and live: it is not the wake's binding.
++  'same-ms-other-instance': f => {
++    f.store.startPresence({ ...target, instanceId: 'instance-2', transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
++      deliveryCapabilities: capabilities }, f.now);
++    assert.equal(f.store.presence(target, f.now).instanceId, 'instance-2');
++    return 'instance-2';
++  },
++  // The lease ends exactly at the retirement time: a lease that is not after now is not live.
++  'lease-ends-at-retirement': f => {
++    f.store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ?').run(iso(f.retireAt), 'instance-1');
++    return null;
++  },
+ };
+ function death(f, kind) {
+   const old = latched(f);
+@@ -166,6 +185,12 @@ test.each(Object.keys(deaths))('an expired latch whose birth is no longer live r
+   assert.equal(retired.observed_at, null); assert.equal(retired.consumed_at, null);
+   assert.deepEqual(without(retired, ['state', 'retired_at']), without(before, ['state', 'retired_at']));
+   assert.equal(f.store.database.prepare('SELECT count(*) AS n FROM session_activity WHERE session_id = ?').get(target.sessionId).n, 0);
++  if (kind === 'live-birth-behind-ended') {
++    // The wake's birth is live yet cannot receive a new wake while the ended later birth is the latest row.
++    assert.equal(f.store.presence(target, f.retireAt).state, 'ended');
++    assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt).dispatch, false);
++    assert.equal(f.store.autoWakeOutlook(target, f.retireAt).reason, 'presence-not-online');
++  }
+   f.store.prune(f.retireAt + 5); assert.deepEqual(attemptRow(f.store, old), retired);
+   // Retired terminal rows follow the existing one-hour cleanup.
+   f.store.prune(f.retireAt + 3600_000 - 1); assert.deepEqual(attemptRow(f.store, old), retired);

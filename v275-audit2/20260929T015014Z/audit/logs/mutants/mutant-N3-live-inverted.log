@@ -1,0 +1,163 @@
+Already up to date
+Done in 565ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v275m
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs (36 tests | 6 failed) 2930ms
+   × an expired latch of a live, quiet birth without activity stays latched: same-generation 29ms
+   × an expired latch of a live, quiet birth without activity stays latched: other-transport 22ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: unreachable 15ms
+   × an expired latch whose birth is no longer live retires after the grace without activity: lease-ends-at-retirement 35ms
+   × same-generation activity before-expiry after expiry retires the latch after the grace 27ms
+   × K: an arrival whose hook receipt expired during a broker outage stays latched until retirement evidence, then a new wake delivers 72ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  6 failed | 110 passed (116)
+   Start at  01:44:02
+   Duration  19.53s (tests 90%, transform 7%, import 3%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch of a live, quiet birth without activity stays latched: same-generation
+AssertionError: Expected values to be strictly equal:
+
+true !== false
+
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:114:44
+    112|     keepAlive(f.store, 'instance-1', 'relay-1', at);
+    113|     f.store.prune(at);
+    114|     if (kind === 'same-generation') assert.equal(f.store.reserveManage…
+       |                                            ^
+    115|     assert.deepEqual(attemptRow(f.store, old), before);
+    116|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch of a live, quiet birth without activity stays latched: other-transport
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  [Object: null prototype] {
+    attempt_id: '221630af-fbba-4165-b0b9-85b656b0d810',
+    birth_generation: '2026-09-29T01:44:03.857Z',
+    consumed_at: null,
+    dispatch_epoch: 1,
+...
+    relay_id: 'relay-1',
++   retired_at: '2026-09-29T02:54:03.857Z',
+-   retired_at: null,
+    retry_count: 0,
+    retry_not_before: null,
+    session_id: 'wake-target',
+    started_at: '2026-09-29T01:44:03.858Z',
++   state: 'expired-unobserved',
+-   state: 'submitted',
+    transport: 'portable'
+  }
+
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "liveness-first-nonce-abcdefghijklmnop",
+    "nonce_digest": "6344260619382d10adc358ee3bb818bb815dad34a4c8ff0f007d19e4a966db3f",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T01:44:03.859Z",
+    "relay_id": "relay-1",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T02:54:03.857Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "wake-target",
+    "started_at": "2026-09-29T01:44:03.858Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "portable",
+  }
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:115:12
+    113|     f.store.prune(at);
+    114|     if (kind === 'same-generation') assert.equal(f.store.reserveManage…
+    115|     assert.deepEqual(attemptRow(f.store, old), before);
+       |            ^
+    116|   }
+    117|   assert.equal(f.store.presence(target, later).startedAt, old.generati…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: unreachable
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch whose birth is no longer live retires after the grace without activity: lease-ends-at-retirement
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'submitted'
+- 'expired-unobserved'
+
+
+Expected: "expired-unobserved"
+Received: "submitted"
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:184:10
+    182|   keep(f.retireAt); f.store.prune(f.retireAt);
+    183|   const retired = attemptRow(f.store, old);
+    184|   assert.equal(retired.state, 'expired-unobserved'); assert.equal(reti…
+       |          ^
+    185|   assert.equal(retired.observed_at, null); assert.equal(retired.consum…
+    186|   assert.deepEqual(without(retired, ['state', 'retired_at']), without(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > same-generation activity before-expiry after expiry retires the latch after the grace
+AssertionError: Expected values to be strictly equal:
+
+true !== false
+
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:237:10
+    235|   keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt);
+    236|   const next = f.store.reserveManagedWake(request('instance-1', 'relay…
+    237|   assert.equal(next.dispatch, kind !== 'before-expiry');
+       |          ^
+    238|   assert.equal(attemptRow(f.store, old).state, kind === 'before-expiry…
+    239| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > K: an arrival whose hook receipt expired during a broker outage stays latched until retirement evidence, then a new wake delivers
+AssertionError: Expected values to be strictly equal:
+
+true !== false
+
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:322:10
+    320|   assert.equal(attemptRow(f.store, old).state, 'submitted');
+    321|   keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt);
+    322|   assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay…
+       |          ^
+    323|   const expiry = Date.parse(attemptRow(f.store, old).expires_at);
+    324|   f.store.observeNativeInput(target, f.retireAt + 1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
