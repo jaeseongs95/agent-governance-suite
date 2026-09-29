@@ -1,0 +1,400 @@
+2026-09-28T23:50:29.6301168Z    ✓ the public CLI consumes the decision before delay and sends no repeated poll when denied 760ms
+2026-09-28T23:50:29.6302261Z    ✓ public native hook suppresses equivalent payloads but permits actual cursor change 1267ms
+2026-09-28T23:50:29.6304607Z    ✓ public CLI equivalent retransmissions consume one decision each and state change restores a snapshot 1513ms
+2026-09-28T23:50:29.6306092Z    ✓ CLI unknown resume uses one bounded wait and does not force permanent stopping 1579ms
+2026-09-28T23:50:29.6308242Z    ✓ broker restart preserves messages but drops resume and repeat-suppression evidence 2009ms
+2026-09-28T23:50:32.9535608Z  ✓ tests/context-continuity/continuity.test.ts (15 tests) 6811ms
+2026-09-28T23:50:32.9537497Z    ✓ direct task continuity (10)
+2026-09-28T23:50:32.9538620Z      ✓ stores replacement snapshots with CAS and request idempotency 378ms
+2026-09-28T23:50:32.9541189Z      ✓ separates suppression and clear while allowing old-epoch purge without retained payload 1539ms
+2026-09-28T23:50:32.9544684Z      ✓ rejects and later scrubs a malformed purge receipt with extra snapshot content 787ms
+2026-09-28T23:50:32.9546396Z      ✓ allows only one winner across two SQLite connections using the same CAS revision 845ms
+2026-09-28T23:50:32.9547953Z      ✓ rejects a payload whose stored JSON no longer matches its digest 648ms
+2026-09-28T23:50:32.9549185Z    ✓ workflow projection and fail-open lifecycle (5)
+2026-09-28T23:50:32.9550601Z      ✓ rewrites only bound MCP tool inputs and persists only HMAC lifecycle correlations 1019ms
+2026-09-28T23:50:35.2396961Z  ✓ tests/session-messaging/historical-wake.test.mjs (65 tests) 58632ms
+2026-09-28T23:50:35.2428118Z    ✓ expired original evidence retires only the exact old attempt, preserving historical time and pending body 493ms
+2026-09-28T23:50:35.2430892Z    ✓ history rejects target without changing any message state 358ms
+2026-09-28T23:50:35.2432458Z    ✓ history rejects attempt without changing any message state 379ms
+2026-09-28T23:50:35.2435017Z    ✓ history rejects receipt without changing any message state 482ms
+2026-09-28T23:50:35.2436690Z    ✓ history rejects nonce without changing any message state 365ms
+2026-09-28T23:50:35.2438188Z    ✓ history rejects current without changing any message state 651ms
+2026-09-28T23:50:35.2439741Z    ✓ history rejects no-current without changing any message state 323ms
+2026-09-28T23:50:35.2441326Z    ✓ history rejects submitted without changing any message state 470ms
+2026-09-28T23:50:35.2443718Z    ✓ history rejects bad-signature without changing any message state 339ms
+2026-09-28T23:50:35.2446013Z    ✓ history rejects digest without changing any message state 491ms
+2026-09-28T23:50:35.2447831Z    ✓ history rejects authority without changing any message state 658ms
+2026-09-28T23:50:35.2449354Z    ✓ history rejects invalid time relation after-late 461ms
+2026-09-28T23:50:35.2450922Z    ✓ history rejects invalid time relation expiry-at-late 716ms
+2026-09-28T23:50:35.2452957Z    ✓ history rejects invalid time relation invalid-late 649ms
+2026-09-28T23:50:35.2454855Z    ✓ history rejects invalid time relation invalid-start 763ms
+2026-09-28T23:50:35.2457106Z    ✓ reconstructs only the exact signed actor digest main/observed 925ms
+2026-09-28T23:50:35.2459029Z    ✓ reconstructs only the exact signed actor digest main/unknown 728ms
+2026-09-28T23:50:35.2460615Z    ✓ reconstructs only the exact signed actor digest unknown/observed 843ms
+2026-09-28T23:50:35.2463398Z    ✓ reconstructs only the exact signed actor digest unknown/unknown 904ms
+2026-09-28T23:50:35.2465347Z    ✓ a signed multiple-nonce observation cannot be approximated by a single old nonce 705ms
+2026-09-28T23:50:35.2467187Z    ✓ readonly trust rejection missing-db creates no database/key/receipt 617ms
+2026-09-28T23:50:35.2481014Z    ✓ readonly trust rejection missing-key creates no database/key/receipt 709ms
+2026-09-28T23:50:35.2503606Z    ✓ readonly trust rejection bad-key creates no database/key/receipt 786ms
+2026-09-28T23:50:35.2516594Z    ✓ readonly trust rejection missing-table creates no database/key/receipt 861ms
+2026-09-28T23:50:35.2589824Z    ✓ readonly trust rejection wrong-column creates no database/key/receipt 767ms
+2026-09-28T23:50:35.2597076Z    ✓ readonly trust respects initializer version compatibility without migrating version 0 770ms
+2026-09-28T23:50:35.2599705Z    ✓ readonly trust respects initializer version compatibility without migrating version 1 684ms
+2026-09-28T23:50:35.2602183Z    ✓ readonly trust respects initializer version compatibility without migrating version 2 534ms
+2026-09-28T23:50:35.2604215Z    ✓ readonly trust respects initializer version compatibility without migrating version 99 840ms
+2026-09-28T23:50:35.2606345Z    ✓ readonly version and receipt share a snapshot while an independent writer upgrades the version 1669ms
+2026-09-28T23:50:35.2608031Z    ✓ broker rejects caller supplied nowMs 918ms
+2026-09-28T23:50:35.2609276Z    ✓ broker rejects caller supplied receipt 1878ms
+2026-09-28T23:50:35.2611057Z    ✓ broker rejects caller supplied approved 1845ms
+2026-09-28T23:50:35.2612614Z    ✓ broker rejects caller supplied observation 1298ms
+2026-09-28T23:50:35.2613902Z    ✓ broker rejects caller supplied nonce 961ms
+2026-09-28T23:50:35.2615472Z    ✓ broker rejects caller supplied instanceId 3694ms
+2026-09-28T23:50:35.2617140Z    ✓ two independent recovery processes CAS once; pending uses separate normal reserve/start 5543ms
+2026-09-28T23:50:35.2618852Z    ✓ CAS rechecks generation after historical verification 722ms
+2026-09-28T23:50:35.2620295Z    ✓ CAS rechecks epoch after historical verification 609ms
+2026-09-28T23:50:35.2622163Z    ✓ CAS rechecks late after historical verification 704ms
+2026-09-28T23:50:35.2623571Z    ✓ CAS rechecks state after historical verification 482ms
+2026-09-28T23:50:35.2625355Z    ✓ historical observation retention counts from recovery application, not the old arrival 782ms
+2026-09-28T23:50:35.2627236Z    ✓ a reused instance with a new birth generation still retires only the old attempt 890ms
+2026-09-28T23:50:35.2629716Z    ✓ read-only verification holds one key/receipt snapshot while an independent writer rotates both 1080ms
+2026-09-28T23:50:35.2632035Z    ✓ bundled public CLI forwards only IDs to the private broker and cannot repeat recovery 949ms
+2026-09-28T23:50:35.2633991Z    ✓ packaged CLI binds history to explicit broker state directory: prestarted 1379ms
+2026-09-28T23:50:35.2635960Z    ✓ packaged CLI binds history to explicit broker state directory: client-ensure 1412ms
+2026-09-28T23:50:35.2637910Z    ✓ packaged root CLI rejects unsupported trust schema without mutation: 0 1017ms
+2026-09-28T23:50:35.2640093Z    ✓ packaged root CLI rejects unsupported trust schema without mutation: 1 916ms
+2026-09-28T23:50:35.2643007Z    ✓ packaged root CLI rejects unsupported trust schema without mutation: 2 1202ms
+2026-09-28T23:50:35.2646375Z    ✓ packaged root CLI rejects unsupported trust schema without mutation: 99 736ms
+2026-09-28T23:50:35.2648356Z    ✓ packaged root CLI rejects unsupported trust schema without mutation: missing-table 1166ms
+2026-09-28T23:50:35.2650002Z    ✓ packaged root CLI rejects unsupported trust schema without mutation: wrong-column 1016ms
+2026-09-28T23:50:35.2651562Z    ✓ packaged claude CLI rejects unsupported trust schema without mutation: 0 1039ms
+2026-09-28T23:50:35.2653047Z    ✓ packaged claude CLI rejects unsupported trust schema without mutation: 1 816ms
+2026-09-28T23:50:35.2654468Z    ✓ packaged claude CLI rejects unsupported trust schema without mutation: 2 864ms
+2026-09-28T23:50:35.2655932Z    ✓ packaged claude CLI rejects unsupported trust schema without mutation: 99 1259ms
+2026-09-28T23:50:35.2657513Z    ✓ packaged claude CLI rejects unsupported trust schema without mutation: missing-table 738ms
+2026-09-28T23:50:35.2659163Z    ✓ packaged claude CLI rejects unsupported trust schema without mutation: wrong-column 1265ms
+2026-09-28T23:50:36.1326942Z stderr | tests/recovery-strategy-selector/recovery-selector.test.mjs
+2026-09-28T23:50:36.1453452Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-09-28T23:50:36.1463190Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-09-28T23:50:36.1479844Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-09-28T23:50:36.1481184Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-09-28T23:50:36.1483005Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-09-28T23:50:36.1484342Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-09-28T23:50:36.1485683Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-09-28T23:50:36.1486878Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-09-28T23:50:36.1487702Z 
+2026-09-28T23:50:37.1731903Z  ✓ tests/recovery-strategy-selector/recovery-selector.test.mjs (17 tests) 1041ms
+2026-09-28T23:50:37.1733343Z    ✓ recovery strategy selector (17)
+2026-09-28T23:50:37.1734656Z      ✓ contracts compile and the digest CLI accepts stdin JSON 710ms
+2026-09-28T23:50:37.3439562Z  ✓ tests/session-board/session-board.test.ts (15 tests) 3817ms
+2026-09-28T23:50:37.3442384Z    ✓ session board hook (6)
+2026-09-28T23:50:37.3443824Z      ✓ gates edits once per request, lets read-only commands and subagents through, and records the line 408ms
+2026-09-28T23:50:37.3445029Z    ✓ session board MCP tools (3)
+2026-09-28T23:50:37.3446339Z      ✓ shares one board between the Claude launcher and the Codex hook and lists both hosts 744ms
+2026-09-28T23:50:37.3448058Z      ✓ reads back the hook-written line, lists the host board and refuses unbound updates 1216ms
+2026-09-28T23:50:37.3450654Z      ✓ overlays matching broker presence and leaves missing sessions unknown 311ms
+2026-09-28T23:50:39.4060981Z  ✓ tests/mcp/receipt-policy.test.ts (33 tests) 9447ms
+2026-09-28T23:50:39.4062494Z    ✓ descriptor-declared reference-only receipts (33)
+2026-09-28T23:50:39.4064511Z      ✓ propagates all four policies, orders artifact dependencies, and binds policy to the plan HMAC 432ms
+2026-09-28T23:50:39.4066927Z      ✓ rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"/output/actorIds"} 467ms
+2026-09-28T23:50:39.4069406Z      ✓ rejects invalid actor-array policies in descriptors and plans: {"actorIdsMatch":"prior-policy-actors"} 368ms
+2026-09-28T23:50:39.4072336Z      ✓ rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"output/actorIds","actorIdsMatch":"prior-policy-actors"} 339ms
+2026-09-28T23:50:39.4074564Z      ✓ rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"/output/actorIds","actorIdsMatch":"any-actors"} 381ms
+2026-09-28T23:50:39.4076029Z      ✓ rejects reordered final actor arrays without changing the receipt 359ms
+2026-09-28T23:50:39.4077702Z      ✓ rejects duplicate final actor arrays without changing the receipt 305ms
+2026-09-28T23:50:39.4079463Z      ✓ blocks finalization when the bound selection artifact is unavailable and proceeds when restored 570ms
+2026-09-28T23:50:39.4081008Z      ✓ rejects actor reuse after SQLite restart 736ms
+2026-09-28T23:50:39.4082358Z      ✓ binds arbitrary capability actor arrays in plan order after SQLite restart 732ms
+2026-09-28T23:50:39.4083340Z      ✓ rejects raw output and receipt text surfaces before SQLite persistence 461ms
+2026-09-28T23:50:50.7658262Z  ✓ tests/mcp/state-cleanup.test.ts (8 tests) 11036ms
+2026-09-28T23:50:50.7659378Z    ✓ state cleanup (8)
+2026-09-28T23:50:50.7660504Z      ✓ backs up and deletes only preview-bound inactive terminal state 2696ms
+2026-09-28T23:50:50.7661447Z      ✓ rejects stale and tampered tokens before deletion 588ms
+2026-09-28T23:50:50.7662368Z      ✓ migrates workflow v3 and continuity v1 databases without losing rows 2448ms
+2026-09-28T23:50:50.7663314Z      ✓ claims a no-op plan only once across two database connections 549ms
+2026-09-28T23:50:50.7664170Z      ✓ keeps candidates when backup verification fails 434ms
+2026-09-28T23:50:50.7665065Z      ✓ keeps a continuity task when a recent child record appears after backup 1917ms
+2026-09-28T23:50:50.7666212Z      ✓ keeps continuity state when its workflow root becomes active after preview 2044ms
+2026-09-28T23:50:50.7667142Z      ✓ expires an unused plan after fifteen minutes 358ms
+2026-09-28T23:50:51.3356180Z  ✓ tests/mcp/workspace-identity.test.ts (24 tests) 395ms
+2026-09-28T23:50:56.1361748Z stdout | tests/session-messaging/message-lifecycle.test.ts > packaged TLS cycles use one request instead of three or two without changing pending state
+2026-09-28T23:50:56.1366430Z relay tick measured TLS request counts [{"transport":"test-inbox","cycles":10,"baselineRequests":30,"tickRequests":10},{"transport":"codex-deferred","cycles":10,"baselineRequests":20,"tickRequests":10}]
+2026-09-28T23:50:56.1368164Z 
+2026-09-28T23:51:05.0082328Z  ✓ tests/session-messaging/message-lifecycle.test.ts (14 tests) 13469ms
+2026-09-28T23:51:05.0084403Z    ✓ applies global draft, receipt and byte backpressure without evicting valid records 2191ms
+2026-09-28T23:51:05.0086185Z    ✓ packaged TLS cycles use one request instead of three or two without changing pending state 2295ms
+2026-09-28T23:51:05.0087751Z    ✓ a real post-commit prepare reply loss leaves only orphan drafts 823ms
+2026-09-28T23:51:05.0089228Z    ✓ a real send reply loss retries the known ID once and survives broker restart 3126ms
+2026-09-28T23:51:05.0090881Z    ✓ two independent processes submit one ID atomically and enforce sender preparation capacity 2950ms
+2026-09-28T23:51:05.0092650Z    ✓ preserves old messages across additive schema initialization but refuses old IDs as new sends 664ms
+2026-09-28T23:51:05.0094465Z    ✓ packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect 1294ms
+2026-09-28T23:51:16.0248173Z  ✓ tests/mcp/stdio-integration.test.ts (4 tests) 10599ms
+2026-09-28T23:51:16.0249390Z    ✓ bundled STDIO MCP server (4)
+2026-09-28T23:51:16.0250507Z      ✓ starts from an isolated plugin tree without node_modules 4928ms
+2026-09-28T23:51:16.0252138Z      ✓ keeps workflow startup clean when both database settings resolve to one file 1216ms
+2026-09-28T23:51:16.0254048Z      ✓ starts with the packaged registry and fails semantic planning closed without a trusted provider 1445ms
+2026-09-28T23:51:16.0255452Z      ✓ shares signed continuity bindings between the packaged hook and MCP server 2993ms
+2026-09-28T23:51:18.8784584Z  ✓ tests/context-continuity/schema-compat.test.ts (18 tests) 41133ms
+2026-09-28T23:51:18.8786050Z    ✓ 2.7.x continuity schema compatibility (13)
+2026-09-28T23:51:18.8786959Z      ✓ preserves schema 2 state across reopen, restore, CAS, purge and epoch rotation 2248ms
+2026-09-28T23:51:18.8787923Z      ✓ preserves schema 3 state across reopen, restore, CAS, purge and epoch rotation 2169ms
+2026-09-28T23:51:18.8788696Z      ✓ creates new databases as schema 2 2837ms
+2026-09-28T23:51:18.8789541Z      ✓ preserves receiver-owned tasks, refuses stale origins and keeps unrelated tasks usable 1881ms
+2026-09-28T23:51:18.8790547Z      ✓ checks receiver state inside the checkpoint transaction after service preflight 1774ms
+2026-09-28T23:51:18.8791818Z      ✓ detects a schema 3 receiver added by another connection after opening schema 2 1551ms
+2026-09-28T23:51:18.8792875Z      ✓ protects receiver state added after snapshot cleanup preview 1870ms
+2026-09-28T23:51:18.8794110Z      ✓ protects receiver state added after task cleanup preview 1738ms
+2026-09-28T23:51:18.8795494Z      ✓ rejects incompatible schema 3 without repairing or downgrading it 1262ms
+2026-09-28T23:51:18.8797033Z      ✓ rejects changed schema 3 defaults instead of changing task suppression implicitly 1574ms
+2026-09-28T23:51:18.8799162Z      ✓ rejects missing schema 3 tables and future schemas without creating state 2832ms
+2026-09-28T23:51:18.8800797Z      ✓ rejects damaged bytes without replacing the database 1075ms
+2026-09-28T23:51:18.8805496Z      ✓ rejects a schema 3 database with valid column definitions and malformed pages 1663ms
+2026-09-28T23:51:18.8806894Z    ✓ source STDIO continuity startup diagnostics (5)
+2026-09-28T23:51:18.8807912Z      ✓ keeps normal MCP usable when continuity is healthy 4170ms
+2026-09-28T23:51:18.8808881Z      ✓ keeps normal MCP usable when continuity is receiver 3565ms
+2026-09-28T23:51:18.8809839Z      ✓ keeps normal MCP usable when continuity is future 2949ms
+2026-09-28T23:51:18.8810564Z      ✓ keeps normal MCP usable when continuity is incompatible 2985ms
+2026-09-28T23:51:18.8811292Z      ✓ keeps normal MCP usable when continuity is corrupt 2989ms
+2026-09-28T23:51:23.3516156Z  ✓ tests/mcp/trust-provenance.test.ts (11 tests) 3842ms
+2026-09-28T23:51:23.3517390Z    ✓ trust provenance (11)
+2026-09-28T23:51:23.3518543Z      ✓ stores peer provenance by digest without persisting the raw body 567ms
+2026-09-28T23:51:23.3520234Z      ✓ records and verifies a claimed peer message before injecting its receipt-bound body 942ms
+2026-09-28T23:51:23.3521872Z      ✓ keeps missing and nullable receipts explicitly unverified 316ms
+2026-09-28T23:51:23.3522923Z      ✓ exposes read-only MCP validation without trusting an arbitrary caller host name 456ms
+2026-09-28T23:51:24.5057363Z  ✓ tests/tooling/commands.test.mjs (12 tests) 8305ms
+2026-09-28T23:51:24.5058639Z    ✓ skill maintenance commands (12)
+2026-09-28T23:51:24.5059890Z      ✓ forwards pnpm script arguments without a standalone separator 620ms
+2026-09-28T23:51:24.5062800Z      ✓ imports only files committed at the requested Git ref 950ms
+2026-09-28T23:51:24.5065224Z      ✓ refuses a replacement that does not contain the required ancestor commit 2271ms
+2026-09-28T23:51:24.5066322Z      ✓ keeps the registered routing when a replaced skill ships no integration descriptor 1990ms
+2026-09-28T23:51:24.5067545Z      ✓ rejects a lock whose auto-pr source is pinned to a commit 783ms
+2026-09-28T23:51:24.5068448Z      ✓ refuses to replace a suite-managed skill through the external importer 1266ms
+2026-09-28T23:51:24.8583381Z  ✓ tests/mcp/plugin-update-service.test.ts (17 tests) 1221ms
+2026-09-28T23:51:24.8584659Z    ✓ PluginUpdateService (17)
+2026-09-28T23:51:24.8587566Z      ✓ caches a successful check for 24 hours and force bypasses the cache 361ms
+2026-09-28T23:51:24.8589490Z      ✓ preserves a concurrent SQLite notice claim against a stale check write 304ms
+2026-09-28T23:51:25.1069131Z  ↓ tests/session-messaging/previous-broker.test.ts (3 tests | 3 skipped)
+2026-09-28T23:51:26.1711610Z  ✓ tests/mcp/codex-host-observation.test.ts (18 tests) 741ms
+2026-09-28T23:51:26.1712905Z    ✓ host-owned hookless provider ingress (2)
+2026-09-28T23:51:26.1714248Z      ✓ shares the strict bootstrap, missing, policy and replay gates for claude-code 434ms
+2026-09-28T23:51:30.1197433Z  ✓ tests/mcp/tool-schema-profile.test.ts (7 tests) 5145ms
+2026-09-28T23:51:30.1198705Z    ✓ MCP tool schema profiles (7)
+2026-09-28T23:51:30.1199728Z      ✓ keeps the historical schemas when no profile is selected 659ms
+2026-09-28T23:51:30.1202131Z      ✓ removes top-level combinators from every advertised schema for Anthropic hosts 424ms
+2026-09-28T23:51:30.1203676Z      ✓ accepts and rejects the same inputs with inlined Anthropic schemas as with the referenced contracts 496ms
+2026-09-28T23:51:30.1204709Z      ✓ validates plan_workflow input identically in both profiles 422ms
+2026-09-28T23:51:30.1205943Z      ✓ advertises the same host-neutral intake instructions to every schema profile 491ms
+2026-09-28T23:51:30.1207571Z      ✓ applies the environment profile in the bundled server 2649ms
+2026-09-28T23:51:31.8454729Z  ✓ tests/mcp/stage-output-file.test.ts (7 tests) 1484ms
+2026-09-28T23:51:31.8456015Z    ✓ stage output by file reference (7)
+2026-09-28T23:51:31.8457972Z      ✓ validates a file-backed output like inline output and stores only the reference 443ms
+2026-09-28T23:51:31.8459879Z      ✓ keeps inline output unchanged 347ms
+2026-09-28T23:51:33.3187513Z  ✓ tests/mcp/korean-prose-readiness.test.ts (7 tests) 1166ms
+2026-09-28T23:51:33.3189399Z    ✓ Korean prose evaluation readiness (7)
+2026-09-28T23:51:33.3190321Z      ✓ reports readiness without confusing it with activation 393ms
+2026-09-28T23:51:34.3000210Z  ✓ tests/mcp/trusted-mcp-integration.test.ts (1 test) 536ms
+2026-09-28T23:51:34.3001600Z    ✓ trusted MCP server boundary (1)
+2026-09-28T23:51:34.3003228Z      ✓ completes and aborts guarded workflows with server-side observations 533ms
+2026-09-28T23:51:35.8569248Z  ❯ tests/session-messaging/presence-retention.test.ts (9 tests | 1 failed) 58186ms
+2026-09-28T23:51:35.8572249Z    × serves board presence from a 342-identity, 1302-row database through a real broker 34336ms
+2026-09-28T23:51:35.8578467Z    ✓ B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve 693ms
+2026-09-28T23:51:35.8603436Z    ✓ keeps an ended or lapsed row until exactly the retention period after its lease end 9ms
+2026-09-28T23:51:35.8608248Z    ✓ never deletes a live row, however old its birth 57ms
+2026-09-28T23:51:35.8613481Z    ✓ keeps retirement, presence and autoWake identical to a run that deletes no presence row 1349ms
+2026-09-28T23:51:35.8615388Z    ✓ gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing 958ms
+2026-09-28T23:51:35.8635004Z    ✓ prunes presence idempotently when two processes race on one database 20739ms
+2026-09-28T23:51:35.8716150Z    ✓ bounds list-presence: batches fit the response limit and oversized or overlong requests are refused 36ms
+2026-09-28T23:51:35.8729091Z    ✓ still lists every identity for an untargeted request that fits 7ms
+2026-09-28T23:51:38.1187875Z  ✓ tests/mcp/provider-result-envelope.test.ts (9 tests) 3211ms
+2026-09-28T23:51:38.1189595Z    ✓ provider result envelope (4)
+2026-09-28T23:51:38.1206981Z      ✓ accepts the shared envelope version for acceptance-evidence-validation even though its provider schema omits it 427ms
+2026-09-28T23:51:38.1209082Z      ✓ keeps validating schemaVersion where the provider schema declares it 324ms
+2026-09-28T23:51:38.1210331Z    ✓ artifact digest form (4)
+2026-09-28T23:51:38.1212083Z      ✓ accepts a digest that differs only by the sha256: prefix for change-scope-baseline-capture and returns the caller's value 335ms
+2026-09-28T23:51:38.1214340Z      ✓ accepts a digest that differs only by the sha256: prefix for mutation-risk-preflight and returns the caller's value 371ms
+2026-09-28T23:51:38.1221032Z      ✓ still rejects digests that are not lowercase SHA-256 hex for change-scope-baseline-capture 487ms
+2026-09-28T23:51:38.1224104Z      ✓ still rejects digests that are not lowercase SHA-256 hex for mutation-risk-preflight 421ms
+2026-09-28T23:51:38.1225649Z    ✓ recorded artifact digests (1)
+2026-09-28T23:51:38.1227299Z      ✓ stores the caller's digest form and still reports missing artifacts and output-file mismatches 349ms
+2026-09-28T23:51:38.6839587Z  ✓ tests/mcp/korean-prose-glossary.test.ts (18 tests) 309ms
+2026-09-28T23:51:39.3160132Z  ✓ tests/coordinate-subagents/model-routing.test.mjs (15 tests) 403ms
+2026-09-28T23:51:39.3161792Z    ✓ packaged model routing (15)
+2026-09-28T23:51:39.3163156Z      ✓ runs the public resolve and record CLI without node_modules 388ms
+2026-09-28T23:51:40.3478940Z  ✓ tests/evaluation-validity-auditor/suite-integration.test.mjs (7 tests) 3760ms
+2026-09-28T23:51:40.3515020Z    ✓ evaluation-validity-auditor suite descriptor (7)
+2026-09-28T23:51:40.3517089Z      ✓ selects only its explicit capability at phase order 68 with the conditional gate 545ms
+2026-09-28T23:51:40.3518979Z      ✓ accepts a safe post-execution PASS receipt and still rejects free text 875ms
+2026-09-28T23:51:40.3520822Z      ✓ freezes the audit purpose in the signed plan and enforces pre versus post completion 820ms
+2026-09-28T23:51:40.3522659Z      ✓ requires an explicit structured purpose for evaluation validity planning 308ms
+2026-09-28T23:51:40.3525097Z      ✓ keeps one evaluation TaskEnvelope compatible with task-contract and acceptance validation 505ms
+2026-09-28T23:51:40.3529147Z      ✓ maps FAIL and BLOCKED reports to their fixed workflow error states 701ms
+2026-09-28T23:51:41.5246735Z  ✓ tests/codex-token-usage-analyzer/integration.test.mjs (6 tests) 1683ms
+2026-09-28T23:51:41.5248985Z    ✓ codex-token-usage-analyzer integration (6)
+2026-09-28T23:51:41.5252249Z      ✓ records and finalizes a no-Markdown PASS workflow 869ms
+2026-09-28T23:51:41.5255673Z      ✓ records and finalizes a no-Markdown PARTIAL workflow 629ms
+2026-09-28T23:51:41.7399258Z  ✓ tests/mcp/runtime-config.test.ts (18 tests) 21ms
+2026-09-28T23:51:41.9403263Z  ✓ tests/mcp/evaluation-preflight.test.ts (8 tests) 18ms
+2026-09-28T23:51:42.2416758Z  ✓ tests/orchestrator/collaboration-decision.test.mjs (14 tests) 11ms
+2026-09-28T23:51:43.2337701Z  ✓ tests/ponytail/ponytail.test.ts (5 tests) 641ms
+2026-09-28T23:51:43.2338942Z    ✓ ponytail at the implementation step (5)
+2026-09-28T23:51:43.2340643Z      ✓ routes minimal-implementation to ponytail after the scope baseline and before the pre-mutation gate and scope verification 354ms
+2026-09-28T23:51:44.3661563Z  ✓ tests/mcp/response-projections.test.ts (2 tests) 820ms
+2026-09-28T23:51:44.3662306Z    ✓ compact MCP response projections (2)
+2026-09-28T23:51:44.3663130Z      ✓ keeps successful workflow progress fixed-size and reduces repeated payload bytes by at least 80% 443ms
+2026-09-28T23:51:44.3664139Z      ✓ projects convergence roots and status without task, frame, or append-only history 374ms
+2026-09-28T23:51:44.4978612Z  ✓ tests/mcp/host-attestation-stdio.test.ts (4 tests) 17830ms
+2026-09-28T23:51:44.4980718Z    ✓ packaged execution observation fixtures (not native-host evidence) (4)
+2026-09-28T23:51:44.4982757Z      ✓ completes guarded STDIO and keeps restart replay rejection for claude-code/hook/claude-opus-5 5628ms
+2026-09-28T23:51:44.4985056Z      ✓ completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-astra 4507ms
+2026-09-28T23:51:44.4999000Z      ✓ completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-sol 4113ms
+2026-09-28T23:51:44.5016044Z      ✓ completes guarded STDIO and keeps restart replay rejection for codex/wrapper/gpt-6-astra 3578ms
+2026-09-28T23:51:44.8041721Z  ✓ tests/korean-prose-editor/glossary-finalizer.test.mjs (5 tests) 104ms
+2026-09-28T23:51:44.8612571Z  ✓ tests/mcp/korean-prose-evaluation-preflight.test.ts (4 tests) 90ms
+2026-09-28T23:51:46.3450743Z stdout | tests/session-messaging/broker-lifecycle.test.ts > isolates socket resets and a lost send response while preserving the broker and one committed message
+2026-09-28T23:51:46.3529656Z Disposable reset broker exited: { code: null, signal: 'SIGTERM', stderr: '' }
+2026-09-28T23:51:46.3531125Z 
+2026-09-28T23:51:46.3532294Z  ✓ tests/session-messaging/broker-lifecycle.test.ts (7 tests) 5726ms
+2026-09-28T23:51:46.3534228Z    ✓ retries transient endpoint publication failures and serves the published endpoint 602ms
+2026-09-28T23:51:46.3546889Z    ✓ releases startup resources after permanent failure and allows recovery 1442ms
+2026-09-28T23:51:46.3564408Z    ✓ releases startup resources after ENOSPC failure and allows recovery 701ms
+2026-09-28T23:51:46.3577542Z    ✓ releases startup resources after credentials failure and allows recovery 476ms
+2026-09-28T23:51:46.3628423Z    ✓ releases startup resources after database failure and allows recovery 489ms
+2026-09-28T23:51:46.3630907Z    ✓ delivers and acknowledges a message using only the packaged CLI and broker 1188ms
+2026-09-28T23:51:46.3637059Z    ✓ isolates socket resets and a lost send response while preserving the broker and one committed message 827ms
+2026-09-28T23:51:46.3800416Z  ✓ tests/software-security-auditor/security-audit.test.mjs (23 tests) 1156ms
+2026-09-28T23:51:46.3801938Z    ✓ security audit evidence contract (23)
+2026-09-28T23:51:46.3803646Z      ✓ runs positive and negative CLI in node_modules-free . packaging 628ms
+2026-09-28T23:51:46.3805523Z      ✓ runs positive and negative CLI in node_modules-free claude-plugin packaging 468ms
+2026-09-28T23:51:46.6661757Z  ✓ tests/tooling/tooling.test.mjs (9 tests) 28ms
+2026-09-28T23:51:47.4265213Z  ✓ tests/software-security-auditor/integration.test.mjs (7 tests) 2012ms
+2026-09-28T23:51:47.4272542Z    ✓ security audit integration (7)
+2026-09-28T23:51:47.4274001Z      ✓ loads schema and maps complete report with findings in  577ms
+2026-09-28T23:51:47.4275838Z      ✓ loads schema and maps complete report with findings in claude-plugin/ 345ms
+2026-09-28T23:51:47.4283327Z      ✓ rejects semantic lies even with schema-valid fields and verified booleans 362ms
+2026-09-28T23:51:47.4542776Z  ✓ tests/session-messaging/presence-batches.test.ts (4 tests) 811ms
+2026-09-28T23:51:47.4544800Z    ✓ stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch 401ms
+2026-09-28T23:51:47.4547212Z    ✓ keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure 402ms
+2026-09-28T23:51:47.6579674Z  ✓ tests/mcp/registry-contract.test.ts (2 tests) 720ms
+2026-09-28T23:51:47.6581606Z    ✓ bundled skill registry (2)
+2026-09-28T23:51:47.6583975Z      ✓ conforms to SkillDescriptor.v2 and exposes all specialist capabilities 367ms
+2026-09-28T23:51:47.6585779Z      ✓ bundles and enables the Korean prose workflow for runtime selection 350ms
+2026-09-28T23:51:47.6965256Z  ✓ tests/mcp/tool-schema-inline.test.ts (5 tests) 10ms
+2026-09-28T23:51:48.3069519Z  ✓ tests/orchestrator/query-registry.test.mjs (2 tests) 356ms
+2026-09-28T23:51:48.6011070Z  ✓ tests/mcp/orchestrator-fixtures.test.ts (8 tests) 110ms
+2026-09-28T23:51:48.8067174Z  ✓ tests/model-effort-advisor/suite-integration.test.ts (3 tests) 183ms
+2026-09-28T23:51:49.1635796Z  ✓ tests/release-state-backup.test.mjs (1 test) 133ms
+2026-09-28T23:51:49.4139664Z  ✓ tests/software-security-auditor/evaluation-evidence.test.mjs (1 test) 14ms
+2026-09-28T23:51:49.6466772Z  ✓ tests/mcp/korean-prose-execution-provenance.test.ts (5 tests) 8ms
+2026-09-28T23:51:49.9185269Z  ✓ tests/session-messaging/self-signed-certificate.test.ts (1 test) 13ms
+2026-09-28T23:51:51.2122235Z  ✓ tests/tooling/skill-context-optimization.test.mjs (3 tests) 2351ms
+2026-09-28T23:51:51.2126615Z    ✓ skill context optimization (3)
+2026-09-28T23:51:51.2128086Z      ✓ preserves the reviewed skill revisions while reducing their initial load 2344ms
+2026-09-28T23:51:52.6625241Z  ✓ tests/instruction-scope-resolver/suite-integration.test.ts (1 test) 1209ms
+2026-09-28T23:51:52.6627250Z    ✓ instruction-scope-resolver standalone regression (1)
+2026-09-28T23:51:52.6628530Z      ✓ runs every node:test case 1206ms
+2026-09-28T23:51:52.9531235Z  ✓ tests/acceptance-evidence-validator/suite-integration.test.ts (1 test) 2789ms
+2026-09-28T23:51:52.9536558Z    ✓ acceptance-evidence-validator standalone regression (1)
+2026-09-28T23:51:52.9538078Z      ✓ runs every node:test case 2787ms
+2026-09-28T23:51:55.6204701Z  ✓ tests/task-contract/suite-integration.test.ts (1 test) 2366ms
+2026-09-28T23:51:55.6242500Z    ✓ task-contract Node tests pass in an isolated process 2364ms
+2026-09-28T23:51:57.1020493Z  ✓ tests/evaluation-validity-auditor/standalone-regression.test.mjs (1 test) 1220ms
+2026-09-28T23:51:57.1021809Z    ✓ evaluation-validity-auditor imported core (1)
+2026-09-28T23:51:57.1022597Z      ✓ passes the suite's normal, boundary, failure, and security regression cases 1218ms
+2026-09-28T23:52:01.5944014Z  ✓ tests/runtime/runtime-smoke.test.mjs (6 tests) 13921ms
+2026-09-28T23:52:01.5945199Z    ✓ installed skill runtime (6)
+2026-09-28T23:52:01.5946317Z      ✓ runs every documented Node CLI without node_modules 13642ms
+2026-09-28T23:52:11.9314998Z  ✓ tests/change-scope-guardian/suite-integration.test.ts (1 test) 19022ms
+2026-09-28T23:52:11.9317152Z    ✓ change-scope-guardian Node tests pass in an isolated process 19020ms
+2026-09-28T23:52:11.9357370Z 
+2026-09-28T23:52:11.9358323Z ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+2026-09-28T23:52:11.9359519Z 
+2026-09-28T23:52:11.9363219Z  FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+2026-09-28T23:52:11.9371660Z AssertionError: expected { host: 'portable', …(16) } to match object { state: 'online', autoWake: { …(2) } }
+2026-09-28T23:52:11.9373120Z (20 matching properties omitted from actual)
+2026-09-28T23:52:11.9373798Z 
+2026-09-28T23:52:11.9374259Z - Expected
+2026-09-28T23:52:11.9374967Z + Received
+2026-09-28T23:52:11.9375394Z 
+2026-09-28T23:52:11.9375776Z   {
+2026-09-28T23:52:11.9376408Z     "autoWake": {
+2026-09-28T23:52:11.9377188Z -     "reason": "relay-live",
+2026-09-28T23:52:11.9378035Z -     "state": "available",
+2026-09-28T23:52:11.9378931Z +     "reason": "presence-not-online",
+2026-09-28T23:52:11.9379813Z +     "state": "no-live-relay",
+2026-09-28T23:52:11.9380519Z     },
+2026-09-28T23:52:11.9381116Z -   "state": "online",
+2026-09-28T23:52:11.9381842Z +   "state": "unreachable",
+2026-09-28T23:52:11.9382510Z   }
+2026-09-28T23:52:11.9382854Z 
+2026-09-28T23:52:11.9383721Z  ❯ tests/session-messaging/presence-retention.test.ts:96:38
+2026-09-28T23:52:11.9481446Z      94|   for (let index = 0; index < 40; index += 1) expect(bySession.get(`re…
+2026-09-28T23:52:11.9482370Z      95|   for (const sessionId of ["live-0", "live-1"]) {
+2026-09-28T23:52:11.9483021Z      96|     expect(bySession.get(sessionId)).toMatchObject({ state: "online", …
+2026-09-28T23:52:11.9483578Z        |                                      ^
+2026-09-28T23:52:11.9483911Z      97|   }
+2026-09-28T23:52:11.9484607Z      98|   // Presence rows ended days ago were pruned; the identity reads as n…
+2026-09-28T23:52:11.9485122Z 
+2026-09-28T23:52:11.9487313Z ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+2026-09-28T23:52:11.9487685Z 
+2026-09-28T23:52:11.9492171Z 
+2026-09-28T23:52:11.9501280Z  Test Files  1 failed | 62 passed | 1 skipped (64)
+2026-09-28T23:52:11.9510497Z       Tests  1 failed | 870 passed | 3 skipped (874)
+2026-09-28T23:52:11.9511434Z    Start at  23:48:54
+2026-09-28T23:52:11.9517769Z    Duration  197.82s (tests 98%, import 2%, transform 1%)
+2026-09-28T23:52:11.9540654Z 
+2026-09-28T23:52:11.9569897Z 
+2026-09-28T23:52:11.9601576Z ##[error]AssertionError: expected { host: 'portable', …(16) } to match object { state: 'online', autoWake: { …(2) } }
+(20 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "autoWake": {
+-     "reason": "relay-live",
+-     "state": "available",
++     "reason": "presence-not-online",
++     "state": "no-live-relay",
+    },
+-   "state": "online",
++   "state": "unreachable",
+  }
+
+ ❯ tests/session-messaging/presence-retention.test.ts:96:38
+
+
+2026-09-28T23:52:12.0148845Z [ELIFECYCLE] Test failed. See above for more details.
+2026-09-28T23:52:12.0368193Z ##[error]Process completed with exit code 1.
+2026-09-28T23:52:12.0678880Z Post job cleanup.
+2026-09-28T23:52:12.2645804Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-09-28T23:52:12.2957717Z git version 2.55.0.windows.5
+2026-09-28T23:52:12.3040849Z Temporarily overriding HOME='D:\a\_temp\bd335307-d51a-446e-93fd-ed11ca085257' before making global git config changes
+2026-09-28T23:52:12.3042472Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-28T23:52:12.3053544Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\agent-governance-suite\agent-governance-suite
+2026-09-28T23:52:12.3396301Z Removing SSH command configuration
+2026-09-28T23:52:12.3409129Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-09-28T23:52:12.3737152Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-09-28T23:52:12.9469356Z Removing HTTP extra header
+2026-09-28T23:52:12.9482442Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-28T23:52:12.9821258Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-09-28T23:52:14.0532956Z Removing includeIf entries pointing to credentials config files
+2026-09-28T23:52:14.0546374Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-28T23:52:14.0829546Z includeif.gitdir:D:/a/agent-governance-suite/agent-governance-suite/.git.path
+2026-09-28T23:52:14.0830762Z includeif.gitdir:D:/a/agent-governance-suite/agent-governance-suite/.git/worktrees/*.path
+2026-09-28T23:52:14.0831622Z includeif.gitdir:/github/workspace/.git.path
+2026-09-28T23:52:14.0832321Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-09-28T23:52:14.0879928Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:D:/a/agent-governance-suite/agent-governance-suite/.git.path
+2026-09-28T23:52:14.1174870Z D:\a\_temp\git-credentials-a7efd206-bbee-4581-b213-2090f63ef750.config
+2026-09-28T23:52:14.1233360Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:D:/a/agent-governance-suite/agent-governance-suite/.git.path D\:\\a\\_temp\\git\-credentials\-a7efd206\-bbee\-4581\-b213\-2090f63ef750\.config
+2026-09-28T23:52:14.1603034Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:D:/a/agent-governance-suite/agent-governance-suite/.git/worktrees/*.path
+2026-09-28T23:52:14.1877061Z D:\a\_temp\git-credentials-a7efd206-bbee-4581-b213-2090f63ef750.config
+2026-09-28T23:52:14.1925989Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:D:/a/agent-governance-suite/agent-governance-suite/.git/worktrees/*.path D\:\\a\\_temp\\git\-credentials\-a7efd206\-bbee\-4581\-b213\-2090f63ef750\.config
+2026-09-28T23:52:14.2240370Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-09-28T23:52:14.2502838Z /github/runner_temp/git-credentials-a7efd206-bbee-4581-b213-2090f63ef750.config
+2026-09-28T23:52:14.2548609Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-a7efd206\-bbee\-4581\-b213\-2090f63ef750\.config
+2026-09-28T23:52:14.2866003Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-09-28T23:52:14.3126588Z /github/runner_temp/git-credentials-a7efd206-bbee-4581-b213-2090f63ef750.config
+2026-09-28T23:52:14.3175651Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-a7efd206\-bbee\-4581\-b213\-2090f63ef750\.config
+2026-09-28T23:52:14.3488006Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-09-28T23:52:14.9110377Z Removing credentials config 'D:\a\_temp\git-credentials-a7efd206-bbee-4581-b213-2090f63ef750.config'
+2026-09-28T23:52:14.9312692Z Cleaning up orphan processes
+2026-09-28T23:52:14.9774343Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

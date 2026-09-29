@@ -1,0 +1,48 @@
+{
+  "audit": "AGS 2.7.4 re-audit 4 (windows-latest CI test fix)",
+  "candidate": {
+    "branch": "claude/v274-presence",
+    "commit": "b31da7789b3f48c548c24d6fb5a6f0b7bfa63f2c",
+    "tree": "c846c249dd216ae9115bcbd8c10dd6e915ebd6b0"
+  },
+  "previousTarget": {
+    "commit": "0135326a921cccc7b49b0ad8b605e87893631804",
+    "verdict": "PASS",
+    "evidence": "claude/evidence-v274-audit3-20260928T233533Z @ 5c758fe"
+  },
+  "failingCi": {
+    "run": 36499856828,
+    "job": "Node 24 / windows-latest (109187863303)",
+    "head": "0135326a",
+    "conclusion": "failure"
+  },
+  "writerEvidenceReadForComparisonOnly": "claude/evidence-v274-presence-fix4-20260928T235902Z @ cb0a9df5276a98722b3aa4cf4db19f10fbc6859a",
+  "previousBrokers": {
+    "v2.7.3": "tag v2.7.3 mcp-server/dist/session-message-broker.mjs",
+    "v2.7.2": "tag v2.7.2 mcp-server/dist/session-message-broker.mjs"
+  },
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "6.18.44-fc-v37",
+  "startedAtUtc": "2026-09-29T00:02:27Z",
+  "finishedAtUtc": "2026-09-29T00:13:30Z",
+  "verdict": "PASS_WITH_FINDINGS",
+  "releaseBlocking": false,
+  "findings": [
+    "T-1 minor: session-message.test.ts packaged hook test also relies on the 20 s presence lease (outside requested scope)"
+  ],
+  "redaction": {
+    "github-token": 0,
+    "anthropic-key": 0,
+    "aws-access-key": 0,
+    "private-key-line": 0,
+    "bearer-header": 0,
+    "email": 0,
+    "home-path": 35,
+    "root-home": 5,
+    "ipv4": 0,
+    "github-url-account": 0,
+    "account-name": 0,
+    "windows-user-path": 0
+  }
+}

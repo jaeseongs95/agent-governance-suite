@@ -1,0 +1,37 @@
+Already up to date
+Done in 419ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274d
+
+ ❯ tests/session-messaging/presence-retention.test.ts (9 tests | 1 failed) 2582ms
+   × keeps an ended or lapsed row until exactly the retention period after its lease end 11ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 27 passed (28)
+   Start at  00:09:49
+   Duration  3.05s (tests 82%, transform 13%, import 4%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end
+AssertionError: expected 'online' to be 'unreachable' // Object.is equality
+
+Expected: "unreachable"
+Received: "online"
+
+ ❯ tests/session-messaging/presence-retention.test.ts:151:104
+    149|   expect(store.presence({ host: "portable", sessionId: "ended" }).stat…
+    150|   store.prune(lapsedLease + RETENTION - 1);
+    151|   expect(store.presence({ host: "portable", sessionId: "lapsed" }, lap…
+       |                                                                                                        ^
+    152|   store.prune(lapsedLease + RETENTION);
+    153|   expect(store.presence({ host: "portable", sessionId: "lapsed" }).sta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1
+--- audit ---
+
+exit=0

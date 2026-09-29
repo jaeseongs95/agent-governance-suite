@@ -1,0 +1,40 @@
+Already up to date
+Done in 477ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274d
+
+ ❯ tests/session-messaging/presence-retention.test.ts (9 tests | 1 failed) 2671ms
+   × bounds list-presence: batches fit the response limit and oversized or overlong requests are refused 23ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 27 passed (28)
+   Start at  00:09:13
+   Duration  3.34s (tests 75%, transform 19%, import 6%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > bounds list-presence: batches fit the response limit and oversized or overlong requests are refused
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/presence-retention.test.ts:296:83
+    294|   // The untargeted pre-2.7.4 request is refused explicitly once the s…
+    295|   for (let index = 0; index < 60; index += 1) born(store, `many-${inde…
+    296|   expect(() => dispatchSessionMessageBrokerOperation(store, "list-pres…
+       |                                                                                   ^
+    297| });
+    298|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1
+--- audit ---
+
+exit=0

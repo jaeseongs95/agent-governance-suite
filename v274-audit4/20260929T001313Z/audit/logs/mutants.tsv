@@ -1,0 +1,15 @@
+mutant	candidate_tests(presence-retention+presence-batches+session-board)	failed
+BASELINE	SURVIVED	0
+M1-live-by-birth	KILLED	3
+M5-no-presence-prune	KILLED	5
+M7-service-unbatched	KILLED	4
+M9-no-broker-size-check	KILLED	1
+A1-protects-oldest-not-latest	KILLED	2
+A2-lapsed-counts-as-live	KILLED	3
+A3-service-drops-last-partial-batch	KILLED	2
+F2-isolation-reverted	KILLED	1
+F2-pattern-filter-removed	KILLED	1
+F4-continue-after-transport-failure	KILLED	2
+F4-stop-on-refusal-too	KILLED	1
+L1-lease-ignored-for-online	KILLED	1
+F2-server-ignores-unanswered	KILLED	1

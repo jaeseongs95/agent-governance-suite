@@ -1,0 +1,16 @@
+Already up to date
+Done in 419ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274d
+
+
+ Test Files  3 passed (3)
+      Tests  28 passed (28)
+   Start at  00:08:55
+   Duration  3.06s (tests 74%, transform 20%, import 5%)
+
+
+exit=0
+--- audit ---
+
+exit=0

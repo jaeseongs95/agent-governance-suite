@@ -1,0 +1,79 @@
+Already up to date
+Done in 433ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274d
+
+ ❯ tests/session-messaging/presence-retention.test.ts (9 tests | 3 failed) 2566ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 1259ms
+   × keeps an ended or lapsed row until exactly the retention period after its lease end 9ms
+   × prunes presence idempotently when two processes race on one database 935ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  3 failed | 25 passed (28)
+   Start at  00:09:22
+   Duration  3.06s (tests 81%, transform 12%, import 6%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected { rows: 282 } to deeply equal { rows: 42 }
+
+- Expected
++ Received
+
+  {
+-   "rows": 42,
++   "rows": 282,
+  }
+
+ ❯ tests/session-messaging/presence-retention.test.ts:113:85
+    111|   const database = new DatabaseSync(path.join(state, "session-messages…
+    112|   try {
+    113|     expect(database.prepare("SELECT count(*) AS rows FROM session_pres…
+       |                                                                                     ^
+    114|   } finally { database.close(); }
+    115| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end
+AssertionError: expected 'online' to be 'unknown' // Object.is equality
+
+Expected: "unknown"
+Received: "online"
+
+ ❯ tests/session-messaging/presence-retention.test.ts:153:75
+    151|   expect(store.presence({ host: "portable", sessionId: "lapsed" }, lap…
+    152|   store.prune(lapsedLease + RETENTION);
+    153|   expect(store.presence({ host: "portable", sessionId: "lapsed" }).sta…
+       |                                                                           ^
+    154|   expect(RETENTION).toBe(24 * HOUR);
+    155| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > prunes presence idempotently when two processes race on one database
+AssertionError: expected [ { rowid: 304, …(16) }, …(281) ] to have a length of 42 but got 282
+
+- Expected
++ Received
+
+- 42
++ 282
+
+ ❯ tests/session-messaging/presence-retention.test.ts:271:18
+    269|   const store = open(database);
+    270|   const before = rows(store).filter((row) => !String((row as { session…
+    271|   expect(before).toHaveLength(42);
+       |                  ^
+    272|   store.prune(now + 30);
+    273|   expect(rows(store).filter((row) => !String((row as { session_id: str…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+exit=1
+--- audit ---
+
+exit=0

@@ -1,0 +1,10 @@
+ ✓ tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker 1141ms
+ ✓ tests/session-messaging/presence-retention.test.ts > B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve 241ms
+ ✓ tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end 6ms
+ ✓ tests/session-messaging/presence-retention.test.ts > never deletes a live row, however old its birth 31ms
+ ✓ tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row 56ms
+ ✓ tests/session-messaging/presence-retention.test.ts > gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing 32ms
+ ✓ tests/session-messaging/presence-retention.test.ts > prunes presence idempotently when two processes race on one database 972ms
+ ✓ tests/session-messaging/presence-retention.test.ts > bounds list-presence: batches fit the response limit and oversized or overlong requests are refused 22ms
+ ✓ tests/session-messaging/presence-retention.test.ts > still lists every identity for an untargeted request that fits 5ms
+   Duration  3.19s (tests 82%, transform 17%, import 2%)

@@ -1,0 +1,59 @@
+=== ags-v274 0135326a real wait 20s
+Already up to date
+Done in 535ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/audit/presence-retention-realwait.test.ts (9 tests | 1 failed | 8 skipped) 21319ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 21317ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/audit/presence-retention-realwait.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected { host: 'portable', …(16) } to match object { state: 'online', autoWake: { …(2) } }
+(20 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "autoWake": {
+-     "reason": "relay-live",
+-     "state": "available",
++     "reason": "presence-not-online",
++     "state": "no-live-relay",
+    },
+-   "state": "online",
++   "state": "unreachable",
+  }
+
+ ❯ tests/audit/presence-retention-realwait.test.ts:97:38
+     95|   for (let index = 0; index < 40; index += 1) expect(bySession.get(`re…
+     96|   for (const sessionId of ["live-0", "live-1"]) {
+     97|     expect(bySession.get(sessionId)).toMatchObject({ state: "online", …
+       |                                      ^
+     98|   }
+     99|   // Presence rows ended days ago were pruned; the identity reads as n…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)
+   Start at  00:03:24
+   Duration  22.05s (tests 97%, transform 2%)
+
+rc=1
+=== ags-v274d b31da778 real wait 20s
+Already up to date
+Done in 422ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274d
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 8 skipped (9)
+   Start at  00:03:47
+   Duration  22.22s (tests 98%, transform 1%)
+
+rc=0

@@ -1,0 +1,26 @@
+=== previous-broker v2.7.3
+Already up to date
+Done in 430ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-verify
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  00:10:49
+   Duration  2.33s (tests 92%, transform 6%, import 2%)
+
+rc=0
+=== previous-broker v2.7.2
+Already up to date
+Done in 445ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-verify
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  00:10:53
+   Duration  2.40s (tests 90%, transform 8%, import 1%)
+
+rc=0

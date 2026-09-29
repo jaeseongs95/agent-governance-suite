@@ -1,0 +1,52 @@
+Already up to date
+Done in 467ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274d
+
+ ❯ tests/session-board/session-board.test.ts (15 tests | 1 failed) 1281ms
+   ❯ session board MCP tools (3)
+     × overlays matching broker presence and leaves missing sessions unknown 144ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 27 passed (28)
+   Start at  00:09:53
+   Duration  2.88s (tests 81%, transform 12%, import 6%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-board/session-board.test.ts > session board MCP tools > overlays matching broker presence and leaves missing sessions unknown
+AssertionError: expected { host: 'claude-code', …(16) } to match object { state: 'unknown', …(2) }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "autoWake": null,
++   "autoWake": {
++     "authorityEffect": "none",
++     "basisAt": null,
++     "checkedAt": "2026-09-29T00:09:55.480Z",
++     "reason": "presence-unknown",
++     "state": "no-live-relay",
++   },
+    "instanceId": null,
+    "state": "unknown",
+  }
+
+ ❯ tests/session-board/session-board.test.ts:370:75
+    368|       autoWake: { state: "no-live-relay", reason: "presence-unknown", …
+    369|     });
+    370|     expect(sessions.find((row) => row.sessionId === "unasked")?.presen…
+       |                                                                           ^
+    371|   });
+    372| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1
+--- audit ---
+
+exit=0

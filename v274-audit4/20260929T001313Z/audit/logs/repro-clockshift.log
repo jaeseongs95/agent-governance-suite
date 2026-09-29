@@ -1,0 +1,108 @@
+=== ags-v274 0135326a shift=0
+Already up to date
+Done in 697ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  00:02:48
+   Duration  3.87s (tests 75%, transform 20%, import 4%)
+
+rc=0
+=== ags-v274 0135326a shift=25000
+Already up to date
+Done in 510ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/session-messaging/presence-retention.test.ts (9 tests | 2 failed) 3067ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 1599ms
+   × B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve 366ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected { host: 'portable', …(16) } to match object { state: 'online', autoWake: { …(2) } }
+(20 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "autoWake": {
+-     "reason": "relay-live",
+-     "state": "available",
++     "reason": "presence-not-online",
++     "state": "no-live-relay",
+    },
+-   "state": "online",
++   "state": "unreachable",
+  }
+
+ ❯ tests/session-messaging/presence-retention.test.ts:96:38
+     94|   for (let index = 0; index < 40; index += 1) expect(bySession.get(`re…
+     95|   for (const sessionId of ["live-0", "live-1"]) {
+     96|     expect(bySession.get(sessionId)).toMatchObject({ state: "online", …
+       |                                      ^
+     97|   }
+     98|   // Presence rows ended days ago were pruned; the identity reads as n…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve
+AssertionError: expected { host: 'portable', …(16) } to match object { state: 'online' }
+(23 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "state": "online",
++   "state": "unreachable",
+  }
+
+ ❯ tests/session-messaging/presence-retention.test.ts:123:93
+    121|   expect(result.ok).toBe(true);
+    122|   for (let index = 0; index < 6; index += 1) {
+    123|     expect(result.data!.sessions.find((session) => session.sessionId =…
+       |                                                                                             ^
+    124|   }
+    125|   expect(result.data!.unanswered).toEqual([{ host: "portable", session…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 11 passed (13)
+   Start at  00:02:53
+   Duration  3.66s (tests 88%, transform 10%, import 2%)
+
+rc=1
+=== ags-v274d b31da778 shift=0
+Already up to date
+Done in 528ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274d
+
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  00:02:59
+   Duration  3.87s (tests 88%, transform 9%, import 3%)
+
+rc=0
+=== ags-v274d b31da778 shift=25000
+Already up to date
+Done in 473ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274d
+
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  00:03:04
+   Duration  3.52s (tests 87%, transform 9%, import 4%)
+
+rc=0

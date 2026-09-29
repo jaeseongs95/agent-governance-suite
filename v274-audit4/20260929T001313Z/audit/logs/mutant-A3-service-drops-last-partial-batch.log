@@ -1,0 +1,71 @@
+Already up to date
+Done in 391ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274d
+
+ ❯ tests/session-messaging/presence-batches.test.ts (4 tests | 1 failed) 821ms
+   × keeps successful batches when the broker refuses one batch and reports only that batch as unanswered 12ms
+ ❯ tests/session-messaging/presence-retention.test.ts (9 tests | 1 failed) 2596ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 1253ms
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  2 failed | 26 passed (28)
+   Start at  00:09:27
+   Duration  3.09s (tests 82%, transform 11%, import 7%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > keeps successful batches when the broker refuses one batch and reports only that batch as unanswered
+AssertionError: expected [ 'a', 'b', 'c' ] to deeply equal [ 'a', 'b', 'c', 'g' ]
+
+- Expected
++ Received
+
+  [
+    "a",
+    "b",
+    "c",
+-   "g",
+  ]
+
+ ❯ tests/session-messaging/presence-batches.test.ts:35:69
+     33|   const result = await new SessionMessageService().listPresence(target…
+     34|   expect(result.ok).toBe(true);
+     35|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+       |                                                                     ^
+     36|   expect(result.data!.unanswered).toEqual([target("fail"), target("e")…
+     37|   expect(request).toHaveBeenCalledTimes(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected undefined to match object { Object (state, autoWake) }
+
+- Expected:
+{
+  "autoWake": {
+    "reason": "presence-unknown",
+    "state": "no-live-relay",
+  },
+  "state": "unknown",
+}
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/presence-retention.test.ts:110:34
+    108|   }
+    109|   // Presence rows ended days ago were pruned; the identity reads as n…
+    110|   expect(bySession.get("old-0")).toMatchObject({ state: "unknown", aut…
+       |                                  ^
+    111|   const database = new DatabaseSync(path.join(state, "session-messages…
+    112|   try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+exit=1
+--- audit ---
+
+exit=0

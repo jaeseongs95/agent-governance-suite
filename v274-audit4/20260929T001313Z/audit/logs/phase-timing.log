@@ -1,0 +1,30 @@
+=== ags-v274 0135326a run 1
+[phase] seeded 706ms
+[phase] broker-ready 936ms
+[phase] listed 1015ms
+      Tests  1 passed | 8 skipped (9)
+=== ags-v274 0135326a run 2
+[phase] seeded 731ms
+[phase] broker-ready 966ms
+[phase] listed 1048ms
+      Tests  1 passed | 8 skipped (9)
+=== ags-v274 0135326a run 3
+[phase] seeded 717ms
+[phase] broker-ready 944ms
+[phase] listed 1030ms
+      Tests  1 passed | 8 skipped (9)
+=== ags-v274d b31da778 run 1
+[phase] seeded 724ms
+[phase] broker-ready 955ms
+[phase] listed 1041ms
+      Tests  1 passed | 8 skipped (9)
+=== ags-v274d b31da778 run 2
+[phase] seeded 781ms
+[phase] broker-ready 1011ms
+[phase] listed 1091ms
+      Tests  1 passed | 8 skipped (9)
+=== ags-v274d b31da778 run 3
+[phase] seeded 802ms
+[phase] broker-ready 1030ms
+[phase] listed 1113ms
+      Tests  1 passed | 8 skipped (9)
