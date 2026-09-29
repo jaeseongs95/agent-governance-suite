@@ -1,0 +1,30 @@
+
+ RUN  v5.0.0 [REDACTED-HOME]/agent-governance-suite
+
+ ❯ tests/session-messaging/message-retention.test.ts (15 tests | 1 failed) 8403ms
+   × reports sender scope and the sender's own earliest expiry when sender and global limits are both full 1211ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > reports sender scope and the sender's own earliest expiry when sender and global limits are both full
+AssertionError: expected 'The bounded message receipt store is …' to be 'The bounded message receipt store is …' // Object.is equality
+
+Expected: "The bounded message receipt store is full for this sender; no draft was created."
+Received: "The bounded message receipt store is full; no draft was created."
+
+ ❯ tests/session-messaging/message-retention.test.ts:300:35
+    298|   expect(earliest(store)).toBe(iso(1000 + 2 * H));
+    299|   const prepareRejected = rejection(() => store.prepare({ sender: hot,…
+    300|   expect(prepareRejected.message).toBe("The bounded message receipt st…
+       |                                   ^
+    301|   expect(prepareRejected.details).toEqual(senderRelease);
+    302|   const sendRejected = rejection(() => store.submitPrepared(hot, pendi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 9 passed | 1 skipped (11)
+      Tests  1 failed | 293 passed | 2 skipped (296)
+   Start at  15:55:04
+   Duration  20.24s (tests 95%, transform 2%, import 2%)
+

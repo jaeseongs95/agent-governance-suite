@@ -1,0 +1,398 @@
+diff --cc claude-plugin/mcp-server/dist/server.mjs
+index 0cd02cf2,62f26b49..00000000
+--- a/claude-plugin/mcp-server/dist/server.mjs
++++ b/claude-plugin/mcp-server/dist/server.mjs
+@@@ -20773,7 -20771,7 +20789,11 @@@ function createMcpServer(service, updat
+        },
+        {
+          name: "send_session_message",
+++<<<<<<< HEAD
+ +        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence.",
+++=======
++         description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+++>>>>>>> 74395bf6
+          inputSchema: contractSchemas.sendSessionMessageRequest,
+          annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+        },
+diff --cc claude-plugin/mcp-server/dist/session-message-broker.mjs
+index 5ee67d5e,69ea05a6..00000000
+--- a/claude-plugin/mcp-server/dist/session-message-broker.mjs
++++ b/claude-plugin/mcp-server/dist/session-message-broker.mjs
+@@@ -624,33 -602,22 +633,44 @@@ var SessionMessageStore = class 
+      this.database.prepare("DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)").run(now, acknowledgedBefore);
+      this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
+      this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
+ -    this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted')
+ -      AND coalesce(consumed_at, observed_at, outcome_at) <= ?
+ +    this.retireUnobservedWakes(nowMs);
+ +    this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted', 'expired-unobserved')
+ +      AND coalesce(consumed_at, observed_at, retired_at, outcome_at) <= ?
+        AND (retry_not_before IS NULL OR retry_not_before <= ?)`).run(acknowledgedBefore, now);
+      this.database.prepare(`DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces
+ -      WHERE state IN ('observed', 'not-submitted') AND (retry_not_before IS NULL OR retry_not_before <= ?)
+ -      ORDER BY coalesce(consumed_at, observed_at, outcome_at) DESC LIMIT -1 OFFSET ?)`).run(now, MESSAGE_LIMIT);
+ +      WHERE state IN ('observed', 'not-submitted', 'expired-unobserved') AND (retry_not_before IS NULL OR retry_not_before <= ?)
+ +      ORDER BY coalesce(consumed_at, observed_at, retired_at, outcome_at) DESC LIMIT -1 OFFSET ?)`).run(now, MESSAGE_LIMIT);
+      this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
+    }
+++<<<<<<< HEAD
+ +  /**
+ +   * Retires an unobserved managed wake only after its injection expiry plus grace, and only with evidence that the
+ +   * host moved past it: a newer live presence birth, or session activity after the expiry. The row keeps its original
+ +   * binding, epoch and times; expired-unobserved is neither observation nor delivery. One UPDATE commits it atomically.
+ +   */
+ +  retireUnobservedWakes(nowMs) {
+ +    const now = iso(nowMs);
+ +    this.database.prepare(`UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ?
+ +      WHERE state IN ${ACTIVE_WAKE_STATES} AND expires_at <= ?
+ +        AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
+ +            AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)
+ +          OR coalesce((SELECT latest.ended_at IS NULL AND latest.lease_until > ? AND latest.started_at > wake_nonces.birth_generation
+ +            FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id
+ +            ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 0))`).run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), now);
+ +  }
+ +  recordActivity(target, nowMs) {
+ +    this.database.prepare(`INSERT INTO session_activity (host, session_id, active_at) VALUES (?, ?, ?)
+ +      ON CONFLICT (host, session_id) DO UPDATE SET active_at = max(active_at, excluded.active_at)`).run(target.host, target.sessionId, iso(nowMs));
+++=======
++   /** Sender quota first, then the global pool; call inside the caller's transaction after prune. */
++   assertReceiptCapacity(sender, suffix) {
++     const owned = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?").get(sender.host, sender.sessionId);
++     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
++       throw new MessageCapacityError(`The bounded message receipt store is full for this sender${suffix}`, { scope: "sender", earliestReleaseAt: owned.earliest });
++     }
++     const all = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL").get();
++     if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityError(`The bounded message receipt store is full${suffix}`, { scope: "global", earliestReleaseAt: all.earliest });
+++>>>>>>> 74395bf6
+    }
+    /** Preparation is durable but has no queue, peer-relation or wake effect. */
+    prepare(input, nowMs = Date.now()) {
+@@@ -686,25 -654,21 +707,30 @@@
+        this.prune(nowMs);
+        const row = this.database.prepare("SELECT * FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?").get(messageId, sender.host, sender.sessionId, iso(nowMs));
+        if (!row) throw new Error("Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent.");
+ +      const target = { host: String(row.target_host), sessionId: String(row.target_session_id) };
+        if (row.receipt !== null) {
+          const receipt2 = JSON.parse(String(row.receipt));
+ +        const autoWake2 = this.autoWakeOutlook(target, nowMs);
+          this.database.exec("COMMIT");
+ -        return { ...receipt2, duplicate: true };
+ +        return { ...receipt2, duplicate: true, autoWake: autoWake2 };
+        }
+++<<<<<<< HEAD
+ +      const receipts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NOT NULL").get();
+ +      if (receipts.count >= MESSAGE_RECEIPT_LIMIT) throw new Error("The bounded message receipt store is full.");
+ +      const receipt = this.send({ messageId, sender, target, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+++=======
++       this.assertReceiptCapacity(sender, ".");
++       const receipt = this.send({ messageId, sender, target: { host: String(row.target_host), sessionId: String(row.target_session_id) }, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+++>>>>>>> 74395bf6
+        const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
+        const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);
+        const recordBytes = Buffer.byteLength(JSON.stringify({ messageId, sender, target: { host: row.target_host, sessionId: row.target_session_id }, preparedAt: row.prepared_at, ttlSeconds: row.ttl_seconds, receipt: receiptJson, expiresAt }), "utf8");
+-       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages WHERE message_id <> ?").get(messageId);
+-       if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message receipt store is full.");
++       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes, min(expires_at) AS earliest FROM prepared_messages WHERE message_id <> ?").get(messageId);
++       if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new MessageCapacityError("The bounded message receipt store is full.", { scope: "global", earliestReleaseAt: bytes.earliest });
+        this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?").run(receiptJson, expiresAt, recordBytes, messageId);
+ +      const autoWake = this.autoWakeOutlook(target, nowMs);
+        this.database.exec("COMMIT");
+ -      return receipt;
+ +      return { ...receipt, autoWake };
+      } catch (error) {
+        this.database.exec("ROLLBACK");
+        throw error;
+@@@ -905,8 -851,11 +932,16 @@@
+      let count = 0;
+      this.database.exec("BEGIN IMMEDIATE");
+      try {
+++<<<<<<< HEAD
+ +      for (const messageId of new Set(messageIds)) count += Number(statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes);
+ +      this.recordActivity(target, nowMs);
+++=======
++       for (const messageId of new Set(messageIds)) {
++         if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
++         receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
++         count++;
++       }
+++>>>>>>> 74395bf6
+        this.database.exec("COMMIT");
+        return count;
+      } catch (error) {
+diff --cc mcp-server/dist/server.mjs
+index 0cd02cf2,62f26b49..00000000
+--- a/mcp-server/dist/server.mjs
++++ b/mcp-server/dist/server.mjs
+@@@ -20773,7 -20771,7 +20789,11 @@@ function createMcpServer(service, updat
+        },
+        {
+          name: "send_session_message",
+++<<<<<<< HEAD
+ +        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence.",
+++=======
++         description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+++>>>>>>> 74395bf6
+          inputSchema: contractSchemas.sendSessionMessageRequest,
+          annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+        },
+diff --cc mcp-server/dist/session-message-broker.mjs
+index 5ee67d5e,69ea05a6..00000000
+--- a/mcp-server/dist/session-message-broker.mjs
++++ b/mcp-server/dist/session-message-broker.mjs
+@@@ -624,33 -602,22 +633,44 @@@ var SessionMessageStore = class 
+      this.database.prepare("DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)").run(now, acknowledgedBefore);
+      this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
+      this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
+ -    this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted')
+ -      AND coalesce(consumed_at, observed_at, outcome_at) <= ?
+ +    this.retireUnobservedWakes(nowMs);
+ +    this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted', 'expired-unobserved')
+ +      AND coalesce(consumed_at, observed_at, retired_at, outcome_at) <= ?
+        AND (retry_not_before IS NULL OR retry_not_before <= ?)`).run(acknowledgedBefore, now);
+      this.database.prepare(`DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces
+ -      WHERE state IN ('observed', 'not-submitted') AND (retry_not_before IS NULL OR retry_not_before <= ?)
+ -      ORDER BY coalesce(consumed_at, observed_at, outcome_at) DESC LIMIT -1 OFFSET ?)`).run(now, MESSAGE_LIMIT);
+ +      WHERE state IN ('observed', 'not-submitted', 'expired-unobserved') AND (retry_not_before IS NULL OR retry_not_before <= ?)
+ +      ORDER BY coalesce(consumed_at, observed_at, retired_at, outcome_at) DESC LIMIT -1 OFFSET ?)`).run(now, MESSAGE_LIMIT);
+      this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
+    }
+++<<<<<<< HEAD
+ +  /**
+ +   * Retires an unobserved managed wake only after its injection expiry plus grace, and only with evidence that the
+ +   * host moved past it: a newer live presence birth, or session activity after the expiry. The row keeps its original
+ +   * binding, epoch and times; expired-unobserved is neither observation nor delivery. One UPDATE commits it atomically.
+ +   */
+ +  retireUnobservedWakes(nowMs) {
+ +    const now = iso(nowMs);
+ +    this.database.prepare(`UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ?
+ +      WHERE state IN ${ACTIVE_WAKE_STATES} AND expires_at <= ?
+ +        AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
+ +            AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)
+ +          OR coalesce((SELECT latest.ended_at IS NULL AND latest.lease_until > ? AND latest.started_at > wake_nonces.birth_generation
+ +            FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id
+ +            ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 0))`).run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), now);
+ +  }
+ +  recordActivity(target, nowMs) {
+ +    this.database.prepare(`INSERT INTO session_activity (host, session_id, active_at) VALUES (?, ?, ?)
+ +      ON CONFLICT (host, session_id) DO UPDATE SET active_at = max(active_at, excluded.active_at)`).run(target.host, target.sessionId, iso(nowMs));
+++=======
++   /** Sender quota first, then the global pool; call inside the caller's transaction after prune. */
++   assertReceiptCapacity(sender, suffix) {
++     const owned = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?").get(sender.host, sender.sessionId);
++     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
++       throw new MessageCapacityError(`The bounded message receipt store is full for this sender${suffix}`, { scope: "sender", earliestReleaseAt: owned.earliest });
++     }
++     const all = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL").get();
++     if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityError(`The bounded message receipt store is full${suffix}`, { scope: "global", earliestReleaseAt: all.earliest });
+++>>>>>>> 74395bf6
+    }
+    /** Preparation is durable but has no queue, peer-relation or wake effect. */
+    prepare(input, nowMs = Date.now()) {
+@@@ -686,25 -654,21 +707,30 @@@
+        this.prune(nowMs);
+        const row = this.database.prepare("SELECT * FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?").get(messageId, sender.host, sender.sessionId, iso(nowMs));
+        if (!row) throw new Error("Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent.");
+ +      const target = { host: String(row.target_host), sessionId: String(row.target_session_id) };
+        if (row.receipt !== null) {
+          const receipt2 = JSON.parse(String(row.receipt));
+ +        const autoWake2 = this.autoWakeOutlook(target, nowMs);
+          this.database.exec("COMMIT");
+ -        return { ...receipt2, duplicate: true };
+ +        return { ...receipt2, duplicate: true, autoWake: autoWake2 };
+        }
+++<<<<<<< HEAD
+ +      const receipts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NOT NULL").get();
+ +      if (receipts.count >= MESSAGE_RECEIPT_LIMIT) throw new Error("The bounded message receipt store is full.");
+ +      const receipt = this.send({ messageId, sender, target, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+++=======
++       this.assertReceiptCapacity(sender, ".");
++       const receipt = this.send({ messageId, sender, target: { host: String(row.target_host), sessionId: String(row.target_session_id) }, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+++>>>>>>> 74395bf6
+        const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
+        const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);
+        const recordBytes = Buffer.byteLength(JSON.stringify({ messageId, sender, target: { host: row.target_host, sessionId: row.target_session_id }, preparedAt: row.prepared_at, ttlSeconds: row.ttl_seconds, receipt: receiptJson, expiresAt }), "utf8");
+-       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages WHERE message_id <> ?").get(messageId);
+-       if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message receipt store is full.");
++       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes, min(expires_at) AS earliest FROM prepared_messages WHERE message_id <> ?").get(messageId);
++       if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new MessageCapacityError("The bounded message receipt store is full.", { scope: "global", earliestReleaseAt: bytes.earliest });
+        this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?").run(receiptJson, expiresAt, recordBytes, messageId);
+ +      const autoWake = this.autoWakeOutlook(target, nowMs);
+        this.database.exec("COMMIT");
+ -      return receipt;
+ +      return { ...receipt, autoWake };
+      } catch (error) {
+        this.database.exec("ROLLBACK");
+        throw error;
+@@@ -905,8 -851,11 +932,16 @@@
+      let count = 0;
+      this.database.exec("BEGIN IMMEDIATE");
+      try {
+++<<<<<<< HEAD
+ +      for (const messageId of new Set(messageIds)) count += Number(statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes);
+ +      this.recordActivity(target, nowMs);
+++=======
++       for (const messageId of new Set(messageIds)) {
++         if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
++         receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
++         count++;
++       }
+++>>>>>>> 74395bf6
+        this.database.exec("COMMIT");
+        return count;
+      } catch (error) {
+diff --cc mcp-server/src/server.ts
+index 10cfb654,c274945e..00000000
+--- a/mcp-server/src/server.ts
++++ b/mcp-server/src/server.ts
+@@@ -533,7 -533,7 +533,11 @@@ export function createMcpServer
+        },
+        {
+          name: "send_session_message",
+++<<<<<<< HEAD
+ +        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence.",
+++=======
++         description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+++>>>>>>> 74395bf6
+          inputSchema: contractSchemas.sendSessionMessageRequest,
+          annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+        },
+diff --cc mcp-server/src/session-message-service.ts
+index 66a8e77a,c023f562..00000000
+--- a/mcp-server/src/session-message-service.ts
++++ b/mcp-server/src/session-message-service.ts
+@@@ -1,6 -1,6 +1,11 @@@
+  import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
+++<<<<<<< HEAD
+ +import { sessionMessageRequest } from "./session-message-client.js";
+ +import type { SessionPresenceView } from "./session-message-store.js";
+++=======
++ import { BrokerRequestRejected, sessionMessageRequest } from "./session-message-client.js";
++ import type { SessionPresence } from "./session-message-store.js";
+++>>>>>>> 74395bf6
+  import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
+  
+  export interface SessionPresenceList {
+diff --cc mcp-server/src/session-message-store.ts
+index ce298eb7,efffd7dc..00000000
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@@ -125,8 -117,24 +127,24 @@@ export interface WakeReservation 
+    dispatch: boolean;
+    attempt: WakeAttempt | null;
+  }
+ -export type ManagedWakeState = "reserved" | "started" | "submitted" | "unknown" | "observed" | "not-submitted";
+ +export type ManagedWakeState = "reserved" | "started" | "submitted" | "unknown" | "observed" | "not-submitted" | "expired-unobserved";
+  
++ export interface MessageCapacityDetails {
++   scope: "sender" | "global";
++   earliestReleaseAt: string | null;
++ }
++ 
++ /** A capacity rejection rolls back its transaction: nothing was queued or drafted. */
++ export class MessageCapacityError extends Error {
++   readonly details: MessageCapacityDetails;
++ 
++   constructor(message: string, details: MessageCapacityDetails) {
++     super(message);
++     this.name = "MessageCapacityError";
++     this.details = details;
++   }
++ }
++ 
+  export interface ClaimLimits {
+    maxMessages?: number;
+    maxBodyChars?: number;
+@@@ -306,27 -284,16 +324,40 @@@ export class SessionMessageStore 
+      this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
+    }
+  
+++<<<<<<< HEAD
+ +  /**
+ +   * Retires an unobserved managed wake only after its injection expiry plus grace, and only with evidence that the
+ +   * host moved past it: a newer live presence birth, or session activity after the expiry. The row keeps its original
+ +   * binding, epoch and times; expired-unobserved is neither observation nor delivery. One UPDATE commits it atomically.
+ +   */
+ +  private retireUnobservedWakes(nowMs: number): void {
+ +    const now = iso(nowMs);
+ +    this.database.prepare(`UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ?
+ +      WHERE state IN ${ACTIVE_WAKE_STATES} AND expires_at <= ?
+ +        AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
+ +            AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)
+ +          OR coalesce((SELECT latest.ended_at IS NULL AND latest.lease_until > ? AND latest.started_at > wake_nonces.birth_generation
+ +            FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id
+ +            ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 0))`)
+ +      .run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), now);
+ +  }
+ +
+ +  private recordActivity(target: SessionIdentity, nowMs: number): void {
+ +    this.database.prepare(`INSERT INTO session_activity (host, session_id, active_at) VALUES (?, ?, ?)
+ +      ON CONFLICT (host, session_id) DO UPDATE SET active_at = max(active_at, excluded.active_at)`)
+ +      .run(target.host, target.sessionId, iso(nowMs));
+++=======
++   /** Sender quota first, then the global pool; call inside the caller's transaction after prune. */
++   private assertReceiptCapacity(sender: SessionIdentity, suffix: string): void {
++     const owned = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?")
++       .get(sender.host, sender.sessionId) as { count: number; earliest: string | null };
++     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
++       throw new MessageCapacityError(`The bounded message receipt store is full for this sender${suffix}`, { scope: "sender", earliestReleaseAt: owned.earliest });
++     }
++     const all = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL")
++       .get() as { count: number; earliest: string | null };
++     if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityError(`The bounded message receipt store is full${suffix}`, { scope: "global", earliestReleaseAt: all.earliest });
+++>>>>>>> 74395bf6
+    }
+  
+    /** Preparation is durable but has no queue, peer-relation or wake effect. */
+@@@ -368,26 -335,22 +401,31 @@@
+        const row = this.database.prepare("SELECT * FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?")
+          .get(messageId, sender.host, sender.sessionId, iso(nowMs)) as Record<string, unknown> | undefined;
+        if (!row) throw new Error("Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent.");
+ +      const target = { host: String(row.target_host), sessionId: String(row.target_session_id) };
+        if (row.receipt !== null) {
+          const receipt = JSON.parse(String(row.receipt)) as { messageId: string; createdAt: string; expiresAt: string };
+ +        const autoWake = this.autoWakeOutlook(target, nowMs);
+          this.database.exec("COMMIT");
+ -        return { ...receipt, duplicate: true };
+ +        return { ...receipt, duplicate: true, autoWake };
+        }
+++<<<<<<< HEAD
+ +      const receipts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NOT NULL").get() as { count: number };
+ +      if (receipts.count >= MESSAGE_RECEIPT_LIMIT) throw new Error("The bounded message receipt store is full.");
+ +      const receipt = this.send({ messageId, sender, target, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+++=======
++       this.assertReceiptCapacity(sender, ".");
++       const receipt = this.send({ messageId, sender, target: { host: String(row.target_host), sessionId: String(row.target_session_id) }, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+++>>>>>>> 74395bf6
+        const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
+        const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);
+        const recordBytes = Buffer.byteLength(JSON.stringify({ messageId, sender, target: { host: row.target_host, sessionId: row.target_session_id }, preparedAt: row.prepared_at, ttlSeconds: row.ttl_seconds, receipt: receiptJson, expiresAt }), "utf8");
+-       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages WHERE message_id <> ?").get(messageId) as { bytes: number };
+-       if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message receipt store is full.");
++       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes, min(expires_at) AS earliest FROM prepared_messages WHERE message_id <> ?").get(messageId) as { bytes: number; earliest: string | null };
++       if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new MessageCapacityError("The bounded message receipt store is full.", { scope: "global", earliestReleaseAt: bytes.earliest });
+        this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?")
+          .run(receiptJson, expiresAt, recordBytes, messageId);
+ +      const autoWake = this.autoWakeOutlook(target, nowMs);
+        this.database.exec("COMMIT");
+ -      return receipt;
+ +      return { ...receipt, autoWake };
+      } catch (error) {
+        this.database.exec("ROLLBACK");
+        throw error;
+@@@ -601,8 -553,11 +641,16 @@@
+      let count = 0;
+      this.database.exec("BEGIN IMMEDIATE");
+      try {
+++<<<<<<< HEAD
+ +      for (const messageId of new Set(messageIds)) count += Number(statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes);
+ +      this.recordActivity(target, nowMs);
+++=======
++       for (const messageId of new Set(messageIds)) {
++         if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
++         receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
++         count++;
++       }
+++>>>>>>> 74395bf6
+        this.database.exec("COMMIT");
+        return count;
+      } catch (error) {

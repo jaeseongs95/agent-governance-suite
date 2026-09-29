@@ -1,0 +1,1229 @@
+diff --git a/claude-plugin/mcp-server/dist/server.mjs b/claude-plugin/mcp-server/dist/server.mjs
+index 0cd02cf2..2a47e042 100644
+--- a/claude-plugin/mcp-server/dist/server.mjs
++++ b/claude-plugin/mcp-server/dist/server.mjs
+@@ -20012,6 +20012,12 @@ var SESSION_MESSAGE_BODY_MAX_BYTES = 4096;
+ 
+ // mcp-server/src/session-message-client.ts
+ var BrokerRequestRejected = class extends Error {
++  details;
++  constructor(message, details = null) {
++    super(message);
++    const record3 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
++    this.details = record3 && (record3.scope === "sender" || record3.scope === "global") && (record3.earliestReleaseAt === null || typeof record3.earliestReleaseAt === "string") ? { scope: record3.scope, earliestReleaseAt: record3.earliestReleaseAt } : null;
++  }
+ };
+ var BROKER_STARTUP_TIMEOUT_MS = 15e3;
+ var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
+@@ -20141,7 +20147,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
+         if (newline < 0) return;
+         try {
+           const response = JSON.parse(buffer.slice(0, newline));
+-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
++          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
+           else finish(void 0, response.data);
+         } catch {
+           finish(new Error("The broker returned invalid JSON."));
+@@ -20273,8 +20279,14 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
+ function ok2(data) {
+   return { schemaVersion: "1.0.0", ok: true, data, error: null };
+ }
+-function failure2(code, message) {
+-  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
++function failure2(code, message, details = null) {
++  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
++}
++function capacityDetails(error2) {
++  return error2 instanceof BrokerRequestRejected ? error2.details : null;
++}
++function capacityRelease(details) {
++  return details.earliestReleaseAt === null ? "A new prepare_session_message may succeed after retained records expire." : `The earliest retained record in this scope expires at ${details.earliestReleaseAt}; after that a new prepare_session_message may succeed.`;
+ }
+ function binding(value) {
+   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+@@ -20302,6 +20314,8 @@ var SessionMessageService = class {
+       }, this.stateDirectory);
+       return ok2(data);
+     } catch (error2) {
++      const details = capacityDetails(error2);
++      if (details) return failure2("MCP_UNAVAILABLE", `${error2.message} ${capacityRelease(details)}`, { ...details });
+       return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "The session message broker is unavailable.");
+     }
+   }
+@@ -20312,6 +20326,8 @@ var SessionMessageService = class {
+     try {
+       return ok2(await sessionMessageRequest("send", { sender, messageId: args.messageId }, this.stateDirectory));
+     } catch (error2) {
++      const details = capacityDetails(error2);
++      if (details) return failure2("MCP_UNAVAILABLE", `${error2.message} This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until its draft expires; after capacity is released, either retry that same messageId or prepare again, not both. ${capacityRelease(details)}`, { ...details });
+       return failure2("MCP_UNAVAILABLE", `${error2 instanceof Error ? error2.message : "The session message broker is unavailable."} Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.`);
+     }
+   }
+@@ -20767,13 +20783,13 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
+       },
+       {
+         name: "prepare_session_message",
+-        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft.",
++        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft. When this sender (250) or all senders (1000) already hold the maximum retained receipts, no draft is created and error.details gives scope and earliestReleaseAt.",
+         inputSchema: prepareSessionMessageInputSchema,
+         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+       },
+       {
+         name: "send_session_message",
+-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence.",
++        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+         inputSchema: contractSchemas.sendSessionMessageRequest,
+         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+       },
+diff --git a/claude-plugin/mcp-server/dist/session-board-hook.mjs b/claude-plugin/mcp-server/dist/session-board-hook.mjs
+index 6e29f9cb..ef0b54f9 100644
+--- a/claude-plugin/mcp-server/dist/session-board-hook.mjs
++++ b/claude-plugin/mcp-server/dist/session-board-hook.mjs
+@@ -124,6 +124,12 @@ var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
+ // mcp-server/src/session-message-client.ts
+ var WAKE_PREFIX = "[agent-governance-suite:wake:";
+ var BrokerRequestRejected = class extends Error {
++  details;
++  constructor(message, details = null) {
++    super(message);
++    const record2 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
++    this.details = record2 && (record2.scope === "sender" || record2.scope === "global") && (record2.earliestReleaseAt === null || typeof record2.earliestReleaseAt === "string") ? { scope: record2.scope, earliestReleaseAt: record2.earliestReleaseAt } : null;
++  }
+ };
+ var BROKER_STARTUP_TIMEOUT_MS = 15e3;
+ var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
+@@ -253,7 +259,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
+         if (newline < 0) return;
+         try {
+           const response = JSON.parse(buffer.slice(0, newline));
+-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
++          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
+           else finish(void 0, response.data);
+         } catch {
+           finish(new Error("The broker returned invalid JSON."));
+diff --git a/claude-plugin/mcp-server/dist/session-message-broker.mjs b/claude-plugin/mcp-server/dist/session-message-broker.mjs
+index 5ee67d5e..eb5d256f 100644
+--- a/claude-plugin/mcp-server/dist/session-message-broker.mjs
++++ b/claude-plugin/mcp-server/dist/session-message-broker.mjs
+@@ -418,6 +418,7 @@ var MESSAGE_DRAFT_TTL_MS = 10 * 6e4;
+ var MESSAGE_DRAFT_LIMIT = 1e3;
+ var MESSAGE_SENDER_DRAFT_LIMIT = 100;
+ var MESSAGE_RECEIPT_LIMIT = 1e3;
++var MESSAGE_SENDER_RECEIPT_LIMIT = 250;
+ var MESSAGE_ID_RECORD_BYTES_LIMIT = 4 * 1024 * 1024;
+ var MESSAGE_RECEIPT_EXTRA_MS = 36e5;
+ var CLAIM_LEASE_BASE_MS = 12e4;
+@@ -459,6 +460,14 @@ function claimedMessage(row, deliveryAttempt = Number(row.delivery_attempts), fi
+ function claimResponseBytes(messages) {
+   return Buffer.byteLength(JSON.stringify({ ok: true, data: { messages } }), "utf8") + 1;
+ }
++var MessageCapacityError = class extends Error {
++  details;
++  constructor(message, details) {
++    super(message);
++    this.name = "MessageCapacityError";
++    this.details = details;
++  }
++};
+ var SessionMessageStore = class {
+   database;
+   constructor(databasePath) {
+@@ -652,6 +661,15 @@ var SessionMessageStore = class {
+     this.database.prepare(`INSERT INTO session_activity (host, session_id, active_at) VALUES (?, ?, ?)
+       ON CONFLICT (host, session_id) DO UPDATE SET active_at = max(active_at, excluded.active_at)`).run(target.host, target.sessionId, iso(nowMs));
+   }
++  /** Sender quota first, then the global pool; call inside the caller's transaction after prune. */
++  assertReceiptCapacity(sender, suffix) {
++    const owned = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?").get(sender.host, sender.sessionId);
++    if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
++      throw new MessageCapacityError(`The bounded message receipt store is full for this sender${suffix}`, { scope: "sender", earliestReleaseAt: owned.earliest });
++    }
++    const all = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL").get();
++    if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityError(`The bounded message receipt store is full${suffix}`, { scope: "global", earliestReleaseAt: all.earliest });
++  }
+   /** Preparation is durable but has no queue, peer-relation or wake effect. */
+   prepare(input, nowMs = Date.now()) {
+     boundedIdentity(input.sender);
+@@ -665,6 +683,7 @@ var SessionMessageStore = class {
+     this.database.exec("BEGIN IMMEDIATE");
+     try {
+       this.prune(nowMs);
++      this.assertReceiptCapacity(input.sender, "; no draft was created.");
+       const drafts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL").get();
+       const owned = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL AND sender_host = ? AND sender_session_id = ?").get(input.sender.host, input.sender.sessionId);
+       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages").get();
+@@ -693,14 +712,13 @@ var SessionMessageStore = class {
+         this.database.exec("COMMIT");
+         return { ...receipt2, duplicate: true, autoWake: autoWake2 };
+       }
+-      const receipts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NOT NULL").get();
+-      if (receipts.count >= MESSAGE_RECEIPT_LIMIT) throw new Error("The bounded message receipt store is full.");
++      this.assertReceiptCapacity(sender, ".");
+       const receipt = this.send({ messageId, sender, target, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+       const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
+       const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);
+       const recordBytes = Buffer.byteLength(JSON.stringify({ messageId, sender, target: { host: row.target_host, sessionId: row.target_session_id }, preparedAt: row.prepared_at, ttlSeconds: row.ttl_seconds, receipt: receiptJson, expiresAt }), "utf8");
+-      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages WHERE message_id <> ?").get(messageId);
+-      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message receipt store is full.");
++      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes, min(expires_at) AS earliest FROM prepared_messages WHERE message_id <> ?").get(messageId);
++      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new MessageCapacityError("The bounded message receipt store is full.", { scope: "global", earliestReleaseAt: bytes.earliest });
+       this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?").run(receiptJson, expiresAt, recordBytes, messageId);
+       const autoWake = this.autoWakeOutlook(target, nowMs);
+       this.database.exec("COMMIT");
+@@ -902,10 +920,15 @@ var SessionMessageStore = class {
+     }
+     const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL
+       WHERE message_id = ? AND target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL`);
++    const receipt = this.database.prepare("UPDATE prepared_messages SET expires_at = min(expires_at, ?) WHERE message_id = ? AND receipt IS NOT NULL");
+     let count = 0;
+     this.database.exec("BEGIN IMMEDIATE");
+     try {
+-      for (const messageId of new Set(messageIds)) count += Number(statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes);
++      for (const messageId of new Set(messageIds)) {
++        if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
++        receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
++        count++;
++      }
+       this.recordActivity(target, nowMs);
+       this.database.exec("COMMIT");
+       return count;
+@@ -2127,7 +2150,11 @@ async function startSessionMessageBroker(stateDirectory) {
+           socket.end(`${JSON.stringify({ ok: true, data })}
+ `);
+         } catch (error) {
+-          socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed." })}
++          socket.end(`${JSON.stringify({
++            ok: false,
++            error: error instanceof Error ? error.message : "Broker request failed.",
++            ...error instanceof MessageCapacityError ? { details: error.details } : {}
++          })}
+ `);
+         }
+       });
+diff --git a/claude-plugin/mcp-server/dist/session-message-cli.mjs b/claude-plugin/mcp-server/dist/session-message-cli.mjs
+index 7bba3114..2f804594 100644
+--- a/claude-plugin/mcp-server/dist/session-message-cli.mjs
++++ b/claude-plugin/mcp-server/dist/session-message-cli.mjs
+@@ -42,6 +42,12 @@ var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
+ 
+ // mcp-server/src/session-message-client.ts
+ var BrokerRequestRejected = class extends Error {
++  details;
++  constructor(message, details = null) {
++    super(message);
++    const record = details && typeof details === "object" && !Array.isArray(details) ? details : null;
++    this.details = record && (record.scope === "sender" || record.scope === "global") && (record.earliestReleaseAt === null || typeof record.earliestReleaseAt === "string") ? { scope: record.scope, earliestReleaseAt: record.earliestReleaseAt } : null;
++  }
+ };
+ var BROKER_STARTUP_TIMEOUT_MS = 15e3;
+ var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
+@@ -171,7 +177,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
+         if (newline < 0) return;
+         try {
+           const response = JSON.parse(buffer.slice(0, newline));
+-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
++          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
+           else finish(void 0, response.data);
+         } catch {
+           finish(new Error("The broker returned invalid JSON."));
+diff --git a/claude-plugin/mcp-server/dist/session-message-hook.mjs b/claude-plugin/mcp-server/dist/session-message-hook.mjs
+index c1d8aa08..ecbb8ef6 100644
+--- a/claude-plugin/mcp-server/dist/session-message-hook.mjs
++++ b/claude-plugin/mcp-server/dist/session-message-hook.mjs
+@@ -460,6 +460,12 @@ var SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES = 8192;
+ // mcp-server/src/session-message-client.ts
+ var WAKE_PREFIX = "[agent-governance-suite:wake:";
+ var BrokerRequestRejected = class extends Error {
++  details;
++  constructor(message, details = null) {
++    super(message);
++    const record2 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
++    this.details = record2 && (record2.scope === "sender" || record2.scope === "global") && (record2.earliestReleaseAt === null || typeof record2.earliestReleaseAt === "string") ? { scope: record2.scope, earliestReleaseAt: record2.earliestReleaseAt } : null;
++  }
+ };
+ var BROKER_STARTUP_TIMEOUT_MS = 15e3;
+ var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
+@@ -589,7 +595,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
+         if (newline < 0) return;
+         try {
+           const response = JSON.parse(buffer.slice(0, newline));
+-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
++          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
+           else finish(void 0, response.data);
+         } catch {
+           finish(new Error("The broker returned invalid JSON."));
+diff --git a/claude-plugin/mcp-server/dist/session-message-relay.mjs b/claude-plugin/mcp-server/dist/session-message-relay.mjs
+index 54f44751..4a7d39d4 100644
+--- a/claude-plugin/mcp-server/dist/session-message-relay.mjs
++++ b/claude-plugin/mcp-server/dist/session-message-relay.mjs
+@@ -41,6 +41,12 @@ var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
+ // mcp-server/src/session-message-client.ts
+ var WAKE_PREFIX = "[agent-governance-suite:wake:";
+ var BrokerRequestRejected = class extends Error {
++  details;
++  constructor(message, details = null) {
++    super(message);
++    const record = details && typeof details === "object" && !Array.isArray(details) ? details : null;
++    this.details = record && (record.scope === "sender" || record.scope === "global") && (record.earliestReleaseAt === null || typeof record.earliestReleaseAt === "string") ? { scope: record.scope, earliestReleaseAt: record.earliestReleaseAt } : null;
++  }
+ };
+ var BROKER_STARTUP_TIMEOUT_MS = 15e3;
+ var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
+@@ -170,7 +176,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
+         if (newline < 0) return;
+         try {
+           const response = JSON.parse(buffer.slice(0, newline));
+-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
++          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
+           else finish(void 0, response.data);
+         } catch {
+           finish(new Error("The broker returned invalid JSON."));
+diff --git a/docs/session-message-lifecycle.md b/docs/session-message-lifecycle.md
+index 62a97f03..314c8397 100644
+--- a/docs/session-message-lifecycle.md
++++ b/docs/session-message-lifecycle.md
+@@ -23,12 +23,18 @@ prepare 응답이 유실되어 다시 준비하면 사용하지 않는 draft가
+ | 저장 대상 | 경계 |
+ | --- | --- |
+ | 미전송 draft | prepare부터 10분; sender별 100개, 전역 1000개 |
+-| 제출 영수증 | 최대 1000개; 최초 메시지 expiry 이후 1시간까지 보존 |
++| 제출 영수증 | 전역 1000개, sender별 250개; 미ACK 메시지는 최초 메시지 expiry 이후 1시간, ACK된 메시지는 `min(메시지 expiry+1시간, 최초 ACK+1시간)`까지 보존 |
+ | draft·영수증 전체 | record JSON의 UTF-8 byte 합 최대 4 MiB; 전송 뒤 본문 중복 저장 제거 |
+ | 실제 수신 큐 | 기존 미ACK 메시지 최대 1000개·본문 합 4 MiB |
+ | 메시지 TTL | 첫 send부터 30~86400초, 기본 3600초 |
+ 
+-상한에서는 명시적으로 거절하며 미만료 기록을 강제로 지우지 않는다. 영수증이 정리된 ID도 unknown으로 거절해 새 메시지가 생기지 않는다. 영구 tombstone이나 별도 DB·daemon은 없다. status는 준비 상태, 기존 queued/delivered/acknowledged 상태 또는 큐 행이 정리된 뒤 제출 영수증과 `deliveryState: "unknown"`을 구별한다.
++상한에서는 명시적으로 거절하며 미만료 기록을 강제로 지우지 않는다. 영수증이 정리된 ID도 unknown으로 거절해 새 메시지가 생기지 않는다.
++
++sender별 영수증 상한은 협력하는 세션 사이의 공정성 장치다. sender는 host hook이 결속한 세션 식별자일 뿐 인증된 principal이 아니므로, 같은 OS 사용자의 의도적 우회를 막는 할당량으로 보지 않는다. send는 같은 transaction에서 정리 뒤 sender 상한, 전역 상한 순으로 검사하는 권위 검사다. prepare도 같은 방식으로 영수증 용량을 먼저 확인해 이미 상한에 닿았으면 draft를 만들지 않고 `no draft was created`로 거절한다. 이 prepare 검사는 입장 확인일 뿐이며, prepare와 send 사이에 용량이 차면 send가 거절하고 해당 draft는 준비 만료까지 남는다.
++
++영수증 용량 거절은 효과가 없었음이 확정된 거절이다. 메시지는 큐에 들어가지 않았고 영수증도 발급되지 않았다. 도구 응답의 `error.code`는 기존 `MCP_UNAVAILABLE`이고, `error.details`에 `scope`(`sender` 또는 `global`)와 해당 범위에서 가장 먼저 만료되는 기록의 시각 `earliestReleaseAt`을 담는다. 그 시각 뒤에는 새 prepare가 성공할 수 있지만 다른 sender가 먼저 용량을 쓸 수 있으므로 보장은 아니다. send에서 거절된 `messageId`는 준비 만료까지 `prepared`로 남는다. 용량이 풀린 뒤에는 같은 ID 재시도와 새 prepare 가운데 하나만 한다. 둘 다 하면 한 의도가 두 메시지로 전달될 수 있다. 응답을 받지 못한 불확실한 send는 이 경우가 아니며, 기존처럼 같은 ID로 status를 조회하거나 send를 재시도한다. 이전 broker에서 온 거절에는 `details`가 없으므로 기존 안내를 그대로 따른다.
++
++ACK는 처음 성공한 ACK에서만 영수증 만료를 줄인다. 두 번째 ACK, 대상이 아닌 세션의 ACK, 모르는 ID의 ACK는 만료를 바꾸지 않으며, 줄인 만료는 다시 늘지 않는다. 따라서 ACK 후 1시간이 지난 ID는 status가 unknown(`null`)이고 같은 ID의 send도 발급 ID 없음으로 거절한다. 이 규칙은 새로 기록되는 ACK에만 적용하며, 이전 버전이 ACK한 기존 영수증의 만료를 소급해 바꾸지 않는다. 영구 tombstone이나 별도 DB·daemon은 없다. status는 준비 상태, 기존 queued/delivered/acknowledged 상태 또는 큐 행이 정리된 뒤 제출 영수증과 `deliveryState: "unknown"`을 구별한다.
+ 
+ ACK 전 lease 재전달은 정상이며 같은 ID·본문을 유지한다. 중복 ACK는 최초 ACK 시각을 늘리지 않는다. ACK는 처리 확인으로, 업무 완료나 승인이 아니다. wake의 전달 결과가 불명확하면 기존 예약을 유지하고 새 wake 효과로 바꾸지 않는다. [peer 대기 판정](peer-wait-policy.md)의 nonce·generation·복귀 증거 만료 계약은 유지한다.
+ 
+diff --git a/mcp-server/dist/server.mjs b/mcp-server/dist/server.mjs
+index 0cd02cf2..2a47e042 100644
+--- a/mcp-server/dist/server.mjs
++++ b/mcp-server/dist/server.mjs
+@@ -20012,6 +20012,12 @@ var SESSION_MESSAGE_BODY_MAX_BYTES = 4096;
+ 
+ // mcp-server/src/session-message-client.ts
+ var BrokerRequestRejected = class extends Error {
++  details;
++  constructor(message, details = null) {
++    super(message);
++    const record3 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
++    this.details = record3 && (record3.scope === "sender" || record3.scope === "global") && (record3.earliestReleaseAt === null || typeof record3.earliestReleaseAt === "string") ? { scope: record3.scope, earliestReleaseAt: record3.earliestReleaseAt } : null;
++  }
+ };
+ var BROKER_STARTUP_TIMEOUT_MS = 15e3;
+ var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
+@@ -20141,7 +20147,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
+         if (newline < 0) return;
+         try {
+           const response = JSON.parse(buffer.slice(0, newline));
+-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
++          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
+           else finish(void 0, response.data);
+         } catch {
+           finish(new Error("The broker returned invalid JSON."));
+@@ -20273,8 +20279,14 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
+ function ok2(data) {
+   return { schemaVersion: "1.0.0", ok: true, data, error: null };
+ }
+-function failure2(code, message) {
+-  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
++function failure2(code, message, details = null) {
++  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
++}
++function capacityDetails(error2) {
++  return error2 instanceof BrokerRequestRejected ? error2.details : null;
++}
++function capacityRelease(details) {
++  return details.earliestReleaseAt === null ? "A new prepare_session_message may succeed after retained records expire." : `The earliest retained record in this scope expires at ${details.earliestReleaseAt}; after that a new prepare_session_message may succeed.`;
+ }
+ function binding(value) {
+   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+@@ -20302,6 +20314,8 @@ var SessionMessageService = class {
+       }, this.stateDirectory);
+       return ok2(data);
+     } catch (error2) {
++      const details = capacityDetails(error2);
++      if (details) return failure2("MCP_UNAVAILABLE", `${error2.message} ${capacityRelease(details)}`, { ...details });
+       return failure2("MCP_UNAVAILABLE", error2 instanceof Error ? error2.message : "The session message broker is unavailable.");
+     }
+   }
+@@ -20312,6 +20326,8 @@ var SessionMessageService = class {
+     try {
+       return ok2(await sessionMessageRequest("send", { sender, messageId: args.messageId }, this.stateDirectory));
+     } catch (error2) {
++      const details = capacityDetails(error2);
++      if (details) return failure2("MCP_UNAVAILABLE", `${error2.message} This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until its draft expires; after capacity is released, either retry that same messageId or prepare again, not both. ${capacityRelease(details)}`, { ...details });
+       return failure2("MCP_UNAVAILABLE", `${error2 instanceof Error ? error2.message : "The session message broker is unavailable."} Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.`);
+     }
+   }
+@@ -20767,13 +20783,13 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
+       },
+       {
+         name: "prepare_session_message",
+-        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft.",
++        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft. When this sender (250) or all senders (1000) already hold the maximum retained receipts, no draft is created and error.details gives scope and earliestReleaseAt.",
+         inputSchema: prepareSessionMessageInputSchema,
+         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+       },
+       {
+         name: "send_session_message",
+-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence.",
++        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+         inputSchema: contractSchemas.sendSessionMessageRequest,
+         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+       },
+diff --git a/mcp-server/dist/session-board-hook.mjs b/mcp-server/dist/session-board-hook.mjs
+index 6e29f9cb..ef0b54f9 100644
+--- a/mcp-server/dist/session-board-hook.mjs
++++ b/mcp-server/dist/session-board-hook.mjs
+@@ -124,6 +124,12 @@ var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
+ // mcp-server/src/session-message-client.ts
+ var WAKE_PREFIX = "[agent-governance-suite:wake:";
+ var BrokerRequestRejected = class extends Error {
++  details;
++  constructor(message, details = null) {
++    super(message);
++    const record2 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
++    this.details = record2 && (record2.scope === "sender" || record2.scope === "global") && (record2.earliestReleaseAt === null || typeof record2.earliestReleaseAt === "string") ? { scope: record2.scope, earliestReleaseAt: record2.earliestReleaseAt } : null;
++  }
+ };
+ var BROKER_STARTUP_TIMEOUT_MS = 15e3;
+ var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
+@@ -253,7 +259,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
+         if (newline < 0) return;
+         try {
+           const response = JSON.parse(buffer.slice(0, newline));
+-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
++          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
+           else finish(void 0, response.data);
+         } catch {
+           finish(new Error("The broker returned invalid JSON."));
+diff --git a/mcp-server/dist/session-message-broker.mjs b/mcp-server/dist/session-message-broker.mjs
+index 5ee67d5e..eb5d256f 100644
+--- a/mcp-server/dist/session-message-broker.mjs
++++ b/mcp-server/dist/session-message-broker.mjs
+@@ -418,6 +418,7 @@ var MESSAGE_DRAFT_TTL_MS = 10 * 6e4;
+ var MESSAGE_DRAFT_LIMIT = 1e3;
+ var MESSAGE_SENDER_DRAFT_LIMIT = 100;
+ var MESSAGE_RECEIPT_LIMIT = 1e3;
++var MESSAGE_SENDER_RECEIPT_LIMIT = 250;
+ var MESSAGE_ID_RECORD_BYTES_LIMIT = 4 * 1024 * 1024;
+ var MESSAGE_RECEIPT_EXTRA_MS = 36e5;
+ var CLAIM_LEASE_BASE_MS = 12e4;
+@@ -459,6 +460,14 @@ function claimedMessage(row, deliveryAttempt = Number(row.delivery_attempts), fi
+ function claimResponseBytes(messages) {
+   return Buffer.byteLength(JSON.stringify({ ok: true, data: { messages } }), "utf8") + 1;
+ }
++var MessageCapacityError = class extends Error {
++  details;
++  constructor(message, details) {
++    super(message);
++    this.name = "MessageCapacityError";
++    this.details = details;
++  }
++};
+ var SessionMessageStore = class {
+   database;
+   constructor(databasePath) {
+@@ -652,6 +661,15 @@ var SessionMessageStore = class {
+     this.database.prepare(`INSERT INTO session_activity (host, session_id, active_at) VALUES (?, ?, ?)
+       ON CONFLICT (host, session_id) DO UPDATE SET active_at = max(active_at, excluded.active_at)`).run(target.host, target.sessionId, iso(nowMs));
+   }
++  /** Sender quota first, then the global pool; call inside the caller's transaction after prune. */
++  assertReceiptCapacity(sender, suffix) {
++    const owned = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?").get(sender.host, sender.sessionId);
++    if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
++      throw new MessageCapacityError(`The bounded message receipt store is full for this sender${suffix}`, { scope: "sender", earliestReleaseAt: owned.earliest });
++    }
++    const all = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL").get();
++    if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityError(`The bounded message receipt store is full${suffix}`, { scope: "global", earliestReleaseAt: all.earliest });
++  }
+   /** Preparation is durable but has no queue, peer-relation or wake effect. */
+   prepare(input, nowMs = Date.now()) {
+     boundedIdentity(input.sender);
+@@ -665,6 +683,7 @@ var SessionMessageStore = class {
+     this.database.exec("BEGIN IMMEDIATE");
+     try {
+       this.prune(nowMs);
++      this.assertReceiptCapacity(input.sender, "; no draft was created.");
+       const drafts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL").get();
+       const owned = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL AND sender_host = ? AND sender_session_id = ?").get(input.sender.host, input.sender.sessionId);
+       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages").get();
+@@ -693,14 +712,13 @@ var SessionMessageStore = class {
+         this.database.exec("COMMIT");
+         return { ...receipt2, duplicate: true, autoWake: autoWake2 };
+       }
+-      const receipts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NOT NULL").get();
+-      if (receipts.count >= MESSAGE_RECEIPT_LIMIT) throw new Error("The bounded message receipt store is full.");
++      this.assertReceiptCapacity(sender, ".");
+       const receipt = this.send({ messageId, sender, target, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+       const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
+       const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);
+       const recordBytes = Buffer.byteLength(JSON.stringify({ messageId, sender, target: { host: row.target_host, sessionId: row.target_session_id }, preparedAt: row.prepared_at, ttlSeconds: row.ttl_seconds, receipt: receiptJson, expiresAt }), "utf8");
+-      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages WHERE message_id <> ?").get(messageId);
+-      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message receipt store is full.");
++      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes, min(expires_at) AS earliest FROM prepared_messages WHERE message_id <> ?").get(messageId);
++      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new MessageCapacityError("The bounded message receipt store is full.", { scope: "global", earliestReleaseAt: bytes.earliest });
+       this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?").run(receiptJson, expiresAt, recordBytes, messageId);
+       const autoWake = this.autoWakeOutlook(target, nowMs);
+       this.database.exec("COMMIT");
+@@ -902,10 +920,15 @@ var SessionMessageStore = class {
+     }
+     const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL
+       WHERE message_id = ? AND target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL`);
++    const receipt = this.database.prepare("UPDATE prepared_messages SET expires_at = min(expires_at, ?) WHERE message_id = ? AND receipt IS NOT NULL");
+     let count = 0;
+     this.database.exec("BEGIN IMMEDIATE");
+     try {
+-      for (const messageId of new Set(messageIds)) count += Number(statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes);
++      for (const messageId of new Set(messageIds)) {
++        if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
++        receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
++        count++;
++      }
+       this.recordActivity(target, nowMs);
+       this.database.exec("COMMIT");
+       return count;
+@@ -2127,7 +2150,11 @@ async function startSessionMessageBroker(stateDirectory) {
+           socket.end(`${JSON.stringify({ ok: true, data })}
+ `);
+         } catch (error) {
+-          socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed." })}
++          socket.end(`${JSON.stringify({
++            ok: false,
++            error: error instanceof Error ? error.message : "Broker request failed.",
++            ...error instanceof MessageCapacityError ? { details: error.details } : {}
++          })}
+ `);
+         }
+       });
+diff --git a/mcp-server/dist/session-message-cli.mjs b/mcp-server/dist/session-message-cli.mjs
+index 7bba3114..2f804594 100644
+--- a/mcp-server/dist/session-message-cli.mjs
++++ b/mcp-server/dist/session-message-cli.mjs
+@@ -42,6 +42,12 @@ var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
+ 
+ // mcp-server/src/session-message-client.ts
+ var BrokerRequestRejected = class extends Error {
++  details;
++  constructor(message, details = null) {
++    super(message);
++    const record = details && typeof details === "object" && !Array.isArray(details) ? details : null;
++    this.details = record && (record.scope === "sender" || record.scope === "global") && (record.earliestReleaseAt === null || typeof record.earliestReleaseAt === "string") ? { scope: record.scope, earliestReleaseAt: record.earliestReleaseAt } : null;
++  }
+ };
+ var BROKER_STARTUP_TIMEOUT_MS = 15e3;
+ var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
+@@ -171,7 +177,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
+         if (newline < 0) return;
+         try {
+           const response = JSON.parse(buffer.slice(0, newline));
+-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
++          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
+           else finish(void 0, response.data);
+         } catch {
+           finish(new Error("The broker returned invalid JSON."));
+diff --git a/mcp-server/dist/session-message-hook.mjs b/mcp-server/dist/session-message-hook.mjs
+index c1d8aa08..ecbb8ef6 100644
+--- a/mcp-server/dist/session-message-hook.mjs
++++ b/mcp-server/dist/session-message-hook.mjs
+@@ -460,6 +460,12 @@ var SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES = 8192;
+ // mcp-server/src/session-message-client.ts
+ var WAKE_PREFIX = "[agent-governance-suite:wake:";
+ var BrokerRequestRejected = class extends Error {
++  details;
++  constructor(message, details = null) {
++    super(message);
++    const record2 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
++    this.details = record2 && (record2.scope === "sender" || record2.scope === "global") && (record2.earliestReleaseAt === null || typeof record2.earliestReleaseAt === "string") ? { scope: record2.scope, earliestReleaseAt: record2.earliestReleaseAt } : null;
++  }
+ };
+ var BROKER_STARTUP_TIMEOUT_MS = 15e3;
+ var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
+@@ -589,7 +595,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
+         if (newline < 0) return;
+         try {
+           const response = JSON.parse(buffer.slice(0, newline));
+-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
++          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
+           else finish(void 0, response.data);
+         } catch {
+           finish(new Error("The broker returned invalid JSON."));
+diff --git a/mcp-server/dist/session-message-relay.mjs b/mcp-server/dist/session-message-relay.mjs
+index 54f44751..4a7d39d4 100644
+--- a/mcp-server/dist/session-message-relay.mjs
++++ b/mcp-server/dist/session-message-relay.mjs
+@@ -41,6 +41,12 @@ var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
+ // mcp-server/src/session-message-client.ts
+ var WAKE_PREFIX = "[agent-governance-suite:wake:";
+ var BrokerRequestRejected = class extends Error {
++  details;
++  constructor(message, details = null) {
++    super(message);
++    const record = details && typeof details === "object" && !Array.isArray(details) ? details : null;
++    this.details = record && (record.scope === "sender" || record.scope === "global") && (record.earliestReleaseAt === null || typeof record.earliestReleaseAt === "string") ? { scope: record.scope, earliestReleaseAt: record.earliestReleaseAt } : null;
++  }
+ };
+ var BROKER_STARTUP_TIMEOUT_MS = 15e3;
+ var SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 2e4;
+@@ -170,7 +176,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
+         if (newline < 0) return;
+         try {
+           const response = JSON.parse(buffer.slice(0, newline));
+-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
++          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
+           else finish(void 0, response.data);
+         } catch {
+           finish(new Error("The broker returned invalid JSON."));
+diff --git a/mcp-server/src/server.ts b/mcp-server/src/server.ts
+index 10cfb654..a106c942 100644
+--- a/mcp-server/src/server.ts
++++ b/mcp-server/src/server.ts
+@@ -527,13 +527,13 @@ export function createMcpServer(
+       },
+       {
+         name: "prepare_session_message",
+-        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft.",
++        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft. When this sender (250) or all senders (1000) already hold the maximum retained receipts, no draft is created and error.details gives scope and earliestReleaseAt.",
+         inputSchema: prepareSessionMessageInputSchema,
+         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
+       },
+       {
+         name: "send_session_message",
+-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence.",
++        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+         inputSchema: contractSchemas.sendSessionMessageRequest,
+         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+       },
+diff --git a/mcp-server/src/session-message-broker.ts b/mcp-server/src/session-message-broker.ts
+index df84cf55..a7bd8289 100644
+--- a/mcp-server/src/session-message-broker.ts
++++ b/mcp-server/src/session-message-broker.ts
+@@ -7,7 +7,7 @@ import { setTimeout as delay } from "node:timers/promises";
+ import { fileURLToPath } from "node:url";
+ 
+ import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
+-import { SessionMessageStore, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
++import { MessageCapacityError, SessionMessageStore, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
+ import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type WakeHookObservationReader } from "./session-message-wake-port.js";
+ import type { InputObservation, InputObservationKind } from "./input-observation.js";
+ import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js";
+@@ -504,7 +504,9 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
+           const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader, historicalWakeVerifier);
+           socket.end(`${JSON.stringify({ ok: true, data })}\n`);
+         } catch (error) {
+-          socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed." })}\n`);
++          // Older clients ignore the optional details field.
++          socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed.",
++            ...(error instanceof MessageCapacityError ? { details: error.details } : {}) })}\n`);
+         }
+       });
+     });
+diff --git a/mcp-server/src/session-message-client.ts b/mcp-server/src/session-message-client.ts
+index 9b3e13b4..f91e70d7 100644
+--- a/mcp-server/src/session-message-client.ts
++++ b/mcp-server/src/session-message-client.ts
+@@ -22,7 +22,19 @@ export interface BrokerEndpoint {
+   certificateFingerprint256: string;
+ }
+ 
+-class BrokerRequestRejected extends Error {}
++/** A broker answer, not a transport failure; details is set only for a bounded-capacity rejection. */
++export class BrokerRequestRejected extends Error {
++  readonly details: { scope: "sender" | "global"; earliestReleaseAt: string | null } | null;
++
++  constructor(message: string, details: unknown = null) {
++    super(message);
++    const record = details && typeof details === "object" && !Array.isArray(details) ? details as Record<string, unknown> : null;
++    this.details = record && (record.scope === "sender" || record.scope === "global")
++      && (record.earliestReleaseAt === null || typeof record.earliestReleaseAt === "string")
++      ? { scope: record.scope, earliestReleaseAt: record.earliestReleaseAt }
++      : null;
++  }
++}
+ 
+ const BROKER_STARTUP_TIMEOUT_MS = 15_000;
+ const SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 20_000;
+@@ -184,8 +196,8 @@ export async function requestSessionMessageOnce<T>(
+         const newline = buffer.indexOf("\n");
+         if (newline < 0) return;
+         try {
+-          const response = JSON.parse(buffer.slice(0, newline)) as { ok: boolean; data?: T; error?: string };
+-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
++          const response = JSON.parse(buffer.slice(0, newline)) as { ok: boolean; data?: T; error?: string; details?: unknown };
++          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
+           else finish(undefined, response.data);
+         } catch {
+           finish(new Error("The broker returned invalid JSON."));
+diff --git a/mcp-server/src/session-message-service.ts b/mcp-server/src/session-message-service.ts
+index 66a8e77a..16ac7bae 100644
+--- a/mcp-server/src/session-message-service.ts
++++ b/mcp-server/src/session-message-service.ts
+@@ -1,5 +1,5 @@
+ import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
+-import { sessionMessageRequest } from "./session-message-client.js";
++import { BrokerRequestRejected, sessionMessageRequest } from "./session-message-client.js";
+ import type { SessionPresenceView } from "./session-message-store.js";
+ import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
+ 
+@@ -11,8 +11,19 @@ function ok<T>(data: T): ApiResultV1<T> {
+   return { schemaVersion: "1.0.0", ok: true, data, error: null };
+ }
+ 
+-function failure(code: ErrorCode, message: string): ApiResultV1<never> {
+-  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
++function failure(code: ErrorCode, message: string, details: Record<string, unknown> | null = null): ApiResultV1<never> {
++  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
++}
++
++/** A broker capacity rejection is definite: its transaction rolled back, so nothing was queued or drafted. */
++function capacityDetails(error: unknown): { scope: "sender" | "global"; earliestReleaseAt: string | null } | null {
++  return error instanceof BrokerRequestRejected ? error.details : null;
++}
++
++function capacityRelease(details: { earliestReleaseAt: string | null }): string {
++  return details.earliestReleaseAt === null
++    ? "A new prepare_session_message may succeed after retained records expire."
++    : `The earliest retained record in this scope expires at ${details.earliestReleaseAt}; after that a new prepare_session_message may succeed.`;
+ }
+ 
+ function binding(value: unknown): SessionBindingV1 | null {
+@@ -46,6 +57,8 @@ export class SessionMessageService {
+       }, this.stateDirectory);
+       return ok(data);
+     } catch (error) {
++      const details = capacityDetails(error);
++      if (details) return failure("MCP_UNAVAILABLE", `${(error as Error).message} ${capacityRelease(details)}`, { ...details });
+       return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "The session message broker is unavailable.");
+     }
+   }
+@@ -57,6 +70,8 @@ export class SessionMessageService {
+     try {
+       return ok(await sessionMessageRequest("send", { sender, messageId: args.messageId }, this.stateDirectory));
+     } catch (error) {
++      const details = capacityDetails(error);
++      if (details) return failure("MCP_UNAVAILABLE", `${(error as Error).message} This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until its draft expires; after capacity is released, either retry that same messageId or prepare again, not both. ${capacityRelease(details)}`, { ...details });
+       return failure("MCP_UNAVAILABLE", `${error instanceof Error ? error.message : "The session message broker is unavailable."} Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.`);
+     }
+   }
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index ce298eb7..b29b89c0 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -17,6 +17,8 @@ export const MESSAGE_DRAFT_TTL_MS = 10 * 60_000;
+ export const MESSAGE_DRAFT_LIMIT = 1000;
+ export const MESSAGE_SENDER_DRAFT_LIMIT = 100;
+ export const MESSAGE_RECEIPT_LIMIT = 1000;
++/** Fairness between cooperating sender sessions; the sender identity is the bound session, not an authenticated principal. */
++export const MESSAGE_SENDER_RECEIPT_LIMIT = 250;
+ export const MESSAGE_ID_RECORD_BYTES_LIMIT = 4 * 1024 * 1024;
+ const MESSAGE_RECEIPT_EXTRA_MS = 3600_000;
+ const CLAIM_LEASE_BASE_MS = 120_000;
+@@ -127,6 +129,22 @@ export interface WakeReservation {
+ }
+ export type ManagedWakeState = "reserved" | "started" | "submitted" | "unknown" | "observed" | "not-submitted" | "expired-unobserved";
+ 
++export interface MessageCapacityDetails {
++  scope: "sender" | "global";
++  earliestReleaseAt: string | null;
++}
++
++/** A capacity rejection rolls back its transaction: nothing was queued or drafted. */
++export class MessageCapacityError extends Error {
++  readonly details: MessageCapacityDetails;
++
++  constructor(message: string, details: MessageCapacityDetails) {
++    super(message);
++    this.name = "MessageCapacityError";
++    this.details = details;
++  }
++}
++
+ export interface ClaimLimits {
+   maxMessages?: number;
+   maxBodyChars?: number;
+@@ -329,6 +347,18 @@ export class SessionMessageStore {
+       .run(target.host, target.sessionId, iso(nowMs));
+   }
+ 
++  /** Sender quota first, then the global pool; call inside the caller's transaction after prune. */
++  private assertReceiptCapacity(sender: SessionIdentity, suffix: string): void {
++    const owned = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?")
++      .get(sender.host, sender.sessionId) as { count: number; earliest: string | null };
++    if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
++      throw new MessageCapacityError(`The bounded message receipt store is full for this sender${suffix}`, { scope: "sender", earliestReleaseAt: owned.earliest });
++    }
++    const all = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL")
++      .get() as { count: number; earliest: string | null };
++    if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityError(`The bounded message receipt store is full${suffix}`, { scope: "global", earliestReleaseAt: all.earliest });
++  }
++
+   /** Preparation is durable but has no queue, peer-relation or wake effect. */
+   prepare(input: { sender: SessionIdentity; target: SessionIdentity; body: string; ttlSeconds?: number }, nowMs = Date.now()): { messageId: string; preparedAt: string; expiresAt: string } {
+     boundedIdentity(input.sender);
+@@ -342,6 +372,8 @@ export class SessionMessageStore {
+     this.database.exec("BEGIN IMMEDIATE");
+     try {
+       this.prune(nowMs);
++      // Admission only; submitPrepared repeats the authoritative check.
++      this.assertReceiptCapacity(input.sender, "; no draft was created.");
+       const drafts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL").get() as { count: number };
+       const owned = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL AND sender_host = ? AND sender_session_id = ?").get(input.sender.host, input.sender.sessionId) as { count: number };
+       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages").get() as { bytes: number };
+@@ -375,14 +407,13 @@ export class SessionMessageStore {
+         this.database.exec("COMMIT");
+         return { ...receipt, duplicate: true, autoWake };
+       }
+-      const receipts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NOT NULL").get() as { count: number };
+-      if (receipts.count >= MESSAGE_RECEIPT_LIMIT) throw new Error("The bounded message receipt store is full.");
++      this.assertReceiptCapacity(sender, ".");
+       const receipt = this.send({ messageId, sender, target, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+       const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
+       const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);
+       const recordBytes = Buffer.byteLength(JSON.stringify({ messageId, sender, target: { host: row.target_host, sessionId: row.target_session_id }, preparedAt: row.prepared_at, ttlSeconds: row.ttl_seconds, receipt: receiptJson, expiresAt }), "utf8");
+-      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages WHERE message_id <> ?").get(messageId) as { bytes: number };
+-      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message receipt store is full.");
++      const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes, min(expires_at) AS earliest FROM prepared_messages WHERE message_id <> ?").get(messageId) as { bytes: number; earliest: string | null };
++      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new MessageCapacityError("The bounded message receipt store is full.", { scope: "global", earliestReleaseAt: bytes.earliest });
+       this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?")
+         .run(receiptJson, expiresAt, recordBytes, messageId);
+       const autoWake = this.autoWakeOutlook(target, nowMs);
+@@ -598,10 +629,16 @@ export class SessionMessageStore {
+     }
+     const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL
+       WHERE message_id = ? AND target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL`);
++    // Only the first ACK shortens the receipt, and min() never extends it.
++    const receipt = this.database.prepare("UPDATE prepared_messages SET expires_at = min(expires_at, ?) WHERE message_id = ? AND receipt IS NOT NULL");
+     let count = 0;
+     this.database.exec("BEGIN IMMEDIATE");
+     try {
+-      for (const messageId of new Set(messageIds)) count += Number(statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes);
++      for (const messageId of new Set(messageIds)) {
++        if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
++        receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
++        count++;
++      }
+       this.recordActivity(target, nowMs);
+       this.database.exec("COMMIT");
+       return count;
+diff --git a/tests/session-messaging/fixtures/issued-send-worker.ts b/tests/session-messaging/fixtures/issued-send-worker.ts
+index ade7c1c5..c0a3f77b 100644
+--- a/tests/session-messaging/fixtures/issued-send-worker.ts
++++ b/tests/session-messaging/fixtures/issued-send-worker.ts
+@@ -2,11 +2,13 @@ import { SessionMessageStore } from "../../../mcp-server/src/session-message-sto
+ 
+ const store = new SessionMessageStore(process.argv[2]!);
+ process.send!({ type: "ready" });
+-process.once("message", (input: { operation: "prepare" | "send"; sender: { host: string; sessionId: string }; target: { host: string; sessionId: string }; messageId: string; nowMs: number }) => {
++process.once("message", (input: { operation: "prepare" | "send" | "acknowledge"; sender: { host: string; sessionId: string }; target: { host: string; sessionId: string }; messageId: string; nowMs: number }) => {
+   try {
+     const result = input.operation === "prepare"
+       ? store.prepare({ sender: input.sender, target: input.target, body: "Concurrent preparation" }, input.nowMs)
+-      : store.submitPrepared(input.sender, input.messageId, input.nowMs);
++      : input.operation === "acknowledge"
++        ? store.acknowledge(input.target, [input.messageId], input.nowMs)
++        : store.submitPrepared(input.sender, input.messageId, input.nowMs);
+     process.send!({ type: "result", result }, () => { store.close(); process.disconnect!(); });
+   } catch (error) {
+     process.send!({ type: "result", error: error instanceof Error ? error.message : "worker failed" }, () => { store.close(); process.disconnect!(); });
+diff --git a/tests/session-messaging/message-lifecycle.test.ts b/tests/session-messaging/message-lifecycle.test.ts
+index 9421c29e..c014bc7b 100644
+--- a/tests/session-messaging/message-lifecycle.test.ts
++++ b/tests/session-messaging/message-lifecycle.test.ts
+@@ -135,14 +135,27 @@ it("applies global draft, receipt and byte backpressure without evicting valid r
+   expect(() => store.prepare({ sender, target, body: "x" }, 1000)).toThrow(/full/u);
+   expect(count(store, "prepared_messages")).toBe(1000);
+   store.prune(601_000);
+-  for (let index = 0; index < 1000; index++) {
++  const fillReceipt = (index: number) => {
+     const owner = { ...sender, sessionId: `receipt-owner-${index}` };
+     const draft = store.prepare({ sender: owner, target, body: "x" }, 602_000);
+     store.submitPrepared(owner, draft.messageId, 602_000);
+     store.acknowledge(target, [draft.messageId], 602_000);
+-  }
+-  const blocked = prepare(store, 602_001);
+-  expect(() => store.submitPrepared(sender, blocked.messageId, 602_001)).toThrow(/receipt store is full/u);
++  };
++  for (let index = 0; index < 999; index++) fillReceipt(index);
++  // Prepared while one global receipt slot remains; the slot is then taken before this draft is sent.
++  const blocked = prepare(store, 602_000);
++  fillReceipt(999);
++  const release = { scope: "global", earliestReleaseAt: new Date(602_000 + 3600_000).toISOString() };
++  const beforeDrafts = count(store, "prepared_messages");
++  let admission: unknown;
++  expect(() => { try { prepare(store, 602_001); } catch (error) { admission = error; throw error; } }).toThrow(/^The bounded message receipt store is full; no draft was created\.$/u);
++  expect(admission).toMatchObject({ details: release });
++  expect(count(store, "prepared_messages")).toBe(beforeDrafts);
++  const beforeMessages = count(store);
++  let submission: unknown;
++  expect(() => { try { store.submitPrepared(sender, blocked.messageId, 602_001); } catch (error) { submission = error; throw error; } }).toThrow(/^The bounded message receipt store is full\.$/u);
++  expect(submission).toMatchObject({ details: release });
++  expect(count(store)).toBe(beforeMessages);
+   expect(store.status(sender, blocked.messageId, 602_001)).toMatchObject({ state: "prepared" });
+   const bytes = fixture();
+   let accepted = 0;
+diff --git a/tests/session-messaging/message-retention.test.ts b/tests/session-messaging/message-retention.test.ts
+new file mode 100644
+index 00000000..8489a0c7
+--- /dev/null
++++ b/tests/session-messaging/message-retention.test.ts
+@@ -0,0 +1,351 @@
++import { spawn, type ChildProcess } from "node:child_process";
++import { once } from "node:events";
++import { mkdtemp, rm } from "node:fs/promises";
++import { tmpdir } from "node:os";
++import path from "node:path";
++import { fileURLToPath } from "node:url";
++import { afterEach, expect, it } from "vitest";
++import * as storeModule from "../../mcp-server/src/session-message-store.js";
++import { SessionMessageStore, MESSAGE_ID_RECORD_BYTES_LIMIT, MESSAGE_RECEIPT_LIMIT } from "../../mcp-server/src/session-message-store.js";
++import { waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
++import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
++
++// Receipt retention limits: sender quota (F1), ACK-bounded receipt expiry (F2), prepare admission (F3)
++// and capacity rejection details (D1). The sender quota is fairness between cooperating sessions, not authentication.
++const SENDER_LIMIT = 250;
++const H = 3600_000;
++const target = { host: "test-host", sessionId: "retention-target" };
++const hot = { host: "test-host", sessionId: "retention-hot" };
++const other = { host: "test-host", sessionId: "retention-other" };
++const root = process.env.PEER_WAIT_TEST_PLUGIN_ROOT ?? fileURLToPath(new URL("../../", import.meta.url));
++const directories: string[] = [];
++const children: ChildProcess[] = [];
++const stores: SessionMessageStore[] = [];
++afterEach(async () => {
++  for (const store of stores.splice(0)) store.close();
++  for (const child of children.splice(0)) {
++    if (child.exitCode === null && child.signalCode === null) { const exit = once(child, "exit"); child.kill(); await exit; }
++  }
++  for (const directory of directories.splice(0)) await rm(directory, { recursive: true, force: true, maxRetries: 10 });
++});
++const fixture = (database = ":memory:") => { const store = new SessionMessageStore(database); stores.push(store); return store; };
++async function directory() { const value = await mkdtemp(path.join(tmpdir(), "ags-retention-")); directories.push(value); return value; }
++const iso = (ms: number) => new Date(ms).toISOString();
++const scalar = (store: SessionMessageStore, sql: string, ...args: string[]) => (store.database.prepare(sql).get(...args) as { value: number | string | null }).value;
++const receipts = (store: SessionMessageStore, sender?: typeof hot) => Number(sender
++  ? scalar(store, "SELECT count(*) AS value FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?", sender.host, sender.sessionId)
++  : scalar(store, "SELECT count(*) AS value FROM prepared_messages WHERE receipt IS NOT NULL"));
++const drafts = (store: SessionMessageStore) => Number(scalar(store, "SELECT count(*) AS value FROM prepared_messages WHERE receipt IS NULL"));
++const rows = (store: SessionMessageStore) => Number(scalar(store, "SELECT count(*) AS value FROM messages"));
++const receiptExpiry = (store: SessionMessageStore, messageId: string) => scalar(store, "SELECT expires_at AS value FROM prepared_messages WHERE message_id = ?", messageId);
++const earliest = (store: SessionMessageStore, sender?: typeof hot) => sender
++  ? scalar(store, "SELECT min(expires_at) AS value FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?", sender.host, sender.sessionId)
++  : scalar(store, "SELECT min(expires_at) AS value FROM prepared_messages WHERE receipt IS NOT NULL");
++function sendNew(store: SessionMessageStore, sender: typeof hot, nowMs: number, ttlSeconds?: number) {
++  const draft = store.prepare({ sender, target, body: "Synthetic retention message", ...(ttlSeconds === undefined ? {} : { ttlSeconds }) }, nowMs);
++  return store.submitPrepared(sender, draft.messageId, nowMs);
++}
++function rejection(action: () => unknown): Error & { details?: unknown } {
++  try { action(); } catch (error) { return error as Error & { details?: unknown }; }
++  throw new Error("expected a rejection");
++}
++
++it("exports the sender receipt limit next to the unchanged global limit", () => {
++  expect((storeModule as Record<string, unknown>).MESSAGE_SENDER_RECEIPT_LIMIT).toBe(SENDER_LIMIT);
++  expect(MESSAGE_RECEIPT_LIMIT).toBe(1000);
++});
++
++it("caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders", () => {
++  const store = fixture();
++  for (let index = 0; index < SENDER_LIMIT - 1; index++) expect(sendNew(store, hot, 1000 + index).duplicate).toBe(false);
++  expect(receipts(store, hot)).toBe(SENDER_LIMIT - 1);
++  const atLimit = store.prepare({ sender: hot, target, body: "exactly at the limit" }, 2000);
++  const overLimit = store.prepare({ sender: hot, target, body: "one over the limit" }, 2000);
++  expect(store.submitPrepared(hot, atLimit.messageId, 2001).duplicate).toBe(false);
++  expect(receipts(store, hot)).toBe(SENDER_LIMIT);
++  const beforeRows = rows(store);
++  const sendRejected = rejection(() => store.submitPrepared(hot, overLimit.messageId, 2002));
++  expect(sendRejected.message).toMatch(/receipt store is full for this sender/u);
++  expect(sendRejected.details).toEqual({ scope: "sender", earliestReleaseAt: earliest(store, hot) });
++  expect(sendRejected.details).toEqual({ scope: "sender", earliestReleaseAt: iso(1000 + 2 * H) });
++  expect(rows(store)).toBe(beforeRows);
++  expect(store.status(hot, overLimit.messageId, 2003)).toMatchObject({ state: "prepared" });
++  // F3: prepare admission refuses to create a draft that the authoritative send check would reject.
++  const draftsBefore = drafts(store);
++  const prepareRejected = rejection(() => store.prepare({ sender: hot, target, body: "no draft" }, 2004));
++  expect(prepareRejected.message).toMatch(/receipt store is full for this sender; no draft was created/u);
++  expect(prepareRejected.message).not.toMatch(/preparation store/u);
++  expect(prepareRejected.details).toEqual({ scope: "sender", earliestReleaseAt: iso(1000 + 2 * H) });
++  expect(drafts(store)).toBe(draftsBefore);
++  expect(sendNew(store, other, 2005).duplicate).toBe(false);
++  expect(receipts(store)).toBe(SENDER_LIMIT + 1);
++  // The earliest receipt frees exactly at its expiry; then the same sender can prepare and send again.
++  expect(() => store.prepare({ sender: hot, target, body: "still full" }, 1000 + 2 * H - 1)).toThrow(/for this sender/u);
++  expect(sendNew(store, hot, 1000 + 2 * H).duplicate).toBe(false);
++});
++
++it("rejects prepare and send with global scope when the global receipt pool is full", () => {
++  const store = fixture();
++  const late = { host: "test-host", sessionId: "retention-late" };
++  for (let index = 0; index < MESSAGE_RECEIPT_LIMIT - 1; index++) sendNew(store, { host: "test-host", sessionId: `retention-global-${index % 4}` }, 1000 + index);
++  const pending = store.prepare({ sender: late, target, body: "prepared before the pool filled" }, 5000);
++  sendNew(store, { host: "test-host", sessionId: "retention-filler" }, 5001);
++  expect(receipts(store)).toBe(MESSAGE_RECEIPT_LIMIT);
++  const draftsBefore = drafts(store);
++  const prepareRejected = rejection(() => store.prepare({ sender: late, target, body: "no draft" }, 5002));
++  expect(prepareRejected.message).toMatch(/^The bounded message receipt store is full; no draft was created\.$/u);
++  expect(prepareRejected.details).toEqual({ scope: "global", earliestReleaseAt: iso(1000 + 2 * H) });
++  expect(drafts(store)).toBe(draftsBefore);
++  const sendRejected = rejection(() => store.submitPrepared(late, pending.messageId, 5003));
++  expect(sendRejected.message).toMatch(/^The bounded message receipt store is full\.$/u);
++  expect(sendRejected.details).toEqual({ scope: "global", earliestReleaseAt: iso(1000 + 2 * H) });
++  expect(store.status(late, pending.messageId, 5004)).toMatchObject({ state: "prepared" });
++});
++
++it("bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted", () => {
++  const store = fixture();
++  const sent = sendNew(store, hot, 1000, 86400);
++  const messageExpiry = Date.parse(sent.expiresAt);
++  expect(receiptExpiry(store, sent.messageId)).toBe(iso(messageExpiry + H));
++  const ackAt = 2000;
++  expect(store.acknowledge(target, [sent.messageId], ackAt)).toBe(1);
++  expect(receiptExpiry(store, sent.messageId)).toBe(iso(Math.min(messageExpiry + H, ackAt + H)));
++  expect(store.submitPrepared(hot, sent.messageId, ackAt + H - 1)).toEqual({ ...sent, duplicate: true, autoWake: { ...sent.autoWake, checkedAt: new Date(ackAt + H - 1).toISOString() } });
++  expect(store.status(hot, sent.messageId, ackAt + H - 1)).toMatchObject({ state: "acknowledged" });
++  expect(() => store.submitPrepared(hot, sent.messageId, ackAt + H)).toThrow(/unavailable/u);
++  expect(Number(scalar(store, "SELECT count(*) AS value FROM messages WHERE message_id = ?", sent.messageId))).toBeLessThanOrEqual(1);
++  expect(store.status(hot, sent.messageId, ackAt + H)).toBeNull();
++  expect(receipts(store, hot)).toBe(0);
++  // An ACK of an expired but not yet pruned row never extends the receipt.
++  const shortLived = sendNew(store, hot, 10_000, 30);
++  expect(store.acknowledge(target, [shortLived.messageId], 10_000 + 40_000)).toBe(1);
++  expect(receiptExpiry(store, shortLived.messageId)).toBe(iso(10_000 + 30_000 + H));
++});
++
++it("drained senders regain capacity at ACK+1h instead of message expiry+1h", () => {
++  const store = fixture();
++  const ids = Array.from({ length: SENDER_LIMIT }, () => sendNew(store, hot, 1000, 86400).messageId);
++  for (let index = 0; index < ids.length; index += 50) expect(store.acknowledge(target, ids.slice(index, index + 50), 1000)).toBe(50);
++  expect(() => store.prepare({ sender: hot, target, body: "still held" }, 1000 + H - 1)).toThrow(/for this sender/u);
++  expect(sendNew(store, hot, 1000 + H, 86400).duplicate).toBe(false);
++});
++
++it("second ACK, another session's ACK and unknown-ID ACK leave receipt expiry unchanged", () => {
++  const store = fixture();
++  const first = sendNew(store, hot, 1000, 86400);
++  const second = sendNew(store, hot, 1000, 86400);
++  const snapshot = () => store.database.prepare("SELECT message_id, expires_at FROM prepared_messages ORDER BY message_id").all();
++  const initial = snapshot();
++  expect(store.acknowledge(other, [first.messageId, second.messageId], 2000)).toBe(0);
++  expect(store.acknowledge(target, ["unknown-retention-id"], 2000)).toBe(0);
++  expect(snapshot()).toEqual(initial);
++  expect(store.acknowledge(target, [first.messageId], 3000)).toBe(1);
++  expect(receiptExpiry(store, first.messageId)).toBe(iso(3000 + H));
++  const afterFirst = snapshot();
++  expect(store.acknowledge(target, [first.messageId], 4000)).toBe(0);
++  expect(snapshot()).toEqual(afterFirst);
++  expect(receiptExpiry(store, second.messageId)).toBe(iso(Date.parse(second.expiresAt) + H));
++  expect(store.status(hot, second.messageId, 3000 + 2 * H)).toMatchObject({ state: "queued" });
++});
++
++it("unacknowledged receipts keep message expiry + 1h", () => {
++  const store = fixture();
++  const sent = sendNew(store, hot, 1000, 30);
++  expect(receiptExpiry(store, sent.messageId)).toBe(iso(1000 + 30_000 + H));
++  expect(store.status(hot, sent.messageId, 1000 + 30_000)).toMatchObject({ state: "submitted", deliveryState: "unknown" });
++  expect(store.status(hot, sent.messageId, 1000 + 30_000 + H - 1)).toMatchObject({ state: "submitted", deliveryState: "unknown" });
++  expect(store.status(hot, sent.messageId, 1000 + 30_000 + H)).toBeNull();
++});
++
++async function race(database: string, requests: Array<{ operation: "send" | "acknowledge"; sender: typeof hot; messageId: string; nowMs: number }>) {
++  const workers = requests.map(() => spawn(process.execPath, ["--import", "tsx", fileURLToPath(new URL("./fixtures/issued-send-worker.ts", import.meta.url)), database], { windowsHide: true, stdio: ["ignore", "ignore", "ignore", "ipc"] }));
++  children.push(...workers);
++  await Promise.all(workers.map((worker) => once(worker, "message")));
++  const results = workers.map((worker) => once(worker, "message"));
++  const exits = workers.map((worker) => once(worker, "exit"));
++  workers.forEach((worker, index) => worker.send({ ...requests[index], target }));
++  const output = (await Promise.all(results)).map(([value]) => value as { result?: unknown; error?: string });
++  await Promise.all(exits);
++  return output;
++}
++
++it("two processes sending for one sender at limit-1 never exceed the sender limit", async () => {
++  const database = path.join(await directory(), "sender-race.sqlite3");
++  const store = fixture(database);
++  for (let index = 0; index < SENDER_LIMIT - 1; index++) sendNew(store, hot, 1000);
++  const [left, right] = [0, 1].map(() => store.prepare({ sender: hot, target, body: "concurrent" }, 1500).messageId);
++  const output = await race(database, [
++    { operation: "send", sender: hot, messageId: left!, nowMs: 2000 },
++    { operation: "send", sender: hot, messageId: right!, nowMs: 2000 },
++  ]);
++  expect(output.filter((value) => value.result)).toHaveLength(1);
++  expect(output.filter((value) => value.error)).toHaveLength(1);
++  expect(output.find((value) => value.error)?.error).toMatch(/receipt store is full for this sender/u);
++  expect(receipts(store, hot)).toBe(SENDER_LIMIT);
++  expect(rows(store)).toBe(SENDER_LIMIT);
++}, 20_000);
++
++it("concurrent send and ACK keep one row and only shorten receipt expiry", async () => {
++  const database = path.join(await directory(), "ack-race.sqlite3");
++  const store = fixture(database);
++  const draft = store.prepare({ sender: hot, target, body: "send or ack first", ttlSeconds: 86400 }, 1000);
++  const output = await race(database, [
++    { operation: "send", sender: hot, messageId: draft.messageId, nowMs: 2000 },
++    { operation: "acknowledge", sender: hot, messageId: draft.messageId, nowMs: 2000 },
++  ]);
++  const sent = output[0]!.result as { expiresAt: string; duplicate: boolean };
++  expect(sent.duplicate).toBe(false);
++  expect(Number(scalar(store, "SELECT count(*) AS value FROM messages WHERE message_id = ?", draft.messageId))).toBe(1);
++  const acknowledged = output[1]!.result as number;
++  const initial = String(receiptExpiry(store, draft.messageId));
++  expect(initial).toBe(acknowledged === 1 ? iso(2000 + H) : iso(Date.parse(sent.expiresAt) + H));
++  store.acknowledge(target, [draft.messageId], 3000);
++  const later = String(receiptExpiry(store, draft.messageId));
++  expect(later <= initial).toBe(true);
++  store.acknowledge(target, [draft.messageId], 4000);
++  expect(String(receiptExpiry(store, draft.messageId))).toBe(later);
++}, 20_000);
++
++it("opens a v2.7.2 receipt without migration and applies ACK+1h only to new ACKs", async () => {
++  const database = path.join(await directory(), "v272.sqlite3");
++  const legacy = fixture(database);
++  const old = sendNew(legacy, hot, 1000, 86400);
++  const fresh = sendNew(legacy, hot, 1000, 86400);
++  // v2.7.2 acknowledge updated only the messages row; its receipt kept message expiry + 1h.
++  legacy.database.prepare("UPDATE messages SET acknowledged_at = ?, claim_until = NULL WHERE message_id = ?").run(iso(2000), old.messageId);
++  legacy.close(); stores.splice(stores.indexOf(legacy), 1);
++  const reopened = fixture(database);
++  const legacyExpiry = iso(Date.parse(old.expiresAt) + H);
++  expect(receiptExpiry(reopened, old.messageId)).toBe(legacyExpiry);
++  expect(reopened.acknowledge(target, [old.messageId], 3000)).toBe(0);
++  expect(receiptExpiry(reopened, old.messageId)).toBe(legacyExpiry);
++  expect(reopened.acknowledge(target, [fresh.messageId], 3000)).toBe(1);
++  expect(receiptExpiry(reopened, fresh.messageId)).toBe(iso(3000 + H));
++  expect(reopened.status(hot, old.messageId, 2000 + H)).toMatchObject({ state: "submitted", deliveryState: "unknown", receiptExpiresAt: legacyExpiry });
++  expect(reopened.status(hot, fresh.messageId, 3000 + H)).toBeNull();
++});
++
++async function launchBroker() {
++  const state = await directory();
++  const child = spawn(process.execPath, [path.join(root, "mcp-server/dist/session-message-broker.mjs"), "--state-directory", state], { windowsHide: true, stdio: "ignore" });
++  children.push(child);
++  await waitForSessionMessageBrokerReady(state, child, 5000);
++  return state;
++}
++
++it("service reports capacity rejections as definite no-effect with scope and earliest release details", async () => {
++  const state = await launchBroker();
++  const store = fixture(path.join(state, "session-messages.sqlite3"));
++  const service = new SessionMessageService(state);
++  const call = { targetHost: target.host, targetSessionId: target.sessionId };
++  const now = Date.now();
++  const firstSent = sendNew(store, hot, now);
++  for (let index = 1; index < SENDER_LIMIT - 1; index++) sendNew(store, hot, now);
++  const prepared = await service.prepare({ ...call, body: "prepared before the limit", _sessionBinding: hot });
++  expect(prepared.ok).toBe(true);
++  sendNew(store, hot, now);
++  const release = earliest(store, hot);
++  const sendRejected = await service.send({ messageId: (prepared.data as { messageId: string }).messageId, _sessionBinding: hot });
++  expect(sendRejected).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { scope: "sender", earliestReleaseAt: release } } });
++  expect(sendRejected.error?.message).toMatch(/receipt store is full for this sender/u);
++  expect(sendRejected.error?.message).toContain("not queued");
++  expect(sendRejected.error?.message).toContain(String(release));
++  expect(sendRejected.error?.message).not.toMatch(/do not prepare again/u);
++  // The rejected draft remains usable until it expires: one of same-ID retry or new prepare, never both.
++  expect(sendRejected.error?.message).toContain("stays prepared until its draft expires");
++  expect(sendRejected.error?.message).toMatch(/either retry that same messageId or prepare again, not both/u);
++  const prepareRejected = await service.prepare({ ...call, body: "no draft", _sessionBinding: hot });
++  expect(prepareRejected).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { scope: "sender", earliestReleaseAt: release } } });
++  expect(prepareRejected.error?.message).toContain("no draft was created");
++  expect(prepareRejected.error?.message).toContain(String(release));
++  // Uncertain outcomes keep the same-ID retry guidance and carry no capacity details.
++  const unknown = await service.send({ messageId: "unknown-retention-id", _sessionBinding: hot });
++  expect(unknown).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: null } });
++  expect(unknown.error?.message).toMatch(/Retry only the known prepared ID/u);
++  for (let index = SENDER_LIMIT; index < MESSAGE_RECEIPT_LIMIT; index++) sendNew(store, { host: "test-host", sessionId: `retention-global-${index % 3}` }, now);
++  const globalRejected = await service.prepare({ ...call, body: "global", _sessionBinding: other });
++  expect(globalRejected).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { scope: "global", earliestReleaseAt: earliest(store) } } });
++  // A resend of an already queued ID stays an idempotent duplicate while both limits are full.
++  const rowsBefore = rows(store);
++  const resent = await service.send({ messageId: firstSent.messageId, _sessionBinding: hot });
++  expect(resent).toMatchObject({ ok: true, error: null, data: { ...firstSent, duplicate: true, autoWake: { ...firstSent.autoWake, checkedAt: expect.any(String) } } });
++  expect(rows(store)).toBe(rowsBefore);
++}, 30_000);
++
++it("a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection", () => {
++  const store = fixture();
++  const sent = Array.from({ length: SENDER_LIMIT }, (_, index) => sendNew(store, hot, 1000 + index));
++  expect(receipts(store, hot)).toBe(SENDER_LIMIT);
++  expect(store.submitPrepared(hot, sent[0]!.messageId, 5000)).toEqual({ ...sent[0], duplicate: true, autoWake: { ...sent[0]!.autoWake, checkedAt: new Date(5000).toISOString() } });
++  expect(store.submitPrepared(hot, sent[SENDER_LIMIT - 1]!.messageId, 5000)).toEqual({ ...sent[SENDER_LIMIT - 1], duplicate: true, autoWake: { ...sent[SENDER_LIMIT - 1]!.autoWake, checkedAt: new Date(5000).toISOString() } });
++  expect(rows(store)).toBe(SENDER_LIMIT);
++  expect(receipts(store, hot)).toBe(SENDER_LIMIT);
++  for (let index = SENDER_LIMIT; index < MESSAGE_RECEIPT_LIMIT; index++) sendNew(store, { host: "test-host", sessionId: `retention-dup-${index % 3}` }, 6000);
++  expect(receipts(store)).toBe(MESSAGE_RECEIPT_LIMIT);
++  expect(store.submitPrepared(hot, sent[1]!.messageId, 7000)).toEqual({ ...sent[1], duplicate: true, autoWake: { ...sent[1]!.autoWake, checkedAt: new Date(7000).toISOString() } });
++  expect(rows(store)).toBe(MESSAGE_RECEIPT_LIMIT);
++});
++
++it("reports sender scope and the sender's own earliest expiry when sender and global limits are both full", () => {
++  const store = fixture();
++  // Other senders' receipts expire first, so the global earliest differs from the full sender's earliest.
++  for (let index = 0; index < MESSAGE_RECEIPT_LIMIT - SENDER_LIMIT; index++) sendNew(store, { host: "test-host", sessionId: `retention-both-${index % 3}` }, 1000);
++  const pending = store.prepare({ sender: hot, target, body: "prepared below both limits" }, 2000);
++  for (let index = 0; index < SENDER_LIMIT; index++) sendNew(store, hot, 3000 + index);
++  expect(receipts(store)).toBe(MESSAGE_RECEIPT_LIMIT);
++  expect(receipts(store, hot)).toBe(SENDER_LIMIT);
++  const senderRelease = { scope: "sender", earliestReleaseAt: iso(3000 + 2 * H) };
++  expect(earliest(store)).toBe(iso(1000 + 2 * H));
++  const prepareRejected = rejection(() => store.prepare({ sender: hot, target, body: "no draft" }, 4000));
++  expect(prepareRejected.message).toBe("The bounded message receipt store is full for this sender; no draft was created.");
++  expect(prepareRejected.details).toEqual(senderRelease);
++  const sendRejected = rejection(() => store.submitPrepared(hot, pending.messageId, 4000));
++  expect(sendRejected.message).toBe("The bounded message receipt store is full for this sender.");
++  expect(sendRejected.details).toEqual(senderRelease);
++  expect(rejection(() => store.prepare({ sender: other, target, body: "global" }, 4000)).details).toEqual({ scope: "global", earliestReleaseAt: iso(1000 + 2 * H) });
++});
++
++it("byte-limit send rejection carries global details and releases exactly at the earliest record expiry", () => {
++  const store = fixture();
++  const bigBody = "\u0001".repeat(4096);
++  let bigDrafts = 0;
++  for (;;) {
++    try { store.prepare({ sender: { host: "test-host", sessionId: `retention-bytes-${Math.floor(bigDrafts / 90)}` }, target, body: bigBody }, 1000); bigDrafts++; }
++    catch (error) { expect(String(error)).toMatch(/preparation store is full/u); break; }
++  }
++  const tiny = store.prepare({ sender: hot, target, body: "t" }, 5000);
++  const usedBytes = () => Number(scalar(store, "SELECT coalesce(sum(record_bytes), 0) AS value FROM prepared_messages"));
++  // Top up with later drafts until fewer bytes remain than the draft-to-receipt growth of `tiny`.
++  const overhead = Buffer.byteLength(JSON.stringify({ sender: other, target, body: "", ttlSeconds: 3600, messageId: "00000000-0000-0000-0000-000000000000", preparedAt: iso(6000), expiresAt: iso(6000 + 600_000) }), "utf8");
++  let filler = MESSAGE_ID_RECORD_BYTES_LIMIT - usedBytes() - overhead - 5;
++  while (filler > 4096) { store.prepare({ sender: other, target, body: "a".repeat(4096) }, 6000); filler -= 4096 + overhead; }
++  expect(filler).toBeGreaterThan(0);
++  store.prepare({ sender: other, target, body: "a".repeat(filler) }, 6000);
++  expect(MESSAGE_ID_RECORD_BYTES_LIMIT - usedBytes()).toBeLessThan(100);
++  expect(receipts(store)).toBe(0);
++  const releaseAt = 1000 + 600_000;
++  const rejected = rejection(() => store.submitPrepared(hot, tiny.messageId, 7000));
++  expect(rejected.message).toBe("The bounded message receipt store is full.");
++  expect(rejected.details).toEqual({ scope: "global", earliestReleaseAt: iso(releaseAt) });
++  expect(rows(store)).toBe(0);
++  const beforeRelease = rejection(() => store.submitPrepared(hot, tiny.messageId, releaseAt - 1));
++  expect(beforeRelease.details).toEqual({ scope: "global", earliestReleaseAt: iso(releaseAt) });
++  expect(store.submitPrepared(hot, tiny.messageId, releaseAt).duplicate).toBe(false);
++  expect(rows(store)).toBe(1);
++});
++
++it("rolls back the whole ACK when the receipt update fails inside the same transaction", () => {
++  const store = fixture();
++  const sent = sendNew(store, hot, 1000, 86400);
++  const before = receiptExpiry(store, sent.messageId);
++  // Fault injection through the test database only; product code has no test path.
++  store.database.exec(`CREATE TRIGGER retention_fail_receipt BEFORE UPDATE OF expires_at ON prepared_messages
++    BEGIN SELECT RAISE(ABORT, 'injected receipt update failure'); END;`);
++  expect(() => store.acknowledge(target, [sent.messageId], 2000)).toThrow(/injected receipt update failure/u);
++  expect(scalar(store, "SELECT acknowledged_at AS value FROM messages WHERE message_id = ?", sent.messageId)).toBeNull();
++  expect(receiptExpiry(store, sent.messageId)).toBe(before);
++  expect(store.status(hot, sent.messageId, 2001)).toMatchObject({ state: "queued", acknowledgedAt: null });
++  store.database.exec("DROP TRIGGER retention_fail_receipt");
++  expect(store.acknowledge(target, [sent.messageId], 3000)).toBe(1);
++  expect(receiptExpiry(store, sent.messageId)).toBe(iso(3000 + H));
++});

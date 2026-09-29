@@ -1,0 +1,6 @@
+mutant	apply	build	candidate_rc	candidate_summary
+BASELINE	0	0	0	Tests  294 passed | 2 skipped (296)
+M03-F1-global-checked-first	0	0	1	Tests  1 failed | 293 passed | 2 skipped (296)
+M05-F1-capacity-before-duplicate	0	0	1	Tests  2 failed | 292 passed | 2 skipped (296)
+M11-F2-update-after-commit	0	0	1	Tests  1 failed | 293 passed | 2 skipped (296)
+M20-D1-byte-rejection-no-details	0	0	1	Tests  1 failed | 293 passed | 2 skipped (296)

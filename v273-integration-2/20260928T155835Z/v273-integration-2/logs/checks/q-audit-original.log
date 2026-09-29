@@ -1,0 +1,73 @@
+
+ RUN  v5.0.0 [REDACTED-HOME]/agent-governance-suite
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 2 failed) 47233ms
+   × I1 resend of one ID never inserts twice: retained, right after ACK, ACK+1h, message expiry 20ms
+   × I2 at full capacity a resend of an already-sent ID is still a duplicate, not a capacity rejection 272ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I1 resend of one ID never inserts twice: retained, right after ACK, ACK+1h, message expiry
+AssertionError: expected { …(5) } to deeply equal { …(5) }
+
+- Expected
++ Received
+
+@@ -1,10 +1,10 @@
+  {
+    "autoWake": {
+      "authorityEffect": "none",
+      "basisAt": null,
+-     "checkedAt": "1970-01-01T00:00:01.000Z",
++     "checkedAt": "1970-01-01T00:00:02.000Z",
+      "reason": "presence-unknown",
+      "state": "no-live-relay",
+    },
+    "createdAt": "1970-01-01T00:00:01.000Z",
+    "duplicate": true,
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:59:59
+     57|   const exp = Date.parse(sent.expiresAt);
+     58|   // During retention (queued, unacked)
+     59|   expect(store.submitPrepared(hot, sent.messageId, 2000)).toEqual({ ..…
+       |                                                           ^
+     60|   expect(rowsFor(store, sent.messageId)).toBe(1);
+     61|   // Right after ACK
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I2 at full capacity a resend of an already-sent ID is still a duplicate, not a capacity rejection
+AssertionError: expected { …(5) } to deeply equal { …(5) }
+
+- Expected
++ Received
+
+@@ -1,10 +1,10 @@
+  {
+    "autoWake": {
+      "authorityEffect": "none",
+      "basisAt": null,
+-     "checkedAt": "1970-01-01T00:00:01.000Z",
++     "checkedAt": "1970-01-01T00:00:05.000Z",
+      "reason": "presence-unknown",
+      "state": "no-live-relay",
+    },
+    "createdAt": "1970-01-01T00:00:01.000Z",
+    "duplicate": true,
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:90:17
+     88|   expect(receipts(store, hot)).toBe(MESSAGE_SENDER_RECEIPT_LIMIT);
+     89|   const again = store.submitPrepared(hot, ids[0]!.messageId, 5000);
+     90|   expect(again).toEqual({ ...ids[0], duplicate: true });
+       |                 ^
+     91|   expect(allRows(store)).toBe(MESSAGE_SENDER_RECEIPT_LIMIT);
+     92| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 16 passed (18)
+   Start at  15:52:18
+   Duration  47.71s (tests 99%, transform 1%)
+

@@ -1,0 +1,36 @@
+
+ RUN  v5.0.0 [REDACTED-HOME]/agent-governance-suite
+
+ ❯ tests/session-messaging/message-retention.test.ts (15 tests | 1 failed) 8380ms
+   × byte-limit send rejection carries global details and releases exactly at the earliest record expiry 88ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > byte-limit send rejection carries global details and releases exactly at the earliest record expiry
+AssertionError: expected undefined to deeply equal { scope: 'global', …(1) }
+
+- Expected:
+{
+  "earliestReleaseAt": "1970-01-01T00:10:01.000Z",
+  "scope": "global",
+}
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/message-retention.test.ts:329:28
+    327|   const rejected = rejection(() => store.submitPrepared(hot, tiny.mess…
+    328|   expect(rejected.message).toBe("The bounded message receipt store is …
+    329|   expect(rejected.details).toEqual({ scope: "global", earliestReleaseA…
+       |                            ^
+    330|   expect(rows(store)).toBe(0);
+    331|   const beforeRelease = rejection(() => store.submitPrepared(hot, tiny…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 9 passed | 1 skipped (11)
+      Tests  1 failed | 293 passed | 2 skipped (296)
+   Start at  15:56:11
+   Duration  20.79s (tests 95%, transform 3%, import 2%)
+

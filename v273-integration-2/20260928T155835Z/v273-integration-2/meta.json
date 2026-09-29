@@ -1,0 +1,13 @@
+{
+  "task": "AGS 2.7.3 integration stage 2 (Q message receipt retention), 총괄 ca8e3dc4",
+  "integrationBase": "e71b121a5481a0a04302a7f1c12ec3f4522df606",
+  "msgqueue": "74395bf698012a8b2e034e58e3b42d51f53b0b68",
+  "integration": "92b1a0d147d280e511eaf5c23cbbf9d00ac790bf",
+  "integrationTree": "f23b7d8d71ada7a59e8b9dde9b92073e72f14424",
+  "instructionsSha256": "474cdcdb93a26a3bed0c58cc03313b3b47e7c19c654702476cb202efc43a0b75",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v42 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startUtc": "2026-09-28T15:47:35Z",
+  "endUtc": "2026-09-28T15:58:35Z"
+}

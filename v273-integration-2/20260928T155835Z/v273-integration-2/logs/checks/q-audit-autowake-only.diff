@@ -1,0 +1,22 @@
+59c59
+<   expect(store.submitPrepared(hot, sent.messageId, 2000)).toEqual({ ...sent, duplicate: true });
+---
+>   expect(store.submitPrepared(hot, sent.messageId, 2000)).toEqual({ ...sent, duplicate: true, autoWake: { ...sent.autoWake, checkedAt: new Date(2000).toISOString() } });
+63,64c63,64
+<   expect(store.submitPrepared(hot, sent.messageId, 3000)).toEqual({ ...sent, duplicate: true });
+<   expect(store.submitPrepared(hot, sent.messageId, 3000 + H - 1)).toEqual({ ...sent, duplicate: true });
+---
+>   expect(store.submitPrepared(hot, sent.messageId, 3000)).toEqual({ ...sent, duplicate: true, autoWake: { ...sent.autoWake, checkedAt: new Date(3000).toISOString() } });
+>   expect(store.submitPrepared(hot, sent.messageId, 3000 + H - 1)).toEqual({ ...sent, duplicate: true, autoWake: { ...sent.autoWake, checkedAt: new Date(3000 + H - 1).toISOString() } });
+76c76
+<   expect(store.submitPrepared(hot, late.messageId, lateExp)).toEqual({ ...late, duplicate: true });
+---
+>   expect(store.submitPrepared(hot, late.messageId, lateExp)).toEqual({ ...late, duplicate: true, autoWake: { ...late.autoWake, checkedAt: new Date(lateExp).toISOString() } });
+78c78
+<   expect(store.submitPrepared(hot, late.messageId, lateExp + H - 1)).toEqual({ ...late, duplicate: true });
+---
+>   expect(store.submitPrepared(hot, late.messageId, lateExp + H - 1)).toEqual({ ...late, duplicate: true, autoWake: { ...late.autoWake, checkedAt: new Date(lateExp + H - 1).toISOString() } });
+90c90
+<   expect(again).toEqual({ ...ids[0], duplicate: true });
+---
+>   expect(again).toEqual({ ...ids[0], duplicate: true, autoWake: { ...ids[0]!.autoWake, checkedAt: new Date(5000).toISOString() } });

@@ -1,0 +1,1660 @@
+diff --git a/mcp-server/src/host-input-adapter.ts b/mcp-server/src/host-input-adapter.ts
+index a614fb7c..bb845435 100644
+--- a/mcp-server/src/host-input-adapter.ts
++++ b/mcp-server/src/host-input-adapter.ts
+@@ -115,15 +115,19 @@ function codexQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: st
+   }
+ }
+ 
+-export function hostDeliveryProfile(host: SupportedHookHost, environment: NodeJS.ProcessEnv = process.env,
+-  diagnose: (reason: string) => void = (reason) => { console.error(`[agent-governance-suite] Codex queue settings: ${reason}; using codex-deferred.`); }): {
++export interface HostDeliveryProfile {
+   transport: SessionMessageTransport;
+   capabilities: DeliveryCapabilities;
+-} {
++  /** The host's prompt hook can stop a wake-only prompt before a model request (a verified empty or retired wake). */
++  blocksEmptyWakePrompt: boolean;
++}
++
++export function hostDeliveryProfile(host: SupportedHookHost, environment: NodeJS.ProcessEnv = process.env,
++  diagnose: (reason: string) => void = (reason) => { console.error(`[agent-governance-suite] Codex queue settings: ${reason}; using codex-deferred.`); }): HostDeliveryProfile {
+   const transport: SessionMessageTransport = host === "claude-code"
+     ? "claude-inbox"
+     : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
+-  return { transport, capabilities: transportDeliveryCapabilities(transport) };
++  return { transport, capabilities: transportDeliveryCapabilities(transport), blocksEmptyWakePrompt: host === "codex" };
+ }
+ 
+ /** Only the observed, local Codex app wait surface is recognized here. */
+diff --git a/mcp-server/src/schema-validator.ts b/mcp-server/src/schema-validator.ts
+index 6b7aa1b3..b3610e1e 100644
+--- a/mcp-server/src/schema-validator.ts
++++ b/mcp-server/src/schema-validator.ts
+@@ -31,6 +31,7 @@ import {
+   type PrepareSessionMessageRequestV1,
+   type AcknowledgeSessionMessagesRequestV1,
+   type GetSessionMessageStatusRequestV1,
++  type SessionAutoWakeOutlookV1,
+   type PrepareStateCleanupRequestV1,
+   type SuppressContextRestoreRequestV1,
+   type PluginUpdateNoticeV1,
+@@ -97,6 +98,7 @@ export const contractSchemas = {
+   prepareSessionMessageRequest: loadSchema("prepare-session-message-request.v1.schema.json"),
+   acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
+   getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
++  sessionAutoWakeOutlook: loadSchema("session-auto-wake-outlook.v1.schema.json"),
+   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
+   executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
+   stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
+@@ -282,6 +284,10 @@ export class ContractValidator {
+     return this.assert<GetSessionMessageStatusRequestV1>("getSessionMessageStatusRequest", value);
+   }
+ 
++  sessionAutoWakeOutlook(value: unknown): SessionAutoWakeOutlookV1 {
++    return this.assert<SessionAutoWakeOutlookV1>("sessionAutoWakeOutlook", value);
++  }
++
+   prepareStateCleanupRequest(value: unknown): PrepareStateCleanupRequestV1 {
+     return this.assert<PrepareStateCleanupRequestV1>("prepareStateCleanupRequest", value);
+   }
+diff --git a/mcp-server/src/server.ts b/mcp-server/src/server.ts
+index c274945e..a106c942 100644
+--- a/mcp-server/src/server.ts
++++ b/mcp-server/src/server.ts
+@@ -1,4 +1,4 @@
+-import { existsSync } from "node:fs";
++import { existsSync, readFileSync } from "node:fs";
+ 
+ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+@@ -27,7 +27,7 @@ import { StateCleanupService } from "./state-cleanup-service.js";
+ import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from "./korean-prose-glossary.js";
+ import { ContractValidator } from "./schema-validator.js";
+ import { SessionMessageService, type SessionPresenceList } from "./session-message-service.js";
+-import type { SessionPresence } from "./session-message-store.js";
++import type { SessionPresenceView } from "./session-message-store.js";
+ import { type TrustService } from "./trust-service.js";
+ 
+ type ObjectSchema = Record<string, unknown> & {
+@@ -217,7 +217,7 @@ function apiError(code: ErrorCode, message: string): ApiResultV1<never> {
+  * Session board tools are an interface over the skill's board store. The PreToolUse hook writes the line with the
+  * host's session identity and binds it here; this side validates the call and reads the board back.
+  */
+-function unknownPresence(host: string, sessionId: string): SessionPresence {
++function unknownPresence(host: string, sessionId: string, brokerAnswered: boolean): SessionPresenceView {
+   return {
+     host,
+     sessionId,
+@@ -235,13 +235,16 @@ function unknownPresence(host: string, sessionId: string): SessionPresence {
+     endedAt: null,
+     endReason: null,
+     state: "unknown",
++    // Advisory only; null when the broker could not be asked.
++    autoWake: brokerAnswered ? { state: "no-live-relay", reason: "presence-unknown", basisAt: null,
++      checkedAt: new Date().toISOString(), authorityEffect: "none" } : null,
+   };
+ }
+ 
+ function withPresence<T extends { host: string; sessionId: string }>(
+   sessions: T[],
+   presence: ApiResultV1<SessionPresenceList>,
+-): Array<T & { presence: SessionPresence }> {
++): Array<T & { presence: SessionPresenceView }> {
+   const bySession = new Map(
+     presence.ok && presence.data
+       ? presence.data.sessions.map((item) => [`${item.host}\u0000${item.sessionId}`, item])
+@@ -249,7 +252,7 @@ function withPresence<T extends { host: string; sessionId: string }>(
+   );
+   return sessions.map((session) => ({
+     ...session,
+-    presence: bySession.get(`${session.host}\u0000${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId),
++    presence: bySession.get(`${session.host}\u0000${session.sessionId}`) ?? unknownPresence(session.host, session.sessionId, presence.ok),
+   }));
+ }
+ 
+@@ -325,16 +328,14 @@ export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "defaul
+   return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
+ }
+ 
+-/**
+- * Session instructions for Claude Code, which places MCP server instructions in
+- * its system prompt once per session. Claude Code sessions start implementing
+- * as soon as a request arrives, so this asks for an intake-time failure-impact
+- * classification before the first action. The default profile advertises none.
+- */
+-export const ANTHROPIC_SERVER_INSTRUCTIONS = "agent-governance-suite 접수 규칙: 사용자 요청을 받을 때마다, 파일을 고치거나 명령을 실행하기 전에 이 요청이 잘못 수행됐을 때의 실패 영향을 한 줄로 분류한다(낮음 또는 높음). CI·CD, 릴리스·배포, 권한·신뢰 경계, 전역 설정, 데이터·스키마, 공개 저장소의 기본 브랜치처럼 실패 영향이 큰 작업이면 구현을 시작하기 전에 Skill 도구로 /agent-governance-suite:orchestrator를 호출해 이 요청에 필요한 전문 스킬 단계와 생략할 단계를 이유와 함께 정하고, 정한 단계를 그 시점에 실제로 호출한다. 실패 영향이 큰 작업에서 orchestrator를 건너뛰는 경우는 사용자가 특정 스킬을 지정했을 때뿐이며, 그때는 그 스킬을 바로 호출한다. 실패 영향이 낮으면 그 이유를 한 줄로 밝히고 진행하되, 요청이 코드를 작성·수정·리팩터링·설계하거나 라이브러리·의존성을 고르는 작업이면 코드를 쓰거나 파일을 고치기 전에 Skill 도구로 /agent-governance-suite:ponytail을 호출한다. 요청의 범위나 완료 조건이 불명확하면 ponytail보다 먼저 확정한다. 코드 검토·감사·검증·완료 판정, 코드 설명·조사만 하는 요청, 코딩이 아닌 요청(일반 지식, 문서, 번역, 요약), 검토·감사를 맡은 서브에이전트에서는 ponytail을 호출하지 않는다.";
++/** Both hosts receive the selection policy from the shared skill, not a second policy copy. */
++const intake = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8")
++  .match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1];
++if (!intake) throw new Error("Shared skill intake instructions are missing.");
++export const SKILL_INTAKE_SERVER_INSTRUCTIONS = `agent-governance-suite 접수 안내: 다음은 skills/orchestrator/SKILL.md의 공통 원본이다. 적용되는 전문 스킬을 호스트가 제공하는 설치된 스킬 호출 방식으로 실행한다.\n\n${intake}\n\n여러 전문 단계를 연결할 때 references/entry-details.md, MCP 실행·실패 처리는 references/mcp-execution.md를 따른다.`;
+ 
+-export function serverInstructions(profile: ToolSchemaProfile = "default"): string | undefined {
+-  return profile === "anthropic" ? `${ANTHROPIC_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}` : SESSION_MESSAGE_SERVER_INSTRUCTIONS;
++export function serverInstructions(): string {
++  return `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
+ }
+ 
+ export const SESSION_MESSAGE_SERVER_INSTRUCTIONS = "세션 메시지는 prepare_session_message로 대상·본문·TTL을 고정하고 시스템이 발급한 messageId를 받은 뒤 send_session_message(messageId)로 전송한다. ID를 직접 만들거나 send에 내용을 다시 넣지 않는다. 전송 결과가 불명확하면 받은 같은 ID로 status를 조회하거나 send를 재시도한다. unknown ID는 이전 전송 완료나 기록 정리 가능성이 있으므로 저장한 영수증과 대조한다. 새 prepare는 새 전송 의도에만 사용하며 불명확한 기존 전송을 무조건 다시 준비하지 않는다. ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다.";
+@@ -358,10 +359,9 @@ export function createMcpServer(
+   sessionMessages: SessionMessageService = new SessionMessageService(),
+   trust: TrustService | null = null,
+ ): Server {
+-  const instructions = serverInstructions(toolSchemaProfile);
+   const server = new Server(
+     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
+-    { capabilities: { tools: {} }, ...(instructions === undefined ? {} : { instructions }) },
++    { capabilities: { tools: {} }, instructions: serverInstructions() },
+   );
+ 
+   const contractDocuments = Object.values(contractSchemas) as Array<Record<string, unknown>>;
+@@ -521,7 +521,7 @@ export function createMcpServer(
+       },
+       {
+         name: "list_session_status",
+-        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs.",
++        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
+         inputSchema: contractSchemas.listSessionStatusRequest,
+         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+       },
+@@ -533,7 +533,7 @@ export function createMcpServer(
+       },
+       {
+         name: "send_session_message",
+-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
++        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+         inputSchema: contractSchemas.sendSessionMessageRequest,
+         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+       },
+@@ -545,7 +545,7 @@ export function createMcpServer(
+       },
+       {
+         name: "get_session_message_status",
+-        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend.",
++        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend. Unacknowledged queue rows include the advisory autoWake recipient wake outlook with its basis time; it is not delivery, completion or permission evidence. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
+         inputSchema: contractSchemas.getSessionMessageStatusRequest,
+         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+       },
+diff --git a/mcp-server/src/session-message-broker.ts b/mcp-server/src/session-message-broker.ts
+index 1c73eae7..a7bd8289 100644
+--- a/mcp-server/src/session-message-broker.ts
++++ b/mcp-server/src/session-message-broker.ts
+@@ -269,7 +269,8 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
+         }) && presence.state === "online" && presence.instanceId === binding.instanceId) binding.wakeObservedAt = Date.now();
+         for (const key of keys) runtime.wakes.delete(key);
+       }
+-      return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null };
++      // retired marks a verified arrival of an attempt the liveness rule already retired; it authorizes no claim.
++      return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null, ...(result.retired ? { retired: true } : {}) };
+     }
+     case "observe-native-input": {
+       peerWaitRuntime(store).policy.reset(identity(payload.target));
+diff --git a/mcp-server/src/session-message-hook.ts b/mcp-server/src/session-message-hook.ts
+index 34e9d471..7bf1e8f0 100644
+--- a/mcp-server/src/session-message-hook.ts
++++ b/mcp-server/src/session-message-hook.ts
+@@ -196,16 +196,21 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
+   let messages: SessionMessage[] = [];
+   if (observation.kind === "user-input") {
+     if (observation.wakeOnly && observation.wakeCandidates?.length && supportsInjection(profile.capabilities, "peer-wake")) {
+-      const result = await sessionMessageRequest<{ recognized: boolean; messages: SessionMessage[]; managed: boolean }>("claim-host-wake", {
++      const result = await sessionMessageRequest<{ recognized: boolean; messages: SessionMessage[]; managed: boolean; retired?: boolean }>("claim-host-wake", {
+         ...limits,
+         observation,
+         sourceReceiptId: recordWakeHookObservation(observation),
+       }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
+       // UserPromptSubmit blocks before a model request. An empty/unavailable
+       // claim alone cannot discard input: require a verified current managed wake.
+-      if (host === "codex" && result.recognized && result.managed === true && result.messages.length === 0) {
++      if (profile.blocksEmptyWakePrompt && result.recognized && result.managed === true && result.messages.length === 0) {
+         return { decision: "block", reason: "No peer message is available for this verified wake notification." };
+       }
++      // A verified marker of an attempt already retired by the liveness rule is a stale duplicate: it claims no
++      // body, and current bodies have their own wake. Stop the empty model turn; the host still shows the marker.
++      if (profile.blocksEmptyWakePrompt && !result.recognized && result.retired === true && result.messages.length === 0) {
++        return { decision: "block", reason: "This wake notification was already retired; no peer message is attached." };
++      }
+       if (result.recognized) messages = result.messages;
+       else await sessionMessageRequest("observe-native-input", { target }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
+     } else if (!observation.wakeOnly) {
+diff --git a/mcp-server/src/session-message-service.ts b/mcp-server/src/session-message-service.ts
+index c023f562..16ac7bae 100644
+--- a/mcp-server/src/session-message-service.ts
++++ b/mcp-server/src/session-message-service.ts
+@@ -1,10 +1,10 @@
+ import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
+ import { BrokerRequestRejected, sessionMessageRequest } from "./session-message-client.js";
+-import type { SessionPresence } from "./session-message-store.js";
++import type { SessionPresenceView } from "./session-message-store.js";
+ import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
+ 
+ export interface SessionPresenceList {
+-  sessions: SessionPresence[];
++  sessions: SessionPresenceView[];
+ }
+ 
+ function ok<T>(data: T): ApiResultV1<T> {
+@@ -104,6 +104,7 @@ export class SessionMessageService {
+       return ok({ sessions: data.sessions.map((session) => ({
+         ...session,
+         deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
++        autoWake: session.autoWake ?? null,
+       })) });
+     } catch (error) {
+       return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "Session presence is unavailable.");
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index efffd7dc..b29b89c0 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -6,6 +6,7 @@ import { DatabaseSync } from "node:sqlite";
+ import { SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
+ import { isWakeHookObservation, verifyHistoricalWakeObservation, wakeBackoffDelay, type HistoricalWakeEvidence, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
+ import type { DeliveryCapabilities, InputObservation, InputObservationKind } from "./input-observation.js";
++import type { SessionAutoWakeOutlookV1 } from "../../contracts/types.js";
+ 
+ export const MESSAGE_BODY_MAX_BYTES = SESSION_MESSAGE_BODY_MAX_BYTES;
+ export const MESSAGE_TTL_DEFAULT_SECONDS = 3600;
+@@ -24,6 +25,12 @@ const CLAIM_LEASE_BASE_MS = 120_000;
+ const CLAIM_LEASE_MAX_MS = 30 * 60_000;
+ const RELAY_LEASE_MS = 15_000;
+ export const WAKE_TTL_MS = 60 * 60_000;
++/** Covers hook timeout, broker restart and receipt TTL after the injection expiry, and equals the longest retry backoff. */
++export const WAKE_RETIRE_GRACE_MS = 10 * 60_000;
++const MESSAGE_SCHEMA_VERSION = 1;
++const ACTIVE_WAKE_STATES = "('reserved', 'started', 'submitted', 'unknown')";
++const WAKE_STATE_CHECK = "CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted', 'expired-unobserved'))";
++const WAKE_COPY_COLUMNS = "nonce_digest, host, session_id, expires_at, consumed_at, state, nonce, instance_id, birth_generation, transport, relay_id, attempt_id, dispatch_epoch, retry_not_before, retry_count, started_at, outcome_at, observed_at, late_observed_at";
+ export const PRESENCE_LEASE_MS = 20_000;
+ const CLAIM_MAX_MESSAGES = 10;
+ 
+@@ -65,6 +72,9 @@ export interface SessionPresence {
+   state: SessionPresenceState;
+ }
+ 
++/** Board and service view; autoWake is absent or null only when a previous broker did not report it. */
++export type SessionPresenceView = SessionPresence & { autoWake?: SessionAutoWakeOutlookV1 | null };
++
+ function iso(milliseconds: number): string {
+   return new Date(milliseconds).toISOString();
+ }
+@@ -117,7 +127,7 @@ export interface WakeReservation {
+   dispatch: boolean;
+   attempt: WakeAttempt | null;
+ }
+-export type ManagedWakeState = "reserved" | "started" | "submitted" | "unknown" | "observed" | "not-submitted";
++export type ManagedWakeState = "reserved" | "started" | "submitted" | "unknown" | "observed" | "not-submitted" | "expired-unobserved";
+ 
+ export interface MessageCapacityDetails {
+   scope: "sender" | "global";
+@@ -147,6 +157,11 @@ export class SessionMessageStore {
+     if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 0o700 });
+     this.database = new DatabaseSync(databasePath);
+     this.database.exec("PRAGMA busy_timeout = 5000;");
++    const storedVersion = (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
++    if (storedVersion > MESSAGE_SCHEMA_VERSION) {
++      this.database.close();
++      throw new Error(`The session message database schema ${storedVersion} is newer than this broker supports.`);
++    }
+     if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
+     this.database.exec(`CREATE TABLE IF NOT EXISTS messages (
+       message_id TEXT PRIMARY KEY,
+@@ -207,6 +222,8 @@ export class SessionMessageStore {
+       ON session_presence (host, session_id, started_at DESC);`);
+     this.database.exec("BEGIN IMMEDIATE");
+     try {
++      const version = (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
++      if (version > MESSAGE_SCHEMA_VERSION) throw new Error(`The session message database schema ${version} is newer than this broker supports.`);
+       this.database.exec(`CREATE TABLE IF NOT EXISTS prepared_messages (
+         message_id TEXT PRIMARY KEY,
+         sender_host TEXT NOT NULL,
+@@ -255,8 +272,30 @@ export class SessionMessageStore {
+       ]) {
+         if (!wakeColumns.some((column) => column.name === name)) this.database.exec(`ALTER TABLE wake_nonces ADD COLUMN ${name} ${definition};`);
+       }
++      // Schema 1 admits the terminal expired-unobserved state. SQLite cannot widen a CHECK in place, so the
++      // table is rebuilt once in this transaction, keeping every row, rowid and column value.
++      if (version < 1) {
++        this.database.exec(`CREATE TABLE wake_nonces_next (
++          nonce_digest TEXT PRIMARY KEY, host TEXT NOT NULL, session_id TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT,
++          state TEXT NOT NULL DEFAULT 'legacy' ${WAKE_STATE_CHECK},
++          nonce TEXT, instance_id TEXT, birth_generation TEXT, transport TEXT, relay_id TEXT, attempt_id TEXT,
++          dispatch_epoch INTEGER NOT NULL DEFAULT 0, retry_not_before TEXT, retry_count INTEGER NOT NULL DEFAULT 0,
++          started_at TEXT, outcome_at TEXT, observed_at TEXT, late_observed_at TEXT, retired_at TEXT
++        ) STRICT;
++        INSERT INTO wake_nonces_next (rowid, ${WAKE_COPY_COLUMNS}) SELECT rowid, ${WAKE_COPY_COLUMNS} FROM wake_nonces;
++        DROP TABLE wake_nonces;`);
++        this.database.exec("ALTER TABLE wake_nonces_next RENAME TO wake_nonces;");
++      }
+       this.database.exec(`CREATE UNIQUE INDEX IF NOT EXISTS wake_active_target ON wake_nonces (host, session_id)
+-        WHERE state IN ('reserved', 'started', 'submitted', 'unknown');`);
++        WHERE state IN ${ACTIVE_WAKE_STATES};`);
++      // Last session-scoped hook or tool activity; retirement evidence only, never delivery evidence.
++      this.database.exec(`CREATE TABLE IF NOT EXISTS session_activity (
++        host TEXT NOT NULL,
++        session_id TEXT NOT NULL,
++        active_at TEXT NOT NULL,
++        PRIMARY KEY (host, session_id)
++      ) STRICT;`);
++      if (version < MESSAGE_SCHEMA_VERSION) this.database.exec(`PRAGMA user_version = ${MESSAGE_SCHEMA_VERSION};`);
+       this.database.exec("COMMIT");
+     } catch (error) {
+       this.database.exec("ROLLBACK");
+@@ -274,16 +313,40 @@ export class SessionMessageStore {
+     this.database.prepare("DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)").run(now, acknowledgedBefore);
+     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
+     this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
+-    this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted')
+-      AND coalesce(consumed_at, observed_at, outcome_at) <= ?
++    this.retireUnobservedWakes(nowMs);
++    this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted', 'expired-unobserved')
++      AND coalesce(consumed_at, observed_at, retired_at, outcome_at) <= ?
+       AND (retry_not_before IS NULL OR retry_not_before <= ?)`).run(acknowledgedBefore, now);
+     this.database.prepare(`DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces
+-      WHERE state IN ('observed', 'not-submitted') AND (retry_not_before IS NULL OR retry_not_before <= ?)
+-      ORDER BY coalesce(consumed_at, observed_at, outcome_at) DESC LIMIT -1 OFFSET ?)`)
++      WHERE state IN ('observed', 'not-submitted', 'expired-unobserved') AND (retry_not_before IS NULL OR retry_not_before <= ?)
++      ORDER BY coalesce(consumed_at, observed_at, retired_at, outcome_at) DESC LIMIT -1 OFFSET ?)`)
+       .run(now, MESSAGE_LIMIT);
+     this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
+   }
+ 
++  /**
++   * Retires an unobserved managed wake only after its injection expiry plus grace, and only with evidence that the
++   * host moved past it: a newer live presence birth, or session activity after the expiry. The row keeps its original
++   * binding, epoch and times; expired-unobserved is neither observation nor delivery. One UPDATE commits it atomically.
++   */
++  private retireUnobservedWakes(nowMs: number): void {
++    const now = iso(nowMs);
++    this.database.prepare(`UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ?
++      WHERE state IN ${ACTIVE_WAKE_STATES} AND expires_at <= ?
++        AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
++            AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)
++          OR coalesce((SELECT latest.ended_at IS NULL AND latest.lease_until > ? AND latest.started_at > wake_nonces.birth_generation
++            FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id
++            ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 0))`)
++      .run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), now);
++  }
++
++  private recordActivity(target: SessionIdentity, nowMs: number): void {
++    this.database.prepare(`INSERT INTO session_activity (host, session_id, active_at) VALUES (?, ?, ?)
++      ON CONFLICT (host, session_id) DO UPDATE SET active_at = max(active_at, excluded.active_at)`)
++      .run(target.host, target.sessionId, iso(nowMs));
++  }
++
+   /** Sender quota first, then the global pool; call inside the caller's transaction after prune. */
+   private assertReceiptCapacity(sender: SessionIdentity, suffix: string): void {
+     const owned = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?")
+@@ -327,7 +390,9 @@ export class SessionMessageStore {
+   }
+ 
+   /** ID ownership, capacity, queue insert and first receipt share one transaction. */
+-  submitPrepared(sender: SessionIdentity, messageId: string, nowMs = Date.now()): { messageId: string; createdAt: string; expiresAt: string; duplicate: boolean } {
++  submitPrepared(sender: SessionIdentity, messageId: string, nowMs = Date.now()): {
++    messageId: string; createdAt: string; expiresAt: string; duplicate: boolean; autoWake: SessionAutoWakeOutlookV1;
++  } {
+     boundedIdentity(sender);
+     this.database.exec("BEGIN IMMEDIATE");
+     try {
+@@ -335,13 +400,15 @@ export class SessionMessageStore {
+       const row = this.database.prepare("SELECT * FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?")
+         .get(messageId, sender.host, sender.sessionId, iso(nowMs)) as Record<string, unknown> | undefined;
+       if (!row) throw new Error("Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent.");
++      const target = { host: String(row.target_host), sessionId: String(row.target_session_id) };
+       if (row.receipt !== null) {
+         const receipt = JSON.parse(String(row.receipt)) as { messageId: string; createdAt: string; expiresAt: string };
++        const autoWake = this.autoWakeOutlook(target, nowMs);
+         this.database.exec("COMMIT");
+-        return { ...receipt, duplicate: true };
++        return { ...receipt, duplicate: true, autoWake };
+       }
+       this.assertReceiptCapacity(sender, ".");
+-      const receipt = this.send({ messageId, sender, target: { host: String(row.target_host), sessionId: String(row.target_session_id) }, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
++      const receipt = this.send({ messageId, sender, target, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+       const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
+       const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);
+       const recordBytes = Buffer.byteLength(JSON.stringify({ messageId, sender, target: { host: row.target_host, sessionId: row.target_session_id }, preparedAt: row.prepared_at, ttlSeconds: row.ttl_seconds, receipt: receiptJson, expiresAt }), "utf8");
+@@ -349,8 +416,9 @@ export class SessionMessageStore {
+       if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new MessageCapacityError("The bounded message receipt store is full.", { scope: "global", earliestReleaseAt: bytes.earliest });
+       this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?")
+         .run(receiptJson, expiresAt, recordBytes, messageId);
++      const autoWake = this.autoWakeOutlook(target, nowMs);
+       this.database.exec("COMMIT");
+-      return receipt;
++      return { ...receipt, autoWake };
+     } catch (error) {
+       this.database.exec("ROLLBACK");
+       throw error;
+@@ -460,6 +528,7 @@ export class SessionMessageStore {
+     try {
+       const claimed = this.claimLocked(target, nowMs, limits);
+       if (claimed.length > 0) this.consumePendingWakes(target, nowMs);
++      this.recordActivity(target, nowMs);
+       this.database.exec("COMMIT");
+       return claimed;
+     } catch (error) {
+@@ -498,9 +567,14 @@ export class SessionMessageStore {
+ 
+   observeNativeInput(target: SessionIdentity, nowMs = Date.now()): void {
+     boundedIdentity(target);
+-    this.database.prepare(`INSERT INTO input_observations (host, session_id, deferred_tool_claim, observed_at)
+-      VALUES (?, ?, 1, ?) ON CONFLICT (host, session_id) DO UPDATE SET deferred_tool_claim = 1, observed_at = excluded.observed_at`)
+-      .run(target.host, target.sessionId, iso(nowMs));
++    this.database.exec("BEGIN IMMEDIATE");
++    try {
++      this.database.prepare(`INSERT INTO input_observations (host, session_id, deferred_tool_claim, observed_at)
++        VALUES (?, ?, 1, ?) ON CONFLICT (host, session_id) DO UPDATE SET deferred_tool_claim = 1, observed_at = excluded.observed_at`)
++        .run(target.host, target.sessionId, iso(nowMs));
++      this.recordActivity(target, nowMs);
++      this.database.exec("COMMIT");
++    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+   }
+ 
+   claimDeferred(target: SessionIdentity, nowMs = Date.now(), limits: ClaimLimits = {}): SessionMessage[] {
+@@ -512,6 +586,7 @@ export class SessionMessageStore {
+         WHERE host = ? AND session_id = ? AND deferred_tool_claim = 1`).run(target.host, target.sessionId).changes === 1;
+       const messages = skipped ? [] : this.claimLocked(target, nowMs, limits);
+       if (messages.length > 0) this.consumePendingWakes(target, nowMs);
++      this.recordActivity(target, nowMs);
+       this.database.exec("COMMIT");
+       return messages;
+     } catch (error) {
+@@ -528,6 +603,7 @@ export class SessionMessageStore {
+       this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
+       const messages = this.claimLocked(target, nowMs, limits);
+       if (messages.length > 0) this.consumePendingWakes(target, nowMs);
++      this.recordActivity(target, nowMs);
+       this.database.exec("COMMIT");
+       return messages;
+     } catch (error) {
+@@ -536,9 +612,14 @@ export class SessionMessageStore {
+     }
+   }
+ 
+-  clearDeferred(target: SessionIdentity): void {
++  clearDeferred(target: SessionIdentity, nowMs = Date.now()): void {
+     boundedIdentity(target);
+-    this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
++    this.database.exec("BEGIN IMMEDIATE");
++    try {
++      this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
++      this.recordActivity(target, nowMs);
++      this.database.exec("COMMIT");
++    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+   }
+ 
+   acknowledge(target: SessionIdentity, messageIds: string[], nowMs = Date.now()): number {
+@@ -558,6 +639,7 @@ export class SessionMessageStore {
+         receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
+         count++;
+       }
++      this.recordActivity(target, nowMs);
+       this.database.exec("COMMIT");
+       return count;
+     } catch (error) {
+@@ -591,6 +673,7 @@ export class SessionMessageStore {
+       firstDeliveredAt: row.first_delivered_at ?? null,
+       state: row.acknowledged_at ? "acknowledged" : row.claimed_at ? "delivered" : "queued",
+       wake: this.managedWakeStatus({ host: String(row.target_host), sessionId: String(row.target_session_id) }, nowMs),
++      autoWake: row.acknowledged_at ? null : this.autoWakeOutlook({ host: String(row.target_host), sessionId: String(row.target_session_id) }, nowMs),
+     };
+   }
+ 
+@@ -607,11 +690,43 @@ export class SessionMessageStore {
+     return { related: rows.length > 0, fingerprint: createHash("sha256").update(JSON.stringify(rows)).digest("hex") };
+   }
+ 
+-  liveRelay(target: SessionIdentity, transport: string, nowMs = Date.now()): { relayId: string; pid: number; parentPid: number } | null {
++  liveRelay(target: SessionIdentity, transport: string, nowMs = Date.now()): { relayId: string; pid: number; parentPid: number; updatedAt: string } | null {
+     boundedIdentity(target);
+-    const row = this.database.prepare("SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lease_until > ?")
+-      .get(target.host, target.sessionId, transport, iso(nowMs)) as { relay_id: string; pid: number; parent_pid: number } | undefined;
+-    return row ? { relayId: row.relay_id, pid: row.pid, parentPid: row.parent_pid } : null;
++    const row = this.database.prepare("SELECT relay_id, pid, parent_pid, updated_at FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lease_until > ?")
++      .get(target.host, target.sessionId, transport, iso(nowMs)) as { relay_id: string; pid: number; parent_pid: number; updated_at: string } | undefined;
++    return row ? { relayId: row.relay_id, pid: row.pid, parentPid: row.parent_pid, updatedAt: row.updated_at } : null;
++  }
++
++  /**
++   * Advisory view of the recipient's idle auto-wake path, read from stored presence, relay lease and wake rows.
++   * Callers prune first so due retirements are visible. It grants nothing and proves no delivery.
++   */
++  autoWakeOutlook(target: SessionIdentity, nowMs = Date.now()): SessionAutoWakeOutlookV1 {
++    boundedIdentity(target);
++    const now = iso(nowMs);
++    const outlook = (state: SessionAutoWakeOutlookV1["state"], reason: SessionAutoWakeOutlookV1["reason"], basisAt: unknown): SessionAutoWakeOutlookV1 =>
++      ({ state, reason, basisAt: basisAt === null || basisAt === undefined ? null : String(basisAt), checkedAt: now, authorityEffect: "none" });
++    const presence = this.presence(target, nowMs);
++    if (presence.state === "unknown") return outlook("no-live-relay", "presence-unknown", null);
++    const capabilities = presence.deliveryCapabilities;
++    if (capabilities.idleWake === "none" || !capabilities.supportedInjection.includes("peer-wake")) return outlook("unsupported", "no-idle-wake", presence.startedAt);
++    if (presence.state !== "online") return outlook("no-live-relay", "presence-not-online", presence.endedAt ?? presence.leaseUntil);
++    const relay = this.liveRelay(target, presence.transport!, nowMs);
++    if (!relay) return outlook("no-live-relay", "relay-lease-missing", presence.heartbeatAt);
++    const active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state IN ${ACTIVE_WAKE_STATES}`)
++      .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
++    if (active) {
++      const current = active.instance_id === presence.instanceId && active.birth_generation === presence.startedAt && active.transport === presence.transport;
++      return current && String(active.expires_at) > now ? outlook("available", "wake-in-flight", active.expires_at)
++        : outlook("latched", "wake-unobserved", active.expires_at);
++    }
++    const legacy = this.database.prepare(`SELECT expires_at FROM wake_nonces WHERE host = ? AND session_id = ?
++      AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ? ORDER BY expires_at DESC LIMIT 1`).get(target.host, target.sessionId, now) as { expires_at: string } | undefined;
++    if (legacy) return outlook("available", "wake-in-flight", legacy.expires_at);
++    const cooldown = this.database.prepare(`SELECT max(retry_not_before) AS until FROM wake_nonces WHERE host = ? AND session_id = ?
++      AND state = 'not-submitted' AND retry_not_before > ?`).get(target.host, target.sessionId, now) as { until: string | null };
++    if (cooldown.until !== null) return outlook("available", "retry-backoff", cooldown.until);
++    return outlook("available", "relay-live", relay.updatedAt);
+   }
+ 
+   pendingCount(target: SessionIdentity, nowMs = Date.now()): number {
+@@ -866,10 +981,12 @@ export class SessionMessageStore {
+       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
+     if (!row) return null;
+     const active = ["reserved", "started", "submitted", "unknown"].includes(String(row.state));
+-    return { state: row.state, observation: row.state === "observed" ? "observed"
++    const retired = row.state === "expired-unobserved";
++    return { state: row.state, observation: row.state === "observed" ? "observed" : retired ? "expired-unobserved"
+       : row.late_observed_at !== null ? "unknown" : active && String(row.expires_at) <= iso(nowMs) ? "observation-overdue"
+       : active ? "pending" : "not-submitted",
+-      deliveryState: row.state === "started" || row.state === "unknown" ? "unknown" : row.state,
++      deliveryState: row.state === "started" || row.state === "unknown" || retired ? "unknown" : row.state,
++      retiredAt: row.retired_at,
+       instanceId: row.instance_id, generation: row.birth_generation, attemptId: row.attempt_id,
+       dispatchEpoch: row.dispatch_epoch, retryNotBefore: row.retry_not_before, expiresAt: row.expires_at,
+       observedAt: row.observed_at, lateObservedAt: row.late_observed_at };
+@@ -921,7 +1038,7 @@ export class SessionMessageStore {
+ 
+   /** Verified arrival retires its attempt; only current bindings may claim bodies in the same transaction. */
+   claimHostWake(target: SessionIdentity, observation: InputObservation, receiptId: string, reader: WakeHookObservationReader | undefined, nowMs = Date.now(), limits: ClaimLimits = {}): {
+-    recognized: boolean; messages: SessionMessage[]; binding: WakeAttempt | null;
++    recognized: boolean; messages: SessionMessage[]; binding: WakeAttempt | null; retired?: true;
+   } {
+     boundedIdentity(target);
+     const rejected = { recognized: false, messages: [], binding: null };
+@@ -932,17 +1049,25 @@ export class SessionMessageStore {
+       if (!reader.verifyObservation(target, observation, receiptId, nowMs)) { this.database.exec("COMMIT"); return rejected; }
+       const rows = digests.map((digest) => this.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?")
+         .get(digest, target.host, target.sessionId) as Record<string, unknown> | undefined);
+-      if (rows.some((row) => !row || !["legacy", "started", "submitted", "unknown"].includes(String(row.state)))) {
++      if (rows.some((row) => !row || !["legacy", "started", "submitted", "unknown", "expired-unobserved"].includes(String(row.state)))) {
+         this.database.exec("COMMIT"); return rejected;
+       }
++      this.recordActivity(target, nowMs);
+       const presence = this.presence(target, nowMs);
+-      const valid = rows.every((row) => row!.state === "legacy" ? row!.consumed_at === null && String(row!.expires_at) > iso(nowMs)
++      // A retired attempt stays retired; its verified late arrival is recorded as evidence only and it takes no part
++      // in the decision, so a current marker in the same prompt still claims. Only an all-retired prompt reports retired.
++      this.database.prepare(`UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?)
++        WHERE host = ? AND session_id = ? AND state = 'expired-unobserved' AND nonce_digest IN (SELECT value FROM json_each(?))`)
++        .run(iso(nowMs), target.host, target.sessionId, JSON.stringify(digests));
++      const live = rows.filter((row) => row!.state !== "expired-unobserved");
++      if (live.length === 0) { this.database.exec("COMMIT"); return { ...rejected, retired: true }; }
++      const valid = live.every((row) => row!.state === "legacy" ? row!.consumed_at === null && String(row!.expires_at) > iso(nowMs)
+         : row!.instance_id === presence.instanceId && row!.birth_generation === presence.startedAt
+           && row!.transport === presence.transport && presence.state === "online"
+           && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row!.expires_at) > iso(nowMs));
+       if (!valid) {
+         // Arrival is proven, but it cannot authorize this generation's body claim or resume evidence.
+-        for (const row of rows) if (row!.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
++        for (const row of live) if (row!.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
+           SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?
+           WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`)
+           .run(iso(nowMs), iso(nowMs), iso(nowMs), String(row!.nonce_digest));
+@@ -950,7 +1075,7 @@ export class SessionMessageStore {
+       }
+       const messages = this.claimLocked(target, nowMs, limits);
+       let binding: WakeAttempt | null = null;
+-      for (const row of rows) {
++      for (const row of live) {
+         if (row!.state === "legacy") this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ?").run(iso(nowMs), String(row!.nonce_digest));
+         else {
+           this.database.prepare("UPDATE wake_nonces SET state = 'observed', consumed_at = ?, observed_at = ? WHERE nonce_digest = ?")
+@@ -992,7 +1117,10 @@ export class SessionMessageStore {
+       idle_wake = excluded.idle_wake, collaboration_id = excluded.collaboration_id,
+       workspace_id = excluded.workspace_id, role = excluded.role,
+       started_at = CASE WHEN session_presence.ended_at IS NOT NULL OR session_presence.lease_until <= excluded.heartbeat_at
+-        THEN excluded.started_at ELSE session_presence.started_at END,
++        THEN CASE WHEN excluded.started_at > session_presence.started_at THEN excluded.started_at
++          -- A rebirth in the same millisecond still gets a later, distinct generation.
++          ELSE strftime('%Y-%m-%dT%H:%M:%fZ', session_presence.started_at, '+0.001 seconds') END
++        ELSE session_presence.started_at END,
+       heartbeat_at = excluded.heartbeat_at, lease_until = excluded.lease_until,
+       ended_at = NULL, end_reason = NULL`).run(
+       input.host, input.sessionId, input.instanceId, input.transport, input.wakeVisibility,
+@@ -1058,9 +1186,13 @@ export class SessionMessageStore {
+     };
+   }
+ 
+-  listPresence(nowMs = Date.now()): SessionPresence[] {
++  listPresence(nowMs = Date.now()): SessionPresenceView[] {
++    this.prune(nowMs);
+     const identities = this.database.prepare(`SELECT host, session_id FROM session_presence
+       GROUP BY host, session_id ORDER BY host, session_id`).all() as Array<{ host: string; session_id: string }>;
+-    return identities.map((row) => this.presence({ host: row.host, sessionId: row.session_id }, nowMs));
++    return identities.map((row) => {
++      const target = { host: row.host, sessionId: row.session_id };
++      return { ...this.presence(target, nowMs), autoWake: this.autoWakeOutlook(target, nowMs) };
++    });
+   }
+ }
+diff --git a/tests/mcp/tool-schema-profile.test.ts b/tests/mcp/tool-schema-profile.test.ts
+index 8bbff6ce..4e5a0194 100644
+--- a/tests/mcp/tool-schema-profile.test.ts
++++ b/tests/mcp/tool-schema-profile.test.ts
+@@ -1,4 +1,4 @@
+-import { mkdtemp, rm } from "node:fs/promises";
++import { mkdtemp, readFile, rm } from "node:fs/promises";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { fileURLToPath } from "node:url";
+@@ -13,7 +13,7 @@ import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.
+ import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
+ import { resolveToolSchemaProfile } from "../../mcp-server/src/runtime-config.js";
+ import { ContractValidator, contractSchemas } from "../../mcp-server/src/schema-validator.js";
+-import { ANTHROPIC_SERVER_INSTRUCTIONS, SESSION_MESSAGE_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
++import { SESSION_MESSAGE_SERVER_INSTRUCTIONS, SKILL_INTAKE_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
+ import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
+ import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
+ import { CURRENT_VERSION } from "./version-fixtures.js";
+@@ -190,22 +190,36 @@ describe("MCP tool schema profiles", () => {
+     expect(resolveToolSchemaProfile({ AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE: "anthropic" })).toBe("anthropic");
+   });
+ 
+-  it("advertises intake session instructions only for Anthropic hosts", async () => {
+-    expect(serverInstructions()).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
+-    expect(serverInstructions("default")).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
+-    expect(serverInstructions("anthropic")).toBe(`${ANTHROPIC_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`);
+-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toMatch(/실패 영향/u);
+-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("/agent-governance-suite:orchestrator");
+-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("실패 영향이 낮으면 그 이유를 한 줄로 밝히고 진행하되");
+-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("코드를 쓰거나 파일을 고치기 전에 Skill 도구로 /agent-governance-suite:ponytail을 호출한다.");
+-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("검토·감사를 맡은 서브에이전트에서는 ponytail을 호출하지 않는다.");
++  it("advertises the same host-neutral intake instructions to every schema profile", async () => {
++    const expected = `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
++    expect(serverInstructions()).toBe(expected);
++    // Initialization projects the actual shared criteria, not merely their location.
++    const shared = await readFile(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8");
++    const intake = shared.split("<!-- skill-intake:start -->\n")[1]?.split("\n<!-- skill-intake:end -->")[0];
++    expect(intake).toBeTruthy();
++    expect(SKILL_INTAKE_SERVER_INSTRUCTIONS.split(intake!)).toHaveLength(2);
++    // Outside the projected block, no common sentence may be repeated or pre-stated.
++    const outside = expected.split(intake!).join("\n");
++    const sentences = intake!.split("\n").filter((line) => !line.startsWith("#")).flatMap((line) => line.replace(/^- /u, "").split(/(?<=다\.) /u)).filter((sentence) => sentence.length > 20);
++    expect(sentences.length).toBeGreaterThan(10);
++    for (const sentence of sentences) expect(outside.includes(sentence), sentence).toBe(false);
++    expect(SKILL_INTAKE_SERVER_INSTRUCTIONS).not.toMatch(/실패 영향이 낮으면|BINDING_/u);
++    // Skill IDs are common; native invocation syntax remains in adapters.
++    for (const hostSpecific of [/Skill 도구/u, /\/agent-governance-suite:/u, /(?<![\w$])\$[a-z][a-z0-9-]*/u, /Claude/u, /Codex/u, /Anthropic/iu, /UserPromptSubmit/u]) {
++      expect(expected).not.toMatch(hostSpecific);
++    }
+     const implicit = await connect();
+     const codex = await connect("default");
+     const claude = await connect("anthropic");
+     try {
+-      expect(implicit.getInstructions()).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
+-      expect(codex.getInstructions()).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
+-      expect(claude.getInstructions()).toBe(`${ANTHROPIC_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`);
++      expect(implicit.getInstructions()).toBe(expected);
++      expect(codex.getInstructions()).toBe(expected);
++      expect(claude.getInstructions()).toBe(expected);
++      // Profiles differ only in the advertised schema conversion.
++      const [codexTools, claudeTools] = [(await codex.listTools()).tools, (await claude.listTools()).tools];
++      expect(claudeTools.map((tool) => tool.name)).toEqual(codexTools.map((tool) => tool.name));
++      const withoutSchema = (tools: typeof codexTools) => tools.map((tool) => ({ ...tool, inputSchema: null }));
++      expect(withoutSchema(claudeTools)).toEqual(withoutSchema(codexTools));
+     } finally {
+       await implicit.close();
+       await codex.close();
+@@ -226,7 +240,7 @@ describe("MCP tool schema profiles", () => {
+       const planning = (await client.listTools()).tools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
+       expect(planning).toBeDefined();
+       expect(planning).not.toHaveProperty("oneOf");
+-      expect(client.getInstructions()).toBe(serverInstructions("anthropic"));
++      expect(client.getInstructions()).toBe(serverInstructions());
+     } finally {
+       try { await transport.close(); } finally { await rm(stateDirectory, { recursive: true, force: true }); }
+     }
+diff --git a/tests/session-board/session-board.test.ts b/tests/session-board/session-board.test.ts
+index 2bc44ae3..f3b239bf 100644
+--- a/tests/session-board/session-board.test.ts
++++ b/tests/session-board/session-board.test.ts
+@@ -362,6 +362,7 @@ describe("session board MCP tools", () => {
+       host: "claude-code", sessionId: "missing", instanceId: null, transport: null, wakeVisibility: "none",
+       canWakeSilently: false, deliveryCapabilities: { supportedInjection: [], idleWake: "none" }, collaborationId: null, workspaceId: null, role: null,
+       startedAt: null, heartbeatAt: null, leaseUntil: null, endedAt: null, endReason: null, state: "unknown",
++      autoWake: { state: "no-live-relay", reason: "presence-unknown", basisAt: null, checkedAt: expect.any(String), authorityEffect: "none" },
+     });
+   });
+ });
+diff --git a/tests/session-messaging/fixtures/managed-wake-process.mjs b/tests/session-messaging/fixtures/managed-wake-process.mjs
+index 26b5cba1..e68cc93f 100644
+--- a/tests/session-messaging/fixtures/managed-wake-process.mjs
++++ b/tests/session-messaging/fixtures/managed-wake-process.mjs
+@@ -17,11 +17,25 @@ if (mode === 'migration-failure') {
+   try { new SessionMessageStore(database); process.exit(2); }
+   catch (error) { process.send({ type: 'result', error: error.message }); process.exit(0); }
+ }
++if (mode === 'rebuild-failure') {
++  const original = DatabaseSync.prototype.exec;
++  DatabaseSync.prototype.exec = function (sql) {
++    if (sql.includes('RENAME TO wake_nonces')) throw new Error('fixture rebuild failure');
++    return original.call(this, sql);
++  };
++  try { new SessionMessageStore(database); process.exit(2); }
++  catch (error) { process.send({ type: 'result', error: error.message }); process.exit(0); }
++}
+ const store = new SessionMessageStore(database);
+ process.send({ type: 'ready' });
+ process.once('message', async (input) => {
+   try {
+-    if (mode === 'wake-transition') {
++    if (mode === 'open-only') {
++      process.send({ type: 'result', version: store.database.prepare('PRAGMA user_version').get().user_version });
++    } else if (mode === 'retire-then-exit') {
++      store.prune(input.now);
++      process.exit(21);
++    } else if (mode === 'wake-transition') {
+       const current = { ...target, instanceId: input.instanceId ?? 'instance-2', transport: 'portable', relayId,
+         wakeVisibility: 'silent', canWakeSilently: true, deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } };
+       let result;
+diff --git a/tests/session-messaging/message-lifecycle.test.ts b/tests/session-messaging/message-lifecycle.test.ts
+index 7ec5867d..c014bc7b 100644
+--- a/tests/session-messaging/message-lifecycle.test.ts
++++ b/tests/session-messaging/message-lifecycle.test.ts
+@@ -97,7 +97,8 @@ it("keeps the first immutable receipt and does not enqueue or wake after ACK/pru
+   const store = fixture(); const draft = prepare(store);
+   const first = store.submitPrepared(sender, draft.messageId, 2000);
+   expect(first.expiresAt).toBe(new Date(32_000).toISOString());
+-  expect(store.submitPrepared(sender, draft.messageId, 3000)).toEqual({ ...first, duplicate: true });
++  // The receipt is immutable; autoWake is a fresh advisory snapshot at each call.
++  expect(store.submitPrepared(sender, draft.messageId, 3000)).toEqual({ ...first, duplicate: true, autoWake: { ...first.autoWake, checkedAt: new Date(3000).toISOString() } });
+   expect(count(store)).toBe(1);
+   const firstClaim = store.claim(target, 3001)[0]!;
+   expect(firstClaim).toMatchObject({ messageId: draft.messageId, body: "Immutable synthetic message" });
+@@ -106,7 +107,7 @@ it("keeps the first immutable receipt and does not enqueue or wake after ACK/pru
+   expect(store.status(sender, draft.messageId, 3003)?.acknowledgedAt).toBe(new Date(3002).toISOString());
+   store.prune(32_000);
+   expect(count(store)).toBe(0);
+-  expect(store.submitPrepared(sender, draft.messageId, 33_000)).toEqual({ ...first, duplicate: true });
++  expect(store.submitPrepared(sender, draft.messageId, 33_000)).toEqual({ ...first, duplicate: true, autoWake: { ...first.autoWake, checkedAt: new Date(33_000).toISOString() } });
+   expect(count(store)).toBe(0);
+   expect(store.status(sender, draft.messageId, 33_000)).toMatchObject({ state: "submitted", deliveryState: "unknown" });
+   store.prune(3_632_000);
+@@ -219,7 +220,8 @@ it("a real send reply loss retries the known ID once and survives broker restart
+   const exit = once(child, "exit"); child.kill(); await exit;
+   const replacement = spawn(process.execPath, [path.join(root, "mcp-server/dist/session-message-broker.mjs"), "--state-directory", state], { windowsHide: true, stdio: "ignore" }); children.push(replacement);
+   await waitForSessionMessageBrokerReady(state, replacement, 5000);
+-  expect(await requestSessionMessageOnce("send", { sender, messageId: draft.messageId }, state)).toEqual(result);
++  const { autoWake, ...receipt } = result as typeof result & { autoWake: Record<string, unknown> };
++  expect(await requestSessionMessageOnce("send", { sender, messageId: draft.messageId }, state)).toEqual({ ...receipt, autoWake: { ...autoWake, checkedAt: expect.any(String) } });
+   expect(count(store)).toBe(1);
+ }, 15_000);
+ 
+@@ -261,7 +263,7 @@ it("packaged CLI discovers prepare/send and rejects old or unknown send with zer
+   const cli = (operation: string, payload: unknown) => spawnSync(process.execPath, [path.join(root, "mcp-server/dist/session-message-cli.mjs")], { input: JSON.stringify({ operation, payload }), encoding: "utf8", windowsHide: true, timeout: 5000, env: { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: state } });
+   const draft = JSON.parse(cli("prepare", { sender, target, body: "CLI synthetic" }).stdout).data;
+   const sent = JSON.parse(cli("send", { sender, messageId: draft.messageId }).stdout).data;
+-  expect(JSON.parse(cli("send", { sender, messageId: draft.messageId }).stdout).data).toEqual({ ...sent, duplicate: true });
++  expect(JSON.parse(cli("send", { sender, messageId: draft.messageId }).stdout).data).toEqual({ ...sent, duplicate: true, autoWake: { ...sent.autoWake, checkedAt: expect.any(String) } });
+   const legacy = cli("send", { sender, target, body: "old shape", messageId: "caller-legacy-id" });
+   expect(legacy.status).toBe(1); expect(JSON.parse(legacy.stdout).error).toMatch(/prepare/u);
+   const unknown = cli("send", { sender, messageId: "unknown-issued-id" });
+diff --git a/tests/session-messaging/message-retention.test.ts b/tests/session-messaging/message-retention.test.ts
+index 6ef6fd2b..8489a0c7 100644
+--- a/tests/session-messaging/message-retention.test.ts
++++ b/tests/session-messaging/message-retention.test.ts
+@@ -110,7 +110,7 @@ it("bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted",
+   const ackAt = 2000;
+   expect(store.acknowledge(target, [sent.messageId], ackAt)).toBe(1);
+   expect(receiptExpiry(store, sent.messageId)).toBe(iso(Math.min(messageExpiry + H, ackAt + H)));
+-  expect(store.submitPrepared(hot, sent.messageId, ackAt + H - 1)).toEqual({ ...sent, duplicate: true });
++  expect(store.submitPrepared(hot, sent.messageId, ackAt + H - 1)).toEqual({ ...sent, duplicate: true, autoWake: { ...sent.autoWake, checkedAt: new Date(ackAt + H - 1).toISOString() } });
+   expect(store.status(hot, sent.messageId, ackAt + H - 1)).toMatchObject({ state: "acknowledged" });
+   expect(() => store.submitPrepared(hot, sent.messageId, ackAt + H)).toThrow(/unavailable/u);
+   expect(Number(scalar(store, "SELECT count(*) AS value FROM messages WHERE message_id = ?", sent.messageId))).toBeLessThanOrEqual(1);
+@@ -268,7 +268,7 @@ it("service reports capacity rejections as definite no-effect with scope and ear
+   // A resend of an already queued ID stays an idempotent duplicate while both limits are full.
+   const rowsBefore = rows(store);
+   const resent = await service.send({ messageId: firstSent.messageId, _sessionBinding: hot });
+-  expect(resent).toMatchObject({ ok: true, error: null, data: { ...firstSent, duplicate: true } });
++  expect(resent).toMatchObject({ ok: true, error: null, data: { ...firstSent, duplicate: true, autoWake: { ...firstSent.autoWake, checkedAt: expect.any(String) } } });
+   expect(rows(store)).toBe(rowsBefore);
+ }, 30_000);
+ 
+@@ -276,13 +276,13 @@ it("a resend of an already sent ID at full sender and global capacity is a dupli
+   const store = fixture();
+   const sent = Array.from({ length: SENDER_LIMIT }, (_, index) => sendNew(store, hot, 1000 + index));
+   expect(receipts(store, hot)).toBe(SENDER_LIMIT);
+-  expect(store.submitPrepared(hot, sent[0]!.messageId, 5000)).toEqual({ ...sent[0], duplicate: true });
+-  expect(store.submitPrepared(hot, sent[SENDER_LIMIT - 1]!.messageId, 5000)).toEqual({ ...sent[SENDER_LIMIT - 1], duplicate: true });
++  expect(store.submitPrepared(hot, sent[0]!.messageId, 5000)).toEqual({ ...sent[0], duplicate: true, autoWake: { ...sent[0]!.autoWake, checkedAt: new Date(5000).toISOString() } });
++  expect(store.submitPrepared(hot, sent[SENDER_LIMIT - 1]!.messageId, 5000)).toEqual({ ...sent[SENDER_LIMIT - 1], duplicate: true, autoWake: { ...sent[SENDER_LIMIT - 1]!.autoWake, checkedAt: new Date(5000).toISOString() } });
+   expect(rows(store)).toBe(SENDER_LIMIT);
+   expect(receipts(store, hot)).toBe(SENDER_LIMIT);
+   for (let index = SENDER_LIMIT; index < MESSAGE_RECEIPT_LIMIT; index++) sendNew(store, { host: "test-host", sessionId: `retention-dup-${index % 3}` }, 6000);
+   expect(receipts(store)).toBe(MESSAGE_RECEIPT_LIMIT);
+-  expect(store.submitPrepared(hot, sent[1]!.messageId, 7000)).toEqual({ ...sent[1], duplicate: true });
++  expect(store.submitPrepared(hot, sent[1]!.messageId, 7000)).toEqual({ ...sent[1], duplicate: true, autoWake: { ...sent[1]!.autoWake, checkedAt: new Date(7000).toISOString() } });
+   expect(rows(store)).toBe(MESSAGE_RECEIPT_LIMIT);
+ });
+ 
+diff --git a/tests/session-messaging/previous-broker.test.ts b/tests/session-messaging/previous-broker.test.ts
+index e9ad1df3..aa0b96d6 100644
+--- a/tests/session-messaging/previous-broker.test.ts
++++ b/tests/session-messaging/previous-broker.test.ts
+@@ -7,6 +7,7 @@ import { DatabaseSync } from "node:sqlite";
+ import { fileURLToPath } from "node:url";
+ import { expect, it } from "vitest";
+ import { requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
++import { SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
+ 
+ // A release check supplies the actual previous installation, not a simulated dispatcher.
+ const previousBroker = process.env.AGS_PREVIOUS_BROKER_PATH;
+@@ -93,3 +94,80 @@ it.skipIf(!previousBroker)("preserves queued messages when new hooks meet the pr
+     await rm(directory, { recursive: true, force: true, maxRetries: 10 });
+   }
+ }, 20_000);
++
++it.skipIf(!previousBroker)("lets the previous released broker serve a schema 1 database with a retired wake", async () => {
++  const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-schema1-"));
++  const environment = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory,
++    AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
++    AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(directory, "shared-state") };
++  const databasePath = path.join(directory, "session-messages.sqlite3");
++  const target = { host: "codex", sessionId: "schema1-recipient" };
++  const capabilities = { supportedInjection: ["peer-wake" as const, "tool-boundary" as const], idleWake: "user-message" as const };
++  const nonce = "schema1-retired-nonce-abcdefghijklmnop";
++  const seed = new SessionMessageStore(databasePath);
++  try {
++    const base = Date.now() - WAKE_TTL_MS - WAKE_RETIRE_GRACE_MS - 60_000;
++    const presence = (instanceId: string, at: number) => {
++      seed.startPresence({ ...target, instanceId, transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false,
++        deliveryCapabilities: capabilities }, at);
++      seed.acquireRelay({ ...target, transport: "codex-queue", relayId: `${instanceId}-relay`, pid: process.pid, parentPid: process.pid }, at);
++    };
++    presence("old-instance", base);
++    seed.send({ sender: { host: "synthetic-host", sessionId: "sender" }, target, messageId: "schema1-old-body", body: "old", ttlSeconds: 86400 }, base);
++    const reserved = seed.reserveManagedWake({ ...target, nonce, instanceId: "old-instance", transport: "codex-queue", relayId: "old-instance-relay" }, base);
++    seed.recordManagedWakeOutcome(seed.startManagedWake(reserved.attempt!, base + 1).attempt!, "submitted", base + 2);
++    presence("new-instance", Date.now());
++  } finally { seed.close(); }
++  const retiredRow = () => {
++    const database = new DatabaseSync(databasePath, { readOnly: true });
++    try {
++      return { version: (database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version,
++        row: database.prepare("SELECT * FROM wake_nonces WHERE nonce = ?").get(nonce) };
++    } finally { database.close(); }
++  };
++  const before = retiredRow();
++  expect(before).toMatchObject({ version: 1, row: { state: "expired-unobserved" } });
++  const cli = (operation: string, payload: Record<string, unknown>) => {
++    const result = spawnSync(process.execPath, [path.join(pluginRoot, "mcp-server/dist/session-message-cli.mjs")], {
++      env: environment, input: JSON.stringify({ operation, payload }), encoding: "utf8", windowsHide: true, timeout: 5000,
++    });
++    expect(result.status, result.stderr).toBe(0);
++    return JSON.parse(result.stdout);
++  };
++  const child = spawn(process.execPath, [previousBroker!, "--state-directory", directory], { windowsHide: true, stdio: "ignore", env: environment });
++  let managedWakeAware: boolean | undefined;
++  try {
++    await waitForSessionMessageBrokerReady(directory, child, 5000);
++    const ping = await requestSessionMessageOnce<{ capabilities?: string[] }>("ping", {}, directory);
++    managedWakeAware = (ping.capabilities ?? []).includes("delivery-capabilities");
++    const sender = { host: "synthetic-host", sessionId: "sender" };
++    let messageId = "schema1-previous-message";
++    if ((ping.capabilities ?? []).includes("deferred-boundary")) {
++      messageId = cli("prepare", { sender, target, body: "after upgrade" }).data.messageId;
++      cli("send", { sender, messageId });
++    } else cli("send", { sender, target, messageId, body: "after upgrade" });
++    expect(cli("status", { sender, messageId }).data.status.state).toBe("queued");
++    const claimed = cli("claim", { target }).data.messages.map((message: { messageId: string }) => message.messageId);
++    expect(claimed).toEqual(["schema1-old-body", messageId]);
++    expect(cli("acknowledge", { target, messageIds: claimed }).data.acknowledged).toBe(2);
++    expect(cli("status", { sender, messageId }).data.status.state).toBe("acknowledged");
++  } finally {
++    if (child.exitCode === null && child.signalCode === null) {
++      const exited = once(child, "exit");
++      child.kill();
++      await exited;
++    }
++  }
++  try {
++    const after = retiredRow();
++    expect(after.version).toBe(1);
++    // Managed-wake brokers leave the terminal row untouched. Older brokers prune every expired nonce row
++    // (their existing behavior for any v2.7 database) but never reopen or rewrite it.
++    if (managedWakeAware === true) expect(after.row).toEqual(before.row);
++    else expect([undefined, before.row]).toContainEqual(after.row);
++    const reopened = new SessionMessageStore(databasePath);
++    reopened.close();
++  } finally {
++    await rm(directory, { recursive: true, force: true, maxRetries: 10 });
++  }
++}, 20_000);
+diff --git a/tests/session-messaging/session-message.test.ts b/tests/session-messaging/session-message.test.ts
+index 0829f86a..2d3d87a2 100644
+--- a/tests/session-messaging/session-message.test.ts
++++ b/tests/session-messaging/session-message.test.ts
+@@ -29,7 +29,7 @@ import { handleSessionMessageHook, sessionMessageEnvelope, sessionMessageTranspo
+ import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
+ import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
+ import { claudeWakeOutcome, codexWakeOutcome, relayIdentityDecision, ringClaude, shouldReleaseWake, transportWakeCapabilities, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
+-import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
++import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
+ import { processIdentityState } from "../../mcp-server/src/process-identity.js";
+ import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "../../mcp-server/src/session-message-protocol.js";
+ import { adaptHostInput, hostDeliveryProfile } from "../../mcp-server/src/host-input-adapter.js";
+@@ -799,6 +799,10 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
+     await writeFile(file, "secret malformed configuration");
+     expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }, diagnose).transport).toBe("codex-queue");
+     expect(hostDeliveryProfile("claude-code", environment, diagnose).transport).toBe("claude-inbox");
++    // The empty/retired wake prompt block is a host capability: Codex (queue and deferred) keeps it, Claude stays fail-open.
++    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }, diagnose).blocksEmptyWakePrompt).toBe(true);
++    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "0" }, diagnose).blocksEmptyWakePrompt).toBe(true);
++    expect(hostDeliveryProfile("claude-code", environment, diagnose).blocksEmptyWakePrompt).toBe(false);
+     expect(diagnose).not.toHaveBeenCalled();
+     expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "true" }, diagnose).transport).toBe("codex-deferred");
+     expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-environment");
+@@ -1217,6 +1221,53 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
+     }
+   }, 30_000);
+ 
++  it("blocks a verified retired Codex wake marker without claiming the current body", async () => {
++    const directory = stateDirectory();
++    await startSourceBroker(directory);
++    vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", directory);
++    vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", path.join(directory, "trust.sqlite3"));
++    vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "1");
++    const capabilities: DeliveryCapabilities = { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" };
++    for (const host of ["codex", "claude-code"]) {
++      const target = { host, sessionId: `retired-hook-${host}` };
++      const nonce = `retired-hook-${host}-nonce-abcdefghijklmnop`;
++      const base = Date.now() - WAKE_TTL_MS - WAKE_RETIRE_GRACE_MS - 60_000;
++      const store = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
++      try {
++        const presence = (instanceId: string, at: number) => {
++          store.startPresence({ ...target, instanceId, transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false,
++            deliveryCapabilities: capabilities }, at);
++          store.acquireRelay({ ...target, transport: "codex-queue", relayId: `${instanceId}-relay`, pid: process.pid, parentPid: process.pid }, at);
++        };
++        presence("old-instance", base);
++        store.send({ sender: { host: "portable", sessionId: "retired-sender" }, target, messageId: `retired-body-${host}`, body: "current body", ttlSeconds: 86400 }, base);
++        const reserved = store.reserveManagedWake({ ...target, nonce, instanceId: "old-instance", transport: "codex-queue", relayId: "old-instance-relay" }, base);
++        const started = store.startManagedWake(reserved.attempt!, base + 1);
++        store.recordManagedWakeOutcome(started.attempt!, "submitted", base + 2);
++        presence("new-instance", Date.now());
++        expect(store.database.prepare("SELECT state FROM wake_nonces WHERE nonce = ?").get(nonce)).toEqual({ state: "expired-unobserved" });
++      } finally { store.close(); }
++      const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, agent_id: "", prompt: `[agent-governance-suite:wake:${nonce}]` };
++      let output: Record<string, unknown>;
++      if (host === "claude-code") output = await handleSessionMessageHook(input, "claude-code");
++      else {
++        const child = spawnSync(process.execPath, [bundledSessionMessageHook], { input: JSON.stringify(input), encoding: "utf8",
++          timeout: 10_000, windowsHide: true, env: { ...process.env } });
++        expect(child.status, child.stderr).toBe(0);
++        output = child.stdout ? JSON.parse(child.stdout) as Record<string, unknown> : {};
++      }
++      if (host === "codex") expect(output).toMatchObject({ decision: "block" });
++      else expect(output).toEqual({});
++      const verification = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
++      try {
++        expect(verification.pendingCount(target)).toBe(1);
++        const row = verification.database.prepare("SELECT state, late_observed_at, observed_at FROM wake_nonces WHERE nonce = ?").get(nonce) as Record<string, unknown>;
++        expect(row).toMatchObject({ state: "expired-unobserved", observed_at: null });
++        expect(row.late_observed_at).toEqual(expect.any(String));
++      } finally { verification.close(); }
++    }
++  }, 30_000);
++
+   it("keeps a maximum-size peer message within the hook context limit", async () => {
+     const directory = stateDirectory();
+     await startSourceBroker(directory);
+diff --git a/tests/session-messaging/wake-liveness.test.mjs b/tests/session-messaging/wake-liveness.test.mjs
+new file mode 100644
+index 00000000..8ff46037
+--- /dev/null
++++ b/tests/session-messaging/wake-liveness.test.mjs
+@@ -0,0 +1,455 @@
++import assert from 'node:assert/strict';
++import { fork } from 'node:child_process';
++import { once } from 'node:events';
++import { mkdtempSync, rmSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { DatabaseSync } from 'node:sqlite';
++import { fileURLToPath } from 'node:url';
++import { afterEach, test, vi } from 'vitest';
++import { SessionMessageStore, WAKE_TTL_MS, WAKE_RETIRE_GRACE_MS } from '../../mcp-server/src/session-message-store.ts';
++import { dispatchSessionMessageBrokerOperation as dispatch } from '../../mcp-server/src/session-message-broker.ts';
++import { adaptHostInput } from '../../mcp-server/src/host-input-adapter.ts';
++import { recordWakeHookObservation, wakeHookObservationReader } from '../../mcp-server/src/session-message-wake-port.ts';
++import { ContractValidator } from '../../mcp-server/src/schema-validator.ts';
++
++// The process fixture binds the same target identity.
++const target = { host: 'portable', sessionId: 'wake-target' };
++const sender = { host: 'portable', sessionId: 'liveness-sender' };
++const capabilities = { supportedInjection: ['peer-wake', 'tool-boundary'], idleWake: 'silent' };
++const iso = ms => new Date(ms).toISOString();
++const validator = new ContractValidator();
++const resources = [];
++afterEach(() => {
++  vi.unstubAllEnvs();
++  for (const { directory, stores } of resources.splice(0)) {
++    for (const store of stores) store.close();
++    rmSync(directory, { recursive: true, force: true });
++  }
++});
++
++function fixture() {
++  const directory = mkdtempSync(join(tmpdir(), 'ags-wake-liveness-'));
++  const database = join(directory, 'session-messages.sqlite3');
++  const store = new SessionMessageStore(database);
++  resources.push({ directory, stores: [store] });
++  const now = Date.now();
++  live(store, 'instance-1', 'relay-1', now);
++  return { directory, database, store, now, retireAt: now + WAKE_TTL_MS + WAKE_RETIRE_GRACE_MS };
++}
++function live(store, instanceId, relayId, at) {
++  store.startPresence({ ...target, instanceId, transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
++    deliveryCapabilities: capabilities }, at);
++  store.acquireRelay({ ...target, transport: 'portable', relayId, pid: process.pid, parentPid: process.pid }, at);
++}
++/** Keeps one presence birth alive across a long fixture gap without a new generation. */
++function keepAlive(store, instanceId, relayId, at) {
++  store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ?').run(iso(at + 60_000), instanceId);
++  store.acquireRelay({ ...target, transport: 'portable', relayId, pid: process.pid, parentPid: process.pid }, at);
++  assert.equal(store.presence(target, at).state, 'online');
++}
++function body(store, id, at) { store.send({ sender, target, messageId: id, body: id, ttlSeconds: 86400 }, at); }
++function request(instanceId, relayId, nonce = `${instanceId}-next-nonce-abcdefghijklmnop`) {
++  return { ...target, nonce, instanceId, transport: 'portable', relayId, resume: true };
++}
++function begin(store, at, input = request('instance-1', 'relay-1', 'liveness-first-nonce-abcdefghijklmnop')) {
++  const reserved = store.reserveManagedWake(input, at);
++  assert.equal(reserved.dispatch, true);
++  const started = store.startManagedWake(reserved.attempt, at + 1);
++  assert.equal(started.dispatch, true);
++  return started.attempt;
++}
++function latched(f, outcome = 'submitted') {
++  body(f.store, 'pending-body', f.now);
++  const attempt = begin(f.store, f.now);
++  if (outcome !== 'started') assert.equal(f.store.recordManagedWakeOutcome(attempt, outcome, f.now + 2), true);
++  return attempt;
++}
++function attemptRow(store, attempt) { return store.database.prepare('SELECT * FROM wake_nonces WHERE attempt_id = ?').get(attempt.attemptId); }
++function without(row, keys) { return Object.fromEntries(Object.entries(row).filter(([key]) => !keys.includes(key))); }
++function observe(f, attempt, at) {
++  vi.stubEnv('AGENT_GOVERNANCE_TRUST_DB_PATH', join(f.directory, 'trust.sqlite3'));
++  const observation = adaptHostInput({ hook_event_name: 'UserPromptSubmit', session_id: target.sessionId,
++    agent_id: '', prompt: `[agent-governance-suite:wake:${attempt.nonce}]` }, target.host).observation;
++  return { observation, sourceReceiptId: recordWakeHookObservation(observation, at) };
++}
++function hostClaim(f, observed, at) {
++  return f.store.claimHostWake(target, observed.observation, observed.sourceReceiptId, wakeHookObservationReader, at);
++}
++
++test.each(['submitted', 'accepted-or-unknown', 'started'])('an expired %s latch retires for a newer live generation and a new wake is reserved', outcome => {
++  const f = fixture(); const old = latched(f, outcome);
++  live(f.store, 'instance-2', 'relay-2', f.retireAt - 1);
++  assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt - 1).dispatch, false);
++  const before = attemptRow(f.store, old);
++  assert.ok(['started', 'submitted', 'unknown'].includes(before.state));
++  keepAlive(f.store, 'instance-2', 'relay-2', f.retireAt);
++  const next = f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt);
++  assert.equal(next.dispatch, true);
++  assert.notEqual(next.attempt.nonce, old.nonce); assert.notEqual(next.attempt.attemptId, old.attemptId);
++  const retired = attemptRow(f.store, old);
++  assert.equal(retired.state, 'expired-unobserved');
++  assert.equal(retired.retired_at, iso(f.retireAt));
++  assert.equal(retired.observed_at, null); assert.equal(retired.consumed_at, null);
++  assert.deepEqual(without(retired, ['state', 'retired_at']), without(before, ['state', 'retired_at']));
++  assert.equal(f.store.recordManagedWakeOutcome(old, 'definite-failure', f.retireAt + 1), false);
++  assert.equal(f.store.recordManagedWakeOutcome(old, 'submitted', f.retireAt + 1), false);
++  assert.equal(f.store.startManagedWake(old, f.retireAt + 1).dispatch, false);
++  assert.deepEqual(attemptRow(f.store, old), retired);
++  assert.equal(f.store.startManagedWake(next.attempt, f.retireAt + 2).dispatch, true);
++  const status = f.store.managedWakeStatus(target, f.retireAt + 2);
++  assert.equal(status.attemptId, next.attempt.attemptId); assert.equal(status.state, 'started');
++});
++
++test.each(['same-generation', 'unreachable', 'ended-new-generation', 'older-live-instance'])('an expired latch without activity or a newer live generation stays latched: %s', kind => {
++  const f = fixture(); const old = latched(f);
++  const later = f.retireAt + 24 * 3600_000;
++  if (kind === 'ended-new-generation') {
++    live(f.store, 'instance-2', 'relay-2', later - 100);
++    assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-2', later - 50), true);
++  }
++  if (kind === 'older-live-instance') {
++    // A row born after the only live presence is not replaced by it.
++    f.store.database.prepare('UPDATE wake_nonces SET birth_generation = ? WHERE attempt_id = ?').run(iso(later), old.attemptId);
++    keepAlive(f.store, 'instance-1', 'relay-1', later);
++  }
++  const before = attemptRow(f.store, old);
++  for (const at of [f.retireAt, later]) {
++    if (kind === 'same-generation' || kind === 'older-live-instance') keepAlive(f.store, 'instance-1', 'relay-1', at);
++    f.store.prune(at);
++    if (kind === 'same-generation') assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), at).dispatch, false);
++    assert.deepEqual(attemptRow(f.store, old), before);
++  }
++  const outlook = f.store.autoWakeOutlook(target, later);
++  if (kind === 'same-generation' || kind === 'older-live-instance') {
++    assert.equal(outlook.state, 'latched'); assert.equal(outlook.reason, 'wake-unobserved');
++    assert.equal(outlook.basisAt, before.expires_at);
++  } else assert.equal(outlook.state, 'no-live-relay');
++  assert.deepEqual(validator.sessionAutoWakeOutlook(outlook), outlook);
++});
++
++const activities = {
++  claim: (store, at) => store.claim(target, at),
++  claimDeferred: (store, at) => store.claimDeferred(target, at),
++  claimTurnEnd: (store, at) => store.claimTurnEnd(target, at),
++  clearDeferred: (store, at) => store.clearDeferred(target, at),
++  acknowledge: (store, at) => store.acknowledge(target, ['no-such-message'], at),
++  observeNativeInput: (store, at) => store.observeNativeInput(target, at),
++};
++test.each([...Object.keys(activities), 'before-expiry'])('same-generation activity %s after expiry retires the latch after the grace', kind => {
++  const f = fixture(); const old = latched(f);
++  const expiry = Date.parse(attemptRow(f.store, old).expires_at);
++  if (kind === 'before-expiry') activities.claimDeferred(f.store, expiry - 1);
++  else activities[kind](f.store, expiry + 1);
++  keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt - 1);
++  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt - 1).dispatch, false);
++  keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt);
++  const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt);
++  assert.equal(next.dispatch, kind !== 'before-expiry');
++  assert.equal(attemptRow(f.store, old).state, kind === 'before-expiry' ? 'submitted' : 'expired-unobserved');
++});
++
++test('retirement and re-reservation are idempotent across prunes and reopened connections', () => {
++  const f = fixture(); const old = latched(f);
++  live(f.store, 'instance-2', 'relay-2', f.retireAt);
++  f.store.prune(f.retireAt);
++  const retired = attemptRow(f.store, old);
++  assert.equal(retired.state, 'expired-unobserved');
++  const peer = new SessionMessageStore(f.database); resources.at(-1).stores.push(peer);
++  peer.prune(f.retireAt + 5);
++  assert.deepEqual(attemptRow(peer, old), retired);
++  const first = peer.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt + 6);
++  assert.equal(first.dispatch, true);
++  const again = f.store.reserveManagedWake(request('instance-2', 'relay-2', 'another-nonce-abcdefghijklmnopqrst'), f.retireAt + 7);
++  assert.equal(again.attempt.attemptId, first.attempt.attemptId);
++  assert.equal(f.store.database.prepare("SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')").get().n, 1);
++  assert.deepEqual(attemptRow(f.store, old), retired);
++});
++
++test('a verified late arrival of a retired nonce is recorded without claiming the current generation body', () => {
++  const f = fixture(); const old = latched(f);
++  live(f.store, 'instance-2', 'relay-2', f.retireAt);
++  const next = f.store.startManagedWake(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt).attempt, f.retireAt + 1).attempt;
++  const retired = attemptRow(f.store, old); const current = attemptRow(f.store, next);
++  const messages = f.store.database.prepare('SELECT * FROM messages').all();
++  const result = hostClaim(f, observe(f, old, f.retireAt + 2), f.retireAt + 3);
++  assert.deepEqual(result, { recognized: false, messages: [], binding: null, retired: true });
++  const late = attemptRow(f.store, old);
++  assert.equal(late.state, 'expired-unobserved'); assert.equal(late.late_observed_at, iso(f.retireAt + 3));
++  assert.deepEqual(without(late, ['late_observed_at']), without(retired, ['late_observed_at']));
++  assert.deepEqual(attemptRow(f.store, next), current);
++  assert.deepEqual(f.store.database.prepare('SELECT * FROM messages').all(), messages);
++  assert.deepEqual(hostClaim(f, observe(f, old, f.retireAt + 4), f.retireAt + 5), { recognized: false, messages: [], binding: null, retired: true });
++  assert.equal(attemptRow(f.store, old).late_observed_at, iso(f.retireAt + 3));
++  // The current attempt still delivers its own body exactly once.
++  const delivered = hostClaim(f, observe(f, next, f.retireAt + 6), f.retireAt + 7);
++  assert.equal(delivered.recognized, true); assert.deepEqual(delivered.messages.map(message => message.messageId), ['pending-body']);
++});
++
++test('F1: a retired nonce mixed with the current nonce records late only and lets the current attempt claim its body', () => {
++  const f = fixture(); const old = latched(f);
++  live(f.store, 'instance-2', 'relay-2', f.retireAt);
++  const next = f.store.startManagedWake(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt).attempt, f.retireAt + 1).attempt;
++  assert.equal(f.store.recordManagedWakeOutcome(next, 'submitted', f.retireAt + 2), true);
++  const retired = attemptRow(f.store, old);
++  vi.stubEnv('AGENT_GOVERNANCE_TRUST_DB_PATH', join(f.directory, 'trust.sqlite3'));
++  const prompt = [old, next].map(attempt => `[agent-governance-suite:wake:${attempt.nonce}]`).join('\n');
++  const observation = adaptHostInput({ hook_event_name: 'UserPromptSubmit', session_id: target.sessionId, agent_id: '', prompt }, target.host).observation;
++  const mixed = { observation, sourceReceiptId: recordWakeHookObservation(observation, f.retireAt + 3) };
++  const result = hostClaim(f, mixed, f.retireAt + 4);
++  assert.equal(result.recognized, true); assert.equal(result.retired, undefined);
++  assert.deepEqual(result.messages.map(message => message.messageId), ['pending-body']);
++  assert.equal(result.binding.attemptId, next.attemptId);
++  const current = attemptRow(f.store, next);
++  assert.equal(current.state, 'observed'); assert.equal(current.observed_at, iso(f.retireAt + 4)); assert.equal(current.late_observed_at, null);
++  const late = attemptRow(f.store, old);
++  assert.equal(late.late_observed_at, iso(f.retireAt + 4));
++  assert.deepEqual(without(late, ['late_observed_at']), without(retired, ['late_observed_at']));
++  // Replaying the same prompt is no longer a fully retired marker, so it neither claims nor asks the host to block.
++  assert.deepEqual(hostClaim(f, { observation, sourceReceiptId: recordWakeHookObservation(observation, f.retireAt + 5) }, f.retireAt + 6),
++    { recognized: false, messages: [], binding: null });
++});
++
++test('a retired nonce cannot be laundered by forged provenance or a mixed unknown nonce', () => {
++  const f = fixture(); const old = latched(f);
++  live(f.store, 'instance-2', 'relay-2', f.retireAt); f.store.prune(f.retireAt);
++  const retired = attemptRow(f.store, old);
++  const observed = observe(f, old, f.retireAt + 1);
++  assert.equal(hostClaim(f, { ...observed, sourceReceiptId: 'source-forged' }, f.retireAt + 2).recognized, false);
++  const mixed = adaptHostInput({ hook_event_name: 'UserPromptSubmit', session_id: target.sessionId, agent_id: '',
++    prompt: `[agent-governance-suite:wake:${old.nonce}]\n[agent-governance-suite:wake:unregistered-nonce-abcdefghijklmnop]` }, target.host).observation;
++  const mixedResult = hostClaim(f, { observation: mixed, sourceReceiptId: recordWakeHookObservation(mixed, f.retireAt + 3) }, f.retireAt + 4);
++  assert.deepEqual(mixedResult, { recognized: false, messages: [], binding: null });
++  assert.deepEqual(attemptRow(f.store, old), retired);
++});
++
++test('K: an arrival whose hook receipt expired during a broker outage stays latched until retirement evidence, then a new wake delivers', () => {
++  const f = fixture(); const old = latched(f);
++  const observed = observe(f, old, f.now + 5);
++  // The broker was down past the 30 second receipt TTL, so the same receipt is rejected on retry (e9 (b) FAIL shape).
++  assert.equal(hostClaim(f, observed, f.now + 35_005).recognized, false);
++  assert.equal(attemptRow(f.store, old).state, 'submitted');
++  keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt);
++  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt).dispatch, false);
++  const expiry = Date.parse(attemptRow(f.store, old).expires_at);
++  f.store.observeNativeInput(target, f.retireAt + 1);
++  assert.ok(f.retireAt + 1 > expiry);
++  keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt + 2);
++  const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt + 2);
++  assert.equal(next.dispatch, true);
++  assert.equal(attemptRow(f.store, old).state, 'expired-unobserved');
++  const started = f.store.startManagedWake(next.attempt, f.retireAt + 3).attempt;
++  f.store.recordManagedWakeOutcome(started, 'submitted', f.retireAt + 4);
++  const delivered = hostClaim(f, observe(f, started, f.retireAt + 5), f.retireAt + 6);
++  assert.equal(delivered.recognized, true);
++  assert.deepEqual(delivered.messages.map(message => message.messageId), ['pending-body']);
++});
++
++test('C2: a same-millisecond rebirth gets a distinct generation, so the previous birth cannot claim', () => {
++  const f = fixture(); const old = latched(f);
++  assert.equal(f.store.endPresence(target, 'fixture-rebirth', 'instance-1', f.now), true);
++  const reborn = f.store.startPresence({ ...target, instanceId: 'instance-1', transport: 'portable', wakeVisibility: 'silent',
++    canWakeSilently: true, deliveryCapabilities: capabilities }, f.now);
++  assert.ok(reborn.startedAt > old.generation);
++  f.store.acquireRelay({ ...target, transport: 'portable', relayId: 'relay-1', pid: process.pid, parentPid: process.pid }, f.now + 3);
++  const result = hostClaim(f, observe(f, old, f.now + 4), f.now + 5);
++  assert.equal(result.recognized, false); assert.deepEqual(result.messages, []);
++  assert.equal(f.store.pendingCount(target, f.now + 5), 1);
++  const again = f.store.startPresence({ ...target, instanceId: 'instance-1', transport: 'portable', wakeVisibility: 'silent',
++    canWakeSilently: true, deliveryCapabilities: capabilities }, f.now + 6);
++  assert.equal(again.startedAt, reborn.startedAt, 'a live renewal keeps its birth');
++});
++
++test('autoWake is advisory and reports each delivery path state', () => {
++  const f = fixture();
++  const check = (store, at, state, reason, basisAt, who = target) => {
++    const outlook = store.autoWakeOutlook(who, at);
++    assert.deepEqual(outlook, { state, reason, basisAt, checkedAt: iso(at), authorityEffect: 'none' });
++    assert.deepEqual(validator.sessionAutoWakeOutlook(outlook), outlook);
++    return outlook;
++  };
++  check(f.store, f.now, 'no-live-relay', 'presence-unknown', null, { host: 'portable', sessionId: 'never-seen' });
++  check(f.store, f.now, 'available', 'relay-live', iso(f.now));
++  const deferred = { host: 'portable', sessionId: 'deferred-only' };
++  f.store.startPresence({ ...deferred, instanceId: 'deferred-1', transport: 'codex-deferred', wakeVisibility: 'none', canWakeSilently: false,
++    deliveryCapabilities: { supportedInjection: ['tool-boundary'], idleWake: 'none' } }, f.now);
++  check(f.store, f.now, 'unsupported', 'no-idle-wake', iso(f.now), deferred);
++  f.store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ?').run(iso(f.now + 19_000), 'instance-1');
++  check(f.store, f.now + 16_000, 'no-live-relay', 'relay-lease-missing', iso(f.now));
++  check(f.store, f.now + 21_000, 'no-live-relay', 'presence-not-online', iso(f.now + 19_000));
++  assert.equal(f.store.presence(target, f.now + 21_000).state, 'unreachable');
++  const board = f.store.listPresence(f.now + 21_000).find(item => item.sessionId === target.sessionId);
++  assert.equal(board.state, 'unreachable'); assert.equal(board.autoWake.state, 'no-live-relay');
++  keepAlive(f.store, 'instance-1', 'relay-1', f.now + 22_000);
++  const old = latched({ ...f, now: f.now + 22_000 });
++  const expiresAt = attemptRow(f.store, old).expires_at;
++  check(f.store, f.now + 22_010, 'available', 'wake-in-flight', expiresAt);
++  const overdue = Date.parse(expiresAt) + 1;
++  keepAlive(f.store, 'instance-1', 'relay-1', overdue);
++  check(f.store, overdue, 'latched', 'wake-unobserved', expiresAt);
++  const sent = f.store.submitPrepared(sender, f.store.prepare({ sender, target, body: 'advisory send', ttlSeconds: 600 }, overdue).messageId, overdue);
++  assert.equal(sent.autoWake.state, 'latched');
++  assert.equal(f.store.submitPrepared(sender, sent.messageId, overdue + 1).autoWake.state, 'latched');
++  assert.equal(f.store.status(sender, sent.messageId, overdue + 2).autoWake.state, 'latched');
++  f.store.acknowledge(target, [sent.messageId], overdue + 3);
++  assert.equal(f.store.status(sender, sent.messageId, overdue + 4).autoWake, null);
++  const retireAt = Date.parse(expiresAt) + WAKE_RETIRE_GRACE_MS;
++  keepAlive(f.store, 'instance-1', 'relay-1', retireAt);
++  f.store.prune(retireAt);
++  check(f.store, retireAt, 'available', 'relay-live', iso(retireAt));
++  const brokerStatus = dispatch(f.store, 'status', { sender, messageId: sent.messageId });
++  assert.equal(brokerStatus.status.autoWake, null);
++});
++
++function v272Database(path, rows) {
++  const db = new DatabaseSync(path);
++  db.exec(`CREATE TABLE wake_nonces (nonce_digest TEXT PRIMARY KEY, host TEXT NOT NULL, session_id TEXT NOT NULL,
++    expires_at TEXT NOT NULL, consumed_at TEXT) STRICT;`);
++  for (const [name, definition] of [
++    ['state', "TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted'))"],
++    ['nonce', 'TEXT'], ['instance_id', 'TEXT'], ['birth_generation', 'TEXT'], ['transport', 'TEXT'],
++    ['relay_id', 'TEXT'], ['attempt_id', 'TEXT'], ['dispatch_epoch', 'INTEGER NOT NULL DEFAULT 0'],
++    ['retry_not_before', 'TEXT'], ['retry_count', 'INTEGER NOT NULL DEFAULT 0'],
++    ['started_at', 'TEXT'], ['outcome_at', 'TEXT'], ['observed_at', 'TEXT'], ['late_observed_at', 'TEXT'],
++  ]) db.exec(`ALTER TABLE wake_nonces ADD COLUMN ${name} ${definition};`);
++  db.exec(`CREATE UNIQUE INDEX wake_active_target ON wake_nonces (host, session_id)
++    WHERE state IN ('reserved', 'started', 'submitted', 'unknown');`);
++  const insert = db.prepare(`INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, consumed_at, state, nonce, instance_id,
++    birth_generation, transport, relay_id, attempt_id, dispatch_epoch, started_at, outcome_at, late_observed_at)
++    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
++  for (const row of rows) insert.run(...row);
++  db.close();
++}
++const V272_COLUMNS = ['nonce_digest', 'host', 'session_id', 'expires_at', 'consumed_at', 'state', 'nonce', 'instance_id', 'birth_generation',
++  'transport', 'relay_id', 'attempt_id', 'dispatch_epoch', 'retry_not_before', 'retry_count', 'started_at', 'outcome_at', 'observed_at', 'late_observed_at'];
++function oldRows(now) {
++  const old = iso(now - 5 * 3600_000);
++  return [
++    ['digest-latched', target.host, target.sessionId, iso(now - 4 * 3600_000), null, 'submitted', 'latched-nonce-abcdefghijklmnopqrst', 'old-instance',
++      old, 'portable', 'old-relay', 'old-attempt', 1, old, old, null],
++    ['digest-late', target.host, 'late-target', iso(now - 4 * 3600_000), null, 'unknown', 'late-nonce-abcdefghijklmnopqrstuv', 'old-instance',
++      old, 'portable', 'old-relay', 'late-attempt', 1, old, old, old],
++    ['digest-legacy', target.host, 'legacy-target', iso(now + 3600_000), null, 'legacy', null, null, null, null, null, null, 0, null, null, null],
++    ['digest-observed', target.host, 'observed-target', iso(now + 3600_000), iso(now), 'observed', 'observed-nonce-abcdefghijklmnopq', 'i',
++      old, 'portable', 'r', 'observed-attempt', 1, old, old, null],
++  ];
++}
++function snapshotV272(path) {
++  const db = new DatabaseSync(path, { readOnly: true });
++  try {
++    return { rows: db.prepare(`SELECT rowid, ${V272_COLUMNS.join(', ')} FROM wake_nonces ORDER BY rowid`).all(),
++      version: db.prepare('PRAGMA user_version').get().user_version,
++      columns: db.prepare('PRAGMA table_info(wake_nonces)').all().map(row => row.name),
++      sql: db.prepare("SELECT sql FROM sqlite_master WHERE name = 'wake_nonces'").get().sql };
++  } finally { db.close(); }
++}
++function migrationFixture() {
++  const directory = mkdtempSync(join(tmpdir(), 'ags-wake-liveness-migrate-'));
++  const database = join(directory, 'session-messages.sqlite3'); const now = Date.now();
++  v272Database(database, oldRows(now));
++  const entry = { directory, stores: [] }; resources.push(entry);
++  return { directory, database, now, entry };
++}
++
++test('G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule', () => {
++  const m = migrationFixture(); const before = snapshotV272(m.database);
++  assert.equal(before.version, 0);
++  const store = new SessionMessageStore(m.database); m.entry.stores.push(store);
++  const after = snapshotV272(m.database);
++  assert.equal(after.version, 1);
++  assert.deepEqual(after.rows, before.rows);
++  assert.deepEqual(after.columns, [...V272_COLUMNS, 'retired_at']);
++  assert.match(after.sql, /'expired-unobserved'/);
++  assert.ok(store.database.prepare("SELECT 1 FROM sqlite_master WHERE name = 'wake_active_target'").get());
++  body(store, 'post-upgrade-body', m.now);
++  live(store, 'instance-new', 'relay-new', m.now);
++  const next = store.reserveManagedWake(request('instance-new', 'relay-new'), m.now + 1);
++  assert.equal(next.dispatch, true);
++  // The relay acquisition already pruned once the newer live presence existed.
++  const retired = store.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = 'digest-latched'").get();
++  assert.equal(retired.state, 'expired-unobserved'); assert.equal(retired.retired_at, iso(m.now));
++  assert.deepEqual(without(retired, ['state', 'retired_at']), without({ ...before.rows[0], retired_at: null }, ['rowid', 'state', 'retired_at']));
++  // Rows without retirement evidence (no activity, no newer live generation) keep their state.
++  assert.equal(store.database.prepare("SELECT state FROM wake_nonces WHERE nonce_digest = 'digest-late'").get().state, 'unknown');
++  store.observeNativeInput({ host: target.host, sessionId: 'late-target' }, m.now + 2);
++  store.prune(m.now + 3);
++  assert.equal(store.database.prepare("SELECT state FROM wake_nonces WHERE nonce_digest = 'digest-late'").get().state, 'expired-unobserved');
++  const reopened = new SessionMessageStore(m.database); m.entry.stores.push(reopened);
++  const stable = snapshotV272(m.database);
++  assert.equal(stable.version, 1); assert.equal(stable.sql, after.sql);
++  assert.deepEqual(reopened.database.prepare('SELECT rowid, * FROM wake_nonces ORDER BY rowid').all(),
++    store.database.prepare('SELECT rowid, * FROM wake_nonces ORDER BY rowid').all());
++});
++
++test('G: a newer message schema version is rejected without mutation', () => {
++  const m = migrationFixture();
++  const db = new DatabaseSync(m.database); db.exec('PRAGMA user_version = 7;'); db.close();
++  const before = snapshotV272(m.database);
++  assert.throws(() => new SessionMessageStore(m.database), /newer/);
++  assert.deepEqual(snapshotV272(m.database), before);
++});
++
++const worker = fileURLToPath(new URL('./fixtures/managed-wake-process.mjs', import.meta.url));
++async function child(database, mode, relayId = `relay-${mode}`, directory = tmpdir()) {
++  const process_ = fork(worker, [mode, database, join(directory, 'effects.txt'), relayId, String(process.pid)],
++    { execArgv: ['--import', 'tsx'], silent: true, windowsHide: true });
++  let stderr = ''; process_.stderr.on('data', chunk => { stderr += chunk; });
++  const exit = once(process_, 'exit');
++  const [first] = await Promise.race([once(process_, 'message'), exit.then(([code]) => { throw new Error(`worker exited early: ${code}; ${stderr}`); })]);
++  return { process: process_, first, exit, stderr: () => stderr };
++}
++async function result(p, input) {
++  p.process.send(input ?? 'go');
++  const [message] = await once(p.process, 'message');
++  await p.exit;
++  return message;
++}
++
++test('G: two independent processes racing the v2.7.2 upgrade both open one migrated schema', async () => {
++  const m = migrationFixture(); const before = snapshotV272(m.database);
++  const opened = await Promise.all(['a', 'b'].map(id => child(m.database, 'open-only', id, m.directory)));
++  for (const p of opened) assert.equal(p.first.type, 'ready', p.stderr());
++  const versions = await Promise.all(opened.map(p => result(p)));
++  assert.deepEqual(versions.map(item => item.version), [1, 1]);
++  const after = snapshotV272(m.database);
++  assert.deepEqual(after.rows, before.rows); assert.equal(after.version, 1);
++});
++
++test('G: a failure inside the table rebuild rolls back columns, rows and schema version', async () => {
++  const m = migrationFixture(); const before = snapshotV272(m.database);
++  const p = await child(m.database, 'rebuild-failure', 'relay-rebuild', m.directory);
++  const [code] = await p.exit;
++  assert.equal(code, 0, p.stderr()); assert.match(p.first.error, /rebuild failure/);
++  assert.deepEqual(snapshotV272(m.database), before);
++  const store = new SessionMessageStore(m.database); m.entry.stores.push(store);
++  assert.equal(snapshotV272(m.database).version, 1);
++});
++
++test('crash right after a committed retirement leaves a retired row and one later reservation', async () => {
++  const f = fixture(); const old = latched(f);
++  live(f.store, 'instance-2', 'relay-2', f.retireAt);
++  const before = attemptRow(f.store, old);
++  const p = await child(f.database, 'retire-then-exit', 'relay-retire', f.directory);
++  assert.equal(p.first.type, 'ready', p.stderr());
++  p.process.send({ now: f.retireAt });
++  const [code] = await p.exit; assert.equal(code, 21, p.stderr());
++  const retired = attemptRow(f.store, old);
++  assert.equal(retired.state, 'expired-unobserved'); assert.equal(retired.retired_at, iso(f.retireAt));
++  assert.deepEqual(without(retired, ['state', 'retired_at']), without(before, ['state', 'retired_at']));
++  f.store.prune(f.retireAt + 1); assert.deepEqual(attemptRow(f.store, old), retired);
++  keepAlive(f.store, 'instance-2', 'relay-2', f.retireAt + 2);
++  assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt + 2).dispatch, true);
++});
++
++test('two independent relay processes racing retirement create one active attempt', async () => {
++  const f = fixture(); const old = latched(f);
++  live(f.store, 'instance-2', 'relay-a', f.retireAt);
++  const raced = await Promise.all(['relay-a', 'relay-b'].map(id => child(f.database, 'wake-transition', id, f.directory)));
++  for (const p of raced) assert.equal(p.first.type, 'ready', p.stderr());
++  const results = await Promise.all(raced.map(p => result(p, { kind: 'relay', now: f.retireAt + 1, attempt: old })));
++  const dispatched = results.map(item => item.result).filter(item => item.dispatch);
++  assert.ok(dispatched.length >= 1);
++  assert.equal(new Set(dispatched.map(item => item.attempt.attemptId)).size, 1);
++  assert.equal(attemptRow(f.store, old).state, 'expired-unobserved');
++  assert.equal(f.store.database.prepare("SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')").get().n, 1);
++});
+diff --git a/tests/tooling/claude-plugin.test.mjs b/tests/tooling/claude-plugin.test.mjs
+index d08009d9..6c501b4a 100644
+--- a/tests/tooling/claude-plugin.test.mjs
++++ b/tests/tooling/claude-plugin.test.mjs
+@@ -85,15 +85,99 @@ describe("generated Claude plugin", () => {
+     expect(claudeOverlay.mcpServers["agent-governance-suite"].env.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("claude-code");
+   });
+ 
+-  it("puts the Claude selection decision at the top of the generated orchestrator skill", async () => {
+-    const generated = await readFile(path.join(pluginRoot, "skills", "orchestrator", "SKILL.md"), "utf8");
++  it("keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation", async () => {
++    const orchestrator = (base, ...segments) => readFile(path.join(base, "skills", "orchestrator", ...segments), "utf8");
++    const adaptation = await readJson(root, "claude-overlay", "adaptations", "orchestrator.json");
++    const shared = await orchestrator(root, "SKILL.md");
++    const generated = await orchestrator(pluginRoot, "SKILL.md");
++    // The shared source names no host invocation syntax or product.
++    for (const document of ["SKILL.md", "references/entry-details.md", "references/mcp-execution.md"]) {
++      const text = await orchestrator(root, document);
++      for (const hostSpecific of [/Skill 도구/u, /\/agent-governance-suite:/u, /(?<![\w$])\$[a-z][a-z0-9]*(?:-[a-z0-9]+)*\b/u, /Claude/u, /Codex/u, /UserPromptSubmit/u, /transcript/u]) {
++        expect(text, document).not.toMatch(hostSpecific);
++      }
++      // References carry the shared policy to Claude byte for byte.
++      if (document !== "SKILL.md") expect(await orchestrator(pluginRoot, document), document).toBe(text);
++    }
++    // The shared description and selection policy stay unchanged; only native invocation/observation is inserted.
++    expect(adaptation).not.toHaveProperty("description");
++    expect(adaptation.replacements).toHaveLength(1);
++    const [{ find, replace }] = adaptation.replacements;
++    const section = replace.slice(0, replace.length - find.length);
++    expect(replace.endsWith(find)).toBe(true);
++    expect(generated).toBe(shared.replace(find, replace));
++    // The Claude section adapts invocation and observation without restating common policy.
++    for (const hostOnly of ["Skill 도구", "/agent-governance-suite:<skill-name>", "agent-governance-suite:independent-auditor", "SessionStart", "transcript"]) {
++      expect(section).toContain(hostOnly);
++    }
++    for (const policy of ["실패 영향", "outputFile", "requiredArtifacts", "`direct`", "`orchestrated`", "BINDING_REQUIRED", "plan_workflow` 전에", "minimal-implementation", "ponytail"]) {
++      expect(section, policy).not.toContain(policy);
++    }
++    // Native hooks may describe observations, but they cannot prescribe recovery after a common rejection.
++    expect(section).toContain("SessionStart·PostModelSwitch");
++    expect(section).toContain("references/mcp-execution.md");
++    expect(section).not.toMatch(/BINDING_INVALID[^\n]*(?:다시 실행|다시 한다|재시도|전환)/u);
++    expect(section).not.toMatch(/5분[^\n]*(?:같은 호출|재시도|다시)/u);
++    const recovery = await orchestrator(root, "references", "mcp-execution.md");
++    for (const guard of ["실행 하한 미달이 확인된", "만료가 확인된 경우", "결속, 신선도, 한 번 소비와 기존 수렴 가드", "코드나 승인 대기 시간만으로 원인을 만료로 단정"]) {
++      expect(recovery).toContain(guard);
++    }
++    // Each common selection sentence reaches Claude exactly once.
++    for (const sentence of ["키워드, 파일 종류나 `complex` 표시만으로 스킬을 붙이지 않는다.", "필수 승인·검증·독립성 gate를 생략하는 권한으로 해석하지 않는다.", "이 문서와 참고 자료를 읽는 것은 전문 스킬 실행이 아니다."]) {
++      expect(shared.split(sentence)).toHaveLength(2);
++      expect(generated.split(sentence)).toHaveLength(2);
++    }
++  });
++
++  it("keeps no copy of the common intake sentences in any tracked file outside the shared source", async () => {
+     const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
+-    expect(shared).not.toContain("## Claude Code에서의 선택 결정");
+-    expect(generated.indexOf("## Claude Code에서의 선택 decision".replace("decision", "결정"))).toBeLessThan(generated.indexOf("## 시작 전 확인"));
+-    for (const skill of ["task-contract", "change-scope-guardian", "acceptance-evidence-validator", "independent-audit-gate", "mutation-risk-preflight"]) {
+-      expect(generated).toContain(`\`${skill}\`:`);
++    const intake = shared.split("<!-- skill-intake:start -->\n")[1].split("\n<!-- skill-intake:end -->")[0];
++    const sentences = intake.split("\n").filter((line) => !line.startsWith("#")).flatMap((line) => line.replace(/^- /u, "").split(/(?<=다\.) /u)).filter((sentence) => sentence.length > 20);
++    expect(sentences.length).toBeGreaterThan(10);
++    // The shared source, its generated Claude copy and this file's fixture are the only allowed holders.
++    const allowed = new Set(["skills/orchestrator/SKILL.md", "claude-plugin/skills/orchestrator/SKILL.md", "tests/tooling/claude-plugin.test.mjs"]);
++    const listed = spawnSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
++    expect(listed.status).toBe(0);
++    const files = listed.stdout.split("\0").filter((file) => file && !allowed.has(file));
++    expect(files.length).toBeGreaterThan(500);
++    for (const file of files) {
++      const text = await readFile(path.join(root, file), "utf8").catch(() => "");
++      for (const sentence of sentences) expect(text.includes(sentence), `${file}: ${sentence}`).toBe(false);
++    }
++  });
++
++  it("projects the current common intake at session start without keyword selection", async () => {
++    const directory = await mkdtemp(path.join(tmpdir(), "ags-intake-port-"));
++    if (path.dirname(path.resolve(directory)) !== path.resolve(tmpdir())) throw new Error("Unexpected disposable fixture path");
++    temporaryDirectories.push(directory);
++    await mkdir(path.join(directory, "hooks"));
++    await mkdir(path.join(directory, "skills", "orchestrator"), { recursive: true });
++    const launcher = await readFile(path.join(root, "claude-overlay", "hooks", "skill-trigger-hook.mjs"));
++    const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
++    // A changed source must change the emitted context, proving there is no adapter policy copy.
++    const current = shared.replace("<!-- skill-intake:end -->", "fixture-source-revision\n<!-- skill-intake:end -->");
++    const intake = current.split("<!-- skill-intake:start -->\n")[1].split("\n<!-- skill-intake:end -->")[0];
++    const hook = path.join(directory, "hooks", "skill-trigger-hook.mjs");
++    await writeFile(hook, launcher);
++    await writeFile(path.join(directory, "skills", "orchestrator", "SKILL.md"), current);
++    const invoke = (input) => spawnSync(process.execPath, [hook], { input: JSON.stringify(input), encoding: "utf8" });
++    const start = invoke({ hook_event_name: "SessionStart", source: "startup" });
++    expect(start.status).toBe(0);
++    expect(start.stderr).toBe("");
++    const context = JSON.parse(start.stdout).hookSpecificOutput;
++    expect(context.hookEventName).toBe("SessionStart");
++    expect(context.additionalContext).toBe(intake + "\n\nClaude Code 호출: 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.");
++    for (const prompt of ["git rebase랑 merge 차이가 뭐예요? 간단히 설명해 주세요.", "안녕하세요!", "change.diff 파일에 있는 변경 사항을 리뷰해 주세요."]) {
++      const result = invoke({ hook_event_name: "UserPromptSubmit", prompt });
++      expect(result.status).toBe(0);
++      expect(result.stdout).toBe("");
+     }
+-    expect(generated).toContain("agent-governance-suite:independent-auditor");
++    const bash = invoke({ hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: { command: "git merge feature" } });
++    expect(bash.status).toBe(0);
++    expect(bash.stdout).toBe("");
++    const invalid = spawnSync(process.execPath, [hook], { input: "not-json", encoding: "utf8" });
++    expect(invalid.status).toBe(0);
++    expect(invalid.stdout).toBe("");
+   });
+ 
+   it("omits Codex-only skills from files, registry, and source lock", async () => {
+@@ -124,8 +208,8 @@ describe("generated Claude plugin", () => {
+         expect(allowedScripts).toContain(hook.args[0]);
+       }
+     }
+-    // Messaging runs before the trigger and board so a peer message can enter the same turn.
+-    expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[4], allowedScripts[1], allowedScripts[3]]);
++    // Messaging runs before the board; the intake has no per-prompt selector.
++    expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[4], allowedScripts[3]]);
+     // The relay-launching hook must stay in direct args form: process.ppid is then the Claude host, not a transient shell.
+     const messageSessionStart = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[4]));
+     expect(messageSessionStart).toHaveLength(1);
+@@ -144,8 +228,9 @@ describe("generated Claude plugin", () => {
+     for (const tool of ["Read", "Grep", "Glob", `${toolPrefix}plan_workflow`, `${toolPrefix}record_stage_result`, ...continuityTools.map((name) => `${toolPrefix}${name}`)]) {
+       expect(boardMatchers.some((matcher) => matcher.test(tool))).toBe(false);
+     }
+-    const bashGroup = claudeHooks.hooks.PreToolUse.find((group) => group.matcher === "^Bash$");
+-    expect(bashGroup.hooks.map((hook) => hook.args[0])).toEqual([allowedScripts[1]]);
++    expect(claudeHooks.hooks.PreToolUse.some((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[1]))).toBe(false);
++    const intakeGroups = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[1]));
++    expect(intakeGroups).toHaveLength(1);
+     const continuityGroup = claudeHooks.hooks.PreToolUse.find((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[0]));
+     const matcher = new RegExp(continuityGroup.matcher, "u");
+     for (const tool of continuityTools) {
+diff --git a/tests/tooling/skill-context-optimization.test.mjs b/tests/tooling/skill-context-optimization.test.mjs
+index 34335612..90f5dafb 100644
+--- a/tests/tooling/skill-context-optimization.test.mjs
++++ b/tests/tooling/skill-context-optimization.test.mjs
+@@ -1,5 +1,6 @@
+ import { describe, expect, it } from "vitest";
+-import { checkSkillContextOptimization, matchesNode24ReadmeUpdate } from "../../scripts/check-skill-context-optimization.mjs";
++import { readFileSync } from "node:fs";
++import { checkSkillContextOptimization, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
+ 
+ describe("skill context optimization", () => {
+   it("allows the runtime minimum update while rejecting other README changes", () => {
+@@ -10,7 +11,23 @@ describe("skill context optimization", () => {
+     expect(matchesNode24ReadmeUpdate("task-contract", `${baseline}Node.js 22 이상\n`, updated)).toBe(false);
+   });
+ 
+-  it("preserves every optimized skill while reducing its initial load", () => {
++  it("pins the intake revision and rejects a one-byte policy or reference change", () => {
++    const candidate = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import.meta.url));
++    const inputs = {
++      reconstructed: reconstructOptimizedSkill("orchestrator"),
++      frontmatter: candidate.subarray(0, candidate.indexOf(Buffer.from("\n---\n"), 4) + 5),
++      mcpExecution: readFileSync(new URL("../../skills/orchestrator/references/mcp-execution.md", import.meta.url)),
++    };
++    for (const [kind, bytes] of Object.entries(inputs)) {
++      expect(matchesOrchestratorIntakeUpdate(kind, bytes), kind).toBe(true);
++      const altered = Buffer.from(bytes);
++      altered[altered.length - 1] ^= 1;
++      expect(matchesOrchestratorIntakeUpdate(kind, altered), kind).toBe(false);
++    }
++    expect(matchesOrchestratorIntakeUpdate("unknown", candidate)).toBe(false);
++  });
++
++  it("preserves the reviewed skill revisions while reducing their initial load", () => {
+     const report = checkSkillContextOptimization();
+     expect(report).toMatchObject({
+       pass: true,
+@@ -18,12 +35,13 @@ describe("skill context optimization", () => {
+       totals: {
+         skillCount: 20,
+         baselineBytes: 115679,
+-        candidateBytes: 45853,
+-        reducedBytes: 69826,
+-        reductionPercent: 60.361863
++        candidateBytes: 45851,
++        reducedBytes: 69828,
++        reductionPercent: 60.363592
+       }
+     });
+     expect(report.skills).toHaveLength(20);
+     expect(report.skills.every((skill) => skill.reducedBytes > 0)).toBe(true);
++    expect(report.policyBaselineUpdates).toMatchObject([{ skillId: "orchestrator", initialMaxBytes: 4585 }]);
+   });
+ });
