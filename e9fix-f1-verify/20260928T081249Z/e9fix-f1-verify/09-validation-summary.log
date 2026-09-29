@@ -1,0 +1,13 @@
+10-bundle-check EXIT=0
+11-claude-drift EXIT=0
+12-claude-check EXIT=0
+13-lint EXIT=0
+14-build EXIT=0
+15 dirty lines: 0
+16-test1 EXIT=0
+17-test2 EXIT=0
+18 dirty lines: 0
+19-runtime-check EXIT=0
+20-validate-all EXIT=0
+21-validate-official EXIT=1
+22-diff-check EXIT=0

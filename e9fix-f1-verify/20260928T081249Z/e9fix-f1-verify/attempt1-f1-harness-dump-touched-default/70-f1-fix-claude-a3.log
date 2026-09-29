@@ -1,0 +1,262 @@
+## VER=fix KIND=claude CASE=a3 INST=/tmp/inst/fix/claude
+R=/tmp/f1/fix-claude-a3/R
+DEFAULT_TRUST=/tmp/f1/fix-claude-a3/home/.agent-governance-suite/session-messaging/trust.sqlite3
+seed: {"target":{"host":"portable","sessionId":"wake-target"},"attemptId":"bea5f350-069d-45e3-aa1c-00e43220aae3","sourceReceiptId":"source-611a908f-be01-4645-a6b5-78fcf7491052","now":1790582483274,"nonceDigestOnly":true}
+--- before
+{
+ "wake_nonces": [
+  {
+   "nonce_digest": "83e638963967bf55a21261fb1c022775251c5cc9fedf228e9c6725df99a0a48c",
+   "host": "portable",
+   "session_id": "wake-target",
+   "expires_at": "2026-09-28T09:01:23.274Z",
+   "consumed_at": null,
+   "state": "unknown",
+   "nonce": "<30 chars>",
+   "instance_id": "instance-1",
+   "birth_generation": "2026-09-28T08:01:23.274Z",
+   "transport": "portable",
+   "relay_id": "relay-1",
+   "attempt_id": "bea5f350-069d-45e3-aa1c-00e43220aae3",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T08:01:23.275Z",
+   "outcome_at": "2026-09-28T08:01:23.276Z",
+   "observed_at": null,
+   "late_observed_at": "2026-09-28T08:01:23.285Z"
+  }
+ ],
+ "messages": [
+  {
+   "message_id": "history-body",
+   "claimed_at": null,
+   "delivery_attempts": 0,
+   "acknowledged_at": null
+  }
+ ],
+ "input_observations": 0,
+ "session_presence": [
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-1",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:01:23.274Z",
+   "heartbeat_at": "2026-09-28T08:01:23.274Z",
+   "lease_until": "2026-09-28T08:01:43.274Z",
+   "ended_at": null,
+   "end_reason": null
+  },
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-2",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:01:23.279Z",
+   "heartbeat_at": "2026-09-28T08:01:23.279Z",
+   "lease_until": "2026-09-28T08:01:43.279Z",
+   "ended_at": null,
+   "end_reason": null
+  }
+ ],
+ "/tmp/f1/fix-claude-a3/R/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-7255d5e7-10b1-4c73-a8b4-5901bce17c40"
+  ]
+ },
+ "/tmp/f1/fix-claude-a3/home/.agent-governance-suite/session-messaging/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-611a908f-be01-4645-a6b5-78fcf7491052"
+  ]
+ }
+}
+--- default dir before:
+trust.sqlite3 28672 3d656d006d86309c mtime=1790582543
+trust.sqlite3-shm 32768 fd4c9fda9cd3f9ae mtime=1790582543
+trust.sqlite3-wal 0 e3b0c44298fc1c14 mtime=1790582543
+cmd: env -i PATH HOME=/tmp/f1/fix-claude-a3/home node /tmp/inst/fix/claude/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/f1/fix-claude-a3/R  (cwd=/tmp/inst/fix/claude)
+endpoint present: yes
+cmd: echo '<payload>' | env -i PATH HOME=/tmp/f1/fix-claude-a3/home AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR=/tmp/f1/fix-claude-a3/R node /tmp/inst/fix/claude/mcp-server/dist/session-message-cli.mjs
+run1 exit=0 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+RESULT run1 false
+run2 exit=0 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+RESULT run2 false
+broker pid=24552 env AGENT_GOVERNANCE_* keys: |count=0
+--- after (broker live)
+{
+ "wake_nonces": [
+  {
+   "nonce_digest": "83e638963967bf55a21261fb1c022775251c5cc9fedf228e9c6725df99a0a48c",
+   "host": "portable",
+   "session_id": "wake-target",
+   "expires_at": "2026-09-28T09:01:23.274Z",
+   "consumed_at": null,
+   "state": "unknown",
+   "nonce": "<30 chars>",
+   "instance_id": "instance-1",
+   "birth_generation": "2026-09-28T08:01:23.274Z",
+   "transport": "portable",
+   "relay_id": "relay-1",
+   "attempt_id": "bea5f350-069d-45e3-aa1c-00e43220aae3",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T08:01:23.275Z",
+   "outcome_at": "2026-09-28T08:01:23.276Z",
+   "observed_at": null,
+   "late_observed_at": "2026-09-28T08:01:23.285Z"
+  }
+ ],
+ "messages": [
+  {
+   "message_id": "history-body",
+   "claimed_at": null,
+   "delivery_attempts": 0,
+   "acknowledged_at": null
+  }
+ ],
+ "input_observations": 0,
+ "session_presence": [
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-1",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:01:23.274Z",
+   "heartbeat_at": "2026-09-28T08:01:23.274Z",
+   "lease_until": "2026-09-28T08:01:43.274Z",
+   "ended_at": null,
+   "end_reason": null
+  },
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-2",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:01:23.279Z",
+   "heartbeat_at": "2026-09-28T08:01:23.279Z",
+   "lease_until": "2026-09-28T08:01:43.279Z",
+   "ended_at": null,
+   "end_reason": null
+  }
+ ],
+ "/tmp/f1/fix-claude-a3/R/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   },
+   {
+    "n": "trust.sqlite3-shm",
+    "size": 32768
+   },
+   {
+    "n": "trust.sqlite3-wal",
+    "size": 0
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-7255d5e7-10b1-4c73-a8b4-5901bce17c40"
+  ]
+ },
+ "/tmp/f1/fix-claude-a3/home/.agent-governance-suite/session-messaging/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   },
+   {
+    "n": "trust.sqlite3-shm",
+    "size": 32768
+   },
+   {
+    "n": "trust.sqlite3-wal",
+    "size": 0
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-611a908f-be01-4645-a6b5-78fcf7491052"
+  ]
+ }
+}
+--- default dir after (broker live):
+trust.sqlite3 28672 3d656d006d86309c mtime=1790582543
+trust.sqlite3-shm 32768 fd4c9fda9cd3f9ae mtime=1790582543
+trust.sqlite3-wal 0 e3b0c44298fc1c14 mtime=1790582543
+--- default dir after broker stop:
+trust.sqlite3 28672 3d656d006d86309c mtime=1790582543
+trust.sqlite3-shm 32768 fd4c9fda9cd3f9ae mtime=1790582543
+trust.sqlite3-wal 0 e3b0c44298fc1c14 mtime=1790582543
+RESULT default_untouched=yes
+RESULT R_trust_exists_after=yes
+RESULT default_dir_exists_after=yes
+EXIT=0

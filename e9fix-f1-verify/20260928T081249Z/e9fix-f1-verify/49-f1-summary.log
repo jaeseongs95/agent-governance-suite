@@ -1,0 +1,28 @@
+e9 codex a1: run1 false run2 false default_untouched=NO R_trust_exists_after=yes default_dir_exists_after=yes 
+e9 codex a2: run1 true run2 false default_untouched=NO R_trust_exists_after=no default_dir_exists_after=yes 
+e9 codex a3: run1 true run2 false default_untouched=NO R_trust_exists_after=yes default_dir_exists_after=yes 
+e9 codex b: run1 false run2 false default_untouched=yes R_trust_exists_after=yes default_dir_exists_after=no 
+e9 codex c-same: run1 true run2 false default_untouched=NO R_trust_exists_after=yes default_dir_exists_after=yes 
+e9 codex c2: run1 true run2 false default_untouched=yes R_trust_exists_after=yes default_dir_exists_after=no 
+e9 claude a1: run1 false run2 false default_untouched=NO R_trust_exists_after=yes default_dir_exists_after=yes 
+e9 claude a2: run1 true run2 false default_untouched=NO R_trust_exists_after=no default_dir_exists_after=yes 
+e9 claude a3: run1 true run2 false default_untouched=NO R_trust_exists_after=yes default_dir_exists_after=yes 
+e9 claude b: run1 false run2 false default_untouched=yes R_trust_exists_after=yes default_dir_exists_after=no 
+e9 claude c-same: run1 true run2 false default_untouched=NO R_trust_exists_after=yes default_dir_exists_after=yes 
+e9 claude c2: run1 true run2 false default_untouched=yes R_trust_exists_after=yes default_dir_exists_after=no 
+fix codex a1: run1 true run2 false default_untouched=yes R_trust_exists_after=yes default_dir_exists_after=yes 
+fix codex a2: run1 false run2 false default_untouched=yes R_trust_exists_after=no default_dir_exists_after=yes 
+fix codex a3: run1 false run2 false default_untouched=yes R_trust_exists_after=yes default_dir_exists_after=yes 
+fix codex b: run1 true run2 false default_untouched=yes R_trust_exists_after=yes default_dir_exists_after=no 
+fix codex c-same: run1 true run2 false default_untouched=NO R_trust_exists_after=yes default_dir_exists_after=yes 
+fix codex c2: run1 true run2 false default_untouched=yes R_trust_exists_after=yes default_dir_exists_after=no 
+fix claude a1: run1 true run2 false default_untouched=yes R_trust_exists_after=yes default_dir_exists_after=yes 
+fix claude a2: run1 false run2 false default_untouched=yes R_trust_exists_after=no default_dir_exists_after=yes 
+fix claude a3: run1 false run2 false default_untouched=yes R_trust_exists_after=yes default_dir_exists_after=yes 
+fix claude b: run1 true run2 false default_untouched=yes R_trust_exists_after=yes default_dir_exists_after=no 
+fix claude c-same: run1 true run2 false default_untouched=NO R_trust_exists_after=yes default_dir_exists_after=yes 
+fix claude c2: run1 true run2 false default_untouched=yes R_trust_exists_after=yes default_dir_exists_after=no 
+e9 codex b0: run1 false run2 false default_untouched=yes R_trust_exists_after=no R_trust_files_after=0 default_dir_exists_after=no 
+e9 claude b0: run1 false run2 false default_untouched=yes R_trust_exists_after=no R_trust_files_after=0 default_dir_exists_after=no 
+fix codex b0: run1 false run2 false default_untouched=yes R_trust_exists_after=no R_trust_files_after=0 default_dir_exists_after=no 
+fix claude b0: run1 false run2 false default_untouched=yes R_trust_exists_after=no R_trust_files_after=0 default_dir_exists_after=no 

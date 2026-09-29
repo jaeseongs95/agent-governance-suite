@@ -1,0 +1,111 @@
+diff --git a/tests/session-messaging/historical-wake.test.mjs b/tests/session-messaging/historical-wake.test.mjs
+index fa28637..96a1145 100644
+--- a/tests/session-messaging/historical-wake.test.mjs
++++ b/tests/session-messaging/historical-wake.test.mjs
+@@ -1,10 +1,12 @@
+ import assert from 'node:assert/strict';
+ import { fork, spawn, spawnSync } from 'node:child_process';
+ import { once } from 'node:events';
+-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
++import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
++import { rm } from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import { DatabaseSync } from 'node:sqlite';
++import { setTimeout as delay } from 'node:timers/promises';
+ import { fileURLToPath } from 'node:url';
+ import { afterEach, test, vi } from 'vitest';
+ import { SessionMessageStore } from '../../mcp-server/src/session-message-store.ts';
+@@ -16,9 +18,9 @@ import { TrustStore } from '../../mcp-server/src/trust-store.ts';
+ 
+ const target = { host: 'portable', sessionId: 'wake-target' };
+ const resources = [];
+-afterEach(() => {
++afterEach(async () => {
+   vi.unstubAllEnvs();
+-  for (const f of resources.splice(0)) { f.store.close(); rmSync(f.directory, { recursive: true, force: true }); }
++  for (const f of resources.splice(0)) { f.store.close(); await rm(f.directory, { recursive: true, force: true, maxRetries: 10 }); }
+ });
+ function fixture() {
+   const directory = mkdtempSync(join(tmpdir(), 'ags-wake-history-'));
+@@ -303,3 +305,80 @@ test('bundled public CLI forwards only IDs to the private broker and cannot repe
+     assert.deepEqual(snapshot(f).observations, []);
+   } finally { broker.kill(); await exited; }
+ }, 20_000);
++
++test.each(['prestarted', 'client-ensure'])('packaged CLI binds history to explicit broker state directory: %s', async mode => {
++  const f = fixture();
++  const install = join(f.directory, 'isolated-install'); mkdirSync(install);
++  for (const name of ['session-message-broker.mjs', 'session-message-cli.mjs']) {
++    copyFileSync(fileURLToPath(new URL(`../../mcp-server/dist/${name}`, import.meta.url)), join(install, name));
++  }
++  const unrelated = join(f.directory, 'environment-default');
++  const decoyPath = join(unrelated, 'trust.sqlite3');
++  const decoy = new TrustStore(decoyPath); decoy.close();
++  const decoyBytes = readFileSync(decoyPath);
++  const trustBytes = readFileSync(f.trustPath);
++  const env = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: unrelated };
++  delete env.AGENT_GOVERNANCE_TRUST_DB_PATH;
++  let broker; let exited;
++  if (mode === 'prestarted') {
++    broker = spawn(process.execPath, [join(install, 'session-message-broker.mjs'), '--state-directory', f.directory],
++      { env, cwd: install, stdio: 'ignore', windowsHide: true });
++    exited = once(broker, 'exit');
++  }
++  try {
++    if (broker) await waitForSessionMessageBrokerReady(f.directory, broker, 5000);
++    const run = input => {
++      const code = `import { readFileSync } from 'node:fs';
++        import { runSessionMessageCli } from './session-message-cli.mjs';
++        try { console.log(JSON.stringify(await runSessionMessageCli(readFileSync(0, 'utf8'), process.argv[1]))); }
++        catch (error) { console.log(JSON.stringify({ ok: false, error: error.message })); process.exitCode = 1; }`;
++      const output = spawnSync(process.execPath, ['--input-type=module', '-e', code, f.directory], {
++        env, cwd: install, encoding: 'utf8', windowsHide: true, timeout: 15_000,
++        input: JSON.stringify({ operation: 'reconcile-wake-observation', payload: input }) });
++      assert.equal(output.error, undefined); return { code: output.status, json: JSON.parse(output.stdout) };
++    };
++    const before = snapshot(f);
++    const wrong = run({ ...payload(f), sourceReceiptId: 'source-missing' });
++    assert.equal(wrong.code, 0); assert.deepEqual(wrong.json.data, { reconciled: false, evidence: null });
++    assert.deepEqual(snapshot(f), before);
++    assert.equal(run({ ...payload(f), approved: true }).code, 1); assert.deepEqual(snapshot(f), before);
++    // Valid proof in the unrelated default DB must not replace the broker's selected DB.
++    copyFileSync(f.trustPath, decoyPath); writeFileSync(f.trustPath, decoyBytes);
++    const unrelatedProof = run(payload(f)); assert.equal(unrelatedProof.code, 0);
++    assert.deepEqual(unrelatedProof.json.data, { reconciled: false, evidence: null });
++    assert.deepEqual(snapshot(f), before); assert.deepEqual(readFileSync(f.trustPath), decoyBytes);
++    assert.deepEqual(readFileSync(decoyPath), trustBytes); assert.deepEqual(readdirSync(unrelated), ['trust.sqlite3']);
++    rmSync(f.trustPath);
++    const missing = run(payload(f)); assert.equal(missing.code, 0);
++    assert.deepEqual(missing.json.data, { reconciled: false, evidence: null });
++    assert.equal(existsSync(f.trustPath), false); assert.deepEqual(snapshot(f), before);
++    assert.deepEqual(readFileSync(decoyPath), trustBytes); assert.deepEqual(readdirSync(unrelated), ['trust.sqlite3']);
++    writeFileSync(f.trustPath, trustBytes); writeFileSync(decoyPath, decoyBytes);
++    const result = run(payload(f)); assert.equal(result.code, 0);
++    assert.equal(result.json.data.reconciled, true, JSON.stringify(result.json));
++    assert.equal(result.json.data.evidence.sourceReceiptId, f.sourceReceiptId);
++    assert.equal(result.json.data.evidence.oldBinding.attemptId, f.attempt.attemptId);
++    assert.deepEqual(snapshot(f).messages, before.messages);
++    assert.deepEqual(snapshot(f).presence, before.presence);
++    assert.deepEqual(snapshot(f).observations, before.observations);
++    assert.deepEqual(run(payload(f)).json.data, { reconciled: false, evidence: null });
++    assert.deepEqual(readFileSync(f.trustPath), trustBytes);
++    assert.deepEqual(readFileSync(decoyPath), decoyBytes);
++    assert.deepEqual(readdirSync(unrelated), ['trust.sqlite3']);
++    assert.equal(existsSync(join(install, 'node_modules')), false);
++  } finally {
++    if (broker) { broker.kill(); await exited; }
++    else if (existsSync(join(f.directory, 'endpoint.json'))) {
++      const endpoint = JSON.parse(readFileSync(join(f.directory, 'endpoint.json'), 'utf8'));
++      process.kill(endpoint.pid);
++      const deadline = Date.now() + 5000;
++      let alive = true;
++      while (alive && Date.now() < deadline) {
++        try { process.kill(endpoint.pid, 0); }
++        catch { alive = false; }
++        if (alive) await delay(20);
++      }
++      assert.equal(alive, false);
++    }
++  }
++}, 30_000);

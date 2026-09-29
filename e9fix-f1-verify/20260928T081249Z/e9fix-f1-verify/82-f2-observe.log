@@ -1,0 +1,7 @@
+user_version 99
+codex run1: {"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":true,"evidence":{"sourceReceiptId":"source-18fe1ea2-e1ee-47ca-b5a9-a99f9dbd89c6","contentDigest":"sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92","observedAt":"2026-09-28T08:09:37.187Z","receiptExpiresAt":"2026-09-28T08:10:07.187Z","oldBinding":{"host":"portable","sessionId":"wake-target","instanceId":"instance-1","generation":"2026-09-28T08:09:37.177Z","transport":"portable","relayId":"relay-1","attemptId":"2bbb6ee3-7280-4feb-b53c-6f845dfb0d68","dispatchEpoch":1},"lateObservedAt":"2026-09-28T08:09:37.188Z","reconciledAt":"2026-09-28T08:10:37.456Z"}}}
+codex run2: {"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+user_version 99
+claude run1: {"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":true,"evidence":{"sourceReceiptId":"source-a57f25c1-291c-4b8c-abba-e59f074b8a2d","contentDigest":"sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92","observedAt":"2026-09-28T08:09:37.679Z","receiptExpiresAt":"2026-09-28T08:10:07.679Z","oldBinding":{"host":"portable","sessionId":"wake-target","instanceId":"instance-1","generation":"2026-09-28T08:09:37.669Z","transport":"portable","relayId":"relay-1","attemptId":"d8961901-d4d7-4019-b1b1-c6cb3d175b6e","dispatchEpoch":1},"lateObservedAt":"2026-09-28T08:09:37.680Z","reconciledAt":"2026-09-28T08:10:37.949Z"}}}
+claude run2: {"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+EXIT=0

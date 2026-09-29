@@ -1,0 +1,30 @@
+| log | ver | tree | case | run1 | run2 | old wake after | msg claimed | obs | default dir untouched | default dir exists | R/trust exists | broker AGENT_GOVERNANCE_* |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 50 | e9 | codex | a1 | false | false | unknown consumed=null | no | 0 | NO | yes | yes | 0 |
+| 51 | e9 | codex | a2 | true | false | observed consumed=set | no | 0 | NO | yes | no | 0 |
+| 52 | e9 | codex | a3 | true | false | observed consumed=set | no | 0 | NO | yes | yes | 0 |
+| 53 | e9 | codex | b | false | false | unknown consumed=null | no | 0 | yes | no | yes | 0 |
+| 54 | e9 | codex | c-same | true | false | observed consumed=set | no | 0 | NO | yes | yes | 0 |
+| 55 | e9 | codex | c2 | true | false | observed consumed=set | no | 0 | yes | no | yes | 1 |
+| 56 | e9 | claude | a1 | false | false | unknown consumed=null | no | 0 | NO | yes | yes | 0 |
+| 57 | e9 | claude | a2 | true | false | observed consumed=set | no | 0 | NO | yes | no | 0 |
+| 58 | e9 | claude | a3 | true | false | observed consumed=set | no | 0 | NO | yes | yes | 0 |
+| 59 | e9 | claude | b | false | false | unknown consumed=null | no | 0 | yes | no | yes | 0 |
+| 60 | e9 | claude | c-same | true | false | observed consumed=set | no | 0 | NO | yes | yes | 0 |
+| 61 | e9 | claude | c2 | true | false | observed consumed=set | no | 0 | yes | no | yes | 1 |
+| 62 | fix | codex | a1 | true | false | observed consumed=set | no | 0 | yes | yes | yes | 0 |
+| 63 | fix | codex | a2 | false | false | unknown consumed=null | no | 0 | yes | yes | no | 0 |
+| 64 | fix | codex | a3 | false | false | unknown consumed=null | no | 0 | yes | yes | yes | 0 |
+| 65 | fix | codex | b | true | false | observed consumed=set | no | 0 | yes | no | yes | 0 |
+| 66 | fix | codex | c-same | true | false | observed consumed=set | no | 0 | NO | yes | yes | 0 |
+| 67 | fix | codex | c2 | true | false | observed consumed=set | no | 0 | yes | no | yes | 1 |
+| 68 | fix | claude | a1 | true | false | observed consumed=set | no | 0 | yes | yes | yes | 0 |
+| 69 | fix | claude | a2 | false | false | unknown consumed=null | no | 0 | yes | yes | no | 0 |
+| 70 | fix | claude | a3 | false | false | unknown consumed=null | no | 0 | yes | yes | yes | 0 |
+| 71 | fix | claude | b | true | false | observed consumed=set | no | 0 | yes | no | yes | 0 |
+| 72 | fix | claude | c-same | true | false | observed consumed=set | no | 0 | NO | yes | yes | 0 |
+| 73 | fix | claude | c2 | true | false | observed consumed=set | no | 0 | yes | no | yes | 1 |
+| 74 | e9 | codex | b0 | false | false | unknown consumed=null | no | 0 | yes | no | no | 0 |
+| 75 | e9 | claude | b0 | false | false | unknown consumed=null | no | 0 | yes | no | no | 0 |
+| 76 | fix | codex | b0 | false | false | unknown consumed=null | no | 0 | yes | no | no | 0 |
+| 77 | fix | claude | b0 | false | false | unknown consumed=null | no | 0 | yes | no | no | 0 |

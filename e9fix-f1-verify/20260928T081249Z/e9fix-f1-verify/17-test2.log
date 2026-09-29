@@ -1,0 +1,14 @@
+$ pnpm test -- --reporter=default --reporter=json --outputFile=/tmp/ev/17-test2.json
+Already up to date
+Done in 528ms using pnpm v11.19.0
+$ node scripts/build.mjs && vitest run -- --reporter=default --reporter=json --outputFile=/tmp/ev/17-test2.json
+
+ RUN  v5.0.0 /tmp/fix
+
+
+ Test Files  59 passed | 1 skipped (60)
+      Tests  770 passed | 1 skipped (771)
+   Start at  07:57:17
+   Duration  63.47s (tests 94%, import 4%, transform 2%)
+
+EXIT=0

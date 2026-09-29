@@ -1,0 +1,15 @@
+seeds 50 with errs 0 childStderr 0 seedErrors 0
+{
+  activeLe1: 50,
+  terminalUnchanged: 50,
+  noUnfoundedRelease: 50,
+  wrongTargetsFalse: 50,
+  reconcileATrueLe1: 50,
+  aRowConsistent: 50,
+  rerunAllFalse: 50,
+  rerunNoChange: 50,
+  noMessageClaim: 50,
+  defaultPathUntouched: 50,
+  childrenOk: 50
+}
+U active in all: true

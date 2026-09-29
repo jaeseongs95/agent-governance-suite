@@ -1,0 +1,250 @@
+$ (cd /tmp/e9) pnpm exec vitest run tests/session-messaging/historical-wake.test.mjs --reporter=verbose --reporter=json --outputFile=/tmp/ev/27-counter-e9.json
+Already up to date
+Done in 485ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /tmp/e9
+
+ ✓ tests/session-messaging/historical-wake.test.mjs > expired original evidence retires only the exact old attempt, preserving historical time and pending body 42ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects target without changing any message state 20ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects attempt without changing any message state 21ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects receipt without changing any message state 17ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects nonce without changing any message state 18ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects current without changing any message state 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects no-current without changing any message state 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects no-late without changing any message state 23ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects submitted without changing any message state 21ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects already-consumed without changing any message state 17ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects bad-signature without changing any message state 21ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects digest without changing any message state 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects adapter without changing any message state 23ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects authority without changing any message state 25ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation before-start 21ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation after-late 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation expiry-at-late 23ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation not-expired 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation invalid-observed 27ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation invalid-late 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation invalid-start 27ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > reconstructs only the exact signed actor digest main/observed 28ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > reconstructs only the exact signed actor digest main/unknown 25ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > reconstructs only the exact signed actor digest unknown/observed 21ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > reconstructs only the exact signed actor digest unknown/unknown 29ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > a signed multiple-nonce observation cannot be approximated by a single old nonce 25ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust rejection missing-db creates no database/key/receipt 23ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust rejection missing-key creates no database/key/receipt 30ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust rejection bad-key creates no database/key/receipt 29ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust rejection missing-table creates no database/key/receipt 25ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied nowMs 20ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied receipt 20ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied approved 29ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied observation 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied nonce 20ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied instanceId 17ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > two independent recovery processes CAS once; pending uses separate normal reserve/start 381ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > CAS rechecks generation after historical verification 24ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > CAS rechecks epoch after historical verification 20ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > CAS rechecks late after historical verification 24ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > CAS rechecks state after historical verification 18ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > historical observation retention counts from recovery application, not the old arrival 21ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > a reused instance with a new birth generation still retires only the old attempt 18ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > read-only verification holds one key/receipt snapshot while an independent writer rotates both 127ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > bundled public CLI forwards only IDs to the private broker and cannot repeat recovery 389ms
+ × tests/session-messaging/historical-wake.test.mjs > packaged CLI binds history to explicit broker state directory: prestarted 418ms
+   → Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   evidence: {
++     contentDigest: 'sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92',
++     lateObservedAt: '2026-09-28T08:00:34.126Z',
++     observedAt: '2026-09-28T08:00:34.125Z',
++     oldBinding: {
++       attemptId: '074d4c1b-a31a-4a9e-b7f5-cee8abc07c81',
++       dispatchEpoch: 1,
++       generation: '2026-09-28T08:00:34.115Z',
++       host: 'portable',
++       instanceId: 'instance-1',
++       relayId: 'relay-1',
++       sessionId: 'wake-target',
++       transport: 'portable'
++     },
++     receiptExpiresAt: '2026-09-28T08:01:04.125Z',
++     reconciledAt: '2026-09-28T08:01:34.478Z',
++     sourceReceiptId: 'source-e6fd90b6-2183-44a8-afb0-9f4dc4dc5158'
++   },
++   reconciled: true
+-   evidence: null,
+-   reconciled: false
+  }
+
+ × tests/session-messaging/historical-wake.test.mjs > packaged CLI binds history to explicit broker state directory: client-ensure 1947ms
+   → Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   evidence: {
++     contentDigest: 'sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92',
++     lateObservedAt: '2026-09-28T08:00:34.538Z',
++     observedAt: '2026-09-28T08:00:34.537Z',
++     oldBinding: {
++       attemptId: '2945d381-14a8-4bbe-bab6-86dbc6adbf06',
++       dispatchEpoch: 1,
++       generation: '2026-09-28T08:00:34.527Z',
++       host: 'portable',
++       instanceId: 'instance-1',
++       relayId: 'relay-1',
++       sessionId: 'wake-target',
++       transport: 'portable'
++     },
++     receiptExpiresAt: '2026-09-28T08:01:04.537Z',
++     reconciledAt: '2026-09-28T08:01:34.899Z',
++     sourceReceiptId: 'source-9a904e4c-5323-411f-b908-90e92093034c'
++   },
++   reconciled: true
+-   evidence: null,
+-   reconciled: false
+  }
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/historical-wake.test.mjs > packaged CLI binds history to explicit broker state directory: prestarted
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   evidence: {
++     contentDigest: 'sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92',
++     lateObservedAt: '2026-09-28T08:00:34.126Z',
++     observedAt: '2026-09-28T08:00:34.125Z',
++     oldBinding: {
++       attemptId: '074d4c1b-a31a-4a9e-b7f5-cee8abc07c81',
++       dispatchEpoch: 1,
++       generation: '2026-09-28T08:00:34.115Z',
++       host: 'portable',
++       instanceId: 'instance-1',
++       relayId: 'relay-1',
++       sessionId: 'wake-target',
++       transport: 'portable'
++     },
++     receiptExpiresAt: '2026-09-28T08:01:04.125Z',
++     reconciledAt: '2026-09-28T08:01:34.478Z',
++     sourceReceiptId: 'source-e6fd90b6-2183-44a8-afb0-9f4dc4dc5158'
++   },
++   reconciled: true
+-   evidence: null,
+-   reconciled: false
+  }
+
+
+- Expected
++ Received
+
+  {
+-   "evidence": null,
+-   "reconciled": false,
++   "evidence": {
++     "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
++     "lateObservedAt": "2026-09-28T08:00:34.126Z",
++     "observedAt": "2026-09-28T08:00:34.125Z",
++     "oldBinding": {
++       "attemptId": "074d4c1b-a31a-4a9e-b7f5-cee8abc07c81",
++       "dispatchEpoch": 1,
++       "generation": "2026-09-28T08:00:34.115Z",
++       "host": "portable",
++       "instanceId": "instance-1",
++       "relayId": "relay-1",
++       "sessionId": "wake-target",
++       "transport": "portable",
++     },
++     "receiptExpiresAt": "2026-09-28T08:01:04.125Z",
++     "reconciledAt": "2026-09-28T08:01:34.478Z",
++     "sourceReceiptId": "source-e6fd90b6-2183-44a8-afb0-9f4dc4dc5158",
++   },
++   "reconciled": true,
+  }
+
+ ❯ tests/session-messaging/historical-wake.test.mjs:348:12
+    346|     copyFileSync(f.trustPath, decoyPath); writeFileSync(f.trustPath, d…
+    347|     const unrelatedProof = run(payload(f)); assert.equal(unrelatedProo…
+    348|     assert.deepEqual(unrelatedProof.json.data, { reconciled: false, ev…
+       |            ^
+    349|     assert.deepEqual(snapshot(f), before); assert.deepEqual(readFileSy…
+    350|     assert.deepEqual(readFileSync(decoyPath), trustBytes); assert.deep…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/historical-wake.test.mjs > packaged CLI binds history to explicit broker state directory: client-ensure
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   evidence: {
++     contentDigest: 'sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92',
++     lateObservedAt: '2026-09-28T08:00:34.538Z',
++     observedAt: '2026-09-28T08:00:34.537Z',
++     oldBinding: {
++       attemptId: '2945d381-14a8-4bbe-bab6-86dbc6adbf06',
++       dispatchEpoch: 1,
++       generation: '2026-09-28T08:00:34.527Z',
++       host: 'portable',
++       instanceId: 'instance-1',
++       relayId: 'relay-1',
++       sessionId: 'wake-target',
++       transport: 'portable'
++     },
++     receiptExpiresAt: '2026-09-28T08:01:04.537Z',
++     reconciledAt: '2026-09-28T08:01:34.899Z',
++     sourceReceiptId: 'source-9a904e4c-5323-411f-b908-90e92093034c'
++   },
++   reconciled: true
+-   evidence: null,
+-   reconciled: false
+  }
+
+
+- Expected
++ Received
+
+  {
+-   "evidence": null,
+-   "reconciled": false,
++   "evidence": {
++     "contentDigest": "sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92",
++     "lateObservedAt": "2026-09-28T08:00:34.538Z",
++     "observedAt": "2026-09-28T08:00:34.537Z",
++     "oldBinding": {
++       "attemptId": "2945d381-14a8-4bbe-bab6-86dbc6adbf06",
++       "dispatchEpoch": 1,
++       "generation": "2026-09-28T08:00:34.527Z",
++       "host": "portable",
++       "instanceId": "instance-1",
++       "relayId": "relay-1",
++       "sessionId": "wake-target",
++       "transport": "portable",
++     },
++     "receiptExpiresAt": "2026-09-28T08:01:04.537Z",
++     "reconciledAt": "2026-09-28T08:01:34.899Z",
++     "sourceReceiptId": "source-9a904e4c-5323-411f-b908-90e92093034c",
++   },
++   "reconciled": true,
+  }
+
+ ❯ tests/session-messaging/historical-wake.test.mjs:348:12
+    346|     copyFileSync(f.trustPath, decoyPath); writeFileSync(f.trustPath, d…
+    347|     const unrelatedProof = run(payload(f)); assert.equal(unrelatedProo…
+    348|     assert.deepEqual(unrelatedProof.json.data, { reconciled: false, ev…
+       |            ^
+    349|     assert.deepEqual(snapshot(f), before); assert.deepEqual(readFileSy…
+    350|     assert.deepEqual(readFileSync(decoyPath), trustBytes); assert.deep…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 45 passed (47)
+   Start at  08:01:31
+   Duration  4.85s (tests 90%, transform 9%, import 1%)
+
+JSON report written to /tmp/ev/27-counter-e9.json
+EXIT=1

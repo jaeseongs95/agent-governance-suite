@@ -1,0 +1,5 @@
+e9/codex node_modules: 0 broker sha: 80c00e7b96dd3e4e cli sha: 41977dabc6a50c36 trustPathBinding: 0
+e9/claude node_modules: 0 broker sha: 80c00e7b96dd3e4e cli sha: 41977dabc6a50c36 trustPathBinding: 0
+fix/codex node_modules: 0 broker sha: 5fafd04e8b8860b9 cli sha: 41977dabc6a50c36 trustPathBinding: 4
+fix/claude node_modules: 0 broker sha: 5fafd04e8b8860b9 cli sha: 41977dabc6a50c36 trustPathBinding: 4
+EXIT=0

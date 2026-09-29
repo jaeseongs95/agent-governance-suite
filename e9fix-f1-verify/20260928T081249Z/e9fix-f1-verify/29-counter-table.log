@@ -1,0 +1,96 @@
+## 27-counter-e9.json tests 47 passed 45 failed 2
+passed	expired original evidence retires only the exact old attempt, preserving historical time and pending body
+passed	history rejects target without changing any message state
+passed	history rejects attempt without changing any message state
+passed	history rejects receipt without changing any message state
+passed	history rejects nonce without changing any message state
+passed	history rejects current without changing any message state
+passed	history rejects no-current without changing any message state
+passed	history rejects no-late without changing any message state
+passed	history rejects submitted without changing any message state
+passed	history rejects already-consumed without changing any message state
+passed	history rejects bad-signature without changing any message state
+passed	history rejects digest without changing any message state
+passed	history rejects adapter without changing any message state
+passed	history rejects authority without changing any message state
+passed	history rejects invalid time relation before-start
+passed	history rejects invalid time relation after-late
+passed	history rejects invalid time relation expiry-at-late
+passed	history rejects invalid time relation not-expired
+passed	history rejects invalid time relation invalid-observed
+passed	history rejects invalid time relation invalid-late
+passed	history rejects invalid time relation invalid-start
+passed	reconstructs only the exact signed actor digest main/observed
+passed	reconstructs only the exact signed actor digest main/unknown
+passed	reconstructs only the exact signed actor digest unknown/observed
+passed	reconstructs only the exact signed actor digest unknown/unknown
+passed	a signed multiple-nonce observation cannot be approximated by a single old nonce
+passed	readonly trust rejection missing-db creates no database/key/receipt
+passed	readonly trust rejection missing-key creates no database/key/receipt
+passed	readonly trust rejection bad-key creates no database/key/receipt
+passed	readonly trust rejection missing-table creates no database/key/receipt
+passed	broker rejects caller supplied nowMs
+passed	broker rejects caller supplied receipt
+passed	broker rejects caller supplied approved
+passed	broker rejects caller supplied observation
+passed	broker rejects caller supplied nonce
+passed	broker rejects caller supplied instanceId
+passed	two independent recovery processes CAS once; pending uses separate normal reserve/start
+passed	CAS rechecks generation after historical verification
+passed	CAS rechecks epoch after historical verification
+passed	CAS rechecks late after historical verification
+passed	CAS rechecks state after historical verification
+passed	historical observation retention counts from recovery application, not the old arrival
+passed	a reused instance with a new birth generation still retires only the old attempt
+passed	read-only verification holds one key/receipt snapshot while an independent writer rotates both
+passed	bundled public CLI forwards only IDs to the private broker and cannot repeat recovery
+failed	packaged CLI binds history to explicit broker state directory: prestarted	AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+failed	packaged CLI binds history to explicit broker state directory: client-ensure	AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+## 28-counter-fix.json tests 47 passed 47 failed 0
+passed	expired original evidence retires only the exact old attempt, preserving historical time and pending body
+passed	history rejects target without changing any message state
+passed	history rejects attempt without changing any message state
+passed	history rejects receipt without changing any message state
+passed	history rejects nonce without changing any message state
+passed	history rejects current without changing any message state
+passed	history rejects no-current without changing any message state
+passed	history rejects no-late without changing any message state
+passed	history rejects submitted without changing any message state
+passed	history rejects already-consumed without changing any message state
+passed	history rejects bad-signature without changing any message state
+passed	history rejects digest without changing any message state
+passed	history rejects adapter without changing any message state
+passed	history rejects authority without changing any message state
+passed	history rejects invalid time relation before-start
+passed	history rejects invalid time relation after-late
+passed	history rejects invalid time relation expiry-at-late
+passed	history rejects invalid time relation not-expired
+passed	history rejects invalid time relation invalid-observed
+passed	history rejects invalid time relation invalid-late
+passed	history rejects invalid time relation invalid-start
+passed	reconstructs only the exact signed actor digest main/observed
+passed	reconstructs only the exact signed actor digest main/unknown
+passed	reconstructs only the exact signed actor digest unknown/observed
+passed	reconstructs only the exact signed actor digest unknown/unknown
+passed	a signed multiple-nonce observation cannot be approximated by a single old nonce
+passed	readonly trust rejection missing-db creates no database/key/receipt
+passed	readonly trust rejection missing-key creates no database/key/receipt
+passed	readonly trust rejection bad-key creates no database/key/receipt
+passed	readonly trust rejection missing-table creates no database/key/receipt
+passed	broker rejects caller supplied nowMs
+passed	broker rejects caller supplied receipt
+passed	broker rejects caller supplied approved
+passed	broker rejects caller supplied observation
+passed	broker rejects caller supplied nonce
+passed	broker rejects caller supplied instanceId
+passed	two independent recovery processes CAS once; pending uses separate normal reserve/start
+passed	CAS rechecks generation after historical verification
+passed	CAS rechecks epoch after historical verification
+passed	CAS rechecks late after historical verification
+passed	CAS rechecks state after historical verification
+passed	historical observation retention counts from recovery application, not the old arrival
+passed	a reused instance with a new birth generation still retires only the old attempt
+passed	read-only verification holds one key/receipt snapshot while an independent writer rotates both
+passed	bundled public CLI forwards only IDs to the private broker and cannot repeat recovery
+passed	packaged CLI binds history to explicit broker state directory: prestarted
+passed	packaged CLI binds history to explicit broker state directory: client-ensure

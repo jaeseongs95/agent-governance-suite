@@ -1,0 +1,13 @@
+{
+  "case": "e9fix-f1-verify",
+  "target": { "sha": "ab8e7456c66364fe99ca344855defe8513fc1bd4", "tree": "a0176ddab500613da4c0b38bb2591459246aa41d", "branch": "codex/wake-history-reconcile" },
+  "baseline_prefix": { "sha": "e9b4c73b2ff4294c68c6490411fbc6118c69c8c8", "tree": "4316195bbb2cdade6efa1a62150e33358ef60a7c" },
+  "state_271_builder": { "sha": "d5c5932cd5a0d87630f6ed94f8e3721181ab9864" },
+  "reference_evidence": ["claude/evidence-e9-tamper-trustpath-20260928T072853Z", "claude/evidence-e9-271-recovery-20260928T072417Z", "claude/evidence-wake-271-state-upgrade-20260928T065638Z"],
+  "node": "v24.21.0", "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v37 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "start_utc": "2026-09-28T07:55:05Z",
+  "end_utc": "2026-09-28T08:12:42Z",
+  "fuzz": { "seeds": "0..49", "procs_per_seed": 4, "child_prng_seed": "seed*16+proc (mulberry32)" },
+  "note": "Disposable Linux cloud experiment; not the user's PC operational state nor live evidence."
+}

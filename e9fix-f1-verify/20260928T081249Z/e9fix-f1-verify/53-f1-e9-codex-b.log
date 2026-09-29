@@ -1,0 +1,214 @@
+## VER=e9 KIND=codex CASE=b INST=/tmp/inst/e9/codex
+R=/tmp/f1/e9-codex-b/R
+DEFAULT_TRUST=/tmp/f1/e9-codex-b/home/.agent-governance-suite/session-messaging/trust.sqlite3
+seed: {"target":{"host":"portable","sessionId":"wake-target"},"attemptId":"32da8e9b-4af9-492a-b954-27f270f7c9a6","sourceReceiptId":"source-ce664bf8-8627-4f38-b72a-334f0fc1cf36","now":1790582524950,"nonceDigestOnly":true}
+--- default dir before (taken before any observation):
+NO_DIR
+--- before
+(dump of scratch copies; R/trust.sqlite3 present=yes, D/trust.sqlite3 present=no)
+{
+ "wake_nonces": [
+  {
+   "nonce_digest": "83e638963967bf55a21261fb1c022775251c5cc9fedf228e9c6725df99a0a48c",
+   "host": "portable",
+   "session_id": "wake-target",
+   "expires_at": "2026-09-28T09:02:04.950Z",
+   "consumed_at": null,
+   "state": "unknown",
+   "nonce": "<30 chars>",
+   "instance_id": "instance-1",
+   "birth_generation": "2026-09-28T08:02:04.950Z",
+   "transport": "portable",
+   "relay_id": "relay-1",
+   "attempt_id": "32da8e9b-4af9-492a-b954-27f270f7c9a6",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T08:02:04.951Z",
+   "outcome_at": "2026-09-28T08:02:04.952Z",
+   "observed_at": null,
+   "late_observed_at": "2026-09-28T08:02:04.961Z"
+  }
+ ],
+ "messages": [
+  {
+   "message_id": "history-body",
+   "claimed_at": null,
+   "delivery_attempts": 0,
+   "acknowledged_at": null
+  }
+ ],
+ "input_observations": 0,
+ "session_presence": [
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-1",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:02:04.950Z",
+   "heartbeat_at": "2026-09-28T08:02:04.950Z",
+   "lease_until": "2026-09-28T08:02:24.950Z",
+   "ended_at": null,
+   "end_reason": null
+  },
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-2",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:02:04.955Z",
+   "heartbeat_at": "2026-09-28T08:02:04.955Z",
+   "lease_until": "2026-09-28T08:02:24.955Z",
+   "ended_at": null,
+   "end_reason": null
+  }
+ ],
+ "/tmp/f1/e9-codex-b/snap-1/R/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-ce664bf8-8627-4f38-b72a-334f0fc1cf36"
+  ]
+ },
+ "/tmp/f1/e9-codex-b/snap-1/D/trust.sqlite3": {
+  "exists": false,
+  "files": []
+ }
+}
+cmd: env -i PATH HOME=/tmp/f1/e9-codex-b/home node /tmp/inst/e9/codex/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/f1/e9-codex-b/R  (cwd=/tmp/inst/e9/codex)
+endpoint present: yes
+cmd: echo '<payload>' | env -i PATH HOME=/tmp/f1/e9-codex-b/home AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR=/tmp/f1/e9-codex-b/R node /tmp/inst/e9/codex/mcp-server/dist/session-message-cli.mjs
+run1 exit=0 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+RESULT run1 false
+run2 exit=0 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+RESULT run2 false
+broker pid=25919 env AGENT_GOVERNANCE_* keys: |count=0
+--- default dir after (broker live, before dump):
+NO_DIR
+--- after (broker live)
+(dump of scratch copies; R/trust.sqlite3 present=yes, D/trust.sqlite3 present=no)
+{
+ "wake_nonces": [
+  {
+   "nonce_digest": "83e638963967bf55a21261fb1c022775251c5cc9fedf228e9c6725df99a0a48c",
+   "host": "portable",
+   "session_id": "wake-target",
+   "expires_at": "2026-09-28T09:02:04.950Z",
+   "consumed_at": null,
+   "state": "unknown",
+   "nonce": "<30 chars>",
+   "instance_id": "instance-1",
+   "birth_generation": "2026-09-28T08:02:04.950Z",
+   "transport": "portable",
+   "relay_id": "relay-1",
+   "attempt_id": "32da8e9b-4af9-492a-b954-27f270f7c9a6",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T08:02:04.951Z",
+   "outcome_at": "2026-09-28T08:02:04.952Z",
+   "observed_at": null,
+   "late_observed_at": "2026-09-28T08:02:04.961Z"
+  }
+ ],
+ "messages": [
+  {
+   "message_id": "history-body",
+   "claimed_at": null,
+   "delivery_attempts": 0,
+   "acknowledged_at": null
+  }
+ ],
+ "input_observations": 0,
+ "session_presence": [
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-1",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:02:04.950Z",
+   "heartbeat_at": "2026-09-28T08:02:04.950Z",
+   "lease_until": "2026-09-28T08:02:24.950Z",
+   "ended_at": null,
+   "end_reason": null
+  },
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-2",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:02:04.955Z",
+   "heartbeat_at": "2026-09-28T08:02:04.955Z",
+   "lease_until": "2026-09-28T08:02:24.955Z",
+   "ended_at": null,
+   "end_reason": null
+  }
+ ],
+ "/tmp/f1/e9-codex-b/snap-2/R/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-ce664bf8-8627-4f38-b72a-334f0fc1cf36"
+  ]
+ },
+ "/tmp/f1/e9-codex-b/snap-2/D/trust.sqlite3": {
+  "exists": false,
+  "files": []
+ }
+}
+--- default dir after broker stop:
+NO_DIR
+RESULT default_untouched=yes
+RESULT R_trust_exists_after=yes
+RESULT default_dir_exists_after=no
+EXIT=0

@@ -1,0 +1,220 @@
+## VER=e9 KIND=codex CASE=b INST=/tmp/inst/e9/codex
+R=/tmp/f1/e9-codex-b/R
+DEFAULT_TRUST=/tmp/f1/e9-codex-b/home/.agent-governance-suite/session-messaging/trust.sqlite3
+seed: {"target":{"host":"portable","sessionId":"wake-target"},"attemptId":"62f671e1-3571-431f-83af-e3fb46ac5329","sourceReceiptId":"source-ee26aead-c827-487d-b441-b6b4d366c13f","now":1790582461478,"nonceDigestOnly":true}
+--- before
+{
+ "wake_nonces": [
+  {
+   "nonce_digest": "83e638963967bf55a21261fb1c022775251c5cc9fedf228e9c6725df99a0a48c",
+   "host": "portable",
+   "session_id": "wake-target",
+   "expires_at": "2026-09-28T09:01:01.478Z",
+   "consumed_at": null,
+   "state": "unknown",
+   "nonce": "<30 chars>",
+   "instance_id": "instance-1",
+   "birth_generation": "2026-09-28T08:01:01.478Z",
+   "transport": "portable",
+   "relay_id": "relay-1",
+   "attempt_id": "62f671e1-3571-431f-83af-e3fb46ac5329",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T08:01:01.479Z",
+   "outcome_at": "2026-09-28T08:01:01.480Z",
+   "observed_at": null,
+   "late_observed_at": "2026-09-28T08:01:01.489Z"
+  }
+ ],
+ "messages": [
+  {
+   "message_id": "history-body",
+   "claimed_at": null,
+   "delivery_attempts": 0,
+   "acknowledged_at": null
+  }
+ ],
+ "input_observations": 0,
+ "session_presence": [
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-1",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:01:01.478Z",
+   "heartbeat_at": "2026-09-28T08:01:01.478Z",
+   "lease_until": "2026-09-28T08:01:21.478Z",
+   "ended_at": null,
+   "end_reason": null
+  },
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-2",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:01:01.483Z",
+   "heartbeat_at": "2026-09-28T08:01:01.483Z",
+   "lease_until": "2026-09-28T08:01:21.483Z",
+   "ended_at": null,
+   "end_reason": null
+  }
+ ],
+ "/tmp/f1/e9-codex-b/R/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-ee26aead-c827-487d-b441-b6b4d366c13f"
+  ]
+ },
+ "/tmp/f1/e9-codex-b/home/.agent-governance-suite/session-messaging/trust.sqlite3": {
+  "exists": false,
+  "files": "NO_DIR"
+ }
+}
+--- default dir before:
+NO_DIR
+cmd: env -i PATH HOME=/tmp/f1/e9-codex-b/home node /tmp/inst/e9/codex/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/f1/e9-codex-b/R  (cwd=/tmp/inst/e9/codex)
+endpoint present: yes
+cmd: echo '<payload>' | env -i PATH HOME=/tmp/f1/e9-codex-b/home AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR=/tmp/f1/e9-codex-b/R node /tmp/inst/e9/codex/mcp-server/dist/session-message-cli.mjs
+run1 exit=0 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+RESULT run1 false
+run2 exit=0 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+RESULT run2 false
+broker pid=21542 env AGENT_GOVERNANCE_* keys: |count=0
+--- after (broker live)
+{
+ "wake_nonces": [
+  {
+   "nonce_digest": "83e638963967bf55a21261fb1c022775251c5cc9fedf228e9c6725df99a0a48c",
+   "host": "portable",
+   "session_id": "wake-target",
+   "expires_at": "2026-09-28T09:01:01.478Z",
+   "consumed_at": null,
+   "state": "unknown",
+   "nonce": "<30 chars>",
+   "instance_id": "instance-1",
+   "birth_generation": "2026-09-28T08:01:01.478Z",
+   "transport": "portable",
+   "relay_id": "relay-1",
+   "attempt_id": "62f671e1-3571-431f-83af-e3fb46ac5329",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T08:01:01.479Z",
+   "outcome_at": "2026-09-28T08:01:01.480Z",
+   "observed_at": null,
+   "late_observed_at": "2026-09-28T08:01:01.489Z"
+  }
+ ],
+ "messages": [
+  {
+   "message_id": "history-body",
+   "claimed_at": null,
+   "delivery_attempts": 0,
+   "acknowledged_at": null
+  }
+ ],
+ "input_observations": 0,
+ "session_presence": [
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-1",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:01:01.478Z",
+   "heartbeat_at": "2026-09-28T08:01:01.478Z",
+   "lease_until": "2026-09-28T08:01:21.478Z",
+   "ended_at": null,
+   "end_reason": null
+  },
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-2",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:01:01.483Z",
+   "heartbeat_at": "2026-09-28T08:01:01.483Z",
+   "lease_until": "2026-09-28T08:01:21.483Z",
+   "ended_at": null,
+   "end_reason": null
+  }
+ ],
+ "/tmp/f1/e9-codex-b/R/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   },
+   {
+    "n": "trust.sqlite3-shm",
+    "size": 32768
+   },
+   {
+    "n": "trust.sqlite3-wal",
+    "size": 0
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-ee26aead-c827-487d-b441-b6b4d366c13f"
+  ]
+ },
+ "/tmp/f1/e9-codex-b/home/.agent-governance-suite/session-messaging/trust.sqlite3": {
+  "exists": false,
+  "files": "NO_DIR"
+ }
+}
+--- default dir after (broker live):
+NO_DIR
+--- default dir after broker stop:
+NO_DIR
+RESULT default_untouched=yes
+RESULT R_trust_exists_after=yes
+RESULT default_dir_exists_after=no
+EXIT=0

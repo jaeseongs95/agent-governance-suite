@@ -1,0 +1,250 @@
+## VER=fix KIND=claude CASE=a1 INST=/tmp/inst/fix/claude
+R=/tmp/f1/fix-claude-a1/R
+DEFAULT_TRUST=/tmp/f1/fix-claude-a1/home/.agent-governance-suite/session-messaging/trust.sqlite3
+seed: {"target":{"host":"portable","sessionId":"wake-target"},"attemptId":"fcd11214-4bcd-425c-b1a1-cf35cded2397","sourceReceiptId":"source-66a0e875-eb33-4527-884f-1807808b5dcc","now":1790582545674,"nonceDigestOnly":true}
+--- default dir before (taken before any observation):
+trust.sqlite3 28672 1be3ff34fc4b1051 ino=1983091 mtime=1790582605.897952162 ctime=1790582605.897952162
+--- before
+(dump of scratch copies; R/trust.sqlite3 present=yes, D/trust.sqlite3 present=yes)
+{
+ "wake_nonces": [
+  {
+   "nonce_digest": "83e638963967bf55a21261fb1c022775251c5cc9fedf228e9c6725df99a0a48c",
+   "host": "portable",
+   "session_id": "wake-target",
+   "expires_at": "2026-09-28T09:02:25.674Z",
+   "consumed_at": null,
+   "state": "unknown",
+   "nonce": "<30 chars>",
+   "instance_id": "instance-1",
+   "birth_generation": "2026-09-28T08:02:25.674Z",
+   "transport": "portable",
+   "relay_id": "relay-1",
+   "attempt_id": "fcd11214-4bcd-425c-b1a1-cf35cded2397",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T08:02:25.675Z",
+   "outcome_at": "2026-09-28T08:02:25.676Z",
+   "observed_at": null,
+   "late_observed_at": "2026-09-28T08:02:25.685Z"
+  }
+ ],
+ "messages": [
+  {
+   "message_id": "history-body",
+   "claimed_at": null,
+   "delivery_attempts": 0,
+   "acknowledged_at": null
+  }
+ ],
+ "input_observations": 0,
+ "session_presence": [
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-1",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:02:25.674Z",
+   "heartbeat_at": "2026-09-28T08:02:25.674Z",
+   "lease_until": "2026-09-28T08:02:45.674Z",
+   "ended_at": null,
+   "end_reason": null
+  },
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-2",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:02:25.679Z",
+   "heartbeat_at": "2026-09-28T08:02:25.679Z",
+   "lease_until": "2026-09-28T08:02:45.679Z",
+   "ended_at": null,
+   "end_reason": null
+  }
+ ],
+ "/tmp/f1/fix-claude-a1/snap-1/R/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-66a0e875-eb33-4527-884f-1807808b5dcc"
+  ]
+ },
+ "/tmp/f1/fix-claude-a1/snap-1/D/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-e88a605f-eee9-4a12-8f60-9ea6a4ea3006"
+  ]
+ }
+}
+cmd: env -i PATH HOME=/tmp/f1/fix-claude-a1/home node /tmp/inst/fix/claude/mcp-server/dist/session-message-broker.mjs --state-directory /tmp/f1/fix-claude-a1/R  (cwd=/tmp/inst/fix/claude)
+endpoint present: yes
+cmd: echo '<payload>' | env -i PATH HOME=/tmp/f1/fix-claude-a1/home AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR=/tmp/f1/fix-claude-a1/R node /tmp/inst/fix/claude/mcp-server/dist/session-message-cli.mjs
+run1 exit=0 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":true,"evidence":{"sourceReceiptId":"source-66a0e875-eb33-4527-884f-1807808b5dcc","contentDigest":"sha256:56457c0a54c0eb9e22153005c6a4170bd2d45b7fc45efcadf8827ac7c438db92","observedAt":"2026-09-28T08:02:25.684Z","receiptExpiresAt":"2026-09-28T08:02:55.684Z","oldBinding":{"host":"portable","sessionId":"wake-target","instanceId":"instance-1","generation":"2026-09-28T08:02:25.674Z","transport":"portable","relayId":"relay-1","attemptId":"fcd11214-4bcd-425c-b1a1-cf35cded2397","dispatchEpoch":1},"lateObservedAt":"2026-09-28T08:02:25.685Z","reconciledAt":"2026-09-28T08:03:26.207Z"}}}
+RESULT run1 true
+run2 exit=0 out={"protocolVersion":"1.0.0","ok":true,"data":{"reconciled":false,"evidence":null}}
+RESULT run2 false
+broker pid=28812 env AGENT_GOVERNANCE_* keys: |count=0
+--- default dir after (broker live, before dump):
+trust.sqlite3 28672 1be3ff34fc4b1051 ino=1983091 mtime=1790582605.897952162 ctime=1790582605.897952162
+--- after (broker live)
+(dump of scratch copies; R/trust.sqlite3 present=yes, D/trust.sqlite3 present=yes)
+{
+ "wake_nonces": [
+  {
+   "nonce_digest": "83e638963967bf55a21261fb1c022775251c5cc9fedf228e9c6725df99a0a48c",
+   "host": "portable",
+   "session_id": "wake-target",
+   "expires_at": "2026-09-28T09:02:25.674Z",
+   "consumed_at": "2026-09-28T08:03:26.207Z",
+   "state": "observed",
+   "nonce": "<30 chars>",
+   "instance_id": "instance-1",
+   "birth_generation": "2026-09-28T08:02:25.674Z",
+   "transport": "portable",
+   "relay_id": "relay-1",
+   "attempt_id": "fcd11214-4bcd-425c-b1a1-cf35cded2397",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T08:02:25.675Z",
+   "outcome_at": "2026-09-28T08:02:25.676Z",
+   "observed_at": "2026-09-28T08:02:25.684Z",
+   "late_observed_at": "2026-09-28T08:02:25.685Z"
+  }
+ ],
+ "messages": [
+  {
+   "message_id": "history-body",
+   "claimed_at": null,
+   "delivery_attempts": 0,
+   "acknowledged_at": null
+  }
+ ],
+ "input_observations": 0,
+ "session_presence": [
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-1",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:02:25.674Z",
+   "heartbeat_at": "2026-09-28T08:02:25.674Z",
+   "lease_until": "2026-09-28T08:02:45.674Z",
+   "ended_at": null,
+   "end_reason": null
+  },
+  {
+   "host": "portable",
+   "session_id": "wake-target",
+   "instance_id": "instance-2",
+   "transport": "portable",
+   "wake_visibility": "silent",
+   "can_wake_silently": 1,
+   "supported_injection": "[\"peer-wake\"]",
+   "idle_wake": "silent",
+   "collaboration_id": null,
+   "workspace_id": null,
+   "role": null,
+   "started_at": "2026-09-28T08:02:25.679Z",
+   "heartbeat_at": "2026-09-28T08:02:25.679Z",
+   "lease_until": "2026-09-28T08:02:45.679Z",
+   "ended_at": null,
+   "end_reason": null
+  }
+ ],
+ "/tmp/f1/fix-claude-a1/snap-2/R/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   },
+   {
+    "n": "trust.sqlite3-shm",
+    "size": 32768
+   },
+   {
+    "n": "trust.sqlite3-wal",
+    "size": 0
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-66a0e875-eb33-4527-884f-1807808b5dcc"
+  ]
+ },
+ "/tmp/f1/fix-claude-a1/snap-2/D/trust.sqlite3": {
+  "exists": true,
+  "files": [
+   {
+    "n": "trust.sqlite3",
+    "size": 28672
+   }
+  ],
+  "keys": [
+   {
+    "key": "trust-signing-key",
+    "len": 43
+   }
+  ],
+  "receipts": [
+   "source-e88a605f-eee9-4a12-8f60-9ea6a4ea3006"
+  ]
+ }
+}
+--- default dir after broker stop:
+trust.sqlite3 28672 1be3ff34fc4b1051 ino=1983091 mtime=1790582605.897952162 ctime=1790582605.897952162
+RESULT default_untouched=yes
+RESULT R_trust_exists_after=yes
+RESULT default_dir_exists_after=yes
+EXIT=0

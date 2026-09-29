@@ -1,0 +1,4 @@
+23-test-json1.json suites 136 tests 771 passed 770 failed 0 pending 1 todo 0 success true
+skipped :: tests/session-messaging/previous-broker.test.ts :: preserves queued messages when new hooks meet the previous released broker
+24-test-json2.json suites 136 tests 771 passed 770 failed 0 pending 1 todo 0 success true
+skipped :: tests/session-messaging/previous-broker.test.ts :: preserves queued messages when new hooks meet the previous released broker

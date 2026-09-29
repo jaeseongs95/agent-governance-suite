@@ -1,0 +1,61 @@
+$ (cd /tmp/fix) pnpm exec vitest run tests/session-messaging/historical-wake.test.mjs --reporter=verbose --reporter=json --outputFile=/tmp/ev/28-counter-fix.json
+Already up to date
+Done in 503ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /tmp/fix
+
+ ✓ tests/session-messaging/historical-wake.test.mjs > expired original evidence retires only the exact old attempt, preserving historical time and pending body 42ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects target without changing any message state 24ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects attempt without changing any message state 27ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects receipt without changing any message state 20ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects nonce without changing any message state 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects current without changing any message state 20ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects no-current without changing any message state 27ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects no-late without changing any message state 24ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects submitted without changing any message state 17ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects already-consumed without changing any message state 19ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects bad-signature without changing any message state 26ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects digest without changing any message state 27ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects adapter without changing any message state 26ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects authority without changing any message state 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation before-start 23ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation after-late 35ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation expiry-at-late 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation not-expired 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation invalid-observed 30ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation invalid-late 27ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > history rejects invalid time relation invalid-start 32ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > reconstructs only the exact signed actor digest main/observed 25ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > reconstructs only the exact signed actor digest main/unknown 24ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > reconstructs only the exact signed actor digest unknown/observed 25ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > reconstructs only the exact signed actor digest unknown/unknown 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > a signed multiple-nonce observation cannot be approximated by a single old nonce 23ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust rejection missing-db creates no database/key/receipt 19ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust rejection missing-key creates no database/key/receipt 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust rejection bad-key creates no database/key/receipt 20ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > readonly trust rejection missing-table creates no database/key/receipt 31ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied nowMs 21ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied receipt 28ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied approved 17ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied observation 17ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied nonce 17ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > broker rejects caller supplied instanceId 25ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > two independent recovery processes CAS once; pending uses separate normal reserve/start 183ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > CAS rechecks generation after historical verification 22ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > CAS rechecks epoch after historical verification 20ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > CAS rechecks late after historical verification 20ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > CAS rechecks state after historical verification 20ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > historical observation retention counts from recovery application, not the old arrival 29ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > a reused instance with a new birth generation still retires only the old attempt 26ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > read-only verification holds one key/receipt snapshot while an independent writer rotates both 139ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > bundled public CLI forwards only IDs to the private broker and cannot repeat recovery 390ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged CLI binds history to explicit broker state directory: prestarted 605ms
+ ✓ tests/session-messaging/historical-wake.test.mjs > packaged CLI binds history to explicit broker state directory: client-ensure 2625ms
+
+ Test Files  1 passed (1)
+      Tests  47 passed (47)
+   Start at  08:01:38
+   Duration  5.45s (tests 93%, transform 6%, import 1%)
+
+JSON report written to /tmp/ev/28-counter-fix.json
+EXIT=0
