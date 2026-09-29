@@ -1,0 +1,1 @@
+ps -eo pid,etimes,args | grep '[s]ession-message-broker' after repeats and previous-broker: 0 processes (an in-command count of 2 matched the shell's own command line, which names the broker path)

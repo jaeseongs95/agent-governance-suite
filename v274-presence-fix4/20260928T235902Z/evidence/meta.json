@@ -1,0 +1,13 @@
+{
+  "task": "AGS 2.7.4 fix4: slow-runner presence fixtures",
+  "previousHead": "0135326a921cccc7b49b0ad8b605e87893631804",
+  "head": "b31da7789b3f48c548c24d6fb5a6f0b7bfa63f2c",
+  "headTree": "c846c249dd216ae9115bcbd8c10dd6e915ebd6b0",
+  "ciRun": "36499856828 windows-latest",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux 6.18.44-fc-v37 x86_64",
+  "stampUtc": "20260928T235902Z",
+  "redaction": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 0, "email": 0, "home-path": 18, "root-home": 1, "ipv4": 0},
+  "redactionSecondPass": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 0, "email": 0, "home-path": 0, "root-home": 0, "ipv4": 0}
+}

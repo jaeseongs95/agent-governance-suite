@@ -1,0 +1,39 @@
+Already up to date
+Done in 377ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/previous-broker.test.ts (3 tests | 1 failed | 2 skipped) 160ms
+   × gives the new batched presence request a defined result from a previous broker 158ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker
+AssertionError: expected { host: 'synthetic-host', …(16) } to match object { state: 'online' }
+(23 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "state": "online",
++   "state": "unreachable",
+  }
+
+ ❯ tests/session-messaging/previous-broker.test.ts:193:86
+    191|     const small = await service.listPresence([target]);
+    192|     expect(small.ok).toBe(true);
+    193|     expect(small.data!.sessions.find((item) => item.sessionId === targ…
+       |                                                                                      ^
+    194|     expect(small.data!.unanswered).toEqual([]);
+    195|     // Past the response limit a previous broker cannot answer; each b…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Start at  23:55:53
+   Duration  604ms (transform 61%, tests 32%, import 6%, worker 1%)
+
+exit=1
