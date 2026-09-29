@@ -5,7 +5,7 @@ index 374c1b5..4168572 100644
 @@ -9,7 +9,7 @@
        "source": {
          "source": "url",
-         "url": "https://github.com/jaeseongs95/agent-governance-suite.git",
+         "url": "https://github.com/[REDACTED]/agent-governance-suite.git",
 -        "ref": "v2.7.5"
 +        "ref": "v2.7.6"
        },
@@ -23,7 +23,7 @@ index 8109c09..fc8e963 100644
 +  "version": "2.7.6",
    "description": "Route governance specialists through declarative provider contracts, a local MCP convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
    "author": {
-     "name": "jaeseongs95",
+     "name": "[REDACTED]",
 diff --git a/README.en.md b/README.en.md
 index 976a575..3a575a1 100644
 --- a/README.en.md
@@ -41,8 +41,8 @@ index 976a575..3a575a1 100644
  
  <!-- release-install:start -->
  ```bash
--codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.5
-+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.6
+-codex plugin marketplace add [REDACTED]/agent-governance-suite --ref v2.7.5
++codex plugin marketplace add [REDACTED]/agent-governance-suite --ref v2.7.6
  codex plugin add agent-governance-suite@agent-governance
  ```
  <!-- release-install:end -->
@@ -63,8 +63,8 @@ index e8afaa4..260d6a7 100644
  
  <!-- release-install:start -->
  ```bash
--codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.5
-+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.6
+-codex plugin marketplace add [REDACTED]/agent-governance-suite --ref v2.7.5
++codex plugin marketplace add [REDACTED]/agent-governance-suite --ref v2.7.6
  codex plugin add agent-governance-suite@agent-governance
  ```
  <!-- release-install:end -->
@@ -136,8 +136,8 @@ index 2888b5a..88154a2 100644
    id: "agent-governance-suite",
 -  version: "2.7.5",
 +  version: "2.7.6",
-   repository: "https://github.com/jaeseongs95/agent-governance-suite",
-   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v",
+   repository: "https://github.com/[REDACTED]/agent-governance-suite",
+   tagsApi: "https://api.github.com/repos/[REDACTED]/agent-governance-suite/git/matching-refs/tags/v",
  });
 diff --git a/mcp-server/src/session-message-client.ts b/mcp-server/src/session-message-client.ts
 index f91e70d..3d2a197 100644

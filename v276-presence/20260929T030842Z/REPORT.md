@@ -142,3 +142,4 @@
 ## 가림
 
 같은 규칙으로 가렸다. 건수는 `meta.json`에 있다. `SHA256SUMS`는 커밋된 blob 기준이다.
+- 계정명: 저장소 소유 계정명 8건을 후속 commit에서 `[REDACTED]`로 가렸다(`logs/change.diff`의 URL과 설치 명령). 첫 commit에는 남아 있었다.
