@@ -1,0 +1,32 @@
+Already up to date
+Done in 570ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ↓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker
+ ↓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake
+ ↓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker
+ ↓ tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired
+ × tests/session-messaging/previous-broker.test.ts > reads a previous broker's Korean claim answer at the response limit whole, and meets its own request reader 258ms
+   → The broker response exceeded its limit.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > reads a previous broker's Korean claim answer at the response limit whole, and meets its own request reader
+Error: The broker response exceeded its limit.
+ ❯ TLSSocket.<anonymous> mcp-server/src/session-message-client.ts:195:99
+    193|       socket.on("data", (chunk: Buffer) => {
+    194|         buffer += chunk.toString("utf8");
+    195|         if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_RE…
+       |                                                                                                   ^
+    196|         const newline = buffer.indexOf("\n");
+    197|         if (newline < 0) return;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  05:16:48
+   Duration  901ms (transform 58%, tests 35%, import 7%, worker 1%)
+

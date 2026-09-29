@@ -1,0 +1,46 @@
+{
+  "task": "AGS 2.7.7 session message UTF-8 framing",
+  "stamp": "20260929T052434Z",
+  "base": "9e76a07b81c8c8eba855acf48b7b25bf395e7548",
+  "branch": "claude/v277-utf8-framing",
+  "head": "fd3f486a4ad976756532d1de0705e8a819f92778",
+  "tree": "1933de6506562af9dda1f4982fcbc24cc370952b",
+  "commits": [
+    "bd571c7 fix: decode session message frames once per line in bytes",
+    "cf09ff6 docs: describe byte-level session message framing for 2.7.7",
+    "fd3f486 chore: release 2.7.7"
+  ],
+  "node": "v24.21.0",
+  "platform": "linux",
+  "redactionFirstPass": {
+    "github-token": 0,
+    "anthropic-key": 0,
+    "aws-key": 0,
+    "private-key-line": 0,
+    "bearer": 1,
+    "email": 0,
+    "home-path": 17,
+    "root-home": 2,
+    "ipv4": 2,
+    "account-name": 2,
+    "windows-home": 0
+  },
+  "redactionSecondPass": {
+    "github-token": 0,
+    "anthropic-key": 0,
+    "aws-key": 0,
+    "private-key-line": 0,
+    "bearer": 0,
+    "email": 0,
+    "home-path": 0,
+    "root-home": 0,
+    "ipv4": 0,
+    "account-name": 0,
+    "windows-home": 0
+  },
+  "redactionExcluded": [
+    "harness/redact.py (checked by hand; holds no personal data)",
+    "SHA256SUMS"
+  ],
+  "sha256sums": "computed from committed blobs"
+}

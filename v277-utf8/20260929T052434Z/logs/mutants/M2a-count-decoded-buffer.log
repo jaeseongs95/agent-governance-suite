@@ -1,0 +1,41 @@
+Already up to date
+Done in 413ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ✓ tests/session-messaging/utf8-framing.test.ts > decodes a 3-byte Korean character split 1|2 at byte 16384 as the original text 10ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > decodes a 3-byte Korean character split 2|1 at byte 16384 as the original text 1ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > decodes a 4-byte emoji split 1|3 at byte 16384 as the original text 0ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > decodes a 4-byte emoji split 2|2 at byte 16384 as the original text 5ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > decodes a 4-byte emoji split 3|1 at byte 16384 as the original text 1ms
+ × tests/session-messaging/utf8-framing.test.ts > counts the line with its newline in raw bytes: exactly the limit is accepted, one byte more is rejected 8ms
+   → The session message line exceeds its limit.
+ ✓ tests/session-messaging/utf8-framing.test.ts > accepts a real claim answer of exactly the response limit with a Korean character split 1|rest at the TLS chunk, and rejects one byte more 318ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > accepts a real claim answer of exactly the response limit with a Korean character split 2|rest at the TLS chunk, and rejects one byte more 300ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > accepts a request of exactly the request limit with a Korean character split 1|rest at the TLS chunk, and rejects one byte more 239ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > accepts a request of exactly the request limit with a Korean character split 2|rest at the TLS chunk, and rejects one byte more 239ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > delivers twelve batches of Korean messages through the CLI claim path byte for byte 716ms
+ ✓ tests/session-messaging/utf8-framing.test.ts > hands a Korean claim answer one byte under the limit to the CLI instead of retrying into an empty 120 s lease 262ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  05:23:50
+   Duration  2.48s (tests 89%, transform 9%, import 2%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/utf8-framing.test.ts > counts the line with its newline in raw bytes: exactly the limit is accepted, one byte more is rejected
+RangeError: The session message line exceeds its limit.
+ ❯ mcp-server/src/session-message-protocol.ts:25:128
+     23|     pending = Buffer.concat([pending, chunk]);
+     24|     const newline = pending.indexOf(0x0a);
+     25|     if (Buffer.byteLength(pending.toString("utf8", 0, newline < 0 ? pe…
+       |                                                                                                                                ^
+     26|     if (newline < 0) return null;
+     27|     const line = pending.toString("utf8", 0, newline);
+ ❯ feed tests/session-messaging/utf8-framing.test.ts:26:38
+ ❯ tests/session-messaging/utf8-framing.test.ts:54:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

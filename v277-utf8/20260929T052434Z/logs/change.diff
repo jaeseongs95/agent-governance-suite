@@ -1,0 +1,454 @@
+diff --git a/docs/architecture.md b/docs/architecture.md
+index d88df1a..a0ae651 100644
+--- a/docs/architecture.md
++++ b/docs/architecture.md
+@@ -68,7 +68,7 @@ Codex lifecycle Hook은 MCP 준비 여부에 의존하지 않고 bundled continu
+ 
+ 첫 클라이언트가 broker를 lazy start합니다. broker는 process lock으로 단일 인스턴스를 유지하고 `[REDACTED]:0`에만 바인딩하며, relay heartbeat나 요청이 없으면 60초 뒤 끝납니다. 다음 요청은 저장된 SQLite를 그대로 열어 새 broker를 시작합니다. 인증서는 Node 내장 `crypto`만으로 만든 ECDSA P-256 자체서명 X.509이며 DNS `localhost`와 IP `[REDACTED]` SAN을 갖습니다. 클라이언트는 이 인증서를 trust anchor로 쓰면서 endpoint 파일의 SHA-256 fingerprint도 pin합니다. TLS의 최소·최대 버전은 모두 1.3이고, TLS 내부 요청에는 별도 256-bit [REDACTED]이 들어갑니다. 인증서·키·token은 사용자 상태 디렉터리에 두고 가능한 플랫폼에서는 `0600`, 디렉터리는 `0700`으로 제한합니다.
+ 
+-메시지 ID는 prepare에서 공통 broker가 발급하며 불변 sender·target·body·TTL을 기존 SQLite의 추가 테이블에 보존합니다. prepare는 전달 효과가 없고, send는 발급 ID만 받아 큐 삽입과 최초 영수증을 같은 transaction으로 확정합니다. 같은 ID는 보존된 최초 결과를 반환하고 미발급·다른 sender·만료·정리된 ID와 변경 내용을 거절합니다. 응답 유실은 같은 알려진 ID로 조정하며 unknown을 무조건 새 prepare로 재전송하지 않습니다. 저장 상한과 복구 제한은 [메시지 ID·재시도 계약](session-message-lifecycle.md)을 따릅니다. 수신 훅의 claim은 짧은 lease를 설정하고, ACK가 없으면 TTL까지 지수 backoff로 재전달합니다. 모델이 본문을 처리한 뒤 MCP ACK를 호출한 시점만 `acknowledged`이며, Codex queue 또는 Claude inbox write 성공은 전달 증거로 쓰지 않습니다. 메시지는 발신·수신 host/session, 본문, 생성·만료·claim·ACK 시각과 전달 횟수·최초 전달 시각을 저장하고 개인 키, broker token, inbox token과 socket 경로는 넣지 않습니다. 본문 4096 UTF-8 byte, TTL 30초~24시간, spool 1000개·4 MiB 제한을 적용합니다. claim은 최대 10개를 고르되 JSON escape와 metadata를 포함한 실제 UTF-8 응답이 32 KiB를 넘기 전에 batch를 자릅니다. 호출자는 대상 host의 주입 한도에 맞춰 `maxMessages`와 UTF-16 code unit 기준 `maxBodyChars`를 더 낮출 수 있으며, 번들 hook은 한 번에 한 메시지만 claim합니다. 최종 envelope는 8192 UTF-8 byte 이내로 검사하며, JSON 이스케이프로 넘치는 본문은 명시적인 base64-utf8 인코딩으로 무손실 전달합니다. 원문 digest와 BEGIN/END 경계·ACK 안내는 유지합니다. 일반 사용자 입력, wake와 도구 경계의 구분은 [입력 출처와 작업 경계](input-boundaries.md)를 따릅니다.
++메시지 ID는 prepare에서 공통 broker가 발급하며 불변 sender·target·body·TTL을 기존 SQLite의 추가 테이블에 보존합니다. prepare는 전달 효과가 없고, send는 발급 ID만 받아 큐 삽입과 최초 영수증을 같은 transaction으로 확정합니다. 같은 ID는 보존된 최초 결과를 반환하고 미발급·다른 sender·만료·정리된 ID와 변경 내용을 거절합니다. 응답 유실은 같은 알려진 ID로 조정하며 unknown을 무조건 새 prepare로 재전송하지 않습니다. 저장 상한과 복구 제한은 [메시지 ID·재시도 계약](session-message-lifecycle.md)을 따릅니다. 수신 훅의 claim은 짧은 lease를 설정하고, ACK가 없으면 TTL까지 지수 backoff로 재전달합니다. 모델이 본문을 처리한 뒤 MCP ACK를 호출한 시점만 `acknowledged`이며, Codex queue 또는 Claude inbox write 성공은 전달 증거로 쓰지 않습니다. 메시지는 발신·수신 host/session, 본문, 생성·만료·claim·ACK 시각과 전달 횟수·최초 전달 시각을 저장하고 개인 키, broker token, inbox token과 socket 경로는 넣지 않습니다. 본문 4096 UTF-8 byte, TTL 30초~24시간, spool 1000개·4 MiB 제한을 적용합니다. claim은 최대 10개를 고르되 JSON escape와 metadata를 포함한 실제 UTF-8 응답이 32 KiB를 넘기 전에 batch를 자릅니다. broker와 client는 요청·응답 한 줄을 받은 byte 그대로 모아 줄바꿈을 포함한 크기가 32 KiB 이하일 때만 받고, 완성된 줄을 한 번에 UTF-8로 풀어 TLS 조각 경계에 걸린 문자도 깨지지 않게 합니다. 호출자는 대상 host의 주입 한도에 맞춰 `maxMessages`와 UTF-16 code unit 기준 `maxBodyChars`를 더 낮출 수 있으며, 번들 hook은 한 번에 한 메시지만 claim합니다. 최종 envelope는 8192 UTF-8 byte 이내로 검사하며, JSON 이스케이프로 넘치는 본문은 명시적인 base64-utf8 인코딩으로 무손실 전달합니다. 원문 digest와 BEGIN/END 경계·ACK 안내는 유지합니다. 일반 사용자 입력, wake와 도구 경계의 구분은 [입력 출처와 작업 경계](input-boundaries.md)를 따릅니다.
+ 
+ Codex와 Claude Code relay는 `(host, sessionId, transport)` lease로 하나만 살아 있게 하고 host 프로세스 PID, 플랫폼이 제공하는 프로세스 시작 식별자와 heartbeat로 stale 상태와 PID 재사용을 회수합니다. 시작 식별자를 얻지 못하면 relay를 시작하지 않아 PID만으로 lease를 유지하지 않습니다. relay는 매 loop에서 PID 존재를 확인하고 시작 시, bell 직전과 드문 주기에 시작 식별자를 다시 확인합니다. 일시 조회 실패는 `unknown`으로 보류하되 반복되면 종료하고, 명시적 불일치는 즉시 종료합니다. 호스트별 adapter가 실제 host PID를 relay에 명시적으로 넘기므로 중간 셸 PID를 host로 오인하지 않습니다. 본문은 host wake transport를 통과하지 않습니다. relay는 broker에 소비 가능한 nonce를 기록한 뒤 nonce만 든 bell을 보내고, 같은 pending 구간에서는 같은 nonce를 지수 backoff로 재사용합니다. `UserPromptSubmit` 현황판 훅은 합쳐진 bell을 줄 단위로 검증하며, 모든 비어 있지 않은 줄이 wake 형식이고 각 nonce가 broker에서 인식된 경우에만 이를 내부 wake로 분류합니다. TLS spool과 ACK가 본문 전달의 내구성을 맡고 wake는 best-effort 힌트이므로, wake 유실이 메시지 손실로 이어지지 않습니다. 수신 훅은 본문을 사용자 승인·권한이 아닌 비신뢰 peer context로 감싸고 message ID와 명시적 ACK 지시를 함께 주입합니다.
+ 
+diff --git a/docs/release-notes-v2.7.7.md b/docs/release-notes-v2.7.7.md
+new file mode 100644
+index 0000000..6997af3
+--- /dev/null
++++ b/docs/release-notes-v2.7.7.md
+@@ -0,0 +1,21 @@
++# v2.7.7: 세션 메시지 한글 조각 경계 수정
++
++세션 메시지의 broker 응답과 요청을 받는 쪽이 여러 byte로 된 문자를 깨뜨리던 결함을 고칩니다. client의 응답 reader와 broker의 요청 reader는 TLS에서 받은 조각마다 UTF-8 문자열로 바꿔 이어 붙였습니다. Node TLS는 평문을 16384 byte 이하의 조각으로 넘기므로, 한글(3 byte)이나 이모지(4 byte)가 조각 경계에 걸리면 그 문자가 U+FFFD로 바뀌었습니다. 크기도 바꾼 문자열로 다시 셌으므로, 깨진 문자만큼 byte 수가 늘었습니다.
++
++피해는 hook 없는 CLI claim 경로에서 났습니다. 이 경로는 기본값(최대 10개, 응답 32 KiB)으로 받으므로 응답이 16384 byte를 넘을 수 있습니다. 한글 메시지 8개씩 12묶음을 claim하는 시험에서 11묶음이 깨졌습니다. 메시지 ID는 ASCII라서 ACK가 성공하므로, 깨진 본문은 그대로 소비됐습니다. 응답이 한도에 가까우면 다른 결과가 났습니다. broker가 한도 안으로 맞춘 응답을 client가 한도 초과로 거절하고 조용히 한 번 더 요청했습니다. 그 사이 첫 요청이 메시지에 lease를 걸었으므로 두 번째 요청은 0개를 받았습니다. 한글 메시지 9개로 32767 byte 응답을 만든 시험에서 CLI는 0개를 반환했고, 9행이 첫 lease(120초) 동안 묶였습니다. hook 전달 경로는 한 번에 한 메시지(본문 4096 byte 이하)만 받으므로 응답이 16384 byte에 닿지 않아 영향이 없었습니다.
++
++이제 client와 broker가 같은 줄 reader 하나를 씁니다. reader는 받은 조각을 byte 그대로 모으고, 줄바꿈(0x0A)을 byte에서 찾습니다. 줄이 완성되면 그 줄만 한 번 UTF-8로 풉니다. 한도는 byte 수로 셉니다. 줄바꿈을 포함한 줄이 32768 byte 이하이면 받고, 그보다 크면 전과 같은 오류로 거절합니다. client의 오류는 "The broker response exceeded its limit.", broker의 오류는 "Request exceeds the broker limit."입니다. broker가 응답을 한도 안으로 맞출 때 세는 방식(줄바꿈을 포함한 UTF-8 byte)과 한 byte까지 같습니다. protocol `1.0.0`, 요청·응답 한도 32 KiB, 거절과 일반 오류의 구분, 현황판 presence 조회, 출력 계약과 schema는 바뀌지 않았습니다.
++
++## 동작 변화(호환성)
++
++ASCII만 담긴 메시지나 16384 byte보다 짧은 응답에서는 결과가 전과 같습니다. 달라지는 경우는 여러 byte로 된 문자가 조각 경계에 걸릴 때뿐입니다. 이제 원문 그대로 받고, 크기가 한도 안이면 거절하지 않습니다.
++
++응답은 broker가 만든 byte를 client가 읽으므로, 2.7.7 client는 이전 broker의 응답도 깨지지 않게 받습니다. 요청은 broker가 읽으므로 이전 broker의 reader가 그대로 적용됩니다. 번들 client가 보내는 요청은 본문이 4096 byte 이하라 16384 byte에 닿기 어렵습니다. previous-broker 회귀 시험은 v2.7.6, v2.7.5, v2.7.3 broker로 통과했습니다. 이 시험에서 새 client는 이전 broker가 보낸 32768 byte 한글 응답을 온전히 받았고, 같은 크기의 한글 요청은 이전 broker가 전처럼 한도 초과로 거절했습니다. 이 검사로 혼합 버전의 모든 실행·복구를 보장하지 않습니다.
++
++## 알려진 한계
++
++2.7.6 이하 client는 업그레이드하기 전까지 이 결함이 그대로 남습니다. 이전 broker의 요청 reader도 broker를 2.7.7로 바꾸기 전까지 그대로입니다. 이미 깨진 채 ACK된 메시지는 원문이 남아 있지 않으므로 되돌릴 수 없습니다.
++
++조각 경계와 한도는 Linux 환경의 시험(reader 단위 시험, 실제 broker와 TLS로 주고받는 경계 시험, CLI claim 경로의 한글 묶음 시험)으로 확인했습니다. Windows와 실제 PC의 동작은 이 검사가 대신하지 않습니다. 공통 접수 원문이 두 번 주입되는 문제(L3)와 presence 조회 보충(`list-presence-fill`)은 이번 범위가 아닙니다.
++
++공식 [설치 안내](../README.md#설치)에 따라 업데이트한 뒤 새 세션으로 재연결합니다. 운영 DB·키·큐를 지우거나 덮어써 불확실한 상태를 없애지 않습니다. 버전 동기화와 로컬 검사는 실제 설치 bytes나 호스트 동작을 대신하지 않으므로, 설치·재연결 뒤 한글 메시지 전달을 별도로 확인합니다.
+diff --git a/docs/roadmap.md b/docs/roadmap.md
+index 9ace241..7a1e387 100644
+--- a/docs/roadmap.md
++++ b/docs/roadmap.md
+@@ -1,7 +1,7 @@
+ # Agent Governance Suite 향후 로드맵
+ 
+ <!-- release-version:start -->
+-문서 기준일은 2026년 9월 21일이다. 현재 공개 릴리스는 `v2.7.6`이다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
++문서 기준일은 2026년 9월 21일이다. 현재 공개 릴리스는 `v2.7.7`이다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
+ <!-- release-version:end -->
+ 
+ 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
+diff --git a/mcp-server/src/plugin-info.ts b/mcp-server/src/plugin-info.ts
+index 88154a2..c689472 100644
+--- a/mcp-server/src/plugin-info.ts
++++ b/mcp-server/src/plugin-info.ts
+@@ -1,6 +1,6 @@
+ export const PLUGIN_INFO = Object.freeze({
+   id: "agent-governance-suite",
+-  version: "2.7.6",
++  version: "2.7.7",
+   repository: "https://github.com/[REDACTED]/agent-governance-suite",
+   tagsApi: "https://api.github.com/repos/[REDACTED]/agent-governance-suite/git/matching-refs/tags/v",
+ });
+diff --git a/mcp-server/src/session-message-broker.ts b/mcp-server/src/session-message-broker.ts
+index 3941da7..99b4a60 100644
+--- a/mcp-server/src/session-message-broker.ts
++++ b/mcp-server/src/session-message-broker.ts
+@@ -6,7 +6,9 @@ import tls from "node:tls";
+ import { setTimeout as delay } from "node:timers/promises";
+ import { fileURLToPath } from "node:url";
+ 
+-import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, SESSION_PRESENCE_LIST_MAX_TARGETS } from "./session-message-protocol.js";
++import {
++  SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, SESSION_PRESENCE_LIST_MAX_TARGETS, sessionMessageLineReader,
++} from "./session-message-protocol.js";
+ import { MessageCapacityError, SessionMessageStore, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
+ import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type WakeHookObservationReader } from "./session-message-wake-port.js";
+ import type { InputObservation, InputObservationKind } from "./input-observation.js";
+@@ -497,20 +499,17 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
+     let lastActivity = Date.now();
+     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
+       lastActivity = Date.now();
+-      let buffer = "";
++      const readLine = sessionMessageLineReader(SESSION_MESSAGE_MAX_REQUEST_BYTES);
+       // A failed client must not terminate the broker or undo a committed request.
+       socket.on("error", () => socket.destroy());
+       socket.setTimeout(5000, () => socket.destroy());
+       socket.on("data", (chunk: Buffer) => {
+-        buffer += chunk.toString("utf8");
+-        if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_REQUEST_BYTES) {
++        let line: string | null;
++        try { line = readLine(chunk); } catch {
+           socket.end(`${JSON.stringify({ ok: false, error: "Request exceeds the broker limit." })}\n`);
+           return;
+         }
+-        const newline = buffer.indexOf("\n");
+-        if (newline < 0) return;
+-        const line = buffer.slice(0, newline);
+-        buffer = "";
++        if (line === null) return;
+         try {
+           const request = JSON.parse(line) as BrokerRequest;
+           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
+diff --git a/mcp-server/src/session-message-client.ts b/mcp-server/src/session-message-client.ts
+index 3d2a197..dab8eb8 100644
+--- a/mcp-server/src/session-message-client.ts
++++ b/mcp-server/src/session-message-client.ts
+@@ -8,7 +8,7 @@ import tls from "node:tls";
+ import { fileURLToPath } from "node:url";
+ 
+ import { resolveSessionMessageStateDirectory } from "./runtime-config.js";
+-import { SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
++import { SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, sessionMessageLineReader } from "./session-message-protocol.js";
+ 
+ export { SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
+ export const WAKE_PREFIX = "[agent-governance-suite:wake:";
+@@ -158,7 +158,7 @@ export async function requestSessionMessageOnce<T>(
+     const { endpoint, token, certificate } = await readEndpoint(stateDirectory, signal);
+     return new Promise<T>((resolve, reject) => {
+       let settled = false;
+-      let buffer = "";
++      const readLine = sessionMessageLineReader(SESSION_MESSAGE_MAX_RESPONSE_BYTES);
+       const socket = tls.connect({
+         host: endpoint.address,
+         port: endpoint.port,
+@@ -191,12 +191,11 @@ export async function requestSessionMessageOnce<T>(
+         socket.write(`${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload })}\n`);
+       });
+       socket.on("data", (chunk: Buffer) => {
+-        buffer += chunk.toString("utf8");
+-        if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) return finish(new Error("The broker response exceeded its limit."));
+-        const newline = buffer.indexOf("\n");
+-        if (newline < 0) return;
++        let line: string | null;
++        try { line = readLine(chunk); } catch { return finish(new Error("The broker response exceeded its limit.")); }
++        if (line === null) return;
+         try {
+-          const response = JSON.parse(buffer.slice(0, newline)) as { ok: boolean; data?: T; error?: string; details?: unknown };
++          const response = JSON.parse(line) as { ok: boolean; data?: T; error?: string; details?: unknown };
+           if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
+           else finish(undefined, response.data);
+         } catch {
+diff --git a/mcp-server/src/session-message-protocol.ts b/mcp-server/src/session-message-protocol.ts
+index be082a2..c453d9d 100644
+--- a/mcp-server/src/session-message-protocol.ts
++++ b/mcp-server/src/session-message-protocol.ts
+@@ -10,3 +10,22 @@ export function isBoundedIdentity(value: { host: string; sessionId: string }): b
+   return /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(value.host) && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(value.sessionId);
+ }
+ export const SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES = 8192;
++
++/**
++ * Reads one newline-terminated frame from raw socket chunks. The limit counts the line's raw bytes with its newline, as
++ * the sender measured it, and the line is decoded once, so a character split across chunks (TLS hands over at most
++ * 16384 bytes at a time) stays whole. Returns the line without its newline, or null until it is complete; throws once
++ * the line passes the limit. After a line the reader starts empty, dropping bytes that followed it in the same chunk.
++ */
++export function sessionMessageLineReader(limitBytes: number): (chunk: Buffer) => string | null {
++  let pending = Buffer.alloc(0);
++  return (chunk) => {
++    pending = Buffer.concat([pending, chunk]);
++    const newline = pending.indexOf(0x0a);
++    if ((newline < 0 ? pending.length : newline + 1) > limitBytes) throw new RangeError("The session message line exceeds its limit.");
++    if (newline < 0) return null;
++    const line = pending.toString("utf8", 0, newline);
++    pending = Buffer.alloc(0);
++    return line;
++  };
++}
+diff --git a/tests/session-messaging/fixtures/padded-claim.mjs b/tests/session-messaging/fixtures/padded-claim.mjs
+new file mode 100644
+index 0000000..d8ce54d
+--- /dev/null
++++ b/tests/session-messaging/fixtures/padded-claim.mjs
+@@ -0,0 +1,10 @@
++// Test-only broker preload: a claim for the session "over-by-one" gets one ASCII byte appended to its last body after
++// the store has fitted the answer to the response limit, so the broker sends a line one byte over that limit.
++import { SessionMessageStore } from "../../../mcp-server/src/session-message-store.ts";
++
++const claim = SessionMessageStore.prototype.claim;
++SessionMessageStore.prototype.claim = function (target, ...rest) {
++  const messages = claim.call(this, target, ...rest);
++  if (target.sessionId === "over-by-one" && messages.length > 0) messages[messages.length - 1].body += "x";
++  return messages;
++};
+diff --git a/tests/session-messaging/fixtures/utf8-layout.ts b/tests/session-messaging/fixtures/utf8-layout.ts
+new file mode 100644
+index 0000000..5105a4d
+--- /dev/null
++++ b/tests/session-messaging/fixtures/utf8-layout.ts
+@@ -0,0 +1,46 @@
++import { randomUUID } from "node:crypto";
++import { SESSION_MESSAGE_PROTOCOL } from "../../../mcp-server/src/session-message-protocol.js";
++
++type Identity = { host: string; sessionId: string };
++// Node TLS hands the reader plaintext in pieces of at most this many bytes, so a long line arrives split here.
++export const TLS_CHUNK = 16384;
++
++/** How many bytes of the multi-byte character that covers byte `at - 1` lie before `at`; 0 when a character starts at `at`. */
++export function headBytes(bytes: Buffer, at: number): number {
++  let start = at - 1;
++  while ((bytes[start]! & 0xc0) === 0x80) start -= 1;
++  const length = bytes[start]! >= 0xf0 ? 4 : bytes[start]! >= 0xe0 ? 3 : bytes[start]! >= 0xc0 ? 2 : 1;
++  return start + length > at ? at - start : 0;
++}
++
++/** The claim answer a broker sends for these bodies; IDs and timestamps have fixed lengths, so only bytes count. */
++export function claimLine(sender: Identity, recipient: Identity, bodies: string[]): Buffer {
++  const stamp = new Date(0).toISOString();
++  const messages = bodies.map((body) => ({ messageId: randomUUID(), sender, recipient, body, createdAt: stamp, expiresAt: stamp,
++    deliveryAttempt: 1, firstDeliveredAt: stamp }));
++  return Buffer.from(`${JSON.stringify({ ok: true, data: { messages } })}\n`);
++}
++
++/**
++ * Nine Korean bodies whose claim answer is `total` bytes with its newline and has `head` bytes of a character before byte
++ * 16384. The first eight are the same, so the order of messages queued in one millisecond cannot move the split.
++ */
++export function straddlingClaim(sender: Identity, recipient: Identity, total: number, head: number): string[] {
++  for (let shift = 0; shift < 3; shift += 1) {
++    const bodies = Array.from({ length: 9 }, () => `${"a".repeat(shift)}${"한".repeat(1100)}`);
++    bodies[8] += "z".repeat(total - claimLine(sender, recipient, bodies).length);
++    if (headBytes(claimLine(sender, recipient, bodies), TLS_CHUNK) === head) return bodies;
++  }
++  throw new Error("No layout puts the split there.");
++}
++
++/** A ping payload whose request line is `total` bytes with its newline and has `head` bytes of a character before byte 16384. */
++export function straddlingPing(token: string, total: number, head: number): { pad: string } {
++  const line = (payload: { pad: string }) => Buffer.from(`${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation: "ping", payload })}\n`);
++  for (let shift = 0; shift < 3; shift += 1) {
++    const payload = { pad: `${"a".repeat(shift)}${"한".repeat(10_000)}` };
++    payload.pad += "z".repeat(total - line(payload).length);
++    if (headBytes(line(payload), TLS_CHUNK) === head) return payload;
++  }
++  throw new Error("No layout puts the split there.");
++}
+diff --git a/tests/session-messaging/previous-broker.test.ts b/tests/session-messaging/previous-broker.test.ts
+index edb24b8..0acba29 100644
+--- a/tests/session-messaging/previous-broker.test.ts
++++ b/tests/session-messaging/previous-broker.test.ts
+@@ -1,14 +1,16 @@
+ import { spawn, spawnSync } from "node:child_process";
+ import { once } from "node:events";
+-import { mkdtemp, rm } from "node:fs/promises";
++import { mkdtemp, readFile, rm } from "node:fs/promises";
+ import { tmpdir } from "node:os";
+ import path from "node:path";
+ import { DatabaseSync } from "node:sqlite";
+ import { fileURLToPath } from "node:url";
+ import { expect, it } from "vitest";
+-import { requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
++import { BrokerRequestRejected, requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
++import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "../../mcp-server/src/session-message-protocol.js";
+ import { SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
+ import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
++import { headBytes, straddlingClaim, straddlingPing, TLS_CHUNK } from "./fixtures/utf8-layout.js";
+ 
+ // A release check supplies the actual previous installation, not a simulated dispatcher.
+ const previousBroker = process.env.AGS_PREVIOUS_BROKER_PATH;
+@@ -297,3 +299,40 @@ it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth f
+     await rm(directory, { recursive: true, force: true, maxRetries: 10 });
+   }
+ }, 20_000);
++
++it.skipIf(!previousBroker)("reads a previous broker's Korean claim answer at the response limit whole, and meets its own request reader", async () => {
++  const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-utf8-"));
++  const environment = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory,
++    AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
++    AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(directory, "shared-state") };
++  const child = spawn(process.execPath, [previousBroker!, "--state-directory", directory], { windowsHide: true, stdio: "ignore", env: environment });
++  try {
++    await waitForSessionMessageBrokerReady(directory, child, 5000);
++    const sender = { host: "synthetic-host", sessionId: "sender" };
++    const target = { host: "synthetic-host", sessionId: "utf8-recipient" };
++    // The response side: the previous broker fits the answer to the limit, and the new client reads it whole.
++    const bodies = straddlingClaim(sender, target, SESSION_MESSAGE_MAX_RESPONSE_BYTES, 1);
++    for (const body of bodies) {
++      const { messageId } = await requestSessionMessageOnce<{ messageId: string }>("prepare", { sender, target, body }, directory);
++      await requestSessionMessageOnce("send", { sender, messageId }, directory);
++    }
++    const data = await requestSessionMessageOnce<{ messages: Array<{ body: string }> }>("claim", { target }, directory);
++    expect(data.messages.map((message) => message.body).sort()).toEqual([...bodies].sort());
++    const sent = Buffer.from(`${JSON.stringify({ ok: true, data })}\n`);
++    expect(sent.length).toBe(SESSION_MESSAGE_MAX_RESPONSE_BYTES);
++    expect(headBytes(sent, TLS_CHUNK)).toBe(1);
++    // The request side is the previous broker's own reader: through 2.7.6 it decodes each chunk, so a request of exactly
++    // the limit with a split Korean character is rejected as over the limit, as it was before this client.
++    const token = (await readFile(path.join(directory, "broker.token"), "utf8")).trim();
++    const request = requestSessionMessageOnce("ping", straddlingPing(token, SESSION_MESSAGE_MAX_REQUEST_BYTES, 1), directory);
++    if (previousAtLeast([2, 7, 7])) await expect(request).resolves.toMatchObject({ protocolVersion: "1.0.0" });
++    else {
++      const error = await request.then(() => null, (reason: unknown) => reason);
++      expect(error).toBeInstanceOf(BrokerRequestRejected);
++      expect((error as Error).message).toBe("Request exceeds the broker limit.");
++    }
++  } finally {
++    if (child.exitCode === null && child.signalCode === null) { const exited = once(child, "exit"); child.kill(); await exited; }
++    await rm(directory, { recursive: true, force: true, maxRetries: 10 });
++  }
++}, 30_000);
+diff --git a/tests/session-messaging/utf8-framing.test.ts b/tests/session-messaging/utf8-framing.test.ts
+new file mode 100644
+index 0000000..f52a0f0
+--- /dev/null
++++ b/tests/session-messaging/utf8-framing.test.ts
+@@ -0,0 +1,145 @@
++import { spawn } from "node:child_process";
++import { once } from "node:events";
++import { mkdtemp, readFile, rm } from "node:fs/promises";
++import { tmpdir } from "node:os";
++import path from "node:path";
++import { fileURLToPath, pathToFileURL } from "node:url";
++import { afterEach, expect, it } from "vitest";
++import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
++import { BrokerRequestRejected, requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
++import {
++  SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, sessionMessageLineReader,
++} from "../../mcp-server/src/session-message-protocol.js";
++import { SessionMessageStore, type SessionMessage } from "../../mcp-server/src/session-message-store.js";
++import { headBytes, straddlingClaim, straddlingPing, TLS_CHUNK } from "./fixtures/utf8-layout.js";
++
++const sourceBroker = fileURLToPath(new URL("../../mcp-server/src/session-message-broker.ts", import.meta.url));
++const paddedClaim = pathToFileURL(fileURLToPath(new URL("./fixtures/padded-claim.mjs", import.meta.url))).href;
++const sender = { host: "portable", sessionId: "sender" };
++const target = { host: "portable", sessionId: "recipient" };
++const cleanup: Array<() => Promise<void>> = [];
++afterEach(async () => { for (const step of cleanup.splice(0).reverse()) await step(); });
++
++function feed(limit: number, ...chunks: Buffer[]): string | null {
++  const read = sessionMessageLineReader(limit);
++  let line: string | null = null;
++  for (const chunk of chunks) line = read(chunk);
++  return line;
++}
++const splitAt = (text: string, at: number) => { const bytes = Buffer.from(text); return [bytes.subarray(0, at), bytes.subarray(at)]; };
++
++it.each([
++  ["a 3-byte Korean character split 1|2", "한", 1],
++  ["a 3-byte Korean character split 2|1", "한", 2],
++  ["a 4-byte emoji split 1|3", "😀", 1],
++  ["a 4-byte emoji split 2|2", "😀", 2],
++  ["a 4-byte emoji split 3|1", "😀", 3],
++])("decodes %s at byte 16384 as the original text", (_name, character, head) => {
++  const text = `${"a".repeat(TLS_CHUNK - head)}${character}${"b".repeat(100)}`;
++  const [first, second] = splitAt(`${text}\n`, TLS_CHUNK);
++  expect(headBytes(Buffer.from(text), TLS_CHUNK)).toBe(head);
++  expect(feed(SESSION_MESSAGE_MAX_RESPONSE_BYTES, first!, second!)).toBe(text);
++});
++
++it("counts the line with its newline in raw bytes: exactly the limit is accepted, one byte more is rejected", () => {
++  // 16 bytes with the newline, arriving with its Korean character split 1|2.
++  const exact = `${"a".repeat(12)}한\n`;
++  expect(feed(16, ...splitAt(exact, 13))).toBe(`${"a".repeat(12)}한`);
++  expect(() => feed(16, ...splitAt(`a${exact}`, 14))).toThrow();
++  // Without a newline, the limit itself still waits for more; one byte past it is rejected at once.
++  expect(feed(16, Buffer.from("a".repeat(16)))).toBeNull();
++  expect(() => feed(16, Buffer.from("a".repeat(17)))).toThrow();
++  // A chunk that ends inside a character counts its raw bytes only (decoded, the partial character would count three).
++  const [partial] = splitAt(`${"a".repeat(14)}한`, 16);
++  expect(feed(16, partial!)).toBeNull();
++});
++
++async function launch(): Promise<string> {
++  const state = await mkdtemp(path.join(tmpdir(), "ags-utf8-framing-"));
++  cleanup.push(() => rm(state, { recursive: true, force: true, maxRetries: 10 }));
++  const child = spawn(process.execPath, ["--import", "tsx", "--import", paddedClaim, sourceBroker, "--state-directory", state],
++    { windowsHide: true, stdio: "ignore" });
++  cleanup.push(async () => {
++    if (child.exitCode === null && child.signalCode === null) { const exit = once(child, "exit"); child.kill(); await exit; }
++  });
++  await waitForSessionMessageBrokerReady(state, child, 5000);
++  return state;
++}
++
++function queue(state: string, recipient: typeof target, bodies: string[]): void {
++  const store = new SessionMessageStore(path.join(state, "session-messages.sqlite3"));
++  try {
++    const base = Date.now();
++    bodies.forEach((body, index) => store.submitPrepared(sender, store.prepare({ sender, target: recipient, body }, base + index).messageId, base + index));
++  } finally { store.close(); }
++}
++
++it.each([1, 2])("accepts a real claim answer of exactly the response limit with a Korean character split %i|rest at the TLS chunk, and rejects one byte more", async (head) => {
++  const state = await launch();
++  const bodies = straddlingClaim(sender, target, SESSION_MESSAGE_MAX_RESPONSE_BYTES, head);
++  queue(state, target, bodies);
++  const data = await requestSessionMessageOnce<{ messages: SessionMessage[] }>("claim", { target }, state);
++  expect(data.messages.map((message) => message.body)).toEqual(bodies);
++  const sent = Buffer.from(`${JSON.stringify({ ok: true, data })}\n`);
++  expect(sent.length).toBe(SESSION_MESSAGE_MAX_RESPONSE_BYTES);
++  expect(headBytes(sent, TLS_CHUNK)).toBe(head);
++
++  const over = { host: "portable", sessionId: "over-by-one" };
++  queue(state, over, straddlingClaim(sender, over, SESSION_MESSAGE_MAX_RESPONSE_BYTES, head));
++  const error = await requestSessionMessageOnce("claim", { target: over }, state).then(() => null, (reason: unknown) => reason);
++  expect(error).toBeInstanceOf(Error);
++  expect(error).not.toBeInstanceOf(BrokerRequestRejected);
++  expect((error as Error).message).toBe("The broker response exceeded its limit.");
++}, 30_000);
++
++it.each([1, 2])("accepts a request of exactly the request limit with a Korean character split %i|rest at the TLS chunk, and rejects one byte more", async (head) => {
++  const state = await launch();
++  const token = (await readFile(path.join(state, "broker.token"), "utf8")).trim();
++  const exact = straddlingPing(token, SESSION_MESSAGE_MAX_REQUEST_BYTES, head);
++  await expect(requestSessionMessageOnce("ping", exact, state)).resolves.toMatchObject({ protocolVersion: SESSION_MESSAGE_PROTOCOL });
++  const over = { pad: `${exact.pad}z` };
++  const error = await requestSessionMessageOnce("ping", over, state).then(() => null, (reason: unknown) => reason);
++  expect(error).toBeInstanceOf(BrokerRequestRejected);
++  expect((error as Error).message).toBe("Request exceeds the broker limit.");
++}, 30_000);
++
++it("delivers twelve batches of Korean messages through the CLI claim path byte for byte", async () => {
++  const state = await launch();
++  const cli = async (operation: string, payload: Record<string, unknown>) => (await runSessionMessageCli(JSON.stringify({ operation, payload }), state)).data;
++  const broken: number[] = [];
++  let replacementCharacters = 0;
++  for (let round = 0; round < 12; round += 1) {
++    // Eight bodies of 3.4-3.8 KB fill one default claim (up to 10 messages, 32 KB) past the first TLS chunk; the length
++    // and leading ASCII of each round move where that chunk boundary falls, mostly inside a Korean character.
++    const bodies = Array.from({ length: 8 }, (_, index) => `${"a".repeat(round % 3)}${index}:${"세션 메시지 한글 본문 ".repeat(110 + round)}`);
++    queue(state, target, bodies);
++    const { messages } = await cli("claim", { target }) as { messages: SessionMessage[] };
++    const received = messages.map((message) => message.body);
++    replacementCharacters += received.join("").split("�").length - 1;
++    if (received.length !== bodies.length || received.some((body, index) => !Buffer.from(body).equals(Buffer.from(bodies[index]!)))) broken.push(round);
++    await cli("acknowledge", { target, messageIds: messages.map((message) => message.messageId) });
++  }
++  expect({ broken, replacementCharacters }).toEqual({ broken: [], replacementCharacters: 0 });
++}, 60_000);
++
++it("hands a Korean claim answer one byte under the limit to the CLI instead of retrying into an empty 120 s lease", async () => {
++  const state = await launch();
++  const bodies = straddlingClaim(sender, target, SESSION_MESSAGE_MAX_RESPONSE_BYTES - 1, 1);
++  queue(state, target, bodies);
++  const { messages } = (await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target } }), state)).data as { messages: SessionMessage[] };
++  const store = new SessionMessageStore(path.join(state, "session-messages.sqlite3"));
++  const leased = (() => {
++    try {
++      return store.database.prepare("SELECT delivery_attempts, claimed_at, claim_until FROM messages WHERE acknowledged_at IS NULL AND claim_until IS NOT NULL")
++        .all() as Array<{ delivery_attempts: number; claimed_at: string; claim_until: string }>;
++    } finally { store.close(); }
++  })();
++  // All nine rows are leased once for the first 120 s; the caller must be the one holding them.
++  expect({
++    returned: messages.length,
++    intact: messages.map((message) => message.body).join("\n") === bodies.join("\n"),
++    leased: leased.length,
++    attempts: [...new Set(leased.map((row) => row.delivery_attempts))],
++    leaseMs: [...new Set(leased.map((row) => Date.parse(row.claim_until) - Date.parse(row.claimed_at)))],
++  }).toEqual({ returned: 9, intact: true, leased: 9, attempts: [1], leaseMs: [120_000] });
++}, 30_000);

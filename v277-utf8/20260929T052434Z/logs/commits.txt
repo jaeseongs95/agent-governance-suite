@@ -1,0 +1,3 @@
+fd3f486a4ad976756532d1de0705e8a819f92778 1933de6506562af9dda1f4982fcbc24cc370952b chore: release 2.7.7
+cf09ff6aa08efb87efd6f89f874e94a3aa7757bf d3208ebcf9a96ae1be64edb027213f358b0e30f7 docs: describe byte-level session message framing for 2.7.7
+bd571c7cc1d2812ab962ca35666ced2aa0531c1f 91c57091f43b73567687db1d5eef45ee6b2243f8 fix: decode session message frames once per line in bytes

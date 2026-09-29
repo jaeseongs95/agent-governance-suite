@@ -1,0 +1,9 @@
+== bd571c7
+$ node scripts/check-bundle.mjs
+bundle 0
+$ node scripts/build-claude-plugin.mjs --check
+claude-plugin: fresh
+== fd3f486
+$ node scripts/check-bundle.mjs
+$ node scripts/build-claude-plugin.mjs --check
+claude-plugin: fresh

@@ -1,0 +1,12 @@
+Already up to date
+Done in 489ms using pnpm v11.19.0
+$ node scripts/build.mjs && vitest run
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+
+ Test Files  65 passed | 1 skipped (66)
+      Tests  898 passed | 5 skipped (903)
+   Start at  05:18:51
+   Duration  76.60s (tests 95%, import 3%, transform 2%)
+

@@ -1,0 +1,9 @@
+mutant	result	failed_tests
+BASELINE	PASS	0
+M1-per-chunk-decode	KILLED	12
+M2a-count-decoded-buffer	KILLED	1
+M2b-count-decoded-chunks	KILLED	6
+M3-limit-ge	KILLED	5
+M4-newline-excluded	KILLED	5
+M5-broker-old-reader	KILLED	2
+M6-client-old-reader	KILLED	4

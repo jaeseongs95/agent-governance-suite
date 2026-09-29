@@ -1,0 +1,16 @@
+Already up to date
+Done in 468ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 1464ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 597ms
+ ✓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker 286ms
+ ✓ tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired 245ms
+ ✓ tests/session-messaging/previous-broker.test.ts > reads a previous broker's Korean claim answer at the response limit whole, and meets its own request reader 241ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  05:23:33
+   Duration  3.25s (tests 91%, transform 8%, import 2%)
+

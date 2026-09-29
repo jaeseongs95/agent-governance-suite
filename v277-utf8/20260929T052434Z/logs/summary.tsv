@@ -1,0 +1,14 @@
+01-install	0
+02-bundle-check	0
+03-claude-drift	0
+04-lint	0
+05-build	0
+06-test	0
+07-runtime-check	0
+08-validate-all	0
+09-validate-official	1
+10-claude-build	0
+11-claude-check	0
+12-source-check	0
+13-diff-check	0
+14-diff-check-range	0
