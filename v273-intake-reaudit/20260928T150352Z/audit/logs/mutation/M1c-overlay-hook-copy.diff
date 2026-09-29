@@ -1,0 +1,15 @@
+ claude-overlay/hooks/skill-trigger-hook.mjs | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/claude-overlay/hooks/skill-trigger-hook.mjs b/claude-overlay/hooks/skill-trigger-hook.mjs
+index 8f62336..413d964 100644
+--- a/claude-overlay/hooks/skill-trigger-hook.mjs
++++ b/claude-overlay/hooks/skill-trigger-hook.mjs
+@@ -10,7 +10,7 @@ try {
+     if (intake) {
+       process.stdout.write(JSON.stringify({ hookSpecificOutput: {
+         hookEventName: "SessionStart",
+-        additionalContext: `${intake}\n\nClaude Code 호출: 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.`,
++        additionalContext: `${intake}\n\nClaude Code 호출: 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다. 개념 설명이나 명령 이력 조회는 그 행동을 실행하는 요청이 아니다.`,
+       } }));
+     }
+   }

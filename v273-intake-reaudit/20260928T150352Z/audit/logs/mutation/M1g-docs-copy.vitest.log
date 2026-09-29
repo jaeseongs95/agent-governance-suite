@@ -1,0 +1,34 @@
+
+ RUN  v5.0.0 [REDACTED-HOME]/ags-mut
+
+ ❯ tests/tooling/claude-plugin.test.mjs (20 tests | 1 failed) 1404ms
+   ❯ generated Claude plugin (12)
+     × keeps no copy of the common intake sentences in any tracked file outside the shared source 242ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in any tracked file outside the shared source
+AssertionError: docs/architecture.md: 개념 설명이나 명령 이력 조회는 그 행동을 실행하는 요청이 아니다.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/tooling/claude-plugin.test.mjs:145:97
+    143|     for (const file of files) {
+    144|       const text = await readFile(path.join(root, file), "utf8").catch…
+    145|       for (const sentence of sentences) expect(text.includes(sentence)…
+       |                                                                                                 ^
+    146|     }
+    147|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 29 passed (30)
+   Start at  15:09:56
+   Duration  3.67s (tests 80%, transform 15%, import 5%)
+

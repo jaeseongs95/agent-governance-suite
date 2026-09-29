@@ -1,0 +1,12 @@
+ docs/architecture.md | 2 ++
+ 1 file changed, 2 insertions(+)
+diff --git a/docs/architecture.md b/docs/architecture.md
+index d88df1a..b71cdfe 100644
+--- a/docs/architecture.md
++++ b/docs/architecture.md
+@@ -83,3 +83,5 @@ MCP 서버는 고정된 공개 저장소에서 `vMAJOR.MINOR.PATCH` 형식의 
+ 고위험 변경의 완료 판정은 오케스트레이터가 내리지 않습니다. 최종 대상과 증거를 확인한 독립 감사 스킬의 결과를 그대로 통합합니다. `mutation-risk-preflight`의 통과는 실행 승인이나 감사 통과를 대신하지 않습니다.
+ 
+ MCP는 적대적인 호출자를 인증하는 보안 경계가 아닙니다. `verified`, locator, auditor ID는 전문 스킬이 직접 확인한 뒤 제출하는 신뢰 입력이며, MCP는 그 선언의 구조와 단계 불변조건을 검사합니다. 실제 신원 인증이나 원자료 무결성이 필요한 배포에서는 인증된 외부 신원·증거 서비스를 추가해야 합니다.
++
++개념 설명이나 명령 이력 조회는 그 행동을 실행하는 요청이 아니다.

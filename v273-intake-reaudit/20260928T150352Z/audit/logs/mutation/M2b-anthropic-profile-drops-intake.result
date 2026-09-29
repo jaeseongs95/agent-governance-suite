@@ -1,0 +1,8 @@
+build=0
+vitest=1
+claude:check=1
+lint=0
+     × advertises the same host-neutral intake instructions to every schema profile 487ms
+     × applies the environment profile in the bundled server 568ms
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > advertises the same host-neutral intake instructions to every schema profile
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > applies the environment profile in the bundled server

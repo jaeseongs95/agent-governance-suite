@@ -1,0 +1,16 @@
+export tree=d25c6caf31046c2c12b283d590ed5191431e9490 candidate tree=d25c6caf31046c2c12b283d590ed5191431e9490
+claude-plugin: wrote 404 files
+claude:build exit=0
+BYTE-IDENTICAL (diff -r)
+files tracked=404 rebuilt=404
+6bbf349eeaa8dced9b257ab60d84ffc0d4dbc2a5700eb3e41e88e53921eb1d18  mcp-server/dist/server.mjs
+6bbf349eeaa8dced9b257ab60d84ffc0d4dbc2a5700eb3e41e88e53921eb1d18  claude-plugin/mcp-server/dist/server.mjs
+SAME continuity-hook.mjs
+SAME host-attestation-api.mjs
+SAME host-attestation-hook.mjs
+SAME server.mjs
+SAME session-board-hook.mjs
+SAME session-message-broker.mjs
+SAME session-message-cli.mjs
+SAME session-message-hook.mjs
+SAME session-message-relay.mjs

@@ -1,0 +1,6 @@
+Already up to date
+Done in 480ms using pnpm v11.19.0
+$ node scripts/build-claude-plugin.mjs --check
+- stale file claude-plugin/mcp-server/dist/server.mjs
+Fix the listed claude-overlay files if any, then run pnpm claude:build and commit the result.
+[ELIFECYCLE] Command failed with exit code 1.

@@ -1,0 +1,6 @@
+build=0
+vitest=1
+claude:check=1
+lint=0
+     × keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation 21ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation

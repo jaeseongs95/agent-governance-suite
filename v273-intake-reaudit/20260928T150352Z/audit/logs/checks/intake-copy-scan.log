@@ -1,0 +1,202 @@
+{
+  "sentenceCount": 21,
+  "fragmentCount": 105,
+  "hits": {
+    "README.en.md": {
+      "fullSentences": 0,
+      "fragments16": 2
+    },
+    "README.md": {
+      "fullSentences": 0,
+      "fragments16": 2
+    },
+    "claude-overlay/README.md": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "claude-plugin/README.md": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "claude-plugin/mcp-server/dist/server.mjs": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "claude-plugin/skills/mutation-risk-preflight/README.md": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "claude-plugin/skills/mutation-risk-preflight/SKILL.md": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "claude-plugin/skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "claude-plugin/skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "claude-plugin/skills/mutation-risk-preflight/integration/provider-result.v1.schema.json": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "claude-plugin/skills/mutation-risk-preflight/integration/skill-descriptor.json": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "claude-plugin/skills/mutation-risk-preflight/scripts/validate-skill.mjs": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "claude-plugin/skills/orchestrator/SKILL.md": {
+      "fullSentences": 21,
+      "fragments16": 105
+    },
+    "claude-plugin/skills/orchestrator/references/entry-details.md": {
+      "fullSentences": 0,
+      "fragments16": 2
+    },
+    "claude-plugin/skills/orchestrator/references/mcp-execution.md": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "claude-plugin/skills/registry.json": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "claude-plugin/skills/source-lock.json": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "docs/additional-skills-implementation-plan.md": {
+      "fullSentences": 0,
+      "fragments16": 3
+    },
+    "docs/architecture.md": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "docs/release-notes-v1.16.1.md": {
+      "fullSentences": 0,
+      "fragments16": 3
+    },
+    "docs/release-notes-v1.16.2.md": {
+      "fullSentences": 0,
+      "fragments16": 2
+    },
+    "docs/release-notes-v1.18.0.md": {
+      "fullSentences": 0,
+      "fragments16": 4
+    },
+    "docs/release-notes-v1.19.0.md": {
+      "fullSentences": 0,
+      "fragments16": 2
+    },
+    "docs/release-notes-v1.20.3.md": {
+      "fullSentences": 0,
+      "fragments16": 3
+    },
+    "docs/roadmap.md": {
+      "fullSentences": 0,
+      "fragments16": 3
+    },
+    "mcp-server/dist/server.mjs": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "mcp-server/src/workflow-service.ts": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "scripts/check-skill-context-optimization.mjs": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "scripts/runtime-entrypoints.mjs": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "skills/mutation-risk-preflight/README.md": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "skills/mutation-risk-preflight/SKILL.md": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "skills/mutation-risk-preflight/integration/provider-result.v1.schema.json": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "skills/mutation-risk-preflight/integration/skill-descriptor.json": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "skills/mutation-risk-preflight/scripts/validate-skill.mjs": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "skills/orchestrator/SKILL.md": {
+      "fullSentences": 21,
+      "fragments16": 105
+    },
+    "skills/orchestrator/references/entry-details.md": {
+      "fullSentences": 0,
+      "fragments16": 2
+    },
+    "skills/orchestrator/references/mcp-execution.md": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "skills/registry.json": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "skills/source-lock.json": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "tests/mcp/provider-result-envelope.test.ts": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "tests/mcp/registry-contract.test.ts": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "tests/mutation-risk-preflight/contracts.node-test.mjs": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "tests/mutation-risk-preflight/preflight.node-test.mjs": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "tests/orchestrator/behavior-cases.json": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "tests/orchestrator/query-registry.test.mjs": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "tests/ponytail/ponytail.test.ts": {
+      "fullSentences": 0,
+      "fragments16": 1
+    },
+    "tests/tooling/claude-plugin.test.mjs": {
+      "fullSentences": 2,
+      "fragments16": 10
+    }
+  }
+}

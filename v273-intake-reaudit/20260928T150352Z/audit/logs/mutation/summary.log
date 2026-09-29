@@ -1,0 +1,158 @@
+== M0-control
+build=0
+vitest=0
+claude:check=0
+lint=0
+== M1a-overlay-readme-copy
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × keeps no copy of the common intake sentences in any tracked file outside the shared source 37ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in any tracked file outside the shared source
+== M1b-overlay-adaptation-copy
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × keeps no copy of the common intake sentences in any tracked file outside the shared source 60ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in any tracked file outside the shared source
+== M1c-overlay-hook-copy
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × keeps no copy of the common intake sentences in any tracked file outside the shared source 50ms
+     × projects the current common intake at session start without keyword selection 58ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in any tracked file outside the shared source
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > projects the current common intake at session start without keyword selection
+== M1d-mcp-source-copy
+build=0
+vitest=1
+claude:check=1
+lint=0
+     × keeps no copy of the common intake sentences in any tracked file outside the shared source 336ms
+     × advertises the same host-neutral intake instructions to every schema profile 21ms
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > advertises the same host-neutral intake instructions to every schema profile
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in any tracked file outside the shared source
+== M1e-codex-hooks-copy-probe
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × keeps no copy of the common intake sentences in any tracked file outside the shared source 236ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in any tracked file outside the shared source
+== M1f-other-mcp-source-copy-probe
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × keeps no copy of the common intake sentences in any tracked file outside the shared source 348ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in any tracked file outside the shared source
+== M2a-default-profile-drops-intake
+build=0
+vitest=1
+claude:check=1
+lint=0
+     × advertises the same host-neutral intake instructions to every schema profile 437ms
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > advertises the same host-neutral intake instructions to every schema profile
+== M2b-anthropic-profile-drops-intake
+build=0
+vitest=1
+claude:check=1
+lint=0
+     × advertises the same host-neutral intake instructions to every schema profile 487ms
+     × applies the environment profile in the bundled server 568ms
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > advertises the same host-neutral intake instructions to every schema profile
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > applies the environment profile in the bundled server
+== M2c-claude-hook-drops-intake
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × projects the current common intake at session start without keyword selection 54ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > projects the current common intake at session start without keyword selection
+== M3a-shared-sentence-changed-regenerated
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × pins the intake revision and rejects a one-byte policy or reference change 14ms
+     × preserves the reviewed skill revisions while reducing their initial load 404ms
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > pins the intake revision and rejects a one-byte policy or reference change
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load
+== M3b-generated-sentence-changed-only
+build=0
+vitest=1
+claude:check=1
+lint=0
+     × keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation 21ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation
+== M3c-overlay-adds-policy-sentence
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation 18ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation
+== M1g-docs-copy
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × keeps no copy of the common intake sentences in any tracked file outside the shared source 242ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in any tracked file outside the shared source
+== M4a-timing-sentence-deleted
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × pins the intake revision and rejects a one-byte policy or reference change 10ms
+     × preserves the reviewed skill revisions while reducing their initial load 356ms
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > pins the intake revision and rejects a one-byte policy or reference change
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load
+== M4b-timing-sentence-changed
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × pins the intake revision and rejects a one-byte policy or reference change 9ms
+     × preserves the reviewed skill revisions while reducing their initial load 311ms
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > pins the intake revision and rejects a one-byte policy or reference change
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load
+== M4c-change-first-sentence-deleted
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × pins the intake revision and rejects a one-byte policy or reference change 9ms
+     × preserves the reviewed skill revisions while reducing their initial load 308ms
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > pins the intake revision and rejects a one-byte policy or reference change
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load
+== M4d-generated-timing-changed-only
+build=0
+vitest=1
+claude:check=1
+lint=0
+     × keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation 21ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation
+== M4e-tag-removed
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × pins the intake revision and rejects a one-byte policy or reference change 9ms
+     × preserves the reviewed skill revisions while reducing their initial load 317ms
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > pins the intake revision and rejects a one-byte policy or reference change
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load
+done

@@ -1,0 +1,60 @@
+
+ RUN  v5.0.0 [REDACTED-HOME]/ags-mut
+
+ ❯ tests/tooling/claude-plugin.test.mjs (20 tests | 2 failed) 1018ms
+   ❯ generated Claude plugin (12)
+     × keeps no copy of the common intake sentences in any tracked file outside the shared source 50ms
+     × projects the current common intake at session start without keyword selection 58ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in any tracked file outside the shared source
+AssertionError: claude-overlay/hooks/skill-trigger-hook.mjs: 개념 설명이나 명령 이력 조회는 그 행동을 실행하는 요청이 아니다.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/tooling/claude-plugin.test.mjs:145:97
+    143|     for (const file of files) {
+    144|       const text = await readFile(path.join(root, file), "utf8").catch…
+    145|       for (const sentence of sentences) expect(text.includes(sentence)…
+       |                                                                                                 ^
+    146|     }
+    147|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > projects the current common intake at session start without keyword selection
+AssertionError: expected '## 공통 접수·선택 기준\n\n요청의 목적, 실제로 수행할 행동과…' to be '## 공통 접수·선택 기준\n\n요청의 목적, 실제로 수행할 행동과…' // Object.is equality
+
+- Expected
++ Received
+
+@@ -7,6 +7,6 @@
+  - 필요한 전문 스킬 하나로 충분하면 그 스킬을 직접 호출한다. 여러 전문 결과의 순서·입출력·필수 gate를 연결해야 하면 `orchestrator`를 실제 호출한 뒤 각 전문 단계를 연결한다. 예를 들어 공개 push·태그·배포의 범위 확인과 위험 사전 점검을 함께 요구하는 흐름은 이 연결 기준으로 판단한다. 읽기 전용 확인에서 환경·권한 선행이 없으면 실제 변경을 실행하지 않는다.
+  - 선택한 스킬은 설치된 본문과 해당 참고 자료를 로드하고 지침에 따라 실제 작업·검증·산출물까지 수행한다. 이 문서와 참고 자료를 읽는 것은 전문 스킬 실행이 아니다. 스킬 이름을 언급하거나 호출이 시작됐다는 응답만으로 수행 완료를 판단하지 않는다.
+  - 전문 스킬이 필요 없는 설명·인사·일반 질문은 그대로 답한다. 단독 전문 작업이나 스킬이 필요 없는 요청에 registry 조회·계획·workflow run을 만들지 않는다. 모든 요청에 실패 영향 분류나 생략 이유를 출력하지 않는다.
+  fixture-source-revision
+
+- Claude Code 호출: 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.
++ Claude Code 호출: 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다. 개념 설명이나 명령 이력 조회는 그 행동을 실행하는 요청이 아니다.
+
+ ❯ tests/tooling/claude-plugin.test.mjs:169:39
+    167|     const context = JSON.parse(start.stdout).hookSpecificOutput;
+    168|     expect(context.hookEventName).toBe("SessionStart");
+    169|     expect(context.additionalContext).toBe(intake + "\n\nClaude Code 호…
+       |                                       ^
+    170|     for (const prompt of ["git rebase랑 merge 차이가 뭐예요? 간단히 설명해 주세요.", "…
+    171|       const result = invoke({ hook_event_name: "UserPromptSubmit", pro…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 28 passed (30)
+   Start at  15:07:25
+   Duration  3.41s (tests 78%, transform 16%, import 6%)
+

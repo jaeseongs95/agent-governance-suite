@@ -1,0 +1,14 @@
+ hooks/hooks.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/hooks/hooks.json b/hooks/hooks.json
+index 992b242..db87f78 100644
+--- a/hooks/hooks.json
++++ b/hooks/hooks.json
+@@ -1,6 +1,6 @@
+ {
+   "description": "Local task continuity binding, compact/resume restore metadata and the session board.",
+-  "hooks": {
++  "x-note": "개념 설명이나 명령 이력 조회는 그 행동을 실행하는 요청이 아니다.", "hooks": {
+     "SessionStart": [
+       {
+         "matcher": "^(startup|resume|clear|compact)$",

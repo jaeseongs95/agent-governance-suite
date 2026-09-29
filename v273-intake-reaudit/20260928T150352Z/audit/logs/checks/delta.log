@@ -1,0 +1,26 @@
+## commits
+33dfdc02508ff13d5a2763f0fa318cd81e2971a7 9c8c6f6a62204bc99fc3ab49df1688ddb023e01d fix: select skills before the first tool call in the shared intake
+9c8c6f6a62204bc99fc3ab49df1688ddb023e01d 732ba286a68b35a7cbd99aefbea12d11b88f1b8c docs: describe the shared intake delivery and widen the copy guard
+## files changed 732ba286..33dfdc02
+README.en.md
+README.md
+claude-overlay/README.md
+claude-plugin/README.md
+claude-plugin/skills/orchestrator/SKILL.md
+scripts/check-skill-context-optimization.mjs
+skills/orchestrator/SKILL.md
+tests/mcp/tool-schema-profile.test.ts
+tests/tooling/claude-plugin.test.mjs
+tests/tooling/skill-context-optimization.test.mjs
+## overlap with 2.7.2 delta (d5c5932..8763cef)
+README.en.md
+README.md
+## markers
+mcp-server/dist/server.mjs 2.7.2=1 verifyInputSource=3 sha=6bbf349eeaa8
+claude-plugin/mcp-server/dist/server.mjs 2.7.2=1 verifyInputSource=3 sha=6bbf349eeaa8
+dist+mcp src unchanged since 732ba286
+## (redo) README diff base 8763cef -> 33dfdc02: hunks
+@@ -66 +66 @@ The agent uses the installed skills' descriptions and applicability rules to dec
+@@ -66 +66 @@ codex plugin add agent-governance-suite@agent-governance
+## files changed 732..33df intersect wake/broker/session-message/plugin-info/version: none if empty
+(end)

@@ -1,0 +1,9 @@
+claude:build=0
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × pins the intake revision and rejects a one-byte policy or reference change 9ms
+     × preserves the reviewed skill revisions while reducing their initial load 308ms
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > pins the intake revision and rejects a one-byte policy or reference change
+ FAIL  tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load

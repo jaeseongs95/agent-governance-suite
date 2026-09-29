@@ -1,0 +1,56 @@
+
+ RUN  v5.0.0 [REDACTED-HOME]/ags-mut
+
+ ❯ tests/tooling/claude-plugin.test.mjs (20 tests | 1 failed) 1409ms
+   ❯ generated Claude plugin (12)
+     × keeps no copy of the common intake sentences in any tracked file outside the shared source 336ms
+ ❯ tests/mcp/tool-schema-profile.test.ts (7 tests | 1 failed) 2037ms
+   ❯ MCP tool schema profiles (7)
+     × advertises the same host-neutral intake instructions to every schema profile 21ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > advertises the same host-neutral intake instructions to every schema profile
+AssertionError: 개념 설명이나 명령 이력 조회는 그 행동을 실행하는 요청이 아니다.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/mcp/tool-schema-profile.test.ts:205:84
+    203|     const sentences = intake!.split("\n").filter((line) => !line.start…
+    204|     expect(sentences.length).toBeGreaterThan(10);
+    205|     for (const sentence of sentences) expect(outside.includes(sentence…
+       |                                                                                    ^
+    206|     expect(SKILL_INTAKE_SERVER_INSTRUCTIONS).not.toMatch(/실패 영향이 낮으면|B…
+    207|     // Skill IDs are common; native invocation syntax remains in adapt…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in any tracked file outside the shared source
+AssertionError: mcp-server/src/server.ts: 개념 설명이나 명령 이력 조회는 그 행동을 실행하는 요청이 아니다.: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/tooling/claude-plugin.test.mjs:145:97
+    143|     for (const file of files) {
+    144|       const text = await readFile(path.join(root, file), "utf8").catch…
+    145|       for (const sentence of sentences) expect(text.includes(sentence)…
+       |                                                                                                 ^
+    146|     }
+    147|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  2 failed | 28 passed (30)
+   Start at  15:07:39
+   Duration  3.01s (tests 76%, transform 19%, import 5%)
+

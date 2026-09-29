@@ -1,0 +1,6 @@
+build=0
+vitest=1
+claude:check=0
+lint=0
+     × keeps no copy of the common intake sentences in any tracked file outside the shared source 242ms
+ FAIL  tests/tooling/claude-plugin.test.mjs > generated Claude plugin > keeps no copy of the common intake sentences in any tracked file outside the shared source

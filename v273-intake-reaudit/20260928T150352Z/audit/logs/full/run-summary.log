@@ -1,0 +1,16 @@
+01-install exit=0
+02-bundle-check exit=0
+03-claude-drift exit=0
+04-lint exit=0
+05-build exit=0
+06-test exit=0
+07-runtime-check exit=0
+08-validate-all exit=0
+09-validate-official exit=1
+10-claude-build exit=0
+11-claude-check exit=0
+12-git-diff-check exit=0
+12b-git-diff-check-range exit=0
+13-source-check exit=0
+14-source-verify exit=1
+status-after lines: 0

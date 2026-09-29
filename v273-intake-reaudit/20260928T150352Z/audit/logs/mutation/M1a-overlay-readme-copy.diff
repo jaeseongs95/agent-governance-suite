@@ -1,0 +1,12 @@
+ claude-overlay/README.md | 2 ++
+ 1 file changed, 2 insertions(+)
+diff --git a/claude-overlay/README.md b/claude-overlay/README.md
+index d7801f5..78aa134 100644
+--- a/claude-overlay/README.md
++++ b/claude-overlay/README.md
+@@ -72,3 +72,5 @@ Codex 배포물은 이 훅을 등록하지 않고 환경 변수도 넘기지 않
+ - `agents/independent-auditor.md`, `agents/deliberation-reviewer.md`: 부모 대화를 상속하지 않고, 파일 수정, 재위임과 스킬 호출을 막은 서브에이전트 정의다.
+ - `hooks/skill-trigger-hook.mjs`: Claude Code 전용 SessionStart 훅이다. 설치된 `skills/orchestrator/SKILL.md`의 공통 접수 원문만 읽어 `additionalContext`로 투영하고, Claude Code 호출 방식 한 줄을 덧붙인다. 요청 문장이나 명령을 보고 스킬을 고르지 않으며 `UserPromptSubmit`·`PreToolUse`에는 등록하지 않는다. 차단·승인 요구·상태 기록은 하지 않고, 원문을 읽지 못하거나 실패하면 조용히 종료한다. Codex 배포물의 `hooks/hooks.json`에는 없다.
+ - `instruction-scope-resolver`의 스크립트는 `AGENTS.md` chain만 계산한다. `CLAUDE.md` 계층은 `references/claude-code-instructions.md`에 따라 스킬이 따로 확인한다.
++
++- 개념 설명이나 명령 이력 조회는 그 행동을 실행하는 요청이 아니다.
