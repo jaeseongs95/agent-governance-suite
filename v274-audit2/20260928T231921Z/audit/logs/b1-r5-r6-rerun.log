@@ -1,0 +1,31 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+stdout | tests/audit/v274-audit.test.ts > R5 probe: deleting the latest row can expose an older-started, later-lapsed row (presence changes, never to online)
+AUDIT-R5 {"before":["y-short","ended"],"after":["x-long","unreachable"],"outBefore":["no-live-relay","presence-not-online"],"outAfter":["no-live-relay","presence-not-online"]}
+
+stdout | tests/audit/v274-audit.test.ts > R6 randomized: prune never deletes a live row and never changes an online presence, autoWake state or retirement
+AUDIT-R6 {"cases":600,"changedNonOnlinePresence":256}
+
+ ↓ tests/audit/v274-audit.test.ts > R1 a live row is never deleted, even when born weeks ago with a renewed lease
+ ↓ tests/audit/v274-audit.test.ts > R2 boundary: lease_until == now-24h is deleted, 1 ms later is kept
+ ↓ tests/audit/v274-audit.test.ts > R3 same started_at for two instances: the live one and the latest-by-rowid are kept, identical presence()
+ ↓ tests/audit/v274-audit.test.ts > R4 latest row not live but another row live: latest kept so presence() and retirement read the same row
+ ✓ tests/audit/v274-audit.test.ts > R5 probe: deleting the latest row can expose an older-started, later-lapsed row (presence changes, never to online) 7ms
+ ✓ tests/audit/v274-audit.test.ts > R6 randomized: prune never deletes a live row and never changes an online presence, autoWake state or retirement 787ms
+ ↓ tests/audit/v274-audit.test.ts > R7 generation fence survives the purge: same instance re-registers later; the old marker neither claims nor observes as current
+ ↓ tests/audit/v274-audit.test.ts > R8 retirement still works for a wake whose generation rows were purged once a new generation is live
+ ↓ tests/audit/v274-audit.test.ts > S1 worst-case 3 targets (max-length control-char fields, ended, autoWake) fit the response limit; measured bytes recorded
+ ↓ tests/audit/v274-audit.test.ts > S2 broker rejects 0, 4, non-array targets and an untargeted oversize list explicitly
+stdout | tests/audit/v274-audit.test.ts > B1 probe: one board identity outside the broker's identifier pattern makes the whole batched lookup fail (all presence unknown)
+AUDIT-B1 {"good":true,"goodCount":6,"mixed":true}
+
+ ✓ tests/audit/v274-audit.test.ts > B1 probe: one board identity outside the broker's identifier pattern makes the whole batched lookup fail (all presence unknown) 258ms
+ ↓ tests/audit/v274-audit.test.ts > C1 latency: list of N board sessions against a DB with ~1300 presence rows (N = 40, 100, 300)
+ ↓ tests/audit/v274-audit.test.ts > C2 prune cost inside send's BEGIN IMMEDIATE with 1300 and 13000 presence rows (non-deletable and deletable mixes)
+
+ Test Files  1 passed (1)
+      Tests  3 passed | 10 skipped (13)
+   Start at  23:18:17
+   Duration  1.76s (tests 63%, transform 34%, import 3%)
+

@@ -1,0 +1,22 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ✓ tests/audit/v274-audit2.test.ts > P1 isBoundedIdentity matches the old store regexes on a corpus including non-strings coerced by RegExp.test 19ms
+stdout | tests/audit/v274-audit2.test.ts > P2 duplicates and a bad identity inside one batch: good ones resolve, bad one unanswered, duplicates answered consistently
+AUDIT-P2 {"ok":true,"sessions":["a:online","a:online","b:online","c:online","b:online"],"unanswered":[{"host":"portable","sessionId":"has space"}]}
+
+ ✓ tests/audit/v274-audit2.test.ts > P2 duplicates and a bad identity inside one batch: good ones resolve, bad one unanswered, duplicates answered consistently 564ms
+stdout | tests/audit/v274-audit2.test.ts > P3 broker killed: every session unanswered (2.7.3-equivalent unknown/null), with total latency recorded
+AUDIT-P3 {"ok":true,"sessions":0,"unanswered":9,"ms":3,"batches":3}
+
+stdout | tests/audit/v274-audit2.test.ts > P4 broker hung (SIGSTOP): per-batch deadlines add up; latency recorded for 3 batches
+AUDIT-P4 {"ok":true,"sessions":0,"unanswered":9,"ms":52514,"batches":3,"perBatchMs":17505}
+
+ ✓ tests/audit/v274-audit2.test.ts > P3 broker killed: every session unanswered (2.7.3-equivalent unknown/null), with total latency recorded 242ms
+ ✓ tests/audit/v274-audit2.test.ts > P4 broker hung (SIGSTOP): per-batch deadlines add up; latency recorded for 3 batches 52742ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  23:12:28
+   Duration  54.34s (tests 99%, transform 1%)
+

@@ -1,0 +1,13 @@
+run 1 rc=0  Tests 11 passed (11)
+run 2 rc=0  Tests 11 passed (11)
+run 3 rc=0  Tests 11 passed (11)
+run 4 rc=0  Tests 11 passed (11)
+run 5 rc=0  Tests 11 passed (11)
+run 6 rc=0  Tests 11 passed (11)
+run 7 rc=0  Tests 11 passed (11)
+run 8 rc=0  Tests 11 passed (11)
+run 9 rc=0  Tests 11 passed (11)
+run 10 rc=0  Tests 11 passed (11)
+leftover dirs: 0; broker procs: 3
+v2.7.3 rc=0  Tests 3 passed (3)
+v2.7.2 rc=0  Tests 3 passed (3)

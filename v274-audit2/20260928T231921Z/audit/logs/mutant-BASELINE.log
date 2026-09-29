@@ -1,0 +1,27 @@
+Already up to date
+Done in 427ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+
+ Test Files  3 passed (3)
+      Tests  26 passed (26)
+   Start at  23:16:57
+   Duration  3.12s (tests 71%, transform 23%, import 6%)
+
+
+exit=0
+--- audit ---
+Already up to date
+Done in 439ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+
+ Test Files  2 passed (2)
+      Tests  12 passed | 5 skipped (17)
+   Start at  23:17:01
+   Duration  1.13s (tests 67%, transform 27%, import 5%)
+
+
+exit=0

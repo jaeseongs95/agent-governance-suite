@@ -1,0 +1,16 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-verify
+
+ ↓ tests/audit/p4-baseline.test.ts > P1 isBoundedIdentity matches the old store regexes on a corpus including non-strings coerced by RegExp.test
+ ↓ tests/audit/p4-baseline.test.ts > P2 duplicates and a bad identity inside one batch: good ones resolve, bad one unanswered, duplicates answered consistently
+ ↓ tests/audit/p4-baseline.test.ts > P3 broker killed: every session unanswered (2.7.3-equivalent unknown/null), with total latency recorded
+stdout | tests/audit/p4-baseline.test.ts > P4 broker hung (SIGSTOP): per-batch deadlines add up; latency recorded for 3 batches
+AUDIT-P4 {"ok":false,"sessions":null,"unanswered":null,"ms":17506,"batches":3,"perBatchMs":5835}
+
+ ✓ tests/audit/p4-baseline.test.ts > P4 broker hung (SIGSTOP): per-batch deadlines add up; latency recorded for 3 batches 17755ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 3 skipped (4)
+   Start at  23:13:40
+   Duration  18.26s (tests 98%, transform 2%)
+
