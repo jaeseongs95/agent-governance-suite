@@ -1,0 +1,27 @@
+{
+ "case": "port272-nl-ab",
+ "candidate": {
+  "sha": "2b53e325f549a9ebd32a143d1d11f7b4393355fa",
+  "tree": "851c82604427f8d0bb01ed15167909eee643f566",
+  "branch": "codex/v272-skill-intake-port",
+  "parent": "53eff30a2984d41fc749d38dd2062966017684fa"
+ },
+ "baseline": {
+  "sha": "53eff30a2984d41fc749d38dd2062966017684fa",
+  "tree": "c030fa4e19411ef511c5d5c89cf588aa6f42c059"
+ },
+ "claude_version": "2.1.283 (Claude Code)",
+ "plugin_version_both": "2.7.1",
+ "node": "v24.21.0",
+ "pnpm": "11.19.0",
+ "uname": "Linux vm 6.18.44-fc-v37 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+ "start_utc": "2026-09-28T07:21:47Z",
+ "end_utc": "2026-09-28T07:32:15Z",
+ "seed": 20260928,
+ "runs": 66,
+ "concurrency": 4,
+ "model": "claude-opus-5-5",
+ "permission_mode": "acceptEdits",
+ "max_turns": 20,
+ "extra_allowed_tools": "none"
+}

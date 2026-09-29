@@ -1,0 +1,2 @@
+/tmp/ev/scripts/nl-ab.sh: line 11: uuidgen: command not found
+smoke-cand-p6 cand p6 exit=0

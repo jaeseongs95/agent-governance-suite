@@ -1,0 +1,617 @@
+diff --git a/claude-overlay/adaptations/orchestrator.json b/claude-overlay/adaptations/orchestrator.json
+index b357dff..3d90baa 100644
+--- a/claude-overlay/adaptations/orchestrator.json
++++ b/claude-overlay/adaptations/orchestrator.json
+@@ -1,15 +1,9 @@
+ {
+-  "description": "요청을 받아 어떤 거버넌스 스킬이 필요한지 분류해야 할 때 쓴다. 실패 영향이 큰 요청에서 필요한 단계와 생략할 단계를 정할 때, 거버넌스 스킬을 둘 이상 이어 써야 할 때(계약 정리→관례 조사→구현→범위·근거 확인→감사), 어느 스킬을 먼저 써야 할지 애매할 때, 여러 산출물을 하나의 완료 판정으로 묶을 때가 해당한다. 요청을 분류하고 전문 스킬의 실행 순서·입출력·결과를 연결하며, 실패 영향이 큰 여러 단계 요청은 MCP orchestrated workflow로 순서와 감사 게이트를 강제한다. MCP가 BINDING_REQUIRED나 BINDING_INVALID를 반환하면 전문 스킬을 직접 순서대로 호출한다. 전문 판단이나 감사 자체는 각 스킬이 맡는다.",
+   "replacements": [
+     {
+       "file": "SKILL.md",
+-      "find": "## 시작 전 확인",
+-      "replace": "## Claude Code에서의 선택 결정\n\n이 문서를 읽는 것은 실행이 아니다. 첫 파일 편집이나 명령 실행 전에 다음 결정을 한 단락으로 적고, 그 결정대로 각 시점에 실제로 실행한다.\n\n- 이 요청이 잘못 수행됐을 때의 실패 영향과 그 근거.\n- 필요한 단계와 생략하는 단계를 각각 이유와 함께. 후보는 다음과 같고, 조건에 맞는 것만 고른다.\n  - `task-contract`: 요청이 여러 해석을 허용하거나 범위·완료 조건·권한이 불명확할 때.\n  - `change-scope-guardian`: 기존 변경이 있는 트리에서 작업하거나 커밋할 때(첫 변경 전 baseline, 커밋 전 범위 확인).\n  - `acceptance-evidence-validator`: 수용 기준이 명시됐거나 완료를 보고해야 할 때.\n  - `independent-audit-gate`: 실패 영향이 큰 변경(CI·CD, 릴리스·배포, 권한·신뢰 경계, 전역 설정, 데이터·스키마)을 커밋·병합·릴리스로 확정하기 전. 구현자와 분리된 fresh 서브에이전트(`agent-governance-suite:independent-auditor`)가 최종 diff를 본다.\n  - `mutation-risk-preflight`: 삭제·배포·push·태그처럼 되돌리기 어려운 명령 직전.\n  - `ponytail`(`minimal-implementation`): 코드를 작성·수정하는 구현 단계. 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르고, 의도적으로 뺀 것을 남긴다.\n- 실행 방식과 그 이유. 둘 중 하나를 고른다.\n  - `orchestrated`: 실패 영향이 크고 고른 단계가 둘 이상이며 `plan_workflow` MCP 도구를 쓸 수 있을 때. 아래 \"MCP 도구 사용 계약\" 순서로 계획, 수렴 root, attempt claim, guarded start, stage별 기록, finalize를 진행한다. 각 stage의 전문 스킬은 Skill 도구로 실제 호출하고 그 결과를 `record_stage_result`로 기록한다. MCP 원장이 단계 순서와 감사 게이트를 강제하므로, 지침만으로 순서를 지키는 것보다 이 방식을 우선한다.\n  - `direct`: 그 밖의 경우, 또는 MCP 도구를 쓸 수 없거나 `BINDING_REQUIRED`·`BINDING_INVALID`로 계획이나 stage 기록이 거절됐을 때. 결정한 스킬을 그 순서대로 직접 호출한다. `orchestrated`에서 전환했다면 반환 코드와 전환 이유를 사용자에게 한 줄로 밝히고, 이미 시작한 run은 `abort_workflow`로 닫는다.\n- `orchestrated`로 계획할 작업 계약(`TaskEnvelope.v1`)은 `plan_workflow` 전에 확정한다. `orchestration`에는 `{ \"requested\": true, \"mcpAvailable\": true }`를 적는다. 서버는 `requested` 값으로 실행 방식을 정하므로 `false`를 적으면 direct 계획이 돌아온다. `scope`와 `workUnits[].writeTargets`에는 저장소 기준 파일 경로나 glob만 적는다. 브랜치·태그·원격 같은 git 대상은 `authorization.allowedActions`와 `mutation-risk-preflight`의 대상으로 다룬다(`change-scope-guardian`은 경로가 아닌 규칙을 `INVALID_INPUT`으로 거절한다). 시작한 run의 계약을 바꿔 다시 시도하면 수렴 가드가 frame 검토(`FRAME_REVIEW_REQUIRED`)와 사용자 승인을 요구한다.\n- 단순 조회·저위험 수정이라 전문 스킬이 필요 없으면 그렇게 적고 진행한다.\n\n### Claude Code의 실행 보증\n\n- `plan_workflow`와 `record_stage_result`를 호출할 때마다 플러그인 훅이 그 호출을 낸 세션(서브에이전트가 호출했으면 그 서브에이전트)의 모델과 추론 수준을 transcript에서 관측해 서버에 넘긴다. 도구 인자에 `executionContext`나 `_hostAttestation`을 넣지 않는다. 넣어도 훅이 지우거나 덮어쓴다.\n- semantic stage의 관측값은 그 stage를 기록한 호출자의 것이다. 서브에이전트에 맡긴 stage를 메인 세션이 기록하면 메인 세션의 모델과 추론 수준이 결속되므로, 그 서브에이전트가 계획된 하한(`executionRequirement`) 이상의 모델과 추론 수준으로 실행됐는지 확인한 뒤 기록한다.\n- 관측값이 하한보다 낮아 `BINDING_INVALID`가 나오면 값을 고쳐 다시 보내지 않는다. 더 높은 모델·추론 수준의 세션에서 다시 실행하거나 `direct`로 전환한다. 대화형 세션에서 도구 승인에 5분 넘게 걸려 `BINDING_INVALID`가 나오면 같은 호출을 다시 한다.\n\n### 큰 stage 출력\n\n- provider 출력(`output.output`)이 저장소 크기에 비례해 커지면(예: `change-scope-guardian` baseline, 변경 범위 보고서, 저장소 관례 조사) 도구 인자에 넣지 않는다. 스킬이 만든 JSON을 바꾸지 않고 로컬 파일에 저장한 뒤, `record_stage_result`에 `outputFile: { \"locator\": \"<절대 경로>\", \"digest\": \"sha256:<그 파일 바이트의 SHA-256>\" }`를 넣고 `output.output`은 `null`로 보낸다. 서버가 파일을 읽어 digest와 출력 schema, 게이트를 인라인 출력과 똑같이 검사하고 receipt에는 참조만 남긴다.\n- 크기를 맞추려고 항목을 줄이거나 요약하지 않는다. digest가 맞지 않으면 `INTEGRITY_FAILED`다.\n- receipt 정책이 있는 stage(한국어 산문, 평가 타당성)는 `outputFile`을 받지 않으므로 인라인으로 기록한다. 이 stage들의 출력은 참조 전용이라 크지 않다.\n\n### stage 기록\n\n- `record_stage_result` 전에 계획된 stage의 `requiredArtifacts`에 있는 id를 모두 `output.artifacts`에 넣는다. 각 항목에는 실제 산출물의 locator, digest, targetDigest를 적고 `verified: true`로 표시한다. digest는 64자리 소문자 hex이며 `sha256:` 접두사는 있어도 없어도 된다.\n- 실제로 만들지 않았거나 확인하지 않은 산출물은 `verified: true`로 적지 않는다. 그 stage는 `passed`로 기록하지 않고, provider 결과(verdict나 `MISSING_EVIDENCE` adapter error)가 가리키는 `needs-input`이나 `blocked` 상태로 기록한다.\n\n## 시작 전 확인"
+-    },
+-    {
+-      "file": "SKILL.md",
+-      "find": "명시적으로 `$skill-name`을 지정한 요청에서는",
+-      "replace": "`/agent-governance-suite:<skill-name>` 호출이나 스킬 이름으로 명시적으로 지정한 요청에서는"
++      "find": "<!-- optimization-navigation:start",
++      "replace": "## Claude Code에서의 호출과 관측\n\n이 절은 호출 방식과 실행 관측만 바꾸며 위의 선택 기준, 아래 참고 자료의 실행 순서·결과 기록 규칙은 그대로 적용한다.\n\n- 전문 스킬은 Skill 도구나 `/agent-governance-suite:<skill-name>` 명령으로 실제 호출한다. 사용자가 slash 명령이나 스킬 이름으로 지정한 스킬을 \"이름으로 지정한 스킬\"로 본다.\n- 공통 계약이 요구하는 독립 감사자를 Claude Code에서 호출할 때는 `agent-governance-suite:independent-auditor` 서브에이전트 유형을 사용한다.\n- UserPromptSubmit·Bash 훅의 스킬 추천 context를 공통 접수 기준의 입력으로 전달한다.\n\n### 실행 관측\n\n- `plan_workflow`와 `record_stage_result`를 호출할 때마다 플러그인 훅이 그 호출을 낸 세션(서브에이전트가 호출했으면 그 서브에이전트)의 모델과 추론 수준을 transcript에서 관측해 서버에 넘긴다. 도구 인자에 `executionContext`나 `_hostAttestation`을 넣지 않는다. 넣어도 훅이 지우거나 덮어쓴다.\n- `record_stage_result`의 관측 대상은 도구 호출자다. 메인 세션이 호출하면 메인 세션 관측이, 서브에이전트가 호출하면 그 서브에이전트 transcript 관측이 전달된다.\n- 메인 세션의 SessionStart·PostModelSwitch 훅은 현재 세션 모델을 기록하고, PreToolUse 훅은 각 대상 도구 호출의 관측을 공통 host-attestation 경로로 전달한다. 관측 실패 뒤 처리 기준은 [MCP 실행 계약](references/mcp-execution.md)을 따른다.\n\n<!-- optimization-navigation:start"
+     }
+   ]
+ }
+diff --git a/claude-plugin/mcp-server/dist/server.mjs b/claude-plugin/mcp-server/dist/server.mjs
+index 68a6c6d..1e96baf 100644
+--- a/claude-plugin/mcp-server/dist/server.mjs
++++ b/claude-plugin/mcp-server/dist/server.mjs
+@@ -20577,20 +20577,19 @@ var planWorkflowAnthropicInputSchema = {
+ function planWorkflowToolInputSchema(profile = "default") {
+   return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
+ }
+-var ANTHROPIC_SERVER_INSTRUCTIONS = "agent-governance-suite \uC811\uC218 \uADDC\uCE59: \uC0AC\uC6A9\uC790 \uC694\uCCAD\uC744 \uBC1B\uC744 \uB54C\uB9C8\uB2E4, \uD30C\uC77C\uC744 \uACE0\uCE58\uAC70\uB098 \uBA85\uB839\uC744 \uC2E4\uD589\uD558\uAE30 \uC804\uC5D0 \uC774 \uC694\uCCAD\uC774 \uC798\uBABB \uC218\uD589\uB410\uC744 \uB54C\uC758 \uC2E4\uD328 \uC601\uD5A5\uC744 \uD55C \uC904\uB85C \uBD84\uB958\uD55C\uB2E4(\uB0AE\uC74C \uB610\uB294 \uB192\uC74C). CI\xB7CD, \uB9B4\uB9AC\uC2A4\xB7\uBC30\uD3EC, \uAD8C\uD55C\xB7\uC2E0\uB8B0 \uACBD\uACC4, \uC804\uC5ED \uC124\uC815, \uB370\uC774\uD130\xB7\uC2A4\uD0A4\uB9C8, \uACF5\uAC1C \uC800\uC7A5\uC18C\uC758 \uAE30\uBCF8 \uBE0C\uB79C\uCE58\uCC98\uB7FC \uC2E4\uD328 \uC601\uD5A5\uC774 \uD070 \uC791\uC5C5\uC774\uBA74 \uAD6C\uD604\uC744 \uC2DC\uC791\uD558\uAE30 \uC804\uC5D0 Skill \uB3C4\uAD6C\uB85C /agent-governance-suite:orchestrator\uB97C \uD638\uCD9C\uD574 \uC774 \uC694\uCCAD\uC5D0 \uD544\uC694\uD55C \uC804\uBB38 \uC2A4\uD0AC \uB2E8\uACC4\uC640 \uC0DD\uB7B5\uD560 \uB2E8\uACC4\uB97C \uC774\uC720\uC640 \uD568\uAED8 \uC815\uD558\uACE0, \uC815\uD55C \uB2E8\uACC4\uB97C \uADF8 \uC2DC\uC810\uC5D0 \uC2E4\uC81C\uB85C \uD638\uCD9C\uD55C\uB2E4. \uC2E4\uD328 \uC601\uD5A5\uC774 \uD070 \uC791\uC5C5\uC5D0\uC11C orchestrator\uB97C \uAC74\uB108\uB6F0\uB294 \uACBD\uC6B0\uB294 \uC0AC\uC6A9\uC790\uAC00 \uD2B9\uC815 \uC2A4\uD0AC\uC744 \uC9C0\uC815\uD588\uC744 \uB54C\uBFD0\uC774\uBA70, \uADF8\uB54C\uB294 \uADF8 \uC2A4\uD0AC\uC744 \uBC14\uB85C \uD638\uCD9C\uD55C\uB2E4. \uC2E4\uD328 \uC601\uD5A5\uC774 \uB0AE\uC73C\uBA74 \uADF8 \uC774\uC720\uB97C \uD55C \uC904\uB85C \uBC1D\uD788\uACE0 \uC9C4\uD589\uD558\uB418, \uC694\uCCAD\uC774 \uCF54\uB4DC\uB97C \uC791\uC131\xB7\uC218\uC815\xB7\uB9AC\uD329\uD130\uB9C1\xB7\uC124\uACC4\uD558\uAC70\uB098 \uB77C\uC774\uBE0C\uB7EC\uB9AC\xB7\uC758\uC874\uC131\uC744 \uACE0\uB974\uB294 \uC791\uC5C5\uC774\uBA74 \uCF54\uB4DC\uB97C \uC4F0\uAC70\uB098 \uD30C\uC77C\uC744 \uACE0\uCE58\uAE30 \uC804\uC5D0 Skill \uB3C4\uAD6C\uB85C /agent-governance-suite:ponytail\uC744 \uD638\uCD9C\uD55C\uB2E4. \uC694\uCCAD\uC758 \uBC94\uC704\uB098 \uC644\uB8CC \uC870\uAC74\uC774 \uBD88\uBA85\uD655\uD558\uBA74 ponytail\uBCF4\uB2E4 \uBA3C\uC800 \uD655\uC815\uD55C\uB2E4. \uCF54\uB4DC \uAC80\uD1A0\xB7\uAC10\uC0AC\xB7\uAC80\uC99D\xB7\uC644\uB8CC \uD310\uC815, \uCF54\uB4DC \uC124\uBA85\xB7\uC870\uC0AC\uB9CC \uD558\uB294 \uC694\uCCAD, \uCF54\uB529\uC774 \uC544\uB2CC \uC694\uCCAD(\uC77C\uBC18 \uC9C0\uC2DD, \uBB38\uC11C, \uBC88\uC5ED, \uC694\uC57D), \uAC80\uD1A0\xB7\uAC10\uC0AC\uB97C \uB9E1\uC740 \uC11C\uBE0C\uC5D0\uC774\uC804\uD2B8\uC5D0\uC11C\uB294 ponytail\uC744 \uD638\uCD9C\uD558\uC9C0 \uC54A\uB294\uB2E4.";
+-function serverInstructions(profile = "default") {
+-  return profile === "anthropic" ? `${ANTHROPIC_SERVER_INSTRUCTIONS}
+-${SESSION_MESSAGE_SERVER_INSTRUCTIONS}` : SESSION_MESSAGE_SERVER_INSTRUCTIONS;
++var SKILL_INTAKE_SERVER_INSTRUCTIONS = "agent-governance-suite \uC811\uC218 \uC548\uB0B4: \uAC70\uBC84\uB10C\uC2A4 \uC804\uBB38 \uC2A4\uD0AC\uC758 \uC120\uD0DD\xB7\uC5F0\uACB0\uC774 \uD544\uC694\uD55C \uACBD\uC6B0 orchestrator \uC2A4\uD0AC \uC6D0\uBCF8\uC758 \uACF5\uD1B5 \uC811\uC218\xB7\uB77C\uC6B0\uD305 \uAE30\uC900\uC744 \uB530\uB978\uB2E4. \uACF5\uD1B5 \uC6D0\uBCF8\uC740 skills/orchestrator/SKILL.md\uC640 references/entry-details.md\uC774\uBA70 MCP \uC2E4\uD589\xB7\uC2E4\uD328 \uCC98\uB9AC\uB294 references/mcp-execution.md\uB97C \uB530\uB978\uB2E4. \uC774 \uC548\uB0B4\uB9CC\uC73C\uB85C orchestrator \uD65C\uC131\uD654, registry \uC870\uD68C\uB098 workflow \uC0DD\uC131\uC744 \uC694\uAD6C\uD558\uC9C0 \uC54A\uB294\uB2E4. \uD544\uC694\uD55C \uC804\uBB38 \uC2A4\uD0AC\uC740 \uD638\uC2A4\uD2B8\uAC00 \uC81C\uACF5\uD558\uB294 \uC124\uCE58\uB41C \uC2A4\uD0AC \uD638\uCD9C \uBC29\uC2DD\uC73C\uB85C \uC2E4\uC81C \uC2E4\uD589\uD55C\uB2E4.";
++function serverInstructions() {
++  return `${SKILL_INTAKE_SERVER_INSTRUCTIONS}
++${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
+ }
+ var SESSION_MESSAGE_SERVER_INSTRUCTIONS = "\uC138\uC158 \uBA54\uC2DC\uC9C0\uB294 prepare_session_message\uB85C \uB300\uC0C1\xB7\uBCF8\uBB38\xB7TTL\uC744 \uACE0\uC815\uD558\uACE0 \uC2DC\uC2A4\uD15C\uC774 \uBC1C\uAE09\uD55C messageId\uB97C \uBC1B\uC740 \uB4A4 send_session_message(messageId)\uB85C \uC804\uC1A1\uD55C\uB2E4. ID\uB97C \uC9C1\uC811 \uB9CC\uB4E4\uAC70\uB098 send\uC5D0 \uB0B4\uC6A9\uC744 \uB2E4\uC2DC \uB123\uC9C0 \uC54A\uB294\uB2E4. \uC804\uC1A1 \uACB0\uACFC\uAC00 \uBD88\uBA85\uD655\uD558\uBA74 \uBC1B\uC740 \uAC19\uC740 ID\uB85C status\uB97C \uC870\uD68C\uD558\uAC70\uB098 send\uB97C \uC7AC\uC2DC\uB3C4\uD55C\uB2E4. unknown ID\uB294 \uC774\uC804 \uC804\uC1A1 \uC644\uB8CC\uB098 \uAE30\uB85D \uC815\uB9AC \uAC00\uB2A5\uC131\uC774 \uC788\uC73C\uBBC0\uB85C \uC800\uC7A5\uD55C \uC601\uC218\uC99D\uACFC \uB300\uC870\uD55C\uB2E4. \uC0C8 prepare\uB294 \uC0C8 \uC804\uC1A1 \uC758\uB3C4\uC5D0\uB9CC \uC0AC\uC6A9\uD558\uBA70 \uBD88\uBA85\uD655\uD55C \uAE30\uC874 \uC804\uC1A1\uC744 \uBB34\uC870\uAC74 \uB2E4\uC2DC \uC900\uBE44\uD558\uC9C0 \uC54A\uB294\uB2E4. ACK\uB294 \uBA54\uC2DC\uC9C0 \uCC98\uB9AC \uD655\uC778\uC774\uBA70 \uC5C5\uBB34 \uC644\uB8CC\uB098 \uC2B9\uC778 \uC99D\uAC70\uAC00 \uC544\uB2C8\uB2E4.";
+ function validUpdateArguments(args) {
+   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
+ }
+ function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null) {
+-  const instructions = serverInstructions(toolSchemaProfile);
+   const server = new Server(
+     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
+-    { capabilities: { tools: {} }, ...instructions === void 0 ? {} : { instructions } }
++    { capabilities: { tools: {} }, instructions: serverInstructions() }
+   );
+   const contractDocuments = Object.values(contractSchemas);
+   const advertise = (tools) => toolSchemaProfile === "anthropic" ? tools.map((tool) => {
+diff --git a/claude-plugin/skills/orchestrator/SKILL.md b/claude-plugin/skills/orchestrator/SKILL.md
+index 2902ab8..615e4da 100644
+--- a/claude-plugin/skills/orchestrator/SKILL.md
++++ b/claude-plugin/skills/orchestrator/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: orchestrator
+-description: 요청을 받아 어떤 거버넌스 스킬이 필요한지 분류해야 할 때 쓴다. 실패 영향이 큰 요청에서 필요한 단계와 생략할 단계를 정할 때, 거버넌스 스킬을 둘 이상 이어 써야 할 때(계약 정리→관례 조사→구현→범위·근거 확인→감사), 어느 스킬을 먼저 써야 할지 애매할 때, 여러 산출물을 하나의 완료 판정으로 묶을 때가 해당한다. 요청을 분류하고 전문 스킬의 실행 순서·입출력·결과를 연결하며, 실패 영향이 큰 여러 단계 요청은 MCP orchestrated workflow로 순서와 감사 게이트를 강제한다. MCP가 BINDING_REQUIRED나 BINDING_INVALID를 반환하면 전문 스킬을 직접 순서대로 호출한다. 전문 판단이나 감사 자체는 각 스킬이 맡는다.
++description: 어떤 거버넌스 전문 스킬이 필요한지 정해야 하거나 여러 전문 결과의 실행 순서·입출력·gate를 연결해야 할 때 사용한다. 한 전문 스킬로 충분하면 그 스킬을 직접 쓰고, 전문 스킬이 필요 없는 요청이나 전문 판단·감사 자체에는 사용하지 않는다.
+ license: MIT
+ metadata:
+   version: "1.2.0"
+@@ -10,50 +10,27 @@ metadata:
+ 
+ 전문 스킬의 책임을 바꾸지 않고 요청을 적절한 실행 흐름으로 연결한다. 이 스킬은 분류, 선택, 순서 결정, 입출력 전달, 중간 결과 확인과 최종 결과 통합만 맡는다. 보안 판단, 독립 감사, 반박 작성, 구현, 배포를 대신 수행하지 않는다.
+ 
+-## Claude Code에서의 선택 결정
+-
+-이 문서를 읽는 것은 실행이 아니다. 첫 파일 편집이나 명령 실행 전에 다음 결정을 한 단락으로 적고, 그 결정대로 각 시점에 실제로 실행한다.
+-
+-- 이 요청이 잘못 수행됐을 때의 실패 영향과 그 근거.
+-- 필요한 단계와 생략하는 단계를 각각 이유와 함께. 후보는 다음과 같고, 조건에 맞는 것만 고른다.
+-  - `task-contract`: 요청이 여러 해석을 허용하거나 범위·완료 조건·권한이 불명확할 때.
+-  - `change-scope-guardian`: 기존 변경이 있는 트리에서 작업하거나 커밋할 때(첫 변경 전 baseline, 커밋 전 범위 확인).
+-  - `acceptance-evidence-validator`: 수용 기준이 명시됐거나 완료를 보고해야 할 때.
+-  - `independent-audit-gate`: 실패 영향이 큰 변경(CI·CD, 릴리스·배포, 권한·신뢰 경계, 전역 설정, 데이터·스키마)을 커밋·병합·릴리스로 확정하기 전. 구현자와 분리된 fresh 서브에이전트(`agent-governance-suite:independent-auditor`)가 최종 diff를 본다.
+-  - `mutation-risk-preflight`: 삭제·배포·push·태그처럼 되돌리기 어려운 명령 직전.
+-  - `ponytail`(`minimal-implementation`): 코드를 작성·수정하는 구현 단계. 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르고, 의도적으로 뺀 것을 남긴다.
+-- 실행 방식과 그 이유. 둘 중 하나를 고른다.
+-  - `orchestrated`: 실패 영향이 크고 고른 단계가 둘 이상이며 `plan_workflow` MCP 도구를 쓸 수 있을 때. 아래 "MCP 도구 사용 계약" 순서로 계획, 수렴 root, attempt claim, guarded start, stage별 기록, finalize를 진행한다. 각 stage의 전문 스킬은 Skill 도구로 실제 호출하고 그 결과를 `record_stage_result`로 기록한다. MCP 원장이 단계 순서와 감사 게이트를 강제하므로, 지침만으로 순서를 지키는 것보다 이 방식을 우선한다.
+-  - `direct`: 그 밖의 경우, 또는 MCP 도구를 쓸 수 없거나 `BINDING_REQUIRED`·`BINDING_INVALID`로 계획이나 stage 기록이 거절됐을 때. 결정한 스킬을 그 순서대로 직접 호출한다. `orchestrated`에서 전환했다면 반환 코드와 전환 이유를 사용자에게 한 줄로 밝히고, 이미 시작한 run은 `abort_workflow`로 닫는다.
+-- `orchestrated`로 계획할 작업 계약(`TaskEnvelope.v1`)은 `plan_workflow` 전에 확정한다. `orchestration`에는 `{ "requested": true, "mcpAvailable": true }`를 적는다. 서버는 `requested` 값으로 실행 방식을 정하므로 `false`를 적으면 direct 계획이 돌아온다. `scope`와 `workUnits[].writeTargets`에는 저장소 기준 파일 경로나 glob만 적는다. 브랜치·태그·원격 같은 git 대상은 `authorization.allowedActions`와 `mutation-risk-preflight`의 대상으로 다룬다(`change-scope-guardian`은 경로가 아닌 규칙을 `INVALID_INPUT`으로 거절한다). 시작한 run의 계약을 바꿔 다시 시도하면 수렴 가드가 frame 검토(`FRAME_REVIEW_REQUIRED`)와 사용자 승인을 요구한다.
+-- 단순 조회·저위험 수정이라 전문 스킬이 필요 없으면 그렇게 적고 진행한다.
+-
+-### Claude Code의 실행 보증
+-
+-- `plan_workflow`와 `record_stage_result`를 호출할 때마다 플러그인 훅이 그 호출을 낸 세션(서브에이전트가 호출했으면 그 서브에이전트)의 모델과 추론 수준을 transcript에서 관측해 서버에 넘긴다. 도구 인자에 `executionContext`나 `_hostAttestation`을 넣지 않는다. 넣어도 훅이 지우거나 덮어쓴다.
+-- semantic stage의 관측값은 그 stage를 기록한 호출자의 것이다. 서브에이전트에 맡긴 stage를 메인 세션이 기록하면 메인 세션의 모델과 추론 수준이 결속되므로, 그 서브에이전트가 계획된 하한(`executionRequirement`) 이상의 모델과 추론 수준으로 실행됐는지 확인한 뒤 기록한다.
+-- 관측값이 하한보다 낮아 `BINDING_INVALID`가 나오면 값을 고쳐 다시 보내지 않는다. 더 높은 모델·추론 수준의 세션에서 다시 실행하거나 `direct`로 전환한다. 대화형 세션에서 도구 승인에 5분 넘게 걸려 `BINDING_INVALID`가 나오면 같은 호출을 다시 한다.
+-
+-### 큰 stage 출력
++## 시작 전 확인
+ 
+-- provider 출력(`output.output`)이 저장소 크기에 비례해 커지면(예: `change-scope-guardian` baseline, 변경 범위 보고서, 저장소 관례 조사) 도구 인자에 넣지 않는다. 스킬이 만든 JSON을 바꾸지 않고 로컬 파일에 저장한 뒤, `record_stage_result`에 `outputFile: { "locator": "<절대 경로>", "digest": "sha256:<그 파일 바이트의 SHA-256>" }`를 넣고 `output.output`은 `null`로 보낸다. 서버가 파일을 읽어 digest와 출력 schema, 게이트를 인라인 출력과 똑같이 검사하고 receipt에는 참조만 남긴다.
+-- 크기를 맞추려고 항목을 줄이거나 요약하지 않는다. digest가 맞지 않으면 `INTEGRITY_FAILED`다.
+-- receipt 정책이 있는 stage(한국어 산문, 평가 타당성)는 `outputFile`을 받지 않으므로 인라인으로 기록한다. 이 stage들의 출력은 참조 전용이라 크지 않다.
++요청의 목적, 상태 변경 여부, 실패 영향, 현재 단계, 수용 기준과 사용자가 이름으로 지정한 스킬을 함께 보고 필요한 capability를 정한다. 키워드, 파일 종류나 `complex` 표시만으로 스킬을 붙이지 않는다. 지정한 전문 스킬은 우선하고 다른 스킬로 대체하지 않지만, 필수 승인·검증·독립성 gate를 생략하는 권한으로 해석하지 않는다.
+ 
+-### stage 기록
++한 전문 기능으로 충분하면 그 스킬을 직접 호출하고, 여러 전문 결과의 순서·입출력·gate 연결이 필요할 때만 이 흐름으로 연결한다. 전문 스킬이 필요 없는 요청은 그대로 진행하며, 적용 여부가 애매했을 때만 생략 이유를 한 줄로 밝힌다. 이 문서와 참고 자료를 읽는 것은 전문 스킬 실행이 아니다.
+ 
+-- `record_stage_result` 전에 계획된 stage의 `requiredArtifacts`에 있는 id를 모두 `output.artifacts`에 넣는다. 각 항목에는 실제 산출물의 locator, digest, targetDigest를 적고 `verified: true`로 표시한다. digest는 64자리 소문자 hex이며 `sha256:` 접두사는 있어도 없어도 된다.
+-- 실제로 만들지 않았거나 확인하지 않은 산출물은 `verified: true`로 적지 않는다. 그 stage는 `passed`로 기록하지 않고, provider 결과(verdict나 `MISSING_EVIDENCE` adapter error)가 가리키는 `needs-input`이나 `blocked` 상태로 기록한다.
++한국어 산문을 작성·편집하거나 자연스러움을 검증하는 요청은 일부 단계만 선택하지 않는다. `korean-prose-selection`, `korean-prose-editing`, `korean-prose-verification`, `korean-prose-finalization` 네 capability를 모두 요청하고, descriptor의 artifact 의존성과 `phaseOrder`에 따라 순서대로 실행한다. 원문은 전문 스킬 내부에서만 다루고 MCP 영수증에는 reference-only policy가 허용하는 digest, artifact reference와 고정 토큰만 전달한다.
+ 
+-## 시작 전 확인
++## Claude Code에서의 호출과 관측
+ 
+-먼저 요청의 목표, 상태 변경 여부, 완료 조건과 명시적으로 호출된 스킬을 확인한다. `/agent-governance-suite:<skill-name>` 호출이나 스킬 이름으로 명시적으로 지정한 요청에서는 그 스킬을 우선하며, 다른 스킬로 대체하지 않는다.
++이 절은 호출 방식과 실행 관측만 바꾸며 위의 선택 기준, 아래 참고 자료의 실행 순서·결과 기록 규칙은 그대로 적용한다.
+ 
+-라우팅 전에 설치 시 노출된 스킬 설명으로 후보 capability를 정하고 `node scripts/query-registry.mjs --capability <capability>`를 실행해 일치하는 활성 provider만 조회한다. 여러 capability는 `--capability`를 반복한다. 후보를 특정할 수 없을 때만 `--all`로 compact 전체 목록을 조회하며, `skills/registry.json` 원문 전체를 모델 컨텍스트로 읽지 않는다. 조회 결과의 `selectionCriteria`, precondition, priority를 선택 설명에 남긴다. 같은 capability의 후보 중 priority가 가장 큰 항목을 선택하되, 동률이나 descriptor 충돌은 임의로 고르지 말고 `needs-input`으로 돌린다. `selectionCriteria`는 사람이 검토하는 근거이며 런타임 필터가 아니다. 필요한 역할이 없으면 `missingCapabilities`, 가능한 직접 스킬 호출 경로와 부족한 capability를 분리해 설명한다.
++- 전문 스킬은 Skill 도구나 `/agent-governance-suite:<skill-name>` 명령으로 실제 호출한다. 사용자가 slash 명령이나 스킬 이름으로 지정한 스킬을 "이름으로 지정한 스킬"로 본다.
++- 공통 계약이 요구하는 독립 감사자를 Claude Code에서 호출할 때는 `agent-governance-suite:independent-auditor` 서브에이전트 유형을 사용한다.
++- UserPromptSubmit·Bash 훅의 스킬 추천 context를 공통 접수 기준의 입력으로 전달한다.
+ 
+-초기 정책 capability는 `subagent-coordination`, `independent-deliberation`, `independent-audit`다. 일반 변경 흐름에 필요한 모델·추론 수준 적합성, 지침 범위, 작업 계약, 저장소 관례, 변경 기준선·범위 확인, mutation 사전 점검, 수용 근거 확인과 실패 진단도 capability로 찾는다. 현재 provider 이름을 라우팅 조건으로 사용하지 않는다.
++### 실행 관측
+ 
+-한국어 산문을 작성·편집하거나 자연스러움을 검증하는 요청은 일부 단계만 선택하지 않는다. `korean-prose-selection`, `korean-prose-editing`, `korean-prose-verification`, `korean-prose-finalization` 네 capability를 모두 요청하고, descriptor의 artifact 의존성과 `phaseOrder`에 따라 순서대로 실행한다. 원문은 전문 스킬 내부에서만 다루고 MCP 영수증에는 reference-only policy가 허용하는 digest, artifact reference와 고정 토큰만 전달한다.
++- `plan_workflow`와 `record_stage_result`를 호출할 때마다 플러그인 훅이 그 호출을 낸 세션(서브에이전트가 호출했으면 그 서브에이전트)의 모델과 추론 수준을 transcript에서 관측해 서버에 넘긴다. 도구 인자에 `executionContext`나 `_hostAttestation`을 넣지 않는다. 넣어도 훅이 지우거나 덮어쓴다.
++- `record_stage_result`의 관측 대상은 도구 호출자다. 메인 세션이 호출하면 메인 세션 관측이, 서브에이전트가 호출하면 그 서브에이전트 transcript 관측이 전달된다.
++- 메인 세션의 SessionStart·PostModelSwitch 훅은 현재 세션 모델을 기록하고, PreToolUse 훅은 각 대상 도구 호출의 관측을 공통 host-attestation 경로로 전달한다. 관측 실패 뒤 처리 기준은 [MCP 실행 계약](references/mcp-execution.md)을 따른다.
+ 
+ <!-- optimization-navigation:start condition="the skill is activated for the request" reference="references/entry-details.md" do-not-load-otherwise="true" -->
+ - If the skill is activated for the request, read [entry details](references/entry-details.md) before producing any result or taking any action; otherwise do not read it.
+diff --git a/claude-plugin/skills/orchestrator/references/entry-details.md b/claude-plugin/skills/orchestrator/references/entry-details.md
+index c70684c..e366504 100644
+--- a/claude-plugin/skills/orchestrator/references/entry-details.md
++++ b/claude-plugin/skills/orchestrator/references/entry-details.md
+@@ -16,21 +16,29 @@
+ 
+ ## 초기 라우팅
+ 
++선택 결과에는 선택한 capability·provider·phase와 이유, 적용 조건에 가까웠지만 생략한 capability와 그 이유를 남긴다. 요청에서 capability를 고르는 판단은 이 지침의 책임이다. MCP 계획기는 `TaskEnvelope.v1.requiredCapabilities`를 provider로 결정적으로 매핑하고 계획·단계·결과의 순서와 근거만 검사하므로, 선택 의미를 계획기로 옮기거나 계획 호출을 선택 근거로 대신하지 않는다.
++
++라우팅 전에 설치 시 노출된 스킬 설명으로 후보 capability를 정하고 `node scripts/query-registry.mjs --capability <capability>`를 실행해 일치하는 활성 provider만 조회한다. 여러 capability는 `--capability`를 반복한다. 후보를 특정할 수 없을 때만 `--all`로 compact 전체 목록을 조회하며, `skills/registry.json` 원문 전체를 모델 컨텍스트로 읽지 않는다. 조회 결과의 `selectionCriteria`, precondition, priority를 선택 설명에 남긴다. 같은 capability의 후보 중 priority가 가장 큰 항목을 선택하되, 동률이나 descriptor 충돌은 임의로 고르지 말고 `needs-input`으로 돌린다. `selectionCriteria`는 사람이 검토하는 근거이며 런타임 필터가 아니다. 필요한 역할이 없으면 `missingCapabilities`, 가능한 직접 스킬 호출 경로와 부족한 capability를 분리해 설명한다.
++
++초기 정책 capability는 `subagent-coordination`, `independent-deliberation`, `independent-audit`다. 일반 변경 흐름에 필요한 모델·추론 수준 적합성, 지침 범위, 작업 계약, 저장소 관례, 변경 기준선·범위 확인, mutation 사전 점검, 수용 근거 확인과 실패 진단도 capability로 찾는다. 현재 provider 이름을 라우팅 조건으로 사용하지 않는다. `task-contract-definition`, `change-scope-baseline-capture`, `change-scope-assurance`, `acceptance-evidence-validation`, `mutation-risk-preflight`, `independent-audit`는 각 descriptor의 적용 조건과 phase가 가리키는 시점에만 선택하며, 모든 요청에 기본으로 붙이지 않는다.
++
+ 첫 라우팅에서 `CollaborationDecision.v1`을 `schemaVersion: "1.2.0"`으로 만든다. 기존 `1.0.0`과 `1.1.0` 기록은 당시 의미로 검증하며 새 결정은 현재 입력으로 만든다. 결정에는 출처 주장인 `sourceOriginKind`, 관측 가능한 경우의 `sourceReceiptId`, 항상 `none`인 `authorityEffect`, `userDirective`(`require | forbid | unspecified`), 다섯 위임 조건과 독립 감사 분리 필요 여부를 기록한다. 출처 판단과 검증에는 [입력 출처 규칙](input-origin.md)을 적용한다. 결정적 validator가 `direct | delegate | audit-only | needs-input`을 도출하되 결정 artifact와 TLS 메시지는 권한을 만들지 않는다.
+ 
+ 구조·라우팅만 검사할 때는 결정 JSON을 stdin으로 [검증 CLI](../scripts/validate-collaboration-decision.mjs)에 전달한다. 영수증 관측까지 확인하려면 읽기 전용 `validate_collaboration_decision` 도구를 사용한다. CLI의 `structural-only` 결과를 영수증 검증이나 사용자 승인 증명으로 해석하지 않는다.
+ 
+ 다음 순서로 분류한다.
+ 
+-1. 사용자가 특정 전문 스킬을 명시했으면 해당 스킬의 적용 조건을 확인하고 그 스킬을 호출한다.
++1. 사용자가 특정 전문 스킬을 명시했으면 해당 스킬의 적용 조건을 확인하고 그 스킬을 호출한다. 요청과 무관한 capability를 덧붙이지 않되, 그 스킬이나 요청된 흐름에 필요한 승인·검증·독립성 gate는 면제하지 않는다.
+ 2. 그 밖의 전문 기능은 요청의 목표와 수용 기준에서 capability를 추출하고 레지스트리 descriptor로 찾는다. 선택한 capability, provider, phase와 선택 이유를 계획에 남긴다.
+    `evaluation-validity-audit`를 선택할 때는 공유 `TaskEnvelope.v1`을 변경하지 않는다. `plan_workflow`에 `{ schemaVersion, taskEnvelope, evaluationAuditPurpose }` 구조를 넘기고, 실행 전 설계 감사면 `evaluationAuditPurpose`를 `design-readiness`로, 평가 결과를 품질·릴리스 근거로 제출하는 감사면 `quality-or-release`로 고정한다. 후자는 `post-execution PASS`와 `qualifiesAsQualityOrReleaseEvidence: true`가 모두 확인되지 않으면 완료하지 않는다.
+ 3. 호스트 runtime metadata, 사용자 텍스트나 이번 요청의 화면 캡처에서 현재 task의 모델과 추론 수준을 모두 관측한 경우 `model-effort-fit-assessment`를 요청한다. 현재 선택이 없으면 일반 direct 작업에서는 이 capability 때문에 묻거나 작업을 멈추지 않으며, 결과가 `ADEQUATE`이면 사용자 안내를 생략한다. 단, MCP `orchestrated` workflow를 계획할 때는 별도 규칙을 적용한다. caller는 `plan_workflow` 인자에 `executionContext`를 넣지 않는다. 현재 bootstrap 실행에 대한 model class·추론 수준과 task 결속은 호스트가 서버 측 `TrustedExecutionContextProvider`를 통해 authoritative observation으로 제공해야 한다. provider가 없거나 관측값이 최소 semantic assurance 하한보다 낮아 MCP가 `BINDING_REQUIRED` 또는 `BINDING_INVALID`를 반환하면 값을 임의로 보정·추정하지 않고 해당 workflow를 시작하지 않는다.
+ 4. `CollaborationDecision.v1.route`가 `delegate`인 경우에만 `subagent-coordination`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. `auditSeparationRequired`는 route와 독립된 의무다. `delegate`와 함께 참이면 구현 위임과 별도 감사자를 모두 계획한다. `audit-only`는 구현 위임 없이 감사 의무만 남은 경우다. 감사자는 구현에 참여하지 않고 최종 후보가 준비된 뒤 감사하며, 사용자 금지나 실행 불가가 있으면 감사 완료로 처리하지 않는다. 작업 단위가 둘 이상이거나 `orchestration.requested: true`라는 사실만으로 추가하지 않는다.
+ 5. 실제로 양립할 수 없는 대안이나 충돌하는 근거 중 하나를 선택해야 하고, 독립 관점과 교차 반박이 그 선택에 필요한 경우에만 `independent-deliberation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. `decision.complexity: complex`만으로 추가하지 않으며, 이 단계는 구현이나 완료 게이트를 대체하지 않는다.
+ 6. 정확한 최종 대상이 있는 고위험 변경의 실행·병합·릴리스·완료 가능 여부를 판정하는 요청에는 `independent-audit`을 추가한다. 감사 전의 구현·수정·자체 검증은 이 provider의 역할이 아니다.
+-7. 코드를 작성·수정하는 구현 단계가 있는 요청에는 `minimal-implementation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. 이 단계는 변경 전 기준선 뒤, 위험한 상태 변경의 사전 점검과 범위·수용 근거 확인 전에 실행된다. 구현 단계에서는 Git이 추적하는 파일의 편집·삭제, 새 파일 생성, 확인용 테스트·빌드 실행만 한다. 추적되지 않는 기존 파일이나 저장소 밖 대상의 삭제·덮어쓰기, 마이그레이션·데이터 변경의 실제 실행, 배포·push·태그처럼 사전 점검 대상인 작업은 사전 점검 뒤에 실행하고, MCP 계획에 그 stage가 없으면 실행하지 않고 최종 결과에 남은 작업으로 적는다. provider는 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르고, 의도적으로 뺀 것을 결과에 남긴다. MCP 없이 직접 진행할 때도 구현 단계에서 이 capability의 provider를 호출한다. 동결된 `TaskEnvelope.v1`의 범위와 수용 기준은 명시적 요청으로 보고 줄이지 않으며, 줄일 후보는 최종 결과에 제안으로만 남긴다. 검사용 테스트를 포함한 새 파일은 `scope.included`·`workUnits[].writeTargets` 안에서 저장소의 기존 테스트 관례와 위치를 따라 만든다. 작업 계약이 없으면 사용자 요청이 정한 범위를 같은 기준으로 삼는다.
+-8. 하나의 전문 스킬로 충분한 요청은 오케스트레이터 단계를 생략하고 그 스킬을 직접 사용할 수 있다고 안내한다.
++7. 코딩 설계·구현이나 라이브러리·의존성 선택 단계가 있는 요청에는 `minimal-implementation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. 이 단계는 변경 전 기준선 뒤, 위험한 상태 변경의 사전 점검과 범위·수용 근거 확인 전에 실행된다. 구현 단계에서는 Git이 추적하는 파일의 편집·삭제, 새 파일 생성, 확인용 테스트·빌드 실행만 한다. 추적되지 않는 기존 파일이나 저장소 밖 대상의 삭제·덮어쓰기, 마이그레이션·데이터 변경의 실제 실행, 배포·push·태그처럼 사전 점검 대상인 작업은 사전 점검 뒤에 실행하고, MCP 계획에 그 stage가 없으면 실행하지 않고 최종 결과에 남은 작업으로 적는다. provider는 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르고, 의도적으로 뺀 것을 결과에 남긴다. MCP 없이 직접 진행할 때도 구현 단계에서 이 capability의 provider를 호출한다. 동결된 `TaskEnvelope.v1`의 범위와 수용 기준은 명시적 요청으로 보고 줄이지 않으며, 줄일 후보는 최종 결과에 제안으로만 남긴다. 검사용 테스트를 포함한 새 파일은 `scope.included`·`workUnits[].writeTargets` 안에서 저장소의 기존 테스트 관례와 위치를 따라 만든다. 작업 계약이 없으면 사용자 요청이 정한 범위를 같은 기준으로 삼는다. 코드 리뷰·감사·검증·완료 판정, 코드 설명·조사만 하는 요청, 코딩이 아닌 요청과 검토·감사를 맡은 하위 실행에는 이 capability를 선택하지 않는다.
++8. 하나의 전문 스킬로 충분한 요청은 오케스트레이터 단계를 생략하고 그 스킬을 직접 호출한다. 이때 수렴 root, 계획이나 workflow run을 만들지 않는다. 전문 스킬이 필요 없는 요청은 스킬 호출과 workflow 없이 진행한다.
++
++이 스킬을 사용했다는 사실은 MCP `executionMode`나 `CollaborationDecision.v1.route`를 정하지 않는다. 실행 방식은 선택한 capability와 `riskLevel`·`orchestration`을 담은 `TaskEnvelope.v1`로 기존 계획기가 정하고, 위임 여부는 위임 판단 규칙이 따로 정한다. `orchestration.requested: true`는 실패 영향이 크고 순서·gate 연결이 필요한 전문 단계가 둘 이상이며 MCP를 사용할 수 있을 때 적는다. 계획기는 이 값으로 `orchestrated`와 `direct`를 나누므로 `false`이면 direct 계획이 돌아온다.
+ 
+ 통합 워크플로에서는 bootstrap을 마친 뒤 작업 단위 조정, 독립 숙고, 변경 전 기준선, 최소 구현, 위험한 상태 변경 직전의 사전 점검, 요청된 전문 작업, 범위·수용 근거 확인, 최종 고위험 감사 순으로 연결한다. 구체적인 순서는 provider의 `phaseOrder`와 artifact 의존성으로 정하며 MCP stage 순서와 같아야 한다. 각 전문 스킬이 이미 내부적으로 worker를 조정하는 경우에는 같은 단위를 다시 배정하지 않는다.
+ 
+diff --git a/claude-plugin/skills/orchestrator/references/mcp-execution.md b/claude-plugin/skills/orchestrator/references/mcp-execution.md
+index 470364c..115bf03 100644
+--- a/claude-plugin/skills/orchestrator/references/mcp-execution.md
++++ b/claude-plugin/skills/orchestrator/references/mcp-execution.md
+@@ -4,14 +4,21 @@ MCP를 사용할 때는 연결이 성공했고 도구 목록과 입력 스키마
+ 
+ 통합 실행은 다음 순서를 지킨다.
+ 
+-1. 목표, 범위, 수용 기준, 작업 단위, 위험도와 필요한 capability를 `TaskEnvelope.v1`로 정리하고 `plan_workflow`를 호출한다. 이 호출은 run을 만들지 않는다.
+-2. 최초 전체 실행 전에 `open_convergence_root`를 `responseMode: "compact"`로 호출해 작업 계약과 control/target frame을 결속한다. 같은 작업을 요약하거나 fresh context에 넘겨도 발급된 `rootId`를 유지한다.
++1. 목표, 범위, 수용 기준, 작업 단위, 위험도와 필요한 capability를 `TaskEnvelope.v1`로 정리하고 `plan_workflow`를 호출한다. 이 호출은 run을 만들지 않는다. `scope`와 `workUnits[].writeTargets`에는 저장소 기준 파일 경로나 glob만 적고, 브랜치·태그·원격 같은 git 대상은 `authorization.allowedActions`와 `mutation-risk-preflight` capability의 대상으로 다룬다.
++2. 최초 전체 실행 전에 `open_convergence_root`를 `responseMode: "compact"`로 호출해 작업 계약과 control/target frame을 결속한다. 같은 작업을 요약하거나 fresh context에 넘겨도 발급된 `rootId`를 유지한다. 시작한 run의 계약을 바꿔 다시 시도하면 수렴 가드의 frame 검토(`FRAME_REVIEW_REQUIRED`)와 사용자 승인을 거친다.
+ 3. 계획이 `ready`이고 `executionMode`가 `orchestrated`이면 `claim_workflow_attempt`에서 이미 root에 결속된 `taskEnvelope`와 `frame`을 다시 보내지 않고 계획·실행자·출력 대상에 결속된 lease를 받는다. 이어 `start_guarded_workflow`를 plan 없이 `responseMode: "compact"`로 호출한다. 새 orchestrated run에 `start_workflow`를 사용하지 않는다.
+-4. 계획에 기록된 순서대로 전문 스킬을 사용한다. provider 결과와 산출물 참조를 `ProviderResult.v1`로 묶고, 이를 `StageResult.v1.output`에 넣어 현재 revision과 `responseMode: "compact"`로 `record_stage_result`에 전달한다.
++4. 계획에 기록된 순서대로 각 stage의 전문 스킬을 설치된 스킬 호출 방식으로 실제 실행한다. 계획, 문서 로드나 도구 호출 수락을 스킬 실행이나 `passed`로 기록하지 않는다. provider 결과와 산출물 참조를 `ProviderResult.v1`로 묶고, 이를 `StageResult.v1.output`에 넣어 현재 revision과 `responseMode: "compact"`로 `record_stage_result`에 전달한다.
+ 5. 사용자 입력이나 승인이 필요하면 해당 상태와 차단 사유를 그대로 보고하고 새 실행이 필요한지 판단한다. 순서를 건너뛰거나 이미 기록한 stage를 덮어쓰지 않는다.
+ 6. 필요할 때 `get_workflow_status`와 `get_convergence_status`를 `detail: "compact"`로 호출해 현재 revision, 다음 stage와 남은 실행 예산을 확인한다. compact 결과에 오류 코드나 0보다 큰 blocker·unresolved 수가 있거나 과거 원자료가 필요한 경우에만 해당 status를 `detail: "full"`로 한 번 다시 조회한다. 모든 필수 stage와 감사 게이트가 `passed`인 경우에만 `finalize_workflow`를 `responseMode: "compact"`로 호출한다.
+ 7. 통합 실행을 더 진행하지 않기로 확정하면 `abort_workflow`를 `responseMode: "compact"`로 호출해 해당 run을 닫는다. 시작된 run은 실패·중단돼도 해당 epoch의 시도 횟수에 남는다.
+ 
++### stage 기록과 큰 출력
++
++- `record_stage_result` 전에 계획된 stage의 `requiredArtifacts`에 있는 id를 모두 `output.artifacts`에 넣는다. 각 항목에는 실제 산출물의 locator, digest, targetDigest를 적고 `verified: true`로 표시한다. digest는 64자리 소문자 hex이며 `sha256:` 접두사는 있어도 없어도 된다.
++- 실제로 만들지 않았거나 확인하지 않은 산출물은 `verified: true`로 적지 않는다. 그 stage는 `passed`로 기록하지 않고, provider 결과(verdict나 `MISSING_EVIDENCE` adapter error)가 가리키는 `needs-input`이나 `blocked` 상태로 기록한다.
++- provider 출력(`output.output`)이 저장소 크기에 비례해 커지면(예: 변경 범위 baseline·보고서, 저장소 관례 조사) 도구 인자에 넣지 않는다. 스킬이 만든 JSON을 바꾸지 않고 로컬 파일에 저장한 뒤 `outputFile: { "locator": "<절대 경로>", "digest": "sha256:<그 파일 바이트의 SHA-256>" }`를 넣고 `output.output`은 `null`로 보낸다. 서버는 파일을 읽어 digest, 출력 schema와 gate를 인라인 출력과 똑같이 검사하고 receipt에는 참조만 남긴다.
++- 크기를 맞추려고 항목을 줄이거나 요약하지 않는다. digest가 맞지 않으면 `INTEGRITY_FAILED`다. receipt 정책이 있는 stage(한국어 산문, 평가 타당성)는 `outputFile`을 받지 않으므로 참조 전용 출력을 인라인으로 기록한다.
++
+ MCP workflow run과 계획 서명 키는 SQLite에 저장되므로 프로세스를 다시 시작해도 이어서 처리할 수 있다. `RUN_NOT_FOUND`를 받으면 다른 데이터베이스 경로를 사용 중인지 먼저 확인하고, 저장된 상태가 실제로 없을 때만 새 계획과 run을 만든다. 이전 revision이나 stage 결과를 추측해 복구하지 않는다.
+ 
+ MCP 응답에 별도의 `plugin-update-notice` content block이 있으면 현재 버전과 최신 버전, 제공된 tag URL을 사용자에게 한 문장으로 안내한다. `automaticInstall: false`도 함께 밝혀 업데이트가 설치됐다고 오해하지 않게 한다. 이 알림을 이유로 현재 workflow 결과를 바꾸거나 설치, 파일 수정, 마켓플레이스 갱신을 실행하지 않는다.
+@@ -22,3 +29,7 @@ MCP 응답에 별도의 `plugin-update-notice` content block이 있으면 현재
+ - 도구가 실패하거나 결과를 관측할 수 없으면 실패 원인과 영향을 받은 단계만 멈춘다. 다른 전문 스킬이 독립적으로 완료할 수 있는 부분은 계속할 수 있다.
+ 
+ MCP 연결이나 필요한 MCP 도구를 사용할 수 없더라도, 설치된 전문 스킬을 직접 호출해 처리할 수 있는 요청은 진행한다. MCP 없이는 필요한 통합 작업 자체를 수행할 수 없는 경우에만 통합 결과를 `BLOCKED`로 표시하고, 직접 사용할 수 있는 스킬과 필요한 MCP 기능을 함께 밝힌다.
++
++MCP 미지원과 신뢰할 수 있는 실행 관측 부재는 다른 실패다. MCP가 `BINDING_REQUIRED`나 `BINDING_INVALID`를 반환하면 해당 guarded workflow를 시작하지 않고, 이미 시작한 run의 stage를 `passed`로 진행하지 않는다. 관측값이나 실행 하한을 추정·보정해 다시 보내지 않는다. 설치된 전문 스킬로 독립 처리할 수 있는 허용 부분만 진행하고, 그 결과를 필수 guarded 통합이나 감사 증거로 표현하지 않는다. 통합 실행을 더 진행하지 않으면 시작한 run은 `abort_workflow`로 닫고 반환 코드와 영향받은 완료 판정을 사용자에게 밝힌다.
++
++실행 하한 미달이 확인된 semantic stage는 그 하한을 충족하는 실행자가 전문 작업을 실제로 다시 수행한 뒤 새 관측으로 기록한다. token이나 관측의 만료가 확인된 경우에는 호스트가 현재 호출을 다시 관측해 새 token을 제공하는 정상 호출 경로로 재시도할 수 있다. 이때도 현재 task·run·stage·revision 결속, 신선도, 한 번 소비와 기존 수렴 가드를 그대로 적용한다. `BINDING_INVALID` 코드나 승인 대기 시간만으로 원인을 만료로 단정하거나 같은 token을 재전송하지 않는다. 원인이 확인되지 않으면 영향을 받은 경계를 멈추고 진단 근거와 필요한 관측을 남긴다.
+diff --git a/mcp-server/dist/server.mjs b/mcp-server/dist/server.mjs
+index 68a6c6d..1e96baf 100644
+--- a/mcp-server/dist/server.mjs
++++ b/mcp-server/dist/server.mjs
+@@ -20577,20 +20577,19 @@ var planWorkflowAnthropicInputSchema = {
+ function planWorkflowToolInputSchema(profile = "default") {
+   return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
+ }
+-var ANTHROPIC_SERVER_INSTRUCTIONS = "agent-governance-suite \uC811\uC218 \uADDC\uCE59: \uC0AC\uC6A9\uC790 \uC694\uCCAD\uC744 \uBC1B\uC744 \uB54C\uB9C8\uB2E4, \uD30C\uC77C\uC744 \uACE0\uCE58\uAC70\uB098 \uBA85\uB839\uC744 \uC2E4\uD589\uD558\uAE30 \uC804\uC5D0 \uC774 \uC694\uCCAD\uC774 \uC798\uBABB \uC218\uD589\uB410\uC744 \uB54C\uC758 \uC2E4\uD328 \uC601\uD5A5\uC744 \uD55C \uC904\uB85C \uBD84\uB958\uD55C\uB2E4(\uB0AE\uC74C \uB610\uB294 \uB192\uC74C). CI\xB7CD, \uB9B4\uB9AC\uC2A4\xB7\uBC30\uD3EC, \uAD8C\uD55C\xB7\uC2E0\uB8B0 \uACBD\uACC4, \uC804\uC5ED \uC124\uC815, \uB370\uC774\uD130\xB7\uC2A4\uD0A4\uB9C8, \uACF5\uAC1C \uC800\uC7A5\uC18C\uC758 \uAE30\uBCF8 \uBE0C\uB79C\uCE58\uCC98\uB7FC \uC2E4\uD328 \uC601\uD5A5\uC774 \uD070 \uC791\uC5C5\uC774\uBA74 \uAD6C\uD604\uC744 \uC2DC\uC791\uD558\uAE30 \uC804\uC5D0 Skill \uB3C4\uAD6C\uB85C /agent-governance-suite:orchestrator\uB97C \uD638\uCD9C\uD574 \uC774 \uC694\uCCAD\uC5D0 \uD544\uC694\uD55C \uC804\uBB38 \uC2A4\uD0AC \uB2E8\uACC4\uC640 \uC0DD\uB7B5\uD560 \uB2E8\uACC4\uB97C \uC774\uC720\uC640 \uD568\uAED8 \uC815\uD558\uACE0, \uC815\uD55C \uB2E8\uACC4\uB97C \uADF8 \uC2DC\uC810\uC5D0 \uC2E4\uC81C\uB85C \uD638\uCD9C\uD55C\uB2E4. \uC2E4\uD328 \uC601\uD5A5\uC774 \uD070 \uC791\uC5C5\uC5D0\uC11C orchestrator\uB97C \uAC74\uB108\uB6F0\uB294 \uACBD\uC6B0\uB294 \uC0AC\uC6A9\uC790\uAC00 \uD2B9\uC815 \uC2A4\uD0AC\uC744 \uC9C0\uC815\uD588\uC744 \uB54C\uBFD0\uC774\uBA70, \uADF8\uB54C\uB294 \uADF8 \uC2A4\uD0AC\uC744 \uBC14\uB85C \uD638\uCD9C\uD55C\uB2E4. \uC2E4\uD328 \uC601\uD5A5\uC774 \uB0AE\uC73C\uBA74 \uADF8 \uC774\uC720\uB97C \uD55C \uC904\uB85C \uBC1D\uD788\uACE0 \uC9C4\uD589\uD558\uB418, \uC694\uCCAD\uC774 \uCF54\uB4DC\uB97C \uC791\uC131\xB7\uC218\uC815\xB7\uB9AC\uD329\uD130\uB9C1\xB7\uC124\uACC4\uD558\uAC70\uB098 \uB77C\uC774\uBE0C\uB7EC\uB9AC\xB7\uC758\uC874\uC131\uC744 \uACE0\uB974\uB294 \uC791\uC5C5\uC774\uBA74 \uCF54\uB4DC\uB97C \uC4F0\uAC70\uB098 \uD30C\uC77C\uC744 \uACE0\uCE58\uAE30 \uC804\uC5D0 Skill \uB3C4\uAD6C\uB85C /agent-governance-suite:ponytail\uC744 \uD638\uCD9C\uD55C\uB2E4. \uC694\uCCAD\uC758 \uBC94\uC704\uB098 \uC644\uB8CC \uC870\uAC74\uC774 \uBD88\uBA85\uD655\uD558\uBA74 ponytail\uBCF4\uB2E4 \uBA3C\uC800 \uD655\uC815\uD55C\uB2E4. \uCF54\uB4DC \uAC80\uD1A0\xB7\uAC10\uC0AC\xB7\uAC80\uC99D\xB7\uC644\uB8CC \uD310\uC815, \uCF54\uB4DC \uC124\uBA85\xB7\uC870\uC0AC\uB9CC \uD558\uB294 \uC694\uCCAD, \uCF54\uB529\uC774 \uC544\uB2CC \uC694\uCCAD(\uC77C\uBC18 \uC9C0\uC2DD, \uBB38\uC11C, \uBC88\uC5ED, \uC694\uC57D), \uAC80\uD1A0\xB7\uAC10\uC0AC\uB97C \uB9E1\uC740 \uC11C\uBE0C\uC5D0\uC774\uC804\uD2B8\uC5D0\uC11C\uB294 ponytail\uC744 \uD638\uCD9C\uD558\uC9C0 \uC54A\uB294\uB2E4.";
+-function serverInstructions(profile = "default") {
+-  return profile === "anthropic" ? `${ANTHROPIC_SERVER_INSTRUCTIONS}
+-${SESSION_MESSAGE_SERVER_INSTRUCTIONS}` : SESSION_MESSAGE_SERVER_INSTRUCTIONS;
++var SKILL_INTAKE_SERVER_INSTRUCTIONS = "agent-governance-suite \uC811\uC218 \uC548\uB0B4: \uAC70\uBC84\uB10C\uC2A4 \uC804\uBB38 \uC2A4\uD0AC\uC758 \uC120\uD0DD\xB7\uC5F0\uACB0\uC774 \uD544\uC694\uD55C \uACBD\uC6B0 orchestrator \uC2A4\uD0AC \uC6D0\uBCF8\uC758 \uACF5\uD1B5 \uC811\uC218\xB7\uB77C\uC6B0\uD305 \uAE30\uC900\uC744 \uB530\uB978\uB2E4. \uACF5\uD1B5 \uC6D0\uBCF8\uC740 skills/orchestrator/SKILL.md\uC640 references/entry-details.md\uC774\uBA70 MCP \uC2E4\uD589\xB7\uC2E4\uD328 \uCC98\uB9AC\uB294 references/mcp-execution.md\uB97C \uB530\uB978\uB2E4. \uC774 \uC548\uB0B4\uB9CC\uC73C\uB85C orchestrator \uD65C\uC131\uD654, registry \uC870\uD68C\uB098 workflow \uC0DD\uC131\uC744 \uC694\uAD6C\uD558\uC9C0 \uC54A\uB294\uB2E4. \uD544\uC694\uD55C \uC804\uBB38 \uC2A4\uD0AC\uC740 \uD638\uC2A4\uD2B8\uAC00 \uC81C\uACF5\uD558\uB294 \uC124\uCE58\uB41C \uC2A4\uD0AC \uD638\uCD9C \uBC29\uC2DD\uC73C\uB85C \uC2E4\uC81C \uC2E4\uD589\uD55C\uB2E4.";
++function serverInstructions() {
++  return `${SKILL_INTAKE_SERVER_INSTRUCTIONS}
++${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
+ }
+ var SESSION_MESSAGE_SERVER_INSTRUCTIONS = "\uC138\uC158 \uBA54\uC2DC\uC9C0\uB294 prepare_session_message\uB85C \uB300\uC0C1\xB7\uBCF8\uBB38\xB7TTL\uC744 \uACE0\uC815\uD558\uACE0 \uC2DC\uC2A4\uD15C\uC774 \uBC1C\uAE09\uD55C messageId\uB97C \uBC1B\uC740 \uB4A4 send_session_message(messageId)\uB85C \uC804\uC1A1\uD55C\uB2E4. ID\uB97C \uC9C1\uC811 \uB9CC\uB4E4\uAC70\uB098 send\uC5D0 \uB0B4\uC6A9\uC744 \uB2E4\uC2DC \uB123\uC9C0 \uC54A\uB294\uB2E4. \uC804\uC1A1 \uACB0\uACFC\uAC00 \uBD88\uBA85\uD655\uD558\uBA74 \uBC1B\uC740 \uAC19\uC740 ID\uB85C status\uB97C \uC870\uD68C\uD558\uAC70\uB098 send\uB97C \uC7AC\uC2DC\uB3C4\uD55C\uB2E4. unknown ID\uB294 \uC774\uC804 \uC804\uC1A1 \uC644\uB8CC\uB098 \uAE30\uB85D \uC815\uB9AC \uAC00\uB2A5\uC131\uC774 \uC788\uC73C\uBBC0\uB85C \uC800\uC7A5\uD55C \uC601\uC218\uC99D\uACFC \uB300\uC870\uD55C\uB2E4. \uC0C8 prepare\uB294 \uC0C8 \uC804\uC1A1 \uC758\uB3C4\uC5D0\uB9CC \uC0AC\uC6A9\uD558\uBA70 \uBD88\uBA85\uD655\uD55C \uAE30\uC874 \uC804\uC1A1\uC744 \uBB34\uC870\uAC74 \uB2E4\uC2DC \uC900\uBE44\uD558\uC9C0 \uC54A\uB294\uB2E4. ACK\uB294 \uBA54\uC2DC\uC9C0 \uCC98\uB9AC \uD655\uC778\uC774\uBA70 \uC5C5\uBB34 \uC644\uB8CC\uB098 \uC2B9\uC778 \uC99D\uAC70\uAC00 \uC544\uB2C8\uB2E4.";
+ function validUpdateArguments(args) {
+   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
+ }
+ function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null) {
+-  const instructions = serverInstructions(toolSchemaProfile);
+   const server = new Server(
+     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
+-    { capabilities: { tools: {} }, ...instructions === void 0 ? {} : { instructions } }
++    { capabilities: { tools: {} }, instructions: serverInstructions() }
+   );
+   const contractDocuments = Object.values(contractSchemas);
+   const advertise = (tools) => toolSchemaProfile === "anthropic" ? tools.map((tool) => {
+diff --git a/mcp-server/src/server.ts b/mcp-server/src/server.ts
+index c45f4ac..282515c 100644
+--- a/mcp-server/src/server.ts
++++ b/mcp-server/src/server.ts
+@@ -325,16 +325,11 @@ export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "defaul
+   return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
+ }
+ 
+-/**
+- * Session instructions for Claude Code, which places MCP server instructions in
+- * its system prompt once per session. Claude Code sessions start implementing
+- * as soon as a request arrives, so this asks for an intake-time failure-impact
+- * classification before the first action. The default profile advertises none.
+- */
+-export const ANTHROPIC_SERVER_INSTRUCTIONS = "agent-governance-suite 접수 규칙: 사용자 요청을 받을 때마다, 파일을 고치거나 명령을 실행하기 전에 이 요청이 잘못 수행됐을 때의 실패 영향을 한 줄로 분류한다(낮음 또는 높음). CI·CD, 릴리스·배포, 권한·신뢰 경계, 전역 설정, 데이터·스키마, 공개 저장소의 기본 브랜치처럼 실패 영향이 큰 작업이면 구현을 시작하기 전에 Skill 도구로 /agent-governance-suite:orchestrator를 호출해 이 요청에 필요한 전문 스킬 단계와 생략할 단계를 이유와 함께 정하고, 정한 단계를 그 시점에 실제로 호출한다. 실패 영향이 큰 작업에서 orchestrator를 건너뛰는 경우는 사용자가 특정 스킬을 지정했을 때뿐이며, 그때는 그 스킬을 바로 호출한다. 실패 영향이 낮으면 그 이유를 한 줄로 밝히고 진행하되, 요청이 코드를 작성·수정·리팩터링·설계하거나 라이브러리·의존성을 고르는 작업이면 코드를 쓰거나 파일을 고치기 전에 Skill 도구로 /agent-governance-suite:ponytail을 호출한다. 요청의 범위나 완료 조건이 불명확하면 ponytail보다 먼저 확정한다. 코드 검토·감사·검증·완료 판정, 코드 설명·조사만 하는 요청, 코딩이 아닌 요청(일반 지식, 문서, 번역, 요약), 검토·감사를 맡은 서브에이전트에서는 ponytail을 호출하지 않는다.";
++/** Host-neutral entry pointer; selection and recovery policy stay in the shared skill. */
++export const SKILL_INTAKE_SERVER_INSTRUCTIONS = "agent-governance-suite 접수 안내: 거버넌스 전문 스킬의 선택·연결이 필요한 경우 orchestrator 스킬 원본의 공통 접수·라우팅 기준을 따른다. 공통 원본은 skills/orchestrator/SKILL.md와 references/entry-details.md이며 MCP 실행·실패 처리는 references/mcp-execution.md를 따른다. 이 안내만으로 orchestrator 활성화, registry 조회나 workflow 생성을 요구하지 않는다. 필요한 전문 스킬은 호스트가 제공하는 설치된 스킬 호출 방식으로 실제 실행한다.";
+ 
+-export function serverInstructions(profile: ToolSchemaProfile = "default"): string | undefined {
+-  return profile === "anthropic" ? `${ANTHROPIC_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}` : SESSION_MESSAGE_SERVER_INSTRUCTIONS;
++export function serverInstructions(): string {
++  return `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
+ }
+ 
+ export const SESSION_MESSAGE_SERVER_INSTRUCTIONS = "세션 메시지는 prepare_session_message로 대상·본문·TTL을 고정하고 시스템이 발급한 messageId를 받은 뒤 send_session_message(messageId)로 전송한다. ID를 직접 만들거나 send에 내용을 다시 넣지 않는다. 전송 결과가 불명확하면 받은 같은 ID로 status를 조회하거나 send를 재시도한다. unknown ID는 이전 전송 완료나 기록 정리 가능성이 있으므로 저장한 영수증과 대조한다. 새 prepare는 새 전송 의도에만 사용하며 불명확한 기존 전송을 무조건 다시 준비하지 않는다. ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다.";
+@@ -358,10 +353,9 @@ export function createMcpServer(
+   sessionMessages: SessionMessageService = new SessionMessageService(),
+   trust: TrustService | null = null,
+ ): Server {
+-  const instructions = serverInstructions(toolSchemaProfile);
+   const server = new Server(
+     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
+-    { capabilities: { tools: {} }, ...(instructions === undefined ? {} : { instructions }) },
++    { capabilities: { tools: {} }, instructions: serverInstructions() },
+   );
+ 
+   const contractDocuments = Object.values(contractSchemas) as Array<Record<string, unknown>>;
+diff --git a/scripts/check-skill-context-optimization.mjs b/scripts/check-skill-context-optimization.mjs
+index dd77999..8fc5bae 100644
+--- a/scripts/check-skill-context-optimization.mjs
++++ b/scripts/check-skill-context-optimization.mjs
+@@ -10,6 +10,17 @@ const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
+ // historical bytes and compare the exact, separately frozen addition as well.
+ const SESSION_BOARD_ADDITION = "scripts/fixtures/session-board-peer-message-guidance.2.6.0.md";
+ const SESSION_BOARD_ADDITION_SHA256 = "381be4018118086b3c4087be043c004d8d6de986d42a6c0c14f182c2d76ed76f";
++// Intake changes policy after the original optimization. Pin only this revision;
++// all other skills keep their historical byte-for-byte checks.
++const ORCHESTRATOR_INTAKE = Object.freeze({
++  revision: "2.7.2-source-port",
++  initialMaxBytes: 4585,
++  hashes: Object.freeze({
++    reconstructed: "8e4f855fbd659db8cf5c930a9bdb6cda23c19e12b4ff7f6798091e3501a52f0c",
++    frontmatter: "9054478f3909908263ce9f26afaad3b51d2a0db8f1aceacb228b07c6e3dd7bae",
++    mcpExecution: "be972eaa9b6d2ceab78f48f37fcc0eb4e1d4ce52cd8cfb5de356f019da46c546",
++  }),
++});
+ const TARGETS = [
+   "acceptance-evidence-validator",
+   "blocker-diagnostician",
+@@ -69,6 +80,11 @@ export function matchesNode24ReadmeUpdate(skillId, baseline, candidate) {
+     && candidate === baseline.replace(minimum, "Node.js 24.0.0 이상");
+ }
+ 
++export function matchesOrchestratorIntakeUpdate(kind, bytes) {
++  return Object.hasOwn(ORCHESTRATOR_INTAKE.hashes, kind)
++    && createHash("sha256").update(bytes).digest("hex") === ORCHESTRATOR_INTAKE.hashes[kind];
++}
++
+ export function reconstructOptimizedSkill(skillId, root = ROOT) {
+   const candidate = readFileSync(join(root, "skills", skillId, "SKILL.md"));
+   const detail = readFileSync(join(root, "skills", skillId, "references", "entry-details.md"));
+@@ -113,14 +129,23 @@ export function checkSkillContextOptimization() {
+       if (createHash("sha256").update(addition).digest("hex") !== SESSION_BOARD_ADDITION_SHA256) errors.push("session-board: approved 2.6.0 guidance fixture changed");
+       expectedBaseline = Buffer.concat([baseline, addition]);
+     }
+-    if (!reconstructed.equals(expectedBaseline)) errors.push(`${skillId}: SKILL.md plus entry-details.md does not reconstruct the baseline byte-for-byte`);
+-    if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push(`${skillId}: frontmatter changed`);
++    if (skillId === "orchestrator") {
++      if (!matchesOrchestratorIntakeUpdate("reconstructed", reconstructed)) errors.push("orchestrator: reconstructed intake policy differs from the pinned revision");
++      if (!matchesOrchestratorIntakeUpdate("frontmatter", frontmatter(candidate))) errors.push("orchestrator: intake frontmatter differs from the pinned revision");
++      if (candidate.length > ORCHESTRATOR_INTAKE.initialMaxBytes) errors.push("orchestrator: initial load exceeds the pre-intake limit");
++      const reference = readFileSync(join(ROOT, "skills/orchestrator/references/mcp-execution.md"));
++      if (!matchesOrchestratorIntakeUpdate("mcpExecution", reference)) errors.push("orchestrator: MCP execution policy differs from the pinned revision");
++    } else {
++      if (!reconstructed.equals(expectedBaseline)) errors.push(`${skillId}: SKILL.md plus entry-details.md does not reconstruct the baseline byte-for-byte`);
++      if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push(`${skillId}: frontmatter changed`);
++    }
+     if (candidate.length >= baseline.length) errors.push(`${skillId}: initial SKILL.md did not shrink`);
+ 
+     const descriptorPath = `skills/${skillId}/agents/openai.yaml`;
+     if (!readFileSync(join(ROOT, ...descriptorPath.split("/"))).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
+ 
+     const allowed = new Set([skillPath, detailPath]);
++    if (skillId === "orchestrator") allowed.add("skills/orchestrator/references/mcp-execution.md");
+     if (README_CHANGES.has(skillId)) allowed.add(`skills/${skillId}/README.md`);
+     if (Object.hasOwn(NODE24_README_MINIMUMS, skillId)) {
+       const readmePath = `skills/${skillId}/README.md`;
+@@ -145,6 +170,7 @@ export function checkSkillContextOptimization() {
+   return {
+     baselineRevision: BASELINE,
+     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
++    policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],
+     runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
+     pass: errors.length === 0,
+     errors,
+diff --git a/skills/orchestrator/SKILL.md b/skills/orchestrator/SKILL.md
+index cd6ba1d..0ca3bdb 100644
+--- a/skills/orchestrator/SKILL.md
++++ b/skills/orchestrator/SKILL.md
+@@ -1,6 +1,6 @@
+ ---
+ name: orchestrator
+-description: 여러 거버넌스 스킬이 함께 필요한 요청을 분류하고, 사용 가능한 전문 스킬의 실행 순서·입출력·결과를 연결한다. 전문 판단이나 감사 자체를 수행할 때는 사용하지 않는다.
++description: 어떤 거버넌스 전문 스킬이 필요한지 정해야 하거나 여러 전문 결과의 실행 순서·입출력·gate를 연결해야 할 때 사용한다. 한 전문 스킬로 충분하면 그 스킬을 직접 쓰고, 전문 스킬이 필요 없는 요청이나 전문 판단·감사 자체에는 사용하지 않는다.
+ license: MIT
+ metadata:
+   version: "1.2.0"
+@@ -12,11 +12,9 @@ metadata:
+ 
+ ## 시작 전 확인
+ 
+-먼저 요청의 목표, 상태 변경 여부, 완료 조건과 명시적으로 호출된 스킬을 확인한다. 명시적으로 `$skill-name`을 지정한 요청에서는 그 스킬을 우선하며, 다른 스킬로 대체하지 않는다.
++요청의 목적, 상태 변경 여부, 실패 영향, 현재 단계, 수용 기준과 사용자가 이름으로 지정한 스킬을 함께 보고 필요한 capability를 정한다. 키워드, 파일 종류나 `complex` 표시만으로 스킬을 붙이지 않는다. 지정한 전문 스킬은 우선하고 다른 스킬로 대체하지 않지만, 필수 승인·검증·독립성 gate를 생략하는 권한으로 해석하지 않는다.
+ 
+-라우팅 전에 설치 시 노출된 스킬 설명으로 후보 capability를 정하고 `node scripts/query-registry.mjs --capability <capability>`를 실행해 일치하는 활성 provider만 조회한다. 여러 capability는 `--capability`를 반복한다. 후보를 특정할 수 없을 때만 `--all`로 compact 전체 목록을 조회하며, `skills/registry.json` 원문 전체를 모델 컨텍스트로 읽지 않는다. 조회 결과의 `selectionCriteria`, precondition, priority를 선택 설명에 남긴다. 같은 capability의 후보 중 priority가 가장 큰 항목을 선택하되, 동률이나 descriptor 충돌은 임의로 고르지 말고 `needs-input`으로 돌린다. `selectionCriteria`는 사람이 검토하는 근거이며 런타임 필터가 아니다. 필요한 역할이 없으면 `missingCapabilities`, 가능한 직접 스킬 호출 경로와 부족한 capability를 분리해 설명한다.
+-
+-초기 정책 capability는 `subagent-coordination`, `independent-deliberation`, `independent-audit`다. 일반 변경 흐름에 필요한 모델·추론 수준 적합성, 지침 범위, 작업 계약, 저장소 관례, 변경 기준선·범위 확인, mutation 사전 점검, 수용 근거 확인과 실패 진단도 capability로 찾는다. 현재 provider 이름을 라우팅 조건으로 사용하지 않는다.
++한 전문 기능으로 충분하면 그 스킬을 직접 호출하고, 여러 전문 결과의 순서·입출력·gate 연결이 필요할 때만 이 흐름으로 연결한다. 전문 스킬이 필요 없는 요청은 그대로 진행하며, 적용 여부가 애매했을 때만 생략 이유를 한 줄로 밝힌다. 이 문서와 참고 자료를 읽는 것은 전문 스킬 실행이 아니다.
+ 
+ 한국어 산문을 작성·편집하거나 자연스러움을 검증하는 요청은 일부 단계만 선택하지 않는다. `korean-prose-selection`, `korean-prose-editing`, `korean-prose-verification`, `korean-prose-finalization` 네 capability를 모두 요청하고, descriptor의 artifact 의존성과 `phaseOrder`에 따라 순서대로 실행한다. 원문은 전문 스킬 내부에서만 다루고 MCP 영수증에는 reference-only policy가 허용하는 digest, artifact reference와 고정 토큰만 전달한다.
+ 
+diff --git a/skills/orchestrator/references/entry-details.md b/skills/orchestrator/references/entry-details.md
+index c70684c..e366504 100644
+--- a/skills/orchestrator/references/entry-details.md
++++ b/skills/orchestrator/references/entry-details.md
+@@ -16,21 +16,29 @@
+ 
+ ## 초기 라우팅
+ 
++선택 결과에는 선택한 capability·provider·phase와 이유, 적용 조건에 가까웠지만 생략한 capability와 그 이유를 남긴다. 요청에서 capability를 고르는 판단은 이 지침의 책임이다. MCP 계획기는 `TaskEnvelope.v1.requiredCapabilities`를 provider로 결정적으로 매핑하고 계획·단계·결과의 순서와 근거만 검사하므로, 선택 의미를 계획기로 옮기거나 계획 호출을 선택 근거로 대신하지 않는다.
++
++라우팅 전에 설치 시 노출된 스킬 설명으로 후보 capability를 정하고 `node scripts/query-registry.mjs --capability <capability>`를 실행해 일치하는 활성 provider만 조회한다. 여러 capability는 `--capability`를 반복한다. 후보를 특정할 수 없을 때만 `--all`로 compact 전체 목록을 조회하며, `skills/registry.json` 원문 전체를 모델 컨텍스트로 읽지 않는다. 조회 결과의 `selectionCriteria`, precondition, priority를 선택 설명에 남긴다. 같은 capability의 후보 중 priority가 가장 큰 항목을 선택하되, 동률이나 descriptor 충돌은 임의로 고르지 말고 `needs-input`으로 돌린다. `selectionCriteria`는 사람이 검토하는 근거이며 런타임 필터가 아니다. 필요한 역할이 없으면 `missingCapabilities`, 가능한 직접 스킬 호출 경로와 부족한 capability를 분리해 설명한다.
++
++초기 정책 capability는 `subagent-coordination`, `independent-deliberation`, `independent-audit`다. 일반 변경 흐름에 필요한 모델·추론 수준 적합성, 지침 범위, 작업 계약, 저장소 관례, 변경 기준선·범위 확인, mutation 사전 점검, 수용 근거 확인과 실패 진단도 capability로 찾는다. 현재 provider 이름을 라우팅 조건으로 사용하지 않는다. `task-contract-definition`, `change-scope-baseline-capture`, `change-scope-assurance`, `acceptance-evidence-validation`, `mutation-risk-preflight`, `independent-audit`는 각 descriptor의 적용 조건과 phase가 가리키는 시점에만 선택하며, 모든 요청에 기본으로 붙이지 않는다.
++
+ 첫 라우팅에서 `CollaborationDecision.v1`을 `schemaVersion: "1.2.0"`으로 만든다. 기존 `1.0.0`과 `1.1.0` 기록은 당시 의미로 검증하며 새 결정은 현재 입력으로 만든다. 결정에는 출처 주장인 `sourceOriginKind`, 관측 가능한 경우의 `sourceReceiptId`, 항상 `none`인 `authorityEffect`, `userDirective`(`require | forbid | unspecified`), 다섯 위임 조건과 독립 감사 분리 필요 여부를 기록한다. 출처 판단과 검증에는 [입력 출처 규칙](input-origin.md)을 적용한다. 결정적 validator가 `direct | delegate | audit-only | needs-input`을 도출하되 결정 artifact와 TLS 메시지는 권한을 만들지 않는다.
+ 
+ 구조·라우팅만 검사할 때는 결정 JSON을 stdin으로 [검증 CLI](../scripts/validate-collaboration-decision.mjs)에 전달한다. 영수증 관측까지 확인하려면 읽기 전용 `validate_collaboration_decision` 도구를 사용한다. CLI의 `structural-only` 결과를 영수증 검증이나 사용자 승인 증명으로 해석하지 않는다.
+ 
+ 다음 순서로 분류한다.
+ 
+-1. 사용자가 특정 전문 스킬을 명시했으면 해당 스킬의 적용 조건을 확인하고 그 스킬을 호출한다.
++1. 사용자가 특정 전문 스킬을 명시했으면 해당 스킬의 적용 조건을 확인하고 그 스킬을 호출한다. 요청과 무관한 capability를 덧붙이지 않되, 그 스킬이나 요청된 흐름에 필요한 승인·검증·독립성 gate는 면제하지 않는다.
+ 2. 그 밖의 전문 기능은 요청의 목표와 수용 기준에서 capability를 추출하고 레지스트리 descriptor로 찾는다. 선택한 capability, provider, phase와 선택 이유를 계획에 남긴다.
+    `evaluation-validity-audit`를 선택할 때는 공유 `TaskEnvelope.v1`을 변경하지 않는다. `plan_workflow`에 `{ schemaVersion, taskEnvelope, evaluationAuditPurpose }` 구조를 넘기고, 실행 전 설계 감사면 `evaluationAuditPurpose`를 `design-readiness`로, 평가 결과를 품질·릴리스 근거로 제출하는 감사면 `quality-or-release`로 고정한다. 후자는 `post-execution PASS`와 `qualifiesAsQualityOrReleaseEvidence: true`가 모두 확인되지 않으면 완료하지 않는다.
+ 3. 호스트 runtime metadata, 사용자 텍스트나 이번 요청의 화면 캡처에서 현재 task의 모델과 추론 수준을 모두 관측한 경우 `model-effort-fit-assessment`를 요청한다. 현재 선택이 없으면 일반 direct 작업에서는 이 capability 때문에 묻거나 작업을 멈추지 않으며, 결과가 `ADEQUATE`이면 사용자 안내를 생략한다. 단, MCP `orchestrated` workflow를 계획할 때는 별도 규칙을 적용한다. caller는 `plan_workflow` 인자에 `executionContext`를 넣지 않는다. 현재 bootstrap 실행에 대한 model class·추론 수준과 task 결속은 호스트가 서버 측 `TrustedExecutionContextProvider`를 통해 authoritative observation으로 제공해야 한다. provider가 없거나 관측값이 최소 semantic assurance 하한보다 낮아 MCP가 `BINDING_REQUIRED` 또는 `BINDING_INVALID`를 반환하면 값을 임의로 보정·추정하지 않고 해당 workflow를 시작하지 않는다.
+ 4. `CollaborationDecision.v1.route`가 `delegate`인 경우에만 `subagent-coordination`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. `auditSeparationRequired`는 route와 독립된 의무다. `delegate`와 함께 참이면 구현 위임과 별도 감사자를 모두 계획한다. `audit-only`는 구현 위임 없이 감사 의무만 남은 경우다. 감사자는 구현에 참여하지 않고 최종 후보가 준비된 뒤 감사하며, 사용자 금지나 실행 불가가 있으면 감사 완료로 처리하지 않는다. 작업 단위가 둘 이상이거나 `orchestration.requested: true`라는 사실만으로 추가하지 않는다.
+ 5. 실제로 양립할 수 없는 대안이나 충돌하는 근거 중 하나를 선택해야 하고, 독립 관점과 교차 반박이 그 선택에 필요한 경우에만 `independent-deliberation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. `decision.complexity: complex`만으로 추가하지 않으며, 이 단계는 구현이나 완료 게이트를 대체하지 않는다.
+ 6. 정확한 최종 대상이 있는 고위험 변경의 실행·병합·릴리스·완료 가능 여부를 판정하는 요청에는 `independent-audit`을 추가한다. 감사 전의 구현·수정·자체 검증은 이 provider의 역할이 아니다.
+-7. 코드를 작성·수정하는 구현 단계가 있는 요청에는 `minimal-implementation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. 이 단계는 변경 전 기준선 뒤, 위험한 상태 변경의 사전 점검과 범위·수용 근거 확인 전에 실행된다. 구현 단계에서는 Git이 추적하는 파일의 편집·삭제, 새 파일 생성, 확인용 테스트·빌드 실행만 한다. 추적되지 않는 기존 파일이나 저장소 밖 대상의 삭제·덮어쓰기, 마이그레이션·데이터 변경의 실제 실행, 배포·push·태그처럼 사전 점검 대상인 작업은 사전 점검 뒤에 실행하고, MCP 계획에 그 stage가 없으면 실행하지 않고 최종 결과에 남은 작업으로 적는다. provider는 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르고, 의도적으로 뺀 것을 결과에 남긴다. MCP 없이 직접 진행할 때도 구현 단계에서 이 capability의 provider를 호출한다. 동결된 `TaskEnvelope.v1`의 범위와 수용 기준은 명시적 요청으로 보고 줄이지 않으며, 줄일 후보는 최종 결과에 제안으로만 남긴다. 검사용 테스트를 포함한 새 파일은 `scope.included`·`workUnits[].writeTargets` 안에서 저장소의 기존 테스트 관례와 위치를 따라 만든다. 작업 계약이 없으면 사용자 요청이 정한 범위를 같은 기준으로 삼는다.
+-8. 하나의 전문 스킬로 충분한 요청은 오케스트레이터 단계를 생략하고 그 스킬을 직접 사용할 수 있다고 안내한다.
++7. 코딩 설계·구현이나 라이브러리·의존성 선택 단계가 있는 요청에는 `minimal-implementation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. 이 단계는 변경 전 기준선 뒤, 위험한 상태 변경의 사전 점검과 범위·수용 근거 확인 전에 실행된다. 구현 단계에서는 Git이 추적하는 파일의 편집·삭제, 새 파일 생성, 확인용 테스트·빌드 실행만 한다. 추적되지 않는 기존 파일이나 저장소 밖 대상의 삭제·덮어쓰기, 마이그레이션·데이터 변경의 실제 실행, 배포·push·태그처럼 사전 점검 대상인 작업은 사전 점검 뒤에 실행하고, MCP 계획에 그 stage가 없으면 실행하지 않고 최종 결과에 남은 작업으로 적는다. provider는 필요 없는 기능·추상화·의존성을 만들지 않는 가장 단순한 구현을 고르고, 의도적으로 뺀 것을 결과에 남긴다. MCP 없이 직접 진행할 때도 구현 단계에서 이 capability의 provider를 호출한다. 동결된 `TaskEnvelope.v1`의 범위와 수용 기준은 명시적 요청으로 보고 줄이지 않으며, 줄일 후보는 최종 결과에 제안으로만 남긴다. 검사용 테스트를 포함한 새 파일은 `scope.included`·`workUnits[].writeTargets` 안에서 저장소의 기존 테스트 관례와 위치를 따라 만든다. 작업 계약이 없으면 사용자 요청이 정한 범위를 같은 기준으로 삼는다. 코드 리뷰·감사·검증·완료 판정, 코드 설명·조사만 하는 요청, 코딩이 아닌 요청과 검토·감사를 맡은 하위 실행에는 이 capability를 선택하지 않는다.
++8. 하나의 전문 스킬로 충분한 요청은 오케스트레이터 단계를 생략하고 그 스킬을 직접 호출한다. 이때 수렴 root, 계획이나 workflow run을 만들지 않는다. 전문 스킬이 필요 없는 요청은 스킬 호출과 workflow 없이 진행한다.
++
++이 스킬을 사용했다는 사실은 MCP `executionMode`나 `CollaborationDecision.v1.route`를 정하지 않는다. 실행 방식은 선택한 capability와 `riskLevel`·`orchestration`을 담은 `TaskEnvelope.v1`로 기존 계획기가 정하고, 위임 여부는 위임 판단 규칙이 따로 정한다. `orchestration.requested: true`는 실패 영향이 크고 순서·gate 연결이 필요한 전문 단계가 둘 이상이며 MCP를 사용할 수 있을 때 적는다. 계획기는 이 값으로 `orchestrated`와 `direct`를 나누므로 `false`이면 direct 계획이 돌아온다.
+ 
+ 통합 워크플로에서는 bootstrap을 마친 뒤 작업 단위 조정, 독립 숙고, 변경 전 기준선, 최소 구현, 위험한 상태 변경 직전의 사전 점검, 요청된 전문 작업, 범위·수용 근거 확인, 최종 고위험 감사 순으로 연결한다. 구체적인 순서는 provider의 `phaseOrder`와 artifact 의존성으로 정하며 MCP stage 순서와 같아야 한다. 각 전문 스킬이 이미 내부적으로 worker를 조정하는 경우에는 같은 단위를 다시 배정하지 않는다.
+ 
+diff --git a/skills/orchestrator/references/mcp-execution.md b/skills/orchestrator/references/mcp-execution.md
+index 470364c..115bf03 100644
+--- a/skills/orchestrator/references/mcp-execution.md
++++ b/skills/orchestrator/references/mcp-execution.md
+@@ -4,14 +4,21 @@ MCP를 사용할 때는 연결이 성공했고 도구 목록과 입력 스키마
+ 
+ 통합 실행은 다음 순서를 지킨다.
+ 
+-1. 목표, 범위, 수용 기준, 작업 단위, 위험도와 필요한 capability를 `TaskEnvelope.v1`로 정리하고 `plan_workflow`를 호출한다. 이 호출은 run을 만들지 않는다.
+-2. 최초 전체 실행 전에 `open_convergence_root`를 `responseMode: "compact"`로 호출해 작업 계약과 control/target frame을 결속한다. 같은 작업을 요약하거나 fresh context에 넘겨도 발급된 `rootId`를 유지한다.
++1. 목표, 범위, 수용 기준, 작업 단위, 위험도와 필요한 capability를 `TaskEnvelope.v1`로 정리하고 `plan_workflow`를 호출한다. 이 호출은 run을 만들지 않는다. `scope`와 `workUnits[].writeTargets`에는 저장소 기준 파일 경로나 glob만 적고, 브랜치·태그·원격 같은 git 대상은 `authorization.allowedActions`와 `mutation-risk-preflight` capability의 대상으로 다룬다.
++2. 최초 전체 실행 전에 `open_convergence_root`를 `responseMode: "compact"`로 호출해 작업 계약과 control/target frame을 결속한다. 같은 작업을 요약하거나 fresh context에 넘겨도 발급된 `rootId`를 유지한다. 시작한 run의 계약을 바꿔 다시 시도하면 수렴 가드의 frame 검토(`FRAME_REVIEW_REQUIRED`)와 사용자 승인을 거친다.
+ 3. 계획이 `ready`이고 `executionMode`가 `orchestrated`이면 `claim_workflow_attempt`에서 이미 root에 결속된 `taskEnvelope`와 `frame`을 다시 보내지 않고 계획·실행자·출력 대상에 결속된 lease를 받는다. 이어 `start_guarded_workflow`를 plan 없이 `responseMode: "compact"`로 호출한다. 새 orchestrated run에 `start_workflow`를 사용하지 않는다.
+-4. 계획에 기록된 순서대로 전문 스킬을 사용한다. provider 결과와 산출물 참조를 `ProviderResult.v1`로 묶고, 이를 `StageResult.v1.output`에 넣어 현재 revision과 `responseMode: "compact"`로 `record_stage_result`에 전달한다.
++4. 계획에 기록된 순서대로 각 stage의 전문 스킬을 설치된 스킬 호출 방식으로 실제 실행한다. 계획, 문서 로드나 도구 호출 수락을 스킬 실행이나 `passed`로 기록하지 않는다. provider 결과와 산출물 참조를 `ProviderResult.v1`로 묶고, 이를 `StageResult.v1.output`에 넣어 현재 revision과 `responseMode: "compact"`로 `record_stage_result`에 전달한다.
+ 5. 사용자 입력이나 승인이 필요하면 해당 상태와 차단 사유를 그대로 보고하고 새 실행이 필요한지 판단한다. 순서를 건너뛰거나 이미 기록한 stage를 덮어쓰지 않는다.
+ 6. 필요할 때 `get_workflow_status`와 `get_convergence_status`를 `detail: "compact"`로 호출해 현재 revision, 다음 stage와 남은 실행 예산을 확인한다. compact 결과에 오류 코드나 0보다 큰 blocker·unresolved 수가 있거나 과거 원자료가 필요한 경우에만 해당 status를 `detail: "full"`로 한 번 다시 조회한다. 모든 필수 stage와 감사 게이트가 `passed`인 경우에만 `finalize_workflow`를 `responseMode: "compact"`로 호출한다.
+ 7. 통합 실행을 더 진행하지 않기로 확정하면 `abort_workflow`를 `responseMode: "compact"`로 호출해 해당 run을 닫는다. 시작된 run은 실패·중단돼도 해당 epoch의 시도 횟수에 남는다.
+ 
++### stage 기록과 큰 출력
++
++- `record_stage_result` 전에 계획된 stage의 `requiredArtifacts`에 있는 id를 모두 `output.artifacts`에 넣는다. 각 항목에는 실제 산출물의 locator, digest, targetDigest를 적고 `verified: true`로 표시한다. digest는 64자리 소문자 hex이며 `sha256:` 접두사는 있어도 없어도 된다.
++- 실제로 만들지 않았거나 확인하지 않은 산출물은 `verified: true`로 적지 않는다. 그 stage는 `passed`로 기록하지 않고, provider 결과(verdict나 `MISSING_EVIDENCE` adapter error)가 가리키는 `needs-input`이나 `blocked` 상태로 기록한다.
++- provider 출력(`output.output`)이 저장소 크기에 비례해 커지면(예: 변경 범위 baseline·보고서, 저장소 관례 조사) 도구 인자에 넣지 않는다. 스킬이 만든 JSON을 바꾸지 않고 로컬 파일에 저장한 뒤 `outputFile: { "locator": "<절대 경로>", "digest": "sha256:<그 파일 바이트의 SHA-256>" }`를 넣고 `output.output`은 `null`로 보낸다. 서버는 파일을 읽어 digest, 출력 schema와 gate를 인라인 출력과 똑같이 검사하고 receipt에는 참조만 남긴다.
++- 크기를 맞추려고 항목을 줄이거나 요약하지 않는다. digest가 맞지 않으면 `INTEGRITY_FAILED`다. receipt 정책이 있는 stage(한국어 산문, 평가 타당성)는 `outputFile`을 받지 않으므로 참조 전용 출력을 인라인으로 기록한다.
++
+ MCP workflow run과 계획 서명 키는 SQLite에 저장되므로 프로세스를 다시 시작해도 이어서 처리할 수 있다. `RUN_NOT_FOUND`를 받으면 다른 데이터베이스 경로를 사용 중인지 먼저 확인하고, 저장된 상태가 실제로 없을 때만 새 계획과 run을 만든다. 이전 revision이나 stage 결과를 추측해 복구하지 않는다.
+ 
+ MCP 응답에 별도의 `plugin-update-notice` content block이 있으면 현재 버전과 최신 버전, 제공된 tag URL을 사용자에게 한 문장으로 안내한다. `automaticInstall: false`도 함께 밝혀 업데이트가 설치됐다고 오해하지 않게 한다. 이 알림을 이유로 현재 workflow 결과를 바꾸거나 설치, 파일 수정, 마켓플레이스 갱신을 실행하지 않는다.
+@@ -22,3 +29,7 @@ MCP 응답에 별도의 `plugin-update-notice` content block이 있으면 현재
+ - 도구가 실패하거나 결과를 관측할 수 없으면 실패 원인과 영향을 받은 단계만 멈춘다. 다른 전문 스킬이 독립적으로 완료할 수 있는 부분은 계속할 수 있다.
+ 
+ MCP 연결이나 필요한 MCP 도구를 사용할 수 없더라도, 설치된 전문 스킬을 직접 호출해 처리할 수 있는 요청은 진행한다. MCP 없이는 필요한 통합 작업 자체를 수행할 수 없는 경우에만 통합 결과를 `BLOCKED`로 표시하고, 직접 사용할 수 있는 스킬과 필요한 MCP 기능을 함께 밝힌다.
++
++MCP 미지원과 신뢰할 수 있는 실행 관측 부재는 다른 실패다. MCP가 `BINDING_REQUIRED`나 `BINDING_INVALID`를 반환하면 해당 guarded workflow를 시작하지 않고, 이미 시작한 run의 stage를 `passed`로 진행하지 않는다. 관측값이나 실행 하한을 추정·보정해 다시 보내지 않는다. 설치된 전문 스킬로 독립 처리할 수 있는 허용 부분만 진행하고, 그 결과를 필수 guarded 통합이나 감사 증거로 표현하지 않는다. 통합 실행을 더 진행하지 않으면 시작한 run은 `abort_workflow`로 닫고 반환 코드와 영향받은 완료 판정을 사용자에게 밝힌다.
++
++실행 하한 미달이 확인된 semantic stage는 그 하한을 충족하는 실행자가 전문 작업을 실제로 다시 수행한 뒤 새 관측으로 기록한다. token이나 관측의 만료가 확인된 경우에는 호스트가 현재 호출을 다시 관측해 새 token을 제공하는 정상 호출 경로로 재시도할 수 있다. 이때도 현재 task·run·stage·revision 결속, 신선도, 한 번 소비와 기존 수렴 가드를 그대로 적용한다. `BINDING_INVALID` 코드나 승인 대기 시간만으로 원인을 만료로 단정하거나 같은 token을 재전송하지 않는다. 원인이 확인되지 않으면 영향을 받은 경계를 멈추고 진단 근거와 필요한 관측을 남긴다.
+diff --git a/tests/mcp/tool-schema-profile.test.ts b/tests/mcp/tool-schema-profile.test.ts
+index 8bbff6c..fc960b4 100644
+--- a/tests/mcp/tool-schema-profile.test.ts
++++ b/tests/mcp/tool-schema-profile.test.ts
+@@ -13,7 +13,7 @@ import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.
+ import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
+ import { resolveToolSchemaProfile } from "../../mcp-server/src/runtime-config.js";
+ import { ContractValidator, contractSchemas } from "../../mcp-server/src/schema-validator.js";
+-import { ANTHROPIC_SERVER_INSTRUCTIONS, SESSION_MESSAGE_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
++import { SESSION_MESSAGE_SERVER_INSTRUCTIONS, SKILL_INTAKE_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
+ import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
+ import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
+ import { CURRENT_VERSION } from "./version-fixtures.js";
+@@ -190,22 +190,30 @@ describe("MCP tool schema profiles", () => {
+     expect(resolveToolSchemaProfile({ AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE: "anthropic" })).toBe("anthropic");
+   });
+ 
+-  it("advertises intake session instructions only for Anthropic hosts", async () => {
+-    expect(serverInstructions()).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
+-    expect(serverInstructions("default")).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
+-    expect(serverInstructions("anthropic")).toBe(`${ANTHROPIC_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`);
+-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toMatch(/실패 영향/u);
+-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("/agent-governance-suite:orchestrator");
+-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("실패 영향이 낮으면 그 이유를 한 줄로 밝히고 진행하되");
+-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("코드를 쓰거나 파일을 고치기 전에 Skill 도구로 /agent-governance-suite:ponytail을 호출한다.");
+-    expect(ANTHROPIC_SERVER_INSTRUCTIONS).toContain("검토·감사를 맡은 서브에이전트에서는 ponytail을 호출하지 않는다.");
++  it("advertises the same host-neutral intake instructions to every schema profile", async () => {
++    const expected = `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
++    expect(serverInstructions()).toBe(expected);
++    // The entry points at the policy source without maintaining a second selection policy.
++    for (const phrase of ["orchestrator 스킬 원본", "skills/orchestrator/SKILL.md", "references/entry-details.md", "references/mcp-execution.md", "활성화, registry 조회나 workflow 생성을 요구하지 않는다"]) {
++      expect(SKILL_INTAKE_SERVER_INSTRUCTIONS).toContain(phrase);
++    }
++    expect(SKILL_INTAKE_SERVER_INSTRUCTIONS).not.toMatch(/minimal-implementation|실패 영향이 낮으면|BINDING_/u);
++    // Host invocation syntax and product names stay in the host adapters.
++    for (const hostSpecific of [/Skill 도구/u, /\/agent-governance-suite:/u, /(?<![\w$])\$[a-z][a-z0-9-]*/u, /Claude/u, /Codex/u, /Anthropic/iu, /UserPromptSubmit/u, /ponytail/u]) {
++      expect(expected).not.toMatch(hostSpecific);
++    }
+     const implicit = await connect();
+     const codex = await connect("default");
+     const claude = await connect("anthropic");
+     try {
+-      expect(implicit.getInstructions()).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
+-      expect(codex.getInstructions()).toBe(SESSION_MESSAGE_SERVER_INSTRUCTIONS);
+-      expect(claude.getInstructions()).toBe(`${ANTHROPIC_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`);
++      expect(implicit.getInstructions()).toBe(expected);
++      expect(codex.getInstructions()).toBe(expected);
++      expect(claude.getInstructions()).toBe(expected);
++      // Profiles differ only in the advertised schema conversion.
++      const [codexTools, claudeTools] = [(await codex.listTools()).tools, (await claude.listTools()).tools];
++      expect(claudeTools.map((tool) => tool.name)).toEqual(codexTools.map((tool) => tool.name));
++      const withoutSchema = (tools: typeof codexTools) => tools.map((tool) => ({ ...tool, inputSchema: null }));
++      expect(withoutSchema(claudeTools)).toEqual(withoutSchema(codexTools));
+     } finally {
+       await implicit.close();
+       await codex.close();
+@@ -226,7 +234,7 @@ describe("MCP tool schema profiles", () => {
+       const planning = (await client.listTools()).tools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
+       expect(planning).toBeDefined();
+       expect(planning).not.toHaveProperty("oneOf");
+-      expect(client.getInstructions()).toBe(serverInstructions("anthropic"));
++      expect(client.getInstructions()).toBe(serverInstructions());
+     } finally {
+       try { await transport.close(); } finally { await rm(stateDirectory, { recursive: true, force: true }); }
+     }
+diff --git a/tests/tooling/claude-plugin.test.mjs b/tests/tooling/claude-plugin.test.mjs
+index d08009d..070e4e1 100644
+--- a/tests/tooling/claude-plugin.test.mjs
++++ b/tests/tooling/claude-plugin.test.mjs
+@@ -85,15 +85,48 @@ describe("generated Claude plugin", () => {
+     expect(claudeOverlay.mcpServers["agent-governance-suite"].env.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("claude-code");
+   });
+ 
+-  it("puts the Claude selection decision at the top of the generated orchestrator skill", async () => {
+-    const generated = await readFile(path.join(pluginRoot, "skills", "orchestrator", "SKILL.md"), "utf8");
+-    const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
+-    expect(shared).not.toContain("## Claude Code에서의 선택 결정");
+-    expect(generated.indexOf("## Claude Code에서의 선택 decision".replace("decision", "결정"))).toBeLessThan(generated.indexOf("## 시작 전 확인"));
+-    for (const skill of ["task-contract", "change-scope-guardian", "acceptance-evidence-validator", "independent-audit-gate", "mutation-risk-preflight"]) {
+-      expect(generated).toContain(`\`${skill}\`:`);
++  it("keeps the orchestrator selection policy in the shared source and adapts only Claude invocation and observation", async () => {
++    const orchestrator = (base, ...segments) => readFile(path.join(base, "skills", "orchestrator", ...segments), "utf8");
++    const adaptation = await readJson(root, "claude-overlay", "adaptations", "orchestrator.json");
++    const shared = await orchestrator(root, "SKILL.md");
++    const generated = await orchestrator(pluginRoot, "SKILL.md");
++    // The shared source names no host invocation syntax or product.
++    for (const document of ["SKILL.md", "references/entry-details.md", "references/mcp-execution.md"]) {
++      const text = await orchestrator(root, document);
++      for (const hostSpecific of [/Skill 도구/u, /\/agent-governance-suite:/u, /(?<![\w$])\$[a-z][a-z0-9]*(?:-[a-z0-9]+)*\b/u, /Claude/u, /Codex/u, /UserPromptSubmit/u, /transcript/u]) {
++        expect(text, document).not.toMatch(hostSpecific);
++      }
++      // References carry the shared policy to Claude byte for byte.
++      if (document !== "SKILL.md") expect(await orchestrator(pluginRoot, document), document).toBe(text);
++    }
++    // The shared description and selection policy stay unchanged; only native invocation/observation is inserted.
++    expect(adaptation).not.toHaveProperty("description");
++    expect(adaptation.replacements).toHaveLength(1);
++    const [{ find, replace }] = adaptation.replacements;
++    const section = replace.slice(0, replace.length - find.length);
++    expect(replace.endsWith(find)).toBe(true);
++    expect(generated).toBe(shared.replace(find, replace));
++    // The Claude section adapts invocation and observation without restating common policy.
++    for (const hostOnly of ["Skill 도구", "/agent-governance-suite:<skill-name>", "agent-governance-suite:independent-auditor", "UserPromptSubmit", "transcript"]) {
++      expect(section).toContain(hostOnly);
++    }
++    for (const policy of ["실패 영향", "outputFile", "requiredArtifacts", "`direct`", "`orchestrated`", "BINDING_REQUIRED", "plan_workflow` 전에", "minimal-implementation", "ponytail"]) {
++      expect(section, policy).not.toContain(policy);
++    }
++    // Native hooks may describe observations, but they cannot prescribe recovery after a common rejection.
++    expect(section).toContain("SessionStart·PostModelSwitch");
++    expect(section).toContain("references/mcp-execution.md");
++    expect(section).not.toMatch(/BINDING_INVALID[^\n]*(?:다시 실행|다시 한다|재시도|전환)/u);
++    expect(section).not.toMatch(/5분[^\n]*(?:같은 호출|재시도|다시)/u);
++    const recovery = await orchestrator(root, "references", "mcp-execution.md");
++    for (const guard of ["실행 하한 미달이 확인된", "만료가 확인된 경우", "결속, 신선도, 한 번 소비와 기존 수렴 가드", "코드나 승인 대기 시간만으로 원인을 만료로 단정"]) {
++      expect(recovery).toContain(guard);
++    }
++    // Each common selection sentence reaches Claude exactly once.
++    for (const sentence of ["키워드, 파일 종류나 `complex` 표시만으로 스킬을 붙이지 않는다.", "필수 승인·검증·독립성 gate를 생략하는 권한으로 해석하지 않는다.", "이 문서와 참고 자료를 읽는 것은 전문 스킬 실행이 아니다."]) {
++      expect(shared.split(sentence)).toHaveLength(2);
++      expect(generated.split(sentence)).toHaveLength(2);
+     }
+-    expect(generated).toContain("agent-governance-suite:independent-auditor");
+   });
+ 
+   it("omits Codex-only skills from files, registry, and source lock", async () => {
+diff --git a/tests/tooling/skill-context-optimization.test.mjs b/tests/tooling/skill-context-optimization.test.mjs
+index 3433561..a1f2195 100644
+--- a/tests/tooling/skill-context-optimization.test.mjs
++++ b/tests/tooling/skill-context-optimization.test.mjs
+@@ -1,5 +1,6 @@
+ import { describe, expect, it } from "vitest";
+-import { checkSkillContextOptimization, matchesNode24ReadmeUpdate } from "../../scripts/check-skill-context-optimization.mjs";
++import { readFileSync } from "node:fs";
++import { checkSkillContextOptimization, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
+ 
+ describe("skill context optimization", () => {
+   it("allows the runtime minimum update while rejecting other README changes", () => {
+@@ -10,7 +11,23 @@ describe("skill context optimization", () => {
+     expect(matchesNode24ReadmeUpdate("task-contract", `${baseline}Node.js 22 이상\n`, updated)).toBe(false);
+   });
+ 
+-  it("preserves every optimized skill while reducing its initial load", () => {
++  it("pins the intake revision and rejects a one-byte policy or reference change", () => {
++    const candidate = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import.meta.url));
++    const inputs = {
++      reconstructed: reconstructOptimizedSkill("orchestrator"),
++      frontmatter: candidate.subarray(0, candidate.indexOf(Buffer.from("\n---\n"), 4) + 5),
++      mcpExecution: readFileSync(new URL("../../skills/orchestrator/references/mcp-execution.md", import.meta.url)),
++    };
++    for (const [kind, bytes] of Object.entries(inputs)) {
++      expect(matchesOrchestratorIntakeUpdate(kind, bytes), kind).toBe(true);
++      const altered = Buffer.from(bytes);
++      altered[altered.length - 1] ^= 1;
++      expect(matchesOrchestratorIntakeUpdate(kind, altered), kind).toBe(false);
++    }
++    expect(matchesOrchestratorIntakeUpdate("unknown", candidate)).toBe(false);
++  });
++
++  it("preserves the reviewed skill revisions while reducing their initial load", () => {
+     const report = checkSkillContextOptimization();
+     expect(report).toMatchObject({
+       pass: true,
+@@ -18,12 +35,13 @@ describe("skill context optimization", () => {
+       totals: {
+         skillCount: 20,
+         baselineBytes: 115679,
+-        candidateBytes: 45853,
+-        reducedBytes: 69826,
+-        reductionPercent: 60.361863
++        candidateBytes: 45203,
++        reducedBytes: 70476,
++        reductionPercent: 60.923763
+       }
+     });
+     expect(report.skills).toHaveLength(20);
+     expect(report.skills.every((skill) => skill.reducedBytes > 0)).toBe(true);
++    expect(report.policyBaselineUpdates).toMatchObject([{ skillId: "orchestrator", initialMaxBytes: 4585 }]);
+   });
+ });

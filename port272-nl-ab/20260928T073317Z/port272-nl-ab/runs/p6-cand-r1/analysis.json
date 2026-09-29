@@ -1,0 +1,214 @@
+{
+ "run_id": "p6-cand-r1",
+ "arm": "cand",
+ "prompt": "p6",
+ "requested_session_id": "bddd20cd-cd7f-457e-b3c3-9a419ed602dd",
+ "exit": 0,
+ "init": {
+  "session_id": "bddd20cd-cd7f-457e-b3c3-9a419ed602dd",
+  "model": "claude-opus-5-5",
+  "permissionMode": "acceptEdits",
+  "cwd": "/tmp/nlwork/p6-cand-r1/repo",
+  "plugins": [
+   {
+    "name": "agent-governance-suite",
+    "path": "/tmp/cand/claude-plugin",
+    "source": "agent-governance-suite@inline",
+    "version": "2.7.1"
+   },
+   {
+    "name": "agents-md",
+    "path": "builtin",
+    "source": "agents-md@builtin"
+   },
+   {
+    "name": "telemetry",
+    "path": "builtin",
+    "source": "telemetry@builtin"
+   }
+  ],
+  "mcp_servers": [
+   {
+    "name": "plugin:agent-governance-suite:agent-governance-suite",
+    "status": "connected",
+    "source": "plugin"
+   }
+  ],
+  "agsTools": 28,
+  "toolCount": 67,
+  "skills": [
+   "agent-governance-suite:acceptance-evidence-validator",
+   "agent-governance-suite:blocker-diagnostician",
+   "agent-governance-suite:change-scope-guardian",
+   "agent-governance-suite:context-continuity",
+   "agent-governance-suite:coordinate-subagents",
+   "agent-governance-suite:evaluation-validity-auditor",
+   "agent-governance-suite:independent-audit-gate",
+   "agent-governance-suite:independent-deliberation-panel",
+   "agent-governance-suite:instruction-scope-resolver",
+   "agent-governance-suite:iteration-frame-auditor",
+   "agent-governance-suite:korean-prose-editor",
+   "agent-governance-suite:model-effort-advisor",
+   "agent-governance-suite:mutation-risk-preflight",
+   "agent-governance-suite:orchestrator",
+   "agent-governance-suite:ponytail",
+   "agent-governance-suite:recovery-strategy-selector",
+   "agent-governance-suite:session-board",
+   "agent-governance-suite:software-security-auditor",
+   "agent-governance-suite:task-contract",
+   "agent-governance-suite:workspace-convention-profiler"
+  ],
+  "otherSkills": [
+   "session-start-hook",
+   "deep-research",
+   "design",
+   "slides",
+   "design-sync",
+   "dataviz",
+   "artifact-diagramming",
+   "artifact-capabilities",
+   "update-config",
+   "verify",
+   "debug",
+   "code-review",
+   "simplify",
+   "batch",
+   "fewer-permission-prompts",
+   "doctor",
+   "loop",
+   "claude-api",
+   "workflow-authoring",
+   "run",
+   "run-skill-generator"
+  ],
+  "agents": [
+   "agent-governance-suite:deliberation-reviewer",
+   "agent-governance-suite:independent-auditor",
+   "claude",
+   "claude-code-guide",
+   "Explore",
+   "general-purpose",
+   "Plan",
+   "statusline-setup"
+  ],
+  "claude_code_version": "2.1.283"
+ },
+ "hooks": [
+  {
+   "subtype": "hook_started",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit"
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  },
+  {
+   "subtype": "hook_started",
+   "hook_name": "Stop",
+   "hook_event": "Stop"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "Stop",
+   "hook_event": "Stop",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": ""
+  }
+ ],
+ "skillTriggerContexts": [],
+ "otherHookContexts": [],
+ "skillCalls": [],
+ "slashCommandSkills": [],
+ "mcpCalls": [],
+ "workflowCalls": [],
+ "agentCalls": [],
+ "pluginDocReads": [],
+ "toolOrder": [],
+ "toolErrors": [],
+ "result": {
+  "subtype": "success",
+  "num_turns": 1,
+  "is_error": false,
+  "stop_reason": "end_turn",
+  "terminal_reason": "completed",
+  "duration_ms": 3085,
+  "total_cost_usd": 0.091305,
+  "text": "안녕하세요! 날씨가 좋다니 다행이네요. 저는 잘 지내고 있어요, 물어봐 주셔서 고마워요 😊\n\n오늘은 어떤 일을 도와드릴까요? 지금 열려 있는 저장소에서 코드를 보거나 고칠 일이 있으면 말씀해 주세요."
+ },
+ "permissionDenials": [],
+ "apiErrors": [],
+ "transcriptCollected": true,
+ "sessionIdMatchesRequested": true,
+ "usedAgsSkills": []
+}

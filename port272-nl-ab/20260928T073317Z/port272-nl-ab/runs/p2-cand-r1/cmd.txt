@@ -1,0 +1,7 @@
+run_id=p2-cand-r1 arm=cand prompt=p2 session_id=9e1d2a63-fa3c-41b5-9c26-44a13add6bc1
+cwd=/tmp/nlwork/p2-cand-r1/repo XDG_STATE_HOME=/tmp/nlwork/p2-cand-r1/state
+env_unset=CLAUDE_CODE_SESSION_ID CLAUDE_CODE_REMOTE_SESSION_ID CLAUDECODE CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_TEE_SDK_STDOUT CLAUDE_CODE_SYNC_SESSION_REFS CLAUDE_CODE_SYNC_SKILLS CLAUDE_CODE_POST_FOR_SESSION_INGRESS_V2 CLAUDE_CODE_CHILD_SESSION CLAUDE_PID CLAUDE_CODE_DIAGNOSTICS_FILE CLAUDE_AFTER_LAST_COMPACT CLAUDE_CODE_SESSION_ATTENDED
+cmd=claude -p --session-id 9e1d2a63-fa3c-41b5-9c26-44a13add6bc1 --plugin-dir /tmp/cand/claude-plugin --output-format stream-json --verbose --max-turns 20 --model claude-opus-5-5 --permission-mode acceptEdits <PROMPT>
+extra_allowed_tools=none
+start=2026-09-28T07:27:31Z
+end=2026-09-28T07:27:57Z

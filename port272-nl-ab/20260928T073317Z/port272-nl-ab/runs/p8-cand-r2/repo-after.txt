@@ -1,0 +1,34 @@
+ M util.js
+4bebf3f initial
+diff --git a/util.js b/util.js
+index 380c226..245438a 100644
+--- a/util.js
++++ b/util.js
+@@ -1,3 +1,24 @@
+-function proc(d){var r=[];for(var i=0;i<d.length;i++){if(d[i]!=null&&d[i]!=undefined){if(d[i].a==1){r.push(d[i].n.toUpperCase())}else{r.push(d[i].n)}}}return r}
+-function f2(x){return x.split(',').map(function(y){return y.trim()}).filter(function(z){return z!=''})}
+-module.exports={proc:proc,f2:f2}
++/**
++ * Returns the `n` value of each non-null item, upper-cased when the item's `a` equals 1.
++ * @param {Array<{a: *, n: string} | null | undefined>} items
++ * @returns {string[]}
++ */
++function proc(items) {
++  return items
++    .filter((item) => item != null)
++    .map((item) => (item.a == 1 ? item.n.toUpperCase() : item.n));
++}
++
++/**
++ * Splits a comma-separated string into trimmed, non-empty parts.
++ * @param {string} text
++ * @returns {string[]}
++ */
++function f2(text) {
++  return text
++    .split(',')
++    .map((part) => part.trim())
++    .filter((part) => part !== '');
++}
++
++module.exports = { proc, f2 };

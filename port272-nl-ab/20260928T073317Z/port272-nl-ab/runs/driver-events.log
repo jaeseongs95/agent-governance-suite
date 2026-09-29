@@ -1,0 +1,199 @@
+2026-09-28T07:24:53Z start seq=02 p9-base-r1
+2026-09-28T07:24:53Z start seq=01 p1-base-r1
+2026-09-28T07:24:53Z start seq=03 p5-cand-r3
+2026-09-28T07:24:53Z start seq=04 p8-cand-r1
+p5-cand-r3 cand p5 exit=0
+2026-09-28T07:25:04Z seq=03 p5-cand-r3 attempt=0 infra=ok
+2026-09-28T07:25:04Z start seq=05 p9-cand-r2
+p1-base-r1 base p1 exit=0
+2026-09-28T07:25:17Z seq=01 p1-base-r1 attempt=0 infra=ok
+2026-09-28T07:25:17Z start seq=06 p1-cand-r2
+p8-cand-r1 cand p8 exit=0
+2026-09-28T07:25:27Z seq=04 p8-cand-r1 attempt=0 infra=ok
+2026-09-28T07:25:27Z start seq=07 p6-cand-r1
+p9-base-r1 base p9 exit=0
+2026-09-28T07:25:30Z seq=02 p9-base-r1 attempt=0 infra=ok
+2026-09-28T07:25:30Z start seq=08 x2-base-r1
+p6-cand-r1 cand p6 exit=0
+2026-09-28T07:25:32Z seq=07 p6-cand-r1 attempt=0 infra=ok
+2026-09-28T07:25:32Z start seq=09 p7-cand-r3
+p9-cand-r2 cand p9 exit=0
+2026-09-28T07:25:38Z seq=05 p9-cand-r2 attempt=0 infra=ok
+2026-09-28T07:25:38Z start seq=10 x1-base-r1
+p1-cand-r2 cand p1 exit=0
+2026-09-28T07:25:39Z seq=06 p1-cand-r2 attempt=0 infra=ok
+2026-09-28T07:25:39Z start seq=11 p3-cand-r1
+p3-cand-r1 cand p3 exit=0
+2026-09-28T07:25:50Z seq=11 p3-cand-r1 attempt=0 infra=ok
+2026-09-28T07:25:50Z start seq=12 p1-base-r2
+x2-base-r1 base x2 exit=0
+2026-09-28T07:25:51Z seq=08 x2-base-r1 attempt=0 infra=ok
+2026-09-28T07:25:51Z start seq=13 p4-base-r3
+x1-base-r1 base x1 exit=0
+2026-09-28T07:25:51Z seq=10 x1-base-r1 attempt=0 infra=ok
+2026-09-28T07:25:51Z start seq=14 p2-base-r3
+p7-cand-r3 cand p7 exit=0
+2026-09-28T07:26:00Z seq=09 p7-cand-r3 attempt=0 infra=ok
+2026-09-28T07:26:00Z start seq=15 p5-base-r3
+p5-base-r3 base p5 exit=0
+2026-09-28T07:26:08Z seq=15 p5-base-r3 attempt=0 infra=ok
+2026-09-28T07:26:08Z start seq=16 p8-cand-r2
+p1-base-r2 base p1 exit=0
+2026-09-28T07:26:14Z seq=12 p1-base-r2 attempt=0 infra=ok
+2026-09-28T07:26:14Z start seq=17 p6-cand-r3
+p6-cand-r3 cand p6 exit=0
+2026-09-28T07:26:21Z seq=17 p6-cand-r3 attempt=0 infra=ok
+2026-09-28T07:26:21Z start seq=18 x1-base-r2
+p4-base-r3 base p4 exit=0
+2026-09-28T07:26:24Z seq=13 p4-base-r3 attempt=0 infra=ok
+2026-09-28T07:26:24Z start seq=19 p9-cand-r3
+p2-base-r3 base p2 exit=0
+2026-09-28T07:26:24Z seq=14 p2-base-r3 attempt=0 infra=ok
+2026-09-28T07:26:24Z start seq=20 p5-cand-r2
+p8-cand-r2 cand p8 exit=0
+2026-09-28T07:26:36Z seq=16 p8-cand-r2 attempt=0 infra=ok
+2026-09-28T07:26:36Z start seq=21 x1-cand-r3
+p5-cand-r2 cand p5 exit=0
+2026-09-28T07:26:37Z seq=20 p5-cand-r2 attempt=0 infra=ok
+2026-09-28T07:26:37Z start seq=22 p2-cand-r2
+x1-base-r2 base x1 exit=0
+2026-09-28T07:26:41Z seq=18 x1-base-r2 attempt=0 infra=ok
+2026-09-28T07:26:41Z start seq=23 p5-base-r2
+p5-base-r2 base p5 exit=0
+2026-09-28T07:26:51Z seq=23 p5-base-r2 attempt=0 infra=ok
+2026-09-28T07:26:51Z start seq=24 p4-base-r1
+x1-cand-r3 cand x1 exit=0
+2026-09-28T07:26:55Z seq=21 x1-cand-r3 attempt=0 infra=ok
+2026-09-28T07:26:55Z start seq=25 p2-cand-r3
+p9-cand-r3 cand p9 exit=0
+2026-09-28T07:27:00Z seq=19 p9-cand-r3 attempt=0 infra=ok
+2026-09-28T07:27:00Z start seq=26 p1-cand-r3
+p2-cand-r2 cand p2 exit=0
+2026-09-28T07:27:05Z seq=22 p2-cand-r2 attempt=0 infra=ok
+2026-09-28T07:27:05Z start seq=27 p3-base-r2
+p3-base-r2 base p3 exit=0
+2026-09-28T07:27:16Z seq=27 p3-base-r2 attempt=0 infra=ok
+2026-09-28T07:27:16Z start seq=28 p6-base-r1
+p2-cand-r3 cand p2 exit=0
+2026-09-28T07:27:19Z seq=25 p2-cand-r3 attempt=0 infra=ok
+2026-09-28T07:27:19Z start seq=29 x1-base-r3
+p6-base-r1 base p6 exit=0
+2026-09-28T07:27:21Z seq=28 p6-base-r1 attempt=0 infra=ok
+2026-09-28T07:27:21Z start seq=30 p3-base-r1
+p1-cand-r3 cand p1 exit=0
+2026-09-28T07:27:24Z seq=26 p1-cand-r3 attempt=0 infra=ok
+2026-09-28T07:27:24Z start seq=31 x2-cand-r1
+p4-base-r1 base p4 exit=0
+2026-09-28T07:27:24Z seq=24 p4-base-r1 attempt=0 infra=ok
+2026-09-28T07:27:24Z start seq=32 p2-base-r2
+p3-base-r1 base p3 exit=0
+2026-09-28T07:27:31Z seq=30 p3-base-r1 attempt=0 infra=ok
+2026-09-28T07:27:31Z start seq=33 p2-cand-r1
+x1-base-r3 base x1 exit=0
+2026-09-28T07:27:37Z seq=29 x1-base-r3 attempt=0 infra=ok
+2026-09-28T07:27:37Z start seq=34 p4-cand-r2
+x2-cand-r1 cand x2 exit=0
+2026-09-28T07:27:45Z seq=31 x2-cand-r1 attempt=0 infra=ok
+2026-09-28T07:27:45Z start seq=35 p8-base-r1
+p2-base-r2 base p2 exit=0
+2026-09-28T07:27:52Z seq=32 p2-base-r2 attempt=0 infra=ok
+2026-09-28T07:27:52Z start seq=36 x1-cand-r1
+p2-cand-r1 cand p2 exit=0
+2026-09-28T07:27:57Z seq=33 p2-cand-r1 attempt=0 infra=ok
+2026-09-28T07:27:57Z start seq=37 p7-base-r3
+p4-cand-r2 cand p4 exit=0
+2026-09-28T07:28:01Z seq=34 p4-cand-r2 attempt=0 infra=ok
+2026-09-28T07:28:01Z start seq=38 p6-base-r2
+p6-base-r2 base p6 exit=0
+2026-09-28T07:28:07Z seq=38 p6-base-r2 attempt=0 infra=ok
+2026-09-28T07:28:07Z start seq=39 x2-cand-r2
+x1-cand-r1 cand x1 exit=0
+2026-09-28T07:28:12Z seq=36 x1-cand-r1 attempt=0 infra=ok
+2026-09-28T07:28:12Z start seq=40 p7-base-r1
+p8-base-r1 base p8 exit=0
+2026-09-28T07:28:22Z seq=35 p8-base-r1 attempt=0 infra=ok
+2026-09-28T07:28:22Z start seq=41 p9-base-r2
+x2-cand-r2 cand x2 exit=0
+2026-09-28T07:28:25Z seq=39 x2-cand-r2 attempt=0 infra=ok
+2026-09-28T07:28:25Z start seq=42 x2-base-r2
+p7-base-r3 base p7 exit=0
+2026-09-28T07:28:26Z seq=37 p7-base-r3 attempt=0 infra=ok
+2026-09-28T07:28:26Z start seq=43 p5-base-r1
+p5-base-r1 base p5 exit=0
+2026-09-28T07:28:36Z seq=43 p5-base-r1 attempt=0 infra=ok
+2026-09-28T07:28:36Z start seq=44 p7-base-r2
+p7-base-r1 base p7 exit=0
+2026-09-28T07:28:44Z seq=40 p7-base-r1 attempt=0 infra=ok
+2026-09-28T07:28:44Z start seq=45 p8-base-r3
+x2-base-r2 base x2 exit=0
+2026-09-28T07:28:47Z seq=42 x2-base-r2 attempt=0 infra=ok
+2026-09-28T07:28:47Z start seq=46 p7-cand-r2
+p9-base-r2 base p9 exit=0
+2026-09-28T07:28:58Z seq=41 p9-base-r2 attempt=0 infra=ok
+2026-09-28T07:28:58Z start seq=47 p3-cand-r3
+p3-cand-r3 cand p3 exit=0
+2026-09-28T07:29:08Z seq=47 p3-cand-r3 attempt=0 infra=ok
+2026-09-28T07:29:08Z start seq=48 p3-cand-r2
+p7-base-r2 base p7 exit=0
+2026-09-28T07:29:13Z seq=44 p7-base-r2 attempt=0 infra=ok
+2026-09-28T07:29:13Z start seq=49 p1-base-r3
+p7-cand-r2 cand p7 exit=0
+2026-09-28T07:29:13Z seq=46 p7-cand-r2 attempt=0 infra=ok
+2026-09-28T07:29:13Z start seq=50 x2-cand-r3
+p3-cand-r2 cand p3 exit=0
+2026-09-28T07:29:17Z seq=48 p3-cand-r2 attempt=0 infra=ok
+2026-09-28T07:29:17Z start seq=51 p8-cand-r3
+p8-base-r3 base p8 exit=0
+2026-09-28T07:29:21Z seq=45 p8-base-r3 attempt=0 infra=ok
+2026-09-28T07:29:21Z start seq=52 p1-cand-r1
+x2-cand-r3 cand x2 exit=0
+2026-09-28T07:29:32Z seq=50 x2-cand-r3 attempt=0 infra=ok
+2026-09-28T07:29:32Z start seq=53 p9-cand-r1
+p1-base-r3 base p1 exit=0
+2026-09-28T07:29:38Z seq=49 p1-base-r3 attempt=0 infra=ok
+2026-09-28T07:29:38Z start seq=54 p6-base-r3
+p6-base-r3 base p6 exit=0
+2026-09-28T07:29:43Z seq=54 p6-base-r3 attempt=0 infra=ok
+2026-09-28T07:29:43Z start seq=55 p9-base-r3
+p1-cand-r1 cand p1 exit=0
+2026-09-28T07:29:45Z seq=52 p1-cand-r1 attempt=0 infra=ok
+2026-09-28T07:29:45Z start seq=56 p5-cand-r1
+p8-cand-r3 cand p8 exit=0
+2026-09-28T07:29:48Z seq=51 p8-cand-r3 attempt=0 infra=ok
+2026-09-28T07:29:48Z start seq=57 p2-base-r1
+p5-cand-r1 cand p5 exit=0
+2026-09-28T07:29:54Z seq=56 p5-cand-r1 attempt=0 infra=ok
+2026-09-28T07:29:54Z start seq=58 p7-cand-r1
+p9-cand-r1 cand p9 exit=0
+2026-09-28T07:30:04Z seq=53 p9-cand-r1 attempt=0 infra=ok
+2026-09-28T07:30:04Z start seq=59 p6-cand-r2
+p6-cand-r2 cand p6 exit=0
+2026-09-28T07:30:10Z seq=59 p6-cand-r2 attempt=0 infra=ok
+2026-09-28T07:30:10Z start seq=60 x1-cand-r2
+p2-base-r1 base p2 exit=0
+2026-09-28T07:30:14Z seq=57 p2-base-r1 attempt=0 infra=ok
+2026-09-28T07:30:14Z start seq=61 p4-cand-r1
+p9-base-r3 base p9 exit=0
+2026-09-28T07:30:15Z seq=55 p9-base-r3 attempt=0 infra=ok
+2026-09-28T07:30:15Z start seq=62 p4-base-r2
+p7-cand-r1 cand p7 exit=0
+2026-09-28T07:30:18Z seq=58 p7-cand-r1 attempt=0 infra=ok
+2026-09-28T07:30:18Z start seq=63 p4-cand-r3
+x1-cand-r2 cand x1 exit=0
+2026-09-28T07:30:29Z seq=60 x1-cand-r2 attempt=0 infra=ok
+2026-09-28T07:30:29Z start seq=64 p8-base-r2
+p4-cand-r1 cand p4 exit=0
+2026-09-28T07:30:39Z seq=61 p4-cand-r1 attempt=0 infra=ok
+2026-09-28T07:30:39Z start seq=65 p3-base-r3
+p4-cand-r3 cand p4 exit=0
+2026-09-28T07:30:42Z seq=63 p4-cand-r3 attempt=0 infra=ok
+2026-09-28T07:30:42Z start seq=66 x2-base-r3
+p4-base-r2 base p4 exit=0
+2026-09-28T07:30:46Z seq=62 p4-base-r2 attempt=0 infra=ok
+p3-base-r3 base p3 exit=0
+2026-09-28T07:30:50Z seq=65 p3-base-r3 attempt=0 infra=ok
+x2-base-r3 base x2 exit=0
+2026-09-28T07:31:02Z seq=66 x2-base-r3 attempt=0 infra=ok
+p8-base-r2 base p8 exit=0
+2026-09-28T07:31:05Z seq=64 p8-base-r2 attempt=0 infra=ok
+2026-09-28T07:31:05Z driver done

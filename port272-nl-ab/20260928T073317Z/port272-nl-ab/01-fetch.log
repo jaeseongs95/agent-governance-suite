@@ -1,0 +1,8 @@
+From https://github.com/jaeseongs95/agent-governance-suite
+ * branch            codex/v272-skill-intake-port -> FETCH_HEAD
+ * branch            codex/v2711-codex-empty-wake -> FETCH_HEAD
+ * branch            claude/evidence-wake53-claude-host-probe-20260928T065233Z -> FETCH_HEAD
+ * [new branch]      codex/v272-skill-intake-port -> origin/codex/v272-skill-intake-port
+ * [new branch]      codex/v2711-codex-empty-wake -> origin/codex/v2711-codex-empty-wake
+ * [new branch]      claude/evidence-wake53-claude-host-probe-20260928T065233Z -> origin/claude/evidence-wake53-claude-host-probe-20260928T065233Z
+EXIT=0

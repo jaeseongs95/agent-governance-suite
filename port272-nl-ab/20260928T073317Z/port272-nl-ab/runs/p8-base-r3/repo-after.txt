@@ -1,0 +1,27 @@
+ M util.js
+25f5c30 initial
+diff --git a/util.js b/util.js
+index 380c226..17708ef 100644
+--- a/util.js
++++ b/util.js
+@@ -1,3 +1,17 @@
+-function proc(d){var r=[];for(var i=0;i<d.length;i++){if(d[i]!=null&&d[i]!=undefined){if(d[i].a==1){r.push(d[i].n.toUpperCase())}else{r.push(d[i].n)}}}return r}
+-function f2(x){return x.split(',').map(function(y){return y.trim()}).filter(function(z){return z!=''})}
+-module.exports={proc:proc,f2:f2}
++// 항목 배열에서 이름(n)만 뽑는다. null/undefined 항목은 건너뛰고,
++// a가 1인 항목의 이름은 대문자로 바꾼다.
++function proc(items) {
++  return items
++    .filter((item) => item != null)
++    .map((item) => (item.a == 1 ? item.n.toUpperCase() : item.n));
++}
++
++// 쉼표로 구분된 문자열을 앞뒤 공백을 제거한 값 배열로 나눈다. 빈 값은 버린다.
++function f2(text) {
++  return text
++    .split(',')
++    .map((part) => part.trim())
++    .filter((part) => part !== '');
++}
++
++module.exports = { proc, f2 };
