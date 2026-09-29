@@ -1,0 +1,9 @@
+01-install	0	pnpm install --frozen-lockfile
+02-bundle-check	0	pnpm bundle:check
+03-lint	0	pnpm lint
+04-build	0	pnpm build
+05-test	0	pnpm test
+06-claude-check	0	pnpm claude:check
+07-diff-check	0	git diff --check
+08-diff-check-range	0	git diff --check 3501e7c5fe998a554e8fa3e3ab795b469dccf2e8 HEAD
+done

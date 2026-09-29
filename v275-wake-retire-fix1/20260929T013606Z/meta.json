@@ -1,0 +1,13 @@
+{
+  "task": "AGS 2.7.5 fix1: pin latest-birth retirement counterexample (T-2), resumed-host note (I-2)",
+  "previousHead": "3501e7c5fe998a554e8fa3e3ab795b469dccf2e8",
+  "head": "44235fb5c0fc7efab69c989df4d8eff3975af26f",
+  "headTree": "790a117efbf2fb41317c1b23e4abcbad58d95373",
+  "audit": "claude/evidence-v275-audit-20260929T012510Z",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux 6.18.44-fc-v37 x86_64",
+  "stampUtc": "20260929T013606Z",
+  "redaction": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 0, "email": 0, "home-path": 14, "root-home": 0, "ipv4": 0},
+  "redactionSecondPass": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 0, "email": 0, "home-path": 0, "root-home": 0, "ipv4": 0}
+}

@@ -1,0 +1,68 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/agent-governance-suite
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs (36 tests | 1 failed) 2042ms
+   × an expired latch of a live, quiet birth without activity stays latched: other-transport 26ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 115 passed (116)
+   Start at  01:32:35
+   Duration  17.31s (tests 93%, transform 4%, import 3%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > an expired latch of a live, quiet birth without activity stays latched: other-transport
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  [Object: null prototype] {
+    attempt_id: '95d4821d-13b5-4cbe-ace7-34b9dd1f4edc',
+    birth_generation: '2026-09-29T01:32:36.822Z',
+    consumed_at: null,
+    dispatch_epoch: 1,
+...
+    relay_id: 'relay-1',
++   retired_at: '2026-09-29T02:42:36.822Z',
+-   retired_at: null,
+    retry_count: 0,
+    retry_not_before: null,
+    session_id: 'wake-target',
+    started_at: '2026-09-29T01:32:36.823Z',
++   state: 'expired-unobserved',
+-   state: 'submitted',
+    transport: 'portable'
+  }
+
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "liveness-first-nonce-abcdefghijklmnop",
+    "nonce_digest": "6344260619382d10adc358ee3bb818bb815dad34a4c8ff0f007d19e4a966db3f",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T01:32:36.824Z",
+    "relay_id": "relay-1",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T02:42:36.822Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "wake-target",
+    "started_at": "2026-09-29T01:32:36.823Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "portable",
+  }
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:115:12
+    113|     f.store.prune(at);
+    114|     if (kind === 'same-generation') assert.equal(f.store.reserveManage…
+    115|     assert.deepEqual(attemptRow(f.store, old), before);
+       |            ^
+    116|   }
+    117|   assert.equal(f.store.presence(target, later).startedAt, old.generati…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
