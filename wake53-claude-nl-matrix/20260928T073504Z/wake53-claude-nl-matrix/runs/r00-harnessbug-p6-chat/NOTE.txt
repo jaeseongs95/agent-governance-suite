@@ -1,0 +1,1 @@
+r00: harness bug - prompt positional arg swallowed by variadic --allowedTools; rerun as r01

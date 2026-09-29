@@ -1,0 +1,47 @@
+{
+ "runid": "r01-p6-chat-1",
+ "category": "chat",
+ "requestedSessionId": "ba7d8054-5561-45f1-92e7-cd1003a62a62",
+ "exit": 1,
+ "init": null,
+ "hooks": [
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  }
+ ],
+ "skillTriggerSuggestions": [],
+ "skillCalls": [],
+ "mcpWorkflowCalls": [],
+ "mcpCalls": [],
+ "toolOrder": [],
+ "toolErrors": [],
+ "permissionDenials": [],
+ "apiErrors": [],
+ "result": null,
+ "assistantTurns": 0,
+ "sessionIdMatches": null
+}

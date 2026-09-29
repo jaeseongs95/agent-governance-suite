@@ -1,0 +1,1173 @@
+{
+ "runid": "r06-p5a-prose-1",
+ "category": "explicit-skill",
+ "requestedSessionId": "8f5bc1e3-aeff-4c48-995f-171df75007fd",
+ "exit": 1,
+ "init": {
+  "session_id": "8f5bc1e3-aeff-4c48-995f-171df75007fd",
+  "model": "claude-opus-5-5",
+  "permissionMode": "acceptEdits",
+  "cwd": "/tmp/nlm/r06-p5a-prose-1",
+  "plugins": [
+   "agent-governance-suite@inline@2.7.1",
+   "agents-md@builtin",
+   "telemetry@builtin"
+  ],
+  "mcp_servers": [
+   {
+    "name": "plugin:agent-governance-suite:agent-governance-suite",
+    "status": "connected",
+    "source": "plugin"
+   }
+  ],
+  "toolCount": 67,
+  "agsSkillCount": 20,
+  "skillCount": 53
+ },
+ "hooks": [
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Skill",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Read",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"세션 현황판: 이 요청에서 무엇을 하는지 한 줄로 먼저 적어야 합니다. update_session_status를 {\\\"schemaVersion\\\":\\\"1.0.0\\\",\\\"summary\\\":\\\"<무엇을 · 어디서(브랜치) · 다음 외부 작업>\\\"}로 호출한 뒤 다시 시도하세요. 같은 작업이 이어지면 같은 문장도 됩니다. 도구를 쓸 수 없으면 그대로 다시 시도하세요. 다음 시도는 허용됩니다.\"}}",
+   "stderr": "",
+   "permissionDecision": "deny",
+   "permissionDecisionReason": "세션 현황판: 이 요청에서 무엇을 하는지 한 줄로 먼저 적어야 합니다. update_session_status를 {\"schemaVersion\":\"1.0.0\",\"summary\":\"<무엇을 · 어디서(브랜치) · 다음 외부 작업>\"}로 호출한 뒤 다시 시도하세요. 같은 작업이 이어지면 같은 문장도 됩니다. 도구를 쓸 수 없으면 그대로 다시 시도하세요. 다음 시도는 허용됩니다."
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:ToolSearch",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\",\"updatedInput\":{\"schemaVersion\":\"1.0.0\",\"summary\":\"한국어 문장 한 개 다듬기 · korean-prose-editor 스킬 · 파일 변경·외부 작업 없음\",\"_sessionBinding\":{\"host\":\"claude-code\",\"sessionId\":\"8f5bc1e3-aeff-4c48-995f-171df75007fd\"}}}}",
+   "stderr": "",
+   "permissionDecision": "allow"
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Read",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Write",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Write",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Agent",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Agent",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Agent",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Read",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Read",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Read",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Read",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Read",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Write",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Write",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Write",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Write",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Edit",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Edit",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Agent",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Agent",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Write",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Write",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Read",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Agent",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Write",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Write",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PreToolUse:Bash",
+   "hook_event": "PreToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "PostToolUse:Bash",
+   "hook_event": "PostToolUse",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  }
+ ],
+ "skillTriggerSuggestions": [],
+ "skillCalls": [
+  {
+   "skill": "agent-governance-suite:korean-prose-editor",
+   "args": "이 문서는 실험을 위해서 작성되어진 문서이며, 우리는 이것을 통해서 스킬이 잘 선택되는지를 확인하는 것을 하고자 한다."
+  }
+ ],
+ "mcpWorkflowCalls": [],
+ "mcpCalls": [
+  {
+   "name": "update_session_status",
+   "input": "{\"schemaVersion\":\"1.0.0\",\"summary\":\"한국어 문장 한 개 다듬기 · korean-prose-editor 스킬 · 파일 변경·외부 작업 없음\"}"
+  }
+ ],
+ "toolOrder": [
+  "Skill(agent-governance-suite:korean-prose-editor)",
+  "Read",
+  "Bash[cd /tmp/v53/claude-plugin/skills/korean-prose-editor && ls -R && wc -l reference]",
+  "ToolSearch",
+  "ags:update_session_status",
+  "Bash[cd /tmp/v53/claude-plugin/skills/korean-prose-editor && ls -R && wc -l reference]",
+  "Bash[cd /tmp/v53/claude-plugin/skills/korean-prose-editor && for f in references/cont]",
+  "Bash[cd /tmp/v53/claude-plugin/skills/korean-prose-editor && tail -n +1 references/co]",
+  "Read",
+  "Bash[cd /tmp/v53/claude-plugin/skills/korean-prose-editor && cat contracts/finalizati]",
+  "Bash[S=/tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/sc]",
+  "Write",
+  "Bash[cd /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/s]",
+  "Bash[for i in 1 2 3; do cat /proc/sys/kernel/random/uuid; done]",
+  "Bash[node -e 'const c=require(\"crypto\");console.log([1,2,3].map(()=>c.randomUUID()).j]",
+  "Agent",
+  "Bash[cd /tmp/v53/claude-plugin/skills/korean-prose-editor; cat references/selection-p]",
+  "Bash[cd /tmp/v53/claude-plugin/skills/korean-prose-editor && cat references/selection]",
+  "Bash[cd /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/s]",
+  "Bash[cd /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/s]",
+  "Agent",
+  "Bash[S=/tmp/v53/claude-plugin/skills/korean-prose-editor; D=/tmp/claude-0/-tmp-nlm-r0]",
+  "Bash[cd /tmp/v53/claude-plugin/skills/korean-prose-editor && cat references/editing-p]",
+  "Bash[cd /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/s]",
+  "Read",
+  "Read",
+  "Read",
+  "Read",
+  "Read",
+  "Bash[grep -nE \"^export\" /tmp/v53/claude-plugin/skills/korean-prose-editor/scripts/lib]",
+  "Write",
+  "Write",
+  "Bash[sed -n 1,12p /tmp/v53/claude-plugin/skills/korean-prose-editor/scripts/lib.mjs; ]",
+  "Edit",
+  "Bash[node /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd]",
+  "Agent",
+  "Bash[cd /tmp/v53/claude-plugin/skills/korean-prose-editor; cat references/verificatio]",
+  "Bash[cd /tmp/v53/claude-plugin/skills/korean-prose-editor && cat references/verificat]",
+  "Bash[cd /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/s]",
+  "Bash[cd /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/s]",
+  "Bash[cd /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/s]",
+  "Write",
+  "Read",
+  "Bash[node /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd]",
+  "Write",
+  "Bash[cd /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/s]",
+  "Bash[node /tmp/v53/claude-plugin/skills/korean-prose-editor/scripts/finalize.mjs < /t]",
+  "Bash[cd /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/s]",
+  "Bash[node /tmp/v53/claude-plugin/skills/korean-prose-editor/scripts/finalize.mjs < /t]"
+ ],
+ "toolErrors": [
+  "PreToolUse:Bash hook error: 세션 현황판: 이 요청에서 무엇을 하는지 한 줄로 먼저 적어야 합니다. update_session_status를 {\"schemaVersion\":\"1.0.0\",\"summary\":\"<무엇을 · 어디서(브랜치) · 다음 외부 작업>\"}로 호출한 뒤 다시 시도하세요. 같은 작업이 이어지면 같은 문장도 됩니다. 도구를 쓸 수 없으면 그대로 다시 시도하세요. 다음 시도는 허용됩니다.",
+  "Contains simple_expansion",
+  "Parser skipped input between top-level statements",
+  "cat in '/proc/sys/kernel/random/uuid' was blocked. For security, Claude Code may only concatenate files from the allowed working directories for this session: '/tmp/nlm/r06-p5a-prose-1'.",
+  "Contains simple_expansion",
+  "Contains simple_expansion",
+  "Contains simple_expansion",
+  "Contains simple_expansion",
+  "Contains brace with quote character (expansion obfuscation)",
+  "Input redirection from 'request.json' requires manual approval: the file it names depends on glob expansion or a directory change in the same command.",
+  "Exit code 1\n/bin/bash: line 1: /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/scratchpad/kpe/request.json: No such file or directory"
+ ],
+ "permissionDenials": [
+  {
+   "tool": "Bash",
+   "input": "{\"command\":\"cd /tmp/v53/claude-plugin/skills/korean-prose-editor && ls -R && wc -l references/* scripts/* 2>/dev/null\",\"description\":\"List skill files and sizes\"}"
+  },
+  {
+   "tool": "Bash",
+   "input": "{\"command\":\"cd /tmp/v53/claude-plugin/skills/korean-prose-editor && for f in references/contracts.md references/selection-policy.md references/editing-policy.md references/verification-rubric.md refer"
+  },
+  {
+   "tool": "Bash",
+   "input": "{\"command\":\"S=/tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/scratchpad/kpe; K=/tmp/v53/claude-plugin/skills/korean-prose-editor; mkdir -p $S && cd $S && cat > prep.mjs <<"
+  },
+  {
+   "tool": "Bash",
+   "input": "{\"command\":\"for i in 1 2 3; do cat /proc/sys/kernel/random/uuid; done\",\"description\":\"Generate three actor UUIDs\"}"
+  },
+  {
+   "tool": "Bash",
+   "input": "{\"command\":\"cd /tmp/v53/claude-plugin/skills/korean-prose-editor; cat references/selection-policy.md; cat references/contracts.md; cat contracts/selection-work-product.v1.schema.json contracts/glossar"
+  },
+  {
+   "tool": "Bash",
+   "input": "{\"command\":\"S=/tmp/v53/claude-plugin/skills/korean-prose-editor; D=/tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/scratchpad/kpe; cat $S/references/editing-policy.md; echo"
+  },
+  {
+   "tool": "Bash",
+   "input": "{\"command\":\"cd /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/scratchpad/kpe && for f in source.txt manifest.json units.json selection.json; do echo \\\"--$f\\\"; cat $f; echo"
+  },
+  {
+   "tool": "Bash",
+   "input": "{\"command\":\"cd /tmp/v53/claude-plugin/skills/korean-prose-editor; cat references/verification-rubric.md; echo ----; cat references/contracts.md; echo ----; cat contracts/verification-work-product.v1.s"
+  },
+  {
+   "tool": "Bash",
+   "input": "{\"command\":\"cd /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/scratchpad/kpe && cat > verify-write.mjs <<'EOF'\\nimport fs from \\\"node:fs\\\";\\nimport { sha256, stableJson } "
+  },
+  {
+   "tool": "Bash",
+   "input": "{\"command\":\"cd /tmp/claude-0/-tmp-nlm-r06-p5a-prose-1/8f5bc1e3-aeff-4c48-995f-171df75007fd/scratchpad/kpe && node build-request.mjs && node /tmp/v53/claude-plugin/skills/korean-prose-editor/scripts/fi"
+  }
+ ],
+ "apiErrors": [],
+ "result": {
+  "subtype": "error_max_turns",
+  "num_turns": 21,
+  "is_error": true,
+  "stop_reason": "tool_use",
+  "terminal_reason": "max_turns",
+  "duration_ms": 178329,
+  "total_cost_usd": 1.6595723999999996,
+  "text": ""
+ },
+ "assistantTurns": 59,
+ "sessionIdMatches": true
+}

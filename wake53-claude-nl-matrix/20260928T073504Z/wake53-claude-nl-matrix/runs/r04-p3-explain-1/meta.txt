@@ -1,0 +1,17 @@
+runid=r04-p3-explain-1
+category=explain
+fixture=none
+cwd=/tmp/nlm/r04-p3-explain-1
+session_id=fb18ad1a-5d93-4790-9392-6c17fe15b92e
+start_utc=2026-09-28T07:24:12Z
+cmd=timeout 1200 claude -p --plugin-dir /tmp/v53/claude-plugin --output-format stream-json --verbose --max-turns 20 --model claude-opus-5-5 --permission-mode acceptEdits --session-id fb18ad1a-5d93-4790-9392-6c17fe15b92e --allowedTools Bash\(node:\*\) Bash\(npm\ test:\*\) Bash\(npm\ run\ test:\*\) Read\(/tmp/v53/claude-plugin/\*\*\) Read\(//tmp/v53/claude-plugin/\*\*\) < prompt.txt   # prompt via stdin (variadic --allowedTools would swallow a positional prompt)
+--- pre git state
+remotes_count=0
+1c187bf init fixture
+exit=0
+end_utc=2026-09-28T07:24:27Z
+--- post git state
+remotes_count=0
+tags:
+1c187bf init fixture
+--- post diff vs fixture

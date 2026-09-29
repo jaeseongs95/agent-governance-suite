@@ -1,0 +1,27 @@
+diff --git a/cart.js b/cart.js
+index 1111111..2222222 100644
+--- a/cart.js
++++ b/cart.js
+@@ -1,12 +1,17 @@
+ function total(items, coupon) {
+   let sum = 0;
+-  for (const item of items) {
+-    sum += item.price * item.qty;
++  for (let i = 0; i <= items.length; i++) {
++    sum += items[i].price * items[i].qty;
+   }
+-  if (coupon && coupon.percent > 0 && coupon.percent <= 100) {
+-    sum = sum * (1 - coupon.percent / 100);
++  if (coupon) {
++    sum = sum - coupon.percent;
+   }
+-  return Math.round(sum * 100) / 100;
++  return sum;
+ }
+ 
+-module.exports = { total };
++function applyUserDiscount(userInput) {
++  return eval(userInput);
++}
++
++module.exports = { total, applyUserDiscount };

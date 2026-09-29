@@ -1,0 +1,112 @@
+{
+ "runid": "r01-p6-chat-1",
+ "category": "chat",
+ "requestedSessionId": "23472b4e-d4f5-4a4d-98da-21487418dc1e",
+ "exit": 0,
+ "init": {
+  "session_id": "23472b4e-d4f5-4a4d-98da-21487418dc1e",
+  "model": "claude-opus-5-5",
+  "permissionMode": "acceptEdits",
+  "cwd": "/tmp/nlm/r01-p6-chat-1",
+  "plugins": [
+   "agent-governance-suite@inline@2.7.1",
+   "agents-md@builtin",
+   "telemetry@builtin"
+  ],
+  "mcp_servers": [
+   {
+    "name": "plugin:agent-governance-suite:agent-governance-suite",
+    "status": "connected",
+    "source": "plugin"
+   }
+  ],
+  "toolCount": 67,
+  "agsSkillCount": 20,
+  "skillCount": 53
+ },
+ "hooks": [
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "Stop",
+   "hook_event": "Stop",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  }
+ ],
+ "skillTriggerSuggestions": [],
+ "skillCalls": [],
+ "mcpWorkflowCalls": [],
+ "mcpCalls": [],
+ "toolOrder": [],
+ "toolErrors": [],
+ "permissionDenials": [],
+ "apiErrors": [],
+ "result": {
+  "subtype": "success",
+  "num_turns": 1,
+  "is_error": false,
+  "stop_reason": "end_turn",
+  "terminal_reason": "completed",
+  "duration_ms": 5370,
+  "total_cost_usd": 0.131126,
+  "text": "안녕하세요! 수다 좋죠 😊\n\n기분이 어떠냐고 물어봐 주셔서 고마워요. 저는 사람처럼 하루를 보내는 건 아니지만, 이렇게 편하게 말 걸어 주시는 대화는 반가워요. 일 얘기로만 시작하지 않는 대화라 더 좋네요.\n\n오늘은 어떠세요? 9월 끝자락이라 날씨가 슬슬 선선해졌을 것 같은데, 요즘 어떻게 지내세요? 재미있는 일이 있었거나 그냥 떠오르는 얘기가 있으면 편하게 해 주세요."
+ },
+ "assistantTurns": 2,
+ "sessionIdMatches": true
+}

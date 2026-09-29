@@ -1,0 +1,35 @@
+runid=r02-p1-coding-1
+category=coding
+fixture=fib
+cwd=/tmp/nlm/r02-p1-coding-1
+session_id=18ee26de-dc34-4eaf-8a01-4c64534f8cff
+start_utc=2026-09-28T07:21:19Z
+cmd=timeout 1200 claude -p --plugin-dir /tmp/v53/claude-plugin --output-format stream-json --verbose --max-turns 20 --model claude-opus-5-5 --permission-mode acceptEdits --session-id 18ee26de-dc34-4eaf-8a01-4c64534f8cff --allowedTools Bash\(node:\*\) Bash\(npm\ test:\*\) Bash\(npm\ run\ test:\*\) Read\(/tmp/v53/claude-plugin/\*\*\) Read\(//tmp/v53/claude-plugin/\*\*\) < prompt.txt   # prompt via stdin (variadic --allowedTools would swallow a positional prompt)
+--- pre git state
+remotes_count=0
+e11a707 init fixture
+exit=0
+end_utc=2026-09-28T07:23:49Z
+--- post git state
+remotes_count=0
+tags:
+e11a707 init fixture
+ M fib.js
+--- post diff vs fixture
+diff --git a/fib.js b/fib.js
+index d2a0e21..c64a57e 100644
+--- a/fib.js
++++ b/fib.js
+@@ -1,6 +1,11 @@
++const memo = new Map();
++
+ function fib(n) {
+   if (n < 2) return n;
+-  return fib(n - 1) + fib(n - 2);
++  if (memo.has(n)) return memo.get(n);
++  const result = fib(n - 1) + fib(n - 2);
++  memo.set(n, result);
++  return result;
+ }
+ 
+ module.exports = { fib };

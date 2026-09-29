@@ -1,0 +1,17 @@
+runid=r03-p2-review-1
+category=review
+fixture=review
+cwd=/tmp/nlm/r03-p2-review-1
+session_id=04fe78e4-6f71-4c09-ac0c-47117e39a6e4
+start_utc=2026-09-28T07:23:49Z
+cmd=timeout 1200 claude -p --plugin-dir /tmp/v53/claude-plugin --output-format stream-json --verbose --max-turns 20 --model claude-opus-5-5 --permission-mode acceptEdits --session-id 04fe78e4-6f71-4c09-ac0c-47117e39a6e4 --allowedTools Bash\(node:\*\) Bash\(npm\ test:\*\) Bash\(npm\ run\ test:\*\) Read\(/tmp/v53/claude-plugin/\*\*\) Read\(//tmp/v53/claude-plugin/\*\*\) < prompt.txt   # prompt via stdin (variadic --allowedTools would swallow a positional prompt)
+--- pre git state
+remotes_count=0
+6d15cb8 init fixture
+exit=0
+end_utc=2026-09-28T07:24:12Z
+--- post git state
+remotes_count=0
+tags:
+6d15cb8 init fixture
+--- post diff vs fixture

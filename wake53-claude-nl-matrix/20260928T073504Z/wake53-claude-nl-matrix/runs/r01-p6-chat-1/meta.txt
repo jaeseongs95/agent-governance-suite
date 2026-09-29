@@ -1,0 +1,17 @@
+runid=r01-p6-chat-1
+category=chat
+fixture=none
+cwd=/tmp/nlm/r01-p6-chat-1
+session_id=23472b4e-d4f5-4a4d-98da-21487418dc1e
+start_utc=2026-09-28T07:20:55Z
+cmd=timeout 1200 claude -p --plugin-dir /tmp/v53/claude-plugin --output-format stream-json --verbose --max-turns 20 --model claude-opus-5-5 --permission-mode acceptEdits --session-id 23472b4e-d4f5-4a4d-98da-21487418dc1e --allowedTools Bash\(node:\*\) Bash\(npm\ test:\*\) Bash\(npm\ run\ test:\*\) Read\(/tmp/v53/claude-plugin/\*\*\) < prompt.txt   # prompt via stdin (variadic --allowedTools would swallow a positional prompt)
+--- pre git state
+remotes_count=0
+f9d6c9b init fixture
+exit=0
+end_utc=2026-09-28T07:21:02Z
+--- post git state
+remotes_count=0
+tags:
+f9d6c9b init fixture
+--- post diff vs fixture

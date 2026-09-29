@@ -1,0 +1,112 @@
+{
+ "runid": "r07-p5b-ponytail-1",
+ "category": "explicit-skill",
+ "requestedSessionId": "63a8e34b-26bd-4dd8-81f1-1b3579e92742",
+ "exit": 0,
+ "init": {
+  "session_id": "63a8e34b-26bd-4dd8-81f1-1b3579e92742",
+  "model": "claude-opus-5-5",
+  "permissionMode": "acceptEdits",
+  "cwd": "/tmp/nlm/r07-p5b-ponytail-1",
+  "plugins": [
+   "agent-governance-suite@inline@2.7.1",
+   "agents-md@builtin",
+   "telemetry@builtin"
+  ],
+  "mcp_servers": [
+   {
+    "name": "plugin:agent-governance-suite:agent-governance-suite",
+    "status": "connected",
+    "source": "plugin"
+   }
+  ],
+  "toolCount": 67,
+  "agsSkillCount": 20,
+  "skillCount": 53
+ },
+ "hooks": [
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "SessionStart:startup",
+   "hook_event": "SessionStart",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "UserPromptSubmit",
+   "hook_event": "UserPromptSubmit",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "subtype": "hook_response",
+   "hook_name": "Stop",
+   "hook_event": "Stop",
+   "exit_code": 0,
+   "outcome": "success",
+   "stdout": "",
+   "stderr": ""
+  }
+ ],
+ "skillTriggerSuggestions": [],
+ "skillCalls": [],
+ "mcpWorkflowCalls": [],
+ "mcpCalls": [],
+ "toolOrder": [],
+ "toolErrors": [],
+ "permissionDenials": [],
+ "apiErrors": [],
+ "result": {
+  "subtype": "success",
+  "num_turns": 1,
+  "is_error": false,
+  "stop_reason": "end_turn",
+  "terminal_reason": "completed",
+  "duration_ms": 5573,
+  "total_cost_usd": 0.145932,
+  "text": "```js\nfunction getActiveUserNames(users) {\n  return (users ?? []).filter(u => u.active === true && u.name != null).map(u => u.name);\n}\n```\n\n동작은 원래 함수와 같습니다.\n- `users`가 `null`이나 `undefined`이면 `[]`를 반환합니다.\n- `active === true`는 엄격 비교를 그대로 유지해서 `1`이나 `\"true\"` 같은 truthy 값은 포함되지 않습니다.\n- `u.name != null`은 `null`과 `undefined`만 걸러냅니다. 빈 문자열 `\"\"`은 결과에 남습니다.\n\n별도 테스트는 추가하지 않았습니다. 한 줄짜리 filter/map이어서 필요하지 않다고 판단했습니다."
+ },
+ "assistantTurns": 2,
+ "sessionIdMatches": true
+}

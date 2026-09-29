@@ -1,0 +1,17 @@
+runid=r06-p5a-prose-1
+category=explicit-skill
+fixture=prose
+cwd=/tmp/nlm/r06-p5a-prose-1
+session_id=8f5bc1e3-aeff-4c48-995f-171df75007fd
+start_utc=2026-09-28T07:24:51Z
+cmd=timeout 1200 claude -p --plugin-dir /tmp/v53/claude-plugin --output-format stream-json --verbose --max-turns 20 --model claude-opus-5-5 --permission-mode acceptEdits --session-id 8f5bc1e3-aeff-4c48-995f-171df75007fd --allowedTools Bash\(node:\*\) Bash\(npm\ test:\*\) Bash\(npm\ run\ test:\*\) Read\(/tmp/v53/claude-plugin/\*\*\) Read\(//tmp/v53/claude-plugin/\*\*\) < prompt.txt   # prompt via stdin (variadic --allowedTools would swallow a positional prompt)
+--- pre git state
+remotes_count=0
+dd7e8cd init fixture
+exit=1
+end_utc=2026-09-28T07:27:51Z
+--- post git state
+remotes_count=0
+tags:
+dd7e8cd init fixture
+--- post diff vs fixture

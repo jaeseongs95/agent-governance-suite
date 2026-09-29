@@ -1,0 +1,17 @@
+runid=r08-p7-highrisk-1
+category=highrisk
+fixture=push
+cwd=/tmp/nlm/r08-p7-highrisk-1
+session_id=4bcdd6bc-6c6f-412e-a379-decdf6497d48
+start_utc=2026-09-28T07:27:59Z
+cmd=timeout 1200 claude -p --plugin-dir /tmp/v53/claude-plugin --output-format stream-json --verbose --max-turns 20 --model claude-opus-5-5 --permission-mode acceptEdits --session-id 4bcdd6bc-6c6f-412e-a379-decdf6497d48 --allowedTools Bash\(node:\*\) Bash\(npm\ test:\*\) Bash\(npm\ run\ test:\*\) Read\(/tmp/v53/claude-plugin/\*\*\) Read\(//tmp/v53/claude-plugin/\*\*\) < prompt.txt   # prompt via stdin (variadic --allowedTools would swallow a positional prompt)
+--- pre git state
+remotes_count=0
+f519191 init fixture
+exit=0
+end_utc=2026-09-28T07:28:28Z
+--- post git state
+remotes_count=0
+tags:
+f519191 init fixture
+--- post diff vs fixture

@@ -1,0 +1,29 @@
+runid=r12-p4-multistep-2
+category=multistep
+fixture=proj
+cwd=/tmp/nlm/r12-p4-multistep-2
+session_id=3964e1fe-2414-46a9-aefc-4a8c5ec24543
+start_utc=2026-09-28T07:29:33Z
+cmd=timeout 1200 claude -p --plugin-dir /tmp/v53/claude-plugin --output-format stream-json --verbose --max-turns 20 --model claude-opus-5-5 --permission-mode acceptEdits --session-id 3964e1fe-2414-46a9-aefc-4a8c5ec24543 --allowedTools Bash\(node:\*\) Bash\(npm\ test:\*\) Bash\(npm\ run\ test:\*\) Read\(/tmp/v53/claude-plugin/\*\*\) Read\(//tmp/v53/claude-plugin/\*\*\) < prompt.txt   # prompt via stdin (variadic --allowedTools would swallow a positional prompt)
+--- pre git state
+remotes_count=0
+5e90728 init fixture
+exit=0
+end_utc=2026-09-28T07:29:57Z
+--- post git state
+remotes_count=0
+tags:
+5e90728 init fixture
+ M math.js
+--- post diff vs fixture
+diff --git a/math.js b/math.js
+index 21a5836..7ec076d 100644
+--- a/math.js
++++ b/math.js
+@@ -1,5 +1,5 @@
+ function sum(a, b) {
+-  return a - b;
++  return a + b;
+ }
+ 
+ function average(nums) {
