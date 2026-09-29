@@ -1,0 +1,71 @@
+0	0	71 skipped (71)	session message spool keeps stable IDs until ACK, enforces limits, and recovers stale relay leases
+0	0	71 skipped (71)	session message spool applies caller claim budgets before leasing messages
+0	0	71 skipped (71)	session message spool rejects newline, control, and unsafe host or session identifiers
+0	0	71 skipped (71)	session message spool allows only one unconsumed wake and suppresses wakes during a live claim
+0	0	71 skipped (71)	session message spool expires an unconsumed wake after one hour independently of message TTL
+0	0	71 skipped (71)	session message spool tracks portable presence generations and derives lifecycle state from the lease
+0	0	71 skipped (71)	session message spool does not let an explicit stale presence end offline the current generation
+0	0	71 skipped (71)	session message spool exposes presence lifecycle through vendor-neutral broker operations
+0	0	71 skipped (71)	session message spool leaves queued messages intact when an older broker rejects a new operation
+0	0	71 skipped (71)	session message spool locks claim selection before a competing connection can reserve a wake
+0	0	71 skipped (71)	session message spool keeps a recognized wake latched until claim consumes it atomically
+0	0	71 skipped (71)	session message spool caps the unacknowledged spool and expires messages
+0	0	71 skipped (71)	session message spool keeps delivery receipt metadata stable across lease redelivery and stops after ACK
+0	0	71 skipped (71)	session message spool atomically verifies a session-bound wake before claiming and rejects reuse or mismatch
+0	0	71 skipped (71)	session message spool allows one wake claim across two concurrent SQLite connections
+0	0	71 skipped (71)	session message spool defers one boundary, then keeps claiming new and redelivered messages until a new native input
+0	0	71 skipped (71)	session message spool migrates legacy messages without inventing unknown first-delivery evidence
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter fails fast on broker exit and leaves deadline cleanup to the state-directory owner
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter converges simultaneous startup requests on one broker
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter returns at the startup deadline while state preparation is still blocked and never spawns afterward
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter handles a state-preparation rejection that arrives after the startup deadline
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter preserves the top-level deadline reason when the event loop resumes after expiry
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter enforces an absolute request deadline while a TLS peer keeps sending partial data
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter rejects a reused PID when its process-start token changes
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter parses merged wake bells without hiding mixed user text
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter maps vendor input once and keeps mixed user text as a user-input observation
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter keeps injection and idle wake as separate arbitrary-host capabilities
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter denies observed subagents before session-bound message calls and binds collaboration validation observations
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter treats merged wake bells as internal only when every nonce is broker-recognized
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter backs off definite wake submission failures without exceeding ten minutes
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter keeps Codex wake deferred by default and makes visible queue wake explicit
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter resolves plugin queue settings only after explicit ENV and only for Codex
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter disables malformed plugin queue settings 0 with a bounded diagnostic
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter disables malformed plugin queue settings 1 with a bounded diagnostic
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter disables malformed plugin queue settings 2 with a bounded diagnostic
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter disables malformed plugin queue settings 3 with a bounded diagnostic
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter disables malformed plugin queue settings 4 with a bounded diagnostic
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter disables malformed plugin queue settings 5 with a bounded diagnostic
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter disables malformed plugin queue settings 6 with a bounded diagnostic
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter disables malformed plugin queue settings 7 with a bounded diagnostic
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter disables malformed plugin queue settings 8 with a bounded diagnostic
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter bounds plugin queue settings by bytes, permits false, and rejects read errors and relative paths
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter uses one plugin queue profile for packaged presence and relay until the next SessionStart
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter releases Codex wake reservations only for definite submission failures
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter retains Claude wake reservations whenever the inbox may have accepted bytes
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter serializes a Claude wake with next priority through an isolated inbox socket
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter does not dispatch a Claude wake when socket is missing
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter does not dispatch a Claude wake when token is missing
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter does not dispatch a Claude wake when both is missing
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter consumes queued peers at safe boundaries after restart without waking again after ACK
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter retries only a definitely failed wake whose reservation was released
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter serializes wake reservation and release through the TLS broker
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter stops relay acquisition after three consecutive unknown identity checks
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter does not pass Claude inbox credentials into the broker process
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter blocks only verified empty Codex wake prompts in the packaged hook
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter blocks a verified retired Codex wake marker without claiming the current body
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter keeps a maximum-size peer message within the hook context limit
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter escapes peer bodies inside one bounded JSON block
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter losslessly bounds an escape-heavy controls envelope
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter losslessly bounds an escape-heavy quotes envelope
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter losslessly bounds an escape-heavy backslashes envelope
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter starts the relay without spending a second claim budget during SessionStart
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter leaves Codex Stop messages queued for a supported context event
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter does not register an unsupported Codex Stop context hook
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter keeps packaged hook and relay entrypoints isolated
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter keeps Claude Code Stop context delivery enabled
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter binds message tools to host hook identity
+0	0	71 skipped (71)	TLS 1.3 broker and vendor-neutral adapter does not speak plaintext on the loopback port
+0	0	71 skipped (71)	session message MCP tools reports an overlong Unicode body as INVALID_INPUT before broker access
+0	0	71 skipped (71)	session message MCP tools validates bound send, status, and acknowledgement calls

@@ -1,0 +1,8 @@
+v272	terminal pruning cannot erase an outstanding old-generation backoff	rc=0	fsync=1040	passed:1114
+v272	outstanding terminal backoffs share the active wake budget	rc=0	fsync=1028	passed:1047
+v272	W05-r2 active budget overflow is an explicit rejection	rc=0	fsync=1027	passed:1229
+v272	W05-r2 terminal observation retention is bounded	rc=0	fsync=1031	passed:1067
+head	terminal pruning cannot erase an outstanding old-generation backoff	rc=0	fsync=1040	passed:1140
+head	outstanding terminal backoffs share the active wake budget	rc=0	fsync=1028	passed:1048
+head	W05-r2 active budget overflow is an explicit rejection	rc=0	fsync=1027	passed:1300
+head	W05-r2 terminal observation retention is bounded	rc=0	fsync=1031	passed:1228

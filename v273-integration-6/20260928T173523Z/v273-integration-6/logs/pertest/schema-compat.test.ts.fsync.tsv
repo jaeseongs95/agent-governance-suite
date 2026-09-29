@@ -1,0 +1,18 @@
+69	0	1 passed | 17 skipped (18)	2.7.x continuity schema compatibility preserves schema 2 state across reopen, restore, CAS, purge and epoch rotation
+75	0	1 passed | 17 skipped (18)	2.7.x continuity schema compatibility preserves schema 3 state across reopen, restore, CAS, purge and epoch rotation
+109	0	1 passed | 17 skipped (18)	2.7.x continuity schema compatibility creates new databases as schema 2
+71	0	1 passed | 17 skipped (18)	2.7.x continuity schema compatibility preserves receiver-owned tasks, refuses stale origins and keeps unrelated tasks usable
+67	0	1 passed | 17 skipped (18)	2.7.x continuity schema compatibility checks receiver state inside the checkpoint transaction after service preflight
+64	0	1 passed | 17 skipped (18)	2.7.x continuity schema compatibility detects a schema 3 receiver added by another connection after opening schema 2
+71	0	1 passed | 17 skipped (18)	2.7.x continuity schema compatibility protects receiver state added after snapshot cleanup preview
+71	0	1 passed | 17 skipped (18)	2.7.x continuity schema compatibility protects receiver state added after task cleanup preview
+63	0	1 passed | 17 skipped (18)	2.7.x continuity schema compatibility rejects incompatible schema 3 without repairing or downgrading it
+64	0	1 passed | 17 skipped (18)	2.7.x continuity schema compatibility rejects changed schema 3 defaults instead of changing task suppression implicitly
+120	0	1 passed | 17 skipped (18)	2.7.x continuity schema compatibility rejects missing schema 3 tables and future schemas without creating state
+52	0	1 passed | 17 skipped (18)	2.7.x continuity schema compatibility rejects damaged bytes without replacing the database
+58	0	1 passed | 17 skipped (18)	2.7.x continuity schema compatibility rejects a schema 3 database with valid column definitions and malformed pages
+92	0	1 passed | 17 skipped (18)	source STDIO continuity startup diagnostics keeps normal MCP usable when continuity is healthy
+94	0	1 passed | 17 skipped (18)	source STDIO continuity startup diagnostics keeps normal MCP usable when continuity is receiver
+84	0	1 passed | 17 skipped (18)	source STDIO continuity startup diagnostics keeps normal MCP usable when continuity is future
+90	0	1 passed | 17 skipped (18)	source STDIO continuity startup diagnostics keeps normal MCP usable when continuity is incompatible
+85	0	1 passed | 17 skipped (18)	source STDIO continuity startup diagnostics keeps normal MCP usable when continuity is corrupt

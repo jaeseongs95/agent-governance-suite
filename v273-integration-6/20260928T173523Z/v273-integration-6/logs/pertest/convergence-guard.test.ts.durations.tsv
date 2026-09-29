@@ -1,0 +1,66 @@
+300	passed	local MCP convergence guard opens an immutable root and rejects overlapping active scope even under a changed taskId
+224	passed	local MCP convergence guard requires a lease for every valid orchestrated plan
+168	passed	local MCP convergence guard rejects a signed plan produced from a different task envelope with the same taskId
+308	passed	local MCP convergence guard reuses root and lease bindings when compact claim and guarded start omit duplicate values
+178	passed	local MCP convergence guard preserves stale and expiry checks for planless guarded starts
+165	passed	local MCP convergence guard atomically consumes the first lease and rejects reuse
+174	passed	local MCP convergence guard does not issue another lease while the previous consumed attempt is still running
+167	passed	local MCP convergence guard preserves a pending frame-review gate when an older running attempt terminates
+245	passed	local MCP convergence guard records failed outcomes and allows target-only, evidence-bearing retries through ordinal 3
+155	passed	local MCP convergence guard gates a changed task contract before workflow start
+152	passed	local MCP convergence guard gates a changed control frame before workflow start
+146	passed	local MCP convergence guard accepts an independent review when frame drift is detected before any attempt starts
+219	passed	local MCP convergence guard rejects a repeated target and repeated evidence as NEW_EVIDENCE_REQUIRED
+404	passed	local MCP convergence guard records a rejected retry on the root without spending attempt budget
+300	passed	local MCP convergence guard records a stale-fingerprint rejection without burning its evidence
+318	passed	local MCP convergence guard reads a root stored before retry rejections existed
+270	passed	local MCP convergence guard refuses evidence burnt by an earlier rejection even in the next epoch
+271	passed	local MCP convergence guard persists roots, consumed budget, running attempts, and aborted outcomes across restart
+688	passed	local MCP convergence guard allows only one competing lease claim across two SQLite connections
+255	passed	local MCP convergence guard allows only one trusted observation claim across two SQLite connections
+148	passed	local MCP convergence guard keeps legacy plans compatible only outside strict MCP claim and start boundaries
+253	passed	local MCP convergence guard opens epoch 2 exactly once after a fresh independent semantics-preserving review
+226	passed	local MCP convergence guard does not open a new epoch when an otherwise preserving review has no target correction
+155	passed	local MCP convergence guard routes semantics-changing reviews through needs-user
+163	passed	local MCP convergence guard routes ambiguous reviews through panel
+159	passed	local MCP convergence guard does not let an independent review reopen a needs-user root without a new user contract
+327	passed	local MCP convergence guard genericized Korean attempt-6/7 regression gates changed evaluation meaning before attempt 7 starts
+213	passed	local MCP convergence guard returns the root to the user and requires a new user contract after a needs-approval attempt
+226	passed	local MCP convergence guard returns the root to the user and requires a new user contract after a needs-input attempt
+180	passed	local MCP convergence guard returns the root to the user and requires a new user contract after a needs-redesign attempt
+245	passed	local MCP convergence guard does not reset the attempt budget by reopening after a stop review
+155	passed	local MCP convergence guard treats a sibling-path rescope of the same write surface as the same root
+142	passed	local MCP convergence guard opens a second root for unrelated work that shares only the control frame
+180	passed	server-derived workspace identity checks nested checkout containers sharing a repository (.worktrees, reverse=false)
+177	passed	server-derived workspace identity checks nested checkout containers sharing a repository (.worktrees/*/src/candidate.ts, reverse=false)
+179	passed	server-derived workspace identity checks nested checkout containers sharing a repository (.worktrees, reverse=true)
+207	passed	server-derived workspace identity checks nested checkout containers sharing a repository (.worktrees/*/src/candidate.ts, reverse=true)
+228	passed	server-derived workspace identity blocks checkout containers across separate gitdir layouts (admin, nested=false)
+211	passed	server-derived workspace identity blocks checkout containers across separate gitdir layouts (.git, nested=false)
+194	passed	server-derived workspace identity blocks checkout containers across separate gitdir layouts (admin, nested=true)
+193	passed	server-derived workspace identity blocks checkout containers across separate gitdir layouts (.git, nested=true)
+183	passed	server-derived workspace identity rejects the same physical target under a changed workspace id and locator
+143	passed	server-derived workspace identity rejects the same physical target reached through a junction or symlink
+150	passed	server-derived workspace identity keeps open roots of different checkouts independent even on the same relative path
+299	passed	server-derived workspace identity keeps a gated root blocking its relative surface in every checkout of the repository
+175	passed	server-derived workspace identity blocks a non-Git folder or glob that holds a sibling checkout of a gated root's repository
+286	passed	server-derived workspace identity follows the write surface of a stored root after a review replaces its frame
+241	passed	server-derived workspace identity replaces the gated root of a deleted worktree from a sibling checkout
+257	passed	server-derived workspace identity lets two gated roots be replaced without blocking each other, but not widened or rescoped past a gate
+148	passed	server-derived workspace identity identifies a gitdir without commondir and rejects damaged Git evidence
+148	passed	server-derived workspace identity widens globs conservatively and rejects scope entries that are not paths
+279	passed	server-derived workspace identity backfills identities for stored roots without rewriting them and treats legacy URI scope as the whole workspace
+394	passed	server-derived workspace identity admits only one of two connections that open the same target at once
+231	passed	gated roots stored before identities existed does not let a sibling worktree bypass a gated legacy root whose checkout is deleted
+190	passed	gated roots stored before identities existed does not let a sibling worktree bypass a gated legacy root whose checkout is damaged
+184	passed	gated roots stored before identities existed does not store a guessed identity for a legacy root under a non-Git parent locator whose checkout is gone
+180	passed	gated roots stored before identities existed does not guess an identity for a legacy gated root on a target inside the nested worktree once that worktree is deleted
+178	passed	gated roots stored before identities existed does not guess an identity for a legacy gated root on the nested worktree itself as '.' once that worktree is deleted
+173	passed	gated roots stored before identities existed does not guess an identity for a legacy gated root on the nested worktree named from the oute… once that worktree is deleted
+156	passed	gated roots stored before identities existed backfills a legacy root whose target exists and leaves one whose target file was never written unresolved
+192	passed	gated roots stored before identities existed keeps a checkout observed for the current inputs after it is deleted, surface by surface
+300	passed	gated roots stored before identities existed does not reuse an identity observed for a replaced frame, and grants no legacy exception for it
+181	passed	gated roots stored before identities existed takes a checkout that appears above an observed non-Git surface only once the target itself exists
+184	passed	gated roots stored before identities existed follows a checkout created after a root was registered for a workspace that does not exist yet, and keeps it once it is deleted
+226	passed	gated roots stored before identities existed follows a checkout created after a root was registered for an absolute target below an existing ch…, and keeps it once it is deleted
+179	passed	gated roots stored before identities existed still replaces a gated legacy root of a deleted checkout when the same workspace is named

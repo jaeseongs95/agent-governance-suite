@@ -1,0 +1,27 @@
+29	passed	an expired submitted latch retires for a newer live generation and a new wake is reserved
+21	passed	an expired accepted-or-unknown latch retires for a newer live generation and a new wake is reserved
+19	passed	an expired started latch retires for a newer live generation and a new wake is reserved
+21	passed	an expired latch without activity or a newer live generation stays latched: same-generation
+17	passed	an expired latch without activity or a newer live generation stays latched: unreachable
+17	passed	an expired latch without activity or a newer live generation stays latched: ended-new-generation
+17	passed	an expired latch without activity or a newer live generation stays latched: older-live-instance
+19	passed	same-generation activity claim after expiry retires the latch after the grace
+19	passed	same-generation activity claimDeferred after expiry retires the latch after the grace
+17	passed	same-generation activity claimTurnEnd after expiry retires the latch after the grace
+15	passed	same-generation activity clearDeferred after expiry retires the latch after the grace
+16	passed	same-generation activity acknowledge after expiry retires the latch after the grace
+17	passed	same-generation activity observeNativeInput after expiry retires the latch after the grace
+14	passed	same-generation activity before-expiry after expiry retires the latch after the grace
+15	passed	retirement and re-reservation are idempotent across prunes and reopened connections
+33	passed	a verified late arrival of a retired nonce is recorded without claiming the current generation body
+28	passed	F1: a retired nonce mixed with the current nonce records late only and lets the current attempt claim its body
+24	passed	a retired nonce cannot be laundered by forged provenance or a mixed unknown nonce
+31	passed	K: an arrival whose hook receipt expired during a broker outage stays latched until retirement evidence, then a new wake delivers
+23	passed	C2: a same-millisecond rebirth gets a distinct generation, so the previous birth cannot claim
+28	passed	autoWake is advisory and reports each delivery path state
+28	passed	G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule
+18	passed	G: a newer message schema version is rejected without mutation
+169	passed	G: two independent processes racing the v2.7.2 upgrade both open one migrated schema
+160	passed	G: a failure inside the table rebuild rolls back columns, rows and schema version
+158	passed	crash right after a committed retirement leaves a retired row and one later reservation
+170	passed	two independent relay processes racing retirement create one active attempt

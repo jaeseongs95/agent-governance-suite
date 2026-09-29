@@ -1,0 +1,65 @@
+41	0	1 passed | 64 skipped (65)	expired original evidence retires only the exact old attempt, preserving historical time and pending body
+36	0	1 passed | 64 skipped (65)	history rejects target without changing any message state
+24	0	1 passed | 64 skipped (65)	history rejects attempt without changing any message state
+24	0	1 passed | 64 skipped (65)	history rejects receipt without changing any message state
+35	0	1 passed | 64 skipped (65)	history rejects nonce without changing any message state
+23	0	1 passed | 64 skipped (65)	history rejects current without changing any message state
+8	0	1 passed | 64 skipped (65)	history rejects no-current without changing any message state
+31	0	1 passed | 64 skipped (65)	history rejects no-late without changing any message state
+53	0	1 passed | 64 skipped (65)	history rejects submitted without changing any message state
+26	0	1 passed | 64 skipped (65)	history rejects already-consumed without changing any message state
+27	0	1 passed | 64 skipped (65)	history rejects bad-signature without changing any message state
+41	0	1 passed | 64 skipped (65)	history rejects digest without changing any message state
+35	0	1 passed | 64 skipped (65)	history rejects adapter without changing any message state
+22	0	1 passed | 64 skipped (65)	history rejects authority without changing any message state
+17	0	1 passed | 64 skipped (65)	history rejects invalid time relation before-start
+22	0	1 passed | 64 skipped (65)	history rejects invalid time relation after-late
+27	0	1 passed | 64 skipped (65)	history rejects invalid time relation expiry-at-late
+43	0	1 passed | 64 skipped (65)	history rejects invalid time relation not-expired
+54	0	1 passed | 64 skipped (65)	history rejects invalid time relation invalid-observed
+39	0	1 passed | 64 skipped (65)	history rejects invalid time relation invalid-late
+35	0	1 passed | 64 skipped (65)	history rejects invalid time relation invalid-start
+16	0	1 passed | 64 skipped (65)	reconstructs only the exact signed actor digest main/observed
+18	0	1 passed | 64 skipped (65)	reconstructs only the exact signed actor digest main/unknown
+36	0	1 passed | 64 skipped (65)	reconstructs only the exact signed actor digest unknown/observed
+26	0	1 passed | 64 skipped (65)	reconstructs only the exact signed actor digest unknown/unknown
+40	0	1 passed | 64 skipped (65)	a signed multiple-nonce observation cannot be approximated by a single old nonce
+25	0	1 passed | 64 skipped (65)	readonly trust rejection missing-db creates no database/key/receipt
+19	0	1 passed | 64 skipped (65)	readonly trust rejection missing-key creates no database/key/receipt
+23	0	1 passed | 64 skipped (65)	readonly trust rejection bad-key creates no database/key/receipt
+72	0	1 passed | 64 skipped (65)	readonly trust rejection missing-table creates no database/key/receipt
+30	0	1 passed | 64 skipped (65)	readonly trust rejection wrong-column creates no database/key/receipt
+46	0	1 passed | 64 skipped (65)	readonly trust respects initializer version compatibility without migrating version 0
+45	0	1 passed | 64 skipped (65)	readonly trust respects initializer version compatibility without migrating version 1
+25	0	1 passed | 64 skipped (65)	readonly trust respects initializer version compatibility without migrating version 2
+29	0	1 passed | 64 skipped (65)	readonly trust respects initializer version compatibility without migrating version 99
+40	0	1 passed | 64 skipped (65)	readonly version and receipt share a snapshot while an independent writer upgrades the version
+56	0	1 passed | 64 skipped (65)	broker rejects caller supplied nowMs
+35	0	1 passed | 64 skipped (65)	broker rejects caller supplied receipt
+6	0	1 passed | 64 skipped (65)	broker rejects caller supplied approved
+48	0	1 passed | 64 skipped (65)	broker rejects caller supplied observation
+25	0	1 passed | 64 skipped (65)	broker rejects caller supplied nonce
+37	0	1 passed | 64 skipped (65)	broker rejects caller supplied instanceId
+43	0	1 passed | 64 skipped (65)	two independent recovery processes CAS once; pending uses separate normal reserve/start
+52	0	1 passed | 64 skipped (65)	CAS rechecks generation after historical verification
+42	0	1 passed | 64 skipped (65)	CAS rechecks epoch after historical verification
+23	0	1 passed | 64 skipped (65)	CAS rechecks late after historical verification
+47	0	1 passed | 64 skipped (65)	CAS rechecks state after historical verification
+65	0	1 passed | 64 skipped (65)	historical observation retention counts from recovery application, not the old arrival
+34	0	1 passed | 64 skipped (65)	a reused instance with a new birth generation still retires only the old attempt
+31	0	1 passed | 64 skipped (65)	read-only verification holds one key/receipt snapshot while an independent writer rotates both
+36	0	1 passed | 64 skipped (65)	bundled public CLI forwards only IDs to the private broker and cannot repeat recovery
+35	0	1 passed | 64 skipped (65)	packaged CLI binds history to explicit broker state directory: prestarted
+21	0	1 passed | 64 skipped (65)	packaged CLI binds history to explicit broker state directory: client-ensure
+31	0	1 passed | 64 skipped (65)	packaged root CLI rejects unsupported trust schema without mutation: 0
+46	0	1 passed | 64 skipped (65)	packaged root CLI rejects unsupported trust schema without mutation: 1
+60	0	1 passed | 64 skipped (65)	packaged root CLI rejects unsupported trust schema without mutation: 2
+15	0	1 passed | 64 skipped (65)	packaged root CLI rejects unsupported trust schema without mutation: 99
+38	0	1 passed | 64 skipped (65)	packaged root CLI rejects unsupported trust schema without mutation: missing-table
+39	0	1 passed | 64 skipped (65)	packaged root CLI rejects unsupported trust schema without mutation: wrong-column
+43	0	1 passed | 64 skipped (65)	packaged claude CLI rejects unsupported trust schema without mutation: 0
+29	0	1 passed | 64 skipped (65)	packaged claude CLI rejects unsupported trust schema without mutation: 1
+20	0	1 passed | 64 skipped (65)	packaged claude CLI rejects unsupported trust schema without mutation: 2
+40	0	1 passed | 64 skipped (65)	packaged claude CLI rejects unsupported trust schema without mutation: 99
+61	0	1 passed | 64 skipped (65)	packaged claude CLI rejects unsupported trust schema without mutation: missing-table
+68	0	1 passed | 64 skipped (65)	packaged claude CLI rejects unsupported trust schema without mutation: wrong-column

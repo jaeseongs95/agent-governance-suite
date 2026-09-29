@@ -1,0 +1,27 @@
+29	0	1 passed | 26 skipped (27)	an expired submitted latch retires for a newer live generation and a new wake is reserved
+29	0	1 passed | 26 skipped (27)	an expired accepted-or-unknown latch retires for a newer live generation and a new wake is reserved
+29	0	1 passed | 26 skipped (27)	an expired started latch retires for a newer live generation and a new wake is reserved
+28	0	1 passed | 26 skipped (27)	an expired latch without activity or a newer live generation stays latched: same-generation
+23	0	1 passed | 26 skipped (27)	an expired latch without activity or a newer live generation stays latched: unreachable
+27	0	1 passed | 26 skipped (27)	an expired latch without activity or a newer live generation stays latched: ended-new-generation
+31	0	1 passed | 26 skipped (27)	an expired latch without activity or a newer live generation stays latched: older-live-instance
+29	0	1 passed | 26 skipped (27)	same-generation activity claim after expiry retires the latch after the grace
+29	0	1 passed | 26 skipped (27)	same-generation activity claimDeferred after expiry retires the latch after the grace
+29	0	1 passed | 26 skipped (27)	same-generation activity claimTurnEnd after expiry retires the latch after the grace
+29	0	1 passed | 26 skipped (27)	same-generation activity clearDeferred after expiry retires the latch after the grace
+29	0	1 passed | 26 skipped (27)	same-generation activity acknowledge after expiry retires the latch after the grace
+29	0	1 passed | 26 skipped (27)	same-generation activity observeNativeInput after expiry retires the latch after the grace
+27	0	1 passed | 26 skipped (27)	same-generation activity before-expiry after expiry retires the latch after the grace
+27	0	1 passed | 26 skipped (27)	retirement and re-reservation are idempotent across prunes and reopened connections
+68	0	1 passed | 26 skipped (27)	a verified late arrival of a retired nonce is recorded without claiming the current generation body
+56	0	1 passed | 26 skipped (27)	F1: a retired nonce mixed with the current nonce records late only and lets the current attempt claim its body
+52	0	1 passed | 26 skipped (27)	a retired nonce cannot be laundered by forged provenance or a mixed unknown nonce
+59	0	1 passed | 26 skipped (27)	K: an arrival whose hook receipt expired during a broker outage stays latched until retirement evidence, then a new wake delivers
+42	0	1 passed | 26 skipped (27)	C2: a same-millisecond rebirth gets a distinct generation, so the previous birth cannot claim
+36	0	1 passed | 26 skipped (27)	autoWake is advisory and reports each delivery path state
+102	0	1 passed | 26 skipped (27)	G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule
+84	0	1 passed | 26 skipped (27)	G: a newer message schema version is rejected without mutation
+95	0	1 passed | 26 skipped (27)	G: two independent processes racing the v2.7.2 upgrade both open one migrated schema
+95	0	1 passed | 26 skipped (27)	G: a failure inside the table rebuild rolls back columns, rows and schema version
+28	0	1 passed | 26 skipped (27)	crash right after a committed retirement leaves a retired row and one later reservation
+31	0	1 passed | 26 skipped (27)	two independent relay processes racing retirement create one active attempt

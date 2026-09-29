@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 [REDACTED-HOME]/agent-governance-suite
+
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  17:01:24
+   Duration  1.20s (import 54%, transform 33%, tests 13%, worker 1%)
+

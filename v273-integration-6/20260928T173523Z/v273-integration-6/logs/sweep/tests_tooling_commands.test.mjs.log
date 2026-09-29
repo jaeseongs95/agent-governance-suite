@@ -1,0 +1,34 @@
+
+ RUN  v5.0.0 [REDACTED-HOME]/agent-governance-suite
+
+ ❯ tests/tooling/commands.test.mjs (12 tests | 1 failed) 7752ms
+   ❯ skill maintenance commands (12)
+     × forwards pnpm script arguments without a standalone separator 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/tooling/commands.test.mjs > skill maintenance commands > forwards pnpm script arguments without a standalone separator
+AssertionError: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/tooling/commands.test.mjs:37:28
+     35|   it("forwards pnpm script arguments without a standalone separator", …
+     36|     const pnpmEntrypoint = process.env.npm_execpath;
+     37|     expect(pnpmEntrypoint).toBeTruthy();
+       |                            ^
+     38|     const pnpmArguments = [
+     39| "validate:skill", "--name", "orchestrator"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  17:04:56
+   Duration  8.09s (tests 98%, transform 1%)
+

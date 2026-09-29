@@ -1,0 +1,65 @@
+50	passed	expired original evidence retires only the exact old attempt, preserving historical time and pending body
+24	passed	history rejects target without changing any message state
+18	passed	history rejects attempt without changing any message state
+23	passed	history rejects receipt without changing any message state
+22	passed	history rejects nonce without changing any message state
+21	passed	history rejects current without changing any message state
+18	passed	history rejects no-current without changing any message state
+21	passed	history rejects no-late without changing any message state
+18	passed	history rejects submitted without changing any message state
+21	passed	history rejects already-consumed without changing any message state
+27	passed	history rejects bad-signature without changing any message state
+23	passed	history rejects digest without changing any message state
+23	passed	history rejects adapter without changing any message state
+22	passed	history rejects authority without changing any message state
+21	passed	history rejects invalid time relation before-start
+28	passed	history rejects invalid time relation after-late
+31	passed	history rejects invalid time relation expiry-at-late
+29	passed	history rejects invalid time relation not-expired
+26	passed	history rejects invalid time relation invalid-observed
+18	passed	history rejects invalid time relation invalid-late
+19	passed	history rejects invalid time relation invalid-start
+22	passed	reconstructs only the exact signed actor digest main/observed
+21	passed	reconstructs only the exact signed actor digest main/unknown
+21	passed	reconstructs only the exact signed actor digest unknown/observed
+24	passed	reconstructs only the exact signed actor digest unknown/unknown
+23	passed	a signed multiple-nonce observation cannot be approximated by a single old nonce
+20	passed	readonly trust rejection missing-db creates no database/key/receipt
+19	passed	readonly trust rejection missing-key creates no database/key/receipt
+21	passed	readonly trust rejection bad-key creates no database/key/receipt
+28	passed	readonly trust rejection missing-table creates no database/key/receipt
+21	passed	readonly trust rejection wrong-column creates no database/key/receipt
+21	passed	readonly trust respects initializer version compatibility without migrating version 0
+21	passed	readonly trust respects initializer version compatibility without migrating version 1
+22	passed	readonly trust respects initializer version compatibility without migrating version 2
+22	passed	readonly trust respects initializer version compatibility without migrating version 99
+52	passed	readonly version and receipt share a snapshot while an independent writer upgrades the version
+22	passed	broker rejects caller supplied nowMs
+19	passed	broker rejects caller supplied receipt
+19	passed	broker rejects caller supplied approved
+18	passed	broker rejects caller supplied observation
+18	passed	broker rejects caller supplied nonce
+16	passed	broker rejects caller supplied instanceId
+195	passed	two independent recovery processes CAS once; pending uses separate normal reserve/start
+25	passed	CAS rechecks generation after historical verification
+25	passed	CAS rechecks epoch after historical verification
+24	passed	CAS rechecks late after historical verification
+21	passed	CAS rechecks state after historical verification
+22	passed	historical observation retention counts from recovery application, not the old arrival
+20	passed	a reused instance with a new birth generation still retires only the old attempt
+126	passed	read-only verification holds one key/receipt snapshot while an independent writer rotates both
+360	passed	bundled public CLI forwards only IDs to the private broker and cannot repeat recovery
+553	passed	packaged CLI binds history to explicit broker state directory: prestarted
+2191	passed	packaged CLI binds history to explicit broker state directory: client-ensure
+291	passed	packaged root CLI rejects unsupported trust schema without mutation: 0
+283	passed	packaged root CLI rejects unsupported trust schema without mutation: 1
+280	passed	packaged root CLI rejects unsupported trust schema without mutation: 2
+284	passed	packaged root CLI rejects unsupported trust schema without mutation: 99
+282	passed	packaged root CLI rejects unsupported trust schema without mutation: missing-table
+281	passed	packaged root CLI rejects unsupported trust schema without mutation: wrong-column
+278	passed	packaged claude CLI rejects unsupported trust schema without mutation: 0
+277	passed	packaged claude CLI rejects unsupported trust schema without mutation: 1
+280	passed	packaged claude CLI rejects unsupported trust schema without mutation: 2
+290	passed	packaged claude CLI rejects unsupported trust schema without mutation: 99
+280	passed	packaged claude CLI rejects unsupported trust schema without mutation: missing-table
+282	passed	packaged claude CLI rejects unsupported trust schema without mutation: wrong-column

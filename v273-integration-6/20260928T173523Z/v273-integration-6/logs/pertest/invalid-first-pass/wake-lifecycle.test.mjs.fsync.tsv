@@ -1,0 +1,51 @@
+56	0	1 passed | 50 skipped (51)	W05-r2 body claim and ACK cannot authorize another unobserved managed wake
+41	0	1 passed | 50 skipped (51)	W05-r2 board ownership check has no nonce state effect
+34	0	1 passed | 50 skipped (51)	W05-r2 claimDeferred and ACK leave the managed notification fenced
+47	0	1 passed | 50 skipped (51)	W05-r2 claimTurnEnd and ACK leave the managed notification fenced
+43	0	1 passed | 50 skipped (51)	W05-r2 start rechecks claim/ACK and persists no-effect retirement
+49	0	1 passed | 50 skipped (51)	W05-r2 claim after start keeps one fence until the actual hook, including an empty batch
+34	0	1 passed | 50 skipped (51)	W05-r2 reserved crash recovery keeps the nonce/attempt and rejects replaced lease CAS
+35	0	1 passed | 50 skipped (51)	W05-r2 transport remains part of the exact stored attempt binding
+40	0	1 passed | 50 skipped (51)	W05-r2 definite failure uses durable backoff and exact dispatch epoch for late results
+46	0	1 passed | 50 skipped (51)	old no-effect reserved H1/instance retires and starts a separate attempt after durable backoff
+39	0	1 passed | 50 skipped (51)	old no-effect reserved H1/rebirth retires and starts a separate attempt after durable backoff
+39	0	1 passed | 50 skipped (51)	old no-effect reserved H1/transport retires and starts a separate attempt after durable backoff
+44	0	1 passed | 50 skipped (51)	old no-effect reserved H2/instance retires and starts a separate attempt after durable backoff
+37	0	1 passed | 50 skipped (51)	old no-effect reserved H2/rebirth retires and starts a separate attempt after durable backoff
+45	0	1 passed | 50 skipped (51)	old no-effect reserved H2/transport retires and starts a separate attempt after durable backoff
+54	0	1 passed | 50 skipped (51)	old no-effect reserved H3/instance retires and starts a separate attempt after durable backoff
+33	0	1 passed | 50 skipped (51)	old no-effect reserved H3/rebirth retires and starts a separate attempt after durable backoff
+38	0	1 passed | 50 skipped (51)	old no-effect reserved H3/transport retires and starts a separate attempt after durable backoff
+44	0	1 passed | 50 skipped (51)	generation replacement alone preserves the submitted effect fence
+11	0	1 passed | 50 skipped (51)	generation replacement alone preserves the accepted-or-unknown effect fence
+43	0	1 passed | 50 skipped (51)	generation replacement alone preserves the none effect fence
+31	0	1 passed | 50 skipped (51)	generation replacement alone preserves the late effect fence
+41	0	1 passed | 50 skipped (51)	old-generation definite failure requires every original binding field and epoch
+35	0	1 passed | 50 skipped (51)	stale reserved late_observed_at cannot be normalized as a no-effect attempt
+38	0	1 passed | 50 skipped (51)	stale reserved observed_at cannot be normalized as a no-effect attempt
+21	0	1 passed | 50 skipped (51)	stale reserved consumed_at cannot be normalized as a no-effect attempt
+70	0	1 passed | 50 skipped (51)	stale reserved unproved-retry cannot be normalized as a no-effect attempt
+48	0	1 passed | 50 skipped (51)	terminal pruning cannot erase an outstanding old-generation backoff
+48	0	1 passed | 50 skipped (51)	outstanding terminal backoffs share the active wake budget and release it at the deadline
+26	0	1 passed | 50 skipped (51)	W05-r2 unknown survives restart, both TTLs, ordinary claim, ACK and generation replacement
+53	0	1 passed | 50 skipped (51)	W05-r2 ordinary peer provenance, expired hook receipts and changed observation digests cannot release a fence
+29	0	1 passed | 50 skipped (51)	W05-r2 observation holds the SQLite generation lock and notices a generation change during verification
+39	0	1 passed | 50 skipped (51)	W05-r2 lost committed outcome response never dispatches again
+41	0	1 passed | 50 skipped (51)	W05-r2 forged nonce, caller approved and normalized observation cannot observe without the hook receipt
+37	0	1 passed | 50 skipped (51)	verified expired/old-generation arrival retires only its attempt before a separate current wake
+26	0	1 passed | 50 skipped (51)	old-generation retirement still rejects wrong target, unknown or mixed nonces and stale provenance
+28	0	1 passed | 50 skipped (51)	W05-r2 batch/ACK-loss redelivery and hook rollback preserve exact nonce consumption
+47	0	1 passed | 50 skipped (51)	W05-r2 hook-before-outcome, adapter exception and new vendor use the same core
+0	0	1 passed | 50 skipped (51)	W05-r2 both host capabilities preserve submission/observation distinction and deferred idle wake zero
+41	0	1 passed | 50 skipped (51)	W05-r2 additive legacy migration never imports old consumed_at as observed
+44	0	1 passed | 50 skipped (51)	W05-r2 active budget overflow is an explicit rejection and does not remove unknowns
+46	0	1 passed | 50 skipped (51)	W05-r2 terminal observation retention is bounded while unresolved rows are retained
+63	0	1 passed | 50 skipped (51)	independent generation/outcome-first-race workers permit exactly one separate new effect
+77	0	1 passed | 50 skipped (51)	independent generation/start-first-race workers permit exactly one separate new effect
+72	0	1 passed | 50 skipped (51)	verified old arrival in another process releases only the old attempt and permits one new effect
+49	0	1 passed | 50 skipped (51)	Codex running body claim in another process prevents the external queue call before start
+48	0	1 passed | 50 skipped (51)	Codex post-start claim in another process leaves one marker and a verified empty discard
+39	0	1 passed | 50 skipped (51)	W05-r2 independent senders and relay processes perform exactly one external call
+78	0	1 passed | 50 skipped (51)	W05-r2 independent process crash before start recovers the same attempt; after effect never resends
+93	0	1 passed | 50 skipped (51)	W05-r2 independent migration failure rolls back every added nonce column and preserves legacy bytes
+46	0	1 passed | 50 skipped (51)	public wake binding requires a fresh presence birth after lease expiry

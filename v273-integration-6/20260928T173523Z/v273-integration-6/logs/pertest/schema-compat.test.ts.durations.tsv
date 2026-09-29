@@ -1,0 +1,18 @@
+495	passed	2.7.x continuity schema compatibility preserves schema 2 state across reopen, restore, CAS, purge and epoch rotation
+341	passed	2.7.x continuity schema compatibility preserves schema 3 state across reopen, restore, CAS, purge and epoch rotation
+178	passed	2.7.x continuity schema compatibility creates new databases as schema 2
+434	passed	2.7.x continuity schema compatibility preserves receiver-owned tasks, refuses stale origins and keeps unrelated tasks usable
+204	passed	2.7.x continuity schema compatibility checks receiver state inside the checkpoint transaction after service preflight
+159	passed	2.7.x continuity schema compatibility detects a schema 3 receiver added by another connection after opening schema 2
+153	passed	2.7.x continuity schema compatibility protects receiver state added after snapshot cleanup preview
+156	passed	2.7.x continuity schema compatibility protects receiver state added after task cleanup preview
+19	passed	2.7.x continuity schema compatibility rejects incompatible schema 3 without repairing or downgrading it
+17	passed	2.7.x continuity schema compatibility rejects changed schema 3 defaults instead of changing task suppression implicitly
+33	passed	2.7.x continuity schema compatibility rejects missing schema 3 tables and future schemas without creating state
+14	passed	2.7.x continuity schema compatibility rejects damaged bytes without replacing the database
+382	passed	2.7.x continuity schema compatibility rejects a schema 3 database with valid column definitions and malformed pages
+1771	passed	source STDIO continuity startup diagnostics keeps normal MCP usable when continuity is healthy
+1227	passed	source STDIO continuity startup diagnostics keeps normal MCP usable when continuity is receiver
+813	passed	source STDIO continuity startup diagnostics keeps normal MCP usable when continuity is future
+760	passed	source STDIO continuity startup diagnostics keeps normal MCP usable when continuity is incompatible
+765	passed	source STDIO continuity startup diagnostics keeps normal MCP usable when continuity is corrupt

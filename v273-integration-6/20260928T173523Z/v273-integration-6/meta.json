@@ -1,0 +1,13 @@
+{
+  "task": "AGS 2.7.3 integration stage 6 (per-commit fsync in bulk-filled file DB tests), 총괄 ca8e3dc4",
+  "base": "46859d041841fab208faa1d9b45e813de0f5e864",
+  "comparedRelease": "8763cef2b11f2635d6c9af7861b5bffd496e2a30",
+  "head": "e3220a48ce0f1aaea30f90db4bbb597b8fd7ea92",
+  "headTree": "2934992daa71fa2b24af7f58bd95454ea59d46c2",
+  "ciRun": "36454035194",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v42 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startUtc": "2026-09-28T16:58:17Z",
+  "endUtc": "2026-09-28T17:35:23Z"
+}

@@ -1,0 +1,1 @@
+$ eslint . && node scripts/validate-repository.mjs
