@@ -1,0 +1,5 @@
+row {"session_id":"wake-B","instance_id":"instance-1","attempt_id":"ca61a1fe-fa92-4951-829c-05b1b62cdfb0","nonce":"histnoncewakeBabcdefghijklmnop","state":"unknown","late_observed_at":null,"observed_at":null} receipt null
+row {"session_id":"wake-D","instance_id":"instance-1","attempt_id":"ff88ce87-f0c7-458d-9903-159e0768f544","nonce":"EkwfgKE0CJMaGBMyoiKXbdxYeG3YK2tv","state":"unknown","late_observed_at":null,"observed_at":null} receipt source-3973343f-be72-47b8-948a-e400d7cbd3f7
+reconcile -> {"reconciled":false,"evidence":null}
+after {"state":"unknown","late_observed_at":null,"observed_at":null}
+wake-status {"wake":{"state":"unknown","observation":"pending","deliveryState":"unknown","instanceId":"instance-1","generation":"2026-09-28T08:02:21.848Z","attemptId":"ff88ce87-f0c7-458d-9903-159e0768f544","dispatchEpoch":1,"retryNotBefore":null,"expiresAt":"2026-09-28T09:02:21.997Z","observedAt":null,"lateObservedAt":null}}

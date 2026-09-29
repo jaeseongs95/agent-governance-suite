@@ -1,0 +1,912 @@
+parent	-	STEP S00-broker-start
+broker#1	1	exec:pre|PRAGMA busy_timeout = 5000;
+broker#1	2	exec:post|PRAGMA busy_timeout = 5000;
+broker#1	3	exec:pre|PRAGMA journal_mode = WAL;
+broker#1	4	exec:post|PRAGMA journal_mode = WAL;
+broker#1	5	exec:pre|CREATE TABLE IF NOT EXISTS messages ( message_id TEXT PRIMARY KEY, sender_host TEXT NOT NULL, sender_session_i
+broker#1	6	exec:post|CREATE TABLE IF NOT EXISTS messages ( message_id TEXT PRIMARY KEY, sender_host TEXT NOT NULL, sender_session_i
+broker#1	7	exec:pre|BEGIN IMMEDIATE
+broker#1	8	exec:post|BEGIN IMMEDIATE
+broker#1	9	exec:pre|CREATE TABLE IF NOT EXISTS prepared_messages ( message_id TEXT PRIMARY KEY, sender_host TEXT NOT NULL, sender_
+broker#1	10	exec:post|CREATE TABLE IF NOT EXISTS prepared_messages ( message_id TEXT PRIMARY KEY, sender_host TEXT NOT NULL, sender_
+broker#1	11	all:pre|PRAGMA table_info(messages)
+broker#1	12	all:post|PRAGMA table_info(messages)
+broker#1	13	all:pre|PRAGMA table_info(session_presence)
+broker#1	14	all:post|PRAGMA table_info(session_presence)
+broker#1	15	exec:pre|CREATE TABLE IF NOT EXISTS input_observations ( host TEXT NOT NULL, session_id TEXT NOT NULL, deferred_tool_cl
+broker#1	16	exec:post|CREATE TABLE IF NOT EXISTS input_observations ( host TEXT NOT NULL, session_id TEXT NOT NULL, deferred_tool_cl
+broker#1	17	all:pre|PRAGMA table_info(wake_nonces)
+broker#1	18	all:post|PRAGMA table_info(wake_nonces)
+broker#1	19	exec:pre|CREATE UNIQUE INDEX IF NOT EXISTS wake_active_target ON wake_nonces (host, session_id) WHERE state IN ('reserv
+broker#1	20	exec:post|CREATE UNIQUE INDEX IF NOT EXISTS wake_active_target ON wake_nonces (host, session_id) WHERE state IN ('reserv
+broker#1	21	exec:pre|COMMIT
+broker#1	22	exec:post|COMMIT
+parent	-	STEP S01-presence-A3
+parent	-	step:presence-start
+broker#1	23	run:pre|INSERT INTO session_presence ( host, session_id, instance_id, transport, wake_visibility, can_wake_silently, s
+broker#1	24	run:post|INSERT INTO session_presence ( host, session_id, instance_id, transport, wake_visibility, can_wake_silently, s
+broker#1	25	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	26	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+parent	-	STEP S02-presence-B3
+parent	-	step:presence-start
+broker#1	27	run:pre|INSERT INTO session_presence ( host, session_id, instance_id, transport, wake_visibility, can_wake_silently, s
+broker#1	28	run:post|INSERT INTO session_presence ( host, session_id, instance_id, transport, wake_visibility, can_wake_silently, s
+broker#1	29	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	30	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+parent	-	STEP S03-relay-A-latched
+parent	-	step:relay:wake-A
+broker#1	31	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	32	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	33	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	34	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	35	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	36	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	37	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	38	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	39	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	40	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	41	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	42	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	43	run:pre|INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at) VAL
+broker#1	44	run:post|INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at) VAL
+broker#1	45	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	46	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	47	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	48	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+relay#1	1	point|relay:after-acquire
+broker#1	49	exec:pre|BEGIN IMMEDIATE
+broker#1	50	exec:post|BEGIN IMMEDIATE
+broker#1	51	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	52	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	53	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	54	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	55	run:pre|UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AN
+broker#1	56	run:post|UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AN
+broker#1	57	get:pre|SELECT instance_id FROM session_presence WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS
+broker#1	58	get:post|SELECT instance_id FROM session_presence WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS
+broker#1	59	run:pre|UPDATE session_presence SET heartbeat_at = ?, lease_until = ? WHERE host = ? AND session_id = ? AND instance_i
+broker#1	60	run:post|UPDATE session_presence SET heartbeat_at = ?, lease_until = ? WHERE host = ? AND session_id = ? AND instance_i
+broker#1	61	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	62	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	63	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	64	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	65	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	66	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	67	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	68	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	69	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	70	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	71	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	72	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	73	get:pre|SELECT count(*) AS count FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS 
+broker#1	74	get:post|SELECT count(*) AS count FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS 
+broker#1	75	exec:pre|COMMIT
+broker#1	76	exec:post|COMMIT
+broker#1	77	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	78	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	79	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	80	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+relay#1	2	point|relay:after-tick
+broker#1	81	exec:pre|BEGIN IMMEDIATE
+broker#1	82	exec:post|BEGIN IMMEDIATE
+broker#1	83	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	84	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	85	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	86	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	87	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	88	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	89	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	90	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	91	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	92	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	93	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	94	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	95	get:pre|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state IN ('reserved', 'started', 'submitted', 
+broker#1	96	get:post|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state IN ('reserved', 'started', 'submitted', 
+broker#1	97	exec:pre|COMMIT
+broker#1	98	exec:post|COMMIT
+relay#1	3	point|relay:after-reserve
+parent	-	STEP S04-reconcile-A
+parent	-	step:reconcile-wake-observation
+broker#1	99	exec:pre|BEGIN IMMEDIATE
+broker#1	100	exec:post|BEGIN IMMEDIATE
+broker#1	101	get:pre|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ? AND state = 'unknown' AND late_
+broker#1	102	get:post|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ? AND state = 'unknown' AND late_
+broker#1	103	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	104	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	105	exec:pre|PRAGMA query_only = ON; BEGIN;
+broker#1	106	exec:post|PRAGMA query_only = ON; BEGIN;
+broker#1	107	get:pre|SELECT value FROM trust_metadata WHERE key = ?
+broker#1	108	get:post|SELECT value FROM trust_metadata WHERE key = ?
+broker#1	109	get:pre|SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?
+broker#1	110	get:post|SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?
+broker#1	111	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	112	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	113	run:pre|UPDATE wake_nonces SET state = 'observed', observed_at = ?, consumed_at = ? WHERE nonce_digest = ? AND nonce =
+broker#1	114	run:post|UPDATE wake_nonces SET state = 'observed', observed_at = ?, consumed_at = ? WHERE nonce_digest = ? AND nonce =
+broker#1	115	exec:pre|COMMIT
+broker#1	116	exec:post|COMMIT
+parent	-	STEP S05-reconcile-A-again
+parent	-	step:reconcile-wake-observation
+broker#1	117	exec:pre|BEGIN IMMEDIATE
+broker#1	118	exec:post|BEGIN IMMEDIATE
+broker#1	119	get:pre|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ? AND state = 'unknown' AND late_
+broker#1	120	get:post|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ? AND state = 'unknown' AND late_
+broker#1	121	exec:pre|COMMIT
+broker#1	122	exec:post|COMMIT
+parent	-	STEP S06-reconcile-B-foreign
+parent	-	step:reconcile-wake-observation
+broker#1	123	exec:pre|BEGIN IMMEDIATE
+broker#1	124	exec:post|BEGIN IMMEDIATE
+broker#1	125	get:pre|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ? AND state = 'unknown' AND late_
+broker#1	126	get:post|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ? AND state = 'unknown' AND late_
+broker#1	127	exec:pre|COMMIT
+broker#1	128	exec:post|COMMIT
+parent	-	STEP S07-reconcile-B-bogus
+parent	-	step:reconcile-wake-observation
+broker#1	129	exec:pre|BEGIN IMMEDIATE
+broker#1	130	exec:post|BEGIN IMMEDIATE
+broker#1	131	get:pre|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ? AND state = 'unknown' AND late_
+broker#1	132	get:post|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ? AND state = 'unknown' AND late_
+broker#1	133	exec:pre|COMMIT
+broker#1	134	exec:post|COMMIT
+parent	-	STEP S08-relay-A
+parent	-	step:relay:wake-A
+broker#1	135	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	136	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	137	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	138	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	139	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	140	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	141	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	142	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	143	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	144	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	145	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	146	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	147	run:pre|INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at) VAL
+broker#1	148	run:post|INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at) VAL
+broker#1	149	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	150	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	151	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	152	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+relay#2	1	point|relay:after-acquire
+broker#1	153	exec:pre|BEGIN IMMEDIATE
+broker#1	154	exec:post|BEGIN IMMEDIATE
+broker#1	155	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	156	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	157	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	158	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	159	run:pre|UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AN
+broker#1	160	run:post|UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AN
+broker#1	161	get:pre|SELECT instance_id FROM session_presence WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS
+broker#1	162	get:post|SELECT instance_id FROM session_presence WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS
+broker#1	163	run:pre|UPDATE session_presence SET heartbeat_at = ?, lease_until = ? WHERE host = ? AND session_id = ? AND instance_i
+broker#1	164	run:post|UPDATE session_presence SET heartbeat_at = ?, lease_until = ? WHERE host = ? AND session_id = ? AND instance_i
+broker#1	165	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	166	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	167	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	168	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	169	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	170	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	171	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	172	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	173	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	174	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	175	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	176	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	177	get:pre|SELECT count(*) AS count FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS 
+broker#1	178	get:post|SELECT count(*) AS count FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS 
+broker#1	179	exec:pre|COMMIT
+broker#1	180	exec:post|COMMIT
+broker#1	181	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	182	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	183	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	184	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+relay#2	2	point|relay:after-tick
+broker#1	185	exec:pre|BEGIN IMMEDIATE
+broker#1	186	exec:post|BEGIN IMMEDIATE
+broker#1	187	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	188	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	189	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	190	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	191	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	192	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	193	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	194	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	195	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	196	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	197	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	198	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	199	get:pre|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state IN ('reserved', 'started', 'submitted', 
+broker#1	200	get:post|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state IN ('reserved', 'started', 'submitted', 
+broker#1	201	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	202	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	203	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	204	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	205	get:pre|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	206	get:post|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	207	get:pre|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	208	get:post|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	209	get:pre|SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND e
+broker#1	210	get:post|SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND e
+broker#1	211	get:pre|SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')
+broker#1	212	get:post|SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')
+broker#1	213	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	214	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	215	run:pre|INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce, instance_id, birth_generati
+broker#1	216	run:post|INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce, instance_id, birth_generati
+broker#1	217	exec:pre|COMMIT
+broker#1	218	exec:post|COMMIT
+relay#2	3	point|relay:after-reserve
+broker#1	219	exec:pre|BEGIN IMMEDIATE
+broker#1	220	exec:post|BEGIN IMMEDIATE
+broker#1	221	get:pre|SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'reserved' AND in
+broker#1	222	get:post|SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'reserved' AND in
+broker#1	223	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	224	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	225	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	226	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	227	get:pre|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	228	get:post|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	229	get:pre|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	230	get:post|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	231	run:pre|UPDATE wake_nonces SET state = 'started', started_at = ?, dispatch_epoch = dispatch_epoch + 1 WHERE nonce_dige
+broker#1	232	run:post|UPDATE wake_nonces SET state = 'started', started_at = ?, dispatch_epoch = dispatch_epoch + 1 WHERE nonce_dige
+broker#1	233	exec:pre|COMMIT
+broker#1	234	exec:post|COMMIT
+relay#2	4	point|relay:after-start
+relay#2	5	get:pre|SELECT state, attempt_id, dispatch_epoch FROM wake_nonces WHERE nonce_digest = ?
+relay#2	6	get:post|SELECT state, attempt_id, dispatch_epoch FROM wake_nonces WHERE nonce_digest = ?
+relay#2	7	point|relay:after-effect
+broker#1	235	exec:pre|BEGIN IMMEDIATE
+broker#1	236	exec:post|BEGIN IMMEDIATE
+broker#1	237	get:pre|SELECT retry_count FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ? AND instance_id = ?
+broker#1	238	get:post|SELECT retry_count FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ? AND instance_id = ?
+broker#1	239	run:pre|UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ? WHERE nonce_digest = ?
+broker#1	240	run:post|UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ? WHERE nonce_digest = ?
+broker#1	241	exec:pre|COMMIT
+broker#1	242	exec:post|COMMIT
+relay#2	8	point|relay:after-outcome
+parent	-	STEP S09-hooks
+parent	-	step:hooks
+hook#1	1	exec:pre|PRAGMA busy_timeout = 5000;
+hook#1	2	exec:post|PRAGMA busy_timeout = 5000;
+hook#1	3	exec:pre|PRAGMA synchronous = FULL;
+hook#1	4	exec:post|PRAGMA synchronous = FULL;
+hook#1	5	exec:pre|PRAGMA journal_mode = WAL;
+hook#1	6	exec:post|PRAGMA journal_mode = WAL;
+hook#1	7	get:pre|PRAGMA user_version
+hook#1	8	get:post|PRAGMA user_version
+hook#1	9	exec:pre|BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS trust_metadata ( key TEXT PRIMARY KEY, value TEXT NOT NULL, update
+hook#1	10	exec:post|BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS trust_metadata ( key TEXT PRIMARY KEY, value TEXT NOT NULL, update
+hook#1	11	exec:pre|BEGIN IMMEDIATE;
+hook#1	12	exec:post|BEGIN IMMEDIATE;
+hook#1	13	get:pre|SELECT value FROM trust_metadata WHERE key = ?
+hook#1	14	get:post|SELECT value FROM trust_metadata WHERE key = ?
+hook#1	15	exec:pre|COMMIT;
+hook#1	16	exec:post|COMMIT;
+hook#1	17	exec:pre|BEGIN IMMEDIATE;
+hook#1	18	exec:post|BEGIN IMMEDIATE;
+hook#1	19	get:pre|SELECT receipt_json FROM input_source_receipts WHERE host = ? AND session_id = ? AND event_id = ?
+hook#1	20	get:post|SELECT receipt_json FROM input_source_receipts WHERE host = ? AND session_id = ? AND event_id = ?
+hook#1	21	run:pre|INSERT INTO input_source_receipts ( receipt_id, host, session_id, event_id, origin_kind, authority_effect, obs
+hook#1	22	run:post|INSERT INTO input_source_receipts ( receipt_id, host, session_id, event_id, origin_kind, authority_effect, obs
+hook#1	23	exec:pre|COMMIT;
+hook#1	24	exec:post|COMMIT;
+hook#1	25	point|hook:after-receipt
+broker#1	243	exec:pre|BEGIN IMMEDIATE
+broker#1	244	exec:post|BEGIN IMMEDIATE
+broker#1	245	exec:pre|PRAGMA busy_timeout = 5000;
+broker#1	246	exec:post|PRAGMA busy_timeout = 5000;
+broker#1	247	exec:pre|PRAGMA synchronous = FULL;
+broker#1	248	exec:post|PRAGMA synchronous = FULL;
+broker#1	249	exec:pre|PRAGMA journal_mode = WAL;
+broker#1	250	exec:post|PRAGMA journal_mode = WAL;
+broker#1	251	get:pre|PRAGMA user_version
+broker#1	252	get:post|PRAGMA user_version
+broker#1	253	exec:pre|BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS trust_metadata ( key TEXT PRIMARY KEY, value TEXT NOT NULL, update
+broker#1	254	exec:post|BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS trust_metadata ( key TEXT PRIMARY KEY, value TEXT NOT NULL, update
+broker#1	255	exec:pre|BEGIN IMMEDIATE;
+broker#1	256	exec:post|BEGIN IMMEDIATE;
+broker#1	257	get:pre|SELECT value FROM trust_metadata WHERE key = ?
+broker#1	258	get:post|SELECT value FROM trust_metadata WHERE key = ?
+broker#1	259	exec:pre|COMMIT;
+broker#1	260	exec:post|COMMIT;
+broker#1	261	get:pre|SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?
+broker#1	262	get:post|SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?
+broker#1	263	get:pre|SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
+broker#1	264	get:post|SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
+broker#1	265	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	266	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	267	all:pre|SELECT * FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	268	all:post|SELECT * FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	269	run:pre|UPDATE messages SET claimed_at = ?, claim_until = ?, delivery_attempts = delivery_attempts + 1, first_delivere
+broker#1	270	run:post|UPDATE messages SET claimed_at = ?, claim_until = ?, delivery_attempts = delivery_attempts + 1, first_delivere
+broker#1	271	run:pre|UPDATE wake_nonces SET state = 'observed', consumed_at = ?, observed_at = ? WHERE nonce_digest = ?
+broker#1	272	run:post|UPDATE wake_nonces SET state = 'observed', consumed_at = ?, observed_at = ? WHERE nonce_digest = ?
+broker#1	273	exec:pre|COMMIT
+broker#1	274	exec:post|COMMIT
+hook#1	26	point|hook:after-claim
+parent	-	STEP S10-ack-A
+parent	-	step:acknowledge
+broker#1	275	exec:pre|BEGIN IMMEDIATE
+broker#1	276	exec:post|BEGIN IMMEDIATE
+broker#1	277	run:pre|UPDATE messages SET acknowledged_at = ?, claim_until = NULL WHERE message_id = ? AND target_host = ? AND targe
+broker#1	278	run:post|UPDATE messages SET acknowledged_at = ?, claim_until = NULL WHERE message_id = ? AND target_host = ? AND targe
+broker#1	279	exec:pre|COMMIT
+broker#1	280	exec:post|COMMIT
+parent	-	STEP S11-presence-D1
+parent	-	step:presence-start
+broker#1	281	run:pre|INSERT INTO session_presence ( host, session_id, instance_id, transport, wake_visibility, can_wake_silently, s
+broker#1	282	run:post|INSERT INTO session_presence ( host, session_id, instance_id, transport, wake_visibility, can_wake_silently, s
+broker#1	283	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	284	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+parent	-	STEP S12-prepare-D
+parent	-	step:prepare
+broker#1	285	exec:pre|BEGIN IMMEDIATE
+broker#1	286	exec:post|BEGIN IMMEDIATE
+broker#1	287	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	288	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	289	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	290	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	291	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	292	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	293	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	294	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	295	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	296	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	297	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	298	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	299	get:pre|SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL
+broker#1	300	get:post|SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL
+broker#1	301	get:pre|SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL AND sender_host = ? AND sender_session_i
+broker#1	302	get:post|SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL AND sender_host = ? AND sender_session_i
+broker#1	303	get:pre|SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages
+broker#1	304	get:post|SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages
+broker#1	305	run:pre|INSERT INTO prepared_messages (message_id, sender_host, sender_session_id, target_host, target_session_id, bod
+broker#1	306	run:post|INSERT INTO prepared_messages (message_id, sender_host, sender_session_id, target_host, target_session_id, bod
+broker#1	307	exec:pre|COMMIT
+broker#1	308	exec:post|COMMIT
+parent	-	STEP S13-send-D
+parent	-	step:send
+broker#1	309	exec:pre|BEGIN IMMEDIATE
+broker#1	310	exec:post|BEGIN IMMEDIATE
+broker#1	311	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	312	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	313	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	314	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	315	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	316	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	317	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	318	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	319	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	320	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	321	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	322	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	323	get:pre|SELECT * FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires
+broker#1	324	get:post|SELECT * FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires
+broker#1	325	get:pre|SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NOT NULL
+broker#1	326	get:post|SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NOT NULL
+broker#1	327	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	328	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	329	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	330	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	331	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	332	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	333	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	334	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	335	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	336	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	337	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	338	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	339	get:pre|SELECT * FROM messages WHERE message_id = ?
+broker#1	340	get:post|SELECT * FROM messages WHERE message_id = ?
+broker#1	341	get:pre|SELECT count(*) AS count, coalesce(sum(body_bytes), 0) AS bytes FROM messages WHERE acknowledged_at IS NULL AN
+broker#1	342	get:post|SELECT count(*) AS count, coalesce(sum(body_bytes), 0) AS bytes FROM messages WHERE acknowledged_at IS NULL AN
+broker#1	343	run:pre|INSERT INTO messages ( message_id, sender_host, sender_session_id, target_host, target_session_id, body, body_
+broker#1	344	run:post|INSERT INTO messages ( message_id, sender_host, sender_session_id, target_host, target_session_id, body, body_
+broker#1	345	get:pre|SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages WHERE message_id <> ?
+broker#1	346	get:post|SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages WHERE message_id <> ?
+broker#1	347	run:pre|UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?
+broker#1	348	run:post|UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?
+broker#1	349	exec:pre|COMMIT
+broker#1	350	exec:post|COMMIT
+parent	-	STEP S14-relay-D1
+parent	-	step:relay:wake-D
+broker#1	351	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	352	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	353	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	354	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	355	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	356	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	357	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	358	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	359	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	360	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	361	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	362	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	363	run:pre|INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at) VAL
+broker#1	364	run:post|INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at) VAL
+broker#1	365	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	366	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	367	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	368	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+relay#3	1	point|relay:after-acquire
+broker#1	369	exec:pre|BEGIN IMMEDIATE
+broker#1	370	exec:post|BEGIN IMMEDIATE
+broker#1	371	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	372	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	373	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	374	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	375	run:pre|UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AN
+broker#1	376	run:post|UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AN
+broker#1	377	get:pre|SELECT instance_id FROM session_presence WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS
+broker#1	378	get:post|SELECT instance_id FROM session_presence WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS
+broker#1	379	run:pre|UPDATE session_presence SET heartbeat_at = ?, lease_until = ? WHERE host = ? AND session_id = ? AND instance_i
+broker#1	380	run:post|UPDATE session_presence SET heartbeat_at = ?, lease_until = ? WHERE host = ? AND session_id = ? AND instance_i
+broker#1	381	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	382	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	383	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	384	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	385	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	386	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	387	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	388	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	389	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	390	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	391	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	392	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	393	get:pre|SELECT count(*) AS count FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS 
+broker#1	394	get:post|SELECT count(*) AS count FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS 
+broker#1	395	exec:pre|COMMIT
+broker#1	396	exec:post|COMMIT
+broker#1	397	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	398	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	399	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	400	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+relay#3	2	point|relay:after-tick
+broker#1	401	exec:pre|BEGIN IMMEDIATE
+broker#1	402	exec:post|BEGIN IMMEDIATE
+broker#1	403	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	404	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	405	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	406	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	407	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	408	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	409	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	410	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	411	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	412	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	413	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	414	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	415	get:pre|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state IN ('reserved', 'started', 'submitted', 
+broker#1	416	get:post|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state IN ('reserved', 'started', 'submitted', 
+broker#1	417	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	418	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	419	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	420	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	421	get:pre|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	422	get:post|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	423	get:pre|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	424	get:post|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	425	get:pre|SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND e
+broker#1	426	get:post|SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND e
+broker#1	427	get:pre|SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')
+broker#1	428	get:post|SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')
+broker#1	429	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	430	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	431	run:pre|INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce, instance_id, birth_generati
+broker#1	432	run:post|INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce, instance_id, birth_generati
+broker#1	433	exec:pre|COMMIT
+broker#1	434	exec:post|COMMIT
+relay#3	3	point|relay:after-reserve
+broker#1	435	exec:pre|BEGIN IMMEDIATE
+broker#1	436	exec:post|BEGIN IMMEDIATE
+broker#1	437	get:pre|SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'reserved' AND in
+broker#1	438	get:post|SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'reserved' AND in
+broker#1	439	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	440	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	441	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	442	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	443	get:pre|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	444	get:post|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	445	get:pre|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	446	get:post|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	447	run:pre|UPDATE wake_nonces SET state = 'started', started_at = ?, dispatch_epoch = dispatch_epoch + 1 WHERE nonce_dige
+broker#1	448	run:post|UPDATE wake_nonces SET state = 'started', started_at = ?, dispatch_epoch = dispatch_epoch + 1 WHERE nonce_dige
+broker#1	449	exec:pre|COMMIT
+broker#1	450	exec:post|COMMIT
+relay#3	4	point|relay:after-start
+relay#3	5	get:pre|SELECT state, attempt_id, dispatch_epoch FROM wake_nonces WHERE nonce_digest = ?
+relay#3	6	get:post|SELECT state, attempt_id, dispatch_epoch FROM wake_nonces WHERE nonce_digest = ?
+relay#3	7	point|relay:after-effect
+broker#1	451	exec:pre|BEGIN IMMEDIATE
+broker#1	452	exec:post|BEGIN IMMEDIATE
+broker#1	453	get:pre|SELECT retry_count FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ? AND instance_id = ?
+broker#1	454	get:post|SELECT retry_count FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ? AND instance_id = ?
+broker#1	455	run:pre|UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ? WHERE nonce_digest = ?
+broker#1	456	run:post|UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ? WHERE nonce_digest = ?
+broker#1	457	exec:pre|COMMIT
+broker#1	458	exec:post|COMMIT
+relay#3	8	point|relay:after-outcome
+parent	-	STEP S15-presence-D2
+parent	-	step:presence-start
+broker#1	459	run:pre|INSERT INTO session_presence ( host, session_id, instance_id, transport, wake_visibility, can_wake_silently, s
+broker#1	460	run:post|INSERT INTO session_presence ( host, session_id, instance_id, transport, wake_visibility, can_wake_silently, s
+broker#1	461	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	462	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+parent	-	STEP S16-hooks
+parent	-	step:hooks
+hook#2	1	exec:pre|PRAGMA busy_timeout = 5000;
+hook#2	2	exec:post|PRAGMA busy_timeout = 5000;
+hook#2	3	exec:pre|PRAGMA synchronous = FULL;
+hook#2	4	exec:post|PRAGMA synchronous = FULL;
+hook#2	5	exec:pre|PRAGMA journal_mode = WAL;
+hook#2	6	exec:post|PRAGMA journal_mode = WAL;
+hook#2	7	get:pre|PRAGMA user_version
+hook#2	8	get:post|PRAGMA user_version
+hook#2	9	exec:pre|BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS trust_metadata ( key TEXT PRIMARY KEY, value TEXT NOT NULL, update
+hook#2	10	exec:post|BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS trust_metadata ( key TEXT PRIMARY KEY, value TEXT NOT NULL, update
+hook#2	11	exec:pre|BEGIN IMMEDIATE;
+hook#2	12	exec:post|BEGIN IMMEDIATE;
+hook#2	13	get:pre|SELECT value FROM trust_metadata WHERE key = ?
+hook#2	14	get:post|SELECT value FROM trust_metadata WHERE key = ?
+hook#2	15	exec:pre|COMMIT;
+hook#2	16	exec:post|COMMIT;
+hook#2	17	exec:pre|BEGIN IMMEDIATE;
+hook#2	18	exec:post|BEGIN IMMEDIATE;
+hook#2	19	get:pre|SELECT receipt_json FROM input_source_receipts WHERE host = ? AND session_id = ? AND event_id = ?
+hook#2	20	get:post|SELECT receipt_json FROM input_source_receipts WHERE host = ? AND session_id = ? AND event_id = ?
+hook#2	21	run:pre|INSERT INTO input_source_receipts ( receipt_id, host, session_id, event_id, origin_kind, authority_effect, obs
+hook#2	22	run:post|INSERT INTO input_source_receipts ( receipt_id, host, session_id, event_id, origin_kind, authority_effect, obs
+hook#2	23	exec:pre|COMMIT;
+hook#2	24	exec:post|COMMIT;
+hook#2	25	point|hook:after-receipt
+broker#1	463	exec:pre|BEGIN IMMEDIATE
+broker#1	464	exec:post|BEGIN IMMEDIATE
+broker#1	465	exec:pre|PRAGMA busy_timeout = 5000;
+broker#1	466	exec:post|PRAGMA busy_timeout = 5000;
+broker#1	467	exec:pre|PRAGMA synchronous = FULL;
+broker#1	468	exec:post|PRAGMA synchronous = FULL;
+broker#1	469	exec:pre|PRAGMA journal_mode = WAL;
+broker#1	470	exec:post|PRAGMA journal_mode = WAL;
+broker#1	471	get:pre|PRAGMA user_version
+broker#1	472	get:post|PRAGMA user_version
+broker#1	473	exec:pre|BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS trust_metadata ( key TEXT PRIMARY KEY, value TEXT NOT NULL, update
+broker#1	474	exec:post|BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS trust_metadata ( key TEXT PRIMARY KEY, value TEXT NOT NULL, update
+broker#1	475	exec:pre|BEGIN IMMEDIATE;
+broker#1	476	exec:post|BEGIN IMMEDIATE;
+broker#1	477	get:pre|SELECT value FROM trust_metadata WHERE key = ?
+broker#1	478	get:post|SELECT value FROM trust_metadata WHERE key = ?
+broker#1	479	exec:pre|COMMIT;
+broker#1	480	exec:post|COMMIT;
+broker#1	481	get:pre|SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?
+broker#1	482	get:post|SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?
+broker#1	483	get:pre|SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
+broker#1	484	get:post|SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
+broker#1	485	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	486	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	487	run:pre|UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, 
+broker#1	488	run:post|UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, 
+broker#1	489	exec:pre|COMMIT
+broker#1	490	exec:post|COMMIT
+hook#2	26	point|hook:after-claim
+parent	-	STEP S17-relay-D2
+parent	-	step:relay:wake-D
+broker#1	491	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	492	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	493	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	494	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	495	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	496	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	497	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	498	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	499	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	500	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	501	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	502	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	503	run:pre|INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at) VAL
+broker#1	504	run:post|INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at) VAL
+broker#1	505	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	506	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	507	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	508	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+relay#4	1	point|relay:after-acquire
+broker#1	509	exec:pre|BEGIN IMMEDIATE
+broker#1	510	exec:post|BEGIN IMMEDIATE
+broker#1	511	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	512	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	513	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	514	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	515	run:pre|UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AN
+broker#1	516	run:post|UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AN
+broker#1	517	get:pre|SELECT instance_id FROM session_presence WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS
+broker#1	518	get:post|SELECT instance_id FROM session_presence WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS
+broker#1	519	run:pre|UPDATE session_presence SET heartbeat_at = ?, lease_until = ? WHERE host = ? AND session_id = ? AND instance_i
+broker#1	520	run:post|UPDATE session_presence SET heartbeat_at = ?, lease_until = ? WHERE host = ? AND session_id = ? AND instance_i
+broker#1	521	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	522	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	523	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	524	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	525	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	526	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	527	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	528	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	529	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	530	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	531	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	532	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	533	get:pre|SELECT count(*) AS count FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS 
+broker#1	534	get:post|SELECT count(*) AS count FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS 
+broker#1	535	exec:pre|COMMIT
+broker#1	536	exec:post|COMMIT
+broker#1	537	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	538	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	539	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	540	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+relay#4	2	point|relay:after-tick
+broker#1	541	exec:pre|BEGIN IMMEDIATE
+broker#1	542	exec:post|BEGIN IMMEDIATE
+broker#1	543	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	544	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	545	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	546	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	547	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	548	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	549	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	550	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	551	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	552	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	553	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	554	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	555	get:pre|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state IN ('reserved', 'started', 'submitted', 
+broker#1	556	get:post|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state IN ('reserved', 'started', 'submitted', 
+broker#1	557	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	558	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	559	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	560	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	561	get:pre|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	562	get:post|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	563	get:pre|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	564	get:post|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	565	get:pre|SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND e
+broker#1	566	get:post|SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND e
+broker#1	567	get:pre|SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')
+broker#1	568	get:post|SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')
+broker#1	569	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	570	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	571	run:pre|INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce, instance_id, birth_generati
+broker#1	572	run:post|INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce, instance_id, birth_generati
+broker#1	573	exec:pre|COMMIT
+broker#1	574	exec:post|COMMIT
+relay#4	3	point|relay:after-reserve
+broker#1	575	exec:pre|BEGIN IMMEDIATE
+broker#1	576	exec:post|BEGIN IMMEDIATE
+broker#1	577	get:pre|SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'reserved' AND in
+broker#1	578	get:post|SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'reserved' AND in
+broker#1	579	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	580	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	581	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	582	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	583	get:pre|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	584	get:post|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	585	get:pre|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	586	get:post|SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	587	run:pre|UPDATE wake_nonces SET state = 'started', started_at = ?, dispatch_epoch = dispatch_epoch + 1 WHERE nonce_dige
+broker#1	588	run:post|UPDATE wake_nonces SET state = 'started', started_at = ?, dispatch_epoch = dispatch_epoch + 1 WHERE nonce_dige
+broker#1	589	exec:pre|COMMIT
+broker#1	590	exec:post|COMMIT
+relay#4	4	point|relay:after-start
+relay#4	5	get:pre|SELECT state, attempt_id, dispatch_epoch FROM wake_nonces WHERE nonce_digest = ?
+relay#4	6	get:post|SELECT state, attempt_id, dispatch_epoch FROM wake_nonces WHERE nonce_digest = ?
+relay#4	7	point|relay:after-effect
+broker#1	591	exec:pre|BEGIN IMMEDIATE
+broker#1	592	exec:post|BEGIN IMMEDIATE
+broker#1	593	get:pre|SELECT retry_count FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ? AND instance_id = ?
+broker#1	594	get:post|SELECT retry_count FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ? AND instance_id = ?
+broker#1	595	run:pre|UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ? WHERE nonce_digest = ?
+broker#1	596	run:post|UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ? WHERE nonce_digest = ?
+broker#1	597	exec:pre|COMMIT
+broker#1	598	exec:post|COMMIT
+relay#4	8	point|relay:after-outcome
+parent	-	STEP S18-hooks
+parent	-	step:hooks
+hook#3	1	exec:pre|PRAGMA busy_timeout = 5000;
+hook#3	2	exec:post|PRAGMA busy_timeout = 5000;
+hook#3	3	exec:pre|PRAGMA synchronous = FULL;
+hook#3	4	exec:post|PRAGMA synchronous = FULL;
+hook#3	5	exec:pre|PRAGMA journal_mode = WAL;
+hook#3	6	exec:post|PRAGMA journal_mode = WAL;
+hook#3	7	get:pre|PRAGMA user_version
+hook#3	8	get:post|PRAGMA user_version
+hook#3	9	exec:pre|BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS trust_metadata ( key TEXT PRIMARY KEY, value TEXT NOT NULL, update
+hook#3	10	exec:post|BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS trust_metadata ( key TEXT PRIMARY KEY, value TEXT NOT NULL, update
+hook#3	11	exec:pre|BEGIN IMMEDIATE;
+hook#3	12	exec:post|BEGIN IMMEDIATE;
+hook#3	13	get:pre|SELECT value FROM trust_metadata WHERE key = ?
+hook#3	14	get:post|SELECT value FROM trust_metadata WHERE key = ?
+hook#3	15	exec:pre|COMMIT;
+hook#3	16	exec:post|COMMIT;
+hook#3	17	exec:pre|BEGIN IMMEDIATE;
+hook#3	18	exec:post|BEGIN IMMEDIATE;
+hook#3	19	get:pre|SELECT receipt_json FROM input_source_receipts WHERE host = ? AND session_id = ? AND event_id = ?
+hook#3	20	get:post|SELECT receipt_json FROM input_source_receipts WHERE host = ? AND session_id = ? AND event_id = ?
+hook#3	21	run:pre|INSERT INTO input_source_receipts ( receipt_id, host, session_id, event_id, origin_kind, authority_effect, obs
+hook#3	22	run:post|INSERT INTO input_source_receipts ( receipt_id, host, session_id, event_id, origin_kind, authority_effect, obs
+hook#3	23	exec:pre|COMMIT;
+hook#3	24	exec:post|COMMIT;
+hook#3	25	point|hook:after-receipt
+broker#1	599	exec:pre|BEGIN IMMEDIATE
+broker#1	600	exec:post|BEGIN IMMEDIATE
+broker#1	601	exec:pre|PRAGMA busy_timeout = 5000;
+broker#1	602	exec:post|PRAGMA busy_timeout = 5000;
+broker#1	603	exec:pre|PRAGMA synchronous = FULL;
+broker#1	604	exec:post|PRAGMA synchronous = FULL;
+broker#1	605	exec:pre|PRAGMA journal_mode = WAL;
+broker#1	606	exec:post|PRAGMA journal_mode = WAL;
+broker#1	607	get:pre|PRAGMA user_version
+broker#1	608	get:post|PRAGMA user_version
+broker#1	609	exec:pre|BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS trust_metadata ( key TEXT PRIMARY KEY, value TEXT NOT NULL, update
+broker#1	610	exec:post|BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS trust_metadata ( key TEXT PRIMARY KEY, value TEXT NOT NULL, update
+broker#1	611	exec:pre|BEGIN IMMEDIATE;
+broker#1	612	exec:post|BEGIN IMMEDIATE;
+broker#1	613	get:pre|SELECT value FROM trust_metadata WHERE key = ?
+broker#1	614	get:post|SELECT value FROM trust_metadata WHERE key = ?
+broker#1	615	exec:pre|COMMIT;
+broker#1	616	exec:post|COMMIT;
+broker#1	617	get:pre|SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?
+broker#1	618	get:post|SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?
+broker#1	619	get:pre|SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
+broker#1	620	get:post|SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
+broker#1	621	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	622	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	623	all:pre|SELECT * FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	624	all:post|SELECT * FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires
+broker#1	625	run:pre|UPDATE messages SET claimed_at = ?, claim_until = ?, delivery_attempts = delivery_attempts + 1, first_delivere
+broker#1	626	run:post|UPDATE messages SET claimed_at = ?, claim_until = ?, delivery_attempts = delivery_attempts + 1, first_delivere
+broker#1	627	run:pre|UPDATE wake_nonces SET state = 'observed', consumed_at = ?, observed_at = ? WHERE nonce_digest = ?
+broker#1	628	run:post|UPDATE wake_nonces SET state = 'observed', consumed_at = ?, observed_at = ? WHERE nonce_digest = ?
+broker#1	629	exec:pre|COMMIT
+broker#1	630	exec:post|COMMIT
+hook#3	26	point|hook:after-claim
+parent	-	STEP S19-ack-D
+parent	-	step:acknowledge
+broker#1	631	exec:pre|BEGIN IMMEDIATE
+broker#1	632	exec:post|BEGIN IMMEDIATE
+broker#1	633	run:pre|UPDATE messages SET acknowledged_at = ?, claim_until = NULL WHERE message_id = ? AND target_host = ? AND targe
+broker#1	634	run:post|UPDATE messages SET acknowledged_at = ?, claim_until = NULL WHERE message_id = ? AND target_host = ? AND targe
+broker#1	635	exec:pre|COMMIT
+broker#1	636	exec:post|COMMIT
+parent	-	STEP S20-relay-final
+parent	-	step:relay:wake-A
+broker#1	637	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	638	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	639	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	640	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	641	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	642	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	643	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	644	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	645	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	646	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	647	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	648	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	649	run:pre|INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at) VAL
+broker#1	650	run:post|INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at) VAL
+broker#1	651	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	652	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	653	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	654	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+relay#5	1	point|relay:after-acquire
+broker#1	655	exec:pre|BEGIN IMMEDIATE
+broker#1	656	exec:post|BEGIN IMMEDIATE
+broker#1	657	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	658	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	659	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	660	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	661	run:pre|UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AN
+broker#1	662	run:post|UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AN
+broker#1	663	get:pre|SELECT instance_id FROM session_presence WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS
+broker#1	664	get:post|SELECT instance_id FROM session_presence WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS
+broker#1	665	run:pre|UPDATE session_presence SET heartbeat_at = ?, lease_until = ? WHERE host = ? AND session_id = ? AND instance_i
+broker#1	666	run:post|UPDATE session_presence SET heartbeat_at = ?, lease_until = ? WHERE host = ? AND session_id = ? AND instance_i
+broker#1	667	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	668	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	669	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	670	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	671	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	672	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	673	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	674	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	675	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	676	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	677	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	678	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	679	get:pre|SELECT count(*) AS count FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS 
+broker#1	680	get:post|SELECT count(*) AS count FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS 
+broker#1	681	exec:pre|COMMIT
+broker#1	682	exec:post|COMMIT
+broker#1	683	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	684	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	685	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	686	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+relay#5	2	point|relay:after-tick
+parent	-	step:relay:wake-D
+broker#1	687	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	688	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	689	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	690	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	691	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	692	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	693	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	694	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	695	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	696	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	697	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	698	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	699	run:pre|INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at) VAL
+broker#1	700	run:post|INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at) VAL
+broker#1	701	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	702	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	703	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	704	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+relay#6	1	point|relay:after-acquire
+broker#1	705	exec:pre|BEGIN IMMEDIATE
+broker#1	706	exec:post|BEGIN IMMEDIATE
+broker#1	707	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	708	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	709	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	710	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	711	run:pre|UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AN
+broker#1	712	run:post|UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AN
+broker#1	713	get:pre|SELECT instance_id FROM session_presence WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS
+broker#1	714	get:post|SELECT instance_id FROM session_presence WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS
+broker#1	715	run:pre|UPDATE session_presence SET heartbeat_at = ?, lease_until = ? WHERE host = ? AND session_id = ? AND instance_i
+broker#1	716	run:post|UPDATE session_presence SET heartbeat_at = ?, lease_until = ? WHERE host = ? AND session_id = ? AND instance_i
+broker#1	717	run:pre|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	718	run:post|DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+broker#1	719	run:pre|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	720	run:post|DELETE FROM relay_leases WHERE lease_until <= ?
+broker#1	721	run:pre|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	722	run:post|DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?
+broker#1	723	run:pre|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	724	run:post|DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted') AND coalesce(consumed_at, observed_at, ou
+broker#1	725	run:pre|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	726	run:post|DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces WHERE state IN ('observed'
+broker#1	727	run:pre|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	728	run:post|DELETE FROM prepared_messages WHERE expires_at <= ?
+broker#1	729	get:pre|SELECT count(*) AS count FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS 
+broker#1	730	get:post|SELECT count(*) AS count FROM messages WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS 
+broker#1	731	exec:pre|COMMIT
+broker#1	732	exec:post|COMMIT
+broker#1	733	get:pre|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	734	get:post|SELECT * FROM session_presence WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1
+broker#1	735	get:pre|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+broker#1	736	get:post|SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lea
+relay#6	2	point|relay:after-tick
+parent	-	step:hooks
+parent	-	STEP S21-reconcile-final
+parent	-	step:reconcile-wake-observation
+broker#1	737	exec:pre|BEGIN IMMEDIATE
+broker#1	738	exec:post|BEGIN IMMEDIATE
+broker#1	739	get:pre|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ? AND state = 'unknown' AND late_
+broker#1	740	get:post|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ? AND state = 'unknown' AND late_
+broker#1	741	exec:pre|COMMIT
+broker#1	742	exec:post|COMMIT
+parent	-	step:reconcile-wake-observation
+broker#1	743	exec:pre|BEGIN IMMEDIATE
+broker#1	744	exec:post|BEGIN IMMEDIATE
+broker#1	745	get:pre|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ? AND state = 'unknown' AND late_
+broker#1	746	get:post|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ? AND state = 'unknown' AND late_
+broker#1	747	exec:pre|COMMIT
+broker#1	748	exec:post|COMMIT
+parent	-	step:wake-status
+broker#1	749	get:pre|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state <> 'legacy' ORDER BY CASE WHEN state IN 
+broker#1	750	get:post|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state <> 'legacy' ORDER BY CASE WHEN state IN 
+parent	-	step:wake-status
+broker#1	751	get:pre|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state <> 'legacy' ORDER BY CASE WHEN state IN 
+broker#1	752	get:post|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state <> 'legacy' ORDER BY CASE WHEN state IN 
+parent	-	step:wake-status
+broker#1	753	get:pre|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state <> 'legacy' ORDER BY CASE WHEN state IN 
+broker#1	754	get:post|SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state <> 'legacy' ORDER BY CASE WHEN state IN 

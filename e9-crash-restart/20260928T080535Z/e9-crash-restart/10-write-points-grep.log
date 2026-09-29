@@ -1,0 +1,157 @@
+== e9 session-message-store.ts
+128:  constructor(databasePath: string) {
+132:    if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
+190:    this.database.exec("BEGIN IMMEDIATE");
+242:      this.database.exec("COMMIT");
+244:      this.database.exec("ROLLBACK");
+253:  prune(nowMs = Date.now()): void {
+258:    this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
+259:    this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted')
+261:    this.database.prepare(`DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces
+277:    this.database.exec("BEGIN IMMEDIATE");
+279:      this.prune(nowMs);
+287:      this.database.exec("COMMIT");
+290:      this.database.exec("ROLLBACK");
+298:    this.database.exec("BEGIN IMMEDIATE");
+300:      this.prune(nowMs);
+306:        this.database.exec("COMMIT");
+319:      this.database.exec("COMMIT");
+322:      this.database.exec("ROLLBACK");
+346:    this.prune(nowMs);
+372:  private claimLocked(target: SessionIdentity, nowMs: number, limits: ClaimLimits): SessionMessage[] {
+382:    const statement = this.database.prepare(`UPDATE messages SET claimed_at = ?, claim_until = ?,
+418:    this.database.prepare(`UPDATE wake_nonces SET consumed_at = ?
+425:    this.prune(nowMs);
+426:    this.database.exec("BEGIN IMMEDIATE");
+428:      const claimed = this.claimLocked(target, nowMs, limits);
+430:      this.database.exec("COMMIT");
+433:      this.database.exec("ROLLBACK");
+444:    this.prune(nowMs);
+446:    this.database.exec("BEGIN IMMEDIATE");
+452:        this.database.exec("COMMIT");
+455:      const messages = this.claimLocked(target, nowMs, limits);
+456:      const consume = this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ? AND consumed_at IS NULL");
+458:      this.database.exec("COMMIT");
+461:      this.database.exec("ROLLBACK");
+475:    this.prune(nowMs);
+476:    this.database.exec("BEGIN IMMEDIATE");
+480:      const messages = skipped ? [] : this.claimLocked(target, nowMs, limits);
+482:      this.database.exec("COMMIT");
+485:      this.database.exec("ROLLBACK");
+492:    this.prune(nowMs);
+493:    this.database.exec("BEGIN IMMEDIATE");
+496:      const messages = this.claimLocked(target, nowMs, limits);
+498:      this.database.exec("COMMIT");
+501:      this.database.exec("ROLLBACK");
+511:  acknowledge(target: SessionIdentity, messageIds: string[], nowMs = Date.now()): number {
+516:    const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL
+519:    this.database.exec("BEGIN IMMEDIATE");
+522:      this.database.exec("COMMIT");
+525:      this.database.exec("ROLLBACK");
+532:    this.prune(nowMs);
+580:    this.prune(nowMs);
+592:    this.prune(nowMs);
+619:    this.database.exec("BEGIN IMMEDIATE");
+624:        this.database.exec("ROLLBACK");
+630:      this.database.exec("COMMIT");
+633:      this.database.exec("ROLLBACK");
+641:    this.prune(nowMs);
+643:    this.database.exec("BEGIN IMMEDIATE");
+658:        this.database.exec("COMMIT");
+661:      this.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at) VALUES (?, ?, ?, ?)")
+663:      this.database.exec("COMMIT");
+666:      this.database.exec("ROLLBACK");
+674:    return this.database.prepare(`DELETE FROM wake_nonces
+712:  reserveManagedWake(input: WakeRelayBinding & { nonce: string; resume?: boolean }, nowMs = Date.now()): WakeReservation {
+718:    this.database.exec("BEGIN IMMEDIATE");
+720:      this.prune(nowMs);
+727:          this.database.prepare("UPDATE wake_nonces SET state = 'unknown' WHERE nonce_digest = ? AND state = 'started'").run(String(active.nonce_digest));
+734:          this.database.prepare("UPDATE wake_nonces SET relay_id = ? WHERE nonce_digest = ? AND state = 'reserved'")
+746:          this.database.prepare(`INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce,
+753:      this.database.exec("COMMIT");
+755:    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+759:  startManagedWake(attempt: WakeAttempt, nowMs = Date.now()): WakeReservation {
+760:    this.database.exec("BEGIN IMMEDIATE");
+768:        this.database.exec("COMMIT"); return { dispatch: false, attempt: null };
+771:        this.database.prepare("UPDATE wake_nonces SET state = 'not-submitted', outcome_at = ? WHERE nonce_digest = ? AND state = 'reserved'")
+773:        this.database.exec("COMMIT"); return { dispatch: false, attempt: null };
+775:      this.database.prepare("UPDATE wake_nonces SET state = 'started', started_at = ?, dispatch_epoch = dispatch_epoch + 1 WHERE nonce_digest = ?")
+777:      this.database.exec("COMMIT");
+779:    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+782:  recordManagedWakeOutcome(attempt: WakeAttempt, outcome: WakeDispatchOutcome, nowMs = Date.now()): boolean {
+784:    this.database.exec("BEGIN IMMEDIATE");
+790:      if (!row) { this.database.exec("COMMIT"); return false; }
+792:      this.database.prepare(`UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ?
+795:      this.database.exec("COMMIT"); return true;
+796:    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+816:  reconcileHistoricalWake(target: SessionIdentity, attemptId: string, sourceReceiptId: string, nowMs = Date.now(),
+830:    this.database.exec("BEGIN IMMEDIATE");
+837:        this.database.exec("COMMIT"); return rejected;
+840:      if (!proof || !isOldGeneration(row)) { this.database.exec("COMMIT"); return rejected; }
+842:      const changed = this.database.prepare(`UPDATE wake_nonces SET state = 'observed', observed_at = ?, consumed_at = ?
+849:      this.database.exec("COMMIT");
+856:    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+860:  claimHostWake(target: SessionIdentity, observation: InputObservation, receiptId: string, reader: WakeHookObservationReader | undefined, nowMs = Date.now(), limits: ClaimLimits = {}): {
+867:    this.database.exec("BEGIN IMMEDIATE");
+869:      if (!reader.verifyObservation(target, observation, receiptId, nowMs)) { this.database.exec("COMMIT"); return rejected; }
+873:        this.database.exec("COMMIT"); return rejected;
+882:        for (const row of rows) if (row!.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
+886:        this.database.exec("COMMIT"); return rejected;
+888:      const messages = this.claimLocked(target, nowMs, limits);
+891:        if (row!.state === "legacy") this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ?").run(iso(nowMs), String(row!.nonce_digest));
+893:          this.database.prepare("UPDATE wake_nonces SET state = 'observed', consumed_at = ?, observed_at = ? WHERE nonce_digest = ?")
+898:      this.database.exec("COMMIT"); return { recognized: true, messages, binding };
+899:    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+== e9 relay/broker/hook/wake-port/trust
+session-message-relay.ts:70:  const reserved = await request<WakeReservation>("reserve-wake", { target, nonce: newWakeNonce(),
+session-message-relay.ts:73:  const started = await request<WakeReservation>("start-wake", { attempt: reserved.attempt });
+session-message-relay.ts:76:  try { outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce)); }
+session-message-relay.ts:78:  await request("record-wake-outcome", { attempt: started.attempt, outcome });
+session-message-broker.ts:244:    case "claim-host-wake": {
+session-message-broker.ts:400:    case "record-wake-outcome": {
+session-message-broker.ts:405:    case "reconcile-wake-observation": {
+session-message-hook.ts:59:      const receipt = store.recordInputSource({
+session-message-hook.ts:91:      "[agent-governance-suite peer message BEGIN]",
+session-message-hook.ts:199:      const result = await sessionMessageRequest<{ recognized: boolean; messages: SessionMessage[]; managed: boolean }>("claim-host-wake", {
+session-message-hook.ts:202:        sourceReceiptId: recordWakeHookObservation(observation),
+session-message-wake-port.ts:114:  const receipt = TrustStore.readVerifiedInputSource(databasePath, sourceReceiptId);
+session-message-wake-port.ts:135:export function recordWakeHookObservation(observation: InputObservation, nowMs = Date.now()): string {
+session-message-wake-port.ts:139:    return trust.recordInputSource({ originKind: "peer", host: observation.host, sessionId: observation.sessionId,
+trust-store.ts:65:  recordInputSource(input: UnsignedInputSource): InputSourceReceiptV1 {
+trust-store.ts:159:  static readVerifiedInputSource(databasePath: string, receiptId: string): InputSourceReceiptV1 | null {
+trust-store.ts:163:      database.exec("PRAGMA query_only = ON; BEGIN;");
+trust-store.ts:198:      BEGIN IMMEDIATE;
+trust-store.ts:217:      COMMIT;
+trust-store.ts:233:    this.database.exec("BEGIN IMMEDIATE;");
+trust-store.ts:236:      this.database.exec("COMMIT;");
+== v53 store
+190:    this.database.exec("BEGIN IMMEDIATE");
+277:    this.database.exec("BEGIN IMMEDIATE");
+298:    this.database.exec("BEGIN IMMEDIATE");
+418:    this.database.prepare(`UPDATE wake_nonces SET consumed_at = ?
+426:    this.database.exec("BEGIN IMMEDIATE");
+446:    this.database.exec("BEGIN IMMEDIATE");
+456:      const consume = this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ? AND consumed_at IS NULL");
+476:    this.database.exec("BEGIN IMMEDIATE");
+493:    this.database.exec("BEGIN IMMEDIATE");
+519:    this.database.exec("BEGIN IMMEDIATE");
+619:    this.database.exec("BEGIN IMMEDIATE");
+643:    this.database.exec("BEGIN IMMEDIATE");
+661:      this.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at) VALUES (?, ?, ?, ?)")
+712:  reserveManagedWake(input: WakeRelayBinding & { nonce: string; resume?: boolean }, nowMs = Date.now()): WakeReservation {
+718:    this.database.exec("BEGIN IMMEDIATE");
+727:          this.database.prepare("UPDATE wake_nonces SET state = 'unknown' WHERE nonce_digest = ? AND state = 'started'").run(String(active.nonce_digest));
+734:          this.database.prepare("UPDATE wake_nonces SET relay_id = ? WHERE nonce_digest = ? AND state = 'reserved'")
+746:          this.database.prepare(`INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce,
+759:  startManagedWake(attempt: WakeAttempt, nowMs = Date.now()): WakeReservation {
+760:    this.database.exec("BEGIN IMMEDIATE");
+771:        this.database.prepare("UPDATE wake_nonces SET state = 'not-submitted', outcome_at = ? WHERE nonce_digest = ? AND state = 'reserved'")
+775:      this.database.prepare("UPDATE wake_nonces SET state = 'started', started_at = ?, dispatch_epoch = dispatch_epoch + 1 WHERE nonce_digest = ?")
+782:  recordManagedWakeOutcome(attempt: WakeAttempt, outcome: WakeDispatchOutcome, nowMs = Date.now()): boolean {
+784:    this.database.exec("BEGIN IMMEDIATE");
+792:      this.database.prepare(`UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ?
+816:  claimHostWake(target: SessionIdentity, observation: InputObservation, receiptId: string, reader: WakeHookObservationReader | undefined, nowMs = Date.now(), limits: ClaimLimits = {}): {
+823:    this.database.exec("BEGIN IMMEDIATE");
+838:        for (const row of rows) if (row!.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
+847:        if (row!.state === "legacy") this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ?").run(iso(nowMs), String(row!.nonce_digest));
+849:          this.database.prepare("UPDATE wake_nonces SET state = 'observed', consumed_at = ?, observed_at = ? WHERE nonce_digest = ?")

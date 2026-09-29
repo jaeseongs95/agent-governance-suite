@@ -1,0 +1,143 @@
+{
+ "summary": {
+  "53": {
+   "supersededHarnessRuns": [
+    "v53-ev-463",
+    "v53-ev-464",
+    "v53-ev-465",
+    "v53-ev-466",
+    "v53-ev-467",
+    "v53-ev-468",
+    "v53-ev-469",
+    "v53-ev-470",
+    "v53-ev-471",
+    "v53-ev-472",
+    "v53-dk-007",
+    "v53-dk-012",
+    "v53-dk-014",
+    "v53-dk-018",
+    "v53-dk-021",
+    "v53-dk-022",
+    "v53-dk-023",
+    "v53-dk-027"
+   ],
+   "total": 537,
+   "killed": 537,
+   "notTriggered": 0,
+   "harness": 0,
+   "byCheck": {
+    "a_integrity": {
+     "PASS": 537
+    },
+    "b_reattach": {
+     "PASS": 535,
+     "FAIL": 2
+    },
+    "c_unknown_preserved": {
+     "PASS": 537
+    },
+    "d_reconcile_idempotent": {
+     "NA": 537
+    },
+    "e_new_generation_effect": {
+     "PASS": 537
+    },
+    "f_schema": {
+     "PASS": 537
+    }
+   },
+   "byMode": {
+    "double": 30,
+    "outage-35s": 2,
+    "outage-10s": 1,
+    "outage-25s": 1,
+    "boundary": 473,
+    "timing": 30
+   },
+   "fails": [
+    {
+     "id": "v53-down-0",
+     "check": "b_reattach",
+     "key": "broker#1|S16-hooks|exec:post|BEGIN IMMEDIATE|#1"
+    },
+    {
+     "id": "v53-down-1",
+     "check": "b_reattach",
+     "key": "broker#1|S18-hooks|exec:post|BEGIN IMMEDIATE|#1"
+    }
+   ]
+  },
+  "e9": {
+   "supersededHarnessRuns": [
+    "e9-ev-543",
+    "e9-ev-544",
+    "e9-ev-545",
+    "e9-ev-546",
+    "e9-dk-003",
+    "e9-dk-010",
+    "e9-dk-015",
+    "e9-dk-017",
+    "e9-dk-019",
+    "e9-dk-020",
+    "e9-dk-022",
+    "e9-dk-021",
+    "e9-dk-023",
+    "e9-dk-026",
+    "e9-dk-028",
+    "e9-dk-029"
+   ],
+   "total": 614,
+   "killed": 614,
+   "notTriggered": 0,
+   "harness": 0,
+   "byCheck": {
+    "a_integrity": {
+     "PASS": 614
+    },
+    "b_reattach": {
+     "PASS": 611,
+     "FAIL": 3
+    },
+    "c_unknown_preserved": {
+     "PASS": 614
+    },
+    "d_reconcile_idempotent": {
+     "PASS": 614
+    },
+    "e_new_generation_effect": {
+     "PASS": 614
+    },
+    "f_schema": {
+     "PASS": 614
+    }
+   },
+   "byMode": {
+    "double": 30,
+    "outage-35s": 3,
+    "outage-10s": 2,
+    "outage-25s": 2,
+    "boundary": 547,
+    "timing": 30
+   },
+   "fails": [
+    {
+     "id": "e9-down-0",
+     "check": "b_reattach",
+     "key": "broker#1|S09-hooks|exec:post|BEGIN IMMEDIATE|#1"
+    },
+    {
+     "id": "e9-down-1",
+     "check": "b_reattach",
+     "key": "broker#1|S16-hooks|exec:post|BEGIN IMMEDIATE|#1"
+    },
+    {
+     "id": "e9-down-2",
+     "check": "b_reattach",
+     "key": "broker#1|S18-hooks|exec:post|BEGIN IMMEDIATE|#1"
+    }
+   ]
+  }
+ },
+ "cross": 3,
+ "sharedKeys": 412
+}

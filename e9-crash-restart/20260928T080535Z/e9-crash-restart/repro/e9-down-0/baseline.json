@@ -1,0 +1,62 @@
+{
+  "T0": "2026-09-28T07:47:33.734Z",
+  "targets": {
+    "wake-A:claim": {
+      "recognized": false,
+      "messages": [],
+      "binding": null
+    },
+    "wake-A": {
+      "attemptId": "30723874-63bb-4eb2-83e8-12e1b7c42116",
+      "nonce": "histnoncewakeAabcdefghijklmnop",
+      "sourceReceiptId": "source-0b779055-6fde-45e1-9087-1bf7a2d973d0",
+      "row": {
+        "nonce_digest": "3e0c72345147f21307db4e7318c16582e49ab044372a1931f53acf45bb0d3dde",
+        "host": "portable",
+        "session_id": "wake-A",
+        "expires_at": "2026-09-28T08:47:33.734Z",
+        "consumed_at": null,
+        "state": "unknown",
+        "nonce": "histnoncewakeAabcdefghijklmnop",
+        "instance_id": "instance-1",
+        "birth_generation": "2026-09-28T07:47:33.734Z",
+        "transport": "portable",
+        "relay_id": "relay-wake-A-1",
+        "attempt_id": "30723874-63bb-4eb2-83e8-12e1b7c42116",
+        "dispatch_epoch": 1,
+        "retry_not_before": null,
+        "retry_count": 0,
+        "started_at": "2026-09-28T07:47:33.735Z",
+        "outcome_at": "2026-09-28T07:47:33.736Z",
+        "observed_at": null,
+        "late_observed_at": "2026-09-28T07:47:33.744Z"
+      }
+    },
+    "wake-B": {
+      "attemptId": "e2198e41-8a2d-46d7-9343-475ca374b8fa",
+      "nonce": "histnoncewakeBabcdefghijklmnop",
+      "sourceReceiptId": null,
+      "row": {
+        "nonce_digest": "0fd1a284757bbabcc0d3bbef5d1dd597d9d5bc678bbccc5bf89e4310b92718d9",
+        "host": "portable",
+        "session_id": "wake-B",
+        "expires_at": "2026-09-28T08:47:33.734Z",
+        "consumed_at": null,
+        "state": "unknown",
+        "nonce": "histnoncewakeBabcdefghijklmnop",
+        "instance_id": "instance-1",
+        "birth_generation": "2026-09-28T07:47:33.734Z",
+        "transport": "portable",
+        "relay_id": "relay-wake-B-1",
+        "attempt_id": "e2198e41-8a2d-46d7-9343-475ca374b8fa",
+        "dispatch_epoch": 1,
+        "retry_not_before": null,
+        "retry_count": 0,
+        "started_at": "2026-09-28T07:47:33.735Z",
+        "outcome_at": "2026-09-28T07:47:33.736Z",
+        "observed_at": null,
+        "late_observed_at": null
+      }
+    }
+  }
+}

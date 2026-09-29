@@ -1,0 +1,15 @@
+{
+  "case": "e9-crash-restart",
+  "targets": {
+    "e9": {"sha": "e9b4c73b2ff4294c68c6490411fbc6118c69c8c8", "tree": "4316195bbb2cdade6efa1a62150e33358ef60a7c"},
+    "53": {"sha": "53eff30a2984d41fc749d38dd2062966017684fa", "tree": "c030fa4e19411ef511c5d5c89cf588aa6f42c059"}
+  },
+  "baseline": {"sha": "d5c5932cd5a0d87630f6ed94f8e3721181ab9864", "role": "v2.7.1 frozen writer for historical rows"},
+  "sessionRepoHead": "d5c5932cd5a0d87630f6ed94f8e3721181ab9864",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v37 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startUtc": "20260928T072316Z",
+  "endUtc": "20260928T080526Z",
+  "seeds": {"plan-e9": 20260930, "plan-53": 20260931, "plan-extra-e9": 779, "plan-extra-53": 780}
+}

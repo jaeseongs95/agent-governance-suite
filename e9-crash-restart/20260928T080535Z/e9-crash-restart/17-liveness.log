@@ -1,0 +1,29 @@
+{
+ "53": {
+  "trials": 537,
+  "A_notDelivered": 537,
+  "D_notDelivered": 49,
+  "latchedTrials": 537,
+  "dupDelivery": 0,
+  "latchedStates": {
+   "unknown+late": 537,
+   "unknown": 30,
+   "submitted": 11,
+   "started": 1,
+   "reserved": 1
+  }
+ },
+ "e9": {
+  "trials": 614,
+  "A_notDelivered": 28,
+  "D_notDelivered": 46,
+  "latchedTrials": 62,
+  "dupDelivery": 0,
+  "latchedStates": {
+   "unknown": 38,
+   "submitted": 20,
+   "started": 3,
+   "reserved": 1
+  }
+ }
+}

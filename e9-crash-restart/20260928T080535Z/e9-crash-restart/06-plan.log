@@ -1,0 +1,4 @@
+{"version":"e9","total":577,"stat":{"broker:tx-or-write":446,"broker:reconcile-all":24,"relay:worker-point":25,"hook:worker-point":48,"broker:startup":4,"broker:timing":30}}
+{"version":"v53","total":503,"stat":{"broker:tx-or-write":402,"broker:reconcile-all":6,"relay:worker-point":23,"hook:worker-point":32,"broker:startup":10,"broker:timing":30}}
+e9 33 S09-hooks@244 S16-hooks@464 S18-hooks@600
+v53 32 S16-hooks@350 S18-hooks@486

@@ -1,0 +1,27 @@
+{
+ "version": "v53",
+ "plan": [
+  {
+   "id": "v53-downctl-10s",
+   "mode": "event",
+   "role": "broker",
+   "event": 350,
+   "step": "S16-hooks",
+   "label": "exec:post|BEGIN IMMEDIATE",
+   "why": "outage-10s",
+   "outcome": "submitted",
+   "downMs": 10000
+  },
+  {
+   "id": "v53-downctl-25s",
+   "mode": "event",
+   "role": "broker",
+   "event": 350,
+   "step": "S16-hooks",
+   "label": "exec:post|BEGIN IMMEDIATE",
+   "why": "outage-25s",
+   "outcome": "submitted",
+   "downMs": 25000
+  }
+ ]
+}
