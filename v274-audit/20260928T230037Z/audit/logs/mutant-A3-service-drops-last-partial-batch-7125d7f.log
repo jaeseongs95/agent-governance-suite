@@ -1,0 +1,57 @@
+Already up to date
+Done in 436ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/session-messaging/presence-retention.test.ts (8 tests | 1 failed) 2308ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 1219ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 22 passed (23)
+   Start at  22:45:23
+   Duration  2.84s (tests 78%, transform 16%, import 5%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected undefined to match object { Object (state, autoWake) }
+
+- Expected:
+{
+  "autoWake": {
+    "reason": "presence-unknown",
+    "state": "no-live-relay",
+  },
+  "state": "unknown",
+}
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/presence-retention.test.ts:96:34
+     94|   }
+     95|   // Presence rows ended days ago were pruned; the identity reads as n…
+     96|   expect(bySession.get("old-0")).toMatchObject({ state: "unknown", aut…
+       |                                  ^
+     97|   const database = new DatabaseSync(path.join(state, "session-messages…
+     98|   try {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1
+--- audit ---
+Already up to date
+Done in 466ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+
+ Test Files  1 passed (1)
+      Tests  10 passed | 3 skipped (13)
+   Start at  22:45:27
+   Duration  1.17s (tests 72%, transform 23%, import 4%)
+
+
+exit=0

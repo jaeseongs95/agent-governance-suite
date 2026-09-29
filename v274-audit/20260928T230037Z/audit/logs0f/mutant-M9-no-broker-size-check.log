@@ -1,0 +1,75 @@
+Already up to date
+Done in 441ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/session-messaging/presence-retention.test.ts (8 tests | 1 failed) 2194ms
+   × bounds list-presence: batches fit the response limit and oversized or overlong requests are refused 20ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 22 passed (23)
+   Start at  22:58:33
+   Duration  2.65s (tests 79%, transform 16%, import 5%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > bounds list-presence: batches fit the response limit and oversized or overlong requests are refused
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/presence-retention.test.ts:262:83
+    260|   // The untargeted pre-2.7.4 request is refused explicitly once the s…
+    261|   for (let index = 0; index < 60; index += 1) born(store, `many-${inde…
+    262|   expect(() => dispatchSessionMessageBrokerOperation(store, "list-pres…
+       |                                                                                   ^
+    263| });
+    264|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1
+--- audit ---
+Already up to date
+Done in 469ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/audit/v274-audit.test.ts (13 tests | 1 failed | 3 skipped) 771ms
+   × S2 broker rejects 0, 4, non-array targets and an untargeted oversize list explicitly 14ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed | 3 skipped (13)
+   Start at  22:58:37
+   Duration  1.20s (tests 72%, transform 23%, import 4%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/audit/v274-audit.test.ts > S2 broker rejects 0, 4, non-array targets and an untargeted oversize list explicitly
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/audit/v274-audit.test.ts:187:50
+    185|   for (const bad of [[], [t("a"), t("b"), t("c"), t("d")], "x", {}]) e…
+    186|   for (let i = 0; i < 8; i++) worstIdentity(s, i, now);
+    187|   expect(() => dispatch(s, "list-presence", {})).toThrow(/exceeds the …
+       |                                                  ^
+    188|   expect(() => dispatch(s, "list-presence", { targets: [{ host: "bad h…
+    189| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1

@@ -1,0 +1,12 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 1250ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 557ms
+ ✓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker 269ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  22:46:07
+   Duration  2.37s (tests 91%, transform 7%, import 2%)
+

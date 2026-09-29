@@ -1,0 +1,40 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+stdout | tests/audit/v274-audit.test.ts > R5 probe: deleting the latest row can expose an older-started, later-lapsed row (presence changes, never to online)
+AUDIT-R5 {"before":["y-short","ended"],"after":["x-long","unreachable"],"outBefore":["no-live-relay","presence-not-online"],"outAfter":["no-live-relay","presence-not-online"]}
+
+stdout | tests/audit/v274-audit.test.ts > R6 randomized: prune never deletes a live row and never changes an online presence, autoWake state or retirement
+AUDIT-R6 {"cases":600,"changedNonOnlinePresence":250}
+
+ ✓ tests/audit/v274-audit.test.ts > R1 a live row is never deleted, even when born weeks ago with a renewed lease 8ms
+ ✓ tests/audit/v274-audit.test.ts > R2 boundary: lease_until == now-24h is deleted, 1 ms later is kept 4ms
+ ✓ tests/audit/v274-audit.test.ts > R3 same started_at for two instances: the live one and the latest-by-rowid are kept, identical presence() 6ms
+ ✓ tests/audit/v274-audit.test.ts > R4 latest row not live but another row live: latest kept so presence() and retirement read the same row 5ms
+ ✓ tests/audit/v274-audit.test.ts > R5 probe: deleting the latest row can expose an older-started, later-lapsed row (presence changes, never to online) 5ms
+stdout | tests/audit/v274-audit.test.ts > S1 worst-case 3 targets (max-length control-char fields, ended, autoWake) fit the response limit; measured bytes recorded
+AUDIT-S1 {"targets":3,"bytes":22447,"perSession":7470,"limit":32768,"headroom":10321,"maxTargetsThatFit":4}
+
+ ✓ tests/audit/v274-audit.test.ts > R6 randomized: prune never deletes a live row and never changes an online presence, autoWake state or retirement 768ms
+ ✓ tests/audit/v274-audit.test.ts > R7 generation fence survives the purge: same instance re-registers later; the old marker neither claims nor observes as current 43ms
+ ✓ tests/audit/v274-audit.test.ts > R8 retirement still works for a wake whose generation rows were purged once a new generation is live 7ms
+ ✓ tests/audit/v274-audit.test.ts > S1 worst-case 3 targets (max-length control-char fields, ended, autoWake) fit the response limit; measured bytes recorded 7ms
+ ✓ tests/audit/v274-audit.test.ts > S2 broker rejects 0, 4, non-array targets and an untargeted oversize list explicitly 8ms
+stdout | tests/audit/v274-audit.test.ts > B1 probe: one board identity outside the broker's identifier pattern makes the whole batched lookup fail (all presence unknown)
+AUDIT-B1 {"good":true,"goodCount":6,"mixed":false,"error":"host and sessionId must use bounded identifier characters."}
+
+ ✓ tests/audit/v274-audit.test.ts > B1 probe: one board identity outside the broker's identifier pattern makes the whole batched lookup fail (all presence unknown) 267ms
+stdout | tests/audit/v274-audit.test.ts > C1 latency: list of N board sessions against a DB with ~1300 presence rows (N = 40, 100, 300)
+AUDIT-C1 {"N40":{"requests":14,"ms":[109,71,66]},"N100":{"requests":34,"ms":[163,144,153]},"N300":{"requests":100,"ms":[418,434,480]}}
+
+stdout | tests/audit/v274-audit.test.ts > C2 prune cost inside send's BEGIN IMMEDIATE with 1300 and 13000 presence rows (non-deletable and deletable mixes)
+AUDIT-C2 {"1300-lapsed-within-24h":{"rowsAfter":1300,"pruneMs":[0.45,0.23,0.19,0.21,0.22],"submitMs":[1.23,0.92,0.71,0.6,0.84]},"1300-live":{"rowsAfter":1300,"pruneMs":[0.32,0.25,0.17,0.19,0.17],"submitMs":[0.67,0.54,0.5,0.57,0.55]},"1300-old-deletable":{"rowsAfter":0,"pruneMs":[3.78,0.29,0.16,0.27,0.17],"submitMs":[0.83,0.75,0.67,0.81,0.71]},"13000-lapsed-within-24h":{"rowsAfter":13000,"pruneMs":[1.4,1,0.94,0.91,0.92],"submitMs":[2.17,2.18,2.19,2,2.08]},"13000-old-deletable":{"rowsAfter":0,"pruneMs":[41.01,0.48,0.18,0.15,0.15],"submitMs":[0.55,0.53,0.58,0.46,0.44]}}
+
+ ✓ tests/audit/v274-audit.test.ts > C1 latency: list of N board sessions against a DB with ~1300 presence rows (N = 40, 100, 300) 2397ms
+ ✓ tests/audit/v274-audit.test.ts > C2 prune cost inside send's BEGIN IMMEDIATE with 1300 and 13000 presence rows (non-deletable and deletable mixes) 2787ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  22:43:54
+   Duration  6.97s (tests 92%, transform 7%, import 1%)
+

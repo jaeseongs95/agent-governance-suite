@@ -1,0 +1,10 @@
+run 1 rc=0  Tests 8 passed (8) Duration  2.61s
+run 2 rc=0  Tests 8 passed (8) Duration  2.57s
+run 3 rc=0  Tests 8 passed (8) Duration  2.64s
+run 4 rc=0  Tests 8 passed (8) Duration  2.33s
+run 5 rc=0  Tests 8 passed (8) Duration  2.42s
+run 6 rc=0  Tests 8 passed (8) Duration  2.49s
+run 7 rc=0  Tests 8 passed (8) Duration  2.78s
+run 8 rc=0  Tests 8 passed (8) Duration  2.57s
+run 9 rc=0  Tests 8 passed (8) Duration  2.76s
+run 10 rc=0  Tests 8 passed (8) Duration  2.52s

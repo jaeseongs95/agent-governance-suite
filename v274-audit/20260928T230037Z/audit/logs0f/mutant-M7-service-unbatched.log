@@ -1,0 +1,55 @@
+Already up to date
+Done in 376ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/session-messaging/presence-retention.test.ts (8 tests | 1 failed) 2203ms
+   × serves board presence from a 342-identity, 1302-row database through a real broker 1084ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 22 passed (23)
+   Start at  22:58:26
+   Duration  2.64s (tests 80%, transform 15%, import 5%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker
+AssertionError: expected { code: 'MCP_UNAVAILABLE', …(2) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "code": "MCP_UNAVAILABLE",
+  "details": null,
+  "message": "targets must list 1 to 3 session identities.",
+}
+
+ ❯ tests/session-messaging/presence-retention.test.ts:92:24
+     90|     .map((sessionId) => ({ host: "portable", sessionId }));
+     91|   const result = await new SessionMessageService(state).listPresence(b…
+     92|   expect(result.error).toBeNull();
+       |                        ^
+     93|   const bySession = new Map(result.data!.sessions.map((session) => [se…
+     94|   for (let index = 0; index < 40; index += 1) expect(bySession.get(`re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit=1
+--- audit ---
+Already up to date
+Done in 435ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+
+ Test Files  1 passed (1)
+      Tests  10 passed | 3 skipped (13)
+   Start at  22:58:30
+   Duration  1.18s (tests 75%, transform 21%, import 4%)
+
+
+exit=0

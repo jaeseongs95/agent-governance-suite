@@ -1,0 +1,182 @@
+Already up to date
+Done in 439ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/session-messaging/presence-retention.test.ts (8 tests | 2 failed) 2411ms
+   × never deletes a live row, however old its birth 36ms
+   × keeps retirement, presence and autoWake identical to a run that deletes no presence row 59ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 21 passed (23)
+   Start at  22:44:42
+   Duration  3.08s (tests 75%, transform 20%, import 5%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > never deletes a live row, however old its birth
+AssertionError: expected [ { instance_id: 'long' } ] to deeply equal [ { instance_id: 'long' }, …(1) ]
+
+- Expected
++ Received
+
+  [
+    {
+      "instance_id": "long",
+    },
+-   {
+-     "instance_id": "newer",
+-   },
+  ]
+
+ ❯ tests/session-messaging/presence-retention.test.ts:136:6
+    134|   store.prune(end + 2000);
+    135|   expect(store.database.prepare("SELECT instance_id FROM session_prese…
+    136|     .toEqual([{ instance_id: "long" }, { instance_id: "newer" }]);
+       |      ^
+    137| });
+    138|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row
+AssertionError: expected { host: 'portable', …(16) } to deeply equal { host: 'portable', …(16) }
+
+- Expected
++ Received
+
+  {
+    "autoWake": {
+      "authorityEffect": "none",
+-     "basisAt": "2026-09-25T22:44:46.688Z",
++     "basisAt": "2026-09-28T22:44:44.697Z",
+      "checkedAt": null,
+-     "reason": "presence-not-online",
+-     "state": "no-live-relay",
++     "reason": "relay-live",
++     "state": "available",
+    },
+    "canWakeSilently": true,
+    "collaborationId": "collaboration-presence-retention",
+    "deliveryCapabilities": {
+      "idleWake": "silent",
+      "supportedInjection": [
+        "peer-wake",
+        "tool-boundary",
+      ],
+    },
+-   "endReason": "session-end",
+-   "endedAt": "2026-09-25T22:44:46.688Z",
+-   "heartbeatAt": "2026-09-25T22:44:46.688Z",
++   "endReason": null,
++   "endedAt": null,
++   "heartbeatAt": "2026-09-25T22:44:44.688Z",
+    "host": "portable",
+-   "instanceId": "ended-new",
+-   "leaseUntil": "2026-09-25T22:44:46.688Z",
++   "instanceId": "live-old",
++   "leaseUntil": "2026-09-28T22:45:44.707Z",
+    "role": "implementation-writer",
+    "sessionId": "split",
+-   "startedAt": "2026-09-25T22:44:45.688Z",
+-   "state": "ended",
++   "startedAt": "2026-09-25T22:44:44.688Z",
++   "state": "online",
+    "transport": "portable",
+    "wakeVisibility": "silent",
+    "workspaceId": "/work/space/presence-retention/projects/agent-governance-suite-split",
+  }
+
+ ❯ tests/session-messaging/presence-retention.test.ts:182:76
+    180|   expect(a.database.prepare("SELECT state FROM wake_nonces WHERE sessi…
+    181|   for (const sessionId of ["reborn", "split", "recent", "live"]) {
+    182|     expect(withoutCheckedAt(a.listPresence(now, [target(sessionId)])[0…
+       |                                                                            ^
+    183|   }
+    184|   expect(b.presence(target("split"), now).state).toBe("ended");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+exit=1
+--- audit ---
+Already up to date
+Done in 529ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/audit/v274-audit.test.ts (13 tests | 2 failed | 3 skipped) 108ms
+   × R4 latest row not live but another row live: latest kept so presence() and retirement read the same row 13ms
+   × R6 randomized: prune never deletes a live row and never changes an online presence, autoWake state or retirement 20ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed | 3 skipped (13)
+   Start at  22:44:47
+   Duration  496ms (transform 59%, tests 28%, import 12%, worker 1%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/audit/v274-audit.test.ts > R4 latest row not live but another row live: latest kept so presence() and retirement read the same row
+AssertionError: expected { host: 'portable', …(16) } to deeply equal { host: 'portable', …(16) }
+
+- Expected
++ Received
+
+@@ -7,19 +7,19 @@
+      "supportedInjection": [
+        "peer-wake",
+        "tool-boundary",
+      ],
+    },
+-   "endReason": "x",
+-   "endedAt": "2026-09-24T22:44:47.561Z",
+-   "heartbeatAt": "2026-09-24T22:44:47.561Z",
++   "endReason": null,
++   "endedAt": null,
++   "heartbeatAt": "2026-09-23T22:44:47.556Z",
+    "host": "portable",
+-   "instanceId": "ended-later",
+-   "leaseUntil": "2026-09-24T22:44:47.561Z",
++   "instanceId": "live-early",
++   "leaseUntil": "2026-09-28T22:45:07.556Z",
+    "role": null,
+    "sessionId": "mix",
+-   "startedAt": "2026-09-24T22:44:47.556Z",
+-   "state": "ended",
++   "startedAt": "2026-09-23T22:44:47.556Z",
++   "state": "online",
+    "transport": "portable",
+    "wakeVisibility": "silent",
+    "workspaceId": null,
+  }
+
+ ❯ tests/audit/v274-audit.test.ts:67:53
+     65|   const before = s.presence(t("mix"), now);
+     66|   s.prune(now);
+     67|   expect(strip(s.presence(t("mix"), now) as never)).toEqual(strip(befo…
+       |                                                     ^
+     68|   expect(presenceRows(s, "mix").map((r) => (r as { instance_id: string…
+     69| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/audit/v274-audit.test.ts > R6 randomized: prune never deletes a live row and never changes an online presence, autoWake state or retirement
+AssertionError: expected 'unreachable' to be 'online' // Object.is equality
+
+Expected: "online"
+Received: "unreachable"
+
+ ❯ tests/audit/v274-audit.test.ts:119:61
+    117|       if (before[id]!.p.state === "online") { expect(p.instanceId).toB…
+    118|       expect(o.state).toBe(before[id]!.o.state);
+    119|       if (p.state === "online") expect(before[id]!.p.state).toBe("onli…
+       |                                                             ^
+    120|       if (p.instanceId !== before[id]!.p.instanceId || p.state !== bef…
+    121|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+exit=1

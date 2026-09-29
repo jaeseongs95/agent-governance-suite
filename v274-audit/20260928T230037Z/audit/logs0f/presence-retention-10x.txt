@@ -1,0 +1,15 @@
+run 1 rc=0  Tests 8 passed (8)
+run 2 rc=0  Tests 8 passed (8)
+run 3 rc=0  Tests 8 passed (8)
+run 4 rc=0  Tests 8 passed (8)
+run 5 rc=0  Tests 8 passed (8)
+run 6 rc=0  Tests 8 passed (8)
+run 7 rc=0  Tests 8 passed (8)
+run 8 rc=0  Tests 8 passed (8)
+run 9 rc=0  Tests 8 passed (8)
+run 10 rc=0  Tests 8 passed (8)
+leftover temp dirs before=0 after=0
+orphan brokers: 1
+v2.7.3 rc=0  Tests 3 passed (3)
+v2.7.2 rc=0  Tests 3 passed (3)
+correction: the 'orphan brokers: 1' count was pgrep matching its own shell; ps shows no session-message-broker process

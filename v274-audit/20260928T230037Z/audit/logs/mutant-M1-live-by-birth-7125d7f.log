@@ -1,0 +1,209 @@
+Already up to date
+Done in 400ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/session-messaging/presence-retention.test.ts (8 tests | 3 failed) 2373ms
+   × keeps an ended or lapsed row until exactly the retention period after its lease end 14ms
+   × never deletes a live row, however old its birth 38ms
+   × keeps retirement, presence and autoWake identical to a run that deletes no presence row 58ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 20 passed (23)
+   Start at  22:44:36
+   Duration  2.87s (tests 79%, transform 15%, import 5%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end
+AssertionError: expected 'unknown' to be 'ended' // Object.is equality
+
+Expected: "ended"
+Received: "unknown"
+
+ ❯ tests/session-messaging/presence-retention.test.ts:110:100
+    108|   const lapsedLease = Date.parse(store.presence({ host: "portable", se…
+    109|   store.prune(now + 10 + RETENTION - 1);
+    110|   expect(store.presence({ host: "portable", sessionId: "ended" }, now …
+       |                                                                                                    ^
+    111|   store.prune(now + 10 + RETENTION);
+    112|   expect(store.presence({ host: "portable", sessionId: "ended" }).stat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > never deletes a live row, however old its birth
+AssertionError: expected [ { instance_id: 'newer' } ] to deeply equal [ { instance_id: 'long' }, …(1) ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "instance_id": "long",
+-   },
+-   {
+      "instance_id": "newer",
+    },
+  ]
+
+ ❯ tests/session-messaging/presence-retention.test.ts:136:6
+    134|   store.prune(end + 2000);
+    135|   expect(store.database.prepare("SELECT instance_id FROM session_prese…
+    136|     .toEqual([{ instance_id: "long" }, { instance_id: "newer" }]);
+       |      ^
+    137| });
+    138|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row
+AssertionError: expected { host: 'portable', …(16) } to deeply equal { host: 'portable', …(16) }
+
+- Expected
++ Received
+
+  {
+    "autoWake": {
+      "authorityEffect": "none",
+-     "basisAt": "2026-09-25T22:44:40.522Z",
++     "basisAt": null,
+      "checkedAt": null,
+-     "reason": "presence-not-online",
++     "reason": "presence-unknown",
+      "state": "no-live-relay",
+    },
+-   "canWakeSilently": true,
+-   "collaborationId": "collaboration-presence-retention",
++   "canWakeSilently": false,
++   "collaborationId": null,
+    "deliveryCapabilities": {
+-     "idleWake": "silent",
+-     "supportedInjection": [
+-       "peer-wake",
+-       "tool-boundary",
+-     ],
++     "idleWake": "none",
++     "supportedInjection": [],
+    },
+-   "endReason": "session-end",
+-   "endedAt": "2026-09-25T22:44:40.522Z",
+-   "heartbeatAt": "2026-09-25T22:44:40.522Z",
++   "endReason": null,
++   "endedAt": null,
++   "heartbeatAt": null,
+    "host": "portable",
+-   "instanceId": "ended-new",
+-   "leaseUntil": "2026-09-25T22:44:40.522Z",
+-   "role": "implementation-writer",
++   "instanceId": null,
++   "leaseUntil": null,
++   "role": null,
+    "sessionId": "split",
+-   "startedAt": "2026-09-25T22:44:39.522Z",
+-   "state": "ended",
+-   "transport": "portable",
+-   "wakeVisibility": "silent",
+-   "workspaceId": "/work/space/presence-retention/projects/agent-governance-suite-split",
++   "startedAt": null,
++   "state": "unknown",
++   "transport": null,
++   "wakeVisibility": "none",
++   "workspaceId": null,
+  }
+
+ ❯ tests/session-messaging/presence-retention.test.ts:182:76
+    180|   expect(a.database.prepare("SELECT state FROM wake_nonces WHERE sessi…
+    181|   for (const sessionId of ["reborn", "split", "recent", "live"]) {
+    182|     expect(withoutCheckedAt(a.listPresence(now, [target(sessionId)])[0…
+       |                                                                            ^
+    183|   }
+    184|   expect(b.presence(target("split"), now).state).toBe("ended");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+exit=1
+--- audit ---
+Already up to date
+Done in 384ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+ ❯ tests/audit/v274-audit.test.ts (13 tests | 3 failed | 3 skipped) 109ms
+   × R2 boundary: lease_until == now-24h is deleted, 1 ms later is kept 11ms
+   × R4 latest row not live but another row live: latest kept so presence() and retirement read the same row 6ms
+   × R6 randomized: prune never deletes a live row and never changes an online presence, autoWake state or retirement 18ms
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed | 3 skipped (13)
+   Start at  22:44:40
+   Duration  476ms (transform 58%, tests 29%, import 12%, worker 1%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/audit/v274-audit.test.ts > R2 boundary: lease_until == now-24h is deleted, 1 ms later is kept
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/audit/v274-audit.test.ts:45:78
+     43|   born(s, "b", "ib", now - 30 * H); s.endPresence(t("b"), "x", "ib", n…
+     44|   s.prune(now);
+     45|   expect(presenceRows(s, "a")).toHaveLength(0); expect(presenceRows(s,…
+       |                                                                              ^
+     46| });
+     47|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/audit/v274-audit.test.ts > R4 latest row not live but another row live: latest kept so presence() and retirement read the same row
+AssertionError: expected [ 'ended-later' ] to deeply equal [ 'ended-later', 'live-early' ]
+
+- Expected
++ Received
+
+  [
+    "ended-later",
+-   "live-early",
+  ]
+
+ ❯ tests/audit/v274-audit.test.ts:68:96
+     66|   s.prune(now);
+     67|   expect(strip(s.presence(t("mix"), now) as never)).toEqual(strip(befo…
+     68|   expect(presenceRows(s, "mix").map((r) => (r as { instance_id: string…
+       |                                                                                                ^
+     69| });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/audit/v274-audit.test.ts > R6 randomized: prune never deletes a live row and never changes an online presence, autoWake state or retirement
+AssertionError: expected [ 'i0-0', 'i10-0', 'i13-1', …(2) ] to deeply equal [ 'i0-0', 'i10-0', 'i11-2', …(5) ]
+
+- Expected
++ Received
+
+  [
+    "i0-0",
+    "i10-0",
+-   "i11-2",
+-   "i13-0",
+    "i13-1",
+    "i2-0",
+    "i3-0",
+-   "i3-3",
+  ]
+
+ ❯ tests/audit/v274-audit.test.ts:112:23
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+exit=1

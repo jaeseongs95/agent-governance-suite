@@ -1,0 +1,43 @@
+{
+  "audit": "AGS v2.7.4 hotfix independent pre-release audit",
+  "candidate": {
+    "branch": "claude/v274-presence",
+    "commit": "0f0c192e3027525d2f12e17620c29e9e2cfd7c43",
+    "tree": "e4748a110a75a7a87509a4db14c8ff855c52ad02",
+    "auditedBodyAt": {
+      "commit": "7125d7fdffb7f4574f216a3a2867132a13f6e810",
+      "tree": "5ace3e6b1f68438321aa5519e05b0077939bef55"
+    }
+  },
+  "baseline": {
+    "ref": "main / tag v2.7.3",
+    "commit": "65bdd257b749e894b3099a882996feb463ccb96d"
+  },
+  "previousBrokers": {
+    "v2.7.3": "tag dist sha256 b30977b5…",
+    "v2.7.2": "tag dist sha256 fbb808e0…"
+  },
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "Linux vm 6.18.44-fc-v37 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startedAtUtc": "2026-09-28T22:40:39Z",
+  "finishedAtUtc": "2026-09-28T23:00:30Z",
+  "verdict": "PASS_WITH_FINDINGS",
+  "redaction": {
+    "github-token": 0,
+    "anthropic-key": 0,
+    "aws-access-key": 0,
+    "private-key-line": 0,
+    "bearer-header": 0,
+    "email": 0,
+    "home-path": 73,
+    "root-home": 5,
+    "ipv4": 0,
+    "accountInUrl": "github.com/<account> masked"
+  },
+  "writerEvidenceReadForComparisonOnly": [
+    "claude/evidence-v274-presence-20260928T223840Z",
+    "claude/evidence-v274-presence-fix1-20260928T224647Z"
+  ],
+  "releaseBlocking": false
+}

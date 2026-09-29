@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v274
+
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  22:46:00
+   Duration  2.76s (tests 84%, transform 14%, import 2%)
+
