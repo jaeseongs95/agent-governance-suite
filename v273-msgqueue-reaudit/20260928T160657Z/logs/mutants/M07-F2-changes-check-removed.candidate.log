@@ -1,0 +1,91 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/message-lifecycle.test.ts (14 tests | 1 failed) 6114ms
+   × keeps the first immutable receipt and does not enqueue or wake after ACK/prune 14ms
+ ❯ tests/session-messaging/message-retention.test.ts (15 tests | 3 failed) 6081ms
+   × second ACK, another session's ACK and unknown-ID ACK leave receipt expiry unchanged 21ms
+   × concurrent send and ACK keep one row and only shorten receipt expiry 144ms
+   × opens a v2.7.2 receipt without migration and applies ACK+1h only to new ACKs 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-lifecycle.test.ts > keeps the first immutable receipt and does not enqueue or wake after ACK/prune
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/session-messaging/message-lifecycle.test.ts:105:62
+    103|   expect(firstClaim).toMatchObject({ messageId: draft.messageId, body:…
+    104|   expect(store.acknowledge(target, [draft.messageId], 3002)).toBe(1);
+    105|   expect(store.acknowledge(target, [draft.messageId], 3003)).toBe(0);
+       |                                                              ^
+    106|   expect(store.status(sender, draft.messageId, 3003)?.acknowledgedAt).…
+    107|   store.prune(32_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > second ACK, another session's ACK and unknown-ID ACK leave receipt expiry unchanged
+AssertionError: expected 2 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 2
+
+ ❯ tests/session-messaging/message-retention.test.ts:139:79
+    137|   const snapshot = () => store.database.prepare("SELECT message_id, ex…
+    138|   const initial = snapshot();
+    139|   expect(store.acknowledge(other, [first.messageId, second.messageId],…
+       |                                                                               ^
+    140|   expect(store.acknowledge(target, ["unknown-retention-id"], 2000)).to…
+    141|   expect(snapshot()).toEqual(initial);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > concurrent send and ACK keep one row and only shorten receipt expiry
+AssertionError: expected '1970-01-02T01:00:02.000Z' to be '1970-01-01T01:00:02.000Z' // Object.is equality
+
+Expected: "1970-01-01T01:00:02.000Z"
+Received: "1970-01-02T01:00:02.000Z"
+
+ ❯ tests/session-messaging/message-retention.test.ts:201:19
+    199|   const acknowledged = output[1]!.result as number;
+    200|   const initial = String(receiptExpiry(store, draft.messageId));
+    201|   expect(initial).toBe(acknowledged === 1 ? iso(2000 + H) : iso(Date.p…
+       |                   ^
+    202|   store.acknowledge(target, [draft.messageId], 3000);
+    203|   const later = String(receiptExpiry(store, draft.messageId));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > opens a v2.7.2 receipt without migration and applies ACK+1h only to new ACKs
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/session-messaging/message-retention.test.ts:220:63
+    218|   const legacyExpiry = iso(Date.parse(old.expiresAt) + H);
+    219|   expect(receiptExpiry(reopened, old.messageId)).toBe(legacyExpiry);
+    220|   expect(reopened.acknowledge(target, [old.messageId], 3000)).toBe(0);
+       |                                                               ^
+    221|   expect(receiptExpiry(reopened, old.messageId)).toBe(legacyExpiry);
+    222|   expect(reopened.acknowledge(target, [fresh.messageId], 3000)).toBe(1…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 7 passed | 1 skipped (10)
+      Tests  4 failed | 262 passed | 1 skipped (267)
+   Start at  15:53:14
+   Duration  17.64s (tests 96%, transform 2%, import 1%)
+

@@ -1,0 +1,43 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 2 failed) 17099ms
+   × L3 earliestReleaseAt equals the actual release instant, and exactly one slot frees per expired receipt 175ms
+   × L4 send of a pre-made draft just before and at earliestReleaseAt (global scope) 932ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L3 earliestReleaseAt equals the actual release instant, and exactly one slot frees per expired receipt
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:292:13
+    290|       .get(sender.host, sender.sessionId) as { count: number; earliest…
+    291|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    292|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    293|     }
+    294|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:312:12
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:219:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L4 send of a pre-made draft just before and at earliestReleaseAt (global scope)
+MessageCapacityError: The bounded message receipt store is full; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:296:51
+    294|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+    295|       .get() as { count: number; earliest: string | null };
+    296|     if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityE…
+       |                                                   ^
+    297|   }
+    298|
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:312:12
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:239:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 passed (16)
+   Start at  15:57:13
+   Duration  17.41s (tests 99%, transform 1%)
+

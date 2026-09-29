@@ -1,0 +1,14 @@
+
+ RUN  v5.0.0 /home/user/audit-lab
+
+ ✓ tests/session-messaging/reaudit-n5.test.ts > N5-a doing both branches after release delivers one intent twice (why 'not both' is required) 197ms
+stdout | tests/session-messaging/reaudit-n5.test.ts > N5-b same-ID branch: when earliestReleaseAt is after the draft expiry, the retry lands on uncertain guidance
+N5-b same-ID retry after release: {"code":"MCP_UNAVAILABLE","message":"Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent. Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.","details":null}
+
+ ✓ tests/session-messaging/reaudit-n5.test.ts > N5-b same-ID branch: when earliestReleaseAt is after the draft expiry, the retry lands on uncertain guidance 540ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  15:50:55
+   Duration  1.19s (tests 68%, transform 28%, import 3%)
+

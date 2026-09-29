@@ -1,0 +1,12 @@
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index efffd7dc..79269e03 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -340,7 +340,6 @@ export class SessionMessageStore {
+         this.database.exec("COMMIT");
+         return { ...receipt, duplicate: true };
+       }
+-      this.assertReceiptCapacity(sender, ".");
+       const receipt = this.send({ messageId, sender, target: { host: String(row.target_host), sessionId: String(row.target_session_id) }, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+       const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
+       const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);

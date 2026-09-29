@@ -1,0 +1,50 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 2 failed) 17948ms
+   × I3 repeated claim and ACK leave receipt expiry, capacity counts and status stable 14ms
+   × R3 concurrent send and ACK: one row, expiry only shrinks (5 rounds) 132ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I3 repeated claim and ACK leave receipt expiry, capacity counts and status stable
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:107:76
+    105|   for (const t of [2_000_002, 2_100_000, 2_000_000 + H - 1]) {
+    106|     store.claim(target, t);
+    107|     expect(store.acknowledge(target, [sent.messageId, sent.messageId],…
+       |                                                                            ^
+    108|     expect(receiptExpiry(store, sent.messageId)).toBe(afterAck);
+    109|     expect(receipts(store, hot)).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > R3 concurrent send and ACK: one row, expiry only shrinks (5 rounds)
+AssertionError: expected '1970-01-02T01:00:02.000Z' to be '1970-01-01T01:00:02.000Z' // Object.is equality
+
+Expected: "1970-01-01T01:00:02.000Z"
+Received: "1970-01-02T01:00:02.000Z"
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:334:51
+    332|     const acked = out[1]!.result as number;
+    333|     if (acked === 1) orders.sendFirst++; else orders.ackFirst++;
+    334|     expect(receiptExpiry(store, draft.messageId)).toBe(acked === 1 ? i…
+       |                                                   ^
+    335|   }
+    336|   expect(orders.ackFirst + orders.sendFirst).toBe(RACE_ROUNDS);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 passed (16)
+   Start at  15:53:32
+   Duration  18.28s (tests 99%, transform 1%)
+

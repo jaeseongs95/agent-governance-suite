@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+
+ Test Files  9 passed | 1 skipped (10)
+      Tests  266 passed | 1 skipped (267)
+   Start at  15:49:16
+   Duration  18.16s (tests 96%, transform 3%, import 1%)
+

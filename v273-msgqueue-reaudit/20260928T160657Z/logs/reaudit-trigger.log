@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 /home/user/audit-lab
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:05:04
+   Duration  406ms (transform 83%, import 10%, tests 6%, worker 1%)
+

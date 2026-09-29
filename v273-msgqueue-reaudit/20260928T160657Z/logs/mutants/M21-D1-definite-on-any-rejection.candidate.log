@@ -1,0 +1,43 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/message-retention.test.ts (15 tests | 1 failed) 4411ms
+   × service reports capacity rejections as definite no-effect with scope and earliest release details 523ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > service reports capacity rejections as definite no-effect with scope and earliest release details
+AssertionError: expected { schemaVersion: '1.0.0', …(3) } to match object { ok: false, error: { …(2) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "error": {
+      "code": "MCP_UNAVAILABLE",
+-     "details": null,
++     "details": {
++       "earliestReleaseAt": null,
++       "scope": "global",
++     },
+    },
+    "ok": false,
+  }
+
+ ❯ tests/session-messaging/message-retention.test.ts:263:19
+    261|   // Uncertain outcomes keep the same-ID retry guidance and carry no c…
+    262|   const unknown = await service.send({ messageId: "unknown-retention-i…
+    263|   expect(unknown).toMatchObject({ ok: false, error: { code: "MCP_UNAVA…
+       |                   ^
+    264|   expect(unknown.error?.message).toMatch(/Retry only the known prepare…
+    265|   for (let index = SENDER_LIMIT; index < MESSAGE_RECEIPT_LIMIT; index+…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 8 passed | 1 skipped (10)
+      Tests  1 failed | 265 passed | 1 skipped (267)
+   Start at  16:01:46
+   Duration  16.73s (tests 96%, transform 3%, import 1%)
+

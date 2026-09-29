@@ -1,0 +1,50 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 2 failed) 9081ms
+   × R1 two processes send at sender limit-1 never exceed the limit (5 rounds) 554ms
+   × R2 two senders race for the last global slot (5 rounds) 1897ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > R1 two processes send at sender limit-1 never exceed the limit (5 rounds)
+AssertionError: expected [ { type: 'result', …(1) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:293:41
+    291|     const ids = [0, 1].map(() => store.prepare({ sender: hot, target, …
+    292|     const out = await race(database, ids.map((messageId) => ({ operati…
+    293|     expect(out.filter((v) => v.result)).toHaveLength(1);
+       |                                         ^
+    294|     expect(out.find((v) => v.error)?.error).toBe("The bounded message …
+    295|     expect(receipts(store, hot)).toBe(MESSAGE_SENDER_RECEIPT_LIMIT);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > R2 two senders race for the last global slot (5 rounds)
+AssertionError: expected 'The bounded message spool is full.' to be 'The bounded message receipt store is …' // Object.is equality
+
+Expected: "The bounded message receipt store is full."
+Received: "The bounded message spool is full."
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:314:45
+    312|     ]);
+    313|     expect(out.filter((v) => v.result)).toHaveLength(1);
+    314|     expect(out.find((v) => v.error)?.error).toBe("The bounded message …
+       |                                             ^
+    315|     expect(receipts(store)).toBe(MESSAGE_RECEIPT_LIMIT);
+    316|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 passed (16)
+   Start at  15:53:03
+   Duration  9.39s (tests 98%, transform 2%)
+

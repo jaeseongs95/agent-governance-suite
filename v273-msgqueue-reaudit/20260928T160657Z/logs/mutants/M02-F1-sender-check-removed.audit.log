@@ -1,0 +1,99 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 5 failed) 15399ms
+   × I5 a capacity-rejected draft stays retryable by the same ID and delivers exactly once 165ms
+   × L1 sender boundary limit-1 / limit / limit+1 for prepare and send 159ms
+   × L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first) 932ms
+   × L3 earliestReleaseAt equals the actual release instant, and exactly one slot frees per expired receipt 165ms
+   × R1 two processes send at sender limit-1 never exceed the limit (5 rounds) 475ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I5 a capacity-rejected draft stays retryable by the same ID and delivers exactly once
+Error: expected a rejection
+ ❯ rejection tests/session-messaging/audit-msgqueue.test.ts:49:9
+     47| function rejection(action: () => unknown): Error & { details?: { scope…
+     48|   try { action(); } catch (error) { return error as Error & { details?…
+     49|   throw new Error("expected a rejection");
+       |         ^
+     50| }
+     51|
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:135:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L1 sender boundary limit-1 / limit / limit+1 for prepare and send
+Error: expected a rejection
+ ❯ rejection tests/session-messaging/audit-msgqueue.test.ts:49:9
+     47| function rejection(action: () => unknown): Error & { details?: { scope…
+     48|   try { action(); } catch (error) { return error as Error & { details?…
+     49|   throw new Error("expected a rejection");
+       |         ^
+     50| }
+     51|
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:177:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first)
+AssertionError: expected { scope: 'global', …(1) } to deeply equal { scope: 'sender', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "earliestReleaseAt": "1970-01-01T02:00:05.000Z",
+-   "scope": "sender",
++   "earliestReleaseAt": "1970-01-01T02:00:01.000Z",
++   "scope": "global",
+  }
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:200:24
+    198|   // both full: hot sees sender scope with its own earliest receipt
+    199|   const both = rejection(() => store.prepare({ sender: hot, target, bo…
+    200|   expect(both.details).toEqual({ scope: "sender", earliestReleaseAt: i…
+       |                        ^
+    201|   // other sender sees global scope with the pool's earliest receipt
+    202|   const globalSend = rejection(() => store.submitPrepared(other, other…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L3 earliestReleaseAt equals the actual release instant, and exactly one slot frees per expired receipt
+Error: expected a rejection
+ ❯ rejection tests/session-messaging/audit-msgqueue.test.ts:49:9
+     47| function rejection(action: () => unknown): Error & { details?: { scope…
+     48|   try { action(); } catch (error) { return error as Error & { details?…
+     49|   throw new Error("expected a rejection");
+       |         ^
+     50| }
+     51|
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:215:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > R1 two processes send at sender limit-1 never exceed the limit (5 rounds)
+AssertionError: expected [ { type: 'result', …(1) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:293:41
+    291|     const ids = [0, 1].map(() => store.prepare({ sender: hot, target, …
+    292|     const out = await race(database, ids.map((messageId) => ({ operati…
+    293|     expect(out.filter((v) => v.result)).toHaveLength(1);
+       |                                         ^
+    294|     expect(out.find((v) => v.error)?.error).toBe("The bounded message …
+    295|     expect(receipts(store, hot)).toBe(MESSAGE_SENDER_RECEIPT_LIMIT);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 11 passed (16)
+   Start at  15:50:49
+   Duration  15.69s (tests 99%, transform 1%)
+

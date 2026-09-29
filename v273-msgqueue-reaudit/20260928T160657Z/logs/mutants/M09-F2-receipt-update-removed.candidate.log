@@ -1,0 +1,128 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/message-retention.test.ts (15 tests | 5 failed) 6001ms
+   × bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted 13ms
+   × drained senders regain capacity at ACK+1h instead of message expiry+1h 200ms
+   × second ACK, another session's ACK and unknown-ID ACK leave receipt expiry unchanged 5ms
+   × opens a v2.7.2 receipt without migration and applies ACK+1h only to new ACKs 15ms
+   × rolls back the whole ACK when the receipt update fails inside the same transaction 6ms
+ ❯ tests/session-messaging/message-lifecycle.test.ts (14 tests | 1 failed) 5835ms
+   × applies global draft, receipt and byte backpressure without evicting valid records 1062ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-lifecycle.test.ts > applies global draft, receipt and byte backpressure without evicting valid records
+AssertionError: expected MessageCapacityError: The bounded message… { details: { …(2) } } to match object { details: { scope: 'global', …(1) } }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
++ MessageCapacityError {
+    "details": {
+-     "earliestReleaseAt": "1970-01-01T01:10:02.000Z",
++     "earliestReleaseAt": "1970-01-01T02:10:02.000Z",
+      "scope": "global",
+    },
+  }
+
+ ❯ tests/session-messaging/message-lifecycle.test.ts:151:21
+    149|   let admission: unknown;
+    150|   expect(() => { try { prepare(store, 602_001); } catch (error) { admi…
+    151|   expect(admission).toMatchObject({ details: release });
+       |                     ^
+    152|   expect(count(store, "prepared_messages")).toBe(beforeDrafts);
+    153|   const beforeMessages = count(store);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted
+AssertionError: expected '1970-01-02T01:00:01.000Z' to be '1970-01-01T01:00:02.000Z' // Object.is equality
+
+Expected: "1970-01-01T01:00:02.000Z"
+Received: "1970-01-02T01:00:01.000Z"
+
+ ❯ tests/session-messaging/message-retention.test.ts:112:48
+    110|   const ackAt = 2000;
+    111|   expect(store.acknowledge(target, [sent.messageId], ackAt)).toBe(1);
+    112|   expect(receiptExpiry(store, sent.messageId)).toBe(iso(Math.min(messa…
+       |                                                ^
+    113|   expect(store.submitPrepared(hot, sent.messageId, ackAt + H - 1)).toE…
+    114|   expect(store.status(hot, sent.messageId, ackAt + H - 1)).toMatchObje…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > drained senders regain capacity at ACK+1h instead of message expiry+1h
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:292:13
+    290|       .get(sender.host, sender.sessionId) as { count: number; earliest…
+    291|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    292|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    293|     }
+    294|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:313:12
+ ❯ sendNew tests/session-messaging/message-retention.test.ts:45:23
+ ❯ tests/session-messaging/message-retention.test.ts:130:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > second ACK, another session's ACK and unknown-ID ACK leave receipt expiry unchanged
+AssertionError: expected '1970-01-02T01:00:01.000Z' to be '1970-01-01T01:00:03.000Z' // Object.is equality
+
+Expected: "1970-01-01T01:00:03.000Z"
+Received: "1970-01-02T01:00:01.000Z"
+
+ ❯ tests/session-messaging/message-retention.test.ts:143:49
+    141|   expect(snapshot()).toEqual(initial);
+    142|   expect(store.acknowledge(target, [first.messageId], 3000)).toBe(1);
+    143|   expect(receiptExpiry(store, first.messageId)).toBe(iso(3000 + H));
+       |                                                 ^
+    144|   const afterFirst = snapshot();
+    145|   expect(store.acknowledge(target, [first.messageId], 4000)).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > opens a v2.7.2 receipt without migration and applies ACK+1h only to new ACKs
+AssertionError: expected '1970-01-02T01:00:01.000Z' to be '1970-01-01T01:00:03.000Z' // Object.is equality
+
+Expected: "1970-01-01T01:00:03.000Z"
+Received: "1970-01-02T01:00:01.000Z"
+
+ ❯ tests/session-messaging/message-retention.test.ts:223:52
+    221|   expect(receiptExpiry(reopened, old.messageId)).toBe(legacyExpiry);
+    222|   expect(reopened.acknowledge(target, [fresh.messageId], 3000)).toBe(1…
+    223|   expect(receiptExpiry(reopened, fresh.messageId)).toBe(iso(3000 + H));
+       |                                                    ^
+    224|   expect(reopened.status(hot, old.messageId, 2000 + H)).toMatchObject(…
+    225|   expect(reopened.status(hot, fresh.messageId, 3000 + H)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > rolls back the whole ACK when the receipt update fails inside the same transaction
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/message-retention.test.ts:344:67
+    342|   store.database.exec(`CREATE TRIGGER retention_fail_receipt BEFORE UP…
+    343|     BEGIN SELECT RAISE(ABORT, 'injected receipt update failure'); END;…
+    344|   expect(() => store.acknowledge(target, [sent.messageId], 2000)).toTh…
+       |                                                                   ^
+    345|   expect(scalar(store, "SELECT acknowledged_at AS value FROM messages …
+    346|   expect(receiptExpiry(store, sent.messageId)).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed | 7 passed | 1 skipped (10)
+      Tests  6 failed | 260 passed | 1 skipped (267)
+   Start at  15:54:29
+   Duration  17.73s (tests 96%, transform 3%, import 1%)
+

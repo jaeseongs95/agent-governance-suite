@@ -1,0 +1,131 @@
+
+ RUN  v5.0.0 /home/user/reaudit-merge
+
+ ❯ tests/session-messaging/historical-wake.test.mjs (65 tests | 6 failed) 7959ms
+   × packaged claude CLI rejects unsupported trust schema without mutation: 0 132ms
+   × packaged claude CLI rejects unsupported trust schema without mutation: 1 123ms
+   × packaged claude CLI rejects unsupported trust schema without mutation: 2 126ms
+   × packaged claude CLI rejects unsupported trust schema without mutation: 99 124ms
+   × packaged claude CLI rejects unsupported trust schema without mutation: missing-table 123ms
+   × packaged claude CLI rejects unsupported trust schema without mutation: wrong-column 124ms
+ ❯ tests/session-messaging/message-retention.test.ts (15 tests | 3 failed) 7798ms
+   × bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted 14ms
+   × service reports capacity rejections as definite no-effect with scope and earliest release details 3215ms
+   × a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection 259ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/historical-wake.test.mjs > packaged claude CLI rejects unsupported trust schema without mutation: 0
+ FAIL  tests/session-messaging/historical-wake.test.mjs > packaged claude CLI rejects unsupported trust schema without mutation: 1
+ FAIL  tests/session-messaging/historical-wake.test.mjs > packaged claude CLI rejects unsupported trust schema without mutation: 2
+ FAIL  tests/session-messaging/historical-wake.test.mjs > packaged claude CLI rejects unsupported trust schema without mutation: 99
+ FAIL  tests/session-messaging/historical-wake.test.mjs > packaged claude CLI rejects unsupported trust schema without mutation: missing-table
+ FAIL  tests/session-messaging/historical-wake.test.mjs > packaged claude CLI rejects unsupported trust schema without mutation: wrong-column
+Error: The session message broker exited before it was ready (code 1, signal null).
+ ❯ mcp-server/src/session-message-client.ts:242:17
+    240|         if (spawnError) throw spawnError;
+    241|         if ((child.exitCode !== null && child.exitCode !== 0) || child…
+    242|           throw new Error(
+       |                 ^
+    243|             `The session message broker exited before it was ready (co…
+    244|           );
+ ❯ withDeadline mcp-server/src/session-message-client.ts:114:12
+ ❯ tests/session-messaging/historical-wake.test.mjs:446:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted
+AssertionError: expected { …(5) } to deeply equal { …(5) }
+
+- Expected
++ Received
+
+@@ -1,10 +1,10 @@
+  {
+    "autoWake": {
+      "authorityEffect": "none",
+      "basisAt": null,
+-     "checkedAt": "1970-01-01T00:00:01.000Z",
++     "checkedAt": "1970-01-01T01:00:01.999Z",
+      "reason": "presence-unknown",
+      "state": "no-live-relay",
+    },
+    "createdAt": "1970-01-01T00:00:01.000Z",
+    "duplicate": true,
+
+ ❯ tests/session-messaging/message-retention.test.ts:113:68
+    111|   expect(store.acknowledge(target, [sent.messageId], ackAt)).toBe(1);
+    112|   expect(receiptExpiry(store, sent.messageId)).toBe(iso(Math.min(messa…
+    113|   expect(store.submitPrepared(hot, sent.messageId, ackAt + H - 1)).toE…
+       |                                                                    ^
+    114|   expect(store.status(hot, sent.messageId, ackAt + H - 1)).toMatchObje…
+    115|   expect(() => store.submitPrepared(hot, sent.messageId, ackAt + H)).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > service reports capacity rejections as definite no-effect with scope and earliest release details
+AssertionError: expected { schemaVersion: '1.0.0', …(3) } to match object { ok: true, error: null, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,11 +1,11 @@
+  {
+    "data": {
+      "autoWake": {
+        "authorityEffect": "none",
+        "basisAt": null,
+-       "checkedAt": "2026-09-28T15:49:51.653Z",
++       "checkedAt": "2026-09-28T15:49:54.711Z",
+        "reason": "presence-unknown",
+        "state": "no-live-relay",
+      },
+      "createdAt": "2026-09-28T15:49:51.653Z",
+      "duplicate": true,
+
+ ❯ tests/session-messaging/message-retention.test.ts:271:18
+    269|   const rowsBefore = rows(store);
+    270|   const resent = await service.send({ messageId: firstSent.messageId, …
+    271|   expect(resent).toMatchObject({ ok: true, error: null, data: { ...fir…
+       |                  ^
+    272|   expect(rows(store)).toBe(rowsBefore);
+    273| }, 30_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection
+AssertionError: expected { …(5) } to deeply equal { …(5) }
+
+- Expected
++ Received
+
+@@ -1,10 +1,10 @@
+  {
+    "autoWake": {
+      "authorityEffect": "none",
+      "basisAt": null,
+-     "checkedAt": "1970-01-01T00:00:01.000Z",
++     "checkedAt": "1970-01-01T00:00:05.000Z",
+      "reason": "presence-unknown",
+      "state": "no-live-relay",
+    },
+    "createdAt": "1970-01-01T00:00:01.000Z",
+    "duplicate": true,
+
+ ❯ tests/session-messaging/message-retention.test.ts:279:63
+    277|   const sent = Array.from({ length: SENDER_LIMIT }, (_, index) => send…
+    278|   expect(receipts(store, hot)).toBe(SENDER_LIMIT);
+    279|   expect(store.submitPrepared(hot, sent[0]!.messageId, 5000)).toEqual(…
+       |                                                               ^
+    280|   expect(store.submitPrepared(hot, sent[SENDER_LIMIT - 1]!.messageId, …
+    281|   expect(rows(store)).toBe(SENDER_LIMIT);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+
+ Test Files  2 failed | 8 passed | 1 skipped (11)
+      Tests  9 failed | 285 passed | 2 skipped (296)
+   Start at  15:49:39
+   Duration  21.23s (tests 96%, transform 2%, import 2%)
+

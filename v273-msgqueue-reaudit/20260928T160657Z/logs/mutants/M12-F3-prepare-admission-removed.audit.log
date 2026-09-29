@@ -1,0 +1,69 @@
+
+ RUN  v5.0.0 /home/user/audit-mut
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts (16 tests | 4 failed) 16732ms
+   × L1 sender boundary limit-1 / limit / limit+1 for prepare and send 178ms
+   × L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first) 809ms
+   × L3 earliestReleaseAt equals the actual release instant, and exactly one slot frees per expired receipt 138ms
+   × L4 send of a pre-made draft just before and at earliestReleaseAt (global scope) 798ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L1 sender boundary limit-1 / limit / limit+1 for prepare and send
+Error: expected a rejection
+ ❯ rejection tests/session-messaging/audit-msgqueue.test.ts:49:9
+     47| function rejection(action: () => unknown): Error & { details?: { scope…
+     48|   try { action(); } catch (error) { return error as Error & { details?…
+     49|   throw new Error("expected a rejection");
+       |         ^
+     50| }
+     51|
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:177:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first)
+Error: expected a rejection
+ ❯ rejection tests/session-messaging/audit-msgqueue.test.ts:49:9
+     47| function rejection(action: () => unknown): Error & { details?: { scope…
+     48|   try { action(); } catch (error) { return error as Error & { details?…
+     49|   throw new Error("expected a rejection");
+       |         ^
+     50| }
+     51|
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:199:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L3 earliestReleaseAt equals the actual release instant, and exactly one slot frees per expired receipt
+Error: expected a rejection
+ ❯ rejection tests/session-messaging/audit-msgqueue.test.ts:49:9
+     47| function rejection(action: () => unknown): Error & { details?: { scope…
+     48|   try { action(); } catch (error) { return error as Error & { details?…
+     49|   throw new Error("expected a rejection");
+       |         ^
+     50| }
+     51|
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:215:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > L4 send of a pre-made draft just before and at earliestReleaseAt (global scope)
+Error: expected a rejection
+ ❯ rejection tests/session-messaging/audit-msgqueue.test.ts:49:9
+     47| function rejection(action: () => unknown): Error & { details?: { scope…
+     48|   try { action(); } catch (error) { return error as Error & { details?…
+     49|   throw new Error("expected a rejection");
+       |         ^
+     50| }
+     51|
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:238:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 12 passed (16)
+   Start at  15:56:37
+   Duration  17.05s (tests 99%, transform 1%)
+
