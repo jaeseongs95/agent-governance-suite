@@ -64,6 +64,8 @@ const withoutCheckedAt = (value: storeModule.SessionPresenceView) =>
 function largeFixture(database: string, now: number) {
   const store = new SessionMessageStore(database);
   try {
+    // One transaction: about 2000 separate commits each waited for a disk flush, which dominated slow Windows runners.
+    store.database.exec("BEGIN");
     for (let index = 0; index < 300; index += 1) {
       for (let instance = 0; instance < (index < 60 ? 5 : 4); instance += 1) {
         const at = now - 10 * 24 * HOUR + index * 60_000 + instance * 1000;
@@ -83,6 +85,7 @@ function largeFixture(database: string, now: number) {
         new Date(now + 60_000).toISOString(), new Date(now - 1000).toISOString());
     }
     keepLive(store, ["live-0", "live-1"]);
+    store.database.exec("COMMIT");
     return (store.database.prepare("SELECT count(*) AS rows, count(DISTINCT session_id) AS identities FROM session_presence").get());
   } finally { store.close(); }
 }
