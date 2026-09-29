@@ -1,0 +1,30 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-fmut
+
+ ❯ tests/session-messaging/message-retention.test.ts (16 tests | 1 failed) 9153ms
+   × bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted 17ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted
+AssertionError: expected '1970-01-01T01:00:50.000Z' to be '1970-01-01T01:00:40.000Z' // Object.is equality
+
+Expected: "1970-01-01T01:00:40.000Z"
+Received: "1970-01-01T01:00:50.000Z"
+
+ ❯ tests/session-messaging/message-retention.test.ts:123:54
+    121|   const shortLived = sendNew(store, hot, 10_000, 30);
+    122|   expect(store.acknowledge(target, [shortLived.messageId], 10_000 + 40…
+    123|   expect(receiptExpiry(store, shortLived.messageId)).toBe(iso(10_000 +…
+       |                                                      ^
+    124| });
+    125|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 9 passed | 1 skipped (11)
+      Tests  1 failed | 294 passed | 2 skipped (297)
+   Start at  16:46:52
+   Duration  22.47s (tests 96%, import 2%, transform 2%)
+

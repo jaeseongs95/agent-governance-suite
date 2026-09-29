@@ -1,0 +1,6 @@
+new run1 rc=0 481ms 1883ms 470ms 
+new run2 rc=0 484ms 1982ms 521ms 
+new run3 rc=0 483ms 1822ms 496ms 
+old run1 rc=0 717ms 2636ms 787ms 
+old run2 rc=0 708ms 2973ms 687ms 
+old run3 rc=0 724ms 2662ms 688ms 

@@ -1,0 +1,42 @@
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index a84568e..ce298eb 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -1017,26 +1017,28 @@ export class SessionMessageStore {
+       }
+       this.recordActivity(target, nowMs);
+       const presence = this.presence(target, nowMs);
+-      const retired = rows.some((row) => row!.state === "expired-unobserved");
+-      const valid = !retired && rows.every((row) => row!.state === "legacy" ? row!.consumed_at === null && String(row!.expires_at) > iso(nowMs)
++      // A retired attempt stays retired; its verified late arrival is recorded as evidence only and it takes no part
++      // in the decision, so a current marker in the same prompt still claims. Only an all-retired prompt reports retired.
++      this.database.prepare(`UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?)
++        WHERE host = ? AND session_id = ? AND state = 'expired-unobserved' AND nonce_digest IN (SELECT value FROM json_each(?))`)
++        .run(iso(nowMs), target.host, target.sessionId, JSON.stringify(digests));
++      const live = rows.filter((row) => row!.state !== "expired-unobserved");
++      if (live.length === 0) { this.database.exec("COMMIT"); return { ...rejected, retired: true }; }
++      const valid = live.every((row) => row!.state === "legacy" ? row!.consumed_at === null && String(row!.expires_at) > iso(nowMs)
+         : row!.instance_id === presence.instanceId && row!.birth_generation === presence.startedAt
+           && row!.transport === presence.transport && presence.state === "online"
+           && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row!.expires_at) > iso(nowMs));
+       if (!valid) {
+         // Arrival is proven, but it cannot authorize this generation's body claim or resume evidence.
+-        for (const row of rows) if (row!.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
++        for (const row of live) if (row!.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
+           SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?
+           WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`)
+           .run(iso(nowMs), iso(nowMs), iso(nowMs), String(row!.nonce_digest));
+-        // A retired attempt stays retired; its verified late arrival is recorded as evidence only.
+-        this.database.prepare(`UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?)
+-          WHERE host = ? AND session_id = ? AND state = 'expired-unobserved' AND nonce_digest IN (SELECT value FROM json_each(?))`)
+-          .run(iso(nowMs), target.host, target.sessionId, JSON.stringify(digests));
+-        this.database.exec("COMMIT"); return retired ? { ...rejected, retired: true } : rejected;
++        this.database.exec("COMMIT"); return rejected;
+       }
+       const messages = this.claimLocked(target, nowMs, limits);
+       let binding: WakeAttempt | null = null;
+-      for (const row of rows) {
++      for (const row of live) {
+         if (row!.state === "legacy") this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ?").run(iso(nowMs), String(row!.nonce_digest));
+         else {
+           this.database.prepare("UPDATE wake_nonces SET state = 'observed', consumed_at = ?, observed_at = ? WHERE nonce_digest = ?")

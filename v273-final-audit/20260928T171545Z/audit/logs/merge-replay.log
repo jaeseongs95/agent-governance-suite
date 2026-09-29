@@ -1,0 +1,206 @@
+=== merge d9498d6 parents 8763cef2b11f2635d6c9af7861b5bffd496e2a30 651f5ec94e120703b2685c6fbbe68cfebd1afbfd auto-tree a857f79deb3c250a072f15a9306f62b6f8e0ed6e
+=== merge e71b121 parents d9498d691e11ada1752a34d4cf146051f116355e 33dfdc02508ff13d5a2763f0fa318cd81e2971a7 auto-tree e708032fadaadec2210a68ed262f89a611c5a57a
+=== merge 92b1a0d parents e71b121a5481a0a04302a7f1c12ec3f4522df606 74395bf698012a8b2e034e58e3b42d51f53b0b68 auto-tree 00764881215317cdc0348c25dc641c3b6e7ce22b
+ claude-plugin/mcp-server/dist/server.mjs              |  6 +-----
+ .../mcp-server/dist/session-message-broker.mjs        | 18 +++---------------
+ mcp-server/dist/server.mjs                            |  6 +-----
+ mcp-server/dist/session-message-broker.mjs            | 18 +++---------------
+ mcp-server/src/server.ts                              |  6 +-----
+ mcp-server/src/session-message-service.ts             |  7 +------
+ mcp-server/src/session-message-store.ts               | 19 ++++---------------
+ tests/session-messaging/message-retention.test.ts     | 10 +++++-----
+ 8 files changed, 19 insertions(+), 71 deletions(-)
+diff --git a/mcp-server/src/server.ts b/mcp-server/src/server.ts
+index cda93f1..a106c94 100644
+--- a/mcp-server/src/server.ts
++++ b/mcp-server/src/server.ts
+@@ -533,11 +533,7 @@ export function createMcpServer(
+       },
+       {
+         name: "send_session_message",
+-<<<<<<< e71b121a5481a0a04302a7f1c12ec3f4522df606
+-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence.",
+-=======
+-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+->>>>>>> 74395bf698012a8b2e034e58e3b42d51f53b0b68
++        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+         inputSchema: contractSchemas.sendSessionMessageRequest,
+         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+       },
+diff --git a/mcp-server/src/session-message-service.ts b/mcp-server/src/session-message-service.ts
+index a4dba69..16ac7ba 100644
+--- a/mcp-server/src/session-message-service.ts
++++ b/mcp-server/src/session-message-service.ts
+@@ -1,11 +1,6 @@
+ import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
+-<<<<<<< e71b121a5481a0a04302a7f1c12ec3f4522df606
+-import { sessionMessageRequest } from "./session-message-client.js";
+-import type { SessionPresenceView } from "./session-message-store.js";
+-=======
+ import { BrokerRequestRejected, sessionMessageRequest } from "./session-message-client.js";
+-import type { SessionPresence } from "./session-message-store.js";
+->>>>>>> 74395bf698012a8b2e034e58e3b42d51f53b0b68
++import type { SessionPresenceView } from "./session-message-store.js";
+ import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
+ 
+ export interface SessionPresenceList {
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index 86f03aa..b29b89c 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -324,7 +324,6 @@ export class SessionMessageStore {
+     this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
+   }
+ 
+-<<<<<<< e71b121a5481a0a04302a7f1c12ec3f4522df606
+   /**
+    * Retires an unobserved managed wake only after its injection expiry plus grace, and only with evidence that the
+    * host moved past it: a newer live presence birth, or session activity after the expiry. The row keeps its original
+@@ -346,7 +345,8 @@ export class SessionMessageStore {
+     this.database.prepare(`INSERT INTO session_activity (host, session_id, active_at) VALUES (?, ?, ?)
+       ON CONFLICT (host, session_id) DO UPDATE SET active_at = max(active_at, excluded.active_at)`)
+       .run(target.host, target.sessionId, iso(nowMs));
+-=======
++  }
++
+   /** Sender quota first, then the global pool; call inside the caller's transaction after prune. */
+   private assertReceiptCapacity(sender: SessionIdentity, suffix: string): void {
+     const owned = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?")
+@@ -357,7 +357,6 @@ export class SessionMessageStore {
+     const all = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL")
+       .get() as { count: number; earliest: string | null };
+     if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityError(`The bounded message receipt store is full${suffix}`, { scope: "global", earliestReleaseAt: all.earliest });
+->>>>>>> 74395bf698012a8b2e034e58e3b42d51f53b0b68
+   }
+ 
+   /** Preparation is durable but has no queue, peer-relation or wake effect. */
+@@ -408,14 +407,8 @@ export class SessionMessageStore {
+         this.database.exec("COMMIT");
+         return { ...receipt, duplicate: true, autoWake };
+       }
+-<<<<<<< e71b121a5481a0a04302a7f1c12ec3f4522df606
+-      const receipts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NOT NULL").get() as { count: number };
+-      if (receipts.count >= MESSAGE_RECEIPT_LIMIT) throw new Error("The bounded message receipt store is full.");
+-      const receipt = this.send({ messageId, sender, target, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+-=======
+       this.assertReceiptCapacity(sender, ".");
+-      const receipt = this.send({ messageId, sender, target: { host: String(row.target_host), sessionId: String(row.target_session_id) }, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+->>>>>>> 74395bf698012a8b2e034e58e3b42d51f53b0b68
++      const receipt = this.send({ messageId, sender, target, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+       const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
+       const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);
+       const recordBytes = Buffer.byteLength(JSON.stringify({ messageId, sender, target: { host: row.target_host, sessionId: row.target_session_id }, preparedAt: row.prepared_at, ttlSeconds: row.ttl_seconds, receipt: receiptJson, expiresAt }), "utf8");
+@@ -641,16 +634,12 @@ export class SessionMessageStore {
+     let count = 0;
+     this.database.exec("BEGIN IMMEDIATE");
+     try {
+-<<<<<<< e71b121a5481a0a04302a7f1c12ec3f4522df606
+-      for (const messageId of new Set(messageIds)) count += Number(statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes);
+-      this.recordActivity(target, nowMs);
+-=======
+       for (const messageId of new Set(messageIds)) {
+         if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
+         receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
+         count++;
+       }
+->>>>>>> 74395bf698012a8b2e034e58e3b42d51f53b0b68
++      this.recordActivity(target, nowMs);
+       this.database.exec("COMMIT");
+       return count;
+     } catch (error) {
+diff --git a/tests/session-messaging/message-retention.test.ts b/tests/session-messaging/message-retention.test.ts
+index 6ef6fd2..8489a0c 100644
+--- a/tests/session-messaging/message-retention.test.ts
++++ b/tests/session-messaging/message-retention.test.ts
+@@ -110,7 +110,7 @@ it("bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted",
+   const ackAt = 2000;
+   expect(store.acknowledge(target, [sent.messageId], ackAt)).toBe(1);
+   expect(receiptExpiry(store, sent.messageId)).toBe(iso(Math.min(messageExpiry + H, ackAt + H)));
+-  expect(store.submitPrepared(hot, sent.messageId, ackAt + H - 1)).toEqual({ ...sent, duplicate: true });
++  expect(store.submitPrepared(hot, sent.messageId, ackAt + H - 1)).toEqual({ ...sent, duplicate: true, autoWake: { ...sent.autoWake, checkedAt: new Date(ackAt + H - 1).toISOString() } });
+   expect(store.status(hot, sent.messageId, ackAt + H - 1)).toMatchObject({ state: "acknowledged" });
+   expect(() => store.submitPrepared(hot, sent.messageId, ackAt + H)).toThrow(/unavailable/u);
+   expect(Number(scalar(store, "SELECT count(*) AS value FROM messages WHERE message_id = ?", sent.messageId))).toBeLessThanOrEqual(1);
+@@ -268,7 +268,7 @@ it("service reports capacity rejections as definite no-effect with scope and ear
+   // A resend of an already queued ID stays an idempotent duplicate while both limits are full.
+   const rowsBefore = rows(store);
+   const resent = await service.send({ messageId: firstSent.messageId, _sessionBinding: hot });
+-  expect(resent).toMatchObject({ ok: true, error: null, data: { ...firstSent, duplicate: true } });
++  expect(resent).toMatchObject({ ok: true, error: null, data: { ...firstSent, duplicate: true, autoWake: { ...firstSent.autoWake, checkedAt: expect.any(String) } } });
+   expect(rows(store)).toBe(rowsBefore);
+ }, 30_000);
+ 
+@@ -276,13 +276,13 @@ it("a resend of an already sent ID at full sender and global capacity is a dupli
+   const store = fixture();
+   const sent = Array.from({ length: SENDER_LIMIT }, (_, index) => sendNew(store, hot, 1000 + index));
+   expect(receipts(store, hot)).toBe(SENDER_LIMIT);
+-  expect(store.submitPrepared(hot, sent[0]!.messageId, 5000)).toEqual({ ...sent[0], duplicate: true });
+-  expect(store.submitPrepared(hot, sent[SENDER_LIMIT - 1]!.messageId, 5000)).toEqual({ ...sent[SENDER_LIMIT - 1], duplicate: true });
++  expect(store.submitPrepared(hot, sent[0]!.messageId, 5000)).toEqual({ ...sent[0], duplicate: true, autoWake: { ...sent[0]!.autoWake, checkedAt: new Date(5000).toISOString() } });
++  expect(store.submitPrepared(hot, sent[SENDER_LIMIT - 1]!.messageId, 5000)).toEqual({ ...sent[SENDER_LIMIT - 1], duplicate: true, autoWake: { ...sent[SENDER_LIMIT - 1]!.autoWake, checkedAt: new Date(5000).toISOString() } });
+   expect(rows(store)).toBe(SENDER_LIMIT);
+   expect(receipts(store, hot)).toBe(SENDER_LIMIT);
+   for (let index = SENDER_LIMIT; index < MESSAGE_RECEIPT_LIMIT; index++) sendNew(store, { host: "test-host", sessionId: `retention-dup-${index % 3}` }, 6000);
+   expect(receipts(store)).toBe(MESSAGE_RECEIPT_LIMIT);
+-  expect(store.submitPrepared(hot, sent[1]!.messageId, 7000)).toEqual({ ...sent[1], duplicate: true });
++  expect(store.submitPrepared(hot, sent[1]!.messageId, 7000)).toEqual({ ...sent[1], duplicate: true, autoWake: { ...sent[1]!.autoWake, checkedAt: new Date(7000).toISOString() } });
+   expect(rows(store)).toBe(MESSAGE_RECEIPT_LIMIT);
+ });
+ 
+=== merge 6b5af08 parents b6deb37120e82c75ea0e3ba90a07324adf885969 d99d768eab65878bab228ea73e5f5660ac98c616 auto-tree 2fabff3547bcfd3b1ba325fe1c4dd1ecc026a8fe
+ claude-plugin/mcp-server/dist/server.mjs | 6 +-----
+ mcp-server/dist/server.mjs               | 6 +-----
+ mcp-server/src/server.ts                 | 6 +-----
+ 3 files changed, 3 insertions(+), 15 deletions(-)
+diff --git a/mcp-server/src/server.ts b/mcp-server/src/server.ts
+index a42b16d..5ed3479 100644
+--- a/mcp-server/src/server.ts
++++ b/mcp-server/src/server.ts
+@@ -533,11 +533,7 @@ export function createMcpServer(
+       },
+       {
+         name: "send_session_message",
+-<<<<<<< b6deb37120e82c75ea0e3ba90a07324adf885969
+-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until its draft expires; after earliestReleaseAt either retry that same ID or prepare again, not both.",
+-=======
+-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
+->>>>>>> d99d768eab65878bab228ea73e5f5660ac98c616
++        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
+         inputSchema: contractSchemas.sendSessionMessageRequest,
+         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
+       },
+=== commit 4195850
+chore: prepare v2.7.3 release metadata and bundles
+
+ .agents/plugins/marketplace.json         | 2 +-
+ .codex-plugin/plugin.json                | 2 +-
+ README.en.md                             | 4 ++--
+ README.md                                | 4 ++--
+ claude-plugin/.claude-plugin/plugin.json | 2 +-
+ claude-plugin/mcp-server/dist/server.mjs | 2 +-
+ docs/roadmap.md                          | 2 +-
+ mcp-server/dist/server.mjs               | 2 +-
+ mcp-server/src/plugin-info.ts            | 2 +-
+ package.json                             | 2 +-
+ release/version.json                     | 2 +-
+ 11 files changed, 13 insertions(+), 13 deletions(-)
+=== commit b6deb37
+docs: add v2.7.3 release notes
+
+ docs/release-notes-v2.7.3.md | 33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
+=== commit 6852c72
+docs: align v2.7.3 notes with capacity retry guidance
+
+ docs/release-notes-v2.7.3.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+=== commit 9a678df
+docs: record Windows validation in v2.7.3 notes
+
+ docs/release-notes-v2.7.3.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+=== commit 46859d0
+test: speed up the file-backed receipt capacity service test
+
+ tests/session-messaging/message-retention.test.ts | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)

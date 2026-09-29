@@ -1,0 +1,21 @@
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index b29b89c..fbe5fde 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -394,6 +394,8 @@ export class SessionMessageStore {
+     messageId: string; createdAt: string; expiresAt: string; duplicate: boolean; autoWake: SessionAutoWakeOutlookV1;
+   } {
+     boundedIdentity(sender);
++    const pre = this.database.prepare("SELECT receipt FROM prepared_messages WHERE message_id = ?").get(messageId) as { receipt: string | null } | undefined;
++    if (pre && pre.receipt === null) { this.prune(nowMs); this.assertReceiptCapacity(sender, "."); }
+     this.database.exec("BEGIN IMMEDIATE");
+     try {
+       this.prune(nowMs);
+@@ -407,7 +409,6 @@ export class SessionMessageStore {
+         this.database.exec("COMMIT");
+         return { ...receipt, duplicate: true, autoWake };
+       }
+-      this.assertReceiptCapacity(sender, ".");
+       const receipt = this.send({ messageId, sender, target, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+       const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
+       const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);

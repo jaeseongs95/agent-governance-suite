@@ -1,0 +1,28 @@
+mutant	apply	build	candidate_rc	candidate_summary	failed_tests
+BASELINE	0	0	0	Tests  295 passed | 2 skipped (297)	0
+M01-F1-sender-limit-251	0	0	1	Tests  7 failed | 288 passed | 2 skipped (297)	7
+M02-F1-sender-check-removed	0	0	1	Tests  6 failed | 289 passed | 2 skipped (297)	6
+M03-F1-global-checked-first	0	0	1	Tests  1 failed | 294 passed | 2 skipped (297)	1
+M04-F1-send-check-removed	0	0	1	Tests  7 failed | 288 passed | 2 skipped (297)	7
+M05-F1-capacity-before-duplicate	0	0	1	Tests  2 failed | 293 passed | 2 skipped (297)	2
+M06-F1-check-outside-transaction	0	0	1	Tests  1 failed | 294 passed | 2 skipped (297)	1
+M07-F2-changes-check-removed	0	0	1	Tests  3 failed | 292 passed | 2 skipped (297)	3
+M08-F2-min-removed	0	0	1	Tests  1 failed | 294 passed | 2 skipped (297)	1
+M09-F2-receipt-update-removed	0	0	1	Tests  6 failed | 289 passed | 2 skipped (297)	6
+M10-F2-ack-without-1h	0	0	1	Tests  7 failed | 288 passed | 2 skipped (297)	7
+M11-F2-update-after-commit	0	0	1	Tests  1 failed | 294 passed | 2 skipped (297)	1
+M12-F3-prepare-admission-removed	0	0	1	Tests  6 failed | 289 passed | 2 skipped (297)	6
+M13-F3-admission-before-prune	0	0	1	Tests  3 failed | 292 passed | 2 skipped (297)	3
+M14-D1-broker-omits-details	0	0	1	Tests  2 failed | 293 passed | 2 skipped (297)	2
+M15-D1-client-drops-details	0	0	1	Tests  2 failed | 293 passed | 2 skipped (297)	2
+M16-D1-service-details-null	0	0	1	Tests  2 failed | 293 passed | 2 skipped (297)	2
+M17-D1-earliest-uses-max	0	0	1	Tests  3 failed | 292 passed | 2 skipped (297)	3
+M18-D1-scope-label-swapped	0	0	1	Tests  3 failed | 292 passed | 2 skipped (297)	3
+M19-D1-send-uses-uncertain-guidance	0	0	1	Tests  2 failed | 293 passed | 2 skipped (297)	2
+M20-D1-byte-rejection-no-details	0	0	1	Tests  1 failed | 294 passed | 2 skipped (297)	1
+M21-D1-definite-on-any-rejection	0	0	1	Tests  2 failed | 293 passed | 2 skipped (297)	2
+M22-F1-sender-count-unfiltered	0	0	1	Tests  6 failed | 289 passed | 2 skipped (297)	6
+W-M1-revert-F1-store	0	0	1	Tests  1 failed | 294 passed | 2 skipped (297)	1
+W-M2-capability-always-true	0	0	1	Tests  3 failed | 292 passed | 2 skipped (297)	3
+W-M3-capability-always-false	0	0	1	Tests  3 failed | 292 passed | 2 skipped (297)	3
+W-M4-retired-block-ignores-capability	0	0	1	Tests  1 failed | 294 passed | 2 skipped (297)	1

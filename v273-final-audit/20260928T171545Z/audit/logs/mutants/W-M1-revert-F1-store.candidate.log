@@ -1,0 +1,36 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-fmut
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs (27 tests | 1 failed) 1299ms
+   × F1: a retired nonce mixed with the current nonce records late only and lets the current attempt claim its body 34ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/wake-liveness.test.mjs > F1: a retired nonce mixed with the current nonce records late only and lets the current attempt claim its body
+AssertionError: Expected values to be strictly equal:
+
+false !== true
+
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/session-messaging/wake-liveness.test.mjs:200:10
+    198|   const mixed = { observation, sourceReceiptId: recordWakeHookObservat…
+    199|   const result = hostClaim(f, mixed, f.retireAt + 4);
+    200|   assert.equal(result.recognized, true); assert.equal(result.retired, …
+       |          ^
+    201|   assert.deepEqual(result.messages.map(message => message.messageId), …
+    202|   assert.equal(result.binding.attemptId, next.attemptId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 9 passed | 1 skipped (11)
+      Tests  1 failed | 294 passed | 2 skipped (297)
+   Start at  16:52:31
+   Duration  21.97s (tests 95%, transform 3%, import 2%)
+

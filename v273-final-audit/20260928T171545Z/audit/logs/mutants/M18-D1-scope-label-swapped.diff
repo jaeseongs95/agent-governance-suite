@@ -1,0 +1,13 @@
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index b29b89c..791465d 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -352,7 +352,7 @@ export class SessionMessageStore {
+     const owned = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?")
+       .get(sender.host, sender.sessionId) as { count: number; earliest: string | null };
+     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+-      throw new MessageCapacityError(`The bounded message receipt store is full for this sender${suffix}`, { scope: "sender", earliestReleaseAt: owned.earliest });
++      throw new MessageCapacityError(`The bounded message receipt store is full for this sender${suffix}`, { scope: "global", earliestReleaseAt: owned.earliest });
+     }
+     const all = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL")
+       .get() as { count: number; earliest: string | null };

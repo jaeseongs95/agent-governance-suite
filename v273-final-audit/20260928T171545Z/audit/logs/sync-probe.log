@@ -1,0 +1,13 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-fmut
+
+stdout | tests/audit/sync-probe.test.mjs > fill connection NORMAL(1); a second in-process connection and a child-process connection stay at the default
+AUDIT-SYNC {"fill":1,"other":2,"child":{"sync":2,"mode":"wal"},"fillMode":"wal"}
+
+ ✓ tests/audit/sync-probe.test.mjs > fill connection NORMAL(1); a second in-process connection and a child-process connection stay at the default 154ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:54:50
+   Duration  645ms (transform 62%, tests 30%, import 7%, worker 1%)
+

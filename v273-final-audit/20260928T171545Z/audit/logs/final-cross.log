@@ -1,0 +1,14 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-final
+
+ ✓ tests/audit/final-cross.test.mjs > X1 sender capacity full: duplicate resend returns a schema-valid autoWake; a new send is a definite rejection that leaves every table unchanged 834ms
+ ✓ tests/audit/final-cross.test.mjs > X1b send-time capacity rejection (draft prepared before the pool filled) rolls back before autoWake and writes nothing 692ms
+ ✓ tests/audit/final-cross.test.mjs > X2 ACK after the wake expiry updates the receipt and records activity in one transaction; the next prune retires the latch once 25ms
+ ✓ tests/audit/final-cross.test.mjs > X2b a failure while recording activity rolls back the ACK and the receipt update together 26ms
+ ✓ tests/audit/final-cross.test.mjs > X3 read tools prune receipts and retire a wake in the same call and are idempotent afterwards 35ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  16:44:32
+   Duration  2.68s (tests 63%, import 19%, transform 17%)
+

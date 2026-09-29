@@ -1,0 +1,13 @@
+diff --git a/mcp-server/src/session-message-hook.ts b/mcp-server/src/session-message-hook.ts
+index 7bf1e8f..ebd8dd0 100644
+--- a/mcp-server/src/session-message-hook.ts
++++ b/mcp-server/src/session-message-hook.ts
+@@ -208,7 +208,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
+       }
+       // A verified marker of an attempt already retired by the liveness rule is a stale duplicate: it claims no
+       // body, and current bodies have their own wake. Stop the empty model turn; the host still shows the marker.
+-      if (profile.blocksEmptyWakePrompt && !result.recognized && result.retired === true && result.messages.length === 0) {
++      if (!result.recognized && result.retired === true && result.messages.length === 0) {
+         return { decision: "block", reason: "This wake notification was already retired; no peer message is attached." };
+       }
+       if (result.recognized) messages = result.messages;

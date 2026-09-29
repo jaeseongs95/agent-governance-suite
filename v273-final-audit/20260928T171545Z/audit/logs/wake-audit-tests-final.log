@@ -1,0 +1,81 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-final
+
+ ✓ tests/audit/reaudit-f1-store.test.mjs > F1-a (2b with corrected expectation) mixed retired+current: current claims its body once; retired keeps state, gets late 129ms
+ ✓ tests/audit/reaudit-f1-store.test.mjs > F1-b retired-only prompt still reports retired and claims nothing; late recorded once 69ms
+ ✓ tests/audit/audit-retire.test.mjs > 1a expiry only (same generation, relay live, no activity) never retires, up to 7 days 50ms
+ ✓ tests/audit/audit-retire.test.mjs > 1b generation replacement only (before expiry+grace) does not retire; boundary is exact 46ms
+ ✓ tests/audit/reaudit-f1-store.test.mjs > F1-c retired + old-generation (non-retired) marker: no claim, no retired flag, old row observed(late) 77ms
+ ✓ tests/audit/audit-retire.test.mjs > 1c ACK only (before expiry) does not retire even long after expiry 48ms
+ ✓ tests/audit/audit-retire.test.mjs > 1c2 ACK after expiry but checked before grace does not retire yet; after grace it retires once 42ms
+ ✓ tests/audit/reaudit-f1-store.test.mjs > F1-d retired + unregistered nonce: whole prompt rejected, nothing written 94ms
+ ✓ tests/audit/reaudit-f1-store.test.mjs > F1-e forged receipt on a mixed prompt writes nothing 71ms
+ ✓ tests/audit/reaudit-f1-store.test.mjs > F1-f mixed retired+current whose current is past its expiry: no claim, no retired flag 75ms
+ ✓ tests/audit/audit-retire.test.mjs > 1d relay restart only (new relay id, lapsed old relay lease, same presence birth) does not retire and is not activity 70ms
+ ✓ tests/audit/audit-retire.test.mjs > 1e activity of another session or another host with the same session id is not evidence 43ms
+ ✓ tests/audit/audit-retire.test.mjs > 1f newer generation that is unreachable (lease lapsed, not ended) is not evidence 49ms
+ ✓ tests/audit/audit-retire.test.mjs > 1g both conditions: exactly one new attempt across repeated reserves, relays and connections 42ms
+ ✓ tests/audit/audit-retire.test.mjs > 1h activity that retired W1 does not carry over to retire the next attempt W2 58ms
+stdout | tests/audit/audit-retire.test.mjs > 2b mixed prompt: retired nonce + current live nonce (finding probe)
+AUDIT-2b {"res":{"recognized":true,"messages":[{"messageId":"body-1790613569457","sender":{"host":"portable","sessionId":"audit-sender"},"recipient":{"host":"portable","sessionId":"audit-target"},"body":"b","createdAt":"2026-09-28T16:39:29.457Z","expiresAt":"2026-09-29T16:39:29.457Z","deliveryAttempt":1,"firstDeliveredAt":"2026-09-28T17:49:29.461Z"}],"binding":{"host":"portable","sessionId":"audit-target","instanceId":"inst-2","transport":"portable","relayId":"relay-2","nonce":"inst-2-w2-nonce-abcdefghijklmnopq","generation":"2026-09-28T16:39:34.457Z","attemptId":"3c94cfb2-0599-44ed-af7d-4f060faa6888","dispatchEpoch":1}},"w2state":"observed","w2late":null,"pending":0}
+
+ ✓ tests/audit/audit-retire.test.mjs > 1i a retired row cannot become observed via any public transition 52ms
+ ✓ tests/audit/audit-retire.test.mjs > 2a late retired nonce with no current wake reserved claims no body and records late once 64ms
+stdout | tests/audit/audit-retire.test.mjs > LT a long busy turn with tool activity lets one extra marker per ~70 min be queued (probe)
+AUDIT-LT markers queued while one turn stayed busy: 4
+
+ × tests/audit/audit-retire.test.mjs > 2b mixed prompt: retired nonce + current live nonce (finding probe) 44ms
+   → Expected values to be strictly equal:
+
+1 !== 0
+
+ ✓ tests/audit/audit-retire.test.mjs > 2c same prune/event replayed many times: no second retirement or second attempt 50ms
+ ✓ tests/audit/reaudit-f1-hook.test.ts > codex: mixed retired+current prompt delivers the current body and is not blocked 746ms
+ ✓ tests/audit/reaudit-f1-hook.test.ts > codex: retired-only prompt is blocked only on the blocking-capable host (unchanged from e739090) 331ms
+ ✓ tests/audit/reaudit-f1-hook.test.ts > claude-code: mixed retired+current prompt delivers the current body and is not blocked 433ms
+ ✓ tests/audit/reaudit-f1-hook.test.ts > claude-code: retired-only prompt is blocked only on the blocking-capable host (unchanged from e739090) 582ms
+ ✓ tests/audit/audit-retire.test.mjs > LT a long busy turn with tool activity lets one extra marker per ~70 min be queued (probe) 109ms
+ ✓ tests/audit/audit-retire.test.mjs > 5a every outlook produced is schema-valid and carries authorityEffect none; send/status never claim delivery 54ms
+ ✓ tests/audit/audit-retire.test.mjs > C2 fuzz: rebirth at equal or earlier time yields prev+1ms for 2000 random birth times 3972ms
+stdout | tests/audit/audit-retire.test.mjs > 5b probe: outlook for an old-generation wake that has NOT passed its injection expiry
+AUDIT-5b {"outlook":{"state":"latched","reason":"wake-unobserved","basisAt":"2026-09-28T17:39:33.722Z","checkedAt":"2026-09-28T16:39:39.722Z","authorityEffect":"none"},"expiresAt":"2026-09-28T17:39:33.722Z","beforeExpiry":true}
+
+ ✓ tests/audit/audit-retire.test.mjs > 2d ordering where the verified late arrival lands before any prune retired the row: observed (real arrival), then one new wake 38ms
+ ✓ tests/audit/audit-retire.test.mjs > 5b probe: outlook for an old-generation wake that has NOT passed its injection expiry 26ms
+ ✓ tests/audit/audit-race.test.mjs > R1 6 relay processes racing reserve/start after both conditions: one effect, one attempt, repeated rounds 10220ms
+stdout | tests/audit/audit-race.test.mjs > R2 late arrival of the old nonce racing retirement+reserve: no body claim by old nonce, at most one new attempt
+AUDIT-R2 outcome distribution {"expired-unobserved/retiredFlag=true/relayReserved=true":20}
+
+ ✓ tests/audit/audit-race.test.mjs > R2 late arrival of the old nonce racing retirement+reserve: no body claim by old nonce, at most one new attempt 3529ms
+ ✓ tests/audit/audit-race.test.mjs > R3 activity and relays racing in the same-generation path: one effect 7755ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/audit/audit-retire.test.mjs > 2b mixed prompt: retired nonce + current live nonce (finding probe)
+AssertionError: Expected values to be strictly equal:
+
+1 !== 0
+
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/audit/audit-retire.test.mjs:199:10
+    197|   // Record the observed behavior for the report.
+    198|   console.log('AUDIT-2b', JSON.stringify({ res, w2state: w2row.state, …
+    199|   assert.equal(res.messages.length, 0);
+       |          ^
+    200|   // Body must remain deliverable: a fresh wake must be reservable for…
+    201|   alive(f.store, 'inst-2', 'relay-2', at + 6);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 30 passed (31)
+   Start at  16:39:26
+   Duration  22.05s (tests 87%, import 7%, transform 6%)
+

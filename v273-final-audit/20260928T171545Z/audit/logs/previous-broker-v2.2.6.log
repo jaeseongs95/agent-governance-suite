@@ -1,0 +1,13 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-final
+
+ ↓ tests/session-messaging/audit-compat.test.ts > C2 a DB written by the previous release keeps its receipts; ACK+1h applies only to new ACKs
+ ↓ tests/session-messaging/audit-compat.test.ts > C3 the previous CLI against the candidate broker still reads a capacity rejection
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 1408ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 564ms
+
+ Test Files  1 passed | 1 skipped (2)
+      Tests  2 passed | 2 skipped (4)
+   Start at  16:44:48
+   Duration  2.36s (tests 82%, transform 13%, import 5%)
+

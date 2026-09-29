@@ -1,0 +1,13 @@
+diff --git a/mcp-server/src/host-input-adapter.ts b/mcp-server/src/host-input-adapter.ts
+index bb84543..07e20cf 100644
+--- a/mcp-server/src/host-input-adapter.ts
++++ b/mcp-server/src/host-input-adapter.ts
+@@ -127,7 +127,7 @@ export function hostDeliveryProfile(host: SupportedHookHost, environment: NodeJS
+   const transport: SessionMessageTransport = host === "claude-code"
+     ? "claude-inbox"
+     : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
+-  return { transport, capabilities: transportDeliveryCapabilities(transport), blocksEmptyWakePrompt: host === "codex" };
++  return { transport, capabilities: transportDeliveryCapabilities(transport), blocksEmptyWakePrompt: false };
+ }
+ 
+ /** Only the observed, local Codex app wait surface is recognized here. */

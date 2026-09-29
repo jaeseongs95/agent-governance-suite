@@ -1,0 +1,70 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-final
+
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > I1 resend of one ID never inserts twice: retained, right after ACK, ACK+1h, message expiry
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > I2 at full capacity a resend of an already-sent ID is still a duplicate, not a capacity rejection
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > I3 repeated claim and ACK leave receipt expiry, capacity counts and status stable
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > I4 normalization variants of an issued ID never reach a second insert
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > I5 a capacity-rejected draft stays retryable by the same ID and delivers exactly once
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > I6 late retry through the service after ACK+1h is uncertain guidance, never a definite no-effect claim
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > L1 sender boundary limit-1 / limit / limit+1 for prepare and send
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first)
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > L3 earliestReleaseAt equals the actual release instant, and exactly one slot frees per expired receipt
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > L4 send of a pre-made draft just before and at earliestReleaseAt (global scope)
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > L5 byte-limit send rejection: scope global, earliestReleaseAt is the real release instant
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > R1 two processes send at sender limit-1 never exceed the limit (20 rounds)
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > R2 two senders race for the last global slot (20 rounds)
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > R3 concurrent send and ACK: one row, expiry only shrinks (20 rounds)
+ ↓ tests/session-messaging/audit-msgqueue.test.ts > R4 prepare admission racing the send that takes the last sender slot (20 rounds)
+ × tests/session-messaging/audit-compat.test.ts > C2 a DB written by the previous release keeps its receipts; ACK+1h applies only to new ACKs 217ms
+   → Cannot read properties of undefined (reading 'messageId')
+stdout | tests/session-messaging/audit-compat.test.ts > C3 the previous CLI against the candidate broker still reads a capacity rejection
+C3 previous CLI output {"status":1,"stdout":"{\"protocolVersion\":\"1.0.0\",\"ok\":false,\"error\":\"Unsupported session message operation.\"}"}
+
+ × tests/session-messaging/audit-compat.test.ts > C3 the previous CLI against the candidate broker still reads a capacity rejection 1035ms
+   → expected 'Unsupported session message operation.' to match /receipt store is full for this sende…/u
+stdout | tests/session-messaging/audit-msgqueue.test.ts > C1 new client against the previous broker: capacity rejection falls back to the old guidance
+C1 previous broker has no prepare: {"code":"MCP_UNAVAILABLE","message":"Unknown broker operation.","details":null}
+
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > C1 new client against the previous broker: capacity rejection falls back to the old guidance 2989ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-compat.test.ts > C2 a DB written by the previous release keeps its receipts; ACK+1h applies only to new ACKs
+TypeError: Cannot read properties of undefined (reading 'messageId')
+ ❯ prepare tests/session-messaging/audit-compat.test.ts:46:124
+     44|   const state = await stateDir();
+     45|   const old = await broker(previousRoot!, state);
+     46|   const prepare = (body: string) => cli(previousRoot!, state, "prepare…
+       |                                                                                                                            ^
+     47|   const acked = prepare("acked by previous release");
+     48|   const pending = prepare("left unacknowledged");
+ ❯ tests/session-messaging/audit-compat.test.ts:47:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/audit-compat.test.ts > C3 the previous CLI against the candidate broker still reads a capacity rejection
+AssertionError: expected 'Unsupported session message operation.' to match /receipt store is full for this sende…/u
+
+- Expected:
+/receipt store is full for this sender; no draft was created/u
+
++ Received:
+"Unsupported session message operation."
+
+ ❯ tests/session-messaging/audit-compat.test.ts:98:39
+     96|   console.log(`C3 previous CLI output ${JSON.stringify({ status: rejec…
+     97|   expect(rejected.json).toMatchObject({ ok: false });
+     98|   expect(String(rejected.json.error)).toMatch(/receipt store is full f…
+       |                                       ^
+     99| }, 60_000);
+    100|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 1 passed | 15 skipped (18)
+   Start at  16:45:08
+   Duration  3.79s (tests 79%, transform 18%, import 2%)
+

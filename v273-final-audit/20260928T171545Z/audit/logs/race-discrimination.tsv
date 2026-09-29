@@ -1,0 +1,9 @@
+mutant	testfile	runs	failures	mean_ms
+none	old	10	0	1900
+none	new	10	0	1664
+M02	old	10	10	1922
+M02	new	10	10	1711
+M06	old	10	1	2014
+M06	new	10	1	1803
+M06-wide	old	10	10	39256
+M06-wide	new	10	10	38849

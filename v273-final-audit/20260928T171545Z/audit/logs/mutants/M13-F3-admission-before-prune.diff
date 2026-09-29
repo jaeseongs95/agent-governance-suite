@@ -1,0 +1,15 @@
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index b29b89c..c2e57a4 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -371,9 +371,9 @@ export class SessionMessageStore {
+     const recordBytes = Buffer.byteLength(JSON.stringify({ ...input, ttlSeconds, ...result }), "utf8");
+     this.database.exec("BEGIN IMMEDIATE");
+     try {
+-      this.prune(nowMs);
+       // Admission only; submitPrepared repeats the authoritative check.
+       this.assertReceiptCapacity(input.sender, "; no draft was created.");
++      this.prune(nowMs);
+       const drafts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL").get() as { count: number };
+       const owned = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL AND sender_host = ? AND sender_session_id = ?").get(input.sender.host, input.sender.sessionId) as { count: number };
+       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages").get() as { bytes: number };

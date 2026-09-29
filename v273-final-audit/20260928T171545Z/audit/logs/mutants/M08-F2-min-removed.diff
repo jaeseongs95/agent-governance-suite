@@ -1,0 +1,13 @@
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index b29b89c..22f2f01 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -630,7 +630,7 @@ export class SessionMessageStore {
+     const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL
+       WHERE message_id = ? AND target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL`);
+     // Only the first ACK shortens the receipt, and min() never extends it.
+-    const receipt = this.database.prepare("UPDATE prepared_messages SET expires_at = min(expires_at, ?) WHERE message_id = ? AND receipt IS NOT NULL");
++    const receipt = this.database.prepare("UPDATE prepared_messages SET expires_at = ? WHERE message_id = ? AND receipt IS NOT NULL");
+     let count = 0;
+     this.database.exec("BEGIN IMMEDIATE");
+     try {

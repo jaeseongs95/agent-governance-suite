@@ -1,0 +1,14 @@
+01-install	0	2026-09-28T16:37:23Z	2026-09-28T16:37:36Z	pnpm install --frozen-lockfile
+02-bundle-check	0	2026-09-28T16:37:36Z	2026-09-28T16:37:38Z	pnpm bundle:check
+03-claude-drift	0	2026-09-28T16:37:38Z	2026-09-28T16:37:40Z	pnpm claude:drift
+04-lint	0	2026-09-28T16:37:40Z	2026-09-28T16:37:54Z	pnpm lint
+05-build	0	2026-09-28T16:37:54Z	2026-09-28T16:38:01Z	pnpm build
+06-test	0	2026-09-28T16:38:01Z	2026-09-28T16:39:16Z	pnpm test
+07-runtime-check	0	2026-09-28T16:39:16Z	2026-09-28T16:39:24Z	pnpm runtime:check
+08-validate-all	0	2026-09-28T16:39:24Z	2026-09-28T16:39:30Z	pnpm validate:all
+09-validate-official	1	2026-09-28T16:39:30Z	2026-09-28T16:39:32Z	pnpm validate:official
+10-claude-build	0	2026-09-28T16:39:32Z	2026-09-28T16:39:33Z	pnpm claude:build
+11-claude-check	0	2026-09-28T16:39:33Z	2026-09-28T16:39:35Z	pnpm claude:check
+12-diff-check	0	2026-09-28T16:39:35Z	2026-09-28T16:39:35Z	git diff --check
+13-source-check	0	2026-09-28T16:39:35Z	2026-09-28T16:39:36Z	pnpm source:check
+DONE

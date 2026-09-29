@@ -1,0 +1,110 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-fmut
+
+ ❯ tests/session-messaging/message-retention.test.ts (16 tests | 5 failed) 4302ms
+   × caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders 342ms
+   × rejects prepare and send with global scope when the global receipt pool is full 253ms
+   × service reports capacity rejections as definite no-effect with scope and earliest release details 795ms
+   × a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection 280ms
+   × reports sender scope and the sender's own earliest expiry when sender and global limits are both full 349ms
+ ❯ tests/session-messaging/message-lifecycle.test.ts (14 tests | 1 failed) 5718ms
+   × applies global draft, receipt and byte backpressure without evicting valid records 727ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-lifecycle.test.ts > applies global draft, receipt and byte backpressure without evicting valid records
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:355:13
+    353|       .get() as { count: number; earliest: string | null };
+    354|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    355|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    356|     }
+    357|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:376:12
+ ❯ fillReceipt tests/session-messaging/message-lifecycle.test.ts:140:25
+ ❯ tests/session-messaging/message-lifecycle.test.ts:144:45
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:355:13
+    353|       .get() as { count: number; earliest: string | null };
+    354|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    355|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    356|     }
+    357|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:376:12
+ ❯ sendNew tests/session-messaging/message-retention.test.ts:46:23
+ ❯ tests/session-messaging/message-retention.test.ts:81:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > rejects prepare and send with global scope when the global receipt pool is full
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:355:13
+    353|       .get() as { count: number; earliest: string | null };
+    354|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    355|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    356|     }
+    357|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:376:12
+ ❯ sendNew tests/session-messaging/message-retention.test.ts:46:23
+ ❯ tests/session-messaging/message-retention.test.ts:91:67
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > service reports capacity rejections as definite no-effect with scope and earliest release details
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:355:13
+    353|       .get() as { count: number; earliest: string | null };
+    354|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    355|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    356|     }
+    357|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:376:12
+ ❯ sendNew tests/session-messaging/message-retention.test.ts:46:23
+ ❯ tests/session-messaging/message-retention.test.ts:265:74
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:355:13
+    353|       .get() as { count: number; earliest: string | null };
+    354|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    355|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    356|     }
+    357|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:376:12
+ ❯ sendNew tests/session-messaging/message-retention.test.ts:46:23
+ ❯ tests/session-messaging/message-retention.test.ts:283:74
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > reports sender scope and the sender's own earliest expiry when sender and global limits are both full
+MessageCapacityError: The bounded message receipt store is full for this sender; no draft was created.
+ ❯ SessionMessageStore.assertReceiptCapacity mcp-server/src/session-message-store.ts:355:13
+    353|       .get() as { count: number; earliest: string | null };
+    354|     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
+    355|       throw new MessageCapacityError(`The bounded message receipt stor…
+       |             ^
+    356|     }
+    357|     const all = this.database.prepare("SELECT count(*) AS count, min(e…
+ ❯ SessionMessageStore.prepare mcp-server/src/session-message-store.ts:376:12
+ ❯ sendNew tests/session-messaging/message-retention.test.ts:46:23
+ ❯ tests/session-messaging/message-retention.test.ts:292:78
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed | 8 passed | 1 skipped (11)
+      Tests  6 failed | 289 passed | 2 skipped (297)
+   Start at  16:52:10
+   Duration  19.86s (tests 95%, import 2%, transform 2%)
+

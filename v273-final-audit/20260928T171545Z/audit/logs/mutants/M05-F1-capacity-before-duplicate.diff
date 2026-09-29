@@ -1,0 +1,19 @@
+diff --git a/mcp-server/src/session-message-store.ts b/mcp-server/src/session-message-store.ts
+index b29b89c..3659ad0 100644
+--- a/mcp-server/src/session-message-store.ts
++++ b/mcp-server/src/session-message-store.ts
+@@ -401,13 +401,13 @@ export class SessionMessageStore {
+         .get(messageId, sender.host, sender.sessionId, iso(nowMs)) as Record<string, unknown> | undefined;
+       if (!row) throw new Error("Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent.");
+       const target = { host: String(row.target_host), sessionId: String(row.target_session_id) };
++      this.assertReceiptCapacity(sender, ".");
+       if (row.receipt !== null) {
+         const receipt = JSON.parse(String(row.receipt)) as { messageId: string; createdAt: string; expiresAt: string };
+         const autoWake = this.autoWakeOutlook(target, nowMs);
+         this.database.exec("COMMIT");
+         return { ...receipt, duplicate: true, autoWake };
+       }
+-      this.assertReceiptCapacity(sender, ".");
+       const receipt = this.send({ messageId, sender, target, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
+       const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
+       const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);

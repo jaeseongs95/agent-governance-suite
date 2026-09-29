@@ -1,0 +1,33 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-fmut
+
+ ❯ tests/session-messaging/message-lifecycle.test.ts (14 tests | 1 failed) 7179ms
+   × rejects exact draft expiry and validates Unicode, TTL and sender draft capacity 43ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-lifecycle.test.ts > rejects exact draft expiry and validates Unicode, TTL and sender draft capacity
+AssertionError: expected 99 to be 100 // Object.is equality
+
+- Expected
++ Received
+
+- 100
++ 99
+
+ ❯ tests/session-messaging/message-lifecycle.test.ts:124:45
+    122|   for (const ttlSeconds of [29, 86401, 1.5]) expect(() => store.prepar…
+    123|   for (let index = 0; index < 99; index++) prepare(store);
+    124|   expect(count(store, "prepared_messages")).toBe(100);
+       |                                             ^
+    125|   expect(() => prepare(store)).toThrow(/full/u);
+    126|   expect(count(store)).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 9 passed | 1 skipped (11)
+      Tests  1 failed | 294 passed | 2 skipped (297)
+   Start at  16:46:06
+   Duration  22.27s (tests 96%, transform 2%, import 2%)
+

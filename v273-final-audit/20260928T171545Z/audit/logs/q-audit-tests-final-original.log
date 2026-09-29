@@ -1,0 +1,132 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-final
+
+ ↓ tests/session-messaging/audit-compat.test.ts > C2 a DB written by the previous release keeps its receipts; ACK+1h applies only to new ACKs
+ ↓ tests/session-messaging/audit-compat.test.ts > C3 the previous CLI against the candidate broker still reads a capacity rejection
+ × tests/session-messaging/audit-msgqueue.test.ts > I1 resend of one ID never inserts twice: retained, right after ACK, ACK+1h, message expiry 28ms
+   → expected { …(5) } to deeply equal { …(5) }
+ ✓ tests/session-messaging/reaudit-n5.test.ts > N5-a doing both branches after release delivers one intent twice (why 'not both' is required) 306ms
+stdout | tests/session-messaging/reaudit2-guidance.test.ts > G1 (N5-b) release after draft expiry: the guidance selects prepare again; the intent is delivered once
+G1 rejection message: The bounded message receipt store is full for this sender. This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until the expiresAt returned by prepare_session_message. If earliestReleaseAt is before that expiresAt, retry that same messageId after earliestReleaseAt; otherwise the draft expires first, so prepare again. Never do both. The earliest retained record in this scope expires at 2026-09-28T18:39:50.076Z; after that a new prepare_session_message may succeed.
+
+ × tests/session-messaging/audit-msgqueue.test.ts > I2 at full capacity a resend of an already-sent ID is still a duplicate, not a capacity rejection 348ms
+   → expected { …(5) } to deeply equal { …(5) }
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > I3 repeated claim and ACK leave receipt expiry, capacity counts and status stable 15ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > I4 normalization variants of an issued ID never reach a second insert 9ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > I5 a capacity-rejected draft stays retryable by the same ID and delivers exactly once 288ms
+ ✓ tests/session-messaging/reaudit2-guidance.test.ts > G1 (N5-b) release after draft expiry: the guidance selects prepare again; the intent is delivered once 743ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > I6 late retry through the service after ACK+1h is uncertain guidance, never a definite no-effect claim 182ms
+ × tests/session-messaging/reaudit-n5.test.ts > N5-b same-ID branch: when earliestReleaseAt is after the draft expiry, the retry lands on uncertain guidance 702ms
+   → expected 'The bounded message receipt store is …' to match /either retry that same messageId or …/u
+ ✓ tests/session-messaging/reaudit-trigger.test.ts > the trigger fails only UPDATEs of prepared_messages.expires_at; other paths keep working 17ms
+ ✓ tests/session-messaging/reaudit2-guidance.test.ts > G2 (N5-a condition) release before draft expiry: same-ID retry enters the queue exactly once 311ms
+ ✓ tests/session-messaging/reaudit2-guidance.test.ts > G3 boundary: release == draft expiresAt is the 'otherwise' branch; release == expiresAt-1 still allows the same ID 599ms
+ ✓ tests/session-messaging/reaudit2-guidance.test.ts > G4 an unknown ID without a definite rejection keeps the uncertain guidance and no details 144ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > L1 sender boundary limit-1 / limit / limit+1 for prepare and send 296ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > L2 global boundary 999 / 1000 / 1001 and both limits full at once (sender reported first) 1526ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > L3 earliestReleaseAt equals the actual release instant, and exactly one slot frees per expired receipt 311ms
+stdout | tests/session-messaging/audit-msgqueue.test.ts > L5 byte-limit send rejection: scope global, earliestReleaseAt is the real release instant
+L5 {"bigDrafts":168,"remaining":20575,"probe":274,"fillerLen":2816,"left":5}
+
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > L4 send of a pre-made draft just before and at earliestReleaseAt (global scope) 1259ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > L5 byte-limit send rejection: scope global, earliestReleaseAt is the real release instant 75ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > R1 two processes send at sender limit-1 never exceed the limit (20 rounds) 13292ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > R2 two senders race for the last global slot (20 rounds) 50003ms
+stdout | tests/session-messaging/audit-msgqueue.test.ts > R3 concurrent send and ACK: one row, expiry only shrinks (20 rounds)
+R3 orders {"ackFirst":7,"sendFirst":13}
+
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > R3 concurrent send and ACK: one row, expiry only shrinks (20 rounds) 3183ms
+stdout | tests/session-messaging/audit-msgqueue.test.ts > R4 prepare admission racing the send that takes the last sender slot (20 rounds)
+R4 outcomes {"prepareWon":2,"sendWon":18}
+
+stdout | tests/session-messaging/audit-msgqueue.test.ts > C1 new client against the previous broker: capacity rejection falls back to the old guidance
+C1 skipped: AGS_PREVIOUS_BROKER_PATH unset
+
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > R4 prepare admission racing the send that takes the last sender slot (20 rounds) 13147ms
+ ✓ tests/session-messaging/audit-msgqueue.test.ts > C1 new client against the previous broker: capacity rejection falls back to the old guidance 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I1 resend of one ID never inserts twice: retained, right after ACK, ACK+1h, message expiry
+AssertionError: expected { …(5) } to deeply equal { …(5) }
+
+- Expected
++ Received
+
+@@ -1,10 +1,10 @@
+  {
+    "autoWake": {
+      "authorityEffect": "none",
+      "basisAt": null,
+-     "checkedAt": "1970-01-01T00:00:01.000Z",
++     "checkedAt": "1970-01-01T00:00:02.000Z",
+      "reason": "presence-unknown",
+      "state": "no-live-relay",
+    },
+    "createdAt": "1970-01-01T00:00:01.000Z",
+    "duplicate": true,
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:59:59
+     57|   const exp = Date.parse(sent.expiresAt);
+     58|   // During retention (queued, unacked)
+     59|   expect(store.submitPrepared(hot, sent.messageId, 2000)).toEqual({ ..…
+       |                                                           ^
+     60|   expect(rowsFor(store, sent.messageId)).toBe(1);
+     61|   // Right after ACK
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/session-messaging/audit-msgqueue.test.ts > I2 at full capacity a resend of an already-sent ID is still a duplicate, not a capacity rejection
+AssertionError: expected { …(5) } to deeply equal { …(5) }
+
+- Expected
++ Received
+
+@@ -1,10 +1,10 @@
+  {
+    "autoWake": {
+      "authorityEffect": "none",
+      "basisAt": null,
+-     "checkedAt": "1970-01-01T00:00:01.000Z",
++     "checkedAt": "1970-01-01T00:00:05.000Z",
+      "reason": "presence-unknown",
+      "state": "no-live-relay",
+    },
+    "createdAt": "1970-01-01T00:00:01.000Z",
+    "duplicate": true,
+
+ ❯ tests/session-messaging/audit-msgqueue.test.ts:90:17
+     88|   expect(receipts(store, hot)).toBe(MESSAGE_SENDER_RECEIPT_LIMIT);
+     89|   const again = store.submitPrepared(hot, ids[0]!.messageId, 5000);
+     90|   expect(again).toEqual({ ...ids[0], duplicate: true });
+       |                 ^
+     91|   expect(allRows(store)).toBe(MESSAGE_SENDER_RECEIPT_LIMIT);
+     92| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/session-messaging/reaudit-n5.test.ts > N5-b same-ID branch: when earliestReleaseAt is after the draft expiry, the retry lands on uncertain guidance
+AssertionError: expected 'The bounded message receipt store is …' to match /either retry that same messageId or …/u
+
+- Expected:
+/either retry that same messageId or prepare again, not both/u
+
++ Received:
+"The bounded message receipt store is full for this sender. This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until the expiresAt returned by prepare_session_message. If earliestReleaseAt is before that expiresAt, retry that same messageId after earliestReleaseAt; otherwise the draft expires first, so prepare again. Never do both. The earliest retained record in this scope expires at 2026-09-28T18:39:50.570Z; after that a new prepare_session_message may succeed."
+
+ ❯ tests/session-messaging/reaudit-n5.test.ts:69:35
+     67|   expect(rejected.ok).toBe(false);
+     68|   const release = String((rejected.error!.details as { earliestRelease…
+     69|   expect(rejected.error!.message).toMatch(/either retry that same mess…
+       |                                   ^
+     70|   // Neither details nor the message give the draft expiry; the sender…
+     71|   expect(rejected.error!.message).not.toContain(draftExpiresAt);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 2 passed | 1 skipped (5)
+      Tests  3 failed | 20 passed | 2 skipped (25)
+   Start at  16:39:49
+   Duration  84.40s (tests 99%, transform 1%)
+

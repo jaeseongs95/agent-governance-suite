@@ -1,0 +1,36 @@
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-fmut
+
+ ❯ tests/session-messaging/message-retention.test.ts (16 tests | 1 failed) 9606ms
+   × byte-limit send rejection carries global details and releases exactly at the earliest record expiry 88ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/message-retention.test.ts > byte-limit send rejection carries global details and releases exactly at the earliest record expiry
+AssertionError: expected undefined to deeply equal { scope: 'global', …(1) }
+
+- Expected:
+{
+  "earliestReleaseAt": "1970-01-01T00:10:01.000Z",
+  "scope": "global",
+}
+
++ Received:
+undefined
+
+ ❯ tests/session-messaging/message-retention.test.ts:329:28
+    327|   const rejected = rejection(() => store.submitPrepared(hot, tiny.mess…
+    328|   expect(rejected.message).toBe("The bounded message receipt store is …
+    329|   expect(rejected.details).toEqual({ scope: "global", earliestReleaseA…
+       |                            ^
+    330|   expect(rows(store)).toBe(0);
+    331|   const beforeRelease = rejection(() => store.submitPrepared(hot, tiny…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 9 passed | 1 skipped (11)
+      Tests  1 failed | 294 passed | 2 skipped (297)
+   Start at  16:51:24
+   Duration  22.11s (tests 95%, transform 3%, import 2%)
+

@@ -1,0 +1,13 @@
+diff --git a/mcp-server/src/session-message-client.ts b/mcp-server/src/session-message-client.ts
+index f91e70d..c9f23ce 100644
+--- a/mcp-server/src/session-message-client.ts
++++ b/mcp-server/src/session-message-client.ts
+@@ -197,7 +197,7 @@ export async function requestSessionMessageOnce<T>(
+         if (newline < 0) return;
+         try {
+           const response = JSON.parse(buffer.slice(0, newline)) as { ok: boolean; data?: T; error?: string; details?: unknown };
+-          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
++          if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request."));
+           else finish(undefined, response.data);
+         } catch {
+           finish(new Error("The broker returned invalid JSON."));

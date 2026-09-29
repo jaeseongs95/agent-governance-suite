@@ -1,0 +1,13 @@
+diff --git a/mcp-server/src/session-message-service.ts b/mcp-server/src/session-message-service.ts
+index a278406..eff075b 100644
+--- a/mcp-server/src/session-message-service.ts
++++ b/mcp-server/src/session-message-service.ts
+@@ -17,7 +17,7 @@ function failure(code: ErrorCode, message: string, details: Record<string, unkno
+ 
+ /** A broker capacity rejection is definite: its transaction rolled back, so nothing was queued or drafted. */
+ function capacityDetails(error: unknown): { scope: "sender" | "global"; earliestReleaseAt: string | null } | null {
+-  return error instanceof BrokerRequestRejected ? error.details : null;
++  return error instanceof BrokerRequestRejected ? (error.details ?? { scope: "global", earliestReleaseAt: null }) : null;
+ }
+ 
+ function capacityRelease(details: { earliestReleaseAt: string | null }): string {

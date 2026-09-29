@@ -1,0 +1,21 @@
+36a37
+> # Ported for the integrated tree: the duplicate branch now also computes autoWake (same meaning).
+38a40
+>         const autoWake = this.autoWakeOutlook(target, nowMs);
+40c42
+<         return { ...receipt, duplicate: true };
+---
+>         return { ...receipt, duplicate: true, autoWake };
+49c51,52
+<       this.database.exec("COMMIT");"""
+---
+>       this.recordActivity(target, nowMs);
+>       this.database.exec("COMMIT");"""  # ported: wake recordActivity now shares the ACK transaction
+58a62
+>         const autoWake = this.autoWakeOutlook(target, nowMs);
+60c64
+<         return { ...receipt, duplicate: true };
+---
+>         return { ...receipt, duplicate: true, autoWake };
+78a83
+>       this.recordActivity(target, nowMs);
