@@ -1,0 +1,30 @@
+93a7e4bc69f556859bc929af1df871dfc74eae68 10cfd37e66ca9c30000073a4e17b7b3e97355baa
+  test: accept a previous broker that already retires ended-birth wakes
+10cfd37e66ca9c30000073a4e17b7b3e97355baa e33e47e8ddf6b6a9c8ac781bf1dce1c7aec8363f
+  chore: release 2.7.6
+e33e47e8ddf6b6a9c8ac781bf1dce1c7aec8363f 2e3066a060eeb2a2fc3e06a5a4f5dba058f49b7b
+  docs: describe the board presence lookup deadline
+2e3066a060eeb2a2fc3e06a5a4f5dba058f49b7b bfdbeee15e8c4741a60208e17b46f6ccb2d07abc
+  fix: bound the board presence lookup with one overall deadline
+bfdbeee15e8c4741a60208e17b46f6ccb2d07abc 3706167d4646c53c8b47510eebda58931cbd1cfe
+  test: seed the large presence fixture in one transaction
+ .agents/plugins/marketplace.json                   |   2 +-
+ .codex-plugin/plugin.json                          |   2 +-
+ README.en.md                                       |   4 +-
+ README.md                                          |   4 +-
+ claude-plugin/.claude-plugin/plugin.json           |   2 +-
+ claude-plugin/mcp-server/dist/server.mjs           |  15 ++-
+ docs/release-notes-v2.7.6.md                       |  25 +++++
+ docs/roadmap.md                                    |   2 +-
+ docs/session-message-lifecycle.md                  |   4 +-
+ mcp-server/dist/server.mjs                         |  15 ++-
+ mcp-server/src/plugin-info.ts                      |   2 +-
+ mcp-server/src/session-message-client.ts           |   2 +-
+ mcp-server/src/session-message-service.ts          |  12 ++-
+ package.json                                       |   2 +-
+ release/version.json                               |   2 +-
+ .../fixtures/slow-list-presence.mjs                |  11 +++
+ tests/session-messaging/presence-deadline.test.ts  | 103 +++++++++++++++++++++
+ tests/session-messaging/presence-retention.test.ts |  26 +++++-
+ tests/session-messaging/previous-broker.test.ts    |   7 +-
+ 19 files changed, 217 insertions(+), 25 deletions(-)

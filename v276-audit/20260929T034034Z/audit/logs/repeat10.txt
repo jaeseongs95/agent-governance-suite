@@ -1,0 +1,11 @@
+run1	rc=0	 Tests 18 passed (18)	 Duration 22.22s (tests 96%, transform 3%, import 1%)
+run2	rc=0	 Tests 18 passed (18)	 Duration 22.17s (tests 97%, transform 2%, import 1%)
+run3	rc=0	 Tests 18 passed (18)	 Duration 22.16s (tests 97%, transform 2%, import 1%)
+run4	rc=0	 Tests 18 passed (18)	 Duration 22.25s (tests 96%, transform 3%, import 1%)
+run5	rc=0	 Tests 18 passed (18)	 Duration 22.14s (tests 97%, transform 2%, import 1%)
+run6	rc=0	 Tests 18 passed (18)	 Duration 22.45s (tests 96%, transform 3%, import 1%)
+run7	rc=0	 Tests 18 passed (18)	 Duration 22.38s (tests 96%, transform 3%, import 1%)
+run8	rc=0	 Tests 18 passed (18)	 Duration 22.37s (tests 96%, transform 3%, import 1%)
+run9	rc=0	 Tests 18 passed (18)	 Duration 22.15s (tests 97%, transform 2%, import 1%)
+run10	rc=0	 Tests 18 passed (18)	 Duration 22.41s (tests 95%, transform 4%, import 1%)
+leftover-broker-processes=1

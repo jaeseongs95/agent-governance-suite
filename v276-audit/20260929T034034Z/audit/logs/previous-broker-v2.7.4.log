@@ -1,0 +1,16 @@
+=== previous-broker v2.7.4 (0c8b52d97d1ccdda1768c18422d073d674e2c785), candidate test
+Already up to date
+Done in 480ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276c
+
+ ✓ tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 1561ms
+ ✓ tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 620ms
+ ✓ tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker 230ms
+ ✓ tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired 221ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  03:37:25
+   Duration  3.03s (tests 90%, transform 7%, import 2%)
+

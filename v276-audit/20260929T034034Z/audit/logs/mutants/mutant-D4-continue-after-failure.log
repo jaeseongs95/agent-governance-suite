@@ -1,0 +1,41 @@
+Already up to date
+Done in 480ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276m
+
+ ❯ tests/session-messaging/presence-batches.test.ts (4 tests | 2 failed) 1615ms
+   × stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch 1208ms
+   × keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure 402ms
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  2 failed | 31 passed (33)
+   Start at  03:15:35
+   Duration  22.37s (tests 93%, transform 5%, import 2%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch
+AssertionError: expected "vi.fn()" to be called 1 times, but got 3 times
+ ❯ tests/session-messaging/presence-batches.test.ts:60:19
+     58|   const result = await new SessionMessageService().listPresence(target…
+     59|   const elapsed = Date.now() - started;
+     60|   expect(request).toHaveBeenCalledTimes(1);
+       |                   ^
+     61|   expect(elapsed).toBeLessThan(2 * DEADLINE_MS);
+     62|   expect(result.ok).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/presence-batches.test.ts > keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure
+AssertionError: expected "vi.fn()" to be called 2 times, but got 3 times
+ ❯ tests/session-messaging/presence-batches.test.ts:72:19
+     70|   expect(result.data!.sessions.map((session) => session.sessionId)).to…
+     71|   expect(result.data!.unanswered).toEqual(["hang", "e", "f", "fail", "…
+     72|   expect(request).toHaveBeenCalledTimes(2);
+       |                   ^
+     73| });
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+

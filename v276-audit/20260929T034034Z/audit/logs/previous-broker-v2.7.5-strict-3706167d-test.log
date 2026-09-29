@@ -1,0 +1,53 @@
+=== previous-broker v2.7.5 (3706167d4646c53c8b47510eebda58931cbd1cfe), 3706167d strict test
+Already up to date
+Done in 472ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276c
+
+ ✓ tests/session-messaging/previous-broker.strict-audit.test.ts > preserves queued messages when new hooks meet the previous released broker 1530ms
+ ✓ tests/session-messaging/previous-broker.strict-audit.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 629ms
+ ✓ tests/session-messaging/previous-broker.strict-audit.test.ts > gives the new batched presence request a defined result from a previous broker 237ms
+ × tests/session-messaging/previous-broker.strict-audit.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire 247ms
+   → expected { …(20) } to deeply equal { …(20) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.strict-audit.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire
+AssertionError: expected { …(20) } to deeply equal { …(20) }
+
+- Expected
++ Received
+
+@@ -10,13 +10,13 @@
+    "nonce": "ended-birth-nonce-abcdefghijklmnopqr",
+    "nonce_digest": "0a18f745b9e73706ed9204a5ba02f518a3e39d8a57ea55b9a20d1c5fbede2eb0",
+    "observed_at": null,
+    "outcome_at": "2026-09-29T02:27:08.755Z",
+    "relay_id": "ended-relay",
+-   "retired_at": null,
++   "retired_at": "2026-09-29T03:38:08.956Z",
+    "retry_count": 0,
+    "retry_not_before": null,
+    "session_id": "ended-recipient",
+    "started_at": "2026-09-29T02:27:08.754Z",
+-   "state": "submitted",
++   "state": "expired-unobserved",
+    "transport": "codex-queue",
+  }
+
+ ❯ tests/session-messaging/previous-broker.strict-audit.test.ts:274:49
+    272|   try {
+    273|     const kept = wakeRow();
+    274|     if (managedWakeAware === true) expect(kept).toEqual(before);
+       |                                                 ^
+    275|     else expect([undefined, before]).toContainEqual(kept);
+    276|     const current = new SessionMessageStore(databasePath);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  03:38:05
+   Duration  3.03s (tests 92%, transform 7%, import 2%)
+

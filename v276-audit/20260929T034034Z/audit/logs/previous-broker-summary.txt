@@ -1,0 +1,12 @@
+v2.7.5(HARNESS ERROR: local tag missing, empty broker file; superseded below)	candidate-test	rc=1	⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Tests 4 failed (4)
+v2.7.5(HARNESS ERROR: local tag missing, empty broker file; superseded below)	strict-3706167d-test	rc=1	⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Tests 4 failed (4)
+v2.7.4	candidate-test	rc=0	 Tests 4 passed (4)
+v2.7.4	strict-3706167d-test	rc=0	 Tests 4 passed (4)
+v2.7.3	candidate-test	rc=0	 Tests 4 passed (4)
+v2.7.3	strict-3706167d-test	rc=0	 Tests 4 passed (4)
+v2.7.5	candidate-test	rc=0	 Tests 4 passed (4)
+v2.7.5	strict-3706167d-test	rc=1	⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Tests 1 failed | 3 passed (4)
+DONE

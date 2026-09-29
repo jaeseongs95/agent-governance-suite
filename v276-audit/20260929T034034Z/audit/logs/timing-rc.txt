@@ -1,0 +1,26 @@
+normal-1000ms rc=0
+normal-1000ms rc=0
+normal-1000ms rc=0
+normal-1000ms rc=0
+normal-1000ms rc=0
+normal-1000ms rc=0
+normal-1000ms rc=0
+normal-1000ms rc=0
+normal-1000ms rc=0
+normal-1000ms rc=0
+normal-1900ms rc=0
+retry-path-3000ms rc=0
+retry-path-3000ms rc=0
+cpu-saturated-1000ms rc=0
+cpu-saturated-1000ms rc=0
+cpu-saturated-1000ms rc=0
+cpu-saturated-1000ms rc=0
+cpu-saturated-1000ms rc=0
+cpu-saturated presence-retention run1 rc=0
+cpu-saturated presence-retention run2 rc=0
+cpu-saturated presence-retention run3 rc=0
+fsync20ms-1000ms rc=0
+fsync20ms-1000ms rc=0
+fsync20ms-1000ms rc=0
+fsync20ms presence-retention rc=0
+DONE

@@ -1,0 +1,21 @@
+Already up to date
+Done in 594ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276c
+
+ ✓ tests/session-messaging/presence-retention.test.ts > serves board presence from a 342-identity, 1302-row database through a real broker 1455ms
+ ✓ tests/session-messaging/presence-retention.test.ts > ends a board lookup against a slow real broker at one overall client deadline 20964ms
+ ✓ tests/session-messaging/presence-retention.test.ts > B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve 980ms
+ ✓ tests/session-messaging/presence-retention.test.ts > keeps an ended or lapsed row until exactly the retention period after its lease end 7ms
+ ✓ tests/session-messaging/presence-retention.test.ts > never deletes a live row, however old its birth 32ms
+ ✓ tests/session-messaging/presence-retention.test.ts > keeps retirement, presence and autoWake identical to a run that deletes no presence row 1470ms
+ ✓ tests/session-messaging/presence-retention.test.ts > gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing 1030ms
+ ✓ tests/session-messaging/presence-retention.test.ts > prunes presence idempotently when two processes race on one database 2031ms
+ ✓ tests/session-messaging/presence-retention.test.ts > bounds list-presence: batches fit the response limit and oversized or overlong requests are refused 24ms
+ ✓ tests/session-messaging/presence-retention.test.ts > still lists every identity for an untargeted request that fits 5ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  03:28:51
+   Duration  28.99s (tests 97%, transform 2%)
+

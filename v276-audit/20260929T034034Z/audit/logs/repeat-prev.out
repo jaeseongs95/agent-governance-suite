@@ -1,0 +1,4 @@
+fatal: invalid object name 'v2.7.5'.
+fatal: ambiguous argument 'v2.7.5^{commit}': unknown revision or path not in the working tree.
+Use '--' to separate paths from revisions, like this:
+'git <command> [<revision>...] -- [<file>...]'

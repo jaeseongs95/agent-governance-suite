@@ -1,0 +1,12 @@
+Already up to date
+Done in 550ms using pnpm v11.19.0
+$ node scripts/build.mjs && vitest run
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276c
+
+
+ Test Files  64 passed | 1 skipped (65)
+      Tests  885 passed | 4 skipped (889)
+   Start at  03:12:01
+   Duration  81.74s (tests 95%, import 3%, transform 2%)
+

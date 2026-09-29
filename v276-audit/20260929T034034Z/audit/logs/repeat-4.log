@@ -1,0 +1,11 @@
+Already up to date
+Done in 475ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276c
+
+
+ Test Files  3 passed (3)
+      Tests  18 passed (18)
+   Start at  03:33:54
+   Duration  22.25s (tests 96%, transform 3%, import 1%)
+

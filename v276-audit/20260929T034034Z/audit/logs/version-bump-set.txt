@@ -1,0 +1,13 @@
+10cfd37 vs 3501e7c5 (v2.7.5 release commit) file set:
+SAME
+.agents/plugins/marketplace.json
+.codex-plugin/plugin.json
+README.en.md
+README.md
+claude-plugin/.claude-plugin/plugin.json
+claude-plugin/mcp-server/dist/server.mjs
+docs/roadmap.md
+mcp-server/dist/server.mjs
+mcp-server/src/plugin-info.ts
+package.json
+release/version.json

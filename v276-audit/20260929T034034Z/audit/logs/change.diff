@@ -1,0 +1,514 @@
+diff --git a/.agents/plugins/marketplace.json b/.agents/plugins/marketplace.json
+index 374c1b5..4168572 100644
+--- a/.agents/plugins/marketplace.json
++++ b/.agents/plugins/marketplace.json
+@@ -9,7 +9,7 @@
+       "source": {
+         "source": "url",
+         "url": "https://github.com/[REDACTED]/agent-governance-suite.git",
+-        "ref": "v2.7.5"
++        "ref": "v2.7.6"
+       },
+       "policy": {
+         "installation": "AVAILABLE",
+diff --git a/.codex-plugin/plugin.json b/.codex-plugin/plugin.json
+index 8109c09..fc8e963 100644
+--- a/.codex-plugin/plugin.json
++++ b/.codex-plugin/plugin.json
+@@ -1,7 +1,7 @@
+ {
+   "id": "agent-governance-suite",
+   "name": "agent-governance-suite",
+-  "version": "2.7.5",
++  "version": "2.7.6",
+   "description": "Route governance specialists through declarative provider contracts, a local MCP convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
+   "author": {
+     "name": "[REDACTED]",
+diff --git a/README.en.md b/README.en.md
+index 976a575..3a575a1 100644
+--- a/README.en.md
++++ b/README.en.md
+@@ -14,7 +14,7 @@ Use it to track change scope and verification while building a feature, or to co
+ | Coordinating sessions | A way to see each session's work and contact it | A shared board and local PEER messages with processing acknowledgments |
+ 
+ <!-- release-version:start -->
+-The current public release is `v2.7.5` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
++The current public release is `v2.7.6` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+ <!-- release-version:end -->
+ 
+ - [Installation](#installation)
+@@ -44,7 +44,7 @@ Run in a terminal:
+ 
+ <!-- release-install:start -->
+ ```bash
+-codex plugin marketplace add [REDACTED]/agent-governance-suite --ref v2.7.5
++codex plugin marketplace add [REDACTED]/agent-governance-suite --ref v2.7.6
+ codex plugin add agent-governance-suite@agent-governance
+ ```
+ <!-- release-install:end -->
+diff --git a/README.md b/README.md
+index e8afaa4..260d6a7 100644
+--- a/README.md
++++ b/README.md
+@@ -14,7 +14,7 @@ Agent Governance Suite(AGS)는 AI 에이전트의 작업에 전문 스킬과 검
+ | 여러 세션의 협업 | 각 세션의 작업을 확인하고 연락할 경로 | 공용 현황판과 처리 여부를 확인할 수 있는 로컬 PEER 메시지 |
+ 
+ <!-- release-version:start -->
+-현재 공개 릴리스는 `v2.7.5`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
++현재 공개 릴리스는 `v2.7.6`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+ <!-- release-version:end -->
+ 
+ - [설치](#설치)
+@@ -44,7 +44,7 @@ Claude Code 안에서 실행합니다.
+ 
+ <!-- release-install:start -->
+ ```bash
+-codex plugin marketplace add [REDACTED]/agent-governance-suite --ref v2.7.5
++codex plugin marketplace add [REDACTED]/agent-governance-suite --ref v2.7.6
+ codex plugin add agent-governance-suite@agent-governance
+ ```
+ <!-- release-install:end -->
+diff --git a/claude-plugin/.claude-plugin/plugin.json b/claude-plugin/.claude-plugin/plugin.json
+index 9904f56..efa87d4 100644
+--- a/claude-plugin/.claude-plugin/plugin.json
++++ b/claude-plugin/.claude-plugin/plugin.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "agent-governance-suite",
+-  "version": "2.7.5",
++  "version": "2.7.6",
+   "description": "Governance specialists, a local MCP workflow guard, opt-in task continuity, and an MCP-assisted Korean prose workflow for Claude Code.",
+   "author": {
+     "name": "[REDACTED]",
+diff --git a/claude-plugin/mcp-server/dist/server.mjs b/claude-plugin/mcp-server/dist/server.mjs
+index 300163b..e17c6ca 100644
+--- a/claude-plugin/mcp-server/dist/server.mjs
++++ b/claude-plugin/mcp-server/dist/server.mjs
+@@ -19733,7 +19733,7 @@ function inlineSchemaReferences(schema, documents) {
+ // mcp-server/src/plugin-info.ts
+ var PLUGIN_INFO = Object.freeze({
+   id: "agent-governance-suite",
+-  version: "2.7.5",
++  version: "2.7.6",
+   repository: "https://github.com/[REDACTED]/agent-governance-suite",
+   tagsApi: "https://api.github.com/[REDACTED]/[REDACTED]/agent-governance-suite/git/matching-refs/tags/v"
+ });
+@@ -20356,16 +20356,25 @@ var SessionMessageService = class {
+     }
+   }
+   /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. A refused
+-   * batch or an identity outside the broker's pattern is reported as unanswered; the other batches still count. */
++   * batch or an identity outside the broker's pattern is reported as unanswered; the other batches still count. The
++   * whole lookup shares one client deadline, so a slow broker ends it once, not once per batch. */
+   async listPresence(targets) {
+     const sessions = [];
+     const unanswered = [];
+     const asked = [];
+     for (const { host, sessionId } of targets) (isBoundedIdentity({ host, sessionId }) ? asked : unanswered).push({ host, sessionId });
++    const deadline = Date.now() + SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
+     for (let index = 0; index < asked.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
+       const batch = asked.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS);
++      const remaining = deadline - Date.now();
+       try {
+-        const data = await sessionMessageRequest("list-presence", { targets: batch }, this.stateDirectory);
++        if (remaining <= 0) throw new Error("The board presence lookup reached its deadline.");
++        const data = await sessionMessageRequest(
++          "list-presence",
++          { targets: batch },
++          this.stateDirectory,
++          { totalTimeoutMs: remaining }
++        );
+         sessions.push(...data.sessions.map((session) => ({
+           ...session,
+           deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
+diff --git a/docs/release-notes-v2.7.6.md b/docs/release-notes-v2.7.6.md
+new file mode 100644
+index 0000000..435fc24
+--- /dev/null
++++ b/docs/release-notes-v2.7.6.md
+@@ -0,0 +1,25 @@
++# v2.7.6: 현황판 presence 조회 대기 상한
++
++세션 현황판(`list_session_status`)의 presence 조회 전체에 대기 상한을 둡니다. 2.7.4부터 서버는 현황판 세션을 3개씩 묶어 broker에 순서대로 물었고, 묶음 하나에는 client deadline(20초)이 있었지만 조회 전체에는 상한이 없었습니다. broker가 아예 답하지 않으면 첫 묶음 뒤에 멈췄지만, 답은 하되 묶음마다 느리면 대기가 묶음 수만큼 늘었습니다. 요청 하나의 한도 안에서 묶음마다 1.9초가 걸리면 300개 세션(100개 묶음)에서 190초입니다. 시험으로 재현했습니다. 묶음마다 1초씩 답을 늦추는 실제 broker에서 90개 세션 조회가 약 30초 걸렸습니다.
++
++이제 조회 전체가 client deadline 하나(20초)를 나눠 씁니다. 묶음마다 남은 시간만 client에 넘기고, 남은 시간이 없으면 더 묻지 않습니다. deadline에 걸린 묶음은 client가 연결을 끊습니다. 그 묶음과 남은 묶음의 세션은 broker가 답하지 않은 것으로 보고 `unknown`(`autoWake: null`)으로 두며, 앞서 받은 결과는 그대로 보여 줍니다. 끊은 요청의 응답이 뒤늦게 와도 결과는 바뀌지 않습니다. 같은 실제 broker에서 조회는 약 20초에 끝났습니다. 거절된 묶음만 `unknown`으로 두는 규칙, 거절이 아닌 실패에서 멈추는 규칙, broker가 받지 않는 형식의 세션을 묻지 않는 규칙, 묶음 크기 3과 응답 한도는 그대로입니다. 자세한 규칙은 [presence 보존과 현황판 조회](session-message-lifecycle.md#presence-보존과-현황판-조회)를 따릅니다.
++
++20초는 다른 broker 요청 하나의 client deadline과 같은 값입니다. broker가 떠 있지 않아 새로 띄우는 첫 조회(기동 대기 최대 15초)도 이 안에서 끝날 수 있고, 호스트의 MCP 도구 호출 제한(Codex 기본 60초)보다 짧습니다. 새 설정은 없습니다. 묶음을 동시에 보내는 방식은 택하지 않았습니다. broker는 요청을 한 process에서 차례로 처리하므로 동시에 보내도 broker 쪽 처리 시간은 줄지 않고, 순서·중복·실패 처리만 복잡해집니다. 정상 broker에서 300개 세션 조회는 약 0.5초입니다.
++
++## 동작 변화(호환성)
++
++정상 broker에서는 결과와 시간이 전과 같습니다. 달라지는 경우는 조회가 20초를 넘길 때뿐입니다. 전에는 끝까지 기다렸지만, 이제 20초에 멈추고 받지 못한 세션을 `unknown`으로 보여 줍니다. 다시 조회하면 다시 묻습니다.
++
++이 변경은 서버(client) 쪽에만 있습니다. broker 계약과 schema는 바뀌지 않았으므로, 2.7.6 서버는 2.7.5·2.7.4 broker와도 같은 상한으로 동작합니다. previous-broker 회귀 시험은 v2.7.5, v2.7.4 broker로 통과했으며, 이 검사로 혼합 버전의 모든 실행·복구를 보장하지 않습니다. 2.7.4보다 이전 broker는 요청한 세션 목록을 무시하므로 2.7.4 notes의 혼합 버전 표를 따릅니다.
++
++presence 보존 시험(342 identity, 1302행 DB)이 느린 Windows runner에서 시간 초과로 실패하던 문제도 고쳤습니다. 원인은 현황판 조회가 아니라 시험 fixture였습니다. fixture가 행을 약 2000번의 개별 commit으로 쓰고 있었고, 그 조회는 44개 세션(15개 묶음)뿐이었습니다. fixture를 transaction 하나로 묶었고, 제품 동작과 시험 한도는 바꾸지 않았습니다. fsync마다 20ms를 더한 흉내에서 두 시험은 48.6초와 47.3초에서 1.7초와 2.5초로 줄었습니다.
++
++## 알려진 한계
++
++broker가 20초 안에 다 답하지 못할 만큼 느리면, 현황판의 뒤쪽 세션은 그 조회에서 `unknown`으로 보입니다. 어느 세션이 뒤쪽인지는 현황판 순서를 따릅니다.
++
++대기 상한은 presence 조회에만 둡니다. 현황판 파일을 읽는 시간과 다른 broker 요청의 deadline은 그대로입니다. 공통 접수 원문이 두 번 주입되는 문제(L3)는 이번 범위가 아닙니다.
++
++상한과 시험 시간은 Linux 환경의 시험(가짜 client와 느린 실제 broker)으로 확인했습니다. 실제 PC와 Windows runner의 동작은 이 검사가 대신하지 않습니다.
++
++공식 [설치 안내](../README.md#설치)에 따라 업데이트한 뒤 새 세션으로 재연결합니다. 운영 DB·키·큐를 지우거나 덮어써 불확실한 상태를 없애지 않습니다. 버전 동기화와 로컬 검사는 실제 설치 bytes나 호스트 동작을 대신하지 않으므로, 설치·재연결 뒤 현황판 presence를 별도로 확인합니다.
+diff --git a/docs/roadmap.md b/docs/roadmap.md
+index cf368d9..9ace241 100644
+--- a/docs/roadmap.md
++++ b/docs/roadmap.md
+@@ -1,7 +1,7 @@
+ # Agent Governance Suite 향후 로드맵
+ 
+ <!-- release-version:start -->
+-문서 기준일은 2026년 9월 21일이다. 현재 공개 릴리스는 `v2.7.5`이다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
++문서 기준일은 2026년 9월 21일이다. 현재 공개 릴리스는 `v2.7.6`이다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
+ <!-- release-version:end -->
+ 
+ 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
+diff --git a/docs/session-message-lifecycle.md b/docs/session-message-lifecycle.md
+index 7b30230..9d90ad7 100644
+--- a/docs/session-message-lifecycle.md
++++ b/docs/session-message-lifecycle.md
+@@ -187,7 +187,9 @@ presence birth는 ms 해상도 ISO 문자열이다. 같은 instance가 이전 bi
+ 
+ 조회: 서버는 현황판에 보이는 identity만 3개씩 묶어 `list-presence`의 `targets`로 요청하고, broker는 그 identity만 돌려준다. 3개는 모든 문자열 필드가 최대 길이이고 JSON escape로 6바이트가 되는 문자만으로 채워져도 응답 한도 안에 든다. broker는 `targets`가 1~3개가 아니면 거절하고, 응답이 한도를 넘으면 보내지 않고 명시적으로 거절한다. `targets` 없는 요청(2.7.3 이하 service)에는 저장된 모든 identity를 돌려주며, 한도를 넘으면 같은 거절을 한다.
+ 
+-서버는 broker가 받는 식별자 형식(`isBoundedIdentity`, broker와 같은 규칙)에 맞지 않는 identity는 요청하지 않는다. 그 identity와 broker가 명시적으로 거절한 묶음의 identity는 broker가 답하지 않은 것으로 보고 `unknown`, `autoWake: null`로 두며, 나머지 묶음은 그대로 표시한다. 거절이 아닌 실패(연결 실패, client deadline 초과, 응답 한도 초과)가 한 번 나면 남은 묶음은 요청하지 않고, 그 묶음과 남은 묶음의 identity를 모두 같은 방식으로 둔다. 그래서 broker가 살아 있지만 응답하지 않아도 전체 시간은 묶음 하나의 client deadline을 넘지 않는다. broker에 물었는데 행이 없는 identity는 `unknown`이고 `autoWake`는 `no-live-relay`/`presence-unknown`이다. 요청 수는 ceil(N/3)이고, 여러 묶음을 합친 전체 deadline은 없다.
++서버는 broker가 받는 식별자 형식(`isBoundedIdentity`, broker와 같은 규칙)에 맞지 않는 identity는 요청하지 않는다. 그 identity와 broker가 명시적으로 거절한 묶음의 identity는 broker가 답하지 않은 것으로 보고 `unknown`, `autoWake: null`로 두며, 나머지 묶음은 그대로 표시한다. 거절이 아닌 실패(연결 실패, client deadline 초과, 응답 한도 초과)가 한 번 나면 남은 묶음은 요청하지 않고, 그 묶음과 남은 묶음의 identity를 모두 같은 방식으로 둔다. broker에 물었는데 행이 없는 identity는 `unknown`이고 `autoWake`는 `no-live-relay`/`presence-unknown`이다. 요청 수는 ceil(N/3)이고 묶음은 순서대로 보낸다.
++
++조회 전체는 client deadline 하나(20초, 다른 broker 요청 하나와 같은 값)를 나눠 쓴다. 묶음마다 남은 시간만 client에 넘기고, 남은 시간이 없으면 더 요청하지 않는다. deadline에 걸린 묶음은 client가 연결을 끊고 거절이 아닌 실패로 끝나므로, 위 규칙대로 그 묶음과 남은 묶음을 모두 `unknown`, `autoWake: null`로 두고 앞서 받은 결과는 유지한다. 끊은 요청의 응답이 뒤늦게 와도 결과는 바뀌지 않는다. 그래서 broker가 응답하지 않거나, 응답은 하지만 묶음마다 느려도 조회 전체는 20초를 넘지 않는다. 2.7.5까지는 전체 상한이 없어, 묶음마다 요청 하나의 한도 안에서 느리게 답하는 broker에서는 대기가 묶음 수만큼 늘었다. 20초는 broker가 없어 새로 띄우는 첫 조회(기동 대기 최대 15초)가 끝날 수 있는 시간이고, 호스트의 MCP 도구 호출 제한(Codex 기본 60초)보다 짧다. 묶음을 동시에 보내지는 않는다. broker는 요청을 한 process에서 차례로 처리하므로 동시에 보내도 broker 쪽 시간은 줄지 않고, 정상 broker에서 300개 세션 조회는 약 0.5초다.
+ 
+ | service | broker | 현황판 presence |
+ | --- | --- | --- |
+diff --git a/mcp-server/dist/server.mjs b/mcp-server/dist/server.mjs
+index 300163b..e17c6ca 100644
+--- a/mcp-server/dist/server.mjs
++++ b/mcp-server/dist/server.mjs
+@@ -19733,7 +19733,7 @@ function inlineSchemaReferences(schema, documents) {
+ // mcp-server/src/plugin-info.ts
+ var PLUGIN_INFO = Object.freeze({
+   id: "agent-governance-suite",
+-  version: "2.7.5",
++  version: "2.7.6",
+   repository: "https://github.com/[REDACTED]/agent-governance-suite",
+   tagsApi: "https://api.github.com/[REDACTED]/[REDACTED]/agent-governance-suite/git/matching-refs/tags/v"
+ });
+@@ -20356,16 +20356,25 @@ var SessionMessageService = class {
+     }
+   }
+   /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. A refused
+-   * batch or an identity outside the broker's pattern is reported as unanswered; the other batches still count. */
++   * batch or an identity outside the broker's pattern is reported as unanswered; the other batches still count. The
++   * whole lookup shares one client deadline, so a slow broker ends it once, not once per batch. */
+   async listPresence(targets) {
+     const sessions = [];
+     const unanswered = [];
+     const asked = [];
+     for (const { host, sessionId } of targets) (isBoundedIdentity({ host, sessionId }) ? asked : unanswered).push({ host, sessionId });
++    const deadline = Date.now() + SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
+     for (let index = 0; index < asked.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
+       const batch = asked.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS);
++      const remaining = deadline - Date.now();
+       try {
+-        const data = await sessionMessageRequest("list-presence", { targets: batch }, this.stateDirectory);
++        if (remaining <= 0) throw new Error("The board presence lookup reached its deadline.");
++        const data = await sessionMessageRequest(
++          "list-presence",
++          { targets: batch },
++          this.stateDirectory,
++          { totalTimeoutMs: remaining }
++        );
+         sessions.push(...data.sessions.map((session) => ({
+           ...session,
+           deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
+diff --git a/mcp-server/src/plugin-info.ts b/mcp-server/src/plugin-info.ts
+index 2888b5a..88154a2 100644
+--- a/mcp-server/src/plugin-info.ts
++++ b/mcp-server/src/plugin-info.ts
+@@ -1,6 +1,6 @@
+ export const PLUGIN_INFO = Object.freeze({
+   id: "agent-governance-suite",
+-  version: "2.7.5",
++  version: "2.7.6",
+   repository: "https://github.com/[REDACTED]/agent-governance-suite",
+   tagsApi: "https://api.github.com/[REDACTED]/[REDACTED]/agent-governance-suite/git/matching-refs/tags/v",
+ });
+diff --git a/mcp-server/src/session-message-client.ts b/mcp-server/src/session-message-client.ts
+index f91e70d..3d2a197 100644
+--- a/mcp-server/src/session-message-client.ts
++++ b/mcp-server/src/session-message-client.ts
+@@ -37,7 +37,7 @@ export class BrokerRequestRejected extends Error {
+ }
+ 
+ const BROKER_STARTUP_TIMEOUT_MS = 15_000;
+-const SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 20_000;
++export const SESSION_MESSAGE_REQUEST_TIMEOUT_MS = 20_000;
+ const BROKER_REQUEST_TIMEOUT_MS = 2_500;
+ const BROKER_STARTUP_DEADLINE_MESSAGE = "The session message broker did not become ready before the startup deadline.";
+ const SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE = "The session message request deadline expired.";
+diff --git a/mcp-server/src/session-message-service.ts b/mcp-server/src/session-message-service.ts
+index 1c11252..eb0a149 100644
+--- a/mcp-server/src/session-message-service.ts
++++ b/mcp-server/src/session-message-service.ts
+@@ -1,5 +1,5 @@
+ import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
+-import { BrokerRequestRejected, sessionMessageRequest } from "./session-message-client.js";
++import { BrokerRequestRejected, SESSION_MESSAGE_REQUEST_TIMEOUT_MS, sessionMessageRequest } from "./session-message-client.js";
+ import type { SessionPresenceView } from "./session-message-store.js";
+ import { isBoundedIdentity, SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_PRESENCE_LIST_MAX_TARGETS } from "./session-message-protocol.js";
+ 
+@@ -101,16 +101,22 @@ export class SessionMessageService {
+   }
+ 
+   /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. A refused
+-   * batch or an identity outside the broker's pattern is reported as unanswered; the other batches still count. */
++   * batch or an identity outside the broker's pattern is reported as unanswered; the other batches still count. The
++   * whole lookup shares one client deadline, so a slow broker ends it once, not once per batch. */
+   async listPresence(targets: Array<{ host: string; sessionId: string }>): Promise<ApiResultV1<SessionPresenceList>> {
+     const sessions: SessionPresenceView[] = [];
+     const unanswered: Array<{ host: string; sessionId: string }> = [];
+     const asked: Array<{ host: string; sessionId: string }> = [];
+     for (const { host, sessionId } of targets) (isBoundedIdentity({ host, sessionId }) ? asked : unanswered).push({ host, sessionId });
++    const deadline = Date.now() + SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
+     for (let index = 0; index < asked.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
+       const batch = asked.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS);
++      const remaining = deadline - Date.now();
+       try {
+-        const data = await sessionMessageRequest<SessionPresenceList>("list-presence", { targets: batch }, this.stateDirectory);
++        // Each batch may use only what is left; past the deadline the client gives up like any unanswered request.
++        if (remaining <= 0) throw new Error("The board presence lookup reached its deadline.");
++        const data = await sessionMessageRequest<SessionPresenceList>("list-presence", { targets: batch }, this.stateDirectory,
++          { totalTimeoutMs: remaining });
+         sessions.push(...data.sessions.map((session) => ({
+           ...session,
+           deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
+diff --git a/package.json b/package.json
+index 7ea77f0..22c92cb 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "agent-governance-suite",
+-  "version": "2.7.5",
++  "version": "2.7.6",
+   "private": true,
+   "description": "Governance specialists with declarative local orchestration, a local convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
+   "type": "module",
+diff --git a/release/version.json b/release/version.json
+index 5a85129..cf5f857 100644
+--- a/release/version.json
++++ b/release/version.json
+@@ -1,3 +1,3 @@
+ {
+-  "version": "2.7.5"
++  "version": "2.7.6"
+ }
+diff --git a/tests/session-messaging/fixtures/slow-list-presence.mjs b/tests/session-messaging/fixtures/slow-list-presence.mjs
+new file mode 100644
+index 0000000..0e056f1
+--- /dev/null
++++ b/tests/session-messaging/fixtures/slow-list-presence.mjs
+@@ -0,0 +1,11 @@
++// Test-only broker preload: every list-presence answer is held back by a fixed busy wait, as on a slow machine. The
++// broker's single event loop is blocked for that time, like any synchronous request; the client keeps its own timers.
++import { SessionMessageStore } from "../../../mcp-server/src/session-message-store.ts";
++
++const delay = Number(process.env.AGS_TEST_LIST_PRESENCE_DELAY_MS ?? "0");
++const listPresence = SessionMessageStore.prototype.listPresence;
++SessionMessageStore.prototype.listPresence = function (...args) {
++  const until = Date.now() + delay;
++  while (Date.now() < until) { /* hold the answer */ }
++  return listPresence.apply(this, args);
++};
+diff --git a/tests/session-messaging/presence-deadline.test.ts b/tests/session-messaging/presence-deadline.test.ts
+new file mode 100644
+index 0000000..2cdbe97
+--- /dev/null
++++ b/tests/session-messaging/presence-deadline.test.ts
+@@ -0,0 +1,103 @@
++import { afterEach, beforeEach, expect, it, vi } from "vitest";
++
++vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
++  ...(await original<typeof import("../../mcp-server/src/session-message-client.js")>()),
++  sessionMessageRequest: vi.fn(),
++}));
++
++const { sessionMessageRequest } = await import("../../mcp-server/src/session-message-client.js");
++const { SessionMessageService } = await import("../../mcp-server/src/session-message-service.js");
++const request = vi.mocked(sessionMessageRequest);
++type Target = { host: string; sessionId: string };
++const targets = (count: number): Target[] => Array.from({ length: count }, (_, index) => ({ host: "portable", sessionId: `session-${index}` }));
++// The client's default per-call deadline, which a board lookup also uses as its overall bound.
++const CLIENT_DEADLINE_MS = 20_000;
++let arrivals: Target[][] = [];
++
++/**
++ * A stub client and broker on fake time. The broker answers each batch after `answerAfter` ms. Like the real client, the
++ * call gives up at its own deadline (`totalTimeoutMs`, else the default) with a transport error; the broker's answer
++ * still arrives later and is recorded, but that call has already failed.
++ */
++function broker(answerAfter: (batch: Target[]) => number) {
++  request.mockImplementation((_operation: string, payload: Record<string, unknown>, _directory?: string, options: { totalTimeoutMs?: number } = {}) => {
++    const batch = payload.targets as Target[];
++    const budget = options.totalTimeoutMs ?? CLIENT_DEADLINE_MS;
++    const delay = answerAfter(batch);
++    if (Number.isFinite(delay)) setTimeout(() => arrivals.push(batch), delay);
++    return new Promise((resolve, reject) => {
++      if (delay <= budget) setTimeout(() => resolve({ sessions: batch.map((item) => ({ ...item, state: "online" })) } as never), delay);
++      else setTimeout(() => reject(new Error("The session message request timed out.")), Math.max(budget, 0));
++    });
++  });
++}
++
++async function lookup(board: Target[]) {
++  let settledAt: number | null = null;
++  const started = Date.now();
++  const pending = new SessionMessageService().listPresence(board).then((result) => { settledAt = Date.now() - started; return result; });
++  return { pending, settledAt: () => settledAt };
++}
++
++beforeEach(() => { vi.useFakeTimers(); request.mockReset(); arrivals = []; });
++afterEach(() => { vi.useRealTimers(); });
++
++it("ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered", async () => {
++  // 300 board sessions are 100 batches. Each answer takes 1.9 s, inside every per-request limit, so without an overall
++  // bound the lookup would take 190 s.
++  const board = targets(300);
++  broker(() => 1900);
++  const { pending, settledAt } = await lookup(board);
++  await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
++  expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
++  const result = await pending;
++  expect(result.ok).toBe(true);
++  // Ten batches answered by 19 s; the eleventh had 1 s left and gave up at the deadline.
++  expect(result.data!.sessions.map((session) => session.sessionId)).toEqual(board.slice(0, 30).map((item) => item.sessionId));
++  expect(result.data!.unanswered).toEqual(board.slice(30));
++  expect(request).toHaveBeenCalledTimes(11);
++  const budgets = request.mock.calls.map(([, , , options]) => (options as { totalTimeoutMs: number }).totalTimeoutMs);
++  expect(budgets[0]).toBe(CLIENT_DEADLINE_MS);
++  expect(budgets.at(-1)).toBe(CLIENT_DEADLINE_MS - 10 * 1900);
++});
++
++it("does not let an answer that arrives after the deadline change the result", async () => {
++  const board = targets(12);
++  // The first three batches answer at once; the fourth answers only after the overall deadline.
++  broker((batch) => batch.some((item) => item.sessionId === "session-9") ? CLIENT_DEADLINE_MS + 5000 : 0);
++  const { pending, settledAt } = await lookup(board);
++  // Timers of the immediate answers each take the 1 ms minimum, so the fourth batch starts after the lookup did.
++  await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
++  expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
++  const result = await pending;
++  const snapshot = structuredClone(result);
++  await vi.advanceTimersByTimeAsync(10_000);
++  expect(arrivals.at(-1)!.map((item) => item.sessionId)).toEqual(["session-9", "session-10", "session-11"]);
++  expect(result).toEqual(snapshot);
++  expect(result.data!.sessions.map((session) => session.sessionId)).toEqual(board.slice(0, 9).map((item) => item.sessionId));
++  expect(result.data!.unanswered).toEqual(board.slice(9));
++});
++
++it("bounds an unresponsive broker by the same deadline and asks only once", async () => {
++  const board = targets(9);
++  broker(() => Number.POSITIVE_INFINITY);
++  const { pending, settledAt } = await lookup(board);
++  await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
++  expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
++  const result = await pending;
++  expect(request).toHaveBeenCalledTimes(1);
++  expect(result.data).toEqual({ sessions: [], unanswered: board });
++});
++
++it("returns every identity exactly once, in order, from a normal broker", async () => {
++  const board = [...targets(301), { host: "portable", sessionId: "has space" }];
++  broker(() => 5);
++  const { pending, settledAt } = await lookup(board);
++  await vi.advanceTimersByTimeAsync(101 * 5);
++  expect(settledAt()).not.toBeNull();
++  const result = await pending;
++  expect(result.data!.sessions.map((session) => session.sessionId)).toEqual(board.slice(0, 301).map((item) => item.sessionId));
++  // An identity outside the broker pattern is never asked and stays unanswered on its own.
++  expect(result.data!.unanswered).toEqual([{ host: "portable", sessionId: "has space" }]);
++  expect(request).toHaveBeenCalledTimes(101);
++});
+diff --git a/tests/session-messaging/presence-retention.test.ts b/tests/session-messaging/presence-retention.test.ts
+index 1bc4b23..0788cd8 100644
+--- a/tests/session-messaging/presence-retention.test.ts
++++ b/tests/session-messaging/presence-retention.test.ts
+@@ -4,7 +4,7 @@ import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import path from "node:path";
+ import { DatabaseSync } from "node:sqlite";
+-import { fileURLToPath } from "node:url";
++import { fileURLToPath, pathToFileURL } from "node:url";
+ import { afterEach, expect, it, vi } from "vitest";
+ import { waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
+ import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
+@@ -64,6 +64,8 @@ const withoutCheckedAt = (value: storeModule.SessionPresenceView) =>
+ function largeFixture(database: string, now: number) {
+   const store = new SessionMessageStore(database);
+   try {
++    // One transaction: about 2000 separate commits each waited for a disk flush, which dominated slow Windows runners.
++    store.database.exec("BEGIN");
+     for (let index = 0; index < 300; index += 1) {
+       for (let instance = 0; instance < (index < 60 ? 5 : 4); instance += 1) {
+         const at = now - 10 * 24 * HOUR + index * 60_000 + instance * 1000;
+@@ -83,6 +85,7 @@ function largeFixture(database: string, now: number) {
+         new Date(now + 60_000).toISOString(), new Date(now - 1000).toISOString());
+     }
+     keepLive(store, ["live-0", "live-1"]);
++    store.database.exec("COMMIT");
+     return (store.database.prepare("SELECT count(*) AS rows, count(DISTINCT session_id) AS identities FROM session_presence").get());
+   } finally { store.close(); }
+ }
+@@ -114,6 +117,27 @@ it("serves board presence from a 342-identity, 1302-row database through a real
+   } finally { database.close(); }
+ }, 60_000);
+ 
++it("ends a board lookup against a slow real broker at one overall client deadline", async () => {
++  const state = directory();
++  const slow = pathToFileURL(fileURLToPath(new URL("./fixtures/slow-list-presence.mjs", import.meta.url))).href;
++  const child = spawn(process.execPath, ["--import", "tsx", "--import", slow, sourceBroker, "--state-directory", state],
++    { windowsHide: true, stdio: "ignore", env: { ...process.env, AGS_TEST_LIST_PRESENCE_DELAY_MS: "1000" } });
++  cleanup.push(async () => {
++    if (child.exitCode === null && child.signalCode === null) { const exit = once(child, "exit"); child.kill(); await exit; }
++  });
++  await waitForSessionMessageBrokerReady(state, child, 5000);
++  // 90 board sessions are 30 batches; at 1 s each (inside the 2.5 s per-request limit) the lookup would take 30 s.
++  const board = Array.from({ length: 90 }, (_, index) => ({ host: "portable", sessionId: `slow-${index}` }));
++  const started = Date.now();
++  const result = await new SessionMessageService(state).listPresence(board);
++  const elapsed = Date.now() - started;
++  expect(elapsed).toBeLessThan(22_000);
++  const answered = result.data!.sessions.map((session) => session.sessionId);
++  expect(answered.length).toBeGreaterThan(0);
++  expect(answered).toEqual(board.slice(0, answered.length).map((item) => item.sessionId));
++  expect(result.data!.unanswered).toEqual(board.slice(answered.length));
++}, 60_000);
++
+ it("B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve", async () => {
+   const state = directory();
+   const now = Date.now();
+diff --git a/tests/session-messaging/previous-broker.test.ts b/tests/session-messaging/previous-broker.test.ts
+index fce9efa..cd372d9 100644
+--- a/tests/session-messaging/previous-broker.test.ts
++++ b/tests/session-messaging/previous-broker.test.ts
+@@ -223,7 +223,7 @@ it.skipIf(!previousBroker)("gives the new batched presence request a defined res
+   }
+ }, 20_000);
+ 
+-it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth for the new broker to retire", async () => {
++it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired", async () => {
+   const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-ended-"));
+   const environment = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory,
+     AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
+@@ -271,7 +271,10 @@ it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth f
+   }
+   try {
+     const kept = wakeRow();
+-    if (managedWakeAware === true) expect(kept).toEqual(before);
++    const binding = (row: Record<string, unknown>) => Object.fromEntries(Object.entries(row).filter(([key]) => !["state", "retired_at"].includes(key)));
++    // A 2.7.5 or later broker already retires it (same binding, terminal state); 2.7.4 and 2.7.3 keep the latch.
++    if (kept?.state === "expired-unobserved") expect(binding(kept)).toEqual(binding(before!));
++    else if (managedWakeAware === true) expect(kept).toEqual(before);
+     else expect([undefined, before]).toContainEqual(kept);
+     const current = new SessionMessageStore(databasePath);
+     try {

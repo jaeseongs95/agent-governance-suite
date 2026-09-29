@@ -1,0 +1,48 @@
+{
+  "audit": "AGS 2.7.6 independent pre-release audit (L2 board presence lookup deadline, T-4 fixture transaction)",
+  "candidate": {
+    "branch": "claude/v276-presence-deadline",
+    "commit": "93a7e4bc69f556859bc929af1df871dfc74eae68",
+    "tree": "90ec390cc6dffdcf34e52960103f71e883833907"
+  },
+  "baseline": {
+    "ref": "main / tag v2.7.5",
+    "commit": "3706167d4646c53c8b47510eebda58931cbd1cfe"
+  },
+  "writerEvidenceReadForComparisonOnly": "evidence @ 4a0bf82a196ea2c4d93f589163a2ac4e05fc2fe8 : v276-presence/20260929T030842Z",
+  "previousBrokers": {
+    "v2.7.5": "tag v2.7.5 dist",
+    "v2.7.4": "tag v2.7.4 dist",
+    "v2.7.3": "tag v2.7.3 dist"
+  },
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "uname": "6.18.44-fc-v37",
+  "startedAtUtc": "2026-09-29T03:11:26Z",
+  "finishedAtUtc": "2026-09-29T03:40:35Z",
+  "verdict": "PASS_WITH_FINDINGS",
+  "releaseBlocking": false,
+  "findings": [
+    "L2-1 minor: listPresence deadline uses the wall clock (Date.now); a clock step back lengthens the lookup by the step (probe: 60 s back, 11 -> 43 requests)",
+    "T-5 minor: previous-broker retired-row branch is chosen by observed state, not bound to broker version >= 2.7.5"
+  ],
+  "info": [
+    "I-4 pre-existing: a batch slower than the 2.5 s per-attempt cap ends the lookup at about 5.5 s with all unknown (same on 3706167d)",
+    "I-6 real slow broker test: observed overrun <= 3 ms against the 2 s margin, low flake risk",
+    "I-7 writer evidence commit 298ac88 carried the account name before 4a0bf82 masked it; history keeps it"
+  ],
+  "redaction": {
+    "github-token": 0,
+    "anthropic-key": 0,
+    "aws-access-key": 0,
+    "private-key-line": 0,
+    "bearer-header": 0,
+    "email": 0,
+    "home-path": 74,
+    "root-home": 6,
+    "ipv4": 0,
+    "github-url-account": 7,
+    "account-name": 9,
+    "windows-user-path": 0
+  }
+}

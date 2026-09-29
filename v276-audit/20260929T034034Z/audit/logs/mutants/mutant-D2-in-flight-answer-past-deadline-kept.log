@@ -1,0 +1,55 @@
+Already up to date
+Done in 472ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276m
+
+ ❯ tests/session-messaging/presence-deadline.test.ts (4 tests | 2 failed) 31ms
+   × ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered 14ms
+   × does not let an answer that arrives after the deadline change the result 1ms
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  2 failed | 31 passed (33)
+   Start at  03:14:37
+   Duration  22.44s (tests 93%, transform 5%, import 2%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered
+AssertionError: expected null to be 20000 // Object.is equality
+
+- Expected:
+20000
+
++ Received:
+null
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:52:23
+     50|   const { pending, settledAt } = await lookup(board);
+     51|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
+     52|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+     53|   const result = await pending;
+     54|   expect(result.ok).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/presence-deadline.test.ts > does not let an answer that arrives after the deadline change the result
+AssertionError: expected null to be 20000 // Object.is equality
+
+- Expected:
+20000
+
++ Received:
+null
+
+ ❯ tests/session-messaging/presence-deadline.test.ts:71:23
+     69|   // Timers of the immediate answers each take the 1 ms minimum, so th…
+     70|   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
+     71|   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
+       |                       ^
+     72|   const result = await pending;
+     73|   const snapshot = structuredClone(result);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+

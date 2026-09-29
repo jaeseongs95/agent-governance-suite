@@ -1,0 +1,39 @@
+=== previous-broker v2.7.5 (v2.7.5^{commit}), candidate test
+Already up to date
+Done in 484ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/[REDACTED]/ags-v276c
+
+ × tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker 5012ms
+   → The session message broker did not become ready before the startup deadline.
+ × tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake 5029ms
+   → The session message broker did not become ready before the startup deadline.
+ × tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker 5025ms
+   → The session message broker did not become ready before the startup deadline.
+ × tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired 5026ms
+   → The session message broker did not become ready before the startup deadline.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/previous-broker.test.ts > preserves queued messages when new hooks meet the previous released broker
+ FAIL  tests/session-messaging/previous-broker.test.ts > lets the previous released broker serve a schema 1 database with a retired wake
+ FAIL  tests/session-messaging/previous-broker.test.ts > gives the new batched presence request a defined result from a previous broker
+ FAIL  tests/session-messaging/previous-broker.test.ts > leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired
+Error: The session message broker did not become ready before the startup deadline.
+ ❯ deadlineError mcp-server/src/session-message-client.ts:56:10
+     54|
+     55| function deadlineError(message: string): Error {
+     56|   return new Error(message);
+       |          ^
+     57| }
+     58|
+ ❯ Timeout.<anonymous> mcp-server/src/session-message-client.ts:105:51
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  03:36:41
+   Duration  20.45s (tests 99%, transform 1%)
+
