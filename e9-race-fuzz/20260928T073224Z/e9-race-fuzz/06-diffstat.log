@@ -1,0 +1,17 @@
+ claude-plugin/mcp-server/dist/server.mjs           |  30 +-
+ .../mcp-server/dist/session-message-broker.mjs     | 137 ++++++++-
+ .../mcp-server/dist/session-message-cli.mjs        |   2 +-
+ .../mcp-server/dist/session-message-hook.mjs       |  34 ++-
+ docs/session-message-lifecycle.md                  |  12 +-
+ mcp-server/dist/server.mjs                         |  30 +-
+ mcp-server/dist/session-message-broker.mjs         | 137 ++++++++-
+ mcp-server/dist/session-message-cli.mjs            |   2 +-
+ mcp-server/dist/session-message-hook.mjs           |  34 ++-
+ mcp-server/src/session-message-broker.ts           |   9 +
+ mcp-server/src/session-message-cli.ts              |   2 +-
+ mcp-server/src/session-message-store.ts            |  50 +++-
+ mcp-server/src/session-message-wake-port.ts        |  37 ++-
+ mcp-server/src/trust-store.ts                      |  31 ++-
+ .../fixtures/managed-wake-process.mjs              |   2 +
+ tests/session-messaging/historical-wake.test.mjs   | 305 +++++++++++++++++++++
+ 16 files changed, 801 insertions(+), 53 deletions(-)

@@ -1,0 +1,13 @@
+{
+  "case": "e9-race-fuzz",
+  "target": { "sha": "e9b4c73b2ff4294c68c6490411fbc6118c69c8c8", "tree": "4316195bbb2cdade6efa1a62150e33358ef60a7c", "branch": "codex/wake-history-reconcile" },
+  "baseline": { "sha": "53eff30a2984d41fc749d38dd2062966017684fa" },
+  "node": "v24.21.0 (node-v24.21.0-linux-x64.tar.xz, SHASUMS256 verified)",
+  "pnpm": "11.19.0 (corepack, repo packageManager)",
+  "uname": "Linux vm 6.18.44-fc-v37 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "startUtc": "2026-09-28T07:16:03Z",
+  "endUtc": "2026-09-28T07:32:18Z",
+  "fuzzRuns": 2400,
+  "invariantViolations": 0,
+  "note": "Disposable single Linux cloud container experiment; not user-PC operational or live evidence."
+}

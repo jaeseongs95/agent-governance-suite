@@ -1,0 +1,3496 @@
+{
+ "stats": {
+  "seed": 7,
+  "n": 8,
+  "impl": "e9",
+  "mode": "mixed",
+  "variants": [
+   "valid",
+   "current-gen",
+   "no-late"
+  ],
+  "missingKind": null,
+  "holder": false,
+  "ops": 197,
+  "reconciled": 1,
+  "recAttempts": 47,
+  "effects": 3,
+  "starts": 3,
+  "lateObserved": 2,
+  "hookRecognized": 2,
+  "errors": 0,
+  "errorKinds": [],
+  "sidecarsCreated": [],
+  "violations": 0,
+  "invs": []
+ },
+ "violations": [],
+ "cfg": {
+  "seed": 7,
+  "n": 8,
+  "database": "/tmp/fz-e9-mixed-U5GdfO/session-messages.sqlite3",
+  "trustPath": "/tmp/fz-e9-mixed-U5GdfO/trust.sqlite3",
+  "effects": "/tmp/fz-e9-mixed-U5GdfO/effects.jsonl",
+  "opsPerWorker": 24,
+  "ops": [
+   [
+    "reconcile",
+    5
+   ],
+   [
+    "reconcile-bad",
+    2
+   ],
+   [
+    "gen-change",
+    1
+   ],
+   [
+    "end-presence",
+    1
+   ],
+   [
+    "relay-cycle",
+    6
+   ],
+   [
+    "hook-current",
+    5
+   ],
+   [
+    "hook-old",
+    1
+   ],
+   [
+    "late-outcome-old",
+    2
+   ],
+   [
+    "late-outcome-mine",
+    2
+   ],
+   [
+    "send",
+    2
+   ],
+   [
+    "read-only",
+    2
+   ]
+  ],
+  "targets": [
+   {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attempt": {
+     "host": "portable",
+     "sessionId": "wt-0",
+     "instanceId": "inst-1",
+     "transport": "portable",
+     "relayId": "relay-seed",
+     "nonce": "LTNUTOlTdOoAKJpa72i_qTuw",
+     "generation": "2026-09-28T07:27:35.544Z",
+     "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+     "dispatchEpoch": 1
+    },
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281",
+    "startedAt": "2026-09-28T07:27:35.545Z",
+    "lateAt": "2026-09-28T07:27:35.555Z"
+   },
+   {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attempt": {
+     "host": "portable",
+     "sessionId": "wt-1",
+     "instanceId": "inst-1",
+     "transport": "portable",
+     "relayId": "relay-seed",
+     "nonce": "ainE0OjloEmFRvNEXtErITG4",
+     "generation": "2026-09-28T07:27:35.544Z",
+     "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+     "dispatchEpoch": 1
+    },
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402",
+    "startedAt": "2026-09-28T07:27:35.545Z",
+    "lateAt": "2026-09-28T07:27:35.555Z"
+   },
+   {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attempt": {
+     "host": "portable",
+     "sessionId": "wt-2",
+     "instanceId": "inst-1",
+     "transport": "portable",
+     "relayId": "relay-seed",
+     "nonce": "KDKLoE56T0biOHbDgdEERote",
+     "generation": "2026-09-28T07:27:35.544Z",
+     "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+     "dispatchEpoch": 1
+    },
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b",
+    "startedAt": "2026-09-28T07:27:35.545Z",
+    "lateAt": null
+   }
+  ]
+ },
+ "logs": [
+  {
+   "w": 0,
+   "i": 0,
+   "op": "hook-current",
+   "sid": "wt-2",
+   "t0": 1790580575595,
+   "noop": "no-nonce",
+   "t1": 1790580575595
+  },
+  {
+   "w": 0,
+   "i": 1,
+   "op": "late-outcome-old",
+   "sid": "wt-1",
+   "t0": 1790580575595,
+   "outcome": "accepted-or-unknown",
+   "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+   "result": false,
+   "t1": 1790580575604
+  },
+  {
+   "w": 0,
+   "i": 2,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575605,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575609
+  },
+  {
+   "w": 0,
+   "i": 3,
+   "op": "end-presence",
+   "sid": "wt-0",
+   "t0": 1790580575610,
+   "result": true,
+   "t1": 1790580575630
+  },
+  {
+   "w": 0,
+   "i": 4,
+   "op": "late-outcome-old",
+   "sid": "wt-2",
+   "t0": 1790580575630,
+   "outcome": "definite-failure",
+   "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+   "result": false,
+   "t1": 1790580575633
+  },
+  {
+   "w": 0,
+   "i": 5,
+   "op": "reconcile",
+   "sid": "wt-1",
+   "t0": 1790580575634,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575638
+  },
+  {
+   "w": 0,
+   "i": 6,
+   "op": "send",
+   "sid": "wt-0",
+   "t0": 1790580575641,
+   "result": "msg-7-0-6",
+   "t1": 1790580575644
+  },
+  {
+   "w": 0,
+   "i": 7,
+   "op": "reconcile",
+   "sid": "wt-1",
+   "t0": 1790580575644,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575644
+  },
+  {
+   "w": 0,
+   "i": 8,
+   "op": "read-only",
+   "sid": "wt-1",
+   "t0": 1790580575645,
+   "result": {
+    "receipt": true,
+    "verified": true
+   },
+   "status": "observed",
+   "t1": 1790580575646
+  },
+  {
+   "w": 0,
+   "i": 9,
+   "op": "relay-cycle",
+   "sid": "wt-1",
+   "t0": 1790580575646,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575672
+  },
+  {
+   "w": 0,
+   "i": 10,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575674,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575734
+  },
+  {
+   "w": 0,
+   "i": 11,
+   "op": "hook-old",
+   "sid": "wt-0",
+   "t0": 1790580575734,
+   "nonce": "LTNUTOlTdOoAKJpa72i_qTuw",
+   "receiptId": "source-c2bf2e4c-5cbd-436c-b069-37632d4644b1",
+   "result": {
+    "recognized": false,
+    "messages": 0,
+    "binding": null
+   },
+   "t1": 1790580575738
+  },
+  {
+   "w": 0,
+   "i": 12,
+   "op": "late-outcome-old",
+   "sid": "wt-1",
+   "t0": 1790580575739,
+   "outcome": "accepted-or-unknown",
+   "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+   "result": false,
+   "t1": 1790580575739
+  },
+  {
+   "w": 0,
+   "i": 13,
+   "op": "hook-current",
+   "sid": "wt-2",
+   "t0": 1790580575739,
+   "noop": "no-nonce",
+   "t1": 1790580575739
+  },
+  {
+   "w": 0,
+   "i": 14,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575739,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575740
+  },
+  {
+   "w": 0,
+   "i": 15,
+   "op": "relay-cycle",
+   "sid": "wt-1",
+   "t0": 1790580575740,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575741
+  },
+  {
+   "w": 0,
+   "i": 16,
+   "op": "late-outcome-old",
+   "sid": "wt-0",
+   "t0": 1790580575743,
+   "outcome": "submitted",
+   "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+   "result": false,
+   "t1": 1790580575744
+  },
+  {
+   "w": 0,
+   "i": 17,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575746,
+   "noop": "no-nonce",
+   "t1": 1790580575746
+  },
+  {
+   "w": 0,
+   "i": 18,
+   "op": "late-outcome-old",
+   "sid": "wt-1",
+   "t0": 1790580575746,
+   "outcome": "accepted-or-unknown",
+   "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+   "result": false,
+   "t1": 1790580575747
+  },
+  {
+   "w": 0,
+   "i": 19,
+   "op": "late-outcome-old",
+   "sid": "wt-1",
+   "t0": 1790580575747,
+   "outcome": "submitted",
+   "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+   "result": false,
+   "t1": 1790580575747
+  },
+  {
+   "w": 0,
+   "i": 20,
+   "op": "late-outcome-mine",
+   "sid": "wt-1",
+   "t0": 1790580575748,
+   "noop": "none",
+   "t1": 1790580575748
+  },
+  {
+   "w": 0,
+   "i": 21,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575748,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575785
+  },
+  {
+   "w": 0,
+   "i": 22,
+   "op": "late-outcome-old",
+   "sid": "wt-0",
+   "t0": 1790580575785,
+   "outcome": "submitted",
+   "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+   "result": false,
+   "t1": 1790580575785
+  },
+  {
+   "w": 0,
+   "i": 23,
+   "op": "send",
+   "sid": "wt-1",
+   "t0": 1790580575785,
+   "result": "msg-7-0-23",
+   "t1": 1790580575820
+  },
+  {
+   "w": 1,
+   "i": 0,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575596,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575857
+  },
+  {
+   "w": 1,
+   "i": 1,
+   "op": "reconcile-bad",
+   "sid": "wt-1",
+   "t0": 1790580575858,
+   "kind": "missing-receipt",
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+    "sourceReceiptId": "source-c4bbd95412a9e23e"
+   },
+   "same": false,
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575858
+  },
+  {
+   "w": 1,
+   "i": 2,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575858,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575858
+  },
+  {
+   "w": 1,
+   "i": 3,
+   "op": "reconcile",
+   "sid": "wt-2",
+   "t0": 1790580575860,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575862
+  },
+  {
+   "w": 1,
+   "i": 4,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575864,
+   "noop": "no-nonce",
+   "t1": 1790580575864
+  },
+  {
+   "w": 1,
+   "i": 5,
+   "op": "reconcile-bad",
+   "sid": "wt-2",
+   "t0": 1790580575864,
+   "kind": "missing-receipt",
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-4d5b3c1a5b768c29"
+   },
+   "same": true,
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575864
+  },
+  {
+   "w": 1,
+   "i": 6,
+   "op": "send",
+   "sid": "wt-1",
+   "t0": 1790580575867,
+   "result": "msg-7-1-6",
+   "t1": 1790580575868
+  },
+  {
+   "w": 1,
+   "i": 7,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575869,
+   "noop": "no-nonce",
+   "t1": 1790580575870
+  },
+  {
+   "w": 1,
+   "i": 8,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575870,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575874
+  },
+  {
+   "w": 1,
+   "i": 9,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575876,
+   "noop": "no-nonce",
+   "t1": 1790580575876
+  },
+  {
+   "w": 1,
+   "i": 10,
+   "op": "relay-cycle",
+   "sid": "wt-1",
+   "t0": 1790580575876,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575880
+  },
+  {
+   "w": 1,
+   "i": 11,
+   "op": "gen-change",
+   "sid": "wt-2",
+   "t0": 1790580575881,
+   "instanceId": "inst-w1-11",
+   "generation": "2026-09-28T07:29:35.881Z",
+   "t1": 1790580575891
+  },
+  {
+   "w": 1,
+   "i": 12,
+   "op": "reconcile",
+   "sid": "wt-1",
+   "t0": 1790580575891,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575892
+  },
+  {
+   "w": 1,
+   "i": 13,
+   "op": "late-outcome-mine",
+   "sid": "wt-1",
+   "t0": 1790580575893,
+   "noop": "none",
+   "t1": 1790580575893
+  },
+  {
+   "w": 1,
+   "i": 14,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575893,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575894
+  },
+  {
+   "w": 1,
+   "i": 15,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575894,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575897
+  },
+  {
+   "w": 1,
+   "i": 16,
+   "op": "reconcile",
+   "sid": "wt-1",
+   "t0": 1790580575897,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575897
+  },
+  {
+   "w": 1,
+   "i": 17,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575897,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575899
+  },
+  {
+   "w": 1,
+   "i": 18,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575899,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575901
+  },
+  {
+   "w": 1,
+   "i": 19,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575901,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575904
+  },
+  {
+   "w": 1,
+   "i": 20,
+   "op": "hook-current",
+   "sid": "wt-2",
+   "t0": 1790580575905,
+   "noop": "no-nonce",
+   "t1": 1790580575905
+  },
+  {
+   "w": 1,
+   "i": 21,
+   "op": "late-outcome-mine",
+   "sid": "wt-1",
+   "t0": 1790580575906,
+   "noop": "none",
+   "t1": 1790580575906
+  },
+  {
+   "w": 1,
+   "i": 22,
+   "op": "hook-current",
+   "sid": "wt-2",
+   "t0": 1790580575906,
+   "noop": "no-nonce",
+   "t1": 1790580575906
+  },
+  {
+   "w": 1,
+   "i": 23,
+   "op": "late-outcome-mine",
+   "sid": "wt-1",
+   "t0": 1790580575907,
+   "noop": "none",
+   "t1": 1790580575907
+  },
+  {
+   "w": 2,
+   "i": 0,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575593,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": true,
+    "evidence": {
+     "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281",
+     "contentDigest": "sha256:1bd9d0f574c1759a431f2f033920b6583a8422719fa43f5c48f922fc965abf25",
+     "observedAt": "2026-09-28T07:27:35.554Z",
+     "receiptExpiresAt": "2026-09-28T07:28:05.554Z",
+     "oldBinding": {
+      "host": "portable",
+      "sessionId": "wt-0",
+      "instanceId": "inst-1",
+      "generation": "2026-09-28T07:27:35.544Z",
+      "transport": "portable",
+      "relayId": "relay-seed",
+      "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+      "dispatchEpoch": 1
+     },
+     "lateObservedAt": "2026-09-28T07:27:35.555Z",
+     "reconciledAt": "2026-09-28T07:29:35.593Z"
+    }
+   },
+   "t1": 1790580575597
+  },
+  {
+   "w": 2,
+   "i": 1,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575597,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575601
+  },
+  {
+   "w": 2,
+   "i": 2,
+   "op": "reconcile",
+   "sid": "wt-2",
+   "t0": 1790580575601,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575601
+  },
+  {
+   "w": 2,
+   "i": 3,
+   "op": "late-outcome-old",
+   "sid": "wt-2",
+   "t0": 1790580575601,
+   "outcome": "submitted",
+   "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+   "result": true,
+   "t1": 1790580575602
+  },
+  {
+   "w": 2,
+   "i": 4,
+   "op": "read-only",
+   "sid": "wt-1",
+   "t0": 1790580575604,
+   "result": {
+    "receipt": true,
+    "verified": true
+   },
+   "status": "unknown",
+   "t1": 1790580575606
+  },
+  {
+   "w": 2,
+   "i": 5,
+   "op": "hook-old",
+   "sid": "wt-1",
+   "t0": 1790580575606,
+   "nonce": "ainE0OjloEmFRvNEXtErITG4",
+   "receiptId": "source-e0c2570e-ebd0-49ad-a51f-760139a5a26a",
+   "result": {
+    "recognized": false,
+    "messages": 0,
+    "binding": null
+   },
+   "t1": 1790580575612
+  },
+  {
+   "w": 2,
+   "i": 6,
+   "op": "end-presence",
+   "sid": "wt-1",
+   "t0": 1790580575612,
+   "result": true,
+   "t1": 1790580575613
+  },
+  {
+   "w": 2,
+   "i": 7,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575613,
+   "acquired": true,
+   "reserved": true,
+   "attemptId": "a777bec1-9ec8-40dd-b407-d359c5a0dce3",
+   "nonce": "_UgZ6E1IlJAUQTxOOwhaYA8Z",
+   "started": true,
+   "outcome": "accepted-or-unknown",
+   "deferred": true,
+   "t1": 1790580575617
+  },
+  {
+   "w": 2,
+   "i": 8,
+   "op": "send",
+   "sid": "wt-2",
+   "t0": 1790580575619,
+   "result": "msg-7-2-8",
+   "t1": 1790580575620
+  },
+  {
+   "w": 2,
+   "i": 9,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575620,
+   "acquired": true,
+   "reserved": false,
+   "t1": 1790580575623
+  },
+  {
+   "w": 2,
+   "i": 10,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575624,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575626
+  },
+  {
+   "w": 2,
+   "i": 11,
+   "op": "send",
+   "sid": "wt-1",
+   "t0": 1790580575628,
+   "result": "msg-7-2-11",
+   "t1": 1790580575633
+  },
+  {
+   "w": 2,
+   "i": 12,
+   "op": "hook-old",
+   "sid": "wt-0",
+   "t0": 1790580575635,
+   "nonce": "LTNUTOlTdOoAKJpa72i_qTuw",
+   "receiptId": "source-bd7bc22f-7c59-48fd-8c94-64a8114d82b2",
+   "result": {
+    "recognized": false,
+    "messages": 0,
+    "binding": null
+   },
+   "t1": 1790580575648
+  },
+  {
+   "w": 2,
+   "i": 13,
+   "op": "read-only",
+   "sid": "wt-2",
+   "t0": 1790580575648,
+   "result": {
+    "receipt": true,
+    "verified": false
+   },
+   "status": "submitted",
+   "t1": 1790580575650
+  },
+  {
+   "w": 2,
+   "i": 14,
+   "op": "late-outcome-old",
+   "sid": "wt-0",
+   "t0": 1790580575651,
+   "outcome": "submitted",
+   "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+   "result": false,
+   "t1": 1790580575652
+  },
+  {
+   "w": 2,
+   "i": 15,
+   "op": "reconcile",
+   "sid": "wt-2",
+   "t0": 1790580575652,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575652
+  },
+  {
+   "w": 2,
+   "i": 16,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575653,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575657
+  },
+  {
+   "w": 2,
+   "i": 17,
+   "op": "relay-cycle",
+   "sid": "wt-1",
+   "t0": 1790580575657,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575659
+  },
+  {
+   "w": 2,
+   "i": 18,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575659,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575659
+  },
+  {
+   "w": 2,
+   "i": 19,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575662,
+   "acquired": true,
+   "reserved": true,
+   "attemptId": "965dc871-5039-44c4-840d-83cf03dc583e",
+   "nonce": "npm_jl8dOA19ti4Pk5uSkTlK",
+   "started": true,
+   "outcome": "submitted",
+   "recorded": true,
+   "t1": 1790580575706
+  },
+  {
+   "w": 2,
+   "i": 20,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575706,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575708
+  },
+  {
+   "w": 2,
+   "i": 21,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575708,
+   "acquired": true,
+   "reserved": false,
+   "t1": 1790580575710
+  },
+  {
+   "w": 2,
+   "i": 22,
+   "op": "send",
+   "sid": "wt-1",
+   "t0": 1790580575710,
+   "result": "msg-7-2-22",
+   "t1": 1790580575712
+  },
+  {
+   "w": 2,
+   "i": 23,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575713,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575715
+  },
+  {
+   "w": 2,
+   "i": "flush",
+   "op": "late-outcome-mine",
+   "attemptId": "a777bec1-9ec8-40dd-b407-d359c5a0dce3",
+   "epoch": 1,
+   "outcome": "accepted-or-unknown",
+   "t0": 1790580575715,
+   "result": false
+  },
+  {
+   "w": 3,
+   "i": 0,
+   "op": "send",
+   "sid": "wt-0",
+   "t0": 1790580575595,
+   "result": "msg-7-3-0",
+   "t1": 1790580575606
+  },
+  {
+   "w": 3,
+   "i": 1,
+   "op": "late-outcome-mine",
+   "sid": "wt-0",
+   "t0": 1790580575606,
+   "noop": "none",
+   "t1": 1790580575606
+  },
+  {
+   "w": 3,
+   "i": 2,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575608,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575627
+  },
+  {
+   "w": 3,
+   "i": 3,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575627,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575796
+  },
+  {
+   "w": 3,
+   "i": 4,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575796,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575805
+  },
+  {
+   "w": 3,
+   "i": 5,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575807,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575807
+  },
+  {
+   "w": 3,
+   "i": 6,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575807,
+   "noop": "no-nonce",
+   "t1": 1790580575807
+  },
+  {
+   "w": 3,
+   "i": 7,
+   "op": "relay-cycle",
+   "sid": "wt-1",
+   "t0": 1790580575809,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575812
+  },
+  {
+   "w": 3,
+   "i": 8,
+   "op": "read-only",
+   "sid": "wt-1",
+   "t0": 1790580575812,
+   "result": {
+    "receipt": false,
+    "verified": true
+   },
+   "status": "observed",
+   "t1": 1790580575814
+  },
+  {
+   "w": 3,
+   "i": 9,
+   "op": "relay-cycle",
+   "sid": "wt-1",
+   "t0": 1790580575814,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575817
+  },
+  {
+   "w": 3,
+   "i": 10,
+   "op": "reconcile",
+   "sid": "wt-2",
+   "t0": 1790580575817,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575817
+  },
+  {
+   "w": 3,
+   "i": 11,
+   "op": "hook-old",
+   "sid": "wt-0",
+   "t0": 1790580575818,
+   "nonce": "LTNUTOlTdOoAKJpa72i_qTuw",
+   "receiptId": "source-dee26c4d-a470-4b96-96bc-a1cdd9988d31",
+   "result": {
+    "recognized": false,
+    "messages": 0,
+    "binding": null
+   },
+   "t1": 1790580575826
+  },
+  {
+   "w": 3,
+   "i": 12,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575826,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575826
+  },
+  {
+   "w": 3,
+   "i": 13,
+   "op": "send",
+   "sid": "wt-2",
+   "t0": 1790580575826,
+   "result": "msg-7-3-13",
+   "t1": 1790580575831
+  },
+  {
+   "w": 3,
+   "i": 14,
+   "op": "reconcile",
+   "sid": "wt-1",
+   "t0": 1790580575831,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575831
+  },
+  {
+   "w": 3,
+   "i": 15,
+   "op": "late-outcome-mine",
+   "sid": "wt-0",
+   "t0": 1790580575831,
+   "noop": "none",
+   "t1": 1790580575831
+  },
+  {
+   "w": 3,
+   "i": 16,
+   "op": "send",
+   "sid": "wt-1",
+   "t0": 1790580575831,
+   "result": "msg-7-3-16",
+   "t1": 1790580575833
+  },
+  {
+   "w": 3,
+   "i": 17,
+   "op": "hook-current",
+   "sid": "wt-0",
+   "t0": 1790580575834,
+   "noop": "no-nonce",
+   "t1": 1790580575834
+  },
+  {
+   "w": 3,
+   "i": 18,
+   "op": "hook-current",
+   "sid": "wt-2",
+   "t0": 1790580575834,
+   "nonce": "wXCxTzBAvfIDcwjFCs_6ckZb",
+   "receiptId": "source-371e6328-a1bc-4ea5-b324-634de917b0b1",
+   "result": {
+    "recognized": true,
+    "messages": 7,
+    "binding": "cf328f57-c64d-42b2-a2fd-57037b5a6c05"
+   },
+   "t1": 1790580575844
+  },
+  {
+   "w": 3,
+   "i": 19,
+   "op": "end-presence",
+   "sid": "wt-2",
+   "t0": 1790580575844,
+   "result": true,
+   "t1": 1790580575845
+  },
+  {
+   "w": 3,
+   "i": 20,
+   "op": "relay-cycle",
+   "sid": "wt-1",
+   "t0": 1790580575845,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575849
+  },
+  {
+   "w": 3,
+   "i": 21,
+   "op": "late-outcome-mine",
+   "sid": "wt-1",
+   "t0": 1790580575849,
+   "noop": "none",
+   "t1": 1790580575849
+  },
+  {
+   "w": 3,
+   "i": 22,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575851,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575853
+  },
+  {
+   "w": 3,
+   "i": 23,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575853,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575859
+  },
+  {
+   "w": 4,
+   "i": 0,
+   "op": "hook-current",
+   "sid": "wt-2",
+   "t0": 1790580575595,
+   "noop": "no-nonce",
+   "t1": 1790580575595
+  },
+  {
+   "w": 4,
+   "i": 1,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575596,
+   "acquired": true,
+   "reserved": false,
+   "t1": 1790580575603
+  },
+  {
+   "w": 4,
+   "i": 2,
+   "op": "hook-current",
+   "sid": "wt-0",
+   "t0": 1790580575604,
+   "noop": "no-nonce",
+   "t1": 1790580575604
+  },
+  {
+   "w": 4,
+   "i": 3,
+   "op": "hook-current",
+   "sid": "wt-0",
+   "t0": 1790580575604,
+   "noop": "no-nonce",
+   "t1": 1790580575604
+  },
+  {
+   "w": 4,
+   "i": 4,
+   "op": "hook-current",
+   "sid": "wt-2",
+   "t0": 1790580575607,
+   "noop": "no-nonce",
+   "t1": 1790580575607
+  },
+  {
+   "w": 4,
+   "i": 5,
+   "op": "send",
+   "sid": "wt-2",
+   "t0": 1790580575609,
+   "result": "msg-7-4-5",
+   "t1": 1790580575743
+  },
+  {
+   "w": 4,
+   "i": 6,
+   "op": "late-outcome-old",
+   "sid": "wt-1",
+   "t0": 1790580575743,
+   "outcome": "definite-failure",
+   "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+   "result": false,
+   "t1": 1790580575744
+  },
+  {
+   "w": 4,
+   "i": 7,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575746,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575746
+  },
+  {
+   "w": 4,
+   "i": 8,
+   "op": "reconcile",
+   "sid": "wt-1",
+   "t0": 1790580575746,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575746
+  },
+  {
+   "w": 4,
+   "i": 9,
+   "op": "hook-old",
+   "sid": "wt-2",
+   "t0": 1790580575746,
+   "nonce": "KDKLoE56T0biOHbDgdEERote",
+   "receiptId": "source-4f0e9c29-5030-4481-8140-b42ff8ea919c",
+   "result": {
+    "recognized": false,
+    "messages": 0,
+    "binding": null
+   },
+   "t1": 1790580575757
+  },
+  {
+   "w": 4,
+   "i": 10,
+   "op": "read-only",
+   "sid": "wt-0",
+   "t0": 1790580575758,
+   "result": {
+    "receipt": true,
+    "verified": false
+   },
+   "status": "observed",
+   "t1": 1790580575758
+  },
+  {
+   "w": 4,
+   "i": 11,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575760,
+   "acquired": true,
+   "reserved": true,
+   "attemptId": "cf328f57-c64d-42b2-a2fd-57037b5a6c05",
+   "nonce": "wXCxTzBAvfIDcwjFCs_6ckZb",
+   "started": true,
+   "outcome": "accepted-or-unknown",
+   "deferred": true,
+   "t1": 1790580575768
+  },
+  {
+   "w": 4,
+   "i": 12,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575769,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575772
+  },
+  {
+   "w": 4,
+   "i": 13,
+   "op": "reconcile",
+   "sid": "wt-2",
+   "t0": 1790580575772,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575772
+  },
+  {
+   "w": 4,
+   "i": 14,
+   "op": "reconcile",
+   "sid": "wt-1",
+   "t0": 1790580575772,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575772
+  },
+  {
+   "w": 4,
+   "i": 15,
+   "op": "hook-old",
+   "sid": "wt-0",
+   "t0": 1790580575772,
+   "nonce": "LTNUTOlTdOoAKJpa72i_qTuw",
+   "receiptId": "source-babe3762-6399-431e-bbb7-078b6f94ae8f",
+   "result": {
+    "recognized": false,
+    "messages": 0,
+    "binding": null
+   },
+   "t1": 1790580575789
+  },
+  {
+   "w": 4,
+   "i": 16,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575789,
+   "nonce": "wXCxTzBAvfIDcwjFCs_6ckZb",
+   "receiptId": "source-a453133b-7894-4625-8b8b-13fb3b659710",
+   "result": {
+    "recognized": false,
+    "messages": 0,
+    "binding": null
+   },
+   "t1": 1790580575794
+  },
+  {
+   "w": 4,
+   "i": 17,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575794,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575794
+  },
+  {
+   "w": 4,
+   "i": 18,
+   "op": "read-only",
+   "sid": "wt-2",
+   "t0": 1790580575794,
+   "result": {
+    "receipt": true,
+    "verified": false
+   },
+   "status": "started",
+   "t1": 1790580575795
+  },
+  {
+   "w": 4,
+   "i": 19,
+   "op": "relay-cycle",
+   "sid": "wt-1",
+   "t0": 1790580575797,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575799
+  },
+  {
+   "w": 4,
+   "i": 20,
+   "op": "send",
+   "sid": "wt-2",
+   "t0": 1790580575799,
+   "result": "msg-7-4-20",
+   "t1": 1790580575801
+  },
+  {
+   "w": 4,
+   "i": 21,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575803,
+   "acquired": true,
+   "reserved": false,
+   "t1": 1790580575808
+  },
+  {
+   "w": 4,
+   "i": 22,
+   "op": "hook-current",
+   "sid": "wt-0",
+   "t0": 1790580575808,
+   "nonce": "wXCxTzBAvfIDcwjFCs_6ckZb",
+   "receiptId": "source-673baeba-eb1e-462e-90b3-d83cbb70996a",
+   "result": {
+    "recognized": false,
+    "messages": 0,
+    "binding": null
+   },
+   "t1": 1790580575922
+  },
+  {
+   "w": 4,
+   "i": 23,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575923,
+   "nonce": "wXCxTzBAvfIDcwjFCs_6ckZb",
+   "receiptId": "source-32243532-370e-42ff-801c-b87d24af8d8d",
+   "result": {
+    "recognized": false,
+    "messages": 0,
+    "binding": null
+   },
+   "t1": 1790580575930
+  },
+  {
+   "w": 4,
+   "i": "flush",
+   "op": "late-outcome-mine",
+   "attemptId": "cf328f57-c64d-42b2-a2fd-57037b5a6c05",
+   "epoch": 1,
+   "outcome": "accepted-or-unknown",
+   "t0": 1790580575930,
+   "result": false
+  },
+  {
+   "w": 5,
+   "i": 0,
+   "op": "relay-cycle",
+   "sid": "wt-1",
+   "t0": 1790580575597,
+   "acquired": true,
+   "reserved": false,
+   "t1": 1790580575619
+  },
+  {
+   "w": 5,
+   "i": 1,
+   "op": "late-outcome-old",
+   "sid": "wt-0",
+   "t0": 1790580575621,
+   "outcome": "accepted-or-unknown",
+   "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+   "result": false,
+   "t1": 1790580575624
+  },
+  {
+   "w": 5,
+   "i": 2,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575625,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575630
+  },
+  {
+   "w": 5,
+   "i": 3,
+   "op": "end-presence",
+   "sid": "wt-2",
+   "t0": 1790580575630,
+   "result": true,
+   "t1": 1790580575631
+  },
+  {
+   "w": 5,
+   "i": 4,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575632,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575634
+  },
+  {
+   "w": 5,
+   "i": 5,
+   "op": "hook-current",
+   "sid": "wt-0",
+   "t0": 1790580575635,
+   "nonce": "_UgZ6E1IlJAUQTxOOwhaYA8Z",
+   "receiptId": "source-806bcbf1-9d99-43a2-91ce-a9c62600afea",
+   "result": {
+    "recognized": false,
+    "messages": 0,
+    "binding": null
+   },
+   "t1": 1790580575668
+  },
+  {
+   "w": 5,
+   "i": 6,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575668,
+   "noop": "no-nonce",
+   "t1": 1790580575668
+  },
+  {
+   "w": 5,
+   "i": 7,
+   "op": "reconcile",
+   "sid": "wt-1",
+   "t0": 1790580575668,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575668
+  },
+  {
+   "w": 5,
+   "i": 8,
+   "op": "hook-current",
+   "sid": "wt-0",
+   "t0": 1790580575669,
+   "noop": "no-nonce",
+   "t1": 1790580575669
+  },
+  {
+   "w": 5,
+   "i": 9,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575669,
+   "noop": "no-nonce",
+   "t1": 1790580575669
+  },
+  {
+   "w": 5,
+   "i": 10,
+   "op": "reconcile",
+   "sid": "wt-2",
+   "t0": 1790580575671,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575725
+  },
+  {
+   "w": 5,
+   "i": 11,
+   "op": "end-presence",
+   "sid": "wt-1",
+   "t0": 1790580575726,
+   "result": true,
+   "t1": 1790580575727
+  },
+  {
+   "w": 5,
+   "i": 12,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575728,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575733
+  },
+  {
+   "w": 5,
+   "i": 13,
+   "op": "hook-current",
+   "sid": "wt-0",
+   "t0": 1790580575735,
+   "nonce": "npm_jl8dOA19ti4Pk5uSkTlK",
+   "receiptId": "source-4d75c172-8bb8-4283-bc84-e13a8753580c",
+   "result": {
+    "recognized": true,
+    "messages": 3,
+    "binding": "965dc871-5039-44c4-840d-83cf03dc583e"
+   },
+   "t1": 1790580575754
+  },
+  {
+   "w": 5,
+   "i": 14,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575754,
+   "noop": "no-nonce",
+   "t1": 1790580575754
+  },
+  {
+   "w": 5,
+   "i": 15,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575754,
+   "noop": "no-nonce",
+   "t1": 1790580575754
+  },
+  {
+   "w": 5,
+   "i": 16,
+   "op": "hook-old",
+   "sid": "wt-0",
+   "t0": 1790580575754,
+   "nonce": "LTNUTOlTdOoAKJpa72i_qTuw",
+   "receiptId": "source-a58583be-375e-4404-93a2-05a5d015a452",
+   "result": {
+    "recognized": false,
+    "messages": 0,
+    "binding": null
+   },
+   "t1": 1790580575782
+  },
+  {
+   "w": 5,
+   "i": 17,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575784,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575821
+  },
+  {
+   "w": 5,
+   "i": 18,
+   "op": "late-outcome-old",
+   "sid": "wt-2",
+   "t0": 1790580575823,
+   "outcome": "accepted-or-unknown",
+   "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+   "result": false,
+   "t1": 1790580575827
+  },
+  {
+   "w": 5,
+   "i": 19,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575827,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575829
+  },
+  {
+   "w": 5,
+   "i": 20,
+   "op": "reconcile",
+   "sid": "wt-1",
+   "t0": 1790580575830,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575834
+  },
+  {
+   "w": 5,
+   "i": 21,
+   "op": "late-outcome-mine",
+   "sid": "wt-0",
+   "t0": 1790580575835,
+   "noop": "none",
+   "t1": 1790580575835
+  },
+  {
+   "w": 5,
+   "i": 22,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575837,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575837
+  },
+  {
+   "w": 5,
+   "i": 23,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575838,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575847
+  },
+  {
+   "w": 6,
+   "i": 0,
+   "op": "reconcile-bad",
+   "sid": "wt-2",
+   "t0": 1790580575595,
+   "kind": "swap-receipt",
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   "same": false,
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575650
+  },
+  {
+   "w": 6,
+   "i": 1,
+   "op": "send",
+   "sid": "wt-2",
+   "t0": 1790580575652,
+   "result": "msg-7-6-1",
+   "t1": 1790580575654
+  },
+  {
+   "w": 6,
+   "i": 2,
+   "op": "read-only",
+   "sid": "wt-2",
+   "t0": 1790580575655,
+   "result": {
+    "receipt": true,
+    "verified": false
+   },
+   "status": "submitted",
+   "t1": 1790580575656
+  },
+  {
+   "w": 6,
+   "i": 3,
+   "op": "hook-current",
+   "sid": "wt-0",
+   "t0": 1790580575658,
+   "nonce": "_UgZ6E1IlJAUQTxOOwhaYA8Z",
+   "receiptId": "source-1f5e2371-b948-43b7-849a-124363ea2f98",
+   "result": {
+    "recognized": false,
+    "messages": 0,
+    "binding": null
+   },
+   "t1": 1790580575720
+  },
+  {
+   "w": 6,
+   "i": 4,
+   "op": "hook-current",
+   "sid": "wt-2",
+   "t0": 1790580575722,
+   "noop": "no-nonce",
+   "t1": 1790580575722
+  },
+  {
+   "w": 6,
+   "i": 5,
+   "op": "read-only",
+   "sid": "wt-1",
+   "t0": 1790580575722,
+   "result": {
+    "receipt": true,
+    "verified": true
+   },
+   "status": "observed",
+   "t1": 1790580575723
+  },
+  {
+   "w": 6,
+   "i": 6,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575726,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575726
+  },
+  {
+   "w": 6,
+   "i": 7,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575727,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575731
+  },
+  {
+   "w": 6,
+   "i": 8,
+   "op": "hook-current",
+   "sid": "wt-0",
+   "t0": 1790580575733,
+   "nonce": "npm_jl8dOA19ti4Pk5uSkTlK",
+   "receiptId": "source-0c637b90-0923-45cd-874f-b0c5a9900732",
+   "result": {
+    "recognized": false,
+    "messages": 0,
+    "binding": null
+   },
+   "t1": 1790580575761
+  },
+  {
+   "w": 6,
+   "i": 9,
+   "op": "reconcile",
+   "sid": "wt-2",
+   "t0": 1790580575762,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575762
+  },
+  {
+   "w": 6,
+   "i": 10,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575763,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575877
+  },
+  {
+   "w": 6,
+   "i": 11,
+   "op": "late-outcome-old",
+   "sid": "wt-2",
+   "t0": 1790580575877,
+   "outcome": "definite-failure",
+   "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+   "result": false,
+   "t1": 1790580575878
+  },
+  {
+   "w": 6,
+   "i": 12,
+   "op": "relay-cycle",
+   "sid": "wt-1",
+   "t0": 1790580575880,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575882
+  },
+  {
+   "w": 6,
+   "i": 13,
+   "op": "late-outcome-mine",
+   "sid": "wt-2",
+   "t0": 1790580575883,
+   "noop": "none",
+   "t1": 1790580575883
+  },
+  {
+   "w": 6,
+   "i": 14,
+   "op": "end-presence",
+   "sid": "wt-2",
+   "t0": 1790580575883,
+   "result": true,
+   "t1": 1790580575883
+  },
+  {
+   "w": 6,
+   "i": 15,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575883,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575885
+  },
+  {
+   "w": 6,
+   "i": 16,
+   "op": "reconcile",
+   "sid": "wt-2",
+   "t0": 1790580575885,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575885
+  },
+  {
+   "w": 6,
+   "i": 17,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575886,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575890
+  },
+  {
+   "w": 6,
+   "i": 18,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575890,
+   "noop": "no-nonce",
+   "t1": 1790580575890
+  },
+  {
+   "w": 6,
+   "i": 19,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575890,
+   "noop": "no-nonce",
+   "t1": 1790580575890
+  },
+  {
+   "w": 6,
+   "i": 20,
+   "op": "late-outcome-mine",
+   "sid": "wt-0",
+   "t0": 1790580575890,
+   "noop": "none",
+   "t1": 1790580575890
+  },
+  {
+   "w": 6,
+   "i": 21,
+   "op": "reconcile",
+   "sid": "wt-1",
+   "t0": 1790580575890,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575890
+  },
+  {
+   "w": 6,
+   "i": 22,
+   "op": "hook-current",
+   "sid": "wt-2",
+   "t0": 1790580575891,
+   "noop": "no-nonce",
+   "t1": 1790580575891
+  },
+  {
+   "w": 6,
+   "i": 23,
+   "op": "send",
+   "sid": "wt-2",
+   "t0": 1790580575891,
+   "result": "msg-7-6-23",
+   "t1": 1790580575893
+  },
+  {
+   "w": 7,
+   "i": 0,
+   "op": "reconcile",
+   "sid": "wt-1",
+   "t0": 1790580575596,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575600
+  },
+  {
+   "w": 7,
+   "i": 1,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575600,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575642
+  },
+  {
+   "w": 7,
+   "i": 2,
+   "op": "reconcile",
+   "sid": "wt-2",
+   "t0": 1790580575642,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575642
+  },
+  {
+   "w": 7,
+   "i": 3,
+   "op": "reconcile-bad",
+   "sid": "wt-2",
+   "t0": 1790580575643,
+   "kind": "swap-target",
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   "same": false,
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575652
+  },
+  {
+   "w": 7,
+   "i": 4,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575652,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575661
+  },
+  {
+   "w": 7,
+   "i": 5,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575661,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575769
+  },
+  {
+   "w": 7,
+   "i": 6,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575770,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575774
+  },
+  {
+   "w": 7,
+   "i": 7,
+   "op": "relay-cycle",
+   "sid": "wt-2",
+   "t0": 1790580575774,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575777
+  },
+  {
+   "w": 7,
+   "i": 8,
+   "op": "send",
+   "sid": "wt-2",
+   "t0": 1790580575778,
+   "result": "msg-7-7-8",
+   "t1": 1790580575814
+  },
+  {
+   "w": 7,
+   "i": 9,
+   "op": "relay-cycle",
+   "sid": "wt-1",
+   "t0": 1790580575815,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575836
+  },
+  {
+   "w": 7,
+   "i": 10,
+   "op": "reconcile-bad",
+   "sid": "wt-2",
+   "t0": 1790580575839,
+   "kind": "swap-receipt",
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   "same": true,
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575847
+  },
+  {
+   "w": 7,
+   "i": 11,
+   "op": "relay-cycle",
+   "sid": "wt-0",
+   "t0": 1790580575849,
+   "acquired": false,
+   "reserved": false,
+   "t1": 1790580575851
+  },
+  {
+   "w": 7,
+   "i": 12,
+   "op": "end-presence",
+   "sid": "wt-2",
+   "t0": 1790580575851,
+   "result": false,
+   "t1": 1790580575851
+  },
+  {
+   "w": 7,
+   "i": 13,
+   "op": "hook-current",
+   "sid": "wt-1",
+   "t0": 1790580575851,
+   "noop": "no-nonce",
+   "t1": 1790580575851
+  },
+  {
+   "w": 7,
+   "i": 14,
+   "op": "late-outcome-mine",
+   "sid": "wt-2",
+   "t0": 1790580575852,
+   "noop": "none",
+   "t1": 1790580575852
+  },
+  {
+   "w": 7,
+   "i": 15,
+   "op": "late-outcome-old",
+   "sid": "wt-1",
+   "t0": 1790580575853,
+   "outcome": "definite-failure",
+   "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+   "result": false,
+   "t1": 1790580575855
+  },
+  {
+   "w": 7,
+   "i": 16,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575855,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575855
+  },
+  {
+   "w": 7,
+   "i": 17,
+   "op": "end-presence",
+   "sid": "wt-0",
+   "t0": 1790580575855,
+   "result": true,
+   "t1": 1790580575856
+  },
+  {
+   "w": 7,
+   "i": 18,
+   "op": "reconcile",
+   "sid": "wt-2",
+   "t0": 1790580575856,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575856
+  },
+  {
+   "w": 7,
+   "i": 19,
+   "op": "hook-current",
+   "sid": "wt-2",
+   "t0": 1790580575858,
+   "noop": "no-nonce",
+   "t1": 1790580575858
+  },
+  {
+   "w": 7,
+   "i": 20,
+   "op": "end-presence",
+   "sid": "wt-1",
+   "t0": 1790580575858,
+   "result": true,
+   "t1": 1790580575860
+  },
+  {
+   "w": 7,
+   "i": 21,
+   "op": "hook-current",
+   "sid": "wt-0",
+   "t0": 1790580575860,
+   "noop": "no-nonce",
+   "t1": 1790580575860
+  },
+  {
+   "w": 7,
+   "i": 22,
+   "op": "reconcile",
+   "sid": "wt-0",
+   "t0": 1790580575863,
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   },
+   "t1": 1790580575863
+  },
+  {
+   "w": 7,
+   "i": 23,
+   "op": "late-outcome-mine",
+   "sid": "wt-2",
+   "t0": 1790580575865,
+   "noop": "none",
+   "t1": 1790580575865
+  },
+  {
+   "w": "controller",
+   "i": "pass1",
+   "op": "reconcile",
+   "sid": "wt-0",
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-0"
+    },
+    "attemptId": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+    "sourceReceiptId": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   }
+  },
+  {
+   "w": "controller",
+   "i": "pass1",
+   "op": "reconcile",
+   "sid": "wt-1",
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-1"
+    },
+    "attemptId": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+    "sourceReceiptId": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   }
+  },
+  {
+   "w": "controller",
+   "i": "pass1",
+   "op": "reconcile",
+   "sid": "wt-2",
+   "payload": {
+    "target": {
+     "host": "portable",
+     "sessionId": "wt-2"
+    },
+    "attemptId": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+    "sourceReceiptId": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   "result": {
+    "reconciled": false,
+    "evidence": null
+   }
+  }
+ ],
+ "audit": [
+  {
+   "seq": 1,
+   "op": "U",
+   "digest": "12afbe15de8e59b03808c91067512a274ce9667118409f6e2e7127dc73556aa0",
+   "nonce": "LTNUTOlTdOoAKJpa72i_qTuw",
+   "sid": "wt-0",
+   "attempt": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+   "o_state": "unknown",
+   "n_state": "observed",
+   "o_epoch": 1,
+   "n_epoch": 1,
+   "o_obs": null,
+   "n_obs": "2026-09-28T07:27:35.554Z",
+   "o_cons": null,
+   "n_cons": "2026-09-28T07:29:35.593Z",
+   "o_late": "2026-09-28T07:27:35.555Z",
+   "n_late": "2026-09-28T07:27:35.555Z",
+   "o_out": "2026-09-28T07:27:35.546Z",
+   "n_out": "2026-09-28T07:27:35.546Z",
+   "o_relay": "relay-seed",
+   "n_relay": "relay-seed",
+   "o_inst": "inst-1",
+   "n_inst": "inst-1",
+   "o_gen": "2026-09-28T07:27:35.544Z",
+   "n_gen": "2026-09-28T07:27:35.544Z",
+   "o_started": "2026-09-28T07:27:35.545Z",
+   "n_started": "2026-09-28T07:27:35.545Z",
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.595Z"
+  },
+  {
+   "seq": 2,
+   "op": "U",
+   "digest": "493dab6d37783f64016fa164b3b12e6765a0a826e19e2396fdce862e594c5c0f",
+   "nonce": "KDKLoE56T0biOHbDgdEERote",
+   "sid": "wt-2",
+   "attempt": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+   "o_state": "unknown",
+   "n_state": "submitted",
+   "o_epoch": 1,
+   "n_epoch": 1,
+   "o_obs": null,
+   "n_obs": null,
+   "o_cons": null,
+   "n_cons": null,
+   "o_late": null,
+   "n_late": null,
+   "o_out": "2026-09-28T07:27:35.546Z",
+   "n_out": "2026-09-28T07:29:35.601Z",
+   "o_relay": "relay-seed",
+   "n_relay": "relay-seed",
+   "o_inst": "inst-1",
+   "n_inst": "inst-1",
+   "o_gen": "2026-09-28T07:27:35.544Z",
+   "n_gen": "2026-09-28T07:27:35.544Z",
+   "o_started": "2026-09-28T07:27:35.545Z",
+   "n_started": "2026-09-28T07:27:35.545Z",
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.601Z"
+  },
+  {
+   "seq": 3,
+   "op": "U",
+   "digest": "685af1c5833916c5dfe1b6c5d9835726b6ccbbb9d816c94a035f162d4917e2b4",
+   "nonce": "ainE0OjloEmFRvNEXtErITG4",
+   "sid": "wt-1",
+   "attempt": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+   "o_state": "unknown",
+   "n_state": "observed",
+   "o_epoch": 1,
+   "n_epoch": 1,
+   "o_obs": null,
+   "n_obs": "2026-09-28T07:29:35.609Z",
+   "o_cons": null,
+   "n_cons": "2026-09-28T07:29:35.609Z",
+   "o_late": "2026-09-28T07:27:35.555Z",
+   "n_late": "2026-09-28T07:27:35.555Z",
+   "o_out": "2026-09-28T07:27:35.546Z",
+   "n_out": "2026-09-28T07:27:35.546Z",
+   "o_relay": "relay-seed",
+   "n_relay": "relay-seed",
+   "o_inst": "inst-1",
+   "n_inst": "inst-1",
+   "o_gen": "2026-09-28T07:27:35.544Z",
+   "n_gen": "2026-09-28T07:27:35.544Z",
+   "o_started": "2026-09-28T07:27:35.545Z",
+   "n_started": "2026-09-28T07:27:35.545Z",
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.611Z"
+  },
+  {
+   "seq": 4,
+   "op": "I",
+   "digest": "5de92c9150ba71b2931c7b7ed34e89b54d368577ef539073ee0e20e3c4febe33",
+   "nonce": "_UgZ6E1IlJAUQTxOOwhaYA8Z",
+   "sid": "wt-0",
+   "attempt": "a777bec1-9ec8-40dd-b407-d359c5a0dce3",
+   "o_state": null,
+   "n_state": "reserved",
+   "o_epoch": null,
+   "n_epoch": 0,
+   "o_obs": null,
+   "n_obs": null,
+   "o_cons": null,
+   "n_cons": null,
+   "o_late": null,
+   "n_late": null,
+   "o_out": null,
+   "n_out": null,
+   "o_relay": null,
+   "n_relay": "relay-w2",
+   "o_inst": null,
+   "n_inst": "inst-2",
+   "o_gen": null,
+   "n_gen": "2026-09-28T07:29:35.596Z",
+   "o_started": null,
+   "n_started": null,
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.615Z"
+  },
+  {
+   "seq": 5,
+   "op": "U",
+   "digest": "5de92c9150ba71b2931c7b7ed34e89b54d368577ef539073ee0e20e3c4febe33",
+   "nonce": "_UgZ6E1IlJAUQTxOOwhaYA8Z",
+   "sid": "wt-0",
+   "attempt": "a777bec1-9ec8-40dd-b407-d359c5a0dce3",
+   "o_state": "reserved",
+   "n_state": "started",
+   "o_epoch": 0,
+   "n_epoch": 1,
+   "o_obs": null,
+   "n_obs": null,
+   "o_cons": null,
+   "n_cons": null,
+   "o_late": null,
+   "n_late": null,
+   "o_out": null,
+   "n_out": null,
+   "o_relay": "relay-w2",
+   "n_relay": "relay-w2",
+   "o_inst": "inst-2",
+   "n_inst": "inst-2",
+   "o_gen": "2026-09-28T07:29:35.596Z",
+   "n_gen": "2026-09-28T07:29:35.596Z",
+   "o_started": null,
+   "n_started": "2026-09-28T07:29:35.616Z",
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.616Z"
+  },
+  {
+   "seq": 6,
+   "op": "U",
+   "digest": "5de92c9150ba71b2931c7b7ed34e89b54d368577ef539073ee0e20e3c4febe33",
+   "nonce": "_UgZ6E1IlJAUQTxOOwhaYA8Z",
+   "sid": "wt-0",
+   "attempt": "a777bec1-9ec8-40dd-b407-d359c5a0dce3",
+   "o_state": "started",
+   "n_state": "unknown",
+   "o_epoch": 1,
+   "n_epoch": 1,
+   "o_obs": null,
+   "n_obs": null,
+   "o_cons": null,
+   "n_cons": null,
+   "o_late": null,
+   "n_late": null,
+   "o_out": null,
+   "n_out": null,
+   "o_relay": "relay-w2",
+   "n_relay": "relay-w2",
+   "o_inst": "inst-2",
+   "n_inst": "inst-2",
+   "o_gen": "2026-09-28T07:29:35.596Z",
+   "n_gen": "2026-09-28T07:29:35.596Z",
+   "o_started": "2026-09-28T07:29:35.616Z",
+   "n_started": "2026-09-28T07:29:35.616Z",
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.641Z"
+  },
+  {
+   "seq": 7,
+   "op": "U",
+   "digest": "5de92c9150ba71b2931c7b7ed34e89b54d368577ef539073ee0e20e3c4febe33",
+   "nonce": "_UgZ6E1IlJAUQTxOOwhaYA8Z",
+   "sid": "wt-0",
+   "attempt": "a777bec1-9ec8-40dd-b407-d359c5a0dce3",
+   "o_state": "unknown",
+   "n_state": "observed",
+   "o_epoch": 1,
+   "n_epoch": 1,
+   "o_obs": null,
+   "n_obs": "2026-09-28T07:29:35.645Z",
+   "o_cons": null,
+   "n_cons": "2026-09-28T07:29:35.645Z",
+   "o_late": null,
+   "n_late": "2026-09-28T07:29:35.645Z",
+   "o_out": null,
+   "n_out": null,
+   "o_relay": "relay-w2",
+   "n_relay": "relay-w2",
+   "o_inst": "inst-2",
+   "n_inst": "inst-2",
+   "o_gen": "2026-09-28T07:29:35.596Z",
+   "n_gen": "2026-09-28T07:29:35.596Z",
+   "o_started": "2026-09-28T07:29:35.616Z",
+   "n_started": "2026-09-28T07:29:35.616Z",
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.667Z"
+  },
+  {
+   "seq": 8,
+   "op": "I",
+   "digest": "b1be7deaeef86d4ea9b7ac283e6815c8acdb9a8e789048b26c1c5f02750b2311",
+   "nonce": "npm_jl8dOA19ti4Pk5uSkTlK",
+   "sid": "wt-0",
+   "attempt": "965dc871-5039-44c4-840d-83cf03dc583e",
+   "o_state": null,
+   "n_state": "reserved",
+   "o_epoch": null,
+   "n_epoch": 0,
+   "o_obs": null,
+   "n_obs": null,
+   "o_cons": null,
+   "n_cons": null,
+   "o_late": null,
+   "n_late": null,
+   "o_out": null,
+   "n_out": null,
+   "o_relay": null,
+   "n_relay": "relay-w2",
+   "o_inst": null,
+   "n_inst": "inst-2",
+   "o_gen": null,
+   "n_gen": "2026-09-28T07:29:35.600Z",
+   "o_started": null,
+   "n_started": null,
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.701Z"
+  },
+  {
+   "seq": 9,
+   "op": "U",
+   "digest": "b1be7deaeef86d4ea9b7ac283e6815c8acdb9a8e789048b26c1c5f02750b2311",
+   "nonce": "npm_jl8dOA19ti4Pk5uSkTlK",
+   "sid": "wt-0",
+   "attempt": "965dc871-5039-44c4-840d-83cf03dc583e",
+   "o_state": "reserved",
+   "n_state": "started",
+   "o_epoch": 0,
+   "n_epoch": 1,
+   "o_obs": null,
+   "n_obs": null,
+   "o_cons": null,
+   "n_cons": null,
+   "o_late": null,
+   "n_late": null,
+   "o_out": null,
+   "n_out": null,
+   "o_relay": "relay-w2",
+   "n_relay": "relay-w2",
+   "o_inst": "inst-2",
+   "n_inst": "inst-2",
+   "o_gen": "2026-09-28T07:29:35.600Z",
+   "n_gen": "2026-09-28T07:29:35.600Z",
+   "o_started": null,
+   "n_started": "2026-09-28T07:29:35.703Z",
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.704Z"
+  },
+  {
+   "seq": 10,
+   "op": "U",
+   "digest": "b1be7deaeef86d4ea9b7ac283e6815c8acdb9a8e789048b26c1c5f02750b2311",
+   "nonce": "npm_jl8dOA19ti4Pk5uSkTlK",
+   "sid": "wt-0",
+   "attempt": "965dc871-5039-44c4-840d-83cf03dc583e",
+   "o_state": "started",
+   "n_state": "submitted",
+   "o_epoch": 1,
+   "n_epoch": 1,
+   "o_obs": null,
+   "n_obs": null,
+   "o_cons": null,
+   "n_cons": null,
+   "o_late": null,
+   "n_late": null,
+   "o_out": null,
+   "n_out": "2026-09-28T07:29:35.705Z",
+   "o_relay": "relay-w2",
+   "n_relay": "relay-w2",
+   "o_inst": "inst-2",
+   "n_inst": "inst-2",
+   "o_gen": "2026-09-28T07:29:35.600Z",
+   "n_gen": "2026-09-28T07:29:35.600Z",
+   "o_started": "2026-09-28T07:29:35.703Z",
+   "n_started": "2026-09-28T07:29:35.703Z",
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.705Z"
+  },
+  {
+   "seq": 11,
+   "op": "U",
+   "digest": "b1be7deaeef86d4ea9b7ac283e6815c8acdb9a8e789048b26c1c5f02750b2311",
+   "nonce": "npm_jl8dOA19ti4Pk5uSkTlK",
+   "sid": "wt-0",
+   "attempt": "965dc871-5039-44c4-840d-83cf03dc583e",
+   "o_state": "submitted",
+   "n_state": "observed",
+   "o_epoch": 1,
+   "n_epoch": 1,
+   "o_obs": null,
+   "n_obs": "2026-09-28T07:29:35.747Z",
+   "o_cons": null,
+   "n_cons": "2026-09-28T07:29:35.747Z",
+   "o_late": null,
+   "n_late": null,
+   "o_out": "2026-09-28T07:29:35.705Z",
+   "n_out": "2026-09-28T07:29:35.705Z",
+   "o_relay": "relay-w2",
+   "n_relay": "relay-w2",
+   "o_inst": "inst-2",
+   "n_inst": "inst-2",
+   "o_gen": "2026-09-28T07:29:35.600Z",
+   "n_gen": "2026-09-28T07:29:35.600Z",
+   "o_started": "2026-09-28T07:29:35.703Z",
+   "n_started": "2026-09-28T07:29:35.703Z",
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.752Z"
+  },
+  {
+   "seq": 12,
+   "op": "U",
+   "digest": "493dab6d37783f64016fa164b3b12e6765a0a826e19e2396fdce862e594c5c0f",
+   "nonce": "KDKLoE56T0biOHbDgdEERote",
+   "sid": "wt-2",
+   "attempt": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+   "o_state": "submitted",
+   "n_state": "observed",
+   "o_epoch": 1,
+   "n_epoch": 1,
+   "o_obs": null,
+   "n_obs": "2026-09-28T07:29:35.753Z",
+   "o_cons": null,
+   "n_cons": "2026-09-28T07:29:35.753Z",
+   "o_late": null,
+   "n_late": "2026-09-28T07:29:35.753Z",
+   "o_out": "2026-09-28T07:29:35.601Z",
+   "n_out": "2026-09-28T07:29:35.601Z",
+   "o_relay": "relay-seed",
+   "n_relay": "relay-seed",
+   "o_inst": "inst-1",
+   "n_inst": "inst-1",
+   "o_gen": "2026-09-28T07:27:35.544Z",
+   "n_gen": "2026-09-28T07:27:35.544Z",
+   "o_started": "2026-09-28T07:27:35.545Z",
+   "n_started": "2026-09-28T07:27:35.545Z",
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.757Z"
+  },
+  {
+   "seq": 13,
+   "op": "I",
+   "digest": "557b97136bcc8a45bb8ded9f0b190af7640f2793ebdc961498cc80e1a3844cdb",
+   "nonce": "wXCxTzBAvfIDcwjFCs_6ckZb",
+   "sid": "wt-2",
+   "attempt": "cf328f57-c64d-42b2-a2fd-57037b5a6c05",
+   "o_state": null,
+   "n_state": "reserved",
+   "o_epoch": null,
+   "n_epoch": 0,
+   "o_obs": null,
+   "n_obs": null,
+   "o_cons": null,
+   "n_cons": null,
+   "o_late": null,
+   "n_late": null,
+   "o_out": null,
+   "n_out": null,
+   "o_relay": null,
+   "n_relay": "relay-w4",
+   "o_inst": null,
+   "n_inst": "inst-2",
+   "o_gen": null,
+   "n_gen": "2026-09-28T07:29:35.652Z",
+   "o_started": null,
+   "n_started": null,
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.765Z"
+  },
+  {
+   "seq": 14,
+   "op": "U",
+   "digest": "557b97136bcc8a45bb8ded9f0b190af7640f2793ebdc961498cc80e1a3844cdb",
+   "nonce": "wXCxTzBAvfIDcwjFCs_6ckZb",
+   "sid": "wt-2",
+   "attempt": "cf328f57-c64d-42b2-a2fd-57037b5a6c05",
+   "o_state": "reserved",
+   "n_state": "started",
+   "o_epoch": 0,
+   "n_epoch": 1,
+   "o_obs": null,
+   "n_obs": null,
+   "o_cons": null,
+   "n_cons": null,
+   "o_late": null,
+   "n_late": null,
+   "o_out": null,
+   "n_out": null,
+   "o_relay": "relay-w4",
+   "n_relay": "relay-w4",
+   "o_inst": "inst-2",
+   "n_inst": "inst-2",
+   "o_gen": "2026-09-28T07:29:35.652Z",
+   "n_gen": "2026-09-28T07:29:35.652Z",
+   "o_started": null,
+   "n_started": "2026-09-28T07:29:35.766Z",
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.767Z"
+  },
+  {
+   "seq": 15,
+   "op": "U",
+   "digest": "557b97136bcc8a45bb8ded9f0b190af7640f2793ebdc961498cc80e1a3844cdb",
+   "nonce": "wXCxTzBAvfIDcwjFCs_6ckZb",
+   "sid": "wt-2",
+   "attempt": "cf328f57-c64d-42b2-a2fd-57037b5a6c05",
+   "o_state": "started",
+   "n_state": "observed",
+   "o_epoch": 1,
+   "n_epoch": 1,
+   "o_obs": null,
+   "n_obs": "2026-09-28T07:29:35.838Z",
+   "o_cons": null,
+   "n_cons": "2026-09-28T07:29:35.838Z",
+   "o_late": null,
+   "n_late": null,
+   "o_out": null,
+   "n_out": null,
+   "o_relay": "relay-w4",
+   "n_relay": "relay-w4",
+   "o_inst": "inst-2",
+   "n_inst": "inst-2",
+   "o_gen": "2026-09-28T07:29:35.652Z",
+   "n_gen": "2026-09-28T07:29:35.652Z",
+   "o_started": "2026-09-28T07:29:35.766Z",
+   "n_started": "2026-09-28T07:29:35.766Z",
+   "o_retry": null,
+   "n_retry": null,
+   "ts": "2026-09-28T07:29:35.843Z"
+  }
+ ],
+ "effects": [
+  {
+   "w": 2,
+   "pid": 2919,
+   "i": 7,
+   "sid": "wt-0",
+   "nonce": "_UgZ6E1IlJAUQTxOOwhaYA8Z",
+   "attemptId": "a777bec1-9ec8-40dd-b407-d359c5a0dce3",
+   "epoch": 1,
+   "instanceId": "inst-2",
+   "generation": "2026-09-28T07:29:35.596Z",
+   "at": 1790580575617
+  },
+  {
+   "w": 2,
+   "pid": 2919,
+   "i": 19,
+   "sid": "wt-0",
+   "nonce": "npm_jl8dOA19ti4Pk5uSkTlK",
+   "attemptId": "965dc871-5039-44c4-840d-83cf03dc583e",
+   "epoch": 1,
+   "instanceId": "inst-2",
+   "generation": "2026-09-28T07:29:35.600Z",
+   "at": 1790580575704
+  },
+  {
+   "w": 4,
+   "pid": 2931,
+   "i": 11,
+   "sid": "wt-2",
+   "nonce": "wXCxTzBAvfIDcwjFCs_6ckZb",
+   "attemptId": "cf328f57-c64d-42b2-a2fd-57037b5a6c05",
+   "epoch": 1,
+   "instanceId": "inst-2",
+   "generation": "2026-09-28T07:29:35.652Z",
+   "at": 1790580575767
+  }
+ ],
+ "finalRows": [
+  {
+   "nonce_digest": "12afbe15de8e59b03808c91067512a274ce9667118409f6e2e7127dc73556aa0",
+   "host": "portable",
+   "session_id": "wt-0",
+   "expires_at": "2026-09-28T08:27:35.544Z",
+   "consumed_at": "2026-09-28T07:29:35.593Z",
+   "state": "observed",
+   "nonce": "LTNUTOlTdOoAKJpa72i_qTuw",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T07:27:35.544Z",
+   "transport": "portable",
+   "relay_id": "relay-seed",
+   "attempt_id": "41c5f421-8df0-43c0-a041-26ee0f3998e6",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T07:27:35.545Z",
+   "outcome_at": "2026-09-28T07:27:35.546Z",
+   "observed_at": "2026-09-28T07:27:35.554Z",
+   "late_observed_at": "2026-09-28T07:27:35.555Z"
+  },
+  {
+   "nonce_digest": "685af1c5833916c5dfe1b6c5d9835726b6ccbbb9d816c94a035f162d4917e2b4",
+   "host": "portable",
+   "session_id": "wt-1",
+   "expires_at": "2026-09-28T08:27:35.544Z",
+   "consumed_at": "2026-09-28T07:29:35.609Z",
+   "state": "observed",
+   "nonce": "ainE0OjloEmFRvNEXtErITG4",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T07:27:35.544Z",
+   "transport": "portable",
+   "relay_id": "relay-seed",
+   "attempt_id": "7ae63744-fd65-4653-88de-7c2e55f2510e",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T07:27:35.545Z",
+   "outcome_at": "2026-09-28T07:27:35.546Z",
+   "observed_at": "2026-09-28T07:29:35.609Z",
+   "late_observed_at": "2026-09-28T07:27:35.555Z"
+  },
+  {
+   "nonce_digest": "493dab6d37783f64016fa164b3b12e6765a0a826e19e2396fdce862e594c5c0f",
+   "host": "portable",
+   "session_id": "wt-2",
+   "expires_at": "2026-09-28T08:27:35.544Z",
+   "consumed_at": "2026-09-28T07:29:35.753Z",
+   "state": "observed",
+   "nonce": "KDKLoE56T0biOHbDgdEERote",
+   "instance_id": "inst-1",
+   "birth_generation": "2026-09-28T07:27:35.544Z",
+   "transport": "portable",
+   "relay_id": "relay-seed",
+   "attempt_id": "b46476d1-d2b2-40cc-8b6c-3baae5c0b60b",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T07:27:35.545Z",
+   "outcome_at": "2026-09-28T07:29:35.601Z",
+   "observed_at": "2026-09-28T07:29:35.753Z",
+   "late_observed_at": "2026-09-28T07:29:35.753Z"
+  },
+  {
+   "nonce_digest": "5de92c9150ba71b2931c7b7ed34e89b54d368577ef539073ee0e20e3c4febe33",
+   "host": "portable",
+   "session_id": "wt-0",
+   "expires_at": "2026-09-28T08:29:35.615Z",
+   "consumed_at": "2026-09-28T07:29:35.645Z",
+   "state": "observed",
+   "nonce": "_UgZ6E1IlJAUQTxOOwhaYA8Z",
+   "instance_id": "inst-2",
+   "birth_generation": "2026-09-28T07:29:35.596Z",
+   "transport": "portable",
+   "relay_id": "relay-w2",
+   "attempt_id": "a777bec1-9ec8-40dd-b407-d359c5a0dce3",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T07:29:35.616Z",
+   "outcome_at": null,
+   "observed_at": "2026-09-28T07:29:35.645Z",
+   "late_observed_at": "2026-09-28T07:29:35.645Z"
+  },
+  {
+   "nonce_digest": "b1be7deaeef86d4ea9b7ac283e6815c8acdb9a8e789048b26c1c5f02750b2311",
+   "host": "portable",
+   "session_id": "wt-0",
+   "expires_at": "2026-09-28T08:29:35.700Z",
+   "consumed_at": "2026-09-28T07:29:35.747Z",
+   "state": "observed",
+   "nonce": "npm_jl8dOA19ti4Pk5uSkTlK",
+   "instance_id": "inst-2",
+   "birth_generation": "2026-09-28T07:29:35.600Z",
+   "transport": "portable",
+   "relay_id": "relay-w2",
+   "attempt_id": "965dc871-5039-44c4-840d-83cf03dc583e",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T07:29:35.703Z",
+   "outcome_at": "2026-09-28T07:29:35.705Z",
+   "observed_at": "2026-09-28T07:29:35.747Z",
+   "late_observed_at": null
+  },
+  {
+   "nonce_digest": "557b97136bcc8a45bb8ded9f0b190af7640f2793ebdc961498cc80e1a3844cdb",
+   "host": "portable",
+   "session_id": "wt-2",
+   "expires_at": "2026-09-28T08:29:35.764Z",
+   "consumed_at": "2026-09-28T07:29:35.838Z",
+   "state": "observed",
+   "nonce": "wXCxTzBAvfIDcwjFCs_6ckZb",
+   "instance_id": "inst-2",
+   "birth_generation": "2026-09-28T07:29:35.652Z",
+   "transport": "portable",
+   "relay_id": "relay-w4",
+   "attempt_id": "cf328f57-c64d-42b2-a2fd-57037b5a6c05",
+   "dispatch_epoch": 1,
+   "retry_not_before": null,
+   "retry_count": 0,
+   "started_at": "2026-09-28T07:29:35.766Z",
+   "outcome_at": null,
+   "observed_at": "2026-09-28T07:29:35.838Z",
+   "late_observed_at": null
+  }
+ ],
+ "trustBefore": {
+  "exists": true,
+  "meta": [
+   {
+    "key": "trust-signing-key",
+    "value": "1lLN6UvXwJywv4-6zCzaEehKisKOwacIAUp3BMxyEvQ",
+    "updated_at": "2026-09-28T07:29:35.563Z"
+   }
+  ],
+  "schema": [
+   {
+    "type": "index",
+    "name": "input_source_latest",
+    "sql": "CREATE INDEX input_source_latest\n        ON input_source_receipts(host, session_id, observed_at DESC)"
+   },
+   {
+    "type": "table",
+    "name": "input_source_receipts",
+    "sql": "CREATE TABLE input_source_receipts (\n        receipt_id TEXT PRIMARY KEY,\n        host TEXT NOT NULL,\n        session_id TEXT NOT NULL,\n        event_id TEXT NOT NULL,\n        origin_kind TEXT NOT NULL,\n        authority_effect TEXT NOT NULL,\n        observed_at TEXT NOT NULL,\n        expires_at TEXT NOT NULL,\n        receipt_json TEXT NOT NULL,\n        UNIQUE(host, session_id, event_id)\n      ) STRICT"
+   },
+   {
+    "type": "index",
+    "name": "sqlite_autoindex_input_source_receipts_1",
+    "sql": null
+   },
+   {
+    "type": "index",
+    "name": "sqlite_autoindex_input_source_receipts_2",
+    "sql": null
+   },
+   {
+    "type": "index",
+    "name": "sqlite_autoindex_trust_metadata_1",
+    "sql": null
+   },
+   {
+    "type": "table",
+    "name": "trust_metadata",
+    "sql": "CREATE TABLE trust_metadata (\n        key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL\n      ) STRICT"
+   }
+  ],
+  "receipts": [
+   {
+    "receipt_id": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   {
+    "receipt_id": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   {
+    "receipt_id": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   }
+  ]
+ },
+ "trustAfter": {
+  "exists": true,
+  "meta": [
+   {
+    "key": "trust-signing-key",
+    "value": "1lLN6UvXwJywv4-6zCzaEehKisKOwacIAUp3BMxyEvQ",
+    "updated_at": "2026-09-28T07:29:35.563Z"
+   }
+  ],
+  "schema": [
+   {
+    "type": "index",
+    "name": "input_source_latest",
+    "sql": "CREATE INDEX input_source_latest\n        ON input_source_receipts(host, session_id, observed_at DESC)"
+   },
+   {
+    "type": "table",
+    "name": "input_source_receipts",
+    "sql": "CREATE TABLE input_source_receipts (\n        receipt_id TEXT PRIMARY KEY,\n        host TEXT NOT NULL,\n        session_id TEXT NOT NULL,\n        event_id TEXT NOT NULL,\n        origin_kind TEXT NOT NULL,\n        authority_effect TEXT NOT NULL,\n        observed_at TEXT NOT NULL,\n        expires_at TEXT NOT NULL,\n        receipt_json TEXT NOT NULL,\n        UNIQUE(host, session_id, event_id)\n      ) STRICT"
+   },
+   {
+    "type": "index",
+    "name": "sqlite_autoindex_input_source_receipts_1",
+    "sql": null
+   },
+   {
+    "type": "index",
+    "name": "sqlite_autoindex_input_source_receipts_2",
+    "sql": null
+   },
+   {
+    "type": "index",
+    "name": "sqlite_autoindex_trust_metadata_1",
+    "sql": null
+   },
+   {
+    "type": "table",
+    "name": "trust_metadata",
+    "sql": "CREATE TABLE trust_metadata (\n        key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL\n      ) STRICT"
+   }
+  ],
+  "receipts": [
+   {
+    "receipt_id": "source-0c637b90-0923-45cd-874f-b0c5a9900732"
+   },
+   {
+    "receipt_id": "source-1f5e2371-b948-43b7-849a-124363ea2f98"
+   },
+   {
+    "receipt_id": "source-32243532-370e-42ff-801c-b87d24af8d8d"
+   },
+   {
+    "receipt_id": "source-371e6328-a1bc-4ea5-b324-634de917b0b1"
+   },
+   {
+    "receipt_id": "source-4d75c172-8bb8-4283-bc84-e13a8753580c"
+   },
+   {
+    "receipt_id": "source-4f0e9c29-5030-4481-8140-b42ff8ea919c"
+   },
+   {
+    "receipt_id": "source-60cc6613-c663-4d45-a02b-9705813d3402"
+   },
+   {
+    "receipt_id": "source-673baeba-eb1e-462e-90b3-d83cbb70996a"
+   },
+   {
+    "receipt_id": "source-806bcbf1-9d99-43a2-91ce-a9c62600afea"
+   },
+   {
+    "receipt_id": "source-896c8cbb-d649-4bf7-8506-f458d5c51281"
+   },
+   {
+    "receipt_id": "source-8fbc34be-ca32-4657-858f-bf555b7e2a2b"
+   },
+   {
+    "receipt_id": "source-a453133b-7894-4625-8b8b-13fb3b659710"
+   },
+   {
+    "receipt_id": "source-a58583be-375e-4404-93a2-05a5d015a452"
+   },
+   {
+    "receipt_id": "source-babe3762-6399-431e-bbb7-078b6f94ae8f"
+   },
+   {
+    "receipt_id": "source-bd7bc22f-7c59-48fd-8c94-64a8114d82b2"
+   },
+   {
+    "receipt_id": "source-c2bf2e4c-5cbd-436c-b069-37632d4644b1"
+   },
+   {
+    "receipt_id": "source-dee26c4d-a470-4b96-96bc-a1cdd9988d31"
+   },
+   {
+    "receipt_id": "source-e0c2570e-ebd0-49ad-a51f-760139a5a26a"
+   }
+  ]
+ },
+ "fb": {
+  "trust.sqlite3": {
+   "size": 28672,
+   "sha": "a05269977e2735a7c58a9d4ca6c66c7dafdd1933bbb2bba9175435ebc52840a3"
+  },
+  "trust.sqlite3-shm": {
+   "size": 32768,
+   "sha": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+  },
+  "trust.sqlite3-wal": {
+   "size": 0,
+   "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+ },
+ "fa": {
+  "trust.sqlite3": {
+   "size": 45056,
+   "sha": "ab62f1f0f62f2942515bcf172222e4053253ba0f22311e92e2eef669c72870e1"
+  }
+ },
+ "h": {
+  "allFalse": true,
+  "unchanged": true,
+  "results": [
+   {
+    "reconciled": false,
+    "evidence": null
+   },
+   {
+    "reconciled": false,
+    "evidence": null
+   },
+   {
+    "reconciled": false,
+    "evidence": null
+   }
+  ]
+ }
+}

@@ -1,0 +1,8 @@
+From https://github.com/jaeseongs95/agent-governance-suite
+ * branch            codex/wake-history-reconcile -> FETCH_HEAD
+ * branch            codex/v2711-codex-empty-wake -> FETCH_HEAD
+ * branch            main       -> FETCH_HEAD
+ * [new branch]      codex/wake-history-reconcile -> origin/codex/wake-history-reconcile
+ * [new branch]      codex/v2711-codex-empty-wake -> origin/codex/v2711-codex-empty-wake
+   b3c232f..d5c5932  main       -> origin/main
+EXIT=0

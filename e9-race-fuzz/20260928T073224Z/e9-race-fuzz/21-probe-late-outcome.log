@@ -1,0 +1,51 @@
+== e9 definite-failure
+1 started old attempt (effect in flight): [{"state":"started","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+2 new-generation reserve fences old started->unknown; dispatch = false [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+3 late outcome 'definite-failure' from old dispatcher recorded = true [{"state":"reserved","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":"2026-09-28T07:26:49.275Z","late_observed_at":null}]
+4 +17000ms current-gen reserve=false resume=false old start=false pending=1 [{"state":"reserved","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":"2026-09-28T07:26:49.275Z","late_observed_at":null}]
+4 +1200000ms current-gen reserve=false resume=false old start=false pending=1 [{"state":"reserved","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":"2026-09-28T07:26:49.275Z","late_observed_at":null}]
+4 +7200000ms current-gen reserve=false resume=false old start=false pending=0 [{"state":"reserved","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":"2026-09-28T07:26:49.275Z","late_observed_at":null}]
+5 reconcile (no receipt) = {"reconciled":false,"evidence":null}
+EXIT=0
+== e9 submitted
+1 started old attempt (effect in flight): [{"state":"started","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+2 new-generation reserve fences old started->unknown; dispatch = false [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+3 late outcome 'submitted' from old dispatcher recorded = true [{"state":"submitted","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+4 +17000ms current-gen reserve=false resume=false old start=false pending=1 [{"state":"submitted","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+4 +1200000ms current-gen reserve=false resume=false old start=false pending=1 [{"state":"submitted","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+4 +7200000ms current-gen reserve=false resume=false old start=false pending=0 [{"state":"submitted","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+5 reconcile (no receipt) = {"reconciled":false,"evidence":null}
+EXIT=0
+== e9 accepted-or-unknown
+1 started old attempt (effect in flight): [{"state":"started","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+2 new-generation reserve fences old started->unknown; dispatch = false [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+3 late outcome 'accepted-or-unknown' from old dispatcher recorded = true [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+4 +17000ms current-gen reserve=false resume=false old start=false pending=1 [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+4 +1200000ms current-gen reserve=false resume=false old start=false pending=1 [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+4 +7200000ms current-gen reserve=false resume=false old start=false pending=0 [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+5 reconcile (no receipt) = {"reconciled":false,"evidence":null}
+EXIT=0
+== v53 definite-failure
+1 started old attempt (effect in flight): [{"state":"started","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+2 new-generation reserve fences old started->unknown; dispatch = false [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+3 late outcome 'definite-failure' from old dispatcher recorded = true [{"state":"reserved","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":"2026-09-28T07:26:50.208Z","late_observed_at":null}]
+4 +17000ms current-gen reserve=false resume=false old start=false pending=1 [{"state":"reserved","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":"2026-09-28T07:26:50.208Z","late_observed_at":null}]
+4 +1200000ms current-gen reserve=false resume=false old start=false pending=1 [{"state":"reserved","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":"2026-09-28T07:26:50.208Z","late_observed_at":null}]
+4 +7200000ms current-gen reserve=false resume=false old start=false pending=0 [{"state":"reserved","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":"2026-09-28T07:26:50.208Z","late_observed_at":null}]
+EXIT=0
+== v53 submitted
+1 started old attempt (effect in flight): [{"state":"started","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+2 new-generation reserve fences old started->unknown; dispatch = false [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+3 late outcome 'submitted' from old dispatcher recorded = true [{"state":"submitted","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+4 +17000ms current-gen reserve=false resume=false old start=false pending=1 [{"state":"submitted","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+4 +1200000ms current-gen reserve=false resume=false old start=false pending=1 [{"state":"submitted","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+4 +7200000ms current-gen reserve=false resume=false old start=false pending=0 [{"state":"submitted","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+EXIT=0
+== v53 accepted-or-unknown
+1 started old attempt (effect in flight): [{"state":"started","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+2 new-generation reserve fences old started->unknown; dispatch = false [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+3 late outcome 'accepted-or-unknown' from old dispatcher recorded = true [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+4 +17000ms current-gen reserve=false resume=false old start=false pending=1 [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+4 +1200000ms current-gen reserve=false resume=false old start=false pending=1 [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+4 +7200000ms current-gen reserve=false resume=false old start=false pending=0 [{"state":"unknown","instance_id":"inst-1","relay_id":"relay-1","dispatch_epoch":1,"retry_not_before":null,"late_observed_at":null}]
+EXIT=0

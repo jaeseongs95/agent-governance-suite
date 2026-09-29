@@ -1,0 +1,8 @@
+{"K":300,"R":2,"W":2,"seed":1,"first":{"ok":300,"rejected":0,"errors":[]},"writerReceipts":[2058,988],"writerErrors":[],"spuriousRejectedThenOk":0,"spuriousSample":[],"states":[{"state":"observed","n":300}],"reconcileMicros":{"p50":2889.865,"p99":9746.944,"max":544142.73},"trustFiles":["trust.sqlite3"]}
+EXIT=0
+{"K":300,"R":4,"W":4,"seed":2,"first":{"ok":300,"rejected":0,"errors":[]},"writerReceipts":[788,1012,669,929],"writerErrors":[],"spuriousRejectedThenOk":0,"spuriousSample":[],"states":[{"state":"observed","n":300}],"reconcileMicros":{"p50":2447.318,"p99":237510.529,"max":742522.213},"trustFiles":["trust.sqlite3"]}
+EXIT=0
+{"K":300,"R":8,"W":8,"seed":3,"first":{"ok":300,"rejected":0,"errors":[]},"writerReceipts":[411,341,449,688,448,428,327,512],"writerErrors":[],"spuriousRejectedThenOk":0,"spuriousSample":[],"states":[{"state":"observed","n":300}],"reconcileMicros":{"p50":2206.327,"p99":253067.582,"max":544880.915},"trustFiles":["trust.sqlite3"]}
+EXIT=0
+{"K":300,"R":8,"W":2,"seed":4,"first":{"ok":300,"rejected":0,"errors":[]},"writerReceipts":[1749,1948],"writerErrors":[],"spuriousRejectedThenOk":0,"spuriousSample":[],"states":[{"state":"observed","n":300}],"reconcileMicros":{"p50":2311.75,"p99":342283.19,"max":740638.538},"trustFiles":["trust.sqlite3"]}
+EXIT=0
