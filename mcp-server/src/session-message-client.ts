@@ -8,7 +8,7 @@ import tls from "node:tls";
 import { fileURLToPath } from "node:url";
 
 import { resolveSessionMessageStateDirectory } from "./runtime-config.js";
-import { SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
+import { SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, sessionMessageLineReader } from "./session-message-protocol.js";
 
 export { SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
 export const WAKE_PREFIX = "[agent-governance-suite:wake:";
@@ -158,7 +158,7 @@ export async function requestSessionMessageOnce<T>(
     const { endpoint, token, certificate } = await readEndpoint(stateDirectory, signal);
     return new Promise<T>((resolve, reject) => {
       let settled = false;
-      let buffer = "";
+      const readLine = sessionMessageLineReader(SESSION_MESSAGE_MAX_RESPONSE_BYTES);
       const socket = tls.connect({
         host: endpoint.address,
         port: endpoint.port,
@@ -191,12 +191,11 @@ export async function requestSessionMessageOnce<T>(
         socket.write(`${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload })}\n`);
       });
       socket.on("data", (chunk: Buffer) => {
-        buffer += chunk.toString("utf8");
-        if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) return finish(new Error("The broker response exceeded its limit."));
-        const newline = buffer.indexOf("\n");
-        if (newline < 0) return;
+        let line: string | null;
+        try { line = readLine(chunk); } catch { return finish(new Error("The broker response exceeded its limit.")); }
+        if (line === null) return;
         try {
-          const response = JSON.parse(buffer.slice(0, newline)) as { ok: boolean; data?: T; error?: string; details?: unknown };
+          const response = JSON.parse(line) as { ok: boolean; data?: T; error?: string; details?: unknown };
           if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
           else finish(undefined, response.data);
         } catch {
