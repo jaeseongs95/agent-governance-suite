@@ -98,3 +98,11 @@ push 전에 `harness/redact.py`로 가렸다.
 - 두 번째 검사는 0건이었고, push 전에 계정명 문자열을 별도로 grep해 0건임을 확인했다.
 - 계정명 규칙 자체가 계정명을 담고 있어 `harness/redact.py`의 그 패턴도 `[REDACTED]`로 바뀌었다. 다시 실행하려면 패턴을 채워야 한다.
 - `SHA256SUMS`는 커밋된 blob 기준이다.
+
+## 후속 수정 (이 폴더의 두 번째 commit)
+
+- 첫 commit의 `meta.json`은 `redactionSecondPass`가 비어 있어 올바른 JSON이 아니었다. 원인은 이렇다. 가림 스크립트를 evidence 폴더 안에 두어 첫 pass가 스크립트 자신의 패턴을 바꿨고(Windows 홈 치환 문자열 포함), 두 번째 pass가 예외로 끝났다.
+- 첫 pass의 hit(bearer 1, account-name 3, windows-home 1, root-home 1, home-path 일부)는 모두 `harness/redact.py`의 docstring과 패턴이었다. push 전 검사에서 로그·보고서의 계정명, 이메일, 사용자 홈 경로는 0건이었다.
+- 두 번째 pass는 폴더 밖의 깨끗한 스크립트로, `harness/redact.py`를 뺀 모든 파일에 다시 돌려 0건이었다(`meta.json`).
+- `harness/redact.py`는 깨끗한 판으로 바꿨다. 계정명 패턴은 파일에 적지 않고 `AGS_REDACT_ACCOUNT_PATTERN` 환경 변수로 받는다.
+- "폴더 하나를 commit 하나로" 규칙은 이 수정 때문에 지키지 못했다. force push가 금지라 첫 commit은 이력에 남는다. 그 안에 개인정보는 없다.

@@ -10,5 +10,6 @@
   "uname": "Linux 6.18.44-fc-v37 x86_64",
   "stampUtc": "20260929T035617Z",
   "redaction": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 1, "email": 0, "home-path": 15, "root-home": 1, "ipv4": 0, "account-name": 3, "windows-home": 1},
-  "redactionSecondPass": 
+  "redactionSecondPass": {"github-token": 0, "anthropic-key": 0, "aws-key": 0, "private-key-line": 0, "bearer": 0, "email": 0, "home-path": 0, "root-home": 0, "ipv4": 0, "account-name": 0, "windows-home": 0},
+  "redactionNote": "all first-pass hits were in harness/redact.py itself (its docstring, account-name and Windows-home patterns); the second pass excludes that file"
 }
