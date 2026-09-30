@@ -6,7 +6,9 @@ import tls from "node:tls";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
-import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, SESSION_PRESENCE_LIST_MAX_TARGETS } from "./session-message-protocol.js";
+import {
+  SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, SESSION_PRESENCE_LIST_MAX_TARGETS, sessionMessageLineReader,
+} from "./session-message-protocol.js";
 import { MessageCapacityError, SessionMessageStore, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
 import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type WakeHookObservationReader } from "./session-message-wake-port.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
@@ -497,20 +499,17 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
     let lastActivity = Date.now();
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
       lastActivity = Date.now();
-      let buffer = "";
+      const readLine = sessionMessageLineReader(SESSION_MESSAGE_MAX_REQUEST_BYTES);
       // A failed client must not terminate the broker or undo a committed request.
       socket.on("error", () => socket.destroy());
       socket.setTimeout(5000, () => socket.destroy());
       socket.on("data", (chunk: Buffer) => {
-        buffer += chunk.toString("utf8");
-        if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_REQUEST_BYTES) {
+        let line: string | null;
+        try { line = readLine(chunk); } catch {
           socket.end(`${JSON.stringify({ ok: false, error: "Request exceeds the broker limit." })}\n`);
           return;
         }
-        const newline = buffer.indexOf("\n");
-        if (newline < 0) return;
-        const line = buffer.slice(0, newline);
-        buffer = "";
+        if (line === null) return;
         try {
           const request = JSON.parse(line) as BrokerRequest;
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");

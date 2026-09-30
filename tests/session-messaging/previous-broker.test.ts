@@ -1,14 +1,16 @@
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
+import { BrokerRequestRejected, requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
+import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "../../mcp-server/src/session-message-protocol.js";
 import { SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
+import { headBytes, straddlingClaim, straddlingPing, TLS_CHUNK } from "./fixtures/utf8-layout.js";
 
 // A release check supplies the actual previous installation, not a simulated dispatcher.
 const previousBroker = process.env.AGS_PREVIOUS_BROKER_PATH;
@@ -297,3 +299,40 @@ it.skipIf(!previousBroker)("leaves a previous broker's latch of an ended birth f
     await rm(directory, { recursive: true, force: true, maxRetries: 10 });
   }
 }, 20_000);
+
+it.skipIf(!previousBroker)("reads a previous broker's Korean claim answer at the response limit whole, and meets its own request reader", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "ags-previous-broker-utf8-"));
+  const environment = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory,
+    AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
+    AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(directory, "shared-state") };
+  const child = spawn(process.execPath, [previousBroker!, "--state-directory", directory], { windowsHide: true, stdio: "ignore", env: environment });
+  try {
+    await waitForSessionMessageBrokerReady(directory, child, 5000);
+    const sender = { host: "synthetic-host", sessionId: "sender" };
+    const target = { host: "synthetic-host", sessionId: "utf8-recipient" };
+    // The response side: the previous broker fits the answer to the limit, and the new client reads it whole.
+    const bodies = straddlingClaim(sender, target, SESSION_MESSAGE_MAX_RESPONSE_BYTES, 1);
+    for (const body of bodies) {
+      const { messageId } = await requestSessionMessageOnce<{ messageId: string }>("prepare", { sender, target, body }, directory);
+      await requestSessionMessageOnce("send", { sender, messageId }, directory);
+    }
+    const data = await requestSessionMessageOnce<{ messages: Array<{ body: string }> }>("claim", { target }, directory);
+    expect(data.messages.map((message) => message.body).sort()).toEqual([...bodies].sort());
+    const sent = Buffer.from(`${JSON.stringify({ ok: true, data })}\n`);
+    expect(sent.length).toBe(SESSION_MESSAGE_MAX_RESPONSE_BYTES);
+    expect(headBytes(sent, TLS_CHUNK)).toBe(1);
+    // The request side is the previous broker's own reader: through 2.7.6 it decodes each chunk, so a request of exactly
+    // the limit with a split Korean character is rejected as over the limit, as it was before this client.
+    const token = (await readFile(path.join(directory, "broker.token"), "utf8")).trim();
+    const request = requestSessionMessageOnce("ping", straddlingPing(token, SESSION_MESSAGE_MAX_REQUEST_BYTES, 1), directory);
+    if (previousAtLeast([2, 7, 7])) await expect(request).resolves.toMatchObject({ protocolVersion: "1.0.0" });
+    else {
+      const error = await request.then(() => null, (reason: unknown) => reason);
+      expect(error).toBeInstanceOf(BrokerRequestRejected);
+      expect((error as Error).message).toBe("Request exceeds the broker limit.");
+    }
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) { const exited = once(child, "exit"); child.kill(); await exited; }
+    await rm(directory, { recursive: true, force: true, maxRetries: 10 });
+  }
+}, 30_000);

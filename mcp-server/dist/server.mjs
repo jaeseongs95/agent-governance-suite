@@ -19733,7 +19733,7 @@ function inlineSchemaReferences(schema, documents) {
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "2.7.6",
+  version: "2.7.7",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
@@ -20013,6 +20013,18 @@ var SESSION_PRESENCE_LIST_MAX_TARGETS = 3;
 function isBoundedIdentity(value) {
   return /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(value.host) && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(value.sessionId);
 }
+function sessionMessageLineReader(limitBytes) {
+  let pending = Buffer.alloc(0);
+  return (chunk) => {
+    pending = Buffer.concat([pending, chunk]);
+    const newline = pending.indexOf(10);
+    if ((newline < 0 ? pending.length : newline + 1) > limitBytes) throw new RangeError("The session message line exceeds its limit.");
+    if (newline < 0) return null;
+    const line = pending.toString("utf8", 0, newline);
+    pending = Buffer.alloc(0);
+    return line;
+  };
+}
 
 // mcp-server/src/session-message-client.ts
 var BrokerRequestRejected = class extends Error {
@@ -20113,7 +20125,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
     const { endpoint, token, certificate } = await readEndpoint(stateDirectory, signal);
     return new Promise((resolve, reject) => {
       let settled = false;
-      let buffer = "";
+      const readLine = sessionMessageLineReader(SESSION_MESSAGE_MAX_RESPONSE_BYTES);
       const socket = tls.connect({
         host: endpoint.address,
         port: endpoint.port,
@@ -20145,12 +20157,15 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
 `);
       });
       socket.on("data", (chunk) => {
-        buffer += chunk.toString("utf8");
-        if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) return finish(new Error("The broker response exceeded its limit."));
-        const newline = buffer.indexOf("\n");
-        if (newline < 0) return;
+        let line;
         try {
-          const response = JSON.parse(buffer.slice(0, newline));
+          line = readLine(chunk);
+        } catch {
+          return finish(new Error("The broker response exceeded its limit."));
+        }
+        if (line === null) return;
+        try {
+          const response = JSON.parse(line);
           if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
           else finish(void 0, response.data);
         } catch {

@@ -18,6 +18,18 @@ var SESSION_PRESENCE_LIST_MAX_TARGETS = 3;
 function isBoundedIdentity(value) {
   return /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(value.host) && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(value.sessionId);
 }
+function sessionMessageLineReader(limitBytes) {
+  let pending = Buffer.alloc(0);
+  return (chunk) => {
+    pending = Buffer.concat([pending, chunk]);
+    const newline = pending.indexOf(10);
+    if ((newline < 0 ? pending.length : newline + 1) > limitBytes) throw new RangeError("The session message line exceeds its limit.");
+    if (newline < 0) return null;
+    const line = pending.toString("utf8", 0, newline);
+    pending = Buffer.alloc(0);
+    return line;
+  };
+}
 
 // mcp-server/src/session-message-store.ts
 import { mkdirSync as mkdirSync2 } from "node:fs";
@@ -2149,20 +2161,19 @@ async function startSessionMessageBroker(stateDirectory) {
     let lastActivity = Date.now();
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
       lastActivity = Date.now();
-      let buffer = "";
+      const readLine = sessionMessageLineReader(SESSION_MESSAGE_MAX_REQUEST_BYTES);
       socket.on("error", () => socket.destroy());
       socket.setTimeout(5e3, () => socket.destroy());
       socket.on("data", (chunk) => {
-        buffer += chunk.toString("utf8");
-        if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_REQUEST_BYTES) {
+        let line;
+        try {
+          line = readLine(chunk);
+        } catch {
           socket.end(`${JSON.stringify({ ok: false, error: "Request exceeds the broker limit." })}
 `);
           return;
         }
-        const newline = buffer.indexOf("\n");
-        if (newline < 0) return;
-        const line = buffer.slice(0, newline);
-        buffer = "";
+        if (line === null) return;
         try {
           const request = JSON.parse(line);
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
