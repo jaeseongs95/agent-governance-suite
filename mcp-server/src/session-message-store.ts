@@ -1723,11 +1723,20 @@ export class SessionMessageStore {
           && row!.transport === presence.transport && presence.state === "online"
           && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row!.expires_at) > iso(nowMs));
       if (!valid) {
-        // Arrival is proven, but it cannot authorize this generation's body claim or resume evidence.
-        for (const row of live) if (row!.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
-          SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?
-          WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`)
-          .run(iso(nowMs), iso(nowMs), iso(nowMs), String(row!.nonce_digest));
+        // Only expiry or a positively replaced birth permits terminal observation. An ineligible
+        // current birth (including ended presence) keeps its unknown fence without nonce consumption.
+        for (const row of live) if (row!.state !== "legacy") {
+          const terminal = String(row!.expires_at) <= iso(nowMs)
+            || (presence.instanceId !== null && presence.startedAt !== null
+              && (row!.instance_id !== presence.instanceId || row!.birth_generation !== presence.startedAt));
+          if (terminal) this.database.prepare(`UPDATE wake_nonces
+            SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?
+            WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`)
+            .run(iso(nowMs), iso(nowMs), iso(nowMs), String(row!.nonce_digest));
+          else this.database.prepare(`UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?), state = 'unknown'
+            WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`)
+            .run(iso(nowMs), String(row!.nonce_digest));
+        }
         this.database.exec("COMMIT"); return rejected;
       }
       const messages = this.claimLocked(target, nowMs, limits);

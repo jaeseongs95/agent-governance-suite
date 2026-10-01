@@ -115,6 +115,57 @@ test('AC003 live quiet birth stays latched; expiry activity retires only after t
   assert.equal(row(f, attempt).state, 'expired-unobserved');
 });
 
+test.each(['ended', 'unreachable', 'missing', 'transport', 'capability', 'ended-during-verification'])(
+  'AC008 verified unexpired %s without a replaced birth keeps the unknown fence', variant => {
+    const f = fixture(); const attempt = begin(f); const original = row(f, attempt); const at = f.now + 4;
+    const proof = observed(f, [attempt.nonce], f.now + 2);
+    if (variant === 'ended') f.store.endPresence(target, 'fixture', 'birth-1', at);
+    if (variant === 'unreachable') f.store.database.prepare('UPDATE session_presence SET lease_until=?').run(iso(at));
+    if (variant === 'missing') f.store.database.prepare('DELETE FROM session_presence').run();
+    if (variant === 'transport') f.store.database.prepare('UPDATE session_presence SET transport=?').run('other-port');
+    if (variant === 'capability') f.store.database.prepare('UPDATE session_presence SET supported_injection=?')
+      .run(JSON.stringify(['tool-boundary']));
+    const reader = createWakeHookObservationReader(f.trustPath);
+    const guardedReader = { verifyObservation: (...args) => {
+      if (variant === 'ended-during-verification') f.store.endPresence(target, 'fixture', 'birth-1', at);
+      return reader.verifyObservation(...args);
+    } };
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(at);
+    try {
+      assert.deepEqual(dispatch(f.store, 'claim-host-wake', { target, ...proof }, undefined, undefined, undefined, guardedReader),
+        { recognized: false, messages: [], managed: false });
+    } finally { clock.mockRestore(); }
+    const current = row(f, attempt);
+    assert.equal(current.state, 'unknown'); assert.ok(current.late_observed_at);
+    assert.equal(current.consumed_at, null); assert.equal(current.observed_at, null);
+    for (const key of ['nonce', 'nonce_digest', 'instance_id', 'birth_generation', 'dispatch_epoch', 'started_at', 'expires_at']) {
+      assert.equal(current[key], original[key]);
+    }
+    assert.equal(f.store.pendingCount(target, at), 1);
+    assert.equal(f.store.reserveManagedWake({ ...target, instanceId: 'birth-1', transport: 'portable', relayId: 'relay-1',
+      nonce: 'w05-r3-retry-abcdefghijklmnop' }, at + 1).dispatch, false);
+  });
+
+test.each(['expired-same-birth', 'new-instance', 'same-instance-new-birth'])(
+  'AC008 verified %s is terminal-only with no body claim', variant => {
+    const f = fixture(); const attempt = begin(f);
+    const at = variant === 'expired-same-birth' ? f.now + WAKE_TTL_MS + 1 : f.now + 4;
+    if (variant === 'expired-same-birth') f.store.database.prepare('UPDATE session_presence SET lease_until=?')
+      .run(iso(at + 60_000));
+    else {
+      f.store.endPresence(target, 'fixture', 'birth-1', at);
+      f.store.startPresence(presence(variant === 'new-instance' ? 'birth-2' : 'birth-1'), at + 1);
+    }
+    const proof = observed(f, [attempt.nonce], at + 2);
+    const result = f.store.claimHostWake(target, proof.observation, proof.sourceReceiptId,
+      createWakeHookObservationReader(f.trustPath), at + 3);
+    assert.deepEqual(result, { recognized: false, messages: [], binding: null });
+    const current = row(f, attempt);
+    assert.equal(current.state, 'observed'); assert.ok(current.late_observed_at);
+    assert.ok(current.consumed_at); assert.ok(current.observed_at);
+    assert.equal(f.store.pendingCount(target, at + 3), 1);
+  });
+
 test('AC002/008 verified expired arrival is terminal-only; retired + valid current still claims', () => {
   const f = fixture(); const old = begin(f);
   let at = f.now + WAKE_TTL_MS + 1;
