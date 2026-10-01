@@ -1,0 +1,20 @@
+{
+  "transport": "os-stdin",
+  "objectMode": false,
+  "inputBytes": 1776,
+  "inputSha256": "31c123c9420c70e37703ba8f2fbc0099695dbfdbac508475f743f1c3986cf09d",
+  "readCalls": 0,
+  "scheduledTicks": 0,
+  "pushedChunks": 0,
+  "iteratorChunkCount": 1,
+  "iteratorTypes": [
+    "Buffer"
+  ],
+  "firstChunkSizes": [
+    1776
+  ],
+  "iteratorByteSha256": "31c123c9420c70e37703ba8f2fbc0099695dbfdbac508475f743f1c3986cf09d",
+  "concatenatedTextSha256": "31c123c9420c70e37703ba8f2fbc0099695dbfdbac508475f743f1c3986cf09d",
+  "replacementCharacters": 0,
+  "readableEncoding": null
+}

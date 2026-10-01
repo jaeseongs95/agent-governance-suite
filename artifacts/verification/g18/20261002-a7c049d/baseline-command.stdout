@@ -1,0 +1,33 @@
+{"id":"evaluate-whole","passed":true,"exit":0,"reasons":[],"iteratorTypes":["Buffer"],"replacementCharacters":0}
+{"id":"verify-whole","passed":true,"exit":0,"reasons":[],"iteratorTypes":["Buffer"],"replacementCharacters":0}
+{"id":"evaluate-korean-1","passed":false,"exit":0,"reasons":["independent action digest\n+ actual - expected\n\n+ 'sha256:9a56aca8bd59a4690f021d99b7655509a853cd40dd16c3453d32e3dca3ce302e'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":3}
+{"id":"verify-korean-1","passed":false,"exit":2,"reasons":["Expected values to be strictly equal:\n\nfalse !== true\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":3}
+{"id":"evaluate-korean-2","passed":false,"exit":0,"reasons":["independent action digest\n+ actual - expected\n\n+ 'sha256:056484cd08baf2bceeda1598a611ae8c9240019d185b7dc90b1e00f12bcf70d7'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":2}
+{"id":"verify-korean-2","passed":false,"exit":2,"reasons":["Expected values to be strictly equal:\n\nfalse !== true\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":2}
+{"id":"evaluate-emoji-1","passed":false,"exit":0,"reasons":["independent action digest\n+ actual - expected\n\n+ 'sha256:ebf69c03cc981915517bb96c7fe9b8c917a3badcaee4dbbd70b6d8a233c58ee8'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":4}
+{"id":"verify-emoji-1","passed":false,"exit":2,"reasons":["Expected values to be strictly equal:\n\nfalse !== true\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":4}
+{"id":"evaluate-emoji-2","passed":false,"exit":0,"reasons":["independent action digest\n+ actual - expected\n\n+ 'sha256:32c447a5fe1194a8e87959a5f0b49a4dc5036800eb3e2608b172c235c29574e7'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":3}
+{"id":"verify-emoji-2","passed":false,"exit":2,"reasons":["Expected values to be strictly equal:\n\nfalse !== true\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":3}
+{"id":"evaluate-emoji-3","passed":false,"exit":0,"reasons":["independent action digest\n+ actual - expected\n\n+ 'sha256:b05d114f7beb803463d946889537f1fc31c99bd5d746023fa8af7bd83ea4f71c'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":2}
+{"id":"verify-emoji-3","passed":false,"exit":2,"reasons":["Expected values to be strictly equal:\n\nfalse !== true\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":2}
+{"id":"evaluate-one-byte","passed":false,"exit":0,"reasons":["independent action digest\n+ actual - expected\n\n+ 'sha256:7f3ff1b80da5c06bf7387ffdd85b64820596dbbbda6635382e4eadc1ca278fa7'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":16}
+{"id":"verify-one-byte","passed":false,"exit":2,"reasons":["Expected values to be strictly equal:\n\nfalse !== true\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":440}
+{"id":"evaluate-input-file","passed":true,"exit":0,"reasons":[]}
+{"id":"verify-input-file","passed":true,"exit":0,"reasons":[]}
+{"id":"evaluate-deny-input-file","passed":true,"exit":2,"reasons":[]}
+{"id":"verify-deny-input-file","passed":true,"exit":2,"reasons":[]}
+{"id":"verify-ttl-input-file","passed":true,"exit":2,"reasons":[]}
+{"id":"verify-tamper-input-file","passed":true,"exit":2,"reasons":[]}
+{"id":"verify-changed-text-input-file","passed":true,"exit":2,"reasons":[]}
+{"id":"evaluate-os-stdin","passed":true,"exit":0,"reasons":[],"iteratorTypes":["Buffer"],"replacementCharacters":0}
+{"id":"verify-os-stdin","passed":true,"exit":0,"reasons":[],"iteratorTypes":["Buffer"],"replacementCharacters":0}
+{"id":"evaluate-deny-os-stdin","passed":true,"exit":2,"reasons":[],"iteratorTypes":["Buffer"],"replacementCharacters":0}
+{"id":"verify-deny-os-stdin","passed":true,"exit":2,"reasons":[],"iteratorTypes":["Buffer"],"replacementCharacters":0}
+{"id":"verify-ttl-os-stdin","passed":true,"exit":2,"reasons":[],"iteratorTypes":["Buffer"],"replacementCharacters":0}
+{"id":"verify-tamper-os-stdin","passed":true,"exit":2,"reasons":[],"iteratorTypes":["Buffer"],"replacementCharacters":0}
+{"id":"verify-changed-text-os-stdin","passed":true,"exit":2,"reasons":[],"iteratorTypes":["Buffer"],"replacementCharacters":0}
+{"id":"evaluate-large-os-stdin","passed":false,"exit":0,"reasons":["independent action digest\n+ actual - expected\n\n+ 'sha256:741a000da0788d4720f2c557ac0ee7d4a6516776c0a78b4bc3121d6a7ffa64a7'\n- 'sha256:8ed22af2a1e7e7635546bcb4bef8074a5021900df34fb7bbe309272f62dcc00e'\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":44}
+{"id":"verify-large-os-stdin","passed":false,"exit":2,"reasons":["Expected values to be strictly equal:\n\n2 !== 0\n","Decoded text differs from independent original UTF-8 bytes"],"iteratorTypes":["Buffer"],"replacementCharacters":86}
+{"id":"evaluate-large-input-file","passed":true,"exit":0,"reasons":[]}
+{"id":"verify-large-input-file","passed":true,"exit":0,"reasons":[]}
+{"phase":"baseline","checks":33,"passed":19,"failed":14,"summary":"<EVIDENCE_ROOT>/baseline/summary.json"}

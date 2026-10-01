@@ -1,0 +1,152 @@
+{
+  "scope": "G18 external regression preparation and reproduction only; no canonical source GO or Task completion",
+  "candidate": {
+    "head": "a7c049d5de392651b102840cb7e75243e1afe317",
+    "tree": "7028d31985a497dfbb4f8e74c9a219b3400bffa2",
+    "cwd": "<CANDIDATE_ROOT>",
+    "statusPorcelain": "",
+    "node": "v24.19.0"
+  },
+  "guidance": {
+    "candidateAgentsRead": true,
+    "agentsSha256": "53bf2ec7f300aaa1413dd7f4fd5b8123f20fc7767adfa22b81971947969f099b",
+    "developmentScopeRead": true,
+    "preflightContractRead": true,
+    "preflightSkillScopeReadAsCodeContext": true,
+    "existingG18HarnessFound": false,
+    "searchScope": "candidate tests/scripts/skills/docs and workspace filenames; no G18 matches found",
+    "canonicalTaskFilesPresent": {
+      "tasks/TASKS.json": false,
+      "tasks/TASK_SPECS.json": false,
+      "progress/AREA_SESSIONS.json": false,
+      "progress/TASK_STATUS.sqlite3": false
+    }
+  },
+  "gate": {
+    "officialTaskRevisionWriterSourceGo": "absent/unverified",
+    "authorizedWork": "Explicit current delegation permits isolated preparation and necessary reproduction, conditionally including ephemeral copies",
+    "copyExperimentBasis": "Candidate AGENTS and development-scope contain no explicit prohibition on a disposable, task-owned synthetic copy experiment. Only two copy CLI files changed; no product writer or canonical Task/status authority is inferred.",
+    "missingInputs": [
+      "Official G18 Task and current spec/planning revision",
+      "Writer assignment and approved file scope",
+      "Canonical source GO before any permanent product change"
+    ]
+  },
+  "routing": {
+    "requestedModel": "gpt-6.1-sol",
+    "requestedEffort": "high",
+    "fallbackUsed": false,
+    "observedModelEffort": "Not exposed by this execution API; requested settings are not claimed as runtime observation",
+    "providerCalls": 0
+  },
+  "commands": [
+    {
+      "phase": "baseline",
+      "command": [
+        "node",
+        "<EVIDENCE_ROOT>/harness.mjs",
+        "--source",
+        "<CANDIDATE_ROOT>"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "exit": 1,
+      "startedAt": "2026-10-01T23:29:38.904Z",
+      "endedAt": "2026-10-01T23:29:45.037Z",
+      "harnessObservedDurationSeconds": 6.133,
+      "stdout": "baseline-command.stdout",
+      "stderr": "baseline-command.stderr"
+    },
+    {
+      "phase": "proposed-copy",
+      "command": [
+        "node",
+        "<EVIDENCE_ROOT>/harness.mjs",
+        "--source",
+        "<CANDIDATE_ROOT>",
+        "--proposed-copy",
+        "--allow-isolated-copy-experiment"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "exit": 0,
+      "startedAt": "2026-10-01T23:30:07.170Z",
+      "endedAt": "2026-10-01T23:30:13.093Z",
+      "harnessObservedDurationSeconds": 5.923,
+      "stdout": "proposed-copy-command.stdout",
+      "stderr": "proposed-copy-command.stderr"
+    }
+  ],
+  "result": {
+    "baseline": {
+      "checks": 33,
+      "passed": 19,
+      "failed": 14,
+      "topLevelExit": 1
+    },
+    "proposedCopy": {
+      "checks": 33,
+      "passed": 33,
+      "failed": 0,
+      "topLevelExit": 0
+    },
+    "countMeaning": "Each phase: 32 CLI cases plus one existing-contract process (13 node tests). Seven decoder controls pass separately and are not included in 33. Existing contract also passed once before the recorded harness run.",
+    "forcedBoundaries": "Korean 3-byte codepoint cuts after bytes 1 and 2; emoji 4-byte codepoint cuts after bytes 1,2,3; one-byte chunks; whole-input control. Both CLIs exercised.",
+    "securityControls": "Fresh synthetic deny, TTL-at-exact-expiry, extended-validUntil tamper and changed-original-text checks through --input and real OS stdin remain denying.",
+    "largeInputBytesBaseline": {
+      "evaluate": 1312501,
+      "verify": 2625515
+    },
+    "largeTransport": "Actual OS pipe with asynchronous writes/backpressure and Node real async iterator; observed receive geometry saved in traces. --input equivalents pass.",
+    "observedFailure": "Raw Buffer concatenation preserves incoming bytes but independently decodes each chunk. Split codepoints introduce U+FFFD; evaluate can still exit0/READY with altered text/actionDigest, while verify rejects the original READY receipt. This establishes the reproduced G18 boundary on these exact bytes only.",
+    "copyChangedFiles": [
+      {
+        "path": "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+        "originalSha256": "39ad62d3f1bde2194d3efd116ee81b52e1d59cbeb6a30d5a2a8beb3db4d4b1a5",
+        "proposedSha256": "109fca1977105aebf564d624470a3c38779bb0bea835ee7a7a90e970ac3279fe",
+        "change": "insert one process.stdin.setEncoding(\"utf8\") line before stdin iteration"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+        "originalSha256": "0c738b534c3fb15bd9919873df6cd9e05314647de9cefdba541748f8ee3e612f",
+        "proposedSha256": "9853f6b81f10021ed3b490036fc650291249771506768617a05bbfb47f3e2a49",
+        "change": "insert one process.stdin.setEncoding(\"utf8\") line before stdin iteration"
+      }
+    ],
+    "proposedCopyDescription": "One process.stdin.setEncoding(\"utf8\") line inserted before stdin iteration in each CLI. Node then yields decoded strings without replacement characters. Temporary copy removed."
+  },
+  "evidenceIntegrity": {
+    "originalHashes": [
+      {
+        "path": "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+        "sha256": "39ad62d3f1bde2194d3efd116ee81b52e1d59cbeb6a30d5a2a8beb3db4d4b1a5"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+        "sha256": "0c738b534c3fb15bd9919873df6cd9e05314647de9cefdba541748f8ee3e612f"
+      },
+      {
+        "path": "tests/mutation-risk-preflight/preflight.node-test.mjs",
+        "sha256": "20e38a93b2c018f8aaa6bba938382edf4b14185e4d72e710b22900a57d08828e"
+      }
+    ],
+    "originalInputOracle": "Saved immutable raw UTF-8 fixture bytes and SHA-256, with original text and independent canonical digest projection. Expected data never derives from corrupted CLI output.",
+    "decoderMechanism": "Real Readable(objectMode:false), highWaterMark1, _read callback and asynchronous setImmediate push. Observer yields untouched chunks from Node original iterator. Controls and proposed-copy reader use Node setEncoding/StringDecoder; no emit(data) mock bypass.",
+    "sourceBytesEqualGitHeadAfterRun": true,
+    "canonicalStatusClean": true
+  },
+  "limits": [
+    "No canonical product, generated files, formal metadata, DB or auth configuration changed",
+    "No permanent product tests or fourth product file added; three external harness scripts only",
+    "Existing contract historical dates remain deterministic unit-test constants; no old receipt was reused as current authority",
+    "Harness generates fresh approval/report/verification timestamps for each phase",
+    "No D7 R03 retry; its cause remains unresolved",
+    "No provider calls, native effects, release or Library upload during reproduction; this separate publication adds evidence artifacts only",
+    "No live mutation, source-GO, Task completion or release qualification claim",
+    "Unix/Node24 environment only; real OS receive chunk geometry is nondeterministic"
+  ],
+  "publication": {
+    "branch": "dot/ags-g18-reproduction-20261002",
+    "base": "a7c049d5de392651b102840cb7e75243e1afe317",
+    "retestForPublication": false,
+    "kind": "artifacts-only"
+  }
+}

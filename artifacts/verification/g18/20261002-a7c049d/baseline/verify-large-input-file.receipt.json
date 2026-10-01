@@ -1,0 +1,20 @@
+{
+  "id": "verify-large-input-file",
+  "command": [
+    "<NODE_EXECUTABLE>",
+    "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+    "--input",
+    "<EVIDENCE_ROOT>/baseline/verify-large-input-file.input.json"
+  ],
+  "cwd": "<CANDIDATE_ROOT>",
+  "startedAt": "2026-10-01T23:29:44.835Z",
+  "durationMs": 200,
+  "exit": 0,
+  "signal": null,
+  "inputBytes": 2625515,
+  "inputSha256": "b82ce48dbadb98d0c52738e1050043ff8d4178ce3bb961279c9e253a7e75cce8",
+  "stdoutBytes": 364,
+  "stdoutSha256": "4818c50ee3d92bec774ead379fceefebd873e0903368fe5638989c06ced073e5",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "transport": "input-file"
+}

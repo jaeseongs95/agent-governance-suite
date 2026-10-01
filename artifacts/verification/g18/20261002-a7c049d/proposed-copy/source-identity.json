@@ -1,0 +1,35 @@
+{
+  "head": "a7c049d5de392651b102840cb7e75243e1afe317",
+  "tree": "7028d31985a497dfbb4f8e74c9a219b3400bffa2",
+  "phase": "proposed-copy",
+  "sourceFiles": [
+    {
+      "path": "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+      "sha256": "39ad62d3f1bde2194d3efd116ee81b52e1d59cbeb6a30d5a2a8beb3db4d4b1a5"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+      "sha256": "0c738b534c3fb15bd9919873df6cd9e05314647de9cefdba541748f8ee3e612f"
+    },
+    {
+      "path": "tests/mutation-risk-preflight/preflight.node-test.mjs",
+      "sha256": "20e38a93b2c018f8aaa6bba938382edf4b14185e4d72e710b22900a57d08828e"
+    }
+  ],
+  "copyChanges": [
+    {
+      "path": "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+      "originalSha256": "39ad62d3f1bde2194d3efd116ee81b52e1d59cbeb6a30d5a2a8beb3db4d4b1a5",
+      "proposedSha256": "109fca1977105aebf564d624470a3c38779bb0bea835ee7a7a90e970ac3279fe",
+      "change": "insert one process.stdin.setEncoding(\"utf8\") line before stdin iteration"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+      "originalSha256": "0c738b534c3fb15bd9919873df6cd9e05314647de9cefdba541748f8ee3e612f",
+      "proposedSha256": "9853f6b81f10021ed3b490036fc650291249771506768617a05bbfb47f3e2a49",
+      "change": "insert one process.stdin.setEncoding(\"utf8\") line before stdin iteration"
+    }
+  ],
+  "sourceGo": false,
+  "gate": "Explicit user/lead delegation permits external preparation and isolated reproduction. Candidate AGENTS/development-scope prohibit inference of canonical writer/Task authority; no explicit prohibition on disposable copy experiment found."
+}

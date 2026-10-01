@@ -1,0 +1,20 @@
+{
+  "id": "decoder-control-one-byte",
+  "command": [
+    "<NODE_EXECUTABLE>",
+    "--import",
+    "<EVIDENCE_ROOT>/stream-preload.mjs",
+    "<EVIDENCE_ROOT>/decoder-control.mjs"
+  ],
+  "cwd": "<CANDIDATE_ROOT>",
+  "startedAt": "2026-10-01T23:29:41.703Z",
+  "durationMs": 66,
+  "exit": 0,
+  "signal": null,
+  "inputBytes": 1778,
+  "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+  "stdoutBytes": 99,
+  "stdoutSha256": "c277404dbd233adc7162f657e234374a4a2d6f4e3759f99f28d80f0ce7084739",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "transport": "readable"
+}

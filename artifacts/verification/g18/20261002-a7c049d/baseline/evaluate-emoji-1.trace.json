@@ -1,0 +1,21 @@
+{
+  "transport": "readable",
+  "objectMode": false,
+  "inputBytes": 1778,
+  "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+  "readCalls": 3,
+  "scheduledTicks": 3,
+  "pushedChunks": 2,
+  "iteratorChunkCount": 2,
+  "iteratorTypes": [
+    "Buffer"
+  ],
+  "firstChunkSizes": [
+    1765,
+    13
+  ],
+  "iteratorByteSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+  "concatenatedTextSha256": "ef206e5f1569c072afb61fae4ded272140cd7e3e5a9685dcc13fde11429f280c",
+  "replacementCharacters": 4,
+  "readableEncoding": null
+}

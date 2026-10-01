@@ -1,0 +1,20 @@
+{
+  "id": "verify-large-os-stdin",
+  "command": [
+    "<NODE_EXECUTABLE>",
+    "--import",
+    "<EVIDENCE_ROOT>/stream-preload.mjs",
+    "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+  ],
+  "cwd": "<CANDIDATE_ROOT>",
+  "startedAt": "2026-10-01T23:29:44.410Z",
+  "durationMs": 219,
+  "exit": 2,
+  "signal": null,
+  "inputBytes": 2625515,
+  "inputSha256": "b82ce48dbadb98d0c52738e1050043ff8d4178ce3bb961279c9e253a7e75cce8",
+  "stdoutBytes": 362,
+  "stdoutSha256": "a536a38dbf20f0d67d804ae99729f382aae4b38d122e8d02108907192d416b98",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "transport": "os-stdin"
+}

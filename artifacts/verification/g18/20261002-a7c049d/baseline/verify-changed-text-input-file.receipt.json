@@ -1,0 +1,20 @@
+{
+  "id": "verify-changed-text-input-file",
+  "command": [
+    "<NODE_EXECUTABLE>",
+    "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+    "--input",
+    "<EVIDENCE_ROOT>/baseline/verify-changed-text-input-file.input.json"
+  ],
+  "cwd": "<CANDIDATE_ROOT>",
+  "startedAt": "2026-10-01T23:29:43.013Z",
+  "durationMs": 147,
+  "exit": 2,
+  "signal": null,
+  "inputBytes": 4055,
+  "inputSha256": "69d6d69438f58966f1199d533833437d916d4a00faaab3b2ff527e79c973fd3c",
+  "stdoutBytes": 362,
+  "stdoutSha256": "91aaab4d50482d8a22497eb6a557025aa62bf25a124433e1d1141b77c4e8c417",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "transport": "input-file"
+}

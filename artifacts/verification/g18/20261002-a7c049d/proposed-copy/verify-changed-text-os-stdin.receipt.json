@@ -1,0 +1,20 @@
+{
+  "id": "verify-changed-text-os-stdin",
+  "command": [
+    "<NODE_EXECUTABLE>",
+    "--import",
+    "<EVIDENCE_ROOT>/stream-preload.mjs",
+    "<EPHEMERAL_ROOT>/copy/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+  ],
+  "cwd": "<EPHEMERAL_ROOT>/copy",
+  "startedAt": "2026-10-01T23:30:12.054Z",
+  "durationMs": 143,
+  "exit": 2,
+  "signal": null,
+  "inputBytes": 4055,
+  "inputSha256": "a7507409f7df9c39fcdcefc00e7d690b3f2166460d9dec08a81b4bedda1d35f7",
+  "stdoutBytes": 362,
+  "stdoutSha256": "4c0c95e09bc4a39c9133ff01539064a366a51dba67a7390aa77f7c43dc818160",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "transport": "os-stdin"
+}

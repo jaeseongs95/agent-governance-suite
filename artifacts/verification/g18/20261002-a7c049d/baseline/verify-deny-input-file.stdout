@@ -1,0 +1,1 @@
+{"schemaVersion":"1.0.0","valid":false,"errorCode":"INVALID_TRANSITION","reason":"READY receipt만 실행 직전 재검증할 수 있습니다.","actionDigest":"sha256:a312a877cc305e39a3999553ee9f39e22784142c1d1ba31d1d7da10511d64960","targetDigest":"sha256:2bc598c73f3b8eae5d63420b9c7a85865aedcc3ac958c8055a7db70f120cc825"}

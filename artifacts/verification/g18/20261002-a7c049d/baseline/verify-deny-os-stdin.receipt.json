@@ -1,0 +1,20 @@
+{
+  "id": "verify-deny-os-stdin",
+  "command": [
+    "<NODE_EXECUTABLE>",
+    "--import",
+    "<EVIDENCE_ROOT>/stream-preload.mjs",
+    "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+  ],
+  "cwd": "<CANDIDATE_ROOT>",
+  "startedAt": "2026-10-01T23:29:43.575Z",
+  "durationMs": 140,
+  "exit": 2,
+  "signal": null,
+  "inputBytes": 4157,
+  "inputSha256": "bd257583ff3b6c52d8bce5522b38e190689a38c2104d6f76c3d043c2bad9542e",
+  "stdoutBytes": 324,
+  "stdoutSha256": "2d6bf82d0dd9c671f64ef8450f66972e51c4d057d670744b1c7927a129e0b1eb",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "transport": "os-stdin"
+}

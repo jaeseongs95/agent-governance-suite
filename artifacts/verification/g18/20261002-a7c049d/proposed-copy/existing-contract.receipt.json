@@ -1,0 +1,19 @@
+{
+  "id": "existing-contract",
+  "command": [
+    "<NODE_EXECUTABLE>",
+    "--test",
+    "<EPHEMERAL_ROOT>/copy/tests/mutation-risk-preflight/preflight.node-test.mjs"
+  ],
+  "cwd": "<EPHEMERAL_ROOT>/copy",
+  "startedAt": "2026-10-01T23:30:07.177Z",
+  "durationMs": 587,
+  "exit": 0,
+  "signal": null,
+  "inputBytes": 2,
+  "inputSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "stdoutBytes": 1367,
+  "stdoutSha256": "b1648b66ec9467a529696082f4ae83fd244e28bd050e2b62132e50c6a32c802a",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "transport": "direct"
+}

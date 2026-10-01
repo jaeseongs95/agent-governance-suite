@@ -1,0 +1,20 @@
+{
+  "id": "verify-emoji-1",
+  "command": [
+    "<NODE_EXECUTABLE>",
+    "--import",
+    "<EVIDENCE_ROOT>/stream-preload.mjs",
+    "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+  ],
+  "cwd": "<CANDIDATE_ROOT>",
+  "startedAt": "2026-10-01T23:29:40.878Z",
+  "durationMs": 151,
+  "exit": 2,
+  "signal": null,
+  "inputBytes": 4069,
+  "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+  "stdoutBytes": 362,
+  "stdoutSha256": "7d5d26b83cf2c418e4acb701f012c8dd8ec4b1a37fd021e41099c2f21108bead",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "transport": "readable"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "verify-tamper-input-file",
+  "command": [
+    "<NODE_EXECUTABLE>",
+    "<EPHEMERAL_ROOT>/copy/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+    "--input",
+    "<EVIDENCE_ROOT>/proposed-copy/verify-tamper-input-file.input.json"
+  ],
+  "cwd": "<EPHEMERAL_ROOT>/copy",
+  "startedAt": "2026-10-01T23:30:10.928Z",
+  "durationMs": 137,
+  "exit": 2,
+  "signal": null,
+  "inputBytes": 4069,
+  "inputSha256": "033bb8b281e63b5736693a7b09e9e8b8e4c24c5a01df7e8f36e80f9c33379f14",
+  "stdoutBytes": 362,
+  "stdoutSha256": "1aba7bfc8d311325f943baea18f951322b61d1467b4c4616c117412ea63b835c",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "transport": "input-file"
+}

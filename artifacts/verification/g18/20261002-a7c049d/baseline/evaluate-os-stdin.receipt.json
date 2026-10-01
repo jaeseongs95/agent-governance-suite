@@ -1,0 +1,20 @@
+{
+  "id": "evaluate-os-stdin",
+  "command": [
+    "<NODE_EXECUTABLE>",
+    "--import",
+    "<EVIDENCE_ROOT>/stream-preload.mjs",
+    "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs"
+  ],
+  "cwd": "<CANDIDATE_ROOT>",
+  "startedAt": "2026-10-01T23:29:43.160Z",
+  "durationMs": 137,
+  "exit": 0,
+  "signal": null,
+  "inputBytes": 1778,
+  "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+  "stdoutBytes": 2225,
+  "stdoutSha256": "7863dacc6522c019c1f1a4abc9d74396372cda021a185ae662fbce4f963d9555",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "transport": "os-stdin"
+}

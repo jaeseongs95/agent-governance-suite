@@ -1,0 +1,20 @@
+{
+  "id": "evaluate-deny-input-file",
+  "command": [
+    "<NODE_EXECUTABLE>",
+    "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+    "--input",
+    "<EVIDENCE_ROOT>/baseline/evaluate-deny-input-file.input.json"
+  ],
+  "cwd": "<CANDIDATE_ROOT>",
+  "startedAt": "2026-10-01T23:29:42.434Z",
+  "durationMs": 148,
+  "exit": 2,
+  "signal": null,
+  "inputBytes": 1776,
+  "inputSha256": "31c123c9420c70e37703ba8f2fbc0099695dbfdbac508475f743f1c3986cf09d",
+  "stdoutBytes": 2315,
+  "stdoutSha256": "dce11d4ca86eabdb6f09153a741b456142d35419590f6254c7e8b725589c6524",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "transport": "input-file"
+}

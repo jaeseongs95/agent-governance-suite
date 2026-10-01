@@ -1,0 +1,20 @@
+{
+  "id": "verify-deny-input-file",
+  "command": [
+    "<NODE_EXECUTABLE>",
+    "<EPHEMERAL_ROOT>/copy/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+    "--input",
+    "<EVIDENCE_ROOT>/proposed-copy/verify-deny-input-file.input.json"
+  ],
+  "cwd": "<EPHEMERAL_ROOT>/copy",
+  "startedAt": "2026-10-01T23:30:10.639Z",
+  "durationMs": 148,
+  "exit": 2,
+  "signal": null,
+  "inputBytes": 4157,
+  "inputSha256": "f1d4eb30a45252e5d249efdcaca80927b229fb630fb4dc53e95a0a9135131faf",
+  "stdoutBytes": 324,
+  "stdoutSha256": "dd425dc474e41b2ac2166b95f432e69013047063dc40a2e5761f094e554cfc9a",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "transport": "input-file"
+}

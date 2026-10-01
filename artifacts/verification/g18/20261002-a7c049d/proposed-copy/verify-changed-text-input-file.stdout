@@ -1,0 +1,1 @@
+{"schemaVersion":"1.0.0","valid":false,"errorCode":"STALE_REVISION","reason":"receipt가 원 관측 시각의 intent, 증거 또는 고정 유효기간과 일치하지 않습니다.","actionDigest":"sha256:5fc455133ec2119433fcee4801d69e8d6b1131359832154776e71fdc60f24af4","targetDigest":"sha256:2bc598c73f3b8eae5d63420b9c7a85865aedcc3ac958c8055a7db70f120cc825"}

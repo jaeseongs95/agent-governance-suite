@@ -1,0 +1,21 @@
+✔ 정상·경계·실패 fixture가 실제 판정과 일치한다 (15.329402ms)
+✔ READY 보고서는 계약을 통과하고 실행 권한을 부여하지 않는다 (71.976685ms)
+✔ 여러 대상이 같은 evidence를 공유해도 보고서와 receipt가 계약을 통과한다 (49.560178ms)
+✔ receipt는 대상 fingerprint, action과 만료 시각 변경을 거부한다 (2.462316ms)
+✔ receipt 유효기간 연장과 report 필드 변조를 거부한다 (1.625799ms)
+✔ approval·current-state·recovery·blast-radius evidence 교체를 거부한다 (2.294835ms)
+✔ supplied digest가 같아도 scope·authorization 실제 내용 변경을 거부한다 (3.071381ms)
+✔ intent와 report는 verifyReceipt에서 JSON Schema로 엄격 검증된다 (0.978974ms)
+✔ 계약 위반 intent도 schema-valid BLOCKED 보고서로 정규화한다 (22.526792ms)
+✔ Windows drive·UNC root와 변수·glob target은 안전하지 않다 (3.208386ms)
+✔ JSON CLI는 MCP와 suite import 없이 직접 실행되고 아무 파일도 바꾸지 않는다 (182.015568ms)
+✔ vendored TaskEnvelope snapshot checksum이 lock과 일치한다 (1.401481ms)
+✔ integration descriptor는 precondition gate이고 독립 감사로 가장하지 않는다 (0.938248ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 545.455947

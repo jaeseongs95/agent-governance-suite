@@ -1,0 +1,1445 @@
+{
+  "phase": "baseline",
+  "startedAt": "2026-10-01T23:29:38.904Z",
+  "endedAt": "2026-10-01T23:29:45.037Z",
+  "requestedRouting": {
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "fallback": false
+  },
+  "observedRouting": "unobservable from this execution API; no provider/model call made",
+  "originalHashes": [
+    {
+      "path": "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+      "sha256": "39ad62d3f1bde2194d3efd116ee81b52e1d59cbeb6a30d5a2a8beb3db4d4b1a5"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+      "sha256": "0c738b534c3fb15bd9919873df6cd9e05314647de9cefdba541748f8ee3e612f"
+    },
+    {
+      "path": "tests/mutation-risk-preflight/preflight.node-test.mjs",
+      "sha256": "20e38a93b2c018f8aaa6bba938382edf4b14185e4d72e710b22900a57d08828e"
+    }
+  ],
+  "copyChanges": [],
+  "checks": 33,
+  "passed": 19,
+  "failed": 14,
+  "failures": [
+    {
+      "id": "evaluate-korean-1",
+      "exit": 0,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:9a56aca8bd59a4690f021d99b7655509a853cd40dd16c3453d32e3dca3ce302e'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    },
+    {
+      "id": "verify-korean-1",
+      "exit": 2,
+      "reasons": [
+        "Expected values to be strictly equal:\n\nfalse !== true\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    },
+    {
+      "id": "evaluate-korean-2",
+      "exit": 0,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:056484cd08baf2bceeda1598a611ae8c9240019d185b7dc90b1e00f12bcf70d7'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    },
+    {
+      "id": "verify-korean-2",
+      "exit": 2,
+      "reasons": [
+        "Expected values to be strictly equal:\n\nfalse !== true\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    },
+    {
+      "id": "evaluate-emoji-1",
+      "exit": 0,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:ebf69c03cc981915517bb96c7fe9b8c917a3badcaee4dbbd70b6d8a233c58ee8'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    },
+    {
+      "id": "verify-emoji-1",
+      "exit": 2,
+      "reasons": [
+        "Expected values to be strictly equal:\n\nfalse !== true\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    },
+    {
+      "id": "evaluate-emoji-2",
+      "exit": 0,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:32c447a5fe1194a8e87959a5f0b49a4dc5036800eb3e2608b172c235c29574e7'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    },
+    {
+      "id": "verify-emoji-2",
+      "exit": 2,
+      "reasons": [
+        "Expected values to be strictly equal:\n\nfalse !== true\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    },
+    {
+      "id": "evaluate-emoji-3",
+      "exit": 0,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:b05d114f7beb803463d946889537f1fc31c99bd5d746023fa8af7bd83ea4f71c'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    },
+    {
+      "id": "verify-emoji-3",
+      "exit": 2,
+      "reasons": [
+        "Expected values to be strictly equal:\n\nfalse !== true\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    },
+    {
+      "id": "evaluate-one-byte",
+      "exit": 0,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:7f3ff1b80da5c06bf7387ffdd85b64820596dbbbda6635382e4eadc1ca278fa7'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    },
+    {
+      "id": "verify-one-byte",
+      "exit": 2,
+      "reasons": [
+        "Expected values to be strictly equal:\n\nfalse !== true\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    },
+    {
+      "id": "evaluate-large-os-stdin",
+      "exit": 0,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:741a000da0788d4720f2c557ac0ee7d4a6516776c0a78b4bc3121d6a7ffa64a7'\n- 'sha256:8ed22af2a1e7e7635546bcb4bef8074a5021900df34fb7bbe309272f62dcc00e'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    },
+    {
+      "id": "verify-large-os-stdin",
+      "exit": 2,
+      "reasons": [
+        "Expected values to be strictly equal:\n\n2 !== 0\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ]
+    }
+  ],
+  "existingContractStatus": 0,
+  "control": "all seven real Readable StringDecoder control cases matched original bytes",
+  "limits": [
+    "Synthetic read-only CLI inputs only; no mutation invoked",
+    "Original contract historical dates are fixed test constants, not current receipts or authority",
+    "New harness approval/report/verification timestamps generated fresh for this run",
+    "No source GO/Task/revision/writer authority inferred",
+    "No D7 R03 retry or causality claim",
+    "Real OS pipe chunk geometry is observed, not guaranteed; deterministic Readable cases force the required byte boundaries"
+  ],
+  "results": [
+    {
+      "id": "existing-contract",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--test",
+        "<CANDIDATE_ROOT>/tests/mutation-risk-preflight/preflight.node-test.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:38.908Z",
+      "durationMs": 586,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 2,
+      "inputSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "stdoutBytes": 1368,
+      "stdoutSha256": "92633dadc4e49a67008f7d198996e0795db060a908e927b205f24c5fa9c6fab6",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "direct",
+      "passed": true,
+      "reasons": []
+    },
+    {
+      "id": "evaluate-whole",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:39.645Z",
+      "durationMs": 187,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 1778,
+      "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+      "stdoutBytes": 2225,
+      "stdoutSha256": "f4a26c91772866141675571ef266012445071e8c9d6c23d2995d1e9c30a30ea2",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": true,
+      "reasons": [],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 1778,
+        "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "readCalls": 2,
+        "scheduledTicks": 2,
+        "pushedChunks": 1,
+        "iteratorChunkCount": 1,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1778
+        ],
+        "iteratorByteSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "concatenatedTextSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "replacementCharacters": 0,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "verify-whole",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:39.835Z",
+      "durationMs": 148,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 4069,
+      "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+      "stdoutBytes": 364,
+      "stdoutSha256": "c8414b27e6da8b13ec0924f3c819352f39c80462da6b32a3d0362a65ac3b842e",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": true,
+      "reasons": [],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 4069,
+        "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "readCalls": 2,
+        "scheduledTicks": 2,
+        "pushedChunks": 1,
+        "iteratorChunkCount": 1,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          4069
+        ],
+        "iteratorByteSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "concatenatedTextSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "replacementCharacters": 0,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "evaluate-korean-1",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:40.031Z",
+      "durationMs": 157,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 1778,
+      "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+      "stdoutBytes": 2231,
+      "stdoutSha256": "23b7c08344a0ec12fad2f236a71a39d1d7e1afb6206cf0a9a692836cfe920e2b",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": false,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:9a56aca8bd59a4690f021d99b7655509a853cd40dd16c3453d32e3dca3ce302e'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 1778,
+        "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "readCalls": 3,
+        "scheduledTicks": 3,
+        "pushedChunks": 2,
+        "iteratorChunkCount": 2,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1759,
+          19
+        ],
+        "iteratorByteSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "concatenatedTextSha256": "572983879786b33a5638c3973d7e718e9e278fdb9fcad50765a9e97e9b5b5280",
+        "replacementCharacters": 3,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "verify-korean-1",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:40.189Z",
+      "durationMs": 152,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4069,
+      "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+      "stdoutBytes": 362,
+      "stdoutSha256": "7d5d26b83cf2c418e4acb701f012c8dd8ec4b1a37fd021e41099c2f21108bead",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": false,
+      "reasons": [
+        "Expected values to be strictly equal:\n\nfalse !== true\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 4069,
+        "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "readCalls": 3,
+        "scheduledTicks": 3,
+        "pushedChunks": 2,
+        "iteratorChunkCount": 2,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1817,
+          2252
+        ],
+        "iteratorByteSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "concatenatedTextSha256": "b965cbbc11a6d89dd8d2c3c70c3056512bc62619d551d1d6532f5bbd62360ac9",
+        "replacementCharacters": 3,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "evaluate-korean-2",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:40.383Z",
+      "durationMs": 148,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 1778,
+      "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+      "stdoutBytes": 2228,
+      "stdoutSha256": "7c3f09d1a0b34d731499bb235b5efd32c3f4f43603c46a27bd516b43b9d1b274",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": false,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:056484cd08baf2bceeda1598a611ae8c9240019d185b7dc90b1e00f12bcf70d7'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 1778,
+        "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "readCalls": 3,
+        "scheduledTicks": 3,
+        "pushedChunks": 2,
+        "iteratorChunkCount": 2,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1760,
+          18
+        ],
+        "iteratorByteSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "concatenatedTextSha256": "d5620d3a9f9751787e01052dc38ae5d0da24adb53d0c48d827f1a887b878d82c",
+        "replacementCharacters": 2,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "verify-korean-2",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:40.531Z",
+      "durationMs": 155,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4069,
+      "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+      "stdoutBytes": 362,
+      "stdoutSha256": "7d5d26b83cf2c418e4acb701f012c8dd8ec4b1a37fd021e41099c2f21108bead",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": false,
+      "reasons": [
+        "Expected values to be strictly equal:\n\nfalse !== true\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 4069,
+        "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "readCalls": 3,
+        "scheduledTicks": 3,
+        "pushedChunks": 2,
+        "iteratorChunkCount": 2,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1818,
+          2251
+        ],
+        "iteratorByteSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "concatenatedTextSha256": "9fa7f986984f8001621da261e154c3c5c62da30cf154e0e95e9c92a999bef8e7",
+        "replacementCharacters": 2,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "evaluate-emoji-1",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:40.731Z",
+      "durationMs": 146,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 1778,
+      "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+      "stdoutBytes": 2233,
+      "stdoutSha256": "db110ad892d187df5391e6a336515da48957a4b1ed13085f25e71f1acf0ba035",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": false,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:ebf69c03cc981915517bb96c7fe9b8c917a3badcaee4dbbd70b6d8a233c58ee8'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 1778,
+        "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "readCalls": 3,
+        "scheduledTicks": 3,
+        "pushedChunks": 2,
+        "iteratorChunkCount": 2,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1765,
+          13
+        ],
+        "iteratorByteSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "concatenatedTextSha256": "ef206e5f1569c072afb61fae4ded272140cd7e3e5a9685dcc13fde11429f280c",
+        "replacementCharacters": 4,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "verify-emoji-1",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:40.878Z",
+      "durationMs": 151,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4069,
+      "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+      "stdoutBytes": 362,
+      "stdoutSha256": "7d5d26b83cf2c418e4acb701f012c8dd8ec4b1a37fd021e41099c2f21108bead",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": false,
+      "reasons": [
+        "Expected values to be strictly equal:\n\nfalse !== true\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 4069,
+        "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "readCalls": 3,
+        "scheduledTicks": 3,
+        "pushedChunks": 2,
+        "iteratorChunkCount": 2,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1823,
+          2246
+        ],
+        "iteratorByteSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "concatenatedTextSha256": "eca47845402c9047a0549eddcdd33c2a5390be23702d1e068b01d8c39dc9a038",
+        "replacementCharacters": 4,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "evaluate-emoji-2",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:41.077Z",
+      "durationMs": 141,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 1778,
+      "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+      "stdoutBytes": 2230,
+      "stdoutSha256": "444c364870a004f9d737e8dbc9bf25f1dd3d9251f28b74591a2f717b07beaa42",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": false,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:32c447a5fe1194a8e87959a5f0b49a4dc5036800eb3e2608b172c235c29574e7'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 1778,
+        "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "readCalls": 3,
+        "scheduledTicks": 3,
+        "pushedChunks": 2,
+        "iteratorChunkCount": 2,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1766,
+          12
+        ],
+        "iteratorByteSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "concatenatedTextSha256": "ff8c407ae7a8aed6b2f83426f034612f9c1a6e65b47d30c9a3bd1885d20272bd",
+        "replacementCharacters": 3,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "verify-emoji-2",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:41.218Z",
+      "durationMs": 142,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4069,
+      "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+      "stdoutBytes": 362,
+      "stdoutSha256": "7d5d26b83cf2c418e4acb701f012c8dd8ec4b1a37fd021e41099c2f21108bead",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": false,
+      "reasons": [
+        "Expected values to be strictly equal:\n\nfalse !== true\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 4069,
+        "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "readCalls": 3,
+        "scheduledTicks": 3,
+        "pushedChunks": 2,
+        "iteratorChunkCount": 2,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1824,
+          2245
+        ],
+        "iteratorByteSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "concatenatedTextSha256": "537f0e23e27a1c4c5dc02b73ceca366ba81fdb1c03ea3c7af055593ad4496390",
+        "replacementCharacters": 3,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "evaluate-emoji-3",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:41.402Z",
+      "durationMs": 154,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 1778,
+      "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+      "stdoutBytes": 2227,
+      "stdoutSha256": "0dfc0346b6419d893c8be7b9142a0c3bae87278a54e6e0a638dbfa83ebd0a809",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": false,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:b05d114f7beb803463d946889537f1fc31c99bd5d746023fa8af7bd83ea4f71c'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 1778,
+        "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "readCalls": 3,
+        "scheduledTicks": 3,
+        "pushedChunks": 2,
+        "iteratorChunkCount": 2,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1767,
+          11
+        ],
+        "iteratorByteSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "concatenatedTextSha256": "592debc0457413359f10ef79c31898079d7a505b3cd69e3ebeaf94eeeb96f0ea",
+        "replacementCharacters": 2,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "verify-emoji-3",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:41.557Z",
+      "durationMs": 145,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4069,
+      "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+      "stdoutBytes": 362,
+      "stdoutSha256": "7d5d26b83cf2c418e4acb701f012c8dd8ec4b1a37fd021e41099c2f21108bead",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": false,
+      "reasons": [
+        "Expected values to be strictly equal:\n\nfalse !== true\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 4069,
+        "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "readCalls": 3,
+        "scheduledTicks": 3,
+        "pushedChunks": 2,
+        "iteratorChunkCount": 2,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1825,
+          2244
+        ],
+        "iteratorByteSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "concatenatedTextSha256": "68db3ba5e728c5d4c855affb1b65f02a44e4b17d8673ffc7e779cec916f2cc5e",
+        "replacementCharacters": 2,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "evaluate-one-byte",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:41.770Z",
+      "durationMs": 178,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 1778,
+      "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+      "stdoutBytes": 2257,
+      "stdoutSha256": "227951f79e33bfed1fbe6c471cf2228625e65a12dada6fbf213a45be6e0bf1ce",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": false,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:7f3ff1b80da5c06bf7387ffdd85b64820596dbbbda6635382e4eadc1ca278fa7'\n- 'sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 1778,
+        "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "readCalls": 1779,
+        "scheduledTicks": 1779,
+        "pushedChunks": 1778,
+        "iteratorChunkCount": 1778,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "iteratorByteSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "concatenatedTextSha256": "4eb4425cf2f40e030ded37c536636238931fdb41b45c027383384f80bcb3fbf7",
+        "replacementCharacters": 16,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "verify-one-byte",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:41.948Z",
+      "durationMs": 190,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4069,
+      "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+      "stdoutBytes": 362,
+      "stdoutSha256": "d75187a41c55d2ece86a57537e0d7cdb7b12572166768c1889423829b21a3bb7",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "readable",
+      "passed": false,
+      "reasons": [
+        "Expected values to be strictly equal:\n\nfalse !== true\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "readable",
+        "objectMode": false,
+        "inputBytes": 4069,
+        "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "readCalls": 4070,
+        "scheduledTicks": 4070,
+        "pushedChunks": 4069,
+        "iteratorChunkCount": 4069,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "iteratorByteSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "concatenatedTextSha256": "d55e50e8185a846630b6970d8382f99d0a8e48a30c5a0b39c805b48e587bf2e4",
+        "replacementCharacters": 440,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "evaluate-input-file",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+        "--input",
+        "<EVIDENCE_ROOT>/baseline/evaluate-input-file.input.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:42.140Z",
+      "durationMs": 150,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 1778,
+      "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+      "stdoutBytes": 2225,
+      "stdoutSha256": "702d7426c043c6eb06b547633256c5c352fb0956f8b658474d841c10bf640876",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "input-file",
+      "passed": true,
+      "reasons": [],
+      "trace": null
+    },
+    {
+      "id": "verify-input-file",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+        "--input",
+        "<EVIDENCE_ROOT>/baseline/verify-input-file.input.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:42.291Z",
+      "durationMs": 143,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 4069,
+      "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+      "stdoutBytes": 364,
+      "stdoutSha256": "c8414b27e6da8b13ec0924f3c819352f39c80462da6b32a3d0362a65ac3b842e",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "input-file",
+      "passed": true,
+      "reasons": [],
+      "trace": null
+    },
+    {
+      "id": "evaluate-deny-input-file",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+        "--input",
+        "<EVIDENCE_ROOT>/baseline/evaluate-deny-input-file.input.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:42.434Z",
+      "durationMs": 148,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 1776,
+      "inputSha256": "31c123c9420c70e37703ba8f2fbc0099695dbfdbac508475f743f1c3986cf09d",
+      "stdoutBytes": 2315,
+      "stdoutSha256": "dce11d4ca86eabdb6f09153a741b456142d35419590f6254c7e8b725589c6524",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "input-file",
+      "passed": true,
+      "reasons": [],
+      "trace": null
+    },
+    {
+      "id": "verify-deny-input-file",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+        "--input",
+        "<EVIDENCE_ROOT>/baseline/verify-deny-input-file.input.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:42.583Z",
+      "durationMs": 135,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4157,
+      "inputSha256": "bd257583ff3b6c52d8bce5522b38e190689a38c2104d6f76c3d043c2bad9542e",
+      "stdoutBytes": 324,
+      "stdoutSha256": "2d6bf82d0dd9c671f64ef8450f66972e51c4d057d670744b1c7927a129e0b1eb",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "input-file",
+      "passed": true,
+      "reasons": [],
+      "trace": null
+    },
+    {
+      "id": "verify-ttl-input-file",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+        "--input",
+        "<EVIDENCE_ROOT>/baseline/verify-ttl-input-file.input.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:42.719Z",
+      "durationMs": 153,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4069,
+      "inputSha256": "1e78bcf7aca9f75bf4913bafedf5282c3797643d355fdcf3fbdad8a3a60a6087",
+      "stdoutBytes": 299,
+      "stdoutSha256": "bfea17fabba210e1a4f4a17a6bcd2919ef73bac5438509f057c41e4562e5b349",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "input-file",
+      "passed": true,
+      "reasons": [],
+      "trace": null
+    },
+    {
+      "id": "verify-tamper-input-file",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+        "--input",
+        "<EVIDENCE_ROOT>/baseline/verify-tamper-input-file.input.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:42.872Z",
+      "durationMs": 140,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4069,
+      "inputSha256": "a460f87f11b186cf2e6a5aca83906aee80205f42fd10b6738de5b0836dc318ba",
+      "stdoutBytes": 362,
+      "stdoutSha256": "7d5d26b83cf2c418e4acb701f012c8dd8ec4b1a37fd021e41099c2f21108bead",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "input-file",
+      "passed": true,
+      "reasons": [],
+      "trace": null
+    },
+    {
+      "id": "verify-changed-text-input-file",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+        "--input",
+        "<EVIDENCE_ROOT>/baseline/verify-changed-text-input-file.input.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:43.013Z",
+      "durationMs": 147,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4055,
+      "inputSha256": "69d6d69438f58966f1199d533833437d916d4a00faaab3b2ff527e79c973fd3c",
+      "stdoutBytes": 362,
+      "stdoutSha256": "91aaab4d50482d8a22497eb6a557025aa62bf25a124433e1d1141b77c4e8c417",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "input-file",
+      "passed": true,
+      "reasons": [],
+      "trace": null
+    },
+    {
+      "id": "evaluate-os-stdin",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:43.160Z",
+      "durationMs": 137,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 1778,
+      "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+      "stdoutBytes": 2225,
+      "stdoutSha256": "7863dacc6522c019c1f1a4abc9d74396372cda021a185ae662fbce4f963d9555",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "os-stdin",
+      "passed": true,
+      "reasons": [],
+      "trace": {
+        "transport": "os-stdin",
+        "objectMode": false,
+        "inputBytes": 1778,
+        "inputSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "readCalls": 0,
+        "scheduledTicks": 0,
+        "pushedChunks": 0,
+        "iteratorChunkCount": 1,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1778
+        ],
+        "iteratorByteSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "concatenatedTextSha256": "7c1c9e3d2a551ceceee89e92c5f6d6ad62858a252f5a36986bc5154cade19f8c",
+        "replacementCharacters": 0,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "verify-os-stdin",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:43.298Z",
+      "durationMs": 142,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 4069,
+      "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+      "stdoutBytes": 364,
+      "stdoutSha256": "c8414b27e6da8b13ec0924f3c819352f39c80462da6b32a3d0362a65ac3b842e",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "os-stdin",
+      "passed": true,
+      "reasons": [],
+      "trace": {
+        "transport": "os-stdin",
+        "objectMode": false,
+        "inputBytes": 4069,
+        "inputSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "readCalls": 0,
+        "scheduledTicks": 0,
+        "pushedChunks": 0,
+        "iteratorChunkCount": 1,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          4069
+        ],
+        "iteratorByteSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "concatenatedTextSha256": "fc3678f772d51b241b57a9f1e86812f586e63076b5929b734e4289285a136be9",
+        "replacementCharacters": 0,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "evaluate-deny-os-stdin",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:43.440Z",
+      "durationMs": 134,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 1776,
+      "inputSha256": "31c123c9420c70e37703ba8f2fbc0099695dbfdbac508475f743f1c3986cf09d",
+      "stdoutBytes": 2315,
+      "stdoutSha256": "91ef419ff4be98b80cc3075a229e4e1f7488ffacb86d48937ae7c748560abebd",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "os-stdin",
+      "passed": true,
+      "reasons": [],
+      "trace": {
+        "transport": "os-stdin",
+        "objectMode": false,
+        "inputBytes": 1776,
+        "inputSha256": "31c123c9420c70e37703ba8f2fbc0099695dbfdbac508475f743f1c3986cf09d",
+        "readCalls": 0,
+        "scheduledTicks": 0,
+        "pushedChunks": 0,
+        "iteratorChunkCount": 1,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          1776
+        ],
+        "iteratorByteSha256": "31c123c9420c70e37703ba8f2fbc0099695dbfdbac508475f743f1c3986cf09d",
+        "concatenatedTextSha256": "31c123c9420c70e37703ba8f2fbc0099695dbfdbac508475f743f1c3986cf09d",
+        "replacementCharacters": 0,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "verify-deny-os-stdin",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:43.575Z",
+      "durationMs": 140,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4157,
+      "inputSha256": "bd257583ff3b6c52d8bce5522b38e190689a38c2104d6f76c3d043c2bad9542e",
+      "stdoutBytes": 324,
+      "stdoutSha256": "2d6bf82d0dd9c671f64ef8450f66972e51c4d057d670744b1c7927a129e0b1eb",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "os-stdin",
+      "passed": true,
+      "reasons": [],
+      "trace": {
+        "transport": "os-stdin",
+        "objectMode": false,
+        "inputBytes": 4157,
+        "inputSha256": "bd257583ff3b6c52d8bce5522b38e190689a38c2104d6f76c3d043c2bad9542e",
+        "readCalls": 0,
+        "scheduledTicks": 0,
+        "pushedChunks": 0,
+        "iteratorChunkCount": 1,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          4157
+        ],
+        "iteratorByteSha256": "bd257583ff3b6c52d8bce5522b38e190689a38c2104d6f76c3d043c2bad9542e",
+        "concatenatedTextSha256": "bd257583ff3b6c52d8bce5522b38e190689a38c2104d6f76c3d043c2bad9542e",
+        "replacementCharacters": 0,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "verify-ttl-os-stdin",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:43.716Z",
+      "durationMs": 147,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4069,
+      "inputSha256": "1e78bcf7aca9f75bf4913bafedf5282c3797643d355fdcf3fbdad8a3a60a6087",
+      "stdoutBytes": 299,
+      "stdoutSha256": "bfea17fabba210e1a4f4a17a6bcd2919ef73bac5438509f057c41e4562e5b349",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "os-stdin",
+      "passed": true,
+      "reasons": [],
+      "trace": {
+        "transport": "os-stdin",
+        "objectMode": false,
+        "inputBytes": 4069,
+        "inputSha256": "1e78bcf7aca9f75bf4913bafedf5282c3797643d355fdcf3fbdad8a3a60a6087",
+        "readCalls": 0,
+        "scheduledTicks": 0,
+        "pushedChunks": 0,
+        "iteratorChunkCount": 1,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          4069
+        ],
+        "iteratorByteSha256": "1e78bcf7aca9f75bf4913bafedf5282c3797643d355fdcf3fbdad8a3a60a6087",
+        "concatenatedTextSha256": "1e78bcf7aca9f75bf4913bafedf5282c3797643d355fdcf3fbdad8a3a60a6087",
+        "replacementCharacters": 0,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "verify-tamper-os-stdin",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:43.864Z",
+      "durationMs": 152,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4069,
+      "inputSha256": "a460f87f11b186cf2e6a5aca83906aee80205f42fd10b6738de5b0836dc318ba",
+      "stdoutBytes": 362,
+      "stdoutSha256": "7d5d26b83cf2c418e4acb701f012c8dd8ec4b1a37fd021e41099c2f21108bead",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "os-stdin",
+      "passed": true,
+      "reasons": [],
+      "trace": {
+        "transport": "os-stdin",
+        "objectMode": false,
+        "inputBytes": 4069,
+        "inputSha256": "a460f87f11b186cf2e6a5aca83906aee80205f42fd10b6738de5b0836dc318ba",
+        "readCalls": 0,
+        "scheduledTicks": 0,
+        "pushedChunks": 0,
+        "iteratorChunkCount": 1,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          4069
+        ],
+        "iteratorByteSha256": "a460f87f11b186cf2e6a5aca83906aee80205f42fd10b6738de5b0836dc318ba",
+        "concatenatedTextSha256": "a460f87f11b186cf2e6a5aca83906aee80205f42fd10b6738de5b0836dc318ba",
+        "replacementCharacters": 0,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "verify-changed-text-os-stdin",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:44.016Z",
+      "durationMs": 146,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 4055,
+      "inputSha256": "69d6d69438f58966f1199d533833437d916d4a00faaab3b2ff527e79c973fd3c",
+      "stdoutBytes": 362,
+      "stdoutSha256": "91aaab4d50482d8a22497eb6a557025aa62bf25a124433e1d1141b77c4e8c417",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "os-stdin",
+      "passed": true,
+      "reasons": [],
+      "trace": {
+        "transport": "os-stdin",
+        "objectMode": false,
+        "inputBytes": 4055,
+        "inputSha256": "69d6d69438f58966f1199d533833437d916d4a00faaab3b2ff527e79c973fd3c",
+        "readCalls": 0,
+        "scheduledTicks": 0,
+        "pushedChunks": 0,
+        "iteratorChunkCount": 1,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          4055
+        ],
+        "iteratorByteSha256": "69d6d69438f58966f1199d533833437d916d4a00faaab3b2ff527e79c973fd3c",
+        "concatenatedTextSha256": "69d6d69438f58966f1199d533833437d916d4a00faaab3b2ff527e79c973fd3c",
+        "replacementCharacters": 0,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "evaluate-large-os-stdin",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:44.189Z",
+      "durationMs": 190,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 1312501,
+      "inputSha256": "f016dcd72832eac2b767fd5bc6d61f7a80e6c495468897296ea61878faac9e65",
+      "stdoutBytes": 1313029,
+      "stdoutSha256": "f5e70b99f51794207d6c5b206ebc2feb85313d1220d1523d2ecdd4b412f58199",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "os-stdin",
+      "passed": false,
+      "reasons": [
+        "independent action digest\n+ actual - expected\n\n+ 'sha256:741a000da0788d4720f2c557ac0ee7d4a6516776c0a78b4bc3121d6a7ffa64a7'\n- 'sha256:8ed22af2a1e7e7635546bcb4bef8074a5021900df34fb7bbe309272f62dcc00e'\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "os-stdin",
+        "objectMode": false,
+        "inputBytes": 1312501,
+        "inputSha256": "f016dcd72832eac2b767fd5bc6d61f7a80e6c495468897296ea61878faac9e65",
+        "readCalls": 0,
+        "scheduledTicks": 0,
+        "pushedChunks": 0,
+        "iteratorChunkCount": 25,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          65536,
+          65536,
+          65536,
+          65536,
+          36548,
+          65536,
+          65536,
+          28995,
+          36544,
+          65536,
+          65536,
+          28995
+        ],
+        "iteratorByteSha256": "f016dcd72832eac2b767fd5bc6d61f7a80e6c495468897296ea61878faac9e65",
+        "concatenatedTextSha256": "116aab57147bf87e809db47d490cf93b3b6bd6183760faef0e27bfe5c065d682",
+        "replacementCharacters": 44,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "verify-large-os-stdin",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "--import",
+        "<EVIDENCE_ROOT>/stream-preload.mjs",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:44.410Z",
+      "durationMs": 219,
+      "exit": 2,
+      "signal": null,
+      "inputBytes": 2625515,
+      "inputSha256": "b82ce48dbadb98d0c52738e1050043ff8d4178ce3bb961279c9e253a7e75cce8",
+      "stdoutBytes": 362,
+      "stdoutSha256": "a536a38dbf20f0d67d804ae99729f382aae4b38d122e8d02108907192d416b98",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "os-stdin",
+      "passed": false,
+      "reasons": [
+        "Expected values to be strictly equal:\n\n2 !== 0\n",
+        "Decoded text differs from independent original UTF-8 bytes"
+      ],
+      "trace": {
+        "transport": "os-stdin",
+        "objectMode": false,
+        "inputBytes": 2625515,
+        "inputSha256": "b82ce48dbadb98d0c52738e1050043ff8d4178ce3bb961279c9e253a7e75cce8",
+        "readCalls": 0,
+        "scheduledTicks": 0,
+        "pushedChunks": 0,
+        "iteratorChunkCount": 51,
+        "iteratorTypes": [
+          "Buffer"
+        ],
+        "firstChunkSizes": [
+          65536,
+          65536,
+          65536,
+          36547,
+          65536,
+          65536,
+          2,
+          65536,
+          65536,
+          2,
+          28993,
+          65536
+        ],
+        "iteratorByteSha256": "b82ce48dbadb98d0c52738e1050043ff8d4178ce3bb961279c9e253a7e75cce8",
+        "concatenatedTextSha256": "074c7a39b7b2eaabb6520aee7e624985ab2ca7a580ff1c5c3f737d41d65dfda7",
+        "replacementCharacters": 86,
+        "readableEncoding": null
+      }
+    },
+    {
+      "id": "evaluate-large-input-file",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+        "--input",
+        "<EVIDENCE_ROOT>/baseline/evaluate-large-input-file.input.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:44.642Z",
+      "durationMs": 159,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 1312501,
+      "inputSha256": "f016dcd72832eac2b767fd5bc6d61f7a80e6c495468897296ea61878faac9e65",
+      "stdoutBytes": 1312948,
+      "stdoutSha256": "17fc674f3e701f6606863adc480dbb53e3e9033cbc74537c8d2171cc2a449197",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "input-file",
+      "passed": true,
+      "reasons": [],
+      "trace": null
+    },
+    {
+      "id": "verify-large-input-file",
+      "command": [
+        "<NODE_EXECUTABLE>",
+        "<CANDIDATE_ROOT>/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+        "--input",
+        "<EVIDENCE_ROOT>/baseline/verify-large-input-file.input.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-01T23:29:44.835Z",
+      "durationMs": 200,
+      "exit": 0,
+      "signal": null,
+      "inputBytes": 2625515,
+      "inputSha256": "b82ce48dbadb98d0c52738e1050043ff8d4178ce3bb961279c9e253a7e75cce8",
+      "stdoutBytes": 364,
+      "stdoutSha256": "4818c50ee3d92bec774ead379fceefebd873e0903368fe5638989c06ced073e5",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transport": "input-file",
+      "passed": true,
+      "reasons": [],
+      "trace": null
+    }
+  ]
+}

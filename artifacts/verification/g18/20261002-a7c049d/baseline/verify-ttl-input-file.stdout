@@ -1,0 +1,1 @@
+{"schemaVersion":"1.0.0","valid":false,"errorCode":"STALE_REVISION","reason":"preflight receipt가 만료됐습니다.","actionDigest":"sha256:c2cb9ffc686dd542fde1beec3162f0410d76366a5760d7512843d33d26727f65","targetDigest":"sha256:2bc598c73f3b8eae5d63420b9c7a85865aedcc3ac958c8055a7db70f120cc825"}
