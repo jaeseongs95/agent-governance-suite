@@ -33,6 +33,61 @@ const MESSAGE_SCHEMA_VERSION = 1;
 const ACTIVE_WAKE_STATES = "('reserved', 'started', 'submitted', 'unknown')";
 const WAKE_STATE_CHECK = "CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted', 'expired-unobserved'))";
 const WAKE_COPY_COLUMNS = "nonce_digest, host, session_id, expires_at, consumed_at, state, nonce, instance_id, birth_generation, transport, relay_id, attempt_id, dispatch_epoch, retry_not_before, retry_count, started_at, outcome_at, observed_at, late_observed_at";
+const MESSAGE_SCHEMA_TABLE = "ags_session_message_schema";
+const MESSAGE_SCHEMA_SQL = `CREATE TABLE ${MESSAGE_SCHEMA_TABLE} (
+  singleton INTEGER PRIMARY KEY CHECK (singleton = 1), version INTEGER NOT NULL CHECK (version >= 1)
+) STRICT`;
+const WAKE_BASE_COLUMNS = "nonce_digest TEXT PRIMARY KEY, host TEXT NOT NULL, session_id TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT";
+const WAKE_ADDITIONS = [
+  ["state", "TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted'))"],
+  ["nonce", "TEXT"], ["instance_id", "TEXT"], ["birth_generation", "TEXT"], ["transport", "TEXT"],
+  ["relay_id", "TEXT"], ["attempt_id", "TEXT"], ["dispatch_epoch", "INTEGER NOT NULL DEFAULT 0"],
+  ["retry_not_before", "TEXT"], ["retry_count", "INTEGER NOT NULL DEFAULT 0"],
+  ["started_at", "TEXT"], ["outcome_at", "TEXT"], ["observed_at", "TEXT"], ["late_observed_at", "TEXT"],
+] as const;
+const WAKE_LEGACY_COLUMNS = `${WAKE_BASE_COLUMNS}, ${WAKE_ADDITIONS.map(([name, definition]) => `${name} ${definition}`).join(", ")}`;
+const WAKE_CURRENT_COLUMNS = `${WAKE_LEGACY_COLUMNS.replace(WAKE_ADDITIONS[0][1], `TEXT NOT NULL DEFAULT 'legacy' ${WAKE_STATE_CHECK}`)}, retired_at TEXT`;
+const WAKE_ACTIVE_INDEX_SQL = `CREATE UNIQUE INDEX wake_active_target ON wake_nonces (host, session_id) WHERE state IN ${ACTIVE_WAKE_STATES}`;
+
+function schemaSql(sql: string): string {
+  // Ignore formatting and quoted identifiers, but preserve every byte inside CHECK/default string literals.
+  return sql.replace(/'(?:''|[^'])*'|"(?:""|[^"])*"|\bIF NOT EXISTS\b|[\s;]+/giu,
+    token => token.startsWith("'") ? token : token.startsWith('"') ? token.slice(1, -1) : "");
+}
+
+/** The shared DB header belongs to its application, not this component. Identify only schemas we can migrate. */
+function messageSchema(database: DatabaseSync): { registered: boolean; rebuildWake: boolean } {
+  const objectSql = (name: string): string | null => {
+    const row = database.prepare("SELECT type, sql FROM sqlite_schema WHERE name = ?").get(name) as { type: string; sql: string } | undefined;
+    if (row && row.type !== "table") throw new Error(`Unsupported session message schema object: ${name}.`);
+    return row?.sql ?? null;
+  };
+  const marker = objectSql(MESSAGE_SCHEMA_TABLE);
+  if (marker !== null) {
+    if (schemaSql(marker) !== schemaSql(MESSAGE_SCHEMA_SQL)) throw new Error("Unsupported session message schema metadata.");
+    const rows = database.prepare(`SELECT singleton, version FROM ${MESSAGE_SCHEMA_TABLE}`).all() as Array<{ singleton: number; version: number }>;
+    if (rows.length !== 1 || rows[0]!.singleton !== 1) throw new Error("Unsupported session message schema metadata.");
+    if (rows[0]!.version > MESSAGE_SCHEMA_VERSION) throw new Error(`The session message component schema ${rows[0]!.version} is newer than this broker supports.`);
+    if (rows[0]!.version !== MESSAGE_SCHEMA_VERSION) throw new Error("Unsupported session message component schema version.");
+  }
+  const wake = objectSql("wake_nonces");
+  const matches = (columns: string) => wake !== null && schemaSql(wake) === schemaSql(`CREATE TABLE wake_nonces (${columns}) STRICT`);
+  const current = matches(WAKE_CURRENT_COLUMNS);
+  if (marker !== null && !current) throw new Error("Unsupported registered session message wake schema.");
+  if (wake !== null && !current && !matches(WAKE_BASE_COLUMNS) && !matches(WAKE_LEGACY_COLUMNS)) {
+    throw new Error("Unsupported legacy session message wake schema.");
+  }
+  if (objectSql("wake_nonces_next") !== null) throw new Error("Unsupported pending session message migration.");
+  // A rebuild must never silently drop an unfamiliar index or trigger.
+  if (wake !== null && !current) {
+    const dependencies = database.prepare("SELECT name, sql FROM sqlite_schema WHERE tbl_name = 'wake_nonces' AND type IN ('index', 'trigger') AND sql IS NOT NULL")
+      .all() as Array<{ name: string; sql: string }>;
+    if (dependencies.some(row => row.name !== "wake_active_target" || schemaSql(row.sql) !== schemaSql(WAKE_ACTIVE_INDEX_SQL))) {
+      throw new Error("Unsupported legacy session message wake dependency.");
+    }
+  }
+  return { registered: marker !== null, rebuildWake: !current };
+}
 export const PRESENCE_LEASE_MS = 20_000;
 /** Ended or lapsed presence rows stay this long after their lease end; matches the session board's 24-hour window. */
 export const PRESENCE_RETENTION_MS = 24 * 3600_000;
@@ -242,10 +297,14 @@ export class SessionMessageStore {
     if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 0o700 });
     this.database = new DatabaseSync(databasePath);
     this.database.exec("PRAGMA busy_timeout = 5000;");
-    const storedVersion = (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
-    if (storedVersion > MESSAGE_SCHEMA_VERSION) { this.database.close(); throw new Error(`The session message database schema ${storedVersion} is newer than this broker supports.`); }
-    if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
-    this.database.exec(`CREATE TABLE IF NOT EXISTS messages (
+    let transactionOpen = false;
+    try {
+      messageSchema(this.database); // Reject future/unknown component schemas before journal or DDL effects.
+      if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
+      this.database.exec("BEGIN IMMEDIATE");
+      transactionOpen = true;
+      const schema = messageSchema(this.database); // Another connection may have migrated while we waited.
+      this.database.exec(`CREATE TABLE IF NOT EXISTS messages (
       message_id TEXT PRIMARY KEY,
       sender_host TEXT NOT NULL,
       sender_session_id TEXT NOT NULL,
@@ -353,11 +412,7 @@ export class SessionMessageStore {
       message_id TEXT PRIMARY KEY,
       target_host TEXT NOT NULL,
       target_session_id TEXT NOT NULL
-    ) STRICT;`);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
-      const version = (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
-      if (version > MESSAGE_SCHEMA_VERSION) throw new Error(`The session message database schema ${version} is newer than this broker supports.`);
+      ) STRICT;`);
       this.database.exec(`CREATE TABLE IF NOT EXISTS prepared_messages (
         message_id TEXT PRIMARY KEY,
         sender_host TEXT NOT NULL,
@@ -401,25 +456,13 @@ export class SessionMessageStore {
       ) STRICT;`);
       // Additive, transactional migration: historical consumed_at is never an observation.
       const wakeColumns = this.database.prepare("PRAGMA table_info(wake_nonces)").all() as Array<{ name: string }>;
-      for (const [name, definition] of [
-        ["state", "TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted'))"],
-        ["nonce", "TEXT"], ["instance_id", "TEXT"], ["birth_generation", "TEXT"], ["transport", "TEXT"],
-        ["relay_id", "TEXT"], ["attempt_id", "TEXT"], ["dispatch_epoch", "INTEGER NOT NULL DEFAULT 0"],
-        ["retry_not_before", "TEXT"], ["retry_count", "INTEGER NOT NULL DEFAULT 0"],
-        ["started_at", "TEXT"], ["outcome_at", "TEXT"], ["observed_at", "TEXT"], ["late_observed_at", "TEXT"],
-      ]) {
+      for (const [name, definition] of WAKE_ADDITIONS) {
         if (!wakeColumns.some((column) => column.name === name)) this.database.exec(`ALTER TABLE wake_nonces ADD COLUMN ${name} ${definition};`);
       }
       // Schema 1 admits the terminal expired-unobserved state. SQLite cannot widen a CHECK in place, so the
       // table is rebuilt once in this transaction, keeping every row, rowid and column value.
-      if (version < 1) {
-        this.database.exec(`CREATE TABLE wake_nonces_next (
-          nonce_digest TEXT PRIMARY KEY, host TEXT NOT NULL, session_id TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT,
-          state TEXT NOT NULL DEFAULT 'legacy' ${WAKE_STATE_CHECK},
-          nonce TEXT, instance_id TEXT, birth_generation TEXT, transport TEXT, relay_id TEXT, attempt_id TEXT,
-          dispatch_epoch INTEGER NOT NULL DEFAULT 0, retry_not_before TEXT, retry_count INTEGER NOT NULL DEFAULT 0,
-          started_at TEXT, outcome_at TEXT, observed_at TEXT, late_observed_at TEXT, retired_at TEXT
-        ) STRICT;
+      if (schema.rebuildWake) {
+        this.database.exec(`CREATE TABLE wake_nonces_next (${WAKE_CURRENT_COLUMNS}) STRICT;
         INSERT INTO wake_nonces_next (rowid, ${WAKE_COPY_COLUMNS}) SELECT rowid, ${WAKE_COPY_COLUMNS} FROM wake_nonces;
         DROP TABLE wake_nonces;`);
         this.database.exec("ALTER TABLE wake_nonces_next RENAME TO wake_nonces;");
@@ -433,11 +476,12 @@ export class SessionMessageStore {
         active_at TEXT NOT NULL,
         PRIMARY KEY (host, session_id)
       ) STRICT;`);
-      if (version < MESSAGE_SCHEMA_VERSION) this.database.exec(`PRAGMA user_version = ${MESSAGE_SCHEMA_VERSION};`);
+      if (!schema.registered) this.database.exec(`${MESSAGE_SCHEMA_SQL}; INSERT INTO ${MESSAGE_SCHEMA_TABLE} VALUES (1, ${MESSAGE_SCHEMA_VERSION});`);
 
       this.database.exec("COMMIT");
     } catch (error) {
-      this.database.exec("ROLLBACK");
+      if (transactionOpen) this.database.exec("ROLLBACK");
+      this.database.close();
       throw error;
     }
   }

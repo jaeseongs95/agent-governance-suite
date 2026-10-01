@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
-import { fork } from 'node:child_process';
+import { fork, spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -14,6 +15,9 @@ import { recordWakeHookObservation, createWakeHookObservationReader,
 import { dispatchSessionMessageBrokerOperation as dispatch } from '../../../mcp-server/src/session-message-broker.ts';
 import { TrustStore } from '../../../mcp-server/src/trust-store.ts';
 import { ContractValidator } from '../../../mcp-server/src/schema-validator.ts';
+import { DatabaseSync } from 'node:sqlite';
+import { SessionModelCapabilityStore, capabilitySigner } from '../../../mcp-server/src/session-model-capabilities.ts';
+import { capability } from '../model-routing-v2/fixtures.mjs';
 
 const sender = { host: 'portable', sessionId: 'w05-r3-sender' };
 const target = { host: 'portable', sessionId: 'w05-r3-target' };
@@ -22,7 +26,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
   for (const f of resources.splice(0)) {
     for (const child of f.children) if (child.exitCode === null && child.signalCode === null) child.kill();
-    f.store.close();
+    f.store?.close();
     rmSync(f.directory, { recursive: true, force: true, maxRetries: 10 });
   }
 });
@@ -78,6 +82,201 @@ async function worker(f, input) {
     return answer?.result;
   } };
 }
+
+const schemaTable = 'ags_session_message_schema';
+const tagWakeSchemas = JSON.parse(readFileSync(new URL('../../session-messaging/fixtures/w05-r3-tag-wake-schemas.json', import.meta.url), 'utf8'));
+function databaseState(db) {
+  const objects = db.prepare('SELECT type, name, tbl_name, sql FROM sqlite_schema ORDER BY name').all();
+  const tables = objects.filter(o => o.type === 'table');
+  return { objects, userVersion: db.prepare('PRAGMA user_version').get().user_version,
+    schemaVersion: db.prepare('PRAGMA schema_version').get().schema_version,
+    rows: Object.fromEntries(tables.map(t => [t.name, db.prepare(`SELECT rowid AS rowid, * FROM "${t.name}" ORDER BY rowid`).all().map(r => ({ ...r }))])) };
+}
+function migrationFixture(legacy) {
+  const f = fixture(); const attempt = begin(f);
+  f.store.recordManagedWakeOutcome(attempt, 'accepted-or-unknown', f.now + 2);
+  const sent = receipt(f);
+  f.store.database.prepare('INSERT INTO task_outcomes VALUES (?, ?, ?, NULL, ?)')
+    .run('migration-callback', '{"unchanged":"callback bytes"}', sent.messageId, iso(f.now));
+  const signer = capabilitySigner('K'.repeat(43)), caps = new SessionModelCapabilityStore(f.store, signer);
+  const publication = { schemaVersion: '1.0.0', identity: { ...target, instanceId: 'birth-1' },
+    snapshot: capability({ sessionId: target.sessionId, instanceId: 'birth-1', observedAt: iso(f.now), expiresAt: iso(f.now + 60_000) }) };
+  caps.publish(signer.issue('capability', publication, { issuedAt: iso(f.now), expiresAt: publication.snapshot.expiresAt }), f.now);
+  f.store.database.exec(`DROP TABLE ${schemaTable}; PRAGMA user_version=17;`);
+  if (legacy) {
+    // Reconstruct the pre-r3 seven-state table, retaining all real rowids and binding columns.
+    const sql = f.store.database.prepare("SELECT sql FROM sqlite_schema WHERE name='wake_nonces'").get().sql
+      .replace(/,\s*'expired-unobserved'/u, '').replace(/,\s*retired_at TEXT/u, '');
+    const columns = f.store.database.prepare('PRAGMA table_info(wake_nonces)').all().map(c => c.name).filter(n => n !== 'retired_at').join(',');
+    f.store.database.exec(`ALTER TABLE wake_nonces RENAME TO wake_nonces_current;
+      ${sql}; INSERT INTO wake_nonces(rowid,${columns}) SELECT rowid,${columns} FROM wake_nonces_current;
+      DROP TABLE wake_nonces_current;
+      CREATE UNIQUE INDEX wake_active_target ON wake_nonces(host,session_id) WHERE state IN ('reserved','started','submitted','unknown');`);
+  }
+  const before = databaseState(f.store.database);
+  f.store.close(); f.store = null;
+  return Object.assign(f, { attempt, sent, publication, before });
+}
+function assertMigrationRows(f, db) {
+  const after = databaseState(db);
+  assert.equal(after.userVersion, 17);
+  for (const [table, rows] of Object.entries(f.before.rows)) {
+    assert.deepEqual(after.rows[table], table === 'wake_nonces'
+      ? rows.map(r => ({ ...r, retired_at: r.retired_at ?? null })) : rows);
+  }
+  assert.deepEqual(after.rows[schemaTable], [{ rowid: 1, singleton: 1, version: 1 }]);
+}
+
+test.each([false, true])('AC001 component migration preserves global version 17, rowids, callbacks and capability bytes (legacy=%s)', legacy => {
+  const f = migrationFixture(legacy);
+  f.store = new SessionMessageStore(f.database);
+  assertMigrationRows(f, f.store.database);
+  const once = databaseState(f.store.database);
+  f.store.close(); f.store = new SessionMessageStore(f.database);
+  assert.deepEqual(databaseState(f.store.database), once); // No repeat rebuild or schema/data write.
+  const caps = new SessionModelCapabilityStore(f.store, capabilitySigner('K'.repeat(43)));
+  assert.deepEqual(caps.list({}, f.now + 3).entries[0].snapshot, f.publication.snapshot);
+  assert.equal(f.store.acknowledge(target, [f.sent.messageId], f.now + 4), 1);
+  assert.equal(f.store.database.prepare('SELECT callback_acknowledged_at FROM task_outcomes').get().callback_acknowledged_at, iso(f.now + 4));
+});
+
+test.each(tagWakeSchemas.tags.map(schema => [schema.tag, schema]))(
+  'AC001 %s original wake SQL preserves every old column, binding and rowid across migration and reopen', (_tag, schema) => {
+    // Reproduce only the tag's wake SQL; unrelated 3.x application data is seeded by the existing fixture.
+    const f = migrationFixture(false), db = new DatabaseSync(f.database);
+    try {
+      db.exec('DROP TABLE wake_nonces');
+      for (const step of schema.steps) {
+        assert.equal(createHash('sha256').update(step.sql).digest('hex'), step.sha256);
+        db.exec(step.sql);
+      }
+      const columns = db.prepare('PRAGMA table_info(wake_nonces)').all().map(c => c.name);
+      assert.deepEqual(columns, schema.columns);
+      const insert = db.prepare(`INSERT INTO wake_nonces (rowid,${columns.join(',')}) VALUES (${Array(columns.length + 1).fill('?').join(',')})`);
+      const consumed = { rowid: 211, nonce_digest: 'tag-consumed-digest', host: 'old-host', session_id: 'old-session',
+        expires_at: iso(f.now + WAKE_TTL_MS), consumed_at: iso(f.now - 17), state: 'observed',
+        nonce: 'tag-consumed-nonce-abcdefghijklmnop', instance_id: 'old-instance', birth_generation: iso(f.now - 90),
+        transport: 'old-port', relay_id: 'old-relay', attempt_id: 'old-attempt', dispatch_epoch: 7,
+        retry_not_before: iso(f.now + 60_000), retry_count: 2, started_at: iso(f.now - 80),
+        outcome_at: iso(f.now - 60), observed_at: iso(f.now - 30), late_observed_at: iso(f.now - 10) };
+      for (const old of [{ ...f.before.rows.wake_nonces[0], rowid: 107 }, consumed]) {
+        insert.run(old.rowid, ...columns.map(column => old[column]));
+      }
+      f.before = databaseState(db);
+    } finally { db.close(); }
+    f.store = new SessionMessageStore(f.database);
+    const after = databaseState(f.store.database);
+    assert.equal(after.userVersion, 17);
+    for (const [table, rows] of Object.entries(f.before.rows)) {
+      assert.deepEqual(table === 'wake_nonces'
+        ? after.rows[table].map(row => Object.fromEntries(Object.keys(rows[0]).map(key => [key, row[key]])))
+        : after.rows[table], rows); // Includes host/session_id/consumed_at and every tag binding column, not just counts.
+    }
+    assert.deepEqual(after.rows.wake_nonces.map(row => row.rowid), [107, 211]);
+    assert.deepEqual(after.rows[schemaTable], [{ rowid: 1, singleton: 1, version: 1 }]);
+    assert.notEqual(after.objects.find(o => o.name === 'wake_nonces').sql,
+      f.before.objects.find(o => o.name === 'wake_nonces').sql);
+    assert.ok(after.objects.find(o => o.name === 'wake_nonces').sql.includes('expired-unobserved'));
+    assert.ok(after.rows.wake_nonces.every(row => row.retired_at === null));
+    if (!schema.columns.includes('state')) {
+      assert.deepEqual(after.rows.wake_nonces.map(row => row.state), ['legacy', 'legacy']);
+      assert.ok(after.rows.wake_nonces.every(row => row.observed_at === null));
+    }
+    f.store.close(); f.store = new SessionMessageStore(f.database);
+    assert.deepEqual(databaseState(f.store.database), after); // Reopen must not rebuild or change any saved bytes.
+    const caps = new SessionModelCapabilityStore(f.store, capabilitySigner('K'.repeat(43)));
+    assert.deepEqual(caps.list({}, f.now + 3).entries[0].snapshot, f.publication.snapshot);
+    assert.equal(f.store.acknowledge(target, [f.sent.messageId], f.now + 4), 1);
+    assert.equal(f.store.database.prepare('SELECT callback_acknowledged_at FROM task_outcomes').get().callback_acknowledged_at, iso(f.now + 4));
+  });
+
+test.each(['future', 'unknown-wake', 'unknown-metadata', 'unknown-dependency'])(
+  'AC001 %s component schema is rejected with zero schema/data effect', variant => {
+    const f = migrationFixture(variant === 'unknown-dependency');
+    const db = new DatabaseSync(f.database);
+    try {
+      if (variant === 'future') db.exec(`CREATE TABLE ${schemaTable} (singleton INTEGER PRIMARY KEY CHECK(singleton = 1), version INTEGER NOT NULL CHECK(version >= 1)) STRICT;
+        INSERT INTO ${schemaTable} VALUES(1,2);`);
+      if (variant === 'unknown-wake') db.exec('ALTER TABLE wake_nonces ADD COLUMN unsupported TEXT');
+      if (variant === 'unknown-metadata') db.exec(`CREATE TABLE ${schemaTable} (version TEXT) STRICT;`);
+      if (variant === 'unknown-dependency') db.exec('CREATE INDEX unknown_wake_index ON wake_nonces(nonce)');
+      const before = databaseState(db);
+      assert.throws(() => new SessionMessageStore(f.database), variant === 'future' ? /newer than/ : /Unsupported/);
+      assert.deepEqual(databaseState(db), before);
+    } finally { db.close(); }
+  });
+
+test('AC001 migration DDL, row copy and component marker roll back together', () => {
+  const f = migrationFixture(true), db = new DatabaseSync(f.database), before = databaseState(db);
+  const original = DatabaseSync.prototype.exec;
+  const fail = vi.spyOn(DatabaseSync.prototype, 'exec').mockImplementation(function (sql) {
+    if (sql.includes(`INSERT INTO ${schemaTable}`)) throw new Error('fixture-marker-failure');
+    return original.call(this, sql);
+  });
+  try { assert.throws(() => new SessionMessageStore(f.database), /fixture-marker-failure/); }
+  finally { fail.mockRestore(); }
+  try { assert.deepEqual(databaseState(db), before); } finally { db.close(); }
+  f.store = new SessionMessageStore(f.database);
+  assertMigrationRows(f, f.store.database);
+});
+
+test('AC001 two independent processes recheck the component marker under the migration lock and rebuild once', async () => {
+  const f = migrationFixture(true), gate = new DatabaseSync(f.database);
+  let lockHeld = false;
+  const script = `import { DatabaseSync } from 'node:sqlite';
+    import { SessionMessageStore } from ${JSON.stringify(new URL('../../../mcp-server/src/session-message-store.ts', import.meta.url).href)};
+    const original = DatabaseSync.prototype.exec; let rebuilds=0;
+    DatabaseSync.prototype.exec=function(sql){
+      if(sql==='BEGIN IMMEDIATE') process.send({type:'locking'});
+      if(sql.includes('CREATE TABLE wake_nonces_next')) rebuilds++;
+      return original.call(this,sql);
+    };
+    process.send({type:'ready'});
+    process.once('message',()=>{try { const store=new SessionMessageStore(process.argv[1]);
+      const version=store.database.prepare('SELECT version FROM ${schemaTable}').get().version;
+      store.close();process.send({type:'done',version,rebuilds},()=>process.exit(0));
+    }catch(error){process.send({type:'error',error:error.message},()=>process.exit(1));}});`;
+  const workers = [0, 1].map(() => {
+    const child = spawn(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script, f.database],
+      { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
+    f.children.push(child);
+    const messages = { ready: null, locking: null, done: null };
+    const pending = Object.fromEntries(Object.keys(messages).map(key => [key, {}]));
+    for (const key of Object.keys(messages)) {
+      messages[key] = new Promise((resolve, reject) => { pending[key] = { resolve, reject }; });
+      messages[key].catch(() => {}); // The matching stage below still awaits and reports this rejection.
+    }
+    let stderr = ''; child.stderr.on('data', chunk => { stderr += chunk; });
+    child.on('message', msg => {
+      if (msg.type === 'error') Object.values(pending).forEach(p => p.reject(new Error(msg.error)));
+      else pending[msg.type]?.resolve(msg);
+    });
+    const exit = once(child, 'exit').then(([code]) => {
+      if (code !== 0) {
+        const error = new Error(`migration child ${code}: ${stderr}`);
+        Object.values(pending).forEach(p => p.reject(error));
+        throw error;
+      }
+    });
+    exit.catch(() => {});
+    return { child, ...messages, exit };
+  });
+  try {
+    await Promise.all(workers.map(w => w.ready));
+    gate.exec('BEGIN IMMEDIATE');
+    lockHeld = true;
+    const locked = Promise.all(workers.map(w => w.locking));
+    workers.forEach(w => w.child.send('go'));
+    await locked; // Both have read the old shape before contending on the held write lock.
+    gate.exec('COMMIT');
+    lockHeld = false;
+    const results = await Promise.all(workers.map(w => w.done));
+    await Promise.all(workers.map(w => w.exit));
+    assert.deepEqual(results.map(r => r.version), [1, 1]);
+    assert.equal(results.reduce((n, r) => n + r.rebuilds, 0), 1);
+    assertMigrationRows(f, gate);
+  } finally { if (lockHeld) gate.exec('ROLLBACK'); gate.close(); }
+}, 20_000);
 
 test('AC001/003 wake activity never creates trusted task/contact activity', () => {
   const f = fixture();
@@ -142,8 +341,80 @@ test.each(['ended', 'unreachable', 'missing', 'transport', 'capability', 'ended-
       assert.equal(current[key], original[key]);
     }
     assert.equal(f.store.pendingCount(target, at), 1);
+    assert.equal(f.store.managedWakeStatus(target, at).observation, 'unknown');
+    if (variant === 'transport' || variant === 'capability') {
+      // Restore eligibility without creating a different birth. The unknown fence must do the blocking.
+      const restored = f.store.startPresence(presence('birth-1'), at + 1);
+      assert.equal(restored.startedAt, original.birth_generation);
+      assert.equal(restored.state, 'online');
+      assert.equal(restored.transport, 'portable');
+      assert.ok(restored.deliveryCapabilities.supportedInjection.includes('peer-wake'));
+      assert.equal(f.store.liveRelay(target, 'portable', at + 1).relayId, 'relay-1');
+      f.store.send({ sender, target, messageId: 'fence-new-body-0001', body: '추가 본문', ttlSeconds: 86400 }, at + 1);
+      assert.equal(f.store.pendingCount(target, at + 1), 2);
+    }
     assert.equal(f.store.reserveManagedWake({ ...target, instanceId: 'birth-1', transport: 'portable', relayId: 'relay-1',
       nonce: 'w05-r3-retry-abcdefghijklmnop' }, at + 1).dispatch, false);
+    if (variant === 'transport' || variant === 'capability') {
+      assert.deepEqual(row(f, attempt), current);
+      assert.equal(f.store.database.prepare('SELECT count(*) AS n FROM wake_nonces').get().n, 1);
+      // Removing only the unknown row demonstrates that all other admission conditions now permit dispatch.
+      f.store.database.prepare('DELETE FROM wake_nonces WHERE attempt_id=?').run(attempt.attemptId);
+      assert.equal(f.store.reserveManagedWake({ ...target, instanceId: 'birth-1', transport: 'portable', relayId: 'relay-1',
+        nonce: 'w05-r3-control-abcdefghijklmnop' }, at + 2).dispatch, true);
+    }
+  });
+
+test.each(['transport', 'capability'])(
+  'AC008 one signed receipt claims exactly once after the same birth recovers %s eligibility', variant => {
+    const f = fixture(), attempt = begin(f), original = row(f, attempt);
+    const proof = observed(f, [attempt.nonce], f.now + 2), reader = createWakeHookObservationReader(f.trustPath);
+    const trust = new TrustStore(f.trustPath);
+    let signedReceipt;
+    try {
+      signedReceipt = trust.getInputSource(proof.sourceReceiptId);
+      assert.equal(trust.verify(signedReceipt), true);
+      assert.equal(signedReceipt.authorityEffect, 'none');
+      assert.equal(signedReceipt.expiresAt, iso(f.now + 30_002));
+    } finally { trust.close(); }
+    if (variant === 'transport') f.store.database.prepare('UPDATE session_presence SET transport=?').run('other-port');
+    else f.store.database.prepare('UPDATE session_presence SET supported_injection=?').run(JSON.stringify(['tool-boundary']));
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(f.now + 4);
+    const claim = () => dispatch(f.store, 'claim-host-wake', { target, ...proof }, undefined, undefined, undefined, reader);
+    try {
+      assert.deepEqual(claim(), { recognized: false, messages: [], managed: false });
+      const unknown = row(f, attempt);
+      assert.equal(unknown.state, 'unknown');
+      assert.equal(unknown.consumed_at, null); assert.equal(unknown.observed_at, null);
+      for (const key of ['nonce', 'nonce_digest', 'instance_id', 'birth_generation', 'dispatch_epoch', 'expires_at']) {
+        assert.equal(unknown[key], original[key]);
+      }
+      assert.equal(f.store.pendingCount(target, f.now + 4), 1);
+      const restored = f.store.startPresence(presence('birth-1'), f.now + 5);
+      assert.equal(restored.instanceId, original.instance_id); assert.equal(restored.startedAt, original.birth_generation);
+      assert.equal(restored.transport, 'portable'); assert.equal(restored.state, 'online');
+      assert.ok(restored.deliveryCapabilities.supportedInjection.includes('peer-wake'));
+      assert.equal(f.store.reserveManagedWake({ ...target, instanceId: 'birth-1', transport: 'portable', relayId: 'relay-1',
+        nonce: 'w05-r3-recovery-fence-abcdefghijklmnop' }, f.now + 5).dispatch, false);
+      assert.deepEqual(row(f, attempt), unknown); // Recovery alone must not consume the nonce or permit a new dispatch.
+      clock.mockReturnValue(f.now + 6);
+      assert.ok(f.now + 6 < Date.parse(signedReceipt.expiresAt));
+      const recovered = claim(); // Exactly the original observation and sourceReceiptId, with its real signature.
+      assert.equal(recovered.recognized, true); assert.equal(recovered.managed, true);
+      assert.deepEqual(recovered.messages.map(message => ({ messageId: message.messageId, body: message.body })),
+        [{ messageId: 'wake-body-0001', body: '기존 본문 😀' }]);
+      const consumed = row(f, attempt);
+      assert.equal(consumed.state, 'observed');
+      assert.equal(consumed.consumed_at, iso(f.now + 6)); assert.equal(consumed.observed_at, iso(f.now + 6));
+      clock.mockReturnValue(f.now + 7);
+      assert.deepEqual(claim(), { recognized: false, messages: [], managed: false });
+      assert.deepEqual(row(f, attempt), consumed);
+      assert.equal(f.store.database.prepare('SELECT delivery_attempts FROM messages WHERE message_id=?').get('wake-body-0001').delivery_attempts, 1);
+      assert.equal(f.store.pendingCount(target, f.now + 7), 0);
+      const reopenedTrust = new TrustStore(f.trustPath);
+      try { assert.deepEqual(reopenedTrust.getInputSource(proof.sourceReceiptId), signedReceipt); }
+      finally { reopenedTrust.close(); }
+    } finally { clock.mockRestore(); }
   });
 
 test.each(['expired-same-birth', 'new-instance', 'same-instance-new-birth'])(
@@ -157,14 +428,48 @@ test.each(['expired-same-birth', 'new-instance', 'same-instance-new-birth'])(
       f.store.startPresence(presence(variant === 'new-instance' ? 'birth-2' : 'birth-1'), at + 1);
     }
     const proof = observed(f, [attempt.nonce], at + 2);
-    const result = f.store.claimHostWake(target, proof.observation, proof.sourceReceiptId,
-      createWakeHookObservationReader(f.trustPath), at + 3);
-    assert.deepEqual(result, { recognized: false, messages: [], binding: null });
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(at + 3);
+    try {
+      assert.deepEqual(dispatch(f.store, 'claim-host-wake', { target, ...proof }, undefined, undefined, undefined,
+        createWakeHookObservationReader(f.trustPath)), { recognized: false, messages: [], managed: false });
+    } finally { clock.mockRestore(); }
     const current = row(f, attempt);
     assert.equal(current.state, 'observed'); assert.ok(current.late_observed_at);
     assert.ok(current.consumed_at); assert.ok(current.observed_at);
     assert.equal(f.store.pendingCount(target, at + 3), 1);
   });
+
+test('AC008 independent process birth mutation is fenced during verification, then allowed after the claim commits', () => {
+  const f = fixture(); const attempt = begin(f), at = f.now + 4;
+  const proof = observed(f, [attempt.nonce], at - 1);
+  const script = `import { DatabaseSync } from 'node:sqlite';
+    const db=new DatabaseSync(process.argv[1]);db.exec('PRAGMA busy_timeout=1');
+    try { db.prepare('UPDATE session_presence SET ended_at=? WHERE host=? AND session_id=? AND instance_id=?')
+      .run(process.argv[2],${JSON.stringify(target.host)},${JSON.stringify(target.sessionId)},'birth-1');
+      console.log(JSON.stringify({blocked:false}));
+    } catch(error) { if(!/locked|busy/i.test(error.message)) throw error; console.log(JSON.stringify({blocked:true})); }
+    finally { db.close(); }`;
+  const endFromAnotherProcess = () => {
+    const child = spawnSync(process.execPath, ['--input-type=module', '--eval', script, f.database, iso(at)],
+      { encoding: 'utf8', windowsHide: true, timeout: 5000 });
+    assert.equal(child.status, 0, child.error?.message ?? child.stderr);
+    return JSON.parse(child.stdout);
+  };
+  const reader = createWakeHookObservationReader(f.trustPath);
+  const guardedReader = { verifyObservation: (...args) => {
+    assert.deepEqual(endFromAnotherProcess(), { blocked: true });
+    return reader.verifyObservation(...args);
+  } };
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(at);
+  try {
+    const result = dispatch(f.store, 'claim-host-wake', { target, ...proof }, undefined, undefined, undefined, guardedReader);
+    assert.equal(result.recognized, true); assert.equal(result.managed, true);
+    assert.equal(result.messages.length, 1); assert.equal(result.messages[0].body, '기존 본문 😀');
+  } finally { clock.mockRestore(); }
+  assert.equal(row(f, attempt).state, 'observed');
+  assert.deepEqual(endFromAnotherProcess(), { blocked: false });
+  assert.equal(f.store.presence(target, at).state, 'ended');
+}, 15_000);
 
 test('AC002/008 verified expired arrival is terminal-only; retired + valid current still claims', () => {
   const f = fixture(); const old = begin(f);
@@ -260,6 +565,11 @@ test('AC004 quota admission, duplicate priority and first ACK retention do not b
   assert.equal(f.store.database.prepare('SELECT expires_at FROM prepared_messages WHERE message_id=?').get(id).expires_at, expires);
   assert.equal(f.store.status(sender, id, f.now + 400 + 3600_000), null);
   assert.throws(() => f.store.submitPrepared(sender, id, f.now + 400 + 3600_000), /Issued message ID/);
+  const releasedAt = f.now + 400 + 3600_000;
+  // earliestReleaseAt is after this draft's TTL: retire that ID and prepare once after the slot is released.
+  assert.throws(() => f.store.submitPrepared(sender, pending.messageId, releasedAt), /Issued message ID/);
+  const resumed = f.store.prepare({ sender, target, body: 'fresh after earliest release' }, releasedAt);
+  assert.equal(f.store.submitPrepared(sender, resumed.messageId, releasedAt).duplicate, false);
 });
 
 test('AC004 global pool rejects atomically and reports its earliest release', () => {

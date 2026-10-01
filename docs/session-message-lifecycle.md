@@ -102,7 +102,11 @@ receipt는 `authorityEffect: none`이다. 이 검사는 협력하는 로컬 hook
 
 공통 relay는 outcome/capability/dispatch port만 사용한다. transport 등록과 vendor SDK·protocol은 adapter 모듈에 둔다. 다른 vendor도 같은 port를 주입할 수 있으며 공통 알림 상태에 vendor 분기를 추가하지 않는다. 이 경로는 host queue 목록·취소·삭제를 호출하지 않는다.
 
-이관은 기존 DB에 컬럼과 active target UNIQUE를 transaction으로 추가한다. 기존 nonce는 `legacy`이며 옛 consumed_at을 observed로 가져오지 않는다. 기존 queued marker는 자연 소진한다. legacy 종료에는 새 누적 억제 보장을 소급하지 않는다. 활성 managed target 한도는 기존 1000개 budget을 재사용하고 초과는 명시적으로 거절한다. 미확정 행은 주입 expiry+10분과 아래 생존성 조건으로만 퇴역한다. 종료 기록은 최대 1000개, 종료 후 1시간까지 보관하며 아직 유효한 retry backoff를 제거하지 않는다. 이관 실패는 추가 컬럼과 index를 rollback하며 기존 본문·nonce를 보존한다. 운영 DB 삭제·덮어쓰기나 구버전과 혼용한 자동 rollback은 제공하지 않는다.
+메시지 구성 요소의 스키마 버전은 `ags_session_message_schema`의 한 행(`singleton=1`, `version=1`)으로 관리한다. 공유 DB의 `user_version`을 메시지 버전으로 사용하거나 변경하지 않는다. 기존 `wake_nonces`는 알려진 다섯 컬럼 기본형, 일곱 state의 legacy 형식, 여덟 state와 `retired_at`을 가진 현재 형식만 수용한다. 알 수 없는 marker·스키마나 지원 버전보다 높은 marker는 생성자에서 거절한다. 테이블 재구성이 필요한 legacy 형식에 알 수 없는 index·trigger가 있어도 거절한다.
+
+생성자는 journal mode 전환과 DDL 전에 스키마를 확인하고, `BEGIN IMMEDIATE`로 잠금을 얻은 뒤 다시 확인한다. 컬럼 추가, 필요한 테이블 재구성, 기존 행의 값과 `rowid` 복사, active target UNIQUE와 구성 요소 marker 생성은 같은 transaction 안에서 수행하며 실패하면 함께 rollback한다. `journal_mode`의 WAL 전환은 transaction 밖에서 수행하므로 DB 파일에 발생하는 모든 효과가 원자적이라는 보장은 하지 않는다.
+
+state가 없던 기존 nonce는 `legacy`로 이관하며 옛 consumed_at을 observed로 가져오지 않는다. 기존 queued marker는 자연 소진한다. legacy 종료에는 새 누적 억제 보장을 소급하지 않는다. 활성 managed target 한도는 기존 1000개 budget을 재사용하고 초과는 명시적으로 거절한다. 미확정 행은 주입 expiry+10분과 아래 생존성 조건으로만 퇴역한다. 종료 기록은 최대 1000개, 종료 후 1시간까지 보관하며 아직 유효한 retry backoff를 제거하지 않는다. 이관 실패 시 기존 본문·nonce를 보존한다. 운영 DB 삭제·덮어쓰기나 구버전과 혼용한 자동 rollback은 제공하지 않는다.
 
 ### 보장과 남은 조건
 

@@ -108,7 +108,7 @@ test('W03 issued messages coexist with task callbacks and retain independent ret
   const reopened = new SessionMessageStore(database);
   stores.push(reopened);
   assert.deepEqual(reopened.submitPrepared(ordinarySender, draft.messageId, now + 101),
-    { ...ordinary, duplicate: true });
+    { ...ordinary, duplicate: true, autoWake: { ...ordinary.autoWake, checkedAt: new Date(now + 101).toISOString() } });
   assert.deepEqual(reopened.recordTaskOutcome(outcome, proof, binding(), now + 101),
     { ...terminal, duplicate: true });
   const messages = reopened.claim(callbackTarget, now + 102);

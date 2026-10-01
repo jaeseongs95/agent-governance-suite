@@ -1,0 +1,391 @@
+{
+  "schemaVersion": "1.0.0",
+  "mode": "tag-wake-sql-reproduction",
+  "notes": [
+    "로컬 tag 원문에서 추출한 wake CREATE·ALTER 배열과 template·active index만 같은 순서로 재현한다. 전체 태그 모듈을 실행한 증거가 아니다.",
+    "ALTER는 해당 tag 생성자가 새 wake 테이블에서 누락된 컬럼을 추가하는 실제 순서를 따른다. 생성 뒤의 sqlite_schema는 Cloud runtime에서 관측한다.",
+    "관련 3.x 메시지·binding·capability 데이터는 기존 migrationFixture로 별도 준비한다. 운영 DB를 읽거나 복사하지 않는다."
+  ],
+  "tags": [
+    {
+      "tag": "v2.6.0",
+      "commit": "5479f4eb55a2bfcdd068891d316c0f13986c02f9",
+      "sourcePath": "mcp-server/src/session-message-store.ts",
+      "sourceBlob": "484265add3c0ae786144daa3bb0fc4a18478ca6a",
+      "sourceSha256": "951727d5ed0689473a3d81352006c3a0b2f768119ab36bcf617f92a334677de1",
+      "sourceBytes": 40726,
+      "constructorArray": null,
+      "alterTemplate": null,
+      "columns": [
+        "nonce_digest",
+        "host",
+        "session_id",
+        "expires_at",
+        "consumed_at"
+      ],
+      "steps": [
+        {
+          "kind": "create",
+          "sourceLine": 144,
+          "sql": "CREATE TABLE IF NOT EXISTS wake_nonces (\n      nonce_digest TEXT PRIMARY KEY,\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      expires_at TEXT NOT NULL,\n      consumed_at TEXT\n    ) STRICT;",
+          "sha256": "32e3c817bf9b6cd4651a85d806be8164291f0968113429c8ae99775571e7e60f"
+        }
+      ]
+    },
+    {
+      "tag": "v2.7.0",
+      "commit": "41e056a4954fb2bdd488bb71f8ca33d86b96b1a5",
+      "sourcePath": "mcp-server/src/session-message-store.ts",
+      "sourceBlob": "484265add3c0ae786144daa3bb0fc4a18478ca6a",
+      "sourceSha256": "951727d5ed0689473a3d81352006c3a0b2f768119ab36bcf617f92a334677de1",
+      "sourceBytes": 40726,
+      "constructorArray": null,
+      "alterTemplate": null,
+      "columns": [
+        "nonce_digest",
+        "host",
+        "session_id",
+        "expires_at",
+        "consumed_at"
+      ],
+      "steps": [
+        {
+          "kind": "create",
+          "sourceLine": 144,
+          "sql": "CREATE TABLE IF NOT EXISTS wake_nonces (\n      nonce_digest TEXT PRIMARY KEY,\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      expires_at TEXT NOT NULL,\n      consumed_at TEXT\n    ) STRICT;",
+          "sha256": "32e3c817bf9b6cd4651a85d806be8164291f0968113429c8ae99775571e7e60f"
+        }
+      ]
+    },
+    {
+      "tag": "v2.7.1",
+      "commit": "d5c5932cd5a0d87630f6ed94f8e3721181ab9864",
+      "sourcePath": "mcp-server/src/session-message-store.ts",
+      "sourceBlob": "290a7629d356f0606d3c68f1b0a604857b6fc924",
+      "sourceSha256": "9f6108379078de0dcbcbf822345d5dc8007091d771e5b8cad676b3db2d18fb60",
+      "sourceBytes": 55278,
+      "constructorArray": {
+        "line": 231,
+        "text": "for (const [name, definition] of [\n        [\"state\", \"TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted'))\"],\n        [\"nonce\", \"TEXT\"], [\"instance_id\", \"TEXT\"], [\"birth_generation\", \"TEXT\"], [\"transport\", \"TEXT\"],\n        [\"relay_id\", \"TEXT\"], [\"attempt_id\", \"TEXT\"], [\"dispatch_epoch\", \"INTEGER NOT NULL DEFAULT 0\"],\n        [\"retry_not_before\", \"TEXT\"], [\"retry_count\", \"INTEGER NOT NULL DEFAULT 0\"],\n        [\"started_at\", \"TEXT\"], [\"outcome_at\", \"TEXT\"], [\"observed_at\", \"TEXT\"], [\"late_observed_at\", \"TEXT\"],\n      ]) {",
+        "sha256": "2c13e8dab28d081fd2ce1f3cc583d48ca110c68f8c90f83984339208211756e5"
+      },
+      "alterTemplate": {
+        "line": 238,
+        "text": "ALTER TABLE wake_nonces ADD COLUMN ${name} ${definition};",
+        "sha256": "a5a7b8906666a05c9e69a2c280e9aa640ce971a5a0be394b1dc4e31b61e83301"
+      },
+      "columns": [
+        "nonce_digest",
+        "host",
+        "session_id",
+        "expires_at",
+        "consumed_at",
+        "state",
+        "nonce",
+        "instance_id",
+        "birth_generation",
+        "transport",
+        "relay_id",
+        "attempt_id",
+        "dispatch_epoch",
+        "retry_not_before",
+        "retry_count",
+        "started_at",
+        "outcome_at",
+        "observed_at",
+        "late_observed_at"
+      ],
+      "steps": [
+        {
+          "kind": "create",
+          "sourceLine": 162,
+          "sql": "CREATE TABLE IF NOT EXISTS wake_nonces (\n      nonce_digest TEXT PRIMARY KEY,\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      expires_at TEXT NOT NULL,\n      consumed_at TEXT\n    ) STRICT;",
+          "sha256": "32e3c817bf9b6cd4651a85d806be8164291f0968113429c8ae99775571e7e60f"
+        },
+        {
+          "kind": "alter",
+          "column": "state",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 0,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN state TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted'));",
+          "sha256": "49d880e6cb67d42c49d11dd457b4f3baa65b943879398d48ef80879c753f39a5"
+        },
+        {
+          "kind": "alter",
+          "column": "nonce",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 1,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN nonce TEXT;",
+          "sha256": "7a0c28ac84062766ef9b049f2fb6c08acda481fee80b5cbf657b640013626e6a"
+        },
+        {
+          "kind": "alter",
+          "column": "instance_id",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 2,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN instance_id TEXT;",
+          "sha256": "e0b33820dcf184003de072d687bb1e543ba704b7cfe8536d11790e909f1f091a"
+        },
+        {
+          "kind": "alter",
+          "column": "birth_generation",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 3,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN birth_generation TEXT;",
+          "sha256": "493fcfeec7b2fc56b22e66156f4ca2a36c82982be8564c4f14c1e3e22099c2a0"
+        },
+        {
+          "kind": "alter",
+          "column": "transport",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 4,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN transport TEXT;",
+          "sha256": "cb595593fe71eec4d70eac7c6a90bc6ac21fe5aec87e01d5f7f22c27f56f2b99"
+        },
+        {
+          "kind": "alter",
+          "column": "relay_id",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 5,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN relay_id TEXT;",
+          "sha256": "3fee1bf9db74938b4c517ec329a7d7e78b1e2920e35370d8da4b9eec89d46e7c"
+        },
+        {
+          "kind": "alter",
+          "column": "attempt_id",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 6,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN attempt_id TEXT;",
+          "sha256": "558b22125f0b350e06c440f1346930b43a950b18fcfae25afc2a01f0e805eaf1"
+        },
+        {
+          "kind": "alter",
+          "column": "dispatch_epoch",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 7,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN dispatch_epoch INTEGER NOT NULL DEFAULT 0;",
+          "sha256": "4c0272144a49f2b19e6138dd21e1afab60bd9b326cca4a5ec2fc2ded4799df55"
+        },
+        {
+          "kind": "alter",
+          "column": "retry_not_before",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 8,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN retry_not_before TEXT;",
+          "sha256": "3842c17ef2744d8adbc0a25532e4fc0514e2211b71c8fd3897dd19983d7c5624"
+        },
+        {
+          "kind": "alter",
+          "column": "retry_count",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 9,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0;",
+          "sha256": "b55d5ac3e30d8b1fa0116df65b069c345f84477d38ba6d6cef5cdfc19961214c"
+        },
+        {
+          "kind": "alter",
+          "column": "started_at",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 10,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN started_at TEXT;",
+          "sha256": "19c78d9cd96796fa0698f258821d68410ca034a29773c1302fecdccc682e83f8"
+        },
+        {
+          "kind": "alter",
+          "column": "outcome_at",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 11,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN outcome_at TEXT;",
+          "sha256": "9aa984a48f2d0de13a2c86732c8552d302b946ecf5d92facc5c6c20796d32fb0"
+        },
+        {
+          "kind": "alter",
+          "column": "observed_at",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 12,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN observed_at TEXT;",
+          "sha256": "7e6560959e8159270e99dfb10f311982e59c47aae472e28c50f807a7eef1f675"
+        },
+        {
+          "kind": "alter",
+          "column": "late_observed_at",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 13,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN late_observed_at TEXT;",
+          "sha256": "6be124a1a774aa9730951df382dc84652291433feb1f090cd116e9cb5f91ed0a"
+        },
+        {
+          "kind": "index",
+          "sourceLine": 240,
+          "sql": "CREATE UNIQUE INDEX IF NOT EXISTS wake_active_target ON wake_nonces (host, session_id)\n        WHERE state IN ('reserved', 'started', 'submitted', 'unknown');",
+          "sha256": "21ea9355dead5a714c8a4603b441b29680c6d05baa85ef9c858bd66d9aa43b02"
+        }
+      ]
+    },
+    {
+      "tag": "v2.7.2",
+      "commit": "8763cef2b11f2635d6c9af7861b5bffd496e2a30",
+      "sourcePath": "mcp-server/src/session-message-store.ts",
+      "sourceBlob": "ee05475dc49f5deea9b958a28796eb320450316a",
+      "sourceSha256": "d9119b5d5d159337a2aa92cb4ce2fc12f993ac90dac01c31bd4f7f57a2736222",
+      "sourceBytes": 60845,
+      "constructorArray": {
+        "line": 231,
+        "text": "for (const [name, definition] of [\n        [\"state\", \"TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted'))\"],\n        [\"nonce\", \"TEXT\"], [\"instance_id\", \"TEXT\"], [\"birth_generation\", \"TEXT\"], [\"transport\", \"TEXT\"],\n        [\"relay_id\", \"TEXT\"], [\"attempt_id\", \"TEXT\"], [\"dispatch_epoch\", \"INTEGER NOT NULL DEFAULT 0\"],\n        [\"retry_not_before\", \"TEXT\"], [\"retry_count\", \"INTEGER NOT NULL DEFAULT 0\"],\n        [\"started_at\", \"TEXT\"], [\"outcome_at\", \"TEXT\"], [\"observed_at\", \"TEXT\"], [\"late_observed_at\", \"TEXT\"],\n      ]) {",
+        "sha256": "2c13e8dab28d081fd2ce1f3cc583d48ca110c68f8c90f83984339208211756e5"
+      },
+      "alterTemplate": {
+        "line": 238,
+        "text": "ALTER TABLE wake_nonces ADD COLUMN ${name} ${definition};",
+        "sha256": "a5a7b8906666a05c9e69a2c280e9aa640ce971a5a0be394b1dc4e31b61e83301"
+      },
+      "columns": [
+        "nonce_digest",
+        "host",
+        "session_id",
+        "expires_at",
+        "consumed_at",
+        "state",
+        "nonce",
+        "instance_id",
+        "birth_generation",
+        "transport",
+        "relay_id",
+        "attempt_id",
+        "dispatch_epoch",
+        "retry_not_before",
+        "retry_count",
+        "started_at",
+        "outcome_at",
+        "observed_at",
+        "late_observed_at"
+      ],
+      "steps": [
+        {
+          "kind": "create",
+          "sourceLine": 162,
+          "sql": "CREATE TABLE IF NOT EXISTS wake_nonces (\n      nonce_digest TEXT PRIMARY KEY,\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      expires_at TEXT NOT NULL,\n      consumed_at TEXT\n    ) STRICT;",
+          "sha256": "32e3c817bf9b6cd4651a85d806be8164291f0968113429c8ae99775571e7e60f"
+        },
+        {
+          "kind": "alter",
+          "column": "state",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 0,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN state TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted'));",
+          "sha256": "49d880e6cb67d42c49d11dd457b4f3baa65b943879398d48ef80879c753f39a5"
+        },
+        {
+          "kind": "alter",
+          "column": "nonce",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 1,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN nonce TEXT;",
+          "sha256": "7a0c28ac84062766ef9b049f2fb6c08acda481fee80b5cbf657b640013626e6a"
+        },
+        {
+          "kind": "alter",
+          "column": "instance_id",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 2,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN instance_id TEXT;",
+          "sha256": "e0b33820dcf184003de072d687bb1e543ba704b7cfe8536d11790e909f1f091a"
+        },
+        {
+          "kind": "alter",
+          "column": "birth_generation",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 3,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN birth_generation TEXT;",
+          "sha256": "493fcfeec7b2fc56b22e66156f4ca2a36c82982be8564c4f14c1e3e22099c2a0"
+        },
+        {
+          "kind": "alter",
+          "column": "transport",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 4,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN transport TEXT;",
+          "sha256": "cb595593fe71eec4d70eac7c6a90bc6ac21fe5aec87e01d5f7f22c27f56f2b99"
+        },
+        {
+          "kind": "alter",
+          "column": "relay_id",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 5,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN relay_id TEXT;",
+          "sha256": "3fee1bf9db74938b4c517ec329a7d7e78b1e2920e35370d8da4b9eec89d46e7c"
+        },
+        {
+          "kind": "alter",
+          "column": "attempt_id",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 6,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN attempt_id TEXT;",
+          "sha256": "558b22125f0b350e06c440f1346930b43a950b18fcfae25afc2a01f0e805eaf1"
+        },
+        {
+          "kind": "alter",
+          "column": "dispatch_epoch",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 7,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN dispatch_epoch INTEGER NOT NULL DEFAULT 0;",
+          "sha256": "4c0272144a49f2b19e6138dd21e1afab60bd9b326cca4a5ec2fc2ded4799df55"
+        },
+        {
+          "kind": "alter",
+          "column": "retry_not_before",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 8,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN retry_not_before TEXT;",
+          "sha256": "3842c17ef2744d8adbc0a25532e4fc0514e2211b71c8fd3897dd19983d7c5624"
+        },
+        {
+          "kind": "alter",
+          "column": "retry_count",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 9,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0;",
+          "sha256": "b55d5ac3e30d8b1fa0116df65b069c345f84477d38ba6d6cef5cdfc19961214c"
+        },
+        {
+          "kind": "alter",
+          "column": "started_at",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 10,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN started_at TEXT;",
+          "sha256": "19c78d9cd96796fa0698f258821d68410ca034a29773c1302fecdccc682e83f8"
+        },
+        {
+          "kind": "alter",
+          "column": "outcome_at",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 11,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN outcome_at TEXT;",
+          "sha256": "9aa984a48f2d0de13a2c86732c8552d302b946ecf5d92facc5c6c20796d32fb0"
+        },
+        {
+          "kind": "alter",
+          "column": "observed_at",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 12,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN observed_at TEXT;",
+          "sha256": "7e6560959e8159270e99dfb10f311982e59c47aae472e28c50f807a7eef1f675"
+        },
+        {
+          "kind": "alter",
+          "column": "late_observed_at",
+          "sourceLine": 238,
+          "constructorArrayOrdinal": 13,
+          "sql": "ALTER TABLE wake_nonces ADD COLUMN late_observed_at TEXT;",
+          "sha256": "6be124a1a774aa9730951df382dc84652291433feb1f090cd116e9cb5f91ed0a"
+        },
+        {
+          "kind": "index",
+          "sourceLine": 240,
+          "sql": "CREATE UNIQUE INDEX IF NOT EXISTS wake_active_target ON wake_nonces (host, session_id)\n        WHERE state IN ('reserved', 'started', 'submitted', 'unknown');",
+          "sha256": "21ea9355dead5a714c8a4603b441b29680c6d05baa85ef9c858bd66d9aa43b02"
+        }
+      ]
+    }
+  ]
+}
